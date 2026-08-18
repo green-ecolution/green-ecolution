@@ -18,8 +18,10 @@ import {
 import type { AddressDto, OrganizationDetailResponse, OrganizationResponse } from '@/api/backendApi'
 import { organizationQueries, userQueries } from '@/api/queries'
 import { useOrganizationMutations } from '@/hooks/useOrganizationMutations'
-import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { useContainerWiderThan } from '@/hooks/useContainerWiderThan'
+import { TWO_PANE_MIN_WIDTH } from '../twoPaneWidth'
 import { useHasPermission } from '@/lib/auth/useHasPermission'
+import { initialsOf } from '@/lib/initials'
 import ContactPersonPicker from './ContactPersonPicker'
 import CreateOrganizationDialog from './CreateOrganizationDialog'
 import OrganizationActionButtons from './OrganizationActionButtons'
@@ -29,9 +31,6 @@ import { buildTree, pathTo, type OrgNode } from './organizationTree'
 import { useOrganizationDraft } from './useOrganizationDraft'
 
 const MEMBERS_PER_PAGE = 100
-
-const memberInitialsOf = (firstName?: string | null, lastName?: string | null): string =>
-  `${firstName?.charAt(0) ?? ''}${lastName?.charAt(0) ?? ''}`.toUpperCase()
 
 const statusOf = (error: unknown): number | undefined =>
   (error as { response?: { status?: number } } | null)?.response?.status
@@ -65,7 +64,7 @@ const OrganizationPage = () => {
   const canUpdate = useHasPermission(['organization:update'])
   const canDelete = useHasPermission(['organization:delete'])
   const canReadUsers = useHasPermission(['user:read'])
-  const isDesktop = useMediaQuery('(min-width: 1024px)')
+  const { ref: layoutRef, isWide } = useContainerWiderThan<HTMLDivElement>(TWO_PANE_MIN_WIDTH)
 
   const { data: me } = useQuery(userQueries.me())
   const rootId = me?.organization?.id ?? null
@@ -123,7 +122,7 @@ const OrganizationPage = () => {
 
   const members = memberPage?.data ?? []
   const memberInitials = members
-    .map((user) => memberInitialsOf(user.firstName, user.lastName))
+    .map((user) => initialsOf(user.firstName, user.lastName))
     .filter((initials) => initials.length > 0)
 
   if (rootId === null) {
@@ -360,37 +359,44 @@ const OrganizationPage = () => {
 
   return (
     <>
-      {isDesktop ? (
-        <div className="grid grid-cols-[300px_1fr] gap-6">
-          {tree}
-          {/* --org-panel-bg lets the sticky action bar blend into its surface. */}
-          <div style={{ '--org-panel-bg': 'var(--color-dark-50)' } as CSSProperties}>
-            {renderDetail(true)}
+      {/* Measured, not the branch content, so the ResizeObserver keeps observing
+          across the two-pane <-> Drawer switch instead of losing its element. */}
+      <div ref={layoutRef}>
+        {isWide ? (
+          <div className="grid grid-cols-[300px_minmax(0,1fr)] gap-6">
+            {tree}
+            {/* --org-panel-bg lets the sticky action bar blend into its surface. */}
+            <div
+              className="min-w-0"
+              style={{ '--org-panel-bg': 'var(--color-dark-50)' } as CSSProperties}
+            >
+              {renderDetail(true)}
+            </div>
           </div>
-        </div>
-      ) : (
-        <>
-          {tree}
-          <Drawer open={detailOpen} onOpenChange={requestClose}>
-            <DrawerContent className="max-h-[90vh]">
-              {/* Content scrolls in its own region; the actions live in a fixed
-                  footer below so they stay anchored to the drawer bottom. */}
-              <div className="min-h-0 flex-1 overflow-y-auto p-4">{renderDetail(false)}</div>
-              {draft && dirty && !readOnly && (
-                <DrawerFooter className="flex-col-reverse gap-2 border-t border-dark-200 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
-                  <OrganizationActionButtons
-                    saving={updateOrganization.isPending}
-                    nameEmpty={draft.name.trim().length === 0}
-                    addressComplete={addressComplete}
-                    onSave={save}
-                    onCancel={resetDraft}
-                  />
-                </DrawerFooter>
-              )}
-            </DrawerContent>
-          </Drawer>
-        </>
-      )}
+        ) : (
+          <>
+            {tree}
+            <Drawer open={detailOpen} onOpenChange={requestClose}>
+              <DrawerContent className="max-h-[90vh]">
+                {/* Content scrolls in its own region; the actions live in a fixed
+                    footer below so they stay anchored to the drawer bottom. */}
+                <div className="min-h-0 flex-1 overflow-y-auto p-4">{renderDetail(false)}</div>
+                {draft && dirty && !readOnly && (
+                  <DrawerFooter className="flex-col-reverse gap-2 border-t border-dark-200 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
+                    <OrganizationActionButtons
+                      saving={updateOrganization.isPending}
+                      nameEmpty={draft.name.trim().length === 0}
+                      addressComplete={addressComplete}
+                      onSave={save}
+                      onCancel={resetDraft}
+                    />
+                  </DrawerFooter>
+                )}
+              </DrawerContent>
+            </Drawer>
+          </>
+        )}
+      </div>
 
       <CreateOrganizationDialog
         open={createOpen}

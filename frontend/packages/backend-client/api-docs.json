@@ -1394,6 +1394,43 @@
         }
       }
     },
+    "/v1/roles": {
+      "get": {
+        "tags": [
+          "Roles"
+        ],
+        "summary": "List roles visible to the caller",
+        "description": "Returns every non-template role owned by an organization in the caller's visible subtree. Templates (organization_id = null) are excluded, since they cannot be assigned. Requires role:read.",
+        "operationId": "listRoles",
+        "responses": {
+          "200": {
+            "description": "Roles visible to the caller",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RoleResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "422": {
+            "description": "Acting user has no organization and none was given"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
     "/v1/roles/templates": {
       "get": {
         "tags": [
@@ -2924,8 +2961,8 @@
         "tags": [
           "Users"
         ],
-        "summary": "List all users",
-        "description": "Returns a paginated list of registered users, optionally filtered by organization or role.",
+        "summary": "List visible users",
+        "description": "Returns a paginated list of users from the caller's organization subtree, optionally filtered by organization or role. Requires user:read.",
         "operationId": "listUsers",
         "parameters": [
           {
@@ -2970,6 +3007,15 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          {
+            "name": "query",
+            "in": "query",
+            "description": "Free-text filter over username, first name, last name and email",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -2985,6 +3031,12 @@
           },
           "401": {
             "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "422": {
+            "description": "Acting user has no organization"
           },
           "500": {
             "description": "Internal server error"
@@ -3136,7 +3188,7 @@
           "Users"
         ],
         "summary": "Set a user's organization",
-        "description": "Moves the user into the given organization. Requires user:update in the target organization.",
+        "description": "Moves the user into the given organization. Requires user:update in the target organization. Changes to one's own organization membership are rejected.",
         "operationId": "setUserOrganization",
         "parameters": [
           {
@@ -3177,6 +3229,9 @@
           "403": {
             "description": "Forbidden"
           },
+          "409": {
+            "description": "Attempting to change your own organization"
+          },
           "500": {
             "description": "Internal server error"
           }
@@ -3189,6 +3244,7 @@
           "Users"
         ],
         "summary": "List a user's assigned roles",
+        "description": "Requires user:read in the target user's organization.",
         "operationId": "listUserRoles",
         "parameters": [
           {
@@ -3219,6 +3275,9 @@
           "401": {
             "description": "Unauthorized"
           },
+          "403": {
+            "description": "Forbidden"
+          },
           "500": {
             "description": "Internal server error"
           }
@@ -3229,7 +3288,7 @@
           "Users"
         ],
         "summary": "Assign a role to a user",
-        "description": "Requires user:update in the role's organization, plus a permission set that does not exceed the caller's own grants.",
+        "description": "Assigns a role to a user. Requires user:update in the role's organization, plus a permission set that does not exceed the caller's own grants. The role's organization must match the target user's organization. Changes to one's own roles are rejected.",
         "operationId": "assignUserRole",
         "parameters": [
           {
@@ -3274,7 +3333,7 @@
             "description": "Role not found"
           },
           "409": {
-            "description": "Role is a template and cannot be assigned"
+            "description": "Role is a template and cannot be assigned, the role's organization does not match the target user's organization, or attempting to change your own roles"
           },
           "500": {
             "description": "Internal server error"
@@ -3288,7 +3347,7 @@
           "Users"
         ],
         "summary": "Revoke a role from a user",
-        "description": "Requires user:update in the role's organization.",
+        "description": "Revokes a role from a user. Requires user:update in the role's organization. Changes to one's own roles are rejected.",
         "operationId": "revokeUserRole",
         "parameters": [
           {
@@ -3324,6 +3383,9 @@
           },
           "404": {
             "description": "Role not found"
+          },
+          "409": {
+            "description": "Attempting to change your own roles"
           },
           "500": {
             "description": "Internal server error"

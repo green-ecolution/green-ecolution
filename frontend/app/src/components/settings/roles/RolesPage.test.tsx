@@ -34,12 +34,15 @@ const orgRoles: Role[] = [
 const permissions = vi.fn((): Permissions => UNRESTRICTED)
 vi.mock('@/lib/auth/usePermissions', () => ({ usePermissions: () => permissions() }))
 
-// jsdom's matchMedia mock always reports non-desktop, which would wrap the
-// detail panel in a Drawer and hide the list behind it (aria-hidden). Default
-// to the desktop two-pane layout so both panes stay queryable; a single test
-// flips this to false to exercise the mobile Drawer branch.
-const isDesktop = vi.fn((): boolean => true)
-vi.mock('@/hooks/useMediaQuery', () => ({ useMediaQuery: () => isDesktop() }))
+// jsdom never runs layout (getBoundingClientRect always reports 0 width), so an
+// unmocked useContainerWiderThan would report `false` forever and wrap the detail
+// panel in a Drawer, hiding the list behind it (aria-hidden). Default to the
+// desktop two-pane layout so both panes stay queryable; a single test flips this
+// to false to exercise the mobile Drawer branch.
+const isWide = vi.fn((): boolean => true)
+vi.mock('@/hooks/useContainerWiderThan', () => ({
+  useContainerWiderThan: () => ({ ref: { current: null }, isWide: isWide() }),
+}))
 
 const createMutate = vi.fn()
 const updateMutate = vi.fn()
@@ -132,7 +135,7 @@ describe('RolesPage', () => {
 
   it('does not open the detail drawer on load on mobile', () => {
     permissions.mockReturnValue(UNRESTRICTED)
-    isDesktop.mockReturnValue(false)
+    isWide.mockReturnValue(false)
     render(<RolesPage />)
 
     // The list is shown, but nothing is auto-selected into the drawer.
@@ -142,7 +145,7 @@ describe('RolesPage', () => {
 
   it('guards the mobile drawer close when the draft is dirty', async () => {
     permissions.mockReturnValue(UNRESTRICTED)
-    isDesktop.mockReturnValue(false)
+    isWide.mockReturnValue(false)
     render(<RolesPage />)
 
     // Mobile shows the list first; tap a role to open the detail drawer.

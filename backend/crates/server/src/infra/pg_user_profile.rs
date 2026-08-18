@@ -5,6 +5,7 @@ use uuid::Uuid;
 use domain::{
     Id, RepositoryError,
     organization::Organization,
+    shared::phone_number::PhoneNumber,
     user::{UserProfile, UserProfileReader, UserProfileWriter, UserStatus},
     vehicle::DrivingLicense,
 };
@@ -39,7 +40,7 @@ impl UserProfileRow {
         Ok(UserProfile {
             id: self.id,
             employee_id: self.employee_id,
-            phone_number: self.phone_number,
+            phone_number: self.phone_number.map(PhoneNumber::reconstitute),
             avatar_url,
             status: self.status,
             driving_licenses: self.driving_licenses,
@@ -68,13 +69,14 @@ impl UserProfileReader for PgUserProfileRepository {
     }
 
     #[tracing::instrument(level = "trace", skip_all)]
-    async fn ids_in_organization(
+    async fn ids_in_organizations(
         &self,
-        org: Id<Organization>,
+        orgs: &[Id<Organization>],
     ) -> Result<Vec<Uuid>, RepositoryError> {
+        let orgs: Vec<Uuid> = orgs.iter().map(|org| org.value()).collect();
         let ids = sqlx::query_scalar!(
-            r#"SELECT id FROM user_profiles WHERE organization_id = $1"#,
-            org.value()
+            r#"SELECT id FROM user_profiles WHERE organization_id = ANY($1)"#,
+            &orgs
         )
         .fetch_all(&self.pool)
         .await?;
@@ -115,7 +117,7 @@ impl UserProfileWriter for PgUserProfileRepository {
                WHERE id = $1"#,
             profile.id,
             profile.employee_id.as_deref(),
-            profile.phone_number.as_deref(),
+            profile.phone_number.as_ref().map(PhoneNumber::as_str),
             avatar_url.as_deref(),
             profile.status as UserStatus,
             profile.driving_licenses.as_slice() as &[DrivingLicense],

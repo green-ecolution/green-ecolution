@@ -160,7 +160,7 @@ impl OrganizationService {
         if has_children
             || !self
                 .profile_reader
-                .ids_in_organization(id)
+                .ids_in_organizations(&[id])
                 .await?
                 .is_empty()
         {
@@ -321,6 +321,12 @@ mod tests {
         ) -> Result<Vec<Role>, RepositoryError> {
             Ok(Vec::new())
         }
+        async fn by_organizations(
+            &self,
+            _orgs: &[Id<Organization>],
+        ) -> Result<Vec<Role>, RepositoryError> {
+            Ok(Vec::new())
+        }
         async fn templates(&self) -> Result<Vec<Role>, RepositoryError> {
             Ok(self.templates.clone())
         }
@@ -403,9 +409,9 @@ mod tests {
         async fn by_ids(&self, _ids: &[Uuid]) -> Result<Vec<UserProfile>, RepositoryError> {
             Ok(Vec::new())
         }
-        async fn ids_in_organization(
+        async fn ids_in_organizations(
             &self,
-            _org: Id<Organization>,
+            _orgs: &[Id<Organization>],
         ) -> Result<Vec<Uuid>, RepositoryError> {
             Ok(self.ids_in_org.clone())
         }
@@ -461,6 +467,13 @@ mod tests {
             _pagination: Pagination,
         ) -> Result<Page<UserIdentity>, RepositoryError> {
             unimplemented!("identity listing is not exercised by organization tests")
+        }
+        async fn search(
+            &self,
+            _query: &str,
+            _pagination: Pagination,
+        ) -> Result<Page<UserIdentity>, RepositoryError> {
+            unimplemented!("identity search is not exercised by organization tests")
         }
         async fn by_ids(&self, ids: &[Uuid]) -> Result<Vec<UserIdentity>, RepositoryError> {
             Ok(self

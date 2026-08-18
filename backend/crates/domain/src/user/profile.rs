@@ -1,6 +1,7 @@
 use url::Url;
 use uuid::Uuid;
 
+use crate::shared::phone_number::PhoneNumber;
 use crate::vehicle::DrivingLicense;
 
 use super::UserStatus;
@@ -14,7 +15,7 @@ use super::UserStatus;
 pub struct UserProfile {
     pub id: Uuid,
     pub employee_id: Option<String>,
-    pub phone_number: Option<String>,
+    pub phone_number: Option<PhoneNumber>,
     pub avatar_url: Option<Url>,
     pub status: UserStatus,
     pub driving_licenses: Vec<DrivingLicense>,

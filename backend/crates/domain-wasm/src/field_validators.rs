@@ -4,6 +4,7 @@ use domain::sensor::SensorId;
 use domain::shared::coordinates::Coordinate;
 use domain::shared::distance::Distance;
 use domain::shared::email::Email;
+use domain::shared::phone_number::PhoneNumber;
 use domain::shared::water_capacity::WaterCapacity;
 use domain::tree::{PlantingYear, Species, TreeNumber};
 use domain::user::Username;
@@ -136,6 +137,11 @@ pub fn validate_username(value: &str) -> Result<JsValue, JsError> {
 #[wasm_bindgen(js_name = validateSensorId)]
 pub fn validate_sensor_id(value: &str) -> Result<JsValue, JsError> {
     finish(SensorId::new(value), "sensorId")
+}
+
+#[wasm_bindgen(js_name = validatePhoneNumber)]
+pub fn validate_phone_number(value: &str) -> Result<JsValue, JsError> {
+    finish(PhoneNumber::new(value), "phoneNumber")
 }
 
 #[cfg(test)]

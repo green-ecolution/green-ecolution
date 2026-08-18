@@ -66,6 +66,7 @@ impl IntoResponse for ServiceError {
             | ServiceError::Role(_)
             | ServiceError::OrganizationNotEmpty
             | ServiceError::OrganizationMismatch
+            | ServiceError::CannotChangeOwnAccess
             | ServiceError::TreeInCluster) => (StatusCode::CONFLICT, e.to_string()).into_response(),
             e @ (ServiceError::MissingOrganization | ServiceError::ContactPersonNotAMember) => {
                 (StatusCode::UNPROCESSABLE_ENTITY, e.to_string()).into_response()

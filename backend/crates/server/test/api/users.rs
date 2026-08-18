@@ -99,6 +99,22 @@ async fn update_user_returns_400_for_invalid_avatar_url() {
 }
 
 #[tokio::test]
+async fn update_user_returns_400_for_lettered_phone_number() {
+    let app = spawn_app().await;
+
+    let body = serde_json::json!({
+        "phone_number": "0461 abc",
+        "status": "absent",
+        "driving_licenses": []
+    });
+    let response = app
+        .put_json("/api/v1/users/00000000-0000-0000-0000-000000000000", &body)
+        .await;
+
+    assert_eq!(response.status().as_u16(), 400);
+}
+
+#[tokio::test]
 async fn assign_and_revoke_role_via_api() {
     let app = spawn_app().await;
     let org = create_org(&app, "TBZ").await;
@@ -148,6 +164,68 @@ async fn assign_and_revoke_role_via_api() {
         .await
         .unwrap();
     assert!(roles.as_array().unwrap().is_empty());
+}
+
+#[tokio::test]
+async fn assigning_a_role_from_a_different_organization_returns_409() {
+    let app = spawn_app().await;
+    let role_org = create_org(&app, "Rollen-Org").await;
+    let target_org = create_org(&app, "Ziel-Org").await;
+    let role_id = create_role(&app, &role_org, "Gießtrupp").await;
+    let user_id = Uuid::new_v4();
+
+    let resp = app
+        .patch_json(
+            &format!("/api/v1/users/{user_id}/organization"),
+            &json!({ "organization_id": target_org }),
+        )
+        .await;
+    assert_eq!(resp.status(), 200);
+
+    let resp = app
+        .post_json(
+            &format!("/api/v1/users/{user_id}/roles"),
+            &json!({ "role_id": role_id }),
+        )
+        .await;
+    assert_eq!(resp.status(), 409);
+
+    // Side-effect assertion: role must not have been assigned.
+    let assigned_roles: Vec<Uuid> = sqlx::query_scalar!(
+        r#"SELECT role_id FROM role_assignments WHERE user_id = $1"#,
+        user_id
+    )
+    .fetch_all(&app.db_pool)
+    .await
+    .unwrap();
+    let role_uuid = Uuid::parse_str(&role_id).unwrap();
+    assert!(!assigned_roles.contains(&role_uuid));
+}
+
+#[tokio::test]
+async fn assigning_an_org_scoped_role_to_a_user_without_an_organization_returns_409() {
+    let app = spawn_app().await;
+    let org = create_org(&app, "TBZ").await;
+    let role_id = create_role(&app, &org, "Gießtrupp").await;
+    // Never given an organization via PATCH .../organization.
+    let user_id = Uuid::new_v4();
+
+    let resp = app
+        .post_json(
+            &format!("/api/v1/users/{user_id}/roles"),
+            &json!({ "role_id": role_id }),
+        )
+        .await;
+    assert_eq!(resp.status(), 409);
+
+    let assigned_roles: Vec<Uuid> = sqlx::query_scalar!(
+        r#"SELECT role_id FROM role_assignments WHERE user_id = $1"#,
+        user_id
+    )
+    .fetch_all(&app.db_pool)
+    .await
+    .unwrap();
+    assert!(assigned_roles.is_empty());
 }
 
 #[tokio::test]
@@ -250,4 +328,189 @@ async fn list_users_filtered_by_role_uses_db_assignments() {
     // id set yields an empty page (deterministic).
     let body: serde_json::Value = resp.json().await.unwrap();
     assert!(body["data"].as_array().unwrap().is_empty());
+}
+
+#[tokio::test]
+async fn list_users_search_matches_the_demo_user() {
+    let app = spawn_app().await;
+
+    let resp = app.get("/api/v1/users?query=tester").await;
+
+    assert_eq!(resp.status(), 200);
+    let body: serde_json::Value = resp.json().await.unwrap();
+    assert_eq!(body["data"].as_array().unwrap().len(), 1);
+    assert_eq!(body["data"][0]["username"], "ttester");
+}
+
+#[tokio::test]
+async fn list_users_search_without_hits_returns_an_empty_page() {
+    let app = spawn_app().await;
+
+    let resp = app.get("/api/v1/users?query=zzzznobody").await;
+
+    assert_eq!(resp.status(), 200);
+    let body: serde_json::Value = resp.json().await.unwrap();
+    assert!(body["data"].as_array().unwrap().is_empty());
+}
+
+#[tokio::test]
+async fn list_users_empty_string_search_behaves_like_no_search() {
+    let app = spawn_app().await;
+
+    // A cleared search field arrives as an empty string.
+    let resp = app.get("/api/v1/users?query=").await;
+
+    assert_eq!(resp.status(), 200);
+    let body: serde_json::Value = resp.json().await.unwrap();
+    assert_eq!(body["data"].as_array().unwrap().len(), 1);
+}
+
+#[tokio::test]
+async fn list_users_whitespace_search_is_trimmed() {
+    let app = spawn_app().await;
+
+    // Whitespace-only must not filter either.
+    let resp = app.get("/api/v1/users?query=%20%20").await;
+
+    assert_eq!(resp.status(), 200);
+    let body: serde_json::Value = resp.json().await.unwrap();
+    assert_eq!(body["data"].as_array().unwrap().len(), 1);
+}
+
+const SELF_ID: &str = "00000000-0000-0000-0000-000000000000";
+
+#[tokio::test]
+async fn assigning_a_role_to_yourself_returns_409() {
+    let app = spawn_app().await;
+    let org = create_org(&app, "TBZ").await;
+    let org_uuid = Uuid::parse_str(&org).unwrap();
+    let role_id = create_role(&app, &org, "Gießtrupp").await;
+    let self_uuid = Uuid::nil();
+
+    // PATCH .../organization is itself blocked by the self-lock guard, so the
+    // profile row is seeded directly, in the role's own organization — that
+    // makes the org-match check pass, so the self-lock guard is what actually
+    // fires and the 409 below is not a false positive from OrganizationMismatch.
+    sqlx::query!(
+        r#"INSERT INTO user_profiles (id, organization_id) VALUES ($1, $2)"#,
+        self_uuid,
+        org_uuid
+    )
+    .execute(&app.db_pool)
+    .await
+    .unwrap();
+
+    let resp = app
+        .post_json(
+            &format!("/api/v1/users/{SELF_ID}/roles"),
+            &json!({ "role_id": role_id }),
+        )
+        .await;
+
+    assert_eq!(resp.status(), 409);
+    assert_eq!(
+        resp.text().await.unwrap(),
+        "a user cannot change their own roles or organization"
+    );
+
+    // Side-effect assertion: role must not have been assigned.
+    let assigned_roles: Vec<Uuid> = sqlx::query_scalar!(
+        r#"SELECT role_id FROM role_assignments WHERE user_id = $1"#,
+        self_uuid
+    )
+    .fetch_all(&app.db_pool)
+    .await
+    .unwrap();
+    let role_uuid = Uuid::parse_str(&role_id).unwrap();
+    assert!(!assigned_roles.contains(&role_uuid));
+}
+
+#[tokio::test]
+async fn revoking_a_role_from_yourself_returns_409() {
+    let app = spawn_app().await;
+    let org = create_org(&app, "TBZ").await;
+    let org_uuid = Uuid::parse_str(&org).unwrap();
+    let role_id = create_role(&app, &org, "Gießtrupp").await;
+    let role_uuid = Uuid::parse_str(&role_id).unwrap();
+    let self_uuid = Uuid::nil();
+
+    // Seed a real assignment so the 409 has something to leave alone.
+    // role_assignments.user_id references user_profiles(id), so the profile
+    // row must exist first.
+    sqlx::query!(
+        r#"INSERT INTO user_profiles (id, organization_id) VALUES ($1, $2)"#,
+        self_uuid,
+        org_uuid
+    )
+    .execute(&app.db_pool)
+    .await
+    .unwrap();
+    sqlx::query!(
+        r#"INSERT INTO role_assignments (user_id, role_id) VALUES ($1, $2)"#,
+        self_uuid,
+        role_uuid
+    )
+    .execute(&app.db_pool)
+    .await
+    .unwrap();
+
+    let resp = app
+        .delete(&format!("/api/v1/users/{SELF_ID}/roles/{role_id}"))
+        .await;
+
+    assert_eq!(resp.status(), 409);
+
+    // Side-effect assertion: the seeded assignment must still be there.
+    let assigned_roles: Vec<Uuid> = sqlx::query_scalar!(
+        r#"SELECT role_id FROM role_assignments WHERE user_id = $1"#,
+        self_uuid
+    )
+    .fetch_all(&app.db_pool)
+    .await
+    .unwrap();
+    assert!(assigned_roles.contains(&role_uuid));
+}
+
+#[tokio::test]
+async fn moving_yourself_to_another_organization_returns_409() {
+    let app = spawn_app().await;
+    let org = create_org(&app, "TBZ").await;
+
+    let resp = app
+        .patch_json(
+            &format!("/api/v1/users/{SELF_ID}/organization"),
+            &json!({ "organization_id": org }),
+        )
+        .await;
+
+    assert_eq!(resp.status(), 409);
+
+    // Side-effect assertion: organization assignment must not have succeeded.
+    let self_uuid = Uuid::nil();
+    let target_org = Uuid::parse_str(&org).unwrap();
+    let count: Option<i64> = sqlx::query_scalar!(
+        r#"SELECT COUNT(*) FROM user_profiles WHERE id = $1 AND organization_id = $2"#,
+        self_uuid,
+        target_org
+    )
+    .fetch_one(&app.db_pool)
+    .await
+    .unwrap();
+    assert_eq!(
+        count,
+        Some(0),
+        "user should not be assigned to target organization"
+    );
+}
+
+#[tokio::test]
+async fn updating_your_own_profile_stays_allowed() {
+    let app = spawn_app().await;
+
+    // Only the access path is locked; availability and licenses stay editable.
+    let resp = app
+        .put_json(&format!("/api/v1/users/{SELF_ID}"), &valid_body())
+        .await;
+
+    assert_eq!(resp.status(), 200);
 }

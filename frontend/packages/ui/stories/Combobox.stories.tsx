@@ -36,6 +36,7 @@ export const Default: Story = {
           onChange={setValue}
           placeholder="Bodenart auswählen"
           searchPlaceholder="Code oder Bezeichnung suchen…"
+          aria-label="Bodenart auswählen"
         />
       </div>
     )
@@ -63,7 +64,30 @@ export const WithLabel: Story = {
 export const Disabled: Story = {
   render: () => (
     <div className="w-[320px]">
-      <Combobox options={soilOptions} disabled placeholder="Bodenart auswählen" />
+      <Combobox
+        options={soilOptions}
+        disabled
+        placeholder="Bodenart auswählen"
+        aria-label="Bodenart auswählen"
+      />
+    </div>
+  ),
+}
+
+export const WithError: Story = {
+  render: () => (
+    <div className="grid w-full max-w-sm items-center gap-1.5">
+      <Label htmlFor="soil-condition-error">Bodenart (KA5)</Label>
+      <Combobox
+        id="soil-condition-error"
+        options={soilOptions}
+        placeholder="Bodenart auswählen"
+        aria-describedby="soil-condition-error-message"
+        aria-invalid
+      />
+      <p id="soil-condition-error-message" role="alert" className="text-sm text-red">
+        Bitte wähle eine Bodenart aus.
+      </p>
     </div>
   ),
 }

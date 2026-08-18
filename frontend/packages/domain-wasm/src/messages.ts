@@ -69,6 +69,9 @@ const messages: Record<string, Renderer> = {
   'user.email.empty': () => 'E-Mail ist erforderlich.',
   'user.email.invalidFormat': () => 'E-Mail-Adresse ist ungültig.',
   'user.username.empty': () => 'Benutzername ist erforderlich.',
+  'phone_number.empty': () => 'Telefonnummer ist erforderlich.',
+  'phone_number.invalidFormat': () =>
+    'Telefonnummer ist ungültig. Erlaubt sind Ziffern, Leerzeichen sowie -, /, ( ) und ein führendes +, mit mindestens 6 Ziffern.',
 }
 
 export function translateIssue(issue: ValidationIssue): string {

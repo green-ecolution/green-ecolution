@@ -24,6 +24,7 @@ export {
   validateEmail,
   validateUsername,
   validateSensorId,
+  validatePhoneNumber,
   validateTreeDraft,
   validateTreeClusterDraft,
   validateVehicleDraft,

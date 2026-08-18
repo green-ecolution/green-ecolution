@@ -28,6 +28,7 @@ use crate::{
     shared::{
         email::Email,
         pagination::{Page, Pagination},
+        phone_number::PhoneNumber,
     },
     vehicle::DrivingLicense,
 };
@@ -63,7 +64,7 @@ pub struct UserView {
     pub email: Email,
     pub email_verified: bool,
     pub employee_id: Option<String>,
-    pub phone_number: Option<String>,
+    pub phone_number: Option<PhoneNumber>,
     pub avatar_url: Option<Url>,
     pub organization: Option<OrganizationView>,
     pub roles: Vec<RoleView>,
@@ -83,7 +84,7 @@ pub struct UserCreate {
     pub organization_id: Id<Organization>,
     pub role_ids: Vec<Id<Role>>,
     pub employee_id: Option<String>,
-    pub phone_number: Option<String>,
+    pub phone_number: Option<PhoneNumber>,
     pub avatar_url: Option<Url>,
     pub status: UserStatus,
     pub driving_licenses: Vec<DrivingLicense>,
@@ -120,15 +121,24 @@ pub struct UserIdentity {
 pub trait UserRepository: Send + Sync {
     async fn create(&self, entity: UserIdentityCreate) -> Result<UserIdentity, RepositoryError>;
     async fn all(&self, pagination: Pagination) -> Result<Page<UserIdentity>, RepositoryError>;
+    /// Free-text lookup over username, first name, last name and email.
+    /// Separate from `all` because the IdP resolves the match, not us.
+    async fn search(
+        &self,
+        query: &str,
+        pagination: Pagination,
+    ) -> Result<Page<UserIdentity>, RepositoryError>;
     async fn by_ids(&self, ids: &[Uuid]) -> Result<Vec<UserIdentity>, RepositoryError>;
 }
 
 #[async_trait::async_trait]
 pub trait UserProfileReader: Send + Sync {
     async fn by_ids(&self, ids: &[Uuid]) -> Result<Vec<UserProfile>, RepositoryError>;
-    async fn ids_in_organization(
+    /// Members of any of the given organizations. Bulk by design: read paths
+    /// scope against a whole subtree, which must stay a single query.
+    async fn ids_in_organizations(
         &self,
-        org: Id<Organization>,
+        orgs: &[Id<Organization>],
     ) -> Result<Vec<Uuid>, RepositoryError>;
     async fn organizations_for(
         &self,

@@ -20,6 +20,7 @@ use crate::{
                 UserResponse, UserUpdateRequest,
             },
         },
+        v1::scope::resolve_target_org,
     },
     service::{AuthError, ServiceError, user_service::UserListFilter},
 };
@@ -38,6 +39,16 @@ pub fn protected_routes() -> OpenApiRouter<Arc<AppState>> {
         .routes(routes!(list_user_roles, assign_user_role))
         .routes(routes!(revoke_user_role))
         .routes(routes!(set_user_organization))
+}
+
+/// Self-lockout guard: an account may not change its own access path,
+/// only its own profile. Callers enforce this; the service methods
+/// carry no actor identity.
+fn ensure_not_self(actor: Uuid, target: Uuid) -> Result<(), ServiceError> {
+    if actor == target {
+        return Err(ServiceError::CannotChangeOwnAccess);
+    }
+    Ok(())
 }
 
 #[utoipa::path(get, path = "/users/me", tag = "Users",
@@ -68,30 +79,52 @@ pub async fn get_me(
 
 #[utoipa::path(get, path = "/users", tag = "Users",
     operation_id = "listUsers",
-    summary = "List all users",
-    description = "Returns a paginated list of registered users, optionally filtered by organization or role.",
+    summary = "List visible users",
+    description = "Returns a paginated list of users from the caller's organization subtree, optionally filtered by organization or role. Requires user:read.",
     params(
         ("page" = Option<u64>, Query, description = "Page number to retrieve (1-based)", minimum = 1),
         ("per_page" = Option<u64>, Query, description = "Number of items per page", minimum = 1, maximum = 100),
         ("organization_id" = Option<Uuid>, Query, description = "Filter by organization membership"),
         ("role_id" = Option<Uuid>, Query, description = "Filter by assigned role"),
+        ("query" = Option<String>, Query, description = "Free-text filter over username, first name, last name and email"),
     ),
     responses(
         (status = 200, description = "Paginated list of users", body = ListResponse<UserResponse>),
         (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden"),
+        (status = 422, description = "Acting user has no organization"),
         (status = 500, description = "Internal server error"),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn list_users(
     State(state): State<Arc<AppState>>,
-    _user: AuthUserExtractor,
+    user: AuthUserExtractor,
     Query(params): Query<UserListParams>,
 ) -> Result<Json<ListResponse<UserResponse>>, ServiceError> {
+    let read = Permission::new(Resource::User, Action::Read);
+    let scope = resolve_target_org(&state, user.id, None).await?;
+    state
+        .authorization_service
+        .require(user.id, read, scope)
+        .await?;
+    // The gate only proves the caller may read *somewhere*; a tenant must not
+    // see the members of sibling tenants or of the organization above it.
+    let visibility = state
+        .authorization_service
+        .visible_orgs_for(user.id, read)
+        .await?;
     let pagination = Pagination::new(params.page, params.per_page);
     let filter = UserListFilter {
         organization_id: params.organization_id.map(Id::new),
         role_id: params.role_id.map(Id::new),
+        // A cleared search field arrives as an empty string; treating it as a
+        // filter would match nothing at all.
+        query: params
+            .query
+            .map(|q| q.trim().to_string())
+            .filter(|q| !q.is_empty()),
+        visibility,
     };
     let page = state.user_service.list(pagination, filter).await?;
     Ok(Json(ListResponse::from_page(page, &pagination)))
@@ -174,8 +207,10 @@ pub async fn update_user(
                 .require(user.id, permission, org)
                 .await?
         }
-        // Legacy users predate organization membership and have no org to scope
-        // against; fall back to requiring user:update anywhere in the caller's scope.
+        // organization_id is NOT NULL once a profile row exists, so this is not
+        // a "legacy null org" case; it's a target with no user_profiles row at
+        // all (e.g. never given an organization). Nothing to scope against, so
+        // fall back to requiring user:update anywhere in the caller's scope.
         None => {
             let ctx = state.authorization_service.context_for(user.id).await?;
             if !ctx.permissions.allows(permission) {
@@ -191,19 +226,40 @@ pub async fn update_user(
 #[utoipa::path(get, path = "/users/{user_id}/roles", tag = "Users",
     operation_id = "listUserRoles",
     summary = "List a user's assigned roles",
+    description = "Requires user:read in the target user's organization.",
     params(("user_id" = Uuid, Path, description = "User id")),
     responses(
         (status = 200, description = "The user's roles", body = Vec<RoleResponse>),
         (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden"),
         (status = 500, description = "Internal server error"),
     )
 )]
 #[tracing::instrument(level = "info", skip_all, fields(user.id = %user_id))]
 pub async fn list_user_roles(
     State(state): State<Arc<AppState>>,
-    _user: AuthUserExtractor,
+    user: AuthUserExtractor,
     Path(user_id): Path<Uuid>,
 ) -> Result<Json<Vec<RoleResponse>>, ServiceError> {
+    let permission = Permission::new(Resource::User, Action::Read);
+    match state.user_service.organization_of(user_id).await? {
+        Some(org) => {
+            state
+                .authorization_service
+                .require(user.id, permission, org)
+                .await?
+        }
+        // organization_id is NOT NULL once a profile row exists, so this is not
+        // a "legacy null org" case; it's a target with no user_profiles row at
+        // all (e.g. never given an organization). Nothing to scope against, so
+        // fall back to requiring user:read anywhere in the caller's scope.
+        None => {
+            let ctx = state.authorization_service.context_for(user.id).await?;
+            if !ctx.permissions.allows(permission) {
+                return Err(AuthError::Forbidden.into());
+            }
+        }
+    }
     let views = state.role_service.roles_of_user(user_id).await?;
     Ok(Json(views.iter().map(Into::into).collect()))
 }
@@ -211,7 +267,7 @@ pub async fn list_user_roles(
 #[utoipa::path(post, path = "/users/{user_id}/roles", tag = "Users",
     operation_id = "assignUserRole",
     summary = "Assign a role to a user",
-    description = "Requires user:update in the role's organization, plus a permission set that does not exceed the caller's own grants.",
+    description = "Assigns a role to a user. Requires user:update in the role's organization, plus a permission set that does not exceed the caller's own grants. The role's organization must match the target user's organization. Changes to one's own roles are rejected.",
     params(("user_id" = Uuid, Path, description = "User id")),
     request_body = AssignRoleRequest,
     responses(
@@ -219,7 +275,7 @@ pub async fn list_user_roles(
         (status = 401, description = "Unauthorized"),
         (status = 403, description = "Forbidden"),
         (status = 404, description = "Role not found"),
-        (status = 409, description = "Role is a template and cannot be assigned"),
+        (status = 409, description = "Role is a template and cannot be assigned, the role's organization does not match the target user's organization, or attempting to change your own roles"),
         (status = 500, description = "Internal server error"),
     )
 )]
@@ -246,7 +302,18 @@ pub async fn assign_user_role(
             .authorization_service
             .require_superset(user.id, &perms, role_org)
             .await?;
+        // A role grants its permissions for its owning organization plus that
+        // organization's whole subtree. Assigning a role owned by a different
+        // (e.g. parent) organization would hand the target rights over that
+        // organization's entire subtree, so the role's org and the target's
+        // org must match; a target with no organization has nothing to match.
+        if state.user_service.organization_of(user_id).await? != Some(role_org) {
+            return Err(ServiceError::OrganizationMismatch);
+        }
     }
+    // Template roles skip the permission checks above, so the authorization
+    // guard is not guaranteed to have run — do not assume 403 is returned before 409.
+    ensure_not_self(user.id, user_id)?;
     state.role_service.assign(user_id, role_id).await?;
     Ok((StatusCode::CREATED, Json((&role).into())))
 }
@@ -254,7 +321,7 @@ pub async fn assign_user_role(
 #[utoipa::path(delete, path = "/users/{user_id}/roles/{role_id}", tag = "Users",
     operation_id = "revokeUserRole",
     summary = "Revoke a role from a user",
-    description = "Requires user:update in the role's organization.",
+    description = "Revokes a role from a user. Requires user:update in the role's organization. Changes to one's own roles are rejected.",
     params(
         ("user_id" = Uuid, Path, description = "User id"),
         ("role_id" = Uuid, Path, description = "Role id"),
@@ -264,6 +331,7 @@ pub async fn assign_user_role(
         (status = 401, description = "Unauthorized"),
         (status = 403, description = "Forbidden"),
         (status = 404, description = "Role not found"),
+        (status = 409, description = "Attempting to change your own roles"),
         (status = 500, description = "Internal server error"),
     )
 )]
@@ -285,6 +353,9 @@ pub async fn revoke_user_role(
             )
             .await?;
     }
+    // Template roles skip the permission checks above, so the authorization
+    // guard is not guaranteed to have run — do not assume 403 is returned before 409.
+    ensure_not_self(user.id, user_id)?;
     state.role_service.revoke(user_id, role_id).await?;
     Ok(StatusCode::NO_CONTENT)
 }
@@ -292,13 +363,14 @@ pub async fn revoke_user_role(
 #[utoipa::path(patch, path = "/users/{user_id}/organization", tag = "Users",
     operation_id = "setUserOrganization",
     summary = "Set a user's organization",
-    description = "Moves the user into the given organization. Requires user:update in the target organization.",
+    description = "Moves the user into the given organization. Requires user:update in the target organization. Changes to one's own organization membership are rejected.",
     params(("user_id" = Uuid, Path, description = "User id")),
     request_body = SetOrganizationRequest,
     responses(
         (status = 200, description = "Updated user", body = UserResponse),
         (status = 401, description = "Unauthorized"),
         (status = 403, description = "Forbidden"),
+        (status = 409, description = "Attempting to change your own organization"),
         (status = 500, description = "Internal server error"),
     )
 )]
@@ -318,6 +390,7 @@ pub async fn set_user_organization(
             org,
         )
         .await?;
+    ensure_not_self(user.id, user_id)?;
     let updated = state.user_service.set_organization(user_id, org).await?;
     Ok(Json((&updated).into()))
 }

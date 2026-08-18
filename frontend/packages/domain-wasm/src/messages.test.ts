@@ -37,4 +37,26 @@ describe('translateIssue', () => {
     const text = translateIssue(issue({ key: 'unknown.key.empty', field: 'unknown.key' }))
     expect(text).toBe('unknown.key.empty')
   })
+
+  it('returns the German message for phone_number.empty', () => {
+    expect(
+      translateIssue(
+        issue({ path: 'phoneNumber', field: 'phone_number', key: 'phone_number.empty' }),
+      ),
+    ).toBe('Telefonnummer ist erforderlich.')
+  })
+
+  it('returns one message for phone_number.invalidFormat covering both letters and too few digits', () => {
+    const text = translateIssue(
+      issue({
+        path: 'phoneNumber',
+        field: 'phone_number',
+        key: 'phone_number.invalidFormat',
+        params: { reason: 'must contain only digits...' },
+      }),
+    )
+    expect(text).toBe(
+      'Telefonnummer ist ungültig. Erlaubt sind Ziffern, Leerzeichen sowie -, /, ( ) und ein führendes +, mit mindestens 6 Ziffern.',
+    )
+  })
 })

@@ -11,6 +11,12 @@ use crate::{
 pub trait RoleReader: Send + Sync {
     async fn by_id(&self, id: Id<Role>) -> Result<Role, RepositoryError>;
     async fn by_organization(&self, org: Id<Organization>) -> Result<Vec<Role>, RepositoryError>;
+    /// Templates (`organization_id IS NULL`) never match, since none of the
+    /// given ids is `NULL`.
+    async fn by_organizations(
+        &self,
+        orgs: &[Id<Organization>],
+    ) -> Result<Vec<Role>, RepositoryError>;
     async fn templates(&self) -> Result<Vec<Role>, RepositoryError>;
     async fn roles_for_user(&self, user_id: Uuid) -> Result<Vec<Role>, RepositoryError>;
     async fn roles_for_users(&self, ids: &[Uuid]) -> Result<Vec<(Uuid, Role)>, RepositoryError>;
