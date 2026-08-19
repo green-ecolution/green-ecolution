@@ -15,6 +15,11 @@ Urban green spaces need water - but how much, and when? City maintenance teams o
 
 ![Dashboard Preview](assets/dashboard-preview.png)
 
+<!-- Voting banner: remove after 2026-09-30 -->
+> [!NOTE]
+> **Green Ecolution is up for the community vote of the [Open Source Wettbewerb](https://open-source-wettbewerb.de/) 2026**, run by the Open Source Business Alliance. If this project is useful to you, we would appreciate your support:
+> **[Vote for Green Ecolution](https://open-source-wettbewerb.de/voting/green-ecolution/)** — voting is open until 30 September 2026.
+
 ## What it does
 
 - 🌳 **Tree management** - Track trees and tree clusters, monitor their watering status
