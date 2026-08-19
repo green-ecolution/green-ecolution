@@ -143,3 +143,19 @@ jobs:
           echo "Version: ${{ steps.release.outputs.version }}"
           echo ""
           echo "The build-and-push workflow will be triggered automatically by the tag push."
+
+      - name: Link website release notes
+        if: ${{ steps.release.outputs.release_created == 'true' }}
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          REPO: ${{ github.repository }}
+          TAG: ${{ steps.release.outputs.tag_name }}
+        run: |
+          set -euo pipefail
+          NOTES="$RUNNER_TEMP/release-notes.md"
+          gh release view "$TAG" -R "$REPO" --json body -q .body > "$NOTES"
+          {
+            printf '\n---\n\n'
+            printf 'Detailed release notes are published at [green-ecolution.de/releases/%s](https://green-ecolution.de/releases/%s).\n' "$TAG" "$TAG"
+          } >> "$NOTES"
+          gh release edit "$TAG" -R "$REPO" --notes-file "$NOTES"
