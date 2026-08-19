@@ -326,6 +326,19 @@ impl TreeCluster {
         self.last_watered = Some(ts);
     }
 
+    /// Records a completed watering run: timestamp plus
+    /// [`WateringStatus::JustWatered`].
+    ///
+    /// Bypasses the majority vote on purpose — a finished watering plan is a
+    /// first-hand observation, unlike the sensor-derived statuses
+    /// [`TreeCluster::recalculate_watering_status`] aggregates. The status is
+    /// released again by [`TreeCluster::recalculate_watering_status`] once the
+    /// grace period expires.
+    pub fn mark_just_watered(&mut self, ts: DateTime<Utc>) {
+        self.mark_watered_at(ts);
+        self.watering_status = WateringStatus::JustWatered;
+    }
+
     /// Reassigns the cluster to `target`'s organization. No-op (and no event)
     /// if it already belongs there. Callers must cascade the transfer to
     /// member trees and their attached sensors (see `ClusterService::transfer`).
@@ -552,6 +565,28 @@ mod tests {
         let ts = Utc::now();
         c.mark_watered_at(ts);
         assert_eq!(c.last_watered, Some(ts));
+    }
+
+    #[test]
+    fn mark_just_watered_sets_status_and_timestamp() {
+        let mut c = fixed_cluster();
+        c.recalculate_watering_status(&[WateringStatus::Bad]);
+        let ts = Utc::now();
+
+        c.mark_just_watered(ts);
+
+        assert_eq!(c.watering_status(), WateringStatus::JustWatered);
+        assert_eq!(c.last_watered, Some(ts));
+    }
+
+    #[test]
+    fn recalculate_watering_status_releases_just_watered() {
+        let mut c = fixed_cluster();
+        c.mark_just_watered(Utc::now());
+
+        c.recalculate_watering_status(&[WateringStatus::Good, WateringStatus::Good]);
+
+        assert_eq!(c.watering_status(), WateringStatus::Good);
     }
 
     #[test]

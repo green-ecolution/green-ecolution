@@ -24,6 +24,8 @@ pub struct Settings {
     #[serde(default)]
     pub sensor: SensorSettings,
     #[serde(default)]
+    pub watering: WateringSettings,
+    #[serde(default)]
     pub routing: RoutingSettings,
     #[serde(default)]
     pub plugins: PluginsSettings,
@@ -279,6 +281,33 @@ fn default_sensor_offline_after_secs() -> u64 {
 }
 
 #[derive(serde::Deserialize, Clone)]
+pub struct WateringSettings {
+    /// How long a finished watering plan keeps its clusters and trees on
+    /// "just watered" before they fall back to the sensor-derived status.
+    #[serde(default = "default_just_watered_ttl_secs")]
+    pub just_watered_ttl_secs: u64,
+    /// How often the expiry sweep runs.
+    #[serde(default = "default_just_watered_sweep_interval_secs")]
+    pub just_watered_sweep_interval_secs: u64,
+}
+
+impl Default for WateringSettings {
+    fn default() -> Self {
+        Self {
+            just_watered_ttl_secs: default_just_watered_ttl_secs(),
+            just_watered_sweep_interval_secs: default_just_watered_sweep_interval_secs(),
+        }
+    }
+}
+
+fn default_just_watered_ttl_secs() -> u64 {
+    86_400
+}
+fn default_just_watered_sweep_interval_secs() -> u64 {
+    3_600
+}
+
+#[derive(serde::Deserialize, Clone)]
 pub struct AuthSettings {
     pub enabled: bool,
     pub issuer_url: String,
@@ -383,6 +412,7 @@ impl Settings {
             map: MapSettings::default(),
             info: InfoSettings::default(),
             sensor: SensorSettings::default(),
+            watering: WateringSettings::default(),
             routing: RoutingSettings::default(),
             plugins: PluginsSettings::default(),
         }

@@ -18,3 +18,4 @@ pub mod statistics_repo;
 pub mod streamlet;
 pub mod system_info;
 pub mod update_checker;
+pub mod watering_status_expiry;

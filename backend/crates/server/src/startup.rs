@@ -38,6 +38,7 @@ use crate::{
         cluster_service::ClusterService,
         evaluation_service::EvaluationService,
         event_bus::{EventBus, EventHandler, InMemoryEventBus},
+        handlers::cluster_just_watered::ClusterJustWateredHandler,
         handlers::cluster_recalc::ClusterRecalculationHandler,
         handlers::cluster_soil_recalc::ClusterSoilRecalcHandler,
         handlers::cluster_status::ClusterStatusAggregatorHandler,
@@ -143,6 +144,13 @@ impl Application {
             spawn_mqtt_subscriber(&settings, services.sensor.clone(), shutdown_rx);
         let (health_reader, readiness_reader) =
             spawn_health_probes(&pool, &settings, probe_http_client.clone(), mqtt_state).await;
+        let _expiry_handle = infra::watering_status_expiry::spawn(
+            services.cluster.clone(),
+            Duration::from_secs(settings.watering.just_watered_sweep_interval_secs),
+            chrono::Duration::seconds(
+                i64::try_from(settings.watering.just_watered_ttl_secs).unwrap_or(i64::MAX),
+            ),
+        );
         let _update_handle = infra::update_checker::spawn(
             update_checker,
             probe_http_client,
@@ -464,6 +472,12 @@ fn build_event_bus(repos: &Repositories) -> Arc<dyn EventBus> {
             repos.tree_writer.clone(),
             repos.cluster_reader.clone(),
             repos.sensor_reading_reader.clone(),
+        )),
+        Arc::new(ClusterJustWateredHandler::new(
+            repos.cluster_reader.clone(),
+            repos.cluster_writer.clone(),
+            repos.tree_reader.clone(),
+            repos.tree_writer.clone(),
         )),
         Arc::new(ClusterStatusAggregatorHandler::new(
             repos.cluster_reader.clone(),

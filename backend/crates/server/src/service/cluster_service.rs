@@ -194,6 +194,47 @@ impl ClusterService {
         Ok(self.writer.archive(id).await?)
     }
 
+    /// Releases `JustWatered` on every cluster last watered before `cutoff` and
+    /// returns how many were reset. Clusters keep advertising a fresh watering
+    /// until this runs, so a cluster without sensor-backed trees would stay on
+    /// `JustWatered` forever without it.
+    ///
+    /// A cluster that fails is logged and skipped — the sweep runs
+    /// periodically, so the next pass retries it.
+    #[tracing::instrument(level = "debug", skip_all, fields(%cutoff))]
+    pub async fn expire_just_watered(&self, cutoff: DateTime<Utc>) -> Result<usize, ServiceError> {
+        let clusters = self.reader.just_watered_before(cutoff).await?;
+        let mut expired = 0;
+
+        for mut cluster in clusters {
+            match self.release_just_watered(&mut cluster).await {
+                Ok(()) => expired += 1,
+                Err(error) => {
+                    tracing::warn!(%error, cluster.id = %cluster.id, "skipping just-watered expiry")
+                }
+            }
+        }
+        Ok(expired)
+    }
+
+    async fn release_just_watered(&self, cluster: &mut TreeCluster) -> Result<(), ServiceError> {
+        let mut trees = self.tree_reader.by_ids(&cluster.tree_ids).await?;
+        for tree in trees.iter_mut() {
+            if tree.expire_just_watered() {
+                self.tree_writer.save(tree).await?;
+            }
+        }
+
+        let statuses: Vec<_> = trees
+            .iter()
+            .filter(|t| t.sensor_id().is_some())
+            .map(|t| t.watering_status())
+            .collect();
+        cluster.recalculate_watering_status(&statuses);
+        self.writer.save(cluster).await?;
+        Ok(())
+    }
+
     #[tracing::instrument(level = "debug", skip_all)]
     pub async fn statistics(&self, visible: Visibility) -> Result<ClusterStatistics, ServiceError> {
         Ok(self.reader.statistics(visible).await?)
