@@ -21,6 +21,7 @@ import { useUserMutations } from '@/hooks/useUserMutations'
 import { useContainerWiderThan } from '@/hooks/useContainerWiderThan'
 import { TWO_PANE_MIN_WIDTH } from '../twoPaneWidth'
 import { useHasPermission } from '@/lib/auth/useHasPermission'
+import { statusOf } from '@/lib/httpError'
 import MemberActionButtons from './MemberActionButtons'
 import MemberDetail from './MemberDetail'
 import MemberList from './MemberList'
@@ -30,9 +31,6 @@ import { useMemberProfileDraft } from './useMemberProfileDraft'
 
 const PER_PAGE = 50
 const SEARCH_DEBOUNCE_MS = 300
-
-const statusOf = (error: unknown): number | undefined =>
-  (error as { response?: { status?: number } } | null)?.response?.status
 
 const roleErrorMessage = (error: unknown): string | null => {
   switch (statusOf(error)) {

@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from '@green-ecolution/ui'
 import type { UserResponse } from '@/api/backendApi'
+import { initialsOf } from '@/lib/initials'
 
 interface ContactPersonPickerProps {
   open: boolean
@@ -59,7 +60,7 @@ const ContactPersonPicker = ({
             >
               <Avatar size="sm">
                 <AvatarFallback variant="user">
-                  {`${member.firstName.charAt(0)}${member.lastName.charAt(0)}`.toUpperCase()}
+                  {initialsOf(member.firstName, member.lastName)}
                 </AvatarFallback>
               </Avatar>
               <span className="flex min-w-0 flex-col">

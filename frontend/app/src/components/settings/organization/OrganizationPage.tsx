@@ -21,19 +21,17 @@ import { useOrganizationMutations } from '@/hooks/useOrganizationMutations'
 import { useContainerWiderThan } from '@/hooks/useContainerWiderThan'
 import { TWO_PANE_MIN_WIDTH } from '../twoPaneWidth'
 import { useHasPermission } from '@/lib/auth/useHasPermission'
+import { statusOf } from '@/lib/httpError'
 import { initialsOf } from '@/lib/initials'
 import ContactPersonPicker from './ContactPersonPicker'
 import CreateOrganizationDialog from './CreateOrganizationDialog'
 import OrganizationActionButtons from './OrganizationActionButtons'
 import OrganizationDetail from './OrganizationDetail'
 import OrganizationTree from './OrganizationTree'
-import { buildTree, pathTo, type OrgNode } from './organizationTree'
+import { buildTree, nodeOf, pathTo } from './organizationTree'
 import { useOrganizationDraft } from './useOrganizationDraft'
 
 const MEMBERS_PER_PAGE = 100
-
-const statusOf = (error: unknown): number | undefined =>
-  (error as { response?: { status?: number } } | null)?.response?.status
 
 // Frontend permission gating is scope-blind, so a user whose role is owned by a
 // child organization reaches this page and then gets a 403 from the backend.
@@ -49,15 +47,6 @@ const contactPersonMessage = (error: unknown): string | null =>
   statusOf(error) === 422
     ? 'Diese Person ist dieser Organisation nicht zugeordnet und kann nicht Kontaktperson sein.'
     : null
-
-const nodeOf = (node: OrgNode, orgId: string): OrgNode | null => {
-  if (node.org.id === orgId) return node
-  for (const child of node.children) {
-    const found = nodeOf(child, orgId)
-    if (found) return found
-  }
-  return null
-}
 
 const OrganizationPage = () => {
   const canCreate = useHasPermission(['organization:create'])
@@ -162,10 +151,11 @@ const OrganizationPage = () => {
   const selectedNode = selectedId === null ? null : nodeOf(root, selectedId)
   const readOnly = detail?.parentId == null
 
+  const selectionPath = pathTo(root, selectedId ?? root.org.id)
+
   // Without an override the path down to the selection is open, so the selected
   // node is never hidden inside a collapsed branch.
-  const expanded =
-    expandedOverride ?? new Set(pathTo(root, selectedId ?? root.org.id).map((org) => org.id))
+  const expanded = expandedOverride ?? new Set(selectionPath.map((org) => org.id))
 
   const toggle = (orgId: string) => {
     const next = new Set(expanded)
@@ -326,7 +316,7 @@ const OrganizationPage = () => {
       selectedNode && (
         <OrganizationDetail
           node={selectedNode}
-          root={root}
+          path={selectionPath}
           detail={detail}
           draft={draft}
           dirty={dirty}

@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { roleApi } from '@/api/backendApi'
 import createToast from '@/hooks/createToast'
+import { statusOf } from '@/lib/httpError'
 
 export interface CreateRoleVariables {
   orgId: string
@@ -32,8 +33,7 @@ export const useRoleMutations = () => {
   }
 
   // A 409 is a name conflict already surfaced at the field, so it must not toast.
-  const isNameConflict = (error: unknown): boolean =>
-    (error as { response?: { status?: number } }).response?.status === 409
+  const isNameConflict = (error: unknown): boolean => statusOf(error) === 409
 
   const createRole = useMutation({
     mutationFn: ({ orgId, name, description, permissions }: CreateRoleVariables) =>

@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import type { AddressDto } from '@green-ecolution/backend-client'
 import { organizationApi } from '@/api/backendApi'
 import createToast from '@/hooks/createToast'
+import { statusOf } from '@/lib/httpError'
 
 export interface CreateOrganizationVariables {
   parentId: string
@@ -19,12 +20,12 @@ export interface DeleteOrganizationVariables {
   orgId: string
 }
 
-const statusOf = (error: unknown): number | undefined =>
-  (error as { response?: { status?: number } }).response?.status
-
 const isConflict = (error: unknown): boolean => statusOf(error) === 409
 
-/** 409 name conflict and 422 non-member contact person both belong at a field. */
+/**
+ * 409 is a sibling name conflict, 422 a contact person outside the organization.
+ * Both are surfaced at the field they belong to, so neither may raise a toast.
+ */
 const isFieldLevel = (error: unknown): boolean => {
   const status = statusOf(error)
   return status === 409 || status === 422
@@ -67,8 +68,6 @@ export const useOrganizationMutations = () => {
       invalidate()
       showToast('Organisation gespeichert')
     },
-    // 409 is a sibling name conflict, 422 a contact person outside the
-    // organization; both are surfaced at the field, so neither may toast.
     onError: (error) => {
       if (!isFieldLevel(error)) {
         showToast('Die Organisation konnte nicht gespeichert werden.', 'error')

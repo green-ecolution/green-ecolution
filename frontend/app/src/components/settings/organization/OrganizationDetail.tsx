@@ -19,13 +19,16 @@ import {
   Separator,
 } from '@green-ecolution/ui'
 import type { OrganizationDetailResponse, OrganizationResponse } from '@/api/backendApi'
+import { initialsOf, initialsOfName } from '@/lib/initials'
 import OrganizationActionButtons from './OrganizationActionButtons'
-import { initialsOf, pathTo, subtreeMemberCount, type OrgNode } from './organizationTree'
+import { directChildrenLine, memberSubtitle, memberSummary } from './organizationLabels'
+import type { OrgNode } from './organizationTree'
 import type { AddressFieldErrors, OrganizationDraft } from './useOrganizationDraft'
 
 interface OrganizationDetailProps {
   node: OrgNode
-  root: OrgNode
+  /** Ancestors down to and including this organization, for the breadcrumb. */
+  path: OrganizationResponse[]
   detail: OrganizationDetailResponse
   draft: OrganizationDraft
   dirty: boolean
@@ -66,16 +69,6 @@ const sinceLabel = (createdAt?: string | null): string | null => {
   return `${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`
 }
 
-const subOrgNoun = (count: number): string =>
-  count === 1 ? 'Unterorganisation' : 'Unterorganisationen'
-
-const peopleLine = (people: number, children: number): string => {
-  const persons = `${people} ${people === 1 ? 'Person' : 'Personen'}`
-  return children > 0 ? `${persons} in ${children} ${subOrgNoun(children)}` : persons
-}
-
-const directChildrenLine = (count: number): string => `${count} direkte ${subOrgNoun(count)}`
-
 const StaticField = ({ label, value }: { label: string; value: string }) => (
   <div className="flex flex-col gap-y-1">
     <p className="text-sm font-medium text-dark">{label}</p>
@@ -85,7 +78,7 @@ const StaticField = ({ label, value }: { label: string; value: string }) => (
 
 const OrganizationDetail = ({
   node,
-  root,
+  path,
   detail,
   draft,
   dirty,
@@ -122,7 +115,6 @@ const OrganizationDetail = ({
     else if (contactPersonError) contactRef.current?.focus()
   }, [nameError, contactPersonError])
 
-  const path = pathTo(root, detail.id)
   const trail = path.slice(0, -1)
   const locked = readOnly || !canUpdate
   const nameEmpty = draft.name.trim().length === 0
@@ -161,7 +153,7 @@ const OrganizationDetail = ({
 
       <header className="flex min-w-0 items-start gap-4">
         <span className={`${TILE} size-12 rounded-xl bg-green-dark text-base text-white`}>
-          {initialsOf(detail.name)}
+          {initialsOfName(detail.name)}
         </span>
         <div className="min-w-0 flex-1">
           <h2 className="font-lato text-2xl font-bold text-dark break-words">{detail.name}</h2>
@@ -256,7 +248,7 @@ const OrganizationDetail = ({
                     className={`${TILE} size-10 bg-green-light-100 text-sm text-green-dark`}
                     aria-hidden
                   >
-                    {initialsOf(`${contact.firstName} ${contact.lastName}`)}
+                    {initialsOf(contact.firstName, contact.lastName)}
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold text-dark">
@@ -292,7 +284,7 @@ const OrganizationDetail = ({
               )}
             </div>
             {contactPersonError && (
-              <p role="alert" aria-live="assertive" className="mt-2 text-sm text-red">
+              <p role="alert" aria-live="assertive" className="mt-2 text-sm text-destructive">
                 {contactPersonError}
               </p>
             )}
@@ -303,9 +295,7 @@ const OrganizationDetail = ({
               <h3 className={CARD_TITLE}>Zugewiesene Mitarbeitende</h3>
               <div className="mt-4 flex flex-wrap items-center gap-4">
                 <AvatarStack items={memberInitials} />
-                <p className="min-w-0 flex-1 text-sm text-dark-600">
-                  {peopleLine(subtreeMemberCount(node), children.length)}
-                </p>
+                <p className="min-w-0 flex-1 text-sm text-dark-600">{memberSummary(node)}</p>
               </div>
               <Link
                 to="/settings/team/members"
@@ -337,33 +327,38 @@ const OrganizationDetail = ({
 
             {children.length > 0 && (
               <ul className="mt-4 flex list-none flex-col gap-2">
-                {children.map((child) => (
-                  <li key={child.org.id}>
-                    <ListCard size="compact" hoverable asChild>
-                      <button
-                        type="button"
-                        onClick={() => onSelectChild(child.org)}
-                        className="w-full text-left"
-                      >
-                        <span
-                          className={`${TILE} size-8 bg-green-light-100 text-sm text-green-dark`}
-                          aria-hidden
+                {children.map((child) => {
+                  const subtitle = memberSubtitle(child)
+                  return (
+                    <li key={child.org.id}>
+                      <ListCard size="compact" hoverable asChild>
+                        <button
+                          type="button"
+                          onClick={() => onSelectChild(child.org)}
+                          className="w-full text-left"
                         >
-                          {initialsOf(child.org.name)}
-                        </span>
-                        <span className="min-w-0 flex-1">
-                          <span className="block truncate font-lato text-sm font-semibold text-dark">
-                            {child.org.name}
+                          <span
+                            className={`${TILE} size-8 bg-green-light-100 text-sm text-green-dark`}
+                            aria-hidden
+                          >
+                            {initialsOfName(child.org.name)}
                           </span>
-                          <span className="block truncate text-xs text-dark-600">
-                            {peopleLine(subtreeMemberCount(child), child.children.length)}
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate font-lato text-sm font-semibold text-dark">
+                              {child.org.name}
+                            </span>
+                            {subtitle && (
+                              <span className="block truncate text-xs text-dark-600">
+                                {subtitle}
+                              </span>
+                            )}
                           </span>
-                        </span>
-                        <ChevronRight className="size-4 shrink-0 text-dark-500" aria-hidden />
-                      </button>
-                    </ListCard>
-                  </li>
-                ))}
+                          <ChevronRight className="size-4 shrink-0 text-dark-500" aria-hidden />
+                        </button>
+                      </ListCard>
+                    </li>
+                  )
+                })}
               </ul>
             )}
           </section>

@@ -1,18 +1,13 @@
+import type { VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
-import { Avatar, AvatarFallback } from './avatar'
-
-const overflowSizes = {
-  xs: 'size-6 text-[0.5rem]',
-  sm: 'size-8 text-xs',
-  default: 'size-10 text-sm',
-} as const
+import { Avatar, AvatarFallback, avatarVariants } from './avatar'
 
 export interface AvatarStackProps {
   /** Initials in display order. */
   items: string[]
   /** How many avatars to show before collapsing into a "+N" bubble. */
   max?: number
-  size?: keyof typeof overflowSizes
+  size?: VariantProps<typeof avatarVariants>['size']
   className?: string
 }
 
@@ -32,8 +27,8 @@ const AvatarStack = ({ items, max = 3, size = 'sm', className }: AvatarStackProp
       {hidden > 0 && (
         <span
           className={cn(
-            'flex items-center justify-center rounded-full bg-dark-100 font-semibold text-dark-600 ring-2 ring-white',
-            overflowSizes[size],
+            avatarVariants({ size }),
+            'items-center justify-center bg-dark-100 font-semibold text-dark-600 ring-2 ring-white',
           )}
         >
           +{hidden}
