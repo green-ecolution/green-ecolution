@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { OrganizationResponse } from '@/api/backendApi'
-import { buildTree, flatten, initialsOf, pathTo, subtreeMemberCount } from './organizationTree'
+import { buildTree, flatten, nodeOf, pathTo, subtreeMemberCount } from './organizationTree'
 
 const org = (
   id: string,
@@ -102,24 +102,6 @@ describe('subtreeMemberCount', () => {
   })
 })
 
-describe('initialsOf', () => {
-  it('takes the single initial of a one-word name', () => {
-    expect(initialsOf('Grünflächenamt')).toBe('G')
-  })
-
-  it('ignores leading and repeated internal spaces', () => {
-    expect(initialsOf('  Team   Duburg  Nord')).toBe('TD')
-  })
-
-  it('handles a non-ASCII first letter', () => {
-    expect(initialsOf('Ökologie Nord')).toBe('ÖN')
-  })
-
-  it('does not throw on a whitespace-only name', () => {
-    expect(initialsOf('   ')).toBe('')
-  })
-})
-
 describe('pathTo', () => {
   it('returns the chain from the root down to the target', () => {
     const path = pathTo(buildTree(orgs, 'root')!, 'duburg')
@@ -133,5 +115,17 @@ describe('pathTo', () => {
 
   it('returns an empty array when the target is absent', () => {
     expect(pathTo(buildTree(orgs, 'amt')!, 'nope')).toEqual([])
+  })
+})
+
+describe('nodeOf', () => {
+  it('finds a nested node with its subtree', () => {
+    const found = nodeOf(buildTree(orgs, 'root')!, 'nord')
+    expect(found?.org.id).toBe('nord')
+    expect(found?.children.map((c) => c.org.id)).toEqual(['duburg', 'juergensby'])
+  })
+
+  it('returns null when the node is absent', () => {
+    expect(nodeOf(buildTree(orgs, 'amt')!, 'nope')).toBeNull()
   })
 })

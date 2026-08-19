@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import type { DrivingLicense, UserStatus } from '@green-ecolution/backend-client'
 import { userApi } from '@/api/backendApi'
 import createToast from '@/hooks/createToast'
+import { statusOf } from '@/lib/httpError'
 
 export interface AssignRoleVariables {
   userId: string
@@ -28,9 +29,6 @@ export interface UpdateProfileVariables {
   status: UserStatus
   drivingLicenses: DrivingLicense[]
 }
-
-const statusOf = (error: unknown): number | undefined =>
-  (error as { response?: { status?: number } } | null)?.response?.status
 
 /** 403 (role exceeds own grants) and 409 (own account) are shown at the card. */
 const isFieldLevel = (error: unknown): boolean => {

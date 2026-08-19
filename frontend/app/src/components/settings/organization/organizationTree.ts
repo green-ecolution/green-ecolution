@@ -7,18 +7,13 @@ export interface OrgNode {
 
 const byName = (a: OrgNode, b: OrgNode): number => a.org.name.localeCompare(b.org.name, 'de')
 
-/** The tile glyph shared by the tree rows and the detail header. */
-export const initialsOf = (name: string): string =>
-  name
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((word) => word[0]?.toUpperCase() ?? '')
-    .join('')
-
 /**
- * Builds the subtree below `rootId`. Nodes whose parent is not in `orgs` are
- * unreachable and therefore dropped rather than silently re-parented.
+ * Builds the subtree below `rootId`.
+ *
+ * Two malformed inputs are tolerated rather than trusted: a node whose parent is
+ * absent from `orgs` is unreachable and gets dropped instead of being silently
+ * re-parented, and a parent chain that loops back on itself is cut at the repeat
+ * so the recursion cannot run forever.
  */
 export const buildTree = (orgs: OrganizationResponse[], rootId: string): OrgNode | null => {
   const root = orgs.find((o) => o.id === rootId)
@@ -56,6 +51,15 @@ export const pathTo = (root: OrgNode, orgId: string): OrganizationResponse[] => 
     if (tail.length > 0) return [root.org, ...tail]
   }
   return []
+}
+
+export const nodeOf = (root: OrgNode, orgId: string): OrgNode | null => {
+  if (root.org.id === orgId) return root
+  for (const child of root.children) {
+    const found = nodeOf(child, orgId)
+    if (found) return found
+  }
+  return null
 }
 
 export const flatten = (node: OrgNode): OrganizationResponse[] => [

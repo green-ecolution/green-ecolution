@@ -1,8 +1,9 @@
 import { ChevronDown, ChevronRight } from 'lucide-react'
 import { ListCard } from '@green-ecolution/ui'
 import type { OrganizationResponse } from '@/api/backendApi'
+import { initialsOfName } from '@/lib/initials'
 import type { OrgNode } from './organizationTree'
-import { initialsOf, subtreeMemberCount } from './organizationTree'
+import { memberSubtitle } from './organizationLabels'
 
 interface OrganizationTreeItemProps {
   node: OrgNode
@@ -17,14 +18,6 @@ interface OrganizationTreeItemProps {
 // lines up directly under its parent's tile.
 const INDENT_STEP_REM = 1.25
 
-// Only the headcount: the row is narrow, and the disclosure chevron already
-// signals that a node has children.
-const subtitleOf = (node: OrgNode): string | null => {
-  const memberCount = subtreeMemberCount(node)
-  if (memberCount === 0) return null
-  return `${memberCount} ${memberCount === 1 ? 'Person' : 'Personen'}`
-}
-
 const OrganizationTreeItem = ({
   node,
   depth,
@@ -36,7 +29,7 @@ const OrganizationTreeItem = ({
   const hasChildren = node.children.length > 0
   const isExpanded = expanded.has(node.org.id)
   const isSelected = node.org.id === selectedId
-  const subtitle = subtitleOf(node)
+  const subtitle = memberSubtitle(node)
 
   return (
     <li>
@@ -47,10 +40,7 @@ const OrganizationTreeItem = ({
         {hasChildren ? (
           <button
             type="button"
-            onClick={(event) => {
-              event.stopPropagation()
-              onToggle(node.org.id)
-            }}
+            onClick={() => onToggle(node.org.id)}
             aria-label={isExpanded ? 'Zuklappen' : 'Aufklappen'}
             className="flex size-5 shrink-0 items-center justify-center rounded text-dark-500 transition-colors hover:bg-dark-50 hover:text-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
@@ -81,7 +71,7 @@ const OrganizationTreeItem = ({
                 isSelected ? 'bg-green-dark text-white' : 'bg-green-light-100 text-green-dark'
               }`}
             >
-              {initialsOf(node.org.name)}
+              {initialsOfName(node.org.name)}
             </span>
 
             <span className="min-w-0 flex-1">

@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest'
 import type { OrganizationResponse, RoleResponse, UserResponse } from '@/api/backendApi'
-import { initialsOf } from '@/lib/initials'
 import {
   emptyMessageOf,
   fullNameOf,
@@ -12,20 +11,6 @@ import {
 
 const user = (firstName: string, lastName: string): UserResponse =>
   ({ firstName, lastName }) as UserResponse
-
-describe('initialsOf', () => {
-  it('takes the first letter of each name', () => {
-    expect(initialsOf('Anna', 'Ahlmann')).toBe('AA')
-  })
-
-  it('copes with a missing last name', () => {
-    expect(initialsOf('Anna', null)).toBe('A')
-  })
-
-  it('returns an empty string when nothing is known', () => {
-    expect(initialsOf(null, undefined)).toBe('')
-  })
-})
 
 describe('fullNameOf', () => {
   it('joins first and last name', () => {

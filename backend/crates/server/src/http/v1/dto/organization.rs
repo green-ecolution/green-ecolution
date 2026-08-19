@@ -94,6 +94,25 @@ impl From<&OrganizationView> for OrganizationResponse {
 
 /// A single organization with its contact person resolved.
 #[derive(Debug, Serialize, utoipa::ToSchema)]
+#[schema(example = json!({
+    "id": "01980000-0000-7000-8000-000000000002",
+    "parent_id": "01980000-0000-7000-8000-000000000001",
+    "name": "TBZ Flensburg",
+    "address": {
+        "street": "Nordergraben 12",
+        "postal_code": "24937",
+        "city": "Flensburg"
+    },
+    "contact_person_id": "3f2c1b8e-2f6a-4c1d-9a77-0f3b6d2a1c44",
+    "contact_person": {
+        "id": "3f2c1b8e-2f6a-4c1d-9a77-0f3b6d2a1c44",
+        "first_name": "Anna",
+        "last_name": "Ahlmann",
+        "email": "anna.ahlmann@example.org"
+    },
+    "member_count": 7,
+    "created_at": "2024-06-15T10:30:00+00:00"
+}))]
 pub struct OrganizationDetailResponse {
     pub id: String,
     pub parent_id: Option<String>,

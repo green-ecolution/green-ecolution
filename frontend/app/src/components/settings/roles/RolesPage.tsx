@@ -22,6 +22,7 @@ import { useHasPermission } from '@/lib/auth/useHasPermission'
 import { usePermissions } from '@/lib/auth/usePermissions'
 import { useContainerWiderThan } from '@/hooks/useContainerWiderThan'
 import { TWO_PANE_MIN_WIDTH } from '../twoPaneWidth'
+import { statusOf } from '@/lib/httpError'
 import { initialsOf } from '@/lib/initials'
 import RoleActionButtons from './RoleActionButtons'
 import RoleDetail from './RoleDetail'
@@ -31,10 +32,8 @@ import { useRoleDraft } from './useRoleDraft'
 
 const TEAM_USERS_PARAMS = { page: 1, perPage: 100 }
 
-const nameConflictMessage = (error: unknown): string | null => {
-  const status = (error as { response?: { status?: number } } | null)?.response?.status
-  return status === 409 ? 'Eine Rolle mit diesem Namen existiert bereits.' : null
-}
+const nameConflictMessage = (error: unknown): string | null =>
+  statusOf(error) === 409 ? 'Eine Rolle mit diesem Namen existiert bereits.' : null
 
 const RolesPage = () => {
   const grantable = usePermissions()
