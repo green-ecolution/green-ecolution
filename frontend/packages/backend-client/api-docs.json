@@ -5853,6 +5853,25 @@
               "null"
             ]
           }
+        },
+        "example": {
+          "address": {
+            "city": "Flensburg",
+            "postal_code": "24937",
+            "street": "Nordergraben 12"
+          },
+          "contact_person": {
+            "email": "anna.ahlmann@example.org",
+            "first_name": "Anna",
+            "id": "3f2c1b8e-2f6a-4c1d-9a77-0f3b6d2a1c44",
+            "last_name": "Ahlmann"
+          },
+          "contact_person_id": "3f2c1b8e-2f6a-4c1d-9a77-0f3b6d2a1c44",
+          "created_at": "2024-06-15T10:30:00+00:00",
+          "id": "01980000-0000-7000-8000-000000000002",
+          "member_count": 7,
+          "name": "TBZ Flensburg",
+          "parent_id": "01980000-0000-7000-8000-000000000001"
         }
       },
       "OrganizationResponse": {
