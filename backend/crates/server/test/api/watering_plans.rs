@@ -42,6 +42,25 @@ async fn create_cluster(app: &helpers::TestApp) -> serde_json::Value {
     resp.json().await.unwrap()
 }
 
+async fn create_tree_in_cluster(
+    app: &helpers::TestApp,
+    number: &str,
+    cluster_id: &str,
+) -> serde_json::Value {
+    let body = serde_json::json!({
+        "species": "Eiche",
+        "number": number,
+        "planting_year": 2020,
+        "latitude": 54.79,
+        "longitude": 9.43,
+        "description": "Testbaum",
+        "tree_cluster_id": cluster_id
+    });
+    let resp = app.post_json("/api/v1/trees", &body).await;
+    assert_eq!(resp.status().as_u16(), 201);
+    resp.json().await.unwrap()
+}
+
 fn plan_body(transporter_id: &str, cluster_ids: Vec<&str>) -> serde_json::Value {
     serde_json::json!({
         "date": "2026-05-01T08:00:00Z",
@@ -298,7 +317,7 @@ fn update_body_with_status(
 }
 
 #[tokio::test]
-async fn finish_watering_plan_propagates_last_watered_and_persists_evaluations() {
+async fn finish_watering_plan_marks_just_watered_and_persists_evaluations() {
     let app = spawn_app().await;
 
     let transporter = create_transporter(&app).await;
@@ -310,6 +329,8 @@ async fn finish_watering_plan_propagates_last_watered_and_persists_evaluations()
         cluster["last_watered"].is_null(),
         "cluster should start without last_watered"
     );
+    let tree = create_tree_in_cluster(&app, "T-JW-001", cid).await;
+    let tree_id = tree["id"].as_str().unwrap();
 
     let create_resp = app
         .post_json("/api/v1/watering-plans", &plan_body(tid, vec![cid]))
@@ -322,6 +343,17 @@ async fn finish_watering_plan_propagates_last_watered_and_persists_evaluations()
         .put_json(&format!("/api/v1/watering-plans/{}", plan_id), &activate)
         .await;
     assert_eq!(activate_resp.status().as_u16(), 200);
+
+    let cluster_active: serde_json::Value = app
+        .get(&format!("/api/v1/clusters/{}", cid))
+        .await
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(
+        cluster_active["watering_status"], "unknown",
+        "starting a plan must not change the watering status"
+    );
 
     let finish = update_body_with_status(
         tid,
@@ -353,6 +385,126 @@ async fn finish_watering_plan_propagates_last_watered_and_persists_evaluations()
         "cluster.last_watered must be set after plan finish, got {:?}",
         cluster_after["last_watered"]
     );
+    assert_eq!(
+        cluster_after["watering_status"], "just watered",
+        "cluster must be flagged just watered after plan finish"
+    );
+
+    let tree_after: serde_json::Value = app
+        .get(&format!("/api/v1/trees/{}", tree_id))
+        .await
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(
+        tree_after["watering_status"], "just watered",
+        "trees of a watered cluster must be flagged just watered"
+    );
+    assert!(
+        tree_after["last_watered"].is_string(),
+        "tree.last_watered must be set after plan finish, got {:?}",
+        tree_after["last_watered"]
+    );
+}
+
+#[tokio::test]
+async fn just_watered_expires_back_to_sensor_derived_status() {
+    let app = spawn_app().await;
+
+    let transporter = create_transporter(&app).await;
+    let tid = transporter["id"].as_str().unwrap();
+    let cluster = create_cluster(&app).await;
+    let cid = cluster["id"].as_str().unwrap();
+    let tree = create_tree_in_cluster(&app, "T-JW-002", cid).await;
+    let tree_id = tree["id"].as_str().unwrap();
+
+    finish_plan_for_cluster(&app, tid, cid).await;
+
+    let fresh = app
+        .state
+        .cluster_service
+        .expire_just_watered(chrono::Utc::now() - chrono::Duration::hours(24))
+        .await
+        .expect("expiry sweep must succeed");
+    assert_eq!(fresh, 0, "a cluster watered just now must not expire yet");
+
+    let expired = app
+        .state
+        .cluster_service
+        .expire_just_watered(chrono::Utc::now() + chrono::Duration::hours(1))
+        .await
+        .expect("expiry sweep must succeed");
+    assert_eq!(expired, 1);
+
+    let cluster_after: serde_json::Value = app
+        .get(&format!("/api/v1/clusters/{}", cid))
+        .await
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(
+        cluster_after["watering_status"], "unknown",
+        "a cluster without sensor-backed trees falls back to unknown"
+    );
+    assert!(
+        cluster_after["last_watered"].is_string(),
+        "expiry must keep last_watered"
+    );
+
+    let tree_after: serde_json::Value = app
+        .get(&format!("/api/v1/trees/{}", tree_id))
+        .await
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(tree_after["watering_status"], "unknown");
+    assert!(
+        tree_after["last_watered"].is_string(),
+        "expiry must keep last_watered"
+    );
+}
+
+async fn finish_plan_for_cluster(app: &helpers::TestApp, transporter_id: &str, cluster_id: &str) {
+    let create_resp = app
+        .post_json(
+            "/api/v1/watering-plans",
+            &plan_body(transporter_id, vec![cluster_id]),
+        )
+        .await;
+    let plan: serde_json::Value = create_resp.json().await.unwrap();
+    let plan_id = plan["id"].as_str().unwrap();
+
+    let activate = app
+        .put_json(
+            &format!("/api/v1/watering-plans/{}", plan_id),
+            &update_body_with_status(
+                transporter_id,
+                vec![cluster_id],
+                "active",
+                "",
+                serde_json::json!([]),
+            ),
+        )
+        .await;
+    assert_eq!(activate.status().as_u16(), 200);
+
+    let finish = app
+        .put_json(
+            &format!("/api/v1/watering-plans/{}", plan_id),
+            &update_body_with_status(
+                transporter_id,
+                vec![cluster_id],
+                "finished",
+                "",
+                serde_json::json!([{
+                    "watering_plan_id": plan_id,
+                    "tree_cluster_id": cluster_id,
+                    "consumed_water": 500.0
+                }]),
+            ),
+        )
+        .await;
+    assert_eq!(finish.status().as_u16(), 200);
 }
 
 #[tokio::test]

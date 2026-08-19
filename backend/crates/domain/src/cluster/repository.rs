@@ -68,6 +68,13 @@ pub trait TreeClusterReader: Send + Sync {
         bucket: SoilMoistureBucket,
     ) -> Result<Vec<SoilMoistureDepthSeries>, RepositoryError>;
 
+    /// Clusters still flagged [`crate::shared::watering_status::WateringStatus::JustWatered`]
+    /// whose `last_watered` is older than `cutoff` (or missing entirely).
+    async fn just_watered_before(
+        &self,
+        cutoff: DateTime<Utc>,
+    ) -> Result<Vec<TreeCluster>, RepositoryError>;
+
     /// Finished watering-plan runs that included this cluster, newest first.
     async fn watering_events(
         &self,

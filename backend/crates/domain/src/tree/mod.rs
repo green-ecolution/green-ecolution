@@ -259,6 +259,32 @@ impl Tree {
         self.last_watered = Some(ts);
     }
 
+    /// Records a completed manual watering: timestamp plus
+    /// [`WateringStatus::JustWatered`].
+    ///
+    /// Deliberately emits no `TreeWateringStatusChanged`. The cluster status is
+    /// set explicitly by the same flow, and re-running the majority vote here
+    /// would reset a cluster without sensor-backed trees to `Unknown`.
+    pub fn mark_just_watered(&mut self, ts: DateTime<Utc>) {
+        self.mark_watered_at(ts);
+        self.watering_status = WateringStatus::JustWatered;
+    }
+
+    /// Drops [`WateringStatus::JustWatered`] once its grace period has passed.
+    /// Returns whether the status changed, so callers can skip the write.
+    ///
+    /// The tree falls back to `Unknown` rather than to a sensor-derived value:
+    /// deriving one needs readings this aggregate does not have, and the next
+    /// reading overwrites it anyway. Emits no event for the same reason as
+    /// [`Tree::mark_just_watered`].
+    pub fn expire_just_watered(&mut self) -> bool {
+        if self.watering_status != WateringStatus::JustWatered {
+            return false;
+        }
+        self.watering_status = WateringStatus::Unknown;
+        true
+    }
+
     /// Derives a [`WateringStatus`] from three Watermark sensor readings
     /// (tension at depths 30/60/90 cm) and the tree's age. Mirrors the
     /// calibration the Go backend used — see
@@ -544,6 +570,36 @@ mod tests {
         let ts = Utc::now();
         t.mark_watered_at(ts);
         assert_eq!(t.last_watered, Some(ts));
+    }
+
+    #[test]
+    fn mark_just_watered_sets_status_and_timestamp_without_event() {
+        let mut t = fixed_tree();
+        let _ = t.record_watering_status(WateringStatus::Bad);
+        let ts = Utc::now();
+
+        t.mark_just_watered(ts);
+
+        assert_eq!(t.watering_status(), WateringStatus::JustWatered);
+        assert_eq!(t.last_watered, Some(ts));
+    }
+
+    #[test]
+    fn expire_just_watered_falls_back_to_unknown() {
+        let mut t = fixed_tree();
+        t.mark_just_watered(Utc::now());
+
+        assert!(t.expire_just_watered());
+        assert_eq!(t.watering_status(), WateringStatus::Unknown);
+    }
+
+    #[test]
+    fn expire_just_watered_leaves_other_statuses_untouched() {
+        let mut t = fixed_tree();
+        let _ = t.record_watering_status(WateringStatus::Moderate);
+
+        assert!(!t.expire_just_watered());
+        assert_eq!(t.watering_status(), WateringStatus::Moderate);
     }
 
     #[test]

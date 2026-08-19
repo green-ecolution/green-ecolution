@@ -37,6 +37,9 @@ info:
   repository_url: "https://github.com/green-ecolution/"
 sensor:
   offline_after_secs: 86400
+watering:
+  just_watered_ttl_secs: 86400
+  just_watered_sweep_interval_secs: 3600
 routing:
   enabled: false
   streamlet_url: "http://localhost:2510"

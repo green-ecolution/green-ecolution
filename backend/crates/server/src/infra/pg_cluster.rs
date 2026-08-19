@@ -493,6 +493,36 @@ impl TreeClusterReader for PgTreeClusterRepository {
     }
 
     #[tracing::instrument(level = "trace", skip_all)]
+    async fn just_watered_before(
+        &self,
+        cutoff: DateTime<Utc>,
+    ) -> Result<Vec<TreeCluster>, RepositoryError> {
+        let snaps = sqlx::query_as!(
+            TreeClusterSnapshot,
+            r#"SELECT tc.id, tc.name, tc.address, tc.description,
+                      tc.archived, tc.moisture_level, tc.region_id,
+                      tc.watering_status AS "watering_status: WateringStatus",
+                      tc.soil_condition AS "soil_condition: Option<SoilCondition>",
+                      tc.latitude, tc.longitude,
+                      tc.last_watered AS "last_watered: DateTime<Utc>",
+                      tc.provider,
+                      tc.additional_informations AS additional_info,
+                      tc.organization_id,
+                      COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::uuid[]) AS "tree_ids!: Vec<RawId>"
+            FROM tree_clusters tc
+            LEFT JOIN trees t ON t.tree_cluster_id = tc.id
+            WHERE tc.watering_status = 'just watered'
+              AND (tc.last_watered IS NULL OR tc.last_watered < $1)
+            GROUP BY tc.id"#,
+            cutoff.naive_utc()
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(snaps.into_iter().map(TreeCluster::reconstitute).collect())
+    }
+
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn watering_events(
         &self,
         id: Id<TreeCluster>,
