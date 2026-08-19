@@ -400,7 +400,11 @@ impl UserService {
             .await?
             .into_iter()
             .collect();
-        let counts = self.org_reader.member_counts().await?;
+        let counts = if org_ids.is_empty() {
+            HashMap::new()
+        } else {
+            self.org_reader.member_counts().await?
+        };
         let mut orgs: HashMap<Id<Organization>, OrganizationView> = HashMap::new();
         for org_id in org_ids.values() {
             if !orgs.contains_key(org_id) {
@@ -545,7 +549,10 @@ mod tests {
     use secrecy::SecretString;
     use std::{
         collections::{BTreeSet, HashMap},
-        sync::Mutex,
+        sync::{
+            Mutex,
+            atomic::{AtomicUsize, Ordering},
+        },
     };
 
     struct StubIdentityRepo {
@@ -739,7 +746,10 @@ mod tests {
         }
     }
 
-    struct StubOrgs;
+    #[derive(Default)]
+    struct StubOrgs {
+        member_count_queries: AtomicUsize,
+    }
 
     #[async_trait::async_trait]
     impl OrganizationReader for StubOrgs {
@@ -761,6 +771,7 @@ mod tests {
             Ok(OrgHierarchy::default())
         }
         async fn member_counts(&self) -> Result<HashMap<Id<Organization>, i64>, RepositoryError> {
+            self.member_count_queries.fetch_add(1, Ordering::Relaxed);
             Ok(HashMap::new())
         }
     }
@@ -781,6 +792,14 @@ mod tests {
         repo: Arc<StubIdentityRepo>,
         profiles: Arc<InMemoryProfiles>,
     ) -> UserService {
+        service_with_orgs(repo, profiles, Arc::new(StubOrgs::default()))
+    }
+
+    fn service_with_orgs(
+        repo: Arc<StubIdentityRepo>,
+        profiles: Arc<InMemoryProfiles>,
+        orgs: Arc<StubOrgs>,
+    ) -> UserService {
         let roles = Arc::new(StubRoles);
         UserService::new(
             repo,
@@ -788,13 +807,33 @@ mod tests {
             profiles,
             roles.clone(),
             roles,
-            Arc::new(StubOrgs),
+            orgs,
             true,
         )
     }
 
     fn service(identities: Vec<UserIdentity>, profiles: Arc<InMemoryProfiles>) -> UserService {
         service_with_repo(Arc::new(StubIdentityRepo::new(identities)), profiles)
+    }
+
+    #[tokio::test]
+    async fn list_leaves_the_member_count_query_out_when_nobody_has_an_organization() {
+        let profiles = Arc::new(InMemoryProfiles::default());
+        let orgs = Arc::new(StubOrgs::default());
+        let svc = service_with_orgs(
+            Arc::new(StubIdentityRepo::new(vec![identity(
+                Uuid::now_v7(),
+                "jdoe",
+            )])),
+            profiles,
+            orgs.clone(),
+        );
+
+        svc.list(Pagination::default(), UserListFilter::default())
+            .await
+            .unwrap();
+
+        assert_eq!(orgs.member_count_queries.load(Ordering::Relaxed), 0);
     }
 
     #[tokio::test]
