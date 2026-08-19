@@ -21,6 +21,7 @@ vi.mock('@/api/backendApi', async (importOriginal) => {
 })
 vi.mock('@tanstack/react-router', () => ({
   useNavigate: () => vi.fn().mockResolvedValue(undefined),
+  useRouter: () => ({ invalidate: vi.fn().mockResolvedValue(undefined) }),
   Link: ({ children }: { children: ReactNode }) => <a>{children}</a>,
 }))
 

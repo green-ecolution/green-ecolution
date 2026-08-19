@@ -82,6 +82,7 @@ const VehicleUpdate = ({ vehicleId }: VehicleUpdateProps) => {
             type="archive"
             entityName="das Fahrzeug"
             redirectUrl={{ to: '/vehicles' }}
+            invalidates={['vehicle', 'wateringPlan']}
           />
         </Suspense>
       </Can>

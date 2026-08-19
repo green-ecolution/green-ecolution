@@ -8,6 +8,7 @@ import { ReactNode } from 'react'
 
 vi.mock('@tanstack/react-router', () => ({
   useNavigate: () => vi.fn().mockResolvedValue(undefined),
+  useRouter: () => ({ invalidate: vi.fn().mockResolvedValue(undefined) }),
 }))
 
 function createWrapper() {
@@ -38,6 +39,7 @@ describe('DeleteSection', () => {
       render(
         <DeleteSection
           mutationFn={mockMutationFn}
+          invalidates={['tree']}
           entityName="der Baum"
           redirectUrl={{ to: '/map' }}
         />,
@@ -51,6 +53,7 @@ describe('DeleteSection', () => {
       render(
         <DeleteSection
           mutationFn={mockMutationFn}
+          invalidates={['tree']}
           entityName="das Fahrzeug"
           type="archive"
           redirectUrl={{ to: '/vehicles' }}
@@ -69,6 +72,7 @@ describe('DeleteSection', () => {
       render(
         <DeleteSection
           mutationFn={mockMutationFn}
+          invalidates={['tree']}
           entityName="der Baum"
           redirectUrl={{ to: '/map' }}
         />,
@@ -86,6 +90,7 @@ describe('DeleteSection', () => {
       render(
         <DeleteSection
           mutationFn={mockMutationFn}
+          invalidates={['tree']}
           entityName="das Fahrzeug"
           type="archive"
           redirectUrl={{ to: '/vehicles' }}
@@ -104,6 +109,7 @@ describe('DeleteSection', () => {
       render(
         <DeleteSection
           mutationFn={mockMutationFn}
+          invalidates={['tree']}
           entityName="der Baum"
           redirectUrl={{ to: '/map' }}
         />,
@@ -121,6 +127,7 @@ describe('DeleteSection', () => {
       render(
         <DeleteSection
           mutationFn={mockMutationFn}
+          invalidates={['tree']}
           entityName="der Baum"
           redirectUrl={{ to: '/map' }}
         />,
@@ -147,6 +154,7 @@ describe('DeleteSection', () => {
       render(
         <DeleteSection
           mutationFn={mockMutationFn}
+          invalidates={['tree']}
           entityName="der Baum"
           redirectUrl={{ to: '/map' }}
         />,
@@ -167,6 +175,7 @@ describe('DeleteSection', () => {
       render(
         <DeleteSection
           mutationFn={mockMutationFn}
+          invalidates={['tree']}
           entityName="der Baum"
           redirectUrl={{ to: '/map' }}
         />,
@@ -188,6 +197,7 @@ describe('DeleteSection', () => {
       render(
         <DeleteSection
           mutationFn={deleteTreeFn}
+          invalidates={['tree']}
           entityName="der Baum"
           redirectUrl={{ to: '/map' }}
         />,
@@ -205,6 +215,7 @@ describe('DeleteSection', () => {
       render(
         <DeleteSection
           mutationFn={archiveVehicleFn}
+          invalidates={['tree']}
           entityName="das Fahrzeug"
           type="archive"
           redirectUrl={{ to: '/vehicles' }}
@@ -223,6 +234,7 @@ describe('DeleteSection', () => {
       render(
         <DeleteSection
           mutationFn={deleteClusterFn}
+          invalidates={['tree']}
           entityName="die Bewässerungsgruppe"
           redirectUrl={{ to: '/treecluster' }}
         />,
@@ -242,6 +254,7 @@ describe('DeleteSection', () => {
       render(
         <DeleteSection
           mutationFn={deletePlanFn}
+          invalidates={['tree']}
           entityName="der Einsatzplan"
           redirectUrl={{ to: '/watering-plans' }}
         />,
@@ -265,6 +278,7 @@ describe('DeleteSection', () => {
       render(
         <DeleteSection
           mutationFn={mockMutationFn}
+          invalidates={['tree']}
           entityName="der Baum"
           redirectUrl={{ to: '/map' }}
         />,

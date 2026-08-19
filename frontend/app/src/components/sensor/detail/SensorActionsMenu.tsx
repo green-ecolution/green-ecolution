@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation } from '@tanstack/react-query'
 import { ChevronDown, Link2, Link2Off, Replace, Trash2 } from 'lucide-react'
 import {
   AlertDialog,
@@ -21,7 +21,7 @@ import {
 } from '@green-ecolution/ui'
 import type { Sensor } from '@/api/backendApi'
 import { sensorApi } from '@/api/backendApi'
-import { sensorQueries } from '@/api/queries'
+import { useInvalidateAggregates } from '@/lib/queryInvalidation'
 import { useHasPermission } from '@/lib/auth/useHasPermission'
 import { useSensorActions } from './SensorActionsContext'
 
@@ -35,7 +35,7 @@ const SensorActionsMenu = ({ sensor }: SensorActionsMenuProps) => {
   const isPrepared = sensor.status === 'prepared'
   const [dialogOpen, setDialogOpen] = useState(false)
   const navigate = useNavigate()
-  const queryClient = useQueryClient()
+  const invalidate = useInvalidateAggregates()
   const canUpdate = useHasPermission(['sensor:update'])
   const canDelete = useHasPermission(['sensor:delete'])
 
@@ -43,8 +43,10 @@ const SensorActionsMenu = ({ sensor }: SensorActionsMenuProps) => {
     mutationFn: () => sensorApi.deleteSensor({ sensorId }),
     onSuccess: async () => {
       toast.success('Sensor wurde gelöscht.')
-      await queryClient.invalidateQueries({ queryKey: sensorQueries.key })
       await navigate({ to: '/sensors', search: { page: 1 } })
+      // After leaving: this page holds a live query on the sensor. Trees too,
+      // because deleting a sensor detaches it from the tree it was on.
+      await invalidate(['sensor', 'tree'])
     },
     onError: () => {
       toast.error('Der Sensor konnte nicht gelöscht werden.')

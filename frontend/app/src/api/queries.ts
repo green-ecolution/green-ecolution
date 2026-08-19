@@ -1,4 +1,9 @@
-import { queryOptions, infiniteQueryOptions, keepPreviousData } from '@tanstack/react-query'
+import {
+  queryOptions,
+  infiniteQueryOptions,
+  keepPreviousData,
+  type QueryKey,
+} from '@tanstack/react-query'
 import {
   AppInfoResponse,
   clusterApi,
@@ -85,6 +90,28 @@ export interface TreeMarkersFilters {
 
 /** Partial key matching every sensor list page; use for broad invalidation. */
 const SENSORS_KEY = ['sensors'] as const
+
+/**
+ * Every key prefix an aggregate owns, grouped per aggregate. The keys below
+ * grew inconsistent roots ('treecluster' vs 'treeclusters' vs 'clusters'), so
+ * invalidating one prefix silently misses the rest — go through this table
+ * instead of guessing. See lib/queryInvalidation.ts.
+ */
+export const queryRoots = {
+  cluster: [['treecluster'], ['treeclusters'], ['clusters']],
+  tree: [['tree'], ['trees'], ['planting-years']],
+  vehicle: [['vehicle'], ['vehicles']],
+  sensor: [['sensor'], ['sensors'], ['sensor data'], ['sensor-model']],
+  wateringPlan: [['watering-plan'], ['watering-plans'], ['watering-plan-route'], ['route-preview']],
+  evaluation: [['evaluation']],
+  region: [['regions']],
+  statistics: [['info']],
+  user: [['users']],
+  role: [['roles']],
+  organization: [['organizations']],
+} as const satisfies Record<string, readonly QueryKey[]>
+
+export type Aggregate = keyof typeof queryRoots
 
 export const clusterQueries = {
   list: (params?: ListClustersRequest) =>

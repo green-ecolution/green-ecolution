@@ -1,5 +1,3 @@
-import { QueryClient } from '@tanstack/react-query'
-import { clusterQueries, treeQueries } from '@/api/queries'
 import type { Tree, TreeCreate, TreeUpdate } from '@/api/backendApi'
 import { treeApi } from '@/api/backendApi'
 import { TreeForm } from '@/schema/treeSchema'
@@ -14,19 +12,8 @@ const treeConfig: EntityFormConfig<TreeForm, TreeCreate, TreeUpdate, Tree> = {
   createFn: (body) => treeApi.createTree({ treeCreateRequest: body }),
   updateFn: (id, body) => treeApi.updateTree({ treeId: id, treeUpdateRequest: body }),
 
-  invalidateQueries: (data, queryClient: QueryClient) => {
-    queryClient
-      .invalidateQueries(treeQueries.detail(String(data.id)))
-      .catch((error) => console.error('Invalidate "treeQueries.detail" failed:', error))
-    queryClient
-      .invalidateQueries(treeQueries.list())
-      .catch((error) => console.error('Invalidate "treeQueries.list" failed:', error))
-    if (data.treeClusterId) {
-      queryClient
-        .invalidateQueries(clusterQueries.detail(String(data.treeClusterId)))
-        .catch((error) => console.error('Invalidate "clusterQueries.detail" failed:', error))
-    }
-  },
+  // Cluster too: assigning a tree shifts the cluster's centroid and status.
+  invalidates: ['tree', 'cluster'],
 
   successRoute: (id) => ({
     to: '/trees/$treeId',

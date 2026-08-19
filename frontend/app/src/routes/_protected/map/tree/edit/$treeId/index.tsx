@@ -9,6 +9,7 @@ import { treeApi } from '@/api/backendApi'
 import { TreeForm } from '@/schema/treeSchema'
 import { useTreeForm } from '@/hooks/form/useTreeForm'
 import createToast from '@/hooks/createToast'
+import { useInvalidateAggregates } from '@/lib/queryInvalidation'
 import { entityNotFound, forbiddenErrorComponent, prefetch, requirePermission } from '@/lib/router'
 import { useHasPermission } from '@/lib/auth/useHasPermission'
 import FormForTree from '@/components/general/form/FormForTree'
@@ -42,6 +43,7 @@ export const Route = createFileRoute('/_protected/map/tree/edit/$treeId/')({
 function EditTreeOnMap() {
   const { treeId } = Route.useParams()
   const navigate = useNavigate({ from: Route.fullPath })
+  const invalidate = useInvalidateAggregates()
   const showToast = createToast()
   const map = useMaplibreMap()
   const { data: tree } = useSuspenseQuery(treeQueries.detail(treeId))
@@ -109,7 +111,11 @@ function EditTreeOnMap() {
     navigationBlocker.allowNavigation()
     treeApi
       .deleteTree({ treeId })
+      // Invalidate only after leaving: this panel holds a live query on the
+      // tree, which would refetch into a 404 while still mounted. Cluster too,
+      // because removing a tree shifts its cluster's centroid and status.
       .then(() => navigate({ to: '/map', search: (prev) => prev }))
+      .then(() => invalidate(['tree', 'cluster']))
       .then(() => showToast('Der Baum wurde gelöscht.'))
       .catch((error) => {
         console.error('Delete failed:', error)

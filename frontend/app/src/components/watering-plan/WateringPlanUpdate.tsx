@@ -154,6 +154,7 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
             mutationFn={handleDeleteWateringPlan}
             entityName="der Einsatzplan"
             redirectUrl={{ to: '/watering-plans' }}
+            invalidates={['wateringPlan', 'evaluation']}
           />
         </Suspense>
       </Can>

@@ -1,5 +1,3 @@
-import { QueryClient } from '@tanstack/react-query'
-import { vehicleQueries } from '@/api/queries'
 import type { Vehicle, VehicleCreate, VehicleUpdate } from '@/api/backendApi'
 import { vehicleApi } from '@/api/backendApi'
 import { VehicleForm } from '@/schema/vehicleSchema'
@@ -14,14 +12,8 @@ const vehicleConfig: EntityFormConfig<VehicleForm, VehicleCreate, VehicleUpdate,
   createFn: (body) => vehicleApi.createVehicle({ vehicleCreateRequest: body }),
   updateFn: (id, body) => vehicleApi.updateVehicle({ vehicleId: id, vehicleUpdateRequest: body }),
 
-  invalidateQueries: (data, queryClient: QueryClient) => {
-    queryClient
-      .invalidateQueries(vehicleQueries.detail(String(data.id)))
-      .catch((error) => console.error('Invalidate "vehicleQueries.detail" failed:', error))
-    queryClient
-      .invalidateQueries(vehicleQueries.list())
-      .catch((error) => console.error('Invalidate "vehicleQueries.list" failed:', error))
-  },
+  // Watering plans embed their transporter and trailer.
+  invalidates: ['vehicle', 'wateringPlan'],
 
   successRoute: (id) => ({
     to: '/vehicles/$vehicleId',
