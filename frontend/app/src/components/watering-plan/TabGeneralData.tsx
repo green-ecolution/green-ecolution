@@ -14,9 +14,11 @@ interface TabGeneralDataProps {
 }
 
 const TabGeneralData: React.FC<TabGeneralDataProps> = ({ wateringPlan }) => {
-  const { data: userRes } = useSuspenseQuery(userQueries.list())
+  const { data: userRes } = useSuspenseQuery(userQueries.list({ page: 1, perPage: 100 }))
   const { data: startPoints } = useQuery(routingStartPointsQuery())
   const defaultStartPointName = startPoints?.[0]?.name
+
+  const assignedUsers = userRes.data?.filter((user) => wateringPlan.userIds.includes(user.id)) ?? []
 
   const updatedDate = wateringPlan?.updatedAt
     ? format(new Date(wateringPlan.updatedAt), 'dd.MM.yyyy')
@@ -60,8 +62,8 @@ const TabGeneralData: React.FC<TabGeneralDataProps> = ({ wateringPlan }) => {
     },
     {
       label: 'Eingeteilte Mitarbeitende',
-      value: userRes.data?.length
-        ? userRes.data.map((user) => `${user.firstName} ${user.lastName}`).join(', ')
+      value: assignedUsers.length
+        ? assignedUsers.map((user) => `${user.firstName} ${user.lastName}`).join(', ')
         : 'Keine Angabe',
     },
     {
