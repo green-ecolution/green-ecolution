@@ -22,6 +22,7 @@ const mockUseBlocker = vi.fn().mockReturnValue({
 
 vi.mock('@tanstack/react-router', () => ({
   useNavigate: () => vi.fn().mockResolvedValue(undefined),
+  useRouter: () => ({ invalidate: vi.fn().mockResolvedValue(undefined) }),
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   useBlocker: (...args: unknown[]) => mockUseBlocker(...args),
 }))

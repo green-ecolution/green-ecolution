@@ -19,7 +19,8 @@ import {
 } from '@/schema/wateringPlanSchema'
 import { zodResolver } from '@/lib/zodResolver'
 import { SubmitHandler, useFieldArray, useForm } from 'react-hook-form'
-import { useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
+import { useMutation, useSuspenseQuery } from '@tanstack/react-query'
+import { PLAN_STATUS_AGGREGATES, useInvalidateAggregates } from '@/lib/queryInvalidation'
 import { wateringPlanApi } from '@/api/backendApi'
 import { useNavigate } from '@tanstack/react-router'
 import createToast from '@/hooks/createToast'
@@ -31,7 +32,7 @@ interface WateringPlanStatusUpdateProps {
 const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdateProps) => {
   const { data: loadedData } = useSuspenseQuery(wateringPlanQueries.detail(wateringPlanId))
   const navigate = useNavigate()
-  const queryClient = useQueryClient()
+  const invalidate = useInvalidateAggregates()
   const showToast = createToast()
   const statusDetails = getWateringPlanStatusDetails(loadedData.status)
   const [selectedStatus, setSelectedStatus] = useState(statusDetails)
@@ -44,12 +45,9 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
       }),
 
     onSuccess: (data: WateringPlan) => {
-      queryClient
-        .invalidateQueries(wateringPlanQueries.detail(String(data.id)))
-        .catch((error) => console.error('Invalidate "waterinPlanIdQuery" failed', error))
-      queryClient
-        .invalidateQueries({ queryKey: ['watering-plans'] })
-        .catch((error) => console.error('Invalidate "watering-plans" failed:', error))
+      invalidate(PLAN_STATUS_AGGREGATES).catch((error) =>
+        console.error('Invalidation after watering plan status update failed:', error),
+      )
 
       navigate({
         to: `/watering-plans/$wateringPlanId`,

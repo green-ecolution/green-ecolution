@@ -14,12 +14,16 @@ import {
 } from '@green-ecolution/ui'
 import createToast from '@/hooks/createToast'
 import { LinkProps, useNavigate } from '@tanstack/react-router'
+import type { Aggregate } from '@/api/queries'
+import { useInvalidateAggregates } from '@/lib/queryInvalidation'
 
 interface DeleteSectionProps {
   mutationFn: () => Promise<unknown>
   entityName: string
   type?: 'archive' | 'delete'
   redirectUrl: LinkProps
+  /** Aggregates whose lists and details still contain the removed entity. */
+  invalidates: readonly Aggregate[]
 }
 
 const DeleteSection: React.FC<DeleteSectionProps> = ({
@@ -27,9 +31,11 @@ const DeleteSection: React.FC<DeleteSectionProps> = ({
   entityName,
   type = 'delete',
   redirectUrl,
+  invalidates,
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const navigate = useNavigate()
+  const invalidate = useInvalidateAggregates()
   const showToast = createToast()
 
   const actionText = type === 'archive' ? 'archiviert' : 'gelöscht'
@@ -39,6 +45,9 @@ const DeleteSection: React.FC<DeleteSectionProps> = ({
     onSuccess: () => {
       setIsModalOpen(false)
       navigate(redirectUrl)
+        // After leaving: a page still showing the removed entity would refetch
+        // it into a 404.
+        .then(() => invalidate(invalidates))
         .then(() =>
           showToast(
             `${entityName.charAt(0).toUpperCase()}${entityName.slice(1)} wurde erfolgreich ${actionText}.`,

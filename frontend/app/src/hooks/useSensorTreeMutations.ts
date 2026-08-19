@@ -1,52 +1,38 @@
 import { sensorApi } from '@/api/backendApi'
-import { sensorQueries, treeQueries } from '@/api/queries'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useRouter } from '@tanstack/react-router'
-import type { RegisteredRouter } from '@tanstack/react-router'
+import { useMutation } from '@tanstack/react-query'
+import { useInvalidateAggregates } from '@/lib/queryInvalidation'
 
-const invalidateSensorAndTrees = async (
-  queryClient: ReturnType<typeof useQueryClient>,
-  router: RegisteredRouter,
-  sensorId: string,
-  treeIds: (string | null | undefined)[],
-) => {
-  await Promise.all([
-    queryClient.invalidateQueries({ queryKey: sensorQueries.key }),
-    queryClient.invalidateQueries({ queryKey: sensorQueries.detail(sensorId).queryKey }),
-    ...treeIds
-      .filter((id): id is string => !!id)
-      .map((id) => queryClient.invalidateQueries({ queryKey: treeQueries.detail(id).queryKey })),
-  ])
-  // Detail routes read the sensor/tree from loader data; re-run their loaders.
-  await router.invalidate()
+/**
+ * Sensor/tree link changes. The sensor detail page stays mounted afterwards and
+ * its breadcrumb comes from loader data, so the route loaders re-run too.
+ */
+const useInvalidateSensorTreeLink = () => {
+  const invalidate = useInvalidateAggregates()
+  return () => invalidate(['sensor', 'tree'], { reloadRoutes: true })
 }
 
 export const useActivateSensor = (sensorId: string) => {
-  const queryClient = useQueryClient()
-  const router = useRouter()
+  const invalidateLink = useInvalidateSensorTreeLink()
   return useMutation({
     mutationFn: (treeId: string) =>
       sensorApi.activateSensor({ sensorId, activateSensorRequest: { treeId } }),
-    onSuccess: (_data, treeId) => invalidateSensorAndTrees(queryClient, router, sensorId, [treeId]),
+    onSuccess: invalidateLink,
   })
 }
 
-export const useReassignSensorTree = (sensorId: string, previousTreeId?: string | null) => {
-  const queryClient = useQueryClient()
-  const router = useRouter()
+export const useReassignSensorTree = (sensorId: string) => {
+  const invalidateLink = useInvalidateSensorTreeLink()
   return useMutation({
     mutationFn: (treeId: string) =>
       sensorApi.setSensorTree({ sensorId, setSensorTreeRequest: { treeId } }),
-    onSuccess: (_data, treeId) =>
-      invalidateSensorAndTrees(queryClient, router, sensorId, [previousTreeId, treeId]),
+    onSuccess: invalidateLink,
   })
 }
 
-export const useDeactivateSensor = (sensorId: string, previousTreeId?: string | null) => {
-  const queryClient = useQueryClient()
-  const router = useRouter()
+export const useDeactivateSensor = (sensorId: string) => {
+  const invalidateLink = useInvalidateSensorTreeLink()
   return useMutation({
     mutationFn: () => sensorApi.removeSensorTree({ sensorId }),
-    onSuccess: () => invalidateSensorAndTrees(queryClient, router, sensorId, [previousTreeId]),
+    onSuccess: invalidateLink,
   })
 }

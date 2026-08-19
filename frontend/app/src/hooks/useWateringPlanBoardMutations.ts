@@ -9,7 +9,8 @@ export type PlanEvaluation = NonNullable<WateringPlanUpdateRequest['evaluation']
 
 import { wateringPlanApi } from '@/api/backendApi'
 import type { WateringPlanInList } from '@/api/backendApi'
-import { wateringPlanQueries } from '@/api/queries'
+import { wateringPlanQueries, type Aggregate } from '@/api/queries'
+import { PLAN_STATUS_AGGREGATES, useInvalidateAggregates } from '@/lib/queryInvalidation'
 import createToast from '@/hooks/createToast'
 
 export const toUpdateRequest = (
@@ -34,17 +35,19 @@ const activeKey = wateringPlanQueries.boardColumn([WateringPlanStatus.Active]).q
 
 export const useWateringPlanBoardMutations = () => {
   const queryClient = useQueryClient()
+  const invalidate = useInvalidateAggregates()
   const showToast = createToast()
 
-  const invalidateBoard = () => {
-    // cancelQueries is scoped to board to avoid aborting unrelated watering-plan queries; invalidate is broad for consistency.
-    queryClient
-      .invalidateQueries({ queryKey: ['watering-plans'] })
-      .catch((error) => console.error('Invalidate watering-plans failed:', error))
-    queryClient
-      .invalidateQueries({ queryKey: ['watering-plan'] })
-      .catch((error) => console.error('Invalidate watering-plan failed:', error))
-  }
+  // The board stays mounted after a mutation, so the route loaders have to
+  // re-run as well; cancelQueries elsewhere is scoped to the board to avoid
+  // aborting unrelated watering-plan queries.
+  const runInvalidation = (aggregates: readonly Aggregate[]) =>
+    invalidate(aggregates, { reloadRoutes: true }).catch((error) =>
+      console.error('Invalidation after watering plan mutation failed:', error),
+    )
+
+  const invalidateAfterStatusChange = () => void runInvalidation(PLAN_STATUS_AGGREGATES)
+  const invalidatePlans = () => void runInvalidation(['wateringPlan'])
 
   const update = (plan: WateringPlanInList, overrides: Partial<WateringPlanUpdateRequest>) =>
     wateringPlanApi.updateWateringPlan({
@@ -80,7 +83,7 @@ export const useWateringPlanBoardMutations = () => {
       showToast(`Der Start konnte nicht rückgängig gemacht werden: ${error.message}`, 'error')
     },
     onSuccess: () => showToast('Start rückgängig gemacht.'),
-    onSettled: invalidateBoard,
+    onSettled: invalidateAfterStatusChange,
   })
 
   const startPlan = useMutation({
@@ -114,7 +117,7 @@ export const useWateringPlanBoardMutations = () => {
       showToast('Einsatz gestartet.', 'success', {
         action: { label: 'Rückgängig', onClick: () => revertStart.mutate(plan) },
       }),
-    onSettled: invalidateBoard,
+    onSettled: invalidateAfterStatusChange,
   })
 
   const cancelPlan = useMutation({
@@ -124,7 +127,7 @@ export const useWateringPlanBoardMutations = () => {
       showToast(`Der Einsatz konnte nicht abgebrochen werden: ${error.message}`, 'error'),
     onSuccess: () => {
       showToast('Einsatz abgebrochen.')
-      invalidateBoard()
+      invalidateAfterStatusChange()
     },
   })
 
@@ -135,7 +138,7 @@ export const useWateringPlanBoardMutations = () => {
       showToast(`Der Einsatz konnte nicht abgeschlossen werden: ${error.message}`, 'error'),
     onSuccess: () => {
       showToast('Einsatz abgeschlossen.')
-      invalidateBoard()
+      invalidateAfterStatusChange()
     },
   })
 
@@ -146,7 +149,7 @@ export const useWateringPlanBoardMutations = () => {
       showToast(`Die Zuweisung konnte nicht gespeichert werden: ${error.message}`, 'error'),
     onSuccess: () => {
       showToast('Zuweisung gespeichert.')
-      invalidateBoard()
+      invalidatePlans()
     },
   })
 

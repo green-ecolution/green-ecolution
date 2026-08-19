@@ -1,5 +1,3 @@
-import { QueryClient } from '@tanstack/react-query'
-import { clusterQueries } from '@/api/queries'
 import type { TreeCluster, TreeClusterCreate, TreeClusterUpdate } from '@/api/backendApi'
 import { clusterApi } from '@/api/backendApi'
 import { TreeclusterForm } from '@/schema/treeclusterSchema'
@@ -20,14 +18,8 @@ const treeClusterConfig: EntityFormConfig<
   updateFn: (id, body) =>
     clusterApi.updateCluster({ clusterId: id, treeClusterUpdateRequest: body }),
 
-  invalidateQueries: (data, queryClient: QueryClient) => {
-    queryClient
-      .invalidateQueries(clusterQueries.detail(String(data.id)))
-      .catch((error) => console.error('Invalidate "clusterQueries.detail" failed:', error))
-    queryClient
-      .invalidateQueries(clusterQueries.list())
-      .catch((error) => console.error('Invalidate "clusterQueries.list" failed:', error))
-  },
+  // Tree too: replacing the cluster's trees changes their cluster membership.
+  invalidates: ['cluster', 'tree'],
 
   successRoute: (id) => ({
     to: '/treecluster/$treeclusterId',

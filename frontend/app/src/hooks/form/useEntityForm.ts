@@ -1,6 +1,8 @@
-import { useMutation, useQueryClient, QueryClient } from '@tanstack/react-query'
+import { useMutation } from '@tanstack/react-query'
 import createToast from '@/hooks/createToast'
 import { useNavigate } from '@tanstack/react-router'
+import type { Aggregate } from '@/api/queries'
+import { useInvalidateAggregates } from '@/lib/queryInvalidation'
 import { DefaultValues, FieldValues, Resolver, useForm } from 'react-hook-form'
 import { useFormNavigationBlocker } from './useFormNavigationBlocker'
 import { useFormDraft } from '@/store/form/useFormDraft'
@@ -14,7 +16,8 @@ export interface EntityFormConfig<TForm extends FieldValues, TCreate, TUpdate, T
   createFn: (body: TCreate) => Promise<TEntity>
   updateFn: (id: string, body: TUpdate) => Promise<TEntity>
 
-  invalidateQueries: (data: TEntity, queryClient: QueryClient) => void
+  /** Every aggregate a save touches, including neighbours it changes indirectly. */
+  invalidates: readonly Aggregate[]
 
   successRoute: (id: string) => { to: string; params: Record<string, string> }
   replaceOnSuccess?: boolean
@@ -45,7 +48,7 @@ export function useEntityForm<
   opts: EntityFormOptions<TForm>,
 ) {
   const showToast = createToast()
-  const queryClient = useQueryClient()
+  const invalidate = useInvalidateAggregates()
   const navigate = useNavigate()
   const draft = useFormDraft<TForm>(config.formType, mutationType)
 
@@ -80,7 +83,11 @@ export function useEntityForm<
 
     onSuccess: (data: TEntity) => {
       draft.clear()
-      config.invalidateQueries(data, queryClient)
+      // Not awaited on purpose: invalidateQueries marks the entries stale
+      // synchronously, so the loader of the route we navigate to refetches.
+      invalidate(config.invalidates).catch((error) =>
+        console.error(`Invalidation after ${config.formType} mutation failed:`, error),
+      )
 
       navigationBlocker.allowNavigation()
       const route = config.successRoute(data.id)

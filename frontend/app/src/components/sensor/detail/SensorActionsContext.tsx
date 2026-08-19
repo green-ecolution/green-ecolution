@@ -40,11 +40,9 @@ const SensorActionsProvider = ({ sensor, children }: PropsWithChildren<{ sensor:
   const [assignMode, setAssignMode] = useState<AssignMode | null>(null)
   const [removeOpen, setRemoveOpen] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const previousTreeId = sensor.linkedTreeId ?? null
-
   const activate = useActivateSensor(sensor.id)
-  const reassign = useReassignSensorTree(sensor.id, previousTreeId)
-  const deactivate = useDeactivateSensor(sensor.id, previousTreeId)
+  const reassign = useReassignSensorTree(sensor.id)
+  const deactivate = useDeactivateSensor(sensor.id)
 
   const closeAssign = () => {
     setAssignMode(null)

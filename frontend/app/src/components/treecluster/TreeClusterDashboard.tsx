@@ -29,6 +29,7 @@ import {
   DropdownMenuTrigger,
 } from '@green-ecolution/ui'
 import { clusterApi, type TreeCluster } from '@/api/backendApi'
+import { useInvalidateAggregates } from '@/lib/queryInvalidation'
 
 interface TreeClusterDashboardProps {
   treecluster: TreeCluster
@@ -36,6 +37,7 @@ interface TreeClusterDashboardProps {
 
 const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
   const navigate = useNavigate()
+  const invalidate = useInvalidateAggregates()
   const showToast = createToast()
   const [confirmDelete, setConfirmDelete] = useState(false)
   const canEdit = useHasPermission(['tree_cluster:update'])
@@ -47,7 +49,11 @@ const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
   const handleDelete = () => {
     clusterApi
       .deleteCluster({ clusterId: treecluster.id.toString() })
+      // Invalidate only after leaving: this page holds a live query on the
+      // cluster, which would refetch into a 404 while still mounted. Trees too,
+      // because deleting a cluster walks its trees out of it.
       .then(() => navigate({ to: '/treecluster', search: { page: 1 } }))
+      .then(() => invalidate(['cluster', 'tree']))
       .then(() => showToast('Die Bewässerungsgruppe wurde gelöscht.'))
       .catch((error) => {
         console.error('Delete failed:', error)

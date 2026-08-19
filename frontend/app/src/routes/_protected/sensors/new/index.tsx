@@ -1,5 +1,6 @@
 import { sensorApi } from '@/api/backendApi'
-import { sensorQueries, treeQueries } from '@/api/queries'
+import { sensorQueries } from '@/api/queries'
+import { useInvalidateAggregates } from '@/lib/queryInvalidation'
 import { mapActivateError, resolveResponseStatus } from '@/api/sensorErrors'
 import SensorReviewStep from '@/components/sensor/wizard/SensorReviewStep'
 import SensorScanStep from '@/components/sensor/wizard/SensorScanStep'
@@ -13,7 +14,7 @@ import {
   type WizardStep,
 } from '@/components/sensor/wizard/state'
 import useGeolocation from '@/hooks/useGeolocation'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useCallback, useEffect, useReducer } from 'react'
 
@@ -23,7 +24,7 @@ export const Route = createFileRoute('/_protected/sensors/new/')({
 
 function NewSensor() {
   const navigate = useNavigate()
-  const queryClient = useQueryClient()
+  const invalidate = useInvalidateAggregates()
   const [state, dispatch] = useReducer(wizardReducer, INITIAL_WIZARD_STATE)
   const {
     status: gpsStatus,
@@ -65,22 +66,7 @@ function NewSensor() {
     onMutate: () => dispatch({ type: 'submissionStart' }),
     onSuccess: async () => {
       dispatch({ type: 'submissionSuccess' })
-      const invalidations = [queryClient.invalidateQueries({ queryKey: sensorQueries.key })]
-      if (state.sensorId) {
-        invalidations.push(
-          queryClient.invalidateQueries({
-            queryKey: sensorQueries.detail(state.sensorId).queryKey,
-          }),
-        )
-      }
-      if (state.selectedTreeId) {
-        invalidations.push(
-          queryClient.invalidateQueries({
-            queryKey: treeQueries.detail(state.selectedTreeId).queryKey,
-          }),
-        )
-      }
-      await Promise.all(invalidations)
+      await invalidate(['sensor', 'tree'])
     },
     onError: (err) => dispatch({ type: 'submissionError', message: mapActivateError(err) }),
   })
