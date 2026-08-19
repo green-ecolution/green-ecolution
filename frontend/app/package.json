@@ -34,7 +34,7 @@
     "barcode-detector": "^3.2.2",
     "date-fns": "^4.4.0",
     "immer": "^11.1.17",
-    "lottie-react": "^2.4.0",
+    "lottie-react": "^3.0.0",
     "lucide-react": "^1.31.0",
     "maplibre-gl": "^5.0.0",
     "oidc-client-ts": "^3.5.0",
