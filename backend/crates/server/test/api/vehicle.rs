@@ -237,7 +237,10 @@ async fn update_vehicle_with_string_number_returns_json_error_body() {
         .await
         .expect("malformed body must still yield a JSON error response");
     assert!(
-        body["error"].as_str().unwrap_or_default().contains("height"),
+        body["error"]
+            .as_str()
+            .unwrap_or_default()
+            .contains("height"),
         "error body should name the offending field, got: {body}"
     );
 }
