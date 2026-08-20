@@ -36,7 +36,8 @@ fn valid_body() -> serde_json::Value {
         "phone_number": "+49 461 1",
         "avatar_url": "",
         "status": "absent",
-        "driving_licenses": ["B", "CE"]
+        "driving_licenses": ["B", "CE"],
+        "watering_plan_selectable": true
     })
 }
 
@@ -89,7 +90,8 @@ async fn update_user_returns_400_for_invalid_avatar_url() {
     let body = serde_json::json!({
         "avatar_url": "not a url",
         "status": "absent",
-        "driving_licenses": []
+        "driving_licenses": [],
+        "watering_plan_selectable": true
     });
     let response = app
         .put_json("/api/v1/users/00000000-0000-0000-0000-000000000000", &body)
@@ -105,7 +107,8 @@ async fn update_user_returns_400_for_lettered_phone_number() {
     let body = serde_json::json!({
         "phone_number": "0461 abc",
         "status": "absent",
-        "driving_licenses": []
+        "driving_licenses": [],
+        "watering_plan_selectable": true
     });
     let response = app
         .put_json("/api/v1/users/00000000-0000-0000-0000-000000000000", &body)
@@ -514,4 +517,15 @@ async fn updating_your_own_profile_stays_allowed() {
         .await;
 
     assert_eq!(resp.status(), 200);
+}
+
+#[tokio::test]
+async fn user_response_carries_watering_plan_selectable() {
+    let app = spawn_app().await;
+
+    let response = app.get("/api/v1/users/me").await;
+
+    assert_eq!(response.status().as_u16(), 200);
+    let body: serde_json::Value = response.json().await.unwrap();
+    assert_eq!(body["watering_plan_selectable"], true);
 }
