@@ -93,7 +93,7 @@ async fn create_watering_plan_over_cluster_in_org_subtree_returns_201() {
 }
 
 #[tokio::test]
-async fn create_watering_plan_over_cluster_outside_org_subtree_conflicts() {
+async fn create_watering_plan_over_cluster_outside_org_subtree_is_unprocessable() {
     let app = spawn_app().await;
     insert_tbz_and_sub_org(&app).await;
 
@@ -116,5 +116,7 @@ async fn create_watering_plan_over_cluster_outside_org_subtree_conflicts() {
         )
         .await;
 
-    assert_eq!(resp.status(), 409);
+    assert_eq!(resp.status(), 422);
+    let body: serde_json::Value = resp.json().await.unwrap();
+    assert_eq!(body["code"], "organization_mismatch.clusters_vs_plan");
 }

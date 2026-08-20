@@ -22,7 +22,7 @@ use crate::{
         },
         v1::scope::resolve_target_org,
     },
-    service::{AuthError, ServiceError, user_service::UserListFilter},
+    service::{AuthError, OrganizationMismatch, ServiceError, user_service::UserListFilter},
 };
 use domain::{
     Id,
@@ -275,7 +275,8 @@ pub async fn list_user_roles(
         (status = 401, description = "Unauthorized"),
         (status = 403, description = "Forbidden"),
         (status = 404, description = "Role not found"),
-        (status = 409, description = "Role is a template and cannot be assigned, the role's organization does not match the target user's organization, or attempting to change your own roles"),
+        (status = 409, description = "Role is a template and cannot be assigned, or attempting to change your own roles"),
+        (status = 422, description = "The role's organization does not match the target user's organization (code `organization_mismatch.role_vs_user`)"),
         (status = 500, description = "Internal server error"),
     )
 )]
@@ -308,7 +309,7 @@ pub async fn assign_user_role(
         // organization's entire subtree, so the role's org and the target's
         // org must match; a target with no organization has nothing to match.
         if state.user_service.organization_of(user_id).await? != Some(role_org) {
-            return Err(ServiceError::OrganizationMismatch);
+            return Err(OrganizationMismatch::RoleVsUser.into());
         }
     }
     // Template roles skip the permission checks above, so the authorization

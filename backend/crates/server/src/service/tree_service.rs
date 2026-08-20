@@ -19,7 +19,7 @@ use domain::{
     },
 };
 
-use super::{ServiceError, event_bus::EventBus};
+use super::{OrganizationMismatch, ServiceError, event_bus::EventBus};
 
 pub struct TreeService {
     reader: Arc<dyn TreeReader>,
@@ -60,7 +60,7 @@ impl TreeService {
         if let Some(cid) = cluster_id {
             let cluster = self.cluster_reader.by_id(cid).await?;
             if cluster.organization_id() != org {
-                return Err(ServiceError::OrganizationMismatch);
+                return Err(OrganizationMismatch::ClusterVsTree.into());
             }
         }
         Ok(())
@@ -75,7 +75,7 @@ impl TreeService {
     ) -> Result<(), ServiceError> {
         let sensor = self.sensor_reader.by_id(sensor_id).await?;
         if sensor.organization_id() != org {
-            return Err(ServiceError::OrganizationMismatch);
+            return Err(OrganizationMismatch::SensorVsTree.into());
         }
         Ok(())
     }

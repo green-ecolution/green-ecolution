@@ -42,7 +42,7 @@ fn cluster_payload(tree_ids: &[&str], org: Option<&str>) -> serde_json::Value {
 }
 
 #[tokio::test]
-async fn create_cluster_with_tree_from_foreign_org_conflicts() {
+async fn create_cluster_with_tree_from_foreign_org_is_unprocessable() {
     let app = spawn_app().await;
     insert_tbz_org(&app).await;
 
@@ -57,11 +57,13 @@ async fn create_cluster_with_tree_from_foreign_org_conflicts() {
     let resp = app
         .post_json("/api/v1/clusters", &cluster_payload(&[tree_id], None))
         .await;
-    assert_eq!(resp.status(), 409);
+    assert_eq!(resp.status(), 422);
+    let body: serde_json::Value = resp.json().await.unwrap();
+    assert_eq!(body["code"], "organization_mismatch.trees_vs_cluster");
 }
 
 #[tokio::test]
-async fn update_tree_into_cluster_from_foreign_org_conflicts() {
+async fn update_tree_into_cluster_from_foreign_org_is_unprocessable() {
     let app = spawn_app().await;
     insert_tbz_org(&app).await;
 
@@ -87,7 +89,9 @@ async fn update_tree_into_cluster_from_foreign_org_conflicts() {
     let resp = app
         .put_json(&format!("/api/v1/trees/{}", tree_id), &update_body)
         .await;
-    assert_eq!(resp.status(), 409);
+    assert_eq!(resp.status(), 422);
+    let body: serde_json::Value = resp.json().await.unwrap();
+    assert_eq!(body["code"], "organization_mismatch.cluster_vs_tree");
 }
 
 #[tokio::test]

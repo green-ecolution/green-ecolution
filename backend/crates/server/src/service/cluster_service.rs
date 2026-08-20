@@ -20,7 +20,7 @@ use domain::{
     tree::{Tree, TreeReader, TreeWriter, volumetric_thresholds},
 };
 
-use super::{ServiceError, event_bus::EventBus};
+use super::{OrganizationMismatch, ServiceError, event_bus::EventBus};
 
 pub struct ClusterService {
     reader: Arc<dyn TreeClusterReader>,
@@ -107,7 +107,7 @@ impl ClusterService {
         }
         let trees = self.tree_reader.by_ids(tree_ids).await?;
         if trees.iter().any(|t| t.organization_id() != org) {
-            return Err(ServiceError::OrganizationMismatch);
+            return Err(OrganizationMismatch::TreesVsCluster.into());
         }
         Ok(())
     }

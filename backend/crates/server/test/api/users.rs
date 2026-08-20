@@ -170,7 +170,7 @@ async fn assign_and_revoke_role_via_api() {
 }
 
 #[tokio::test]
-async fn assigning_a_role_from_a_different_organization_returns_409() {
+async fn assigning_a_role_from_a_different_organization_returns_422() {
     let app = spawn_app().await;
     let role_org = create_org(&app, "Rollen-Org").await;
     let target_org = create_org(&app, "Ziel-Org").await;
@@ -191,7 +191,9 @@ async fn assigning_a_role_from_a_different_organization_returns_409() {
             &json!({ "role_id": role_id }),
         )
         .await;
-    assert_eq!(resp.status(), 409);
+    assert_eq!(resp.status(), 422);
+    let body: serde_json::Value = resp.json().await.unwrap();
+    assert_eq!(body["code"], "organization_mismatch.role_vs_user");
 
     // Side-effect assertion: role must not have been assigned.
     let assigned_roles: Vec<Uuid> = sqlx::query_scalar!(
@@ -206,7 +208,7 @@ async fn assigning_a_role_from_a_different_organization_returns_409() {
 }
 
 #[tokio::test]
-async fn assigning_an_org_scoped_role_to_a_user_without_an_organization_returns_409() {
+async fn assigning_an_org_scoped_role_to_a_user_without_an_organization_returns_422() {
     let app = spawn_app().await;
     let org = create_org(&app, "TBZ").await;
     let role_id = create_role(&app, &org, "Gießtrupp").await;
@@ -219,7 +221,7 @@ async fn assigning_an_org_scoped_role_to_a_user_without_an_organization_returns_
             &json!({ "role_id": role_id }),
         )
         .await;
-    assert_eq!(resp.status(), 409);
+    assert_eq!(resp.status(), 422);
 
     let assigned_roles: Vec<Uuid> = sqlx::query_scalar!(
         r#"SELECT role_id FROM role_assignments WHERE user_id = $1"#,
@@ -393,7 +395,7 @@ async fn assigning_a_role_to_yourself_returns_409() {
     // PATCH .../organization is itself blocked by the self-lock guard, so the
     // profile row is seeded directly, in the role's own organization — that
     // makes the org-match check pass, so the self-lock guard is what actually
-    // fires and the 409 below is not a false positive from OrganizationMismatch.
+    // fires and the 409 below is not a false positive from another guard.
     sqlx::query!(
         r#"INSERT INTO user_profiles (id, organization_id) VALUES ($1, $2)"#,
         self_uuid,

@@ -42,16 +42,51 @@ pub enum ServiceError {
     Role(#[from] domain::role::RoleError),
     #[error("organization still has sub-organizations or users")]
     OrganizationNotEmpty,
-    #[error("resource and organization do not match")]
-    OrganizationMismatch,
+    #[error(transparent)]
+    OrganizationMismatch(#[from] OrganizationMismatch),
     #[error("contact person is not a member of this organization")]
     ContactPersonNotAMember,
     #[error("tree is part of a cluster")]
     TreeInCluster,
+    #[error("sensor is bound to a tree and must be transferred with it")]
+    SensorBoundToTree,
     #[error("no organization given and the acting user has none")]
     MissingOrganization,
     #[error("a user cannot change their own roles or organization")]
     CannotChangeOwnAccess,
+}
+
+/// Which cross-aggregate organization rule a request violated.
+///
+/// Two entities may only be linked while they belong to the same
+/// organization; a request that would cross that boundary is rejected here
+/// rather than silently pulling one side along. The variants exist so clients
+/// can tell the cases apart — the `code` is a stable wire contract, the
+/// `Display` text is a fallback for clients without their own wording.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, thiserror::Error)]
+pub enum OrganizationMismatch {
+    #[error("the selected trees belong to a different organization than the cluster")]
+    TreesVsCluster,
+    #[error("the selected cluster belongs to a different organization than the tree")]
+    ClusterVsTree,
+    #[error("the sensor belongs to a different organization than the tree")]
+    SensorVsTree,
+    #[error("the selected clusters are outside the watering plan's organization")]
+    ClustersVsPlan,
+    #[error("the role belongs to a different organization than the user")]
+    RoleVsUser,
+}
+
+impl OrganizationMismatch {
+    pub fn code(self) -> &'static str {
+        match self {
+            Self::TreesVsCluster => "organization_mismatch.trees_vs_cluster",
+            Self::ClusterVsTree => "organization_mismatch.cluster_vs_tree",
+            Self::SensorVsTree => "organization_mismatch.sensor_vs_tree",
+            Self::ClustersVsPlan => "organization_mismatch.clusters_vs_plan",
+            Self::RoleVsUser => "organization_mismatch.role_vs_user",
+        }
+    }
 }
 
 impl From<ValidationError> for ServiceError {

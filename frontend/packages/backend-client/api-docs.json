@@ -224,6 +224,9 @@
               }
             }
           },
+          "422": {
+            "description": "A selected tree belongs to a different organization (code `organization_mismatch.trees_vs_cluster`)"
+          },
           "500": {
             "description": "Internal server error"
           }
@@ -389,6 +392,9 @@
           },
           "404": {
             "description": "Cluster not found"
+          },
+          "422": {
+            "description": "A selected tree belongs to a different organization (code `organization_mismatch.trees_vs_cluster`)"
           },
           "500": {
             "description": "Internal server error"
@@ -2120,6 +2126,9 @@
           "409": {
             "description": "Conflict: sensor or tree already linked"
           },
+          "422": {
+            "description": "Sensor and tree belong to different organizations (code `organization_mismatch.sensor_vs_tree`)"
+          },
           "500": {
             "description": "Internal server error"
           }
@@ -2429,6 +2438,9 @@
           "409": {
             "description": "Conflict: sensor not activated or tree already linked"
           },
+          "422": {
+            "description": "Sensor and tree belong to different organizations (code `organization_mismatch.sensor_vs_tree`)"
+          },
           "500": {
             "description": "Internal server error"
           }
@@ -2607,6 +2619,9 @@
           },
           "400": {
             "description": "Invalid input"
+          },
+          "422": {
+            "description": "The given cluster or sensor belongs to a different organization (codes `organization_mismatch.cluster_vs_tree`, `organization_mismatch.sensor_vs_tree`)"
           },
           "500": {
             "description": "Internal server error"
@@ -2869,6 +2884,9 @@
           },
           "404": {
             "description": "Tree not found"
+          },
+          "422": {
+            "description": "The given cluster or sensor belongs to a different organization (codes `organization_mismatch.cluster_vs_tree`, `organization_mismatch.sensor_vs_tree`)"
           },
           "500": {
             "description": "Internal server error"
@@ -3333,7 +3351,10 @@
             "description": "Role not found"
           },
           "409": {
-            "description": "Role is a template and cannot be assigned, the role's organization does not match the target user's organization, or attempting to change your own roles"
+            "description": "Role is a template and cannot be assigned, or attempting to change your own roles"
+          },
+          "422": {
+            "description": "The role's organization does not match the target user's organization (code `organization_mismatch.role_vs_user`)"
           },
           "500": {
             "description": "Internal server error"
@@ -3879,6 +3900,9 @@
           "400": {
             "description": "Invalid input"
           },
+          "422": {
+            "description": "A selected cluster is outside the plan's organization (code `organization_mismatch.clusters_vs_plan`)"
+          },
           "500": {
             "description": "Internal server error"
           }
@@ -4010,6 +4034,9 @@
           },
           "404": {
             "description": "Watering plan not found"
+          },
+          "422": {
+            "description": "A selected cluster is outside the plan's organization (code `organization_mismatch.clusters_vs_plan`)"
           },
           "500": {
             "description": "Internal server error"

@@ -70,7 +70,7 @@ async fn create_sensor_response_carries_organization_id() {
 }
 
 #[tokio::test]
-async fn activate_sensor_on_tree_from_foreign_org_conflicts() {
+async fn activate_sensor_on_tree_from_foreign_org_is_unprocessable() {
     let app = spawn_app().await;
     insert_tbz_org(&app).await;
     let model_id = app.ecodrizzler_model_id().await;
@@ -92,7 +92,9 @@ async fn activate_sensor_on_tree_from_foreign_org_conflicts() {
             &json!({ "tree_id": tree_id }),
         )
         .await;
-    assert_eq!(resp.status(), 409);
+    assert_eq!(resp.status(), 422);
+    let body: serde_json::Value = resp.json().await.unwrap();
+    assert_eq!(body["code"], "organization_mismatch.sensor_vs_tree");
 }
 
 #[tokio::test]
@@ -142,7 +144,7 @@ fn tree_create_payload(
 }
 
 #[tokio::test]
-async fn update_tree_with_sensor_from_foreign_org_conflicts() {
+async fn update_tree_with_sensor_from_foreign_org_is_unprocessable() {
     let app = spawn_app().await;
     insert_tbz_org(&app).await;
     let model_id = app.ecodrizzler_model_id().await;
@@ -164,11 +166,11 @@ async fn update_tree_with_sensor_from_foreign_org_conflicts() {
             &tree_update_payload("SCOPE-S-005", Some("eui-scope-005")),
         )
         .await;
-    assert_eq!(resp.status(), 409);
+    assert_eq!(resp.status(), 422);
 }
 
 #[tokio::test]
-async fn create_tree_with_sensor_from_foreign_org_conflicts() {
+async fn create_tree_with_sensor_from_foreign_org_is_unprocessable() {
     let app = spawn_app().await;
     insert_tbz_org(&app).await;
     let model_id = app.ecodrizzler_model_id().await;
@@ -188,7 +190,7 @@ async fn create_tree_with_sensor_from_foreign_org_conflicts() {
             &tree_create_payload("SCOPE-S-006", ROOT_ORG, Some("eui-scope-006")),
         )
         .await;
-    assert_eq!(resp.status(), 409);
+    assert_eq!(resp.status(), 422);
 }
 
 #[tokio::test]
@@ -217,7 +219,7 @@ async fn update_tree_with_sensor_from_same_org_returns_200() {
 }
 
 #[tokio::test]
-async fn reassign_sensor_to_tree_from_foreign_org_conflicts() {
+async fn reassign_sensor_to_tree_from_foreign_org_is_unprocessable() {
     let app = spawn_app().await;
     insert_tbz_org(&app).await;
     let model_id = app.ecodrizzler_model_id().await;
@@ -246,5 +248,5 @@ async fn reassign_sensor_to_tree_from_foreign_org_conflicts() {
             &json!({ "tree_id": foreign_tree_id }),
         )
         .await;
-    assert_eq!(resp.status(), 409);
+    assert_eq!(resp.status(), 422);
 }
