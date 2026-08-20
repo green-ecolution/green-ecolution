@@ -10,6 +10,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@green-ecolution/ui'
+import type { OrganizationResponse } from '@green-ecolution/backend-client'
 import { Controller, SubmitHandler, useFormContext, useFormState } from 'react-hook-form'
 import { SoilConditionOptions } from '@/hooks/details/useDetailsForSoilCondition'
 import { TreeclusterForm } from '@/schema/treeclusterSchema'
@@ -27,12 +28,18 @@ interface FormForTreeClusterProps {
   onBlur?: () => void
   fullWidth?: boolean
   emptyHint?: string
+  /** Selectable owning organizations; the field stays hidden below two. */
+  organizations?: OrganizationResponse[]
+  onOrganizationChange?: (organizationId: string) => void
+  /** Trees dropped by the last organization change. */
+  discardedTreeCount?: number
 }
 
 const FormForTreecluster = (props: FormForTreeClusterProps) => {
   const { handleSubmit, register, control } = useFormContext<TreeclusterForm>()
   const { isValid, errors } = useFormState({ control })
   const [soilDialogOpen, setSoilDialogOpen] = useState(false)
+  const organizations = props.organizations ?? []
 
   return (
     <form
@@ -46,6 +53,39 @@ const FormForTreecluster = (props: FormForTreeClusterProps) => {
       onBlur={props.onBlur}
     >
       <div className={props.fullWidth ? 'flex shrink-0 flex-col gap-y-6' : 'flex flex-col gap-y-6'}>
+        {organizations.length > 1 && (
+          <Controller
+            name="organizationId"
+            control={control}
+            render={({ field }) => (
+              <div className="flex flex-col gap-y-2">
+                <Label htmlFor="organizationId">
+                  Organisation
+                  <span className="text-destructive ml-1">*</span>
+                </Label>
+                <Combobox
+                  id="organizationId"
+                  options={organizations.map((org) => ({ value: org.id, label: org.name }))}
+                  value={field.value}
+                  onChange={props.onOrganizationChange ?? field.onChange}
+                  placeholder="Wähle eine Organisation aus"
+                  searchPlaceholder="Organisation suchen…"
+                />
+                <p className="text-sm text-dark-600">
+                  Die Gruppe gehört anschließend dieser Organisation. Auswählbar sind nur deren
+                  Bäume.
+                </p>
+                {(props.discardedTreeCount ?? 0) > 0 && (
+                  <p className="text-sm text-destructive">
+                    {props.discardedTreeCount === 1
+                      ? 'Ein bereits ausgewählter Baum gehört einer anderen Organisation und wurde entfernt.'
+                      : `${props.discardedTreeCount} bereits ausgewählte Bäume gehören einer anderen Organisation und wurden entfernt.`}
+                  </p>
+                )}
+              </div>
+            )}
+          />
+        )}
         <FormField label="Name" error={errors.name?.message} required {...register('name')} />
         <FormField
           label="Adresse"

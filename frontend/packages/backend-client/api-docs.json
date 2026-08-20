@@ -2683,6 +2683,20 @@
                 "$ref": "#/components/schemas/WateringStatus"
               }
             }
+          },
+          {
+            "name": "organization_id",
+            "in": "query",
+            "description": "Restricts the markers to trees owned by this organization.",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "format": "uuid"
+            },
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
           }
         ],
         "responses": {
@@ -7799,7 +7813,8 @@
           "longitude",
           "watering_status",
           "number",
-          "has_sensor"
+          "has_sensor",
+          "organization_id"
         ],
         "properties": {
           "has_sensor": {
@@ -7827,6 +7842,12 @@
           "number": {
             "type": "string",
             "example": "T-2024-0042"
+          },
+          "organization_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Owning organization. Lets the cluster forms tell selectable trees from\nforeign ones without a second request.",
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
           },
           "watering_status": {
             "$ref": "#/components/schemas/WateringStatus"

@@ -23,6 +23,8 @@ export interface TreeclusterForm {
   description: string
   soilCondition: string
   treeIds: string[]
+  /** Owning organization. Only sent on create; the backend defaults to the caller's org. */
+  organizationId?: string
 }
 
 export interface VehicleForm {

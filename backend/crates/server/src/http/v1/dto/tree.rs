@@ -233,6 +233,10 @@ pub struct TreeMarkerResponse {
     #[schema(example = "T-2024-0042")]
     pub number: String,
     pub has_sensor: bool,
+    /// Owning organization. Lets the cluster forms tell selectable trees from
+    /// foreign ones without a second request.
+    #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000")]
+    pub organization_id: uuid::Uuid,
 }
 
 impl From<&TreeMarker> for TreeMarkerResponse {
@@ -244,6 +248,7 @@ impl From<&TreeMarker> for TreeMarkerResponse {
             watering_status: m.watering_status.into(),
             number: m.tree_number.clone(),
             has_sensor: m.has_sensor,
+            organization_id: m.organization_id,
         }
     }
 }
@@ -267,6 +272,10 @@ pub struct TreeMarkerQueryParams {
     /// Repeatable: `?watering_status=good&watering_status=bad`.
     #[serde(default)]
     pub watering_status: Vec<WateringStatus>,
+    /// Restricts the markers to trees owned by this organization.
+    #[param(example = "0190a8e9-7c4f-7000-8000-000000000000", nullable)]
+    #[serde(default)]
+    pub organization_id: Option<uuid::Uuid>,
 }
 
 impl TreeMarkerQueryParams {

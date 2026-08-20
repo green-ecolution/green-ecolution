@@ -70,6 +70,7 @@ export interface ListTreeMarkersRequest {
     hasCluster?: boolean | null;
     plantingYear?: Array<number>;
     wateringStatus?: Array<WateringStatus>;
+    organizationId?: string | null;
 }
 
 export interface ListTreesRequest {
@@ -369,6 +370,10 @@ export class TreesApi extends runtime.BaseAPI {
 
         if (requestParameters['wateringStatus'] != null) {
             queryParameters['watering_status'] = requestParameters['wateringStatus'];
+        }
+
+        if (requestParameters['organizationId'] != null) {
+            queryParameters['organization_id'] = requestParameters['organizationId'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};

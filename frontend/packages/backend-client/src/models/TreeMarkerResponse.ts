@@ -58,6 +58,13 @@ export interface TreeMarkerResponse {
      */
     number: string;
     /**
+     * Owning organization. Lets the cluster forms tell selectable trees from
+     * foreign ones without a second request.
+     * @type {string}
+     * @memberof TreeMarkerResponse
+     */
+    organizationId: string;
+    /**
      * 
      * @type {WateringStatus}
      * @memberof TreeMarkerResponse
@@ -76,6 +83,7 @@ export function instanceOfTreeMarkerResponse(value: object): value is TreeMarker
     if (!('latitude' in value) || value['latitude'] === undefined) return false;
     if (!('longitude' in value) || value['longitude'] === undefined) return false;
     if (!('number' in value) || value['number'] === undefined) return false;
+    if (!('organizationId' in value) || value['organizationId'] === undefined) return false;
     if (!('wateringStatus' in value) || value['wateringStatus'] === undefined) return false;
     return true;
 }
@@ -95,6 +103,7 @@ export function TreeMarkerResponseFromJSONTyped(json: any, ignoreDiscriminator: 
         'latitude': json['latitude'],
         'longitude': json['longitude'],
         'number': json['number'],
+        'organizationId': json['organization_id'],
         'wateringStatus': WateringStatusFromJSON(json['watering_status']),
     };
 }
@@ -115,6 +124,7 @@ export function TreeMarkerResponseToJSONTyped(value?: TreeMarkerResponse | null,
         'latitude': value['latitude'],
         'longitude': value['longitude'],
         'number': value['number'],
+        'organization_id': value['organizationId'],
         'watering_status': WateringStatusToJSON(value['wateringStatus']),
     };
 }
