@@ -236,6 +236,35 @@ describe('FormForWateringPlan', () => {
     expect(options.some((opt) => opt.includes('Bernd Bürokraft'))).toBe(false)
   })
 
+  it('keeps a stored driver who is no longer selectable hidden from the picker while still validating their licence', () => {
+    const formValues: WateringPlanForm = {
+      ...defaultFormValues,
+      transporterId: 'vehicle-uuid-1',
+      driverIds: ['550e8400-e29b-41d4-a716-446655440002'],
+    }
+
+    render(
+      <TestWrapper defaultValues={formValues}>
+        <FormForWateringPlan
+          displayError={false}
+          transporters={mockTransporters}
+          trailers={mockTrailers}
+          users={mockUsers}
+          onAddCluster={mockOnAddCluster}
+          onSubmit={mockOnSubmit}
+        />
+      </TestWrapper>,
+    )
+
+    const userSelect = screen.getByRole('listbox', { name: /verknüpfte mitarbeitende/i })
+    const options = Array.from((userSelect as HTMLSelectElement).options).map((opt) => opt.text)
+    expect(options.some((opt) => opt.includes('Bernd Bürokraft'))).toBe(false)
+
+    expect(
+      screen.queryByText(/kein ausgewählter mitarbeiter hat alle erforderlichen führerscheine/i),
+    ).not.toBeInTheDocument()
+  })
+
   it('renders add cluster button', () => {
     render(
       <TestWrapper defaultValues={defaultFormValues}>
