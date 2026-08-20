@@ -4,7 +4,12 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactNode } from 'react'
 import { useVehicleForm } from './useVehicleForm'
 import { Toaster } from '@green-ecolution/ui'
-import { VehicleType, DrivingLicense, VehicleStatus } from '@green-ecolution/backend-client'
+import {
+  VehicleType,
+  DrivingLicense,
+  VehicleStatus,
+  ResponseError,
+} from '@green-ecolution/backend-client'
 import useStore from '@/store/store'
 
 vi.mock('@/api/backendApi', () => ({
@@ -257,5 +262,33 @@ describe('useVehicleForm', () => {
       expect(result.current.navigationBlocker).toBeDefined()
       expect(result.current.navigationBlocker.message).toContain('Fahrzeug')
     })
+  })
+
+  it('surfaces a rejected save as a German message instead of crashing the page', async () => {
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    const updateMock = vi.mocked(vehicleApi.updateVehicle)
+    updateMock.mockRejectedValueOnce(
+      new ResponseError(
+        new Response(JSON.stringify({ error: 'height: invalid type: string' }), {
+          status: 422,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+        'Response returned an error code',
+      ),
+    )
+
+    const { result } = renderHook(
+      () => useVehicleForm('update', { vehicleId: 'vehicle-uuid-1', initForm: defaultInitForm }),
+      { wrapper: createWrapper() },
+    )
+
+    act(() => {
+      result.current.mutate(defaultInitForm)
+    })
+
+    await waitFor(() => expect(result.current.isError).toBe(true))
+    expect(result.current.error?.message).toBe(
+      'Die eingegebenen Daten sind unvollständig oder ungültig.',
+    )
   })
 })
