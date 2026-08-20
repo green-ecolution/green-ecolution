@@ -2,7 +2,8 @@ import { useMutation } from '@tanstack/react-query'
 import { basePath } from '@/api/backendApi'
 import { useAuthSession } from '@/lib/auth/authSessionContext'
 import createToast from '@/hooks/createToast'
-import { isHTTPError } from '@/lib/utils'
+import { resolveApiError } from '@/lib/apiError'
+import { ResponseError } from '@green-ecolution/backend-client'
 
 /** Downloads the GPX file behind `gpxUrl` and triggers a browser save dialog. */
 export const useDownloadGpx = (gpxUrl: string) => {
@@ -19,9 +20,8 @@ export const useDownloadGpx = (gpxUrl: string) => {
       })
 
       if (resp.status !== 200) {
-        const json: unknown = await resp.json()
-        const errorMsg = isHTTPError(json) ? json.error : 'Unbekannter Fehler'
-        throw new Error(errorMsg)
+        const { message } = await resolveApiError(new ResponseError(resp))
+        throw new Error(message)
       }
 
       const blob = await resp.blob()

@@ -1,7 +1,7 @@
 use std::{collections::BTreeSet, sync::Arc};
 
+use crate::http::extractors::Json;
 use axum::{
-    Json,
     extract::{Path, Query, State},
     http::StatusCode,
 };

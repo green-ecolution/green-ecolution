@@ -1,7 +1,7 @@
 use std::{collections::HashMap, sync::Arc};
 
+use crate::http::extractors::Json;
 use axum::{
-    Json,
     extract::{Path, State},
     http::StatusCode,
 };

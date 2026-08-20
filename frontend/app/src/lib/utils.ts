@@ -34,3 +34,14 @@ export function isHTTPError(data: unknown): data is HTTPError {
 export function formatLiters(liters: number): string {
   return `${new Intl.NumberFormat('de-DE', { maximumFractionDigits: 0 }).format(liters)} L`
 }
+
+// RHF `setValueAs` for number inputs: German keyboards produce a decimal
+// comma, and unparsable input must stay a string so the domain validator
+// reports it as a field error instead of the value silently reaching the API.
+export function parseDecimalInput(value: unknown): unknown {
+  if (typeof value !== 'string') return value
+  const trimmed = value.trim()
+  if (trimmed === '') return value
+  const parsed = Number(trimmed.replace(',', '.'))
+  return Number.isFinite(parsed) ? parsed : value
+}

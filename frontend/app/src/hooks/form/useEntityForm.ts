@@ -8,6 +8,7 @@ import { useFormNavigationBlocker } from './useFormNavigationBlocker'
 import { useFormDraft } from '@/store/form/useFormDraft'
 import { useCallback } from 'react'
 import { FormType, MutationType } from '@/store/form/formDraftSlice'
+import { toApiError } from '@/lib/apiError'
 
 export interface EntityFormConfig<TForm extends FieldValues, TCreate, TUpdate, TEntity> {
   formType: FormType
@@ -72,13 +73,17 @@ export function useEntityForm<
   })
 
   const { mutate, isError, error } = useMutation({
-    mutationFn: (data: TCreate | TUpdate) => {
-      if (mutationType === 'create') {
-        return config.createFn(data as TCreate)
-      } else if (mutationType === 'update' && opts.entityId) {
-        return config.updateFn(opts.entityId, data as TUpdate)
+    mutationFn: async (data: TCreate | TUpdate) => {
+      try {
+        if (mutationType === 'create') {
+          return await config.createFn(data as TCreate)
+        } else if (mutationType === 'update' && opts.entityId) {
+          return await config.updateFn(opts.entityId, data as TUpdate)
+        }
+        throw new Error(`Invalid mutation type or missing entityId for update`)
+      } catch (error) {
+        throw await toApiError(error)
       }
-      return Promise.reject(new Error(`Invalid mutation type or missing entityId for update`))
     },
 
     onSuccess: (data: TEntity) => {
@@ -104,9 +109,11 @@ export function useEntityForm<
 
     onError: (error) => {
       console.error(`Error with ${config.formType} mutation:`, error)
-      showToast(`Fehlermeldung: ${error.message || 'Unbekannter Fehler'}`, 'error')
+      showToast(error.message || 'Unbekannter Fehler', 'error')
     },
-    throwOnError: true,
+    // A rejected save must not tear down the page: the form keeps the user's
+    // input and renders the message inline instead.
+    throwOnError: false,
   })
 
   return {

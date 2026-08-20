@@ -5,7 +5,7 @@ import ButtonLink from '../general/links/ButtonLink'
 import { MoveRight, RefreshCw } from 'lucide-react'
 import { useAuthSession } from '@/lib/auth/authSessionContext'
 import { ResponseError } from '@green-ecolution/backend-client'
-import { isHTTPError } from '@/lib/utils'
+import { resolveApiError } from '@/lib/apiError'
 import { Button } from '@green-ecolution/ui'
 
 interface ErrorFallbackProps {
@@ -14,7 +14,9 @@ interface ErrorFallbackProps {
 }
 
 const ErrorFallback: React.FC<ErrorFallbackProps> = ({ error, resetErrorBoundary }) => {
-  const [errorMessage, setErrorMessage] = useState(error.message)
+  const [errorMessage, setErrorMessage] = useState(() =>
+    error instanceof ResponseError ? 'Die Anfrage ist fehlgeschlagen.' : error.message,
+  )
   const [errorCode] = useState(() => {
     if (error instanceof ResponseError) {
       return error.response.status
@@ -23,21 +25,18 @@ const ErrorFallback: React.FC<ErrorFallbackProps> = ({ error, resetErrorBoundary
 
   const { isAuthenticated } = useAuthSession()
 
-  const checkResponseErrorMessage = useCallback(async () => {
-    if (error instanceof ResponseError) {
-      const json: unknown = await error.response.clone().json()
-      if (isHTTPError(json)) {
-        setErrorMessage(json.error)
-      } else {
-        setErrorMessage('Unbekannter Fehler')
-      }
+  const resolveErrorMessage = useCallback(async () => {
+    const { message, detail } = await resolveApiError(error)
+    if (detail && detail !== message) {
+      console.error('Request failed:', detail)
     }
+    setErrorMessage(message)
   }, [error])
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- async data fetching pattern
-    checkResponseErrorMessage().catch((e) => setErrorMessage(String(e)))
-  }, [checkResponseErrorMessage])
+    resolveErrorMessage().catch(() => setErrorMessage('Unbekannter Fehler'))
+  }, [resolveErrorMessage])
 
   return (
     <div className="relative">
@@ -49,7 +48,7 @@ const ErrorFallback: React.FC<ErrorFallbackProps> = ({ error, resetErrorBoundary
           <h1 className="font-lato font-bold text-4xl mb-4 lg:mb-6 lg:text-5xl lg:text-center xl:text-6xl">
             Upps, hier ist etwas schief gegangen!
           </h1>
-          <p className="lg:text-center">Folgender Fehler ist aufgetreten: {errorMessage}.</p>
+          <p className="lg:text-center">{errorMessage}</p>
           {errorCode && <p className="lg:text-center mb-5">Fehlercode: {errorCode}</p>}
           <div className="flex flex-col gap-y-4 lg:flex-row lg:items-center lg:justify-center lg:gap-x-4">
             <Button onClick={resetErrorBoundary}>

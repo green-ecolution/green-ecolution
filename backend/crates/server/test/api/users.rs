@@ -408,8 +408,9 @@ async fn assigning_a_role_to_yourself_returns_409() {
         .await;
 
     assert_eq!(resp.status(), 409);
+    let body: serde_json::Value = resp.json().await.unwrap();
     assert_eq!(
-        resp.text().await.unwrap(),
+        body["error"],
         "a user cannot change their own roles or organization"
     );
 
