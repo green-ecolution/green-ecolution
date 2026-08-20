@@ -213,3 +213,31 @@ async fn create_duplicate_plate_returns_409() {
 
     assert_eq!(response.status().as_u16(), 409);
 }
+
+#[tokio::test]
+async fn update_vehicle_with_string_number_returns_json_error_body() {
+    let app = spawn_app().await;
+
+    let create_resp = app
+        .post_json("/api/v1/vehicles", &vehicle_json("FL-GE 400"))
+        .await;
+    let created: serde_json::Value = create_resp.json().await.unwrap();
+    let id = created["id"].as_str().unwrap();
+
+    let mut update_body = vehicle_json("FL-GE 400");
+    update_body["height"] = serde_json::json!("1.88");
+
+    let response = app
+        .put_json(&format!("/api/v1/vehicles/{}", id), &update_body)
+        .await;
+
+    assert_eq!(response.status().as_u16(), 422);
+    let body: serde_json::Value = response
+        .json()
+        .await
+        .expect("malformed body must still yield a JSON error response");
+    assert!(
+        body["error"].as_str().unwrap_or_default().contains("height"),
+        "error body should name the offending field, got: {body}"
+    );
+}

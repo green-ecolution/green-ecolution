@@ -1,8 +1,8 @@
 use std::collections::BTreeSet;
 use std::sync::Arc;
 
+use crate::http::extractors::Json;
 use axum::{
-    Json,
     extract::{Path, State},
     http::StatusCode,
 };

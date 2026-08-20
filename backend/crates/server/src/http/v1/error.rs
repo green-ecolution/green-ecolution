@@ -1,7 +1,28 @@
 use axum::{http::StatusCode, response::IntoResponse};
+use serde::Serialize;
 
 use crate::service::{AuthError, ServiceError};
 use domain::{RepositoryError, routing::RoutingError};
+
+/// The body every failing endpoint returns. Clients parse the response as
+/// JSON regardless of status, so error paths must not fall back to plain text.
+#[derive(Debug, Serialize)]
+pub struct ErrorBody {
+    pub error: String,
+}
+
+pub(crate) fn error_response(
+    status: StatusCode,
+    message: impl Into<String>,
+) -> axum::response::Response {
+    (
+        status,
+        axum::Json(ErrorBody {
+            error: message.into(),
+        }),
+    )
+        .into_response()
+}
 
 /// Repository error details carry raw driver output (constraint and table
 /// names, connection errors). They are logged server-side; clients only ever
@@ -40,7 +61,7 @@ impl IntoResponse for AuthError {
             AuthError::IdpUnavailable(_) => "identity provider unavailable".to_string(),
             other => other.to_string(),
         };
-        (status, body).into_response()
+        error_response(status, body)
     }
 }
 
@@ -54,9 +75,9 @@ impl IntoResponse for ServiceError {
                 } else {
                     tracing::warn!(error = %e, kind = "repository", "request rejected");
                 }
-                (status, message).into_response()
+                error_response(status, message)
             }
-            ServiceError::InvalidInput(msg) => (StatusCode::BAD_REQUEST, msg).into_response(),
+            ServiceError::InvalidInput(msg) => error_response(StatusCode::BAD_REQUEST, msg),
             ServiceError::Auth(e) => e.into_response(),
             e @ (ServiceError::TreeAlreadyHasSensor
             | ServiceError::SensorAlreadyAssigned
@@ -67,9 +88,9 @@ impl IntoResponse for ServiceError {
             | ServiceError::OrganizationNotEmpty
             | ServiceError::OrganizationMismatch
             | ServiceError::CannotChangeOwnAccess
-            | ServiceError::TreeInCluster) => (StatusCode::CONFLICT, e.to_string()).into_response(),
+            | ServiceError::TreeInCluster) => error_response(StatusCode::CONFLICT, e.to_string()),
             e @ (ServiceError::MissingOrganization | ServiceError::ContactPersonNotAMember) => {
-                (StatusCode::UNPROCESSABLE_ENTITY, e.to_string()).into_response()
+                error_response(StatusCode::UNPROCESSABLE_ENTITY, e.to_string())
             }
             ServiceError::Routing(e) => {
                 let (status, message) = match &e {
@@ -86,10 +107,10 @@ impl IntoResponse for ServiceError {
                     ),
                 };
                 tracing::error!(error = %e, kind = "routing", "request failed");
-                (status, message).into_response()
+                error_response(status, message)
             }
             e @ ServiceError::FeatureDisabled { .. } => {
-                (StatusCode::SERVICE_UNAVAILABLE, e.to_string()).into_response()
+                error_response(StatusCode::SERVICE_UNAVAILABLE, e.to_string())
             }
         }
     }
@@ -165,5 +186,28 @@ mod tests {
             !body.contains("keycloak:8080"),
             "internal auth URL must not leak to the client, got: {body}"
         );
+    }
+
+    #[tokio::test]
+    async fn error_body_is_json_so_clients_can_parse_every_response() {
+        let err = ServiceError::Repository(RepositoryError::NotFound);
+        let response = err.into_response();
+        assert_eq!(
+            response
+                .headers()
+                .get(axum::http::header::CONTENT_TYPE)
+                .and_then(|v| v.to_str().ok()),
+            Some("application/json")
+        );
+        let body: serde_json::Value = serde_json::from_str(&body_of(response).await).unwrap();
+        assert_eq!(body["error"], "resource not found");
+    }
+
+    #[tokio::test]
+    async fn auth_error_body_is_json() {
+        let response = AuthError::Forbidden.into_response();
+        assert_eq!(response.status(), StatusCode::FORBIDDEN);
+        let body: serde_json::Value = serde_json::from_str(&body_of(response).await).unwrap();
+        assert!(body["error"].is_string());
     }
 }
