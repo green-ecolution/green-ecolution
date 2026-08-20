@@ -357,3 +357,37 @@ impl TryFrom<UserRegisterRequest> for DomainUserCreate {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn request_with_selectable(watering_plan_selectable: bool) -> UserUpdateRequest {
+        UserUpdateRequest {
+            employee_id: None,
+            phone_number: None,
+            avatar_url: None,
+            status: UserStatus::Available,
+            driving_licenses: Vec::new(),
+            watering_plan_selectable,
+        }
+    }
+
+    #[test]
+    fn try_into_profile_carries_watering_plan_selectable_true() {
+        let profile = request_with_selectable(true)
+            .try_into_profile(Uuid::now_v7())
+            .expect("valid request");
+
+        assert!(profile.watering_plan_selectable);
+    }
+
+    #[test]
+    fn try_into_profile_carries_watering_plan_selectable_false() {
+        let profile = request_with_selectable(false)
+            .try_into_profile(Uuid::now_v7())
+            .expect("valid request");
+
+        assert!(!profile.watering_plan_selectable);
+    }
+}
