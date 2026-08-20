@@ -1,66 +1,88 @@
 import { FetchError, ResponseError } from '@green-ecolution/backend-client'
 import { isHTTPError } from './utils'
+import { messageFor, type ApiErrorMessageKey } from './apiErrorMessages'
 
 export interface ApiErrorInfo {
   /** German sentence intended for the user. */
   message: string
-  /** Raw backend detail, kept for logging and unmapped status codes. */
+  /** Catalog key the message came from, so an i18n layer can re-translate it. */
+  messageKey: ApiErrorMessageKey
+  /** Stable cause the backend named, when it sent one. */
+  code?: string
+  /** Raw backend detail, kept for logging and unmapped causes. */
   detail?: string
   status?: number
 }
 
-const statusMessages: Record<number, string> = {
-  400: 'Die Anfrage war fehlerhaft und konnte nicht verarbeitet werden.',
-  401: 'Die Anmeldung ist abgelaufen. Bitte melde dich erneut an.',
-  403: 'Für diese Aktion fehlt dir die Berechtigung.',
-  404: 'Der angeforderte Datensatz wurde nicht gefunden.',
-  409: 'Der Datensatz existiert bereits oder wurde zwischenzeitlich geändert.',
-  415: 'Das Format der Anfrage wird nicht unterstützt.',
-  422: 'Die eingegebenen Daten sind unvollständig oder ungültig.',
-  500: 'Auf dem Server ist ein unerwarteter Fehler aufgetreten.',
-  502: 'Ein nachgelagerter Dienst hat nicht geantwortet.',
-  503: 'Der Dienst ist derzeit nicht erreichbar. Bitte versuche es später erneut.',
+interface ErrorPayload {
+  detail?: string
+  code?: string
 }
 
-// Error bodies are JSON `{ error }`, but a proxy or a crash can still deliver
-// HTML or an empty body — parsing must never throw here, or the error handling
-// itself becomes the reported error.
-async function readDetail(response: Response): Promise<string | undefined> {
+// Error bodies are JSON `{ error, code? }`, but a proxy or a crash can still
+// deliver HTML or an empty body — parsing must never throw here, or the error
+// handling itself becomes the reported error.
+async function readPayload(response: Response): Promise<ErrorPayload> {
   try {
     const text = await response.clone().text()
-    if (!text.trim()) return undefined
+    if (!text.trim()) return {}
     try {
       const parsed: unknown = JSON.parse(text)
-      return isHTTPError(parsed) ? parsed.error : text
+      if (!isHTTPError(parsed)) return { detail: text }
+      const code = 'code' in parsed && typeof parsed.code === 'string' ? parsed.code : undefined
+      return { detail: parsed.error, code }
     } catch {
-      return text
+      return { detail: text }
     }
   } catch {
-    return undefined
+    return {}
+  }
+}
+
+/**
+ * The named cause wins over the status, because a status covers several causes
+ * — a 422 alone cannot say whether an input was missing or two entities from
+ * different organizations were combined.
+ */
+function resolveMessage(
+  status: number,
+  { detail, code }: ErrorPayload,
+): Pick<ApiErrorInfo, 'message' | 'messageKey'> {
+  const keys: ApiErrorMessageKey[] = code
+    ? [`code.${code}`, `status.${status}`]
+    : [`status.${status}`]
+  for (const key of keys) {
+    const message = messageFor(key)
+    if (message) return { message, messageKey: key }
+  }
+  if (detail) return { message: detail, messageKey: 'detail' }
+  return {
+    message: messageFor('status.unknown', { status }) ?? `Status ${status}`,
+    messageKey: 'status.unknown',
   }
 }
 
 export async function resolveApiError(error: unknown): Promise<ApiErrorInfo> {
   if (error instanceof ResponseError) {
     const status = error.response.status
-    const detail = await readDetail(error.response)
-    const mapped = statusMessages[status]
+    const payload = await readPayload(error.response)
     return {
       status,
-      detail,
-      message: mapped ?? detail ?? `Der Server hat mit Status ${status} geantwortet.`,
+      code: payload.code,
+      detail: payload.detail,
+      ...resolveMessage(status, payload),
     }
   }
 
   if (error instanceof FetchError) {
-    return { message: 'Der Server ist nicht erreichbar. Bitte prüfe deine Verbindung.' }
+    return { message: messageFor('offline') ?? '', messageKey: 'offline' }
   }
 
   if (error instanceof Error && error.message) {
-    return { message: error.message }
+    return { message: error.message, messageKey: 'detail' }
   }
 
-  return { message: 'Unbekannter Fehler' }
+  return { message: messageFor('unknown') ?? '', messageKey: 'unknown' }
 }
 
 /** Carries the user-facing message so React Query consumers can render it directly. */

@@ -170,6 +170,7 @@ pub async fn get_tree(
     responses(
         (status = 201, description = "Tree created", body = TreeResponse),
         (status = 400, description = "Invalid input"),
+        (status = 422, description = "The given cluster or sensor belongs to a different organization (codes `organization_mismatch.cluster_vs_tree`, `organization_mismatch.sensor_vs_tree`)"),
         (status = 500, description = "Internal server error"),
     )
 )]
@@ -226,6 +227,7 @@ pub async fn create_tree(
         (status = 200, description = "Tree updated", body = TreeResponse),
         (status = 403, description = "Missing tree:update in the owning organization"),
         (status = 404, description = "Tree not found"),
+        (status = 422, description = "The given cluster or sensor belongs to a different organization (codes `organization_mismatch.cluster_vs_tree`, `organization_mismatch.sensor_vs_tree`)"),
         (status = 500, description = "Internal server error"),
     )
 )]

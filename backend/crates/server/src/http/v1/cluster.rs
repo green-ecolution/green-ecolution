@@ -214,6 +214,7 @@ pub async fn get_cluster(
     request_body = TreeClusterCreateRequest,
     responses(
         (status = 201, description = "Cluster created", body = TreeClusterResponse),
+        (status = 422, description = "A selected tree belongs to a different organization (code `organization_mismatch.trees_vs_cluster`)"),
         (status = 500, description = "Internal server error"),
     )
 )]
@@ -252,6 +253,7 @@ pub async fn create_cluster(
         (status = 200, description = "Cluster updated", body = TreeClusterResponse),
         (status = 403, description = "Missing tree_cluster:update in the owning organization"),
         (status = 404, description = "Cluster not found"),
+        (status = 422, description = "A selected tree belongs to a different organization (code `organization_mismatch.trees_vs_cluster`)"),
         (status = 500, description = "Internal server error"),
     )
 )]

@@ -9,16 +9,40 @@ use domain::{RepositoryError, routing::RoutingError};
 #[derive(Debug, Serialize)]
 pub struct ErrorBody {
     pub error: String,
+    /// Stable discriminator for causes a client has to tell apart, e.g. to
+    /// pick its own localized wording. Absent where the status and message
+    /// already say enough — clients must treat it as optional and never
+    /// depend on `error`, which is prose and may be reworded.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub code: Option<&'static str>,
 }
 
 pub(crate) fn error_response(
     status: StatusCode,
     message: impl Into<String>,
 ) -> axum::response::Response {
+    body_response(status, message, None)
+}
+
+/// `error_response` plus the stable `code` discriminator.
+pub(crate) fn coded_error_response(
+    status: StatusCode,
+    message: impl Into<String>,
+    code: &'static str,
+) -> axum::response::Response {
+    body_response(status, message, Some(code))
+}
+
+fn body_response(
+    status: StatusCode,
+    message: impl Into<String>,
+    code: Option<&'static str>,
+) -> axum::response::Response {
     (
         status,
         axum::Json(ErrorBody {
             error: message.into(),
+            code,
         }),
     )
         .into_response()
@@ -86,9 +110,16 @@ impl IntoResponse for ServiceError {
             | ServiceError::Organization(_)
             | ServiceError::Role(_)
             | ServiceError::OrganizationNotEmpty
-            | ServiceError::OrganizationMismatch
             | ServiceError::CannotChangeOwnAccess
+            | ServiceError::SensorBoundToTree
             | ServiceError::TreeInCluster) => error_response(StatusCode::CONFLICT, e.to_string()),
+            // Not a conflict with stored state: the request combines two
+            // entities that may not be linked, which is an input problem.
+            ServiceError::OrganizationMismatch(kind) => coded_error_response(
+                StatusCode::UNPROCESSABLE_ENTITY,
+                kind.to_string(),
+                kind.code(),
+            ),
             e @ (ServiceError::MissingOrganization | ServiceError::ContactPersonNotAMember) => {
                 error_response(StatusCode::UNPROCESSABLE_ENTITY, e.to_string())
             }
@@ -119,6 +150,7 @@ impl IntoResponse for ServiceError {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::service::OrganizationMismatch;
     use axum::response::IntoResponse;
 
     async fn body_of(response: axum::response::Response) -> String {
@@ -164,6 +196,53 @@ mod tests {
         assert!(
             !body.contains("connection refused"),
             "driver detail must not leak to the client, got: {body}"
+        );
+    }
+
+    #[tokio::test]
+    async fn organization_mismatch_is_unprocessable_and_carries_its_code() {
+        let err = ServiceError::OrganizationMismatch(OrganizationMismatch::TreesVsCluster);
+        let response = err.into_response();
+        assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
+        let body = body_of(response).await;
+        assert!(
+            body.contains("organization_mismatch.trees_vs_cluster"),
+            "clients pick their wording by code, got: {body}"
+        );
+        assert!(
+            body.contains("cluster"),
+            "message must name the violated relation, got: {body}"
+        );
+    }
+
+    #[test]
+    fn every_mismatch_kind_has_a_distinct_code() {
+        let kinds = [
+            OrganizationMismatch::TreesVsCluster,
+            OrganizationMismatch::ClusterVsTree,
+            OrganizationMismatch::SensorVsTree,
+            OrganizationMismatch::ClustersVsPlan,
+            OrganizationMismatch::RoleVsUser,
+        ];
+        let codes: std::collections::HashSet<&str> = kinds.iter().map(|k| k.code()).collect();
+        assert_eq!(codes.len(), kinds.len(), "codes must be unique: {codes:?}");
+        assert!(
+            kinds
+                .iter()
+                .all(|k| k.code().starts_with("organization_mismatch.")),
+            "codes are namespaced so a client can group them"
+        );
+    }
+
+    #[tokio::test]
+    async fn errors_without_a_code_omit_the_field() {
+        let err = ServiceError::TreeInCluster;
+        let response = err.into_response();
+        assert_eq!(response.status(), StatusCode::CONFLICT);
+        let body = body_of(response).await;
+        assert!(
+            !body.contains("code"),
+            "an absent code must not surface as null, got: {body}"
         );
     }
 

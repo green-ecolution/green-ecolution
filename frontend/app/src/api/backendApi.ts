@@ -40,9 +40,10 @@ let signinRedirectInFlight = false
 const backendFetch: FetchAPI = async (resource, config) => {
   const response = await fetch(resource, await withAuthHeader(config))
 
-  // axum's Json extractor rejects malformed bodies with 422 before our handlers run,
-  // so treat it like 401 and force a fresh sign-in.
-  if ((response.status === 401 || response.status === 422) && !signinRedirectInFlight) {
+  // Only 401 means the session is gone. 422 is a domain rejection the backend
+  // sends with a message (invalid input, organization mismatch, …) — sending
+  // the user through a fresh sign-in would swallow it.
+  if (response.status === 401 && !signinRedirectInFlight) {
     signinRedirectInFlight = true
     try {
       await getAuthSession().signinRedirect({
@@ -56,7 +57,8 @@ const backendFetch: FetchAPI = async (resource, config) => {
   return response
 }
 
-// preview errors must stay silent — a 422 here is a routing problem, not an auth problem.
+// Route-preview calls fail routinely while a plan is still being assembled and
+// must never bounce the user to the login page.
 const silentFetch: FetchAPI = async (resource, config) =>
   fetch(resource, await withAuthHeader(config))
 

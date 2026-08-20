@@ -329,6 +329,7 @@ pub async fn create_sensor(
         (status = 403, description = "Missing sensor:update or tree:update in the owning organization"),
         (status = 404, description = "Sensor or tree not found"),
         (status = 409, description = "Conflict: sensor or tree already linked"),
+        (status = 422, description = "Sensor and tree belong to different organizations (code `organization_mismatch.sensor_vs_tree`)"),
         (status = 500, description = "Internal server error"),
     )
 )]
@@ -385,6 +386,7 @@ pub async fn activate_sensor(
         (status = 403, description = "Missing sensor:update or tree:update in the owning organization"),
         (status = 404, description = "Sensor or tree not found"),
         (status = 409, description = "Conflict: sensor not activated or tree already linked"),
+        (status = 422, description = "Sensor and tree belong to different organizations (code `organization_mismatch.sensor_vs_tree`)"),
         (status = 500, description = "Internal server error"),
     )
 )]

@@ -17,7 +17,7 @@ use domain::{
     },
 };
 
-use super::{ServiceError, event_bus::EventBus};
+use super::{OrganizationMismatch, ServiceError, event_bus::EventBus};
 
 pub struct WateringPlanService {
     reader: Arc<dyn WateringPlanReader>,
@@ -82,7 +82,7 @@ impl WateringPlanService {
         {
             Ok(())
         } else {
-            Err(ServiceError::OrganizationMismatch)
+            Err(OrganizationMismatch::ClustersVsPlan.into())
         }
     }
 

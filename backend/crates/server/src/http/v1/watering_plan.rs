@@ -262,6 +262,7 @@ pub async fn get_watering_plan(
     responses(
         (status = 201, description = "Watering plan created", body = WateringPlanResponse),
         (status = 400, description = "Invalid input"),
+        (status = 422, description = "A selected cluster is outside the plan's organization (code `organization_mismatch.clusters_vs_plan`)"),
         (status = 500, description = "Internal server error"),
     )
 )]
@@ -330,6 +331,7 @@ pub async fn create_watering_plan(
     responses(
         (status = 200, description = "Watering plan updated", body = WateringPlanResponse),
         (status = 404, description = "Watering plan not found"),
+        (status = 422, description = "A selected cluster is outside the plan's organization (code `organization_mismatch.clusters_vs_plan`)"),
         (status = 500, description = "Internal server error"),
     )
 )]
