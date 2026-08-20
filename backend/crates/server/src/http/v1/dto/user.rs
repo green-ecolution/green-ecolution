@@ -227,6 +227,8 @@ impl UserUpdateRequest {
             avatar_url,
             status: self.status.into(),
             driving_licenses: self.driving_licenses.into_iter().map(Into::into).collect(),
+            // Not yet exposed on this DTO; wiring it through is a follow-up task.
+            watering_plan_selectable: true,
         })
     }
 }
@@ -338,6 +340,7 @@ impl TryFrom<UserRegisterRequest> for DomainUserCreate {
                 .map(DomainUserStatus::from)
                 .unwrap_or(DomainUserStatus::Available),
             driving_licenses: value.driving_licenses.into_iter().map(Into::into).collect(),
+            watering_plan_selectable: true,
         })
     }
 }

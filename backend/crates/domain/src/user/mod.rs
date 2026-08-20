@@ -70,6 +70,7 @@ pub struct UserView {
     pub roles: Vec<RoleView>,
     pub driving_licenses: Vec<DrivingLicense>,
     pub status: UserStatus,
+    pub watering_plan_selectable: bool,
 }
 
 /// Input for creating a new user: identity fields plus the DB-owned
@@ -88,6 +89,7 @@ pub struct UserCreate {
     pub avatar_url: Option<Url>,
     pub status: UserStatus,
     pub driving_licenses: Vec<DrivingLicense>,
+    pub watering_plan_selectable: bool,
 }
 
 /// Input for creating the identity in the IdP. Organization membership and

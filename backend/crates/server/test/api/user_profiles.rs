@@ -24,6 +24,7 @@ fn sample_profile(id: Uuid) -> UserProfile {
         avatar_url: Some(url::Url::parse("https://example.com/a.png").unwrap()),
         status: UserStatus::Absent,
         driving_licenses: vec![DrivingLicense::B, DrivingLicense::CE],
+        watering_plan_selectable: false,
     }
 }
 
@@ -71,4 +72,16 @@ async fn by_ids_skips_missing_rows() {
     let loaded = repo.by_ids(&[existing, Uuid::now_v7()]).await.unwrap();
     assert_eq!(loaded.len(), 1);
     assert_eq!(loaded[0].id, existing);
+}
+
+#[tokio::test]
+async fn fresh_profile_row_is_selectable_for_watering_plans() {
+    let app = spawn_app().await;
+    let repo = PgUserProfileRepository::new(app.db_pool.clone());
+    let id = Uuid::now_v7();
+
+    seed_profile_row(&repo, id).await;
+
+    let loaded = repo.by_ids(&[id]).await.unwrap();
+    assert!(loaded[0].watering_plan_selectable);
 }
