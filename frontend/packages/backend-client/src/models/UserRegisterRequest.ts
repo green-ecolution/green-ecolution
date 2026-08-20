@@ -106,6 +106,12 @@ export interface UserRegisterRequest {
      * @memberof UserRegisterRequest
      */
     username: string;
+    /**
+     * Whether the new user may be assigned to watering plans (defaults to true).
+     * @type {boolean}
+     * @memberof UserRegisterRequest
+     */
+    wateringPlanSelectable?: boolean | null;
 }
 
 
@@ -145,6 +151,7 @@ export function UserRegisterRequestFromJSONTyped(json: any, ignoreDiscriminator:
         'roleIds': json['role_ids'] == null ? undefined : json['role_ids'],
         'status': json['status'] == null ? undefined : UserStatusFromJSON(json['status']),
         'username': json['username'],
+        'wateringPlanSelectable': json['watering_plan_selectable'] == null ? undefined : json['watering_plan_selectable'],
     };
 }
 
@@ -171,6 +178,7 @@ export function UserRegisterRequestToJSONTyped(value?: UserRegisterRequest | nul
         'role_ids': value['roleIds'],
         'status': UserStatusToJSON(value['status']),
         'username': value['username'],
+        'watering_plan_selectable': value['wateringPlanSelectable'],
     };
 }
 

@@ -132,6 +132,12 @@ export interface UserResponse {
      * @memberof UserResponse
      */
     username: string;
+    /**
+     * Whether the user may be assigned to watering plans.
+     * @type {boolean}
+     * @memberof UserResponse
+     */
+    wateringPlanSelectable: boolean;
 }
 
 
@@ -153,6 +159,7 @@ export function instanceOfUserResponse(value: object): value is UserResponse {
     if (!('roles' in value) || value['roles'] === undefined) return false;
     if (!('status' in value) || value['status'] === undefined) return false;
     if (!('username' in value) || value['username'] === undefined) return false;
+    if (!('wateringPlanSelectable' in value) || value['wateringPlanSelectable'] === undefined) return false;
     return true;
 }
 
@@ -180,6 +187,7 @@ export function UserResponseFromJSONTyped(json: any, ignoreDiscriminator: boolea
         'roles': ((json['roles'] as Array<any>).map(RoleResponseFromJSON)),
         'status': UserStatusFromJSON(json['status']),
         'username': json['username'],
+        'wateringPlanSelectable': json['watering_plan_selectable'],
     };
 }
 
@@ -208,6 +216,7 @@ export function UserResponseToJSONTyped(value?: UserResponse | null, ignoreDiscr
         'roles': ((value['roles'] as Array<any>).map(RoleResponseToJSON)),
         'status': UserStatusToJSON(value['status']),
         'username': value['username'],
+        'watering_plan_selectable': value['wateringPlanSelectable'],
     };
 }
 

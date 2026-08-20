@@ -64,6 +64,12 @@ export interface UserUpdateRequest {
      * @memberof UserUpdateRequest
      */
     status: UserStatus;
+    /**
+     * Whether the user may be assigned to watering plans.
+     * @type {boolean}
+     * @memberof UserUpdateRequest
+     */
+    wateringPlanSelectable: boolean;
 }
 
 
@@ -74,6 +80,7 @@ export interface UserUpdateRequest {
 export function instanceOfUserUpdateRequest(value: object): value is UserUpdateRequest {
     if (!('drivingLicenses' in value) || value['drivingLicenses'] === undefined) return false;
     if (!('status' in value) || value['status'] === undefined) return false;
+    if (!('wateringPlanSelectable' in value) || value['wateringPlanSelectable'] === undefined) return false;
     return true;
 }
 
@@ -92,6 +99,7 @@ export function UserUpdateRequestFromJSONTyped(json: any, ignoreDiscriminator: b
         'employeeId': json['employee_id'] == null ? undefined : json['employee_id'],
         'phoneNumber': json['phone_number'] == null ? undefined : json['phone_number'],
         'status': UserStatusFromJSON(json['status']),
+        'wateringPlanSelectable': json['watering_plan_selectable'],
     };
 }
 
@@ -111,6 +119,7 @@ export function UserUpdateRequestToJSONTyped(value?: UserUpdateRequest | null, i
         'employee_id': value['employeeId'],
         'phone_number': value['phoneNumber'],
         'status': UserStatusToJSON(value['status']),
+        'watering_plan_selectable': value['wateringPlanSelectable'],
     };
 }
 
