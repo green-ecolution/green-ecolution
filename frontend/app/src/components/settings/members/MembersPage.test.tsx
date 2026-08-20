@@ -55,6 +55,7 @@ const member = (
   avatarUrl: avatarOf(id),
   createdAt: '2026-01-02T00:00:00Z',
   drivingLicenses: [],
+  wateringPlanSelectable: true,
   roles,
   status: 'available',
   organization: ORGS.find((org) => org.id === orgId),

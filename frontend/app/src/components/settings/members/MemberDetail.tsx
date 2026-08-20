@@ -27,6 +27,7 @@ interface MemberDetailProps {
   onDrivingLicensesChange: (licenses: DrivingLicense[]) => void
   onPhoneNumberChange: (value: string) => void
   onEmployeeIdChange: (value: string) => void
+  onWateringPlanSelectableChange: (value: boolean) => void
   onRoleAssign: (roleId: string) => void
   onRoleRevoke: (roleId: string) => void
   onOrganizationChange: (orgId: string) => void
@@ -59,6 +60,7 @@ const MemberDetail = ({
   onDrivingLicensesChange,
   onPhoneNumberChange,
   onEmployeeIdChange,
+  onWateringPlanSelectableChange,
   onRoleAssign,
   onRoleRevoke,
   onOrganizationChange,
@@ -128,6 +130,7 @@ const MemberDetail = ({
             onDrivingLicensesChange={onDrivingLicensesChange}
             onPhoneNumberChange={onPhoneNumberChange}
             onEmployeeIdChange={onEmployeeIdChange}
+            onWateringPlanSelectableChange={onWateringPlanSelectableChange}
           />
         </div>
       </div>

@@ -52,6 +52,7 @@ const makeUser = (id: string, licenses: DrivingLicense[]): User => ({
   drivingLicenses: licenses,
   roles: [],
   status: UserStatus.Available,
+  wateringPlanSelectable: true,
 })
 
 const makeVehicle = (id: string, license: DrivingLicense, type: VehicleType): Vehicle => ({

@@ -1,4 +1,4 @@
-import { FormField, Label, MultiSelect, SelectField } from '@green-ecolution/ui'
+import { FormField, Label, MultiSelect, SelectField, Switch } from '@green-ecolution/ui'
 import { translateIssue } from '@green-ecolution/domain-wasm'
 import type { DrivingLicense, UserStatus } from '@green-ecolution/backend-client'
 import {
@@ -17,6 +17,7 @@ interface MemberProfileCardProps {
   onDrivingLicensesChange: (licenses: DrivingLicense[]) => void
   onPhoneNumberChange: (value: string) => void
   onEmployeeIdChange: (value: string) => void
+  onWateringPlanSelectableChange: (value: boolean) => void
 }
 
 const StaticField = ({ label, value }: { label: string; value: string }) => (
@@ -33,6 +34,7 @@ const MemberProfileCard = ({
   onDrivingLicensesChange,
   onPhoneNumberChange,
   onEmployeeIdChange,
+  onWateringPlanSelectableChange,
 }: MemberProfileCardProps) => {
   const licenseLabels = draft.drivingLicenses
     .map((license) => getDrivingLicenseDetails(license).label)
@@ -83,6 +85,22 @@ const MemberProfileCard = ({
               onChange={(event) => onEmployeeIdChange(event.target.value)}
               placeholder="z. B. EMP-042"
             />
+            <div className="flex flex-col gap-y-2 @min-[36rem]:col-span-2">
+              <div className="flex items-center gap-x-3">
+                <Switch
+                  id="member-watering-plan-selectable"
+                  checked={draft.wateringPlanSelectable}
+                  onCheckedChange={onWateringPlanSelectableChange}
+                />
+                <Label htmlFor="member-watering-plan-selectable">
+                  Für Einsatzplanung auswählbar
+                </Label>
+              </div>
+              <p className="text-sm text-dark-600">
+                Nur gekennzeichnete Personen erscheinen in der Auswahl der verknüpften
+                Mitarbeitenden eines Einsatzplans.
+              </p>
+            </div>
           </>
         ) : (
           <>
@@ -90,6 +108,10 @@ const MemberProfileCard = ({
             <StaticField label="Führerscheinklassen" value={licenseLabels} />
             <StaticField label="Telefonnummer" value={draft.phoneNumber} />
             <StaticField label="Personalnummer" value={draft.employeeId} />
+            <StaticField
+              label="Für Einsatzplanung auswählbar"
+              value={draft.wateringPlanSelectable ? 'Ja' : 'Nein'}
+            />
           </>
         )}
       </div>

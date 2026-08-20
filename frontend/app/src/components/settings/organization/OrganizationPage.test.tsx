@@ -44,6 +44,7 @@ const member = (id: string, firstName: string, lastName: string, orgId: string):
   avatarUrl: '',
   createdAt: '2026-01-02T00:00:00Z',
   drivingLicenses: [],
+  wateringPlanSelectable: true,
   roles: [],
   status: 'available',
   organization: BASE_ORGS.find((org) => org.id === orgId),

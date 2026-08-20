@@ -28,6 +28,7 @@ export interface UpdateProfileVariables {
   avatarUrl: string | null
   status: UserStatus
   drivingLicenses: DrivingLicense[]
+  wateringPlanSelectable: boolean
 }
 
 /** 403 (role exceeds own grants) and 409 (own account) are shown at the card. */
@@ -90,10 +91,18 @@ export const useUserMutations = () => {
       avatarUrl,
       status,
       drivingLicenses,
+      wateringPlanSelectable,
     }: UpdateProfileVariables) =>
       userApi.updateUser({
         userId,
-        userUpdateRequest: { employeeId, phoneNumber, avatarUrl, status, drivingLicenses },
+        userUpdateRequest: {
+          employeeId,
+          phoneNumber,
+          avatarUrl,
+          status,
+          drivingLicenses,
+          wateringPlanSelectable,
+        },
       }),
     onSuccess: () => {
       invalidate()

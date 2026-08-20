@@ -284,6 +284,7 @@ const MembersPage = () => {
         avatarUrl: draft.avatarUrl,
         status: draft.status,
         drivingLicenses: draft.drivingLicenses,
+        wateringPlanSelectable: draft.wateringPlanSelectable,
       },
       {
         onSuccess: (updated) => {
@@ -350,6 +351,7 @@ const MembersPage = () => {
           onDrivingLicensesChange={draftState.setDrivingLicenses}
           onPhoneNumberChange={draftState.setPhoneNumber}
           onEmployeeIdChange={draftState.setEmployeeId}
+          onWateringPlanSelectableChange={draftState.setWateringPlanSelectable}
           onRoleAssign={assign}
           onRoleRevoke={revoke}
           onOrganizationChange={setConfirmOrgChange}
