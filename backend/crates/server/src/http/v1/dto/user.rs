@@ -33,7 +33,8 @@ use crate::http::v1::pagination::{default_page, default_per_page};
     "status": "Available",
     "organization": null,
     "roles": [],
-    "driving_licenses": ["B"]
+    "driving_licenses": ["B"],
+    "watering_plan_selectable": true
 }))]
 pub struct UserResponse {
     /// Unique user identifier (UUID).
@@ -74,6 +75,9 @@ pub struct UserResponse {
     pub roles: Vec<RoleResponse>,
     /// Driving licenses held by the user.
     pub driving_licenses: Vec<DrivingLicense>,
+    /// Whether the user may be assigned to watering plans.
+    #[schema(example = true)]
+    pub watering_plan_selectable: bool,
 }
 
 /// Request body for registering a new user.
@@ -90,7 +94,8 @@ pub struct UserResponse {
     "phone_number": "+49 461 123456",
     "avatar_url": "https://example.com/avatar.jpg",
     "status": "available",
-    "driving_licenses": ["B"]
+    "driving_licenses": ["B"],
+    "watering_plan_selectable": true
 }))]
 pub struct UserRegisterRequest {
     /// Desired login username.
@@ -132,6 +137,10 @@ pub struct UserRegisterRequest {
     /// Initial driving licenses.
     #[serde(default)]
     pub driving_licenses: Vec<DrivingLicense>,
+    /// Whether the new user may be assigned to watering plans (defaults to true).
+    #[serde(default)]
+    #[schema(example = true, nullable)]
+    pub watering_plan_selectable: Option<bool>,
 }
 
 /// Request body for replacing a user's profile data.
@@ -141,7 +150,8 @@ pub struct UserRegisterRequest {
     "phone_number": "+49 461 123456",
     "avatar_url": "https://example.com/avatar.jpg",
     "status": "available",
-    "driving_licenses": ["B", "CE"]
+    "driving_licenses": ["B", "CE"],
+    "watering_plan_selectable": true
 }))]
 pub struct UserUpdateRequest {
     /// Internal employee identifier; empty or absent clears the value.
@@ -160,6 +170,9 @@ pub struct UserUpdateRequest {
     pub status: UserStatus,
     /// Full replacement set of driving licenses.
     pub driving_licenses: Vec<DrivingLicense>,
+    /// Whether the user may be assigned to watering plans.
+    #[schema(example = true)]
+    pub watering_plan_selectable: bool,
 }
 
 /// Query parameters for the user list endpoint: pagination plus optional
@@ -227,6 +240,7 @@ impl UserUpdateRequest {
             avatar_url,
             status: self.status.into(),
             driving_licenses: self.driving_licenses.into_iter().map(Into::into).collect(),
+            watering_plan_selectable: self.watering_plan_selectable,
         })
     }
 }
@@ -270,6 +284,7 @@ impl From<&DomainUserView> for UserResponse {
                 .copied()
                 .map(Into::into)
                 .collect(),
+            watering_plan_selectable: value.watering_plan_selectable,
         }
     }
 }
@@ -338,6 +353,41 @@ impl TryFrom<UserRegisterRequest> for DomainUserCreate {
                 .map(DomainUserStatus::from)
                 .unwrap_or(DomainUserStatus::Available),
             driving_licenses: value.driving_licenses.into_iter().map(Into::into).collect(),
+            watering_plan_selectable: value.watering_plan_selectable.unwrap_or(true),
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn request_with_selectable(watering_plan_selectable: bool) -> UserUpdateRequest {
+        UserUpdateRequest {
+            employee_id: None,
+            phone_number: None,
+            avatar_url: None,
+            status: UserStatus::Available,
+            driving_licenses: Vec::new(),
+            watering_plan_selectable,
+        }
+    }
+
+    #[test]
+    fn try_into_profile_carries_watering_plan_selectable_true() {
+        let profile = request_with_selectable(true)
+            .try_into_profile(Uuid::now_v7())
+            .expect("valid request");
+
+        assert!(profile.watering_plan_selectable);
+    }
+
+    #[test]
+    fn try_into_profile_carries_watering_plan_selectable_false() {
+        let profile = request_with_selectable(false)
+            .try_into_profile(Uuid::now_v7())
+            .expect("valid request");
+
+        assert!(!profile.watering_plan_selectable);
     }
 }

@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id, employee_id, phone_number, avatar_url,\n                      status AS \"status: UserStatus\",\n                      driving_licenses AS \"driving_licenses: Vec<DrivingLicense>\"\n               FROM user_profiles\n               WHERE id = ANY($1)",
+  "query": "SELECT id, employee_id, phone_number, avatar_url,\n                      status AS \"status: UserStatus\",\n                      driving_licenses AS \"driving_licenses: Vec<DrivingLicense>\",\n                      watering_plan_selectable\n               FROM user_profiles\n               WHERE id = ANY($1)",
   "describe": {
     "columns": [
       {
@@ -61,6 +61,11 @@
             }
           }
         }
+      },
+      {
+        "ordinal": 6,
+        "name": "watering_plan_selectable",
+        "type_info": "Bool"
       }
     ],
     "parameters": {
@@ -74,8 +79,9 @@
       true,
       true,
       false,
+      false,
       false
     ]
   },
-  "hash": "b1e91226e28ac06dec66226b150bb64a651f280578d2f9f9736df191481ed99a"
+  "hash": "2454d462452402bf15a3022d5d2540017d9b6a284db8ac147094bb6c225eb42d"
 }

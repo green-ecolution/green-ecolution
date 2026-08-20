@@ -27,6 +27,7 @@ struct UserProfileRow {
     avatar_url: Option<String>,
     status: UserStatus,
     driving_licenses: Vec<DrivingLicense>,
+    watering_plan_selectable: bool,
 }
 
 impl UserProfileRow {
@@ -44,6 +45,7 @@ impl UserProfileRow {
             avatar_url,
             status: self.status,
             driving_licenses: self.driving_licenses,
+            watering_plan_selectable: self.watering_plan_selectable,
         })
     }
 }
@@ -56,7 +58,8 @@ impl UserProfileReader for PgUserProfileRepository {
             UserProfileRow,
             r#"SELECT id, employee_id, phone_number, avatar_url,
                       status AS "status: UserStatus",
-                      driving_licenses AS "driving_licenses: Vec<DrivingLicense>"
+                      driving_licenses AS "driving_licenses: Vec<DrivingLicense>",
+                      watering_plan_selectable
                FROM user_profiles
                WHERE id = ANY($1)"#,
             ids
@@ -109,11 +112,12 @@ impl UserProfileWriter for PgUserProfileRepository {
         let avatar_url = profile.avatar_url.as_ref().map(Url::to_string);
         let result = sqlx::query!(
             r#"UPDATE user_profiles SET
-                   employee_id      = $2,
-                   phone_number     = $3,
-                   avatar_url       = $4,
-                   status           = $5,
-                   driving_licenses = $6
+                   employee_id              = $2,
+                   phone_number             = $3,
+                   avatar_url               = $4,
+                   status                   = $5,
+                   driving_licenses         = $6,
+                   watering_plan_selectable = $7
                WHERE id = $1"#,
             profile.id,
             profile.employee_id.as_deref(),
@@ -121,6 +125,7 @@ impl UserProfileWriter for PgUserProfileRepository {
             avatar_url.as_deref(),
             profile.status as UserStatus,
             profile.driving_licenses.as_slice() as &[DrivingLicense],
+            profile.watering_plan_selectable,
         )
         .execute(&self.pool)
         .await?;

@@ -54,6 +54,8 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
   const watchedTrailerId = useWatch<WateringPlanForm, 'trailerId'>({ name: 'trailerId' })
   const watchedDriverIds = useWatch<WateringPlanForm, 'driverIds'>({ name: 'driverIds' })
 
+  // Must resolve already-assigned drivers even if no longer selectable, or a
+  // stored assignment would wrongly report a missing licence.
   const licenseCheck = validateDriverLicenses(
     watchedDriverIds ?? [],
     props.users,
@@ -72,6 +74,8 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
       .map((drivingLicense: DrivingLicense) => getDrivingLicenseDetails(drivingLicense).label)
       .join(', ')
   }
+
+  const selectableUsers = props.users.filter((user) => user.wateringPlanSelectable)
 
   return (
     <form
@@ -191,7 +195,7 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
                 id="driverIds"
                 value={field.value}
                 onChange={field.onChange}
-                options={props.users.map((user) => ({
+                options={selectableUsers.map((user) => ({
                   value: user.id,
                   label: `${user.firstName} ${user.lastName} · ${getDrivingLicensesString(user)}`,
                 }))}

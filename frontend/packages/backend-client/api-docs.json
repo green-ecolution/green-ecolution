@@ -5252,7 +5252,8 @@
                 "avatar_url",
                 "status",
                 "roles",
-                "driving_licenses"
+                "driving_licenses",
+                "watering_plan_selectable"
               ],
               "properties": {
                 "avatar_url": {
@@ -5333,6 +5334,11 @@
                   "type": "string",
                   "description": "Login username.",
                   "example": "jdoe"
+                },
+                "watering_plan_selectable": {
+                  "type": "boolean",
+                  "description": "Whether the user may be assigned to watering plans.",
+                  "example": true
                 }
               },
               "example": {
@@ -5351,7 +5357,8 @@
                 "phone_number": "+49 461 123456",
                 "roles": [],
                 "status": "Available",
-                "username": "jdoe"
+                "username": "jdoe",
+                "watering_plan_selectable": true
               }
             }
           },
@@ -8094,6 +8101,14 @@
             "type": "string",
             "description": "Desired login username.",
             "example": "jdoe"
+          },
+          "watering_plan_selectable": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Whether the new user may be assigned to watering plans (defaults to true).",
+            "example": true
           }
         },
         "example": {
@@ -8110,7 +8125,8 @@
           "phone_number": "+49 461 123456",
           "role_ids": [],
           "status": "available",
-          "username": "jdoe"
+          "username": "jdoe",
+          "watering_plan_selectable": true
         }
       },
       "UserResponse": {
@@ -8129,7 +8145,8 @@
           "avatar_url",
           "status",
           "roles",
-          "driving_licenses"
+          "driving_licenses",
+          "watering_plan_selectable"
         ],
         "properties": {
           "avatar_url": {
@@ -8210,6 +8227,11 @@
             "type": "string",
             "description": "Login username.",
             "example": "jdoe"
+          },
+          "watering_plan_selectable": {
+            "type": "boolean",
+            "description": "Whether the user may be assigned to watering plans.",
+            "example": true
           }
         },
         "example": {
@@ -8228,7 +8250,8 @@
           "phone_number": "+49 461 123456",
           "roles": [],
           "status": "Available",
-          "username": "jdoe"
+          "username": "jdoe",
+          "watering_plan_selectable": true
         }
       },
       "UserStatus": {
@@ -8245,7 +8268,8 @@
         "description": "Request body for replacing a user's profile data.",
         "required": [
           "status",
-          "driving_licenses"
+          "driving_licenses",
+          "watering_plan_selectable"
         ],
         "properties": {
           "avatar_url": {
@@ -8282,6 +8306,11 @@
           "status": {
             "$ref": "#/components/schemas/UserStatus",
             "description": "New availability status."
+          },
+          "watering_plan_selectable": {
+            "type": "boolean",
+            "description": "Whether the user may be assigned to watering plans.",
+            "example": true
           }
         },
         "example": {
@@ -8292,7 +8321,8 @@
           ],
           "employee_id": "EMP-042",
           "phone_number": "+49 461 123456",
-          "status": "available"
+          "status": "available",
+          "watering_plan_selectable": true
         }
       },
       "VehicleCreateRequest": {

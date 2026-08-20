@@ -347,27 +347,29 @@ INSERT INTO vehicle_watering_plans (vehicle_id, watering_plan_id, role) VALUES
 -- Profile data for the Keycloak demo users. Ids match the user ids in the
 -- imported realm (green-ecolution-realm.json). One user per role per org:
 -- root (ge.admin), TBZ, Extern A and Extern B. Username = password.
-INSERT INTO user_profiles (id, status, driving_licenses, organization_id) VALUES
+-- tbz.beobachter (read-only role, no route-planning duties) is marked not
+-- selectable so the watering-plan-selectable filter has a visible effect.
+INSERT INTO user_profiles (id, status, driving_licenses, organization_id, watering_plan_selectable) VALUES
   -- Root
-  ('01980000-0000-7000-8001-000000000001'::uuid, 'available', ARRAY['B','C']::driving_license[],           '01980000-0000-7000-8000-000000000001'),
+  ('01980000-0000-7000-8001-000000000001'::uuid, 'available', ARRAY['B','C']::driving_license[],           '01980000-0000-7000-8000-000000000001', true),
   -- TBZ
-  ('01980000-0000-7000-8001-000000000011'::uuid, 'available', ARRAY['B','C']::driving_license[],           '01980000-0000-7000-8000-000000000002'),
-  ('01980000-0000-7000-8001-000000000012'::uuid, 'available', ARRAY['B']::driving_license[],               '01980000-0000-7000-8000-000000000002'),
-  ('01980000-0000-7000-8001-000000000013'::uuid, 'available', ARRAY['B']::driving_license[],               '01980000-0000-7000-8000-000000000002'),
-  ('01980000-0000-7000-8001-000000000014'::uuid, 'available', ARRAY['B','BE','C','CE']::driving_license[],  '01980000-0000-7000-8000-000000000002'),
-  ('01980000-0000-7000-8001-000000000015'::uuid, 'available', ARRAY['B']::driving_license[],               '01980000-0000-7000-8000-000000000002'),
+  ('01980000-0000-7000-8001-000000000011'::uuid, 'available', ARRAY['B','C']::driving_license[],           '01980000-0000-7000-8000-000000000002', true),
+  ('01980000-0000-7000-8001-000000000012'::uuid, 'available', ARRAY['B']::driving_license[],               '01980000-0000-7000-8000-000000000002', true),
+  ('01980000-0000-7000-8001-000000000013'::uuid, 'available', ARRAY['B']::driving_license[],               '01980000-0000-7000-8000-000000000002', true),
+  ('01980000-0000-7000-8001-000000000014'::uuid, 'available', ARRAY['B','BE','C','CE']::driving_license[],  '01980000-0000-7000-8000-000000000002', true),
+  ('01980000-0000-7000-8001-000000000015'::uuid, 'available', ARRAY['B']::driving_license[],               '01980000-0000-7000-8000-000000000002', false),
   -- Extern A
-  ('01980000-0000-7000-8001-000000000021'::uuid, 'available', ARRAY['B','C']::driving_license[],           '01980000-0000-7000-8000-000000000003'),
-  ('01980000-0000-7000-8001-000000000022'::uuid, 'available', ARRAY['B']::driving_license[],               '01980000-0000-7000-8000-000000000003'),
-  ('01980000-0000-7000-8001-000000000023'::uuid, 'available', ARRAY['B']::driving_license[],               '01980000-0000-7000-8000-000000000003'),
-  ('01980000-0000-7000-8001-000000000024'::uuid, 'available', ARRAY['B','BE','C','CE']::driving_license[],  '01980000-0000-7000-8000-000000000003'),
-  ('01980000-0000-7000-8001-000000000025'::uuid, 'available', ARRAY['B']::driving_license[],               '01980000-0000-7000-8000-000000000003'),
+  ('01980000-0000-7000-8001-000000000021'::uuid, 'available', ARRAY['B','C']::driving_license[],           '01980000-0000-7000-8000-000000000003', true),
+  ('01980000-0000-7000-8001-000000000022'::uuid, 'available', ARRAY['B']::driving_license[],               '01980000-0000-7000-8000-000000000003', true),
+  ('01980000-0000-7000-8001-000000000023'::uuid, 'available', ARRAY['B']::driving_license[],               '01980000-0000-7000-8000-000000000003', true),
+  ('01980000-0000-7000-8001-000000000024'::uuid, 'available', ARRAY['B','BE','C','CE']::driving_license[],  '01980000-0000-7000-8000-000000000003', true),
+  ('01980000-0000-7000-8001-000000000025'::uuid, 'available', ARRAY['B']::driving_license[],               '01980000-0000-7000-8000-000000000003', true),
   -- Extern B
-  ('01980000-0000-7000-8001-000000000031'::uuid, 'available', ARRAY['B','C']::driving_license[],           '01980000-0000-7000-8000-000000000004'),
-  ('01980000-0000-7000-8001-000000000032'::uuid, 'available', ARRAY['B']::driving_license[],               '01980000-0000-7000-8000-000000000004'),
-  ('01980000-0000-7000-8001-000000000033'::uuid, 'available', ARRAY['B']::driving_license[],               '01980000-0000-7000-8000-000000000004'),
-  ('01980000-0000-7000-8001-000000000034'::uuid, 'available', ARRAY['B','BE','C','CE']::driving_license[],  '01980000-0000-7000-8000-000000000004'),
-  ('01980000-0000-7000-8001-000000000035'::uuid, 'available', ARRAY['B']::driving_license[],               '01980000-0000-7000-8000-000000000004');
+  ('01980000-0000-7000-8001-000000000031'::uuid, 'available', ARRAY['B','C']::driving_license[],           '01980000-0000-7000-8000-000000000004', true),
+  ('01980000-0000-7000-8001-000000000032'::uuid, 'available', ARRAY['B']::driving_license[],               '01980000-0000-7000-8000-000000000004', true),
+  ('01980000-0000-7000-8001-000000000033'::uuid, 'available', ARRAY['B']::driving_license[],               '01980000-0000-7000-8000-000000000004', true),
+  ('01980000-0000-7000-8001-000000000034'::uuid, 'available', ARRAY['B','BE','C','CE']::driving_license[],  '01980000-0000-7000-8000-000000000004', true),
+  ('01980000-0000-7000-8001-000000000035'::uuid, 'available', ARRAY['B']::driving_license[],               '01980000-0000-7000-8000-000000000004', true);
 
 -- Each user is assigned its org's copy of the matching role template:
 -- Administrator/Baumpflege/Sensorik/Routenplanung/Beobachter.

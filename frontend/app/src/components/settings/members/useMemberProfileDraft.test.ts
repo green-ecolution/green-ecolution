@@ -13,6 +13,7 @@ const anna = {
   drivingLicenses: [DrivingLicense.B],
   phoneNumber: '+49 461 1',
   employeeId: 'EMP-1',
+  wateringPlanSelectable: true,
 } as UserResponse
 
 describe('useMemberProfileDraft', () => {
@@ -102,6 +103,28 @@ describe('useMemberProfileDraft', () => {
     // avatarUrl cannot be made to differ from baseline through this API (no setter),
     // so its exclusion from canonical() is guaranteed by construction, not by assertion.
     expect(result.current.draft?.avatarUrl).toBe('https://example.com/avatar.png')
+    expect(result.current.dirty).toBe(false)
+  })
+
+  it('becomes dirty when the watering plan selectability is toggled', () => {
+    const { result } = renderHook(() => useMemberProfileDraft())
+    act(() => result.current.edit(anna))
+
+    expect(result.current.draft?.wateringPlanSelectable).toBe(true)
+
+    act(() => result.current.setWateringPlanSelectable(false))
+
+    expect(result.current.draft?.wateringPlanSelectable).toBe(false)
+    expect(result.current.dirty).toBe(true)
+  })
+
+  it('is clean again when the selectability is toggled back', () => {
+    const { result } = renderHook(() => useMemberProfileDraft())
+    act(() => result.current.edit(anna))
+
+    act(() => result.current.setWateringPlanSelectable(false))
+    act(() => result.current.setWateringPlanSelectable(true))
+
     expect(result.current.dirty).toBe(false)
   })
 })
