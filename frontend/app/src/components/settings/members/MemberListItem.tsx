@@ -1,4 +1,4 @@
-import { Avatar, AvatarFallback, Badge, ListCard } from '@green-ecolution/ui'
+import { Avatar, AvatarFallback, AvatarImage, Badge, ListCard } from '@green-ecolution/ui'
 import type { UserResponse } from '@/api/backendApi'
 import { getUserStatusDetails } from '@/hooks/details/useDetailsForUserStatus'
 import { initialsOf } from '@/lib/initials'
@@ -22,6 +22,7 @@ const MemberListItem = ({ user, selected, onSelect }: MemberListItemProps) => {
     >
       <button type="button" onClick={onSelect} aria-current={selected} className="w-full text-left">
         <Avatar size="sm">
+          {user.avatarUrl && <AvatarImage src={user.avatarUrl} alt="" />}
           <AvatarFallback variant="user">
             {initialsOf(user.firstName, user.lastName)}
           </AvatarFallback>

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, userEvent, waitFor, within } from '@/test/utils'
 import { UNRESTRICTED, type Permissions } from '@/lib/auth/permissions'
 import type { OrganizationResponse, RoleResponse, UserResponse } from '@/api/backendApi'
@@ -67,10 +67,17 @@ const badPhoneUser: UserResponse = {
   phoneNumber: '123',
 }
 
+// No organization and no avatar: the API sends an empty string for a profile
+// that never had one.
+const legacyUser: UserResponse = {
+  ...member('u-legacy', 'Cem', 'Demir', null, []),
+  avatarUrl: '',
+}
+
 const users: UserResponse[] = [
   member('u-anna', 'Anna', 'Ahlmann', 'amt', [ROLES[0]]),
   member('u-bo', 'Bo', 'Boysen', 'nord', []),
-  member('u-legacy', 'Cem', 'Demir', null, []),
+  legacyUser,
   badPhoneUser,
 ]
 
@@ -516,5 +523,43 @@ describe('MembersPage', () => {
     await select(/Anna Ahlmann/)
 
     expect(await screen.findByRole('dialog')).toBeInTheDocument()
+  })
+
+  describe('avatars', () => {
+    // Radix keeps AvatarImage unmounted until the browser reports the image as
+    // loaded, which jsdom never does — so it stands in as an already-loaded one.
+    class PreloadedImage {
+      complete = true
+      naturalWidth = 1
+      src = ''
+      crossOrigin: string | null = null
+      addEventListener = vi.fn()
+      removeEventListener = vi.fn()
+    }
+
+    beforeEach(() => vi.stubGlobal('Image', PreloadedImage))
+    afterEach(() => vi.unstubAllGlobals())
+
+    it('shows a stored avatar in the list and on the detail panel', async () => {
+      const { container } = render(<MembersPage />)
+      const avatarsOf = (id: string) => container.querySelectorAll(`img[src="${avatarOf(id)}"]`)
+
+      // Anna is the auto-selected default, so her avatar shows up twice.
+      expect(avatarsOf('u-anna')).toHaveLength(2)
+      expect(avatarsOf('u-bo')).toHaveLength(1)
+
+      await select(/Bo Boysen/)
+
+      expect(avatarsOf('u-bo')).toHaveLength(2)
+      expect(avatarsOf('u-anna')).toHaveLength(1)
+    })
+
+    it('keeps the monogram for a member without an avatar', async () => {
+      const { container } = render(<MembersPage />)
+      await select(/Cem Demir/)
+
+      expect(container.querySelectorAll(`img[src*="u-legacy"]`)).toHaveLength(0)
+      expect(screen.getAllByText('CD')).toHaveLength(2)
+    })
   })
 })

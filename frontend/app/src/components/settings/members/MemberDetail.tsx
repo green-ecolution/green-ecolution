@@ -1,9 +1,8 @@
-import { Badge } from '@green-ecolution/ui'
+import { Avatar, AvatarFallback, AvatarImage, Badge } from '@green-ecolution/ui'
 import type { DrivingLicense, UserStatus } from '@green-ecolution/backend-client'
 import type { OrganizationResponse, RoleResponse, UserResponse } from '@/api/backendApi'
 import { getUserStatusDetails } from '@/hooks/details/useDetailsForUserStatus'
 import { initialsOf } from '@/lib/initials'
-import { TILE } from './cardChrome'
 import MemberActionButtons from './MemberActionButtons'
 import { fullNameOf, phoneNumberIssue, sinceLabel } from './memberList'
 import MemberOrganizationCard from './MemberOrganizationCard'
@@ -82,9 +81,12 @@ const MemberDetail = ({
   return (
     <div className="flex flex-col gap-6">
       <header className="flex min-w-0 items-start gap-4">
-        <span className={`${TILE} size-12 rounded-xl bg-green-dark text-base text-white`}>
-          {initialsOf(user.firstName, user.lastName)}
-        </span>
+        <Avatar size="lg" className="rounded-xl">
+          {user.avatarUrl && <AvatarImage src={user.avatarUrl} alt="" />}
+          <AvatarFallback variant="user" className="rounded-xl">
+            {initialsOf(user.firstName, user.lastName)}
+          </AvatarFallback>
+        </Avatar>
         <div className="min-w-0 flex-1">
           <h2 className="font-lato text-2xl font-bold text-dark break-words">{fullNameOf(user)}</h2>
           <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm text-dark-600">
