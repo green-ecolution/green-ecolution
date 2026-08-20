@@ -6,6 +6,7 @@ import { VehicleTypeOptions } from '@/hooks/details/useDetailsForVehicleType'
 import { DrivingLicenseOptions } from '@/hooks/details/useDetailsForDrivingLicense'
 import { VehicleStatusOptions } from '@/hooks/details/useDetailsForVehicleStatus'
 import { Controller, SubmitHandler, useFormContext, useFormState } from 'react-hook-form'
+import { parseDecimalInput } from '@/lib/utils'
 
 interface FormForVehicleProps {
   displayError: boolean
@@ -13,12 +14,13 @@ interface FormForVehicleProps {
   onSubmit: SubmitHandler<VehicleForm>
 }
 
+// The API rejects strings for these fields, so the raw input has to be parsed
+// on the way into the form state, not on the way out.
+const asNumber = { setValueAs: parseDecimalInput } as const
+
 const FormForVehicle = (props: FormForVehicleProps) => {
   const { register, handleSubmit, control } = useFormContext<VehicleForm>()
   const { isValid, errors } = useFormState({ control })
-
-  const translateNum = (e: React.ChangeEvent<HTMLInputElement>) =>
-    (e.target.value = e.target.value.replace(',', '.'))
 
   return (
     <form
@@ -61,7 +63,7 @@ const FormForVehicle = (props: FormForVehicleProps) => {
         type="number"
         required
         error={errors.waterCapacity?.message}
-        {...register('waterCapacity')}
+        {...register('waterCapacity', asNumber)}
       />
       <Controller
         name="status"
@@ -101,9 +103,7 @@ const FormForVehicle = (props: FormForVehicleProps) => {
         step="0.1"
         required
         error={errors.height?.message}
-        {...register('height', {
-          onChange: translateNum,
-        })}
+        {...register('height', asNumber)}
       />
       <FormField
         placeholder="Breite des Fahrzeugs"
@@ -111,9 +111,7 @@ const FormForVehicle = (props: FormForVehicleProps) => {
         step="0.1"
         required
         error={errors.width?.message}
-        {...register('width', {
-          onChange: translateNum,
-        })}
+        {...register('width', asNumber)}
       />
       <FormField
         placeholder="Länge des Fahrzeugs"
@@ -121,9 +119,7 @@ const FormForVehicle = (props: FormForVehicleProps) => {
         step="0.1"
         required
         error={errors.length?.message}
-        {...register('length', {
-          onChange: translateNum,
-        })}
+        {...register('length', asNumber)}
       />
       <FormField
         placeholder="Gewicht des Fahrzeugs"
@@ -131,9 +127,7 @@ const FormForVehicle = (props: FormForVehicleProps) => {
         step="0.1"
         required
         error={errors.weight?.message}
-        {...register('weight', {
-          onChange: translateNum,
-        })}
+        {...register('weight', asNumber)}
       />
       <TextareaField
         placeholder="Hier ist Platz für Notizen"

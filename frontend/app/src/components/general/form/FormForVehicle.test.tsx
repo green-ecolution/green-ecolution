@@ -244,4 +244,50 @@ describe('FormForVehicle', () => {
       expect(screen.getByRole('combobox', { name: /fahrzeugtyp/i })).toHaveTextContent(/anhänger/i)
     })
   })
+
+  it('submits numeric fields as numbers, accepting comma decimals', async () => {
+    const user = userEvent.setup()
+
+    const validValues: VehicleForm = {
+      numberPlate: 'HH-AB-1234',
+      model: 'Mercedes Sprinter',
+      type: VehicleType.Transporter,
+      drivingLicense: DrivingLicense.B,
+      status: VehicleStatus.Available,
+      height: 2.5,
+      width: 2.0,
+      length: 6.0,
+      weight: 3.5,
+      waterCapacity: 1000,
+      description: '',
+    }
+
+    render(
+      <TestWrapper defaultValues={validValues}>
+        <FormForVehicle displayError={false} onSubmit={mockOnSubmit} />
+      </TestWrapper>,
+    )
+
+    const heightInput = screen.getByLabelText(/höhe des fahrzeugs/i)
+    await user.clear(heightInput)
+    await user.type(heightInput, '1,88')
+
+    const waterCapacityInput = screen.getByLabelText(/wasserkapazität/i)
+    await user.clear(waterCapacityInput)
+    await user.type(waterCapacityInput, '1500')
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /speichern/i })).not.toBeDisabled()
+    })
+    await user.click(screen.getByRole('button', { name: /speichern/i }))
+
+    await waitFor(() => expect(mockOnSubmit).toHaveBeenCalled())
+
+    const submitted = mockOnSubmit.mock.calls[0][0] as VehicleForm
+    expect(submitted.height).toBe(1.88)
+    expect(submitted.waterCapacity).toBe(1500)
+    expect(submitted.width).toBe(2)
+    expect(submitted.length).toBe(6)
+    expect(submitted.weight).toBe(3.5)
+  })
 })
