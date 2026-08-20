@@ -9,6 +9,7 @@ use domain::{
     Id, RepositoryError,
     authorization::Visibility,
     cluster::TreeCluster,
+    organization::Organization,
     sensor::SensorId,
     shared::{
         coordinates::Coordinate,
@@ -21,6 +22,24 @@ use domain::{
         TreeViewWithDistance, TreeWriter,
     },
 };
+
+/// Organization scope of a tree query: the orgs the caller may see, narrowed
+/// by the single org the caller asked for.
+///
+/// Folded into one id list on purpose. `sqlx::query!` only accepts a literal,
+/// so a shared SQL fragment is impossible; keeping the scope out of the SQL
+/// leaves every tree query with the same single `organization_id = ANY($n)`
+/// predicate and this function as the only place the rule lives. Requesting an
+/// invisible org yields an empty list, i.e. no rows rather than an error.
+fn org_scope_ids(visible: Visibility, requested: Option<Id<Organization>>) -> Option<Vec<RawId>> {
+    let requested = requested.map(|id| id.value());
+    match (visible.into_raw_ids(), requested) {
+        (None, None) => None,
+        (None, Some(org)) => Some(vec![org]),
+        (Some(visible), None) => Some(visible),
+        (Some(visible), Some(org)) => Some(visible.into_iter().filter(|id| *id == org).collect()),
+    }
+}
 
 pub struct PgTreeRepository {
     pool: PgPool,
@@ -307,7 +326,7 @@ impl TreeReader for PgTreeRepository {
         let limit = i64::try_from(pagination.limit()).unwrap_or(i64::MAX);
         let offset = i64::try_from(pagination.offset()).unwrap_or(i64::MAX);
         let q_pattern: Option<String> = query.q.as_deref().map(|s| format!("%{}%", like_escape(s)));
-        let visible_ids = query.visible.clone().into_raw_ids();
+        let scope_ids = org_scope_ids(query.visible.clone(), query.organization_id);
 
         let total = sqlx::query_scalar!(
             r#"SELECT COUNT(*) AS "count!: i64" FROM trees
@@ -322,7 +341,7 @@ impl TreeReader for PgTreeRepository {
             provider.as_deref(),
             query.has_cluster,
             q_pattern.as_deref(),
-            visible_ids.as_deref(),
+            scope_ids.as_deref(),
         )
         .fetch_one(&self.pool)
         .await? as u64;
@@ -351,7 +370,7 @@ impl TreeReader for PgTreeRepository {
             provider.as_deref(),
             query.has_cluster,
             q_pattern.as_deref(),
-            visible_ids.as_deref(),
+            scope_ids.as_deref(),
             limit,
             offset,
         )
@@ -376,10 +395,10 @@ impl TreeReader for PgTreeRepository {
             .collect();
         let provider = query.provider.as_ref().map(|p| p.as_str().to_string());
         let bbox = query.bbox;
-        let visible_ids = query.visible.into_raw_ids();
+        let scope_ids = org_scope_ids(query.visible, query.organization_id);
 
         let rows = sqlx::query!(
-            r#"SELECT id, latitude, longitude, number,
+            r#"SELECT id, latitude, longitude, number, organization_id,
                       watering_status AS "watering_status: WateringStatus",
                       (sensor_id IS NOT NULL) AS "has_sensor!: bool"
             FROM trees
@@ -405,7 +424,7 @@ impl TreeReader for PgTreeRepository {
             bbox.map(|b| b.sw_lat()),
             bbox.map(|b| b.ne_lng()),
             bbox.map(|b| b.ne_lat()),
-            visible_ids.as_deref(),
+            scope_ids.as_deref(),
         )
         .fetch_all(&self.pool)
         .await?;
@@ -419,6 +438,7 @@ impl TreeReader for PgTreeRepository {
                 watering_status: row.watering_status,
                 tree_number: row.number,
                 has_sensor: row.has_sensor,
+                organization_id: row.organization_id,
             })
             .collect())
     }
@@ -627,5 +647,42 @@ impl TreeWriter for PgTreeRepository {
         }
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::BTreeSet;
+
+    fn org(n: u128) -> Id<Organization> {
+        Id::new(uuid::Uuid::from_u128(n))
+    }
+
+    fn only(ids: &[u128]) -> Visibility {
+        Visibility::Only(ids.iter().map(|n| org(*n)).collect::<BTreeSet<_>>())
+    }
+
+    #[test]
+    fn unrestricted_without_request_does_not_filter() {
+        assert_eq!(org_scope_ids(Visibility::Unrestricted, None), None);
+    }
+
+    #[test]
+    fn unrestricted_with_request_filters_to_that_org() {
+        let ids = org_scope_ids(Visibility::Unrestricted, Some(org(7)));
+        assert_eq!(ids, Some(vec![org(7).value()]));
+    }
+
+    #[test]
+    fn request_narrows_the_visible_orgs() {
+        let ids = org_scope_ids(only(&[1, 2]), Some(org(2))).unwrap();
+        assert_eq!(ids, vec![org(2).value()]);
+    }
+
+    #[test]
+    fn requesting_an_invisible_org_matches_nothing() {
+        let ids = org_scope_ids(only(&[1, 2]), Some(org(9))).unwrap();
+        assert!(ids.is_empty());
     }
 }

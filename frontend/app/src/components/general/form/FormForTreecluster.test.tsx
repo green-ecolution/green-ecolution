@@ -8,7 +8,7 @@ import { clusterDraftResolver } from '@green-ecolution/domain-wasm'
 import { ReactNode } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from '@green-ecolution/ui'
-import { SoilCondition } from '@green-ecolution/backend-client'
+import { SoilCondition, type OrganizationResponse } from '@green-ecolution/backend-client'
 
 function TestWrapper({
   children,
@@ -277,5 +277,83 @@ describe('soil texture dialog integration', () => {
         /Lt2 – schwach toniger Lehm/,
       ),
     ).toBeInTheDocument()
+  })
+})
+
+describe('organization field', () => {
+  const mockOnSubmit = vi.fn()
+
+  const orgs = [
+    { id: 'tbz', name: 'Betriebshof', parentId: 'root', memberCount: 0 },
+    { id: 'extern', name: 'Extern A', parentId: 'tbz', memberCount: 0 },
+  ] as unknown as OrganizationResponse[]
+
+  it('stays hidden when only one organization qualifies', () => {
+    render(
+      <TestWrapper defaultValues={{ ...defaultFormValues, organizationId: 'tbz' }}>
+        <FormForTreecluster
+          displayError={false}
+          onSubmit={mockOnSubmit}
+          organizations={orgs.slice(0, 1)}
+        />
+      </TestWrapper>,
+    )
+
+    expect(screen.queryByRole('combobox', { name: /organisation/i })).not.toBeInTheDocument()
+  })
+
+  it('lists exactly the passed organizations and marks the current one', async () => {
+    const user = userEvent.setup()
+
+    render(
+      <TestWrapper defaultValues={{ ...defaultFormValues, organizationId: 'tbz' }}>
+        <FormForTreecluster displayError={false} onSubmit={mockOnSubmit} organizations={orgs} />
+      </TestWrapper>,
+    )
+
+    const select = screen.getByRole('combobox', { name: /organisation/i })
+    expect(within(select).getByText('Betriebshof')).toBeInTheDocument()
+
+    await user.click(select)
+    const listbox = await screen.findByRole('listbox')
+    expect(within(listbox).getByText('Betriebshof')).toBeInTheDocument()
+    expect(within(listbox).getByText('Extern A')).toBeInTheDocument()
+    expect(within(listbox).getAllByRole('option')).toHaveLength(2)
+  })
+
+  it('reports the picked organization to the owner instead of writing it itself', async () => {
+    const user = userEvent.setup()
+    const onOrganizationChange = vi.fn()
+
+    render(
+      <TestWrapper defaultValues={{ ...defaultFormValues, organizationId: 'tbz' }}>
+        <FormForTreecluster
+          displayError={false}
+          onSubmit={mockOnSubmit}
+          organizations={orgs}
+          onOrganizationChange={onOrganizationChange}
+        />
+      </TestWrapper>,
+    )
+
+    await user.click(screen.getByRole('combobox', { name: /organisation/i }))
+    await user.click(within(await screen.findByRole('listbox')).getByText('Extern A'))
+
+    expect(onOrganizationChange).toHaveBeenCalledWith('extern')
+  })
+
+  it('names the trees dropped by an organization change', () => {
+    render(
+      <TestWrapper defaultValues={{ ...defaultFormValues, organizationId: 'extern' }}>
+        <FormForTreecluster
+          displayError={false}
+          onSubmit={mockOnSubmit}
+          organizations={orgs}
+          discardedTreeCount={2}
+        />
+      </TestWrapper>,
+    )
+
+    expect(screen.getByText(/2 bereits ausgewählte Bäume/i)).toBeInTheDocument()
   })
 })

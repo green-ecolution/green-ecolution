@@ -101,6 +101,10 @@ pub struct TreeSearchQuery {
     pub bbox: Option<BoundingBox>,
     /// Case-insensitive text filter on tree number or species.
     pub q: Option<String>,
+    /// Narrows the result to one owning organization. Independent of
+    /// `visible`: the caller asks for a single org, `visible` decides whether
+    /// they are allowed to see it at all.
+    pub organization_id: Option<Id<Organization>>,
     /// Which organizations may see the result. Callers must set this per
     /// request; defaults to unrestricted for internal consumers (e.g. event
     /// handlers).

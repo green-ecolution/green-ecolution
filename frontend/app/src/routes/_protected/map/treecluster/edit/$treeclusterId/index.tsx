@@ -1,19 +1,23 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { FormProvider, useWatch, type DefaultValues, type SubmitHandler } from 'react-hook-form'
-import { useSuspenseQuery } from '@tanstack/react-query'
+import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import type { TreeResponse } from '@green-ecolution/backend-client'
-import { clusterQueries } from '@/api/queries'
+import { clusterQueries, organizationQueries } from '@/api/queries'
 import { TreeclusterForm } from '@/schema/treeclusterSchema'
 import { entityNotFound, forbiddenErrorComponent, requirePermission } from '@/lib/router'
+import { useHasPermission } from '@/lib/auth/useHasPermission'
 import FormForTreecluster from '@/components/general/form/FormForTreecluster'
+import ForeignTreeDialog from '@/components/general/form/ForeignTreeDialog'
 import UnsavedChangesDialog from '@/components/general/form/UnsavedChangesDialog'
 import { useTreeClusterForm } from '@/hooks/form/useTreeClusterForm'
 import MapPanel from '@/components/map-gl/MapPanel'
 import { useMaplibreMap } from '@/components/map-gl/MapContext'
 import { isMapAlive } from '@/components/map-gl/mapReady'
 import useClusterBoundaryLayer from '@/components/map-gl/layers/useClusterBoundaryLayer'
-import useSelectableTreeLayer from '@/components/map-gl/layers/useSelectableTreeLayer'
+import useSelectableTreeLayer, {
+  type ForeignTree,
+} from '@/components/map-gl/layers/useSelectableTreeLayer'
 
 export const Route = createFileRoute('/_protected/map/treecluster/edit/$treeclusterId/')({
   component: EditClusterOnMap,
@@ -72,6 +76,13 @@ function EditClusterOnMap() {
     },
   )
   const treeIds = useWatch({ control: form.control, name: 'treeIds' }) ?? []
+  const [foreignTree, setForeignTree] = useState<ForeignTree | null>(null)
+  const canReadOrganizations = useHasPermission(['organization:read'])
+  // Only needed to name the organization in the dialog, so it waits for a click.
+  const { data: organizations } = useQuery({
+    ...organizationQueries.list(),
+    enabled: canReadOrganizations && foreignTree !== null,
+  })
 
   const toggleTree = useCallback(
     (id: string) => {
@@ -83,7 +94,14 @@ function EditClusterOnMap() {
   )
 
   useClusterBoundaryLayer({ interactive: false })
-  useSelectableTreeLayer({ selectedIds: treeIds, onToggle: toggleTree })
+  // The cluster's organization is fixed here, so only its own trees may join.
+  // Foreign ones stay visible but dimmed; clicking one explains why.
+  useSelectableTreeLayer({
+    selectedIds: treeIds,
+    onToggle: toggleTree,
+    organizationId: cluster.organizationId,
+    onForeignTree: setForeignTree,
+  })
 
   const onSubmit: SubmitHandler<TreeclusterForm> = (data) => {
     mutate({ ...data, treeIds: data.treeIds ?? [] })
@@ -99,7 +117,8 @@ function EditClusterOnMap() {
     <>
       <MapPanel title="Bewässerungsgruppe bearbeiten" onClose={handleCancel}>
         <p className="mb-5 shrink-0 text-sm text-dark-600">
-          Klicke Bäume auf der Karte an, um sie der Gruppe hinzuzufügen oder zu entfernen.
+          Klicke Bäume auf der Karte an, um sie der Gruppe hinzuzufügen oder zu entfernen. Blass
+          dargestellte Bäume gehören einer anderen Organisation.
         </p>
         <FormProvider {...form}>
           <FormForTreecluster
@@ -112,6 +131,18 @@ function EditClusterOnMap() {
           />
         </FormProvider>
       </MapPanel>
+
+      <ForeignTreeDialog
+        open={foreignTree !== null}
+        onOpenChange={(open) => !open && setForeignTree(null)}
+        organizationName={
+          organizations?.find((org) => org.id === foreignTree?.organizationId)?.name
+        }
+        canSwitch={false}
+        blockedReason="Die Organisation einer bestehenden Gruppe lässt sich hier nicht wechseln."
+        selectedTreeCount={treeIds.length}
+        onConfirm={() => setForeignTree(null)}
+      />
 
       <UnsavedChangesDialog blocker={navigationBlocker} />
     </>

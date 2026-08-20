@@ -16,10 +16,13 @@ fn tree_payload(org: Option<&str>) -> serde_json::Value {
     p
 }
 
-#[tokio::test]
-async fn create_tree_stores_explicit_organization() {
-    let app = spawn_app().await;
-    // demo bypass: unrestricted, explicit org wins
+fn numbered_tree_payload(number: &str, org: Option<&str>) -> serde_json::Value {
+    let mut p = tree_payload(org);
+    p["number"] = json!(number);
+    p
+}
+
+async fn insert_tbz_org(app: &crate::helpers::TestApp) {
     sqlx::query!(
         "INSERT INTO organizations (id, parent_id, name) VALUES ($1, '01980000-0000-7000-8000-000000000001', 'TBZ')",
         uuid::Uuid::parse_str(TBZ_ORG).unwrap()
@@ -27,6 +30,13 @@ async fn create_tree_stores_explicit_organization() {
     .execute(&app.db_pool)
     .await
     .unwrap();
+}
+
+#[tokio::test]
+async fn create_tree_stores_explicit_organization() {
+    let app = spawn_app().await;
+    // demo bypass: unrestricted, explicit org wins
+    insert_tbz_org(&app).await;
     let resp = app
         .post_json("/api/v1/trees", &tree_payload(Some(TBZ_ORG)))
         .await;
@@ -60,4 +70,57 @@ async fn create_tree_requires_create_permission_in_target_org() {
         .await
         .unwrap();
     assert_eq!(resp.status(), 403);
+}
+
+#[tokio::test]
+async fn tree_markers_can_be_filtered_by_organization() {
+    let app = spawn_app().await;
+    insert_tbz_org(&app).await;
+
+    let resp = app
+        .post_json("/api/v1/trees", &numbered_tree_payload("SCOPE-M-001", None))
+        .await;
+    assert_eq!(resp.status(), 201);
+    let resp = app
+        .post_json(
+            "/api/v1/trees",
+            &numbered_tree_payload("SCOPE-M-002", Some(TBZ_ORG)),
+        )
+        .await;
+    assert_eq!(resp.status(), 201);
+
+    let resp = app
+        .get(&format!(
+            "/api/v1/trees/markers?bbox=54.78,9.40,54.81,9.46&organization_id={TBZ_ORG}"
+        ))
+        .await;
+    assert_eq!(resp.status(), 200);
+    let body: serde_json::Value = resp.json().await.unwrap();
+    let data = body["data"].as_array().unwrap();
+    assert_eq!(data.len(), 1);
+    assert_eq!(data[0]["number"], "SCOPE-M-002");
+}
+
+#[tokio::test]
+async fn tree_markers_carry_their_organization() {
+    let app = spawn_app().await;
+    insert_tbz_org(&app).await;
+
+    let resp = app
+        .post_json(
+            "/api/v1/trees",
+            &numbered_tree_payload("SCOPE-M-003", Some(TBZ_ORG)),
+        )
+        .await;
+    assert_eq!(resp.status(), 201);
+
+    // Unfiltered: the cluster forms need the org per marker to dim foreign trees.
+    let resp = app
+        .get("/api/v1/trees/markers?bbox=54.78,9.40,54.81,9.46")
+        .await;
+    assert_eq!(resp.status(), 200);
+    let body: serde_json::Value = resp.json().await.unwrap();
+    let data = body["data"].as_array().unwrap();
+    assert_eq!(data.len(), 1);
+    assert_eq!(data[0]["organization_id"], TBZ_ORG);
 }

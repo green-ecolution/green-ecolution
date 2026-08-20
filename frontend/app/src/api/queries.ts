@@ -86,6 +86,7 @@ export interface TreeMarkersFilters {
   hasCluster?: boolean
   plantingYears?: number[]
   wateringStatuses?: WateringStatus[]
+  organizationId?: string
 }
 
 /** Partial key matching every sensor list page; use for broad invalidation. */
@@ -198,6 +199,7 @@ export const treeQueries = {
           hasCluster: params.hasCluster,
           plantingYears: params.plantingYears,
           wateringStatuses: params.wateringStatuses,
+          organizationId: params.organizationId,
         },
       ],
       queryFn: () =>
@@ -206,6 +208,7 @@ export const treeQueries = {
           hasCluster: params.hasCluster,
           plantingYear: params.plantingYears,
           wateringStatus: params.wateringStatuses,
+          organizationId: params.organizationId,
         } satisfies ListTreeMarkersRequest),
       placeholderData: keepPreviousData,
       staleTime: 30_000,

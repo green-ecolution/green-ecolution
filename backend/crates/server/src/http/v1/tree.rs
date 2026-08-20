@@ -458,6 +458,7 @@ pub async fn list_tree_markers(
         has_cluster: params.has_cluster,
         planting_years,
         bbox: Some(bbox),
+        organization_id: params.organization_id.map(Id::new),
         visible,
         ..Default::default()
     };

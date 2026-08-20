@@ -4,8 +4,10 @@ use crate::shared::watering_status::WateringStatus;
 
 /// Lightweight projection of a tree intended for map markers.
 ///
-/// Carries only what the marker layer renders: position, status, label, and
-/// whether a sensor exists. It is *not* an aggregate hydration target.
+/// Carries only what the marker layer renders: position, status, label,
+/// whether a sensor exists, and the owning organization — the cluster forms
+/// need it to tell selectable trees from foreign ones. It is *not* an
+/// aggregate hydration target.
 #[derive(Debug, Clone)]
 pub struct TreeMarker {
     pub id: Uuid,
@@ -14,4 +16,5 @@ pub struct TreeMarker {
     pub watering_status: WateringStatus,
     pub tree_number: String,
     pub has_sensor: bool,
+    pub organization_id: Uuid,
 }

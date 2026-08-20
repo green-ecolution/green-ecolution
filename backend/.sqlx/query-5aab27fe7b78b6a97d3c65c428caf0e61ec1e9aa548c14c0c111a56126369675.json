@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id, latitude, longitude, number,\n                      watering_status AS \"watering_status: WateringStatus\",\n                      (sensor_id IS NOT NULL) AS \"has_sensor!: bool\"\n            FROM trees\n            WHERE ($1::watering_status[] = '{}' OR watering_status = ANY($1))\n              AND ($2::int[] = '{}' OR planting_year = ANY($2))\n              AND ($3::text IS NULL OR provider = $3)\n              AND ($4::bool IS NULL\n                   OR ($4 = true AND tree_cluster_id IS NOT NULL)\n                   OR ($4 = false AND tree_cluster_id IS NULL))\n              AND ($5::bool IS FALSE\n                   OR ST_Intersects(\n                       geometry,\n                       ST_MakeEnvelope($6, $7, $8, $9, 4326)\n                   ))\n              AND ($10::uuid[] IS NULL OR organization_id = ANY($10))\n            ORDER BY id",
+  "query": "SELECT id, latitude, longitude, number, organization_id,\n                      watering_status AS \"watering_status: WateringStatus\",\n                      (sensor_id IS NOT NULL) AS \"has_sensor!: bool\"\n            FROM trees\n            WHERE ($1::watering_status[] = '{}' OR watering_status = ANY($1))\n              AND ($2::int[] = '{}' OR planting_year = ANY($2))\n              AND ($3::text IS NULL OR provider = $3)\n              AND ($4::bool IS NULL\n                   OR ($4 = true AND tree_cluster_id IS NOT NULL)\n                   OR ($4 = false AND tree_cluster_id IS NULL))\n              AND ($5::bool IS FALSE\n                   OR ST_Intersects(\n                       geometry,\n                       ST_MakeEnvelope($6, $7, $8, $9, 4326)\n                   ))\n              AND ($10::uuid[] IS NULL OR organization_id = ANY($10))\n            ORDER BY id",
   "describe": {
     "columns": [
       {
@@ -25,6 +25,11 @@
       },
       {
         "ordinal": 4,
+        "name": "organization_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 5,
         "name": "watering_status: WateringStatus",
         "type_info": {
           "Custom": {
@@ -42,7 +47,7 @@
         }
       },
       {
-        "ordinal": 5,
+        "ordinal": 6,
         "name": "has_sensor!: bool",
         "type_info": "Bool"
       }
@@ -87,8 +92,9 @@
       false,
       false,
       false,
+      false,
       null
     ]
   },
-  "hash": "cbaff8af55c76126015469988b041da7e9759b75539de2502c0b5820381f6646"
+  "hash": "5aab27fe7b78b6a97d3c65c428caf0e61ec1e9aa548c14c0c111a56126369675"
 }
