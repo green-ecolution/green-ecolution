@@ -13,6 +13,10 @@ describe('sensorErrors', () => {
   it('maps 409 on reassign to a tree conflict', () => {
     expect(mapReassignError(responseError(409))).toMatch(/bereits/i)
   })
+  it('names the organization mismatch on activate and reassign', () => {
+    expect(mapActivateError(responseError(422))).toMatch(/Organisation/i)
+    expect(mapReassignError(responseError(422))).toMatch(/Organisation/i)
+  })
   it('maps unknown errors generically on deactivate', () => {
     expect(mapDeactivateError(new Error('boom'))).toMatch(/fehlgeschlagen/i)
   })
