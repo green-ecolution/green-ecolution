@@ -43,21 +43,16 @@ interface DragData {
   column: BoardColumnId
 }
 
-const DraggablePlanCard = ({
-  plan,
-  column,
-  users,
-  canModify,
-}: {
+interface PlanCardProps {
   plan: WateringPlanInList
   column: BoardColumnId
   users: User[]
-  canModify: boolean
-}) => {
+}
+
+const DraggablePlanCard = ({ plan, column, users }: PlanCardProps) => {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: plan.id,
     data: { plan, column } satisfies DragData,
-    disabled: !canModify,
   })
 
   return (
@@ -67,14 +62,19 @@ const DraggablePlanCard = ({
         users={users}
         cardState={isDragging ? 'ghost' : 'idle'}
         assignSlot={
-          column === 'planned' && canModify ? (
-            <AssignUsersPopover plan={plan} users={users} />
-          ) : undefined
+          column === 'planned' ? <AssignUsersPopover plan={plan} users={users} /> : undefined
         }
       />
     </div>
   )
 }
+
+const PlanCard = ({ canModify, ...props }: PlanCardProps & { canModify: boolean }) =>
+  canModify ? (
+    <DraggablePlanCard {...props} />
+  ) : (
+    <WateringPlanBoardCard plan={props.plan} users={props.users} />
+  )
 
 const DroppableColumn = ({
   id,
@@ -130,6 +130,7 @@ const WateringPlanBoard = () => {
 
   const { startPlan } = useWateringPlanBoardMutations()
   const canModify = useHasPermission(['watering_plan:update'])
+  const canCreate = useHasPermission(['watering_plan:create'])
   const [activeDrag, setActiveDrag] = useState<DragData | null>(null)
   const [planToCancel, setPlanToCancel] = useState<WateringPlanInList | null>(null)
   const [planToComplete, setPlanToComplete] = useState<WateringPlanInList | null>(null)
@@ -188,12 +189,13 @@ const WateringPlanBoard = () => {
           {plannedQuery.isError && <ColumnError onRetry={() => void plannedQuery.refetch()} />}
           {!plannedQuery.isError && planned.length === 0 && !activeDrag && (
             <KanbanColumnEmpty>
-              Keine geplanten Einsätze. Erstellen Sie einen neuen Einsatzplan oder bündeln Sie
-              Vorschläge.
+              {canCreate
+                ? 'Keine geplanten Einsätze. Erstellen Sie einen neuen Einsatzplan oder bündeln Sie Vorschläge.'
+                : 'Keine geplanten Einsätze.'}
             </KanbanColumnEmpty>
           )}
           {planned.map((plan) => (
-            <DraggablePlanCard
+            <PlanCard
               key={plan.id}
               plan={plan}
               column="planned"
@@ -213,11 +215,13 @@ const WateringPlanBoard = () => {
           {activeQuery.isError && <ColumnError onRetry={() => void activeQuery.refetch()} />}
           {!activeQuery.isError && active.length === 0 && !activeDrag && (
             <KanbanColumnEmpty>
-              Ziehen Sie einen geplanten Einsatz hierher, um ihn zu starten.
+              {canModify
+                ? 'Ziehen Sie einen geplanten Einsatz hierher, um ihn zu starten.'
+                : 'Aktuell ist kein Einsatz unterwegs.'}
             </KanbanColumnEmpty>
           )}
           {active.map((plan) => (
-            <DraggablePlanCard
+            <PlanCard
               key={plan.id}
               plan={plan}
               column="active"

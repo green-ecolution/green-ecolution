@@ -73,4 +73,23 @@ describe('WateringPlanBoard modify gating', () => {
     render(<WateringPlanBoard />)
     expect(screen.getByTestId('assign-users')).toBeInTheDocument()
   })
+
+  it('omits the drag instruction without watering_plan:update', () => {
+    permissions.mockReturnValue(new Set(['watering_plan:read']))
+    render(<WateringPlanBoard />)
+    expect(screen.queryByText(/Ziehen Sie/)).not.toBeInTheDocument()
+    expect(screen.getByText('Aktuell ist kein Einsatz unterwegs.')).toBeInTheDocument()
+  })
+
+  it('renders planned plans as plain cards without watering_plan:update', () => {
+    permissions.mockReturnValue(new Set(['watering_plan:read']))
+    const { container } = render(<WateringPlanBoard />)
+    expect(container.querySelector('[aria-roledescription="draggable"]')).toBeNull()
+  })
+
+  it('renders planned plans as draggable cards with watering_plan:update', () => {
+    permissions.mockReturnValue(new Set(['watering_plan:update']))
+    const { container } = render(<WateringPlanBoard />)
+    expect(container.querySelector('[aria-roledescription="draggable"]')).not.toBeNull()
+  })
 })

@@ -7,6 +7,7 @@ import ListPageHeader from '@/components/general/ListPageHeader'
 import WateringPlanBoard from '@/components/watering-plan/board/WateringPlanBoard'
 import { pendingLoading, prefetch } from '@/lib/router'
 import { Can } from '@/lib/auth/Can'
+import { useHasPermission } from '@/lib/auth/useHasPermission'
 
 export const Route = createFileRoute('/_protected/watering-plans/')({
   component: WateringPlans,
@@ -28,12 +29,18 @@ export const Route = createFileRoute('/_protected/watering-plans/')({
 })
 
 function WateringPlans() {
+  const canModify = useHasPermission(['watering_plan:update'])
+
   return (
     <div className="mt-6">
       <div className="container">
         <ListPageHeader
           title="Einsatzpläne"
-          description="Planen, starten und dokumentieren Sie Bewässerungsfahrten. Ziehen Sie einen Einsatz in die nächste Spalte, um seinen Status zu ändern."
+          description={
+            canModify
+              ? 'Planen, starten und dokumentieren Sie Bewässerungsfahrten. Ziehen Sie einen Einsatz in die nächste Spalte, um seinen Status zu ändern.'
+              : 'Verfolgen Sie geplante, laufende und abgeschlossene Bewässerungsfahrten.'
+          }
           action={
             <Can permission={['watering_plan:create']}>
               <ButtonLink

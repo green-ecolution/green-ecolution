@@ -8,7 +8,7 @@ import { clusterQueries } from '@/api/queries'
 import { useWateringPlanDraft } from '@/store/form/useFormDraft'
 import type { WateringPlanForm } from '@/schema/wateringPlanSchema'
 import ClusterSuggestionCard from './ClusterSuggestionCard'
-import { Can } from '@/lib/auth/Can'
+import { useHasPermission } from '@/lib/auth/useHasPermission'
 
 const SuggestionsColumn = () => {
   const clustersQuery = useQuery(clusterQueries.suggested())
@@ -16,6 +16,7 @@ const SuggestionsColumn = () => {
   const [selected, setSelected] = useState<string[]>([])
   const draft = useWateringPlanDraft<WateringPlanForm>('create')
   const navigate = useNavigate()
+  const canBundle = useHasPermission(['watering_plan:create'])
 
   const clusters = clustersRes?.data ?? []
 
@@ -66,24 +67,22 @@ const SuggestionsColumn = () => {
           key={cluster.id}
           cluster={cluster}
           selected={selected.includes(cluster.id)}
-          onSelectedChange={(isSelected) => toggle(cluster.id, isSelected)}
+          onSelectedChange={canBundle ? (isSelected) => toggle(cluster.id, isSelected) : undefined}
         />
       ))}
-      {clusters.length > 0 && (
-        <Can permission={['watering_plan:create']}>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            disabled={selected.length === 0}
-            onClick={bundleIntoPlan}
-            className="bg-white"
-          >
-            <FolderPlus className="size-4" />
-            Zu Einsatzplan bündeln
-            {selected.length > 0 && <span className="tabular-nums">({selected.length})</span>}
-          </Button>
-        </Can>
+      {clusters.length > 0 && canBundle && (
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          disabled={selected.length === 0}
+          onClick={bundleIntoPlan}
+          className="bg-white"
+        >
+          <FolderPlus className="size-4" />
+          Zu Einsatzplan bündeln
+          {selected.length > 0 && <span className="tabular-nums">({selected.length})</span>}
+        </Button>
       )}
     </KanbanColumn>
   )

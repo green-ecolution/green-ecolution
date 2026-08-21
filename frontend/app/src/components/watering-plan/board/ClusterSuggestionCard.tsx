@@ -5,13 +5,14 @@ import { getWateringStatusDetails } from '@/hooks/details/useDetailsForWateringS
 
 interface ClusterSuggestionCardProps {
   cluster: TreeClusterInListResponse
-  selected: boolean
-  onSelectedChange: (selected: boolean) => void
+  selected?: boolean
+  /** Omit to render the card read-only — no checkbox, no click-to-select. */
+  onSelectedChange?: (selected: boolean) => void
 }
 
 const ClusterSuggestionCard = ({
   cluster,
-  selected,
+  selected = false,
   onSelectedChange,
 }: ClusterSuggestionCardProps) => {
   const statusDetails = getWateringStatusDetails(cluster.wateringStatus)
@@ -19,17 +20,22 @@ const ClusterSuggestionCard = ({
   const toggleOnCardClick = (event: React.MouseEvent) => {
     // Link keeps navigating, checkbox already toggles itself — don't double-toggle.
     if ((event.target as HTMLElement).closest('a, [role="checkbox"]')) return
-    onSelectedChange(!selected)
+    onSelectedChange?.(!selected)
   }
 
   return (
-    <KanbanCard className="flex cursor-pointer items-start gap-3" onClick={toggleOnCardClick}>
-      <Checkbox
-        checked={selected}
-        onCheckedChange={(checked) => onSelectedChange(checked === true)}
-        aria-label={`${cluster.name} für Einsatzplan auswählen`}
-        className="mt-0.5"
-      />
+    <KanbanCard
+      className={`flex items-start gap-3 ${onSelectedChange ? 'cursor-pointer' : ''}`}
+      onClick={onSelectedChange ? toggleOnCardClick : undefined}
+    >
+      {onSelectedChange && (
+        <Checkbox
+          checked={selected}
+          onCheckedChange={(checked) => onSelectedChange(checked === true)}
+          aria-label={`${cluster.name} für Einsatzplan auswählen`}
+          className="mt-0.5"
+        />
+      )}
       <div className="min-w-0">
         <Link
           to="/treecluster/$treeclusterId"
