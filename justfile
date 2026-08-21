@@ -6,6 +6,7 @@ frontend_dir     := "frontend"
 frontend_dist    := frontend_dir / "app/dist"
 binary_name      := "green-ecolution"
 valhalla_tiles_dir := ".docker/infra/valhalla/custom_files"
+pbf_patch_image := env("PBF_PATCH_IMAGE", "ghcr.io/green-ecolution/streamlet/pbf-patch:latest")
 
 app_version        := `git describe --tags --always --dirty 2>/dev/null || echo "dev"`
 app_git_commit     := `git rev-parse --short HEAD 2>/dev/null || echo "unknown"`
@@ -263,21 +264,41 @@ _acme-init:
 # Build patched Valhalla tiles into custom_files using the streamlet pipeline
 # images. Same flow as the streamlet CI, but builds locally and skips the
 # S3 upload (-m), so no secrets are needed. CONSTRUCTION=1 pulls in the TBZ
-# roadworks changeset; default skips it for reproducible dev tiles.
+# roadworks changeset, ALLOWED_PATHS=1 exports the tree positions of the
+# running instance and opens footpaths around trees without road access;
+# both default to off for reproducible dev tiles.
 _build-valhalla-tiles:
     #!/usr/bin/env bash
     set -euo pipefail
     skip="$([[ "${CONSTRUCTION:-0}" == "1" ]] && echo false || echo true)"
+    skip_paths="$([[ "${ALLOWED_PATHS:-0}" == "1" ]] && echo false || echo true)"
     work="$(mktemp -d)"
     trap 'rm -rf "$work"' EXIT
     mkdir -p "{{ valhalla_tiles_dir }}"
-    echo "Building patched PBF (SKIP_CONSTRUCTION=$skip)..."
+    points_env=()
+    if [[ "$skip_paths" == "false" ]]; then
+      echo "Exporting tree positions from Postgres..."
+      sql="select json_build_object('type','FeatureCollection','features',coalesce(json_agg(json_build_object('type','Feature','properties',json_build_object('id',id),'geometry',json_build_object('type','Point','coordinates',json_build_array(longitude,latitude)))),'[]'::json)) from trees"
+      docker compose -f compose.yaml exec -T db \
+        psql -U {{ postgres_user }} -d {{ postgres_db }} -tAc "$sql" \
+        > "$work/targets.geojson" \
+        || { echo "error: tree export failed — is the db container running?"; exit 1; }
+      [[ -s "$work/targets.geojson" ]] || { echo "error: tree export is empty"; exit 1; }
+      count="$(docker compose -f compose.yaml exec -T db \
+        psql -U {{ postgres_user }} -d {{ postgres_db }} -tAc 'select count(*) from trees' \
+        | tr -d '[:space:]')"
+      echo "Exported $count tree positions."
+      points_env=(-e POINTS_FILE=/work/targets.geojson)
+    fi
+    echo "Building patched PBF (SKIP_CONSTRUCTION=$skip, SKIP_PATHS=$skip_paths)..."
     docker run --rm -u "$USER_ID" \
       -v "$work:/work" \
       -e DATA_DIR=/work -e OUTPUT_PATH=/work \
       -e OUTPUT_FILENAME=flensburg-updated.osm.pbf \
       -e SKIP_CONSTRUCTION="$skip" \
-      ghcr.io/green-ecolution/streamlet/pbf-patch:latest
+      -e SKIP_PATHS="$skip_paths" \
+      "${points_env[@]}" \
+      {{ pbf_patch_image }}
     echo "Building Valhalla tiles into {{ valhalla_tiles_dir }}..."
     docker run --rm -u "$USER_ID" \
       -v "$(pwd)/{{ valhalla_tiles_dir }}:/custom_files" \
