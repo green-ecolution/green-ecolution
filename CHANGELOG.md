@@ -11,6 +11,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > single repository. For legacy releases, see the
 > [GitHub Releases](https://github.com/green-ecolution/green-ecolution/releases) page.
 
+## [0.5.1](https://github.com/green-ecolution/green-ecolution/compare/v0.5.0...v0.5.1) (2026-08-22)
+
+
+### Features
+
+* choose the organization when creating a watering group (OP[#3203](https://github.com/green-ecolution/green-ecolution/issues/3203)) ([#976](https://github.com/green-ecolution/green-ecolution/issues/976)) ([4cfbe26](https://github.com/green-ecolution/green-ecolution/commit/4cfbe260a1cb46eda097bc7be896c593293309db))
+* mark employees as selectable for watering plan assignment (OP[#3197](https://github.com/green-ecolution/green-ecolution/issues/3197)) ([#974](https://github.com/green-ecolution/green-ecolution/issues/974)) ([85ea717](https://github.com/green-ecolution/green-ecolution/commit/85ea71734cb203b403e2dda076b9f0a85f237add))
+* **tiles:** export tree positions for the allowed-paths changeset ([#978](https://github.com/green-ecolution/green-ecolution/issues/978)) ([23bd2f2](https://github.com/green-ecolution/green-ecolution/commit/23bd2f26a28a1da19a8e116b8aadaae9a24c23db))
+
+
+### Bug Fixes
+
+* **backend:** set watering status to just watered after a finished plan (OP[#3144](https://github.com/green-ecolution/green-ecolution/issues/3144)) ([#968](https://github.com/green-ecolution/green-ecolution/issues/968)) ([03c3e84](https://github.com/green-ecolution/green-ecolution/commit/03c3e84ec4a62f2606e61b0e45e0ebb1eb58a2d0))
+* **frontend:** invalidate neighbouring aggregates after mutations (OP[#3195](https://github.com/green-ecolution/green-ecolution/issues/3195)) ([#971](https://github.com/green-ecolution/green-ecolution/issues/971)) ([7163a48](https://github.com/green-ecolution/green-ecolution/commit/7163a48ce67b8465f19ab91b46144067c41b4ed0))
+* **frontend:** show only assigned users on watering plan detail (OP[#3193](https://github.com/green-ecolution/green-ecolution/issues/3193)) ([#970](https://github.com/green-ecolution/green-ecolution/issues/970)) ([e865391](https://github.com/green-ecolution/green-ecolution/commit/e8653914a211d08390baa77e85d362be2fe970b1))
+* **frontend:** show stored avatars in the member management ([#972](https://github.com/green-ecolution/green-ecolution/issues/972)) ([37d00a9](https://github.com/green-ecolution/green-ecolution/commit/37d00a942ccdc482a9c87482c9971f8a40859e2f))
+* save vehicles again and surface API errors in the form (OP[#3198](https://github.com/green-ecolution/green-ecolution/issues/3198)) ([#973](https://github.com/green-ecolution/green-ecolution/issues/973)) ([ea18089](https://github.com/green-ecolution/green-ecolution/commit/ea18089d6639ff3d3dd7eb592a560ab07d36f32e))
+* stop offering selection on the watering plan board without permission (OP[#3196](https://github.com/green-ecolution/green-ecolution/issues/3196)) ([#977](https://github.com/green-ecolution/green-ecolution/issues/977)) ([f9d58b3](https://github.com/green-ecolution/green-ecolution/commit/f9d58b358cd597a149a686fca7672e758713e559))
+* surface the real cause of a rejected request instead of a duplicate-record message (OP[#3204](https://github.com/green-ecolution/green-ecolution/issues/3204)) ([#975](https://github.com/green-ecolution/green-ecolution/issues/975)) ([faa124a](https://github.com/green-ecolution/green-ecolution/commit/faa124aaffb821fa558e6d2bfbc79d6066f66d09))
+
 ## [0.5.0](https://github.com/green-ecolution/green-ecolution/compare/v0.4.0...v0.5.0) (2026-08-18)
 
 

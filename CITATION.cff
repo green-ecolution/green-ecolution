@@ -38,8 +38,8 @@ authors:
     given-names: "Sophia"
     family-names: "Anthopoilos"
     email: sophia.anthopoilos@stud.hs-flensburg.de
-version: 0.5.0 # x-release-please-version
-date-released: "2026-08-18"
+version: 0.5.1 # x-release-please-version
+date-released: "2026-08-22"
 url: "https://green-ecolution.de"
 repository-code: "https://github.com/green-ecolution"
 license: AGPL-3.0-only
