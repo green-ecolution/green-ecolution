@@ -49,6 +49,35 @@ export const WateringPlanStatusOptions: {
 
 export const getWateringPlanStatusDetails = createEnumLookup(WateringPlanStatusOptions)
 
+/**
+ * Mirrors the transition table the backend enforces in `update_watering_plan`.
+ * Keep in sync — an entry missing here is unreachable in the UI, an extra one
+ * only fails after submit with `InvalidStateTransition`.
+ */
+const wateringPlanStatusTransitions: Record<WateringPlanStatus, WateringPlanStatus[]> = {
+  [WateringPlanStatus.Planned]: [WateringPlanStatus.Active, WateringPlanStatus.Canceled],
+  [WateringPlanStatus.Active]: [
+    WateringPlanStatus.Planned,
+    WateringPlanStatus.Finished,
+    WateringPlanStatus.NotCompeted,
+    WateringPlanStatus.Canceled,
+  ],
+  [WateringPlanStatus.Finished]: [],
+  [WateringPlanStatus.Canceled]: [],
+  [WateringPlanStatus.NotCompeted]: [],
+  [WateringPlanStatus.Unknown]: [],
+}
+
+/**
+ * Selectable statuses for a plan in `current`: the unchanged status first, then
+ * its valid targets. Empty for terminal statuses, where the plan cannot move on.
+ */
+export const getWateringPlanStatusTransitionOptions = (current: WateringPlanStatus) => {
+  const targets = wateringPlanStatusTransitions[current] ?? []
+  if (targets.length === 0) return []
+  return [current, ...targets].map(getWateringPlanStatusDetails)
+}
+
 export const showWateringPlanStatusButton = (wateringPlan: WateringPlan): boolean => {
   return (
     wateringPlan.status !== WateringPlanStatus.NotCompeted &&
