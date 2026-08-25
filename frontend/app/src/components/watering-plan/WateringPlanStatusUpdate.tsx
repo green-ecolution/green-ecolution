@@ -8,7 +8,7 @@ import { Droplet, MoveRight } from 'lucide-react'
 import FormError from '../general/form/FormError'
 import {
   getWateringPlanStatusDetails,
-  WateringPlanStatusOptions,
+  getWateringPlanStatusTransitionOptions,
 } from '@/hooks/details/useDetailsForWateringPlanStatus'
 import { Badge, TextareaField, FormField, SelectField, Button } from '@green-ecolution/ui'
 import {
@@ -35,6 +35,7 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
   const invalidate = useInvalidateAggregates()
   const showToast = createToast()
   const statusDetails = getWateringPlanStatusDetails(loadedData.status)
+  const statusOptions = getWateringPlanStatusTransitionOptions(loadedData.status)
   const [selectedStatus, setSelectedStatus] = useState(statusDetails)
 
   const { mutate, isError, error } = useMutation({
@@ -89,6 +90,16 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
         })
       }
 
+      const onSubmitNotCompleted: SubmitHandler<WateringPlanCancelForm> = (data) => {
+        mutate({
+          ...loadedData,
+          status: WateringPlanStatus.NotCompeted,
+          cancellationNote: data.cancellationNote,
+          transporterId: loadedData.transporter.id,
+          treeClusterIds: loadedData.treeclusters.map((cluster) => cluster.id),
+        })
+      }
+
       const onSubmitOtherStatus = (status: WateringPlanStatus) => {
         mutate({
           ...loadedData,
@@ -99,7 +110,16 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
       }
       switch (status) {
         case 'canceled':
-          return <CancelWateringPlan onSubmit={onSubmitCancel} />
+          return <CancelWateringPlan onSubmit={onSubmitCancel} className="mt-6 md:w-1/2" />
+        case WateringPlanStatus.NotCompeted:
+          return (
+            <CancelWateringPlan
+              onSubmit={onSubmitNotCompleted}
+              className="mt-6 md:w-1/2"
+              label="Grund des Nichtantritts"
+              placeholder="Warum wurde der Einsatz nicht angetreten?"
+            />
+          )
         case 'finished':
           return (
             <FinishedWateringPlan
@@ -148,21 +168,30 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
       </FormPageHeader>
 
       <section className="mt-10">
-        <div className="flex flex-col gap-y-6 md:w-1/2">
-          <SelectField
-            id="status"
-            label="Status des Einsatzes"
-            placeholder="Wählen Sie einen Status aus"
-            required
-            value={selectedStatus.value}
-            onValueChange={(value) => {
-              setSelectedStatus(getWateringPlanStatusDetails(value))
-            }}
-            options={WateringPlanStatusOptions}
-          />
-        </div>
-        {formByStatus(selectedStatus.value)}
-        <FormError show={isError} error={error?.message} />
+        {statusOptions.length === 0 ? (
+          <p className="text-dark-600 md:w-1/2">
+            Dieser Einsatzplan ist abgeschlossen. Sein Status kann nicht mehr geändert werden.
+          </p>
+        ) : (
+          <>
+            <div className="flex flex-col gap-y-6 md:w-1/2">
+              <SelectField
+                id="status"
+                label="Status des Einsatzes"
+                placeholder="Wähle einen Status aus"
+                required
+                value={selectedStatus.value}
+                description={selectedStatus.description}
+                onValueChange={(value) => {
+                  setSelectedStatus(getWateringPlanStatusDetails(value))
+                }}
+                options={statusOptions}
+              />
+            </div>
+            {formByStatus(selectedStatus.value)}
+            <FormError show={isError} error={error?.message} />
+          </>
+        )}
       </section>
     </>
   )
@@ -172,12 +201,16 @@ interface CancelPlanProps {
   onSubmit: SubmitHandler<WateringPlanCancelForm>
   submitLabel?: string
   className?: string
+  label?: string
+  placeholder?: string
 }
 
 export const CancelWateringPlan = ({
   onSubmit,
   submitLabel = 'Speichern',
   className = 'md:w-1/2',
+  label = 'Grund des Abbruchs',
+  placeholder = 'Warum wurde der Einsatz abgebrochen?',
 }: CancelPlanProps) => {
   const {
     register,
@@ -191,8 +224,8 @@ export const CancelWateringPlan = ({
   return (
     <form className={className} onSubmit={handleSubmit(onSubmit)}>
       <TextareaField
-        placeholder="Warum wurde der Einsatz abgebrochen?"
-        label="Grund des Abbruchs"
+        placeholder={placeholder}
+        label={label}
         error={errors.cancellationNote?.message}
         required
         {...register('cancellationNote')}
