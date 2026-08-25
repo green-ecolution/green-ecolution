@@ -54,6 +54,8 @@ pub enum ServiceError {
     MissingOrganization,
     #[error("a user cannot change their own roles or organization")]
     CannotChangeOwnAccess,
+    #[error("this change would remove your own right to administer roles and members")]
+    CannotRevokeOwnAdministration,
 }
 
 /// Which cross-aggregate organization rule a request violated.

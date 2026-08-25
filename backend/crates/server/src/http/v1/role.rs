@@ -11,7 +11,7 @@ use uuid::Uuid;
 
 use crate::{
     http::{AppState, auth::extractor::AuthUserExtractor, v1::scope::resolve_target_org},
-    service::ServiceError,
+    service::{ServiceError, authorization::RoleChange},
 };
 use domain::{
     Id,
@@ -242,7 +242,7 @@ pub async fn get_role(
 #[utoipa::path(patch, path = "/roles/{role_id}", tag = "Roles",
     operation_id = "updateRole",
     summary = "Replace a role's name, description and permissions",
-    description = "Templates cannot be modified (409). Requires role:update in the role's organization, plus a permission set that does not exceed the caller's own grants.",
+    description = "Templates cannot be modified (409). Requires role:update in the role's organization, plus a permission set that does not exceed the caller's own grants. A change that would leave the caller without role:update or user:update in their own organization is rejected (409).",
     params(("role_id" = Uuid, Path, description = "Role id")),
     request_body = RoleUpdateRequest,
     responses(
@@ -251,7 +251,7 @@ pub async fn get_role(
         (status = 401, description = "Unauthorized"),
         (status = 403, description = "Forbidden"),
         (status = 404, description = "Not found"),
-        (status = 409, description = "Templates are immutable, or name conflicts"),
+        (status = 409, description = "Templates are immutable, the name conflicts, or the change would revoke the caller's own administration rights"),
         (status = 500, description = "Internal server error"),
     )
 )]
@@ -279,6 +279,15 @@ pub async fn update_role(
             .require_superset(user.id, &permissions, org)
             .await?;
     }
+    state
+        .authorization_service
+        .ensure_administration_survives(
+            user.id,
+            state.user_service.organization_of(user.id).await?,
+            id,
+            RoleChange::PermissionsReplacedWith(&permissions),
+        )
+        .await?;
     let description = req
         .description
         .filter(|s| !s.is_empty())
@@ -294,14 +303,14 @@ pub async fn update_role(
 #[utoipa::path(delete, path = "/roles/{role_id}", tag = "Roles",
     operation_id = "deleteRole",
     summary = "Delete a role",
-    description = "Templates cannot be deleted (409). Requires role:delete in the role's organization.",
+    description = "Templates cannot be deleted (409). Requires role:delete in the role's organization. Deleting a role that carries the caller's own role:update or user:update in their organization is rejected (409).",
     params(("role_id" = Uuid, Path, description = "Role id")),
     responses(
         (status = 204, description = "Deleted"),
         (status = 401, description = "Unauthorized"),
         (status = 403, description = "Forbidden"),
         (status = 404, description = "Not found"),
-        (status = 409, description = "Templates are immutable"),
+        (status = 409, description = "Templates are immutable, or the deletion would revoke the caller's own administration rights"),
         (status = 500, description = "Internal server error"),
     )
 )]
@@ -323,6 +332,15 @@ pub async fn delete_role(
             )
             .await?;
     }
+    state
+        .authorization_service
+        .ensure_administration_survives(
+            user.id,
+            state.user_service.organization_of(user.id).await?,
+            id,
+            RoleChange::Deleted,
+        )
+        .await?;
     state.role_service.delete(id).await?;
     Ok(StatusCode::NO_CONTENT)
 }

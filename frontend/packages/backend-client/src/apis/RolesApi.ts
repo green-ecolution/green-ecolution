@@ -105,7 +105,7 @@ export class RolesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Templates cannot be deleted (409). Requires role:delete in the role\'s organization.
+     * Templates cannot be deleted (409). Requires role:delete in the role\'s organization. Deleting a role that carries the caller\'s own role:update or user:update in their organization is rejected (409).
      * Delete a role
      */
     async deleteRoleRaw(requestParameters: DeleteRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
@@ -135,7 +135,7 @@ export class RolesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Templates cannot be deleted (409). Requires role:delete in the role\'s organization.
+     * Templates cannot be deleted (409). Requires role:delete in the role\'s organization. Deleting a role that carries the caller\'s own role:update or user:update in their organization is rejected (409).
      * Delete a role
      */
     async deleteRole(requestParameters: DeleteRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
@@ -312,7 +312,7 @@ export class RolesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Templates cannot be modified (409). Requires role:update in the role\'s organization, plus a permission set that does not exceed the caller\'s own grants.
+     * Templates cannot be modified (409). Requires role:update in the role\'s organization, plus a permission set that does not exceed the caller\'s own grants. A change that would leave the caller without role:update or user:update in their own organization is rejected (409).
      * Replace a role\'s name, description and permissions
      */
     async updateRoleRaw(requestParameters: UpdateRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RoleResponse>> {
@@ -352,7 +352,7 @@ export class RolesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Templates cannot be modified (409). Requires role:update in the role\'s organization, plus a permission set that does not exceed the caller\'s own grants.
+     * Templates cannot be modified (409). Requires role:update in the role\'s organization, plus a permission set that does not exceed the caller\'s own grants. A change that would leave the caller without role:update or user:update in their own organization is rejected (409).
      * Replace a role\'s name, description and permissions
      */
     async updateRole(requestParameters: UpdateRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RoleResponse> {

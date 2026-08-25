@@ -1514,7 +1514,7 @@
           "Roles"
         ],
         "summary": "Delete a role",
-        "description": "Templates cannot be deleted (409). Requires role:delete in the role's organization.",
+        "description": "Templates cannot be deleted (409). Requires role:delete in the role's organization. Deleting a role that carries the caller's own role:update or user:update in their organization is rejected (409).",
         "operationId": "deleteRole",
         "parameters": [
           {
@@ -1542,7 +1542,7 @@
             "description": "Not found"
           },
           "409": {
-            "description": "Templates are immutable"
+            "description": "Templates are immutable, or the deletion would revoke the caller's own administration rights"
           },
           "500": {
             "description": "Internal server error"
@@ -1554,7 +1554,7 @@
           "Roles"
         ],
         "summary": "Replace a role's name, description and permissions",
-        "description": "Templates cannot be modified (409). Requires role:update in the role's organization, plus a permission set that does not exceed the caller's own grants.",
+        "description": "Templates cannot be modified (409). Requires role:update in the role's organization, plus a permission set that does not exceed the caller's own grants. A change that would leave the caller without role:update or user:update in their own organization is rejected (409).",
         "operationId": "updateRole",
         "parameters": [
           {
@@ -1602,7 +1602,7 @@
             "description": "Not found"
           },
           "409": {
-            "description": "Templates are immutable, or name conflicts"
+            "description": "Templates are immutable, the name conflicts, or the change would revoke the caller's own administration rights"
           },
           "500": {
             "description": "Internal server error"
