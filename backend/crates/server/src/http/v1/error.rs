@@ -111,6 +111,7 @@ impl IntoResponse for ServiceError {
             | ServiceError::Role(_)
             | ServiceError::OrganizationNotEmpty
             | ServiceError::CannotChangeOwnAccess
+            | ServiceError::CannotRevokeOwnAdministration
             | ServiceError::SensorBoundToTree
             | ServiceError::TreeInCluster) => error_response(StatusCode::CONFLICT, e.to_string()),
             // Not a conflict with stored state: the request combines two
