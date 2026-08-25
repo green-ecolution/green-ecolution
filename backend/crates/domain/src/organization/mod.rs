@@ -80,6 +80,19 @@ impl Organization {
         self.contact_person
     }
 
+    /// Drops the reference if `person` is the current contact person. A person
+    /// who leaves the organization must not stay its contact — the FK only
+    /// covers profile deletion, not a change of membership. Returns whether
+    /// anything changed so the caller can skip the write.
+    pub fn release_contact_person(&mut self, person: Uuid) -> bool {
+        if self.contact_person == Some(person) {
+            self.contact_person = None;
+            true
+        } else {
+            false
+        }
+    }
+
     /// Replaces the whole editable set. Only the rename is worth an event —
     /// nothing reacts to address or contact-person changes.
     pub fn replace_details(
@@ -188,6 +201,29 @@ mod tests {
         assert_eq!(o.contact_person(), Some(person));
         o.replace_details(name, None, None).unwrap();
         assert_eq!(o.contact_person(), None);
+    }
+
+    #[test]
+    fn releasing_the_contact_person_clears_the_reference_once() {
+        let mut o = org(Some(Id::new_v7()));
+        let name = same_name(&o);
+        let person = uuid::Uuid::now_v7();
+        o.replace_details(name, None, Some(person)).unwrap();
+
+        assert!(o.release_contact_person(person));
+        assert_eq!(o.contact_person(), None);
+        assert!(!o.release_contact_person(person));
+    }
+
+    #[test]
+    fn releasing_someone_else_leaves_the_contact_person_alone() {
+        let mut o = org(Some(Id::new_v7()));
+        let name = same_name(&o);
+        let person = uuid::Uuid::now_v7();
+        o.replace_details(name, None, Some(person)).unwrap();
+
+        assert!(!o.release_contact_person(uuid::Uuid::now_v7()));
+        assert_eq!(o.contact_person(), Some(person));
     }
 
     #[test]
