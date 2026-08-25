@@ -33,7 +33,7 @@ const startOfToday = new Date()
 startOfToday.setHours(0, 0, 0, 0)
 
 const FormForWateringPlan = (props: FormForWateringPlanProps) => {
-  const { register, handleSubmit, control, setValue, getValues } =
+  const { register, handleSubmit, control, resetField, getValues } =
     useFormContext<WateringPlanForm>()
   const { isValid, errors } = useFormState({ control })
 
@@ -43,10 +43,13 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
     if (!startPoints?.length) return
     if (!getValues('startPointName')) {
       const defaultPoint = startPoints.find((sp) => sp.isDefault) ?? startPoints[0]
-      // Untouched select must submit the default depot, not undefined.
-      setValue('startPointName', defaultPoint.name, { shouldValidate: true })
+      // Untouched select must submit the default depot, not undefined. resetField
+      // moves the field's defaultValue along with the value, so the preselection
+      // does not leave the form permanently diverged from its defaults — setValue
+      // would make it count as dirty for the rest of its life.
+      resetField('startPointName', { defaultValue: defaultPoint.name })
     }
-  }, [startPoints, getValues, setValue])
+  }, [startPoints, getValues, resetField])
 
   const watchedTransporterId = useWatch<WateringPlanForm, 'transporterId'>({
     name: 'transporterId',

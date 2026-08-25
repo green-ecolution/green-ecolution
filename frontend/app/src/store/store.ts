@@ -69,10 +69,13 @@ const createFormDraftSlice: StateCreator<Store, Mutators, [], FormDraftSlice> = 
       state.formDrafts[key] = { data, hasChanges: false }
     }),
 
+  // Writing data is not the same as changing it: whether the user actually
+  // altered something is decided by the caller via markFormDraftChanged.
   updateFormDraft: (key, updater) =>
     set((state) => {
-      const current = (state.formDrafts[key]?.data as Parameters<typeof updater>[0]) ?? null
-      state.formDrafts[key] = { data: updater(current), hasChanges: true }
+      const draft = state.formDrafts[key]
+      const current = (draft?.data as Parameters<typeof updater>[0]) ?? null
+      state.formDrafts[key] = { data: updater(current), hasChanges: draft?.hasChanges ?? false }
     }),
 
   markFormDraftChanged: (key) =>

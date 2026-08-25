@@ -65,7 +65,12 @@ const RolesPage = () => {
   const [pendingClose, setPendingClose] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
 
-  const blocker = useBlocker({ shouldBlockFn: () => dirty, withResolver: true })
+  const blocker = useBlocker({
+    shouldBlockFn: () => dirty,
+    // Also gates the browser's own unload prompt; see useFormNavigationBlocker.
+    enableBeforeUnload: () => dirty,
+    withResolver: true,
+  })
 
   const templateList = useMemo(() => templates ?? [], [templates])
   const ownRoles = useMemo(() => ownRolesOf(orgRoles ?? [], templateList), [orgRoles, templateList])

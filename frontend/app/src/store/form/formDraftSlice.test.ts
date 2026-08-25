@@ -51,7 +51,7 @@ describe('formDraftSlice', () => {
   })
 
   describe('updateFormDraft', () => {
-    it('should update data and set hasChanges=true', () => {
+    it('should update data and leave hasChanges to markFormDraftChanged', () => {
       useStore.getState().setFormDraft('cluster-create', { name: 'Test', treeIds: [] })
       useStore.getState().updateFormDraft<TestClusterForm>('cluster-create', (prev) => ({
         ...prev,
@@ -60,7 +60,18 @@ describe('formDraftSlice', () => {
 
       const draft = getDraft<TestClusterForm>('cluster-create')
       expect(draft?.data?.treeIds).toEqual([1, 2, 3])
-      expect(draft?.hasChanges).toBe(true)
+      expect(draft?.hasChanges).toBe(false)
+    })
+
+    it('should keep an already changed draft marked as changed', () => {
+      useStore.getState().setFormDraft('cluster-create', { name: 'Test', treeIds: [] })
+      useStore.getState().markFormDraftChanged('cluster-create')
+      useStore.getState().updateFormDraft<TestClusterForm>('cluster-create', (prev) => ({
+        ...prev,
+        treeIds: [1, 2, 3],
+      }))
+
+      expect(getDraft<TestClusterForm>('cluster-create')?.hasChanges).toBe(true)
     })
 
     it('should handle null prev value gracefully', () => {
@@ -71,7 +82,7 @@ describe('formDraftSlice', () => {
 
       const draft = getDraft<TestClusterForm>('cluster-create')
       expect(draft?.data).toEqual({ name: '', treeIds: [1, 2, 3] })
-      expect(draft?.hasChanges).toBe(true)
+      expect(draft?.hasChanges).toBe(false)
     })
 
     it('should preserve other fields when updating specific field', () => {
@@ -186,6 +197,7 @@ describe('Form → Map → Form roundtrip (Bug Prevention)', () => {
         ...(prev ?? {}),
         treeIds: [101, 102, 103],
       }))
+      useStore.getState().markFormDraftChanged('cluster-update')
 
       const draft = getDraft<TestClusterForm>('cluster-update')
       expect(draft?.data?.treeIds).toEqual([101, 102, 103])
@@ -250,6 +262,7 @@ describe('Form → Map → Form roundtrip (Bug Prevention)', () => {
       ...prev,
       treeIds: [101, 102, 103],
     }))
+    useStore.getState().markFormDraftChanged('cluster-create')
 
     const draft = getDraft<TestClusterForm>('cluster-create')
 
@@ -270,6 +283,7 @@ describe('Form → Map → Form roundtrip (Bug Prevention)', () => {
       ...prev,
       treeIds: [1, 2, 3, 4, 5],
     }))
+    useStore.getState().markFormDraftChanged('cluster-update')
 
     const draft = getDraft<TestClusterForm>('cluster-update')
     expect(draft?.data?.treeIds).toEqual([1, 2, 3, 4, 5])
@@ -287,6 +301,7 @@ describe('Form → Map → Form roundtrip (Bug Prevention)', () => {
       ...prev,
       clusterIds: [10, 20, 30],
     }))
+    useStore.getState().markFormDraftChanged('wateringplan-create')
 
     const draft = getDraft<TestWateringPlanForm>('wateringplan-create')
     expect(draft?.data?.clusterIds).toEqual([10, 20, 30])
@@ -306,6 +321,7 @@ describe('Form → Map → Form roundtrip (Bug Prevention)', () => {
       latitude: 54.123,
       longitude: 9.456,
     }))
+    useStore.getState().markFormDraftChanged('tree-create')
 
     const draft = getDraft<TestTreeForm>('tree-create')
     expect(draft?.data?.latitude).toBe(54.123)
@@ -326,6 +342,7 @@ describe('Form → Map → Form roundtrip (Bug Prevention)', () => {
       latitude: 54.789,
       longitude: 9.012,
     }))
+    useStore.getState().markFormDraftChanged('tree-update')
 
     const draft = getDraft<TestTreeForm>('tree-update')
     expect(draft?.data?.latitude).toBe(54.789)
