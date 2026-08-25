@@ -44,7 +44,11 @@ function TestWrapper({
 
   return (
     <QueryClientProvider client={queryClient}>
-      <FormProvider {...methods}>{children}</FormProvider>
+      <FormProvider {...methods}>
+        {children}
+        <span data-testid="is-dirty">{String(methods.formState.isDirty)}</span>
+        <span data-testid="is-valid">{String(methods.formState.isValid)}</span>
+      </FormProvider>
       <Toaster />
     </QueryClientProvider>
   )
@@ -418,5 +422,69 @@ describe('FormForWateringPlan', () => {
       expect(startPointSelect).toHaveTextContent('B')
     })
     expect(startPointSelect).not.toHaveTextContent('A')
+  })
+
+  it('does not count the preselected start point as a user change', async () => {
+    const user = userEvent.setup()
+    vi.mocked(routingApi).listRoutingStartPoints.mockResolvedValue([
+      { id: 'sp-b', name: 'Betriebshof', isDefault: true, lat: 0, lon: 0, wateringPoint: false },
+    ] as StartPointResponse[])
+
+    render(
+      <TestWrapper defaultValues={defaultFormValues}>
+        <FormForWateringPlan
+          displayError={false}
+          transporters={mockTransporters}
+          trailers={mockTrailers}
+          users={mockUsers}
+          onAddCluster={mockOnAddCluster}
+          onSubmit={mockOnSubmit}
+        />
+      </TestWrapper>,
+    )
+
+    const startPointSelect = await screen.findByRole('combobox', { name: /startpunkt/i })
+    await waitFor(() => expect(startPointSelect).toHaveTextContent('Betriebshof'))
+    expect(screen.getByTestId('is-dirty')).toHaveTextContent('false')
+
+    // Touching a field and undoing the input must leave the form pristine. It
+    // only does so if the preselection moved the default instead of writing a
+    // value on top of it.
+    const description = screen.getByLabelText(/kurze beschreibung/i)
+    await user.type(description, 'x')
+    await waitFor(() => expect(screen.getByTestId('is-dirty')).toHaveTextContent('true'))
+
+    await user.clear(description)
+    await waitFor(() => expect(screen.getByTestId('is-dirty')).toHaveTextContent('false'))
+  })
+
+  it('revalidates the form once the start point is preselected', async () => {
+    vi.mocked(routingApi).listRoutingStartPoints.mockResolvedValue([
+      { id: 'sp-b', name: 'Betriebshof', isDefault: true, lat: 0, lon: 0, wateringPoint: false },
+    ] as StartPointResponse[])
+
+    // Everything but the start point is filled in, so validity hinges on it alone.
+    const almostValid: WateringPlanForm = {
+      ...defaultFormValues,
+      transporterId: 'vehicle-uuid-1',
+      driverIds: ['550e8400-e29b-41d4-a716-446655440000'],
+      clusterIds: ['cluster-uuid-1'],
+    }
+
+    render(
+      <TestWrapper defaultValues={almostValid}>
+        <FormForWateringPlan
+          displayError={false}
+          transporters={mockTransporters}
+          trailers={mockTrailers}
+          users={mockUsers}
+          onAddCluster={mockOnAddCluster}
+          onSubmit={mockOnSubmit}
+        />
+      </TestWrapper>,
+    )
+
+    await waitFor(() => expect(screen.getByTestId('is-valid')).toHaveTextContent('true'))
+    expect(screen.getByRole('button', { name: /speichern/i })).not.toBeDisabled()
   })
 })
