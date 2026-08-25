@@ -126,7 +126,12 @@ const MembersPage = () => {
   const draftState = useMemberProfileDraft()
   const { draft, dirty, edit, discard } = draftState
 
-  const blocker = useBlocker({ shouldBlockFn: () => dirty, withResolver: true })
+  const blocker = useBlocker({
+    shouldBlockFn: () => dirty,
+    // Also gates the browser's own unload prompt; see useFormNavigationBlocker.
+    enableBeforeUnload: () => dirty,
+    withResolver: true,
+  })
 
   const total = userPage?.pagination.totalRecords ?? 0
   const totalPages = userPage?.pagination.totalPages ?? 1

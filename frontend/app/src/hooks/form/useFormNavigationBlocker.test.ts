@@ -16,12 +16,20 @@ describe('useFormNavigationBlocker', () => {
   const mockProceed = vi.fn()
   const mockReset = vi.fn()
   let capturedShouldBlockFn: ShouldBlockFn
+  let capturedEnableBeforeUnload: () => boolean
 
   beforeEach(() => {
     vi.clearAllMocks()
     ;(useBlocker as Mock).mockImplementation(
-      ({ shouldBlockFn }: { shouldBlockFn: ShouldBlockFn }) => {
+      ({
+        shouldBlockFn,
+        enableBeforeUnload,
+      }: {
+        shouldBlockFn: ShouldBlockFn
+        enableBeforeUnload: () => boolean
+      }) => {
         capturedShouldBlockFn = shouldBlockFn
+        capturedEnableBeforeUnload = enableBeforeUnload
         return {
           proceed: mockProceed,
           reset: mockReset,
@@ -337,6 +345,30 @@ describe('useFormNavigationBlocker', () => {
           withResolver: true,
         }),
       )
+    })
+
+    it('gates the native beforeunload prompt on the dirty state', () => {
+      const { result: clean } = renderHook(() =>
+        useFormNavigationBlocker({ isDirty: false, message: 'Test message' }),
+      )
+      expect(clean.current).toBeDefined()
+      expect(capturedEnableBeforeUnload()).toBe(false)
+
+      renderHook(() => useFormNavigationBlocker({ isDirty: true, message: 'Test message' }))
+      expect(capturedEnableBeforeUnload()).toBe(true)
+    })
+
+    it('re-evaluates enableBeforeUnload when the form becomes dirty', () => {
+      const { rerender } = renderHook(
+        ({ isDirty }: { isDirty: boolean }) =>
+          useFormNavigationBlocker({ isDirty, message: 'Test message' }),
+        { initialProps: { isDirty: false } },
+      )
+
+      expect(capturedEnableBeforeUnload()).toBe(false)
+
+      rerender({ isDirty: true })
+      expect(capturedEnableBeforeUnload()).toBe(true)
     })
   })
 })

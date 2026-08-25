@@ -96,7 +96,12 @@ const OrganizationPage = () => {
     enabled: canReadUsers && selectedId !== null,
   })
 
-  const blocker = useBlocker({ shouldBlockFn: () => dirty, withResolver: true })
+  const blocker = useBlocker({
+    shouldBlockFn: () => dirty,
+    // Also gates the browser's own unload prompt; see useFormNavigationBlocker.
+    enableBeforeUnload: () => dirty,
+    withResolver: true,
+  })
 
   useEffect(() => {
     // Keyed on the object, not the id: after a save the invalidated query hands

@@ -48,6 +48,11 @@ export const useFormNavigationBlocker = ({
 
       return true
     },
+    // @tanstack/history arms the browser's own unload prompt from this flag
+    // alone and never consults shouldBlockFn, so the dirty check has to be
+    // repeated here. Leaving it at its `true` default warns on every reload,
+    // even for a form nobody typed into.
+    enableBeforeUnload: () => isDirty,
     withResolver: true,
   })
 
