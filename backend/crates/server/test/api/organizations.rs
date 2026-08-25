@@ -343,6 +343,38 @@ async fn update_returns_the_raw_contact_person_id() {
     );
 }
 
+/// A contact person who changes organization must not stay referenced: the FK
+/// on `contact_person_id` only fires when the profile is deleted, not when its
+/// membership moves.
+#[tokio::test]
+async fn moving_the_contact_person_away_clears_the_reference() {
+    let app = spawn_app().await;
+    let org_id = create_org(&app, "Kontaktstelle").await;
+    let elsewhere = create_org(&app, "Betriebshof Sued").await;
+    let member = seed_profile_in(&app, &org_id).await;
+    app.put_json(
+        &format!("/api/v1/organizations/{org_id}"),
+        &serde_json::json!({ "name": "Kontaktstelle", "contact_person_id": member }),
+    )
+    .await;
+
+    let resp = app
+        .patch_json(
+            &format!("/api/v1/users/{member}/organization"),
+            &serde_json::json!({ "organization_id": elsewhere }),
+        )
+        .await;
+    assert_eq!(resp.status(), 200);
+
+    let stored: Option<Uuid> =
+        sqlx::query_scalar("SELECT contact_person_id FROM organizations WHERE id = $1")
+            .bind(Uuid::parse_str(&org_id).unwrap())
+            .fetch_one(&app.db_pool)
+            .await
+            .unwrap();
+    assert_eq!(stored, None);
+}
+
 /// The uuid-that-does-not-exist case only proves that no membership row was
 /// found; this one proves `ensure_member` compares organizations.
 #[tokio::test]

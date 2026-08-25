@@ -7,7 +7,7 @@ use uuid::Uuid;
 use domain::{
     Id, RepositoryError,
     authorization::Visibility,
-    organization::{Organization, OrganizationReader, OrganizationView},
+    organization::{Organization, OrganizationReader, OrganizationView, OrganizationWriter},
     role::{Role, RoleError, RoleReader, RoleView, RoleWriter},
     shared::{
         email::Email,
@@ -48,6 +48,7 @@ pub struct UserService {
     role_reader: Arc<dyn RoleReader>,
     role_writer: Arc<dyn RoleWriter>,
     org_reader: Arc<dyn OrganizationReader>,
+    org_writer: Arc<dyn OrganizationWriter>,
     enabled: bool,
 }
 
@@ -60,6 +61,7 @@ impl UserService {
         role_reader: Arc<dyn RoleReader>,
         role_writer: Arc<dyn RoleWriter>,
         org_reader: Arc<dyn OrganizationReader>,
+        org_writer: Arc<dyn OrganizationWriter>,
         enabled: bool,
     ) -> Self {
         Self {
@@ -69,6 +71,7 @@ impl UserService {
             role_reader,
             role_writer,
             org_reader,
+            org_writer,
             enabled,
         }
     }
@@ -244,6 +247,8 @@ impl UserService {
         user_id: Uuid,
         org: Id<Organization>,
     ) -> Result<UserView, ServiceError> {
+        self.release_contact_person_of_previous_org(user_id, org)
+            .await?;
         self.profile_writer.set_organization(user_id, org).await?;
         let identity = self.identity_for(user_id).await?;
         self.attach_views(vec![identity])
@@ -251,6 +256,29 @@ impl UserService {
             .into_iter()
             .next()
             .ok_or_else(|| RepositoryError::NotFound.into())
+    }
+
+    /// A contact person must belong to the organization it represents, so
+    /// leaving means giving up that role. The reference is dropped before the
+    /// move: a failure between the two writes then costs a contact person
+    /// instead of leaving a member-less one behind.
+    #[tracing::instrument(level = "debug", skip_all)]
+    async fn release_contact_person_of_previous_org(
+        &self,
+        user_id: Uuid,
+        target: Id<Organization>,
+    ) -> Result<(), ServiceError> {
+        let Some(previous) = self.organization_of(user_id).await? else {
+            return Ok(());
+        };
+        if previous == target {
+            return Ok(());
+        }
+        let mut org = self.org_reader.by_id(previous).await?;
+        if org.release_contact_person(user_id) {
+            self.org_writer.save(&org).await?;
+        }
+        Ok(())
     }
 
     /// The target user's organization, if any. Returns `None` for legacy users
@@ -659,9 +687,14 @@ mod tests {
         }
         async fn organizations_for(
             &self,
-            _ids: &[Uuid],
+            ids: &[Uuid],
         ) -> Result<Vec<(Uuid, Id<Organization>)>, RepositoryError> {
-            Ok(Vec::new())
+            let members = self.members.lock().unwrap();
+            Ok(members
+                .iter()
+                .flat_map(|(org, users)| users.iter().map(move |user| (*user, *org)))
+                .filter(|(user, _)| ids.contains(user))
+                .collect())
         }
     }
 
@@ -753,6 +786,55 @@ mod tests {
     #[derive(Default)]
     struct StubOrgs {
         member_count_queries: AtomicUsize,
+        rows: Mutex<HashMap<Id<Organization>, Organization>>,
+        saves: AtomicUsize,
+    }
+
+    impl StubOrgs {
+        fn insert(&self, id: Id<Organization>, contact_person: Option<Uuid>) {
+            self.rows
+                .lock()
+                .unwrap()
+                .insert(id, org_row(id, contact_person));
+        }
+        fn contact_person_of(&self, id: Id<Organization>) -> Option<Uuid> {
+            self.rows
+                .lock()
+                .unwrap()
+                .get(&id)
+                .and_then(Organization::contact_person)
+        }
+    }
+
+    fn org_row(id: Id<Organization>, contact_person: Option<Uuid>) -> Organization {
+        Organization::reconstitute(OrganizationSnapshot {
+            id: id.value(),
+            parent_id: Some(Uuid::now_v7()),
+            name: "Testorg".into(),
+            street: None,
+            postal_code: None,
+            city: None,
+            contact_person_id: contact_person,
+        })
+    }
+
+    #[async_trait::async_trait]
+    impl OrganizationWriter for StubOrgs {
+        async fn save_new(
+            &self,
+            _draft: domain::organization::OrganizationDraft,
+            _templates: Vec<Role>,
+        ) -> Result<Organization, RepositoryError> {
+            Err(RepositoryError::NotFound)
+        }
+        async fn save(&self, org: &Organization) -> Result<(), RepositoryError> {
+            self.saves.fetch_add(1, Ordering::Relaxed);
+            self.rows.lock().unwrap().insert(org.id, org.clone());
+            Ok(())
+        }
+        async fn delete(&self, _id: Id<Organization>) -> Result<(), RepositoryError> {
+            Ok(())
+        }
     }
 
     #[async_trait::async_trait]
@@ -761,14 +843,17 @@ mod tests {
             Ok(Vec::new())
         }
         async fn by_id(&self, id: Id<Organization>) -> Result<Organization, RepositoryError> {
-            Ok(Organization::reconstitute(OrganizationSnapshot {
-                id: id.value(),
-                parent_id: None,
-                name: "Testorg".into(),
-                street: None,
-                postal_code: None,
-                city: None,
-                contact_person_id: None,
+            let rows = self.rows.lock().unwrap();
+            Ok(rows.get(&id).cloned().unwrap_or_else(|| {
+                Organization::reconstitute(OrganizationSnapshot {
+                    id: id.value(),
+                    parent_id: None,
+                    name: "Testorg".into(),
+                    street: None,
+                    postal_code: None,
+                    city: None,
+                    contact_person_id: None,
+                })
             }))
         }
         async fn hierarchy(&self) -> Result<OrgHierarchy, RepositoryError> {
@@ -811,6 +896,7 @@ mod tests {
             profiles,
             roles.clone(),
             roles,
+            orgs.clone(),
             orgs,
             true,
         )
@@ -924,6 +1010,46 @@ mod tests {
             .expect("organization present after register");
         assert_eq!(organization.id, org);
         assert_eq!(organization.name.as_str(), "Testorg");
+    }
+
+    #[tokio::test]
+    async fn moving_the_contact_person_releases_the_old_organizations_reference() {
+        let user = Uuid::now_v7();
+        let (old_org, new_org) = (Id::new_v7(), Id::new_v7());
+        let profiles = Arc::new(InMemoryProfiles::default());
+        profiles.add_member(old_org, user);
+        let orgs = Arc::new(StubOrgs::default());
+        orgs.insert(old_org, Some(user));
+        let svc = service_with_orgs(
+            Arc::new(StubIdentityRepo::new(vec![identity(user, "jdoe")])),
+            profiles,
+            orgs.clone(),
+        );
+
+        svc.set_organization(user, new_org).await.unwrap();
+
+        assert_eq!(orgs.contact_person_of(old_org), None);
+    }
+
+    #[tokio::test]
+    async fn moving_a_member_leaves_a_different_contact_person_untouched() {
+        let (user, contact) = (Uuid::now_v7(), Uuid::now_v7());
+        let (old_org, new_org) = (Id::new_v7(), Id::new_v7());
+        let profiles = Arc::new(InMemoryProfiles::default());
+        profiles.add_member(old_org, user);
+        profiles.add_member(old_org, contact);
+        let orgs = Arc::new(StubOrgs::default());
+        orgs.insert(old_org, Some(contact));
+        let svc = service_with_orgs(
+            Arc::new(StubIdentityRepo::new(vec![identity(user, "jdoe")])),
+            profiles,
+            orgs.clone(),
+        );
+
+        svc.set_organization(user, new_org).await.unwrap();
+
+        assert_eq!(orgs.contact_person_of(old_org), Some(contact));
+        assert_eq!(orgs.saves.load(Ordering::Relaxed), 0);
     }
 
     #[tokio::test]
