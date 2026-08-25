@@ -1,3 +1,4 @@
+import { Fragment } from 'react'
 import { Link } from '@tanstack/react-router'
 import { useBreadcrumbs } from '@/hooks/useBreadcrumb'
 import {
@@ -28,16 +29,18 @@ function Breadcrumb() {
           </BreadcrumbLink>
         </BreadcrumbItem>
         {breadcrumbs.map((breadcrumb, index) => (
-          <BreadcrumbItem key={breadcrumb.path}>
+          <Fragment key={breadcrumb.path}>
             <BreadcrumbSeparator />
-            {isLastItem(index) ? (
-              <BreadcrumbPage>{breadcrumb.title}</BreadcrumbPage>
-            ) : (
-              <BreadcrumbLink asChild>
-                <Link to={breadcrumb.path}>{breadcrumb.title}</Link>
-              </BreadcrumbLink>
-            )}
-          </BreadcrumbItem>
+            <BreadcrumbItem>
+              {isLastItem(index) ? (
+                <BreadcrumbPage>{breadcrumb.title}</BreadcrumbPage>
+              ) : (
+                <BreadcrumbLink asChild>
+                  <Link to={breadcrumb.path}>{breadcrumb.title}</Link>
+                </BreadcrumbLink>
+              )}
+            </BreadcrumbItem>
+          </Fragment>
         ))}
       </BreadcrumbList>
     </BreadcrumbRoot>
