@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
-use domain::sensor_model::{SensorAbilityUnit, SensorModel};
+use domain::sensor_model::{SensorAbilityUnit, SensorModel, SensorModelAbility};
 use domain::shared::string_value::NonEmptyString;
 use domain::{
     Id,
@@ -118,6 +118,7 @@ pub struct SensorModelSummaryResponse {
     #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000")]
     pub id: uuid::Uuid,
     pub name: String,
+    pub abilities: Vec<SensorModelAbilityResponse>,
 }
 
 impl From<&SensorModelSummary> for SensorModelSummaryResponse {
@@ -125,6 +126,7 @@ impl From<&SensorModelSummary> for SensorModelSummaryResponse {
         Self {
             id: value.id,
             name: value.name.clone(),
+            abilities: value.abilities.iter().map(Into::into).collect(),
         }
     }
 }
@@ -447,6 +449,17 @@ pub struct SensorModelAbilityResponse {
     pub depth_cm: i32,
 }
 
+impl From<&SensorModelAbility> for SensorModelAbilityResponse {
+    fn from(a: &SensorModelAbility) -> Self {
+        Self {
+            id: a.id,
+            ability: a.ability.name.as_str().to_owned(),
+            unit: a.ability.unit.into(),
+            depth_cm: a.depth_cm,
+        }
+    }
+}
+
 /// Full description of a supported sensor model and its abilities.
 #[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct SensorModelResponse {
@@ -466,16 +479,7 @@ impl From<&SensorModel> for SensorModelResponse {
             id: m.id.value(),
             name: m.name.as_str().to_owned(),
             description: m.description.clone(),
-            abilities: m
-                .abilities
-                .iter()
-                .map(|a| SensorModelAbilityResponse {
-                    id: a.id,
-                    ability: a.ability.name.as_str().to_owned(),
-                    unit: a.ability.unit.into(),
-                    depth_cm: a.depth_cm,
-                })
-                .collect(),
+            abilities: m.abilities.iter().map(Into::into).collect(),
         }
     }
 }

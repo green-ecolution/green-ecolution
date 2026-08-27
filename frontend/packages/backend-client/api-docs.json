@@ -6740,9 +6740,16 @@
         "description": "Summary view of the [`SensorModel`] this sensor belongs to.",
         "required": [
           "id",
-          "name"
+          "name",
+          "abilities"
         ],
         "properties": {
+          "abilities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SensorModelAbilityResponse"
+            }
+          },
           "id": {
             "type": "string",
             "format": "uuid",

@@ -7,7 +7,8 @@ use domain::{
     cluster::{SoilCondition, TreeClusterReader},
     events::{DomainEvent, SensorDataReceivedPayload, SensorReadings},
     sensor::SensorReadingReader,
-    tree::{TreeReader, TreeWriter},
+    shared::watering_status::WateringStatus,
+    tree::{TreeError, TreeReader, TreeWriter},
 };
 
 /// Turns each `SensorDataReceived` event into a fresh watering-status decision
@@ -67,6 +68,10 @@ impl TreeWateringFromSensorHandler {
 
         let new_status = match outcome {
             Ok(s) => s,
+            // No calibration applies, so a stored status can never be refreshed.
+            Err(TreeError::UncalibratedSoil | TreeError::BeyondMonitoring) => {
+                WateringStatus::Unknown
+            }
             Err(e) => {
                 tracing::debug!(error = %e, "skipping tree watering update; calibration rejected payload");
                 return Ok(vec![]);

@@ -10,6 +10,7 @@ import ClusterTreeList from './ClusterTreeList'
 import ClusterMasterDataCard from './ClusterMasterDataCard'
 import EntityDetailHeader from '@/components/general/EntityDetailHeader'
 import DeleteConfirmDialog from '@/components/general/DeleteConfirmDialog'
+import { unknownStatusReasons } from './clusterStatusReason'
 import { getWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
 import createToast from '@/hooks/createToast'
 import { Can } from '@/lib/auth/Can'
@@ -45,6 +46,9 @@ const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
   const wateringStatus = getWateringStatusDetails(treecluster.wateringStatus)
   const trees = treecluster.trees ?? []
   const hasSensors = trees.some((tree) => tree.sensor)
+  // Only the calibration window depends on it, so a stale year cannot mislead.
+  // eslint-disable-next-line react-x/purity
+  const statusReasons = unknownStatusReasons(treecluster, new Date().getFullYear())
 
   const handleDelete = () => {
     clusterApi
@@ -125,6 +129,29 @@ const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
           </Alert>
         )}
       </EntityDetailHeader>
+
+      {statusReasons.length > 0 && (
+        <Alert variant="info" className="mt-6 flex w-full gap-4">
+          <AlertIcon variant="info" />
+          <AlertContent>
+            <AlertTitle>Warum ist der Bewässerungszustand unbekannt?</AlertTitle>
+            {statusReasons.length === 1 ? (
+              <AlertDescription>{statusReasons[0].text}</AlertDescription>
+            ) : (
+              <>
+                <AlertDescription>
+                  Mehrere Gründe verhindern derzeit eine Bewertung:
+                </AlertDescription>
+                <ul className="list-disc space-y-1 pl-5 text-sm leading-relaxed text-muted-foreground">
+                  {statusReasons.map((reason) => (
+                    <li key={reason.key}>{reason.text}</li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </AlertContent>
+        </Alert>
+      )}
 
       {/* min-w-0: grid items must shrink below the chart svg's explicit width,
           otherwise Recharts locks the page wider than small viewports. */}

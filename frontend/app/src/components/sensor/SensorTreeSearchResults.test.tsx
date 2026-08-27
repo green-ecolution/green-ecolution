@@ -109,7 +109,7 @@ describe('SensorTreeSearchResults', () => {
             createdAt: '',
             updatedAt: '',
             organizationId: '',
-            model: { id: 'model-1', name: 'EcoDrizzler' },
+            model: { id: 'model-1', name: 'EcoDrizzler', abilities: [] },
             sensorType: 'lorawan',
           },
         }),

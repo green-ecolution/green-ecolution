@@ -286,44 +286,67 @@ async fn insert_tree_in_cluster(
 }
 
 async fn ingest_moisture(app: &TestApp, sensor: &str, model_id: Uuid, v40: f64, v80: f64) {
+    ingest_moisture_at(app, sensor, model_id, &[(40, v40), (80, v80)]).await;
+}
+
+/// Ingests soil-moisture readings at arbitrary depths.
+async fn ingest_moisture_at(app: &TestApp, sensor: &str, model_id: Uuid, readings: &[(i32, f64)]) {
     let model = app
         .state
         .sensor_service
         .model_by_id(domain::Id::new(model_id))
         .await
         .unwrap();
-    let ab_40 = model
-        .ability_id_for(domain::sensor_model::SensorAbilityName::SoilMoisture, 40)
-        .unwrap();
-    let ab_80 = model
-        .ability_id_for(domain::sensor_model::SensorAbilityName::SoilMoisture, 80)
-        .unwrap();
+    let mut normalized = Vec::with_capacity(readings.len());
+    let mut volumetrics = Vec::with_capacity(readings.len());
+    for (depth_cm, value) in readings {
+        normalized.push(NormalizedValue {
+            model_ability_id: model
+                .ability_id_for(
+                    domain::sensor_model::SensorAbilityName::SoilMoisture,
+                    *depth_cm,
+                )
+                .unwrap(),
+            value: Decimal::from_f64_retain(*value).unwrap(),
+        });
+        volumetrics.push(VolumetricReading {
+            depth_cm: *depth_cm,
+            moisture_percent: *value,
+        });
+    }
     app.state
         .sensor_service
         .ingest_reading(ReadingIngest {
             sensor_id: SensorId::new(sensor).unwrap(),
             raw_payload: json!({ "device": sensor }),
-            normalized: vec![
-                NormalizedValue {
-                    model_ability_id: ab_40,
-                    value: Decimal::from_f64_retain(v40).unwrap(),
-                },
-                NormalizedValue {
-                    model_ability_id: ab_80,
-                    value: Decimal::from_f64_retain(v80).unwrap(),
-                },
-            ],
-            typed: SensorReadings::Volumetrics(vec![
-                VolumetricReading {
-                    depth_cm: 40,
-                    moisture_percent: v40,
-                },
-                VolumetricReading {
-                    depth_cm: 80,
-                    moisture_percent: v80,
-                },
-            ]),
+            normalized,
+            typed: SensorReadings::Volumetrics(volumetrics),
         })
+        .await
+        .unwrap();
+}
+
+/// Replaces the cluster's soil condition, leaving every other field as-is.
+async fn set_soil(app: &TestApp, cluster_id: Uuid, soil: SoilCondition) {
+    let cluster = app
+        .state
+        .cluster_service
+        .by_id(Id::new(cluster_id))
+        .await
+        .unwrap();
+    app.state
+        .cluster_service
+        .replace(
+            Id::new(cluster_id),
+            TreeClusterUpdate {
+                name: cluster.name.clone(),
+                address: ClusterAddress::new(cluster.address.as_str()).unwrap(),
+                description: cluster.description.clone(),
+                soil_condition: Some(soil),
+                tree_ids: cluster.tree_ids.clone(),
+                provenance: Provenance::default(),
+            },
+        )
         .await
         .unwrap();
 }
@@ -410,27 +433,7 @@ async fn soil_condition_change_retriggers_tree_and_cluster_status() {
     );
 
     // Change soil to Uu: min @ 40 cm = 20, min @ 80 cm = 20; 13% is Bad at both.
-    let cluster = app
-        .state
-        .cluster_service
-        .by_id(Id::new(cluster_id))
-        .await
-        .unwrap();
-    app.state
-        .cluster_service
-        .replace(
-            Id::new(cluster_id),
-            TreeClusterUpdate {
-                name: cluster.name.clone(),
-                address: ClusterAddress::new(cluster.address.as_str()).unwrap(),
-                description: cluster.description.clone(),
-                soil_condition: Some(SoilCondition::Uu),
-                tree_ids: cluster.tree_ids.clone(),
-                provenance: Provenance::default(),
-            },
-        )
-        .await
-        .unwrap();
+    set_soil(&app, cluster_id, SoilCondition::Uu).await;
 
     assert_eq!(
         watering_status(&app, "T-SOIL-CHG").await,
@@ -441,5 +444,99 @@ async fn soil_condition_change_retriggers_tree_and_cluster_status() {
         cluster_watering_status(&app, cluster_id).await,
         "bad",
         "cluster must be bad after soil changed to Uu"
+    );
+}
+
+#[tokio::test]
+async fn soil_condition_unknown_invalidates_tree_and_cluster_status() {
+    let app = spawn_app().await;
+    let model_id = app.ges_1000_model_id().await;
+    let cluster_id = insert_cluster_with_soil(&app, "Su3").await;
+
+    create_sensor(&app, "eui-soil-unknown", model_id).await;
+    let tree_id = insert_tree_in_cluster(&app, "T-SOIL-UNK", cluster_id, 5).await;
+    app.post_json(
+        "/api/v1/sensors/eui-soil-unknown/activate",
+        &json!({ "tree_id": tree_id }),
+    )
+    .await;
+    ingest_moisture(&app, "eui-soil-unknown", model_id, 13.0, 13.0).await;
+    assert_eq!(
+        watering_status(&app, "T-SOIL-UNK").await,
+        "good",
+        "pre-condition: tree should be good under Su3"
+    );
+
+    set_soil(&app, cluster_id, SoilCondition::Unknown).await;
+
+    assert_eq!(
+        watering_status(&app, "T-SOIL-UNK").await,
+        "unknown",
+        "tree status must be dropped once the soil type is gone"
+    );
+    assert_eq!(
+        cluster_watering_status(&app, cluster_id).await,
+        "unknown",
+        "cluster must follow its trees instead of keeping a stale value"
+    );
+}
+
+/// The EcoDrizzler's 15 cm probe has no KA5 calibration, so its
+/// watermark-derived status must survive a soil type going unknown.
+#[tokio::test]
+async fn soil_condition_unknown_keeps_status_derived_from_watermarks() {
+    let app = spawn_app().await;
+    let model_id = app.ecodrizzler_model_id().await;
+    let cluster_id = insert_cluster_with_soil(&app, "Su3").await;
+
+    create_sensor(&app, "eui-soil-eco", model_id).await;
+    let tree_id = insert_tree_in_cluster(&app, "T-SOIL-ECO", cluster_id, 0).await;
+    app.post_json(
+        "/api/v1/sensors/eui-soil-eco/activate",
+        &json!({ "tree_id": tree_id }),
+    )
+    .await;
+    // 5 centibar across all depths → Good under the year-0 watermark table.
+    app.ingest_ecodrizzler("eui-soil-eco", 5).await.unwrap();
+    // The SMT-100 moisture value lands in the newest reading, so the soil
+    // recalc will see a 15 cm volumetric payload.
+    ingest_moisture_at(&app, "eui-soil-eco", model_id, &[(15, 30.0)]).await;
+    assert_eq!(watering_status(&app, "T-SOIL-ECO").await, "good");
+
+    set_soil(&app, cluster_id, SoilCondition::Unknown).await;
+
+    assert_eq!(
+        watering_status(&app, "T-SOIL-ECO").await,
+        "good",
+        "a 15 cm probe carries no KA5 calibration, so the soil type is irrelevant"
+    );
+}
+
+/// No calibration table covers a tree past the monitored growth period.
+#[tokio::test]
+async fn watermark_ingest_beyond_monitoring_drops_stale_status() {
+    let app = spawn_app().await;
+    let model_id = app.ecodrizzler_model_id().await;
+    let cluster_id = insert_cluster_with_soil(&app, "Su3").await;
+
+    create_sensor(&app, "eui-soil-old-eco", model_id).await;
+    let tree_id = insert_tree_in_cluster(&app, "T-SOIL-OLD-ECO", cluster_id, 12).await;
+    app.post_json(
+        "/api/v1/sensors/eui-soil-old-eco/activate",
+        &json!({ "tree_id": tree_id }),
+    )
+    .await;
+    sqlx::query("UPDATE trees SET watering_status = 'good' WHERE id = $1")
+        .bind(tree_id)
+        .execute(&app.db_pool)
+        .await
+        .unwrap();
+
+    app.ingest_ecodrizzler("eui-soil-old-eco", 5).await.unwrap();
+
+    assert_eq!(
+        watering_status(&app, "T-SOIL-OLD-ECO").await,
+        "unknown",
+        "no calibration table covers year 12, so the status is not derivable"
     );
 }

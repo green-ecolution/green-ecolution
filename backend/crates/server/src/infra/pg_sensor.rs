@@ -4,6 +4,7 @@ use rust_decimal::Decimal;
 use sqlx::PgPool;
 use uuid::Uuid;
 
+use crate::infra::pg_sensor_model::load_abilities_by_model;
 use domain::{
     RepositoryError,
     cluster::{SoilMoistureBucket, SoilMoistureDepthSeries, SoilMoisturePoint},
@@ -207,6 +208,10 @@ impl SensorReader for PgSensorRepository {
             model: SensorModelSummary {
                 id: row.model_id,
                 name: row.model_name,
+                abilities: load_abilities_by_model(&self.pool, &[row.model_id])
+                    .await?
+                    .remove(&row.model_id)
+                    .unwrap_or_default(),
             },
             lorawan: build_lorawan_info(
                 row.serial_number,
@@ -263,6 +268,9 @@ impl SensorReader for PgSensorRepository {
         .fetch_all(&self.pool)
         .await?;
 
+        let model_ids: Vec<Uuid> = rows.iter().map(|r| r.model_id).collect();
+        let abilities = load_abilities_by_model(&self.pool, &model_ids).await?;
+
         rows.into_iter()
             .map(|r| {
                 let latest_reading = build_latest_reading(
@@ -290,6 +298,7 @@ impl SensorReader for PgSensorRepository {
                     model: SensorModelSummary {
                         id: r.model_id,
                         name: r.model_name,
+                        abilities: abilities.get(&r.model_id).cloned().unwrap_or_default(),
                     },
                     lorawan: build_lorawan_info(
                         r.serial_number,
@@ -371,6 +380,9 @@ impl SensorReader for PgSensorRepository {
         .fetch_all(&self.pool)
         .await?;
 
+        let model_ids: Vec<Uuid> = rows.iter().map(|r| r.model_id).collect();
+        let abilities = load_abilities_by_model(&self.pool, &model_ids).await?;
+
         let items = rows
             .into_iter()
             .map(|r| {
@@ -399,6 +411,7 @@ impl SensorReader for PgSensorRepository {
                     model: SensorModelSummary {
                         id: r.model_id,
                         name: r.model_name,
+                        abilities: abilities.get(&r.model_id).cloned().unwrap_or_default(),
                     },
                     lorawan: build_lorawan_info(
                         r.serial_number,
