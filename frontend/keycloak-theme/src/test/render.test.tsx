@@ -53,4 +53,18 @@ describe('KcPage', () => {
     expect(document.getElementById('social-github')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /passwort|password/i })).toBeInTheDocument()
   })
+
+  it('renders the claim and the divider label, never the raw message keys', async () => {
+    const kcContext = getKcContextMock({ pageId: 'login.ftl', overrides: {} })
+
+    render(<KcPage kcContext={kcContext} />)
+
+    await screen.findByRole('button', { name: /anmelden|sign in|log in/i })
+
+    expect(document.body.textContent).not.toContain('geClaim')
+    expect(document.body.textContent).not.toContain('geOr')
+    expect(document.body.textContent).not.toContain('doForgotPassword')
+    expect(document.body.textContent).not.toContain('loginAccountTitle')
+    expect(screen.getByText(/Grünflächenmanagement|green space management/i)).toBeInTheDocument()
+  })
 })
