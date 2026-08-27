@@ -6748,8 +6748,7 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/SensorModelAbilityResponse"
-            },
-            "description": "What the model measures, at which depth. Clients need this to tell\nwhether a reading depends on the cluster's soil type."
+            }
           },
           "id": {
             "type": "string",

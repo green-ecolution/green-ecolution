@@ -28,8 +28,7 @@ import {
  */
 export interface SensorModelSummaryResponse {
     /**
-     * What the model measures, at which depth. Clients need this to tell
-     * whether a reading depends on the cluster's soil type.
+     * 
      * @type {Array<SensorModelAbilityResponse>}
      * @memberof SensorModelSummaryResponse
      */
