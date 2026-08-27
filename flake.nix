@@ -175,6 +175,9 @@
           # Frontend/Node
           nodejs
           pnpm
+          # Keycloak theme build (keycloakify shells out to mvn)
+          jdk21
+          maven
           # Rust
           rustc
           cargo

@@ -1,0 +1,28 @@
+{
+  "name": "@green-ecolution/keycloak-theme",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "build-keycloak-theme": "pnpm run build && keycloakify build",
+    "update-kc-gen": "keycloakify update-kc-gen",
+    "test": "vitest run",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "keycloakify": "11.15.14",
+    "react": "catalog:react19",
+    "react-dom": "catalog:react19"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@vitejs/plugin-react": "^6.1.0",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^6.0.3",
+    "vite": "^8.2.2"
+  }
+}

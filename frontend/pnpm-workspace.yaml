@@ -1,6 +1,7 @@
 packages:
   - 'app'
   - 'packages/*'
+  - 'keycloak-theme'
 
 minimumReleaseAge: 1440
 
