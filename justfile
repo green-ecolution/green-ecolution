@@ -49,7 +49,7 @@ default:
 
 # Install toolchains + deps, build frontend workspace packages (ui, backend-client, plugin-interface) and domain WASM
 [group('setup')]
-setup: build-domain-wasm
+setup: build-domain-wasm build-keycloak-theme
     @echo "Checking Rust toolchain..."
     @command -v cargo >/dev/null 2>&1 || { echo "cargo missing (install rustup)"; exit 1; }
     cd {{ backend_dir }} && cargo fetch --locked
@@ -106,12 +106,12 @@ build-backend: _compile-backend
 # Run the Keycloak theme dev server with mocked Keycloak context
 [group('build')]
 keycloak-theme-dev:
-    cd frontend && pnpm --filter @green-ecolution/keycloak-theme run dev
+    cd {{ frontend_dir }} && pnpm --filter @green-ecolution/keycloak-theme run dev
 
 # Build the Keycloak login theme (jar + exploded theme dir)
 [group('build')]
 build-keycloak-theme:
-    cd frontend && pnpm --filter @green-ecolution/keycloak-theme run build-keycloak-theme
+    cd {{ frontend_dir }} && pnpm --filter @green-ecolution/keycloak-theme run build-keycloak-theme
 
 # Full build: frontend + backend
 [group('build')]
@@ -244,6 +244,8 @@ _compose *ARGS:
 # Start infrastructure services
 [group('infra')]
 infra-up: _acme-init _ensure-valhalla
+    @test -d {{ frontend_dir }}/keycloak-theme/dist_keycloak/theme/green-ecolution \
+      || echo "WARNING: keycloak theme not built - login will fall back to the default theme. Run 'just build-keycloak-theme'."
     @echo "Infra up..."
     @just _compose up -d
 
