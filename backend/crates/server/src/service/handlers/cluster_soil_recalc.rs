@@ -7,16 +7,18 @@ use domain::{
     cluster::{SoilCondition, TreeClusterReader},
     events::DomainEvent,
     sensor::SensorReadingReader,
-    tree::{TreeReader, TreeWriter},
+    shared::watering_status::WateringStatus,
+    tree::{TreeError, TreeReader, TreeWriter},
 };
 
 /// Recomputes the volumetric watering status of every tree in a cluster
 /// when the cluster's `soil_condition` changes.
 ///
-/// Each tree with a sensor gets a fresh status from the latest stored
-/// moisture reading under the new soil type. Trees without a sensor, or
-/// without moisture data for the new soil, are skipped — the bus chains the
-/// resulting `TreeWateringStatusChanged` events into the cluster-status
+/// Each tree with a sensor gets a fresh status from the latest stored moisture
+/// reading under the new soil type. Trees without a sensor, or whose payload the
+/// calibration cannot score at all, are skipped; a scorable payload under an
+/// `Unknown` soil type falls back to `WateringStatus::Unknown`. The bus chains
+/// the resulting `TreeWateringStatusChanged` events into the cluster-status
 /// aggregator.
 pub struct ClusterSoilRecalcHandler {
     tree_reader: Arc<dyn TreeReader>,
@@ -91,6 +93,8 @@ impl EventHandler for ClusterSoilRecalcHandler {
                 Utc::now(),
             ) {
                 Ok(s) => s,
+                // Without a soil type the stored status is no longer derivable.
+                Err(TreeError::UncalibratedSoil) => WateringStatus::Unknown,
                 Err(e) => {
                     tracing::debug!(error = %e, sensor.id = %sensor_id, "skipping tree; calibration rejected");
                     continue;

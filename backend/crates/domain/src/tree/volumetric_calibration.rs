@@ -67,8 +67,16 @@ pub fn rew_fraction(soil: SoilCondition, depth_cm: i32, vwc: f64) -> Option<f64>
     Some((vwc - pwp) / nfk_eff)
 }
 
+/// Depths the KA5 table calibrates; [`depth_params`] gates on this.
+fn is_calibrated_depth(depth_cm: i32) -> bool {
+    matches!(depth_cm, 40 | 80)
+}
+
 /// Lookup of `(FK, nFK, eGp)` for `soil` at `depth_cm` (only 40 cm and 80 cm defined).
 fn depth_params(soil: SoilCondition, depth_cm: i32) -> Option<DepthParams> {
+    if !is_calibrated_depth(depth_cm) {
+        return None;
+    }
     // (fk40, nfk40, egp40, fk80, nfk80, egp80)
     let (fk40, nfk40, egp40, fk80, nfk80, egp80) = match soil {
         SoilCondition::Ss => (20, 16, 9, 17, 14, 7),
@@ -139,25 +147,31 @@ pub(crate) fn classify(
     soil: SoilCondition,
     lifetime_years: i64,
 ) -> Result<WateringStatus, TreeError> {
+    let prefer_40_only = lifetime_years < YOUNG_TREE_YEARS;
+    let has_40 = readings.iter().any(|r| r.depth_cm == 40);
+    let considered: Vec<&VolumetricReading> = readings
+        .iter()
+        .filter(|r| {
+            if prefer_40_only && has_40 {
+                r.depth_cm == 40
+            } else {
+                true
+            }
+        })
+        .filter(|r| r.moisture_percent.is_finite() && is_calibrated_depth(r.depth_cm))
+        .collect();
+
+    // Order matters: callers invalidate a stored status on `UncalibratedSoil`,
+    // but keep it on a payload they could not have scored anyway.
+    if considered.is_empty() {
+        return Err(TreeError::MalformedVolumetric);
+    }
     if matches!(soil, SoilCondition::Unknown) {
         return Err(TreeError::UncalibratedSoil);
     }
 
-    let prefer_40_only = lifetime_years < YOUNG_TREE_YEARS;
-    let has_40 = readings.iter().any(|r| r.depth_cm == 40);
-    let considered = readings.iter().filter(|r| {
-        if prefer_40_only && has_40 {
-            r.depth_cm == 40
-        } else {
-            true
-        }
-    });
-
     let mut worst: Option<i32> = None;
     for r in considered {
-        if !r.moisture_percent.is_finite() {
-            continue;
-        }
         let Some(params) = depth_params(soil, r.depth_cm) else {
             continue;
         };
@@ -270,6 +284,39 @@ mod tests {
         assert!(matches!(
             classify(&[r(40, f64::NAN)], SoilCondition::Uu, 5),
             Err(TreeError::MalformedVolumetric)
+        ));
+    }
+
+    #[test]
+    fn unknown_soil_without_calibratable_depth_is_malformed() {
+        // The EcoDrizzler's 15 cm probe has no KA5 calibration at any soil type.
+        assert!(matches!(
+            classify(&[r(15, 30.0)], SoilCondition::Unknown, 5),
+            Err(TreeError::MalformedVolumetric)
+        ));
+    }
+
+    #[test]
+    fn unknown_soil_without_readings_is_malformed() {
+        assert!(matches!(
+            classify(&[], SoilCondition::Unknown, 5),
+            Err(TreeError::MalformedVolumetric)
+        ));
+    }
+
+    #[test]
+    fn unknown_soil_with_nan_reading_is_malformed() {
+        assert!(matches!(
+            classify(&[r(40, f64::NAN)], SoilCondition::Unknown, 5),
+            Err(TreeError::MalformedVolumetric)
+        ));
+    }
+
+    #[test]
+    fn unknown_soil_reports_uncalibrated_for_young_tree_on_40cm() {
+        assert!(matches!(
+            classify(&[r(40, 20.0), r(80, 20.0)], SoilCondition::Unknown, 0),
+            Err(TreeError::UncalibratedSoil)
         ));
     }
 
