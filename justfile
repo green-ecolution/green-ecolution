@@ -49,7 +49,7 @@ default:
 
 # Install toolchains + deps, build frontend workspace packages (ui, backend-client, plugin-interface) and domain WASM
 [group('setup')]
-setup: build-domain-wasm build-keycloak-theme
+setup: build-domain-wasm
     @echo "Checking Rust toolchain..."
     @command -v cargo >/dev/null 2>&1 || { echo "cargo missing (install rustup)"; exit 1; }
     cd {{ backend_dir }} && cargo fetch --locked
@@ -58,6 +58,8 @@ setup: build-domain-wasm build-keycloak-theme
     cd {{ frontend_dir }} && pnpm install
     @echo "Building frontend workspace packages..."
     cd {{ frontend_dir }} && pnpm --filter=!frontend -r build
+    @echo "Building Keycloak login theme..."
+    @just build-keycloak-theme
 
 # Clean build artifacts
 [group('setup')]
