@@ -10,7 +10,11 @@ const loginSchema = z.object({
 export const Route = createFileRoute('/login')({
   validateSearch: loginSchema,
   loaderDeps: ({ search: { redirect } }) => ({ redirect }),
-  loader: async ({ deps: { redirect } }) => {
+  loader: async ({ deps: { redirect }, preload }) => {
+    // A hover-triggered preload must not leave the page; only a real click may.
+    if (preload) {
+      return
+    }
     await getAuthSession().signinRedirect({ returnTo: sanitizeReturnTo(redirect) })
   },
 })
