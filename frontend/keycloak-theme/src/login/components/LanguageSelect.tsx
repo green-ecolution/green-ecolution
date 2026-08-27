@@ -1,0 +1,48 @@
+import { useState } from 'react'
+import type { I18n } from '../i18n'
+
+export default function LanguageSelect(props: { i18n: I18n }) {
+  const { currentLanguage, enabledLanguages, msgStr } = props.i18n
+  const [isOpen, setIsOpen] = useState(false)
+
+  if (enabledLanguages.length <= 1) {
+    return null
+  }
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        id="kc-current-locale-link"
+        aria-label={msgStr('languages')}
+        aria-haspopup="true"
+        aria-expanded={isOpen}
+        aria-controls="language-switch"
+        onClick={() => setIsOpen(open => !open)}
+        className="rounded-lg px-3 py-1.5 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+      >
+        {currentLanguage.label}
+      </button>
+      {isOpen && (
+        <ul
+          id="language-switch"
+          role="menu"
+          aria-labelledby="kc-current-locale-link"
+          className="absolute right-0 z-20 mt-1 min-w-32 list-none rounded-lg border border-border bg-card p-1 shadow-lg"
+        >
+          {enabledLanguages.map(({ languageTag, label, href }) => (
+            <li key={languageTag} role="none">
+              <a
+                role="menuitem"
+                href={href}
+                className="block rounded-md px-3 py-1.5 text-sm text-card-foreground no-underline transition-colors hover:bg-accent"
+              >
+                {label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}

@@ -43,8 +43,10 @@ body {
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
   }
 }
 
@@ -65,5 +67,14 @@ body {
     --border: var(--dark-700);
     --input: var(--dark-700);
     --ring: var(--green-light);
+  }
+}
+
+@keyframes ge-orb {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(2%, -3%, 0) scale(1.08);
   }
 }
