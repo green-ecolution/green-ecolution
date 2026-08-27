@@ -103,9 +103,19 @@ build-frontend: build-domain-wasm
 build-backend: _compile-backend
     @echo "Backend build done."
 
+# Run the Keycloak theme dev server with mocked Keycloak context
+[group('build')]
+keycloak-theme-dev:
+    cd frontend && pnpm --filter @green-ecolution/keycloak-theme run dev
+
+# Build the Keycloak login theme (jar + exploded theme dir)
+[group('build')]
+build-keycloak-theme:
+    cd frontend && pnpm --filter @green-ecolution/keycloak-theme run build-keycloak-theme
+
 # Full build: frontend + backend
 [group('build')]
-build: build-frontend _compile-backend
+build: build-frontend build-keycloak-theme _compile-backend
     @echo "Build done."
 
 # Cross-compile the backend for a target triple and copy it to bin/

@@ -113,6 +113,7 @@ services:
       - "traefik.http.services.keycloak-health.loadbalancer.server.port=9000"
     volumes:
       - "./.docker/infra/keycloak/green-ecolution-realm.json:/opt/keycloak/data/import/green-ecolution-realm.json"
+      - "./frontend/keycloak-theme/dist_keycloak/theme/green-ecolution:/opt/keycloak/themes/green-ecolution:ro"
     networks:
       default:
         aliases:
