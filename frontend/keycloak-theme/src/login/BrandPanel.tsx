@@ -1,6 +1,6 @@
 import logoUrl from '../assets/logo-with-text-white.svg'
 
-type Props = {
+interface Props {
   variant: 'side' | 'header'
   claim: string
 }

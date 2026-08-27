@@ -1,7 +1,7 @@
 import { i18nBuilder } from 'keycloakify/login'
 import type { ThemeName } from '../kc.gen'
 
-const { useI18n, ofTypeI18n } = i18nBuilder
+const i18n = i18nBuilder
   .withThemeName<ThemeName>()
   .withCustomTranslations({
     de: {
@@ -23,6 +23,7 @@ const { useI18n, ofTypeI18n } = i18nBuilder
   })
   .build()
 
-type I18n = typeof ofTypeI18n
+const { useI18n } = i18n
+type I18n = typeof i18n.ofTypeI18n
 
 export { useI18n, type I18n }

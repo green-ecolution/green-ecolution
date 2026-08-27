@@ -7,6 +7,7 @@ import { classes } from './classes'
 import '../css/theme.css'
 
 const UserProfileFormFields = lazy(() => import('keycloakify/login/UserProfileFormFields'))
+const Login = lazy(() => import('./pages/Login'))
 
 export default function KcPage(props: { kcContext: KcContext }) {
   const { kcContext } = props
@@ -14,15 +15,32 @@ export default function KcPage(props: { kcContext: KcContext }) {
 
   return (
     <Suspense>
-      <DefaultPage
-        kcContext={kcContext}
-        i18n={i18n}
-        classes={classes}
-        Template={Template}
-        doUseDefaultCss={false}
-        UserProfileFormFields={UserProfileFormFields}
-        doMakeUserConfirmPassword={true}
-      />
+      {(() => {
+        switch (kcContext.pageId) {
+          case 'login.ftl':
+            return (
+              <Login
+                kcContext={kcContext}
+                i18n={i18n}
+                classes={classes}
+                Template={Template}
+                doUseDefaultCss={false}
+              />
+            )
+          default:
+            return (
+              <DefaultPage
+                kcContext={kcContext}
+                i18n={i18n}
+                classes={classes}
+                Template={Template}
+                doUseDefaultCss={false}
+                UserProfileFormFields={UserProfileFormFields}
+                doMakeUserConfirmPassword={true}
+              />
+            )
+        }
+      })()}
     </Suspense>
   )
 }
