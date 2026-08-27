@@ -110,6 +110,19 @@ async fn get_sensor_returns_full_response() {
     assert_eq!(sensor["status"], "offline");
     assert_eq!(sensor["sensor_type"], "lorawan");
     assert_eq!(sensor["model"]["id"], model_id.to_string());
+    let abilities = sensor["model"]["abilities"].as_array().unwrap();
+    assert_eq!(abilities.len(), 6);
+    let tension_depths: Vec<i64> = abilities
+        .iter()
+        .filter(|a| a["ability"] == "soil_tension")
+        .map(|a| a["depth_cm"].as_i64().unwrap())
+        .collect();
+    assert_eq!(tension_depths, vec![30, 60, 90]);
+    assert!(
+        abilities.iter().any(|a| a["ability"] == "soil_moisture"
+            && a["depth_cm"] == 15
+            && a["unit"] == "percent")
+    );
     // No tree linked → coordinate / linked_tree_id are omitted.
     assert!(sensor.get("coordinate").is_none_or(|c| c.is_null()));
     assert!(sensor.get("linked_tree_id").is_none_or(|c| c.is_null()));

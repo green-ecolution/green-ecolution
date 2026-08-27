@@ -4,6 +4,7 @@ use uuid::Uuid;
 
 use crate::{
     sensor::{SensorStatus, SensorType, data::SensorReadingView},
+    sensor_model::SensorModelAbility,
     shared::{coordinates::Coordinate, provenance::ProviderId},
 };
 
@@ -33,6 +34,7 @@ pub struct SensorView {
 pub struct SensorModelSummary {
     pub id: Uuid,
     pub name: String,
+    pub abilities: Vec<SensorModelAbility>,
 }
 
 #[derive(Debug, Clone)]

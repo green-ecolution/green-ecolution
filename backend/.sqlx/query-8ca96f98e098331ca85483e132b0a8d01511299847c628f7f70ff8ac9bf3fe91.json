@@ -1,30 +1,35 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT sma.id           AS mapping_id,\n                  sma.depth_cm,\n                  sa.id             AS ability_id,\n                  sa.ability        AS ability_name,\n                  sa.unit           AS \"unit: SensorAbilityUnit\"\n           FROM sensor_model_abilities sma\n           JOIN sensor_abilities       sa ON sa.id = sma.sensor_ability_id\n           WHERE sma.sensor_model_id = $1\n           ORDER BY sa.id, sma.depth_cm",
+  "query": "SELECT sma.sensor_model_id,\n                  sma.id            AS mapping_id,\n                  sma.depth_cm,\n                  sa.id             AS ability_id,\n                  sa.ability        AS ability_name,\n                  sa.unit           AS \"unit: SensorAbilityUnit\"\n           FROM sensor_model_abilities sma\n           JOIN sensor_abilities       sa ON sa.id = sma.sensor_ability_id\n           WHERE sma.sensor_model_id = ANY($1::uuid[])\n           ORDER BY sa.id, sma.depth_cm",
   "describe": {
     "columns": [
       {
         "ordinal": 0,
-        "name": "mapping_id",
+        "name": "sensor_model_id",
         "type_info": "Uuid"
       },
       {
         "ordinal": 1,
+        "name": "mapping_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 2,
         "name": "depth_cm",
         "type_info": "Int4"
       },
       {
-        "ordinal": 2,
+        "ordinal": 3,
         "name": "ability_id",
         "type_info": "Uuid"
       },
       {
-        "ordinal": 3,
+        "ordinal": 4,
         "name": "ability_name",
         "type_info": "Text"
       },
       {
-        "ordinal": 4,
+        "ordinal": 5,
         "name": "unit: SensorAbilityUnit",
         "type_info": {
           "Custom": {
@@ -44,7 +49,7 @@
     ],
     "parameters": {
       "Left": [
-        "Uuid"
+        "UuidArray"
       ]
     },
     "nullable": [
@@ -52,8 +57,9 @@
       false,
       false,
       false,
+      false,
       false
     ]
   },
-  "hash": "b3dc7f4351a94f6c022728802e281ca4408b88c7e55b7920b6d8cddf719cfc6d"
+  "hash": "8ca96f98e098331ca85483e132b0a8d01511299847c628f7f70ff8ac9bf3fe91"
 }

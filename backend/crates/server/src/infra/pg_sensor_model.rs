@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{collections::HashMap, str::FromStr};
 
 use async_trait::async_trait;
 use sqlx::PgPool;
@@ -85,27 +85,41 @@ async fn load_abilities(
     pool: &PgPool,
     model_id: Uuid,
 ) -> Result<Vec<SensorModelAbility>, RepositoryError> {
+    Ok(load_abilities_by_model(pool, &[model_id])
+        .await?
+        .remove(&model_id)
+        .unwrap_or_default())
+}
+
+/// Abilities of every model in `model_ids`, keyed by model id.
+pub(crate) async fn load_abilities_by_model(
+    pool: &PgPool,
+    model_ids: &[Uuid],
+) -> Result<HashMap<Uuid, Vec<SensorModelAbility>>, RepositoryError> {
     let rows = sqlx::query!(
-        r#"SELECT sma.id           AS mapping_id,
+        r#"SELECT sma.sensor_model_id,
+                  sma.id            AS mapping_id,
                   sma.depth_cm,
                   sa.id             AS ability_id,
                   sa.ability        AS ability_name,
                   sa.unit           AS "unit: SensorAbilityUnit"
            FROM sensor_model_abilities sma
            JOIN sensor_abilities       sa ON sa.id = sma.sensor_ability_id
-           WHERE sma.sensor_model_id = $1
+           WHERE sma.sensor_model_id = ANY($1::uuid[])
            ORDER BY sa.id, sma.depth_cm"#,
-        model_id
+        model_ids
     )
     .fetch_all(pool)
     .await?;
 
-    rows.into_iter()
-        .map(|r| {
-            let name = SensorAbilityName::from_str(&r.ability_name).map_err(|e| {
-                RepositoryError::DataIntegrity(format!("unknown ability in DB: {e}"))
-            })?;
-            Ok(SensorModelAbility {
+    let mut by_model: HashMap<Uuid, Vec<SensorModelAbility>> = HashMap::new();
+    for r in rows {
+        let name = SensorAbilityName::from_str(&r.ability_name)
+            .map_err(|e| RepositoryError::DataIntegrity(format!("unknown ability in DB: {e}")))?;
+        by_model
+            .entry(r.sensor_model_id)
+            .or_default()
+            .push(SensorModelAbility {
                 id: r.mapping_id,
                 ability: SensorAbility {
                     id: r.ability_id,
@@ -113,7 +127,7 @@ async fn load_abilities(
                     unit: r.unit,
                 },
                 depth_cm: r.depth_cm,
-            })
-        })
-        .collect()
+            });
+    }
+    Ok(by_model)
 }

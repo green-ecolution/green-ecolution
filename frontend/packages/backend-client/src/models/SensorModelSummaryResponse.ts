@@ -13,12 +13,27 @@
  */
 
 import { mapValues } from '../runtime';
+import type { SensorModelAbilityResponse } from './SensorModelAbilityResponse';
+import {
+    SensorModelAbilityResponseFromJSON,
+    SensorModelAbilityResponseFromJSONTyped,
+    SensorModelAbilityResponseToJSON,
+    SensorModelAbilityResponseToJSONTyped,
+} from './SensorModelAbilityResponse';
+
 /**
  * Summary view of the [`SensorModel`] this sensor belongs to.
  * @export
  * @interface SensorModelSummaryResponse
  */
 export interface SensorModelSummaryResponse {
+    /**
+     * What the model measures, at which depth. Clients need this to tell
+     * whether a reading depends on the cluster's soil type.
+     * @type {Array<SensorModelAbilityResponse>}
+     * @memberof SensorModelSummaryResponse
+     */
+    abilities: Array<SensorModelAbilityResponse>;
     /**
      * 
      * @type {string}
@@ -37,6 +52,7 @@ export interface SensorModelSummaryResponse {
  * Check if a given object implements the SensorModelSummaryResponse interface.
  */
 export function instanceOfSensorModelSummaryResponse(value: object): value is SensorModelSummaryResponse {
+    if (!('abilities' in value) || value['abilities'] === undefined) return false;
     if (!('id' in value) || value['id'] === undefined) return false;
     if (!('name' in value) || value['name'] === undefined) return false;
     return true;
@@ -52,6 +68,7 @@ export function SensorModelSummaryResponseFromJSONTyped(json: any, ignoreDiscrim
     }
     return {
         
+        'abilities': ((json['abilities'] as Array<any>).map(SensorModelAbilityResponseFromJSON)),
         'id': json['id'],
         'name': json['name'],
     };
@@ -68,6 +85,7 @@ export function SensorModelSummaryResponseToJSONTyped(value?: SensorModelSummary
 
     return {
         
+        'abilities': ((value['abilities'] as Array<any>).map(SensorModelAbilityResponseToJSON)),
         'id': value['id'],
         'name': value['name'],
     };
