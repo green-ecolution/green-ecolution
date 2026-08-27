@@ -113,6 +113,8 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
+      - name: Ensure Maven is available
+        run: command -v mvn || sudo apt-get install -y --no-install-recommends maven
       - name: Build Keycloak theme
         working-directory: frontend
         run: pnpm --filter @green-ecolution/keycloak-theme run build-keycloak-theme

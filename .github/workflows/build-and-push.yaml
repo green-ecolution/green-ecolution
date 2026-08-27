@@ -286,7 +286,7 @@ jobs:
   log-build-info:
     runs-on: ubuntu-latest
     timeout-minutes: 2
-    needs: [determine-environment, build-backend, build-frontend]
+    needs: [determine-environment, build-backend, build-frontend, build-keycloak]
     if: always() && needs.determine-environment.result == 'success'
     steps:
       - name: Log build information
@@ -309,6 +309,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "* Backend: \`${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/backend:${TAG}\`" >> $GITHUB_STEP_SUMMARY
           echo "* Frontend: \`${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/frontend:${TAG}\`" >> $GITHUB_STEP_SUMMARY
+          echo "* Keycloak: \`${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/keycloak:${TAG}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 🔄 ArgoCD Image Updater" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
