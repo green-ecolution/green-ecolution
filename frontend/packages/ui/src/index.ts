@@ -1,4 +1,5 @@
 // Styles
+import './styles/fonts.css'
 import './styles/globals.css'
 
 // AccuracyBadge
