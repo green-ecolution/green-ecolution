@@ -1,0 +1,69 @@
+@import 'tailwindcss';
+@import '../../../packages/ui/src/styles/globals.css';
+
+@source '../login';
+
+@font-face {
+  font-family: 'Lato';
+  src: url('../fonts/Lato-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Nunito Sans';
+  src: url('../fonts/NunitoSans-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Nunito Sans';
+  src: url('../fonts/NunitoSans-SemiBold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+html {
+  color-scheme: light dark;
+}
+
+body {
+  margin: 0;
+  font-family: 'Nunito Sans', system-ui, sans-serif;
+  background-color: var(--background);
+  color: var(--foreground);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: var(--dark);
+    --foreground: var(--light);
+    --card: var(--dark-900);
+    --card-foreground: var(--light);
+    --primary: var(--green-light);
+    --primary-foreground: var(--dark);
+    --secondary: var(--green-dark-800);
+    --secondary-foreground: var(--light);
+    --muted: var(--dark-800);
+    --muted-foreground: var(--dark-400);
+    --accent: var(--dark-800);
+    --accent-foreground: var(--light);
+    --border: var(--dark-700);
+    --input: var(--dark-700);
+    --ring: var(--green-light);
+  }
+}
