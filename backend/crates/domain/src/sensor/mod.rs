@@ -16,6 +16,7 @@
 pub mod data;
 pub mod error;
 pub mod payload;
+pub mod plausibility;
 pub mod repository;
 pub mod snapshot;
 pub mod view;
@@ -31,6 +32,7 @@ use crate::{
 };
 
 pub use error::SensorError;
+pub use plausibility::{PlausibilityIssue, PlausibilityReason, ReadingContext};
 pub use repository::{
     NormalizedValue, SensorReader, SensorReadingReader, SensorReadingWriter, SensorWriter,
 };
