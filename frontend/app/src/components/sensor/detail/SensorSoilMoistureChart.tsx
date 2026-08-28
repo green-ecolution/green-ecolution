@@ -55,6 +55,7 @@ const SensorSoilMoistureChart = ({ sensor }: SensorSoilMoistureChartProps) => {
     placeholderData: keepPreviousData,
     enabled: hasSoilMoisture,
   })
+  const { data: quality } = useQuery(sensorQueries.dataQuality(sensor.id))
   if (error) throw error
   if (!hasSoilMoisture) return null
 
@@ -68,6 +69,18 @@ const SensorSoilMoistureChart = ({ sensor }: SensorSoilMoistureChartProps) => {
   ) satisfies ChartConfig
   const criticalByDepth = new Map((data?.thresholds ?? []).map((t) => [t.depthCm, t.critical]))
   const markers = wateringEventMarkers(data?.wateringEvents ?? [], rows, bucket)
+  // Flagged values never enter the series, so the marker shows when data was
+  // discarded rather than what it was.
+  const discardedAt =
+    rows.length <= 1
+      ? []
+      : [
+          ...new Set(
+            (quality?.issues ?? [])
+              .map((issue) => new Date(issue.recordedAt).getTime())
+              .filter((ts) => ts >= rows[0].ts && ts <= rows[rows.length - 1].ts),
+          ),
+        ]
 
   return (
     <Card variant="outlined">
@@ -149,6 +162,20 @@ const SensorSoilMoistureChart = ({ sensor }: SensorSoilMoistureChartProps) => {
                     value: `Bewässert am ${format(event.date, 'dd.MM.')}`,
                     angle: -90,
                     position: 'insideTopRight',
+                    fontSize: 11,
+                  }}
+                />
+              ))}
+              {discardedAt.map((ts) => (
+                <ReferenceLine
+                  key={`discarded_${ts}`}
+                  x={ts}
+                  stroke="#D55E00"
+                  strokeDasharray="2 3"
+                  label={{
+                    value: 'Messwert verworfen',
+                    angle: -90,
+                    position: 'insideBottomRight',
                     fontSize: 11,
                   }}
                 />

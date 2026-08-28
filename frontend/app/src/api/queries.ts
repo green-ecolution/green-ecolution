@@ -39,6 +39,7 @@ import {
   roleApi,
   RouteResponse,
   routingApi,
+  SensorDataQualityResponse,
   SensorModelResponse,
   SensorResponse,
   sensorApi,
@@ -287,6 +288,13 @@ export const sensorQueries = {
       queryKey: ['sensor-model', id],
       queryFn: () => sensorApi.getSensorModel({ id }),
       enabled: isValidUuid(id),
+    }),
+
+  dataQuality: (id: string) =>
+    queryOptions<SensorDataQualityResponse>({
+      queryKey: ['sensor', id, 'data-quality'],
+      queryFn: () => sensorApi.getSensorDataQuality({ sensorId: id }),
+      enabled: id !== '',
     }),
 
   soilMoisture: (id: string, params: { from?: Date; bucket: 'hour' | 'day' }) =>
