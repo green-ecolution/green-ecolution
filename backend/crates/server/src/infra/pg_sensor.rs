@@ -9,9 +9,9 @@ use domain::{
     RepositoryError,
     cluster::{SoilMoistureBucket, SoilMoistureDepthSeries, SoilMoisturePoint},
     sensor::{
-        LastPlausibleValue, LorawanCredentials, Sensor, SensorDraft, SensorId, SensorReader,
-        SensorReadingReader, SensorReadingWriter, SensorSearchQuery, SensorSnapshot, SensorType,
-        SensorView, SensorWriter,
+        LastPlausibleValue, LorawanCredentials, ReadingQualityIssue, Sensor, SensorDraft, SensorId,
+        SensorReader, SensorReadingReader, SensorReadingWriter, SensorSearchQuery, SensorSnapshot,
+        SensorType, SensorView, SensorWriter,
         data::{SensorReading, SensorReadingDraft, SensorReadingSnapshot, SensorReadingView},
         derive_connectivity, derive_data_health,
         repository::NormalizedValue,
@@ -680,6 +680,55 @@ impl SensorReadingReader for PgSensorRepository {
                     .expect("sensor_data.id is minted as uuid v7"),
             })
             .collect())
+    }
+
+    #[tracing::instrument(level = "trace", skip_all)]
+    async fn quality_issues(
+        &self,
+        sensor_id: &SensorId,
+        limit: i64,
+    ) -> Result<Vec<ReadingQualityIssue>, RepositoryError> {
+        let rows = sqlx::query!(
+            r#"SELECT sd.id              AS "reading_id!",
+                      sa.ability         AS "ability!",
+                      sma.depth_cm       AS "depth_cm!",
+                      dav.value::float8  AS "value!",
+                      dav.quality_reason AS "reason!"
+               FROM sensor_data sd
+               JOIN sensor_data_ability_values dav ON dav.sensor_data_id = sd.id
+               JOIN sensor_model_abilities sma ON sma.id = dav.sensor_model_ability_id
+               JOIN sensor_abilities sa ON sa.id = sma.sensor_ability_id
+               WHERE sd.sensor_id = $1
+                 AND NOT dav.plausible
+                 AND dav.quality_reason IS NOT NULL
+               ORDER BY sd.id DESC
+               LIMIT $2"#,
+            sensor_id.as_str(),
+            limit,
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        rows.into_iter()
+            .map(|r| {
+                Ok(ReadingQualityIssue {
+                    recorded_at: uuid_v7_timestamp(&r.reading_id)
+                        .expect("sensor_data.id is minted as uuid v7"),
+                    ability: r.ability.parse().map_err(
+                        |e: domain::sensor_model::UnknownAbility| {
+                            RepositoryError::DataIntegrity(e.to_string())
+                        },
+                    )?,
+                    depth_cm: r.depth_cm,
+                    value: r.value,
+                    reason: r.reason.parse().map_err(
+                        |e: domain::sensor::plausibility::UnknownPlausibilityReason| {
+                            RepositoryError::DataIntegrity(e.to_string())
+                        },
+                    )?,
+                })
+            })
+            .collect()
     }
 
     #[tracing::instrument(level = "trace", skip_all)]

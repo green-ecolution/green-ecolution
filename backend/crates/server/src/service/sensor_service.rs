@@ -10,8 +10,8 @@ use domain::{
     events::{DomainEvent, SensorDataReceivedPayload, SensorReadings},
     organization::Organization,
     sensor::{
-        Sensor, SensorDraft, SensorError, SensorId, SensorReader, SensorReadingReader,
-        SensorReadingWriter, SensorSearchQuery, SensorView, SensorWriter,
+        DataHealth, ReadingQualityIssue, Sensor, SensorDraft, SensorError, SensorId, SensorReader,
+        SensorReadingReader, SensorReadingWriter, SensorSearchQuery, SensorView, SensorWriter,
         data::SensorReadingView,
         plausibility::{self, ReadingContext},
         repository::NormalizedValue,
@@ -36,6 +36,16 @@ pub struct SensorService {
     cluster_reader: Arc<dyn TreeClusterReader>,
     event_bus: Arc<dyn EventBus>,
 }
+
+/// Read model behind `GET /sensors/{id}/data-quality`.
+#[derive(Debug)]
+pub struct SensorDataQuality {
+    pub health: DataHealth,
+    pub implausible_recent: i64,
+    pub issues: Vec<ReadingQualityIssue>,
+}
+
+const QUALITY_ISSUE_LIMIT: i64 = 50;
 
 /// Input for [`SensorService::ingest_reading`]. The MQTT parser builds this
 /// from the raw bytes plus the looked-up model so the service stays agnostic
@@ -234,6 +244,20 @@ impl SensorService {
         self.event_bus.publish_all(events).await;
 
         Ok(self.reader.view_by_id(id).await?)
+    }
+
+    #[tracing::instrument(level = "debug", skip_all, fields(sensor.id = %id))]
+    pub async fn data_quality(&self, id: &SensorId) -> Result<SensorDataQuality, ServiceError> {
+        let view = self.reader.view_by_id(id).await?;
+        let issues = self
+            .reading_reader
+            .quality_issues(id, QUALITY_ISSUE_LIMIT)
+            .await?;
+        Ok(SensorDataQuality {
+            health: view.data_health,
+            implausible_recent: view.implausible_recent,
+            issues,
+        })
     }
 
     #[tracing::instrument(level = "debug", skip_all, fields(sensor.id = %sensor_id))]

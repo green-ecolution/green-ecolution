@@ -18,8 +18,8 @@ use crate::{
                 ListResponse,
                 cluster::{SoilMoistureParams, SoilMoistureSeriesResponse},
                 sensor::{
-                    ActivateSensorRequest, CreateSensorRequest, SensorDataResponse,
-                    SensorModelResponse, SensorResponse, SetSensorTreeRequest,
+                    ActivateSensorRequest, CreateSensorRequest, SensorDataQualityResponse,
+                    SensorDataResponse, SensorModelResponse, SensorResponse, SetSensorTreeRequest,
                 },
                 tree::{TransferRequest, TreeResponse},
             },
@@ -44,6 +44,7 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
         .routes(routes!(activate_sensor))
         .routes(routes!(list_sensor_data))
         .routes(routes!(get_sensor_soil_moisture))
+        .routes(routes!(get_sensor_data_quality))
         .routes(routes!(
             get_tree_by_sensor,
             set_sensor_tree,
@@ -563,4 +564,33 @@ pub async fn transfer_sensor(
         .transfer(&sensor_id, Id::new(req.organization_id))
         .await?;
     Ok(StatusCode::NO_CONTENT)
+}
+
+#[utoipa::path(get, path = "/sensors/{sensor_id}/data-quality", tag = "Sensors",
+    operation_id = "getSensorDataQuality",
+    summary = "Get the data quality of a sensor",
+    description = "Returns the derived data health, the number of values flagged as \
+                   implausible in the last 7 days, and the most recent flagged values.",
+    params(("sensor_id" = String, Path, description = "Sensor ID")),
+    responses(
+        (status = 200, description = "Data quality summary", body = SensorDataQualityResponse),
+        (status = 404, description = "Sensor not found"),
+        (status = 500, description = "Internal server error"),
+    )
+)]
+#[tracing::instrument(level = "info", skip_all, fields(sensor.id = %sensor_id))]
+pub async fn get_sensor_data_quality(
+    State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
+    SensorIdPath(sensor_id): SensorIdPath,
+) -> Result<Json<SensorDataQualityResponse>, ServiceError> {
+    let sensor = state.sensor_service.view_by_id(&sensor_id).await?;
+    let ctx = state.authorization_service.context_for(user.id).await?;
+    scope::ensure_visible(
+        &ctx,
+        Permission::new(Resource::Sensor, Action::Read),
+        sensor.organization_id,
+    )?;
+    let quality = state.sensor_service.data_quality(&sensor_id).await?;
+    Ok(Json(SensorDataQualityResponse::from(quality)))
 }

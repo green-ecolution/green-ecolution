@@ -69,6 +69,13 @@ pub trait SensorReadingReader: Send + Sync {
         sensor_id: &SensorId,
     ) -> Result<Vec<LastPlausibleValue>, RepositoryError>;
 
+    /// Most recent flagged values of this sensor, newest first.
+    async fn quality_issues(
+        &self,
+        sensor_id: &SensorId,
+        limit: i64,
+    ) -> Result<Vec<crate::sensor::plausibility::ReadingQualityIssue>, RepositoryError>;
+
     async fn view_history(
         &self,
         sensor_id: &SensorId,

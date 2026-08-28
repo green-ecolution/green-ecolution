@@ -15,7 +15,10 @@ use domain::{
     shared::provenance::{Provenance, ProviderId},
 };
 
-use crate::service::{ServiceError, sensor_service::SensorService};
+use crate::service::{
+    ServiceError,
+    sensor_service::{SensorDataQuality, SensorService},
+};
 
 use super::{DataHealth, SensorStatus};
 
@@ -587,5 +590,52 @@ mod tests {
             data: json!({"battery": 3.6}),
         };
         assert!(SensorDataResponse::from(&view).signal.is_none());
+    }
+}
+
+/// One measurement rejected by the plausibility rules.
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+pub struct SensorQualityIssueResponse {
+    /// When the uplink carrying the value was recorded (RFC 3339).
+    #[schema(example = "2026-08-20T06:15:00+00:00")]
+    pub recorded_at: String,
+    /// Measured quantity, e.g. "soil_moisture".
+    #[schema(example = "soil_moisture")]
+    pub ability: String,
+    #[schema(example = 40)]
+    pub depth_cm: i32,
+    #[schema(example = 6553.5)]
+    pub value: f64,
+    /// Stable reason code: "out_of_range" or "implausible_jump".
+    #[schema(example = "out_of_range")]
+    pub reason: String,
+}
+
+/// Data-quality summary for one sensor.
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+pub struct SensorDataQualityResponse {
+    pub health: DataHealth,
+    #[schema(example = 3)]
+    pub implausible_recent: i64,
+    pub issues: Vec<SensorQualityIssueResponse>,
+}
+
+impl From<SensorDataQuality> for SensorDataQualityResponse {
+    fn from(value: SensorDataQuality) -> Self {
+        Self {
+            health: value.health.into(),
+            implausible_recent: value.implausible_recent,
+            issues: value
+                .issues
+                .into_iter()
+                .map(|i| SensorQualityIssueResponse {
+                    recorded_at: i.recorded_at.to_rfc3339(),
+                    ability: i.ability.as_str().to_owned(),
+                    depth_cm: i.depth_cm,
+                    value: i.value,
+                    reason: i.reason.to_string(),
+                })
+                .collect(),
+        }
     }
 }

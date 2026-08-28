@@ -211,3 +211,50 @@ async fn data_health_is_reported_in_the_sensor_list() {
         .expect("sensor present in list");
     assert_eq!(entry["data_health"], "suspect");
 }
+
+#[tokio::test]
+async fn data_quality_endpoint_lists_the_flagged_values() {
+    let app = spawn_app().await;
+    insert_sensor(&app, "eui-quality", true).await;
+    insert_uplink(&app, "eui-quality", 6553.5, false).await;
+
+    let response = app.get("/api/v1/sensors/eui-quality/data-quality").await;
+    assert_eq!(response.status().as_u16(), 200);
+    let body: serde_json::Value = response.json().await.unwrap();
+    assert_eq!(
+        body["health"], "ok",
+        "one uplink is below the defect streak"
+    );
+    assert_eq!(body["implausible_recent"], 1);
+    assert_eq!(body["issues"][0]["ability"], "soil_tension");
+    assert_eq!(body["issues"][0]["depth_cm"], 30);
+    assert_eq!(body["issues"][0]["reason"], "out_of_range");
+    assert_eq!(body["issues"][0]["value"], 6553.5);
+}
+
+#[tokio::test]
+async fn data_quality_endpoint_reports_a_suspect_sensor() {
+    let app = spawn_app().await;
+    insert_sensor(&app, "eui-quality-suspect", true).await;
+    for _ in 0..3 {
+        insert_uplink(&app, "eui-quality-suspect", 6553.5, false).await;
+    }
+
+    let body: serde_json::Value = app
+        .get("/api/v1/sensors/eui-quality-suspect/data-quality")
+        .await
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(body["health"], "suspect");
+    assert_eq!(body["issues"].as_array().unwrap().len(), 3);
+}
+
+#[tokio::test]
+async fn data_quality_endpoint_returns_404_for_an_unknown_sensor() {
+    let app = spawn_app().await;
+    let response = app
+        .get("/api/v1/sensors/eui-does-not-exist/data-quality")
+        .await;
+    assert_eq!(response.status().as_u16(), 404);
+}

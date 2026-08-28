@@ -151,6 +151,16 @@ pub fn evaluate(
     })
 }
 
+/// One flagged measurement, for the data-quality read model.
+#[derive(Debug, Clone)]
+pub struct ReadingQualityIssue {
+    pub recorded_at: DateTime<Utc>,
+    pub ability: SensorAbilityName,
+    pub depth_cm: i32,
+    pub value: f64,
+    pub reason: PlausibilityReason,
+}
+
 /// Whether a sensor's recent uplinks suggest a hardware fault. Derived like
 /// connectivity, never stored: a device cannot assert its own health.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
