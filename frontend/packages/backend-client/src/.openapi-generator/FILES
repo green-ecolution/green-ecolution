@@ -27,6 +27,7 @@ models/ClusterStatisticsResponse.ts
 models/ClusterWateringEventResponse.ts
 models/ContactPersonDto.ts
 models/CreateSensorRequest.ts
+models/DataHealth.ts
 models/DataStatisticsResponse.ts
 models/DrivingLicense.ts
 models/EvaluationResponse.ts
@@ -74,10 +75,12 @@ models/RouteRequest.ts
 models/RouteResponse.ts
 models/SensorAbilityUnitDto.ts
 models/SensorCoordinate.ts
+models/SensorDataQualityResponse.ts
 models/SensorDataResponse.ts
 models/SensorModelAbilityResponse.ts
 models/SensorModelResponse.ts
 models/SensorModelSummaryResponse.ts
+models/SensorQualityIssueResponse.ts
 models/SensorResponse.ts
 models/SensorStatus.ts
 models/SensorTypeResponse.ts

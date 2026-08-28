@@ -2226,6 +2226,45 @@
         }
       }
     },
+    "/v1/sensors/{sensor_id}/data-quality": {
+      "get": {
+        "tags": [
+          "Sensors"
+        ],
+        "summary": "Get the data quality of a sensor",
+        "description": "Returns the derived data health, the number of values flagged as implausible in the last 7 days, and the most recent flagged values.",
+        "operationId": "getSensorDataQuality",
+        "parameters": [
+          {
+            "name": "sensor_id",
+            "in": "path",
+            "description": "Sensor ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Data quality summary",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SensorDataQualityResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Sensor not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
     "/v1/sensors/{sensor_id}/organization": {
       "patch": {
         "tags": [
@@ -4586,6 +4625,15 @@
           }
         }
       },
+      "DataHealth": {
+        "type": "string",
+        "description": "Whether a sensor's recent readings look trustworthy.",
+        "enum": [
+          "ok",
+          "suspect"
+        ],
+        "example": "ok"
+      },
       "DataStatisticsResponse": {
         "type": "object",
         "required": [
@@ -4903,6 +4951,8 @@
                 "created_at",
                 "updated_at",
                 "status",
+                "data_health",
+                "implausible_recent",
                 "sensor_type",
                 "model",
                 "organization_id"
@@ -4931,10 +4981,20 @@
                   "description": "Timestamp when the sensor was registered (RFC 3339).",
                   "example": "2024-01-15T10:30:00+00:00"
                 },
+                "data_health": {
+                  "$ref": "#/components/schemas/DataHealth",
+                  "description": "Whether the sensor's recent readings look trustworthy."
+                },
                 "id": {
                   "type": "string",
                   "description": "Unique sensor identifier (EUI).",
                   "example": "eui-a81758fffe0c3b52"
+                },
+                "implausible_recent": {
+                  "type": "integer",
+                  "format": "int64",
+                  "description": "Number of values flagged as implausible in the last 7 days.",
+                  "example": 0
                 },
                 "latest_data": {
                   "oneOf": [
@@ -6631,6 +6691,31 @@
           }
         }
       },
+      "SensorDataQualityResponse": {
+        "type": "object",
+        "description": "Data-quality summary for one sensor.",
+        "required": [
+          "health",
+          "implausible_recent",
+          "issues"
+        ],
+        "properties": {
+          "health": {
+            "$ref": "#/components/schemas/DataHealth"
+          },
+          "implausible_recent": {
+            "type": "integer",
+            "format": "int64",
+            "example": 3
+          },
+          "issues": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SensorQualityIssueResponse"
+            }
+          }
+        }
+      },
       "SensorDataResponse": {
         "type": "object",
         "description": "A single data payload received from a LoRaWAN sensor.",
@@ -6760,6 +6845,44 @@
           }
         }
       },
+      "SensorQualityIssueResponse": {
+        "type": "object",
+        "description": "One measurement rejected by the plausibility rules.",
+        "required": [
+          "recorded_at",
+          "ability",
+          "depth_cm",
+          "value",
+          "reason"
+        ],
+        "properties": {
+          "ability": {
+            "type": "string",
+            "description": "Measured quantity, e.g. \"soil_moisture\".",
+            "example": "soil_moisture"
+          },
+          "depth_cm": {
+            "type": "integer",
+            "format": "int32",
+            "example": 40
+          },
+          "reason": {
+            "type": "string",
+            "description": "Stable reason code: \"out_of_range\" or \"implausible_jump\".",
+            "example": "out_of_range"
+          },
+          "recorded_at": {
+            "type": "string",
+            "description": "When the uplink carrying the value was recorded (RFC 3339).",
+            "example": "2026-08-20T06:15:00+00:00"
+          },
+          "value": {
+            "type": "number",
+            "format": "double",
+            "example": 6553.5
+          }
+        }
+      },
       "SensorResponse": {
         "type": "object",
         "description": "A LoRaWAN sensor used for soil moisture monitoring.",
@@ -6768,6 +6891,8 @@
           "created_at",
           "updated_at",
           "status",
+          "data_health",
+          "implausible_recent",
           "sensor_type",
           "model",
           "organization_id"
@@ -6796,10 +6921,20 @@
             "description": "Timestamp when the sensor was registered (RFC 3339).",
             "example": "2024-01-15T10:30:00+00:00"
           },
+          "data_health": {
+            "$ref": "#/components/schemas/DataHealth",
+            "description": "Whether the sensor's recent readings look trustworthy."
+          },
           "id": {
             "type": "string",
             "description": "Unique sensor identifier (EUI).",
             "example": "eui-a81758fffe0c3b52"
+          },
+          "implausible_recent": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Number of values flagged as implausible in the last 7 days.",
+            "example": 0
           },
           "latest_data": {
             "oneOf": [
