@@ -27,8 +27,11 @@
   font-display: swap;
 }
 
+/* The login commits to the light look of the app and the website. Without the
+   explicit value, form controls follow the OS and render dark on the light
+   ground. */
 html {
-  color-scheme: light dark;
+  color-scheme: light;
 }
 
 body {
@@ -47,26 +50,6 @@ body {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     transition-delay: 0ms !important;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: var(--dark);
-    --foreground: var(--light);
-    --card: var(--dark-900);
-    --card-foreground: var(--light);
-    --primary: var(--green-light);
-    --primary-foreground: var(--dark);
-    --secondary: var(--green-dark-800);
-    --secondary-foreground: var(--light);
-    --muted: var(--dark-800);
-    --muted-foreground: var(--dark-400);
-    --accent: var(--dark-800);
-    --accent-foreground: var(--light);
-    --border: var(--dark-700);
-    --input: var(--dark-700);
-    --ring: var(--green-light);
   }
 }
 
