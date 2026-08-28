@@ -16,7 +16,7 @@ const pageIds = [
 ] as const
 
 describe('KcPage', () => {
-  it.each(pageIds)('renders %s without throwing', pageId => {
+  it.each(pageIds)('renders %s without throwing', (pageId) => {
     const kcContext = getKcContextMock({ pageId, overrides: {} })
     expect(() => render(<KcPage kcContext={kcContext} />)).not.toThrow()
   })

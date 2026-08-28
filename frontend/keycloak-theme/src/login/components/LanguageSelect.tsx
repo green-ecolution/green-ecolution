@@ -44,7 +44,7 @@ export default function LanguageSelect(props: { i18n: I18n }) {
         aria-label={msgStr('languages')}
         aria-expanded={isOpen}
         aria-controls="language-switch"
-        onClick={() => setIsOpen(open => !open)}
+        onClick={() => setIsOpen((open) => !open)}
         className="rounded-lg px-3 py-1.5 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
       >
         {currentLanguage.label}

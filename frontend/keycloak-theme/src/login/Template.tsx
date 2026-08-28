@@ -40,11 +40,7 @@ export default function Template(props: TemplateProps<KcContext, I18n>) {
 
   return (
     <div className="flex min-h-dvh flex-col lg:flex-row">
-      <BrandPanel
-        variant="header"
-        headline={msgStr('geHeadline')}
-        intro={msgStr('geIntro')}
-      />
+      <BrandPanel variant="header" headline={msgStr('geHeadline')} intro={msgStr('geIntro')} />
       <BrandPanel variant="side" headline={msgStr('geHeadline')} intro={msgStr('geIntro')} />
 
       <main className="flex flex-1 items-center justify-center px-6 py-12">
@@ -56,7 +52,10 @@ export default function Template(props: TemplateProps<KcContext, I18n>) {
             <LanguageSelect i18n={i18n} />
           </div>
 
-          <h1 id="kc-page-title" className="font-lato text-[2rem] leading-tight font-bold text-foreground">
+          <h1
+            id="kc-page-title"
+            className="font-lato text-[2rem] leading-tight font-bold text-foreground"
+          >
             {headerNode}
           </h1>
           <p className="mt-2 mb-8 text-sm leading-relaxed text-muted-foreground">
@@ -84,9 +83,11 @@ export default function Template(props: TemplateProps<KcContext, I18n>) {
                 role="alert"
                 className={clsx(
                   kcClsx('kcAlertClass'),
-                  message.type === 'error' && 'border-destructive/40 bg-destructive/10 text-destructive',
+                  message.type === 'error' &&
+                    'border-destructive/40 bg-destructive/10 text-destructive',
                   message.type === 'warning' && 'border-yellow-200 bg-yellow-50 text-foreground',
-                  message.type === 'success' && 'border-green-dark-200 bg-green-dark-50 text-foreground',
+                  message.type === 'success' &&
+                    'border-green-dark-200 bg-green-dark-50 text-foreground',
                   message.type === 'info' && 'border-border bg-muted text-foreground',
                 )}
               >
