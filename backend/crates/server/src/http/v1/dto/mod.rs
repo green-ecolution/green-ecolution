@@ -153,6 +153,26 @@ pub enum SensorStatus {
     Offline,
 }
 
+/// Whether a sensor's recent readings look trustworthy.
+#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
+#[serde(rename_all = "snake_case")]
+#[schema(example = "ok")]
+pub enum DataHealth {
+    /// Recent readings passed the plausibility rules.
+    Ok,
+    /// Consecutive uplinks carried no plausible measurement.
+    Suspect,
+}
+
+impl From<domain::sensor::DataHealth> for DataHealth {
+    fn from(value: domain::sensor::DataHealth) -> Self {
+        match value {
+            domain::sensor::DataHealth::Ok => Self::Ok,
+            domain::sensor::DataHealth::Suspect => Self::Suspect,
+        }
+    }
+}
+
 /// European driving license category required to operate a vehicle.
 #[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
 #[schema(example = "BE")]

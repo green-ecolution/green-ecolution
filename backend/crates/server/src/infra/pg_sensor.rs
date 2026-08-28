@@ -13,7 +13,7 @@ use domain::{
         SensorReadingReader, SensorReadingWriter, SensorSearchQuery, SensorSnapshot, SensorType,
         SensorView, SensorWriter,
         data::{SensorReading, SensorReadingDraft, SensorReadingSnapshot, SensorReadingView},
-        derive_connectivity,
+        derive_connectivity, derive_data_health,
         repository::NormalizedValue,
         view::{LorawanInfo, SensorModelSummary},
     },
@@ -29,13 +29,18 @@ use domain::{
 pub struct PgSensorRepository {
     pool: PgPool,
     offline_after: chrono::Duration,
+    defect_streak: i64,
 }
 
+/// Window the `implausible_recent` counter on [`SensorView`] covers.
+const QUALITY_WINDOW_DAYS: i32 = 7;
+
 impl PgSensorRepository {
-    pub fn new(pool: PgPool, offline_after: chrono::Duration) -> Self {
+    pub fn new(pool: PgPool, offline_after: chrono::Duration, defect_streak: usize) -> Self {
         Self {
             pool,
             offline_after,
+            defect_streak: i64::try_from(defect_streak).unwrap_or(i64::MAX),
         }
     }
 }
@@ -195,7 +200,41 @@ impl SensorReader for PgSensorRepository {
             self.offline_after,
         );
 
+        let quality = sqlx::query!(
+            r#"SELECT
+                 (SELECT COUNT(*) FROM sensor_data sdq
+                    JOIN sensor_data_ability_values davq ON davq.sensor_data_id = sdq.id
+                   WHERE sdq.sensor_id = $1
+                     AND NOT davq.plausible
+                     AND sdq.updated_at >= NOW() - make_interval(days => $2)
+                 ) AS "implausible_recent!",
+                 (SELECT array_agg(u.unusable ORDER BY u.id DESC)
+                    FROM (
+                      SELECT sdh.id, bool_and(NOT davh.plausible) AS unusable
+                        FROM sensor_data sdh
+                        JOIN sensor_data_ability_values davh ON davh.sensor_data_id = sdh.id
+                        JOIN sensor_model_abilities smah ON smah.id = davh.sensor_model_ability_id
+                        JOIN sensor_abilities sah ON sah.id = smah.sensor_ability_id
+                       WHERE sdh.sensor_id = $1
+                         AND sah.ability IN ('soil_moisture', 'soil_tension')
+                       GROUP BY sdh.id
+                       ORDER BY sdh.id DESC
+                       LIMIT $3
+                    ) u
+                 ) AS "recent_unusable?: Vec<bool>""#,
+            id.as_str(),
+            QUALITY_WINDOW_DAYS,
+            self.defect_streak,
+        )
+        .fetch_one(&self.pool)
+        .await?;
+
         Ok(SensorView {
+            data_health: derive_data_health(
+                quality.recent_unusable.as_deref().unwrap_or(&[]),
+                self.defect_streak as usize,
+            ),
+            implausible_recent: quality.implausible_recent,
             id: row.id,
             created_at: row.created_at.and_utc(),
             updated_at: row.updated_at.and_utc(),
@@ -250,7 +289,9 @@ impl SensorReader for PgSensorRepository {
                       lr.id            AS "last_reading_id?: Uuid",
                       lr.updated_at    AS "last_reading_updated_at?",
                       lr.data          AS "last_reading_data?",
-                      s.organization_id
+                      s.organization_id,
+                      q.implausible_recent AS "implausible_recent!",
+                      h.recent_unusable    AS "recent_unusable?: Vec<bool>"
             FROM sensors s
             INNER JOIN sensor_models sm ON sm.id = s.model_id
             LEFT JOIN sensor_lorawan sl ON sl.id = s.id
@@ -262,8 +303,33 @@ impl SensorReader for PgSensorRepository {
                 ORDER BY sd.id DESC
                 LIMIT 1
             ) lr ON true
+            LEFT JOIN LATERAL (
+                SELECT COUNT(*) AS implausible_recent
+                FROM sensor_data sdq
+                JOIN sensor_data_ability_values davq ON davq.sensor_data_id = sdq.id
+                WHERE sdq.sensor_id = s.id
+                  AND NOT davq.plausible
+                  AND sdq.updated_at >= NOW() - make_interval(days => $2)
+            ) q ON true
+            LEFT JOIN LATERAL (
+                SELECT array_agg(u.unusable ORDER BY u.id DESC) AS recent_unusable
+                FROM (
+                    SELECT sdh.id, bool_and(NOT davh.plausible) AS unusable
+                    FROM sensor_data sdh
+                    JOIN sensor_data_ability_values davh ON davh.sensor_data_id = sdh.id
+                    JOIN sensor_model_abilities smah ON smah.id = davh.sensor_model_ability_id
+                    JOIN sensor_abilities sah ON sah.id = smah.sensor_ability_id
+                    WHERE sdh.sensor_id = s.id
+                      AND sah.ability IN ('soil_moisture', 'soil_tension')
+                    GROUP BY sdh.id
+                    ORDER BY sdh.id DESC
+                    LIMIT $3
+                ) u
+            ) h ON true
             WHERE s.id = ANY($1::text[])"#,
-            &ids as &[&str]
+            &ids as &[&str],
+            QUALITY_WINDOW_DAYS,
+            self.defect_streak,
         )
         .fetch_all(&self.pool)
         .await?;
@@ -286,6 +352,11 @@ impl SensorReader for PgSensorRepository {
                     self.offline_after,
                 );
                 Ok(SensorView {
+                    data_health: derive_data_health(
+                        r.recent_unusable.as_deref().unwrap_or(&[]),
+                        self.defect_streak as usize,
+                    ),
+                    implausible_recent: r.implausible_recent,
                     id: r.id,
                     created_at: r.created_at.and_utc(),
                     updated_at: r.updated_at.and_utc(),
@@ -356,7 +427,9 @@ impl SensorReader for PgSensorRepository {
                       lr.id            AS "last_reading_id?: Uuid",
                       lr.updated_at    AS "last_reading_updated_at?",
                       lr.data          AS "last_reading_data?",
-                      s.organization_id
+                      s.organization_id,
+                      q.implausible_recent AS "implausible_recent!",
+                      h.recent_unusable    AS "recent_unusable?: Vec<bool>"
             FROM sensors s
             INNER JOIN sensor_models sm ON sm.id = s.model_id
             LEFT JOIN sensor_lorawan sl ON sl.id = s.id
@@ -368,6 +441,29 @@ impl SensorReader for PgSensorRepository {
                 ORDER BY sd.id DESC
                 LIMIT 1
             ) lr ON true
+            LEFT JOIN LATERAL (
+                SELECT COUNT(*) AS implausible_recent
+                FROM sensor_data sdq
+                JOIN sensor_data_ability_values davq ON davq.sensor_data_id = sdq.id
+                WHERE sdq.sensor_id = s.id
+                  AND NOT davq.plausible
+                  AND sdq.updated_at >= NOW() - make_interval(days => $5)
+            ) q ON true
+            LEFT JOIN LATERAL (
+                SELECT array_agg(u.unusable ORDER BY u.id DESC) AS recent_unusable
+                FROM (
+                    SELECT sdh.id, bool_and(NOT davh.plausible) AS unusable
+                    FROM sensor_data sdh
+                    JOIN sensor_data_ability_values davh ON davh.sensor_data_id = sdh.id
+                    JOIN sensor_model_abilities smah ON smah.id = davh.sensor_model_ability_id
+                    JOIN sensor_abilities sah ON sah.id = smah.sensor_ability_id
+                    WHERE sdh.sensor_id = s.id
+                      AND sah.ability IN ('soil_moisture', 'soil_tension')
+                    GROUP BY sdh.id
+                    ORDER BY sdh.id DESC
+                    LIMIT $6
+                ) u
+            ) h ON true
             WHERE ($1::text IS NULL OR s.provider = $1)
               AND ($4::uuid[] IS NULL OR s.organization_id = ANY($4))
             ORDER BY s.id
@@ -376,6 +472,8 @@ impl SensorReader for PgSensorRepository {
             limit,
             offset,
             visible_ids.as_deref(),
+            QUALITY_WINDOW_DAYS,
+            self.defect_streak,
         )
         .fetch_all(&self.pool)
         .await?;
@@ -399,6 +497,11 @@ impl SensorReader for PgSensorRepository {
                     self.offline_after,
                 );
                 Ok(SensorView {
+                    data_health: derive_data_health(
+                        r.recent_unusable.as_deref().unwrap_or(&[]),
+                        self.defect_streak as usize,
+                    ),
+                    implausible_recent: r.implausible_recent,
                     id: r.id,
                     created_at: r.created_at.and_utc(),
                     updated_at: r.updated_at.and_utc(),

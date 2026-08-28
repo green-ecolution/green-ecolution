@@ -3,7 +3,7 @@ use serde_json::Value;
 use uuid::Uuid;
 
 use crate::{
-    sensor::{SensorStatus, SensorType, data::SensorReadingView},
+    sensor::{DataHealth, SensorStatus, SensorType, data::SensorReadingView},
     sensor_model::SensorModelAbility,
     shared::{coordinates::Coordinate, provenance::ProviderId},
 };
@@ -28,6 +28,10 @@ pub struct SensorView {
     pub lorawan: Option<LorawanInfo>,
     pub latest_reading: Option<SensorReadingView>,
     pub organization_id: Uuid,
+    /// Derived from the recent uplink history; see `derive_data_health`.
+    pub data_health: DataHealth,
+    /// Values flagged as implausible in the last 7 days.
+    pub implausible_recent: i64,
 }
 
 #[derive(Debug, Clone)]

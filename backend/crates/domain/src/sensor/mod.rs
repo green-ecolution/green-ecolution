@@ -32,7 +32,9 @@ use crate::{
 };
 
 pub use error::SensorError;
-pub use plausibility::{PlausibilityIssue, PlausibilityReason, ReadingContext};
+pub use plausibility::{
+    DataHealth, PlausibilityIssue, PlausibilityReason, ReadingContext, derive_data_health,
+};
 pub use repository::{
     LastPlausibleValue, NormalizedValue, SensorReader, SensorReadingReader, SensorReadingWriter,
     SensorWriter,

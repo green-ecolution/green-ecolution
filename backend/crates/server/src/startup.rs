@@ -107,7 +107,7 @@ impl Application {
         let sensor_offline_after = chrono::Duration::seconds(
             i64::try_from(settings.sensor.offline_after_secs).unwrap_or(i64::MAX),
         );
-        let repos = Repositories::build(&pool, sensor_offline_after);
+        let repos = Repositories::build(&pool, sensor_offline_after, settings.sensor.defect_streak);
         let profile_repo = Arc::new(infra::pg_user_profile::PgUserProfileRepository::new(
             pool.clone(),
         ));
@@ -305,12 +305,16 @@ struct Repositories {
 }
 
 impl Repositories {
-    fn build(pool: &PgPool, sensor_offline_after: chrono::Duration) -> Self {
+    fn build(pool: &PgPool, sensor_offline_after: chrono::Duration, defect_streak: usize) -> Self {
         let organization_repo = Arc::new(PgOrganizationRepository::new(pool.clone()));
         let role_repo = Arc::new(PgRoleRepository::new(pool.clone()));
         let region_repo = Arc::new(PgRegionRepository::new(pool.clone()));
         let tree_repo = Arc::new(PgTreeRepository::new(pool.clone()));
-        let sensor_repo = Arc::new(PgSensorRepository::new(pool.clone(), sensor_offline_after));
+        let sensor_repo = Arc::new(PgSensorRepository::new(
+            pool.clone(),
+            sensor_offline_after,
+            defect_streak,
+        ));
         let vehicle_repo = Arc::new(PgVehicleRepository::new(pool.clone()));
         let cluster_repo = Arc::new(PgTreeClusterRepository::new(pool.clone()));
         let watering_plan_repo = Arc::new(PgWateringPlanRepository::new(pool.clone()));

@@ -266,18 +266,26 @@ pub struct SensorSettings {
     /// Activated sensors with no reading newer than this are shown as offline.
     #[serde(default = "default_sensor_offline_after_secs")]
     pub offline_after_secs: u64,
+    /// Consecutive unusable uplinks before a sensor is flagged as suspect.
+    #[serde(default = "default_sensor_defect_streak")]
+    pub defect_streak: usize,
 }
 
 impl Default for SensorSettings {
     fn default() -> Self {
         Self {
             offline_after_secs: default_sensor_offline_after_secs(),
+            defect_streak: default_sensor_defect_streak(),
         }
     }
 }
 
 fn default_sensor_offline_after_secs() -> u64 {
     86_400
+}
+
+fn default_sensor_defect_streak() -> usize {
+    3
 }
 
 #[derive(serde::Deserialize, Clone)]

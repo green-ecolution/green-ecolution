@@ -17,7 +17,7 @@ use domain::{
 
 use crate::service::{ServiceError, sensor_service::SensorService};
 
-use super::SensorStatus;
+use super::{DataHealth, SensorStatus};
 
 /// Resolves a batch of raw sensor-id strings (e.g. from `TreeView::sensor_id`)
 /// into a lookup map keyed by id. Strings that fail [`SensorId`] validation
@@ -228,6 +228,13 @@ pub struct SensorResponse {
     /// Current connectivity status of the sensor.
     pub status: SensorStatus,
 
+    /// Whether the sensor's recent readings look trustworthy.
+    pub data_health: DataHealth,
+
+    /// Number of values flagged as implausible in the last 7 days.
+    #[schema(example = 0)]
+    pub implausible_recent: i64,
+
     /// Bus/protocol class of the sensor.
     pub sensor_type: SensorTypeResponse,
 
@@ -275,6 +282,8 @@ impl From<&SensorView> for SensorResponse {
             created_at: value.created_at.to_rfc3339(),
             updated_at: value.updated_at.to_rfc3339(),
             status: value.status.into(),
+            data_health: value.data_health.into(),
+            implausible_recent: value.implausible_recent,
             sensor_type: value.sensor_type.into(),
             model: SensorModelSummaryResponse::from(&value.model),
             coordinate: value.coordinate.map(|c| SensorCoordinate {

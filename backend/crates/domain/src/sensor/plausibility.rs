@@ -151,6 +151,28 @@ pub fn evaluate(
     })
 }
 
+/// Whether a sensor's recent uplinks suggest a hardware fault. Derived like
+/// connectivity, never stored: a device cannot assert its own health.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DataHealth {
+    Ok,
+    Suspect,
+}
+
+/// `recent_unusable` is newest-first, one entry per uplink that carried a
+/// measurement ability. `true` means no measurement in that uplink was
+/// plausible.
+pub fn derive_data_health(recent_unusable: &[bool], streak_threshold: usize) -> DataHealth {
+    if streak_threshold == 0 || recent_unusable.len() < streak_threshold {
+        return DataHealth::Ok;
+    }
+    if recent_unusable[..streak_threshold].iter().all(|&u| u) {
+        DataHealth::Suspect
+    } else {
+        DataHealth::Ok
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -307,5 +329,44 @@ mod tests {
     #[test]
     fn unknown_reason_string_is_rejected() {
         assert!("above_soil_capacity".parse::<PlausibilityReason>().is_err());
+    }
+
+    #[test]
+    fn health_is_ok_below_the_threshold() {
+        assert_eq!(derive_data_health(&[true, true], 3), DataHealth::Ok);
+    }
+
+    #[test]
+    fn health_is_suspect_exactly_at_the_threshold() {
+        assert_eq!(
+            derive_data_health(&[true, true, true], 3),
+            DataHealth::Suspect
+        );
+    }
+
+    #[test]
+    fn a_usable_uplink_interrupts_the_streak() {
+        assert_eq!(
+            derive_data_health(&[false, true, true, true], 3),
+            DataHealth::Ok
+        );
+    }
+
+    #[test]
+    fn only_the_newest_entries_count() {
+        assert_eq!(
+            derive_data_health(&[true, true, true, false], 3),
+            DataHealth::Suspect
+        );
+    }
+
+    #[test]
+    fn empty_history_is_ok() {
+        assert_eq!(derive_data_health(&[], 3), DataHealth::Ok);
+    }
+
+    #[test]
+    fn zero_threshold_never_reports_suspect() {
+        assert_eq!(derive_data_health(&[true, true, true], 0), DataHealth::Ok);
     }
 }

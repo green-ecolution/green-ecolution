@@ -646,7 +646,7 @@ async fn last_plausible_values_skips_flagged_readings() {
         .await
         .expect("flagged ingest succeeds");
 
-    let repo = PgSensorRepository::new(app.db_pool.clone(), chrono::Duration::hours(24));
+    let repo = PgSensorRepository::new(app.db_pool.clone(), chrono::Duration::hours(24), 3);
     let latest = repo
         .last_plausible_values(&SensorId::new("eui-lastplaus").unwrap())
         .await
