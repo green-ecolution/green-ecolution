@@ -593,6 +593,7 @@ impl SensorReadingReader for PgSensorRepository {
                JOIN sensor_abilities sa ON sa.id = sma.sensor_ability_id
                WHERE sd.sensor_id = $1
                  AND sa.ability = 'soil_moisture'
+                 AND dav.plausible
                  AND sd.id = (
                      SELECT id FROM sensor_data
                      WHERE sensor_id = $1
@@ -625,8 +626,6 @@ impl SensorReadingReader for PgSensorRepository {
             SoilMoistureBucket::Hour => "hour",
             SoilMoistureBucket::Day => "day",
         };
-        // Sentinel guard: disconnected Dragino probes report ~6553.5, so
-        // anything outside 0–100 Vol.-% is a sensor error, not a reading.
         let rows = sqlx::query!(
             r#"SELECT sma.depth_cm AS "depth_cm!",
                       date_trunc($4, sd.updated_at) AS "bucket_start!",
@@ -640,7 +639,7 @@ impl SensorReadingReader for PgSensorRepository {
                JOIN sensor_abilities sa ON sa.id = sma.sensor_ability_id
                WHERE sd.sensor_id = $1
                  AND sa.ability = 'soil_moisture'
-                 AND dav.value >= 0 AND dav.value <= 100
+                 AND dav.plausible
                  AND sd.updated_at >= $2
                  AND sd.updated_at <= $3
                GROUP BY sma.depth_cm, date_trunc($4, sd.updated_at)

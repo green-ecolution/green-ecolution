@@ -172,3 +172,63 @@ async fn unknown_sensor_is_404() {
         .await;
     assert_eq!(r.status().as_u16(), 404);
 }
+
+/// A reading the plausibility rules rejected. The value stays inside 0–100 so
+/// the test cannot pass on the range filter this replaced.
+async fn insert_flagged_reading(
+    app: &TestApp,
+    sensor_id: &str,
+    at: &str,
+    depth_cm: i32,
+    value: f64,
+) {
+    let data_id = Uuid::now_v7();
+    let ability_id = soil_moisture_ability_id(app, depth_cm).await;
+    sqlx::query!(
+        r#"INSERT INTO sensor_data (id, sensor_id, data, updated_at)
+           VALUES ($1, $2, '{}'::jsonb, $3::timestamp)"#,
+        data_id,
+        sensor_id,
+        chrono::NaiveDateTime::parse_from_str(at, "%Y-%m-%d %H:%M:%S").unwrap(),
+    )
+    .execute(&app.db_pool)
+    .await
+    .unwrap();
+    sqlx::query!(
+        r#"INSERT INTO sensor_data_ability_values
+             (sensor_data_id, sensor_model_ability_id, value, plausible, quality_reason)
+           VALUES ($1, $2, $3::float8::numeric, false, 'implausible_jump')"#,
+        data_id,
+        ability_id,
+        value,
+    )
+    .execute(&app.db_pool)
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn flagged_values_are_absent_from_the_soil_moisture_series() {
+    let app = spawn_app().await;
+    let cluster_id = create_cluster(&app, "Uu").await;
+    insert_sensor(&app, Some(cluster_id), "eui-ssm-flagged").await;
+    insert_reading(&app, "eui-ssm-flagged", "2026-07-02 08:00:00", 40, 25.0).await;
+    insert_flagged_reading(&app, "eui-ssm-flagged", "2026-07-02 09:00:00", 40, 99.0).await;
+
+    let r = app
+        .get(&format!(
+            "/api/v1/sensors/eui-ssm-flagged/soil-moisture?{WINDOW}&bucket=day"
+        ))
+        .await;
+    assert_eq!(r.status().as_u16(), 200);
+    let body: serde_json::Value = r.json().await.unwrap();
+
+    let points = body["series"][0]["points"].as_array().unwrap();
+    assert_eq!(points.len(), 1);
+    assert_eq!(points[0]["max"].as_f64().unwrap(), 25.0);
+    assert_eq!(
+        points[0]["sample_count"].as_i64().unwrap(),
+        1,
+        "the flagged reading must not be counted"
+    );
+}
