@@ -2,55 +2,66 @@ import logoUrl from '../assets/logo-with-text-white.svg'
 
 interface Props {
   variant: 'side' | 'header'
-  claim: string
+  headline: string
+  intro: string
 }
 
+/**
+ * Deepens toward the bottom. The palette is counter-intuitive here:
+ * --green-dark-900 is LIGHTER than --green-dark (oklch lightness 0.588 vs
+ * 0.524), so listing them in numeric order washes the panel out.
+ */
+const PANEL_BACKGROUND =
+  'bg-[linear-gradient(152deg,var(--green-dark-900)_0%,var(--green-dark)_46%,color-mix(in_oklch,var(--green-dark)_74%,black)_100%)]'
+
 export default function BrandPanel(props: Props) {
-  const { variant, claim } = props
-  const isSide = variant === 'side'
+  const { variant, headline, intro } = props
+
+  if (variant === 'header') {
+    return (
+      <div
+        className={`relative flex h-36 items-center overflow-hidden px-6 lg:hidden ${PANEL_BACKGROUND}`}
+      >
+        <Atmosphere />
+        <img src={logoUrl} alt="Green Ecolution" className="relative z-10 w-52 max-w-full" />
+      </div>
+    )
+  }
 
   return (
     <div
-      className={
-        isSide
-          ? 'relative hidden overflow-hidden bg-[linear-gradient(160deg,var(--green-dark),var(--green-dark-900))] lg:flex lg:w-[42%] lg:flex-col lg:justify-center lg:px-14'
-          : 'relative flex h-40 items-center overflow-hidden bg-[linear-gradient(160deg,var(--green-dark),var(--green-dark-900))] px-6 lg:hidden'
-      }
+      className={`relative hidden overflow-hidden lg:flex lg:w-[51%] lg:shrink-0 lg:flex-col lg:justify-between lg:p-14 ${PANEL_BACKGROUND}`}
     >
-      <Orbs />
-      <Silhouette />
-      <div className="relative z-10">
-        <img
-          src={logoUrl}
-          alt="Green Ecolution"
-          className={isSide ? 'mb-8 w-64 max-w-full' : 'w-44 max-w-full'}
-        />
-        {isSide && (
-          <p className="max-w-sm text-lg leading-relaxed text-white/80">{claim}</p>
-        )}
+      <Atmosphere />
+
+      <img src={logoUrl} alt="Green Ecolution" className="relative z-10 w-72 max-w-full" />
+
+      <div className="relative z-10 max-w-lg">
+        <h2 className="font-lato text-[2.4rem] leading-[1.12] font-bold text-balance text-white">
+          {headline}
+        </h2>
+        <p className="mt-5 text-[0.95rem] leading-relaxed text-white/75">{intro}</p>
       </div>
     </div>
   )
 }
 
-function Orbs() {
+/**
+ * A warm highlight with no visible edge plus a fine dot grid. An earlier
+ * attempt put the website's blob path here and it read as a pale wedge cropped
+ * by the corner; light without a boundary gives the flat green depth instead.
+ */
+function Atmosphere() {
   return (
     <>
-      <span className="pointer-events-none absolute -top-[30%] -right-[20%] h-[60vmax] w-[60vmax] rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.10)_0%,transparent_70%)] motion-safe:animate-[ge-orb_9s_ease-in-out_infinite_alternate]" />
-      <span className="pointer-events-none absolute -bottom-[35%] -left-[25%] h-[55vmax] w-[55vmax] rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.07)_0%,transparent_70%)] motion-safe:animate-[ge-orb_11s_ease-in-out_1s_infinite_alternate-reverse]" />
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute top-[-10%] right-[-15%] h-[70%] w-[80%] bg-[radial-gradient(closest-side,rgba(236,245,180,0.28),rgba(236,245,180,0.08)_55%,transparent)] motion-safe:animate-[ge-orb_20s_ease-in-out_infinite_alternate]"
+      />
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.07)_1px,transparent_1px)] bg-[length:22px_22px]"
+      />
     </>
-  )
-}
-
-function Silhouette() {
-  return (
-    <svg
-      className="pointer-events-none absolute -right-16 bottom-0 h-3/4 w-auto text-white/[0.08] max-[380px]:hidden"
-      viewBox="0 0 200 240"
-      fill="currentColor"
-      aria-hidden="true"
-    >
-      <path d="M100 8c-30 0-54 21-54 47 0 9 3 17 8 24-13 6-22 19-22 34 0 17 12 31 28 35-3 5-5 11-5 17 0 18 16 33 36 33h6v34h6v-34h6c20 0 36-15 36-33 0-6-2-12-5-17 16-4 28-18 28-35 0-15-9-28-22-34 5-7 8-15 8-24 0-26-24-47-54-47z" />
-    </svg>
   )
 }

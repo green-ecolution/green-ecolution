@@ -40,17 +40,28 @@ export default function Template(props: TemplateProps<KcContext, I18n>) {
 
   return (
     <div className="flex min-h-dvh flex-col lg:flex-row">
-      <BrandPanel variant="header" claim={msgStr('geClaim')} />
-      <BrandPanel variant="side" claim={msgStr('geClaim')} />
+      <BrandPanel
+        variant="header"
+        headline={msgStr('geHeadline')}
+        intro={msgStr('geIntro')}
+      />
+      <BrandPanel variant="side" headline={msgStr('geHeadline')} intro={msgStr('geIntro')} />
 
-      <main className="flex flex-1 items-center justify-center px-6 py-10">
-        <div className="w-full max-w-100">
-          <div className="mb-6 flex items-start justify-between gap-4">
-            <h1 id="kc-page-title" className="font-[Lato] text-2xl font-bold text-foreground">
-              {headerNode}
-            </h1>
+      <main className="flex flex-1 items-center justify-center px-6 py-12">
+        <div className="w-full max-w-[26rem]">
+          <div className="mb-2 flex items-start justify-between gap-4">
+            <p className="text-xs font-bold tracking-[0.12em] text-primary uppercase">
+              {msg('geBrand')}
+            </p>
             <LanguageSelect i18n={i18n} />
           </div>
+
+          <h1 id="kc-page-title" className="font-lato text-[2rem] leading-tight font-bold text-foreground">
+            {headerNode}
+          </h1>
+          <p className="mt-2 mb-8 text-sm leading-relaxed text-muted-foreground">
+            {msg('geLoginSubtitle')}
+          </p>
 
           {auth !== undefined && auth.showUsername && !auth.showResetCredentials && (
             <div className="mb-5 flex items-center gap-2 text-sm text-muted-foreground">

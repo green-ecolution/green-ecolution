@@ -61,10 +61,21 @@ describe('KcPage', () => {
 
     await screen.findByRole('button', { name: /anmelden|sign in|log in/i })
 
-    expect(document.body.textContent).not.toContain('geClaim')
-    expect(document.body.textContent).not.toContain('geOr')
-    expect(document.body.textContent).not.toContain('doForgotPassword')
-    expect(document.body.textContent).not.toContain('loginAccountTitle')
+    for (const key of [
+      'geBrand',
+      'geHeadline',
+      'geIntro',
+      'geLoginSubtitle',
+      'geEmailPlaceholder',
+      'gePasswordPlaceholder',
+      'geOr',
+      'doForgotPassword',
+      'loginAccountTitle',
+    ]) {
+      expect(document.body.textContent).not.toContain(key)
+    }
+
     expect(screen.getByText(/Grünflächenmanagement|green space management/i)).toBeInTheDocument()
+    expect(screen.getByPlaceholderText(/beispiel\.de|example\.com/i)).toBeInTheDocument()
   })
 })
