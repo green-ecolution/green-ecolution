@@ -596,3 +596,63 @@ async fn writer_persists_the_plausibility_verdict() {
     assert!(!row.plausible);
     assert_eq!(row.quality_reason.as_deref(), Some("out_of_range"));
 }
+
+#[tokio::test]
+async fn last_plausible_values_skips_flagged_readings() {
+    use domain::sensor::SensorReadingReader;
+    use server::infra::pg_sensor::PgSensorRepository;
+
+    let app = spawn_app().await;
+    let model_id = app.ges_1000_model_id().await;
+    create_sensor(&app, "eui-lastplaus", model_id).await;
+
+    let model = app
+        .state
+        .sensor_service
+        .model_by_id(Id::new(model_id))
+        .await
+        .expect("ges-1000 model exists");
+    let ability_id = model
+        .ability_id_for(domain::sensor_model::SensorAbilityName::SoilMoisture, 40)
+        .expect("soil moisture at 40 cm");
+
+    let ingest = |value: Decimal, issue| ReadingIngest {
+        sensor_id: SensorId::new("eui-lastplaus").unwrap(),
+        raw_payload: json!({ "device": "eui-lastplaus" }),
+        normalized: vec![NormalizedValue {
+            model_ability_id: ability_id,
+            value,
+            issue,
+        }],
+        typed: SensorReadings::Volumetrics(vec![]),
+    };
+
+    app.state
+        .sensor_service
+        .ingest_reading(ingest(Decimal::new(420, 1), None))
+        .await
+        .expect("plausible ingest succeeds");
+    app.state
+        .sensor_service
+        .ingest_reading(ingest(
+            Decimal::new(65535, 1),
+            Some(
+                domain::sensor::plausibility::PlausibilityIssue::OutOfRange {
+                    min: 0.0,
+                    max: 100.0,
+                },
+            ),
+        ))
+        .await
+        .expect("flagged ingest succeeds");
+
+    let repo = PgSensorRepository::new(app.db_pool.clone(), chrono::Duration::hours(24));
+    let latest = repo
+        .last_plausible_values(&SensorId::new("eui-lastplaus").unwrap())
+        .await
+        .expect("query succeeds");
+
+    assert_eq!(latest.len(), 1);
+    assert_eq!(latest[0].model_ability_id, ability_id);
+    assert_eq!(latest[0].value, Decimal::new(420, 1));
+}

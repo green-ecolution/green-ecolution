@@ -9,9 +9,9 @@ use domain::{
     RepositoryError,
     cluster::{SoilMoistureBucket, SoilMoistureDepthSeries, SoilMoisturePoint},
     sensor::{
-        LorawanCredentials, Sensor, SensorDraft, SensorId, SensorReader, SensorReadingReader,
-        SensorReadingWriter, SensorSearchQuery, SensorSnapshot, SensorType, SensorView,
-        SensorWriter,
+        LastPlausibleValue, LorawanCredentials, Sensor, SensorDraft, SensorId, SensorReader,
+        SensorReadingReader, SensorReadingWriter, SensorSearchQuery, SensorSnapshot, SensorType,
+        SensorView, SensorWriter,
         data::{SensorReading, SensorReadingDraft, SensorReadingSnapshot, SensorReadingView},
         derive_connectivity,
         repository::NormalizedValue,
@@ -546,6 +546,37 @@ impl SensorReadingReader for PgSensorRepository {
         .await?;
 
         Ok(snap.map(SensorReading::reconstitute))
+    }
+
+    #[tracing::instrument(level = "trace", skip_all)]
+    async fn last_plausible_values(
+        &self,
+        sensor_id: &SensorId,
+    ) -> Result<Vec<LastPlausibleValue>, RepositoryError> {
+        let rows = sqlx::query!(
+            r#"SELECT DISTINCT ON (dav.sensor_model_ability_id)
+                      dav.sensor_model_ability_id AS "model_ability_id!",
+                      dav.value                   AS "value!",
+                      sd.id                       AS "reading_id!"
+               FROM sensor_data sd
+               JOIN sensor_data_ability_values dav ON dav.sensor_data_id = sd.id
+               WHERE sd.sensor_id = $1
+                 AND dav.plausible
+               ORDER BY dav.sensor_model_ability_id, sd.id DESC"#,
+            sensor_id.as_str(),
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(rows
+            .into_iter()
+            .map(|r| LastPlausibleValue {
+                model_ability_id: r.model_ability_id,
+                value: r.value,
+                recorded_at: uuid_v7_timestamp(&r.reading_id)
+                    .expect("sensor_data.id is minted as uuid v7"),
+            })
+            .collect())
     }
 
     #[tracing::instrument(level = "trace", skip_all)]

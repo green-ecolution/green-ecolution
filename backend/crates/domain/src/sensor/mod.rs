@@ -34,7 +34,8 @@ use crate::{
 pub use error::SensorError;
 pub use plausibility::{PlausibilityIssue, PlausibilityReason, ReadingContext};
 pub use repository::{
-    NormalizedValue, SensorReader, SensorReadingReader, SensorReadingWriter, SensorWriter,
+    LastPlausibleValue, NormalizedValue, SensorReader, SensorReadingReader, SensorReadingWriter,
+    SensorWriter,
 };
 #[doc(hidden)]
 pub use snapshot::SensorSnapshot;
