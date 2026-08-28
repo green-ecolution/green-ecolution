@@ -656,3 +656,137 @@ async fn last_plausible_values_skips_flagged_readings() {
     assert_eq!(latest[0].model_ability_id, ability_id);
     assert_eq!(latest[0].value, Decimal::new(420, 1));
 }
+
+#[tokio::test]
+async fn ingest_flags_a_sentinel_and_leaves_the_tree_status_untouched() {
+    let app = spawn_app().await;
+    let model_id = app.ges_1000_model_id().await;
+    create_sensor(&app, "eui-sentinel", model_id).await;
+    let tree_id = insert_tree(&app, "T-MQ-SENT-1").await;
+    let r = app
+        .post_json(
+            "/api/v1/sensors/eui-sentinel/activate",
+            &json!({ "tree_id": tree_id }),
+        )
+        .await;
+    assert_eq!(r.status().as_u16(), 200);
+
+    let before = sqlx::query_scalar!(
+        r#"SELECT watering_status::text AS "status!" FROM trees WHERE id = $1"#,
+        tree_id
+    )
+    .fetch_one(&app.db_pool)
+    .await
+    .unwrap();
+
+    let model = app
+        .state
+        .sensor_service
+        .model_by_id(Id::new(model_id))
+        .await
+        .expect("model exists");
+    let ability_40 = model
+        .ability_id_for(domain::sensor_model::SensorAbilityName::SoilMoisture, 40)
+        .expect("soil moisture at 40 cm");
+
+    app.state
+        .sensor_service
+        .ingest_reading(ReadingIngest {
+            sensor_id: SensorId::new("eui-sentinel").unwrap(),
+            raw_payload: json!({ "device": "eui-sentinel" }),
+            normalized: vec![NormalizedValue {
+                model_ability_id: ability_40,
+                value: Decimal::new(65535, 1),
+                issue: None,
+            }],
+            typed: SensorReadings::Volumetrics(vec![VolumetricReading {
+                depth_cm: 40,
+                moisture_percent: 6553.5,
+            }]),
+        })
+        .await
+        .expect("ingest succeeds");
+
+    let row = sqlx::query!(
+        r#"SELECT dav.plausible AS "plausible!", dav.quality_reason
+           FROM sensor_data_ability_values dav
+           JOIN sensor_data sd ON sd.id = dav.sensor_data_id
+           WHERE sd.sensor_id = 'eui-sentinel'"#
+    )
+    .fetch_one(&app.db_pool)
+    .await
+    .unwrap();
+    assert!(!row.plausible, "the service must flag the sentinel itself");
+    assert_eq!(row.quality_reason.as_deref(), Some("out_of_range"));
+
+    let after = sqlx::query_scalar!(
+        r#"SELECT watering_status::text AS "status!" FROM trees WHERE id = $1"#,
+        tree_id
+    )
+    .fetch_one(&app.db_pool)
+    .await
+    .unwrap();
+    assert_eq!(
+        before, after,
+        "watering status must survive a faulty uplink"
+    );
+}
+
+#[tokio::test]
+async fn ingest_keeps_the_plausible_depth_of_a_partly_faulty_uplink() {
+    let app = spawn_app().await;
+    let model_id = app.ges_1000_model_id().await;
+    create_sensor(&app, "eui-partial", model_id).await;
+
+    let model = app
+        .state
+        .sensor_service
+        .model_by_id(Id::new(model_id))
+        .await
+        .expect("model exists");
+    let name = domain::sensor_model::SensorAbilityName::SoilMoisture;
+    let ability_40 = model.ability_id_for(name, 40).expect("40 cm");
+    let ability_80 = model.ability_id_for(name, 80).expect("80 cm");
+
+    app.state
+        .sensor_service
+        .ingest_reading(ReadingIngest {
+            sensor_id: SensorId::new("eui-partial").unwrap(),
+            raw_payload: json!({ "device": "eui-partial" }),
+            normalized: vec![
+                NormalizedValue {
+                    model_ability_id: ability_40,
+                    value: Decimal::new(65535, 1),
+                    issue: None,
+                },
+                NormalizedValue {
+                    model_ability_id: ability_80,
+                    value: Decimal::new(380, 1),
+                    issue: None,
+                },
+            ],
+            typed: SensorReadings::Volumetrics(vec![
+                VolumetricReading {
+                    depth_cm: 40,
+                    moisture_percent: 6553.5,
+                },
+                VolumetricReading {
+                    depth_cm: 80,
+                    moisture_percent: 38.0,
+                },
+            ]),
+        })
+        .await
+        .expect("ingest succeeds");
+
+    let flagged = sqlx::query_scalar!(
+        r#"SELECT COUNT(*) AS "count!"
+           FROM sensor_data_ability_values dav
+           JOIN sensor_data sd ON sd.id = dav.sensor_data_id
+           WHERE sd.sensor_id = 'eui-partial' AND NOT dav.plausible"#
+    )
+    .fetch_one(&app.db_pool)
+    .await
+    .unwrap();
+    assert_eq!(flagged, 1, "only the 40 cm probe is faulty");
+}

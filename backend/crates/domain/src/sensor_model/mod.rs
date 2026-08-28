@@ -35,6 +35,10 @@ impl SensorModel {
             .map(|a| a.id)
     }
 
+    pub fn model_ability_by_id(&self, id: uuid::Uuid) -> Option<&SensorModelAbility> {
+        self.abilities.iter().find(|a| a.id == id)
+    }
+
     pub fn depths_for(&self, name: SensorAbilityName) -> Vec<i32> {
         self.abilities
             .iter()
@@ -100,6 +104,15 @@ mod tests {
         let (m, _) = eco_drizzler();
         assert_eq!(m.ability_id_for(SensorAbilityName::SoilTension, 99), None);
         assert_eq!(m.ability_id_for(SensorAbilityName::Humidity, 15), None);
+    }
+
+    #[test]
+    fn model_ability_by_id_finds_the_entry() {
+        let (m, ids) = eco_drizzler();
+        let found = m.model_ability_by_id(ids[1]).expect("ability exists");
+        assert_eq!(found.depth_cm, 60);
+        assert_eq!(found.ability.name, SensorAbilityName::SoilTension);
+        assert!(m.model_ability_by_id(uuid::Uuid::now_v7()).is_none());
     }
 
     #[test]

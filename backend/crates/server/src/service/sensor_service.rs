@@ -1,4 +1,7 @@
-use std::sync::Arc;
+use std::{
+    collections::{HashMap, HashSet},
+    sync::Arc,
+};
 
 use chrono::{DateTime, Utc};
 use domain::{
@@ -8,13 +11,17 @@ use domain::{
     organization::Organization,
     sensor::{
         Sensor, SensorDraft, SensorError, SensorId, SensorReader, SensorReadingReader,
-        SensorReadingWriter, SensorSearchQuery, SensorView, SensorWriter, data::SensorReadingView,
+        SensorReadingWriter, SensorSearchQuery, SensorView, SensorWriter,
+        data::SensorReadingView,
+        plausibility::{self, ReadingContext},
         repository::NormalizedValue,
     },
-    sensor_model::{SensorModel, SensorModelReader},
+    sensor_model::{SensorAbilityName, SensorModel, SensorModelReader},
     shared::pagination::{Page, Pagination},
     tree::{Tree, TreeReader, TreeWriter, volumetric_thresholds},
 };
+use rust_decimal::prelude::ToPrimitive;
+use uuid::Uuid;
 
 use super::{OrganizationMismatch, ServiceError, event_bus::EventBus};
 
@@ -245,12 +252,84 @@ impl SensorService {
 
     /// Atomically persists a raw reading + its normalized per-ability values
     /// and publishes [`DomainEvent::SensorDataReceived`] so subscribers can
-    /// react without re-parsing the payload.
+    /// react without re-parsing the payload. Values are checked against the
+    /// domain plausibility rules first; flagged values are stored but removed
+    /// from the event payload.
     #[tracing::instrument(level = "debug", skip_all, fields(sensor.id = %ingest.sensor_id))]
-    pub async fn ingest_reading(&self, ingest: ReadingIngest) -> Result<(), ServiceError> {
+    pub async fn ingest_reading(&self, mut ingest: ReadingIngest) -> Result<(), ServiceError> {
+        let sensor = self.reader.by_id(&ingest.sensor_id).await?;
+        let model = self.model_reader.by_id(sensor.model_id()).await?;
+        let previous: HashMap<Uuid, (f64, DateTime<Utc>)> = self
+            .reading_reader
+            .last_plausible_values(&ingest.sensor_id)
+            .await?
+            .into_iter()
+            .filter_map(|p| {
+                p.value
+                    .to_f64()
+                    .map(|v| (p.model_ability_id, (v, p.recorded_at)))
+            })
+            .collect();
+
+        let recorded_at = Utc::now();
+        for value in &mut ingest.normalized {
+            let Some(ability) = model.model_ability_by_id(value.model_ability_id) else {
+                continue;
+            };
+            let Some(as_f64) = value.value.to_f64() else {
+                continue;
+            };
+            let ctx = ReadingContext {
+                previous: previous.get(&value.model_ability_id).copied(),
+                recorded_at,
+            };
+            value.issue =
+                plausibility::evaluate(ability.ability.name, ability.ability.unit, as_f64, &ctx);
+        }
+
+        let flagged: HashSet<(SensorAbilityName, i32)> = ingest
+            .normalized
+            .iter()
+            .filter(|v| v.issue.is_some())
+            .filter_map(|v| model.model_ability_by_id(v.model_ability_id))
+            .map(|a| (a.ability.name, a.depth_cm))
+            .collect();
+
+        let before = typed_len(&ingest.typed);
+        ingest.typed = match ingest.typed {
+            SensorReadings::Watermarks(w) => SensorReadings::Watermarks(
+                w.into_iter()
+                    .filter(|m| !flagged.contains(&(SensorAbilityName::SoilTension, m.depth)))
+                    .collect(),
+            ),
+            SensorReadings::Volumetrics(v) => SensorReadings::Volumetrics(
+                v.into_iter()
+                    .filter(|m| !flagged.contains(&(SensorAbilityName::SoilMoisture, m.depth_cm)))
+                    .collect(),
+            ),
+        };
+        let after = typed_len(&ingest.typed);
+
         self.reading_writer
             .record_with_normalized(&ingest.sensor_id, ingest.raw_payload, &ingest.normalized)
             .await?;
+
+        // Only suppress when filtering emptied the payload. An uplink that
+        // carried nothing scoreable to begin with keeps its previous behaviour.
+        if after == 0 && before > 0 {
+            let reasons: Vec<&str> = ingest
+                .normalized
+                .iter()
+                .filter_map(|v| v.issue.map(|i| i.reason().as_str()))
+                .collect();
+            tracing::warn!(
+                sensor.id = %ingest.sensor_id,
+                sensor.quality_reasons = ?reasons,
+                "no plausible reading in uplink; event suppressed"
+            );
+            return Ok(());
+        }
+
         self.event_bus
             .publish(DomainEvent::SensorDataReceived(SensorDataReceivedPayload {
                 sensor_id: ingest.sensor_id,
@@ -335,5 +414,12 @@ impl From<SensorError> for ServiceError {
             SensorError::NotActivated => ServiceError::NotActivated,
             SensorError::Validation(e) => ServiceError::InvalidInput(e.to_string()),
         }
+    }
+}
+
+fn typed_len(readings: &SensorReadings) -> usize {
+    match readings {
+        SensorReadings::Watermarks(w) => w.len(),
+        SensorReadings::Volumetrics(v) => v.len(),
     }
 }
