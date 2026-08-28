@@ -87,7 +87,11 @@ pub fn physical_range(ability: SensorAbilityName, unit: SensorAbilityUnit) -> Op
     use SensorAbilityUnit as U;
 
     let (min, max) = match (ability, unit) {
-        (N::SoilMoisture, U::Percent) => (0.0, 100.0),
+        // Porosity bounds water content: no tree-pit soil, however organic,
+        // holds 70 Vol.-%. Set far above the highest value ever measured on
+        // site (45.5, from 28.7k readings across 9 sensors, May–Aug 2026) so
+        // that a wetter season cannot reach it. See OpenProject #3464.
+        (N::SoilMoisture, U::Percent) => (0.0, 70.0),
         // Watermark probes saturate at 239 cb.
         (N::SoilTension, U::Centibar) => (0.0, 239.0),
         (N::SoilTension, U::Ohm) => (0.0, 40_000.0),
@@ -210,7 +214,24 @@ mod tests {
     #[test]
     fn value_on_the_upper_bound_is_plausible() {
         assert_eq!(
-            evaluate(N::SoilMoisture, U::Percent, 100.0, &ctx_without_previous()),
+            evaluate(N::SoilMoisture, U::Percent, 70.0, &ctx_without_previous()),
+            None
+        );
+    }
+
+    #[test]
+    fn moisture_above_the_porosity_ceiling_is_out_of_range() {
+        let issue = evaluate(N::SoilMoisture, U::Percent, 70.1, &ctx_without_previous())
+            .expect("no soil holds more than 70 Vol.-% water");
+        assert_eq!(issue.reason(), PlausibilityReason::OutOfRange);
+    }
+
+    /// Highest value ever measured on site (May–Aug 2026). The ceiling must
+    /// stay clear of it, and of the wetter seasons that data does not cover.
+    #[test]
+    fn the_highest_measured_field_value_stays_plausible() {
+        assert_eq!(
+            evaluate(N::SoilMoisture, U::Percent, 45.5, &ctx_without_previous()),
             None
         );
     }
@@ -230,7 +251,7 @@ mod tests {
         assert_eq!(issue.reason(), PlausibilityReason::OutOfRange);
         assert!(matches!(
             issue,
-            PlausibilityIssue::OutOfRange { min, max } if min == 0.0 && max == 100.0
+            PlausibilityIssue::OutOfRange { min, max } if min == 0.0 && max == 70.0
         ));
     }
 
@@ -263,7 +284,7 @@ mod tests {
     #[test]
     fn missing_previous_value_skips_the_jump_rule() {
         assert_eq!(
-            evaluate(N::SoilMoisture, U::Percent, 90.0, &ctx_without_previous()),
+            evaluate(N::SoilMoisture, U::Percent, 65.0, &ctx_without_previous()),
             None
         );
     }
@@ -279,7 +300,7 @@ mod tests {
     fn moisture_jump_beyond_the_limit_is_flagged() {
         let ctx = ctx_with_previous(10.0, Duration::hours(1));
         let issue =
-            evaluate(N::SoilMoisture, U::Percent, 90.0, &ctx).expect("80 Vol.-%/h must be flagged");
+            evaluate(N::SoilMoisture, U::Percent, 65.0, &ctx).expect("80 Vol.-%/h must be flagged");
         assert_eq!(issue.reason(), PlausibilityReason::ImplausibleJump);
         assert!(matches!(
             issue,
@@ -298,13 +319,13 @@ mod tests {
     #[test]
     fn zero_elapsed_time_skips_the_jump_rule() {
         let ctx = ctx_with_previous(10.0, Duration::zero());
-        assert_eq!(evaluate(N::SoilMoisture, U::Percent, 90.0, &ctx), None);
+        assert_eq!(evaluate(N::SoilMoisture, U::Percent, 65.0, &ctx), None);
     }
 
     #[test]
     fn negative_elapsed_time_skips_the_jump_rule() {
         let ctx = ctx_with_previous(10.0, Duration::hours(-2));
-        assert_eq!(evaluate(N::SoilMoisture, U::Percent, 90.0, &ctx), None);
+        assert_eq!(evaluate(N::SoilMoisture, U::Percent, 65.0, &ctx), None);
     }
 
     #[test]
