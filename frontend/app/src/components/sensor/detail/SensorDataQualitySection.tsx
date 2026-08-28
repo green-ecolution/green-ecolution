@@ -25,8 +25,10 @@ const SensorDataQualitySection = ({ sensorId }: SensorDataQualitySectionProps) =
       </CardHeader>
       <CardContent>
         <p className="mb-4 text-sm text-muted-foreground">
-          {quality.description} In den letzten sieben Tagen wurden {data.implausibleRecent}{' '}
-          Messwerte als unplausibel markiert und von der Auswertung ausgeschlossen.
+          {quality.description}{' '}
+          {data.implausibleRecent > 0
+            ? `In den letzten sieben Tagen wurden ${data.implausibleRecent} Messwerte als unplausibel markiert und von der Auswertung ausgeschlossen.`
+            : 'Die aufgeführten Messwerte liegen länger als sieben Tage zurück.'}
         </p>
         <ul className="flex flex-col gap-2">
           {data.issues.map((issue) => (
