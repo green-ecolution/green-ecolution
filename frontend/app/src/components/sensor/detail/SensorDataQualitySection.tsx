@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { format } from 'date-fns'
 import { Badge, Card, CardContent, CardHeader, CardTitle } from '@green-ecolution/ui'
 import { sensorQueries } from '@/api/queries'
-import { getDataHealthDetails, qualityReasonLabel } from '@/hooks/details/useDetailsForDataHealth'
+import { getDataQualityDetails, qualityReasonLabel } from '@/hooks/details/useDetailsForDataHealth'
 
 interface SensorDataQualitySectionProps {
   sensorId: string
@@ -12,18 +12,21 @@ const SensorDataQualitySection = ({ sensorId }: SensorDataQualitySectionProps) =
   const { data } = useQuery(sensorQueries.dataQuality(sensorId))
   if (!data || data.issues.length === 0) return null
 
-  const health = getDataHealthDetails(data.health)
+  const quality = getDataQualityDetails({
+    dataHealth: data.health,
+    implausibleRecent: data.implausibleRecent,
+  })
 
   return (
     <Card variant="outlined">
       <CardHeader className="flex flex-row items-center justify-between gap-3">
         <CardTitle>Datenqualität</CardTitle>
-        <Badge variant={health.color}>{health.label}</Badge>
+        <Badge variant={quality.color}>{quality.label}</Badge>
       </CardHeader>
       <CardContent>
         <p className="mb-4 text-sm text-muted-foreground">
-          {health.description} In den letzten sieben Tagen wurden {data.implausibleRecent} Messwerte
-          als unplausibel markiert und von der Auswertung ausgeschlossen.
+          {quality.description} In den letzten sieben Tagen wurden {data.implausibleRecent}{' '}
+          Messwerte als unplausibel markiert und von der Auswertung ausgeschlossen.
         </p>
         <ul className="flex flex-col gap-2">
           {data.issues.map((issue) => (

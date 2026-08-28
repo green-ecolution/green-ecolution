@@ -3,7 +3,7 @@ import { format, formatDistanceToNow } from 'date-fns'
 import React from 'react'
 import { Badge, ListCard, ListCardTitle, ListCardDescription } from '@green-ecolution/ui'
 import { getSensorStatusDetails } from '@/hooks/details/useDetailsForSensorStatus'
-import { getDataHealthDetails, hasQualityWarning } from '@/hooks/details/useDetailsForDataHealth'
+import { getDataQualityDetails, hasQualityWarning } from '@/hooks/details/useDetailsForDataHealth'
 import { Link } from '@tanstack/react-router'
 import { de } from 'date-fns/locale'
 
@@ -33,8 +33,8 @@ const SensorCard: React.FC<SensorCardProps> = ({ sensor }) => {
             {statusDetails.label}
           </Badge>
           {hasQualityWarning(sensor) && (
-            <Badge variant={getDataHealthDetails(sensor.dataHealth).color}>
-              {getDataHealthDetails(sensor.dataHealth).label}
+            <Badge variant={getDataQualityDetails(sensor).color}>
+              {getDataQualityDetails(sensor).label}
             </Badge>
           )}
         </div>

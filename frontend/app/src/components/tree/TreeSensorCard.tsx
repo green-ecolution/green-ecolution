@@ -10,7 +10,7 @@ import {
 import { Link } from '@tanstack/react-router'
 import type { Tree } from '@/api/backendApi'
 import { getSensorStatusDetails } from '@/hooks/details/useDetailsForSensorStatus'
-import { getDataHealthDetails, hasQualityWarning } from '@/hooks/details/useDetailsForDataHealth'
+import { getDataQualityDetails, hasQualityWarning } from '@/hooks/details/useDetailsForDataHealth'
 import {
   parseSignal,
   signalBarsFromRssi,
@@ -44,9 +44,8 @@ const TreeSensorCard = ({ tree }: TreeSensorCardProps) => {
         ) : (
           <>
             {hasQualityWarning(sensor) && (
-              <p className="mb-3 rounded-lg border border-red bg-red-50 p-3 text-sm text-red">
-                Der angezeigte Bewässerungszustand beruht auf zweifelhaften Sensordaten.{' '}
-                {getDataHealthDetails(sensor.dataHealth).description}
+              <p className="mb-3 rounded-lg border border-dark-400 bg-dark-50 p-3 text-sm text-dark-800">
+                {getDataQualityDetails(sensor).description}
               </p>
             )}
             <Link

@@ -19,17 +19,18 @@ const treeWith = (dataHealth: DataHealth, implausibleRecent: number) =>
     },
   }) as unknown as Tree
 
-const WARNING = /zweifelhaften Sensordaten/
+const WARNING = /unplausibel|verwertbaren Messwert/
 
 describe('TreeSensorCard', () => {
   it('warns when the sensor data is suspect', () => {
     render(<TreeSensorCard tree={treeWith(DataHealth.Suspect, 4)} />)
-    expect(screen.getByText(WARNING)).toBeInTheDocument()
+    expect(screen.getByText(/verwertbaren Messwert/)).toBeInTheDocument()
   })
 
-  it('warns when values were flagged without a defect suspicion', () => {
+  it('distinguishes flagged values from a defect suspicion', () => {
     render(<TreeSensorCard tree={treeWith(DataHealth.Ok, 2)} />)
-    expect(screen.getByText(WARNING)).toBeInTheDocument()
+    expect(screen.getByText(/Einzelne Messwerte waren unplausibel/)).toBeInTheDocument()
+    expect(screen.queryByText(/verwertbaren Messwert/)).not.toBeInTheDocument()
   })
 
   it('stays quiet on clean data', () => {

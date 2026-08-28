@@ -1,29 +1,48 @@
 import { DataHealth } from '@green-ecolution/backend-client'
 import type { StatusColor } from './types'
 
-const DataHealthProperties: Record<
-  DataHealth,
+interface DataQualityFacts {
+  dataHealth: DataHealth
+  implausibleRecent: number
+}
+
+/// A sensor can have flagged values without being under defect suspicion, so
+/// the display state is not the derived health alone.
+export type DataQualityLevel = 'ok' | 'flagged' | 'suspect'
+
+const DataQualityProperties: Record<
+  DataQualityLevel,
   { color: StatusColor; label: string; description: string }
 > = {
-  [DataHealth.Ok]: {
+  ok: {
     color: 'outline-green-dark',
     label: 'Daten plausibel',
     description: 'Die zuletzt empfangenen Messwerte liegen im erwarteten Bereich.',
   },
-  [DataHealth.Suspect]: {
+  flagged: {
+    color: 'outline-yellow',
+    label: 'Einzelne Werte verworfen',
+    description:
+      'Einzelne Messwerte waren unplausibel und wurden von der Auswertung ausgeschlossen. Der Bewässerungszustand beruht auf den übrigen Werten.',
+  },
+  suspect: {
     color: 'outline-red',
     label: 'Datenqualität prüfen',
     description:
-      'Mehrere Übertragungen in Folge enthielten keinen verwertbaren Messwert. Der Sensor ist womöglich defekt.',
+      'Mehrere Übertragungen in Folge enthielten keinen verwertbaren Messwert. Der Sensor ist womöglich defekt und der angezeigte Bewässerungszustand veraltet.',
   },
 }
 
-export const getDataHealthDetails = (health: DataHealth) => DataHealthProperties[health]
+export const dataQualityLevel = (sensor: DataQualityFacts): DataQualityLevel => {
+  if (sensor.dataHealth === DataHealth.Suspect) return 'suspect'
+  return sensor.implausibleRecent > 0 ? 'flagged' : 'ok'
+}
 
-export const hasQualityWarning = (sensor: {
-  dataHealth: DataHealth
-  implausibleRecent: number
-}): boolean => sensor.dataHealth === DataHealth.Suspect || sensor.implausibleRecent > 0
+export const getDataQualityDetails = (sensor: DataQualityFacts) =>
+  DataQualityProperties[dataQualityLevel(sensor)]
+
+export const hasQualityWarning = (sensor: DataQualityFacts): boolean =>
+  dataQualityLevel(sensor) !== 'ok'
 
 const QUALITY_REASON_LABEL: Record<string, string> = {
   out_of_range: 'Wert außerhalb des möglichen Bereichs',

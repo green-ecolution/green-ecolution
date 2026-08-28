@@ -16,7 +16,7 @@ import {
   SIGNAL_LEVEL_TEXT_COLOR,
 } from '@/components/sensor/detail/signalParsing'
 import { formatBatteryVoltage, formatLastSeen } from '@/components/sensor/detail/latestDataParsing'
-import { getDataHealthDetails, hasQualityWarning } from '@/hooks/details/useDetailsForDataHealth'
+import { getDataQualityDetails, hasQualityWarning } from '@/hooks/details/useDetailsForDataHealth'
 
 interface ClusterSensorCardProps {
   trees: Tree[]
@@ -38,9 +38,8 @@ const SensorTreeRow = ({ tree }: { tree: Tree }) => {
         Sensor-Baum: {tree.species} · {tree.number}
       </p>
       {hasQualityWarning(sensor) && (
-        <p className="mb-3 rounded-lg border border-red bg-red-50 p-3 text-sm text-red">
-          Der Bewässerungszustand dieses Baums beruht auf zweifelhaften Sensordaten.{' '}
-          {getDataHealthDetails(sensor.dataHealth).description}
+        <p className="mb-3 rounded-lg border border-dark-400 bg-dark-50 p-3 text-sm text-dark-800">
+          {getDataQualityDetails(sensor).description}
         </p>
       )}
       <DetailedList
