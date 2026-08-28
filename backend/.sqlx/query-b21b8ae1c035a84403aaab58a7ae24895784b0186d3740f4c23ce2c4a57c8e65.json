@@ -1,0 +1,34 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT DISTINCT ON (dav.sensor_model_ability_id)\n                      dav.sensor_model_ability_id AS \"model_ability_id!\",\n                      dav.value                   AS \"value!\",\n                      sd.id                       AS \"reading_id!\"\n               FROM sensor_data sd\n               JOIN sensor_data_ability_values dav ON dav.sensor_data_id = sd.id\n               WHERE sd.sensor_id = $1\n                 AND dav.plausible\n               ORDER BY dav.sensor_model_ability_id, sd.id DESC",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "model_ability_id!",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "value!",
+        "type_info": "Numeric"
+      },
+      {
+        "ordinal": 2,
+        "name": "reading_id!",
+        "type_info": "Uuid"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "b21b8ae1c035a84403aaab58a7ae24895784b0186d3740f4c23ce2c4a57c8e65"
+}

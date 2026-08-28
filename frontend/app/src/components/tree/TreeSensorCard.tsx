@@ -1,4 +1,8 @@
 import {
+  Alert,
+  AlertContent,
+  AlertDescription,
+  AlertIcon,
   Badge,
   Card,
   CardContent,
@@ -10,6 +14,7 @@ import {
 import { Link } from '@tanstack/react-router'
 import type { Tree } from '@/api/backendApi'
 import { getSensorStatusDetails } from '@/hooks/details/useDetailsForSensorStatus'
+import { getDataQualityDetails, hasQualityWarning } from '@/hooks/details/useDetailsForDataHealth'
 import {
   parseSignal,
   signalBarsFromRssi,
@@ -41,33 +46,46 @@ const TreeSensorCard = ({ tree }: TreeSensorCardProps) => {
             unbekannt.
           </p>
         ) : (
-          <Link
-            to="/sensors/$sensorId"
-            params={{ sensorId: sensor.id }}
-            className="block rounded-lg border border-dark-50 bg-white p-4 transition-colors hover:border-green-dark"
-          >
-            <p className="mb-2 font-lato text-lg font-bold break-all">{sensor.id}</p>
-            <DetailedList
-              columns={1}
-              details={[
-                {
-                  label: 'Signal',
-                  value: signal ? (
-                    <span
-                      className={`flex items-center gap-2 ${SIGNAL_LEVEL_TEXT_COLOR[signalLevelFromRssi(signal.rssiDbm)]}`}
-                    >
-                      <SignalBars filled={signalBarsFromRssi(signal.rssiDbm)} />
-                      {SIGNAL_LEVEL_LABEL[signalLevelFromRssi(signal.rssiDbm)]}
-                    </span>
-                  ) : (
-                    'Keine Daten'
-                  ),
-                },
-                { label: 'Batterie', value: formatBatteryVoltage(sensor.latestData) },
-                { label: 'Letzte Übertragung', value: formatLastSeen(sensor.latestData) },
-              ]}
-            />
-          </Link>
+          <>
+            {hasQualityWarning(sensor) && (
+              <Alert
+                variant={getDataQualityDetails(sensor).alert}
+                className="mb-3 flex w-full items-start gap-3"
+              >
+                <AlertIcon variant={getDataQualityDetails(sensor).alert} />
+                <AlertContent>
+                  <AlertDescription>{getDataQualityDetails(sensor).description}</AlertDescription>
+                </AlertContent>
+              </Alert>
+            )}
+            <Link
+              to="/sensors/$sensorId"
+              params={{ sensorId: sensor.id }}
+              className="block rounded-lg border border-dark-50 bg-white p-4 transition-colors hover:border-green-dark"
+            >
+              <p className="mb-2 font-lato text-lg font-bold break-all">{sensor.id}</p>
+              <DetailedList
+                columns={1}
+                details={[
+                  {
+                    label: 'Signal',
+                    value: signal ? (
+                      <span
+                        className={`flex items-center gap-2 ${SIGNAL_LEVEL_TEXT_COLOR[signalLevelFromRssi(signal.rssiDbm)]}`}
+                      >
+                        <SignalBars filled={signalBarsFromRssi(signal.rssiDbm)} />
+                        {SIGNAL_LEVEL_LABEL[signalLevelFromRssi(signal.rssiDbm)]}
+                      </span>
+                    ) : (
+                      'Keine Daten'
+                    ),
+                  },
+                  { label: 'Batterie', value: formatBatteryVoltage(sensor.latestData) },
+                  { label: 'Letzte Übertragung', value: formatLastSeen(sensor.latestData) },
+                ]}
+              />
+            </Link>
+          </>
         )}
       </CardContent>
     </Card>

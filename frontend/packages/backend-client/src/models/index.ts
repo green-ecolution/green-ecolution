@@ -1,5 +1,6 @@
 /* tslint:disable */
 /* eslint-disable */
+export * from './AcknowledgeDataQualityRequest';
 export * from './ActivateSensorRequest';
 export * from './AddressDto';
 export * from './AppInfoResponse';
@@ -13,6 +14,8 @@ export * from './ClusterStatisticsResponse';
 export * from './ClusterWateringEventResponse';
 export * from './ContactPersonDto';
 export * from './CreateSensorRequest';
+export * from './DataHealth';
+export * from './DataQualityAcknowledgementResponse';
 export * from './DataStatisticsResponse';
 export * from './DrivingLicense';
 export * from './EvaluationResponse';
@@ -60,10 +63,12 @@ export * from './RouteRequest';
 export * from './RouteResponse';
 export * from './SensorAbilityUnitDto';
 export * from './SensorCoordinate';
+export * from './SensorDataQualityResponse';
 export * from './SensorDataResponse';
 export * from './SensorModelAbilityResponse';
 export * from './SensorModelResponse';
 export * from './SensorModelSummaryResponse';
+export * from './SensorQualityIssueResponse';
 export * from './SensorResponse';
 export * from './SensorStatus';
 export * from './SensorTypeResponse';

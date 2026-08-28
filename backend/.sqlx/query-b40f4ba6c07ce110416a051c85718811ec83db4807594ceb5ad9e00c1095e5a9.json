@@ -1,0 +1,47 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT sd.id              AS \"reading_id!\",\n                      sa.ability         AS \"ability!\",\n                      sma.depth_cm       AS \"depth_cm!\",\n                      dav.value::float8  AS \"value!\",\n                      dav.quality_reason AS \"reason!\"\n               FROM sensor_data sd\n               JOIN sensor_data_ability_values dav ON dav.sensor_data_id = sd.id\n               JOIN sensor_model_abilities sma ON sma.id = dav.sensor_model_ability_id\n               JOIN sensor_abilities sa ON sa.id = sma.sensor_ability_id\n               WHERE sd.sensor_id = $1\n                 AND NOT dav.plausible\n                 AND dav.quality_reason IS NOT NULL\n               ORDER BY sd.id DESC\n               LIMIT $2",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "reading_id!",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "ability!",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "depth_cm!",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 3,
+        "name": "value!",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 4,
+        "name": "reason!",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      null,
+      true
+    ]
+  },
+  "hash": "b40f4ba6c07ce110416a051c85718811ec83db4807594ceb5ad9e00c1095e5a9"
+}

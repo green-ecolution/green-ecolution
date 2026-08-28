@@ -55,6 +55,13 @@ import {
     SensorStatusToJSON,
     SensorStatusToJSONTyped,
 } from './SensorStatus';
+import type { DataHealth } from './DataHealth';
+import {
+    DataHealthFromJSON,
+    DataHealthFromJSONTyped,
+    DataHealthToJSON,
+    DataHealthToJSONTyped,
+} from './DataHealth';
 
 /**
  * A LoRaWAN sensor used for soil moisture monitoring.
@@ -81,11 +88,23 @@ export interface ListResponseSensorResponseDataInner {
      */
     createdAt: string;
     /**
+     * Whether the sensor's recent readings look trustworthy.
+     * @type {DataHealth}
+     * @memberof ListResponseSensorResponseDataInner
+     */
+    dataHealth: DataHealth;
+    /**
      * Unique sensor identifier (EUI).
      * @type {string}
      * @memberof ListResponseSensorResponseDataInner
      */
     id: string;
+    /**
+     * Number of values flagged as implausible in the last 7 days.
+     * @type {number}
+     * @memberof ListResponseSensorResponseDataInner
+     */
+    implausibleRecent: number;
     /**
      * Most recent data payload from the sensor, if available.
      * @type {SensorDataResponse}
@@ -149,7 +168,9 @@ export interface ListResponseSensorResponseDataInner {
  */
 export function instanceOfListResponseSensorResponseDataInner(value: object): value is ListResponseSensorResponseDataInner {
     if (!('createdAt' in value) || value['createdAt'] === undefined) return false;
+    if (!('dataHealth' in value) || value['dataHealth'] === undefined) return false;
     if (!('id' in value) || value['id'] === undefined) return false;
+    if (!('implausibleRecent' in value) || value['implausibleRecent'] === undefined) return false;
     if (!('model' in value) || value['model'] === undefined) return false;
     if (!('organizationId' in value) || value['organizationId'] === undefined) return false;
     if (!('sensorType' in value) || value['sensorType'] === undefined) return false;
@@ -171,7 +192,9 @@ export function ListResponseSensorResponseDataInnerFromJSONTyped(json: any, igno
         'additionalInformation': json['additional_information'] == null ? undefined : json['additional_information'],
         'coordinate': json['coordinate'] == null ? undefined : SensorCoordinateFromJSON(json['coordinate']),
         'createdAt': json['created_at'],
+        'dataHealth': DataHealthFromJSON(json['data_health']),
         'id': json['id'],
+        'implausibleRecent': json['implausible_recent'],
         'latestData': json['latest_data'] == null ? undefined : SensorDataResponseFromJSON(json['latest_data']),
         'linkedTreeId': json['linked_tree_id'] == null ? undefined : json['linked_tree_id'],
         'lorawan': json['lorawan'] == null ? undefined : LorawanInfoResponseFromJSON(json['lorawan']),
@@ -198,7 +221,9 @@ export function ListResponseSensorResponseDataInnerToJSONTyped(value?: ListRespo
         'additional_information': value['additionalInformation'],
         'coordinate': SensorCoordinateToJSON(value['coordinate']),
         'created_at': value['createdAt'],
+        'data_health': DataHealthToJSON(value['dataHealth']),
         'id': value['id'],
+        'implausible_recent': value['implausibleRecent'],
         'latest_data': SensorDataResponseToJSON(value['latestData']),
         'linked_tree_id': value['linkedTreeId'],
         'lorawan': LorawanInfoResponseToJSON(value['lorawan']),

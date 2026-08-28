@@ -1,0 +1,20 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT COUNT(*) AS \"count!\"\n           FROM sensor_data_ability_values dav\n           JOIN sensor_data sd ON sd.id = dav.sensor_data_id\n           WHERE sd.sensor_id = 'eui-partial' AND NOT dav.plausible",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "count!",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "e9c1fba73aefa50ec42faccac5c2ebeab7af2ac7600fd087447a2008bd966dfa"
+}

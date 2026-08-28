@@ -323,6 +323,7 @@ fn build_ges_1000(
         normalized.push(NormalizedValue {
             model_ability_id,
             value: Decimal::from_f64_retain(r.value).unwrap_or_default(),
+            issue: None,
         });
         if name == SensorAbilityName::SoilMoisture {
             volumetrics.push(VolumetricReading {
@@ -352,6 +353,7 @@ fn normalize_eco_drizzler(
             out.push(NormalizedValue {
                 model_ability_id,
                 value: Decimal::from(w.centibar),
+                issue: None,
             });
         }
     }
@@ -359,12 +361,14 @@ fn normalize_eco_drizzler(
         out.push(NormalizedValue {
             model_ability_id,
             value: Decimal::from_f64_retain(payload.temperature).unwrap_or_default(),
+            issue: None,
         });
     }
     if let Some(model_ability_id) = model.ability_id_for(SensorAbilityName::Humidity, 15) {
         out.push(NormalizedValue {
             model_ability_id,
             value: Decimal::from_f64_retain(payload.humidity).unwrap_or_default(),
+            issue: None,
         });
     }
     out

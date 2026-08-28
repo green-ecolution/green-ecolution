@@ -4,6 +4,7 @@ import {
   CardHeader,
   CardTitle,
   DetailedList,
+  InlineAlert,
   SignalBars,
 } from '@green-ecolution/ui'
 import { Link } from '@tanstack/react-router'
@@ -16,6 +17,7 @@ import {
   SIGNAL_LEVEL_TEXT_COLOR,
 } from '@/components/sensor/detail/signalParsing'
 import { formatBatteryVoltage, formatLastSeen } from '@/components/sensor/detail/latestDataParsing'
+import { getDataQualityDetails, hasQualityWarning } from '@/hooks/details/useDetailsForDataHealth'
 
 interface ClusterSensorCardProps {
   trees: Tree[]
@@ -36,6 +38,13 @@ const SensorTreeRow = ({ tree }: { tree: Tree }) => {
       <p className="mb-2 font-lato text-lg font-bold">
         Sensor-Baum: {tree.species} · {tree.number}
       </p>
+      {hasQualityWarning(sensor) && (
+        <InlineAlert
+          variant={getDataQualityDetails(sensor).alert}
+          description={getDataQualityDetails(sensor).label}
+          className="mb-3"
+        />
+      )}
       <DetailedList
         columns={1}
         details={[

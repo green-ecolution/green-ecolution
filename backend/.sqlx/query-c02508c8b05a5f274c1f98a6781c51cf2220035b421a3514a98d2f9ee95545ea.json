@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO sensor_data_ability_values\n             (sensor_data_id, sensor_model_ability_id, value, plausible, quality_reason)\n           VALUES ($1, $2, $3::float8::numeric, false, 'implausible_jump')",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Float8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "c02508c8b05a5f274c1f98a6781c51cf2220035b421a3514a98d2f9ee95545ea"
+}

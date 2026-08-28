@@ -1,4 +1,7 @@
-use std::sync::Arc;
+use std::{
+    collections::{HashMap, HashSet},
+    sync::Arc,
+};
 
 use chrono::{DateTime, Utc};
 use domain::{
@@ -7,14 +10,19 @@ use domain::{
     events::{DomainEvent, SensorDataReceivedPayload, SensorReadings},
     organization::Organization,
     sensor::{
-        Sensor, SensorDraft, SensorError, SensorId, SensorReader, SensorReadingReader,
-        SensorReadingWriter, SensorSearchQuery, SensorView, SensorWriter, data::SensorReadingView,
+        AcknowledgementNote, DataHealth, DataQualityAcknowledgement, ReadingQualityIssue, Sensor,
+        SensorDraft, SensorError, SensorId, SensorReader, SensorReadingReader, SensorReadingWriter,
+        SensorSearchQuery, SensorView, SensorWriter,
+        data::SensorReadingView,
+        plausibility::{self, ReadingContext},
         repository::NormalizedValue,
     },
-    sensor_model::{SensorModel, SensorModelReader},
+    sensor_model::{SensorAbilityName, SensorModel, SensorModelReader},
     shared::pagination::{Page, Pagination},
     tree::{Tree, TreeReader, TreeWriter, volumetric_thresholds},
 };
+use rust_decimal::prelude::ToPrimitive;
+use uuid::Uuid;
 
 use super::{OrganizationMismatch, ServiceError, event_bus::EventBus};
 
@@ -29,6 +37,19 @@ pub struct SensorService {
     cluster_reader: Arc<dyn TreeClusterReader>,
     event_bus: Arc<dyn EventBus>,
 }
+
+/// Read model behind `GET /sensors/{id}/data-quality`.
+#[derive(Debug)]
+pub struct SensorDataQuality {
+    pub health: DataHealth,
+    pub implausible_recent: i64,
+    pub issues: Vec<ReadingQualityIssue>,
+    /// Present once someone reviewed the flagged readings. Issues recorded at
+    /// or before `at` are the reviewed ones; the frontend splits the list on it.
+    pub acknowledged: Option<DataQualityAcknowledgement>,
+}
+
+const QUALITY_ISSUE_LIMIT: i64 = 50;
 
 /// Input for [`SensorService::ingest_reading`]. The MQTT parser builds this
 /// from the raw bytes plus the looked-up model so the service stays agnostic
@@ -229,6 +250,44 @@ impl SensorService {
         Ok(self.reader.view_by_id(id).await?)
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(sensor.id = %id))]
+    pub async fn data_quality(&self, id: &SensorId) -> Result<SensorDataQuality, ServiceError> {
+        let view = self.reader.view_by_id(id).await?;
+        let sensor = self.reader.by_id(id).await?;
+        let issues = self
+            .reading_reader
+            .quality_issues(id, QUALITY_ISSUE_LIMIT)
+            .await?;
+        Ok(SensorDataQuality {
+            health: view.data_health,
+            implausible_recent: view.implausible_recent,
+            issues,
+            acknowledged: sensor.quality_acknowledged().cloned(),
+        })
+    }
+
+    /// Records that `by` reviewed this sensor's flagged readings. The
+    /// watermark is the server's clock, not a client-supplied timestamp.
+    #[tracing::instrument(level = "debug", skip_all, fields(sensor.id = %id))]
+    pub async fn acknowledge_data_quality(
+        &self,
+        id: &SensorId,
+        by: Uuid,
+        note: Option<AcknowledgementNote>,
+    ) -> Result<SensorDataQuality, ServiceError> {
+        let mut sensor = self.reader.by_id(id).await?;
+        let events = sensor.acknowledge_data_quality(DataQualityAcknowledgement {
+            at: Utc::now(),
+            by,
+            note,
+        });
+        if !events.is_empty() {
+            self.writer.save(&sensor).await?;
+            self.event_bus.publish_all(events).await;
+        }
+        self.data_quality(id).await
+    }
+
     #[tracing::instrument(level = "debug", skip_all, fields(sensor.id = %sensor_id))]
     pub async fn view_history(
         &self,
@@ -245,12 +304,84 @@ impl SensorService {
 
     /// Atomically persists a raw reading + its normalized per-ability values
     /// and publishes [`DomainEvent::SensorDataReceived`] so subscribers can
-    /// react without re-parsing the payload.
+    /// react without re-parsing the payload. Values are checked against the
+    /// domain plausibility rules first; flagged values are stored but removed
+    /// from the event payload.
     #[tracing::instrument(level = "debug", skip_all, fields(sensor.id = %ingest.sensor_id))]
-    pub async fn ingest_reading(&self, ingest: ReadingIngest) -> Result<(), ServiceError> {
+    pub async fn ingest_reading(&self, mut ingest: ReadingIngest) -> Result<(), ServiceError> {
+        let sensor = self.reader.by_id(&ingest.sensor_id).await?;
+        let model = self.model_reader.by_id(sensor.model_id()).await?;
+        let previous: HashMap<Uuid, (f64, DateTime<Utc>)> = self
+            .reading_reader
+            .last_plausible_values(&ingest.sensor_id)
+            .await?
+            .into_iter()
+            .filter_map(|p| {
+                p.value
+                    .to_f64()
+                    .map(|v| (p.model_ability_id, (v, p.recorded_at)))
+            })
+            .collect();
+
+        let recorded_at = Utc::now();
+        for value in &mut ingest.normalized {
+            let Some(ability) = model.model_ability_by_id(value.model_ability_id) else {
+                continue;
+            };
+            let Some(as_f64) = value.value.to_f64() else {
+                continue;
+            };
+            let ctx = ReadingContext {
+                previous: previous.get(&value.model_ability_id).copied(),
+                recorded_at,
+            };
+            value.issue =
+                plausibility::evaluate(ability.ability.name, ability.ability.unit, as_f64, &ctx);
+        }
+
+        let flagged: HashSet<(SensorAbilityName, i32)> = ingest
+            .normalized
+            .iter()
+            .filter(|v| v.issue.is_some())
+            .filter_map(|v| model.model_ability_by_id(v.model_ability_id))
+            .map(|a| (a.ability.name, a.depth_cm))
+            .collect();
+
+        let before = typed_len(&ingest.typed);
+        ingest.typed = match ingest.typed {
+            SensorReadings::Watermarks(w) => SensorReadings::Watermarks(
+                w.into_iter()
+                    .filter(|m| !flagged.contains(&(SensorAbilityName::SoilTension, m.depth)))
+                    .collect(),
+            ),
+            SensorReadings::Volumetrics(v) => SensorReadings::Volumetrics(
+                v.into_iter()
+                    .filter(|m| !flagged.contains(&(SensorAbilityName::SoilMoisture, m.depth_cm)))
+                    .collect(),
+            ),
+        };
+        let after = typed_len(&ingest.typed);
+
         self.reading_writer
             .record_with_normalized(&ingest.sensor_id, ingest.raw_payload, &ingest.normalized)
             .await?;
+
+        // Only suppress when filtering emptied the payload. An uplink that
+        // carried nothing scoreable to begin with keeps its previous behaviour.
+        if after == 0 && before > 0 {
+            let reasons: Vec<&str> = ingest
+                .normalized
+                .iter()
+                .filter_map(|v| v.issue.map(|i| i.reason().as_str()))
+                .collect();
+            tracing::warn!(
+                sensor.id = %ingest.sensor_id,
+                sensor.quality_reasons = ?reasons,
+                "no plausible reading in uplink; event suppressed"
+            );
+            return Ok(());
+        }
+
         self.event_bus
             .publish(DomainEvent::SensorDataReceived(SensorDataReceivedPayload {
                 sensor_id: ingest.sensor_id,
@@ -335,5 +466,12 @@ impl From<SensorError> for ServiceError {
             SensorError::NotActivated => ServiceError::NotActivated,
             SensorError::Validation(e) => ServiceError::InvalidInput(e.to_string()),
         }
+    }
+}
+
+fn typed_len(readings: &SensorReadings) -> usize {
+    match readings {
+        SensorReadings::Watermarks(w) => w.len(),
+        SensorReadings::Volumetrics(v) => v.len(),
     }
 }

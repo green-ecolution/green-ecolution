@@ -16,6 +16,7 @@
 pub mod data;
 pub mod error;
 pub mod payload;
+pub mod plausibility;
 pub mod repository;
 pub mod snapshot;
 pub mod view;
@@ -31,8 +32,13 @@ use crate::{
 };
 
 pub use error::SensorError;
+pub use plausibility::{
+    DataHealth, PlausibilityIssue, PlausibilityReason, ReadingContext, ReadingQualityIssue,
+    derive_data_health,
+};
 pub use repository::{
-    NormalizedValue, SensorReader, SensorReadingReader, SensorReadingWriter, SensorWriter,
+    LastPlausibleValue, NormalizedValue, SensorReader, SensorReadingReader, SensorReadingWriter,
+    SensorWriter,
 };
 #[doc(hidden)]
 pub use snapshot::SensorSnapshot;
@@ -92,6 +98,21 @@ crate::newtype_nonempty! {
     SensorId, "sensor.id", 1, 64
 }
 
+crate::newtype_nonempty! {
+    /// Reason someone recorded when reviewing a sensor's flagged readings.
+    AcknowledgementNote, "sensor.acknowledgement.note", 1, 500
+}
+
+/// Records that someone reviewed this sensor's flagged readings. `at` is a
+/// watermark: values flagged after it are unreviewed and raise the warning
+/// again without anyone having to re-arm it.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DataQualityAcknowledgement {
+    pub at: DateTime<Utc>,
+    pub by: uuid::Uuid,
+    pub note: Option<AcknowledgementNote>,
+}
+
 #[derive(Debug, Clone)]
 pub struct Sensor {
     pub id: SensorId,
@@ -101,6 +122,7 @@ pub struct Sensor {
     model_id: Id<SensorModel>,
     lorawan: Option<LorawanCredentials>,
     organization_id: Id<Organization>,
+    quality_acknowledged: Option<DataQualityAcknowledgement>,
 }
 
 /// Input for creating a new [`Sensor`].
@@ -125,7 +147,33 @@ impl Sensor {
             model_id: Id::new(snap.model_id),
             lorawan: snap.lorawan,
             organization_id: Id::new(snap.organization_id),
+            quality_acknowledged: snap.quality_acknowledged,
         }
+    }
+
+    pub fn quality_acknowledged(&self) -> Option<&DataQualityAcknowledgement> {
+        self.quality_acknowledged.as_ref()
+    }
+
+    /// Marks every reading flagged up to `ack.at` as reviewed. The watermark
+    /// only moves forward: a request carrying an older timestamp is ignored so
+    /// a late or replayed call cannot reopen warnings someone already closed.
+    pub fn acknowledge_data_quality(
+        &mut self,
+        ack: DataQualityAcknowledgement,
+    ) -> Vec<crate::events::DomainEvent> {
+        if let Some(current) = &self.quality_acknowledged
+            && ack.at <= current.at
+        {
+            return vec![];
+        }
+        let event = crate::events::DomainEvent::SensorDataQualityAcknowledged {
+            sensor_id: self.id.clone(),
+            at: ack.at,
+            by: ack.by,
+        };
+        self.quality_acknowledged = Some(ack);
+        vec![event]
     }
 
     pub fn organization_id(&self) -> Id<Organization> {
@@ -226,6 +274,7 @@ mod tests {
             model_id: Id::new_v7(),
             lorawan: None,
             organization_id: Id::new_v7(),
+            quality_acknowledged: None,
         }
     }
 
@@ -304,6 +353,74 @@ mod tests {
         s.deactivate().unwrap();
         assert_ok!(s.activate(fixed_now()));
         assert!(s.is_activated());
+    }
+
+    fn ack(at: DateTime<Utc>, note: Option<&str>) -> DataQualityAcknowledgement {
+        DataQualityAcknowledgement {
+            at,
+            by: uuid::Uuid::now_v7(),
+            note: note.map(|n| AcknowledgementNote::new(n).unwrap()),
+        }
+    }
+
+    #[test]
+    fn acknowledging_sets_the_watermark_and_emits_an_event() {
+        use crate::events::DomainEvent;
+        let mut s = fixed_sensor();
+        assert!(s.quality_acknowledged().is_none());
+
+        let at = fixed_now();
+        let events = s.acknowledge_data_quality(ack(at, Some("Sonde nicht angeschlossen")));
+
+        assert_eq!(s.quality_acknowledged().map(|a| a.at), Some(at));
+        assert_eq!(events.len(), 1);
+        assert!(matches!(
+            &events[0],
+            DomainEvent::SensorDataQualityAcknowledged { sensor_id, .. } if sensor_id == &s.id
+        ));
+    }
+
+    #[test]
+    fn acknowledging_again_moves_the_watermark_forward() {
+        let mut s = fixed_sensor();
+        s.acknowledge_data_quality(ack(fixed_now(), None));
+        let later = fixed_now() + Duration::hours(1);
+
+        let events = s.acknowledge_data_quality(ack(later, Some("erneut geprüft")));
+
+        assert_eq!(s.quality_acknowledged().map(|a| a.at), Some(later));
+        assert_eq!(events.len(), 1);
+    }
+
+    #[test]
+    fn acknowledging_with_an_older_timestamp_is_a_noop() {
+        let mut s = fixed_sensor();
+        let current = fixed_now();
+        s.acknowledge_data_quality(ack(current, Some("aktuell")));
+
+        let events =
+            s.acknowledge_data_quality(ack(current - Duration::hours(2), Some("veraltet")));
+
+        assert_eq!(
+            s.quality_acknowledged().map(|a| a.at),
+            Some(current),
+            "a late request must not reopen already reviewed warnings"
+        );
+        assert_eq!(
+            s.quality_acknowledged()
+                .and_then(|a| a.note.clone())
+                .map(|n| n.as_str().to_owned()),
+            Some("aktuell".to_owned())
+        );
+        assert!(events.is_empty());
+    }
+
+    #[test]
+    fn acknowledging_with_the_same_timestamp_is_a_noop() {
+        let mut s = fixed_sensor();
+        let at = fixed_now();
+        s.acknowledge_data_quality(ack(at, None));
+        assert!(s.acknowledge_data_quality(ack(at, None)).is_empty());
     }
 
     #[test]

@@ -9,11 +9,12 @@ use domain::{
     RepositoryError,
     cluster::{SoilMoistureBucket, SoilMoistureDepthSeries, SoilMoisturePoint},
     sensor::{
-        LorawanCredentials, Sensor, SensorDraft, SensorId, SensorReader, SensorReadingReader,
+        AcknowledgementNote, DataQualityAcknowledgement, LastPlausibleValue, LorawanCredentials,
+        ReadingQualityIssue, Sensor, SensorDraft, SensorId, SensorReader, SensorReadingReader,
         SensorReadingWriter, SensorSearchQuery, SensorSnapshot, SensorType, SensorView,
         SensorWriter,
         data::{SensorReading, SensorReadingDraft, SensorReadingSnapshot, SensorReadingView},
-        derive_connectivity,
+        derive_connectivity, derive_data_health,
         repository::NormalizedValue,
         view::{LorawanInfo, SensorModelSummary},
     },
@@ -29,13 +30,18 @@ use domain::{
 pub struct PgSensorRepository {
     pool: PgPool,
     offline_after: chrono::Duration,
+    defect_streak: i64,
 }
 
+/// Window the `implausible_recent` counter on [`SensorView`] covers.
+const QUALITY_WINDOW_DAYS: i32 = 7;
+
 impl PgSensorRepository {
-    pub fn new(pool: PgPool, offline_after: chrono::Duration) -> Self {
+    pub fn new(pool: PgPool, offline_after: chrono::Duration, defect_streak: usize) -> Self {
         Self {
             pool,
             offline_after,
+            defect_streak: i64::try_from(defect_streak).unwrap_or(i64::MAX),
         }
     }
 }
@@ -58,9 +64,13 @@ impl SensorReader for PgSensorRepository {
                       sl.app_key       AS "app_key?",
                       sl.at_pin,
                       sl.ota_pin,
-                      sl.config        AS "config: serde_json::Value"
+                      sl.config        AS "config: serde_json::Value",
+                      qa.acknowledged_at AS "acknowledged_at?",
+                      qa.acknowledged_by AS "acknowledged_by?",
+                      qa.note            AS "acknowledged_note?"
             FROM sensors s
             LEFT JOIN sensor_lorawan sl ON sl.id = s.id
+            LEFT JOIN sensor_quality_acknowledgements qa ON qa.sensor_id = s.id
             WHERE s.id = $1"#,
             id.as_str()
         )
@@ -86,6 +96,11 @@ impl SensorReader for PgSensorRepository {
             additional_info: row.additional_info,
             lorawan,
             organization_id: row.organization_id,
+            quality_acknowledged: build_acknowledgement(
+                row.acknowledged_at,
+                row.acknowledged_by,
+                row.acknowledged_note,
+            )?,
         }))
     }
 
@@ -107,9 +122,13 @@ impl SensorReader for PgSensorRepository {
                       sl.app_key       AS "app_key?",
                       sl.at_pin,
                       sl.ota_pin,
-                      sl.config        AS "config: serde_json::Value"
+                      sl.config        AS "config: serde_json::Value",
+                      qa.acknowledged_at AS "acknowledged_at?",
+                      qa.acknowledged_by AS "acknowledged_by?",
+                      qa.note            AS "acknowledged_note?"
             FROM sensors s
             LEFT JOIN sensor_lorawan sl ON sl.id = s.id
+            LEFT JOIN sensor_quality_acknowledgements qa ON qa.sensor_id = s.id
             WHERE s.id = ANY($1::text[])"#,
             &ids as &[&str]
         )
@@ -136,6 +155,11 @@ impl SensorReader for PgSensorRepository {
                     additional_info: r.additional_info,
                     lorawan,
                     organization_id: r.organization_id,
+                    quality_acknowledged: build_acknowledgement(
+                        r.acknowledged_at,
+                        r.acknowledged_by,
+                        r.acknowledged_note,
+                    )?,
                 }))
             })
             .collect()
@@ -195,7 +219,55 @@ impl SensorReader for PgSensorRepository {
             self.offline_after,
         );
 
+        // A sensor still in preparation reports nothing: an unplugged probe is
+        // the normal case there, not a finding. `cutoff` is the acknowledgement
+        // watermark — readings up to it have been reviewed.
+        let quality = sqlx::query!(
+            r#"WITH scope AS (
+                 SELECT s.activated_at IS NOT NULL AS activated,
+                        COALESCE(qa.acknowledged_at, '-infinity'::timestamp) AS cutoff
+                   FROM sensors s
+                   LEFT JOIN sensor_quality_acknowledgements qa ON qa.sensor_id = s.id
+                  WHERE s.id = $1
+               )
+               SELECT
+                 (SELECT COUNT(*) FROM sensor_data sdq
+                    JOIN sensor_data_ability_values davq ON davq.sensor_data_id = sdq.id
+                   WHERE sdq.sensor_id = $1
+                     AND NOT davq.plausible
+                     AND (SELECT activated FROM scope)
+                     AND sdq.updated_at > (SELECT cutoff FROM scope)
+                     AND sdq.updated_at >= NOW() - make_interval(days => $2)
+                 ) AS "implausible_recent!",
+                 (SELECT array_agg(u.unusable ORDER BY u.id DESC)
+                    FROM (
+                      SELECT sdh.id, bool_and(NOT davh.plausible) AS unusable
+                        FROM sensor_data sdh
+                        JOIN sensor_data_ability_values davh ON davh.sensor_data_id = sdh.id
+                        JOIN sensor_model_abilities smah ON smah.id = davh.sensor_model_ability_id
+                        JOIN sensor_abilities sah ON sah.id = smah.sensor_ability_id
+                       WHERE sdh.sensor_id = $1
+                         AND (SELECT activated FROM scope)
+                         AND sdh.updated_at > (SELECT cutoff FROM scope)
+                         AND sah.ability IN ('soil_moisture', 'soil_tension')
+                       GROUP BY sdh.id
+                       ORDER BY sdh.id DESC
+                       LIMIT $3
+                    ) u
+                 ) AS "recent_unusable?: Vec<bool>""#,
+            id.as_str(),
+            QUALITY_WINDOW_DAYS,
+            self.defect_streak,
+        )
+        .fetch_one(&self.pool)
+        .await?;
+
         Ok(SensorView {
+            data_health: derive_data_health(
+                quality.recent_unusable.as_deref().unwrap_or(&[]),
+                self.defect_streak as usize,
+            ),
+            implausible_recent: quality.implausible_recent,
             id: row.id,
             created_at: row.created_at.and_utc(),
             updated_at: row.updated_at.and_utc(),
@@ -250,11 +322,14 @@ impl SensorReader for PgSensorRepository {
                       lr.id            AS "last_reading_id?: Uuid",
                       lr.updated_at    AS "last_reading_updated_at?",
                       lr.data          AS "last_reading_data?",
-                      s.organization_id
+                      s.organization_id,
+                      q.implausible_recent AS "implausible_recent!",
+                      h.recent_unusable    AS "recent_unusable?: Vec<bool>"
             FROM sensors s
             INNER JOIN sensor_models sm ON sm.id = s.model_id
             LEFT JOIN sensor_lorawan sl ON sl.id = s.id
             LEFT JOIN trees t          ON t.sensor_id = s.id
+            LEFT JOIN sensor_quality_acknowledgements qa ON qa.sensor_id = s.id
             LEFT JOIN LATERAL (
                 SELECT sd.id, sd.updated_at, sd.data
                 FROM sensor_data sd
@@ -262,8 +337,37 @@ impl SensorReader for PgSensorRepository {
                 ORDER BY sd.id DESC
                 LIMIT 1
             ) lr ON true
+            LEFT JOIN LATERAL (
+                SELECT COUNT(*) AS implausible_recent
+                FROM sensor_data sdq
+                JOIN sensor_data_ability_values davq ON davq.sensor_data_id = sdq.id
+                WHERE sdq.sensor_id = s.id
+                  AND NOT davq.plausible
+                  AND s.activated_at IS NOT NULL
+                  AND sdq.updated_at > COALESCE(qa.acknowledged_at, '-infinity'::timestamp)
+                  AND sdq.updated_at >= NOW() - make_interval(days => $2)
+            ) q ON true
+            LEFT JOIN LATERAL (
+                SELECT array_agg(u.unusable ORDER BY u.id DESC) AS recent_unusable
+                FROM (
+                    SELECT sdh.id, bool_and(NOT davh.plausible) AS unusable
+                    FROM sensor_data sdh
+                    JOIN sensor_data_ability_values davh ON davh.sensor_data_id = sdh.id
+                    JOIN sensor_model_abilities smah ON smah.id = davh.sensor_model_ability_id
+                    JOIN sensor_abilities sah ON sah.id = smah.sensor_ability_id
+                    WHERE sdh.sensor_id = s.id
+                      AND s.activated_at IS NOT NULL
+                      AND sdh.updated_at > COALESCE(qa.acknowledged_at, '-infinity'::timestamp)
+                      AND sah.ability IN ('soil_moisture', 'soil_tension')
+                    GROUP BY sdh.id
+                    ORDER BY sdh.id DESC
+                    LIMIT $3
+                ) u
+            ) h ON true
             WHERE s.id = ANY($1::text[])"#,
-            &ids as &[&str]
+            &ids as &[&str],
+            QUALITY_WINDOW_DAYS,
+            self.defect_streak,
         )
         .fetch_all(&self.pool)
         .await?;
@@ -286,6 +390,11 @@ impl SensorReader for PgSensorRepository {
                     self.offline_after,
                 );
                 Ok(SensorView {
+                    data_health: derive_data_health(
+                        r.recent_unusable.as_deref().unwrap_or(&[]),
+                        self.defect_streak as usize,
+                    ),
+                    implausible_recent: r.implausible_recent,
                     id: r.id,
                     created_at: r.created_at.and_utc(),
                     updated_at: r.updated_at.and_utc(),
@@ -356,11 +465,14 @@ impl SensorReader for PgSensorRepository {
                       lr.id            AS "last_reading_id?: Uuid",
                       lr.updated_at    AS "last_reading_updated_at?",
                       lr.data          AS "last_reading_data?",
-                      s.organization_id
+                      s.organization_id,
+                      q.implausible_recent AS "implausible_recent!",
+                      h.recent_unusable    AS "recent_unusable?: Vec<bool>"
             FROM sensors s
             INNER JOIN sensor_models sm ON sm.id = s.model_id
             LEFT JOIN sensor_lorawan sl ON sl.id = s.id
             LEFT JOIN trees t          ON t.sensor_id = s.id
+            LEFT JOIN sensor_quality_acknowledgements qa ON qa.sensor_id = s.id
             LEFT JOIN LATERAL (
                 SELECT sd.id, sd.updated_at, sd.data
                 FROM sensor_data sd
@@ -368,6 +480,33 @@ impl SensorReader for PgSensorRepository {
                 ORDER BY sd.id DESC
                 LIMIT 1
             ) lr ON true
+            LEFT JOIN LATERAL (
+                SELECT COUNT(*) AS implausible_recent
+                FROM sensor_data sdq
+                JOIN sensor_data_ability_values davq ON davq.sensor_data_id = sdq.id
+                WHERE sdq.sensor_id = s.id
+                  AND NOT davq.plausible
+                  AND s.activated_at IS NOT NULL
+                  AND sdq.updated_at > COALESCE(qa.acknowledged_at, '-infinity'::timestamp)
+                  AND sdq.updated_at >= NOW() - make_interval(days => $5)
+            ) q ON true
+            LEFT JOIN LATERAL (
+                SELECT array_agg(u.unusable ORDER BY u.id DESC) AS recent_unusable
+                FROM (
+                    SELECT sdh.id, bool_and(NOT davh.plausible) AS unusable
+                    FROM sensor_data sdh
+                    JOIN sensor_data_ability_values davh ON davh.sensor_data_id = sdh.id
+                    JOIN sensor_model_abilities smah ON smah.id = davh.sensor_model_ability_id
+                    JOIN sensor_abilities sah ON sah.id = smah.sensor_ability_id
+                    WHERE sdh.sensor_id = s.id
+                      AND s.activated_at IS NOT NULL
+                      AND sdh.updated_at > COALESCE(qa.acknowledged_at, '-infinity'::timestamp)
+                      AND sah.ability IN ('soil_moisture', 'soil_tension')
+                    GROUP BY sdh.id
+                    ORDER BY sdh.id DESC
+                    LIMIT $6
+                ) u
+            ) h ON true
             WHERE ($1::text IS NULL OR s.provider = $1)
               AND ($4::uuid[] IS NULL OR s.organization_id = ANY($4))
             ORDER BY s.id
@@ -376,6 +515,8 @@ impl SensorReader for PgSensorRepository {
             limit,
             offset,
             visible_ids.as_deref(),
+            QUALITY_WINDOW_DAYS,
+            self.defect_streak,
         )
         .fetch_all(&self.pool)
         .await?;
@@ -399,6 +540,11 @@ impl SensorReader for PgSensorRepository {
                     self.offline_after,
                 );
                 Ok(SensorView {
+                    data_health: derive_data_health(
+                        r.recent_unusable.as_deref().unwrap_or(&[]),
+                        self.defect_streak as usize,
+                    ),
+                    implausible_recent: r.implausible_recent,
                     id: r.id,
                     created_at: r.created_at.and_utc(),
                     updated_at: r.updated_at.and_utc(),
@@ -474,6 +620,8 @@ impl SensorWriter for PgSensorRepository {
 
     #[tracing::instrument(level = "trace", skip_all)]
     async fn save(&self, sensor: &Sensor) -> Result<(), RepositoryError> {
+        let mut tx = self.pool.begin().await?;
+
         let result = sqlx::query!(
             r#"UPDATE sensors SET
                 activated_at = $2,
@@ -487,13 +635,34 @@ impl SensorWriter for PgSensorRepository {
             sensor.provenance.additional_info().cloned(),
             sensor.organization_id().value(),
         )
-        .execute(&self.pool)
+        .execute(&mut *tx)
         .await?;
 
         if result.rows_affected() == 0 {
             return Err(RepositoryError::NotFound);
         }
 
+        // The aggregate only ever moves the watermark forward, so an upsert is
+        // enough; there is no path that clears an acknowledgement.
+        if let Some(ack) = sensor.quality_acknowledged() {
+            sqlx::query!(
+                r#"INSERT INTO sensor_quality_acknowledgements
+                    (sensor_id, acknowledged_at, acknowledged_by, note)
+                VALUES ($1, $2, $3, $4)
+                ON CONFLICT (sensor_id) DO UPDATE SET
+                    acknowledged_at = EXCLUDED.acknowledged_at,
+                    acknowledged_by = EXCLUDED.acknowledged_by,
+                    note = EXCLUDED.note"#,
+                sensor.id.as_str(),
+                ack.at.naive_utc(),
+                ack.by,
+                ack.note.as_ref().map(|n| n.as_str()),
+            )
+            .execute(&mut *tx)
+            .await?;
+        }
+
+        tx.commit().await?;
         Ok(())
     }
 
@@ -549,6 +718,86 @@ impl SensorReadingReader for PgSensorRepository {
     }
 
     #[tracing::instrument(level = "trace", skip_all)]
+    async fn last_plausible_values(
+        &self,
+        sensor_id: &SensorId,
+    ) -> Result<Vec<LastPlausibleValue>, RepositoryError> {
+        let rows = sqlx::query!(
+            r#"SELECT DISTINCT ON (dav.sensor_model_ability_id)
+                      dav.sensor_model_ability_id AS "model_ability_id!",
+                      dav.value                   AS "value!",
+                      sd.id                       AS "reading_id!"
+               FROM sensor_data sd
+               JOIN sensor_data_ability_values dav ON dav.sensor_data_id = sd.id
+               WHERE sd.sensor_id = $1
+                 AND dav.plausible
+               ORDER BY dav.sensor_model_ability_id, sd.id DESC"#,
+            sensor_id.as_str(),
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(rows
+            .into_iter()
+            .map(|r| LastPlausibleValue {
+                model_ability_id: r.model_ability_id,
+                value: r.value,
+                recorded_at: uuid_v7_timestamp(&r.reading_id)
+                    .expect("sensor_data.id is minted as uuid v7"),
+            })
+            .collect())
+    }
+
+    #[tracing::instrument(level = "trace", skip_all)]
+    async fn quality_issues(
+        &self,
+        sensor_id: &SensorId,
+        limit: i64,
+    ) -> Result<Vec<ReadingQualityIssue>, RepositoryError> {
+        let rows = sqlx::query!(
+            r#"SELECT sd.id              AS "reading_id!",
+                      sa.ability         AS "ability!",
+                      sma.depth_cm       AS "depth_cm!",
+                      dav.value::float8  AS "value!",
+                      dav.quality_reason AS "reason!"
+               FROM sensor_data sd
+               JOIN sensor_data_ability_values dav ON dav.sensor_data_id = sd.id
+               JOIN sensor_model_abilities sma ON sma.id = dav.sensor_model_ability_id
+               JOIN sensor_abilities sa ON sa.id = sma.sensor_ability_id
+               WHERE sd.sensor_id = $1
+                 AND NOT dav.plausible
+                 AND dav.quality_reason IS NOT NULL
+               ORDER BY sd.id DESC
+               LIMIT $2"#,
+            sensor_id.as_str(),
+            limit,
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        rows.into_iter()
+            .map(|r| {
+                Ok(ReadingQualityIssue {
+                    recorded_at: uuid_v7_timestamp(&r.reading_id)
+                        .expect("sensor_data.id is minted as uuid v7"),
+                    ability: r.ability.parse().map_err(
+                        |e: domain::sensor_model::UnknownAbility| {
+                            RepositoryError::DataIntegrity(e.to_string())
+                        },
+                    )?,
+                    depth_cm: r.depth_cm,
+                    value: r.value,
+                    reason: r.reason.parse().map_err(
+                        |e: domain::sensor::plausibility::UnknownPlausibilityReason| {
+                            RepositoryError::DataIntegrity(e.to_string())
+                        },
+                    )?,
+                })
+            })
+            .collect()
+    }
+
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn latest_volumetric_moisture(
         &self,
         sensor_id: &SensorId,
@@ -562,6 +811,7 @@ impl SensorReadingReader for PgSensorRepository {
                JOIN sensor_abilities sa ON sa.id = sma.sensor_ability_id
                WHERE sd.sensor_id = $1
                  AND sa.ability = 'soil_moisture'
+                 AND dav.plausible
                  AND sd.id = (
                      SELECT id FROM sensor_data
                      WHERE sensor_id = $1
@@ -594,8 +844,6 @@ impl SensorReadingReader for PgSensorRepository {
             SoilMoistureBucket::Hour => "hour",
             SoilMoistureBucket::Day => "day",
         };
-        // Sentinel guard: disconnected Dragino probes report ~6553.5, so
-        // anything outside 0–100 Vol.-% is a sensor error, not a reading.
         let rows = sqlx::query!(
             r#"SELECT sma.depth_cm AS "depth_cm!",
                       date_trunc($4, sd.updated_at) AS "bucket_start!",
@@ -609,7 +857,7 @@ impl SensorReadingReader for PgSensorRepository {
                JOIN sensor_abilities sa ON sa.id = sma.sensor_ability_id
                WHERE sd.sensor_id = $1
                  AND sa.ability = 'soil_moisture'
-                 AND dav.value >= 0 AND dav.value <= 100
+                 AND dav.plausible
                  AND sd.updated_at >= $2
                  AND sd.updated_at <= $3
                GROUP BY sma.depth_cm, date_trunc($4, sd.updated_at)
@@ -738,14 +986,22 @@ impl SensorReadingWriter for PgSensorRepository {
         if !normalized.is_empty() {
             let ability_ids: Vec<Uuid> = normalized.iter().map(|n| n.model_ability_id).collect();
             let values: Vec<Decimal> = normalized.iter().map(|n| n.value).collect();
+            let plausible: Vec<bool> = normalized.iter().map(|n| n.issue.is_none()).collect();
+            let reasons: Vec<Option<String>> = normalized
+                .iter()
+                .map(|n| n.issue.map(|i| i.reason().to_string()))
+                .collect();
             sqlx::query!(
                 r#"INSERT INTO sensor_data_ability_values
-                    (sensor_data_id, sensor_model_ability_id, value)
-                SELECT $1, ability, val
-                FROM UNNEST($2::uuid[], $3::numeric[]) AS t(ability, val)"#,
+                    (sensor_data_id, sensor_model_ability_id, value, plausible, quality_reason)
+                SELECT $1, ability, val, ok, reason
+                FROM UNNEST($2::uuid[], $3::numeric[], $4::bool[], $5::text[])
+                     AS t(ability, val, ok, reason)"#,
                 reading_id,
                 &ability_ids,
                 &values as &[Decimal],
+                &plausible,
+                &reasons as &[Option<String>],
             )
             .execute(&mut *tx)
             .await?;
@@ -760,6 +1016,25 @@ impl SensorReadingWriter for PgSensorRepository {
 /// when the join missed (no `sensor_lorawan` row); otherwise validates the
 /// non-empty fields and surfaces a [`RepositoryError::DataIntegrity`] on bad
 /// data.
+/// Rebuilds the acknowledgement from the joined row. A missing join yields
+/// `None`; a half-present row cannot occur because the columns come from one
+/// `NOT NULL`-constrained table.
+fn build_acknowledgement(
+    at: Option<chrono::NaiveDateTime>,
+    by: Option<Uuid>,
+    note: Option<String>,
+) -> Result<Option<DataQualityAcknowledgement>, RepositoryError> {
+    let (Some(at), Some(by)) = (at, by) else {
+        return Ok(None);
+    };
+    let note = note.map(AcknowledgementNote::new).transpose()?;
+    Ok(Some(DataQualityAcknowledgement {
+        at: at.and_utc(),
+        by,
+        note,
+    }))
+}
+
 fn build_lorawan(
     serial_number: Option<String>,
     dev_eui: Option<String>,

@@ -15,6 +15,17 @@ use crate::{
 pub struct NormalizedValue {
     pub model_ability_id: uuid::Uuid,
     pub value: rust_decimal::Decimal,
+    /// `None` = plausible. Set by `SensorService::ingest_reading`; every other
+    /// producer leaves it empty.
+    pub issue: Option<crate::sensor::plausibility::PlausibilityIssue>,
+}
+
+/// Newest plausible value of one model ability, used by the jump rule.
+#[derive(Debug, Clone)]
+pub struct LastPlausibleValue {
+    pub model_ability_id: uuid::Uuid,
+    pub value: rust_decimal::Decimal,
+    pub recorded_at: DateTime<Utc>,
 }
 
 /// Read-side access to sensors, including aggregate hydration and the
@@ -51,6 +62,19 @@ pub trait SensorReadingReader: Send + Sync {
         limit: i64,
     ) -> Result<Vec<SensorReading>, RepositoryError>;
     async fn latest(&self, sensor_id: &SensorId) -> Result<Option<SensorReading>, RepositoryError>;
+
+    /// Newest plausible value of each model ability of this sensor.
+    async fn last_plausible_values(
+        &self,
+        sensor_id: &SensorId,
+    ) -> Result<Vec<LastPlausibleValue>, RepositoryError>;
+
+    /// Most recent flagged values of this sensor, newest first.
+    async fn quality_issues(
+        &self,
+        sensor_id: &SensorId,
+        limit: i64,
+    ) -> Result<Vec<crate::sensor::plausibility::ReadingQualityIssue>, RepositoryError>;
 
     async fn view_history(
         &self,

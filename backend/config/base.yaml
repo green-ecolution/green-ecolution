@@ -37,6 +37,7 @@ info:
   repository_url: "https://github.com/green-ecolution/"
 sensor:
   offline_after_secs: 86400
+  defect_streak: 3
 watering:
   just_watered_ttl_secs: 86400
   just_watered_sweep_interval_secs: 3600

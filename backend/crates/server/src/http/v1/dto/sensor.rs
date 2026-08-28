@@ -15,9 +15,12 @@ use domain::{
     shared::provenance::{Provenance, ProviderId},
 };
 
-use crate::service::{ServiceError, sensor_service::SensorService};
+use crate::service::{
+    ServiceError,
+    sensor_service::{SensorDataQuality, SensorService},
+};
 
-use super::SensorStatus;
+use super::{DataHealth, SensorStatus};
 
 /// Resolves a batch of raw sensor-id strings (e.g. from `TreeView::sensor_id`)
 /// into a lookup map keyed by id. Strings that fail [`SensorId`] validation
@@ -228,6 +231,13 @@ pub struct SensorResponse {
     /// Current connectivity status of the sensor.
     pub status: SensorStatus,
 
+    /// Whether the sensor's recent readings look trustworthy.
+    pub data_health: DataHealth,
+
+    /// Number of values flagged as implausible in the last 7 days.
+    #[schema(example = 0)]
+    pub implausible_recent: i64,
+
     /// Bus/protocol class of the sensor.
     pub sensor_type: SensorTypeResponse,
 
@@ -275,6 +285,8 @@ impl From<&SensorView> for SensorResponse {
             created_at: value.created_at.to_rfc3339(),
             updated_at: value.updated_at.to_rfc3339(),
             status: value.status.into(),
+            data_health: value.data_health.into(),
+            implausible_recent: value.implausible_recent,
             sensor_type: value.sensor_type.into(),
             model: SensorModelSummaryResponse::from(&value.model),
             coordinate: value.coordinate.map(|c| SensorCoordinate {
@@ -579,4 +591,89 @@ mod tests {
         };
         assert!(SensorDataResponse::from(&view).signal.is_none());
     }
+}
+
+/// One measurement rejected by the plausibility rules.
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+pub struct SensorQualityIssueResponse {
+    /// When the uplink carrying the value was recorded (RFC 3339).
+    #[schema(example = "2026-08-20T06:15:00+00:00")]
+    pub recorded_at: String,
+    /// Measured quantity, e.g. "soil_moisture".
+    #[schema(example = "soil_moisture")]
+    pub ability: String,
+    #[schema(example = 40)]
+    pub depth_cm: i32,
+    #[schema(example = 6553.5)]
+    pub value: f64,
+    /// Stable reason code: "out_of_range" or "implausible_jump".
+    #[schema(example = "out_of_range")]
+    pub reason: String,
+}
+
+/// Record that someone reviewed the flagged readings. Everything recorded at
+/// or before `at` counts as reviewed.
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+pub struct DataQualityAcknowledgementResponse {
+    #[schema(example = "2026-08-28T13:30:00+00:00")]
+    pub at: String,
+    #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000")]
+    pub by_id: String,
+    /// Display name of the reviewer; absent if the account no longer resolves.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(example = "tbz1", nullable)]
+    pub by_name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(example = "Sonde bei der Vorbereitung nicht angeschlossen", nullable)]
+    pub note: Option<String>,
+}
+
+/// Data-quality summary for one sensor.
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+pub struct SensorDataQualityResponse {
+    pub health: DataHealth,
+    #[schema(example = 3)]
+    pub implausible_recent: i64,
+    pub issues: Vec<SensorQualityIssueResponse>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable)]
+    pub acknowledged: Option<DataQualityAcknowledgementResponse>,
+}
+
+impl SensorDataQualityResponse {
+    /// `by_name` is resolved by the handler, which owns the user service; the
+    /// sensor service deliberately does not depend on it.
+    pub fn build(value: SensorDataQuality, by_name: Option<String>) -> Self {
+        Self {
+            health: value.health.into(),
+            implausible_recent: value.implausible_recent,
+            issues: value
+                .issues
+                .into_iter()
+                .map(|i| SensorQualityIssueResponse {
+                    recorded_at: i.recorded_at.to_rfc3339(),
+                    ability: i.ability.as_str().to_owned(),
+                    depth_cm: i.depth_cm,
+                    value: i.value,
+                    reason: i.reason.to_string(),
+                })
+                .collect(),
+            acknowledged: value
+                .acknowledged
+                .map(|a| DataQualityAcknowledgementResponse {
+                    at: a.at.to_rfc3339(),
+                    by_id: a.by.to_string(),
+                    by_name,
+                    note: a.note.map(|n| n.as_str().to_owned()),
+                }),
+        }
+    }
+}
+
+/// Body of the acknowledge request. The timestamp is the server's clock, so
+/// only the reason travels.
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
+pub struct AcknowledgeDataQualityRequest {
+    #[schema(example = "Sonde bei der Vorbereitung nicht angeschlossen", nullable)]
+    pub note: Option<String>,
 }

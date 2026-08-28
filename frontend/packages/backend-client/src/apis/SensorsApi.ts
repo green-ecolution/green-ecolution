@@ -15,10 +15,12 @@
 
 import * as runtime from '../runtime';
 import type {
+  AcknowledgeDataQualityRequest,
   ActivateSensorRequest,
   CreateSensorRequest,
   ListResponseSensorDataResponse,
   ListResponseSensorResponse,
+  SensorDataQualityResponse,
   SensorModelResponse,
   SensorResponse,
   SetSensorTreeRequest,
@@ -26,6 +28,8 @@ import type {
   TransferRequest,
 } from '../models/index';
 import {
+    AcknowledgeDataQualityRequestFromJSON,
+    AcknowledgeDataQualityRequestToJSON,
     ActivateSensorRequestFromJSON,
     ActivateSensorRequestToJSON,
     CreateSensorRequestFromJSON,
@@ -34,6 +38,8 @@ import {
     ListResponseSensorDataResponseToJSON,
     ListResponseSensorResponseFromJSON,
     ListResponseSensorResponseToJSON,
+    SensorDataQualityResponseFromJSON,
+    SensorDataQualityResponseToJSON,
     SensorModelResponseFromJSON,
     SensorModelResponseToJSON,
     SensorResponseFromJSON,
@@ -45,6 +51,11 @@ import {
     TransferRequestFromJSON,
     TransferRequestToJSON,
 } from '../models/index';
+
+export interface AcknowledgeSensorDataQualityRequest {
+    sensorId: string;
+    acknowledgeDataQualityRequest: AcknowledgeDataQualityRequest;
+}
 
 export interface ActivateSensorOperationRequest {
     sensorId: string;
@@ -60,6 +71,10 @@ export interface DeleteSensorRequest {
 }
 
 export interface GetSensorRequest {
+    sensorId: string;
+}
+
+export interface GetSensorDataQualityRequest {
     sensorId: string;
 }
 
@@ -105,6 +120,55 @@ export interface TransferSensorRequest {
  * 
  */
 export class SensorsApi extends runtime.BaseAPI {
+
+    /**
+     * Records that the flagged readings up to now have been reviewed. Readings flagged afterwards raise the warning again on their own.
+     * Acknowledge a sensor\'s flagged readings
+     */
+    async acknowledgeSensorDataQualityRaw(requestParameters: AcknowledgeSensorDataQualityRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SensorDataQualityResponse>> {
+        if (requestParameters['sensorId'] == null) {
+            throw new runtime.RequiredError(
+                'sensorId',
+                'Required parameter "sensorId" was null or undefined when calling acknowledgeSensorDataQuality().'
+            );
+        }
+
+        if (requestParameters['acknowledgeDataQualityRequest'] == null) {
+            throw new runtime.RequiredError(
+                'acknowledgeDataQualityRequest',
+                'Required parameter "acknowledgeDataQualityRequest" was null or undefined when calling acknowledgeSensorDataQuality().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+
+        let urlPath = `/v1/sensors/{sensor_id}/data-quality/acknowledge`;
+        urlPath = urlPath.replace(`{${"sensor_id"}}`, encodeURIComponent(String(requestParameters['sensorId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: AcknowledgeDataQualityRequestToJSON(requestParameters['acknowledgeDataQualityRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => SensorDataQualityResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Records that the flagged readings up to now have been reviewed. Readings flagged afterwards raise the warning again on their own.
+     * Acknowledge a sensor\'s flagged readings
+     */
+    async acknowledgeSensorDataQuality(requestParameters: AcknowledgeSensorDataQualityRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SensorDataQualityResponse> {
+        const response = await this.acknowledgeSensorDataQualityRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
 
     /**
      * Transitions a sensor from `Prepared` to `Offline` and attaches it to the given tree. Idempotent if the sensor is already attached to the same tree.
@@ -270,6 +334,45 @@ export class SensorsApi extends runtime.BaseAPI {
      */
     async getSensor(requestParameters: GetSensorRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SensorResponse> {
         const response = await this.getSensorRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns the derived data health, the number of values flagged as implausible in the last 7 days, and the most recent flagged values.
+     * Get the data quality of a sensor
+     */
+    async getSensorDataQualityRaw(requestParameters: GetSensorDataQualityRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SensorDataQualityResponse>> {
+        if (requestParameters['sensorId'] == null) {
+            throw new runtime.RequiredError(
+                'sensorId',
+                'Required parameter "sensorId" was null or undefined when calling getSensorDataQuality().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/v1/sensors/{sensor_id}/data-quality`;
+        urlPath = urlPath.replace(`{${"sensor_id"}}`, encodeURIComponent(String(requestParameters['sensorId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => SensorDataQualityResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns the derived data health, the number of values flagged as implausible in the last 7 days, and the most recent flagged values.
+     * Get the data quality of a sensor
+     */
+    async getSensorDataQuality(requestParameters: GetSensorDataQualityRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SensorDataQualityResponse> {
+        const response = await this.getSensorDataQualityRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

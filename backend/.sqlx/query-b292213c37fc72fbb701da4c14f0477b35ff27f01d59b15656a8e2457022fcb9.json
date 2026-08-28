@@ -1,0 +1,30 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "WITH scope AS (\n                 SELECT s.activated_at IS NOT NULL AS activated,\n                        COALESCE(qa.acknowledged_at, '-infinity'::timestamp) AS cutoff\n                   FROM sensors s\n                   LEFT JOIN sensor_quality_acknowledgements qa ON qa.sensor_id = s.id\n                  WHERE s.id = $1\n               )\n               SELECT\n                 (SELECT COUNT(*) FROM sensor_data sdq\n                    JOIN sensor_data_ability_values davq ON davq.sensor_data_id = sdq.id\n                   WHERE sdq.sensor_id = $1\n                     AND NOT davq.plausible\n                     AND (SELECT activated FROM scope)\n                     AND sdq.updated_at > (SELECT cutoff FROM scope)\n                     AND sdq.updated_at >= NOW() - make_interval(days => $2)\n                 ) AS \"implausible_recent!\",\n                 (SELECT array_agg(u.unusable ORDER BY u.id DESC)\n                    FROM (\n                      SELECT sdh.id, bool_and(NOT davh.plausible) AS unusable\n                        FROM sensor_data sdh\n                        JOIN sensor_data_ability_values davh ON davh.sensor_data_id = sdh.id\n                        JOIN sensor_model_abilities smah ON smah.id = davh.sensor_model_ability_id\n                        JOIN sensor_abilities sah ON sah.id = smah.sensor_ability_id\n                       WHERE sdh.sensor_id = $1\n                         AND (SELECT activated FROM scope)\n                         AND sdh.updated_at > (SELECT cutoff FROM scope)\n                         AND sah.ability IN ('soil_moisture', 'soil_tension')\n                       GROUP BY sdh.id\n                       ORDER BY sdh.id DESC\n                       LIMIT $3\n                    ) u\n                 ) AS \"recent_unusable?: Vec<bool>\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "implausible_recent!",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "recent_unusable?: Vec<bool>",
+        "type_info": "BoolArray"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Int4",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      null,
+      null
+    ]
+  },
+  "hash": "b292213c37fc72fbb701da4c14f0477b35ff27f01d59b15656a8e2457022fcb9"
+}
