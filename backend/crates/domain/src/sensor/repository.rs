@@ -15,6 +15,9 @@ use crate::{
 pub struct NormalizedValue {
     pub model_ability_id: uuid::Uuid,
     pub value: rust_decimal::Decimal,
+    /// `None` = plausible. Set by `SensorService::ingest_reading`; every other
+    /// producer leaves it empty.
+    pub issue: Option<crate::sensor::plausibility::PlausibilityIssue>,
 }
 
 /// Read-side access to sensors, including aggregate hydration and the

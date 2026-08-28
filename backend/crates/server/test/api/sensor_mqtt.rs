@@ -148,10 +148,12 @@ async fn ges_1000_ingest_writes_volumetric_normalized_values() {
         NormalizedValue {
             model_ability_id: ab_40,
             value: Decimal::from_f64_retain(42.0).unwrap(),
+            issue: None,
         },
         NormalizedValue {
             model_ability_id: ab_80,
             value: Decimal::from_f64_retain(25.0).unwrap(),
+            issue: None,
         },
     ];
     let typed = SensorReadings::Volumetrics(vec![
@@ -205,6 +207,7 @@ async fn prepared_sensor_ingest_persists_reading_without_tree_link() {
     let normalized = vec![NormalizedValue {
         model_ability_id: ab_40,
         value: Decimal::from_f64_retain(33.0).unwrap(),
+        issue: None,
     }];
 
     app.state
@@ -308,6 +311,7 @@ async fn ingest_moisture_at(app: &TestApp, sensor: &str, model_id: Uuid, reading
                 )
                 .unwrap(),
             value: Decimal::from_f64_retain(*value).unwrap(),
+            issue: None,
         });
         volumetrics.push(VolumetricReading {
             depth_cm: *depth_cm,
@@ -539,4 +543,56 @@ async fn watermark_ingest_beyond_monitoring_drops_stale_status() {
         "unknown",
         "no calibration table covers year 12, so the status is not derivable"
     );
+}
+
+#[tokio::test]
+async fn writer_persists_the_plausibility_verdict() {
+    let app = spawn_app().await;
+    let model_id = app.ges_1000_model_id().await;
+    create_sensor(&app, "eui-verdict", model_id).await;
+
+    let model = app
+        .state
+        .sensor_service
+        .model_by_id(Id::new(model_id))
+        .await
+        .expect("ges-1000 model exists");
+    let ability_id = model
+        .ability_id_for(domain::sensor_model::SensorAbilityName::SoilMoisture, 40)
+        .expect("soil moisture at 40 cm");
+
+    app.state
+        .sensor_service
+        .ingest_reading(ReadingIngest {
+            sensor_id: SensorId::new("eui-verdict").unwrap(),
+            raw_payload: json!({ "device": "eui-verdict" }),
+            normalized: vec![NormalizedValue {
+                model_ability_id: ability_id,
+                value: Decimal::new(65535, 1),
+                issue: Some(
+                    domain::sensor::plausibility::PlausibilityIssue::OutOfRange {
+                        min: 0.0,
+                        max: 100.0,
+                    },
+                ),
+            }],
+            typed: SensorReadings::Volumetrics(vec![VolumetricReading {
+                depth_cm: 40,
+                moisture_percent: 6553.5,
+            }]),
+        })
+        .await
+        .expect("ingest succeeds");
+
+    let row = sqlx::query!(
+        r#"SELECT dav.plausible AS "plausible!", dav.quality_reason
+           FROM sensor_data_ability_values dav
+           JOIN sensor_data sd ON sd.id = dav.sensor_data_id
+           WHERE sd.sensor_id = 'eui-verdict'"#
+    )
+    .fetch_one(&app.db_pool)
+    .await
+    .unwrap();
+    assert!(!row.plausible);
+    assert_eq!(row.quality_reason.as_deref(), Some("out_of_range"));
 }

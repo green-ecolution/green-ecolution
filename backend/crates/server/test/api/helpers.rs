@@ -130,6 +130,7 @@ impl TestApp {
                     .map(|id| NormalizedValue {
                         model_ability_id: id,
                         value: Decimal::from(w.centibar),
+                        issue: None,
                     })
             })
             .collect();
@@ -137,12 +138,14 @@ impl TestApp {
             normalized.push(NormalizedValue {
                 model_ability_id: id,
                 value: Decimal::from(18),
+                issue: None,
             });
         }
         if let Some(id) = model.ability_id_for(SensorAbilityName::Humidity, 15) {
             normalized.push(NormalizedValue {
                 model_ability_id: id,
                 value: Decimal::new(4, 1),
+                issue: None,
             });
         }
 

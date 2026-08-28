@@ -1,0 +1,26 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT dav.plausible AS \"plausible!\", dav.quality_reason\n           FROM sensor_data_ability_values dav\n           JOIN sensor_data sd ON sd.id = dav.sensor_data_id\n           WHERE sd.sensor_id = 'eui-verdict'",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "plausible!",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 1,
+        "name": "quality_reason",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      true
+    ]
+  },
+  "hash": "76ef249d4e160fa1d5cafec0ab1c09d7a67635cba39c8ef29a46533c50c48b6e"
+}

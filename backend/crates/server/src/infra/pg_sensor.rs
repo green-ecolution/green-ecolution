@@ -738,14 +738,22 @@ impl SensorReadingWriter for PgSensorRepository {
         if !normalized.is_empty() {
             let ability_ids: Vec<Uuid> = normalized.iter().map(|n| n.model_ability_id).collect();
             let values: Vec<Decimal> = normalized.iter().map(|n| n.value).collect();
+            let plausible: Vec<bool> = normalized.iter().map(|n| n.issue.is_none()).collect();
+            let reasons: Vec<Option<String>> = normalized
+                .iter()
+                .map(|n| n.issue.map(|i| i.reason().to_string()))
+                .collect();
             sqlx::query!(
                 r#"INSERT INTO sensor_data_ability_values
-                    (sensor_data_id, sensor_model_ability_id, value)
-                SELECT $1, ability, val
-                FROM UNNEST($2::uuid[], $3::numeric[]) AS t(ability, val)"#,
+                    (sensor_data_id, sensor_model_ability_id, value, plausible, quality_reason)
+                SELECT $1, ability, val, ok, reason
+                FROM UNNEST($2::uuid[], $3::numeric[], $4::bool[], $5::text[])
+                     AS t(ability, val, ok, reason)"#,
                 reading_id,
                 &ability_ids,
                 &values as &[Decimal],
+                &plausible,
+                &reasons as &[Option<String>],
             )
             .execute(&mut *tx)
             .await?;
