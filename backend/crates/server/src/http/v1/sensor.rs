@@ -18,8 +18,9 @@ use crate::{
                 ListResponse,
                 cluster::{SoilMoistureParams, SoilMoistureSeriesResponse},
                 sensor::{
-                    ActivateSensorRequest, CreateSensorRequest, SensorDataQualityResponse,
-                    SensorDataResponse, SensorModelResponse, SensorResponse, SetSensorTreeRequest,
+                    AcknowledgeDataQualityRequest, ActivateSensorRequest, CreateSensorRequest,
+                    SensorDataQualityResponse, SensorDataResponse, SensorModelResponse,
+                    SensorResponse, SetSensorTreeRequest,
                 },
                 tree::{TransferRequest, TreeResponse},
             },
@@ -32,7 +33,7 @@ use crate::{
 use domain::{
     Id, RepositoryError,
     authorization::{Action, Permission, Resource},
-    sensor::SensorSearchQuery,
+    sensor::{AcknowledgementNote, SensorSearchQuery},
     sensor_model::SensorModel,
     shared::pagination::Pagination,
 };
@@ -45,6 +46,7 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
         .routes(routes!(list_sensor_data))
         .routes(routes!(get_sensor_soil_moisture))
         .routes(routes!(get_sensor_data_quality))
+        .routes(routes!(acknowledge_sensor_data_quality))
         .routes(routes!(
             get_tree_by_sensor,
             set_sensor_tree,
@@ -592,5 +594,60 @@ pub async fn get_sensor_data_quality(
         sensor.organization_id,
     )?;
     let quality = state.sensor_service.data_quality(&sensor_id).await?;
-    Ok(Json(SensorDataQualityResponse::from(quality)))
+    let by_name = resolve_acknowledger(&state, &quality).await;
+    Ok(Json(SensorDataQualityResponse::build(quality, by_name)))
+}
+
+/// Looks up the reviewer's display name. A missing account must not fail the
+/// request — the acknowledgement itself is still valid.
+async fn resolve_acknowledger(
+    state: &Arc<AppState>,
+    quality: &crate::service::sensor_service::SensorDataQuality,
+) -> Option<String> {
+    let by = quality.acknowledged.as_ref()?.by;
+    let user = state.user_service.by_ids(&[by]).await.ok()?.pop()?;
+    let full_name = format!("{} {}", user.first_name.trim(), user.last_name.trim());
+    Some(match full_name.trim() {
+        "" => user.username.as_str().to_owned(),
+        name => name.to_owned(),
+    })
+}
+
+#[utoipa::path(post, path = "/sensors/{sensor_id}/data-quality/acknowledge", tag = "Sensors",
+    operation_id = "acknowledgeSensorDataQuality",
+    summary = "Acknowledge a sensor's flagged readings",
+    description = "Records that the flagged readings up to now have been reviewed. Readings \
+                   flagged afterwards raise the warning again on their own.",
+    params(("sensor_id" = String, Path, description = "Sensor ID")),
+    request_body = AcknowledgeDataQualityRequest,
+    responses(
+        (status = 200, description = "Updated data quality summary", body = SensorDataQualityResponse),
+        (status = 403, description = "Missing sensor:update permission"),
+        (status = 404, description = "Sensor not found"),
+        (status = 400, description = "Note is empty or longer than 500 characters"),
+        (status = 500, description = "Internal server error"),
+    )
+)]
+#[tracing::instrument(level = "info", skip_all, fields(sensor.id = %sensor_id))]
+pub async fn acknowledge_sensor_data_quality(
+    State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
+    SensorIdPath(sensor_id): SensorIdPath,
+    Json(body): Json<AcknowledgeDataQualityRequest>,
+) -> Result<Json<SensorDataQualityResponse>, ServiceError> {
+    let sensor = state.sensor_service.view_by_id(&sensor_id).await?;
+    let ctx = state.authorization_service.context_for(user.id).await?;
+    scope::ensure_visible(
+        &ctx,
+        Permission::new(Resource::Sensor, Action::Update),
+        sensor.organization_id,
+    )?;
+
+    let note = body.note.map(AcknowledgementNote::new).transpose()?;
+    let quality = state
+        .sensor_service
+        .acknowledge_data_quality(&sensor_id, user.id, note)
+        .await?;
+    let by_name = resolve_acknowledger(&state, &quality).await;
+    Ok(Json(SensorDataQualityResponse::build(quality, by_name)))
 }

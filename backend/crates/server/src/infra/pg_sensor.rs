@@ -9,9 +9,10 @@ use domain::{
     RepositoryError,
     cluster::{SoilMoistureBucket, SoilMoistureDepthSeries, SoilMoisturePoint},
     sensor::{
-        LastPlausibleValue, LorawanCredentials, ReadingQualityIssue, Sensor, SensorDraft, SensorId,
-        SensorReader, SensorReadingReader, SensorReadingWriter, SensorSearchQuery, SensorSnapshot,
-        SensorType, SensorView, SensorWriter,
+        AcknowledgementNote, DataQualityAcknowledgement, LastPlausibleValue, LorawanCredentials,
+        ReadingQualityIssue, Sensor, SensorDraft, SensorId, SensorReader, SensorReadingReader,
+        SensorReadingWriter, SensorSearchQuery, SensorSnapshot, SensorType, SensorView,
+        SensorWriter,
         data::{SensorReading, SensorReadingDraft, SensorReadingSnapshot, SensorReadingView},
         derive_connectivity, derive_data_health,
         repository::NormalizedValue,
@@ -63,9 +64,13 @@ impl SensorReader for PgSensorRepository {
                       sl.app_key       AS "app_key?",
                       sl.at_pin,
                       sl.ota_pin,
-                      sl.config        AS "config: serde_json::Value"
+                      sl.config        AS "config: serde_json::Value",
+                      qa.acknowledged_at AS "acknowledged_at?",
+                      qa.acknowledged_by AS "acknowledged_by?",
+                      qa.note            AS "acknowledged_note?"
             FROM sensors s
             LEFT JOIN sensor_lorawan sl ON sl.id = s.id
+            LEFT JOIN sensor_quality_acknowledgements qa ON qa.sensor_id = s.id
             WHERE s.id = $1"#,
             id.as_str()
         )
@@ -91,6 +96,11 @@ impl SensorReader for PgSensorRepository {
             additional_info: row.additional_info,
             lorawan,
             organization_id: row.organization_id,
+            quality_acknowledged: build_acknowledgement(
+                row.acknowledged_at,
+                row.acknowledged_by,
+                row.acknowledged_note,
+            )?,
         }))
     }
 
@@ -112,9 +122,13 @@ impl SensorReader for PgSensorRepository {
                       sl.app_key       AS "app_key?",
                       sl.at_pin,
                       sl.ota_pin,
-                      sl.config        AS "config: serde_json::Value"
+                      sl.config        AS "config: serde_json::Value",
+                      qa.acknowledged_at AS "acknowledged_at?",
+                      qa.acknowledged_by AS "acknowledged_by?",
+                      qa.note            AS "acknowledged_note?"
             FROM sensors s
             LEFT JOIN sensor_lorawan sl ON sl.id = s.id
+            LEFT JOIN sensor_quality_acknowledgements qa ON qa.sensor_id = s.id
             WHERE s.id = ANY($1::text[])"#,
             &ids as &[&str]
         )
@@ -141,6 +155,11 @@ impl SensorReader for PgSensorRepository {
                     additional_info: r.additional_info,
                     lorawan,
                     organization_id: r.organization_id,
+                    quality_acknowledged: build_acknowledgement(
+                        r.acknowledged_at,
+                        r.acknowledged_by,
+                        r.acknowledged_note,
+                    )?,
                 }))
             })
             .collect()
@@ -200,12 +219,24 @@ impl SensorReader for PgSensorRepository {
             self.offline_after,
         );
 
+        // A sensor still in preparation reports nothing: an unplugged probe is
+        // the normal case there, not a finding. `cutoff` is the acknowledgement
+        // watermark — readings up to it have been reviewed.
         let quality = sqlx::query!(
-            r#"SELECT
+            r#"WITH scope AS (
+                 SELECT s.activated_at IS NOT NULL AS activated,
+                        COALESCE(qa.acknowledged_at, '-infinity'::timestamp) AS cutoff
+                   FROM sensors s
+                   LEFT JOIN sensor_quality_acknowledgements qa ON qa.sensor_id = s.id
+                  WHERE s.id = $1
+               )
+               SELECT
                  (SELECT COUNT(*) FROM sensor_data sdq
                     JOIN sensor_data_ability_values davq ON davq.sensor_data_id = sdq.id
                    WHERE sdq.sensor_id = $1
                      AND NOT davq.plausible
+                     AND (SELECT activated FROM scope)
+                     AND sdq.updated_at > (SELECT cutoff FROM scope)
                      AND sdq.updated_at >= NOW() - make_interval(days => $2)
                  ) AS "implausible_recent!",
                  (SELECT array_agg(u.unusable ORDER BY u.id DESC)
@@ -216,6 +247,8 @@ impl SensorReader for PgSensorRepository {
                         JOIN sensor_model_abilities smah ON smah.id = davh.sensor_model_ability_id
                         JOIN sensor_abilities sah ON sah.id = smah.sensor_ability_id
                        WHERE sdh.sensor_id = $1
+                         AND (SELECT activated FROM scope)
+                         AND sdh.updated_at > (SELECT cutoff FROM scope)
                          AND sah.ability IN ('soil_moisture', 'soil_tension')
                        GROUP BY sdh.id
                        ORDER BY sdh.id DESC
@@ -296,6 +329,7 @@ impl SensorReader for PgSensorRepository {
             INNER JOIN sensor_models sm ON sm.id = s.model_id
             LEFT JOIN sensor_lorawan sl ON sl.id = s.id
             LEFT JOIN trees t          ON t.sensor_id = s.id
+            LEFT JOIN sensor_quality_acknowledgements qa ON qa.sensor_id = s.id
             LEFT JOIN LATERAL (
                 SELECT sd.id, sd.updated_at, sd.data
                 FROM sensor_data sd
@@ -309,6 +343,8 @@ impl SensorReader for PgSensorRepository {
                 JOIN sensor_data_ability_values davq ON davq.sensor_data_id = sdq.id
                 WHERE sdq.sensor_id = s.id
                   AND NOT davq.plausible
+                  AND s.activated_at IS NOT NULL
+                  AND sdq.updated_at > COALESCE(qa.acknowledged_at, '-infinity'::timestamp)
                   AND sdq.updated_at >= NOW() - make_interval(days => $2)
             ) q ON true
             LEFT JOIN LATERAL (
@@ -320,6 +356,8 @@ impl SensorReader for PgSensorRepository {
                     JOIN sensor_model_abilities smah ON smah.id = davh.sensor_model_ability_id
                     JOIN sensor_abilities sah ON sah.id = smah.sensor_ability_id
                     WHERE sdh.sensor_id = s.id
+                      AND s.activated_at IS NOT NULL
+                      AND sdh.updated_at > COALESCE(qa.acknowledged_at, '-infinity'::timestamp)
                       AND sah.ability IN ('soil_moisture', 'soil_tension')
                     GROUP BY sdh.id
                     ORDER BY sdh.id DESC
@@ -434,6 +472,7 @@ impl SensorReader for PgSensorRepository {
             INNER JOIN sensor_models sm ON sm.id = s.model_id
             LEFT JOIN sensor_lorawan sl ON sl.id = s.id
             LEFT JOIN trees t          ON t.sensor_id = s.id
+            LEFT JOIN sensor_quality_acknowledgements qa ON qa.sensor_id = s.id
             LEFT JOIN LATERAL (
                 SELECT sd.id, sd.updated_at, sd.data
                 FROM sensor_data sd
@@ -447,6 +486,8 @@ impl SensorReader for PgSensorRepository {
                 JOIN sensor_data_ability_values davq ON davq.sensor_data_id = sdq.id
                 WHERE sdq.sensor_id = s.id
                   AND NOT davq.plausible
+                  AND s.activated_at IS NOT NULL
+                  AND sdq.updated_at > COALESCE(qa.acknowledged_at, '-infinity'::timestamp)
                   AND sdq.updated_at >= NOW() - make_interval(days => $5)
             ) q ON true
             LEFT JOIN LATERAL (
@@ -458,6 +499,8 @@ impl SensorReader for PgSensorRepository {
                     JOIN sensor_model_abilities smah ON smah.id = davh.sensor_model_ability_id
                     JOIN sensor_abilities sah ON sah.id = smah.sensor_ability_id
                     WHERE sdh.sensor_id = s.id
+                      AND s.activated_at IS NOT NULL
+                      AND sdh.updated_at > COALESCE(qa.acknowledged_at, '-infinity'::timestamp)
                       AND sah.ability IN ('soil_moisture', 'soil_tension')
                     GROUP BY sdh.id
                     ORDER BY sdh.id DESC
@@ -577,6 +620,8 @@ impl SensorWriter for PgSensorRepository {
 
     #[tracing::instrument(level = "trace", skip_all)]
     async fn save(&self, sensor: &Sensor) -> Result<(), RepositoryError> {
+        let mut tx = self.pool.begin().await?;
+
         let result = sqlx::query!(
             r#"UPDATE sensors SET
                 activated_at = $2,
@@ -590,13 +635,34 @@ impl SensorWriter for PgSensorRepository {
             sensor.provenance.additional_info().cloned(),
             sensor.organization_id().value(),
         )
-        .execute(&self.pool)
+        .execute(&mut *tx)
         .await?;
 
         if result.rows_affected() == 0 {
             return Err(RepositoryError::NotFound);
         }
 
+        // The aggregate only ever moves the watermark forward, so an upsert is
+        // enough; there is no path that clears an acknowledgement.
+        if let Some(ack) = sensor.quality_acknowledged() {
+            sqlx::query!(
+                r#"INSERT INTO sensor_quality_acknowledgements
+                    (sensor_id, acknowledged_at, acknowledged_by, note)
+                VALUES ($1, $2, $3, $4)
+                ON CONFLICT (sensor_id) DO UPDATE SET
+                    acknowledged_at = EXCLUDED.acknowledged_at,
+                    acknowledged_by = EXCLUDED.acknowledged_by,
+                    note = EXCLUDED.note"#,
+                sensor.id.as_str(),
+                ack.at.naive_utc(),
+                ack.by,
+                ack.note.as_ref().map(|n| n.as_str()),
+            )
+            .execute(&mut *tx)
+            .await?;
+        }
+
+        tx.commit().await?;
         Ok(())
     }
 
@@ -950,6 +1016,25 @@ impl SensorReadingWriter for PgSensorRepository {
 /// when the join missed (no `sensor_lorawan` row); otherwise validates the
 /// non-empty fields and surfaces a [`RepositoryError::DataIntegrity`] on bad
 /// data.
+/// Rebuilds the acknowledgement from the joined row. A missing join yields
+/// `None`; a half-present row cannot occur because the columns come from one
+/// `NOT NULL`-constrained table.
+fn build_acknowledgement(
+    at: Option<chrono::NaiveDateTime>,
+    by: Option<Uuid>,
+    note: Option<String>,
+) -> Result<Option<DataQualityAcknowledgement>, RepositoryError> {
+    let (Some(at), Some(by)) = (at, by) else {
+        return Ok(None);
+    };
+    let note = note.map(AcknowledgementNote::new).transpose()?;
+    Ok(Some(DataQualityAcknowledgement {
+        at: at.and_utc(),
+        by,
+        note,
+    }))
+}
+
 fn build_lorawan(
     serial_number: Option<String>,
     dev_eui: Option<String>,

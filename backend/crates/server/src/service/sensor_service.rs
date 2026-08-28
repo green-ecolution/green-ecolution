@@ -10,8 +10,9 @@ use domain::{
     events::{DomainEvent, SensorDataReceivedPayload, SensorReadings},
     organization::Organization,
     sensor::{
-        DataHealth, ReadingQualityIssue, Sensor, SensorDraft, SensorError, SensorId, SensorReader,
-        SensorReadingReader, SensorReadingWriter, SensorSearchQuery, SensorView, SensorWriter,
+        AcknowledgementNote, DataHealth, DataQualityAcknowledgement, ReadingQualityIssue, Sensor,
+        SensorDraft, SensorError, SensorId, SensorReader, SensorReadingReader, SensorReadingWriter,
+        SensorSearchQuery, SensorView, SensorWriter,
         data::SensorReadingView,
         plausibility::{self, ReadingContext},
         repository::NormalizedValue,
@@ -43,6 +44,9 @@ pub struct SensorDataQuality {
     pub health: DataHealth,
     pub implausible_recent: i64,
     pub issues: Vec<ReadingQualityIssue>,
+    /// Present once someone reviewed the flagged readings. Issues recorded at
+    /// or before `at` are the reviewed ones; the frontend splits the list on it.
+    pub acknowledged: Option<DataQualityAcknowledgement>,
 }
 
 const QUALITY_ISSUE_LIMIT: i64 = 50;
@@ -249,6 +253,7 @@ impl SensorService {
     #[tracing::instrument(level = "debug", skip_all, fields(sensor.id = %id))]
     pub async fn data_quality(&self, id: &SensorId) -> Result<SensorDataQuality, ServiceError> {
         let view = self.reader.view_by_id(id).await?;
+        let sensor = self.reader.by_id(id).await?;
         let issues = self
             .reading_reader
             .quality_issues(id, QUALITY_ISSUE_LIMIT)
@@ -257,7 +262,30 @@ impl SensorService {
             health: view.data_health,
             implausible_recent: view.implausible_recent,
             issues,
+            acknowledged: sensor.quality_acknowledged().cloned(),
         })
+    }
+
+    /// Records that `by` reviewed this sensor's flagged readings. The
+    /// watermark is the server's clock, not a client-supplied timestamp.
+    #[tracing::instrument(level = "debug", skip_all, fields(sensor.id = %id))]
+    pub async fn acknowledge_data_quality(
+        &self,
+        id: &SensorId,
+        by: Uuid,
+        note: Option<AcknowledgementNote>,
+    ) -> Result<SensorDataQuality, ServiceError> {
+        let mut sensor = self.reader.by_id(id).await?;
+        let events = sensor.acknowledge_data_quality(DataQualityAcknowledgement {
+            at: Utc::now(),
+            by,
+            note,
+        });
+        if !events.is_empty() {
+            self.writer.save(&sensor).await?;
+            self.event_bus.publish_all(events).await;
+        }
+        self.data_quality(id).await
     }
 
     #[tracing::instrument(level = "debug", skip_all, fields(sensor.id = %sensor_id))]

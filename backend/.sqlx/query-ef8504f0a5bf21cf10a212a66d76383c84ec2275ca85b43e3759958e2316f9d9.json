@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO sensor_quality_acknowledgements\n                    (sensor_id, acknowledged_at, acknowledged_by, note)\n                VALUES ($1, $2, $3, $4)\n                ON CONFLICT (sensor_id) DO UPDATE SET\n                    acknowledged_at = EXCLUDED.acknowledged_at,\n                    acknowledged_by = EXCLUDED.acknowledged_by,\n                    note = EXCLUDED.note",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Timestamp",
+        "Uuid",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "ef8504f0a5bf21cf10a212a66d76383c84ec2275ca85b43e3759958e2316f9d9"
+}

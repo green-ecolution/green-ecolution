@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT s.id,\n                      s.activated_at,\n                      s.type          AS \"sensor_type: SensorType\",\n                      s.model_id,\n                      s.provider,\n                      s.additional_informations AS \"additional_info: serde_json::Value\",\n                      s.organization_id,\n                      sl.serial_number AS \"serial_number?\",\n                      sl.dev_eui       AS \"dev_eui?\",\n                      sl.app_eui       AS \"app_eui?\",\n                      sl.app_key       AS \"app_key?\",\n                      sl.at_pin,\n                      sl.ota_pin,\n                      sl.config        AS \"config: serde_json::Value\"\n            FROM sensors s\n            LEFT JOIN sensor_lorawan sl ON sl.id = s.id\n            WHERE s.id = ANY($1::text[])",
+  "query": "SELECT s.id,\n                      s.activated_at,\n                      s.type          AS \"sensor_type: SensorType\",\n                      s.model_id,\n                      s.provider,\n                      s.additional_informations AS \"additional_info: serde_json::Value\",\n                      s.organization_id,\n                      sl.serial_number AS \"serial_number?\",\n                      sl.dev_eui       AS \"dev_eui?\",\n                      sl.app_eui       AS \"app_eui?\",\n                      sl.app_key       AS \"app_key?\",\n                      sl.at_pin,\n                      sl.ota_pin,\n                      sl.config        AS \"config: serde_json::Value\",\n                      qa.acknowledged_at AS \"acknowledged_at?\",\n                      qa.acknowledged_by AS \"acknowledged_by?\",\n                      qa.note            AS \"acknowledged_note?\"\n            FROM sensors s\n            LEFT JOIN sensor_lorawan sl ON sl.id = s.id\n            LEFT JOIN sensor_quality_acknowledgements qa ON qa.sensor_id = s.id\n            WHERE s.id = ANY($1::text[])",
   "describe": {
     "columns": [
       {
@@ -81,6 +81,21 @@
         "ordinal": 13,
         "name": "config: serde_json::Value",
         "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 14,
+        "name": "acknowledged_at?",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 15,
+        "name": "acknowledged_by?",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 16,
+        "name": "acknowledged_note?",
+        "type_info": "Text"
       }
     ],
     "parameters": {
@@ -102,8 +117,11 @@
       true,
       true,
       true,
+      true,
+      true,
+      true,
       true
     ]
   },
-  "hash": "ecd7c39baf481796e97743cd8f3373fa8ede01a05d2e4c9460165ec03f1e576b"
+  "hash": "12b9c70459c93b51f5f7f36fdee4487f0db956979ccccd2572e352ca2d39e51f"
 }

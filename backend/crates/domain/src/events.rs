@@ -107,6 +107,14 @@ pub enum DomainEvent {
     SensorDeactivated {
         sensor_id: SensorId,
     },
+    /// Emitted when someone reviews a sensor's flagged readings. No subscriber
+    /// today; recorded so the review is auditable alongside the other sensor
+    /// lifecycle events.
+    SensorDataQualityAcknowledged {
+        sensor_id: SensorId,
+        at: DateTime<Utc>,
+        by: uuid::Uuid,
+    },
     WateringPlanStarted {
         plan_id: Id<WateringPlan>,
         cluster_ids: Vec<Id<TreeCluster>>,
