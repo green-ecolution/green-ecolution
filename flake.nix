@@ -115,7 +115,7 @@
         pnpmDeps = pkgs.fetchPnpmDeps {
           inherit pname version src;
           fetcherVersion = 4;
-          hash = "sha256-CsMs57N+KlSeIeq4tVc7/gguJM42/cx8/j9xm+gyOGo=";
+          hash = "sha256-V/dW0r56jpHJEiemesFxcO/LEW7HonE8shpwdbdHJkY=";
         };
 
         # domain-wasm/pkg is wasm-pack output, gitignored and thus absent
@@ -175,6 +175,9 @@
           # Frontend/Node
           nodejs
           pnpm
+          # Keycloak theme build (keycloakify shells out to mvn)
+          jdk21
+          maven
           # Rust
           rustc
           cargo

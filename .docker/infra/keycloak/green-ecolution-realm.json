@@ -1950,7 +1950,7 @@
     "ssl": "true",
     "user": "noreply@green-ecolution.de"
   },
-  "loginTheme": "keycloak",
+  "loginTheme": "green-ecolution",
   "accountTheme": "keycloak.v3",
   "adminTheme": "keycloak.v2",
   "emailTheme": "keycloak",

@@ -35,6 +35,7 @@ Be respectful and constructive in all interactions. We welcome contributors of a
 - `wasm-pack` (`cargo install wasm-pack`) — builds the domain WASM bindings, required by `just build`
 - `bacon` (`cargo install bacon`) — live reload, required by `just run-dev`
 - `sqlx-cli` (`cargo install sqlx-cli --no-default-features --features rustls,postgres`) for migrations and offline-cache regeneration
+- JDK 21 + Apache Maven — required to build the Keycloak login theme (`just build-keycloak-theme`)
 
 ### Installation
 
@@ -61,6 +62,22 @@ For a reproducible environment, use `nix develop`.
 | `just generate` | Run code generation |
 | `just migrate-up` | Apply database migrations |
 | `just generate-sqlx` | Refresh sqlx offline query cache (after changing any `query!` / `query_as!`) |
+| `just build-keycloak-theme` | Build the Keycloak login theme (jar + exploded theme dir under `frontend/keycloak-theme/dist_keycloak/theme/`) |
+| `just keycloak-theme-dev` | Run the theme's Vite dev server against a mocked Keycloak context |
+
+### Keycloak Login Theme
+
+`just setup` builds the theme automatically, and `just infra-up` prints a warning if the built
+theme directory is missing, but it is still worth knowing what can go wrong:
+
+- The theme build needs a JDK and Apache Maven. `keycloakify build` packages the theme jar by
+  shelling out to `mvn clean install`; without `mvn` on the `PATH` it aborts before writing
+  anything. `nix develop` provides both; otherwise install a JDK and Maven from your
+  distribution.
+- If the theme was never built (or the build failed), `compose.yaml` mounts an empty directory
+  into Keycloak's theme path, and Keycloak falls back to its default login page. This looks like
+  nothing is wrong, so run `just build-keycloak-theme` and refresh the page if a local login
+  doesn't look branded.
 
 ## Making Changes
 

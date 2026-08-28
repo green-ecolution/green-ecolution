@@ -100,6 +100,27 @@ jobs:
           cache-from: type=gha,scope=frontend-dockerfile
           cache-to: type=gha,mode=max,scope=frontend-dockerfile
 
+  keycloak_theme:
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup-frontend
+      - name: Set up JDK for the keycloakify jar build
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Ensure Maven is available
+        run: command -v mvn || sudo apt-get install -y --no-install-recommends maven
+      - name: Build Keycloak theme
+        working-directory: frontend
+        run: pnpm --filter @green-ecolution/keycloak-theme run build-keycloak-theme
+      - name: Verify theme artifact
+        run: test -f frontend/keycloak-theme/dist_keycloak/keycloak-theme.jar
+
   check_generated:
     needs: changes
     if: needs.changes.outputs.frontend == 'true'
@@ -129,7 +150,7 @@ jobs:
   frontend-pr-ok:
     name: Frontend PR OK
     if: always()
-    needs: [build, lint, test, test_dockerfile, check_generated]
+    needs: [build, lint, test, test_dockerfile, keycloak_theme, check_generated]
     runs-on: ubuntu-latest
     timeout-minutes: 1
     steps:
@@ -140,6 +161,7 @@ jobs:
             "${{ needs.lint.result }}"
             "${{ needs.test.result }}"
             "${{ needs.test_dockerfile.result }}"
+            "${{ needs.keycloak_theme.result }}"
             "${{ needs.check_generated.result }}"
           )
           for r in "${results[@]}"; do

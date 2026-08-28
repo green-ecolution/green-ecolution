@@ -58,6 +58,8 @@ setup: build-domain-wasm
     cd {{ frontend_dir }} && pnpm install
     @echo "Building frontend workspace packages..."
     cd {{ frontend_dir }} && pnpm --filter=!frontend -r build
+    @echo "Building Keycloak login theme..."
+    @just build-keycloak-theme
 
 # Clean build artifacts
 [group('setup')]
@@ -103,9 +105,19 @@ build-frontend: build-domain-wasm
 build-backend: _compile-backend
     @echo "Backend build done."
 
+# Run the Keycloak theme dev server with mocked Keycloak context
+[group('build')]
+keycloak-theme-dev:
+    cd {{ frontend_dir }} && pnpm --filter @green-ecolution/keycloak-theme run dev
+
+# Build the Keycloak login theme (jar + exploded theme dir)
+[group('build')]
+build-keycloak-theme:
+    cd {{ frontend_dir }} && pnpm --filter @green-ecolution/keycloak-theme run build-keycloak-theme
+
 # Full build: frontend + backend
 [group('build')]
-build: build-frontend _compile-backend
+build: build-frontend build-keycloak-theme _compile-backend
     @echo "Build done."
 
 # Cross-compile the backend for a target triple and copy it to bin/
@@ -234,6 +246,8 @@ _compose *ARGS:
 # Start infrastructure services
 [group('infra')]
 infra-up: _acme-init _ensure-valhalla
+    @test -d {{ frontend_dir }}/keycloak-theme/dist_keycloak/theme/green-ecolution \
+      || echo "WARNING: keycloak theme not built - login will fall back to the default theme. Run 'just build-keycloak-theme'."
     @echo "Infra up..."
     @just _compose up -d
 

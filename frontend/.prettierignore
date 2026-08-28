@@ -1,6 +1,9 @@
 **/dist
 **/dev-dist
 **/node_modules
+keycloak-theme/dist_keycloak
+# Keycloak's own css/js, copied in by keycloakify during the theme build
+keycloak-theme/public
 packages/backend-client/**
 packages/domain-wasm/pkg/**
 app/src/animations/**
