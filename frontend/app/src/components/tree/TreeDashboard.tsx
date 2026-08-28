@@ -1,23 +1,11 @@
+import { Badge } from '@green-ecolution/ui'
 import EntityDetailHeader from '../general/EntityDetailHeader'
-import {
-  Alert,
-  AlertContent,
-  AlertDescription,
-  AlertIcon,
-  AlertTitle,
-  Badge,
-  Tabs,
-  TabsList,
-  TabsTrigger,
-  TabsContent,
-} from '@green-ecolution/ui'
-import GeneralLink from '../general/links/GeneralLink'
-import { File } from 'lucide-react'
-import TreeIcon from '../icons/Tree'
-import SensorIcon from '../icons/Sensor'
-import TabWateringStatus from './TabWateringStatus'
-import TabGeneralData from './TabGeneralData'
-import TabSensorData from './TabSensorData'
+import TreeKpiRow from './TreeKpiRow'
+import TreeLocationCard from './TreeLocationCard'
+import TreeClusterCard from './TreeClusterCard'
+import TreeSensorCard from './TreeSensorCard'
+import TreeMasterDataCard from './TreeMasterDataCard'
+import { getWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
 import type { Tree, TreeCluster } from '@/api/backendApi'
 import { useHasPermission } from '@/lib/auth/useHasPermission'
 
@@ -28,16 +16,14 @@ interface TreeDashboardProps {
 
 const TreeDashboard = ({ tree, treeCluster }: TreeDashboardProps) => {
   const canEdit = useHasPermission(['tree:update'])
+  const wateringStatus = getWateringStatusDetails(tree.wateringStatus)
+
   return (
     <>
       <EntityDetailHeader
         backLink={{ link: { to: '/trees' }, label: 'Zu allen Bäumen' }}
         title={<>Baum: {tree.number}</>}
-        badge={
-          <Badge variant="green-dark" size="lg">
-            {tree.provider ?? 'manuell erstellt'}
-          </Badge>
-        }
+        badge={<Badge variant={wateringStatus.color}>{wateringStatus.label}</Badge>}
         editLink={
           canEdit
             ? {
@@ -50,90 +36,28 @@ const TreeDashboard = ({ tree, treeCluster }: TreeDashboardProps) => {
             : undefined
         }
       >
-        {tree.treeClusterId && treeCluster ? (
-          <p className="text-dark-600 text-lg">
-            <span>Bewässerungsgruppe: {treeCluster?.name}</span>
-            {', '}
-            <span>
-              Standort: {treeCluster?.address}, {treeCluster?.region?.name}
-            </span>
-          </p>
-        ) : (
-          <p className="text-dark-600 text-lg">
-            Dieser Baum ist keiner Bewässerungsgruppe zugeordnet.
-          </p>
-        )}
+        <p className="mb-4 text-dark-600">
+          {tree.species} ·{' '}
+          {treeCluster
+            ? `${treeCluster.name} · ${treeCluster.address}`
+            : 'Keiner Bewässerungsgruppe zugeordnet'}
+        </p>
         {tree.description && <p>{tree.description}</p>}
-        <div className="flex mt-4 flex-wrap gap-x-10">
-          <GeneralLink
-            label="Auf der Karte anzeigen"
-            link={{
-              to: '/map',
-              search: {
-                lat: tree.latitude,
-                lng: tree.longitude,
-                zoom: 18,
-                tree: tree.id,
-              },
-            }}
-          />
-          {tree.treeClusterId && treeCluster && (
-            <GeneralLink
-              label="Zur Bewässerungsgruppe"
-              link={{
-                to: `/treecluster/$treeclusterId`,
-                params: { treeclusterId: String(tree.treeClusterId) },
-              }}
-            />
-          )}
-        </div>
       </EntityDetailHeader>
 
-      {tree?.sensor ? (
-        <Tabs defaultValue="watering" className="mt-10">
-          <TabsList>
-            <TabsTrigger value="watering">
-              <TreeIcon className="w-5 h-5" />
-              <span className="hidden group-data-[state=active]:block lg:block">
-                Bewässerungsdaten
-              </span>
-            </TabsTrigger>
-            <TabsTrigger value="general">
-              <File className="w-5 h-5" />
-              <span className="hidden group-data-[state=active]:block lg:block">
-                Allgemeine Daten
-              </span>
-            </TabsTrigger>
-            <TabsTrigger value="sensor">
-              <SensorIcon className="w-5 h-5" />
-              <span className="hidden group-data-[state=active]:block lg:block">Sensordaten</span>
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent value="watering">
-            <TabWateringStatus tree={tree} />
-          </TabsContent>
-          <TabsContent value="general">
-            <TabGeneralData tree={tree} />
-          </TabsContent>
-          <TabsContent value="sensor">
-            <TabSensorData tree={tree} />
-          </TabsContent>
-        </Tabs>
-      ) : (
-        <section className="mt-10">
-          <Alert variant="info" className="flex gap-4 mb-10">
-            <AlertIcon variant="info" />
-            <AlertContent>
-              <AlertTitle>Dieser Baum ist nicht mit einem Sensor ausgestattet</AlertTitle>
-              <AlertDescription>
-                Es können keine Informationen über den aktuellen Bewässerungszustand angezeigt
-                werden. Der Bewässerungszustand wird als unbekannt ausgezeichnet.
-              </AlertDescription>
-            </AlertContent>
-          </Alert>
-          <TabGeneralData tree={tree} />
-        </section>
-      )}
+      <div className="mt-10 flex flex-col gap-6">
+        <TreeKpiRow tree={tree} />
+        <div className="grid gap-6 md:grid-cols-2">
+          <div className="flex flex-col gap-6">
+            <TreeLocationCard tree={tree} />
+            <TreeClusterCard tree={tree} treeCluster={treeCluster} />
+          </div>
+          <div className="flex flex-col gap-6">
+            <TreeSensorCard tree={tree} />
+            <TreeMasterDataCard tree={tree} />
+          </div>
+        </div>
+      </div>
     </>
   )
 }
