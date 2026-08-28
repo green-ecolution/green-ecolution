@@ -1,5 +1,6 @@
 /* tslint:disable */
 /* eslint-disable */
+export * from './AcknowledgeDataQualityRequest';
 export * from './ActivateSensorRequest';
 export * from './AddressDto';
 export * from './AppInfoResponse';
@@ -14,6 +15,7 @@ export * from './ClusterWateringEventResponse';
 export * from './ContactPersonDto';
 export * from './CreateSensorRequest';
 export * from './DataHealth';
+export * from './DataQualityAcknowledgementResponse';
 export * from './DataStatisticsResponse';
 export * from './DrivingLicense';
 export * from './EvaluationResponse';

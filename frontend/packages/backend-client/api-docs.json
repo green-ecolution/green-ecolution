@@ -2265,6 +2265,61 @@
         }
       }
     },
+    "/v1/sensors/{sensor_id}/data-quality/acknowledge": {
+      "post": {
+        "tags": [
+          "Sensors"
+        ],
+        "summary": "Acknowledge a sensor's flagged readings",
+        "description": "Records that the flagged readings up to now have been reviewed. Readings flagged afterwards raise the warning again on their own.",
+        "operationId": "acknowledgeSensorDataQuality",
+        "parameters": [
+          {
+            "name": "sensor_id",
+            "in": "path",
+            "description": "Sensor ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcknowledgeDataQualityRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Updated data quality summary",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SensorDataQualityResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Note is empty or longer than 500 characters"
+          },
+          "403": {
+            "description": "Missing sensor:update permission"
+          },
+          "404": {
+            "description": "Sensor not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
     "/v1/sensors/{sensor_id}/organization": {
       "patch": {
         "tags": [
@@ -4213,6 +4268,19 @@
   },
   "components": {
     "schemas": {
+      "AcknowledgeDataQualityRequest": {
+        "type": "object",
+        "description": "Body of the acknowledge request. The timestamp is the server's clock, so\nonly the reason travels.",
+        "properties": {
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "Sonde bei der Vorbereitung nicht angeschlossen"
+          }
+        }
+      },
       "ActivateSensorRequest": {
         "type": "object",
         "description": "Request body for `POST /sensors/{sensor_id}/activate` - binds a prepared\nsensor to a tree.",
@@ -4633,6 +4701,39 @@
           "suspect"
         ],
         "example": "ok"
+      },
+      "DataQualityAcknowledgementResponse": {
+        "type": "object",
+        "description": "Record that someone reviewed the flagged readings. Everything recorded at\nor before `at` counts as reviewed.",
+        "required": [
+          "at",
+          "by_id"
+        ],
+        "properties": {
+          "at": {
+            "type": "string",
+            "example": "2026-08-28T13:30:00+00:00"
+          },
+          "by_id": {
+            "type": "string",
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
+          },
+          "by_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Display name of the reviewer; absent if the account no longer resolves.",
+            "example": "tbz1"
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "Sonde bei der Vorbereitung nicht angeschlossen"
+          }
+        }
       },
       "DataStatisticsResponse": {
         "type": "object",
@@ -6700,6 +6801,16 @@
           "issues"
         ],
         "properties": {
+          "acknowledged": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/DataQualityAcknowledgementResponse"
+              }
+            ]
+          },
           "health": {
             "$ref": "#/components/schemas/DataHealth"
           },

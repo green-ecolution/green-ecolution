@@ -20,6 +20,13 @@ import {
     SensorQualityIssueResponseToJSON,
     SensorQualityIssueResponseToJSONTyped,
 } from './SensorQualityIssueResponse';
+import type { DataQualityAcknowledgementResponse } from './DataQualityAcknowledgementResponse';
+import {
+    DataQualityAcknowledgementResponseFromJSON,
+    DataQualityAcknowledgementResponseFromJSONTyped,
+    DataQualityAcknowledgementResponseToJSON,
+    DataQualityAcknowledgementResponseToJSONTyped,
+} from './DataQualityAcknowledgementResponse';
 import type { DataHealth } from './DataHealth';
 import {
     DataHealthFromJSON,
@@ -34,6 +41,12 @@ import {
  * @interface SensorDataQualityResponse
  */
 export interface SensorDataQualityResponse {
+    /**
+     * 
+     * @type {DataQualityAcknowledgementResponse}
+     * @memberof SensorDataQualityResponse
+     */
+    acknowledged?: DataQualityAcknowledgementResponse | null;
     /**
      * 
      * @type {DataHealth}
@@ -76,6 +89,7 @@ export function SensorDataQualityResponseFromJSONTyped(json: any, ignoreDiscrimi
     }
     return {
         
+        'acknowledged': json['acknowledged'] == null ? undefined : DataQualityAcknowledgementResponseFromJSON(json['acknowledged']),
         'health': DataHealthFromJSON(json['health']),
         'implausibleRecent': json['implausible_recent'],
         'issues': ((json['issues'] as Array<any>).map(SensorQualityIssueResponseFromJSON)),
@@ -93,6 +107,7 @@ export function SensorDataQualityResponseToJSONTyped(value?: SensorDataQualityRe
 
     return {
         
+        'acknowledged': DataQualityAcknowledgementResponseToJSON(value['acknowledged']),
         'health': DataHealthToJSON(value['health']),
         'implausible_recent': value['implausibleRecent'],
         'issues': ((value['issues'] as Array<any>).map(SensorQualityIssueResponseToJSON)),
