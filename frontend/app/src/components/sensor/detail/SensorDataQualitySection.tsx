@@ -1,11 +1,28 @@
 import { useQuery } from '@tanstack/react-query'
 import { format } from 'date-fns'
-import { Badge, Card, CardContent, CardHeader, CardTitle } from '@green-ecolution/ui'
+import {
+  Alert,
+  AlertContent,
+  AlertDescription,
+  AlertIcon,
+  AlertTitle,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@green-ecolution/ui'
 import { sensorQueries } from '@/api/queries'
 import { getDataQualityDetails, qualityReasonLabel } from '@/hooks/details/useDetailsForDataHealth'
 
 interface SensorDataQualitySectionProps {
   sensorId: string
+}
+
+const windowSummary = (implausibleRecent: number): string => {
+  if (implausibleRecent === 0)
+    return 'Die aufgeführten Messwerte liegen länger als sieben Tage zurück.'
+  if (implausibleRecent === 1) return 'In den letzten sieben Tagen wurde ein Messwert verworfen.'
+  return `In den letzten sieben Tagen wurden ${implausibleRecent} Messwerte verworfen.`
 }
 
 const SensorDataQualitySection = ({ sensorId }: SensorDataQualitySectionProps) => {
@@ -19,17 +36,19 @@ const SensorDataQualitySection = ({ sensorId }: SensorDataQualitySectionProps) =
 
   return (
     <Card variant="outlined">
-      <CardHeader className="flex flex-row items-center justify-between gap-3">
+      <CardHeader>
         <CardTitle>Datenqualität</CardTitle>
-        <Badge variant={quality.color}>{quality.label}</Badge>
       </CardHeader>
       <CardContent>
-        <p className="mb-4 text-sm text-muted-foreground">
-          {quality.description}{' '}
-          {data.implausibleRecent > 0
-            ? `In den letzten sieben Tagen wurden ${data.implausibleRecent} Messwerte als unplausibel markiert und von der Auswertung ausgeschlossen.`
-            : 'Die aufgeführten Messwerte liegen länger als sieben Tage zurück.'}
-        </p>
+        <Alert variant={quality.alert} className="mb-4 flex w-full items-start gap-3">
+          <AlertIcon variant={quality.alert} />
+          <AlertContent>
+            <AlertTitle>{quality.label}</AlertTitle>
+            <AlertDescription>
+              {quality.description} {windowSummary(data.implausibleRecent)}
+            </AlertDescription>
+          </AlertContent>
+        </Alert>
         <ul className="flex flex-col gap-2">
           {data.issues.map((issue) => (
             <li

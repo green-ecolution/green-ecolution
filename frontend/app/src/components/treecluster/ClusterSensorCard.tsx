@@ -4,6 +4,7 @@ import {
   CardHeader,
   CardTitle,
   DetailedList,
+  InlineAlert,
   SignalBars,
 } from '@green-ecolution/ui'
 import { Link } from '@tanstack/react-router'
@@ -38,9 +39,11 @@ const SensorTreeRow = ({ tree }: { tree: Tree }) => {
         Sensor-Baum: {tree.species} · {tree.number}
       </p>
       {hasQualityWarning(sensor) && (
-        <p className="mb-3 rounded-lg border border-dark-400 bg-dark-50 p-3 text-sm text-dark-800">
-          {getDataQualityDetails(sensor).description}
-        </p>
+        <InlineAlert
+          variant={getDataQualityDetails(sensor).alert}
+          description={getDataQualityDetails(sensor).label}
+          className="mb-3"
+        />
       )}
       <DetailedList
         columns={1}

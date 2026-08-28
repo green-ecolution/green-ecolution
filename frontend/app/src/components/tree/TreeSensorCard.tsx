@@ -1,4 +1,8 @@
 import {
+  Alert,
+  AlertContent,
+  AlertDescription,
+  AlertIcon,
   Badge,
   Card,
   CardContent,
@@ -44,9 +48,15 @@ const TreeSensorCard = ({ tree }: TreeSensorCardProps) => {
         ) : (
           <>
             {hasQualityWarning(sensor) && (
-              <p className="mb-3 rounded-lg border border-dark-400 bg-dark-50 p-3 text-sm text-dark-800">
-                {getDataQualityDetails(sensor).description}
-              </p>
+              <Alert
+                variant={getDataQualityDetails(sensor).alert}
+                className="mb-3 flex w-full items-start gap-3"
+              >
+                <AlertIcon variant={getDataQualityDetails(sensor).alert} />
+                <AlertContent>
+                  <AlertDescription>{getDataQualityDetails(sensor).description}</AlertDescription>
+                </AlertContent>
+              </Alert>
             )}
             <Link
               to="/sensors/$sensorId"
