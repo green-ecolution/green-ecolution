@@ -1,23 +1,60 @@
 //! Derives the watering status from volumetric soil-moisture readings using
 //! per-soil-type, per-depth REW thresholds. Young trees (< 3 years) are scored
 //! on the 40 cm probe only; older trees use both depths, worst case wins.
+//!
+//! # KA5 pore classes
+//!
+//! `depth_params` stores three capacities per soil type and depth, all in
+//! Vol.-%. They are sums over KA5 pore classes, which are defined by
+//! equivalent pore diameter:
+//!
+//! | Class                       | Diameter  | Role                                        |
+//! | --------------------------- | --------- | ------------------------------------------- |
+//! | `wGP` — weite Grobporen     | > 50 µm   | air-filled at field capacity → air capacity |
+//! | `eGP` — enge Grobporen      | 10–50 µm  | plant-available, loosely held               |
+//! | `MP`  — Mittelporen         | 0.2–10 µm | plant-available, held against gravity       |
+//! | `FP`  — Feinporen           | < 0.2 µm  | bound, not extractable by plants            |
+//!
+//! From which `FK = eGP + MP + FP`, `nFK = eGP + MP`, `PWP = FP`, `LK = wGP`,
+//! and total pore volume `GPV = FK + LK`.
+//!
+//! That resolves both terms in `DepthParams::thresholds`: `FK − nFK` is `FP`,
+//! the water still present at the permanent wilting point, and `nFK − eGP` is
+//! `MP`. Scaling the thresholds by `MP` alone leaves out the loosely held
+//! narrow-coarse-pore water; whether that was a deliberate modelling choice is
+//! not recorded anywhere.
+//!
+//! Note what the table *cannot* give: `GPV`, because the air capacity `wGP` is
+//! not stored. A saturation ceiling for plausibility checks therefore cannot be
+//! derived here — see the fixed bound in `sensor::plausibility` instead.
+//!
+//! Pore-class definitions per LfU Bayern and Geologischer Dienst NRW. The
+//! per-soil-type numbers themselves arrived with PR #828 (GECO-151) without a
+//! cited source; which KA5 table and edition they come from is unverified.
 
 use crate::cluster::SoilCondition;
 use crate::sensor::data::VolumetricReading;
 use crate::shared::watering_status::WateringStatus;
 use crate::tree::TreeError;
 
-/// REW coefficient for the onset of moderate stress.
+/// REW coefficient for the onset of moderate stress. Below REW 0.4 stomata
+/// close and transpiration is throttled; the threshold comes from Granier et
+/// al. (1999) and is widely adopted in forest hydrology.
 pub const REW_MIN: f64 = 0.40;
-/// REW coefficient for acute stress.
+/// REW coefficient for acute stress. Project-internal: the literature names
+/// 0.4 and 0.2, not 0.3, and no source for this value could be traced.
 pub const REW_CRIT: f64 = 0.30;
 /// Below this lifetime the 80 cm probe is ignored.
 const YOUNG_TREE_YEARS: i64 = 3;
 
-/// Hydrological values for one soil type at a fixed depth, in Vol.-%.
+/// Hydrological values for one soil type at a fixed depth, in Vol.-%. See the
+/// module docs for how these map onto the KA5 pore classes.
 struct DepthParams {
+    /// Field capacity: `eGP + MP + FP`.
     fk: i32,
+    /// Plant-available field capacity: `eGP + MP`.
     nfk: i32,
+    /// Narrow coarse pores, 10–50 µm. Part of `nfk`, not on top of `fk`.
     egp: i32,
 }
 
@@ -196,6 +233,71 @@ mod tests {
         VolumetricReading {
             depth_cm,
             moisture_percent,
+        }
+    }
+
+    const ALL_SOILS: [SoilCondition; 34] = [
+        SoilCondition::Ss,
+        SoilCondition::Sl2,
+        SoilCondition::Sl3,
+        SoilCondition::Sl4,
+        SoilCondition::Slu,
+        SoilCondition::St2,
+        SoilCondition::St3,
+        SoilCondition::Su2,
+        SoilCondition::Su3,
+        SoilCondition::Su4,
+        SoilCondition::Ls2,
+        SoilCondition::Ls3,
+        SoilCondition::Ls4,
+        SoilCondition::Lt2,
+        SoilCondition::Lt3,
+        SoilCondition::Lts,
+        SoilCondition::Lu,
+        SoilCondition::Uu,
+        SoilCondition::Uls,
+        SoilCondition::Us,
+        SoilCondition::Ut2,
+        SoilCondition::Ut3,
+        SoilCondition::Ut4,
+        SoilCondition::Tt,
+        SoilCondition::Tl,
+        SoilCondition::Tu2,
+        SoilCondition::Tu3,
+        SoilCondition::Tu4,
+        SoilCondition::Ts2,
+        SoilCondition::Ts3,
+        SoilCondition::Ts4,
+        SoilCondition::Fs,
+        SoilCondition::Ms,
+        SoilCondition::Gs,
+    ];
+
+    /// The pore-class composition documented at module level implies
+    /// `eGP <= nFK <= FK` for every row. A typo breaking it would silently
+    /// produce a negative medium-pore reservoir and nonsensical thresholds.
+    #[test]
+    fn every_soil_row_satisfies_the_pore_class_composition() {
+        for soil in ALL_SOILS {
+            for depth in [40, 80] {
+                let p = depth_params(soil, depth).expect("calibrated depth");
+                assert!(
+                    p.egp <= p.nfk,
+                    "{soil:?} @ {depth} cm: eGP {} exceeds nFK {}",
+                    p.egp,
+                    p.nfk
+                );
+                assert!(
+                    p.nfk <= p.fk,
+                    "{soil:?} @ {depth} cm: nFK {} exceeds FK {}",
+                    p.nfk,
+                    p.fk
+                );
+                assert!(
+                    p.nfk - p.egp > 0,
+                    "{soil:?} @ {depth} cm: medium-pore reservoir is empty"
+                );
+            }
         }
     }
 
