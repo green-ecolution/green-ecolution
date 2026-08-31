@@ -10,6 +10,7 @@ import ErrorFallback from './components/layout/ErrorFallback'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { getAuthSession } from '@/lib/auth/session'
 import { AuthSessionProvider } from '@/lib/auth/AuthSessionProvider'
+import { pendingLoading } from '@/lib/router'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -33,6 +34,9 @@ const router = createRouter({
     <ErrorFallback error={error} resetErrorBoundary={reset} />
   ),
   defaultNotFoundComponent: () => <NotFound />,
+  // A pending match without this renders null, so a loader that never settles
+  // leaves a blank page behind. Only shows past defaultPendingMs (1s).
+  defaultPendingComponent: pendingLoading('Wird geladen …'),
   defaultPreload: 'intent',
   defaultPreloadStaleTime: 30_000,
   scrollRestoration: true,
