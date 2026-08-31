@@ -55,6 +55,16 @@ Object.defineProperty(window, 'matchMedia', {
   })),
 })
 
+// jsdom hardcodes navigator.language/.languages to en-US, but the app defaults to German
+Object.defineProperty(window.navigator, 'language', {
+  value: 'de-DE',
+  configurable: true,
+})
+Object.defineProperty(window.navigator, 'languages', {
+  value: ['de-DE'],
+  configurable: true,
+})
+
 // Mock sessionStorage
 const sessionStorageMock = (() => {
   let store: Record<string, string> = {}

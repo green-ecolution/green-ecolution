@@ -1,0 +1,18 @@
+{
+  "actions": {
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "back": "Zurück",
+    "next": "Weiter",
+    "retry": "Erneut versuchen"
+  },
+  "state": {
+    "loading": "Lade …",
+    "empty": "Keine Einträge vorhanden",
+    "noData": "Keine Angabe"
+  },
+  "pagination": {
+    "pageOf": "Seite {page} von {total}"
+  }
+}

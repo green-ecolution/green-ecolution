@@ -11,6 +11,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { getAuthSession } from '@/lib/auth/session'
 import { AuthSessionProvider } from '@/lib/auth/AuthSessionProvider'
 import { pendingLoading } from '@/lib/router'
+import { I18nextProvider } from 'react-i18next'
+import { createI18n } from '@/lib/i18n'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -81,12 +83,35 @@ if (!isPWA) {
   })
 }
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <AuthSessionProvider>
-        <RouterProvider router={router} />
-      </AuthSessionProvider>
-    </QueryClientProvider>
-  </React.StrictMode>,
-)
+void createI18n()
+  .then((i18n) => {
+    ReactDOM.createRoot(document.getElementById('root')!).render(
+      <React.StrictMode>
+        <I18nextProvider i18n={i18n}>
+          <QueryClientProvider client={queryClient}>
+            <AuthSessionProvider>
+              <RouterProvider router={router} />
+            </AuthSessionProvider>
+          </QueryClientProvider>
+        </I18nextProvider>
+      </React.StrictMode>,
+    )
+  })
+  .catch((error: unknown) => {
+    console.error('i18n bootstrap failed', error)
+    removeLoader()
+    // Untranslated on purpose: i18n itself is the component that failed to load,
+    // so this path cannot depend on it (and must not mount I18nextProvider).
+    ReactDOM.createRoot(document.getElementById('root')!).render(
+      <div role="alert" className="mx-auto mt-[35vh] max-w-md px-4 text-center">
+        <p className="mb-4">Die App konnte nicht geladen werden. Bitte lade die Seite neu.</p>
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+          className="rounded bg-primary px-4 py-2 text-white"
+        >
+          Neu laden
+        </button>
+      </div>,
+    )
+  })
