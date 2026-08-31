@@ -8,6 +8,7 @@ import { getDrivingLicenseDetails } from '@/hooks/details/useDetailsForDrivingLi
 import { DrivingLicense } from '@green-ecolution/backend-client'
 import { useCurrentUserAvatar } from '@/lib/auth/useCurrentUserAvatar'
 import { Avatar, AvatarFallback, AvatarImage, Badge, DetailedList } from '@green-ecolution/ui'
+import LanguageSwitcher from '@/components/settings/LanguageSwitcher'
 
 export const Route = createFileRoute('/_protected/settings/profile/')({
   component: Profile,
@@ -83,6 +84,10 @@ function Profile() {
           { label: 'E-Mail:', value: user.email ?? 'Keine Angabe' },
         ]}
       />
+
+      <section className="mt-16">
+        <LanguageSwitcher />
+      </section>
     </div>
   )
 }

@@ -14,5 +14,12 @@
   },
   "pagination": {
     "pageOf": "Page {page} of {total}"
+  },
+  "language": {
+    "label": "Language",
+    "description": "The choice applies to this browser and takes effect immediately.",
+    "de": "German",
+    "en": "English",
+    "switchFailed": "The language could not be changed. Please try again."
   }
 }
