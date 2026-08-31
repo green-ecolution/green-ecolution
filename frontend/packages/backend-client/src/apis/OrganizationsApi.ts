@@ -15,12 +15,15 @@
 
 import * as runtime from '../runtime';
 import type {
+  ErrorBody,
   OrganizationCreateRequest,
   OrganizationDetailResponse,
   OrganizationResponse,
   OrganizationUpdateRequest,
 } from '../models/index';
 import {
+    ErrorBodyFromJSON,
+    ErrorBodyToJSON,
     OrganizationCreateRequestFromJSON,
     OrganizationCreateRequestToJSON,
     OrganizationDetailResponseFromJSON,

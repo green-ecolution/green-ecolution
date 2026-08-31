@@ -3,7 +3,7 @@ use serde_json::Value;
 crate::newtype_nonempty! {
     /// Opaque provider identifier (e.g. `"tbz"`, `"smarte-grenzregion"`),
     /// 1–64 characters after trimming.
-    ProviderId, "provider", 1, 64
+    ProviderId, "provenance.provider", 1, 64
 }
 
 /// Attribution metadata attached to most aggregates.

@@ -33,7 +33,7 @@ impl RoleReader for PgRoleRepository {
     async fn by_id(&self, id: Id<Role>) -> Result<Role, RepositoryError> {
         let snap = sqlx::query_as!(
             RoleSnapshot,
-            r#"SELECT id, organization_id, name, description, permissions FROM roles WHERE id = $1"#,
+            r#"SELECT id, organization_id, name, description, permissions, template_key FROM roles WHERE id = $1"#,
             id.value()
         )
         .fetch_optional(&self.pool)
@@ -46,7 +46,7 @@ impl RoleReader for PgRoleRepository {
     async fn by_organization(&self, org: Id<Organization>) -> Result<Vec<Role>, RepositoryError> {
         sqlx::query_as!(
             RoleSnapshot,
-            r#"SELECT id, organization_id, name, description, permissions
+            r#"SELECT id, organization_id, name, description, permissions, template_key
                FROM roles WHERE organization_id = $1 ORDER BY name ASC"#,
             org.value()
         )
@@ -65,7 +65,7 @@ impl RoleReader for PgRoleRepository {
         let orgs: Vec<Uuid> = orgs.iter().map(|o| o.value()).collect();
         sqlx::query_as!(
             RoleSnapshot,
-            r#"SELECT id, organization_id, name, description, permissions
+            r#"SELECT id, organization_id, name, description, permissions, template_key
                FROM roles WHERE organization_id = ANY($1) ORDER BY name ASC"#,
             &orgs
         )
@@ -80,7 +80,7 @@ impl RoleReader for PgRoleRepository {
     async fn templates(&self) -> Result<Vec<Role>, RepositoryError> {
         sqlx::query_as!(
             RoleSnapshot,
-            r#"SELECT id, organization_id, name, description, permissions
+            r#"SELECT id, organization_id, name, description, permissions, template_key
                FROM roles WHERE organization_id IS NULL ORDER BY name ASC"#
         )
         .fetch_all(&self.pool)
@@ -94,7 +94,7 @@ impl RoleReader for PgRoleRepository {
     async fn roles_for_user(&self, user_id: Uuid) -> Result<Vec<Role>, RepositoryError> {
         sqlx::query_as!(
             RoleSnapshot,
-            r#"SELECT r.id, r.organization_id, r.name, r.description, r.permissions
+            r#"SELECT r.id, r.organization_id, r.name, r.description, r.permissions, r.template_key
                FROM roles r JOIN role_assignments a ON a.role_id = r.id
                WHERE a.user_id = $1"#,
             user_id
@@ -109,7 +109,7 @@ impl RoleReader for PgRoleRepository {
     #[tracing::instrument(level = "trace", skip_all)]
     async fn roles_for_users(&self, ids: &[Uuid]) -> Result<Vec<(Uuid, Role)>, RepositoryError> {
         let rows = sqlx::query!(
-            r#"SELECT a.user_id, r.id, r.organization_id, r.name, r.description, r.permissions
+            r#"SELECT a.user_id, r.id, r.organization_id, r.name, r.description, r.permissions, r.template_key
                FROM roles r JOIN role_assignments a ON a.role_id = r.id
                WHERE a.user_id = ANY($1)"#,
             ids
@@ -124,6 +124,7 @@ impl RoleReader for PgRoleRepository {
                     name: row.name,
                     description: row.description,
                     permissions: row.permissions,
+                    template_key: row.template_key,
                 })?;
                 Ok((row.user_id, role))
             })
@@ -149,13 +150,14 @@ impl RoleWriter for PgRoleRepository {
         let id = Id::<Role>::new_v7();
         let permissions = permissions_as_strings(draft.permissions.iter().copied());
         sqlx::query!(
-            r#"INSERT INTO roles (id, organization_id, name, description, permissions)
-               VALUES ($1, $2, $3, $4, $5)"#,
+            r#"INSERT INTO roles (id, organization_id, name, description, permissions, template_key)
+               VALUES ($1, $2, $3, $4, $5, $6)"#,
             id.value(),
             draft.organization_id.value(),
             draft.name.as_str(),
             draft.description.as_ref().map(|d| d.as_str()),
             &permissions,
+            draft.template_key.as_ref().map(|k| k.as_str()),
         )
         .execute(&self.pool)
         .await?;
@@ -165,6 +167,7 @@ impl RoleWriter for PgRoleRepository {
             name: draft.name.as_str().to_string(),
             description: draft.description.as_ref().map(|d| d.as_str().to_string()),
             permissions,
+            template_key: draft.template_key.as_ref().map(|k| k.as_str().to_string()),
         })?)
     }
 
@@ -172,11 +175,12 @@ impl RoleWriter for PgRoleRepository {
     async fn save(&self, role: &Role) -> Result<(), RepositoryError> {
         let permissions = permissions_as_strings(role.permissions().iter().copied());
         let result = sqlx::query!(
-            r#"UPDATE roles SET name = $2, description = $3, permissions = $4 WHERE id = $1"#,
+            r#"UPDATE roles SET name = $2, description = $3, permissions = $4, template_key = $5 WHERE id = $1"#,
             role.id.value(),
             role.name.as_str(),
             role.description.as_ref().map(|d| d.as_str()),
             &permissions,
+            role.template_key().map(|k| k.as_str()),
         )
         .execute(&self.pool)
         .await?;

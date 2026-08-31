@@ -18,7 +18,7 @@ impl BoundingBox {
     ) -> Result<Self, ValidationError> {
         if !(-90.0..=90.0).contains(&sw_lat) {
             return Err(ValidationError::OutOfRange {
-                field: "bbox.sw_lat",
+                field: "geo.bbox.sw_lat",
                 min: -90.0,
                 max: 90.0,
                 got: sw_lat,
@@ -26,7 +26,7 @@ impl BoundingBox {
         }
         if !(-90.0..=90.0).contains(&ne_lat) {
             return Err(ValidationError::OutOfRange {
-                field: "bbox.ne_lat",
+                field: "geo.bbox.ne_lat",
                 min: -90.0,
                 max: 90.0,
                 got: ne_lat,
@@ -34,7 +34,7 @@ impl BoundingBox {
         }
         if !(-180.0..=180.0).contains(&sw_lng) {
             return Err(ValidationError::OutOfRange {
-                field: "bbox.sw_lng",
+                field: "geo.bbox.sw_lng",
                 min: -180.0,
                 max: 180.0,
                 got: sw_lng,
@@ -42,7 +42,7 @@ impl BoundingBox {
         }
         if !(-180.0..=180.0).contains(&ne_lng) {
             return Err(ValidationError::OutOfRange {
-                field: "bbox.ne_lng",
+                field: "geo.bbox.ne_lng",
                 min: -180.0,
                 max: 180.0,
                 got: ne_lng,
@@ -50,13 +50,13 @@ impl BoundingBox {
         }
         if sw_lat >= ne_lat {
             return Err(ValidationError::InvalidFormat {
-                field: "bbox",
+                field: "geo.bbox",
                 reason: format!("sw_lat ({sw_lat}) must be < ne_lat ({ne_lat})"),
             });
         }
         if sw_lng >= ne_lng {
             return Err(ValidationError::InvalidFormat {
-                field: "bbox",
+                field: "geo.bbox",
                 reason: format!("sw_lng ({sw_lng}) must be < ne_lng ({ne_lng})"),
             });
         }

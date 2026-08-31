@@ -10,6 +10,7 @@ const templates: Role[] = [
     name: 'Routenplanung',
     description: 'Planung von Bewässerungsrouten',
     isTemplate: true,
+    templateKey: 'route_planning',
     permissions: ['watering_plan:read', 'tree:read'],
   },
 ]
@@ -20,6 +21,7 @@ const orgRoles: Role[] = [
     name: 'Routenplanung',
     description: 'Planung von Bewässerungsrouten',
     isTemplate: false,
+    templateKey: 'route_planning',
     permissions: ['watering_plan:read', 'tree:read'],
   },
   {

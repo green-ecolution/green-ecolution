@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
-use axum::{
-    Json,
-    extract::{Path, Query, State},
-};
+use crate::http::v1::error::ErrorBody;
+
+use crate::http::extractors::{Path, Query};
+use axum::{Json, extract::State};
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
@@ -34,7 +34,7 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
     params(PaginationParams),
     responses(
         (status = 200, description = "Paginated list of regions", body = ListResponse<RegionResponse>),
-        (status = 500, description = "Internal server error"),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
@@ -61,8 +61,8 @@ pub async fn list_regions(
     params(("region_id" = uuid::Uuid, Path, description = "Region ID")),
     responses(
         (status = 200, description = "Region found", body = RegionResponse),
-        (status = 404, description = "Region not found"),
-        (status = 500, description = "Internal server error"),
+        (status = 404, description = "Region not found", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all, fields(region.id = %region_id))]

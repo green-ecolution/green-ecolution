@@ -15,10 +15,13 @@
 
 import * as runtime from '../runtime';
 import type {
+  ErrorBody,
   ListResponseRegionResponse,
   RegionResponse,
 } from '../models/index';
 import {
+    ErrorBodyFromJSON,
+    ErrorBodyToJSON,
     ListResponseRegionResponseFromJSON,
     ListResponseRegionResponseToJSON,
     RegionResponseFromJSON,

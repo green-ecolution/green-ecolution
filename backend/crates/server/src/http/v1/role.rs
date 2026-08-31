@@ -1,11 +1,10 @@
 use std::collections::BTreeSet;
+
+use crate::http::v1::error::ErrorBody;
 use std::sync::Arc;
 
-use crate::http::extractors::Json;
-use axum::{
-    extract::{Path, State},
-    http::StatusCode,
-};
+use crate::http::extractors::{Json, Path};
+use axum::{extract::State, http::StatusCode};
 use utoipa_axum::{router::OpenApiRouter, routes};
 use uuid::Uuid;
 
@@ -37,10 +36,10 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
     description = "Returns every non-template role owned by an organization in the caller's visible subtree. Templates (organization_id = null) are excluded, since they cannot be assigned. Requires role:read.",
     responses(
         (status = 200, description = "Roles visible to the caller", body = Vec<RoleResponse>),
-        (status = 401, description = "Unauthorized"),
-        (status = 403, description = "Forbidden"),
-        (status = 422, description = "Acting user has no organization and none was given"),
-        (status = 500, description = "Internal server error"),
+        (status = 401, description = "Unauthorized", body = ErrorBody),
+        (status = 403, description = "Forbidden", body = ErrorBody),
+        (status = 422, description = "Acting user has no organization and none was given", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
@@ -80,8 +79,8 @@ pub async fn list_roles(
     description = "Returns the five seeded templates (organization_id = null). Templates are immutable and not assignable.",
     responses(
         (status = 200, description = "The role templates", body = Vec<RoleResponse>),
-        (status = 401, description = "Unauthorized"),
-        (status = 500, description = "Internal server error"),
+        (status = 401, description = "Unauthorized", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
@@ -99,7 +98,7 @@ pub async fn list_templates(
     description = "Returns every grantable permission as `<resource>:<action>`, e.g. `tree:read`.",
     responses(
         (status = 200, description = "The permission catalog", body = Vec<String>),
-        (status = 401, description = "Unauthorized"),
+        (status = 401, description = "Unauthorized", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
@@ -119,8 +118,8 @@ pub async fn list_permissions(_user: AuthUserExtractor) -> Json<Vec<String>> {
     params(("org_id" = Uuid, Path, description = "Organization id")),
     responses(
         (status = 200, description = "Roles owned by the organization", body = Vec<RoleResponse>),
-        (status = 401, description = "Unauthorized"),
-        (status = 500, description = "Internal server error"),
+        (status = 401, description = "Unauthorized", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all, fields(organization.id = %org_id))]
@@ -141,12 +140,12 @@ pub async fn list_org_roles(
     request_body = RoleCreateRequest,
     responses(
         (status = 201, description = "Created", body = RoleResponse),
-        (status = 400, description = "Invalid input (missing fields or unknown permission)"),
-        (status = 401, description = "Unauthorized"),
-        (status = 403, description = "Forbidden"),
-        (status = 404, description = "Source role/template not found"),
-        (status = 409, description = "Name conflict"),
-        (status = 500, description = "Internal server error"),
+        (status = 400, description = "Invalid input (missing fields or unknown permission)", body = ErrorBody),
+        (status = 401, description = "Unauthorized", body = ErrorBody),
+        (status = 403, description = "Forbidden", body = ErrorBody),
+        (status = 404, description = "Source role/template not found", body = ErrorBody),
+        (status = 409, description = "Name conflict (code `resource.already_exists`)", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all, fields(organization.id = %org_id))]
@@ -182,6 +181,9 @@ pub async fn create_role(
                             name: RoleName::new(name)?,
                             description: source_view.description.clone(),
                             permissions: perms,
+                            // A renamed copy is the caller's own role, not the
+                            // delivered one, so it carries no template key.
+                            template_key: None,
                         })
                         .await?
                 }
@@ -211,6 +213,7 @@ pub async fn create_role(
                     name: RoleName::new(name)?,
                     description,
                     permissions,
+                    template_key: None,
                 })
                 .await?
         }
@@ -224,9 +227,9 @@ pub async fn create_role(
     params(("role_id" = Uuid, Path, description = "Role id")),
     responses(
         (status = 200, description = "The role", body = RoleResponse),
-        (status = 401, description = "Unauthorized"),
-        (status = 404, description = "Not found"),
-        (status = 500, description = "Internal server error"),
+        (status = 401, description = "Unauthorized", body = ErrorBody),
+        (status = 404, description = "Not found", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all, fields(role.id = %role_id))]
@@ -247,12 +250,12 @@ pub async fn get_role(
     request_body = RoleUpdateRequest,
     responses(
         (status = 200, description = "Updated", body = RoleResponse),
-        (status = 400, description = "Invalid input (unknown permission)"),
-        (status = 401, description = "Unauthorized"),
-        (status = 403, description = "Forbidden"),
-        (status = 404, description = "Not found"),
-        (status = 409, description = "Templates are immutable, the name conflicts, or the change would revoke the caller's own administration rights"),
-        (status = 500, description = "Internal server error"),
+        (status = 400, description = "Invalid input (unknown permission)", body = ErrorBody),
+        (status = 401, description = "Unauthorized", body = ErrorBody),
+        (status = 403, description = "Forbidden", body = ErrorBody),
+        (status = 404, description = "Not found", body = ErrorBody),
+        (status = 409, description = "Templates are immutable, the name conflicts, or the change would revoke the caller's own administration rights (codes `conflict.role_template_immutable`, `resource.already_exists`, `conflict.cannot_revoke_own_administration`)", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all, fields(role.id = %role_id))]
@@ -307,11 +310,11 @@ pub async fn update_role(
     params(("role_id" = Uuid, Path, description = "Role id")),
     responses(
         (status = 204, description = "Deleted"),
-        (status = 401, description = "Unauthorized"),
-        (status = 403, description = "Forbidden"),
-        (status = 404, description = "Not found"),
-        (status = 409, description = "Templates are immutable, or the deletion would revoke the caller's own administration rights"),
-        (status = 500, description = "Internal server error"),
+        (status = 401, description = "Unauthorized", body = ErrorBody),
+        (status = 403, description = "Forbidden", body = ErrorBody),
+        (status = 404, description = "Not found", body = ErrorBody),
+        (status = 409, description = "Templates are immutable, or the deletion would revoke the caller's own administration rights (codes `conflict.role_template_immutable`, `conflict.cannot_revoke_own_administration`)", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all, fields(role.id = %role_id))]

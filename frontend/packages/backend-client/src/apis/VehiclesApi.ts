@@ -15,6 +15,7 @@
 
 import * as runtime from '../runtime';
 import type {
+  ErrorBody,
   ListResponseVehicleResponse,
   TransferRequest,
   VehicleCreateRequest,
@@ -22,6 +23,8 @@ import type {
   VehicleUpdateRequest,
 } from '../models/index';
 import {
+    ErrorBodyFromJSON,
+    ErrorBodyToJSON,
     ListResponseVehicleResponseFromJSON,
     ListResponseVehicleResponseToJSON,
     TransferRequestFromJSON,

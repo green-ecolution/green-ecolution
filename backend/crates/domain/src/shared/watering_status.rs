@@ -14,7 +14,7 @@ pub enum WateringStatus {
     Good,
     Moderate,
     Bad,
-    #[cfg_attr(feature = "sqlx", sqlx(rename = "just watered"))]
+    #[cfg_attr(feature = "sqlx", sqlx(rename = "just_watered"))]
     JustWatered,
     Unknown,
 }

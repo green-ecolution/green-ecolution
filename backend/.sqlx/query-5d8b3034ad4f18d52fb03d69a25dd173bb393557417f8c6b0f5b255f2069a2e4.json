@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id, organization_id, name, description, permissions FROM roles WHERE id = $1",
+  "query": "SELECT id, organization_id, name, description, permissions, template_key\n               FROM roles WHERE organization_id IS NULL ORDER BY name ASC",
   "describe": {
     "columns": [
       {
@@ -27,20 +27,24 @@
         "ordinal": 4,
         "name": "permissions",
         "type_info": "TextArray"
+      },
+      {
+        "ordinal": 5,
+        "name": "template_key",
+        "type_info": "Text"
       }
     ],
     "parameters": {
-      "Left": [
-        "Uuid"
-      ]
+      "Left": []
     },
     "nullable": [
       false,
       true,
       false,
       true,
-      false
+      false,
+      true
     ]
   },
-  "hash": "0a298e9a392e60f46d991d2ea7925c1defb1d0d7b73e405cc163ee3940a3b851"
+  "hash": "5d8b3034ad4f18d52fb03d69a25dd173bb393557417f8c6b0f5b255f2069a2e4"
 }

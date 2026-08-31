@@ -58,7 +58,7 @@
               "Enum": [
                 "active",
                 "available",
-                "not available",
+                "not_available",
                 "unknown"
               ]
             }

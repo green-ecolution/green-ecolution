@@ -269,6 +269,7 @@ mod tests {
             name: "Testrolle".into(),
             description: None,
             permissions: perms.iter().map(|p| p.to_string()).collect(),
+            template_key: None,
         })
         .unwrap()
     }

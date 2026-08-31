@@ -1,5 +1,7 @@
 use std::sync::Arc;
 
+use crate::http::v1::error::ErrorBody;
+
 use axum::{Json, extract::State};
 use utoipa_axum::{router::OpenApiRouter, routes};
 
@@ -32,7 +34,7 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
     description = "Returns aggregated statistics including resource counts, water consumption, and per-region/vehicle breakdowns.",
     responses(
         (status = 200, description = "Evaluation statistics", body = EvaluationResponse),
-        (status = 500, description = "Internal server error"),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]

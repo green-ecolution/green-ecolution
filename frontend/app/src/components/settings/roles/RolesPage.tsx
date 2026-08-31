@@ -73,7 +73,7 @@ const RolesPage = () => {
   })
 
   const templateList = useMemo(() => templates ?? [], [templates])
-  const ownRoles = useMemo(() => ownRolesOf(orgRoles ?? [], templateList), [orgRoles, templateList])
+  const ownRoles = useMemo(() => ownRolesOf(orgRoles ?? []), [orgRoles])
 
   useEffect(() => {
     // Only in the two-pane layout, where the detail pane is always visible. In

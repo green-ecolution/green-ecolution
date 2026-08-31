@@ -5,6 +5,9 @@ export interface ValidationIssue {
   params: Record<string, string | number>
 }
 
+/** The minimum needed to render an issue: which rule broke, with what values. */
+export type TranslatableIssue = Pick<ValidationIssue, 'key' | 'params'>
+
 export interface TreeForm {
   number: string
   species: string

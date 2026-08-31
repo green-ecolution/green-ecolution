@@ -357,6 +357,7 @@ mod tests {
                 name: draft.name.as_str().to_string(),
                 description: draft.description.as_ref().map(|d| d.as_str().to_string()),
                 permissions: draft.permissions.iter().map(|p| p.to_string()).collect(),
+                template_key: None,
             })
             .unwrap())
         }
@@ -520,6 +521,7 @@ mod tests {
             name: name.into(),
             description: None,
             permissions: Vec::new(),
+            template_key: None,
         })
         .unwrap()
     }

@@ -15,11 +15,14 @@
 
 import * as runtime from '../runtime';
 import type {
+  ErrorBody,
   RoleCreateRequest,
   RoleResponse,
   RoleUpdateRequest,
 } from '../models/index';
 import {
+    ErrorBodyFromJSON,
+    ErrorBodyToJSON,
     RoleCreateRequestFromJSON,
     RoleCreateRequestToJSON,
     RoleResponseFromJSON,

@@ -386,7 +386,7 @@ async fn finish_watering_plan_marks_just_watered_and_persists_evaluations() {
         cluster_after["last_watered"]
     );
     assert_eq!(
-        cluster_after["watering_status"], "just watered",
+        cluster_after["watering_status"], "just_watered",
         "cluster must be flagged just watered after plan finish"
     );
 
@@ -397,7 +397,7 @@ async fn finish_watering_plan_marks_just_watered_and_persists_evaluations() {
         .await
         .unwrap();
     assert_eq!(
-        tree_after["watering_status"], "just watered",
+        tree_after["watering_status"], "just_watered",
         "trees of a watered cluster must be flagged just watered"
     );
     assert!(

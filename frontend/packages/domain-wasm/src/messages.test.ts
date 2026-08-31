@@ -38,20 +38,20 @@ describe('translateIssue', () => {
     expect(text).toBe('unknown.key.empty')
   })
 
-  it('returns the German message for phone_number.empty', () => {
+  it('returns the German message for user.phone_number.empty', () => {
     expect(
       translateIssue(
-        issue({ path: 'phoneNumber', field: 'phone_number', key: 'phone_number.empty' }),
+        issue({ path: 'phoneNumber', field: 'user.phone_number', key: 'user.phone_number.empty' }),
       ),
     ).toBe('Telefonnummer ist erforderlich.')
   })
 
-  it('returns one message for phone_number.invalidFormat covering both letters and too few digits', () => {
+  it('returns one message for user.phone_number.invalidFormat covering both letters and too few digits', () => {
     const text = translateIssue(
       issue({
         path: 'phoneNumber',
-        field: 'phone_number',
-        key: 'phone_number.invalidFormat',
+        field: 'user.phone_number',
+        key: 'user.phone_number.invalidFormat',
         params: { reason: 'must contain only digits...' },
       }),
     )

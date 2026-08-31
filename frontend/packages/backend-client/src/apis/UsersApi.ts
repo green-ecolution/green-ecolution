@@ -16,6 +16,7 @@
 import * as runtime from '../runtime';
 import type {
   AssignRoleRequest,
+  ErrorBody,
   ListResponseUserResponse,
   RoleResponse,
   SetOrganizationRequest,
@@ -26,6 +27,8 @@ import type {
 import {
     AssignRoleRequestFromJSON,
     AssignRoleRequestToJSON,
+    ErrorBodyFromJSON,
+    ErrorBodyToJSON,
     ListResponseUserResponseFromJSON,
     ListResponseUserResponseToJSON,
     RoleResponseFromJSON,

@@ -61,6 +61,15 @@ export interface RoleResponse {
      * @memberof RoleResponse
      */
     permissions: Array<string>;
+    /**
+     * Which delivered template this role still matches verbatim, e.g.
+     * `tree_care`. Null once someone edits the name or description, or for a
+     * hand-made role. A client may translate `name` and `description` while
+     * this is set, and must show them verbatim once it is null.
+     * @type {string}
+     * @memberof RoleResponse
+     */
+    templateKey?: string | null;
 }
 
 /**
@@ -91,6 +100,7 @@ export function RoleResponseFromJSONTyped(json: any, ignoreDiscriminator: boolea
         'name': json['name'],
         'organizationId': json['organization_id'] == null ? undefined : json['organization_id'],
         'permissions': json['permissions'],
+        'templateKey': json['template_key'] == null ? undefined : json['template_key'],
     };
 }
 
@@ -112,6 +122,7 @@ export function RoleResponseToJSONTyped(value?: RoleResponse | null, ignoreDiscr
         'name': value['name'],
         'organization_id': value['organizationId'],
         'permissions': value['permissions'],
+        'template_key': value['templateKey'],
     };
 }
 

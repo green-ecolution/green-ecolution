@@ -93,7 +93,7 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
       const onSubmitNotCompleted: SubmitHandler<WateringPlanCancelForm> = (data) => {
         mutate({
           ...loadedData,
-          status: WateringPlanStatus.NotCompeted,
+          status: WateringPlanStatus.NotCompleted,
           cancellationNote: data.cancellationNote,
           transporterId: loadedData.transporter.id,
           treeClusterIds: loadedData.treeclusters.map((cluster) => cluster.id),
@@ -111,7 +111,7 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
       switch (status) {
         case 'canceled':
           return <CancelWateringPlan onSubmit={onSubmitCancel} className="mt-6 md:w-1/2" />
-        case WateringPlanStatus.NotCompeted:
+        case WateringPlanStatus.NotCompleted:
           return (
             <CancelWateringPlan
               onSubmit={onSubmitNotCompleted}

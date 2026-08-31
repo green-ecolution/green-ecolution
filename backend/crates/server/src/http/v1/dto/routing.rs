@@ -58,12 +58,11 @@ pub struct StartPointRequest {
 
 impl StartPointRequest {
     fn coordinate(&self) -> Result<Coordinate, ServiceError> {
-        Coordinate::new(self.lat, self.lon).map_err(|e| ServiceError::InvalidInput(e.to_string()))
+        Coordinate::new(self.lat, self.lon).map_err(ServiceError::from)
     }
 
     fn name(&self) -> Result<StartPointName, ServiceError> {
-        StartPointName::new(self.name.clone())
-            .map_err(|e| ServiceError::InvalidInput(e.to_string()))
+        StartPointName::new(self.name.clone()).map_err(ServiceError::from)
     }
 
     pub fn into_draft(

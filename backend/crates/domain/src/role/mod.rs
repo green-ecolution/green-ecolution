@@ -34,6 +34,13 @@ crate::newtype_nonempty! {
     RoleDescription, "role.description", 1, 500
 }
 
+crate::newtype_nonempty! {
+    /// Identifies which delivered template a role descends from, e.g.
+    /// `tree_care`. Present only while name and description are still the ones
+    /// that shipped, which is what lets a client translate them.
+    RoleTemplateKey, "role.template_key", 1, 64
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct Role {
     pub id: Id<Role>,
@@ -41,6 +48,9 @@ pub struct Role {
     pub description: Option<RoleDescription>,
     organization_id: Option<Id<Organization>>,
     permissions: BTreeSet<Permission>,
+    /// Cleared as soon as name or description is edited, so a client only ever
+    /// translates text the user has not made their own.
+    template_key: Option<RoleTemplateKey>,
 }
 
 /// Input for creating an org-owned role (manually or as a template copy).
@@ -50,6 +60,7 @@ pub struct RoleDraft {
     pub name: RoleName,
     pub description: Option<RoleDescription>,
     pub permissions: BTreeSet<Permission>,
+    pub template_key: Option<RoleTemplateKey>,
 }
 
 impl Role {
@@ -66,6 +77,7 @@ impl Role {
             description: snap.description.map(RoleDescription::reconstitute),
             organization_id: snap.organization_id.map(Id::new),
             permissions,
+            template_key: snap.template_key.map(RoleTemplateKey::reconstitute),
         })
     }
 
@@ -81,12 +93,18 @@ impl Role {
         self.organization_id.is_none()
     }
 
+    /// Which delivered template this role still matches verbatim, if any.
+    pub fn template_key(&self) -> Option<&RoleTemplateKey> {
+        self.template_key.as_ref()
+    }
+
     pub fn rename(&mut self, new_name: RoleName) -> Result<Vec<DomainEvent>, RoleError> {
         self.ensure_mutable()?;
         if self.name == new_name {
             return Ok(Vec::new());
         }
         self.name = new_name;
+        self.template_key = None;
         Ok(vec![DomainEvent::RoleRenamed { role_id: self.id }])
     }
 
@@ -96,6 +114,7 @@ impl Role {
     ) -> Result<(), RoleError> {
         self.ensure_mutable()?;
         self.description = description;
+        self.template_key = None;
         Ok(())
     }
 
@@ -120,6 +139,7 @@ impl Role {
             name: self.name.clone(),
             description: self.description.clone(),
             permissions: self.permissions.clone(),
+            template_key: self.template_key.clone(),
         }
     }
 
@@ -149,6 +169,7 @@ mod tests {
             description: None,
             organization_id: org,
             permissions: perms(),
+            template_key: None,
         }
     }
 
@@ -207,6 +228,63 @@ mod tests {
         assert_eq!(draft.permissions, perms());
     }
 
+    fn template_with_key() -> Role {
+        let mut t = role(None);
+        t.template_key = Some(RoleTemplateKey::new("tree_care").unwrap());
+        t
+    }
+
+    #[test]
+    fn a_copy_inherits_the_template_key() {
+        let draft = template_with_key().copy_for(Id::new_v7());
+        assert_eq!(
+            draft.template_key.as_ref().map(RoleTemplateKey::as_str),
+            Some("tree_care"),
+            "the copy is still the delivered role, so a client may translate its name"
+        );
+    }
+
+    #[test]
+    fn renaming_a_copy_drops_the_template_key() {
+        let mut r = template_with_key();
+        r.organization_id = Some(Id::new_v7());
+
+        r.rename(RoleName::new("Pflege Nord").unwrap()).unwrap();
+
+        assert_eq!(
+            r.template_key, None,
+            "a hand-picked name must win over the catalog"
+        );
+    }
+
+    #[test]
+    fn a_rename_that_changes_nothing_keeps_the_template_key() {
+        let mut r = template_with_key();
+        r.organization_id = Some(Id::new_v7());
+
+        r.rename(RoleName::new("Baumpflege").unwrap()).unwrap();
+
+        assert!(r.template_key.is_some());
+    }
+
+    #[test]
+    fn editing_the_description_drops_the_template_key() {
+        let mut r = template_with_key();
+        r.organization_id = Some(Id::new_v7());
+
+        r.set_description(Some(RoleDescription::new("Eigener Text").unwrap()))
+            .unwrap();
+
+        assert_eq!(r.template_key, None);
+    }
+
+    #[test]
+    fn a_hand_made_role_never_gains_a_template_key() {
+        let mut r = role(Some(Id::new_v7()));
+        r.rename(RoleName::new("Eigene Rolle").unwrap()).unwrap();
+        assert_eq!(r.template_key, None);
+    }
+
     #[test]
     fn reconstitute_rejects_unknown_permission_string() {
         let snap = snapshot::RoleSnapshot {
@@ -215,6 +293,7 @@ mod tests {
             name: "Kaputt".into(),
             description: None,
             permissions: vec!["tree:read".into(), "garden:fly".into()],
+            template_key: None,
         };
         assert_err!(Role::reconstitute(snap));
     }

@@ -5,7 +5,7 @@ use uuid::Uuid;
 
 use domain::role::RoleView;
 
-use crate::service::ServiceError;
+use crate::service::{Malformed, ServiceError};
 
 /// A role (named permission set), either a global template or bound to an organization.
 #[derive(Debug, Serialize, utoipa::ToSchema)]
@@ -16,6 +16,7 @@ use crate::service::ServiceError;
     "description": "Voller Zugriff auf alle Ressourcen",
     "permissions": ["tree:read", "tree:create"],
     "is_template": false,
+    "template_key": "administrator",
     "created_at": "2024-06-15T10:30:00+00:00"
 }))]
 pub struct RoleResponse {
@@ -30,6 +31,12 @@ pub struct RoleResponse {
     pub permissions: Vec<String>,
     /// Whether this role is a global template (immutable, not assignable).
     pub is_template: bool,
+    /// Which delivered template this role still matches verbatim, e.g.
+    /// `tree_care`. Null once someone edits the name or description, or for a
+    /// hand-made role. A client may translate `name` and `description` while
+    /// this is set, and must show them verbatim once it is null.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub template_key: Option<String>,
     /// Creation time derived from the UUID v7 id (null for seeded ids without a real timestamp).
     pub created_at: Option<String>,
 }
@@ -43,6 +50,7 @@ impl From<&RoleView> for RoleResponse {
             description: value.description.as_ref().map(|d| d.as_str().to_string()),
             permissions: value.permissions.iter().map(|p| p.to_string()).collect(),
             is_template: value.is_template,
+            template_key: value.template_key.as_ref().map(|k| k.as_str().to_string()),
             created_at: value.created_at.map(|t| t.to_rfc3339()),
         }
     }
@@ -76,5 +84,8 @@ pub fn parse_permissions(
     raw.iter()
         .map(|s| s.parse::<domain::authorization::Permission>())
         .collect::<Result<_, _>>()
-        .map_err(|e| ServiceError::InvalidInput(e.to_string()))
+        .map_err(|e| ServiceError::Malformed {
+            kind: Malformed::Permission,
+            detail: e.to_string(),
+        })
 }

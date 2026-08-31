@@ -21,7 +21,7 @@ export const WateringStatus = {
     Good: 'good',
     Moderate: 'moderate',
     Bad: 'bad',
-    JustWatered: 'just watered',
+    JustWatered: 'just_watered',
     Unknown: 'unknown'
 } as const;
 export type WateringStatus = typeof WateringStatus[keyof typeof WateringStatus];

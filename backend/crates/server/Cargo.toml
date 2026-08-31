@@ -61,7 +61,7 @@ serde_urlencoded = "0.7"
 sqlx = { workspace = true, features = ["macros", "migrate", "runtime-tokio", "tls-rustls", "postgres", "chrono", "uuid", "json", "rust_decimal"] }
 thiserror = { workspace = true }
 tokio = { version = "1.52.3", features = ["full"] }
-tower = "0.5"
+tower = { version = "0.5", features = ["util"] }
 tower-http = { version = "0.7.0", features = ["cors", "trace", "request-id"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }

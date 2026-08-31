@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id, organization_id, name, description, permissions\n               FROM roles WHERE organization_id = $1 ORDER BY name ASC",
+  "query": "SELECT id, organization_id, name, description, permissions, template_key\n               FROM roles WHERE organization_id = $1 ORDER BY name ASC",
   "describe": {
     "columns": [
       {
@@ -27,6 +27,11 @@
         "ordinal": 4,
         "name": "permissions",
         "type_info": "TextArray"
+      },
+      {
+        "ordinal": 5,
+        "name": "template_key",
+        "type_info": "Text"
       }
     ],
     "parameters": {
@@ -39,8 +44,9 @@
       true,
       false,
       true,
-      false
+      false,
+      true
     ]
   },
-  "hash": "830cb0d1c7c36e3599aa7b4f8cfee07c8419ee51ea8ba4a2f09372f3bcdde226"
+  "hash": "3630210bafde62eaad53bb07e7b1704e5f682c84e61b20666cb3acfd3d75eadf"
 }

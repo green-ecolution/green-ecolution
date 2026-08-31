@@ -12,11 +12,13 @@ impl Email {
     pub fn new(value: impl Into<String>) -> Result<Self, ValidationError> {
         let trimmed = value.into().trim().to_string();
         if trimmed.is_empty() {
-            return Err(ValidationError::EmptyString { field: "email" });
+            return Err(ValidationError::EmptyString {
+                field: "user.email",
+            });
         }
         if !looks_like_email(&trimmed) {
             return Err(ValidationError::InvalidFormat {
-                field: "email",
+                field: "user.email",
                 reason: "must be a valid email address".to_string(),
             });
         }

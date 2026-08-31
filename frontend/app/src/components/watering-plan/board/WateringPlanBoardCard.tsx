@@ -14,7 +14,7 @@ const statusDot: Record<WateringPlanStatus, string> = {
   [WateringPlanStatus.Active]: 'bg-green-light',
   [WateringPlanStatus.Finished]: 'bg-green-dark-700',
   [WateringPlanStatus.Canceled]: 'bg-red',
-  [WateringPlanStatus.NotCompeted]: 'bg-dark-400',
+  [WateringPlanStatus.NotCompleted]: 'bg-dark-400',
   [WateringPlanStatus.Unknown]: 'bg-dark-300',
 }
 

@@ -15,6 +15,7 @@
 
 import * as runtime from '../runtime';
 import type {
+  ErrorBody,
   ListResponseWateringPlanInListResponse,
   RouteRequest,
   RouteResponse,
@@ -24,6 +25,8 @@ import type {
   WateringPlanUpdateRequest,
 } from '../models/index';
 import {
+    ErrorBodyFromJSON,
+    ErrorBodyToJSON,
     ListResponseWateringPlanInListResponseFromJSON,
     ListResponseWateringPlanInListResponseToJSON,
     RouteRequestFromJSON,

@@ -1,12 +1,13 @@
 use std::{collections::HashMap, sync::Arc};
 
-use crate::http::extractors::Json;
+use crate::http::v1::error::ErrorBody;
+
+use crate::http::extractors::{Json, Path, Query};
 use axum::{
-    extract::{Path, State},
+    extract::State,
     http::{StatusCode, header},
     response::IntoResponse,
 };
-use axum_extra::extract::Query;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
@@ -29,7 +30,7 @@ use crate::{
             gpx, scope,
         },
     },
-    service::ServiceError,
+    service::{Feature, Malformed, ServiceError},
 };
 use domain::{
     Id,
@@ -123,7 +124,7 @@ async fn resolve_view_relations(
     params(WateringPlanListParams),
     responses(
         (status = 200, description = "Paginated list of watering plans", body = ListResponse<WateringPlanInListResponse>),
-        (status = 500, description = "Internal server error"),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
@@ -222,8 +223,8 @@ pub async fn list_watering_plans(
     params(("watering_plan_id" = uuid::Uuid, Path, description = "Watering plan ID")),
     responses(
         (status = 200, description = "Watering plan found", body = WateringPlanResponse),
-        (status = 404, description = "Watering plan not found"),
-        (status = 500, description = "Internal server error"),
+        (status = 404, description = "Watering plan not found", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all, fields(plan.id = %id))]
@@ -261,9 +262,9 @@ pub async fn get_watering_plan(
     request_body = WateringPlanCreateRequest,
     responses(
         (status = 201, description = "Watering plan created", body = WateringPlanResponse),
-        (status = 400, description = "Invalid input"),
-        (status = 422, description = "A selected cluster is outside the plan's organization (code `organization_mismatch.clusters_vs_plan`)"),
-        (status = 500, description = "Internal server error"),
+        (status = 400, description = "Invalid input", body = ErrorBody),
+        (status = 422, description = "A selected cluster is outside the plan's organization (code `organization_mismatch.clusters_vs_plan`)", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
@@ -330,9 +331,9 @@ pub async fn create_watering_plan(
     request_body = WateringPlanUpdateRequest,
     responses(
         (status = 200, description = "Watering plan updated", body = WateringPlanResponse),
-        (status = 404, description = "Watering plan not found"),
-        (status = 422, description = "A selected cluster is outside the plan's organization (code `organization_mismatch.clusters_vs_plan`)"),
-        (status = 500, description = "Internal server error"),
+        (status = 404, description = "Watering plan not found", body = ErrorBody),
+        (status = 422, description = "A selected cluster is outside the plan's organization (code `organization_mismatch.clusters_vs_plan`)", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all, fields(plan.id = %id))]
@@ -483,8 +484,8 @@ pub async fn update_watering_plan(
     params(("watering_plan_id" = uuid::Uuid, Path, description = "Watering plan ID")),
     responses(
         (status = 204, description = "Watering plan deleted"),
-        (status = 404, description = "Watering plan not found"),
-        (status = 500, description = "Internal server error"),
+        (status = 404, description = "Watering plan not found", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all, fields(plan.id = %id))]
@@ -536,9 +537,9 @@ fn route_response_from_plan(
     params(("watering_plan_id" = uuid::Uuid, Path, description = "Watering plan ID")),
     responses(
         (status = 200, description = "Optimized route", body = RouteResponse),
-        (status = 404, description = "Plan not found or has no route"),
-        (status = 503, description = "Routing feature is disabled"),
-        (status = 500, description = "Internal server error"),
+        (status = 404, description = "Plan not found or has no route", body = ErrorBody),
+        (status = 503, description = "Routing feature is disabled (code `feature.routing_disabled`)", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all, fields(plan.id = %id))]
@@ -548,7 +549,9 @@ pub async fn get_watering_plan_route(
     Path(id): Path<uuid::Uuid>,
 ) -> Result<Json<RouteResponse>, ServiceError> {
     if !state.feature_flags.routing_enabled {
-        return Err(ServiceError::FeatureDisabled { feature: "routing" });
+        return Err(ServiceError::FeatureDisabled {
+            feature: Feature::Routing,
+        });
     }
     let view = state.watering_plan_service.view_by_id(Id::new(id)).await?;
     let ctx = state.authorization_service.context_for(user.id).await?;
@@ -568,10 +571,10 @@ pub async fn get_watering_plan_route(
     request_body = RouteRequest,
     responses(
         (status = 200, description = "Route preview", body = RouteResponse),
-        (status = 422, description = "Route problem rejected by the optimizer"),
-        (status = 502, description = "Routing engine unavailable"),
-        (status = 503, description = "Routing feature is disabled"),
-        (status = 500, description = "Internal server error"),
+        (status = 422, description = "Route problem rejected by the optimizer", body = ErrorBody),
+        (status = 502, description = "Routing engine unavailable", body = ErrorBody),
+        (status = 503, description = "Routing feature is disabled (code `feature.routing_disabled`)", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
@@ -581,7 +584,9 @@ pub async fn preview_route(
     Json(req): Json<RouteRequest>,
 ) -> Result<Json<RouteResponse>, ServiceError> {
     if !state.feature_flags.routing_enabled {
-        return Err(ServiceError::FeatureDisabled { feature: "routing" });
+        return Err(ServiceError::FeatureDisabled {
+            feature: Feature::Routing,
+        });
     }
     let org = scope::resolve_target_org(&state, user.id, None).await?;
     state
@@ -619,9 +624,9 @@ pub async fn preview_route(
     params(("watering_plan_id" = uuid::Uuid, Path, description = "Watering plan ID")),
     responses(
         (status = 200, description = "GPX file", content_type = "application/gpx+xml"),
-        (status = 404, description = "Plan not found or has no route"),
-        (status = 503, description = "Routing feature is disabled"),
-        (status = 500, description = "Internal server error"),
+        (status = 404, description = "Plan not found or has no route", body = ErrorBody),
+        (status = 503, description = "Routing feature is disabled (code `feature.routing_disabled`)", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all, fields(plan.id = %id))]
@@ -631,7 +636,9 @@ pub async fn get_gpx_file(
     Path(id): Path<uuid::Uuid>,
 ) -> Result<impl IntoResponse, ServiceError> {
     if !state.feature_flags.routing_enabled {
-        return Err(ServiceError::FeatureDisabled { feature: "routing" });
+        return Err(ServiceError::FeatureDisabled {
+            feature: Feature::Routing,
+        });
     }
     let view = state.watering_plan_service.view_by_id(Id::new(id)).await?;
     let ctx = state.authorization_service.context_for(user.id).await?;
@@ -644,7 +651,8 @@ pub async fn get_gpx_file(
     let geometry = plan
         .route_geometry()
         .ok_or(ServiceError::Repository(domain::RepositoryError::NotFound))?;
-    let name = format!("Bewässerungsroute {}", plan.date.format("%Y-%m-%d"));
+    let date = plan.date.format("%Y-%m-%d").to_string();
+    let name = gpx::track_name(plan.description.as_deref(), &date);
     let body = gpx::render_gpx(&name, geometry);
     Ok((
         [
@@ -664,5 +672,8 @@ pub async fn get_gpx_file(
 fn parse_date(s: &str) -> Result<chrono::DateTime<chrono::Utc>, ServiceError> {
     chrono::DateTime::parse_from_rfc3339(s)
         .map(|dt| dt.with_timezone(&chrono::Utc))
-        .map_err(|e| ServiceError::InvalidInput(format!("invalid date: {e}")))
+        .map_err(|e| ServiceError::Malformed {
+            kind: Malformed::Date,
+            detail: e.to_string(),
+        })
 }

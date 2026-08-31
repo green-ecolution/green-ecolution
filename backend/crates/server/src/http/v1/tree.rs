@@ -1,11 +1,9 @@
 use std::sync::Arc;
 
-use crate::http::extractors::Json;
-use axum::{
-    extract::{Path, State},
-    http::StatusCode,
-};
-use axum_extra::extract::Query;
+use crate::http::v1::error::ErrorBody;
+
+use crate::http::extractors::{Json, Path, Query};
+use axum::{extract::State, http::StatusCode};
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
@@ -25,7 +23,7 @@ use crate::{
             scope,
         },
     },
-    service::ServiceError,
+    service::{Malformed, ServiceError},
 };
 use domain::{
     Id,
@@ -56,8 +54,8 @@ const TREE_LIST_Q_MAX_LEN: usize = 100;
     params(TreeListParams),
     responses(
         (status = 200, description = "Paginated list of trees", body = ListResponse<TreeResponse>),
-        (status = 400, description = "Invalid query parameter"),
-        (status = 500, description = "Internal server error"),
+        (status = 400, description = "Invalid query parameter", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all, fields(query.len = tracing::field::Empty))]
@@ -135,8 +133,8 @@ pub async fn list_trees(
     params(("tree_id" = uuid::Uuid, Path, description = "Tree ID")),
     responses(
         (status = 200, description = "Tree found", body = TreeResponse),
-        (status = 404, description = "Tree not found"),
-        (status = 500, description = "Internal server error"),
+        (status = 404, description = "Tree not found", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all, fields(tree.id = %id))]
@@ -169,9 +167,10 @@ pub async fn get_tree(
     request_body = TreeCreateRequest,
     responses(
         (status = 201, description = "Tree created", body = TreeResponse),
-        (status = 400, description = "Invalid input"),
-        (status = 422, description = "The given cluster or sensor belongs to a different organization (codes `organization_mismatch.cluster_vs_tree`, `organization_mismatch.sensor_vs_tree`)"),
-        (status = 500, description = "Internal server error"),
+        (status = 400, description = "Invalid input", body = ErrorBody),
+        (status = 409, description = "The given sensor is already assigned to another tree (code `conflict.sensor_already_assigned`)", body = ErrorBody),
+        (status = 422, description = "The given cluster or sensor belongs to a different organization (codes `organization_mismatch.cluster_vs_tree`, `organization_mismatch.sensor_vs_tree`)", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
@@ -225,10 +224,11 @@ pub async fn create_tree(
     request_body = TreeUpdateRequest,
     responses(
         (status = 200, description = "Tree updated", body = TreeResponse),
-        (status = 403, description = "Missing tree:update in the owning organization"),
-        (status = 404, description = "Tree not found"),
-        (status = 422, description = "The given cluster or sensor belongs to a different organization (codes `organization_mismatch.cluster_vs_tree`, `organization_mismatch.sensor_vs_tree`)"),
-        (status = 500, description = "Internal server error"),
+        (status = 403, description = "Missing tree:update in the owning organization", body = ErrorBody),
+        (status = 409, description = "The given sensor is already assigned to another tree (code `conflict.sensor_already_assigned`)", body = ErrorBody),
+        (status = 404, description = "Tree not found", body = ErrorBody),
+        (status = 422, description = "The given cluster or sensor belongs to a different organization (codes `organization_mismatch.cluster_vs_tree`, `organization_mismatch.sensor_vs_tree`)", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all, fields(tree.id = %id))]
@@ -303,9 +303,9 @@ pub async fn update_tree(
     params(("tree_id" = uuid::Uuid, Path, description = "Tree ID")),
     responses(
         (status = 204, description = "Tree deleted"),
-        (status = 403, description = "Missing tree:delete in the owning organization"),
-        (status = 404, description = "Tree not found"),
-        (status = 500, description = "Internal server error"),
+        (status = 403, description = "Missing tree:delete in the owning organization", body = ErrorBody),
+        (status = 404, description = "Tree not found", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all, fields(tree.id = %id))]
@@ -339,7 +339,7 @@ pub async fn delete_tree(
     description = "Returns a list of distinct planting years across all trees.",
     responses(
         (status = 200, description = "List of distinct planting years", body = Vec<i32>),
-        (status = 500, description = "Internal server error"),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
@@ -362,7 +362,7 @@ pub async fn list_planting_years(
     params(NearestTreeParams),
     responses(
         (status = 200, description = "Nearest trees", body = NearestTreeListResponse),
-        (status = 500, description = "Internal server error"),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
@@ -424,8 +424,8 @@ pub async fn get_nearest_trees(
     params(TreeMarkerQueryParams),
     responses(
         (status = 200, description = "Marker list", body = TreeMarkerListResponse),
-        (status = 400, description = "Invalid bbox or filter parameter"),
-        (status = 500, description = "Internal server error"),
+        (status = 400, description = "Invalid bbox or filter parameter", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
@@ -434,7 +434,12 @@ pub async fn list_tree_markers(
     user: AuthUserExtractor,
     Query(params): Query<TreeMarkerQueryParams>,
 ) -> Result<Json<TreeMarkerListResponse>, ServiceError> {
-    let bbox = params.parse_bbox().map_err(ServiceError::InvalidInput)?;
+    let bbox = params
+        .parse_bbox()
+        .map_err(|detail| ServiceError::Malformed {
+            kind: Malformed::BoundingBox,
+            detail,
+        })?;
 
     let planting_years = params
         .planting_year
@@ -476,9 +481,9 @@ pub async fn list_tree_markers(
     request_body = TransferRequest,
     responses(
         (status = 204, description = "Tree transferred"),
-        (status = 403, description = "Missing tree:update in source or target organization"),
-        (status = 404, description = "Tree or organization not found"),
-        (status = 409, description = "Tree is part of a cluster"),
+        (status = 403, description = "Missing tree:update in source or target organization", body = ErrorBody),
+        (status = 404, description = "Tree or organization not found", body = ErrorBody),
+        (status = 409, description = "Tree is part of a cluster (code `conflict.tree_in_cluster`)", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all, fields(tree.id = %id))]

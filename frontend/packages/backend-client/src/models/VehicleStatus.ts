@@ -20,7 +20,7 @@
 export const VehicleStatus = {
     Active: 'active',
     Available: 'available',
-    NotAvailable: 'not available',
+    NotAvailable: 'not_available',
     Unknown: 'unknown'
 } as const;
 export type VehicleStatus = typeof VehicleStatus[keyof typeof VehicleStatus];

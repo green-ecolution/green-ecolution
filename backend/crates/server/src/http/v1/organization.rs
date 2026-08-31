@@ -1,10 +1,9 @@
 use std::sync::Arc;
 
-use crate::http::extractors::Json;
-use axum::{
-    extract::{Path, State},
-    http::StatusCode,
-};
+use crate::http::v1::error::ErrorBody;
+
+use crate::http::extractors::{Json, Path};
+use axum::{extract::State, http::StatusCode};
 use utoipa_axum::{router::OpenApiRouter, routes};
 use uuid::Uuid;
 
@@ -43,10 +42,10 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
     description = "Returns the caller's organization subtree as a flat list; clients rebuild the tree via parent_id. Requires organization:read.",
     responses(
         (status = 200, description = "The organizations visible to the caller", body = Vec<OrganizationResponse>),
-        (status = 401, description = "Unauthorized"),
-        (status = 403, description = "Forbidden"),
-        (status = 422, description = "Acting user has no organization and none was given"),
-        (status = 500, description = "Internal server error"),
+        (status = 401, description = "Unauthorized", body = ErrorBody),
+        (status = 403, description = "Forbidden", body = ErrorBody),
+        (status = 422, description = "Acting user has no organization and none was given", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
@@ -83,10 +82,10 @@ pub async fn list_organizations(
     params(("org_id" = Uuid, Path, description = "Organization id")),
     responses(
         (status = 200, description = "The organization", body = OrganizationDetailResponse),
-        (status = 401, description = "Unauthorized"),
-        (status = 403, description = "Forbidden"),
-        (status = 404, description = "Not found"),
-        (status = 500, description = "Internal server error"),
+        (status = 401, description = "Unauthorized", body = ErrorBody),
+        (status = 403, description = "Forbidden", body = ErrorBody),
+        (status = 404, description = "Not found", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
@@ -115,12 +114,12 @@ pub async fn get_organization(
     request_body = OrganizationCreateRequest,
     responses(
         (status = 201, description = "Created", body = OrganizationResponse),
-        (status = 400, description = "Invalid input"),
-        (status = 401, description = "Unauthorized"),
-        (status = 403, description = "Forbidden"),
-        (status = 409, description = "Sibling name conflict"),
-        (status = 422, description = "Parent does not exist"),
-        (status = 500, description = "Internal server error"),
+        (status = 400, description = "Invalid input", body = ErrorBody),
+        (status = 401, description = "Unauthorized", body = ErrorBody),
+        (status = 403, description = "Forbidden", body = ErrorBody),
+        (status = 409, description = "Sibling name conflict (code `resource.already_exists`)", body = ErrorBody),
+        (status = 422, description = "Parent does not exist", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
@@ -154,13 +153,13 @@ pub async fn create_organization(
     request_body = OrganizationUpdateRequest,
     responses(
         (status = 200, description = "Updated", body = OrganizationResponse),
-        (status = 400, description = "Invalid input"),
-        (status = 401, description = "Unauthorized"),
-        (status = 403, description = "Forbidden"),
-        (status = 404, description = "Not found"),
-        (status = 409, description = "Name conflict or root organization"),
-        (status = 422, description = "Contact person is not a member of this organization"),
-        (status = 500, description = "Internal server error"),
+        (status = 400, description = "Invalid input", body = ErrorBody),
+        (status = 401, description = "Unauthorized", body = ErrorBody),
+        (status = 403, description = "Forbidden", body = ErrorBody),
+        (status = 404, description = "Not found", body = ErrorBody),
+        (status = 409, description = "Name conflict or root organization (codes `resource.already_exists`, `conflict.root_organization_immutable`)", body = ErrorBody),
+        (status = 422, description = "Contact person is not a member of this organization", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
@@ -198,11 +197,11 @@ pub async fn update_organization(
     params(("org_id" = Uuid, Path, description = "Organization id")),
     responses(
         (status = 204, description = "Deleted"),
-        (status = 401, description = "Unauthorized"),
-        (status = 403, description = "Forbidden"),
-        (status = 404, description = "Not found"),
-        (status = 409, description = "Organization still has children or users"),
-        (status = 500, description = "Internal server error"),
+        (status = 401, description = "Unauthorized", body = ErrorBody),
+        (status = 403, description = "Forbidden", body = ErrorBody),
+        (status = 404, description = "Not found", body = ErrorBody),
+        (status = 409, description = "Organization still has children or users, or is the root (codes `conflict.organization_not_empty`, `conflict.root_organization_immutable`)", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]

@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT a.user_id, r.id, r.organization_id, r.name, r.description, r.permissions\n               FROM roles r JOIN role_assignments a ON a.role_id = r.id\n               WHERE a.user_id = ANY($1)",
+  "query": "SELECT a.user_id, r.id, r.organization_id, r.name, r.description, r.permissions, r.template_key\n               FROM roles r JOIN role_assignments a ON a.role_id = r.id\n               WHERE a.user_id = ANY($1)",
   "describe": {
     "columns": [
       {
@@ -32,6 +32,11 @@
         "ordinal": 5,
         "name": "permissions",
         "type_info": "TextArray"
+      },
+      {
+        "ordinal": 6,
+        "name": "template_key",
+        "type_info": "Text"
       }
     ],
     "parameters": {
@@ -45,8 +50,9 @@
       true,
       false,
       true,
-      false
+      false,
+      true
     ]
   },
-  "hash": "9417afea389bc829d86dbae04e67f7e101b024f502ef47fa9813c4211a0caf0c"
+  "hash": "3dc446a31b78007b45c519e4ae49cc5451bcb8a49585b66b52caa01da69fa0ce"
 }

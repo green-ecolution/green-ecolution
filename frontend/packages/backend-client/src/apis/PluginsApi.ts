@@ -16,6 +16,7 @@
 import * as runtime from '../runtime';
 import type {
   ClientTokenResponse,
+  ErrorBody,
   PluginAuthRequest,
   PluginListResponse,
   PluginRegisterRequest,
@@ -24,6 +25,8 @@ import type {
 import {
     ClientTokenResponseFromJSON,
     ClientTokenResponseToJSON,
+    ErrorBodyFromJSON,
+    ErrorBodyToJSON,
     PluginAuthRequestFromJSON,
     PluginAuthRequestToJSON,
     PluginListResponseFromJSON,

@@ -33,6 +33,58 @@ pub enum ValidationError {
     InvalidFormat { field: &'static str, reason: String },
 }
 
+/// A validation failure in the shape a client can translate.
+///
+/// Both delivery paths build this from the same [`ValidationError`]: the WASM
+/// bindings for in-browser form validation and the HTTP layer for rules that
+/// only the server can check. Keeping one constructor is what stops the two
+/// key spaces from drifting apart, which would silently strand catalog
+/// entries on one side.
+#[derive(Debug, Clone, PartialEq, serde::Serialize)]
+pub struct ValidationIssue {
+    /// Namespaced domain field label, e.g. `cluster.name`.
+    pub field: &'static str,
+    /// Translation key, `{field}.{violated rule}`.
+    pub key: String,
+    /// Values the translated sentence interpolates.
+    pub params: serde_json::Value,
+}
+
+impl From<&ValidationError> for ValidationIssue {
+    fn from(error: &ValidationError) -> Self {
+        use serde_json::json;
+
+        let (field, rule, params) = match error {
+            ValidationError::EmptyString { field } => (*field, "empty", json!({})),
+            ValidationError::TooShort { field, min, got } => {
+                (*field, "tooShort", json!({ "min": min, "got": got }))
+            }
+            ValidationError::TooLong { field, max, got } => {
+                (*field, "tooLong", json!({ "max": max, "got": got }))
+            }
+            ValidationError::OutOfRange {
+                field,
+                min,
+                max,
+                got,
+            } => (
+                *field,
+                "outOfRange",
+                json!({ "min": min, "max": max, "got": got }),
+            ),
+            ValidationError::InvalidFormat { field, reason } => {
+                (*field, "invalidFormat", json!({ "reason": reason }))
+            }
+        };
+
+        Self {
+            field,
+            key: format!("{field}.{rule}"),
+            params,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -62,5 +114,68 @@ mod tests {
             got: 1.5,
         };
         assert_eq!(err.to_string(), "moisture value 1.5 out of range [0, 1]");
+    }
+}
+
+#[cfg(test)]
+mod issue_tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn key_is_the_field_label_plus_the_violated_rule() {
+        let issue = ValidationIssue::from(&ValidationError::TooLong {
+            field: "cluster.name",
+            max: 255,
+            got: 300,
+        });
+        assert_eq!(issue.field, "cluster.name");
+        assert_eq!(issue.key, "cluster.name.tooLong");
+        assert_eq!(issue.params, json!({ "max": 255, "got": 300 }));
+    }
+
+    #[test]
+    fn an_empty_field_carries_no_parameters() {
+        let issue = ValidationIssue::from(&ValidationError::EmptyString {
+            field: "tree.species",
+        });
+        assert_eq!(issue.key, "tree.species.empty");
+        assert_eq!(issue.params, json!({}));
+    }
+
+    #[test]
+    fn a_range_violation_carries_the_bounds_and_the_offending_value() {
+        let issue = ValidationIssue::from(&ValidationError::OutOfRange {
+            field: "coordinate.latitude",
+            min: -90.0,
+            max: 90.0,
+            got: 91.0,
+        });
+        assert_eq!(issue.key, "coordinate.latitude.outOfRange");
+        assert_eq!(
+            issue.params,
+            json!({ "min": -90.0, "max": 90.0, "got": 91.0 })
+        );
+    }
+
+    #[test]
+    fn a_format_violation_carries_its_reason() {
+        let issue = ValidationIssue::from(&ValidationError::InvalidFormat {
+            field: "user.email",
+            reason: "missing @".into(),
+        });
+        assert_eq!(issue.key, "user.email.invalidFormat");
+        assert_eq!(issue.params, json!({ "reason": "missing @" }));
+    }
+
+    #[test]
+    fn a_too_short_field_carries_the_minimum() {
+        let issue = ValidationIssue::from(&ValidationError::TooShort {
+            field: "role.name",
+            min: 2,
+            got: 1,
+        });
+        assert_eq!(issue.key, "role.name.tooShort");
+        assert_eq!(issue.params, json!({ "min": 2, "got": 1 }));
     }
 }

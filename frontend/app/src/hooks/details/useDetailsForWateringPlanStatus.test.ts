@@ -19,7 +19,7 @@ describe('getWateringPlanStatusTransitionOptions', () => {
       WateringPlanStatus.Active,
       WateringPlanStatus.Planned,
       WateringPlanStatus.Finished,
-      WateringPlanStatus.NotCompeted,
+      WateringPlanStatus.NotCompleted,
       WateringPlanStatus.Canceled,
     ])
   })
@@ -27,7 +27,7 @@ describe('getWateringPlanStatusTransitionOptions', () => {
   it.each([
     WateringPlanStatus.Finished,
     WateringPlanStatus.Canceled,
-    WateringPlanStatus.NotCompeted,
+    WateringPlanStatus.NotCompleted,
     WateringPlanStatus.Unknown,
   ])('offers no transition out of the terminal status %s', (status) => {
     expect(valuesFor(status)).toEqual([])

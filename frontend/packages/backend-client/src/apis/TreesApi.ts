@@ -15,6 +15,7 @@
 
 import * as runtime from '../runtime';
 import type {
+  ErrorBody,
   ListResponseTreeResponse,
   NearestTreeListResponse,
   TransferRequest,
@@ -25,6 +26,8 @@ import type {
   WateringStatus,
 } from '../models/index';
 import {
+    ErrorBodyFromJSON,
+    ErrorBodyToJSON,
     ListResponseTreeResponseFromJSON,
     ListResponseTreeResponseToJSON,
     NearestTreeListResponseFromJSON,

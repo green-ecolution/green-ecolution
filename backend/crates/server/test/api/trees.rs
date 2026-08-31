@@ -800,14 +800,27 @@ async fn list_trees_rejects_invalid_watering_status() {
 }
 
 #[tokio::test]
-async fn list_trees_accepts_url_encoded_just_watered_status() {
+async fn list_trees_still_accepts_the_previous_just_watered_spelling() {
     let app = spawn_app().await;
     create_tree_with(&app, "T-001", 2018, None).await;
 
-    // "just watered" carries a space; pin the %20 round-trip through serde_html_form.
+    // The label was renamed to `just_watered`; the space-carrying spelling stays
+    // accepted as a serde alias so existing callers keep working.
     let response = app
         .get("/api/v1/trees?watering_status=just%20watered")
         .await;
+
+    assert_eq!(response.status().as_u16(), 200);
+    let body: serde_json::Value = response.json().await.unwrap();
+    assert_eq!(body["data"].as_array().unwrap().len(), 0);
+}
+
+#[tokio::test]
+async fn list_trees_accepts_the_canonical_just_watered_status() {
+    let app = spawn_app().await;
+    create_tree_with(&app, "T-001", 2018, None).await;
+
+    let response = app.get("/api/v1/trees?watering_status=just_watered").await;
 
     assert_eq!(response.status().as_u16(), 200);
     let body: serde_json::Value = response.json().await.unwrap();

@@ -404,7 +404,7 @@ impl TreeClusterReader for PgTreeClusterRepository {
                 COUNT(*) FILTER (WHERE watering_status = 'bad')           AS "bad!: i64",
                 COUNT(*) FILTER (WHERE watering_status = 'moderate')      AS "moderate!: i64",
                 COUNT(*) FILTER (WHERE watering_status = 'good')          AS "good!: i64",
-                COUNT(*) FILTER (WHERE watering_status = 'just watered')  AS "just_watered!: i64",
+                COUNT(*) FILTER (WHERE watering_status = 'just_watered')  AS "just_watered!: i64",
                 COUNT(*) FILTER (WHERE watering_status = 'unknown')       AS "unknown!: i64",
                 COALESCE((
                     SELECT COUNT(*) FROM trees t
@@ -511,7 +511,7 @@ impl TreeClusterReader for PgTreeClusterRepository {
                       COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::uuid[]) AS "tree_ids!: Vec<RawId>"
             FROM tree_clusters tc
             LEFT JOIN trees t ON t.tree_cluster_id = tc.id
-            WHERE tc.watering_status = 'just watered'
+            WHERE tc.watering_status = 'just_watered'
               AND (tc.last_watered IS NULL OR tc.last_watered < $1)
             GROUP BY tc.id"#,
             cutoff.naive_utc()

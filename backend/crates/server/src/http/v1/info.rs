@@ -1,5 +1,7 @@
 use std::sync::Arc;
 
+use crate::http::v1::error::ErrorBody;
+
 use axum::{Json, extract::State};
 use utoipa_axum::{router::OpenApiRouter, routes};
 
@@ -29,7 +31,7 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
     description = "Returns version, git, and map configuration metadata.",
     responses(
         (status = 200, description = "Application info", body = AppInfoResponse),
-        (status = 500, description = "Internal server error"),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
@@ -58,7 +60,7 @@ pub async fn get_info(
     description = "Returns the map center coordinates and bounding box.",
     responses(
         (status = 200, description = "Map configuration", body = MapInfoResponse),
-        (status = 500, description = "Internal server error"),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
@@ -75,7 +77,7 @@ pub async fn get_map_info(
     description = "Returns server OS, hostname, and network information.",
     responses(
         (status = 200, description = "Server information", body = ServerInfoResponse),
-        (status = 500, description = "Internal server error"),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
@@ -92,7 +94,7 @@ pub async fn get_server_info(
     description = "Returns health status of all connected services (database, routing, etc.).",
     responses(
         (status = 200, description = "Services health status", body = ServicesInfoResponse),
-        (status = 500, description = "Internal server error"),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
@@ -111,7 +113,7 @@ pub async fn get_services_info(
     description = "Returns counts of all managed resources.",
     responses(
         (status = 200, description = "Data statistics", body = DataStatisticsResponse),
-        (status = 500, description = "Internal server error"),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]

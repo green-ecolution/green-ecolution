@@ -7,7 +7,7 @@ export const STATUS_COLORS: Record<WateringStatus, string> = {
   good: '#ACB63B',
   moderate: '#FFC434',
   bad: '#E44E4D',
-  'just watered': '#747474',
+  just_watered: '#747474',
   unknown: '#A2A2A2',
 }
 
@@ -21,8 +21,8 @@ export const STATUS_COLOR_EXPRESSION: ExpressionSpecification = [
   STATUS_COLORS.moderate,
   'bad',
   STATUS_COLORS.bad,
-  'just watered',
-  STATUS_COLORS['just watered'],
+  'just_watered',
+  STATUS_COLORS.just_watered,
   STATUS_COLORS.unknown,
 ]
 

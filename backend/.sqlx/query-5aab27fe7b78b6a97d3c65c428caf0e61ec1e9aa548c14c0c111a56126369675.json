@@ -40,7 +40,7 @@
                 "moderate",
                 "bad",
                 "unknown",
-                "just watered"
+                "just_watered"
               ]
             }
           }
@@ -67,7 +67,7 @@
                       "moderate",
                       "bad",
                       "unknown",
-                      "just watered"
+                      "just_watered"
                     ]
                   }
                 }

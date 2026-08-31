@@ -17,7 +17,7 @@ use domain::{
     },
 };
 
-use super::{OrganizationMismatch, ServiceError, event_bus::EventBus};
+use super::{Feature, OrganizationMismatch, ServiceError, event_bus::EventBus};
 
 pub struct WateringPlanService {
     reader: Arc<dyn WateringPlanReader>,
@@ -232,7 +232,9 @@ impl WateringPlanService {
         let optimizer = self
             .route_optimizer
             .as_ref()
-            .ok_or(ServiceError::FeatureDisabled { feature: "routing" })?;
+            .ok_or(ServiceError::FeatureDisabled {
+                feature: Feature::Routing,
+            })?;
         let transporter = self.vehicle_reader.by_id(transporter_id).await?;
         let trailer = match trailer_id {
             Some(id) => Some(self.vehicle_reader.by_id(id).await?),
@@ -337,5 +339,5 @@ impl WateringPlanService {
 }
 
 fn map_plan_error(e: WateringPlanError) -> ServiceError {
-    ServiceError::InvalidInput(e.to_string())
+    ServiceError::WateringPlan(e)
 }
