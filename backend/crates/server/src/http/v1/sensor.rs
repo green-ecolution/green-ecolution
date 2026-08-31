@@ -1,10 +1,7 @@
 use std::sync::Arc;
 
-use crate::http::extractors::Json;
-use axum::{
-    extract::{Path, Query, State},
-    http::StatusCode,
-};
+use crate::http::extractors::{Json, Path, Query};
+use axum::{extract::State, http::StatusCode};
 use chrono::{DateTime, Utc};
 use utoipa_axum::{router::OpenApiRouter, routes};
 

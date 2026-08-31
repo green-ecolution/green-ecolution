@@ -10,6 +10,7 @@ pub mod enforcement_sensor;
 pub mod enforcement_tree;
 pub mod enforcement_vehicle;
 pub mod enforcement_watering_plan;
+pub mod error_contract;
 pub mod evaluation;
 pub mod health;
 pub mod health_probes;

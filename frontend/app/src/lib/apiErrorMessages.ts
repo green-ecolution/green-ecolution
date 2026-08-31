@@ -82,6 +82,16 @@ export const apiErrorMessages: Record<string, string> = {
   'code.request.malformed_bounding_box': 'Der Kartenausschnitt konnte nicht gelesen werden.',
   'code.request.unknown_permission': 'Die Anfrage nennt eine unbekannte Berechtigung.',
 
+  // Client-side defects rather than user mistakes. They still need their own
+  // text: `status.404` would claim a record was not found, when in truth the
+  // endpoint does not exist, which usually means app and server versions differ.
+  'code.request.unknown_endpoint':
+    'Diese Funktion kennt der Server nicht. Vermutlich passen App und Server nicht zusammen. Lade die Seite neu.',
+  'code.request.method_not_allowed': 'Die Anfrage ist für diesen Endpunkt nicht zulässig.',
+  'code.request.malformed_path_parameter': 'Der Verweis in der Adresse ist ungültig.',
+  'code.request.malformed_query_parameter': 'Ein Filter- oder Seitenparameter ist ungültig.',
+  'code.request.malformed_body': 'Die gesendeten Daten konnten nicht gelesen werden.',
+
   // Deliberately absent: `resource.*`, `auth.*`, `request.invalid_input`,
   // `request.validation_failed` and `internal.error`. The first three and the
   // last say no more than their status does; `request.validation_failed`
@@ -92,6 +102,7 @@ export const apiErrorMessages: Record<string, string> = {
   'status.403': 'Für diese Aktion fehlt dir die Berechtigung.',
   'status.404': 'Der angeforderte Datensatz wurde nicht gefunden.',
   'status.409': 'Der Datensatz existiert bereits oder wurde zwischenzeitlich geändert.',
+  'status.405': 'Die Anfrage ist für diesen Endpunkt nicht zulässig.',
   'status.415': 'Das Format der Anfrage wird nicht unterstützt.',
   'status.422': 'Die eingegebenen Daten sind unvollständig oder ungültig.',
   'status.500':

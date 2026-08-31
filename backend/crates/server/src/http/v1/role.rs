@@ -1,11 +1,8 @@
 use std::collections::BTreeSet;
 use std::sync::Arc;
 
-use crate::http::extractors::Json;
-use axum::{
-    extract::{Path, State},
-    http::StatusCode,
-};
+use crate::http::extractors::{Json, Path};
+use axum::{extract::State, http::StatusCode};
 use utoipa_axum::{router::OpenApiRouter, routes};
 use uuid::Uuid;
 

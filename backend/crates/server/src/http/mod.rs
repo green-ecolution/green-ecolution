@@ -167,11 +167,32 @@ pub fn router(
     router
         .route("/api/config.js", axum::routing::get(frontend_config_js))
         .merge(swagger_ui(api, oidc))
+        // Without these, an unknown route and a wrong method answer with an
+        // empty body, which a client that parses every response as JSON reads
+        // as a parse failure rather than as the 404/405 it is.
+        .fallback(route_not_found)
+        .method_not_allowed_fallback(method_not_allowed)
         .layer(cors_layer(cors))
         .layer(PropagateRequestIdLayer::new(REQUEST_ID_HEADER))
         .layer(trace_layer)
         .layer(SetRequestIdLayer::new(REQUEST_ID_HEADER, MakeRequestUuid))
         .with_state(state)
+}
+
+async fn route_not_found() -> axum::response::Response {
+    v1::error::coded_error_response(
+        axum::http::StatusCode::NOT_FOUND,
+        "no such endpoint",
+        "request.unknown_endpoint",
+    )
+}
+
+async fn method_not_allowed() -> axum::response::Response {
+    v1::error::coded_error_response(
+        axum::http::StatusCode::METHOD_NOT_ALLOWED,
+        "method not allowed for this endpoint",
+        "request.method_not_allowed",
+    )
 }
 
 const OIDC_SECURITY_SCHEME: &str = "keycloak";

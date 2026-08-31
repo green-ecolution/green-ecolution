@@ -22,14 +22,7 @@ pub struct ErrorBody {
     pub validation: Option<ValidationIssue>,
 }
 
-pub(crate) fn error_response(
-    status: StatusCode,
-    message: impl Into<String>,
-) -> axum::response::Response {
-    body_response(status, message, None, None)
-}
-
-/// `error_response` plus the stable `code` discriminator.
+/// Renders the error body with its stable `code` discriminator.
 pub(crate) fn coded_error_response(
     status: StatusCode,
     message: impl Into<String>,

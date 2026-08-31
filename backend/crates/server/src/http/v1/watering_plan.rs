@@ -1,12 +1,11 @@
 use std::{collections::HashMap, sync::Arc};
 
-use crate::http::extractors::Json;
+use crate::http::extractors::{Json, Path, Query};
 use axum::{
-    extract::{Path, State},
+    extract::State,
     http::{StatusCode, header},
     response::IntoResponse,
 };
-use axum_extra::extract::Query;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{

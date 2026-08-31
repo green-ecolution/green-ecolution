@@ -3,7 +3,7 @@ use axum::{
     response::{IntoResponse, Response},
 };
 
-use crate::http::v1::error::error_response;
+use crate::http::v1::error::coded_error_response;
 
 /// Drop-in replacement for [`axum::Json`] that renders extraction failures as
 /// the API's JSON error body. Axum's own rejections are `text/plain`, which
@@ -40,6 +40,10 @@ impl From<JsonRejection> for JsonBodyRejection {
 impl IntoResponse for JsonBodyRejection {
     fn into_response(self) -> Response {
         tracing::warn!(error = %self.0, kind = "request_body", "request rejected");
-        error_response(self.0.status(), self.0.body_text())
+        coded_error_response(
+            self.0.status(),
+            self.0.body_text(),
+            "request.malformed_body",
+        )
     }
 }
