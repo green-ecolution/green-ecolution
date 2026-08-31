@@ -15,11 +15,14 @@
 
 import * as runtime from '../runtime';
 import type {
+  ErrorBody,
   StartPointRequest,
   StartPointResponse,
   TransferRequest,
 } from '../models/index';
 import {
+    ErrorBodyFromJSON,
+    ErrorBodyToJSON,
     StartPointRequestFromJSON,
     StartPointRequestToJSON,
     StartPointResponseFromJSON,

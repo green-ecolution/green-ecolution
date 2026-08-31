@@ -1,6 +1,11 @@
-import { FetchError, ResponseError } from '@green-ecolution/backend-client'
-import { translateIssue, type ServerValidationIssue } from '@green-ecolution/domain-wasm'
-import { isHTTPError } from './utils'
+import {
+  FetchError,
+  ResponseError,
+  instanceOfErrorBody,
+  instanceOfValidationIssue,
+  type ValidationIssue,
+} from '@green-ecolution/backend-client'
+import { translateIssue } from '@green-ecolution/domain-wasm'
 import { messageFor, type ApiErrorMessageKey } from './apiErrorMessages'
 
 export interface ApiErrorInfo {
@@ -15,7 +20,7 @@ export interface ApiErrorInfo {
    * Carries the same key as the in-browser validator, so `translateIssue`
    * renders it and a form can attach it to the field.
    */
-  validation?: ServerValidationIssue
+  validation?: ValidationIssue
   /** Raw backend detail, kept for logging and unmapped causes. */
   detail?: string
   status?: number
@@ -24,30 +29,33 @@ export interface ApiErrorInfo {
 interface ErrorPayload {
   detail?: string
   code?: string
-  validation?: ServerValidationIssue
+  validation?: ValidationIssue
 }
 
-function readValidationIssue(parsed: object): ServerValidationIssue | undefined {
-  if (!('validation' in parsed)) return undefined
-  const issue: unknown = parsed.validation
+// The generated guards only assert that the required keys exist, which is
+// exactly the check that matters here: the body crossed the network and may be
+// anything.
+function readValidationIssue(issue: unknown): ValidationIssue | undefined {
   if (issue === null || typeof issue !== 'object') return undefined
-  if (!('field' in issue) || !('key' in issue) || !('params' in issue)) return undefined
-  if (typeof issue.field !== 'string' || typeof issue.key !== 'string') return undefined
-  return issue as ServerValidationIssue
+  return instanceOfValidationIssue(issue) ? issue : undefined
 }
 
-// Error bodies are JSON `{ error, code? }`, but a proxy or a crash can still
-// deliver HTML or an empty body — parsing must never throw here, or the error
-// handling itself becomes the reported error.
+// Error bodies follow the generated `ErrorBody` schema, but a proxy or a crash
+// can still deliver HTML or an empty body — parsing must never throw here, or
+// the error handling itself becomes the reported error.
 async function readPayload(response: Response): Promise<ErrorPayload> {
   try {
     const text = await response.clone().text()
     if (!text.trim()) return {}
     try {
       const parsed: unknown = JSON.parse(text)
-      if (!isHTTPError(parsed)) return { detail: text }
-      const code = 'code' in parsed && typeof parsed.code === 'string' ? parsed.code : undefined
-      return { detail: parsed.error, code, validation: readValidationIssue(parsed) }
+      if (parsed === null || typeof parsed !== 'object') return { detail: text }
+      if (!instanceOfErrorBody(parsed)) return { detail: text }
+      return {
+        detail: parsed.error,
+        code: parsed.code ?? undefined,
+        validation: readValidationIssue(parsed.validation),
+      }
     } catch {
       return { detail: text }
     }

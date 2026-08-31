@@ -1,5 +1,7 @@
 use std::{collections::BTreeSet, sync::Arc};
 
+use crate::http::v1::error::ErrorBody;
+
 use crate::http::extractors::{Json, Path, Query};
 use axum::{extract::State, http::StatusCode};
 use utoipa_axum::{router::OpenApiRouter, routes};
@@ -54,9 +56,9 @@ fn ensure_not_self(actor: Uuid, target: Uuid) -> Result<(), ServiceError> {
     description = "Returns the profile of the currently authenticated user.",
     responses(
         (status = 200, description = "The authenticated user", body = UserResponse),
-        (status = 401, description = "Unauthorized"),
-        (status = 404, description = "User not found"),
-        (status = 500, description = "Internal server error"),
+        (status = 401, description = "Unauthorized", body = ErrorBody),
+        (status = 404, description = "User not found", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
@@ -87,10 +89,10 @@ pub async fn get_me(
     ),
     responses(
         (status = 200, description = "Paginated list of users", body = ListResponse<UserResponse>),
-        (status = 401, description = "Unauthorized"),
-        (status = 403, description = "Forbidden"),
-        (status = 422, description = "Acting user has no organization"),
-        (status = 500, description = "Internal server error"),
+        (status = 401, description = "Unauthorized", body = ErrorBody),
+        (status = 403, description = "Forbidden", body = ErrorBody),
+        (status = 422, description = "Acting user has no organization", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
@@ -134,12 +136,12 @@ pub async fn list_users(
     request_body = UserRegisterRequest,
     responses(
         (status = 201, description = "User created", body = UserResponse),
-        (status = 400, description = "Invalid input"),
-        (status = 401, description = "Unauthorized"),
-        (status = 403, description = "Forbidden"),
-        (status = 404, description = "Role not found"),
-        (status = 409, description = "Role is a template and cannot be assigned (code `conflict.role_template_not_assignable`)"),
-        (status = 500, description = "Internal server error"),
+        (status = 400, description = "Invalid input", body = ErrorBody),
+        (status = 401, description = "Unauthorized", body = ErrorBody),
+        (status = 403, description = "Forbidden", body = ErrorBody),
+        (status = 404, description = "Role not found", body = ErrorBody),
+        (status = 409, description = "Role is a template and cannot be assigned (code `conflict.role_template_not_assignable`)", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
@@ -182,11 +184,11 @@ pub async fn create_user(
     request_body = UserUpdateRequest,
     responses(
         (status = 200, description = "Updated user", body = UserResponse),
-        (status = 400, description = "Invalid input"),
-        (status = 401, description = "Unauthorized"),
-        (status = 403, description = "Forbidden"),
-        (status = 404, description = "User not found"),
-        (status = 500, description = "Internal server error"),
+        (status = 400, description = "Invalid input", body = ErrorBody),
+        (status = 401, description = "Unauthorized", body = ErrorBody),
+        (status = 403, description = "Forbidden", body = ErrorBody),
+        (status = 404, description = "User not found", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
@@ -227,9 +229,9 @@ pub async fn update_user(
     params(("user_id" = Uuid, Path, description = "User id")),
     responses(
         (status = 200, description = "The user's roles", body = Vec<RoleResponse>),
-        (status = 401, description = "Unauthorized"),
-        (status = 403, description = "Forbidden"),
-        (status = 500, description = "Internal server error"),
+        (status = 401, description = "Unauthorized", body = ErrorBody),
+        (status = 403, description = "Forbidden", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all, fields(user.id = %user_id))]
@@ -269,12 +271,12 @@ pub async fn list_user_roles(
     request_body = AssignRoleRequest,
     responses(
         (status = 201, description = "Role assigned", body = RoleResponse),
-        (status = 401, description = "Unauthorized"),
-        (status = 403, description = "Forbidden"),
-        (status = 404, description = "Role not found"),
-        (status = 409, description = "Role is a template and cannot be assigned, or attempting to change your own roles (codes `conflict.role_template_not_assignable`, `conflict.cannot_change_own_access`)"),
-        (status = 422, description = "The role's organization does not match the target user's organization (code `organization_mismatch.role_vs_user`)"),
-        (status = 500, description = "Internal server error"),
+        (status = 401, description = "Unauthorized", body = ErrorBody),
+        (status = 403, description = "Forbidden", body = ErrorBody),
+        (status = 404, description = "Role not found", body = ErrorBody),
+        (status = 409, description = "Role is a template and cannot be assigned, or attempting to change your own roles (codes `conflict.role_template_not_assignable`, `conflict.cannot_change_own_access`)", body = ErrorBody),
+        (status = 422, description = "The role's organization does not match the target user's organization (code `organization_mismatch.role_vs_user`)", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all, fields(user.id = %user_id))]
@@ -326,11 +328,11 @@ pub async fn assign_user_role(
     ),
     responses(
         (status = 204, description = "Role revoked"),
-        (status = 401, description = "Unauthorized"),
-        (status = 403, description = "Forbidden"),
-        (status = 404, description = "Role not found"),
-        (status = 409, description = "Attempting to change your own roles (code `conflict.cannot_change_own_access`)"),
-        (status = 500, description = "Internal server error"),
+        (status = 401, description = "Unauthorized", body = ErrorBody),
+        (status = 403, description = "Forbidden", body = ErrorBody),
+        (status = 404, description = "Role not found", body = ErrorBody),
+        (status = 409, description = "Attempting to change your own roles (code `conflict.cannot_change_own_access`)", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all, fields(user.id = %user_id))]
@@ -366,10 +368,10 @@ pub async fn revoke_user_role(
     request_body = SetOrganizationRequest,
     responses(
         (status = 200, description = "Updated user", body = UserResponse),
-        (status = 401, description = "Unauthorized"),
-        (status = 403, description = "Forbidden"),
-        (status = 409, description = "Attempting to change your own organization (code `conflict.cannot_change_own_access`)"),
-        (status = 500, description = "Internal server error"),
+        (status = 401, description = "Unauthorized", body = ErrorBody),
+        (status = 403, description = "Forbidden", body = ErrorBody),
+        (status = 409, description = "Attempting to change your own organization (code `conflict.cannot_change_own_access`)", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all, fields(user.id = %user_id))]

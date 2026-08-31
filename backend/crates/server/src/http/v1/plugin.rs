@@ -1,5 +1,7 @@
 use std::sync::Arc;
 
+use crate::http::v1::error::ErrorBody;
+
 use crate::http::extractors::Path;
 use axum::{Json, body::Bytes, extract::State, http::StatusCode};
 use utoipa_axum::{router::OpenApiRouter, routes};
@@ -41,8 +43,8 @@ fn guard(state: &AppState) -> Result<(), ServiceError> {
     description = "Returns all registered plugins.",
     responses(
         (status = 200, description = "List of registered plugins", body = PluginListResponse),
-        (status = 503, description = "Plugins feature is disabled (code `feature.plugins_disabled`)"),
-        (status = 500, description = "Internal server error"),
+        (status = 503, description = "Plugins feature is disabled (code `feature.plugins_disabled`)", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
@@ -60,9 +62,9 @@ pub async fn list_plugins(
     request_body = PluginRegisterRequest,
     responses(
         (status = 201, description = "Plugin registered", body = ClientTokenResponse),
-        (status = 400, description = "Invalid input"),
-        (status = 503, description = "Plugins feature is disabled (code `feature.plugins_disabled`)"),
-        (status = 500, description = "Internal server error"),
+        (status = 400, description = "Invalid input", body = ErrorBody),
+        (status = 503, description = "Plugins feature is disabled (code `feature.plugins_disabled`)", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
@@ -82,9 +84,9 @@ pub async fn register_plugin(
     params(("plugin_slug" = String, Path, description = "Plugin slug")),
     responses(
         (status = 200, description = "Plugin found", body = PluginResponse),
-        (status = 404, description = "Plugin not found"),
-        (status = 503, description = "Plugins feature is disabled (code `feature.plugins_disabled`)"),
-        (status = 500, description = "Internal server error"),
+        (status = 404, description = "Plugin not found", body = ErrorBody),
+        (status = 503, description = "Plugins feature is disabled (code `feature.plugins_disabled`)", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
@@ -103,9 +105,9 @@ pub async fn get_plugin(
     params(("plugin_slug" = String, Path, description = "Plugin slug")),
     responses(
         (status = 200, description = "Heartbeat received"),
-        (status = 404, description = "Plugin not found"),
-        (status = 503, description = "Plugins feature is disabled (code `feature.plugins_disabled`)"),
-        (status = 500, description = "Internal server error"),
+        (status = 404, description = "Plugin not found", body = ErrorBody),
+        (status = 503, description = "Plugins feature is disabled (code `feature.plugins_disabled`)", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
@@ -125,9 +127,9 @@ pub async fn plugin_heartbeat(
     request_body = PluginAuthRequest,
     responses(
         (status = 200, description = "Token refreshed", body = ClientTokenResponse),
-        (status = 404, description = "Plugin not found"),
-        (status = 503, description = "Plugins feature is disabled (code `feature.plugins_disabled`)"),
-        (status = 500, description = "Internal server error"),
+        (status = 404, description = "Plugin not found", body = ErrorBody),
+        (status = 503, description = "Plugins feature is disabled (code `feature.plugins_disabled`)", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
@@ -148,9 +150,9 @@ pub async fn plugin_refresh_token(
     params(("plugin_slug" = String, Path, description = "Plugin slug")),
     responses(
         (status = 204, description = "Plugin unregistered"),
-        (status = 404, description = "Plugin not found"),
-        (status = 503, description = "Plugins feature is disabled (code `feature.plugins_disabled`)"),
-        (status = 500, description = "Internal server error"),
+        (status = 404, description = "Plugin not found", body = ErrorBody),
+        (status = 503, description = "Plugins feature is disabled (code `feature.plugins_disabled`)", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]

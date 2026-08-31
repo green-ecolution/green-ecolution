@@ -1,5 +1,7 @@
 use std::sync::Arc;
 
+use crate::http::v1::error::ErrorBody;
+
 use crate::http::extractors::{Json, Path, Query};
 use axum::{extract::State, http::StatusCode};
 use utoipa_axum::{router::OpenApiRouter, routes};
@@ -44,7 +46,7 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
     params(PaginationParams),
     responses(
         (status = 200, description = "Paginated list of vehicles", body = ListResponse<VehicleResponse>),
-        (status = 500, description = "Internal server error"),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
@@ -74,8 +76,8 @@ pub async fn list_vehicles(
     params(("vehicle_id" = uuid::Uuid, Path, description = "Vehicle ID")),
     responses(
         (status = 200, description = "Vehicle found", body = VehicleResponse),
-        (status = 404, description = "Vehicle not found"),
-        (status = 500, description = "Internal server error"),
+        (status = 404, description = "Vehicle not found", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all, fields(vehicle.id = %id))]
@@ -101,9 +103,9 @@ pub async fn get_vehicle(
     request_body = VehicleCreateRequest,
     responses(
         (status = 201, description = "Vehicle created", body = VehicleResponse),
-        (status = 400, description = "Invalid input"),
-        (status = 409, description = "Number plate already exists (code `resource.already_exists`)"),
-        (status = 500, description = "Internal server error"),
+        (status = 400, description = "Invalid input", body = ErrorBody),
+        (status = 409, description = "Number plate already exists (code `resource.already_exists`)", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
@@ -135,9 +137,9 @@ pub async fn create_vehicle(
     request_body = VehicleUpdateRequest,
     responses(
         (status = 200, description = "Vehicle updated", body = VehicleResponse),
-        (status = 403, description = "Missing vehicle:update in the owning organization"),
-        (status = 404, description = "Vehicle not found"),
-        (status = 500, description = "Internal server error"),
+        (status = 403, description = "Missing vehicle:update in the owning organization", body = ErrorBody),
+        (status = 404, description = "Vehicle not found", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all, fields(vehicle.id = %id))]
@@ -175,9 +177,9 @@ pub async fn update_vehicle(
     params(("vehicle_id" = uuid::Uuid, Path, description = "Vehicle ID")),
     responses(
         (status = 204, description = "Vehicle deleted"),
-        (status = 403, description = "Missing vehicle:delete in the owning organization"),
-        (status = 404, description = "Vehicle not found"),
-        (status = 500, description = "Internal server error"),
+        (status = 403, description = "Missing vehicle:delete in the owning organization", body = ErrorBody),
+        (status = 404, description = "Vehicle not found", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all, fields(vehicle.id = %id))]
@@ -212,7 +214,7 @@ pub async fn delete_vehicle(
     params(PaginationParams),
     responses(
         (status = 200, description = "Paginated list of archived vehicles", body = ListResponse<VehicleResponse>),
-        (status = 500, description = "Internal server error"),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
@@ -244,9 +246,9 @@ pub async fn list_archived_vehicles(
     params(("vehicle_id" = uuid::Uuid, Path, description = "Vehicle ID")),
     responses(
         (status = 204, description = "Vehicle archived"),
-        (status = 403, description = "Missing vehicle:update in the owning organization"),
-        (status = 404, description = "Vehicle not found"),
-        (status = 500, description = "Internal server error"),
+        (status = 403, description = "Missing vehicle:update in the owning organization", body = ErrorBody),
+        (status = 404, description = "Vehicle not found", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all, fields(vehicle.id = %id))]
@@ -281,8 +283,8 @@ pub async fn archive_vehicle(
     params(("plate" = String, Path, description = "Vehicle number plate")),
     responses(
         (status = 200, description = "Vehicle found", body = VehicleResponse),
-        (status = 404, description = "Vehicle not found"),
-        (status = 500, description = "Internal server error"),
+        (status = 404, description = "Vehicle not found", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all, fields(vehicle.plate = %plate))]
@@ -315,8 +317,8 @@ pub async fn get_vehicle_by_plate(
     request_body = TransferRequest,
     responses(
         (status = 204, description = "Vehicle transferred"),
-        (status = 403, description = "Missing vehicle:update in source or target organization"),
-        (status = 404, description = "Vehicle or organization not found"),
+        (status = 403, description = "Missing vehicle:update in source or target organization", body = ErrorBody),
+        (status = 404, description = "Vehicle or organization not found", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all, fields(vehicle.id = %id))]

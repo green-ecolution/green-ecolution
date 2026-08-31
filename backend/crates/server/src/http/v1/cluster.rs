@@ -1,5 +1,7 @@
 use std::{collections::HashMap, sync::Arc};
 
+use crate::http::v1::error::ErrorBody;
+
 use crate::http::extractors::{Json, Path, Query};
 use axum::{extract::State, http::StatusCode};
 use utoipa_axum::{router::OpenApiRouter, routes};
@@ -97,8 +99,8 @@ const CLUSTER_LIST_QUERY_MAX_LEN: usize = 100;
     params(ClusterListParams),
     responses(
         (status = 200, description = "Paginated list of tree clusters", body = ListResponse<TreeClusterInListResponse>),
-        (status = 400, description = "Invalid query parameter"),
-        (status = 500, description = "Internal server error"),
+        (status = 400, description = "Invalid query parameter", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
@@ -179,8 +181,8 @@ pub async fn list_clusters(
     params(("cluster_id" = uuid::Uuid, Path, description = "Cluster ID")),
     responses(
         (status = 200, description = "Cluster found", body = TreeClusterResponse),
-        (status = 404, description = "Cluster not found"),
-        (status = 500, description = "Internal server error"),
+        (status = 404, description = "Cluster not found", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all, fields(cluster.id = %id))]
@@ -210,8 +212,8 @@ pub async fn get_cluster(
     request_body = TreeClusterCreateRequest,
     responses(
         (status = 201, description = "Cluster created", body = TreeClusterResponse),
-        (status = 422, description = "A selected tree belongs to a different organization (code `organization_mismatch.trees_vs_cluster`)"),
-        (status = 500, description = "Internal server error"),
+        (status = 422, description = "A selected tree belongs to a different organization (code `organization_mismatch.trees_vs_cluster`)", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
@@ -247,10 +249,10 @@ pub async fn create_cluster(
     request_body = TreeClusterUpdateRequest,
     responses(
         (status = 200, description = "Cluster updated", body = TreeClusterResponse),
-        (status = 403, description = "Missing tree_cluster:update in the owning organization"),
-        (status = 404, description = "Cluster not found"),
-        (status = 422, description = "A selected tree belongs to a different organization (code `organization_mismatch.trees_vs_cluster`)"),
-        (status = 500, description = "Internal server error"),
+        (status = 403, description = "Missing tree_cluster:update in the owning organization", body = ErrorBody),
+        (status = 404, description = "Cluster not found", body = ErrorBody),
+        (status = 422, description = "A selected tree belongs to a different organization (code `organization_mismatch.trees_vs_cluster`)", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all, fields(cluster.id = %id))]
@@ -303,9 +305,9 @@ pub async fn update_cluster(
     params(("cluster_id" = uuid::Uuid, Path, description = "Cluster ID")),
     responses(
         (status = 204, description = "Cluster deleted"),
-        (status = 403, description = "Missing tree_cluster:delete in the owning organization"),
-        (status = 404, description = "Cluster not found"),
-        (status = 500, description = "Internal server error"),
+        (status = 403, description = "Missing tree_cluster:delete in the owning organization", body = ErrorBody),
+        (status = 404, description = "Cluster not found", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all, fields(cluster.id = %id))]
@@ -343,7 +345,7 @@ pub async fn delete_cluster(
                    for all non-archived clusters with a centroid. Not paginated.",
     responses(
         (status = 200, description = "Marker list", body = ClusterMarkerListResponse),
-        (status = 500, description = "Internal server error"),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
@@ -373,7 +375,7 @@ pub async fn list_cluster_markers(
                    around the trees of each non-archived cluster. Not paginated.",
     responses(
         (status = 200, description = "Boundary list", body = ClusterBoundaryListResponse),
-        (status = 500, description = "Internal server error"),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
@@ -405,7 +407,7 @@ pub async fn list_cluster_boundaries(
     description = "Counts of non-archived clusters per watering status, plus total clusters and total trees in clusters.",
     responses(
         (status = 200, description = "Cluster statistics", body = ClusterStatisticsResponse),
-        (status = 500, description = "Internal server error"),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
@@ -436,9 +438,9 @@ pub async fn cluster_statistics(
     params(("cluster_id" = uuid::Uuid, Path, description = "Cluster ID"), SoilMoistureParams),
     responses(
         (status = 200, description = "Aggregated soil-moisture series", body = SoilMoistureSeriesResponse),
-        (status = 400, description = "Invalid query parameter"),
-        (status = 404, description = "Cluster not found"),
-        (status = 500, description = "Internal server error"),
+        (status = 400, description = "Invalid query parameter", body = ErrorBody),
+        (status = 404, description = "Cluster not found", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all, fields(cluster.id = %id))]
@@ -477,8 +479,8 @@ pub async fn get_cluster_soil_moisture(
     request_body = TransferRequest,
     responses(
         (status = 204, description = "Cluster transferred"),
-        (status = 403, description = "Missing tree_cluster:update in source or target organization"),
-        (status = 404, description = "Cluster or organization not found"),
+        (status = 403, description = "Missing tree_cluster:update in source or target organization", body = ErrorBody),
+        (status = 404, description = "Cluster or organization not found", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all, fields(cluster.id = %id))]

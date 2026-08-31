@@ -17,6 +17,7 @@ import * as runtime from '../runtime';
 import type {
   AppInfoResponse,
   DataStatisticsResponse,
+  ErrorBody,
   MapInfoResponse,
   ReadinessResponse,
   ServerInfoResponse,
@@ -27,6 +28,8 @@ import {
     AppInfoResponseToJSON,
     DataStatisticsResponseFromJSON,
     DataStatisticsResponseToJSON,
+    ErrorBodyFromJSON,
+    ErrorBodyToJSON,
     MapInfoResponseFromJSON,
     MapInfoResponseToJSON,
     ReadinessResponseFromJSON,

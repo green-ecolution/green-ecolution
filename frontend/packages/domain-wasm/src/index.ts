@@ -1,6 +1,5 @@
 export type {
   ValidationIssue,
-  ServerValidationIssue,
   TranslatableIssue,
   TreeForm,
   TreeclusterForm,

@@ -1,5 +1,7 @@
 use std::sync::Arc;
 
+use crate::http::v1::error::ErrorBody;
+
 use crate::http::extractors::{Json, Path, Query};
 use axum::{extract::State, http::StatusCode};
 use chrono::{DateTime, Utc};
@@ -61,7 +63,7 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
     params(PaginationParams),
     responses(
         (status = 200, description = "Paginated list of sensors", body = ListResponse<SensorResponse>),
-        (status = 500, description = "Internal server error"),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
@@ -91,8 +93,8 @@ pub async fn list_sensors(
     params(("sensor_id" = String, Path, description = "Sensor ID")),
     responses(
         (status = 200, description = "Sensor found", body = SensorResponse),
-        (status = 404, description = "Sensor not found"),
-        (status = 500, description = "Internal server error"),
+        (status = 404, description = "Sensor not found", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all, fields(sensor.id = %sensor_id))]
@@ -118,9 +120,9 @@ pub async fn get_sensor(
     params(("sensor_id" = String, Path, description = "Sensor ID")),
     responses(
         (status = 204, description = "Sensor deleted"),
-        (status = 403, description = "Missing sensor:delete in the owning organization"),
-        (status = 404, description = "Sensor not found"),
-        (status = 500, description = "Internal server error"),
+        (status = 403, description = "Missing sensor:delete in the owning organization", body = ErrorBody),
+        (status = 404, description = "Sensor not found", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all, fields(sensor.id = %sensor_id))]
@@ -187,7 +189,7 @@ pub struct SensorDataParams {
     params(("sensor_id" = String, Path, description = "Sensor ID"), SensorDataParams),
     responses(
         (status = 200, description = "Paginated sensor data", body = ListResponse<SensorDataResponse>),
-        (status = 500, description = "Internal server error"),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all, fields(sensor.id = %sensor_id))]
@@ -223,9 +225,9 @@ pub async fn list_sensor_data(
     params(("sensor_id" = String, Path, description = "Sensor ID"), SoilMoistureParams),
     responses(
         (status = 200, description = "Aggregated soil-moisture series", body = SoilMoistureSeriesResponse),
-        (status = 400, description = "Invalid query parameter"),
-        (status = 404, description = "Sensor not found"),
-        (status = 500, description = "Internal server error"),
+        (status = 400, description = "Invalid query parameter", body = ErrorBody),
+        (status = 404, description = "Sensor not found", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all, fields(sensor.id = %sensor_id))]
@@ -257,8 +259,8 @@ pub async fn get_sensor_soil_moisture(
     params(("sensor_id" = String, Path, description = "Sensor ID")),
     responses(
         (status = 200, description = "Tree found", body = TreeResponse),
-        (status = 404, description = "Sensor or associated tree not found"),
-        (status = 500, description = "Internal server error"),
+        (status = 404, description = "Sensor or associated tree not found", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all, fields(sensor.id = %sensor_id))]
@@ -291,10 +293,10 @@ pub async fn get_tree_by_sensor(
     request_body = CreateSensorRequest,
     responses(
         (status = 201, description = "Sensor created", body = SensorResponse),
-        (status = 400, description = "Invalid request body"),
-        (status = 404, description = "Sensor model not found"),
-        (status = 409, description = "Sensor id already exists (code `resource.already_exists`)"),
-        (status = 500, description = "Internal server error"),
+        (status = 400, description = "Invalid request body", body = ErrorBody),
+        (status = 404, description = "Sensor model not found", body = ErrorBody),
+        (status = 409, description = "Sensor id already exists (code `resource.already_exists`)", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
@@ -326,11 +328,11 @@ pub async fn create_sensor(
     request_body = ActivateSensorRequest,
     responses(
         (status = 200, description = "Sensor activated", body = SensorResponse),
-        (status = 403, description = "Missing sensor:update or tree:update in the owning organization"),
-        (status = 404, description = "Sensor or tree not found"),
-        (status = 409, description = "Sensor already activated, or the tree already carries another sensor (codes `conflict.sensor_already_activated`, `conflict.tree_already_has_sensor`)"),
-        (status = 422, description = "Sensor and tree belong to different organizations (code `organization_mismatch.sensor_vs_tree`)"),
-        (status = 500, description = "Internal server error"),
+        (status = 403, description = "Missing sensor:update or tree:update in the owning organization", body = ErrorBody),
+        (status = 404, description = "Sensor or tree not found", body = ErrorBody),
+        (status = 409, description = "Sensor already activated, or the tree already carries another sensor (codes `conflict.sensor_already_activated`, `conflict.tree_already_has_sensor`)", body = ErrorBody),
+        (status = 422, description = "Sensor and tree belong to different organizations (code `organization_mismatch.sensor_vs_tree`)", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all, fields(sensor.id = %sensor_id))]
@@ -383,11 +385,11 @@ pub async fn activate_sensor(
     request_body = SetSensorTreeRequest,
     responses(
         (status = 200, description = "Sensor re-linked", body = SensorResponse),
-        (status = 403, description = "Missing sensor:update or tree:update in the owning organization"),
-        (status = 404, description = "Sensor or tree not found"),
-        (status = 409, description = "Sensor not activated, or the tree already carries another sensor (codes `conflict.sensor_not_activated`, `conflict.tree_already_has_sensor`)"),
-        (status = 422, description = "Sensor and tree belong to different organizations (code `organization_mismatch.sensor_vs_tree`)"),
-        (status = 500, description = "Internal server error"),
+        (status = 403, description = "Missing sensor:update or tree:update in the owning organization", body = ErrorBody),
+        (status = 404, description = "Sensor or tree not found", body = ErrorBody),
+        (status = 409, description = "Sensor not activated, or the tree already carries another sensor (codes `conflict.sensor_not_activated`, `conflict.tree_already_has_sensor`)", body = ErrorBody),
+        (status = 422, description = "Sensor and tree belong to different organizations (code `organization_mismatch.sensor_vs_tree`)", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all, fields(sensor.id = %sensor_id))]
@@ -439,9 +441,9 @@ pub async fn set_sensor_tree(
     params(("sensor_id" = String, Path, description = "Sensor ID (EUI)")),
     responses(
         (status = 200, description = "Sensor reset to prepared", body = SensorResponse),
-        (status = 403, description = "Missing sensor:update or tree:update in the owning organization"),
-        (status = 404, description = "Sensor not found"),
-        (status = 500, description = "Internal server error"),
+        (status = 403, description = "Missing sensor:update or tree:update in the owning organization", body = ErrorBody),
+        (status = 404, description = "Sensor not found", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all, fields(sensor.id = %sensor_id))]
@@ -488,7 +490,7 @@ pub async fn remove_sensor_tree(
         its abilities (e.g. soil tension at 30/60/90 cm).",
     responses(
         (status = 200, description = "Sensor models", body = Vec<SensorModelResponse>),
-        (status = 500, description = "Internal server error"),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
@@ -505,8 +507,8 @@ pub async fn list_sensor_models(
     params(("id" = uuid::Uuid, Path, description = "Sensor model ID")),
     responses(
         (status = 200, description = "Sensor model", body = SensorModelResponse),
-        (status = 404, description = "Sensor model not found"),
-        (status = 500, description = "Internal server error"),
+        (status = 404, description = "Sensor model not found", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all, fields(model.id = %id))]
@@ -530,9 +532,9 @@ pub async fn get_sensor_model(
     request_body = TransferRequest,
     responses(
         (status = 204, description = "Sensor transferred"),
-        (status = 403, description = "Missing sensor:update in source or target organization"),
-        (status = 404, description = "Sensor or organization not found"),
-        (status = 409, description = "Sensor is bound to a tree (code `conflict.sensor_bound_to_tree`)"),
+        (status = 403, description = "Missing sensor:update in source or target organization", body = ErrorBody),
+        (status = 404, description = "Sensor or organization not found", body = ErrorBody),
+        (status = 409, description = "Sensor is bound to a tree (code `conflict.sensor_bound_to_tree`)", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all, fields(sensor.id = %sensor_id))]
@@ -573,8 +575,8 @@ pub async fn transfer_sensor(
     params(("sensor_id" = String, Path, description = "Sensor ID")),
     responses(
         (status = 200, description = "Data quality summary", body = SensorDataQualityResponse),
-        (status = 404, description = "Sensor not found"),
-        (status = 500, description = "Internal server error"),
+        (status = 404, description = "Sensor not found", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all, fields(sensor.id = %sensor_id))]
@@ -619,10 +621,10 @@ async fn resolve_acknowledger(
     request_body = AcknowledgeDataQualityRequest,
     responses(
         (status = 200, description = "Updated data quality summary", body = SensorDataQualityResponse),
-        (status = 403, description = "Missing sensor:update permission"),
-        (status = 404, description = "Sensor not found"),
-        (status = 400, description = "Note is empty or longer than 500 characters"),
-        (status = 500, description = "Internal server error"),
+        (status = 403, description = "Missing sensor:update permission", body = ErrorBody),
+        (status = 404, description = "Sensor not found", body = ErrorBody),
+        (status = 400, description = "Note is empty or longer than 500 characters", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all, fields(sensor.id = %sensor_id))]

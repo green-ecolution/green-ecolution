@@ -5,19 +5,6 @@ export interface ValidationIssue {
   params: Record<string, string | number>
 }
 
-/**
- * What the backend sends for a field violation, in `ErrorBody.validation`.
- *
- * Same `key` and `params` as the in-browser issue, built from the same Rust
- * constructor. It has no `path`, because the form-field path only exists in
- * the browser.
- */
-export interface ServerValidationIssue {
-  field: string
-  key: string
-  params: Record<string, string | number>
-}
-
 /** The minimum needed to render an issue: which rule broke, with what values. */
 export type TranslatableIssue = Pick<ValidationIssue, 'key' | 'params'>
 

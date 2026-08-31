@@ -4,21 +4,50 @@ use serde::Serialize;
 use crate::service::{AuthError, ServiceError};
 use domain::{RepositoryError, routing::RoutingError, shared::error::ValidationIssue};
 
+/// OpenAPI shape of [`ValidationIssue`].
+///
+/// A mirror rather than a derive on the domain type: the domain crate must
+/// build without utoipa, so the schema cannot live next to the struct. Keep the
+/// fields in step with `domain::shared::error::ValidationIssue`.
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+#[schema(as = ValidationIssue)]
+#[schema(example = json!({
+    "field": "cluster.name",
+    "key": "cluster.name.tooLong",
+    "params": { "max": 255, "got": 300 }
+}))]
+pub struct ValidationIssueSchema {
+    /// Namespaced domain field label.
+    pub field: String,
+    /// Translation key, `{field}.{violated rule}`.
+    pub key: String,
+    /// Values the translated sentence interpolates.
+    pub params: serde_json::Value,
+}
+
 /// The body every failing endpoint returns. Clients parse the response as
 /// JSON regardless of status, so error paths must not fall back to plain text.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+#[schema(example = json!({
+    "error": "tree is part of a cluster",
+    "code": "conflict.tree_in_cluster"
+}))]
 pub struct ErrorBody {
+    /// Prose for logs and for a client without its own wording. May be
+    /// reworded at any time; branch on `code` instead.
     pub error: String,
     /// Stable discriminator every failing response carries, so a client can
     /// pick its own localized wording instead of showing `error`, which is
     /// prose and may be reworded. Still optional on the wire: a client that
     /// does not know a code must fall back on the status.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(value_type = Option<String>)]
     pub code: Option<&'static str>,
     /// Which input field broke which rule, present only when one field is to
     /// blame. Carries the same `key` and `params` the in-browser validator
     /// emits, so one catalog entry serves both paths.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(value_type = Option<ValidationIssueSchema>)]
     pub validation: Option<ValidationIssue>,
 }
 

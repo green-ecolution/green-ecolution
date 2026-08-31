@@ -32,6 +32,7 @@ models/DataHealth.ts
 models/DataQualityAcknowledgementResponse.ts
 models/DataStatisticsResponse.ts
 models/DrivingLicense.ts
+models/ErrorBody.ts
 models/EvaluationResponse.ts
 models/EvaluationValueRequest.ts
 models/EvaluationValueResponse.ts
@@ -116,6 +117,7 @@ models/UserRegisterRequest.ts
 models/UserResponse.ts
 models/UserStatus.ts
 models/UserUpdateRequest.ts
+models/ValidationIssue.ts
 models/VehicleCreateRequest.ts
 models/VehicleEvaluationResponse.ts
 models/VehicleResponse.ts

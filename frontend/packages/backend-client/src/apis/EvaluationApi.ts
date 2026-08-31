@@ -15,9 +15,12 @@
 
 import * as runtime from '../runtime';
 import type {
+  ErrorBody,
   EvaluationResponse,
 } from '../models/index';
 import {
+    ErrorBodyFromJSON,
+    ErrorBodyToJSON,
     EvaluationResponseFromJSON,
     EvaluationResponseToJSON,
 } from '../models/index';
