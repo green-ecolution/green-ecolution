@@ -284,6 +284,7 @@ mod tests {
                 name: draft.name.as_str().to_string(),
                 description: draft.description.as_ref().map(|d| d.as_str().to_string()),
                 permissions: draft.permissions.iter().map(|p| p.to_string()).collect(),
+                template_key: None,
             })
             .unwrap();
             self.rows.lock().unwrap().push(role.clone());
@@ -379,6 +380,7 @@ mod tests {
             name: "Baumpflege".into(),
             description: None,
             permissions: perms().iter().map(|p| p.to_string()).collect(),
+            template_key: None,
         })
         .unwrap()
     }
@@ -408,6 +410,7 @@ mod tests {
                 name: RoleName::new("Baumpflege").unwrap(),
                 description: None,
                 permissions: perms(),
+                template_key: None,
             })
             .await
             .unwrap();

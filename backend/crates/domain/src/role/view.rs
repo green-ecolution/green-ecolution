@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 
 use crate::{Id, authorization::Permission, organization::Organization};
 
-use super::{Role, RoleDescription, RoleName};
+use super::{Role, RoleDescription, RoleName, RoleTemplateKey};
 
 /// Flat read model returned by HTTP handlers. `created_at` derives from the
 /// UUID v7 id (None for seeded/legacy non-v7 ids).
@@ -14,6 +14,7 @@ pub struct RoleView {
     pub description: Option<RoleDescription>,
     pub permissions: Vec<Permission>,
     pub is_template: bool,
+    pub template_key: Option<RoleTemplateKey>,
     pub created_at: Option<DateTime<Utc>>,
 }
 
@@ -26,6 +27,7 @@ impl From<&Role> for RoleView {
             description: value.description.clone(),
             permissions: value.permissions().iter().copied().collect(),
             is_template: value.is_template(),
+            template_key: value.template_key().cloned(),
             created_at: value.id.created_at(),
         }
     }

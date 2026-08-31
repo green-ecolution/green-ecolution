@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { Role } from '@/api/backendApi'
-import { isPristineTemplateCopy, ownRolesOf, samePermissionSet } from './roleList'
+import { isPristineTemplateCopy, ownRolesOf, roleDisplayName, samePermissionSet } from './roleList'
 
 const role = (overrides: Partial<Role>): Role => ({
   id: 'id',
@@ -15,9 +15,16 @@ const templates: Role[] = [
     id: 't1',
     name: 'Baumpflege',
     isTemplate: true,
+    templateKey: 'tree_care',
     permissions: ['tree:read', 'tree:create'],
   }),
-  role({ id: 't2', name: 'Beobachter', isTemplate: true, permissions: ['tree:read'] }),
+  role({
+    id: 't2',
+    name: 'Beobachter',
+    isTemplate: true,
+    templateKey: 'observer',
+    permissions: ['tree:read'],
+  }),
 ]
 
 describe('samePermissionSet', () => {
@@ -32,42 +39,57 @@ describe('samePermissionSet', () => {
 })
 
 describe('isPristineTemplateCopy', () => {
-  it('matches a copy with the same name and the same permissions', () => {
-    const copy = role({ id: 'c1', name: 'Baumpflege', permissions: ['tree:create', 'tree:read'] })
-    expect(isPristineTemplateCopy(copy, templates)).toBe(true)
+  it('matches a copy the backend still marks as delivered', () => {
+    const copy = role({ id: 'c1', name: 'Baumpflege', templateKey: 'tree_care' })
+    expect(isPristineTemplateCopy(copy)).toBe(true)
   })
 
-  it('does not match once the permissions changed', () => {
-    const copy = role({ id: 'c1', name: 'Baumpflege', permissions: ['tree:read'] })
-    expect(isPristineTemplateCopy(copy, templates)).toBe(false)
+  it('does not match once the backend cleared the key on an edit', () => {
+    const copy = role({ id: 'c1', name: 'Baumpflege Nord', templateKey: null })
+    expect(isPristineTemplateCopy(copy)).toBe(false)
   })
 
-  it('does not match once the name changed', () => {
-    const copy = role({
-      id: 'c1',
-      name: 'Baumpflege Nord',
-      permissions: ['tree:read', 'tree:create'],
-    })
-    expect(isPristineTemplateCopy(copy, templates)).toBe(false)
+  it('does not match a role that never came from a template', () => {
+    const own = role({ id: 'c2', name: 'Praktikant' })
+    expect(isPristineTemplateCopy(own)).toBe(false)
   })
 
-  it('does not match a role unrelated to any template', () => {
-    const own = role({ id: 'c2', name: 'Praktikant', permissions: ['tree:read', 'sensor:read'] })
-    expect(isPristineTemplateCopy(own, templates)).toBe(false)
+  it('does not match a template itself', () => {
+    expect(isPristineTemplateCopy(templates[0])).toBe(false)
   })
 })
 
 describe('ownRolesOf', () => {
   it('drops the untouched template copies and keeps the rest', () => {
     const roles: Role[] = [
-      role({ id: 'c1', name: 'Baumpflege', permissions: ['tree:read', 'tree:create'] }),
-      role({ id: 'c2', name: 'Beobachter', permissions: ['tree:read', 'sensor:read'] }),
-      role({ id: 'c3', name: 'Praktikant', permissions: ['tree:read'] }),
+      role({ id: 'c1', name: 'Baumpflege', templateKey: 'tree_care' }),
+      role({ id: 'c2', name: 'Beobachter Nord', templateKey: null }),
+      role({ id: 'c3', name: 'Praktikant' }),
     ]
-    expect(ownRolesOf(roles, templates).map((entry) => entry.id)).toEqual(['c2', 'c3'])
+    expect(ownRolesOf(roles).map((entry) => entry.id)).toEqual(['c2', 'c3'])
   })
 
   it('never lists templates themselves', () => {
-    expect(ownRolesOf(templates, templates)).toEqual([])
+    expect(ownRolesOf(templates)).toEqual([])
+  })
+})
+
+describe('roleDisplayName', () => {
+  it('translates a delivered role through its template key', () => {
+    expect(roleDisplayName(role({ name: 'Baumpflege', templateKey: 'tree_care' }))).toBe(
+      'Baumpflege',
+    )
+  })
+
+  it('shows the stored name once the role has been edited', () => {
+    expect(roleDisplayName(role({ name: 'Pflege Nord', templateKey: undefined }))).toBe(
+      'Pflege Nord',
+    )
+  })
+
+  it('falls back to the stored name for an unknown template key', () => {
+    expect(roleDisplayName(role({ name: 'Sonderrolle', templateKey: 'not_in_catalog' }))).toBe(
+      'Sonderrolle',
+    )
   })
 })

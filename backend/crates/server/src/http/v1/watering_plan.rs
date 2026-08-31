@@ -651,7 +651,8 @@ pub async fn get_gpx_file(
     let geometry = plan
         .route_geometry()
         .ok_or(ServiceError::Repository(domain::RepositoryError::NotFound))?;
-    let name = format!("Bewässerungsroute {}", plan.date.format("%Y-%m-%d"));
+    let date = plan.date.format("%Y-%m-%d").to_string();
+    let name = gpx::track_name(plan.description.as_deref(), &date);
     let body = gpx::render_gpx(&name, geometry);
     Ok((
         [

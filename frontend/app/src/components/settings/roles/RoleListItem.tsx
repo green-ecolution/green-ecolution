@@ -2,6 +2,7 @@ import { Lock, Pencil } from 'lucide-react'
 import { Avatar, AvatarFallback, ListCard } from '@green-ecolution/ui'
 import type { Role } from '@/api/backendApi'
 import RoleIcon from './roleIcon'
+import { roleDisplayName } from './roleList'
 
 interface RoleListItemProps {
   role: Role
@@ -30,7 +31,7 @@ const RoleListItem = ({ role, selected, locked, assignees, onSelect }: RoleListI
 
       <span className="min-w-0 flex-1">
         <span className="block truncate font-lato text-sm font-semibold text-dark">
-          {role.name}
+          {roleDisplayName(role)}
         </span>
         <span className="block truncate text-xs text-dark-600">
           {role.description ? `${role.description} · ` : ''}

@@ -9,6 +9,7 @@ import {
 } from '@green-ecolution/ui'
 import type { RoleResponse } from '@/api/backendApi'
 import { CARD, CARD_TITLE } from './cardChrome'
+import { roleDisplayName } from '../roles/roleList'
 
 interface MemberRolesCardProps {
   roles: RoleResponse[]
@@ -58,7 +59,9 @@ const MemberRolesCard = ({
             className="flex items-center justify-between gap-3 rounded-lg border border-dark-50 px-3 py-2"
           >
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-sm font-semibold text-dark">{role.name}</span>
+              <span className="block truncate text-sm font-semibold text-dark">
+                {roleDisplayName(role)}
+              </span>
               {role.description && (
                 <span className="block truncate text-xs text-dark-600">{role.description}</span>
               )}
@@ -69,7 +72,7 @@ const MemberRolesCard = ({
                 variant="ghost-destructive"
                 size="sm"
                 onClick={() => onRevoke(role.id)}
-                aria-label={`Rolle ${role.name} entziehen`}
+                aria-label={`Rolle ${roleDisplayName(role)} entziehen`}
               >
                 <X className="size-4" aria-hidden />
               </Button>
@@ -83,7 +86,7 @@ const MemberRolesCard = ({
       <div className="mt-4 flex items-center gap-2">
         <Plus className="size-4 shrink-0 text-dark-500" aria-hidden />
         <Combobox
-          options={assignable.map((role) => ({ value: role.id, label: role.name }))}
+          options={assignable.map((role) => ({ value: role.id, label: roleDisplayName(role) }))}
           onChange={onAssign}
           placeholder="Rolle zuweisen"
           searchPlaceholder="Rolle suchen"

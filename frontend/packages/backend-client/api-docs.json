@@ -8429,6 +8429,13 @@
               "type": "string"
             },
             "description": "Grantable capabilities, formatted as `<resource>:<action>`."
+          },
+          "template_key": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Which delivered template this role still matches verbatim, e.g.\n`tree_care`. Null once someone edits the name or description, or for a\nhand-made role. A client may translate `name` and `description` while\nthis is set, and must show them verbatim once it is null."
           }
         },
         "example": {
@@ -8441,7 +8448,8 @@
           "permissions": [
             "tree:read",
             "tree:create"
-          ]
+          ],
+          "template_key": "administrator"
         }
       },
       "RoleUpdateRequest": {

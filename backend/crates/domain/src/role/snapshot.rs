@@ -9,4 +9,5 @@ pub struct RoleSnapshot {
     pub name: String,
     pub description: Option<String>,
     pub permissions: Vec<String>,
+    pub template_key: Option<String>,
 }

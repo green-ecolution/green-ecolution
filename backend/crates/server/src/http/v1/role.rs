@@ -181,6 +181,9 @@ pub async fn create_role(
                             name: RoleName::new(name)?,
                             description: source_view.description.clone(),
                             permissions: perms,
+                            // A renamed copy is the caller's own role, not the
+                            // delivered one, so it carries no template key.
+                            template_key: None,
                         })
                         .await?
                 }
@@ -210,6 +213,7 @@ pub async fn create_role(
                     name: RoleName::new(name)?,
                     description,
                     permissions,
+                    template_key: None,
                 })
                 .await?
         }
