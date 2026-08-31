@@ -194,10 +194,7 @@ fn parse_provenance(
     provider: Option<String>,
     additional_information: Option<serde_json::Value>,
 ) -> Result<Provenance, crate::service::ServiceError> {
-    let provider_id = provider
-        .map(ProviderId::new)
-        .transpose()
-        .map_err(|e| crate::service::ServiceError::InvalidInput(e.to_string()))?;
+    let provider_id = provider.map(ProviderId::new).transpose()?;
     Ok(Provenance::new(provider_id, additional_information))
 }
 
@@ -206,14 +203,10 @@ impl VehicleCreateRequest {
         self,
         organization_id: Id<Organization>,
     ) -> Result<VehicleDraft, crate::service::ServiceError> {
-        let number_plate = NumberPlate::new(self.number_plate)
-            .map_err(|e| crate::service::ServiceError::InvalidInput(e.to_string()))?;
-        let model = VehicleModel::new(self.model)
-            .map_err(|e| crate::service::ServiceError::InvalidInput(e.to_string()))?;
-        let water_capacity = WaterCapacity::new(self.water_capacity)
-            .map_err(|e| crate::service::ServiceError::InvalidInput(e.to_string()))?;
-        let dimension = VehicleDimension::new(self.height, self.width, self.length, self.weight)
-            .map_err(|e| crate::service::ServiceError::InvalidInput(e.to_string()))?;
+        let number_plate = NumberPlate::new(self.number_plate)?;
+        let model = VehicleModel::new(self.model)?;
+        let water_capacity = WaterCapacity::new(self.water_capacity)?;
+        let dimension = VehicleDimension::new(self.height, self.width, self.length, self.weight)?;
         let provenance = parse_provenance(self.provider, self.additional_information)?;
 
         Ok(VehicleDraft {
@@ -235,14 +228,10 @@ impl VehicleUpdateRequest {
     pub fn into_update(
         self,
     ) -> Result<domain::vehicle::VehicleUpdate, crate::service::ServiceError> {
-        let number_plate = NumberPlate::new(self.number_plate)
-            .map_err(|e| crate::service::ServiceError::InvalidInput(e.to_string()))?;
-        let model = VehicleModel::new(self.model)
-            .map_err(|e| crate::service::ServiceError::InvalidInput(e.to_string()))?;
-        let water_capacity = WaterCapacity::new(self.water_capacity)
-            .map_err(|e| crate::service::ServiceError::InvalidInput(e.to_string()))?;
-        let dimension = VehicleDimension::new(self.height, self.width, self.length, self.weight)
-            .map_err(|e| crate::service::ServiceError::InvalidInput(e.to_string()))?;
+        let number_plate = NumberPlate::new(self.number_plate)?;
+        let model = VehicleModel::new(self.model)?;
+        let water_capacity = WaterCapacity::new(self.water_capacity)?;
+        let dimension = VehicleDimension::new(self.height, self.width, self.length, self.weight)?;
         let provenance = parse_provenance(self.provider, self.additional_information)?;
 
         Ok(domain::vehicle::VehicleUpdate {

@@ -231,8 +231,7 @@ impl UserUpdateRequest {
             .phone_number
             .filter(|s| !s.is_empty())
             .map(PhoneNumber::new)
-            .transpose()
-            .map_err(|e| ServiceError::InvalidInput(format!("phone_number: {e}")))?;
+            .transpose()?;
         Ok(DomainUserProfile {
             id,
             employee_id: self.employee_id.filter(|s| !s.is_empty()),
@@ -334,8 +333,7 @@ impl TryFrom<UserRegisterRequest> for DomainUserCreate {
             .phone_number
             .filter(|s| !s.is_empty())
             .map(PhoneNumber::new)
-            .transpose()
-            .map_err(|e| ServiceError::InvalidInput(format!("phone_number: {e}")))?;
+            .transpose()?;
 
         Ok(Self {
             username,

@@ -464,7 +464,7 @@ impl From<SensorError> for ServiceError {
         match err {
             SensorError::AlreadyActivated => ServiceError::AlreadyActivated,
             SensorError::NotActivated => ServiceError::NotActivated,
-            SensorError::Validation(e) => ServiceError::InvalidInput(e.to_string()),
+            SensorError::Validation(e) => ServiceError::Validation(e),
         }
     }
 }

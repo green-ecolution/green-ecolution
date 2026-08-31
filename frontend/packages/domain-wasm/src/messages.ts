@@ -1,4 +1,4 @@
-import type { ValidationIssue } from './types'
+import type { TranslatableIssue } from './types'
 
 type Renderer = (params: Record<string, string | number>) => string
 
@@ -74,7 +74,14 @@ const messages: Record<string, Renderer> = {
     'Telefonnummer ist ungültig. Erlaubt sind Ziffern, Leerzeichen sowie -, /, ( ) und ein führendes +, mit mindestens 6 Ziffern.',
 }
 
-export function translateIssue(issue: ValidationIssue): string {
+/**
+ * Render an issue with the German catalog.
+ *
+ * Takes only `key` and `params`, not the full `ValidationIssue`: the server
+ * reports the same violation without a form-field `path`, and both sources
+ * must resolve through this one catalog.
+ */
+export function translateIssue(issue: TranslatableIssue): string {
   const renderer = messages[issue.key]
   if (!renderer) return issue.key
   return renderer(issue.params)

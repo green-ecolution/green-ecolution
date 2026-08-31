@@ -74,9 +74,18 @@ export const apiErrorMessages: Record<string, string> = {
     'Aus den gewählten Angaben lässt sich keine Route berechnen. Prüfe Fahrzeug, Startpunkt und Gruppen.',
   'code.routing.failed': 'Die Routenberechnung ist fehlgeschlagen.',
 
-  // Deliberately absent: `resource.*`, `auth.*`, `request.invalid_input` and
-  // `internal.error`. Their status text already says the same thing, and a
-  // duplicate entry would only be a second place to keep in sync.
+  // Request parts the backend could not parse. Each names a different input,
+  // so a form can point at the right control.
+  'code.request.malformed_date': 'Das Datum konnte nicht gelesen werden.',
+  'code.request.malformed_uuid': 'Ein ausgewählter Eintrag hat keine gültige Kennung.',
+  'code.request.malformed_sensor_id': 'Die Sensor-Kennung hat kein gültiges Format.',
+  'code.request.malformed_bounding_box': 'Der Kartenausschnitt konnte nicht gelesen werden.',
+  'code.request.unknown_permission': 'Die Anfrage nennt eine unbekannte Berechtigung.',
+
+  // Deliberately absent: `resource.*`, `auth.*`, `request.invalid_input`,
+  // `request.validation_failed` and `internal.error`. The first three and the
+  // last say no more than their status does; `request.validation_failed`
+  // always ships a `validation` block, whose own key produces the better text.
 
   'status.400': 'Die Anfrage war fehlerhaft und konnte nicht verarbeitet werden.',
   'status.401': 'Die Anmeldung ist abgelaufen. Bitte melde dich erneut an.',

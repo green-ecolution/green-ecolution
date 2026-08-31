@@ -5,7 +5,7 @@ use uuid::Uuid;
 
 use domain::role::RoleView;
 
-use crate::service::ServiceError;
+use crate::service::{Malformed, ServiceError};
 
 /// A role (named permission set), either a global template or bound to an organization.
 #[derive(Debug, Serialize, utoipa::ToSchema)]
@@ -76,5 +76,8 @@ pub fn parse_permissions(
     raw.iter()
         .map(|s| s.parse::<domain::authorization::Permission>())
         .collect::<Result<_, _>>()
-        .map_err(|e| ServiceError::InvalidInput(e.to_string()))
+        .map_err(|e| ServiceError::Malformed {
+            kind: Malformed::Permission,
+            detail: e.to_string(),
+        })
 }

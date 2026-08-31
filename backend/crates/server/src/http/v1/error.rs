@@ -2,7 +2,7 @@ use axum::{http::StatusCode, response::IntoResponse};
 use serde::Serialize;
 
 use crate::service::{AuthError, ServiceError};
-use domain::{RepositoryError, routing::RoutingError};
+use domain::{RepositoryError, routing::RoutingError, shared::error::ValidationIssue};
 
 /// The body every failing endpoint returns. Clients parse the response as
 /// JSON regardless of status, so error paths must not fall back to plain text.
@@ -15,13 +15,18 @@ pub struct ErrorBody {
     /// does not know a code must fall back on the status.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub code: Option<&'static str>,
+    /// Which input field broke which rule, present only when one field is to
+    /// blame. Carries the same `key` and `params` the in-browser validator
+    /// emits, so one catalog entry serves both paths.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub validation: Option<ValidationIssue>,
 }
 
 pub(crate) fn error_response(
     status: StatusCode,
     message: impl Into<String>,
 ) -> axum::response::Response {
-    body_response(status, message, None)
+    body_response(status, message, None, None)
 }
 
 /// `error_response` plus the stable `code` discriminator.
@@ -30,19 +35,21 @@ pub(crate) fn coded_error_response(
     message: impl Into<String>,
     code: &'static str,
 ) -> axum::response::Response {
-    body_response(status, message, Some(code))
+    body_response(status, message, Some(code), None)
 }
 
 fn body_response(
     status: StatusCode,
     message: impl Into<String>,
     code: Option<&'static str>,
+    validation: Option<ValidationIssue>,
 ) -> axum::response::Response {
     (
         status,
         axum::Json(ErrorBody {
             error: message.into(),
             code,
+            validation,
         }),
     )
         .into_response()
@@ -99,6 +106,7 @@ impl IntoResponse for AuthError {
 impl IntoResponse for ServiceError {
     fn into_response(self) -> axum::response::Response {
         let code = self.code();
+        let validation = self.validation_issue();
         let (status, message) = match &self {
             ServiceError::Repository(e) => {
                 let (status, message) = repository_error_response(e);
@@ -109,6 +117,8 @@ impl IntoResponse for ServiceError {
                 }
                 (status, message.to_string())
             }
+            ServiceError::Validation(e) => (StatusCode::BAD_REQUEST, e.to_string()),
+            ServiceError::Malformed { .. } => (StatusCode::BAD_REQUEST, self.to_string()),
             ServiceError::InvalidInput(msg) => (StatusCode::BAD_REQUEST, msg.clone()),
             ServiceError::Auth(e) => {
                 let (status, message) = auth_error_response(e);
@@ -160,7 +170,7 @@ impl IntoResponse for ServiceError {
                 (StatusCode::SERVICE_UNAVAILABLE, self.to_string())
             }
         };
-        coded_error_response(status, message, code)
+        body_response(status, message, Some(code), validation)
     }
 }
 
@@ -332,5 +342,92 @@ mod tests {
         assert_eq!(response.status(), StatusCode::FORBIDDEN);
         let body: serde_json::Value = serde_json::from_str(&body_of(response).await).unwrap();
         assert!(body["error"].is_string());
+    }
+}
+
+#[cfg(test)]
+mod validation_tests {
+    use super::*;
+    use axum::response::IntoResponse;
+    use domain::shared::error::ValidationError;
+
+    async fn body_of(response: axum::response::Response) -> serde_json::Value {
+        let bytes = axum::body::to_bytes(response.into_body(), usize::MAX)
+            .await
+            .unwrap();
+        serde_json::from_slice(&bytes).unwrap()
+    }
+
+    #[tokio::test]
+    async fn a_field_violation_travels_as_key_and_params() {
+        let err = ServiceError::from(ValidationError::TooLong {
+            field: "cluster.name",
+            max: 255,
+            got: 300,
+        });
+        let response = err.into_response();
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+
+        let body = body_of(response).await;
+        assert_eq!(body["code"], "request.validation_failed");
+        assert_eq!(body["validation"]["field"], "cluster.name");
+        assert_eq!(body["validation"]["key"], "cluster.name.tooLong");
+        assert_eq!(body["validation"]["params"]["max"], 255);
+        assert_eq!(body["validation"]["params"]["got"], 300);
+    }
+
+    #[tokio::test]
+    async fn an_out_of_range_violation_carries_its_bounds() {
+        let err = ServiceError::from(ValidationError::OutOfRange {
+            field: "coordinate.latitude",
+            min: -90.0,
+            max: 90.0,
+            got: 91.0,
+        });
+        let body = body_of(err.into_response()).await;
+        assert_eq!(body["validation"]["key"], "coordinate.latitude.outOfRange");
+        assert_eq!(body["validation"]["params"]["got"], 91.0);
+    }
+
+    #[tokio::test]
+    async fn an_empty_field_violation_carries_no_parameters() {
+        let err = ServiceError::from(ValidationError::EmptyString {
+            field: "tree.species",
+        });
+        let body = body_of(err.into_response()).await;
+        assert_eq!(body["validation"]["key"], "tree.species.empty");
+        assert_eq!(body["validation"]["params"], serde_json::json!({}));
+    }
+
+    #[tokio::test]
+    async fn a_format_violation_carries_its_reason() {
+        let err = ServiceError::from(ValidationError::InvalidFormat {
+            field: "user.email",
+            reason: "missing @".into(),
+        });
+        let body = body_of(err.into_response()).await;
+        assert_eq!(body["validation"]["key"], "user.email.invalidFormat");
+        assert_eq!(body["validation"]["params"]["reason"], "missing @");
+    }
+
+    #[tokio::test]
+    async fn a_too_short_violation_carries_the_minimum() {
+        let err = ServiceError::from(ValidationError::TooShort {
+            field: "role.name",
+            min: 2,
+            got: 1,
+        });
+        let body = body_of(err.into_response()).await;
+        assert_eq!(body["validation"]["key"], "role.name.tooShort");
+        assert_eq!(body["validation"]["params"]["min"], 2);
+    }
+
+    #[tokio::test]
+    async fn an_error_without_a_field_omits_the_validation_block() {
+        let body = body_of(ServiceError::TreeInCluster.into_response()).await;
+        assert!(
+            body.get("validation").is_none(),
+            "only field violations carry a validation block, got: {body}"
+        );
     }
 }

@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-use crate::service::ServiceError;
+use crate::service::{Malformed, ServiceError};
 use domain::{
     Id,
     organization::Organization,
@@ -446,14 +446,20 @@ pub struct RouteResponse {
 fn parse_date(s: &str) -> Result<DateTime<Utc>, ServiceError> {
     DateTime::parse_from_rfc3339(s)
         .map(|dt| dt.with_timezone(&Utc))
-        .map_err(|e| ServiceError::InvalidInput(format!("invalid date: {e}")))
+        .map_err(|e| ServiceError::Malformed {
+            kind: Malformed::Date,
+            detail: e.to_string(),
+        })
 }
 
 pub(crate) fn parse_user_ids(ids: &[String]) -> Result<Vec<uuid::Uuid>, ServiceError> {
     ids.iter()
         .map(|s| {
             s.parse::<uuid::Uuid>()
-                .map_err(|e| ServiceError::InvalidInput(format!("invalid user id '{s}': {e}")))
+                .map_err(|e| ServiceError::Malformed {
+                    kind: Malformed::Uuid,
+                    detail: format!("{s}: {e}"),
+                })
         })
         .collect()
 }

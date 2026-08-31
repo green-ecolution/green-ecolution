@@ -25,7 +25,7 @@ use crate::{
             scope,
         },
     },
-    service::ServiceError,
+    service::{Malformed, ServiceError},
 };
 use domain::{
     Id,
@@ -436,7 +436,12 @@ pub async fn list_tree_markers(
     user: AuthUserExtractor,
     Query(params): Query<TreeMarkerQueryParams>,
 ) -> Result<Json<TreeMarkerListResponse>, ServiceError> {
-    let bbox = params.parse_bbox().map_err(ServiceError::InvalidInput)?;
+    let bbox = params
+        .parse_bbox()
+        .map_err(|detail| ServiceError::Malformed {
+            kind: Malformed::BoundingBox,
+            detail,
+        })?;
 
     let planting_years = params
         .planting_year

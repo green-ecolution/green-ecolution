@@ -15,7 +15,9 @@ pub mod watering_execution_service;
 pub mod watering_plan_service;
 
 use domain::{
-    RepositoryError, routing::RoutingError, shared::error::ValidationError,
+    RepositoryError,
+    routing::RoutingError,
+    shared::error::{ValidationError, ValidationIssue},
     watering_plan::WateringPlanError,
 };
 
@@ -38,10 +40,58 @@ impl std::fmt::Display for Feature {
     }
 }
 
+/// Which request part failed to parse.
+///
+/// Each gets its own error code because a client wants to point at a different
+/// input for each: a date picker, an entity selection, a scanned sensor id.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Malformed {
+    Date,
+    Uuid,
+    SensorId,
+    BoundingBox,
+    Permission,
+}
+
+impl Malformed {
+    fn code(self) -> &'static str {
+        match self {
+            Self::Date => "request.malformed_date",
+            Self::Uuid => "request.malformed_uuid",
+            Self::SensorId => "request.malformed_sensor_id",
+            Self::BoundingBox => "request.malformed_bounding_box",
+            Self::Permission => "request.unknown_permission",
+        }
+    }
+}
+
+impl std::fmt::Display for Malformed {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            Self::Date => "date",
+            Self::Uuid => "id",
+            Self::SensorId => "sensor id",
+            Self::BoundingBox => "bounding box",
+            Self::Permission => "permission",
+        })
+    }
+}
+
 #[derive(Debug, thiserror::Error)]
 pub enum ServiceError {
     #[error(transparent)]
     Repository(#[from] RepositoryError),
+    /// A single input field violated a domain rule. Carries the typed error so
+    /// the field label, the violated rule and its parameters survive to the
+    /// client instead of collapsing into a sentence.
+    #[error(transparent)]
+    Validation(#[from] ValidationError),
+    /// A request part the server could not even parse into a domain value.
+    /// Distinct from `Validation`, which means a value parsed but broke a rule.
+    #[error("malformed {kind}: {detail}")]
+    Malformed { kind: Malformed, detail: String },
+    /// A rule the request broke that is not attributable to one input field,
+    /// e.g. two request parts that contradict each other.
     #[error("invalid input: {0}")]
     InvalidInput(String),
     #[error(transparent)]
@@ -91,6 +141,8 @@ impl ServiceError {
     pub fn code(&self) -> &'static str {
         match self {
             Self::Repository(e) => repository_code(e),
+            Self::Validation(_) => "request.validation_failed",
+            Self::Malformed { kind, .. } => kind.code(),
             Self::InvalidInput(_) => "request.invalid_input",
             Self::Auth(e) => e.code(),
             Self::Routing(e) => routing_code(e),
@@ -114,6 +166,22 @@ impl ServiceError {
                 Feature::Plugins => "feature.plugins_disabled",
             },
         }
+    }
+
+    /// Field-level detail, present only where one input field is to blame.
+    ///
+    /// Built through the shared [`ValidationIssue`] constructor, so a rule the
+    /// browser already checks and the same rule enforced here resolve to the
+    /// same translation key.
+    pub fn validation_issue(&self) -> Option<ValidationIssue> {
+        let error = match self {
+            Self::Validation(e) => e,
+            Self::Organization(domain::organization::OrganizationError::Validation(e)) => e,
+            Self::Role(domain::role::RoleError::Validation(e)) => e,
+            Self::WateringPlan(WateringPlanError::Validation(e)) => e,
+            _ => return None,
+        };
+        Some(ValidationIssue::from(error))
     }
 }
 
@@ -199,12 +267,6 @@ impl OrganizationMismatch {
     }
 }
 
-impl From<ValidationError> for ServiceError {
-    fn from(err: ValidationError) -> Self {
-        Self::InvalidInput(err.to_string())
-    }
-}
-
 #[derive(Debug, thiserror::Error)]
 pub enum AuthError {
     #[error("missing or malformed authorization header")]
@@ -249,6 +311,29 @@ mod tests {
             ServiceError::Repository(RepositoryError::ConstraintViolation("x".into())),
             ServiceError::Repository(RepositoryError::DataIntegrity("x".into())),
             ServiceError::Repository(RepositoryError::Internal("x".into())),
+            ServiceError::Validation(ValidationError::EmptyString {
+                field: "tree.species",
+            }),
+            ServiceError::Malformed {
+                kind: Malformed::Date,
+                detail: "x".into(),
+            },
+            ServiceError::Malformed {
+                kind: Malformed::Uuid,
+                detail: "x".into(),
+            },
+            ServiceError::Malformed {
+                kind: Malformed::SensorId,
+                detail: "x".into(),
+            },
+            ServiceError::Malformed {
+                kind: Malformed::BoundingBox,
+                detail: "x".into(),
+            },
+            ServiceError::Malformed {
+                kind: Malformed::Permission,
+                detail: "x".into(),
+            },
             ServiceError::InvalidInput("x".into()),
             ServiceError::Auth(AuthError::MissingToken),
             ServiceError::Auth(AuthError::InvalidToken("x".into())),

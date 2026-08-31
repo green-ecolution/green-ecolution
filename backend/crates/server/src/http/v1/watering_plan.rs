@@ -29,7 +29,7 @@ use crate::{
             gpx, scope,
         },
     },
-    service::{Feature, ServiceError},
+    service::{Feature, Malformed, ServiceError},
 };
 use domain::{
     Id,
@@ -670,5 +670,8 @@ pub async fn get_gpx_file(
 fn parse_date(s: &str) -> Result<chrono::DateTime<chrono::Utc>, ServiceError> {
     chrono::DateTime::parse_from_rfc3339(s)
         .map(|dt| dt.with_timezone(&chrono::Utc))
-        .map_err(|e| ServiceError::InvalidInput(format!("invalid date: {e}")))
+        .map_err(|e| ServiceError::Malformed {
+            kind: Malformed::Date,
+            detail: e.to_string(),
+        })
 }

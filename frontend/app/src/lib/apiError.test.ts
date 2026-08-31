@@ -76,3 +76,48 @@ describe('resolveApiError', () => {
     expect(info.messageKey).toBe('offline')
   })
 })
+
+describe('field validation reported by the backend', () => {
+  const violation = (validation: unknown) =>
+    respond(400, {
+      error: 'cluster.name length 300 exceeds max 255',
+      code: 'request.validation_failed',
+      validation,
+    })
+
+  it('renders the broken rule instead of the generic 400 text', async () => {
+    const info = await resolveApiError(
+      violation({ field: 'cluster.name', key: 'cluster.name.tooLong', params: { max: 255 } }),
+    )
+
+    expect(info.message).toBe('Name darf maximal 255 Zeichen lang sein.')
+    expect(info.messageKey).toBe('code.cluster.name.tooLong')
+  })
+
+  it('exposes the issue so a form can attach it to the field', async () => {
+    const info = await resolveApiError(
+      violation({ field: 'tree.species', key: 'tree.species.empty', params: {} }),
+    )
+
+    expect(info.validation).toEqual({
+      field: 'tree.species',
+      key: 'tree.species.empty',
+      params: {},
+    })
+  })
+
+  it('falls back to the status text when the key has no catalog entry', async () => {
+    const info = await resolveApiError(
+      violation({ field: 'sensor.id', key: 'sensor.id.tooLong', params: { max: 64 } }),
+    )
+
+    expect(info.messageKey).toBe('status.400')
+  })
+
+  it('ignores a malformed validation block rather than throwing', async () => {
+    const info = await resolveApiError(violation({ key: 'cluster.name.tooLong' }))
+
+    expect(info.validation).toBeUndefined()
+    expect(info.messageKey).toBe('status.400')
+  })
+})

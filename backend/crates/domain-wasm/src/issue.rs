@@ -1,6 +1,6 @@
-use domain::shared::error::ValidationError;
+use domain::shared::error::{ValidationError, ValidationIssue as DomainIssue};
 use serde::Serialize;
-use serde_json::{Value, json};
+use serde_json::Value;
 
 #[derive(Debug, Clone, Serialize, PartialEq)]
 pub struct ValidationIssue {
@@ -13,43 +13,18 @@ pub struct ValidationIssue {
 impl ValidationIssue {
     /// Convert a domain `ValidationError` into a frontend-friendly issue.
     ///
-    /// `path` is the form-field path the frontend uses; `field` keeps the
-    /// original namespaced domain field for debugging/logging; `key` is the
-    /// i18n key (`{field}.{variant}`); `params` carry the variant payload.
+    /// `field`, `key` and `params` come from [`DomainIssue`], the same
+    /// constructor the HTTP layer uses, so a form field validated in the
+    /// browser and the same field rejected by the server resolve to one
+    /// catalog entry. Only `path` is added here: it is the form-field path,
+    /// which exists in the browser and has no meaning server-side.
     pub fn from_error(err: &ValidationError, path: impl Into<String>) -> Self {
-        let (field, suffix, params) = decompose(err);
-        let path = path.into();
-        let key = format!("{}.{}", field, suffix);
+        let issue = DomainIssue::from(err);
         Self {
-            path,
-            field: field.to_string(),
-            key,
-            params,
-        }
-    }
-}
-
-fn decompose(err: &ValidationError) -> (&'static str, &'static str, Value) {
-    match err {
-        ValidationError::EmptyString { field } => (field, "empty", json!({})),
-        ValidationError::TooShort { field, min, got } => {
-            (field, "tooShort", json!({ "min": min, "got": got }))
-        }
-        ValidationError::TooLong { field, max, got } => {
-            (field, "tooLong", json!({ "max": max, "got": got }))
-        }
-        ValidationError::OutOfRange {
-            field,
-            min,
-            max,
-            got,
-        } => (
-            field,
-            "outOfRange",
-            json!({ "min": min, "max": max, "got": got }),
-        ),
-        ValidationError::InvalidFormat { field, reason } => {
-            (field, "invalidFormat", json!({ "reason": reason }))
+            path: path.into(),
+            field: issue.field.to_string(),
+            key: issue.key,
+            params: issue.params,
         }
     }
 }
@@ -57,6 +32,7 @@ fn decompose(err: &ValidationError) -> (&'static str, &'static str, Value) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serde_json::json;
 
     #[test]
     fn empty_string_maps_to_empty_suffix() {
@@ -119,5 +95,20 @@ mod tests {
         let issue = ValidationIssue::from_error(&err, "email");
         assert_eq!(issue.key, "user.email.invalidFormat");
         assert_eq!(issue.params, json!({ "reason": "missing @" }));
+    }
+
+    #[test]
+    fn the_wasm_issue_agrees_with_the_shared_constructor() {
+        let err = ValidationError::TooLong {
+            field: "vehicle.model",
+            max: 128,
+            got: 200,
+        };
+        let shared = DomainIssue::from(&err);
+        let wire = ValidationIssue::from_error(&err, "model");
+
+        assert_eq!(wire.field, shared.field);
+        assert_eq!(wire.key, shared.key);
+        assert_eq!(wire.params, shared.params);
     }
 }
