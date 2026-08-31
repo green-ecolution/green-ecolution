@@ -1,5 +1,6 @@
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { userQueries } from '@/api/queries'
+import { startSigninHandover } from '@/lib/auth/handover'
 import { readAuthBypass } from '@/lib/auth/runtimeConfig'
 
 export const Route = createFileRoute('/_protected')({
@@ -11,7 +12,10 @@ export const Route = createFileRoute('/_protected')({
       if (preload) {
         throw redirect({ to: '/' })
       }
-      await context.auth.signinRedirect({ returnTo: location.pathname + location.searchStr })
+      await startSigninHandover(context.auth, location.pathname + location.searchStr)
+      // Still here, so the handover was aborted. Falling through would query /me
+      // unauthenticated and strand the visitor on an error page.
+      throw redirect({ to: '/', replace: true })
     }
     // Nav entries and child guards read permissions synchronously from the
     // cache, so the user has to be resolved before anything inside renders.

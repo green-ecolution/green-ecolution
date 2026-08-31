@@ -1,5 +1,6 @@
 import { getAuthSession } from '@/lib/auth/session'
-import { createFileRoute } from '@tanstack/react-router'
+import { startSignoutHandover } from '@/lib/auth/handover'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/logout')({
   beforeLoad: async ({ preload }) => {
@@ -7,6 +8,8 @@ export const Route = createFileRoute('/logout')({
     if (preload) {
       return
     }
-    await getAuthSession().signoutRedirect()
+    await startSignoutHandover(getAuthSession())
+    // Still here, so the handover was aborted; this route renders nothing.
+    throw redirect({ to: '/', replace: true })
   },
 })
