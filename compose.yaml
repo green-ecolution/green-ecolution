@@ -238,7 +238,7 @@ services:
   #     - app-network
 
   streamlet:
-    image: ghcr.io/green-ecolution/streamlet/server:0.1.0
+    image: ghcr.io/green-ecolution/streamlet/server:0.2.0
     environment:
       STREAMLET_ADDR: "0.0.0.0:3000"
       STREAMLET_VALHALLA_URL: "http://valhalla:8002"
@@ -292,7 +292,7 @@ services:
       - "traefik.http.routers.valhalla.rule=Host(`valhalla.${APP_HOST:-localhost}`)"
       - "traefik.http.routers.valhalla.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
   reverse-proxy:
-    image: traefik:v3.7.11
+    image: traefik:v3.7.12
     extra_hosts:
       - "host.docker.internal:host-gateway"
     environment:
