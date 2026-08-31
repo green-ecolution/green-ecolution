@@ -32,7 +32,7 @@ const statusOptions = [
   { value: 'bad', label: 'Sehr trocken' },
   { value: 'moderate', label: 'Leicht trocken' },
   { value: 'good', label: 'In Ordnung' },
-  { value: 'just watered', label: 'Soeben bewässert' },
+  { value: 'just_watered', label: 'Soeben bewässert' },
   { value: 'unknown', label: 'Unbekannt' },
 ]
 

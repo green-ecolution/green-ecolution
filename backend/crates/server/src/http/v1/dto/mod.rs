@@ -77,7 +77,7 @@ impl<T: Serialize + utoipa::ToSchema> ListResponse<T> {
 // -- Shared enums used across multiple DTOs --
 
 /// Current watering status of a tree or tree cluster.
-#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
+#[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "snake_case")]
 #[schema(example = "good")]
 pub enum WateringStatus {
@@ -88,14 +88,14 @@ pub enum WateringStatus {
     /// Soil moisture is critically low — immediate watering required.
     Bad,
     /// Recently watered — status will update after next sensor reading.
-    #[serde(rename = "just watered")]
+    #[serde(rename = "just_watered", alias = "just watered")]
     JustWatered,
     /// Status could not be determined (e.g. no sensor data available).
     Unknown,
 }
 
 /// KA5 soil texture class of a tree cluster site (KA5 short code).
-#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
+#[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
 #[schema(example = "Lu")]
 #[allow(non_camel_case_types)]
 pub enum SoilCondition {
@@ -141,7 +141,7 @@ pub enum SoilCondition {
 }
 
 /// Connectivity status of a LoRaWAN sensor.
-#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
+#[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "snake_case")]
 #[schema(example = "online")]
 pub enum SensorStatus {
@@ -154,7 +154,7 @@ pub enum SensorStatus {
 }
 
 /// Whether a sensor's recent readings look trustworthy.
-#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
+#[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "snake_case")]
 #[schema(example = "ok")]
 pub enum DataHealth {
@@ -174,7 +174,7 @@ impl From<domain::sensor::DataHealth> for DataHealth {
 }
 
 /// European driving license category required to operate a vehicle.
-#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
+#[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
 #[schema(example = "BE")]
 pub enum DrivingLicense {
     /// Standard car license (up to 3.5t).
@@ -188,7 +188,7 @@ pub enum DrivingLicense {
 }
 
 /// Operational status of a watering vehicle.
-#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
+#[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "snake_case")]
 #[schema(example = "available")]
 pub enum VehicleStatus {
@@ -197,14 +197,14 @@ pub enum VehicleStatus {
     /// Vehicle is available for assignment.
     Available,
     /// Vehicle is temporarily unavailable (e.g. maintenance).
-    #[serde(rename = "not available")]
+    #[serde(rename = "not_available", alias = "not available")]
     NotAvailable,
     /// Vehicle status could not be determined.
     Unknown,
 }
 
 /// Classification of a watering vehicle.
-#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
+#[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "snake_case")]
 #[schema(example = "transporter")]
 pub enum VehicleType {
@@ -215,7 +215,7 @@ pub enum VehicleType {
 }
 
 /// Lifecycle status of a watering plan.
-#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
+#[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "snake_case")]
 #[schema(example = "planned")]
 pub enum WateringPlanStatus {
@@ -228,14 +228,14 @@ pub enum WateringPlanStatus {
     /// Plan was completed successfully.
     Finished,
     /// Plan was started but could not be completed.
-    #[serde(rename = "not competed")]
+    #[serde(rename = "not_completed", alias = "not competed")]
     NotCompleted,
     /// Plan status could not be determined.
     Unknown,
 }
 
 /// Availability status of a user.
-#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
+#[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "snake_case")]
 #[schema(example = "available")]
 pub enum UserStatus {
@@ -452,5 +452,77 @@ impl From<DomainWateringPlanStatus> for WateringPlanStatus {
             DomainWateringPlanStatus::NotCompleted => Self::NotCompleted,
             DomainWateringPlanStatus::Unknown => Self::Unknown,
         }
+    }
+}
+
+#[cfg(test)]
+mod wire_format_tests {
+    use super::*;
+
+    /// A value with a space cannot serve as an i18n key segment, and
+    /// `not competed` was a typo carried over from the Go backend.
+    #[test]
+    fn no_status_value_contains_a_space() {
+        let values = [
+            serde_json::to_string(&WateringStatus::JustWatered).unwrap(),
+            serde_json::to_string(&VehicleStatus::NotAvailable).unwrap(),
+            serde_json::to_string(&WateringPlanStatus::NotCompleted).unwrap(),
+        ];
+        for value in &values {
+            assert!(
+                !value.contains(' '),
+                "a wire value must be usable as a key segment, got {value}"
+            );
+        }
+    }
+
+    #[test]
+    fn statuses_serialize_in_snake_case() {
+        assert_eq!(
+            serde_json::to_string(&WateringStatus::JustWatered).unwrap(),
+            "\"just_watered\""
+        );
+        assert_eq!(
+            serde_json::to_string(&VehicleStatus::NotAvailable).unwrap(),
+            "\"not_available\""
+        );
+        assert_eq!(
+            serde_json::to_string(&WateringPlanStatus::NotCompleted).unwrap(),
+            "\"not_completed\""
+        );
+    }
+
+    /// The rename would otherwise be a breaking change. Accepting the old
+    /// spelling on input keeps every existing caller working.
+    #[test]
+    fn the_previous_spellings_are_still_accepted_on_input() {
+        assert_eq!(
+            serde_json::from_str::<WateringStatus>("\"just watered\"").unwrap(),
+            WateringStatus::JustWatered
+        );
+        assert_eq!(
+            serde_json::from_str::<VehicleStatus>("\"not available\"").unwrap(),
+            VehicleStatus::NotAvailable
+        );
+        assert_eq!(
+            serde_json::from_str::<WateringPlanStatus>("\"not competed\"").unwrap(),
+            WateringPlanStatus::NotCompleted
+        );
+    }
+
+    #[test]
+    fn the_canonical_spellings_are_accepted_on_input() {
+        assert_eq!(
+            serde_json::from_str::<WateringStatus>("\"just_watered\"").unwrap(),
+            WateringStatus::JustWatered
+        );
+        assert_eq!(
+            serde_json::from_str::<VehicleStatus>("\"not_available\"").unwrap(),
+            VehicleStatus::NotAvailable
+        );
+        assert_eq!(
+            serde_json::from_str::<WateringPlanStatus>("\"not_completed\"").unwrap(),
+            WateringPlanStatus::NotCompleted
+        );
     }
 }

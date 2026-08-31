@@ -51,8 +51,8 @@ pub use view::VehicleView;
 pub enum VehicleStatus {
     Active,
     Available,
-    #[serde(rename = "not available")]
-    #[cfg_attr(feature = "sqlx", sqlx(rename = "not available"))]
+    #[serde(rename = "not_available", alias = "not available")]
+    #[cfg_attr(feature = "sqlx", sqlx(rename = "not_available"))]
     NotAvailable,
     Unknown,
 }

@@ -67,8 +67,8 @@ pub enum WateringPlanStatus {
     Active,
     Canceled,
     Finished,
-    #[serde(rename = "not competed")]
-    #[cfg_attr(feature = "sqlx", sqlx(rename = "not competed"))]
+    #[serde(rename = "not_completed", alias = "not competed")]
+    #[cfg_attr(feature = "sqlx", sqlx(rename = "not_completed"))]
     NotCompleted,
     Unknown,
 }

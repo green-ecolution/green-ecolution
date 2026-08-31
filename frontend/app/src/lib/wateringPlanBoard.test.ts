@@ -11,7 +11,7 @@ describe('columnForStatus', () => {
   it('maps all terminal statuses to done', () => {
     expect(columnForStatus(WateringPlanStatus.Finished)).toBe('done')
     expect(columnForStatus(WateringPlanStatus.Canceled)).toBe('done')
-    expect(columnForStatus(WateringPlanStatus.NotCompeted)).toBe('done')
+    expect(columnForStatus(WateringPlanStatus.NotCompleted)).toBe('done')
   })
 
   it('maps unknown to null', () => {

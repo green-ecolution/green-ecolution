@@ -188,7 +188,7 @@ describe('WateringPlanStatusUpdate — Nicht angetreten', () => {
     const [payload] = updateWateringPlan.mock.calls[0] as [
       { wateringPlanUpdateRequest: { status: string; cancellationNote: string } },
     ]
-    expect(payload.wateringPlanUpdateRequest.status).toBe(WateringPlanStatus.NotCompeted)
+    expect(payload.wateringPlanUpdateRequest.status).toBe(WateringPlanStatus.NotCompleted)
     expect(payload.wateringPlanUpdateRequest.cancellationNote).toBe('Fahrzeug defekt')
   })
 })

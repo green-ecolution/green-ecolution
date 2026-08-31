@@ -10774,7 +10774,7 @@
         "enum": [
           "active",
           "available",
-          "not available",
+          "not_available",
           "unknown"
         ],
         "example": "available"
@@ -11298,7 +11298,7 @@
           "active",
           "canceled",
           "finished",
-          "not competed",
+          "not_completed",
           "unknown"
         ],
         "example": "planned"
@@ -11413,7 +11413,7 @@
           "good",
           "moderate",
           "bad",
-          "just watered",
+          "just_watered",
           "unknown"
         ],
         "example": "good"

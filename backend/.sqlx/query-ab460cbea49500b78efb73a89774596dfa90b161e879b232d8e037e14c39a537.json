@@ -17,7 +17,7 @@
                 "active",
                 "canceled",
                 "finished",
-                "not competed",
+                "not_completed",
                 "unknown"
               ]
             }

@@ -15,12 +15,12 @@ impl PhoneNumber {
         let trimmed = value.into().trim().to_string();
         if trimmed.is_empty() {
             return Err(ValidationError::EmptyString {
-                field: "phone_number",
+                field: "user.phone_number",
             });
         }
         if !looks_like_phone_number(&trimmed) {
             return Err(ValidationError::InvalidFormat {
-                field: "phone_number",
+                field: "user.phone_number",
                 reason: "must contain only digits, spaces, -, /, (, ) and an optional leading +, with at least 6 digits".to_string(),
             });
         }

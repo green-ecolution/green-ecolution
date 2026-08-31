@@ -51,7 +51,7 @@ impl FromStr for Resource {
             .into_iter()
             .find(|r| r.as_str() == s)
             .ok_or_else(|| ValidationError::InvalidFormat {
-                field: "permission",
+                field: "authorization.permission",
                 reason: format!("unknown resource '{s}'"),
             })
     }
@@ -86,7 +86,7 @@ impl FromStr for Action {
             .into_iter()
             .find(|a| a.as_str() == s)
             .ok_or_else(|| ValidationError::InvalidFormat {
-                field: "permission",
+                field: "authorization.permission",
                 reason: format!("unknown action '{s}'"),
             })
     }
@@ -125,7 +125,7 @@ impl FromStr for Permission {
         let (res, act) = s
             .split_once(':')
             .ok_or_else(|| ValidationError::InvalidFormat {
-                field: "permission",
+                field: "authorization.permission",
                 reason: format!("expected '<resource>:<action>', got '{s}'"),
             })?;
         Ok(Permission::new(
