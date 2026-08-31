@@ -1,3 +1,6 @@
+import { getI18n } from '@/lib/i18n'
+import { intlLocale } from '@/lib/i18n/format'
+
 interface HTTPError {
   error: string
 }
@@ -32,7 +35,8 @@ export function isHTTPError(data: unknown): data is HTTPError {
 }
 
 export function formatLiters(liters: number): string {
-  return `${new Intl.NumberFormat('de-DE', { maximumFractionDigits: 0 }).format(liters)} L`
+  const locale = intlLocale(getI18n().language)
+  return `${new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(liters)} L`
 }
 
 // RHF `setValueAs` for number inputs: German keyboards produce a decimal

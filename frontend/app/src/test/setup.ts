@@ -1,6 +1,7 @@
 import '@testing-library/jest-dom/vitest'
 import { cleanup } from '@testing-library/react'
 import { afterEach, beforeAll, afterAll, vi } from 'vitest'
+import { createI18n } from '@/lib/i18n'
 import { server } from './mocks/server'
 
 // The lottie player touches a real canvas on import, which jsdom does not provide
@@ -85,6 +86,10 @@ Object.defineProperty(window, 'sessionStorage', { value: sessionStorageMock })
 
 // MSW server setup
 beforeAll(() => server.listen({ onUnhandledRequest: 'error' }))
+
+// Translations resolve through a module-level i18n instance; any test that renders
+// something needs it created first, or getI18n() throws.
+beforeAll(() => createI18n())
 afterEach(() => {
   cleanup()
   server.resetHandlers()
