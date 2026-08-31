@@ -68,7 +68,7 @@ vi.mock('@/lib/auth/usePermissions', () => ({ usePermissions: () => permissions(
 // two-pane layout; one test flips this to exercise the Drawer branch.
 const isWide = vi.fn((): boolean => true)
 vi.mock('@/hooks/useContainerWiderThan', () => ({
-  useContainerWiderThan: () => ({ ref: { current: null }, isWide: isWide() }),
+  useContainerWiderThan: () => ({ ref: vi.fn(), isWide: isWide() }),
 }))
 
 const createMutate = vi.fn()

@@ -43,7 +43,7 @@ vi.mock('@/lib/auth/usePermissions', () => ({ usePermissions: () => permissions(
 // to false to exercise the mobile Drawer branch.
 const isWide = vi.fn((): boolean => true)
 vi.mock('@/hooks/useContainerWiderThan', () => ({
-  useContainerWiderThan: () => ({ ref: { current: null }, isWide: isWide() }),
+  useContainerWiderThan: () => ({ ref: vi.fn(), isWide: isWide() }),
 }))
 
 const createMutate = vi.fn()

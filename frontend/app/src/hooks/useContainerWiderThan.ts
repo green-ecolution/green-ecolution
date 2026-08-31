@@ -1,7 +1,7 @@
-import { useLayoutEffect, useRef, useState, type RefObject } from 'react'
+import { useCallback, useState, type RefCallback } from 'react'
 
 interface ContainerWiderThan<T extends HTMLElement> {
-  ref: RefObject<T | null>
+  ref: RefCallback<T>
   isWide: boolean
 }
 
@@ -13,21 +13,25 @@ interface ContainerWiderThan<T extends HTMLElement> {
 export function useContainerWiderThan<T extends HTMLElement = HTMLDivElement>(
   minWidth: number,
 ): ContainerWiderThan<T> {
-  const ref = useRef<T | null>(null)
   const [isWide, setIsWide] = useState(false)
 
-  useLayoutEffect(() => {
-    const el = ref.current
-    if (!el) return
+  // A callback ref, not useLayoutEffect + useRef: pages render a loading state
+  // before the layout they measure, so the element is absent on the first commit
+  // and an effect that only depends on minWidth would never measure it.
+  const ref = useCallback<RefCallback<T>>(
+    (node) => {
+      if (!node) return
 
-    setIsWide(el.getBoundingClientRect().width >= minWidth)
+      setIsWide(node.getBoundingClientRect().width >= minWidth)
 
-    const observer = new ResizeObserver(([entry]) => {
-      if (entry) setIsWide(entry.contentRect.width >= minWidth)
-    })
-    observer.observe(el)
-    return () => observer.disconnect()
-  }, [minWidth])
+      const observer = new ResizeObserver(([entry]) => {
+        if (entry) setIsWide(entry.contentRect.width >= minWidth)
+      })
+      observer.observe(node)
+      return () => observer.disconnect()
+    },
+    [minWidth],
+  )
 
   return { ref, isWide }
 }

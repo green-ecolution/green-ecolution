@@ -90,7 +90,7 @@ vi.mock('@/lib/auth/usePermissions', () => ({ usePermissions: () => permissions(
 // panel in a Drawer, leaving both panes unqueryable.
 const isWide = vi.fn((): boolean => true)
 vi.mock('@/hooks/useContainerWiderThan', () => ({
-  useContainerWiderThan: () => ({ ref: { current: null }, isWide: isWide() }),
+  useContainerWiderThan: () => ({ ref: vi.fn(), isWide: isWide() }),
 }))
 
 const assignMutate = vi.fn()
