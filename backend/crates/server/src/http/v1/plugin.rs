@@ -18,7 +18,7 @@ use crate::{
             user::ClientTokenResponse,
         },
     },
-    service::ServiceError,
+    service::{Feature, ServiceError},
 };
 
 pub fn routes() -> OpenApiRouter<Arc<AppState>> {
@@ -32,7 +32,9 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
 
 fn guard(state: &AppState) -> Result<(), ServiceError> {
     if !state.feature_flags.plugins_enabled {
-        return Err(ServiceError::FeatureDisabled { feature: "plugins" });
+        return Err(ServiceError::FeatureDisabled {
+            feature: Feature::Plugins,
+        });
     }
     Ok(())
 }
@@ -43,7 +45,7 @@ fn guard(state: &AppState) -> Result<(), ServiceError> {
     description = "Returns all registered plugins.",
     responses(
         (status = 200, description = "List of registered plugins", body = PluginListResponse),
-        (status = 503, description = "Plugins feature is disabled"),
+        (status = 503, description = "Plugins feature is disabled (code `feature.plugins_disabled`)"),
         (status = 500, description = "Internal server error"),
     )
 )]
@@ -63,7 +65,7 @@ pub async fn list_plugins(
     responses(
         (status = 201, description = "Plugin registered", body = ClientTokenResponse),
         (status = 400, description = "Invalid input"),
-        (status = 503, description = "Plugins feature is disabled"),
+        (status = 503, description = "Plugins feature is disabled (code `feature.plugins_disabled`)"),
         (status = 500, description = "Internal server error"),
     )
 )]
@@ -85,7 +87,7 @@ pub async fn register_plugin(
     responses(
         (status = 200, description = "Plugin found", body = PluginResponse),
         (status = 404, description = "Plugin not found"),
-        (status = 503, description = "Plugins feature is disabled"),
+        (status = 503, description = "Plugins feature is disabled (code `feature.plugins_disabled`)"),
         (status = 500, description = "Internal server error"),
     )
 )]
@@ -106,7 +108,7 @@ pub async fn get_plugin(
     responses(
         (status = 200, description = "Heartbeat received"),
         (status = 404, description = "Plugin not found"),
-        (status = 503, description = "Plugins feature is disabled"),
+        (status = 503, description = "Plugins feature is disabled (code `feature.plugins_disabled`)"),
         (status = 500, description = "Internal server error"),
     )
 )]
@@ -128,7 +130,7 @@ pub async fn plugin_heartbeat(
     responses(
         (status = 200, description = "Token refreshed", body = ClientTokenResponse),
         (status = 404, description = "Plugin not found"),
-        (status = 503, description = "Plugins feature is disabled"),
+        (status = 503, description = "Plugins feature is disabled (code `feature.plugins_disabled`)"),
         (status = 500, description = "Internal server error"),
     )
 )]
@@ -151,7 +153,7 @@ pub async fn plugin_refresh_token(
     responses(
         (status = 204, description = "Plugin unregistered"),
         (status = 404, description = "Plugin not found"),
-        (status = 503, description = "Plugins feature is disabled"),
+        (status = 503, description = "Plugins feature is disabled (code `feature.plugins_disabled`)"),
         (status = 500, description = "Internal server error"),
     )
 )]

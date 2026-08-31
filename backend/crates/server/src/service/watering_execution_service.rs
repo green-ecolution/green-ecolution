@@ -37,7 +37,7 @@ impl WateringExecutionService {
         let mut plan = self.reader.by_id(id).await?;
         let events = plan
             .finish(&evaluations)
-            .map_err(|e| ServiceError::InvalidInput(e.to_string()))?;
+            .map_err(ServiceError::WateringPlan)?;
 
         let cluster_ids: Vec<_> = plan.cluster_ids().to_vec();
         let now = Utc::now();

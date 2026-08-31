@@ -170,6 +170,7 @@ pub async fn get_tree(
     responses(
         (status = 201, description = "Tree created", body = TreeResponse),
         (status = 400, description = "Invalid input"),
+        (status = 409, description = "The given sensor is already assigned to another tree (code `conflict.sensor_already_assigned`)"),
         (status = 422, description = "The given cluster or sensor belongs to a different organization (codes `organization_mismatch.cluster_vs_tree`, `organization_mismatch.sensor_vs_tree`)"),
         (status = 500, description = "Internal server error"),
     )
@@ -226,6 +227,7 @@ pub async fn create_tree(
     responses(
         (status = 200, description = "Tree updated", body = TreeResponse),
         (status = 403, description = "Missing tree:update in the owning organization"),
+        (status = 409, description = "The given sensor is already assigned to another tree (code `conflict.sensor_already_assigned`)"),
         (status = 404, description = "Tree not found"),
         (status = 422, description = "The given cluster or sensor belongs to a different organization (codes `organization_mismatch.cluster_vs_tree`, `organization_mismatch.sensor_vs_tree`)"),
         (status = 500, description = "Internal server error"),
@@ -478,7 +480,7 @@ pub async fn list_tree_markers(
         (status = 204, description = "Tree transferred"),
         (status = 403, description = "Missing tree:update in source or target organization"),
         (status = 404, description = "Tree or organization not found"),
-        (status = 409, description = "Tree is part of a cluster"),
+        (status = 409, description = "Tree is part of a cluster (code `conflict.tree_in_cluster`)"),
     )
 )]
 #[tracing::instrument(level = "info", skip_all, fields(tree.id = %id))]

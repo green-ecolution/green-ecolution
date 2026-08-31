@@ -9,7 +9,7 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
     http::{AppState, auth::extractor::AuthUserExtractor},
-    service::ServiceError,
+    service::{Feature, ServiceError},
 };
 use domain::{
     Id,
@@ -34,7 +34,9 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
 
 fn ensure_routing(state: &AppState) -> Result<(), ServiceError> {
     if !state.feature_flags.routing_enabled {
-        return Err(ServiceError::FeatureDisabled { feature: "routing" });
+        return Err(ServiceError::FeatureDisabled {
+            feature: Feature::Routing,
+        });
     }
     Ok(())
 }
@@ -45,7 +47,7 @@ fn ensure_routing(state: &AppState) -> Result<(), ServiceError> {
     description = "Returns the persisted named start/return points for watering routes.",
     responses(
         (status = 200, description = "List of start points", body = Vec<StartPointResponse>),
-        (status = 503, description = "Routing feature is disabled"),
+        (status = 503, description = "Routing feature is disabled (code `feature.routing_disabled`)"),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
@@ -72,7 +74,7 @@ pub async fn list_routing_start_points(
     responses(
         (status = 201, description = "Start point created", body = StartPointResponse),
         (status = 400, description = "Invalid input"),
-        (status = 503, description = "Routing feature is disabled"),
+        (status = 503, description = "Routing feature is disabled (code `feature.routing_disabled`)"),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
@@ -105,7 +107,7 @@ pub async fn create_start_point(
         (status = 200, description = "Start point updated", body = StartPointResponse),
         (status = 403, description = "Missing watering_plan:update in the owning organization"),
         (status = 404, description = "Start point not found"),
-        (status = 503, description = "Routing feature is disabled"),
+        (status = 503, description = "Routing feature is disabled (code `feature.routing_disabled`)"),
     )
 )]
 #[tracing::instrument(level = "info", skip_all, fields(start_point.id = %id))]
@@ -148,7 +150,7 @@ pub async fn update_start_point(
         (status = 400, description = "Cannot delete the default start point"),
         (status = 403, description = "Missing watering_plan:delete in the owning organization"),
         (status = 404, description = "Start point not found"),
-        (status = 503, description = "Routing feature is disabled"),
+        (status = 503, description = "Routing feature is disabled (code `feature.routing_disabled`)"),
     )
 )]
 #[tracing::instrument(level = "info", skip_all, fields(start_point.id = %id))]
@@ -185,7 +187,7 @@ pub async fn delete_start_point(
         (status = 204, description = "Default set"),
         (status = 403, description = "Missing watering_plan:update in the owning organization"),
         (status = 404, description = "Start point not found"),
-        (status = 503, description = "Routing feature is disabled"),
+        (status = 503, description = "Routing feature is disabled (code `feature.routing_disabled`)"),
     )
 )]
 #[tracing::instrument(level = "info", skip_all, fields(start_point.id = %id))]
@@ -227,7 +229,7 @@ pub async fn set_default_start_point(
         (status = 204, description = "Start point transferred"),
         (status = 403, description = "Missing watering_plan:update in source or target organization"),
         (status = 404, description = "Start point or organization not found"),
-        (status = 503, description = "Routing feature is disabled"),
+        (status = 503, description = "Routing feature is disabled (code `feature.routing_disabled`)"),
     )
 )]
 #[tracing::instrument(level = "info", skip_all, fields(start_point.id = %id))]

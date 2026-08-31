@@ -145,7 +145,7 @@ pub async fn list_org_roles(
         (status = 401, description = "Unauthorized"),
         (status = 403, description = "Forbidden"),
         (status = 404, description = "Source role/template not found"),
-        (status = 409, description = "Name conflict"),
+        (status = 409, description = "Name conflict (code `resource.already_exists`)"),
         (status = 500, description = "Internal server error"),
     )
 )]
@@ -251,7 +251,7 @@ pub async fn get_role(
         (status = 401, description = "Unauthorized"),
         (status = 403, description = "Forbidden"),
         (status = 404, description = "Not found"),
-        (status = 409, description = "Templates are immutable, the name conflicts, or the change would revoke the caller's own administration rights"),
+        (status = 409, description = "Templates are immutable, the name conflicts, or the change would revoke the caller's own administration rights (codes `conflict.role_template_immutable`, `resource.already_exists`, `conflict.cannot_revoke_own_administration`)"),
         (status = 500, description = "Internal server error"),
     )
 )]
@@ -310,7 +310,7 @@ pub async fn update_role(
         (status = 401, description = "Unauthorized"),
         (status = 403, description = "Forbidden"),
         (status = 404, description = "Not found"),
-        (status = 409, description = "Templates are immutable, or the deletion would revoke the caller's own administration rights"),
+        (status = 409, description = "Templates are immutable, or the deletion would revoke the caller's own administration rights (codes `conflict.role_template_immutable`, `conflict.cannot_revoke_own_administration`)"),
         (status = 500, description = "Internal server error"),
     )
 )]

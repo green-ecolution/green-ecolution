@@ -9,10 +9,10 @@ use domain::{RepositoryError, routing::RoutingError};
 #[derive(Debug, Serialize)]
 pub struct ErrorBody {
     pub error: String,
-    /// Stable discriminator for causes a client has to tell apart, e.g. to
-    /// pick its own localized wording. Absent where the status and message
-    /// already say enough — clients must treat it as optional and never
-    /// depend on `error`, which is prose and may be reworded.
+    /// Stable discriminator every failing response carries, so a client can
+    /// pick its own localized wording instead of showing `error`, which is
+    /// prose and may be reworded. Still optional on the wire: a client that
+    /// does not know a code must fall back on the status.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub code: Option<&'static str>,
 }
@@ -69,41 +69,55 @@ fn repository_error_response(e: &RepositoryError) -> (StatusCode, &'static str) 
     }
 }
 
+/// Status and client-facing message for an auth failure. Shared by both
+/// `IntoResponse` impls so `ServiceError::Auth` cannot drift from `AuthError`.
+fn auth_error_response(e: &AuthError) -> (StatusCode, String) {
+    let status = match e {
+        AuthError::MissingToken | AuthError::InvalidToken(_) | AuthError::TokenExpired => {
+            StatusCode::UNAUTHORIZED
+        }
+        AuthError::Forbidden => StatusCode::FORBIDDEN,
+        AuthError::IdpUnavailable(_) => StatusCode::SERVICE_UNAVAILABLE,
+    };
+    let message = match e {
+        AuthError::IdpUnavailable(_) => "identity provider unavailable".to_string(),
+        other => other.to_string(),
+    };
+    (status, message)
+}
+
 impl IntoResponse for AuthError {
     fn into_response(self) -> axum::response::Response {
-        let status = match &self {
-            AuthError::MissingToken | AuthError::InvalidToken(_) | AuthError::TokenExpired => {
-                StatusCode::UNAUTHORIZED
-            }
-            AuthError::Forbidden => StatusCode::FORBIDDEN,
-            AuthError::IdpUnavailable(_) => StatusCode::SERVICE_UNAVAILABLE,
-        };
+        let (status, message) = auth_error_response(&self);
         if status.is_server_error() {
             tracing::error!(error = %self, kind = "auth", "request failed");
         }
-        let body = match &self {
-            AuthError::IdpUnavailable(_) => "identity provider unavailable".to_string(),
-            other => other.to_string(),
-        };
-        error_response(status, body)
+        coded_error_response(status, message, self.code())
     }
 }
 
 impl IntoResponse for ServiceError {
     fn into_response(self) -> axum::response::Response {
-        match self {
+        let code = self.code();
+        let (status, message) = match &self {
             ServiceError::Repository(e) => {
-                let (status, message) = repository_error_response(&e);
+                let (status, message) = repository_error_response(e);
                 if status.is_server_error() {
                     tracing::error!(error = %e, kind = "repository", "request failed");
                 } else {
                     tracing::warn!(error = %e, kind = "repository", "request rejected");
                 }
-                error_response(status, message)
+                (status, message.to_string())
             }
-            ServiceError::InvalidInput(msg) => error_response(StatusCode::BAD_REQUEST, msg),
-            ServiceError::Auth(e) => e.into_response(),
-            e @ (ServiceError::TreeAlreadyHasSensor
+            ServiceError::InvalidInput(msg) => (StatusCode::BAD_REQUEST, msg.clone()),
+            ServiceError::Auth(e) => {
+                let (status, message) = auth_error_response(e);
+                if status.is_server_error() {
+                    tracing::error!(error = %e, kind = "auth", "request failed");
+                }
+                (status, message)
+            }
+            ServiceError::TreeAlreadyHasSensor
             | ServiceError::SensorAlreadyAssigned
             | ServiceError::AlreadyActivated
             | ServiceError::NotActivated
@@ -113,19 +127,20 @@ impl IntoResponse for ServiceError {
             | ServiceError::CannotChangeOwnAccess
             | ServiceError::CannotRevokeOwnAdministration
             | ServiceError::SensorBoundToTree
-            | ServiceError::TreeInCluster) => error_response(StatusCode::CONFLICT, e.to_string()),
+            | ServiceError::TreeInCluster => (StatusCode::CONFLICT, self.to_string()),
             // Not a conflict with stored state: the request combines two
             // entities that may not be linked, which is an input problem.
-            ServiceError::OrganizationMismatch(kind) => coded_error_response(
-                StatusCode::UNPROCESSABLE_ENTITY,
-                kind.to_string(),
-                kind.code(),
-            ),
-            e @ (ServiceError::MissingOrganization | ServiceError::ContactPersonNotAMember) => {
-                error_response(StatusCode::UNPROCESSABLE_ENTITY, e.to_string())
+            ServiceError::OrganizationMismatch(kind) => {
+                (StatusCode::UNPROCESSABLE_ENTITY, kind.to_string())
             }
+            ServiceError::MissingOrganization | ServiceError::ContactPersonNotAMember => {
+                (StatusCode::UNPROCESSABLE_ENTITY, self.to_string())
+            }
+            // Status kept at 400 as before; the transition is now only
+            // distinguishable by its code, not by a new status.
+            ServiceError::WateringPlan(e) => (StatusCode::BAD_REQUEST, e.to_string()),
             ServiceError::Routing(e) => {
-                let (status, message) = match &e {
+                let (status, message) = match e {
                     RoutingError::Unavailable(_) => (
                         StatusCode::BAD_GATEWAY,
                         "routing engine unavailable".to_string(),
@@ -139,12 +154,13 @@ impl IntoResponse for ServiceError {
                     ),
                 };
                 tracing::error!(error = %e, kind = "routing", "request failed");
-                error_response(status, message)
+                (status, message)
             }
-            e @ ServiceError::FeatureDisabled { .. } => {
-                error_response(StatusCode::SERVICE_UNAVAILABLE, e.to_string())
+            ServiceError::FeatureDisabled { .. } => {
+                (StatusCode::SERVICE_UNAVAILABLE, self.to_string())
             }
-        }
+        };
+        coded_error_response(status, message, code)
     }
 }
 
@@ -236,15 +252,42 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn errors_without_a_code_omit_the_field() {
+    async fn a_conflict_names_its_cause_so_the_client_can_word_it() {
         let err = ServiceError::TreeInCluster;
         let response = err.into_response();
         assert_eq!(response.status(), StatusCode::CONFLICT);
-        let body = body_of(response).await;
-        assert!(
-            !body.contains("code"),
-            "an absent code must not surface as null, got: {body}"
+        let body: serde_json::Value = serde_json::from_str(&body_of(response).await).unwrap();
+        assert_eq!(
+            body["code"], "conflict.tree_in_cluster",
+            "a bare 409 cannot tell twelve causes apart"
         );
+    }
+
+    #[tokio::test]
+    async fn a_plan_state_transition_is_distinguishable_from_other_bad_input() {
+        use domain::watering_plan::{WateringPlanError, WateringPlanStatus};
+
+        let err = ServiceError::WateringPlan(WateringPlanError::InvalidStateTransition {
+            from: WateringPlanStatus::Finished,
+            to: WateringPlanStatus::Active,
+        });
+        let response = err.into_response();
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+        let body: serde_json::Value = serde_json::from_str(&body_of(response).await).unwrap();
+        assert_eq!(body["code"], "watering_plan.invalid_state_transition");
+    }
+
+    #[tokio::test]
+    async fn each_disabled_feature_has_its_own_code() {
+        use crate::service::Feature;
+
+        let routing = ServiceError::FeatureDisabled {
+            feature: Feature::Routing,
+        }
+        .into_response();
+        assert_eq!(routing.status(), StatusCode::SERVICE_UNAVAILABLE);
+        let body: serde_json::Value = serde_json::from_str(&body_of(routing).await).unwrap();
+        assert_eq!(body["code"], "feature.routing_disabled");
     }
 
     #[tokio::test]

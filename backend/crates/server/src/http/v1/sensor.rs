@@ -296,7 +296,7 @@ pub async fn get_tree_by_sensor(
         (status = 201, description = "Sensor created", body = SensorResponse),
         (status = 400, description = "Invalid request body"),
         (status = 404, description = "Sensor model not found"),
-        (status = 409, description = "Sensor id already exists"),
+        (status = 409, description = "Sensor id already exists (code `resource.already_exists`)"),
         (status = 500, description = "Internal server error"),
     )
 )]
@@ -331,7 +331,7 @@ pub async fn create_sensor(
         (status = 200, description = "Sensor activated", body = SensorResponse),
         (status = 403, description = "Missing sensor:update or tree:update in the owning organization"),
         (status = 404, description = "Sensor or tree not found"),
-        (status = 409, description = "Conflict: sensor or tree already linked"),
+        (status = 409, description = "Sensor already activated, or the tree already carries another sensor (codes `conflict.sensor_already_activated`, `conflict.tree_already_has_sensor`)"),
         (status = 422, description = "Sensor and tree belong to different organizations (code `organization_mismatch.sensor_vs_tree`)"),
         (status = 500, description = "Internal server error"),
     )
@@ -388,7 +388,7 @@ pub async fn activate_sensor(
         (status = 200, description = "Sensor re-linked", body = SensorResponse),
         (status = 403, description = "Missing sensor:update or tree:update in the owning organization"),
         (status = 404, description = "Sensor or tree not found"),
-        (status = 409, description = "Conflict: sensor not activated or tree already linked"),
+        (status = 409, description = "Sensor not activated, or the tree already carries another sensor (codes `conflict.sensor_not_activated`, `conflict.tree_already_has_sensor`)"),
         (status = 422, description = "Sensor and tree belong to different organizations (code `organization_mismatch.sensor_vs_tree`)"),
         (status = 500, description = "Internal server error"),
     )
@@ -535,7 +535,7 @@ pub async fn get_sensor_model(
         (status = 204, description = "Sensor transferred"),
         (status = 403, description = "Missing sensor:update in source or target organization"),
         (status = 404, description = "Sensor or organization not found"),
-        (status = 409, description = "Sensor is bound to a tree"),
+        (status = 409, description = "Sensor is bound to a tree (code `conflict.sensor_bound_to_tree`)"),
     )
 )]
 #[tracing::instrument(level = "info", skip_all, fields(sensor.id = %sensor_id))]

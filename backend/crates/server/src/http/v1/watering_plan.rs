@@ -29,7 +29,7 @@ use crate::{
             gpx, scope,
         },
     },
-    service::ServiceError,
+    service::{Feature, ServiceError},
 };
 use domain::{
     Id,
@@ -537,7 +537,7 @@ fn route_response_from_plan(
     responses(
         (status = 200, description = "Optimized route", body = RouteResponse),
         (status = 404, description = "Plan not found or has no route"),
-        (status = 503, description = "Routing feature is disabled"),
+        (status = 503, description = "Routing feature is disabled (code `feature.routing_disabled`)"),
         (status = 500, description = "Internal server error"),
     )
 )]
@@ -548,7 +548,9 @@ pub async fn get_watering_plan_route(
     Path(id): Path<uuid::Uuid>,
 ) -> Result<Json<RouteResponse>, ServiceError> {
     if !state.feature_flags.routing_enabled {
-        return Err(ServiceError::FeatureDisabled { feature: "routing" });
+        return Err(ServiceError::FeatureDisabled {
+            feature: Feature::Routing,
+        });
     }
     let view = state.watering_plan_service.view_by_id(Id::new(id)).await?;
     let ctx = state.authorization_service.context_for(user.id).await?;
@@ -570,7 +572,7 @@ pub async fn get_watering_plan_route(
         (status = 200, description = "Route preview", body = RouteResponse),
         (status = 422, description = "Route problem rejected by the optimizer"),
         (status = 502, description = "Routing engine unavailable"),
-        (status = 503, description = "Routing feature is disabled"),
+        (status = 503, description = "Routing feature is disabled (code `feature.routing_disabled`)"),
         (status = 500, description = "Internal server error"),
     )
 )]
@@ -581,7 +583,9 @@ pub async fn preview_route(
     Json(req): Json<RouteRequest>,
 ) -> Result<Json<RouteResponse>, ServiceError> {
     if !state.feature_flags.routing_enabled {
-        return Err(ServiceError::FeatureDisabled { feature: "routing" });
+        return Err(ServiceError::FeatureDisabled {
+            feature: Feature::Routing,
+        });
     }
     let org = scope::resolve_target_org(&state, user.id, None).await?;
     state
@@ -620,7 +624,7 @@ pub async fn preview_route(
     responses(
         (status = 200, description = "GPX file", content_type = "application/gpx+xml"),
         (status = 404, description = "Plan not found or has no route"),
-        (status = 503, description = "Routing feature is disabled"),
+        (status = 503, description = "Routing feature is disabled (code `feature.routing_disabled`)"),
         (status = 500, description = "Internal server error"),
     )
 )]
@@ -631,7 +635,9 @@ pub async fn get_gpx_file(
     Path(id): Path<uuid::Uuid>,
 ) -> Result<impl IntoResponse, ServiceError> {
     if !state.feature_flags.routing_enabled {
-        return Err(ServiceError::FeatureDisabled { feature: "routing" });
+        return Err(ServiceError::FeatureDisabled {
+            feature: Feature::Routing,
+        });
     }
     let view = state.watering_plan_service.view_by_id(Id::new(id)).await?;
     let ctx = state.authorization_service.context_for(user.id).await?;

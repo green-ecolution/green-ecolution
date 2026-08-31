@@ -105,7 +105,7 @@ pub async fn get_vehicle(
     responses(
         (status = 201, description = "Vehicle created", body = VehicleResponse),
         (status = 400, description = "Invalid input"),
-        (status = 409, description = "Number plate already exists"),
+        (status = 409, description = "Number plate already exists (code `resource.already_exists`)"),
         (status = 500, description = "Internal server error"),
     )
 )]

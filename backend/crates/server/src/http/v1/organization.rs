@@ -118,7 +118,7 @@ pub async fn get_organization(
         (status = 400, description = "Invalid input"),
         (status = 401, description = "Unauthorized"),
         (status = 403, description = "Forbidden"),
-        (status = 409, description = "Sibling name conflict"),
+        (status = 409, description = "Sibling name conflict (code `resource.already_exists`)"),
         (status = 422, description = "Parent does not exist"),
         (status = 500, description = "Internal server error"),
     )
@@ -158,7 +158,7 @@ pub async fn create_organization(
         (status = 401, description = "Unauthorized"),
         (status = 403, description = "Forbidden"),
         (status = 404, description = "Not found"),
-        (status = 409, description = "Name conflict or root organization"),
+        (status = 409, description = "Name conflict or root organization (codes `resource.already_exists`, `conflict.root_organization_immutable`)"),
         (status = 422, description = "Contact person is not a member of this organization"),
         (status = 500, description = "Internal server error"),
     )
@@ -201,7 +201,7 @@ pub async fn update_organization(
         (status = 401, description = "Unauthorized"),
         (status = 403, description = "Forbidden"),
         (status = 404, description = "Not found"),
-        (status = 409, description = "Organization still has children or users"),
+        (status = 409, description = "Organization still has children or users, or is the root (codes `conflict.organization_not_empty`, `conflict.root_organization_immutable`)"),
         (status = 500, description = "Internal server error"),
     )
 )]

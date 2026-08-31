@@ -141,7 +141,7 @@ pub async fn list_users(
         (status = 401, description = "Unauthorized"),
         (status = 403, description = "Forbidden"),
         (status = 404, description = "Role not found"),
-        (status = 409, description = "Role is a template and cannot be assigned"),
+        (status = 409, description = "Role is a template and cannot be assigned (code `conflict.role_template_not_assignable`)"),
         (status = 500, description = "Internal server error"),
     )
 )]
@@ -275,7 +275,7 @@ pub async fn list_user_roles(
         (status = 401, description = "Unauthorized"),
         (status = 403, description = "Forbidden"),
         (status = 404, description = "Role not found"),
-        (status = 409, description = "Role is a template and cannot be assigned, or attempting to change your own roles"),
+        (status = 409, description = "Role is a template and cannot be assigned, or attempting to change your own roles (codes `conflict.role_template_not_assignable`, `conflict.cannot_change_own_access`)"),
         (status = 422, description = "The role's organization does not match the target user's organization (code `organization_mismatch.role_vs_user`)"),
         (status = 500, description = "Internal server error"),
     )
@@ -332,7 +332,7 @@ pub async fn assign_user_role(
         (status = 401, description = "Unauthorized"),
         (status = 403, description = "Forbidden"),
         (status = 404, description = "Role not found"),
-        (status = 409, description = "Attempting to change your own roles"),
+        (status = 409, description = "Attempting to change your own roles (code `conflict.cannot_change_own_access`)"),
         (status = 500, description = "Internal server error"),
     )
 )]
@@ -371,7 +371,7 @@ pub async fn revoke_user_role(
         (status = 200, description = "Updated user", body = UserResponse),
         (status = 401, description = "Unauthorized"),
         (status = 403, description = "Forbidden"),
-        (status = 409, description = "Attempting to change your own organization"),
+        (status = 409, description = "Attempting to change your own organization (code `conflict.cannot_change_own_access`)"),
         (status = 500, description = "Internal server error"),
     )
 )]

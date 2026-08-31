@@ -14,7 +14,29 @@ pub mod vehicle_service;
 pub mod watering_execution_service;
 pub mod watering_plan_service;
 
-use domain::{RepositoryError, routing::RoutingError, shared::error::ValidationError};
+use domain::{
+    RepositoryError, routing::RoutingError, shared::error::ValidationError,
+    watering_plan::WateringPlanError,
+};
+
+/// Optional subsystem a request can hit while it is switched off.
+///
+/// A closed set rather than a `&'static str` so every feature gets its own
+/// stable error code instead of one opaque "something is disabled".
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Feature {
+    Routing,
+    Plugins,
+}
+
+impl std::fmt::Display for Feature {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            Self::Routing => "routing",
+            Self::Plugins => "plugins",
+        })
+    }
+}
 
 #[derive(Debug, thiserror::Error)]
 pub enum ServiceError {
@@ -33,7 +55,7 @@ pub enum ServiceError {
     #[error("sensor is not activated")]
     NotActivated,
     #[error("{feature} feature is disabled")]
-    FeatureDisabled { feature: &'static str },
+    FeatureDisabled { feature: Feature },
     #[error(transparent)]
     Routing(#[from] RoutingError),
     #[error(transparent)]
@@ -56,6 +78,92 @@ pub enum ServiceError {
     CannotChangeOwnAccess,
     #[error("this change would remove your own right to administer roles and members")]
     CannotRevokeOwnAdministration,
+    #[error(transparent)]
+    WateringPlan(#[from] WateringPlanError),
+}
+
+impl ServiceError {
+    /// Stable discriminator the client keys its own wording on.
+    ///
+    /// The `Display` text is prose and may be reworded; only this is contract.
+    /// The match is exhaustive on purpose, so a new variant cannot ship without
+    /// deciding what a client should be able to tell apart.
+    pub fn code(&self) -> &'static str {
+        match self {
+            Self::Repository(e) => repository_code(e),
+            Self::InvalidInput(_) => "request.invalid_input",
+            Self::Auth(e) => e.code(),
+            Self::Routing(e) => routing_code(e),
+            Self::Organization(e) => organization_code(e),
+            Self::Role(e) => role_code(e),
+            Self::WateringPlan(e) => watering_plan_code(e),
+            Self::OrganizationMismatch(kind) => kind.code(),
+            Self::TreeAlreadyHasSensor => "conflict.tree_already_has_sensor",
+            Self::SensorAlreadyAssigned => "conflict.sensor_already_assigned",
+            Self::AlreadyActivated => "conflict.sensor_already_activated",
+            Self::NotActivated => "conflict.sensor_not_activated",
+            Self::OrganizationNotEmpty => "conflict.organization_not_empty",
+            Self::TreeInCluster => "conflict.tree_in_cluster",
+            Self::SensorBoundToTree => "conflict.sensor_bound_to_tree",
+            Self::CannotChangeOwnAccess => "conflict.cannot_change_own_access",
+            Self::CannotRevokeOwnAdministration => "conflict.cannot_revoke_own_administration",
+            Self::ContactPersonNotAMember => "organization.contact_person_not_a_member",
+            Self::MissingOrganization => "organization.missing",
+            Self::FeatureDisabled { feature } => match feature {
+                Feature::Routing => "feature.routing_disabled",
+                Feature::Plugins => "feature.plugins_disabled",
+            },
+        }
+    }
+}
+
+fn repository_code(e: &RepositoryError) -> &'static str {
+    match e {
+        RepositoryError::NotFound => "resource.not_found",
+        RepositoryError::AlreadyExists(_) => "resource.already_exists",
+        RepositoryError::ForeignKeyViolation(_) => "resource.referenced_missing",
+        RepositoryError::ConstraintViolation(_) => "resource.constraint_violated",
+        RepositoryError::DataIntegrity(_) | RepositoryError::Internal(_) => "internal.error",
+    }
+}
+
+fn routing_code(e: &RoutingError) -> &'static str {
+    match e {
+        RoutingError::Unavailable(_) => "routing.unavailable",
+        RoutingError::InvalidProblem(_) => "routing.invalid_problem",
+        RoutingError::Failed(_) => "routing.failed",
+    }
+}
+
+fn organization_code(e: &domain::organization::OrganizationError) -> &'static str {
+    use domain::organization::OrganizationError as E;
+    match e {
+        E::RootImmutable => "conflict.root_organization_immutable",
+        E::Validation(_) => "request.invalid_input",
+    }
+}
+
+fn role_code(e: &domain::role::RoleError) -> &'static str {
+    use domain::role::RoleError as E;
+    match e {
+        E::TemplateImmutable => "conflict.role_template_immutable",
+        E::CannotAssignTemplate => "conflict.role_template_not_assignable",
+        E::Validation(_) => "request.invalid_input",
+    }
+}
+
+fn watering_plan_code(e: &WateringPlanError) -> &'static str {
+    match e {
+        WateringPlanError::InvalidStateTransition { .. } => {
+            "watering_plan.invalid_state_transition"
+        }
+        WateringPlanError::CannotMutateAfterStart => "watering_plan.cannot_mutate_after_start",
+        WateringPlanError::CancellationNoteRequired => "watering_plan.cancellation_note_required",
+        WateringPlanError::EvaluationMissingForCluster(_) => {
+            "watering_plan.evaluation_missing_for_cluster"
+        }
+        WateringPlanError::Validation(_) => "request.invalid_input",
+    }
 }
 
 /// Which cross-aggregate organization rule a request violated.
@@ -109,4 +217,129 @@ pub enum AuthError {
     Forbidden,
     #[error("identity provider unavailable: {0}")]
     IdpUnavailable(String),
+}
+
+impl AuthError {
+    pub fn code(&self) -> &'static str {
+        match self {
+            Self::MissingToken => "auth.missing_token",
+            Self::InvalidToken(_) => "auth.invalid_token",
+            Self::TokenExpired => "auth.token_expired",
+            Self::Forbidden => "auth.forbidden",
+            Self::IdpUnavailable(_) => "auth.idp_unavailable",
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use domain::Id;
+    use domain::watering_plan::WateringPlanStatus;
+    use std::collections::HashSet;
+
+    /// One instance per `ServiceError` variant. `code()` matches exhaustively,
+    /// so a new variant breaks the build; this list keeps the wire contract
+    /// itself under test.
+    fn every_variant() -> Vec<ServiceError> {
+        vec![
+            ServiceError::Repository(RepositoryError::NotFound),
+            ServiceError::Repository(RepositoryError::AlreadyExists("x".into())),
+            ServiceError::Repository(RepositoryError::ForeignKeyViolation("x".into())),
+            ServiceError::Repository(RepositoryError::ConstraintViolation("x".into())),
+            ServiceError::Repository(RepositoryError::DataIntegrity("x".into())),
+            ServiceError::Repository(RepositoryError::Internal("x".into())),
+            ServiceError::InvalidInput("x".into()),
+            ServiceError::Auth(AuthError::MissingToken),
+            ServiceError::Auth(AuthError::InvalidToken("x".into())),
+            ServiceError::Auth(AuthError::TokenExpired),
+            ServiceError::Auth(AuthError::Forbidden),
+            ServiceError::Auth(AuthError::IdpUnavailable("x".into())),
+            ServiceError::TreeAlreadyHasSensor,
+            ServiceError::SensorAlreadyAssigned,
+            ServiceError::AlreadyActivated,
+            ServiceError::NotActivated,
+            ServiceError::FeatureDisabled {
+                feature: Feature::Routing,
+            },
+            ServiceError::FeatureDisabled {
+                feature: Feature::Plugins,
+            },
+            ServiceError::Routing(RoutingError::Unavailable("x".into())),
+            ServiceError::Routing(RoutingError::InvalidProblem("x".into())),
+            ServiceError::Routing(RoutingError::Failed("x".into())),
+            ServiceError::Organization(domain::organization::OrganizationError::RootImmutable),
+            ServiceError::Role(domain::role::RoleError::TemplateImmutable),
+            ServiceError::Role(domain::role::RoleError::CannotAssignTemplate),
+            ServiceError::OrganizationNotEmpty,
+            ServiceError::OrganizationMismatch(OrganizationMismatch::TreesVsCluster),
+            ServiceError::OrganizationMismatch(OrganizationMismatch::ClusterVsTree),
+            ServiceError::OrganizationMismatch(OrganizationMismatch::SensorVsTree),
+            ServiceError::OrganizationMismatch(OrganizationMismatch::ClustersVsPlan),
+            ServiceError::OrganizationMismatch(OrganizationMismatch::RoleVsUser),
+            ServiceError::ContactPersonNotAMember,
+            ServiceError::TreeInCluster,
+            ServiceError::SensorBoundToTree,
+            ServiceError::MissingOrganization,
+            ServiceError::CannotChangeOwnAccess,
+            ServiceError::CannotRevokeOwnAdministration,
+            ServiceError::WateringPlan(WateringPlanError::InvalidStateTransition {
+                from: WateringPlanStatus::Planned,
+                to: WateringPlanStatus::Finished,
+            }),
+            ServiceError::WateringPlan(WateringPlanError::CannotMutateAfterStart),
+            ServiceError::WateringPlan(WateringPlanError::CancellationNoteRequired),
+            ServiceError::WateringPlan(
+                WateringPlanError::EvaluationMissingForCluster(Id::new_v7()),
+            ),
+        ]
+    }
+
+    #[test]
+    fn every_error_carries_a_namespaced_code() {
+        for error in every_variant() {
+            let code = error.code();
+            assert!(
+                code.contains('.'),
+                "code for {error:?} must be namespaced, got {code:?}"
+            );
+            assert!(
+                code.chars()
+                    .all(|c| c.is_ascii_lowercase() || c == '.' || c == '_'),
+                "code for {error:?} must be lowercase snake_case, got {code:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn distinct_causes_carry_distinct_codes() {
+        // The 500 bucket is deliberately shared: the client is not told
+        // whether the server tripped over its own data or a driver, and the
+        // HTTP layer already collapses both into one generic message.
+        let codes: Vec<&'static str> = every_variant()
+            .iter()
+            .map(ServiceError::code)
+            .filter(|c| *c != "internal.error")
+            .collect();
+        let unique: HashSet<&&str> = codes.iter().collect();
+        assert_eq!(
+            unique.len(),
+            codes.len(),
+            "each cause needs its own code, got {codes:?}"
+        );
+    }
+
+    #[test]
+    fn only_the_server_side_failures_share_the_internal_code() {
+        let internal: Vec<String> = every_variant()
+            .into_iter()
+            .filter(|e| e.code() == "internal.error")
+            .map(|e| format!("{e:?}"))
+            .collect();
+        assert_eq!(
+            internal.len(),
+            2,
+            "only DataIntegrity and Internal may collapse, got {internal:?}"
+        );
+    }
 }

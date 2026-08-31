@@ -28,6 +28,56 @@ export const apiErrorMessages: Record<string, string> = {
   'code.organization_mismatch.role_vs_user':
     'Die Rolle gehört zu einer anderen Organisation als die ausgewählte Person.',
 
+  // Conflicts with stored state. All of these arrive as 409, so without the
+  // code they would collapse into one wrong sentence.
+  'code.conflict.tree_already_has_sensor': 'An diesem Baum hängt bereits ein anderer Sensor.',
+  'code.conflict.sensor_already_assigned':
+    'Dieser Sensor ist bereits einem anderen Baum zugeordnet.',
+  'code.conflict.sensor_already_activated': 'Dieser Sensor ist bereits aktiviert.',
+  'code.conflict.sensor_not_activated': 'Dieser Sensor ist noch nicht aktiviert.',
+  'code.conflict.sensor_bound_to_tree':
+    'Der Sensor hängt an einem Baum und kann nur zusammen mit ihm übertragen werden.',
+  'code.conflict.tree_in_cluster':
+    'Der Baum gehört zu einer Bewässerungsgruppe und muss erst daraus entfernt werden.',
+  'code.conflict.organization_not_empty':
+    'Die Organisation hat noch Unterorganisationen oder Mitglieder.',
+  'code.conflict.root_organization_immutable':
+    'Die oberste Organisation kann nicht geändert oder gelöscht werden.',
+  'code.conflict.role_template_immutable':
+    'Vorlagen-Rollen lassen sich nicht ändern. Lege stattdessen eine Kopie in deiner Organisation an.',
+  'code.conflict.role_template_not_assignable':
+    'Vorlagen-Rollen können keiner Person zugewiesen werden.',
+  'code.conflict.cannot_change_own_access':
+    'Du kannst deine eigenen Rollen und deine eigene Organisation nicht ändern.',
+  'code.conflict.cannot_revoke_own_administration':
+    'Diese Änderung würde dir selbst das Recht nehmen, Rollen und Mitglieder zu verwalten.',
+
+  'code.organization.missing':
+    'Es wurde keine Organisation angegeben und dein Konto gehört zu keiner.',
+  'code.organization.contact_person_not_a_member':
+    'Die ausgewählte Ansprechperson gehört nicht zu dieser Organisation.',
+
+  // Watering plan state machine. All 400, only the code tells them apart.
+  'code.watering_plan.invalid_state_transition':
+    'Dieser Statuswechsel ist im aktuellen Zustand des Einsatzplans nicht möglich.',
+  'code.watering_plan.cannot_mutate_after_start':
+    'Der Einsatzplan lässt sich nur bearbeiten, solange er noch nicht gestartet ist.',
+  'code.watering_plan.cancellation_note_required': 'Für den Abbruch wird eine Begründung benötigt.',
+  'code.watering_plan.evaluation_missing_for_cluster':
+    'Für jede zugewiesene Bewässerungsgruppe wird eine Auswertung benötigt.',
+
+  'code.feature.routing_disabled': 'Die Routenplanung ist in dieser Umgebung nicht aktiviert.',
+  'code.feature.plugins_disabled': 'Das Plugin-System ist in dieser Umgebung nicht aktiviert.',
+
+  'code.routing.unavailable': 'Der Routing-Dienst ist derzeit nicht erreichbar.',
+  'code.routing.invalid_problem':
+    'Aus den gewählten Angaben lässt sich keine Route berechnen. Prüfe Fahrzeug, Startpunkt und Gruppen.',
+  'code.routing.failed': 'Die Routenberechnung ist fehlgeschlagen.',
+
+  // Deliberately absent: `resource.*`, `auth.*`, `request.invalid_input` and
+  // `internal.error`. Their status text already says the same thing, and a
+  // duplicate entry would only be a second place to keep in sync.
+
   'status.400': 'Die Anfrage war fehlerhaft und konnte nicht verarbeitet werden.',
   'status.401': 'Die Anmeldung ist abgelaufen. Bitte melde dich erneut an.',
   'status.403': 'Für diese Aktion fehlt dir die Berechtigung.',
