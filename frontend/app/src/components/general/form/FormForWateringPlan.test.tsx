@@ -38,7 +38,7 @@ function TestWrapper({
 
   const methods = useForm<WateringPlanForm>({
     defaultValues,
-    resolver: wateringPlanDraftResolver<WateringPlanForm>(),
+    resolver: wateringPlanDraftResolver<WateringPlanForm>((key) => key),
     mode: 'onChange',
   })
 

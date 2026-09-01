@@ -5,7 +5,7 @@ import {
   instanceOfValidationIssue,
   type ValidationIssue,
 } from '@green-ecolution/backend-client'
-import { translateIssue } from '@green-ecolution/domain-wasm'
+import { translateIssueNow } from '@/lib/i18n/validation'
 import { messageFor, type ApiErrorMessageKey } from './apiErrorMessages'
 
 export interface ApiErrorInfo {
@@ -76,7 +76,7 @@ function resolveMessage(
   // A named field beats a generic code: "Name darf maximal 255 Zeichen lang
   // sein" is more use than "Die eingegebenen Daten sind ungültig."
   if (validation) {
-    const message = translateIssue(validation)
+    const message = translateIssueNow(validation)
     if (message !== validation.key) return { message, messageKey: `code.${validation.key}` }
   }
   const keys: ApiErrorMessageKey[] = code

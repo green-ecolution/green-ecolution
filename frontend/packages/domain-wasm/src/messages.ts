@@ -1,93 +1,91 @@
-import type { TranslatableIssue } from './types'
+import type { IssueTranslator, TranslatableIssue } from './types'
 
-type Renderer = (params: Record<string, string | number>) => string
-
-const messages: Record<string, Renderer> = {
+/**
+ * Every key the Rust validators can emit, in catalog order.
+ *
+ * The texts live in the consuming app's `validation` namespace; this package
+ * holds keys only. A test in the app checks the catalog against this list, so
+ * a new Rust variant cannot arrive without a translation.
+ */
+export const VALIDATION_KEYS = [
   // Tree
-  'tree.species.empty': () => 'Art ist erforderlich.',
-  'tree.species.tooShort': (p) => `Art muss mindestens ${p.min} Zeichen lang sein.`,
-  'tree.species.tooLong': (p) => `Art darf maximal ${p.max} Zeichen lang sein.`,
-  'tree.number.empty': () => 'Baumnummer ist erforderlich.',
-  'tree.number.tooShort': (p) => `Baumnummer muss mindestens ${p.min} Zeichen lang sein.`,
-  'tree.number.tooLong': (p) => `Baumnummer darf maximal ${p.max} Zeichen lang sein.`,
-  'tree.planting_year.outOfRange': (p) => `Pflanzjahr muss zwischen ${p.min} und ${p.max} liegen.`,
-  'tree.planting_year.invalidFormat': () => 'Pflanzjahr muss eine ganze Zahl sein.',
+  'tree.species.empty',
+  'tree.species.tooShort',
+  'tree.species.tooLong',
+  'tree.number.empty',
+  'tree.number.tooShort',
+  'tree.number.tooLong',
+  'tree.planting_year.outOfRange',
+  'tree.planting_year.invalidFormat',
 
   // Coordinate
-  'coordinate.latitude.outOfRange': (p) =>
-    `Breitengrad muss zwischen ${p.min} und ${p.max} liegen (war ${p.got}).`,
-  'coordinate.longitude.outOfRange': (p) =>
-    `Längengrad muss zwischen ${p.min} und ${p.max} liegen (war ${p.got}).`,
-  'coordinate.latitude.invalidFormat': () => 'Breitengrad muss eine Zahl sein.',
-  'coordinate.longitude.invalidFormat': () => 'Längengrad muss eine Zahl sein.',
+  'coordinate.latitude.outOfRange',
+  'coordinate.longitude.outOfRange',
+  'coordinate.latitude.invalidFormat',
+  'coordinate.longitude.invalidFormat',
 
   // Cluster
-  'cluster.name.empty': () => 'Name ist erforderlich.',
-  'cluster.name.tooShort': (p) => `Name muss mindestens ${p.min} Zeichen lang sein.`,
-  'cluster.name.tooLong': (p) => `Name darf maximal ${p.max} Zeichen lang sein.`,
-  'cluster.address.empty': () => 'Adresse ist erforderlich.',
-  'cluster.address.tooShort': (p) => `Adresse muss mindestens ${p.min} Zeichen lang sein.`,
-  'cluster.address.tooLong': (p) => `Adresse darf maximal ${p.max} Zeichen lang sein.`,
-  'cluster.soil_condition.invalidFormat': () => 'Keine korrekte Bodenbeschaffenheit.',
+  'cluster.name.empty',
+  'cluster.name.tooShort',
+  'cluster.name.tooLong',
+  'cluster.address.empty',
+  'cluster.address.tooShort',
+  'cluster.address.tooLong',
+  'cluster.soil_condition.invalidFormat',
 
   // Vehicle
-  'vehicle.number_plate.empty': () => 'Kennzeichen ist erforderlich.',
-  'vehicle.number_plate.tooShort': (p) => `Kennzeichen muss mindestens ${p.min} Zeichen lang sein.`,
-  'vehicle.number_plate.tooLong': (p) => `Kennzeichen darf maximal ${p.max} Zeichen lang sein.`,
-  'vehicle.model.empty': () => 'Modell ist erforderlich.',
-  'vehicle.model.tooShort': (p) => `Modell muss mindestens ${p.min} Zeichen lang sein.`,
-  'vehicle.model.tooLong': (p) => `Modell darf maximal ${p.max} Zeichen lang sein.`,
-  'water_capacity.outOfRange': (p) =>
-    `Wasserkapazität muss zwischen ${p.min} und ${p.max} Liter liegen.`,
-  'vehicle.water_capacity.invalidFormat': () => 'Wasserkapazität muss eine Zahl sein.',
-  'vehicle.dimension.height.outOfRange': () => 'Höhe ist erforderlich.',
-  'vehicle.dimension.width.outOfRange': () => 'Breite ist erforderlich.',
-  'vehicle.dimension.length.outOfRange': () => 'Länge ist erforderlich.',
-  'vehicle.dimension.weight.outOfRange': () => 'Gewicht ist erforderlich.',
-  'vehicle.dimension.height.invalidFormat': () => 'Höhe muss eine Zahl sein.',
-  'vehicle.dimension.width.invalidFormat': () => 'Breite muss eine Zahl sein.',
-  'vehicle.dimension.length.invalidFormat': () => 'Länge muss eine Zahl sein.',
-  'vehicle.dimension.weight.invalidFormat': () => 'Gewicht muss eine Zahl sein.',
-  'vehicle.type.invalidFormat': () => 'Kein korrekter Fahrzeugtyp.',
-  'vehicle.driving_license.invalidFormat': () => 'Keine korrekte Fahrzeugerlaubnis.',
-  'vehicle.status.invalidFormat': () => 'Kein korrekter Fahrzeugstatus.',
+  'vehicle.number_plate.empty',
+  'vehicle.number_plate.tooShort',
+  'vehicle.number_plate.tooLong',
+  'vehicle.model.empty',
+  'vehicle.model.tooShort',
+  'vehicle.model.tooLong',
+  'water_capacity.outOfRange',
+  'vehicle.water_capacity.invalidFormat',
+  'vehicle.dimension.height.outOfRange',
+  'vehicle.dimension.width.outOfRange',
+  'vehicle.dimension.length.outOfRange',
+  'vehicle.dimension.weight.outOfRange',
+  'vehicle.dimension.height.invalidFormat',
+  'vehicle.dimension.width.invalidFormat',
+  'vehicle.dimension.length.invalidFormat',
+  'vehicle.dimension.weight.invalidFormat',
+  'vehicle.type.invalidFormat',
+  'vehicle.driving_license.invalidFormat',
+  'vehicle.status.invalidFormat',
 
   // Watering plan
-  'watering_plan.cluster_ids.empty': () => 'Es muss mindestens ein Cluster ausgewählt werden.',
-  'watering_plan.driver_ids.empty': () => 'Es muss mindestens ein Mitarbeiter ausgewählt werden.',
-  'watering_plan.transporter_id.empty': () => 'Es muss ein Transportfahrzeug ausgewählt werden.',
-  'watering_plan.transporter_id.outOfRange': () =>
-    'Es muss ein gültiges Transportfahrzeug ausgewählt werden.',
-  'watering_plan.trailer_id.outOfRange': () => 'Es muss ein gültiger Anhänger ausgewählt werden.',
-  'watering_plan.driver_ids.invalidFormat': () =>
-    'Eine Mitarbeiter-ID hat kein gültiges UUID-Format.',
-  'watering_plan.status.invalidFormat': () => 'Kein korrekter Status.',
-  'watering_plan.date.outOfRange': () => 'Datum muss heute oder in der Zukunft liegen.',
-  'watering_plan.start_point_name.empty': () => 'Es muss ein Startpunkt ausgewählt werden.',
+  'watering_plan.cluster_ids.empty',
+  'watering_plan.driver_ids.empty',
+  'watering_plan.transporter_id.empty',
+  'watering_plan.transporter_id.outOfRange',
+  'watering_plan.trailer_id.outOfRange',
+  'watering_plan.driver_ids.invalidFormat',
+  'watering_plan.status.invalidFormat',
+  'watering_plan.date.outOfRange',
+  'watering_plan.start_point_name.empty',
 
   // Provenance. Only reachable through the server's validation block, not the
   // in-browser validators: a provider is set by an import, never typed in.
-  'provenance.provider.empty': () => 'Datenquelle ist erforderlich.',
-  'provenance.provider.tooLong': (p) => `Datenquelle darf maximal ${p.max} Zeichen lang sein.`,
+  'provenance.provider.empty',
+  'provenance.provider.tooLong',
 
   // User
-  'user.email.empty': () => 'E-Mail ist erforderlich.',
-  'user.email.invalidFormat': () => 'E-Mail-Adresse ist ungültig.',
-  'user.username.empty': () => 'Benutzername ist erforderlich.',
-  'user.phone_number.empty': () => 'Telefonnummer ist erforderlich.',
-  'user.phone_number.invalidFormat': () =>
-    'Telefonnummer ist ungültig. Erlaubt sind Ziffern, Leerzeichen sowie -, /, ( ) und ein führendes +, mit mindestens 6 Ziffern.',
-}
+  'user.email.empty',
+  'user.email.invalidFormat',
+  'user.username.empty',
+  'user.phone_number.empty',
+  'user.phone_number.invalidFormat',
+] as const satisfies readonly string[]
 
 /**
- * Render an issue with the German catalog.
+ * Render an issue through the caller's translator.
  *
  * Takes only `key` and `params`, not the full `ValidationIssue`: the server
  * reports the same violation without a form-field `path`, and both sources
- * must resolve through this one catalog.
+ * must resolve through the same catalog.
  */
-export function translateIssue(issue: TranslatableIssue): string {
-  const renderer = messages[issue.key]
-  if (!renderer) return issue.key
-  return renderer(issue.params)
+export function translateIssue(issue: TranslatableIssue, translate: IssueTranslator): string {
+  const message = translate(issue.key, issue.params)
+  return message ? message : issue.key
 }

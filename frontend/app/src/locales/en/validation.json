@@ -1,0 +1,132 @@
+{
+  "tree": {
+    "species": {
+      "empty": "Species is required.",
+      "tooShort": "Species must be at least {min} characters long.",
+      "tooLong": "Species must be at most {max} characters long."
+    },
+    "number": {
+      "empty": "Tree number is required.",
+      "tooShort": "Tree number must be at least {min} characters long.",
+      "tooLong": "Tree number must be at most {max} characters long."
+    },
+    "planting_year": {
+      "outOfRange": "Planting year must be between {min} and {max}.",
+      "invalidFormat": "Planting year must be a whole number."
+    }
+  },
+  "coordinate": {
+    "latitude": {
+      "outOfRange": "Latitude must be between {min} and {max} (was {got}).",
+      "invalidFormat": "Latitude must be a number."
+    },
+    "longitude": {
+      "outOfRange": "Longitude must be between {min} and {max} (was {got}).",
+      "invalidFormat": "Longitude must be a number."
+    }
+  },
+  "cluster": {
+    "name": {
+      "empty": "Name is required.",
+      "tooShort": "Name must be at least {min} characters long.",
+      "tooLong": "Name must be at most {max} characters long."
+    },
+    "address": {
+      "empty": "Address is required.",
+      "tooShort": "Address must be at least {min} characters long.",
+      "tooLong": "Address must be at most {max} characters long."
+    },
+    "soil_condition": {
+      "invalidFormat": "Not a valid soil condition."
+    }
+  },
+  "vehicle": {
+    "number_plate": {
+      "empty": "License plate is required.",
+      "tooShort": "License plate must be at least {min} characters long.",
+      "tooLong": "License plate must be at most {max} characters long."
+    },
+    "model": {
+      "empty": "Model is required.",
+      "tooShort": "Model must be at least {min} characters long.",
+      "tooLong": "Model must be at most {max} characters long."
+    },
+    "water_capacity": {
+      "invalidFormat": "Water capacity must be a number."
+    },
+    "dimension": {
+      "height": {
+        "outOfRange": "Height is required.",
+        "invalidFormat": "Height must be a number."
+      },
+      "width": {
+        "outOfRange": "Width is required.",
+        "invalidFormat": "Width must be a number."
+      },
+      "length": {
+        "outOfRange": "Length is required.",
+        "invalidFormat": "Length must be a number."
+      },
+      "weight": {
+        "outOfRange": "Weight is required.",
+        "invalidFormat": "Weight must be a number."
+      }
+    },
+    "type": {
+      "invalidFormat": "Not a valid vehicle type."
+    },
+    "driving_license": {
+      "invalidFormat": "Not a valid driving license."
+    },
+    "status": {
+      "invalidFormat": "Not a valid vehicle status."
+    }
+  },
+  "water_capacity": {
+    "outOfRange": "Water capacity must be between {min} and {max} liters."
+  },
+  "watering_plan": {
+    "cluster_ids": {
+      "empty": "At least one watering group must be selected."
+    },
+    "driver_ids": {
+      "empty": "At least one employee must be selected.",
+      "invalidFormat": "An employee ID is not a valid UUID."
+    },
+    "transporter_id": {
+      "empty": "A transporter vehicle must be selected.",
+      "outOfRange": "A valid transporter vehicle must be selected."
+    },
+    "trailer_id": {
+      "outOfRange": "A valid trailer must be selected."
+    },
+    "status": {
+      "invalidFormat": "Not a valid status."
+    },
+    "date": {
+      "outOfRange": "Date must be today or in the future."
+    },
+    "start_point_name": {
+      "empty": "A start point must be selected."
+    }
+  },
+  "provenance": {
+    "provider": {
+      "empty": "Data source is required.",
+      "tooLong": "Data source must be at most {max} characters long."
+    }
+  },
+  "user": {
+    "email": {
+      "empty": "Email is required.",
+      "invalidFormat": "Email address is invalid."
+    },
+    "username": {
+      "empty": "Username is required."
+    },
+    "phone_number": {
+      "empty": "Phone number is required.",
+      "invalidFormat": "Phone number is invalid. Allowed are digits, spaces, -, /, ( ) and a leading +, with at least 6 digits."
+    }
+  }
+}

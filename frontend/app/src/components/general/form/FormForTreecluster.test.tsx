@@ -23,7 +23,7 @@ function TestWrapper({
 
   const methods = useForm<TreeclusterForm>({
     defaultValues,
-    resolver: clusterDraftResolver<TreeclusterForm>(),
+    resolver: clusterDraftResolver<TreeclusterForm>((key) => key),
     mode: 'onChange',
   })
 

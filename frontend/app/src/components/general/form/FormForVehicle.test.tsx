@@ -23,7 +23,7 @@ function TestWrapper({
 
   const methods = useForm<VehicleForm>({
     defaultValues,
-    resolver: vehicleDraftResolver<VehicleForm>(),
+    resolver: vehicleDraftResolver<VehicleForm>((key) => key),
     mode: 'onChange',
   })
 

@@ -1,6 +1,7 @@
 import { FormField, Label, MultiSelect, SelectField, Switch } from '@green-ecolution/ui'
 import { translateIssue } from '@green-ecolution/domain-wasm'
 import type { DrivingLicense, UserStatus } from '@green-ecolution/backend-client'
+import { useIssueTranslator } from '@/lib/i18n/validation'
 import {
   DrivingLicenseOptions,
   getDrivingLicenseDetails,
@@ -36,6 +37,7 @@ const MemberProfileCard = ({
   onEmployeeIdChange,
   onWateringPlanSelectableChange,
 }: MemberProfileCardProps) => {
+  const translate = useIssueTranslator()
   const licenseLabels = draft.drivingLicenses
     .map((license) => getDrivingLicenseDetails(license).label)
     .join(', ')
@@ -75,7 +77,7 @@ const MemberProfileCard = ({
               label="Telefonnummer"
               value={draft.phoneNumber}
               onChange={(event) => onPhoneNumberChange(event.target.value)}
-              error={phoneIssue ? translateIssue(phoneIssue) : undefined}
+              error={phoneIssue ? translateIssue(phoneIssue, translate) : undefined}
               placeholder="z. B. +49 461 123456"
               inputMode="tel"
             />
