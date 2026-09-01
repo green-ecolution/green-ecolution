@@ -146,6 +146,7 @@ export class RolesApi extends runtime.BaseAPI {
     }
 
     /**
+     * Requires role:read in the role\'s organization; a role outside the caller\'s visible subtree answers 404 rather than 403 so callers cannot probe for existence. Templates carry no organization and stay readable.
      * Get a single role
      */
     async getRoleRaw(requestParameters: GetRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RoleResponse>> {
@@ -175,6 +176,7 @@ export class RolesApi extends runtime.BaseAPI {
     }
 
     /**
+     * Requires role:read in the role\'s organization; a role outside the caller\'s visible subtree answers 404 rather than 403 so callers cannot probe for existence. Templates carry no organization and stay readable.
      * Get a single role
      */
     async getRole(requestParameters: GetRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RoleResponse> {
@@ -183,7 +185,7 @@ export class RolesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns every role instantiated for the given organization, including the copies of the five templates created alongside it.
+     * Returns every role instantiated for the given organization, including the copies of the five templates created alongside it. Requires role:read in that organization.
      * List roles owned by an organization
      */
     async listOrgRolesRaw(requestParameters: ListOrgRolesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<RoleResponse>>> {
@@ -213,7 +215,7 @@ export class RolesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns every role instantiated for the given organization, including the copies of the five templates created alongside it.
+     * Returns every role instantiated for the given organization, including the copies of the five templates created alongside it. Requires role:read in that organization.
      * List roles owned by an organization
      */
     async listOrgRoles(requestParameters: ListOrgRolesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<RoleResponse>> {
