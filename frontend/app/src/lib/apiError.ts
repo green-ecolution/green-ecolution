@@ -5,8 +5,42 @@ import {
   instanceOfValidationIssue,
   type ValidationIssue,
 } from '@green-ecolution/backend-client'
+import { getI18n } from '@/lib/i18n'
 import { translateIssueNow } from '@/lib/i18n/validation'
-import { messageFor, type ApiErrorMessageKey } from './apiErrorMessages'
+
+/**
+ * Keys mirror what the response carries: `code.<code>` when the body names a
+ * cause, `status.<http status>` otherwise. Deliberately absent from the
+ * catalog: `resource.*`, `auth.*`, `request.invalid_input`,
+ * `request.validation_failed` and `internal.error`. The first three and the
+ * last say no more than their status does; `request.validation_failed` always
+ * ships a `validation` block, whose own key produces the better text.
+ */
+export type ApiErrorMessageKey =
+  | `code.${string}`
+  | `status.${number}`
+  | 'status.unknown'
+  | `validation:${string}`
+  | 'offline'
+  | 'unknown'
+  /** Backend prose used verbatim because no catalog entry matched. */
+  | 'detail'
+
+// `t`'s generated overloads pick a signature from the catalog's literal key
+// union; a key built from `ApiErrorMessageKey` at runtime can't satisfy that
+// statically (same issue as `lib/i18n/validation.ts`'s `LooseTranslate`).
+type LooseTranslate = (key: string, params?: Record<string, string | number>) => string
+
+/** Catalog lookup in the `errors` namespace; undefined when the key is unknown. */
+function messageFor(
+  key: ApiErrorMessageKey,
+  params?: Record<string, string | number>,
+): string | undefined {
+  const { t, exists } = getI18n()
+  const namespaced = `errors:${key}`
+  if (!exists(namespaced)) return undefined
+  return (t as LooseTranslate)(namespaced, params)
+}
 
 export interface ApiErrorInfo {
   /** German sentence intended for the user. */
@@ -77,7 +111,9 @@ function resolveMessage(
   // sein" is more use than "Die eingegebenen Daten sind ungültig."
   if (validation) {
     const message = translateIssueNow(validation)
-    if (message !== validation.key) return { message, messageKey: `code.${validation.key}` }
+    if (message !== validation.key) {
+      return { message, messageKey: `validation:${validation.key}` }
+    }
   }
   const keys: ApiErrorMessageKey[] = code
     ? [`code.${code}`, `status.${status}`]
@@ -97,6 +133,12 @@ export async function resolveApiError(error: unknown): Promise<ApiErrorInfo> {
   if (error instanceof ResponseError) {
     const status = error.response.status
     const payload = await readPayload(error.response)
+    // No automatic net exists for `code.*`: the backend does not publish its
+    // code list, `ServiceError::code()` is only exhaustive in Rust. A missing
+    // entry degrades to the status text, so make it visible in development.
+    if (import.meta.env.DEV && payload.code && !getI18n().exists(`errors:code.${payload.code}`)) {
+      console.warn(`apiError: no catalog entry for code ${payload.code}`)
+    }
     return {
       status,
       code: payload.code,

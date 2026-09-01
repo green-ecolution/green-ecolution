@@ -1,4 +1,5 @@
 import common from './common.json'
 import validation from './validation.json'
+import errors from './errors.json'
 
-export default { common, validation }
+export default { common, validation, errors }

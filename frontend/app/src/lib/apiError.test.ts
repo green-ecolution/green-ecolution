@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { FetchError, ResponseError } from '@green-ecolution/backend-client'
 import { resolveApiError } from './apiError'
-import { apiErrorMessages } from './apiErrorMessages'
+import errors from '@/locales/de/errors.json'
 
 const respond = (status: number, body?: unknown, contentType = 'application/json') =>
   new ResponseError(
@@ -23,7 +23,7 @@ describe('resolveApiError', () => {
     expect(info.status).toBe(422)
     expect(info.code).toBe('organization_mismatch.trees_vs_cluster')
     expect(info.messageKey).toBe('code.organization_mismatch.trees_vs_cluster')
-    expect(info.message).toBe(apiErrorMessages['code.organization_mismatch.trees_vs_cluster'])
+    expect(info.message).toBe(errors.code.organization_mismatch.trees_vs_cluster)
   })
 
   it('falls back to the status text for an unknown code', async () => {
@@ -32,7 +32,7 @@ describe('resolveApiError', () => {
     )
 
     expect(info.messageKey).toBe('status.422')
-    expect(info.message).toBe(apiErrorMessages['status.422'])
+    expect(info.message).toBe(errors.status['422'])
     expect(info.code).toBe('not_in_catalog')
   })
 
@@ -91,7 +91,7 @@ describe('field validation reported by the backend', () => {
     )
 
     expect(info.message).toBe('Name darf maximal 255 Zeichen lang sein.')
-    expect(info.messageKey).toBe('code.cluster.name.tooLong')
+    expect(info.messageKey).toBe('validation:cluster.name.tooLong')
   })
 
   it('exposes the issue so a form can attach it to the field', async () => {

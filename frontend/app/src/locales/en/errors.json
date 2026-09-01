@@ -1,0 +1,72 @@
+{
+  "code": {
+    "organization_mismatch": {
+      "trees_vs_cluster": "The selected trees belong to a different organization than the watering group.",
+      "cluster_vs_tree": "The selected watering group belongs to a different organization than the tree.",
+      "sensor_vs_tree": "The sensor belongs to a different organization than the tree.",
+      "clusters_vs_plan": "The selected watering groups lie outside the watering plan's organization.",
+      "role_vs_user": "The role belongs to a different organization than the selected person."
+    },
+    "conflict": {
+      "tree_already_has_sensor": "This tree already has another sensor attached.",
+      "sensor_already_assigned": "This sensor is already assigned to another tree.",
+      "sensor_already_activated": "This sensor is already activated.",
+      "sensor_not_activated": "This sensor is not activated yet.",
+      "sensor_bound_to_tree": "The sensor is attached to a tree and can only be transferred together with it.",
+      "tree_in_cluster": "The tree belongs to a watering group and must be removed from it first.",
+      "organization_not_empty": "The organization still has suborganizations or members.",
+      "root_organization_immutable": "The top-level organization cannot be changed or deleted.",
+      "role_template_immutable": "Template roles cannot be changed. Create a copy in your organization instead.",
+      "role_template_not_assignable": "Template roles cannot be assigned to a person.",
+      "cannot_change_own_access": "You cannot change your own roles or your own organization.",
+      "cannot_revoke_own_administration": "This change would take away your own right to manage roles and members."
+    },
+    "organization": {
+      "missing": "No organization was specified and your account does not belong to one.",
+      "contact_person_not_a_member": "The selected contact person does not belong to this organization."
+    },
+    "watering_plan": {
+      "invalid_state_transition": "This status change is not possible in the watering plan's current state.",
+      "cannot_mutate_after_start": "The watering plan can only be edited while it has not started yet.",
+      "cancellation_note_required": "Canceling requires a reason.",
+      "evaluation_missing_for_cluster": "Every assigned watering group needs an evaluation."
+    },
+    "feature": {
+      "routing_disabled": "Route planning is not enabled in this environment.",
+      "plugins_disabled": "The plugin system is not enabled in this environment."
+    },
+    "routing": {
+      "unavailable": "The routing service is currently unreachable.",
+      "invalid_problem": "No route can be calculated from the selected data. Check the vehicle, start point and groups.",
+      "failed": "Route calculation failed."
+    },
+    "request": {
+      "malformed_date": "The date could not be read.",
+      "malformed_uuid": "A selected entry has no valid identifier.",
+      "malformed_sensor_id": "The sensor ID has an invalid format.",
+      "malformed_bounding_box": "The map extent could not be read.",
+      "unknown_permission": "The request names an unknown permission.",
+      "unknown_endpoint": "The server does not know this function. The app and server versions likely do not match. Reload the page.",
+      "method_not_allowed": "The request is not allowed for this endpoint.",
+      "malformed_path_parameter": "The reference in the address is invalid.",
+      "malformed_query_parameter": "A filter or paging parameter is invalid.",
+      "malformed_body": "The submitted data could not be read."
+    }
+  },
+  "status": {
+    "400": "The request was malformed and could not be processed.",
+    "401": "Your session has expired. Please log in again.",
+    "403": "You do not have permission for this action.",
+    "404": "The requested record was not found.",
+    "405": "The request is not allowed for this endpoint.",
+    "409": "The record already exists or has been changed in the meantime.",
+    "415": "The request format is not supported.",
+    "422": "The submitted data is incomplete or invalid.",
+    "500": "An unexpected error occurred on the server. Please try again or contact a system administrator.",
+    "502": "A downstream service did not respond.",
+    "503": "The service is currently unreachable. Please try again later.",
+    "unknown": "The server responded with status {status}."
+  },
+  "offline": "The server is unreachable. Please check your connection.",
+  "unknown": "Unknown error"
+}
