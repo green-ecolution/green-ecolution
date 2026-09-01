@@ -1,6 +1,8 @@
 import React from 'react'
 import { Link } from '@tanstack/react-router'
 import { ArrowRight, Layers, MapPin } from 'lucide-react'
+import type { TFunction } from 'i18next'
+import { useTranslation } from 'react-i18next'
 import { Badge, Card } from '@green-ecolution/ui'
 import TreeIcon from '@/components/icons/Tree'
 import ClusterTreeDots from '@/components/treecluster/ClusterTreeDots'
@@ -15,18 +17,21 @@ interface ClusterCardProps {
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24
 
-const lastWateredLabel = (lastWatered?: string | null): string => {
-  if (!lastWatered) return 'noch nicht bewässert'
+const lastWateredLabel = (
+  lastWatered: string | null | undefined,
+  t: TFunction<'treecluster'>,
+): string => {
+  if (!lastWatered) return t('card.lastWateredNever')
 
   const watered = new Date(lastWatered)
-  if (Number.isNaN(watered.getTime())) return 'noch nicht bewässert'
+  if (Number.isNaN(watered.getTime())) return t('card.lastWateredNever')
 
   const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
   const days = Math.round((startOfDay(new Date()) - startOfDay(watered)) / MS_PER_DAY)
 
-  if (days <= 0) return 'heute'
-  if (days === 1) return 'gestern'
-  return `vor ${days} Tagen`
+  if (days <= 0) return t('card.lastWateredToday')
+  if (days === 1) return t('card.lastWateredYesterday')
+  return t('card.lastWateredDaysAgo', { count: days })
 }
 
 const Metric: React.FC<{
@@ -44,10 +49,11 @@ const Metric: React.FC<{
 )
 
 const ClusterCard: React.FC<ClusterCardProps> = ({ treecluster }) => {
+  const { t } = useTranslation('treecluster')
   const status = getWateringStatusDetails(treecluster.wateringStatus)
   const treeCount = treecluster.treeIds?.length ?? 0
   const hasSoil = treecluster.soilCondition && treecluster.soilCondition !== SoilCondition.Unknown
-  const soilLabel = hasSoil ? soilConditionLabel(treecluster.soilCondition) : '–'
+  const soilLabel = hasSoil ? soilConditionLabel(treecluster.soilCondition) : t('card.noSoilData')
 
   return (
     <Card
@@ -58,7 +64,7 @@ const ClusterCard: React.FC<ClusterCardProps> = ({ treecluster }) => {
         to="/treecluster/$treeclusterId"
         params={{ treeclusterId: treecluster.id.toString() }}
         className="flex flex-1 flex-col gap-5 p-6 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:rounded-xl"
-        aria-label={`Details zur Bewässerungsgruppe ${treecluster.name}`}
+        aria-label={t('card.ariaLabelDetail', { name: treecluster.name })}
       >
         <header className="flex items-start justify-between gap-3">
           <div className="flex min-w-0 items-center gap-2">
@@ -81,23 +87,27 @@ const ClusterCard: React.FC<ClusterCardProps> = ({ treecluster }) => {
           <p className="min-w-0">
             <span className="block truncate text-dark-900">{treecluster.address}</span>
             <span className="block truncate text-xs text-dark-600">
-              {treecluster.region?.name ?? '–'}
+              {treecluster.region?.name ?? t('card.noRegion')}
             </span>
           </p>
         </div>
 
         <div className="flex flex-col gap-3 border-y border-border py-4">
           <div className="grid grid-cols-2 gap-3">
-            <Metric icon={<TreeIcon className="h-3.5 w-3.5" />} label="Bäume" value={treeCount} />
+            <Metric
+              icon={<TreeIcon className="h-3.5 w-3.5" />}
+              label={t('card.treesLabel')}
+              value={treeCount}
+            />
             <Metric
               icon={<span className="h-2 w-2 shrink-0 rounded-full bg-green-dark" aria-hidden />}
-              label="Sensor-Bäume"
+              label={t('card.sensorTreesLabel')}
               value={treecluster.sensorCount}
             />
           </div>
           <Metric
             icon={<Layers className="h-3.5 w-3.5 shrink-0" aria-hidden />}
-            label="Bodenart"
+            label={t('card.soilLabel')}
             value={soilLabel}
           />
         </div>
@@ -106,10 +116,10 @@ const ClusterCard: React.FC<ClusterCardProps> = ({ treecluster }) => {
 
         <footer className="mt-auto flex items-center justify-between gap-3 pt-1 text-sm">
           <span className="min-w-0 truncate text-dark-600">
-            Zuletzt bewässert: {lastWateredLabel(treecluster.lastWatered)}
+            {t('card.lastWateredPrefix', { label: lastWateredLabel(treecluster.lastWatered, t) })}
           </span>
           <span className="flex shrink-0 items-center gap-1 font-semibold text-green-dark">
-            Details
+            {t('card.detailsLabel')}
             <ArrowRight
               className="h-4 w-4 transition-transform duration-base ease-emphasized group-hover:translate-x-1 motion-reduce:transition-none"
               aria-hidden

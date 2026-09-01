@@ -2,6 +2,7 @@ import React from 'react'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { X } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { clusterQueries } from '@/api/queries'
 import { WateringStatus } from '@/api/backendApi'
 import { getWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
@@ -21,6 +22,7 @@ const ALWAYS_SHOWN: WateringStatus[] = [
 ]
 
 const ClusterStatusChips: React.FC<{ className?: string }> = ({ className }) => {
+  const { t } = useTranslation('treecluster')
   const { data: stats } = useSuspenseQuery(clusterQueries.statistics())
   const search = useSearch({ strict: false })
   const navigate = useNavigate()
@@ -59,7 +61,7 @@ const ClusterStatusChips: React.FC<{ className?: string }> = ({ className }) => 
   return (
     <div
       role="group"
-      aria-label="Nach Bewässerungszustand filtern"
+      aria-label={t('statusChips.groupAriaLabel')}
       className={`flex items-center gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0 ${className ?? ''}`}
     >
       {visible.map((status) => {

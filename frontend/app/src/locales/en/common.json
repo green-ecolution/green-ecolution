@@ -3,6 +3,8 @@
     "save": "Save",
     "cancel": "Cancel",
     "delete": "Delete",
+    "archive": "Archive",
+    "confirm": "Confirm",
     "back": "Back",
     "next": "Next",
     "retry": "Try again"
@@ -66,6 +68,14 @@
       "emptyLabel": "No {label} selected yet.",
       "addLabel": "Add {label}"
     }
+  },
+  "deleteSection": {
+    "deletedParticiple": "deleted",
+    "archivedParticiple": "archived",
+    "confirmTitle": "Do you really want to have {entity} {action}?",
+    "confirmDescription": "Once {entity} has been {action}, the data cannot be recovered.",
+    "successToast": "{entity} was successfully {action}.",
+    "unexpectedError": "An error occurred"
   },
   "geo": {
     "permission": {

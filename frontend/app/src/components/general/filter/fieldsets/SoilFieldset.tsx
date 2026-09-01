@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import useStore from '@/store/store'
 import { SoilConditionOptions } from '@/hooks/details/useDetailsForSoilCondition'
 import { MultiSelectCombobox } from '@green-ecolution/ui'
@@ -10,18 +11,21 @@ const SOIL_OPTIONS = SoilConditionOptions.map((option) => ({
 }))
 
 const SoilFieldset = () => {
+  const { t } = useTranslation('treecluster')
   const soilTags = useStore((s) => s.filterDraft.soilTags)
   const setSoilTags = useStore((s) => s.setFilterSoilTags)
 
   return (
     <fieldset className="mt-6">
-      <legend className="font-lato font-semibold text-dark-600 mb-2">Bodenart:</legend>
+      <legend className="font-lato font-semibold text-dark-600 mb-2">
+        {t('soilFieldset.legend')}
+      </legend>
       <MultiSelectCombobox
         options={SOIL_OPTIONS}
         value={soilTags}
         onChange={setSoilTags}
-        placeholder="Alle Bodenarten"
-        searchPlaceholder="Bodenart suchen"
+        placeholder={t('soilFieldset.placeholder')}
+        searchPlaceholder={t('soilFieldset.searchPlaceholder')}
       />
       <SelectedTagList
         options={SOIL_OPTIONS}

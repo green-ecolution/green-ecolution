@@ -39,9 +39,12 @@ const DeleteSection: React.FC<DeleteSectionProps> = ({
   const navigate = useNavigate()
   const invalidate = useInvalidateAggregates()
   const showToast = createToast()
-  const { t } = useTranslation('errors')
+  const { t } = useTranslation(['errors', 'common'])
 
-  const actionText = type === 'archive' ? 'archiviert' : 'gelöscht'
+  const actionText =
+    type === 'archive'
+      ? t('common:deleteSection.archivedParticiple')
+      : t('common:deleteSection.deletedParticiple')
   const capitalizedEntity = `${entityName.charAt(0).toUpperCase()}${entityName.slice(1)}`
   const failureKey = type === 'archive' ? 'frame.archiveFailed' : 'frame.deleteFailed'
 
@@ -53,8 +56,16 @@ const DeleteSection: React.FC<DeleteSectionProps> = ({
         // After leaving: a page still showing the removed entity would refetch
         // it into a 404.
         .then(() => invalidate(invalidates))
-        .then(() => showToast(`${capitalizedEntity} wurde erfolgreich ${actionText}.`, 'success'))
-        .catch(() => showToast('Ein fehler is aufgetreten', 'error'))
+        .then(() =>
+          showToast(
+            t('common:deleteSection.successToast', {
+              entity: capitalizedEntity,
+              action: actionText,
+            }),
+            'success',
+          ),
+        )
+        .catch(() => showToast(t('common:deleteSection.unexpectedError'), 'error'))
     },
     onError: (error: unknown) => {
       void resolveApiError(error).then((info) =>
@@ -73,7 +84,7 @@ const DeleteSection: React.FC<DeleteSectionProps> = ({
         onClick={() => setIsModalOpen(true)}
         className="mt-10 mb-4 px-0 group"
       >
-        {type === 'archive' ? 'Archivieren' : 'Löschen'}
+        {type === 'archive' ? t('common:actions.archive') : t('common:actions.delete')}
         <MoveRight className="transition-transform duration-base ease-emphasized group-hover:translate-x-1 motion-reduce:transition-none" />
       </Button>
 
@@ -81,20 +92,22 @@ const DeleteSection: React.FC<DeleteSectionProps> = ({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              Soll {entityName} wirklich {actionText} werden?
+              {t('common:deleteSection.confirmTitle', { entity: entityName, action: actionText })}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Sobald {entityName} {actionText} wurde, können die Daten nicht wieder hergestellt
-              werden.
+              {t('common:deleteSection.confirmDescription', {
+                entity: entityName,
+                action: actionText,
+              })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>
-              Abbrechen
+              {t('common:actions.cancel')}
               <X />
             </AlertDialogCancel>
             <AlertDialogAction onClick={() => mutate()}>
-              Bestätigen
+              {t('common:actions.confirm')}
               <MoveRight className="icon-arrow-animate" />
             </AlertDialogAction>
           </AlertDialogFooter>

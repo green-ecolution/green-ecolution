@@ -1,4 +1,5 @@
 import { ChangeEvent, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Button,
   Dialog,
@@ -22,12 +23,6 @@ import SoilTextureTriangle from './SoilTextureTriangle'
 
 const NEUTRAL_FRACTIONS: SoilFractions = { sand: 33, silt: 34, clay: 33 }
 
-const FRACTION_FIELDS: { key: keyof SoilFractions; label: string }[] = [
-  { key: 'sand', label: 'Sand' },
-  { key: 'silt', label: 'Schluff' },
-  { key: 'clay', label: 'Ton' },
-]
-
 interface SoilTextureFormProps {
   initialCondition: SoilCondition
   onApply: (condition: SoilCondition) => void
@@ -35,6 +30,12 @@ interface SoilTextureFormProps {
 }
 
 const SoilTextureForm = ({ initialCondition, onApply, onCancel }: SoilTextureFormProps) => {
+  const { t } = useTranslation('treecluster')
+  const FRACTION_FIELDS: { key: keyof SoilFractions; label: string }[] = [
+    { key: 'sand', label: t('soilTexture.fractionSand') },
+    { key: 'silt', label: t('soilTexture.fractionSilt') },
+    { key: 'clay', label: t('soilTexture.fractionClay') },
+  ]
   const [fractions, setFractions] = useState<SoilFractions>(
     () => regionMidpoint(initialCondition) ?? NEUTRAL_FRACTIONS,
   )
@@ -78,14 +79,15 @@ const SoilTextureForm = ({ initialCondition, onApply, onCancel }: SoilTextureFor
         activeCondition={condition}
       />
       <p aria-live="polite" className="text-sm">
-        Ermittelte Bodenart: <span className="font-semibold">{soilConditionLabel(condition)}</span>
+        {t('soilTexture.resultLabel')}{' '}
+        <span className="font-semibold">{soilConditionLabel(condition)}</span>
       </p>
       <DialogFooter>
         <Button type="button" variant="outline" onClick={onCancel}>
-          Abbrechen
+          {t('soilTexture.cancelButton')}
         </Button>
         <Button type="button" onClick={() => onApply(condition)}>
-          Übernehmen
+          {t('soilTexture.applyButton')}
         </Button>
       </DialogFooter>
     </>
@@ -104,26 +106,27 @@ const SoilTextureDialog = ({
   onOpenChange,
   initialCondition,
   onApply,
-}: SoilTextureDialogProps) => (
-  <Dialog open={open} onOpenChange={onOpenChange}>
-    <DialogContent>
-      <DialogHeader>
-        <DialogTitle>Bodenart bestimmen</DialogTitle>
-        <DialogDescription>
-          Gib die Korngrößenanteile aus der Bodenprobe an. Die Bodenart wird nach dem
-          KA5-Bodenartendiagramm bestimmt.
-        </DialogDescription>
-      </DialogHeader>
-      <SoilTextureForm
-        initialCondition={initialCondition}
-        onApply={(condition) => {
-          onApply(condition)
-          onOpenChange(false)
-        }}
-        onCancel={() => onOpenChange(false)}
-      />
-    </DialogContent>
-  </Dialog>
-)
+}: SoilTextureDialogProps) => {
+  const { t } = useTranslation('treecluster')
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t('soilTexture.dialogTitle')}</DialogTitle>
+          <DialogDescription>{t('soilTexture.dialogDescription')}</DialogDescription>
+        </DialogHeader>
+        <SoilTextureForm
+          initialCondition={initialCondition}
+          onApply={(condition) => {
+            onApply(condition)
+            onOpenChange(false)
+          }}
+          onCancel={() => onOpenChange(false)}
+        />
+      </DialogContent>
+    </Dialog>
+  )
+}
 
 export default SoilTextureDialog

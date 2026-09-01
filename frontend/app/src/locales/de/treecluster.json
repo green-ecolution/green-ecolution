@@ -1,0 +1,195 @@
+{
+  "entity": {
+    "name": "Bewässerungsgruppe"
+  },
+  "card": {
+    "ariaLabelDetail": "Details zur Bewässerungsgruppe {name}",
+    "treesLabel": "Bäume",
+    "sensorTreesLabel": "Sensor-Bäume",
+    "soilLabel": "Bodenart",
+    "noSoilData": "–",
+    "noRegion": "–",
+    "lastWateredPrefix": "Zuletzt bewässert: {label}",
+    "lastWateredNever": "noch nicht bewässert",
+    "lastWateredToday": "heute",
+    "lastWateredYesterday": "gestern",
+    "lastWateredDaysAgo": "vor {count} Tagen",
+    "detailsLabel": "Details"
+  },
+  "kpi": {
+    "wateringStatusLabel": "Bewässerungszustand (ø)",
+    "soilTemperatureLabel": "Bodentemperatur",
+    "noData": "Keine Daten",
+    "lastMeasurementLabel": "Letzte Messung",
+    "lastWateredLabel": "Letzte Bewässerung",
+    "lastWateredInfo": "Wird aktualisiert, sobald ein Einsatzplan mit dieser Gruppe als »Beendet« markiert wird."
+  },
+  "locationCard": {
+    "title": "Standort",
+    "mapAriaLabel": "Karte mit den Bäumen und der Umrandung der Bewässerungsgruppe",
+    "noTreesNotice": "Keine Bäume — kein Standort.",
+    "viewOnMapLabel": "Auf der Karte anzeigen"
+  },
+  "masterData": {
+    "title": "Stammdaten",
+    "regionLabel": "Region",
+    "speciesLabel": "Baumarten",
+    "soilLabel": "Bodenart",
+    "descriptionLabel": "Beschreibung"
+  },
+  "sensorCard": {
+    "title": "Sensorik",
+    "treeLabel": "Sensor-Baum: {species} · {number}",
+    "signalLabel": "Signal",
+    "noSignalData": "Keine Daten",
+    "batteryLabel": "Batterie",
+    "lastTransmissionLabel": "Letzte Übertragung",
+    "noSensorNotice": "Kein Baum dieser Gruppe ist mit einem Sensor ausgestattet.",
+    "sensorCount_one": "{withSensor} von {count} Baum mit Sensor",
+    "sensorCount_other": "{withSensor} von {count} Bäumen mit Sensor"
+  },
+  "statusChips": {
+    "groupAriaLabel": "Nach Bewässerungszustand filtern"
+  },
+  "toolbar": {
+    "searchPlaceholder": "Gruppe suchen",
+    "sortLabel": "Sortieren:",
+    "sortPlaceholder": "Sortieren",
+    "sortSearchPlaceholder": "Sortierung suchen",
+    "sortAriaLabel": "Gruppen sortieren",
+    "sortOptionName": "Name",
+    "sortOptionMoisture": "Feuchte",
+    "sortOptionTrees": "Anzahl Bäume"
+  },
+  "treeDots": {
+    "noTreesNotice": "Noch keine Bäume zugeordnet",
+    "legend": "Sensor-Baum · misst die Gruppe"
+  },
+  "treeList": {
+    "title": "Bäume · {count}",
+    "emptyMessage": "Der Bewässerungsgruppe wurden keine Bäume hinzugefügt.",
+    "sensorBadge": "Sensor"
+  },
+  "viewToggle": {
+    "ariaLabel": "Ansicht wechseln",
+    "cardsLabel": "Karten",
+    "tableLabel": "Tabelle"
+  },
+  "wateringHistory": {
+    "title": "Bewässerungshistorie",
+    "loadingLabel": "Einsatzpläne werden geladen",
+    "errorMessage": "Die Einsatzpläne konnten nicht geladen werden.",
+    "emptyMessage": "Für diese Gruppe wurden noch keine Einsatzpläne abgeschlossen.",
+    "viewLink": "Einsatzplan ansehen"
+  },
+  "waterSupplyChart": {
+    "title": "Wasserversorgung",
+    "subtitleHour": "Pflanzenverfügbares Wasser (Stundenmittel) · Gestrichelt = Schwellen",
+    "subtitleDay": "Pflanzenverfügbares Wasser (Tagesmittel) · Gestrichelt = Schwellen",
+    "seriesLabel": "Verfügbares Wasser (%)",
+    "noSensorsNotice": "Kein Baum dieser Gruppe ist mit einem Sensor ausgestattet — es liegen keine Messwerte vor.",
+    "loadingLabel": "Messwerte werden geladen",
+    "soilUnknownNotice": "Für diese Gruppe ist keine Bodenart hinterlegt — die Wasserversorgung kann nicht berechnet werden.",
+    "tooFewDataPoints": "Zu wenige Datenpunkte im gewählten Zeitraum.",
+    "moderateThresholdLabel": "mäßig",
+    "criticalThresholdLabel": "kritisch",
+    "wateredOnLabel": "Bewässert am {date}"
+  },
+  "unknownStatus": {
+    "title": "Warum ist der Bewässerungszustand unbekannt?",
+    "multipleReasonsNote": "Mehrere Gründe verhindern derzeit eine Bewertung:",
+    "soilUnknown": "Die Bodenbeschaffenheit der Gruppe ist nicht bestimmt. Ohne sie lassen sich die Feuchtemesswerte nicht bewerten.",
+    "noSensor": "Diese Gruppe hat keinen Sensor, daher liegen keine Messwerte vor.",
+    "sensorSilent_one": "1 Sensor sendet derzeit keine Daten.",
+    "sensorSilent_other": "{count} Sensoren senden derzeit keine Daten.",
+    "beyondMonitoring_one": "{count} Baum liegt außerhalb des überwachten Anwuchszeitraums von {years} Jahren.",
+    "beyondMonitoring_other": "{count} Bäume liegen außerhalb des überwachten Anwuchszeitraums von {years} Jahren.",
+    "unscorable_one": "Für {count} Baum liegen keine auswertbaren Messwerte vor.",
+    "unscorable_other": "Für {count} Bäume liegen keine auswertbaren Messwerte vor."
+  },
+  "dashboard": {
+    "backToList": "Zu allen Bewässerungsgruppen",
+    "title": "Bewässerungsgruppe: {name}",
+    "editLink": "Gruppe bearbeiten",
+    "moreActionsAriaLabel": "Weitere Aktionen",
+    "deleteMenuItem": "Gruppe löschen",
+    "infoLine": "{address} · {region} · {treeCount}",
+    "treeCount_one": "{count} Baum",
+    "treeCount_other": "{count} Bäume",
+    "noTreesTitle": "Keine Bäume zugewiesen",
+    "noTreesDescription": "Diese Bewässerungsgruppe enthält keine Bäume und hat daher keinen Standort.",
+    "deleteDialogTitle": "Bewässerungsgruppe löschen?",
+    "deleteDialogDescription": "Möchtest du die Bewässerungsgruppe wirklich löschen? Die zugehörigen Bäume bleiben erhalten.",
+    "deleteSuccessToast": "Die Bewässerungsgruppe wurde gelöscht.",
+    "deleteErrorToast": "Die Bewässerungsgruppe konnte nicht gelöscht werden."
+  },
+  "soilTexture": {
+    "fractionSand": "Sand",
+    "fractionSilt": "Schluff",
+    "fractionClay": "Ton",
+    "resultLabel": "Ermittelte Bodenart:",
+    "cancelButton": "Abbrechen",
+    "applyButton": "Übernehmen",
+    "dialogTitle": "Bodenart bestimmen",
+    "dialogDescription": "Gib die Korngrößenanteile aus der Bodenprobe an. Die Bodenart wird nach dem KA5-Bodenartendiagramm bestimmt.",
+    "triangleAriaLabel": "Bodenartendiagramm: Schluff {silt} %, Ton {clay} %, Klasse {condition}",
+    "siltAxisLabel": "Schluff [%]",
+    "clayAxisLabel": "Ton [%]"
+  },
+  "clusterFieldset": {
+    "legend": "Zugehörigkeit einer Bewässerungsgruppe:",
+    "hasCluster": "Gruppe zugehörig",
+    "noCluster": "Keiner Gruppe zugehörig"
+  },
+  "regionFieldset": {
+    "legend": "Stadtteil in Flensburg:",
+    "placeholder": "Alle Bezirke",
+    "searchPlaceholder": "Bezirk suchen"
+  },
+  "soilFieldset": {
+    "legend": "Bodenart:",
+    "placeholder": "Alle Bodenarten",
+    "searchPlaceholder": "Bodenart suchen"
+  },
+  "listRow": {
+    "treeCount_one": "{count} Baum",
+    "treeCount_other": "{count} Bäume"
+  },
+  "selectedCard": {
+    "treeCount_one": "{count} Baum",
+    "treeCount_other": "{count} Bäume",
+    "removeAriaLabel": "Bewässerungsgruppe aus Auswahl löschen"
+  },
+  "form": {
+    "organizationLabel": "Organisation",
+    "organizationPlaceholder": "Wähle eine Organisation aus",
+    "organizationSearchPlaceholder": "Organisation suchen…",
+    "organizationHint": "Die Gruppe gehört anschließend dieser Organisation. Auswählbar sind nur deren Bäume.",
+    "discardedTree_one": "Ein bereits ausgewählter Baum gehört einer anderen Organisation und wurde entfernt.",
+    "discardedTree_other": "{count} bereits ausgewählte Bäume gehören einer anderen Organisation und wurden entfernt.",
+    "nameLabel": "Name",
+    "addressLabel": "Adresse",
+    "soilConditionLabel": "Bodenbeschaffenheit",
+    "soilConditionPlaceholder": "Wähle eine Bodenbeschaffenheit aus",
+    "soilConditionSearchPlaceholder": "Code oder Bezeichnung suchen…",
+    "soilConditionDetermineAriaLabel": "Bodenbeschaffenheit bestimmen",
+    "treesLabel": "Bäume"
+  },
+  "list": {
+    "title": "Bewässerungsgruppen",
+    "statsLabel": "{total} Gruppen · {trees} Bäume",
+    "description": "Hier findest du eine Übersicht aller Bewässerungsgruppen. Eine Bewässerungsgruppe besteht aus mehreren Bäumen, welche aufgrund ihrer Nähe und Standortbedingungen in einer Gruppe zusammengefasst wurden. Die Ausstattung einzelner Bäume mit Sensoren erlaubt eine Gesamtaussage über den Bewässerungszustand der vollständigen Gruppe.",
+    "createButton": "Gruppe anlegen",
+    "filterHeadline": "Bewässerungsgruppen filtern",
+    "loadingLabel": "Daten werden geladen",
+    "columnStatus": "Status",
+    "columnName": "Name",
+    "columnLocation": "Standort",
+    "columnTreeCount": "Anzahl d. Bäume",
+    "emptyMessage": "Es wurden leider keine Bewässerungsgruppen gefunden."
+  },
+  "detail": {
+    "loadingLabel": "Bewässerungsgruppe wird geladen …",
+    "notFoundBackLabel": "Zur Gruppenliste"
+  }
+}

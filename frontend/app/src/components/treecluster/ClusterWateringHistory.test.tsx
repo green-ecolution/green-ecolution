@@ -91,7 +91,7 @@ describe('ClusterWateringHistory', () => {
     expect(screen.getByText('1.234 L')).toBeInTheDocument()
     expect(screen.getByText('500 L')).toBeInTheDocument()
 
-    const links = screen.getAllByRole('link', { name: 'Einsatz ansehen' })
+    const links = screen.getAllByRole('link', { name: 'Einsatzplan ansehen' })
     expect(links).toHaveLength(2)
     expect(links[0]).toHaveAttribute('href', '/watering-plans/plan-1')
     expect(links[1]).toHaveAttribute('href', '/watering-plans/plan-2')
@@ -116,7 +116,7 @@ describe('ClusterWateringHistory', () => {
     renderWithProviders()
 
     await waitFor(() => {
-      expect(screen.getAllByRole('link', { name: 'Einsatz ansehen' })).toHaveLength(6)
+      expect(screen.getAllByRole('link', { name: 'Einsatzplan ansehen' })).toHaveLength(6)
     })
 
     const newestSixDates = [
@@ -149,7 +149,7 @@ describe('ClusterWateringHistory', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText('Für diese Gruppe wurden noch keine Einsätze abgeschlossen.'),
+        screen.getByText('Für diese Gruppe wurden noch keine Einsatzpläne abgeschlossen.'),
       ).toBeInTheDocument()
     })
   })
@@ -161,10 +161,10 @@ describe('ClusterWateringHistory', () => {
     renderWithProviders()
 
     await waitFor(() => {
-      expect(screen.getByText('Einsätze werden geladen')).toBeInTheDocument()
+      expect(screen.getByText('Einsatzpläne werden geladen')).toBeInTheDocument()
     })
     expect(
-      screen.queryByText('Für diese Gruppe wurden noch keine Einsätze abgeschlossen.'),
+      screen.queryByText('Für diese Gruppe wurden noch keine Einsatzpläne abgeschlossen.'),
     ).not.toBeInTheDocument()
   })
 
@@ -174,10 +174,10 @@ describe('ClusterWateringHistory', () => {
     renderWithProviders()
 
     await waitFor(() => {
-      expect(screen.getByText('Die Einsätze konnten nicht geladen werden.')).toBeInTheDocument()
+      expect(screen.getByText('Die Einsatzpläne konnten nicht geladen werden.')).toBeInTheDocument()
     })
     expect(
-      screen.queryByText('Für diese Gruppe wurden noch keine Einsätze abgeschlossen.'),
+      screen.queryByText('Für diese Gruppe wurden noch keine Einsatzpläne abgeschlossen.'),
     ).not.toBeInTheDocument()
   })
 })

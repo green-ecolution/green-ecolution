@@ -1,0 +1,195 @@
+{
+  "entity": {
+    "name": "Watering group"
+  },
+  "card": {
+    "ariaLabelDetail": "Details for watering group {name}",
+    "treesLabel": "Trees",
+    "sensorTreesLabel": "Sensor trees",
+    "soilLabel": "Soil type",
+    "noSoilData": "–",
+    "noRegion": "–",
+    "lastWateredPrefix": "Last watered: {label}",
+    "lastWateredNever": "not watered yet",
+    "lastWateredToday": "today",
+    "lastWateredYesterday": "yesterday",
+    "lastWateredDaysAgo": "{count} days ago",
+    "detailsLabel": "Details"
+  },
+  "kpi": {
+    "wateringStatusLabel": "Watering status (avg.)",
+    "soilTemperatureLabel": "Soil temperature",
+    "noData": "No data",
+    "lastMeasurementLabel": "Last measurement",
+    "lastWateredLabel": "Last watered",
+    "lastWateredInfo": "Updates once a watering plan involving this group is marked »Finished«."
+  },
+  "locationCard": {
+    "title": "Location",
+    "mapAriaLabel": "Map showing the trees and the boundary of the watering group",
+    "noTreesNotice": "No trees — no location.",
+    "viewOnMapLabel": "Show on map"
+  },
+  "masterData": {
+    "title": "Master data",
+    "regionLabel": "Region",
+    "speciesLabel": "Species",
+    "soilLabel": "Soil type",
+    "descriptionLabel": "Description"
+  },
+  "sensorCard": {
+    "title": "Sensors",
+    "treeLabel": "Sensor tree: {species} · {number}",
+    "signalLabel": "Signal",
+    "noSignalData": "No data",
+    "batteryLabel": "Battery",
+    "lastTransmissionLabel": "Last transmission",
+    "noSensorNotice": "No tree in this group is equipped with a sensor.",
+    "sensorCount_one": "{withSensor} of {count} tree with a sensor",
+    "sensorCount_other": "{withSensor} of {count} trees with a sensor"
+  },
+  "statusChips": {
+    "groupAriaLabel": "Filter by watering status"
+  },
+  "toolbar": {
+    "searchPlaceholder": "Search group",
+    "sortLabel": "Sort:",
+    "sortPlaceholder": "Sort",
+    "sortSearchPlaceholder": "Search sort order",
+    "sortAriaLabel": "Sort groups",
+    "sortOptionName": "Name",
+    "sortOptionMoisture": "Moisture",
+    "sortOptionTrees": "Tree count"
+  },
+  "treeDots": {
+    "noTreesNotice": "No trees assigned yet",
+    "legend": "Sensor tree · measures the group"
+  },
+  "treeList": {
+    "title": "Trees · {count}",
+    "emptyMessage": "No trees have been added to the watering group.",
+    "sensorBadge": "Sensor"
+  },
+  "viewToggle": {
+    "ariaLabel": "Switch view",
+    "cardsLabel": "Cards",
+    "tableLabel": "Table"
+  },
+  "wateringHistory": {
+    "title": "Watering history",
+    "loadingLabel": "Loading watering plans",
+    "errorMessage": "The watering plans could not be loaded.",
+    "emptyMessage": "No watering plans have been completed for this group yet.",
+    "viewLink": "View watering plan"
+  },
+  "waterSupplyChart": {
+    "title": "Water supply",
+    "subtitleHour": "Plant-available water (hourly average) · Dashed = thresholds",
+    "subtitleDay": "Plant-available water (daily average) · Dashed = thresholds",
+    "seriesLabel": "Available water (%)",
+    "noSensorsNotice": "No tree in this group is equipped with a sensor — no measurements are available.",
+    "loadingLabel": "Loading measurements",
+    "soilUnknownNotice": "No soil type is set for this group — the water supply cannot be calculated.",
+    "tooFewDataPoints": "Too few data points in the selected time range.",
+    "moderateThresholdLabel": "moderate",
+    "criticalThresholdLabel": "critical",
+    "wateredOnLabel": "Watered on {date}"
+  },
+  "unknownStatus": {
+    "title": "Why is the watering status unknown?",
+    "multipleReasonsNote": "Several reasons currently prevent an assessment:",
+    "soilUnknown": "The group's soil condition has not been determined. Without it, the moisture readings cannot be assessed.",
+    "noSensor": "This group has no sensor, so no measurements are available.",
+    "sensorSilent_one": "1 sensor is currently not sending data.",
+    "sensorSilent_other": "{count} sensors are currently not sending data.",
+    "beyondMonitoring_one": "{count} tree is outside the monitored growth period of {years} years.",
+    "beyondMonitoring_other": "{count} trees are outside the monitored growth period of {years} years.",
+    "unscorable_one": "No evaluable measurements are available for {count} tree.",
+    "unscorable_other": "No evaluable measurements are available for {count} trees."
+  },
+  "dashboard": {
+    "backToList": "Back to all watering groups",
+    "title": "Watering group: {name}",
+    "editLink": "Edit group",
+    "moreActionsAriaLabel": "More actions",
+    "deleteMenuItem": "Delete group",
+    "infoLine": "{address} · {region} · {treeCount}",
+    "treeCount_one": "{count} tree",
+    "treeCount_other": "{count} trees",
+    "noTreesTitle": "No trees assigned",
+    "noTreesDescription": "This watering group contains no trees and therefore has no location.",
+    "deleteDialogTitle": "Delete watering group?",
+    "deleteDialogDescription": "Do you really want to delete the watering group? Its trees remain.",
+    "deleteSuccessToast": "The watering group was deleted.",
+    "deleteErrorToast": "The watering group could not be deleted."
+  },
+  "soilTexture": {
+    "fractionSand": "Sand",
+    "fractionSilt": "Silt",
+    "fractionClay": "Clay",
+    "resultLabel": "Determined soil type:",
+    "cancelButton": "Cancel",
+    "applyButton": "Apply",
+    "dialogTitle": "Determine soil type",
+    "dialogDescription": "Enter the particle-size fractions from the soil sample. The soil type is determined using the KA5 soil texture diagram.",
+    "triangleAriaLabel": "Soil texture diagram: silt {silt} %, clay {clay} %, class {condition}",
+    "siltAxisLabel": "Silt [%]",
+    "clayAxisLabel": "Clay [%]"
+  },
+  "clusterFieldset": {
+    "legend": "Watering group membership:",
+    "hasCluster": "Belongs to a group",
+    "noCluster": "Does not belong to a group"
+  },
+  "regionFieldset": {
+    "legend": "District in Flensburg:",
+    "placeholder": "All districts",
+    "searchPlaceholder": "Search district"
+  },
+  "soilFieldset": {
+    "legend": "Soil type:",
+    "placeholder": "All soil types",
+    "searchPlaceholder": "Search soil type"
+  },
+  "listRow": {
+    "treeCount_one": "{count} tree",
+    "treeCount_other": "{count} trees"
+  },
+  "selectedCard": {
+    "treeCount_one": "{count} tree",
+    "treeCount_other": "{count} trees",
+    "removeAriaLabel": "Remove watering group from selection"
+  },
+  "form": {
+    "organizationLabel": "Organization",
+    "organizationPlaceholder": "Choose an organization",
+    "organizationSearchPlaceholder": "Search organization…",
+    "organizationHint": "The group will then belong to this organization. Only its trees can be selected.",
+    "discardedTree_one": "One already-selected tree belongs to a different organization and was removed.",
+    "discardedTree_other": "{count} already-selected trees belong to a different organization and were removed.",
+    "nameLabel": "Name",
+    "addressLabel": "Address",
+    "soilConditionLabel": "Soil condition",
+    "soilConditionPlaceholder": "Choose a soil condition",
+    "soilConditionSearchPlaceholder": "Search code or name…",
+    "soilConditionDetermineAriaLabel": "Determine soil condition",
+    "treesLabel": "Trees"
+  },
+  "list": {
+    "title": "Watering groups",
+    "statsLabel": "{total} groups · {trees} trees",
+    "description": "Here you'll find an overview of all watering groups. A watering group consists of several trees grouped together based on their proximity and site conditions. Equipping individual trees with sensors allows an overall assessment of the watering status of the whole group.",
+    "createButton": "Create group",
+    "filterHeadline": "Filter watering groups",
+    "loadingLabel": "Loading data",
+    "columnStatus": "Status",
+    "columnName": "Name",
+    "columnLocation": "Location",
+    "columnTreeCount": "No. of trees",
+    "emptyMessage": "Unfortunately, no watering groups were found."
+  },
+  "detail": {
+    "loadingLabel": "Loading watering group …",
+    "notFoundBackLabel": "To the group list"
+  }
+}

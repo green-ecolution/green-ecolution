@@ -1,8 +1,17 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeAll } from 'vitest'
+import type { TFunction } from 'i18next'
+import { getI18n } from '@/lib/i18n'
 import { unknownStatusReasons } from './clusterStatusReason'
 import type { SensorModelAbilityResponse, TreeCluster } from '@/api/backendApi'
 
 const CURRENT_YEAR = 2026
+
+// vitest setup already calls createI18n(); fix the language so assertions
+// against the German catalog text stay stable regardless of test order.
+let t: TFunction<'treecluster'>
+beforeAll(() => {
+  t = getI18n().getFixedT('de', 'treecluster')
+})
 
 const moistureAt = (depthCm: number): SensorModelAbilityResponse => ({
   id: `ability-moisture-${depthCm}`,
@@ -51,7 +60,7 @@ const makeCluster = (overrides: Partial<TreeCluster> = {}) =>
   }) as unknown as TreeCluster
 
 const keysOf = (cluster: TreeCluster) =>
-  unknownStatusReasons(cluster, CURRENT_YEAR).map((reason) => reason.key)
+  unknownStatusReasons(cluster, CURRENT_YEAR, t).map((reason) => reason.key)
 
 describe('unknownStatusReasons', () => {
   it('stays silent while the status is known', () => {
@@ -60,7 +69,7 @@ describe('unknownStatusReasons', () => {
       trees: [makeTree('a')],
     })
 
-    expect(unknownStatusReasons(cluster, CURRENT_YEAR)).toEqual([])
+    expect(unknownStatusReasons(cluster, CURRENT_YEAR, t)).toEqual([])
   })
 
   it('stays silent for a cluster without trees, which has its own notice', () => {
@@ -72,7 +81,7 @@ describe('unknownStatusReasons', () => {
       trees: [makeTree('a'), makeTree('b')],
     })
 
-    const reasons = unknownStatusReasons(cluster, CURRENT_YEAR)
+    const reasons = unknownStatusReasons(cluster, CURRENT_YEAR, t)
     expect(reasons).toHaveLength(1)
     expect(reasons[0].key).toBe('no-sensor')
     expect(reasons[0].text).toBe(
@@ -89,7 +98,7 @@ describe('unknownStatusReasons', () => {
       ],
     })
 
-    const reasons = unknownStatusReasons(cluster, CURRENT_YEAR)
+    const reasons = unknownStatusReasons(cluster, CURRENT_YEAR, t)
     expect(reasons).toHaveLength(1)
     expect(reasons[0].key).toBe('sensor-silent')
   })
@@ -99,7 +108,7 @@ describe('unknownStatusReasons', () => {
       trees: [makeTree('a', { sensor: { status: 'offline', abilities: [moistureAt(40)] } })],
     })
 
-    const reasons = unknownStatusReasons(cluster, CURRENT_YEAR)
+    const reasons = unknownStatusReasons(cluster, CURRENT_YEAR, t)
     expect(reasons).toHaveLength(1)
     expect(reasons[0].key).toBe('sensor-silent')
     expect(reasons[0].text).toBe('1 Sensor sendet derzeit keine Daten.')
@@ -111,7 +120,7 @@ describe('unknownStatusReasons', () => {
       trees: [makeTree('a', { sensor: { status: 'online', abilities: [moistureAt(40)] } })],
     })
 
-    const reasons = unknownStatusReasons(cluster, CURRENT_YEAR)
+    const reasons = unknownStatusReasons(cluster, CURRENT_YEAR, t)
     expect(reasons).toHaveLength(1)
     expect(reasons[0].key).toBe('soil-unknown')
     expect(reasons[0].text).toContain('Bodenbeschaffenheit')
@@ -157,10 +166,14 @@ describe('unknownStatusReasons', () => {
       ],
     })
 
-    const reasons = unknownStatusReasons(cluster, CURRENT_YEAR)
+    const reasons = unknownStatusReasons(cluster, CURRENT_YEAR, t)
     expect(reasons).toHaveLength(1)
     expect(reasons[0].key).toBe('beyond-monitoring')
-    expect(reasons[0].text).toContain('Anwuchszeitraums')
+    // Singular subject ("1 Baum") takes the singular verb ("liegt"), not the
+    // plural "liegen" the _other form uses for "Bäume".
+    expect(reasons[0].text).toBe(
+      '1 Baum liegt außerhalb des überwachten Anwuchszeitraums von 3 Jahren.',
+    )
   })
 
   it('ignores trees that do have a status', () => {
@@ -174,7 +187,7 @@ describe('unknownStatusReasons', () => {
       ],
     })
 
-    const reasons = unknownStatusReasons(cluster, CURRENT_YEAR)
+    const reasons = unknownStatusReasons(cluster, CURRENT_YEAR, t)
     expect(reasons).toHaveLength(1)
     expect(reasons[0].text).toBe('1 Sensor sendet derzeit keine Daten.')
   })

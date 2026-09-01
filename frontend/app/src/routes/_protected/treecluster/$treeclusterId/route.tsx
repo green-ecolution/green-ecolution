@@ -9,9 +9,9 @@ export const Route = createFileRoute('/_protected/treecluster/$treeclusterId')(
     idParam: 'treeclusterId',
     title: (treecluster) => treecluster.name,
     notFound: {
-      entityName: 'Bewässerungsgruppe',
+      entityName: { key: 'treecluster:entity.name' },
       backTo: '/treecluster',
-      backLabel: 'Zur Gruppenliste',
+      backLabel: { key: 'treecluster:detail.notFoundBackLabel' },
     },
   }),
 )

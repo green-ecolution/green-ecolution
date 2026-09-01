@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { ChevronDown, Pencil, Trash2 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import ClusterKpiRow from './ClusterKpiRow'
 import ClusterWaterSupplyChart from './ClusterWaterSupplyChart'
 import ClusterWateringHistory from './ClusterWateringHistory'
@@ -37,6 +38,7 @@ interface TreeClusterDashboardProps {
 }
 
 const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
+  const { t } = useTranslation('treecluster')
   const navigate = useNavigate()
   const invalidate = useInvalidateAggregates()
   const showToast = createToast()
@@ -48,7 +50,7 @@ const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
   const hasSensors = trees.some((tree) => tree.sensor)
   // Only the calibration window depends on it, so a stale year cannot mislead.
   // eslint-disable-next-line react-x/purity
-  const statusReasons = unknownStatusReasons(treecluster, new Date().getFullYear())
+  const statusReasons = unknownStatusReasons(treecluster, new Date().getFullYear(), t)
 
   const handleDelete = () => {
     clusterApi
@@ -58,18 +60,18 @@ const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
       // because deleting a cluster walks its trees out of it.
       .then(() => navigate({ to: '/treecluster', search: { page: 1 } }))
       .then(() => invalidate(['cluster', 'tree']))
-      .then(() => showToast('Die Bewässerungsgruppe wurde gelöscht.'))
+      .then(() => showToast(t('dashboard.deleteSuccessToast')))
       .catch((error) => {
         console.error('Delete failed:', error)
-        showToast('Die Bewässerungsgruppe konnte nicht gelöscht werden.', 'error')
+        showToast(t('dashboard.deleteErrorToast'), 'error')
       })
   }
 
   return (
     <>
       <EntityDetailHeader
-        backLink={{ link: { to: '/treecluster' }, label: 'Zu allen Bewässerungsgruppen' }}
-        title={<>Bewässerungsgruppe: {treecluster.name}</>}
+        backLink={{ link: { to: '/treecluster' }, label: t('dashboard.backToList') }}
+        title={<>{t('dashboard.title', { name: treecluster.name })}</>}
         badge={<Badge variant={wateringStatus.color}>{wateringStatus.label}</Badge>}
         actions={
           (canEdit || canDelete) && (
@@ -80,7 +82,7 @@ const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
                     to="/map/treecluster/edit/$treeclusterId"
                     params={{ treeclusterId: treecluster.id.toString() }}
                   >
-                    Gruppe bearbeiten
+                    {t('dashboard.editLink')}
                     <Pencil className="stroke-1" />
                   </Link>
                 </Button>
@@ -91,7 +93,7 @@ const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
                     <Button
                       variant="outline"
                       size="icon"
-                      aria-label="Weitere Aktionen"
+                      aria-label={t('dashboard.moreActionsAriaLabel')}
                       className="[&_svg]:size-4 [&_svg]:transition-transform [&_svg]:duration-base data-[state=open]:[&_svg]:rotate-180 motion-reduce:[&_svg]:transition-none"
                     >
                       <ChevronDown />
@@ -103,7 +105,7 @@ const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
                       onSelect={() => setConfirmDelete(true)}
                     >
                       <Trash2 />
-                      Gruppe löschen
+                      {t('dashboard.deleteMenuItem')}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -113,18 +115,19 @@ const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
         }
       >
         <p className="mb-4 text-dark-600">
-          {treecluster.address} · {treecluster.region?.name ?? '—'} · {trees.length}{' '}
-          {trees.length === 1 ? 'Baum' : 'Bäume'}
+          {t('dashboard.infoLine', {
+            address: treecluster.address,
+            region: treecluster.region?.name ?? '—',
+            treeCount: t('dashboard.treeCount', { count: trees.length }),
+          })}
         </p>
         {treecluster.description && <p className="mb-4">{treecluster.description}</p>}
         {trees.length === 0 && (
           <Alert variant="destructive" className="flex gap-4">
             <AlertIcon variant="destructive" />
             <AlertContent>
-              <AlertTitle>Keine Bäume zugewiesen</AlertTitle>
-              <AlertDescription>
-                Diese Baumgruppe enthält keine Bäume und hat daher keinen Standort.
-              </AlertDescription>
+              <AlertTitle>{t('dashboard.noTreesTitle')}</AlertTitle>
+              <AlertDescription>{t('dashboard.noTreesDescription')}</AlertDescription>
             </AlertContent>
           </Alert>
         )}
@@ -134,14 +137,12 @@ const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
         <Alert variant="info" className="mt-6 flex w-full gap-4">
           <AlertIcon variant="info" />
           <AlertContent>
-            <AlertTitle>Warum ist der Bewässerungszustand unbekannt?</AlertTitle>
+            <AlertTitle>{t('unknownStatus.title')}</AlertTitle>
             {statusReasons.length === 1 ? (
               <AlertDescription>{statusReasons[0].text}</AlertDescription>
             ) : (
               <>
-                <AlertDescription>
-                  Mehrere Gründe verhindern derzeit eine Bewertung:
-                </AlertDescription>
+                <AlertDescription>{t('unknownStatus.multipleReasonsNote')}</AlertDescription>
                 <ul className="list-disc space-y-1 pl-5 text-sm leading-relaxed text-muted-foreground">
                   {statusReasons.map((reason) => (
                     <li key={reason.key}>{reason.text}</li>
@@ -172,8 +173,8 @@ const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
       <DeleteConfirmDialog
         open={confirmDelete}
         onOpenChange={setConfirmDelete}
-        title="Bewässerungsgruppe löschen?"
-        description="Möchtest du die Bewässerungsgruppe wirklich löschen? Die zugehörigen Bäume bleiben erhalten."
+        title={t('dashboard.deleteDialogTitle')}
+        description={t('dashboard.deleteDialogDescription')}
         onConfirm={handleDelete}
       />
     </>

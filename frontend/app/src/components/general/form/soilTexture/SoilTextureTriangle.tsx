@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { SoilCondition } from '@green-ecolution/backend-client'
 import {
   SOIL_REGIONS,
@@ -56,6 +57,7 @@ const Region = ({ region, active }: { region: SoilRegion; active: boolean }) => 
 }
 
 const SoilTextureTriangle = ({ silt, clay, activeCondition }: SoilTextureTriangleProps) => {
+  const { t } = useTranslation('treecluster')
   const activeRegion = SOIL_REGIONS.find((r) => r.condition === activeCondition)
   const inactiveRegions = SOIL_REGIONS.filter((r) => r.condition !== activeCondition)
 
@@ -63,7 +65,7 @@ const SoilTextureTriangle = ({ silt, clay, activeCondition }: SoilTextureTriangl
     <svg
       viewBox="0 0 126 122"
       role="img"
-      aria-label={`Bodenartendiagramm: Schluff ${silt} %, Ton ${clay} %, Klasse ${activeCondition}`}
+      aria-label={t('soilTexture.triangleAriaLabel', { silt, clay, condition: activeCondition })}
       className="w-full select-none"
     >
       {inactiveRegions.map((region) => (
@@ -88,7 +90,7 @@ const SoilTextureTriangle = ({ silt, clay, activeCondition }: SoilTextureTriangl
         fontSize={3.5}
         className="fill-foreground"
       >
-        Schluff [%]
+        {t('soilTexture.siltAxisLabel')}
       </text>
       <text
         x={3.5}
@@ -98,7 +100,7 @@ const SoilTextureTriangle = ({ silt, clay, activeCondition }: SoilTextureTriangl
         className="fill-foreground"
         transform={`rotate(-90 3.5 ${toY(50)})`}
       >
-        Ton [%]
+        {t('soilTexture.clayAxisLabel')}
       </text>
 
       {/* transition must sit on the circles: cx/cy change there, not on a wrapper */}

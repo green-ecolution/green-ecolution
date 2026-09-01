@@ -10,6 +10,7 @@ import {
   ListCardDescription,
 } from '@green-ecolution/ui'
 import { Link } from '@tanstack/react-router'
+import { useTranslation } from 'react-i18next'
 import type { Tree } from '@/api/backendApi'
 import { getWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
 
@@ -18,16 +19,16 @@ interface ClusterTreeListProps {
 }
 
 const ClusterTreeList = ({ trees }: ClusterTreeListProps) => {
+  const { t } = useTranslation('treecluster')
+
   return (
     <Card variant="outlined">
       <CardHeader>
-        <CardTitle>Bäume · {trees.length}</CardTitle>
+        <CardTitle>{t('treeList.title', { count: trees.length })}</CardTitle>
       </CardHeader>
       <CardContent>
         {trees.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            Der Bewässerungsgruppe wurden keine Bäume hinzugefügt.
-          </p>
+          <p className="text-sm text-muted-foreground">{t('treeList.emptyMessage')}</p>
         ) : (
           <div className="flex flex-col gap-y-3">
             {trees.map((tree) => {
@@ -40,7 +41,9 @@ const ClusterTreeList = ({ trees }: ClusterTreeListProps) => {
                       <ListCardTitle>{tree.species}</ListCardTitle>
                       <ListCardDescription>{tree.number}</ListCardDescription>
                     </div>
-                    {tree.sensor && <Badge variant="green-light">Sensor</Badge>}
+                    {tree.sensor && (
+                      <Badge variant="green-light">{t('treeList.sensorBadge')}</Badge>
+                    )}
                   </Link>
                 </ListCard>
               )

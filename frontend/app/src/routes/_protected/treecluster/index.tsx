@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery, useSuspenseQuery, keepPreviousData } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import ButtonLink from '@/components/general/links/ButtonLink'
 import { Plus } from 'lucide-react'
 import { Loading } from '@green-ecolution/ui'
@@ -34,6 +35,7 @@ const treeclusterFilterSchema = filterSearchSchema
   })
 
 function Treecluster() {
+  const { t } = useTranslation('treecluster')
   const {
     page,
     wateringStatuses,
@@ -69,22 +71,21 @@ function Treecluster() {
       <header className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <article className="max-w-3xl">
           <h1 className="font-lato font-bold text-3xl lg:text-4xl xl:text-5xl">
-            Bewässerungsgruppen
+            {t('list.title')}
           </h1>
           <p className="mt-2 font-lato font-semibold text-dark-700">
-            {stats.total} Gruppen · {stats.trees} Bäume
+            {t('list.statsLabel', { total: stats.total, trees: stats.trees })}
           </p>
-          <p className="mt-3 hidden text-sm text-dark-600 md:block">
-            Hier finden Sie eine Übersicht aller Bewässerungsgruppen. Eine Bewässerungsgruppe
-            besteht aus mehreren Bäumen, welche aufgrund ihrer Nähe und Standortbedinungen in einer
-            Gruppe zusammengefasst wurden. Die Ausstattung einzelner Bäume mit Sensoren erlaubt eine
-            Gesamtaussage über den Bewässerungszustand der vollständigen Gruppe.
-          </p>
+          <p className="mt-3 hidden text-sm text-dark-600 md:block">{t('list.description')}</p>
         </article>
         <div className="flex shrink-0 flex-wrap items-center gap-3">
           <ClusterViewToggle />
           <Can permission={['tree_cluster:create']}>
-            <ButtonLink icon={Plus} label="Gruppe anlegen" link={{ to: '/map/treecluster/new' }} />
+            <ButtonLink
+              icon={Plus}
+              label={t('list.createButton')}
+              link={{ to: '/map/treecluster/new' }}
+            />
           </Can>
         </div>
       </header>
@@ -93,7 +94,7 @@ function Treecluster() {
         <div className="mb-6 flex flex-col gap-3 lg:mb-8">
           <div className="flex items-center gap-2 sm:flex-wrap sm:gap-3">
             <ClusterToolbar />
-            <Dialog headline="Bewässerungsgruppen filtern" fullUrlPath={Route.fullPath}>
+            <Dialog headline={t('list.filterHeadline')} fullUrlPath={Route.fullPath}>
               <StatusFieldset />
               <RegionFieldset />
               <SoilFieldset />
@@ -105,7 +106,7 @@ function Treecluster() {
         </div>
 
         {!clustersRes ? (
-          <Loading className="mt-10 justify-center" label="Daten werden geladen" />
+          <Loading className="mt-10 justify-center" label={t('list.loadingLabel')} />
         ) : (
           <div
             className="transition-opacity duration-200"
@@ -115,16 +116,16 @@ function Treecluster() {
             {view === 'table' ? (
               <>
                 <ListCardHeader columns="1fr 2fr 1.5fr 1fr">
-                  <p>Status</p>
-                  <p>Name</p>
-                  <p>Standort</p>
-                  <p>Anzahl d. Bäume</p>
+                  <p>{t('list.columnStatus')}</p>
+                  <p>{t('list.columnName')}</p>
+                  <p>{t('list.columnLocation')}</p>
+                  <p>{t('list.columnTreeCount')}</p>
                 </ListCardHeader>
 
                 <EntityList
                   items={clustersRes.data}
                   getKey={(cluster) => cluster.id}
-                  emptyMessage="Es wurden leider keine Bewässerungsgruppen gefunden."
+                  emptyMessage={t('list.emptyMessage')}
                   renderItem={(cluster) => <TreeclusterCard treecluster={cluster} />}
                 />
               </>
@@ -133,7 +134,7 @@ function Treecluster() {
                 layout="grid"
                 items={clustersRes.data}
                 getKey={(cluster) => cluster.id}
-                emptyMessage="Es wurden leider keine Bewässerungsgruppen gefunden."
+                emptyMessage={t('list.emptyMessage')}
                 renderItem={(cluster) => <ClusterCard treecluster={cluster} />}
               />
             )}
@@ -150,7 +151,7 @@ function Treecluster() {
 export const Route = createFileRoute('/_protected/treecluster/')({
   component: Treecluster,
   validateSearch: treeclusterFilterSchema,
-  pendingComponent: pendingLoading('Daten werden geladen'),
+  pendingComponent: pendingLoading({ key: 'treecluster:list.loadingLabel' }),
   loaderDeps: ({ search }) => ({
     page: search.page,
     wateringStatuses: search.wateringStatuses,
