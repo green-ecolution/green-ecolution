@@ -385,6 +385,21 @@ pub enum ConfigError {
 }
 
 impl Settings {
+    /// Weak spots worth logging at startup that are not severe enough to
+    /// refuse the boot. Hard refusals live in [`Self::ensure_secure`].
+    pub fn security_advisories(&self) -> Vec<String> {
+        let mut advisories = Vec::new();
+        if self.auth.enabled && self.auth.expected_audience.is_none() {
+            advisories.push(
+                "auth.expected_audience is unset: every token the realm issues is accepted, \
+                 including tokens minted for another client. Add an audience mapper in \
+                 Keycloak and set auth.expected_audience."
+                    .to_string(),
+            );
+        }
+        advisories
+    }
+
     /// Build a `Settings` value for integration tests. Database settings are
     /// dummy — the test pool is created separately and passed to
     /// `Application::build_with_pool`.
@@ -502,6 +517,47 @@ impl TryFrom<String> for Environment {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn auth(enabled: bool, expected_audience: Option<&str>) -> AuthSettings {
+        AuthSettings {
+            enabled,
+            issuer_url: "http://localhost/realms/green-ecolution".into(),
+            frontend_client_id: "frontend".into(),
+            backend_client_id: "backend".into(),
+            backend_client_secret: SecretString::from("secret".to_string()),
+            jwks_refresh_interval_secs: 3600,
+            jwks_refresh_timeout_secs: 5,
+            default_redirect_url: "http://localhost/cb".into(),
+            expected_audience: expected_audience.map(str::to_string),
+        }
+    }
+
+    #[test]
+    fn an_enabled_auth_stack_without_an_expected_audience_is_flagged() {
+        let settings = Settings::for_test(auth(true, None));
+
+        assert!(
+            settings
+                .security_advisories()
+                .iter()
+                .any(|a| a.contains("expected_audience")),
+            "without an audience the API accepts every token the realm issues"
+        );
+    }
+
+    #[test]
+    fn a_configured_expected_audience_clears_the_advisory() {
+        let settings = Settings::for_test(auth(true, Some("backend")));
+
+        assert!(settings.security_advisories().is_empty());
+    }
+
+    #[test]
+    fn a_disabled_auth_stack_is_not_asked_for_an_audience() {
+        let settings = Settings::for_test(auth(false, None));
+
+        assert!(settings.security_advisories().is_empty());
+    }
 
     #[test]
     fn routing_settings_defaults_are_flensburg() {
