@@ -6,6 +6,7 @@ import { useVehicleTypeOptions } from '@/hooks/details/useDetailsForVehicleType'
 import { useDrivingLicenseOptions } from '@/hooks/details/useDetailsForDrivingLicense'
 import { useVehicleStatusOptions } from '@/hooks/details/useDetailsForVehicleStatus'
 import { Controller, SubmitHandler, useFormContext, useFormState } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
 import { parseDecimalInput } from '@/lib/utils'
 
 interface FormForVehicleProps {
@@ -19,6 +20,7 @@ interface FormForVehicleProps {
 const asNumber = { setValueAs: parseDecimalInput } as const
 
 const FormForVehicle = (props: FormForVehicleProps) => {
+  const { t } = useTranslation(['vehicle', 'common'])
   const { register, handleSubmit, control } = useFormContext<VehicleForm>()
   const { isValid, errors } = useFormState({ control })
   const vehicleTypeOptions = useVehicleTypeOptions()
@@ -31,15 +33,15 @@ const FormForVehicle = (props: FormForVehicleProps) => {
       onSubmit={handleSubmit(props.onSubmit)}
     >
       <FormField
-        placeholder="Kennzeichen"
-        label="Kennzeichen"
+        placeholder={t('form.numberPlatePlaceholder')}
+        label={t('form.numberPlateLabel')}
         required
         error={errors.numberPlate?.message}
         {...register('numberPlate')}
       />
       <FormField
-        placeholder="Fahrzeugmodell"
-        label="Fahrzeugmodell"
+        placeholder={t('form.modelPlaceholder')}
+        label={t('form.modelLabel')}
         required
         error={errors.model?.message}
         {...register('model')}
@@ -50,8 +52,8 @@ const FormForVehicle = (props: FormForVehicleProps) => {
         render={({ field }) => (
           <SelectField
             id="type"
-            label="Fahrzeugtyp"
-            placeholder="Fahrzeugtyp"
+            label={t('form.typeLabel')}
+            placeholder={t('form.typePlaceholder')}
             required
             value={field.value}
             onValueChange={field.onChange}
@@ -61,8 +63,8 @@ const FormForVehicle = (props: FormForVehicleProps) => {
         )}
       />
       <FormField
-        placeholder="Wasserkapazität"
-        label="Wasserkapazität"
+        placeholder={t('form.waterCapacityPlaceholder')}
+        label={t('form.waterCapacityLabel')}
         type="number"
         required
         error={errors.waterCapacity?.message}
@@ -74,8 +76,8 @@ const FormForVehicle = (props: FormForVehicleProps) => {
         render={({ field }) => (
           <SelectField
             id="status"
-            label="Aktueller Status"
-            placeholder="Aktueller Fahrzeugstatus"
+            label={t('form.statusLabel')}
+            placeholder={t('form.statusPlaceholder')}
             required
             value={field.value}
             onValueChange={field.onChange}
@@ -90,8 +92,8 @@ const FormForVehicle = (props: FormForVehicleProps) => {
         render={({ field }) => (
           <SelectField
             id="drivingLicense"
-            label="Führerscheinklasse"
-            placeholder="Wählen Sie eine Führerscheinklasse aus"
+            label={t('form.drivingLicenseLabel')}
+            placeholder={t('form.drivingLicensePlaceholder')}
             required
             value={field.value}
             onValueChange={field.onChange}
@@ -101,40 +103,40 @@ const FormForVehicle = (props: FormForVehicleProps) => {
         )}
       />
       <FormField
-        placeholder="Höhe des Fahrzeugs"
-        label="Höhe des Fahrzeugs (in Metern)"
+        placeholder={t('form.heightPlaceholder')}
+        label={t('form.heightLabel')}
         step="0.1"
         required
         error={errors.height?.message}
         {...register('height', asNumber)}
       />
       <FormField
-        placeholder="Breite des Fahrzeugs"
-        label="Breite des Fahrzeugs (in Metern)"
+        placeholder={t('form.widthPlaceholder')}
+        label={t('form.widthLabel')}
         step="0.1"
         required
         error={errors.width?.message}
         {...register('width', asNumber)}
       />
       <FormField
-        placeholder="Länge des Fahrzeugs"
-        label="Länge des Fahrzeugs (in Metern)"
+        placeholder={t('form.lengthPlaceholder')}
+        label={t('form.lengthLabel')}
         step="0.1"
         required
         error={errors.length?.message}
         {...register('length', asNumber)}
       />
       <FormField
-        placeholder="Gewicht des Fahrzeugs"
-        label="Gewicht des Fahrzeugs (in Tonnen)"
+        placeholder={t('form.weightPlaceholder')}
+        label={t('form.weightLabel')}
         step="0.1"
         required
         error={errors.weight?.message}
         {...register('weight', asNumber)}
       />
       <TextareaField
-        placeholder="Hier ist Platz für Notizen"
-        label="Kurze Beschreibung"
+        placeholder={t('common:form.notesPlaceholder')}
+        label={t('common:form.shortDescriptionLabel')}
         error={errors.description?.message}
         {...register('description')}
       />

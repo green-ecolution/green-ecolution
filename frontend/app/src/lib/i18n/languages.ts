@@ -18,6 +18,7 @@ export const NAMESPACES = [
   'treecluster',
   'enums',
   'sensor',
+  'vehicle',
 ] as const
 
 export const DEFAULT_NAMESPACE = 'common'

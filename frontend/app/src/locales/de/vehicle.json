@@ -1,0 +1,83 @@
+{
+  "entity": {
+    "name": "Fahrzeug",
+    "nameWithArticle": "das Fahrzeug"
+  },
+  "list": {
+    "title": "Alle Fahrzeuge",
+    "description": "Hier findest du eine Übersicht aller Fahrzeuge, die für Einsätze verwendet werden können.",
+    "createButton": "Neues Fahrzeug erstellen",
+    "columnStatus": "Status",
+    "columnNumberPlate": "Kennzeichen",
+    "columnWaterCapacity": "Wasserkapazität",
+    "columnModel": "Modell",
+    "columnDrivingLicense": "Führerscheinklasse",
+    "emptyMessage": "Es wurden leider keine Fahrzeuge gefunden.",
+    "loadingLabel": "Fahrzeuge werden geladen …"
+  },
+  "card": {
+    "numberPlateSrLabel": "Kennzeichen:",
+    "waterCapacitySrLabel": "Wasserkapazität:",
+    "modelSrLabel": "Modell:",
+    "drivingLicenseSrLabel": "Benötigte Führerscheinklasse:",
+    "waterCapacityValue": "{value} Liter"
+  },
+  "detail": {
+    "title": "Fahrzeug: {numberPlate}",
+    "loadingLabel": "Fahrzeug wird geladen …",
+    "backLabel": "Alle Fahrzeuge",
+    "editLabel": "Fahrzeug bearbeiten",
+    "headline": "Daten zum Fahrzeug",
+    "modelLabel": "Modell",
+    "typeLabel": "Fahrzeug-Typ",
+    "drivingLicenseLabel": "Benötigte Führerscheinklasse",
+    "heightLabel": "Höhe des Fahrzeugs",
+    "heightValue": "{value} Meter",
+    "widthLabel": "Breite des Fahrzeugs",
+    "widthValue": "{value} Meter",
+    "numberPlateLabel": "Kennzeichen",
+    "waterCapacityLabel": "Wasserkapazität",
+    "waterCapacityValue": "{value} Liter",
+    "lengthLabel": "Länge des Fahrzeugs",
+    "lengthValue": "{value} Meter",
+    "weightLabel": "Gewicht des Fahrzeugs",
+    "weightValue": "{value} Tonnen",
+    "activeNotice": "Dieses Fahrzeug befindet sich im Einsatz.",
+    "wateringPlansLinkLabel": "Zu den Einsatzplänen",
+    "notFoundBackLabel": "Zur Fahrzeugliste"
+  },
+  "update": {
+    "backLabel": "Zurück zur Fahrzeugübersicht",
+    "title": "Fahrzeug {numberPlate} bearbeiten",
+    "crumbTitle": "Fahrzeug {numberPlate}",
+    "description": "Hier kannst du das Fahrzeug bearbeiten.",
+    "archivingLabel": "Das Fahrzeug wird archiviert"
+  },
+  "create": {
+    "backLabel": "Zu allen Fahrzeugen",
+    "title": "Neues Fahrzeug erstellen",
+    "description": "In dieser Ansicht kannst du ein neues Fahrzeug anlegen. Bitte beachte, dass jedes Fahrzeug ein eindeutiges Kennzeichen besitzen muss, da keine doppelten Kennzeichen erlaubt sind. Zusätzlich müssen die Abmessungen des Fahrzeugs hinterlegt werden, damit das Navigationssystem bei einer Bewässerungsfahrt ermitteln kann, welche Strecken für das Fahrzeug befahrbar sind."
+  },
+  "form": {
+    "numberPlatePlaceholder": "Kennzeichen",
+    "numberPlateLabel": "Kennzeichen",
+    "modelPlaceholder": "Fahrzeugmodell",
+    "modelLabel": "Fahrzeugmodell",
+    "typeLabel": "Fahrzeugtyp",
+    "typePlaceholder": "Fahrzeugtyp",
+    "waterCapacityPlaceholder": "Wasserkapazität",
+    "waterCapacityLabel": "Wasserkapazität",
+    "statusLabel": "Aktueller Status",
+    "statusPlaceholder": "Aktueller Fahrzeugstatus",
+    "drivingLicenseLabel": "Führerscheinklasse",
+    "drivingLicensePlaceholder": "Wähle eine Führerscheinklasse aus",
+    "heightPlaceholder": "Höhe des Fahrzeugs",
+    "heightLabel": "Höhe des Fahrzeugs (in Metern)",
+    "widthPlaceholder": "Breite des Fahrzeugs",
+    "widthLabel": "Breite des Fahrzeugs (in Metern)",
+    "lengthPlaceholder": "Länge des Fahrzeugs",
+    "lengthLabel": "Länge des Fahrzeugs (in Metern)",
+    "weightPlaceholder": "Gewicht des Fahrzeugs",
+    "weightLabel": "Gewicht des Fahrzeugs (in Tonnen)"
+  }
+}

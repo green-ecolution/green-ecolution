@@ -7,71 +7,76 @@ import { VehicleStatus } from '@green-ecolution/backend-client'
 import { useVehicleTypeLabel } from '@/hooks/details/useDetailsForVehicleType'
 import { DetailedList } from '@green-ecolution/ui'
 import { useHasPermission } from '@/lib/auth/useHasPermission'
+import { useTranslation } from 'react-i18next'
 
 interface VehicleDashboardProps {
   vehicle: Vehicle
 }
 
 const VehicleDashboard = ({ vehicle }: VehicleDashboardProps) => {
+  const { t } = useTranslation(['vehicle', 'common'])
   const getVehicleStatusDetails = useVehicleStatusDetails()
   const getVehicleTypeLabel = useVehicleTypeLabel()
   const statusDetails = getVehicleStatusDetails(vehicle.status)
   const vehicleType = getVehicleTypeLabel(vehicle.type)
   const canEdit = useHasPermission(['vehicle:update'])
+  const noData = t('common:state.noData')
 
   const vehicleData = [
     {
-      label: 'Modell',
-      value: vehicle?.model ?? 'Keine Angabe',
+      label: t('detail.modelLabel'),
+      value: vehicle?.model ?? noData,
     },
     {
-      label: 'Fahrzeug-Typ',
-      value: vehicleType ?? 'Keine Angabe',
+      label: t('detail.typeLabel'),
+      value: vehicleType ?? noData,
     },
     {
-      label: 'Benötigte Führerscheinklasse',
-      value: vehicle?.drivingLicense ?? 'Keine Angabe',
+      label: t('detail.drivingLicenseLabel'),
+      value: vehicle?.drivingLicense ?? noData,
     },
     {
-      label: 'Höhe des Fahrzeugs',
-      value: vehicle?.height ? `${vehicle.height} Meter` : 'Keine Angabe',
+      label: t('detail.heightLabel'),
+      value: vehicle?.height ? t('detail.heightValue', { value: vehicle.height }) : noData,
     },
     {
-      label: 'Breite des Fahrzeugs',
-      value: vehicle?.width ? `${vehicle.width} Meter` : 'Keine Angabe',
+      label: t('detail.widthLabel'),
+      value: vehicle?.width ? t('detail.widthValue', { value: vehicle.width }) : noData,
     },
     {
-      label: 'Nummernschild',
-      value: vehicle?.numberPlate ?? 'Keine Angabe',
+      label: t('detail.numberPlateLabel'),
+      value: vehicle?.numberPlate ?? noData,
     },
     {
-      label: 'Wasserkapazität',
-      value: vehicle?.waterCapacity ? `${vehicle.waterCapacity} Liter` : 'Keine Angabe',
+      label: t('detail.waterCapacityLabel'),
+      value: vehicle?.waterCapacity
+        ? t('detail.waterCapacityValue', { value: vehicle.waterCapacity })
+        : noData,
     },
     {
-      label: 'Länge des Fahrzeugs',
-      value: vehicle?.length ? `${vehicle.length} Meter` : 'Keine Angabe',
+      label: t('detail.lengthLabel'),
+      value: vehicle?.length ? t('detail.lengthValue', { value: vehicle.length }) : noData,
     },
     {
-      label: 'Gewicht des Fahrzeugs',
-      value: vehicle?.weight ? `${vehicle.weight} Tonnen` : 'Keine Angabe',
+      label: t('detail.weightLabel'),
+      value: vehicle?.weight ? t('detail.weightValue', { value: vehicle.weight }) : noData,
     },
   ]
 
   return (
     <>
       <EntityDetailHeader
-        backLink={{ link: { to: '/vehicles' }, label: 'Alle Fahrzeuge' }}
-        title={<>Fahrzeug: {vehicle.numberPlate}</>}
+        backLink={{ link: { to: '/vehicles' }, label: t('detail.backLabel') }}
+        title={<>{t('detail.title', { numberPlate: vehicle.numberPlate })}</>}
         badge={
           <Badge variant={statusDetails?.color ?? 'outline-dark'} size="lg">
-            {statusDetails?.label ?? 'Keine Angabe'}
+            {statusDetails?.label ?? noData}
           </Badge>
         }
         editLink={
           canEdit
             ? {
-                label: 'Fahrzeug bearbeiten',
+                label: t('detail.editLabel'),
                 link: {
                   to: `/vehicles/$vehicleId/edit`,
                   params: { vehicleId: String(vehicle.id) },
@@ -86,9 +91,9 @@ const VehicleDashboard = ({ vehicle }: VehicleDashboardProps) => {
       {vehicle.status == VehicleStatus.Active && (
         <div className="h-full shadow-cards flex flex-col gap-y-3 rounded-xl border border-green-light bg-green-light-50 p-6 mt-6">
           <div className="flex items-center justify-between">
-            <p className="text-lg font-semibold">Dieses Fahrzeug befindet sich im Einsatz.</p>
+            <p className="text-lg font-semibold">{t('detail.activeNotice')}</p>
             <GeneralLink
-              label="Zu den Einsatzplänen"
+              label={t('detail.wateringPlansLinkLabel')}
               link={{
                 to: '/watering-plans',
               }}
@@ -98,7 +103,7 @@ const VehicleDashboard = ({ vehicle }: VehicleDashboardProps) => {
       )}
 
       <section className="mt-16">
-        <DetailedList headline="Daten zum Fahrzeug" details={vehicleData} />
+        <DetailedList headline={t('detail.headline')} details={vehicleData} />
       </section>
     </>
   )

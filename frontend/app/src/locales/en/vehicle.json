@@ -1,0 +1,83 @@
+{
+  "entity": {
+    "name": "Vehicle",
+    "nameWithArticle": "the vehicle"
+  },
+  "list": {
+    "title": "All vehicles",
+    "description": "Here you'll find an overview of all vehicles that can be used for watering plans.",
+    "createButton": "Create new vehicle",
+    "columnStatus": "Status",
+    "columnNumberPlate": "Number plate",
+    "columnWaterCapacity": "Water capacity",
+    "columnModel": "Model",
+    "columnDrivingLicense": "Driving licence class",
+    "emptyMessage": "Unfortunately no vehicles were found.",
+    "loadingLabel": "Loading vehicles …"
+  },
+  "card": {
+    "numberPlateSrLabel": "Number plate:",
+    "waterCapacitySrLabel": "Water capacity:",
+    "modelSrLabel": "Model:",
+    "drivingLicenseSrLabel": "Required driving licence class:",
+    "waterCapacityValue": "{value} liters"
+  },
+  "detail": {
+    "title": "Vehicle: {numberPlate}",
+    "loadingLabel": "Loading vehicle …",
+    "backLabel": "All vehicles",
+    "editLabel": "Edit vehicle",
+    "headline": "Vehicle data",
+    "modelLabel": "Model",
+    "typeLabel": "Vehicle type",
+    "drivingLicenseLabel": "Required driving licence class",
+    "heightLabel": "Vehicle height",
+    "heightValue": "{value} meters",
+    "widthLabel": "Vehicle width",
+    "widthValue": "{value} meters",
+    "numberPlateLabel": "Number plate",
+    "waterCapacityLabel": "Water capacity",
+    "waterCapacityValue": "{value} liters",
+    "lengthLabel": "Vehicle length",
+    "lengthValue": "{value} meters",
+    "weightLabel": "Vehicle weight",
+    "weightValue": "{value} tons",
+    "activeNotice": "This vehicle is currently in use.",
+    "wateringPlansLinkLabel": "To the watering plans",
+    "notFoundBackLabel": "To the vehicle list"
+  },
+  "update": {
+    "backLabel": "Back to vehicle overview",
+    "title": "Edit vehicle {numberPlate}",
+    "crumbTitle": "Vehicle {numberPlate}",
+    "description": "Here you can edit the vehicle.",
+    "archivingLabel": "The vehicle is being archived"
+  },
+  "create": {
+    "backLabel": "To all vehicles",
+    "title": "Create new vehicle",
+    "description": "In this view you can create a new vehicle. Please note that every vehicle must have a unique number plate, since duplicate number plates are not allowed. The vehicle's dimensions must also be recorded so the navigation system can determine which routes the vehicle can take during a watering run."
+  },
+  "form": {
+    "numberPlatePlaceholder": "Number plate",
+    "numberPlateLabel": "Number plate",
+    "modelPlaceholder": "Vehicle model",
+    "modelLabel": "Vehicle model",
+    "typeLabel": "Vehicle type",
+    "typePlaceholder": "Vehicle type",
+    "waterCapacityPlaceholder": "Water capacity",
+    "waterCapacityLabel": "Water capacity",
+    "statusLabel": "Current status",
+    "statusPlaceholder": "Current vehicle status",
+    "drivingLicenseLabel": "Driving licence class",
+    "drivingLicensePlaceholder": "Choose a driving licence class",
+    "heightPlaceholder": "Vehicle height",
+    "heightLabel": "Vehicle height (in meters)",
+    "widthPlaceholder": "Vehicle width",
+    "widthLabel": "Vehicle width (in meters)",
+    "lengthPlaceholder": "Vehicle length",
+    "lengthLabel": "Vehicle length (in meters)",
+    "weightPlaceholder": "Vehicle weight",
+    "weightLabel": "Vehicle weight (in tons)"
+  }
+}

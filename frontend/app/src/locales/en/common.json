@@ -70,11 +70,18 @@
     }
   },
   "deleteSection": {
-    "deletedParticiple": "deleted",
-    "archivedParticiple": "archived",
-    "confirmTitle": "Do you really want to have {entity} {action}?",
-    "confirmDescription": "Once {entity} has been {action}, the data cannot be recovered.",
-    "successToast": "{entity} was successfully {action}.",
+    "confirmTitle": {
+      "delete": "Do you really want to delete {entity}?",
+      "archive": "Do you really want to archive {entity}?"
+    },
+    "confirmDescription": {
+      "delete": "Once {entity} has been deleted, the data cannot be recovered.",
+      "archive": "Once {entity} has been archived, the data cannot be recovered."
+    },
+    "successToast": {
+      "delete": "{entity} was successfully deleted.",
+      "archive": "{entity} was successfully archived."
+    },
     "unexpectedError": "An error occurred"
   },
   "geo": {

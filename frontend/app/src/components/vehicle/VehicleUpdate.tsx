@@ -8,6 +8,7 @@ import { vehicleApi } from '@/api/backendApi'
 import { FormProvider, SubmitHandler } from 'react-hook-form'
 import { Suspense } from 'react'
 import { Loading } from '@green-ecolution/ui'
+import { useTranslation } from 'react-i18next'
 import { VehicleForm } from '@/schema/vehicleSchema'
 import FormForVehicle from '../general/form/FormForVehicle'
 import UnsavedChangesDialog from '../general/form/UnsavedChangesDialog'
@@ -18,6 +19,7 @@ interface VehicleUpdateProps {
 }
 
 const VehicleUpdate = ({ vehicleId }: VehicleUpdateProps) => {
+  const { t } = useTranslation('vehicle')
   const { initForm, loadedData } = useInitFormQuery<Vehicle, VehicleForm>(
     vehicleQueries.detail(vehicleId),
     (data) => ({
@@ -52,15 +54,15 @@ const VehicleUpdate = ({ vehicleId }: VehicleUpdateProps) => {
     <>
       <FormPageHeader
         backLink={{
-          label: 'Zurück zur Fahrzeugübersicht',
+          label: t('update.backLabel'),
           link: {
             to: `/vehicles/$vehicleId`,
             params: { vehicleId: vehicleId?.toString() ?? '' },
           },
         }}
-        title={<>Fahrzeug {loadedData?.numberPlate} bearbeiten</>}
+        title={<>{t('update.title', { numberPlate: loadedData?.numberPlate })}</>}
       >
-        <p className="mb-5">Hier können Sie das Fahrzeug bearbeiten.</p>
+        <p className="mb-5">{t('update.description')}</p>
       </FormPageHeader>
 
       <section className="mt-10">
@@ -75,12 +77,12 @@ const VehicleUpdate = ({ vehicleId }: VehicleUpdateProps) => {
 
       <Can permission={['vehicle:delete']}>
         <Suspense
-          fallback={<Loading className="mt-20 justify-center" label="Das Fahrzeug wird gelöscht" />}
+          fallback={<Loading className="mt-20 justify-center" label={t('update.archivingLabel')} />}
         >
           <DeleteSection
             mutationFn={handleArchiveVehicle}
             type="archive"
-            entityName="das Fahrzeug"
+            entityName={{ key: 'vehicle:entity.nameWithArticle' }}
             redirectUrl={{ to: '/vehicles' }}
             invalidates={['vehicle', 'wateringPlan']}
           />

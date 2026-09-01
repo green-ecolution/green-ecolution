@@ -3,6 +3,7 @@ import type { Vehicle } from '@/api/backendApi'
 import { Link } from '@tanstack/react-router'
 import { Badge, ListCard, ListCardTitle, ListCardDescription } from '@green-ecolution/ui'
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import { useVehicleTypeLabel } from '@/hooks/details/useDetailsForVehicleType'
 
 interface VehicleCard {
@@ -10,6 +11,7 @@ interface VehicleCard {
 }
 
 const VehicleCard: React.FC<VehicleCard> = ({ vehicle }) => {
+  const { t } = useTranslation(['vehicle', 'common'])
   const getVehicleStatusDetails = useVehicleStatusDetails()
   const getVehicleTypeLabel = useVehicleTypeLabel()
   const statusDetails = getVehicleStatusDetails(vehicle.status)
@@ -25,30 +27,30 @@ const VehicleCard: React.FC<VehicleCard> = ({ vehicle }) => {
       >
         <div>
           <Badge variant={statusDetails?.color ?? 'outline-dark'} size="lg">
-            {statusDetails?.label ?? 'Keine Angabe'}
+            {statusDetails?.label ?? t('common:state.noData')}
           </Badge>
         </div>
 
         <div>
           <ListCardTitle className="mb-0.5">
-            <span className="lg:sr-only">Kennzeichen: </span>
+            <span className="lg:sr-only">{t('card.numberPlateSrLabel')} </span>
             {vehicle.numberPlate}
           </ListCardTitle>
           <p className="text-dark-600 lg:text-sm">{vehicleType}</p>
         </div>
 
         <ListCardDescription>
-          <span className="lg:sr-only">Wasserkapazität:&nbsp;</span>
-          {vehicle.waterCapacity} Liter
+          <span className="lg:sr-only">{t('card.waterCapacitySrLabel')}&nbsp;</span>
+          {t('card.waterCapacityValue', { value: vehicle.waterCapacity })}
         </ListCardDescription>
 
         <ListCardDescription>
-          <span className="lg:sr-only">Modell:&nbsp;</span>
+          <span className="lg:sr-only">{t('card.modelSrLabel')}&nbsp;</span>
           {vehicle.model}
         </ListCardDescription>
 
         <ListCardDescription>
-          <span className="lg:sr-only">Benötigte Führerscheinklasse:&nbsp;</span>
+          <span className="lg:sr-only">{t('card.drivingLicenseSrLabel')}&nbsp;</span>
           {vehicle.drivingLicense}
         </ListCardDescription>
       </Link>

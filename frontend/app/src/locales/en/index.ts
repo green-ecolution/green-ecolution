@@ -6,5 +6,16 @@ import tree from './tree.json'
 import treecluster from './treecluster.json'
 import enums from './enums.json'
 import sensor from './sensor.json'
+import vehicle from './vehicle.json'
 
-export default { common, validation, errors, navigation, tree, treecluster, enums, sensor }
+export default {
+  common,
+  validation,
+  errors,
+  navigation,
+  tree,
+  treecluster,
+  enums,
+  sensor,
+  vehicle,
+}

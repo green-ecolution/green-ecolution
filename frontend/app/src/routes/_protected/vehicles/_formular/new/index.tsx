@@ -6,6 +6,7 @@ import { VehicleForm } from '@/schema/vehicleSchema'
 import { createFileRoute } from '@tanstack/react-router'
 import { useVehicleForm } from '@/hooks/form/useVehicleForm'
 import { DefaultValues, FormProvider } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
 
 export const Route = createFileRoute('/_protected/vehicles/_formular/new/')({
   component: NewVehicle,
@@ -24,6 +25,7 @@ const defaultForm: DefaultValues<VehicleForm> = {
 }
 
 function NewVehicle() {
+  const { t } = useTranslation('vehicle')
   const { mutate, isError, error, form, navigationBlocker } = useVehicleForm('create', {
     initForm: defaultForm,
   })
@@ -34,17 +36,11 @@ function NewVehicle() {
   return (
     <div className="container mt-6">
       <article className="2xl:w-4/5">
-        <BackLink link={{ to: '/vehicles' }} label="Zu allen Fahrzeugen" />
+        <BackLink link={{ to: '/vehicles' }} label={t('create.backLabel')} />
         <h1 className="font-lato font-bold text-3xl mb-4 lg:text-4xl xl:text-5xl">
-          Neues Fahrzeug erstellen
+          {t('create.title')}
         </h1>
-        <p className="mb-5">
-          In dieser Ansicht können Sie ein neues Fahrzeug anlegen. Bitte beachten Sie, dass jedes
-          Fahrzeug ein eindeutiges Kennzeichen besitzen muss, da keine doppelten Kennzeichen erlaubt
-          sind. Zusätzlich müssen die Abmessungen des Fahrzeugs hinterlegt werden, damit das
-          Navigationssystem bei einer Bewässerungsfahrt ermitteln kann, welche Strecken für das
-          Fahrzeug befahrbar sind.
-        </p>
+        <p className="mb-5">{t('create.description')}</p>
       </article>
 
       <section className="mt-10">

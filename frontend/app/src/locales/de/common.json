@@ -70,11 +70,18 @@
     }
   },
   "deleteSection": {
-    "deletedParticiple": "gelöscht",
-    "archivedParticiple": "archiviert",
-    "confirmTitle": "Soll {entity} wirklich {action} werden?",
-    "confirmDescription": "Sobald {entity} {action} wurde, können die Daten nicht wieder hergestellt werden.",
-    "successToast": "{entity} wurde erfolgreich {action}.",
+    "confirmTitle": {
+      "delete": "Soll {entity} wirklich gelöscht werden?",
+      "archive": "Soll {entity} wirklich archiviert werden?"
+    },
+    "confirmDescription": {
+      "delete": "Sobald {entity} gelöscht wurde, können die Daten nicht wieder hergestellt werden.",
+      "archive": "Sobald {entity} archiviert wurde, können die Daten nicht wieder hergestellt werden."
+    },
+    "successToast": {
+      "delete": "{entity} wurde erfolgreich gelöscht.",
+      "archive": "{entity} wurde erfolgreich archiviert."
+    },
     "unexpectedError": "Ein Fehler ist aufgetreten"
   },
   "geo": {

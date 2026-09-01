@@ -11,6 +11,9 @@ vi.mock('@tanstack/react-router', () => ({
   useRouter: () => ({ invalidate: vi.fn().mockResolvedValue(undefined) }),
 }))
 
+const showToast = vi.fn()
+vi.mock('@/hooks/createToast', () => ({ default: () => showToast }))
+
 function createWrapper() {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -54,7 +57,7 @@ describe('DeleteSection', () => {
         <DeleteSection
           mutationFn={mockMutationFn}
           invalidates={['tree']}
-          entityName="das Fahrzeug"
+          entityName={{ key: 'vehicle:entity.nameWithArticle' }}
           type="archive"
           redirectUrl={{ to: '/vehicles' }}
         />,
@@ -91,7 +94,7 @@ describe('DeleteSection', () => {
         <DeleteSection
           mutationFn={mockMutationFn}
           invalidates={['tree']}
-          entityName="das Fahrzeug"
+          entityName={{ key: 'vehicle:entity.nameWithArticle' }}
           type="archive"
           redirectUrl={{ to: '/vehicles' }}
         />,
@@ -187,6 +190,32 @@ describe('DeleteSection', () => {
 
       expect(mockMutationFn).not.toHaveBeenCalled()
     })
+
+    it('resolves a LocalizedText key entityName and capitalizes it in the success toast', async () => {
+      const user = userEvent.setup()
+      mockMutationFn.mockResolvedValueOnce(undefined)
+
+      render(
+        <DeleteSection
+          mutationFn={mockMutationFn}
+          invalidates={['vehicle']}
+          entityName={{ key: 'vehicle:entity.nameWithArticle' }}
+          type="archive"
+          redirectUrl={{ to: '/vehicles' }}
+        />,
+        { wrapper: createWrapper() },
+      )
+
+      await user.click(screen.getByRole('button', { name: /archivieren/i }))
+      await user.click(screen.getByRole('button', { name: /bestätigen/i }))
+
+      await waitFor(() => {
+        expect(showToast).toHaveBeenCalledWith(
+          'Das Fahrzeug wurde erfolgreich archiviert.',
+          'success',
+        )
+      })
+    })
   })
 
   describe('Entity Types', () => {
@@ -216,7 +245,7 @@ describe('DeleteSection', () => {
         <DeleteSection
           mutationFn={archiveVehicleFn}
           invalidates={['tree']}
-          entityName="das Fahrzeug"
+          entityName={{ key: 'vehicle:entity.nameWithArticle' }}
           type="archive"
           redirectUrl={{ to: '/vehicles' }}
         />,
