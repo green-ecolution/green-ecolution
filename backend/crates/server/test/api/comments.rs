@@ -406,3 +406,268 @@ async fn list_is_newest_first_and_paginated() {
     assert_eq!(second_page["data"].as_array().unwrap().len(), 1);
     assert_eq!(second_page["data"][0]["body"], "eins");
 }
+
+/// Seeds a second user in an existing org with the given permissions and
+/// returns their token. Used to test that a non-author needs `:delete`.
+async fn seed_second_user_in_org(
+    harness: &crate::auth_helpers::AuthHarness,
+    app: &TestApp,
+    org: Uuid,
+    role_name: &str,
+    permissions: &[&str],
+) -> String {
+    let permissions: Vec<String> = permissions.iter().map(|p| p.to_string()).collect();
+    let role_id: Uuid = sqlx::query_scalar!(
+        r#"INSERT INTO roles (id, organization_id, name, permissions)
+           VALUES (gen_random_uuid(), $1, $2, $3)
+           RETURNING id"#,
+        org,
+        role_name,
+        &permissions,
+    )
+    .fetch_one(&app.db_pool)
+    .await
+    .unwrap();
+    let user_id = Uuid::new_v4();
+    sqlx::query!(
+        r#"INSERT INTO user_profiles (id, organization_id) VALUES ($1, $2)"#,
+        user_id,
+        org
+    )
+    .execute(&app.db_pool)
+    .await
+    .unwrap();
+    sqlx::query!(
+        r#"INSERT INTO role_assignments (user_id, role_id) VALUES ($1, $2)"#,
+        user_id,
+        role_id
+    )
+    .execute(&app.db_pool)
+    .await
+    .unwrap();
+    harness.sign_token(json!({ "sub": user_id.to_string() }))
+}
+
+async fn post_comment(app: &TestApp, token: &str, cluster_id: &str, body: &str) -> String {
+    let created: serde_json::Value = reqwest::Client::new()
+        .post(format!(
+            "{}/api/v1/clusters/{cluster_id}/comments",
+            app.address
+        ))
+        .bearer_auth(token)
+        .json(&json!({ "body": body }))
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    created["id"].as_str().unwrap().to_owned()
+}
+
+#[tokio::test]
+async fn author_deletes_own_comment_without_delete_permission() {
+    let (harness, app) = spawn_with_auth().await;
+    let (org, token) = seed_user_with_permissions(
+        &harness,
+        &app,
+        "Autor löscht",
+        &[
+            "tree_cluster:read",
+            "tree_cluster:create",
+            "tree_cluster:update",
+        ],
+    )
+    .await;
+    let cluster_id = create_cluster(&app, &token, org).await;
+    let comment_id = post_comment(&app, &token, &cluster_id, "weg damit").await;
+    let client = reqwest::Client::new();
+
+    let response = client
+        .delete(format!(
+            "{}/api/v1/clusters/{cluster_id}/comments/{comment_id}",
+            app.address
+        ))
+        .bearer_auth(&token)
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(response.status(), 204);
+
+    let list: serde_json::Value = client
+        .get(format!(
+            "{}/api/v1/clusters/{cluster_id}/comments",
+            app.address
+        ))
+        .bearer_auth(&token)
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(list["pagination"]["total_records"], 0);
+}
+
+#[tokio::test]
+async fn deleting_twice_gets_404() {
+    let (harness, app) = spawn_with_auth().await;
+    let (org, token) = seed_user_with_permissions(
+        &harness,
+        &app,
+        "Doppelt löschen",
+        &[
+            "tree_cluster:read",
+            "tree_cluster:create",
+            "tree_cluster:update",
+        ],
+    )
+    .await;
+    let cluster_id = create_cluster(&app, &token, org).await;
+    let comment_id = post_comment(&app, &token, &cluster_id, "einmalig").await;
+    let client = reqwest::Client::new();
+    let url = format!(
+        "{}/api/v1/clusters/{cluster_id}/comments/{comment_id}",
+        app.address
+    );
+
+    assert_eq!(
+        client
+            .delete(&url)
+            .bearer_auth(&token)
+            .send()
+            .await
+            .unwrap()
+            .status(),
+        204
+    );
+    assert_eq!(
+        client
+            .delete(&url)
+            .bearer_auth(&token)
+            .send()
+            .await
+            .unwrap()
+            .status(),
+        404
+    );
+}
+
+#[tokio::test]
+async fn non_author_needs_delete_permission() {
+    let (harness, app) = spawn_with_auth().await;
+    let (org, author_token) = seed_user_with_permissions(
+        &harness,
+        &app,
+        "Fremdlöschung",
+        &[
+            "tree_cluster:read",
+            "tree_cluster:create",
+            "tree_cluster:update",
+        ],
+    )
+    .await;
+    let cluster_id = create_cluster(&app, &author_token, org).await;
+    let comment_id = post_comment(&app, &author_token, &cluster_id, "nicht deiner").await;
+    let client = reqwest::Client::new();
+    let url = format!(
+        "{}/api/v1/clusters/{cluster_id}/comments/{comment_id}",
+        app.address
+    );
+
+    let reader_token =
+        seed_second_user_in_org(&harness, &app, org, "Reader", &["tree_cluster:read"]).await;
+    assert_eq!(
+        client
+            .delete(&url)
+            .bearer_auth(&reader_token)
+            .send()
+            .await
+            .unwrap()
+            .status(),
+        403
+    );
+
+    let moderator_token = seed_second_user_in_org(
+        &harness,
+        &app,
+        org,
+        "Moderator",
+        &["tree_cluster:read", "tree_cluster:delete"],
+    )
+    .await;
+    assert_eq!(
+        client
+            .delete(&url)
+            .bearer_auth(&moderator_token)
+            .send()
+            .await
+            .unwrap()
+            .status(),
+        204
+    );
+}
+
+#[tokio::test]
+async fn comment_id_of_another_parent_gets_404() {
+    let (harness, app) = spawn_with_auth().await;
+    let (org, token) = seed_user_with_permissions(
+        &harness,
+        &app,
+        "Falscher Elternpfad",
+        &[
+            "tree_cluster:read",
+            "tree_cluster:create",
+            "tree_cluster:update",
+        ],
+    )
+    .await;
+    let first = create_cluster(&app, &token, org).await;
+    let second = create_cluster(&app, &token, org).await;
+    let comment_id = post_comment(&app, &token, &first, "gehört zu first").await;
+
+    let response = reqwest::Client::new()
+        .delete(format!(
+            "{}/api/v1/clusters/{second}/comments/{comment_id}",
+            app.address
+        ))
+        .bearer_auth(&token)
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(response.status(), 404);
+}
+
+#[tokio::test]
+async fn plan_comment_can_be_deleted_by_its_author() {
+    let (harness, app) = spawn_with_auth().await;
+    let (org, token) = seed_user_with_permissions(&harness, &app, "Plan löschen", PLAN_PERMS).await;
+    let plan_id = create_plan(&app, &token, org).await;
+    let client = reqwest::Client::new();
+
+    let created: serde_json::Value = client
+        .post(format!(
+            "{}/api/v1/watering-plans/{plan_id}/comments",
+            app.address
+        ))
+        .bearer_auth(&token)
+        .json(&json!({ "body": "Plan-Notiz" }))
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    let comment_id = created["id"].as_str().unwrap();
+
+    let response = client
+        .delete(format!(
+            "{}/api/v1/watering-plans/{plan_id}/comments/{comment_id}",
+            app.address
+        ))
+        .bearer_auth(&token)
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(response.status(), 204);
+}

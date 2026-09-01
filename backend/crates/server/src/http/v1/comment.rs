@@ -32,7 +32,9 @@ use domain::{
 pub fn routes() -> OpenApiRouter<Arc<AppState>> {
     OpenApiRouter::new()
         .routes(routes!(list_cluster_comments, create_cluster_comment))
+        .routes(routes!(delete_cluster_comment))
         .routes(routes!(list_plan_comments, create_plan_comment))
+        .routes(routes!(delete_plan_comment))
 }
 
 /// Resolves the cluster subject after checking that the caller may see the
@@ -78,6 +80,36 @@ async fn plan_scope(
         CommentSubject::WateringPlan(Id::new(plan_id)),
         view.organization_id,
     ))
+}
+
+/// Checks that `comment_id` belongs to `subject` and that the caller may
+/// remove it. The author may always delete their own comment; anyone else
+/// needs the parent resource's delete permission. A comment addressed through
+/// the wrong parent reads as 404, never 403.
+async fn authorize_delete(
+    state: &AppState,
+    user_id: Uuid,
+    subject: CommentSubject,
+    org: Uuid,
+    comment_id: Uuid,
+    resource: Resource,
+) -> Result<Id<domain::comment::Comment>, ServiceError> {
+    let id = Id::new(comment_id);
+    let comment = state.comment_service.by_id(id).await?;
+    if comment.subject != subject {
+        return Err(domain::RepositoryError::NotFound.into());
+    }
+    if comment.author_id != user_id {
+        state
+            .authorization_service
+            .require(
+                user_id,
+                Permission::new(resource, Action::Delete),
+                Id::new(org),
+            )
+            .await?;
+    }
+    Ok(id)
 }
 
 fn display_name(user: &UserView) -> String {
@@ -204,6 +236,44 @@ pub async fn create_cluster_comment(
 }
 
 #[utoipa::path(
+    delete,
+    path = "/clusters/{cluster_id}/comments/{comment_id}",
+    tag = "Comments",
+    operation_id = "deleteClusterComment",
+    summary = "Delete a comment on a tree cluster",
+    description = "Removes a comment. The author may delete their own comment; anyone else needs `tree_cluster:delete` in the cluster's organization.",
+    params(
+        ("cluster_id" = uuid::Uuid, Path, description = "Cluster ID"),
+        ("comment_id" = uuid::Uuid, Path, description = "Comment ID"),
+    ),
+    responses(
+        (status = 204, description = "Comment deleted"),
+        (status = 403, description = "Not the author and missing `tree_cluster:delete`", body = ErrorBody),
+        (status = 404, description = "Cluster or comment not found, or the comment belongs to another cluster", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
+    )
+)]
+#[tracing::instrument(level = "info", skip_all, fields(cluster.id = %cluster_id, comment.id = %comment_id))]
+pub async fn delete_cluster_comment(
+    State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
+    Path((cluster_id, comment_id)): Path<(uuid::Uuid, uuid::Uuid)>,
+) -> Result<axum::http::StatusCode, ServiceError> {
+    let (subject, org) = cluster_scope(&state, user.id, cluster_id).await?;
+    let id = authorize_delete(
+        &state,
+        user.id,
+        subject,
+        org,
+        comment_id,
+        Resource::TreeCluster,
+    )
+    .await?;
+    state.comment_service.delete(id).await?;
+    Ok(axum::http::StatusCode::NO_CONTENT)
+}
+
+#[utoipa::path(
     get,
     path = "/watering-plans/{plan_id}/comments",
     tag = "Comments",
@@ -263,4 +333,42 @@ pub async fn create_plan_comment(
         .await?;
     let response = create_for(&state, subject, user.id, payload).await?;
     Ok((axum::http::StatusCode::CREATED, Json(response)))
+}
+
+#[utoipa::path(
+    delete,
+    path = "/watering-plans/{plan_id}/comments/{comment_id}",
+    tag = "Comments",
+    operation_id = "deleteWateringPlanComment",
+    summary = "Delete a comment on a watering plan",
+    description = "Removes a comment. The author may delete their own comment; anyone else needs `watering_plan:delete` in the plan's organization.",
+    params(
+        ("plan_id" = uuid::Uuid, Path, description = "Watering plan ID"),
+        ("comment_id" = uuid::Uuid, Path, description = "Comment ID"),
+    ),
+    responses(
+        (status = 204, description = "Comment deleted"),
+        (status = 403, description = "Not the author and missing `watering_plan:delete`", body = ErrorBody),
+        (status = 404, description = "Watering plan or comment not found, or the comment belongs to another plan", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
+    )
+)]
+#[tracing::instrument(level = "info", skip_all, fields(watering_plan.id = %plan_id, comment.id = %comment_id))]
+pub async fn delete_plan_comment(
+    State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
+    Path((plan_id, comment_id)): Path<(uuid::Uuid, uuid::Uuid)>,
+) -> Result<axum::http::StatusCode, ServiceError> {
+    let (subject, org) = plan_scope(&state, user.id, plan_id).await?;
+    let id = authorize_delete(
+        &state,
+        user.id,
+        subject,
+        org,
+        comment_id,
+        Resource::WateringPlan,
+    )
+    .await?;
+    state.comment_service.delete(id).await?;
+    Ok(axum::http::StatusCode::NO_CONTENT)
 }
