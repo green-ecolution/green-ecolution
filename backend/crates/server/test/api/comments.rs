@@ -730,7 +730,7 @@ async fn deleting_a_watering_plan_removes_its_comments() {
     let plan_id = create_plan(&app, &token, org).await;
     let client = reqwest::Client::new();
 
-    client
+    let commented = client
         .post(format!(
             "{}/api/v1/watering-plans/{plan_id}/comments",
             app.address
@@ -740,6 +740,7 @@ async fn deleting_a_watering_plan_removes_its_comments() {
         .send()
         .await
         .unwrap();
+    assert_eq!(commented.status(), 201);
 
     let deleted = client
         .delete(format!("{}/api/v1/watering-plans/{plan_id}", app.address))
@@ -780,12 +781,13 @@ async fn deleting_a_cluster_keeps_comments_of_other_clusters() {
     post_comment(&app, &token, &doomed, "geht").await;
     post_comment(&app, &token, &kept, "bleibt").await;
 
-    reqwest::Client::new()
+    let deleted = reqwest::Client::new()
         .delete(format!("{}/api/v1/clusters/{doomed}", app.address))
         .bearer_auth(&token)
         .send()
         .await
         .unwrap();
+    assert_eq!(deleted.status(), 204);
 
     let remaining: i64 = sqlx::query_scalar!(
         r#"SELECT COUNT(*) AS "count!: i64" FROM comments
