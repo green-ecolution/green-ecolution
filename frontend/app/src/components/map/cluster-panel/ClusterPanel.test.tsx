@@ -65,7 +65,7 @@ describe('ClusterPanel', () => {
       />,
     )
     expect(screen.getByText(/konnte nicht geladen werden/)).toBeInTheDocument()
-    expect(screen.queryByText(/Lade Baumgruppe/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Lade Bewässerungsgruppe/)).not.toBeInTheDocument()
     expect(getCluster).not.toHaveBeenCalled()
   })
 

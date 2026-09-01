@@ -1,5 +1,6 @@
 import { ReactNode, useState } from 'react'
 import { Search, SlidersHorizontal } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { WateringStatus } from '@green-ecolution/backend-client'
 import { Input } from '@green-ecolution/ui'
 import { useWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
@@ -23,6 +24,7 @@ const MapFilterToolbar = ({
   filterSlot,
   createSlot,
 }: MapFilterToolbarProps) => {
+  const { t } = useTranslation('map')
   const [expanded, setExpanded] = useState(false)
   const highlightToggle = expanded || statuses.length > 0
   const getWateringStatusDetails = useWateringStatusDetails()
@@ -34,14 +36,14 @@ const MapFilterToolbar = ({
         <Input
           value={searchTerm}
           onChange={(event) => onSearchTermChange(event.target.value)}
-          placeholder="Baumgruppe…"
+          placeholder={t('toolbar.searchPlaceholder')}
           className="w-full rounded-full border-dark-200 bg-white pl-9 shadow-cards focus-visible:border-green-dark"
         />
       </div>
 
       <button
         type="button"
-        aria-label="Filter und Aktionen"
+        aria-label={t('toolbar.filterAndActionsAriaLabel')}
         aria-expanded={expanded}
         onClick={() => setExpanded((value) => !value)}
         className={`flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-full border shadow-cards transition-colors lg:hidden ${

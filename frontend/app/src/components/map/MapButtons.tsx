@@ -9,16 +9,18 @@ import {
   DialogDescription,
 } from '@green-ecolution/ui'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Can } from '@/lib/auth/Can'
 
 const MapButtons = () => {
+  const { t } = useTranslation('map')
   const [isModalOpen, setIsModalOpen] = useState(false)
   return (
     <Can permission={['tree:create']}>
       <Button
         variant="outline"
         size="icon"
-        aria-label="Kataster-Einstellungen"
+        aria-label={t('toolbar.katasterSettingsAriaLabel')}
         onClick={() => setIsModalOpen(!isModalOpen)}
         className="rounded-full shadow-cards bg-white border-dark-200"
       >
@@ -27,11 +29,8 @@ const MapButtons = () => {
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Weitere Kataster-Einstellungen</DialogTitle>
-            <DialogDescription>
-              In dieser Ansicht können weitere Einstellungen vorgenommen werden. Es können zum
-              Beispiel manuell Bäume zum Kataster hinzugefügt werden.
-            </DialogDescription>
+            <DialogTitle>{t('toolbar.katasterSettingsTitle')}</DialogTitle>
+            <DialogDescription>{t('toolbar.katasterSettingsDescription')}</DialogDescription>
           </DialogHeader>
           <Link
             to="/map/tree/new"
@@ -40,7 +39,7 @@ const MapButtons = () => {
             onClick={() => setIsModalOpen(false)}
             className="group flex items-center gap-x-2 !text-green-dark font-medium text-base mb-4"
           >
-            Neuen Baum manuell hinzufügen
+            {t('toolbar.addTreeManually')}
             <MoveRight className="w-4 h-4 transition-transform duration-base ease-emphasized group-hover:translate-x-1 motion-reduce:transition-none" />
           </Link>
         </DialogContent>

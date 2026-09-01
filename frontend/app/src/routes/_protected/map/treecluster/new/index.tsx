@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useCallback, useState } from 'react'
 import { FormProvider, useWatch, type DefaultValues, type SubmitHandler } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
 import { SoilCondition } from '@/api/backendApi'
 import { TreeclusterForm } from '@/schema/treeclusterSchema'
 import FormForTreecluster from '@/components/general/form/FormForTreecluster'
@@ -27,6 +28,7 @@ const defaultForm: DefaultValues<TreeclusterForm> = {
 }
 
 function NewClusterOnMap() {
+  const { t } = useTranslation('map')
   const navigate = useNavigate({ from: Route.fullPath })
   const { mutate, isError, error, form, navigationBlocker, saveDraft } = useTreeClusterForm(
     'create',
@@ -83,11 +85,8 @@ function NewClusterOnMap() {
 
   return (
     <>
-      <MapPanel title="Neue Bewässerungsgruppe" onClose={handleCancel}>
-        <p className="mb-5 shrink-0 text-sm text-dark-600">
-          Klicke Bäume auf der Karte an, um sie der Gruppe hinzuzufügen oder zu entfernen. Blass
-          dargestellte Bäume gehören einer anderen Organisation.
-        </p>
+      <MapPanel title={t('clusterForm.newTitle')} onClose={handleCancel}>
+        <p className="mb-5 shrink-0 text-sm text-dark-600">{t('clusterForm.clickTreesHint')}</p>
         <FormProvider {...form}>
           <FormForTreecluster
             displayError={isError}
@@ -95,7 +94,7 @@ function NewClusterOnMap() {
             onSubmit={onSubmit}
             onBlur={saveDraft}
             fullWidth
-            emptyHint="Klicke einen Baum auf der Karte an, um ihn zur Liste hinzuzufügen."
+            emptyHint={t('clusterForm.emptyHint')}
             organizations={organizations}
             onOrganizationChange={changeOrganization}
             discardedTreeCount={discardedTreeCount}
@@ -108,7 +107,7 @@ function NewClusterOnMap() {
         onOpenChange={(open) => !open && setForeignTree(null)}
         organizationName={foreignTree ? nameOf(foreignTree.organizationId) : undefined}
         canSwitch={foreignTree ? canCreateIn(foreignTree.organizationId) : false}
-        blockedReason="In dieser Organisation darfst du keine Gruppe anlegen."
+        blockedReason={t('clusterForm.blockedReasonCreate')}
         selectedTreeCount={treeIds.length}
         onConfirm={adoptForeignTree}
       />

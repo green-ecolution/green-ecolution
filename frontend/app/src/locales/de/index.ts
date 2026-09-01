@@ -8,6 +8,7 @@ import enums from './enums.json'
 import sensor from './sensor.json'
 import vehicle from './vehicle.json'
 import wateringPlan from './wateringPlan.json'
+import map from './map.json'
 
 export default {
   common,
@@ -20,4 +21,5 @@ export default {
   sensor,
   vehicle,
   wateringPlan,
+  map,
 }

@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { FormProvider, type DefaultValues } from 'react-hook-form'
 import { useSuspenseQuery } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@green-ecolution/ui'
 import { Trash2 } from 'lucide-react'
 import { clusterQueries, sensorQueries, treeQueries } from '@/api/queries'
@@ -33,14 +34,15 @@ export const Route = createFileRoute('/_protected/map/tree/edit/$treeId/')({
   },
   errorComponent: forbiddenErrorComponent(
     entityNotFound({
-      entityName: 'Baum',
+      entityName: { key: 'map:tree.entityName' },
       backTo: '/trees',
-      backLabel: 'Zur Baumliste',
+      backLabel: { key: 'map:tree.backToList' },
     }),
   ),
 })
 
 function EditTreeOnMap() {
+  const { t } = useTranslation('map')
   const { treeId } = Route.useParams()
   const navigate = useNavigate({ from: Route.fullPath })
   const invalidate = useInvalidateAggregates()
@@ -116,10 +118,10 @@ function EditTreeOnMap() {
       // because removing a tree shifts its cluster's centroid and status.
       .then(() => navigate({ to: '/map', search: (prev) => prev }))
       .then(() => invalidate(['tree', 'cluster']))
-      .then(() => showToast('Der Baum wurde gelöscht.'))
+      .then(() => showToast(t('tree.deleteSuccess')))
       .catch((error) => {
         console.error('Delete failed:', error)
-        showToast('Der Baum konnte nicht gelöscht werden.', 'error')
+        showToast(t('tree.deleteError'), 'error')
       })
   }
 
@@ -127,11 +129,9 @@ function EditTreeOnMap() {
     <>
       {!isProvider && <DraggableMarker lng={pos.lng} lat={pos.lat} onDragEnd={handleDragEnd} />}
 
-      <MapPanel title="Baum bearbeiten" onClose={handleCancel} className="overflow-y-auto">
+      <MapPanel title={t('tree.editTitle')} onClose={handleCancel} className="overflow-y-auto">
         {!isProvider && (
-          <p className="mb-5 shrink-0 text-sm text-dark-600">
-            Ziehe den Marker auf der Karte, um den Standort des Baums anzupassen.
-          </p>
+          <p className="mb-5 shrink-0 text-sm text-dark-600">{t('tree.dragMarkerHint')}</p>
         )}
         <FormProvider {...form}>
           <FormForTree
@@ -154,7 +154,7 @@ function EditTreeOnMap() {
             className="mt-3 shrink-0 self-start text-destructive hover:text-destructive"
           >
             <Trash2 className="size-4" />
-            Baum löschen
+            {t('tree.deleteButton')}
           </Button>
         )}
       </MapPanel>
@@ -162,8 +162,8 @@ function EditTreeOnMap() {
       <DeleteConfirmDialog
         open={confirmDelete}
         onOpenChange={setConfirmDelete}
-        title="Baum löschen?"
-        description="Möchtest du diesen Baum wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden."
+        title={t('tree.deleteConfirmTitle')}
+        description={t('tree.deleteConfirmDescription')}
         onConfirm={handleDelete}
       />
 

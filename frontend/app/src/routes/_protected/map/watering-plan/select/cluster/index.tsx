@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Button, InlineAlert } from '@green-ecolution/ui'
 import { MoveRight } from 'lucide-react'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
 import { WateringPlanForm } from '@/schema/wateringPlanSchema'
 import {
@@ -38,6 +39,7 @@ export const Route = createFileRoute('/_protected/map/watering-plan/select/clust
 })
 
 function SelectCluster() {
+  const { t } = useTranslation('map')
   const { trailerId, transporterId, formType, clusterIds: searchClusterIds } = Route.useSearch()
   const [clusterIds, setClusterIds] = useState<string[]>(searchClusterIds)
   const [showError, setShowError] = useState(false)
@@ -49,8 +51,7 @@ function SelectCluster() {
     isDirty: true,
     allowedPaths: ['/watering-plans/', '/map/watering-plan/select/cluster'],
     onLeave: () => draft.clear(),
-    message:
-      'Möchtest du die Seite wirklich verlassen? Deine Eingaben gehen verloren, wenn du jetzt gehst.',
+    message: t('selectCluster.leaveConfirmMessage'),
   })
 
   const { data: clusters } = useSuspenseQuery(clusterQueries.list())
@@ -163,39 +164,34 @@ function SelectCluster() {
     const errors = []
 
     if (!transporterId || transporterId === '-1') {
-      errors.push('Um eine Route generieren zu können, muss ein Fahrzeug ausgewählt werden.')
+      errors.push(t('selectCluster.noVehicleWarning'))
     }
 
     if (disabledClusters.length > 0) {
-      errors.push(
-        'Ausgegraute Bewässerungsgruppen sind ausgeschlossen, da das Fahrzeug nicht genügend Wasserkapazität hat.',
-      )
+      errors.push(t('selectCluster.insufficientCapacityWarning'))
     }
 
     return { showNotice: errors.length > 0, notice: errors }
-  }, [transporterId, disabledClusters])
+  }, [transporterId, disabledClusters, t])
 
   return (
     <>
       <RoutePointMarkers points={routePoints} />
-      <MapPanel title="Bewässerungsgruppen auswählen" onClose={() => void handleNavigateBack()}>
-        <p className="mb-5 shrink-0 text-sm text-dark-600">
-          Klicke die Gruppen auf der Karte an, die in diesen Bewässerungsplan aufgenommen werden
-          sollen.
-        </p>
+      <MapPanel title={t('selectCluster.title')} onClose={() => void handleNavigateBack()}>
+        <p className="mb-5 shrink-0 text-sm text-dark-600">{t('selectCluster.hint')}</p>
         {showNotice && <InlineAlert className="mb-4 shrink-0" description={notice.join(' ')} />}
 
         <SelectEntities
           onChange={setClusterIds}
           entityIds={clusterIds}
           type="cluster"
-          label="Bewässerungsgruppen"
+          label={t('selectCluster.entitiesLabel')}
           fill
-          emptyHint="Klicke eine Gruppe auf der Karte an, um sie hinzuzufügen."
+          emptyHint={t('selectCluster.emptyHint')}
         />
         {showError && clusterIds.length === 0 && (
           <p className="mt-2 shrink-0 text-sm font-semibold text-destructive">
-            Bitte wähle mindestens eine Bewässerungsgruppe aus.
+            {t('selectCluster.requiredError')}
           </p>
         )}
 
@@ -205,7 +201,7 @@ function SelectCluster() {
           disabled={clusterIds.length === 0}
           className="mt-4 w-full shrink-0"
         >
-          Übernehmen
+          {t('selectCluster.applyButton')}
           <MoveRight className="icon-arrow-animate" />
         </Button>
       </MapPanel>

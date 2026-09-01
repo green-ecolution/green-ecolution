@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useMaplibreMap } from './MapContext'
 import MapControlButton from './MapControlButton'
 
 const CompassButton = () => {
+  const { t } = useTranslation('map')
   const map = useMaplibreMap()
   const [bearing, setBearing] = useState(() => map.getBearing())
   const [pitched, setPitched] = useState(() => map.getPitch() > 0)
@@ -22,7 +24,7 @@ const CompassButton = () => {
 
   return (
     <MapControlButton
-      aria-label="Karte nach Norden ausrichten"
+      aria-label={t('controls.resetBearingAriaLabel')}
       onClick={() => map.easeTo({ bearing: 0, pitch: 0 })}
       className={oriented ? 'ring-2 ring-green-dark/40' : undefined}
     >

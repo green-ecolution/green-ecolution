@@ -1,5 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { Marker } from 'maplibre-gl'
+import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import type { RefillPointResponse, StartPointResponse } from '@green-ecolution/backend-client'
 import { useMaplibreMap } from './MapContext'
 
@@ -41,8 +43,8 @@ export const buildRoutePoints = (
 
 // Collapsed to an icon circle (sized like SensorMarker); the depot name
 // slides out on hover/tap so the busy map stays quiet by default.
-const buildPointElement = ({ name, kind }: RoutePointMarkerData) => {
-  const roleLabel = kind === 'start' ? 'Startpunkt' : 'Nachfüllpunkt'
+const buildPointElement = ({ name, kind }: RoutePointMarkerData, t: TFunction<'map'>) => {
+  const roleLabel = kind === 'start' ? t('routePoints.start') : t('routePoints.refill')
   const el = document.createElement('div')
   el.className = `group flex h-8 items-center rounded-full border-2 border-white text-white shadow-[0_2px_6px_rgba(0,0,0,0.35)] hover:z-10 ${
     kind === 'start' ? 'bg-green-dark' : 'bg-blue-600'
@@ -62,12 +64,13 @@ const buildPointElement = ({ name, kind }: RoutePointMarkerData) => {
 
 // Read-only chips marking the depot and the refill stations a route visits.
 const RoutePointMarkers = ({ points }: RoutePointMarkersProps) => {
+  const { t } = useTranslation('map')
   const map = useMaplibreMap()
   const markersRef = useRef<Marker[]>([])
 
   useEffect(() => {
     markersRef.current = points.map((point) =>
-      new Marker({ element: buildPointElement(point) })
+      new Marker({ element: buildPointElement(point, t) })
         .setLngLat([point.lng, point.lat])
         .addTo(map),
     )
@@ -75,7 +78,7 @@ const RoutePointMarkers = ({ points }: RoutePointMarkersProps) => {
       markersRef.current.forEach((marker) => marker.remove())
       markersRef.current = []
     }
-  }, [map, points])
+  }, [map, points, t])
 
   return null
 }
