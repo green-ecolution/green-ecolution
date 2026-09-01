@@ -8,7 +8,7 @@ export const FALLBACK_LANGUAGE: Language = 'de'
  * Grows with every extraction task. i18next only preloads what is listed here,
  * so a namespace missing from this array resolves to its raw key.
  */
-export const NAMESPACES = ['common', 'validation', 'errors', 'ui'] as const
+export const NAMESPACES = ['common', 'validation', 'errors', 'ui', 'navigation'] as const
 
 export const DEFAULT_NAMESPACE = 'common'
 

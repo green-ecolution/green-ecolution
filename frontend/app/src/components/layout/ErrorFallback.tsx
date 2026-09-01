@@ -44,6 +44,11 @@ const ErrorFallback: React.FC<ErrorFallbackProps> = ({ error, resetErrorBoundary
     resolveErrorMessage().catch(() => setErrorMessage(getI18n().t('errors:unknown')))
   }, [resolveErrorMessage])
 
+  // Same reasoning as above: the surrounding chrome uses getI18n() rather
+  // than useTranslation, so it keeps working on the same outside-the-provider
+  // path the error message itself relies on.
+  const t = getI18n().t
+
   return (
     <div className="relative">
       <figure aria-hidden="true" className="absolute top-0 inset-x-0 z-0">
@@ -52,19 +57,31 @@ const ErrorFallback: React.FC<ErrorFallbackProps> = ({ error, resetErrorBoundary
       <div className="mt-[45vh] mx-auto max-w-208 sm:mt-[50vh] xl:max-w-screen-lg">
         <section className="my-28 px-4 md:px-6 lg:my-36 xl:my-52">
           <h1 className="font-lato font-bold text-4xl mb-4 lg:mb-6 lg:text-5xl lg:text-center xl:text-6xl">
-            Upps, hier ist etwas schief gegangen!
+            {t('navigation:errorFallback.title')}
           </h1>
           <p className="lg:text-center">{errorMessage}</p>
-          {errorCode && <p className="lg:text-center mb-5">Fehlercode: {errorCode}</p>}
+          {errorCode && (
+            <p className="lg:text-center mb-5">
+              {t('navigation:errorFallback.errorCode', { code: errorCode })}
+            </p>
+          )}
           <div className="flex flex-col gap-y-4 lg:flex-row lg:items-center lg:justify-center lg:gap-x-4">
             <Button onClick={resetErrorBoundary}>
-              Zurück
+              {t('navigation:errorFallback.back')}
               <RefreshCw />
             </Button>
             {isAuthenticated ? (
-              <ButtonLink link={{ to: '/dashboard' }} label="Zum Dashboard" icon={MoveRight} />
+              <ButtonLink
+                link={{ to: '/dashboard' }}
+                label={t('navigation:errorFallback.toDashboard')}
+                icon={MoveRight}
+              />
             ) : (
-              <ButtonLink link={{ to: '/' }} label="Zur Startseite" icon={MoveRight} />
+              <ButtonLink
+                link={{ to: '/' }}
+                label={t('navigation:errorFallback.toHome')}
+                icon={MoveRight}
+              />
             )}
           </div>
         </section>

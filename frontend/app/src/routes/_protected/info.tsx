@@ -23,7 +23,7 @@ export const Route = createFileRoute('/_protected/info')({
     prefetch(queryClient, infoQueries.services(), 'infoQueries.services')
     return {
       crumb: {
-        title: 'Systeminformationen',
+        titleKey: 'info' as const,
       },
     }
   },

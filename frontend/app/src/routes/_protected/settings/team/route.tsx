@@ -36,6 +36,6 @@ const TeamTabs = () => {
 export const Route = createFileRoute('/_protected/settings/team')(
   guardedRoute(['user:read', 'role:read'], {
     component: TeamTabs,
-    loader: () => ({ crumb: { title: 'Team & Rollen' } }),
+    loader: () => ({ crumb: { titleKey: 'team' as const } }),
   }),
 )

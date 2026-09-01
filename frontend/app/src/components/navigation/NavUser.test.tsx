@@ -87,7 +87,7 @@ describe('NavUser', () => {
     await user.click(screen.getByRole('button', { name: /benutzermenü/i }))
 
     await waitFor(() => {
-      expect(screen.getByRole('menuitem', { name: /ihr profil/i })).toBeInTheDocument()
+      expect(screen.getByRole('menuitem', { name: /dein profil/i })).toBeInTheDocument()
       expect(screen.getByRole('menuitem', { name: /abmelden/i })).toBeInTheDocument()
     })
   })

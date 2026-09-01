@@ -1,5 +1,6 @@
 import { Link, LinkProps } from '@tanstack/react-router'
 import { MoveLeft, Search } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@green-ecolution/ui'
 
 interface EntityNotFoundProps {
@@ -9,6 +10,8 @@ interface EntityNotFoundProps {
 }
 
 function EntityNotFound({ entityName, backTo, backLabel }: EntityNotFoundProps) {
+  const { t } = useTranslation('navigation')
+
   return (
     <div className="container mt-6">
       <section className="relative my-12 lg:my-20">
@@ -27,10 +30,10 @@ function EntityNotFound({ entityName, backTo, backLabel }: EntityNotFoundProps) 
           {/* Content */}
           <div className="max-w-md space-y-3">
             <h1 className="font-lato font-bold text-2xl lg:text-3xl text-dark dark:text-light">
-              {entityName} nicht gefunden
+              {t('entityNotFound.title', { entityName })}
             </h1>
             <p className="text-dark-500 dark:text-dark-400 leading-relaxed">
-              Die angeforderte Ressource existiert nicht oder wurde bereits entfernt.
+              {t('entityNotFound.description')}
             </p>
           </div>
 

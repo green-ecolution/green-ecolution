@@ -50,7 +50,7 @@ export const Route = createFileRoute('/_protected/map')({
     useStore.setState({ mapCenter: [lat, lng], mapZoom: zoom })
 
     return {
-      crumb: { title: 'Karte' },
+      crumb: { titleKey: 'map' as const },
     }
   },
   pendingComponent: pendingLoading('Lade Karte...'),

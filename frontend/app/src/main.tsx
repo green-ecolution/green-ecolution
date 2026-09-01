@@ -14,6 +14,7 @@ import { pendingLoading } from '@/lib/router'
 import { I18nextProvider } from 'react-i18next'
 import { createI18n } from '@/lib/i18n'
 import { UiTextBridge } from '@/lib/i18n/UiTextBridge'
+import type { NavigationCrumbKey } from '@/lib/i18n/navigation'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -50,9 +51,11 @@ declare module '@tanstack/react-router' {
     router: typeof router
   }
 
-  interface Breadcrumb {
-    title: string
-  }
+  /**
+   * Static routes carry a key resolved at render time; a crumb naming a loaded
+   * entity carries the text itself, because no catalog can hold entity names.
+   */
+  type Breadcrumb = { titleKey: NavigationCrumbKey } | { title: string }
 
   interface StaticDataRouteOption {
     crumb?: Breadcrumb

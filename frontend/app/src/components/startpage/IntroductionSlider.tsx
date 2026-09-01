@@ -1,11 +1,13 @@
 import { Splide, SplideSlide } from '@splidejs/react-splide'
 import { Car, MapPin, PieChart, Route } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import IntroductionCard from '../general/cards/IntroductionCard'
 import SensorIcon from '../icons/Sensor'
 import TreeIcon from '../icons/Tree'
-import { i18nTranslated } from '../../lib/sliderTranslations'
+import { sliderLabels } from '../../lib/sliderTranslations'
 
 const IntroductionSlider = () => {
+  const { t } = useTranslation('navigation')
   const facts = [
     {
       id: 1,
@@ -70,7 +72,7 @@ const IntroductionSlider = () => {
           options={{
             rewind: true,
             arrows: false,
-            i18n: i18nTranslated,
+            i18n: sliderLabels(t),
             mediaQuery: 'min',
             gap: '1rem',
             breakpoints: breakpoints,

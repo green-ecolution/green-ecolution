@@ -1,4 +1,5 @@
 import { ChevronsUpDown } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Avatar, AvatarFallback, AvatarImage } from '@green-ecolution/ui'
 import NavUserMenu from './NavUserMenu'
 import { navItemClasses } from './navItemStyles'
@@ -22,12 +23,13 @@ const NavUser = ({
 }: NavUserProps) => {
   const initials = `${firstName.charAt(0)}${lastName.charAt(0)}`
   const fullName = `${firstName} ${lastName}`.trim()
+  const { t } = useTranslation('navigation')
 
   return (
     <NavUserMenu email={email} side="right" onNavigate={closeSidebar}>
       <button
         type="button"
-        aria-label="Benutzermenü öffnen"
+        aria-label={t('user.openMenu')}
         className={`${navItemClasses} w-full border-transparent ${collapsed ? 'px-3 lg:justify-center lg:px-2' : 'px-2'}`}
       >
         <Avatar size="sm">

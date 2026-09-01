@@ -8,6 +8,7 @@ import ErrorFallback from '@/components/layout/ErrorFallback'
 import Forbidden from '@/components/layout/Forbidden'
 import { userQueries } from '@/api/queries'
 import { readAuthBypass } from '@/lib/auth/runtimeConfig'
+import type { NavigationCrumbKey } from '@/lib/i18n/navigation'
 import {
   permissionsOf,
   satisfies,
@@ -16,9 +17,9 @@ import {
 } from '@/lib/auth/permissions'
 
 /** Options for layout routes that only render an Outlet and contribute a breadcrumb. */
-export const crumbRoute = (title: string) => ({
+export const crumbRoute = (titleKey: NavigationCrumbKey) => ({
   component: Outlet,
-  loader: () => ({ crumb: { title } }),
+  loader: () => ({ crumb: { titleKey } }),
 })
 
 export const pendingLoading = (label: string) => () => (

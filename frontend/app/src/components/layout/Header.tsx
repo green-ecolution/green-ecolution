@@ -1,5 +1,6 @@
 import { AlignJustifyIcon, ChevronDown } from 'lucide-react'
 import { useState, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import Navigation from './Navigation'
 import Breadcrumb from './Breadcrumb'
 import NavUserMenu from '../navigation/NavUserMenu'
@@ -21,6 +22,7 @@ function Header() {
   const { firstName, lastName, email } = useCurrentUser()
   const avatarUrl = useCurrentUserAvatar()
   const setSidebarCollapsed = useStore((s) => s.setSidebarCollapsed)
+  const { t } = useTranslation('navigation')
 
   const closeSidebar = useCallback(() => {
     setOpen(false)
@@ -62,7 +64,7 @@ function Header() {
             aria-expanded={open}
             aria-controls="main-navigation"
             aria-haspopup="menu"
-            aria-label="Hauptnavigation öffnen"
+            aria-label={t('sidebar.openMainNav')}
             className="size-8 rounded-full bg-dark hover:bg-dark-600"
             onClick={toggleSidebar}
           >
@@ -75,7 +77,7 @@ function Header() {
             <NavUserMenu email={email} side="bottom" onNavigate={closeSidebar}>
               <button
                 type="button"
-                aria-label="Benutzermenü öffnen"
+                aria-label={t('user.openMenu')}
                 className="group flex cursor-pointer items-center gap-x-1"
               >
                 <Avatar>

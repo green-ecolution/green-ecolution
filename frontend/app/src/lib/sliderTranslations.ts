@@ -1,13 +1,17 @@
-// German translations for reusable splide slider
-export const i18nTranslated = {
-  prev: 'Vorheriges Element anzeigen',
-  next: 'Nächstes Element anzeigen',
-  first: 'Erstes Element anzeigen',
-  last: 'Letztes Element anzeigen',
-  slideX: 'Zu Seite %s springen',
-  pageX: 'Zu Seite %s springen',
-  carousel: 'Slider',
-  select: 'Paginierung der Elemente',
-  slide: 'Slider Element',
-  slideLabel: '%s von %s',
+import type { TFunction } from 'i18next'
+
+/** Splide's accessibility labels. `%s` is Splide's own placeholder, not i18next's. */
+export function sliderLabels(t: TFunction<'navigation'>) {
+  return {
+    prev: t('slider.prev'),
+    next: t('slider.next'),
+    first: t('slider.first'),
+    last: t('slider.last'),
+    slideX: t('slider.slideX'),
+    pageX: t('slider.pageX'),
+    carousel: t('slider.carousel'),
+    select: t('slider.select'),
+    slide: t('slider.slide'),
+    slideLabel: t('slider.slideLabel'),
+  }
 }

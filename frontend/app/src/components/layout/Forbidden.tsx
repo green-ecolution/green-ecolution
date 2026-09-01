@@ -1,8 +1,11 @@
 import { Link } from '@tanstack/react-router'
 import { Lock, MoveRight } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@green-ecolution/ui'
 
 function Forbidden() {
+  const { t } = useTranslation('navigation')
+
   return (
     <div className="container mt-6">
       <section className="relative my-12 lg:my-20">
@@ -20,18 +23,17 @@ function Forbidden() {
 
           <div className="max-w-md space-y-3">
             <h1 className="font-lato font-bold text-2xl lg:text-3xl text-dark dark:text-light">
-              Kein Zugriff
+              {t('forbidden.title')}
             </h1>
             <p className="text-dark-500 dark:text-dark-400 leading-relaxed">
-              Für diesen Bereich fehlt dir die nötige Berechtigung. Wende dich an die Administration
-              deiner Organisation, wenn du Zugriff benötigst.
+              {t('forbidden.description')}
             </p>
           </div>
 
           <div className="mt-8">
             <Button asChild variant="outline" className="group gap-2 px-6">
               <Link to="/dashboard">
-                Zum Dashboard
+                {t('forbidden.toDashboard')}
                 <MoveRight className="w-4 h-4 transition-transform duration-base ease-emphasized group-hover:translate-x-1 motion-reduce:transition-none" />
               </Link>
             </Button>
