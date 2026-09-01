@@ -173,7 +173,11 @@
     "soilConditionPlaceholder": "Wähle eine Bodenbeschaffenheit aus",
     "soilConditionSearchPlaceholder": "Code oder Bezeichnung suchen…",
     "soilConditionDetermineAriaLabel": "Bodenbeschaffenheit bestimmen",
-    "treesLabel": "Bäume"
+    "treesLabel": "Bäume",
+    "createLeaveMessage": "Möchtest du die Seite wirklich verlassen? Deine Eingaben zum Erstellen der Bewässerungsgruppe gehen verloren, wenn du jetzt gehst.",
+    "updateLeaveMessage": "Möchtest du die Seite wirklich verlassen? Deine Änderungen an der Bewässerungsgruppe gehen verloren, wenn du jetzt gehst.",
+    "createSuccessMessage": "Die Bewässerungsgruppe wurde erfolgreich erstellt.",
+    "updateSuccessMessage": "Die Bewässerungsgruppe wurde erfolgreich bearbeitet."
   },
   "list": {
     "title": "Bewässerungsgruppen",

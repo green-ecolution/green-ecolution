@@ -173,7 +173,11 @@
     "soilConditionPlaceholder": "Choose a soil condition",
     "soilConditionSearchPlaceholder": "Search code or name…",
     "soilConditionDetermineAriaLabel": "Determine soil condition",
-    "treesLabel": "Trees"
+    "treesLabel": "Trees",
+    "createLeaveMessage": "Do you really want to leave this page? Your entries for creating the watering group will be lost if you leave now.",
+    "updateLeaveMessage": "Do you really want to leave this page? Your changes to the watering group will be lost if you leave now.",
+    "createSuccessMessage": "The watering group was created successfully.",
+    "updateSuccessMessage": "The watering group was updated successfully."
   },
   "list": {
     "title": "Watering groups",

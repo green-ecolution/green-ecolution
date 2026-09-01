@@ -78,6 +78,10 @@
     "lengthPlaceholder": "Vehicle length",
     "lengthLabel": "Vehicle length (in meters)",
     "weightPlaceholder": "Vehicle weight",
-    "weightLabel": "Vehicle weight (in tons)"
+    "weightLabel": "Vehicle weight (in tons)",
+    "createLeaveMessage": "Do you really want to leave this page? Your entries for creating the vehicle will be lost if you leave now.",
+    "updateLeaveMessage": "Do you really want to leave this page? Your changes to the vehicle will be lost if you leave now.",
+    "createSuccessMessage": "The vehicle was created successfully.",
+    "updateSuccessMessage": "The vehicle was updated successfully."
   }
 }

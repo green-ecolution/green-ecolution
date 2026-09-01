@@ -78,6 +78,10 @@
     "lengthPlaceholder": "Länge des Fahrzeugs",
     "lengthLabel": "Länge des Fahrzeugs (in Metern)",
     "weightPlaceholder": "Gewicht des Fahrzeugs",
-    "weightLabel": "Gewicht des Fahrzeugs (in Tonnen)"
+    "weightLabel": "Gewicht des Fahrzeugs (in Tonnen)",
+    "createLeaveMessage": "Möchtest du die Seite wirklich verlassen? Deine Eingaben zum Erstellen des Fahrzeugs gehen verloren, wenn du jetzt gehst.",
+    "updateLeaveMessage": "Möchtest du die Seite wirklich verlassen? Deine Änderungen am Fahrzeug gehen verloren, wenn du jetzt gehst.",
+    "createSuccessMessage": "Das Fahrzeug wurde erfolgreich erstellt.",
+    "updateSuccessMessage": "Das Fahrzeug wurde erfolgreich bearbeitet."
   }
 }

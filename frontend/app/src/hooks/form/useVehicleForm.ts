@@ -4,6 +4,7 @@ import { useIssueTranslator } from '@/lib/i18n/validation'
 import { VehicleForm } from '@/schema/vehicleSchema'
 import { vehicleDraftResolver } from '@green-ecolution/domain-wasm'
 import { DefaultValues } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
 import { EntityFormConfig, useEntityForm } from './useEntityForm'
 
 export const useVehicleForm = (
@@ -15,6 +16,7 @@ export const useVehicleForm = (
   },
 ) => {
   const translate = useIssueTranslator()
+  const { t } = useTranslation('vehicle')
 
   const vehicleConfig: EntityFormConfig<VehicleForm, VehicleCreate, VehicleUpdate, Vehicle> = {
     formType: 'vehicle',
@@ -34,12 +36,10 @@ export const useVehicleForm = (
     allowedPaths: [],
 
     messages: {
-      createLeave:
-        'Möchtest du die Seite wirklich verlassen? Deine Eingaben zum Erstellen des Fahrzeugs gehen verloren, wenn du jetzt gehst.',
-      updateLeave:
-        'Möchtest du die Seite wirklich verlassen? Deine Änderungen am Fahrzeug gehen verloren, wenn du jetzt gehst.',
-      createSuccess: 'Das Fahrzeug wurde erfolgreich erstellt.',
-      updateSuccess: 'Das Fahrzeug wurde erfolgreich bearbeitet.',
+      createLeave: t('form.createLeaveMessage'),
+      updateLeave: t('form.updateLeaveMessage'),
+      createSuccess: t('form.createSuccessMessage'),
+      updateSuccess: t('form.updateSuccessMessage'),
     },
   }
 

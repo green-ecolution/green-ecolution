@@ -89,5 +89,21 @@
     "scannerFailed": "Der Scanner konnte nicht gestartet werden."
   },
   "offline": "Der Server ist nicht erreichbar. Bitte prüfe deine Verbindung.",
-  "unknown": "Unbekannter Fehler"
+  "unknown": "Unbekannter Fehler",
+  "sensorFlow": {
+    "activate": {
+      "notFound": "Sensor existiert nicht (mehr). Bitte erneut versuchen.",
+      "conflict": "Sensor ist bereits einem Baum zugeordnet.",
+      "failed": "Aktivierung fehlgeschlagen. Bitte erneut versuchen."
+    },
+    "reassign": {
+      "notFound": "Sensor oder Baum existiert nicht (mehr).",
+      "conflict": "Der Baum ist bereits einem anderen Sensor zugeordnet.",
+      "failed": "Baumwechsel fehlgeschlagen. Bitte erneut versuchen."
+    },
+    "deactivate": {
+      "notFound": "Sensor existiert nicht (mehr).",
+      "failed": "Zurücksetzen fehlgeschlagen. Bitte erneut versuchen."
+    }
+  }
 }

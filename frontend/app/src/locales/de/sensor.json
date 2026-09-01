@@ -72,7 +72,9 @@
     "acknowledgeDialogTitle": "Datenqualität zur Kenntnis nehmen",
     "acknowledgeDialogDescription": "Die bisher verworfenen Messwerte gelten damit als geprüft. Kommen danach wieder unplausible Werte, meldet sich der Sensor von selbst erneut.",
     "acknowledgeNotePlaceholder": "Grund, z. B. Sonde war bei der Vorbereitung nicht angeschlossen",
-    "acknowledgeSubmit": "Vermerken"
+    "acknowledgeSubmit": "Vermerken",
+    "acknowledgeSuccessToast": "Datenqualität als geprüft vermerkt",
+    "acknowledgeFailedToast": "Der Vermerk konnte nicht gespeichert werden."
   },
   "clipboard": {
     "copyFailed": "Kopieren fehlgeschlagen."

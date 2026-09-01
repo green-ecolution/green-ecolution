@@ -72,7 +72,9 @@
     "acknowledgeDialogTitle": "Acknowledge data quality",
     "acknowledgeDialogDescription": "The previously discarded readings are then considered reviewed. If implausible values occur again, the sensor will flag them again on its own.",
     "acknowledgeNotePlaceholder": "Reason, e.g. probe was not connected during setup",
-    "acknowledgeSubmit": "Save"
+    "acknowledgeSubmit": "Save",
+    "acknowledgeSuccessToast": "Data quality marked as reviewed",
+    "acknowledgeFailedToast": "The note could not be saved."
   },
   "clipboard": {
     "copyFailed": "Copy failed."

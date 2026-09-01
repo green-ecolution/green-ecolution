@@ -99,6 +99,10 @@
     "locationHeading": "Tree location",
     "latitudeLabel": "Latitude:",
     "longitudeLabel": "Longitude:",
-    "adjustLocationButton": "Adjust the tree's location"
+    "adjustLocationButton": "Adjust the tree's location",
+    "createLeaveMessage": "Do you really want to leave this page? Your entries for creating the tree will be lost if you leave now.",
+    "updateLeaveMessage": "Do you really want to leave this page? Your changes to the tree will be lost if you leave now.",
+    "createSuccessMessage": "The tree was created successfully.",
+    "updateSuccessMessage": "The tree was updated successfully."
   }
 }

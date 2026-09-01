@@ -4,6 +4,7 @@ import { useIssueTranslator } from '@/lib/i18n/validation'
 import { TreeForm } from '@/schema/treeSchema'
 import { treeDraftResolver } from '@green-ecolution/domain-wasm'
 import { DefaultValues } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
 import { EntityFormConfig, useEntityForm } from './useEntityForm'
 
 export const useTreeForm = (
@@ -11,6 +12,7 @@ export const useTreeForm = (
   opts: { treeId?: string; initForm?: DefaultValues<TreeForm>; disableNavigationBlock?: boolean },
 ) => {
   const translate = useIssueTranslator()
+  const { t } = useTranslation('tree')
 
   const treeConfig: EntityFormConfig<TreeForm, TreeCreate, TreeUpdate, Tree> = {
     formType: 'tree',
@@ -29,12 +31,10 @@ export const useTreeForm = (
     allowedPaths: [],
 
     messages: {
-      createLeave:
-        'Möchtest du die Seite wirklich verlassen? Deine Eingaben zum Erstellen des Baums gehen verloren, wenn du jetzt gehst.',
-      updateLeave:
-        'Möchtest du die Seite wirklich verlassen? Deine Änderungen am Baum gehen verloren, wenn du jetzt gehst.',
-      createSuccess: 'Der Baum wurde erfolgreich erstellt.',
-      updateSuccess: 'Der Baum wurde erfolgreich bearbeitet.',
+      createLeave: t('form.createLeaveMessage'),
+      updateLeave: t('form.updateLeaveMessage'),
+      createSuccess: t('form.createSuccessMessage'),
+      updateSuccess: t('form.updateSuccessMessage'),
     },
   }
 

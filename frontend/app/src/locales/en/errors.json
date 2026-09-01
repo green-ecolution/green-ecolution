@@ -89,5 +89,21 @@
     "scannerFailed": "The scanner could not be started."
   },
   "offline": "The server is unreachable. Please check your connection.",
-  "unknown": "Unknown error"
+  "unknown": "Unknown error",
+  "sensorFlow": {
+    "activate": {
+      "notFound": "Sensor no longer exists. Please try again.",
+      "conflict": "Sensor is already assigned to a tree.",
+      "failed": "Activation failed. Please try again."
+    },
+    "reassign": {
+      "notFound": "Sensor or tree no longer exists.",
+      "conflict": "The tree is already assigned to a different sensor.",
+      "failed": "Changing the tree failed. Please try again."
+    },
+    "deactivate": {
+      "notFound": "Sensor no longer exists.",
+      "failed": "Reset failed. Please try again."
+    }
+  }
 }
