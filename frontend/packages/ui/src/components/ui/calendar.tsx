@@ -5,23 +5,24 @@ import { setMonth, setYear } from 'date-fns'
 
 import { cn } from '@/lib/utils'
 import { buttonVariants } from '@/components/ui/button'
+import { useUiText } from '@/i18n'
 
 type CalendarProps = React.ComponentProps<typeof DayPicker>
 
-const MONTHS_DE = [
-  'Januar',
-  'Februar',
-  'März',
-  'April',
-  'Mai',
-  'Juni',
-  'Juli',
-  'August',
-  'September',
-  'Oktober',
-  'November',
-  'Dezember',
-]
+// Month names come from Intl rather than the catalog: 12 entries per language
+// would need maintaining for every future locale, and the platform already
+// knows them.
+function useMonthNames(locale: string): string[] {
+  return React.useMemo(() => {
+    // Anchor dates are UTC midnight; without a fixed timeZone the formatter
+    // uses the viewer's local zone and rolls the date back a day west of UTC,
+    // shifting every month name by one.
+    const formatter = new Intl.DateTimeFormat(locale, { month: 'long', timeZone: 'UTC' })
+    return Array.from({ length: 12 }, (_, month) =>
+      formatter.format(new Date(Date.UTC(2000, month, 1))),
+    )
+  }, [locale])
+}
 
 function CalendarHeader({
   displayMonth,
@@ -34,6 +35,8 @@ function CalendarHeader({
   onPreviousMonth: () => void
   onNextMonth: () => void
 }) {
+  const { t, locale } = useUiText()
+  const months = useMonthNames(locale)
   const currentYear = new Date().getFullYear()
   const years = Array.from({ length: 21 }, (_, i) => currentYear - 10 + i)
 
@@ -46,7 +49,7 @@ function CalendarHeader({
           buttonVariants({ variant: 'ghost', size: 'icon' }),
           'size-8 p-0 opacity-60 hover:opacity-100 [&_svg]:size-4',
         )}
-        aria-label="Vorheriger Monat"
+        aria-label={t('calendar.previousMonth')}
       >
         <ChevronLeft className="size-4" />
       </button>
@@ -57,9 +60,9 @@ function CalendarHeader({
             value={displayMonth.getMonth()}
             onChange={(e) => onMonthChange(setMonth(displayMonth, parseInt(e.target.value)))}
             className="h-8 appearance-none rounded-md bg-transparent py-1 pl-2 pr-6 text-sm font-medium outline-none hover:bg-accent cursor-pointer transition-colors focus-visible:ring-green-dark/50 focus-visible:ring-[3px]"
-            aria-label="Monat auswählen"
+            aria-label={t('calendar.selectMonth')}
           >
-            {MONTHS_DE.map((month, i) => (
+            {months.map((month, i) => (
               <option key={month} value={i}>
                 {month}
               </option>
@@ -72,7 +75,7 @@ function CalendarHeader({
             value={displayMonth.getFullYear()}
             onChange={(e) => onMonthChange(setYear(displayMonth, parseInt(e.target.value)))}
             className="h-8 appearance-none rounded-md bg-transparent py-1 pl-2 pr-6 text-sm font-medium outline-none hover:bg-accent cursor-pointer transition-colors focus-visible:ring-green-dark/50 focus-visible:ring-[3px]"
-            aria-label="Jahr auswählen"
+            aria-label={t('calendar.selectYear')}
           >
             {years.map((year) => (
               <option key={year} value={year}>
@@ -91,7 +94,7 @@ function CalendarHeader({
           buttonVariants({ variant: 'ghost', size: 'icon' }),
           'size-8 p-0 opacity-60 hover:opacity-100 [&_svg]:size-4',
         )}
-        aria-label="Nächster Monat"
+        aria-label={t('calendar.nextMonth')}
       >
         <ChevronRight className="size-4" />
       </button>

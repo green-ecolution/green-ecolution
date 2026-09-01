@@ -1,6 +1,7 @@
 import * as React from 'react'
 
 import { cn } from '@/lib/utils'
+import { useUiText } from '@/i18n'
 
 export type CameraViewportState = 'inactive' | 'loading' | 'scanning' | 'success' | 'error'
 
@@ -30,10 +31,8 @@ const Corner = ({ className, flash }: { className: string; flash: boolean }) => 
 )
 
 const CameraViewport = React.forwardRef<HTMLDivElement, CameraViewportProps>(
-  (
-    { videoRef, state, overlay, flash = false, ariaLabel = 'Kamera-Vorschau', className, ...props },
-    ref,
-  ) => {
+  ({ videoRef, state, overlay, flash = false, ariaLabel, className, ...props }, ref) => {
+    const { t } = useUiText()
     const showVideo = state === 'scanning' || state === 'success'
 
     // Bump a tick on each rising edge of `flash` to re-key the animated
@@ -51,7 +50,7 @@ const CameraViewport = React.forwardRef<HTMLDivElement, CameraViewportProps>(
         data-slot="camera-viewport"
         data-state={state}
         role="region"
-        aria-label={ariaLabel}
+        aria-label={ariaLabel ?? t('camera.preview')}
         className={cn(
           'relative aspect-square w-full max-w-md mx-auto',
           'overflow-hidden rounded-2xl bg-dark',

@@ -2,6 +2,7 @@ import * as React from 'react'
 import { Check, ChevronsUpDown } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
+import { useUiText } from '@/i18n'
 import { Popover, PopoverContent, PopoverTrigger } from './popover'
 import {
   Command,
@@ -26,7 +27,7 @@ export interface MultiSelectComboboxProps {
   placeholder?: string
   searchPlaceholder?: string
   emptyText?: string
-  /** Number of selections above which the trigger shows "N ausgewählt" instead of the labels. */
+  /** Number of selections above which the trigger shows `combobox.selectedCount` instead of the labels. */
   summaryThreshold?: number
   searchable?: boolean
   id?: string
@@ -40,9 +41,9 @@ const MultiSelectCombobox = React.forwardRef<HTMLButtonElement, MultiSelectCombo
       options,
       value,
       onChange,
-      placeholder = 'Auswählen…',
-      searchPlaceholder = 'Suchen…',
-      emptyText = 'Keine Treffer.',
+      placeholder,
+      searchPlaceholder,
+      emptyText,
       summaryThreshold = 1,
       searchable = true,
       id,
@@ -51,8 +52,12 @@ const MultiSelectCombobox = React.forwardRef<HTMLButtonElement, MultiSelectCombo
     },
     ref,
   ) => {
+    const { t } = useUiText()
     const [open, setOpen] = React.useState(false)
     const selected = React.useMemo(() => new Set(value), [value])
+    const resolvedPlaceholder = placeholder ?? t('combobox.placeholder')
+    const resolvedSearchPlaceholder = searchPlaceholder ?? t('combobox.searchPlaceholder')
+    const resolvedEmptyText = emptyText ?? t('combobox.empty')
 
     const groups = React.useMemo(() => {
       const map = new Map<string, MultiSelectComboboxOption[]>()
@@ -72,10 +77,10 @@ const MultiSelectCombobox = React.forwardRef<HTMLButtonElement, MultiSelectCombo
 
     const triggerLabel =
       value.length === 0
-        ? placeholder
+        ? resolvedPlaceholder
         : value.length <= summaryThreshold
           ? value.map((v) => options.find((o) => o.value === v)?.label ?? v).join(', ')
-          : `${value.length} ausgewählt`
+          : t('combobox.selectedCount', { count: value.length })
 
     return (
       <Popover modal open={open} onOpenChange={setOpen}>
@@ -100,9 +105,9 @@ const MultiSelectCombobox = React.forwardRef<HTMLButtonElement, MultiSelectCombo
         </PopoverTrigger>
         <PopoverContent align="start" className="w-[var(--radix-popover-trigger-width)] p-0">
           <Command>
-            {searchable && <CommandInput placeholder={searchPlaceholder} />}
+            {searchable && <CommandInput placeholder={resolvedSearchPlaceholder} />}
             <CommandList>
-              <CommandEmpty>{emptyText}</CommandEmpty>
+              <CommandEmpty>{resolvedEmptyText}</CommandEmpty>
               {groups.map((group) => (
                 <CommandGroup key={group.label || '_ungrouped'} heading={group.label || undefined}>
                   {group.options.map((option) => {

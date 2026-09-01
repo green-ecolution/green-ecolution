@@ -2,6 +2,7 @@ import * as React from 'react'
 import { Check, ChevronsUpDown } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
+import { useUiText } from '@/i18n'
 import { Popover, PopoverContent, PopoverTrigger } from './popover'
 import {
   Command,
@@ -43,9 +44,9 @@ const Combobox = React.forwardRef<HTMLButtonElement, ComboboxProps>(
       options,
       value,
       onChange,
-      placeholder = 'Auswählen…',
-      searchPlaceholder = 'Suchen…',
-      emptyText = 'Keine Treffer.',
+      placeholder,
+      searchPlaceholder,
+      emptyText,
       id,
       disabled,
       className,
@@ -56,8 +57,12 @@ const Combobox = React.forwardRef<HTMLButtonElement, ComboboxProps>(
     },
     ref,
   ) => {
+    const { t } = useUiText()
     const [open, setOpen] = React.useState(false)
     const selected = options.find((o) => o.value === value)
+    const resolvedPlaceholder = placeholder ?? t('combobox.placeholder')
+    const resolvedSearchPlaceholder = searchPlaceholder ?? t('combobox.searchPlaceholder')
+    const resolvedEmptyText = emptyText ?? t('combobox.empty')
 
     const groups = React.useMemo(() => {
       const map = new Map<string, ComboboxOption[]>()
@@ -91,7 +96,7 @@ const Combobox = React.forwardRef<HTMLButtonElement, ComboboxProps>(
             )}
           >
             <span className="line-clamp-1 text-left">
-              {selected ? selected.label : placeholder}
+              {selected ? selected.label : resolvedPlaceholder}
             </span>
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </button>
@@ -101,9 +106,9 @@ const Combobox = React.forwardRef<HTMLButtonElement, ComboboxProps>(
           className={cn('w-[var(--radix-popover-trigger-width)] p-0', contentClassName)}
         >
           <Command>
-            <CommandInput placeholder={searchPlaceholder} />
+            <CommandInput placeholder={resolvedSearchPlaceholder} />
             <CommandList>
-              <CommandEmpty>{emptyText}</CommandEmpty>
+              <CommandEmpty>{resolvedEmptyText}</CommandEmpty>
               {groups.map((group) => (
                 <CommandGroup key={group.label || '_ungrouped'} heading={group.label || undefined}>
                   {group.options.map((option) => (

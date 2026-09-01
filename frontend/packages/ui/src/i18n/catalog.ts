@@ -26,7 +26,7 @@ export const uiDe = {
   datePicker: { placeholder: 'Datum auswählen' },
   fileUpload: { remove: 'Datei entfernen', prompt: 'Klicken zum Hochladen' },
   statusCard: { moreInfo: 'Weitere Informationen' },
-  stepper: { progress: 'Fortschritt' },
+  stepper: { progress: 'Fortschritt', stepOf: 'Schritt {current} von {total}' },
   timeRange: { label: 'Zeitraum' },
   camera: { preview: 'Kamera-Vorschau' },
   accuracy: {
@@ -35,6 +35,8 @@ export const uiDe = {
     fair: 'Mäßig',
     poor: 'Ungenau',
     searching: 'Suche …',
+    ariaLabel: 'GPS-Genauigkeit: {label}',
+    ariaLabelWithValue: 'GPS-Genauigkeit: {label}, {value}',
   },
 } as const
 
@@ -77,7 +79,7 @@ export const uiEn = {
   datePicker: { placeholder: 'Select date' },
   fileUpload: { remove: 'Remove file', prompt: 'Click to upload' },
   statusCard: { moreInfo: 'More information' },
-  stepper: { progress: 'Progress' },
+  stepper: { progress: 'Progress', stepOf: 'Step {current} of {total}' },
   timeRange: { label: 'Time range' },
   camera: { preview: 'Camera preview' },
   accuracy: {
@@ -86,6 +88,8 @@ export const uiEn = {
     fair: 'Fair',
     poor: 'Poor',
     searching: 'Searching …',
+    ariaLabel: 'GPS accuracy: {label}',
+    ariaLabelWithValue: 'GPS accuracy: {label}, {value}',
   },
 } as const satisfies UiCatalog
 

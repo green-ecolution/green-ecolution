@@ -3,16 +3,20 @@ import { ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 import { Button, type ButtonProps } from '@/components/ui/button'
+import { useUiText } from '@/i18n'
 
-const Pagination = ({ className, ...props }: React.ComponentProps<'nav'>) => (
-  <nav
-    role="navigation"
-    aria-label="pagination"
-    data-slot="pagination"
-    className={cn('mx-auto flex w-full justify-center', className)}
-    {...props}
-  />
-)
+const Pagination = ({ className, ...props }: React.ComponentProps<'nav'>) => {
+  const { t } = useUiText()
+  return (
+    <nav
+      role="navigation"
+      aria-label={t('pagination.label')}
+      data-slot="pagination"
+      className={cn('mx-auto flex w-full justify-center', className)}
+      {...props}
+    />
+  )
+}
 Pagination.displayName = 'Pagination'
 
 const PaginationContent = React.forwardRef<HTMLUListElement, React.ComponentProps<'ul'>>(
@@ -60,45 +64,54 @@ PaginationLink.displayName = 'PaginationLink'
 const PaginationPrevious = ({
   className,
   ...props
-}: React.ComponentProps<typeof PaginationLink>) => (
-  <PaginationLink
-    data-slot="pagination-previous"
-    aria-label="Zur vorherigen Seite"
-    size="icon"
-    className={className}
-    {...props}
-  >
-    <ChevronLeft className="h-4 w-4" />
-    <span className="sr-only">Zurück</span>
-  </PaginationLink>
-)
+}: React.ComponentProps<typeof PaginationLink>) => {
+  const { t } = useUiText()
+  return (
+    <PaginationLink
+      data-slot="pagination-previous"
+      aria-label={t('pagination.goToPrevious')}
+      size="icon"
+      className={className}
+      {...props}
+    >
+      <ChevronLeft className="h-4 w-4" />
+      <span className="sr-only">{t('pagination.previous')}</span>
+    </PaginationLink>
+  )
+}
 PaginationPrevious.displayName = 'PaginationPrevious'
 
-const PaginationNext = ({ className, ...props }: React.ComponentProps<typeof PaginationLink>) => (
-  <PaginationLink
-    data-slot="pagination-next"
-    aria-label="Zur nächsten Seite"
-    size="icon"
-    className={className}
-    {...props}
-  >
-    <ChevronRight className="h-4 w-4" />
-    <span className="sr-only">Weiter</span>
-  </PaginationLink>
-)
+const PaginationNext = ({ className, ...props }: React.ComponentProps<typeof PaginationLink>) => {
+  const { t } = useUiText()
+  return (
+    <PaginationLink
+      data-slot="pagination-next"
+      aria-label={t('pagination.goToNext')}
+      size="icon"
+      className={className}
+      {...props}
+    >
+      <ChevronRight className="h-4 w-4" />
+      <span className="sr-only">{t('pagination.next')}</span>
+    </PaginationLink>
+  )
+}
 PaginationNext.displayName = 'PaginationNext'
 
-const PaginationEllipsis = ({ className, ...props }: React.ComponentProps<'span'>) => (
-  <span
-    aria-hidden
-    data-slot="pagination-ellipsis"
-    className={cn('flex h-9 w-9 items-center justify-center text-dark-400', className)}
-    {...props}
-  >
-    <MoreHorizontal className="h-4 w-4" />
-    <span className="sr-only">Weitere Seiten</span>
-  </span>
-)
+const PaginationEllipsis = ({ className, ...props }: React.ComponentProps<'span'>) => {
+  const { t } = useUiText()
+  return (
+    <span
+      aria-hidden
+      data-slot="pagination-ellipsis"
+      className={cn('flex h-9 w-9 items-center justify-center text-dark-400', className)}
+      {...props}
+    >
+      <MoreHorizontal className="h-4 w-4" />
+      <span className="sr-only">{t('pagination.morePages')}</span>
+    </span>
+  )
+}
 PaginationEllipsis.displayName = 'PaginationEllipsis'
 
 export interface PaginationData {
@@ -115,6 +128,7 @@ export interface SimplePaginationProps {
 }
 
 function SimplePagination({ pagination, onPageChange, className }: SimplePaginationProps) {
+  const { t } = useUiText()
   const { currentPage, totalPages, hasNextPage, hasPreviousPage } = pagination
 
   const getPageNumbers = () => {
@@ -158,7 +172,7 @@ function SimplePagination({ pagination, onPageChange, className }: SimplePaginat
             size="icon"
             onClick={() => onPageChange(currentPage - 1)}
             disabled={!hasPreviousPage}
-            aria-label="Vorherige Seite"
+            aria-label={t('pagination.previousPage')}
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
@@ -191,7 +205,7 @@ function SimplePagination({ pagination, onPageChange, className }: SimplePaginat
             size="icon"
             onClick={() => onPageChange(currentPage + 1)}
             disabled={!hasNextPage}
-            aria-label="Nächste Seite"
+            aria-label={t('pagination.nextPage')}
           >
             <ChevronRight className="h-4 w-4" />
           </Button>

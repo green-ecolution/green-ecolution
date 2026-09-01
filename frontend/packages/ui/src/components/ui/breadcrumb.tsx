@@ -3,13 +3,17 @@ import { Slot } from '@radix-ui/react-slot'
 import { ChevronRight, MoreHorizontal } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
+import { useUiText } from '@/i18n'
 
 const Breadcrumb = React.forwardRef<
   HTMLElement,
   React.ComponentPropsWithoutRef<'nav'> & {
     separator?: React.ReactNode
   }
->(({ ...props }, ref) => <nav ref={ref} aria-label="breadcrumb" {...props} />)
+>(({ ...props }, ref) => {
+  const { t } = useUiText()
+  return <nav ref={ref} aria-label={t('breadcrumb.label')} {...props} />
+})
 Breadcrumb.displayName = 'Breadcrumb'
 
 const BreadcrumbList = React.forwardRef<HTMLOListElement, React.ComponentPropsWithoutRef<'ol'>>(
@@ -77,18 +81,21 @@ const BreadcrumbSeparator = ({ children, className, ...props }: React.ComponentP
 )
 BreadcrumbSeparator.displayName = 'BreadcrumbSeparator'
 
-const BreadcrumbEllipsis = ({ className, ...props }: React.ComponentProps<'span'>) => (
-  <span
-    className={cn(
-      'flex h-6 w-6 items-center justify-center cursor-pointer hover:bg-accent rounded transition-colors',
-      className,
-    )}
-    {...props}
-  >
-    <MoreHorizontal className="h-3.5 w-3.5" />
-    <span className="sr-only">Mehr</span>
-  </span>
-)
+const BreadcrumbEllipsis = ({ className, ...props }: React.ComponentProps<'span'>) => {
+  const { t } = useUiText()
+  return (
+    <span
+      className={cn(
+        'flex h-6 w-6 items-center justify-center cursor-pointer hover:bg-accent rounded transition-colors',
+        className,
+      )}
+      {...props}
+    >
+      <MoreHorizontal className="h-3.5 w-3.5" />
+      <span className="sr-only">{t('breadcrumb.more')}</span>
+    </span>
+  )
+}
 BreadcrumbEllipsis.displayName = 'BreadcrumbEllipsis'
 
 export {

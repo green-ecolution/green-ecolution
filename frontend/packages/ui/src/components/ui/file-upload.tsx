@@ -4,6 +4,7 @@ import { Upload, X, FileIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
+import { useUiText } from '@/i18n'
 
 export interface FileUploadProps extends Omit<
   React.InputHTMLAttributes<HTMLInputElement>,
@@ -22,6 +23,7 @@ const FileUpload = React.forwardRef<HTMLInputElement, FileUploadProps>(
     { className, label, description, error, value, onChange, onClear, accept, id, ...props },
     ref,
   ) => {
+    const { t } = useUiText()
     const generatedId = React.useId()
     const inputId = id || generatedId
     const inputRef = React.useRef<HTMLInputElement>(null)
@@ -92,7 +94,7 @@ const FileUpload = React.forwardRef<HTMLInputElement, FileUploadProps>(
                 className="ml-2"
               >
                 <X className="h-4 w-4" />
-                <span className="sr-only">Datei entfernen</span>
+                <span className="sr-only">{t('fileUpload.remove')}</span>
               </Button>
             </div>
           ) : (
@@ -103,7 +105,7 @@ const FileUpload = React.forwardRef<HTMLInputElement, FileUploadProps>(
               className="flex flex-col items-center gap-2 text-center"
             >
               <Upload className="h-8 w-8 text-muted-foreground" />
-              <span className="text-sm font-medium">Klicken zum Hochladen</span>
+              <span className="text-sm font-medium">{t('fileUpload.prompt')}</span>
               {description && <span className="text-xs text-muted-foreground">{description}</span>}
             </button>
           )}
