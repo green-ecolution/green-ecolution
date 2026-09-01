@@ -190,9 +190,11 @@ impl ClusterService {
         }
         self.writer.delete(id).await?;
         // Comments have no cascading FK: the subject is polymorphic.
-        self.comment_writer
+        let deleted_comments = self
+            .comment_writer
             .delete_for_subject(CommentSubject::TreeCluster(id))
             .await?;
+        tracing::debug!(deleted_comments, "removed comments for deleted cluster");
         self.event_bus.publish_all(events).await;
         Ok(())
     }
