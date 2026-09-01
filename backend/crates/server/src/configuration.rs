@@ -97,6 +97,15 @@ pub struct ApplicationSettings {
     pub base_url: Url,
     #[serde(default)]
     pub environment: Environment,
+    /// Upper bound on how long a request may occupy a connection. Must stay
+    /// above the slowest downstream client timeout (Streamlet: 30 s), or route
+    /// optimization is cut off by the outer bound instead of the inner one.
+    #[serde(default = "default_request_timeout_secs")]
+    pub request_timeout_secs: u64,
+}
+
+fn default_request_timeout_secs() -> u64 {
+    60
 }
 
 fn deserialize_url<'de, D>(deserializer: D) -> Result<Url, D::Error>
@@ -384,7 +393,61 @@ pub enum ConfigError {
     Source(#[from] config::ConfigError),
 }
 
+/// A configuration an environment must not run with. Both cases are a single
+/// mistyped override away and would disable a protection without any visible
+/// symptom, so the process refuses to start rather than serving traffic.
+#[derive(Debug, thiserror::Error, PartialEq, Eq)]
+pub enum InsecureConfiguration {
+    #[error(
+        "auth.enabled = false is refused in the {environment} environment: it grants every caller \
+         unrestricted access. Deploy a login-free instance as APP_ENVIRONMENT=demo instead."
+    )]
+    AuthDisabled { environment: &'static str },
+
+    #[error(
+        "cors.allowed_origins = [\"*\"] is refused in the {environment} environment. \
+         List the frontend origins explicitly."
+    )]
+    WildcardCors { environment: &'static str },
+}
+
 impl Settings {
+    /// Startup gate: refuses configurations an environment must not run with.
+    /// Softer findings are reported by [`Self::security_advisories`].
+    pub fn ensure_secure(&self) -> Result<(), InsecureConfiguration> {
+        let environment = self.application.environment.as_str();
+
+        if self.application.environment.requires_authentication() && !self.auth.enabled {
+            return Err(InsecureConfiguration::AuthDisabled { environment });
+        }
+
+        if self
+            .application
+            .environment
+            .requires_explicit_cors_origins()
+            && self.cors.allowed_origins.iter().any(|o| o == "*")
+        {
+            return Err(InsecureConfiguration::WildcardCors { environment });
+        }
+
+        Ok(())
+    }
+
+    /// Weak spots worth logging at startup that are not severe enough to
+    /// refuse the boot. Hard refusals live in [`Self::ensure_secure`].
+    pub fn security_advisories(&self) -> Vec<String> {
+        let mut advisories = Vec::new();
+        if self.auth.enabled && self.auth.expected_audience.is_none() {
+            advisories.push(
+                "auth.expected_audience is unset: every token the realm issues is accepted, \
+                 including tokens minted for another client. Add an audience mapper in \
+                 Keycloak and set auth.expected_audience."
+                    .to_string(),
+            );
+        }
+        advisories
+    }
+
     /// Build a `Settings` value for integration tests. Database settings are
     /// dummy — the test pool is created separately and passed to
     /// `Application::build_with_pool`.
@@ -407,6 +470,7 @@ impl Settings {
                 host: "127.0.0.1".into(),
                 base_url: Url::parse("http://127.0.0.1").expect("test base_url"),
                 environment: Environment::Local,
+                request_timeout_secs: default_request_timeout_secs(),
             },
             log: LogSettings {
                 level: "warn".into(),
@@ -471,6 +535,10 @@ pub enum Environment {
     #[default]
     Local,
     Staging,
+    /// Publicly reachable instance that deliberately runs without a login.
+    /// Its own environment so a login-free deployment is a named choice
+    /// rather than production with the lock quietly taken off.
+    Demo,
     Production,
 }
 
@@ -479,7 +547,24 @@ impl Environment {
         match self {
             Environment::Local => "local",
             Environment::Staging => "staging",
+            Environment::Demo => "demo",
             Environment::Production => "production",
+        }
+    }
+
+    fn requires_authentication(&self) -> bool {
+        match self {
+            Environment::Staging | Environment::Production => true,
+            Environment::Local | Environment::Demo => false,
+        }
+    }
+
+    /// Every internet-facing environment needs a real origin list — the demo
+    /// included, whose missing login makes a wildcard worse, not harmless.
+    fn requires_explicit_cors_origins(&self) -> bool {
+        match self {
+            Environment::Staging | Environment::Demo | Environment::Production => true,
+            Environment::Local => false,
         }
     }
 }
@@ -491,9 +576,10 @@ impl TryFrom<String> for Environment {
         match value.to_lowercase().as_str() {
             "local" => Ok(Self::Local),
             "staging" => Ok(Self::Staging),
+            "demo" => Ok(Self::Demo),
             "production" => Ok(Self::Production),
             other => Err(format!(
-                "{other} is not a supported environment. Use `local`, `staging`, or `production`."
+                "{other} is not a supported environment. Use `local`, `staging`, `demo`, or `production`."
             )),
         }
     }
@@ -502,6 +588,128 @@ impl TryFrom<String> for Environment {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn auth(enabled: bool, expected_audience: Option<&str>) -> AuthSettings {
+        AuthSettings {
+            enabled,
+            issuer_url: "http://localhost/realms/green-ecolution".into(),
+            frontend_client_id: "frontend".into(),
+            backend_client_id: "backend".into(),
+            backend_client_secret: SecretString::from("secret".to_string()),
+            jwks_refresh_interval_secs: 3600,
+            jwks_refresh_timeout_secs: 5,
+            default_redirect_url: "http://localhost/cb".into(),
+            expected_audience: expected_audience.map(str::to_string),
+        }
+    }
+
+    fn settings_in(env: Environment, auth_enabled: bool, origins: &[&str]) -> Settings {
+        let mut settings = Settings::for_test(auth(auth_enabled, Some("backend")));
+        settings.application.environment = env;
+        settings.cors.allowed_origins = origins.iter().map(|o| (*o).to_string()).collect();
+        settings
+    }
+
+    const REAL_ORIGIN: [&str; 1] = ["https://app.green-ecolution.de"];
+
+    #[test]
+    fn production_refuses_to_start_without_authentication() {
+        let settings = settings_in(Environment::Production, false, &REAL_ORIGIN);
+
+        assert_eq!(
+            settings.ensure_secure(),
+            Err(InsecureConfiguration::AuthDisabled {
+                environment: "production"
+            })
+        );
+    }
+
+    #[test]
+    fn staging_refuses_to_start_without_authentication() {
+        let settings = settings_in(Environment::Staging, false, &REAL_ORIGIN);
+
+        assert!(settings.ensure_secure().is_err());
+    }
+
+    /// The demo instance is meant to run without a login. Naming that as its
+    /// own environment keeps it from being a production deployment with the
+    /// lock quietly taken off.
+    #[test]
+    fn demo_may_run_without_authentication() {
+        let settings = settings_in(Environment::Demo, false, &REAL_ORIGIN);
+
+        assert_eq!(settings.ensure_secure(), Ok(()));
+    }
+
+    #[test]
+    fn production_refuses_a_wildcard_cors_origin() {
+        let settings = settings_in(Environment::Production, true, &["*"]);
+
+        assert_eq!(
+            settings.ensure_secure(),
+            Err(InsecureConfiguration::WildcardCors {
+                environment: "production"
+            })
+        );
+    }
+
+    /// Demo is internet-facing too, so the origin list stays mandatory even
+    /// though the login does not.
+    #[test]
+    fn demo_still_refuses_a_wildcard_cors_origin() {
+        let settings = settings_in(Environment::Demo, false, &["*"]);
+
+        assert!(settings.ensure_secure().is_err());
+    }
+
+    #[test]
+    fn local_may_run_wide_open() {
+        let settings = settings_in(Environment::Local, false, &["*"]);
+
+        assert_eq!(settings.ensure_secure(), Ok(()));
+    }
+
+    #[test]
+    fn a_sound_production_configuration_passes() {
+        let settings = settings_in(Environment::Production, true, &REAL_ORIGIN);
+
+        assert_eq!(settings.ensure_secure(), Ok(()));
+    }
+
+    #[test]
+    fn demo_is_a_recognised_environment_value() {
+        assert!(matches!(
+            Environment::try_from("demo".to_string()),
+            Ok(Environment::Demo)
+        ));
+    }
+
+    #[test]
+    fn an_enabled_auth_stack_without_an_expected_audience_is_flagged() {
+        let settings = Settings::for_test(auth(true, None));
+
+        assert!(
+            settings
+                .security_advisories()
+                .iter()
+                .any(|a| a.contains("expected_audience")),
+            "without an audience the API accepts every token the realm issues"
+        );
+    }
+
+    #[test]
+    fn a_configured_expected_audience_clears_the_advisory() {
+        let settings = Settings::for_test(auth(true, Some("backend")));
+
+        assert!(settings.security_advisories().is_empty());
+    }
+
+    #[test]
+    fn a_disabled_auth_stack_is_not_asked_for_an_audience() {
+        let settings = Settings::for_test(auth(false, None));
+
+        assert!(settings.security_advisories().is_empty());
+    }
 
     #[test]
     fn routing_settings_defaults_are_flensburg() {

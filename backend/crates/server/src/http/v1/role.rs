@@ -9,7 +9,11 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 use uuid::Uuid;
 
 use crate::{
-    http::{AppState, auth::extractor::AuthUserExtractor, v1::scope::resolve_target_org},
+    http::{
+        AppState,
+        auth::extractor::AuthUserExtractor,
+        v1::scope::{ensure_visible, resolve_target_org},
+    },
     service::{ServiceError, authorization::RoleChange},
 };
 use domain::{
@@ -114,21 +118,27 @@ pub async fn list_permissions(_user: AuthUserExtractor) -> Json<Vec<String>> {
 #[utoipa::path(get, path = "/organizations/{org_id}/roles", tag = "Roles",
     operation_id = "listOrgRoles",
     summary = "List roles owned by an organization",
-    description = "Returns every role instantiated for the given organization, including the copies of the five templates created alongside it.",
+    description = "Returns every role instantiated for the given organization, including the copies of the five templates created alongside it. Requires role:read in that organization.",
     params(("org_id" = Uuid, Path, description = "Organization id")),
     responses(
         (status = 200, description = "Roles owned by the organization", body = Vec<RoleResponse>),
         (status = 401, description = "Unauthorized", body = ErrorBody),
+        (status = 403, description = "Forbidden", body = ErrorBody),
         (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all, fields(organization.id = %org_id))]
 pub async fn list_org_roles(
     State(state): State<Arc<AppState>>,
-    _user: AuthUserExtractor,
+    user: AuthUserExtractor,
     Path(org_id): Path<Uuid>,
 ) -> Result<Json<Vec<RoleResponse>>, ServiceError> {
-    let views = state.role_service.by_organization(Id::new(org_id)).await?;
+    let id = Id::new(org_id);
+    state
+        .authorization_service
+        .require(user.id, Permission::new(Resource::Role, Action::Read), id)
+        .await?;
+    let views = state.role_service.by_organization(id).await?;
     Ok(Json(views.iter().map(Into::into).collect()))
 }
 
@@ -224,21 +234,32 @@ pub async fn create_role(
 #[utoipa::path(get, path = "/roles/{role_id}", tag = "Roles",
     operation_id = "getRole",
     summary = "Get a single role",
+    description = "Requires role:read in the role's organization; a role outside the caller's visible subtree answers 404 rather than 403 so callers cannot probe for existence. Templates carry no organization and stay readable.",
     params(("role_id" = Uuid, Path, description = "Role id")),
     responses(
         (status = 200, description = "The role", body = RoleResponse),
         (status = 401, description = "Unauthorized", body = ErrorBody),
-        (status = 404, description = "Not found", body = ErrorBody),
+        (status = 404, description = "Not found, or not visible to the caller", body = ErrorBody),
         (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all, fields(role.id = %role_id))]
 pub async fn get_role(
     State(state): State<Arc<AppState>>,
-    _user: AuthUserExtractor,
+    user: AuthUserExtractor,
     Path(role_id): Path<Uuid>,
 ) -> Result<Json<RoleResponse>, ServiceError> {
     let view = state.role_service.by_id(Id::new(role_id)).await?;
+    // Templates own no organization and are already listed unscoped under
+    // /roles/templates; scoping them would only break the copy-on-create flow.
+    if let Some(org) = view.organization_id {
+        let ctx = state.authorization_service.context_for(user.id).await?;
+        ensure_visible(
+            &ctx,
+            Permission::new(Resource::Role, Action::Read),
+            org.value(),
+        )?;
+    }
     Ok(Json((&view).into()))
 }
 

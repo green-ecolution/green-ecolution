@@ -823,6 +823,16 @@
               }
             }
           },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
           "500": {
             "description": "Internal server error",
             "content": {
@@ -855,6 +865,16 @@
               }
             }
           },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
           "500": {
             "description": "Internal server error",
             "content": {
@@ -883,6 +903,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/DataStatisticsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
                 }
               }
             }
@@ -1321,7 +1351,7 @@
           "Roles"
         ],
         "summary": "List roles owned by an organization",
-        "description": "Returns every role instantiated for the given organization, including the copies of the five templates created alongside it.",
+        "description": "Returns every role instantiated for the given organization, including the copies of the five templates created alongside it. Requires role:read in that organization.",
         "operationId": "listOrgRoles",
         "parameters": [
           {
@@ -1351,6 +1381,16 @@
           },
           "401": {
             "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
             "content": {
               "application/json": {
                 "schema": {
@@ -2090,6 +2130,7 @@
           "Roles"
         ],
         "summary": "Get a single role",
+        "description": "Requires role:read in the role's organization; a role outside the caller's visible subtree answers 404 rather than 403 so callers cannot probe for existence. Templates carry no organization and stay readable.",
         "operationId": "getRole",
         "parameters": [
           {
@@ -2125,7 +2166,7 @@
             }
           },
           "404": {
-            "description": "Not found",
+            "description": "Not found, or not visible to the caller",
             "content": {
               "application/json": {
                 "schema": {

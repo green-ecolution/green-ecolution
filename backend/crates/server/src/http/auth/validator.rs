@@ -19,6 +19,10 @@ impl TokenValidator {
         validation.set_issuer(&[&settings.issuer_url]);
         if let Some(aud) = &settings.expected_audience {
             validation.set_audience(&[aud]);
+            // `set_audience` alone only checks the claim when it is present, so
+            // a token carrying no `aud` at all would still pass. Requiring the
+            // claim closes that hole.
+            validation.set_required_spec_claims(&["exp", "aud"]);
         } else {
             // Keycloak's default `aud` is "account"; don't enforce unless explicitly configured.
             validation.validate_aud = false;

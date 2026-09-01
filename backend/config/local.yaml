@@ -12,5 +12,9 @@ auth:
   backend_client_id: "backend"
   backend_client_secret: "cVBGgWNlbwSLydLZfZMvTvmNCeiSmLGP"
   default_redirect_url: "http://localhost:3000/auth/callback"
+  # Matches the backend-audience mapper on the frontend client in
+  # .docker/infra/keycloak/green-ecolution-realm.json. Staging and production
+  # get this only once their realms carry the same mapper.
+  expected_audience: "backend"
 routing:
   enabled: true

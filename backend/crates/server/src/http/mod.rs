@@ -1,7 +1,9 @@
 use std::sync::Arc;
+use std::time::Duration;
 
 use axum::{Router, http::HeaderValue};
 use tower_http::{
+    catch_panic::CatchPanicLayer,
     cors::{Any, CorsLayer},
     request_id::{PropagateRequestIdLayer, SetRequestIdLayer},
     trace::{DefaultOnFailure, TraceLayer},
@@ -151,6 +153,7 @@ pub fn router(
     cors: &CorsSettings,
     auth_layer: AuthLayer,
     oidc: &OidcSwaggerSettings,
+    request_timeout: Duration,
 ) -> Router {
     let (router, mut api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
         .nest("/api", health::routes())
@@ -159,24 +162,87 @@ pub fn router(
 
     rewrite_paths_for_client(&mut api, base_url);
 
-    let trace_layer = TraceLayer::new_for_http()
-        .make_span_with(make_span)
-        .on_response(on_response)
-        .on_failure(DefaultOnFailure::new().level(::tracing::Level::ERROR));
-
-    router
+    let router = router
         .route("/api/config.js", axum::routing::get(frontend_config_js))
         .merge(swagger_ui(api, oidc))
         // Without these, an unknown route and a wrong method answer with an
         // empty body, which a client that parses every response as JSON reads
         // as a parse failure rather than as the 404/405 it is.
         .fallback(route_not_found)
-        .method_not_allowed_fallback(method_not_allowed)
+        .method_not_allowed_fallback(method_not_allowed);
+
+    apply_middleware(router, cors, request_timeout).with_state(state)
+}
+
+/// The outer middleware stack, innermost layer first. Kept separate from
+/// [`router`] so the cross-cutting behaviour can be exercised against a toy
+/// router instead of the whole application.
+fn apply_middleware<S>(
+    router: Router<S>,
+    cors: &CorsSettings,
+    request_timeout: Duration,
+) -> Router<S>
+where
+    S: Clone + Send + Sync + 'static,
+{
+    let trace_layer = TraceLayer::new_for_http()
+        .make_span_with(make_span)
+        .on_response(on_response)
+        .on_failure(DefaultOnFailure::new().level(::tracing::Level::ERROR));
+
+    router
+        .layer(axum::middleware::from_fn_with_state(
+            request_timeout,
+            enforce_timeout,
+        ))
+        .layer(CatchPanicLayer::custom(panic_response))
         .layer(cors_layer(cors))
         .layer(PropagateRequestIdLayer::new(REQUEST_ID_HEADER))
         .layer(trace_layer)
         .layer(SetRequestIdLayer::new(REQUEST_ID_HEADER, MakeRequestUuid))
-        .with_state(state)
+}
+
+/// A panic would otherwise travel up as a dropped connection: the client sees
+/// a transport error instead of a 500 and the trace span records no status.
+fn panic_response(panic: Box<dyn std::any::Any + Send + 'static>) -> axum::response::Response {
+    let detail = panic
+        .downcast_ref::<String>()
+        .map(String::as_str)
+        .or_else(|| panic.downcast_ref::<&str>().copied())
+        .unwrap_or("unknown panic payload");
+    ::tracing::error!(panic = detail, kind = "panic", "request handler panicked");
+
+    v1::error::coded_error_response(
+        axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+        "internal server error",
+        "request.panic",
+    )
+}
+
+/// Bounds how long a request may occupy a connection when a downstream
+/// dependency stalls. Written by hand rather than with `tower_http`'s timeout
+/// layer, whose 408 carries an empty body — clients parse every response as
+/// JSON.
+async fn enforce_timeout(
+    axum::extract::State(timeout): axum::extract::State<Duration>,
+    request: axum::extract::Request,
+    next: axum::middleware::Next,
+) -> axum::response::Response {
+    match tokio::time::timeout(timeout, next.run(request)).await {
+        Ok(response) => response,
+        Err(_) => {
+            ::tracing::warn!(
+                timeout_secs = timeout.as_secs_f64(),
+                kind = "timeout",
+                "request exceeded the configured timeout"
+            );
+            v1::error::coded_error_response(
+                axum::http::StatusCode::REQUEST_TIMEOUT,
+                "request timed out",
+                "request.timeout",
+            )
+        }
+    }
 }
 
 async fn route_not_found() -> axum::response::Response {
@@ -275,4 +341,94 @@ fn cors_layer(config: &CorsSettings) -> CorsLayer {
         .allow_origin(origins)
         .allow_methods(Any)
         .allow_headers(Any)
+}
+
+#[cfg(test)]
+mod middleware_tests {
+    use super::*;
+    use axum::{
+        Router,
+        body::Body,
+        http::{Request, StatusCode},
+        routing::get,
+    };
+    use tower::ServiceExt;
+
+    fn permissive_cors() -> CorsSettings {
+        CorsSettings {
+            allowed_origins: vec!["*".to_string()],
+        }
+    }
+
+    async fn body_json(response: axum::response::Response) -> serde_json::Value {
+        let bytes = axum::body::to_bytes(response.into_body(), usize::MAX)
+            .await
+            .expect("body");
+        serde_json::from_slice(&bytes).expect("every response must parse as JSON")
+    }
+
+    /// Without a catch-panic layer axum drops the connection, which a client
+    /// sees as a transport error rather than as the 500 it is — and the trace
+    /// span never records a status.
+    async fn boom() -> &'static str {
+        panic!("handler exploded")
+    }
+
+    #[tokio::test]
+    async fn a_panicking_handler_answers_with_a_json_500() {
+        let app = apply_middleware(
+            Router::new().route("/boom", get(boom)),
+            &permissive_cors(),
+            Duration::from_secs(30),
+        );
+
+        let response = app
+            .oneshot(Request::builder().uri("/boom").body(Body::empty()).unwrap())
+            .await
+            .expect("the panic must not tear down the connection");
+
+        assert_eq!(response.status(), StatusCode::INTERNAL_SERVER_ERROR);
+        let body = body_json(response).await;
+        assert_eq!(body["code"], "request.panic");
+    }
+
+    #[tokio::test]
+    async fn a_request_outliving_the_timeout_answers_with_json() {
+        let app = apply_middleware(
+            Router::new().route(
+                "/slow",
+                get(|| async {
+                    tokio::time::sleep(Duration::from_secs(30)).await;
+                    "never"
+                }),
+            ),
+            &permissive_cors(),
+            Duration::from_millis(50),
+        );
+
+        let response = app
+            .oneshot(Request::builder().uri("/slow").body(Body::empty()).unwrap())
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::REQUEST_TIMEOUT);
+        let body = body_json(response).await;
+        assert_eq!(body["code"], "request.timeout");
+    }
+
+    #[tokio::test]
+    async fn a_handler_within_the_timeout_is_untouched() {
+        let app = apply_middleware(
+            Router::new().route("/fast", get(|| async { "ok" })),
+            &permissive_cors(),
+            Duration::from_secs(30),
+        );
+
+        let response = app
+            .oneshot(Request::builder().uri("/fast").body(Body::empty()).unwrap())
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::OK);
+    }
 }

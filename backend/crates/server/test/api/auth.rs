@@ -130,3 +130,64 @@ async fn auth_disabled_user_list_returns_demo_user_without_keycloak() {
         Some("toni.tester@green-ecolution.de")
     );
 }
+
+/// Keycloak is a shared realm: without an audience check the API accepts any
+/// token the realm ever issued, including one minted for a different client.
+mod audience {
+    use serde_json::json;
+    use uuid::Uuid;
+
+    use crate::auth_helpers::AuthHarness;
+    use crate::helpers::spawn_app_with_auth;
+
+    /// Needs only a valid token, no permission — so the status distinguishes
+    /// "token rejected" from "token accepted" without any RBAC noise.
+    const AUTH_ONLY_ROUTE: &str = "/api/v1/info/server";
+
+    async fn get_with(token: &str, app: &crate::helpers::TestApp) -> reqwest::Response {
+        reqwest::Client::new()
+            .get(format!("{}{AUTH_ONLY_ROUTE}", app.address))
+            .bearer_auth(token)
+            .send()
+            .await
+            .unwrap()
+    }
+
+    #[tokio::test]
+    async fn a_token_without_the_configured_audience_is_rejected() {
+        let harness = AuthHarness::start().await;
+        let app = spawn_app_with_auth(harness.auth_settings_with_audience("backend")).await;
+        // Keycloak's default for a public client: aud = "account".
+        let token = harness.sign_token(json!({ "aud": "account" }));
+
+        let response = get_with(&token, &app).await;
+
+        assert_eq!(
+            response.status().as_u16(),
+            401,
+            "a token minted for another client of the same realm must not open this API"
+        );
+    }
+
+    #[tokio::test]
+    async fn a_token_carrying_the_configured_audience_is_accepted() {
+        let harness = AuthHarness::start().await;
+        let app = spawn_app_with_auth(harness.auth_settings_with_audience("backend")).await;
+        let token = harness.sign_token(json!({ "aud": ["backend", "account"] }));
+
+        let response = get_with(&token, &app).await;
+
+        assert_eq!(response.status().as_u16(), 200);
+    }
+
+    #[tokio::test]
+    async fn a_token_without_any_audience_claim_is_rejected() {
+        let harness = AuthHarness::start().await;
+        let app = spawn_app_with_auth(harness.auth_settings_with_audience("backend")).await;
+        let token = harness.sign_token(json!({ "sub": Uuid::now_v7().to_string() }));
+
+        let response = get_with(&token, &app).await;
+
+        assert_eq!(response.status().as_u16(), 401);
+    }
+}

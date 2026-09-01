@@ -1,4 +1,66 @@
+use serde_json::json;
+use uuid::Uuid;
+
 use crate::{helpers::spawn_app, organizations::ROOT_ORG_ID};
+
+/// Seeds an org under root, a role carrying `permissions`, and a user in
+/// that org holding it. Returns (org_id, role_id, token).
+async fn seed_user_holding(
+    harness: &crate::auth_helpers::AuthHarness,
+    app: &crate::helpers::TestApp,
+    org_name: &str,
+    permissions: &[&str],
+) -> (Uuid, Uuid, String) {
+    let org_id: Uuid = sqlx::query_scalar!(
+        r#"INSERT INTO organizations (id, parent_id, name) VALUES (gen_random_uuid(), $1::uuid, $2) RETURNING id"#,
+        Uuid::parse_str(ROOT_ORG_ID).unwrap(),
+        org_name
+    )
+    .fetch_one(&app.db_pool)
+    .await
+    .unwrap();
+    let role_id = insert_role(app, org_id, "Org-Admin", permissions).await;
+    let user_id = Uuid::new_v4();
+    sqlx::query!(
+        r#"INSERT INTO user_profiles (id, organization_id) VALUES ($1, $2)"#,
+        user_id,
+        org_id
+    )
+    .execute(&app.db_pool)
+    .await
+    .unwrap();
+    sqlx::query!(
+        r#"INSERT INTO role_assignments (user_id, role_id) VALUES ($1, $2)"#,
+        user_id,
+        role_id
+    )
+    .execute(&app.db_pool)
+    .await
+    .unwrap();
+    let token = harness.sign_token(json!({ "sub": user_id.to_string() }));
+    (org_id, role_id, token)
+}
+
+async fn insert_role(
+    app: &crate::helpers::TestApp,
+    org_id: Uuid,
+    name: &str,
+    permissions: &[&str],
+) -> Uuid {
+    let permissions: Vec<String> = permissions.iter().map(|p| (*p).to_string()).collect();
+    // Indentation inside the literal is load-bearing: sqlx keys its offline
+    // cache on the exact query text, so reflowing this churns `.sqlx/`.
+    sqlx::query_scalar!(
+        r#"INSERT INTO roles (id, organization_id, name, permissions)
+               VALUES (gen_random_uuid(), $1, $2, $3) RETURNING id"#,
+        org_id,
+        name,
+        &permissions
+    )
+    .fetch_one(&app.db_pool)
+    .await
+    .unwrap()
+}
 
 async fn create_org(app: &crate::helpers::TestApp, name: &str) -> String {
     let resp = app
@@ -166,66 +228,10 @@ async fn update_and_delete_work_for_org_roles_but_not_templates() {
 /// Real-auth harness for the self-lockout guard (OP#3133). The demo bypass
 /// grants unrestricted access, so these cases only exist with `auth.enabled`.
 mod self_lockout {
-    use crate::{auth_helpers::spawn_with_auth, organizations::ROOT_ORG_ID};
+    use super::{insert_role, seed_user_holding};
+    use crate::auth_helpers::spawn_with_auth;
     use serde_json::json;
     use uuid::Uuid;
-
-    /// Seeds an org under root, a role carrying `permissions`, and a user in
-    /// that org holding it. Returns (org_id, role_id, token).
-    async fn seed_user_holding(
-        harness: &crate::auth_helpers::AuthHarness,
-        app: &crate::helpers::TestApp,
-        org_name: &str,
-        permissions: &[&str],
-    ) -> (Uuid, Uuid, String) {
-        let org_id: Uuid = sqlx::query_scalar!(
-            r#"INSERT INTO organizations (id, parent_id, name) VALUES (gen_random_uuid(), $1::uuid, $2) RETURNING id"#,
-            Uuid::parse_str(ROOT_ORG_ID).unwrap(),
-            org_name
-        )
-        .fetch_one(&app.db_pool)
-        .await
-        .unwrap();
-        let role_id = insert_role(app, org_id, "Org-Admin", permissions).await;
-        let user_id = Uuid::new_v4();
-        sqlx::query!(
-            r#"INSERT INTO user_profiles (id, organization_id) VALUES ($1, $2)"#,
-            user_id,
-            org_id
-        )
-        .execute(&app.db_pool)
-        .await
-        .unwrap();
-        sqlx::query!(
-            r#"INSERT INTO role_assignments (user_id, role_id) VALUES ($1, $2)"#,
-            user_id,
-            role_id
-        )
-        .execute(&app.db_pool)
-        .await
-        .unwrap();
-        let token = harness.sign_token(json!({ "sub": user_id.to_string() }));
-        (org_id, role_id, token)
-    }
-
-    async fn insert_role(
-        app: &crate::helpers::TestApp,
-        org_id: Uuid,
-        name: &str,
-        permissions: &[&str],
-    ) -> Uuid {
-        let permissions: Vec<String> = permissions.iter().map(|p| (*p).to_string()).collect();
-        sqlx::query_scalar!(
-            r#"INSERT INTO roles (id, organization_id, name, permissions)
-               VALUES (gen_random_uuid(), $1, $2, $3) RETURNING id"#,
-            org_id,
-            name,
-            &permissions
-        )
-        .fetch_one(&app.db_pool)
-        .await
-        .unwrap()
-    }
 
     async fn permissions_of(app: &crate::helpers::TestApp, role_id: Uuid) -> Vec<String> {
         sqlx::query_scalar!(r#"SELECT permissions FROM roles WHERE id = $1"#, role_id)
@@ -338,5 +344,96 @@ mod self_lockout {
         let resp = patch_role(&app, &token, role_id, "Org-Admin", &[]).await;
 
         assert_eq!(resp.status(), 403);
+    }
+}
+
+/// Role names and permission sets describe how an organization is run.
+/// Reading them across tenants was possible until OP#1110 because both
+/// handlers took the caller without ever consulting it.
+mod cross_org_reads {
+    use super::{insert_role, seed_user_holding};
+    use crate::auth_helpers::spawn_with_auth;
+
+    const READER: [&str; 1] = ["role:read"];
+
+    async fn get(app: &crate::helpers::TestApp, token: &str, path: &str) -> reqwest::Response {
+        reqwest::Client::new()
+            .get(format!("{}{path}", app.address))
+            .bearer_auth(token)
+            .send()
+            .await
+            .unwrap()
+    }
+
+    #[tokio::test]
+    async fn reading_a_role_of_another_organization_returns_404() {
+        let (harness, app) = spawn_with_auth().await;
+        let (_org_a, _role_a, token) = seed_user_holding(&harness, &app, "TBZ", &READER).await;
+        let (org_b, _role_b, _other) =
+            seed_user_holding(&harness, &app, "Stadtwerke", &READER).await;
+        let foreign_role = insert_role(&app, org_b, "Gießtrupp", &["tree:read"]).await;
+
+        let resp = get(&app, &token, &format!("/api/v1/roles/{foreign_role}")).await;
+
+        assert_eq!(
+            resp.status().as_u16(),
+            404,
+            "an invisible role must read as absent, not as forbidden"
+        );
+    }
+
+    #[tokio::test]
+    async fn listing_roles_of_another_organization_returns_403() {
+        let (harness, app) = spawn_with_auth().await;
+        let (_org_a, _role_a, token) = seed_user_holding(&harness, &app, "TBZ", &READER).await;
+        let (org_b, _role_b, _other) =
+            seed_user_holding(&harness, &app, "Stadtwerke", &READER).await;
+
+        let resp = get(
+            &app,
+            &token,
+            &format!("/api/v1/organizations/{org_b}/roles"),
+        )
+        .await;
+
+        assert_eq!(resp.status().as_u16(), 403);
+    }
+
+    #[tokio::test]
+    async fn reading_a_role_in_your_own_organization_stays_allowed() {
+        let (harness, app) = spawn_with_auth().await;
+        let (_org, role_id, token) = seed_user_holding(&harness, &app, "TBZ", &READER).await;
+
+        let resp = get(&app, &token, &format!("/api/v1/roles/{role_id}")).await;
+
+        assert_eq!(resp.status().as_u16(), 200);
+    }
+
+    #[tokio::test]
+    async fn listing_roles_of_your_own_organization_stays_allowed() {
+        let (harness, app) = spawn_with_auth().await;
+        let (org, _role_id, token) = seed_user_holding(&harness, &app, "TBZ", &READER).await;
+
+        let resp = get(&app, &token, &format!("/api/v1/organizations/{org}/roles")).await;
+
+        assert_eq!(resp.status().as_u16(), 200);
+    }
+
+    /// Templates own no organization, so an org-scoped check would reject
+    /// every one of them and break the copy-on-create flow.
+    #[tokio::test]
+    async fn a_template_stays_readable_by_id() {
+        let (harness, app) = spawn_with_auth().await;
+        let (_org, _role_id, token) = seed_user_holding(&harness, &app, "TBZ", &READER).await;
+        let templates: serde_json::Value = get(&app, &token, "/api/v1/roles/templates")
+            .await
+            .json()
+            .await
+            .unwrap();
+        let template_id = templates.as_array().unwrap()[0]["id"].as_str().unwrap();
+
+        let resp = get(&app, &token, &format!("/api/v1/roles/{template_id}")).await;
+
+        assert_eq!(resp.status().as_u16(), 200);
     }
 }

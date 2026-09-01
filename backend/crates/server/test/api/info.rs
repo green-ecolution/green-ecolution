@@ -1,5 +1,6 @@
 use std::collections::HashSet;
 
+use crate::auth_helpers::spawn_with_auth;
 use crate::helpers::spawn_app;
 
 #[tokio::test]
@@ -182,5 +183,64 @@ async fn services_info_lists_routing_and_plugins_disabled_by_default() {
     assert_eq!(
         plugins.get("enabled").and_then(|v| v.as_bool()),
         Some(false)
+    );
+}
+
+/// The footer renders on public pages, so the version must survive without a
+/// token even after the reconnaissance-shaped endpoints move behind auth.
+#[tokio::test]
+async fn app_info_stays_public() {
+    let (_harness, app) = spawn_with_auth().await;
+
+    let response = app.get("/api/v1/info").await;
+
+    assert_eq!(response.status().as_u16(), 200);
+}
+
+#[tokio::test]
+async fn map_info_stays_public() {
+    let (_harness, app) = spawn_with_auth().await;
+
+    let response = app.get("/api/v1/info/map").await;
+
+    assert_eq!(response.status().as_u16(), 200);
+}
+
+#[tokio::test]
+async fn server_info_requires_authentication() {
+    let (_harness, app) = spawn_with_auth().await;
+
+    let response = app.get("/api/v1/info/server").await;
+
+    assert_eq!(
+        response.status().as_u16(),
+        401,
+        "hostname, bind interface and uptime must not be readable without a token"
+    );
+}
+
+#[tokio::test]
+async fn services_info_requires_authentication() {
+    let (_harness, app) = spawn_with_auth().await;
+
+    let response = app.get("/api/v1/info/services").await;
+
+    assert_eq!(
+        response.status().as_u16(),
+        401,
+        "the reachability of database, IdP and broker must not be probeable without a token"
+    );
+}
+
+#[tokio::test]
+async fn statistics_requires_authentication() {
+    let (_harness, app) = spawn_with_auth().await;
+
+    let response = app.get("/api/v1/info/statistics").await;
+
+    assert_eq!(
+        response.status().as_u16(),
+        401,
+        "record counts must not be readable without a token"
     );
 }

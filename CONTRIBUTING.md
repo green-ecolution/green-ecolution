@@ -262,7 +262,7 @@ backend/                  Cargo workspace (Rust API)
                              `green-ecolution` and `migrate` binaries.
   migrations/                sqlx-managed SQL migrations (workspace root)
   seeds/                     SQL seed data
-  config/                    YAML config (base, local, production)
+  config/                    YAML config (base, local, staging, demo, production)
   .sqlx/                     committed offline query metadata
 frontend/
   app/                       Main React application

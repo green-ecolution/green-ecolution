@@ -81,6 +81,14 @@ impl AuthHarness {
         }
     }
 
+    /// Same realm, but the API only accepts tokens minted for `audience`.
+    pub fn auth_settings_with_audience(&self, audience: &str) -> AuthSettings {
+        AuthSettings {
+            expected_audience: Some(audience.to_string()),
+            ..self.auth_settings(true)
+        }
+    }
+
     pub fn auth_settings(&self, enabled: bool) -> AuthSettings {
         AuthSettings {
             enabled,

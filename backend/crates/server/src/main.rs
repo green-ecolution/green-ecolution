@@ -19,6 +19,15 @@ async fn main() -> ExitCode {
 
     telemetry::init(&config.log);
 
+    if let Err(err) = config.ensure_secure() {
+        tracing::error!(error = %err, kind = "security", "refusing to start");
+        return ExitCode::FAILURE;
+    }
+
+    for advisory in config.security_advisories() {
+        tracing::warn!(kind = "security", "{advisory}");
+    }
+
     let app = match Application::build(config).await {
         Ok(app) => app,
         Err(err) => {
