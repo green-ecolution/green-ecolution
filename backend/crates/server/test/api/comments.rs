@@ -2,7 +2,7 @@ use serde_json::json;
 use uuid::Uuid;
 
 use crate::auth_helpers::spawn_with_auth;
-use crate::helpers::{TestApp, seed_user_with_permissions};
+use crate::helpers::{TestApp, seed_user_with_permissions, seed_user_with_permissions_and_id};
 
 async fn create_cluster(app: &TestApp, token: &str, org: Uuid) -> String {
     let created: serde_json::Value = reqwest::Client::new()
@@ -82,10 +82,6 @@ async fn create_plan(app: &TestApp, token: &str, org: Uuid) -> String {
     created["id"].as_str().unwrap().to_owned()
 }
 
-/// `author_name` is deliberately not asserted here: resolving it needs a
-/// mocked Keycloak identity for the acting user, and `seed_user_with_permissions`
-/// does not hand back the user id. The name is best-effort by design (see
-/// `resolve_author_names`), so its absence must never fail a request.
 #[tokio::test]
 async fn creates_and_lists_a_cluster_comment() {
     let (harness, app) = spawn_with_auth().await;
@@ -135,6 +131,55 @@ async fn creates_and_lists_a_cluster_comment() {
     assert_eq!(list["data"][0]["body"], "Boden war noch feucht");
     assert_eq!(list["data"][0]["id"], created["id"]);
     assert_eq!(list["data"][0]["author_id"], created["author_id"]);
+}
+
+#[tokio::test]
+async fn created_comment_carries_the_authors_display_name() {
+    let (harness, app) = spawn_with_auth().await;
+    let (org, token, user_id) = seed_user_with_permissions_and_id(
+        &harness,
+        &app,
+        "Autorenname",
+        &[
+            "tree_cluster:read",
+            "tree_cluster:create",
+            "tree_cluster:update",
+        ],
+    )
+    .await;
+    harness
+        .mock_identity_lookups(&[(user_id, "tbz-autor")])
+        .await;
+    let cluster_id = create_cluster(&app, &token, org).await;
+
+    let created: serde_json::Value = reqwest::Client::new()
+        .post(format!(
+            "{}/api/v1/clusters/{cluster_id}/comments",
+            app.address
+        ))
+        .bearer_auth(&token)
+        .json(&json!({ "body": "wer war das" }))
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(created["author_name"], "Test tbz-autor");
+
+    let list: serde_json::Value = reqwest::Client::new()
+        .get(format!(
+            "{}/api/v1/clusters/{cluster_id}/comments",
+            app.address
+        ))
+        .bearer_auth(&token)
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(list["data"][0]["author_name"], "Test tbz-autor");
 }
 
 #[tokio::test]
@@ -248,6 +293,7 @@ async fn rejects_empty_body_with_400() {
         body["error"].as_str().is_some(),
         "error bodies must be JSON"
     );
+    assert_eq!(body["validation"]["key"], "comment.body.empty");
 }
 
 #[tokio::test]
@@ -465,6 +511,23 @@ async fn post_comment(app: &TestApp, token: &str, cluster_id: &str, body: &str) 
     created["id"].as_str().unwrap().to_owned()
 }
 
+async fn post_plan_comment(app: &TestApp, token: &str, plan_id: &str, body: &str) -> String {
+    let created: serde_json::Value = reqwest::Client::new()
+        .post(format!(
+            "{}/api/v1/watering-plans/{plan_id}/comments",
+            app.address
+        ))
+        .bearer_auth(token)
+        .json(&json!({ "body": body }))
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    created["id"].as_str().unwrap().to_owned()
+}
+
 #[tokio::test]
 async fn author_deletes_own_comment_without_delete_permission() {
     let (harness, app) = spawn_with_auth().await;
@@ -625,8 +688,9 @@ async fn comment_id_of_another_parent_gets_404() {
     let first = create_cluster(&app, &token, org).await;
     let second = create_cluster(&app, &token, org).await;
     let comment_id = post_comment(&app, &token, &first, "gehört zu first").await;
+    let client = reqwest::Client::new();
 
-    let response = reqwest::Client::new()
+    let response = client
         .delete(format!(
             "{}/api/v1/clusters/{second}/comments/{comment_id}",
             app.address
@@ -636,6 +700,17 @@ async fn comment_id_of_another_parent_gets_404() {
         .await
         .unwrap();
     assert_eq!(response.status(), 404);
+
+    let list: serde_json::Value = client
+        .get(format!("{}/api/v1/clusters/{first}/comments", app.address))
+        .bearer_auth(&token)
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(list["pagination"]["total_records"], 1);
 }
 
 #[tokio::test]
@@ -670,6 +745,83 @@ async fn plan_comment_can_be_deleted_by_its_author() {
         .await
         .unwrap();
     assert_eq!(response.status(), 204);
+}
+
+#[tokio::test]
+async fn create_plan_comment_requires_update_permission_on_the_parent() {
+    let (harness, app) = spawn_with_auth().await;
+    let (org, token) = seed_user_with_permissions(
+        &harness,
+        &app,
+        "Plan Nur Lesen",
+        &[
+            "watering_plan:read",
+            "watering_plan:create",
+            "vehicle:read",
+            "vehicle:create",
+        ],
+    )
+    .await;
+    let plan_id = create_plan(&app, &token, org).await;
+
+    let response = reqwest::Client::new()
+        .post(format!(
+            "{}/api/v1/watering-plans/{plan_id}/comments",
+            app.address
+        ))
+        .bearer_auth(&token)
+        .json(&json!({ "body": "darf ich nicht" }))
+        .send()
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), 403);
+}
+
+#[tokio::test]
+async fn non_author_needs_delete_permission_on_a_plan_comment() {
+    let (harness, app) = spawn_with_auth().await;
+    let (org, author_token) =
+        seed_user_with_permissions(&harness, &app, "Plan Fremdlöschung", PLAN_PERMS).await;
+    let plan_id = create_plan(&app, &author_token, org).await;
+    let comment_id = post_plan_comment(&app, &author_token, &plan_id, "nicht deiner").await;
+    let client = reqwest::Client::new();
+    let url = format!(
+        "{}/api/v1/watering-plans/{plan_id}/comments/{comment_id}",
+        app.address
+    );
+
+    let reader_token =
+        seed_second_user_in_org(&harness, &app, org, "Plan Reader", &["watering_plan:read"]).await;
+    assert_eq!(
+        client
+            .delete(&url)
+            .bearer_auth(&reader_token)
+            .send()
+            .await
+            .unwrap()
+            .status(),
+        403
+    );
+
+    let moderator_token = seed_second_user_in_org(
+        &harness,
+        &app,
+        org,
+        "Plan Moderator",
+        &["watering_plan:read", "watering_plan:delete"],
+    )
+    .await;
+    assert_eq!(
+        client
+            .delete(&url)
+            .bearer_auth(&moderator_token)
+            .send()
+            .await
+            .unwrap()
+            .status(),
+        204
+    );
 }
 
 #[tokio::test]

@@ -316,6 +316,20 @@ pub async fn seed_user_with_permissions(
     org_name: &str,
     permissions: &[&str],
 ) -> (Uuid, String) {
+    let (org_id, token, _user_id) =
+        seed_user_with_permissions_and_id(harness, app, org_name, permissions).await;
+    (org_id, token)
+}
+
+/// Same as [`seed_user_with_permissions`], but also hands back the seeded
+/// user's id so a caller can mock its Keycloak identity via
+/// `AuthHarness::mock_identity_lookups`.
+pub async fn seed_user_with_permissions_and_id(
+    harness: &AuthHarness,
+    app: &TestApp,
+    org_name: &str,
+    permissions: &[&str],
+) -> (Uuid, String, Uuid) {
     let org_id: Uuid = sqlx::query_scalar!(
         r#"INSERT INTO organizations (id, parent_id, name) VALUES (gen_random_uuid(), $1::uuid, $2) RETURNING id"#,
         Uuid::parse_str(ROOT_ORG_ID).unwrap(),
@@ -353,7 +367,7 @@ pub async fn seed_user_with_permissions(
     .await
     .unwrap();
     let token = harness.sign_token(json!({ "sub": user_id.to_string() }));
-    (org_id, token)
+    (org_id, token, user_id)
 }
 
 async fn spawn_with_settings(settings: Settings) -> TestApp {
