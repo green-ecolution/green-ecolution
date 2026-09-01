@@ -4,7 +4,7 @@
 # staging and production refuse to start with it (see Settings::ensure_secure).
 application:
   host: "0.0.0.0"
-  base_url: "https://api.demo.green-ecolution.de"
+  base_url: "https://demo.green-ecolution.de"
 database:
   require_ssl: true
   max_connections: 20
