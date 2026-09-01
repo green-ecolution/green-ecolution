@@ -15,18 +15,21 @@ import {
   parseSignal,
   signalBarsFromRssi,
   signalLevelFromRssi,
-  SIGNAL_LEVEL_LABEL,
+  useSignalLevelLabel,
   SIGNAL_LEVEL_TEXT_COLOR,
 } from '@/components/sensor/detail/signalParsing'
 import { formatBatteryVoltage, formatLastSeen } from '@/components/sensor/detail/latestDataParsing'
 import { useDataQualityDetails, hasQualityWarning } from '@/hooks/details/useDetailsForDataHealth'
+import { useDateLocale } from '@/lib/i18n/useFormatters'
 
 interface ClusterSensorCardProps {
   trees: Tree[]
 }
 
 const SensorTreeRow = ({ tree, t }: { tree: Tree; t: TFunction<'treecluster'> }) => {
+  const dateLocale = useDateLocale()
   const getDataQualityDetails = useDataQualityDetails()
+  const getSignalLevelLabel = useSignalLevelLabel()
   const sensor = tree.sensor
   if (!sensor) return null
 
@@ -58,7 +61,7 @@ const SensorTreeRow = ({ tree, t }: { tree: Tree; t: TFunction<'treecluster'> })
                 className={`flex items-center gap-2 ${SIGNAL_LEVEL_TEXT_COLOR[signalLevelFromRssi(signal.rssiDbm)]}`}
               >
                 <SignalBars filled={signalBarsFromRssi(signal.rssiDbm)} />
-                {SIGNAL_LEVEL_LABEL[signalLevelFromRssi(signal.rssiDbm)]}
+                {getSignalLevelLabel(signalLevelFromRssi(signal.rssiDbm))}
               </span>
             ) : (
               t('sensorCard.noSignalData')
@@ -67,7 +70,7 @@ const SensorTreeRow = ({ tree, t }: { tree: Tree; t: TFunction<'treecluster'> })
           { label: t('sensorCard.batteryLabel'), value: formatBatteryVoltage(sensor.latestData) },
           {
             label: t('sensorCard.lastTransmissionLabel'),
-            value: formatLastSeen(sensor.latestData),
+            value: formatLastSeen(sensor.latestData, dateLocale),
           },
         ]}
       />

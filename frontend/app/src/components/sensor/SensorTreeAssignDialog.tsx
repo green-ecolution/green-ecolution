@@ -12,6 +12,7 @@ import {
 } from '@green-ecolution/ui'
 import { Suspense, useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import type { ExpressionSpecification, LngLatBoundsLike } from 'maplibre-gl'
 import { WateringStatus } from '@/api/backendApi'
 import type { Sensor, TreeResponse } from '@/api/backendApi'
@@ -37,19 +38,6 @@ interface SensorTreeAssignDialogProps {
   isPending: boolean
   errorMessage: string | null
   onConfirm: (treeId: string) => void
-}
-
-const COPY: Record<AssignMode, { title: string; description: string; confirm: string }> = {
-  activate: {
-    title: 'Sensor aktivieren und Baum zuweisen',
-    description: 'Suche den Baum nach Nummer oder Art und aktiviere den Sensor an diesem Baum.',
-    confirm: 'Aktivieren',
-  },
-  reassign: {
-    title: 'Anderen Baum zuweisen',
-    description: 'Wähle den neuen Baum, dem dieser Sensor zugeordnet werden soll.',
-    confirm: 'Baum zuweisen',
-  },
 }
 
 const FOCUS_ZOOM = 18
@@ -135,6 +123,7 @@ const DialogBody = ({
   selectedTreeId: string | null
   onSelect: (treeId: string) => void
 }) => {
+  const { t } = useTranslation('sensor')
   const linkedTreeId = sensor.linkedTreeId
   const { data: currentTree } = useQuery({
     ...treeQueries.detail(linkedTreeId != null ? String(linkedTreeId) : ''),
@@ -198,9 +187,9 @@ const DialogBody = ({
           <Checkbox
             checked={showAll}
             onCheckedChange={(value) => setShowAll(value === true)}
-            aria-label="Alle Bäume anzeigen"
+            aria-label={t('treeAssignDialog.showAllTreesLabel')}
           />
-          Alle Bäume anzeigen
+          {t('treeAssignDialog.showAllTreesLabel')}
         </label>
         <div className="min-h-0 flex-1 overflow-y-auto">
           <SensorTreeSearchResults
@@ -217,7 +206,7 @@ const DialogBody = ({
           center={center}
           zoom={mapZoom}
           interactive
-          ariaLabel="Karte zur Baumauswahl"
+          ariaLabel={t('treeAssignDialog.mapAriaLabel')}
           className={cn('aspect-[4/3] sm:aspect-auto sm:h-full')}
         >
           <Suspense fallback={null}>
@@ -244,8 +233,20 @@ const SensorTreeAssignDialog = ({
   errorMessage,
   onConfirm,
 }: SensorTreeAssignDialogProps) => {
+  const { t } = useTranslation(['sensor', 'common'])
   const [selectedTreeId, setSelectedTreeId] = useState<string | null>(null)
-  const copy = COPY[mode]
+  const copy =
+    mode === 'activate'
+      ? {
+          title: t('treeAssignDialog.activate.title'),
+          description: t('treeAssignDialog.activate.description'),
+          confirm: t('treeAssignDialog.activate.confirm'),
+        }
+      : {
+          title: t('actions.reassignTree'),
+          description: t('treeAssignDialog.reassign.description'),
+          confirm: t('treeAssignDialog.reassign.confirm'),
+        }
 
   return (
     <Dialog
@@ -272,13 +273,13 @@ const SensorTreeAssignDialog = ({
         <DialogFooter className="flex-col gap-3 px-6 py-4 sm:flex-row sm:items-center sm:justify-end">
           {errorMessage && <InlineAlert variant="destructive" description={errorMessage} />}
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
-            Abbrechen
+            {t('common:actions.cancel')}
           </Button>
           <Button
             disabled={!selectedTreeId || isPending}
             onClick={() => selectedTreeId && onConfirm(selectedTreeId)}
           >
-            {isPending ? 'Wird gespeichert …' : copy.confirm}
+            {isPending ? t('treeAssignDialog.savingButton') : copy.confirm}
           </Button>
         </DialogFooter>
       </DialogContent>

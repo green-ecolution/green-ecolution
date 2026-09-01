@@ -5,5 +5,6 @@ import navigation from './navigation.json'
 import tree from './tree.json'
 import treecluster from './treecluster.json'
 import enums from './enums.json'
+import sensor from './sensor.json'
 
-export default { common, validation, errors, navigation, tree, treecluster, enums }
+export default { common, validation, errors, navigation, tree, treecluster, enums, sensor }

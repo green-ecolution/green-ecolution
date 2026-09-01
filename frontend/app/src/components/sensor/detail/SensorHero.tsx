@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { Badge } from '@green-ecolution/ui'
 import { useSensorStatusDetails } from '@/hooks/details/useDetailsForSensorStatus'
 import { getSensorImage } from './sensorImages'
@@ -9,6 +10,7 @@ interface SensorHeroProps {
 }
 
 const SensorHero = ({ sensor }: SensorHeroProps) => {
+  const { t } = useTranslation('sensor')
   const image = getSensorImage(sensor.model.name)
   const getSensorStatusDetails = useSensorStatusDetails()
   const status = getSensorStatusDetails(sensor.status)
@@ -24,7 +26,7 @@ const SensorHero = ({ sensor }: SensorHeroProps) => {
         <div className="size-44 md:size-56 rounded-3xl border border-dark-100 bg-white shadow-cards p-5 grid place-items-center">
           <img
             src={image}
-            alt={`Modellabbildung: ${sensor.model.name}`}
+            alt={t('hero.modelImageAlt', { model: sensor.model.name })}
             className="size-full object-cover"
             loading="lazy"
           />
@@ -33,7 +35,7 @@ const SensorHero = ({ sensor }: SensorHeroProps) => {
 
       <div className="flex-1 min-w-0">
         <p className="font-lato text-xs font-bold uppercase tracking-[0.22em] text-green-dark mb-3">
-          {sensorTypeLabel} Sensor
+          {t('hero.typeLabel', { type: sensorTypeLabel })}
         </p>
         <h1 className="font-lato font-bold text-3xl lg:text-4xl xl:text-5xl tracking-tight leading-[1.05] break-all">
           {sensor.id}
@@ -53,7 +55,8 @@ const SensorHero = ({ sensor }: SensorHeroProps) => {
                 ·
               </span>
               <span className="text-sm text-muted-foreground">
-                via <span className="font-semibold text-foreground">{sensor.provider}</span>
+                {t('hero.viaLabel')}{' '}
+                <span className="font-semibold text-foreground">{sensor.provider}</span>
               </span>
             </>
           )}

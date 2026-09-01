@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { Badge, Card, CardContent, CardHeader, CardTitle, SignalBars } from '@green-ecolution/ui'
 import { Signal } from 'lucide-react'
 import type { Sensor } from '@/api/backendApi'
@@ -5,7 +6,7 @@ import {
   parseSignal,
   signalBarsFromRssi,
   signalLevelFromRssi,
-  SIGNAL_LEVEL_LABEL,
+  useSignalLevelLabel,
   SIGNAL_LEVEL_TEXT_COLOR,
   SIGNAL_LEVEL_BADGE_VARIANT,
 } from './signalParsing'
@@ -23,6 +24,8 @@ const Stat = ({ label, value }: { label: string; value: string }) => (
 )
 
 const SensorSignalCard = ({ sensor }: SensorSignalCardProps) => {
+  const { t } = useTranslation('sensor')
+  const getSignalLevelLabel = useSignalLevelLabel()
   const signal = parseSignal(sensor.latestData)
   const level = signal ? signalLevelFromRssi(signal.rssiDbm) : null
 
@@ -34,16 +37,16 @@ const SensorSignalCard = ({ sensor }: SensorSignalCardProps) => {
             <div className="grid place-items-center size-9 rounded-lg bg-green-dark-50 text-green-dark">
               <Signal className="size-5" />
             </div>
-            <CardTitle>Signal</CardTitle>
+            <CardTitle>{t('signal.title')}</CardTitle>
           </div>
           {level && (
-            <Badge variant={SIGNAL_LEVEL_BADGE_VARIANT[level]}>{SIGNAL_LEVEL_LABEL[level]}</Badge>
+            <Badge variant={SIGNAL_LEVEL_BADGE_VARIANT[level]}>{getSignalLevelLabel(level)}</Badge>
           )}
         </div>
       </CardHeader>
       <CardContent>
         {!signal || !level ? (
-          <p className="text-muted-foreground">Keine Signaldaten empfangen.</p>
+          <p className="text-muted-foreground">{t('signal.noSignalData')}</p>
         ) : (
           <>
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -59,8 +62,8 @@ const SensorSignalCard = ({ sensor }: SensorSignalCardProps) => {
                 </p>
               </div>
               <dl className="grid grid-cols-2 gap-3 sm:flex">
-                <Stat label="SNR" value={`${signal.snrDb} dB`} />
-                <Stat label="Gateways" value={String(signal.gatewayCount)} />
+                <Stat label={t('signal.snrLabel')} value={`${signal.snrDb} dB`} />
+                <Stat label={t('signal.gatewaysLabel')} value={String(signal.gatewayCount)} />
               </dl>
             </div>
             <ChartSignalData sensorId={sensor.id} />

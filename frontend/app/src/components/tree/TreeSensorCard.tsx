@@ -20,10 +20,11 @@ import {
   parseSignal,
   signalBarsFromRssi,
   signalLevelFromRssi,
-  SIGNAL_LEVEL_LABEL,
+  useSignalLevelLabel,
   SIGNAL_LEVEL_TEXT_COLOR,
 } from '@/components/sensor/detail/signalParsing'
 import { formatBatteryVoltage, formatLastSeen } from '@/components/sensor/detail/latestDataParsing'
+import { useDateLocale } from '@/lib/i18n/useFormatters'
 
 interface TreeSensorCardProps {
   tree: Tree
@@ -31,8 +32,10 @@ interface TreeSensorCardProps {
 
 const TreeSensorCard = ({ tree }: TreeSensorCardProps) => {
   const { t } = useTranslation('tree')
+  const dateLocale = useDateLocale()
   const getSensorStatusDetails = useSensorStatusDetails()
   const getDataQualityDetails = useDataQualityDetails()
+  const getSignalLevelLabel = useSignalLevelLabel()
   const sensor = tree.sensor
   const statusDetails = sensor ? getSensorStatusDetails(sensor.status) : null
   const signal = parseSignal(sensor?.latestData)
@@ -75,7 +78,7 @@ const TreeSensorCard = ({ tree }: TreeSensorCardProps) => {
                         className={`flex items-center gap-2 ${SIGNAL_LEVEL_TEXT_COLOR[signalLevelFromRssi(signal.rssiDbm)]}`}
                       >
                         <SignalBars filled={signalBarsFromRssi(signal.rssiDbm)} />
-                        {SIGNAL_LEVEL_LABEL[signalLevelFromRssi(signal.rssiDbm)]}
+                        {getSignalLevelLabel(signalLevelFromRssi(signal.rssiDbm))}
                       </span>
                     ) : (
                       t('sensorCard.noSignalData')
@@ -87,7 +90,7 @@ const TreeSensorCard = ({ tree }: TreeSensorCardProps) => {
                   },
                   {
                     label: t('sensorCard.lastTransmissionLabel'),
-                    value: formatLastSeen(sensor.latestData),
+                    value: formatLastSeen(sensor.latestData, dateLocale),
                   },
                 ]}
               />

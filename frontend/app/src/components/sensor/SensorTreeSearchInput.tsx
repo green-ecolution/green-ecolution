@@ -1,6 +1,7 @@
 import { Input, Button } from '@green-ecolution/ui'
 import { Search, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 interface SensorTreeSearchInputProps {
   value: string
@@ -13,8 +14,10 @@ const DEBOUNCE_MS = 300
 const SensorTreeSearchInput = ({
   value,
   onChange,
-  placeholder = 'Baumnummer oder Baumart suchen…',
+  placeholder,
 }: SensorTreeSearchInputProps) => {
+  const { t } = useTranslation('sensor')
+  const resolvedPlaceholder = placeholder ?? t('treeSearch.inputPlaceholder')
   const [local, setLocal] = useState(value)
   const [syncedValue, setSyncedValue] = useState(value)
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -46,7 +49,7 @@ const SensorTreeSearchInput = ({
         role="searchbox"
         value={local}
         onChange={(e) => schedule(e.target.value)}
-        placeholder={placeholder}
+        placeholder={resolvedPlaceholder}
         className="pl-9 pr-9 text-base"
         autoComplete="off"
         inputMode="search"
@@ -56,7 +59,7 @@ const SensorTreeSearchInput = ({
           type="button"
           variant="ghost"
           size="icon"
-          aria-label="Leeren"
+          aria-label={t('treeSearch.clearAriaLabel')}
           onClick={() => schedule('')}
           className="absolute right-1 size-7"
         >

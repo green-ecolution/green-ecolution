@@ -16,6 +16,7 @@ import {
   Loading,
 } from '@green-ecolution/ui'
 import { useQuery } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { Loader2, MapPin, Search } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
@@ -36,6 +37,7 @@ const SensorTreeStep = ({
   onSelect,
   onRelocate,
 }: SensorTreeStepProps) => {
+  const { t } = useTranslation(['sensor', 'common'])
   const [pickerOpen, setPickerOpen] = useState(false)
 
   const {
@@ -75,11 +77,11 @@ const SensorTreeStep = ({
   return (
     <div className="space-y-6">
       <header className="space-y-2">
-        <h1 className="font-lato font-bold text-3xl lg:text-4xl">Baum zuordnen</h1>
+        <h1 className="font-lato font-bold text-3xl lg:text-4xl">
+          {t('wizard.tree.header.title')}
+        </h1>
         <p className="text-sm text-muted-foreground max-w-prose">
-          Wähle den Baum aus, an dem der Sensor angebracht wird. Der Vorschlag basiert auf deinem
-          aktuellen Standort. Gespeichert wird am Sensor nur die Baum-Zuordnung, nicht deine
-          Koordinaten.
+          {t('wizard.tree.header.description')}
         </p>
       </header>
 
@@ -88,7 +90,7 @@ const SensorTreeStep = ({
           <AccuracyBadge accuracyMeters={position.accuracy} />
           <Button variant="link" size="sm" className="h-auto px-0" onClick={onRelocate}>
             <MapPin className="size-4" />
-            Standort aktualisieren
+            {t('wizard.tree.relocateButton')}
           </Button>
         </div>
       )}
@@ -100,7 +102,7 @@ const SensorTreeStep = ({
           className="flex items-center gap-3 text-sm text-muted-foreground"
         >
           <Loader2 className="size-5 animate-spin" aria-hidden />
-          Standort wird ermittelt …
+          {t('wizard.tree.locatingNotice')}
         </div>
       )}
 
@@ -134,28 +136,23 @@ const SensorTreeStep = ({
       )}
 
       {position && treesLoading && (
-        <Loading size="default" label="Bäume in der Nähe werden gesucht…" />
+        <Loading size="default" label={t('wizard.tree.loadingNearby')} />
       )}
 
       {position && treesError && (
         <Alert variant="destructive">
           <AlertContent>
-            <AlertTitle>Baumsuche fehlgeschlagen</AlertTitle>
-            <AlertDescription>
-              Die Suche nach Bäumen in der Nähe ist fehlgeschlagen.
-            </AlertDescription>
+            <AlertTitle>{t('wizard.tree.searchFailed.title')}</AlertTitle>
+            <AlertDescription>{t('wizard.tree.searchFailed.description')}</AlertDescription>
           </AlertContent>
           <Button variant="outline" size="sm" onClick={() => void refetchTrees()}>
-            Erneut versuchen
+            {t('common:actions.retry')}
           </Button>
         </Alert>
       )}
 
       {position && !treesLoading && !treesError && trees.length === 0 && (
-        <InlineAlert
-          variant="warning"
-          description="Es wurden keine Bäume in der Nähe gefunden. Wähle den Baum manuell aus."
-        />
+        <InlineAlert variant="warning" description={t('wizard.tree.noNearbyTrees')} />
       )}
 
       {trees.length > 0 && (
@@ -168,7 +165,7 @@ const SensorTreeStep = ({
 
       <Button variant="outline" onClick={() => setPickerOpen(true)} className="w-full sm:w-auto">
         <Search className="size-4" />
-        Anderen Baum auswählen
+        {t('treePickerSheet.title')}
       </Button>
 
       <SensorTreePickerSheet
@@ -187,7 +184,7 @@ const SensorTreeStep = ({
       {selectedTreeId && !isSelectionInNearest && outsideTree && (
         <div className="rounded-xl border border-green-dark/30 bg-green-dark-50/30 p-4">
           <p className="text-xs uppercase tracking-wide font-semibold text-green-dark mb-1">
-            Ausgewählter Baum
+            {t('wizard.tree.selectedTreeLabel')}
           </p>
           <div className="flex items-baseline gap-3 text-sm">
             <span className="font-semibold">{outsideTree.species}</span>

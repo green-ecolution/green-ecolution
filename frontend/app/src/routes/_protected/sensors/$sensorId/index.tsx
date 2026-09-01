@@ -8,7 +8,7 @@ const sensorRoute = getRouteApi('/_protected/sensors/$sensorId')
 
 export const Route = createFileRoute('/_protected/sensors/$sensorId/')({
   component: SingleSensor,
-  pendingComponent: pendingLoading('Sensoren werden geladen …'),
+  pendingComponent: pendingLoading({ key: 'sensor:detail.loadingLabel' }),
 })
 
 function SingleSensor() {

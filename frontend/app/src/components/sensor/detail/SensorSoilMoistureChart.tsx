@@ -24,6 +24,7 @@ import {
   toChartRows,
   wateringEventMarkers,
 } from '@/components/general/charts/soilMoistureChart'
+import { useDateLocale } from '@/lib/i18n/useFormatters'
 import type { Sensor } from '@/api/backendApi'
 
 const RANGE_KEYS = ['24h', '7d', '30d'] satisfies TimeWindowKey[]
@@ -35,19 +36,23 @@ const BUCKET_BY_RANGE: Record<RangeKey, 'hour' | 'day'> = {
   '30d': 'day',
 }
 
-const BUCKET_SUBTITLE: Record<'hour' | 'day', string> = {
-  hour: 'Stundenmittel · Band = Min–Max · Gestrichelt = kritische Schwelle je Tiefe',
-  day: 'Tagesmittel · Band = Min–Max · Gestrichelt = kritische Schwelle je Tiefe',
-}
-
 interface SensorSoilMoistureChartProps {
   sensor: Sensor
 }
 
 const SensorSoilMoistureChart = ({ sensor }: SensorSoilMoistureChartProps) => {
-  const { t } = useTranslation('common')
+  const { t } = useTranslation('sensor')
+  // Separate from `t` above: timeWindowOptions expects a TFunction<'common'>,
+  // and a multi-namespace `t` would default-resolve its unprefixed keys
+  // against 'sensor' instead (namespace order picks the default).
+  const { t: tCommon } = useTranslation('common')
+  const dateLocale = useDateLocale()
   const [rangeKey, setRangeKey] = useState<RangeKey>('7d')
   const bucket = BUCKET_BY_RANGE[rangeKey]
+  const bucketSubtitle: Record<'hour' | 'day', string> = {
+    hour: t('soilMoistureChart.subtitleHour'),
+    day: t('soilMoistureChart.subtitleDay'),
+  }
   // eslint-disable-next-line react-hooks/purity, react-x/purity -- windowStart truncates to the hour, keeping the query key stable
   const from = windowStart(rangeKey, Date.now())
   const { data: model } = useQuery(sensorQueries.model(sensor.model.id))
@@ -66,7 +71,7 @@ const SensorSoilMoistureChart = ({ sensor }: SensorSoilMoistureChartProps) => {
   const config = Object.fromEntries(
     depths.map((depth, index) => [
       `mean_${depth}`,
-      { label: `${depth} cm Tiefe`, color: depthColor(depth, index) },
+      { label: t('soilMoistureChart.depthSeriesLabel', { depth }), color: depthColor(depth, index) },
     ]),
   ) satisfies ChartConfig
   const criticalByDepth = new Map((data?.thresholds ?? []).map((t) => [t.depthCm, t.critical]))
@@ -88,21 +93,21 @@ const SensorSoilMoistureChart = ({ sensor }: SensorSoilMoistureChartProps) => {
     <Card variant="outlined">
       <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-2">
         <div>
-          <CardTitle>Bodenfeuchte-Verlauf</CardTitle>
-          <p className="text-xs text-muted-foreground">{BUCKET_SUBTITLE[bucket]}</p>
+          <CardTitle>{t('soilMoistureChart.title')}</CardTitle>
+          <p className="text-xs text-muted-foreground">{bucketSubtitle[bucket]}</p>
         </div>
         <TimeRangeToggle
-          options={timeWindowOptions(RANGE_KEYS, t)}
+          options={timeWindowOptions(RANGE_KEYS, tCommon)}
           value={rangeKey}
           onChange={setRangeKey}
         />
       </CardHeader>
       <CardContent>
         {!data ? (
-          <Loading className="h-[260px] justify-center" label="Messwerte werden geladen" />
+          <Loading className="h-[260px] justify-center" label={t('soilMoistureChart.loadingLabel')} />
         ) : rows.length <= 1 ? (
           <p className="flex h-[260px] items-center justify-center text-sm text-muted-foreground">
-            Zu wenige Datenpunkte im gewählten Zeitraum.
+            {t('soilMoistureChart.tooFewDataPoints')}
           </p>
         ) : (
           <div
@@ -161,7 +166,9 @@ const SensorSoilMoistureChart = ({ sensor }: SensorSoilMoistureChartProps) => {
                   stroke="#747474"
                   strokeDasharray="4 4"
                   label={{
-                    value: `Bewässert am ${format(event.date, 'dd.MM.')}`,
+                    value: t('soilMoistureChart.wateredOnLabel', {
+                      date: format(event.date, 'dd.MM.', { locale: dateLocale }),
+                    }),
                     angle: -90,
                     position: 'insideTopRight',
                     fontSize: 11,
@@ -175,7 +182,7 @@ const SensorSoilMoistureChart = ({ sensor }: SensorSoilMoistureChartProps) => {
                   stroke="#D55E00"
                   strokeDasharray="2 3"
                   label={{
-                    value: 'Messwert verworfen',
+                    value: t('soilMoistureChart.discardedLabel'),
                     angle: -90,
                     position: 'insideBottomRight',
                     fontSize: 11,

@@ -1,3 +1,5 @@
+import { useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { SensorData } from '@/api/backendApi'
 
 export type SignalLevel = 'good' | 'fair' | 'weak'
@@ -33,10 +35,10 @@ export const signalLevelFromRssi = (rssiDbm: number): SignalLevel => {
   return 'weak'
 }
 
-export const SIGNAL_LEVEL_LABEL: Record<SignalLevel, string> = {
-  good: 'Gut',
-  fair: 'Ausreichend',
-  weak: 'Schwach',
+/** Reactive to language change: re-renders whichever component calls it. */
+export const useSignalLevelLabel = (): ((level: SignalLevel) => string) => {
+  const { t } = useTranslation('sensor')
+  return useCallback((level: SignalLevel) => t(`signal.level.${level}`), [t])
 }
 
 export const SIGNAL_LEVEL_TEXT_COLOR: Record<SignalLevel, string> = {

@@ -1,9 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { Card, CardContent, CardHeader, CardTitle } from '@green-ecolution/ui'
 import { Activity } from 'lucide-react'
 import type { SensorModelAbilityResponse } from '@green-ecolution/backend-client'
 import { sensorQueries } from '@/api/queries'
-import { getAbilityMeta, getUnitSymbol } from './abilityMapping'
+import { useAbilityMeta, getUnitSymbol } from './abilityMapping'
 import type { Sensor } from '@/api/backendApi'
 
 interface SensorAbilitiesSectionProps {
@@ -33,6 +34,8 @@ const groupAbilities = (abilities: SensorModelAbilityResponse[]): GroupedAbility
 }
 
 const SensorAbilitiesSection = ({ sensor }: SensorAbilitiesSectionProps) => {
+  const { t } = useTranslation('sensor')
+  const getAbilityMeta = useAbilityMeta()
   const { data: model, isLoading, isError } = useQuery(sensorQueries.model(sensor.model.id))
 
   if (isError) return null
@@ -50,7 +53,7 @@ const SensorAbilitiesSection = ({ sensor }: SensorAbilitiesSectionProps) => {
             <Activity className="size-5" />
           </div>
           <div className="flex flex-col">
-            <CardTitle>Was dieser Sensor misst</CardTitle>
+            <CardTitle>{t('abilities.title')}</CardTitle>
             {model?.description && (
               <span className="text-sm text-muted-foreground mt-1.5">{model.description}</span>
             )}
@@ -84,10 +87,10 @@ const SensorAbilitiesSection = ({ sensor }: SensorAbilitiesSectionProps) => {
                     </div>
                     <h3 className="font-lato font-bold text-lg tracking-tight">{meta.label}</h3>
                     <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-sm">
-                      <dt className="text-muted-foreground">Einheit</dt>
+                      <dt className="text-muted-foreground">{t('abilities.unitLabel')}</dt>
                       <dd className="font-mono font-semibold">{getUnitSymbol(g.unit)}</dd>
                       <dt className="text-muted-foreground">
-                        {g.depths.length === 1 ? 'Tiefe' : 'Tiefen'}
+                        {t('abilities.depthLabel', { count: g.depths.length })}
                       </dt>
                       <dd className="font-mono font-semibold">
                         {g.depths.map((d) => `${d} cm`).join(' · ')}
