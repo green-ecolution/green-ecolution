@@ -1,5 +1,6 @@
 import { Button } from '@green-ecolution/ui'
 import { MoveRight } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 interface FormSubmitButtonProps {
   disabled: boolean
@@ -10,11 +11,15 @@ interface FormSubmitButtonProps {
 const FormSubmitButton = ({
   disabled,
   className = 'mt-10 lg:col-span-full lg:w-fit',
-}: FormSubmitButtonProps) => (
-  <Button type="submit" className={className} disabled={disabled}>
-    Speichern
-    <MoveRight className="icon-arrow-animate" />
-  </Button>
-)
+}: FormSubmitButtonProps) => {
+  const { t } = useTranslation('common')
+
+  return (
+    <Button type="submit" className={className} disabled={disabled}>
+      {t('actions.save')}
+      <MoveRight className="icon-arrow-animate" />
+    </Button>
+  )
+}
 
 export default FormSubmitButton

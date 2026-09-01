@@ -6,34 +6,34 @@ import {
   AlertTitle,
   Button,
 } from '@green-ecolution/ui'
+import { useTranslation } from 'react-i18next'
 
 interface CameraPermissionNoticeProps {
   status: 'denied' | 'unsupported' | 'error'
   onRetry?: () => void
 }
 
-const COPY = {
-  denied: {
-    variant: 'destructive' as const,
-    title: 'Kamerazugriff verweigert',
-    description:
-      'Um QR-Codes zu scannen, benötigt die App Zugriff auf deine Kamera. Erlaube den Zugriff in den Einstellungen deines Browsers und versuche es erneut.',
-  },
-  unsupported: {
-    variant: 'warning' as const,
-    title: 'Kamera nicht verfügbar',
-    description:
-      'Dein Browser oder Gerät unterstützt den Kamerazugriff in diesem Kontext nicht. Stelle sicher, dass du die App über HTTPS aufrufst.',
-  },
-  error: {
-    variant: 'destructive' as const,
-    title: 'Kamera konnte nicht gestartet werden',
-    description:
-      'Beim Zugriff auf die Kamera ist ein Fehler aufgetreten. Prüfe, ob eine andere Anwendung die Kamera bereits nutzt.',
-  },
-} as const
-
 const CameraPermissionNotice = ({ status, onRetry }: CameraPermissionNoticeProps) => {
+  const { t } = useTranslation('common')
+
+  const COPY = {
+    denied: {
+      variant: 'destructive' as const,
+      title: t('scanner.permission.denied.title'),
+      description: t('scanner.permission.denied.description'),
+    },
+    unsupported: {
+      variant: 'warning' as const,
+      title: t('scanner.permission.unsupported.title'),
+      description: t('scanner.permission.unsupported.description'),
+    },
+    error: {
+      variant: 'destructive' as const,
+      title: t('scanner.permission.error.title'),
+      description: t('scanner.permission.error.description'),
+    },
+  } as const
+
   const copy = COPY[status]
   const canRetry = (status === 'denied' || status === 'error') && onRetry
 
@@ -50,7 +50,7 @@ const CameraPermissionNotice = ({ status, onRetry }: CameraPermissionNoticeProps
       </Alert>
       {canRetry && (
         <Button variant="outline" size="sm" onClick={onRetry}>
-          Erneut versuchen
+          {t('actions.retry')}
         </Button>
       )}
     </div>

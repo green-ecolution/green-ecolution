@@ -1,4 +1,5 @@
 import { X } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 interface SelectedTagListProps {
   options: { value: string; label: string }[]
@@ -7,6 +8,8 @@ interface SelectedTagListProps {
 }
 
 const SelectedTagList = ({ options, value, onRemove }: SelectedTagListProps) => {
+  const { t } = useTranslation('common')
+
   if (value.length === 0) return null
 
   const labelFor = (v: string) => options.find((o) => o.value === v)?.label ?? v
@@ -18,7 +21,7 @@ const SelectedTagList = ({ options, value, onRemove }: SelectedTagListProps) => 
           <button
             type="button"
             onClick={() => onRemove(v)}
-            aria-label={`${labelFor(v)} entfernen`}
+            aria-label={t('filter.tag.removeAriaLabel', { label: labelFor(v) })}
             className="inline-flex items-center gap-1 rounded-full border border-dark-200 bg-dark-50 py-0.5 pl-2.5 pr-1.5 text-xs text-dark-700 transition hover:border-green-dark"
           >
             {labelFor(v)}

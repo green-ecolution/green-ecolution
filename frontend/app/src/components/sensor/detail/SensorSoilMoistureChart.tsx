@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useQuery, keepPreviousData } from '@tanstack/react-query'
 import { format } from 'date-fns'
+import { useTranslation } from 'react-i18next'
 import { Area, Line, ReferenceLine } from 'recharts'
 import {
   Card,
@@ -44,6 +45,7 @@ interface SensorSoilMoistureChartProps {
 }
 
 const SensorSoilMoistureChart = ({ sensor }: SensorSoilMoistureChartProps) => {
+  const { t } = useTranslation('common')
   const [rangeKey, setRangeKey] = useState<RangeKey>('7d')
   const bucket = BUCKET_BY_RANGE[rangeKey]
   // eslint-disable-next-line react-hooks/purity, react-x/purity -- windowStart truncates to the hour, keeping the query key stable
@@ -90,7 +92,7 @@ const SensorSoilMoistureChart = ({ sensor }: SensorSoilMoistureChartProps) => {
           <p className="text-xs text-muted-foreground">{BUCKET_SUBTITLE[bucket]}</p>
         </div>
         <TimeRangeToggle
-          options={timeWindowOptions(RANGE_KEYS)}
+          options={timeWindowOptions(RANGE_KEYS, t)}
           value={rangeKey}
           onChange={setRangeKey}
         />

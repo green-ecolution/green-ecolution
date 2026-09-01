@@ -10,6 +10,7 @@ import {
 } from '@green-ecolution/ui'
 import { MoveRight, X } from 'lucide-react'
 import { useNavigate, useSearch } from '@tanstack/react-router'
+import { useTranslation } from 'react-i18next'
 import useStore from '@/store/store'
 import { filtersFromSearch, searchFromFilters } from '@/lib/filterSearchSchema'
 
@@ -29,6 +30,7 @@ const Dialog = ({
   isOnMap = false,
   onToggleOpen,
 }: DialogProps) => {
+  const { t } = useTranslation('common')
   const [isOpen, setIsOpen] = useState(false)
   const navigate = useNavigate()
   const search = useSearch({ strict: false })
@@ -111,18 +113,20 @@ const Dialog = ({
             <DialogTitle>{headline}</DialogTitle>
           </DialogHeader>
           <Suspense
-            fallback={<Loading className="py-8 justify-center" label="Filter werden geladen" />}
+            fallback={
+              <Loading className="py-8 justify-center" label={t('filter.dialog.loading')} />
+            }
           >
             {children}
           </Suspense>
 
           <div className="flex flex-wrap gap-5 mt-6">
             <Button type="button" onClick={handleSubmit}>
-              Anwenden
+              {t('filter.dialog.apply')}
               <MoveRight className="icon-arrow-animate" />
             </Button>
             <Button variant="outline" onClick={handleReset}>
-              Zurücksetzen
+              {t('filter.dialog.reset')}
               <X />
             </Button>
           </div>

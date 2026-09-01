@@ -21,5 +21,123 @@
     "de": "Deutsch",
     "en": "Englisch",
     "switchFailed": "Die Sprache konnte nicht umgestellt werden. Bitte versuche es erneut."
+  },
+  "chart": {
+    "timeWindow": {
+      "24h": "24 h",
+      "7d": "7 Tage",
+      "30d": "30 Tage",
+      "all": "Alles"
+    }
+  },
+  "dialog": {
+    "unsavedChanges": {
+      "title": "Seite verlassen?",
+      "confirm": "Verlassen"
+    }
+  },
+  "filter": {
+    "button": {
+      "label": "Filter"
+    },
+    "dialog": {
+      "loading": "Filter werden geladen",
+      "apply": "Anwenden",
+      "reset": "Zurücksetzen"
+    },
+    "status": {
+      "legend": "Zustand der Bewässerung:",
+      "placeholder": "Alle Zustände"
+    },
+    "tag": {
+      "removeAriaLabel": "{label} entfernen"
+    }
+  },
+  "form": {
+    "error": {
+      "fallback": "Es ist leider ein Problem aufgetreten. Bitte probiere es erneut oder wende dich an einen Systemadministrierenden."
+    },
+    "selectEntities": {
+      "selectedLabel": "Zugehörige {label}",
+      "requiredHint": "Es muss mindestens eine Auswahl getroffen werden.",
+      "emptyLabel": "Noch keine {label} ausgewählt.",
+      "addLabel": "{label} hinzufügen"
+    }
+  },
+  "geo": {
+    "permission": {
+      "denied": {
+        "title": "Standortzugriff verweigert",
+        "description": "Um den Sensorstandort automatisch zu erfassen, benötigt die App Zugriff auf deinen GPS-Standort. Erlaube den Zugriff in den Einstellungen deines Browsers und versuche es erneut."
+      },
+      "unsupported": {
+        "title": "Standort nicht verfügbar",
+        "description": "Dein Browser oder Gerät unterstützt die Geolocation-API in diesem Kontext nicht. Stelle sicher, dass du die App über HTTPS aufrufst."
+      },
+      "error": {
+        "title": "Standort konnte nicht ermittelt werden",
+        "description": "Beim Zugriff auf die Position ist ein Fehler aufgetreten. Prüfe, ob GPS aktiviert ist und du im Freien stehst."
+      }
+    },
+    "status": {
+      "currentPosition": "Aktuelle Position",
+      "latitude": "Breitengrad",
+      "longitude": "Längengrad",
+      "accuracy": "Genauigkeit",
+      "altitude": "Höhe",
+      "capturedAt": "Erfasst um"
+    },
+    "map": {
+      "currentPositionAriaLabel": "Karte mit aktueller GPS-Position",
+      "nearestTreeAriaLabel": "Karte mit Sensor-Position und nahegelegenen Bäumen"
+    }
+  },
+  "scanner": {
+    "permission": {
+      "denied": {
+        "title": "Kamerazugriff verweigert",
+        "description": "Um QR-Codes zu scannen, benötigt die App Zugriff auf deine Kamera. Erlaube den Zugriff in den Einstellungen deines Browsers und versuche es erneut."
+      },
+      "unsupported": {
+        "title": "Kamera nicht verfügbar",
+        "description": "Dein Browser oder Gerät unterstützt den Kamerazugriff in diesem Kontext nicht. Stelle sicher, dass du die App über HTTPS aufrufst."
+      },
+      "error": {
+        "title": "Kamera konnte nicht gestartet werden",
+        "description": "Beim Zugriff auf die Kamera ist ein Fehler aufgetreten. Prüfe, ob eine andere Anwendung die Kamera bereits nutzt."
+      }
+    },
+    "install": {
+      "title": "App installieren für die beste Scan-Erfahrung",
+      "descriptionIos": "Tippe unten in Safari auf das Teilen-Symbol und wähle \"Zum Home-Bildschirm\". So startet der Scanner direkt im Vollbild ohne Adressleiste.",
+      "descriptionAndroid": "Installiere die App auf deinem Gerät. Der Scanner startet schneller und läuft im Vollbild ohne Browser-Leiste.",
+      "iosHint": "Teilen → Zum Home-Bildschirm",
+      "installButton": "Installieren",
+      "dismissAriaLabel": "Hinweis schließen"
+    },
+    "status": {
+      "requesting": "Kamera wird gestartet",
+      "scanning": "Suche nach QR-Code",
+      "scanned": "Erfolgreich erkannt",
+      "denied": "Zugriff verweigert",
+      "unsupported": "Nicht verfügbar",
+      "error": "Fehler"
+    },
+    "view": {
+      "startingHint": "Kamera wird gestartet …",
+      "cameraAriaLabel": "Kamera-Vorschau für QR-Code-Scanner",
+      "scanningHint": "Sorge für ausreichend Licht und halte den Code ruhig vor die Kamera."
+    },
+    "toast": {
+      "scanSuccess": "QR-Code erfolgreich gescannt"
+    },
+    "result": {
+      "title": "QR-Code erkannt",
+      "scanAgain": "Erneut scannen",
+      "toastNotImplemented": "Nächster Schritt ist noch nicht implementiert",
+      "idLabel": "Sensor-ID",
+      "idCopied": "Sensor-ID kopiert",
+      "idCopyFailed": "Sensor-ID konnte nicht kopiert werden"
+    }
   }
 }

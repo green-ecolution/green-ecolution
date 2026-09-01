@@ -1,5 +1,6 @@
 import React from 'react'
 import { SlidersHorizontal } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 interface FilterButtonProps {
   ariaLabel: string
@@ -14,6 +15,7 @@ const FilterButton: React.FC<FilterButtonProps> = ({
   onClick,
   isOnMap,
 }) => {
+  const { t } = useTranslation('common')
   const active = activeCount > 0
 
   return (
@@ -28,7 +30,7 @@ const FilterButton: React.FC<FilterButtonProps> = ({
       } ${active ? 'bg-green-light-200' : ''}`}
     >
       {!isOnMap && <SlidersHorizontal className="size-5 sm:hidden" aria-hidden />}
-      <span className={isOnMap ? '' : 'hidden sm:inline'}>Filter</span>
+      <span className={isOnMap ? '' : 'hidden sm:inline'}>{t('filter.button.label')}</span>
       <span
         className={`${isOnMap ? 'flex' : 'hidden sm:flex'} h-6 w-6 items-center justify-center rounded-full bg-green-dark/20 text-sm`}
       >

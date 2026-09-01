@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { sensorQueries } from '@/api/queries'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { Area } from 'recharts'
 import { Loading, TimeRangeToggle, type ChartConfig } from '@green-ecolution/ui'
 import TimeSeriesFrame from '@/components/general/charts/TimeSeriesFrame'
@@ -24,6 +25,7 @@ interface ChartSignalDataProps {
 }
 
 const ChartSignalData: React.FC<ChartSignalDataProps> = ({ sensorId }) => {
+  const { t } = useTranslation('common')
   const [selectedWindow, setSelectedWindow] = useState<TimeWindowKey>('7d')
   // eslint-disable-next-line react-hooks/purity, react-x/purity -- windowStart truncates to the hour, keeping the query key stable
   const from = windowStart(selectedWindow, Date.now())
@@ -58,7 +60,7 @@ const ChartSignalData: React.FC<ChartSignalDataProps> = ({ sensorId }) => {
           </p>
         </div>
         <TimeRangeToggle
-          options={timeWindowOptions(['24h', '7d', '30d', 'all'])}
+          options={timeWindowOptions(['24h', '7d', '30d', 'all'], t)}
           value={selectedWindow}
           onChange={setSelectedWindow}
         />
