@@ -4,11 +4,13 @@ import { useAuthSession } from '@/lib/auth/authSessionContext'
 import createToast from '@/hooks/createToast'
 import { resolveApiError } from '@/lib/apiError'
 import { ResponseError } from '@green-ecolution/backend-client'
+import { useTranslation } from 'react-i18next'
 
 /** Downloads the GPX file behind `gpxUrl` and triggers a browser save dialog. */
 export const useDownloadGpx = (gpxUrl: string) => {
   const { accessToken } = useAuthSession()
   const showToast = createToast()
+  const { t } = useTranslation('errors')
 
   return useMutation({
     mutationFn: async () => {
@@ -36,7 +38,9 @@ export const useDownloadGpx = (gpxUrl: string) => {
       window.URL.revokeObjectURL(objUrl)
     },
     onError: (error) => {
-      showToast(error.message, 'error')
+      void resolveApiError(error).then((info) =>
+        showToast(t('frame.gpxDownloadFailed', { reason: info.message }), 'error'),
+      )
     },
   })
 }

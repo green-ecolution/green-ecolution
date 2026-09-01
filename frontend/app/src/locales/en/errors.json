@@ -67,6 +67,27 @@
     "503": "The service is currently unreachable. Please try again later.",
     "unknown": "The server responded with status {status}."
   },
+  "frame": {
+    "wateringPlanStartRevertFailed": "The start could not be undone: {reason}",
+    "wateringPlanStartFailed": "The watering plan could not be started: {reason}",
+    "wateringPlanCancelFailed": "The watering plan could not be canceled: {reason}",
+    "wateringPlanFinishFailed": "The watering plan could not be completed: {reason}",
+    "wateringPlanAssignFailed": "The assignment could not be saved: {reason}",
+    "wateringPlanStatusUpdateFailed": "The status could not be changed: {reason}",
+    "deleteFailed": "{entity} could not be deleted: {reason}",
+    "archiveFailed": "{entity} could not be archived: {reason}",
+    "gpxDownloadFailed": "The GPX download failed: {reason}",
+    "formSubmitFailed": "Saving failed: {reason}",
+    "requestFailed": "The request failed."
+  },
+  "browser": {
+    "geolocationDenied": "Access to your location was denied.",
+    "geolocationUnavailable": "Your location could not be determined.",
+    "geolocationTimeout": "Determining your location took too long.",
+    "cameraDenied": "Access to the camera was denied.",
+    "cameraUnavailable": "No usable camera was found.",
+    "scannerFailed": "The scanner could not be started."
+  },
   "offline": "The server is unreachable. Please check your connection.",
   "unknown": "Unknown error"
 }

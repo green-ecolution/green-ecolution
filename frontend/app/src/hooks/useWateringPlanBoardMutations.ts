@@ -4,6 +4,7 @@ import type {
   ListResponseWateringPlanInListResponse,
   WateringPlanUpdateRequest,
 } from '@green-ecolution/backend-client'
+import { useTranslation } from 'react-i18next'
 
 export type PlanEvaluation = NonNullable<WateringPlanUpdateRequest['evaluation']>
 
@@ -12,6 +13,7 @@ import type { WateringPlanInList } from '@/api/backendApi'
 import { wateringPlanQueries, type Aggregate } from '@/api/queries'
 import { PLAN_STATUS_AGGREGATES, useInvalidateAggregates } from '@/lib/queryInvalidation'
 import createToast from '@/hooks/createToast'
+import { resolveApiError } from '@/lib/apiError'
 
 export const toUpdateRequest = (
   plan: WateringPlanInList,
@@ -37,6 +39,7 @@ export const useWateringPlanBoardMutations = () => {
   const queryClient = useQueryClient()
   const invalidate = useInvalidateAggregates()
   const showToast = createToast()
+  const { t } = useTranslation('errors')
 
   // The board stays mounted after a mutation, so the route loaders have to
   // re-run as well; cancelQueries elsewhere is scoped to the board to avoid
@@ -80,7 +83,9 @@ export const useWateringPlanBoardMutations = () => {
     onError: (error, _plan, context) => {
       if (context?.previousPlanned) queryClient.setQueryData(plannedKey, context.previousPlanned)
       if (context?.previousActive) queryClient.setQueryData(activeKey, context.previousActive)
-      showToast(`Der Start konnte nicht rückgängig gemacht werden: ${error.message}`, 'error')
+      void resolveApiError(error).then((info) =>
+        showToast(t('frame.wateringPlanStartRevertFailed', { reason: info.message }), 'error'),
+      )
     },
     onSuccess: () => showToast('Start rückgängig gemacht.'),
     onSettled: invalidateAfterStatusChange,
@@ -111,7 +116,9 @@ export const useWateringPlanBoardMutations = () => {
     onError: (error, _plan, context) => {
       if (context?.previousPlanned) queryClient.setQueryData(plannedKey, context.previousPlanned)
       if (context?.previousActive) queryClient.setQueryData(activeKey, context.previousActive)
-      showToast(`Der Einsatz konnte nicht gestartet werden: ${error.message}`, 'error')
+      void resolveApiError(error).then((info) =>
+        showToast(t('frame.wateringPlanStartFailed', { reason: info.message }), 'error'),
+      )
     },
     onSuccess: (_data, plan) =>
       showToast('Einsatz gestartet.', 'success', {
@@ -123,8 +130,11 @@ export const useWateringPlanBoardMutations = () => {
   const cancelPlan = useMutation({
     mutationFn: ({ plan, note }: { plan: WateringPlanInList; note: string }) =>
       update(plan, { status: WateringPlanStatus.Canceled, cancellationNote: note }),
-    onError: (error) =>
-      showToast(`Der Einsatz konnte nicht abgebrochen werden: ${error.message}`, 'error'),
+    onError: (error) => {
+      void resolveApiError(error).then((info) =>
+        showToast(t('frame.wateringPlanCancelFailed', { reason: info.message }), 'error'),
+      )
+    },
     onSuccess: () => {
       showToast('Einsatz abgebrochen.')
       invalidateAfterStatusChange()
@@ -134,8 +144,11 @@ export const useWateringPlanBoardMutations = () => {
   const finishPlan = useMutation({
     mutationFn: ({ plan, evaluation }: { plan: WateringPlanInList; evaluation: PlanEvaluation }) =>
       update(plan, { status: WateringPlanStatus.Finished, evaluation }),
-    onError: (error) =>
-      showToast(`Der Einsatz konnte nicht abgeschlossen werden: ${error.message}`, 'error'),
+    onError: (error) => {
+      void resolveApiError(error).then((info) =>
+        showToast(t('frame.wateringPlanFinishFailed', { reason: info.message }), 'error'),
+      )
+    },
     onSuccess: () => {
       showToast('Einsatz abgeschlossen.')
       invalidateAfterStatusChange()
@@ -145,8 +158,11 @@ export const useWateringPlanBoardMutations = () => {
   const assignUsers = useMutation({
     mutationFn: ({ plan, userIds }: { plan: WateringPlanInList; userIds: string[] }) =>
       update(plan, { userIds }),
-    onError: (error) =>
-      showToast(`Die Zuweisung konnte nicht gespeichert werden: ${error.message}`, 'error'),
+    onError: (error) => {
+      void resolveApiError(error).then((info) =>
+        showToast(t('frame.wateringPlanAssignFailed', { reason: info.message }), 'error'),
+      )
+    },
     onSuccess: () => {
       showToast('Zuweisung gespeichert.')
       invalidatePlans()

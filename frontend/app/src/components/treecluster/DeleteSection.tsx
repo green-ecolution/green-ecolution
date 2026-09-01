@@ -16,6 +16,8 @@ import createToast from '@/hooks/createToast'
 import { LinkProps, useNavigate } from '@tanstack/react-router'
 import type { Aggregate } from '@/api/queries'
 import { useInvalidateAggregates } from '@/lib/queryInvalidation'
+import { useTranslation } from 'react-i18next'
+import { resolveApiError } from '@/lib/apiError'
 
 interface DeleteSectionProps {
   mutationFn: () => Promise<unknown>
@@ -37,8 +39,11 @@ const DeleteSection: React.FC<DeleteSectionProps> = ({
   const navigate = useNavigate()
   const invalidate = useInvalidateAggregates()
   const showToast = createToast()
+  const { t } = useTranslation('errors')
 
   const actionText = type === 'archive' ? 'archiviert' : 'gelöscht'
+  const capitalizedEntity = `${entityName.charAt(0).toUpperCase()}${entityName.slice(1)}`
+  const failureKey = type === 'archive' ? 'frame.archiveFailed' : 'frame.deleteFailed'
 
   const { mutate } = useMutation({
     mutationFn,
@@ -48,23 +53,13 @@ const DeleteSection: React.FC<DeleteSectionProps> = ({
         // After leaving: a page still showing the removed entity would refetch
         // it into a 404.
         .then(() => invalidate(invalidates))
-        .then(() =>
-          showToast(
-            `${entityName.charAt(0).toUpperCase()}${entityName.slice(1)} wurde erfolgreich ${actionText}.`,
-            'success',
-          ),
-        )
+        .then(() => showToast(`${capitalizedEntity} wurde erfolgreich ${actionText}.`, 'success'))
         .catch(() => showToast('Ein fehler is aufgetreten', 'error'))
     },
     onError: (error: unknown) => {
-      if (error instanceof Error) {
-        showToast(error.message, 'error')
-      } else {
-        showToast(
-          'Leider ist ein Fehler eim löschen des Baumes aufgetreten. Versuche es später erneut.',
-          'error',
-        )
-      }
+      void resolveApiError(error).then((info) =>
+        showToast(t(failureKey, { entity: capitalizedEntity, reason: info.message }), 'error'),
+      )
 
       console.error(error)
       setIsModalOpen(false)

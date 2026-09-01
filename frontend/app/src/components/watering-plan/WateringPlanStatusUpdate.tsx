@@ -24,6 +24,8 @@ import { PLAN_STATUS_AGGREGATES, useInvalidateAggregates } from '@/lib/queryInva
 import { wateringPlanApi } from '@/api/backendApi'
 import { useNavigate } from '@tanstack/react-router'
 import createToast from '@/hooks/createToast'
+import { useTranslation } from 'react-i18next'
+import { toApiError } from '@/lib/apiError'
 
 interface WateringPlanStatusUpdateProps {
   wateringPlanId: string
@@ -34,16 +36,22 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
   const navigate = useNavigate()
   const invalidate = useInvalidateAggregates()
   const showToast = createToast()
+  const { t } = useTranslation('errors')
   const statusDetails = getWateringPlanStatusDetails(loadedData.status)
   const statusOptions = getWateringPlanStatusTransitionOptions(loadedData.status)
   const [selectedStatus, setSelectedStatus] = useState(statusDetails)
 
   const { mutate, isError, error } = useMutation({
-    mutationFn: (wateringPlan: WateringPlanUpdate) =>
-      wateringPlanApi.updateWateringPlan({
-        wateringPlanId: wateringPlanId,
-        wateringPlanUpdateRequest: wateringPlan,
-      }),
+    mutationFn: async (wateringPlan: WateringPlanUpdate) => {
+      try {
+        return await wateringPlanApi.updateWateringPlan({
+          wateringPlanId: wateringPlanId,
+          wateringPlanUpdateRequest: wateringPlan,
+        })
+      } catch (error) {
+        throw await toApiError(error)
+      }
+    },
 
     onSuccess: (data: WateringPlan) => {
       invalidate(PLAN_STATUS_AGGREGATES).catch((error) =>
@@ -61,7 +69,9 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
 
     onError: (error) => {
       console.error('Error with vehicle mutation:', error)
-      showToast(`Fehlermeldung: ${error.message || 'Unbekannter Fehler'}`, 'error') // TODO: Parse API ResponseError
+      // mutationFn already routed this through toApiError, so error.message is
+      // the resolved catalog text — the same value FormError renders below.
+      showToast(t('frame.wateringPlanStatusUpdateFailed', { reason: error.message }), 'error')
     },
     throwOnError: true,
   })

@@ -67,6 +67,27 @@
     "503": "Der Dienst ist derzeit nicht erreichbar. Bitte versuche es später erneut.",
     "unknown": "Der Server hat mit Status {status} geantwortet."
   },
+  "frame": {
+    "wateringPlanStartRevertFailed": "Der Start konnte nicht rückgängig gemacht werden: {reason}",
+    "wateringPlanStartFailed": "Der Einsatzplan konnte nicht gestartet werden: {reason}",
+    "wateringPlanCancelFailed": "Der Einsatzplan konnte nicht abgebrochen werden: {reason}",
+    "wateringPlanFinishFailed": "Der Einsatzplan konnte nicht abgeschlossen werden: {reason}",
+    "wateringPlanAssignFailed": "Die Zuweisung konnte nicht gespeichert werden: {reason}",
+    "wateringPlanStatusUpdateFailed": "Der Status konnte nicht geändert werden: {reason}",
+    "deleteFailed": "{entity} konnte nicht gelöscht werden: {reason}",
+    "archiveFailed": "{entity} konnte nicht archiviert werden: {reason}",
+    "gpxDownloadFailed": "Der GPX-Download ist fehlgeschlagen: {reason}",
+    "formSubmitFailed": "Das Speichern ist fehlgeschlagen: {reason}",
+    "requestFailed": "Die Anfrage ist fehlgeschlagen."
+  },
+  "browser": {
+    "geolocationDenied": "Der Zugriff auf deinen Standort wurde abgelehnt.",
+    "geolocationUnavailable": "Dein Standort konnte nicht bestimmt werden.",
+    "geolocationTimeout": "Die Standortbestimmung hat zu lange gedauert.",
+    "cameraDenied": "Der Zugriff auf die Kamera wurde abgelehnt.",
+    "cameraUnavailable": "Es wurde keine nutzbare Kamera gefunden.",
+    "scannerFailed": "Der Scanner konnte nicht gestartet werden."
+  },
   "offline": "Der Server ist nicht erreichbar. Bitte prüfe deine Verbindung.",
   "unknown": "Unbekannter Fehler"
 }

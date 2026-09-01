@@ -9,6 +9,7 @@ import { useFormDraft } from '@/store/form/useFormDraft'
 import { useCallback } from 'react'
 import { FormType, MutationType } from '@/store/form/formDraftSlice'
 import { toApiError } from '@/lib/apiError'
+import { useTranslation } from 'react-i18next'
 
 export interface EntityFormConfig<TForm extends FieldValues, TCreate, TUpdate, TEntity> {
   formType: FormType
@@ -51,6 +52,7 @@ export function useEntityForm<
   const showToast = createToast()
   const invalidate = useInvalidateAggregates()
   const navigate = useNavigate()
+  const { t } = useTranslation('errors')
   const draft = useFormDraft<TForm>(config.formType, mutationType)
 
   const form = useForm<TForm>({
@@ -109,7 +111,10 @@ export function useEntityForm<
 
     onError: (error) => {
       console.error(`Error with ${config.formType} mutation:`, error)
-      showToast(error.message || 'Unbekannter Fehler', 'error')
+      // The mutationFn's catch above already routed this through toApiError, so
+      // `message` is the resolved catalog text, not the client's raw error.
+      const { message } = error
+      showToast(t('frame.formSubmitFailed', { reason: message }), 'error')
     },
     // A rejected save must not tear down the page: the form keeps the user's
     // input and renders the message inline instead.

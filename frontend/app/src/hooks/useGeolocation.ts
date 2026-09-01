@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 export type GeolocationStatus =
   'idle' | 'requesting' | 'watching' | 'denied' | 'unsupported' | 'error'
@@ -44,6 +45,17 @@ interface UseGeolocationReturn {
   relocate: () => Promise<GeolocationFix | null>
 }
 
+const GEOLOCATION_KEYS: Record<number, string> = {
+  1: 'browser.geolocationDenied',
+  2: 'browser.geolocationUnavailable',
+  3: 'browser.geolocationTimeout',
+}
+
+// `t`'s generated overloads only accept the catalog's literal key union; a key
+// looked up from GEOLOCATION_KEYS at runtime can't satisfy that statically
+// (same issue as `lib/apiError.ts`'s `LooseTranslate`).
+type LooseTranslate = (key: string) => string
+
 const toFix = (position: GeolocationPosition): GeolocationFix => ({
   latitude: position.coords.latitude,
   longitude: position.coords.longitude,
@@ -63,6 +75,7 @@ const useGeolocation = ({
   maximumAge = 0,
   onLocated,
 }: UseGeolocationOptions = {}): UseGeolocationReturn => {
+  const { t } = useTranslation('errors')
   const watchIdRef = useRef<number | null>(null)
   const startingRef = useRef(false)
   const locatedRef = useRef(false)
@@ -124,7 +137,12 @@ const useGeolocation = ({
 
   const handleError = useCallback(
     (err: GeolocationPositionError) => {
-      setErrorMessage(err.message || null)
+      // Raw message is vendor-specific and untranslated; keep it for diagnosis only.
+      const { message } = err
+      console.warn('Geolocation error:', message)
+      setErrorMessage(
+        (t as LooseTranslate)(GEOLOCATION_KEYS[err.code] ?? 'browser.geolocationUnavailable'),
+      )
       if (err.code === err.PERMISSION_DENIED) {
         setStatus('denied')
         clearWatch()
@@ -138,7 +156,7 @@ const useGeolocation = ({
         settlePending(null, err)
       }
     },
-    [clearWatch, settlePending],
+    [clearWatch, settlePending, t],
   )
 
   const start = useCallback((): Promise<GeolocationFix | null> => {
@@ -196,7 +214,7 @@ const useGeolocation = ({
         } catch (err) {
           console.error('Failed to start geolocation watch', err)
           setStatus('error')
-          setErrorMessage(err instanceof Error ? err.message : String(err))
+          setErrorMessage(t('browser.geolocationUnavailable'))
           settlePending(null, err)
         } finally {
           startingRef.current = false
@@ -205,7 +223,7 @@ const useGeolocation = ({
 
       void run()
     })
-  }, [handleSuccess, handleError, settlePending, position])
+  }, [handleSuccess, handleError, settlePending, position, t])
 
   const stop = useCallback(() => {
     clearWatch()

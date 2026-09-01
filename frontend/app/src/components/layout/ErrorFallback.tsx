@@ -6,6 +6,7 @@ import { MoveRight, RefreshCw } from 'lucide-react'
 import { useAuthSession } from '@/lib/auth/authSessionContext'
 import { ResponseError } from '@green-ecolution/backend-client'
 import { resolveApiError } from '@/lib/apiError'
+import { getI18n } from '@/lib/i18n'
 import { Button } from '@green-ecolution/ui'
 
 interface ErrorFallbackProps {
@@ -14,9 +15,14 @@ interface ErrorFallbackProps {
 }
 
 const ErrorFallback: React.FC<ErrorFallbackProps> = ({ error, resetErrorBoundary }) => {
-  const [errorMessage, setErrorMessage] = useState(() =>
-    error instanceof ResponseError ? 'Die Anfrage ist fehlgeschlagen.' : error.message,
-  )
+  // The router can render this as its defaultErrorComponent outside the
+  // I18nextProvider, so useTranslation would throw here; getI18n() reads the
+  // module-level instance directly.
+  const [errorMessage, setErrorMessage] = useState(() => {
+    if (error instanceof ResponseError) return getI18n().t('errors:frame.requestFailed')
+    const { message } = error
+    return message
+  })
   const [errorCode] = useState(() => {
     if (error instanceof ResponseError) {
       return error.response.status
@@ -35,7 +41,7 @@ const ErrorFallback: React.FC<ErrorFallbackProps> = ({ error, resetErrorBoundary
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- async data fetching pattern
-    resolveErrorMessage().catch(() => setErrorMessage('Unbekannter Fehler'))
+    resolveErrorMessage().catch(() => setErrorMessage(getI18n().t('errors:unknown')))
   }, [resolveErrorMessage])
 
   return (
