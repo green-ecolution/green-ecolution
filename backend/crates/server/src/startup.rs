@@ -19,6 +19,7 @@ use crate::{
         keycloak::{AuthStack, JwksProvider},
         mqtt::MqttHealthState,
         pg_cluster::PgTreeClusterRepository,
+        pg_comment::PgCommentRepository,
         pg_evaluation::PgEvaluationRepository,
         pg_organization::PgOrganizationRepository,
         pg_region::PgRegionRepository,
@@ -36,6 +37,7 @@ use crate::{
     service::{
         authorization::AuthorizationService,
         cluster_service::ClusterService,
+        comment_service::CommentService,
         evaluation_service::EvaluationService,
         event_bus::{EventBus, EventHandler, InMemoryEventBus},
         handlers::cluster_just_watered::ClusterJustWateredHandler,
@@ -165,6 +167,7 @@ impl Application {
             sensor_service: services.sensor,
             vehicle_service: services.vehicle,
             cluster_service: services.cluster,
+            comment_service: services.comment,
             watering_plan_service: services.watering_plan,
             watering_execution_service: services.watering_execution,
             evaluation_service: services.evaluation,
@@ -299,6 +302,8 @@ struct Repositories {
     vehicle_writer: Arc<dyn domain::vehicle::VehicleWriter>,
     cluster_reader: Arc<dyn domain::cluster::TreeClusterReader>,
     cluster_writer: Arc<dyn domain::cluster::TreeClusterWriter>,
+    comment_reader: Arc<dyn domain::comment::CommentReader>,
+    comment_writer: Arc<dyn domain::comment::CommentWriter>,
     watering_plan_reader: Arc<dyn domain::watering_plan::WateringPlanReader>,
     watering_plan_writer: Arc<dyn domain::watering_plan::WateringPlanWriter>,
     evaluation: Arc<dyn domain::evaluation::EvaluationRepository>,
@@ -320,6 +325,7 @@ impl Repositories {
         ));
         let vehicle_repo = Arc::new(PgVehicleRepository::new(pool.clone()));
         let cluster_repo = Arc::new(PgTreeClusterRepository::new(pool.clone()));
+        let comment_repo = Arc::new(PgCommentRepository::new(pool.clone()));
         let watering_plan_repo = Arc::new(PgWateringPlanRepository::new(pool.clone()));
         let start_point_repo = Arc::new(PgStartPointRepository::new(pool.clone()));
 
@@ -341,6 +347,8 @@ impl Repositories {
             vehicle_writer: vehicle_repo,
             cluster_reader: cluster_repo.clone(),
             cluster_writer: cluster_repo,
+            comment_reader: comment_repo.clone(),
+            comment_writer: comment_repo,
             watering_plan_reader: watering_plan_repo.clone(),
             watering_plan_writer: watering_plan_repo,
             evaluation: Arc::new(PgEvaluationRepository::new(pool.clone())),
@@ -357,6 +365,7 @@ struct Services {
     sensor: Arc<SensorService>,
     vehicle: Arc<VehicleService>,
     cluster: Arc<ClusterService>,
+    comment: Arc<CommentService>,
     watering_plan: Arc<WateringPlanService>,
     watering_execution: Arc<WateringExecutionService>,
     evaluation: Arc<EvaluationService>,
@@ -415,6 +424,10 @@ impl Services {
                 repos.sensor_reader.clone(),
                 repos.sensor_writer.clone(),
                 event_bus.clone(),
+            )),
+            comment: Arc::new(CommentService::new(
+                repos.comment_reader.clone(),
+                repos.comment_writer.clone(),
             )),
             watering_plan: Arc::new(WateringPlanService::new(
                 repos.watering_plan_reader.clone(),

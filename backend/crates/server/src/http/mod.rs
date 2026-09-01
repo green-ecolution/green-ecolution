@@ -24,8 +24,9 @@ use crate::{
     },
     service::{
         authorization::AuthorizationService, cluster_service::ClusterService,
-        evaluation_service::EvaluationService, organization_service::OrganizationService,
-        region_service::RegionService, role_service::RoleService, sensor_service::SensorService,
+        comment_service::CommentService, evaluation_service::EvaluationService,
+        organization_service::OrganizationService, region_service::RegionService,
+        role_service::RoleService, sensor_service::SensorService,
         start_point_service::StartPointService, tree_service::TreeService,
         user_service::UserService, vehicle_service::VehicleService,
         watering_execution_service::WateringExecutionService,
@@ -68,6 +69,7 @@ pub struct AppState {
     pub sensor_service: Arc<SensorService>,
     pub vehicle_service: Arc<VehicleService>,
     pub cluster_service: Arc<ClusterService>,
+    pub comment_service: Arc<CommentService>,
     pub watering_plan_service: Arc<WateringPlanService>,
     pub watering_execution_service: Arc<WateringExecutionService>,
     pub evaluation_service: Arc<EvaluationService>,
@@ -112,6 +114,7 @@ pub struct AppState {
         (name = "Routing", description = "Routing configuration and start point management. Exposes the named depot locations available for watering route optimization."),
         (name = "Organizations", description = "Manage the organization tree used for RBAC scoping and multi-tenancy."),
         (name = "Roles", description = "Manage roles (named permission sets) and their assignment to users."),
+        (name = "Comments", description = "Free-text comments on tree clusters and watering plans. Reading follows the parent resource's read permission, writing its update permission."),
     ),
 )]
 struct ApiDoc;
