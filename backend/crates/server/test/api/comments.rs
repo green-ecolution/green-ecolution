@@ -671,3 +671,129 @@ async fn plan_comment_can_be_deleted_by_its_author() {
         .unwrap();
     assert_eq!(response.status(), 204);
 }
+
+#[tokio::test]
+async fn deleting_a_cluster_removes_its_comments() {
+    let (harness, app) = spawn_with_auth().await;
+    let (org, token) = seed_user_with_permissions(
+        &harness,
+        &app,
+        "Gruppe entfernen",
+        &[
+            "tree_cluster:read",
+            "tree_cluster:create",
+            "tree_cluster:update",
+            "tree_cluster:delete",
+        ],
+    )
+    .await;
+    let cluster_id = create_cluster(&app, &token, org).await;
+    post_comment(&app, &token, &cluster_id, "verschwindet mit").await;
+    let client = reqwest::Client::new();
+
+    let deleted = client
+        .delete(format!("{}/api/v1/clusters/{cluster_id}", app.address))
+        .bearer_auth(&token)
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(deleted.status(), 204);
+
+    let remaining: i64 = sqlx::query_scalar!(
+        r#"SELECT COUNT(*) AS "count!: i64" FROM comments
+           WHERE subject_type = 'tree_cluster' AND subject_id = $1"#,
+        Uuid::parse_str(&cluster_id).unwrap()
+    )
+    .fetch_one(&app.db_pool)
+    .await
+    .unwrap();
+    assert_eq!(remaining, 0);
+}
+
+#[tokio::test]
+async fn deleting_a_watering_plan_removes_its_comments() {
+    let (harness, app) = spawn_with_auth().await;
+    let (org, token) = seed_user_with_permissions(
+        &harness,
+        &app,
+        "Plan entfernen",
+        &[
+            "watering_plan:read",
+            "watering_plan:create",
+            "watering_plan:update",
+            "watering_plan:delete",
+            "vehicle:read",
+            "vehicle:create",
+        ],
+    )
+    .await;
+    let plan_id = create_plan(&app, &token, org).await;
+    let client = reqwest::Client::new();
+
+    client
+        .post(format!(
+            "{}/api/v1/watering-plans/{plan_id}/comments",
+            app.address
+        ))
+        .bearer_auth(&token)
+        .json(&json!({ "body": "verschwindet mit dem plan" }))
+        .send()
+        .await
+        .unwrap();
+
+    let deleted = client
+        .delete(format!("{}/api/v1/watering-plans/{plan_id}", app.address))
+        .bearer_auth(&token)
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(deleted.status(), 204);
+
+    let remaining: i64 = sqlx::query_scalar!(
+        r#"SELECT COUNT(*) AS "count!: i64" FROM comments
+           WHERE subject_type = 'watering_plan' AND subject_id = $1"#,
+        Uuid::parse_str(&plan_id).unwrap()
+    )
+    .fetch_one(&app.db_pool)
+    .await
+    .unwrap();
+    assert_eq!(remaining, 0);
+}
+
+#[tokio::test]
+async fn deleting_a_cluster_keeps_comments_of_other_clusters() {
+    let (harness, app) = spawn_with_auth().await;
+    let (org, token) = seed_user_with_permissions(
+        &harness,
+        &app,
+        "Nur eine Gruppe",
+        &[
+            "tree_cluster:read",
+            "tree_cluster:create",
+            "tree_cluster:update",
+            "tree_cluster:delete",
+        ],
+    )
+    .await;
+    let doomed = create_cluster(&app, &token, org).await;
+    let kept = create_cluster(&app, &token, org).await;
+    post_comment(&app, &token, &doomed, "geht").await;
+    post_comment(&app, &token, &kept, "bleibt").await;
+
+    reqwest::Client::new()
+        .delete(format!("{}/api/v1/clusters/{doomed}", app.address))
+        .bearer_auth(&token)
+        .send()
+        .await
+        .unwrap();
+
+    let remaining: i64 = sqlx::query_scalar!(
+        r#"SELECT COUNT(*) AS "count!: i64" FROM comments
+           WHERE subject_type = 'tree_cluster' AND subject_id = $1"#,
+        Uuid::parse_str(&kept).unwrap()
+    )
+    .fetch_one(&app.db_pool)
+    .await
+    .unwrap();
+    assert_eq!(remaining, 1);
+}

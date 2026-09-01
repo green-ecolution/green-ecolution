@@ -10,6 +10,7 @@ use domain::{
         TreeClusterSearchQuery, TreeClusterUpdate, TreeClusterView, TreeClusterWriter,
         condition_series,
     },
+    comment::{CommentSubject, CommentWriter},
     events::DomainEvent,
     organization::Organization,
     sensor::{SensorReader, SensorWriter},
@@ -30,6 +31,7 @@ pub struct ClusterService {
     sensor_reader: Arc<dyn SensorReader>,
     sensor_writer: Arc<dyn SensorWriter>,
     event_bus: Arc<dyn EventBus>,
+    comment_writer: Arc<dyn CommentWriter>,
 }
 
 impl ClusterService {
@@ -42,6 +44,7 @@ impl ClusterService {
         sensor_reader: Arc<dyn SensorReader>,
         sensor_writer: Arc<dyn SensorWriter>,
         event_bus: Arc<dyn EventBus>,
+        comment_writer: Arc<dyn CommentWriter>,
     ) -> Self {
         Self {
             reader,
@@ -51,6 +54,7 @@ impl ClusterService {
             sensor_reader,
             sensor_writer,
             event_bus,
+            comment_writer,
         }
     }
 
@@ -185,6 +189,10 @@ impl ClusterService {
             self.tree_writer.save(&tree).await?;
         }
         self.writer.delete(id).await?;
+        // Comments have no cascading FK: the subject is polymorphic.
+        self.comment_writer
+            .delete_for_subject(CommentSubject::TreeCluster(id))
+            .await?;
         self.event_bus.publish_all(events).await;
         Ok(())
     }

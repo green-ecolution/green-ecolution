@@ -424,6 +424,7 @@ impl Services {
                 repos.sensor_reader.clone(),
                 repos.sensor_writer.clone(),
                 event_bus.clone(),
+                repos.comment_writer.clone(),
             )),
             comment: Arc::new(CommentService::new(
                 repos.comment_reader.clone(),
@@ -439,6 +440,7 @@ impl Services {
                 tree_demand_liters,
                 start_point_reader.clone(),
                 repos.organization_reader.clone(),
+                repos.comment_writer.clone(),
             )),
             watering_execution: Arc::new(WateringExecutionService::new(
                 repos.watering_plan_reader.clone(),
