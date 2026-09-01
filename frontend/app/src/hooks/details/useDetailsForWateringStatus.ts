@@ -1,49 +1,37 @@
+import { useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { WateringStatus } from '@green-ecolution/backend-client'
 import { StatusColor } from './types'
 
-const WateringStatusProperties: Record<
-  WateringStatus,
-  {
-    color: StatusColor
-    label: string
-    description: string
-    colorHex: string
-  }
-> = {
-  [WateringStatus.Unknown]: {
-    color: 'outline-dark',
-    label: 'Unbekannt',
-    description: 'Der Bewässerungsstatus ist unbekannt.',
-    colorHex: '#A2A2A2',
-  },
-  [WateringStatus.JustWatered]: {
-    color: 'outline-dark',
-    label: 'Soeben bewässert',
-    description: 'Die Bäume wurden vor kurzem bewässert.',
-    colorHex: '#747474',
-  },
-  [WateringStatus.Bad]: {
-    color: 'outline-red',
-    label: 'Sehr trocken',
-    description: 'Die Bäume benötigen dringend Wasser.',
-    colorHex: '#E44E4D',
-  },
-  [WateringStatus.Moderate]: {
-    color: 'outline-yellow',
-    label: 'Leicht trocken',
-    description: 'Die Bäume sind leicht trocken und benötigen etwas Wasser.',
-    colorHex: '#FFC434',
-  },
-  [WateringStatus.Good]: {
-    color: 'outline-green-light',
-    label: 'In Ordnung',
-    description: 'Die Bewässerung ist ausreichend, keine Maßnahmen erforderlich.',
-    colorHex: '#ACB63B',
-  },
-} as const
+// `t`'s generated overloads only accept the catalog's literal key union; the
+// enum value plugged into the template isn't statically one of those literals.
+type EnumsTranslate = (key: string) => string
 
-type WateringStatusDetails = (typeof WateringStatusProperties)[WateringStatus]
+const WateringStatusColors: Record<WateringStatus, { color: StatusColor; colorHex: string }> = {
+  [WateringStatus.Unknown]: { color: 'outline-dark', colorHex: '#A2A2A2' },
+  [WateringStatus.JustWatered]: { color: 'outline-dark', colorHex: '#747474' },
+  [WateringStatus.Bad]: { color: 'outline-red', colorHex: '#E44E4D' },
+  [WateringStatus.Moderate]: { color: 'outline-yellow', colorHex: '#FFC434' },
+  [WateringStatus.Good]: { color: 'outline-green-light', colorHex: '#ACB63B' },
+}
 
-export const getWateringStatusDetails = (status: WateringStatus): WateringStatusDetails => {
-  return WateringStatusProperties[status]
+export interface WateringStatusDetails {
+  color: StatusColor
+  colorHex: string
+  label: string
+  description: string
+}
+
+/** Reactive to language change: re-renders whichever component calls it. */
+export const useWateringStatusDetails = (): ((status: WateringStatus) => WateringStatusDetails) => {
+  const { t } = useTranslation('enums')
+  const translate = t as EnumsTranslate
+  return useCallback(
+    (status: WateringStatus): WateringStatusDetails => ({
+      ...WateringStatusColors[status],
+      label: translate(`wateringStatus.${status}.label`),
+      description: translate(`wateringStatus.${status}.description`),
+    }),
+    [translate],
+  )
 }

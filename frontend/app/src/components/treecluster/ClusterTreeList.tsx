@@ -12,7 +12,7 @@ import {
 import { Link } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import type { Tree } from '@/api/backendApi'
-import { getWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
+import { useWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
 
 interface ClusterTreeListProps {
   trees: Tree[]
@@ -20,6 +20,7 @@ interface ClusterTreeListProps {
 
 const ClusterTreeList = ({ trees }: ClusterTreeListProps) => {
   const { t } = useTranslation('treecluster')
+  const getWateringStatusDetails = useWateringStatusDetails()
 
   return (
     <Card variant="outlined">

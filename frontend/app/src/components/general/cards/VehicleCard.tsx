@@ -1,17 +1,19 @@
-import { getVehicleStatusDetails } from '@/hooks/details/useDetailsForVehicleStatus'
+import { useVehicleStatusDetails } from '@/hooks/details/useDetailsForVehicleStatus'
 import type { Vehicle } from '@/api/backendApi'
 import { Link } from '@tanstack/react-router'
 import { Badge, ListCard, ListCardTitle, ListCardDescription } from '@green-ecolution/ui'
 import React from 'react'
-import { getVehicleType } from '@/hooks/details/useDetailsForVehicleType'
+import { useVehicleTypeLabel } from '@/hooks/details/useDetailsForVehicleType'
 
 interface VehicleCard {
   vehicle: Vehicle
 }
 
 const VehicleCard: React.FC<VehicleCard> = ({ vehicle }) => {
+  const getVehicleStatusDetails = useVehicleStatusDetails()
+  const getVehicleTypeLabel = useVehicleTypeLabel()
   const statusDetails = getVehicleStatusDetails(vehicle.status)
-  const vehicleType = getVehicleType(vehicle.type)
+  const vehicleType = getVehicleTypeLabel(vehicle.type)
 
   return (
     <ListCard asChild columns="repeat(5, 1fr)" className="lg:py-10">

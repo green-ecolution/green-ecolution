@@ -19,13 +19,14 @@ import {
   SIGNAL_LEVEL_TEXT_COLOR,
 } from '@/components/sensor/detail/signalParsing'
 import { formatBatteryVoltage, formatLastSeen } from '@/components/sensor/detail/latestDataParsing'
-import { getDataQualityDetails, hasQualityWarning } from '@/hooks/details/useDetailsForDataHealth'
+import { useDataQualityDetails, hasQualityWarning } from '@/hooks/details/useDetailsForDataHealth'
 
 interface ClusterSensorCardProps {
   trees: Tree[]
 }
 
 const SensorTreeRow = ({ tree, t }: { tree: Tree; t: TFunction<'treecluster'> }) => {
+  const getDataQualityDetails = useDataQualityDetails()
   const sensor = tree.sensor
   if (!sensor) return null
 

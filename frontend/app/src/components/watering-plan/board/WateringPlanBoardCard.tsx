@@ -2,7 +2,7 @@ import { Link } from '@tanstack/react-router'
 import { Avatar, AvatarFallback, AvatarImage, Badge, KanbanCard } from '@green-ecolution/ui'
 import { WateringPlanStatus } from '@green-ecolution/backend-client'
 import type { User, WateringPlanInList } from '@/api/backendApi'
-import { getWateringPlanStatusDetails } from '@/hooks/details/useDetailsForWateringPlanStatus'
+import { useWateringPlanStatusDetails } from '@/hooks/details/useDetailsForWateringPlanStatus'
 import { columnForStatus } from '@/lib/wateringPlanBoard'
 import { formatLiters } from '@/lib/utils'
 import type { ReactNode } from 'react'
@@ -32,6 +32,7 @@ const WateringPlanBoardCard = ({
   cardState,
 }: WateringPlanBoardCardProps) => {
   const column = columnForStatus(plan.status)
+  const getWateringPlanStatusDetails = useWateringPlanStatusDetails()
   const statusDetails = getWateringPlanStatusDetails(plan.status)
   const assigned = users.filter((u) => plan.userIds.includes(u.id))
 

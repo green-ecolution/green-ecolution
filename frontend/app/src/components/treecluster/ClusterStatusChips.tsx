@@ -5,7 +5,7 @@ import { X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { clusterQueries } from '@/api/queries'
 import { WateringStatus } from '@/api/backendApi'
-import { getWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
+import { useWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
 
 const STATUSES = [
   WateringStatus.Bad,
@@ -26,6 +26,7 @@ const ClusterStatusChips: React.FC<{ className?: string }> = ({ className }) => 
   const { data: stats } = useSuspenseQuery(clusterQueries.statistics())
   const search = useSearch({ strict: false })
   const navigate = useNavigate()
+  const getWateringStatusDetails = useWateringStatusDetails()
 
   const active = 'wateringStatuses' in search ? (search.wateringStatuses ?? []) : []
 

@@ -1,4 +1,12 @@
+import { useCallback, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { SoilCondition } from '@green-ecolution/backend-client'
+
+// `t`'s generated overloads only accept the catalog's literal key union; the
+// enum value plugged into the template isn't statically one of those literals.
+type EnumsTranslate = (key: string) => string
+
+type SoilGroupKey = 'sands' | 'silts' | 'loams' | 'clays' | 'pureSands' | 'other'
 
 export interface SoilConditionOption {
   value: SoilCondition
@@ -7,43 +15,72 @@ export interface SoilConditionOption {
 }
 
 // KA5 fine soil types, grouped by Hauptbodenart.
-export const SoilConditionOptions: SoilConditionOption[] = [
-  { value: SoilCondition.Ss, label: 'Ss – Reinsand', group: 'Sande' },
-  { value: SoilCondition.Su2, label: 'Su2 – schwach schluffiger Sand', group: 'Sande' },
-  { value: SoilCondition.Su3, label: 'Su3 – schluffiger Sand', group: 'Sande' },
-  { value: SoilCondition.Su4, label: 'Su4 – stark schluffiger Sand', group: 'Sande' },
-  { value: SoilCondition.Sl2, label: 'Sl2 – schwach lehmiger Sand', group: 'Sande' },
-  { value: SoilCondition.Sl3, label: 'Sl3 – lehmiger Sand', group: 'Sande' },
-  { value: SoilCondition.Sl4, label: 'Sl4 – stark lehmiger Sand', group: 'Sande' },
-  { value: SoilCondition.Slu, label: 'Slu – schluffig-lehmiger Sand', group: 'Sande' },
-  { value: SoilCondition.St2, label: 'St2 – schwach toniger Sand', group: 'Sande' },
-  { value: SoilCondition.St3, label: 'St3 – toniger Sand', group: 'Sande' },
-  { value: SoilCondition.Uu, label: 'Uu – reiner Schluff', group: 'Schluffe' },
-  { value: SoilCondition.Us, label: 'Us – sandiger Schluff', group: 'Schluffe' },
-  { value: SoilCondition.Uls, label: 'Uls – sandig-lehmiger Schluff', group: 'Schluffe' },
-  { value: SoilCondition.Ut2, label: 'Ut2 – schwach toniger Schluff', group: 'Schluffe' },
-  { value: SoilCondition.Ut3, label: 'Ut3 – toniger Schluff', group: 'Schluffe' },
-  { value: SoilCondition.Ut4, label: 'Ut4 – stark toniger Schluff', group: 'Schluffe' },
-  { value: SoilCondition.Ls2, label: 'Ls2 – schwach sandiger Lehm', group: 'Lehme' },
-  { value: SoilCondition.Ls3, label: 'Ls3 – sandiger Lehm', group: 'Lehme' },
-  { value: SoilCondition.Ls4, label: 'Ls4 – stark sandiger Lehm', group: 'Lehme' },
-  { value: SoilCondition.Lt2, label: 'Lt2 – schwach toniger Lehm', group: 'Lehme' },
-  { value: SoilCondition.Lt3, label: 'Lt3 – toniger Lehm', group: 'Lehme' },
-  { value: SoilCondition.Lts, label: 'Lts – sandig-toniger Lehm', group: 'Lehme' },
-  { value: SoilCondition.Lu, label: 'Lu – schluffiger Lehm', group: 'Lehme' },
-  { value: SoilCondition.Tt, label: 'Tt – reiner Ton', group: 'Tone' },
-  { value: SoilCondition.Tu2, label: 'Tu2 – schwach schluffiger Ton', group: 'Tone' },
-  { value: SoilCondition.Tu3, label: 'Tu3 – schluffiger Ton', group: 'Tone' },
-  { value: SoilCondition.Tu4, label: 'Tu4 – stark schluffiger Ton', group: 'Tone' },
-  { value: SoilCondition.Ts2, label: 'Ts2 – schwach sandiger Ton', group: 'Tone' },
-  { value: SoilCondition.Ts3, label: 'Ts3 – sandiger Ton', group: 'Tone' },
-  { value: SoilCondition.Ts4, label: 'Ts4 – stark sandiger Ton', group: 'Tone' },
-  { value: SoilCondition.Tl, label: 'Tl – lehmiger Ton', group: 'Tone' },
-  { value: SoilCondition.FS, label: 'fS – Feinsand', group: 'Reinsande' },
-  { value: SoilCondition.MS, label: 'mS – Mittelsand', group: 'Reinsande' },
-  { value: SoilCondition.GS, label: 'gS – Grobsand', group: 'Reinsande' },
-  { value: SoilCondition.Unknown, label: 'Unbekannt', group: 'Sonstige' },
+const SoilConditionEntries: { value: SoilCondition; groupKey: SoilGroupKey }[] = [
+  { value: SoilCondition.Ss, groupKey: 'sands' },
+  { value: SoilCondition.Su2, groupKey: 'sands' },
+  { value: SoilCondition.Su3, groupKey: 'sands' },
+  { value: SoilCondition.Su4, groupKey: 'sands' },
+  { value: SoilCondition.Sl2, groupKey: 'sands' },
+  { value: SoilCondition.Sl3, groupKey: 'sands' },
+  { value: SoilCondition.Sl4, groupKey: 'sands' },
+  { value: SoilCondition.Slu, groupKey: 'sands' },
+  { value: SoilCondition.St2, groupKey: 'sands' },
+  { value: SoilCondition.St3, groupKey: 'sands' },
+  { value: SoilCondition.Uu, groupKey: 'silts' },
+  { value: SoilCondition.Us, groupKey: 'silts' },
+  { value: SoilCondition.Uls, groupKey: 'silts' },
+  { value: SoilCondition.Ut2, groupKey: 'silts' },
+  { value: SoilCondition.Ut3, groupKey: 'silts' },
+  { value: SoilCondition.Ut4, groupKey: 'silts' },
+  { value: SoilCondition.Ls2, groupKey: 'loams' },
+  { value: SoilCondition.Ls3, groupKey: 'loams' },
+  { value: SoilCondition.Ls4, groupKey: 'loams' },
+  { value: SoilCondition.Lt2, groupKey: 'loams' },
+  { value: SoilCondition.Lt3, groupKey: 'loams' },
+  { value: SoilCondition.Lts, groupKey: 'loams' },
+  { value: SoilCondition.Lu, groupKey: 'loams' },
+  { value: SoilCondition.Tt, groupKey: 'clays' },
+  { value: SoilCondition.Tu2, groupKey: 'clays' },
+  { value: SoilCondition.Tu3, groupKey: 'clays' },
+  { value: SoilCondition.Tu4, groupKey: 'clays' },
+  { value: SoilCondition.Ts2, groupKey: 'clays' },
+  { value: SoilCondition.Ts3, groupKey: 'clays' },
+  { value: SoilCondition.Ts4, groupKey: 'clays' },
+  { value: SoilCondition.Tl, groupKey: 'clays' },
+  { value: SoilCondition.FS, groupKey: 'pureSands' },
+  { value: SoilCondition.MS, groupKey: 'pureSands' },
+  { value: SoilCondition.GS, groupKey: 'pureSands' },
+  { value: SoilCondition.Unknown, groupKey: 'other' },
 ]
 
-export const soilConditionLabel = (value: SoilCondition): string =>
-  SoilConditionOptions.find((o) => o.value === value)?.label ?? value
+/**
+ * Reactive to language change: re-renders whichever component calls it.
+ * Falls back to the raw value for anything outside the KA5 catalog (e.g. an
+ * absent soil condition), matching the pre-catalog lookup's `?? value`.
+ */
+export const useSoilConditionLabel = (): ((value: SoilCondition) => string) => {
+  const { t } = useTranslation('enums')
+  const translate = t as EnumsTranslate
+  return useCallback(
+    (value: SoilCondition) =>
+      SoilConditionEntries.some((entry) => entry.value === value)
+        ? translate(`soilCondition.${value}.label`)
+        : value,
+    [translate],
+  )
+}
+
+/** The full KA5 option list with translated labels and group headings, in display order. */
+export const useSoilConditionOptions = (): SoilConditionOption[] => {
+  const { t } = useTranslation('enums')
+  const translate = t as EnumsTranslate
+  return useMemo(
+    () =>
+      SoilConditionEntries.map(({ value, groupKey }) => ({
+        value,
+        label: translate(`soilCondition.${value}.label`),
+        group: translate(`soilCondition.groups.${groupKey}`),
+      })),
+    [translate],
+  )
+}

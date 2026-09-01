@@ -12,7 +12,7 @@ import {
   Label,
 } from '@green-ecolution/ui'
 import { SoilCondition } from '@green-ecolution/backend-client'
-import { soilConditionLabel } from '@/hooks/details/useDetailsForSoilCondition'
+import { useSoilConditionLabel } from '@/hooks/details/useDetailsForSoilCondition'
 import {
   SoilFractions,
   balanceFractions,
@@ -31,6 +31,7 @@ interface SoilTextureFormProps {
 
 const SoilTextureForm = ({ initialCondition, onApply, onCancel }: SoilTextureFormProps) => {
   const { t } = useTranslation('treecluster')
+  const soilConditionLabel = useSoilConditionLabel()
   const FRACTION_FIELDS: { key: keyof SoilFractions; label: string }[] = [
     { key: 'sand', label: t('soilTexture.fractionSand') },
     { key: 'silt', label: t('soilTexture.fractionSilt') },

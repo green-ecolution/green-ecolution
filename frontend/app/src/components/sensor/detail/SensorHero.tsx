@@ -1,5 +1,5 @@
 import { Badge } from '@green-ecolution/ui'
-import { getSensorStatusDetails } from '@/hooks/details/useDetailsForSensorStatus'
+import { useSensorStatusDetails } from '@/hooks/details/useDetailsForSensorStatus'
 import { getSensorImage } from './sensorImages'
 import SensorActionsMenu from './SensorActionsMenu'
 import type { Sensor } from '@/api/backendApi'
@@ -10,6 +10,7 @@ interface SensorHeroProps {
 
 const SensorHero = ({ sensor }: SensorHeroProps) => {
   const image = getSensorImage(sensor.model.name)
+  const getSensorStatusDetails = useSensorStatusDetails()
   const status = getSensorStatusDetails(sensor.status)
   const sensorTypeLabel = sensor.sensorType === 'lorawan' ? 'LoRaWAN' : sensor.sensorType
 

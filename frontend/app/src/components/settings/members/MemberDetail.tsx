@@ -1,7 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage, Badge } from '@green-ecolution/ui'
 import type { DrivingLicense, UserStatus } from '@green-ecolution/backend-client'
 import type { OrganizationResponse, RoleResponse, UserResponse } from '@/api/backendApi'
-import { getUserStatusDetails } from '@/hooks/details/useDetailsForUserStatus'
+import { useUserStatusDetails } from '@/hooks/details/useDetailsForUserStatus'
 import { initialsOf } from '@/lib/initials'
 import MemberActionButtons from './MemberActionButtons'
 import { fullNameOf, phoneNumberIssue, sinceLabel } from './memberList'
@@ -68,6 +68,7 @@ const MemberDetail = ({
   onCancel,
   renderActionBar,
 }: MemberDetailProps) => {
+  const getUserStatusDetails = useUserStatusDetails()
   const status = getUserStatusDetails(user.status)
   const since = sinceLabel(user.createdAt)
   const organization = user.organization ?? undefined

@@ -2,8 +2,8 @@ import type { Sensor } from '@/api/backendApi'
 import { format, formatDistanceToNow } from 'date-fns'
 import React from 'react'
 import { Badge, ListCard, ListCardTitle, ListCardDescription } from '@green-ecolution/ui'
-import { getSensorStatusDetails } from '@/hooks/details/useDetailsForSensorStatus'
-import { getDataQualityDetails, hasQualityWarning } from '@/hooks/details/useDetailsForDataHealth'
+import { useSensorStatusDetails } from '@/hooks/details/useDetailsForSensorStatus'
+import { useDataQualityDetails, hasQualityWarning } from '@/hooks/details/useDetailsForDataHealth'
 import { Link } from '@tanstack/react-router'
 import { de } from 'date-fns/locale'
 
@@ -12,6 +12,8 @@ interface SensorCardProps {
 }
 
 const SensorCard: React.FC<SensorCardProps> = ({ sensor }) => {
+  const getSensorStatusDetails = useSensorStatusDetails()
+  const getDataQualityDetails = useDataQualityDetails()
   const statusDetails = getSensorStatusDetails(sensor.status)
   const createdDate = sensor?.createdAt
     ? format(new Date(sensor?.createdAt), 'dd.MM.yyyy')

@@ -16,6 +16,7 @@ export const NAMESPACES = [
   'navigation',
   'tree',
   'treecluster',
+  'enums',
 ] as const
 
 export const DEFAULT_NAMESPACE = 'common'

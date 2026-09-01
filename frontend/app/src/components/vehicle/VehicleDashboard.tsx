@@ -1,10 +1,10 @@
 import EntityDetailHeader from '../general/EntityDetailHeader'
 import { Badge } from '@green-ecolution/ui'
-import { getVehicleStatusDetails } from '@/hooks/details/useDetailsForVehicleStatus'
+import { useVehicleStatusDetails } from '@/hooks/details/useDetailsForVehicleStatus'
 import GeneralLink from '../general/links/GeneralLink'
 import type { Vehicle } from '@/api/backendApi'
 import { VehicleStatus } from '@green-ecolution/backend-client'
-import { getVehicleType } from '@/hooks/details/useDetailsForVehicleType'
+import { useVehicleTypeLabel } from '@/hooks/details/useDetailsForVehicleType'
 import { DetailedList } from '@green-ecolution/ui'
 import { useHasPermission } from '@/lib/auth/useHasPermission'
 
@@ -13,8 +13,10 @@ interface VehicleDashboardProps {
 }
 
 const VehicleDashboard = ({ vehicle }: VehicleDashboardProps) => {
+  const getVehicleStatusDetails = useVehicleStatusDetails()
+  const getVehicleTypeLabel = useVehicleTypeLabel()
   const statusDetails = getVehicleStatusDetails(vehicle.status)
-  const vehicleType = getVehicleType(vehicle.type)
+  const vehicleType = getVehicleTypeLabel(vehicle.type)
   const canEdit = useHasPermission(['vehicle:update'])
 
   const vehicleData = [

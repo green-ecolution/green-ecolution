@@ -24,7 +24,7 @@ import type { SensorQualityIssueResponse } from '@/api/backendApi'
 import { sensorQueries } from '@/api/queries'
 import { Can } from '@/lib/auth/Can'
 import { useSensorQualityMutations } from '@/hooks/useSensorQualityMutations'
-import { getDataQualityDetails, qualityReasonLabel } from '@/hooks/details/useDetailsForDataHealth'
+import { useDataQualityDetails, useQualityReasonLabel } from '@/hooks/details/useDetailsForDataHealth'
 
 interface SensorDataQualitySectionProps {
   sensorId: string
@@ -36,29 +36,34 @@ const windowSummary = (implausibleRecent: number): string => {
   return `In den letzten sieben Tagen wurden ${implausibleRecent} Messwerte verworfen.`
 }
 
-const IssueList = ({ issues }: { issues: SensorQualityIssueResponse[] }) => (
-  <ul className="flex flex-col gap-2">
-    {issues.map((issue) => (
-      <li
-        key={`${issue.recordedAt}-${issue.ability}-${issue.depthCm}`}
-        className="rounded-lg border border-dark-50 bg-white p-3 text-sm"
-      >
-        <p className="font-bold">
-          {format(new Date(issue.recordedAt), 'dd.MM.yyyy HH:mm')} · {issue.depthCm} cm Tiefe
-        </p>
-        <p className="text-dark-800">
-          Messwert {issue.value} · {qualityReasonLabel(issue.reason)}
-        </p>
-      </li>
-    ))}
-  </ul>
-)
+const IssueList = ({ issues }: { issues: SensorQualityIssueResponse[] }) => {
+  const getQualityReasonLabel = useQualityReasonLabel()
+  return (
+    <ul className="flex flex-col gap-2">
+      {issues.map((issue) => (
+        <li
+          key={`${issue.recordedAt}-${issue.ability}-${issue.depthCm}`}
+          className="rounded-lg border border-dark-50 bg-white p-3 text-sm"
+        >
+          <p className="font-bold">
+            {format(new Date(issue.recordedAt), 'dd.MM.yyyy HH:mm')} · {issue.depthCm} cm Tiefe
+          </p>
+          <p className="text-dark-800">
+            Messwert {issue.value} · {getQualityReasonLabel(issue.reason)}
+          </p>
+        </li>
+      ))}
+    </ul>
+  )
+}
 
 const SensorDataQualitySection = ({ sensorId }: SensorDataQualitySectionProps) => {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [note, setNote] = useState('')
   const { data } = useQuery(sensorQueries.dataQuality(sensorId))
   const { acknowledge } = useSensorQualityMutations()
+
+  const getDataQualityDetails = useDataQualityDetails()
 
   if (!data || data.issues.length === 0) return null
 

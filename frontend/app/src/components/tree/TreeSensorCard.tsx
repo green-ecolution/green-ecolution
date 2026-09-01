@@ -14,8 +14,8 @@ import {
 import { Link } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import type { Tree } from '@/api/backendApi'
-import { getSensorStatusDetails } from '@/hooks/details/useDetailsForSensorStatus'
-import { getDataQualityDetails, hasQualityWarning } from '@/hooks/details/useDetailsForDataHealth'
+import { useSensorStatusDetails } from '@/hooks/details/useDetailsForSensorStatus'
+import { useDataQualityDetails, hasQualityWarning } from '@/hooks/details/useDetailsForDataHealth'
 import {
   parseSignal,
   signalBarsFromRssi,
@@ -31,6 +31,8 @@ interface TreeSensorCardProps {
 
 const TreeSensorCard = ({ tree }: TreeSensorCardProps) => {
   const { t } = useTranslation('tree')
+  const getSensorStatusDetails = useSensorStatusDetails()
+  const getDataQualityDetails = useDataQualityDetails()
   const sensor = tree.sensor
   const statusDetails = sensor ? getSensorStatusDetails(sensor.status) : null
   const signal = parseSignal(sensor?.latestData)

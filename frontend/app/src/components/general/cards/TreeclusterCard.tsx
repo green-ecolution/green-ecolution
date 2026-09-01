@@ -1,5 +1,5 @@
 import TreeIcon from '@/components/icons/Tree'
-import { getWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
+import { useWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
 import type { TreeClusterInList } from '@/api/backendApi'
 import { Link } from '@tanstack/react-router'
 import { MapPin } from 'lucide-react'
@@ -13,6 +13,7 @@ interface TreeclusterCardProps {
 
 const TreeclusterCard: React.FC<TreeclusterCardProps> = ({ treecluster }) => {
   const { t } = useTranslation('treecluster')
+  const getWateringStatusDetails = useWateringStatusDetails()
   const statusDetails = getWateringStatusDetails(treecluster.wateringStatus)
 
   return (

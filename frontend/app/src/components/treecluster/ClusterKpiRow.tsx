@@ -2,7 +2,7 @@ import { format, formatDistanceToNow } from 'date-fns'
 import { useTranslation } from 'react-i18next'
 import { StatusCard } from '@green-ecolution/ui'
 import StatusCardGrid from '@/components/general/StatusCardGrid'
-import { getWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
+import { useWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
 import { roundTo } from '@/lib/utils'
 import { useDateLocale } from '@/lib/i18n/useFormatters'
 import { latestClusterReading } from './clusterLatestReading'
@@ -15,6 +15,7 @@ interface ClusterKpiRowProps {
 const ClusterKpiRow = ({ treecluster }: ClusterKpiRowProps) => {
   const { t } = useTranslation('treecluster')
   const dateLocale = useDateLocale()
+  const getWateringStatusDetails = useWateringStatusDetails()
   const wateringStatus = getWateringStatusDetails(treecluster.wateringStatus)
   const { temperature, measuredAt } = latestClusterReading(treecluster.trees ?? [])
 

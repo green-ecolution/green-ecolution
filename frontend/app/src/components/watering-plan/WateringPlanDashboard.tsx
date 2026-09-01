@@ -13,7 +13,7 @@ import {
   AlertDescription,
 } from '@green-ecolution/ui'
 import {
-  getWateringPlanStatusDetails,
+  useWateringPlanStatusDetails,
   showWateringPlanStatusButton,
 } from '@/hooks/details/useDetailsForWateringPlanStatus'
 import { format } from 'date-fns'
@@ -31,6 +31,7 @@ interface WateringPlanDashboardProps {
 }
 
 const WateringPlanDashboard = ({ wateringPlan }: WateringPlanDashboardProps) => {
+  const getWateringPlanStatusDetails = useWateringPlanStatusDetails()
   const statusDetails = getWateringPlanStatusDetails(wateringPlan.status)
   const canEdit = useHasPermission(['watering_plan:update'])
 

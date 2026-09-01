@@ -12,7 +12,7 @@ import { WateringPlanForm } from '@/schema/wateringPlanSchema'
 import type { User, Vehicle } from '@/api/backendApi'
 import type { DrivingLicense } from '@green-ecolution/backend-client'
 import SelectEntities from './types/SelectEntities'
-import { getDrivingLicenseDetails } from '@/hooks/details/useDetailsForDrivingLicense'
+import { useDrivingLicenseDetails } from '@/hooks/details/useDetailsForDrivingLicense'
 import { validateDriverLicenses } from '@/lib/licenseValidation'
 import { Controller, SubmitHandler, useFormContext, useFormState, useWatch } from 'react-hook-form'
 import { useQuery } from '@tanstack/react-query'
@@ -38,6 +38,7 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
   const { isValid, errors } = useFormState({ control })
 
   const { data: startPoints, isPending } = useQuery(routingStartPointsQuery())
+  const getDrivingLicenseDetails = useDrivingLicenseDetails()
 
   useEffect(() => {
     if (!startPoints?.length) return

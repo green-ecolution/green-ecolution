@@ -2,7 +2,7 @@ import { MoveRight, RadioTower } from 'lucide-react'
 import { format, formatDistanceToNow } from 'date-fns'
 import { de } from 'date-fns/locale'
 import { Badge, Button, StatusCard } from '@green-ecolution/ui'
-import { getWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
+import { useWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
 import { roundTo } from '@/lib/utils'
 import Tree from '@/components/icons/Tree'
 import type { SensorPayload, TreeClusterResponse } from '@/api/backendApi'
@@ -16,6 +16,7 @@ interface ClusterPanelViewProps {
 const PREVIEW_COUNT = 3
 
 const ClusterPanelView = ({ treecluster, onOpenDashboard }: ClusterPanelViewProps) => {
+  const getWateringStatusDetails = useWateringStatusDetails()
   const status = getWateringStatusDetails(treecluster.wateringStatus)
   const species = summarizeTopSpecies(treecluster.trees)
   const sortedTrees = sortTreesSensorFirst(treecluster.trees)

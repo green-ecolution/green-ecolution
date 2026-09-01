@@ -1,29 +1,34 @@
+import { useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { SensorStatus } from '@green-ecolution/backend-client'
 import type { StatusColor } from './types'
 
-const SensorStatusProperties: Record<
-  SensorStatus,
-  { color: StatusColor; label: string; description: string }
-> = {
-  [SensorStatus.Prepared]: {
-    color: 'outline-dark',
-    label: 'Vorbereitet',
-    description: 'Der Sensor ist registriert, aber noch nicht aktiviert.',
-  },
-  [SensorStatus.Offline]: {
-    color: 'outline-red',
-    label: 'Offline',
-    description: 'Der Sensorbaukasten hat Probleme und benötigen eine Wartung.',
-  },
-  [SensorStatus.Online]: {
-    color: 'outline-green-dark',
-    label: 'Online',
-    description: 'Der Sensorbaukasten kann Daten senden.',
-  },
+// `t`'s generated overloads only accept the catalog's literal key union; the
+// enum value plugged into the template isn't statically one of those literals.
+type EnumsTranslate = (key: string) => string
+
+const SensorStatusColors: Record<SensorStatus, { color: StatusColor }> = {
+  [SensorStatus.Prepared]: { color: 'outline-dark' },
+  [SensorStatus.Offline]: { color: 'outline-red' },
+  [SensorStatus.Online]: { color: 'outline-green-dark' },
 }
 
-type SensorStatusDetails = (typeof SensorStatusProperties)[SensorStatus]
+export interface SensorStatusDetails {
+  color: StatusColor
+  label: string
+  description: string
+}
 
-export const getSensorStatusDetails = (status: SensorStatus): SensorStatusDetails => {
-  return SensorStatusProperties[status]
+/** Reactive to language change: re-renders whichever component calls it. */
+export const useSensorStatusDetails = (): ((status: SensorStatus) => SensorStatusDetails) => {
+  const { t } = useTranslation('enums')
+  const translate = t as EnumsTranslate
+  return useCallback(
+    (status: SensorStatus): SensorStatusDetails => ({
+      ...SensorStatusColors[status],
+      label: translate(`sensorStatus.${status}.label`),
+      description: translate(`sensorStatus.${status}.description`),
+    }),
+    [translate],
+  )
 }

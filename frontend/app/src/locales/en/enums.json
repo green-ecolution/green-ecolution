@@ -1,0 +1,174 @@
+{
+  "wateringStatus": {
+    "good": {
+      "label": "Good",
+      "description": "Watering is sufficient, no action required."
+    },
+    "moderate": {
+      "label": "Slightly dry",
+      "description": "The trees are slightly dry and need some water."
+    },
+    "bad": {
+      "label": "Very dry",
+      "description": "The trees urgently need water."
+    },
+    "just_watered": {
+      "label": "Just watered",
+      "description": "The trees were watered recently."
+    },
+    "unknown": {
+      "label": "Unknown",
+      "description": "The watering status is unknown."
+    }
+  },
+  "sensorStatus": {
+    "prepared": {
+      "label": "Prepared",
+      "description": "The sensor is registered but not yet activated."
+    },
+    "offline": {
+      "label": "Offline",
+      "description": "The sensor unit has a problem and needs maintenance."
+    },
+    "online": {
+      "label": "Online",
+      "description": "The sensor unit can send data."
+    }
+  },
+  "userStatus": {
+    "unknown": {
+      "label": "Unknown"
+    },
+    "absent": {
+      "label": "Not available"
+    },
+    "available": {
+      "label": "Available"
+    }
+  },
+  "vehicleStatus": {
+    "unknown": {
+      "label": "Unknown",
+      "description": "The vehicle status is unknown."
+    },
+    "not_available": {
+      "label": "Not available",
+      "description": "The vehicle is not available."
+    },
+    "available": {
+      "label": "Available",
+      "description": "The vehicle is available."
+    },
+    "active": {
+      "label": "In use",
+      "description": "The vehicle is in use."
+    }
+  },
+  "vehicleType": {
+    "transporter": {
+      "label": "Van"
+    },
+    "trailer": {
+      "label": "Trailer"
+    },
+    "unknown": {
+      "label": "Unknown"
+    }
+  },
+  "wateringPlanStatus": {
+    "unknown": {
+      "label": "Unknown",
+      "description": "The watering plan's status is unknown."
+    },
+    "active": {
+      "label": "Active",
+      "description": "The watering plan is active and is currently being carried out."
+    },
+    "canceled": {
+      "label": "Canceled",
+      "description": "The watering plan was canceled and was not completed."
+    },
+    "finished": {
+      "label": "Finished",
+      "description": "The watering plan was completed successfully."
+    },
+    "not_completed": {
+      "label": "Not carried out",
+      "description": "The watering plan was not carried out."
+    },
+    "planned": {
+      "label": "Planned",
+      "description": "The watering plan is planned and can be started."
+    }
+  },
+  "dataHealth": {
+    "ok": {
+      "label": "Data plausible",
+      "description": "The most recently received readings are within the expected range."
+    },
+    "flagged": {
+      "label": "Some values discarded",
+      "description": "Some readings were implausible and were excluded from the evaluation. The watering status is based on the remaining values."
+    },
+    "suspect": {
+      "label": "Check data quality",
+      "description": "Several transmissions in a row contained no usable reading. The sensor may be defective and the displayed watering status may be outdated."
+    },
+    "reasons": {
+      "out_of_range": "Value outside the possible range",
+      "implausible_jump": "Implausible jump from the previous value",
+      "unknown": "Unknown reason"
+    }
+  },
+  "drivingLicense": {
+    "B": { "label": "B" },
+    "BE": { "label": "BE" },
+    "C": { "label": "C" },
+    "CE": { "label": "CE" }
+  },
+  "soilCondition": {
+    "groups": {
+      "sands": "Sands",
+      "silts": "Silts",
+      "loams": "Loams",
+      "clays": "Clays",
+      "pureSands": "Pure sands",
+      "other": "Other"
+    },
+    "Ss": { "label": "Ss – Pure sand" },
+    "Su2": { "label": "Su2 – slightly silty sand" },
+    "Su3": { "label": "Su3 – silty sand" },
+    "Su4": { "label": "Su4 – strongly silty sand" },
+    "Sl2": { "label": "Sl2 – slightly loamy sand" },
+    "Sl3": { "label": "Sl3 – loamy sand" },
+    "Sl4": { "label": "Sl4 – strongly loamy sand" },
+    "Slu": { "label": "Slu – silty-loamy sand" },
+    "St2": { "label": "St2 – slightly clayey sand" },
+    "St3": { "label": "St3 – clayey sand" },
+    "Uu": { "label": "Uu – pure silt" },
+    "Us": { "label": "Us – sandy silt" },
+    "Uls": { "label": "Uls – sandy-loamy silt" },
+    "Ut2": { "label": "Ut2 – slightly clayey silt" },
+    "Ut3": { "label": "Ut3 – clayey silt" },
+    "Ut4": { "label": "Ut4 – strongly clayey silt" },
+    "Ls2": { "label": "Ls2 – slightly sandy loam" },
+    "Ls3": { "label": "Ls3 – sandy loam" },
+    "Ls4": { "label": "Ls4 – strongly sandy loam" },
+    "Lt2": { "label": "Lt2 – slightly clayey loam" },
+    "Lt3": { "label": "Lt3 – clayey loam" },
+    "Lts": { "label": "Lts – sandy-clayey loam" },
+    "Lu": { "label": "Lu – silty loam" },
+    "Tt": { "label": "Tt – pure clay" },
+    "Tu2": { "label": "Tu2 – slightly silty clay" },
+    "Tu3": { "label": "Tu3 – silty clay" },
+    "Tu4": { "label": "Tu4 – strongly silty clay" },
+    "Ts2": { "label": "Ts2 – slightly sandy clay" },
+    "Ts3": { "label": "Ts3 – sandy clay" },
+    "Ts4": { "label": "Ts4 – strongly sandy clay" },
+    "Tl": { "label": "Tl – loamy clay" },
+    "fS": { "label": "fS – fine sand" },
+    "mS": { "label": "mS – medium sand" },
+    "gS": { "label": "gS – coarse sand" },
+    "unknown": { "label": "Unknown" }
+  }
+}

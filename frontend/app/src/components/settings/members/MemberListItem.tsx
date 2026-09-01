@@ -1,6 +1,6 @@
 import { Avatar, AvatarFallback, AvatarImage, Badge, ListCard } from '@green-ecolution/ui'
 import type { UserResponse } from '@/api/backendApi'
-import { getUserStatusDetails } from '@/hooks/details/useDetailsForUserStatus'
+import { useUserStatusDetails } from '@/hooks/details/useDetailsForUserStatus'
 import { initialsOf } from '@/lib/initials'
 import { fullNameOf } from './memberList'
 
@@ -11,6 +11,7 @@ interface MemberListItemProps {
 }
 
 const MemberListItem = ({ user, selected, onSelect }: MemberListItemProps) => {
+  const getUserStatusDetails = useUserStatusDetails()
   const status = getUserStatusDetails(user.status)
 
   return (

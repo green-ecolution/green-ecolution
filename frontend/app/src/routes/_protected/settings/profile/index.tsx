@@ -3,8 +3,8 @@ import { useQuery } from '@tanstack/react-query'
 import { useCurrentUser } from '@/lib/auth/useCurrentUser'
 import { UserRound } from 'lucide-react'
 import { userQueries } from '@/api/queries'
-import { getUserStatusDetails } from '@/hooks/details/useDetailsForUserStatus'
-import { getDrivingLicenseDetails } from '@/hooks/details/useDetailsForDrivingLicense'
+import { useUserStatusDetails } from '@/hooks/details/useDetailsForUserStatus'
+import { useDrivingLicenseDetails } from '@/hooks/details/useDetailsForDrivingLicense'
 import { DrivingLicense } from '@green-ecolution/backend-client'
 import { useCurrentUserAvatar } from '@/lib/auth/useCurrentUserAvatar'
 import { Avatar, AvatarFallback, AvatarImage, Badge, DetailedList } from '@green-ecolution/ui'
@@ -19,6 +19,8 @@ function Profile() {
   const avatarUrl = useCurrentUserAvatar()
   const { data: me } = useQuery(userQueries.me())
   const roles = me?.roles ?? []
+  const getUserStatusDetails = useUserStatusDetails()
+  const getDrivingLicenseDetails = useDrivingLicenseDetails()
 
   return (
     <div className="container mt-6">

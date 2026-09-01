@@ -2,9 +2,9 @@ import { VehicleForm } from '@/schema/vehicleSchema'
 import FormError from './FormError'
 import FormSubmitButton from './FormSubmitButton'
 import { FormField, TextareaField, SelectField } from '@green-ecolution/ui'
-import { VehicleTypeOptions } from '@/hooks/details/useDetailsForVehicleType'
-import { DrivingLicenseOptions } from '@/hooks/details/useDetailsForDrivingLicense'
-import { VehicleStatusOptions } from '@/hooks/details/useDetailsForVehicleStatus'
+import { useVehicleTypeOptions } from '@/hooks/details/useDetailsForVehicleType'
+import { useDrivingLicenseOptions } from '@/hooks/details/useDetailsForDrivingLicense'
+import { useVehicleStatusOptions } from '@/hooks/details/useDetailsForVehicleStatus'
 import { Controller, SubmitHandler, useFormContext, useFormState } from 'react-hook-form'
 import { parseDecimalInput } from '@/lib/utils'
 
@@ -21,6 +21,9 @@ const asNumber = { setValueAs: parseDecimalInput } as const
 const FormForVehicle = (props: FormForVehicleProps) => {
   const { register, handleSubmit, control } = useFormContext<VehicleForm>()
   const { isValid, errors } = useFormState({ control })
+  const vehicleTypeOptions = useVehicleTypeOptions()
+  const vehicleStatusOptions = useVehicleStatusOptions()
+  const drivingLicenseOptions = useDrivingLicenseOptions()
 
   return (
     <form
@@ -53,7 +56,7 @@ const FormForVehicle = (props: FormForVehicleProps) => {
             value={field.value}
             onValueChange={field.onChange}
             error={errors.type?.message}
-            options={VehicleTypeOptions}
+            options={vehicleTypeOptions}
           />
         )}
       />
@@ -77,7 +80,7 @@ const FormForVehicle = (props: FormForVehicleProps) => {
             value={field.value}
             onValueChange={field.onChange}
             error={errors.status?.message}
-            options={VehicleStatusOptions}
+            options={vehicleStatusOptions}
           />
         )}
       />
@@ -93,7 +96,7 @@ const FormForVehicle = (props: FormForVehicleProps) => {
             value={field.value}
             onValueChange={field.onChange}
             error={errors.drivingLicense?.message}
-            options={DrivingLicenseOptions}
+            options={drivingLicenseOptions}
           />
         )}
       />

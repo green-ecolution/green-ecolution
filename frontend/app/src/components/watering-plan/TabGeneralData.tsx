@@ -3,7 +3,7 @@ import type { WateringPlan } from '@/api/backendApi'
 import { DetailedList, StatusCard } from '@green-ecolution/ui'
 import StatusCardGrid from '../general/StatusCardGrid'
 import { format, formatDuration, intervalToDuration } from 'date-fns'
-import { getWateringPlanStatusDetails } from '@/hooks/details/useDetailsForWateringPlanStatus'
+import { useWateringPlanStatusDetails } from '@/hooks/details/useDetailsForWateringPlanStatus'
 import { useSuspenseQuery, useQuery } from '@tanstack/react-query'
 import { userQueries, routingStartPointsQuery } from '@/api/queries'
 import { de } from 'date-fns/locale'
@@ -14,6 +14,7 @@ interface TabGeneralDataProps {
 }
 
 const TabGeneralData: React.FC<TabGeneralDataProps> = ({ wateringPlan }) => {
+  const getWateringPlanStatusDetails = useWateringPlanStatusDetails()
   const { data: userRes } = useSuspenseQuery(userQueries.list({ page: 1, perPage: 100 }))
   const { data: startPoints } = useQuery(routingStartPointsQuery())
   const defaultStartPointName = startPoints?.[0]?.name

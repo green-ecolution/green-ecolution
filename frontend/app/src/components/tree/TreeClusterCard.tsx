@@ -11,7 +11,7 @@ import {
 import { Link } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import type { Tree, TreeCluster } from '@/api/backendApi'
-import { getWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
+import { useWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
 
 interface TreeClusterCardProps {
   tree: Tree
@@ -20,6 +20,7 @@ interface TreeClusterCardProps {
 
 const TreeClusterCard = ({ tree, treeCluster }: TreeClusterCardProps) => {
   const { t } = useTranslation('tree')
+  const getWateringStatusDetails = useWateringStatusDetails()
   const clusterStatus = treeCluster ? getWateringStatusDetails(treeCluster.wateringStatus) : null
   const treeStatus = getWateringStatusDetails(tree.wateringStatus)
   const deviates = treeCluster ? treeCluster.wateringStatus !== tree.wateringStatus : false

@@ -1,19 +1,24 @@
+import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import useStore from '@/store/store'
-import { getWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
+import { useWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
 import { WateringStatus } from '@green-ecolution/backend-client'
 import { MultiSelectCombobox } from '@green-ecolution/ui'
 import SelectedTagList from '../SelectedTagList'
-
-const STATUS_OPTIONS = Object.values(WateringStatus).map((value) => ({
-  value,
-  label: getWateringStatusDetails(value).label,
-}))
 
 const StatusFieldset = () => {
   const { t } = useTranslation('common')
   const statusTags = useStore((s) => s.filterDraft.statusTags)
   const setStatusTags = useStore((s) => s.setFilterStatusTags)
+  const getWateringStatusDetails = useWateringStatusDetails()
+  const STATUS_OPTIONS = useMemo(
+    () =>
+      Object.values(WateringStatus).map((value) => ({
+        value,
+        label: getWateringStatusDetails(value).label,
+      })),
+    [getWateringStatusDetails],
+  )
 
   return (
     <fieldset>

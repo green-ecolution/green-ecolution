@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { Card, CardContent, CardHeader, CardTitle, DetailedList } from '@green-ecolution/ui'
-import { soilConditionLabel } from '@/hooks/details/useDetailsForSoilCondition'
+import { useSoilConditionLabel } from '@/hooks/details/useDetailsForSoilCondition'
 import type { TreeCluster } from '@/api/backendApi'
 
 interface ClusterMasterDataCardProps {
@@ -9,6 +9,7 @@ interface ClusterMasterDataCardProps {
 
 const ClusterMasterDataCard = ({ treecluster }: ClusterMasterDataCardProps) => {
   const { t } = useTranslation(['treecluster', 'common'])
+  const soilConditionLabel = useSoilConditionLabel()
   const species = [...new Set(treecluster.trees.map((tree) => tree.species))].join(', ')
   const noData = t('common:state.noData')
 

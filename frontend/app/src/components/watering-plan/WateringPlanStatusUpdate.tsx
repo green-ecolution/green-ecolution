@@ -7,8 +7,8 @@ import { format } from 'date-fns'
 import { Droplet, MoveRight } from 'lucide-react'
 import FormError from '../general/form/FormError'
 import {
-  getWateringPlanStatusDetails,
-  getWateringPlanStatusTransitionOptions,
+  useWateringPlanStatusDetails,
+  useWateringPlanStatusTransitionOptions,
 } from '@/hooks/details/useDetailsForWateringPlanStatus'
 import { Badge, TextareaField, FormField, SelectField, Button } from '@green-ecolution/ui'
 import {
@@ -37,8 +37,9 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
   const invalidate = useInvalidateAggregates()
   const showToast = createToast()
   const { t } = useTranslation('errors')
+  const getWateringPlanStatusDetails = useWateringPlanStatusDetails()
   const statusDetails = getWateringPlanStatusDetails(loadedData.status)
-  const statusOptions = getWateringPlanStatusTransitionOptions(loadedData.status)
+  const statusOptions = useWateringPlanStatusTransitionOptions(loadedData.status)
   const [selectedStatus, setSelectedStatus] = useState(statusDetails)
 
   const { mutate, isError, error } = useMutation({
@@ -193,7 +194,9 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
                 value={selectedStatus.value}
                 description={selectedStatus.description}
                 onValueChange={(value) => {
-                  setSelectedStatus(getWateringPlanStatusDetails(value))
+                  // SelectField's onValueChange is string-typed; value is always
+                  // one of statusOptions' WateringPlanStatus values.
+                  setSelectedStatus(getWateringPlanStatusDetails(value as WateringPlanStatus))
                 }}
                 options={statusOptions}
               />

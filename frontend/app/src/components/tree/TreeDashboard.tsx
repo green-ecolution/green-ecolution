@@ -6,7 +6,7 @@ import TreeLocationCard from './TreeLocationCard'
 import TreeClusterCard from './TreeClusterCard'
 import TreeSensorCard from './TreeSensorCard'
 import TreeMasterDataCard from './TreeMasterDataCard'
-import { getWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
+import { useWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
 import type { Tree, TreeCluster } from '@/api/backendApi'
 import { useHasPermission } from '@/lib/auth/useHasPermission'
 
@@ -18,6 +18,7 @@ interface TreeDashboardProps {
 const TreeDashboard = ({ tree, treeCluster }: TreeDashboardProps) => {
   const { t } = useTranslation('tree')
   const canEdit = useHasPermission(['tree:update'])
+  const getWateringStatusDetails = useWateringStatusDetails()
   const wateringStatus = getWateringStatusDetails(tree.wateringStatus)
 
   return (

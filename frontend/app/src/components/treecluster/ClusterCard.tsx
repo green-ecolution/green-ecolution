@@ -6,8 +6,8 @@ import { useTranslation } from 'react-i18next'
 import { Badge, Card } from '@green-ecolution/ui'
 import TreeIcon from '@/components/icons/Tree'
 import ClusterTreeDots from '@/components/treecluster/ClusterTreeDots'
-import { getWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
-import { soilConditionLabel } from '@/hooks/details/useDetailsForSoilCondition'
+import { useWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
+import { useSoilConditionLabel } from '@/hooks/details/useDetailsForSoilCondition'
 import { SoilCondition } from '@/api/backendApi'
 import type { TreeClusterInList } from '@/api/backendApi'
 
@@ -50,6 +50,8 @@ const Metric: React.FC<{
 
 const ClusterCard: React.FC<ClusterCardProps> = ({ treecluster }) => {
   const { t } = useTranslation('treecluster')
+  const getWateringStatusDetails = useWateringStatusDetails()
+  const soilConditionLabel = useSoilConditionLabel()
   const status = getWateringStatusDetails(treecluster.wateringStatus)
   const treeCount = treecluster.treeIds?.length ?? 0
   const hasSoil = treecluster.soilCondition && treecluster.soilCondition !== SoilCondition.Unknown

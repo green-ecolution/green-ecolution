@@ -1,7 +1,7 @@
 import { Checkbox, KanbanCard } from '@green-ecolution/ui'
 import { Link } from '@tanstack/react-router'
 import type { TreeClusterInListResponse } from '@green-ecolution/backend-client'
-import { getWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
+import { useWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
 
 interface ClusterSuggestionCardProps {
   cluster: TreeClusterInListResponse
@@ -15,6 +15,7 @@ const ClusterSuggestionCard = ({
   selected = false,
   onSelectedChange,
 }: ClusterSuggestionCardProps) => {
+  const getWateringStatusDetails = useWateringStatusDetails()
   const statusDetails = getWateringStatusDetails(cluster.wateringStatus)
 
   const toggleOnCardClick = (event: React.MouseEvent) => {

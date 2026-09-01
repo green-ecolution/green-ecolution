@@ -1,19 +1,14 @@
 import { useTranslation } from 'react-i18next'
 import useStore from '@/store/store'
-import { SoilConditionOptions } from '@/hooks/details/useDetailsForSoilCondition'
+import { useSoilConditionOptions } from '@/hooks/details/useDetailsForSoilCondition'
 import { MultiSelectCombobox } from '@green-ecolution/ui'
 import SelectedTagList from '../SelectedTagList'
-
-const SOIL_OPTIONS = SoilConditionOptions.map((option) => ({
-  value: option.value,
-  label: option.label,
-  group: option.group,
-}))
 
 const SoilFieldset = () => {
   const { t } = useTranslation('treecluster')
   const soilTags = useStore((s) => s.filterDraft.soilTags)
   const setSoilTags = useStore((s) => s.setFilterSoilTags)
+  const SOIL_OPTIONS = useSoilConditionOptions()
 
   return (
     <fieldset className="mt-6">

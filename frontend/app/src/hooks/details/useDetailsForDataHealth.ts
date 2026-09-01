@@ -1,6 +1,12 @@
+import { useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { DataHealth } from '@green-ecolution/backend-client'
 import type { AlertProps } from '@green-ecolution/ui'
 import type { StatusColor } from './types'
+
+// `t`'s generated overloads only accept the catalog's literal key union; the
+// dynamic level/reason plugged into the template isn't statically one of those literals.
+type EnumsTranslate = (key: string) => string
 
 interface DataQualityFacts {
   dataHealth: DataHealth
@@ -11,35 +17,20 @@ interface DataQualityFacts {
 /// the display state is not the derived health alone.
 export type DataQualityLevel = 'ok' | 'flagged' | 'suspect'
 
-const DataQualityProperties: Record<
+const DataQualityColors: Record<
   DataQualityLevel,
-  {
-    color: StatusColor
-    alert: NonNullable<AlertProps['variant']>
-    label: string
-    description: string
-  }
+  { color: StatusColor; alert: NonNullable<AlertProps['variant']> }
 > = {
-  ok: {
-    color: 'outline-green-dark',
-    alert: 'success',
-    label: 'Daten plausibel',
-    description: 'Die zuletzt empfangenen Messwerte liegen im erwarteten Bereich.',
-  },
-  flagged: {
-    color: 'outline-yellow',
-    alert: 'warning',
-    label: 'Einzelne Werte verworfen',
-    description:
-      'Einzelne Messwerte waren unplausibel und wurden von der Auswertung ausgeschlossen. Der Bewässerungszustand beruht auf den übrigen Werten.',
-  },
-  suspect: {
-    color: 'outline-red',
-    alert: 'destructive',
-    label: 'Datenqualität prüfen',
-    description:
-      'Mehrere Übertragungen in Folge enthielten keinen verwertbaren Messwert. Der Sensor ist womöglich defekt und der angezeigte Bewässerungszustand veraltet.',
-  },
+  ok: { color: 'outline-green-dark', alert: 'success' },
+  flagged: { color: 'outline-yellow', alert: 'warning' },
+  suspect: { color: 'outline-red', alert: 'destructive' },
+}
+
+export interface DataQualityDetails {
+  color: StatusColor
+  alert: NonNullable<AlertProps['variant']>
+  label: string
+  description: string
 }
 
 export const dataQualityLevel = (sensor: DataQualityFacts): DataQualityLevel => {
@@ -47,16 +38,35 @@ export const dataQualityLevel = (sensor: DataQualityFacts): DataQualityLevel => 
   return sensor.implausibleRecent > 0 ? 'flagged' : 'ok'
 }
 
-export const getDataQualityDetails = (sensor: DataQualityFacts) =>
-  DataQualityProperties[dataQualityLevel(sensor)]
-
 export const hasQualityWarning = (sensor: DataQualityFacts): boolean =>
   dataQualityLevel(sensor) !== 'ok'
 
-const QUALITY_REASON_LABEL: Record<string, string> = {
-  out_of_range: 'Wert außerhalb des möglichen Bereichs',
-  implausible_jump: 'Unplausibler Sprung gegenüber dem Vorwert',
+/** Reactive to language change: re-renders whichever component calls it. */
+export const useDataQualityDetails = (): ((sensor: DataQualityFacts) => DataQualityDetails) => {
+  const { t } = useTranslation('enums')
+  const translate = t as EnumsTranslate
+  return useCallback(
+    (sensor: DataQualityFacts): DataQualityDetails => {
+      const level = dataQualityLevel(sensor)
+      return {
+        ...DataQualityColors[level],
+        label: translate(`dataHealth.${level}.label`),
+        description: translate(`dataHealth.${level}.description`),
+      }
+    },
+    [translate],
+  )
 }
 
-export const qualityReasonLabel = (reason: string): string =>
-  QUALITY_REASON_LABEL[reason] ?? 'Unbekannter Grund'
+const QUALITY_REASON_KEYS = new Set(['out_of_range', 'implausible_jump'])
+
+/** Reactive to language change: re-renders whichever component calls it. */
+export const useQualityReasonLabel = (): ((reason: string) => string) => {
+  const { t } = useTranslation('enums')
+  const translate = t as EnumsTranslate
+  return useCallback(
+    (reason: string) =>
+      translate(`dataHealth.reasons.${QUALITY_REASON_KEYS.has(reason) ? reason : 'unknown'}`),
+    [translate],
+  )
+}

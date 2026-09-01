@@ -2,7 +2,7 @@ import { ReactNode, useState } from 'react'
 import { Search, SlidersHorizontal } from 'lucide-react'
 import { WateringStatus } from '@green-ecolution/backend-client'
 import { Input } from '@green-ecolution/ui'
-import { getWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
+import { useWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
 
 interface MapFilterToolbarProps {
   searchTerm: string
@@ -25,6 +25,7 @@ const MapFilterToolbar = ({
 }: MapFilterToolbarProps) => {
   const [expanded, setExpanded] = useState(false)
   const highlightToggle = expanded || statuses.length > 0
+  const getWateringStatusDetails = useWateringStatusDetails()
 
   return (
     <div className="flex w-full flex-wrap items-center gap-2 font-nunito-sans">

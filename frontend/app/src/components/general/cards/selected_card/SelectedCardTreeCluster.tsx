@@ -2,7 +2,7 @@ import { clusterQueries } from '@/api/queries'
 import { SelectedCardProps } from '../SelectedCard'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { getWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
+import { useWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
 import { Trash2 } from 'lucide-react'
 import {
   ListCard,
@@ -17,6 +17,7 @@ interface SelectedCardClusterProps extends Omit<SelectedCardProps, 'type'> {}
 const SelectedCardCluster = ({ onClick, id }: SelectedCardClusterProps) => {
   const { t } = useTranslation(['treecluster', 'common'])
   const { data } = useQuery(clusterQueries.detail(String(id)))
+  const getWateringStatusDetails = useWateringStatusDetails()
   const statusDetails = getWateringStatusDetails(data?.wateringStatus ?? 'unknown')
 
   return (

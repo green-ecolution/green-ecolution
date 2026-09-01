@@ -3,10 +3,10 @@ import { translateIssue } from '@green-ecolution/domain-wasm'
 import type { DrivingLicense, UserStatus } from '@green-ecolution/backend-client'
 import { useIssueTranslator } from '@/lib/i18n/validation'
 import {
-  DrivingLicenseOptions,
-  getDrivingLicenseDetails,
+  useDrivingLicenseOptions,
+  useDrivingLicenseDetails,
 } from '@/hooks/details/useDetailsForDrivingLicense'
-import { getUserStatusDetails, UserStatusOptions } from '@/hooks/details/useDetailsForUserStatus'
+import { useUserStatusDetails, useUserStatusOptions } from '@/hooks/details/useDetailsForUserStatus'
 import { CARD, CARD_TITLE } from './cardChrome'
 import { phoneNumberIssue } from './memberList'
 import type { MemberProfileDraft } from './useMemberProfileDraft'
@@ -38,6 +38,10 @@ const MemberProfileCard = ({
   onWateringPlanSelectableChange,
 }: MemberProfileCardProps) => {
   const translate = useIssueTranslator()
+  const getDrivingLicenseDetails = useDrivingLicenseDetails()
+  const getUserStatusDetails = useUserStatusDetails()
+  const drivingLicenseOptions = useDrivingLicenseOptions()
+  const userStatusOptions = useUserStatusOptions()
   const licenseLabels = draft.drivingLicenses
     .map((license) => getDrivingLicenseDetails(license).label)
     .join(', ')
@@ -57,9 +61,9 @@ const MemberProfileCard = ({
               label="Verfügbarkeit"
               value={draft.status}
               onValueChange={(value) => onStatusChange(value as UserStatus)}
-              options={UserStatusOptions.filter((option) => option.value !== 'unknown').map(
-                (option) => ({ value: option.value, label: option.label }),
-              )}
+              options={userStatusOptions
+                .filter((option) => option.value !== 'unknown')
+                .map((option) => ({ value: option.value, label: option.label }))}
             />
             <div className="flex flex-col gap-y-2">
               <Label htmlFor="member-driving-licenses">Führerscheinklassen</Label>
@@ -67,7 +71,7 @@ const MemberProfileCard = ({
                 id="member-driving-licenses"
                 value={draft.drivingLicenses}
                 onChange={(value) => onDrivingLicensesChange(value as DrivingLicense[])}
-                options={DrivingLicenseOptions.map((option) => ({
+                options={drivingLicenseOptions.map((option) => ({
                   value: option.value,
                   label: option.label,
                 }))}

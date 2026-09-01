@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { WateringStatus } from '@green-ecolution/backend-client'
-import { getWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
+import { useWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
 
 const AMPEL_STATUSES = [WateringStatus.Bad, WateringStatus.Moderate, WateringStatus.Good]
 const NEUTRAL_STATUSES = [WateringStatus.JustWatered, WateringStatus.Unknown]
 
 const LegendRow = ({ status }: { status: WateringStatus }) => {
+  const getWateringStatusDetails = useWateringStatusDetails()
   const { label, colorHex } = getWateringStatusDetails(status)
   return (
     <li className="flex items-center gap-2">

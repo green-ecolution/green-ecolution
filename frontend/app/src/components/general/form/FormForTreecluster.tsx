@@ -13,7 +13,7 @@ import {
 } from '@green-ecolution/ui'
 import type { OrganizationResponse } from '@green-ecolution/backend-client'
 import { Controller, SubmitHandler, useFormContext, useFormState } from 'react-hook-form'
-import { SoilConditionOptions } from '@/hooks/details/useDetailsForSoilCondition'
+import { useSoilConditionOptions } from '@/hooks/details/useDetailsForSoilCondition'
 import { TreeclusterForm } from '@/schema/treeclusterSchema'
 import FormError from './FormError'
 import FormSubmitButton from './FormSubmitButton'
@@ -42,6 +42,7 @@ const FormForTreecluster = (props: FormForTreeClusterProps) => {
   const { isValid, errors } = useFormState({ control })
   const [soilDialogOpen, setSoilDialogOpen] = useState(false)
   const organizations = props.organizations ?? []
+  const soilConditionOptions = useSoilConditionOptions()
 
   return (
     <form
@@ -108,7 +109,7 @@ const FormForTreecluster = (props: FormForTreeClusterProps) => {
                 <div className="min-w-0 flex-1">
                   <Combobox
                     id="soilCondition"
-                    options={SoilConditionOptions}
+                    options={soilConditionOptions}
                     value={field.value}
                     onChange={field.onChange}
                     placeholder={t('form.soilConditionPlaceholder')}
