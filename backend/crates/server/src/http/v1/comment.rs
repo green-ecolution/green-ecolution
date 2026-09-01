@@ -13,6 +13,7 @@ use crate::{
             dto::{
                 ListResponse,
                 comment::{CommentResponse, CreateCommentRequest},
+                user::display_name,
             },
             error::ErrorBody,
             pagination::PaginationParams,
@@ -22,11 +23,10 @@ use crate::{
     service::ServiceError,
 };
 use domain::{
-    Id,
+    Id, RepositoryError,
     authorization::{Action, Permission, Resource},
-    comment::{CommentBody, CommentSubject, CommentView},
+    comment::{Comment, CommentBody, CommentSubject, CommentView},
     shared::pagination::Pagination,
-    user::UserView,
 };
 
 pub fn routes() -> OpenApiRouter<Arc<AppState>> {
@@ -37,14 +37,22 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
         .routes(routes!(delete_plan_comment))
 }
 
+/// The parent a comment belongs to, resolved once so its resource cannot be
+/// stated twice (and disagree) between authorization checks on the same
+/// request.
+struct ParentScope {
+    subject: CommentSubject,
+    org: Uuid,
+    resource: Resource,
+}
+
 /// Resolves the cluster subject after checking that the caller may see the
-/// cluster at all. Returns the owning organization so the caller can require a
-/// further permission in it.
+/// cluster at all.
 async fn cluster_scope(
     state: &AppState,
     user_id: Uuid,
     cluster_id: Uuid,
-) -> Result<(CommentSubject, Uuid), ServiceError> {
+) -> Result<ParentScope, ServiceError> {
     let view = state
         .cluster_service
         .view_by_id(Id::new(cluster_id))
@@ -55,20 +63,21 @@ async fn cluster_scope(
         Permission::new(Resource::TreeCluster, Action::Read),
         view.organization_id,
     )?;
-    Ok((
-        CommentSubject::TreeCluster(Id::new(cluster_id)),
-        view.organization_id,
-    ))
+    Ok(ParentScope {
+        subject: CommentSubject::TreeCluster(Id::new(cluster_id)),
+        org: view.organization_id,
+        resource: Resource::TreeCluster,
+    })
 }
 
 async fn plan_scope(
     state: &AppState,
     user_id: Uuid,
-    plan_id: Uuid,
-) -> Result<(CommentSubject, Uuid), ServiceError> {
+    watering_plan_id: Uuid,
+) -> Result<ParentScope, ServiceError> {
     let view = state
         .watering_plan_service
-        .view_by_id(Id::new(plan_id))
+        .view_by_id(Id::new(watering_plan_id))
         .await?;
     let ctx = state.authorization_service.context_for(user_id).await?;
     scope::ensure_visible(
@@ -76,48 +85,39 @@ async fn plan_scope(
         Permission::new(Resource::WateringPlan, Action::Read),
         view.organization_id,
     )?;
-    Ok((
-        CommentSubject::WateringPlan(Id::new(plan_id)),
-        view.organization_id,
-    ))
+    Ok(ParentScope {
+        subject: CommentSubject::WateringPlan(Id::new(watering_plan_id)),
+        org: view.organization_id,
+        resource: Resource::WateringPlan,
+    })
 }
 
-/// Checks that `comment_id` belongs to `subject` and that the caller may
-/// remove it. The author may always delete their own comment; anyone else
+/// Checks that `comment_id` belongs to `scope.subject` and that the caller
+/// may remove it. The author may always delete their own comment; anyone else
 /// needs the parent resource's delete permission. A comment addressed through
 /// the wrong parent reads as 404, never 403.
 async fn authorize_delete(
     state: &AppState,
     user_id: Uuid,
-    subject: CommentSubject,
-    org: Uuid,
+    scope: ParentScope,
     comment_id: Uuid,
-    resource: Resource,
-) -> Result<Id<domain::comment::Comment>, ServiceError> {
+) -> Result<Id<Comment>, ServiceError> {
     let id = Id::new(comment_id);
     let comment = state.comment_service.by_id(id).await?;
-    if comment.subject != subject {
-        return Err(domain::RepositoryError::NotFound.into());
+    if comment.subject != scope.subject {
+        return Err(RepositoryError::NotFound.into());
     }
     if comment.author_id != user_id {
         state
             .authorization_service
             .require(
                 user_id,
-                Permission::new(resource, Action::Delete),
-                Id::new(org),
+                Permission::new(scope.resource, Action::Delete),
+                Id::new(scope.org),
             )
             .await?;
     }
     Ok(id)
-}
-
-fn display_name(user: &UserView) -> String {
-    let full_name = format!("{} {}", user.first_name.trim(), user.last_name.trim());
-    match full_name.trim() {
-        "" => user.username.as_str().to_owned(),
-        name => name.to_owned(),
-    }
 }
 
 /// Resolves author display names for one page in a single lookup. An IdP
@@ -130,10 +130,13 @@ async fn resolve_author_names(state: &AppState, views: &[CommentView]) -> HashMa
     if ids.is_empty() {
         return HashMap::new();
     }
+    // One Keycloak round-trip per distinct author, not a batch call; see
+    // `resolve_author_names`'s doc for why that's deferred.
     state
         .user_service
         .by_ids(&ids)
         .await
+        .inspect_err(|error| tracing::warn!(%error, "failed to resolve comment author names"))
         .unwrap_or_default()
         .iter()
         .map(|user| (user.id, display_name(user)))
@@ -194,8 +197,8 @@ pub async fn list_cluster_comments(
     Path(cluster_id): Path<uuid::Uuid>,
     Query(params): Query<PaginationParams>,
 ) -> Result<Json<ListResponse<CommentResponse>>, ServiceError> {
-    let (subject, _org) = cluster_scope(&state, user.id, cluster_id).await?;
-    Ok(Json(list_for(&state, subject, &params).await?))
+    let scope = cluster_scope(&state, user.id, cluster_id).await?;
+    Ok(Json(list_for(&state, scope.subject, &params).await?))
 }
 
 #[utoipa::path(
@@ -222,16 +225,16 @@ pub async fn create_cluster_comment(
     Path(cluster_id): Path<uuid::Uuid>,
     Json(payload): Json<CreateCommentRequest>,
 ) -> Result<(axum::http::StatusCode, Json<CommentResponse>), ServiceError> {
-    let (subject, org) = cluster_scope(&state, user.id, cluster_id).await?;
+    let scope = cluster_scope(&state, user.id, cluster_id).await?;
     state
         .authorization_service
         .require(
             user.id,
-            Permission::new(Resource::TreeCluster, Action::Update),
-            Id::new(org),
+            Permission::new(scope.resource, Action::Update),
+            Id::new(scope.org),
         )
         .await?;
-    let response = create_for(&state, subject, user.id, payload).await?;
+    let response = create_for(&state, scope.subject, user.id, payload).await?;
     Ok((axum::http::StatusCode::CREATED, Json(response)))
 }
 
@@ -259,53 +262,45 @@ pub async fn delete_cluster_comment(
     user: AuthUserExtractor,
     Path((cluster_id, comment_id)): Path<(uuid::Uuid, uuid::Uuid)>,
 ) -> Result<axum::http::StatusCode, ServiceError> {
-    let (subject, org) = cluster_scope(&state, user.id, cluster_id).await?;
-    let id = authorize_delete(
-        &state,
-        user.id,
-        subject,
-        org,
-        comment_id,
-        Resource::TreeCluster,
-    )
-    .await?;
+    let scope = cluster_scope(&state, user.id, cluster_id).await?;
+    let id = authorize_delete(&state, user.id, scope, comment_id).await?;
     state.comment_service.delete(id).await?;
     Ok(axum::http::StatusCode::NO_CONTENT)
 }
 
 #[utoipa::path(
     get,
-    path = "/watering-plans/{plan_id}/comments",
+    path = "/watering-plans/{watering_plan_id}/comments",
     tag = "Comments",
     operation_id = "listWateringPlanComments",
     summary = "List comments on a watering plan",
     description = "Returns the comments of a watering plan, newest first. Requires `watering_plan:read` in the plan's organization.",
-    params(("plan_id" = uuid::Uuid, Path, description = "Watering plan ID"), PaginationParams),
+    params(("watering_plan_id" = uuid::Uuid, Path, description = "Watering plan ID"), PaginationParams),
     responses(
         (status = 200, description = "Paginated list of comments", body = ListResponse<CommentResponse>),
         (status = 404, description = "Watering plan not found or not visible", body = ErrorBody),
         (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
-#[tracing::instrument(level = "info", skip_all, fields(watering_plan.id = %plan_id))]
+#[tracing::instrument(level = "info", skip_all, fields(plan.id = %watering_plan_id))]
 pub async fn list_plan_comments(
     State(state): State<Arc<AppState>>,
     user: AuthUserExtractor,
-    Path(plan_id): Path<uuid::Uuid>,
+    Path(watering_plan_id): Path<uuid::Uuid>,
     Query(params): Query<PaginationParams>,
 ) -> Result<Json<ListResponse<CommentResponse>>, ServiceError> {
-    let (subject, _org) = plan_scope(&state, user.id, plan_id).await?;
-    Ok(Json(list_for(&state, subject, &params).await?))
+    let scope = plan_scope(&state, user.id, watering_plan_id).await?;
+    Ok(Json(list_for(&state, scope.subject, &params).await?))
 }
 
 #[utoipa::path(
     post,
-    path = "/watering-plans/{plan_id}/comments",
+    path = "/watering-plans/{watering_plan_id}/comments",
     tag = "Comments",
     operation_id = "createWateringPlanComment",
     summary = "Comment on a watering plan",
     description = "Adds a comment to a watering plan. Requires `watering_plan:update` in the plan's organization.",
-    params(("plan_id" = uuid::Uuid, Path, description = "Watering plan ID")),
+    params(("watering_plan_id" = uuid::Uuid, Path, description = "Watering plan ID")),
     request_body = CreateCommentRequest,
     responses(
         (status = 201, description = "Comment created", body = CommentResponse),
@@ -315,35 +310,35 @@ pub async fn list_plan_comments(
         (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
-#[tracing::instrument(level = "info", skip_all, fields(watering_plan.id = %plan_id))]
+#[tracing::instrument(level = "info", skip_all, fields(plan.id = %watering_plan_id))]
 pub async fn create_plan_comment(
     State(state): State<Arc<AppState>>,
     user: AuthUserExtractor,
-    Path(plan_id): Path<uuid::Uuid>,
+    Path(watering_plan_id): Path<uuid::Uuid>,
     Json(payload): Json<CreateCommentRequest>,
 ) -> Result<(axum::http::StatusCode, Json<CommentResponse>), ServiceError> {
-    let (subject, org) = plan_scope(&state, user.id, plan_id).await?;
+    let scope = plan_scope(&state, user.id, watering_plan_id).await?;
     state
         .authorization_service
         .require(
             user.id,
-            Permission::new(Resource::WateringPlan, Action::Update),
-            Id::new(org),
+            Permission::new(scope.resource, Action::Update),
+            Id::new(scope.org),
         )
         .await?;
-    let response = create_for(&state, subject, user.id, payload).await?;
+    let response = create_for(&state, scope.subject, user.id, payload).await?;
     Ok((axum::http::StatusCode::CREATED, Json(response)))
 }
 
 #[utoipa::path(
     delete,
-    path = "/watering-plans/{plan_id}/comments/{comment_id}",
+    path = "/watering-plans/{watering_plan_id}/comments/{comment_id}",
     tag = "Comments",
     operation_id = "deleteWateringPlanComment",
     summary = "Delete a comment on a watering plan",
     description = "Removes a comment. The author may delete their own comment; anyone else needs `watering_plan:delete` in the plan's organization.",
     params(
-        ("plan_id" = uuid::Uuid, Path, description = "Watering plan ID"),
+        ("watering_plan_id" = uuid::Uuid, Path, description = "Watering plan ID"),
         ("comment_id" = uuid::Uuid, Path, description = "Comment ID"),
     ),
     responses(
@@ -353,22 +348,14 @@ pub async fn create_plan_comment(
         (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
-#[tracing::instrument(level = "info", skip_all, fields(watering_plan.id = %plan_id, comment.id = %comment_id))]
+#[tracing::instrument(level = "info", skip_all, fields(plan.id = %watering_plan_id, comment.id = %comment_id))]
 pub async fn delete_plan_comment(
     State(state): State<Arc<AppState>>,
     user: AuthUserExtractor,
-    Path((plan_id, comment_id)): Path<(uuid::Uuid, uuid::Uuid)>,
+    Path((watering_plan_id, comment_id)): Path<(uuid::Uuid, uuid::Uuid)>,
 ) -> Result<axum::http::StatusCode, ServiceError> {
-    let (subject, org) = plan_scope(&state, user.id, plan_id).await?;
-    let id = authorize_delete(
-        &state,
-        user.id,
-        subject,
-        org,
-        comment_id,
-        Resource::WateringPlan,
-    )
-    .await?;
+    let scope = plan_scope(&state, user.id, watering_plan_id).await?;
+    let id = authorize_delete(&state, user.id, scope, comment_id).await?;
     state.comment_service.delete(id).await?;
     Ok(axum::http::StatusCode::NO_CONTENT)
 }
