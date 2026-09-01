@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { Badge } from '@green-ecolution/ui'
 import EntityDetailHeader from '../general/EntityDetailHeader'
 import TreeKpiRow from './TreeKpiRow'
@@ -15,19 +16,20 @@ interface TreeDashboardProps {
 }
 
 const TreeDashboard = ({ tree, treeCluster }: TreeDashboardProps) => {
+  const { t } = useTranslation('tree')
   const canEdit = useHasPermission(['tree:update'])
   const wateringStatus = getWateringStatusDetails(tree.wateringStatus)
 
   return (
     <>
       <EntityDetailHeader
-        backLink={{ link: { to: '/trees' }, label: 'Zu allen Bäumen' }}
-        title={<>Baum: {tree.number}</>}
+        backLink={{ link: { to: '/trees' }, label: t('detail.backToList') }}
+        title={<>{t('detail.title', { number: tree.number })}</>}
         badge={<Badge variant={wateringStatus.color}>{wateringStatus.label}</Badge>}
         editLink={
           canEdit
             ? {
-                label: 'Baum bearbeiten',
+                label: t('detail.editLink'),
                 link: {
                   to: `/map/tree/edit/$treeId`,
                   params: { treeId: String(tree.id) },
@@ -40,7 +42,7 @@ const TreeDashboard = ({ tree, treeCluster }: TreeDashboardProps) => {
           {tree.species} ·{' '}
           {treeCluster
             ? `${treeCluster.name} · ${treeCluster.address}`
-            : 'Keiner Bewässerungsgruppe zugeordnet'}
+            : t('detail.noClusterAssigned')}
         </p>
         {tree.description && <p>{tree.description}</p>}
       </EntityDetailHeader>

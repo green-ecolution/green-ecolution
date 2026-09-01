@@ -7,7 +7,7 @@ import { createFileRoute, getRouteApi } from '@tanstack/react-router'
 const treeRoute = getRouteApi('/_protected/trees/$treeId')
 
 export const Route = createFileRoute('/_protected/trees/$treeId/')({
-  pendingComponent: pendingLoading('Baumdaten werden geladen …'),
+  pendingComponent: pendingLoading({ key: 'tree:detail.loadingLabel' }),
   component: SingleTree,
 })
 

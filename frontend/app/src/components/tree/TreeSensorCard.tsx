@@ -12,6 +12,7 @@ import {
   SignalBars,
 } from '@green-ecolution/ui'
 import { Link } from '@tanstack/react-router'
+import { useTranslation } from 'react-i18next'
 import type { Tree } from '@/api/backendApi'
 import { getSensorStatusDetails } from '@/hooks/details/useDetailsForSensorStatus'
 import { getDataQualityDetails, hasQualityWarning } from '@/hooks/details/useDetailsForDataHealth'
@@ -29,6 +30,7 @@ interface TreeSensorCardProps {
 }
 
 const TreeSensorCard = ({ tree }: TreeSensorCardProps) => {
+  const { t } = useTranslation('tree')
   const sensor = tree.sensor
   const statusDetails = sensor ? getSensorStatusDetails(sensor.status) : null
   const signal = parseSignal(sensor?.latestData)
@@ -36,15 +38,12 @@ const TreeSensorCard = ({ tree }: TreeSensorCardProps) => {
   return (
     <Card variant="outlined">
       <CardHeader className="flex flex-row items-center justify-between gap-3">
-        <CardTitle>Sensor</CardTitle>
+        <CardTitle>{t('sensorCard.title')}</CardTitle>
         {statusDetails && <Badge variant={statusDetails.color}>{statusDetails.label}</Badge>}
       </CardHeader>
       <CardContent>
         {!sensor ? (
-          <p className="text-sm text-muted-foreground">
-            Dieser Baum ist mit keinem Sensor ausgestattet. Sein Bewässerungszustand bleibt daher
-            unbekannt.
-          </p>
+          <p className="text-sm text-muted-foreground">{t('sensorCard.noSensor')}</p>
         ) : (
           <>
             {hasQualityWarning(sensor) && (
@@ -68,7 +67,7 @@ const TreeSensorCard = ({ tree }: TreeSensorCardProps) => {
                 columns={1}
                 details={[
                   {
-                    label: 'Signal',
+                    label: t('sensorCard.signalLabel'),
                     value: signal ? (
                       <span
                         className={`flex items-center gap-2 ${SIGNAL_LEVEL_TEXT_COLOR[signalLevelFromRssi(signal.rssiDbm)]}`}
@@ -77,11 +76,17 @@ const TreeSensorCard = ({ tree }: TreeSensorCardProps) => {
                         {SIGNAL_LEVEL_LABEL[signalLevelFromRssi(signal.rssiDbm)]}
                       </span>
                     ) : (
-                      'Keine Daten'
+                      t('sensorCard.noSignalData')
                     ),
                   },
-                  { label: 'Batterie', value: formatBatteryVoltage(sensor.latestData) },
-                  { label: 'Letzte Übertragung', value: formatLastSeen(sensor.latestData) },
+                  {
+                    label: t('sensorCard.batteryLabel'),
+                    value: formatBatteryVoltage(sensor.latestData),
+                  },
+                  {
+                    label: t('sensorCard.lastTransmissionLabel'),
+                    value: formatLastSeen(sensor.latestData),
+                  },
                 ]}
               />
             </Link>

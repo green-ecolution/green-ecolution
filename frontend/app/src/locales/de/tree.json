@@ -1,0 +1,104 @@
+{
+  "entity": {
+    "name": "Baum"
+  },
+  "kpi": {
+    "wateringStatusLabel": "Bewässerungszustand",
+    "lastWateredLabel": "Letzte Bewässerung",
+    "lastWateredInfo": "Wird aktualisiert, sobald ein Einsatzplan mit diesem Baum als »Beendet« markiert wird."
+  },
+  "sensorCard": {
+    "title": "Sensor",
+    "noSensor": "Dieser Baum ist mit keinem Sensor ausgestattet. Sein Bewässerungszustand bleibt daher unbekannt.",
+    "signalLabel": "Signal",
+    "noSignalData": "Keine Daten",
+    "batteryLabel": "Batterie",
+    "lastTransmissionLabel": "Letzte Übertragung"
+  },
+  "locationCard": {
+    "title": "Standort",
+    "mapAriaLabel": "Karte mit der Position des Baumes",
+    "viewOnMapLabel": "Auf der Karte anzeigen"
+  },
+  "clusterCard": {
+    "title": "Bewässerungsgruppe",
+    "treeCount_one": "{count} Baum",
+    "treeCount_other": "{count} Bäume",
+    "noRegion": "Keine Region",
+    "deviatesNote": "Der Gruppenzustand ist ein Mehrheitswert. Dieser Baum ist als »{status}« bewertet.",
+    "noClusterNote": "Dieser Baum ist keiner Bewässerungsgruppe zugeordnet. Ohne Gruppe fehlt die Bodenart, weshalb sich der Bewässerungszustand aus Feuchtemesswerten nicht berechnen lässt."
+  },
+  "masterData": {
+    "title": "Stammdaten",
+    "speciesLabel": "Baumart",
+    "numberLabel": "Baumnummer",
+    "plantingYearLabel": "Pflanzjahr",
+    "dataSourceLabel": "Ursprung der Daten",
+    "manuallyCreated": "Manuell erstellt",
+    "coordinatesLabel": "Koordinaten",
+    "lastUpdateLabel": "Letztes Update"
+  },
+  "detail": {
+    "title": "Baum: {number}",
+    "backToList": "Zu allen Bäumen",
+    "editLink": "Baum bearbeiten",
+    "noClusterAssigned": "Keiner Bewässerungsgruppe zugeordnet",
+    "loadingLabel": "Baumdaten werden geladen …",
+    "notFoundBackLabel": "Zur Baumliste"
+  },
+  "list": {
+    "title": "Auflistung aller Bäume",
+    "descriptionIntro": "Hier findest du eine Übersicht aller Bäume in einer Listenansicht. Die Bäume lassen sich allerdings auch auf einer",
+    "mapLinkLabel": "Karte",
+    "descriptionOutro": "visualisieren.",
+    "createButton": "Neuen Baum erstellen",
+    "filterHeadline": "Bäume filtern",
+    "columnStatus": "Status",
+    "columnSpecies": "Baumart",
+    "columnNumber": "Baumnummer",
+    "columnCluster": "Bewässerungsgruppe",
+    "loadingLabel": "Daten werden geladen",
+    "emptyMessage": "Es wurden leider keine Bäume gefunden."
+  },
+  "card": {
+    "numberSrLabel": "Baumnummer: ",
+    "numberUnknown": "Unbekannt",
+    "clusterSrLabel": "Bewässerungsgruppe: ",
+    "clusterUnassigned": "Nicht zugeordnet"
+  },
+  "selectedCard": {
+    "label": "Baum:",
+    "removeAriaLabel": "Baum aus Auswahl löschen"
+  },
+  "filter": {
+    "plantingYearLegend": "Pflanzjahr:",
+    "plantingYearRange": "Pflanzjahr: {min} - {max}"
+  },
+  "foreignDialog": {
+    "titleSwitch": "Organisation wechseln?",
+    "titleBlocked": "Baum nicht auswählbar",
+    "ownedBy": "Dieser Baum gehört der Organisation {organization}.",
+    "ownedByOther": "Dieser Baum gehört einer anderen Organisation.",
+    "blockedExplanation": "Eine Bewässerungsgruppe darf nur Bäume ihrer eigenen Organisation enthalten.",
+    "confirmQuestion": "Soll die Gruppe für diese Organisation angelegt werden?",
+    "consequence": "Die bisher ausgewählten Bäume ({count}) werden dabei verworfen, weil eine Gruppe nur Bäume einer Organisation enthalten darf.",
+    "understood": "Verstanden",
+    "switchAction": "Wechseln"
+  },
+  "form": {
+    "numberLabel": "Baumnummer",
+    "speciesLabel": "Baumart",
+    "plantingYearLabel": "Pflanzjahr",
+    "clusterLabel": "Bewässerungsgruppe",
+    "clusterPlaceholder": "Wähle eine Bewässerungsgruppe aus",
+    "clusterNoneOption": "Keine Bewässerungsgruppe",
+    "sensorLabel": "Verknüpfter Sensor",
+    "sensorPlaceholder": "Wähle einen Sensor aus, sofern vorhanden",
+    "sensorNoneOption": "Kein Sensor",
+    "sensorOptionLabel": "Sensor {id}",
+    "locationHeading": "Standort des Baumes",
+    "latitudeLabel": "Breitengrad:",
+    "longitudeLabel": "Längengrad:",
+    "adjustLocationButton": "Standort des Baumes anpassen"
+  }
+}

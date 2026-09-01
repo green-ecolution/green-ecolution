@@ -9,6 +9,7 @@ import Forbidden from '@/components/layout/Forbidden'
 import { userQueries } from '@/api/queries'
 import { readAuthBypass } from '@/lib/auth/runtimeConfig'
 import type { NavigationCrumbKey } from '@/lib/i18n/navigation'
+import { useLocalizedText, type LocalizedText } from '@/lib/i18n/localizedText'
 import {
   permissionsOf,
   satisfies,
@@ -22,9 +23,20 @@ export const crumbRoute = (titleKey: NavigationCrumbKey) => ({
   loader: () => ({ crumb: { titleKey } }),
 })
 
-export const pendingLoading = (label: string) => () => (
-  <Loading className="mt-20 justify-center" label={label} />
-)
+/**
+ * Route modules are imported eagerly (see `routeTree.gen.ts`), well before
+ * `createI18n()` resolves, so `label` is a key resolved by `useLocalizedText()`
+ * once this component actually renders — never pre-resolved at declaration
+ * time, so it stays correct if the language changes while mounted. A plain
+ * string still works unchanged for the many call sites not yet translated.
+ */
+export const pendingLoading = (label: LocalizedText) => {
+  const PendingLoading = () => {
+    const resolve = useLocalizedText()
+    return <Loading className="mt-20 justify-center" label={resolve(label)} />
+  }
+  return PendingLoading
+}
 
 export const entityNotFound = (props: ComponentProps<typeof EntityNotFound>) => () => (
   <EntityNotFound {...props} />

@@ -9,6 +9,7 @@
   },
   "state": {
     "loading": "Loading …",
+    "loadingInline": "Loading…",
     "empty": "No entries",
     "noData": "Not available"
   },
@@ -57,6 +58,8 @@
     "error": {
       "fallback": "Unfortunately a problem occurred. Please try again or contact a system administrator."
     },
+    "notesPlaceholder": "Space for notes here",
+    "shortDescriptionLabel": "Short description",
     "selectEntities": {
       "selectedLabel": "Associated {label}",
       "requiredHint": "At least one selection must be made.",

@@ -1,7 +1,9 @@
 import { format } from 'date-fns'
+import { useTranslation } from 'react-i18next'
 import { StatusCard } from '@green-ecolution/ui'
 import StatusCardGrid from '@/components/general/StatusCardGrid'
 import { getWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
+import { useDateLocale } from '@/lib/i18n/useFormatters'
 import type { Tree } from '@/api/backendApi'
 
 interface TreeKpiRowProps {
@@ -9,6 +11,8 @@ interface TreeKpiRowProps {
 }
 
 const TreeKpiRow = ({ tree }: TreeKpiRowProps) => {
+  const { t } = useTranslation('tree')
+  const dateLocale = useDateLocale()
   const wateringStatus = getWateringStatusDetails(tree.wateringStatus)
 
   return (
@@ -18,16 +22,20 @@ const TreeKpiRow = ({ tree }: TreeKpiRowProps) => {
           size="compact"
           status={wateringStatus.color}
           indicator="dot"
-          label="Bewässerungszustand"
+          label={t('kpi.wateringStatusLabel')}
           value={wateringStatus.label}
         />
       </li>
       <li className="h-full">
         <StatusCard
           size="compact"
-          label="Letzte Bewässerung"
-          value={tree.lastWatered ? format(new Date(tree.lastWatered), 'dd.MM.yyyy') : '—'}
-          info="Wird aktualisiert, sobald ein Einsatzplan mit diesem Baum als »Beendet« markiert wird."
+          label={t('kpi.lastWateredLabel')}
+          value={
+            tree.lastWatered
+              ? format(new Date(tree.lastWatered), 'dd.MM.yyyy', { locale: dateLocale })
+              : '—'
+          }
+          info={t('kpi.lastWateredInfo')}
         />
       </li>
     </StatusCardGrid>

@@ -9,6 +9,7 @@ import {
   ListCardDescription,
 } from '@green-ecolution/ui'
 import { Link } from '@tanstack/react-router'
+import { useTranslation } from 'react-i18next'
 import type { Tree, TreeCluster } from '@/api/backendApi'
 import { getWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
 
@@ -18,6 +19,7 @@ interface TreeClusterCardProps {
 }
 
 const TreeClusterCard = ({ tree, treeCluster }: TreeClusterCardProps) => {
+  const { t } = useTranslation('tree')
   const clusterStatus = treeCluster ? getWateringStatusDetails(treeCluster.wateringStatus) : null
   const treeStatus = getWateringStatusDetails(tree.wateringStatus)
   const deviates = treeCluster ? treeCluster.wateringStatus !== tree.wateringStatus : false
@@ -26,7 +28,7 @@ const TreeClusterCard = ({ tree, treeCluster }: TreeClusterCardProps) => {
   return (
     <Card variant="outlined">
       <CardHeader>
-        <CardTitle>Bewässerungsgruppe</CardTitle>
+        <CardTitle>{t('clusterCard.title')}</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
         {treeCluster && clusterStatus ? (
@@ -37,24 +39,20 @@ const TreeClusterCard = ({ tree, treeCluster }: TreeClusterCardProps) => {
                 <div className="min-w-0 flex-1">
                   <ListCardTitle>{treeCluster.name}</ListCardTitle>
                   <ListCardDescription>
-                    {clusterStatus.label} · {treeCount} {treeCount === 1 ? 'Baum' : 'Bäume'} ·{' '}
-                    {treeCluster.region?.name ?? 'Keine Region'}
+                    {clusterStatus.label} · {t('clusterCard.treeCount', { count: treeCount })} ·{' '}
+                    {treeCluster.region?.name ?? t('clusterCard.noRegion')}
                   </ListCardDescription>
                 </div>
               </Link>
             </ListCard>
             {deviates && (
               <p className="text-sm text-muted-foreground">
-                Der Gruppenzustand ist ein Mehrheitswert. Dieser Baum ist als »{treeStatus.label}«
-                bewertet.
+                {t('clusterCard.deviatesNote', { status: treeStatus.label })}
               </p>
             )}
           </>
         ) : (
-          <p className="text-sm text-muted-foreground">
-            Dieser Baum ist keiner Bewässerungsgruppe zugeordnet. Ohne Gruppe fehlt die Bodenart,
-            weshalb sich der Bewässerungszustand aus Feuchtemesswerten nicht berechnen lässt.
-          </p>
+          <p className="text-sm text-muted-foreground">{t('clusterCard.noClusterNote')}</p>
         )}
       </CardContent>
     </Card>

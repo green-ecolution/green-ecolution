@@ -9,6 +9,7 @@
   },
   "state": {
     "loading": "Lade …",
+    "loadingInline": "Lädt…",
     "empty": "Keine Einträge vorhanden",
     "noData": "Keine Angabe"
   },
@@ -57,6 +58,8 @@
     "error": {
       "fallback": "Es ist leider ein Problem aufgetreten. Bitte probiere es erneut oder wende dich an einen Systemadministrierenden."
     },
+    "notesPlaceholder": "Hier ist Platz für Notizen",
+    "shortDescriptionLabel": "Kurze Beschreibung",
     "selectEntities": {
       "selectedLabel": "Zugehörige {label}",
       "requiredHint": "Es muss mindestens eine Auswahl getroffen werden.",
