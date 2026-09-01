@@ -84,10 +84,9 @@ export interface UpdateWateringPlanRequest {
 export class WateringPlansApi extends runtime.BaseAPI {
 
     /**
-     * Creates a new watering plan with clusters, vehicles, and user assignments.
-     * Create a watering plan
+     * Creates request options for createWateringPlan without sending the request
      */
-    async createWateringPlanRaw(requestParameters: CreateWateringPlanRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WateringPlanResponse>> {
+    async createWateringPlanRequestOpts(requestParameters: CreateWateringPlanRequest): Promise<runtime.RequestOpts> {
         if (requestParameters['wateringPlanCreateRequest'] == null) {
             throw new runtime.RequiredError(
                 'wateringPlanCreateRequest',
@@ -104,13 +103,22 @@ export class WateringPlansApi extends runtime.BaseAPI {
 
         let urlPath = `/v1/watering-plans`;
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
             body: WateringPlanCreateRequestToJSON(requestParameters['wateringPlanCreateRequest']),
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Creates a new watering plan with clusters, vehicles, and user assignments.
+     * Create a watering plan
+     */
+    async createWateringPlanRaw(requestParameters: CreateWateringPlanRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WateringPlanResponse>> {
+        const requestOptions = await this.createWateringPlanRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => WateringPlanResponseFromJSON(jsonValue));
     }
@@ -125,10 +133,9 @@ export class WateringPlansApi extends runtime.BaseAPI {
     }
 
     /**
-     * Permanently deletes a watering plan.
-     * Delete a watering plan
+     * Creates request options for deleteWateringPlan without sending the request
      */
-    async deleteWateringPlanRaw(requestParameters: DeleteWateringPlanRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async deleteWateringPlanRequestOpts(requestParameters: DeleteWateringPlanRequest): Promise<runtime.RequestOpts> {
         if (requestParameters['wateringPlanId'] == null) {
             throw new runtime.RequiredError(
                 'wateringPlanId',
@@ -144,12 +151,21 @@ export class WateringPlansApi extends runtime.BaseAPI {
         let urlPath = `/v1/watering-plans/{watering_plan_id}`;
         urlPath = urlPath.replace(`{${"watering_plan_id"}}`, encodeURIComponent(String(requestParameters['wateringPlanId'])));
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'DELETE',
             headers: headerParameters,
             query: queryParameters,
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Permanently deletes a watering plan.
+     * Delete a watering plan
+     */
+    async deleteWateringPlanRaw(requestParameters: DeleteWateringPlanRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        const requestOptions = await this.deleteWateringPlanRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.VoidApiResponse(response);
     }
@@ -163,10 +179,9 @@ export class WateringPlansApi extends runtime.BaseAPI {
     }
 
     /**
-     * Renders the optimized watering route of a plan as a GPX track.
-     * Download GPX file
+     * Creates request options for getGpxFile without sending the request
      */
-    async getGpxFileRaw(requestParameters: GetGpxFileRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async getGpxFileRequestOpts(requestParameters: GetGpxFileRequest): Promise<runtime.RequestOpts> {
         if (requestParameters['wateringPlanId'] == null) {
             throw new runtime.RequiredError(
                 'wateringPlanId',
@@ -182,12 +197,21 @@ export class WateringPlansApi extends runtime.BaseAPI {
         let urlPath = `/v1/watering-plans/{watering_plan_id}/route/gpx`;
         urlPath = urlPath.replace(`{${"watering_plan_id"}}`, encodeURIComponent(String(requestParameters['wateringPlanId'])));
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Renders the optimized watering route of a plan as a GPX track.
+     * Download GPX file
+     */
+    async getGpxFileRaw(requestParameters: GetGpxFileRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        const requestOptions = await this.getGpxFileRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.VoidApiResponse(response);
     }
@@ -201,10 +225,9 @@ export class WateringPlansApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns full watering plan detail including evaluation values.
-     * Get a watering plan
+     * Creates request options for getWateringPlan without sending the request
      */
-    async getWateringPlanRaw(requestParameters: GetWateringPlanRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WateringPlanResponse>> {
+    async getWateringPlanRequestOpts(requestParameters: GetWateringPlanRequest): Promise<runtime.RequestOpts> {
         if (requestParameters['wateringPlanId'] == null) {
             throw new runtime.RequiredError(
                 'wateringPlanId',
@@ -220,12 +243,21 @@ export class WateringPlansApi extends runtime.BaseAPI {
         let urlPath = `/v1/watering-plans/{watering_plan_id}`;
         urlPath = urlPath.replace(`{${"watering_plan_id"}}`, encodeURIComponent(String(requestParameters['wateringPlanId'])));
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Returns full watering plan detail including evaluation values.
+     * Get a watering plan
+     */
+    async getWateringPlanRaw(requestParameters: GetWateringPlanRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WateringPlanResponse>> {
+        const requestOptions = await this.getWateringPlanRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => WateringPlanResponseFromJSON(jsonValue));
     }
@@ -240,10 +272,9 @@ export class WateringPlansApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the persisted optimized route as GeoJSON LineString geometry with metrics.
-     * Get the optimized route of a watering plan
+     * Creates request options for getWateringPlanRoute without sending the request
      */
-    async getWateringPlanRouteRaw(requestParameters: GetWateringPlanRouteRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RouteResponse>> {
+    async getWateringPlanRouteRequestOpts(requestParameters: GetWateringPlanRouteRequest): Promise<runtime.RequestOpts> {
         if (requestParameters['wateringPlanId'] == null) {
             throw new runtime.RequiredError(
                 'wateringPlanId',
@@ -259,12 +290,21 @@ export class WateringPlansApi extends runtime.BaseAPI {
         let urlPath = `/v1/watering-plans/{watering_plan_id}/route`;
         urlPath = urlPath.replace(`{${"watering_plan_id"}}`, encodeURIComponent(String(requestParameters['wateringPlanId'])));
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Returns the persisted optimized route as GeoJSON LineString geometry with metrics.
+     * Get the optimized route of a watering plan
+     */
+    async getWateringPlanRouteRaw(requestParameters: GetWateringPlanRouteRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RouteResponse>> {
+        const requestOptions = await this.getWateringPlanRouteRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => RouteResponseFromJSON(jsonValue));
     }
@@ -279,10 +319,9 @@ export class WateringPlansApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a paginated list of watering plans with embedded vehicles and clusters. Optional filter parameter (status) narrows the result; the array parameter is repeatable.
-     * List all watering plans
+     * Creates request options for listWateringPlans without sending the request
      */
-    async listWateringPlansRaw(requestParameters: ListWateringPlansRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListResponseWateringPlanInListResponse>> {
+    async listWateringPlansRequestOpts(requestParameters: ListWateringPlansRequest): Promise<runtime.RequestOpts> {
         const queryParameters: any = {};
 
         if (requestParameters['page'] != null) {
@@ -302,12 +341,21 @@ export class WateringPlansApi extends runtime.BaseAPI {
 
         let urlPath = `/v1/watering-plans`;
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Returns a paginated list of watering plans with embedded vehicles and clusters. Optional filter parameter (status) narrows the result; the array parameter is repeatable.
+     * List all watering plans
+     */
+    async listWateringPlansRaw(requestParameters: ListWateringPlansRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListResponseWateringPlanInListResponse>> {
+        const requestOptions = await this.listWateringPlansRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => ListResponseWateringPlanInListResponseFromJSON(jsonValue));
     }
@@ -322,10 +370,9 @@ export class WateringPlansApi extends runtime.BaseAPI {
     }
 
     /**
-     * Calculates and previews an optimized watering route without creating a plan.
-     * Preview route
+     * Creates request options for previewRoute without sending the request
      */
-    async previewRouteRaw(requestParameters: PreviewRouteRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RouteResponse>> {
+    async previewRouteRequestOpts(requestParameters: PreviewRouteRequest): Promise<runtime.RequestOpts> {
         if (requestParameters['routeRequest'] == null) {
             throw new runtime.RequiredError(
                 'routeRequest',
@@ -342,13 +389,22 @@ export class WateringPlansApi extends runtime.BaseAPI {
 
         let urlPath = `/v1/watering-plans/route/preview`;
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
             body: RouteRequestToJSON(requestParameters['routeRequest']),
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Calculates and previews an optimized watering route without creating a plan.
+     * Preview route
+     */
+    async previewRouteRaw(requestParameters: PreviewRouteRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RouteResponse>> {
+        const requestOptions = await this.previewRouteRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => RouteResponseFromJSON(jsonValue));
     }
@@ -363,10 +419,9 @@ export class WateringPlansApi extends runtime.BaseAPI {
     }
 
     /**
-     * Updates the details or status of an existing watering plan.
-     * Update a watering plan
+     * Creates request options for updateWateringPlan without sending the request
      */
-    async updateWateringPlanRaw(requestParameters: UpdateWateringPlanRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WateringPlanResponse>> {
+    async updateWateringPlanRequestOpts(requestParameters: UpdateWateringPlanRequest): Promise<runtime.RequestOpts> {
         if (requestParameters['wateringPlanId'] == null) {
             throw new runtime.RequiredError(
                 'wateringPlanId',
@@ -391,13 +446,22 @@ export class WateringPlansApi extends runtime.BaseAPI {
         let urlPath = `/v1/watering-plans/{watering_plan_id}`;
         urlPath = urlPath.replace(`{${"watering_plan_id"}}`, encodeURIComponent(String(requestParameters['wateringPlanId'])));
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
             body: WateringPlanUpdateRequestToJSON(requestParameters['wateringPlanUpdateRequest']),
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Updates the details or status of an existing watering plan.
+     * Update a watering plan
+     */
+    async updateWateringPlanRaw(requestParameters: UpdateWateringPlanRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WateringPlanResponse>> {
+        const requestOptions = await this.updateWateringPlanRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => WateringPlanResponseFromJSON(jsonValue));
     }

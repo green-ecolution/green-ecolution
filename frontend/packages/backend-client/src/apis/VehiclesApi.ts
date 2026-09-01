@@ -83,10 +83,9 @@ export interface UpdateVehicleRequest {
 export class VehiclesApi extends runtime.BaseAPI {
 
     /**
-     * Moves a vehicle to the archived state.
-     * Archive a vehicle
+     * Creates request options for archiveVehicle without sending the request
      */
-    async archiveVehicleRaw(requestParameters: ArchiveVehicleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async archiveVehicleRequestOpts(requestParameters: ArchiveVehicleRequest): Promise<runtime.RequestOpts> {
         if (requestParameters['vehicleId'] == null) {
             throw new runtime.RequiredError(
                 'vehicleId',
@@ -102,12 +101,21 @@ export class VehiclesApi extends runtime.BaseAPI {
         let urlPath = `/v1/vehicles/archived/{vehicle_id}`;
         urlPath = urlPath.replace(`{${"vehicle_id"}}`, encodeURIComponent(String(requestParameters['vehicleId'])));
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Moves a vehicle to the archived state.
+     * Archive a vehicle
+     */
+    async archiveVehicleRaw(requestParameters: ArchiveVehicleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        const requestOptions = await this.archiveVehicleRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.VoidApiResponse(response);
     }
@@ -121,10 +129,9 @@ export class VehiclesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Registers a new watering vehicle.
-     * Create a vehicle
+     * Creates request options for createVehicle without sending the request
      */
-    async createVehicleRaw(requestParameters: CreateVehicleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VehicleResponse>> {
+    async createVehicleRequestOpts(requestParameters: CreateVehicleRequest): Promise<runtime.RequestOpts> {
         if (requestParameters['vehicleCreateRequest'] == null) {
             throw new runtime.RequiredError(
                 'vehicleCreateRequest',
@@ -141,13 +148,22 @@ export class VehiclesApi extends runtime.BaseAPI {
 
         let urlPath = `/v1/vehicles`;
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
             body: VehicleCreateRequestToJSON(requestParameters['vehicleCreateRequest']),
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Registers a new watering vehicle.
+     * Create a vehicle
+     */
+    async createVehicleRaw(requestParameters: CreateVehicleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VehicleResponse>> {
+        const requestOptions = await this.createVehicleRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => VehicleResponseFromJSON(jsonValue));
     }
@@ -162,10 +178,9 @@ export class VehiclesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Permanently deletes a vehicle.
-     * Delete a vehicle
+     * Creates request options for deleteVehicle without sending the request
      */
-    async deleteVehicleRaw(requestParameters: DeleteVehicleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async deleteVehicleRequestOpts(requestParameters: DeleteVehicleRequest): Promise<runtime.RequestOpts> {
         if (requestParameters['vehicleId'] == null) {
             throw new runtime.RequiredError(
                 'vehicleId',
@@ -181,12 +196,21 @@ export class VehiclesApi extends runtime.BaseAPI {
         let urlPath = `/v1/vehicles/{vehicle_id}`;
         urlPath = urlPath.replace(`{${"vehicle_id"}}`, encodeURIComponent(String(requestParameters['vehicleId'])));
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'DELETE',
             headers: headerParameters,
             query: queryParameters,
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Permanently deletes a vehicle.
+     * Delete a vehicle
+     */
+    async deleteVehicleRaw(requestParameters: DeleteVehicleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        const requestOptions = await this.deleteVehicleRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.VoidApiResponse(response);
     }
@@ -200,10 +224,9 @@ export class VehiclesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a single vehicle by its ID.
-     * Get a vehicle
+     * Creates request options for getVehicle without sending the request
      */
-    async getVehicleRaw(requestParameters: GetVehicleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VehicleResponse>> {
+    async getVehicleRequestOpts(requestParameters: GetVehicleRequest): Promise<runtime.RequestOpts> {
         if (requestParameters['vehicleId'] == null) {
             throw new runtime.RequiredError(
                 'vehicleId',
@@ -219,12 +242,21 @@ export class VehiclesApi extends runtime.BaseAPI {
         let urlPath = `/v1/vehicles/{vehicle_id}`;
         urlPath = urlPath.replace(`{${"vehicle_id"}}`, encodeURIComponent(String(requestParameters['vehicleId'])));
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Returns a single vehicle by its ID.
+     * Get a vehicle
+     */
+    async getVehicleRaw(requestParameters: GetVehicleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VehicleResponse>> {
+        const requestOptions = await this.getVehicleRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => VehicleResponseFromJSON(jsonValue));
     }
@@ -239,10 +271,9 @@ export class VehiclesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Looks up a vehicle by its license plate number.
-     * Get vehicle by plate
+     * Creates request options for getVehicleByPlate without sending the request
      */
-    async getVehicleByPlateRaw(requestParameters: GetVehicleByPlateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VehicleResponse>> {
+    async getVehicleByPlateRequestOpts(requestParameters: GetVehicleByPlateRequest): Promise<runtime.RequestOpts> {
         if (requestParameters['plate'] == null) {
             throw new runtime.RequiredError(
                 'plate',
@@ -258,12 +289,21 @@ export class VehiclesApi extends runtime.BaseAPI {
         let urlPath = `/v1/vehicles/plate/{plate}`;
         urlPath = urlPath.replace(`{${"plate"}}`, encodeURIComponent(String(requestParameters['plate'])));
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Looks up a vehicle by its license plate number.
+     * Get vehicle by plate
+     */
+    async getVehicleByPlateRaw(requestParameters: GetVehicleByPlateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VehicleResponse>> {
+        const requestOptions = await this.getVehicleByPlateRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => VehicleResponseFromJSON(jsonValue));
     }
@@ -278,10 +318,9 @@ export class VehiclesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a paginated list of decommissioned vehicles.
-     * List archived vehicles
+     * Creates request options for listArchivedVehicles without sending the request
      */
-    async listArchivedVehiclesRaw(requestParameters: ListArchivedVehiclesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListResponseVehicleResponse>> {
+    async listArchivedVehiclesRequestOpts(requestParameters: ListArchivedVehiclesRequest): Promise<runtime.RequestOpts> {
         const queryParameters: any = {};
 
         if (requestParameters['page'] != null) {
@@ -297,12 +336,21 @@ export class VehiclesApi extends runtime.BaseAPI {
 
         let urlPath = `/v1/vehicles/archived`;
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Returns a paginated list of decommissioned vehicles.
+     * List archived vehicles
+     */
+    async listArchivedVehiclesRaw(requestParameters: ListArchivedVehiclesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListResponseVehicleResponse>> {
+        const requestOptions = await this.listArchivedVehiclesRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => ListResponseVehicleResponseFromJSON(jsonValue));
     }
@@ -317,10 +365,9 @@ export class VehiclesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a paginated list of active vehicles.
-     * List all vehicles
+     * Creates request options for listVehicles without sending the request
      */
-    async listVehiclesRaw(requestParameters: ListVehiclesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListResponseVehicleResponse>> {
+    async listVehiclesRequestOpts(requestParameters: ListVehiclesRequest): Promise<runtime.RequestOpts> {
         const queryParameters: any = {};
 
         if (requestParameters['page'] != null) {
@@ -336,12 +383,21 @@ export class VehiclesApi extends runtime.BaseAPI {
 
         let urlPath = `/v1/vehicles`;
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Returns a paginated list of active vehicles.
+     * List all vehicles
+     */
+    async listVehiclesRaw(requestParameters: ListVehiclesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListResponseVehicleResponse>> {
+        const requestOptions = await this.listVehiclesRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => ListResponseVehicleResponseFromJSON(jsonValue));
     }
@@ -356,10 +412,9 @@ export class VehiclesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Moves a vehicle to a different owning organization. Requires `vehicle:update` in both the source and target organization.
-     * Transfer a vehicle\'s ownership to another organization
+     * Creates request options for transferVehicle without sending the request
      */
-    async transferVehicleRaw(requestParameters: TransferVehicleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async transferVehicleRequestOpts(requestParameters: TransferVehicleRequest): Promise<runtime.RequestOpts> {
         if (requestParameters['vehicleId'] == null) {
             throw new runtime.RequiredError(
                 'vehicleId',
@@ -384,13 +439,22 @@ export class VehiclesApi extends runtime.BaseAPI {
         let urlPath = `/v1/vehicles/{vehicle_id}/organization`;
         urlPath = urlPath.replace(`{${"vehicle_id"}}`, encodeURIComponent(String(requestParameters['vehicleId'])));
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
             body: TransferRequestToJSON(requestParameters['transferRequest']),
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Moves a vehicle to a different owning organization. Requires `vehicle:update` in both the source and target organization.
+     * Transfer a vehicle\'s ownership to another organization
+     */
+    async transferVehicleRaw(requestParameters: TransferVehicleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        const requestOptions = await this.transferVehicleRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.VoidApiResponse(response);
     }
@@ -404,10 +468,9 @@ export class VehiclesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Updates the details of an existing vehicle.
-     * Update a vehicle
+     * Creates request options for updateVehicle without sending the request
      */
-    async updateVehicleRaw(requestParameters: UpdateVehicleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VehicleResponse>> {
+    async updateVehicleRequestOpts(requestParameters: UpdateVehicleRequest): Promise<runtime.RequestOpts> {
         if (requestParameters['vehicleId'] == null) {
             throw new runtime.RequiredError(
                 'vehicleId',
@@ -432,13 +495,22 @@ export class VehiclesApi extends runtime.BaseAPI {
         let urlPath = `/v1/vehicles/{vehicle_id}`;
         urlPath = urlPath.replace(`{${"vehicle_id"}}`, encodeURIComponent(String(requestParameters['vehicleId'])));
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
             body: VehicleUpdateRequestToJSON(requestParameters['vehicleUpdateRequest']),
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Updates the details of an existing vehicle.
+     * Update a vehicle
+     */
+    async updateVehicleRaw(requestParameters: UpdateVehicleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VehicleResponse>> {
+        const requestOptions = await this.updateVehicleRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => VehicleResponseFromJSON(jsonValue));
     }

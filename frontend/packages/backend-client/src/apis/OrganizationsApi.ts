@@ -57,10 +57,9 @@ export interface UpdateOrganizationRequest {
 export class OrganizationsApi extends runtime.BaseAPI {
 
     /**
-     * Creates a sub-organization under parent_id and instantiates copies of all role templates. Requires organization:create in the parent organization.
-     * Create an organization
+     * Creates request options for createOrganization without sending the request
      */
-    async createOrganizationRaw(requestParameters: CreateOrganizationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OrganizationResponse>> {
+    async createOrganizationRequestOpts(requestParameters: CreateOrganizationRequest): Promise<runtime.RequestOpts> {
         if (requestParameters['organizationCreateRequest'] == null) {
             throw new runtime.RequiredError(
                 'organizationCreateRequest',
@@ -77,13 +76,22 @@ export class OrganizationsApi extends runtime.BaseAPI {
 
         let urlPath = `/v1/organizations`;
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
             body: OrganizationCreateRequestToJSON(requestParameters['organizationCreateRequest']),
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Creates a sub-organization under parent_id and instantiates copies of all role templates. Requires organization:create in the parent organization.
+     * Create an organization
+     */
+    async createOrganizationRaw(requestParameters: CreateOrganizationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OrganizationResponse>> {
+        const requestOptions = await this.createOrganizationRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => OrganizationResponseFromJSON(jsonValue));
     }
@@ -98,9 +106,9 @@ export class OrganizationsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Delete an empty organization
+     * Creates request options for deleteOrganization without sending the request
      */
-    async deleteOrganizationRaw(requestParameters: DeleteOrganizationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async deleteOrganizationRequestOpts(requestParameters: DeleteOrganizationRequest): Promise<runtime.RequestOpts> {
         if (requestParameters['orgId'] == null) {
             throw new runtime.RequiredError(
                 'orgId',
@@ -116,12 +124,20 @@ export class OrganizationsApi extends runtime.BaseAPI {
         let urlPath = `/v1/organizations/{org_id}`;
         urlPath = urlPath.replace(`{${"org_id"}}`, encodeURIComponent(String(requestParameters['orgId'])));
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'DELETE',
             headers: headerParameters,
             query: queryParameters,
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Delete an empty organization
+     */
+    async deleteOrganizationRaw(requestParameters: DeleteOrganizationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        const requestOptions = await this.deleteOrganizationRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.VoidApiResponse(response);
     }
@@ -134,10 +150,9 @@ export class OrganizationsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Includes the resolved contact person. Requires organization:read.
-     * Get a single organization
+     * Creates request options for getOrganization without sending the request
      */
-    async getOrganizationRaw(requestParameters: GetOrganizationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OrganizationDetailResponse>> {
+    async getOrganizationRequestOpts(requestParameters: GetOrganizationRequest): Promise<runtime.RequestOpts> {
         if (requestParameters['orgId'] == null) {
             throw new runtime.RequiredError(
                 'orgId',
@@ -153,12 +168,21 @@ export class OrganizationsApi extends runtime.BaseAPI {
         let urlPath = `/v1/organizations/{org_id}`;
         urlPath = urlPath.replace(`{${"org_id"}}`, encodeURIComponent(String(requestParameters['orgId'])));
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Includes the resolved contact person. Requires organization:read.
+     * Get a single organization
+     */
+    async getOrganizationRaw(requestParameters: GetOrganizationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OrganizationDetailResponse>> {
+        const requestOptions = await this.getOrganizationRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => OrganizationDetailResponseFromJSON(jsonValue));
     }
@@ -173,10 +197,9 @@ export class OrganizationsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the caller\'s organization subtree as a flat list; clients rebuild the tree via parent_id. Requires organization:read.
-     * List visible organizations
+     * Creates request options for listOrganizations without sending the request
      */
-    async listOrganizationsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<OrganizationResponse>>> {
+    async listOrganizationsRequestOpts(): Promise<runtime.RequestOpts> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -184,12 +207,21 @@ export class OrganizationsApi extends runtime.BaseAPI {
 
         let urlPath = `/v1/organizations`;
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Returns the caller\'s organization subtree as a flat list; clients rebuild the tree via parent_id. Requires organization:read.
+     * List visible organizations
+     */
+    async listOrganizationsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<OrganizationResponse>>> {
+        const requestOptions = await this.listOrganizationsRequestOpts();
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(OrganizationResponseFromJSON));
     }
@@ -204,10 +236,9 @@ export class OrganizationsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Replaces name, address and contact person. An omitted field clears the stored value. The contact person must be a member of this organization.
-     * Update an organization
+     * Creates request options for updateOrganization without sending the request
      */
-    async updateOrganizationRaw(requestParameters: UpdateOrganizationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OrganizationResponse>> {
+    async updateOrganizationRequestOpts(requestParameters: UpdateOrganizationRequest): Promise<runtime.RequestOpts> {
         if (requestParameters['orgId'] == null) {
             throw new runtime.RequiredError(
                 'orgId',
@@ -232,13 +263,22 @@ export class OrganizationsApi extends runtime.BaseAPI {
         let urlPath = `/v1/organizations/{org_id}`;
         urlPath = urlPath.replace(`{${"org_id"}}`, encodeURIComponent(String(requestParameters['orgId'])));
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
             body: OrganizationUpdateRequestToJSON(requestParameters['organizationUpdateRequest']),
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Replaces name, address and contact person. An omitted field clears the stored value. The contact person must be a member of this organization.
+     * Update an organization
+     */
+    async updateOrganizationRaw(requestParameters: UpdateOrganizationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OrganizationResponse>> {
+        const requestOptions = await this.updateOrganizationRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => OrganizationResponseFromJSON(jsonValue));
     }

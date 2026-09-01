@@ -31,10 +31,9 @@ import {
 export class EvaluationApi extends runtime.BaseAPI {
 
     /**
-     * Returns aggregated statistics including resource counts, water consumption, and per-region/vehicle breakdowns.
-     * Get evaluation data
+     * Creates request options for getEvaluation without sending the request
      */
-    async getEvaluationRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EvaluationResponse>> {
+    async getEvaluationRequestOpts(): Promise<runtime.RequestOpts> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -42,12 +41,21 @@ export class EvaluationApi extends runtime.BaseAPI {
 
         let urlPath = `/v1/evaluation`;
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Returns aggregated statistics including resource counts, water consumption, and per-region/vehicle breakdowns.
+     * Get evaluation data
+     */
+    async getEvaluationRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EvaluationResponse>> {
+        const requestOptions = await this.getEvaluationRequestOpts();
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => EvaluationResponseFromJSON(jsonValue));
     }

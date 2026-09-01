@@ -64,10 +64,9 @@ export interface UnregisterPluginRequest {
 export class PluginsApi extends runtime.BaseAPI {
 
     /**
-     * Returns plugin information by slug.
-     * Get a plugin
+     * Creates request options for getPlugin without sending the request
      */
-    async getPluginRaw(requestParameters: GetPluginRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PluginResponse>> {
+    async getPluginRequestOpts(requestParameters: GetPluginRequest): Promise<runtime.RequestOpts> {
         if (requestParameters['pluginSlug'] == null) {
             throw new runtime.RequiredError(
                 'pluginSlug',
@@ -83,12 +82,21 @@ export class PluginsApi extends runtime.BaseAPI {
         let urlPath = `/v1/plugins/{plugin_slug}`;
         urlPath = urlPath.replace(`{${"plugin_slug"}}`, encodeURIComponent(String(requestParameters['pluginSlug'])));
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Returns plugin information by slug.
+     * Get a plugin
+     */
+    async getPluginRaw(requestParameters: GetPluginRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PluginResponse>> {
+        const requestOptions = await this.getPluginRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => PluginResponseFromJSON(jsonValue));
     }
@@ -103,10 +111,9 @@ export class PluginsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns all registered plugins.
-     * List all plugins
+     * Creates request options for listPlugins without sending the request
      */
-    async listPluginsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PluginListResponse>> {
+    async listPluginsRequestOpts(): Promise<runtime.RequestOpts> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -114,12 +121,21 @@ export class PluginsApi extends runtime.BaseAPI {
 
         let urlPath = `/v1/plugins`;
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Returns all registered plugins.
+     * List all plugins
+     */
+    async listPluginsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PluginListResponse>> {
+        const requestOptions = await this.listPluginsRequestOpts();
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => PluginListResponseFromJSON(jsonValue));
     }
@@ -134,10 +150,9 @@ export class PluginsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Send a keepalive heartbeat for a registered plugin.
-     * Send heartbeat
+     * Creates request options for pluginHeartbeat without sending the request
      */
-    async pluginHeartbeatRaw(requestParameters: PluginHeartbeatRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async pluginHeartbeatRequestOpts(requestParameters: PluginHeartbeatRequest): Promise<runtime.RequestOpts> {
         if (requestParameters['pluginSlug'] == null) {
             throw new runtime.RequiredError(
                 'pluginSlug',
@@ -153,12 +168,21 @@ export class PluginsApi extends runtime.BaseAPI {
         let urlPath = `/v1/plugins/{plugin_slug}/heartbeat`;
         urlPath = urlPath.replace(`{${"plugin_slug"}}`, encodeURIComponent(String(requestParameters['pluginSlug'])));
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Send a keepalive heartbeat for a registered plugin.
+     * Send heartbeat
+     */
+    async pluginHeartbeatRaw(requestParameters: PluginHeartbeatRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        const requestOptions = await this.pluginHeartbeatRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.VoidApiResponse(response);
     }
@@ -172,10 +196,9 @@ export class PluginsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Refresh authentication token for a plugin.
-     * Refresh plugin token
+     * Creates request options for refreshPluginToken without sending the request
      */
-    async refreshPluginTokenRaw(requestParameters: RefreshPluginTokenRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ClientTokenResponse>> {
+    async refreshPluginTokenRequestOpts(requestParameters: RefreshPluginTokenRequest): Promise<runtime.RequestOpts> {
         if (requestParameters['pluginSlug'] == null) {
             throw new runtime.RequiredError(
                 'pluginSlug',
@@ -200,13 +223,22 @@ export class PluginsApi extends runtime.BaseAPI {
         let urlPath = `/v1/plugins/{plugin_slug}/token/refresh`;
         urlPath = urlPath.replace(`{${"plugin_slug"}}`, encodeURIComponent(String(requestParameters['pluginSlug'])));
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
             body: PluginAuthRequestToJSON(requestParameters['pluginAuthRequest']),
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Refresh authentication token for a plugin.
+     * Refresh plugin token
+     */
+    async refreshPluginTokenRaw(requestParameters: RefreshPluginTokenRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ClientTokenResponse>> {
+        const requestOptions = await this.refreshPluginTokenRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => ClientTokenResponseFromJSON(jsonValue));
     }
@@ -221,10 +253,9 @@ export class PluginsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Register a new external plugin and receive authentication tokens.
-     * Register a plugin
+     * Creates request options for registerPlugin without sending the request
      */
-    async registerPluginRaw(requestParameters: RegisterPluginRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ClientTokenResponse>> {
+    async registerPluginRequestOpts(requestParameters: RegisterPluginRequest): Promise<runtime.RequestOpts> {
         if (requestParameters['pluginRegisterRequest'] == null) {
             throw new runtime.RequiredError(
                 'pluginRegisterRequest',
@@ -241,13 +272,22 @@ export class PluginsApi extends runtime.BaseAPI {
 
         let urlPath = `/v1/plugins`;
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
             body: PluginRegisterRequestToJSON(requestParameters['pluginRegisterRequest']),
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Register a new external plugin and receive authentication tokens.
+     * Register a plugin
+     */
+    async registerPluginRaw(requestParameters: RegisterPluginRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ClientTokenResponse>> {
+        const requestOptions = await this.registerPluginRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => ClientTokenResponseFromJSON(jsonValue));
     }
@@ -262,10 +302,9 @@ export class PluginsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Remove a plugin registration.
-     * Unregister a plugin
+     * Creates request options for unregisterPlugin without sending the request
      */
-    async unregisterPluginRaw(requestParameters: UnregisterPluginRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async unregisterPluginRequestOpts(requestParameters: UnregisterPluginRequest): Promise<runtime.RequestOpts> {
         if (requestParameters['pluginSlug'] == null) {
             throw new runtime.RequiredError(
                 'pluginSlug',
@@ -281,12 +320,21 @@ export class PluginsApi extends runtime.BaseAPI {
         let urlPath = `/v1/plugins/{plugin_slug}/unregister`;
         urlPath = urlPath.replace(`{${"plugin_slug"}}`, encodeURIComponent(String(requestParameters['pluginSlug'])));
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Remove a plugin registration.
+     * Unregister a plugin
+     */
+    async unregisterPluginRaw(requestParameters: UnregisterPluginRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        const requestOptions = await this.unregisterPluginRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.VoidApiResponse(response);
     }

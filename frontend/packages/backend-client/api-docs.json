@@ -548,6 +548,236 @@
         }
       }
     },
+    "/v1/clusters/{cluster_id}/comments": {
+      "get": {
+        "tags": [
+          "Comments"
+        ],
+        "summary": "List comments on a tree cluster",
+        "description": "Returns the comments of a tree cluster, newest first. Requires `tree_cluster:read` in the cluster's organization.",
+        "operationId": "listClusterComments",
+        "parameters": [
+          {
+            "name": "cluster_id",
+            "in": "path",
+            "description": "Cluster ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number to retrieve (1-based).",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "default": 1,
+              "minimum": 1
+            },
+            "example": 1
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "description": "Number of items per page.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1
+            },
+            "example": 25
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of comments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListResponse_CommentResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Cluster not found or not visible",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Comments"
+        ],
+        "summary": "Comment on a tree cluster",
+        "description": "Adds a comment to a tree cluster. Requires `tree_cluster:update` in the cluster's organization.",
+        "operationId": "createClusterComment",
+        "parameters": [
+          {
+            "name": "cluster_id",
+            "in": "path",
+            "description": "Cluster ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCommentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Comment created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Empty or overlong comment text",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing `tree_cluster:update`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Cluster not found or not visible",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/clusters/{cluster_id}/comments/{comment_id}": {
+      "delete": {
+        "tags": [
+          "Comments"
+        ],
+        "summary": "Delete a comment on a tree cluster",
+        "description": "Removes a comment. The author may delete their own comment; anyone else needs `tree_cluster:delete` in the cluster's organization.",
+        "operationId": "deleteClusterComment",
+        "parameters": [
+          {
+            "name": "cluster_id",
+            "in": "path",
+            "description": "Cluster ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "comment_id",
+            "in": "path",
+            "description": "Comment ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Comment deleted"
+          },
+          "403": {
+            "description": "Not the author and missing `tree_cluster:delete`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Cluster or comment not found, or the comment belongs to another cluster",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/clusters/{cluster_id}/organization": {
       "patch": {
         "tags": [
@@ -5830,6 +6060,236 @@
         }
       }
     },
+    "/v1/watering-plans/{plan_id}/comments": {
+      "get": {
+        "tags": [
+          "Comments"
+        ],
+        "summary": "List comments on a watering plan",
+        "description": "Returns the comments of a watering plan, newest first. Requires `watering_plan:read` in the plan's organization.",
+        "operationId": "listWateringPlanComments",
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "description": "Watering plan ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number to retrieve (1-based).",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "default": 1,
+              "minimum": 1
+            },
+            "example": 1
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "description": "Number of items per page.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1
+            },
+            "example": 25
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of comments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListResponse_CommentResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Watering plan not found or not visible",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Comments"
+        ],
+        "summary": "Comment on a watering plan",
+        "description": "Adds a comment to a watering plan. Requires `watering_plan:update` in the plan's organization.",
+        "operationId": "createWateringPlanComment",
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "description": "Watering plan ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCommentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Comment created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Empty or overlong comment text",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing `watering_plan:update`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Watering plan not found or not visible",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/watering-plans/{plan_id}/comments/{comment_id}": {
+      "delete": {
+        "tags": [
+          "Comments"
+        ],
+        "summary": "Delete a comment on a watering plan",
+        "description": "Removes a comment. The author may delete their own comment; anyone else needs `watering_plan:delete` in the plan's organization.",
+        "operationId": "deleteWateringPlanComment",
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "description": "Watering plan ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "comment_id",
+            "in": "path",
+            "description": "Comment ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Comment deleted"
+          },
+          "403": {
+            "description": "Not the author and missing `watering_plan:delete`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Watering plan or comment not found, or the comment belongs to another plan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/watering-plans/{watering_plan_id}": {
       "get": {
         "tags": [
@@ -6472,6 +6932,42 @@
           }
         }
       },
+      "CommentResponse": {
+        "type": "object",
+        "description": "A single comment on a tree cluster or a watering plan.",
+        "required": [
+          "id",
+          "author_id",
+          "body",
+          "created_at"
+        ],
+        "properties": {
+          "author_id": {
+            "type": "string",
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
+          },
+          "author_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Display name of the author; absent if the account no longer resolves.",
+            "example": "tbz1"
+          },
+          "body": {
+            "type": "string",
+            "example": "Boden war noch feucht"
+          },
+          "created_at": {
+            "type": "string",
+            "example": "2026-09-01T13:30:00+00:00"
+          },
+          "id": {
+            "type": "string",
+            "example": "0199a8e9-7c4f-7000-8000-000000000000"
+          }
+        }
+      },
       "ContactPersonDto": {
         "type": "object",
         "description": "The organization's contact person, resolved from the identity provider.",
@@ -6493,6 +6989,21 @@
           },
           "last_name": {
             "type": "string"
+          }
+        }
+      },
+      "CreateCommentRequest": {
+        "type": "object",
+        "description": "Body of the create request. Author and timestamp come from the server.",
+        "required": [
+          "body"
+        ],
+        "properties": {
+          "body": {
+            "type": "string",
+            "example": "Boden war noch feucht",
+            "maxLength": 2000,
+            "minLength": 1
           }
         }
       },
@@ -6829,6 +7340,57 @@
           "repository": {
             "type": "string",
             "example": "https://github.com/green-ecolution/green-ecolution/"
+          }
+        }
+      },
+      "ListResponse_CommentResponse": {
+        "type": "object",
+        "required": [
+          "data",
+          "pagination"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "description": "A single comment on a tree cluster or a watering plan.",
+              "required": [
+                "id",
+                "author_id",
+                "body",
+                "created_at"
+              ],
+              "properties": {
+                "author_id": {
+                  "type": "string",
+                  "example": "0190a8e9-7c4f-7000-8000-000000000000"
+                },
+                "author_name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Display name of the author; absent if the account no longer resolves.",
+                  "example": "tbz1"
+                },
+                "body": {
+                  "type": "string",
+                  "example": "Boden war noch feucht"
+                },
+                "created_at": {
+                  "type": "string",
+                  "example": "2026-09-01T13:30:00+00:00"
+                },
+                "id": {
+                  "type": "string",
+                  "example": "0199a8e9-7c4f-7000-8000-000000000000"
+                }
+              }
+            }
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationResponse"
           }
         }
       },
@@ -11521,6 +12083,10 @@
     {
       "name": "Roles",
       "description": "Manage roles (named permission sets) and their assignment to users."
+    },
+    {
+      "name": "Comments",
+      "description": "Free-text comments on tree clusters and watering plans. Reading follows the parent resource's read permission, writing its update permission."
     }
   ]
 }

@@ -1,5 +1,6 @@
 /* tslint:disable */
 /* eslint-disable */
+export * from './CommentsApi';
 export * from './EvaluationApi';
 export * from './InfoApi';
 export * from './OrganizationsApi';

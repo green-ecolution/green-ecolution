@@ -96,7 +96,7 @@ export function SoilMoisturePointResponseToJSONTyped(value?: SoilMoisturePointRe
         'mean': value['mean'],
         'min': value['min'],
         'sample_count': value['sampleCount'],
-        'timestamp': ((value['timestamp']).toISOString()),
+        'timestamp': value['timestamp'].toISOString(),
     };
 }
 

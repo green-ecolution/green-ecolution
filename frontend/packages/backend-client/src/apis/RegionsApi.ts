@@ -43,10 +43,9 @@ export interface ListRegionsRequest {
 export class RegionsApi extends runtime.BaseAPI {
 
     /**
-     * Returns a single region by its unique identifier.
-     * Get a region
+     * Creates request options for getRegion without sending the request
      */
-    async getRegionRaw(requestParameters: GetRegionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RegionResponse>> {
+    async getRegionRequestOpts(requestParameters: GetRegionRequest): Promise<runtime.RequestOpts> {
         if (requestParameters['regionId'] == null) {
             throw new runtime.RequiredError(
                 'regionId',
@@ -62,12 +61,21 @@ export class RegionsApi extends runtime.BaseAPI {
         let urlPath = `/v1/regions/{region_id}`;
         urlPath = urlPath.replace(`{${"region_id"}}`, encodeURIComponent(String(requestParameters['regionId'])));
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Returns a single region by its unique identifier.
+     * Get a region
+     */
+    async getRegionRaw(requestParameters: GetRegionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RegionResponse>> {
+        const requestOptions = await this.getRegionRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => RegionResponseFromJSON(jsonValue));
     }
@@ -82,10 +90,9 @@ export class RegionsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a paginated list of all geographic regions used to organize tree clusters.
-     * List all regions
+     * Creates request options for listRegions without sending the request
      */
-    async listRegionsRaw(requestParameters: ListRegionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListResponseRegionResponse>> {
+    async listRegionsRequestOpts(requestParameters: ListRegionsRequest): Promise<runtime.RequestOpts> {
         const queryParameters: any = {};
 
         if (requestParameters['page'] != null) {
@@ -101,12 +108,21 @@ export class RegionsApi extends runtime.BaseAPI {
 
         let urlPath = `/v1/regions`;
 
-        const response = await this.request({
+        return {
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Returns a paginated list of all geographic regions used to organize tree clusters.
+     * List all regions
+     */
+    async listRegionsRaw(requestParameters: ListRegionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListResponseRegionResponse>> {
+        const requestOptions = await this.listRegionsRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => ListResponseRegionResponseFromJSON(jsonValue));
     }

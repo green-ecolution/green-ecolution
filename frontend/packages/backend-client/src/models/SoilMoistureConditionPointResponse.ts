@@ -98,7 +98,7 @@ export function SoilMoistureConditionPointResponseToJSONTyped(value?: SoilMoistu
         'max': value['max'],
         'mean': value['mean'],
         'min': value['min'],
-        'timestamp': ((value['timestamp']).toISOString()),
+        'timestamp': value['timestamp'].toISOString(),
         'worst_depth_cm': value['worstDepthCm'],
     };
 }
