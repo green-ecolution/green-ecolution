@@ -38,7 +38,7 @@ fn created_at_of(id: Id<Comment>) -> DateTime<Utc> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::comment::{CommentBody, CommentSubject};
+    use crate::comment::CommentBody;
 
     #[test]
     fn view_derives_created_at_from_id() {
