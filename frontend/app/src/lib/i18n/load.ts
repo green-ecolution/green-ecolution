@@ -1,3 +1,4 @@
+import { uiDe, uiEn } from '@green-ecolution/ui'
 import type { i18n as I18n } from 'i18next'
 import type { Language } from './languages'
 
@@ -11,11 +12,21 @@ async function bundlesFor(lng: Language): Promise<Record<string, object>> {
 
 const loaded = new WeakMap<I18n, Set<Language>>()
 
+// `ui` is a static import from the package, already in memory for both
+// languages at once (unlike the per-language chunks above), so it is
+// registered for `de` and `en` together the first time an instance loads
+// anything — not gated behind the `lng` being switched to.
+function registerUiCatalog(instance: I18n): void {
+  instance.addResourceBundle('de', 'ui', uiDe, true, true)
+  instance.addResourceBundle('en', 'ui', uiEn, true, true)
+}
+
 export async function ensureLanguage(instance: I18n, lng: Language): Promise<void> {
   let seen = loaded.get(instance)
   if (!seen) {
     seen = new Set()
     loaded.set(instance, seen)
+    registerUiCatalog(instance)
   }
   if (seen.has(lng)) return
 

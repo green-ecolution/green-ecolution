@@ -13,6 +13,7 @@ import { AuthSessionProvider } from '@/lib/auth/AuthSessionProvider'
 import { pendingLoading } from '@/lib/router'
 import { I18nextProvider } from 'react-i18next'
 import { createI18n } from '@/lib/i18n'
+import { UiTextBridge } from '@/lib/i18n/UiTextBridge'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -88,11 +89,13 @@ void createI18n()
     ReactDOM.createRoot(document.getElementById('root')!).render(
       <React.StrictMode>
         <I18nextProvider i18n={i18n}>
-          <QueryClientProvider client={queryClient}>
-            <AuthSessionProvider>
-              <RouterProvider router={router} />
-            </AuthSessionProvider>
-          </QueryClientProvider>
+          <UiTextBridge>
+            <QueryClientProvider client={queryClient}>
+              <AuthSessionProvider>
+                <RouterProvider router={router} />
+              </AuthSessionProvider>
+            </QueryClientProvider>
+          </UiTextBridge>
         </I18nextProvider>
       </React.StrictMode>,
     )
