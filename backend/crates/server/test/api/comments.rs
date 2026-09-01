@@ -190,13 +190,14 @@ async fn cluster_comments_are_not_visible_on_another_cluster() {
     let second = create_cluster(&app, &token, org).await;
     let client = reqwest::Client::new();
 
-    client
+    let posted = client
         .post(format!("{}/api/v1/clusters/{first}/comments", app.address))
         .bearer_auth(&token)
         .json(&json!({ "body": "nur hier" }))
         .send()
         .await
         .unwrap();
+    assert_eq!(posted.status(), 201);
 
     let list: serde_json::Value = client
         .get(format!("{}/api/v1/clusters/{second}/comments", app.address))
