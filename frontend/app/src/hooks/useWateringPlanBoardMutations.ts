@@ -39,7 +39,9 @@ export const useWateringPlanBoardMutations = () => {
   const queryClient = useQueryClient()
   const invalidate = useInvalidateAggregates()
   const showToast = createToast()
-  const { t } = useTranslation('errors')
+  // Default namespace stays 'errors' so every existing `t('frame.*')` call below
+  // is untouched; new wateringPlan strings are reached with an explicit prefix.
+  const { t } = useTranslation(['errors', 'wateringPlan'])
 
   // The board stays mounted after a mutation, so the route loaders have to
   // re-run as well; cancelQueries elsewhere is scoped to the board to avoid
@@ -87,7 +89,7 @@ export const useWateringPlanBoardMutations = () => {
         showToast(t('frame.wateringPlanStartRevertFailed', { reason: info.message }), 'error'),
       )
     },
-    onSuccess: () => showToast('Start rückgängig gemacht.'),
+    onSuccess: () => showToast(t('wateringPlan:board.mutation.startRevertedToast')),
     onSettled: invalidateAfterStatusChange,
   })
 
@@ -121,8 +123,11 @@ export const useWateringPlanBoardMutations = () => {
       )
     },
     onSuccess: (_data, plan) =>
-      showToast('Einsatz gestartet.', 'success', {
-        action: { label: 'Rückgängig', onClick: () => revertStart.mutate(plan) },
+      showToast(t('wateringPlan:board.mutation.startedToast'), 'success', {
+        action: {
+          label: t('wateringPlan:board.mutation.undoActionLabel'),
+          onClick: () => revertStart.mutate(plan),
+        },
       }),
     onSettled: invalidateAfterStatusChange,
   })
@@ -136,7 +141,7 @@ export const useWateringPlanBoardMutations = () => {
       )
     },
     onSuccess: () => {
-      showToast('Einsatz abgebrochen.')
+      showToast(t('wateringPlan:board.mutation.canceledToast'))
       invalidateAfterStatusChange()
     },
   })
@@ -150,7 +155,7 @@ export const useWateringPlanBoardMutations = () => {
       )
     },
     onSuccess: () => {
-      showToast('Einsatz abgeschlossen.')
+      showToast(t('wateringPlan:board.mutation.finishedToast'))
       invalidateAfterStatusChange()
     },
   })
@@ -164,7 +169,7 @@ export const useWateringPlanBoardMutations = () => {
       )
     },
     onSuccess: () => {
-      showToast('Zuweisung gespeichert.')
+      showToast(t('wateringPlan:board.mutation.assignedToast'))
       invalidatePlans()
     },
   })

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState, Suspense } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { Loading } from '@green-ecolution/ui'
+import { useTranslation } from 'react-i18next'
 import type { WateringPlan } from '@/api/backendApi'
 import { clusterQueries, routingStartPointsQuery, wateringPlanQueries } from '@/api/queries'
 import RoutePointMarkers, {
@@ -82,6 +83,7 @@ const RoutePreviewLayers = ({
 }
 
 const WateringPlanPreviewRoute = ({ wateringPlan }: WateringPlanPreviewRouteProps) => {
+  const { t } = useTranslation('wateringPlan')
   const [centerLat, centerLng] = useStore.getState().mapCenter
   const clusterIds = wateringPlan.treeclusters.map((tc) => tc.id)
   const [selectedClusterId, setSelectedClusterId] = useState<string | null>(null)
@@ -117,9 +119,11 @@ const WateringPlanPreviewRoute = ({ wateringPlan }: WateringPlanPreviewRouteProp
       zoom={13}
       interactive
       className="h-[40rem]"
-      ariaLabel="Karte mit der Route und den Bewässerungsgruppen des Plans"
+      ariaLabel={t('detail.routePreviewAriaLabel')}
     >
-      <Suspense fallback={<Loading className="justify-center" label="Lade Karte..." />}>
+      <Suspense
+        fallback={<Loading className="justify-center" label={t('detail.routePreviewLoadingLabel')} />}
+      >
         <RoutePreviewLayers
           planId={wateringPlan.id}
           clusterIds={clusterIds}

@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { FolderPlus, Sprout } from 'lucide-react'
 import { Button, KanbanColumn, KanbanColumnEmpty, KanbanColumnHeader } from '@green-ecolution/ui'
+import { useTranslation } from 'react-i18next'
 import { WateringPlanStatus } from '@green-ecolution/backend-client'
 import { clusterQueries } from '@/api/queries'
 import { useWateringPlanDraft } from '@/store/form/useFormDraft'
@@ -17,6 +18,7 @@ const SuggestionsColumn = () => {
   const draft = useWateringPlanDraft<WateringPlanForm>('create')
   const navigate = useNavigate()
   const canBundle = useHasPermission(['watering_plan:create'])
+  const { t } = useTranslation(['wateringPlan', 'common'])
 
   const clusters = clustersRes?.data ?? []
 
@@ -43,11 +45,15 @@ const SuggestionsColumn = () => {
   }
 
   return (
-    <KanbanColumn tone="suggestion" aria-label="Vorschläge">
-      <KanbanColumnHeader icon={<Sprout />} title="Vorschläge" count={clusters.length} />
+    <KanbanColumn tone="suggestion" aria-label={t('board.suggestions.ariaLabel')}>
+      <KanbanColumnHeader
+        icon={<Sprout />}
+        title={t('board.suggestions.title')}
+        count={clusters.length}
+      />
       {clustersQuery.isError && (
         <KanbanColumnEmpty>
-          Die Vorschläge konnten nicht geladen werden.
+          {t('board.suggestions.loadError')}
           <Button
             type="button"
             size="sm"
@@ -55,12 +61,12 @@ const SuggestionsColumn = () => {
             className="mt-2 bg-white"
             onClick={() => void clustersQuery.refetch()}
           >
-            Erneut versuchen
+            {t('common:actions.retry')}
           </Button>
         </KanbanColumnEmpty>
       )}
       {!clustersQuery.isError && clusters.length === 0 && (
-        <KanbanColumnEmpty>Aktuell sind keine Bewässerungsgruppen sehr trocken.</KanbanColumnEmpty>
+        <KanbanColumnEmpty>{t('board.suggestions.emptyMessage')}</KanbanColumnEmpty>
       )}
       {clusters.map((cluster) => (
         <ClusterSuggestionCard
@@ -80,7 +86,7 @@ const SuggestionsColumn = () => {
           className="bg-white"
         >
           <FolderPlus className="size-4" />
-          Zu Einsatzplan bündeln
+          {t('board.suggestions.bundleButtonLabel')}
           {selected.length > 0 && <span className="tabular-nums">({selected.length})</span>}
         </Button>
       )}

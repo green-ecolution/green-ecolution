@@ -131,7 +131,7 @@ describe('CancelWateringPlan', () => {
 
     render(<CancelWateringPlan onSubmit={mockOnSubmit} />)
 
-    const textarea = screen.getByPlaceholderText(/warum wurde der einsatz abgebrochen/i)
+    const textarea = screen.getByPlaceholderText(/warum wurde der einsatzplan abgebrochen/i)
     await user.type(textarea, 'Schlechtes Wetter')
 
     await waitFor(() => {
@@ -161,7 +161,7 @@ describe('WateringPlanStatusUpdate — Nicht angetreten', () => {
   const selectNotCompleted = async (user: ReturnType<typeof userEvent.setup>) => {
     render(<WateringPlanStatusUpdate wateringPlanId={PLAN_ID} />, { wrapper: createWrapper() })
 
-    const trigger = await screen.findByRole('combobox', { name: /status des einsatzes/i })
+    const trigger = await screen.findByRole('combobox', { name: /status des einsatzplans/i })
     await user.click(trigger)
     await user.click(await screen.findByRole('option', { name: /nicht angetreten/i }))
   }
@@ -170,7 +170,9 @@ describe('WateringPlanStatusUpdate — Nicht angetreten', () => {
     const user = userEvent.setup()
     await selectNotCompleted(user)
 
-    const textarea = await screen.findByPlaceholderText(/warum wurde der einsatz nicht angetreten/i)
+    const textarea = await screen.findByPlaceholderText(
+      /warum wurde der einsatzplan nicht angetreten/i,
+    )
     expect(textarea).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /speichern/i })).toBeDisabled()
   })
@@ -180,7 +182,9 @@ describe('WateringPlanStatusUpdate — Nicht angetreten', () => {
     updateWateringPlan.mockResolvedValueOnce({ ...mockLoadedData })
     await selectNotCompleted(user)
 
-    const textarea = await screen.findByPlaceholderText(/warum wurde der einsatz nicht angetreten/i)
+    const textarea = await screen.findByPlaceholderText(
+      /warum wurde der einsatzplan nicht angetreten/i,
+    )
     await user.type(textarea, 'Fahrzeug defekt')
     await user.click(screen.getByRole('button', { name: /speichern/i }))
 

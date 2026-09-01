@@ -1,4 +1,5 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeAll } from 'vitest'
+import type { TFunction } from 'i18next'
 import {
   DrivingLicense,
   VehicleStatus,
@@ -6,7 +7,15 @@ import {
   UserStatus,
 } from '@green-ecolution/backend-client'
 import type { User, Vehicle } from '@/api/backendApi'
+import { getI18n } from '@/lib/i18n'
 import { licenseSatisfies, validateDriverLicenses } from './licenseValidation'
+
+// vitest setup already calls createI18n(); fix the language so assertions
+// against the German catalog text stay stable regardless of test order.
+let t: TFunction<'wateringPlan'>
+beforeAll(() => {
+  t = getI18n().getFixedT('de', 'wateringPlan')
+})
 
 describe('licenseSatisfies', () => {
   // B satisfies only B
@@ -81,50 +90,92 @@ describe('validateDriverLicenses', () => {
   const trailers = [makeVehicle('v10', DrivingLicense.Be, VehicleType.Trailer)]
 
   it('returns valid when no drivers selected', () => {
-    const result = validateDriverLicenses([], [], transporters, trailers, 'v1')
+    const result = validateDriverLicenses([], [], transporters, trailers, 'v1', undefined, t)
     expect(result.valid).toBe(true)
   })
 
   it('returns valid when no vehicle selected', () => {
     const users = [makeUser('u1', [DrivingLicense.B])]
-    const result = validateDriverLicenses(['u1'], users, transporters, trailers)
+    const result = validateDriverLicenses(
+      ['u1'],
+      users,
+      transporters,
+      trailers,
+      undefined,
+      undefined,
+      t,
+    )
     expect(result.valid).toBe(true)
   })
 
   it('returns valid when driver has matching license', () => {
     const users = [makeUser('u1', [DrivingLicense.C])]
-    const result = validateDriverLicenses(['u1'], users, transporters, trailers, 'v2')
+    const result = validateDriverLicenses(
+      ['u1'],
+      users,
+      transporters,
+      trailers,
+      'v2',
+      undefined,
+      t,
+    )
     expect(result.valid).toBe(true)
   })
 
   it('returns invalid when driver lacks required license', () => {
     const users = [makeUser('u1', [DrivingLicense.B])]
-    const result = validateDriverLicenses(['u1'], users, transporters, trailers, 'v2')
+    const result = validateDriverLicenses(
+      ['u1'],
+      users,
+      transporters,
+      trailers,
+      'v2',
+      undefined,
+      t,
+    )
     expect(result.valid).toBe(false)
-    expect(result.message).toBeDefined()
+    expect(result.message).toBe(
+      'Kein ausgewählter Mitarbeiter hat alle erforderlichen Führerscheine für die gewählten Fahrzeuge.',
+    )
   })
 
   it('uses hierarchy: C driver satisfies B vehicle', () => {
     const users = [makeUser('u1', [DrivingLicense.C])]
-    const result = validateDriverLicenses(['u1'], users, transporters, trailers, 'v1')
+    const result = validateDriverLicenses(
+      ['u1'],
+      users,
+      transporters,
+      trailers,
+      'v1',
+      undefined,
+      t,
+    )
     expect(result.valid).toBe(true)
   })
 
   it('returns valid when at least one driver qualifies', () => {
     const users = [makeUser('u1', [DrivingLicense.B]), makeUser('u2', [DrivingLicense.C])]
-    const result = validateDriverLicenses(['u1', 'u2'], users, transporters, trailers, 'v2')
+    const result = validateDriverLicenses(
+      ['u1', 'u2'],
+      users,
+      transporters,
+      trailers,
+      'v2',
+      undefined,
+      t,
+    )
     expect(result.valid).toBe(true)
   })
 
   it('validates transporter + trailer combination', () => {
     const users = [makeUser('u1', [DrivingLicense.Ce])]
-    const result = validateDriverLicenses(['u1'], users, transporters, trailers, 'v2', 'v10')
+    const result = validateDriverLicenses(['u1'], users, transporters, trailers, 'v2', 'v10', t)
     expect(result.valid).toBe(true)
   })
 
   it('fails transporter + trailer when no driver qualifies for both', () => {
     const users = [makeUser('u1', [DrivingLicense.C])]
-    const result = validateDriverLicenses(['u1'], users, transporters, trailers, 'v2', 'v10')
+    const result = validateDriverLicenses(['u1'], users, transporters, trailers, 'v2', 'v10', t)
     expect(result.valid).toBe(false)
   })
 })

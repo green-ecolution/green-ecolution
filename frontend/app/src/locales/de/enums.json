@@ -78,7 +78,7 @@
   "wateringPlanStatus": {
     "unknown": {
       "label": "Unbekannt",
-      "description": "Der Status der Einsatzplanung ist unbekannt."
+      "description": "Der Status des Einsatzplans ist unbekannt."
     },
     "active": {
       "label": "Aktiv",

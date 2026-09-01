@@ -1,5 +1,6 @@
 import { Checkbox, KanbanCard } from '@green-ecolution/ui'
 import { Link } from '@tanstack/react-router'
+import { useTranslation } from 'react-i18next'
 import type { TreeClusterInListResponse } from '@green-ecolution/backend-client'
 import { useWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
 
@@ -17,6 +18,7 @@ const ClusterSuggestionCard = ({
 }: ClusterSuggestionCardProps) => {
   const getWateringStatusDetails = useWateringStatusDetails()
   const statusDetails = getWateringStatusDetails(cluster.wateringStatus)
+  const { t } = useTranslation('wateringPlan')
 
   const toggleOnCardClick = (event: React.MouseEvent) => {
     // Link keeps navigating, checkbox already toggles itself — don't double-toggle.
@@ -33,7 +35,7 @@ const ClusterSuggestionCard = ({
         <Checkbox
           checked={selected}
           onCheckedChange={(checked) => onSelectedChange(checked === true)}
-          aria-label={`${cluster.name} für Einsatzplan auswählen`}
+          aria-label={t('board.suggestionCard.selectAriaLabel', { name: cluster.name })}
           className="mt-0.5"
         />
       )}
@@ -51,7 +53,9 @@ const ClusterSuggestionCard = ({
             className="size-2 shrink-0 rounded-full"
             style={{ backgroundColor: statusDetails.colorHex }}
           />
-          <span className="tabular-nums">{cluster.treeIds.length} Bäume</span>
+          <span className="tabular-nums">
+            {t('board.suggestionCard.treeCount', { count: cluster.treeIds.length })}
+          </span>
           <span>·</span>
           <span>{statusDetails.label}</span>
         </p>

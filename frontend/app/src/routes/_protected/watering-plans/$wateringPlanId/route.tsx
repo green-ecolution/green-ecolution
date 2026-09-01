@@ -1,5 +1,7 @@
 import { wateringPlanQueries } from '@/api/queries'
 import { entityRoute } from '@/lib/router'
+import { getI18n } from '@/lib/i18n'
+import { dateFnsLocale } from '@/lib/i18n/format'
 import { createFileRoute } from '@tanstack/react-router'
 import { format } from 'date-fns'
 
@@ -9,13 +11,17 @@ export const wateringPlanEntityRoute = entityRoute({
   query: wateringPlanQueries.detail,
   idParam: 'wateringPlanId',
   title: (wateringPlan) =>
-    wateringPlan.date
-      ? `Einsatz: ${format(new Date(wateringPlan.date), 'dd.MM.yyyy')}`
-      : `Einsatz: ${wateringPlan.id}`,
+    getI18n().t('wateringPlan:detail.entityTitle', {
+      value: wateringPlan.date
+        ? format(new Date(wateringPlan.date), 'dd.MM.yyyy', {
+            locale: dateFnsLocale(getI18n().language),
+          })
+        : wateringPlan.id,
+    }),
   notFound: {
-    entityName: 'Einsatzplan',
+    entityName: { key: 'wateringPlan:entity.name' },
     backTo: '/watering-plans',
-    backLabel: 'Zur Einsatzliste',
+    backLabel: { key: 'wateringPlan:detail.notFoundBackLabel' },
   },
 })
 

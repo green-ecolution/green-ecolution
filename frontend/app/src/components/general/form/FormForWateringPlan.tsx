@@ -6,6 +6,7 @@ import {
   Label,
   MultiSelect,
 } from '@green-ecolution/ui'
+import { useTranslation } from 'react-i18next'
 import FormError from './FormError'
 import FormSubmitButton from './FormSubmitButton'
 import { WateringPlanForm } from '@/schema/wateringPlanSchema'
@@ -33,6 +34,7 @@ const startOfToday = new Date()
 startOfToday.setHours(0, 0, 0, 0)
 
 const FormForWateringPlan = (props: FormForWateringPlanProps) => {
+  const { t } = useTranslation(['wateringPlan', 'common'])
   const { register, handleSubmit, control, resetField, getValues } =
     useFormContext<WateringPlanForm>()
   const { isValid, errors } = useFormState({ control })
@@ -67,11 +69,12 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
     props.trailers,
     watchedTransporterId,
     watchedTrailerId,
+    t,
   )
 
   const getDrivingLicensesString = (user: User) => {
     if (!user.drivingLicenses || user.drivingLicenses.length === 0) {
-      return 'Keinen Führerschein'
+      return t('form.noDrivingLicenseLabel')
     }
 
     return user.drivingLicenses
@@ -93,7 +96,7 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
           name="date"
           render={({ field: { value, onChange } }) => (
             <DatePickerField
-              label="Datum des Einsatzes"
+              label={t('form.dateLabel')}
               error={errors.date?.message}
               required
               value={value ? new Date(value) : undefined}
@@ -108,14 +111,14 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
           render={({ field }) => (
             <SelectField
               id="transporterId"
-              label="Verknüpftes Fahrzeug"
-              placeholder="Wählen Sie ein Fahrzeug aus"
+              label={t('form.transporterLabel')}
+              placeholder={t('form.transporterPlaceholder')}
               required
               value={field.value ?? ''}
               onValueChange={(val) => field.onChange(val)}
               error={errors.transporterId?.message}
               options={[
-                { value: '-1', label: 'Kein Fahrzeug' },
+                { value: '-1', label: t('form.noTransporterOption') },
                 ...props.transporters.map((transporter) => ({
                   value: transporter.id.toString(),
                   label: `${transporter.numberPlate} · ${getDrivingLicenseDetails(transporter.drivingLicense).label}`,
@@ -132,8 +135,8 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
               render={({ field }) => (
                 <SelectField
                   id="startPointName"
-                  label="Startpunkt"
-                  placeholder="Startpunkt auswählen"
+                  label={t('form.startPointLabel')}
+                  placeholder={t('form.startPointPlaceholder')}
                   required
                   value={field.value ?? ''}
                   // Radix echoes a spurious onValueChange('') from its hidden
@@ -153,13 +156,10 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
           ) : (
             <div className="flex flex-col gap-y-2">
               <Label>
-                Startpunkt
+                {t('form.startPointLabel')}
                 <span className="text-destructive ml-1">*</span>
               </Label>
-              <p className="text-sm text-destructive">
-                Es sind keine Startpunkte verfügbar. Ohne Startpunkt kann kein Einsatzplan erstellt
-                werden.
-              </p>
+              <p className="text-sm text-destructive">{t('form.noStartPointsError')}</p>
             </div>
           ))}
         <Controller
@@ -168,13 +168,13 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
           render={({ field }) => (
             <SelectField
               id="trailerId"
-              label="Verknüpfter Anhänger"
-              placeholder="Wählen Sie einen Anhänger aus, sofern vorhanden"
+              label={t('form.trailerLabel')}
+              placeholder={t('form.trailerPlaceholder')}
               value={field.value ?? '-1'}
               onValueChange={(val) => field.onChange(val === '-1' ? undefined : val)}
               error={errors.trailerId?.message}
               options={[
-                { value: '-1', label: 'Keinen Anhänger' },
+                { value: '-1', label: t('form.noTrailerOption') },
                 ...props.trailers.map((trailer) => ({
                   value: trailer.id.toString(),
                   label: `${trailer.numberPlate} · ${getDrivingLicenseDetails(trailer.drivingLicense).label}`,
@@ -189,12 +189,10 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
           render={({ field }) => (
             <div className="flex flex-col gap-y-2">
               <Label htmlFor="driverIds">
-                Verknüpfte Mitarbeitende
+                {t('form.driversLabel')}
                 <span className="text-destructive ml-1">*</span>
               </Label>
-              <p className="text-sm text-muted-foreground">
-                Indem Sie die Taste »Shift« gedrückt halten, können Sie eine Mehrauswahl tätigen.
-              </p>
+              <p className="text-sm text-muted-foreground">{t('form.driversMultiSelectHint')}</p>
               <MultiSelect
                 id="driverIds"
                 value={field.value}
@@ -214,8 +212,8 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
           )}
         />
         <TextareaField
-          placeholder="Hier ist Platz für Notizen"
-          label="Kurze Beschreibung"
+          placeholder={t('common:form.notesPlaceholder')}
+          label={t('common:form.shortDescriptionLabel')}
           error={errors.description?.message}
           {...register('description')}
         />
@@ -230,7 +228,7 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
             entityIds={value}
             onAdd={props.onAddCluster}
             type="cluster"
-            label="Bewässerungsgruppen"
+            label={t('form.clustersLabel')}
           />
         )}
       />

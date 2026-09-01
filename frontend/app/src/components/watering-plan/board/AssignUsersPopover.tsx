@@ -6,6 +6,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@green-ecolution/ui'
+import { useTranslation } from 'react-i18next'
 import type { User, WateringPlanInList } from '@/api/backendApi'
 import { useWateringPlanBoardMutations } from '@/hooks/useWateringPlanBoardMutations'
 
@@ -18,6 +19,7 @@ const AssignUsersPopover = ({ plan, users }: AssignUsersPopoverProps) => {
   const [open, setOpen] = useState(false)
   const [selected, setSelected] = useState<string[]>(plan.userIds)
   const { assignUsers } = useWateringPlanBoardMutations()
+  const { t } = useTranslation('wateringPlan')
 
   const options = users.map((user) => ({
     value: user.id,
@@ -33,16 +35,20 @@ const AssignUsersPopover = ({ plan, users }: AssignUsersPopoverProps) => {
     <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <Button type="button" size="sm" variant="outline">
-          {plan.userIds.length > 0 ? 'Ändern' : 'Zuweisen'}
+          {plan.userIds.length > 0
+            ? t('board.assignUsersPopover.changeLabel')
+            : t('board.assignUsersPopover.assignLabel')}
         </Button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-72 space-y-3">
-        <p className="font-lato text-sm font-semibold text-dark">Mitarbeitende zuweisen</p>
+        <p className="font-lato text-sm font-semibold text-dark">
+          {t('board.assignUsersPopover.heading')}
+        </p>
         <MultiSelectCombobox
           options={options}
           value={selected}
           onChange={setSelected}
-          placeholder="Mitarbeitende auswählen…"
+          placeholder={t('board.assignUsersPopover.placeholder')}
         />
         <Button
           type="button"
@@ -53,7 +59,7 @@ const AssignUsersPopover = ({ plan, users }: AssignUsersPopoverProps) => {
             assignUsers.mutate({ plan, userIds: selected }, { onSuccess: () => setOpen(false) })
           }
         >
-          Zuweisung speichern
+          {t('board.assignUsersPopover.saveLabel')}
         </Button>
       </PopoverContent>
     </Popover>

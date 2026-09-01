@@ -3,10 +3,11 @@ import type { WateringPlan } from '@/api/backendApi'
 import { DetailedList, StatusCard } from '@green-ecolution/ui'
 import StatusCardGrid from '../general/StatusCardGrid'
 import { format, formatDuration, intervalToDuration } from 'date-fns'
+import { useTranslation } from 'react-i18next'
 import { useWateringPlanStatusDetails } from '@/hooks/details/useDetailsForWateringPlanStatus'
 import { useSuspenseQuery, useQuery } from '@tanstack/react-query'
 import { userQueries, routingStartPointsQuery } from '@/api/queries'
-import { de } from 'date-fns/locale'
+import { useDateLocale } from '@/lib/i18n/useFormatters'
 import { formatKm } from '@/lib/utils'
 
 interface TabGeneralDataProps {
@@ -14,71 +15,78 @@ interface TabGeneralDataProps {
 }
 
 const TabGeneralData: React.FC<TabGeneralDataProps> = ({ wateringPlan }) => {
+  const { t } = useTranslation(['wateringPlan', 'common'])
+  const dateLocale = useDateLocale()
   const getWateringPlanStatusDetails = useWateringPlanStatusDetails()
   const { data: userRes } = useSuspenseQuery(userQueries.list({ page: 1, perPage: 100 }))
   const { data: startPoints } = useQuery(routingStartPointsQuery())
   const defaultStartPointName = startPoints?.[0]?.name
 
   const assignedUsers = userRes.data?.filter((user) => wateringPlan.userIds.includes(user.id)) ?? []
+  const noData = t('common:state.noData')
 
   const updatedDate = wateringPlan?.updatedAt
-    ? format(new Date(wateringPlan.updatedAt), 'dd.MM.yyyy')
-    : 'Keine Angabe'
+    ? format(new Date(wateringPlan.updatedAt), 'dd.MM.yyyy', { locale: dateLocale })
+    : noData
 
   const wateringPlanData: {
     label: string
     value: string
   }[] = [
     {
-      label: 'Länge der Route',
-      value: wateringPlan.distance ? formatKm(wateringPlan.distance) : 'Keine Angabe',
+      label: t('detail.routeLengthLabel'),
+      value: wateringPlan.distance ? formatKm(wateringPlan.distance) : noData,
     },
     {
-      label: 'Startpunkt',
-      value: wateringPlan.startPointName ?? defaultStartPointName ?? 'Keine Angabe',
+      label: t('detail.startPointLabel'),
+      value: wateringPlan.startPointName ?? defaultStartPointName ?? noData,
     },
     {
-      label: 'Benötigtes Wasser',
+      label: t('detail.requiredWaterLabel'),
       value: wateringPlan.totalWaterRequired
-        ? `${wateringPlan.totalWaterRequired} Liter`
-        : 'Keine Angabe',
+        ? t('detail.requiredWaterValue', { value: wateringPlan.totalWaterRequired })
+        : noData,
     },
     {
-      label: 'Transporter',
+      label: t('detail.transporterLabel'),
       value: wateringPlan.transporter
-        ? `${wateringPlan.transporter.numberPlate}${wateringPlan.transporter.archivedAt ? ' (Archiviert)' : ''}`
-        : 'Keine Angabe',
+        ? wateringPlan.transporter.archivedAt
+          ? t('detail.archivedVehicleValue', { numberPlate: wateringPlan.transporter.numberPlate })
+          : wateringPlan.transporter.numberPlate
+        : noData,
     },
     {
-      label: 'Zusätzlicher Anhänger',
+      label: t('detail.trailerLabel'),
       value: wateringPlan.trailer
-        ? `${wateringPlan.trailer.numberPlate}${wateringPlan.trailer.archivedAt ? ' (Archiviert)' : ''}`
-        : 'Keine Angabe',
+        ? wateringPlan.trailer.archivedAt
+          ? t('detail.archivedVehicleValue', { numberPlate: wateringPlan.trailer.numberPlate })
+          : wateringPlan.trailer.numberPlate
+        : noData,
     },
     {
-      label: 'Anzahl der Bewässerungsgruppen',
+      label: t('detail.clusterCountLabel'),
       value: wateringPlan.treeclusters?.length
-        ? `${wateringPlan.treeclusters.length} Gruppe(n)`
-        : 'Keine Angabe',
+        ? t('detail.clusterCountValue', { count: wateringPlan.treeclusters.length })
+        : noData,
     },
     {
-      label: 'Eingeteilte Mitarbeitende',
+      label: t('detail.assignedUsersLabel'),
       value: assignedUsers.length
         ? assignedUsers.map((user) => `${user.firstName} ${user.lastName}`).join(', ')
-        : 'Keine Angabe',
+        : noData,
     },
     {
-      label: 'Benötigte Nachfüllungen',
-      value: wateringPlan.refillCount ? wateringPlan.refillCount.toString() : 'Keine Angabe',
+      label: t('detail.refillCountLabel'),
+      value: wateringPlan.refillCount ? wateringPlan.refillCount.toString() : noData,
     },
     {
-      label: 'Benötigte Zeit (Fahrzeit)',
+      label: t('detail.durationLabel'),
       value: wateringPlan.duration
-        ? `${formatDuration(intervalToDuration({ start: 0, end: wateringPlan.duration * 1000 }), { format: ['hours', 'minutes'], delimiter: ', ', locale: de })}`
-        : 'Keine Angabe',
+        ? `${formatDuration(intervalToDuration({ start: 0, end: wateringPlan.duration * 1000 }), { format: ['hours', 'minutes'], delimiter: ', ', locale: dateLocale })}`
+        : noData,
     },
     {
-      label: 'Zuletzt geupdated',
+      label: t('detail.updatedAtLabel'),
       value: updatedDate,
     },
   ]
@@ -94,7 +102,7 @@ const TabGeneralData: React.FC<TabGeneralDataProps> = ({ wateringPlan }) => {
           <StatusCard
             status={statusDetails.color}
             indicator="badge"
-            label="Aktueller Status des Einsatzes"
+            label={t('detail.currentStatusLabel')}
             value={statusDetails.label}
             description={statusDetails.description}
           />
@@ -102,7 +110,7 @@ const TabGeneralData: React.FC<TabGeneralDataProps> = ({ wateringPlan }) => {
         {wateringPlan?.status === WateringPlanStatus.Canceled && wateringPlan.cancellationNote && (
           <li>
             <StatusCard
-              label="Notiz zum Abbruch"
+              label={t('detail.cancellationNoteLabel')}
               value=""
               description={wateringPlan.cancellationNote}
             />
@@ -111,21 +119,30 @@ const TabGeneralData: React.FC<TabGeneralDataProps> = ({ wateringPlan }) => {
         {wateringPlan?.status === WateringPlanStatus.Finished && (
           <li>
             <StatusCard
-              label="Verbrauchtes Wasser"
-              value={`${wateringPlan.evaluation.reduce((sum: number, item: { consumedWater: number }) => sum + item.consumedWater, 0)} Liter`}
+              label={t('detail.consumedWaterLabel')}
+              value={t('detail.consumedWaterValue', {
+                value: wateringPlan.evaluation.reduce(
+                  (sum: number, item: { consumedWater: number }) => sum + item.consumedWater,
+                  0,
+                ),
+              })}
               isLarge
-              description={`bei ${wateringPlan.treeclusters.length} ${wateringPlan.treeclusters.length === 1 ? 'Bewässerungsgruppe' : 'Bewässerungsgruppen'}`}
+              description={t('detail.consumedWaterDescription', {
+                count: wateringPlan.treeclusters.length,
+              })}
             />
           </li>
         )}
         <li>
           <StatusCard
-            label="Länge der Route"
+            label={t('detail.routeLengthLabel')}
             value={formatKm(wateringPlan.distance)}
             isLarge
             description={
               (wateringPlan.startPointName ?? defaultStartPointName)
-                ? `Einsatz startet: ${wateringPlan.startPointName ?? defaultStartPointName}`
+                ? t('detail.routeStartDescription', {
+                    startPoint: wateringPlan.startPointName ?? defaultStartPointName,
+                  })
                 : undefined
             }
           />
@@ -133,7 +150,7 @@ const TabGeneralData: React.FC<TabGeneralDataProps> = ({ wateringPlan }) => {
       </StatusCardGrid>
 
       <section className="mt-16">
-        <DetailedList headline="Daten zur Einsatzplanung" details={wateringPlanData} />
+        <DetailedList headline={t('detail.dataHeadline')} details={wateringPlanData} />
       </section>
     </>
   )

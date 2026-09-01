@@ -1,3 +1,4 @@
+import type { TFunction } from 'i18next'
 import { WateringPlanStatus } from '@green-ecolution/backend-client'
 
 export type BoardColumnId = 'planned' | 'active' | 'done'
@@ -32,13 +33,16 @@ export function dropActionFor(from: BoardColumnId, to: BoardColumnId): DropActio
   return null
 }
 
-export function dropHintFor(action: DropAction): string {
+// Not a component: the caller passes its own scoped `t` (see clusterStatusReason.ts
+// for the same shape) rather than this module reaching for `getI18n()` — a frozen
+// translation here would reproduce the bug the router helpers had.
+export function dropHintFor(action: DropAction, t: TFunction<'wateringPlan'>): string {
   switch (action) {
     case 'start':
-      return 'Einsatz starten'
+      return t('board.dropHint.start')
     case 'cancel':
-      return 'Einsatz abbrechen'
+      return t('board.dropHint.cancel')
     case 'complete':
-      return 'Einsatz abschließen'
+      return t('board.dropHint.complete')
   }
 }

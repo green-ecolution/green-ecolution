@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { WateringPlanStatus } from '@/api/backendApi'
 import { DefaultValues, FormProvider, SubmitHandler } from 'react-hook-form'
 import { useSuspenseQuery } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import BackLink from '@/components/general/links/BackLink'
 import { userQueries, vehicleQueries } from '@/api/queries'
 import { WateringPlanForm } from '@/schema/wateringPlanSchema'
@@ -27,6 +28,7 @@ const defaultForm: DefaultValues<WateringPlanForm> = {
 }
 
 function NewWateringPlan() {
+  const { t } = useTranslation('wateringPlan')
   const draft = useWateringPlanDraft<WateringPlanForm>('create')
   const initForm = draft.data ?? defaultForm
   const formKey = draft.data?.clusterIds?.join(',') ?? 'initial'
@@ -77,18 +79,11 @@ function NewWateringPlan() {
   return (
     <div className="container mt-6">
       <article className="2xl:w-4/5">
-        <BackLink link={{ to: '/watering-plans' }} label="Zu allen Einsatzplänen" />
+        <BackLink link={{ to: '/watering-plans' }} label={t('create.backLabel')} />
         <h1 className="font-lato font-bold text-3xl mb-4 lg:text-4xl xl:text-5xl">
-          Neuen Einsatzplan erstellen
+          {t('create.title')}
         </h1>
-        <p className="mb-5">
-          Ein Einsatzplan bildet eine Bewässerungsroute ab, indem ihr ein Fahrzeug, einen Anhänger,
-          Mitarbeitende und anzufahrende Bewässerungsgruppen zugewiesen werden können. Ein neu
-          erstellter Einsatzplan wird automatisch als »geplant« eingestuft. Anhand der
-          Bewässerungsgruppen und die Anzahl der Bäume wird berechnet, wie viel Wasser zum bewässern
-          benötigt wird. Der Startpunkt des Einsatzes kann aus den konfigurierten Depotstandorten
-          ausgewählt werden.
-        </p>
+        <p className="mb-5">{t('create.description')}</p>
       </article>
 
       <section className="mt-10">

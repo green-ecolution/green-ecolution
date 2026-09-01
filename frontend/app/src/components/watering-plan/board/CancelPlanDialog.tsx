@@ -7,9 +7,11 @@ import {
   DialogIcon,
   DialogTitle,
 } from '@green-ecolution/ui'
+import { useTranslation } from 'react-i18next'
 import type { WateringPlanInList } from '@/api/backendApi'
 import { CancelWateringPlan } from '../WateringPlanStatusUpdate'
 import { useWateringPlanBoardMutations } from '@/hooks/useWateringPlanBoardMutations'
+import { useDateLocale } from '@/lib/i18n/useFormatters'
 import { formatBoardDate } from './format'
 
 interface CancelPlanDialogProps {
@@ -19,6 +21,8 @@ interface CancelPlanDialogProps {
 
 const CancelPlanDialog = ({ plan, onClose }: CancelPlanDialogProps) => {
   const { cancelPlan } = useWateringPlanBoardMutations()
+  const { t } = useTranslation('wateringPlan')
+  const dateLocale = useDateLocale()
 
   return (
     <Dialog open={plan !== null} onOpenChange={(open) => !open && onClose()}>
@@ -27,12 +31,13 @@ const CancelPlanDialog = ({ plan, onClose }: CancelPlanDialogProps) => {
           <Ban />
         </DialogIcon>
         <DialogHeader>
-          <DialogTitle>Einsatz abbrechen</DialogTitle>
+          <DialogTitle>{t('board.cancelDialog.title')}</DialogTitle>
           <DialogDescription>
             {plan && (
               <>
-                Der Einsatz vom {formatBoardDate(plan.date)} wird abgebrochen. Geben Sie dafür einen
-                Grund an.
+                {t('board.cancelDialog.description', {
+                  date: formatBoardDate(plan.date, dateLocale),
+                })}
               </>
             )}
           </DialogDescription>
@@ -40,7 +45,7 @@ const CancelPlanDialog = ({ plan, onClose }: CancelPlanDialogProps) => {
         {plan && (
           <CancelWateringPlan
             className="w-full"
-            submitLabel="Einsatz abbrechen"
+            submitLabel={t('board.cancelDialog.title')}
             onSubmit={(data) =>
               cancelPlan.mutate({ plan, note: data.cancellationNote }, { onSuccess: onClose })
             }

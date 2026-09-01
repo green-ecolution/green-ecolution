@@ -19,6 +19,7 @@ export const NAMESPACES = [
   'enums',
   'sensor',
   'vehicle',
+  'wateringPlan',
 ] as const
 
 export const DEFAULT_NAMESPACE = 'common'

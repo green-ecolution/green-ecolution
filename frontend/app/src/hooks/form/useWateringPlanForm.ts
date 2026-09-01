@@ -4,6 +4,7 @@ import { useIssueTranslator } from '@/lib/i18n/validation'
 import { WateringPlanForm } from '@/schema/wateringPlanSchema'
 import { wateringPlanDraftResolver } from '@green-ecolution/domain-wasm'
 import { DefaultValues } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
 import { EntityFormConfig, useEntityForm } from './useEntityForm'
 
 export const useWateringPlanForm = (
@@ -11,6 +12,7 @@ export const useWateringPlanForm = (
   opts: { wateringPlanId?: string; initForm?: DefaultValues<WateringPlanForm> },
 ) => {
   const translate = useIssueTranslator()
+  const { t } = useTranslation('wateringPlan')
 
   const wateringPlanConfig: EntityFormConfig<
     WateringPlanForm,
@@ -38,12 +40,10 @@ export const useWateringPlanForm = (
     allowedPaths: ['/map/watering-plan/select/cluster'],
 
     messages: {
-      createLeave:
-        'Möchtest du die Seite wirklich verlassen? Deine Eingaben zum Erstellen des Einsatzplans gehen verloren, wenn du jetzt gehst.',
-      updateLeave:
-        'Möchtest du die Seite wirklich verlassen? Deine Änderungen am Einsatzplan gehen verloren, wenn du jetzt gehst.',
-      createSuccess: 'Der Einsatzplan wurde erfolgreich erstellt.',
-      updateSuccess: 'Der Einsatzplan wurde erfolgreich bearbeitet.',
+      createLeave: t('form.createLeaveMessage'),
+      updateLeave: t('form.updateLeaveMessage'),
+      createSuccess: t('form.createSuccessMessage'),
+      updateSuccess: t('form.updateSuccessMessage'),
     },
   }
 

@@ -1,0 +1,168 @@
+{
+  "entity": {
+    "name": "Einsatzplan",
+    "nameWithArticle": "der Einsatzplan"
+  },
+  "list": {
+    "title": "Einsatzpläne",
+    "descriptionCanModify": "Plane, starte und dokumentiere Bewässerungsfahrten. Ziehe einen Einsatzplan in die nächste Spalte, um seinen Status zu ändern.",
+    "description": "Verfolge geplante, laufende und abgeschlossene Bewässerungsfahrten.",
+    "createButton": "Neuen Einsatzplan erstellen",
+    "loadingLabel": "Daten werden geladen"
+  },
+  "detail": {
+    "backLabel": "Alle Einsatzpläne",
+    "title": "Einsatzplan für den {date}",
+    "editLabel": "Einsatzplan bearbeiten",
+    "downloadRouteLabel": "Route herunterladen",
+    "routeErrorAlert": "Die Route für diesen Einsatzplan konnte nicht berechnet werden. Bitte überprüfe, ob das ausgewählte Fahrzeug über ausreichend Wasserkapazität für die gewählten Bewässerungsgruppen verfügt.",
+    "updateStatusLabel": "Status aktualisieren",
+    "tabGeneral": "Allgemeine Daten",
+    "tabClusters": "Bewässerungsgruppen",
+    "tabRoute": "Route",
+    "clustersEmptyMessage": "Es wurden leider keine Bewässerungsgruppen gefunden.",
+    "loadingLabel": "Einsatzplan wird geladen …",
+    "routeLengthLabel": "Länge der Route",
+    "startPointLabel": "Startpunkt",
+    "requiredWaterLabel": "Benötigtes Wasser",
+    "requiredWaterValue": "{value} Liter",
+    "transporterLabel": "Transporter",
+    "archivedVehicleValue": "{numberPlate} (Archiviert)",
+    "trailerLabel": "Zusätzlicher Anhänger",
+    "clusterCountLabel": "Anzahl der Bewässerungsgruppen",
+    "clusterCountValue": "{count} Gruppe(n)",
+    "assignedUsersLabel": "Eingeteilte Mitarbeitende",
+    "refillCountLabel": "Benötigte Nachfüllungen",
+    "durationLabel": "Benötigte Zeit (Fahrzeit)",
+    "updatedAtLabel": "Zuletzt aktualisiert",
+    "dataHeadline": "Daten zum Einsatzplan",
+    "currentStatusLabel": "Aktueller Status des Einsatzplans",
+    "cancellationNoteLabel": "Notiz zum Abbruch",
+    "consumedWaterLabel": "Verbrauchtes Wasser",
+    "consumedWaterValue": "{value} Liter",
+    "consumedWaterDescription_one": "bei {count} Bewässerungsgruppe",
+    "consumedWaterDescription_other": "bei {count} Bewässerungsgruppen",
+    "routeStartDescription": "Einsatzplan startet: {startPoint}",
+    "entityTitle": "Einsatzplan: {value}",
+    "notFoundBackLabel": "Zur Einsatzplanliste",
+    "routePreviewAriaLabel": "Karte mit der Route und den Bewässerungsgruppen des Plans",
+    "routePreviewLoadingLabel": "Lade Karte …"
+  },
+  "update": {
+    "backLabel": "Zurück zum Einsatzplan",
+    "title": "Einsatzplan für den {date} bearbeiten",
+    "description": "Der Einsatzplan kann in dieser Ansicht editiert werden, falls bestimmte Daten nicht mehr stimmen oder z. B. bestimmte Informationen zusätzlich hinterlegt werden müssen. Ein Einsatzplan erfordert immer mindestens eine Bewässerungsgruppe, die angefahren werden soll und mindestens eine:n Mitarbeiter:in, die den Einsatzplan durchführen soll. Zudem muss ein Fahrzeug hinterlegt werden.",
+    "statusEditNotice": "Der Status eines Einsatzplans kann separat editiert werden.",
+    "deletingLabel": "Der Einsatzplan wird gelöscht"
+  },
+  "statusUpdate": {
+    "backLabel": "Zurück zum Einsatzplan",
+    "title": "Status vom Einsatzplan {date} bearbeiten",
+    "currentStatusLabel": "Aktueller Status:",
+    "description": "Der Status eines Einsatzplans beschreibt, ob er beispielsweise aktiv ausgeführt wird, beendet ist oder abgebrochen wurde. Diese Angabe hilft dabei, die erstellten Einsatzpläne zu kategorisieren und eine Auswertung anzulegen. Sobald ein Einsatzplan beendet wird, kann zudem angegeben werden, mit wie viel Wasser die zugehörigen Bewässerungsgruppen bewässert wurden.",
+    "finishedNotice": "Dieser Einsatzplan ist abgeschlossen. Sein Status kann nicht mehr geändert werden.",
+    "statusFieldLabel": "Status des Einsatzplans",
+    "statusFieldPlaceholder": "Wähle einen Status aus",
+    "cancelReasonLabel": "Grund des Abbruchs",
+    "cancelReasonPlaceholder": "Warum wurde der Einsatzplan abgebrochen?",
+    "notCompletedReasonLabel": "Grund des Nichtantritts",
+    "notCompletedReasonPlaceholder": "Warum wurde der Einsatzplan nicht angetreten?",
+    "toastSuccess": "Der Status des Einsatzplans wurde erfolgreich aktualisiert.",
+    "finished": {
+      "waterPerClusterLegend": "Wasservergabe pro Bewässerungsgruppe:",
+      "defaultsHint": "Die Standardwerte ergeben sich aus 80 Litern pro Baum einer Bewässerungsgruppe.",
+      "treeCount_one": "{count} Baum",
+      "treeCount_other": "{count} Bäume",
+      "litersForClusterLabel": "Liter für {name}",
+      "litersUnitLabel": "Liter"
+    }
+  },
+  "form": {
+    "noDrivingLicenseLabel": "Keinen Führerschein",
+    "dateLabel": "Datum des Einsatzplans",
+    "transporterLabel": "Verknüpftes Fahrzeug",
+    "transporterPlaceholder": "Wähle ein Fahrzeug aus",
+    "noTransporterOption": "Kein Fahrzeug",
+    "startPointLabel": "Startpunkt",
+    "startPointPlaceholder": "Startpunkt auswählen",
+    "noStartPointsError": "Es sind keine Startpunkte verfügbar. Ohne Startpunkt kann kein Einsatzplan erstellt werden.",
+    "trailerLabel": "Verknüpfter Anhänger",
+    "trailerPlaceholder": "Wähle einen Anhänger aus, sofern vorhanden",
+    "noTrailerOption": "Keinen Anhänger",
+    "driversLabel": "Verknüpfte Mitarbeitende",
+    "driversMultiSelectHint": "Indem du die Taste »Shift« gedrückt hältst, kannst du eine Mehrauswahl tätigen.",
+    "clustersLabel": "Bewässerungsgruppen",
+    "noQualifiedDriverError": "Kein ausgewählter Mitarbeiter hat alle erforderlichen Führerscheine für die gewählten Fahrzeuge.",
+    "createLeaveMessage": "Möchtest du die Seite wirklich verlassen? Deine Eingaben zum Erstellen des Einsatzplans gehen verloren, wenn du jetzt gehst.",
+    "updateLeaveMessage": "Möchtest du die Seite wirklich verlassen? Deine Änderungen am Einsatzplan gehen verloren, wenn du jetzt gehst.",
+    "createSuccessMessage": "Der Einsatzplan wurde erfolgreich erstellt.",
+    "updateSuccessMessage": "Der Einsatzplan wurde erfolgreich bearbeitet."
+  },
+  "create": {
+    "backLabel": "Zu allen Einsatzplänen",
+    "title": "Neuen Einsatzplan erstellen",
+    "description": "Ein Einsatzplan bildet eine Bewässerungsroute ab, indem ihr ein Fahrzeug, einen Anhänger, Mitarbeitende und anzufahrende Bewässerungsgruppen zugewiesen werden können. Ein neu erstellter Einsatzplan wird automatisch als »geplant« eingestuft. Anhand der Bewässerungsgruppen und der Anzahl der Bäume wird berechnet, wie viel Wasser zum Bewässern benötigt wird. Der Startpunkt des Einsatzplans kann aus den konfigurierten Depotstandorten ausgewählt werden."
+  },
+  "board": {
+    "columnError": {
+      "message": "Die Einsatzpläne konnten nicht geladen werden."
+    },
+    "column": {
+      "planned": "Geplant",
+      "active": "Unterwegs",
+      "done": "Erledigt",
+      "plannedEmptyCanCreate": "Keine geplanten Einsatzpläne. Erstelle einen neuen Einsatzplan oder bündle Vorschläge.",
+      "plannedEmpty": "Keine geplanten Einsatzpläne.",
+      "activeEmptyCanModify": "Ziehe einen geplanten Einsatzplan hierher, um ihn zu starten.",
+      "activeEmpty": "Aktuell ist kein Einsatzplan unterwegs.",
+      "doneEmpty": "Noch keine erledigten Einsatzpläne.",
+      "loadMore": "Mehr laden",
+      "clusterCountBadge_one": "{count} Gruppe",
+      "clusterCountBadge_other": "{count} Gruppen"
+    },
+    "assignDriverLabel": "Fahrer:in zuweisen",
+    "assignUsersPopover": {
+      "changeLabel": "Ändern",
+      "assignLabel": "Zuweisen",
+      "heading": "Mitarbeitende zuweisen",
+      "placeholder": "Mitarbeitende auswählen…",
+      "saveLabel": "Zuweisung speichern"
+    },
+    "cancelDialog": {
+      "title": "Einsatzplan abbrechen",
+      "description": "Der Einsatzplan vom {date} wird abgebrochen. Gib dafür einen Grund an."
+    },
+    "completeDialog": {
+      "title": "Einsatzplan abschließen",
+      "description": "Wie ist der Einsatzplan vom {date} ausgegangen?",
+      "outcomeAriaLabel": "Ausgang des Einsatzplans",
+      "finishedOption": "Beendet",
+      "canceledOption": "Abgebrochen"
+    },
+    "suggestionCard": {
+      "selectAriaLabel": "{name} für Einsatzplan auswählen",
+      "treeCount_one": "{count} Baum",
+      "treeCount_other": "{count} Bäume"
+    },
+    "suggestions": {
+      "ariaLabel": "Vorschläge",
+      "title": "Vorschläge",
+      "loadError": "Die Vorschläge konnten nicht geladen werden.",
+      "emptyMessage": "Aktuell sind keine Bewässerungsgruppen sehr trocken.",
+      "bundleButtonLabel": "Zu Einsatzplan bündeln"
+    },
+    "dropHint": {
+      "start": "Einsatzplan starten",
+      "cancel": "Einsatzplan abbrechen",
+      "complete": "Einsatzplan abschließen"
+    },
+    "mutation": {
+      "startRevertedToast": "Start rückgängig gemacht.",
+      "startedToast": "Einsatzplan gestartet.",
+      "undoActionLabel": "Rückgängig",
+      "canceledToast": "Einsatzplan abgebrochen.",
+      "finishedToast": "Einsatzplan abgeschlossen.",
+      "assignedToast": "Zuweisung gespeichert."
+    }
+  }
+}

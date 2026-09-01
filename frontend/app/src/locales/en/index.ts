@@ -7,6 +7,7 @@ import treecluster from './treecluster.json'
 import enums from './enums.json'
 import sensor from './sensor.json'
 import vehicle from './vehicle.json'
+import wateringPlan from './wateringPlan.json'
 
 export default {
   common,
@@ -18,4 +19,5 @@ export default {
   enums,
   sensor,
   vehicle,
+  wateringPlan,
 }
