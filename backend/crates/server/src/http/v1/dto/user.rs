@@ -209,6 +209,15 @@ pub struct SetOrganizationRequest {
     pub organization_id: Uuid,
 }
 
+/// Falls back to the username when first/last name are both blank.
+pub(crate) fn display_name(user: &DomainUserView) -> String {
+    let full_name = format!("{} {}", user.first_name.trim(), user.last_name.trim());
+    match full_name.trim() {
+        "" => user.username.as_str().to_owned(),
+        name => name.to_owned(),
+    }
+}
+
 impl From<UserStatus> for DomainUserStatus {
     fn from(value: UserStatus) -> Self {
         match value {

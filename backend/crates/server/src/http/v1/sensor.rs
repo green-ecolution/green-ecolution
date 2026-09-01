@@ -22,6 +22,7 @@ use crate::{
                     SensorResponse, SetSensorTreeRequest,
                 },
                 tree::{TransferRequest, TreeResponse},
+                user::display_name,
             },
             pagination::{PaginationParams, default_page},
             scope,
@@ -605,11 +606,7 @@ async fn resolve_acknowledger(
 ) -> Option<String> {
     let by = quality.acknowledged.as_ref()?.by;
     let user = state.user_service.by_ids(&[by]).await.ok()?.pop()?;
-    let full_name = format!("{} {}", user.first_name.trim(), user.last_name.trim());
-    Some(match full_name.trim() {
-        "" => user.username.as_str().to_owned(),
-        name => name.to_owned(),
-    })
+    Some(display_name(&user))
 }
 
 #[utoipa::path(post, path = "/sensors/{sensor_id}/data-quality/acknowledge", tag = "Sensors",
