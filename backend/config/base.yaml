@@ -1,5 +1,8 @@
 application:
   port: 3030
+  # Above the 30 s Streamlet client timeout, so a slow route optimization is
+  # cut off by its own client rather than by this outer bound.
+  request_timeout_secs: 60
 database:
   host: "127.0.0.1"
   port: 5432

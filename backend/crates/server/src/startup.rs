@@ -67,6 +67,7 @@ pub struct Application {
     cors: CorsSettings,
     auth_layer: AuthLayer,
     oidc_swagger: OidcSwaggerSettings,
+    request_timeout: Duration,
     _jwks: Arc<JwksProvider>,
     shutdown_tx: tokio::sync::watch::Sender<bool>,
     mqtt_handle: Option<tokio::task::JoinHandle<()>>,
@@ -203,6 +204,7 @@ impl Application {
                 issuer_url: settings.auth.issuer_url,
                 client_id: settings.auth.frontend_client_id,
             },
+            request_timeout: Duration::from_secs(settings.application.request_timeout_secs),
             _jwks: jwks,
             shutdown_tx,
             mqtt_handle,
@@ -230,6 +232,7 @@ impl Application {
             &self.cors,
             self.auth_layer,
             &self.oidc_swagger,
+            self.request_timeout,
         );
         tracing::info!("listening on {}", self.listener.local_addr()?);
         axum::serve(self.listener, app)

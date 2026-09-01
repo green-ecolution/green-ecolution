@@ -97,6 +97,15 @@ pub struct ApplicationSettings {
     pub base_url: Url,
     #[serde(default)]
     pub environment: Environment,
+    /// Upper bound on how long a request may occupy a connection. Must stay
+    /// above the slowest downstream client timeout (Streamlet: 30 s), or route
+    /// optimization is cut off by the outer bound instead of the inner one.
+    #[serde(default = "default_request_timeout_secs")]
+    pub request_timeout_secs: u64,
+}
+
+fn default_request_timeout_secs() -> u64 {
+    60
 }
 
 fn deserialize_url<'de, D>(deserializer: D) -> Result<Url, D::Error>
@@ -461,6 +470,7 @@ impl Settings {
                 host: "127.0.0.1".into(),
                 base_url: Url::parse("http://127.0.0.1").expect("test base_url"),
                 environment: Environment::Local,
+                request_timeout_secs: default_request_timeout_secs(),
             },
             log: LogSettings {
                 level: "warn".into(),
