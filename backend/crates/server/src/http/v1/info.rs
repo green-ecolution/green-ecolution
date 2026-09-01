@@ -16,10 +16,18 @@ use crate::{
     service::ServiceError,
 };
 
-pub fn routes() -> OpenApiRouter<Arc<AppState>> {
+/// Version and map configuration: the frontend renders both before a login
+/// exists (the footer is global), so they stay reachable without a token.
+pub fn public_routes() -> OpenApiRouter<Arc<AppState>> {
     OpenApiRouter::new()
         .routes(routes!(get_info))
         .routes(routes!(get_map_info))
+}
+
+/// Host, dependency reachability and record counts describe the deployment,
+/// not the product. Unauthenticated they amount to free reconnaissance.
+pub fn protected_routes() -> OpenApiRouter<Arc<AppState>> {
+    OpenApiRouter::new()
         .routes(routes!(get_server_info))
         .routes(routes!(get_services_info))
         .routes(routes!(get_statistics))
@@ -77,6 +85,7 @@ pub async fn get_map_info(
     description = "Returns server OS, hostname, and network information.",
     responses(
         (status = 200, description = "Server information", body = ServerInfoResponse),
+        (status = 401, description = "Unauthorized", body = ErrorBody),
         (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
@@ -94,6 +103,7 @@ pub async fn get_server_info(
     description = "Returns health status of all connected services (database, routing, etc.).",
     responses(
         (status = 200, description = "Services health status", body = ServicesInfoResponse),
+        (status = 401, description = "Unauthorized", body = ErrorBody),
         (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
@@ -113,6 +123,7 @@ pub async fn get_services_info(
     description = "Returns counts of all managed resources.",
     responses(
         (status = 200, description = "Data statistics", body = DataStatisticsResponse),
+        (status = 401, description = "Unauthorized", body = ErrorBody),
         (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
