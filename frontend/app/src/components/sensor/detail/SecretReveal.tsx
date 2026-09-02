@@ -33,7 +33,10 @@ const SecretReveal = ({ label, value, autoHideSeconds = 10 }: SecretRevealProps)
     <div className="flex flex-col gap-2">
       <span className="text-xs uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
         {label}
-        <ShieldAlert className="size-3 text-yellow" aria-label={t('secretReveal.sensitiveDataAriaLabel')} />
+        <ShieldAlert
+          className="size-3 text-yellow"
+          aria-label={t('secretReveal.sensitiveDataAriaLabel')}
+        />
       </span>
       <code className="relative flex items-center font-mono text-lg md:text-xl font-semibold break-all bg-dark-50 rounded-lg pl-3 pr-20 py-2 border border-dark-100 min-h-12">
         <span

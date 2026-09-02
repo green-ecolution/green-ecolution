@@ -71,7 +71,10 @@ const SensorSoilMoistureChart = ({ sensor }: SensorSoilMoistureChartProps) => {
   const config = Object.fromEntries(
     depths.map((depth, index) => [
       `mean_${depth}`,
-      { label: t('soilMoistureChart.depthSeriesLabel', { depth }), color: depthColor(depth, index) },
+      {
+        label: t('soilMoistureChart.depthSeriesLabel', { depth }),
+        color: depthColor(depth, index),
+      },
     ]),
   ) satisfies ChartConfig
   const criticalByDepth = new Map((data?.thresholds ?? []).map((t) => [t.depthCm, t.critical]))
@@ -104,7 +107,10 @@ const SensorSoilMoistureChart = ({ sensor }: SensorSoilMoistureChartProps) => {
       </CardHeader>
       <CardContent>
         {!data ? (
-          <Loading className="h-[260px] justify-center" label={t('soilMoistureChart.loadingLabel')} />
+          <Loading
+            className="h-[260px] justify-center"
+            label={t('soilMoistureChart.loadingLabel')}
+          />
         ) : rows.length <= 1 ? (
           <p className="flex h-[260px] items-center justify-center text-sm text-muted-foreground">
             {t('soilMoistureChart.tooFewDataPoints')}

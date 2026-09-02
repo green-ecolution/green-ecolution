@@ -39,8 +39,5 @@ export const useVehicleStatusDetails = (): ((status: VehicleStatus) => VehicleSt
 /** The full status list with translated labels, in display order. */
 export const useVehicleStatusOptions = (): VehicleStatusDetails[] => {
   const getDetails = useVehicleStatusDetails()
-  return useMemo(
-    () => VehicleStatusEntries.map((entry) => getDetails(entry.value)),
-    [getDetails],
-  )
+  return useMemo(() => VehicleStatusEntries.map((entry) => getDetails(entry.value)), [getDetails])
 }

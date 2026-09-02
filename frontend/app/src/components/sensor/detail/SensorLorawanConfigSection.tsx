@@ -143,9 +143,7 @@ const SensorLorawanConfigSection = ({ sensor }: SensorLorawanConfigSectionProps)
     navigator.clipboard.writeText(text).then(
       () =>
         toast.success(
-          hasSecrets
-            ? t('lorawanConfig.copiedWithSecretsToast')
-            : t('lorawanConfig.copiedToast'),
+          hasSecrets ? t('lorawanConfig.copiedWithSecretsToast') : t('lorawanConfig.copiedToast'),
         ),
       () => toast.error(t('clipboard.copyFailed')),
     )
@@ -187,7 +185,9 @@ const SensorLorawanConfigSection = ({ sensor }: SensorLorawanConfigSectionProps)
                 <AlertIcon variant="warning" />
                 <AlertContent>
                   <AlertTitle>{t('lorawanConfig.secretsWarningTitle')}</AlertTitle>
-                  <AlertDescription>{t('lorawanConfig.secretsWarningDescription')}</AlertDescription>
+                  <AlertDescription>
+                    {t('lorawanConfig.secretsWarningDescription')}
+                  </AlertDescription>
                 </AlertContent>
               </div>
             </Alert>

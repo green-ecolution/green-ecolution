@@ -273,8 +273,7 @@ function BuildStatusCard({ env, visual, versionInfo }: BuildStatusCardProps) {
                 >
                   green-ecolution.de
                 </a>
-                {/* eslint-enable i18next/no-literal-string */}
-                .
+                {/* eslint-enable i18next/no-literal-string */}.
               </p>
             </div>
           </div>
@@ -304,8 +303,7 @@ function BuildStatusCard({ env, visual, versionInfo }: BuildStatusCardProps) {
                 >
                   green-ecolution.de
                 </a>
-                {/* eslint-enable i18next/no-literal-string */}
-                .
+                {/* eslint-enable i18next/no-literal-string */}.
               </p>
             </div>
           </div>

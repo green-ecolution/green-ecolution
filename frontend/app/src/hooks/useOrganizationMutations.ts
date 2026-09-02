@@ -86,7 +86,11 @@ export const useOrganizationMutations = () => {
     },
     onError: (error) => {
       showToast(
-        t(isConflict(error) ? 'organization.toast.deleteConflict' : 'organization.toast.deleteFailed'),
+        t(
+          isConflict(error)
+            ? 'organization.toast.deleteConflict'
+            : 'organization.toast.deleteFailed',
+        ),
         'error',
       )
     },

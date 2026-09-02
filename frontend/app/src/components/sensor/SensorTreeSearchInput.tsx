@@ -11,11 +11,7 @@ interface SensorTreeSearchInputProps {
 
 const DEBOUNCE_MS = 300
 
-const SensorTreeSearchInput = ({
-  value,
-  onChange,
-  placeholder,
-}: SensorTreeSearchInputProps) => {
+const SensorTreeSearchInput = ({ value, onChange, placeholder }: SensorTreeSearchInputProps) => {
   const { t } = useTranslation('sensor')
   const resolvedPlaceholder = placeholder ?? t('treeSearch.inputPlaceholder')
   const [local, setLocal] = useState(value)

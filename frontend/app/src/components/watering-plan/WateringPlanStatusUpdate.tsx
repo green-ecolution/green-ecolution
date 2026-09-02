@@ -74,7 +74,10 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
       console.error('Error with vehicle mutation:', error)
       // mutationFn already routed this through toApiError, so error.message is
       // the resolved catalog text — the same value FormError renders below.
-      showToast(t('errors:frame.wateringPlanStatusUpdateFailed', { reason: error.message }), 'error')
+      showToast(
+        t('errors:frame.wateringPlanStatusUpdateFailed', { reason: error.message }),
+        'error',
+      )
     },
     throwOnError: true,
   })

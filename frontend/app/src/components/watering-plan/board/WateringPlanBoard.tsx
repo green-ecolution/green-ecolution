@@ -195,9 +195,7 @@ const WateringPlanBoard = () => {
           {plannedQuery.isError && <ColumnError onRetry={() => void plannedQuery.refetch()} />}
           {!plannedQuery.isError && planned.length === 0 && !activeDrag && (
             <KanbanColumnEmpty>
-              {canCreate
-                ? t('board.column.plannedEmptyCanCreate')
-                : t('board.column.plannedEmpty')}
+              {canCreate ? t('board.column.plannedEmptyCanCreate') : t('board.column.plannedEmpty')}
             </KanbanColumnEmpty>
           )}
           {planned.map((plan) => (
@@ -221,9 +219,7 @@ const WateringPlanBoard = () => {
           {activeQuery.isError && <ColumnError onRetry={() => void activeQuery.refetch()} />}
           {!activeQuery.isError && active.length === 0 && !activeDrag && (
             <KanbanColumnEmpty>
-              {canModify
-                ? t('board.column.activeEmptyCanModify')
-                : t('board.column.activeEmpty')}
+              {canModify ? t('board.column.activeEmptyCanModify') : t('board.column.activeEmpty')}
             </KanbanColumnEmpty>
           )}
           {active.map((plan) => (

@@ -60,7 +60,9 @@ it('persists the choice to localStorage', async () => {
 })
 
 it('toasts and keeps the previous language when the language chunk fails to load', async () => {
-  vi.mocked(switchLanguage).mockRejectedValueOnce(new Error('Failed to fetch dynamically imported module'))
+  vi.mocked(switchLanguage).mockRejectedValueOnce(
+    new Error('Failed to fetch dynamically imported module'),
+  )
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
   const i18n = getI18n()

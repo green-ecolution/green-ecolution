@@ -24,12 +24,7 @@ const RoleListItem = ({ role, selected, locked, assignees, onSelect }: RoleListI
       asChild
       className={selected ? 'border-green-dark bg-green-dark-50' : undefined}
     >
-      <button
-        type="button"
-        onClick={onSelect}
-        aria-current={selected}
-        className="w-full text-left"
-      >
+      <button type="button" onClick={onSelect} aria-current={selected} className="w-full text-left">
         <span
           className={`flex size-9 shrink-0 items-center justify-center rounded-xl ${
             selected ? 'bg-green-dark text-white' : 'bg-green-light-100 text-green-dark'
@@ -64,7 +59,10 @@ const RoleListItem = ({ role, selected, locked, assignees, onSelect }: RoleListI
         )}
 
         {locked ? (
-          <Lock className="size-4 shrink-0 text-dark-400" aria-label={t('roles.readOnlyAriaLabel')} />
+          <Lock
+            className="size-4 shrink-0 text-dark-400"
+            aria-label={t('roles.readOnlyAriaLabel')}
+          />
         ) : (
           <Pencil className="size-4 shrink-0 text-dark-400" aria-hidden />
         )}

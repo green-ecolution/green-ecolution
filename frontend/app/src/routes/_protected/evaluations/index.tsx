@@ -54,7 +54,9 @@ function Evaluation() {
         </section>
 
         <section className="mt-16">
-          <h2 className="font-lato font-bold text-2xl mb-4">{t('list.wateringPlanSectionTitle')}</h2>
+          <h2 className="font-lato font-bold text-2xl mb-4">
+            {t('list.wateringPlanSectionTitle')}
+          </h2>
           <StatusCardGrid>
             <li>
               <StatusCard

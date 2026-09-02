@@ -110,29 +110,13 @@ describe('validateDriverLicenses', () => {
 
   it('returns valid when driver has matching license', () => {
     const users = [makeUser('u1', [DrivingLicense.C])]
-    const result = validateDriverLicenses(
-      ['u1'],
-      users,
-      transporters,
-      trailers,
-      'v2',
-      undefined,
-      t,
-    )
+    const result = validateDriverLicenses(['u1'], users, transporters, trailers, 'v2', undefined, t)
     expect(result.valid).toBe(true)
   })
 
   it('returns invalid when driver lacks required license', () => {
     const users = [makeUser('u1', [DrivingLicense.B])]
-    const result = validateDriverLicenses(
-      ['u1'],
-      users,
-      transporters,
-      trailers,
-      'v2',
-      undefined,
-      t,
-    )
+    const result = validateDriverLicenses(['u1'], users, transporters, trailers, 'v2', undefined, t)
     expect(result.valid).toBe(false)
     expect(result.message).toBe(
       'Kein ausgewählter Mitarbeiter hat alle erforderlichen Führerscheine für die gewählten Fahrzeuge.',
@@ -141,15 +125,7 @@ describe('validateDriverLicenses', () => {
 
   it('uses hierarchy: C driver satisfies B vehicle', () => {
     const users = [makeUser('u1', [DrivingLicense.C])]
-    const result = validateDriverLicenses(
-      ['u1'],
-      users,
-      transporters,
-      trailers,
-      'v1',
-      undefined,
-      t,
-    )
+    const result = validateDriverLicenses(['u1'], users, transporters, trailers, 'v1', undefined, t)
     expect(result.valid).toBe(true)
   })
 

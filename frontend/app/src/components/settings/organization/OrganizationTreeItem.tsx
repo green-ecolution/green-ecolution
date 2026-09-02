@@ -43,7 +43,9 @@ const OrganizationTreeItem = ({
           <button
             type="button"
             onClick={() => onToggle(node.org.id)}
-            aria-label={t(isExpanded ? 'organization.collapseAriaLabel' : 'organization.expandAriaLabel')}
+            aria-label={t(
+              isExpanded ? 'organization.collapseAriaLabel' : 'organization.expandAriaLabel',
+            )}
             className="flex size-5 shrink-0 items-center justify-center rounded text-dark-500 transition-colors hover:bg-dark-50 hover:text-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             {isExpanded ? (

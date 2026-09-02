@@ -88,14 +88,20 @@ const NearestTreeListItem = ({
               |
             </span>
             <span className="text-dark-600 text-xs">
-              {tree.treeClusterId ? (clusterRes?.name ?? '…') : t('nearestTreeList.unassignedGroup')}
+              {tree.treeClusterId
+                ? (clusterRes?.name ?? '…')
+                : t('nearestTreeList.unassignedGroup')}
             </span>
             {isAssigned && (
               <>
                 <span className="text-dark-200" aria-hidden>
                   |
                 </span>
-                <Badge variant="muted" size="default" aria-label={t('treeSearch.sensorAssignedBadge')}>
+                <Badge
+                  variant="muted"
+                  size="default"
+                  aria-label={t('treeSearch.sensorAssignedBadge')}
+                >
                   {t('treeSearch.sensorAssignedBadge')}
                 </Badge>
               </>

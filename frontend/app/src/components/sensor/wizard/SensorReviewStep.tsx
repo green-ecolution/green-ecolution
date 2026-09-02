@@ -36,7 +36,9 @@ const SensorReviewStep = ({
   return (
     <div className="space-y-6">
       <header className="space-y-2">
-        <h1 className="font-lato font-bold text-3xl lg:text-4xl">{t('wizard.review.header.title')}</h1>
+        <h1 className="font-lato font-bold text-3xl lg:text-4xl">
+          {t('wizard.review.header.title')}
+        </h1>
         <p className="text-sm text-muted-foreground max-w-prose">
           {t('wizard.review.header.description')}
         </p>

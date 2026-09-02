@@ -17,9 +17,10 @@ const VehicleTypeValues: VehicleTypeOrUnknown[] = [
 export const useVehicleTypeLabel = (): ((type: VehicleTypeOrUnknown) => string) => {
   const { t } = useTranslation('enums')
   const translate = t as EnumsTranslate
-  return useCallback((type: VehicleTypeOrUnknown) => translate(`vehicleType.${type}.label`), [
-    translate,
-  ])
+  return useCallback(
+    (type: VehicleTypeOrUnknown) => translate(`vehicleType.${type}.label`),
+    [translate],
+  )
 }
 
 /** The full type list with translated labels, in display order. */

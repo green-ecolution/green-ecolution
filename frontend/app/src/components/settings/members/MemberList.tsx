@@ -109,7 +109,11 @@ const MemberList = ({
       ) : members.length === 0 ? (
         <p className="text-sm text-dark-600">{emptyMessageOf(filtered, t)}</p>
       ) : (
-        <ul role="list" aria-label={t('members.listAriaLabel')} className="flex list-none flex-col gap-2">
+        <ul
+          role="list"
+          aria-label={t('members.listAriaLabel')}
+          className="flex list-none flex-col gap-2"
+        >
           {members.map((user) => (
             <li key={user.id}>
               <MemberListItem

@@ -122,7 +122,9 @@ const WateringPlanPreviewRoute = ({ wateringPlan }: WateringPlanPreviewRouteProp
       ariaLabel={t('detail.routePreviewAriaLabel')}
     >
       <Suspense
-        fallback={<Loading className="justify-center" label={t('detail.routePreviewLoadingLabel')} />}
+        fallback={
+          <Loading className="justify-center" label={t('detail.routePreviewLoadingLabel')} />
+        }
       >
         <RoutePreviewLayers
           planId={wateringPlan.id}

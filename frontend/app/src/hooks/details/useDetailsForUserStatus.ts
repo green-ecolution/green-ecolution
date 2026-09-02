@@ -37,10 +37,7 @@ export const useUserStatusDetails = (): ((status: UserStatusOrUnknown) => UserSt
 /** The full status list with translated labels, in display order. */
 export const useUserStatusOptions = (): UserStatusDetails[] => {
   const getDetails = useUserStatusDetails()
-  return useMemo(
-    () => UserStatusEntries.map((entry) => getDetails(entry.value)),
-    [getDetails],
-  )
+  return useMemo(() => UserStatusEntries.map((entry) => getDetails(entry.value)), [getDetails])
 }
 
 const parseLowercaseUserStatus = createEnumParser<UserStatusOrUnknown>(

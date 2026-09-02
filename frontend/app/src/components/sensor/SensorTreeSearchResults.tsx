@@ -190,7 +190,11 @@ function ResultRow({
           <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-dark-800">
             <span className="font-mono text-xs text-dark-600">{tree.number}</span>
             {isAssigned && (
-              <Badge variant="muted" size="default" aria-label={t('treeSearch.sensorAssignedBadge')}>
+              <Badge
+                variant="muted"
+                size="default"
+                aria-label={t('treeSearch.sensorAssignedBadge')}
+              >
                 {t('treeSearch.sensorAssignedBadge')}
               </Badge>
             )}

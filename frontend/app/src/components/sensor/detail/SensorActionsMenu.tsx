@@ -115,7 +115,9 @@ const SensorActionsMenu = ({ sensor }: SensorActionsMenuProps) => {
             <Trash2 />
           </AlertDialogIcon>
           <AlertDialogTitle>{t('actions.deleteConfirmTitle')}</AlertDialogTitle>
-          <AlertDialogDescription>{t('actions.deleteConfirmDescription', { id: sensorId })}</AlertDialogDescription>
+          <AlertDialogDescription>
+            {t('actions.deleteConfirmDescription', { id: sensorId })}
+          </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={deleteMutation.isPending}>
