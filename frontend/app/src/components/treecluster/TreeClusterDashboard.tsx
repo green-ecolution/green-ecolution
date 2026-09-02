@@ -9,6 +9,7 @@ import ClusterLocationCard from './ClusterLocationCard'
 import ClusterSensorCard from './ClusterSensorCard'
 import ClusterTreeList from './ClusterTreeList'
 import ClusterMasterDataCard from './ClusterMasterDataCard'
+import CommentsSection from '@/components/comments/CommentsSection'
 import EntityDetailHeader from '@/components/general/EntityDetailHeader'
 import DeleteConfirmDialog from '@/components/general/DeleteConfirmDialog'
 import { unknownStatusReasons } from './clusterStatusReason'
@@ -169,6 +170,10 @@ const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
           <ClusterTreeList trees={trees} />
           <ClusterMasterDataCard treecluster={treecluster} />
         </div>
+      </div>
+
+      <div className="mt-10">
+        <CommentsSection subject="cluster" parentId={treecluster.id.toString()} />
       </div>
 
       <DeleteConfirmDialog
