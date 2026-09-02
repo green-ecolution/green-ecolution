@@ -103,11 +103,11 @@ const CommentItem = React.forwardRef<HTMLDivElement, CommentItemProps>(
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="size-8 text-dark-400 hover:text-dark"
+                    className="size-7 text-dark-400 hover:text-dark"
                     title={t('comments.edit')}
                     onClick={openEdit}
                   >
-                    <Pencil className="size-4" aria-hidden />
+                    <Pencil className="size-3.5" aria-hidden />
                     <span className="sr-only">{t('comments.edit')}</span>
                   </Button>
                 )}
@@ -116,11 +116,11 @@ const CommentItem = React.forwardRef<HTMLDivElement, CommentItemProps>(
                     type="button"
                     variant="ghost-destructive"
                     size="icon"
-                    className="size-8 text-dark-400"
+                    className="size-7 text-dark-400"
                     title={t('comments.delete')}
                     onClick={() => onDelete?.()}
                   >
-                    <Trash2 className="size-4" aria-hidden />
+                    <Trash2 className="size-3.5" aria-hidden />
                     <span className="sr-only">{t('comments.delete')}</span>
                   </Button>
                 )}
