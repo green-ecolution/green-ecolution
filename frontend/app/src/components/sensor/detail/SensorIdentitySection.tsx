@@ -1,5 +1,6 @@
 import type { Locale } from 'date-fns'
 import { format } from 'date-fns'
+import type { TFunction } from 'i18next'
 import { useTranslation } from 'react-i18next'
 import {
   Card,
@@ -18,17 +19,25 @@ interface SensorIdentitySectionProps {
   sensor: Sensor
 }
 
-const formatDate = (iso: string | undefined, locale: Locale): string => {
+const formatDate = (
+  iso: string | undefined,
+  locale: Locale,
+  t: TFunction<['sensor', 'common']>,
+): string => {
   if (!iso) return '—'
   try {
-    return format(new Date(iso), "dd. MMMM yyyy 'um' HH:mm", { locale })
+    const date = new Date(iso)
+    return t('common:dateTime.at', {
+      date: format(date, 'dd. MMMM yyyy', { locale }),
+      time: format(date, 'HH:mm', { locale }),
+    })
   } catch {
     return iso
   }
 }
 
 const SensorIdentitySection = ({ sensor }: SensorIdentitySectionProps) => {
-  const { t } = useTranslation('sensor')
+  const { t } = useTranslation(['sensor', 'common'])
   const dateLocale = useDateLocale()
   const lora = sensor.lorawan
 
@@ -80,13 +89,13 @@ const SensorIdentitySection = ({ sensor }: SensorIdentitySectionProps) => {
           <span className="text-xs uppercase tracking-widest text-muted-foreground">
             {t('identity.createdAtLabel')}
           </span>
-          <span className="text-sm font-medium">{formatDate(sensor.createdAt, dateLocale)}</span>
+          <span className="text-sm font-medium">{formatDate(sensor.createdAt, dateLocale, t)}</span>
         </div>
         <div className="flex flex-col gap-1.5">
           <span className="text-xs uppercase tracking-widest text-muted-foreground">
             {t('identity.updatedAtLabel')}
           </span>
-          <span className="text-sm font-medium">{formatDate(sensor.updatedAt, dateLocale)}</span>
+          <span className="text-sm font-medium">{formatDate(sensor.updatedAt, dateLocale, t)}</span>
         </div>
       </CardContent>
     </Card>

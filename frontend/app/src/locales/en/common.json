@@ -18,6 +18,9 @@
   "pagination": {
     "pageOf": "Page {page} of {total}"
   },
+  "dateTime": {
+    "at": "{date} at {time}"
+  },
   "language": {
     "label": "Language",
     "description": "The choice applies to this browser and takes effect immediately.",
