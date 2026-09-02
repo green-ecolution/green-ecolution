@@ -3,6 +3,9 @@ import { useTranslation } from 'react-i18next'
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query'
 import { formatDistanceToNow } from 'date-fns'
 import {
+  Alert,
+  AlertContent,
+  AlertDescription,
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -11,6 +14,8 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertIcon,
+  AlertTitle,
   Button,
   Card,
   CardContent,
@@ -52,6 +57,10 @@ const CommentsSection = ({ subject, parentId }: CommentsSectionProps) => {
   const commentsQuery = useInfiniteQuery(commentQueries.list(subject, parentId))
   const comments = commentsQuery.data?.pages.flatMap((page) => page.data) ?? []
 
+  // A failed page-two fetch must not hide the comments page one already
+  // delivered, so the alert accompanies the list instead of replacing it.
+  const showList = !commentsQuery.isError || comments.length > 0
+
   const { create, update, remove } = useCommentMutations(subject, parentId)
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
 
@@ -79,30 +88,42 @@ const CommentsSection = ({ subject, parentId }: CommentsSectionProps) => {
             placeholder={t('composer.placeholder')}
           />
 
-          <CommentList isLoading={commentsQuery.isLoading} emptyLabel={t('list.empty')}>
-            {comments.map((comment) => {
-              const isOwnComment = comment.authorId === me?.id
-              return (
-                <CommentItem
-                  key={comment.id}
-                  author={{ name: comment.authorName ?? t('list.unknownAuthor') }}
-                  body={comment.body}
-                  timestamp={formatDistanceToNow(new Date(comment.createdAt), {
-                    addSuffix: true,
-                    locale: dateLocale,
-                  })}
-                  editedLabel={comment.editedAt ? t('list.edited') : undefined}
-                  canEdit={isOwnComment}
-                  canDelete={isOwnComment || canDeleteAny}
-                  isSaving={update.isPending && update.variables?.commentId === comment.id}
-                  onEdit={async (body) => {
-                    await update.mutateAsync({ commentId: comment.id, body })
-                  }}
-                  onDelete={() => setPendingDeleteId(comment.id)}
-                />
-              )
-            })}
-          </CommentList>
+          {commentsQuery.isError && (
+            <Alert variant="destructive" className="flex w-full gap-4">
+              <AlertIcon variant="destructive" />
+              <AlertContent>
+                <AlertTitle>{t('list.errorTitle')}</AlertTitle>
+                <AlertDescription>{t('list.errorDescription')}</AlertDescription>
+              </AlertContent>
+            </Alert>
+          )}
+
+          {showList && (
+            <CommentList isLoading={commentsQuery.isLoading} emptyLabel={t('list.empty')}>
+              {comments.map((comment) => {
+                const isOwnComment = comment.authorId === me?.id
+                return (
+                  <CommentItem
+                    key={comment.id}
+                    author={{ name: comment.authorName ?? t('list.unknownAuthor') }}
+                    body={comment.body}
+                    timestamp={formatDistanceToNow(new Date(comment.createdAt), {
+                      addSuffix: true,
+                      locale: dateLocale,
+                    })}
+                    editedLabel={comment.editedAt ? t('list.edited') : undefined}
+                    canEdit={isOwnComment}
+                    canDelete={isOwnComment || canDeleteAny}
+                    isSaving={update.isPending && update.variables?.commentId === comment.id}
+                    onEdit={async (body) => {
+                      await update.mutateAsync({ commentId: comment.id, body })
+                    }}
+                    onDelete={() => setPendingDeleteId(comment.id)}
+                  />
+                )
+              })}
+            </CommentList>
+          )}
 
           {commentsQuery.hasNextPage && (
             <Button

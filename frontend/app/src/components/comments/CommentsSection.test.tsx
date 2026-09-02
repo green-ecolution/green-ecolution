@@ -216,4 +216,32 @@ describe('CommentsSection', () => {
       perPage: 20,
     })
   })
+
+  it('explains a failed load instead of claiming there are no comments', async () => {
+    listClusterComments.mockRejectedValue(new Error('boom'))
+
+    renderSection()
+
+    expect(await screen.findByText('Kommentare konnten nicht geladen werden')).toBeInTheDocument()
+    expect(
+      screen.queryByText('Für diesen Eintrag gibt es noch keine Kommentare.'),
+    ).not.toBeInTheDocument()
+  })
+
+  it('keeps already loaded comments visible when a later page fails', async () => {
+    listClusterComments
+      .mockResolvedValueOnce(
+        pageOf([comment({ id: 'p1', body: 'Seite eins' })], { nextPage: 2, totalPages: 2 }),
+      )
+      .mockRejectedValueOnce(new Error('boom'))
+    const user = userEvent.setup()
+
+    renderSection()
+    await screen.findByText('Seite eins')
+
+    await user.click(screen.getByRole('button', { name: 'Weitere Kommentare laden' }))
+
+    expect(await screen.findByText('Kommentare konnten nicht geladen werden')).toBeInTheDocument()
+    expect(screen.getByText('Seite eins')).toBeInTheDocument()
+  })
 })
