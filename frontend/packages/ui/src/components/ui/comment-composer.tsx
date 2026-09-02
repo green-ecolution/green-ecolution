@@ -1,41 +1,12 @@
 import * as React from 'react'
-import type { VariantProps } from 'class-variance-authority'
 
 import { cn } from '@/lib/utils'
 import { useUiText } from '@/i18n'
-import { Avatar, AvatarFallback, AvatarImage, avatarVariants } from './avatar'
 import { Button } from './button'
+import { CommentAuthorAvatar, type CommentAuthor } from './comment-author-avatar'
 import { Label } from './label'
 import { Spinner } from './spinner'
 import { Textarea } from './textarea'
-
-export interface CommentAuthor {
-  name: string
-  avatarUrl?: string | null
-}
-
-function initialsFromName(name: string): string {
-  return name
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((word) => word[0]?.toUpperCase() ?? '')
-    .join('')
-}
-
-interface CommentAuthorAvatarProps {
-  author: CommentAuthor
-  size?: VariantProps<typeof avatarVariants>['size']
-}
-
-function CommentAuthorAvatar({ author, size = 'default' }: CommentAuthorAvatarProps) {
-  return (
-    <Avatar size={size}>
-      {author.avatarUrl && <AvatarImage src={author.avatarUrl} alt={author.name} />}
-      <AvatarFallback variant="user">{initialsFromName(author.name)}</AvatarFallback>
-    </Avatar>
-  )
-}
 
 export interface CommentComposerProps extends Omit<
   React.HTMLAttributes<HTMLDivElement>,
@@ -95,7 +66,7 @@ const CommentComposer = React.forwardRef<HTMLDivElement, CommentComposerProps>(
         <CommentAuthorAvatar author={author} size="default" />
         <form onSubmit={handleSubmit} className="flex flex-1 flex-col gap-2">
           <Label htmlFor={textareaId} className="sr-only">
-            {label}
+            {t('comments.composerLabel')}
           </Label>
           <Textarea
             id={textareaId}
@@ -122,4 +93,4 @@ const CommentComposer = React.forwardRef<HTMLDivElement, CommentComposerProps>(
 )
 CommentComposer.displayName = 'CommentComposer'
 
-export { CommentComposer, CommentAuthorAvatar, initialsFromName }
+export { CommentComposer }

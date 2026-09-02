@@ -51,7 +51,8 @@ describe('comments catalog under the English provider', () => {
         <CommentComposer author={{ name: 'Anna Krüger' }} onSubmit={() => {}} />
       </UiTextProvider>,
     )
-    expect(screen.getByRole('textbox', { name: 'Add a comment…' })).toBeInTheDocument()
+    expect(screen.getByRole('textbox', { name: 'Add a comment' })).toBeInTheDocument()
+    expect(screen.getByRole('textbox')).toHaveAttribute('placeholder', 'Add a comment…')
     expect(screen.getByRole('button', { name: 'Comment' })).toBeInTheDocument()
   })
 

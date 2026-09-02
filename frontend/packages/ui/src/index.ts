@@ -121,7 +121,8 @@ export { Checkbox } from './components/ui/checkbox'
 
 // CommentComposer / CommentItem / CommentList
 export { CommentComposer } from './components/ui/comment-composer'
-export type { CommentComposerProps, CommentAuthor } from './components/ui/comment-composer'
+export type { CommentComposerProps } from './components/ui/comment-composer'
+export type { CommentAuthor } from './components/ui/comment-author-avatar'
 export { CommentItem } from './components/ui/comment-item'
 export type { CommentItemProps } from './components/ui/comment-item'
 export { CommentList } from './components/ui/comment-list'

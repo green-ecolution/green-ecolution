@@ -2,7 +2,8 @@ import type { Meta, StoryObj } from '@storybook/react-vite'
 import * as React from 'react'
 import { CommentList } from '../src/components/ui/comment-list'
 import { CommentItem } from '../src/components/ui/comment-item'
-import { CommentComposer, type CommentAuthor } from '../src/components/ui/comment-composer'
+import { CommentComposer } from '../src/components/ui/comment-composer'
+import type { CommentAuthor } from '../src/components/ui/comment-author-avatar'
 
 const meta: Meta<typeof CommentList> = {
   title: 'UI/CommentList',

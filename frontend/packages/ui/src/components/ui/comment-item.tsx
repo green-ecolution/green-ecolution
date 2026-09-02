@@ -6,7 +6,7 @@ import { Button } from './button'
 import { Label } from './label'
 import { Spinner } from './spinner'
 import { Textarea } from './textarea'
-import { CommentAuthorAvatar, type CommentAuthor } from './comment-composer'
+import { CommentAuthorAvatar, type CommentAuthor } from './comment-author-avatar'
 
 export interface CommentItemProps extends React.HTMLAttributes<HTMLDivElement> {
   author: CommentAuthor
@@ -99,7 +99,7 @@ const CommentItem = React.forwardRef<HTMLDivElement, CommentItemProps>(
           {isEditing ? (
             <div className="mt-2 flex flex-col gap-2">
               <Label htmlFor={textareaId} className="sr-only">
-                {t('comments.edit')}
+                {t('comments.editLabel')}
               </Label>
               <Textarea
                 id={textareaId}
