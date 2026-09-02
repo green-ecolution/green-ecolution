@@ -30,7 +30,6 @@ import { commentQueries, userQueries, type CommentSubject } from '@/api/queries'
 import { useCommentMutations } from '@/hooks/useCommentMutations'
 import { useCurrentUser } from '@/lib/auth/useCurrentUser'
 import { useCurrentUserAvatar } from '@/lib/auth/useCurrentUserAvatar'
-import { useHasPermission } from '@/lib/auth/useHasPermission'
 import { useDateLocale } from '@/lib/i18n/useFormatters'
 
 interface CommentsSectionProps {
@@ -49,10 +48,6 @@ const CommentsSection = ({ subject, parentId }: CommentsSectionProps) => {
   const fullName = `${currentUser.firstName} ${currentUser.lastName}`.trim()
   const displayName = fullName || currentUser.username
   const composerAuthor: CommentAuthor = { name: displayName, avatarUrl }
-
-  const canDeleteAny = useHasPermission(
-    subject === 'cluster' ? ['tree_cluster:delete'] : ['watering_plan:delete'],
-  )
 
   const commentsQuery = useInfiniteQuery(commentQueries.list(subject, parentId))
   const comments = commentsQuery.data?.pages.flatMap((page) => page.data) ?? []
@@ -113,7 +108,7 @@ const CommentsSection = ({ subject, parentId }: CommentsSectionProps) => {
                     })}
                     editedLabel={comment.editedAt ? t('list.edited') : undefined}
                     canEdit={isOwnComment}
-                    canDelete={isOwnComment || canDeleteAny}
+                    canDelete={isOwnComment}
                     isSaving={update.isPending && update.variables?.commentId === comment.id}
                     onEdit={async (body) => {
                       await update.mutateAsync({ commentId: comment.id, body })

@@ -155,7 +155,7 @@ describe('CommentsSection', () => {
     expect(screen.getAllByRole('button', { name: 'Löschen' })).toHaveLength(1)
   })
 
-  it('shows delete on every comment for a moderator with delete rights', async () => {
+  it('does not show delete on a foreign comment for a moderator with delete rights', async () => {
     permissions.mockReturnValue(new Set(['tree_cluster:delete']))
     listClusterComments.mockResolvedValue(
       pageOf([
@@ -167,7 +167,7 @@ describe('CommentsSection', () => {
     renderSection()
     await screen.findByText('Mein Kommentar')
 
-    expect(screen.getAllByRole('button', { name: 'Löschen' })).toHaveLength(2)
+    expect(screen.getAllByRole('button', { name: 'Löschen' })).toHaveLength(1)
   })
 
   it('only deletes a comment once the confirmation dialog is accepted', async () => {
