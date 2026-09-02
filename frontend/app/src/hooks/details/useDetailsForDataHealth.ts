@@ -2,11 +2,7 @@ import { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { DataHealth } from '@green-ecolution/backend-client'
 import type { AlertProps } from '@green-ecolution/ui'
-import type { StatusColor } from './types'
-
-// `t`'s generated overloads only accept the catalog's literal key union; the
-// dynamic level/reason plugged into the template isn't statically one of those literals.
-type EnumsTranslate = (key: string) => string
+import type { EnumsTranslate, StatusColor } from './types'
 
 interface DataQualityFacts {
   dataHealth: DataHealth

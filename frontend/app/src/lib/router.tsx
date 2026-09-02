@@ -29,8 +29,11 @@ export const crumbRoute = (titleKey: NavigationCrumbKey) => ({
  * Route modules are imported eagerly (see `routeTree.gen.ts`), well before
  * `createI18n()` resolves, so `label` is a key resolved by `useLocalizedText()`
  * once this component actually renders — never pre-resolved at declaration
- * time, so it stays correct if the language changes while mounted. A plain
- * string still works unchanged for the many call sites not yet translated.
+ * time, so it stays correct if the language changes while mounted. No current
+ * caller passes a plain string — `label` takes the full `LocalizedText` union
+ * (not a key-only type) so it stays usable for a future label built from
+ * loaded data rather than a catalog key, the same reason `EntityCrumbTitle`
+ * below keeps its own string branch for `treecluster.name`.
  */
 export const pendingLoading = (label: LocalizedText) => {
   const PendingLoading = () => {

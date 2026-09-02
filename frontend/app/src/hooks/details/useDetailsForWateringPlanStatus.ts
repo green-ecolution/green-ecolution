@@ -2,11 +2,7 @@ import { useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { WateringPlanStatus } from '@green-ecolution/backend-client'
 import type { WateringPlan } from '@/api/backendApi'
-import type { StatusColor } from './types'
-
-// `t`'s generated overloads only accept the catalog's literal key union; the
-// enum value plugged into the template isn't statically one of those literals.
-type EnumsTranslate = (key: string) => string
+import type { EnumsTranslate, StatusColor } from './types'
 
 const WateringPlanStatusEntries: { value: WateringPlanStatus; color: StatusColor }[] = [
   { value: WateringPlanStatus.Unknown, color: 'outline-dark' },

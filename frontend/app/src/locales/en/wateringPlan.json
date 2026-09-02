@@ -135,9 +135,7 @@
     "completeDialog": {
       "title": "Complete watering plan",
       "description": "How did the watering plan for {date} turn out?",
-      "outcomeAriaLabel": "Outcome of the watering plan",
-      "finishedOption": "Finished",
-      "canceledOption": "Canceled"
+      "outcomeAriaLabel": "Outcome of the watering plan"
     },
     "suggestionCard": {
       "selectAriaLabel": "Select {name} for a watering plan",

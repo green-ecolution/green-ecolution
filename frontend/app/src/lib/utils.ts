@@ -25,7 +25,8 @@ export function roundTo(n: number, digits: number) {
 }
 
 export function formatKm(meters: number): string {
-  return `${roundTo(meters / 1000, 2)} km`
+  const locale = intlLocale(getI18n().language)
+  return `${new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(meters / 1000)} km`
 }
 
 export function isHTTPError(data: unknown): data is HTTPError {

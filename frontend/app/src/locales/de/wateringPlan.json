@@ -135,9 +135,7 @@
     "completeDialog": {
       "title": "Einsatzplan abschließen",
       "description": "Wie ist der Einsatzplan vom {date} ausgegangen?",
-      "outcomeAriaLabel": "Ausgang des Einsatzplans",
-      "finishedOption": "Beendet",
-      "canceledOption": "Abgebrochen"
+      "outcomeAriaLabel": "Ausgang des Einsatzplans"
     },
     "suggestionCard": {
       "selectAriaLabel": "{name} für Einsatzplan auswählen",

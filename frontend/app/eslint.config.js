@@ -80,6 +80,12 @@ export default tseslint.config(
     files: ['src/**/*.{ts,tsx}'],
     plugins: { i18next },
     rules: {
+      // `jsx-text-only` catches literal text nodes (`<p>Rohtext</p>`) but NOT string
+      // attributes such as `aria-label="…"`, `title="…"` or `placeholder="…"` — which is
+      // where most of this plan's extracted copy actually lived. Widening the mode was
+      // evaluated and rejected: without an allowlist it produced 113 findings, mostly
+      // noise (class names, test ids, non-UI strings). This rule is a floor, not full
+      // coverage; grep for `aria-label="` and `placeholder = '` to catch the rest.
       'i18next/no-literal-string': [
         'error',
         {

@@ -12,7 +12,6 @@
   "state": {
     "loading": "Lade …",
     "loadingInline": "Lädt…",
-    "empty": "Keine Einträge vorhanden",
     "noData": "Keine Angabe"
   },
   "pagination": {

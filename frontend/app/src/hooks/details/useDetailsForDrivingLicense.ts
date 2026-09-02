@@ -2,10 +2,7 @@ import { useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { DrivingLicense } from '@green-ecolution/backend-client'
 import { createEnumParser } from '@/lib/enumLookup'
-
-// `t`'s generated overloads only accept the catalog's literal key union; the
-// enum value plugged into the template isn't statically one of those literals.
-type EnumsTranslate = (key: string) => string
+import type { EnumsTranslate } from './types'
 
 const DrivingLicenseValues: DrivingLicense[] = [
   DrivingLicense.B,

@@ -2,11 +2,7 @@ import { useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { UserStatus } from '@green-ecolution/backend-client'
 import { createEnumParser } from '@/lib/enumLookup'
-import { StatusColor } from './types'
-
-// `t`'s generated overloads only accept the catalog's literal key union; the
-// enum value plugged into the template isn't statically one of those literals.
-type EnumsTranslate = (key: string) => string
+import { EnumsTranslate, StatusColor } from './types'
 
 // Local sentinel for statuses outside the backend enum (e.g. unparseable JWT claims).
 export const UNKNOWN_USER_STATUS = 'unknown' as const

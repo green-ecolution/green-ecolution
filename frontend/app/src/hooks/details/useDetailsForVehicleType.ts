@@ -1,18 +1,15 @@
 import { useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { VehicleType } from '@green-ecolution/backend-client'
-
-// `t`'s generated overloads only accept the catalog's literal key union; the
-// enum value plugged into the template isn't statically one of those literals.
-type EnumsTranslate = (key: string) => string
+import type { EnumsTranslate } from './types'
 
 // Local sentinel for vehicle types not represented by the backend enum.
 export const UNKNOWN_VEHICLE_TYPE = 'unknown' as const
 export type VehicleTypeOrUnknown = VehicleType | typeof UNKNOWN_VEHICLE_TYPE
 
 const VehicleTypeValues: VehicleTypeOrUnknown[] = [
-  VehicleType.Transporter,
   VehicleType.Trailer,
+  VehicleType.Transporter,
   UNKNOWN_VEHICLE_TYPE,
 ]
 

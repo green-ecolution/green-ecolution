@@ -10,10 +10,12 @@ import {
   DialogTitle,
 } from '@green-ecolution/ui'
 import { useTranslation } from 'react-i18next'
+import { WateringPlanStatus } from '@green-ecolution/backend-client'
 import type { WateringPlanInList } from '@/api/backendApi'
 import { CancelWateringPlan, FinishedWateringPlan } from '../WateringPlanStatusUpdate'
 import { useWateringPlanBoardMutations } from '@/hooks/useWateringPlanBoardMutations'
 import { useDateLocale } from '@/lib/i18n/useFormatters'
+import { useWateringPlanStatusDetails } from '@/hooks/details/useDetailsForWateringPlanStatus'
 import { formatBoardDate } from './format'
 
 type CompleteMode = 'finished' | 'canceled'
@@ -28,6 +30,7 @@ const CompletePlanDialog = ({ plan, onClose }: CompletePlanDialogProps) => {
   const { finishPlan, cancelPlan } = useWateringPlanBoardMutations()
   const { t } = useTranslation('wateringPlan')
   const dateLocale = useDateLocale()
+  const getStatusDetails = useWateringPlanStatusDetails()
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {
@@ -67,7 +70,7 @@ const CompletePlanDialog = ({ plan, onClose }: CompletePlanDialogProps) => {
             aria-checked={mode === 'finished'}
             onClick={() => setMode('finished')}
           >
-            {t('board.completeDialog.finishedOption')}
+            {getStatusDetails(WateringPlanStatus.Finished).label}
           </Button>
           <Button
             type="button"
@@ -77,7 +80,7 @@ const CompletePlanDialog = ({ plan, onClose }: CompletePlanDialogProps) => {
             aria-checked={mode === 'canceled'}
             onClick={() => setMode('canceled')}
           >
-            {t('board.completeDialog.canceledOption')}
+            {getStatusDetails(WateringPlanStatus.Canceled).label}
           </Button>
         </div>
         {plan && mode === 'finished' && (
