@@ -24,6 +24,7 @@ export const NAMESPACES = [
   'dashboard',
   'evaluation',
   'settings',
+  'startpage',
 ] as const
 
 export const DEFAULT_NAMESPACE = 'common'

@@ -12,6 +12,7 @@ import map from './map.json'
 import dashboard from './dashboard.json'
 import evaluation from './evaluation.json'
 import settings from './settings.json'
+import startpage from './startpage.json'
 
 export default {
   common,
@@ -28,4 +29,5 @@ export default {
   dashboard,
   evaluation,
   settings,
+  startpage,
 }

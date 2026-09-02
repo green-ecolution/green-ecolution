@@ -7,49 +7,44 @@ import TreeIcon from '../icons/Tree'
 import { sliderLabels } from '../../lib/sliderTranslations'
 
 const IntroductionSlider = () => {
-  const { t } = useTranslation('navigation')
+  const { t } = useTranslation('startpage')
+  const { t: tNav } = useTranslation('navigation')
   const facts = [
     {
       id: 1,
-      label: 'Entwicklung einer Sensorlösung',
+      label: t('introSlider.sensorSolution.label'),
       icon: SensorIcon,
-      description:
-        'Daten zur Bodenfeuchte werden mithilfe von in unterschiedlicher Tiefe platzierten Sensoren geliefert.',
+      description: t('introSlider.sensorSolution.description'),
     },
     {
       id: 2,
-      label: 'Auswertung der Messdaten',
+      label: t('introSlider.dataEvaluation.label'),
       icon: PieChart,
-      description:
-        'Auswertung der durch Sensoren übermittelten Daten für eine bedarfsgerechte Bewässerung von Bäumen.',
+      description: t('introSlider.dataEvaluation.description'),
     },
     {
       id: 3,
-      label: 'Augenmerk auf Jungbäume',
+      label: t('introSlider.youngTrees.label'),
       icon: TreeIcon,
-      description:
-        'Jungbäume sind besonders hitzeanfällig und daher äußerst schutzbedürftig. Aus diesem Grund werden Bäume in deren ersten drei Standjahren überwacht.',
+      description: t('introSlider.youngTrees.description'),
     },
     {
       id: 4,
-      label: 'Monitoring mehrerer Standorte',
+      label: t('introSlider.multiSite.label'),
       icon: MapPin,
-      description:
-        'Unter Verwendung des LoRaWan-Netzes können verschiedene Standorte überwacht und weitere einfach eingebunden werden.',
+      description: t('introSlider.multiSite.description'),
     },
     {
       id: 5,
-      label: 'Vereinfachte Einsatzplanung',
+      label: t('introSlider.planning.label'),
       icon: Car,
-      description:
-        'Einsatzfahrten zur Bewässerung können digital und schnell geplant werden. Dabei können Informationen wie die Mitarbeitenden sowie genutzte Fahrzeuge und deren Wasserkapazität hinterlegt werden.',
+      description: t('introSlider.planning.description'),
     },
     {
       id: 6,
-      label: 'Dynamische Routenplanung',
+      label: t('introSlider.routing.label'),
       icon: Route,
-      description:
-        'Dynamische Berechnung von Bewässerungsrouten mithilfe von Open-Source Software (Valhalla & Vroom).',
+      description: t('introSlider.routing.description'),
     },
   ]
 
@@ -66,18 +61,18 @@ const IntroductionSlider = () => {
     <section className="container my-20 lg:my-28">
       <div className="rounded-xl bg-green-dark-100 p-6 md:p-10 lg:pb-6">
         <h2 className="font-bold font-lato text-xl mb-6 text-green-dark md:px-2">
-          Alle Funktionen auf einem Blick
+          {t('introSlider.heading')}
         </h2>
         <Splide
           options={{
             rewind: true,
             arrows: false,
-            i18n: sliderLabels(t),
+            i18n: sliderLabels(tNav),
             mediaQuery: 'min',
             gap: '1rem',
             breakpoints: breakpoints,
           }}
-          aria-label="Fakten zum Grünflächenmanagement"
+          aria-label={t('introSlider.ariaLabel')}
           className="splide--grid-small md:px-2"
         >
           {facts.map((fact) => (
