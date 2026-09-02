@@ -24,6 +24,7 @@ pub trait CommentReader: Send + Sync {
 #[async_trait]
 pub trait CommentWriter: Send + Sync {
     async fn save_new(&self, draft: CommentDraft) -> Result<Comment, RepositoryError>;
+    async fn save(&self, comment: &Comment) -> Result<(), RepositoryError>;
     async fn delete(&self, id: Id<Comment>) -> Result<(), RepositoryError>;
     /// Removes every comment of a subject. Called when the parent entity is
     /// deleted, since the polymorphic subject rules out a cascading FK.

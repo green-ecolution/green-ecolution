@@ -15,6 +15,7 @@ pub struct CommentView {
     pub author_id: Uuid,
     pub body: String,
     pub created_at: DateTime<Utc>,
+    pub edited_at: Option<DateTime<Utc>>,
 }
 
 impl From<&Comment> for CommentView {
@@ -25,6 +26,7 @@ impl From<&Comment> for CommentView {
             author_id: comment.author_id,
             body: comment.body.as_str().to_owned(),
             created_at: created_at_of(comment.id),
+            edited_at: comment.edited_at(),
         }
     }
 }
@@ -42,11 +44,12 @@ mod tests {
 
     #[test]
     fn view_derives_created_at_from_id() {
-        let comment = Comment {
+        let mut comment = Comment {
             id: Id::new_v7(),
             subject: CommentSubject::TreeCluster(Id::new_v7()),
             author_id: Uuid::new_v4(),
             body: CommentBody::new("Notiz").unwrap(),
+            edited_at: None,
         };
         let before = Utc::now();
         let view = CommentView::from(&comment);
@@ -56,5 +59,11 @@ mod tests {
             (view.created_at - before).num_seconds().abs() < 5,
             "created_at must come from the v7 timestamp"
         );
+        assert_eq!(view.edited_at, None);
+
+        let edit_time = Utc::now();
+        comment.edit(CommentBody::new("Geändert").unwrap(), edit_time);
+        let edited_view = CommentView::from(&comment);
+        assert_eq!(edited_view.edited_at, Some(edit_time));
     }
 }

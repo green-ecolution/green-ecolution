@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
 use crate::comment::CommentSubject;
@@ -12,4 +13,5 @@ pub struct CommentSnapshot {
     pub subject: CommentSubject,
     pub author_id: Uuid,
     pub body: String,
+    pub edited_at: Option<DateTime<Utc>>,
 }

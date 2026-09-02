@@ -1,15 +1,17 @@
 //! Comment aggregate — free-text note someone leaves on a tree cluster or a
 //! watering plan.
 //!
-//! Immutable after creation: there is no edit path, so the aggregate has no
-//! mutation methods and emits no domain events. Deletion is a repository
-//! operation. The subject is typed rather than a raw pair of columns so that
-//! adding a further commentable aggregate is a new enum variant.
+//! The only mutation is the author replacing the text via [`Comment::edit`];
+//! there are no other transitions and no subscribers, so the aggregate emits
+//! no domain events. Deletion is a repository operation. The subject is typed
+//! rather than a raw pair of columns so that adding a further commentable
+//! aggregate is a new enum variant.
 
 pub mod repository;
 pub mod snapshot;
 pub mod view;
 
+use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
 use crate::{
@@ -67,6 +69,10 @@ pub struct Comment {
     pub subject: CommentSubject,
     pub author_id: Uuid,
     pub body: CommentBody,
+    /// Set on the aggregate, not just the view: that a text was changed after
+    /// the fact is a fact a reader is entitled to, the same reasoning as
+    /// `Vehicle::archived_at`, not audit bookkeeping.
+    edited_at: Option<DateTime<Utc>>,
 }
 
 /// Input for creating a new [`Comment`]. The id and the creation timestamp are
@@ -86,7 +92,23 @@ impl Comment {
             subject: snap.subject,
             author_id: snap.author_id,
             body: CommentBody::reconstitute(snap.body),
+            edited_at: snap.edited_at,
         }
+    }
+
+    pub fn edited_at(&self) -> Option<DateTime<Utc>> {
+        self.edited_at
+    }
+
+    /// Replaces the text. Returns whether anything changed, so an unchanged
+    /// request does not leave a misleading edit marker.
+    pub fn edit(&mut self, body: CommentBody, at: DateTime<Utc>) -> bool {
+        if self.body == body {
+            return false;
+        }
+        self.body = body;
+        self.edited_at = Some(at);
+        true
     }
 }
 
@@ -162,10 +184,57 @@ mod tests {
             subject,
             author_id,
             body: "Bereits gewässert".to_owned(),
+            edited_at: None,
         });
         assert_eq!(comment.id.value(), id);
         assert_eq!(comment.subject, subject);
         assert_eq!(comment.author_id, author_id);
         assert_eq!(comment.body.as_str(), "Bereits gewässert");
+        assert_eq!(comment.edited_at(), None);
+    }
+
+    #[test]
+    fn reconstitute_round_trips_edited_at_when_present() {
+        let at = Utc::now();
+        let comment = Comment::reconstitute(CommentSnapshot {
+            id: Uuid::now_v7(),
+            subject: CommentSubject::TreeCluster(Id::new_v7()),
+            author_id: Uuid::new_v4(),
+            body: "Bereits gewässert".to_owned(),
+            edited_at: Some(at),
+        });
+        assert_eq!(comment.edited_at(), Some(at));
+    }
+
+    #[test]
+    fn edit_with_different_body_changes_text_and_sets_edited_at() {
+        let mut comment = Comment::reconstitute(CommentSnapshot {
+            id: Uuid::now_v7(),
+            subject: CommentSubject::TreeCluster(Id::new_v7()),
+            author_id: Uuid::new_v4(),
+            body: "alter Text".to_owned(),
+            edited_at: None,
+        });
+        let at = Utc::now();
+        let changed = comment.edit(CommentBody::new("neuer Text").unwrap(), at);
+        assert!(changed);
+        assert_eq!(comment.body.as_str(), "neuer Text");
+        assert_eq!(comment.edited_at(), Some(at));
+    }
+
+    #[test]
+    fn edit_with_identical_body_returns_false_and_leaves_untouched() {
+        let original_edited_at = Utc::now();
+        let mut comment = Comment::reconstitute(CommentSnapshot {
+            id: Uuid::now_v7(),
+            subject: CommentSubject::TreeCluster(Id::new_v7()),
+            author_id: Uuid::new_v4(),
+            body: "unveraendert".to_owned(),
+            edited_at: Some(original_edited_at),
+        });
+        let changed = comment.edit(CommentBody::new("unveraendert").unwrap(), Utc::now());
+        assert!(!changed);
+        assert_eq!(comment.body.as_str(), "unveraendert");
+        assert_eq!(comment.edited_at(), Some(original_edited_at));
     }
 }
