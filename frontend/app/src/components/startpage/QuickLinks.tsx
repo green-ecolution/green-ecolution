@@ -31,9 +31,7 @@ const QuickLinks = () => {
   return (
     <section className="container border-t border-t-dark-100 pt-10 mt-20 lg:pt-28 lg:mt-28">
       <article className="text-center max-w-screen-lg mx-auto">
-        <h2 className="font-bold font-lato text-xl mb-6 lg:text-3xl">
-          {t('quickLinks.heading')}
-        </h2>
+        <h2 className="font-bold font-lato text-xl mb-6 lg:text-3xl">{t('quickLinks.heading')}</h2>
         <p className="mb-6 lg:mb-10">{t('quickLinks.intro')}</p>
       </article>
       <ul className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
