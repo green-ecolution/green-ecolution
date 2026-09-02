@@ -73,10 +73,7 @@ function EditModePreview(args: React.ComponentProps<typeof CommentItem>) {
   const containerRef = React.useRef<HTMLDivElement>(null)
 
   React.useEffect(() => {
-    const editButton = Array.from(containerRef.current?.querySelectorAll('button') ?? []).find(
-      (button) => button.textContent === 'Bearbeiten',
-    )
-    editButton?.click()
+    containerRef.current?.querySelector<HTMLButtonElement>('button[title="Bearbeiten"]')?.click()
   }, [])
 
   return (

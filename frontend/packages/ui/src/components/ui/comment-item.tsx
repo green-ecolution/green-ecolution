@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { Pencil, Trash2 } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 import { useUiText } from '@/i18n'
@@ -90,10 +91,41 @@ const CommentItem = React.forwardRef<HTMLDivElement, CommentItemProps>(
       <div ref={ref} data-slot="comment-item" className={cn('flex gap-3', className)} {...props}>
         <CommentAuthorAvatar author={author} size="sm" />
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-baseline gap-x-2">
+          <div className="flex items-baseline gap-x-2">
             <span className="text-sm font-semibold text-dark-800">{author.name}</span>
             <span className="text-xs text-dark-500">{timestamp}</span>
             {editedLabel && <span className="text-xs italic text-dark-400">{editedLabel}</span>}
+            {!isEditing && (canEdit || canDelete) && (
+              <div className="ml-auto flex shrink-0 items-center gap-1">
+                {canEdit && (
+                  <Button
+                    ref={editTriggerRef}
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="size-8 text-dark-400 hover:text-dark"
+                    title={t('comments.edit')}
+                    onClick={openEdit}
+                  >
+                    <Pencil className="size-4" aria-hidden />
+                    <span className="sr-only">{t('comments.edit')}</span>
+                  </Button>
+                )}
+                {canDelete && (
+                  <Button
+                    type="button"
+                    variant="ghost-destructive"
+                    size="icon"
+                    className="size-8 text-dark-400"
+                    title={t('comments.delete')}
+                    onClick={() => onDelete?.()}
+                  >
+                    <Trash2 className="size-4" aria-hidden />
+                    <span className="sr-only">{t('comments.delete')}</span>
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
 
           {isEditing ? (
@@ -126,36 +158,7 @@ const CommentItem = React.forwardRef<HTMLDivElement, CommentItemProps>(
               </div>
             </div>
           ) : (
-            <>
-              <p className="mt-1 whitespace-pre-wrap break-words text-sm text-dark-800">{body}</p>
-              {(canEdit || canDelete) && (
-                <div className="mt-1 flex gap-3">
-                  {canEdit && (
-                    <Button
-                      ref={editTriggerRef}
-                      type="button"
-                      variant="link"
-                      size="sm"
-                      className="h-auto px-0"
-                      onClick={openEdit}
-                    >
-                      {t('comments.edit')}
-                    </Button>
-                  )}
-                  {canDelete && (
-                    <Button
-                      type="button"
-                      variant="link-destructive"
-                      size="sm"
-                      className="h-auto px-0"
-                      onClick={() => onDelete?.()}
-                    >
-                      {t('comments.delete')}
-                    </Button>
-                  )}
-                </div>
-              )}
-            </>
+            <p className="mt-1 whitespace-pre-wrap break-words text-sm text-dark-800">{body}</p>
           )}
         </div>
       </div>
