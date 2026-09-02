@@ -707,7 +707,7 @@
           "Comments"
         ],
         "summary": "Edit a comment on a tree cluster",
-        "description": "Replaces a comment's text. Only the comment's author may edit it, unlike delete there is no fallback via `tree_cluster:delete`.",
+        "description": "Replaces a comment's text. Only the comment's author may edit it.",
         "operationId": "updateClusterComment",
         "parameters": [
           {
@@ -799,7 +799,7 @@
           "Comments"
         ],
         "summary": "Delete a comment on a tree cluster",
-        "description": "Removes a comment. The author may delete their own comment; anyone else needs `tree_cluster:delete` in the cluster's organization.",
+        "description": "Removes a comment. Only the comment's author may delete it.",
         "operationId": "deleteClusterComment",
         "parameters": [
           {
@@ -828,7 +828,7 @@
             "description": "Comment deleted"
           },
           "403": {
-            "description": "Not the author and missing `tree_cluster:delete`",
+            "description": "Not the author",
             "content": {
               "application/json": {
                 "schema": {
@@ -6472,7 +6472,7 @@
           "Comments"
         ],
         "summary": "Edit a comment on a watering plan",
-        "description": "Replaces a comment's text. Only the comment's author may edit it, unlike delete there is no fallback via `watering_plan:delete`.",
+        "description": "Replaces a comment's text. Only the comment's author may edit it.",
         "operationId": "updateWateringPlanComment",
         "parameters": [
           {
@@ -6564,7 +6564,7 @@
           "Comments"
         ],
         "summary": "Delete a comment on a watering plan",
-        "description": "Removes a comment. The author may delete their own comment; anyone else needs `watering_plan:delete` in the plan's organization.",
+        "description": "Removes a comment. Only the comment's author may delete it.",
         "operationId": "deleteWateringPlanComment",
         "parameters": [
           {
@@ -6593,7 +6593,7 @@
             "description": "Comment deleted"
           },
           "403": {
-            "description": "Not the author and missing `watering_plan:delete`",
+            "description": "Not the author",
             "content": {
               "application/json": {
                 "schema": {

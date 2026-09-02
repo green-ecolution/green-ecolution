@@ -233,7 +233,7 @@ export class CommentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Removes a comment. The author may delete their own comment; anyone else needs `tree_cluster:delete` in the cluster\'s organization.
+     * Removes a comment. Only the comment\'s author may delete it.
      * Delete a comment on a tree cluster
      */
     async deleteClusterCommentRaw(requestParameters: DeleteClusterCommentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
@@ -244,7 +244,7 @@ export class CommentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Removes a comment. The author may delete their own comment; anyone else needs `tree_cluster:delete` in the cluster\'s organization.
+     * Removes a comment. Only the comment\'s author may delete it.
      * Delete a comment on a tree cluster
      */
     async deleteClusterComment(requestParameters: DeleteClusterCommentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
@@ -287,7 +287,7 @@ export class CommentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Removes a comment. The author may delete their own comment; anyone else needs `watering_plan:delete` in the plan\'s organization.
+     * Removes a comment. Only the comment\'s author may delete it.
      * Delete a comment on a watering plan
      */
     async deleteWateringPlanCommentRaw(requestParameters: DeleteWateringPlanCommentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
@@ -298,7 +298,7 @@ export class CommentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Removes a comment. The author may delete their own comment; anyone else needs `watering_plan:delete` in the plan\'s organization.
+     * Removes a comment. Only the comment\'s author may delete it.
      * Delete a comment on a watering plan
      */
     async deleteWateringPlanComment(requestParameters: DeleteWateringPlanCommentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
@@ -461,7 +461,7 @@ export class CommentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Replaces a comment\'s text. Only the comment\'s author may edit it, unlike delete there is no fallback via `tree_cluster:delete`.
+     * Replaces a comment\'s text. Only the comment\'s author may edit it.
      * Edit a comment on a tree cluster
      */
     async updateClusterCommentRaw(requestParameters: UpdateClusterCommentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CommentResponse>> {
@@ -472,7 +472,7 @@ export class CommentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Replaces a comment\'s text. Only the comment\'s author may edit it, unlike delete there is no fallback via `tree_cluster:delete`.
+     * Replaces a comment\'s text. Only the comment\'s author may edit it.
      * Edit a comment on a tree cluster
      */
     async updateClusterComment(requestParameters: UpdateClusterCommentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CommentResponse> {
@@ -526,7 +526,7 @@ export class CommentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Replaces a comment\'s text. Only the comment\'s author may edit it, unlike delete there is no fallback via `watering_plan:delete`.
+     * Replaces a comment\'s text. Only the comment\'s author may edit it.
      * Edit a comment on a watering plan
      */
     async updateWateringPlanCommentRaw(requestParameters: UpdateWateringPlanCommentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CommentResponse>> {
@@ -537,7 +537,7 @@ export class CommentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Replaces a comment\'s text. Only the comment\'s author may edit it, unlike delete there is no fallback via `watering_plan:delete`.
+     * Replaces a comment\'s text. Only the comment\'s author may edit it.
      * Edit a comment on a watering plan
      */
     async updateWateringPlanComment(requestParameters: UpdateWateringPlanCommentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CommentResponse> {
