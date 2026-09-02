@@ -119,6 +119,14 @@ export type { ChartConfig } from './components/ui/chart'
 // Checkbox
 export { Checkbox } from './components/ui/checkbox'
 
+// CommentComposer / CommentItem / CommentList
+export { CommentComposer } from './components/ui/comment-composer'
+export type { CommentComposerProps, CommentAuthor } from './components/ui/comment-composer'
+export { CommentItem } from './components/ui/comment-item'
+export type { CommentItemProps } from './components/ui/comment-item'
+export { CommentList } from './components/ui/comment-list'
+export type { CommentListProps } from './components/ui/comment-list'
+
 // CopyableText
 export { CopyableText } from './components/ui/copyable-text'
 export type { CopyableTextProps } from './components/ui/copyable-text'
