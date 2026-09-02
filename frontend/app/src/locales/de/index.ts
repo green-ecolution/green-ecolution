@@ -14,6 +14,7 @@ import evaluation from './evaluation.json'
 import settings from './settings.json'
 import startpage from './startpage.json'
 import info from './info.json'
+import comments from './comments.json'
 
 export default {
   common,
@@ -32,4 +33,5 @@ export default {
   settings,
   startpage,
   info,
+  comments,
 }

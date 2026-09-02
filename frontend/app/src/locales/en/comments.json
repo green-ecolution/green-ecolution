@@ -1,0 +1,26 @@
+{
+  "heading": "Comments",
+  "composer": {
+    "placeholder": "Write a comment …"
+  },
+  "list": {
+    "loadMore": "Load more comments",
+    "empty": "There are no comments for this entry yet.",
+    "edited": "(edited)",
+    "unknownAuthor": "Unknown user"
+  },
+  "deleteDialog": {
+    "title": "Delete comment?",
+    "description": "The comment will be permanently removed and cannot be restored.",
+    "confirm": "Delete",
+    "cancel": "Cancel"
+  },
+  "toasts": {
+    "createSuccess": "Comment added",
+    "createError": "The comment could not be saved.",
+    "updateSuccess": "Comment updated",
+    "updateError": "The comment could not be updated.",
+    "deleteSuccess": "Comment deleted",
+    "deleteError": "The comment could not be deleted."
+  }
+}

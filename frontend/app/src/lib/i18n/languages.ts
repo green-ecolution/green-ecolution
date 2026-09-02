@@ -26,6 +26,7 @@ export const NAMESPACES = [
   'settings',
   'startpage',
   'info',
+  'comments',
 ] as const
 
 export const DEFAULT_NAMESPACE = 'common'
