@@ -207,12 +207,11 @@ pub async fn list_cluster_comments(
     tag = "Comments",
     operation_id = "createClusterComment",
     summary = "Comment on a tree cluster",
-    description = "Adds a comment to a tree cluster. Requires `tree_cluster:update` in the cluster's organization.",
+    description = "Adds a comment to a tree cluster. Requires `tree_cluster:read` in the cluster's organization — anyone who may see the cluster may annotate it.",
     params(("cluster_id" = uuid::Uuid, Path, description = "Cluster ID")),
     request_body = CreateCommentRequest,
     responses(
         (status = 201, description = "Comment created", body = CommentResponse),
-        (status = 403, description = "Missing `tree_cluster:update`", body = ErrorBody),
         (status = 404, description = "Cluster not found or not visible", body = ErrorBody),
         (status = 400, description = "Empty or overlong comment text", body = ErrorBody),
         (status = 500, description = "Internal server error", body = ErrorBody),
@@ -226,14 +225,6 @@ pub async fn create_cluster_comment(
     Json(payload): Json<CreateCommentRequest>,
 ) -> Result<(axum::http::StatusCode, Json<CommentResponse>), ServiceError> {
     let scope = cluster_scope(&state, user.id, cluster_id).await?;
-    state
-        .authorization_service
-        .require(
-            user.id,
-            Permission::new(scope.resource, Action::Update),
-            Id::new(scope.org),
-        )
-        .await?;
     let response = create_for(&state, scope.subject, user.id, payload).await?;
     Ok((axum::http::StatusCode::CREATED, Json(response)))
 }
@@ -299,12 +290,11 @@ pub async fn list_plan_comments(
     tag = "Comments",
     operation_id = "createWateringPlanComment",
     summary = "Comment on a watering plan",
-    description = "Adds a comment to a watering plan. Requires `watering_plan:update` in the plan's organization.",
+    description = "Adds a comment to a watering plan. Requires `watering_plan:read` in the plan's organization — anyone who may see the plan may annotate it.",
     params(("watering_plan_id" = uuid::Uuid, Path, description = "Watering plan ID")),
     request_body = CreateCommentRequest,
     responses(
         (status = 201, description = "Comment created", body = CommentResponse),
-        (status = 403, description = "Missing `watering_plan:update`", body = ErrorBody),
         (status = 404, description = "Watering plan not found or not visible", body = ErrorBody),
         (status = 400, description = "Empty or overlong comment text", body = ErrorBody),
         (status = 500, description = "Internal server error", body = ErrorBody),
@@ -318,14 +308,6 @@ pub async fn create_plan_comment(
     Json(payload): Json<CreateCommentRequest>,
 ) -> Result<(axum::http::StatusCode, Json<CommentResponse>), ServiceError> {
     let scope = plan_scope(&state, user.id, watering_plan_id).await?;
-    state
-        .authorization_service
-        .require(
-            user.id,
-            Permission::new(scope.resource, Action::Update),
-            Id::new(scope.org),
-        )
-        .await?;
     let response = create_for(&state, scope.subject, user.id, payload).await?;
     Ok((axum::http::StatusCode::CREATED, Json(response)))
 }

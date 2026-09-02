@@ -297,7 +297,7 @@ async fn rejects_empty_body_with_400() {
 }
 
 #[tokio::test]
-async fn create_requires_update_permission_on_the_parent() {
+async fn create_only_requires_read_permission_on_the_parent() {
     let (harness, app) = spawn_with_auth().await;
     let (org, token) = seed_user_with_permissions(
         &harness,
@@ -314,12 +314,28 @@ async fn create_requires_update_permission_on_the_parent() {
             app.address
         ))
         .bearer_auth(&token)
-        .json(&json!({ "body": "darf ich nicht" }))
+        .json(&json!({ "body": "darf ich jetzt" }))
         .send()
         .await
         .unwrap();
 
-    assert_eq!(response.status(), 403);
+    assert_eq!(response.status(), 201);
+    let created: serde_json::Value = response.json().await.unwrap();
+
+    let list: serde_json::Value = reqwest::Client::new()
+        .get(format!(
+            "{}/api/v1/clusters/{cluster_id}/comments",
+            app.address
+        ))
+        .bearer_auth(&token)
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(list["pagination"]["total_records"], 1);
+    assert_eq!(list["data"][0]["id"], created["id"]);
 }
 
 #[tokio::test]
@@ -748,7 +764,7 @@ async fn plan_comment_can_be_deleted_by_its_author() {
 }
 
 #[tokio::test]
-async fn create_plan_comment_requires_update_permission_on_the_parent() {
+async fn create_plan_comment_only_requires_read_permission_on_the_parent() {
     let (harness, app) = spawn_with_auth().await;
     let (org, token) = seed_user_with_permissions(
         &harness,
@@ -770,12 +786,28 @@ async fn create_plan_comment_requires_update_permission_on_the_parent() {
             app.address
         ))
         .bearer_auth(&token)
-        .json(&json!({ "body": "darf ich nicht" }))
+        .json(&json!({ "body": "darf ich jetzt" }))
         .send()
         .await
         .unwrap();
 
-    assert_eq!(response.status(), 403);
+    assert_eq!(response.status(), 201);
+    let created: serde_json::Value = response.json().await.unwrap();
+
+    let list: serde_json::Value = reqwest::Client::new()
+        .get(format!(
+            "{}/api/v1/watering-plans/{plan_id}/comments",
+            app.address
+        ))
+        .bearer_auth(&token)
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(list["pagination"]["total_records"], 1);
+    assert_eq!(list["data"][0]["id"], created["id"]);
 }
 
 #[tokio::test]
