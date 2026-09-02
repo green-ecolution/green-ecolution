@@ -1,5 +1,6 @@
+use chrono::Utc;
 use domain::{
-    Id,
+    Id, RepositoryError,
     comment::{CommentBody, CommentDraft, CommentReader, CommentSubject, CommentWriter},
     shared::pagination::Pagination,
 };
@@ -113,6 +114,63 @@ async fn by_id_returns_the_aggregate_and_not_found_after_delete() {
     repo.delete(created.id).await.unwrap();
     assert!(repo.by_id(created.id).await.is_err());
     assert!(repo.delete(created.id).await.is_err());
+}
+
+#[tokio::test]
+async fn freshly_created_comment_has_no_edited_at() {
+    let app = spawn_app().await;
+    let repo = PgCommentRepository::new(app.db_pool.clone());
+    let subject = CommentSubject::TreeCluster(Id::new_v7());
+
+    let created = repo
+        .save_new(draft(subject, Uuid::new_v4(), "frisch"))
+        .await
+        .unwrap();
+
+    assert_eq!(created.edited_at(), None);
+    let loaded = repo.by_id(created.id).await.unwrap();
+    assert_eq!(loaded.edited_at(), None);
+}
+
+#[tokio::test]
+async fn save_persists_body_and_timestamp_and_by_id_reads_both_back() {
+    let app = spawn_app().await;
+    let repo = PgCommentRepository::new(app.db_pool.clone());
+    let subject = CommentSubject::TreeCluster(Id::new_v7());
+
+    let mut comment = repo
+        .save_new(draft(subject, Uuid::new_v4(), "alter Text"))
+        .await
+        .unwrap();
+
+    let at = Utc::now();
+    let changed = comment.edit(CommentBody::new("neuer Text").unwrap(), at);
+    assert!(changed);
+    repo.save(&comment).await.unwrap();
+
+    let loaded = repo.by_id(comment.id).await.unwrap();
+    assert_eq!(loaded.body.as_str(), "neuer Text");
+    assert_eq!(
+        loaded.edited_at().unwrap().timestamp_millis(),
+        at.timestamp_millis()
+    );
+}
+
+#[tokio::test]
+async fn save_on_unknown_id_is_an_error() {
+    let app = spawn_app().await;
+    let repo = PgCommentRepository::new(app.db_pool.clone());
+    let subject = CommentSubject::TreeCluster(Id::new_v7());
+
+    let mut comment = repo
+        .save_new(draft(subject, Uuid::new_v4(), "wird geloescht"))
+        .await
+        .unwrap();
+    repo.delete(comment.id).await.unwrap();
+
+    comment.edit(CommentBody::new("geistertext").unwrap(), Utc::now());
+    let result = repo.save(&comment).await;
+    assert!(matches!(result, Err(RepositoryError::NotFound)));
 }
 
 #[tokio::test]

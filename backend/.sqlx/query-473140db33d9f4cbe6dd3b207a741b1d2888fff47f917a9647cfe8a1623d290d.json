@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id, subject_type, subject_id, author_id, body\n               FROM comments WHERE id = $1",
+  "query": "SELECT id, subject_type, subject_id, author_id, body, edited_at\n               FROM comments WHERE id = $1",
   "describe": {
     "columns": [
       {
@@ -27,6 +27,11 @@
         "ordinal": 4,
         "name": "body",
         "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "edited_at",
+        "type_info": "Timestamp"
       }
     ],
     "parameters": {
@@ -39,8 +44,9 @@
       false,
       false,
       false,
-      false
+      false,
+      true
     ]
   },
-  "hash": "e1d18c6f93fc40e7671874ded1afd5e0faabaa07183cc3e6fb8a61bbddd4676f"
+  "hash": "473140db33d9f4cbe6dd3b207a741b1d2888fff47f917a9647cfe8a1623d290d"
 }

@@ -26,6 +26,7 @@ struct CommentRow {
     subject_id: Uuid,
     author_id: Uuid,
     body: String,
+    edited_at: Option<chrono::NaiveDateTime>,
 }
 
 impl TryFrom<CommentRow> for CommentSnapshot {
@@ -37,6 +38,7 @@ impl TryFrom<CommentRow> for CommentSnapshot {
             subject: CommentSubject::from_parts(&row.subject_type, row.subject_id)?,
             author_id: row.author_id,
             body: row.body,
+            edited_at: row.edited_at.map(|d| d.and_utc()),
         })
     }
 }
@@ -52,7 +54,7 @@ impl CommentReader for PgCommentRepository {
     async fn by_id(&self, id: Id<Comment>) -> Result<Comment, RepositoryError> {
         let row = sqlx::query_as!(
             CommentRow,
-            r#"SELECT id, subject_type, subject_id, author_id, body
+            r#"SELECT id, subject_type, subject_id, author_id, body, edited_at
                FROM comments WHERE id = $1"#,
             id.value()
         )
@@ -83,7 +85,7 @@ impl CommentReader for PgCommentRepository {
 
         let rows = sqlx::query_as!(
             CommentRow,
-            r#"SELECT id, subject_type, subject_id, author_id, body
+            r#"SELECT id, subject_type, subject_id, author_id, body, edited_at
                FROM comments
                WHERE subject_type = $1 AND subject_id = $2
                ORDER BY id DESC
@@ -127,7 +129,25 @@ impl CommentWriter for PgCommentRepository {
             subject: draft.subject,
             author_id: draft.author_id,
             body: draft.body.as_str().to_owned(),
+            edited_at: None,
         }))
+    }
+
+    #[tracing::instrument(level = "trace", skip_all)]
+    async fn save(&self, comment: &Comment) -> Result<(), RepositoryError> {
+        let result = sqlx::query!(
+            r#"UPDATE comments SET body = $2, edited_at = $3 WHERE id = $1"#,
+            comment.id.value(),
+            comment.body.as_str(),
+            comment.edited_at().map(|d| d.naive_utc()),
+        )
+        .execute(&self.pool)
+        .await?;
+
+        if result.rows_affected() == 0 {
+            return Err(RepositoryError::NotFound);
+        }
+        Ok(())
     }
 
     #[tracing::instrument(level = "trace", skip_all)]
