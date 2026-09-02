@@ -87,7 +87,7 @@
   },
   "watering_plan": {
     "cluster_ids": {
-      "empty": "Es muss mindestens ein Cluster ausgewählt werden."
+      "empty": "Es muss mindestens eine Bewässerungsgruppe ausgewählt werden."
     },
     "driver_ids": {
       "empty": "Es muss mindestens ein Mitarbeiter ausgewählt werden.",

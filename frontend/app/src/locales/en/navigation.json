@@ -14,7 +14,7 @@
     "evaluations": "Evaluation",
     "debug": "Debug",
     "backToDashboard": "Back to your dashboard",
-    "logoAlt": "Green Ecolution logo – smart green-space management",
+    "logoAlt": "Green Ecolution logo — smart green-space management",
     "logoIconAlt": "Green Ecolution",
     "closeMainNav": "Close main navigation",
     "openMainNav": "Open main navigation",
@@ -54,7 +54,7 @@
     "info": "System information"
   },
   "footer": {
-    "tagline": "Smart green-space management – Green Ecolution {version}",
+    "tagline": "Smart green-space management - Green Ecolution {version}",
     "nav": "Footer navigation",
     "contact": "Contact",
     "imprint": "Imprint",

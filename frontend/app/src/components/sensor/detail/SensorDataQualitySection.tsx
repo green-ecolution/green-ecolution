@@ -25,7 +25,11 @@ import type { SensorQualityIssueResponse } from '@/api/backendApi'
 import { sensorQueries } from '@/api/queries'
 import { Can } from '@/lib/auth/Can'
 import { useSensorQualityMutations } from '@/hooks/useSensorQualityMutations'
-import { useDataQualityDetails, useQualityReasonLabel } from '@/hooks/details/useDetailsForDataHealth'
+import {
+  useDataQualityDetails,
+  useQualityReasonLabel,
+} from '@/hooks/details/useDetailsForDataHealth'
+import { useDateLocale } from '@/lib/i18n/useFormatters'
 
 interface SensorDataQualitySectionProps {
   sensorId: string
@@ -34,6 +38,7 @@ interface SensorDataQualitySectionProps {
 const IssueList = ({ issues }: { issues: SensorQualityIssueResponse[] }) => {
   const { t } = useTranslation('sensor')
   const getQualityReasonLabel = useQualityReasonLabel()
+  const dateLocale = useDateLocale()
   return (
     <ul className="flex flex-col gap-2">
       {issues.map((issue) => (
@@ -42,7 +47,7 @@ const IssueList = ({ issues }: { issues: SensorQualityIssueResponse[] }) => {
           className="rounded-lg border border-dark-50 bg-white p-3 text-sm"
         >
           <p className="font-bold">
-            {format(new Date(issue.recordedAt), 'dd.MM.yyyy HH:mm')} ·{' '}
+            {format(new Date(issue.recordedAt), 'dd.MM.yyyy HH:mm', { locale: dateLocale })} ·{' '}
             {t('dataQuality.issueDepth', { depth: issue.depthCm })}
           </p>
           <p className="text-dark-800">
@@ -57,6 +62,7 @@ const IssueList = ({ issues }: { issues: SensorQualityIssueResponse[] }) => {
 
 const SensorDataQualitySection = ({ sensorId }: SensorDataQualitySectionProps) => {
   const { t } = useTranslation(['sensor', 'common'])
+  const dateLocale = useDateLocale()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [note, setNote] = useState('')
   const { data } = useQuery(sensorQueries.dataQuality(sensorId))
@@ -107,7 +113,9 @@ const SensorDataQualitySection = ({ sensorId }: SensorDataQualitySectionProps) =
               <AlertDescription className="mt-1 italic">
                 {t('dataQuality.acknowledgedBy', {
                   name: data.acknowledged.byName ?? t('dataQuality.unknownReviewer'),
-                  date: format(new Date(data.acknowledged.at), 'dd.MM.yyyy HH:mm'),
+                  date: format(new Date(data.acknowledged.at), 'dd.MM.yyyy HH:mm', {
+                    locale: dateLocale,
+                  }),
                 })}
                 {data.acknowledged.note ? `: ${data.acknowledged.note}` : ''}
               </AlertDescription>

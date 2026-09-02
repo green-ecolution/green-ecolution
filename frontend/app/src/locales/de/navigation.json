@@ -3,7 +3,7 @@
     "login": "Anmelden",
     "settings": "Einstellungen",
     "headlineGreenSpaces": "Grünflächen",
-    "headlinePlanning": "Einsatzplanung",
+    "headlinePlanning": "Planung",
     "headlineMore": "Weiteres",
     "map": "Karte",
     "clusters": "Bewässerungsgruppen",
@@ -14,7 +14,7 @@
     "evaluations": "Auswertung",
     "debug": "Debug",
     "backToDashboard": "Zurück zum persönlichen Dashboard",
-    "logoAlt": "Logo von Green Ecolution – Smartes Grünflächenmanagement",
+    "logoAlt": "Logo von Green Ecolution — Smartes Grünflächenmanagement",
     "logoIconAlt": "Green Ecolution",
     "closeMainNav": "Hauptnavigation schließen",
     "openMainNav": "Hauptnavigation öffnen",
@@ -54,7 +54,7 @@
     "info": "Systeminformationen"
   },
   "footer": {
-    "tagline": "Smartes Grünflächenmanagement – Green Ecolution {version}",
+    "tagline": "Smartes Grünflächenmanagement - Green Ecolution {version}",
     "nav": "Fußnavigation",
     "contact": "Kontakt",
     "imprint": "Impressum",

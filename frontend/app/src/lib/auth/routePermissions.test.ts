@@ -74,7 +74,7 @@ describe('visibleNavSections', () => {
     },
     {
       id: 2,
-      headline: 'Einsatzplanung',
+      headline: 'Planung',
       links: [
         { key: 'plans', to: '/watering-plans' },
         { key: 'vehicles', to: '/vehicles' },
@@ -92,7 +92,7 @@ describe('visibleNavSections', () => {
   it('drops sections that end up without links so no empty headline remains', () => {
     const visible = visibleNavSections(sections, perms('vehicle:read'))
 
-    expect(visible.map((section) => section.headline)).toEqual(['Einsatzplanung'])
+    expect(visible.map((section) => section.headline)).toEqual(['Planung'])
     expect(visible[0].links.map((link) => link.key)).toEqual(['vehicles'])
   })
 

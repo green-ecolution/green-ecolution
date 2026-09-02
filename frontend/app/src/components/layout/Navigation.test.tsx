@@ -74,7 +74,7 @@ describe('Navigation', () => {
     await waitFor(() => {
       expect(screen.getByText('Grünflächen')).toBeInTheDocument()
     })
-    expect(screen.queryByText('Einsatzplanung')).not.toBeInTheDocument()
+    expect(screen.queryByText('Planung')).not.toBeInTheDocument()
   })
 
   it('shows every entry for unrestricted access', async () => {

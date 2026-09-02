@@ -45,6 +45,30 @@ const renderBreadcrumbs = () => {
   return render(<RouterProvider router={router} />)
 }
 
+const renderEntityBreadcrumb = () => {
+  const rootRoute = createRootRoute({ component: () => <Outlet /> })
+  const treesRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: 'trees',
+    loader: () => ({ crumb: { titleKey: 'trees' } }),
+    component: () => <Outlet />,
+  })
+  const treeDetailRoute = createRoute({
+    getParentRoute: () => treesRoute,
+    path: '$treeId',
+    loader: () => ({
+      crumb: { titleKey: 'tree:detail.title', params: { number: 1234 } },
+    }),
+    component: () => <BreadcrumbList />,
+  })
+  const router = createRouter({
+    routeTree: rootRoute.addChildren([treesRoute.addChildren([treeDetailRoute])]),
+    history: createMemoryHistory({ initialEntries: ['/trees/1234'] }),
+  })
+
+  return render(<RouterProvider router={router} />)
+}
+
 describe('useBreadcrumbs', () => {
   it('resolves a titleKey crumb through the navigation catalog', async () => {
     renderBreadcrumbs()
@@ -59,6 +83,14 @@ describe('useBreadcrumbs', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Eiche #1234')).toBeInTheDocument()
+    })
+  })
+
+  it('resolves a fully-qualified titleKey crumb with interpolation params, reactively', async () => {
+    renderEntityBreadcrumb()
+
+    await waitFor(() => {
+      expect(screen.getByText('Baum: 1234')).toBeInTheDocument()
     })
   })
 })

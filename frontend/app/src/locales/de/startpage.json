@@ -12,7 +12,7 @@
     "monitoring": "Monitoring des Bewässerungszustands",
     "grouping": "Gruppierung von Bäumen anhand von Standortbedingungen",
     "interpretation": "Interpretation der Messwerte der Sensordaten in ein Ampelsystem",
-    "planning": "Vereinfachte & digitalisierte Einsatzplanung",
+    "planning": "Vereinfachte & digitalisierte Erstellung von Einsatzplänen",
     "routing": "Dynamische Routenplanung von Bewässerungsfahrten",
     "evaluation": "Langzeitauswertung von Daten"
   },
@@ -55,7 +55,7 @@
       "description": "Unter Verwendung des LoRaWAN-Netzes können verschiedene Standorte überwacht und weitere einfach eingebunden werden."
     },
     "planning": {
-      "label": "Vereinfachte Einsatzplanung",
+      "label": "Vereinfachte Erstellung von Einsatzplänen",
       "description": "Bewässerungsfahrten können digital und schnell geplant werden. Dabei können Informationen wie die Mitarbeitenden sowie genutzte Fahrzeuge und deren Wasserkapazität hinterlegt werden."
     },
     "routing": {

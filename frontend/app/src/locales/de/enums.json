@@ -60,8 +60,8 @@
       "description": "Das Fahrzeug ist verfügbar."
     },
     "active": {
-      "label": "Im Einsatz",
-      "description": "Das Fahrzeug ist im Einsatz."
+      "label": "In Betrieb",
+      "description": "Das Fahrzeug ist in Betrieb."
     }
   },
   "vehicleType": {

@@ -152,7 +152,7 @@
     "phoneNumberPlaceholder": "z. B. +49 461 123456",
     "employeeIdLabel": "Personalnummer",
     "employeeIdPlaceholder": "z. B. EMP-042",
-    "wateringPlanSelectableLabel": "Für Einsatzplanung auswählbar",
+    "wateringPlanSelectableLabel": "Für Einsatzpläne auswählbar",
     "wateringPlanSelectableHint": "Nur gekennzeichnete Personen erscheinen in der Auswahl der verknüpften Mitarbeitenden eines Einsatzplans.",
     "yes": "Ja",
     "no": "Nein",
@@ -292,7 +292,7 @@
     },
     "group": {
       "greenspaces": "Grünflächen",
-      "operations": "Einsatzplanung",
+      "operations": "Planung",
       "administration": "Verwaltung"
     },
     "action": {

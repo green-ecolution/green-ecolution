@@ -4,7 +4,7 @@
     "titleLine2": "green space management",
     "intro": "This project deals with the smart watering of trees in an urban context. Sensor-based monitoring transmits and evaluates data via the LoRaWAN network, so that watering recommendations can be issued. Based on these recommendations, watering plans for a watering tour can be created.",
     "ctaDashboard": "Go to dashboard",
-    "ctaLogin": "Sign in",
+    "ctaLogin": "Log in",
     "ctaContact": "Contact"
   },
   "keyFacts": {

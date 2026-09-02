@@ -42,7 +42,7 @@
     "lengthValue": "{value} Meter",
     "weightLabel": "Gewicht des Fahrzeugs",
     "weightValue": "{value} Tonnen",
-    "activeNotice": "Dieses Fahrzeug befindet sich im Einsatz.",
+    "activeNotice": "Dieses Fahrzeug ist aktuell in Betrieb.",
     "wateringPlansLinkLabel": "Zu den Einsatzplänen",
     "notFoundBackLabel": "Zur Fahrzeugliste"
   },

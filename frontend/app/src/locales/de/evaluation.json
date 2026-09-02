@@ -27,12 +27,12 @@
     "userCountLabel": "Anzahl Mitarbeitende für Einsatzpläne",
     "userCountValue": "{count} Mitarbeitende",
     "userCountDescription": "Dies beschreibt die Anzahl aller Mitarbeitenden, die zu Einsatzplänen verlinkt wurden. Dopplungen wurden nicht ausgeschlossen.",
-    "regionListTitle": "Anzahl an Bewässerungen pro Stadtteil:",
+    "regionListTitle": "Anzahl an Einsatzplänen pro Stadtteil:",
     "regionListLabel": "Stadtteil",
     "vehicleListTitle": "Nutzung der Fahrzeuge:",
     "vehicleListLabel": "Fahrzeug",
-    "wateringCountColumnHeader": "Anzahl der Bewässerungen",
-    "wateringCountValue_one": "{count} Bewässerung",
-    "wateringCountValue_other": "{count} Bewässerungen"
+    "wateringCountColumnHeader": "Anzahl der Einsatzpläne",
+    "wateringCountValue_one": "{count} Einsatzplan",
+    "wateringCountValue_other": "{count} Einsatzpläne"
   }
 }

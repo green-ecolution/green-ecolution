@@ -176,7 +176,7 @@ describe('RoleDetail', () => {
   it('groups the nine areas under three headings', () => {
     render(<RoleDetail {...baseProps} role={ownRole} draft={draftFor(ownRole)} dirty={false} />)
     expect(screen.getByText('Grünflächen')).toBeInTheDocument()
-    expect(screen.getByText('Einsatzplanung')).toBeInTheDocument()
+    expect(screen.getByText('Planung')).toBeInTheDocument()
     expect(screen.getByText('Verwaltung')).toBeInTheDocument()
   })
 })

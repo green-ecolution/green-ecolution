@@ -1,6 +1,5 @@
 import { sensorQueries } from '@/api/queries'
 import { entityRoute } from '@/lib/router'
-import { getI18n } from '@/lib/i18n'
 import { createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/_protected/sensors/$sensorId')(
@@ -8,7 +7,7 @@ export const Route = createFileRoute('/_protected/sensors/$sensorId')(
     key: 'sensor',
     query: sensorQueries.detail,
     idParam: 'sensorId',
-    title: (sensor) => getI18n().t('sensor:detail.title', { id: sensor.id }),
+    title: (sensor) => ({ titleKey: 'sensor:detail.title', params: { id: sensor.id } }),
     notFound: {
       entityName: { key: 'sensor:entity.name' },
       backTo: '/sensors',

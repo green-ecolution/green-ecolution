@@ -15,6 +15,8 @@ import { I18nextProvider } from 'react-i18next'
 import { createI18n } from '@/lib/i18n'
 import { UiTextBridge } from '@/lib/i18n/UiTextBridge'
 import type { NavigationCrumbKey } from '@/lib/i18n/navigation'
+import type { ParseKeys } from 'i18next'
+import type { NAMESPACES } from '@/lib/i18n/languages'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -52,10 +54,16 @@ declare module '@tanstack/react-router' {
   }
 
   /**
-   * Static routes carry a key resolved at render time; a crumb naming a loaded
-   * entity carries the text itself, because no catalog can hold entity names.
+   * Static routes carry a bare navigation key resolved at render time; an
+   * entity route carries a fully-qualified cross-namespace key plus its
+   * interpolation params, resolved the same way so a language switch updates
+   * it without a re-navigation. Only a crumb naming a loaded entity by its raw
+   * data (no catalog can hold entity names) falls back to the literal text.
    */
-  type Breadcrumb = { titleKey: NavigationCrumbKey } | { title: string }
+  type Breadcrumb =
+    | { titleKey: NavigationCrumbKey }
+    | { titleKey: ParseKeys<typeof NAMESPACES>; params: Record<string, unknown> }
+    | { title: string }
 
   interface StaticDataRouteOption {
     crumb?: Breadcrumb

@@ -10,14 +10,16 @@ export const wateringPlanEntityRoute = entityRoute({
   key: 'wateringPlan',
   query: wateringPlanQueries.detail,
   idParam: 'wateringPlanId',
-  title: (wateringPlan) =>
-    getI18n().t('wateringPlan:detail.entityTitle', {
+  title: (wateringPlan) => ({
+    titleKey: 'wateringPlan:detail.entityTitle',
+    params: {
       value: wateringPlan.date
         ? format(new Date(wateringPlan.date), 'dd.MM.yyyy', {
             locale: dateFnsLocale(getI18n().language),
           })
         : wateringPlan.id,
-    }),
+    },
+  }),
   notFound: {
     entityName: { key: 'wateringPlan:entity.name' },
     backTo: '/watering-plans',

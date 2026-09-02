@@ -27,12 +27,12 @@
     "userCountLabel": "Number of employees assigned to watering plans",
     "userCountValue": "{count} employees",
     "userCountDescription": "This describes the number of all employees linked to watering plans. Duplicates were not excluded.",
-    "regionListTitle": "Number of waterings per district:",
+    "regionListTitle": "Number of watering plans per district:",
     "regionListLabel": "District",
     "vehicleListTitle": "Vehicle usage:",
     "vehicleListLabel": "Vehicle",
-    "wateringCountColumnHeader": "Number of waterings",
-    "wateringCountValue_one": "{count} watering",
-    "wateringCountValue_other": "{count} waterings"
+    "wateringCountColumnHeader": "Number of watering plans",
+    "wateringCountValue_one": "{count} watering plan",
+    "wateringCountValue_other": "{count} watering plans"
   }
 }
