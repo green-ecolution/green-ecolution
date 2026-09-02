@@ -37,22 +37,13 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
         .routes(routes!(delete_plan_comment, update_plan_comment))
 }
 
-/// The parent a comment belongs to, resolved once so its resource cannot be
-/// stated twice (and disagree) between authorization checks on the same
-/// request.
-struct ParentScope {
-    subject: CommentSubject,
-    org: Uuid,
-    resource: Resource,
-}
-
 /// Resolves the cluster subject after checking that the caller may see the
 /// cluster at all.
 async fn cluster_scope(
     state: &AppState,
     user_id: Uuid,
     cluster_id: Uuid,
-) -> Result<ParentScope, ServiceError> {
+) -> Result<CommentSubject, ServiceError> {
     let view = state
         .cluster_service
         .view_by_id(Id::new(cluster_id))
@@ -63,18 +54,14 @@ async fn cluster_scope(
         Permission::new(Resource::TreeCluster, Action::Read),
         view.organization_id,
     )?;
-    Ok(ParentScope {
-        subject: CommentSubject::TreeCluster(Id::new(cluster_id)),
-        org: view.organization_id,
-        resource: Resource::TreeCluster,
-    })
+    Ok(CommentSubject::TreeCluster(Id::new(cluster_id)))
 }
 
 async fn plan_scope(
     state: &AppState,
     user_id: Uuid,
     watering_plan_id: Uuid,
-) -> Result<ParentScope, ServiceError> {
+) -> Result<CommentSubject, ServiceError> {
     let view = state
         .watering_plan_service
         .view_by_id(Id::new(watering_plan_id))
@@ -85,54 +72,22 @@ async fn plan_scope(
         Permission::new(Resource::WateringPlan, Action::Read),
         view.organization_id,
     )?;
-    Ok(ParentScope {
-        subject: CommentSubject::WateringPlan(Id::new(watering_plan_id)),
-        org: view.organization_id,
-        resource: Resource::WateringPlan,
-    })
+    Ok(CommentSubject::WateringPlan(Id::new(watering_plan_id)))
 }
 
-/// Checks that `comment_id` belongs to `scope.subject` and that the caller
-/// may remove it. The author may always delete their own comment; anyone else
-/// needs the parent resource's delete permission. A comment addressed through
-/// the wrong parent reads as 404, never 403.
-async fn authorize_delete(
+/// Checks that `comment_id` belongs to `subject` and that the caller is its
+/// author. The same rule applies to editing and deleting: only the author
+/// may act on their own comment, with no fallback via any permission. A
+/// comment addressed through the wrong parent reads as 404, never 403.
+async fn authorize_own_comment(
     state: &AppState,
     user_id: Uuid,
-    scope: ParentScope,
+    subject: CommentSubject,
     comment_id: Uuid,
 ) -> Result<Id<Comment>, ServiceError> {
     let id = Id::new(comment_id);
     let comment = state.comment_service.by_id(id).await?;
-    if comment.subject != scope.subject {
-        return Err(RepositoryError::NotFound.into());
-    }
-    if comment.author_id != user_id {
-        state
-            .authorization_service
-            .require(
-                user_id,
-                Permission::new(scope.resource, Action::Delete),
-                Id::new(scope.org),
-            )
-            .await?;
-    }
-    Ok(id)
-}
-
-/// Checks that `comment_id` belongs to `scope.subject` and that the caller
-/// is its author. Unlike delete, there is no fallback via the parent's
-/// `:delete` permission: only the author may edit their own text. A comment
-/// addressed through the wrong parent reads as 404, never 403.
-async fn authorize_edit(
-    state: &AppState,
-    user_id: Uuid,
-    scope: ParentScope,
-    comment_id: Uuid,
-) -> Result<Id<Comment>, ServiceError> {
-    let id = Id::new(comment_id);
-    let comment = state.comment_service.by_id(id).await?;
-    if comment.subject != scope.subject {
+    if comment.subject != subject {
         return Err(RepositoryError::NotFound.into());
     }
     if comment.author_id != user_id {
@@ -235,8 +190,8 @@ pub async fn list_cluster_comments(
     Path(cluster_id): Path<uuid::Uuid>,
     Query(params): Query<PaginationParams>,
 ) -> Result<Json<ListResponse<CommentResponse>>, ServiceError> {
-    let scope = cluster_scope(&state, user.id, cluster_id).await?;
-    Ok(Json(list_for(&state, scope.subject, &params).await?))
+    let subject = cluster_scope(&state, user.id, cluster_id).await?;
+    Ok(Json(list_for(&state, subject, &params).await?))
 }
 
 #[utoipa::path(
@@ -262,8 +217,8 @@ pub async fn create_cluster_comment(
     Path(cluster_id): Path<uuid::Uuid>,
     Json(payload): Json<CreateCommentRequest>,
 ) -> Result<(axum::http::StatusCode, Json<CommentResponse>), ServiceError> {
-    let scope = cluster_scope(&state, user.id, cluster_id).await?;
-    let response = create_for(&state, scope.subject, user.id, payload).await?;
+    let subject = cluster_scope(&state, user.id, cluster_id).await?;
+    let response = create_for(&state, subject, user.id, payload).await?;
     Ok((axum::http::StatusCode::CREATED, Json(response)))
 }
 
@@ -273,14 +228,14 @@ pub async fn create_cluster_comment(
     tag = "Comments",
     operation_id = "deleteClusterComment",
     summary = "Delete a comment on a tree cluster",
-    description = "Removes a comment. The author may delete their own comment; anyone else needs `tree_cluster:delete` in the cluster's organization.",
+    description = "Removes a comment. Only the comment's author may delete it.",
     params(
         ("cluster_id" = uuid::Uuid, Path, description = "Cluster ID"),
         ("comment_id" = uuid::Uuid, Path, description = "Comment ID"),
     ),
     responses(
         (status = 204, description = "Comment deleted"),
-        (status = 403, description = "Not the author and missing `tree_cluster:delete`", body = ErrorBody),
+        (status = 403, description = "Not the author", body = ErrorBody),
         (status = 404, description = "Cluster or comment not found, or the comment belongs to another cluster", body = ErrorBody),
         (status = 500, description = "Internal server error", body = ErrorBody),
     )
@@ -291,8 +246,8 @@ pub async fn delete_cluster_comment(
     user: AuthUserExtractor,
     Path((cluster_id, comment_id)): Path<(uuid::Uuid, uuid::Uuid)>,
 ) -> Result<axum::http::StatusCode, ServiceError> {
-    let scope = cluster_scope(&state, user.id, cluster_id).await?;
-    let id = authorize_delete(&state, user.id, scope, comment_id).await?;
+    let subject = cluster_scope(&state, user.id, cluster_id).await?;
+    let id = authorize_own_comment(&state, user.id, subject, comment_id).await?;
     state.comment_service.delete(id).await?;
     Ok(axum::http::StatusCode::NO_CONTENT)
 }
@@ -303,7 +258,7 @@ pub async fn delete_cluster_comment(
     tag = "Comments",
     operation_id = "updateClusterComment",
     summary = "Edit a comment on a tree cluster",
-    description = "Replaces a comment's text. Only the comment's author may edit it, unlike delete there is no fallback via `tree_cluster:delete`.",
+    description = "Replaces a comment's text. Only the comment's author may edit it.",
     params(
         ("cluster_id" = uuid::Uuid, Path, description = "Cluster ID"),
         ("comment_id" = uuid::Uuid, Path, description = "Comment ID"),
@@ -324,8 +279,8 @@ pub async fn update_cluster_comment(
     Path((cluster_id, comment_id)): Path<(uuid::Uuid, uuid::Uuid)>,
     Json(payload): Json<UpdateCommentRequest>,
 ) -> Result<Json<CommentResponse>, ServiceError> {
-    let scope = cluster_scope(&state, user.id, cluster_id).await?;
-    let id = authorize_edit(&state, user.id, scope, comment_id).await?;
+    let subject = cluster_scope(&state, user.id, cluster_id).await?;
+    let id = authorize_own_comment(&state, user.id, subject, comment_id).await?;
     Ok(Json(update_for(&state, id, payload).await?))
 }
 
@@ -350,8 +305,8 @@ pub async fn list_plan_comments(
     Path(watering_plan_id): Path<uuid::Uuid>,
     Query(params): Query<PaginationParams>,
 ) -> Result<Json<ListResponse<CommentResponse>>, ServiceError> {
-    let scope = plan_scope(&state, user.id, watering_plan_id).await?;
-    Ok(Json(list_for(&state, scope.subject, &params).await?))
+    let subject = plan_scope(&state, user.id, watering_plan_id).await?;
+    Ok(Json(list_for(&state, subject, &params).await?))
 }
 
 #[utoipa::path(
@@ -377,8 +332,8 @@ pub async fn create_plan_comment(
     Path(watering_plan_id): Path<uuid::Uuid>,
     Json(payload): Json<CreateCommentRequest>,
 ) -> Result<(axum::http::StatusCode, Json<CommentResponse>), ServiceError> {
-    let scope = plan_scope(&state, user.id, watering_plan_id).await?;
-    let response = create_for(&state, scope.subject, user.id, payload).await?;
+    let subject = plan_scope(&state, user.id, watering_plan_id).await?;
+    let response = create_for(&state, subject, user.id, payload).await?;
     Ok((axum::http::StatusCode::CREATED, Json(response)))
 }
 
@@ -388,14 +343,14 @@ pub async fn create_plan_comment(
     tag = "Comments",
     operation_id = "deleteWateringPlanComment",
     summary = "Delete a comment on a watering plan",
-    description = "Removes a comment. The author may delete their own comment; anyone else needs `watering_plan:delete` in the plan's organization.",
+    description = "Removes a comment. Only the comment's author may delete it.",
     params(
         ("watering_plan_id" = uuid::Uuid, Path, description = "Watering plan ID"),
         ("comment_id" = uuid::Uuid, Path, description = "Comment ID"),
     ),
     responses(
         (status = 204, description = "Comment deleted"),
-        (status = 403, description = "Not the author and missing `watering_plan:delete`", body = ErrorBody),
+        (status = 403, description = "Not the author", body = ErrorBody),
         (status = 404, description = "Watering plan or comment not found, or the comment belongs to another plan", body = ErrorBody),
         (status = 500, description = "Internal server error", body = ErrorBody),
     )
@@ -406,8 +361,8 @@ pub async fn delete_plan_comment(
     user: AuthUserExtractor,
     Path((watering_plan_id, comment_id)): Path<(uuid::Uuid, uuid::Uuid)>,
 ) -> Result<axum::http::StatusCode, ServiceError> {
-    let scope = plan_scope(&state, user.id, watering_plan_id).await?;
-    let id = authorize_delete(&state, user.id, scope, comment_id).await?;
+    let subject = plan_scope(&state, user.id, watering_plan_id).await?;
+    let id = authorize_own_comment(&state, user.id, subject, comment_id).await?;
     state.comment_service.delete(id).await?;
     Ok(axum::http::StatusCode::NO_CONTENT)
 }
@@ -418,7 +373,7 @@ pub async fn delete_plan_comment(
     tag = "Comments",
     operation_id = "updateWateringPlanComment",
     summary = "Edit a comment on a watering plan",
-    description = "Replaces a comment's text. Only the comment's author may edit it, unlike delete there is no fallback via `watering_plan:delete`.",
+    description = "Replaces a comment's text. Only the comment's author may edit it.",
     params(
         ("watering_plan_id" = uuid::Uuid, Path, description = "Watering plan ID"),
         ("comment_id" = uuid::Uuid, Path, description = "Comment ID"),
@@ -439,7 +394,7 @@ pub async fn update_plan_comment(
     Path((watering_plan_id, comment_id)): Path<(uuid::Uuid, uuid::Uuid)>,
     Json(payload): Json<UpdateCommentRequest>,
 ) -> Result<Json<CommentResponse>, ServiceError> {
-    let scope = plan_scope(&state, user.id, watering_plan_id).await?;
-    let id = authorize_edit(&state, user.id, scope, comment_id).await?;
+    let subject = plan_scope(&state, user.id, watering_plan_id).await?;
+    let id = authorize_own_comment(&state, user.id, subject, comment_id).await?;
     Ok(Json(update_for(&state, id, payload).await?))
 }

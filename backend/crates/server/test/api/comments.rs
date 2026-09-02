@@ -470,7 +470,7 @@ async fn list_is_newest_first_and_paginated() {
 }
 
 /// Seeds a second user in an existing org with the given permissions and
-/// returns their token. Used to test that a non-author needs `:delete`.
+/// returns their token. Used to test that only the author may edit or delete.
 async fn seed_second_user_in_org(
     harness: &crate::auth_helpers::AuthHarness,
     app: &TestApp,
@@ -633,7 +633,7 @@ async fn deleting_twice_gets_404() {
 }
 
 #[tokio::test]
-async fn non_author_needs_delete_permission() {
+async fn only_the_author_may_delete_a_cluster_comment() {
     let (harness, app) = spawn_with_auth().await;
     let (org, author_token) = seed_user_with_permissions(
         &harness,
@@ -683,8 +683,22 @@ async fn non_author_needs_delete_permission() {
             .await
             .unwrap()
             .status(),
-        204
+        403
     );
+
+    let list: serde_json::Value = client
+        .get(format!(
+            "{}/api/v1/clusters/{cluster_id}/comments",
+            app.address
+        ))
+        .bearer_auth(&author_token)
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(list["pagination"]["total_records"], 1);
 }
 
 #[tokio::test]
@@ -811,7 +825,7 @@ async fn create_plan_comment_only_requires_read_permission_on_the_parent() {
 }
 
 #[tokio::test]
-async fn non_author_needs_delete_permission_on_a_plan_comment() {
+async fn only_the_author_may_delete_a_plan_comment() {
     let (harness, app) = spawn_with_auth().await;
     let (org, author_token) =
         seed_user_with_permissions(&harness, &app, "Plan Fremdlöschung", PLAN_PERMS).await;
@@ -852,8 +866,22 @@ async fn non_author_needs_delete_permission_on_a_plan_comment() {
             .await
             .unwrap()
             .status(),
-        204
+        403
     );
+
+    let list: serde_json::Value = client
+        .get(format!(
+            "{}/api/v1/watering-plans/{plan_id}/comments",
+            app.address
+        ))
+        .bearer_auth(&author_token)
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(list["pagination"]["total_records"], 1);
 }
 
 #[tokio::test]
