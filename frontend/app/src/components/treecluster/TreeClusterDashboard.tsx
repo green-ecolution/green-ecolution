@@ -163,6 +163,7 @@ const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
           <ClusterKpiRow treecluster={treecluster} />
           <ClusterWaterSupplyChart clusterId={treecluster.id} hasSensors={hasSensors} />
           <ClusterWateringHistory clusterId={treecluster.id} />
+          <CommentsSection subject="cluster" parentId={treecluster.id.toString()} />
         </div>
         <div className="flex min-w-0 flex-col gap-6">
           <ClusterLocationCard treecluster={treecluster} />
@@ -170,10 +171,6 @@ const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
           <ClusterTreeList trees={trees} />
           <ClusterMasterDataCard treecluster={treecluster} />
         </div>
-      </div>
-
-      <div className="mt-10">
-        <CommentsSection subject="cluster" parentId={treecluster.id.toString()} />
       </div>
 
       <DeleteConfirmDialog

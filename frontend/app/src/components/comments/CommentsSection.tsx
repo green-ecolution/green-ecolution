@@ -57,9 +57,9 @@ const CommentsSection = ({ subject, parentId }: CommentsSectionProps) => {
   const commentsQuery = useInfiniteQuery(commentQueries.list(subject, parentId))
   const comments = commentsQuery.data?.pages.flatMap((page) => page.data) ?? []
 
-  // A failed page-two fetch must not hide the comments page one already
-  // delivered, so the alert accompanies the list instead of replacing it.
-  const showList = !commentsQuery.isError || comments.length > 0
+  // No comments means no list at all, not an empty-state hint. A failed
+  // page-two fetch still shows what page one delivered, alongside the alert.
+  const showList = comments.length > 0 || commentsQuery.isLoading
 
   const { create, update, remove } = useCommentMutations(subject, parentId)
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
@@ -99,7 +99,7 @@ const CommentsSection = ({ subject, parentId }: CommentsSectionProps) => {
           )}
 
           {showList && (
-            <CommentList isLoading={commentsQuery.isLoading} emptyLabel={t('list.empty')}>
+            <CommentList isLoading={commentsQuery.isLoading}>
               {comments.map((comment) => {
                 const isOwnComment = comment.authorId === me?.id
                 return (

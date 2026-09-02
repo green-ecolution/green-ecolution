@@ -110,7 +110,9 @@ describe('CommentsSection', () => {
     const user = userEvent.setup()
 
     renderSection()
-    await screen.findByText('Für diesen Eintrag gibt es noch keine Kommentare.')
+    // Wait for the list request to settle before typing, so the submit is not
+    // racing the initial fetch.
+    await waitFor(() => expect(listClusterComments).toHaveBeenCalled())
 
     const textbox = screen.getByRole('textbox', { name: 'Kommentar hinzufügen' })
     await user.type(textbox, 'Neuer Kommentar')
@@ -217,15 +219,27 @@ describe('CommentsSection', () => {
     })
   })
 
-  it('explains a failed load instead of claiming there are no comments', async () => {
+  // 'Noch keine Kommentare.' is the UI library's own empty-state copy. It can
+  // only appear if the list gets rendered with nothing in it, so asserting its
+  // absence is what guards the "show nothing when empty" rule.
+  it('shows nothing but the composer when there are no comments', async () => {
+    listClusterComments.mockResolvedValue(pageOf([]))
+
+    renderSection()
+
+    expect(await screen.findByRole('textbox')).toBeInTheDocument()
+    await waitFor(() =>
+      expect(screen.queryByText('Noch keine Kommentare.')).not.toBeInTheDocument(),
+    )
+  })
+
+  it('explains a failed load instead of showing an empty list', async () => {
     listClusterComments.mockRejectedValue(new Error('boom'))
 
     renderSection()
 
     expect(await screen.findByText('Kommentare konnten nicht geladen werden')).toBeInTheDocument()
-    expect(
-      screen.queryByText('Für diesen Eintrag gibt es noch keine Kommentare.'),
-    ).not.toBeInTheDocument()
+    expect(screen.queryByText('Noch keine Kommentare.')).not.toBeInTheDocument()
   })
 
   it('keeps already loaded comments visible when a later page fails', async () => {

@@ -5,7 +5,6 @@
   },
   "list": {
     "loadMore": "Weitere Kommentare laden",
-    "empty": "Für diesen Eintrag gibt es noch keine Kommentare.",
     "edited": "(bearbeitet)",
     "unknownAuthor": "Unbekannter Nutzer",
     "errorTitle": "Kommentare konnten nicht geladen werden",
