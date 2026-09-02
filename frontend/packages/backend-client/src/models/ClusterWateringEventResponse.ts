@@ -77,7 +77,7 @@ export function ClusterWateringEventResponseToJSONTyped(value?: ClusterWateringE
     return {
         
         'consumed_water_liters': value['consumedWaterLiters'],
-        'date': value['date'].toISOString().substring(0,10),
+        'date': ((value['date']).toISOString().substring(0,10)),
         'watering_plan_id': value['wateringPlanId'],
     };
 }

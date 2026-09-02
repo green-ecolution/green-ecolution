@@ -84,9 +84,10 @@ export interface UpdateWateringPlanCommentRequest {
 export class CommentsApi extends runtime.BaseAPI {
 
     /**
-     * Creates request options for createClusterComment without sending the request
+     * Adds a comment to a tree cluster. Requires `tree_cluster:read` in the cluster\'s organization — anyone who may see the cluster may annotate it.
+     * Comment on a tree cluster
      */
-    async createClusterCommentRequestOpts(requestParameters: CreateClusterCommentRequest): Promise<runtime.RequestOpts> {
+    async createClusterCommentRaw(requestParameters: CreateClusterCommentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CommentResponse>> {
         if (requestParameters['clusterId'] == null) {
             throw new runtime.RequiredError(
                 'clusterId',
@@ -111,22 +112,13 @@ export class CommentsApi extends runtime.BaseAPI {
         let urlPath = `/v1/clusters/{cluster_id}/comments`;
         urlPath = urlPath.replace(`{${"cluster_id"}}`, encodeURIComponent(String(requestParameters['clusterId'])));
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
             body: CreateCommentRequestToJSON(requestParameters['createCommentRequest']),
-        };
-    }
-
-    /**
-     * Adds a comment to a tree cluster. Requires `tree_cluster:read` in the cluster\'s organization — anyone who may see the cluster may annotate it.
-     * Comment on a tree cluster
-     */
-    async createClusterCommentRaw(requestParameters: CreateClusterCommentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CommentResponse>> {
-        const requestOptions = await this.createClusterCommentRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => CommentResponseFromJSON(jsonValue));
     }
@@ -141,9 +133,10 @@ export class CommentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for createWateringPlanComment without sending the request
+     * Adds a comment to a watering plan. Requires `watering_plan:read` in the plan\'s organization — anyone who may see the plan may annotate it.
+     * Comment on a watering plan
      */
-    async createWateringPlanCommentRequestOpts(requestParameters: CreateWateringPlanCommentRequest): Promise<runtime.RequestOpts> {
+    async createWateringPlanCommentRaw(requestParameters: CreateWateringPlanCommentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CommentResponse>> {
         if (requestParameters['wateringPlanId'] == null) {
             throw new runtime.RequiredError(
                 'wateringPlanId',
@@ -168,22 +161,13 @@ export class CommentsApi extends runtime.BaseAPI {
         let urlPath = `/v1/watering-plans/{watering_plan_id}/comments`;
         urlPath = urlPath.replace(`{${"watering_plan_id"}}`, encodeURIComponent(String(requestParameters['wateringPlanId'])));
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
             body: CreateCommentRequestToJSON(requestParameters['createCommentRequest']),
-        };
-    }
-
-    /**
-     * Adds a comment to a watering plan. Requires `watering_plan:read` in the plan\'s organization — anyone who may see the plan may annotate it.
-     * Comment on a watering plan
-     */
-    async createWateringPlanCommentRaw(requestParameters: CreateWateringPlanCommentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CommentResponse>> {
-        const requestOptions = await this.createWateringPlanCommentRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => CommentResponseFromJSON(jsonValue));
     }
@@ -198,9 +182,10 @@ export class CommentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for deleteClusterComment without sending the request
+     * Removes a comment. Only the comment\'s author may delete it.
+     * Delete a comment on a tree cluster
      */
-    async deleteClusterCommentRequestOpts(requestParameters: DeleteClusterCommentRequest): Promise<runtime.RequestOpts> {
+    async deleteClusterCommentRaw(requestParameters: DeleteClusterCommentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['clusterId'] == null) {
             throw new runtime.RequiredError(
                 'clusterId',
@@ -224,21 +209,12 @@ export class CommentsApi extends runtime.BaseAPI {
         urlPath = urlPath.replace(`{${"cluster_id"}}`, encodeURIComponent(String(requestParameters['clusterId'])));
         urlPath = urlPath.replace(`{${"comment_id"}}`, encodeURIComponent(String(requestParameters['commentId'])));
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'DELETE',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * Removes a comment. Only the comment\'s author may delete it.
-     * Delete a comment on a tree cluster
-     */
-    async deleteClusterCommentRaw(requestParameters: DeleteClusterCommentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        const requestOptions = await this.deleteClusterCommentRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.VoidApiResponse(response);
     }
@@ -252,9 +228,10 @@ export class CommentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for deleteWateringPlanComment without sending the request
+     * Removes a comment. Only the comment\'s author may delete it.
+     * Delete a comment on a watering plan
      */
-    async deleteWateringPlanCommentRequestOpts(requestParameters: DeleteWateringPlanCommentRequest): Promise<runtime.RequestOpts> {
+    async deleteWateringPlanCommentRaw(requestParameters: DeleteWateringPlanCommentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['wateringPlanId'] == null) {
             throw new runtime.RequiredError(
                 'wateringPlanId',
@@ -278,21 +255,12 @@ export class CommentsApi extends runtime.BaseAPI {
         urlPath = urlPath.replace(`{${"watering_plan_id"}}`, encodeURIComponent(String(requestParameters['wateringPlanId'])));
         urlPath = urlPath.replace(`{${"comment_id"}}`, encodeURIComponent(String(requestParameters['commentId'])));
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'DELETE',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * Removes a comment. Only the comment\'s author may delete it.
-     * Delete a comment on a watering plan
-     */
-    async deleteWateringPlanCommentRaw(requestParameters: DeleteWateringPlanCommentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        const requestOptions = await this.deleteWateringPlanCommentRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.VoidApiResponse(response);
     }
@@ -306,9 +274,10 @@ export class CommentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for listClusterComments without sending the request
+     * Returns the comments of a tree cluster, newest first. Requires `tree_cluster:read` in the cluster\'s organization.
+     * List comments on a tree cluster
      */
-    async listClusterCommentsRequestOpts(requestParameters: ListClusterCommentsRequest): Promise<runtime.RequestOpts> {
+    async listClusterCommentsRaw(requestParameters: ListClusterCommentsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListResponseCommentResponse>> {
         if (requestParameters['clusterId'] == null) {
             throw new runtime.RequiredError(
                 'clusterId',
@@ -332,21 +301,12 @@ export class CommentsApi extends runtime.BaseAPI {
         let urlPath = `/v1/clusters/{cluster_id}/comments`;
         urlPath = urlPath.replace(`{${"cluster_id"}}`, encodeURIComponent(String(requestParameters['clusterId'])));
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * Returns the comments of a tree cluster, newest first. Requires `tree_cluster:read` in the cluster\'s organization.
-     * List comments on a tree cluster
-     */
-    async listClusterCommentsRaw(requestParameters: ListClusterCommentsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListResponseCommentResponse>> {
-        const requestOptions = await this.listClusterCommentsRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => ListResponseCommentResponseFromJSON(jsonValue));
     }
@@ -361,9 +321,10 @@ export class CommentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for listWateringPlanComments without sending the request
+     * Returns the comments of a watering plan, newest first. Requires `watering_plan:read` in the plan\'s organization.
+     * List comments on a watering plan
      */
-    async listWateringPlanCommentsRequestOpts(requestParameters: ListWateringPlanCommentsRequest): Promise<runtime.RequestOpts> {
+    async listWateringPlanCommentsRaw(requestParameters: ListWateringPlanCommentsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListResponseCommentResponse>> {
         if (requestParameters['wateringPlanId'] == null) {
             throw new runtime.RequiredError(
                 'wateringPlanId',
@@ -387,21 +348,12 @@ export class CommentsApi extends runtime.BaseAPI {
         let urlPath = `/v1/watering-plans/{watering_plan_id}/comments`;
         urlPath = urlPath.replace(`{${"watering_plan_id"}}`, encodeURIComponent(String(requestParameters['wateringPlanId'])));
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * Returns the comments of a watering plan, newest first. Requires `watering_plan:read` in the plan\'s organization.
-     * List comments on a watering plan
-     */
-    async listWateringPlanCommentsRaw(requestParameters: ListWateringPlanCommentsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListResponseCommentResponse>> {
-        const requestOptions = await this.listWateringPlanCommentsRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => ListResponseCommentResponseFromJSON(jsonValue));
     }
@@ -416,9 +368,10 @@ export class CommentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for updateClusterComment without sending the request
+     * Replaces a comment\'s text. Only the comment\'s author may edit it.
+     * Edit a comment on a tree cluster
      */
-    async updateClusterCommentRequestOpts(requestParameters: UpdateClusterCommentRequest): Promise<runtime.RequestOpts> {
+    async updateClusterCommentRaw(requestParameters: UpdateClusterCommentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CommentResponse>> {
         if (requestParameters['clusterId'] == null) {
             throw new runtime.RequiredError(
                 'clusterId',
@@ -451,22 +404,13 @@ export class CommentsApi extends runtime.BaseAPI {
         urlPath = urlPath.replace(`{${"cluster_id"}}`, encodeURIComponent(String(requestParameters['clusterId'])));
         urlPath = urlPath.replace(`{${"comment_id"}}`, encodeURIComponent(String(requestParameters['commentId'])));
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
             body: UpdateCommentRequestToJSON(requestParameters['updateCommentRequest']),
-        };
-    }
-
-    /**
-     * Replaces a comment\'s text. Only the comment\'s author may edit it.
-     * Edit a comment on a tree cluster
-     */
-    async updateClusterCommentRaw(requestParameters: UpdateClusterCommentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CommentResponse>> {
-        const requestOptions = await this.updateClusterCommentRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => CommentResponseFromJSON(jsonValue));
     }
@@ -481,9 +425,10 @@ export class CommentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for updateWateringPlanComment without sending the request
+     * Replaces a comment\'s text. Only the comment\'s author may edit it.
+     * Edit a comment on a watering plan
      */
-    async updateWateringPlanCommentRequestOpts(requestParameters: UpdateWateringPlanCommentRequest): Promise<runtime.RequestOpts> {
+    async updateWateringPlanCommentRaw(requestParameters: UpdateWateringPlanCommentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CommentResponse>> {
         if (requestParameters['wateringPlanId'] == null) {
             throw new runtime.RequiredError(
                 'wateringPlanId',
@@ -516,22 +461,13 @@ export class CommentsApi extends runtime.BaseAPI {
         urlPath = urlPath.replace(`{${"watering_plan_id"}}`, encodeURIComponent(String(requestParameters['wateringPlanId'])));
         urlPath = urlPath.replace(`{${"comment_id"}}`, encodeURIComponent(String(requestParameters['commentId'])));
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
             body: UpdateCommentRequestToJSON(requestParameters['updateCommentRequest']),
-        };
-    }
-
-    /**
-     * Replaces a comment\'s text. Only the comment\'s author may edit it.
-     * Edit a comment on a watering plan
-     */
-    async updateWateringPlanCommentRaw(requestParameters: UpdateWateringPlanCommentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CommentResponse>> {
-        const requestOptions = await this.updateWateringPlanCommentRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => CommentResponseFromJSON(jsonValue));
     }

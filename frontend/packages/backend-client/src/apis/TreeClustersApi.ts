@@ -101,9 +101,10 @@ export interface UpdateClusterRequest {
 export class TreeClustersApi extends runtime.BaseAPI {
 
     /**
-     * Creates request options for createCluster without sending the request
+     * Creates a new tree cluster with the given properties and returns the created resource.
+     * Create a tree cluster
      */
-    async createClusterRequestOpts(requestParameters: CreateClusterRequest): Promise<runtime.RequestOpts> {
+    async createClusterRaw(requestParameters: CreateClusterRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TreeClusterResponse>> {
         if (requestParameters['treeClusterCreateRequest'] == null) {
             throw new runtime.RequiredError(
                 'treeClusterCreateRequest',
@@ -120,22 +121,13 @@ export class TreeClustersApi extends runtime.BaseAPI {
 
         let urlPath = `/v1/clusters`;
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
             body: TreeClusterCreateRequestToJSON(requestParameters['treeClusterCreateRequest']),
-        };
-    }
-
-    /**
-     * Creates a new tree cluster with the given properties and returns the created resource.
-     * Create a tree cluster
-     */
-    async createClusterRaw(requestParameters: CreateClusterRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TreeClusterResponse>> {
-        const requestOptions = await this.createClusterRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => TreeClusterResponseFromJSON(jsonValue));
     }
@@ -150,9 +142,10 @@ export class TreeClustersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for deleteCluster without sending the request
+     * Deletes a tree cluster identified by its ID.
+     * Delete a tree cluster
      */
-    async deleteClusterRequestOpts(requestParameters: DeleteClusterRequest): Promise<runtime.RequestOpts> {
+    async deleteClusterRaw(requestParameters: DeleteClusterRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['clusterId'] == null) {
             throw new runtime.RequiredError(
                 'clusterId',
@@ -168,21 +161,12 @@ export class TreeClustersApi extends runtime.BaseAPI {
         let urlPath = `/v1/clusters/{cluster_id}`;
         urlPath = urlPath.replace(`{${"cluster_id"}}`, encodeURIComponent(String(requestParameters['clusterId'])));
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'DELETE',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * Deletes a tree cluster identified by its ID.
-     * Delete a tree cluster
-     */
-    async deleteClusterRaw(requestParameters: DeleteClusterRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        const requestOptions = await this.deleteClusterRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.VoidApiResponse(response);
     }
@@ -196,9 +180,10 @@ export class TreeClustersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for getCluster without sending the request
+     * Returns a single tree cluster by its unique identifier, including fully resolved tree objects.
+     * Get a tree cluster
      */
-    async getClusterRequestOpts(requestParameters: GetClusterRequest): Promise<runtime.RequestOpts> {
+    async getClusterRaw(requestParameters: GetClusterRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TreeClusterResponse>> {
         if (requestParameters['clusterId'] == null) {
             throw new runtime.RequiredError(
                 'clusterId',
@@ -214,21 +199,12 @@ export class TreeClustersApi extends runtime.BaseAPI {
         let urlPath = `/v1/clusters/{cluster_id}`;
         urlPath = urlPath.replace(`{${"cluster_id"}}`, encodeURIComponent(String(requestParameters['clusterId'])));
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * Returns a single tree cluster by its unique identifier, including fully resolved tree objects.
-     * Get a tree cluster
-     */
-    async getClusterRaw(requestParameters: GetClusterRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TreeClusterResponse>> {
-        const requestOptions = await this.getClusterRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => TreeClusterResponseFromJSON(jsonValue));
     }
@@ -243,9 +219,10 @@ export class TreeClustersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for getClusterSoilMoisture without sending the request
+     * Aggregates volumetric soil-moisture readings (mean/min/max per probe depth and time bucket) across all sensors of the cluster, with per-depth stress thresholds derived from the cluster\'s soil condition and the cluster\'s finished watering runs.
+     * Bucketed soil-moisture series for a cluster
      */
-    async getClusterSoilMoistureRequestOpts(requestParameters: GetClusterSoilMoistureRequest): Promise<runtime.RequestOpts> {
+    async getClusterSoilMoistureRaw(requestParameters: GetClusterSoilMoistureRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SoilMoistureSeriesResponse>> {
         if (requestParameters['clusterId'] == null) {
             throw new runtime.RequiredError(
                 'clusterId',
@@ -273,21 +250,12 @@ export class TreeClustersApi extends runtime.BaseAPI {
         let urlPath = `/v1/clusters/{cluster_id}/soil-moisture`;
         urlPath = urlPath.replace(`{${"cluster_id"}}`, encodeURIComponent(String(requestParameters['clusterId'])));
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * Aggregates volumetric soil-moisture readings (mean/min/max per probe depth and time bucket) across all sensors of the cluster, with per-depth stress thresholds derived from the cluster\'s soil condition and the cluster\'s finished watering runs.
-     * Bucketed soil-moisture series for a cluster
-     */
-    async getClusterSoilMoistureRaw(requestParameters: GetClusterSoilMoistureRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SoilMoistureSeriesResponse>> {
-        const requestOptions = await this.getClusterSoilMoistureRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => SoilMoistureSeriesResponseFromJSON(jsonValue));
     }
@@ -302,9 +270,10 @@ export class TreeClustersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for getClusterStatistics without sending the request
+     * Counts of non-archived clusters per watering status, plus total clusters and total trees in clusters.
+     * Cluster statistics
      */
-    async getClusterStatisticsRequestOpts(): Promise<runtime.RequestOpts> {
+    async getClusterStatisticsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ClusterStatisticsResponse>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -312,21 +281,12 @@ export class TreeClustersApi extends runtime.BaseAPI {
 
         let urlPath = `/v1/clusters/statistics`;
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * Counts of non-archived clusters per watering status, plus total clusters and total trees in clusters.
-     * Cluster statistics
-     */
-    async getClusterStatisticsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ClusterStatisticsResponse>> {
-        const requestOptions = await this.getClusterStatisticsRequestOpts();
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => ClusterStatisticsResponseFromJSON(jsonValue));
     }
@@ -341,9 +301,10 @@ export class TreeClustersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for listClusterBoundaries without sending the request
+     * Returns a convex-hull boundary polygon (GeoJSON, buffered by a fixed margin in meters) around the trees of each non-archived cluster. Not paginated.
+     * List cluster boundaries
      */
-    async listClusterBoundariesRequestOpts(): Promise<runtime.RequestOpts> {
+    async listClusterBoundariesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ClusterBoundaryListResponse>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -351,21 +312,12 @@ export class TreeClustersApi extends runtime.BaseAPI {
 
         let urlPath = `/v1/clusters/boundaries`;
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * Returns a convex-hull boundary polygon (GeoJSON, buffered by a fixed margin in meters) around the trees of each non-archived cluster. Not paginated.
-     * List cluster boundaries
-     */
-    async listClusterBoundariesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ClusterBoundaryListResponse>> {
-        const requestOptions = await this.listClusterBoundariesRequestOpts();
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => ClusterBoundaryListResponseFromJSON(jsonValue));
     }
@@ -380,9 +332,10 @@ export class TreeClustersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for listClusterMarkers without sending the request
+     * Returns lightweight markers (id, name, lat, lng, status, tree_count) for all non-archived clusters with a centroid. Not paginated.
+     * List cluster markers
      */
-    async listClusterMarkersRequestOpts(): Promise<runtime.RequestOpts> {
+    async listClusterMarkersRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ClusterMarkerListResponse>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -390,21 +343,12 @@ export class TreeClustersApi extends runtime.BaseAPI {
 
         let urlPath = `/v1/clusters/markers`;
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * Returns lightweight markers (id, name, lat, lng, status, tree_count) for all non-archived clusters with a centroid. Not paginated.
-     * List cluster markers
-     */
-    async listClusterMarkersRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ClusterMarkerListResponse>> {
-        const requestOptions = await this.listClusterMarkersRequestOpts();
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => ClusterMarkerListResponseFromJSON(jsonValue));
     }
@@ -419,9 +363,10 @@ export class TreeClustersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for listClusters without sending the request
+     * Returns a paginated list of all tree clusters with a compact representation including region info. Optional filter parameters (watering_status, region) narrow the result; array parameters are repeatable.
+     * List all tree clusters
      */
-    async listClustersRequestOpts(requestParameters: ListClustersRequest): Promise<runtime.RequestOpts> {
+    async listClustersRaw(requestParameters: ListClustersRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListResponseTreeClusterInListResponse>> {
         const queryParameters: any = {};
 
         if (requestParameters['page'] != null) {
@@ -461,21 +406,12 @@ export class TreeClustersApi extends runtime.BaseAPI {
 
         let urlPath = `/v1/clusters`;
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * Returns a paginated list of all tree clusters with a compact representation including region info. Optional filter parameters (watering_status, region) narrow the result; array parameters are repeatable.
-     * List all tree clusters
-     */
-    async listClustersRaw(requestParameters: ListClustersRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListResponseTreeClusterInListResponse>> {
-        const requestOptions = await this.listClustersRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => ListResponseTreeClusterInListResponseFromJSON(jsonValue));
     }
@@ -490,9 +426,10 @@ export class TreeClustersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for transferCluster without sending the request
+     * Moves the cluster, its member trees, and their attached sensors to a different owning organization in one operation. Requires `tree_cluster:update` in both the source and target organization.
+     * Transfer a cluster\'s ownership to another organization
      */
-    async transferClusterRequestOpts(requestParameters: TransferClusterRequest): Promise<runtime.RequestOpts> {
+    async transferClusterRaw(requestParameters: TransferClusterRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['clusterId'] == null) {
             throw new runtime.RequiredError(
                 'clusterId',
@@ -517,22 +454,13 @@ export class TreeClustersApi extends runtime.BaseAPI {
         let urlPath = `/v1/clusters/{cluster_id}/organization`;
         urlPath = urlPath.replace(`{${"cluster_id"}}`, encodeURIComponent(String(requestParameters['clusterId'])));
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
             body: TransferRequestToJSON(requestParameters['transferRequest']),
-        };
-    }
-
-    /**
-     * Moves the cluster, its member trees, and their attached sensors to a different owning organization in one operation. Requires `tree_cluster:update` in both the source and target organization.
-     * Transfer a cluster\'s ownership to another organization
-     */
-    async transferClusterRaw(requestParameters: TransferClusterRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        const requestOptions = await this.transferClusterRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.VoidApiResponse(response);
     }
@@ -546,9 +474,10 @@ export class TreeClustersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for updateCluster without sending the request
+     * Updates an existing tree cluster identified by its ID and returns the updated resource.
+     * Update a tree cluster
      */
-    async updateClusterRequestOpts(requestParameters: UpdateClusterRequest): Promise<runtime.RequestOpts> {
+    async updateClusterRaw(requestParameters: UpdateClusterRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TreeClusterResponse>> {
         if (requestParameters['clusterId'] == null) {
             throw new runtime.RequiredError(
                 'clusterId',
@@ -573,22 +502,13 @@ export class TreeClustersApi extends runtime.BaseAPI {
         let urlPath = `/v1/clusters/{cluster_id}`;
         urlPath = urlPath.replace(`{${"cluster_id"}}`, encodeURIComponent(String(requestParameters['clusterId'])));
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
             body: TreeClusterUpdateRequestToJSON(requestParameters['treeClusterUpdateRequest']),
-        };
-    }
-
-    /**
-     * Updates an existing tree cluster identified by its ID and returns the updated resource.
-     * Update a tree cluster
-     */
-    async updateClusterRaw(requestParameters: UpdateClusterRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TreeClusterResponse>> {
-        const requestOptions = await this.updateClusterRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => TreeClusterResponseFromJSON(jsonValue));
     }

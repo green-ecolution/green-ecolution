@@ -125,9 +125,10 @@ export interface TransferSensorRequest {
 export class SensorsApi extends runtime.BaseAPI {
 
     /**
-     * Creates request options for acknowledgeSensorDataQuality without sending the request
+     * Records that the flagged readings up to now have been reviewed. Readings flagged afterwards raise the warning again on their own.
+     * Acknowledge a sensor\'s flagged readings
      */
-    async acknowledgeSensorDataQualityRequestOpts(requestParameters: AcknowledgeSensorDataQualityRequest): Promise<runtime.RequestOpts> {
+    async acknowledgeSensorDataQualityRaw(requestParameters: AcknowledgeSensorDataQualityRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SensorDataQualityResponse>> {
         if (requestParameters['sensorId'] == null) {
             throw new runtime.RequiredError(
                 'sensorId',
@@ -152,22 +153,13 @@ export class SensorsApi extends runtime.BaseAPI {
         let urlPath = `/v1/sensors/{sensor_id}/data-quality/acknowledge`;
         urlPath = urlPath.replace(`{${"sensor_id"}}`, encodeURIComponent(String(requestParameters['sensorId'])));
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
             body: AcknowledgeDataQualityRequestToJSON(requestParameters['acknowledgeDataQualityRequest']),
-        };
-    }
-
-    /**
-     * Records that the flagged readings up to now have been reviewed. Readings flagged afterwards raise the warning again on their own.
-     * Acknowledge a sensor\'s flagged readings
-     */
-    async acknowledgeSensorDataQualityRaw(requestParameters: AcknowledgeSensorDataQualityRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SensorDataQualityResponse>> {
-        const requestOptions = await this.acknowledgeSensorDataQualityRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => SensorDataQualityResponseFromJSON(jsonValue));
     }
@@ -182,9 +174,10 @@ export class SensorsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for activateSensor without sending the request
+     * Transitions a sensor from `Prepared` to `Offline` and attaches it to the given tree. Idempotent if the sensor is already attached to the same tree.
+     * Activate a prepared sensor by binding it to a tree
      */
-    async activateSensorRequestOpts(requestParameters: ActivateSensorOperationRequest): Promise<runtime.RequestOpts> {
+    async activateSensorRaw(requestParameters: ActivateSensorOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SensorResponse>> {
         if (requestParameters['sensorId'] == null) {
             throw new runtime.RequiredError(
                 'sensorId',
@@ -209,22 +202,13 @@ export class SensorsApi extends runtime.BaseAPI {
         let urlPath = `/v1/sensors/{sensor_id}/activate`;
         urlPath = urlPath.replace(`{${"sensor_id"}}`, encodeURIComponent(String(requestParameters['sensorId'])));
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
             body: ActivateSensorRequestToJSON(requestParameters['activateSensorRequest']),
-        };
-    }
-
-    /**
-     * Transitions a sensor from `Prepared` to `Offline` and attaches it to the given tree. Idempotent if the sensor is already attached to the same tree.
-     * Activate a prepared sensor by binding it to a tree
-     */
-    async activateSensorRaw(requestParameters: ActivateSensorOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SensorResponse>> {
-        const requestOptions = await this.activateSensorRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => SensorResponseFromJSON(jsonValue));
     }
@@ -239,9 +223,10 @@ export class SensorsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for createSensor without sending the request
+     * Creates a sensor record in `Prepared` state. The sensor must later be bound to a tree via `POST /sensors/{sensor_id}/activate` before it starts receiving data.
+     * Register a new (prepared) sensor unit
      */
-    async createSensorRequestOpts(requestParameters: CreateSensorOperationRequest): Promise<runtime.RequestOpts> {
+    async createSensorRaw(requestParameters: CreateSensorOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SensorResponse>> {
         if (requestParameters['createSensorRequest'] == null) {
             throw new runtime.RequiredError(
                 'createSensorRequest',
@@ -258,22 +243,13 @@ export class SensorsApi extends runtime.BaseAPI {
 
         let urlPath = `/v1/sensors`;
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
             body: CreateSensorRequestToJSON(requestParameters['createSensorRequest']),
-        };
-    }
-
-    /**
-     * Creates a sensor record in `Prepared` state. The sensor must later be bound to a tree via `POST /sensors/{sensor_id}/activate` before it starts receiving data.
-     * Register a new (prepared) sensor unit
-     */
-    async createSensorRaw(requestParameters: CreateSensorOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SensorResponse>> {
-        const requestOptions = await this.createSensorRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => SensorResponseFromJSON(jsonValue));
     }
@@ -288,9 +264,10 @@ export class SensorsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for deleteSensor without sending the request
+     * Permanently deletes a sensor by its EUI identifier.
+     * Delete a sensor
      */
-    async deleteSensorRequestOpts(requestParameters: DeleteSensorRequest): Promise<runtime.RequestOpts> {
+    async deleteSensorRaw(requestParameters: DeleteSensorRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['sensorId'] == null) {
             throw new runtime.RequiredError(
                 'sensorId',
@@ -306,21 +283,12 @@ export class SensorsApi extends runtime.BaseAPI {
         let urlPath = `/v1/sensors/{sensor_id}`;
         urlPath = urlPath.replace(`{${"sensor_id"}}`, encodeURIComponent(String(requestParameters['sensorId'])));
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'DELETE',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * Permanently deletes a sensor by its EUI identifier.
-     * Delete a sensor
-     */
-    async deleteSensorRaw(requestParameters: DeleteSensorRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        const requestOptions = await this.deleteSensorRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.VoidApiResponse(response);
     }
@@ -334,9 +302,10 @@ export class SensorsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for getSensor without sending the request
+     * Returns a single sensor by its EUI identifier.
+     * Get a sensor by ID
      */
-    async getSensorRequestOpts(requestParameters: GetSensorRequest): Promise<runtime.RequestOpts> {
+    async getSensorRaw(requestParameters: GetSensorRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SensorResponse>> {
         if (requestParameters['sensorId'] == null) {
             throw new runtime.RequiredError(
                 'sensorId',
@@ -352,21 +321,12 @@ export class SensorsApi extends runtime.BaseAPI {
         let urlPath = `/v1/sensors/{sensor_id}`;
         urlPath = urlPath.replace(`{${"sensor_id"}}`, encodeURIComponent(String(requestParameters['sensorId'])));
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * Returns a single sensor by its EUI identifier.
-     * Get a sensor by ID
-     */
-    async getSensorRaw(requestParameters: GetSensorRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SensorResponse>> {
-        const requestOptions = await this.getSensorRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => SensorResponseFromJSON(jsonValue));
     }
@@ -381,9 +341,10 @@ export class SensorsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for getSensorDataQuality without sending the request
+     * Returns the derived data health, the number of values flagged as implausible in the last 7 days, and the most recent flagged values.
+     * Get the data quality of a sensor
      */
-    async getSensorDataQualityRequestOpts(requestParameters: GetSensorDataQualityRequest): Promise<runtime.RequestOpts> {
+    async getSensorDataQualityRaw(requestParameters: GetSensorDataQualityRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SensorDataQualityResponse>> {
         if (requestParameters['sensorId'] == null) {
             throw new runtime.RequiredError(
                 'sensorId',
@@ -399,21 +360,12 @@ export class SensorsApi extends runtime.BaseAPI {
         let urlPath = `/v1/sensors/{sensor_id}/data-quality`;
         urlPath = urlPath.replace(`{${"sensor_id"}}`, encodeURIComponent(String(requestParameters['sensorId'])));
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * Returns the derived data health, the number of values flagged as implausible in the last 7 days, and the most recent flagged values.
-     * Get the data quality of a sensor
-     */
-    async getSensorDataQualityRaw(requestParameters: GetSensorDataQualityRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SensorDataQualityResponse>> {
-        const requestOptions = await this.getSensorDataQualityRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => SensorDataQualityResponseFromJSON(jsonValue));
     }
@@ -428,9 +380,9 @@ export class SensorsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for getSensorModel without sending the request
+     * Get a single sensor model
      */
-    async getSensorModelRequestOpts(requestParameters: GetSensorModelRequest): Promise<runtime.RequestOpts> {
+    async getSensorModelRaw(requestParameters: GetSensorModelRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SensorModelResponse>> {
         if (requestParameters['id'] == null) {
             throw new runtime.RequiredError(
                 'id',
@@ -446,20 +398,12 @@ export class SensorsApi extends runtime.BaseAPI {
         let urlPath = `/v1/sensors/models/{id}`;
         urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * Get a single sensor model
-     */
-    async getSensorModelRaw(requestParameters: GetSensorModelRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SensorModelResponse>> {
-        const requestOptions = await this.getSensorModelRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => SensorModelResponseFromJSON(jsonValue));
     }
@@ -473,9 +417,10 @@ export class SensorsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for getSensorSoilMoisture without sending the request
+     * Aggregates the sensor\'s volumetric soil-moisture readings (mean/min/max per probe depth and time bucket). Stress thresholds and the REW condition series are derived from the soil condition of the linked tree\'s cluster and are empty when the sensor is not linked or the soil is unknown.
+     * Bucketed soil-moisture series for a sensor
      */
-    async getSensorSoilMoistureRequestOpts(requestParameters: GetSensorSoilMoistureRequest): Promise<runtime.RequestOpts> {
+    async getSensorSoilMoistureRaw(requestParameters: GetSensorSoilMoistureRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SoilMoistureSeriesResponse>> {
         if (requestParameters['sensorId'] == null) {
             throw new runtime.RequiredError(
                 'sensorId',
@@ -503,21 +448,12 @@ export class SensorsApi extends runtime.BaseAPI {
         let urlPath = `/v1/sensors/{sensor_id}/soil-moisture`;
         urlPath = urlPath.replace(`{${"sensor_id"}}`, encodeURIComponent(String(requestParameters['sensorId'])));
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * Aggregates the sensor\'s volumetric soil-moisture readings (mean/min/max per probe depth and time bucket). Stress thresholds and the REW condition series are derived from the soil condition of the linked tree\'s cluster and are empty when the sensor is not linked or the soil is unknown.
-     * Bucketed soil-moisture series for a sensor
-     */
-    async getSensorSoilMoistureRaw(requestParameters: GetSensorSoilMoistureRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SoilMoistureSeriesResponse>> {
-        const requestOptions = await this.getSensorSoilMoistureRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => SoilMoistureSeriesResponseFromJSON(jsonValue));
     }
@@ -532,9 +468,10 @@ export class SensorsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for listSensorData without sending the request
+     * Returns a paginated list of historical data readings for a sensor, optionally restricted to a time range.
+     * List sensor data
      */
-    async listSensorDataRequestOpts(requestParameters: ListSensorDataRequest): Promise<runtime.RequestOpts> {
+    async listSensorDataRaw(requestParameters: ListSensorDataRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListResponseSensorDataResponse>> {
         if (requestParameters['sensorId'] == null) {
             throw new runtime.RequiredError(
                 'sensorId',
@@ -566,21 +503,12 @@ export class SensorsApi extends runtime.BaseAPI {
         let urlPath = `/v1/sensors/{sensor_id}/data`;
         urlPath = urlPath.replace(`{${"sensor_id"}}`, encodeURIComponent(String(requestParameters['sensorId'])));
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * Returns a paginated list of historical data readings for a sensor, optionally restricted to a time range.
-     * List sensor data
-     */
-    async listSensorDataRaw(requestParameters: ListSensorDataRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListResponseSensorDataResponse>> {
-        const requestOptions = await this.listSensorDataRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => ListResponseSensorDataResponseFromJSON(jsonValue));
     }
@@ -595,9 +523,10 @@ export class SensorsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for listSensorModels without sending the request
+     * Returns every sensor model registered in the catalogue along with its abilities (e.g. soil tension at 30/60/90 cm).
+     * List all supported sensor models
      */
-    async listSensorModelsRequestOpts(): Promise<runtime.RequestOpts> {
+    async listSensorModelsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<SensorModelResponse>>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -605,21 +534,12 @@ export class SensorsApi extends runtime.BaseAPI {
 
         let urlPath = `/v1/sensors/models`;
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * Returns every sensor model registered in the catalogue along with its abilities (e.g. soil tension at 30/60/90 cm).
-     * List all supported sensor models
-     */
-    async listSensorModelsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<SensorModelResponse>>> {
-        const requestOptions = await this.listSensorModelsRequestOpts();
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(SensorModelResponseFromJSON));
     }
@@ -634,9 +554,10 @@ export class SensorsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for listSensors without sending the request
+     * Returns a paginated list of all LoRaWAN sensors.
+     * List all sensors
      */
-    async listSensorsRequestOpts(requestParameters: ListSensorsRequest): Promise<runtime.RequestOpts> {
+    async listSensorsRaw(requestParameters: ListSensorsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListResponseSensorResponse>> {
         const queryParameters: any = {};
 
         if (requestParameters['page'] != null) {
@@ -652,21 +573,12 @@ export class SensorsApi extends runtime.BaseAPI {
 
         let urlPath = `/v1/sensors`;
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * Returns a paginated list of all LoRaWAN sensors.
-     * List all sensors
-     */
-    async listSensorsRaw(requestParameters: ListSensorsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListResponseSensorResponse>> {
-        const requestOptions = await this.listSensorsRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => ListResponseSensorResponseFromJSON(jsonValue));
     }
@@ -681,9 +593,10 @@ export class SensorsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for removeSensorTree without sending the request
+     * Detaches the sensor from its tree and deactivates it, returning it to the `Prepared` state. Idempotent for an already prepared sensor.
+     * Remove a sensor\'s tree link and reset it to prepared
      */
-    async removeSensorTreeRequestOpts(requestParameters: RemoveSensorTreeRequest): Promise<runtime.RequestOpts> {
+    async removeSensorTreeRaw(requestParameters: RemoveSensorTreeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SensorResponse>> {
         if (requestParameters['sensorId'] == null) {
             throw new runtime.RequiredError(
                 'sensorId',
@@ -699,21 +612,12 @@ export class SensorsApi extends runtime.BaseAPI {
         let urlPath = `/v1/sensors/{sensor_id}/tree`;
         urlPath = urlPath.replace(`{${"sensor_id"}}`, encodeURIComponent(String(requestParameters['sensorId'])));
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'DELETE',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * Detaches the sensor from its tree and deactivates it, returning it to the `Prepared` state. Idempotent for an already prepared sensor.
-     * Remove a sensor\'s tree link and reset it to prepared
-     */
-    async removeSensorTreeRaw(requestParameters: RemoveSensorTreeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SensorResponse>> {
-        const requestOptions = await this.removeSensorTreeRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => SensorResponseFromJSON(jsonValue));
     }
@@ -728,9 +632,10 @@ export class SensorsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for setSensorTree without sending the request
+     * Re-links an already activated sensor to `tree_id`. Rejects a tree that already has a different sensor and a sensor that is not yet activated. Idempotent if the sensor is already linked to that tree.
+     * Move an activated sensor to a different tree
      */
-    async setSensorTreeRequestOpts(requestParameters: SetSensorTreeOperationRequest): Promise<runtime.RequestOpts> {
+    async setSensorTreeRaw(requestParameters: SetSensorTreeOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SensorResponse>> {
         if (requestParameters['sensorId'] == null) {
             throw new runtime.RequiredError(
                 'sensorId',
@@ -755,22 +660,13 @@ export class SensorsApi extends runtime.BaseAPI {
         let urlPath = `/v1/sensors/{sensor_id}/tree`;
         urlPath = urlPath.replace(`{${"sensor_id"}}`, encodeURIComponent(String(requestParameters['sensorId'])));
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
             body: SetSensorTreeRequestToJSON(requestParameters['setSensorTreeRequest']),
-        };
-    }
-
-    /**
-     * Re-links an already activated sensor to `tree_id`. Rejects a tree that already has a different sensor and a sensor that is not yet activated. Idempotent if the sensor is already linked to that tree.
-     * Move an activated sensor to a different tree
-     */
-    async setSensorTreeRaw(requestParameters: SetSensorTreeOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SensorResponse>> {
-        const requestOptions = await this.setSensorTreeRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => SensorResponseFromJSON(jsonValue));
     }
@@ -785,9 +681,10 @@ export class SensorsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for transferSensor without sending the request
+     * Moves an unbound sensor to a different owning organization. Requires `sensor:update` in both the source and target organization. A sensor bound to a tree must be transferred via its tree instead.
+     * Transfer a sensor\'s ownership to another organization
      */
-    async transferSensorRequestOpts(requestParameters: TransferSensorRequest): Promise<runtime.RequestOpts> {
+    async transferSensorRaw(requestParameters: TransferSensorRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['sensorId'] == null) {
             throw new runtime.RequiredError(
                 'sensorId',
@@ -812,22 +709,13 @@ export class SensorsApi extends runtime.BaseAPI {
         let urlPath = `/v1/sensors/{sensor_id}/organization`;
         urlPath = urlPath.replace(`{${"sensor_id"}}`, encodeURIComponent(String(requestParameters['sensorId'])));
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
             body: TransferRequestToJSON(requestParameters['transferRequest']),
-        };
-    }
-
-    /**
-     * Moves an unbound sensor to a different owning organization. Requires `sensor:update` in both the source and target organization. A sensor bound to a tree must be transferred via its tree instead.
-     * Transfer a sensor\'s ownership to another organization
-     */
-    async transferSensorRaw(requestParameters: TransferSensorRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        const requestOptions = await this.transferSensorRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.VoidApiResponse(response);
     }

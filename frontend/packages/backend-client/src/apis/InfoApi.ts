@@ -46,9 +46,10 @@ import {
 export class InfoApi extends runtime.BaseAPI {
 
     /**
-     * Creates request options for getInfo without sending the request
+     * Returns version, git, and map configuration metadata.
+     * Get application info
      */
-    async getInfoRequestOpts(): Promise<runtime.RequestOpts> {
+    async getInfoRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AppInfoResponse>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -56,21 +57,12 @@ export class InfoApi extends runtime.BaseAPI {
 
         let urlPath = `/v1/info`;
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * Returns version, git, and map configuration metadata.
-     * Get application info
-     */
-    async getInfoRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AppInfoResponse>> {
-        const requestOptions = await this.getInfoRequestOpts();
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => AppInfoResponseFromJSON(jsonValue));
     }
@@ -85,9 +77,10 @@ export class InfoApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for getMapInfo without sending the request
+     * Returns the map center coordinates and bounding box.
+     * Get map configuration
      */
-    async getMapInfoRequestOpts(): Promise<runtime.RequestOpts> {
+    async getMapInfoRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<MapInfoResponse>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -95,21 +88,12 @@ export class InfoApi extends runtime.BaseAPI {
 
         let urlPath = `/v1/info/map`;
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * Returns the map center coordinates and bounding box.
-     * Get map configuration
-     */
-    async getMapInfoRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<MapInfoResponse>> {
-        const requestOptions = await this.getMapInfoRequestOpts();
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => MapInfoResponseFromJSON(jsonValue));
     }
@@ -124,9 +108,10 @@ export class InfoApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for getServerInfo without sending the request
+     * Returns server OS, hostname, and network information.
+     * Get server info
      */
-    async getServerInfoRequestOpts(): Promise<runtime.RequestOpts> {
+    async getServerInfoRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ServerInfoResponse>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -134,21 +119,12 @@ export class InfoApi extends runtime.BaseAPI {
 
         let urlPath = `/v1/info/server`;
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * Returns server OS, hostname, and network information.
-     * Get server info
-     */
-    async getServerInfoRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ServerInfoResponse>> {
-        const requestOptions = await this.getServerInfoRequestOpts();
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => ServerInfoResponseFromJSON(jsonValue));
     }
@@ -163,9 +139,10 @@ export class InfoApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for getServicesInfo without sending the request
+     * Returns health status of all connected services (database, routing, etc.).
+     * Get services health
      */
-    async getServicesInfoRequestOpts(): Promise<runtime.RequestOpts> {
+    async getServicesInfoRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ServicesInfoResponse>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -173,21 +150,12 @@ export class InfoApi extends runtime.BaseAPI {
 
         let urlPath = `/v1/info/services`;
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * Returns health status of all connected services (database, routing, etc.).
-     * Get services health
-     */
-    async getServicesInfoRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ServicesInfoResponse>> {
-        const requestOptions = await this.getServicesInfoRequestOpts();
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => ServicesInfoResponseFromJSON(jsonValue));
     }
@@ -202,9 +170,10 @@ export class InfoApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for getStatistics without sending the request
+     * Returns counts of all managed resources.
+     * Get data statistics
      */
-    async getStatisticsRequestOpts(): Promise<runtime.RequestOpts> {
+    async getStatisticsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DataStatisticsResponse>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -212,21 +181,12 @@ export class InfoApi extends runtime.BaseAPI {
 
         let urlPath = `/v1/info/statistics`;
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * Returns counts of all managed resources.
-     * Get data statistics
-     */
-    async getStatisticsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DataStatisticsResponse>> {
-        const requestOptions = await this.getStatisticsRequestOpts();
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => DataStatisticsResponseFromJSON(jsonValue));
     }
@@ -241,9 +201,10 @@ export class InfoApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for health without sending the request
+     * Lightweight liveness probe for container orchestrators. Returns 200 OK while the HTTP server is responsive; performs no downstream service checks. Use /api/ready for a readiness probe that verifies critical dependencies, or /api/v1/info/services for a deep services health check.
+     * Liveness probe
      */
-    async healthRequestOpts(): Promise<runtime.RequestOpts> {
+    async healthRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -251,21 +212,12 @@ export class InfoApi extends runtime.BaseAPI {
 
         let urlPath = `/health`;
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * Lightweight liveness probe for container orchestrators. Returns 200 OK while the HTTP server is responsive; performs no downstream service checks. Use /api/ready for a readiness probe that verifies critical dependencies, or /api/v1/info/services for a deep services health check.
-     * Liveness probe
-     */
-    async healthRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        const requestOptions = await this.healthRequestOpts();
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.VoidApiResponse(response);
     }
@@ -279,9 +231,10 @@ export class InfoApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for readiness without sending the request
+     * Readiness probe for container orchestrators. Verifies that critical dependencies (the database) are reachable and returns 200 only when the service can serve traffic; returns 503 otherwise so the pod is pulled from the load balancer. Optional services (auth, MQTT) are reported by /api/v1/info/services and do not gate readiness.
+     * Readiness probe
      */
-    async readinessRequestOpts(): Promise<runtime.RequestOpts> {
+    async readinessRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ReadinessResponse>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -289,21 +242,12 @@ export class InfoApi extends runtime.BaseAPI {
 
         let urlPath = `/ready`;
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * Readiness probe for container orchestrators. Verifies that critical dependencies (the database) are reachable and returns 200 only when the service can serve traffic; returns 503 otherwise so the pod is pulled from the load balancer. Optional services (auth, MQTT) are reported by /api/v1/info/services and do not gate readiness.
-     * Readiness probe
-     */
-    async readinessRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ReadinessResponse>> {
-        const requestOptions = await this.readinessRequestOpts();
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => ReadinessResponseFromJSON(jsonValue));
     }

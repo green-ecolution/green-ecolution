@@ -101,9 +101,10 @@ export interface UpdateTreeRequest {
 export class TreesApi extends runtime.BaseAPI {
 
     /**
-     * Creates request options for createTree without sending the request
+     * Creates a new tree with location and optional cluster or sensor association.
+     * Create a new tree
      */
-    async createTreeRequestOpts(requestParameters: CreateTreeRequest): Promise<runtime.RequestOpts> {
+    async createTreeRaw(requestParameters: CreateTreeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TreeResponse>> {
         if (requestParameters['treeCreateRequest'] == null) {
             throw new runtime.RequiredError(
                 'treeCreateRequest',
@@ -120,22 +121,13 @@ export class TreesApi extends runtime.BaseAPI {
 
         let urlPath = `/v1/trees`;
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
             body: TreeCreateRequestToJSON(requestParameters['treeCreateRequest']),
-        };
-    }
-
-    /**
-     * Creates a new tree with location and optional cluster or sensor association.
-     * Create a new tree
-     */
-    async createTreeRaw(requestParameters: CreateTreeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TreeResponse>> {
-        const requestOptions = await this.createTreeRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => TreeResponseFromJSON(jsonValue));
     }
@@ -150,9 +142,10 @@ export class TreesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for deleteTree without sending the request
+     * Permanently deletes a tree by its ID.
+     * Delete a tree
      */
-    async deleteTreeRequestOpts(requestParameters: DeleteTreeRequest): Promise<runtime.RequestOpts> {
+    async deleteTreeRaw(requestParameters: DeleteTreeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['treeId'] == null) {
             throw new runtime.RequiredError(
                 'treeId',
@@ -168,21 +161,12 @@ export class TreesApi extends runtime.BaseAPI {
         let urlPath = `/v1/trees/{tree_id}`;
         urlPath = urlPath.replace(`{${"tree_id"}}`, encodeURIComponent(String(requestParameters['treeId'])));
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'DELETE',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * Permanently deletes a tree by its ID.
-     * Delete a tree
-     */
-    async deleteTreeRaw(requestParameters: DeleteTreeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        const requestOptions = await this.deleteTreeRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.VoidApiResponse(response);
     }
@@ -196,9 +180,10 @@ export class TreesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for getNearestTrees without sending the request
+     * Finds trees closest to a given coordinate.
+     * Get nearest trees
      */
-    async getNearestTreesRequestOpts(requestParameters: GetNearestTreesRequest): Promise<runtime.RequestOpts> {
+    async getNearestTreesRaw(requestParameters: GetNearestTreesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<NearestTreeListResponse>> {
         if (requestParameters['lat'] == null) {
             throw new runtime.RequiredError(
                 'lat',
@@ -232,21 +217,12 @@ export class TreesApi extends runtime.BaseAPI {
 
         let urlPath = `/v1/trees/nearest`;
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * Finds trees closest to a given coordinate.
-     * Get nearest trees
-     */
-    async getNearestTreesRaw(requestParameters: GetNearestTreesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<NearestTreeListResponse>> {
-        const requestOptions = await this.getNearestTreesRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => NearestTreeListResponseFromJSON(jsonValue));
     }
@@ -261,9 +237,10 @@ export class TreesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for getTree without sending the request
+     * Returns a single tree by its ID, including associated sensor data.
+     * Get a tree by ID
      */
-    async getTreeRequestOpts(requestParameters: GetTreeRequest): Promise<runtime.RequestOpts> {
+    async getTreeRaw(requestParameters: GetTreeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TreeResponse>> {
         if (requestParameters['treeId'] == null) {
             throw new runtime.RequiredError(
                 'treeId',
@@ -279,21 +256,12 @@ export class TreesApi extends runtime.BaseAPI {
         let urlPath = `/v1/trees/{tree_id}`;
         urlPath = urlPath.replace(`{${"tree_id"}}`, encodeURIComponent(String(requestParameters['treeId'])));
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * Returns a single tree by its ID, including associated sensor data.
-     * Get a tree by ID
-     */
-    async getTreeRaw(requestParameters: GetTreeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TreeResponse>> {
-        const requestOptions = await this.getTreeRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => TreeResponseFromJSON(jsonValue));
     }
@@ -308,9 +276,10 @@ export class TreesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for getTreeBySensor without sending the request
+     * Retrieves the tree linked to the given sensor. Returns 404 if the sensor or its associated tree does not exist.
+     * Get the tree associated with a sensor
      */
-    async getTreeBySensorRequestOpts(requestParameters: GetTreeBySensorRequest): Promise<runtime.RequestOpts> {
+    async getTreeBySensorRaw(requestParameters: GetTreeBySensorRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TreeResponse>> {
         if (requestParameters['sensorId'] == null) {
             throw new runtime.RequiredError(
                 'sensorId',
@@ -326,21 +295,12 @@ export class TreesApi extends runtime.BaseAPI {
         let urlPath = `/v1/sensors/{sensor_id}/tree`;
         urlPath = urlPath.replace(`{${"sensor_id"}}`, encodeURIComponent(String(requestParameters['sensorId'])));
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * Retrieves the tree linked to the given sensor. Returns 404 if the sensor or its associated tree does not exist.
-     * Get the tree associated with a sensor
-     */
-    async getTreeBySensorRaw(requestParameters: GetTreeBySensorRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TreeResponse>> {
-        const requestOptions = await this.getTreeBySensorRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => TreeResponseFromJSON(jsonValue));
     }
@@ -355,9 +315,10 @@ export class TreesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for listPlantingYears without sending the request
+     * Returns a list of distinct planting years across all trees.
+     * List distinct planting years
      */
-    async listPlantingYearsRequestOpts(): Promise<runtime.RequestOpts> {
+    async listPlantingYearsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<number>>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -365,21 +326,12 @@ export class TreesApi extends runtime.BaseAPI {
 
         let urlPath = `/v1/trees/planting-years`;
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * Returns a list of distinct planting years across all trees.
-     * List distinct planting years
-     */
-    async listPlantingYearsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<number>>> {
-        const requestOptions = await this.listPlantingYearsRequestOpts();
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse<any>(response);
     }
@@ -394,9 +346,10 @@ export class TreesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for listTreeMarkers without sending the request
+     * Returns minimal tree markers (id, lat, lng, watering_status, number, has_sensor) intersecting the given bounding box. Optional filter parameters narrow the result. Not paginated — the bounding box bounds the result.
+     * List tree markers in a bounding box
      */
-    async listTreeMarkersRequestOpts(requestParameters: ListTreeMarkersRequest): Promise<runtime.RequestOpts> {
+    async listTreeMarkersRaw(requestParameters: ListTreeMarkersRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TreeMarkerListResponse>> {
         if (requestParameters['bbox'] == null) {
             throw new runtime.RequiredError(
                 'bbox',
@@ -431,21 +384,12 @@ export class TreesApi extends runtime.BaseAPI {
 
         let urlPath = `/v1/trees/markers`;
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * Returns minimal tree markers (id, lat, lng, watering_status, number, has_sensor) intersecting the given bounding box. Optional filter parameters narrow the result. Not paginated — the bounding box bounds the result.
-     * List tree markers in a bounding box
-     */
-    async listTreeMarkersRaw(requestParameters: ListTreeMarkersRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TreeMarkerListResponse>> {
-        const requestOptions = await this.listTreeMarkersRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => TreeMarkerListResponseFromJSON(jsonValue));
     }
@@ -460,9 +404,10 @@ export class TreesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for listTrees without sending the request
+     * Returns a paginated list of all trees with their associated sensor data. Optional `q` parameter case-insensitively filters by tree number or species. Optional filter parameters (watering_status, has_cluster, planting_year) narrow the result; array parameters are repeatable.
+     * List all trees
      */
-    async listTreesRequestOpts(requestParameters: ListTreesRequest): Promise<runtime.RequestOpts> {
+    async listTreesRaw(requestParameters: ListTreesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListResponseTreeResponse>> {
         const queryParameters: any = {};
 
         if (requestParameters['page'] != null) {
@@ -494,21 +439,12 @@ export class TreesApi extends runtime.BaseAPI {
 
         let urlPath = `/v1/trees`;
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * Returns a paginated list of all trees with their associated sensor data. Optional `q` parameter case-insensitively filters by tree number or species. Optional filter parameters (watering_status, has_cluster, planting_year) narrow the result; array parameters are repeatable.
-     * List all trees
-     */
-    async listTreesRaw(requestParameters: ListTreesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListResponseTreeResponse>> {
-        const requestOptions = await this.listTreesRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => ListResponseTreeResponseFromJSON(jsonValue));
     }
@@ -523,9 +459,10 @@ export class TreesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for transferTree without sending the request
+     * Moves a clusterless tree (and any attached sensor) to a different owning organization. Requires `tree:update` in both the source and target organization.
+     * Transfer a tree\'s ownership to another organization
      */
-    async transferTreeRequestOpts(requestParameters: TransferTreeRequest): Promise<runtime.RequestOpts> {
+    async transferTreeRaw(requestParameters: TransferTreeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['treeId'] == null) {
             throw new runtime.RequiredError(
                 'treeId',
@@ -550,22 +487,13 @@ export class TreesApi extends runtime.BaseAPI {
         let urlPath = `/v1/trees/{tree_id}/organization`;
         urlPath = urlPath.replace(`{${"tree_id"}}`, encodeURIComponent(String(requestParameters['treeId'])));
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
             body: TransferRequestToJSON(requestParameters['transferRequest']),
-        };
-    }
-
-    /**
-     * Moves a clusterless tree (and any attached sensor) to a different owning organization. Requires `tree:update` in both the source and target organization.
-     * Transfer a tree\'s ownership to another organization
-     */
-    async transferTreeRaw(requestParameters: TransferTreeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        const requestOptions = await this.transferTreeRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.VoidApiResponse(response);
     }
@@ -579,9 +507,10 @@ export class TreesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for updateTree without sending the request
+     * Performs a full replacement update of a tree by its ID.
+     * Update a tree
      */
-    async updateTreeRequestOpts(requestParameters: UpdateTreeRequest): Promise<runtime.RequestOpts> {
+    async updateTreeRaw(requestParameters: UpdateTreeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TreeResponse>> {
         if (requestParameters['treeId'] == null) {
             throw new runtime.RequiredError(
                 'treeId',
@@ -606,22 +535,13 @@ export class TreesApi extends runtime.BaseAPI {
         let urlPath = `/v1/trees/{tree_id}`;
         urlPath = urlPath.replace(`{${"tree_id"}}`, encodeURIComponent(String(requestParameters['treeId'])));
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
             body: TreeUpdateRequestToJSON(requestParameters['treeUpdateRequest']),
-        };
-    }
-
-    /**
-     * Performs a full replacement update of a tree by its ID.
-     * Update a tree
-     */
-    async updateTreeRaw(requestParameters: UpdateTreeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TreeResponse>> {
-        const requestOptions = await this.updateTreeRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => TreeResponseFromJSON(jsonValue));
     }

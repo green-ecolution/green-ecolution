@@ -59,9 +59,10 @@ export interface UpdateRoleRequest {
 export class RolesApi extends runtime.BaseAPI {
 
     /**
-     * Creates request options for createRole without sending the request
+     * Either provide `name` + `permissions` to create a role from scratch, or `copy_from_role_id` to copy an existing role/template into this organization (optionally renaming it). Requires role:create in the organization, plus a permission set that does not exceed the caller\'s own grants.
+     * Create a role, from scratch or as a copy
      */
-    async createRoleRequestOpts(requestParameters: CreateRoleRequest): Promise<runtime.RequestOpts> {
+    async createRoleRaw(requestParameters: CreateRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RoleResponse>> {
         if (requestParameters['orgId'] == null) {
             throw new runtime.RequiredError(
                 'orgId',
@@ -86,22 +87,13 @@ export class RolesApi extends runtime.BaseAPI {
         let urlPath = `/v1/organizations/{org_id}/roles`;
         urlPath = urlPath.replace(`{${"org_id"}}`, encodeURIComponent(String(requestParameters['orgId'])));
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
             body: RoleCreateRequestToJSON(requestParameters['roleCreateRequest']),
-        };
-    }
-
-    /**
-     * Either provide `name` + `permissions` to create a role from scratch, or `copy_from_role_id` to copy an existing role/template into this organization (optionally renaming it). Requires role:create in the organization, plus a permission set that does not exceed the caller\'s own grants.
-     * Create a role, from scratch or as a copy
-     */
-    async createRoleRaw(requestParameters: CreateRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RoleResponse>> {
-        const requestOptions = await this.createRoleRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => RoleResponseFromJSON(jsonValue));
     }
@@ -116,9 +108,10 @@ export class RolesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for deleteRole without sending the request
+     * Templates cannot be deleted (409). Requires role:delete in the role\'s organization. Deleting a role that carries the caller\'s own role:update or user:update in their organization is rejected (409).
+     * Delete a role
      */
-    async deleteRoleRequestOpts(requestParameters: DeleteRoleRequest): Promise<runtime.RequestOpts> {
+    async deleteRoleRaw(requestParameters: DeleteRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['roleId'] == null) {
             throw new runtime.RequiredError(
                 'roleId',
@@ -134,21 +127,12 @@ export class RolesApi extends runtime.BaseAPI {
         let urlPath = `/v1/roles/{role_id}`;
         urlPath = urlPath.replace(`{${"role_id"}}`, encodeURIComponent(String(requestParameters['roleId'])));
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'DELETE',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * Templates cannot be deleted (409). Requires role:delete in the role\'s organization. Deleting a role that carries the caller\'s own role:update or user:update in their organization is rejected (409).
-     * Delete a role
-     */
-    async deleteRoleRaw(requestParameters: DeleteRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        const requestOptions = await this.deleteRoleRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.VoidApiResponse(response);
     }
@@ -162,9 +146,10 @@ export class RolesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for getRole without sending the request
+     * Requires role:read in the role\'s organization; a role outside the caller\'s visible subtree answers 404 rather than 403 so callers cannot probe for existence. Templates carry no organization and stay readable.
+     * Get a single role
      */
-    async getRoleRequestOpts(requestParameters: GetRoleRequest): Promise<runtime.RequestOpts> {
+    async getRoleRaw(requestParameters: GetRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RoleResponse>> {
         if (requestParameters['roleId'] == null) {
             throw new runtime.RequiredError(
                 'roleId',
@@ -180,21 +165,12 @@ export class RolesApi extends runtime.BaseAPI {
         let urlPath = `/v1/roles/{role_id}`;
         urlPath = urlPath.replace(`{${"role_id"}}`, encodeURIComponent(String(requestParameters['roleId'])));
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * Requires role:read in the role\'s organization; a role outside the caller\'s visible subtree answers 404 rather than 403 so callers cannot probe for existence. Templates carry no organization and stay readable.
-     * Get a single role
-     */
-    async getRoleRaw(requestParameters: GetRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RoleResponse>> {
-        const requestOptions = await this.getRoleRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => RoleResponseFromJSON(jsonValue));
     }
@@ -209,9 +185,10 @@ export class RolesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for listOrgRoles without sending the request
+     * Returns every role instantiated for the given organization, including the copies of the five templates created alongside it. Requires role:read in that organization.
+     * List roles owned by an organization
      */
-    async listOrgRolesRequestOpts(requestParameters: ListOrgRolesRequest): Promise<runtime.RequestOpts> {
+    async listOrgRolesRaw(requestParameters: ListOrgRolesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<RoleResponse>>> {
         if (requestParameters['orgId'] == null) {
             throw new runtime.RequiredError(
                 'orgId',
@@ -227,21 +204,12 @@ export class RolesApi extends runtime.BaseAPI {
         let urlPath = `/v1/organizations/{org_id}/roles`;
         urlPath = urlPath.replace(`{${"org_id"}}`, encodeURIComponent(String(requestParameters['orgId'])));
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * Returns every role instantiated for the given organization, including the copies of the five templates created alongside it. Requires role:read in that organization.
-     * List roles owned by an organization
-     */
-    async listOrgRolesRaw(requestParameters: ListOrgRolesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<RoleResponse>>> {
-        const requestOptions = await this.listOrgRolesRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(RoleResponseFromJSON));
     }
@@ -256,9 +224,10 @@ export class RolesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for listPermissions without sending the request
+     * Returns every grantable permission as `<resource>:<action>`, e.g. `tree:read`.
+     * List the permission catalog
      */
-    async listPermissionsRequestOpts(): Promise<runtime.RequestOpts> {
+    async listPermissionsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<string>>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -266,21 +235,12 @@ export class RolesApi extends runtime.BaseAPI {
 
         let urlPath = `/v1/permissions`;
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * Returns every grantable permission as `<resource>:<action>`, e.g. `tree:read`.
-     * List the permission catalog
-     */
-    async listPermissionsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<string>>> {
-        const requestOptions = await this.listPermissionsRequestOpts();
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse<any>(response);
     }
@@ -295,9 +255,10 @@ export class RolesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for listRoleTemplates without sending the request
+     * Returns the five seeded templates (organization_id = null). Templates are immutable and not assignable.
+     * List the global role templates
      */
-    async listRoleTemplatesRequestOpts(): Promise<runtime.RequestOpts> {
+    async listRoleTemplatesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<RoleResponse>>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -305,21 +266,12 @@ export class RolesApi extends runtime.BaseAPI {
 
         let urlPath = `/v1/roles/templates`;
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * Returns the five seeded templates (organization_id = null). Templates are immutable and not assignable.
-     * List the global role templates
-     */
-    async listRoleTemplatesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<RoleResponse>>> {
-        const requestOptions = await this.listRoleTemplatesRequestOpts();
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(RoleResponseFromJSON));
     }
@@ -334,9 +286,10 @@ export class RolesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for listRoles without sending the request
+     * Returns every non-template role owned by an organization in the caller\'s visible subtree. Templates (organization_id = null) are excluded, since they cannot be assigned. Requires role:read.
+     * List roles visible to the caller
      */
-    async listRolesRequestOpts(): Promise<runtime.RequestOpts> {
+    async listRolesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<RoleResponse>>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -344,21 +297,12 @@ export class RolesApi extends runtime.BaseAPI {
 
         let urlPath = `/v1/roles`;
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * Returns every non-template role owned by an organization in the caller\'s visible subtree. Templates (organization_id = null) are excluded, since they cannot be assigned. Requires role:read.
-     * List roles visible to the caller
-     */
-    async listRolesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<RoleResponse>>> {
-        const requestOptions = await this.listRolesRequestOpts();
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(RoleResponseFromJSON));
     }
@@ -373,9 +317,10 @@ export class RolesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for updateRole without sending the request
+     * Templates cannot be modified (409). Requires role:update in the role\'s organization, plus a permission set that does not exceed the caller\'s own grants. A change that would leave the caller without role:update or user:update in their own organization is rejected (409).
+     * Replace a role\'s name, description and permissions
      */
-    async updateRoleRequestOpts(requestParameters: UpdateRoleRequest): Promise<runtime.RequestOpts> {
+    async updateRoleRaw(requestParameters: UpdateRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RoleResponse>> {
         if (requestParameters['roleId'] == null) {
             throw new runtime.RequiredError(
                 'roleId',
@@ -400,22 +345,13 @@ export class RolesApi extends runtime.BaseAPI {
         let urlPath = `/v1/roles/{role_id}`;
         urlPath = urlPath.replace(`{${"role_id"}}`, encodeURIComponent(String(requestParameters['roleId'])));
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
             body: RoleUpdateRequestToJSON(requestParameters['roleUpdateRequest']),
-        };
-    }
-
-    /**
-     * Templates cannot be modified (409). Requires role:update in the role\'s organization, plus a permission set that does not exceed the caller\'s own grants. A change that would leave the caller without role:update or user:update in their own organization is rejected (409).
-     * Replace a role\'s name, description and permissions
-     */
-    async updateRoleRaw(requestParameters: UpdateRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RoleResponse>> {
-        const requestOptions = await this.updateRoleRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => RoleResponseFromJSON(jsonValue));
     }

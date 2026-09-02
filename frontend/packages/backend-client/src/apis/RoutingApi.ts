@@ -59,9 +59,9 @@ export interface UpdateStartPointRequest {
 export class RoutingApi extends runtime.BaseAPI {
 
     /**
-     * Creates request options for createStartPoint without sending the request
+     * Create a start point
      */
-    async createStartPointRequestOpts(requestParameters: CreateStartPointRequest): Promise<runtime.RequestOpts> {
+    async createStartPointRaw(requestParameters: CreateStartPointRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<StartPointResponse>> {
         if (requestParameters['startPointRequest'] == null) {
             throw new runtime.RequiredError(
                 'startPointRequest',
@@ -78,21 +78,13 @@ export class RoutingApi extends runtime.BaseAPI {
 
         let urlPath = `/v1/routing/start-points`;
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
             body: StartPointRequestToJSON(requestParameters['startPointRequest']),
-        };
-    }
-
-    /**
-     * Create a start point
-     */
-    async createStartPointRaw(requestParameters: CreateStartPointRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<StartPointResponse>> {
-        const requestOptions = await this.createStartPointRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => StartPointResponseFromJSON(jsonValue));
     }
@@ -106,9 +98,9 @@ export class RoutingApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for deleteStartPoint without sending the request
+     * Delete a start point
      */
-    async deleteStartPointRequestOpts(requestParameters: DeleteStartPointRequest): Promise<runtime.RequestOpts> {
+    async deleteStartPointRaw(requestParameters: DeleteStartPointRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['startPointId'] == null) {
             throw new runtime.RequiredError(
                 'startPointId',
@@ -124,20 +116,12 @@ export class RoutingApi extends runtime.BaseAPI {
         let urlPath = `/v1/routing/start-points/{start_point_id}`;
         urlPath = urlPath.replace(`{${"start_point_id"}}`, encodeURIComponent(String(requestParameters['startPointId'])));
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'DELETE',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * Delete a start point
-     */
-    async deleteStartPointRaw(requestParameters: DeleteStartPointRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        const requestOptions = await this.deleteStartPointRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.VoidApiResponse(response);
     }
@@ -150,9 +134,10 @@ export class RoutingApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for listRoutingStartPoints without sending the request
+     * Returns the persisted named start/return points for watering routes.
+     * List routing start points
      */
-    async listRoutingStartPointsRequestOpts(): Promise<runtime.RequestOpts> {
+    async listRoutingStartPointsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<StartPointResponse>>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -160,21 +145,12 @@ export class RoutingApi extends runtime.BaseAPI {
 
         let urlPath = `/v1/routing/start-points`;
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * Returns the persisted named start/return points for watering routes.
-     * List routing start points
-     */
-    async listRoutingStartPointsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<StartPointResponse>>> {
-        const requestOptions = await this.listRoutingStartPointsRequestOpts();
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(StartPointResponseFromJSON));
     }
@@ -189,9 +165,9 @@ export class RoutingApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for setDefaultStartPoint without sending the request
+     * Set the default start point
      */
-    async setDefaultStartPointRequestOpts(requestParameters: SetDefaultStartPointRequest): Promise<runtime.RequestOpts> {
+    async setDefaultStartPointRaw(requestParameters: SetDefaultStartPointRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['startPointId'] == null) {
             throw new runtime.RequiredError(
                 'startPointId',
@@ -207,20 +183,12 @@ export class RoutingApi extends runtime.BaseAPI {
         let urlPath = `/v1/routing/start-points/{start_point_id}/default`;
         urlPath = urlPath.replace(`{${"start_point_id"}}`, encodeURIComponent(String(requestParameters['startPointId'])));
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * Set the default start point
-     */
-    async setDefaultStartPointRaw(requestParameters: SetDefaultStartPointRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        const requestOptions = await this.setDefaultStartPointRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.VoidApiResponse(response);
     }
@@ -233,9 +201,10 @@ export class RoutingApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for transferStartPoint without sending the request
+     * Moves a start point to a different owning organization. If it was the default for its organization, it loses that status (the target organization\'s own default, if any, is left untouched). Requires `watering_plan:update` in both the source and target organization.
+     * Transfer a start point\'s ownership to another organization
      */
-    async transferStartPointRequestOpts(requestParameters: TransferStartPointRequest): Promise<runtime.RequestOpts> {
+    async transferStartPointRaw(requestParameters: TransferStartPointRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['startPointId'] == null) {
             throw new runtime.RequiredError(
                 'startPointId',
@@ -260,22 +229,13 @@ export class RoutingApi extends runtime.BaseAPI {
         let urlPath = `/v1/routing/start-points/{start_point_id}/organization`;
         urlPath = urlPath.replace(`{${"start_point_id"}}`, encodeURIComponent(String(requestParameters['startPointId'])));
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
             body: TransferRequestToJSON(requestParameters['transferRequest']),
-        };
-    }
-
-    /**
-     * Moves a start point to a different owning organization. If it was the default for its organization, it loses that status (the target organization\'s own default, if any, is left untouched). Requires `watering_plan:update` in both the source and target organization.
-     * Transfer a start point\'s ownership to another organization
-     */
-    async transferStartPointRaw(requestParameters: TransferStartPointRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        const requestOptions = await this.transferStartPointRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.VoidApiResponse(response);
     }
@@ -289,9 +249,9 @@ export class RoutingApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for updateStartPoint without sending the request
+     * Update a start point
      */
-    async updateStartPointRequestOpts(requestParameters: UpdateStartPointRequest): Promise<runtime.RequestOpts> {
+    async updateStartPointRaw(requestParameters: UpdateStartPointRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<StartPointResponse>> {
         if (requestParameters['startPointId'] == null) {
             throw new runtime.RequiredError(
                 'startPointId',
@@ -316,21 +276,13 @@ export class RoutingApi extends runtime.BaseAPI {
         let urlPath = `/v1/routing/start-points/{start_point_id}`;
         urlPath = urlPath.replace(`{${"start_point_id"}}`, encodeURIComponent(String(requestParameters['startPointId'])));
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
             body: StartPointRequestToJSON(requestParameters['startPointRequest']),
-        };
-    }
-
-    /**
-     * Update a start point
-     */
-    async updateStartPointRaw(requestParameters: UpdateStartPointRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<StartPointResponse>> {
-        const requestOptions = await this.updateStartPointRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => StartPointResponseFromJSON(jsonValue));
     }

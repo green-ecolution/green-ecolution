@@ -85,9 +85,10 @@ export interface UpdateUserRequest {
 export class UsersApi extends runtime.BaseAPI {
 
     /**
-     * Creates request options for assignUserRole without sending the request
+     * Assigns a role to a user. Requires user:update in the role\'s organization, plus a permission set that does not exceed the caller\'s own grants. The role\'s organization must match the target user\'s organization. Changes to one\'s own roles are rejected.
+     * Assign a role to a user
      */
-    async assignUserRoleRequestOpts(requestParameters: AssignUserRoleRequest): Promise<runtime.RequestOpts> {
+    async assignUserRoleRaw(requestParameters: AssignUserRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RoleResponse>> {
         if (requestParameters['userId'] == null) {
             throw new runtime.RequiredError(
                 'userId',
@@ -112,22 +113,13 @@ export class UsersApi extends runtime.BaseAPI {
         let urlPath = `/v1/users/{user_id}/roles`;
         urlPath = urlPath.replace(`{${"user_id"}}`, encodeURIComponent(String(requestParameters['userId'])));
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
             body: AssignRoleRequestToJSON(requestParameters['assignRoleRequest']),
-        };
-    }
-
-    /**
-     * Assigns a role to a user. Requires user:update in the role\'s organization, plus a permission set that does not exceed the caller\'s own grants. The role\'s organization must match the target user\'s organization. Changes to one\'s own roles are rejected.
-     * Assign a role to a user
-     */
-    async assignUserRoleRaw(requestParameters: AssignUserRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RoleResponse>> {
-        const requestOptions = await this.assignUserRoleRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => RoleResponseFromJSON(jsonValue));
     }
@@ -142,9 +134,10 @@ export class UsersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for createUser without sending the request
+     * Registers a user in the given organization and assigns the requested roles. Requires user:create in the organization, plus each role\'s permissions must not exceed the caller\'s own grants.
+     * Register a new user
      */
-    async createUserRequestOpts(requestParameters: CreateUserRequest): Promise<runtime.RequestOpts> {
+    async createUserRaw(requestParameters: CreateUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UserResponse>> {
         if (requestParameters['userRegisterRequest'] == null) {
             throw new runtime.RequiredError(
                 'userRegisterRequest',
@@ -161,22 +154,13 @@ export class UsersApi extends runtime.BaseAPI {
 
         let urlPath = `/v1/users`;
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
             body: UserRegisterRequestToJSON(requestParameters['userRegisterRequest']),
-        };
-    }
-
-    /**
-     * Registers a user in the given organization and assigns the requested roles. Requires user:create in the organization, plus each role\'s permissions must not exceed the caller\'s own grants.
-     * Register a new user
-     */
-    async createUserRaw(requestParameters: CreateUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UserResponse>> {
-        const requestOptions = await this.createUserRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => UserResponseFromJSON(jsonValue));
     }
@@ -191,9 +175,10 @@ export class UsersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for getMe without sending the request
+     * Returns the profile of the currently authenticated user.
+     * Get the authenticated user
      */
-    async getMeRequestOpts(): Promise<runtime.RequestOpts> {
+    async getMeRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UserResponse>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -201,21 +186,12 @@ export class UsersApi extends runtime.BaseAPI {
 
         let urlPath = `/v1/users/me`;
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * Returns the profile of the currently authenticated user.
-     * Get the authenticated user
-     */
-    async getMeRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UserResponse>> {
-        const requestOptions = await this.getMeRequestOpts();
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => UserResponseFromJSON(jsonValue));
     }
@@ -230,9 +206,10 @@ export class UsersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for listUserRoles without sending the request
+     * Requires user:read in the target user\'s organization.
+     * List a user\'s assigned roles
      */
-    async listUserRolesRequestOpts(requestParameters: ListUserRolesRequest): Promise<runtime.RequestOpts> {
+    async listUserRolesRaw(requestParameters: ListUserRolesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<RoleResponse>>> {
         if (requestParameters['userId'] == null) {
             throw new runtime.RequiredError(
                 'userId',
@@ -248,21 +225,12 @@ export class UsersApi extends runtime.BaseAPI {
         let urlPath = `/v1/users/{user_id}/roles`;
         urlPath = urlPath.replace(`{${"user_id"}}`, encodeURIComponent(String(requestParameters['userId'])));
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * Requires user:read in the target user\'s organization.
-     * List a user\'s assigned roles
-     */
-    async listUserRolesRaw(requestParameters: ListUserRolesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<RoleResponse>>> {
-        const requestOptions = await this.listUserRolesRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(RoleResponseFromJSON));
     }
@@ -277,9 +245,10 @@ export class UsersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for listUsers without sending the request
+     * Returns a paginated list of users from the caller\'s organization subtree, optionally filtered by organization or role. Requires user:read.
+     * List visible users
      */
-    async listUsersRequestOpts(requestParameters: ListUsersRequest): Promise<runtime.RequestOpts> {
+    async listUsersRaw(requestParameters: ListUsersRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListResponseUserResponse>> {
         const queryParameters: any = {};
 
         if (requestParameters['page'] != null) {
@@ -307,21 +276,12 @@ export class UsersApi extends runtime.BaseAPI {
 
         let urlPath = `/v1/users`;
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * Returns a paginated list of users from the caller\'s organization subtree, optionally filtered by organization or role. Requires user:read.
-     * List visible users
-     */
-    async listUsersRaw(requestParameters: ListUsersRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListResponseUserResponse>> {
-        const requestOptions = await this.listUsersRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => ListResponseUserResponseFromJSON(jsonValue));
     }
@@ -336,9 +296,10 @@ export class UsersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for revokeUserRole without sending the request
+     * Revokes a role from a user. Requires user:update in the role\'s organization. Changes to one\'s own roles are rejected.
+     * Revoke a role from a user
      */
-    async revokeUserRoleRequestOpts(requestParameters: RevokeUserRoleRequest): Promise<runtime.RequestOpts> {
+    async revokeUserRoleRaw(requestParameters: RevokeUserRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['userId'] == null) {
             throw new runtime.RequiredError(
                 'userId',
@@ -362,21 +323,12 @@ export class UsersApi extends runtime.BaseAPI {
         urlPath = urlPath.replace(`{${"user_id"}}`, encodeURIComponent(String(requestParameters['userId'])));
         urlPath = urlPath.replace(`{${"role_id"}}`, encodeURIComponent(String(requestParameters['roleId'])));
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'DELETE',
             headers: headerParameters,
             query: queryParameters,
-        };
-    }
-
-    /**
-     * Revokes a role from a user. Requires user:update in the role\'s organization. Changes to one\'s own roles are rejected.
-     * Revoke a role from a user
-     */
-    async revokeUserRoleRaw(requestParameters: RevokeUserRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        const requestOptions = await this.revokeUserRoleRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.VoidApiResponse(response);
     }
@@ -390,9 +342,10 @@ export class UsersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for setUserOrganization without sending the request
+     * Moves the user into the given organization. Requires user:update in the target organization. Changes to one\'s own organization membership are rejected.
+     * Set a user\'s organization
      */
-    async setUserOrganizationRequestOpts(requestParameters: SetUserOrganizationRequest): Promise<runtime.RequestOpts> {
+    async setUserOrganizationRaw(requestParameters: SetUserOrganizationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UserResponse>> {
         if (requestParameters['userId'] == null) {
             throw new runtime.RequiredError(
                 'userId',
@@ -417,22 +370,13 @@ export class UsersApi extends runtime.BaseAPI {
         let urlPath = `/v1/users/{user_id}/organization`;
         urlPath = urlPath.replace(`{${"user_id"}}`, encodeURIComponent(String(requestParameters['userId'])));
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
             body: SetOrganizationRequestToJSON(requestParameters['setOrganizationRequest']),
-        };
-    }
-
-    /**
-     * Moves the user into the given organization. Requires user:update in the target organization. Changes to one\'s own organization membership are rejected.
-     * Set a user\'s organization
-     */
-    async setUserOrganizationRaw(requestParameters: SetUserOrganizationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UserResponse>> {
-        const requestOptions = await this.setUserOrganizationRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => UserResponseFromJSON(jsonValue));
     }
@@ -447,9 +391,10 @@ export class UsersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for updateUser without sending the request
+     * Replace-style update of the app-owned user profile. Requires user:update in the target user\'s organization.
+     * Replace a user\'s profile data
      */
-    async updateUserRequestOpts(requestParameters: UpdateUserRequest): Promise<runtime.RequestOpts> {
+    async updateUserRaw(requestParameters: UpdateUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UserResponse>> {
         if (requestParameters['userId'] == null) {
             throw new runtime.RequiredError(
                 'userId',
@@ -474,22 +419,13 @@ export class UsersApi extends runtime.BaseAPI {
         let urlPath = `/v1/users/{user_id}`;
         urlPath = urlPath.replace(`{${"user_id"}}`, encodeURIComponent(String(requestParameters['userId'])));
 
-        return {
+        const response = await this.request({
             path: urlPath,
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
             body: UserUpdateRequestToJSON(requestParameters['userUpdateRequest']),
-        };
-    }
-
-    /**
-     * Replace-style update of the app-owned user profile. Requires user:update in the target user\'s organization.
-     * Replace a user\'s profile data
-     */
-    async updateUserRaw(requestParameters: UpdateUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UserResponse>> {
-        const requestOptions = await this.updateUserRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+        }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => UserResponseFromJSON(jsonValue));
     }
