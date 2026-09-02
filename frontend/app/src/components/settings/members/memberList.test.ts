@@ -1,4 +1,6 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeAll } from 'vitest'
+import type { TFunction } from 'i18next'
+import { getI18n } from '@/lib/i18n'
 import type { OrganizationResponse, RoleResponse, UserResponse } from '@/api/backendApi'
 import {
   emptyMessageOf,
@@ -8,6 +10,11 @@ import {
   roleFilterOptions,
   sinceLabel,
 } from './memberList'
+
+let t: TFunction<'settings'>
+beforeAll(() => {
+  t = getI18n().getFixedT('de', 'settings')
+})
 
 const user = (firstName: string, lastName: string): UserResponse =>
   ({ firstName, lastName }) as UserResponse
@@ -24,25 +31,25 @@ describe('fullNameOf', () => {
 
 describe('memberCountLabel', () => {
   it('names one number without a filter', () => {
-    expect(memberCountLabel(3, 3, false)).toBe('3 Personen')
+    expect(memberCountLabel(3, 3, false, t)).toBe('3 Personen')
   })
 
   it('uses the singular for one person', () => {
-    expect(memberCountLabel(1, 1, false)).toBe('1 Person')
+    expect(memberCountLabel(1, 1, false, t)).toBe('1 Person')
   })
 
   it('names both numbers with an active filter, so the narrowing stays visible', () => {
-    expect(memberCountLabel(2, 7, true)).toBe('2 von 7 Personen')
+    expect(memberCountLabel(2, 7, true, t)).toBe('2 von 7 Personen')
   })
 })
 
 describe('emptyMessageOf', () => {
   it('says "no search hits" when filtered', () => {
-    expect(emptyMessageOf(true)).toBe('Keine Person passt zu Suche und Filter.')
+    expect(emptyMessageOf(true, t)).toBe('Keine Person passt zu Suche und Filter.')
   })
 
   it('says "no members yet" when not filtered', () => {
-    expect(emptyMessageOf(false)).toBe('Es sind noch keine Mitarbeitenden hinterlegt.')
+    expect(emptyMessageOf(false, t)).toBe('Es sind noch keine Mitarbeitenden hinterlegt.')
   })
 })
 
@@ -84,6 +91,7 @@ describe('roleFilterOptions', () => {
     const options = roleFilterOptions(
       [role('r1', 'Administrator', 'amt'), role('r2', 'Administrator', 'nord')],
       orgs,
+      t,
     )
 
     expect(options).toEqual([
@@ -96,18 +104,19 @@ describe('roleFilterOptions', () => {
     const options = roleFilterOptions(
       [role('r2', 'Gärtner', 'nord'), role('r1', 'Gärtner', 'amt')],
       orgs,
+      t,
     )
 
     expect(options.map((option) => option.group)).toEqual(['Grünflächenamt', 'Stadtgärtnerei Nord'])
   })
 
   it('still lists a role whose organization is not visible instead of dropping it', () => {
-    const options = roleFilterOptions([role('r9', 'Fremd', 'unbekannt')], orgs)
+    const options = roleFilterOptions([role('r9', 'Fremd', 'unbekannt')], orgs, t)
 
     expect(options).toEqual([{ value: 'r9', label: 'Fremd', group: 'Ohne Organisation' }])
   })
 
   it('yields nothing when there are no roles', () => {
-    expect(roleFilterOptions([], orgs)).toEqual([])
+    expect(roleFilterOptions([], orgs, t)).toEqual([])
   })
 })

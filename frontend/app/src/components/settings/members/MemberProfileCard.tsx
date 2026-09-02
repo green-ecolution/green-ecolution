@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { FormField, Label, MultiSelect, SelectField, Switch } from '@green-ecolution/ui'
 import { translateIssue } from '@green-ecolution/domain-wasm'
 import type { DrivingLicense, UserStatus } from '@green-ecolution/backend-client'
@@ -21,10 +22,18 @@ interface MemberProfileCardProps {
   onWateringPlanSelectableChange: (value: boolean) => void
 }
 
-const StaticField = ({ label, value }: { label: string; value: string }) => (
+const StaticField = ({
+  label,
+  value,
+  fallback,
+}: {
+  label: string
+  value: string
+  fallback: string
+}) => (
   <div className="flex flex-col gap-y-1">
     <p className="text-sm font-medium text-dark">{label}</p>
-    <p className="text-sm text-dark-600">{value.trim().length > 0 ? value : 'Nicht hinterlegt'}</p>
+    <p className="text-sm text-dark-600">{value.trim().length > 0 ? value : fallback}</p>
   </div>
 )
 
@@ -37,6 +46,7 @@ const MemberProfileCard = ({
   onEmployeeIdChange,
   onWateringPlanSelectableChange,
 }: MemberProfileCardProps) => {
+  const { t } = useTranslation(['settings', 'common'])
   const translate = useIssueTranslator()
   const getDrivingLicenseDetails = useDrivingLicenseDetails()
   const getUserStatusDetails = useUserStatusDetails()
@@ -46,19 +56,18 @@ const MemberProfileCard = ({
     .map((license) => getDrivingLicenseDetails(license).label)
     .join(', ')
   const phoneIssue = phoneNumberIssue(draft.phoneNumber)
+  const notProvided = t('notProvided')
 
   return (
     <section className={`${CARD} @min-[48rem]:col-span-2`}>
-      <h3 className={CARD_TITLE}>Profil</h3>
-      <p className="mt-0.5 text-sm text-dark-600">
-        Diese Angaben zählen für die Einteilung in Einsatzpläne.
-      </p>
+      <h3 className={CARD_TITLE}>{t('members.profileTitle')}</h3>
+      <p className="mt-0.5 text-sm text-dark-600">{t('members.profileHint')}</p>
 
       <div className="mt-4 grid gap-4 @min-[36rem]:grid-cols-2">
         {editable ? (
           <>
             <SelectField
-              label="Verfügbarkeit"
+              label={t('members.availabilityLabel')}
               value={draft.status}
               onValueChange={(value) => onStatusChange(value as UserStatus)}
               options={userStatusOptions
@@ -66,7 +75,7 @@ const MemberProfileCard = ({
                 .map((option) => ({ value: option.value, label: option.label }))}
             />
             <div className="flex flex-col gap-y-2">
-              <Label htmlFor="member-driving-licenses">Führerscheinklassen</Label>
+              <Label htmlFor="member-driving-licenses">{t('members.drivingLicensesLabel')}</Label>
               <MultiSelect
                 id="member-driving-licenses"
                 value={draft.drivingLicenses}
@@ -78,18 +87,18 @@ const MemberProfileCard = ({
               />
             </div>
             <FormField
-              label="Telefonnummer"
+              label={t('members.phoneNumberLabel')}
               value={draft.phoneNumber}
               onChange={(event) => onPhoneNumberChange(event.target.value)}
               error={phoneIssue ? translateIssue(phoneIssue, translate) : undefined}
-              placeholder="z. B. +49 461 123456"
+              placeholder={t('members.phoneNumberPlaceholder')}
               inputMode="tel"
             />
             <FormField
-              label="Personalnummer"
+              label={t('members.employeeIdLabel')}
               value={draft.employeeId}
               onChange={(event) => onEmployeeIdChange(event.target.value)}
-              placeholder="z. B. EMP-042"
+              placeholder={t('members.employeeIdPlaceholder')}
             />
             <div className="flex flex-col gap-y-2 @min-[36rem]:col-span-2">
               <div className="flex items-center gap-x-3">
@@ -99,24 +108,38 @@ const MemberProfileCard = ({
                   onCheckedChange={onWateringPlanSelectableChange}
                 />
                 <Label htmlFor="member-watering-plan-selectable">
-                  Für Einsatzplanung auswählbar
+                  {t('members.wateringPlanSelectableLabel')}
                 </Label>
               </div>
-              <p className="text-sm text-dark-600">
-                Nur gekennzeichnete Personen erscheinen in der Auswahl der verknüpften
-                Mitarbeitenden eines Einsatzplans.
-              </p>
+              <p className="text-sm text-dark-600">{t('members.wateringPlanSelectableHint')}</p>
             </div>
           </>
         ) : (
           <>
-            <StaticField label="Verfügbarkeit" value={getUserStatusDetails(draft.status).label} />
-            <StaticField label="Führerscheinklassen" value={licenseLabels} />
-            <StaticField label="Telefonnummer" value={draft.phoneNumber} />
-            <StaticField label="Personalnummer" value={draft.employeeId} />
             <StaticField
-              label="Für Einsatzplanung auswählbar"
-              value={draft.wateringPlanSelectable ? 'Ja' : 'Nein'}
+              label={t('members.availabilityLabel')}
+              value={getUserStatusDetails(draft.status).label}
+              fallback={notProvided}
+            />
+            <StaticField
+              label={t('members.drivingLicensesLabel')}
+              value={licenseLabels}
+              fallback={notProvided}
+            />
+            <StaticField
+              label={t('members.phoneNumberLabel')}
+              value={draft.phoneNumber}
+              fallback={notProvided}
+            />
+            <StaticField
+              label={t('members.employeeIdLabel')}
+              value={draft.employeeId}
+              fallback={notProvided}
+            />
+            <StaticField
+              label={t('members.wateringPlanSelectableLabel')}
+              value={draft.wateringPlanSelectable ? t('members.yes') : t('members.no')}
+              fallback={notProvided}
             />
           </>
         )}

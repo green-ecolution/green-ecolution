@@ -1,4 +1,7 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeAll } from 'vitest'
+import type { TFunction } from 'i18next'
+import { getI18n } from '@/lib/i18n'
+import { ensureLanguage } from '@/lib/i18n/load'
 import { UNRESTRICTED } from './permissions'
 import {
   activeActionCount,
@@ -7,21 +10,32 @@ import {
   clampToGrantable,
   isGrantable,
   levelOf,
-  PERMISSION_AREAS,
+  permissionAreasFor,
   toggleAction,
   unknownPermissions,
 } from './permissionAreas'
 
-describe('PERMISSION_AREAS', () => {
+let t: TFunction<'settings'>
+let tEn: TFunction<'settings'>
+beforeAll(async () => {
+  t = getI18n().getFixedT('de', 'settings')
+  // The English bundle is loaded lazily on first switch; fixedT('en', …)
+  // resolves to raw keys until it's registered.
+  await ensureLanguage(getI18n(), 'en')
+  tEn = getI18n().getFixedT('en', 'settings')
+})
+
+describe('permissionAreasFor', () => {
   it('covers all nine resources with four actions each', () => {
-    expect(PERMISSION_AREAS).toHaveLength(9)
-    for (const area of PERMISSION_AREAS) {
+    const areas = permissionAreasFor(t)
+    expect(areas).toHaveLength(9)
+    for (const area of areas) {
       expect(area.actions).toHaveLength(4)
     }
   })
 
   it('labels the organization actions without the word Untereinheit', () => {
-    const area = PERMISSION_AREAS.find((candidate) => candidate.resource === 'organization')
+    const area = permissionAreasFor(t).find((candidate) => candidate.resource === 'organization')
     const text = area!.actions.map((action) => `${action.label} ${action.hint}`).join(' ')
     expect(text).not.toMatch(/Untereinheit/)
     expect(area!.actions.map((action) => action.label)).toEqual([
@@ -33,13 +47,57 @@ describe('PERMISSION_AREAS', () => {
   })
 
   it('builds the permission string from resource and action', () => {
-    const area = PERMISSION_AREAS.find((candidate) => candidate.resource === 'tree')
+    const area = permissionAreasFor(t).find((candidate) => candidate.resource === 'tree')
     expect(area!.actions.map((action) => action.permission)).toEqual([
       'tree:read',
       'tree:create',
       'tree:update',
       'tree:delete',
     ])
+  })
+
+  // The generic "{resource} {verb}" composition is lossless for 34 of the 36
+  // cells; these two pin the label overrides that restore the distinction the
+  // generic verb would otherwise flatten (invite vs. create a person, remove
+  // access vs. delete a person). watering_plan:create is deliberately not
+  // overridden — see the next test.
+  it('overrides the two cells the generic verbs would flatten', () => {
+    const labelOf = (t: TFunction<'settings'>, resource: string, action: string) =>
+      permissionAreasFor(t)
+        .find((area) => area.resource === resource)!
+        .actions.find((candidate) => candidate.action === action)!.label
+
+    expect(labelOf(t, 'user', 'create')).toBe('Mitarbeitende einladen')
+    expect(labelOf(t, 'user', 'delete')).toBe('Mitarbeitende entfernen')
+
+    expect(labelOf(tEn, 'user', 'create')).toBe('Invite members')
+    expect(labelOf(tEn, 'user', 'delete')).toBe('Remove members')
+  })
+
+  // watering_plan:create composes like the other 33 cells: once the entity is
+  // correctly named "Einsatzplan", the extra verb "planen" a prior fix added
+  // here said nothing "anlegen" didn't already say.
+  it('composes watering_plan:create like the other cells instead of overriding it', () => {
+    const labelOf = (t: TFunction<'settings'>, resource: string, action: string) =>
+      permissionAreasFor(t)
+        .find((area) => area.resource === resource)!
+        .actions.find((candidate) => candidate.action === action)!.label
+
+    expect(labelOf(t, 'watering_plan', 'create')).toBe('Einsatzplan anlegen')
+    expect(labelOf(tEn, 'watering_plan', 'create')).toBe('Create watering plan')
+  })
+
+  it('still composes the other user and watering_plan actions', () => {
+    const labelOf = (resource: string, action: string) =>
+      permissionAreasFor(t)
+        .find((area) => area.resource === resource)!
+        .actions.find((candidate) => candidate.action === action)!.label
+
+    expect(labelOf('user', 'read')).toBe('Mitarbeitende ansehen')
+    expect(labelOf('user', 'update')).toBe('Mitarbeitende bearbeiten')
+    expect(labelOf('watering_plan', 'read')).toBe('Einsatzpläne ansehen')
+    expect(labelOf('watering_plan', 'update')).toBe('Einsatzplan bearbeiten')
+    expect(labelOf('watering_plan', 'delete')).toBe('Einsatzplan löschen')
   })
 })
 

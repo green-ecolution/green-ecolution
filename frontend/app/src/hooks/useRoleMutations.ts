@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { roleApi } from '@/api/backendApi'
 import createToast from '@/hooks/createToast'
 import { statusOf } from '@/lib/httpError'
@@ -24,6 +25,7 @@ export interface DeleteRoleVariables {
 export const useRoleMutations = () => {
   const queryClient = useQueryClient()
   const showToast = createToast()
+  const { t } = useTranslation('settings')
 
   // A role change can alter the signed-in user's own grants, so nav and gating
   // must refetch alongside the role list.
@@ -43,10 +45,10 @@ export const useRoleMutations = () => {
       }),
     onSuccess: () => {
       invalidate()
-      showToast('Rolle angelegt')
+      showToast(t('roles.toast.created'))
     },
     onError: (error) => {
-      if (!isNameConflict(error)) showToast('Die Rolle konnte nicht gespeichert werden.', 'error')
+      if (!isNameConflict(error)) showToast(t('roles.toast.saveFailed'), 'error')
     },
   })
 
@@ -58,10 +60,10 @@ export const useRoleMutations = () => {
       }),
     onSuccess: () => {
       invalidate()
-      showToast('Gespeichert')
+      showToast(t('roles.toast.saved'))
     },
     onError: (error) => {
-      if (!isNameConflict(error)) showToast('Die Rolle konnte nicht gespeichert werden.', 'error')
+      if (!isNameConflict(error)) showToast(t('roles.toast.saveFailed'), 'error')
     },
   })
 
@@ -69,9 +71,9 @@ export const useRoleMutations = () => {
     mutationFn: ({ roleId }: DeleteRoleVariables) => roleApi.deleteRole({ roleId }),
     onSuccess: () => {
       invalidate()
-      showToast('Rolle gelöscht')
+      showToast(t('roles.toast.deleted'))
     },
-    onError: () => showToast('Die Rolle konnte nicht gelöscht werden.', 'error'),
+    onError: () => showToast(t('roles.toast.deleteFailed'), 'error'),
   })
 
   return { createRole, updateRole, deleteRole }

@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useRef } from 'react'
 import { Link } from '@tanstack/react-router'
 import { ArrowRight, ChevronRight, Lock, Plus, Trash2, UserPlus } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import {
   Alert,
   AlertContent,
@@ -69,10 +70,18 @@ const sinceLabel = (createdAt?: string | null): string | null => {
   return `${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`
 }
 
-const StaticField = ({ label, value }: { label: string; value: string }) => (
+const StaticField = ({
+  label,
+  value,
+  fallback,
+}: {
+  label: string
+  value: string
+  fallback: string
+}) => (
   <div className="flex flex-col gap-y-1">
     <p className="text-sm font-medium text-dark">{label}</p>
-    <p className="text-sm text-dark-600">{value.trim().length > 0 ? value : 'Nicht hinterlegt'}</p>
+    <p className="text-sm text-dark-600">{value.trim().length > 0 ? value : fallback}</p>
   </div>
 )
 
@@ -105,6 +114,7 @@ const OrganizationDetail = ({
   onDelete,
   renderActionBar,
 }: OrganizationDetailProps) => {
+  const { t } = useTranslation(['settings', 'common'])
   const nameRef = useRef<HTMLInputElement>(null)
   const contactRef = useRef<HTMLButtonElement>(null)
 
@@ -119,9 +129,10 @@ const OrganizationDetail = ({
   const locked = readOnly || !canUpdate
   const nameEmpty = draft.name.trim().length === 0
   const since = sinceLabel(detail.createdAt)
-  const kind = detail.parentId == null ? 'Oberste Organisation' : 'Untergeordnete Organisation'
+  const kind = t(detail.parentId == null ? 'organization.topLevelKind' : 'organization.childKind')
   const contact = detail.contactPerson
   const children = node.children
+  const notProvided = t('notProvided')
 
   return (
     <div className="flex flex-col gap-6">
@@ -157,7 +168,9 @@ const OrganizationDetail = ({
         </span>
         <div className="min-w-0 flex-1">
           <h2 className="font-lato text-2xl font-bold text-dark break-words">{detail.name}</h2>
-          <p className="mt-0.5 text-sm text-dark-600">{since ? `${kind} · seit ${since}` : kind}</p>
+          <p className="mt-0.5 text-sm text-dark-600">
+            {since ? `${kind} · ${t('organization.sinceLabel', { since })}` : kind}
+          </p>
         </div>
       </header>
 
@@ -165,9 +178,7 @@ const OrganizationDetail = ({
         <Alert variant="info" size="default" className="flex w-full gap-4">
           <AlertIcon variant="info" icon={Lock} />
           <AlertContent>
-            <AlertDescription>
-              Die oberste Organisation dieser Instanz kann nicht bearbeitet werden.
-            </AlertDescription>
+            <AlertDescription>{t('organization.readOnlyRootNotice')}</AlertDescription>
           </AlertContent>
         </Alert>
       )}
@@ -175,63 +186,77 @@ const OrganizationDetail = ({
       <div className="@container">
         <div className="grid gap-4 @min-[48rem]:grid-cols-2">
           <section className={CARD}>
-            <h3 className={CARD_TITLE}>Stammdaten</h3>
+            <h3 className={CARD_TITLE}>{t('organization.masterDataTitle')}</h3>
             <div className="mt-4">
               {locked ? (
-                <StaticField label="Name" value={draft.name} />
+                <StaticField
+                  label={t('organization.nameLabel')}
+                  value={draft.name}
+                  fallback={notProvided}
+                />
               ) : (
                 // FormField owns aria-invalid and aria-describedby; passing
                 // aria-invalid in would set it without an associated reason.
                 <FormField
                   ref={nameRef}
-                  label="Name"
+                  label={t('organization.nameLabel')}
                   value={draft.name}
                   onChange={(event) => onNameChange(event.target.value)}
-                  error={nameError ?? (nameEmpty ? 'Gib der Organisation einen Namen.' : undefined)}
-                  placeholder="Name der Organisation"
+                  error={nameError ?? (nameEmpty ? t('organization.nameEmptyHint') : undefined)}
+                  placeholder={t('organization.namePlaceholder')}
                 />
               )}
             </div>
           </section>
 
           <section className={CARD}>
-            <h3 className={CARD_TITLE}>Standort</h3>
-            <p className="mt-0.5 text-sm text-dark-600">
-              Die Adresse ist optional, lässt sich aber nur vollständig speichern.
-            </p>
+            <h3 className={CARD_TITLE}>{t('organization.locationTitle')}</h3>
+            <p className="mt-0.5 text-sm text-dark-600">{t('organization.locationHint')}</p>
             <div className="mt-4 flex flex-col gap-4">
               {locked ? (
                 <>
-                  <StaticField label="Straße und Hausnummer" value={draft.street} />
+                  <StaticField
+                    label={t('organization.streetLabel')}
+                    value={draft.street}
+                    fallback={notProvided}
+                  />
                   <div className="grid gap-4 @min-[22rem]:grid-cols-[8rem_1fr]">
-                    <StaticField label="PLZ" value={draft.postalCode} />
-                    <StaticField label="Ort" value={draft.city} />
+                    <StaticField
+                      label={t('organization.postalCodeLabel')}
+                      value={draft.postalCode}
+                      fallback={notProvided}
+                    />
+                    <StaticField
+                      label={t('organization.cityLabel')}
+                      value={draft.city}
+                      fallback={notProvided}
+                    />
                   </div>
                 </>
               ) : (
                 <>
                   <FormField
-                    label="Straße und Hausnummer"
+                    label={t('organization.streetLabel')}
                     value={draft.street}
                     onChange={(event) => onStreetChange(event.target.value)}
                     error={addressErrors.street}
-                    placeholder="z. B. Nordergraben 12"
+                    placeholder={t('organization.streetPlaceholder')}
                   />
                   <div className="grid gap-4 @min-[22rem]:grid-cols-[8rem_1fr]">
                     <FormField
-                      label="PLZ"
+                      label={t('organization.postalCodeLabel')}
                       value={draft.postalCode}
                       onChange={(event) => onPostalCodeChange(event.target.value)}
                       error={addressErrors.postalCode}
-                      placeholder="24937"
+                      placeholder={t('organization.postalCodePlaceholder')}
                       inputMode="numeric"
                     />
                     <FormField
-                      label="Ort"
+                      label={t('organization.cityLabel')}
                       value={draft.city}
                       onChange={(event) => onCityChange(event.target.value)}
                       error={addressErrors.city}
-                      placeholder="Flensburg"
+                      placeholder={t('organization.cityPlaceholder')}
                     />
                   </div>
                 </>
@@ -240,7 +265,7 @@ const OrganizationDetail = ({
           </section>
 
           <section className={`${CARD} ${canReadUsers ? '' : '@min-[48rem]:col-span-2'}`}>
-            <h3 className={CARD_TITLE}>Kontaktperson</h3>
+            <h3 className={CARD_TITLE}>{t('organization.contactPersonTitle')}</h3>
             <div className="mt-4 flex flex-wrap items-center gap-4">
               {contact ? (
                 <>
@@ -264,7 +289,7 @@ const OrganizationDetail = ({
                       size="sm"
                       onClick={onContactPersonRequest}
                     >
-                      Ändern
+                      {t('organization.changeContactPerson')}
                     </Button>
                   )}
                 </>
@@ -277,10 +302,10 @@ const OrganizationDetail = ({
                   onClick={onContactPersonRequest}
                 >
                   <UserPlus className="size-4" aria-hidden />
-                  Kontaktperson festlegen
+                  {t('organization.setContactPerson')}
                 </Button>
               ) : (
-                <p className="text-sm text-dark-600">Keine Kontaktperson festgelegt.</p>
+                <p className="text-sm text-dark-600">{t('organization.noContactPerson')}</p>
               )}
             </div>
             {contactPersonError && (
@@ -292,16 +317,16 @@ const OrganizationDetail = ({
 
           {canReadUsers && (
             <section className={CARD}>
-              <h3 className={CARD_TITLE}>Zugewiesene Mitarbeitende</h3>
+              <h3 className={CARD_TITLE}>{t('organization.assignedMembersTitle')}</h3>
               <div className="mt-4 flex flex-wrap items-center gap-4">
                 <AvatarStack items={memberInitials} />
-                <p className="min-w-0 flex-1 text-sm text-dark-600">{memberSummary(node)}</p>
+                <p className="min-w-0 flex-1 text-sm text-dark-600">{memberSummary(node, t)}</p>
               </div>
               <Link
                 to="/settings/team/members"
                 className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-green-dark hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                Mitarbeitende verwalten
+                {t('organization.manageMembers')}
                 <ArrowRight className="size-4" aria-hidden />
               </Link>
             </section>
@@ -310,17 +335,17 @@ const OrganizationDetail = ({
           <section className={`${CARD} @min-[48rem]:col-span-2`}>
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
-                <h3 className={CARD_TITLE}>Untergeordnete Organisationen</h3>
+                <h3 className={CARD_TITLE}>{t('organization.subOrganizationsTitle')}</h3>
                 <p className="mt-0.5 text-sm text-dark-600">
                   {children.length === 0
-                    ? 'Diese Organisation hat keine Unterorganisationen.'
-                    : directChildrenLine(children.length)}
+                    ? t('organization.noSubOrganizations')
+                    : directChildrenLine(children.length, t)}
                 </p>
               </div>
               {canCreate && (
                 <Button type="button" variant="outline" size="sm" onClick={onSubOrganizationCreate}>
                   <Plus className="size-4" aria-hidden />
-                  Unterorganisation anlegen
+                  {t('organization.createSubOrganization')}
                 </Button>
               )}
             </div>
@@ -328,7 +353,7 @@ const OrganizationDetail = ({
             {children.length > 0 && (
               <ul className="mt-4 flex list-none flex-col gap-2">
                 {children.map((child) => {
-                  const subtitle = memberSubtitle(child)
+                  const subtitle = memberSubtitle(child, t)
                   return (
                     <li key={child.org.id}>
                       <ListCard size="compact" hoverable asChild>
@@ -369,13 +394,10 @@ const OrganizationDetail = ({
         <div className="flex flex-col gap-3">
           <Separator />
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="text-sm text-dark-600">
-              Eine Organisation lässt sich nur löschen, wenn sie keine Unterorganisationen und keine
-              Mitarbeitenden mehr hat.
-            </p>
+            <p className="text-sm text-dark-600">{t('organization.deleteHint')}</p>
             <Button type="button" variant="ghost-destructive" size="sm" onClick={onDelete}>
               <Trash2 className="size-4" aria-hidden />
-              Organisation löschen
+              {t('organization.deleteButton')}
             </Button>
           </div>
         </div>

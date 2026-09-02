@@ -23,6 +23,7 @@ export const NAMESPACES = [
   'map',
   'dashboard',
   'evaluation',
+  'settings',
 ] as const
 
 export const DEFAULT_NAMESPACE = 'common'

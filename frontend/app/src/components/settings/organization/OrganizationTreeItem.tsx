@@ -1,4 +1,5 @@
 import { ChevronDown, ChevronRight } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { ListCard } from '@green-ecolution/ui'
 import type { OrganizationResponse } from '@/api/backendApi'
 import { initialsOfName } from '@/lib/initials'
@@ -26,10 +27,11 @@ const OrganizationTreeItem = ({
   onSelect,
   onToggle,
 }: OrganizationTreeItemProps) => {
+  const { t } = useTranslation('settings')
   const hasChildren = node.children.length > 0
   const isExpanded = expanded.has(node.org.id)
   const isSelected = node.org.id === selectedId
-  const subtitle = memberSubtitle(node)
+  const subtitle = memberSubtitle(node, t)
 
   return (
     <li>
@@ -41,7 +43,7 @@ const OrganizationTreeItem = ({
           <button
             type="button"
             onClick={() => onToggle(node.org.id)}
-            aria-label={isExpanded ? 'Zuklappen' : 'Aufklappen'}
+            aria-label={t(isExpanded ? 'organization.collapseAriaLabel' : 'organization.expandAriaLabel')}
             className="flex size-5 shrink-0 items-center justify-center rounded text-dark-500 transition-colors hover:bg-dark-50 hover:text-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             {isExpanded ? (

@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Button,
   Dialog,
@@ -27,6 +28,7 @@ const CreateOrganizationDialog = ({
   onOpenChange,
   onSubmit,
 }: CreateOrganizationDialogProps) => {
+  const { t } = useTranslation(['settings', 'common'])
   const [name, setName] = useState('')
 
   const trimmed = name.trim()
@@ -47,16 +49,16 @@ const CreateOrganizationDialog = ({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Unterorganisation anlegen</DialogTitle>
+          <DialogTitle>{t('organization.createDialog.title')}</DialogTitle>
           <DialogDescription>
-            Die neue Organisation wird unter {parentName} eingeordnet.
+            {t('organization.createDialog.description', { parentName })}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <FormField
             id="new-organization-name"
-            label="Name der Organisation"
+            label={t('organization.createDialog.nameLabel')}
             value={name}
             onChange={(e) => setName(e.target.value)}
             error={nameError ?? undefined}
@@ -65,10 +67,10 @@ const CreateOrganizationDialog = ({
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
-              Abbrechen
+              {t('common:actions.cancel')}
             </Button>
             <Button type="submit" disabled={trimmed === '' || saving}>
-              Anlegen
+              {t('organization.createDialog.submit')}
             </Button>
           </DialogFooter>
         </form>

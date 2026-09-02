@@ -1,6 +1,8 @@
 import { useEffect, useState, type CSSProperties } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useBlocker } from '@tanstack/react-router'
+import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,20 +37,17 @@ const MEMBERS_PER_PAGE = 100
 
 // Frontend permission gating is scope-blind, so a user whose role is owned by a
 // child organization reaches this page and then gets a 403 from the backend.
-const loadErrorMessage = (error: unknown): string =>
-  statusOf(error) === 403
-    ? 'Du darfst diese Organisation nicht einsehen. Vermutlich gilt deine Rolle nur für eine untergeordnete Organisation.'
-    : 'Die Organisationsstruktur konnte nicht geladen werden. Bitte versuche es später erneut.'
+const loadErrorMessage = (error: unknown, t: TFunction<'settings'>): string =>
+  t(statusOf(error) === 403 ? 'organization.loadErrorForbidden' : 'organization.loadErrorGeneric')
 
-const nameConflictMessage = (error: unknown): string | null =>
-  statusOf(error) === 409 ? 'Eine Organisation mit diesem Namen existiert bereits.' : null
+const nameConflictMessage = (error: unknown, t: TFunction<'settings'>): string | null =>
+  statusOf(error) === 409 ? t('organization.nameConflict') : null
 
-const contactPersonMessage = (error: unknown): string | null =>
-  statusOf(error) === 422
-    ? 'Diese Person ist dieser Organisation nicht zugeordnet und kann nicht Kontaktperson sein.'
-    : null
+const contactPersonMessage = (error: unknown, t: TFunction<'settings'>): string | null =>
+  statusOf(error) === 422 ? t('organization.contactPersonNotAssigned') : null
 
 const OrganizationPage = () => {
+  const { t } = useTranslation(['settings', 'common'])
   const canCreate = useHasPermission(['organization:create'])
   const canUpdate = useHasPermission(['organization:update'])
   const canDelete = useHasPermission(['organization:delete'])
@@ -120,16 +119,11 @@ const OrganizationPage = () => {
     .filter((initials) => initials.length > 0)
 
   if (rootId === null) {
-    return (
-      <p className="text-sm text-dark-600">
-        Deinem Konto ist keine Organisation zugeordnet. Ohne Organisation lässt sich keine
-        Organisationsstruktur verwalten.
-      </p>
-    )
+    return <p className="text-sm text-dark-600">{t('organization.noOwnOrganization')}</p>
   }
 
   if (orgsLoading) {
-    return <Loading className="mt-10 justify-center" label="Organisationen werden geladen" />
+    return <Loading className="mt-10 justify-center" label={t('organization.loading')} />
   }
 
   // A failed load must not be reported as absence — the data may exist and just
@@ -137,7 +131,7 @@ const OrganizationPage = () => {
   if (orgsError) {
     return (
       <p role="alert" className="text-sm text-dark-600">
-        {loadErrorMessage(orgsError)}
+        {loadErrorMessage(orgsError, t)}
       </p>
     )
   }
@@ -145,12 +139,7 @@ const OrganizationPage = () => {
   const root = buildTree(orgs ?? [], rootId)
 
   if (!root) {
-    return (
-      <p className="text-sm text-dark-600">
-        Deine Organisation wurde nicht gefunden. Ohne sie lässt sich die Organisationsstruktur nicht
-        anzeigen.
-      </p>
-    )
+    return <p className="text-sm text-dark-600">{t('organization.ownOrganizationMissing')}</p>
   }
 
   const selectedNode = selectedId === null ? null : nodeOf(root, selectedId)
@@ -311,7 +300,7 @@ const OrganizationPage = () => {
     if (detailError) {
       return (
         <p role="alert" className="text-sm text-dark-600">
-          {loadErrorMessage(detailError)}
+          {loadErrorMessage(detailError, t)}
         </p>
       )
     }
@@ -334,8 +323,8 @@ const OrganizationPage = () => {
           canReadUsers={canReadUsers}
           memberInitials={memberInitials}
           saving={updateOrganization.isPending}
-          nameError={nameConflictMessage(updateOrganization.error)}
-          contactPersonError={contactPersonMessage(updateOrganization.error)}
+          nameError={nameConflictMessage(updateOrganization.error, t)}
+          contactPersonError={contactPersonMessage(updateOrganization.error, t)}
           onNameChange={draftState.setName}
           onStreetChange={draftState.setStreet}
           onPostalCodeChange={draftState.setPostalCode}
@@ -397,7 +386,7 @@ const OrganizationPage = () => {
         open={createOpen}
         parentName={detail?.name ?? ''}
         saving={createOrganization.isPending}
-        nameError={nameConflictMessage(createOrganization.error)}
+        nameError={nameConflictMessage(createOrganization.error, t)}
         onOpenChange={setCreateOpen}
         onSubmit={create}
       />
@@ -423,14 +412,14 @@ const OrganizationPage = () => {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Änderungen verwerfen?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Du hast Änderungen an dieser Organisation, die noch nicht gespeichert sind.
-            </AlertDialogDescription>
+            <AlertDialogTitle>{t('dialog.discardChanges.title')}</AlertDialogTitle>
+            <AlertDialogDescription>{t('organization.discardDescription')}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Weiter bearbeiten</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDiscard}>Verwerfen</AlertDialogAction>
+            <AlertDialogCancel>{t('dialog.discardChanges.continueEditing')}</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDiscard}>
+              {t('dialog.discardChanges.discard')}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -438,15 +427,14 @@ const OrganizationPage = () => {
       <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Organisation löschen?</AlertDialogTitle>
+            <AlertDialogTitle>{t('organization.deleteDialog.title')}</AlertDialogTitle>
             <AlertDialogDescription>
-              {detail?.name} wird entfernt. Das ist nur möglich, solange keine Unterorganisationen
-              und keine Mitarbeitenden zugeordnet sind.
+              {t('organization.deleteDialog.description', { name: detail?.name ?? '' })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-            <AlertDialogAction onClick={remove}>Löschen</AlertDialogAction>
+            <AlertDialogCancel>{t('common:actions.cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={remove}>{t('common:actions.delete')}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -455,16 +443,16 @@ const OrganizationPage = () => {
         <AlertDialog open onOpenChange={() => blocker.reset?.()}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Seite verlassen?</AlertDialogTitle>
-              <AlertDialogDescription>
-                Deine Änderungen an dieser Organisation sind noch nicht gespeichert.
-              </AlertDialogDescription>
+              <AlertDialogTitle>{t('common:dialog.unsavedChanges.title')}</AlertDialogTitle>
+              <AlertDialogDescription>{t('organization.leaveDescription')}</AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel onClick={() => blocker.reset?.()}>
-                Weiter bearbeiten
+                {t('dialog.discardChanges.continueEditing')}
               </AlertDialogCancel>
-              <AlertDialogAction onClick={() => blocker.proceed?.()}>Verlassen</AlertDialogAction>
+              <AlertDialogAction onClick={() => blocker.proceed?.()}>
+                {t('common:dialog.unsavedChanges.confirm')}
+              </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>

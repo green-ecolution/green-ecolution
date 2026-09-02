@@ -1,6 +1,7 @@
 import type { CSSProperties, ReactNode } from 'react'
 import { Link } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { Bell, Building2, Droplet, Map, Puzzle, RadioTower, UserRound, Users } from 'lucide-react'
 import { Badge } from '@green-ecolution/ui'
 import { infoQueries } from '@/api/queries'
@@ -14,6 +15,7 @@ interface SettingsLayoutProps {
 }
 
 const SettingsLayout = ({ children }: SettingsLayoutProps) => {
+  const { t } = useTranslation('settings')
   const perms = usePermissions()
   const { data: services } = useQuery(infoQueries.services())
   const enabledFeatures = new Set(
@@ -32,12 +34,12 @@ const SettingsLayout = ({ children }: SettingsLayoutProps) => {
       }
     >
       <div className="sticky top-[var(--app-header-h)] z-30 -mx-4 mb-6 flex h-14 items-center bg-light px-4 lg:mx-0 lg:px-0">
-        <h1 className="font-lato text-3xl font-bold lg:text-4xl">Einstellungen</h1>
+        <h1 className="font-lato text-3xl font-bold lg:text-4xl">{t('layout.title')}</h1>
       </div>
 
       <div className="lg:grid lg:grid-cols-[240px_1fr] lg:gap-8">
         <nav
-          aria-label="Einstellungsbereiche"
+          aria-label={t('layout.navAriaLabel')}
           className="z-20 lg:sticky lg:top-[var(--settings-header-top)] lg:self-start"
         >
           <ul className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-2 lg:mx-0 lg:flex-col lg:overflow-visible lg:px-0 lg:pb-0">
@@ -52,11 +54,11 @@ const SettingsLayout = ({ children }: SettingsLayoutProps) => {
                   >
                     <Icon className="size-5 shrink-0" aria-hidden />
                     <span className={item.comingSoon ? 'text-dark-500' : undefined}>
-                      {item.label}
+                      {t(`nav.${item.labelKey}`)}
                     </span>
                     {item.comingSoon && (
                       <Badge variant="muted" className="ml-auto hidden lg:inline-flex">
-                        bald
+                        {t('layout.comingSoonBadge')}
                       </Badge>
                     )}
                   </Link>

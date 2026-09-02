@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import type { AddressDto } from '@green-ecolution/backend-client'
 import { organizationApi } from '@/api/backendApi'
 import createToast from '@/hooks/createToast'
@@ -34,6 +35,7 @@ const isFieldLevel = (error: unknown): boolean => {
 export const useOrganizationMutations = () => {
   const queryClient = useQueryClient()
   const showToast = createToast()
+  const { t } = useTranslation('settings')
 
   // A rename also changes the organization name shown in the navigation, which
   // comes from the cached /users/me response.
@@ -49,11 +51,11 @@ export const useOrganizationMutations = () => {
       }),
     onSuccess: () => {
       invalidate()
-      showToast('Unterorganisation angelegt')
+      showToast(t('organization.toast.created'))
     },
     onError: (error) => {
       if (!isConflict(error)) {
-        showToast('Die Unterorganisation konnte nicht angelegt werden.', 'error')
+        showToast(t('organization.toast.createFailed'), 'error')
       }
     },
   })
@@ -66,11 +68,11 @@ export const useOrganizationMutations = () => {
       }),
     onSuccess: () => {
       invalidate()
-      showToast('Organisation gespeichert')
+      showToast(t('organization.toast.saved'))
     },
     onError: (error) => {
       if (!isFieldLevel(error)) {
-        showToast('Die Organisation konnte nicht gespeichert werden.', 'error')
+        showToast(t('organization.toast.saveFailed'), 'error')
       }
     },
   })
@@ -80,13 +82,11 @@ export const useOrganizationMutations = () => {
       organizationApi.deleteOrganization({ orgId }),
     onSuccess: () => {
       invalidate()
-      showToast('Organisation gelöscht')
+      showToast(t('organization.toast.deleted'))
     },
     onError: (error) => {
       showToast(
-        isConflict(error)
-          ? 'Die Organisation hat noch Unterorganisationen oder zugeordnete Personen und kann nicht gelöscht werden.'
-          : 'Die Organisation konnte nicht gelöscht werden.',
+        t(isConflict(error) ? 'organization.toast.deleteConflict' : 'organization.toast.deleteFailed'),
         'error',
       )
     },

@@ -11,6 +11,7 @@ import wateringPlan from './wateringPlan.json'
 import map from './map.json'
 import dashboard from './dashboard.json'
 import evaluation from './evaluation.json'
+import settings from './settings.json'
 
 export default {
   common,
@@ -26,4 +27,5 @@ export default {
   map,
   dashboard,
   evaluation,
+  settings,
 }

@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { useTranslation } from 'react-i18next'
 
 export const Route = createFileRoute('/_protected/settings/plugin/$pluginName/')({
   component: PluginView,
@@ -6,13 +7,11 @@ export const Route = createFileRoute('/_protected/settings/plugin/$pluginName/')
 
 function PluginView() {
   const { pluginName } = Route.useParams()
+  const { t } = useTranslation('settings')
 
   return (
     <div className="container mt-6">
-      <p>
-        Das Plugin <strong>{pluginName}</strong> kann derzeit nicht geladen werden. Das
-        Plugin-System wird überarbeitet.
-      </p>
+      <p>{t('plugin.unavailable', { pluginName })}</p>
     </div>
   )
 }

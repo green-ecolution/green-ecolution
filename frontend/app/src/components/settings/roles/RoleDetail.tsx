@@ -1,4 +1,5 @@
 import { Copy, Lock, Trash2 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import {
   Alert,
   AlertContent,
@@ -12,9 +13,9 @@ import {
 import type { Role } from '@/api/backendApi'
 import type { Permission, Permissions, Resource } from '@/lib/auth/permissions'
 import {
-  AREA_GROUP_LABELS,
   AREA_GROUP_ORDER,
-  PERMISSION_AREAS,
+  areaGroupLabels,
+  permissionAreasFor,
   unknownPermissions,
   type AccessLevel,
 } from '@/lib/auth/permissionAreas'
@@ -70,6 +71,7 @@ const RoleDetail = ({
   onDelete,
   renderActionBar = true,
 }: RoleDetailProps) => {
+  const { t } = useTranslation(['settings', 'common'])
   const isSystemRole = role?.isTemplate === true
   const isNew = draft.kind === 'new'
   const readOnly = isSystemRole || (!isNew && !canUpdate)
@@ -91,8 +93,8 @@ const RoleDetail = ({
               ) : (
                 <>
                   <Input
-                    aria-label="Name der Rolle"
-                    placeholder="Name der Rolle"
+                    aria-label={t('roles.nameAriaLabel')}
+                    placeholder={t('roles.namePlaceholder')}
                     value={draft.name}
                     onChange={(event) => onNameChange(event.target.value)}
                     aria-invalid={nameError !== null || nameEmpty}
@@ -100,13 +102,13 @@ const RoleDetail = ({
                   />
                   {nameError && <p className="mt-1 text-sm text-red">{nameError}</p>}
                   {!nameError && nameEmpty && (
-                    <p className="mt-1 text-sm text-dark-600">Gib der Rolle einen Namen.</p>
+                    <p className="mt-1 text-sm text-dark-600">{t('roles.nameRequiredHint')}</p>
                   )}
                   <Input
-                    aria-label="Beschreibung der Rolle"
+                    aria-label={t('roles.descriptionAriaLabel')}
                     value={draft.description}
                     onChange={(event) => onDescriptionChange(event.target.value)}
-                    placeholder="Kurze Beschreibung"
+                    placeholder={t('roles.descriptionPlaceholder')}
                     className="mt-2 max-w-md text-sm"
                   />
                 </>
@@ -123,10 +125,10 @@ const RoleDetail = ({
               {isSystemRole ? (
                 <>
                   <Lock className="mr-1 size-3" aria-hidden />
-                  Systemrolle
+                  {t('roles.systemRoleBadge')}
                 </>
               ) : (
-                'Eigene Rolle'
+                t('roles.ownRoleBadge')
               )}
             </Badge>
 
@@ -135,14 +137,14 @@ const RoleDetail = ({
             {!isNew && canCreate && (
               <Button type="button" variant="outline" size="sm" onClick={onCopy}>
                 <Copy className="size-4" aria-hidden />
-                Kopieren & bearbeiten
+                {t('roles.copyAndEdit')}
               </Button>
             )}
 
             {!isNew && !isSystemRole && canDelete && (
               <Button type="button" variant="outline" size="sm" onClick={onDelete}>
                 <Trash2 className="size-4" aria-hidden />
-                Löschen
+                {t('common:actions.delete')}
               </Button>
             )}
           </div>
@@ -154,19 +156,19 @@ const RoleDetail = ({
           <AlertIcon variant="warning" icon={Lock} />
           <AlertContent>
             <AlertDescription>
-              Systemrollen sind schreibgeschützt.{' '}
+              {t('roles.systemReadOnlyNoticePrefix')}{' '}
               {canCreate ? (
                 <button
                   type="button"
                   onClick={onCopy}
                   className="font-semibold text-green-dark underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
-                  Kopiere
+                  {t('roles.copyLinkLabel')}
                 </button>
               ) : (
-                'Kopiere'
+                t('roles.copyLinkLabel')
               )}{' '}
-              die Rolle, um Berechtigungen anzupassen oder eine eigene Rolle zu erstellen.
+              {t('roles.systemReadOnlyNoticeSuffix')}
             </AlertDescription>
           </AlertContent>
         </Alert>
@@ -177,7 +179,7 @@ const RoleDetail = ({
           <AlertIcon variant="warning" />
           <AlertContent>
             <AlertDescription>
-              {draft.clampedAway.length} Rechte wurden entfernt, weil du sie selbst nicht besitzt.
+              {t('roles.clampedAway', { count: draft.clampedAway.length })}
             </AlertDescription>
           </AlertContent>
         </Alert>
@@ -185,29 +187,29 @@ const RoleDetail = ({
 
       {AREA_GROUP_ORDER.map((group) => (
         <section key={group} className="flex flex-col gap-3">
-          <p className={SECTION_LABEL}>{AREA_GROUP_LABELS[group]}</p>
-          {PERMISSION_AREAS.filter((area) => area.group === group).map((area) => (
-            <RoleAreaCard
-              key={area.resource}
-              area={area}
-              permissions={draft.permissions}
-              grantable={grantable}
-              readOnly={readOnly}
-              onLevelChange={(level) => onLevelChange(area.resource, level)}
-              onActionToggle={onActionToggle}
-            />
-          ))}
+          <p className={SECTION_LABEL}>{areaGroupLabels(t)[group]}</p>
+          {permissionAreasFor(t)
+            .filter((area) => area.group === group)
+            .map((area) => (
+              <RoleAreaCard
+                key={area.resource}
+                area={area}
+                permissions={draft.permissions}
+                grantable={grantable}
+                readOnly={readOnly}
+                onLevelChange={(level) => onLevelChange(area.resource, level)}
+                onActionToggle={onActionToggle}
+              />
+            ))}
         </section>
       ))}
 
       {unknown.length > 0 && (
         <section className="rounded-xl border border-dark-100 bg-dark-50 p-4">
           <p className="text-xs font-semibold uppercase tracking-wider text-dark-500">
-            Weitere Rechte ({unknown.length})
+            {t('roles.unknownPermissionsHeading', { count: unknown.length })}
           </p>
-          <p className="mt-1 text-sm text-dark-600">
-            Diese Rechte kennt diese Ansicht nicht. Sie bleiben beim Speichern erhalten.
-          </p>
+          <p className="mt-1 text-sm text-dark-600">{t('roles.unknownPermissionsHint')}</p>
           <ul className="mt-2 flex flex-wrap gap-2">
             {unknown.map((permission) => (
               <li key={permission}>

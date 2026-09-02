@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { Role } from '@/api/backendApi'
 import type { Permission, Permissions, Resource } from '@/lib/auth/permissions'
 import {
@@ -33,6 +34,7 @@ const baselineOf = (role: Role): Baseline => ({
 })
 
 export const useRoleDraft = (grantable: Permissions) => {
+  const { t } = useTranslation('settings')
   const [draft, setDraft] = useState<RoleDraft | null>(null)
   const [baseline, setBaseline] = useState<Baseline | null>(null)
 
@@ -58,14 +60,14 @@ export const useRoleDraft = (grantable: Permissions) => {
       const { permissions, removed } = clampToGrantable(new Set(source.permissions), grantable)
       setDraft({
         kind: 'new',
-        name: `${source.name} (Kopie)`,
-        description: `Kopie von ${source.name}`,
+        name: t('roles.copyName', { name: source.name }),
+        description: t('roles.copyDescription', { name: source.name }),
         permissions,
         clampedAway: removed,
       })
       setBaseline(null)
     },
-    [grantable],
+    [grantable, t],
   )
 
   const discard = useCallback(() => {

@@ -1,0 +1,419 @@
+{
+  "layout": {
+    "title": "Einstellungen",
+    "navAriaLabel": "Einstellungsbereiche",
+    "comingSoonBadge": "bald"
+  },
+  "nav": {
+    "profile": "Profil",
+    "organization": "Organisation",
+    "irrigation": "Bewässerung",
+    "notifications": "Benachrichtigungen",
+    "sensors": "Sensoren & Netz",
+    "team": "Team & Rollen",
+    "map": "Karte & Einheiten",
+    "plugin": "Plugins"
+  },
+  "comingSoon": {
+    "inProgress": "In Arbeit",
+    "irrigation": {
+      "title": "Bewässerung",
+      "description": "Hier legst du künftig Schwellenwerte und Bewässerungsregeln für die gesamte Anwendung fest."
+    },
+    "notifications": {
+      "title": "Benachrichtigungen",
+      "description": "Hier bestimmst du künftig, worüber und auf welchem Weg dich die Anwendung informiert."
+    },
+    "sensors": {
+      "title": "Sensoren & Netz",
+      "description": "Hier konfigurierst du künftig die LoRaWAN-Anbindung und die Vorgaben für neue Geräte."
+    },
+    "map": {
+      "title": "Karte & Einheiten",
+      "description": "Hier wählst du künftig Kartenhintergrund, Startausschnitt und die Einheiten für Längen und Mengen."
+    }
+  },
+  "profile": {
+    "heading": "Profil von {firstName} {lastName}",
+    "intro": "Dies ist deine persönliche Profilseite. Auf dieser Seite findest du deine persönlichen Daten.",
+    "usernameLabel": "Username:",
+    "availabilityLabel": "Verfügbarkeit:",
+    "firstNameLabel": "Vorname:",
+    "drivingLicenseLabel": "Führerscheinklasse:",
+    "lastNameLabel": "Nachname:",
+    "rolesLabel": "Rollen:",
+    "emailLabel": "E-Mail:"
+  },
+  "team": {
+    "navAriaLabel": "Team und Rollen",
+    "tabMembers": "Mitarbeitende",
+    "tabRoles": "Rollen"
+  },
+  "plugin": {
+    "overviewTitle": "Übersicht der Plugins",
+    "overviewIntro": "Hier findest du eine Übersicht aller installierten Plugins. Diese Plugins erweitern die Funktionalität der Anwendung und können eine Vielzahl nützlicher Features bieten. Klicke auf eines der Plugins, um mehr darüber zu erfahren.",
+    "loading": "Laden von Plugins...",
+    "startAriaLabel": "{name} starten",
+    "startLabel": "{name} starten",
+    "empty": "Zur Zeit sind keine Plugins registriert.",
+    "unavailable": "Das Plugin {pluginName} kann derzeit nicht geladen werden. Das Plugin-System wird überarbeitet."
+  },
+  "notProvided": "Nicht hinterlegt",
+  "dialog": {
+    "discardChanges": {
+      "title": "Änderungen verwerfen?",
+      "continueEditing": "Weiter bearbeiten",
+      "discard": "Verwerfen"
+    }
+  },
+  "roles": {
+    "listTitle": "Rollen",
+    "createButton": "Neu",
+    "systemSectionLabel": "System · nicht editierbar",
+    "ownSectionLabel": "Eigene Rollen",
+    "emptyOwn": "Noch keine eigene Rolle. Kopiere eine Systemrolle oder lege eine neue an.",
+    "readOnlyAriaLabel": "Schreibgeschützt",
+    "nameAriaLabel": "Name der Rolle",
+    "namePlaceholder": "Name der Rolle",
+    "descriptionAriaLabel": "Beschreibung der Rolle",
+    "descriptionPlaceholder": "Kurze Beschreibung",
+    "nameRequiredHint": "Gib der Rolle einen Namen.",
+    "systemRoleBadge": "Systemrolle",
+    "ownRoleBadge": "Eigene Rolle",
+    "copyAndEdit": "Kopieren & bearbeiten",
+    "systemReadOnlyNoticePrefix": "Systemrollen sind schreibgeschützt.",
+    "systemReadOnlyNoticeSuffix": "die Rolle, um Berechtigungen anzupassen oder eine eigene Rolle zu erstellen.",
+    "copyLinkLabel": "Kopiere",
+    "clampedAway_one": "{count} Recht wurde entfernt, weil du es selbst nicht besitzt.",
+    "clampedAway_other": "{count} Rechte wurden entfernt, weil du sie selbst nicht besitzt.",
+    "unknownPermissionsHeading": "Weitere Rechte ({count})",
+    "unknownPermissionsHint": "Diese Rechte kennt diese Ansicht nicht. Sie bleiben beim Speichern erhalten.",
+    "discardDescription": "Du hast Änderungen an dieser Rolle, die noch nicht gespeichert sind.",
+    "deleteDialog": {
+      "title": "Rolle löschen?",
+      "description": "{name} wird entfernt. Personen mit dieser Rolle verlieren die darin enthaltenen Rechte."
+    },
+    "leaveDescription": "Deine Änderungen an dieser Rolle sind noch nicht gespeichert.",
+    "noOrganization": "Deinem Konto ist keine Organisation zugeordnet. Ohne Organisation lassen sich keine Rollen verwalten.",
+    "loading": "Rollen werden geladen",
+    "nameConflict": "Eine Rolle mit diesem Namen existiert bereits.",
+    "createButtonLabel": "Rolle anlegen",
+    "copyName": "{name} (Kopie)",
+    "copyDescription": "Kopie von {name}",
+    "notGrantable": "Du kannst nur Rechte vergeben, die du selbst besitzt.",
+    "areaActiveCount": "{count} von {total} Aktionen aktiv",
+    "customBadge": "Individuell",
+    "accessLevelAriaLabel": "Zugriffsstufe für {area}",
+    "showActionsAriaLabel": "Aktionen für {area} anzeigen",
+    "hideActionsAriaLabel": "Aktionen für {area} verbergen",
+    "templateName": {
+      "administrator": "Administrator",
+      "tree_care": "Baumpflege",
+      "sensors": "Sensorik",
+      "route_planning": "Routenplanung",
+      "observer": "Beobachter"
+    },
+    "toast": {
+      "created": "Rolle angelegt",
+      "saved": "Gespeichert",
+      "saveFailed": "Die Rolle konnte nicht gespeichert werden.",
+      "deleted": "Rolle gelöscht",
+      "deleteFailed": "Die Rolle konnte nicht gelöscht werden."
+    }
+  },
+  "members": {
+    "listTitle": "Mitarbeitende",
+    "searchPlaceholder": "Name, Username oder E-Mail",
+    "searchAriaLabel": "Mitarbeitende suchen",
+    "organizationFilterLabel": "Organisation",
+    "organizationFilterPlaceholder": "Alle Organisationen",
+    "organizationFilterAllLabel": "Alle Organisationen",
+    "roleFilterAriaLabel": "Rolle",
+    "roleFilterPlaceholder": "Alle Rollen",
+    "roleFilterSearchPlaceholder": "Rolle suchen",
+    "roleFilterEmptyText": "Keine passende Rolle",
+    "roleFilterAllLabel": "Alle Rollen",
+    "roleFilterOrphanGroup": "Ohne Organisation",
+    "listAriaLabel": "Mitarbeitende",
+    "loading": "Mitarbeitende werden geladen",
+    "count_one": "{count} Person",
+    "count_other": "{count} Personen",
+    "personNoun_one": "Person",
+    "personNoun_other": "Personen",
+    "countFiltered": "{shown} von {total} {noun}",
+    "emptyFiltered": "Keine Person passt zu Suche und Filter.",
+    "emptyUnfiltered": "Es sind noch keine Mitarbeitenden hinterlegt.",
+    "noOrganization": "Keine Organisation",
+    "profileTitle": "Profil",
+    "profileHint": "Diese Angaben zählen für die Einteilung in Einsatzpläne.",
+    "availabilityLabel": "Verfügbarkeit",
+    "drivingLicensesLabel": "Führerscheinklassen",
+    "phoneNumberLabel": "Telefonnummer",
+    "phoneNumberPlaceholder": "z. B. +49 461 123456",
+    "employeeIdLabel": "Personalnummer",
+    "employeeIdPlaceholder": "z. B. EMP-042",
+    "wateringPlanSelectableLabel": "Für Einsatzplanung auswählbar",
+    "wateringPlanSelectableHint": "Nur gekennzeichnete Personen erscheinen in der Auswahl der verknüpften Mitarbeitenden eines Einsatzplans.",
+    "yes": "Ja",
+    "no": "Nein",
+    "rolesTitle": "Rollen",
+    "rolesHint": "Rollen wirken sofort. Eine Änderung braucht kein Speichern.",
+    "noRolesAssigned": "Keine Rolle zugewiesen.",
+    "assignedRolesAriaLabel": "Zugewiesene Rollen",
+    "revokeRoleAriaLabel": "Rolle {role} entziehen",
+    "assignRolePlaceholder": "Rolle zuweisen",
+    "assignRoleSearchPlaceholder": "Rolle suchen",
+    "assignRoleEmptyText": "Keine weitere Rolle verfügbar",
+    "assignRoleAriaLabel": "Rolle zuweisen",
+    "organizationTitle": "Organisation",
+    "organizationHint": "Eine Person gehört zu höchstens einer Organisation. Ein Wechsel verschiebt sie sofort.",
+    "noOrganizationAssigned": "Keine Organisation zugeordnet",
+    "changeOrganizationPlaceholder": "Organisation wechseln",
+    "changeOrganizationSearchPlaceholder": "Organisation suchen",
+    "changeOrganizationEmptyText": "Keine passende Organisation",
+    "changeOrganizationAriaLabel": "Organisation wechseln",
+    "selfOrganizationLocked": "Die eigene Organisation kann hier nicht geändert werden. Das muss eine andere Person mit Verwaltungsrechten übernehmen.",
+    "selfRolesLocked": "Die eigenen Rollen können hier nicht geändert werden. Das muss eine andere Person mit Verwaltungsrechten übernehmen.",
+    "noOrganizationRolesLocked": "Ohne Organisation lassen sich keine Rollen zuweisen. Ordne die Person zuerst einer Organisation zu.",
+    "emailNotVerified": "E-Mail nicht bestätigt",
+    "sinceLabel": "seit {since}",
+    "roleErrorTooPowerful": "Diese Rolle enthält Rechte, die über deine eigenen hinausgehen.",
+    "roleErrorSelfAccount": "Am eigenen Konto lassen sich Rollen nicht ändern.",
+    "organizationErrorForbidden": "In dieser Organisation darfst du keine Personen verwalten.",
+    "organizationErrorSelfAccount": "Die eigene Organisation lässt sich hier nicht ändern.",
+    "notMatchingFilter": "Die ausgewählte Person passt nicht zu Suche und Filter.",
+    "resetFilters": "Suche und Filter zurücksetzen",
+    "moveDialog": {
+      "title": "Person verschieben?",
+      "descriptionWithSource": "{name} wechselt von {from} zu {to}. Die Änderung wirkt sofort, zugewiesene Rollen bleiben bestehen.",
+      "descriptionWithoutSource": "{name} wird {to} zugeordnet. Die Änderung wirkt sofort, zugewiesene Rollen bleiben bestehen.",
+      "confirm": "Verschieben"
+    },
+    "discardDescription": "Du hast Änderungen am Profil dieser Person, die noch nicht gespeichert sind.",
+    "leaveDescription": "Deine Änderungen am Profil dieser Person sind noch nicht gespeichert.",
+    "toast": {
+      "roleAssigned": "Rolle zugewiesen",
+      "roleAssignFailed": "Die Rolle konnte nicht zugewiesen werden.",
+      "roleRevoked": "Rolle entzogen",
+      "roleRevokeFailed": "Die Rolle konnte nicht entzogen werden.",
+      "organizationChanged": "Organisation geändert",
+      "organizationChangeFailed": "Die Organisation konnte nicht geändert werden.",
+      "profileSaved": "Gespeichert",
+      "profileSaveFailed": "Das Profil konnte nicht gespeichert werden."
+    }
+  },
+  "organization": {
+    "treeTitle": "Organisationsstruktur",
+    "treeAriaLabel": "Organisationsstruktur",
+    "createButton": "Neu",
+    "collapseAriaLabel": "Zuklappen",
+    "expandAriaLabel": "Aufklappen",
+    "loading": "Organisationen werden geladen",
+    "loadErrorForbidden": "Du darfst diese Organisation nicht einsehen. Vermutlich gilt deine Rolle nur für eine untergeordnete Organisation.",
+    "loadErrorGeneric": "Die Organisationsstruktur konnte nicht geladen werden. Bitte versuche es später erneut.",
+    "nameConflict": "Eine Organisation mit diesem Namen existiert bereits.",
+    "contactPersonNotAssigned": "Diese Person ist dieser Organisation nicht zugeordnet und kann nicht Kontaktperson sein.",
+    "noOwnOrganization": "Deinem Konto ist keine Organisation zugeordnet. Ohne Organisation lässt sich keine Organisationsstruktur verwalten.",
+    "ownOrganizationMissing": "Deine Organisation wurde nicht gefunden. Ohne sie lässt sich die Organisationsstruktur nicht anzeigen.",
+    "count_one": "{count} Person",
+    "count_other": "{count} Personen",
+    "memberSummaryWithChildren": "{people} in {children}",
+    "noMembersAssigned": "Keine Personen zugeordnet",
+    "subOrganizationCount_one": "{count} Unterorganisation",
+    "subOrganizationCount_other": "{count} Unterorganisationen",
+    "subOrganizationNoun_one": "Unterorganisation",
+    "subOrganizationNoun_other": "Unterorganisationen",
+    "directChildrenLine": "{count} direkte {noun}",
+    "topLevelKind": "Oberste Organisation",
+    "childKind": "Untergeordnete Organisation",
+    "sinceLabel": "seit {since}",
+    "readOnlyRootNotice": "Die oberste Organisation dieser Instanz kann nicht bearbeitet werden.",
+    "masterDataTitle": "Stammdaten",
+    "nameLabel": "Name",
+    "nameEmptyHint": "Gib der Organisation einen Namen.",
+    "namePlaceholder": "Name der Organisation",
+    "locationTitle": "Standort",
+    "locationHint": "Die Adresse ist optional, lässt sich aber nur vollständig speichern.",
+    "streetLabel": "Straße und Hausnummer",
+    "streetPlaceholder": "z. B. Nordergraben 12",
+    "postalCodeLabel": "PLZ",
+    "postalCodePlaceholder": "24937",
+    "cityLabel": "Ort",
+    "cityPlaceholder": "Flensburg",
+    "streetMissing": "Straße fehlt",
+    "postalCodeMissing": "PLZ fehlt",
+    "cityMissing": "Ort fehlt",
+    "contactPersonTitle": "Kontaktperson",
+    "changeContactPerson": "Ändern",
+    "setContactPerson": "Kontaktperson festlegen",
+    "noContactPerson": "Keine Kontaktperson festgelegt.",
+    "assignedMembersTitle": "Zugewiesene Mitarbeitende",
+    "manageMembers": "Mitarbeitende verwalten",
+    "subOrganizationsTitle": "Untergeordnete Organisationen",
+    "noSubOrganizations": "Diese Organisation hat keine Unterorganisationen.",
+    "createSubOrganization": "Unterorganisation anlegen",
+    "deleteHint": "Eine Organisation lässt sich nur löschen, wenn sie keine Unterorganisationen und keine Mitarbeitenden mehr hat.",
+    "deleteButton": "Organisation löschen",
+    "discardDescription": "Du hast Änderungen an dieser Organisation, die noch nicht gespeichert sind.",
+    "deleteDialog": {
+      "title": "Organisation löschen?",
+      "description": "{name} wird entfernt. Das ist nur möglich, solange keine Unterorganisationen und keine Mitarbeitenden zugeordnet sind."
+    },
+    "leaveDescription": "Deine Änderungen an dieser Organisation sind noch nicht gespeichert.",
+    "createDialog": {
+      "title": "Unterorganisation anlegen",
+      "description": "Die neue Organisation wird unter {parentName} eingeordnet.",
+      "nameLabel": "Name der Organisation",
+      "submit": "Anlegen"
+    },
+    "contactPicker": {
+      "title": "Kontaktperson wählen",
+      "description": "Nur Personen, die dieser Organisation zugeordnet sind, können Kontaktperson sein.",
+      "searchPlaceholder": "Person suchen",
+      "empty": "Es sind keine Personen dieser Organisation zugeordnet.",
+      "remove": "Kontaktperson entfernen"
+    },
+    "toast": {
+      "created": "Unterorganisation angelegt",
+      "createFailed": "Die Unterorganisation konnte nicht angelegt werden.",
+      "saved": "Organisation gespeichert",
+      "saveFailed": "Die Organisation konnte nicht gespeichert werden.",
+      "deleted": "Organisation gelöscht",
+      "deleteConflict": "Die Organisation hat noch Unterorganisationen oder zugeordnete Personen und kann nicht gelöscht werden.",
+      "deleteFailed": "Die Organisation konnte nicht gelöscht werden."
+    }
+  },
+  "permission": {
+    "level": {
+      "none": "Kein",
+      "view": "Ansehen",
+      "edit": "Bearbeiten",
+      "manage": "Verwalten"
+    },
+    "group": {
+      "greenspaces": "Grünflächen",
+      "operations": "Einsatzplanung",
+      "administration": "Verwaltung"
+    },
+    "action": {
+      "read": "{resource} ansehen",
+      "create": "{resource} anlegen",
+      "update": "{resource} bearbeiten",
+      "delete": "{resource} löschen"
+    },
+    "resource": {
+      "tree": {
+        "label": "Bäume",
+        "pluralNoun": "Bäume",
+        "singular": "Baum",
+        "description": "Bäume & Standorte",
+        "hint": {
+          "read": "Baumliste und Details einsehen",
+          "create": "Neue Bäume erfassen",
+          "update": "Stammdaten und Standort ändern",
+          "delete": "Bäume dauerhaft entfernen"
+        }
+      },
+      "tree_cluster": {
+        "label": "Bewässerungsgruppen",
+        "pluralNoun": "Bewässerungsgruppen",
+        "singular": "Bewässerungsgruppe",
+        "description": "Gruppen & Schwellen",
+        "hint": {
+          "read": "Gruppen und Bewässerungsstatus einsehen",
+          "create": "Neue Bewässerungsgruppen anlegen",
+          "update": "Zuordnung, Name und Schwellen ändern",
+          "delete": "Gruppen auflösen"
+        }
+      },
+      "sensor": {
+        "label": "Sensoren",
+        "pluralNoun": "Sensoren",
+        "singular": "Sensor",
+        "description": "Geräte & Netz",
+        "hint": {
+          "read": "Geräte und Messwerte einsehen",
+          "create": "Neues Gerät in Betrieb nehmen",
+          "update": "Zuordnung und Stammdaten ändern",
+          "delete": "Gerät dauerhaft entfernen"
+        }
+      },
+      "region": {
+        "label": "Gebiete",
+        "pluralNoun": "Gebiete",
+        "singular": "Gebiet",
+        "description": "Stadtgebiete & Zuordnung",
+        "hint": {
+          "read": "Stadtgebiete einsehen",
+          "create": "Neues Gebiet anlegen",
+          "update": "Gebiet umbenennen oder anpassen",
+          "delete": "Gebiet entfernen"
+        }
+      },
+      "watering_plan": {
+        "label": "Einsatzpläne",
+        "pluralNoun": "Einsatzpläne",
+        "singular": "Einsatzplan",
+        "description": "Planung & Touren",
+        "hint": {
+          "read": "Geplante und abgeschlossene Einsatzpläne einsehen",
+          "create": "Neuen Einsatzplan anlegen",
+          "update": "Route, Zeit, Umfang und Status ändern",
+          "delete": "Einsatzplan dauerhaft entfernen"
+        }
+      },
+      "vehicle": {
+        "label": "Fahrzeuge",
+        "pluralNoun": "Fahrzeuge",
+        "singular": "Fahrzeug",
+        "description": "Transporter & Anhänger",
+        "hint": {
+          "read": "Fahrzeuge und Verfügbarkeit einsehen",
+          "create": "Neues Fahrzeug aufnehmen",
+          "update": "Stammdaten und Verfügbarkeit ändern",
+          "delete": "Fahrzeug archivieren oder entfernen"
+        }
+      },
+      "user": {
+        "label": "Mitarbeitende",
+        "pluralNoun": "Mitarbeitende",
+        "singular": "Mitarbeitende",
+        "description": "Konten & Zuordnung",
+        "hint": {
+          "read": "Mitarbeitende und ihre Rollen einsehen",
+          "create": "Neue Mitarbeitende einladen",
+          "update": "Stammdaten und Rollenzuordnung ändern",
+          "delete": "Zugang entziehen"
+        },
+        "actionOverrides": {
+          "create": "Mitarbeitende einladen",
+          "delete": "Mitarbeitende entfernen"
+        }
+      },
+      "organization": {
+        "label": "Organisation",
+        "pluralNoun": "Organisation",
+        "singular": "Organisation",
+        "description": "Struktur & Einheiten",
+        "hint": {
+          "read": "Organisationsstruktur einsehen",
+          "create": "Neue Organisation anlegen",
+          "update": "Organisation umbenennen",
+          "delete": "Organisation löschen"
+        }
+      },
+      "role": {
+        "label": "Rollen & Rechte",
+        "pluralNoun": "Rollen",
+        "singular": "Rolle",
+        "description": "Berechtigungen",
+        "hint": {
+          "read": "Rollen und ihre Rechte einsehen",
+          "create": "Neue Rolle anlegen oder kopieren",
+          "update": "Rechte einer Rolle ändern",
+          "delete": "Rolle löschen"
+        }
+      }
+    }
+  }
+}

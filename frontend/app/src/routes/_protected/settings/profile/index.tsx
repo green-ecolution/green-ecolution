@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { useCurrentUser } from '@/lib/auth/useCurrentUser'
 import { UserRound } from 'lucide-react'
 import { userQueries } from '@/api/queries'
@@ -9,12 +10,14 @@ import { DrivingLicense } from '@green-ecolution/backend-client'
 import { useCurrentUserAvatar } from '@/lib/auth/useCurrentUserAvatar'
 import { Avatar, AvatarFallback, AvatarImage, Badge, DetailedList } from '@green-ecolution/ui'
 import LanguageSwitcher from '@/components/settings/LanguageSwitcher'
+import { roleDisplayName } from '@/components/settings/roles/roleList'
 
 export const Route = createFileRoute('/_protected/settings/profile/')({
   component: Profile,
 })
 
 function Profile() {
+  const { t } = useTranslation(['settings', 'common'])
   const user = useCurrentUser()
   const avatarUrl = useCurrentUserAvatar()
   const { data: me } = useQuery(userQueries.me())
@@ -26,12 +29,9 @@ function Profile() {
     <div className="container mt-6">
       <article className="2xl:w-4/5">
         <h1 className="font-lato font-bold text-3xl mb-4 lg:text-4xl xl:text-5xl">
-          Profil von {user.firstName} {user.lastName}
+          {t('profile.heading', { firstName: user.firstName, lastName: user.lastName })}
         </h1>
-        <p>
-          Dies ist deine persönliche Profilseite. Auf dieser Seite findest du deine persönlichen
-          Daten.{' '}
-        </p>
+        <p>{t('profile.intro')}</p>
       </article>
 
       <section className="mt-16 grid grid-cols-1 gap-y-10 lg:grid-cols-2 lg:gap-x-11">
@@ -63,27 +63,30 @@ function Profile() {
         columns={2}
         className="mt-10 lg:mt-16"
         details={[
-          { label: 'Username:', value: user.username ?? 'Keine Angabe' },
+          { label: t('profile.usernameLabel'), value: user.username ?? t('common:state.noData') },
           {
-            label: 'Verfügbarkeit:',
+            label: t('profile.availabilityLabel'),
             value: getUserStatusDetails(user.userStatus).label,
           },
-          { label: 'Vorname:', value: user.firstName ?? 'Keine Angabe' },
+          { label: t('profile.firstNameLabel'), value: user.firstName ?? t('common:state.noData') },
           {
-            label: 'Führerscheinklasse:',
+            label: t('profile.drivingLicenseLabel'),
             value:
               user.drivingLicenses && user.drivingLicenses.length > 0
                 ? user.drivingLicenses
                     .map((dl: DrivingLicense) => getDrivingLicenseDetails(dl).label)
                     .join(', ')
-                : 'Keine Angabe',
+                : t('common:state.noData'),
           },
-          { label: 'Nachname:', value: user.lastName ?? 'Keine Angabe' },
+          { label: t('profile.lastNameLabel'), value: user.lastName ?? t('common:state.noData') },
           {
-            label: 'Rollen:',
-            value: roles.length > 0 ? roles.map((role) => role.name).join(', ') : 'Keine Angabe',
+            label: t('profile.rolesLabel'),
+            value:
+              roles.length > 0
+                ? roles.map((role) => roleDisplayName(role, t)).join(', ')
+                : t('common:state.noData'),
           },
-          { label: 'E-Mail:', value: user.email ?? 'Keine Angabe' },
+          { label: t('profile.emailLabel'), value: user.email ?? t('common:state.noData') },
         ]}
       />
 
