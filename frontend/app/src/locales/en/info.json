@@ -1,0 +1,145 @@
+{
+  "uptimeLabel": "Uptime",
+  "releaseNotesLink": "View release notes",
+  "root": {
+    "loadingLabel": "Loading system information"
+  },
+  "page": {
+    "title": "System information",
+    "description": "Here you can find an overview of the current version, the status of the connected services, and further technical details about the running instance."
+  },
+  "tabs": {
+    "system": "System",
+    "data": "Data",
+    "software": "Software",
+    "server": "Server"
+  },
+  "data": {
+    "chart": {
+      "countLabel": "Count",
+      "title": "Data overview",
+      "treeName": "Trees",
+      "groupName": "Groups",
+      "sensorName": "Sensors",
+      "vehicleName": "Vehicles",
+      "planName": "Plans"
+    },
+    "hero": {
+      "viewAllGroupsLink": "View all watering groups",
+      "totalTreesLabel": "Trees total",
+      "managedInGroups": "managed in {count} watering groups"
+    },
+    "stat": {
+      "viewLink": "View",
+      "groupsLabel": "Watering groups",
+      "groupsSubtitle": "Managed watering groups",
+      "sensorsLabel": "Sensors",
+      "sensorsSubtitle": "Active measuring devices",
+      "vehiclesLabel": "Vehicles",
+      "vehiclesSubtitle": "Registered fleet",
+      "plansLabel": "Watering plans",
+      "plansSubtitle": "Planned routes"
+    },
+    "summary": {
+      "totalLabel": "Total records",
+      "totalHint": "All managed entities"
+    }
+  },
+  "server": {
+    "hero": {
+      "hostnameLabel": "Hostname"
+    },
+    "quick": {
+      "osLabel": "Operating system",
+      "portLabel": "HTTP port"
+    },
+    "network": {
+      "title": "Network",
+      "interfaceLabel": "Interface",
+      "urlLabel": "URL"
+    },
+    "footer": {
+      "title": "Server information",
+      "subtitle": "{hostname} on port {port}"
+    }
+  },
+  "software": {
+    "toast": {
+      "copySuccess": "Copied to clipboard",
+      "copyError": "Copy failed"
+    },
+    "env": {
+      "release": "Release",
+      "staging": "Staging",
+      "development": "Development"
+    },
+    "hero": {
+      "buildDateLabel": "Build date",
+      "buildTimeLabel": "Build time",
+      "buildTimeValue": "{time}",
+      "versionLabel": "Software version",
+      "rustRuntimeLabel": "Rust runtime",
+      "buildModeLabel": "Build mode",
+      "editionLabel": "Edition"
+    },
+    "git": {
+      "title": "Git repository",
+      "branchLabel": "Branch",
+      "commitLabel": "Commit",
+      "repositoryLabel": "Repository",
+      "copyTitle": "Copy",
+      "githubLinkLabel": "GitHub"
+    },
+    "buildStatus": {
+      "devTitle": "Local development build",
+      "devDescription": "This version was compiled locally. The update check is disabled; for production versions see",
+      "stageTitle": "Staging environment",
+      "stageDescription": "This version is being tested before release. The update check is disabled; you can find the production version at",
+      "updateAvailableTitle": "New version available",
+      "upToDateTitle": "Software is up to date",
+      "updateVersionPrefix": "Version",
+      "updateVersionSuffix": "is available",
+      "latestVersionLabel": "Latest version"
+    }
+  },
+  "system": {
+    "serviceName": {
+      "database": "Database",
+      "auth": "Authentication",
+      "mqtt": "MQTT",
+      "s3": "S3 storage",
+      "routing": "Routing (Valhalla)",
+      "vroom": "Route optimization (Vroom)",
+      "plugins": "Plugin system"
+    },
+    "serviceStatus": {
+      "disabled": "Disabled",
+      "connected": "Connected",
+      "noConnection": "No connection",
+      "urlNotConfigured": "URL not configured",
+      "notConfigured": "Not configured",
+      "enabled": "Enabled",
+      "connectionError": "Connection error",
+      "bucketNotFound": "Bucket not found"
+    },
+    "hero": {
+      "versionLabel": "Version",
+      "upToDateBadge": "Up to date",
+      "updateAvailableBadge": "Update available"
+    },
+    "quick": {
+      "servicesLabel": "Services",
+      "servicesHint": "active and healthy",
+      "uptimeHint": "since last restart",
+      "backendLabel": "Backend",
+      "backendValue": "Rust {version}",
+      "backendHint": "Runtime version"
+    },
+    "services": {
+      "title": "Service status",
+      "onlineCount": "{healthy} of {total} online",
+      "loadingLabel": "Loading services...",
+      "emptyLabel": "No services available"
+    }
+  }
+}

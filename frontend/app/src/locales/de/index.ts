@@ -13,6 +13,7 @@ import dashboard from './dashboard.json'
 import evaluation from './evaluation.json'
 import settings from './settings.json'
 import startpage from './startpage.json'
+import info from './info.json'
 
 export default {
   common,
@@ -30,4 +31,5 @@ export default {
   evaluation,
   settings,
   startpage,
+  info,
 }

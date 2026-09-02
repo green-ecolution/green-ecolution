@@ -15,38 +15,41 @@ import {
   XCircle,
   Zap,
 } from 'lucide-react'
+import type { TFunction } from 'i18next'
+import { useTranslation } from 'react-i18next'
 import type { ServiceStatusResponse, VersionInfoResponse } from '@green-ecolution/backend-client'
 import HeroStatCard from './HeroStatCard'
 import { formatUptime } from './formatUptime'
 
-const serviceNameMap: Record<string, string> = {
-  database: 'Datenbank',
-  auth: 'Authentifizierung',
-  mqtt: 'MQTT',
-  s3: 'S3 Speicher',
-  routing: 'Routing (Valhalla)',
-  vroom: 'Routenoptimierung (Vroom)',
-  plugins: 'Plugin-System',
+function serviceDisplayName(t: TFunction<'info'>, name: string): string {
+  const map: Record<string, string> = {
+    database: t('system.serviceName.database'),
+    auth: t('system.serviceName.auth'),
+    mqtt: t('system.serviceName.mqtt'),
+    s3: t('system.serviceName.s3'),
+    routing: t('system.serviceName.routing'),
+    vroom: t('system.serviceName.vroom'),
+    plugins: t('system.serviceName.plugins'),
+  }
+  return map[name] || name
 }
 
-function getServiceDisplayName(name: string): string {
-  return serviceNameMap[name] || name
+function serviceStatusMessages(t: TFunction<'info'>): Record<string, string> {
+  return {
+    'service.status.disabled': t('system.serviceStatus.disabled'),
+    'service.status.connected': t('system.serviceStatus.connected'),
+    'service.status.no_connection': t('system.serviceStatus.noConnection'),
+    'service.status.url_not_configured': t('system.serviceStatus.urlNotConfigured'),
+    'service.status.not_configured': t('system.serviceStatus.notConfigured'),
+    'service.status.enabled': t('system.serviceStatus.enabled'),
+    'service.status.connection_error': t('system.serviceStatus.connectionError'),
+    'service.status.bucket_not_found': t('system.serviceStatus.bucketNotFound'),
+  }
 }
 
-const serviceMessageMap: Record<string, string> = {
-  'service.status.disabled': 'Deaktiviert',
-  'service.status.connected': 'Verbunden',
-  'service.status.no_connection': 'Keine Verbindung',
-  'service.status.url_not_configured': 'URL nicht konfiguriert',
-  'service.status.not_configured': 'Nicht konfiguriert',
-  'service.status.enabled': 'Aktiviert',
-  'service.status.connection_error': 'Verbindungsfehler',
-  'service.status.bucket_not_found': 'Bucket nicht gefunden',
-}
-
-function translateServiceMessage(key?: string): string {
+function translateServiceMessage(t: TFunction<'info'>, key?: string): string {
   if (!key) return ''
-  return serviceMessageMap[key] ?? key
+  return serviceStatusMessages(t)[key] ?? key
 }
 
 type VersionStatus = 'default' | 'yellow' | 'green-dark'
@@ -93,6 +96,7 @@ const SystemTabContent = ({
   serverData,
   totalServices,
 }: SystemTabContentProps) => {
+  const { t } = useTranslation('info')
   const healthyServices =
     servicesData?.items.filter((s: ServiceStatusResponse) => s.enabled && s.healthy).length ?? 0
 
@@ -126,14 +130,16 @@ const SystemTabContent = ({
                 rel="noopener noreferrer"
                 className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-green-dark hover:underline"
               >
-                Release Notes ansehen
+                {t('releaseNotesLink')}
                 <ExternalLink className="size-3" />
               </a>
             )
           }
         >
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium text-dark-600 mb-1">Version</p>
+            <p className="text-sm font-medium text-dark-600 mb-1">
+              {t('system.hero.versionLabel')}
+            </p>
             {isLongVersion ? (
               <p className="text-lg font-bold font-mono tracking-tight break-all" title={version}>
                 {version}
@@ -151,13 +157,13 @@ const SystemTabContent = ({
               {versionStatus === 'green-dark' && !isDev && (
                 <span className="inline-flex items-center gap-1.5 text-sm text-green-dark">
                   <CheckCircle2 className="size-4" />
-                  Aktuell
+                  {t('system.hero.upToDateBadge')}
                 </span>
               )}
               {versionStatus === 'yellow' && (
                 <span className="inline-flex items-center gap-1.5 text-sm text-yellow-600">
                   <ArrowUp className="size-4" />
-                  Update verfügbar
+                  {t('system.hero.updateAvailableBadge')}
                 </span>
               )}
             </div>
@@ -169,26 +175,28 @@ const SystemTabContent = ({
           <CardContent className="pt-6">
             <div className="grid gap-6 sm:grid-cols-3">
               <div>
-                <p className="text-sm text-dark-500 mb-1">Services</p>
+                <p className="text-sm text-dark-500 mb-1">{t('system.quick.servicesLabel')}</p>
                 <p className="text-2xl font-bold font-lato">
                   {healthyServices}
                   <span className="text-base text-dark-400">/{totalServices}</span>
                 </p>
-                <p className="text-xs text-dark-400 mt-1">aktiv und gesund</p>
+                <p className="text-xs text-dark-400 mt-1">{t('system.quick.servicesHint')}</p>
               </div>
               {serverData && (
                 <div>
-                  <p className="text-sm text-dark-500 mb-1">Uptime</p>
+                  <p className="text-sm text-dark-500 mb-1">{t('uptimeLabel')}</p>
                   <p className="text-2xl font-bold font-lato">
                     {formatUptime(serverData.uptimeSeconds)}
                   </p>
-                  <p className="text-xs text-dark-400 mt-1">seit letztem Neustart</p>
+                  <p className="text-xs text-dark-400 mt-1">{t('system.quick.uptimeHint')}</p>
                 </div>
               )}
               <div>
-                <p className="text-sm text-dark-500 mb-1">Backend</p>
-                <p className="text-2xl font-bold font-mono">Rust {data.rustVersion}</p>
-                <p className="text-xs text-dark-400 mt-1">Runtime Version</p>
+                <p className="text-sm text-dark-500 mb-1">{t('system.quick.backendLabel')}</p>
+                <p className="text-2xl font-bold font-mono">
+                  {t('system.quick.backendValue', { version: data.rustVersion })}
+                </p>
+                <p className="text-xs text-dark-400 mt-1">{t('system.quick.backendHint')}</p>
               </div>
             </div>
           </CardContent>
@@ -201,17 +209,17 @@ const SystemTabContent = ({
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2 text-lg">
               <Settings className="size-5" />
-              Service Status
+              {t('system.services.title')}
             </CardTitle>
             <span className="text-sm text-dark-500">
-              {healthyServices} von {totalServices} online
+              {t('system.services.onlineCount', { healthy: healthyServices, total: totalServices })}
             </span>
           </div>
         </CardHeader>
         <CardContent>
           {servicesLoading ? (
             <div className="flex items-center justify-center py-8 text-dark-500">
-              <Loading label="Lade Services..." />
+              <Loading label={t('system.services.loadingLabel')} />
             </div>
           ) : servicesData ? (
             <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
@@ -244,20 +252,20 @@ const SystemTabContent = ({
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <p className="font-medium truncate">
-                          {getServiceDisplayName(service.name)}
+                          {serviceDisplayName(t, service.name)}
                         </p>
                         {isHealthy ? (
                           <CheckCircle2 className="size-4 text-green-dark shrink-0" />
                         ) : isDisabled ? (
                           <span className="text-xs text-dark-400">
-                            {translateServiceMessage('service.status.disabled')}
+                            {translateServiceMessage(t, 'service.status.disabled')}
                           </span>
                         ) : (
                           <XCircle className="size-4 text-red shrink-0" />
                         )}
                       </div>
                       <p className="text-xs text-dark-500 truncate">
-                        {translateServiceMessage(service.message ?? undefined)}
+                        {translateServiceMessage(t, service.message ?? undefined)}
                       </p>
                       {service.enabled &&
                         service.responseTimeMs != null &&
@@ -274,7 +282,7 @@ const SystemTabContent = ({
               })}
             </div>
           ) : (
-            <div className="text-center py-8 text-dark-500">Keine Services verfügbar</div>
+            <div className="text-center py-8 text-dark-500">{t('system.services.emptyLabel')}</div>
           )}
         </CardContent>
       </Card>

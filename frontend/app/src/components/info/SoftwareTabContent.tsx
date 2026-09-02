@@ -12,7 +12,11 @@ import {
   Package,
   Tag,
 } from 'lucide-react'
+import { format } from 'date-fns'
+import type { TFunction } from 'i18next'
+import { useTranslation } from 'react-i18next'
 import type { VersionInfoResponse } from '@green-ecolution/backend-client'
+import { useDateLocale } from '@/lib/i18n/useFormatters'
 import HeroStatCard from './HeroStatCard'
 import InfoTile from './InfoTile'
 
@@ -35,37 +39,39 @@ interface EnvVisual {
   pillIcon: React.ReactNode
 }
 
-const envVisuals: Record<BuildEnv, EnvVisual> = {
-  release: {
-    label: 'Release',
-    heroGradient: 'from-green-dark/5 to-transparent',
-    heroIconBg: 'bg-green-dark/10',
-    heroIconColor: 'text-green-dark',
-    versionColor: 'text-green-dark',
-    pillBg: 'bg-green-dark/10',
-    pillText: 'text-green-dark',
-    pillIcon: <CheckCircle2 className="size-3.5" />,
-  },
-  stage: {
-    label: 'Staging',
-    heroGradient: 'from-blue-500/8 to-transparent',
-    heroIconBg: 'bg-blue-500/10',
-    heroIconColor: 'text-blue-600',
-    versionColor: 'text-blue-600',
-    pillBg: 'bg-blue-500/10',
-    pillText: 'text-blue-700',
-    pillIcon: <FlaskConical className="size-3.5" />,
-  },
-  development: {
-    label: 'Entwicklung',
-    heroGradient: 'from-amber-500/10 to-transparent',
-    heroIconBg: 'bg-amber-500/10',
-    heroIconColor: 'text-amber-700',
-    versionColor: 'text-amber-700',
-    pillBg: 'bg-amber-500/10',
-    pillText: 'text-amber-800',
-    pillIcon: <Code className="size-3.5" />,
-  },
+function envVisualsFor(t: TFunction<'info'>): Record<BuildEnv, EnvVisual> {
+  return {
+    release: {
+      label: t('software.env.release'),
+      heroGradient: 'from-green-dark/5 to-transparent',
+      heroIconBg: 'bg-green-dark/10',
+      heroIconColor: 'text-green-dark',
+      versionColor: 'text-green-dark',
+      pillBg: 'bg-green-dark/10',
+      pillText: 'text-green-dark',
+      pillIcon: <CheckCircle2 className="size-3.5" />,
+    },
+    stage: {
+      label: t('software.env.staging'),
+      heroGradient: 'from-blue-500/8 to-transparent',
+      heroIconBg: 'bg-blue-500/10',
+      heroIconColor: 'text-blue-600',
+      versionColor: 'text-blue-600',
+      pillBg: 'bg-blue-500/10',
+      pillText: 'text-blue-700',
+      pillIcon: <FlaskConical className="size-3.5" />,
+    },
+    development: {
+      label: t('software.env.development'),
+      heroGradient: 'from-amber-500/10 to-transparent',
+      heroIconBg: 'bg-amber-500/10',
+      heroIconColor: 'text-amber-700',
+      versionColor: 'text-amber-700',
+      pillBg: 'bg-amber-500/10',
+      pillText: 'text-amber-800',
+      pillIcon: <Code className="size-3.5" />,
+    },
+  }
 }
 
 interface SoftwareTabContentProps {
@@ -85,18 +91,21 @@ interface SoftwareTabContentProps {
 }
 
 const SoftwareTabContent = ({ data }: SoftwareTabContentProps) => {
+  const { t } = useTranslation('info')
+  const dateLocale = useDateLocale()
+
   const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text)
-      toast.success('In Zwischenablage kopiert')
+      toast.success(t('software.toast.copySuccess'))
     } catch {
-      toast.error('Kopieren fehlgeschlagen')
+      toast.error(t('software.toast.copyError'))
     }
   }
 
   const buildDate = new Date(data.buildTime)
   const env = getBuildEnv(data.versionInfo)
-  const visual = envVisuals[env]
+  const visual = envVisualsFor(t)[env]
   const buildMode = data.versionInfo.isDevelopment ? 'Debug' : 'Release'
   const isLongVersion = data.version.length > 12
 
@@ -112,30 +121,26 @@ const SoftwareTabContent = ({ data }: SoftwareTabContentProps) => {
           footer={
             <div className="grid grid-cols-2 gap-4 pt-4 border-t border-dark-200">
               <div>
-                <p className="text-xs text-dark-500 mb-1">Build-Datum</p>
+                <p className="text-xs text-dark-500 mb-1">{t('software.hero.buildDateLabel')}</p>
                 <p className="font-medium">
-                  {buildDate.toLocaleDateString('de-DE', {
-                    day: '2-digit',
-                    month: 'long',
-                    year: 'numeric',
-                  })}
+                  {format(buildDate, 'dd. MMMM yyyy', { locale: dateLocale })}
                 </p>
               </div>
               <div>
-                <p className="text-xs text-dark-500 mb-1">Build-Zeit</p>
+                <p className="text-xs text-dark-500 mb-1">{t('software.hero.buildTimeLabel')}</p>
                 <p className="font-medium">
-                  {buildDate.toLocaleTimeString('de-DE', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}{' '}
-                  Uhr
+                  {t('software.hero.buildTimeValue', {
+                    time: format(buildDate, 'HH:mm', { locale: dateLocale }),
+                  })}
                 </p>
               </div>
             </div>
           }
         >
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium text-dark-600 mb-1">Software Version</p>
+            <p className="text-sm font-medium text-dark-600 mb-1">
+              {t('software.hero.versionLabel')}
+            </p>
             {isLongVersion ? (
               <p
                 className={`text-3xl font-bold font-mono tracking-tight break-all ${visual.versionColor}`}
@@ -165,18 +170,20 @@ const SoftwareTabContent = ({ data }: SoftwareTabContentProps) => {
           footer={
             <div className="grid grid-cols-2 gap-4 pt-4 border-t border-dark-200">
               <div>
-                <p className="text-xs text-dark-500 mb-1">Build-Modus</p>
+                <p className="text-xs text-dark-500 mb-1">{t('software.hero.buildModeLabel')}</p>
                 <p className="font-medium">{buildMode}</p>
               </div>
               <div>
-                <p className="text-xs text-dark-500 mb-1">Edition</p>
+                <p className="text-xs text-dark-500 mb-1">{t('software.hero.editionLabel')}</p>
                 <p className="font-medium">{data.rustEdition}</p>
               </div>
             </div>
           }
         >
           <div>
-            <p className="text-sm font-medium text-dark-600 mb-1">Rust Runtime</p>
+            <p className="text-sm font-medium text-dark-600 mb-1">
+              {t('software.hero.rustRuntimeLabel')}
+            </p>
             <p className="text-5xl font-bold font-lato text-orange-600 tracking-tight">
               {data.rustVersion}
             </p>
@@ -193,36 +200,36 @@ const SoftwareTabContent = ({ data }: SoftwareTabContentProps) => {
         <CardHeader className="pb-4">
           <CardTitle className="flex items-center gap-2 text-lg">
             <GitBranch className="size-5" />
-            Git Repository
+            {t('software.git.title')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-3">
-            <InfoTile icon={GitBranch} label="Branch">
+            <InfoTile icon={GitBranch} label={t('software.git.branchLabel')}>
               <p className="font-medium font-mono">{data.git.branch}</p>
             </InfoTile>
 
-            <InfoTile icon={GitCommit} label="Commit">
+            <InfoTile icon={GitCommit} label={t('software.git.commitLabel')}>
               <div className="flex items-center gap-2">
                 <code className="font-mono text-sm truncate flex-1">{data.git.commit}</code>
                 <button
                   onClick={() => void copyToClipboard(data.git.commit)}
                   className="p-1.5 hover:bg-dark-200 rounded transition-colors shrink-0 cursor-pointer"
-                  title="Kopieren"
+                  title={t('software.git.copyTitle')}
                 >
                   <Copy className="size-3.5 text-dark-500 hover:text-dark-700" />
                 </button>
               </div>
             </InfoTile>
 
-            <InfoTile icon={Globe} label="Repository">
+            <InfoTile icon={Globe} label={t('software.git.repositoryLabel')}>
               <a
                 href={data.git.repository}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 font-medium text-green-dark hover:underline"
               >
-                GitHub
+                {t('software.git.githubLinkLabel')}
                 <ExternalLink className="size-3.5" />
               </a>
             </InfoTile>
@@ -243,6 +250,8 @@ interface BuildStatusCardProps {
 }
 
 function BuildStatusCard({ env, visual, versionInfo }: BuildStatusCardProps) {
+  const { t } = useTranslation('info')
+
   if (env === 'development') {
     return (
       <Card className="border-amber-500/30 bg-amber-500/5">
@@ -252,10 +261,9 @@ function BuildStatusCard({ env, visual, versionInfo }: BuildStatusCardProps) {
               <Code className={`size-5 ${visual.heroIconColor}`} />
             </div>
             <div>
-              <p className="font-medium mb-1">Lokaler Entwicklungs-Build</p>
+              <p className="font-medium mb-1">{t('software.buildStatus.devTitle')}</p>
               <p className="text-sm text-dark-600">
-                Diese Version wurde lokal kompiliert. Der Update-Check ist deaktiviert; für
-                produktive Versionen siehe{' '}
+                {t('software.buildStatus.devDescription')}{' '}
                 <a
                   href="https://green-ecolution.de"
                   target="_blank"
@@ -282,10 +290,9 @@ function BuildStatusCard({ env, visual, versionInfo }: BuildStatusCardProps) {
               <FlaskConical className={`size-5 ${visual.heroIconColor}`} />
             </div>
             <div>
-              <p className="font-medium mb-1">Staging-Umgebung</p>
+              <p className="font-medium mb-1">{t('software.buildStatus.stageTitle')}</p>
               <p className="text-sm text-dark-600">
-                Diese Version wird vor dem Release getestet. Der Update-Check ist deaktiviert; die
-                produktive Version findest du unter{' '}
+                {t('software.buildStatus.stageDescription')}{' '}
                 <a
                   href="https://green-ecolution.de"
                   target="_blank"
@@ -317,13 +324,16 @@ function BuildStatusCard({ env, visual, versionInfo }: BuildStatusCardProps) {
                 <CheckCircle2 className="size-5 text-green-dark" />
               )}
               <p className="font-medium">
-                {versionInfo.updateAvailable ? 'Neue Version verfügbar' : 'Software ist aktuell'}
+                {versionInfo.updateAvailable
+                  ? t('software.buildStatus.updateAvailableTitle')
+                  : t('software.buildStatus.upToDateTitle')}
               </p>
             </div>
             {versionInfo.updateAvailable && (
               <p className="text-sm text-dark-600 mb-4">
-                Version <span className="font-mono font-medium">{versionInfo.latest}</span> ist
-                verfügbar
+                {t('software.buildStatus.updateVersionPrefix')}{' '}
+                <span className="font-mono font-medium">{versionInfo.latest}</span>{' '}
+                {t('software.buildStatus.updateVersionSuffix')}
               </p>
             )}
             <a
@@ -332,12 +342,14 @@ function BuildStatusCard({ env, visual, versionInfo }: BuildStatusCardProps) {
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 text-sm font-medium text-green-dark hover:underline"
             >
-              Release Notes ansehen
+              {t('releaseNotesLink')}
               <ExternalLink className="size-3.5" />
             </a>
           </div>
           <div className="text-right">
-            <p className="text-xs text-dark-500 mb-1">Neueste Version</p>
+            <p className="text-xs text-dark-500 mb-1">
+              {t('software.buildStatus.latestVersionLabel')}
+            </p>
             <p className="text-2xl font-bold font-mono">{versionInfo.latest}</p>
           </div>
         </div>
