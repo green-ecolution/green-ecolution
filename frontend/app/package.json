@@ -74,6 +74,7 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.5",
     "eslint-plugin-react-x": "^5.18.6",
+    "eslint-plugin-i18next": "^6.1.5",
     "globals": "^17.11.0",
     "jsdom": "^30.0.1",
     "msw": "^2.15.0",

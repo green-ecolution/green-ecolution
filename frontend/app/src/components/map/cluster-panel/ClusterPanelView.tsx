@@ -82,7 +82,10 @@ const ClusterPanelView = ({ treecluster, onOpenDashboard }: ClusterPanelViewProp
               )}
               <span className="min-w-0 flex-1 truncate">
                 <span className="font-medium text-dark-800">{tree.species}</span>
-                <span className="text-dark-500"> · ID {tree.number}</span>
+                <span className="text-dark-500">
+                  {' '}
+                  {t('cluster.treeIdLabel', { number: tree.number })}
+                </span>
               </span>
               {tree.sensor ? (
                 <Badge variant="success" className="shrink-0">

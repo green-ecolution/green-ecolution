@@ -264,6 +264,7 @@ function BuildStatusCard({ env, visual, versionInfo }: BuildStatusCardProps) {
               <p className="font-medium mb-1">{t('software.buildStatus.devTitle')}</p>
               <p className="text-sm text-dark-600">
                 {t('software.buildStatus.devDescription')}{' '}
+                {/* eslint-disable i18next/no-literal-string -- domain name, identical across languages */}
                 <a
                   href="https://green-ecolution.de"
                   target="_blank"
@@ -272,6 +273,7 @@ function BuildStatusCard({ env, visual, versionInfo }: BuildStatusCardProps) {
                 >
                   green-ecolution.de
                 </a>
+                {/* eslint-enable i18next/no-literal-string */}
                 .
               </p>
             </div>
@@ -293,6 +295,7 @@ function BuildStatusCard({ env, visual, versionInfo }: BuildStatusCardProps) {
               <p className="font-medium mb-1">{t('software.buildStatus.stageTitle')}</p>
               <p className="text-sm text-dark-600">
                 {t('software.buildStatus.stageDescription')}{' '}
+                {/* eslint-disable i18next/no-literal-string -- domain name, identical across languages */}
                 <a
                   href="https://green-ecolution.de"
                   target="_blank"
@@ -301,6 +304,7 @@ function BuildStatusCard({ env, visual, versionInfo }: BuildStatusCardProps) {
                 >
                   green-ecolution.de
                 </a>
+                {/* eslint-enable i18next/no-literal-string */}
                 .
               </p>
             </div>

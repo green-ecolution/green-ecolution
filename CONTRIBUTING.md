@@ -239,6 +239,23 @@ Use the [Feature Request template](https://github.com/green-ecolution/green-ecol
 - Use existing UI components from `@green-ecolution/ui`
 - Keep components focused and reusable
 
+#### User-facing text
+
+All user-facing text lives in the translation catalogs, never hardcoded in a
+component. Add the German string to `frontend/app/src/locales/de/<namespace>.json`
+and the English one to `.../en/<namespace>.json`, then read it with
+`useTranslation('<namespace>')`. Component copy in `frontend/packages/ui` goes
+into that package's own catalog at `src/i18n/catalog.ts` instead.
+
+`frontend/app` enforces this with the `i18next/no-literal-string` ESLint rule
+(`frontend/app/eslint.config.js`), scoped to `src/**/*.{ts,tsx}` with an
+allowlist for product names, technical literals (units, aria roles, test ids,
+routes) and the debug routes/components, which are deliberately untranslated.
+`frontend/packages/ui` has no equivalent lint rule — its exposure is low since
+its copy is already centralized in one catalog file — so reviewers reject a
+hardcoded JSX text node or quoted sentence there on sight. The `de`/`en`
+parity test fails when only one of the two catalogs is updated.
+
 ### General
 
 - Prefer editing existing files over creating new ones

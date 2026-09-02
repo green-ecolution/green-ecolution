@@ -5,6 +5,7 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import tseslint from 'typescript-eslint'
 import reactX from 'eslint-plugin-react-x'
 import reactDom from 'eslint-plugin-react-dom'
+import i18next from 'eslint-plugin-i18next'
 
 export default tseslint.config(
   { ignores: ['dist', 'dev-dist'] },
@@ -74,5 +75,31 @@ export default tseslint.config(
     rules: {
       'react-refresh/only-export-components': 'off',
     },
+  },
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    plugins: { i18next },
+    rules: {
+      'i18next/no-literal-string': [
+        'error',
+        {
+          mode: 'jsx-text-only',
+          'should-validate-template': true,
+          message: 'User-facing text belongs in a catalog under src/locales.',
+        },
+      ],
+    },
+  },
+  {
+    // main.tsx renders its bootstrap-failure fallback before I18nextProvider
+    // mounts, so there is no instance to translate with (unlike
+    // ErrorFallback.tsx, which renders after and uses getI18n()).
+    files: [
+      'src/routes/_protected/debug/**',
+      'src/components/debug/**',
+      'src/**/*.test.{ts,tsx}',
+      'src/main.tsx',
+    ],
+    rules: { 'i18next/no-literal-string': 'off' },
   },
 )

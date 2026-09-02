@@ -58,6 +58,7 @@ const SensorSignalCard = ({ sensor }: SensorSignalCardProps) => {
                 />
                 <p className="text-4xl font-bold leading-none text-green-dark tabular-nums">
                   {signal.rssiDbm}
+                  {/* eslint-disable-next-line i18next/no-literal-string -- unit symbol, identical across languages */}
                   <span className="ml-1.5 text-base font-semibold text-muted-foreground">dBm</span>
                 </p>
               </div>

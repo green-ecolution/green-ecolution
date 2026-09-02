@@ -59,7 +59,9 @@ const SelectableTreeMarkers = ({ trees, selectedTreeId, onSelect }: SelectableTr
     }
     // colorHex is presentation data, not translated text, so the resolver
     // function identity (which changes on language switch) doesn't belong here.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Both react-hooks and react-x register their own exhaustive-deps rule
+    // and both fire here, so both ids need disabling.
+    // eslint-disable-next-line react-hooks/exhaustive-deps, react-x/exhaustive-deps
   }, [map, trees, selectedTreeId])
 
   return null

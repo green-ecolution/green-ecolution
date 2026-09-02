@@ -50,6 +50,7 @@
     "treesInGroupHeading": "Bäume in dieser Gruppe · {count}",
     "sensorTreeBadge": "Sensor-Baum",
     "noSensor": "kein Sensor",
+    "treeIdLabel": "· ID {number}",
     "remainingTrees_one": "+ {count} weiterer Baum · alle anzeigen",
     "remainingTrees_other": "+ {count} weitere Bäume · alle anzeigen"
   },

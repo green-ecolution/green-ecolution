@@ -25,6 +25,7 @@ const Map3DToggle = () => {
       aria-label={pitched ? t('controls.switchTo2dAriaLabel') : t('controls.switchTo3dAriaLabel')}
       onClick={() => map.easeTo({ pitch: pitched ? 0 : PITCH_3D })}
     >
+      {/* eslint-disable-next-line i18next/no-literal-string -- "3D" is not language content */}
       <span className="text-sm font-bold">3D</span>
     </MapControlButton>
   )

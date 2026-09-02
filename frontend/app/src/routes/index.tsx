@@ -22,6 +22,7 @@ function Startpage() {
     <>
       <article className="container my-20 lg:my-24 xl:grid xl:grid-cols-2 xl:gap-x-16 xl:items-center">
         <div>
+          {/* eslint-disable-next-line i18next/no-literal-string -- product name, not translated */}
           <p className="text-green-dark mb-4 text-lg font-semibold">Green Ecolution</p>
           <h1 className="font-lato font-bold text-4xl mb-4 lg:text-5xl xl:text-6xl">
             {t('hero.titleLine1')}
