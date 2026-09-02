@@ -702,6 +702,98 @@
       }
     },
     "/v1/clusters/{cluster_id}/comments/{comment_id}": {
+      "put": {
+        "tags": [
+          "Comments"
+        ],
+        "summary": "Edit a comment on a tree cluster",
+        "description": "Replaces a comment's text. Only the comment's author may edit it, unlike delete there is no fallback via `tree_cluster:delete`.",
+        "operationId": "updateClusterComment",
+        "parameters": [
+          {
+            "name": "cluster_id",
+            "in": "path",
+            "description": "Cluster ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "comment_id",
+            "in": "path",
+            "description": "Comment ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCommentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Comment updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Empty or overlong comment text",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not the author",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Cluster or comment not found, or the comment belongs to another cluster",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
       "delete": {
         "tags": [
           "Comments"
@@ -6375,6 +6467,98 @@
       }
     },
     "/v1/watering-plans/{watering_plan_id}/comments/{comment_id}": {
+      "put": {
+        "tags": [
+          "Comments"
+        ],
+        "summary": "Edit a comment on a watering plan",
+        "description": "Replaces a comment's text. Only the comment's author may edit it, unlike delete there is no fallback via `watering_plan:delete`.",
+        "operationId": "updateWateringPlanComment",
+        "parameters": [
+          {
+            "name": "watering_plan_id",
+            "in": "path",
+            "description": "Watering plan ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "comment_id",
+            "in": "path",
+            "description": "Comment ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCommentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Comment updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Empty or overlong comment text",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not the author",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Watering plan or comment not found, or the comment belongs to another plan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
       "delete": {
         "tags": [
           "Comments"
@@ -6942,6 +7126,14 @@
             "type": "string",
             "example": "2026-09-01T13:30:00+00:00"
           },
+          "edited_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Present once the author has edited the comment.",
+            "example": "2026-09-01T14:00:00+00:00"
+          },
           "id": {
             "type": "string",
             "example": "0199a8e9-7c4f-7000-8000-000000000000"
@@ -7361,6 +7553,14 @@
                 "created_at": {
                   "type": "string",
                   "example": "2026-09-01T13:30:00+00:00"
+                },
+                "edited_at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Present once the author has edited the comment.",
+                  "example": "2026-09-01T14:00:00+00:00"
                 },
                 "id": {
                   "type": "string",
@@ -10753,6 +10953,21 @@
           },
           "tree": {
             "$ref": "#/components/schemas/TreeResponse"
+          }
+        }
+      },
+      "UpdateCommentRequest": {
+        "type": "object",
+        "description": "Body of the edit request. A separate type from `CreateCommentRequest` so\nthe generated client does not carry a \"Create\" type on an update endpoint.",
+        "required": [
+          "body"
+        ],
+        "properties": {
+          "body": {
+            "type": "string",
+            "example": "Boden ist mittlerweile trocken",
+            "maxLength": 2000,
+            "minLength": 1
           }
         }
       },

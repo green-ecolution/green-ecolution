@@ -103,6 +103,7 @@ export * from './TreeMarkerResponse';
 export * from './TreeResponse';
 export * from './TreeUpdateRequest';
 export * from './TreeWithDistanceResponse';
+export * from './UpdateCommentRequest';
 export * from './UserRegisterRequest';
 export * from './UserResponse';
 export * from './UserStatus';

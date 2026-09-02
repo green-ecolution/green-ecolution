@@ -19,6 +19,7 @@ import type {
   CreateCommentRequest,
   ErrorBody,
   ListResponseCommentResponse,
+  UpdateCommentRequest,
 } from '../models/index';
 import {
     CommentResponseFromJSON,
@@ -29,6 +30,8 @@ import {
     ErrorBodyToJSON,
     ListResponseCommentResponseFromJSON,
     ListResponseCommentResponseToJSON,
+    UpdateCommentRequestFromJSON,
+    UpdateCommentRequestToJSON,
 } from '../models/index';
 
 export interface CreateClusterCommentRequest {
@@ -61,6 +64,18 @@ export interface ListWateringPlanCommentsRequest {
     wateringPlanId: string;
     page?: number;
     perPage?: number;
+}
+
+export interface UpdateClusterCommentRequest {
+    clusterId: string;
+    commentId: string;
+    updateCommentRequest: UpdateCommentRequest;
+}
+
+export interface UpdateWateringPlanCommentRequest {
+    wateringPlanId: string;
+    commentId: string;
+    updateCommentRequest: UpdateCommentRequest;
 }
 
 /**
@@ -397,6 +412,136 @@ export class CommentsApi extends runtime.BaseAPI {
      */
     async listWateringPlanComments(requestParameters: ListWateringPlanCommentsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ListResponseCommentResponse> {
         const response = await this.listWateringPlanCommentsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Creates request options for updateClusterComment without sending the request
+     */
+    async updateClusterCommentRequestOpts(requestParameters: UpdateClusterCommentRequest): Promise<runtime.RequestOpts> {
+        if (requestParameters['clusterId'] == null) {
+            throw new runtime.RequiredError(
+                'clusterId',
+                'Required parameter "clusterId" was null or undefined when calling updateClusterComment().'
+            );
+        }
+
+        if (requestParameters['commentId'] == null) {
+            throw new runtime.RequiredError(
+                'commentId',
+                'Required parameter "commentId" was null or undefined when calling updateClusterComment().'
+            );
+        }
+
+        if (requestParameters['updateCommentRequest'] == null) {
+            throw new runtime.RequiredError(
+                'updateCommentRequest',
+                'Required parameter "updateCommentRequest" was null or undefined when calling updateClusterComment().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+
+        let urlPath = `/v1/clusters/{cluster_id}/comments/{comment_id}`;
+        urlPath = urlPath.replace(`{${"cluster_id"}}`, encodeURIComponent(String(requestParameters['clusterId'])));
+        urlPath = urlPath.replace(`{${"comment_id"}}`, encodeURIComponent(String(requestParameters['commentId'])));
+
+        return {
+            path: urlPath,
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: UpdateCommentRequestToJSON(requestParameters['updateCommentRequest']),
+        };
+    }
+
+    /**
+     * Replaces a comment\'s text. Only the comment\'s author may edit it, unlike delete there is no fallback via `tree_cluster:delete`.
+     * Edit a comment on a tree cluster
+     */
+    async updateClusterCommentRaw(requestParameters: UpdateClusterCommentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CommentResponse>> {
+        const requestOptions = await this.updateClusterCommentRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => CommentResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Replaces a comment\'s text. Only the comment\'s author may edit it, unlike delete there is no fallback via `tree_cluster:delete`.
+     * Edit a comment on a tree cluster
+     */
+    async updateClusterComment(requestParameters: UpdateClusterCommentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CommentResponse> {
+        const response = await this.updateClusterCommentRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Creates request options for updateWateringPlanComment without sending the request
+     */
+    async updateWateringPlanCommentRequestOpts(requestParameters: UpdateWateringPlanCommentRequest): Promise<runtime.RequestOpts> {
+        if (requestParameters['wateringPlanId'] == null) {
+            throw new runtime.RequiredError(
+                'wateringPlanId',
+                'Required parameter "wateringPlanId" was null or undefined when calling updateWateringPlanComment().'
+            );
+        }
+
+        if (requestParameters['commentId'] == null) {
+            throw new runtime.RequiredError(
+                'commentId',
+                'Required parameter "commentId" was null or undefined when calling updateWateringPlanComment().'
+            );
+        }
+
+        if (requestParameters['updateCommentRequest'] == null) {
+            throw new runtime.RequiredError(
+                'updateCommentRequest',
+                'Required parameter "updateCommentRequest" was null or undefined when calling updateWateringPlanComment().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+
+        let urlPath = `/v1/watering-plans/{watering_plan_id}/comments/{comment_id}`;
+        urlPath = urlPath.replace(`{${"watering_plan_id"}}`, encodeURIComponent(String(requestParameters['wateringPlanId'])));
+        urlPath = urlPath.replace(`{${"comment_id"}}`, encodeURIComponent(String(requestParameters['commentId'])));
+
+        return {
+            path: urlPath,
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: UpdateCommentRequestToJSON(requestParameters['updateCommentRequest']),
+        };
+    }
+
+    /**
+     * Replaces a comment\'s text. Only the comment\'s author may edit it, unlike delete there is no fallback via `watering_plan:delete`.
+     * Edit a comment on a watering plan
+     */
+    async updateWateringPlanCommentRaw(requestParameters: UpdateWateringPlanCommentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CommentResponse>> {
+        const requestOptions = await this.updateWateringPlanCommentRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => CommentResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Replaces a comment\'s text. Only the comment\'s author may edit it, unlike delete there is no fallback via `watering_plan:delete`.
+     * Edit a comment on a watering plan
+     */
+    async updateWateringPlanComment(requestParameters: UpdateWateringPlanCommentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CommentResponse> {
+        const response = await this.updateWateringPlanCommentRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

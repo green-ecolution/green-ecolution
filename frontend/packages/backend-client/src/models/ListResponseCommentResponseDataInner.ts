@@ -44,6 +44,12 @@ export interface ListResponseCommentResponseDataInner {
      */
     createdAt: string;
     /**
+     * Present once the author has edited the comment.
+     * @type {string}
+     * @memberof ListResponseCommentResponseDataInner
+     */
+    editedAt?: string | null;
+    /**
      * 
      * @type {string}
      * @memberof ListResponseCommentResponseDataInner
@@ -76,6 +82,7 @@ export function ListResponseCommentResponseDataInnerFromJSONTyped(json: any, ign
         'authorName': json['author_name'] == null ? undefined : json['author_name'],
         'body': json['body'],
         'createdAt': json['created_at'],
+        'editedAt': json['edited_at'] == null ? undefined : json['edited_at'],
         'id': json['id'],
     };
 }
@@ -95,6 +102,7 @@ export function ListResponseCommentResponseDataInnerToJSONTyped(value?: ListResp
         'author_name': value['authorName'],
         'body': value['body'],
         'created_at': value['createdAt'],
+        'edited_at': value['editedAt'],
         'id': value['id'],
     };
 }

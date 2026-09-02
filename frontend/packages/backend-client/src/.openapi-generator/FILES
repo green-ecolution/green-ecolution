@@ -128,6 +128,7 @@ docs/TreeResponse.md
 docs/TreeUpdateRequest.md
 docs/TreeWithDistanceResponse.md
 docs/TreesApi.md
+docs/UpdateCommentRequest.md
 docs/UserRegisterRequest.md
 docs/UserResponse.md
 docs/UserStatus.md
@@ -253,6 +254,7 @@ models/TreeMarkerResponse.ts
 models/TreeResponse.ts
 models/TreeUpdateRequest.ts
 models/TreeWithDistanceResponse.ts
+models/UpdateCommentRequest.ts
 models/UserRegisterRequest.ts
 models/UserResponse.ts
 models/UserStatus.ts
