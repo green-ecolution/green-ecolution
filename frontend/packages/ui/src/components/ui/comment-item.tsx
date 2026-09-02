@@ -1,5 +1,4 @@
 import * as React from 'react'
-import { Pencil, Trash2 } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 import { useUiText } from '@/i18n'
@@ -95,37 +94,6 @@ const CommentItem = React.forwardRef<HTMLDivElement, CommentItemProps>(
             <span className="text-sm font-semibold text-dark-800">{author.name}</span>
             <span className="text-xs text-dark-500">{timestamp}</span>
             {editedLabel && <span className="text-xs italic text-dark-400">{editedLabel}</span>}
-            {!isEditing && (canEdit || canDelete) && (
-              <div className="ml-auto flex shrink-0 items-center gap-1">
-                {canEdit && (
-                  <Button
-                    ref={editTriggerRef}
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="size-7 text-dark-400 hover:text-dark"
-                    title={t('comments.edit')}
-                    onClick={openEdit}
-                  >
-                    <Pencil className="size-3.5" aria-hidden />
-                    <span className="sr-only">{t('comments.edit')}</span>
-                  </Button>
-                )}
-                {canDelete && (
-                  <Button
-                    type="button"
-                    variant="ghost-destructive"
-                    size="icon"
-                    className="size-7 text-dark-400"
-                    title={t('comments.delete')}
-                    onClick={() => onDelete?.()}
-                  >
-                    <Trash2 className="size-3.5" aria-hidden />
-                    <span className="sr-only">{t('comments.delete')}</span>
-                  </Button>
-                )}
-              </div>
-            )}
           </div>
 
           {isEditing ? (
@@ -158,7 +126,39 @@ const CommentItem = React.forwardRef<HTMLDivElement, CommentItemProps>(
               </div>
             </div>
           ) : (
-            <p className="mt-1 whitespace-pre-wrap break-words text-sm text-dark-800">{body}</p>
+            <>
+              <p className="mt-1 whitespace-pre-wrap break-words text-sm text-dark-800">{body}</p>
+              {(canEdit || canDelete) && (
+                <div className="mt-1.5 flex items-center gap-2">
+                  {canEdit && (
+                    <Button
+                      ref={editTriggerRef}
+                      type="button"
+                      variant="link"
+                      className="h-auto p-0 text-xs font-normal text-dark-400 hover:text-dark"
+                      onClick={openEdit}
+                    >
+                      {t('comments.edit')}
+                    </Button>
+                  )}
+                  {canEdit && canDelete && (
+                    <span className="text-xs text-dark-300" aria-hidden>
+                      ·
+                    </span>
+                  )}
+                  {canDelete && (
+                    <Button
+                      type="button"
+                      variant="link"
+                      className="h-auto p-0 text-xs font-normal text-dark-400 hover:text-destructive"
+                      onClick={() => onDelete?.()}
+                    >
+                      {t('comments.delete')}
+                    </Button>
+                  )}
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
