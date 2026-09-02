@@ -6060,236 +6060,6 @@
         }
       }
     },
-    "/v1/watering-plans/{plan_id}/comments": {
-      "get": {
-        "tags": [
-          "Comments"
-        ],
-        "summary": "List comments on a watering plan",
-        "description": "Returns the comments of a watering plan, newest first. Requires `watering_plan:read` in the plan's organization.",
-        "operationId": "listWateringPlanComments",
-        "parameters": [
-          {
-            "name": "plan_id",
-            "in": "path",
-            "description": "Watering plan ID",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "description": "Page number to retrieve (1-based).",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int64",
-              "default": 1,
-              "minimum": 1
-            },
-            "example": 1
-          },
-          {
-            "name": "per_page",
-            "in": "query",
-            "description": "Number of items per page.",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int64",
-              "default": 25,
-              "maximum": 100,
-              "minimum": 1
-            },
-            "example": 25
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Paginated list of comments",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ListResponse_CommentResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Watering plan not found or not visible",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "Comments"
-        ],
-        "summary": "Comment on a watering plan",
-        "description": "Adds a comment to a watering plan. Requires `watering_plan:update` in the plan's organization.",
-        "operationId": "createWateringPlanComment",
-        "parameters": [
-          {
-            "name": "plan_id",
-            "in": "path",
-            "description": "Watering plan ID",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateCommentRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "description": "Comment created",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CommentResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Empty or overlong comment text",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Missing `watering_plan:update`",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Watering plan not found or not visible",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/v1/watering-plans/{plan_id}/comments/{comment_id}": {
-      "delete": {
-        "tags": [
-          "Comments"
-        ],
-        "summary": "Delete a comment on a watering plan",
-        "description": "Removes a comment. The author may delete their own comment; anyone else needs `watering_plan:delete` in the plan's organization.",
-        "operationId": "deleteWateringPlanComment",
-        "parameters": [
-          {
-            "name": "plan_id",
-            "in": "path",
-            "description": "Watering plan ID",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
-            "name": "comment_id",
-            "in": "path",
-            "description": "Comment ID",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Comment deleted"
-          },
-          "403": {
-            "description": "Not the author and missing `watering_plan:delete`",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Watering plan or comment not found, or the comment belongs to another plan",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/v1/watering-plans/{watering_plan_id}": {
       "get": {
         "tags": [
@@ -6440,6 +6210,236 @@
           },
           "404": {
             "description": "Watering plan not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/watering-plans/{watering_plan_id}/comments": {
+      "get": {
+        "tags": [
+          "Comments"
+        ],
+        "summary": "List comments on a watering plan",
+        "description": "Returns the comments of a watering plan, newest first. Requires `watering_plan:read` in the plan's organization.",
+        "operationId": "listWateringPlanComments",
+        "parameters": [
+          {
+            "name": "watering_plan_id",
+            "in": "path",
+            "description": "Watering plan ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number to retrieve (1-based).",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "default": 1,
+              "minimum": 1
+            },
+            "example": 1
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "description": "Number of items per page.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1
+            },
+            "example": 25
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of comments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListResponse_CommentResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Watering plan not found or not visible",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Comments"
+        ],
+        "summary": "Comment on a watering plan",
+        "description": "Adds a comment to a watering plan. Requires `watering_plan:update` in the plan's organization.",
+        "operationId": "createWateringPlanComment",
+        "parameters": [
+          {
+            "name": "watering_plan_id",
+            "in": "path",
+            "description": "Watering plan ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCommentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Comment created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Empty or overlong comment text",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing `watering_plan:update`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Watering plan not found or not visible",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/watering-plans/{watering_plan_id}/comments/{comment_id}": {
+      "delete": {
+        "tags": [
+          "Comments"
+        ],
+        "summary": "Delete a comment on a watering plan",
+        "description": "Removes a comment. The author may delete their own comment; anyone else needs `watering_plan:delete` in the plan's organization.",
+        "operationId": "deleteWateringPlanComment",
+        "parameters": [
+          {
+            "name": "watering_plan_id",
+            "in": "path",
+            "description": "Watering plan ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "comment_id",
+            "in": "path",
+            "description": "Comment ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Comment deleted"
+          },
+          "403": {
+            "description": "Not the author and missing `watering_plan:delete`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Watering plan or comment not found, or the comment belongs to another plan",
             "content": {
               "application/json": {
                 "schema": {

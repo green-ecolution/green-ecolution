@@ -37,7 +37,7 @@ export interface CreateClusterCommentRequest {
 }
 
 export interface CreateWateringPlanCommentRequest {
-    planId: string;
+    wateringPlanId: string;
     createCommentRequest: CreateCommentRequest;
 }
 
@@ -47,7 +47,7 @@ export interface DeleteClusterCommentRequest {
 }
 
 export interface DeleteWateringPlanCommentRequest {
-    planId: string;
+    wateringPlanId: string;
     commentId: string;
 }
 
@@ -58,7 +58,7 @@ export interface ListClusterCommentsRequest {
 }
 
 export interface ListWateringPlanCommentsRequest {
-    planId: string;
+    wateringPlanId: string;
     page?: number;
     perPage?: number;
 }
@@ -129,10 +129,10 @@ export class CommentsApi extends runtime.BaseAPI {
      * Creates request options for createWateringPlanComment without sending the request
      */
     async createWateringPlanCommentRequestOpts(requestParameters: CreateWateringPlanCommentRequest): Promise<runtime.RequestOpts> {
-        if (requestParameters['planId'] == null) {
+        if (requestParameters['wateringPlanId'] == null) {
             throw new runtime.RequiredError(
-                'planId',
-                'Required parameter "planId" was null or undefined when calling createWateringPlanComment().'
+                'wateringPlanId',
+                'Required parameter "wateringPlanId" was null or undefined when calling createWateringPlanComment().'
             );
         }
 
@@ -150,8 +150,8 @@ export class CommentsApi extends runtime.BaseAPI {
         headerParameters['Content-Type'] = 'application/json';
 
 
-        let urlPath = `/v1/watering-plans/{plan_id}/comments`;
-        urlPath = urlPath.replace(`{${"plan_id"}}`, encodeURIComponent(String(requestParameters['planId'])));
+        let urlPath = `/v1/watering-plans/{watering_plan_id}/comments`;
+        urlPath = urlPath.replace(`{${"watering_plan_id"}}`, encodeURIComponent(String(requestParameters['wateringPlanId'])));
 
         return {
             path: urlPath,
@@ -240,10 +240,10 @@ export class CommentsApi extends runtime.BaseAPI {
      * Creates request options for deleteWateringPlanComment without sending the request
      */
     async deleteWateringPlanCommentRequestOpts(requestParameters: DeleteWateringPlanCommentRequest): Promise<runtime.RequestOpts> {
-        if (requestParameters['planId'] == null) {
+        if (requestParameters['wateringPlanId'] == null) {
             throw new runtime.RequiredError(
-                'planId',
-                'Required parameter "planId" was null or undefined when calling deleteWateringPlanComment().'
+                'wateringPlanId',
+                'Required parameter "wateringPlanId" was null or undefined when calling deleteWateringPlanComment().'
             );
         }
 
@@ -259,8 +259,8 @@ export class CommentsApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
 
-        let urlPath = `/v1/watering-plans/{plan_id}/comments/{comment_id}`;
-        urlPath = urlPath.replace(`{${"plan_id"}}`, encodeURIComponent(String(requestParameters['planId'])));
+        let urlPath = `/v1/watering-plans/{watering_plan_id}/comments/{comment_id}`;
+        urlPath = urlPath.replace(`{${"watering_plan_id"}}`, encodeURIComponent(String(requestParameters['wateringPlanId'])));
         urlPath = urlPath.replace(`{${"comment_id"}}`, encodeURIComponent(String(requestParameters['commentId'])));
 
         return {
@@ -349,10 +349,10 @@ export class CommentsApi extends runtime.BaseAPI {
      * Creates request options for listWateringPlanComments without sending the request
      */
     async listWateringPlanCommentsRequestOpts(requestParameters: ListWateringPlanCommentsRequest): Promise<runtime.RequestOpts> {
-        if (requestParameters['planId'] == null) {
+        if (requestParameters['wateringPlanId'] == null) {
             throw new runtime.RequiredError(
-                'planId',
-                'Required parameter "planId" was null or undefined when calling listWateringPlanComments().'
+                'wateringPlanId',
+                'Required parameter "wateringPlanId" was null or undefined when calling listWateringPlanComments().'
             );
         }
 
@@ -369,8 +369,8 @@ export class CommentsApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
 
-        let urlPath = `/v1/watering-plans/{plan_id}/comments`;
-        urlPath = urlPath.replace(`{${"plan_id"}}`, encodeURIComponent(String(requestParameters['planId'])));
+        let urlPath = `/v1/watering-plans/{watering_plan_id}/comments`;
+        urlPath = urlPath.replace(`{${"watering_plan_id"}}`, encodeURIComponent(String(requestParameters['wateringPlanId'])));
 
         return {
             path: urlPath,
