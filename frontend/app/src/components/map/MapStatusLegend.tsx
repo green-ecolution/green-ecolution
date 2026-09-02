@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { WateringStatus } from '@green-ecolution/backend-client'
-import { getWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
+import { useWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
 
 const AMPEL_STATUSES = [WateringStatus.Bad, WateringStatus.Moderate, WateringStatus.Good]
 const NEUTRAL_STATUSES = [WateringStatus.JustWatered, WateringStatus.Unknown]
 
 const LegendRow = ({ status }: { status: WateringStatus }) => {
+  const getWateringStatusDetails = useWateringStatusDetails()
   const { label, colorHex } = getWateringStatusDetails(status)
   return (
     <li className="flex items-center gap-2">
@@ -20,6 +22,7 @@ const LegendRow = ({ status }: { status: WateringStatus }) => {
 }
 
 const MapStatusLegend = () => {
+  const { t } = useTranslation('map')
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
 
@@ -42,10 +45,10 @@ const MapStatusLegend = () => {
       {open && (
         <div
           role="region"
-          aria-label="Legende Bewässerungsstatus"
+          aria-label={t('statusLegend.regionAriaLabel')}
           className="w-52 rounded-xl bg-white p-4 shadow-cards"
         >
-          <p className="text-sm font-semibold text-dark-800">Bewässerungsstatus</p>
+          <p className="text-sm font-semibold text-dark-800">{t('statusLegend.heading')}</p>
           <ul className="mt-2 flex flex-col gap-1.5">
             {AMPEL_STATUSES.map((status) => (
               <LegendRow key={status} status={status} />
@@ -62,7 +65,7 @@ const MapStatusLegend = () => {
       <button
         type="button"
         aria-expanded={open}
-        aria-label={open ? 'Legende ausblenden' : 'Legende anzeigen'}
+        aria-label={open ? t('statusLegend.hide') : t('statusLegend.show')}
         onClick={() => setOpen((v) => !v)}
         className="grid size-9 place-items-center rounded-full bg-white shadow-cards"
       >

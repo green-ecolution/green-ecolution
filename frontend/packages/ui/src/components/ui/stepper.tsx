@@ -3,6 +3,7 @@ import { Check } from 'lucide-react'
 import { cva, type VariantProps } from 'class-variance-authority'
 
 import { cn } from '@/lib/utils'
+import { useUiText } from '@/i18n'
 
 const circleVariants = cva(
   'flex size-8 shrink-0 items-center justify-center rounded-full border text-sm font-semibold tabular-nums transition-colors',
@@ -52,12 +53,13 @@ export const Stepper = ({
   onStepClick,
   className,
 }: StepperProps) => {
+  const { t } = useUiText()
   const completed = React.useMemo(() => new Set(completedSteps), [completedSteps])
 
   return (
-    <nav aria-label="Fortschritt">
+    <nav aria-label={t('stepper.progress')}>
       <p className="md:hidden mb-2 text-xs text-muted-foreground">
-        Schritt {currentStep} von {steps.length}
+        {t('stepper.stepOf', { current: currentStep, total: steps.length })}
       </p>
       <ol className={cn('flex items-center gap-2 md:gap-4', className)}>
         {steps.map((step, idx) => {

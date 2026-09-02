@@ -1,0 +1,309 @@
+{
+  "entity": {
+    "name": "Sensor"
+  },
+  "list": {
+    "title": "Sensors",
+    "description": "Overview of all sensors registered in the system. You can add new sensors by scanning the QR code on the sensor unit.",
+    "activateButton": "Activate sensor",
+    "statusColumn": "Status",
+    "nameAndLinkColumn": "Name and link",
+    "createdAtColumn": "Created on",
+    "lastUpdateColumn": "Last data update",
+    "loadingLabel": "Sensors are loading",
+    "emptyMessage": "No sensors were found."
+  },
+  "detail": {
+    "backToList": "To all sensors",
+    "title": "Sensor ID: {id}",
+    "loadingLabel": "Sensors are loading …",
+    "notFoundBackLabel": "To the sensor list"
+  },
+  "card": {
+    "idLabel": "ID: {id}",
+    "detailsLabel": "Sensor details",
+    "createdAtLabel": "Created on:",
+    "lastUpdateLabel": "Last update:"
+  },
+  "hero": {
+    "typeLabel": "{type} sensor",
+    "modelImageAlt": "Model image: {model}",
+    "viaLabel": "via"
+  },
+  "statusGrid": {
+    "srHeading": "Status",
+    "statusLabel": "Status",
+    "batteryLabel": "Battery level",
+    "batteryNoDataDescription": "No battery data received yet.",
+    "batteryShutoffDescription": "The battery switches off below 2.8 V.",
+    "lastSignalLabel": "Last signal",
+    "lastSignalDescriptionWithInterval": "Last data transmission · sends {interval}",
+    "lastSignalDescription": "Last data transmission"
+  },
+  "sendInterval": {
+    "seconds": "every {count} sec.",
+    "minutes": "every {count} min.",
+    "hours": "every {count} h."
+  },
+  "identity": {
+    "title": "Identity",
+    "modelLabel": "Model",
+    "modelIdLabel": "Model ID: {id}",
+    "providerLabel": "Provider",
+    "providerSourceLabel": "Data source / integration",
+    "serialNumberLabel": "Serial Number",
+    "devEuiLabel": "Dev EUI",
+    "appEuiLabel": "App EUI",
+    "atPinLabel": "AT-Pin",
+    "otaPinLabel": "OTA-Pin",
+    "createdAtLabel": "Created on",
+    "updatedAtLabel": "Last updated"
+  },
+  "dataQuality": {
+    "title": "Data quality",
+    "discardedSummary_one": "One reading was discarded in the last seven days.",
+    "discardedSummary_other": "{count} readings were discarded in the last seven days.",
+    "acknowledgedBy": "Reviewed by {name} on {date}",
+    "unknownReviewer": "unknown",
+    "acknowledgeButton": "Acknowledged",
+    "issueDepth": "{depth} cm depth",
+    "issueReading": "Reading {value}",
+    "pastIssues": "Past anomalies ({count})",
+    "acknowledgeDialogTitle": "Acknowledge data quality",
+    "acknowledgeDialogDescription": "The previously discarded readings are then considered reviewed. If implausible values occur again, the sensor will flag them again on its own.",
+    "acknowledgeNotePlaceholder": "Reason, e.g. probe was not connected during setup",
+    "acknowledgeSubmit": "Save",
+    "acknowledgeSuccessToast": "Data quality marked as reviewed",
+    "acknowledgeFailedToast": "The note could not be saved."
+  },
+  "clipboard": {
+    "copyFailed": "Copy failed."
+  },
+  "secretReveal": {
+    "sensitiveDataAriaLabel": "Sensitive data",
+    "hideAriaLabel": "Hide {label}",
+    "showAriaLabel": "Show {label}",
+    "copyAriaLabel": "Copy {label}",
+    "autoHideNotice": "Automatically hides again in {seconds}s."
+  },
+  "signal": {
+    "title": "Signal",
+    "noSignalData": "No signal data received.",
+    "snrLabel": "SNR",
+    "gatewaysLabel": "Gateways",
+    "level": {
+      "good": "Good",
+      "fair": "Fair",
+      "weak": "Weak"
+    }
+  },
+  "signalChart": {
+    "title": "RSSI history",
+    "subtitle": "Higher (less negative) = better reception",
+    "seriesLabel": "RSSI (dBm)",
+    "loadingLabel": "Signal data is loading",
+    "tooFewDataPoints": "Not enough data points in the selected period."
+  },
+  "soilMoistureChart": {
+    "title": "Soil moisture history",
+    "subtitleHour": "Hourly average · band = min–max · dashed = critical threshold per depth",
+    "subtitleDay": "Daily average · band = min–max · dashed = critical threshold per depth",
+    "depthSeriesLabel": "{depth} cm depth",
+    "loadingLabel": "Readings are loading",
+    "tooFewDataPoints": "Not enough data points in the selected period.",
+    "wateredOnLabel": "Watered on {date}",
+    "discardedLabel": "Reading discarded"
+  },
+  "abilities": {
+    "title": "What this sensor measures",
+    "unitLabel": "Unit",
+    "depthLabel_one": "Depth",
+    "depthLabel_other": "Depths"
+  },
+  "ability": {
+    "soil_moisture": "Soil moisture",
+    "soil_tension": "Soil tension",
+    "temperature": "Temperature",
+    "humidity": "Humidity"
+  },
+  "linkedTree": {
+    "title": "Linked tree",
+    "noLinkTitle": "Not linked yet",
+    "noLinkDescription": "This sensor is not linked to any tree. Without a link, its readings cannot be attributed to any vegetation.",
+    "loadFailedTitle": "Tree not loaded",
+    "loadFailedDescription": "The linked tree (#{id}) could not be retrieved.",
+    "treeNumberLabel": "Tree no. {number}",
+    "unknownSpecies": "Unknown species",
+    "plantedLabel": "Planted {year}"
+  },
+  "location": {
+    "title": "Location",
+    "coordinatesToggle": "Coordinates",
+    "mapAriaLabel": "Map with the sensor position, nearby trees and watering groups",
+    "latitudeLabel": "Latitude",
+    "longitudeLabel": "Longitude",
+    "derivedFromTreeNotice": "The position is taken from the linked tree.",
+    "notInFieldTitle": "Sensor not yet in the field",
+    "notInFieldDescription": "This sensor has not been activated yet and has no location. Once it is assigned to a tree or bed, a map will appear here."
+  },
+  "lorawanConfig": {
+    "emptyValue": "empty",
+    "title": "Advanced LoRaWAN configuration",
+    "keyCountLabel": "{count} AT command keys",
+    "collapseLabel": "Collapse",
+    "expandLabel": "Expand to view",
+    "secretsWarningTitle": "Secrets are masked",
+    "secretsWarningDescription": "LoRaWAN keys (APPKEY, APPSKEY, NWKSKEY, PWORD) are hidden by default and can be revealed individually. They are automatically redacted when copied.",
+    "searchPlaceholder": "Search key or value …",
+    "searchAriaLabel": "Search configuration",
+    "copyAllButton": "Copy all",
+    "copiedWithSecretsToast": "Configuration copied (secrets redacted).",
+    "copiedToast": "Configuration copied to clipboard.",
+    "keyColumnHeader": "Key",
+    "valueColumnHeader": "Value",
+    "noResults": "No results for \"{query}\"."
+  },
+  "actions": {
+    "menuButton": "Actions",
+    "activateAssignTree": "Activate & assign tree",
+    "reassignTree": "Assign different tree",
+    "removeLink": "Remove tree link",
+    "deleteSensor": "Delete sensor",
+    "deleteConfirmTitle": "Really delete this sensor?",
+    "deleteConfirmDescription": "This action cannot be undone. Sensor {id} will be permanently removed, including its LoRaWAN configuration and all readings.",
+    "deletePending": "Deleting …",
+    "deleteFinal": "Delete permanently",
+    "deleteSuccessToast": "Sensor was deleted.",
+    "deleteFailedToast": "The sensor could not be deleted.",
+    "removeConfirmTitle": "Remove tree link and reset sensor?",
+    "removeConfirmDescription": "The tree link will be removed and the sensor reset to the \"{status}\" state. It can then be activated on another tree like a new sensor.",
+    "removeConfirmSubmitPending": "Removing …",
+    "removeConfirmSubmit": "Remove link",
+    "removeSuccessToast": "Sensor was reset.",
+    "activateSuccessToast": "Sensor activated and tree assigned.",
+    "reassignSuccessToast": "Tree changed."
+  },
+  "treeAssignDialog": {
+    "activate": {
+      "title": "Activate sensor and assign tree",
+      "description": "Search for the tree by number or species and activate the sensor on this tree.",
+      "confirm": "Activate"
+    },
+    "reassign": {
+      "description": "Choose the new tree this sensor should be assigned to.",
+      "confirm": "Assign tree"
+    },
+    "showAllTreesLabel": "Show all trees",
+    "mapAriaLabel": "Map for tree selection",
+    "savingButton": "Saving …"
+  },
+  "treeSearch": {
+    "inputPlaceholder": "Search tree number or species…",
+    "clearAriaLabel": "Clear",
+    "idleHint": "Type a tree number or species.",
+    "loadingLabel": "Searching trees…",
+    "failedTitle": "Search failed",
+    "failedDescription": "The tree search failed.",
+    "noResultsForQuery": "No trees found for \"{query}\".",
+    "noResultsHint": "Check the spelling or tree number.",
+    "noTreesAvailable": "There are no trees available.",
+    "resultCountMatches": "{shown} of {total} matches",
+    "resultCountTrees": "{shown} of {total} trees",
+    "selectResultAriaLabel": "Select tree from search results",
+    "loadingMoreLabel": "Loading more trees…",
+    "sensorAssignedBadge": "Sensor assigned"
+  },
+  "nearestTreeList": {
+    "title": "Nearby trees",
+    "selectAriaLabel": "Select tree",
+    "unassignedGroup": "Not assigned"
+  },
+  "treePickerSheet": {
+    "title": "Choose a different tree",
+    "description": "Search by tree number or species if the right tree is not in the suggestion list."
+  },
+  "wizard": {
+    "layout": {
+      "backToList": "Back to sensor overview",
+      "steps": {
+        "scan": "QR scan",
+        "tree": "Tree"
+      }
+    },
+    "scan": {
+      "header": {
+        "title": "Scan sensor QR code",
+        "description": "Hold the QR code on the sensor unit steady inside the scan frame. This uniquely identifies the sensor before you assign it to a tree in the next step. In poor lighting, it helps to hold the code a little closer."
+      },
+      "continueLabel": "Accept sensor",
+      "checking": {
+        "title": "Checking sensor",
+        "description": "We're matching the scanned ID against the database. This only takes a moment.",
+        "loadingLabel": "Matching sensor against the system …"
+      },
+      "error": {
+        "notFound": {
+          "title": "Sensor not found",
+          "description": "This sensor ID is not registered in the system.",
+          "hint": "Make sure the sensor unit was registered in the system through administration, or contact the admin."
+        },
+        "badRequest": {
+          "title": "Invalid sensor ID",
+          "description": "The scanned ID does not match the expected format.",
+          "hint": "Please check that you scanned the correct QR code on the sensor unit."
+        },
+        "network": {
+          "title": "Matching failed",
+          "description": "Matching against the database could not be performed.",
+          "hint": "Please check your internet connection and try again."
+        },
+        "scannedIdLabel": "Scanned ID"
+      },
+      "retryButton": "Check again",
+      "rescanButton": "Scan a different sensor",
+      "notActivatable": {
+        "title": "Sensor cannot be activated",
+        "onlineDescription": "This sensor is already activated and assigned to a tree.",
+        "offlineDescription": "This sensor has already been activated and is currently offline.",
+        "statusLabel": "Status: {status}",
+        "lastSeenLabel": "Last seen: {date}"
+      },
+      "recognized": {
+        "title": "Sensor recognized",
+        "description": "Known in the system and cleared for activation.",
+        "statusLabel": "Sensor ID · Status: Ready"
+      }
+    },
+    "tree": {
+      "header": {
+        "title": "Assign tree",
+        "description": "Choose the tree the sensor will be mounted on. The suggestion is based on your current location. Only the tree assignment is saved on the sensor, not your coordinates."
+      },
+      "relocateButton": "Update location",
+      "locatingNotice": "Determining location …",
+      "loadingNearby": "Searching for nearby trees…",
+      "searchFailed": {
+        "title": "Tree search failed",
+        "description": "The search for nearby trees failed."
+      },
+      "noNearbyTrees": "No nearby trees were found. Choose the tree manually.",
+      "selectedTreeLabel": "Selected tree"
+    },
+    "review": {
+      "header": {
+        "title": "Review assignment",
+        "description": "Confirm sensor, tree and location. The link is saved once you select \"Activate sensor\"."
+      },
+      "assignedTreeLabel": "Assigned tree",
+      "locationLabel": "Location",
+      "activatingLabel": "Activating …",
+      "activateButton": "Activate sensor"
+    },
+    "success": {
+      "title": "Sensor activated",
+      "summary": "Sensor {sensorId} was assigned to tree {treeNumber}.",
+      "nextButton": "Scan next sensor",
+      "backToOverviewButton": "Back to overview"
+    }
+  }
+}

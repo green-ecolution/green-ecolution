@@ -8,6 +8,7 @@ import {
   useSearch,
 } from '@tanstack/react-router'
 import { z } from 'zod'
+import { useTranslation } from 'react-i18next'
 import MapCanvas from '@/components/map-gl/MapCanvas'
 import MapControls from '@/components/map-gl/MapControls'
 import MapBackgroundClick from '@/components/map-gl/MapBackgroundClick'
@@ -50,13 +51,14 @@ export const Route = createFileRoute('/_protected/map')({
     useStore.setState({ mapCenter: [lat, lng], mapZoom: zoom })
 
     return {
-      crumb: { title: 'Karte' },
+      crumb: { titleKey: 'map' as const },
     }
   },
-  pendingComponent: pendingLoading('Lade Karte...'),
+  pendingComponent: pendingLoading({ key: 'map:root.loadingLabel' }),
 })
 
 function MapRoot() {
+  const { t } = useTranslation('map')
   const { pathname } = useLocation()
   const navigate = useNavigate()
   const search = useSearch({ strict: false })
@@ -96,12 +98,16 @@ function MapRoot() {
       {isIndex && <MapToolbarBar />}
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <div className="relative flex-1">
-          <Suspense fallback={<Loading className="mt-20 justify-center" label="Lade Karte..." />}>
+          <Suspense
+            fallback={<Loading className="mt-20 justify-center" label={t('root.loadingLabel')} />}
+          >
             <MapCanvas>
               <MapControls />
               {isIndex && <MapBackgroundClick onBackground={handleClosePanel} />}
               <Suspense
-                fallback={<Loading className="mt-20 justify-center" label="Lade Karte..." />}
+                fallback={
+                  <Loading className="mt-20 justify-center" label={t('root.loadingLabel')} />
+                }
               >
                 <Outlet />
               </Suspense>

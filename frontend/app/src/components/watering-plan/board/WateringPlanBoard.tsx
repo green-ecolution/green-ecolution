@@ -21,6 +21,7 @@ import {
   KanbanColumnHeader,
   KanbanDropHint,
 } from '@green-ecolution/ui'
+import { useTranslation } from 'react-i18next'
 import { WateringPlanStatus } from '@green-ecolution/backend-client'
 import type { User, WateringPlanInList } from '@/api/backendApi'
 import { userQueries, wateringPlanQueries } from '@/api/queries'
@@ -96,6 +97,7 @@ const DroppableColumn = ({
   const action = activeDrag ? dropActionFor(activeDrag.column, id) : null
   const disabled = activeDrag !== null && action === null && activeDrag.column !== id
   const { setNodeRef, isOver } = useDroppable({ id, disabled: action === null })
+  const { t } = useTranslation('wateringPlan')
 
   return (
     <KanbanColumn
@@ -105,20 +107,23 @@ const DroppableColumn = ({
       aria-label={title}
     >
       <KanbanColumnHeader icon={icon} title={title} count={count} />
-      {action && <KanbanDropHint label={dropHintFor(action)} />}
+      {action && <KanbanDropHint label={dropHintFor(action, t)} />}
       {children}
     </KanbanColumn>
   )
 }
 
-const ColumnError = ({ onRetry }: { onRetry: () => void }) => (
-  <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-red-200 p-4 text-center text-sm text-dark-600">
-    Die Einsätze konnten nicht geladen werden.
-    <Button type="button" size="sm" variant="outline" className="bg-white" onClick={onRetry}>
-      Erneut versuchen
-    </Button>
-  </div>
-)
+const ColumnError = ({ onRetry }: { onRetry: () => void }) => {
+  const { t } = useTranslation(['wateringPlan', 'common'])
+  return (
+    <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-red-200 p-4 text-center text-sm text-dark-600">
+      {t('board.columnError.message')}
+      <Button type="button" size="sm" variant="outline" className="bg-white" onClick={onRetry}>
+        {t('common:actions.retry')}
+      </Button>
+    </div>
+  )
+}
 
 const WateringPlanBoard = () => {
   const plannedQuery = useQuery(wateringPlanQueries.boardColumn([WateringPlanStatus.Planned]))
@@ -131,6 +136,7 @@ const WateringPlanBoard = () => {
   const { startPlan } = useWateringPlanBoardMutations()
   const canModify = useHasPermission(['watering_plan:update'])
   const canCreate = useHasPermission(['watering_plan:create'])
+  const { t } = useTranslation('wateringPlan')
   const [activeDrag, setActiveDrag] = useState<DragData | null>(null)
   const [planToCancel, setPlanToCancel] = useState<WateringPlanInList | null>(null)
   const [planToComplete, setPlanToComplete] = useState<WateringPlanInList | null>(null)
@@ -182,16 +188,14 @@ const WateringPlanBoard = () => {
         <DroppableColumn
           id="planned"
           icon={<CalendarClock />}
-          title="Geplant"
+          title={t('board.column.planned')}
           count={planned.length}
           activeDrag={activeDrag}
         >
           {plannedQuery.isError && <ColumnError onRetry={() => void plannedQuery.refetch()} />}
           {!plannedQuery.isError && planned.length === 0 && !activeDrag && (
             <KanbanColumnEmpty>
-              {canCreate
-                ? 'Keine geplanten Einsätze. Erstellen Sie einen neuen Einsatzplan oder bündeln Sie Vorschläge.'
-                : 'Keine geplanten Einsätze.'}
+              {canCreate ? t('board.column.plannedEmptyCanCreate') : t('board.column.plannedEmpty')}
             </KanbanColumnEmpty>
           )}
           {planned.map((plan) => (
@@ -208,16 +212,14 @@ const WateringPlanBoard = () => {
           id="active"
           tone="active"
           icon={<Truck />}
-          title="Unterwegs"
+          title={t('board.column.active')}
           count={active.length}
           activeDrag={activeDrag}
         >
           {activeQuery.isError && <ColumnError onRetry={() => void activeQuery.refetch()} />}
           {!activeQuery.isError && active.length === 0 && !activeDrag && (
             <KanbanColumnEmpty>
-              {canModify
-                ? 'Ziehen Sie einen geplanten Einsatz hierher, um ihn zu starten.'
-                : 'Aktuell ist kein Einsatz unterwegs.'}
+              {canModify ? t('board.column.activeEmptyCanModify') : t('board.column.activeEmpty')}
             </KanbanColumnEmpty>
           )}
           {active.map((plan) => (
@@ -233,13 +235,13 @@ const WateringPlanBoard = () => {
         <DroppableColumn
           id="done"
           icon={<CheckCircle2 />}
-          title="Erledigt"
+          title={t('board.column.done')}
           count={doneTotal}
           activeDrag={activeDrag}
         >
           {doneQuery.isError && <ColumnError onRetry={() => void doneQuery.refetch()} />}
           {!doneQuery.isError && done.length === 0 && !activeDrag && (
-            <KanbanColumnEmpty>Noch keine erledigten Einsätze.</KanbanColumnEmpty>
+            <KanbanColumnEmpty>{t('board.column.doneEmpty')}</KanbanColumnEmpty>
           )}
           {done.map((plan) => (
             <WateringPlanBoardCard key={plan.id} plan={plan} users={users} />
@@ -253,7 +255,7 @@ const WateringPlanBoard = () => {
               disabled={doneQuery.isFetchingNextPage}
               onClick={() => void doneQuery.fetchNextPage()}
             >
-              Mehr laden
+              {t('board.column.loadMore')}
             </Button>
           )}
         </DroppableColumn>

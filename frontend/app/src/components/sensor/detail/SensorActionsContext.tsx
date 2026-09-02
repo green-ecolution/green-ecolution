@@ -1,4 +1,5 @@
 import { createContext, use, useState, type PropsWithChildren } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,6 +38,7 @@ export const useSensorActions = (): SensorActionsApi => {
 }
 
 const SensorActionsProvider = ({ sensor, children }: PropsWithChildren<{ sensor: Sensor }>) => {
+  const { t } = useTranslation(['sensor', 'enums', 'common'])
   const [assignMode, setAssignMode] = useState<AssignMode | null>(null)
   const [removeOpen, setRemoveOpen] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -54,7 +56,7 @@ const SensorActionsProvider = ({ sensor, children }: PropsWithChildren<{ sensor:
     if (assignMode === 'activate') {
       activate.mutate(treeId, {
         onSuccess: () => {
-          toast.success('Sensor aktiviert und Baum zugewiesen.')
+          toast.success(t('actions.activateSuccessToast'))
           closeAssign()
         },
         onError: (err) => setErrorMessage(mapActivateError(err)),
@@ -62,7 +64,7 @@ const SensorActionsProvider = ({ sensor, children }: PropsWithChildren<{ sensor:
     } else if (assignMode === 'reassign') {
       reassign.mutate(treeId, {
         onSuccess: () => {
-          toast.success('Baum gewechselt.')
+          toast.success(t('actions.reassignSuccessToast'))
           closeAssign()
         },
         onError: (err) => setErrorMessage(mapReassignError(err)),
@@ -108,29 +110,33 @@ const SensorActionsProvider = ({ sensor, children }: PropsWithChildren<{ sensor:
             <AlertDialogIcon variant="destructive">
               <Link2Off />
             </AlertDialogIcon>
-            <AlertDialogTitle>Baumverknüpfung aufheben und Sensor zurücksetzen?</AlertDialogTitle>
+            <AlertDialogTitle>{t('actions.removeConfirmTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Die Verknüpfung zum Baum wird aufgehoben und der Sensor auf den Zustand „Vorbereitet"
-              zurückgesetzt. Anschließend kann er wie ein neuer Sensor an einem anderen Baum
-              aktiviert werden.
+              {t('actions.removeConfirmDescription', {
+                status: t('enums:sensorStatus.prepared.label'),
+              })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deactivate.isPending}>Abbrechen</AlertDialogCancel>
+            <AlertDialogCancel disabled={deactivate.isPending}>
+              {t('common:actions.cancel')}
+            </AlertDialogCancel>
             <AlertDialogAction
               disabled={deactivate.isPending}
               onClick={(e) => {
                 e.preventDefault()
                 deactivate.mutate(undefined, {
                   onSuccess: () => {
-                    toast.success('Sensor wurde zurückgesetzt.')
+                    toast.success(t('actions.removeSuccessToast'))
                     setRemoveOpen(false)
                   },
                   onError: (err) => toast.error(mapDeactivateError(err)),
                 })
               }}
             >
-              {deactivate.isPending ? 'Wird aufgehoben …' : 'Verknüpfung aufheben'}
+              {deactivate.isPending
+                ? t('actions.removeConfirmSubmitPending')
+                : t('actions.removeConfirmSubmit')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -1,4 +1,5 @@
 import { Search } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Combobox, Input, Loading, SelectField, SimplePagination } from '@green-ecolution/ui'
 import type { OrganizationResponse, RoleResponse, UserResponse } from '@/api/backendApi'
 import MemberListItem from './MemberListItem'
@@ -44,6 +45,7 @@ const MemberList = ({
   onPageChange,
   onSelect,
 }: MemberListProps) => {
+  const { t } = useTranslation('settings')
   const filtered = isFiltered(search, organizationFilter, roleFilter)
 
   // With an organization picked, only its own roles can ever match: the backend
@@ -56,7 +58,7 @@ const MemberList = ({
 
   return (
     <div className="flex flex-col gap-4">
-      <h2 className="font-lato text-base font-semibold">Mitarbeitende</h2>
+      <h2 className="font-lato text-base font-semibold">{t('members.listTitle')}</h2>
 
       <div className="relative">
         <Search
@@ -67,47 +69,51 @@ const MemberList = ({
           type="search"
           value={search}
           onChange={(event) => onSearchChange(event.target.value)}
-          placeholder="Name, Username oder E-Mail"
-          aria-label="Mitarbeitende suchen"
+          placeholder={t('members.searchPlaceholder')}
+          aria-label={t('members.searchAriaLabel')}
           className="pl-9"
         />
       </div>
 
       <SelectField
-        label="Organisation"
+        label={t('members.organizationFilterLabel')}
         hideLabel
-        placeholder="Alle Organisationen"
+        placeholder={t('members.organizationFilterPlaceholder')}
         value={organizationFilter ?? ALL}
         onValueChange={(value) => onOrganizationFilterChange(value === ALL ? null : value)}
         options={[
-          { value: ALL, label: 'Alle Organisationen' },
+          { value: ALL, label: t('members.organizationFilterAllLabel') },
           ...organizations.map((org) => ({ value: org.id, label: org.name })),
         ]}
       />
 
       <Combobox
-        aria-label="Rolle"
-        placeholder="Alle Rollen"
-        searchPlaceholder="Rolle suchen"
-        emptyText="Keine passende Rolle"
+        aria-label={t('members.roleFilterAriaLabel')}
+        placeholder={t('members.roleFilterPlaceholder')}
+        searchPlaceholder={t('members.roleFilterSearchPlaceholder')}
+        emptyText={t('members.roleFilterEmptyText')}
         value={roleFilter ?? ALL}
         onChange={(value) => onRoleFilterChange(value === ALL ? null : value)}
         options={[
-          { value: ALL, label: 'Alle Rollen' },
-          ...roleFilterOptions(selectableRoles, organizations),
+          { value: ALL, label: t('members.roleFilterAllLabel') },
+          ...roleFilterOptions(selectableRoles, organizations, t),
         ]}
       />
 
       <p className="text-xs font-semibold uppercase tracking-wider text-dark-500">
-        {memberCountLabel(members.length, total, filtered)}
+        {memberCountLabel(members.length, total, filtered, t)}
       </p>
 
       {loading ? (
-        <Loading className="justify-center py-6" label="Mitarbeitende werden geladen" />
+        <Loading className="justify-center py-6" label={t('members.loading')} />
       ) : members.length === 0 ? (
-        <p className="text-sm text-dark-600">{emptyMessageOf(filtered)}</p>
+        <p className="text-sm text-dark-600">{emptyMessageOf(filtered, t)}</p>
       ) : (
-        <ul role="list" aria-label="Mitarbeitende" className="flex list-none flex-col gap-2">
+        <ul
+          role="list"
+          aria-label={t('members.listAriaLabel')}
+          className="flex list-none flex-col gap-2"
+        >
           {members.map((user) => (
             <li key={user.id}>
               <MemberListItem

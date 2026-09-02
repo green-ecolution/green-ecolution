@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { FormProvider, useWatch, type DefaultValues, type SubmitHandler } from 'react-hook-form'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import type { TreeResponse } from '@green-ecolution/backend-client'
 import { clusterQueries, organizationQueries } from '@/api/queries'
 import { TreeclusterForm } from '@/schema/treeclusterSchema'
@@ -26,14 +27,15 @@ export const Route = createFileRoute('/_protected/map/treecluster/edit/$treeclus
     queryClient.prefetchQuery(clusterQueries.detail(treeclusterId)),
   errorComponent: forbiddenErrorComponent(
     entityNotFound({
-      entityName: 'Bewässerungsgruppe',
+      entityName: { key: 'map:clusterForm.entityName' },
       backTo: '/treecluster',
-      backLabel: 'Zur Gruppenliste',
+      backLabel: { key: 'map:clusterForm.backToList' },
     }),
   ),
 })
 
 function EditClusterOnMap() {
+  const { t } = useTranslation('map')
   const { treeclusterId } = Route.useParams()
   const navigate = useNavigate({ from: Route.fullPath })
   const map = useMaplibreMap()
@@ -115,11 +117,8 @@ function EditClusterOnMap() {
 
   return (
     <>
-      <MapPanel title="Bewässerungsgruppe bearbeiten" onClose={handleCancel}>
-        <p className="mb-5 shrink-0 text-sm text-dark-600">
-          Klicke Bäume auf der Karte an, um sie der Gruppe hinzuzufügen oder zu entfernen. Blass
-          dargestellte Bäume gehören einer anderen Organisation.
-        </p>
+      <MapPanel title={t('clusterForm.editTitle')} onClose={handleCancel}>
+        <p className="mb-5 shrink-0 text-sm text-dark-600">{t('clusterForm.clickTreesHint')}</p>
         <FormProvider {...form}>
           <FormForTreecluster
             displayError={isError}
@@ -127,7 +126,7 @@ function EditClusterOnMap() {
             onSubmit={onSubmit}
             onBlur={saveDraft}
             fullWidth
-            emptyHint="Klicke einen Baum auf der Karte an, um ihn zur Liste hinzuzufügen."
+            emptyHint={t('clusterForm.emptyHint')}
           />
         </FormProvider>
       </MapPanel>
@@ -139,7 +138,7 @@ function EditClusterOnMap() {
           organizations?.find((org) => org.id === foreignTree?.organizationId)?.name
         }
         canSwitch={false}
-        blockedReason="Die Organisation einer bestehenden Gruppe lässt sich hier nicht wechseln."
+        blockedReason={t('clusterForm.blockedReasonEdit')}
         selectedTreeCount={treeIds.length}
         onConfirm={() => setForeignTree(null)}
       />

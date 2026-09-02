@@ -1,0 +1,92 @@
+{
+  "root": {
+    "loadingLabel": "Loading map..."
+  },
+  "toolbar": {
+    "searchPlaceholder": "Watering group…",
+    "filterAndActionsAriaLabel": "Filters and actions",
+    "filterDialogHeadline": "Filter watering groups",
+    "createGroup": "Add group",
+    "katasterSettingsAriaLabel": "Register settings",
+    "katasterSettingsTitle": "More register settings",
+    "katasterSettingsDescription": "This view offers further settings, for example adding trees to the register manually.",
+    "addTreeManually": "Add a new tree manually"
+  },
+  "statusLegend": {
+    "regionAriaLabel": "Watering status legend",
+    "heading": "Watering status",
+    "show": "Show legend",
+    "hide": "Hide legend"
+  },
+  "controls": {
+    "resetBearingAriaLabel": "Orient the map north",
+    "switchTo2dAriaLabel": "Switch to 2D view",
+    "switchTo3dAriaLabel": "Switch to 3D view",
+    "zoomInAriaLabel": "Zoom in",
+    "zoomOutAriaLabel": "Zoom out",
+    "gpsShowAriaLabel": "Show your location",
+    "gpsStopAriaLabel": "Stop showing location",
+    "gpsOutsideMapBounds": "Position outside the map area",
+    "gpsUnsupported": "This browser does not support locating your position"
+  },
+  "routePoints": {
+    "start": "Start point",
+    "refill": "Refill point"
+  },
+  "cluster": {
+    "editAriaLabel": "Edit group",
+    "fallbackTitle": "Watering group",
+    "closePanelAriaLabel": "Close side view",
+    "loadError": "The watering group could not be loaded.",
+    "loadingLabel": "Loading watering group...",
+    "openDashboard": "To the dashboard",
+    "wateringStatusLabel": "Watering status",
+    "soilTemperatureLabel": "Soil temperature",
+    "lastMeasurementLabel": "Last measurement",
+    "lastWateredLabel": "Last watered",
+    "noData": "No data",
+    "treeCount_one": "{count} tree",
+    "treeCount_other": "{count} trees",
+    "treesInGroupHeading": "Trees in this group · {count}",
+    "sensorTreeBadge": "Sensor tree",
+    "noSensor": "no sensor",
+    "treeIdLabel": "· ID {number}",
+    "remainingTrees_one": "+ {count} more tree · show all",
+    "remainingTrees_other": "+ {count} more trees · show all"
+  },
+  "tree": {
+    "newTitle": "Record a new tree",
+    "locationSelected": "Location selected",
+    "clickToSetLocationHint": "Click on the map to set the new tree's location. You can still move the marker afterwards.",
+    "editTitle": "Edit tree",
+    "dragMarkerHint": "Drag the marker on the map to adjust the tree's location.",
+    "deleteButton": "Delete tree",
+    "deleteConfirmTitle": "Delete tree?",
+    "deleteConfirmDescription": "Do you really want to delete this tree? This action cannot be undone.",
+    "deleteSuccess": "The tree was deleted.",
+    "deleteError": "The tree could not be deleted.",
+    "entityName": "Tree",
+    "backToList": "To the tree list"
+  },
+  "clusterForm": {
+    "newTitle": "New watering group",
+    "editTitle": "Edit watering group",
+    "clickTreesHint": "Click trees on the map to add or remove them from the group. Trees shown pale belong to another organization.",
+    "emptyHint": "Click a tree on the map to add it to the list.",
+    "blockedReasonCreate": "You may not create a group in this organization.",
+    "blockedReasonEdit": "An existing group's organization cannot be changed here.",
+    "entityName": "Watering group",
+    "backToList": "To the group list"
+  },
+  "selectCluster": {
+    "title": "Select watering groups",
+    "hint": "Click the groups on the map that should be included in this watering plan.",
+    "entitiesLabel": "Watering groups",
+    "emptyHint": "Click a group on the map to add it.",
+    "requiredError": "Please select at least one watering group.",
+    "applyButton": "Apply",
+    "leaveConfirmMessage": "Do you really want to leave this page? Your input will be lost if you leave now.",
+    "noVehicleWarning": "A vehicle must be selected to be able to generate a route.",
+    "insufficientCapacityWarning": "Greyed-out watering groups are excluded because the vehicle does not have enough water capacity."
+  }
+}

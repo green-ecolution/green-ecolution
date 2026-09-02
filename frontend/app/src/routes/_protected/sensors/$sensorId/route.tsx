@@ -7,7 +7,11 @@ export const Route = createFileRoute('/_protected/sensors/$sensorId')(
     key: 'sensor',
     query: sensorQueries.detail,
     idParam: 'sensorId',
-    title: (sensor) => `Sensor ID: ${sensor.id}`,
-    notFound: { entityName: 'Sensor', backTo: '/sensors', backLabel: 'Zur Sensorenliste' },
+    title: (sensor) => ({ titleKey: 'sensor:detail.title', params: { id: sensor.id } }),
+    notFound: {
+      entityName: { key: 'sensor:entity.name' },
+      backTo: '/sensors',
+      backLabel: { key: 'sensor:detail.notFoundBackLabel' },
+    },
   }),
 )

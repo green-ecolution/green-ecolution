@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Alert,
   AlertContent,
@@ -55,6 +56,7 @@ interface ConfigRowProps {
 }
 
 const ConfigRow = ({ configKey, value }: ConfigRowProps) => {
+  const { t } = useTranslation('sensor')
   const sensitive = isSensitiveConfigKey(configKey)
   const { revealed, toggle } = useSecretReveal(AUTO_HIDE_SECONDS)
 
@@ -67,7 +69,12 @@ const ConfigRow = ({ configKey, value }: ConfigRowProps) => {
       <TableCell className="font-mono text-xs font-semibold align-top">
         <span className="flex items-center gap-1.5">
           {configKey}
-          {sensitive && <ShieldAlert className="size-3 text-yellow" aria-label="Sensible Daten" />}
+          {sensitive && (
+            <ShieldAlert
+              className="size-3 text-yellow"
+              aria-label={t('secretReveal.sensitiveDataAriaLabel')}
+            />
+          )}
         </span>
       </TableCell>
       <TableCell className="font-mono text-xs break-all whitespace-pre-wrap text-foreground">
@@ -78,13 +85,21 @@ const ConfigRow = ({ configKey, value }: ConfigRowProps) => {
               sensitive && !revealed && 'tracking-[0.2em] text-dark-600 select-none',
             )}
           >
-            {isEmpty ? <span className="text-muted-foreground italic">leer</span> : displayed}
+            {isEmpty ? (
+              <span className="text-muted-foreground italic">{t('lorawanConfig.emptyValue')}</span>
+            ) : (
+              displayed
+            )}
           </span>
           {sensitive && !isEmpty && (
             <button
               type="button"
               onClick={toggle}
-              aria-label={revealed ? `${configKey} verbergen` : `${configKey} anzeigen`}
+              aria-label={
+                revealed
+                  ? t('secretReveal.hideAriaLabel', { label: configKey })
+                  : t('secretReveal.showAriaLabel', { label: configKey })
+              }
               aria-pressed={revealed}
               className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-dark-100 transition shrink-0 cursor-pointer"
             >
@@ -98,6 +113,7 @@ const ConfigRow = ({ configKey, value }: ConfigRowProps) => {
 }
 
 const SensorLorawanConfigSection = ({ sensor }: SensorLorawanConfigSectionProps) => {
+  const { t } = useTranslation('sensor')
   const config = sensor.lorawan?.config as Record<string, unknown> | undefined
   const [expanded, setExpanded] = useState(false)
   const [query, setQuery] = useState('')
@@ -127,11 +143,9 @@ const SensorLorawanConfigSection = ({ sensor }: SensorLorawanConfigSectionProps)
     navigator.clipboard.writeText(text).then(
       () =>
         toast.success(
-          hasSecrets
-            ? 'Konfiguration kopiert (Geheimnisse redacted).'
-            : 'Konfiguration in die Zwischenablage kopiert.',
+          hasSecrets ? t('lorawanConfig.copiedWithSecretsToast') : t('lorawanConfig.copiedToast'),
         ),
-      () => toast.error('Kopieren fehlgeschlagen.'),
+      () => toast.error(t('clipboard.copyFailed')),
     )
   }
 
@@ -149,10 +163,10 @@ const SensorLorawanConfigSection = ({ sensor }: SensorLorawanConfigSectionProps)
               <SlidersHorizontal className="size-5" />
             </div>
             <div className="flex flex-col">
-              <CardTitle>Erweiterte LoRaWAN-Konfiguration</CardTitle>
+              <CardTitle>{t('lorawanConfig.title')}</CardTitle>
               <span className="text-xs text-muted-foreground mt-1">
-                {entries.length} AT-Command-Schlüssel ·{' '}
-                {expanded ? 'Einklappen' : 'Ausklappen zum Anzeigen'}
+                {t('lorawanConfig.keyCountLabel', { count: entries.length })} ·{' '}
+                {expanded ? t('lorawanConfig.collapseLabel') : t('lorawanConfig.expandLabel')}
               </span>
             </div>
           </div>
@@ -170,11 +184,9 @@ const SensorLorawanConfigSection = ({ sensor }: SensorLorawanConfigSectionProps)
               <div className="flex gap-3">
                 <AlertIcon variant="warning" />
                 <AlertContent>
-                  <AlertTitle>Geheimnisse sind maskiert</AlertTitle>
+                  <AlertTitle>{t('lorawanConfig.secretsWarningTitle')}</AlertTitle>
                   <AlertDescription>
-                    LoRaWAN-Schlüssel (APPKEY, APPSKEY, NWKSKEY, PWORD) werden standardmäßig
-                    verborgen und können einzeln eingeblendet werden. Beim Kopieren werden sie
-                    automatisch redacted.
+                    {t('lorawanConfig.secretsWarningDescription')}
                   </AlertDescription>
                 </AlertContent>
               </div>
@@ -187,9 +199,9 @@ const SensorLorawanConfigSection = ({ sensor }: SensorLorawanConfigSectionProps)
               <Input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Schlüssel oder Wert suchen …"
+                placeholder={t('lorawanConfig.searchPlaceholder')}
                 className="pl-9"
-                aria-label="Konfiguration durchsuchen"
+                aria-label={t('lorawanConfig.searchAriaLabel')}
               />
             </div>
             <Button
@@ -199,7 +211,7 @@ const SensorLorawanConfigSection = ({ sensor }: SensorLorawanConfigSectionProps)
               className="gap-2 [&_svg]:size-4"
             >
               <Copy />
-              Alle kopieren
+              {t('lorawanConfig.copyAllButton')}
             </Button>
           </div>
 
@@ -208,9 +220,11 @@ const SensorLorawanConfigSection = ({ sensor }: SensorLorawanConfigSectionProps)
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-44 font-mono text-xs uppercase tracking-wider">
-                    Schlüssel
+                    {t('lorawanConfig.keyColumnHeader')}
                   </TableHead>
-                  <TableHead className="font-mono text-xs uppercase tracking-wider">Wert</TableHead>
+                  <TableHead className="font-mono text-xs uppercase tracking-wider">
+                    {t('lorawanConfig.valueColumnHeader')}
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -220,7 +234,7 @@ const SensorLorawanConfigSection = ({ sensor }: SensorLorawanConfigSectionProps)
                       colSpan={2}
                       className="text-center text-sm text-muted-foreground py-8"
                     >
-                      Keine Treffer für „{query}".
+                      {t('lorawanConfig.noResults', { query })}
                     </TableCell>
                   </TableRow>
                 ) : (

@@ -1,5 +1,6 @@
 import { useId, useState } from 'react'
 import { ChevronDown } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Badge, SegmentedControl } from '@green-ecolution/ui'
 import type { Permission, Permissions } from '@/lib/auth/permissions'
 import {
@@ -7,15 +8,11 @@ import {
   activeActionCount,
   isGrantable,
   levelOf,
-  LEVEL_LABELS,
+  levelLabels,
   type AccessLevel,
   type PermissionArea,
 } from '@/lib/auth/permissionAreas'
 import PermissionToggle from './PermissionToggle'
-
-const LEVEL_OPTIONS = ACCESS_LEVELS.map((level) => ({ value: level, label: LEVEL_LABELS[level] }))
-
-const NOT_GRANTABLE = 'Du kannst nur Rechte vergeben, die du selbst besitzt.'
 
 interface RoleAreaCardProps {
   area: PermissionArea
@@ -34,11 +31,17 @@ const RoleAreaCard = ({
   onLevelChange,
   onActionToggle,
 }: RoleAreaCardProps) => {
+  const { t } = useTranslation('settings')
   const [expanded, setExpanded] = useState(false)
   const panelId = useId()
 
   const level = levelOf(area.resource, permissions)
   const count = activeActionCount(area.resource, permissions)
+  const levelOptions = ACCESS_LEVELS.map((option) => ({
+    value: option,
+    label: levelLabels(t)[option],
+  }))
+  const notGrantable = t('roles.notGrantable')
 
   return (
     <div className="@container overflow-hidden rounded-xl border border-dark-50 bg-white shadow-cards">
@@ -48,11 +51,11 @@ const RoleAreaCard = ({
           <p className="mt-0.5 text-sm text-dark-600">{area.description}</p>
           <p className="mt-1 flex flex-wrap items-center gap-2 text-xs text-dark-500">
             <span className="whitespace-nowrap">
-              {count} von {area.actions.length} Aktionen aktiv
+              {t('roles.areaActiveCount', { count, total: area.actions.length })}
             </span>
             {level === 'custom' && (
               <Badge variant="muted" className="font-normal">
-                Individuell
+                {t('roles.customBadge')}
               </Badge>
             )}
           </p>
@@ -60,10 +63,10 @@ const RoleAreaCard = ({
 
         <div className="flex items-center justify-between gap-2 @min-[30rem]:justify-end">
           <SegmentedControl
-            options={LEVEL_OPTIONS}
+            options={levelOptions}
             value={level === 'custom' ? null : level}
             onChange={onLevelChange}
-            ariaLabel={`Zugriffsstufe für ${area.label}`}
+            ariaLabel={t('roles.accessLevelAriaLabel', { area: area.label })}
             disabled={readOnly}
           />
 
@@ -75,9 +78,9 @@ const RoleAreaCard = ({
             className="shrink-0 rounded-lg p-1.5 text-dark-500 transition-colors hover:bg-dark-50 hover:text-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <span className="sr-only">
-              {expanded
-                ? `Aktionen für ${area.label} verbergen`
-                : `Aktionen für ${area.label} anzeigen`}
+              {t(expanded ? 'roles.hideActionsAriaLabel' : 'roles.showActionsAriaLabel', {
+                area: area.label,
+              })}
             </span>
             <ChevronDown
               aria-hidden
@@ -103,7 +106,7 @@ const RoleAreaCard = ({
                     hint={action.hint}
                     checked={permissions.has(action.permission)}
                     disabled={readOnly || !grantableAction}
-                    disabledReason={grantableAction ? undefined : NOT_GRANTABLE}
+                    disabledReason={grantableAction ? undefined : notGrantable}
                     onCheckedChange={() => onActionToggle(action.permission)}
                   />
                 )

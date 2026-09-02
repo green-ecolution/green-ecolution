@@ -1,7 +1,8 @@
+import { useTranslation } from 'react-i18next'
 import { Avatar, AvatarFallback, AvatarImage, Badge } from '@green-ecolution/ui'
 import type { DrivingLicense, UserStatus } from '@green-ecolution/backend-client'
 import type { OrganizationResponse, RoleResponse, UserResponse } from '@/api/backendApi'
-import { getUserStatusDetails } from '@/hooks/details/useDetailsForUserStatus'
+import { useUserStatusDetails } from '@/hooks/details/useDetailsForUserStatus'
 import { initialsOf } from '@/lib/initials'
 import MemberActionButtons from './MemberActionButtons'
 import { fullNameOf, phoneNumberIssue, sinceLabel } from './memberList'
@@ -36,13 +37,6 @@ interface MemberDetailProps {
   renderActionBar: boolean
 }
 
-const SELF_ORGANIZATION_LOCKED =
-  'Die eigene Organisation kann hier nicht geändert werden. Das muss eine andere Person mit Verwaltungsrechten übernehmen.'
-const SELF_ROLES_LOCKED =
-  'Die eigenen Rollen können hier nicht geändert werden. Das muss eine andere Person mit Verwaltungsrechten übernehmen.'
-const NO_ORGANIZATION_ROLES_LOCKED =
-  'Ohne Organisation lassen sich keine Rollen zuweisen. Ordne die Person zuerst einer Organisation zu.'
-
 const MemberDetail = ({
   user,
   draft,
@@ -68,16 +62,18 @@ const MemberDetail = ({
   onCancel,
   renderActionBar,
 }: MemberDetailProps) => {
+  const { t } = useTranslation('settings')
+  const getUserStatusDetails = useUserStatusDetails()
   const status = getUserStatusDetails(user.status)
   const since = sinceLabel(user.createdAt)
   const organization = user.organization ?? undefined
 
   const phoneNumberInvalid = phoneNumberIssue(draft.phoneNumber) !== null
-  const organizationLockedReason = isSelf ? SELF_ORGANIZATION_LOCKED : null
+  const organizationLockedReason = isSelf ? t('members.selfOrganizationLocked') : null
   const rolesLockedReason = isSelf
-    ? SELF_ROLES_LOCKED
+    ? t('members.selfRolesLocked')
     : organization === undefined
-      ? NO_ORGANIZATION_ROLES_LOCKED
+      ? t('members.noOrganizationRolesLocked')
       : null
 
   return (
@@ -94,9 +90,11 @@ const MemberDetail = ({
           <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm text-dark-600">
             <span className="truncate">
               {user.username} · {user.email}
-              {since ? ` · seit ${since}` : ''}
+              {since ? ` · ${t('members.sinceLabel', { since })}` : ''}
             </span>
-            {!user.emailVerified && <Badge variant="outline-yellow">E-Mail nicht bestätigt</Badge>}
+            {!user.emailVerified && (
+              <Badge variant="outline-yellow">{t('members.emailNotVerified')}</Badge>
+            )}
           </p>
         </div>
         <Badge variant={status.color}>{status.label}</Badge>

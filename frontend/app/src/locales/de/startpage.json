@@ -1,0 +1,66 @@
+{
+  "hero": {
+    "titleLine1": "Willkommen beim smarten",
+    "titleLine2": "Grünflächen­management",
+    "intro": "Dieses Projekt befasst sich mit der smarten Bewässerung von Bäumen im urbanen Kontext. Mittels sensorgestützter Überwachung werden Daten über das LoRaWAN-Netz übermittelt und ausgewertet, sodass Handlungsempfehlungen für die Bewässerung abgegeben werden können. Anhand dieser Handlungsempfehlungen können Einsatzpläne für eine Bewässerungstour erstellt werden.",
+    "ctaDashboard": "Zum Dashboard",
+    "ctaLogin": "Anmelden",
+    "ctaContact": "Kontakt"
+  },
+  "keyFacts": {
+    "heading": "Wobei genau hilft dir Green Ecolution?",
+    "monitoring": "Monitoring des Bewässerungszustands",
+    "grouping": "Gruppierung von Bäumen anhand von Standortbedingungen",
+    "interpretation": "Interpretation der Messwerte der Sensordaten in ein Ampelsystem",
+    "planning": "Vereinfachte & digitalisierte Erstellung von Einsatzplänen",
+    "routing": "Dynamische Routenplanung von Bewässerungsfahrten",
+    "evaluation": "Langzeitauswertung von Daten"
+  },
+  "quickLinks": {
+    "heading": "Ansichten für eine effiziente Bewässerungskontrolle",
+    "intro": "Unser System bietet verschiedene Ansichten, um den Bewässerungszustand der Bäume zu überwachen. Du kannst alle Bäume auf einer Karte anzeigen, die verbauten Sensoren mit Akkustand und Messwerten einsehen und eine Übersicht der Einsatzpläne bisheriger und zukünftiger Bewässerungsfahrten abrufen.",
+    "map": {
+      "description": "Alle Bewässerungsgruppen & Bäume auf der Karte anzeigen lassen",
+      "headline": "Karte inkl. Verortung aller Bäume",
+      "linkLabel": "Zur Karte"
+    },
+    "sensors": {
+      "description": "Zeigt alle verbauten Sensoren inkl. Akkustand, Messwerte, …",
+      "headline": "Liste aller verbauten Sensoren",
+      "linkLabel": "Zu den Sensoren"
+    },
+    "wateringPlans": {
+      "description": "Listenansicht aller Einsatzpläne, die geplant, abgeschlossen, aktiv etc. sind.",
+      "headline": "Auflistung der Einsatzpläne & Routenplanung",
+      "linkLabel": "Zu den Einsatzplänen"
+    }
+  },
+  "introSlider": {
+    "heading": "Alle Funktionen auf einen Blick",
+    "ariaLabel": "Fakten zum Grünflächenmanagement",
+    "sensorSolution": {
+      "label": "Entwicklung einer Sensorlösung",
+      "description": "Daten zur Bodenfeuchte werden mithilfe von in unterschiedlicher Tiefe platzierten Sensoren geliefert."
+    },
+    "dataEvaluation": {
+      "label": "Auswertung der Messdaten",
+      "description": "Auswertung der durch Sensoren übermittelten Daten für eine bedarfsgerechte Bewässerung von Bäumen."
+    },
+    "youngTrees": {
+      "label": "Augenmerk auf Jungbäume",
+      "description": "Jungbäume sind besonders hitzeanfällig und daher äußerst schutzbedürftig. Aus diesem Grund werden Bäume in deren ersten drei Standjahren überwacht."
+    },
+    "multiSite": {
+      "label": "Monitoring mehrerer Standorte",
+      "description": "Unter Verwendung des LoRaWAN-Netzes können verschiedene Standorte überwacht und weitere einfach eingebunden werden."
+    },
+    "planning": {
+      "label": "Vereinfachte Erstellung von Einsatzplänen",
+      "description": "Bewässerungsfahrten können digital und schnell geplant werden. Dabei können Informationen wie die Mitarbeitenden sowie genutzte Fahrzeuge und deren Wasserkapazität hinterlegt werden."
+    },
+    "routing": {
+      "label": "Dynamische Routenplanung",
+      "description": "Dynamische Berechnung von Bewässerungsrouten mithilfe von Open-Source Software (Valhalla & Vroom)."
+    }
+  }
+}

@@ -1,3 +1,4 @@
+import type { TFunction } from 'i18next'
 import {
   ACTIONS,
   RESOURCES,
@@ -11,16 +12,9 @@ import {
 export const ACCESS_LEVELS = ['none', 'view', 'edit', 'manage'] as const
 export type AccessLevel = (typeof ACCESS_LEVELS)[number]
 
-export const LEVEL_LABELS: Record<AccessLevel, string> = {
-  none: 'Kein',
-  view: 'Ansehen',
-  edit: 'Bearbeiten',
-  manage: 'Verwalten',
-}
-
 /**
  * Presets only. The stored truth is always the individual action set, so a role
- * whose actions match no preset stays valid and reads as "Individuell".
+ * whose actions match no preset stays valid and reads as "custom".
  */
 const LEVEL_ACTIONS: Record<AccessLevel, readonly Action[]> = {
   none: [],
@@ -30,12 +24,6 @@ const LEVEL_ACTIONS: Record<AccessLevel, readonly Action[]> = {
 }
 
 export type AreaGroup = 'greenspaces' | 'operations' | 'administration'
-
-export const AREA_GROUP_LABELS: Record<AreaGroup, string> = {
-  greenspaces: 'Grünflächen',
-  operations: 'Einsatzplanung',
-  administration: 'Verwaltung',
-}
 
 export const AREA_GROUP_ORDER: readonly AreaGroup[] = [
   'greenspaces',
@@ -58,141 +46,94 @@ export interface PermissionArea {
   actions: AreaAction[]
 }
 
-type ActionCopy = Record<Action, readonly [label: string, hint: string]>
-
 interface AreaDefinition {
   resource: Resource
   group: AreaGroup
-  label: string
-  description: string
-  copy: ActionCopy
 }
 
 const AREA_DEFINITIONS: readonly AreaDefinition[] = [
-  {
-    resource: 'tree',
-    group: 'greenspaces',
-    label: 'Bäume',
-    description: 'Bäume & Standorte',
-    copy: {
-      read: ['Bäume ansehen', 'Baumliste und Details einsehen'],
-      create: ['Baum anlegen', 'Neue Bäume erfassen'],
-      update: ['Baum bearbeiten', 'Stammdaten und Standort ändern'],
-      delete: ['Baum löschen', 'Bäume dauerhaft entfernen'],
-    },
-  },
-  {
-    resource: 'tree_cluster',
-    group: 'greenspaces',
-    label: 'Bewässerungsgruppen',
-    description: 'Gruppen & Schwellen',
-    copy: {
-      read: ['Gruppen ansehen', 'Gruppen und Bewässerungsstatus einsehen'],
-      create: ['Gruppe anlegen', 'Neue Bewässerungsgruppen anlegen'],
-      update: ['Gruppe bearbeiten', 'Zuordnung, Name und Schwellen ändern'],
-      delete: ['Gruppe löschen', 'Gruppen auflösen'],
-    },
-  },
-  {
-    resource: 'sensor',
-    group: 'greenspaces',
-    label: 'Sensoren',
-    description: 'Geräte & Netz',
-    copy: {
-      read: ['Sensoren ansehen', 'Geräte und Messwerte einsehen'],
-      create: ['Sensor anlegen', 'Neues Gerät in Betrieb nehmen'],
-      update: ['Sensor bearbeiten', 'Zuordnung und Stammdaten ändern'],
-      delete: ['Sensor löschen', 'Gerät dauerhaft entfernen'],
-    },
-  },
-  {
-    resource: 'region',
-    group: 'greenspaces',
-    label: 'Gebiete',
-    description: 'Stadtgebiete & Zuordnung',
-    copy: {
-      read: ['Gebiete ansehen', 'Stadtgebiete einsehen'],
-      create: ['Gebiet anlegen', 'Neues Gebiet anlegen'],
-      update: ['Gebiet bearbeiten', 'Gebiet umbenennen oder anpassen'],
-      delete: ['Gebiet löschen', 'Gebiet entfernen'],
-    },
-  },
-  {
-    resource: 'watering_plan',
-    group: 'operations',
-    label: 'Einsätze',
-    description: 'Planung & Touren',
-    copy: {
-      read: ['Einsätze ansehen', 'Geplante und abgeschlossene Einsätze einsehen'],
-      create: ['Einsatz planen', 'Neuen Bewässerungseinsatz anlegen'],
-      update: ['Einsatz bearbeiten', 'Route, Zeit, Umfang und Status ändern'],
-      delete: ['Einsatz löschen', 'Einsatz dauerhaft entfernen'],
-    },
-  },
-  {
-    resource: 'vehicle',
-    group: 'operations',
-    label: 'Fahrzeuge',
-    description: 'Transporter & Anhänger',
-    copy: {
-      read: ['Fahrzeuge ansehen', 'Fahrzeuge und Verfügbarkeit einsehen'],
-      create: ['Fahrzeug anlegen', 'Neues Fahrzeug aufnehmen'],
-      update: ['Fahrzeug bearbeiten', 'Stammdaten und Verfügbarkeit ändern'],
-      delete: ['Fahrzeug löschen', 'Fahrzeug archivieren oder entfernen'],
-    },
-  },
-  {
-    resource: 'user',
-    group: 'administration',
-    label: 'Mitarbeitende',
-    description: 'Konten & Zuordnung',
-    copy: {
-      read: ['Mitarbeitende ansehen', 'Mitarbeitende und ihre Rollen einsehen'],
-      create: ['Mitarbeitende einladen', 'Neue Mitarbeitende einladen'],
-      update: ['Mitarbeitende bearbeiten', 'Stammdaten und Rollenzuordnung ändern'],
-      delete: ['Mitarbeitende entfernen', 'Zugang entziehen'],
-    },
-  },
-  {
-    resource: 'organization',
-    group: 'administration',
-    label: 'Organisation',
-    description: 'Struktur & Einheiten',
-    copy: {
-      read: ['Organisation ansehen', 'Organisationsstruktur einsehen'],
-      create: ['Organisation anlegen', 'Neue Organisation anlegen'],
-      update: ['Organisation bearbeiten', 'Organisation umbenennen'],
-      delete: ['Organisation löschen', 'Organisation löschen'],
-    },
-  },
-  {
-    resource: 'role',
-    group: 'administration',
-    label: 'Rollen & Rechte',
-    description: 'Berechtigungen',
-    copy: {
-      read: ['Rollen ansehen', 'Rollen und ihre Rechte einsehen'],
-      create: ['Rolle anlegen', 'Neue Rolle anlegen oder kopieren'],
-      update: ['Rolle bearbeiten', 'Rechte einer Rolle ändern'],
-      delete: ['Rolle löschen', 'Rolle löschen'],
-    },
-  },
+  { resource: 'tree', group: 'greenspaces' },
+  { resource: 'tree_cluster', group: 'greenspaces' },
+  { resource: 'sensor', group: 'greenspaces' },
+  { resource: 'region', group: 'greenspaces' },
+  { resource: 'watering_plan', group: 'operations' },
+  { resource: 'vehicle', group: 'operations' },
+  { resource: 'user', group: 'administration' },
+  { resource: 'organization', group: 'administration' },
+  { resource: 'role', group: 'administration' },
 ]
 
 const permissionFor = (resource: Resource, action: Action): Permission => `${resource}:${action}`
 
-export const PERMISSION_AREAS: PermissionArea[] = AREA_DEFINITIONS.map((definition) => ({
-  resource: definition.resource,
-  group: definition.group,
-  label: definition.label,
-  description: definition.description,
-  actions: ACTIONS.map((action) => ({
-    action,
-    permission: permissionFor(definition.resource, action),
-    label: definition.copy[action][0],
-    hint: definition.copy[action][1],
-  })),
-}))
+/**
+ * Composing "{resource} {verb}" from the four generic action verbs is lossless
+ * for 34 of the 36 cells, but two lose a real distinction the generic verb
+ * can't carry: inviting a person is not creating one, and removing their
+ * access is not deleting them. These two literal overrides take priority
+ * over the composed form; everything else still composes — including
+ * watering_plan:create, where the composed "Einsatzplan anlegen" already says
+ * everything "planen" would have: the specificity in the old "Einsatz planen"
+ * lived in the noun ("Einsatz" denoted the activity itself), and once the
+ * entity is correctly named "Einsatzplan" the extra verb adds nothing.
+ */
+const actionLabelOverride = (
+  resource: Resource,
+  action: Action,
+  t: TFunction<'settings'>,
+): string | null => {
+  if (resource === 'user' && action === 'create') {
+    return t('permission.resource.user.actionOverrides.create')
+  }
+  if (resource === 'user' && action === 'delete') {
+    return t('permission.resource.user.actionOverrides.delete')
+  }
+  return null
+}
+
+export const levelLabels = (t: TFunction<'settings'>): Record<AccessLevel, string> => ({
+  none: t('permission.level.none'),
+  view: t('permission.level.view'),
+  edit: t('permission.level.edit'),
+  manage: t('permission.level.manage'),
+})
+
+export const areaGroupLabels = (t: TFunction<'settings'>): Record<AreaGroup, string> => ({
+  greenspaces: t('permission.group.greenspaces'),
+  operations: t('permission.group.operations'),
+  administration: t('permission.group.administration'),
+})
+
+/**
+ * Composes the nine areas and their 36 actions from settings:permission.resource.*
+ * (label, singular noun, description, and the per-action hint, which genuinely
+ * differs per permission) and settings:permission.action.* (the four verb
+ * templates, "read" filled with the plural label, the rest with the singular
+ * noun) — with two explicit label overrides (see actionLabelOverride) for
+ * the cells the generic verbs flatten. Not a component: the caller passes its
+ * own scoped `t`, mirroring clusterStatusReason.ts.
+ */
+export const permissionAreasFor = (t: TFunction<'settings'>): PermissionArea[] =>
+  AREA_DEFINITIONS.map((definition) => {
+    const resourceKey = `permission.resource.${definition.resource}` as const
+    const singular = t(`${resourceKey}.singular`)
+    const pluralNoun = t(`${resourceKey}.pluralNoun`)
+    return {
+      resource: definition.resource,
+      group: definition.group,
+      label: t(`${resourceKey}.label`),
+      description: t(`${resourceKey}.description`),
+      actions: ACTIONS.map((action) => ({
+        action,
+        permission: permissionFor(definition.resource, action),
+        label:
+          actionLabelOverride(definition.resource, action, t) ??
+          t(`permission.action.${action}`, {
+            resource: action === 'read' ? pluralNoun : singular,
+          }),
+        hint: t(`${resourceKey}.hint.${action}`),
+      })),
+    }
+  })
 
 export const activeActionsOf = (resource: Resource, perms: ReadonlySet<string>): Action[] =>
   ACTIONS.filter((action) => perms.has(permissionFor(resource, action)))

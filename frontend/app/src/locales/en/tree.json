@@ -1,0 +1,108 @@
+{
+  "entity": {
+    "name": "Tree"
+  },
+  "kpi": {
+    "wateringStatusLabel": "Watering status",
+    "lastWateredLabel": "Last watered",
+    "lastWateredInfo": "Updates once a watering plan involving this tree is marked »Finished«."
+  },
+  "sensorCard": {
+    "title": "Sensor",
+    "noSensor": "This tree has no sensor attached. Its watering status therefore remains unknown.",
+    "signalLabel": "Signal",
+    "noSignalData": "No data",
+    "batteryLabel": "Battery",
+    "lastTransmissionLabel": "Last transmission"
+  },
+  "locationCard": {
+    "title": "Location",
+    "mapAriaLabel": "Map showing the tree's position",
+    "viewOnMapLabel": "Show on map"
+  },
+  "clusterCard": {
+    "title": "Watering group",
+    "treeCount_one": "{count} tree",
+    "treeCount_other": "{count} trees",
+    "noRegion": "No region",
+    "deviatesNote": "The group status is a majority value. This tree is rated as »{status}«.",
+    "noClusterNote": "This tree is not assigned to a watering group. Without a group, the soil type is missing, so the watering status cannot be calculated from moisture readings."
+  },
+  "masterData": {
+    "title": "Master data",
+    "speciesLabel": "Species",
+    "numberLabel": "Tree number",
+    "plantingYearLabel": "Planting year",
+    "dataSourceLabel": "Data source",
+    "manuallyCreated": "Manually created",
+    "coordinatesLabel": "Coordinates",
+    "lastUpdateLabel": "Last update"
+  },
+  "detail": {
+    "title": "Tree: {number}",
+    "backToList": "Back to all trees",
+    "editLink": "Edit tree",
+    "noClusterAssigned": "Not assigned to a watering group",
+    "loadingLabel": "Loading tree data …",
+    "notFoundBackLabel": "To the tree list"
+  },
+  "list": {
+    "title": "List of all trees",
+    "descriptionIntro": "Here you'll find an overview of all trees in a list view. The trees can also be displayed on a",
+    "mapLinkLabel": "map",
+    "descriptionOutro": ".",
+    "createButton": "Create new tree",
+    "filterHeadline": "Filter trees",
+    "columnStatus": "Status",
+    "columnSpecies": "Species",
+    "columnNumber": "Tree number",
+    "columnCluster": "Watering group",
+    "loadingLabel": "Loading data",
+    "emptyMessage": "Unfortunately, no trees were found."
+  },
+  "card": {
+    "numberSrLabel": "Tree number: ",
+    "numberUnknown": "Unknown",
+    "clusterSrLabel": "Watering group: ",
+    "clusterUnassigned": "Not assigned"
+  },
+  "selectedCard": {
+    "label": "Tree:",
+    "removeAriaLabel": "Remove tree from selection"
+  },
+  "filter": {
+    "plantingYearLegend": "Planting year:",
+    "plantingYearRange": "Planting year: {min} - {max}"
+  },
+  "foreignDialog": {
+    "titleSwitch": "Switch organization?",
+    "titleBlocked": "Tree cannot be selected",
+    "ownedBy": "This tree belongs to the organization {organization}.",
+    "ownedByOther": "This tree belongs to a different organization.",
+    "blockedExplanation": "A watering group may only contain trees from its own organization.",
+    "confirmQuestion": "Should the group be created for this organization?",
+    "consequence": "The trees selected so far ({count}) will be discarded, because a group may only contain trees from one organization.",
+    "understood": "Understood",
+    "switchAction": "Switch"
+  },
+  "form": {
+    "numberLabel": "Tree number",
+    "speciesLabel": "Species",
+    "plantingYearLabel": "Planting year",
+    "clusterLabel": "Watering group",
+    "clusterPlaceholder": "Choose a watering group",
+    "clusterNoneOption": "No watering group",
+    "sensorLabel": "Linked sensor",
+    "sensorPlaceholder": "Choose a sensor, if any",
+    "sensorNoneOption": "No sensor",
+    "sensorOptionLabel": "Sensor {id}",
+    "locationHeading": "Tree location",
+    "latitudeLabel": "Latitude:",
+    "longitudeLabel": "Longitude:",
+    "adjustLocationButton": "Adjust the tree's location",
+    "createLeaveMessage": "Do you really want to leave this page? Your entries for creating the tree will be lost if you leave now.",
+    "updateLeaveMessage": "Do you really want to leave this page? Your changes to the tree will be lost if you leave now.",
+    "createSuccessMessage": "The tree was created successfully.",
+    "updateSuccessMessage": "The tree was updated successfully."
+  }
+}

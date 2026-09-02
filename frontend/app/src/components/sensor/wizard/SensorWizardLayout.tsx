@@ -1,13 +1,8 @@
+import { useTranslation } from 'react-i18next'
 import BackLink from '@/components/general/links/BackLink'
 import type { WizardStep } from './state'
 import { Button, Stepper, type StepDefinition } from '@green-ecolution/ui'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-
-const STEPS: StepDefinition[] = [
-  { id: 'scan', label: 'QR-Scan' },
-  { id: 'tree', label: 'Baum' },
-  { id: 'confirm', label: 'Bestätigen' },
-]
 
 interface SensorWizardLayoutProps {
   step: WizardStep
@@ -28,16 +23,23 @@ const SensorWizardLayout = ({
   onBack,
   onNext,
   canGoNext,
-  nextLabel = 'Weiter',
+  nextLabel,
   hideFooter = false,
   children,
 }: SensorWizardLayoutProps) => {
+  const { t } = useTranslation(['sensor', 'common'])
+  const steps: StepDefinition[] = [
+    { id: 'scan', label: t('wizard.layout.steps.scan') },
+    { id: 'tree', label: t('wizard.layout.steps.tree') },
+    { id: 'confirm', label: t('common:actions.confirm') },
+  ]
+
   return (
     <div className="container mt-6 pb-[env(safe-area-inset-bottom)]">
-      <BackLink label="Zurück zur Sensorübersicht" link={{ to: '/sensors' }} />
+      <BackLink label={t('wizard.layout.backToList')} link={{ to: '/sensors' }} />
 
       <Stepper
-        steps={STEPS}
+        steps={steps}
         currentStep={step}
         completedSteps={completedSteps}
         onStepClick={(target) => onStepClick(target as WizardStep)}
@@ -51,14 +53,14 @@ const SensorWizardLayout = ({
           {onBack ? (
             <Button variant="outline" onClick={onBack} className="sm:w-auto">
               <ChevronLeft className="size-4" />
-              Zurück
+              {t('common:actions.back')}
             </Button>
           ) : (
             <span />
           )}
           {onNext && (
             <Button onClick={onNext} disabled={!canGoNext} className="sm:w-auto">
-              {nextLabel}
+              {nextLabel ?? t('common:actions.next')}
               <ChevronRight className="size-4" />
             </Button>
           )}

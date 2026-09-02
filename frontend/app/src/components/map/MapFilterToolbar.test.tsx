@@ -22,7 +22,7 @@ describe('MapFilterToolbar', () => {
   it('reports search input changes', async () => {
     const onSearchTermChange = vi.fn()
     renderToolbar({ onSearchTermChange })
-    await userEvent.type(screen.getByPlaceholderText(/Baumgruppe/), 'Haf')
+    await userEvent.type(screen.getByPlaceholderText(/Bewässerungsgruppe/), 'Haf')
     expect(onSearchTermChange).toHaveBeenCalled()
   })
 

@@ -38,7 +38,7 @@ function TestWrapper({
 
   const methods = useForm<WateringPlanForm>({
     defaultValues,
-    resolver: wateringPlanDraftResolver<WateringPlanForm>(),
+    resolver: wateringPlanDraftResolver<WateringPlanForm>((key) => key),
     mode: 'onChange',
   })
 
@@ -141,7 +141,7 @@ describe('FormForWateringPlan', () => {
       </TestWrapper>,
     )
 
-    expect(screen.getByText(/datum des einsatzes/i)).toBeInTheDocument()
+    expect(screen.getByText(/datum des einsatzplans/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/verknüpftes fahrzeug/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/verknüpfter anhänger/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/verknüpfte mitarbeitende/i)).toBeInTheDocument()

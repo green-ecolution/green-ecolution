@@ -61,9 +61,9 @@ describe('CancelPlanDialog', () => {
     const onClose = vi.fn()
     render(<CancelPlanDialog plan={plan} onClose={onClose} />, { wrapper: createWrapper() })
 
-    expect(screen.getByRole('button', { name: /einsatz abbrechen/i })).toBeDisabled()
+    expect(screen.getByRole('button', { name: /einsatzplan abbrechen/i })).toBeDisabled()
     await user.type(screen.getByLabelText(/grund des abbruchs/i), 'Regen vorhergesagt')
-    await user.click(screen.getByRole('button', { name: /einsatz abbrechen/i }))
+    await user.click(screen.getByRole('button', { name: /einsatzplan abbrechen/i }))
 
     await waitFor(() => expect(updateWateringPlan).toHaveBeenCalledTimes(1))
     const request = updateWateringPlan.mock.calls[0][0] as {
@@ -76,7 +76,7 @@ describe('CancelPlanDialog', () => {
 
   it('renders nothing while closed', () => {
     render(<CancelPlanDialog plan={null} onClose={vi.fn()} />, { wrapper: createWrapper() })
-    expect(screen.queryByText(/einsatz abbrechen/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/einsatzplan abbrechen/i)).not.toBeInTheDocument()
     expect(screen.queryByLabelText(/grund des abbruchs/i)).not.toBeInTheDocument()
   })
 })

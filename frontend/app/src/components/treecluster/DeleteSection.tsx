@@ -16,10 +16,13 @@ import createToast from '@/hooks/createToast'
 import { LinkProps, useNavigate } from '@tanstack/react-router'
 import type { Aggregate } from '@/api/queries'
 import { useInvalidateAggregates } from '@/lib/queryInvalidation'
+import { useTranslation } from 'react-i18next'
+import { resolveApiError } from '@/lib/apiError'
+import { useLocalizedText, type LocalizedText } from '@/lib/i18n/localizedText'
 
 interface DeleteSectionProps {
   mutationFn: () => Promise<unknown>
-  entityName: string
+  entityName: LocalizedText
   type?: 'archive' | 'delete'
   redirectUrl: LinkProps
   /** Aggregates whose lists and details still contain the removed entity. */
@@ -37,8 +40,27 @@ const DeleteSection: React.FC<DeleteSectionProps> = ({
   const navigate = useNavigate()
   const invalidate = useInvalidateAggregates()
   const showToast = createToast()
+  const { t } = useTranslation(['errors', 'common'])
+  const resolve = useLocalizedText()
 
-  const actionText = type === 'archive' ? 'archiviert' : 'gelöscht'
+  const entity = resolve(entityName)
+  // Sentence-initial usage (toasts, failure messages) needs the noun capitalized;
+  // word order and case differ per language, so each sentence is its own catalog
+  // entry per type rather than being spliced together from an entity + action pair.
+  const capitalizedEntity = `${entity.charAt(0).toUpperCase()}${entity.slice(1)}`
+  const failureKey = type === 'archive' ? 'frame.archiveFailed' : 'frame.deleteFailed'
+  const confirmTitleKey =
+    type === 'archive'
+      ? 'common:deleteSection.confirmTitle.archive'
+      : 'common:deleteSection.confirmTitle.delete'
+  const confirmDescriptionKey =
+    type === 'archive'
+      ? 'common:deleteSection.confirmDescription.archive'
+      : 'common:deleteSection.confirmDescription.delete'
+  const successToastKey =
+    type === 'archive'
+      ? 'common:deleteSection.successToast.archive'
+      : 'common:deleteSection.successToast.delete'
 
   const { mutate } = useMutation({
     mutationFn,
@@ -48,23 +70,13 @@ const DeleteSection: React.FC<DeleteSectionProps> = ({
         // After leaving: a page still showing the removed entity would refetch
         // it into a 404.
         .then(() => invalidate(invalidates))
-        .then(() =>
-          showToast(
-            `${entityName.charAt(0).toUpperCase()}${entityName.slice(1)} wurde erfolgreich ${actionText}.`,
-            'success',
-          ),
-        )
-        .catch(() => showToast('Ein fehler is aufgetreten', 'error'))
+        .then(() => showToast(t(successToastKey, { entity: capitalizedEntity }), 'success'))
+        .catch(() => showToast(t('common:deleteSection.unexpectedError'), 'error'))
     },
     onError: (error: unknown) => {
-      if (error instanceof Error) {
-        showToast(error.message, 'error')
-      } else {
-        showToast(
-          'Leider ist ein Fehler eim löschen des Baumes aufgetreten. Versuche es später erneut.',
-          'error',
-        )
-      }
+      void resolveApiError(error).then((info) =>
+        showToast(t(failureKey, { entity: capitalizedEntity, reason: info.message }), 'error'),
+      )
 
       console.error(error)
       setIsModalOpen(false)
@@ -78,28 +90,23 @@ const DeleteSection: React.FC<DeleteSectionProps> = ({
         onClick={() => setIsModalOpen(true)}
         className="mt-10 mb-4 px-0 group"
       >
-        {type === 'archive' ? 'Archivieren' : 'Löschen'}
+        {type === 'archive' ? t('common:actions.archive') : t('common:actions.delete')}
         <MoveRight className="transition-transform duration-base ease-emphasized group-hover:translate-x-1 motion-reduce:transition-none" />
       </Button>
 
       <AlertDialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              Soll {entityName} wirklich {actionText} werden?
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              Sobald {entityName} {actionText} wurde, können die Daten nicht wieder hergestellt
-              werden.
-            </AlertDialogDescription>
+            <AlertDialogTitle>{t(confirmTitleKey, { entity })}</AlertDialogTitle>
+            <AlertDialogDescription>{t(confirmDescriptionKey, { entity })}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>
-              Abbrechen
+              {t('common:actions.cancel')}
               <X />
             </AlertDialogCancel>
             <AlertDialogAction onClick={() => mutate()}>
-              Bestätigen
+              {t('common:actions.confirm')}
               <MoveRight className="icon-arrow-animate" />
             </AlertDialogAction>
           </AlertDialogFooter>

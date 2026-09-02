@@ -1,0 +1,165 @@
+{
+  "actions": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "archive": "Archive",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "retry": "Try again"
+  },
+  "state": {
+    "loading": "Loading …",
+    "loadingInline": "Loading…",
+    "noData": "Not available"
+  },
+  "pagination": {
+    "pageOf": "Page {page} of {total}"
+  },
+  "dateTime": {
+    "at": "{date} at {time}"
+  },
+  "language": {
+    "label": "Language",
+    "description": "The choice applies to this browser and takes effect immediately.",
+    "de": "German",
+    "en": "English",
+    "switchFailed": "The language could not be changed. Please try again."
+  },
+  "chart": {
+    "timeWindow": {
+      "24h": "24 h",
+      "7d": "7 days",
+      "30d": "30 days",
+      "all": "All"
+    }
+  },
+  "dialog": {
+    "unsavedChanges": {
+      "title": "Leave page?",
+      "confirm": "Leave"
+    }
+  },
+  "filter": {
+    "button": {
+      "label": "Filter"
+    },
+    "dialog": {
+      "loading": "Loading filters",
+      "apply": "Apply",
+      "reset": "Reset"
+    },
+    "status": {
+      "legend": "Watering status:",
+      "placeholder": "All statuses"
+    },
+    "tag": {
+      "removeAriaLabel": "Remove {label}"
+    }
+  },
+  "form": {
+    "error": {
+      "fallback": "Unfortunately a problem occurred. Please try again or contact a system administrator."
+    },
+    "notesPlaceholder": "Space for notes here",
+    "shortDescriptionLabel": "Short description",
+    "selectEntities": {
+      "selectedLabel": "Associated {label}",
+      "requiredHint": "At least one selection must be made.",
+      "emptyLabel": "No {label} selected yet.",
+      "addLabel": "Add {label}"
+    }
+  },
+  "deleteSection": {
+    "confirmTitle": {
+      "delete": "Do you really want to delete {entity}?",
+      "archive": "Do you really want to archive {entity}?"
+    },
+    "confirmDescription": {
+      "delete": "Once {entity} has been deleted, the data cannot be recovered.",
+      "archive": "Once {entity} has been archived, the data cannot be recovered."
+    },
+    "successToast": {
+      "delete": "{entity} was successfully deleted.",
+      "archive": "{entity} was successfully archived."
+    },
+    "unexpectedError": "An error occurred"
+  },
+  "geo": {
+    "permission": {
+      "denied": {
+        "title": "Location access denied",
+        "description": "To capture the sensor location automatically, the app needs access to your GPS location. Allow access in your browser settings and try again."
+      },
+      "unsupported": {
+        "title": "Location not available",
+        "description": "Your browser or device does not support the Geolocation API in this context. Make sure you are using the app over HTTPS."
+      },
+      "error": {
+        "title": "Location could not be determined",
+        "description": "An error occurred while accessing your position. Check that GPS is enabled and that you are outdoors."
+      }
+    },
+    "status": {
+      "currentPosition": "Current position",
+      "latitude": "Latitude",
+      "longitude": "Longitude",
+      "accuracy": "Accuracy",
+      "altitude": "Altitude",
+      "capturedAt": "Captured at"
+    },
+    "map": {
+      "currentPositionAriaLabel": "Map with current GPS position",
+      "nearestTreeAriaLabel": "Map with sensor position and nearby trees"
+    }
+  },
+  "scanner": {
+    "permission": {
+      "denied": {
+        "title": "Camera access denied",
+        "description": "To scan QR codes, the app needs access to your camera. Allow access in your browser settings and try again."
+      },
+      "unsupported": {
+        "title": "Camera not available",
+        "description": "Your browser or device does not support camera access in this context. Make sure you are using the app over HTTPS."
+      },
+      "error": {
+        "title": "Camera could not be started",
+        "description": "An error occurred while accessing the camera. Check whether another application is already using the camera."
+      }
+    },
+    "install": {
+      "title": "Install the app for the best scanning experience",
+      "descriptionIos": "Tap the share icon in Safari and choose \"Add to Home Screen\". This starts the scanner directly in full screen without the address bar.",
+      "descriptionAndroid": "Install the app on your device. The scanner starts faster and runs full screen without the browser bar.",
+      "iosHint": "Share → Add to Home Screen",
+      "installButton": "Install",
+      "dismissAriaLabel": "Dismiss notice"
+    },
+    "status": {
+      "requesting": "Starting camera",
+      "scanning": "Looking for a QR code",
+      "scanned": "Successfully recognized",
+      "denied": "Access denied",
+      "unsupported": "Not available",
+      "error": "Error"
+    },
+    "view": {
+      "startingHint": "Starting camera …",
+      "cameraAriaLabel": "Camera preview for the QR code scanner",
+      "scanningHint": "Make sure there is enough light and hold the code steady in front of the camera."
+    },
+    "toast": {
+      "scanSuccess": "QR code scanned successfully"
+    },
+    "result": {
+      "title": "QR code recognized",
+      "scanAgain": "Scan again",
+      "toastNotImplemented": "The next step is not yet implemented",
+      "idLabel": "Sensor ID",
+      "idCopied": "Sensor ID copied",
+      "idCopyFailed": "Sensor ID could not be copied"
+    }
+  }
+}

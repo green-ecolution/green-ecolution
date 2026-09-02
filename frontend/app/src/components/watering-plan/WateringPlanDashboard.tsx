@@ -13,16 +13,18 @@ import {
   AlertDescription,
 } from '@green-ecolution/ui'
 import {
-  getWateringPlanStatusDetails,
+  useWateringPlanStatusDetails,
   showWateringPlanStatusButton,
 } from '@/hooks/details/useDetailsForWateringPlanStatus'
 import { format } from 'date-fns'
 import { File, FolderClosed, MoveRight, Route } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import TabGeneralData from './TabGeneralData'
 import TreeclusterCard from '../general/cards/TreeclusterCard'
 import ButtonLink from '../general/links/ButtonLink'
 import { WateringPlan } from '@/api/backendApi'
 import { useDownloadGpx } from '@/hooks/useDownloadGpx'
+import { useDateLocale } from '@/lib/i18n/useFormatters'
 import WateringPlanPreviewRoute from './WateringPlanRoutePreview'
 import { useHasPermission } from '@/lib/auth/useHasPermission'
 
@@ -31,12 +33,15 @@ interface WateringPlanDashboardProps {
 }
 
 const WateringPlanDashboard = ({ wateringPlan }: WateringPlanDashboardProps) => {
+  const getWateringPlanStatusDetails = useWateringPlanStatusDetails()
   const statusDetails = getWateringPlanStatusDetails(wateringPlan.status)
   const canEdit = useHasPermission(['watering_plan:update'])
+  const { t } = useTranslation(['wateringPlan', 'common'])
+  const dateLocale = useDateLocale()
 
   const date = wateringPlan?.date
-    ? format(new Date(wateringPlan?.date), 'dd.MM.yyyy')
-    : 'Keine Angabe'
+    ? format(new Date(wateringPlan?.date), 'dd.MM.yyyy', { locale: dateLocale })
+    : t('common:state.noData')
 
   const { mutate: downloadGpx } = useDownloadGpx(wateringPlan.gpxUrl)
 
@@ -44,17 +49,17 @@ const WateringPlanDashboard = ({ wateringPlan }: WateringPlanDashboardProps) => 
     <>
       <EntityDetailHeader
         breakpoint="xl"
-        backLink={{ link: { to: '/watering-plans' }, label: 'Alle Einsatzpläne' }}
-        title={<>Einsatzplan für den {date}</>}
+        backLink={{ link: { to: '/watering-plans' }, label: t('detail.backLabel') }}
+        title={<>{t('detail.title', { date })}</>}
         badge={
           <Badge variant={statusDetails?.color ?? 'outline-dark'} size="lg">
-            {statusDetails?.label ?? 'Keine Angabe'}
+            {statusDetails?.label ?? t('common:state.noData')}
           </Badge>
         }
         editLink={
           canEdit
             ? {
-                label: 'Einsatz bearbeiten',
+                label: t('detail.editLabel'),
                 link: {
                   to: `/watering-plans/$wateringPlanId/edit`,
                   params: { wateringPlanId: String(wateringPlan.id) },
@@ -71,12 +76,12 @@ const WateringPlanDashboard = ({ wateringPlan }: WateringPlanDashboardProps) => 
                 to: '/watering-plans/$wateringPlanId/status/edit',
                 params: { wateringPlanId: wateringPlan.id.toString() },
               }}
-              label="Status aktualisieren"
+              label={t('detail.updateStatusLabel')}
               icon={MoveRight}
             />
           )}
           <Button variant="nav" onClick={() => downloadGpx()} className="p-0 h-auto [&_svg]:size-4">
-            Route herunterladen
+            {t('detail.downloadRouteLabel')}
             <MoveRight className="icon-arrow-animate" />
           </Button>
         </div>
@@ -84,11 +89,7 @@ const WateringPlanDashboard = ({ wateringPlan }: WateringPlanDashboardProps) => 
           <Alert variant="destructive" className="mt-6 flex items-center gap-3">
             <AlertIcon variant="destructive" />
             <AlertContent>
-              <AlertDescription>
-                Die Route für diesen Einsatzplan konnte nicht berechnet werden. Bitte überprüfen
-                Sie, ob das ausgewählte Fahrzeug über ausreichend Wasserkapazität für die gewählten
-                Bewässerungsgruppen verfügt.
-              </AlertDescription>
+              <AlertDescription>{t('detail.routeErrorAlert')}</AlertDescription>
             </AlertContent>
           </Alert>
         )}
@@ -99,19 +100,21 @@ const WateringPlanDashboard = ({ wateringPlan }: WateringPlanDashboardProps) => 
           <TabsTrigger value="general">
             <File className="w-5 h-5" />
             <span className="hidden group-data-[state=active]:block lg:block">
-              Allgemeine Daten
+              {t('detail.tabGeneral')}
             </span>
           </TabsTrigger>
           <TabsTrigger value="clusters">
             <FolderClosed className="w-5 h-5" />
             <span className="hidden group-data-[state=active]:block lg:block">
-              Bewässerungsgruppen
+              {t('detail.tabClusters')}
             </span>
           </TabsTrigger>
           {wateringPlan.distance > 0 && (
             <TabsTrigger value="route">
               <Route className="w-5 h-5" />
-              <span className="hidden group-data-[state=active]:block lg:block">Route</span>
+              <span className="hidden group-data-[state=active]:block lg:block">
+                {t('detail.tabRoute')}
+              </span>
             </TabsTrigger>
           )}
         </TabsList>
@@ -122,7 +125,7 @@ const WateringPlanDashboard = ({ wateringPlan }: WateringPlanDashboardProps) => 
           <EntityList
             items={wateringPlan.treeclusters}
             getKey={(cluster) => cluster.id}
-            emptyMessage="Es wurden leider keine Bewässerungsgruppen gefunden."
+            emptyMessage={t('detail.clustersEmptyMessage')}
             renderItem={(cluster) => <TreeclusterCard treecluster={cluster} />}
           />
         </TabsContent>

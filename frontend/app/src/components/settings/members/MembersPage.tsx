@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useBlocker } from '@tanstack/react-router'
+import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,23 +34,23 @@ import { useMemberProfileDraft } from './useMemberProfileDraft'
 const PER_PAGE = 50
 const SEARCH_DEBOUNCE_MS = 300
 
-const roleErrorMessage = (error: unknown): string | null => {
+const roleErrorMessage = (error: unknown, t: TFunction<'settings'>): string | null => {
   switch (statusOf(error)) {
     case 403:
-      return 'Diese Rolle enthält Rechte, die über deine eigenen hinausgehen.'
+      return t('members.roleErrorTooPowerful')
     case 409:
-      return 'Am eigenen Konto lassen sich Rollen nicht ändern.'
+      return t('members.roleErrorSelfAccount')
     default:
       return null
   }
 }
 
-const organizationErrorMessage = (error: unknown): string | null => {
+const organizationErrorMessage = (error: unknown, t: TFunction<'settings'>): string | null => {
   switch (statusOf(error)) {
     case 403:
-      return 'In dieser Organisation darfst du keine Personen verwalten.'
+      return t('members.organizationErrorForbidden')
     case 409:
-      return 'Die eigene Organisation lässt sich hier nicht ändern.'
+      return t('members.organizationErrorSelfAccount')
     default:
       return null
   }
@@ -60,6 +62,7 @@ const trimmedOrNull = (value: string): string | null => {
 }
 
 const MembersPage = () => {
+  const { t } = useTranslation(['settings', 'common'])
   const canUpdate = useHasPermission(['user:update'])
   const canReadRoles = useHasPermission(['role:read'])
   const canReadOrganizations = useHasPermission(['organization:read'])
@@ -326,11 +329,9 @@ const MembersPage = () => {
       if (!filtered) return null
       return (
         <div className="flex flex-col items-start gap-3">
-          <p className="text-sm text-dark-600">
-            Die ausgewählte Person passt nicht zu Suche und Filter.
-          </p>
+          <p className="text-sm text-dark-600">{t('members.notMatchingFilter')}</p>
           <Button type="button" variant="outline" onClick={resetFilters}>
-            Suche und Filter zurücksetzen
+            {t('members.resetFilters')}
           </Button>
         </div>
       )
@@ -349,8 +350,8 @@ const MembersPage = () => {
           canReadOrganizations={canReadOrganizations}
           organizations={organizationList}
           assignableRoles={assignableRoles}
-          roleError={roleErrorMessage(assignRole.error ?? revokeRole.error)}
-          organizationError={organizationErrorMessage(setOrganization.error)}
+          roleError={roleErrorMessage(assignRole.error ?? revokeRole.error, t)}
+          organizationError={organizationErrorMessage(setOrganization.error, t)}
           saving={updateProfile.isPending}
           onStatusChange={draftState.setStatus}
           onDrivingLicensesChange={draftState.setDrivingLicenses}
@@ -419,18 +420,27 @@ const MembersPage = () => {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Person verschieben?</AlertDialogTitle>
+            <AlertDialogTitle>{t('members.moveDialog.title')}</AlertDialogTitle>
             <AlertDialogDescription>
               {selected && targetOrganization
-                ? sourceOrganizationName
-                  ? `${fullNameOf(selected)} wechselt von ${sourceOrganizationName} zu ${targetOrganization.name}. Die Änderung wirkt sofort, zugewiesene Rollen bleiben bestehen.`
-                  : `${fullNameOf(selected)} wird ${targetOrganization.name} zugeordnet. Die Änderung wirkt sofort, zugewiesene Rollen bleiben bestehen.`
+                ? t(
+                    sourceOrganizationName
+                      ? 'members.moveDialog.descriptionWithSource'
+                      : 'members.moveDialog.descriptionWithoutSource',
+                    {
+                      name: fullNameOf(selected),
+                      from: sourceOrganizationName ?? '',
+                      to: targetOrganization.name,
+                    },
+                  )
                 : null}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-            <AlertDialogAction onClick={moveToOrganization}>Verschieben</AlertDialogAction>
+            <AlertDialogCancel>{t('common:actions.cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={moveToOrganization}>
+              {t('members.moveDialog.confirm')}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -445,14 +455,14 @@ const MembersPage = () => {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Änderungen verwerfen?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Du hast Änderungen am Profil dieser Person, die noch nicht gespeichert sind.
-            </AlertDialogDescription>
+            <AlertDialogTitle>{t('dialog.discardChanges.title')}</AlertDialogTitle>
+            <AlertDialogDescription>{t('members.discardDescription')}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Weiter bearbeiten</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDiscard}>Verwerfen</AlertDialogAction>
+            <AlertDialogCancel>{t('dialog.discardChanges.continueEditing')}</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDiscard}>
+              {t('dialog.discardChanges.discard')}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -461,16 +471,16 @@ const MembersPage = () => {
         <AlertDialog open onOpenChange={() => blocker.reset?.()}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Seite verlassen?</AlertDialogTitle>
-              <AlertDialogDescription>
-                Deine Änderungen am Profil dieser Person sind noch nicht gespeichert.
-              </AlertDialogDescription>
+              <AlertDialogTitle>{t('common:dialog.unsavedChanges.title')}</AlertDialogTitle>
+              <AlertDialogDescription>{t('members.leaveDescription')}</AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel onClick={() => blocker.reset?.()}>
-                Weiter bearbeiten
+                {t('dialog.discardChanges.continueEditing')}
               </AlertDialogCancel>
-              <AlertDialogAction onClick={() => blocker.proceed?.()}>Verlassen</AlertDialogAction>
+              <AlertDialogAction onClick={() => blocker.proceed?.()}>
+                {t('common:dialog.unsavedChanges.confirm')}
+              </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>

@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { Plus } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { WateringPlanStatus } from '@green-ecolution/backend-client'
 import { clusterQueries, userQueries, wateringPlanQueries } from '@/api/queries'
 import ButtonLink from '@/components/general/links/ButtonLink'
@@ -11,7 +12,7 @@ import { useHasPermission } from '@/lib/auth/useHasPermission'
 
 export const Route = createFileRoute('/_protected/watering-plans/')({
   component: WateringPlans,
-  pendingComponent: pendingLoading('Daten werden geladen'),
+  pendingComponent: pendingLoading({ key: 'wateringPlan:list.loadingLabel' }),
   loader: ({ context: { queryClient } }) => {
     prefetch(
       queryClient,
@@ -29,23 +30,20 @@ export const Route = createFileRoute('/_protected/watering-plans/')({
 })
 
 function WateringPlans() {
+  const { t } = useTranslation('wateringPlan')
   const canModify = useHasPermission(['watering_plan:update'])
 
   return (
     <div className="mt-6">
       <div className="container">
         <ListPageHeader
-          title="Einsatzpläne"
-          description={
-            canModify
-              ? 'Planen, starten und dokumentieren Sie Bewässerungsfahrten. Ziehen Sie einen Einsatz in die nächste Spalte, um seinen Status zu ändern.'
-              : 'Verfolgen Sie geplante, laufende und abgeschlossene Bewässerungsfahrten.'
-          }
+          title={t('list.title')}
+          description={canModify ? t('list.descriptionCanModify') : t('list.description')}
           action={
             <Can permission={['watering_plan:create']}>
               <ButtonLink
                 icon={Plus}
-                label="Neuen Einsatzplan erstellen"
+                label={t('list.createButton')}
                 link={{ to: '/watering-plans/new' }}
               />
             </Can>

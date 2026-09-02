@@ -7,8 +7,8 @@ import { format } from 'date-fns'
 import { Droplet, MoveRight } from 'lucide-react'
 import FormError from '../general/form/FormError'
 import {
-  getWateringPlanStatusDetails,
-  getWateringPlanStatusTransitionOptions,
+  useWateringPlanStatusDetails,
+  useWateringPlanStatusTransitionOptions,
 } from '@/hooks/details/useDetailsForWateringPlanStatus'
 import { Badge, TextareaField, FormField, SelectField, Button } from '@green-ecolution/ui'
 import {
@@ -24,6 +24,9 @@ import { PLAN_STATUS_AGGREGATES, useInvalidateAggregates } from '@/lib/queryInva
 import { wateringPlanApi } from '@/api/backendApi'
 import { useNavigate } from '@tanstack/react-router'
 import createToast from '@/hooks/createToast'
+import { useTranslation } from 'react-i18next'
+import { useDateLocale } from '@/lib/i18n/useFormatters'
+import { toApiError } from '@/lib/apiError'
 
 interface WateringPlanStatusUpdateProps {
   wateringPlanId: string
@@ -34,16 +37,24 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
   const navigate = useNavigate()
   const invalidate = useInvalidateAggregates()
   const showToast = createToast()
+  const { t } = useTranslation(['wateringPlan', 'errors', 'common'])
+  const dateLocale = useDateLocale()
+  const getWateringPlanStatusDetails = useWateringPlanStatusDetails()
   const statusDetails = getWateringPlanStatusDetails(loadedData.status)
-  const statusOptions = getWateringPlanStatusTransitionOptions(loadedData.status)
+  const statusOptions = useWateringPlanStatusTransitionOptions(loadedData.status)
   const [selectedStatus, setSelectedStatus] = useState(statusDetails)
 
   const { mutate, isError, error } = useMutation({
-    mutationFn: (wateringPlan: WateringPlanUpdate) =>
-      wateringPlanApi.updateWateringPlan({
-        wateringPlanId: wateringPlanId,
-        wateringPlanUpdateRequest: wateringPlan,
-      }),
+    mutationFn: async (wateringPlan: WateringPlanUpdate) => {
+      try {
+        return await wateringPlanApi.updateWateringPlan({
+          wateringPlanId: wateringPlanId,
+          wateringPlanUpdateRequest: wateringPlan,
+        })
+      } catch (error) {
+        throw await toApiError(error)
+      }
+    },
 
     onSuccess: (data: WateringPlan) => {
       invalidate(PLAN_STATUS_AGGREGATES).catch((error) =>
@@ -56,17 +67,22 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
         replace: true,
       }).catch((error) => console.error('Navigation failed:', error))
 
-      showToast('Der Status der Einsatzplanung wurde erfolgreich aktualisiert.')
+      showToast(t('statusUpdate.toastSuccess'))
     },
 
     onError: (error) => {
       console.error('Error with vehicle mutation:', error)
-      showToast(`Fehlermeldung: ${error.message || 'Unbekannter Fehler'}`, 'error') // TODO: Parse API ResponseError
+      // mutationFn already routed this through toApiError, so error.message is
+      // the resolved catalog text — the same value FormError renders below.
+      showToast(
+        t('errors:frame.wateringPlanStatusUpdateFailed', { reason: error.message }),
+        'error',
+      )
     },
     throwOnError: true,
   })
 
-  const date = format(new Date(loadedData.date), 'dd.MM.yyyy')
+  const date = format(new Date(loadedData.date), 'dd.MM.yyyy', { locale: dateLocale })
 
   const formByStatus = useCallback(
     (status: WateringPlanStatus) => {
@@ -116,8 +132,8 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
             <CancelWateringPlan
               onSubmit={onSubmitNotCompleted}
               className="mt-6 md:w-1/2"
-              label="Grund des Nichtantritts"
-              placeholder="Warum wurde der Einsatz nicht angetreten?"
+              label={t('statusUpdate.notCompletedReasonLabel')}
+              placeholder={t('statusUpdate.notCompletedReasonPlaceholder')}
             />
           )
         case 'finished':
@@ -131,59 +147,53 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
         default:
           return (
             <Button onClick={() => onSubmitOtherStatus(status)} type="submit" className="mt-10">
-              Speichern
+              {t('common:actions.save')}
               <MoveRight className="icon-arrow-animate" />
             </Button>
           )
       }
     },
-    [loadedData, wateringPlanId, mutate],
+    [loadedData, wateringPlanId, mutate, t],
   )
 
   return (
     <>
       <FormPageHeader
         backLink={{
-          label: 'Zurück zm Einsatzplan',
+          label: t('statusUpdate.backLabel'),
           link: {
             to: `/watering-plans/$wateringPlanId`,
             params: { wateringPlanId },
           },
         }}
-        title={<>Status vom Einsatzplan {date} bearbeiten</>}
+        title={<>{t('statusUpdate.title', { date })}</>}
       >
         <p className="flex gap-x-3 mb-5">
-          <strong>Aktueller Status:</strong>
+          <strong>{t('statusUpdate.currentStatusLabel')}</strong>
           <Badge variant={statusDetails.color} size="lg">
             {statusDetails.label}
           </Badge>
         </p>
-        <p>
-          Der Status eines Einsatzes beschreibt, ob der Einsatz beispielsweise aktiv ausgeführt
-          wird, beendet ist oder abgebrochen wurde. Diese Angabe hilft dabei die erstellen Einsätze
-          zu kategorisieren und eine Auswertung anzulegen. Sobald ein Einsatz beendet wird, kann
-          zudem angegeben werden, mit wie viel Wasser die zugehörigen Bewässerungsgruppen bewässert
-          wurden.
-        </p>
+        <p>{t('statusUpdate.description')}</p>
       </FormPageHeader>
 
       <section className="mt-10">
         {statusOptions.length === 0 ? (
-          <p className="text-dark-600 md:w-1/2">
-            Dieser Einsatzplan ist abgeschlossen. Sein Status kann nicht mehr geändert werden.
-          </p>
+          <p className="text-dark-600 md:w-1/2">{t('statusUpdate.finishedNotice')}</p>
         ) : (
           <>
             <div className="flex flex-col gap-y-6 md:w-1/2">
               <SelectField
                 id="status"
-                label="Status des Einsatzes"
-                placeholder="Wähle einen Status aus"
+                label={t('statusUpdate.statusFieldLabel')}
+                placeholder={t('statusUpdate.statusFieldPlaceholder')}
                 required
                 value={selectedStatus.value}
                 description={selectedStatus.description}
                 onValueChange={(value) => {
-                  setSelectedStatus(getWateringPlanStatusDetails(value))
+                  // SelectField's onValueChange is string-typed; value is always
+                  // one of statusOptions' WateringPlanStatus values.
+                  setSelectedStatus(getWateringPlanStatusDetails(value as WateringPlanStatus))
                 }}
                 options={statusOptions}
               />
@@ -207,11 +217,12 @@ interface CancelPlanProps {
 
 export const CancelWateringPlan = ({
   onSubmit,
-  submitLabel = 'Speichern',
+  submitLabel,
   className = 'md:w-1/2',
-  label = 'Grund des Abbruchs',
-  placeholder = 'Warum wurde der Einsatz abgebrochen?',
+  label,
+  placeholder,
 }: CancelPlanProps) => {
+  const { t } = useTranslation(['wateringPlan', 'common'])
   const {
     register,
     handleSubmit,
@@ -224,15 +235,15 @@ export const CancelWateringPlan = ({
   return (
     <form className={className} onSubmit={handleSubmit(onSubmit)}>
       <TextareaField
-        placeholder={placeholder}
-        label={label}
+        placeholder={placeholder ?? t('statusUpdate.cancelReasonPlaceholder')}
+        label={label ?? t('statusUpdate.cancelReasonLabel')}
         error={errors.cancellationNote?.message}
         required
         {...register('cancellationNote')}
       />
 
       <Button type="submit" disabled={!isValid} className="mt-10">
-        {submitLabel}
+        {submitLabel ?? t('common:actions.save')}
         <MoveRight className="icon-arrow-animate" />
       </Button>
     </form>
@@ -250,8 +261,9 @@ export const FinishedWateringPlan = ({
   wateringPlanId,
   onSubmit,
   loadedData,
-  submitLabel = 'Speichern',
+  submitLabel,
 }: FinishedPlanProps) => {
+  const { t } = useTranslation(['wateringPlan', 'common'])
   const {
     register,
     handleSubmit,
@@ -278,10 +290,10 @@ export const FinishedWateringPlan = ({
     <form className="flex flex-col gap-y-6" onSubmit={handleSubmit(onSubmit)}>
       <fieldset className="mt-6">
         <legend className="block font-semibold text-dark-800 mb-2.5">
-          Wasservergabe pro Bewässerungsgruppe:
+          {t('statusUpdate.finished.waterPerClusterLegend')}
         </legend>
         <p className="-mt-2 text-sm text-dark-600 mb-2.5">
-          Die Standardwerte ergeben sich aus 80 Litern pro Baum einer Bewässerungsgruppe.
+          {t('statusUpdate.finished.defaultsHint')}
         </p>
         <ul className="flex flex-col">
           {fields.map((field, index) => {
@@ -303,7 +315,7 @@ export const FinishedWateringPlan = ({
                     <p className="truncate font-medium text-dark">{cluster.name}</p>
                     {treeCount > 0 && (
                       <p className="text-xs tabular-nums text-dark-600">
-                        {treeCount} {treeCount === 1 ? 'Baum' : 'Bäume'}
+                        {t('statusUpdate.finished.treeCount', { count: treeCount })}
                       </p>
                     )}
                   </div>
@@ -311,13 +323,15 @@ export const FinishedWateringPlan = ({
                 <div className="flex shrink-0 items-center gap-2">
                   <FormField
                     type="number"
-                    label={`Liter für ${cluster.name}`}
+                    label={t('statusUpdate.finished.litersForClusterLabel', { name: cluster.name })}
                     defaultValue={field.consumedWater}
                     className="max-w-28"
                     hideLabel
                     {...register(`evaluation.${index}.consumedWater`)}
                   />
-                  <span className="text-sm text-dark-600">Liter</span>
+                  <span className="text-sm text-dark-600">
+                    {t('statusUpdate.finished.litersUnitLabel')}
+                  </span>
                 </div>
               </li>
             )
@@ -326,7 +340,7 @@ export const FinishedWateringPlan = ({
       </fieldset>
 
       <Button type="submit" disabled={!isValid} className="mt-10">
-        {submitLabel}
+        {submitLabel ?? t('common:actions.save')}
         <MoveRight className="icon-arrow-animate" />
       </Button>
     </form>

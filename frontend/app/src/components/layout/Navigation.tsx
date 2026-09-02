@@ -11,6 +11,8 @@ import {
 import * as React from 'react'
 import { useCallback } from 'react'
 import { LinkProps } from '@tanstack/react-router'
+import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import NavLink from '../navigation/NavLink'
 import NavHeadline from '../navigation/NavHeadline'
 import NavHeader from '../navigation/NavHeader'
@@ -42,14 +44,14 @@ interface NavSectionData {
   links: NavLinkData[]
 }
 
-const publicNavData: NavSectionData[] = [
+const publicNavData = (t: TFunction<'navigation'>): NavSectionData[] => [
   {
     id: 1,
     headline: '',
     links: [
       {
         key: 'nav-login',
-        label: 'Anmelden',
+        label: t('sidebar.login'),
         icon: <LogIn className="w-5 h-5" />,
         to: '/login',
         preload: false,
@@ -60,36 +62,36 @@ const publicNavData: NavSectionData[] = [
 
 // Settings and the user entry are pinned to the bottom of the sidebar,
 // separate from the navigation sections.
-const footerNavData: NavLinkData[] = [
+const footerNavData = (t: TFunction<'navigation'>): NavLinkData[] => [
   {
     key: 'nav-settings',
-    label: 'Einstellungen',
+    label: t('sidebar.settings'),
     icon: <Settings className="w-5 h-5" />,
     to: '/settings',
   },
 ]
 
-const protectedNavData: NavSectionData[] = [
+const protectedNavData = (t: TFunction<'navigation'>): NavSectionData[] => [
   {
     id: 1,
-    headline: 'Grünflächen',
+    headline: t('sidebar.headlineGreenSpaces'),
     links: [
       {
         key: 'nav-green-spaces-map',
-        label: 'Karte',
+        label: t('sidebar.map'),
         icon: <Map className="w-5 h-5" />,
         to: '/map',
         preload: false,
       },
       {
         key: 'nav-green-spaces-clusters',
-        label: 'Bewässerungsgruppen',
+        label: t('sidebar.clusters'),
         icon: <FolderClosed className="w-5 h-5" />,
         to: '/treecluster',
       },
       {
         key: 'nav-green-spaces-trees',
-        label: 'Bäume',
+        label: t('sidebar.trees'),
         icon: <Tree className="w-5 h-5" />,
         to: '/trees',
       },
@@ -97,17 +99,17 @@ const protectedNavData: NavSectionData[] = [
   },
   {
     id: 2,
-    headline: 'Einsatzplanung',
+    headline: t('sidebar.headlinePlanning'),
     links: [
       {
         key: 'nav-watering-plans',
-        label: 'Einsätze',
+        label: t('sidebar.wateringPlans'),
         icon: <ArrowLeftRight className="w-5 h-5" />,
         to: '/watering-plans',
       },
       {
         key: 'nav-watering-plan-vehicle',
-        label: 'Fahrzeuge',
+        label: t('sidebar.vehicles'),
         icon: <Car className="w-5 h-5" />,
         to: '/vehicles',
       },
@@ -115,17 +117,17 @@ const protectedNavData: NavSectionData[] = [
   },
   {
     id: 3,
-    headline: 'Weiteres',
+    headline: t('sidebar.headlineMore'),
     links: [
       {
         key: 'nav-more-sensor',
-        label: 'Sensoren',
+        label: t('sidebar.sensors'),
         icon: <SensorIcon className="w-5 h-5" />,
         to: '/sensors',
       },
       {
         key: 'nav-more-evaluation',
-        label: 'Auswertung',
+        label: t('sidebar.evaluations'),
         icon: <PieChart className="w-5 h-5" />,
         to: '/evaluations',
       },
@@ -134,7 +136,7 @@ const protectedNavData: NavSectionData[] = [
         ? [
             {
               key: 'nav-more-debug',
-              label: 'Debug',
+              label: t('sidebar.debug'),
               icon: <Bug className="w-5 h-5" />,
               to: '/debug',
             } as NavLinkData,
@@ -148,6 +150,7 @@ const Navigation: React.FC<NavigationProps> = ({ isOpen, closeSidebar }) => {
   const isLargeScreen = useMediaQuery('(min-width: 1024px)')
   const { isAuthenticated: isLoggedIn } = useAuthSession()
   const collapsed = useSidebarCollapsed()
+  const { t } = useTranslation('navigation')
 
   const { firstName, lastName, email } = useCurrentUser()
   const avatarUrl = useCurrentUserAvatar()
@@ -157,12 +160,14 @@ const Navigation: React.FC<NavigationProps> = ({ isOpen, closeSidebar }) => {
   }, [isLargeScreen, closeSidebar])
 
   const perms = usePermissions()
-  const navigationData = isLoggedIn ? visibleNavSections(protectedNavData, perms) : publicNavData
+  const navigationData = isLoggedIn
+    ? visibleNavSections(protectedNavData(t), perms)
+    : publicNavData(t)
 
   return (
     <nav
       id="main-navigation"
-      aria-label="Hauptnavigation"
+      aria-label={t('sidebar.mainNavLabel')}
       className={`fixed inset-0 z-50 bg-dark w-screen h-dvh flex flex-col ease-in-out duration-300 transition-[left,width,visibility] motion-reduce:transition-none
         lg:left-0 lg:visible ${collapsed ? 'lg:w-[4.5rem]' : 'lg:w-[16rem]'}
         ${isOpen ? 'visible left-0' : 'invisible -left-full'}`}
@@ -202,7 +207,7 @@ const Navigation: React.FC<NavigationProps> = ({ isOpen, closeSidebar }) => {
       >
         <ul className="space-y-1">
           {isLoggedIn &&
-            footerNavData.map(({ key, label, icon, ...linkProps }) => (
+            footerNavData(t).map(({ key, label, icon, ...linkProps }) => (
               <NavLink
                 key={key}
                 label={label}

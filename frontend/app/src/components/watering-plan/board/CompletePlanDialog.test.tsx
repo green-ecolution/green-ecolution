@@ -63,7 +63,7 @@ describe('CompletePlanDialog', () => {
 
     await user.click(screen.getByRole('radio', { name: /abgebrochen/i }))
     await user.type(screen.getByLabelText(/grund des abbruchs/i), 'Fahrzeug defekt')
-    await user.click(screen.getByRole('button', { name: /einsatz abbrechen/i }))
+    await user.click(screen.getByRole('button', { name: /einsatzplan abbrechen/i }))
 
     await waitFor(() => expect(updateWateringPlan).toHaveBeenCalledTimes(1))
     const request = updateWateringPlan.mock.calls[0][0] as {

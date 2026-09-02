@@ -6,6 +6,7 @@ import {
   DialogTitle,
 } from '@green-ecolution/ui'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import SensorTreeSearchInput from './SensorTreeSearchInput'
 import SensorTreeSearchResults from './SensorTreeSearchResults'
 
@@ -42,6 +43,7 @@ const SensorTreePickerSheet = ({
   selectedTreeId,
   onSelect,
 }: SensorTreePickerSheetProps) => {
+  const { t } = useTranslation('sensor')
   const handleSelect = (treeId: string) => {
     onSelect(treeId)
     onOpenChange(false)
@@ -51,11 +53,8 @@ const SensorTreePickerSheet = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md sm:max-w-lg h-[85vh] sm:h-[70vh] flex flex-col gap-0 p-0">
         <DialogHeader className="px-6 pt-6 pb-3">
-          <DialogTitle>Anderen Baum auswählen</DialogTitle>
-          <DialogDescription>
-            Suche nach Baumnummer oder Baumart, wenn der richtige Baum nicht in der Vorschlagsliste
-            ist.
-          </DialogDescription>
+          <DialogTitle>{t('treePickerSheet.title')}</DialogTitle>
+          <DialogDescription>{t('treePickerSheet.description')}</DialogDescription>
         </DialogHeader>
         <PickerBody
           key={open ? 'open' : 'closed'}

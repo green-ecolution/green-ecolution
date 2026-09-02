@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@green-ecolution/ui'
 import { Activity, Clock, ExternalLink, Monitor, Network, Server, Zap } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import HeroStatCard from './HeroStatCard'
 import InfoTile from './InfoTile'
 import { formatUptime } from './formatUptime'
@@ -17,6 +18,8 @@ interface ServerTabContentProps {
 }
 
 const ServerTabContent = ({ serverData }: ServerTabContentProps) => {
+  const { t } = useTranslation('info')
+
   return (
     <div className="space-y-6">
       {/* Server hero */}
@@ -28,7 +31,9 @@ const ServerTabContent = ({ serverData }: ServerTabContentProps) => {
           iconBoxClassName="p-3 bg-blue-500/10"
         >
           <div>
-            <p className="text-sm font-medium text-dark-600 mb-1">Hostname</p>
+            <p className="text-sm font-medium text-dark-600 mb-1">
+              {t('server.hero.hostnameLabel')}
+            </p>
             <p className="text-2xl font-bold font-lato tracking-tight break-all">
               {serverData.hostname}
             </p>
@@ -44,7 +49,7 @@ const ServerTabContent = ({ serverData }: ServerTabContentProps) => {
               <div>
                 <div className="flex items-center gap-2 mb-2">
                   <Clock className="size-4 text-dark-500" />
-                  <p className="text-sm text-dark-500">Uptime</p>
+                  <p className="text-sm text-dark-500">{t('uptimeLabel')}</p>
                 </div>
                 <p className="text-2xl font-bold font-lato">
                   {formatUptime(serverData.uptimeSeconds)}
@@ -53,7 +58,7 @@ const ServerTabContent = ({ serverData }: ServerTabContentProps) => {
               <div>
                 <div className="flex items-center gap-2 mb-2">
                   <Monitor className="size-4 text-dark-500" />
-                  <p className="text-sm text-dark-500">Betriebssystem</p>
+                  <p className="text-sm text-dark-500">{t('server.quick.osLabel')}</p>
                 </div>
                 <p className="text-lg font-semibold capitalize">{serverData.os}</p>
                 <p className="text-sm text-dark-400">{serverData.arch}</p>
@@ -61,7 +66,7 @@ const ServerTabContent = ({ serverData }: ServerTabContentProps) => {
               <div>
                 <div className="flex items-center gap-2 mb-2">
                   <Zap className="size-4 text-dark-500" />
-                  <p className="text-sm text-dark-500">HTTP Port</p>
+                  <p className="text-sm text-dark-500">{t('server.quick.portLabel')}</p>
                 </div>
                 <p className="text-2xl font-bold font-mono">{serverData.port}</p>
               </div>
@@ -75,16 +80,16 @@ const ServerTabContent = ({ serverData }: ServerTabContentProps) => {
         <CardHeader className="pb-4">
           <CardTitle className="flex items-center gap-2 text-lg">
             <Network className="size-5" />
-            Netzwerk
+            {t('server.network.title')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2">
-            <InfoTile icon={Network} label="Interface">
+            <InfoTile icon={Network} label={t('server.network.interfaceLabel')}>
               <p className="font-mono text-lg font-medium">{serverData._interface}</p>
             </InfoTile>
 
-            <InfoTile icon={ExternalLink} label="URL">
+            <InfoTile icon={ExternalLink} label={t('server.network.urlLabel')}>
               <a
                 href={serverData.url}
                 target="_blank"
@@ -108,9 +113,12 @@ const ServerTabContent = ({ serverData }: ServerTabContentProps) => {
                 <Activity className="size-4 text-dark-600" />
               </div>
               <div>
-                <p className="text-sm font-medium">Server-Informationen</p>
+                <p className="text-sm font-medium">{t('server.footer.title')}</p>
                 <p className="text-xs text-dark-500">
-                  {serverData.hostname} auf Port {serverData.port}
+                  {t('server.footer.subtitle', {
+                    hostname: serverData.hostname,
+                    port: serverData.port,
+                  })}
                 </p>
               </div>
             </div>

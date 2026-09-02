@@ -1,5 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import {
   Alert,
   AlertContent,
@@ -22,6 +23,7 @@ interface SensorLinkedTreeSectionProps {
 }
 
 const SensorLinkedTreeSection = ({ sensor }: SensorLinkedTreeSectionProps) => {
+  const { t } = useTranslation('sensor')
   const hasLink = sensor.linkedTreeId != null
   const treeIdStr = hasLink ? String(sensor.linkedTreeId) : ''
   const { data: tree, isLoading, isError } = useQuery(treeQueries.detail(treeIdStr))
@@ -34,7 +36,7 @@ const SensorLinkedTreeSection = ({ sensor }: SensorLinkedTreeSectionProps) => {
           <div className="grid place-items-center size-9 rounded-lg bg-green-dark-50 text-green-dark">
             {hasLink ? <Link2 className="size-5" /> : <Link2Off className="size-5" />}
           </div>
-          <CardTitle>Verknüpfter Baum</CardTitle>
+          <CardTitle>{t('linkedTree.title')}</CardTitle>
         </div>
       </CardHeader>
       <CardContent>
@@ -43,11 +45,8 @@ const SensorLinkedTreeSection = ({ sensor }: SensorLinkedTreeSectionProps) => {
             <div className="flex gap-3">
               <AlertIcon variant="warning" />
               <AlertContent>
-                <AlertTitle>Noch keine Verknüpfung</AlertTitle>
-                <AlertDescription>
-                  Dieser Sensor ist mit keinem Baum verknüpft. Ohne Verknüpfung können seine
-                  Messdaten keiner Vegetation zugeordnet werden.
-                </AlertDescription>
+                <AlertTitle>{t('linkedTree.noLinkTitle')}</AlertTitle>
+                <AlertDescription>{t('linkedTree.noLinkDescription')}</AlertDescription>
                 <div className="mt-3">
                   <Button
                     variant="outline"
@@ -56,7 +55,7 @@ const SensorLinkedTreeSection = ({ sensor }: SensorLinkedTreeSectionProps) => {
                     onClick={() => actions.requestActivate()}
                   >
                     <Link2 />
-                    Aktivieren & Baum zuweisen
+                    {t('actions.activateAssignTree')}
                   </Button>
                 </div>
               </AlertContent>
@@ -69,9 +68,9 @@ const SensorLinkedTreeSection = ({ sensor }: SensorLinkedTreeSectionProps) => {
             <div className="flex gap-3">
               <AlertIcon variant="destructive" />
               <AlertContent>
-                <AlertTitle>Baum nicht geladen</AlertTitle>
+                <AlertTitle>{t('linkedTree.loadFailedTitle')}</AlertTitle>
                 <AlertDescription>
-                  Der verknüpfte Baum (#{sensor.linkedTreeId}) konnte nicht abgerufen werden.
+                  {t('linkedTree.loadFailedDescription', { id: sensor.linkedTreeId })}
                 </AlertDescription>
               </AlertContent>
             </div>
@@ -87,12 +86,14 @@ const SensorLinkedTreeSection = ({ sensor }: SensorLinkedTreeSectionProps) => {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs uppercase tracking-widest text-muted-foreground">
-                Baum-Nr. {tree.number}
+                {t('linkedTree.treeNumberLabel', { number: tree.number })}
               </p>
               <p className="font-lato font-bold text-xl mt-1 truncate">
-                {tree.species || 'Unbekannte Art'}
+                {tree.species || t('linkedTree.unknownSpecies')}
               </p>
-              <p className="text-sm text-muted-foreground mt-0.5">Gepflanzt {tree.plantingYear}</p>
+              <p className="text-sm text-muted-foreground mt-0.5">
+                {t('linkedTree.plantedLabel', { year: tree.plantingYear })}
+              </p>
             </div>
             <ArrowUpRight className="size-5 text-muted-foreground group-hover:text-green-dark transition shrink-0" />
           </Link>

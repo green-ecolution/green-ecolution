@@ -1,0 +1,109 @@
+{
+  "code": {
+    "organization_mismatch": {
+      "trees_vs_cluster": "Die ausgewählten Bäume gehören zu einer anderen Organisation als die Bewässerungsgruppe.",
+      "cluster_vs_tree": "Die ausgewählte Bewässerungsgruppe gehört zu einer anderen Organisation als der Baum.",
+      "sensor_vs_tree": "Der Sensor gehört zu einer anderen Organisation als der Baum.",
+      "clusters_vs_plan": "Die ausgewählten Bewässerungsgruppen liegen außerhalb der Organisation des Einsatzplans.",
+      "role_vs_user": "Die Rolle gehört zu einer anderen Organisation als die ausgewählte Person."
+    },
+    "conflict": {
+      "tree_already_has_sensor": "An diesem Baum hängt bereits ein anderer Sensor.",
+      "sensor_already_assigned": "Dieser Sensor ist bereits einem anderen Baum zugeordnet.",
+      "sensor_already_activated": "Dieser Sensor ist bereits aktiviert.",
+      "sensor_not_activated": "Dieser Sensor ist noch nicht aktiviert.",
+      "sensor_bound_to_tree": "Der Sensor hängt an einem Baum und kann nur zusammen mit ihm übertragen werden.",
+      "tree_in_cluster": "Der Baum gehört zu einer Bewässerungsgruppe und muss erst daraus entfernt werden.",
+      "organization_not_empty": "Die Organisation hat noch Unterorganisationen oder Mitglieder.",
+      "root_organization_immutable": "Die oberste Organisation kann nicht geändert oder gelöscht werden.",
+      "role_template_immutable": "Vorlagen-Rollen lassen sich nicht ändern. Lege stattdessen eine Kopie in deiner Organisation an.",
+      "role_template_not_assignable": "Vorlagen-Rollen können keiner Person zugewiesen werden.",
+      "cannot_change_own_access": "Du kannst deine eigenen Rollen und deine eigene Organisation nicht ändern.",
+      "cannot_revoke_own_administration": "Diese Änderung würde dir selbst das Recht nehmen, Rollen und Mitglieder zu verwalten."
+    },
+    "organization": {
+      "missing": "Es wurde keine Organisation angegeben und dein Konto gehört zu keiner.",
+      "contact_person_not_a_member": "Die ausgewählte Ansprechperson gehört nicht zu dieser Organisation."
+    },
+    "watering_plan": {
+      "invalid_state_transition": "Dieser Statuswechsel ist im aktuellen Zustand des Einsatzplans nicht möglich.",
+      "cannot_mutate_after_start": "Der Einsatzplan lässt sich nur bearbeiten, solange er noch nicht gestartet ist.",
+      "cancellation_note_required": "Für den Abbruch wird eine Begründung benötigt.",
+      "evaluation_missing_for_cluster": "Für jede zugewiesene Bewässerungsgruppe wird eine Auswertung benötigt."
+    },
+    "feature": {
+      "routing_disabled": "Die Routenplanung ist in dieser Umgebung nicht aktiviert.",
+      "plugins_disabled": "Das Plugin-System ist in dieser Umgebung nicht aktiviert."
+    },
+    "routing": {
+      "unavailable": "Der Routing-Dienst ist derzeit nicht erreichbar.",
+      "invalid_problem": "Aus den gewählten Angaben lässt sich keine Route berechnen. Prüfe Fahrzeug, Startpunkt und Gruppen.",
+      "failed": "Die Routenberechnung ist fehlgeschlagen."
+    },
+    "request": {
+      "malformed_date": "Das Datum konnte nicht gelesen werden.",
+      "malformed_uuid": "Ein ausgewählter Eintrag hat keine gültige Kennung.",
+      "malformed_sensor_id": "Die Sensor-Kennung hat kein gültiges Format.",
+      "malformed_bounding_box": "Der Kartenausschnitt konnte nicht gelesen werden.",
+      "unknown_permission": "Die Anfrage nennt eine unbekannte Berechtigung.",
+      "unknown_endpoint": "Diese Funktion kennt der Server nicht. Vermutlich passen App und Server nicht zusammen. Lade die Seite neu.",
+      "method_not_allowed": "Die Anfrage ist für diesen Endpunkt nicht zulässig.",
+      "malformed_path_parameter": "Der Verweis in der Adresse ist ungültig.",
+      "malformed_query_parameter": "Ein Filter- oder Seitenparameter ist ungültig.",
+      "malformed_body": "Die gesendeten Daten konnten nicht gelesen werden."
+    }
+  },
+  "status": {
+    "400": "Die Anfrage war fehlerhaft und konnte nicht verarbeitet werden.",
+    "401": "Die Anmeldung ist abgelaufen. Bitte melde dich erneut an.",
+    "403": "Für diese Aktion fehlt dir die Berechtigung.",
+    "404": "Der angeforderte Datensatz wurde nicht gefunden.",
+    "405": "Die Anfrage ist für diesen Endpunkt nicht zulässig.",
+    "409": "Der Datensatz existiert bereits oder wurde zwischenzeitlich geändert.",
+    "415": "Das Format der Anfrage wird nicht unterstützt.",
+    "422": "Die eingegebenen Daten sind unvollständig oder ungültig.",
+    "500": "Auf dem Server ist ein unerwarteter Fehler aufgetreten. Bitte probiere es erneut oder wende dich an einen Systemadministrierenden.",
+    "502": "Ein nachgelagerter Dienst hat nicht geantwortet.",
+    "503": "Der Dienst ist derzeit nicht erreichbar. Bitte versuche es später erneut.",
+    "unknown": "Der Server hat mit Status {status} geantwortet."
+  },
+  "frame": {
+    "wateringPlanStartRevertFailed": "Der Start konnte nicht rückgängig gemacht werden: {reason}",
+    "wateringPlanStartFailed": "Der Einsatzplan konnte nicht gestartet werden: {reason}",
+    "wateringPlanCancelFailed": "Der Einsatzplan konnte nicht abgebrochen werden: {reason}",
+    "wateringPlanFinishFailed": "Der Einsatzplan konnte nicht abgeschlossen werden: {reason}",
+    "wateringPlanAssignFailed": "Die Zuweisung konnte nicht gespeichert werden: {reason}",
+    "wateringPlanStatusUpdateFailed": "Der Status konnte nicht geändert werden: {reason}",
+    "deleteFailed": "{entity} konnte nicht gelöscht werden: {reason}",
+    "archiveFailed": "{entity} konnte nicht archiviert werden: {reason}",
+    "gpxDownloadFailed": "Der GPX-Download ist fehlgeschlagen: {reason}",
+    "formSubmitFailed": "Das Speichern ist fehlgeschlagen: {reason}",
+    "requestFailed": "Die Anfrage ist fehlgeschlagen."
+  },
+  "browser": {
+    "geolocationDenied": "Der Zugriff auf deinen Standort wurde abgelehnt.",
+    "geolocationUnavailable": "Dein Standort konnte nicht bestimmt werden.",
+    "geolocationTimeout": "Die Standortbestimmung hat zu lange gedauert.",
+    "cameraDenied": "Der Zugriff auf die Kamera wurde abgelehnt.",
+    "cameraUnavailable": "Es wurde keine nutzbare Kamera gefunden.",
+    "scannerFailed": "Der Scanner konnte nicht gestartet werden."
+  },
+  "offline": "Der Server ist nicht erreichbar. Bitte prüfe deine Verbindung.",
+  "unknown": "Unbekannter Fehler",
+  "sensorFlow": {
+    "activate": {
+      "notFound": "Sensor existiert nicht (mehr). Bitte erneut versuchen.",
+      "conflict": "Sensor ist bereits einem Baum zugeordnet.",
+      "failed": "Aktivierung fehlgeschlagen. Bitte erneut versuchen."
+    },
+    "reassign": {
+      "notFound": "Sensor oder Baum existiert nicht (mehr).",
+      "conflict": "Der Baum ist bereits einem anderen Sensor zugeordnet.",
+      "failed": "Baumwechsel fehlgeschlagen. Bitte erneut versuchen."
+    },
+    "deactivate": {
+      "notFound": "Sensor existiert nicht (mehr).",
+      "failed": "Zurücksetzen fehlgeschlagen. Bitte erneut versuchen."
+    }
+  }
+}

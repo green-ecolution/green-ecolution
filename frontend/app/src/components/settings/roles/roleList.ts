@@ -1,4 +1,9 @@
+import type { TFunction } from 'i18next'
 import type { Role } from '@/api/backendApi'
+
+// `t`'s generated overloads only accept the catalog's literal key union; a key
+// built from the backend's runtime template_key can't satisfy that statically.
+type LooseTranslate = (key: string) => string
 
 export const samePermissionSet = (a: readonly string[], b: readonly string[]): boolean => {
   const left = new Set(a)
@@ -21,23 +26,26 @@ export const ownRolesOf = (roles: Role[]): Role[] =>
   roles.filter((role) => !role.isTemplate && !isPristineTemplateCopy(role))
 
 /**
- * Names of the delivered roles, keyed by the backend's `template_key`.
- *
- * These live here rather than in the database because a name shipped by a
- * migration cannot be translated. The moment a user edits the role the backend
- * drops the key, and the stored name wins again.
+ * Names of the delivered roles, keyed by the backend's `template_key`, resolved
+ * through settings:roles.templateName.* so the display name follows the active
+ * language. These live here rather than in the database because a name shipped
+ * by a migration cannot be translated. The moment a user edits the role the
+ * backend drops the key, and the stored name wins again.
  */
-const TEMPLATE_NAMES: Record<string, string> = {
-  administrator: 'Administrator',
-  tree_care: 'Baumpflege',
-  sensors: 'Sensorik',
-  route_planning: 'Routenplanung',
-  observer: 'Beobachter',
-}
+const TEMPLATE_KEYS: readonly string[] = [
+  'administrator',
+  'tree_care',
+  'sensors',
+  'route_planning',
+  'observer',
+]
 
 /** Label for a role: the catalog name while untouched, the stored name after. */
-export const roleDisplayName = (role: Pick<Role, 'name' | 'templateKey'>): string => {
+export const roleDisplayName = (
+  role: Pick<Role, 'name' | 'templateKey'>,
+  t: TFunction<'settings'>,
+): string => {
   const key = role.templateKey
-  const label = key == null ? undefined : TEMPLATE_NAMES[key]
-  return label ?? role.name
+  if (key == null || !TEMPLATE_KEYS.includes(key)) return role.name
+  return (t as LooseTranslate)(`roles.templateName.${key}`)
 }

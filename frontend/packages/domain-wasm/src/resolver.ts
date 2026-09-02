@@ -6,7 +6,7 @@ import type {
   ResolverResult,
 } from 'react-hook-form'
 import { translateIssue } from './messages'
-import type { ValidationIssue } from './types'
+import type { IssueTranslator, ValidationIssue } from './types'
 import {
   validateTreeClusterDraft,
   validateTreeDraft,
@@ -33,7 +33,10 @@ function normaliseForWasm(values: unknown): unknown {
   return values
 }
 
-function makeResolver<TForm extends FieldValues>(validate: RawValidator): Resolver<TForm> {
+function makeResolver<TForm extends FieldValues>(
+  validate: RawValidator,
+  translate: IssueTranslator,
+): Resolver<TForm> {
   return async (values): Promise<ResolverResult<TForm>> => {
     const issues = validate(normaliseForWasm(values))
     if (issues.length === 0) {
@@ -43,7 +46,7 @@ function makeResolver<TForm extends FieldValues>(validate: RawValidator): Resolv
     for (const issue of issues) {
       errors[issue.path] = {
         type: issue.key,
-        message: translateIssue(issue),
+        message: translateIssue(issue, translate),
       }
     }
     // RHF's FieldErrors<TForm> uses statically-keyed types; runtime issue.path
@@ -59,14 +62,18 @@ const clusterValidator = validateTreeClusterDraft as RawValidator
 const vehicleValidator = validateVehicleDraft as RawValidator
 const wateringPlanValidator = validateWateringPlanDraft as RawValidator
 
-export const treeDraftResolver = <TForm extends FieldValues>(): Resolver<TForm> =>
-  makeResolver<TForm>(treeValidator)
+export const treeDraftResolver = <TForm extends FieldValues>(
+  translate: IssueTranslator,
+): Resolver<TForm> => makeResolver<TForm>(treeValidator, translate)
 
-export const clusterDraftResolver = <TForm extends FieldValues>(): Resolver<TForm> =>
-  makeResolver<TForm>(clusterValidator)
+export const clusterDraftResolver = <TForm extends FieldValues>(
+  translate: IssueTranslator,
+): Resolver<TForm> => makeResolver<TForm>(clusterValidator, translate)
 
-export const vehicleDraftResolver = <TForm extends FieldValues>(): Resolver<TForm> =>
-  makeResolver<TForm>(vehicleValidator)
+export const vehicleDraftResolver = <TForm extends FieldValues>(
+  translate: IssueTranslator,
+): Resolver<TForm> => makeResolver<TForm>(vehicleValidator, translate)
 
-export const wateringPlanDraftResolver = <TForm extends FieldValues>(): Resolver<TForm> =>
-  makeResolver<TForm>(wateringPlanValidator)
+export const wateringPlanDraftResolver = <TForm extends FieldValues>(
+  translate: IssueTranslator,
+): Resolver<TForm> => makeResolver<TForm>(wateringPlanValidator, translate)

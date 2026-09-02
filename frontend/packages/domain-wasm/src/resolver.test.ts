@@ -22,7 +22,9 @@ const validTreeForm: TreeForm = {
   sensorId: '-1',
 }
 
-const resolver = treeDraftResolver<TreeForm>()
+const translate = (key: string) => key
+
+const resolver = treeDraftResolver<TreeForm>(translate)
 
 describe('treeDraftResolver', () => {
   it('returns values when validation passes', async () => {
@@ -51,11 +53,11 @@ describe('treeDraftResolver', () => {
     expect(result.values).toEqual({})
     expect('species' in result.errors && result.errors.species).toMatchObject({
       type: 'tree.species.empty',
-      message: 'Art ist erforderlich.',
+      message: 'tree.species.empty',
     })
   })
 
-  it('uses i18n key as message fallback when no German string exists', async () => {
+  it('uses i18n key as message fallback when no translation exists', async () => {
     vi.mocked(validateTreeDraft).mockReturnValueOnce([
       {
         path: 'plantingYear',

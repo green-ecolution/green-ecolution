@@ -7,7 +7,14 @@ export const Route = createFileRoute('/_protected/vehicles/$vehicleId')(
     key: 'vehicle',
     query: vehicleQueries.detail,
     idParam: 'vehicleId',
-    title: (vehicle) => `Fahrzeug: ${vehicle.numberPlate}`,
-    notFound: { entityName: 'Fahrzeug', backTo: '/vehicles', backLabel: 'Zur Fahrzeugliste' },
+    title: (vehicle) => ({
+      titleKey: 'vehicle:detail.title',
+      params: { numberPlate: vehicle.numberPlate },
+    }),
+    notFound: {
+      entityName: { key: 'vehicle:entity.name' },
+      backTo: '/vehicles',
+      backLabel: { key: 'vehicle:detail.notFoundBackLabel' },
+    },
   }),
 )

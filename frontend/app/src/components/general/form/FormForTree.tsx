@@ -2,6 +2,7 @@ import { TreeForm } from '@/schema/treeSchema'
 import { FormField, TextareaField, SelectField, Button } from '@green-ecolution/ui'
 import { Sensor, TreeClusterInList } from '@/api/backendApi'
 import { MapPin } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import FormError from './FormError'
 import FormSubmitButton from './FormSubmitButton'
 import { Controller, SubmitHandler, useFormContext, useFormState } from 'react-hook-form'
@@ -20,6 +21,7 @@ interface FormForTreeProps {
 }
 
 const FormForTree = (props: FormForTreeProps) => {
+  const { t } = useTranslation(['tree', 'common'])
   const { register, handleSubmit, getValues, control } = useFormContext<TreeForm>()
   const { isValid, errors } = useFormState({ control })
 
@@ -36,8 +38,8 @@ const FormForTree = (props: FormForTreeProps) => {
       <div className="flex flex-col gap-y-6">
         {!props.isReadonly && (
           <FormField
-            placeholder="Baumnummer"
-            label="Baumnummer"
+            placeholder={t('form.numberLabel')}
+            label={t('form.numberLabel')}
             required
             error={errors.number?.message}
             {...register('number')}
@@ -45,8 +47,8 @@ const FormForTree = (props: FormForTreeProps) => {
         )}
         {!props.isReadonly && (
           <FormField
-            placeholder="Baumart"
-            label="Baumart"
+            placeholder={t('form.speciesLabel')}
+            label={t('form.speciesLabel')}
             required
             error={errors.species?.message}
             {...register('species')}
@@ -54,8 +56,8 @@ const FormForTree = (props: FormForTreeProps) => {
         )}
         {!props.isReadonly && (
           <FormField
-            placeholder="Pflanzjahr"
-            label="Pflanzjahr"
+            placeholder={t('form.plantingYearLabel')}
+            label={t('form.plantingYearLabel')}
             type="number"
             error={errors.plantingYear?.message}
             required
@@ -69,13 +71,13 @@ const FormForTree = (props: FormForTreeProps) => {
             render={({ field }) => (
               <SelectField
                 id="treeClusterId"
-                label="Bewässerungsgruppe"
-                placeholder="Wählen Sie eine Bewässerungsgruppe aus"
+                label={t('form.clusterLabel')}
+                placeholder={t('form.clusterPlaceholder')}
                 value={field.value ?? '-1'}
                 onValueChange={(val) => field.onChange(val === '-1' ? null : val)}
                 error={errors.treeClusterId?.message}
                 options={[
-                  { value: '-1', label: 'Keine Bewässerungsgruppe' },
+                  { value: '-1', label: t('form.clusterNoneOption') },
                   ...props.treeClusters.map((cluster) => ({
                     value: cluster.id.toString(),
                     label: cluster.name,
@@ -91,24 +93,24 @@ const FormForTree = (props: FormForTreeProps) => {
           render={({ field }) => (
             <SelectField
               id="sensorId"
-              label="Verknüpfter Sensor"
-              placeholder="Wählen Sie einen Sensor aus, sofern vorhanden"
+              label={t('form.sensorLabel')}
+              placeholder={t('form.sensorPlaceholder')}
               value={field.value ?? '-1'}
               onValueChange={(val) => field.onChange(val === '-1' ? null : val)}
               error={errors.sensorId?.message}
               options={[
-                { value: '-1', label: 'Kein Sensor' },
+                { value: '-1', label: t('form.sensorNoneOption') },
                 ...props.sensors.map((sensor) => ({
                   value: sensor.id.toString(),
-                  label: `Sensor ${sensor.id}`,
+                  label: t('form.sensorOptionLabel', { id: sensor.id }),
                 })),
               ]}
             />
           )}
         />
         <TextareaField
-          placeholder="Hier ist Platz für Notizen"
-          label="Kurze Beschreibung"
+          placeholder={t('common:form.notesPlaceholder')}
+          label={t('common:form.shortDescriptionLabel')}
           error={errors.description?.message}
           {...register('description')}
         />
@@ -116,13 +118,14 @@ const FormForTree = (props: FormForTreeProps) => {
 
       {!props.isReadonly && !props.hideLocation && (
         <div>
-          <p className="block font-semibold text-dark-800 mb-2.5">Standort des Baumes</p>
+          <p className="block font-semibold text-dark-800 mb-2.5">{t('form.locationHeading')}</p>
           <div>
             <p className="block mb-2.5">
-              <strong className="text-dark-800">Breitengrad:</strong> {getValues('latitude')}
+              <strong className="text-dark-800">{t('form.latitudeLabel')}</strong>{' '}
+              {getValues('latitude')}
             </p>
             <p className="block mb-2.5">
-              <strong className="text-dark-800 font-semibold">Längengrad:</strong>{' '}
+              <strong className="text-dark-800 font-semibold">{t('form.longitudeLabel')}</strong>{' '}
               {getValues('longitude')}
             </p>
           </div>
@@ -134,7 +137,7 @@ const FormForTree = (props: FormForTreeProps) => {
               onClick={props.onChangeLocation}
               className="mt-6"
             >
-              Standort des Baumes anpassen
+              {t('form.adjustLocationButton')}
               <MapPin />
             </Button>
           )}

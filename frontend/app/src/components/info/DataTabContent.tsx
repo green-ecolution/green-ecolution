@@ -11,14 +11,9 @@ import {
 import { Link } from '@tanstack/react-router'
 import { ArrowRight, Database, Droplets, Radio, TreeDeciduous, Trees, Truck } from 'lucide-react'
 import { Bar, BarChart, XAxis, YAxis, Cell } from 'recharts'
+import { useTranslation } from 'react-i18next'
+import { useNumberFormatter } from '@/lib/i18n/useFormatters'
 import HeroStatCard from './HeroStatCard'
-
-const dataChartConfig: ChartConfig = {
-  value: {
-    label: 'Anzahl',
-    color: 'hsl(142, 76%, 36%)',
-  },
-}
 
 interface DataTabContentProps {
   statsData:
@@ -33,29 +28,39 @@ interface DataTabContentProps {
 }
 
 const DataTabContent = ({ statsData }: DataTabContentProps) => {
+  const { t } = useTranslation('info')
+  const numberFormatter = useNumberFormatter()
+
+  const dataChartConfig: ChartConfig = {
+    value: {
+      label: t('data.chart.countLabel'),
+      color: 'hsl(142, 76%, 36%)',
+    },
+  }
+
   const chartData = [
     {
-      name: 'Bäume',
+      name: t('data.chart.treeName'),
       value: statsData?.treeCount ?? 0,
       fill: 'hsl(142, 76%, 36%)',
     },
     {
-      name: 'Gruppen',
+      name: t('data.chart.groupName'),
       value: statsData?.treeClusterCount ?? 0,
       fill: 'hsl(142, 60%, 45%)',
     },
     {
-      name: 'Sensoren',
+      name: t('data.chart.sensorName'),
       value: statsData?.sensorCount ?? 0,
       fill: 'hsl(200, 70%, 50%)',
     },
     {
-      name: 'Fahrzeuge',
+      name: t('data.chart.vehicleName'),
       value: statsData?.vehicleCount ?? 0,
       fill: 'hsl(35, 90%, 55%)',
     },
     {
-      name: 'Pläne',
+      name: t('data.chart.planName'),
       value: statsData?.wateringPlanCount ?? 0,
       fill: 'hsl(210, 60%, 55%)',
     },
@@ -84,18 +89,25 @@ const DataTabContent = ({ statsData }: DataTabContentProps) => {
               search={{ page: 1 }}
               className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-green-dark hover:underline"
             >
-              Alle Baumgruppen ansehen
+              {t('data.hero.viewAllGroupsLink')}
               <ArrowRight className="size-4" />
             </Link>
           }
         >
           <div>
-            <p className="text-sm font-medium text-dark-600 mb-1">Bäume gesamt</p>
+            <p className="text-sm font-medium text-dark-600 mb-1">
+              {t('data.hero.totalTreesLabel')}
+            </p>
             <p className="text-5xl font-bold font-lato text-green-dark tracking-tight">
-              {statsData?.treeCount?.toLocaleString('de-DE') ?? '-'}
+              {statsData?.treeCount != null ? numberFormatter.format(statsData.treeCount) : '-'}
             </p>
             <p className="text-sm text-dark-500 mt-2">
-              in {statsData?.treeClusterCount?.toLocaleString('de-DE') ?? '-'} Gruppen verwaltet
+              {t('data.hero.managedInGroups', {
+                count:
+                  statsData?.treeClusterCount != null
+                    ? numberFormatter.format(statsData.treeClusterCount)
+                    : '-',
+              })}
             </p>
           </div>
         </HeroStatCard>
@@ -103,7 +115,7 @@ const DataTabContent = ({ statsData }: DataTabContentProps) => {
         {/* Chart overview */}
         <Card className="lg:col-span-2">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base font-medium">Datenübersicht</CardTitle>
+            <CardTitle className="text-base font-medium">{t('data.chart.title')}</CardTitle>
           </CardHeader>
           <CardContent>
             <ChartContainer config={dataChartConfig} className="h-[180px] w-full">
@@ -136,33 +148,33 @@ const DataTabContent = ({ statsData }: DataTabContentProps) => {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <DataStatCard
           icon={<Trees className="size-5" />}
-          label="Baumgruppen"
+          label={t('data.stat.groupsLabel')}
           value={statsData?.treeClusterCount ?? 0}
-          subtitle="Verwaltete Cluster"
+          subtitle={t('data.stat.groupsSubtitle')}
           color="green"
           href="/treecluster"
         />
         <DataStatCard
           icon={<Radio className="size-5" />}
-          label="Sensoren"
+          label={t('data.stat.sensorsLabel')}
           value={statsData?.sensorCount ?? 0}
-          subtitle="Aktive Messgeräte"
+          subtitle={t('data.stat.sensorsSubtitle')}
           color="blue"
           href="/sensors"
         />
         <DataStatCard
           icon={<Truck className="size-5" />}
-          label="Fahrzeuge"
+          label={t('data.stat.vehiclesLabel')}
           value={statsData?.vehicleCount ?? 0}
-          subtitle="Registrierte Flotte"
+          subtitle={t('data.stat.vehiclesSubtitle')}
           color="orange"
           href="/vehicles"
         />
         <DataStatCard
           icon={<Droplets className="size-5" />}
-          label="Bewässerungspläne"
+          label={t('data.stat.plansLabel')}
           value={statsData?.wateringPlanCount ?? 0}
-          subtitle="Geplante Routen"
+          subtitle={t('data.stat.plansSubtitle')}
           color="cyan"
           href="/watering-plans"
         />
@@ -177,11 +189,11 @@ const DataTabContent = ({ statsData }: DataTabContentProps) => {
                 <Database className="size-4 text-dark-600" />
               </div>
               <div>
-                <p className="text-sm font-medium">Gesamte Datensätze</p>
-                <p className="text-xs text-dark-500">Alle verwalteten Entitäten</p>
+                <p className="text-sm font-medium">{t('data.summary.totalLabel')}</p>
+                <p className="text-xs text-dark-500">{t('data.summary.totalHint')}</p>
               </div>
             </div>
-            <p className="text-2xl font-bold font-lato">{totalEntities.toLocaleString('de-DE')}</p>
+            <p className="text-2xl font-bold font-lato">{numberFormatter.format(totalEntities)}</p>
           </div>
         </CardContent>
       </Card>
@@ -222,6 +234,8 @@ const colorStyles = {
 }
 
 function DataStatCard({ icon, label, value, subtitle, color, href }: DataStatCardProps) {
+  const { t } = useTranslation('info')
+  const numberFormatter = useNumberFormatter()
   const styles = colorStyles[color]
 
   return (
@@ -234,12 +248,12 @@ function DataStatCard({ icon, label, value, subtitle, color, href }: DataStatCar
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm text-dark-600 font-medium truncate">{label}</p>
-              <p className="text-2xl font-bold font-lato mt-0.5">{value.toLocaleString('de-DE')}</p>
+              <p className="text-2xl font-bold font-lato mt-0.5">{numberFormatter.format(value)}</p>
               <p className="text-xs text-dark-400 mt-1">{subtitle}</p>
             </div>
           </div>
           <div className="mt-3 flex items-center gap-1.5 text-xs font-medium text-dark-500 group-hover:text-green-dark transition-colors">
-            Ansehen
+            {t('data.stat.viewLink')}
             <ArrowRight className="size-3 transition-transform duration-base ease-emphasized group-hover:translate-x-0.5 motion-reduce:transition-none" />
           </div>
         </CardContent>

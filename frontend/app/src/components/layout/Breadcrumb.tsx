@@ -1,5 +1,6 @@
 import { Fragment } from 'react'
 import { Link } from '@tanstack/react-router'
+import { useTranslation } from 'react-i18next'
 import { useBreadcrumbs } from '@/hooks/useBreadcrumb'
 import {
   Breadcrumb as BreadcrumbRoot,
@@ -12,16 +13,17 @@ import {
 
 function Breadcrumb() {
   const breadcrumbs = useBreadcrumbs()
+  const { t } = useTranslation('navigation')
 
   const rootBreadcrumb = {
-    title: 'Dashboard',
+    title: t('breadcrumb.root'),
     path: '/dashboard',
   }
 
   const isLastItem = (index: number) => index === breadcrumbs.length - 1
 
   return (
-    <BreadcrumbRoot aria-label="Seitennavigation" className="hidden lg:block">
+    <BreadcrumbRoot aria-label={t('breadcrumb.nav')} className="hidden lg:block">
       <BreadcrumbList>
         <BreadcrumbItem>
           <BreadcrumbLink asChild>

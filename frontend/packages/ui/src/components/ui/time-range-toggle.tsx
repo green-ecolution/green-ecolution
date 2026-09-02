@@ -1,4 +1,5 @@
 import { SegmentedControl, type SegmentedControlOption } from '@/components/ui/segmented-control'
+import { useUiText } from '@/i18n'
 
 export type TimeRangeToggleOption<T extends string> = SegmentedControlOption<T>
 
@@ -14,15 +15,18 @@ export const TimeRangeToggle = <T extends string>({
   options,
   value,
   onChange,
-  ariaLabel = 'Zeitraum',
+  ariaLabel,
   className,
-}: TimeRangeToggleProps<T>) => (
-  <SegmentedControl
-    options={options}
-    value={value}
-    onChange={onChange}
-    ariaLabel={ariaLabel}
-    size="sm"
-    className={className}
-  />
-)
+}: TimeRangeToggleProps<T>) => {
+  const { t } = useUiText()
+  return (
+    <SegmentedControl
+      options={options}
+      value={value}
+      onChange={onChange}
+      ariaLabel={ariaLabel ?? t('timeRange.label')}
+      size="sm"
+      className={className}
+    />
+  )
+}

@@ -1,9 +1,10 @@
 import { format, formatDistanceToNow } from 'date-fns'
-import { de } from 'date-fns/locale'
+import { useTranslation } from 'react-i18next'
 import { StatusCard } from '@green-ecolution/ui'
 import StatusCardGrid from '@/components/general/StatusCardGrid'
-import { getWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
+import { useWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
 import { roundTo } from '@/lib/utils'
+import { useDateLocale } from '@/lib/i18n/useFormatters'
 import { latestClusterReading } from './clusterLatestReading'
 import type { TreeCluster } from '@/api/backendApi'
 
@@ -12,6 +13,9 @@ interface ClusterKpiRowProps {
 }
 
 const ClusterKpiRow = ({ treecluster }: ClusterKpiRowProps) => {
+  const { t } = useTranslation('treecluster')
+  const dateLocale = useDateLocale()
+  const getWateringStatusDetails = useWateringStatusDetails()
   const wateringStatus = getWateringStatusDetails(treecluster.wateringStatus)
   const { temperature, measuredAt } = latestClusterReading(treecluster.trees ?? [])
 
@@ -22,7 +26,7 @@ const ClusterKpiRow = ({ treecluster }: ClusterKpiRowProps) => {
           size="compact"
           status={wateringStatus.color}
           indicator="dot"
-          label="Bewässerungszustand (ø)"
+          label={t('kpi.wateringStatusLabel')}
           value={wateringStatus.label}
           info={wateringStatus.description}
         />
@@ -30,29 +34,31 @@ const ClusterKpiRow = ({ treecluster }: ClusterKpiRowProps) => {
       <li className="h-full">
         <StatusCard
           size="compact"
-          label="Bodentemperatur"
-          value={temperature != null ? `${roundTo(temperature, 1)} °C` : 'Keine Daten'}
+          label={t('kpi.soilTemperatureLabel')}
+          value={temperature != null ? `${roundTo(temperature, 1)} °C` : t('kpi.noData')}
         />
       </li>
       <li className="h-full">
         <StatusCard
           size="compact"
-          label="Letzte Messung"
+          label={t('kpi.lastMeasurementLabel')}
           value={
             measuredAt
-              ? formatDistanceToNow(measuredAt, { addSuffix: true, locale: de })
-              : 'Keine Daten'
+              ? formatDistanceToNow(measuredAt, { addSuffix: true, locale: dateLocale })
+              : t('kpi.noData')
           }
         />
       </li>
       <li className="h-full">
         <StatusCard
           size="compact"
-          label="Letzte Bewässerung"
+          label={t('kpi.lastWateredLabel')}
           value={
-            treecluster.lastWatered ? format(new Date(treecluster.lastWatered), 'dd.MM.yyyy') : '—'
+            treecluster.lastWatered
+              ? format(new Date(treecluster.lastWatered), 'dd.MM.yyyy', { locale: dateLocale })
+              : '—'
           }
-          info="Wird aktualisiert, sobald ein Einsatzplan mit dieser Gruppe als »Beendet« markiert wird."
+          info={t('kpi.lastWateredInfo')}
         />
       </li>
     </StatusCardGrid>

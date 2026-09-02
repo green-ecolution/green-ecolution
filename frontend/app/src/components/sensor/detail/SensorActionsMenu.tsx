@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useMutation } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { ChevronDown, Link2, Link2Off, Replace, Trash2 } from 'lucide-react'
 import {
   AlertDialog,
@@ -30,6 +31,7 @@ interface SensorActionsMenuProps {
 }
 
 const SensorActionsMenu = ({ sensor }: SensorActionsMenuProps) => {
+  const { t } = useTranslation(['sensor', 'common'])
   const sensorId = sensor.id
   const actions = useSensorActions()
   const isPrepared = sensor.status === 'prepared'
@@ -42,14 +44,14 @@ const SensorActionsMenu = ({ sensor }: SensorActionsMenuProps) => {
   const deleteMutation = useMutation({
     mutationFn: () => sensorApi.deleteSensor({ sensorId }),
     onSuccess: async () => {
-      toast.success('Sensor wurde gelöscht.')
+      toast.success(t('actions.deleteSuccessToast'))
       await navigate({ to: '/sensors', search: { page: 1 } })
       // After leaving: this page holds a live query on the sensor. Trees too,
       // because deleting a sensor detaches it from the tree it was on.
       await invalidate(['sensor', 'tree'])
     },
     onError: () => {
-      toast.error('Der Sensor konnte nicht gelöscht werden.')
+      toast.error(t('actions.deleteFailedToast'))
     },
   })
 
@@ -60,7 +62,7 @@ const SensorActionsMenu = ({ sensor }: SensorActionsMenuProps) => {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="sm" className="gap-2 [&_svg]:size-4">
-            Aktionen
+            {t('actions.menuButton')}
             <ChevronDown />
           </Button>
         </DropdownMenuTrigger>
@@ -72,7 +74,7 @@ const SensorActionsMenu = ({ sensor }: SensorActionsMenuProps) => {
                 onSelect={() => actions.requestActivate()}
               >
                 <Link2 className="mr-2 size-4" />
-                Aktivieren & Baum zuweisen
+                {t('actions.activateAssignTree')}
               </DropdownMenuItem>
             ) : (
               <>
@@ -81,14 +83,14 @@ const SensorActionsMenu = ({ sensor }: SensorActionsMenuProps) => {
                   onSelect={() => actions.requestReassign()}
                 >
                   <Replace className="mr-2 size-4" />
-                  Anderen Baum zuweisen
+                  {t('actions.reassignTree')}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="cursor-pointer"
                   onSelect={() => actions.requestRemove()}
                 >
                   <Link2Off className="mr-2 size-4" />
-                  Baumverknüpfung aufheben
+                  {t('actions.removeLink')}
                 </DropdownMenuItem>
               </>
             ))}
@@ -101,7 +103,7 @@ const SensorActionsMenu = ({ sensor }: SensorActionsMenuProps) => {
               }}
             >
               <Trash2 className="mr-2 size-4" />
-              Sensor löschen
+              {t('actions.deleteSensor')}
             </DropdownMenuItem>
           )}
         </DropdownMenuContent>
@@ -112,15 +114,15 @@ const SensorActionsMenu = ({ sensor }: SensorActionsMenuProps) => {
           <AlertDialogIcon variant="destructive">
             <Trash2 />
           </AlertDialogIcon>
-          <AlertDialogTitle>Sensor wirklich löschen?</AlertDialogTitle>
+          <AlertDialogTitle>{t('actions.deleteConfirmTitle')}</AlertDialogTitle>
           <AlertDialogDescription>
-            Diese Aktion kann nicht rückgängig gemacht werden. Der Sensor{' '}
-            <code className="font-mono text-foreground">{sensorId}</code> wird inklusive seiner
-            LoRaWAN-Konfiguration und aller Messdaten dauerhaft entfernt.
+            {t('actions.deleteConfirmDescription', { id: sensorId })}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={deleteMutation.isPending}>Abbrechen</AlertDialogCancel>
+          <AlertDialogCancel disabled={deleteMutation.isPending}>
+            {t('common:actions.cancel')}
+          </AlertDialogCancel>
           <AlertDialogAction
             disabled={deleteMutation.isPending}
             onClick={(e) => {
@@ -128,7 +130,7 @@ const SensorActionsMenu = ({ sensor }: SensorActionsMenuProps) => {
               deleteMutation.mutate()
             }}
           >
-            {deleteMutation.isPending ? 'Wird gelöscht …' : 'Endgültig löschen'}
+            {deleteMutation.isPending ? t('actions.deletePending') : t('actions.deleteFinal')}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { type LngLatBoundsLike } from 'maplibre-gl'
 import { cn } from '@green-ecolution/ui'
+import { useTranslation } from 'react-i18next'
 import type { TreeWithDistance } from '@/api/backendApi'
 import { useMaplibreMap } from '@/components/map-gl/MapContext'
 import MapPreview from '@/components/map-gl/MapPreview'
@@ -46,6 +47,7 @@ const NearestTreeMapPreview = ({
   onSelectTree,
   className,
 }: NearestTreeMapPreviewProps) => {
+  const { t } = useTranslation('common')
   const bounds = useMemo<LngLatBoundsLike>(() => {
     const lngs = [sensorLng, ...trees.map((t) => t.tree.longitude)]
     const lats = [sensorLat, ...trees.map((t) => t.tree.latitude)]
@@ -69,7 +71,7 @@ const NearestTreeMapPreview = ({
     <MapPreview
       bounds={bounds}
       interactive
-      ariaLabel="Karte mit Sensor-Position und nahegelegenen Bäumen"
+      ariaLabel={t('geo.map.nearestTreeAriaLabel')}
       className={cn('aspect-[4/3] sm:aspect-[16/10]', className)}
     >
       <SensorMarker lng={sensorLng} lat={sensorLat} />

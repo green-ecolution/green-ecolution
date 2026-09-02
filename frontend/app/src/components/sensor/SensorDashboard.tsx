@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import BackLink from '@/components/general/links/BackLink'
 import SensorAbilitiesSection from './detail/SensorAbilitiesSection'
 import SensorActionsProvider from './detail/SensorActionsContext'
@@ -17,9 +18,10 @@ interface SensorDashboardProps {
 }
 
 const SensorDashboard = ({ sensor }: SensorDashboardProps) => {
+  const { t } = useTranslation('sensor')
   return (
     <SensorActionsProvider sensor={sensor}>
-      <BackLink link={{ to: '/sensors', search: { page: 1 } }} label="Zu allen Sensoren" />
+      <BackLink link={{ to: '/sensors', search: { page: 1 } }} label={t('detail.backToList')} />
       <div className="flex flex-col gap-10 pb-16">
         <SensorHero sensor={sensor} />
         <SensorStatusGrid sensor={sensor} />

@@ -9,7 +9,7 @@ export const Route = createFileRoute(
   '/_protected/watering-plans/_formular/$wateringPlanId/status/edit/',
 )({
   component: StatusEditWateringPlan,
-  pendingComponent: pendingLoading('Einsatzplan wird geladen …'),
+  pendingComponent: pendingLoading({ key: 'wateringPlan:detail.loadingLabel' }),
   loader: async () => {
     if (!(await getAuthSession().isAuthenticated())) return
   },

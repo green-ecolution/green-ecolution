@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { sensorApi } from '@/api/backendApi'
 import createToast from '@/hooks/createToast'
+import { useTranslation } from 'react-i18next'
 
 export interface AcknowledgeDataQualityVariables {
   sensorId: string
@@ -10,6 +11,7 @@ export interface AcknowledgeDataQualityVariables {
 export const useSensorQualityMutations = () => {
   const queryClient = useQueryClient()
   const showToast = createToast()
+  const { t } = useTranslation('sensor')
 
   const acknowledge = useMutation({
     mutationFn: ({ sensorId, note }: AcknowledgeDataQualityVariables) => {
@@ -25,10 +27,10 @@ export const useSensorQualityMutations = () => {
       // read the same two fields, so the sensor caches have to go too.
       void queryClient.invalidateQueries({ queryKey: ['sensor', sensorId] })
       void queryClient.invalidateQueries({ queryKey: ['sensors'] })
-      showToast('Datenqualität als geprüft vermerkt')
+      showToast(t('dataQuality.acknowledgeSuccessToast'))
     },
     onError: () => {
-      showToast('Der Vermerk konnte nicht gespeichert werden.', 'error')
+      showToast(t('dataQuality.acknowledgeFailedToast'), 'error')
     },
   })
 

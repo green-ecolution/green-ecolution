@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Check, Copy, Eye, EyeOff, ShieldAlert } from 'lucide-react'
 import { cn, toast } from '@green-ecolution/ui'
 import { SECRET_MASK } from './secrets'
@@ -12,6 +13,7 @@ interface SecretRevealProps {
 }
 
 const SecretReveal = ({ label, value, autoHideSeconds = 10 }: SecretRevealProps) => {
+  const { t } = useTranslation('sensor')
   const { revealed, toggle } = useSecretReveal(autoHideSeconds)
   const [copied, setCopied] = useState(false)
 
@@ -22,7 +24,7 @@ const SecretReveal = ({ label, value, autoHideSeconds = 10 }: SecretRevealProps)
         setTimeout(() => setCopied(false), 2000)
       },
       () => {
-        toast.error('Kopieren fehlgeschlagen.')
+        toast.error(t('clipboard.copyFailed'))
       },
     )
   }
@@ -31,7 +33,10 @@ const SecretReveal = ({ label, value, autoHideSeconds = 10 }: SecretRevealProps)
     <div className="flex flex-col gap-2">
       <span className="text-xs uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
         {label}
-        <ShieldAlert className="size-3 text-yellow" aria-label="Sensible Daten" />
+        <ShieldAlert
+          className="size-3 text-yellow"
+          aria-label={t('secretReveal.sensitiveDataAriaLabel')}
+        />
       </span>
       <code className="relative flex items-center font-mono text-lg md:text-xl font-semibold break-all bg-dark-50 rounded-lg pl-3 pr-20 py-2 border border-dark-100 min-h-12">
         <span
@@ -44,7 +49,11 @@ const SecretReveal = ({ label, value, autoHideSeconds = 10 }: SecretRevealProps)
           <button
             type="button"
             onClick={toggle}
-            aria-label={revealed ? `${label} verbergen` : `${label} anzeigen`}
+            aria-label={
+              revealed
+                ? t('secretReveal.hideAriaLabel', { label })
+                : t('secretReveal.showAriaLabel', { label })
+            }
             aria-pressed={revealed}
             className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-dark-100 transition-colors cursor-pointer"
           >
@@ -53,7 +62,7 @@ const SecretReveal = ({ label, value, autoHideSeconds = 10 }: SecretRevealProps)
           <button
             type="button"
             onClick={handleCopy}
-            aria-label={`${label} kopieren`}
+            aria-label={t('secretReveal.copyAriaLabel', { label })}
             className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-dark-100 transition-colors cursor-pointer"
           >
             {copied ? <Check className="size-4 text-green-dark" /> : <Copy className="size-4" />}
@@ -62,7 +71,7 @@ const SecretReveal = ({ label, value, autoHideSeconds = 10 }: SecretRevealProps)
       </code>
       {revealed && (
         <p className="text-xs text-muted-foreground">
-          Wird in {autoHideSeconds}s automatisch verborgen.
+          {t('secretReveal.autoHideNotice', { seconds: autoHideSeconds })}
         </p>
       )}
     </div>

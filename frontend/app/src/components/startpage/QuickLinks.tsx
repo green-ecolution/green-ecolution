@@ -1,44 +1,38 @@
 import { Link } from '@tanstack/react-router'
 import { LinkCard, LinkCardTitle, LinkCardDescription, LinkCardFooter } from '@green-ecolution/ui'
+import { useTranslation } from 'react-i18next'
 
 const QuickLinks = () => {
+  const { t } = useTranslation('startpage')
   const cards = [
     {
       id: 1,
       url: '/map',
-      description: 'Alle Bewässerungsgruppen & Bäume auf der Karte anzeigen lassen',
-      headline: 'Karte inkl. Verortung aller Bäume',
-      linkLabel: 'Zur Karte',
+      description: t('quickLinks.map.description'),
+      headline: t('quickLinks.map.headline'),
+      linkLabel: t('quickLinks.map.linkLabel'),
     },
     {
       id: 2,
       url: '/sensors',
-      description: 'Zeigt alle verbauten Sensoren inkl. Akkustand, Messwerte, …',
-      headline: 'Liste aller verbauten Sensoren',
-      linkLabel: 'Zu den Sensoren',
+      description: t('quickLinks.sensors.description'),
+      headline: t('quickLinks.sensors.headline'),
+      linkLabel: t('quickLinks.sensors.linkLabel'),
     },
     {
       id: 3,
       url: '/watering-plans',
-      description:
-        'Listenansicht, aller Einsatzpläne, die geplant, abgeschlossen, aktiv etc. sind.',
-      headline: 'Auflistung der Einsatzpläne & Routenplanung',
-      linkLabel: 'Zu den Einsatzplänen',
+      description: t('quickLinks.wateringPlans.description'),
+      headline: t('quickLinks.wateringPlans.headline'),
+      linkLabel: t('quickLinks.wateringPlans.linkLabel'),
     },
   ]
 
   return (
     <section className="container border-t border-t-dark-100 pt-10 mt-20 lg:pt-28 lg:mt-28">
       <article className="text-center max-w-screen-lg mx-auto">
-        <h2 className="font-bold font-lato text-xl mb-6 lg:text-3xl">
-          Ansichten für eine effiziente Bewässerungskontrolle
-        </h2>
-        <p className="mb-6 lg:mb-10">
-          Unser System bietet verschiedene Ansichten, um den Bewässerungszustand der Bäume zu
-          überwachen. Sie können alle Bäume auf einer Karte anzeigen, die verbauten Sensoren mit
-          Akkustand und Messwerten einsehen und eine Übersicht der Einsatzpläne bisheriger und
-          zukünftiger Bewässerungsfahrten abrufen.
-        </p>
+        <h2 className="font-bold font-lato text-xl mb-6 lg:text-3xl">{t('quickLinks.heading')}</h2>
+        <p className="mb-6 lg:mb-10">{t('quickLinks.intro')}</p>
       </article>
       <ul className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
         {cards.map((card, key) => (

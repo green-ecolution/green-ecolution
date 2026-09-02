@@ -1,49 +1,33 @@
+import { useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { WateringStatus } from '@green-ecolution/backend-client'
-import { StatusColor } from './types'
+import { EnumsTranslate, StatusColor } from './types'
 
-const WateringStatusProperties: Record<
-  WateringStatus,
-  {
-    color: StatusColor
-    label: string
-    description: string
-    colorHex: string
-  }
-> = {
-  [WateringStatus.Unknown]: {
-    color: 'outline-dark',
-    label: 'Unbekannt',
-    description: 'Der Bewässerungsstatus ist unbekannt.',
-    colorHex: '#A2A2A2',
-  },
-  [WateringStatus.JustWatered]: {
-    color: 'outline-dark',
-    label: 'Soeben bewässert',
-    description: 'Die Bäume wurden vor kurzem bewässert.',
-    colorHex: '#747474',
-  },
-  [WateringStatus.Bad]: {
-    color: 'outline-red',
-    label: 'Sehr trocken',
-    description: 'Die Bäume benötigen dringend Wasser.',
-    colorHex: '#E44E4D',
-  },
-  [WateringStatus.Moderate]: {
-    color: 'outline-yellow',
-    label: 'Leicht trocken',
-    description: 'Die Bäume sind leicht trocken und benötigen etwas Wasser.',
-    colorHex: '#FFC434',
-  },
-  [WateringStatus.Good]: {
-    color: 'outline-green-light',
-    label: 'In Ordnung',
-    description: 'Die Bewässerung ist ausreichend, keine Maßnahmen erforderlich.',
-    colorHex: '#ACB63B',
-  },
-} as const
+const WateringStatusColors: Record<WateringStatus, { color: StatusColor; colorHex: string }> = {
+  [WateringStatus.Unknown]: { color: 'outline-dark', colorHex: '#A2A2A2' },
+  [WateringStatus.JustWatered]: { color: 'outline-dark', colorHex: '#747474' },
+  [WateringStatus.Bad]: { color: 'outline-red', colorHex: '#E44E4D' },
+  [WateringStatus.Moderate]: { color: 'outline-yellow', colorHex: '#FFC434' },
+  [WateringStatus.Good]: { color: 'outline-green-light', colorHex: '#ACB63B' },
+}
 
-type WateringStatusDetails = (typeof WateringStatusProperties)[WateringStatus]
+export interface WateringStatusDetails {
+  color: StatusColor
+  colorHex: string
+  label: string
+  description: string
+}
 
-export const getWateringStatusDetails = (status: WateringStatus): WateringStatusDetails => {
-  return WateringStatusProperties[status]
+/** Reactive to language change: re-renders whichever component calls it. */
+export const useWateringStatusDetails = (): ((status: WateringStatus) => WateringStatusDetails) => {
+  const { t } = useTranslation('enums')
+  const translate = t as EnumsTranslate
+  return useCallback(
+    (status: WateringStatus): WateringStatusDetails => ({
+      ...WateringStatusColors[status],
+      label: translate(`wateringStatus.${status}.label`),
+      description: translate(`wateringStatus.${status}.description`),
+    }),
+    [translate],
+  )
 }

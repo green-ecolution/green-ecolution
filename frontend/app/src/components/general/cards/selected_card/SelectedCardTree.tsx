@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { SelectedCardProps } from '../SelectedCard'
 import { treeQueries } from '@/api/queries'
-import { getWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
+import { useWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
 import { Trash2 } from 'lucide-react'
 import {
   ListCard,
@@ -14,8 +15,10 @@ import {
 interface SelectedCardTreeProps extends Omit<SelectedCardProps, 'type'> {}
 
 const SelectedCardTree = ({ onClick, id }: SelectedCardTreeProps) => {
+  const { t } = useTranslation(['tree', 'common'])
   // useQuery (not suspense) so adding a card doesn't suspend and flicker the panel.
   const { data } = useQuery(treeQueries.detail(String(id)))
+  const getWateringStatusDetails = useWateringStatusDetails()
   const statusDetails = getWateringStatusDetails(data?.wateringStatus ?? 'unknown')
 
   return (
@@ -23,13 +26,13 @@ const SelectedCardTree = ({ onClick, id }: SelectedCardTreeProps) => {
       <ListCardStatus status={statusDetails.color} />
       <ListCardContent>
         <span className="font-medium">
-          <strong className="font-semibold">Baum:</strong>
+          <strong className="font-semibold">{t('selectedCard.label')}</strong>
           {data ? (
             <>
               &nbsp;{data.species} · {data.number} · {data.plantingYear}
             </>
           ) : (
-            <>&nbsp;Lädt…</>
+            <>&nbsp;{t('common:state.loadingInline')}</>
           )}
         </span>
       </ListCardContent>
@@ -43,7 +46,7 @@ const SelectedCardTree = ({ onClick, id }: SelectedCardTreeProps) => {
             onClick={() => onClick(id)}
           >
             <Trash2 className="w-5 h-5" />
-            <span className="sr-only">Baum aus Auswahl löschen</span>
+            <span className="sr-only">{t('selectedCard.removeAriaLabel')}</span>
           </Button>
         </ListCardActions>
       )}

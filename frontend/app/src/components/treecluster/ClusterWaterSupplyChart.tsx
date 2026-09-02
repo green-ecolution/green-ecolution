@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useQuery, keepPreviousData } from '@tanstack/react-query'
 import { format } from 'date-fns'
+import { useTranslation } from 'react-i18next'
 import { Area, Line, ReferenceLine } from 'recharts'
 import {
   Card,
@@ -22,6 +23,7 @@ import {
   toConditionRows,
   wateringEventMarkers,
 } from '@/components/general/charts/soilMoistureChart'
+import { useDateLocale } from '@/lib/i18n/useFormatters'
 
 const RANGE_KEYS = ['24h', '7d', '30d'] satisfies TimeWindowKey[]
 type RangeKey = (typeof RANGE_KEYS)[number]
@@ -32,16 +34,7 @@ const BUCKET_BY_RANGE: Record<RangeKey, 'hour' | 'day'> = {
   '30d': 'day',
 }
 
-const BUCKET_SUBTITLE: Record<'hour' | 'day', string> = {
-  hour: 'Pflanzenverfügbares Wasser (Stundenmittel) · Gestrichelt = Schwellen',
-  day: 'Pflanzenverfügbares Wasser (Tagesmittel) · Gestrichelt = Schwellen',
-}
-
 const SUPPLY_COLOR = '#0072B2'
-
-const config = {
-  supply: { label: 'Verfügbares Wasser (%)', color: SUPPLY_COLOR },
-} satisfies ChartConfig
 
 interface ClusterWaterSupplyChartProps {
   clusterId: string
@@ -49,8 +42,21 @@ interface ClusterWaterSupplyChartProps {
 }
 
 const ClusterWaterSupplyChart = ({ clusterId, hasSensors }: ClusterWaterSupplyChartProps) => {
+  const { t } = useTranslation('treecluster')
+  // Separate from `t` above: timeWindowOptions expects a TFunction<'common'>,
+  // and a multi-namespace `t` would default-resolve its unprefixed keys
+  // against 'treecluster' instead (namespace order picks the default).
+  const { t: tCommon } = useTranslation('common')
+  const dateLocale = useDateLocale()
   const [rangeKey, setRangeKey] = useState<RangeKey>('7d')
   const bucket = BUCKET_BY_RANGE[rangeKey]
+  const bucketSubtitle: Record<'hour' | 'day', string> = {
+    hour: t('waterSupplyChart.subtitleHour'),
+    day: t('waterSupplyChart.subtitleDay'),
+  }
+  const config = {
+    supply: { label: t('waterSupplyChart.seriesLabel'), color: SUPPLY_COLOR },
+  } satisfies ChartConfig
   // eslint-disable-next-line react-hooks/purity, react-x/purity -- windowStart truncates to the hour, keeping the query key stable
   const from = windowStart(rangeKey, Date.now())
   const { data, isPlaceholderData, error } = useQuery({
@@ -69,11 +75,11 @@ const ClusterWaterSupplyChart = ({ clusterId, hasSensors }: ClusterWaterSupplyCh
     <Card variant="outlined">
       <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-2">
         <div>
-          <CardTitle>Wasserversorgung</CardTitle>
-          <p className="text-xs text-muted-foreground">{BUCKET_SUBTITLE[bucket]}</p>
+          <CardTitle>{t('waterSupplyChart.title')}</CardTitle>
+          <p className="text-xs text-muted-foreground">{bucketSubtitle[bucket]}</p>
         </div>
         <TimeRangeToggle
-          options={timeWindowOptions(RANGE_KEYS)}
+          options={timeWindowOptions(RANGE_KEYS, tCommon)}
           value={rangeKey}
           onChange={setRangeKey}
         />
@@ -81,19 +87,20 @@ const ClusterWaterSupplyChart = ({ clusterId, hasSensors }: ClusterWaterSupplyCh
       <CardContent>
         {!hasSensors ? (
           <p className="flex h-[260px] items-center justify-center text-center text-sm text-muted-foreground">
-            Kein Baum dieser Gruppe ist mit einem Sensor ausgestattet — es liegen keine Messwerte
-            vor.
+            {t('waterSupplyChart.noSensorsNotice')}
           </p>
         ) : !data ? (
-          <Loading className="h-[260px] justify-center" label="Messwerte werden geladen" />
+          <Loading
+            className="h-[260px] justify-center"
+            label={t('waterSupplyChart.loadingLabel')}
+          />
         ) : soilUnknown ? (
           <p className="flex h-[260px] items-center justify-center text-center text-sm text-muted-foreground">
-            Für diese Gruppe ist keine Bodenart hinterlegt — die Wasserversorgung kann nicht
-            berechnet werden.
+            {t('waterSupplyChart.soilUnknownNotice')}
           </p>
         ) : rows.length <= 1 ? (
           <p className="flex h-[260px] items-center justify-center text-sm text-muted-foreground">
-            Zu wenige Datenpunkte im gewählten Zeitraum.
+            {t('waterSupplyChart.tooFewDataPoints')}
           </p>
         ) : (
           <div
@@ -136,7 +143,11 @@ const ClusterWaterSupplyChart = ({ clusterId, hasSensors }: ClusterWaterSupplyCh
                   stroke="#747474"
                   strokeDasharray="4 4"
                   ifOverflow="extendDomain"
-                  label={{ value: 'mäßig', position: 'insideBottomLeft', fontSize: 11 }}
+                  label={{
+                    value: t('waterSupplyChart.moderateThresholdLabel'),
+                    position: 'insideBottomLeft',
+                    fontSize: 11,
+                  }}
                 />
               )}
               {thresholds && (
@@ -145,7 +156,11 @@ const ClusterWaterSupplyChart = ({ clusterId, hasSensors }: ClusterWaterSupplyCh
                   stroke="#747474"
                   strokeDasharray="4 4"
                   ifOverflow="extendDomain"
-                  label={{ value: 'kritisch', position: 'insideBottomLeft', fontSize: 11 }}
+                  label={{
+                    value: t('waterSupplyChart.criticalThresholdLabel'),
+                    position: 'insideBottomLeft',
+                    fontSize: 11,
+                  }}
                 />
               )}
               {markers.map((event) => (
@@ -155,7 +170,9 @@ const ClusterWaterSupplyChart = ({ clusterId, hasSensors }: ClusterWaterSupplyCh
                   stroke="#747474"
                   strokeDasharray="4 4"
                   label={{
-                    value: `Bewässert am ${format(event.date, 'dd.MM.')}`,
+                    value: t('waterSupplyChart.wateredOnLabel', {
+                      date: format(event.date, 'dd.MM.', { locale: dateLocale }),
+                    }),
                     angle: -90,
                     position: 'insideTopRight',
                     fontSize: 11,

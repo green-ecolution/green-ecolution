@@ -1,6 +1,9 @@
+import { useTranslation } from 'react-i18next'
 import QRScannerView from '@/components/scanner/QRScannerView'
 import type { SensorResponse } from '@green-ecolution/backend-client'
 import { Button, CopyableText, Loading } from '@green-ecolution/ui'
+import { useSensorStatusDetails } from '@/hooks/details/useDetailsForSensorStatus'
+import { intlLocale } from '@/lib/i18n/format'
 import {
   AlertTriangle,
   Barcode,
@@ -23,27 +26,23 @@ interface SensorScanStepProps {
   onContinue: () => void
 }
 
-const dateFormatter = new Intl.DateTimeFormat('de-DE', {
-  dateStyle: 'medium',
-  timeStyle: 'short',
-})
-
-const formatLatestData = (iso: string): string => {
+const formatLatestData = (iso: string, locale: string): string => {
   const date = new Date(iso)
   if (Number.isNaN(date.getTime())) return iso
-  return dateFormatter.format(date)
+  return new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }).format(date)
 }
 
-const ScannerHeader = () => (
-  <header className="space-y-2">
-    <h1 className="font-lato font-bold text-3xl lg:text-4xl">Sensor-QR scannen</h1>
-    <p className="text-sm text-muted-foreground max-w-prose">
-      Halte den QR-Code auf der Sensoreinheit ruhig in den Scan-Rahmen. Wir identifizieren damit den
-      Sensor eindeutig, bevor du ihn im nächsten Schritt einem Baum zuordnest. Bei schlechter
-      Beleuchtung hilft es, den Code etwas näher heranzuhalten.
-    </p>
-  </header>
-)
+const ScannerHeader = () => {
+  const { t } = useTranslation('sensor')
+  return (
+    <header className="space-y-2">
+      <h1 className="font-lato font-bold text-3xl lg:text-4xl">{t('wizard.scan.header.title')}</h1>
+      <p className="text-sm text-muted-foreground max-w-prose">
+        {t('wizard.scan.header.description')}
+      </p>
+    </header>
+  )
+}
 
 const SensorScanStep = ({
   scannedSensorId,
@@ -56,11 +55,14 @@ const SensorScanStep = ({
   onRetryLookup,
   onContinue,
 }: SensorScanStepProps) => {
+  const { t, i18n } = useTranslation(['sensor', 'common'])
+  const getSensorStatusDetails = useSensorStatusDetails()
+
   if (!scannedSensorId) {
     return (
       <div className="space-y-6">
         <ScannerHeader />
-        <QRScannerView continueLabel="Sensor übernehmen" onContinue={onScanned} />
+        <QRScannerView continueLabel={t('wizard.scan.continueLabel')} onContinue={onScanned} />
       </div>
     )
   }
@@ -69,15 +71,17 @@ const SensorScanStep = ({
     return (
       <div className="space-y-6">
         <header className="space-y-2">
-          <h1 className="font-lato font-bold text-3xl lg:text-4xl">Sensor wird geprüft</h1>
+          <h1 className="font-lato font-bold text-3xl lg:text-4xl">
+            {t('wizard.scan.checking.title')}
+          </h1>
           <p className="text-sm text-muted-foreground max-w-prose">
-            Wir gleichen die gescannte ID mit der Datenbank ab. Das dauert nur einen Moment.
+            {t('wizard.scan.checking.description')}
           </p>
         </header>
 
         <div className="rounded-2xl border border-dark-100 bg-dark-50/40 p-4 md:p-5 space-y-4">
-          <CopyableText value={scannedSensorId} label="Sensor-ID" />
-          <Loading size="default" label="Sensor wird im System abgeglichen …" />
+          <CopyableText value={scannedSensorId} label={t('common:scanner.result.idLabel')} />
+          <Loading size="default" label={t('wizard.scan.checking.loadingLabel')} />
         </div>
       </div>
     )
@@ -90,21 +94,21 @@ const SensorScanStep = ({
     const content = {
       notFound: {
         icon: <ScanSearch className="size-8" />,
-        title: 'Sensor nicht gefunden',
-        description: 'Diese Sensor-ID ist im System nicht hinterlegt.',
-        hint: 'Vergewissere dich, dass die Sensoreinheit über die Verwaltung im System registriert wurde, oder kontaktiere den Admin.',
+        title: t('wizard.scan.error.notFound.title'),
+        description: t('wizard.scan.error.notFound.description'),
+        hint: t('wizard.scan.error.notFound.hint'),
       },
       badRequest: {
         icon: <Barcode className="size-8" />,
-        title: 'Sensor-ID ungültig',
-        description: 'Die gescannte ID entspricht nicht dem erwarteten Format.',
-        hint: 'Bitte prüfe, ob du den korrekten QR-Code auf der Sensoreinheit gescannt hast.',
+        title: t('wizard.scan.error.badRequest.title'),
+        description: t('wizard.scan.error.badRequest.description'),
+        hint: t('wizard.scan.error.badRequest.hint'),
       },
       network: {
         icon: <WifiOff className="size-8" />,
-        title: 'Abgleich fehlgeschlagen',
-        description: 'Der Abgleich mit der Datenbank konnte nicht ausgeführt werden.',
-        hint: 'Bitte prüfe deine Internetverbindung und versuche es erneut.',
+        title: t('wizard.scan.error.network.title'),
+        description: t('wizard.scan.error.network.description'),
+        hint: t('wizard.scan.error.network.hint'),
       },
     }[kind]
 
@@ -130,7 +134,7 @@ const SensorScanStep = ({
 
             <div className="w-full max-w-sm rounded-xl border border-red-200/70 bg-background px-4 py-3 text-left">
               <p className="text-[10px] uppercase tracking-wider font-semibold text-red/80 mb-1">
-                Gescannte ID
+                {t('wizard.scan.error.scannedIdLabel')}
               </p>
               <p className="font-mono text-sm md:text-base font-semibold text-foreground break-all">
                 {scannedSensorId}
@@ -143,7 +147,7 @@ const SensorScanStep = ({
               {showRetry && (
                 <Button onClick={onRetryLookup} className="sm:min-w-[180px]">
                   <RotateCw className="size-4" />
-                  Erneut prüfen
+                  {t('wizard.scan.retryButton')}
                 </Button>
               )}
               <Button
@@ -152,7 +156,7 @@ const SensorScanStep = ({
                 className="sm:min-w-[200px]"
               >
                 <RotateCw className="size-4" />
-                Anderen Sensor scannen
+                {t('wizard.scan.rescanButton')}
               </Button>
             </div>
           </div>
@@ -176,32 +180,36 @@ const SensorScanStep = ({
 
             <div className="space-y-2">
               <h2 className="font-lato font-bold text-2xl md:text-3xl text-foreground">
-                Sensor nicht aktivierbar
+                {t('wizard.scan.notActivatable.title')}
               </h2>
               <p className="text-sm text-muted-foreground max-w-prose">
                 {isOnline
-                  ? 'Dieser Sensor ist bereits aktiviert und einem Baum zugeordnet.'
-                  : 'Dieser Sensor wurde bereits aktiviert und ist derzeit offline.'}
+                  ? t('wizard.scan.notActivatable.onlineDescription')
+                  : t('wizard.scan.notActivatable.offlineDescription')}
               </p>
             </div>
 
             <div className="w-full max-w-sm rounded-xl border border-yellow-200/70 bg-background px-4 py-3 text-left space-y-1">
               <p className="text-[10px] uppercase tracking-wider font-semibold text-yellow-900/80">
-                Status: {isOnline ? 'Online' : 'Offline'}
+                {t('wizard.scan.notActivatable.statusLabel', {
+                  status: getSensorStatusDetails(sensor.status).label,
+                })}
               </p>
               <p className="font-mono text-sm md:text-base font-semibold text-foreground break-all">
                 {sensor.id}
               </p>
               {sensor.latestData?.createdAt && (
                 <p className="text-xs text-muted-foreground pt-1">
-                  Zuletzt gesehen: {formatLatestData(sensor.latestData.createdAt)}
+                  {t('wizard.scan.notActivatable.lastSeenLabel', {
+                    date: formatLatestData(sensor.latestData.createdAt, intlLocale(i18n.language)),
+                  })}
                 </p>
               )}
             </div>
 
             <Button onClick={onScanAgain} className="w-full sm:w-auto sm:min-w-[200px]">
               <RotateCw className="size-4" />
-              Anderen Sensor scannen
+              {t('wizard.scan.rescanButton')}
             </Button>
           </div>
         </div>
@@ -223,16 +231,16 @@ const SensorScanStep = ({
 
             <div className="space-y-2">
               <h2 className="font-lato font-bold text-2xl md:text-3xl text-foreground">
-                Sensor erkannt
+                {t('wizard.scan.recognized.title')}
               </h2>
               <p className="text-sm text-muted-foreground max-w-prose">
-                Im System bekannt und zur Aktivierung freigegeben.
+                {t('wizard.scan.recognized.description')}
               </p>
             </div>
 
             <div className="w-full max-w-sm rounded-xl border border-green-dark/30 bg-background px-4 py-3 text-left space-y-1">
               <p className="text-[10px] uppercase tracking-wider font-semibold text-green-dark/80">
-                Sensor-ID · Status: Bereit
+                {t('wizard.scan.recognized.statusLabel')}
               </p>
               <p className="font-mono text-sm md:text-base font-semibold text-foreground break-all">
                 {sensor.id}
@@ -242,10 +250,10 @@ const SensorScanStep = ({
             <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-center">
               <Button variant="outline" onClick={onScanAgain} className="sm:min-w-[200px]">
                 <RotateCw className="size-4" />
-                Anderen Sensor scannen
+                {t('wizard.scan.rescanButton')}
               </Button>
               <Button onClick={onContinue} className="sm:min-w-[200px]">
-                Weiter
+                {t('common:actions.next')}
                 <ChevronRight className="size-4" />
               </Button>
             </div>
@@ -258,7 +266,7 @@ const SensorScanStep = ({
   return (
     <div className="space-y-6">
       <ScannerHeader />
-      <QRScannerView continueLabel="Sensor übernehmen" onContinue={onScanned} />
+      <QRScannerView continueLabel={t('wizard.scan.continueLabel')} onContinue={onScanned} />
     </div>
   )
 }

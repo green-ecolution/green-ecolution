@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { Marker } from 'maplibre-gl'
 import { cn } from '@green-ecolution/ui'
+import { useTranslation } from 'react-i18next'
 import { useMaplibreMap } from '@/components/map-gl/MapContext'
 import MapPreview from '@/components/map-gl/MapPreview'
 import { useAccuracyRing } from '@/components/map-gl/hooks/useAccuracyRing'
@@ -66,24 +67,29 @@ const LocationMapPreview = ({
   accuracyMeters,
   className,
   zoom = 18,
-  ariaLabel = 'Karte mit aktueller GPS-Position',
+  ariaLabel,
   interactive = false,
   follow = true,
-}: LocationMapPreviewProps) => (
-  <MapPreview
-    center={[longitude, latitude]}
-    zoom={zoom}
-    interactive={interactive}
-    ariaLabel={ariaLabel}
-    className={cn('aspect-[4/3] sm:aspect-[16/10]', className)}
-  >
-    <PositionLayers
-      latitude={latitude}
-      longitude={longitude}
-      accuracyMeters={accuracyMeters}
-      follow={follow}
-    />
-  </MapPreview>
-)
+}: LocationMapPreviewProps) => {
+  const { t } = useTranslation('common')
+  const resolvedAriaLabel = ariaLabel ?? t('geo.map.currentPositionAriaLabel')
+
+  return (
+    <MapPreview
+      center={[longitude, latitude]}
+      zoom={zoom}
+      interactive={interactive}
+      ariaLabel={resolvedAriaLabel}
+      className={cn('aspect-[4/3] sm:aspect-[16/10]', className)}
+    >
+      <PositionLayers
+        latitude={latitude}
+        longitude={longitude}
+        accuracyMeters={accuracyMeters}
+        follow={follow}
+      />
+    </MapPreview>
+  )
+}
 
 export default LocationMapPreview

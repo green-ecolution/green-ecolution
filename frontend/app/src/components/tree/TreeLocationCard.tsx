@@ -1,4 +1,5 @@
 import { Suspense } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Card, CardContent, CardHeader, CardTitle } from '@green-ecolution/ui'
 import MapPreview from '@/components/map-gl/MapPreview'
 import useClusterBoundaryLayer from '@/components/map-gl/layers/useClusterBoundaryLayer'
@@ -33,38 +34,42 @@ const TreeMarkerLayer = ({ tree }: { tree: Tree }) => {
   return null
 }
 
-const TreeLocationCard = ({ tree }: TreeLocationCardProps) => (
-  <Card variant="outlined">
-    <CardHeader>
-      <CardTitle>Standort</CardTitle>
-    </CardHeader>
-    <CardContent className="flex flex-col gap-4">
-      <MapPreview
-        center={[tree.longitude, tree.latitude]}
-        zoom={18}
-        ariaLabel="Karte mit der Position des Baumes"
-        className="h-56"
-      >
-        {/* Boundary before the marker: mount order controls layer stacking. */}
-        <Suspense fallback={null}>
-          {tree.treeClusterId && <ClusterBoundaryLayer clusterId={tree.treeClusterId} />}
-          <TreeMarkerLayer tree={tree} />
-        </Suspense>
-      </MapPreview>
-      <GeneralLink
-        link={{
-          to: '/map',
-          search: {
-            lat: tree.latitude,
-            lng: tree.longitude,
-            zoom: 18,
-            tree: tree.id,
-          },
-        }}
-        label="Auf der Karte anzeigen"
-      />
-    </CardContent>
-  </Card>
-)
+const TreeLocationCard = ({ tree }: TreeLocationCardProps) => {
+  const { t } = useTranslation('tree')
+
+  return (
+    <Card variant="outlined">
+      <CardHeader>
+        <CardTitle>{t('locationCard.title')}</CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-4">
+        <MapPreview
+          center={[tree.longitude, tree.latitude]}
+          zoom={18}
+          ariaLabel={t('locationCard.mapAriaLabel')}
+          className="h-56"
+        >
+          {/* Boundary before the marker: mount order controls layer stacking. */}
+          <Suspense fallback={null}>
+            {tree.treeClusterId && <ClusterBoundaryLayer clusterId={tree.treeClusterId} />}
+            <TreeMarkerLayer tree={tree} />
+          </Suspense>
+        </MapPreview>
+        <GeneralLink
+          link={{
+            to: '/map',
+            search: {
+              lat: tree.latitude,
+              lng: tree.longitude,
+              zoom: 18,
+              tree: tree.id,
+            },
+          }}
+          label={t('locationCard.viewOnMapLabel')}
+        />
+      </CardContent>
+    </Card>
+  )
+}
 
 export default TreeLocationCard

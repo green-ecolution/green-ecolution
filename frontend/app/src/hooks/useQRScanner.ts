@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { BarcodeDetector as BarcodeDetectorType } from 'barcode-detector/pure'
 
 export type ScannerStatus =
@@ -25,7 +26,7 @@ interface UseQRScannerReturn {
   videoRef: React.RefObject<HTMLVideoElement | null>
   status: ScannerStatus
   scannedData: string | null
-  /** Detail text of the last failure, e.g. 'NotAllowedError: Permission denied' */
+  /** Translated message for the last failure; the raw browser error goes to console.warn. */
   errorMessage: string | null
   startScanning: () => Promise<void>
   stopScanning: () => void
@@ -41,10 +42,32 @@ const resolveBarcodeDetector = async (): Promise<typeof BarcodeDetectorType> => 
   return mod.BarcodeDetector
 }
 
-const formatError = (err: unknown): string =>
-  err instanceof Error ? `${err.name}: ${err.message}` : String(err)
+// Raw browser message, e.g. 'NotAllowedError: Permission denied' — vendor text,
+// untranslated and inconsistent across browsers; kept for diagnosis only.
+const formatError = (err: unknown): string => {
+  if (!(err instanceof Error)) return String(err)
+  const { name, message } = err
+  return `${name}: ${message}`
+}
+
+const CAMERA_ERROR_KEYS: Record<string, string> = {
+  NotAllowedError: 'browser.cameraDenied',
+  PermissionDeniedError: 'browser.cameraDenied',
+  NotFoundError: 'browser.cameraUnavailable',
+}
+
+const cameraErrorKey = (err: unknown): string => {
+  const name = err instanceof DOMException ? err.name : err instanceof Error ? err.name : ''
+  return CAMERA_ERROR_KEYS[name] ?? 'browser.scannerFailed'
+}
+
+// `t`'s generated overloads only accept the catalog's literal key union; a key
+// looked up from CAMERA_ERROR_KEYS at runtime can't satisfy that statically
+// (same issue as `lib/apiError.ts`'s `LooseTranslate`).
+type LooseTranslate = (key: string) => string
 
 const useQRScanner = ({ onScan, onDetect }: UseQRScannerOptions = {}): UseQRScannerReturn => {
+  const { t } = useTranslation('errors')
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const detectorRef = useRef<InstanceType<typeof BarcodeDetectorType> | null>(null)
@@ -110,8 +133,8 @@ const useQRScanner = ({ onScan, onDetect }: UseQRScannerOptions = {}): UseQRScan
         const Detector = await resolveBarcodeDetector()
         detectorRef.current = new Detector({ formats: ['qr_code'] })
       } catch (err) {
-        console.error('Failed to initialise BarcodeDetector', err)
-        setErrorMessage(formatError(err))
+        console.warn('Failed to initialise BarcodeDetector', formatError(err))
+        setErrorMessage(t('browser.scannerFailed'))
         setStatus('error')
         startingRef.current = false
         return
@@ -132,14 +155,10 @@ const useQRScanner = ({ onScan, onDetect }: UseQRScannerOptions = {}): UseQRScan
       }
       videoRef.current.srcObject = stream
     } catch (err) {
-      const name = err instanceof DOMException ? err.name : ''
-      setErrorMessage(formatError(err))
-      if (name === 'NotAllowedError' || name === 'PermissionDeniedError') {
-        setStatus('denied')
-      } else {
-        console.error('Camera start failed', err)
-        setStatus('error')
-      }
+      const key = cameraErrorKey(err)
+      console.warn('Camera start failed', formatError(err))
+      setErrorMessage((t as LooseTranslate)(key))
+      setStatus(key === 'browser.cameraDenied' ? 'denied' : 'error')
       startingRef.current = false
       return
     }
@@ -203,7 +222,7 @@ const useQRScanner = ({ onScan, onDetect }: UseQRScannerOptions = {}): UseQRScan
     }
 
     scheduleNext()
-  }, [releaseStream])
+  }, [releaseStream, t])
 
   const stopScanning = useCallback(() => {
     releaseStream()

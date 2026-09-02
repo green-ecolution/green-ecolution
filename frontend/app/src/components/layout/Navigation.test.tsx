@@ -61,7 +61,7 @@ describe('Navigation', () => {
     expect(screen.getByText('Karte')).toBeInTheDocument()
     expect(screen.getByText('Auswertung')).toBeInTheDocument()
     expect(screen.queryByText('Bewässerungsgruppen')).not.toBeInTheDocument()
-    expect(screen.queryByText('Einsätze')).not.toBeInTheDocument()
+    expect(screen.queryByText('Einsatzpläne')).not.toBeInTheDocument()
     expect(screen.queryByText('Fahrzeuge')).not.toBeInTheDocument()
     expect(screen.queryByText('Sensoren')).not.toBeInTheDocument()
   })
@@ -74,7 +74,7 @@ describe('Navigation', () => {
     await waitFor(() => {
       expect(screen.getByText('Grünflächen')).toBeInTheDocument()
     })
-    expect(screen.queryByText('Einsatzplanung')).not.toBeInTheDocument()
+    expect(screen.queryByText('Planung')).not.toBeInTheDocument()
   })
 
   it('shows every entry for unrestricted access', async () => {
@@ -87,7 +87,7 @@ describe('Navigation', () => {
     })
     expect(screen.getByText('Bewässerungsgruppen')).toBeInTheDocument()
     expect(screen.getByText('Sensoren')).toBeInTheDocument()
-    expect(screen.getByText('Einsätze')).toBeInTheDocument()
+    expect(screen.getByText('Einsatzpläne')).toBeInTheDocument()
     // Mitarbeitende lives under settings now, not the global nav.
     expect(screen.queryByText('Mitarbeitende')).not.toBeInTheDocument()
   })

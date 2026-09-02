@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useBlocker } from '@tanstack/react-router'
+import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,10 +34,11 @@ import { useRoleDraft } from './useRoleDraft'
 
 const TEAM_USERS_PARAMS = { page: 1, perPage: 100 }
 
-const nameConflictMessage = (error: unknown): string | null =>
-  statusOf(error) === 409 ? 'Eine Rolle mit diesem Namen existiert bereits.' : null
+const nameConflictMessage = (error: unknown, t: TFunction<'settings'>): string | null =>
+  statusOf(error) === 409 ? t('roles.nameConflict') : null
 
 const RolesPage = () => {
+  const { t } = useTranslation(['settings', 'common'])
   const grantable = usePermissions()
   const canCreate = useHasPermission(['role:create'])
   const canUpdate = useHasPermission(['role:update'])
@@ -195,16 +198,11 @@ const RolesPage = () => {
   }
 
   if (!orgId) {
-    return (
-      <p className="text-sm text-dark-600">
-        Deinem Konto ist keine Organisation zugeordnet. Ohne Organisation lassen sich keine Rollen
-        verwalten.
-      </p>
-    )
+    return <p className="text-sm text-dark-600">{t('roles.noOrganization')}</p>
   }
 
   if (templatesLoading || orgRolesLoading) {
-    return <Loading className="mt-10 justify-center" label="Rollen werden geladen" />
+    return <Loading className="mt-10 justify-center" label={t('roles.loading')} />
   }
 
   const list = (
@@ -230,7 +228,7 @@ const RolesPage = () => {
         canDelete={canDelete}
         canCreate={canCreate}
         assignees={draft.kind === 'new' || !selected ? [] : assigneesOf(selected.id)}
-        nameError={nameConflictMessage(createRole.error ?? updateRole.error)}
+        nameError={nameConflictMessage(createRole.error ?? updateRole.error, t)}
         saving={createRole.isPending || updateRole.isPending}
         onNameChange={draftState.setName}
         onDescriptionChange={draftState.setDescription}
@@ -295,14 +293,14 @@ const RolesPage = () => {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Änderungen verwerfen?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Du hast Änderungen an dieser Rolle, die noch nicht gespeichert sind.
-            </AlertDialogDescription>
+            <AlertDialogTitle>{t('dialog.discardChanges.title')}</AlertDialogTitle>
+            <AlertDialogDescription>{t('roles.discardDescription')}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Weiter bearbeiten</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDiscard}>Verwerfen</AlertDialogAction>
+            <AlertDialogCancel>{t('dialog.discardChanges.continueEditing')}</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDiscard}>
+              {t('dialog.discardChanges.discard')}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -310,15 +308,14 @@ const RolesPage = () => {
       <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Rolle löschen?</AlertDialogTitle>
+            <AlertDialogTitle>{t('roles.deleteDialog.title')}</AlertDialogTitle>
             <AlertDialogDescription>
-              {draft?.name} wird entfernt. Personen mit dieser Rolle verlieren die darin enthaltenen
-              Rechte.
+              {t('roles.deleteDialog.description', { name: draft?.name ?? '' })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-            <AlertDialogAction onClick={remove}>Löschen</AlertDialogAction>
+            <AlertDialogCancel>{t('common:actions.cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={remove}>{t('common:actions.delete')}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -327,16 +324,16 @@ const RolesPage = () => {
         <AlertDialog open onOpenChange={() => blocker.reset?.()}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Seite verlassen?</AlertDialogTitle>
-              <AlertDialogDescription>
-                Deine Änderungen an dieser Rolle sind noch nicht gespeichert.
-              </AlertDialogDescription>
+              <AlertDialogTitle>{t('common:dialog.unsavedChanges.title')}</AlertDialogTitle>
+              <AlertDialogDescription>{t('roles.leaveDescription')}</AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel onClick={() => blocker.reset?.()}>
-                Weiter bearbeiten
+                {t('dialog.discardChanges.continueEditing')}
               </AlertDialogCancel>
-              <AlertDialogAction onClick={() => blocker.proceed?.()}>Verlassen</AlertDialogAction>
+              <AlertDialogAction onClick={() => blocker.proceed?.()}>
+                {t('common:dialog.unsavedChanges.confirm')}
+              </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>

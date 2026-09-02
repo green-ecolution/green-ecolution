@@ -1,0 +1,37 @@
+{
+  "welcomeTitle": "Willkommen zurück, {name}!",
+  "welcomeDescription": "Du befindest dich auf dem Dashboard. Dies ist eine Übersichtsseite, um direkten Zugriff auf wichtige Bereiche zu erhalten.",
+  "quickLinksTitle": "Schnellverweise",
+  "cards": {
+    "map": {
+      "headline": "Karte",
+      "description": "Alle Bäume in Flensburg im Zuständigkeitsbereich des TBZ.",
+      "linkLabel": "Zur Karte"
+    },
+    "clusters": {
+      "headline": "Auflistung der Bewässerungsgruppen",
+      "description": "Listenansicht aller gruppierten Bäume, die mit Sensoren ausgestattet sind.",
+      "linkLabel": "Zu den Bewässerungsgruppen"
+    },
+    "sensors": {
+      "headline": "Liste aller verbauten Sensoren",
+      "description": "Zeigt alle verbauten Sensoren in Flensburg inkl. Akkustand, Standort,…",
+      "linkLabel": "Zu den Sensoren"
+    },
+    "wateringPlans": {
+      "headline": "Einsatzpläne",
+      "description": "Planung eines neuen Einsatzplans zur Bewässerung von Bewässerungsgruppen",
+      "linkLabel": "Zu den Einsatzplänen"
+    },
+    "settings": {
+      "headline": "Einstellungen",
+      "description": "Hier kannst du Einstellungen vornehmen, da du Administrator bist.",
+      "linkLabel": "Zu den Einstellungen"
+    },
+    "profile": {
+      "headline": "Eigenes Profil",
+      "description": "Hier können persönliche Informationen hinterlegt und angepasst werden.",
+      "linkLabel": "Zum Profil"
+    }
+  }
+}

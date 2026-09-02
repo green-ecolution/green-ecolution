@@ -5,6 +5,7 @@ import { useSuspenseQuery, useQuery } from '@tanstack/react-query'
 import { createFileRoute, Link, useSearch } from '@tanstack/react-router'
 import { z } from 'zod'
 import { Database, Layers, Monitor, Server } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import DataTabContent from '@/components/info/DataTabContent'
 import SystemTabContent from '@/components/info/SystemTabContent'
 import SoftwareTabContent from '@/components/info/SoftwareTabContent'
@@ -14,7 +15,7 @@ const tabSchema = z.enum(['system', 'data', 'software', 'server']).catch('system
 
 export const Route = createFileRoute('/_protected/info')({
   component: Info,
-  pendingComponent: pendingLoading('Lade Systeminformationen'),
+  pendingComponent: pendingLoading({ key: 'info:root.loadingLabel' }),
   validateSearch: z.object({
     tab: tabSchema.default('system'),
   }),
@@ -23,13 +24,14 @@ export const Route = createFileRoute('/_protected/info')({
     prefetch(queryClient, infoQueries.services(), 'infoQueries.services')
     return {
       crumb: {
-        title: 'Systeminformationen',
+        titleKey: 'info' as const,
       },
     }
   },
 })
 
 function Info() {
+  const { t } = useTranslation('info')
   const { tab } = useSearch({ from: '/_protected/info' })
   const { data } = useSuspenseQuery(infoQueries.app())
   const { data: servicesData, isLoading: servicesLoading } = useQuery(infoQueries.services())
@@ -46,12 +48,9 @@ function Info() {
     <div className="container mt-6">
       <article className="mb-10 2xl:w-4/5">
         <h1 className="font-lato font-bold text-3xl mb-4 lg:text-4xl xl:text-5xl">
-          Systeminformationen
+          {t('page.title')}
         </h1>
-        <p>
-          Hier findest du eine Übersicht über die aktuelle Version, den Status der verbundenen
-          Services und weitere technische Details zur laufenden Instanz.
-        </p>
+        <p>{t('page.description')}</p>
       </article>
 
       <Tabs value={activeTab}>
@@ -59,26 +58,26 @@ function Info() {
           <TabsTrigger value="system" asChild>
             <Link to="/info" search={{ tab: 'system' }}>
               <Monitor className="size-5" />
-              System
+              {t('tabs.system')}
             </Link>
           </TabsTrigger>
           <TabsTrigger value="data" asChild>
             <Link to="/info" search={{ tab: 'data' }}>
               <Database className="size-5" />
-              Daten
+              {t('tabs.data')}
             </Link>
           </TabsTrigger>
           <TabsTrigger value="software" asChild>
             <Link to="/info" search={{ tab: 'software' }}>
               <Layers className="size-5" />
-              Software
+              {t('tabs.software')}
             </Link>
           </TabsTrigger>
           {hasServerInfo && (
             <TabsTrigger value="server" asChild>
               <Link to="/info" search={{ tab: 'server' }}>
                 <Server className="size-5" />
-                Server
+                {t('tabs.server')}
               </Link>
             </TabsTrigger>
           )}

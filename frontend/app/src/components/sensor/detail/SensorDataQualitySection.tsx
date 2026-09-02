@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { format } from 'date-fns'
+import { useTranslation } from 'react-i18next'
 import {
   Alert,
   AlertContent,
@@ -24,41 +25,50 @@ import type { SensorQualityIssueResponse } from '@/api/backendApi'
 import { sensorQueries } from '@/api/queries'
 import { Can } from '@/lib/auth/Can'
 import { useSensorQualityMutations } from '@/hooks/useSensorQualityMutations'
-import { getDataQualityDetails, qualityReasonLabel } from '@/hooks/details/useDetailsForDataHealth'
+import {
+  useDataQualityDetails,
+  useQualityReasonLabel,
+} from '@/hooks/details/useDetailsForDataHealth'
+import { useDateLocale } from '@/lib/i18n/useFormatters'
 
 interface SensorDataQualitySectionProps {
   sensorId: string
 }
 
-const windowSummary = (implausibleRecent: number): string => {
-  if (implausibleRecent === 0) return ''
-  if (implausibleRecent === 1) return 'In den letzten sieben Tagen wurde ein Messwert verworfen.'
-  return `In den letzten sieben Tagen wurden ${implausibleRecent} Messwerte verworfen.`
+const IssueList = ({ issues }: { issues: SensorQualityIssueResponse[] }) => {
+  const { t } = useTranslation('sensor')
+  const getQualityReasonLabel = useQualityReasonLabel()
+  const dateLocale = useDateLocale()
+  return (
+    <ul className="flex flex-col gap-2">
+      {issues.map((issue) => (
+        <li
+          key={`${issue.recordedAt}-${issue.ability}-${issue.depthCm}`}
+          className="rounded-lg border border-dark-50 bg-white p-3 text-sm"
+        >
+          <p className="font-bold">
+            {format(new Date(issue.recordedAt), 'dd.MM.yyyy HH:mm', { locale: dateLocale })} ·{' '}
+            {t('dataQuality.issueDepth', { depth: issue.depthCm })}
+          </p>
+          <p className="text-dark-800">
+            {t('dataQuality.issueReading', { value: issue.value })} ·{' '}
+            {getQualityReasonLabel(issue.reason)}
+          </p>
+        </li>
+      ))}
+    </ul>
+  )
 }
 
-const IssueList = ({ issues }: { issues: SensorQualityIssueResponse[] }) => (
-  <ul className="flex flex-col gap-2">
-    {issues.map((issue) => (
-      <li
-        key={`${issue.recordedAt}-${issue.ability}-${issue.depthCm}`}
-        className="rounded-lg border border-dark-50 bg-white p-3 text-sm"
-      >
-        <p className="font-bold">
-          {format(new Date(issue.recordedAt), 'dd.MM.yyyy HH:mm')} · {issue.depthCm} cm Tiefe
-        </p>
-        <p className="text-dark-800">
-          Messwert {issue.value} · {qualityReasonLabel(issue.reason)}
-        </p>
-      </li>
-    ))}
-  </ul>
-)
-
 const SensorDataQualitySection = ({ sensorId }: SensorDataQualitySectionProps) => {
+  const { t } = useTranslation(['sensor', 'common'])
+  const dateLocale = useDateLocale()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [note, setNote] = useState('')
   const { data } = useQuery(sensorQueries.dataQuality(sensorId))
   const { acknowledge } = useSensorQualityMutations()
+
+  const getDataQualityDetails = useDataQualityDetails()
 
   if (!data || data.issues.length === 0) return null
 
@@ -87,7 +97,7 @@ const SensorDataQualitySection = ({ sensorId }: SensorDataQualitySectionProps) =
   return (
     <Card variant="outlined">
       <CardHeader>
-        <CardTitle>Datenqualität</CardTitle>
+        <CardTitle>{t('dataQuality.title')}</CardTitle>
       </CardHeader>
       <CardContent>
         <Alert variant={quality.alert} className="mb-4 flex w-full items-start gap-3">
@@ -95,12 +105,18 @@ const SensorDataQualitySection = ({ sensorId }: SensorDataQualitySectionProps) =
           <AlertContent>
             <AlertTitle>{quality.label}</AlertTitle>
             <AlertDescription>
-              {quality.description} {windowSummary(data.implausibleRecent)}
+              {quality.description}{' '}
+              {data.implausibleRecent > 0 &&
+                t('dataQuality.discardedSummary', { count: data.implausibleRecent })}
             </AlertDescription>
             {data.acknowledged && (
               <AlertDescription className="mt-1 italic">
-                Geprüft von {data.acknowledged.byName ?? 'unbekannt'} am{' '}
-                {format(new Date(data.acknowledged.at), 'dd.MM.yyyy HH:mm')}
+                {t('dataQuality.acknowledgedBy', {
+                  name: data.acknowledged.byName ?? t('dataQuality.unknownReviewer'),
+                  date: format(new Date(data.acknowledged.at), 'dd.MM.yyyy HH:mm', {
+                    locale: dateLocale,
+                  }),
+                })}
                 {data.acknowledged.note ? `: ${data.acknowledged.note}` : ''}
               </AlertDescription>
             )}
@@ -112,7 +128,7 @@ const SensorDataQualitySection = ({ sensorId }: SensorDataQualitySectionProps) =
                   className="mt-3 w-fit"
                   onClick={() => setDialogOpen(true)}
                 >
-                  Zur Kenntnis genommen
+                  {t('dataQuality.acknowledgeButton')}
                 </Button>
               </Can>
             )}
@@ -124,7 +140,7 @@ const SensorDataQualitySection = ({ sensorId }: SensorDataQualitySectionProps) =
         {reviewed.length > 0 && (
           <details className={pending.length > 0 ? 'mt-4' : undefined}>
             <summary className="cursor-pointer text-sm text-muted-foreground">
-              Frühere Auffälligkeiten ({reviewed.length})
+              {t('dataQuality.pastIssues', { count: reviewed.length })}
             </summary>
             <div className="mt-2">
               <IssueList issues={reviewed} />
@@ -136,24 +152,21 @@ const SensorDataQualitySection = ({ sensorId }: SensorDataQualitySectionProps) =
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Datenqualität zur Kenntnis nehmen</DialogTitle>
-            <DialogDescription>
-              Die bisher verworfenen Messwerte gelten damit als geprüft. Kommen danach wieder
-              unplausible Werte, meldet sich der Sensor von selbst erneut.
-            </DialogDescription>
+            <DialogTitle>{t('dataQuality.acknowledgeDialogTitle')}</DialogTitle>
+            <DialogDescription>{t('dataQuality.acknowledgeDialogDescription')}</DialogDescription>
           </DialogHeader>
           <Textarea
             value={note}
             onChange={(event) => setNote(event.target.value)}
-            placeholder="Grund, z. B. Sonde war bei der Vorbereitung nicht angeschlossen"
+            placeholder={t('dataQuality.acknowledgeNotePlaceholder')}
             maxLength={500}
           />
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
-              Abbrechen
+              {t('common:actions.cancel')}
             </Button>
             <Button onClick={submit} disabled={acknowledge.isPending}>
-              Vermerken
+              {t('dataQuality.acknowledgeSubmit')}
             </Button>
           </DialogFooter>
         </DialogContent>

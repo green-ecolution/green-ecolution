@@ -2,10 +2,12 @@ import { Link } from '@tanstack/react-router'
 import { Avatar, AvatarFallback, AvatarImage, Badge, KanbanCard } from '@green-ecolution/ui'
 import { WateringPlanStatus } from '@green-ecolution/backend-client'
 import type { User, WateringPlanInList } from '@/api/backendApi'
-import { getWateringPlanStatusDetails } from '@/hooks/details/useDetailsForWateringPlanStatus'
+import { useWateringPlanStatusDetails } from '@/hooks/details/useDetailsForWateringPlanStatus'
 import { columnForStatus } from '@/lib/wateringPlanBoard'
 import { formatLiters } from '@/lib/utils'
 import type { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
+import { useDateLocale } from '@/lib/i18n/useFormatters'
 import { userInitials, formatBoardDate } from './format'
 import { Droplet, FolderClosed, Truck, UserRound } from 'lucide-react'
 
@@ -32,8 +34,11 @@ const WateringPlanBoardCard = ({
   cardState,
 }: WateringPlanBoardCardProps) => {
   const column = columnForStatus(plan.status)
+  const getWateringPlanStatusDetails = useWateringPlanStatusDetails()
   const statusDetails = getWateringPlanStatusDetails(plan.status)
   const assigned = users.filter((u) => plan.userIds.includes(u.id))
+  const { t } = useTranslation('wateringPlan')
+  const dateLocale = useDateLocale()
 
   return (
     <KanbanCard state={cardState}>
@@ -44,7 +49,9 @@ const WateringPlanBoardCard = ({
       >
         <div className="flex items-center gap-2">
           <span aria-hidden className={`size-2 shrink-0 rounded-full ${statusDot[plan.status]}`} />
-          <p className="font-lato font-semibold text-dark">{formatBoardDate(plan.date)}</p>
+          <p className="font-lato font-semibold text-dark">
+            {formatBoardDate(plan.date, dateLocale)}
+          </p>
         </div>
         {plan.description && (
           <p className="mt-0.5 line-clamp-1 text-sm text-dark-600">{plan.description}</p>
@@ -61,7 +68,7 @@ const WateringPlanBoardCard = ({
           )}
           <Badge variant="muted" className="gap-1 tabular-nums">
             <FolderClosed className="size-3" />
-            {plan.treeclusters.length} {plan.treeclusters.length === 1 ? 'Gruppe' : 'Gruppen'}
+            {t('board.column.clusterCountBadge', { count: plan.treeclusters.length })}
           </Badge>
           <Badge variant="muted" className="gap-1 tabular-nums">
             <Droplet className="size-3" />
@@ -98,7 +105,7 @@ const WateringPlanBoardCard = ({
                     <UserRound className="size-3 text-dark-500" />
                   </AvatarFallback>
                 </Avatar>
-                <p className="text-xs text-dark-600">Fahrer:in zuweisen</p>
+                <p className="text-xs text-dark-600">{t('board.assignDriverLabel')}</p>
               </>
             )
           )}

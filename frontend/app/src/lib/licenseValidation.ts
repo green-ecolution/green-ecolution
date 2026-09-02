@@ -1,3 +1,4 @@
+import type { TFunction } from 'i18next'
 import { DrivingLicense } from '@green-ecolution/backend-client'
 import type { User, Vehicle } from '@/api/backendApi'
 
@@ -22,13 +23,16 @@ export function licenseSatisfies(held: DrivingLicense, required: DrivingLicense)
   }
 }
 
+// Not a component: the caller passes its own scoped `t` (see clusterStatusReason.ts
+// for the same shape) rather than this module reaching for `getI18n()`.
 export function validateDriverLicenses(
   driverIds: string[],
   users: User[],
   transporters: Vehicle[],
   trailers: Vehicle[],
-  transporterId?: string,
-  trailerId?: string,
+  transporterId: string | undefined,
+  trailerId: string | undefined,
+  t: TFunction<'wateringPlan'>,
 ): { valid: boolean; message?: string } {
   if (!driverIds || driverIds.length === 0) {
     return { valid: true }
@@ -64,8 +68,7 @@ export function validateDriverLicenses(
   if (!hasQualifiedDriver) {
     return {
       valid: false,
-      message:
-        'Kein ausgewählter Mitarbeiter hat alle erforderlichen Führerscheine für die gewählten Fahrzeuge.',
+      message: t('form.noQualifiedDriverError'),
     }
   }
 

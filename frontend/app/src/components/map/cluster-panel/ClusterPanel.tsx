@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { Button, Loading } from '@green-ecolution/ui'
 import { Pencil } from 'lucide-react'
 import { clusterQueries, isValidUuid } from '@/api/queries'
@@ -24,23 +25,24 @@ const ClusterPanel = ({
   activeSnapPoint,
   setActiveSnapPoint,
 }: ClusterPanelProps) => {
+  const { t } = useTranslation('map')
   const { data, isError } = useQuery(clusterQueries.detail(clusterId))
   const failed = !isValidUuid(clusterId) || isError
   const canEdit = useHasPermission(['tree_cluster:update'])
 
   const headerAction =
     data && canEdit ? (
-      <Button variant="ghost" size="icon" aria-label="Gruppe bearbeiten" onClick={onEdit}>
+      <Button variant="ghost" size="icon" aria-label={t('cluster.editAriaLabel')} onClick={onEdit}>
         <Pencil />
       </Button>
     ) : undefined
 
   return (
     <MapPanel
-      title={data?.name ?? 'Baumgruppe'}
+      title={data?.name ?? t('cluster.fallbackTitle')}
       headerAction={headerAction}
       onClose={onClose}
-      closeLabel="Seitenansicht schließen"
+      closeLabel={t('cluster.closePanelAriaLabel')}
       mobileCollapsedSnap="260px"
       activeSnapPoint={activeSnapPoint}
       setActiveSnapPoint={setActiveSnapPoint}
@@ -49,11 +51,9 @@ const ClusterPanel = ({
         {data ? (
           <ClusterPanelView treecluster={data} onOpenDashboard={onOpenDashboard} />
         ) : failed ? (
-          <p className="py-10 text-center text-dark-600">
-            Die Baumgruppe konnte nicht geladen werden.
-          </p>
+          <p className="py-10 text-center text-dark-600">{t('cluster.loadError')}</p>
         ) : (
-          <Loading className="justify-center py-10" label="Lade Baumgruppe..." />
+          <Loading className="justify-center py-10" label={t('cluster.loadingLabel')} />
         )}
       </ClusterPanelShell>
     </MapPanel>

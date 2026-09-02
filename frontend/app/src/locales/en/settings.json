@@ -1,0 +1,419 @@
+{
+  "layout": {
+    "title": "Settings",
+    "navAriaLabel": "Settings areas",
+    "comingSoonBadge": "soon"
+  },
+  "nav": {
+    "profile": "Profile",
+    "organization": "Organization",
+    "irrigation": "Irrigation",
+    "notifications": "Notifications",
+    "sensors": "Sensors & network",
+    "team": "Team & roles",
+    "map": "Map & units",
+    "plugin": "Plugins"
+  },
+  "comingSoon": {
+    "inProgress": "In progress",
+    "irrigation": {
+      "title": "Irrigation",
+      "description": "This is where you'll set threshold values and watering rules for the whole application."
+    },
+    "notifications": {
+      "title": "Notifications",
+      "description": "This is where you'll decide what the application notifies you about and how."
+    },
+    "sensors": {
+      "title": "Sensors & network",
+      "description": "This is where you'll configure the LoRaWAN connection and the defaults for new devices."
+    },
+    "map": {
+      "title": "Map & units",
+      "description": "This is where you'll choose the map background, the starting view, and the units for lengths and quantities."
+    }
+  },
+  "profile": {
+    "heading": "Profile of {firstName} {lastName}",
+    "intro": "This is your personal profile page. Here you can find your personal data.",
+    "usernameLabel": "Username:",
+    "availabilityLabel": "Availability:",
+    "firstNameLabel": "First name:",
+    "drivingLicenseLabel": "Driving licence:",
+    "lastNameLabel": "Last name:",
+    "rolesLabel": "Roles:",
+    "emailLabel": "Email:"
+  },
+  "team": {
+    "navAriaLabel": "Team and roles",
+    "tabMembers": "Members",
+    "tabRoles": "Roles"
+  },
+  "plugin": {
+    "overviewTitle": "Plugin overview",
+    "overviewIntro": "Here you can find an overview of all installed plugins. These plugins extend the application's functionality and can offer a variety of useful features. Click a plugin to learn more about it.",
+    "loading": "Loading plugins...",
+    "startAriaLabel": "Start {name}",
+    "startLabel": "Start {name}",
+    "empty": "No plugins are currently registered.",
+    "unavailable": "The plugin {pluginName} cannot currently be loaded. The plugin system is being reworked."
+  },
+  "notProvided": "Not provided",
+  "dialog": {
+    "discardChanges": {
+      "title": "Discard changes?",
+      "continueEditing": "Continue editing",
+      "discard": "Discard"
+    }
+  },
+  "roles": {
+    "listTitle": "Roles",
+    "createButton": "New",
+    "systemSectionLabel": "System · not editable",
+    "ownSectionLabel": "Own roles",
+    "emptyOwn": "No own role yet. Copy a system role or create a new one.",
+    "readOnlyAriaLabel": "Read-only",
+    "nameAriaLabel": "Role name",
+    "namePlaceholder": "Role name",
+    "descriptionAriaLabel": "Role description",
+    "descriptionPlaceholder": "Short description",
+    "nameRequiredHint": "Give the role a name.",
+    "systemRoleBadge": "System role",
+    "ownRoleBadge": "Own role",
+    "copyAndEdit": "Copy & edit",
+    "systemReadOnlyNoticePrefix": "System roles are read-only.",
+    "systemReadOnlyNoticeSuffix": "the role to adjust permissions or create your own role.",
+    "copyLinkLabel": "Copy",
+    "clampedAway_one": "{count} permission was removed because you don't hold it yourself.",
+    "clampedAway_other": "{count} permissions were removed because you don't hold them yourself.",
+    "unknownPermissionsHeading": "Other permissions ({count})",
+    "unknownPermissionsHint": "This view doesn't know these permissions. They are kept when saving.",
+    "discardDescription": "You have unsaved changes to this role.",
+    "deleteDialog": {
+      "title": "Delete role?",
+      "description": "{name} will be removed. People with this role lose the permissions it contains."
+    },
+    "leaveDescription": "Your changes to this role haven't been saved yet.",
+    "noOrganization": "Your account isn't assigned to an organization. Roles can't be managed without an organization.",
+    "loading": "Loading roles",
+    "nameConflict": "A role with this name already exists.",
+    "createButtonLabel": "Create role",
+    "copyName": "{name} (copy)",
+    "copyDescription": "Copy of {name}",
+    "notGrantable": "You can only grant permissions you hold yourself.",
+    "areaActiveCount": "{count} of {total} actions active",
+    "customBadge": "Custom",
+    "accessLevelAriaLabel": "Access level for {area}",
+    "showActionsAriaLabel": "Show actions for {area}",
+    "hideActionsAriaLabel": "Hide actions for {area}",
+    "templateName": {
+      "administrator": "Administrator",
+      "tree_care": "Tree care",
+      "sensors": "Sensor technology",
+      "route_planning": "Route planning",
+      "observer": "Observer"
+    },
+    "toast": {
+      "created": "Role created",
+      "saved": "Saved",
+      "saveFailed": "The role could not be saved.",
+      "deleted": "Role deleted",
+      "deleteFailed": "The role could not be deleted."
+    }
+  },
+  "members": {
+    "listTitle": "Members",
+    "searchPlaceholder": "Name, username or email",
+    "searchAriaLabel": "Search members",
+    "organizationFilterLabel": "Organization",
+    "organizationFilterPlaceholder": "All organizations",
+    "organizationFilterAllLabel": "All organizations",
+    "roleFilterAriaLabel": "Role",
+    "roleFilterPlaceholder": "All roles",
+    "roleFilterSearchPlaceholder": "Search role",
+    "roleFilterEmptyText": "No matching role",
+    "roleFilterAllLabel": "All roles",
+    "roleFilterOrphanGroup": "No organization",
+    "listAriaLabel": "Members",
+    "loading": "Loading members",
+    "count_one": "{count} person",
+    "count_other": "{count} people",
+    "personNoun_one": "person",
+    "personNoun_other": "people",
+    "countFiltered": "{shown} of {total} {noun}",
+    "emptyFiltered": "No person matches the search and filter.",
+    "emptyUnfiltered": "No members have been added yet.",
+    "noOrganization": "No organization",
+    "profileTitle": "Profile",
+    "profileHint": "This information is used to assign people to watering plans.",
+    "availabilityLabel": "Availability",
+    "drivingLicensesLabel": "Driving licence classes",
+    "phoneNumberLabel": "Phone number",
+    "phoneNumberPlaceholder": "e.g. +49 461 123456",
+    "employeeIdLabel": "Employee ID",
+    "employeeIdPlaceholder": "e.g. EMP-042",
+    "wateringPlanSelectableLabel": "Selectable for watering plans",
+    "wateringPlanSelectableHint": "Only marked people appear in the selection of members linked to a watering plan.",
+    "yes": "Yes",
+    "no": "No",
+    "rolesTitle": "Roles",
+    "rolesHint": "Roles take effect immediately. A change doesn't need saving.",
+    "noRolesAssigned": "No role assigned.",
+    "assignedRolesAriaLabel": "Assigned roles",
+    "revokeRoleAriaLabel": "Revoke role {role}",
+    "assignRolePlaceholder": "Assign role",
+    "assignRoleSearchPlaceholder": "Search role",
+    "assignRoleEmptyText": "No more roles available",
+    "assignRoleAriaLabel": "Assign role",
+    "organizationTitle": "Organization",
+    "organizationHint": "A person belongs to at most one organization. A change moves them immediately.",
+    "noOrganizationAssigned": "No organization assigned",
+    "changeOrganizationPlaceholder": "Change organization",
+    "changeOrganizationSearchPlaceholder": "Search organization",
+    "changeOrganizationEmptyText": "No matching organization",
+    "changeOrganizationAriaLabel": "Change organization",
+    "selfOrganizationLocked": "Your own organization can't be changed here. Someone else with administrative rights has to do this.",
+    "selfRolesLocked": "Your own roles can't be changed here. Someone else with administrative rights has to do this.",
+    "noOrganizationRolesLocked": "Roles can't be assigned without an organization. Assign the person to an organization first.",
+    "emailNotVerified": "Email not verified",
+    "sinceLabel": "since {since}",
+    "roleErrorTooPowerful": "This role contains permissions beyond your own.",
+    "roleErrorSelfAccount": "Roles can't be changed on your own account.",
+    "organizationErrorForbidden": "You aren't allowed to manage people in this organization.",
+    "organizationErrorSelfAccount": "Your own organization can't be changed here.",
+    "notMatchingFilter": "The selected person doesn't match the search and filter.",
+    "resetFilters": "Reset search and filter",
+    "moveDialog": {
+      "title": "Move person?",
+      "descriptionWithSource": "{name} moves from {from} to {to}. The change takes effect immediately, assigned roles remain in place.",
+      "descriptionWithoutSource": "{name} is assigned to {to}. The change takes effect immediately, assigned roles remain in place.",
+      "confirm": "Move"
+    },
+    "discardDescription": "You have unsaved changes to this person's profile.",
+    "leaveDescription": "Your changes to this person's profile haven't been saved yet.",
+    "toast": {
+      "roleAssigned": "Role assigned",
+      "roleAssignFailed": "The role could not be assigned.",
+      "roleRevoked": "Role revoked",
+      "roleRevokeFailed": "The role could not be revoked.",
+      "organizationChanged": "Organization changed",
+      "organizationChangeFailed": "The organization could not be changed.",
+      "profileSaved": "Saved",
+      "profileSaveFailed": "The profile could not be saved."
+    }
+  },
+  "organization": {
+    "treeTitle": "Organization structure",
+    "treeAriaLabel": "Organization structure",
+    "createButton": "New",
+    "collapseAriaLabel": "Collapse",
+    "expandAriaLabel": "Expand",
+    "loading": "Loading organizations",
+    "loadErrorForbidden": "You aren't allowed to view this organization. Your role probably only applies to a sub-organization.",
+    "loadErrorGeneric": "The organization structure could not be loaded. Please try again later.",
+    "nameConflict": "An organization with this name already exists.",
+    "contactPersonNotAssigned": "This person isn't assigned to this organization and can't be the contact person.",
+    "noOwnOrganization": "Your account isn't assigned to an organization. The organization structure can't be managed without an organization.",
+    "ownOrganizationMissing": "Your organization wasn't found. The organization structure can't be shown without it.",
+    "count_one": "{count} person",
+    "count_other": "{count} people",
+    "memberSummaryWithChildren": "{people} in {children}",
+    "noMembersAssigned": "No people assigned",
+    "subOrganizationCount_one": "{count} sub-organization",
+    "subOrganizationCount_other": "{count} sub-organizations",
+    "subOrganizationNoun_one": "sub-organization",
+    "subOrganizationNoun_other": "sub-organizations",
+    "directChildrenLine": "{count} direct {noun}",
+    "topLevelKind": "Top-level organization",
+    "childKind": "Sub-organization",
+    "sinceLabel": "since {since}",
+    "readOnlyRootNotice": "The top-level organization of this instance cannot be edited.",
+    "masterDataTitle": "Master data",
+    "nameLabel": "Name",
+    "nameEmptyHint": "Give the organization a name.",
+    "namePlaceholder": "Organization name",
+    "locationTitle": "Location",
+    "locationHint": "The address is optional, but can only be saved in full.",
+    "streetLabel": "Street and house number",
+    "streetPlaceholder": "e.g. Nordergraben 12",
+    "postalCodeLabel": "Postal code",
+    "postalCodePlaceholder": "24937",
+    "cityLabel": "City",
+    "cityPlaceholder": "Flensburg",
+    "streetMissing": "Street is missing",
+    "postalCodeMissing": "Postal code is missing",
+    "cityMissing": "City is missing",
+    "contactPersonTitle": "Contact person",
+    "changeContactPerson": "Change",
+    "setContactPerson": "Set contact person",
+    "noContactPerson": "No contact person set.",
+    "assignedMembersTitle": "Assigned members",
+    "manageMembers": "Manage members",
+    "subOrganizationsTitle": "Sub-organizations",
+    "noSubOrganizations": "This organization has no sub-organizations.",
+    "createSubOrganization": "Create sub-organization",
+    "deleteHint": "An organization can only be deleted once it has no sub-organizations and no members left.",
+    "deleteButton": "Delete organization",
+    "discardDescription": "You have unsaved changes to this organization.",
+    "deleteDialog": {
+      "title": "Delete organization?",
+      "description": "{name} will be removed. This is only possible while no sub-organizations and no members are assigned."
+    },
+    "leaveDescription": "Your changes to this organization haven't been saved yet.",
+    "createDialog": {
+      "title": "Create sub-organization",
+      "description": "The new organization will be placed under {parentName}.",
+      "nameLabel": "Organization name",
+      "submit": "Create"
+    },
+    "contactPicker": {
+      "title": "Choose contact person",
+      "description": "Only people assigned to this organization can be the contact person.",
+      "searchPlaceholder": "Search person",
+      "empty": "No people are assigned to this organization.",
+      "remove": "Remove contact person"
+    },
+    "toast": {
+      "created": "Sub-organization created",
+      "createFailed": "The sub-organization could not be created.",
+      "saved": "Organization saved",
+      "saveFailed": "The organization could not be saved.",
+      "deleted": "Organization deleted",
+      "deleteConflict": "The organization still has sub-organizations or assigned people and cannot be deleted.",
+      "deleteFailed": "The organization could not be deleted."
+    }
+  },
+  "permission": {
+    "level": {
+      "none": "None",
+      "view": "View",
+      "edit": "Edit",
+      "manage": "Manage"
+    },
+    "group": {
+      "greenspaces": "Green spaces",
+      "operations": "Operations",
+      "administration": "Administration"
+    },
+    "action": {
+      "read": "View {resource}",
+      "create": "Create {resource}",
+      "update": "Edit {resource}",
+      "delete": "Delete {resource}"
+    },
+    "resource": {
+      "tree": {
+        "label": "Trees",
+        "pluralNoun": "trees",
+        "singular": "tree",
+        "description": "Trees & locations",
+        "hint": {
+          "read": "View tree list and details",
+          "create": "Record new trees",
+          "update": "Change master data and location",
+          "delete": "Remove trees permanently"
+        }
+      },
+      "tree_cluster": {
+        "label": "Watering groups",
+        "pluralNoun": "watering groups",
+        "singular": "watering group",
+        "description": "Groups & thresholds",
+        "hint": {
+          "read": "View groups and watering status",
+          "create": "Create new watering groups",
+          "update": "Change assignment, name and thresholds",
+          "delete": "Dissolve groups"
+        }
+      },
+      "sensor": {
+        "label": "Sensors",
+        "pluralNoun": "sensors",
+        "singular": "sensor",
+        "description": "Devices & network",
+        "hint": {
+          "read": "View devices and readings",
+          "create": "Commission a new device",
+          "update": "Change assignment and master data",
+          "delete": "Remove a device permanently"
+        }
+      },
+      "region": {
+        "label": "Areas",
+        "pluralNoun": "areas",
+        "singular": "area",
+        "description": "City areas & assignment",
+        "hint": {
+          "read": "View city areas",
+          "create": "Create a new area",
+          "update": "Rename or adjust an area",
+          "delete": "Remove an area"
+        }
+      },
+      "watering_plan": {
+        "label": "Watering plans",
+        "pluralNoun": "watering plans",
+        "singular": "watering plan",
+        "description": "Planning & routes",
+        "hint": {
+          "read": "View planned and completed watering plans",
+          "create": "Create a new watering plan",
+          "update": "Change route, time, scope and status",
+          "delete": "Remove a watering plan permanently"
+        }
+      },
+      "vehicle": {
+        "label": "Vehicles",
+        "pluralNoun": "vehicles",
+        "singular": "vehicle",
+        "description": "Trucks & trailers",
+        "hint": {
+          "read": "View vehicles and availability",
+          "create": "Add a new vehicle",
+          "update": "Change master data and availability",
+          "delete": "Archive or remove a vehicle"
+        }
+      },
+      "user": {
+        "label": "Members",
+        "pluralNoun": "members",
+        "singular": "member",
+        "description": "Accounts & assignment",
+        "hint": {
+          "read": "View members and their roles",
+          "create": "Invite new members",
+          "update": "Change master data and role assignment",
+          "delete": "Revoke access"
+        },
+        "actionOverrides": {
+          "create": "Invite members",
+          "delete": "Remove members"
+        }
+      },
+      "organization": {
+        "label": "Organization",
+        "pluralNoun": "organization",
+        "singular": "organization",
+        "description": "Structure & units",
+        "hint": {
+          "read": "View organization structure",
+          "create": "Create a new organization",
+          "update": "Rename organization",
+          "delete": "Delete organization"
+        }
+      },
+      "role": {
+        "label": "Roles & permissions",
+        "pluralNoun": "roles",
+        "singular": "role",
+        "description": "Permissions",
+        "hint": {
+          "read": "View roles and their permissions",
+          "create": "Create or copy a new role",
+          "update": "Change a role's permissions",
+          "delete": "Delete role"
+        }
+      }
+    }
+  }
+}

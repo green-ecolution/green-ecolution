@@ -2,18 +2,10 @@ import { clusterQueries } from '@/api/queries'
 import type { TreeWithDistance } from '@/api/backendApi'
 import { Badge, cn } from '@green-ecolution/ui'
 import { useQuery } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { Check, MapPin, TreeDeciduous } from 'lucide-react'
 import { useEffect } from 'react'
-
-function formatDistance(meters: number): string {
-  if (meters >= 1000) {
-    return `${new Intl.NumberFormat('de-DE', { maximumFractionDigits: 1 }).format(meters / 1000)} km`
-  }
-  if (meters < 10) {
-    return `${new Intl.NumberFormat('de-DE', { maximumFractionDigits: 1 }).format(meters)} m`
-  }
-  return `${new Intl.NumberFormat('de-DE', { maximumFractionDigits: 0 }).format(meters)} m`
-}
+import { useNumberFormatter } from '@/lib/i18n/useFormatters'
 
 interface NearestTreeListProps {
   trees: TreeWithDistance[]
@@ -30,8 +22,17 @@ const NearestTreeListItem = ({
   isSelected: boolean
   onSelect: () => void
 }) => {
+  const { t } = useTranslation('sensor')
+  const oneDecimal = useNumberFormatter({ maximumFractionDigits: 1 })
+  const wholeNumber = useNumberFormatter({ maximumFractionDigits: 0 })
   const { tree, distanceMeters } = entry
   const isAssigned = tree.sensor != null
+
+  const formatDistance = (meters: number): string => {
+    if (meters >= 1000) return `${oneDecimal.format(meters / 1000)} km`
+    if (meters < 10) return `${oneDecimal.format(meters)} m`
+    return `${wholeNumber.format(meters)} m`
+  }
 
   const clusterId = tree.treeClusterId ? String(tree.treeClusterId) : null
   const { data: clusterRes } = useQuery({
@@ -87,15 +88,21 @@ const NearestTreeListItem = ({
               |
             </span>
             <span className="text-dark-600 text-xs">
-              {tree.treeClusterId ? (clusterRes?.name ?? '…') : 'Nicht zugeordnet'}
+              {tree.treeClusterId
+                ? (clusterRes?.name ?? '…')
+                : t('nearestTreeList.unassignedGroup')}
             </span>
             {isAssigned && (
               <>
                 <span className="text-dark-200" aria-hidden>
                   |
                 </span>
-                <Badge variant="muted" size="default" aria-label="Sensor zugeordnet">
-                  Sensor zugeordnet
+                <Badge
+                  variant="muted"
+                  size="default"
+                  aria-label={t('treeSearch.sensorAssignedBadge')}
+                >
+                  {t('treeSearch.sensorAssignedBadge')}
                 </Badge>
               </>
             )}
@@ -107,6 +114,7 @@ const NearestTreeListItem = ({
 }
 
 const NearestTreeList = ({ trees, selectedTreeId, onSelect }: NearestTreeListProps) => {
+  const { t } = useTranslation('sensor')
   useEffect(() => {
     if (selectedTreeId !== null) return
     const firstSelectable = trees.find((entry) => entry.tree.sensor == null)
@@ -116,17 +124,21 @@ const NearestTreeList = ({ trees, selectedTreeId, onSelect }: NearestTreeListPro
   }, [trees, selectedTreeId, onSelect])
 
   return (
-    <section aria-label="Bäume in der Nähe">
+    <section aria-label={t('nearestTreeList.title')}>
       <div className="flex items-center gap-2 mb-3">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-dark-600">
-          Bäume in der Nähe
+          {t('nearestTreeList.title')}
         </h2>
         <Badge variant="muted" size="default">
           {trees.length}
         </Badge>
       </div>
 
-      <div className="flex flex-col gap-2" role="radiogroup" aria-label="Baum auswählen">
+      <div
+        className="flex flex-col gap-2"
+        role="radiogroup"
+        aria-label={t('nearestTreeList.selectAriaLabel')}
+      >
         {trees.map((entry) => (
           <NearestTreeListItem
             key={entry.tree.id}

@@ -1,18 +1,19 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { ArrowDownUp, Search } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Combobox, Input } from '@green-ecolution/ui'
 import type { ComboboxOption } from '@green-ecolution/ui'
 
-const SORT_OPTIONS: ComboboxOption[] = [
-  { value: 'name', label: 'Name' },
-  { value: 'moisture', label: 'Feuchte' },
-  { value: 'trees', label: 'Anzahl Bäume' },
-]
-
 const ClusterToolbar: React.FC = () => {
+  const { t } = useTranslation('treecluster')
   const search = useSearch({ strict: false })
   const navigate = useNavigate()
+  const sortOptions: ComboboxOption[] = [
+    { value: 'name', label: t('toolbar.sortOptionName') },
+    { value: 'moisture', label: t('toolbar.sortOptionMoisture') },
+    { value: 'trees', label: t('toolbar.sortOptionTrees') },
+  ]
 
   const [inputValue, setInputValue] = useState(search.q ?? '')
 
@@ -52,7 +53,7 @@ const ClusterToolbar: React.FC = () => {
         />
         <Input
           type="search"
-          placeholder="Gruppe suchen"
+          placeholder={t('toolbar.searchPlaceholder')}
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           className="pl-9"
@@ -61,14 +62,16 @@ const ClusterToolbar: React.FC = () => {
 
       <div className="hidden items-center gap-2 sm:flex">
         <ArrowDownUp className="h-4 w-4 shrink-0 text-dark-600" aria-hidden />
-        <span className="shrink-0 whitespace-nowrap text-sm text-dark-600">Sortieren:</span>
+        <span className="shrink-0 whitespace-nowrap text-sm text-dark-600">
+          {t('toolbar.sortLabel')}
+        </span>
         <Combobox
-          options={SORT_OPTIONS}
+          options={sortOptions}
           value={search.sort ?? 'name'}
           onChange={handleSortChange}
-          placeholder="Sortieren"
-          searchPlaceholder="Sortierung suchen"
-          aria-label="Gruppen sortieren"
+          placeholder={t('toolbar.sortPlaceholder')}
+          searchPlaceholder={t('toolbar.sortSearchPlaceholder')}
+          aria-label={t('toolbar.sortAriaLabel')}
           className="min-w-0 flex-1 sm:w-48 sm:flex-none"
         />
       </div>

@@ -1,5 +1,6 @@
 import { Suspense } from 'react'
 import type { LngLatBoundsLike } from 'maplibre-gl'
+import { useTranslation } from 'react-i18next'
 import { Card, CardContent, CardHeader, CardTitle } from '@green-ecolution/ui'
 import MapPreview from '@/components/map-gl/MapPreview'
 import useClusterBoundaryLayer from '@/components/map-gl/layers/useClusterBoundaryLayer'
@@ -43,6 +44,7 @@ const clusterTreeBounds = (trees: Tree[]): LngLatBoundsLike | undefined => {
 }
 
 const ClusterLocationCard = ({ treecluster }: ClusterLocationCardProps) => {
+  const { t } = useTranslation('treecluster')
   const trees = treecluster.trees
   const hasTrees = trees.length > 0
   const bounds = clusterTreeBounds(trees)
@@ -50,14 +52,14 @@ const ClusterLocationCard = ({ treecluster }: ClusterLocationCardProps) => {
   return (
     <Card variant="outlined">
       <CardHeader>
-        <CardTitle>Standort</CardTitle>
+        <CardTitle>{t('locationCard.title')}</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         {hasTrees ? (
           <MapPreview
             center={bounds ? undefined : [treecluster.longitude, treecluster.latitude]}
             bounds={bounds}
-            ariaLabel="Karte mit den Bäumen und der Umrandung der Bewässerungsgruppe"
+            ariaLabel={t('locationCard.mapAriaLabel')}
             className="h-56"
           >
             {/* Boundary before markers: mount order controls layer stacking. */}
@@ -68,7 +70,7 @@ const ClusterLocationCard = ({ treecluster }: ClusterLocationCardProps) => {
           </MapPreview>
         ) : (
           <p className="flex h-56 items-center justify-center rounded-2xl border border-dark-100 bg-dark-50/40 text-center text-sm text-muted-foreground">
-            Keine Bäume — kein Standort.
+            {t('locationCard.noTreesNotice')}
           </p>
         )}
         {hasTrees && (
@@ -82,7 +84,7 @@ const ClusterLocationCard = ({ treecluster }: ClusterLocationCardProps) => {
                 cluster: treecluster.id,
               },
             }}
-            label="Auf der Karte anzeigen"
+            label={t('locationCard.viewOnMapLabel')}
           />
         )}
       </CardContent>

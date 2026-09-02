@@ -7,7 +7,7 @@ const vehicleFormRoute = getRouteApi('/_protected/vehicles/_formular/$vehicleId'
 
 export const Route = createFileRoute('/_protected/vehicles/_formular/$vehicleId/edit/')({
   component: EditVehicle,
-  pendingComponent: pendingLoading('Fahrzeug wird geladen …'),
+  pendingComponent: pendingLoading({ key: 'vehicle:detail.loadingLabel' }),
   loader: async () => {
     if (!(await getAuthSession().isAuthenticated())) return
   },

@@ -9,9 +9,13 @@ import {
   DialogIcon,
   DialogTitle,
 } from '@green-ecolution/ui'
+import { useTranslation } from 'react-i18next'
+import { WateringPlanStatus } from '@green-ecolution/backend-client'
 import type { WateringPlanInList } from '@/api/backendApi'
 import { CancelWateringPlan, FinishedWateringPlan } from '../WateringPlanStatusUpdate'
 import { useWateringPlanBoardMutations } from '@/hooks/useWateringPlanBoardMutations'
+import { useDateLocale } from '@/lib/i18n/useFormatters'
+import { useWateringPlanStatusDetails } from '@/hooks/details/useDetailsForWateringPlanStatus'
 import { formatBoardDate } from './format'
 
 type CompleteMode = 'finished' | 'canceled'
@@ -24,6 +28,9 @@ interface CompletePlanDialogProps {
 const CompletePlanDialog = ({ plan, onClose }: CompletePlanDialogProps) => {
   const [mode, setMode] = useState<CompleteMode>('finished')
   const { finishPlan, cancelPlan } = useWateringPlanBoardMutations()
+  const { t } = useTranslation('wateringPlan')
+  const dateLocale = useDateLocale()
+  const getStatusDetails = useWateringPlanStatusDetails()
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {
@@ -39,12 +46,22 @@ const CompletePlanDialog = ({ plan, onClose }: CompletePlanDialogProps) => {
           <CheckCircle2 />
         </DialogIcon>
         <DialogHeader>
-          <DialogTitle>Einsatz abschließen</DialogTitle>
+          <DialogTitle>{t('board.completeDialog.title')}</DialogTitle>
           <DialogDescription>
-            {plan && <>Wie ist der Einsatz vom {formatBoardDate(plan.date)} ausgegangen?</>}
+            {plan && (
+              <>
+                {t('board.completeDialog.description', {
+                  date: formatBoardDate(plan.date, dateLocale),
+                })}
+              </>
+            )}
           </DialogDescription>
         </DialogHeader>
-        <div className="flex gap-2" role="radiogroup" aria-label="Ausgang des Einsatzes">
+        <div
+          className="flex gap-2"
+          role="radiogroup"
+          aria-label={t('board.completeDialog.outcomeAriaLabel')}
+        >
           <Button
             type="button"
             size="sm"
@@ -53,7 +70,7 @@ const CompletePlanDialog = ({ plan, onClose }: CompletePlanDialogProps) => {
             aria-checked={mode === 'finished'}
             onClick={() => setMode('finished')}
           >
-            Beendet
+            {getStatusDetails(WateringPlanStatus.Finished).label}
           </Button>
           <Button
             type="button"
@@ -63,14 +80,14 @@ const CompletePlanDialog = ({ plan, onClose }: CompletePlanDialogProps) => {
             aria-checked={mode === 'canceled'}
             onClick={() => setMode('canceled')}
           >
-            Abgebrochen
+            {getStatusDetails(WateringPlanStatus.Canceled).label}
           </Button>
         </div>
         {plan && mode === 'finished' && (
           <FinishedWateringPlan
             wateringPlanId={plan.id.toString()}
             loadedData={{ treeclusters: plan.treeclusters }}
-            submitLabel="Einsatz abschließen"
+            submitLabel={t('board.completeDialog.title')}
             onSubmit={(data) =>
               finishPlan.mutate({ plan, evaluation: data.evaluation }, { onSuccess: onClose })
             }
@@ -79,7 +96,7 @@ const CompletePlanDialog = ({ plan, onClose }: CompletePlanDialogProps) => {
         {plan && mode === 'canceled' && (
           <CancelWateringPlan
             className="w-full"
-            submitLabel="Einsatz abbrechen"
+            submitLabel={t('board.cancelDialog.title')}
             onSubmit={(data) =>
               cancelPlan.mutate({ plan, note: data.cancellationNote }, { onSuccess: onClose })
             }

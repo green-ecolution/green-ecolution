@@ -9,6 +9,7 @@ import {
   AlertDialogTitle,
 } from '@green-ecolution/ui'
 import { MoveRight, X } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 interface DeleteConfirmDialogProps {
   open: boolean
@@ -24,25 +25,29 @@ const DeleteConfirmDialog = ({
   title,
   description,
   onConfirm,
-}: DeleteConfirmDialogProps) => (
-  <AlertDialog open={open} onOpenChange={onOpenChange}>
-    <AlertDialogContent>
-      <AlertDialogHeader>
-        <AlertDialogTitle>{title}</AlertDialogTitle>
-        <AlertDialogDescription>{description}</AlertDialogDescription>
-      </AlertDialogHeader>
-      <AlertDialogFooter>
-        <AlertDialogCancel>
-          Abbrechen
-          <X />
-        </AlertDialogCancel>
-        <AlertDialogAction onClick={onConfirm}>
-          Löschen
-          <MoveRight className="icon-arrow-animate" />
-        </AlertDialogAction>
-      </AlertDialogFooter>
-    </AlertDialogContent>
-  </AlertDialog>
-)
+}: DeleteConfirmDialogProps) => {
+  const { t } = useTranslation('common')
+
+  return (
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{title}</AlertDialogTitle>
+          <AlertDialogDescription>{description}</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>
+            {t('actions.cancel')}
+            <X />
+          </AlertDialogCancel>
+          <AlertDialogAction onClick={onConfirm}>
+            {t('actions.delete')}
+            <MoveRight className="icon-arrow-animate" />
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  )
+}
 
 export default DeleteConfirmDialog

@@ -1,12 +1,13 @@
 export type {
   ValidationIssue,
   TranslatableIssue,
+  IssueTranslator,
   TreeForm,
   TreeclusterForm,
   VehicleForm,
   WateringPlanForm,
 } from './types'
-export { translateIssue } from './messages'
+export { translateIssue, VALIDATION_KEYS } from './messages'
 
 // Re-export all wasm-bindgen functions.
 export {

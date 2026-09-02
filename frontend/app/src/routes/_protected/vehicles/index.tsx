@@ -8,6 +8,7 @@ import EntityList from '@/components/general/EntityList'
 import ListPageHeader from '@/components/general/ListPageHeader'
 import Pagination from '@/components/general/Pagination'
 import { z } from 'zod'
+import { useTranslation } from 'react-i18next'
 import { vehicleQueries } from '@/api/queries'
 import { ListCardHeader } from '@green-ecolution/ui'
 import { pendingLoading, prefetch } from '@/lib/router'
@@ -15,7 +16,7 @@ import { Can } from '@/lib/auth/Can'
 
 export const Route = createFileRoute('/_protected/vehicles/')({
   component: Vehicles,
-  pendingComponent: pendingLoading('Fahrzeuge wird geladen …'),
+  pendingComponent: pendingLoading({ key: 'vehicle:list.loadingLabel' }),
   validateSearch: z.object({
     page: z.number().int().min(1).catch(1),
   }),
@@ -28,6 +29,7 @@ export const Route = createFileRoute('/_protected/vehicles/')({
 })
 
 function Vehicles() {
+  const { t } = useTranslation('vehicle')
   const { page } = Route.useSearch()
   const {
     data: vehicleRes,
@@ -42,29 +44,25 @@ function Vehicles() {
   return (
     <div className="container mt-6">
       <ListPageHeader
-        title="Alle Fahrzeuge"
-        description="Hier finden Sie eine Übersicht aller Fahrzeuge, welche für Einsätze verwendet werden können."
+        title={t('list.title')}
+        description={t('list.description')}
         action={
           <Can permission={['vehicle:create']}>
-            <ButtonLink
-              icon={Plus}
-              label="Neues Fahrzeug erstellen"
-              link={{ to: '/vehicles/new' }}
-            />
+            <ButtonLink icon={Plus} label={t('list.createButton')} link={{ to: '/vehicles/new' }} />
           </Can>
         }
       />
 
       <section className="mt-10">
         <ListCardHeader columns="repeat(5, 1fr)">
-          <p>Status</p>
-          <p>Kennzeichen</p>
-          <p>Wasserkapazität</p>
-          <p>Modell</p>
-          <p>Führerscheinklasse</p>
+          <p>{t('list.columnStatus')}</p>
+          <p>{t('list.columnNumberPlate')}</p>
+          <p>{t('list.columnWaterCapacity')}</p>
+          <p>{t('list.columnModel')}</p>
+          <p>{t('list.columnDrivingLicense')}</p>
         </ListCardHeader>
         {!vehicleRes ? (
-          <Loading className="mt-10 justify-center" label="Fahrzeuge wird geladen …" />
+          <Loading className="mt-10 justify-center" label={t('list.loadingLabel')} />
         ) : (
           <div
             className="transition-opacity duration-200"
@@ -74,7 +72,7 @@ function Vehicles() {
             <EntityList
               items={vehicleRes.data}
               getKey={(vehicle) => vehicle.id}
-              emptyMessage="Es wurden leider keine Fahrzeuge gefunden."
+              emptyMessage={t('list.emptyMessage')}
               renderItem={(vehicle) => <VehicleCard vehicle={vehicle} />}
             />
             {vehicleRes.pagination && vehicleRes.pagination?.totalPages > 1 && (

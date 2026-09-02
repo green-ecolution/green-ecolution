@@ -1,5 +1,6 @@
 import React from 'react'
 import { Plus } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import SelectedCard from '../../cards/SelectedCard'
 import { Button } from '@green-ecolution/ui'
 
@@ -26,13 +27,14 @@ const SelectEntities: React.FC<SelectEntitiesProps> = ({
   fill = false,
   emptyHint,
 }) => {
+  const { t } = useTranslation('common')
   const hasEntities = entityIds.length > 0
 
   return (
     <div className={fill ? 'flex min-h-0 flex-1 flex-col' : undefined}>
       <div className="mb-2.5 flex items-center justify-between gap-2">
         <p className="block font-semibold text-dark-800">
-          Zugehörige {label}
+          {t('form.selectEntities.selectedLabel', { label })}
           {required && <span className="text-destructive">&nbsp;*</span>}
         </p>
         {hasEntities && (
@@ -67,11 +69,13 @@ const SelectEntities: React.FC<SelectEntitiesProps> = ({
         <div className="rounded-lg border border-dashed border-dark-200 bg-dark-50/60 px-4 py-6 text-center text-sm">
           {required ? (
             <p className="font-semibold text-destructive">
-              Es muss mindestens eine Auswahl getroffen werden.
+              {t('form.selectEntities.requiredHint')}
             </p>
           ) : (
             <>
-              <p className="font-medium text-dark-800">Noch keine {label} ausgewählt.</p>
+              <p className="font-medium text-dark-800">
+                {t('form.selectEntities.emptyLabel', { label })}
+              </p>
               {emptyHint && <p className="mt-1 text-dark-600">{emptyHint}</p>}
             </>
           )}
@@ -88,7 +92,7 @@ const SelectEntities: React.FC<SelectEntitiesProps> = ({
           }}
           className="mt-6"
         >
-          {label} hinzufügen
+          {t('form.selectEntities.addLabel', { label })}
           <Plus />
         </Button>
       )}

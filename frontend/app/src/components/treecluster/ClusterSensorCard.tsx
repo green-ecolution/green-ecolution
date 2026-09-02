@@ -8,22 +8,28 @@ import {
   SignalBars,
 } from '@green-ecolution/ui'
 import { Link } from '@tanstack/react-router'
+import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import type { Tree } from '@/api/backendApi'
 import {
   parseSignal,
   signalBarsFromRssi,
   signalLevelFromRssi,
-  SIGNAL_LEVEL_LABEL,
+  useSignalLevelLabel,
   SIGNAL_LEVEL_TEXT_COLOR,
 } from '@/components/sensor/detail/signalParsing'
 import { formatBatteryVoltage, formatLastSeen } from '@/components/sensor/detail/latestDataParsing'
-import { getDataQualityDetails, hasQualityWarning } from '@/hooks/details/useDetailsForDataHealth'
+import { useDataQualityDetails, hasQualityWarning } from '@/hooks/details/useDetailsForDataHealth'
+import { useDateLocale } from '@/lib/i18n/useFormatters'
 
 interface ClusterSensorCardProps {
   trees: Tree[]
 }
 
-const SensorTreeRow = ({ tree }: { tree: Tree }) => {
+const SensorTreeRow = ({ tree, t }: { tree: Tree; t: TFunction<'treecluster'> }) => {
+  const dateLocale = useDateLocale()
+  const getDataQualityDetails = useDataQualityDetails()
+  const getSignalLevelLabel = useSignalLevelLabel()
   const sensor = tree.sensor
   if (!sensor) return null
 
@@ -36,7 +42,7 @@ const SensorTreeRow = ({ tree }: { tree: Tree }) => {
       className="block rounded-lg border border-dark-50 bg-white p-4 transition-colors hover:border-green-dark"
     >
       <p className="mb-2 font-lato text-lg font-bold">
-        Sensor-Baum: {tree.species} · {tree.number}
+        {t('sensorCard.treeLabel', { species: tree.species, number: tree.number })}
       </p>
       {hasQualityWarning(sensor) && (
         <InlineAlert
@@ -49,20 +55,23 @@ const SensorTreeRow = ({ tree }: { tree: Tree }) => {
         columns={1}
         details={[
           {
-            label: 'Signal',
+            label: t('sensorCard.signalLabel'),
             value: signal ? (
               <span
                 className={`flex items-center gap-2 ${SIGNAL_LEVEL_TEXT_COLOR[signalLevelFromRssi(signal.rssiDbm)]}`}
               >
                 <SignalBars filled={signalBarsFromRssi(signal.rssiDbm)} />
-                {SIGNAL_LEVEL_LABEL[signalLevelFromRssi(signal.rssiDbm)]}
+                {getSignalLevelLabel(signalLevelFromRssi(signal.rssiDbm))}
               </span>
             ) : (
-              'Keine Daten'
+              t('sensorCard.noSignalData')
             ),
           },
-          { label: 'Batterie', value: formatBatteryVoltage(sensor.latestData) },
-          { label: 'Letzte Übertragung', value: formatLastSeen(sensor.latestData) },
+          { label: t('sensorCard.batteryLabel'), value: formatBatteryVoltage(sensor.latestData) },
+          {
+            label: t('sensorCard.lastTransmissionLabel'),
+            value: formatLastSeen(sensor.latestData, dateLocale),
+          },
         ]}
       />
     </Link>
@@ -70,28 +79,29 @@ const SensorTreeRow = ({ tree }: { tree: Tree }) => {
 }
 
 const ClusterSensorCard = ({ trees }: ClusterSensorCardProps) => {
+  const { t } = useTranslation('treecluster')
   const treesWithSensor = trees.filter((tree) => tree.sensor)
 
   return (
     <Card variant="outlined">
       <CardHeader>
-        <CardTitle>Sensorik</CardTitle>
+        <CardTitle>{t('sensorCard.title')}</CardTitle>
       </CardHeader>
       <CardContent>
         {treesWithSensor.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            Kein Baum dieser Gruppe ist mit einem Sensor ausgestattet.
-          </p>
+          <p className="text-sm text-muted-foreground">{t('sensorCard.noSensorNotice')}</p>
         ) : (
           <>
             <div className="flex flex-col gap-y-3">
               {treesWithSensor.map((tree) => (
-                <SensorTreeRow key={tree.id} tree={tree} />
+                <SensorTreeRow key={tree.id} tree={tree} t={t} />
               ))}
             </div>
             <p className="mt-4 text-right text-sm text-muted-foreground tabular-nums">
-              {treesWithSensor.length} von {trees.length} {trees.length === 1 ? 'Baum' : 'Bäumen'}{' '}
-              mit Sensor
+              {t('sensorCard.sensorCount', {
+                count: trees.length,
+                withSensor: treesWithSensor.length,
+              })}
             </p>
           </>
         )}

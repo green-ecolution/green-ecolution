@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils'
 import { Calendar } from '@/components/ui/calendar'
 import { Label } from '@/components/ui/label'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { useUiText } from '@/i18n'
 
 export interface DatePickerFieldProps {
   label: string
@@ -37,13 +38,15 @@ function DatePickerField({
   disabled,
   id,
   className,
-  placeholder = 'Datum auswählen',
+  placeholder,
   fromDate,
   toDate,
 }: DatePickerFieldProps) {
+  const { t } = useUiText()
   const generatedId = React.useId()
   const inputId = id || generatedId
   const [open, setOpen] = React.useState(false)
+  const resolvedPlaceholder = placeholder ?? t('datePicker.placeholder')
 
   return (
     <div data-slot="date-picker-field" className={cn('flex flex-col gap-y-2', className)}>
@@ -69,7 +72,7 @@ function DatePickerField({
           >
             <CalendarIcon className="size-4 shrink-0 opacity-50" />
             <span className="flex-1 text-left">
-              {value ? format(value, 'PPP', { locale: de }) : placeholder}
+              {value ? format(value, 'PPP', { locale: de }) : resolvedPlaceholder}
             </span>
           </button>
         </PopoverTrigger>

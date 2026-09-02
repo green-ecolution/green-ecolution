@@ -6,7 +6,7 @@ const wateringPlanRoute = getRouteApi('/_protected/watering-plans/$wateringPlanI
 
 export const Route = createFileRoute('/_protected/watering-plans/$wateringPlanId/')({
   component: SingleWateringPlan,
-  pendingComponent: pendingLoading('Einsatzplan wird geladen...'),
+  pendingComponent: pendingLoading({ key: 'wateringPlan:detail.loadingLabel' }),
 })
 
 function SingleWateringPlan() {

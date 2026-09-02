@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { FormProvider } from 'react-hook-form'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { MapPin } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { clusterQueries, sensorQueries } from '@/api/queries'
 import { prefetch } from '@/lib/router'
 import { useTreeForm } from '@/hooks/form/useTreeForm'
@@ -31,6 +32,7 @@ const defaultForm = () => ({
 })
 
 function NewTree() {
+  const { t } = useTranslation('map')
   const navigate = useNavigate({ from: Route.fullPath })
   const [pos, setPos] = useState<MapClickLngLat>()
   const { data: sensors } = useSuspenseQuery(sensorQueries.list())
@@ -71,7 +73,7 @@ function NewTree() {
   return (
     <>
       <MapPanel
-        title="Neuen Baum erfassen"
+        title={t('tree.newTitle')}
         onClose={handleCancel}
         className="overflow-y-auto"
         mobileCollapsedSnap="260px"
@@ -83,7 +85,7 @@ function NewTree() {
                 <MapPin className="size-4" />
               </span>
               <div className="min-w-0">
-                <p className="text-sm font-medium text-dark-800">Standort gewählt</p>
+                <p className="text-sm font-medium text-dark-800">{t('tree.locationSelected')}</p>
                 <p className="truncate text-xs tabular-nums text-dark-400">
                   {pos.lat.toFixed(5)}, {pos.lng.toFixed(5)}
                 </p>
@@ -104,10 +106,7 @@ function NewTree() {
             </FormProvider>
           </>
         ) : (
-          <p className="text-dark-600">
-            Klicke auf die Karte, um den Standort des neuen Baums zu setzen. Den Marker kannst du
-            danach noch verschieben.
-          </p>
+          <p className="text-dark-600">{t('tree.clickToSetLocationHint')}</p>
         )}
       </MapPanel>
 

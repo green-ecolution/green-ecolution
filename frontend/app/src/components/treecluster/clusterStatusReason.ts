@@ -1,3 +1,4 @@
+import type { TFunction } from 'i18next'
 import { SensorStatus, SoilCondition, WateringStatus } from '@/api/backendApi'
 import type { Tree, TreeCluster } from '@/api/backendApi'
 
@@ -48,21 +49,22 @@ const diagnose = (
   return 'unscorable'
 }
 
-const describe = (key: UnknownStatusReasonKey, count: number): string => {
-  const trees = count === 1 ? 'Baum' : 'Bäume'
+const describe = (
+  key: UnknownStatusReasonKey,
+  count: number,
+  t: TFunction<'treecluster'>,
+): string => {
   switch (key) {
     case 'soil-unknown':
-      return 'Die Bodenbeschaffenheit der Gruppe ist nicht bestimmt. Ohne sie lassen sich die Feuchtemesswerte nicht bewerten.'
+      return t('unknownStatus.soilUnknown')
     case 'no-sensor':
-      return 'Diese Gruppe hat keinen Sensor, daher liegen keine Messwerte vor.'
+      return t('unknownStatus.noSensor')
     case 'sensor-silent':
-      return count === 1
-        ? '1 Sensor sendet derzeit keine Daten.'
-        : `${count} Sensoren senden derzeit keine Daten.`
+      return t('unknownStatus.sensorSilent', { count })
     case 'beyond-monitoring':
-      return `${count} ${trees} liegen außerhalb des überwachten Anwuchszeitraums von ${MONITORED_GROWTH_YEARS} Jahren.`
+      return t('unknownStatus.beyondMonitoring', { count, years: MONITORED_GROWTH_YEARS })
     case 'unscorable':
-      return `Für ${count} ${trees} liegen keine auswertbaren Messwerte vor.`
+      return t('unknownStatus.unscorable', { count })
   }
 }
 
@@ -73,12 +75,13 @@ const describe = (key: UnknownStatusReasonKey, count: number): string => {
 export const unknownStatusReasons = (
   cluster: TreeCluster,
   currentYear: number,
+  t: TFunction<'treecluster'>,
 ): UnknownStatusReason[] => {
   const trees = cluster.trees ?? []
   if (cluster.wateringStatus !== WateringStatus.Unknown || trees.length === 0) return []
 
   if (!trees.some((tree) => tree.sensor)) {
-    return [{ key: 'no-sensor', text: describe('no-sensor', trees.length) }]
+    return [{ key: 'no-sensor', text: describe('no-sensor', trees.length, t) }]
   }
 
   // A missing soil type blocks the whole group, whatever its sensors do.
@@ -96,6 +99,6 @@ export const unknownStatusReasons = (
 
   return DISPLAY_ORDER.flatMap((key) => {
     const count = counts.get(key)
-    return count ? [{ key, text: describe(key, count) }] : []
+    return count ? [{ key, text: describe(key, count, t) }] : []
   })
 }

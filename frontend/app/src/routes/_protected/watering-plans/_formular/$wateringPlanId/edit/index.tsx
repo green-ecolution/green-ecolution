@@ -8,7 +8,7 @@ const wateringPlanFormRoute = getRouteApi('/_protected/watering-plans/_formular/
 
 export const Route = createFileRoute('/_protected/watering-plans/_formular/$wateringPlanId/edit/')({
   component: EditWateringPlan,
-  pendingComponent: pendingLoading('Einsatzplan wird geladen …'),
+  pendingComponent: pendingLoading({ key: 'wateringPlan:detail.loadingLabel' }),
 })
 
 function EditWateringPlan() {

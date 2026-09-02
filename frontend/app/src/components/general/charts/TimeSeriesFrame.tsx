@@ -8,6 +8,7 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from '@green-ecolution/ui'
+import { useDateLocale } from '@/lib/i18n/useFormatters'
 
 const DAY_MS = 24 * 60 * 60 * 1000
 
@@ -32,6 +33,7 @@ const TimeSeriesFrame = ({
   legend = false,
   children,
 }: TimeSeriesFrameProps) => {
+  const dateLocale = useDateLocale()
   const ts = data.map((row) => row.ts as number)
   const spanMs = ts.length > 1 ? ts[ts.length - 1] - ts[0] : 0
   const tickPattern = spanMs > 2 * DAY_MS ? 'dd.MM.' : 'HH:mm'
@@ -49,7 +51,9 @@ const TimeSeriesFrame = ({
           axisLine={false}
           tickMargin={8}
           minTickGap={40}
-          tickFormatter={(value) => format(new Date(value as number), tickPattern)}
+          tickFormatter={(value) =>
+            format(new Date(value as number), tickPattern, { locale: dateLocale })
+          }
         />
         <YAxis tickLine={false} axisLine={false} width={40} tickMargin={4} domain={yDomain} />
         <ChartTooltip
@@ -58,7 +62,9 @@ const TimeSeriesFrame = ({
               labelFormatter={(_, payload) => {
                 const point = payload?.[0] as { payload?: { ts?: number } } | undefined
                 const pointTs = point?.payload?.ts
-                return pointTs ? format(new Date(pointTs), 'dd.MM.yyyy HH:mm') : ''
+                return pointTs
+                  ? format(new Date(pointTs), 'dd.MM.yyyy HH:mm', { locale: dateLocale })
+                  : ''
               }}
             />
           }

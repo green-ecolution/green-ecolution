@@ -1,19 +1,24 @@
+import type { TFunction } from 'i18next'
 import type { ComboboxOption } from '@green-ecolution/ui'
 import { validatePhoneNumber, type ValidationIssue } from '@green-ecolution/domain-wasm'
 import type { OrganizationResponse, RoleResponse, UserResponse } from '@/api/backendApi'
+import { roleDisplayName } from '../roles/roleList'
 
 export const fullNameOf = (user: UserResponse): string =>
   [user.firstName, user.lastName].filter((part) => (part ?? '').trim().length > 0).join(' ')
 
-const personNoun = (count: number): string => (count === 1 ? 'Person' : 'Personen')
-
-export const memberCountLabel = (shown: number, total: number, filtered: boolean): string =>
-  filtered ? `${shown} von ${total} ${personNoun(total)}` : `${total} ${personNoun(total)}`
-
-export const emptyMessageOf = (filtered: boolean): string =>
+export const memberCountLabel = (
+  shown: number,
+  total: number,
+  filtered: boolean,
+  t: TFunction<'settings'>,
+): string =>
   filtered
-    ? 'Keine Person passt zu Suche und Filter.'
-    : 'Es sind noch keine Mitarbeitenden hinterlegt.'
+    ? t('members.countFiltered', { shown, total, noun: t('members.personNoun', { count: total }) })
+    : t('members.count', { count: total })
+
+export const emptyMessageOf = (filtered: boolean, t: TFunction<'settings'>): string =>
+  t(filtered ? 'members.emptyFiltered' : 'members.emptyUnfiltered')
 
 export const isFiltered = (
   search: string,
@@ -44,17 +49,22 @@ export const sinceLabel = (createdAt?: string | null): string | null => {
 export const roleFilterOptions = (
   roles: RoleResponse[],
   organizations: OrganizationResponse[],
+  t: TFunction<'settings'>,
 ): ComboboxOption[] => {
   const known = new Set(organizations.map((org) => org.id))
   const grouped = organizations.flatMap((org) =>
     roles
       .filter((role) => role.organizationId === org.id)
-      .map((role) => ({ value: role.id, label: role.name, group: org.name })),
+      .map((role) => ({ value: role.id, label: roleDisplayName(role, t), group: org.name })),
   )
   // Without this a role whose organization is not in the visible list would
   // disappear from the filter with no trace.
   const orphans = roles
     .filter((role) => role.organizationId == null || !known.has(role.organizationId))
-    .map((role) => ({ value: role.id, label: role.name, group: 'Ohne Organisation' }))
+    .map((role) => ({
+      value: role.id,
+      label: roleDisplayName(role, t),
+      group: t('members.roleFilterOrphanGroup'),
+    }))
   return [...grouped, ...orphans]
 }

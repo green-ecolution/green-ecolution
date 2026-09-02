@@ -1,4 +1,5 @@
 import { RefreshCw } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import {
   Button,
   Dialog,
@@ -13,6 +14,7 @@ import useAppUpdate from '@/hooks/useAppUpdate'
 
 export default function UpdateNotification() {
   const { updateAvailable, performUpdate, dismissUpdate } = useAppUpdate()
+  const { t } = useTranslation('navigation')
 
   return (
     <Dialog open={updateAvailable} onOpenChange={(open) => !open && dismissUpdate()}>
@@ -21,17 +23,14 @@ export default function UpdateNotification() {
           <RefreshCw />
         </DialogIcon>
         <DialogHeader>
-          <DialogTitle>Neue Version verfügbar</DialogTitle>
-          <DialogDescription>
-            Eine neue Version von Green Ecolution ist verfügbar. Aktualisiere die Anwendung, um die
-            neuesten Verbesserungen zu nutzen.
-          </DialogDescription>
+          <DialogTitle>{t('updateNotification.title')}</DialogTitle>
+          <DialogDescription>{t('updateNotification.description')}</DialogDescription>
         </DialogHeader>
         <DialogFooter>
           <Button variant="outline" onClick={dismissUpdate}>
-            Später
+            {t('updateNotification.later')}
           </Button>
-          <Button onClick={performUpdate}>Jetzt aktualisieren</Button>
+          <Button onClick={performUpdate}>{t('updateNotification.updateNow')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

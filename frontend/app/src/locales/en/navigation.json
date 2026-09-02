@@ -1,0 +1,104 @@
+{
+  "sidebar": {
+    "login": "Log in",
+    "settings": "Settings",
+    "headlineGreenSpaces": "Green spaces",
+    "headlinePlanning": "Planning",
+    "headlineMore": "More",
+    "map": "Map",
+    "clusters": "Watering groups",
+    "trees": "Trees",
+    "wateringPlans": "Watering plans",
+    "vehicles": "Vehicles",
+    "sensors": "Sensors",
+    "evaluations": "Evaluation",
+    "debug": "Debug",
+    "backToDashboard": "Back to your dashboard",
+    "logoAlt": "Green Ecolution logo — smart green-space management",
+    "logoIconAlt": "Green Ecolution",
+    "closeMainNav": "Close main navigation",
+    "openMainNav": "Open main navigation",
+    "mainNavLabel": "Main navigation",
+    "toggleExpand": "Expand sidebar navigation",
+    "toggleCollapse": "Collapse sidebar navigation"
+  },
+  "user": {
+    "openMenu": "Open user menu",
+    "signedInAs": "Signed in as:",
+    "profile": "Your profile",
+    "logout": "Log out"
+  },
+  "breadcrumb": {
+    "nav": "Breadcrumb navigation",
+    "root": "Dashboard"
+  },
+  "crumb": {
+    "trees": "Trees",
+    "clusters": "Watering groups",
+    "sensors": "Sensors",
+    "sensorActivate": "Activate sensor",
+    "vehicles": "Vehicles",
+    "vehicleNew": "New vehicle",
+    "vehicleEdit": "Edit vehicle",
+    "wateringPlans": "Watering plans",
+    "wateringPlanNew": "New watering plan",
+    "wateringPlanEdit": "Edit watering plan",
+    "wateringPlanStatusEdit": "Change watering plan status",
+    "map": "Map",
+    "treeLocationNew": "Record tree location",
+    "routeSelect": "Set route",
+    "evaluations": "Evaluations",
+    "settings": "Settings",
+    "team": "Team & roles",
+    "plugins": "Plugins",
+    "info": "System information"
+  },
+  "footer": {
+    "tagline": "Smart green-space management - Green Ecolution {version}",
+    "nav": "Footer navigation",
+    "contact": "Contact",
+    "imprint": "Imprint",
+    "privacy": "Privacy Policy",
+    "versionUnknown": "unknown"
+  },
+  "notFound": {
+    "title": "This page could not be found.",
+    "description": "The page you requested is unavailable, either because it does not exist or because an error occurred. Error code: 404",
+    "toDashboard": "Go to dashboard",
+    "toHome": "Go to homepage"
+  },
+  "forbidden": {
+    "title": "Access denied",
+    "description": "You do not have the permission required for this area. Contact your organization's administration if you need access.",
+    "toDashboard": "Go to dashboard"
+  },
+  "entityNotFound": {
+    "title": "{entityName} not found",
+    "description": "The requested resource does not exist or has already been removed."
+  },
+  "updateNotification": {
+    "title": "New version available",
+    "description": "A new version of Green Ecolution is available. Update the app to get the latest improvements.",
+    "later": "Later",
+    "updateNow": "Update now"
+  },
+  "errorFallback": {
+    "title": "Oops, something went wrong!",
+    "errorCode": "Error code: {code}",
+    "back": "Back",
+    "toDashboard": "Go to dashboard",
+    "toHome": "Go to homepage"
+  },
+  "slider": {
+    "prev": "Show previous item",
+    "next": "Show next item",
+    "first": "Show first item",
+    "last": "Show last item",
+    "slideX": "Go to page %s",
+    "pageX": "Go to page %s",
+    "carousel": "Slider",
+    "select": "Item pagination",
+    "slide": "Slider item",
+    "slideLabel": "%s of %s"
+  }
+}

@@ -7,5 +7,5 @@ export const Route = createFileRoute('/_protected/settings')({
       <Outlet />
     </SettingsLayout>
   ),
-  loader: () => ({ crumb: { title: 'Einstellungen' } }),
+  loader: () => ({ crumb: { titleKey: 'settings' as const } }),
 })

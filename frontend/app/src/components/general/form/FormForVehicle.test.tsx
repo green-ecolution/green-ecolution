@@ -23,7 +23,7 @@ function TestWrapper({
 
   const methods = useForm<VehicleForm>({
     defaultValues,
-    resolver: vehicleDraftResolver<VehicleForm>(),
+    resolver: vehicleDraftResolver<VehicleForm>((key) => key),
     mode: 'onChange',
   })
 
@@ -128,7 +128,7 @@ describe('FormForVehicle', () => {
     const listbox = await screen.findByRole('listbox')
     expect(within(listbox).getByText('Verfügbar')).toBeInTheDocument()
     expect(within(listbox).getByText('Nicht Verfügbar')).toBeInTheDocument()
-    expect(within(listbox).getByText('Im Einsatz')).toBeInTheDocument()
+    expect(within(listbox).getByText('In Betrieb')).toBeInTheDocument()
     expect(within(listbox).getByText('Unbekannt')).toBeInTheDocument()
   })
 

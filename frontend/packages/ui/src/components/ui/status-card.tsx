@@ -2,6 +2,7 @@ import * as React from 'react'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { Info } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useUiText } from '@/i18n'
 import { Badge, type BadgeProps } from './badge'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './tooltip'
 
@@ -151,6 +152,7 @@ const StatusCard = React.forwardRef<HTMLDivElement, StatusCardProps>(
     },
     ref,
   ) => {
+    const { t } = useUiText()
     const showDot = indicator === 'dot' && !icon
     const showIcon = indicator === 'dot' && icon
     const showBadge = indicator === 'badge'
@@ -166,7 +168,7 @@ const StatusCard = React.forwardRef<HTMLDivElement, StatusCardProps>(
                 <TooltipTrigger asChild>
                   <button
                     type="button"
-                    aria-label="Weitere Informationen"
+                    aria-label={t('statusCard.moreInfo')}
                     className="ml-1.5 inline-flex translate-y-0.5 text-dark-500 hover:text-dark-700 focus-visible:outline-2 focus-visible:outline-offset-2"
                   >
                     <Info className="size-3.5" />

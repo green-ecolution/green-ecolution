@@ -1,6 +1,7 @@
 import { Loading } from '@green-ecolution/ui'
 import { useQuery, keepPreviousData } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
+import { useTranslation } from 'react-i18next'
 import ButtonLink from '@/components/general/links/ButtonLink'
 import { Plus } from 'lucide-react'
 import TreeCard from '@/components/general/cards/TreeCard'
@@ -23,6 +24,7 @@ const treeFilterSchema = filterSearchSchema
   .extend({ page: z.number().int().min(1).catch(1) })
 
 function Trees() {
+  const { t } = useTranslation('tree')
   const { page, wateringStatuses, hasCluster, plantingYears } = Route.useSearch()
   const {
     data: treesRes,
@@ -43,43 +45,42 @@ function Trees() {
   return (
     <div className="container mt-6">
       <ListPageHeader
-        title="Auflistung aller Bäume"
+        title={t('list.title')}
         description={
           <>
-            Hier finden Sie eine Übersicht aller Bäume in einer Listenansicht. Die Bäume lassen sich
-            allerdings auch auf einer{' '}
+            {t('list.descriptionIntro')}{' '}
             <a
               href="/map"
               className="text-green underline hover:text-green-light focus:text-green-light-50"
             >
-              Karte
+              {t('list.mapLinkLabel')}
             </a>
-            &nbsp;visualisieren.
+            &nbsp;{t('list.descriptionOutro')}
           </>
         }
         action={
           <Can permission={['tree:create']}>
-            <ButtonLink icon={Plus} label="Neuen Baum erstellen" link={{ to: '/map/tree/new' }} />
+            <ButtonLink icon={Plus} label={t('list.createButton')} link={{ to: '/map/tree/new' }} />
           </Can>
         }
       />
 
       <section className="mt-10">
         <div className="flex justify-end mb-6 lg:mb-10">
-          <Dialog headline="Bäume filtern" fullUrlPath={Route.fullPath}>
+          <Dialog headline={t('list.filterHeadline')} fullUrlPath={Route.fullPath}>
             <StatusFieldset />
             <ClusterFieldset />
             <PlantingYearFieldset />
           </Dialog>
         </div>
         <ListCardHeader columns="1fr 1.5fr 1fr 1fr">
-          <p>Status</p>
-          <p>Baumart</p>
-          <p>Baumnummer</p>
-          <p>Bewässerungsgruppe</p>
+          <p>{t('list.columnStatus')}</p>
+          <p>{t('list.columnSpecies')}</p>
+          <p>{t('list.columnNumber')}</p>
+          <p>{t('list.columnCluster')}</p>
         </ListCardHeader>
         {!treesRes ? (
-          <Loading className="mt-10 justify-center" label="Daten werden geladen" />
+          <Loading className="mt-10 justify-center" label={t('list.loadingLabel')} />
         ) : (
           <div
             className="transition-opacity duration-200"
@@ -89,7 +90,7 @@ function Trees() {
             <EntityList
               items={treesRes.data}
               getKey={(tree) => tree.id}
-              emptyMessage="Es wurden leider keine Bäume gefunden."
+              emptyMessage={t('list.emptyMessage')}
               renderItem={(tree) => <TreeCard tree={tree} />}
             />
             {treesRes.pagination && treesRes.pagination?.totalPages > 1 && (
@@ -105,7 +106,7 @@ function Trees() {
 export const Route = createFileRoute('/_protected/trees/')({
   component: Trees,
   validateSearch: treeFilterSchema,
-  pendingComponent: pendingLoading('Daten werden geladen'),
+  pendingComponent: pendingLoading({ key: 'tree:list.loadingLabel' }),
   loaderDeps: ({ search }) => ({
     page: search.page,
     wateringStatuses: search.wateringStatuses,

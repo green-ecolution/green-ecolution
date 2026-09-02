@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { OrganizationDetailResponse } from '@/api/backendApi'
 
 export interface OrganizationDraft {
@@ -15,12 +16,6 @@ export interface AddressFieldErrors {
   city?: string
 }
 
-const MISSING: Required<AddressFieldErrors> = {
-  street: 'Straße fehlt',
-  postalCode: 'PLZ fehlt',
-  city: 'Ort fehlt',
-}
-
 const draftOf = (org: OrganizationDetailResponse): OrganizationDraft => ({
   name: org.name,
   street: org.address?.street ?? '',
@@ -34,6 +29,7 @@ const draftOf = (org: OrganizationDetailResponse): OrganizationDraft => ({
 const sameField = (a: string, b: string): boolean => a.trim() === b.trim()
 
 export const useOrganizationDraft = () => {
+  const { t } = useTranslation('settings')
   const [draft, setDraft] = useState<OrganizationDraft | null>(null)
   const [baseline, setBaseline] = useState<OrganizationDraft | null>(null)
 
@@ -61,9 +57,11 @@ export const useOrganizationDraft = () => {
 
   const addressErrors: AddressFieldErrors = {}
   if (draft && !addressComplete) {
-    if (draft.street.trim().length === 0) addressErrors.street = MISSING.street
-    if (draft.postalCode.trim().length === 0) addressErrors.postalCode = MISSING.postalCode
-    if (draft.city.trim().length === 0) addressErrors.city = MISSING.city
+    if (draft.street.trim().length === 0) addressErrors.street = t('organization.streetMissing')
+    if (draft.postalCode.trim().length === 0) {
+      addressErrors.postalCode = t('organization.postalCodeMissing')
+    }
+    if (draft.city.trim().length === 0) addressErrors.city = t('organization.cityMissing')
   }
 
   const dirty =

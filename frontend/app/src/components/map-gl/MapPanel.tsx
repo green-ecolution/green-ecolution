@@ -1,5 +1,6 @@
 import type { PropsWithChildren, ReactNode } from 'react'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button, cn, Drawer, DrawerContent, DrawerTitle } from '@green-ecolution/ui'
 import { X } from 'lucide-react'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
@@ -25,13 +26,15 @@ const MapPanel = ({
   title,
   onClose,
   className,
-  closeLabel = 'Abbrechen',
+  closeLabel,
   headerAction,
   children,
   mobileCollapsedSnap = '360px',
   activeSnapPoint,
   setActiveSnapPoint,
 }: MapPanelProps) => {
+  const { t } = useTranslation('common')
+  const resolvedCloseLabel = closeLabel ?? t('actions.cancel')
   const isDesktop = useMediaQuery('(min-width: 1024px)')
   const [internalSnap, setInternalSnap] = useState<number | string | null>(mobileCollapsedSnap)
   const snapControlled = setActiveSnapPoint !== undefined
@@ -44,7 +47,7 @@ const MapPanel = ({
   const headerControls = (
     <div className="flex items-center gap-1">
       {headerAction}
-      <Button variant="ghost" size="icon" aria-label={closeLabel} onClick={onClose}>
+      <Button variant="ghost" size="icon" aria-label={resolvedCloseLabel} onClick={onClose}>
         <X />
       </Button>
     </div>

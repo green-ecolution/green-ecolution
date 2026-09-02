@@ -4,6 +4,7 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { X } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
+import { useUiText } from '@/i18n'
 
 const Dialog = DialogPrimitive.Root
 
@@ -35,37 +36,40 @@ DialogOverlay.displayName = DialogPrimitive.Overlay.displayName
 const DialogContent = React.forwardRef<
   React.ComponentRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
->(({ className, children, ...props }, ref) => (
-  <DialogPortal>
-    <DialogOverlay />
-    <DialogPrimitive.Content
-      ref={ref}
-      data-slot="dialog-content"
-      className={cn(
-        'fixed left-1/2 top-1/2 z-50 grid w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2',
-        'gap-4 border border-dark-100 bg-background p-6 shadow-cards rounded-xl',
-        // Fade plus a slight scale, no travel: a centred modal has no origin to
-        // fly in from. Do not re-add slide-* here — the centering above uses the
-        // translate property, which the keyframe's transform no longer replaces,
-        // so any slide value composes with it into a visible offset.
-        'duration-base ease-out data-[state=open]:animate-in data-[state=closed]:animate-out',
-        'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
-        'data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
-        className,
-      )}
-      {...props}
-    >
-      {children}
-      <DialogPrimitive.Close
-        data-slot="dialog-close"
-        className="absolute right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-dark-400 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none"
+>(({ className, children, ...props }, ref) => {
+  const { t } = useUiText()
+  return (
+    <DialogPortal>
+      <DialogOverlay />
+      <DialogPrimitive.Content
+        ref={ref}
+        data-slot="dialog-content"
+        className={cn(
+          'fixed left-1/2 top-1/2 z-50 grid w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2',
+          'gap-4 border border-dark-100 bg-background p-6 shadow-cards rounded-xl',
+          // Fade plus a slight scale, no travel: a centred modal has no origin to
+          // fly in from. Do not re-add slide-* here — the centering above uses the
+          // translate property, which the keyframe's transform no longer replaces,
+          // so any slide value composes with it into a visible offset.
+          'duration-base ease-out data-[state=open]:animate-in data-[state=closed]:animate-out',
+          'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
+          'data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
+          className,
+        )}
+        {...props}
       >
-        <X className="h-4 w-4" />
-        <span className="sr-only">Schließen</span>
-      </DialogPrimitive.Close>
-    </DialogPrimitive.Content>
-  </DialogPortal>
-))
+        {children}
+        <DialogPrimitive.Close
+          data-slot="dialog-close"
+          className="absolute right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-dark-400 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none"
+        >
+          <X className="h-4 w-4" />
+          <span className="sr-only">{t('dialog.close')}</span>
+        </DialogPrimitive.Close>
+      </DialogPrimitive.Content>
+    </DialogPortal>
+  )
+})
 DialogContent.displayName = DialogPrimitive.Content.displayName
 
 const dialogIconVariants = cva(

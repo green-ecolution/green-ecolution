@@ -1,15 +1,23 @@
+import type { ReactNode } from 'react'
 import { describe, expect, it } from 'vitest'
+import { renderHook } from '@testing-library/react'
+import { I18nextProvider } from 'react-i18next'
 import { DataHealth } from '@green-ecolution/backend-client'
+import { getI18n } from '@/lib/i18n'
 import {
   dataQualityLevel,
-  getDataQualityDetails,
   hasQualityWarning,
-  qualityReasonLabel,
+  useDataQualityDetails,
+  useQualityReasonLabel,
 } from './useDetailsForDataHealth'
 
 const ok = { dataHealth: DataHealth.Ok, implausibleRecent: 0 }
 const flagged = { dataHealth: DataHealth.Ok, implausibleRecent: 2 }
 const suspect = { dataHealth: DataHealth.Suspect, implausibleRecent: 9 }
+
+const wrapper = ({ children }: { children: ReactNode }) => (
+  <I18nextProvider i18n={getI18n()}>{children}</I18nextProvider>
+)
 
 describe('dataQualityLevel', () => {
   it('separates flagged values from a defect suspicion', () => {
@@ -25,16 +33,18 @@ describe('dataQualityLevel', () => {
   })
 })
 
-describe('getDataQualityDetails', () => {
+describe('useDataQualityDetails', () => {
   it('never calls flagged data plausible', () => {
-    expect(getDataQualityDetails(flagged).label).not.toBe(getDataQualityDetails(ok).label)
-    expect(getDataQualityDetails(flagged).color).not.toBe(getDataQualityDetails(ok).color)
+    const { result } = renderHook(() => useDataQualityDetails(), { wrapper })
+    expect(result.current(flagged).label).not.toBe(result.current(ok).label)
+    expect(result.current(flagged).color).not.toBe(result.current(ok).color)
   })
 
   it('labels the three levels distinctly', () => {
-    expect(getDataQualityDetails(ok).label).toBe('Daten plausibel')
-    expect(getDataQualityDetails(flagged).label).toBe('Einzelne Werte verworfen')
-    expect(getDataQualityDetails(suspect).label).toBe('Datenqualität prüfen')
+    const { result } = renderHook(() => useDataQualityDetails(), { wrapper })
+    expect(result.current(ok).label).toBe('Daten plausibel')
+    expect(result.current(flagged).label).toBe('Einzelne Werte verworfen')
+    expect(result.current(suspect).label).toBe('Datenqualität prüfen')
   })
 })
 
@@ -52,13 +62,15 @@ describe('hasQualityWarning', () => {
   })
 })
 
-describe('qualityReasonLabel', () => {
+describe('useQualityReasonLabel', () => {
   it('translates the known reason codes', () => {
-    expect(qualityReasonLabel('out_of_range')).toBe('Wert außerhalb des möglichen Bereichs')
-    expect(qualityReasonLabel('implausible_jump')).toBe('Unplausibler Sprung gegenüber dem Vorwert')
+    const { result } = renderHook(() => useQualityReasonLabel(), { wrapper })
+    expect(result.current('out_of_range')).toBe('Wert außerhalb des möglichen Bereichs')
+    expect(result.current('implausible_jump')).toBe('Unplausibler Sprung gegenüber dem Vorwert')
   })
 
   it('falls back for an unknown code', () => {
-    expect(qualityReasonLabel('above_soil_capacity')).toBe('Unbekannter Grund')
+    const { result } = renderHook(() => useQualityReasonLabel(), { wrapper })
+    expect(result.current('above_soil_capacity')).toBe('Unbekannter Grund')
   })
 })

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { sensorQueries } from '@/api/queries'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { Area } from 'recharts'
 import { Loading, TimeRangeToggle, type ChartConfig } from '@green-ecolution/ui'
 import TimeSeriesFrame from '@/components/general/charts/TimeSeriesFrame'
@@ -10,13 +11,6 @@ import {
   type TimeWindowKey,
 } from '@/components/general/charts/timeWindows'
 
-const chartConfig = {
-  rssi: {
-    label: 'RSSI (dBm)',
-    color: '#4C7741',
-  },
-} satisfies ChartConfig
-
 const PER_PAGE = 5000
 
 interface ChartSignalDataProps {
@@ -24,6 +18,14 @@ interface ChartSignalDataProps {
 }
 
 const ChartSignalData: React.FC<ChartSignalDataProps> = ({ sensorId }) => {
+  const { t } = useTranslation('sensor')
+  // Separate from `t` above: timeWindowOptions expects a TFunction<'common'>,
+  // and a multi-namespace `t` would default-resolve its unprefixed keys
+  // against 'sensor' instead (namespace order picks the default).
+  const { t: tCommon } = useTranslation('common')
+  const chartConfig = {
+    rssi: { label: t('signalChart.seriesLabel'), color: '#4C7741' },
+  } satisfies ChartConfig
   const [selectedWindow, setSelectedWindow] = useState<TimeWindowKey>('7d')
   // eslint-disable-next-line react-hooks/purity, react-x/purity -- windowStart truncates to the hour, keeping the query key stable
   const from = windowStart(selectedWindow, Date.now())
@@ -52,22 +54,20 @@ const ChartSignalData: React.FC<ChartSignalDataProps> = ({ sensorId }) => {
     <div className="mt-6 border-t border-dark-100 pt-5">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <div>
-          <p className="text-sm font-semibold">RSSI-Verlauf</p>
-          <p className="text-xs text-muted-foreground">
-            Höher (weniger negativ) = besserer Empfang
-          </p>
+          <p className="text-sm font-semibold">{t('signalChart.title')}</p>
+          <p className="text-xs text-muted-foreground">{t('signalChart.subtitle')}</p>
         </div>
         <TimeRangeToggle
-          options={timeWindowOptions(['24h', '7d', '30d', 'all'])}
+          options={timeWindowOptions(['24h', '7d', '30d', 'all'], tCommon)}
           value={selectedWindow}
           onChange={setSelectedWindow}
         />
       </div>
       {!sensorDataRes ? (
-        <Loading className="h-[220px] justify-center" label="Signaldaten werden geladen" />
+        <Loading className="h-[220px] justify-center" label={t('signalChart.loadingLabel')} />
       ) : signalData.length <= 1 ? (
         <p className="flex h-[220px] items-center justify-center text-sm text-muted-foreground">
-          Zu wenige Datenpunkte im gewählten Zeitraum.
+          {t('signalChart.tooFewDataPoints')}
         </p>
       ) : (
         <div

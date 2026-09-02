@@ -1,9 +1,10 @@
 import TreeIcon from '@/components/icons/Tree'
-import { getWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
+import { useWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
 import type { TreeClusterInList } from '@/api/backendApi'
 import { Link } from '@tanstack/react-router'
 import { MapPin } from 'lucide-react'
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import { ListCard, ListCardStatus, ListCardTitle, ListCardMeta } from '@green-ecolution/ui'
 
 interface TreeclusterCardProps {
@@ -11,6 +12,8 @@ interface TreeclusterCardProps {
 }
 
 const TreeclusterCard: React.FC<TreeclusterCardProps> = ({ treecluster }) => {
+  const { t } = useTranslation('treecluster')
+  const getWateringStatusDetails = useWateringStatusDetails()
   const statusDetails = getWateringStatusDetails(treecluster.wateringStatus)
 
   return (
@@ -39,8 +42,9 @@ const TreeclusterCard: React.FC<TreeclusterCardProps> = ({ treecluster }) => {
         <ListCardMeta>
           <TreeIcon className="w-5 h-5 mt-0.5" />
           <p>
-            {treecluster.treeIds ? treecluster.treeIds?.length : 0}
-            {treecluster.treeIds?.length === 1 ? ' Baum' : ' Bäume'}
+            {t('listRow.treeCount', {
+              count: treecluster.treeIds ? treecluster.treeIds.length : 0,
+            })}
           </p>
         </ListCardMeta>
       </Link>

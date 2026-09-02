@@ -1,6 +1,7 @@
+import { useTranslation } from 'react-i18next'
 import { Avatar, AvatarFallback, AvatarImage, Badge, ListCard } from '@green-ecolution/ui'
 import type { UserResponse } from '@/api/backendApi'
-import { getUserStatusDetails } from '@/hooks/details/useDetailsForUserStatus'
+import { useUserStatusDetails } from '@/hooks/details/useDetailsForUserStatus'
 import { initialsOf } from '@/lib/initials'
 import { fullNameOf } from './memberList'
 
@@ -11,6 +12,8 @@ interface MemberListItemProps {
 }
 
 const MemberListItem = ({ user, selected, onSelect }: MemberListItemProps) => {
+  const { t } = useTranslation('settings')
+  const getUserStatusDetails = useUserStatusDetails()
   const status = getUserStatusDetails(user.status)
 
   return (
@@ -33,7 +36,7 @@ const MemberListItem = ({ user, selected, onSelect }: MemberListItemProps) => {
             {fullNameOf(user)}
           </span>
           <span className="block truncate text-xs text-dark-600">
-            {user.organization?.name ?? 'Keine Organisation'}
+            {user.organization?.name ?? t('members.noOrganization')}
           </span>
         </span>
 

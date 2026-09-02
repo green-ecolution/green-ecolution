@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import type { DrivingLicense, UserStatus } from '@green-ecolution/backend-client'
 import { userApi } from '@/api/backendApi'
 import createToast from '@/hooks/createToast'
@@ -40,6 +41,7 @@ const isFieldLevel = (error: unknown): boolean => {
 export const useUserMutations = () => {
   const queryClient = useQueryClient()
   const showToast = createToast()
+  const { t } = useTranslation('settings')
 
   const invalidate = () => {
     void queryClient.invalidateQueries({ queryKey: ['users'] })
@@ -50,10 +52,10 @@ export const useUserMutations = () => {
       userApi.assignUserRole({ userId, assignRoleRequest: { roleId } }),
     onSuccess: () => {
       invalidate()
-      showToast('Rolle zugewiesen')
+      showToast(t('members.toast.roleAssigned'))
     },
     onError: (error) => {
-      if (!isFieldLevel(error)) showToast('Die Rolle konnte nicht zugewiesen werden.', 'error')
+      if (!isFieldLevel(error)) showToast(t('members.toast.roleAssignFailed'), 'error')
     },
   })
 
@@ -62,10 +64,10 @@ export const useUserMutations = () => {
       userApi.revokeUserRole({ userId, roleId }),
     onSuccess: () => {
       invalidate()
-      showToast('Rolle entzogen')
+      showToast(t('members.toast.roleRevoked'))
     },
     onError: (error) => {
-      if (!isFieldLevel(error)) showToast('Die Rolle konnte nicht entzogen werden.', 'error')
+      if (!isFieldLevel(error)) showToast(t('members.toast.roleRevokeFailed'), 'error')
     },
   })
 
@@ -74,11 +76,11 @@ export const useUserMutations = () => {
       userApi.setUserOrganization({ userId, setOrganizationRequest: { organizationId } }),
     onSuccess: () => {
       invalidate()
-      showToast('Organisation geändert')
+      showToast(t('members.toast.organizationChanged'))
     },
     onError: (error) => {
       if (!isFieldLevel(error)) {
-        showToast('Die Organisation konnte nicht geändert werden.', 'error')
+        showToast(t('members.toast.organizationChangeFailed'), 'error')
       }
     },
   })
@@ -106,10 +108,10 @@ export const useUserMutations = () => {
       }),
     onSuccess: () => {
       invalidate()
-      showToast('Gespeichert')
+      showToast(t('members.toast.profileSaved'))
     },
     onError: (error) => {
-      if (!isFieldLevel(error)) showToast('Das Profil konnte nicht gespeichert werden.', 'error')
+      if (!isFieldLevel(error)) showToast(t('members.toast.profileSaveFailed'), 'error')
     },
   })
 

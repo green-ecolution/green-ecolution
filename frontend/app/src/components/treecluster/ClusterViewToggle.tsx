@@ -1,20 +1,21 @@
 import React from 'react'
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { LayoutGrid, Table } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 type ViewOption = 'cards' | 'table'
 
-const OPTIONS: { value: ViewOption; label: string; icon: React.ElementType }[] = [
-  { value: 'cards', label: 'Karten', icon: LayoutGrid },
-  { value: 'table', label: 'Tabelle', icon: Table },
-]
-
 const ClusterViewToggle: React.FC = () => {
+  const { t } = useTranslation('treecluster')
   const search = useSearch({ strict: false })
   const view: ViewOption =
     'view' in search && (search.view === 'cards' || search.view === 'table') ? search.view : 'cards'
   const navigate = useNavigate()
   const page = typeof search.page === 'number' ? search.page : 1
+  const options: { value: ViewOption; label: string; icon: React.ElementType }[] = [
+    { value: 'cards', label: t('viewToggle.cardsLabel'), icon: LayoutGrid },
+    { value: 'table', label: t('viewToggle.tableLabel'), icon: Table },
+  ]
 
   const handleSelect = (v: ViewOption) => {
     navigate({
@@ -26,10 +27,10 @@ const ClusterViewToggle: React.FC = () => {
   return (
     <div
       role="tablist"
-      aria-label="Ansicht wechseln"
+      aria-label={t('viewToggle.ariaLabel')}
       className="inline-flex rounded-lg bg-dark-50 p-1"
     >
-      {OPTIONS.map(({ value, label, icon: Icon }) => (
+      {options.map(({ value, label, icon: Icon }) => (
         <button
           key={value}
           type="button"

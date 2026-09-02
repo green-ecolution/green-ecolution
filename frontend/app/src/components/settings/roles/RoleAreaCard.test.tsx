@@ -1,14 +1,21 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeAll } from 'vitest'
+import type { TFunction } from 'i18next'
 import { render, screen, userEvent } from '@/test/utils'
+import { getI18n } from '@/lib/i18n'
 import { UNRESTRICTED } from '@/lib/auth/permissions'
-import { PERMISSION_AREAS } from '@/lib/auth/permissionAreas'
+import { permissionAreasFor } from '@/lib/auth/permissionAreas'
 import RoleAreaCard from './RoleAreaCard'
 
-const treeArea = PERMISSION_AREAS.find((area) => area.resource === 'tree')!
+let t: TFunction<'settings'>
+beforeAll(() => {
+  t = getI18n().getFixedT('de', 'settings')
+})
+
+const treeArea = () => permissionAreasFor(t).find((area) => area.resource === 'tree')!
 
 const renderCard = (overrides: Partial<React.ComponentProps<typeof RoleAreaCard>> = {}) => {
   const props: React.ComponentProps<typeof RoleAreaCard> = {
-    area: treeArea,
+    area: treeArea(),
     permissions: new Set(['tree:read', 'tree:create', 'tree:update']),
     grantable: UNRESTRICTED,
     onLevelChange: vi.fn(),

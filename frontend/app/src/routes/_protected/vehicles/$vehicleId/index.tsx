@@ -5,7 +5,7 @@ import { createFileRoute, getRouteApi } from '@tanstack/react-router'
 const vehicleRoute = getRouteApi('/_protected/vehicles/$vehicleId')
 
 export const Route = createFileRoute('/_protected/vehicles/$vehicleId/')({
-  pendingComponent: pendingLoading('Fahrzeug wird geladen …'),
+  pendingComponent: pendingLoading({ key: 'vehicle:detail.loadingLabel' }),
   component: SingleVehicle,
 })
 

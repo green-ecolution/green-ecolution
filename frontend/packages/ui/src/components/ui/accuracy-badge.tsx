@@ -2,6 +2,7 @@ import * as React from 'react'
 import { cva, type VariantProps } from 'class-variance-authority'
 
 import { cn } from '@/lib/utils'
+import { useUiText, type UiTextKey } from '@/i18n'
 
 import { SignalBars } from './signal-bars'
 
@@ -25,12 +26,14 @@ const accuracyBadgeVariants = cva(
 
 export type AccuracyLevel = NonNullable<VariantProps<typeof accuracyBadgeVariants>['level']>
 
-const LEVEL_LABEL: Record<AccuracyLevel, string> = {
-  excellent: 'Sehr gut',
-  good: 'Gut',
-  fair: 'Mäßig',
-  poor: 'Ungenau',
-  searching: 'Suche …',
+// A template-literal key (`accuracy.${level}`) isn't narrow enough for
+// UiTextKey; this table makes the compiler check all five variants instead.
+const ACCURACY_KEYS: Record<AccuracyLevel, UiTextKey> = {
+  excellent: 'accuracy.excellent',
+  good: 'accuracy.good',
+  fair: 'accuracy.fair',
+  poor: 'accuracy.poor',
+  searching: 'accuracy.searching',
 }
 
 export const accuracyLevelFromMeters = (meters: number | null | undefined): AccuracyLevel => {
@@ -67,15 +70,18 @@ export interface AccuracyBadgeProps extends Omit<
 
 const AccuracyBadge = React.forwardRef<HTMLSpanElement, AccuracyBadgeProps>(
   ({ accuracyMeters, hideValue, className, ...rest }, ref) => {
+    const { t } = useUiText()
     const level = accuracyLevelFromMeters(accuracyMeters)
-    const label = LEVEL_LABEL[level]
+    const label = t(ACCURACY_KEYS[level])
     const showValue =
       level !== 'searching' &&
       !hideValue &&
       accuracyMeters != null &&
       Number.isFinite(accuracyMeters)
     const value = showValue ? formatMeters(accuracyMeters as number) : null
-    const aria = `GPS-Genauigkeit: ${label}${value ? `, ${value}` : ''}`
+    const aria = value
+      ? t('accuracy.ariaLabelWithValue', { label, value })
+      : t('accuracy.ariaLabel', { label })
 
     return (
       <span

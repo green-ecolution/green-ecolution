@@ -1,5 +1,6 @@
 import { Suspense, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import {
   Alert,
   AlertContent,
@@ -56,6 +57,7 @@ const LocationClusterBoundaries = () => {
 }
 
 const SensorLocationSection = ({ sensor }: SensorLocationSectionProps) => {
+  const { t } = useTranslation('sensor')
   const coord = sensor.coordinate
   const [showDetails, setShowDetails] = useState(false)
 
@@ -67,7 +69,7 @@ const SensorLocationSection = ({ sensor }: SensorLocationSectionProps) => {
             <div className="grid place-items-center size-9 rounded-lg bg-green-dark-50 text-green-dark">
               {coord ? <MapPin className="size-5" /> : <MapPinOff className="size-5" />}
             </div>
-            <CardTitle>Standort</CardTitle>
+            <CardTitle>{t('location.title')}</CardTitle>
           </div>
           {coord && (
             <button
@@ -76,7 +78,7 @@ const SensorLocationSection = ({ sensor }: SensorLocationSectionProps) => {
               aria-expanded={showDetails}
               className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-green-dark transition hover:bg-green-dark-50"
             >
-              Koordinaten
+              {t('location.coordinatesToggle')}
               <ChevronDown
                 className={cn(
                   'size-4 transition-transform duration-base ease-out motion-reduce:transition-none',
@@ -94,7 +96,7 @@ const SensorLocationSection = ({ sensor }: SensorLocationSectionProps) => {
               center={[coord.longitude, coord.latitude]}
               zoom={17}
               interactive
-              ariaLabel="Karte mit der Sensor-Position, nahegelegenen Bäumen und Bewässerungsgruppen"
+              ariaLabel={t('location.mapAriaLabel')}
               className="h-72 sm:h-80"
             >
               <Suspense fallback={null}>
@@ -108,7 +110,7 @@ const SensorLocationSection = ({ sensor }: SensorLocationSectionProps) => {
               <dl className="grid grid-cols-2 gap-x-6 gap-y-4 rounded-2xl border border-dark-100 bg-dark-50/40 p-5 animate-in fade-in slide-in-from-top-1">
                 <div className="flex flex-col gap-1">
                   <dt className="text-xs uppercase tracking-widest text-muted-foreground">
-                    Latitude
+                    {t('location.latitudeLabel')}
                   </dt>
                   <dd className="font-mono font-semibold text-base">
                     {coord.latitude.toFixed(6)}°
@@ -116,14 +118,14 @@ const SensorLocationSection = ({ sensor }: SensorLocationSectionProps) => {
                 </div>
                 <div className="flex flex-col gap-1">
                   <dt className="text-xs uppercase tracking-widest text-muted-foreground">
-                    Longitude
+                    {t('location.longitudeLabel')}
                   </dt>
                   <dd className="font-mono font-semibold text-base">
                     {coord.longitude.toFixed(6)}°
                   </dd>
                 </div>
                 <p className="col-span-2 text-xs leading-relaxed text-muted-foreground">
-                  Die Position wird vom verknüpften Baum übernommen.
+                  {t('location.derivedFromTreeNotice')}
                 </p>
               </dl>
             )}
@@ -133,11 +135,8 @@ const SensorLocationSection = ({ sensor }: SensorLocationSectionProps) => {
             <div className="flex gap-3">
               <AlertIcon variant="warning" />
               <AlertContent>
-                <AlertTitle>Sensor noch nicht im Feld</AlertTitle>
-                <AlertDescription>
-                  Dieser Sensor wurde noch nicht aktiviert und hat keinen Standort. Sobald er einem
-                  Baum oder Beet zugeordnet wird, erscheint hier eine Karte.
-                </AlertDescription>
+                <AlertTitle>{t('location.notInFieldTitle')}</AlertTitle>
+                <AlertDescription>{t('location.notInFieldDescription')}</AlertDescription>
               </AlertContent>
             </div>
           </Alert>

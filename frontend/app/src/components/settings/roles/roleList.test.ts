@@ -1,6 +1,13 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeAll } from 'vitest'
+import type { TFunction } from 'i18next'
+import { getI18n } from '@/lib/i18n'
 import type { Role } from '@/api/backendApi'
 import { isPristineTemplateCopy, ownRolesOf, roleDisplayName, samePermissionSet } from './roleList'
+
+let t: TFunction<'settings'>
+beforeAll(() => {
+  t = getI18n().getFixedT('de', 'settings')
+})
 
 const role = (overrides: Partial<Role>): Role => ({
   id: 'id',
@@ -76,19 +83,19 @@ describe('ownRolesOf', () => {
 
 describe('roleDisplayName', () => {
   it('translates a delivered role through its template key', () => {
-    expect(roleDisplayName(role({ name: 'Baumpflege', templateKey: 'tree_care' }))).toBe(
+    expect(roleDisplayName(role({ name: 'Baumpflege', templateKey: 'tree_care' }), t)).toBe(
       'Baumpflege',
     )
   })
 
   it('shows the stored name once the role has been edited', () => {
-    expect(roleDisplayName(role({ name: 'Pflege Nord', templateKey: undefined }))).toBe(
+    expect(roleDisplayName(role({ name: 'Pflege Nord', templateKey: undefined }), t)).toBe(
       'Pflege Nord',
     )
   })
 
   it('falls back to the stored name for an unknown template key', () => {
-    expect(roleDisplayName(role({ name: 'Sonderrolle', templateKey: 'not_in_catalog' }))).toBe(
+    expect(roleDisplayName(role({ name: 'Sonderrolle', templateKey: 'not_in_catalog' }), t)).toBe(
       'Sonderrolle',
     )
   })

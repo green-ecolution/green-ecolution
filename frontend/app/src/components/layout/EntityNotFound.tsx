@@ -1,14 +1,19 @@
 import { Link, LinkProps } from '@tanstack/react-router'
 import { MoveLeft, Search } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@green-ecolution/ui'
+import { useLocalizedText, type LocalizedText } from '@/lib/i18n/localizedText'
 
 interface EntityNotFoundProps {
-  entityName: string
+  entityName: LocalizedText
   backTo: LinkProps['to']
-  backLabel: string
+  backLabel: LocalizedText
 }
 
 function EntityNotFound({ entityName, backTo, backLabel }: EntityNotFoundProps) {
+  const { t } = useTranslation('navigation')
+  const resolve = useLocalizedText()
+
   return (
     <div className="container mt-6">
       <section className="relative my-12 lg:my-20">
@@ -27,10 +32,10 @@ function EntityNotFound({ entityName, backTo, backLabel }: EntityNotFoundProps) 
           {/* Content */}
           <div className="max-w-md space-y-3">
             <h1 className="font-lato font-bold text-2xl lg:text-3xl text-dark dark:text-light">
-              {entityName} nicht gefunden
+              {t('entityNotFound.title', { entityName: resolve(entityName) })}
             </h1>
             <p className="text-dark-500 dark:text-dark-400 leading-relaxed">
-              Die angeforderte Ressource existiert nicht oder wurde bereits entfernt.
+              {t('entityNotFound.description')}
             </p>
           </div>
 
@@ -39,7 +44,7 @@ function EntityNotFound({ entityName, backTo, backLabel }: EntityNotFoundProps) 
             <Button asChild variant="outline" className="group gap-2 px-6">
               <Link to={backTo}>
                 <MoveLeft className="w-4 h-4 transition-transform duration-base ease-emphasized group-hover:-translate-x-1 motion-reduce:transition-none" />
-                {backLabel}
+                {resolve(backLabel)}
               </Link>
             </Button>
           </div>

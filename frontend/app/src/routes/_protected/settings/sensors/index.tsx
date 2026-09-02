@@ -1,11 +1,17 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { useTranslation } from 'react-i18next'
 import SettingsComingSoon from '@/components/settings/SettingsComingSoon'
 
 export const Route = createFileRoute('/_protected/settings/sensors/')({
-  component: () => (
-    <SettingsComingSoon
-      title="Sensoren & Netz"
-      description="Hier konfigurierst du künftig die LoRaWAN-Anbindung und die Vorgaben für neue Geräte."
-    />
-  ),
+  component: SensorsComingSoon,
 })
+
+function SensorsComingSoon() {
+  const { t } = useTranslation('settings')
+  return (
+    <SettingsComingSoon
+      title={t('comingSoon.sensors.title')}
+      description={t('comingSoon.sensors.description')}
+    />
+  )
+}

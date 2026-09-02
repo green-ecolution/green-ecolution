@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import { Marker } from 'maplibre-gl'
 import { WateringStatus } from '@green-ecolution/backend-client'
 import type { SensorResponse } from '@green-ecolution/backend-client'
-import { getWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
+import { useWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
 import { useMaplibreMap } from '@/components/map-gl/MapContext'
 
 export interface SelectableTree {
@@ -34,6 +34,7 @@ const buildTreeElement = (colorHex: string, isSelected: boolean, isAssigned: boo
 
 const SelectableTreeMarkers = ({ trees, selectedTreeId, onSelect }: SelectableTreeMarkersProps) => {
   const map = useMaplibreMap()
+  const getWateringStatusDetails = useWateringStatusDetails()
   const markersRef = useRef<Marker[]>([])
   const onSelectRef = useRef(onSelect)
   useEffect(() => {
@@ -56,6 +57,11 @@ const SelectableTreeMarkers = ({ trees, selectedTreeId, onSelect }: SelectableTr
       for (const m of markersRef.current) m.remove()
       markersRef.current = []
     }
+    // colorHex is presentation data, not translated text, so the resolver
+    // function identity (which changes on language switch) doesn't belong here.
+    // Both react-hooks and react-x register their own exhaustive-deps rule
+    // and both fire here, so both ids need disabling.
+    // eslint-disable-next-line react-hooks/exhaustive-deps, react-x/exhaustive-deps
   }, [map, trees, selectedTreeId])
 
   return null

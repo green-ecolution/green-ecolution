@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Button,
   FormField,
@@ -12,7 +13,7 @@ import {
 } from '@green-ecolution/ui'
 import type { OrganizationResponse } from '@green-ecolution/backend-client'
 import { Controller, SubmitHandler, useFormContext, useFormState } from 'react-hook-form'
-import { SoilConditionOptions } from '@/hooks/details/useDetailsForSoilCondition'
+import { useSoilConditionOptions } from '@/hooks/details/useDetailsForSoilCondition'
 import { TreeclusterForm } from '@/schema/treeclusterSchema'
 import FormError from './FormError'
 import FormSubmitButton from './FormSubmitButton'
@@ -36,10 +37,12 @@ interface FormForTreeClusterProps {
 }
 
 const FormForTreecluster = (props: FormForTreeClusterProps) => {
+  const { t } = useTranslation(['treecluster', 'common'])
   const { handleSubmit, register, control } = useFormContext<TreeclusterForm>()
   const { isValid, errors } = useFormState({ control })
   const [soilDialogOpen, setSoilDialogOpen] = useState(false)
   const organizations = props.organizations ?? []
+  const soilConditionOptions = useSoilConditionOptions()
 
   return (
     <form
@@ -60,7 +63,7 @@ const FormForTreecluster = (props: FormForTreeClusterProps) => {
             render={({ field }) => (
               <div className="flex flex-col gap-y-2">
                 <Label htmlFor="organizationId">
-                  Organisation
+                  {t('form.organizationLabel')}
                   <span className="text-destructive ml-1">*</span>
                 </Label>
                 <Combobox
@@ -68,27 +71,27 @@ const FormForTreecluster = (props: FormForTreeClusterProps) => {
                   options={organizations.map((org) => ({ value: org.id, label: org.name }))}
                   value={field.value}
                   onChange={props.onOrganizationChange ?? field.onChange}
-                  placeholder="Wähle eine Organisation aus"
-                  searchPlaceholder="Organisation suchen…"
+                  placeholder={t('form.organizationPlaceholder')}
+                  searchPlaceholder={t('form.organizationSearchPlaceholder')}
                 />
-                <p className="text-sm text-dark-600">
-                  Die Gruppe gehört anschließend dieser Organisation. Auswählbar sind nur deren
-                  Bäume.
-                </p>
+                <p className="text-sm text-dark-600">{t('form.organizationHint')}</p>
                 {(props.discardedTreeCount ?? 0) > 0 && (
                   <p className="text-sm text-destructive">
-                    {props.discardedTreeCount === 1
-                      ? 'Ein bereits ausgewählter Baum gehört einer anderen Organisation und wurde entfernt.'
-                      : `${props.discardedTreeCount} bereits ausgewählte Bäume gehören einer anderen Organisation und wurden entfernt.`}
+                    {t('form.discardedTree', { count: props.discardedTreeCount })}
                   </p>
                 )}
               </div>
             )}
           />
         )}
-        <FormField label="Name" error={errors.name?.message} required {...register('name')} />
         <FormField
-          label="Adresse"
+          label={t('form.nameLabel')}
+          error={errors.name?.message}
+          required
+          {...register('name')}
+        />
+        <FormField
+          label={t('form.addressLabel')}
           required
           error={errors.address?.message}
           {...register('address')}
@@ -99,18 +102,18 @@ const FormForTreecluster = (props: FormForTreeClusterProps) => {
           render={({ field }) => (
             <div className="flex flex-col gap-y-2">
               <Label htmlFor="soilCondition">
-                Bodenbeschaffenheit
+                {t('form.soilConditionLabel')}
                 <span className="text-destructive ml-1">*</span>
               </Label>
               <div className="flex gap-x-2">
                 <div className="min-w-0 flex-1">
                   <Combobox
                     id="soilCondition"
-                    options={SoilConditionOptions}
+                    options={soilConditionOptions}
                     value={field.value}
                     onChange={field.onChange}
-                    placeholder="Wähle eine Bodenbeschaffenheit aus"
-                    searchPlaceholder="Code oder Bezeichnung suchen…"
+                    placeholder={t('form.soilConditionPlaceholder')}
+                    searchPlaceholder={t('form.soilConditionSearchPlaceholder')}
                   />
                 </div>
                 <TooltipProvider>
@@ -120,13 +123,13 @@ const FormForTreecluster = (props: FormForTreeClusterProps) => {
                         type="button"
                         variant="outline"
                         size="icon"
-                        aria-label="Bodenbeschaffenheit bestimmen"
+                        aria-label={t('form.soilConditionDetermineAriaLabel')}
                         onClick={() => setSoilDialogOpen(true)}
                       >
                         <SoilTriangleIcon />
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>Bodenbeschaffenheit bestimmen</TooltipContent>
+                    <TooltipContent>{t('form.soilConditionDetermineAriaLabel')}</TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
               </div>
@@ -143,8 +146,8 @@ const FormForTreecluster = (props: FormForTreeClusterProps) => {
           )}
         />
         <TextareaField
-          placeholder="Hier ist Platz für Notizen"
-          label="Kurze Beschreibung"
+          placeholder={t('common:form.notesPlaceholder')}
+          label={t('common:form.shortDescriptionLabel')}
           error={errors.description?.message}
           {...register('description')}
         />
@@ -159,7 +162,7 @@ const FormForTreecluster = (props: FormForTreeClusterProps) => {
             entityIds={value}
             onAdd={props.onAddTrees}
             type="tree"
-            label="Bäume"
+            label={t('form.treesLabel')}
             fill={props.fullWidth}
             emptyHint={props.emptyHint}
           />

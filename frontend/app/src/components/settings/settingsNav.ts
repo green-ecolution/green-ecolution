@@ -1,8 +1,12 @@
+import type de from '@/locales/de'
 import { satisfies, type PermissionRequirement, type Permissions } from '@/lib/auth/permissions'
+
+type SettingsNavKey = keyof (typeof de)['settings']['nav']
 
 export interface SettingsNavItem {
   key: string
-  label: string
+  /** Key into settings:nav.*, resolved in SettingsLayout so this module stays translation-free. */
+  labelKey: SettingsNavKey
   /** Lucide icon name, resolved in SettingsLayout so this module stays JSX-free. */
   icon: string
   to: string
@@ -12,46 +16,52 @@ export interface SettingsNavItem {
 }
 
 export const SETTINGS_NAV: SettingsNavItem[] = [
-  { key: 'profile', label: 'Profil', icon: 'UserRound', to: '/settings/profile' },
+  { key: 'profile', labelKey: 'profile', icon: 'UserRound', to: '/settings/profile' },
   {
     key: 'organization',
-    label: 'Organisation',
+    labelKey: 'organization',
     icon: 'Building2',
     to: '/settings/organization',
     permission: ['organization:read'],
   },
   {
     key: 'irrigation',
-    label: 'Bewässerung',
+    labelKey: 'irrigation',
     icon: 'Droplet',
     to: '/settings/irrigation',
     comingSoon: true,
   },
   {
     key: 'notifications',
-    label: 'Benachrichtigungen',
+    labelKey: 'notifications',
     icon: 'Bell',
     to: '/settings/notifications',
     comingSoon: true,
   },
   {
     key: 'sensors',
-    label: 'Sensoren & Netz',
+    labelKey: 'sensors',
     icon: 'RadioTower',
     to: '/settings/sensors',
     comingSoon: true,
   },
   {
     key: 'team',
-    label: 'Team & Rollen',
+    labelKey: 'team',
     icon: 'Users',
     to: '/settings/team',
     permission: ['user:read', 'role:read'],
   },
-  { key: 'map', label: 'Karte & Einheiten', icon: 'Map', to: '/settings/map', comingSoon: true },
+  {
+    key: 'map',
+    labelKey: 'map',
+    icon: 'Map',
+    to: '/settings/map',
+    comingSoon: true,
+  },
   {
     key: 'plugin',
-    label: 'Plugins',
+    labelKey: 'plugin',
     icon: 'Puzzle',
     to: '/settings/plugin',
     featureKey: 'plugins',

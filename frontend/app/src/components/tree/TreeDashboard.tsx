@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { Badge } from '@green-ecolution/ui'
 import EntityDetailHeader from '../general/EntityDetailHeader'
 import TreeKpiRow from './TreeKpiRow'
@@ -5,7 +6,7 @@ import TreeLocationCard from './TreeLocationCard'
 import TreeClusterCard from './TreeClusterCard'
 import TreeSensorCard from './TreeSensorCard'
 import TreeMasterDataCard from './TreeMasterDataCard'
-import { getWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
+import { useWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
 import type { Tree, TreeCluster } from '@/api/backendApi'
 import { useHasPermission } from '@/lib/auth/useHasPermission'
 
@@ -15,19 +16,21 @@ interface TreeDashboardProps {
 }
 
 const TreeDashboard = ({ tree, treeCluster }: TreeDashboardProps) => {
+  const { t } = useTranslation('tree')
   const canEdit = useHasPermission(['tree:update'])
+  const getWateringStatusDetails = useWateringStatusDetails()
   const wateringStatus = getWateringStatusDetails(tree.wateringStatus)
 
   return (
     <>
       <EntityDetailHeader
-        backLink={{ link: { to: '/trees' }, label: 'Zu allen Bäumen' }}
-        title={<>Baum: {tree.number}</>}
+        backLink={{ link: { to: '/trees' }, label: t('detail.backToList') }}
+        title={<>{t('detail.title', { number: tree.number })}</>}
         badge={<Badge variant={wateringStatus.color}>{wateringStatus.label}</Badge>}
         editLink={
           canEdit
             ? {
-                label: 'Baum bearbeiten',
+                label: t('detail.editLink'),
                 link: {
                   to: `/map/tree/edit/$treeId`,
                   params: { treeId: String(tree.id) },
@@ -40,7 +43,7 @@ const TreeDashboard = ({ tree, treeCluster }: TreeDashboardProps) => {
           {tree.species} ·{' '}
           {treeCluster
             ? `${treeCluster.name} · ${treeCluster.address}`
-            : 'Keiner Bewässerungsgruppe zugeordnet'}
+            : t('detail.noClusterAssigned')}
         </p>
         {tree.description && <p>{tree.description}</p>}
       </EntityDetailHeader>

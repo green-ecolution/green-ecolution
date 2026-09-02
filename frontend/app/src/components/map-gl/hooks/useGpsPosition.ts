@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { GeoJSONSource, Map as MaplibreMap } from 'maplibre-gl'
+import { useTranslation } from 'react-i18next'
 import { toast } from '@green-ecolution/ui'
 import { useMaplibreMap } from '../MapContext'
 import { metersCircle } from '../metersCircle'
@@ -49,6 +50,7 @@ const ensureLayers = (map: MaplibreMap) => {
 }
 
 export const useGpsPosition = () => {
+  const { t } = useTranslation(['map', 'common'])
   const map = useMaplibreMap()
   const [active, setActive] = useState(false)
   const watchId = useRef<number | null>(null)
@@ -86,7 +88,7 @@ export const useGpsPosition = () => {
       const { longitude, latitude, accuracy } = pos.coords
       const bounds = map.getMaxBounds()
       if (bounds && !bounds.contains([longitude, latitude])) {
-        toast.info('Position außerhalb des Kartenbereichs')
+        toast.info(t('controls.gpsOutsideMapBounds'))
         stop()
         return
       }
@@ -119,12 +121,12 @@ export const useGpsPosition = () => {
         }
       }
     },
-    [map, stop],
+    [map, stop, t],
   )
 
   const start = useCallback(() => {
     if (!('geolocation' in navigator)) {
-      toast.error('Standortbestimmung wird von diesem Browser nicht unterstützt')
+      toast.error(t('controls.gpsUnsupported'))
       return
     }
     setActive(true)
@@ -135,14 +137,14 @@ export const useGpsPosition = () => {
       (err) => {
         toast.error(
           err.code === err.PERMISSION_DENIED
-            ? 'Standortzugriff verweigert'
-            : 'Standort konnte nicht ermittelt werden',
+            ? t('common:geo.permission.denied.title')
+            : t('common:geo.permission.error.title'),
         )
         stop()
       },
       { enableHighAccuracy: true },
     )
-  }, [map, cancelFollow, handlePosition, stop])
+  }, [map, cancelFollow, handlePosition, stop, t])
 
   useEffect(() => stop, [stop])
 

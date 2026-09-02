@@ -1,6 +1,15 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, beforeAll } from 'vitest'
+import type { TFunction } from 'i18next'
 import { WateringPlanStatus } from '@green-ecolution/backend-client'
+import { getI18n } from '@/lib/i18n'
 import { columnForStatus, dropActionFor, dropHintFor } from './wateringPlanBoard'
+
+// vitest setup already calls createI18n(); fix the language so assertions
+// against the German catalog text stay stable regardless of test order.
+let t: TFunction<'wateringPlan'>
+beforeAll(() => {
+  t = getI18n().getFixedT('de', 'wateringPlan')
+})
 
 describe('columnForStatus', () => {
   it('maps planned and active to their columns', () => {
@@ -36,8 +45,8 @@ describe('dropActionFor', () => {
 
 describe('dropHintFor', () => {
   it('labels actions with their consequence', () => {
-    expect(dropHintFor('start')).toBe('Einsatz starten')
-    expect(dropHintFor('cancel')).toBe('Einsatz abbrechen')
-    expect(dropHintFor('complete')).toBe('Einsatz abschließen')
+    expect(dropHintFor('start', t)).toBe('Einsatzplan starten')
+    expect(dropHintFor('cancel', t)).toBe('Einsatzplan abbrechen')
+    expect(dropHintFor('complete', t)).toBe('Einsatzplan abschließen')
   })
 })

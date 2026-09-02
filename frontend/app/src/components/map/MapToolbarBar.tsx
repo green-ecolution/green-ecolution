@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react'
 import { Link, useNavigate, useSearch } from '@tanstack/react-router'
 import { Plus } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { WateringStatus } from '@green-ecolution/backend-client'
 import { Button } from '@green-ecolution/ui'
 import Dialog from '@/components/general/filter/Dialog'
@@ -10,6 +11,7 @@ import MapButtons from './MapButtons'
 import { Can } from '@/lib/auth/Can'
 
 const MapToolbarBar = () => {
+  const { t } = useTranslation('map')
   const navigate = useNavigate()
   const search = useSearch({ strict: false })
   // Local input state so typing stays responsive; router navigations are
@@ -50,7 +52,7 @@ const MapToolbarBar = () => {
         statuses={search.wateringStatuses ?? []}
         onToggleStatus={handleToggleStatus}
         filterSlot={
-          <Dialog headline="Baumgruppen filtern" isOnMap fullUrlPath="/map">
+          <Dialog headline={t('toolbar.filterDialogHeadline')} isOnMap fullUrlPath="/map">
             <StatusFieldset />
           </Dialog>
         }
@@ -60,7 +62,7 @@ const MapToolbarBar = () => {
             <Can permission={['tree_cluster:create']}>
               <Button asChild>
                 <Link to="/map/treecluster/new" search={(prev) => prev}>
-                  <span className="hidden sm:inline">Gruppe anlegen</span>
+                  <span className="hidden sm:inline">{t('toolbar.createGroup')}</span>
                   <Plus />
                 </Link>
               </Button>

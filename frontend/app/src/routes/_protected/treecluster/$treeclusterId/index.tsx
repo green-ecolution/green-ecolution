@@ -8,7 +8,7 @@ const treeclusterRoute = getRouteApi('/_protected/treecluster/$treeclusterId')
 
 export const Route = createFileRoute('/_protected/treecluster/$treeclusterId/')({
   component: SingleTreecluster,
-  pendingComponent: pendingLoading('Bewässerungsgruppe wird geladen …'),
+  pendingComponent: pendingLoading({ key: 'treecluster:detail.loadingLabel' }),
 })
 
 function SingleTreecluster() {

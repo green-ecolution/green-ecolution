@@ -1,0 +1,92 @@
+{
+  "root": {
+    "loadingLabel": "Lade Karte..."
+  },
+  "toolbar": {
+    "searchPlaceholder": "Bewässerungsgruppe…",
+    "filterAndActionsAriaLabel": "Filter und Aktionen",
+    "filterDialogHeadline": "Bewässerungsgruppen filtern",
+    "createGroup": "Gruppe anlegen",
+    "katasterSettingsAriaLabel": "Kataster-Einstellungen",
+    "katasterSettingsTitle": "Weitere Kataster-Einstellungen",
+    "katasterSettingsDescription": "In dieser Ansicht können weitere Einstellungen vorgenommen werden. Es können zum Beispiel manuell Bäume zum Kataster hinzugefügt werden.",
+    "addTreeManually": "Neuen Baum manuell hinzufügen"
+  },
+  "statusLegend": {
+    "regionAriaLabel": "Legende Bewässerungsstatus",
+    "heading": "Bewässerungsstatus",
+    "show": "Legende anzeigen",
+    "hide": "Legende ausblenden"
+  },
+  "controls": {
+    "resetBearingAriaLabel": "Karte nach Norden ausrichten",
+    "switchTo2dAriaLabel": "Zur 2D-Ansicht wechseln",
+    "switchTo3dAriaLabel": "Zur 3D-Ansicht wechseln",
+    "zoomInAriaLabel": "Hineinzoomen",
+    "zoomOutAriaLabel": "Herauszoomen",
+    "gpsShowAriaLabel": "Eigenen Standort anzeigen",
+    "gpsStopAriaLabel": "Standortanzeige beenden",
+    "gpsOutsideMapBounds": "Position außerhalb des Kartenbereichs",
+    "gpsUnsupported": "Standortbestimmung wird von diesem Browser nicht unterstützt"
+  },
+  "routePoints": {
+    "start": "Startpunkt",
+    "refill": "Nachfüllpunkt"
+  },
+  "cluster": {
+    "editAriaLabel": "Gruppe bearbeiten",
+    "fallbackTitle": "Bewässerungsgruppe",
+    "closePanelAriaLabel": "Seitenansicht schließen",
+    "loadError": "Die Bewässerungsgruppe konnte nicht geladen werden.",
+    "loadingLabel": "Lade Bewässerungsgruppe...",
+    "openDashboard": "Zum Dashboard",
+    "wateringStatusLabel": "Bewässerungszustand",
+    "soilTemperatureLabel": "Bodentemperatur",
+    "lastMeasurementLabel": "Letzte Messung",
+    "lastWateredLabel": "Letzte Bewässerung",
+    "noData": "Keine Daten",
+    "treeCount_one": "{count} Baum",
+    "treeCount_other": "{count} Bäume",
+    "treesInGroupHeading": "Bäume in dieser Gruppe · {count}",
+    "sensorTreeBadge": "Sensor-Baum",
+    "noSensor": "kein Sensor",
+    "treeIdLabel": "· ID {number}",
+    "remainingTrees_one": "+ {count} weiterer Baum · alle anzeigen",
+    "remainingTrees_other": "+ {count} weitere Bäume · alle anzeigen"
+  },
+  "tree": {
+    "newTitle": "Neuen Baum erfassen",
+    "locationSelected": "Standort gewählt",
+    "clickToSetLocationHint": "Klicke auf die Karte, um den Standort des neuen Baums zu setzen. Den Marker kannst du danach noch verschieben.",
+    "editTitle": "Baum bearbeiten",
+    "dragMarkerHint": "Ziehe den Marker auf der Karte, um den Standort des Baums anzupassen.",
+    "deleteButton": "Baum löschen",
+    "deleteConfirmTitle": "Baum löschen?",
+    "deleteConfirmDescription": "Möchtest du diesen Baum wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
+    "deleteSuccess": "Der Baum wurde gelöscht.",
+    "deleteError": "Der Baum konnte nicht gelöscht werden.",
+    "entityName": "Baum",
+    "backToList": "Zur Baumliste"
+  },
+  "clusterForm": {
+    "newTitle": "Neue Bewässerungsgruppe",
+    "editTitle": "Bewässerungsgruppe bearbeiten",
+    "clickTreesHint": "Klicke Bäume auf der Karte an, um sie der Gruppe hinzuzufügen oder zu entfernen. Blass dargestellte Bäume gehören einer anderen Organisation.",
+    "emptyHint": "Klicke einen Baum auf der Karte an, um ihn zur Liste hinzuzufügen.",
+    "blockedReasonCreate": "In dieser Organisation darfst du keine Gruppe anlegen.",
+    "blockedReasonEdit": "Die Organisation einer bestehenden Gruppe lässt sich hier nicht wechseln.",
+    "entityName": "Bewässerungsgruppe",
+    "backToList": "Zur Gruppenliste"
+  },
+  "selectCluster": {
+    "title": "Bewässerungsgruppen auswählen",
+    "hint": "Klicke die Gruppen auf der Karte an, die in diesen Bewässerungsplan aufgenommen werden sollen.",
+    "entitiesLabel": "Bewässerungsgruppen",
+    "emptyHint": "Klicke eine Gruppe auf der Karte an, um sie hinzuzufügen.",
+    "requiredError": "Bitte wähle mindestens eine Bewässerungsgruppe aus.",
+    "applyButton": "Übernehmen",
+    "leaveConfirmMessage": "Möchtest du die Seite wirklich verlassen? Deine Eingaben gehen verloren, wenn du jetzt gehst.",
+    "noVehicleWarning": "Um eine Route generieren zu können, muss ein Fahrzeug ausgewählt werden.",
+    "insufficientCapacityWarning": "Ausgegraute Bewässerungsgruppen sind ausgeschlossen, da das Fahrzeug nicht genügend Wasserkapazität hat."
+  }
+}

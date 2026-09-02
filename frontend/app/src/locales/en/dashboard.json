@@ -1,0 +1,37 @@
+{
+  "welcomeTitle": "Welcome back, {name}!",
+  "welcomeDescription": "You're on the dashboard. This overview page gives you direct access to important areas.",
+  "quickLinksTitle": "Quick links",
+  "cards": {
+    "map": {
+      "headline": "Map",
+      "description": "All trees in Flensburg within the TBZ's area of responsibility.",
+      "linkLabel": "To the map"
+    },
+    "clusters": {
+      "headline": "List of watering groups",
+      "description": "List view of all grouped trees fitted with sensors.",
+      "linkLabel": "To the watering groups"
+    },
+    "sensors": {
+      "headline": "List of all installed sensors",
+      "description": "Shows all installed sensors in Flensburg incl. battery level, location,…",
+      "linkLabel": "To the sensors"
+    },
+    "wateringPlans": {
+      "headline": "Watering plans",
+      "description": "Plan a new watering plan for watering groups",
+      "linkLabel": "To the watering plans"
+    },
+    "settings": {
+      "headline": "Settings",
+      "description": "You can adjust settings here if you're an administrator.",
+      "linkLabel": "To the settings"
+    },
+    "profile": {
+      "headline": "My profile",
+      "description": "Manage and update your personal information here.",
+      "linkLabel": "To the profile"
+    }
+  }
+}

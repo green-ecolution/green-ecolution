@@ -1,0 +1,174 @@
+{
+  "wateringStatus": {
+    "good": {
+      "label": "In Ordnung",
+      "description": "Die Bewässerung ist ausreichend, keine Maßnahmen erforderlich."
+    },
+    "moderate": {
+      "label": "Leicht trocken",
+      "description": "Die Bäume sind leicht trocken und benötigen etwas Wasser."
+    },
+    "bad": {
+      "label": "Sehr trocken",
+      "description": "Die Bäume benötigen dringend Wasser."
+    },
+    "just_watered": {
+      "label": "Soeben bewässert",
+      "description": "Die Bäume wurden vor kurzem bewässert."
+    },
+    "unknown": {
+      "label": "Unbekannt",
+      "description": "Der Bewässerungsstatus ist unbekannt."
+    }
+  },
+  "sensorStatus": {
+    "prepared": {
+      "label": "Vorbereitet",
+      "description": "Der Sensor ist registriert, aber noch nicht aktiviert."
+    },
+    "offline": {
+      "label": "Offline",
+      "description": "Der Sensorbaukasten hat Probleme und benötigt eine Wartung."
+    },
+    "online": {
+      "label": "Online",
+      "description": "Der Sensorbaukasten kann Daten senden."
+    }
+  },
+  "userStatus": {
+    "unknown": {
+      "label": "Unbekannt"
+    },
+    "absent": {
+      "label": "Nicht verfügbar"
+    },
+    "available": {
+      "label": "Verfügbar"
+    }
+  },
+  "vehicleStatus": {
+    "unknown": {
+      "label": "Unbekannt",
+      "description": "Der Fahrzeugstatus ist unbekannt."
+    },
+    "not_available": {
+      "label": "Nicht Verfügbar",
+      "description": "Das Fahrzeug ist nicht verfügbar."
+    },
+    "available": {
+      "label": "Verfügbar",
+      "description": "Das Fahrzeug ist verfügbar."
+    },
+    "active": {
+      "label": "In Betrieb",
+      "description": "Das Fahrzeug ist in Betrieb."
+    }
+  },
+  "vehicleType": {
+    "transporter": {
+      "label": "Transporter"
+    },
+    "trailer": {
+      "label": "Anhänger"
+    },
+    "unknown": {
+      "label": "Unbekannt"
+    }
+  },
+  "wateringPlanStatus": {
+    "unknown": {
+      "label": "Unbekannt",
+      "description": "Der Status des Einsatzplans ist unbekannt."
+    },
+    "active": {
+      "label": "Aktiv",
+      "description": "Der Einsatzplan ist aktiv und wird aktuell ausgeführt."
+    },
+    "canceled": {
+      "label": "Abgebrochen",
+      "description": "Der Einsatzplan wurde abgebrochen und ist nicht fertiggestellt."
+    },
+    "finished": {
+      "label": "Beendet",
+      "description": "Der Einsatzplan wurde erfolgreich beendet."
+    },
+    "not_completed": {
+      "label": "Nicht angetreten",
+      "description": "Der Einsatzplan wurde nicht angetreten."
+    },
+    "planned": {
+      "label": "Geplant",
+      "description": "Der Einsatzplan ist geplant und kann gestartet werden."
+    }
+  },
+  "dataHealth": {
+    "ok": {
+      "label": "Daten plausibel",
+      "description": "Die zuletzt empfangenen Messwerte liegen im erwarteten Bereich."
+    },
+    "flagged": {
+      "label": "Einzelne Werte verworfen",
+      "description": "Einzelne Messwerte waren unplausibel und wurden von der Auswertung ausgeschlossen. Der Bewässerungszustand beruht auf den übrigen Werten."
+    },
+    "suspect": {
+      "label": "Datenqualität prüfen",
+      "description": "Mehrere Übertragungen in Folge enthielten keinen verwertbaren Messwert. Der Sensor ist womöglich defekt und der angezeigte Bewässerungszustand veraltet."
+    },
+    "reasons": {
+      "out_of_range": "Wert außerhalb des möglichen Bereichs",
+      "implausible_jump": "Unplausibler Sprung gegenüber dem Vorwert",
+      "unknown": "Unbekannter Grund"
+    }
+  },
+  "drivingLicense": {
+    "B": { "label": "B" },
+    "BE": { "label": "BE" },
+    "C": { "label": "C" },
+    "CE": { "label": "CE" }
+  },
+  "soilCondition": {
+    "groups": {
+      "sands": "Sande",
+      "silts": "Schluffe",
+      "loams": "Lehme",
+      "clays": "Tone",
+      "pureSands": "Reinsande",
+      "other": "Sonstige"
+    },
+    "Ss": { "label": "Ss – Reinsand" },
+    "Su2": { "label": "Su2 – schwach schluffiger Sand" },
+    "Su3": { "label": "Su3 – schluffiger Sand" },
+    "Su4": { "label": "Su4 – stark schluffiger Sand" },
+    "Sl2": { "label": "Sl2 – schwach lehmiger Sand" },
+    "Sl3": { "label": "Sl3 – lehmiger Sand" },
+    "Sl4": { "label": "Sl4 – stark lehmiger Sand" },
+    "Slu": { "label": "Slu – schluffig-lehmiger Sand" },
+    "St2": { "label": "St2 – schwach toniger Sand" },
+    "St3": { "label": "St3 – toniger Sand" },
+    "Uu": { "label": "Uu – reiner Schluff" },
+    "Us": { "label": "Us – sandiger Schluff" },
+    "Uls": { "label": "Uls – sandig-lehmiger Schluff" },
+    "Ut2": { "label": "Ut2 – schwach toniger Schluff" },
+    "Ut3": { "label": "Ut3 – toniger Schluff" },
+    "Ut4": { "label": "Ut4 – stark toniger Schluff" },
+    "Ls2": { "label": "Ls2 – schwach sandiger Lehm" },
+    "Ls3": { "label": "Ls3 – sandiger Lehm" },
+    "Ls4": { "label": "Ls4 – stark sandiger Lehm" },
+    "Lt2": { "label": "Lt2 – schwach toniger Lehm" },
+    "Lt3": { "label": "Lt3 – toniger Lehm" },
+    "Lts": { "label": "Lts – sandig-toniger Lehm" },
+    "Lu": { "label": "Lu – schluffiger Lehm" },
+    "Tt": { "label": "Tt – reiner Ton" },
+    "Tu2": { "label": "Tu2 – schwach schluffiger Ton" },
+    "Tu3": { "label": "Tu3 – schluffiger Ton" },
+    "Tu4": { "label": "Tu4 – stark schluffiger Ton" },
+    "Ts2": { "label": "Ts2 – schwach sandiger Ton" },
+    "Ts3": { "label": "Ts3 – sandiger Ton" },
+    "Ts4": { "label": "Ts4 – stark sandiger Ton" },
+    "Tl": { "label": "Tl – lehmiger Ton" },
+    "fS": { "label": "fS – Feinsand" },
+    "mS": { "label": "mS – Mittelsand" },
+    "gS": { "label": "gS – Grobsand" },
+    "unknown": { "label": "Unbekannt" }
+  }
+}

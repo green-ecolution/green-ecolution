@@ -368,3 +368,7 @@ export { Toaster, toast } from './components/ui/sonner'
 
 // Utils
 export { cn } from './lib/utils'
+
+// i18n
+export { uiDe, uiEn, fallbackTranslate, UiTextProvider, useUiText } from './i18n'
+export type { UiCatalog, UiTextKey, UiTranslate, UiTextProviderProps } from './i18n'

@@ -2,20 +2,22 @@ import createToast from '@/hooks/createToast'
 import useQRScanner, { type ScannerStatus } from '@/hooks/useQRScanner'
 import { CameraViewport, Loading, type CameraViewportState } from '@green-ecolution/ui'
 import { CameraOff, CircleAlert, ShieldAlert } from 'lucide-react'
+import type { TFunction } from 'i18next'
 import { useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import CameraPermissionNotice from './CameraPermissionNotice'
 import PWAInstallHint from './PWAInstallHint'
 import QRScanResult from './QRScanResult'
 
-const STATUS_LABELS: Record<ScannerStatus, string> = {
+const statusLabels = (t: TFunction<'common'>): Record<ScannerStatus, string> => ({
   idle: '',
-  requesting: 'Kamera wird gestartet',
-  scanning: 'Suche nach QR-Code',
-  scanned: 'Erfolgreich erkannt',
-  denied: 'Zugriff verweigert',
-  unsupported: 'Nicht verfügbar',
-  error: 'Fehler',
-}
+  requesting: t('scanner.status.requesting'),
+  scanning: t('scanner.status.scanning'),
+  scanned: t('scanner.status.scanned'),
+  denied: t('scanner.status.denied'),
+  unsupported: t('scanner.status.unsupported'),
+  error: t('scanner.status.error'),
+})
 
 const STATUS_TO_VIEWPORT: Record<ScannerStatus, CameraViewportState> = {
   idle: 'inactive',
@@ -28,7 +30,7 @@ const STATUS_TO_VIEWPORT: Record<ScannerStatus, CameraViewportState> = {
 }
 
 interface QRScannerViewProps {
-  /** Label rendered on the continue button in the result card. Defaults to "Weiter". */
+  /** Label rendered on the continue button in the result card. Defaults to `common:actions.next`. */
   continueLabel?: string
   /** Invoked with the decoded value when the user confirms via the continue button */
   onContinue?: (value: string) => void
@@ -39,14 +41,16 @@ interface QRScannerViewProps {
 const SCAN_VIBRATE_MS = 40
 
 const QRScannerView = ({ continueLabel, onContinue, extra }: QRScannerViewProps = {}) => {
+  const { t } = useTranslation('common')
   const showToast = createToast()
+  const STATUS_LABELS = statusLabels(t)
 
   const { videoRef, status, scannedData, startScanning, resetScan } = useQRScanner({
     onScan: () => {
       if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
         navigator.vibrate(SCAN_VIBRATE_MS)
       }
-      showToast('QR-Code erfolgreich gescannt', 'success')
+      showToast(t('scanner.toast.scanSuccess'), 'success')
     },
   })
 
@@ -70,7 +74,7 @@ const QRScannerView = ({ continueLabel, onContinue, extra }: QRScannerViewProps 
     viewportOverlay = (
       <span className="flex flex-col items-center gap-3 text-white/80">
         <Loading size="lg" label="" />
-        <span className="text-sm">Kamera wird gestartet …</span>
+        <span className="text-sm">{t('scanner.view.startingHint')}</span>
       </span>
     )
   } else if (status === 'denied') {
@@ -91,7 +95,7 @@ const QRScannerView = ({ continueLabel, onContinue, extra }: QRScannerViewProps 
           videoRef={videoRef}
           state={viewportState}
           overlay={viewportOverlay}
-          ariaLabel="Kamera-Vorschau für QR-Code-Scanner"
+          ariaLabel={t('scanner.view.cameraAriaLabel')}
         />
       </div>
       {showResult && (
@@ -117,7 +121,7 @@ const QRScannerView = ({ continueLabel, onContinue, extra }: QRScannerViewProps 
       <div className="mt-6 min-h-32">
         {status === 'scanning' && (
           <p className="text-sm text-muted-foreground text-center max-w-prose mx-auto">
-            Sorge für ausreichend Licht und halte den Code ruhig vor die Kamera.
+            {t('scanner.view.scanningHint')}
           </p>
         )}
         {(status === 'denied' || status === 'unsupported' || status === 'error') && (

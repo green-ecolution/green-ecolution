@@ -1,17 +1,19 @@
 import { BadgeCheck } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 const KeyFacts = () => {
+  const { t } = useTranslation('startpage')
   const numbers = [
-    'Monitoring des Bewässerungszustands',
-    'Gruppierung von Bäumen anhand von Standortbedingungen',
-    'Interpretation der Messwerte der Sensordaten in ein Ampelsystem',
-    'Vereinfachte & Digitalisierte Einsatzplanung',
-    'Dynamische Routenplanung von Bewässerungsfahrten',
-    'Langzeitauswertung von Daten',
+    t('keyFacts.monitoring'),
+    t('keyFacts.grouping'),
+    t('keyFacts.interpretation'),
+    t('keyFacts.planning'),
+    t('keyFacts.routing'),
+    t('keyFacts.evaluation'),
   ]
   return (
     <section className="container mt-20 lg:mt-28">
-      <h2 className="font-semibold text-dark-800 mb-6">Wobei genau hilft Ihnen Green Ecolution?</h2>
+      <h2 className="font-semibold text-dark-800 mb-6">{t('keyFacts.heading')}</h2>
       <ul className="grid grid-cols-1 gap-y-4 md:grid-cols-2 md:gap-x-10">
         {numbers.map((number) => (
           <li key={number} className="flex items-center gap-x-4">

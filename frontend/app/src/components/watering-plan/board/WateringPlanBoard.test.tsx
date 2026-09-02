@@ -77,8 +77,8 @@ describe('WateringPlanBoard modify gating', () => {
   it('omits the drag instruction without watering_plan:update', () => {
     permissions.mockReturnValue(new Set(['watering_plan:read']))
     render(<WateringPlanBoard />)
-    expect(screen.queryByText(/Ziehen Sie/)).not.toBeInTheDocument()
-    expect(screen.getByText('Aktuell ist kein Einsatz unterwegs.')).toBeInTheDocument()
+    expect(screen.queryByText(/Ziehe einen geplanten Einsatzplan/)).not.toBeInTheDocument()
+    expect(screen.getByText('Aktuell ist kein Einsatzplan unterwegs.')).toBeInTheDocument()
   })
 
   it('renders planned plans as plain cards without watering_plan:update', () => {

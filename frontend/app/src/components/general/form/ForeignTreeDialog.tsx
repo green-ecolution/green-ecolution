@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,54 +26,59 @@ interface ForeignTreeDialogProps {
   onConfirm: () => void
 }
 
-const describe = ({
-  organizationName,
-  canSwitch,
-  blockedReason,
-  selectedTreeCount,
-}: Pick<
-  ForeignTreeDialogProps,
-  'organizationName' | 'canSwitch' | 'blockedReason' | 'selectedTreeCount'
->) => {
+const describe = (
+  t: TFunction<['tree', 'common']>,
+  {
+    organizationName,
+    canSwitch,
+    blockedReason,
+    selectedTreeCount,
+  }: Pick<
+    ForeignTreeDialogProps,
+    'organizationName' | 'canSwitch' | 'blockedReason' | 'selectedTreeCount'
+  >,
+) => {
   const owner = organizationName
-    ? `Dieser Baum gehört der Organisation ${organizationName}.`
-    : 'Dieser Baum gehört einer anderen Organisation.'
+    ? t('foreignDialog.ownedBy', { organization: organizationName })
+    : t('foreignDialog.ownedByOther')
 
   if (!canSwitch) {
-    return `${owner} Eine Bewässerungsgruppe darf nur Bäume ihrer eigenen Organisation enthalten. ${blockedReason}`
+    return `${owner} ${t('foreignDialog.blockedExplanation')} ${blockedReason}`
   }
 
   const consequence =
-    selectedTreeCount > 0
-      ? ` Die bisher ausgewählten Bäume (${selectedTreeCount}) werden dabei verworfen, weil eine Gruppe nur Bäume einer Organisation enthalten darf.`
-      : ''
+    selectedTreeCount > 0 ? ` ${t('foreignDialog.consequence', { count: selectedTreeCount })}` : ''
 
-  return `${owner} Soll die Gruppe für diese Organisation angelegt werden?${consequence}`
+  return `${owner} ${t('foreignDialog.confirmQuestion')}${consequence}`
 }
 
-const ForeignTreeDialog = (props: ForeignTreeDialogProps) => (
-  <AlertDialog open={props.open} onOpenChange={props.onOpenChange}>
-    <AlertDialogContent>
-      <AlertDialogHeader>
-        <AlertDialogTitle>
-          {props.canSwitch ? 'Organisation wechseln?' : 'Baum nicht auswählbar'}
-        </AlertDialogTitle>
-        <AlertDialogDescription>{describe(props)}</AlertDialogDescription>
-      </AlertDialogHeader>
-      <AlertDialogFooter>
-        <AlertDialogCancel>
-          {props.canSwitch ? 'Abbrechen' : 'Verstanden'}
-          <X />
-        </AlertDialogCancel>
-        {props.canSwitch && (
-          <AlertDialogAction onClick={props.onConfirm}>
-            Wechseln
-            <MoveRight className="icon-arrow-animate" />
-          </AlertDialogAction>
-        )}
-      </AlertDialogFooter>
-    </AlertDialogContent>
-  </AlertDialog>
-)
+const ForeignTreeDialog = (props: ForeignTreeDialogProps) => {
+  const { t } = useTranslation(['tree', 'common'])
+
+  return (
+    <AlertDialog open={props.open} onOpenChange={props.onOpenChange}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>
+            {props.canSwitch ? t('foreignDialog.titleSwitch') : t('foreignDialog.titleBlocked')}
+          </AlertDialogTitle>
+          <AlertDialogDescription>{describe(t, props)}</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>
+            {props.canSwitch ? t('common:actions.cancel') : t('foreignDialog.understood')}
+            <X />
+          </AlertDialogCancel>
+          {props.canSwitch && (
+            <AlertDialogAction onClick={props.onConfirm}>
+              {t('foreignDialog.switchAction')}
+              <MoveRight className="icon-arrow-animate" />
+            </AlertDialogAction>
+          )}
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  )
+}
 
 export default ForeignTreeDialog

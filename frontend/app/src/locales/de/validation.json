@@ -1,0 +1,132 @@
+{
+  "tree": {
+    "species": {
+      "empty": "Art ist erforderlich.",
+      "tooShort": "Art muss mindestens {min} Zeichen lang sein.",
+      "tooLong": "Art darf maximal {max} Zeichen lang sein."
+    },
+    "number": {
+      "empty": "Baumnummer ist erforderlich.",
+      "tooShort": "Baumnummer muss mindestens {min} Zeichen lang sein.",
+      "tooLong": "Baumnummer darf maximal {max} Zeichen lang sein."
+    },
+    "planting_year": {
+      "outOfRange": "Pflanzjahr muss zwischen {min} und {max} liegen.",
+      "invalidFormat": "Pflanzjahr muss eine ganze Zahl sein."
+    }
+  },
+  "coordinate": {
+    "latitude": {
+      "outOfRange": "Breitengrad muss zwischen {min} und {max} liegen (war {got}).",
+      "invalidFormat": "Breitengrad muss eine Zahl sein."
+    },
+    "longitude": {
+      "outOfRange": "Längengrad muss zwischen {min} und {max} liegen (war {got}).",
+      "invalidFormat": "Längengrad muss eine Zahl sein."
+    }
+  },
+  "cluster": {
+    "name": {
+      "empty": "Name ist erforderlich.",
+      "tooShort": "Name muss mindestens {min} Zeichen lang sein.",
+      "tooLong": "Name darf maximal {max} Zeichen lang sein."
+    },
+    "address": {
+      "empty": "Adresse ist erforderlich.",
+      "tooShort": "Adresse muss mindestens {min} Zeichen lang sein.",
+      "tooLong": "Adresse darf maximal {max} Zeichen lang sein."
+    },
+    "soil_condition": {
+      "invalidFormat": "Keine korrekte Bodenbeschaffenheit."
+    }
+  },
+  "vehicle": {
+    "number_plate": {
+      "empty": "Kennzeichen ist erforderlich.",
+      "tooShort": "Kennzeichen muss mindestens {min} Zeichen lang sein.",
+      "tooLong": "Kennzeichen darf maximal {max} Zeichen lang sein."
+    },
+    "model": {
+      "empty": "Modell ist erforderlich.",
+      "tooShort": "Modell muss mindestens {min} Zeichen lang sein.",
+      "tooLong": "Modell darf maximal {max} Zeichen lang sein."
+    },
+    "water_capacity": {
+      "invalidFormat": "Wasserkapazität muss eine Zahl sein."
+    },
+    "dimension": {
+      "height": {
+        "outOfRange": "Höhe ist erforderlich.",
+        "invalidFormat": "Höhe muss eine Zahl sein."
+      },
+      "width": {
+        "outOfRange": "Breite ist erforderlich.",
+        "invalidFormat": "Breite muss eine Zahl sein."
+      },
+      "length": {
+        "outOfRange": "Länge ist erforderlich.",
+        "invalidFormat": "Länge muss eine Zahl sein."
+      },
+      "weight": {
+        "outOfRange": "Gewicht ist erforderlich.",
+        "invalidFormat": "Gewicht muss eine Zahl sein."
+      }
+    },
+    "type": {
+      "invalidFormat": "Kein korrekter Fahrzeugtyp."
+    },
+    "driving_license": {
+      "invalidFormat": "Keine korrekte Fahrzeugerlaubnis."
+    },
+    "status": {
+      "invalidFormat": "Kein korrekter Fahrzeugstatus."
+    }
+  },
+  "water_capacity": {
+    "outOfRange": "Wasserkapazität muss zwischen {min} und {max} Liter liegen."
+  },
+  "watering_plan": {
+    "cluster_ids": {
+      "empty": "Es muss mindestens eine Bewässerungsgruppe ausgewählt werden."
+    },
+    "driver_ids": {
+      "empty": "Es muss mindestens ein Mitarbeiter ausgewählt werden.",
+      "invalidFormat": "Eine Mitarbeiter-ID hat kein gültiges UUID-Format."
+    },
+    "transporter_id": {
+      "empty": "Es muss ein Transportfahrzeug ausgewählt werden.",
+      "outOfRange": "Es muss ein gültiges Transportfahrzeug ausgewählt werden."
+    },
+    "trailer_id": {
+      "outOfRange": "Es muss ein gültiger Anhänger ausgewählt werden."
+    },
+    "status": {
+      "invalidFormat": "Kein korrekter Status."
+    },
+    "date": {
+      "outOfRange": "Datum muss heute oder in der Zukunft liegen."
+    },
+    "start_point_name": {
+      "empty": "Es muss ein Startpunkt ausgewählt werden."
+    }
+  },
+  "provenance": {
+    "provider": {
+      "empty": "Datenquelle ist erforderlich.",
+      "tooLong": "Datenquelle darf maximal {max} Zeichen lang sein."
+    }
+  },
+  "user": {
+    "email": {
+      "empty": "E-Mail ist erforderlich.",
+      "invalidFormat": "E-Mail-Adresse ist ungültig."
+    },
+    "username": {
+      "empty": "Benutzername ist erforderlich."
+    },
+    "phone_number": {
+      "empty": "Telefonnummer ist erforderlich.",
+      "invalidFormat": "Telefonnummer ist ungültig. Erlaubt sind Ziffern, Leerzeichen sowie -, /, ( ) und ein führendes +, mit mindestens 6 Ziffern."
+    }
+  }
+}

@@ -1,3 +1,6 @@
+import { getI18n } from '@/lib/i18n'
+import { intlLocale } from '@/lib/i18n/format'
+
 interface HTTPError {
   error: string
 }
@@ -22,7 +25,8 @@ export function roundTo(n: number, digits: number) {
 }
 
 export function formatKm(meters: number): string {
-  return `${roundTo(meters / 1000, 2)} km`
+  const locale = intlLocale(getI18n().language)
+  return `${new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(meters / 1000)} km`
 }
 
 export function isHTTPError(data: unknown): data is HTTPError {
@@ -32,7 +36,8 @@ export function isHTTPError(data: unknown): data is HTTPError {
 }
 
 export function formatLiters(liters: number): string {
-  return `${new Intl.NumberFormat('de-DE', { maximumFractionDigits: 0 }).format(liters)} L`
+  const locale = intlLocale(getI18n().language)
+  return `${new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(liters)} L`
 }
 
 // RHF `setValueAs` for number inputs: German keyboards produce a decimal

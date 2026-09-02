@@ -1,0 +1,66 @@
+{
+  "hero": {
+    "titleLine1": "Welcome to smart",
+    "titleLine2": "green space management",
+    "intro": "This project deals with the smart watering of trees in an urban context. Sensor-based monitoring transmits and evaluates data via the LoRaWAN network, so that watering recommendations can be issued. Based on these recommendations, watering plans for a watering tour can be created.",
+    "ctaDashboard": "Go to dashboard",
+    "ctaLogin": "Log in",
+    "ctaContact": "Contact"
+  },
+  "keyFacts": {
+    "heading": "What exactly does Green Ecolution help you with?",
+    "monitoring": "Monitoring of watering status",
+    "grouping": "Grouping trees by site conditions",
+    "interpretation": "Interpreting sensor measurement data with a traffic-light system",
+    "planning": "Simplified & digitized watering plan scheduling",
+    "routing": "Dynamic route planning for watering trips",
+    "evaluation": "Long-term evaluation of data"
+  },
+  "quickLinks": {
+    "heading": "Views for efficient watering monitoring",
+    "intro": "Our system offers various views for monitoring the watering status of the trees. You can display all trees on a map, view the installed sensors with battery level and readings, and pull up an overview of past and upcoming watering trips.",
+    "map": {
+      "description": "Show all watering groups & trees on the map",
+      "headline": "Map including the location of all trees",
+      "linkLabel": "Go to the map"
+    },
+    "sensors": {
+      "description": "Shows all installed sensors incl. battery level, readings, …",
+      "headline": "List of all installed sensors",
+      "linkLabel": "Go to the sensors"
+    },
+    "wateringPlans": {
+      "description": "List view of all watering plans that are planned, completed, active etc.",
+      "headline": "Overview of watering plans & route planning",
+      "linkLabel": "Go to the watering plans"
+    }
+  },
+  "introSlider": {
+    "heading": "All features at a glance",
+    "ariaLabel": "Facts about green space management",
+    "sensorSolution": {
+      "label": "Development of a sensor solution",
+      "description": "Soil moisture data is delivered using sensors placed at different depths."
+    },
+    "dataEvaluation": {
+      "label": "Evaluation of measurement data",
+      "description": "Evaluation of the data transmitted by sensors for needs-based watering of trees."
+    },
+    "youngTrees": {
+      "label": "Focus on young trees",
+      "description": "Young trees are especially vulnerable to heat and therefore need particular protection. For this reason, trees are monitored during their first three years in the ground."
+    },
+    "multiSite": {
+      "label": "Monitoring multiple sites",
+      "description": "Using the LoRaWAN network, different sites can be monitored and additional ones easily added."
+    },
+    "planning": {
+      "label": "Simplified watering plan scheduling",
+      "description": "Watering trips can be planned digitally and quickly. Information such as staff as well as vehicles used and their water capacity can be recorded."
+    },
+    "routing": {
+      "label": "Dynamic route planning",
+      "description": "Dynamic calculation of watering routes using open-source software (Valhalla & Vroom)."
+    }
+  }
+}

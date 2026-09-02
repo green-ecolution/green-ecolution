@@ -1,24 +1,29 @@
 import type { Sensor } from '@/api/backendApi'
 import { format, formatDistanceToNow } from 'date-fns'
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import { Badge, ListCard, ListCardTitle, ListCardDescription } from '@green-ecolution/ui'
-import { getSensorStatusDetails } from '@/hooks/details/useDetailsForSensorStatus'
-import { getDataQualityDetails, hasQualityWarning } from '@/hooks/details/useDetailsForDataHealth'
+import { useSensorStatusDetails } from '@/hooks/details/useDetailsForSensorStatus'
+import { useDataQualityDetails, hasQualityWarning } from '@/hooks/details/useDetailsForDataHealth'
+import { useDateLocale } from '@/lib/i18n/useFormatters'
 import { Link } from '@tanstack/react-router'
-import { de } from 'date-fns/locale'
 
 interface SensorCardProps {
   sensor: Sensor
 }
 
 const SensorCard: React.FC<SensorCardProps> = ({ sensor }) => {
+  const { t } = useTranslation(['sensor', 'common'])
+  const dateLocale = useDateLocale()
+  const getSensorStatusDetails = useSensorStatusDetails()
+  const getDataQualityDetails = useDataQualityDetails()
   const statusDetails = getSensorStatusDetails(sensor.status)
   const createdDate = sensor?.createdAt
     ? format(new Date(sensor?.createdAt), 'dd.MM.yyyy')
-    : 'Keine Angabe'
+    : t('common:state.noData')
   const updatedDate = sensor?.latestData?.createdAt
-    ? formatDistanceToNow(sensor?.latestData?.updatedAt, { locale: de })
-    : 'Keine Angabe'
+    ? formatDistanceToNow(sensor?.latestData?.updatedAt, { locale: dateLocale, addSuffix: true })
+    : t('common:state.noData')
 
   return (
     <ListCard asChild columns="1fr 2fr 1fr 1fr" className="lg:py-10">
@@ -40,17 +45,17 @@ const SensorCard: React.FC<SensorCardProps> = ({ sensor }) => {
         </div>
 
         <div>
-          <ListCardTitle className="mb-0.5">ID: {sensor.id}</ListCardTitle>
-          <p className="text-dark-800 text-sm">Sensor-Details</p>
+          <ListCardTitle className="mb-0.5">{t('card.idLabel', { id: sensor.id })}</ListCardTitle>
+          <p className="text-dark-800 text-sm">{t('card.detailsLabel')}</p>
         </div>
 
         <ListCardDescription>
-          <span className="lg:sr-only">Erstellt am:&nbsp;</span>
+          <span className="lg:sr-only">{t('card.createdAtLabel')}&nbsp;</span>
           {createdDate}
         </ListCardDescription>
 
         <ListCardDescription>
-          <span className="lg:sr-only">Letztes Update:&nbsp;</span>
+          <span className="lg:sr-only">{t('card.lastUpdateLabel')}&nbsp;</span>
           {updatedDate}
         </ListCardDescription>
       </Link>
