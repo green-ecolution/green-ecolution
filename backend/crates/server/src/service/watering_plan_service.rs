@@ -4,6 +4,7 @@ use domain::{
     Id,
     authorization::Visibility,
     cluster::{TreeCluster, TreeClusterReader},
+    comment::{CommentSubject, CommentWriter},
     events::DomainEvent,
     organization::{Organization, OrganizationReader},
     routing::{OptimizedRoute, RouteOptimizer, RouteStop},
@@ -29,6 +30,7 @@ pub struct WateringPlanService {
     tree_demand_liters: f64,
     start_point_reader: Arc<dyn StartPointReader>,
     org_reader: Arc<dyn OrganizationReader>,
+    comment_writer: Arc<dyn CommentWriter>,
 }
 
 /// Result of a route computation: the optimized route plus the summed
@@ -51,6 +53,7 @@ impl WateringPlanService {
         tree_demand_liters: f64,
         start_point_reader: Arc<dyn StartPointReader>,
         org_reader: Arc<dyn OrganizationReader>,
+        comment_writer: Arc<dyn CommentWriter>,
     ) -> Self {
         Self {
             reader,
@@ -62,6 +65,7 @@ impl WateringPlanService {
             tree_demand_liters,
             start_point_reader,
             org_reader,
+            comment_writer,
         }
     }
 
@@ -328,6 +332,15 @@ impl WateringPlanService {
         let plan = self.reader.by_id(id).await?;
         let cluster_ids = plan.cluster_ids().to_vec();
         self.writer.delete(id).await?;
+        // Comments have no cascading FK: the subject is polymorphic.
+        let deleted_comments = self
+            .comment_writer
+            .delete_for_subject(CommentSubject::WateringPlan(id))
+            .await?;
+        tracing::debug!(
+            deleted_comments,
+            "removed comments for deleted watering plan"
+        );
         self.event_bus
             .publish(DomainEvent::WateringPlanDeleted {
                 plan_id: id,

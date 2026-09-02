@@ -9,6 +9,7 @@ import ClusterLocationCard from './ClusterLocationCard'
 import ClusterSensorCard from './ClusterSensorCard'
 import ClusterTreeList from './ClusterTreeList'
 import ClusterMasterDataCard from './ClusterMasterDataCard'
+import CommentsSection from '@/components/comments/CommentsSection'
 import EntityDetailHeader from '@/components/general/EntityDetailHeader'
 import DeleteConfirmDialog from '@/components/general/DeleteConfirmDialog'
 import { unknownStatusReasons } from './clusterStatusReason'
@@ -162,6 +163,7 @@ const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
           <ClusterKpiRow treecluster={treecluster} />
           <ClusterWaterSupplyChart clusterId={treecluster.id} hasSensors={hasSensors} />
           <ClusterWateringHistory clusterId={treecluster.id} />
+          <CommentsSection subject="cluster" parentId={treecluster.id.toString()} />
         </div>
         <div className="flex min-w-0 flex-col gap-6">
           <ClusterLocationCard treecluster={treecluster} />

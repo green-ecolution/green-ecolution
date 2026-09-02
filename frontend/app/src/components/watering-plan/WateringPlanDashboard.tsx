@@ -20,6 +20,7 @@ import { format } from 'date-fns'
 import { File, FolderClosed, MoveRight, Route } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import TabGeneralData from './TabGeneralData'
+import CommentsSection from '@/components/comments/CommentsSection'
 import TreeclusterCard from '../general/cards/TreeclusterCard'
 import ButtonLink from '../general/links/ButtonLink'
 import { WateringPlan } from '@/api/backendApi'
@@ -135,6 +136,10 @@ const WateringPlanDashboard = ({ wateringPlan }: WateringPlanDashboardProps) => 
           </TabsContent>
         )}
       </Tabs>
+
+      <div className="mt-10">
+        <CommentsSection subject="watering-plan" parentId={wateringPlan.id.toString()} />
+      </div>
     </>
   )
 }

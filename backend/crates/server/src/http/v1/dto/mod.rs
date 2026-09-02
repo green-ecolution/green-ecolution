@@ -1,4 +1,5 @@
 pub mod cluster;
+pub mod comment;
 pub mod evaluation;
 pub mod info;
 pub mod organization;

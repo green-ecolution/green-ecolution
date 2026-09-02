@@ -1,0 +1,27 @@
+{
+  "heading": "Kommentare",
+  "composer": {
+    "placeholder": "Kommentar schreiben …"
+  },
+  "list": {
+    "loadMore": "Weitere Kommentare laden",
+    "edited": "(bearbeitet)",
+    "unknownAuthor": "Unbekannter Nutzer",
+    "errorTitle": "Kommentare konnten nicht geladen werden",
+    "errorDescription": "Bitte die Seite neu laden. Bestehende Kommentare sind nicht verloren."
+  },
+  "deleteDialog": {
+    "title": "Kommentar löschen?",
+    "description": "Der Kommentar wird endgültig entfernt und kann nicht wiederhergestellt werden.",
+    "confirm": "Löschen",
+    "cancel": "Abbrechen"
+  },
+  "toasts": {
+    "createSuccess": "Kommentar hinzugefügt",
+    "createError": "Der Kommentar konnte nicht gespeichert werden.",
+    "updateSuccess": "Kommentar aktualisiert",
+    "updateError": "Der Kommentar konnte nicht aktualisiert werden.",
+    "deleteSuccess": "Kommentar gelöscht",
+    "deleteError": "Der Kommentar konnte nicht gelöscht werden."
+  }
+}

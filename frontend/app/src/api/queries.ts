@@ -10,6 +10,7 @@ import {
   ClusterBoundaryListResponse,
   ClusterMarkerListResponse,
   ClusterStatisticsResponse,
+  commentApi,
   DataStatisticsResponse,
   EvaluationResponse,
   infoApi,
@@ -111,6 +112,7 @@ export const queryRoots = {
   user: [['users']],
   role: [['roles']],
   organization: [['organizations']],
+  comment: [['comments']],
 } as const satisfies Record<string, readonly QueryKey[]>
 
 export type Aggregate = keyof typeof queryRoots
@@ -457,6 +459,27 @@ export const organizationQueries = {
     queryOptions<OrganizationDetailResponse>({
       queryKey: ['organizations', orgId],
       queryFn: () => organizationApi.getOrganization({ orgId }),
+    }),
+}
+
+export type CommentSubject = 'cluster' | 'watering-plan'
+
+export const commentQueries = {
+  list: (subject: CommentSubject, parentId: string) =>
+    infiniteQueryOptions({
+      queryKey: ['comments', subject, parentId],
+      queryFn: ({ pageParam }) =>
+        subject === 'cluster'
+          ? commentApi.listClusterComments({ clusterId: parentId, page: pageParam, perPage: 20 })
+          : commentApi.listWateringPlanComments({
+              wateringPlanId: parentId,
+              page: pageParam,
+              perPage: 20,
+            }),
+      initialPageParam: 1,
+      getNextPageParam: (lastPage) =>
+        lastPage.pagination?.nextPage ? lastPage.pagination.currentPage + 1 : undefined,
+      enabled: isValidUuid(parentId),
     }),
 }
 

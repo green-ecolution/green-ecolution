@@ -1,5 +1,6 @@
 pub mod authorization;
 pub mod cluster_service;
+pub mod comment_service;
 pub mod evaluation_service;
 pub mod event_bus;
 pub mod handlers;

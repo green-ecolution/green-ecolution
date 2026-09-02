@@ -3,6 +3,8 @@ pub mod auth_helpers;
 pub mod authorization;
 pub mod cluster_soil_moisture;
 pub mod clusters;
+pub mod comments;
+pub mod comments_repo;
 pub mod config_js;
 pub mod enforcement_cluster;
 pub mod enforcement_evaluation;

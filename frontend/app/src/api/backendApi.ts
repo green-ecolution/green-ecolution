@@ -1,4 +1,5 @@
 import {
+  CommentsApi,
   Configuration,
   ConfigurationParameters,
   EvaluationApi,
@@ -90,6 +91,7 @@ export const wateringPlanPreviewApi = new WateringPlansApi(silentConfig)
 export const routingApi = new RoutingApi(config)
 export const roleApi = new RolesApi(config)
 export const organizationApi = new OrganizationsApi(config)
+export const commentApi = new CommentsApi(config)
 
 export * from '@green-ecolution/backend-client'
 

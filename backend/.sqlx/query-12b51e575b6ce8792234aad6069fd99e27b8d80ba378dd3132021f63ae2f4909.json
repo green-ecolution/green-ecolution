@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM comments WHERE subject_type = $1 AND subject_id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "12b51e575b6ce8792234aad6069fd99e27b8d80ba378dd3132021f63ae2f4909"
+}

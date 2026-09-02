@@ -24,6 +24,7 @@ use uuid::Uuid;
 pub mod auth;
 pub mod authorization;
 pub mod cluster;
+pub mod comment;
 pub mod error;
 pub mod evaluation;
 pub mod event_bus;

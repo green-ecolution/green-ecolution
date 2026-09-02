@@ -1,4 +1,5 @@
 .openapi-generator-ignore
+apis/CommentsApi.ts
 apis/EvaluationApi.ts
 apis/InfoApi.ts
 apis/OrganizationsApi.ts
@@ -26,7 +27,9 @@ models/ClusterMarkerListResponse.ts
 models/ClusterMarkerResponse.ts
 models/ClusterStatisticsResponse.ts
 models/ClusterWateringEventResponse.ts
+models/CommentResponse.ts
 models/ContactPersonDto.ts
+models/CreateCommentRequest.ts
 models/CreateSensorRequest.ts
 models/DataHealth.ts
 models/DataQualityAcknowledgementResponse.ts
@@ -37,6 +40,8 @@ models/EvaluationResponse.ts
 models/EvaluationValueRequest.ts
 models/EvaluationValueResponse.ts
 models/GitInfoResponse.ts
+models/ListResponseCommentResponse.ts
+models/ListResponseCommentResponseDataInner.ts
 models/ListResponseRegionResponse.ts
 models/ListResponseRegionResponseDataInner.ts
 models/ListResponseSensorDataResponse.ts
@@ -113,6 +118,7 @@ models/TreeMarkerResponse.ts
 models/TreeResponse.ts
 models/TreeUpdateRequest.ts
 models/TreeWithDistanceResponse.ts
+models/UpdateCommentRequest.ts
 models/UserRegisterRequest.ts
 models/UserResponse.ts
 models/UserStatus.ts

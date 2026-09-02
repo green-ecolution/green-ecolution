@@ -38,6 +38,21 @@ export const uiDe = {
     ariaLabel: 'GPS-Genauigkeit: {label}',
     ariaLabelWithValue: 'GPS-Genauigkeit: {label}, {value}',
   },
+  comments: {
+    placeholder: 'Kommentar hinzufügen…',
+    // Accessible names for the two textareas; the placeholder reads poorly as
+    // a field name and a caller-supplied placeholder must not become one.
+    composerLabel: 'Kommentar hinzufügen',
+    editLabel: 'Kommentar bearbeiten',
+    submit: 'Kommentieren',
+    cancel: 'Abbrechen',
+    save: 'Speichern',
+    edit: 'Bearbeiten',
+    delete: 'Löschen',
+    empty: 'Noch keine Kommentare.',
+    edited: 'bearbeitet',
+    charactersLeft: 'Noch {count} Zeichen',
+  },
 } as const
 
 /**
@@ -90,6 +105,19 @@ export const uiEn = {
     searching: 'Searching …',
     ariaLabel: 'GPS accuracy: {label}',
     ariaLabelWithValue: 'GPS accuracy: {label}, {value}',
+  },
+  comments: {
+    placeholder: 'Add a comment…',
+    composerLabel: 'Add a comment',
+    editLabel: 'Edit comment',
+    submit: 'Comment',
+    cancel: 'Cancel',
+    save: 'Save',
+    edit: 'Edit',
+    delete: 'Delete',
+    empty: 'No comments yet.',
+    edited: 'edited',
+    charactersLeft: '{count} characters left',
   },
 } as const satisfies UiCatalog
 
