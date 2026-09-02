@@ -127,7 +127,7 @@ describe('CommentsSection', () => {
     await waitFor(() => expect(textbox).toHaveValue(''))
   })
 
-  it('shows the edit action only on the signed-in user\'s own comment', async () => {
+  it("shows the edit action only on the signed-in user's own comment", async () => {
     listClusterComments.mockResolvedValue(
       pageOf([
         comment({ id: 'own', authorId: ME_ID, body: 'Mein Kommentar' }),
