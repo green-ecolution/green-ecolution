@@ -106,7 +106,7 @@ export class CommentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Adds a comment to a tree cluster. Requires `tree_cluster:update` in the cluster\'s organization.
+     * Adds a comment to a tree cluster. Requires `tree_cluster:read` in the cluster\'s organization — anyone who may see the cluster may annotate it.
      * Comment on a tree cluster
      */
     async createClusterCommentRaw(requestParameters: CreateClusterCommentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CommentResponse>> {
@@ -117,7 +117,7 @@ export class CommentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Adds a comment to a tree cluster. Requires `tree_cluster:update` in the cluster\'s organization.
+     * Adds a comment to a tree cluster. Requires `tree_cluster:read` in the cluster\'s organization — anyone who may see the cluster may annotate it.
      * Comment on a tree cluster
      */
     async createClusterComment(requestParameters: CreateClusterCommentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CommentResponse> {
@@ -163,7 +163,7 @@ export class CommentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Adds a comment to a watering plan. Requires `watering_plan:update` in the plan\'s organization.
+     * Adds a comment to a watering plan. Requires `watering_plan:read` in the plan\'s organization — anyone who may see the plan may annotate it.
      * Comment on a watering plan
      */
     async createWateringPlanCommentRaw(requestParameters: CreateWateringPlanCommentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CommentResponse>> {
@@ -174,7 +174,7 @@ export class CommentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Adds a comment to a watering plan. Requires `watering_plan:update` in the plan\'s organization.
+     * Adds a comment to a watering plan. Requires `watering_plan:read` in the plan\'s organization — anyone who may see the plan may annotate it.
      * Comment on a watering plan
      */
     async createWateringPlanComment(requestParameters: CreateWateringPlanCommentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CommentResponse> {

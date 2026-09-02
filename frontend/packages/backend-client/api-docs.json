@@ -633,7 +633,7 @@
           "Comments"
         ],
         "summary": "Comment on a tree cluster",
-        "description": "Adds a comment to a tree cluster. Requires `tree_cluster:update` in the cluster's organization.",
+        "description": "Adds a comment to a tree cluster. Requires `tree_cluster:read` in the cluster's organization — anyone who may see the cluster may annotate it.",
         "operationId": "createClusterComment",
         "parameters": [
           {
@@ -670,16 +670,6 @@
           },
           "400": {
             "description": "Empty or overlong comment text",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Missing `tree_cluster:update`",
             "content": {
               "application/json": {
                 "schema": {
@@ -6316,7 +6306,7 @@
           "Comments"
         ],
         "summary": "Comment on a watering plan",
-        "description": "Adds a comment to a watering plan. Requires `watering_plan:update` in the plan's organization.",
+        "description": "Adds a comment to a watering plan. Requires `watering_plan:read` in the plan's organization — anyone who may see the plan may annotate it.",
         "operationId": "createWateringPlanComment",
         "parameters": [
           {
@@ -6353,16 +6343,6 @@
           },
           "400": {
             "description": "Empty or overlong comment text",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Missing `watering_plan:update`",
             "content": {
               "application/json": {
                 "schema": {
