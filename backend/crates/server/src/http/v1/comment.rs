@@ -130,8 +130,8 @@ async fn resolve_author_names(state: &AppState, views: &[CommentView]) -> HashMa
     if ids.is_empty() {
         return HashMap::new();
     }
-    // One Keycloak round-trip per distinct author, not a batch call; see
-    // `resolve_author_names`'s doc for why that's deferred.
+    // One Keycloak round-trip per distinct author, not a batch call. Batching it
+    // needs a display-name-only lookup on UserService, deferred to its own change.
     state
         .user_service
         .by_ids(&ids)
