@@ -22,6 +22,7 @@ export const NAMESPACES = [
   'wateringPlan',
   'map',
   'dashboard',
+  'evaluation',
 ] as const
 
 export const DEFAULT_NAMESPACE = 'common'
