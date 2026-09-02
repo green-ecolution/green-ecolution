@@ -42,7 +42,7 @@ const router = createRouter({
   defaultNotFoundComponent: () => <NotFound />,
   // A pending match without this renders null, so a loader that never settles
   // leaves a blank page behind. Only shows past defaultPendingMs (1s).
-  defaultPendingComponent: pendingLoading('Wird geladen …'),
+  defaultPendingComponent: pendingLoading({ key: 'common:state.loading' }),
   defaultPreload: 'intent',
   defaultPreloadStaleTime: 30_000,
   scrollRestoration: true,

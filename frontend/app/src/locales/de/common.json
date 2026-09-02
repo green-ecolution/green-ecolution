@@ -10,7 +10,7 @@
     "retry": "Erneut versuchen"
   },
   "state": {
-    "loading": "Lade …",
+    "loading": "Wird geladen …",
     "loadingInline": "Lädt…",
     "noData": "Keine Angabe"
   },
