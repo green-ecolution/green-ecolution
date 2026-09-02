@@ -1,4 +1,15 @@
 import { expect, it } from 'vitest'
+import {
+  DataHealth,
+  DrivingLicense,
+  SensorStatus,
+  SoilCondition,
+  UserStatus,
+  VehicleStatus,
+  VehicleType,
+  WateringPlanStatus,
+  WateringStatus,
+} from '@green-ecolution/backend-client'
 import de from '@/locales/de/enums.json'
 import en from '@/locales/en/enums.json'
 
@@ -35,6 +46,34 @@ function placeholdersIn(value: string): Set<string> {
 
 it('has the same key set in German and English', () => {
   expect(flatten(en).sort()).toEqual(flatten(de).sort())
+})
+
+// A group whose catalog entries don't map 1:1 onto a backend-client enum
+// (e.g. `dataHealth`'s derived UI levels, or a group's local `unknown`
+// sentinel outside the backend's own values) is intentionally not asserted
+// here beyond the enum values it does share with the backend.
+const ENUM_GROUPS: { group: string; values: readonly string[]; hasDescription: boolean }[] = [
+  { group: 'wateringStatus', values: Object.values(WateringStatus), hasDescription: true },
+  { group: 'sensorStatus', values: Object.values(SensorStatus), hasDescription: true },
+  { group: 'userStatus', values: Object.values(UserStatus), hasDescription: false },
+  { group: 'vehicleStatus', values: Object.values(VehicleStatus), hasDescription: true },
+  { group: 'vehicleType', values: Object.values(VehicleType), hasDescription: false },
+  { group: 'wateringPlanStatus', values: Object.values(WateringPlanStatus), hasDescription: true },
+  { group: 'dataHealth', values: Object.values(DataHealth), hasDescription: true },
+  { group: 'drivingLicense', values: Object.values(DrivingLicense), hasDescription: false },
+  { group: 'soilCondition', values: Object.values(SoilCondition), hasDescription: false },
+]
+
+it('has a German label (and description, where the group carries one) for every backend enum value', () => {
+  const deKeys = flatten(de)
+  const missing = ENUM_GROUPS.flatMap(({ group, values, hasDescription }) =>
+    values.flatMap((value) =>
+      (hasDescription ? ['label', 'description'] : ['label'])
+        .map((suffix) => `${group}.${value}.${suffix}`)
+        .filter((key) => !deKeys.includes(key)),
+    ),
+  )
+  expect(missing).toEqual([])
 })
 
 it('uses the same placeholders in German and English for every key', () => {
