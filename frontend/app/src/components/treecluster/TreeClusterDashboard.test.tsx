@@ -19,6 +19,21 @@ vi.mock('@/lib/auth/usePermissions', () => ({
   usePermissions: () => permissions(),
 }))
 
+// The CommentsSection at the bottom of the page needs a session context and
+// its own user lookup; neither is under test here.
+vi.mock('@/lib/auth/authSessionContext', () => ({
+  useAuthSession: () => ({ isAuthenticated: true, accessToken: null }),
+}))
+
+const getMe = vi.fn().mockResolvedValue({ id: 'me', roles: [] })
+vi.mock('@/api/backendApi', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/api/backendApi')>()
+  return {
+    ...actual,
+    userApi: { getMe: (...args: unknown[]) => getMe(...args) as unknown },
+  }
+})
+
 // MapLibre needs a WebGL context, which jsdom does not provide.
 vi.mock('@/components/map-gl/MapPreview', () => ({
   default: () => <div data-testid="map-preview" />,
