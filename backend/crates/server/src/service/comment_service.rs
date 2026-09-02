@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use chrono::{DateTime, Utc};
 use domain::{
     Id,
     comment::{
@@ -57,5 +58,19 @@ impl CommentService {
     #[tracing::instrument(level = "debug", skip_all)]
     pub async fn delete(&self, id: Id<Comment>) -> Result<(), ServiceError> {
         Ok(self.writer.delete(id).await?)
+    }
+
+    #[tracing::instrument(level = "debug", skip_all)]
+    pub async fn update(
+        &self,
+        id: Id<Comment>,
+        body: CommentBody,
+        at: DateTime<Utc>,
+    ) -> Result<CommentView, ServiceError> {
+        let mut comment = self.reader.by_id(id).await?;
+        if comment.edit(body, at) {
+            self.writer.save(&comment).await?;
+        }
+        Ok(CommentView::from(&comment))
     }
 }

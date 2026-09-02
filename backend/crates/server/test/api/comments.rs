@@ -946,6 +946,271 @@ async fn deleting_a_watering_plan_removes_its_comments() {
 }
 
 #[tokio::test]
+async fn author_edits_own_cluster_comment() {
+    let (harness, app) = spawn_with_auth().await;
+    let (org, token) = seed_user_with_permissions(
+        &harness,
+        &app,
+        "Autor bearbeitet",
+        &[
+            "tree_cluster:read",
+            "tree_cluster:create",
+            "tree_cluster:update",
+        ],
+    )
+    .await;
+    let cluster_id = create_cluster(&app, &token, org).await;
+    let comment_id = post_comment(&app, &token, &cluster_id, "erste fassung").await;
+    let client = reqwest::Client::new();
+
+    let response = client
+        .put(format!(
+            "{}/api/v1/clusters/{cluster_id}/comments/{comment_id}",
+            app.address
+        ))
+        .bearer_auth(&token)
+        .json(&json!({ "body": "zweite fassung" }))
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(response.status(), 200);
+    let updated: serde_json::Value = response.json().await.unwrap();
+    assert_eq!(updated["body"], "zweite fassung");
+    assert!(updated["edited_at"].as_str().is_some());
+
+    let list: serde_json::Value = client
+        .get(format!(
+            "{}/api/v1/clusters/{cluster_id}/comments",
+            app.address
+        ))
+        .bearer_auth(&token)
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(list["data"][0]["body"], "zweite fassung");
+    assert!(list["data"][0]["edited_at"].as_str().is_some());
+}
+
+#[tokio::test]
+async fn author_edits_own_plan_comment() {
+    let (harness, app) = spawn_with_auth().await;
+    let (org, token) =
+        seed_user_with_permissions(&harness, &app, "Plan bearbeiten", PLAN_PERMS).await;
+    let plan_id = create_plan(&app, &token, org).await;
+    let comment_id = post_plan_comment(&app, &token, &plan_id, "erste fassung").await;
+    let client = reqwest::Client::new();
+
+    let response = client
+        .put(format!(
+            "{}/api/v1/watering-plans/{plan_id}/comments/{comment_id}",
+            app.address
+        ))
+        .bearer_auth(&token)
+        .json(&json!({ "body": "zweite fassung" }))
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(response.status(), 200);
+    let updated: serde_json::Value = response.json().await.unwrap();
+    assert_eq!(updated["body"], "zweite fassung");
+    assert!(updated["edited_at"].as_str().is_some());
+
+    let list: serde_json::Value = client
+        .get(format!(
+            "{}/api/v1/watering-plans/{plan_id}/comments",
+            app.address
+        ))
+        .bearer_auth(&token)
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(list["data"][0]["body"], "zweite fassung");
+    assert!(list["data"][0]["edited_at"].as_str().is_some());
+}
+
+#[tokio::test]
+async fn non_author_with_delete_permission_cannot_edit_a_cluster_comment() {
+    let (harness, app) = spawn_with_auth().await;
+    let (org, author_token) = seed_user_with_permissions(
+        &harness,
+        &app,
+        "Kein Moderieren beim Edit",
+        &[
+            "tree_cluster:read",
+            "tree_cluster:create",
+            "tree_cluster:update",
+        ],
+    )
+    .await;
+    let cluster_id = create_cluster(&app, &author_token, org).await;
+    let comment_id = post_comment(&app, &author_token, &cluster_id, "nicht deiner").await;
+
+    let moderator_token = seed_second_user_in_org(
+        &harness,
+        &app,
+        org,
+        "Moderator ohne Editrecht",
+        &["tree_cluster:read", "tree_cluster:delete"],
+    )
+    .await;
+
+    let response = reqwest::Client::new()
+        .put(format!(
+            "{}/api/v1/clusters/{cluster_id}/comments/{comment_id}",
+            app.address
+        ))
+        .bearer_auth(&moderator_token)
+        .json(&json!({ "body": "fremdbearbeitung" }))
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(response.status(), 403);
+}
+
+#[tokio::test]
+async fn non_author_with_delete_permission_cannot_edit_a_plan_comment() {
+    let (harness, app) = spawn_with_auth().await;
+    let (org, author_token) =
+        seed_user_with_permissions(&harness, &app, "Plan kein Moderieren", PLAN_PERMS).await;
+    let plan_id = create_plan(&app, &author_token, org).await;
+    let comment_id = post_plan_comment(&app, &author_token, &plan_id, "nicht deiner").await;
+
+    let moderator_token = seed_second_user_in_org(
+        &harness,
+        &app,
+        org,
+        "Plan Moderator ohne Editrecht",
+        &["watering_plan:read", "watering_plan:delete"],
+    )
+    .await;
+
+    let response = reqwest::Client::new()
+        .put(format!(
+            "{}/api/v1/watering-plans/{plan_id}/comments/{comment_id}",
+            app.address
+        ))
+        .bearer_auth(&moderator_token)
+        .json(&json!({ "body": "fremdbearbeitung" }))
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(response.status(), 403);
+}
+
+#[tokio::test]
+async fn editing_through_the_wrong_parent_gets_404_and_leaves_the_comment_unchanged() {
+    let (harness, app) = spawn_with_auth().await;
+    let (org, token) = seed_user_with_permissions(
+        &harness,
+        &app,
+        "Falscher Elternpfad beim Edit",
+        &[
+            "tree_cluster:read",
+            "tree_cluster:create",
+            "tree_cluster:update",
+        ],
+    )
+    .await;
+    let first = create_cluster(&app, &token, org).await;
+    let second = create_cluster(&app, &token, org).await;
+    let comment_id = post_comment(&app, &token, &first, "gehört zu first").await;
+    let client = reqwest::Client::new();
+
+    let response = client
+        .put(format!(
+            "{}/api/v1/clusters/{second}/comments/{comment_id}",
+            app.address
+        ))
+        .bearer_auth(&token)
+        .json(&json!({ "body": "sollte nicht klappen" }))
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(response.status(), 404);
+
+    let list: serde_json::Value = client
+        .get(format!("{}/api/v1/clusters/{first}/comments", app.address))
+        .bearer_auth(&token)
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(list["data"][0]["body"], "gehört zu first");
+    assert!(list["data"][0]["edited_at"].is_null());
+}
+
+#[tokio::test]
+async fn editing_an_unknown_comment_gets_404() {
+    let (harness, app) = spawn_with_auth().await;
+    let (org, token) = seed_user_with_permissions(
+        &harness,
+        &app,
+        "Unbekannter Kommentar beim Edit",
+        &[
+            "tree_cluster:read",
+            "tree_cluster:create",
+            "tree_cluster:update",
+        ],
+    )
+    .await;
+    let cluster_id = create_cluster(&app, &token, org).await;
+    let missing = Uuid::now_v7();
+
+    let response = reqwest::Client::new()
+        .put(format!(
+            "{}/api/v1/clusters/{cluster_id}/comments/{missing}",
+            app.address
+        ))
+        .bearer_auth(&token)
+        .json(&json!({ "body": "gibt es nicht" }))
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(response.status(), 404);
+}
+
+#[tokio::test]
+async fn editing_with_empty_body_gets_400() {
+    let (harness, app) = spawn_with_auth().await;
+    let (org, token) = seed_user_with_permissions(
+        &harness,
+        &app,
+        "Leerer Text beim Edit",
+        &[
+            "tree_cluster:read",
+            "tree_cluster:create",
+            "tree_cluster:update",
+        ],
+    )
+    .await;
+    let cluster_id = create_cluster(&app, &token, org).await;
+    let comment_id = post_comment(&app, &token, &cluster_id, "wird geleert").await;
+
+    let response = reqwest::Client::new()
+        .put(format!(
+            "{}/api/v1/clusters/{cluster_id}/comments/{comment_id}",
+            app.address
+        ))
+        .bearer_auth(&token)
+        .json(&json!({ "body": "   " }))
+        .send()
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), 400);
+    let body: serde_json::Value = response.json().await.unwrap();
+    assert_eq!(body["validation"]["key"], "comment.body.empty");
+}
+
+#[tokio::test]
 async fn deleting_a_cluster_keeps_comments_of_other_clusters() {
     let (harness, app) = spawn_with_auth().await;
     let (org, token) = seed_user_with_permissions(

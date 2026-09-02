@@ -12,7 +12,7 @@ use crate::{
         v1::{
             dto::{
                 ListResponse,
-                comment::{CommentResponse, CreateCommentRequest},
+                comment::{CommentResponse, CreateCommentRequest, UpdateCommentRequest},
                 user::display_name,
             },
             error::ErrorBody,
@@ -20,7 +20,7 @@ use crate::{
             scope,
         },
     },
-    service::ServiceError,
+    service::{AuthError, ServiceError},
 };
 use domain::{
     Id, RepositoryError,
@@ -32,9 +32,9 @@ use domain::{
 pub fn routes() -> OpenApiRouter<Arc<AppState>> {
     OpenApiRouter::new()
         .routes(routes!(list_cluster_comments, create_cluster_comment))
-        .routes(routes!(delete_cluster_comment))
+        .routes(routes!(delete_cluster_comment, update_cluster_comment))
         .routes(routes!(list_plan_comments, create_plan_comment))
-        .routes(routes!(delete_plan_comment))
+        .routes(routes!(delete_plan_comment, update_plan_comment))
 }
 
 /// The parent a comment belongs to, resolved once so its resource cannot be
@@ -120,6 +120,27 @@ async fn authorize_delete(
     Ok(id)
 }
 
+/// Checks that `comment_id` belongs to `scope.subject` and that the caller
+/// is its author. Unlike delete, there is no fallback via the parent's
+/// `:delete` permission: only the author may edit their own text. A comment
+/// addressed through the wrong parent reads as 404, never 403.
+async fn authorize_edit(
+    state: &AppState,
+    user_id: Uuid,
+    scope: ParentScope,
+    comment_id: Uuid,
+) -> Result<Id<Comment>, ServiceError> {
+    let id = Id::new(comment_id);
+    let comment = state.comment_service.by_id(id).await?;
+    if comment.subject != scope.subject {
+        return Err(RepositoryError::NotFound.into());
+    }
+    if comment.author_id != user_id {
+        return Err(AuthError::Forbidden.into());
+    }
+    Ok(id)
+}
+
 /// Resolves author display names for one page in a single lookup. An IdP
 /// outage must not fail the request — the comments themselves are still valid,
 /// they just render without a name.
@@ -168,6 +189,23 @@ async fn create_for(
     let view = state
         .comment_service
         .create(subject, author_id, body)
+        .await?;
+    let names = resolve_author_names(state, std::slice::from_ref(&view)).await;
+    Ok(CommentResponse::from_parts(
+        &view,
+        names.get(&view.author_id).cloned(),
+    ))
+}
+
+async fn update_for(
+    state: &AppState,
+    id: Id<Comment>,
+    payload: UpdateCommentRequest,
+) -> Result<CommentResponse, ServiceError> {
+    let body = CommentBody::new(payload.body)?;
+    let view = state
+        .comment_service
+        .update(id, body, chrono::Utc::now())
         .await?;
     let names = resolve_author_names(state, std::slice::from_ref(&view)).await;
     Ok(CommentResponse::from_parts(
@@ -260,6 +298,38 @@ pub async fn delete_cluster_comment(
 }
 
 #[utoipa::path(
+    put,
+    path = "/clusters/{cluster_id}/comments/{comment_id}",
+    tag = "Comments",
+    operation_id = "updateClusterComment",
+    summary = "Edit a comment on a tree cluster",
+    description = "Replaces a comment's text. Only the comment's author may edit it, unlike delete there is no fallback via `tree_cluster:delete`.",
+    params(
+        ("cluster_id" = uuid::Uuid, Path, description = "Cluster ID"),
+        ("comment_id" = uuid::Uuid, Path, description = "Comment ID"),
+    ),
+    request_body = UpdateCommentRequest,
+    responses(
+        (status = 200, description = "Comment updated", body = CommentResponse),
+        (status = 403, description = "Not the author", body = ErrorBody),
+        (status = 404, description = "Cluster or comment not found, or the comment belongs to another cluster", body = ErrorBody),
+        (status = 400, description = "Empty or overlong comment text", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
+    )
+)]
+#[tracing::instrument(level = "info", skip_all, fields(cluster.id = %cluster_id, comment.id = %comment_id))]
+pub async fn update_cluster_comment(
+    State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
+    Path((cluster_id, comment_id)): Path<(uuid::Uuid, uuid::Uuid)>,
+    Json(payload): Json<UpdateCommentRequest>,
+) -> Result<Json<CommentResponse>, ServiceError> {
+    let scope = cluster_scope(&state, user.id, cluster_id).await?;
+    let id = authorize_edit(&state, user.id, scope, comment_id).await?;
+    Ok(Json(update_for(&state, id, payload).await?))
+}
+
+#[utoipa::path(
     get,
     path = "/watering-plans/{watering_plan_id}/comments",
     tag = "Comments",
@@ -340,4 +410,36 @@ pub async fn delete_plan_comment(
     let id = authorize_delete(&state, user.id, scope, comment_id).await?;
     state.comment_service.delete(id).await?;
     Ok(axum::http::StatusCode::NO_CONTENT)
+}
+
+#[utoipa::path(
+    put,
+    path = "/watering-plans/{watering_plan_id}/comments/{comment_id}",
+    tag = "Comments",
+    operation_id = "updateWateringPlanComment",
+    summary = "Edit a comment on a watering plan",
+    description = "Replaces a comment's text. Only the comment's author may edit it, unlike delete there is no fallback via `watering_plan:delete`.",
+    params(
+        ("watering_plan_id" = uuid::Uuid, Path, description = "Watering plan ID"),
+        ("comment_id" = uuid::Uuid, Path, description = "Comment ID"),
+    ),
+    request_body = UpdateCommentRequest,
+    responses(
+        (status = 200, description = "Comment updated", body = CommentResponse),
+        (status = 403, description = "Not the author", body = ErrorBody),
+        (status = 404, description = "Watering plan or comment not found, or the comment belongs to another plan", body = ErrorBody),
+        (status = 400, description = "Empty or overlong comment text", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
+    )
+)]
+#[tracing::instrument(level = "info", skip_all, fields(plan.id = %watering_plan_id, comment.id = %comment_id))]
+pub async fn update_plan_comment(
+    State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
+    Path((watering_plan_id, comment_id)): Path<(uuid::Uuid, uuid::Uuid)>,
+    Json(payload): Json<UpdateCommentRequest>,
+) -> Result<Json<CommentResponse>, ServiceError> {
+    let scope = plan_scope(&state, user.id, watering_plan_id).await?;
+    let id = authorize_edit(&state, user.id, scope, comment_id).await?;
+    Ok(Json(update_for(&state, id, payload).await?))
 }

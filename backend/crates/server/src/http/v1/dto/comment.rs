@@ -17,6 +17,10 @@ pub struct CommentResponse {
     pub body: String,
     #[schema(example = "2026-09-01T13:30:00+00:00")]
     pub created_at: String,
+    /// Present once the author has edited the comment.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(example = "2026-09-01T14:00:00+00:00", nullable)]
+    pub edited_at: Option<String>,
 }
 
 impl CommentResponse {
@@ -29,6 +33,7 @@ impl CommentResponse {
             author_name,
             body: view.body.clone(),
             created_at: view.created_at.to_rfc3339(),
+            edited_at: view.edited_at.map(|d| d.to_rfc3339()),
         }
     }
 }
@@ -37,5 +42,17 @@ impl CommentResponse {
 #[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct CreateCommentRequest {
     #[schema(example = "Boden war noch feucht", min_length = 1, max_length = 2000)]
+    pub body: String,
+}
+
+/// Body of the edit request. A separate type from `CreateCommentRequest` so
+/// the generated client does not carry a "Create" type on an update endpoint.
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
+pub struct UpdateCommentRequest {
+    #[schema(
+        example = "Boden ist mittlerweile trocken",
+        min_length = 1,
+        max_length = 2000
+    )]
     pub body: String,
 }
