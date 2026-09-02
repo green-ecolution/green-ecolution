@@ -9,6 +9,7 @@ import sensor from './sensor.json'
 import vehicle from './vehicle.json'
 import wateringPlan from './wateringPlan.json'
 import map from './map.json'
+import dashboard from './dashboard.json'
 
 export default {
   common,
@@ -22,4 +23,5 @@ export default {
   vehicle,
   wateringPlan,
   map,
+  dashboard,
 }
