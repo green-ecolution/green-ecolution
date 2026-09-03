@@ -106,4 +106,9 @@ describe('toBlocks', () => {
       { kind: 'code', language: 'json', value: '{ "a": 1 }' },
     ])
   })
+
+  it('keeps the newlines inside a fenced code block, unlike a wrapped paragraph', () => {
+    const blocks = parse('```json\n{\n  "a": 1,\n  "b": 2\n}\n```')
+    expect(blocks[0].value).toBe('{\n  "a": 1,\n  "b": 2\n}')
+  })
 })

@@ -36,7 +36,9 @@ export function toInline(nodes, ctx) {
   return nodes.flatMap((node) => {
     switch (node.type) {
       case 'text':
-        return [{ kind: 'text', value: node.value }]
+        // remark keeps a soft line break as a literal "\n" inside the text value;
+        // collapse it (and surrounding spaces) like HTML whitespace so both renderers agree.
+        return [{ kind: 'text', value: node.value.replace(/[ \t]*\n[ \t]*/g, ' ') }]
       case 'strong':
         return [{ kind: 'strong', children: toInline(node.children, ctx) }]
       case 'emphasis':

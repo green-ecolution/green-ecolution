@@ -54,3 +54,26 @@ describe('link targets', () => {
     expect(() => parse('Text mit <kbd>Strg</kbd>.')).toThrow(/unsupported inline node "html"/)
   })
 })
+
+describe('soft line breaks', () => {
+  it('collapses a wrapped paragraph into one text run with a single space', () => {
+    expect(parse('Erste Zeile\nZweite Zeile')).toEqual([
+      { kind: 'text', value: 'Erste Zeile Zweite Zeile' },
+    ])
+  })
+
+  it('collapses spaces around the wrap into exactly one space', () => {
+    const ctx = { file: 'demo.md', slug: 'demo' }
+    expect(toInline([{ type: 'text', value: 'Erste Zeile   \n   Zweite Zeile' }], ctx)).toEqual([
+      { kind: 'text', value: 'Erste Zeile Zweite Zeile' },
+    ])
+  })
+
+  it('leaves inline code newlines untouched, unlike a paragraph wrap', () => {
+    expect(parse('Nutze `foo\nbar` hier.')).toEqual([
+      { kind: 'text', value: 'Nutze ' },
+      { kind: 'code', value: 'foo\nbar' },
+      { kind: 'text', value: ' hier.' },
+    ])
+  })
+})
