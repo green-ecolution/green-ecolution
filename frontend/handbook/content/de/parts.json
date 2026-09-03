@@ -1,0 +1,8 @@
+[
+  { "id": "intro", "title": "Einstieg" },
+  { "id": "greenspaces", "title": "Grünflächen" },
+  { "id": "planning", "title": "Planung und Einsatz" },
+  { "id": "sensors", "title": "Sensorik" },
+  { "id": "administration", "title": "Verwaltung" },
+  { "id": "appendix", "title": "Anhang" }
+]

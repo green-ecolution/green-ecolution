@@ -10,7 +10,7 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
-    include: ['src/**/*.{test,spec}.{ts,tsx}'],
+    include: ['src/**/*.{test,spec}.{ts,tsx}', '../handbook/src/**/*.test.mjs'],
     exclude: ['node_modules', 'dist'],
     css: true,
     coverage: {
@@ -24,5 +24,8 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, './src'),
     },
+    // handbook/src lives outside this package, so its bare imports don't walk up into
+    // ./node_modules on their own; dedupe forces resolution to start at this package root.
+    dedupe: ['unified', 'remark-parse', 'remark-gfm', 'remark-frontmatter', 'yaml'],
   },
 })

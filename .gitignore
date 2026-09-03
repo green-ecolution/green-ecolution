@@ -325,3 +325,7 @@ dev-dist
 backend-rs/target/
 **/*.rs.bk
 .bacon-locations
+
+# Handbook build output
+frontend/handbook/generated/
+frontend/app/public/handbook/*.pdf
