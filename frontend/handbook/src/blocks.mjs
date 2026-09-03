@@ -32,6 +32,25 @@ function callout(node, ctx) {
   return { kind: 'callout', tone, children: toBlocks(body, ctx) }
 }
 
+function figure(node, ctx) {
+  if (node.children.length !== 1) fail(ctx, 'an image needs its own paragraph, without surrounding text')
+
+  const image = node.children[0]
+  const caption = image.alt?.trim() ?? ''
+  if (!caption) fail(ctx, 'every image needs a caption in its alt text')
+
+  const match = /^\.\.\/images\/([\w.-]+)$/.exec(image.url)
+  if (!match) fail(ctx, `image "${image.url}" must live in ../images/ and be referenced from there`)
+
+  return { kind: 'figure', image: match[1], caption }
+}
+
+function table(node, ctx) {
+  const [head, ...body] = node.children
+  const cells = (row) => row.children.map((cell) => toInline(cell.children, ctx))
+  return { kind: 'table', head: cells(head), rows: body.map(cells) }
+}
+
 export function toBlocks(nodes, ctx) {
   return nodes.flatMap((node) => {
     switch (node.type) {
@@ -43,11 +62,17 @@ export function toBlocks(nodes, ctx) {
         return [{ kind: 'heading', level: node.depth, text, anchor: slugify(text) }]
       }
       case 'paragraph':
-        return [{ kind: 'paragraph', children: toInline(node.children, ctx) }]
+        return node.children.some((child) => child.type === 'image')
+          ? [figure(node, ctx)]
+          : [{ kind: 'paragraph', children: toInline(node.children, ctx) }]
       case 'list':
         return [{ kind: node.ordered ? 'steps' : 'list', items: listItems(node, ctx) }]
       case 'blockquote':
         return [callout(node, ctx)]
+      case 'table':
+        return [table(node, ctx)]
+      case 'code':
+        return [{ kind: 'code', language: node.lang ?? null, value: node.value }]
       default:
         return fail(ctx, `unsupported block node "${node.type}"`)
     }

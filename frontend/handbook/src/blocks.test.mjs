@@ -66,4 +66,40 @@ describe('toBlocks', () => {
   it('rejects a nested list', () => {
     expect(() => parse('- Erstes\n  - Verschachtelt')).toThrow(/nested/)
   })
+
+  it('reads a standalone image as a numbered figure', () => {
+    expect(parse('![Die Kartenübersicht](../images/map-overview.png)')).toEqual([
+      { kind: 'figure', image: 'map-overview.png', caption: 'Die Kartenübersicht' },
+    ])
+  })
+
+  it('rejects an image without a caption', () => {
+    expect(() => parse('![](../images/map-overview.png)')).toThrow(/caption/)
+  })
+
+  it('rejects an image outside the handbook image folder', () => {
+    expect(() => parse('![Karte](https://example.org/a.png)')).toThrow(/\.\.\/images\//)
+  })
+
+  it('rejects an image mixed into a text paragraph', () => {
+    expect(() => parse('Siehe ![Karte](../images/map-overview.png) dort.')).toThrow(/own paragraph/)
+  })
+
+  it('reads a gfm table', () => {
+    const blocks = parse('| Status | Bedeutung |\n| --- | --- |\n| Aktiv | Läuft |')
+
+    expect(blocks).toEqual([
+      {
+        kind: 'table',
+        head: [[{ kind: 'text', value: 'Status' }], [{ kind: 'text', value: 'Bedeutung' }]],
+        rows: [[[{ kind: 'text', value: 'Aktiv' }], [{ kind: 'text', value: 'Läuft' }]]],
+      },
+    ])
+  })
+
+  it('reads a fenced code block with its language', () => {
+    expect(parse('```json\n{ "a": 1 }\n```')).toEqual([
+      { kind: 'code', language: 'json', value: '{ "a": 1 }' },
+    ])
+  })
 })
