@@ -41,7 +41,9 @@ jobs:
               - 'frontend/handbook/**'
               - 'frontend/app/vite.config.ts'
               - 'frontend/app/vitest.config.ts'
+              - 'frontend/app/public/fonts/**'
               - 'frontend/packages/ui/src/styles/globals.css'
+              - 'frontend/Dockerfile'
               - '.github/workflows/frontend-pr.yaml'
 
   build:
