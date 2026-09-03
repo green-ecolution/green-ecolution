@@ -110,4 +110,20 @@ describe('generate', () => {
 
     await expect(generate({ root, language: 'de' })).rejects.toThrow(/unknown chapter "missing"/)
   })
+
+  it('writes one typst file per chapter plus an ordered include list', async () => {
+    await writeFile(
+      join(root, 'content', 'de', '10-introduction.md'),
+      chapter('introduction', 'intro', '## B\n\nText.'),
+    )
+
+    await generate({ root, language: 'de' })
+
+    const read = (file) => readFile(join(root, 'generated', 'typst', file), 'utf8')
+
+    await expect(read('introduction.typ')).resolves.toContain('#chapter("introduction"')
+    await expect(read('chapters.typ')).resolves.toBe(
+      '#import "../../typst/blocks.typ": *\n#part("intro", "Einstieg")\n#include "introduction.typ"\n#part("appendix", "Anhang")\n',
+    )
+  })
 })

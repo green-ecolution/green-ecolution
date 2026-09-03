@@ -1,6 +1,7 @@
 import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { parseChapter } from './chapter.mjs'
+import { emitChapter } from './typst.mjs'
 
 function chapterLinksInRuns(runs, seen) {
   for (const run of runs) {
@@ -87,6 +88,22 @@ export async function generate({ root, language }) {
       `${JSON.stringify(content, null, 2)}\n`,
     )
   }
+
+  await mkdir(join(out, 'typst'), { recursive: true })
+  for (const content of Object.values(contents)) {
+    await writeFile(
+      join(out, 'typst', `${content.slug}.typ`),
+      emitChapter(content, chapters[content.slug]),
+    )
+  }
+  const order = index.parts.flatMap((part) => [
+    `#part(${JSON.stringify(part.id)}, ${JSON.stringify(part.title)})`,
+    ...part.chapters.map((slug) => `#include "${slug}.typ"`),
+  ])
+  await writeFile(
+    join(out, 'typst', 'chapters.typ'),
+    `#import "../../typst/blocks.typ": *\n${order.join('\n')}\n`,
+  )
 
   return { index, chapters: contents, search }
 }
