@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { searchHandbook } from './search'
+import { isSearchableQuery, searchHandbook } from './search'
 import type { SearchEntry } from './types'
 
 const entries: SearchEntry[] = [
@@ -41,5 +41,35 @@ describe('searchHandbook', () => {
     const hits = searchHandbook(entries, 'route')
 
     expect(hits[0].sectionTitle).toBe('Route festlegen')
+  })
+
+  it('leaves the excerpt empty for a title match on a section without paragraph text', () => {
+    const withoutText: SearchEntry[] = [
+      { slug: 'glossary', anchor: 'begriffe', sectionTitle: 'Begriffe', text: '' },
+    ]
+
+    const hits = searchHandbook(withoutText, 'begriffe')
+
+    expect(hits).toHaveLength(1)
+    expect(hits[0].excerpt).toBe('')
+  })
+})
+
+describe('isSearchableQuery', () => {
+  it('rejects a whitespace-only query', () => {
+    expect(isSearchableQuery('   ')).toBe(false)
+  })
+
+  it('rejects a one-character query', () => {
+    expect(isSearchableQuery('r')).toBe(false)
+  })
+
+  it('accepts a two-character query', () => {
+    expect(isSearchableQuery('ro')).toBe(true)
+  })
+
+  it('trims surrounding whitespace before checking the length', () => {
+    expect(isSearchableQuery('  a  ')).toBe(false)
+    expect(isSearchableQuery('  ro  ')).toBe(true)
   })
 })

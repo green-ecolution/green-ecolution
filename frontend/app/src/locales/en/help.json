@@ -8,7 +8,8 @@
     "label": "Search the handbook",
     "placeholder": "Search for a term",
     "empty": "Nothing found for \"{query}\".",
-    "resultsLabel": "Search results"
+    "resultsLabel": "Search results",
+    "error": "Search is not available right now. Chapters can still be opened from the overview."
   },
   "chapter": {
     "backToOverview": "Back to the handbook overview",

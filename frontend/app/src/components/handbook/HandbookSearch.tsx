@@ -1,32 +1,45 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { Search } from 'lucide-react'
 import { Input } from '@green-ecolution/ui'
 import { loadSearchEntries } from '@/lib/handbook'
-import { searchHandbook, type SearchHit } from '@/lib/handbook/search'
+import { isSearchableQuery, searchHandbook, type SearchHit } from '@/lib/handbook/search'
 import type { SearchEntry } from '@/lib/handbook/types'
 
 function HandbookSearch() {
   const { t } = useTranslation('help')
   const [query, setQuery] = useState('')
   const [entries, setEntries] = useState<SearchEntry[] | null>(null)
+  const [loadError, setLoadError] = useState(false)
+  const loadStarted = useRef(false)
+  const cancelled = useRef(false)
+
+  useEffect(() => {
+    return () => {
+      cancelled.current = true
+    }
+  }, [])
 
   // The search text is a separate chunk, fetched on first use so the overview
-  // page does not carry the whole handbook body.
+  // page does not carry the whole handbook body. Deliberately fires at most
+  // once per mount (loadStarted), not once per keystroke.
   useEffect(() => {
-    if (query.length < 2 || entries) return
-    let cancelled = false
-    void loadSearchEntries().then((loaded) => {
-      if (!cancelled) setEntries(loaded)
-    })
-    return () => {
-      cancelled = true
-    }
-  }, [query, entries])
+    if (!isSearchableQuery(query) || loadStarted.current) return
+    loadStarted.current = true
+    loadSearchEntries()
+      .then((loaded) => {
+        if (!cancelled.current) setEntries(loaded)
+      })
+      .catch((error: unknown) => {
+        if (cancelled.current) return
+        console.error('handbook: failed to load search entries', error)
+        setLoadError(true)
+      })
+  }, [query])
 
   const hits: SearchHit[] = entries ? searchHandbook(entries, query) : []
-  const searching = query.trim().length >= 2
+  const searching = isSearchableQuery(query)
 
   return (
     <section>
@@ -45,7 +58,9 @@ function HandbookSearch() {
         />
       </div>
 
-      {searching && entries && hits.length === 0 && (
+      {searching && loadError && <p className="mt-4 text-dark-600">{t('search.error')}</p>}
+
+      {searching && !loadError && entries && hits.length === 0 && (
         <p className="mt-4 text-dark-600">{t('search.empty', { query })}</p>
       )}
 
@@ -61,7 +76,9 @@ function HandbookSearch() {
               >
                 <span className="text-sm text-dark-600">{hit.chapterTitle}</span>
                 <span className="font-lato font-semibold block">{hit.sectionTitle}</span>
-                <span className="mt-1 block text-sm text-dark-600">{hit.excerpt}</span>
+                {hit.excerpt && (
+                  <span className="mt-1 block text-sm text-dark-600">{hit.excerpt}</span>
+                )}
               </Link>
             </li>
           ))}

@@ -10,6 +10,11 @@ export interface SearchHit {
 }
 
 const EXCERPT_RADIUS = 60
+const MIN_QUERY_LENGTH = 2
+
+export function isSearchableQuery(query: string): boolean {
+  return query.trim().length >= MIN_QUERY_LENGTH
+}
 
 function excerpt(text: string, at: number): string {
   const start = Math.max(0, at - EXCERPT_RADIUS)
@@ -18,8 +23,8 @@ function excerpt(text: string, at: number): string {
 }
 
 export function searchHandbook(entries: SearchEntry[], query: string): SearchHit[] {
+  if (!isSearchableQuery(query)) return []
   const needle = query.trim().toLowerCase()
-  if (needle.length < 2) return []
 
   return entries
     .flatMap((entry) => {

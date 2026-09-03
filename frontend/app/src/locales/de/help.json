@@ -8,7 +8,8 @@
     "label": "Im Handbuch suchen",
     "placeholder": "Nach einem Begriff suchen",
     "empty": "Zu \"{query}\" wurde nichts gefunden.",
-    "resultsLabel": "Suchergebnisse"
+    "resultsLabel": "Suchergebnisse",
+    "error": "Die Suche ist gerade nicht verfügbar. Die Kapitel lassen sich weiterhin über die Übersicht öffnen."
   },
   "chapter": {
     "backToOverview": "Zur Handbuch-Übersicht",
