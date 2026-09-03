@@ -105,6 +105,11 @@ build-frontend: build-domain-wasm
 handbook-pdf:
     @echo "Rendering handbook PDF..."
     @command -v typst >/dev/null 2>&1 || { echo "typst missing (nix shell nixpkgs#typst)"; exit 1; }
+    @pinned_version="$(sed -n 's/^ARG TYPST_VERSION=\(.*\)/\1/p' {{ frontend_dir }}/Dockerfile)"; \
+        local_version="$(typst --version | awk '{print $2}')"; \
+        if [ "$local_version" != "$pinned_version" ]; then \
+            echo "warning: local typst is $local_version, but frontend/Dockerfile pins $pinned_version — the shipped PDF is rendered by the pinned version"; \
+        fi
     node {{ frontend_dir }}/handbook/src/cli.mjs
     mkdir -p {{ frontend_dir }}/app/public/handbook
     typst compile \
