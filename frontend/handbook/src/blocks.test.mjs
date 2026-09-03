@@ -85,6 +85,10 @@ describe('toBlocks', () => {
     expect(() => parse('Siehe ![Karte](../images/map-overview.png) dort.')).toThrow(/own paragraph/)
   })
 
+  it('rejects a non-PNG image', () => {
+    expect(() => parse('![Diagramm](../images/diagram.svg)')).toThrow(/must be a PNG file/)
+  })
+
   it('reads a gfm table', () => {
     const blocks = parse('| Status | Bedeutung |\n| --- | --- |\n| Aktiv | Läuft |')
 

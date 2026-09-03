@@ -33,14 +33,16 @@ function callout(node, ctx) {
 }
 
 function figure(node, ctx) {
-  if (node.children.length !== 1) fail(ctx, 'an image needs its own paragraph, without surrounding text')
+  if (node.children.length !== 1)
+    fail(ctx, 'an image needs its own paragraph, without surrounding text')
 
   const image = node.children[0]
   const caption = image.alt?.trim() ?? ''
   if (!caption) fail(ctx, 'every image needs a caption in its alt text')
 
-  const match = /^\.\.\/images\/([\w.-]+)$/.exec(image.url)
-  if (!match) fail(ctx, `image "${image.url}" must live in ../images/ and be referenced from there`)
+  const match = /^\.\.\/images\/([\w-]+\.png)$/.exec(image.url)
+  if (!match)
+    fail(ctx, `image "${image.url}" must be a PNG file in ../images/ and be referenced from there`)
 
   return { kind: 'figure', image: match[1], caption }
 }
