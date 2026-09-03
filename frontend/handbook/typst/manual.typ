@@ -55,7 +55,11 @@
 
 #show: manual-theme
 
-// Table of contents
-#outline(title: [Inhalt], depth: 2, indent: auto)
+// Table of contents. "Inhalt" is set as plain styled text, not a heading,
+// so the level-1 show rule in theme.typ only ever sees part dividers.
+#block(below: 1em)[
+  #text(font: display-font, weight: "bold", size: 22pt, fill: colors.at("green-dark"))[Inhalt]
+]
+#outline(title: none, depth: 2, indent: auto)
 
 #include "../generated/typst/chapters.typ"

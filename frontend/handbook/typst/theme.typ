@@ -52,29 +52,23 @@
 
   // A part divider owns its page, so the reader feels the section change
   // before reading it. page() inside the show rule provides that break.
-  // #outline's own title is also a level-1 heading (outlined: false by
-  // default), so it must fall through to a plain heading instead.
-  show heading.where(level: 1): it => if it.outlined {
-    page(
-      fill: colors.at("green-light-50"),
-      header: none,
-      margin: (x: 3cm, y: 4cm),
-      align(
-        horizon + left,
-        stack(
-          spacing: 0.6em,
-          text(font: display-font, weight: "black", size: 96pt, fill: colors.at("green-dark-200"))[
-            #context part-number.display("I")
-          ],
-          text(font: display-font, weight: "bold", size: 34pt, fill: colors.at("green-dark"))[#it.body],
-        ),
+  // Level-1 headings are only ever emitted by part() — the outline's own
+  // title is set with `title: none` in manual.typ so it never becomes one.
+  show heading.where(level: 1): it => page(
+    fill: colors.at("green-light-50"),
+    header: none,
+    margin: (x: 3cm, y: 4cm),
+    align(
+      horizon + left,
+      stack(
+        spacing: 0.6em,
+        text(font: display-font, weight: "black", size: 96pt, fill: colors.at("green-dark-200"))[
+          #context part-number.display("I")
+        ],
+        text(font: display-font, weight: "bold", size: 34pt, fill: colors.at("green-dark"))[#it.body],
       ),
-    )
-  } else {
-    block(below: 1em)[
-      #text(font: display-font, weight: "bold", size: 22pt, fill: colors.at("green-dark"))[#it.body]
-    ]
-  }
+    ),
+  )
 
   show heading.where(level: 2): it => block(below: 1.4em)[
     #text(font: mono-font, size: 8pt, tracking: 1.5pt, fill: colors.at("dark-500"))[KAPITEL]
