@@ -14,6 +14,10 @@ const TONE_VARIANT = {
   warning: 'warning',
 } as const
 
+function assertNever(value: never): never {
+  throw new Error(`handbook: unsupported node ${JSON.stringify(value)}`)
+}
+
 function Runs({ runs }: { runs: Inline[] }) {
   return (
     <>
@@ -73,6 +77,8 @@ function Runs({ runs }: { runs: Inline[] }) {
                 <Runs runs={run.children} />
               </Link>
             )
+          default:
+            return assertNever(run)
         }
       })}
     </>
@@ -169,6 +175,8 @@ function One({ block }: { block: Block }) {
           <code>{block.value}</code>
         </pre>
       )
+    default:
+      return assertNever(block)
   }
 }
 
