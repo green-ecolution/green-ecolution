@@ -5,16 +5,16 @@
   "license": "AGPL-3.0-only",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
-    "build:stage": "tsc && NODE_ENV=development vite build --mode staging",
-    "lint": "tsc --noEmit && eslint . --report-unused-disable-directives --max-warnings 0",
+    "dev": "node ../handbook/src/cli.mjs && vite",
+    "build": "node ../handbook/src/cli.mjs && tsc -b && vite build",
+    "build:stage": "node ../handbook/src/cli.mjs && tsc && NODE_ENV=development vite build --mode staging",
+    "lint": "node ../handbook/src/cli.mjs && tsc --noEmit && eslint . --report-unused-disable-directives --max-warnings 0",
     "lint:fix": "eslint . --fix",
     "preview": "vite preview",
     "fmt": "prettier --write src/**/*.ts src/**/*.tsx",
-    "test": "vitest",
+    "test": "node ../handbook/src/cli.mjs && vitest",
     "test:ui": "vitest --ui",
-    "test:run": "vitest run",
+    "test:run": "node ../handbook/src/cli.mjs && vitest run",
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
