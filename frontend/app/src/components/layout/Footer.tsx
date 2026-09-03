@@ -17,6 +17,10 @@ function Footer() {
 
   const navItems = [
     {
+      url: '/help',
+      label: t('footer.handbook'),
+    },
+    {
       url: 'mailto:info@green-ecolution.de',
       label: t('footer.contact'),
     },
@@ -42,7 +46,7 @@ function Footer() {
               <li key={navItem.url}>
                 <a
                   href={navItem.url}
-                  target="_blank"
+                  target={navItem.url.startsWith('/') ? undefined : '_blank'}
                   className="text-dark-600 transition-colors duration-quick ease-out hover:text-dark-800"
                 >
                   {navItem.label}

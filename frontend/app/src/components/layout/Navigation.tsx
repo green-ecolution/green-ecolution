@@ -1,5 +1,6 @@
 import {
   ArrowLeftRight,
+  BookOpen,
   Bug,
   Car,
   FolderClosed,
@@ -119,6 +120,12 @@ const protectedNavData = (t: TFunction<'navigation'>): NavSectionData[] => [
     id: 3,
     headline: t('sidebar.headlineMore'),
     links: [
+      {
+        key: 'nav-more-help',
+        label: t('sidebar.help'),
+        icon: <BookOpen className="w-5 h-5" />,
+        to: '/help',
+      },
       {
         key: 'nav-more-sensor',
         label: t('sidebar.sensors'),
