@@ -100,6 +100,8 @@ describe('Blocks', () => {
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent('Achtung.')
     })
+    const alert = screen.getByRole('alert')
+    expect(alert.querySelectorAll('p')).toHaveLength(1)
   })
 
   it('renders a figure with its caption', async () => {
