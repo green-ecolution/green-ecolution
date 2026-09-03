@@ -8,6 +8,7 @@ import basicSsl from '@vitejs/plugin-basic-ssl'
 import { VitePWA } from 'vite-plugin-pwa'
 import wasm from 'vite-plugin-wasm'
 import topLevelAwait from 'vite-plugin-top-level-await'
+import { handbook } from '../handbook/src/vite-plugin.mjs'
 
 const useTraefik = !!process.env.USE_TRAEFIK
 
@@ -48,13 +49,27 @@ export default defineConfig({
     ...(useTraefik ? [publicDevUrlBanner()] : []),
     wasm(),
     topLevelAwait(),
+    handbook(),
     VitePWA({
       registerType: 'prompt',
       includeAssets: ['images/favicons/favicon.svg', 'images/favicons/apple-touch-icon.png'],
       manifest: false,
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,wasm}'],
+        // Handbook screenshots must not enter the precache: they would add their
+        // full weight to every install. They are runtime-cached on first read.
+        globIgnores: ['**/assets/handbook/**'],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+        runtimeCaching: [
+          {
+            urlPattern: /\/assets\/handbook\/.*\.png$/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'handbook-images',
+              expiration: { maxEntries: 80 },
+            },
+          },
+        ],
       },
       devOptions: {
         enabled: false,
@@ -114,6 +129,10 @@ export default defineConfig({
             { name: 'maplibre', test: /maplibre-gl/ },
           ],
         },
+        assetFileNames: (info) =>
+          info.originalFileNames?.some((file) => file.includes('handbook/images/'))
+            ? 'assets/handbook/[name]-[hash][extname]'
+            : 'assets/[name]-[hash][extname]',
       },
     },
   },
