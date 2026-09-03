@@ -24,8 +24,5 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, './src'),
     },
-    // handbook/src lives outside this package, so its bare imports don't walk up into
-    // ./node_modules on their own; dedupe forces resolution to start at this package root.
-    dedupe: ['unified', 'remark-parse', 'remark-gfm', 'remark-frontmatter', 'yaml'],
   },
 })

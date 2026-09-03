@@ -20,6 +20,21 @@ importers:
       prettier:
         specifier: ^3.9.6
         version: 3.9.6
+      remark-frontmatter:
+        specifier: ^5.0.0
+        version: 5.0.0
+      remark-gfm:
+        specifier: ^4.0.1
+        version: 4.0.1
+      remark-parse:
+        specifier: ^11.0.0
+        version: 11.0.0
+      unified:
+        specifier: ^11.0.5
+        version: 11.0.5
+      yaml:
+        specifier: ^2.8.1
+        version: 2.9.0
 
   app:
     dependencies:
@@ -198,15 +213,6 @@ importers:
       msw:
         specifier: ^2.15.0
         version: 2.15.0(@types/node@26.3.0)(typescript@6.0.3)
-      remark-frontmatter:
-        specifier: ^5.0.0
-        version: 5.0.0
-      remark-gfm:
-        specifier: ^4.0.1
-        version: 4.0.1
-      remark-parse:
-        specifier: ^11.0.0
-        version: 11.0.0
       tailwindcss:
         specifier: ^4.3.3
         version: 4.3.3
@@ -216,9 +222,6 @@ importers:
       typescript-eslint:
         specifier: ^8.68.0
         version: 8.68.0(eslint@10.9.1(jiti@2.7.0))(typescript@6.0.3)
-      unified:
-        specifier: ^11.0.5
-        version: 11.0.5
       vite:
         specifier: ^8.2.2
         version: 8.2.2(@types/node@26.3.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.21.0)(yaml@2.9.0)
@@ -237,9 +240,6 @@ importers:
       workbox-window:
         specifier: ^7.4.1
         version: 7.4.1
-      yaml:
-        specifier: ^2.8.1
-        version: 2.9.0
 
   keycloak-theme:
     dependencies:
