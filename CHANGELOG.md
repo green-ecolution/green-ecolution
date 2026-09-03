@@ -11,6 +11,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > single repository. For legacy releases, see the
 > [GitHub Releases](https://github.com/green-ecolution/green-ecolution/releases) page.
 
+## [0.6.0](https://github.com/green-ecolution/green-ecolution/compare/v0.5.1...v0.6.0) (2026-09-03)
+
+
+### Features
+
+* add comments to tree clusters and watering plans ([#1013](https://github.com/green-ecolution/green-ecolution/issues/1013)) ([b6027a1](https://github.com/green-ecolution/green-ecolution/commit/b6027a1890512b7e91e5f412eff76ef63e5373ac))
+* **api:** make the error contract translatable ([#999](https://github.com/green-ecolution/green-ecolution/issues/999)) ([bdc1b87](https://github.com/green-ecolution/green-ecolution/commit/bdc1b871a56858099874a43bb12df7554b63748b))
+* **backend:** harden the API surface and refuse insecure configurations (OP[#1110](https://github.com/green-ecolution/green-ecolution/issues/1110)) ([#1011](https://github.com/green-ecolution/green-ecolution/issues/1011)) ([090e0e2](https://github.com/green-ecolution/green-ecolution/commit/090e0e2bd6202cd4e677ef13094ccc7958230725))
+* count page views on the demo instance ([#1015](https://github.com/green-ecolution/green-ecolution/issues/1015)) ([f845235](https://github.com/green-ecolution/green-ecolution/commit/f845235014119efeab9e5dbe0c697eaa37b4d3bd))
+* **frontend:** make the interface translatable and add English ([#1012](https://github.com/green-ecolution/green-ecolution/issues/1012)) ([f86a8c9](https://github.com/green-ecolution/green-ecolution/commit/f86a8c9508de24cc8de2d3d91c478da4951e8d19))
+* **keycloak-theme:** add the Green Ecolution login theme ([#996](https://github.com/green-ecolution/green-ecolution/issues/996)) ([52c6ffe](https://github.com/green-ecolution/green-ecolution/commit/52c6ffe0716b550431da48b9ef31e08f666ab788))
+* **sensor:** flag implausible readings and surface data quality ([#998](https://github.com/green-ecolution/green-ecolution/issues/998)) ([17e75a4](https://github.com/green-ecolution/green-ecolution/commit/17e75a45c661da58d9d90df9455842118a5f54dc))
+
+
+### Bug Fixes
+
+* **backend:** close the second self-lockout path through role definitions (OP[#3133](https://github.com/green-ecolution/green-ecolution/issues/3133)) ([#991](https://github.com/green-ecolution/green-ecolution/issues/991)) ([6be1193](https://github.com/green-ecolution/green-ecolution/commit/6be119359d58a3f87ed895a13b73ddae752a83b8))
+* **backend:** give the login-free demo user an organization ([#1014](https://github.com/green-ecolution/green-ecolution/issues/1014)) ([9a9f88b](https://github.com/green-ecolution/green-ecolution/commit/9a9f88b7c24090a91490bcc17d6409d2c7b8a624))
+* **backend:** release the contact person on an organization change (OP[#3101](https://github.com/green-ecolution/green-ecolution/issues/3101)) ([#990](https://github.com/green-ecolution/green-ecolution/issues/990)) ([5e5ddc2](https://github.com/green-ecolution/green-ecolution/commit/5e5ddc245ac1a772465b11c43726555d6d4ca07b))
+* **breadcrumb:** render separator as sibling li (OP[#1299](https://github.com/green-ecolution/green-ecolution/issues/1299)) ([#988](https://github.com/green-ecolution/green-ecolution/issues/988)) ([c9899dd](https://github.com/green-ecolution/green-ecolution/commit/c9899dd7d81d6adcc6318dc07700a31a5b7f1c52))
+* **frontend:** measure the two-pane container when it mounts late ([#1000](https://github.com/green-ecolution/green-ecolution/issues/1000)) ([9b96d6e](https://github.com/green-ecolution/green-ecolution/commit/9b96d6e52dc492321d0e620c1a45910bc4e538c7))
+* **frontend:** offer only valid status transitions in the watering plan status dialog (OP[#1298](https://github.com/green-ecolution/green-ecolution/issues/1298)) ([#986](https://github.com/green-ecolution/green-ecolution/issues/986)) ([7f0711a](https://github.com/green-ecolution/green-ecolution/commit/7f0711adf0feb77b24293295e7d6ef37478fd859))
+* **frontend:** only start the auth redirect on a click, not on hover (OP[#1124](https://github.com/green-ecolution/green-ecolution/issues/1124)) ([#992](https://github.com/green-ecolution/green-ecolution/issues/992)) ([a2f189b](https://github.com/green-ecolution/green-ecolution/commit/a2f189b80ea821ba75192824668679b179f20870))
+* **frontend:** only warn about unsaved changes when a form was actually edited (OP[#1300](https://github.com/green-ecolution/green-ecolution/issues/1300)) ([#989](https://github.com/green-ecolution/green-ecolution/issues/989)) ([35e5aed](https://github.com/green-ecolution/green-ecolution/commit/35e5aedb9c519238500c6a1122d2d362033a863f))
+* **frontend:** recover from an aborted Keycloak handover (OP[#3476](https://github.com/green-ecolution/green-ecolution/issues/3476)) ([#1001](https://github.com/green-ecolution/green-ecolution/issues/1001)) ([4f0edd1](https://github.com/green-ecolution/green-ecolution/commit/4f0edd10af244a0972da0d1dbddff8366a9d665a))
+* invalidate the watering status when no calibration applies ([#995](https://github.com/green-ecolution/green-ecolution/issues/995)) ([15dd275](https://github.com/green-ecolution/green-ecolution/commit/15dd2757cbe0176192fcec29cf3bd269b78f147a))
+
 ## [0.5.1](https://github.com/green-ecolution/green-ecolution/compare/v0.5.0...v0.5.1) (2026-08-22)
 
 
