@@ -51,6 +51,38 @@ async fn get_me_returns_the_authenticated_user() {
     let body: serde_json::Value = response.json().await.unwrap();
     assert_eq!(body["username"], "ttester");
     assert_eq!(body["id"], "00000000-0000-0000-0000-000000000000");
+    // Nothing seeded for the nil user, so the static fallback applies.
+    assert!(body["organization"].is_null());
+    assert_eq!(body["roles"], json!([]));
+}
+
+/// The login-free demo has no IdP, but the organization and roles of its
+/// anonymous user must still come from the database — otherwise every
+/// "your organization" default in the UI has nothing to work with.
+#[tokio::test]
+async fn get_me_reflects_the_seeded_profile_of_the_demo_user() {
+    let app = spawn_app().await;
+    let org = create_org(&app, "TBZ").await;
+    let role = create_role(&app, &org, "Gießtrupp").await;
+
+    sqlx::query("INSERT INTO user_profiles (id, organization_id) VALUES ($1, $2)")
+        .bind(Uuid::nil())
+        .bind(Uuid::parse_str(&org).unwrap())
+        .execute(&app.db_pool)
+        .await
+        .unwrap();
+    sqlx::query("INSERT INTO role_assignments (user_id, role_id) VALUES ($1, $2)")
+        .bind(Uuid::nil())
+        .bind(Uuid::parse_str(&role).unwrap())
+        .execute(&app.db_pool)
+        .await
+        .unwrap();
+
+    let body: serde_json::Value = app.get("/api/v1/users/me").await.json().await.unwrap();
+
+    assert_eq!(body["username"], "ttester");
+    assert_eq!(body["organization"]["id"], org);
+    assert_eq!(body["roles"][0]["id"], role);
 }
 
 #[tokio::test]

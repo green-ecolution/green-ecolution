@@ -393,6 +393,19 @@ INSERT INTO role_assignments (user_id, role_id) VALUES
   ('01980000-0000-7000-8001-000000000035'::uuid, '01980000-0000-7000-8000-0000000000e5'::uuid);
 
 
+-- The login-free demo (auth.enabled = false) serves every request as the
+-- anonymous user Toni Tester, whose id is the nil UUID. Without these two rows
+-- that user belongs to no organization, and every "your organization" default
+-- in the UI falls back to the alphabetically first one — which owns almost no
+-- trees, so the cluster form looks empty. Licenses and selectability mirror the
+-- static fallback in user_service::demo_user.
+INSERT INTO user_profiles (id, status, driving_licenses, organization_id, watering_plan_selectable) VALUES
+  ('00000000-0000-0000-0000-000000000000'::uuid, 'available', ARRAY['B','BE','C','CE']::driving_license[], '01980000-0000-7000-8000-000000000002', true);
+
+INSERT INTO role_assignments (user_id, role_id) VALUES
+  ('00000000-0000-0000-0000-000000000000'::uuid, '01980000-0000-7000-8000-0000000000c1'::uuid);
+
+
 -- tbz.routen owns the TBZ watering plans.
 INSERT INTO user_watering_plans (user_id, watering_plan_id) VALUES
   ('01980000-0000-7000-8001-000000000014', '019e3fcb-2a5c-70b8-b5c4-fb729bd9c877'::uuid),

@@ -135,7 +135,7 @@ impl UserService {
         match (filter.query.as_deref(), self.candidate_ids(&filter).await?) {
             (None, None) => {
                 if !self.enabled {
-                    return Ok(demo_user_page(pagination, None));
+                    return self.demo_page(pagination, None).await;
                 }
                 let page = self.user_repo.all(pagination).await?;
                 let items = self.attach_views(page.items).await?;
@@ -147,7 +147,7 @@ impl UserService {
             (None, Some(candidates)) => self.list_by_ids(pagination, candidates).await,
             (Some(query), None) => {
                 if !self.enabled {
-                    return Ok(demo_user_page(pagination, Some(query)));
+                    return self.demo_page(pagination, Some(query)).await;
                 }
                 let page = self.user_repo.search(query, pagination).await?;
                 let items = self.attach_views(page.items).await?;
@@ -300,24 +300,23 @@ impl UserService {
     #[tracing::instrument(level = "debug", skip_all)]
     pub async fn by_ids(&self, ids: &[Uuid]) -> Result<Vec<UserView>, ServiceError> {
         if !self.enabled {
-            let demo = demo_user();
-            return Ok(ids
-                .iter()
-                .filter(|id| **id == demo.id)
-                .map(|_| demo.clone())
-                .collect());
+            let demo_id = demo_user().id;
+            let mut views = Vec::new();
+            for id in ids.iter().filter(|id| **id == demo_id) {
+                views.push(self.demo_view(*id).await?);
+            }
+            return Ok(views);
         }
         let identities = self.user_repo.by_ids(ids).await?;
         self.attach_views(identities).await
     }
 
-    /// In demo mode (auth disabled) the write is a no-op: the static demo user is returned unchanged.
+    /// In demo mode (auth disabled) the write is a no-op: the demo user is returned unchanged.
     #[tracing::instrument(level = "debug", skip_all)]
     pub async fn update_profile(&self, profile: UserProfile) -> Result<UserView, ServiceError> {
         if !self.enabled {
-            let demo = demo_user();
-            if profile.id == demo.id {
-                return Ok(demo);
+            if profile.id == demo_user().id {
+                return self.demo_view(profile.id).await;
             }
             return Err(RepositoryError::NotFound.into());
         }
@@ -370,6 +369,38 @@ impl UserService {
             });
         }
         Ok(restricted)
+    }
+
+    /// The demo user as the local database sees it. Demo mode has no IdP, so
+    /// the identity stays static, but profile, organization and role
+    /// assignments still come from Postgres — the seeded profile for the nil
+    /// user is what gives the login-free demo a home organization. Without such
+    /// a row the static fallback applies, so an unseeded demo behaves as before.
+    async fn demo_view(&self, id: Uuid) -> Result<UserView, ServiceError> {
+        if self.profile_reader.by_ids(&[id]).await?.is_empty() {
+            return Ok(demo_user());
+        }
+        self.attach_views(vec![demo_identity(id)])
+            .await?
+            .into_iter()
+            .next()
+            .ok_or_else(|| RepositoryError::NotFound.into())
+    }
+
+    async fn demo_page(
+        &self,
+        pagination: Pagination,
+        query: Option<&str>,
+    ) -> Result<Page<UserView>, ServiceError> {
+        let page = demo_user_page(pagination, query);
+        let mut items = Vec::with_capacity(page.items.len());
+        for user in page.items {
+            items.push(self.demo_view(user.id).await?);
+        }
+        Ok(Page {
+            items,
+            total: page.total,
+        })
     }
 
     /// Resolve identities for a page of ids. In demo mode only the static demo
