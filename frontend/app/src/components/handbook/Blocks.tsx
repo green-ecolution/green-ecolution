@@ -67,9 +67,7 @@ function Runs({ runs }: { runs: Inline[] }) {
             return (
               <Link
                 key={i}
-                // @ts-expect-error -- /help/$slug is registered by a later task in this plan; the route does not exist yet
                 to="/help/$slug"
-                // @ts-expect-error -- see above, follows from the same not-yet-registered route
                 params={{ slug: run.target.slug }}
                 hash={run.target.anchor}
                 className="text-green-dark underline"

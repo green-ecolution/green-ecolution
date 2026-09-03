@@ -26,6 +26,7 @@ import { Route as ProtectedVehiclesRouteRouteImport } from './routes/_protected/
 import { Route as ProtectedWateringPlansRouteRouteImport } from './routes/_protected/watering-plans/route'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 import { Route as HelpIndexRouteImport } from './routes/help/index'
+import { Route as HelpSlugRouteImport } from './routes/help/$slug'
 import { Route as ProtectedDebugIndexRouteImport } from './routes/_protected/debug/index'
 import { Route as ProtectedEvaluationsIndexRouteImport } from './routes/_protected/evaluations/index'
 import { Route as ProtectedMapIndexRouteImport } from './routes/_protected/map/index'
@@ -168,6 +169,11 @@ const AuthCallbackRoute = AuthCallbackRouteImport.update({
 const HelpIndexRoute = HelpIndexRouteImport.update({
   id: '/help/',
   path: '/help/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HelpSlugRoute = HelpSlugRouteImport.update({
+  id: '/help/$slug',
+  path: '/help/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProtectedDebugIndexRoute = ProtectedDebugIndexRouteImport.update({
@@ -525,6 +531,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof ProtectedDashboardRoute
   '/info': typeof ProtectedInfoRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/help/$slug': typeof HelpSlugRoute
   '/help/': typeof HelpIndexRoute
   '/sensors/$sensorId': typeof ProtectedSensorsSensorIdRouteRouteWithChildren
   '/sensors/new': typeof ProtectedSensorsNewRouteRouteWithChildren
@@ -588,6 +595,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof ProtectedDashboardRoute
   '/info': typeof ProtectedInfoRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/help/$slug': typeof HelpSlugRoute
   '/help': typeof HelpIndexRoute
   '/debug': typeof ProtectedDebugIndexRoute
   '/evaluations': typeof ProtectedEvaluationsIndexRoute
@@ -646,6 +654,7 @@ export interface FileRoutesById {
   '/_protected/dashboard': typeof ProtectedDashboardRoute
   '/_protected/info': typeof ProtectedInfoRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/help/$slug': typeof HelpSlugRoute
   '/help/': typeof HelpIndexRoute
   '/_protected/sensors/$sensorId': typeof ProtectedSensorsSensorIdRouteRouteWithChildren
   '/_protected/sensors/new': typeof ProtectedSensorsNewRouteRouteWithChildren
@@ -722,6 +731,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/info'
     | '/auth/callback'
+    | '/help/$slug'
     | '/help/'
     | '/sensors/$sensorId'
     | '/sensors/new'
@@ -785,6 +795,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/info'
     | '/auth/callback'
+    | '/help/$slug'
     | '/help'
     | '/debug'
     | '/evaluations'
@@ -842,6 +853,7 @@ export interface FileRouteTypes {
     | '/_protected/dashboard'
     | '/_protected/info'
     | '/auth/callback'
+    | '/help/$slug'
     | '/help/'
     | '/_protected/sensors/$sensorId'
     | '/_protected/sensors/new'
@@ -907,6 +919,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   LogoutRoute: typeof LogoutRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
+  HelpSlugRoute: typeof HelpSlugRoute
   HelpIndexRoute: typeof HelpIndexRoute
 }
 
@@ -1029,6 +1042,13 @@ declare module '@tanstack/react-router' {
       path: '/help'
       fullPath: '/help/'
       preLoaderRoute: typeof HelpIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/help/$slug': {
+      id: '/help/$slug'
+      path: '/help/$slug'
+      fullPath: '/help/$slug'
+      preLoaderRoute: typeof HelpSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_protected/debug/': {
@@ -1920,6 +1940,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   LogoutRoute: LogoutRoute,
   AuthCallbackRoute: AuthCallbackRoute,
+  HelpSlugRoute: HelpSlugRoute,
   HelpIndexRoute: HelpIndexRoute,
 }
 export const routeTree = rootRouteImport

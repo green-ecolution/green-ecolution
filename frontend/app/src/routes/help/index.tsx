@@ -39,9 +39,7 @@ function HandbookOverview() {
                 return (
                   <li key={slug}>
                     <Link
-                      // @ts-expect-error -- /help/$slug is registered by a later task in this plan; the route does not exist yet
                       to="/help/$slug"
-                      // @ts-expect-error -- see above, follows from the same not-yet-registered route
                       params={{ slug }}
                       className="block h-full rounded-2xl border border-dark-100 p-4 shadow-cards transition-colors duration-base ease-out hover:border-green-dark"
                     >
