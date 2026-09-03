@@ -1,7 +1,7 @@
 import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { parseChapter } from './chapter.mjs'
-import { emitChapter } from './typst.mjs'
+import { emitChapter, typstString } from './typst.mjs'
 
 function chapterLinksInRuns(runs, seen) {
   for (const run of runs) {
@@ -97,7 +97,7 @@ export async function generate({ root, language }) {
     )
   }
   const order = index.parts.flatMap((part) => [
-    `#part(${JSON.stringify(part.id)}, ${JSON.stringify(part.title)})`,
+    `#part(${typstString(part.id)}, ${typstString(part.title)})`,
     ...part.chapters.map((slug) => `#include "${slug}.typ"`),
   ])
   await writeFile(
