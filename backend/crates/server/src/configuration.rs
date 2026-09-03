@@ -29,6 +29,8 @@ pub struct Settings {
     pub routing: RoutingSettings,
     #[serde(default)]
     pub plugins: PluginsSettings,
+    #[serde(default)]
+    pub analytics: AnalyticsSettings,
 }
 
 #[derive(serde::Deserialize, Clone)]
@@ -191,6 +193,30 @@ fn default_tree_demand_liters() -> f64 {
 pub struct PluginsSettings {
     #[serde(default)]
     pub enabled: bool,
+}
+
+/// Page-view counting for the frontend, handed to it through the runtime
+/// config. Off by default and enabled only for the public demo instance.
+#[derive(serde::Deserialize, Clone, Default)]
+pub struct AnalyticsSettings {
+    #[serde(default)]
+    pub enabled: bool,
+    #[serde(default)]
+    pub script_url: String,
+    #[serde(default)]
+    pub tenant_id: String,
+}
+
+impl AnalyticsSettings {
+    /// The script URL the frontend loads, or `None` when analytics is off or
+    /// half-configured. The tenant id has to travel in the query string: the
+    /// script reads it back off its own `src` attribute.
+    pub fn script_src(&self) -> Option<String> {
+        if !self.enabled || self.script_url.is_empty() || self.tenant_id.is_empty() {
+            return None;
+        }
+        Some(format!("{}?id={}", self.script_url, self.tenant_id))
+    }
 }
 
 #[derive(serde::Deserialize, Clone)]
@@ -487,6 +513,7 @@ impl Settings {
             watering: WateringSettings::default(),
             routing: RoutingSettings::default(),
             plugins: PluginsSettings::default(),
+            analytics: AnalyticsSettings::default(),
         }
     }
 }
@@ -709,6 +736,39 @@ mod tests {
         let settings = Settings::for_test(auth(false, None));
 
         assert!(settings.security_advisories().is_empty());
+    }
+
+    fn analytics(enabled: bool, tenant_id: &str) -> AnalyticsSettings {
+        AnalyticsSettings {
+            enabled,
+            script_url: "https://analytics.progeek.de/a.js".into(),
+            tenant_id: tenant_id.into(),
+        }
+    }
+
+    #[test]
+    fn enabled_analytics_carries_the_tenant_id_in_the_query_string() {
+        assert_eq!(
+            analytics(true, "tenant-42").script_src().as_deref(),
+            Some("https://analytics.progeek.de/a.js?id=tenant-42")
+        );
+    }
+
+    #[test]
+    fn disabled_analytics_has_no_script() {
+        assert_eq!(analytics(false, "tenant-42").script_src(), None);
+    }
+
+    /// A tenant-less script would load and then report nothing, so treat the
+    /// half-configured case as off instead of shipping a dead request.
+    #[test]
+    fn analytics_without_a_tenant_id_has_no_script() {
+        assert_eq!(analytics(true, "").script_src(), None);
+    }
+
+    #[test]
+    fn analytics_is_off_by_default() {
+        assert_eq!(AnalyticsSettings::default().script_src(), None);
     }
 
     #[test]

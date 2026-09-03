@@ -2,6 +2,7 @@ interface RuntimeEnv {
   VITE_AUTH_BYPASS?: string
   VITE_OIDC_AUTHORITY?: string
   VITE_OIDC_CLIENT_ID?: string
+  VITE_ANALYTICS_SCRIPT_URL?: string
 }
 
 function runtimeEnv(): RuntimeEnv {
@@ -18,4 +19,13 @@ export function readOidcAuthority(): string | undefined {
 
 export function readOidcClientId(): string | undefined {
   return runtimeEnv().VITE_OIDC_CLIENT_ID ?? import.meta.env.VITE_OIDC_CLIENT_ID
+}
+
+/**
+ * Runtime-only on purpose, with no build-time fallback: which instance is
+ * measured is a deployment decision, and a baked-in value would follow the
+ * shared image into every other environment.
+ */
+export function readAnalyticsScriptUrl(): string | undefined {
+  return runtimeEnv().VITE_ANALYTICS_SCRIPT_URL
 }

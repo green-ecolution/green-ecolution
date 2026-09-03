@@ -186,7 +186,11 @@ impl Application {
                 default_limit: settings.map.nearest_tree_default_limit,
                 max_limit: settings.map.nearest_tree_max_limit,
             },
-            frontend_config_js: crate::http::render_frontend_config_js(&settings.auth).into(),
+            frontend_config_js: crate::http::render_frontend_config_js(
+                &settings.auth,
+                &settings.analytics,
+            )
+            .into(),
             start_point_service: services.start_point,
             organization_service: services.organization,
             role_service: services.role,
