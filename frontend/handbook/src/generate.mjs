@@ -1,7 +1,11 @@
 import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { parseChapter } from './chapter.mjs'
 import { emitChapter, typstString } from './typst.mjs'
+import { emitColors, readColors } from './colors.mjs'
+
+const frontendDir = join(dirname(fileURLToPath(import.meta.url)), '..', '..')
 
 function chapterLinksInRuns(runs, seen) {
   for (const run of runs) {
@@ -90,6 +94,21 @@ export async function generate({ root, language }) {
   }
 
   await mkdir(join(out, 'typst'), { recursive: true })
+
+  const globalsCss = join(frontendDir, 'packages', 'ui', 'src', 'styles', 'globals.css')
+  await writeFile(
+    join(out, 'typst', 'colors.typ'),
+    emitColors(readColors(await readFile(globalsCss, 'utf8'))),
+  )
+
+  const pkg = JSON.parse(await readFile(join(frontendDir, 'app', 'package.json'), 'utf8'))
+  const today = new Date()
+  const stamp = `${String(today.getDate()).padStart(2, '0')}.${String(today.getMonth() + 1).padStart(2, '0')}.${today.getFullYear()}`
+  await writeFile(
+    join(out, 'typst', 'meta.typ'),
+    `#let version = "v${pkg.version}"\n#let build-date = "${stamp}"\n`,
+  )
+
   for (const content of Object.values(contents)) {
     await writeFile(
       join(out, 'typst', `${content.slug}.typ`),
