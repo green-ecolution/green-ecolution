@@ -50,3 +50,6 @@ routing:
   tree_demand_liters: 80.0
 plugins:
   enabled: false
+analytics:
+  enabled: false
+  script_url: "https://analytics.progeek.de/a.js"

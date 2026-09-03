@@ -24,3 +24,6 @@ auth:
   backend_client_id: "backend"
   backend_client_secret: "unused-while-auth-is-disabled"
   default_redirect_url: "https://demo.green-ecolution.de/auth/callback"
+analytics:
+  enabled: true
+  tenant_id: "ZECPeLLG8eyZ"

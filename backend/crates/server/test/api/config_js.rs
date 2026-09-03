@@ -32,3 +32,15 @@ async fn get_config_js_content_type_is_javascript() {
         .unwrap_or("");
     assert!(content_type.contains("javascript"));
 }
+
+/// Analytics is demo-only, so the shipped default must not hand the frontend
+/// a script to load.
+#[tokio::test]
+async fn get_config_js_omits_analytics_by_default() {
+    let app = spawn_app().await;
+
+    let response = app.get("/api/config.js").await;
+    let body = response.text().await.expect("failed to read body");
+
+    assert!(!body.contains("VITE_ANALYTICS_SCRIPT_URL"));
+}

@@ -11,6 +11,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { getAuthSession } from '@/lib/auth/session'
 import { AuthSessionProvider } from '@/lib/auth/AuthSessionProvider'
 import { pendingLoading } from '@/lib/router'
+import { startAnalytics } from '@/lib/analytics'
 import { I18nextProvider } from 'react-i18next'
 import { createI18n } from '@/lib/i18n'
 import { UiTextBridge } from '@/lib/i18n/UiTextBridge'
@@ -47,6 +48,8 @@ const router = createRouter({
   defaultPreloadStaleTime: 30_000,
   scrollRestoration: true,
 })
+
+startAnalytics(router)
 
 declare module '@tanstack/react-router' {
   interface Register {

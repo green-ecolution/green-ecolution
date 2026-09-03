@@ -17,7 +17,7 @@ use utoipa_axum::router::OpenApiRouter;
 use utoipa_swagger_ui::{SwaggerUi, oauth};
 
 use crate::{
-    configuration::{AuthSettings, CorsSettings},
+    configuration::{AnalyticsSettings, AuthSettings, CorsSettings},
     http::{
         auth::{AuthLayer, validator::TokenValidator},
         tracing::{MakeRequestUuid, REQUEST_ID_HEADER, make_span, on_response},
@@ -119,12 +119,19 @@ pub struct AppState {
 )]
 struct ApiDoc;
 
-pub fn render_frontend_config_js(auth: &AuthSettings) -> String {
-    let env = serde_json::json!({
+pub fn render_frontend_config_js(auth: &AuthSettings, analytics: &AnalyticsSettings) -> String {
+    let mut env = serde_json::json!({
         "VITE_AUTH_BYPASS": (!auth.enabled).to_string(),
         "VITE_OIDC_AUTHORITY": auth.issuer_url,
         "VITE_OIDC_CLIENT_ID": auth.frontend_client_id,
     });
+
+    // Absent rather than empty when analytics is off: the frontend loads the
+    // script only for a key that is actually there.
+    if let (Some(map), Some(src)) = (env.as_object_mut(), analytics.script_src()) {
+        map.insert("VITE_ANALYTICS_SCRIPT_URL".to_string(), src.into());
+    }
+
     format!("window._env_ = {env};\n")
 }
 
@@ -344,6 +351,57 @@ fn cors_layer(config: &CorsSettings) -> CorsLayer {
         .allow_origin(origins)
         .allow_methods(Any)
         .allow_headers(Any)
+}
+
+#[cfg(test)]
+mod frontend_config_tests {
+    use super::*;
+    use secrecy::SecretString;
+
+    fn auth() -> AuthSettings {
+        AuthSettings {
+            enabled: true,
+            issuer_url: "http://localhost/realms/green-ecolution".into(),
+            frontend_client_id: "frontend".into(),
+            backend_client_id: "backend".into(),
+            backend_client_secret: SecretString::from("secret".to_string()),
+            jwks_refresh_interval_secs: 3600,
+            jwks_refresh_timeout_secs: 5,
+            default_redirect_url: "http://localhost/cb".into(),
+            expected_audience: None,
+        }
+    }
+
+    fn rendered_env(analytics: &AnalyticsSettings) -> serde_json::Value {
+        let js = render_frontend_config_js(&auth(), analytics);
+        let json = js
+            .trim_end()
+            .trim_end_matches(';')
+            .trim_start_matches("window._env_ = ");
+        serde_json::from_str(json).expect("config.js must carry a JSON object")
+    }
+
+    #[test]
+    fn analytics_off_leaves_the_script_url_out_entirely() {
+        let env = rendered_env(&AnalyticsSettings::default());
+
+        assert!(env.get("VITE_ANALYTICS_SCRIPT_URL").is_none());
+        assert_eq!(env["VITE_OIDC_CLIENT_ID"], "frontend");
+    }
+
+    #[test]
+    fn analytics_on_exposes_the_script_url_with_the_tenant_id() {
+        let env = rendered_env(&AnalyticsSettings {
+            enabled: true,
+            script_url: "https://analytics.progeek.de/a.js".into(),
+            tenant_id: "tenant-42".into(),
+        });
+
+        assert_eq!(
+            env["VITE_ANALYTICS_SCRIPT_URL"],
+            "https://analytics.progeek.de/a.js?id=tenant-42"
+        );
+    }
 }
 
 #[cfg(test)]
