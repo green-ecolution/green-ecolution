@@ -100,6 +100,21 @@ build-frontend: build-domain-wasm
     cd {{ frontend_dir }} && pnpm run build
     @echo "Frontend build done."
 
+# Render the user handbook PDF
+[group('build')]
+handbook-pdf:
+    @echo "Rendering handbook PDF..."
+    @command -v typst >/dev/null 2>&1 || { echo "typst missing (nix shell nixpkgs#typst)"; exit 1; }
+    node {{ frontend_dir }}/handbook/src/cli.mjs
+    mkdir -p {{ frontend_dir }}/app/public/handbook
+    typst compile \
+        --root {{ frontend_dir }}/handbook \
+        --font-path {{ frontend_dir }}/handbook/typst/fonts \
+        --font-path {{ frontend_dir }}/app/public/fonts \
+        {{ frontend_dir }}/handbook/typst/manual.typ \
+        {{ frontend_dir }}/app/public/handbook/green-ecolution-handbuch.pdf
+    @echo "Handbook PDF written to {{ frontend_dir }}/app/public/handbook/"
+
 # Build the Rust backend
 [group('build')]
 build-backend: _compile-backend
