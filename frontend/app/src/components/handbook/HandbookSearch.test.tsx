@@ -1,3 +1,4 @@
+import { StrictMode } from 'react'
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -32,7 +33,7 @@ vi.mock('@/lib/handbook', () => ({
 
 const mockedLoadSearchEntries = vi.mocked(loadSearchEntries)
 
-function renderHandbookSearch() {
+function buildHandbookSearchRouter() {
   const rootRoute = createRootRoute({ component: () => <Outlet /> })
   const indexRoute = createRoute({
     getParentRoute: () => rootRoute,
@@ -45,11 +46,22 @@ function renderHandbookSearch() {
     component: () => <div data-testid="chapter-page" />,
   })
   const routeTree = rootRoute.addChildren([indexRoute, chapterRoute])
-  const router = createRouter({
+  return createRouter({
     routeTree,
     history: createMemoryHistory({ initialEntries: ['/'] }),
   })
-  return render(<RouterProvider router={router} />)
+}
+
+function renderHandbookSearch() {
+  return render(<RouterProvider router={buildHandbookSearchRouter()} />)
+}
+
+function renderHandbookSearchInStrictMode() {
+  return render(
+    <StrictMode>
+      <RouterProvider router={buildHandbookSearchRouter()} />
+    </StrictMode>,
+  )
 }
 
 describe('HandbookSearch', () => {
@@ -88,7 +100,7 @@ describe('HandbookSearch', () => {
   })
 
   it('loads the search entries only once even while more searchable keystrokes arrive', async () => {
-    let resolveLoad: (entries: SearchEntry[]) => void
+    let resolveLoad!: (entries: SearchEntry[]) => void
     mockedLoadSearchEntries.mockReturnValue(
       new Promise((resolve) => {
         resolveLoad = resolve
@@ -101,5 +113,25 @@ describe('HandbookSearch', () => {
 
     expect(mockedLoadSearchEntries).toHaveBeenCalledTimes(1)
     resolveLoad([])
+  })
+
+  it('still shows a result under StrictMode, whose phantom mount/cleanup must not leave the load results permanently discarded', async () => {
+    const entries: SearchEntry[] = [
+      {
+        slug: 'watering-plans',
+        anchor: 'route-festlegen',
+        sectionTitle: 'Route festlegen',
+        text: 'Erst die Gruppen wählen, dann die Route berechnen lassen.',
+      },
+    ]
+    mockedLoadSearchEntries.mockResolvedValue(entries)
+    const user = userEvent.setup()
+    renderHandbookSearchInStrictMode()
+
+    await user.type(await screen.findByLabelText(/suchen/i), 'route')
+
+    await waitFor(() => {
+      expect(screen.getByText('Route festlegen')).toBeInTheDocument()
+    })
   })
 })
