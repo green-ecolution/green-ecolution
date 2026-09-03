@@ -77,3 +77,13 @@ describe('soft line breaks', () => {
     ])
   })
 })
+
+describe('hard line breaks', () => {
+  it('rejects two trailing spaces before a newline', () => {
+    expect(() => parse('Erste Zeile  \nZweite Zeile')).toThrow(/trailing spaces|backslash/)
+  })
+
+  it('rejects a trailing backslash before a newline', () => {
+    expect(() => parse('Erste Zeile\\\nZweite Zeile')).toThrow(/trailing spaces|backslash/)
+  })
+})

@@ -53,6 +53,12 @@ export function toInline(nodes, ctx) {
             children: toInline(node.children, ctx),
           },
         ]
+      case 'break':
+        return fail(
+          ctx,
+          'hard line break is not supported; it usually comes from trailing spaces or a ' +
+            'backslash at the end of a line, so just wrap the line normally',
+        )
       default:
         return fail(ctx, `unsupported inline node "${node.type}"`)
     }
