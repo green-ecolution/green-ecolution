@@ -27,9 +27,10 @@ Beschreibung und einer Schaltfläche, die zum jeweiligen Bereich führt:
 - **Einstellungen** führt in den Einstellungsbereich.
 - **Eigenes Profil** führt zu den eigenen persönlichen Daten.
 
-Für welche dieser Kacheln du die nötige Berechtigung hast, richtet sich nach deinen
-Rollen. Fehlt sie, meldet dir die Anwendung beim Öffnen der Kachel, dass der Zugriff
-fehlt, statt den jeweiligen Bereich anzuzeigen.
+**Einstellungen** und **Eigenes Profil** stehen jeder und jedem offen. Für die übrigen
+vier Kacheln entscheiden deine Rollen, ob du sie öffnen darfst. Fehlt die Berechtigung,
+meldet dir die Anwendung beim Öffnen der Kachel, dass der Zugriff fehlt, statt den
+jeweiligen Bereich anzuzeigen.
 
 ## Von hier aus weiter
 

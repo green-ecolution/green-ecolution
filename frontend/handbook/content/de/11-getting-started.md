@@ -44,7 +44,8 @@ einem Tablet also am ehesten im Querformat.
 
 Über deinen Avatar öffnest du das Benutzermenü. Es zeigt, mit welcher E-Mail-Adresse du
 angemeldet bist, und führt über **Dein Profil** zu deinen persönlichen Daten oder über
-**Abmelden** zurück zur Anmeldeseite. Auf breiten Bildschirmen liegt der Avatar am
+**Abmelden** zurück zur Startseite, von der aus du dich bei Bedarf erneut anmelden kannst.
+Auf breiten Bildschirmen liegt der Avatar am
 unteren Rand der Seitennavigation, auf schmalen Bildschirmen stattdessen oben rechts in
 der Kopfzeile.
 
