@@ -39,6 +39,20 @@ describe('parseChapter', () => {
     ])
   })
 
+  it('flattens inline formatting in heading text and anchor', () => {
+    const { blocks } = parseChapter(
+      chapter('## Der Menüpunkt **Baumkataster** zeigt `Filter`\n\nText.'),
+      { file: '10-demo.md' },
+    )
+
+    expect(blocks[0]).toEqual({
+      kind: 'heading',
+      level: 2,
+      text: 'Der Menüpunkt Baumkataster zeigt Filter',
+      anchor: 'der-menupunkt-baumkataster-zeigt-filter',
+    })
+  })
+
   it('turns paragraphs into inline runs', () => {
     const { blocks } = parseChapter(chapter('## A\n\nDas Feld **Art** nimmt `Tilia` an.'), {
       file: '10-demo.md',
