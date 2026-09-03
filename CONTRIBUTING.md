@@ -79,6 +79,30 @@ theme directory is missing, but it is still worth knowing what can go wrong:
   nothing is wrong, so run `just build-keycloak-theme` and refresh the page if a local login
   doesn't look branded.
 
+### User Handbook
+
+The application's user documentation lives in `frontend/handbook/`. Chapters are Markdown
+files with YAML frontmatter, one per file, under `frontend/handbook/content/de/`; a single
+generator turns them into both the in-app help under `/help` and a PDF, so a chapter never
+has to be written twice for the two outputs.
+
+Only the Markdown constructs the generator can render identically in both outputs are
+permitted, and that set is closed: anything outside it (an unsupported block or inline node,
+a heading deeper than `###`, a bare relative link, and so on) fails the build with an error
+naming what was rejected, rather than quietly rendering differently between the app and the
+PDF. The generator itself (`frontend/handbook/src/blocks.mjs` and `inline.mjs`) is the source
+of truth for what is allowed.
+
+To render the PDF locally:
+
+```bash
+just handbook-pdf
+```
+
+This requires Typst, which ships in the Nix development shell (`nix develop`); outside Nix,
+install it separately and match the version pinned in `frontend/Dockerfile`, since
+`just handbook-pdf` warns when the local version drifts from it.
+
 ## Making Changes
 
 ### Branch Strategy
