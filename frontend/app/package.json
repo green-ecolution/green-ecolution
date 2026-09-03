@@ -8,7 +8,7 @@
     "dev": "node ../handbook/src/cli.mjs && vite",
     "build": "node ../handbook/src/cli.mjs && tsc -b && vite build",
     "build:stage": "node ../handbook/src/cli.mjs && tsc && NODE_ENV=development vite build --mode staging",
-    "lint": "node ../handbook/src/cli.mjs && tsc --noEmit && eslint . --report-unused-disable-directives --max-warnings 0",
+    "lint": "node ../handbook/src/cli.mjs && tsc -b --noEmit && eslint . --report-unused-disable-directives --max-warnings 0",
     "lint:fix": "eslint . --fix",
     "preview": "vite preview",
     "fmt": "prettier --write src/**/*.ts src/**/*.tsx",
