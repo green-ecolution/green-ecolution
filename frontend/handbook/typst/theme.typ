@@ -21,6 +21,10 @@
 }
 
 #let chapter(slug, title) = {
+  // The running head in manual-theme blanks any page that a level-2 heading
+  // lands on. That only identifies chapter openers because a chapter always
+  // starts on a fresh page — drop this break and every page sharing a page
+  // with a chapter opening loses its running head.
   pagebreak(weak: true)
   [#heading(level: 2, title) #label("ch-" + slug)]
 }
