@@ -115,7 +115,7 @@
         pnpmDeps = pkgs.fetchPnpmDeps {
           inherit pname version src;
           fetcherVersion = 4;
-          hash = "sha256-TcNfd/AlUcbLuc/p2vLEpRfPkXFvu+ZHExvZxRs32aQ=";
+          hash = "sha256-g8QGxK8SLGNN8nXiXT63/Pv4l0k3x3/UmS1sASFC32M=";
         };
 
         # domain-wasm/pkg is wasm-pack output, gitignored and thus absent
@@ -175,6 +175,8 @@
           # Frontend/Node
           nodejs
           pnpm
+          # Handbook PDF
+          typst
           # Keycloak theme build (keycloakify shells out to mvn)
           jdk21
           maven

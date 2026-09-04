@@ -10,7 +10,7 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
-    include: ['src/**/*.{test,spec}.{ts,tsx}'],
+    include: ['src/**/*.{test,spec}.{ts,tsx}', '../handbook/src/**/*.test.mjs'],
     exclude: ['node_modules', 'dist'],
     css: true,
     coverage: {
@@ -23,6 +23,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      'virtual:pwa-register/react': path.resolve(__dirname, './src/test/mocks/pwaRegister.ts'),
     },
   },
 })

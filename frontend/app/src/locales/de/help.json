@@ -1,0 +1,20 @@
+{
+  "page": {
+    "title": "Handbuch",
+    "description": "Alles zur Bedienung von Green Ecolution, von der Anmeldung bis zur Verwaltung von Rollen.",
+    "pdfDownload": "Handbuch als PDF herunterladen"
+  },
+  "search": {
+    "label": "Im Handbuch suchen",
+    "placeholder": "Nach einem Begriff suchen",
+    "empty": "Zu \"{query}\" wurde nichts gefunden.",
+    "resultsLabel": "Suchergebnisse",
+    "error": "Die Suche ist gerade nicht verfügbar. Die Kapitel lassen sich weiterhin über die Übersicht öffnen."
+  },
+  "chapter": {
+    "backToOverview": "Zur Handbuch-Übersicht",
+    "onThisPage": "Auf dieser Seite",
+    "contextHelp": "Hilfe zu dieser Seite",
+    "fallbackNotice": "Dieses Kapitel liegt noch nicht auf Englisch vor und wird auf Deutsch angezeigt."
+  }
+}

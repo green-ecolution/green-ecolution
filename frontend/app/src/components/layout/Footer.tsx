@@ -1,8 +1,20 @@
-import { useLocation } from '@tanstack/react-router'
+import { useLocation, Link } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { infoQueries } from '@/api/queries'
 import { useSidebarCollapsed } from '@/hooks/useSidebarCollapsed'
+
+interface NavItemInternal {
+  to: '/help'
+  label: string
+}
+
+interface NavItemExternal {
+  url: string
+  label: string
+}
+
+type NavItem = NavItemInternal | NavItemExternal
 
 function Footer() {
   const location = useLocation()
@@ -15,7 +27,11 @@ function Footer() {
     ? appInfo.version
     : `v${appInfo?.version ?? t('footer.versionUnknown')}`
 
-  const navItems = [
+  const navItems: NavItem[] = [
+    {
+      to: '/help',
+      label: t('footer.handbook'),
+    },
     {
       url: 'mailto:info@green-ecolution.de',
       label: t('footer.contact'),
@@ -39,14 +55,23 @@ function Footer() {
         <nav aria-label={t('footer.nav')}>
           <ul className="flex flex-wrap gap-x-4">
             {navItems.map((navItem) => (
-              <li key={navItem.url}>
-                <a
-                  href={navItem.url}
-                  target="_blank"
-                  className="text-dark-600 transition-colors duration-quick ease-out hover:text-dark-800"
-                >
-                  {navItem.label}
-                </a>
+              <li key={'to' in navItem ? navItem.to : navItem.url}>
+                {'to' in navItem ? (
+                  <Link
+                    to={navItem.to}
+                    className="text-dark-600 transition-colors duration-quick ease-out hover:text-dark-800"
+                  >
+                    {navItem.label}
+                  </Link>
+                ) : (
+                  <a
+                    href={navItem.url}
+                    target="_blank"
+                    className="text-dark-600 transition-colors duration-quick ease-out hover:text-dark-800"
+                  >
+                    {navItem.label}
+                  </a>
+                )}
               </li>
             ))}
           </ul>

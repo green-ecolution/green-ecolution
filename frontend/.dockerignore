@@ -28,3 +28,7 @@ packages/backend-client/**
 !packages/backend-client/src
 !packages/backend-client/package.json
 !packages/backend-client/tsconfig.json
+
+# Handbook build output: the image regenerates it and renders the PDF itself
+handbook/generated
+app/public/handbook

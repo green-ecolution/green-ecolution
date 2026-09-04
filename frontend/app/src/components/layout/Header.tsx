@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import Navigation from './Navigation'
 import Breadcrumb from './Breadcrumb'
 import NavUserMenu from '../navigation/NavUserMenu'
+import ContextHelpLink from '../handbook/ContextHelpLink'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { useSidebarCollapsed } from '@/hooks/useSidebarCollapsed'
 import { useAuthSession } from '@/lib/auth/authSessionContext'
@@ -72,8 +73,9 @@ function Header() {
           </Button>
         )}
         {!isStartPage && <Breadcrumb />}
-        {!isLargeScreen && isAuthenticated && (
-          <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-1">
+          <ContextHelpLink />
+          {!isLargeScreen && isAuthenticated && (
             <NavUserMenu email={email} side="bottom" onNavigate={closeSidebar}>
               <button
                 type="button"
@@ -89,8 +91,8 @@ function Header() {
                 <ChevronDown className="size-5 text-dark transition-transform duration-base ease-out group-data-[state=open]:rotate-180 motion-reduce:transition-none" />
               </button>
             </NavUserMenu>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       <Navigation isOpen={open} closeSidebar={closeSidebar} />

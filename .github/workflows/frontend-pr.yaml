@@ -16,6 +16,7 @@ jobs:
     outputs:
       frontend: ${{ steps.filter.outputs.frontend }}
       docker: ${{ steps.filter.outputs.docker }}
+      handbook: ${{ steps.filter.outputs.handbook }}
     steps:
       - uses: actions/checkout@v7
       - uses: dorny/paths-filter@v4
@@ -35,6 +36,14 @@ jobs:
               - 'frontend/Dockerfile'
               - 'frontend/.dockerignore'
               - 'frontend/pnpm-lock.yaml'
+              - '.github/workflows/frontend-pr.yaml'
+            handbook:
+              - 'frontend/handbook/**'
+              - 'frontend/app/vite.config.ts'
+              - 'frontend/app/vitest.config.ts'
+              - 'frontend/app/public/fonts/**'
+              - 'frontend/packages/ui/src/styles/globals.css'
+              - 'frontend/Dockerfile'
               - '.github/workflows/frontend-pr.yaml'
 
   build:
@@ -78,6 +87,47 @@ jobs:
       - name: Test
         working-directory: ./frontend
         run: pnpm test
+
+  handbook:
+    needs: changes
+    if: needs.changes.outputs.handbook == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup-frontend
+      - name: Generate manifest and typst sources
+        run: node frontend/handbook/src/cli.mjs
+      # frontend/Dockerfile pins the typst version the handbook layout was verified
+      # against; read it here instead of duplicating it as a workflow literal.
+      - name: Read pinned typst version
+        id: typst_version
+        run: |
+          version="$(sed -n 's/^ARG TYPST_VERSION=\(.*\)/\1/p' frontend/Dockerfile)"
+          if [ -z "$version" ]; then
+            echo "::error::Could not read TYPST_VERSION from frontend/Dockerfile" >&2
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      - name: Install typst
+        uses: typst-community/setup-typst@v4
+        with:
+          typst-version: ${{ steps.typst_version.outputs.version }}
+      - name: Compile the handbook pdf
+        run: |
+          mkdir -p frontend/app/public/handbook
+          typst compile \
+            --root frontend/handbook \
+            --font-path frontend/handbook/typst/fonts \
+            --font-path frontend/app/public/fonts \
+            frontend/handbook/typst/manual.typ \
+            frontend/app/public/handbook/green-ecolution-handbuch.pdf
+      - name: Upload the handbook pdf
+        uses: actions/upload-artifact@v5
+        with:
+          name: green-ecolution-handbuch
+          path: frontend/app/public/handbook/green-ecolution-handbuch.pdf
+          if-no-files-found: error
 
   # The app build is already covered by the build job; this only needs to
   # run when the image definition itself changes.
@@ -150,7 +200,8 @@ jobs:
   frontend-pr-ok:
     name: Frontend PR OK
     if: always()
-    needs: [build, lint, test, test_dockerfile, keycloak_theme, check_generated]
+    needs:
+      [build, lint, test, handbook, test_dockerfile, keycloak_theme, check_generated]
     runs-on: ubuntu-latest
     timeout-minutes: 1
     steps:
@@ -160,6 +211,7 @@ jobs:
             "${{ needs.build.result }}"
             "${{ needs.lint.result }}"
             "${{ needs.test.result }}"
+            "${{ needs.handbook.result }}"
             "${{ needs.test_dockerfile.result }}"
             "${{ needs.keycloak_theme.result }}"
             "${{ needs.check_generated.result }}"

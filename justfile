@@ -93,12 +93,44 @@ build-domain-wasm:
 
 # Build frontend (pnpm)
 [group('build')]
-build-frontend: build-domain-wasm
+build-frontend: build-domain-wasm handbook-pdf
     @echo "Building frontend..."
     @command -v pnpm >/dev/null 2>&1 || { echo "pnpm missing"; exit 1; }
     cd {{ frontend_dir }} && pnpm install --frozen-lockfile
     cd {{ frontend_dir }} && pnpm run build
     @echo "Frontend build done."
+
+# Render the user handbook PDF
+[group('build')]
+handbook-pdf:
+    @echo "Rendering handbook PDF..."
+    @command -v typst >/dev/null 2>&1 || { echo "typst missing (nix shell nixpkgs#typst)"; exit 1; }
+    @pinned_version="$(sed -n 's/^ARG TYPST_VERSION=\(.*\)/\1/p' {{ frontend_dir }}/Dockerfile)"; \
+        local_version="$(typst --version | awk '{print $2}')"; \
+        if [ "$local_version" != "$pinned_version" ]; then \
+            echo "warning: local typst is $local_version, but frontend/Dockerfile pins $pinned_version — the shipped PDF is rendered by the pinned version"; \
+        fi
+    node {{ frontend_dir }}/handbook/src/cli.mjs
+    mkdir -p {{ frontend_dir }}/app/public/handbook
+    typst compile \
+        --root {{ frontend_dir }}/handbook \
+        --font-path {{ frontend_dir }}/handbook/typst/fonts \
+        --font-path {{ frontend_dir }}/app/public/fonts \
+        {{ frontend_dir }}/handbook/typst/manual.typ \
+        {{ frontend_dir }}/app/public/handbook/green-ecolution-handbuch.pdf
+    @echo "Handbook PDF written to {{ frontend_dir }}/app/public/handbook/"
+
+# Render the handbook PDF for a dev session, but only when it is missing:
+# rendering on every start costs seconds, and a missing typst must not stop the
+# dev server — the download link answers 404 until the PDF is rendered.
+_handbook-pdf-if-missing:
+    @if [ ! -f {{ frontend_dir }}/app/public/handbook/green-ecolution-handbuch.pdf ]; then \
+        if command -v typst >/dev/null 2>&1; then \
+            just handbook-pdf; \
+        else \
+            echo "warning: typst missing — handbook PDF download stays unavailable (just handbook-pdf)"; \
+        fi; \
+    fi
 
 # Build the Rust backend
 [group('build')]
@@ -151,7 +183,7 @@ run: build
 
 # Run frontend dev server
 [group('run')]
-frontend-dev:
+frontend-dev: _handbook-pdf-if-missing
     cd {{ frontend_dir }} && pnpm run dev
 
 # Preview frontend build
@@ -161,7 +193,7 @@ frontend-preview:
 
 # Backend + frontend dev via Traefik
 [group('run')]
-run-dev:
+run-dev: _handbook-pdf-if-missing
     @command -v bacon >/dev/null 2>&1 || { echo "bacon missing — run: cargo install bacon"; exit 1; }
     @echo "Starting dev environment ({{ app_host }})..."
     @echo "  Backend:  {{ app_proto }}://{{ app_host }}:{{ app_port }}/api"
