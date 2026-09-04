@@ -5,7 +5,12 @@
 #let mono-font = "JetBrains Mono"
 
 #let txt(value) = [#value]
-#let tech(value) = text(font: mono-font, size: 0.92em, fill: colors.at("green-dark"))[#value]
+#let tech(value) = text(
+  font: mono-font,
+  size: 0.92em,
+  fill: colors.at("green-dark"),
+  hyphenate: false,
+)[#value]
 #let para(..runs) = block(below: 0.9em)[#runs.pos().join()]
 
 #let part-number = counter("handbook-part")
