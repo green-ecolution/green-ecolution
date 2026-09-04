@@ -1,0 +1,61 @@
+# Handbook screenshots
+
+Every file in this directory is currently a generated placeholder: a diagonally
+striped background in muted project colours with a green border. Replace them one by
+one with real screenshots. Keep the exact file name and the exact pixel dimensions
+listed below, and no chapter Markdown needs to change — the handbook build already
+references these files by name.
+
+Twenty of the twenty-two files below are placed in a chapter today; two
+(`treecluster-assign.png`, `watering-plan-finish.png`) are generated and kept
+available but are not currently referenced from any chapter. Replace them anyway if
+you like, or leave them as placeholders — they cost nothing sitting unused.
+
+## Capture conditions
+
+Shoot the whole set in one sitting so the images read as a series:
+
+- Same Green Ecolution instance, same seed/demo data, for every shot.
+- Browser window exactly 1440 px wide for the landscape shots, 900 px wide for the
+  three portrait ones (`vehicle-form.png`, `sensor-wizard-qr.png`, `tree-form.png`).
+  Use the browser's own device toolbar or window resize, not a scaled screenshot.
+- Light appearance (not dark mode).
+- German interface language.
+- Signed in as a user with full administration rights, so every button and panel
+  mentioned below is actually visible. Don't use an account that is missing a
+  permission — a greyed-out or hidden button would make the screenshot wrong.
+- No real personal names, email addresses, phone numbers, or street addresses in
+  frame. Use the demo data's placeholder names, or rename entries before shooting if
+  the demo data has real-looking names in it.
+- Crop to exactly the browser viewport — no browser chrome, no OS taskbar, no dev
+  tools.
+- Save as PNG (not JPEG) with the exact file name and dimensions in the table below;
+  a screenshot tool that adds its own padding or scrollbars needs to be trimmed
+  first.
+
+## Screenshots
+
+| File                        | Size (px) | Chapter                                                    | What it must show                                                                                                                                                                        |
+| --------------------------- | --------- | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `login.png`                 | 1440×900  | Erste Schritte (`getting-started`)                         | The Green Ecolution sign-in screen, before entering credentials.                                                                                                                         |
+| `app-shell.png`             | 1440×900  | Erste Schritte (`getting-started`)                         | Any page with the sidebar expanded (not collapsed to icons), the breadcrumb trail visible in the header, and the user avatar/menu visible at the bottom of the sidebar.                  |
+| `dashboard.png`             | 1440×900  | Das Dashboard (`dashboard`)                                | The personal dashboard with the greeting and all six tiles under "Schnellverweise" filled in and readable, for a user who can open every tile.                                           |
+| `map-overview.png`          | 1440×900  | Die Karte (`map`)                                          | The map zoomed to a level where several tree clusters are visible as coloured outlines with a mix of individual trees and grouped markers, no side panel or legend open.                 |
+| `map-legend.png`            | 1440×900  | Die Karte (`map`)                                          | The map with the "Bewässerungsstatus" legend open (via the question-mark button, bottom left), showing all five status entries with their actual colours.                                |
+| `map-3d.png`                | 1440×900  | Die Karte (`map`)                                          | The map switched to the tilted 3D perspective (via the "3D" button), ideally also rotated slightly off north so the tilt is unmistakable.                                                |
+| `tree-list-filter.png`      | 1440×900  | Bäume (`trees`)                                            | The tree list with the filter panel open, at least one filter (watering status, cluster, or planting year) actively applied so the filtered result is visible.                           |
+| `tree-detail.png`           | 1440×900  | Bäume (`trees`)                                            | A single tree's detail page for a tree that has both a watering status other than "Unbekannt" and a linked sensor, so the sensor section shows real signal/battery values.               |
+| `tree-form.png`             | 900×1100  | Bäume (`trees`)                                            | The tree edit form (opened via "Baum bearbeiten" from a tree's detail page) with tree number, species, planting year, and an assigned watering cluster all filled in.                    |
+| `treecluster-dashboard.png` | 1440×900  | Bewässerungsgruppen (`treecluster`)                        | A cluster dashboard for a cluster with enough sensor history that the "Wasserversorgung" chart actually draws a curve with its threshold lines, not the empty state.                     |
+| `watering-plan-board.png`   | 1440×900  | Einsatzpläne (`watering-plans`)                            | The watering-plan board with at least one card in every column: Vorschläge, Geplant, Unterwegs, and Erledigt.                                                                            |
+| `watering-plan-route.png`   | 1440×900  | Einsatzpläne (`watering-plans`)                            | The cluster-selection map opened from "Bewässerungsgruppen hinzufügen", with a vehicle and several clusters already chosen so the preview route and at least one refill point are drawn. |
+| `vehicle-form.png`          | 900×1100  | Fahrzeuge (`vehicles`)                                     | The "Neues Fahrzeug erstellen" form filled in, with the driving-licence class and water-capacity fields both visible and populated.                                                      |
+| `evaluations.png`           | 1440×900  | Auswertung (`evaluations`)                                 | The full "Auswertung aller Daten" page for an instance with real activity, so both number blocks and the per-district and per-vehicle listings show non-zero values.                     |
+| `sensor-list.png`           | 1440×900  | Sensorik (`sensors`)                                       | The sensor list with at least one device each in the Vorbereitet, Online, and Offline states, so all three states are visible in one screenshot.                                         |
+| `sensor-wizard-qr.png`      | 900×1100  | Sensorik (`sensors`)                                       | The activation wizard on its first step, the QR-scan screen, with the camera viewfinder visible (a paused/idle frame is fine — it does not need to catch an actual scan in progress).    |
+| `sensor-detail.png`         | 1440×900  | Sensorik (`sensors`)                                       | A sensor detail page for a moisture or tension sensor with enough history that both the signal-quality chart and the per-depth measurement chart show real curves.                       |
+| `settings-team-members.png` | 1440×900  | Team und Rollen (`settings-team`)                          | The "Mitarbeitende" page with a person selected on the left and, on the right, the "Rollen" section expanded so a role assignment is visible.                                            |
+| `settings-team-roles.png`   | 1440×900  | Team und Rollen (`settings-team`)                          | A non-template role open for editing, with at least one area's access-level control expanded to show the individual Ansehen/Anlegen/Bearbeiten/Löschen checkboxes.                       |
+| `settings-organization.png` | 1440×900  | Organisation (`settings-organization`)                     | The organisation tree on the left with a non-root organisation selected, and on the right its master data including address, contact person, and the "Zugewiesene Mitarbeitende" tile.   |
+| `treecluster-assign.png`    | 1440×900  | Bewässerungsgruppen (`treecluster`) — not currently placed | The map in cluster create/edit mode with several trees already picked (highlighted) and at least one greyed-out tree belonging to another organisation visible in frame.                 |
+| `watering-plan-finish.png`  | 1440×900  | Einsatzpläne (`watering-plans`) — not currently placed     | The "finish plan" dialog with a watering plan that has several assigned clusters, each with its own litres-used input field filled in.                                                   |
