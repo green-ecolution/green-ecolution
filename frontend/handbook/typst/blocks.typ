@@ -102,10 +102,11 @@
 
 #let xref-chapter(slug, anchor, body) = {
   let target = label(if anchor == none { "ch-" + slug } else { "sec-" + anchor })
-  [#body #h(0.25em) #context {
+  [#body #context {
     let hits = query(target)
     if hits.len() > 0 {
-      text(size: 0.85em, fill: colors.at("dark-600"))[(siehe S. #hits.first().location().page())]
+      let page-number = hits.first().location().page()
+      text(size: 0.85em, fill: colors.at("dark-600"), hyphenate: false)[(siehe~S.~#page-number)]
     }
   }]
 }
