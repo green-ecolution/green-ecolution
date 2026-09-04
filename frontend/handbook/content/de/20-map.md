@@ -80,6 +80,8 @@ anschließend auf die Karte, um den Standort des Baums festzulegen; den gesetzte
 kannst du danach noch beliebig verschieben. Trage dann Baumnummer, Baumart, Pflanzjahr
 und optional eine Bewässerungsgruppe sowie einen Sensor ein und speichere.
 
+![Der Dialog Kataster-Einstellungen mit der Schaltfläche Neuen Baum manuell hinzufügen](../images/map-tree-new.png)
+
 Eine neue Bewässerungsgruppe legst du über die Schaltfläche **Gruppe anlegen** an. Nach
 Name, Adresse und Bodenbeschaffenheit klickst du die Bäume, die zur Gruppe gehören
 sollen, einzeln auf der Karte an; ein erneuter Klick entfernt einen Baum wieder aus der
