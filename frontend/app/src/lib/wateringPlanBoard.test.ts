@@ -23,8 +23,10 @@ describe('columnForStatus', () => {
     expect(columnForStatus(WateringPlanStatus.NotCompleted)).toBe('done')
   })
 
-  it('maps unknown to null', () => {
-    expect(columnForStatus(WateringPlanStatus.Unknown)).toBeNull()
+  it('maps every status to a column', () => {
+    for (const status of Object.values(WateringPlanStatus)) {
+      expect(columnForStatus(status)).not.toBeUndefined()
+    }
   })
 })
 

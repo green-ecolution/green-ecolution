@@ -231,8 +231,6 @@ pub enum WateringPlanStatus {
     /// Plan was started but could not be completed.
     #[serde(rename = "not_completed", alias = "not competed")]
     NotCompleted,
-    /// Plan status could not be determined.
-    Unknown,
 }
 
 /// Availability status of a user.
@@ -329,7 +327,6 @@ impl From<WateringPlanStatus> for DomainWateringPlanStatus {
             WateringPlanStatus::Canceled => Self::Canceled,
             WateringPlanStatus::Finished => Self::Finished,
             WateringPlanStatus::NotCompleted => Self::NotCompleted,
-            WateringPlanStatus::Unknown => Self::Unknown,
         }
     }
 }
@@ -451,7 +448,6 @@ impl From<DomainWateringPlanStatus> for WateringPlanStatus {
             DomainWateringPlanStatus::Canceled => Self::Canceled,
             DomainWateringPlanStatus::Finished => Self::Finished,
             DomainWateringPlanStatus::NotCompleted => Self::NotCompleted,
-            DomainWateringPlanStatus::Unknown => Self::Unknown,
         }
     }
 }

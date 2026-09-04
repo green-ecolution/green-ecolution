@@ -13,8 +13,6 @@
 //! ```
 //!
 //! Transitions not shown are rejected with [`WateringPlanError::InvalidStateTransition`].
-//! `Unknown` is a legacy/sentinel value from the DB; it does not participate
-//! in normal transitions.
 //!
 //! Plan content (`date`, `cluster_ids`, vehicles) may only be changed while
 //! the plan is in `Planned`; `replace_details` enforces this via
@@ -70,7 +68,6 @@ pub enum WateringPlanStatus {
     #[serde(rename = "not_completed", alias = "not competed")]
     #[cfg_attr(feature = "sqlx", sqlx(rename = "not_completed"))]
     NotCompleted,
-    Unknown,
 }
 
 /// Water refill station a computed route visits, captured by name and
