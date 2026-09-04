@@ -31,7 +31,10 @@ Shoot the whole set in one sitting so the images read as a series:
   tools.
 - Save as PNG (not JPEG) with the exact file name and dimensions in the table below;
   a screenshot tool that adds its own padding or scrollbars needs to be trimmed
-  first.
+  first. On a Retina/HiDPI display a full-page screenshot is usually captured at
+  2x — 2880×1800 for a 1440×900 shot — so scale it down to the listed size before
+  saving; don't just crop a 2x image to the right pixel count, or everything will
+  look twice as zoomed in as it should.
 
 ## Screenshots
 
