@@ -70,7 +70,7 @@
     )
     #block(above: 0.5em)[
       #text(font: body-font, style: "italic", size: 8.5pt, fill: colors.at("dark-600"))[
-        #context [Abb. #figure-counter.display() — ] #caption
+        #context [Abb. #figure-counter.display(): ] #caption
       ]
     ]
   ]
