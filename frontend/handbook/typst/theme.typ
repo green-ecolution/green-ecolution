@@ -73,7 +73,7 @@
         text(font: display-font, weight: "black", size: 96pt, fill: colors.at("green-dark-200"))[
           #context part-number.display("I")
         ],
-        text(font: display-font, weight: "bold", size: 34pt, fill: colors.at("green-dark"))[#it.body],
+        text(font: display-font, weight: "bold", size: 34pt, fill: colors.at("green-dark"), hyphenate: false)[#it.body],
       ),
     ),
   )
@@ -81,17 +81,17 @@
   show heading.where(level: 2): it => block(below: 1.4em)[
     #text(font: mono-font, size: 8pt, tracking: 1.5pt, fill: colors.at("dark-500"))[KAPITEL]
     #block(above: 0.3em)[
-      #text(font: display-font, weight: "bold", size: 26pt, fill: colors.at("green-dark"))[#it.body]
+      #text(font: display-font, weight: "bold", size: 26pt, fill: colors.at("green-dark"), hyphenate: false)[#it.body]
     ]
     #block(above: 0.6em)[#line(length: 100%, stroke: 0.6pt + colors.at("dark-100"))]
   ]
 
   show heading.where(level: 3): it => block(above: 1.6em, below: 0.7em)[
-    #text(font: display-font, weight: "bold", size: 16pt, fill: colors.at("dark"))[#it.body]
+    #text(font: display-font, weight: "bold", size: 16pt, fill: colors.at("dark"), hyphenate: false)[#it.body]
   ]
 
   show heading.where(level: 4): it => block(above: 1.3em, below: 0.6em)[
-    #text(font: display-font, weight: "bold", size: 13pt, fill: colors.at("dark"))[#it.body]
+    #text(font: display-font, weight: "bold", size: 13pt, fill: colors.at("dark"), hyphenate: false)[#it.body]
   ]
 
   body
