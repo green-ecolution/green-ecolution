@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { generate } from './generate.mjs'
@@ -11,6 +12,19 @@ export function handbook({ language = 'de' } = {}) {
       await generate({ root, language })
     },
     configureServer(server) {
+      // The PDF is rendered by `just handbook-pdf`, not by this plugin. Without
+      // this guard a missing file falls through to the SPA fallback, and the
+      // download button hands out index.html under a .pdf name.
+      server.middlewares.use((req, res, next) => {
+        const path = req.url?.split('?')[0] ?? ''
+        if (!path.startsWith('/handbook/') || !path.endsWith('.pdf')) return next()
+        if (existsSync(join(server.config.publicDir, path))) return next()
+
+        res.statusCode = 404
+        res.setHeader('Content-Type', 'text/plain; charset=utf-8')
+        res.end('Handbook PDF not rendered yet — run `just handbook-pdf`.\n')
+      })
+
       const watched = join(root, 'content')
       server.watcher.add(watched)
 

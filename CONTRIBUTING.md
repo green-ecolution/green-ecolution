@@ -107,6 +107,11 @@ install it separately and match the version pinned in `frontend/Dockerfile`, sin
 handbook page offers it as a download and a `dist` without it would serve the SPA fallback
 under the download link. Typst is required for those builds too.
 
+`just run-dev` and `just frontend-dev` render the PDF only when it is missing, so a normal
+dev session does not pay for it on every start. Without Typst they print a warning and carry
+on; the download link then answers 404 instead of handing out the app shell under a `.pdf`
+name.
+
 ## Making Changes
 
 ### Branch Strategy

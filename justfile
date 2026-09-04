@@ -120,6 +120,18 @@ handbook-pdf:
         {{ frontend_dir }}/app/public/handbook/green-ecolution-handbuch.pdf
     @echo "Handbook PDF written to {{ frontend_dir }}/app/public/handbook/"
 
+# Render the handbook PDF for a dev session, but only when it is missing:
+# rendering on every start costs seconds, and a missing typst must not stop the
+# dev server — the download link answers 404 until the PDF is rendered.
+_handbook-pdf-if-missing:
+    @if [ ! -f {{ frontend_dir }}/app/public/handbook/green-ecolution-handbuch.pdf ]; then \
+        if command -v typst >/dev/null 2>&1; then \
+            just handbook-pdf; \
+        else \
+            echo "warning: typst missing — handbook PDF download stays unavailable (just handbook-pdf)"; \
+        fi; \
+    fi
+
 # Build the Rust backend
 [group('build')]
 build-backend: _compile-backend
@@ -171,7 +183,7 @@ run: build
 
 # Run frontend dev server
 [group('run')]
-frontend-dev:
+frontend-dev: _handbook-pdf-if-missing
     cd {{ frontend_dir }} && pnpm run dev
 
 # Preview frontend build
@@ -181,7 +193,7 @@ frontend-preview:
 
 # Backend + frontend dev via Traefik
 [group('run')]
-run-dev:
+run-dev: _handbook-pdf-if-missing
     @command -v bacon >/dev/null 2>&1 || { echo "bacon missing — run: cargo install bacon"; exit 1; }
     @echo "Starting dev environment ({{ app_host }})..."
     @echo "  Backend:  {{ app_proto }}://{{ app_host }}:{{ app_port }}/api"
