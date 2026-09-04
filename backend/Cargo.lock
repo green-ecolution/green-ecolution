@@ -806,7 +806,7 @@ dependencies = [
 
 [[package]]
 name = "domain"
-version = "0.6.0"
+version = "0.6.1"
 dependencies = [
  "async-trait",
  "chrono",
@@ -825,7 +825,7 @@ dependencies = [
 
 [[package]]
 name = "domain-wasm"
-version = "0.6.0"
+version = "0.6.1"
 dependencies = [
  "chrono",
  "domain",
@@ -3184,7 +3184,7 @@ dependencies = [
 
 [[package]]
 name = "server"
-version = "0.6.0"
+version = "0.6.1"
 dependencies = [
  "anyhow",
  "async-trait",
