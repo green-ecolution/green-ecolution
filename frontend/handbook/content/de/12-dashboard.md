@@ -13,6 +13,8 @@ Sie begrüßt dich namentlich und dient als Ausgangspunkt für den direkten Zugr
 die wichtigsten Bereiche der Anwendung, ohne dass du dich vorher durch die
 Seitennavigation klicken musst.
 
+![Das persönliche Dashboard mit den sechs Kacheln unter Schnellverweise](../images/dashboard.png)
+
 ## Die Kacheln lesen
 
 Unter der Überschrift **Schnellverweise** liegen sechs Kacheln, jede mit einer kurzen

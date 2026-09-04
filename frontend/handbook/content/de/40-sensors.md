@@ -22,6 +22,8 @@ und ihre ID ist der Anwendung unbekannt, meldet der Aktivierungsassistent das be
 und verweist auf die Verwaltung oder eine zuständige Administratorin. Erst ein bereits
 angelegter Sensor lässt sich hier aktivieren.
 
+![Die Geräteliste mit vorbereiteten, online und offline gemeldeten Sensoren nebeneinander](../images/sensor-list.png)
+
 ## Die Verbindungszustände: vorbereitet, online und offline
 
 Ein Sensor meldet nicht selbst, ob er online ist. Sein Verbindungszustand wird bei jedem
@@ -66,6 +68,8 @@ Verknüpfen einer physischen Sensoreinheit mit einem Baum:
    Verknüpfung; danach lässt sich direkt der nächste Sensor scannen oder zur Übersicht
    zurückkehren.
 
+![Der Aktivierungsassistent im ersten Schritt: QR-Scan der Sensoreinheit](../images/sensor-wizard-qr.png)
+
 ## Ein Sensor hat keine eigene Position
 
 Für einen Sensor gibt es kein Feld, in das du Koordinaten einträgst. Sein Standort auf
@@ -99,6 +103,8 @@ ein Hinweis zur **Datenqualität** darauf hin; das betrifft die Verlässlichkeit
 Messwerte, nicht den Verbindungszustand, der weiterhin allein aus der Übertragungszeit
 folgt. Die Stammdaten darunter fassen Modell, Provider sowie bei LoRaWAN-Sensoren
 Seriennummer und Geräteschlüssel zusammen.
+
+![Die Detailseite eines Sensors mit Messwerten und Signalqualität](../images/sensor-detail.png)
 
 ## Sensor deaktivieren und neu verknüpfen
 

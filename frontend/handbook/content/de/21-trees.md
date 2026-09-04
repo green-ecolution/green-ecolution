@@ -18,6 +18,8 @@ führt zur Erfassung [auf der Karte](./map.md#baume-und-gruppen-direkt-auf-der-k
 denn ein Baum braucht immer einen Standort. Dieselben Bäume lassen sich auch direkt
 [auf der Karte](./map.md) ansehen.
 
+![Die Baumliste mit geöffnetem Filter nach Bewässerungszustand, Gruppe und Pflanzjahr](../images/tree-list-filter.png)
+
 ## Die Detailseite lesen
 
 Der Kopf der Detailseite zeigt die Baumnummer, den aktuellen Bewässerungszustand als
@@ -40,6 +42,8 @@ ausdrücklich darauf hin, dass der Bewässerungszustand deshalb unbekannt bleibt
 **Stammdaten** darunter fassen Baumart, Baumnummer, Pflanzjahr, den Ursprung der Daten,
 die Koordinaten und den Zeitpunkt der letzten Aktualisierung zusammen.
 
+![Die Detailseite eines Baums mit Bewässerungszustand und verknüpftem Sensor](../images/tree-detail.png)
+
 ## Baum erfassen und bearbeiten
 
 Sowohl das Anlegen als auch das Bearbeiten eines Baums laufen über die Karte, weil ein
@@ -50,6 +54,8 @@ bereits ausgefüllten Werten und dem Marker an der bisherigen Position; wie beim
 lässt er sich weiterhin verschieben, um den Standort anzupassen. Über **Baum löschen**
 entfernst du den Baum endgültig; die Anwendung fragt vor dem Löschen noch einmal nach,
 weil sich die Aktion nicht rückgängig machen lässt.
+
+![Das Formular zum Bearbeiten eines Baums mit Baumnummer, Baumart, Pflanzjahr und Bewässerungsgruppe](../images/tree-form.png)
 
 ## Bäume aus dem Baumkataster
 

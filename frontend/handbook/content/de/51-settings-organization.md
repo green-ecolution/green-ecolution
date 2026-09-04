@@ -30,6 +30,8 @@ ihr direkt und über Unterorganisationen zugeordneten Personen. Mit der Berechti
 `user:read` kommt zusätzlich eine Kachel **Zugewiesene Mitarbeitende** mit ihren
 Kürzeln hinzu, die auf die Mitarbeitendenliste verlinkt.
 
+![Der Organisationsbaum mit ausgewählter Organisation und ihren Stammdaten](../images/settings-organization.png)
+
 ## Unterorganisationen
 
 Mit der Berechtigung `organization:create` legst du über **Unterorganisation anlegen**

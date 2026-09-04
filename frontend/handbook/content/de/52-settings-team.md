@@ -31,6 +31,8 @@ nach der Organisation ihrer Inhaberin oder ihres Inhabers. Ist eine Person also
 plötzlich in Bereichen unterwegs, die zu ihrer aktuellen Organisation gar nicht zu
 passen scheinen, lohnt der Blick auf ihre Rollen und deren jeweilige Organisation.
 
+![Die Mitarbeitendenliste mit ausgewählter Person und geöffneter Rollenzuweisung](../images/settings-team-members.png)
+
 Unter **Rollen** siehst du die zugewiesenen Rollen der Person. Mit `user:update` und
 zusätzlich `role:read`, um die zuweisbaren Rollen zu laden, weist du ihr eine Rolle aus
 deren eigener Organisation zu oder entziehst ihr eine bereits zugewiesene; das wirkt
@@ -76,6 +78,8 @@ Zugriffsstufe lässt sich der Bereich aufklappen und jedes der vier Rechte einze
 setzen; passt die daraus entstehende Kombination zu keiner der vier Stufen, zeigt die
 Anwendung stattdessen **Individuell**. Ein Recht, das du selbst nicht besitzt, lässt
 sich dabei nicht aktivieren.
+
+![Eine Rolle mit ihrer Rechteauswahl aus Kein, Ansehen, Bearbeiten und Verwalten je Bereich](../images/settings-team-roles.png)
 
 ## Der Berechtigungskatalog
 

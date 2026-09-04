@@ -14,10 +14,14 @@ Anmeldedienst deiner Organisation: Dort gibst du Benutzername und Passwort ein u
 bestätigst die Eingabe. Danach kehrst du automatisch zu Green Ecolution zurück, entweder
 auf die Seite, die du zuvor aufrufen wolltest, oder auf das Dashboard.
 
+![Die Anmeldeseite, zu der die Schaltfläche Anmelden führt](../images/login.png)
+
 ## Aufbau der Oberfläche
 
 Nach der Anmeldung besteht die Oberfläche aus vier wiederkehrenden Elementen: der
 Seitennavigation, dem Brotkrümelpfad, dem Benutzermenü sowie Kopf- und Fußzeile.
+
+![Die Oberfläche nach der Anmeldung mit ausgeklappter Seitennavigation, Brotkrümelpfad und Benutzermenü](../images/app-shell.png)
 
 ### Seitennavigation
 

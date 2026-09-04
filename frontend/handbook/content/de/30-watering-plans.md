@@ -51,6 +51,8 @@ Abgebrochen und Nicht angetreten sind Endzustände: Aus ihnen heraus lässt sich
 Inhalt noch der Status eines Einsatzplans mehr ändern. Unbekannt ist ein technischer
 Übergangswert aus älteren Daten, dem du im laufenden Betrieb nicht begegnest.
 
+![Das Board der Einsatzpläne mit den Spalten Vorschläge, Geplant, Unterwegs und Erledigt](../images/watering-plan-board.png)
+
 ## Einsatz anlegen
 
 Auf dem Board legst du einen neuen Einsatzplan über **Neuen Einsatzplan erstellen** an.
@@ -103,6 +105,8 @@ prüfen, ob das gewählte Fahrzeug über ausreichend Wasserkapazität für die g
 Bewässerungsgruppen verfügt. Liegt eine Route vor, lädst du sie über
 **Route herunterladen** als GPX-Datei herunter und siehst sie zusätzlich im Reiter
 **Route** auf einer interaktiven Karte.
+
+![Die Routenauswahl auf der Karte mit eingezeichneter Route und Nachfüllpunkten](../images/watering-plan-route.png)
 
 ## Einsatz starten
 

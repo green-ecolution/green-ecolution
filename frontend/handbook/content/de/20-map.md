@@ -26,6 +26,8 @@ Bearbeitung. Oberhalb der Karte filterst du die Anzeige über die Suche nach ein
 und den Zustand der Bewässerung; wer eine Gruppe anlegen darf, findet dort auch die
 Schaltfläche **Gruppe anlegen**.
 
+![Die Kartenübersicht mit Bäumen und Bewässerungsgruppen im Zuständigkeitsbereich, Panele geschlossen](../images/map-overview.png)
+
 ## Ebenen und Legende
 
 Über die Schaltfläche mit dem Fragezeichen unten links blendest du die Legende
@@ -44,6 +46,8 @@ Die ersten drei Zustände bilden die eigentliche Ampel von grün über gelb nach
 beiden übrigen sind neutral eingefärbt. Wie ein Baum und eine Gruppe zu ihrem jeweiligen
 Zustand kommen, erklärt das [Gruppendashboard](./treecluster.md#bewasserungsstatus-und-wie-er-zustande-kommt).
 
+![Die eingeblendete Legende Bewässerungsstatus mit ihren fünf Zuständen](../images/map-legend.png)
+
 ## Die 3D-Ansicht
 
 Die Schaltfläche **3D** in der Kartensteuerung rechts unten kippt die Karte in eine
@@ -51,6 +55,8 @@ perspektivische Ansicht und schaltet auf erneuten Klick wieder in die flache 2D-
 zurück. Hast du die Karte zusätzlich gedreht, richtet sie die Kompassschaltfläche
 darüber mit einem Klick wieder exakt nach Norden aus und hebt die Kippung dabei
 gleichzeitig auf.
+
+![Die Karte in der gekippten 3D-Ansicht](../images/map-3d.png)
 
 ## Der eigene Standort
 

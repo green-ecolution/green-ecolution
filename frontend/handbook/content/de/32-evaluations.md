@@ -18,6 +18,8 @@ Person über mehrere Einsatzpläne hinweg rechnet die Anwendung dabei nicht hera
 Darunter listet sie die Anzahl an Einsatzplänen je Stadtteil sowie die Nutzung der
 Fahrzeuge, jeweils mit der Zahl der Einsatzpläne, denen ein Fahrzeug zugeordnet war.
 
+![Die Seite Auswertung aller Daten mit ihren Kennzahlen und Diagrammen](../images/evaluations.png)
+
 ## Worauf sich die Zahlen beziehen
 
 Alle Zahlen dieser Seite beziehen sich, wie überall in der Anwendung, nur auf das, was

@@ -23,6 +23,8 @@ Anwendung setzt diesen Wert nicht automatisch, etwa wenn das Fahrzeug gerade in 
 Einsatzplan unterwegs ist. Der Status dient allein deiner eigenen Übersicht: Bei der
 Auswahl eines Fahrzeugs für einen Einsatzplan spielt er keine Rolle.
 
+![Das Formular zum Anlegen eines Fahrzeugs mit Führerscheinklasse und Wasserkapazität](../images/vehicle-form.png)
+
 ## Führerscheinklassen
 
 Green Ecolution kennt die Führerscheinklassen **B**, **BE**, **C** und **CE**. Jedes

@@ -54,6 +54,8 @@ Bodenart und Beschreibung. Wer die nötige Berechtigung hat, findet oben zudem
 **Gruppe bearbeiten** und, über das Menü daneben, **Gruppe löschen**; gelöscht wird
 dabei nur die Gruppe, ihre Bäume bleiben erhalten.
 
+![Das Gruppendashboard mit dem Verlauf der Wasserversorgung](../images/treecluster-dashboard.png)
+
 ## Bewässerungsstatus und wie er zustande kommt
 
 Der Bewässerungszustand eines Baums wird ausschließlich aus den Messwerten seines
