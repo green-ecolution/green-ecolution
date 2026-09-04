@@ -28,12 +28,23 @@ abgelaufen, bitte melde dich erneut an, betrifft das nur diese eine Anfrage; mel
 neu an und versuche die Aktion noch einmal. Bleibt die Seite dagegen komplett weiß oder
 meldet, der Server sei nicht erreichbar, prüfe zuerst deine eigene Internetverbindung.
 
-Kommst du zwar an, siehst danach aber in fast jedem Bereich **Kein Zugriff**, obwohl dir
-Rollen zugewiesen sind, lohnt sich der Blick darauf, ob dein Konto überhaupt einer
-Organisation angehört: Ohne Organisation bleibt dein Zuständigkeitsbereich leer, ganz
-unabhängig von deinen Rollen. Das lässt sich nur über
-[Mitarbeitende verwalten](./settings-team.md#mitarbeitende-verwalten) durch eine Person mit
-den nötigen Rechten beheben.
+Kommst du zwar an, siehst danach aber in fast jedem Bereich **Kein Zugriff**, entscheidet
+darüber ausschließlich, welche Rollen deinem Konto zugewiesen sind und zu welcher
+Organisation jede dieser Rollen selbst gehört; die Organisation deines eigenen Kontos
+spielt für diese Frage keine Rolle, siehe
+[Wie weit eine Rolle reicht](./settings-team.md#wie-weit-eine-rolle-reicht). Der
+wahrscheinlichste Grund für fehlenden Zugriff überall ist deshalb, dass dir noch gar
+keine Rolle zugewiesen wurde; das prüft und behebt eine Person mit den nötigen Rechten
+unter [Mitarbeitende verwalten](./settings-team.md#mitarbeitende-verwalten), im Bereich
+**Rollen** der betroffenen Person.
+
+Fehlt deinem Konto stattdessen die Organisation selbst, wirkt sich das an anderer Stelle
+aus, nicht beim Ansehen bestehender Bereiche: Legst du eine Rolle an oder lädst eine neue
+Mitarbeiterin oder einen neuen Mitarbeiter ein, verwendet die Anwendung dafür immer die
+Organisation deines eigenen Kontos, ohne dass sich das umgehen ließe; fehlt sie, meldet
+sie, dass keine Organisation angegeben wurde und dein Konto zu keiner gehört. Auch das
+behebt nur eine Person mit den nötigen Rechten über
+[Mitarbeitende verwalten](./settings-team.md#mitarbeitende-verwalten).
 
 ## Eine Seite meldet „Kein Zugriff"
 
