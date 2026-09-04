@@ -151,6 +151,8 @@ den Wert für jede Gruppe einzeln anpassen. Für jede Gruppe muss ein Wert grö�
 hinterlegt sein, ein Einsatzplan lässt sich nur beenden, wenn für jede seiner Gruppen ein
 solcher Wert vorliegt.
 
+![Der Dialog zum Beenden eines Einsatzplans mit der verbrauchten Wassermenge je Bewässerungsgruppe](../images/watering-plan-finish.png)
+
 Sobald der Einsatzplan Beendet ist, zeigt seine Detailseite die insgesamt verbrauchte
 Wassermenge, und seine Bewässerungsgruppen wechseln auf **Soeben bewässert**, siehe
 [Bewässerungsstatus und wie er zustande kommt](./treecluster.md#bewasserungsstatus-und-wie-er-zustande-kommt).
