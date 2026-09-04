@@ -10,9 +10,10 @@ const declaredRoutes = () =>
   )
 
 /** Every path the router itself can hand a match, index routes included. */
-const routerFullPaths = () => {
+const routerFullPaths = (): string[] => {
   const router = createRouter({ routeTree, context: {} as never })
-  return Object.values(router.routesById)
+  const routes = Object.values(router.routesById) as { fullPath?: string }[]
+  return routes
     .map((route) => route.fullPath)
     .filter((fullPath): fullPath is string => Boolean(fullPath))
 }

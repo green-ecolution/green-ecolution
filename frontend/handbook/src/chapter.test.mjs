@@ -102,7 +102,9 @@ describe('parseChapter', () => {
 
   it('indexes a chapter that has no headings at all', () => {
     const { search } = parseChapter(
-      chapter('| Begriff | Erklärung |\n| --- | --- |\n| Anwuchsfenster | Zeitfenster nach der Pflanzung. |'),
+      chapter(
+        '| Begriff | Erklärung |\n| --- | --- |\n| Anwuchsfenster | Zeitfenster nach der Pflanzung. |',
+      ),
       { file: '90-glossary.md' },
     )
 
