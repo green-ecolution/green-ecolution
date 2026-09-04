@@ -101,6 +101,35 @@ Der Dialog **Bodenart bestimmen** lässt dich die Korngrößenanteile Sand, Schl
 aus einer Bodenprobe eintragen und zeigt anhand des Bodenartendiagramms, welche Bodenart
 sich daraus ergibt; mit **Übernehmen** landet sie im Formular.
 
+![Der Dialog Bodenart bestimmen mit den Anteilen von Sand, Schluff und Ton im Bodenartendiagramm](../images/soil-type-dialog.png)
+
+### Die Korngrößenanteile mit einem Glas bestimmen
+
+Die drei Anteile lassen sich ohne Laborausstattung abschätzen, mit einem gewöhnlichen
+Einmachglas. Die Probe nutzt aus, dass sich die Korngrößen in Wasser unterschiedlich
+schnell absetzen: Sand fällt sofort auf den Boden, Schluff legt sich darüber, und Ton
+bleibt am längsten in der Schwebe und bildet die oberste Schicht.
+
+1. Entnimm an mehreren Stellen der Gruppe Boden aus etwa 10 bis 20 Zentimetern Tiefe und entferne Steine, Wurzeln und Pflanzenreste.
+2. Füll ein geradwandiges, klares Glas etwa zu einem Drittel mit dieser Erde und gieß es bis knapp unter den Rand mit Wasser auf; ein Tropfen Spülmittel hilft, verklebte Krümel zu lösen.
+3. Verschließ das Glas und schüttel es einige Minuten kräftig, bis keine Klümpchen mehr zu sehen sind.
+4. Stell das Glas ruhig hin und lass es stehen: Sand setzt sich innerhalb einer Minute ab, Schluff braucht ungefähr zwei Stunden, Ton bis zu einem Tag oder länger.
+5. Miss die Höhe der drei Schichten und der gesamten Ablagerung und rechne jede Schicht in Prozent der Gesamthöhe um.
+
+Diese drei Prozentwerte trägst du in den Dialog **Bodenart bestimmen** ein. Die drei
+Felder halten die Summe von selbst bei 100 Prozent: Änderst du einen Wert, zieht der
+Dialog die übrigen entsprechend nach. Unter den Feldern zeigt er den Punkt im
+Bodenartendiagramm und darunter die daraus ermittelte Bodenart.
+
+![Ein Einmachglas nach der Probe mit den abgesetzten Schichten Sand, Schluff und Ton von unten nach oben](../images/soil-jar-test.png)
+
+> [!NOTE]
+> Die Glasprobe ist eine Abschätzung, keine Laboranalyse. Für eine Bewässerungsgruppe
+> auf sehr unterschiedlichem Untergrund lohnt es sich, mehrere Proben zu nehmen und den
+> Mittelwert zu verwenden. Weicht der berechnete Bewässerungszustand später dauerhaft
+> von dem ab, was vor Ort zu sehen ist, ist die eingetragene Bodenart einer der ersten
+> Punkte, die sich prüfen lassen.
+
 ## Kommentare
 
 Am Fuß des Dashboards können alle, die auf die Gruppe zugreifen dürfen, Kommentare
