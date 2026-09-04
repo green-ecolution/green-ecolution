@@ -103,6 +103,10 @@ This requires Typst, which ships in the Nix development shell (`nix develop`); o
 install it separately and match the version pinned in `frontend/Dockerfile`, since
 `just handbook-pdf` warns when the local version drifts from it.
 
+`just build-frontend` (and therefore `just build`) renders the PDF as well, because the
+handbook page offers it as a download and a `dist` without it would serve the SPA fallback
+under the download link. Typst is required for those builds too.
+
 ## Making Changes
 
 ### Branch Strategy

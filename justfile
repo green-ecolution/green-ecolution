@@ -93,7 +93,7 @@ build-domain-wasm:
 
 # Build frontend (pnpm)
 [group('build')]
-build-frontend: build-domain-wasm
+build-frontend: build-domain-wasm handbook-pdf
     @echo "Building frontend..."
     @command -v pnpm >/dev/null 2>&1 || { echo "pnpm missing"; exit 1; }
     cd {{ frontend_dir }} && pnpm install --frozen-lockfile
