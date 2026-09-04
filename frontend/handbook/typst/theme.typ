@@ -78,13 +78,20 @@
     ),
   )
 
-  show heading.where(level: 2): it => block(below: 1.4em)[
-    #text(font: mono-font, size: 8pt, tracking: 1.5pt, fill: colors.at("dark-500"))[KAPITEL]
-    #block(above: 0.3em)[
-      #text(font: display-font, weight: "bold", size: 26pt, fill: colors.at("green-dark"), hyphenate: false)[#it.body]
+  show heading.where(level: 2): it => {
+    let chapter-title-size = 26pt
+    block(below: 1.4em)[
+      #text(font: mono-font, size: 8pt, tracking: 1.5pt, fill: colors.at("dark-500"))[KAPITEL]
+      // Gap is a fraction of the title's own size, not the ambient body
+      // size — an umlaut's diacritic scales with the title, so the
+      // clearance above it has to as well, or a capital Ü/Ä/Ö keeps
+      // reaching into the kicker line above.
+      #block(above: chapter-title-size * 0.4)[
+        #text(font: display-font, weight: "bold", size: chapter-title-size, fill: colors.at("green-dark"), hyphenate: false)[#it.body]
+      ]
+      #block(above: 0.6em)[#line(length: 100%, stroke: 0.6pt + colors.at("dark-100"))]
     ]
-    #block(above: 0.6em)[#line(length: 100%, stroke: 0.6pt + colors.at("dark-100"))]
-  ]
+  }
 
   show heading.where(level: 3): it => block(above: 1.6em, below: 0.7em)[
     #text(font: display-font, weight: "bold", size: 16pt, fill: colors.at("dark"), hyphenate: false)[#it.body]
