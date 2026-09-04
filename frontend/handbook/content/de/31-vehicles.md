@@ -10,18 +10,28 @@ routes: ['/vehicles', '/vehicles/$vehicleId', '/vehicles/new']
 
 Auf der Seite **Alle Fahrzeuge** legst du ein neues Fahrzeug über
 **Neues Fahrzeug erstellen** an. Pflichtangaben sind Kennzeichen, Fahrzeugmodell,
-Fahrzeugtyp (Transporter oder Anhänger), Wasserkapazität, der aktuelle Status, die
+Fahrzeugtyp (Transporter oder Anhänger), Wasserkapazität, die Verfügbarkeit, die
 erforderliche Führerscheinklasse sowie Höhe, Breite, Länge und Gewicht des Fahrzeugs;
 eine kurze Beschreibung ist optional. Kennzeichen müssen eindeutig sein, ein bereits
 vergebenes Kennzeichen weist die Anwendung zurück. Die Abmessungen braucht sie, um bei
 der Routenberechnung nur Strecken vorzuschlagen, die für dieses Fahrzeug tatsächlich
 befahrbar sind.
 
-Unter **Aktueller Status** trägst du selbst ein, ob das Fahrzeug Verfügbar, Nicht
-Verfügbar, In Betrieb oder Unbekannt ist, beim Anlegen wie beim Bearbeiten; die
-Anwendung setzt diesen Wert nicht automatisch, etwa wenn das Fahrzeug gerade in einem
-Einsatzplan unterwegs ist. Der Status dient allein deiner eigenen Übersicht: Bei der
-Auswahl eines Fahrzeugs für einen Einsatzplan spielt er keine Rolle.
+Unter **Verfügbarkeit** trägst du ein, ob das Fahrzeug Verfügbar oder Nicht Verfügbar
+ist, beim Anlegen wie beim Bearbeiten. Gemeint ist damit, ob es grundsätzlich zur
+Verfügung steht; Nicht Verfügbar setzt du zum Beispiel während eines
+Werkstattaufenthalts. Ob ein Fahrzeug gerade unterwegs ist, trägst du dagegen nicht
+selbst ein.
+
+Den Status **Im Einsatz** vergibt die Anwendung selbst: Ein Fahrzeug bekommt ihn, sobald
+es als Transporter oder Anhänger an einem Einsatzplan hängt, der gerade läuft, und
+verliert ihn wieder, sobald dieser Plan abgeschlossen oder abgebrochen ist. Du musst also
+nach einer Fahrt nichts zurücksetzen. Ein Fahrzeug, das du auf Nicht Verfügbar gesetzt
+hast, bleibt auch dann Nicht Verfügbar, wenn es noch an einem laufenden Plan hängt: Deine
+Angabe hat Vorrang vor einem Plan, den vielleicht nur niemand abgeschlossen hat.
+
+Bei der Auswahl eines Fahrzeugs für einen Einsatzplan spielt weder die Verfügbarkeit noch
+der Status eine Rolle; beides dient deiner Übersicht.
 
 ![Das Formular zum Anlegen eines Fahrzeugs mit Führerscheinklasse und Wasserkapazität](../images/vehicle-form.png)
 
