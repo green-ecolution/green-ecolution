@@ -39,7 +39,7 @@ authors:
     family-names: "Anthopoilos"
     email: sophia.anthopoilos@stud.hs-flensburg.de
 version: 0.6.1 # x-release-please-version
-date-released: "2026-09-03"
+date-released: "2026-09-04"
 url: "https://green-ecolution.de"
 repository-code: "https://github.com/green-ecolution"
 license: AGPL-3.0-only
