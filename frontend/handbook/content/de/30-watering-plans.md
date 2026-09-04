@@ -89,7 +89,11 @@ im Auswahlmodus **Bewässerungsgruppen auswählen**. Dort klickst du die gewüns
 Gruppen einzeln an, ein erneuter Klick wählt eine Gruppe wieder ab. Gruppen, deren Bäume
 zusammen mehr Wasser benötigen, als das gewählte Fahrzeug und ein eventueller Anhänger
 zusammen fassen, sind ausgegraut und lassen sich nicht auswählen; die Anwendung rechnet
-dafür mit 80 Litern je Baum einer Gruppe. Ist noch kein Fahrzeug gewählt, weist ein
+dafür mit 80 Litern je Baum einer Gruppe. Diese 80 Liter sind ein anwendungsweiter
+Standardwert, kein fester Bedarf des einzelnen Baums; die tatsächlich ausgebrachte Menge
+trägst du beim
+[Beenden des Einsatzes](./watering-plans.md#einsatz-mit-auswertung-beenden) je Gruppe
+einzeln ein. Ist noch kein Fahrzeug gewählt, weist ein
 Hinweis darauf hin, dass ohne Fahrzeug keine Route berechnet werden kann. Sobald
 mindestens eine Gruppe und ein Fahrzeug feststehen, zeichnet die Karte zur Orientierung
 bereits eine vorläufige Route ein. **Übernehmen** speichert die Auswahl im Formular und
@@ -146,10 +150,10 @@ Einen laufenden Einsatz schließt du ab, indem du seine Karte auf dem Board in d
 Spalte Erledigt ziehst und dort Beendet wählst, oder auf der Detailseite über
 **Status aktualisieren** den Status auf Beendet setzt. In beiden Fällen trägst du für
 jede zugewiesene Bewässerungsgruppe die tatsächlich verbrauchte Wassermenge in Litern
-ein; als Ausgangswert schlägt die Anwendung 80 Liter je Baum der Gruppe vor, du kannst
-den Wert für jede Gruppe einzeln anpassen. Für jede Gruppe muss ein Wert größer null
-hinterlegt sein, ein Einsatzplan lässt sich nur beenden, wenn für jede seiner Gruppen ein
-solcher Wert vorliegt.
+ein; als Ausgangswert schlägt die Anwendung denselben Standardwert von 80 Litern je Baum
+der Gruppe vor, den du für jede Gruppe einzeln anpassen kannst. Für jede Gruppe muss ein
+Wert größer null hinterlegt sein, ein Einsatzplan lässt sich nur beenden, wenn für jede
+seiner Gruppen ein solcher Wert vorliegt.
 
 ![Der Dialog zum Beenden eines Einsatzplans mit der verbrauchten Wassermenge je Bewässerungsgruppe](../images/watering-plan-finish.png)
 
