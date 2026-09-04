@@ -2,9 +2,15 @@
 
 Every file in this directory is currently a generated placeholder: a diagonally
 striped background in muted project colours with a green border. Replace them one by
-one with real screenshots. Keep the exact file name and the exact pixel dimensions
+one with real screenshots. Keep the exact file name and shoot at the window size
 listed below, and no chapter Markdown needs to change — the handbook build already
 references these files by name.
+
+The sizes in the table are window sizes, not a pixel count the file has to match.
+Cropping a 1440×900 window to its viewport lands somewhere around 1424×884 depending
+on the scrollbar and the browser's own chrome, and that is fine: both the PDF and the
+in-app help scale every figure to the full text width, so only the aspect ratio is
+visible. What matters is that all the landscape shots come off the same window size.
 
 Twenty-eight of the twenty-nine files below are placed in a chapter today; one
 (`treecluster-assign.png`) is generated and kept available but is not currently
@@ -21,11 +27,20 @@ need instead is noted in their table rows.
 Shoot the whole set in one sitting so the images read as a series:
 
 - Same Green Ecolution instance, same seed/demo data, for every shot.
-- Browser window exactly 1440 px wide for the landscape shots, 900 px wide for the
-  portrait ones (`vehicle-form.png`, `sensor-wizard-qr.png`, `tree-form.png`,
-  `soil-type-dialog.png`). Use the browser's own device toolbar or window resize, not a
-  scaled screenshot. The two mobile install shots (`install-ios-safari.png`,
-  `install-android.png`) come off a real device instead and get scaled to 900×1100.
+- Browser window exactly 1440 px wide for the landscape shots. Use the browser's own
+  device toolbar or window resize, not a scaled screenshot.
+- **Never shoot an in-app view below 1024 px wide.** That is the app's desktop
+  breakpoint: below it `MapPanel` turns into a bottom sheet that hides the map, and
+  forms such as the vehicle form collapse from two columns to one. A narrow shot of a
+  desktop view therefore shows a layout the caption does not describe. The portrait
+  format is reserved for views that genuinely belong on a hand-held device.
+- The portrait shots are 900 px wide: `sensor-wizard-qr.png` (a field device — the
+  activation is done at the tree), the two mobile install shots
+  (`install-ios-safari.png`, `install-android.png`) and the `soil-jar-test.png`
+  drawing. Portrait is capped at 900×1100 because the PDF scales every figure to the
+  full text width, so a phone's native 9:19.5 frame would render taller than the page.
+  Crop a phone screenshot around the menu or prompt to reach that size; don't squash
+  the whole screen into it.
 - Light appearance (not dark mode).
 - German interface language.
 - Signed in as a user with full administration rights, so every button and panel
@@ -37,8 +52,8 @@ Shoot the whole set in one sitting so the images read as a series:
 - Crop to exactly the browser viewport — no browser chrome, no OS taskbar, no dev
   tools. The one exception is `install-desktop-chrome.png`, where the address bar is
   the subject of the shot.
-- Save as PNG (not JPEG) with the exact file name and dimensions in the table below;
-  a screenshot tool that adds its own padding or scrollbars needs to be trimmed
+- Save as PNG (not JPEG) under the exact file name in the table below; a screenshot
+  tool that adds its own padding needs to be trimmed
   first. On a Retina/HiDPI display a full-page screenshot is usually captured at
   2x — 2880×1800 for a 1440×900 shot — so scale it down to the listed size before
   saving; don't just crop a 2x image to the right pixel count, or everything will
@@ -60,14 +75,14 @@ Shoot the whole set in one sitting so the images read as a series:
 | `map-tree-new.png`           | 1440×900  | Die Karte (`map`)                                          | The "Kataster-Einstellungen" dialog (gear button in the map toolbar) open, with the "Neuen Baum manuell hinzufügen" button clearly visible in it.                                                                                                                                                                                                                                                                          |
 | `tree-list-filter.png`       | 1440×900  | Bäume (`trees`)                                            | The tree list with the filter panel open, at least one filter (watering status, cluster, or planting year) actively applied so the filtered result is visible.                                                                                                                                                                                                                                                             |
 | `tree-detail.png`            | 1440×900  | Bäume (`trees`)                                            | A single tree's detail page for a tree that has both a watering status other than "Unbekannt" and a linked sensor, so the sensor section shows real signal/battery values.                                                                                                                                                                                                                                                 |
-| `tree-form.png`              | 900×1100  | Bäume (`trees`)                                            | The tree edit form (opened via "Baum bearbeiten" from a tree's detail page) with tree number, species, planting year, and an assigned watering cluster all filled in.                                                                                                                                                                                                                                                      |
+| `tree-form.png`              | 1440×900  | Bäume (`trees`)                                            | The tree edit form as it appears on the desktop: the panel anchored top right over the map, opened via "Baum bearbeiten" from a tree's detail page, with tree number, species, planting year and an assigned watering cluster all filled in, and the tree's marker visible on the map behind it. The panel scrolls when the form is taller than the window; scroll it so those four fields and "Speichern" are in frame.   |
 | `treecluster-dashboard.png`  | 1440×900  | Bewässerungsgruppen (`treecluster`)                        | A cluster dashboard for a cluster with enough sensor history that the "Wasserversorgung" chart actually draws a curve with its threshold lines, not the empty state.                                                                                                                                                                                                                                                       |
-| `soil-type-dialog.png`       | 900×1100  | Bewässerungsgruppen (`treecluster`)                        | The "Bodenart bestimmen" dialog with sand/silt/clay percentages entered, the point plotted inside the KA5 triangle, and the resulting soil class shown under "Ermittelte Bodenart". Pick fractions that land in a clearly named class, not on a boundary.                                                                                                                                                                  |
+| `soil-type-dialog.png`       | 1440×900  | Bewässerungsgruppen (`treecluster`)                        | The "Bodenart bestimmen" dialog with sand/silt/clay percentages entered, the point plotted inside the KA5 triangle, and the resulting soil class shown under "Ermittelte Bodenart". The dialog is a fixed 512 px wide and centred, so the cluster form stays visible behind it — shoot the whole window, not a crop. Pick fractions that land in a clearly named class, not on a boundary.                                 |
 | `soil-jar-test.png`          | 900×1100  | Bewässerungsgruppen (`treecluster`)                        | NOT a screenshot: a drawing or photograph of a straight-sided glass jar after the settling test, with the three settled layers distinguishable and labelled Sand (bottom), Schluff (middle), Ton (top). German labels. Light background, so it sits next to the screenshots without clashing.                                                                                                                              |
 | `watering-plan-board.png`    | 1440×900  | Einsatzpläne (`watering-plans`)                            | The watering-plan board with at least one card in every column: Vorschläge, Geplant, Unterwegs, and Erledigt.                                                                                                                                                                                                                                                                                                              |
 | `watering-plan-route.png`    | 1440×900  | Einsatzpläne (`watering-plans`)                            | The cluster-selection map opened from "Bewässerungsgruppen hinzufügen", with a vehicle and several clusters already chosen so the preview route and at least one refill point are drawn.                                                                                                                                                                                                                                   |
 | `watering-plan-finish.png`   | 1440×900  | Einsatzpläne (`watering-plans`)                            | The "finish plan" dialog for an active watering plan with several assigned clusters, each with its own litres-used input field filled in with a value.                                                                                                                                                                                                                                                                     |
-| `vehicle-form.png`           | 900×1100  | Fahrzeuge (`vehicles`)                                     | The "Neues Fahrzeug erstellen" form filled in, with the driving-licence class and water-capacity fields both visible and populated.                                                                                                                                                                                                                                                                                        |
+| `vehicle-form.png`           | 1440×900  | Fahrzeuge (`vehicles`)                                     | The "Neues Fahrzeug erstellen" form filled in, in its two-column desktop layout, with the driving-licence class and water-capacity fields both visible and populated.                                                                                                                                                                                                                                                      |
 | `evaluations.png`            | 1440×900  | Auswertung (`evaluations`)                                 | The full "Auswertung aller Daten" page for an instance with real activity, so both number blocks and the per-district and per-vehicle listings show non-zero values. Prerequisite: carry a handful of watering plans through to Beendet first (see "Einsatz mit Auswertung beenden" in the Einsatzpläne chapter) — an instance with no finished plans shows only zeros in the water-consumption and vehicle-usage figures. |
 | `sensor-list.png`            | 1440×900  | Sensorik (`sensors`)                                       | The sensor list with at least one device each in the Vorbereitet, Online, and Offline states, so all three states are visible in one screenshot.                                                                                                                                                                                                                                                                           |
 | `sensor-wizard-qr.png`       | 900×1100  | Sensorik (`sensors`)                                       | The activation wizard on its first step, the QR-scan screen, with the camera viewfinder visible (a paused/idle frame is fine — it does not need to catch an actual scan in progress).                                                                                                                                                                                                                                      |
