@@ -17,11 +17,11 @@ vergebenes Kennzeichen weist die Anwendung zurück. Die Abmessungen braucht sie,
 der Routenberechnung nur Strecken vorzuschlagen, die für dieses Fahrzeug tatsächlich
 befahrbar sind.
 
-Den **Aktuellen Status** eines Fahrzeugs (Verfügbar, Nicht Verfügbar, In Betrieb oder
-Unbekannt) trägst du selbst beim Anlegen oder Bearbeiten ein; die Anwendung setzt ihn
-nicht automatisch, etwa wenn das Fahrzeug gerade in einem Einsatzplan unterwegs ist. Der
-Status dient allein deiner eigenen Übersicht: Bei der Auswahl eines Fahrzeugs für einen
-Einsatzplan spielt er keine Rolle.
+Unter **Aktueller Status** trägst du selbst ein, ob das Fahrzeug Verfügbar, Nicht
+Verfügbar, In Betrieb oder Unbekannt ist, beim Anlegen wie beim Bearbeiten; die
+Anwendung setzt diesen Wert nicht automatisch, etwa wenn das Fahrzeug gerade in einem
+Einsatzplan unterwegs ist. Der Status dient allein deiner eigenen Übersicht: Bei der
+Auswahl eines Fahrzeugs für einen Einsatzplan spielt er keine Rolle.
 
 ## Führerscheinklassen
 
