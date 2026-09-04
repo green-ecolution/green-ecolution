@@ -35,6 +35,13 @@ describe('typst theme', () => {
     expect(missing).toEqual([])
   })
 
+  it('turns a chapter cross-reference into a link', async () => {
+    const blocks = await read('blocks.typ')
+
+    expect(blocks).toMatch(/link\(target\)/)
+    expect(blocks).toContain('"sec-" + slug + "-" + anchor')
+  })
+
   it('never hardcodes a color', async () => {
     const theme = await read('theme.typ')
     const blocks = await read('blocks.typ')

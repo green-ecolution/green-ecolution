@@ -39,10 +39,12 @@ const para = (children) => `para(${children.map(inline).join(', ')})`
 
 const tuple = (entries) => `(${entries.join(', ')}${entries.length === 1 ? ',' : ''})`
 
-function block(node) {
+function block(node, slug) {
   switch (node.kind) {
     case 'heading':
-      return `#section(${node.level}, ${typstString(node.anchor)}, ${typstString(node.text)})`
+      // Anchors are unique per chapter, the PDF holds every chapter at once —
+      // so the label a cross-reference links to has to carry the chapter.
+      return `#section(${node.level}, ${typstString(`${slug}-${node.anchor}`)}, ${typstString(node.text)})`
     case 'paragraph':
       return `#${para(node.children)}`
     case 'list':
@@ -50,7 +52,7 @@ function block(node) {
     case 'steps':
       return `#steps(${tuple(node.items.map(para))})`
     case 'callout':
-      return `#callout(${typstString(node.tone)})[\n${node.children.map(block).join('\n')}\n]`
+      return `#callout(${typstString(node.tone)})[\n${node.children.map((child) => block(child, slug)).join('\n')}\n]`
     case 'figure':
       return `#figure-image(${typstString(node.image)}, ${inline({ kind: 'text', value: node.caption })})`
     case 'table':
@@ -69,5 +71,5 @@ export function emitChapter(content, meta) {
     `#chapter(${typstString(meta.slug)}, ${typstString(meta.title)})`,
     '',
   ]
-  return `${[...head, ...content.blocks.map(block)].join('\n')}\n`
+  return `${[...head, ...content.blocks.map((node) => block(node, meta.slug))].join('\n')}\n`
 }

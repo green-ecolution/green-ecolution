@@ -100,15 +100,12 @@
 
 #let link-external(href, body) = link(href)[#underline(text(fill: colors.at("green-dark"))[#body])]
 
-#let xref-chapter(slug, anchor, body) = {
-  let target = label(if anchor == none { "ch-" + slug } else { "sec-" + anchor })
-  [#body #context {
-    let hits = query(target)
-    if hits.len() > 0 {
-      let page-number = hits.first().location().page()
-      text(size: 0.85em, fill: colors.at("dark-600"), hyphenate: false)[(siehe~S.~#page-number)]
-    }
-  }]
+// The generator rejects a link to an unknown chapter or anchor, so the target
+// always exists and query() may be read without a fallback.
+#let xref-chapter(slug, anchor, body) = context {
+  let target = label(if anchor == none { "ch-" + slug } else { "sec-" + slug + "-" + anchor })
+  let page-number = query(target).first().location().page()
+  link(target)[#body #text(size: 0.85em, fill: colors.at("green-dark"), hyphenate: false)[(siehe~S.~#page-number)]]
 }
 
 #let app-route(to, body) = [#body #h(0.2em) #tech(to)]

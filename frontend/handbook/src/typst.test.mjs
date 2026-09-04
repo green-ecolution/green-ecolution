@@ -28,8 +28,37 @@ describe('emitChapter', () => {
 
   it('emits headings as section calls', () => {
     expect(emit([{ kind: 'heading', level: 2, text: 'Board', anchor: 'board' }])).toContain(
-      '#section(2, "board", "Board")',
+      '#section(2, "demo-board", "Board")',
     )
+  })
+
+  it('qualifies a section anchor with the chapter slug', () => {
+    // Anchors are only unique per chapter, but the PDF holds every chapter at
+    // once and a cross-reference links to the label, which must be unique.
+    const other = emitChapter(
+      {
+        slug: 'plans',
+        blocks: [{ kind: 'heading', level: 2, text: 'Kommentare', anchor: 'kommentare' }],
+      },
+      { ...meta, slug: 'plans' },
+    )
+
+    expect(
+      emit([{ kind: 'heading', level: 2, text: 'Kommentare', anchor: 'kommentare' }]),
+    ).toContain('#section(2, "demo-kommentare", "Kommentare")')
+    expect(other).toContain('#section(2, "plans-kommentare", "Kommentare")')
+  })
+
+  it('qualifies a heading nested in a callout as well', () => {
+    const out = emit([
+      {
+        kind: 'callout',
+        tone: 'note',
+        children: [{ kind: 'heading', level: 3, text: 'Board', anchor: 'board' }],
+      },
+    ])
+
+    expect(out).toContain('#section(3, "demo-board", "Board")')
   })
 
   it('emits inline runs as nested calls', () => {
