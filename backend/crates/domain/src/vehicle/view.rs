@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 use serde_json::Value;
 use uuid::Uuid;
 
-use crate::vehicle::{DrivingLicense, VehicleStatus, VehicleType};
+use crate::vehicle::{DrivingLicense, VehicleAvailability, VehicleStatus, VehicleType};
 
 /// HTTP-side read model for a vehicle.
 ///
@@ -16,6 +16,8 @@ pub struct VehicleView {
     pub number_plate: String,
     pub description: Option<String>,
     pub water_capacity: f64,
+    pub availability: VehicleAvailability,
+    /// Derived via `vehicle::derive_status`, never read from a column.
     pub status: VehicleStatus,
     pub vehicle_type: VehicleType,
     pub model: String,

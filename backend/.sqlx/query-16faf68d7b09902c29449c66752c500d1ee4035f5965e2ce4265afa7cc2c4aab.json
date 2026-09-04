@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id,\n                      archived_at AS \"archived_at: DateTime<chrono::Utc>\",\n                      number_plate,\n                      description,\n                      water_capacity,\n                      type AS \"vehicle_type: VehicleType\",\n                      status AS \"status: VehicleStatus\",\n                      model,\n                      driving_license AS \"driving_license: DrivingLicense\",\n                      height, width, length, weight,\n                      provider,\n                      additional_informations AS additional_info,\n                      organization_id\n            FROM vehicles WHERE id = ANY($1::uuid[])",
+  "query": "INSERT INTO vehicles (id, number_plate, description, water_capacity, type, availability,\n                                     model, driving_license, height, length, width, weight,\n                                     provider, additional_informations, organization_id)\n            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)\n            RETURNING id,\n                      archived_at AS \"archived_at: DateTime<chrono::Utc>\",\n                      number_plate,\n                      description,\n                      water_capacity,\n                      type AS \"vehicle_type: VehicleType\",\n                      availability AS \"availability: VehicleAvailability\",\n                      model,\n                      driving_license AS \"driving_license: DrivingLicense\",\n                      height, width, length, weight,\n                      provider,\n                      additional_informations AS additional_info,\n                      organization_id",
   "describe": {
     "columns": [
       {
@@ -45,16 +45,14 @@
       },
       {
         "ordinal": 6,
-        "name": "status: VehicleStatus",
+        "name": "availability: VehicleAvailability",
         "type_info": {
           "Custom": {
-            "name": "vehicle_status",
+            "name": "vehicle_availability",
             "kind": {
               "Enum": [
-                "active",
                 "available",
-                "not_available",
-                "unknown"
+                "not_available"
               ]
             }
           }
@@ -120,7 +118,53 @@
     ],
     "parameters": {
       "Left": [
-        "UuidArray"
+        "Uuid",
+        "Text",
+        "Text",
+        "Float8",
+        {
+          "Custom": {
+            "name": "vehicle_type",
+            "kind": {
+              "Enum": [
+                "transporter",
+                "trailer"
+              ]
+            }
+          }
+        },
+        {
+          "Custom": {
+            "name": "vehicle_availability",
+            "kind": {
+              "Enum": [
+                "available",
+                "not_available"
+              ]
+            }
+          }
+        },
+        "Text",
+        {
+          "Custom": {
+            "name": "driving_license",
+            "kind": {
+              "Enum": [
+                "B",
+                "BE",
+                "C",
+                "CE"
+              ]
+            }
+          }
+        },
+        "Float8",
+        "Float8",
+        "Float8",
+        "Float8",
+        "Text",
+        "Jsonb",
+        "Uuid"
       ]
     },
     "nullable": [
@@ -142,5 +186,5 @@
       false
     ]
   },
-  "hash": "02d9baa7719d82311b6e77cbaa9735e18e7e9768ac13dcaf258323b2fc8999b2"
+  "hash": "16faf68d7b09902c29449c66752c500d1ee4035f5965e2ce4265afa7cc2c4aab"
 }

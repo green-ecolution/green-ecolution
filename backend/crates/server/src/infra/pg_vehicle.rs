@@ -8,8 +8,9 @@ use domain::{
     authorization::Visibility,
     shared::pagination::{Page, Pagination},
     vehicle::{
-        DrivingLicense, NumberPlate, Vehicle, VehicleDraft, VehicleReader, VehicleSearchQuery,
-        VehicleSnapshot, VehicleStatus, VehicleType, VehicleView, VehicleWriter,
+        DrivingLicense, NumberPlate, Vehicle, VehicleAvailability, VehicleDraft, VehicleReader,
+        VehicleSearchQuery, VehicleSnapshot, VehicleType, VehicleView, VehicleWriter,
+        derive_status,
     },
 };
 
@@ -24,7 +25,8 @@ impl PgVehicleRepository {
 }
 
 /// Flat row shape shared by every `view_*` query on `vehicles`. The `From`
-/// impl derives `created_at` from the UUID v7 id.
+/// impl derives `created_at` from the UUID v7 id and the visible status from
+/// the availability plus the `on_active_plan` flag each query computes.
 #[allow(dead_code)] // fields are read via the `From<VehicleViewRow>` impl
 struct VehicleViewRow {
     id: RawId,
@@ -34,7 +36,7 @@ struct VehicleViewRow {
     description: Option<String>,
     water_capacity: f64,
     vehicle_type: VehicleType,
-    status: VehicleStatus,
+    availability: VehicleAvailability,
     model: String,
     driving_license: DrivingLicense,
     height: f64,
@@ -44,6 +46,7 @@ struct VehicleViewRow {
     provider: Option<String>,
     additional_info: Option<Value>,
     organization_id: RawId,
+    on_active_plan: bool,
 }
 
 impl From<VehicleViewRow> for VehicleView {
@@ -59,7 +62,8 @@ impl From<VehicleViewRow> for VehicleView {
             number_plate: row.number_plate,
             description: row.description,
             water_capacity: row.water_capacity,
-            status: row.status,
+            availability: row.availability,
+            status: derive_status(row.availability, row.on_active_plan),
             vehicle_type: row.vehicle_type,
             model: row.model,
             driving_license: row.driving_license,
@@ -86,7 +90,7 @@ impl VehicleReader for PgVehicleRepository {
                       description,
                       water_capacity,
                       type AS "vehicle_type: VehicleType",
-                      status AS "status: VehicleStatus",
+                      availability AS "availability: VehicleAvailability",
                       model,
                       driving_license AS "driving_license: DrivingLicense",
                       height, width, length, weight,
@@ -114,7 +118,7 @@ impl VehicleReader for PgVehicleRepository {
                       description,
                       water_capacity,
                       type AS "vehicle_type: VehicleType",
-                      status AS "status: VehicleStatus",
+                      availability AS "availability: VehicleAvailability",
                       model,
                       driving_license AS "driving_license: DrivingLicense",
                       height, width, length, weight,
@@ -140,7 +144,7 @@ impl VehicleReader for PgVehicleRepository {
                       description,
                       water_capacity,
                       type AS "vehicle_type: VehicleType",
-                      status AS "status: VehicleStatus",
+                      availability AS "availability: VehicleAvailability",
                       model,
                       driving_license AS "driving_license: DrivingLicense",
                       height, width, length, weight,
@@ -166,13 +170,17 @@ impl VehicleReader for PgVehicleRepository {
                       description,
                       water_capacity,
                       type AS "vehicle_type: VehicleType",
-                      status AS "status: VehicleStatus",
+                      availability AS "availability: VehicleAvailability",
                       model,
                       driving_license AS "driving_license: DrivingLicense",
                       height, width, length, weight,
                       provider,
                       additional_informations AS "additional_info: Value",
-                      organization_id
+                      organization_id,
+                      EXISTS (SELECT 1 FROM vehicle_watering_plans vwp
+                              JOIN watering_plans wp ON wp.id = vwp.watering_plan_id
+                              WHERE vwp.vehicle_id = vehicles.id
+                                AND wp.status = 'active') AS "on_active_plan!: bool"
             FROM vehicles WHERE id = $1"#,
             id.value()
         )
@@ -194,13 +202,17 @@ impl VehicleReader for PgVehicleRepository {
                       description,
                       water_capacity,
                       type AS "vehicle_type: VehicleType",
-                      status AS "status: VehicleStatus",
+                      availability AS "availability: VehicleAvailability",
                       model,
                       driving_license AS "driving_license: DrivingLicense",
                       height, width, length, weight,
                       provider,
                       additional_informations AS "additional_info: Value",
-                      organization_id
+                      organization_id,
+                      EXISTS (SELECT 1 FROM vehicle_watering_plans vwp
+                              JOIN watering_plans wp ON wp.id = vwp.watering_plan_id
+                              WHERE vwp.vehicle_id = vehicles.id
+                                AND wp.status = 'active') AS "on_active_plan!: bool"
             FROM vehicles WHERE id = ANY($1::uuid[])"#,
             &id_values
         )
@@ -245,13 +257,17 @@ impl VehicleReader for PgVehicleRepository {
                       description,
                       water_capacity,
                       type AS "vehicle_type: VehicleType",
-                      status AS "status: VehicleStatus",
+                      availability AS "availability: VehicleAvailability",
                       model,
                       driving_license AS "driving_license: DrivingLicense",
                       height, width, length, weight,
                       provider,
                       additional_informations AS "additional_info: Value",
-                      organization_id
+                      organization_id,
+                      EXISTS (SELECT 1 FROM vehicle_watering_plans vwp
+                              JOIN watering_plans wp ON wp.id = vwp.watering_plan_id
+                              WHERE vwp.vehicle_id = vehicles.id
+                                AND wp.status = 'active') AS "on_active_plan!: bool"
             FROM vehicles
             WHERE ($1::text IS NULL OR provider = $1)
               AND ($2::vehicle_type IS NULL OR type = $2)
@@ -299,7 +315,7 @@ impl VehicleWriter for PgVehicleRepository {
         let id = Id::<Vehicle>::new_v7();
         let snap = sqlx::query_as!(
             VehicleSnapshot,
-            r#"INSERT INTO vehicles (id, number_plate, description, water_capacity, type, status,
+            r#"INSERT INTO vehicles (id, number_plate, description, water_capacity, type, availability,
                                      model, driving_license, height, length, width, weight,
                                      provider, additional_informations, organization_id)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
@@ -309,7 +325,7 @@ impl VehicleWriter for PgVehicleRepository {
                       description,
                       water_capacity,
                       type AS "vehicle_type: VehicleType",
-                      status AS "status: VehicleStatus",
+                      availability AS "availability: VehicleAvailability",
                       model,
                       driving_license AS "driving_license: DrivingLicense",
                       height, width, length, weight,
@@ -321,7 +337,7 @@ impl VehicleWriter for PgVehicleRepository {
             draft.description,
             draft.water_capacity.liters(),
             draft.vehicle_type as VehicleType,
-            draft.status as VehicleStatus,
+            draft.availability as VehicleAvailability,
             draft.model.as_str(),
             draft.driving_license as DrivingLicense,
             draft.dimension.height,
@@ -346,7 +362,7 @@ impl VehicleWriter for PgVehicleRepository {
                 description = $3,
                 water_capacity = $4,
                 type = $5,
-                status = $6,
+                availability = $6,
                 model = $7,
                 driving_license = $8,
                 height = $9,
@@ -363,7 +379,7 @@ impl VehicleWriter for PgVehicleRepository {
             vehicle.description.as_deref(),
             vehicle.water_capacity.liters(),
             vehicle.vehicle_type as VehicleType,
-            vehicle.status as VehicleStatus,
+            vehicle.availability as VehicleAvailability,
             vehicle.model.as_str(),
             vehicle.driving_license as DrivingLicense,
             vehicle.dimension.height,

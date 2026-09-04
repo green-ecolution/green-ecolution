@@ -14,14 +14,14 @@
 
 
 /**
- * Operational status of a watering vehicle.
+ * Operational status of a watering vehicle. Read-only: derived from the
+ * vehicle's availability and the watering plans it is assigned to.
  * @export
  */
 export const VehicleStatus = {
     Active: 'active',
     Available: 'available',
-    NotAvailable: 'not_available',
-    Unknown: 'unknown'
+    NotAvailable: 'not_available'
 } as const;
 export type VehicleStatus = typeof VehicleStatus[keyof typeof VehicleStatus];
 

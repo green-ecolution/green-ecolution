@@ -35,26 +35,50 @@ pub use repository::{VehicleReader, VehicleWriter};
 pub use snapshot::VehicleSnapshot;
 pub use view::VehicleView;
 
-/// Operational status of a vehicle.
-///
-/// - `Active` — currently on a watering run.
-/// - `Available` — ready to be assigned to a watering plan.
-/// - `NotAvailable` — temporarily out of service (maintenance, etc.).
-/// - `Unknown` — status not yet set or not determinable.
+/// Whether a vehicle may be assigned at all — the one part of its state only a
+/// human knows (workshop, breakdown). This is what gets stored.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "sqlx", derive(sqlx::Type))]
 #[cfg_attr(
     feature = "sqlx",
-    sqlx(type_name = "vehicle_status", rename_all = "snake_case")
+    sqlx(type_name = "vehicle_availability", rename_all = "snake_case")
 )]
-pub enum VehicleStatus {
-    Active,
+pub enum VehicleAvailability {
     Available,
     #[serde(rename = "not_available", alias = "not available")]
     #[cfg_attr(feature = "sqlx", sqlx(rename = "not_available"))]
     NotAvailable,
-    Unknown,
+}
+
+/// Display-only operational status, derived via [`derive_status`] — never
+/// stored.
+///
+/// - `Active` — currently assigned to a running watering plan.
+/// - `Available` — ready to be assigned.
+/// - `NotAvailable` — temporarily out of service (maintenance, etc.).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum VehicleStatus {
+    Active,
+    Available,
+    #[serde(rename = "not_available", alias = "not available")]
+    NotAvailable,
+}
+
+/// Derives the status shown to clients. Being on a run is never stored: a
+/// vehicle cannot assert "I am out driving" — it is an observation about the
+/// watering plans it is assigned to.
+///
+/// `NotAvailable` wins over a running plan. Whoever puts a vehicle into the
+/// workshop knows more than a plan someone forgot to cancel, and the
+/// precedence keeps `Active` implying availability.
+pub fn derive_status(availability: VehicleAvailability, on_active_plan: bool) -> VehicleStatus {
+    match availability {
+        VehicleAvailability::NotAvailable => VehicleStatus::NotAvailable,
+        VehicleAvailability::Available if on_active_plan => VehicleStatus::Active,
+        VehicleAvailability::Available => VehicleStatus::Available,
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
@@ -128,7 +152,7 @@ pub struct Vehicle {
     pub number_plate: NumberPlate,
     pub description: Option<String>,
     pub water_capacity: WaterCapacity,
-    pub status: VehicleStatus,
+    pub availability: VehicleAvailability,
     pub vehicle_type: VehicleType,
     pub model: VehicleModel,
     pub driving_license: DrivingLicense,
@@ -145,7 +169,7 @@ pub struct VehicleDraft {
     pub number_plate: NumberPlate,
     pub description: Option<String>,
     pub water_capacity: WaterCapacity,
-    pub status: VehicleStatus,
+    pub availability: VehicleAvailability,
     pub vehicle_type: VehicleType,
     pub model: VehicleModel,
     pub driving_license: DrivingLicense,
@@ -171,7 +195,7 @@ pub struct VehicleUpdate {
     pub number_plate: NumberPlate,
     pub description: Option<String>,
     pub water_capacity: WaterCapacity,
-    pub status: VehicleStatus,
+    pub availability: VehicleAvailability,
     pub vehicle_type: VehicleType,
     pub model: VehicleModel,
     pub driving_license: DrivingLicense,
@@ -188,7 +212,7 @@ impl Vehicle {
             description: snap.description,
             water_capacity: WaterCapacity::new(snap.water_capacity)
                 .expect("DB water_capacity must be valid"),
-            status: snap.status,
+            availability: snap.availability,
             vehicle_type: snap.vehicle_type,
             model: VehicleModel::reconstitute(snap.model),
             driving_license: snap.driving_license,
@@ -228,7 +252,7 @@ impl Vehicle {
         self.number_plate = update.number_plate;
         self.description = update.description;
         self.water_capacity = update.water_capacity;
-        self.status = update.status;
+        self.availability = update.availability;
         self.vehicle_type = update.vehicle_type;
         self.model = update.model;
         self.driving_license = update.driving_license;
@@ -275,7 +299,7 @@ mod tests {
             number_plate: NumberPlate::new("FL-AB-123").unwrap(),
             description: None,
             water_capacity: WaterCapacity::new(1000.0).unwrap(),
-            status: VehicleStatus::Available,
+            availability: VehicleAvailability::Available,
             vehicle_type: VehicleType::Transporter,
             model: VehicleModel::new("Mercedes Sprinter").unwrap(),
             driving_license: DrivingLicense::B,
@@ -353,7 +377,7 @@ mod tests {
             number_plate: NumberPlate::new("FL-XY-789").unwrap(),
             description: Some("neu".into()),
             water_capacity: WaterCapacity::new(2000.0).unwrap(),
-            status: VehicleStatus::NotAvailable,
+            availability: VehicleAvailability::NotAvailable,
             vehicle_type: VehicleType::Trailer,
             model: VehicleModel::new("Schmitz Cargobull").unwrap(),
             driving_license: DrivingLicense::BE,
@@ -363,7 +387,7 @@ mod tests {
         assert_eq!(v.number_plate.as_str(), "FL-XY-789");
         assert_eq!(v.description.as_deref(), Some("neu"));
         assert_eq!(v.water_capacity.liters(), 2000.0);
-        assert_eq!(v.status, VehicleStatus::NotAvailable);
+        assert_eq!(v.availability, VehicleAvailability::NotAvailable);
         assert_eq!(v.vehicle_type, VehicleType::Trailer);
         assert_eq!(v.model.as_str(), "Schmitz Cargobull");
         assert_eq!(v.driving_license, DrivingLicense::BE);
@@ -372,6 +396,30 @@ mod tests {
             v.archived_at(),
             original_archived,
             "replace_details must not touch archived_at"
+        );
+    }
+
+    #[test]
+    fn available_vehicle_without_active_plan_is_available() {
+        assert_eq!(
+            derive_status(VehicleAvailability::Available, false),
+            VehicleStatus::Available
+        );
+    }
+
+    #[test]
+    fn available_vehicle_on_active_plan_is_active() {
+        assert_eq!(
+            derive_status(VehicleAvailability::Available, true),
+            VehicleStatus::Active
+        );
+    }
+
+    #[test]
+    fn not_available_wins_over_an_active_plan() {
+        assert_eq!(
+            derive_status(VehicleAvailability::NotAvailable, true),
+            VehicleStatus::NotAvailable
         );
     }
 

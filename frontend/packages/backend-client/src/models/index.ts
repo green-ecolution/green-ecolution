@@ -109,6 +109,7 @@ export * from './UserResponse';
 export * from './UserStatus';
 export * from './UserUpdateRequest';
 export * from './ValidationIssue';
+export * from './VehicleAvailability';
 export * from './VehicleCreateRequest';
 export * from './VehicleEvaluationResponse';
 export * from './VehicleResponse';

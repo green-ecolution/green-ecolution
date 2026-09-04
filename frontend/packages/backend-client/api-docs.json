@@ -8227,6 +8227,7 @@
                 "water_capacity",
                 "model",
                 "status",
+                "availability",
                 "type",
                 "driving_license",
                 "height",
@@ -8250,6 +8251,10 @@
                   ],
                   "description": "Timestamp when the vehicle was archived, if applicable (RFC 3339).",
                   "example": "2025-06-01T00:00:00Z"
+                },
+                "availability": {
+                  "$ref": "#/components/schemas/VehicleAvailability",
+                  "description": "Whether the vehicle may be assigned to a watering plan."
                 },
                 "created_at": {
                   "type": "string",
@@ -8310,7 +8315,7 @@
                 },
                 "status": {
                   "$ref": "#/components/schemas/VehicleStatus",
-                  "description": "Current operational status of the vehicle."
+                  "description": "Operational status. Read-only: derived from `availability` and the\nwatering plans the vehicle is assigned to."
                 },
                 "type": {
                   "$ref": "#/components/schemas/VehicleType",
@@ -11316,6 +11321,15 @@
           }
         }
       },
+      "VehicleAvailability": {
+        "type": "string",
+        "description": "Whether a watering vehicle may be assigned at all. Set by hand; the only\npart of a vehicle's state the system cannot observe for itself.",
+        "enum": [
+          "available",
+          "not_available"
+        ],
+        "example": "available"
+      },
       "VehicleCreateRequest": {
         "type": "object",
         "description": "Request body for creating a new watering vehicle.",
@@ -11323,7 +11337,7 @@
           "number_plate",
           "water_capacity",
           "model",
-          "status",
+          "availability",
           "type",
           "driving_license",
           "height",
@@ -11338,6 +11352,10 @@
               "null"
             ],
             "description": "Arbitrary additional metadata from the provider."
+          },
+          "availability": {
+            "$ref": "#/components/schemas/VehicleAvailability",
+            "description": "Whether the vehicle may be assigned to a watering plan."
           },
           "description": {
             "type": [
@@ -11391,10 +11409,6 @@
             ],
             "description": "Name of the external data provider that supplied this vehicle record.",
             "example": "green_ecolution"
-          },
-          "status": {
-            "$ref": "#/components/schemas/VehicleStatus",
-            "description": "Current operational status of the vehicle."
           },
           "type": {
             "$ref": "#/components/schemas/VehicleType",
@@ -11457,6 +11471,7 @@
           "water_capacity",
           "model",
           "status",
+          "availability",
           "type",
           "driving_license",
           "height",
@@ -11480,6 +11495,10 @@
             ],
             "description": "Timestamp when the vehicle was archived, if applicable (RFC 3339).",
             "example": "2025-06-01T00:00:00Z"
+          },
+          "availability": {
+            "$ref": "#/components/schemas/VehicleAvailability",
+            "description": "Whether the vehicle may be assigned to a watering plan."
           },
           "created_at": {
             "type": "string",
@@ -11540,7 +11559,7 @@
           },
           "status": {
             "$ref": "#/components/schemas/VehicleStatus",
-            "description": "Current operational status of the vehicle."
+            "description": "Operational status. Read-only: derived from `availability` and the\nwatering plans the vehicle is assigned to."
           },
           "type": {
             "$ref": "#/components/schemas/VehicleType",
@@ -11576,12 +11595,11 @@
       },
       "VehicleStatus": {
         "type": "string",
-        "description": "Operational status of a watering vehicle.",
+        "description": "Operational status of a watering vehicle. Read-only: derived from the\nvehicle's availability and the watering plans it is assigned to.",
         "enum": [
           "active",
           "available",
-          "not_available",
-          "unknown"
+          "not_available"
         ],
         "example": "available"
       },
@@ -11601,7 +11619,7 @@
           "number_plate",
           "water_capacity",
           "model",
-          "status",
+          "availability",
           "type",
           "driving_license",
           "height",
@@ -11616,6 +11634,10 @@
               "null"
             ],
             "description": "Arbitrary additional metadata from the provider."
+          },
+          "availability": {
+            "$ref": "#/components/schemas/VehicleAvailability",
+            "description": "Whether the vehicle may be assigned to a watering plan."
           },
           "description": {
             "type": [
@@ -11660,10 +11682,6 @@
             ],
             "description": "Name of the external data provider that supplied this vehicle record.",
             "example": "green_ecolution"
-          },
-          "status": {
-            "$ref": "#/components/schemas/VehicleStatus",
-            "description": "Current operational status of the vehicle."
           },
           "type": {
             "$ref": "#/components/schemas/VehicleType",

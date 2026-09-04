@@ -6,7 +6,7 @@ fn vehicle_json(plate: &str) -> serde_json::Value {
         "description": "Testfahrzeug",
         "water_capacity": 5000.0,
         "model": "MAN TGS",
-        "status": "available",
+        "availability": "available",
         "type": "transporter",
         "driving_license": "C",
         "height": 3.2,
@@ -62,6 +62,7 @@ async fn create_vehicle_returns_201() {
     assert_eq!(vehicle["model"], "MAN TGS");
     assert_eq!(vehicle["water_capacity"], 5000.0);
     assert_eq!(vehicle["status"], "available");
+    assert_eq!(vehicle["availability"], "available");
     assert_eq!(vehicle["type"], "transporter");
     assert_eq!(vehicle["driving_license"], "C");
 }
@@ -242,5 +243,156 @@ async fn update_vehicle_with_string_number_returns_json_error_body() {
             .unwrap_or_default()
             .contains("height"),
         "error body should name the offending field, got: {body}"
+    );
+}
+
+#[tokio::test]
+async fn vehicle_status_follows_the_plan_it_is_assigned_to() {
+    let app = spawn_app().await;
+
+    let created: serde_json::Value = app
+        .post_json("/api/v1/vehicles", &vehicle_json("FL-GE 500"))
+        .await
+        .json()
+        .await
+        .unwrap();
+    let vehicle_id = created["id"].as_str().unwrap();
+    assert_eq!(created["status"], "available");
+
+    let plan: serde_json::Value = app
+        .post_json(
+            "/api/v1/watering-plans",
+            &serde_json::json!({
+                "date": "2026-05-01T08:00:00Z",
+                "description": "Bewaesserung Innenstadt",
+                "transporter_id": vehicle_id,
+                "tree_cluster_ids": [],
+                "user_ids": []
+            }),
+        )
+        .await
+        .json()
+        .await
+        .unwrap();
+    let plan_id = plan["id"].as_str().unwrap();
+
+    let planned: serde_json::Value = app
+        .get(&format!("/api/v1/vehicles/{}", vehicle_id))
+        .await
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(
+        planned["status"], "available",
+        "a merely planned run must not make the vehicle active"
+    );
+
+    let plan_update = |status: &str| {
+        serde_json::json!({
+            "date": "2026-05-01T08:00:00Z",
+            "description": "Bewaesserung Innenstadt",
+            "status": status,
+            "transporter_id": vehicle_id,
+            "tree_cluster_ids": [],
+            "user_ids": [],
+            "cancellation_note": "",
+            "evaluation": [],
+        })
+    };
+
+    let start = app
+        .put_json(
+            &format!("/api/v1/watering-plans/{}", plan_id),
+            &plan_update("active"),
+        )
+        .await;
+    assert_eq!(start.status().as_u16(), 200);
+
+    let active: serde_json::Value = app
+        .get(&format!("/api/v1/vehicles/{}", vehicle_id))
+        .await
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(active["status"], "active");
+    assert_eq!(
+        active["availability"], "available",
+        "the stored availability stays untouched while the plan runs"
+    );
+
+    let finish = app
+        .put_json(
+            &format!("/api/v1/watering-plans/{}", plan_id),
+            &plan_update("finished"),
+        )
+        .await;
+    assert_eq!(finish.status().as_u16(), 200);
+
+    let after: serde_json::Value = app
+        .get(&format!("/api/v1/vehicles/{}", vehicle_id))
+        .await
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(after["status"], "available");
+}
+
+#[tokio::test]
+async fn not_available_vehicle_stays_not_available_on_an_active_plan() {
+    let app = spawn_app().await;
+
+    let created: serde_json::Value = app
+        .post_json("/api/v1/vehicles", &vehicle_json("FL-GE 600"))
+        .await
+        .json()
+        .await
+        .unwrap();
+    let vehicle_id = created["id"].as_str().unwrap();
+
+    let plan: serde_json::Value = app
+        .post_json(
+            "/api/v1/watering-plans",
+            &serde_json::json!({
+                "date": "2026-05-01T08:00:00Z",
+                "description": "Bewaesserung Innenstadt",
+                "transporter_id": vehicle_id,
+                "tree_cluster_ids": [],
+                "user_ids": []
+            }),
+        )
+        .await
+        .json()
+        .await
+        .unwrap();
+    let plan_id = plan["id"].as_str().unwrap();
+
+    let start = app
+        .put_json(
+            &format!("/api/v1/watering-plans/{}", plan_id),
+            &serde_json::json!({
+                "date": "2026-05-01T08:00:00Z",
+                "description": "Bewaesserung Innenstadt",
+                "status": "active",
+                "transporter_id": vehicle_id,
+                "tree_cluster_ids": [],
+                "user_ids": [],
+                "cancellation_note": "",
+                "evaluation": [],
+            }),
+        )
+        .await;
+    assert_eq!(start.status().as_u16(), 200);
+
+    let mut workshop = vehicle_json("FL-GE 600");
+    workshop["availability"] = serde_json::json!("not_available");
+    let update = app
+        .put_json(&format!("/api/v1/vehicles/{}", vehicle_id), &workshop)
+        .await;
+    assert_eq!(update.status().as_u16(), 200);
+
+    let updated: serde_json::Value = update.json().await.unwrap();
+    assert_eq!(
+        updated["status"], "not_available",
+        "a vehicle in the workshop must not read as active"
     );
 }

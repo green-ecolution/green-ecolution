@@ -42,7 +42,7 @@ async fn create_transporter(app: &crate::helpers::TestApp) -> serde_json::Value 
         "description": "Giesswagen",
         "water_capacity": 5000.0,
         "model": "MAN TGS",
-        "status": "available",
+        "availability": "available",
         "type": "transporter",
         "driving_license": "C",
         "height": 3.2, "width": 2.5, "length": 8.0, "weight": 12000.0

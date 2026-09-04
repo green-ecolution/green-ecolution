@@ -26,7 +26,7 @@ const VehicleUpdate = ({ vehicleId }: VehicleUpdateProps) => {
       numberPlate: data.numberPlate,
       type: data.type,
       drivingLicense: data.drivingLicense,
-      status: data.status,
+      availability: data.availability,
       height: data.height,
       width: data.width,
       length: data.length,

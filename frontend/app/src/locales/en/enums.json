@@ -47,10 +47,6 @@
     }
   },
   "vehicleStatus": {
-    "unknown": {
-      "label": "Unknown",
-      "description": "The vehicle status is unknown."
-    },
     "not_available": {
       "label": "Not available",
       "description": "The vehicle is not available."
@@ -60,8 +56,8 @@
       "description": "The vehicle is available."
     },
     "active": {
-      "label": "In use",
-      "description": "The vehicle is in use."
+      "label": "On a run",
+      "description": "The vehicle is assigned to a watering plan that is currently running."
     }
   },
   "vehicleType": {

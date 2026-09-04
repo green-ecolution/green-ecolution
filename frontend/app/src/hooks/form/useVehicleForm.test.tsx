@@ -7,7 +7,7 @@ import { Toaster } from '@green-ecolution/ui'
 import {
   VehicleType,
   DrivingLicense,
-  VehicleStatus,
+  VehicleAvailability,
   ResponseError,
 } from '@green-ecolution/backend-client'
 import useStore from '@/store/store'
@@ -56,7 +56,7 @@ const defaultInitForm = {
   model: 'Mercedes Sprinter',
   type: VehicleType.Transporter,
   drivingLicense: DrivingLicense.B,
-  status: VehicleStatus.Available,
+  availability: VehicleAvailability.Available,
   height: 2.5,
   width: 2.0,
   length: 6.0,
@@ -117,7 +117,7 @@ describe('useVehicleForm', () => {
         model: 'Mercedes Sprinter',
         type: VehicleType.Transporter,
         drivingLicense: DrivingLicense.B,
-        status: VehicleStatus.Available,
+        availability: VehicleAvailability.Available,
         height: 2.5,
         width: 2.0,
         length: 6.0,
@@ -166,7 +166,7 @@ describe('useVehicleForm', () => {
         model: 'VW Crafter',
         type: VehicleType.Transporter,
         drivingLicense: DrivingLicense.B,
-        status: VehicleStatus.Available,
+        availability: VehicleAvailability.Available,
         height: 2.5,
         width: 2.0,
         length: 6.0,

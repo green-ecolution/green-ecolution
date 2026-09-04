@@ -4,7 +4,7 @@ import FormSubmitButton from './FormSubmitButton'
 import { FormField, TextareaField, SelectField } from '@green-ecolution/ui'
 import { useVehicleTypeOptions } from '@/hooks/details/useDetailsForVehicleType'
 import { useDrivingLicenseOptions } from '@/hooks/details/useDetailsForDrivingLicense'
-import { useVehicleStatusOptions } from '@/hooks/details/useDetailsForVehicleStatus'
+import { useVehicleAvailabilityOptions } from '@/hooks/details/useDetailsForVehicleStatus'
 import { Controller, SubmitHandler, useFormContext, useFormState } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { parseDecimalInput } from '@/lib/utils'
@@ -24,7 +24,7 @@ const FormForVehicle = (props: FormForVehicleProps) => {
   const { register, handleSubmit, control } = useFormContext<VehicleForm>()
   const { isValid, errors } = useFormState({ control })
   const vehicleTypeOptions = useVehicleTypeOptions()
-  const vehicleStatusOptions = useVehicleStatusOptions()
+  const vehicleAvailabilityOptions = useVehicleAvailabilityOptions()
   const drivingLicenseOptions = useDrivingLicenseOptions()
 
   return (
@@ -71,18 +71,18 @@ const FormForVehicle = (props: FormForVehicleProps) => {
         {...register('waterCapacity', asNumber)}
       />
       <Controller
-        name="status"
+        name="availability"
         control={control}
         render={({ field }) => (
           <SelectField
-            id="status"
-            label={t('form.statusLabel')}
-            placeholder={t('form.statusPlaceholder')}
+            id="availability"
+            label={t('form.availabilityLabel')}
+            placeholder={t('form.availabilityPlaceholder')}
             required
             value={field.value}
             onValueChange={field.onChange}
-            error={errors.status?.message}
-            options={vehicleStatusOptions}
+            error={errors.availability?.message}
+            options={vehicleAvailabilityOptions}
           />
         )}
       />

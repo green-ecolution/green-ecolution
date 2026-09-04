@@ -124,6 +124,7 @@ models/UserResponse.ts
 models/UserStatus.ts
 models/UserUpdateRequest.ts
 models/ValidationIssue.ts
+models/VehicleAvailability.ts
 models/VehicleCreateRequest.ts
 models/VehicleEvaluationResponse.ts
 models/VehicleResponse.ts
