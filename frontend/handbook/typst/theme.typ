@@ -34,7 +34,7 @@
 ]
 
 #let manual-theme(body) = {
-  set document(title: "Green Ecolution — Nutzerhandbuch")
+  set document(title: "Green Ecolution Nutzerhandbuch")
   set page(
     paper: "a4",
     fill: colors.at("light"),

@@ -83,7 +83,7 @@
         #line(length: 4.6cm, stroke: 0.6pt + colors.at("green-dark"))
         #v(1.5em, weak: false)
         #text(font: body-font, size: 11pt, fill: colors.at("dark"))[
-          Dieses Handbuch beschreibt die Bedienung von Green Ecolution für alle Rollen —
+          Dieses Handbuch beschreibt die Bedienung von Green Ecolution für alle Rollen,
           vom täglichen Erfassen und Planen bis zur Verwaltung von Organisationen und
           Rechten. Es entsteht aus derselben Quelle wie die Hilfe in der Anwendung und
           ist damit immer auf demselben Stand.

@@ -61,8 +61,8 @@ dabei nur die Gruppe, ihre Bäume bleiben erhalten.
 Der Bewässerungszustand eines Baums wird ausschließlich aus den Messwerten seines
 Sensors berechnet, zusammen mit seinem Pflanzjahr und, je nach Sensortyp, der Bodenart
 seiner Gruppe. Ohne Sensor lässt sich für einen Baum nie **In Ordnung**, **Leicht
-trocken** oder **Sehr trocken** ermitteln, und er steht ansonsten auf **Unbekannt** —
-nur wenn ein Einsatzplan seiner Gruppe abgeschlossen wird, zeigt auch er für eine Weile
+trocken** oder **Sehr trocken** ermitteln, und er steht ansonsten auf **Unbekannt**.
+Nur wenn ein Einsatzplan seiner Gruppe abgeschlossen wird, zeigt auch er für eine Weile
 **Soeben bewässert**.
 
 Der Bewässerungszustand einer Gruppe ist ein Mehrheitswert über die Zustände ihrer

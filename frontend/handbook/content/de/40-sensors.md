@@ -2,7 +2,7 @@
 slug: sensors
 title: Sensorik
 part: sensors
-summary: Sensoren in der Anwendung verwalten — Geräteliste, Verbindungszustände, Messwerte, Verknüpfungen — und eine Sensoreinheit im Feld einbauen und aktivieren.
+summary: Sensoren in der Anwendung verwalten, von der Geräteliste über die Verbindungszustände bis zu Messwerten und Verknüpfungen, und eine Sensoreinheit im Feld einbauen und aktivieren.
 routes: ['/sensors', '/sensors/$sensorId', '/sensors/new']
 ---
 
@@ -131,7 +131,7 @@ danach wird das Loch gebohrt, etwa 80 Zentimeter tief.
 > [!WARNING]
 > Der Erdbohrer trifft in dieser Tiefe auf Strom-, Wasser- und Telekommunikationsleitungen.
 > Die Prüfung mit dem Leitungssuchgerät ersetzt nicht den Leitungsplan und der Plan nicht
-> die Prüfung — beides ist nötig, jedes Mal.
+> die Prüfung. Beides ist nötig, jedes Mal.
 
 ### Sensoren einsetzen
 
@@ -154,7 +154,7 @@ irgendwo auffällt.
 Pack das Funkmodul aus, entferne die gelbe Schutzkappe und schraube die Antenne an.
 Verbinde dann das Funkmodul mit den beiden Sensoren und achte dabei auf die Einkerbungen
 der Stecker, die nur in einer Stellung zusammenpassen. Der rote Dichtungsring bleibt
-dabei am Stecker, und der Schutzverschluss wird fest zugeschraubt — er hält die
+dabei am Stecker, und der Schutzverschluss wird fest zugeschraubt. Er hält die
 Verbindung auf Jahre trocken.
 
 ### Sensor aktivieren
