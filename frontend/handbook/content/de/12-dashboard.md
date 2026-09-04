@@ -38,6 +38,6 @@ jeweiligen Bereich anzuzeigen.
 
 Die Kacheln sind Abkürzungen zu den am häufigsten gebrauchten Bereichen. Für die
 vollständige Übersicht aller Bereiche nutzt du die
-[Seitennavigation](./getting-started.md#seitennavigation); über den Brotkrümelpfad
-kommst du von jeder tieferen Seite mit einem Klick auf **Dashboard** wieder hierher
-zurück.
+[Seitennavigation](./getting-started.md#seitennavigation); über den Navigationspfad in
+der Kopfzeile kommst du von jeder tieferen Seite mit einem Klick auf **Dashboard**
+wieder hierher zurück.
