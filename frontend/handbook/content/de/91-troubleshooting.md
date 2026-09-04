@@ -96,8 +96,10 @@ Auf der Sensor-Detailseite oder im Bereich **Wasserversorgung** eines Gruppendas
 fehlt ein Verlauf, wo eigentlich einer stehen sollte. Dafür kommen mehrere, klar
 unterscheidbare Ursachen infrage.
 
-Ist der Sensor noch nicht aktiviert, liefert er naturgemäß keine Messwerte, weil er
-keinem Baum zugeordnet ist. Ist er aktiviert, aber offline, fehlen aktuelle Werte aus
+Ist der Sensor noch nicht aktiviert, ist er meist auch noch nicht im Feld in Betrieb und
+sendet deshalb nichts; überträgt er bereits, werden seine Werte zwar gespeichert,
+erscheinen ohne Baumzuordnung aber in keinem Gruppendashboard. In beiden Fällen ist die
+Aktivierung der nächste Schritt. Ist er aktiviert, aber offline, fehlen aktuelle Werte aus
 demselben Grund wie im vorigen Abschnitt beschrieben. Zeigt die Detailseite dagegen
 Werte, aber daneben einen Hinweis zur **Datenqualität**, liegen durchaus Messwerte vor,
 die Anwendung hat in den letzten sieben Tagen jedoch wiederholt unplausible Werte
