@@ -32,12 +32,20 @@
     margin: (inside: 2.4cm, outside: 5.2cm, top: 2.6cm, bottom: 2.4cm),
     binding: left,
     header: context {
-      // A chapter's own opening page precedes its heading in document
-      // order, so the running head is blank there by convention — the
-      // page number still needs to show on every page, chapter openers
-      // included.
-      let seen = query(selector(heading.where(level: 2)).before(here()))
-      let running-head = if seen.len() > 0 { upper(seen.last().body) } else { [] }
+      // A chapter's own heading sits below the header in document order, so
+      // querying "before here()" alone would surface the previous chapter's
+      // title on an opening page. Locations expose the page they land on,
+      // so we can instead ask "does this page open a chapter?" and blank
+      // the head there — the page number still shows on every page,
+      // chapter openers included.
+      let chapter-headings = query(selector(heading.where(level: 2)))
+      let opens-chapter-here = chapter-headings.any(h => h.location().page() == here().page())
+      let running-head = if opens-chapter-here {
+        []
+      } else {
+        let seen = chapter-headings.filter(h => h.location().page() < here().page())
+        if seen.len() > 0 { upper(seen.last().body) } else { [] }
+      }
       grid(
         columns: (1fr, auto),
         text(font: mono-font, size: 8pt, fill: colors.at("dark-500"))[#running-head],
