@@ -11,6 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > single repository. For legacy releases, see the
 > [GitHub Releases](https://github.com/green-ecolution/green-ecolution/releases) page.
 
+## [0.6.1](https://github.com/green-ecolution/green-ecolution/compare/v0.6.0...v0.6.1) (2026-09-04)
+
+
+### Bug Fixes
+
+* derive the vehicle status from its watering plan ([#1020](https://github.com/green-ecolution/green-ecolution/issues/1020)) ([707cdf6](https://github.com/green-ecolution/green-ecolution/commit/707cdf68aa428d267b853914a48007a4e9b8c54d))
+* **frontend:** keep the error page cable above the text ([#1016](https://github.com/green-ecolution/green-ecolution/issues/1016)) ([114eb7c](https://github.com/green-ecolution/green-ecolution/commit/114eb7c7bf7b7ae301afd8280f38eab803c4d845))
+
 ## [0.6.0](https://github.com/green-ecolution/green-ecolution/compare/v0.5.1...v0.6.0) (2026-09-03)
 
 
