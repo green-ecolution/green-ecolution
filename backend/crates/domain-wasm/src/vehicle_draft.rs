@@ -1,7 +1,7 @@
 use domain::shared::error::ValidationError;
 use domain::shared::water_capacity::WaterCapacity;
 use domain::vehicle::{
-    DrivingLicense, NumberPlate, VehicleDimension, VehicleModel, VehicleStatus, VehicleType,
+    DrivingLicense, NumberPlate, VehicleAvailability, VehicleDimension, VehicleModel, VehicleType,
 };
 use serde::Deserialize;
 use serde_wasm_bindgen::{from_value, to_value};
@@ -22,7 +22,7 @@ pub(crate) struct VehicleDraftInput {
     #[serde(default)]
     pub driving_license: String,
     #[serde(default)]
-    pub status: String,
+    pub availability: String,
     #[serde(default)]
     pub water_capacity: LooseF64,
     #[serde(default)]
@@ -57,7 +57,11 @@ pub(crate) fn collect_vehicle_issues(input: &VehicleDraftInput) -> Vec<Validatio
     ) {
         issues.push(issue);
     }
-    if let Some(issue) = validate_enum::<VehicleStatus>(&input.status, "vehicle.status", "status") {
+    if let Some(issue) = validate_enum::<VehicleAvailability>(
+        &input.availability,
+        "vehicle.availability",
+        "availability",
+    ) {
         issues.push(issue);
     }
 
@@ -128,7 +132,7 @@ mod tests {
             model: "Mercedes Sprinter".into(),
             r#type: "transporter".into(),
             driving_license: "B".into(),
-            status: "available".into(),
+            availability: "available".into(),
             water_capacity: LooseF64(Some(100.0)),
             height: LooseF64(Some(2.5)),
             width: LooseF64(Some(2.0)),
@@ -173,11 +177,11 @@ mod tests {
     }
 
     #[test]
-    fn invalid_status_is_rejected() {
+    fn invalid_availability_is_rejected() {
         let mut input = valid();
-        input.status = "broken".into();
+        input.availability = "broken".into();
         let issues = collect_vehicle_issues(&input);
-        assert!(issues.iter().any(|i| i.path == "status"));
+        assert!(issues.iter().any(|i| i.path == "availability"));
     }
 
     #[test]
@@ -213,7 +217,7 @@ mod tests {
         assert!(paths.contains(&"model"));
         assert!(paths.contains(&"type"));
         assert!(paths.contains(&"drivingLicense"));
-        assert!(paths.contains(&"status"));
+        assert!(paths.contains(&"availability"));
         assert!(paths.contains(&"waterCapacity"));
         assert!(paths.contains(&"height"));
     }

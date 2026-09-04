@@ -41,7 +41,7 @@ export interface VehicleForm {
   model: string
   type: string
   drivingLicense: string
-  status: string
+  availability: string
   height: number
   width: number
   length: number

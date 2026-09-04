@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id, updated_at,\n                      archived_at,\n                      number_plate,\n                      description,\n                      water_capacity,\n                      type AS \"vehicle_type: VehicleType\",\n                      status AS \"status: VehicleStatus\",\n                      model,\n                      driving_license AS \"driving_license: DrivingLicense\",\n                      height, width, length, weight,\n                      provider,\n                      additional_informations AS \"additional_info: Value\",\n                      organization_id\n            FROM vehicles\n            WHERE ($1::text IS NULL OR provider = $1)\n              AND ($2::vehicle_type IS NULL OR type = $2)\n              AND ($3::bool OR archived_at IS NULL)\n              AND (NOT $4::bool OR archived_at IS NOT NULL)\n              AND ($7::uuid[] IS NULL OR organization_id = ANY($7))\n            ORDER BY water_capacity DESC\n            LIMIT $5 OFFSET $6",
+  "query": "SELECT id, updated_at,\n                      archived_at,\n                      number_plate,\n                      description,\n                      water_capacity,\n                      type AS \"vehicle_type: VehicleType\",\n                      availability AS \"availability: VehicleAvailability\",\n                      model,\n                      driving_license AS \"driving_license: DrivingLicense\",\n                      height, width, length, weight,\n                      provider,\n                      additional_informations AS \"additional_info: Value\",\n                      organization_id,\n                      EXISTS (SELECT 1 FROM vehicle_watering_plans vwp\n                              JOIN watering_plans wp ON wp.id = vwp.watering_plan_id\n                              WHERE vwp.vehicle_id = vehicles.id\n                                AND wp.status = 'active') AS \"on_active_plan!: bool\"\n            FROM vehicles\n            WHERE ($1::text IS NULL OR provider = $1)\n              AND ($2::vehicle_type IS NULL OR type = $2)\n              AND ($3::bool OR archived_at IS NULL)\n              AND (NOT $4::bool OR archived_at IS NOT NULL)\n              AND ($7::uuid[] IS NULL OR organization_id = ANY($7))\n            ORDER BY water_capacity DESC\n            LIMIT $5 OFFSET $6",
   "describe": {
     "columns": [
       {
@@ -50,16 +50,14 @@
       },
       {
         "ordinal": 7,
-        "name": "status: VehicleStatus",
+        "name": "availability: VehicleAvailability",
         "type_info": {
           "Custom": {
-            "name": "vehicle_status",
+            "name": "vehicle_availability",
             "kind": {
               "Enum": [
-                "active",
                 "available",
-                "not_available",
-                "unknown"
+                "not_available"
               ]
             }
           }
@@ -121,6 +119,11 @@
         "ordinal": 16,
         "name": "organization_id",
         "type_info": "Uuid"
+      },
+      {
+        "ordinal": 17,
+        "name": "on_active_plan!: bool",
+        "type_info": "Bool"
       }
     ],
     "parameters": {
@@ -161,8 +164,9 @@
       false,
       true,
       true,
-      false
+      false,
+      null
     ]
   },
-  "hash": "35f23994b8e4e1dc78de3bb4cbb56632ec9d588426d543e975b33a6dbbc287bf"
+  "hash": "54d103992d26b543d361c3111b71a9ade59d9dd2cfd33a650be9eb53e4613146"
 }

@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 use serde_json::Value;
 use uuid::Uuid;
 
-use crate::vehicle::{DrivingLicense, VehicleStatus, VehicleType};
+use crate::vehicle::{DrivingLicense, VehicleAvailability, VehicleType};
 
 /// Raw DB-row mapping used exclusively for aggregate rehydration.
 #[doc(hidden)]
@@ -13,7 +13,7 @@ pub struct VehicleSnapshot {
     pub number_plate: String,
     pub description: Option<String>,
     pub water_capacity: f64,
-    pub status: VehicleStatus,
+    pub availability: VehicleAvailability,
     pub vehicle_type: VehicleType,
     pub model: String,
     pub driving_license: DrivingLicense,

@@ -6,7 +6,7 @@ async fn create_transporter(app: &helpers::TestApp) -> serde_json::Value {
         "description": "Giesswagen",
         "water_capacity": 5000.0,
         "model": "MAN TGS",
-        "status": "available",
+        "availability": "available",
         "type": "transporter",
         "driving_license": "C",
         "height": 3.2, "width": 2.5, "length": 8.0, "weight": 12000.0
@@ -21,7 +21,7 @@ async fn create_trailer(app: &helpers::TestApp) -> serde_json::Value {
         "description": "Anhaenger",
         "water_capacity": 3000.0,
         "model": "Trailer X",
-        "status": "available",
+        "availability": "available",
         "type": "trailer",
         "driving_license": "BE",
         "height": 2.0, "width": 2.0, "length": 5.0, "weight": 3000.0

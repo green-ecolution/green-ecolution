@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id,\n                      archived_at AS \"archived_at: DateTime<chrono::Utc>\",\n                      number_plate,\n                      description,\n                      water_capacity,\n                      type AS \"vehicle_type: VehicleType\",\n                      status AS \"status: VehicleStatus\",\n                      model,\n                      driving_license AS \"driving_license: DrivingLicense\",\n                      height, width, length, weight,\n                      provider,\n                      additional_informations AS additional_info,\n                      organization_id\n            FROM vehicles WHERE id = $1",
+  "query": "SELECT id,\n                      archived_at AS \"archived_at: DateTime<chrono::Utc>\",\n                      number_plate,\n                      description,\n                      water_capacity,\n                      type AS \"vehicle_type: VehicleType\",\n                      availability AS \"availability: VehicleAvailability\",\n                      model,\n                      driving_license AS \"driving_license: DrivingLicense\",\n                      height, width, length, weight,\n                      provider,\n                      additional_informations AS additional_info,\n                      organization_id\n            FROM vehicles WHERE number_plate = $1",
   "describe": {
     "columns": [
       {
@@ -45,16 +45,14 @@
       },
       {
         "ordinal": 6,
-        "name": "status: VehicleStatus",
+        "name": "availability: VehicleAvailability",
         "type_info": {
           "Custom": {
-            "name": "vehicle_status",
+            "name": "vehicle_availability",
             "kind": {
               "Enum": [
-                "active",
                 "available",
-                "not_available",
-                "unknown"
+                "not_available"
               ]
             }
           }
@@ -120,7 +118,7 @@
     ],
     "parameters": {
       "Left": [
-        "Uuid"
+        "Text"
       ]
     },
     "nullable": [
@@ -142,5 +140,5 @@
       false
     ]
   },
-  "hash": "0004f2d254e30e14259ad80a3e875ff24f17635d350768cd5931799da4101eef"
+  "hash": "03ee2b33fff1819fb299986878496f2c82cbd50a441dc2d836e4db7a665d73c9"
 }

@@ -47,10 +47,6 @@
     }
   },
   "vehicleStatus": {
-    "unknown": {
-      "label": "Unbekannt",
-      "description": "Der Fahrzeugstatus ist unbekannt."
-    },
     "not_available": {
       "label": "Nicht Verfügbar",
       "description": "Das Fahrzeug ist nicht verfügbar."
@@ -60,8 +56,8 @@
       "description": "Das Fahrzeug ist verfügbar."
     },
     "active": {
-      "label": "In Betrieb",
-      "description": "Das Fahrzeug ist in Betrieb."
+      "label": "Im Einsatz",
+      "description": "Das Fahrzeug ist einem laufenden Einsatzplan zugeordnet."
     }
   },
   "vehicleType": {

@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id,\n                      archived_at AS \"archived_at: DateTime<chrono::Utc>\",\n                      number_plate,\n                      description,\n                      water_capacity,\n                      type AS \"vehicle_type: VehicleType\",\n                      status AS \"status: VehicleStatus\",\n                      model,\n                      driving_license AS \"driving_license: DrivingLicense\",\n                      height, width, length, weight,\n                      provider,\n                      additional_informations AS additional_info,\n                      organization_id\n            FROM vehicles WHERE number_plate = $1",
+  "query": "SELECT id, updated_at,\n                      archived_at,\n                      number_plate,\n                      description,\n                      water_capacity,\n                      type AS \"vehicle_type: VehicleType\",\n                      availability AS \"availability: VehicleAvailability\",\n                      model,\n                      driving_license AS \"driving_license: DrivingLicense\",\n                      height, width, length, weight,\n                      provider,\n                      additional_informations AS \"additional_info: Value\",\n                      organization_id,\n                      EXISTS (SELECT 1 FROM vehicle_watering_plans vwp\n                              JOIN watering_plans wp ON wp.id = vwp.watering_plan_id\n                              WHERE vwp.vehicle_id = vehicles.id\n                                AND wp.status = 'active') AS \"on_active_plan!: bool\"\n            FROM vehicles WHERE id = ANY($1::uuid[])",
   "describe": {
     "columns": [
       {
@@ -10,26 +10,31 @@
       },
       {
         "ordinal": 1,
-        "name": "archived_at: DateTime<chrono::Utc>",
+        "name": "updated_at",
         "type_info": "Timestamp"
       },
       {
         "ordinal": 2,
+        "name": "archived_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 3,
         "name": "number_plate",
         "type_info": "Text"
       },
       {
-        "ordinal": 3,
+        "ordinal": 4,
         "name": "description",
         "type_info": "Text"
       },
       {
-        "ordinal": 4,
+        "ordinal": 5,
         "name": "water_capacity",
         "type_info": "Float8"
       },
       {
-        "ordinal": 5,
+        "ordinal": 6,
         "name": "vehicle_type: VehicleType",
         "type_info": {
           "Custom": {
@@ -44,29 +49,27 @@
         }
       },
       {
-        "ordinal": 6,
-        "name": "status: VehicleStatus",
+        "ordinal": 7,
+        "name": "availability: VehicleAvailability",
         "type_info": {
           "Custom": {
-            "name": "vehicle_status",
+            "name": "vehicle_availability",
             "kind": {
               "Enum": [
-                "active",
                 "available",
-                "not_available",
-                "unknown"
+                "not_available"
               ]
             }
           }
         }
       },
       {
-        "ordinal": 7,
+        "ordinal": 8,
         "name": "model",
         "type_info": "Text"
       },
       {
-        "ordinal": 8,
+        "ordinal": 9,
         "name": "driving_license: DrivingLicense",
         "type_info": {
           "Custom": {
@@ -83,64 +86,71 @@
         }
       },
       {
-        "ordinal": 9,
+        "ordinal": 10,
         "name": "height",
         "type_info": "Float8"
       },
       {
-        "ordinal": 10,
+        "ordinal": 11,
         "name": "width",
         "type_info": "Float8"
       },
       {
-        "ordinal": 11,
+        "ordinal": 12,
         "name": "length",
         "type_info": "Float8"
       },
       {
-        "ordinal": 12,
+        "ordinal": 13,
         "name": "weight",
         "type_info": "Float8"
       },
       {
-        "ordinal": 13,
+        "ordinal": 14,
         "name": "provider",
         "type_info": "Text"
       },
       {
-        "ordinal": 14,
-        "name": "additional_info",
+        "ordinal": 15,
+        "name": "additional_info: Value",
         "type_info": "Jsonb"
       },
       {
-        "ordinal": 15,
+        "ordinal": 16,
         "name": "organization_id",
         "type_info": "Uuid"
+      },
+      {
+        "ordinal": 17,
+        "name": "on_active_plan!: bool",
+        "type_info": "Bool"
       }
     ],
     "parameters": {
       "Left": [
-        "Text"
+        "UuidArray"
       ]
     },
     "nullable": [
       false,
-      true,
-      false,
-      false,
-      false,
-      false,
-      false,
-      false,
-      false,
-      false,
-      false,
-      false,
       false,
       true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
       true,
-      false
+      true,
+      false,
+      null
     ]
   },
-  "hash": "850f7c0edeffd90e967c59be01e1b3365171cc7d248d88202ad8c82be5941e1a"
+  "hash": "b5940fe4c7a46f8b19af906c2d3515aee8280c61cd4a3eccf6f2d0f777f6ef4d"
 }

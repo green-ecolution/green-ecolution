@@ -8,7 +8,7 @@ import { vehicleDraftResolver } from '@green-ecolution/domain-wasm'
 import { ReactNode } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from '@green-ecolution/ui'
-import { VehicleType, DrivingLicense, VehicleStatus } from '@green-ecolution/backend-client'
+import { VehicleType, DrivingLicense, VehicleAvailability } from '@green-ecolution/backend-client'
 
 function TestWrapper({
   children,
@@ -40,7 +40,7 @@ const defaultFormValues: VehicleForm = {
   model: '',
   type: VehicleType.Transporter,
   drivingLicense: DrivingLicense.B,
-  status: VehicleStatus.Available,
+  availability: VehicleAvailability.Available,
   height: 0,
   width: 0,
   length: 0,
@@ -67,7 +67,7 @@ describe('FormForVehicle', () => {
     expect(screen.getByLabelText(/fahrzeugmodell/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/fahrzeugtyp/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/wasserkapazität/i)).toBeInTheDocument()
-    expect(screen.getByLabelText(/aktueller status/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/verfügbarkeit/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/führerscheinklasse/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/höhe des fahrzeugs/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/breite des fahrzeugs/i)).toBeInTheDocument()
@@ -113,7 +113,7 @@ describe('FormForVehicle', () => {
     expect(within(listbox).getByText('CE')).toBeInTheDocument()
   })
 
-  it('renders vehicle status select with options', async () => {
+  it('renders vehicle availability select with options', async () => {
     const user = userEvent.setup()
 
     render(
@@ -122,14 +122,13 @@ describe('FormForVehicle', () => {
       </TestWrapper>,
     )
 
-    const statusSelect = screen.getByRole('combobox', { name: /aktueller status/i })
-    await user.click(statusSelect)
+    const availabilitySelect = screen.getByRole('combobox', { name: /verfügbarkeit/i })
+    await user.click(availabilitySelect)
 
     const listbox = await screen.findByRole('listbox')
     expect(within(listbox).getByText('Verfügbar')).toBeInTheDocument()
     expect(within(listbox).getByText('Nicht Verfügbar')).toBeInTheDocument()
-    expect(within(listbox).getByText('In Betrieb')).toBeInTheDocument()
-    expect(within(listbox).getByText('Unbekannt')).toBeInTheDocument()
+    expect(within(listbox).queryByText('Im Einsatz')).not.toBeInTheDocument()
   })
 
   it('shows error message when displayError is true', () => {
@@ -165,7 +164,7 @@ describe('FormForVehicle', () => {
       model: 'Mercedes Sprinter',
       type: VehicleType.Transporter,
       drivingLicense: DrivingLicense.B,
-      status: VehicleStatus.Available,
+      availability: VehicleAvailability.Available,
       height: 2.5,
       width: 2.0,
       length: 6.0,
@@ -253,7 +252,7 @@ describe('FormForVehicle', () => {
       model: 'Mercedes Sprinter',
       type: VehicleType.Transporter,
       drivingLicense: DrivingLicense.B,
-      status: VehicleStatus.Available,
+      availability: VehicleAvailability.Available,
       height: 2.5,
       width: 2.0,
       length: 6.0,

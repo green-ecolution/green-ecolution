@@ -27,6 +27,13 @@ import {
     DrivingLicenseToJSON,
     DrivingLicenseToJSONTyped,
 } from './DrivingLicense';
+import type { VehicleAvailability } from './VehicleAvailability';
+import {
+    VehicleAvailabilityFromJSON,
+    VehicleAvailabilityFromJSONTyped,
+    VehicleAvailabilityToJSON,
+    VehicleAvailabilityToJSONTyped,
+} from './VehicleAvailability';
 import type { VehicleStatus } from './VehicleStatus';
 import {
     VehicleStatusFromJSON,
@@ -53,6 +60,12 @@ export interface ListResponseVehicleResponseDataInner {
      * @memberof ListResponseVehicleResponseDataInner
      */
     archivedAt?: string | null;
+    /**
+     * Whether the vehicle may be assigned to a watering plan.
+     * @type {VehicleAvailability}
+     * @memberof ListResponseVehicleResponseDataInner
+     */
+    availability: VehicleAvailability;
     /**
      * Timestamp when the vehicle was created (RFC 3339).
      * @type {string}
@@ -114,7 +127,8 @@ export interface ListResponseVehicleResponseDataInner {
      */
     provider?: string | null;
     /**
-     * Current operational status of the vehicle.
+     * Operational status. Read-only: derived from `availability` and the
+     * watering plans the vehicle is assigned to.
      * @type {VehicleStatus}
      * @memberof ListResponseVehicleResponseDataInner
      */
@@ -157,6 +171,7 @@ export interface ListResponseVehicleResponseDataInner {
  * Check if a given object implements the ListResponseVehicleResponseDataInner interface.
  */
 export function instanceOfListResponseVehicleResponseDataInner(value: object): value is ListResponseVehicleResponseDataInner {
+    if (!('availability' in value) || value['availability'] === undefined) return false;
     if (!('createdAt' in value) || value['createdAt'] === undefined) return false;
     if (!('description' in value) || value['description'] === undefined) return false;
     if (!('drivingLicense' in value) || value['drivingLicense'] === undefined) return false;
@@ -187,6 +202,7 @@ export function ListResponseVehicleResponseDataInnerFromJSONTyped(json: any, ign
         
         'additionalInformation': json['additional_information'] == null ? undefined : json['additional_information'],
         'archivedAt': json['archived_at'] == null ? undefined : json['archived_at'],
+        'availability': VehicleAvailabilityFromJSON(json['availability']),
         'createdAt': json['created_at'],
         'description': json['description'],
         'drivingLicense': DrivingLicenseFromJSON(json['driving_license']),
@@ -219,6 +235,7 @@ export function ListResponseVehicleResponseDataInnerToJSONTyped(value?: ListResp
         
         'additional_information': value['additionalInformation'],
         'archived_at': value['archivedAt'],
+        'availability': VehicleAvailabilityToJSON(value['availability']),
         'created_at': value['createdAt'],
         'description': value['description'],
         'driving_license': DrivingLicenseToJSON(value['drivingLicense']),

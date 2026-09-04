@@ -1,4 +1,4 @@
-import { VehicleType, DrivingLicense, VehicleStatus } from '@green-ecolution/backend-client'
+import { VehicleType, DrivingLicense, VehicleAvailability } from '@green-ecolution/backend-client'
 import FormForVehicle from '@/components/general/form/FormForVehicle'
 import UnsavedChangesDialog from '@/components/general/form/UnsavedChangesDialog'
 import BackLink from '@/components/general/links/BackLink'
@@ -16,7 +16,7 @@ const defaultForm: DefaultValues<VehicleForm> = {
   numberPlate: '',
   type: VehicleType.Transporter,
   drivingLicense: DrivingLicense.B,
-  status: VehicleStatus.Unknown,
+  availability: VehicleAvailability.Available,
   height: 2.5,
   width: 2,
   length: 6,

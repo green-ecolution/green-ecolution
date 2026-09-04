@@ -10,7 +10,7 @@ use domain::{
     vehicle::{NumberPlate, VehicleDimension, VehicleDraft, VehicleModel, VehicleView},
 };
 
-use super::{DrivingLicense, VehicleStatus, VehicleType};
+use super::{DrivingLicense, VehicleAvailability, VehicleStatus, VehicleType};
 
 /// Represents a watering vehicle used for urban green-space irrigation.
 #[derive(Debug, Serialize, utoipa::ToSchema)]
@@ -36,8 +36,11 @@ pub struct VehicleResponse {
     /// Manufacturer and model name.
     #[schema(example = "MAN TGE 3.180")]
     pub model: String,
-    /// Current operational status of the vehicle.
+    /// Operational status. Read-only: derived from `availability` and the
+    /// watering plans the vehicle is assigned to.
     pub status: VehicleStatus,
+    /// Whether the vehicle may be assigned to a watering plan.
+    pub availability: VehicleAvailability,
     /// Type/category of the vehicle.
     #[serde(rename = "type")]
     pub vehicle_type: VehicleType,
@@ -83,6 +86,7 @@ impl From<&VehicleView> for VehicleResponse {
             water_capacity: value.water_capacity,
             model: value.model.clone(),
             status: value.status.into(),
+            availability: value.availability.into(),
             vehicle_type: value.vehicle_type.into(),
             driving_license: value.driving_license.into(),
             height: value.height,
@@ -112,8 +116,8 @@ pub struct VehicleCreateRequest {
     /// Manufacturer and model name.
     #[schema(example = "MAN TGE 3.180")]
     pub model: String,
-    /// Current operational status of the vehicle.
-    pub status: VehicleStatus,
+    /// Whether the vehicle may be assigned to a watering plan.
+    pub availability: VehicleAvailability,
     /// Type/category of the vehicle.
     #[serde(rename = "type")]
     pub vehicle_type: VehicleType,
@@ -161,8 +165,8 @@ pub struct VehicleUpdateRequest {
     /// Manufacturer and model name.
     #[schema(example = "MAN TGE 3.180")]
     pub model: String,
-    /// Current operational status of the vehicle.
-    pub status: VehicleStatus,
+    /// Whether the vehicle may be assigned to a watering plan.
+    pub availability: VehicleAvailability,
     /// Type/category of the vehicle.
     #[serde(rename = "type")]
     pub vehicle_type: VehicleType,
@@ -213,7 +217,7 @@ impl VehicleCreateRequest {
             number_plate,
             description: self.description,
             water_capacity,
-            status: self.status.into(),
+            availability: self.availability.into(),
             vehicle_type: self.vehicle_type.into(),
             model,
             driving_license: self.driving_license.into(),
@@ -238,7 +242,7 @@ impl VehicleUpdateRequest {
             number_plate,
             description: self.description,
             water_capacity,
-            status: self.status.into(),
+            availability: self.availability.into(),
             vehicle_type: self.vehicle_type.into(),
             model,
             driving_license: self.driving_license.into(),

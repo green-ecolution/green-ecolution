@@ -24,8 +24,8 @@ use domain::{
         watering_status::WateringStatus as DomainWateringStatus,
     },
     vehicle::{
-        DrivingLicense as DomainDrivingLicense, VehicleStatus as DomainVehicleStatus,
-        VehicleType as DomainVehicleType,
+        DrivingLicense as DomainDrivingLicense, VehicleAvailability as DomainVehicleAvailability,
+        VehicleStatus as DomainVehicleStatus, VehicleType as DomainVehicleType,
     },
     watering_plan::WateringPlanStatus as DomainWateringPlanStatus,
 };
@@ -188,7 +188,21 @@ pub enum DrivingLicense {
     CE,
 }
 
-/// Operational status of a watering vehicle.
+/// Whether a watering vehicle may be assigned at all. Set by hand; the only
+/// part of a vehicle's state the system cannot observe for itself.
+#[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
+#[serde(rename_all = "snake_case")]
+#[schema(example = "available")]
+pub enum VehicleAvailability {
+    /// Vehicle may be assigned to a watering plan.
+    Available,
+    /// Vehicle is temporarily out of service (e.g. maintenance).
+    #[serde(rename = "not_available", alias = "not available")]
+    NotAvailable,
+}
+
+/// Operational status of a watering vehicle. Read-only: derived from the
+/// vehicle's availability and the watering plans it is assigned to.
 #[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "snake_case")]
 #[schema(example = "available")]
@@ -200,8 +214,6 @@ pub enum VehicleStatus {
     /// Vehicle is temporarily unavailable (e.g. maintenance).
     #[serde(rename = "not_available", alias = "not available")]
     NotAvailable,
-    /// Vehicle status could not be determined.
-    Unknown,
 }
 
 /// Classification of a watering vehicle.
@@ -288,13 +300,11 @@ impl From<SoilCondition> for DomainSoilCondition {
     }
 }
 
-impl From<VehicleStatus> for DomainVehicleStatus {
-    fn from(value: VehicleStatus) -> Self {
+impl From<VehicleAvailability> for DomainVehicleAvailability {
+    fn from(value: VehicleAvailability) -> Self {
         match value {
-            VehicleStatus::Active => Self::Active,
-            VehicleStatus::Available => Self::Available,
-            VehicleStatus::NotAvailable => Self::NotAvailable,
-            VehicleStatus::Unknown => Self::Unknown,
+            VehicleAvailability::Available => Self::Available,
+            VehicleAvailability::NotAvailable => Self::NotAvailable,
         }
     }
 }
@@ -426,7 +436,15 @@ impl From<DomainVehicleStatus> for VehicleStatus {
             DomainVehicleStatus::Active => Self::Active,
             DomainVehicleStatus::Available => Self::Available,
             DomainVehicleStatus::NotAvailable => Self::NotAvailable,
-            DomainVehicleStatus::Unknown => Self::Unknown,
+        }
+    }
+}
+
+impl From<DomainVehicleAvailability> for VehicleAvailability {
+    fn from(value: DomainVehicleAvailability) -> Self {
+        match value {
+            DomainVehicleAvailability::Available => Self::Available,
+            DomainVehicleAvailability::NotAvailable => Self::NotAvailable,
         }
     }
 }

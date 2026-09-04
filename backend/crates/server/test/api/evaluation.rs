@@ -72,7 +72,7 @@ async fn get_evaluation_counts_vehicles_and_sensors() {
             "description": "Test",
             "water_capacity": 5000.0,
             "model": "MAN",
-            "status": "available",
+            "availability": "available",
             "type": "transporter",
             "driving_license": "C",
             "height": 3.0, "width": 2.5, "length": 8.0, "weight": 12000.0
@@ -123,7 +123,7 @@ async fn get_evaluation_includes_vehicle_watering_plan_stats() {
                 "description": "Test",
                 "water_capacity": 5000.0,
                 "model": "MAN",
-                "status": "available",
+                "availability": "available",
                 "type": "transporter",
                 "driving_license": "C",
                 "height": 3.0, "width": 2.5, "length": 8.0, "weight": 12000.0
@@ -218,7 +218,7 @@ async fn get_evaluation_includes_region_watering_plan_stats() {
                 "description": "Test",
                 "water_capacity": 5000.0,
                 "model": "MAN",
-                "status": "available",
+                "availability": "available",
                 "type": "transporter",
                 "driving_license": "C",
                 "height": 3.0, "width": 2.5, "length": 8.0, "weight": 12000.0

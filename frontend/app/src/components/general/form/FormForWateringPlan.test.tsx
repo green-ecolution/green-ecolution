@@ -13,6 +13,7 @@ import {
   WateringPlanStatus,
   VehicleType,
   DrivingLicense,
+  VehicleAvailability,
   VehicleStatus,
   type StartPointResponse,
 } from '@green-ecolution/backend-client'
@@ -75,6 +76,7 @@ const mockTransporters = [
     drivingLicense: DrivingLicense.B,
     type: VehicleType.Transporter,
     status: VehicleStatus.Available,
+    availability: VehicleAvailability.Available,
   },
   {
     id: 'vehicle-uuid-2',
@@ -82,6 +84,7 @@ const mockTransporters = [
     drivingLicense: DrivingLicense.C,
     type: VehicleType.Transporter,
     status: VehicleStatus.Available,
+    availability: VehicleAvailability.Available,
   },
 ] as unknown as Vehicle[]
 
@@ -92,6 +95,7 @@ const mockTrailers = [
     drivingLicense: DrivingLicense.Be,
     type: VehicleType.Trailer,
     status: VehicleStatus.Available,
+    availability: VehicleAvailability.Available,
   },
 ] as unknown as Vehicle[]
 

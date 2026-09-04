@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll } from 'vitest'
 import type { TFunction } from 'i18next'
 import {
   DrivingLicense,
+  VehicleAvailability,
   VehicleStatus,
   VehicleType,
   UserStatus,
@@ -77,6 +78,7 @@ const makeVehicle = (id: string, license: DrivingLicense, type: VehicleType): Ve
   weight: 0,
   waterCapacity: 0,
   status: VehicleStatus.Active,
+  availability: VehicleAvailability.Available,
   organizationId: '',
   createdAt: '',
   updatedAt: '',

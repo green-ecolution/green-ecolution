@@ -41,7 +41,7 @@ async fn create_transporter(app: &crate::helpers::TestApp) -> serde_json::Value 
         "description": "Routing-Transporter",
         "water_capacity": 2000.0,
         "model": "Unimog",
-        "status": "available",
+        "availability": "available",
         "type": "transporter",
         "driving_license": "BE",
         "height": 2.1, "width": 2.0, "length": 5.0, "weight": 3500.0

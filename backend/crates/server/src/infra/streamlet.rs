@@ -333,7 +333,9 @@ mod tests {
     use super::*;
     use domain::routing::{RouteOptimizer, RouteStop};
     use domain::shared::coordinates::Coordinate;
-    use domain::vehicle::{DrivingLicense, Vehicle, VehicleSnapshot, VehicleStatus, VehicleType};
+    use domain::vehicle::{
+        DrivingLicense, Vehicle, VehicleAvailability, VehicleSnapshot, VehicleType,
+    };
     use wiremock::matchers::{method, path};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -344,7 +346,7 @@ mod tests {
             number_plate: "FL GE 1234".to_string(),
             description: None,
             water_capacity,
-            status: VehicleStatus::Active,
+            availability: VehicleAvailability::Available,
             vehicle_type,
             model: "Unimog".to_string(),
             driving_license: DrivingLicense::BE,

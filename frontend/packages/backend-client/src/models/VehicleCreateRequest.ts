@@ -27,13 +27,13 @@ import {
     DrivingLicenseToJSON,
     DrivingLicenseToJSONTyped,
 } from './DrivingLicense';
-import type { VehicleStatus } from './VehicleStatus';
+import type { VehicleAvailability } from './VehicleAvailability';
 import {
-    VehicleStatusFromJSON,
-    VehicleStatusFromJSONTyped,
-    VehicleStatusToJSON,
-    VehicleStatusToJSONTyped,
-} from './VehicleStatus';
+    VehicleAvailabilityFromJSON,
+    VehicleAvailabilityFromJSONTyped,
+    VehicleAvailabilityToJSON,
+    VehicleAvailabilityToJSONTyped,
+} from './VehicleAvailability';
 
 /**
  * Request body for creating a new watering vehicle.
@@ -47,6 +47,12 @@ export interface VehicleCreateRequest {
      * @memberof VehicleCreateRequest
      */
     additionalInformation?: object | null;
+    /**
+     * Whether the vehicle may be assigned to a watering plan.
+     * @type {VehicleAvailability}
+     * @memberof VehicleCreateRequest
+     */
+    availability: VehicleAvailability;
     /**
      * Human-readable description of the vehicle.
      * @type {string}
@@ -97,12 +103,6 @@ export interface VehicleCreateRequest {
      */
     provider?: string | null;
     /**
-     * Current operational status of the vehicle.
-     * @type {VehicleStatus}
-     * @memberof VehicleCreateRequest
-     */
-    status: VehicleStatus;
-    /**
      * Type/category of the vehicle.
      * @type {VehicleType}
      * @memberof VehicleCreateRequest
@@ -134,12 +134,12 @@ export interface VehicleCreateRequest {
  * Check if a given object implements the VehicleCreateRequest interface.
  */
 export function instanceOfVehicleCreateRequest(value: object): value is VehicleCreateRequest {
+    if (!('availability' in value) || value['availability'] === undefined) return false;
     if (!('drivingLicense' in value) || value['drivingLicense'] === undefined) return false;
     if (!('height' in value) || value['height'] === undefined) return false;
     if (!('length' in value) || value['length'] === undefined) return false;
     if (!('model' in value) || value['model'] === undefined) return false;
     if (!('numberPlate' in value) || value['numberPlate'] === undefined) return false;
-    if (!('status' in value) || value['status'] === undefined) return false;
     if (!('type' in value) || value['type'] === undefined) return false;
     if (!('waterCapacity' in value) || value['waterCapacity'] === undefined) return false;
     if (!('weight' in value) || value['weight'] === undefined) return false;
@@ -158,6 +158,7 @@ export function VehicleCreateRequestFromJSONTyped(json: any, ignoreDiscriminator
     return {
         
         'additionalInformation': json['additional_information'] == null ? undefined : json['additional_information'],
+        'availability': VehicleAvailabilityFromJSON(json['availability']),
         'description': json['description'] == null ? undefined : json['description'],
         'drivingLicense': DrivingLicenseFromJSON(json['driving_license']),
         'height': json['height'],
@@ -166,7 +167,6 @@ export function VehicleCreateRequestFromJSONTyped(json: any, ignoreDiscriminator
         'numberPlate': json['number_plate'],
         'organizationId': json['organization_id'] == null ? undefined : json['organization_id'],
         'provider': json['provider'] == null ? undefined : json['provider'],
-        'status': VehicleStatusFromJSON(json['status']),
         'type': VehicleTypeFromJSON(json['type']),
         'waterCapacity': json['water_capacity'],
         'weight': json['weight'],
@@ -186,6 +186,7 @@ export function VehicleCreateRequestToJSONTyped(value?: VehicleCreateRequest | n
     return {
         
         'additional_information': value['additionalInformation'],
+        'availability': VehicleAvailabilityToJSON(value['availability']),
         'description': value['description'],
         'driving_license': DrivingLicenseToJSON(value['drivingLicense']),
         'height': value['height'],
@@ -194,7 +195,6 @@ export function VehicleCreateRequestToJSONTyped(value?: VehicleCreateRequest | n
         'number_plate': value['numberPlate'],
         'organization_id': value['organizationId'],
         'provider': value['provider'],
-        'status': VehicleStatusToJSON(value['status']),
         'type': VehicleTypeToJSON(value['type']),
         'water_capacity': value['waterCapacity'],
         'weight': value['weight'],

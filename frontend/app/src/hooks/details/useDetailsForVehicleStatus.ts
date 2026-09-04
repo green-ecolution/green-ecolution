@@ -1,19 +1,33 @@
 import { useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { VehicleStatus } from '@green-ecolution/backend-client'
+import { VehicleAvailability, VehicleStatus } from '@green-ecolution/backend-client'
 import { EnumsTranslate, StatusColor } from './types'
 
-const VehicleStatusEntries: { value: VehicleStatus; color: StatusColor; bgcolor: string }[] = [
-  { value: VehicleStatus.Unknown, color: 'outline-dark', bgcolor: 'none' },
-  { value: VehicleStatus.NotAvailable, color: 'outline-red', bgcolor: 'none' },
-  { value: VehicleStatus.Available, color: 'outline-green-dark', bgcolor: 'none' },
-  { value: VehicleStatus.Active, color: 'outline-green-light', bgcolor: 'green-light-200' },
-]
-
-export interface VehicleStatusDetails {
-  value: VehicleStatus
+interface StatusStyle {
   color: StatusColor
   bgcolor: string
+}
+
+const VehicleStatusStyles: Record<VehicleStatus, StatusStyle> = {
+  [VehicleStatus.NotAvailable]: { color: 'outline-red', bgcolor: 'none' },
+  [VehicleStatus.Available]: { color: 'outline-green-dark', bgcolor: 'none' },
+  [VehicleStatus.Active]: { color: 'outline-green-light', bgcolor: 'green-light-200' },
+}
+
+/** Only a human can assert these two; `active` is derived and never chosen. */
+const VehicleAvailabilityOrder: VehicleAvailability[] = [
+  VehicleAvailability.Available,
+  VehicleAvailability.NotAvailable,
+]
+
+export interface VehicleStatusDetails extends StatusStyle {
+  value: VehicleStatus
+  label: string
+  description: string
+}
+
+export interface VehicleAvailabilityDetails {
+  value: VehicleAvailability
   label: string
   description: string
 }
@@ -23,21 +37,27 @@ export const useVehicleStatusDetails = (): ((status: VehicleStatus) => VehicleSt
   const { t } = useTranslation('enums')
   const translate = t as EnumsTranslate
   return useCallback(
-    (status: VehicleStatus): VehicleStatusDetails => {
-      const entry =
-        VehicleStatusEntries.find((option) => option.value === status) ?? VehicleStatusEntries[0]
-      return {
-        ...entry,
-        label: translate(`vehicleStatus.${entry.value}.label`),
-        description: translate(`vehicleStatus.${entry.value}.description`),
-      }
-    },
+    (status: VehicleStatus): VehicleStatusDetails => ({
+      ...VehicleStatusStyles[status],
+      value: status,
+      label: translate(`vehicleStatus.${status}.label`),
+      description: translate(`vehicleStatus.${status}.description`),
+    }),
     [translate],
   )
 }
 
-/** The full status list with translated labels, in display order. */
-export const useVehicleStatusOptions = (): VehicleStatusDetails[] => {
-  const getDetails = useVehicleStatusDetails()
-  return useMemo(() => VehicleStatusEntries.map((entry) => getDetails(entry.value)), [getDetails])
+/** The selectable availabilities with translated labels, in display order. */
+export const useVehicleAvailabilityOptions = (): VehicleAvailabilityDetails[] => {
+  const { t } = useTranslation('enums')
+  const translate = t as EnumsTranslate
+  return useMemo(
+    () =>
+      VehicleAvailabilityOrder.map((value) => ({
+        value,
+        label: translate(`vehicleStatus.${value}.label`),
+        description: translate(`vehicleStatus.${value}.description`),
+      })),
+    [translate],
+  )
 }

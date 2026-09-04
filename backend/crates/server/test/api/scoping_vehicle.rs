@@ -11,7 +11,7 @@ fn vehicle_payload(plate: &str, org: Option<&str>) -> serde_json::Value {
         "description": "Testfahrzeug",
         "water_capacity": 5000.0,
         "model": "MAN TGS",
-        "status": "available",
+        "availability": "available",
         "type": "transporter",
         "driving_license": "C",
         "height": 3.2,
