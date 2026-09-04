@@ -80,6 +80,17 @@ describe('generate', () => {
     await expect(generate({ root, language: 'de' })).rejects.toThrow(/duplicate slug "same"/)
   })
 
+  it('rejects two headings in one chapter that slugify to the same anchor', async () => {
+    await writeFile(
+      join(root, 'content', 'de', '10-a.md'),
+      chapter('a', 'intro', '## Bäume\n\nText.\n\n## Baume\n\nText.'),
+    )
+
+    await expect(generate({ root, language: 'de' })).rejects.toThrow(
+      /duplicate anchor "baume" in chapter "a"/,
+    )
+  })
+
   it('rejects a chapter referring to an unknown part', async () => {
     await writeFile(
       join(root, 'content', 'de', '10-a.md'),

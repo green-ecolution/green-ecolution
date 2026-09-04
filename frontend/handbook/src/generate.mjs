@@ -58,6 +58,17 @@ export async function generate({ root, language }) {
     const { meta, blocks, search: entries } = parseChapter(source, { file })
 
     if (chapters[meta.slug]) throw new Error(`handbook: ${file}: duplicate slug "${meta.slug}"`)
+
+    const anchors = new Set()
+    for (const section of meta.sections) {
+      if (anchors.has(section.anchor)) {
+        throw new Error(
+          `handbook: ${file}: duplicate anchor "${section.anchor}" in chapter "${meta.slug}"`,
+        )
+      }
+      anchors.add(section.anchor)
+    }
+
     if (!parts.some((part) => part.id === meta.part)) {
       throw new Error(`handbook: ${file}: unknown part "${meta.part}"`)
     }
