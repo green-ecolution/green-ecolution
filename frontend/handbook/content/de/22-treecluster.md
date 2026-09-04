@@ -58,9 +58,10 @@ dabei nur die Gruppe, ihre Bäume bleiben erhalten.
 
 Der Bewässerungszustand eines Baums wird ausschließlich aus den Messwerten seines
 Sensors berechnet, zusammen mit seinem Pflanzjahr und, je nach Sensortyp, der Bodenart
-seiner Gruppe. Ist ein Baum mit keinem Sensor ausgestattet, bleibt sein
-Bewässerungszustand deshalb dauerhaft **Unbekannt**; es gibt keinen anderen Weg, ihn zu
-ermitteln.
+seiner Gruppe. Ohne Sensor lässt sich für einen Baum nie **In Ordnung**, **Leicht
+trocken** oder **Sehr trocken** ermitteln, und er steht ansonsten auf **Unbekannt** —
+nur wenn ein Einsatzplan seiner Gruppe abgeschlossen wird, zeigt auch er für eine Weile
+**Soeben bewässert**.
 
 Der Bewässerungszustand einer Gruppe ist ein Mehrheitswert über die Zustände ihrer
 Bäume mit Sensor. Bäume ohne Sensor zählen dabei nicht mit. Stehen sich zwei Zustände
@@ -68,8 +69,9 @@ mit gleich vielen Stimmen gegenüber, entscheidet die Anwendung zugunsten des
 alarmierenderen: **Sehr trocken** vor **Leicht trocken** vor **Soeben bewässert** vor
 **In Ordnung**. Hat keiner der Bäume der Gruppe einen Sensor oder enthält die Gruppe
 noch keine Bäume, ist auch ihr Zustand **Unbekannt**. Der Zustand **Soeben bewässert**
-wird gesetzt, sobald ein Einsatzplan für die Gruppe abgeschlossen wird, und weicht nach
-einer gewissen Zeit wieder dem aus den Sensordaten berechneten Zustand.
+wird gesetzt, sobald ein Einsatzplan für die Gruppe abgeschlossen wird, und fällt nach
+einer gewissen Zeit auf **Unbekannt** zurück; einen aus Sensordaten berechneten Zustand
+zeigt die Gruppe erst wieder, sobald tatsächlich neue Messwerte eintreffen.
 
 Ist der Zustand einer Gruppe unbekannt, erklärt ein Hinweis auf dem Dashboard den oder
 die Gründe dafür: dass keiner ihrer Bäume einen Sensor trägt, dass die Bodenart der

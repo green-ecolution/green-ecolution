@@ -29,7 +29,7 @@ Schaltfläche **Gruppe anlegen**.
 ## Ebenen und Legende
 
 Über die Schaltfläche mit dem Fragezeichen unten links blendest du die Legende
-**Bewässerungszustand** ein und wieder aus. Sie zeigt dieselben fünf Zustände, die auch
+**Bewässerungsstatus** ein und wieder aus. Sie zeigt dieselben fünf Zustände, die auch
 Baum- und Gruppensymbole einfärben:
 
 | Zustand          | Bedeutung                                                      |
