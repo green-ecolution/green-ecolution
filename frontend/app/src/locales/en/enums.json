@@ -76,10 +76,6 @@
     }
   },
   "wateringPlanStatus": {
-    "unknown": {
-      "label": "Unknown",
-      "description": "The watering plan's status is unknown."
-    },
     "active": {
       "label": "Active",
       "description": "The watering plan is active and is currently being carried out."

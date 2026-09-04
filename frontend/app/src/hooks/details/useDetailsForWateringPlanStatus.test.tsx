@@ -38,15 +38,8 @@ describe('useWateringPlanStatusTransitionOptions', () => {
     WateringPlanStatus.Finished,
     WateringPlanStatus.Canceled,
     WateringPlanStatus.NotCompleted,
-    WateringPlanStatus.Unknown,
   ])('offers no transition out of the terminal status %s', (status) => {
     expect(valuesFor(status)).toEqual([])
-  })
-
-  it('never offers "unknown" as a target', () => {
-    for (const status of Object.values(WateringPlanStatus)) {
-      expect(valuesFor(status)).not.toContain(WateringPlanStatus.Unknown)
-    }
   })
 
   it('carries the label and colour from the status catalogue', () => {

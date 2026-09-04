@@ -9,7 +9,7 @@ export const DONE_STATUSES: WateringPlanStatus[] = [
   WateringPlanStatus.NotCompleted,
 ]
 
-export function columnForStatus(status: WateringPlanStatus): BoardColumnId | null {
+export function columnForStatus(status: WateringPlanStatus): BoardColumnId {
   switch (status) {
     case WateringPlanStatus.Planned:
       return 'planned'
@@ -19,8 +19,6 @@ export function columnForStatus(status: WateringPlanStatus): BoardColumnId | nul
     case WateringPlanStatus.Canceled:
     case WateringPlanStatus.NotCompleted:
       return 'done'
-    case WateringPlanStatus.Unknown:
-      return null
   }
 }
 

@@ -17,7 +17,6 @@ const statusDot: Record<WateringPlanStatus, string> = {
   [WateringPlanStatus.Finished]: 'bg-green-dark-700',
   [WateringPlanStatus.Canceled]: 'bg-red',
   [WateringPlanStatus.NotCompleted]: 'bg-dark-400',
-  [WateringPlanStatus.Unknown]: 'bg-dark-300',
 }
 
 interface WateringPlanBoardCardProps {

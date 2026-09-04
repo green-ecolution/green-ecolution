@@ -12104,8 +12104,7 @@
           "active",
           "canceled",
           "finished",
-          "not_completed",
-          "unknown"
+          "not_completed"
         ],
         "example": "planned"
       },

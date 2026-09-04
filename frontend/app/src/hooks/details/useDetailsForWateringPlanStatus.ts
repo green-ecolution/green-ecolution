@@ -4,14 +4,13 @@ import { WateringPlanStatus } from '@green-ecolution/backend-client'
 import type { WateringPlan } from '@/api/backendApi'
 import type { EnumsTranslate, StatusColor } from './types'
 
-const WateringPlanStatusEntries: { value: WateringPlanStatus; color: StatusColor }[] = [
-  { value: WateringPlanStatus.Unknown, color: 'outline-dark' },
-  { value: WateringPlanStatus.Active, color: 'outline-green-light' },
-  { value: WateringPlanStatus.Canceled, color: 'outline-red' },
-  { value: WateringPlanStatus.Finished, color: 'outline-green-dark' },
-  { value: WateringPlanStatus.NotCompleted, color: 'outline-dark' },
-  { value: WateringPlanStatus.Planned, color: 'outline-dark' },
-]
+const wateringPlanStatusColors: Record<WateringPlanStatus, StatusColor> = {
+  [WateringPlanStatus.Active]: 'outline-green-light',
+  [WateringPlanStatus.Canceled]: 'outline-red',
+  [WateringPlanStatus.Finished]: 'outline-green-dark',
+  [WateringPlanStatus.NotCompleted]: 'outline-dark',
+  [WateringPlanStatus.Planned]: 'outline-dark',
+}
 
 export interface WateringPlanStatusDetails {
   value: WateringPlanStatus
@@ -27,16 +26,12 @@ export const useWateringPlanStatusDetails = (): ((
   const { t } = useTranslation('enums')
   const translate = t as EnumsTranslate
   return useCallback(
-    (status: WateringPlanStatus): WateringPlanStatusDetails => {
-      const entry =
-        WateringPlanStatusEntries.find((option) => option.value === status) ??
-        WateringPlanStatusEntries[0]
-      return {
-        ...entry,
-        label: translate(`wateringPlanStatus.${entry.value}.label`),
-        description: translate(`wateringPlanStatus.${entry.value}.description`),
-      }
-    },
+    (status: WateringPlanStatus): WateringPlanStatusDetails => ({
+      value: status,
+      color: wateringPlanStatusColors[status],
+      label: translate(`wateringPlanStatus.${status}.label`),
+      description: translate(`wateringPlanStatus.${status}.description`),
+    }),
     [translate],
   )
 }
@@ -57,7 +52,6 @@ const wateringPlanStatusTransitions: Record<WateringPlanStatus, WateringPlanStat
   [WateringPlanStatus.Finished]: [],
   [WateringPlanStatus.Canceled]: [],
   [WateringPlanStatus.NotCompleted]: [],
-  [WateringPlanStatus.Unknown]: [],
 }
 
 /**
