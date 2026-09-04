@@ -7,7 +7,7 @@ function ChapterToc({ sections }: { sections: ChapterSection[] }) {
   if (sections.length === 0) return null
 
   return (
-    <nav aria-label={t('chapter.onThisPage')} className="text-sm">
+    <nav className="text-sm">
       <p className="font-lato font-semibold mb-2">{t('chapter.onThisPage')}</p>
       <ul className="space-y-1 border-l border-dark-100">
         {sections.map((section) => (
