@@ -40,6 +40,8 @@ export default defineConfig({
       target: 'react',
       autoCodeSplitting: true,
       quoteStyle: 'single',
+      // Tests sit next to the routes they cover and export no Route.
+      routeFileIgnorePattern: '\\.(test|spec)\\.[jt]sx?$',
     }),
     tailwindcss(),
     react(),
@@ -106,21 +108,40 @@ export default defineConfig({
   },
   build: {
     target: 'esnext',
-    rollupOptions: {
+    // maplibre-gl ships as a single ~1 MB module that cannot be split further;
+    // it is lazy-loaded on the map routes. Sits just above that baseline so the
+    // warning still catches anything larger.
+    chunkSizeWarningLimit: 1100,
+    rolldownOptions: {
+      // Build-performance profiling only, nothing actionable in this project.
+      checks: { pluginTimings: false },
       output: {
-        advancedChunks: {
+        codeSplitting: {
           groups: [
             { name: 'domain-wasm', test: /[\\/]domain-wasm[\\/]/ },
             { name: 'maplibre', test: /maplibre-gl/ },
+            {
+              name: 'react-vendor',
+              test: /[\\/]node_modules[\\/](react|react-dom|scheduler)[\\/]/,
+            },
           ],
         },
       },
     },
   },
   resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src'),
-      'lottie-react': path.resolve(__dirname, 'node_modules/lottie-react/build/index.es.js'),
-    },
+    alias: [
+      { find: '@', replacement: path.resolve(import.meta.dirname, './src') },
+      {
+        find: /^lottie-react$/,
+        replacement: path.resolve(
+          import.meta.dirname,
+          'node_modules/lottie-react/build/index.es.js',
+        ),
+      },
+      // The light player drops the expression engine and its direct `eval`.
+      // Our SVGator animations use no expressions.
+      { find: /^lottie-web$/, replacement: 'lottie-web/build/player/esm/lottie_light.min.js' },
+    ],
   },
 })
