@@ -86,6 +86,60 @@ describe('parseChapter', () => {
     ])
   })
 
+  it('indexes content that precedes the first heading under the chapter title', () => {
+    const { search } = parseChapter(
+      chapter('Einleitender Absatz.\n\n## Route festlegen\n\nText.'),
+      { file: '10-demo.md' },
+    )
+
+    expect(search[0]).toEqual({
+      slug: 'demo',
+      anchor: '',
+      sectionTitle: 'Demo-Kapitel',
+      text: 'Einleitender Absatz.',
+    })
+  })
+
+  it('indexes a chapter that has no headings at all', () => {
+    const { search } = parseChapter(
+      chapter('| Begriff | Erklärung |\n| --- | --- |\n| Anwuchsfenster | Zeitfenster nach der Pflanzung. |'),
+      { file: '90-glossary.md' },
+    )
+
+    expect(search).toEqual([
+      {
+        slug: 'demo',
+        anchor: '',
+        sectionTitle: 'Demo-Kapitel',
+        text: 'Begriff Erklärung Anwuchsfenster Zeitfenster nach der Pflanzung.',
+      },
+    ])
+  })
+
+  it('drops the chapter bucket when the chapter opens with a heading', () => {
+    const { search } = parseChapter(chapter('## Abschnitt\n\nText.'), { file: '10-demo.md' })
+
+    expect(search.map((entry) => entry.anchor)).toEqual(['abschnitt'])
+  })
+
+  it('indexes list and step items', () => {
+    const { search } = parseChapter(
+      chapter('## A\n\n- Erster Punkt\n- Zweiter Punkt\n\n1. Erster Schritt\n2. Zweiter Schritt'),
+      { file: '10-demo.md' },
+    )
+
+    expect(search[0].text).toBe('Erster Punkt Zweiter Punkt Erster Schritt Zweiter Schritt')
+  })
+
+  it('indexes callout children', () => {
+    const { search } = parseChapter(
+      chapter('## A\n\n> [!NOTE]\n> Diese Seite setzt `tree:read` voraus.'),
+      { file: '10-demo.md' },
+    )
+
+    expect(search[0].text).toBe('Diese Seite setzt tree:read voraus.')
+  })
+
   it('rejects a level-1 heading', () => {
     expect(() => parseChapter(chapter('# Titel\n\nText.'), { file: '10-demo.md' })).toThrow(
       /10-demo\.md.*level-1 heading/,

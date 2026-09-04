@@ -22,9 +22,32 @@ function readFrontmatter(tree, ctx) {
   return data
 }
 
-function sectionsAndSearch(blocks, slug) {
+function searchText(block) {
+  switch (block.kind) {
+    case 'paragraph':
+      return plainText(block.children)
+    case 'list':
+    case 'steps':
+      return block.items.map(plainText).filter(Boolean).join(' ')
+    case 'table':
+      return [block.head, ...block.rows]
+        .flatMap((row) => row.map(plainText))
+        .filter(Boolean)
+        .join(' ')
+    case 'callout':
+      return block.children.map(searchText).filter(Boolean).join(' ')
+    default:
+      return ''
+  }
+}
+
+function sectionsAndSearch(blocks, slug, title) {
   const sections = []
-  const search = []
+  // A chapter may open with content before its first heading — a lead
+  // paragraph, a permission callout, or the glossary's single table, which
+  // has no headings at all. The empty anchor lands such a hit at the top of
+  // the chapter; the bucket is dropped again when nothing precedes a heading.
+  const search = [{ slug, anchor: '', sectionTitle: title, text: '' }]
 
   for (const block of blocks) {
     if (block.kind === 'heading') {
@@ -33,12 +56,11 @@ function sectionsAndSearch(blocks, slug) {
       continue
     }
     const current = search.at(-1)
-    if (!current) continue
-    const text = block.kind === 'paragraph' ? plainText(block.children) : ''
+    const text = searchText(block)
     if (text) current.text = current.text ? `${current.text} ${text}` : text
   }
 
-  return { sections, search }
+  return { sections, search: search.filter((entry) => entry.anchor !== '' || entry.text !== '') }
 }
 
 export function parseChapter(source, { file }) {
@@ -48,7 +70,7 @@ export function parseChapter(source, { file }) {
   ctx.slug = data.slug
 
   const blocks = toBlocks(tree.children.slice(1), ctx)
-  const { sections, search } = sectionsAndSearch(blocks, data.slug)
+  const { sections, search } = sectionsAndSearch(blocks, data.slug, data.title)
 
   return {
     meta: {

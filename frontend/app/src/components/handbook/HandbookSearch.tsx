@@ -72,7 +72,7 @@ function HandbookSearch() {
               <Link
                 to="/help/$slug"
                 params={{ slug: hit.slug }}
-                hash={hit.anchor}
+                hash={hit.anchor || undefined}
                 className="block rounded-xl border border-dark-100 p-3 transition-colors duration-base ease-out hover:border-green-dark"
               >
                 <span className="text-sm text-dark-600">{hit.chapterTitle}</span>

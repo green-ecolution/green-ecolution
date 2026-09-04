@@ -86,6 +86,22 @@ describe('HandbookSearch', () => {
     expect(item?.querySelectorAll('span')).toHaveLength(2)
   })
 
+  it('links a chapter-level hit to the top of the chapter, without a dangling hash', async () => {
+    const entries: SearchEntry[] = [
+      { slug: 'glossary', anchor: '', sectionTitle: 'Glossar', text: 'Anwuchsfenster erklärt.' },
+    ]
+    mockedLoadSearchEntries.mockResolvedValue(entries)
+    const user = userEvent.setup()
+    renderHandbookSearch()
+
+    await user.type(await screen.findByLabelText(/suchen/i), 'anwuchsfenster')
+
+    await waitFor(() => {
+      expect(screen.getByRole('link')).toBeInTheDocument()
+    })
+    expect(screen.getByRole('link')).toHaveAttribute('href', '/help/glossary')
+  })
+
   it('shows an error message instead of hanging silently when the search text fails to load', async () => {
     mockedLoadSearchEntries.mockRejectedValue(new Error('chunk load failed'))
     vi.spyOn(console, 'error').mockImplementation(() => undefined)
