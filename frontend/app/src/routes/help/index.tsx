@@ -4,6 +4,7 @@ import { Download } from 'lucide-react'
 import { Button } from '@green-ecolution/ui'
 import { handbookIndex } from '@/lib/handbook'
 import HandbookSearch from '@/components/handbook/HandbookSearch'
+import LanguageFallbackNotice from '@/components/handbook/LanguageFallbackNotice'
 
 export const Route = createFileRoute('/help/')({
   component: HandbookOverview,
@@ -26,6 +27,8 @@ function HandbookOverview() {
           </a>
         </Button>
       </article>
+
+      <LanguageFallbackNotice className="mb-8 2xl:w-4/5" />
 
       <HandbookSearch />
 

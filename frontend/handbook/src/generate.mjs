@@ -98,6 +98,7 @@ export async function generate({ root, language }) {
   }
 
   const index = {
+    language,
     parts: parts.map((part) => ({
       ...part,
       chapters: Object.values(chapters)

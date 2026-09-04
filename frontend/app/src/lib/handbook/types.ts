@@ -42,6 +42,8 @@ export interface HandbookPart {
 }
 
 export interface HandbookIndex {
+  /** The single language the chapters were generated in. */
+  language: string
   parts: HandbookPart[]
   chapters: Record<string, ChapterMeta>
 }

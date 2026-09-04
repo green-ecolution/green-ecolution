@@ -4,6 +4,7 @@ import { ArrowLeft } from 'lucide-react'
 import { handbookIndex, loadChapter } from '@/lib/handbook'
 import Blocks from '@/components/handbook/Blocks'
 import ChapterToc from '@/components/handbook/ChapterToc'
+import LanguageFallbackNotice from '@/components/handbook/LanguageFallbackNotice'
 
 export const Route = createFileRoute('/help/$slug')({
   component: HandbookChapter,
@@ -30,6 +31,7 @@ function HandbookChapter() {
         </Link>
         <h1 className="font-lato font-bold text-3xl mt-4 lg:text-4xl">{meta.title}</h1>
         <p className="mt-2 text-dark-600">{meta.summary}</p>
+        <LanguageFallbackNotice className="mt-6" />
         <Blocks blocks={content.blocks} />
       </article>
 
