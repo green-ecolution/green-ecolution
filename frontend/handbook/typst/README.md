@@ -8,7 +8,7 @@ Chapter sources live in `../content/de/`; the `.typ` files under
 
 ## Fonts
 
-`fonts/` carries the weights the app repository does not ship. All four are
+`fonts/` carries the weights the app repository does not ship. Every one of them is
 licensed under the SIL Open Font License 1.1:
 
 - Lato Black, Lato Italic — Łukasz Dziedzic
