@@ -41,15 +41,13 @@ Jeder Einsatzplan durchläuft dabei einen festen Zustandsablauf:
 | Beendet          | Der Einsatzplan wurde erfolgreich beendet.                      |
 | Abgebrochen      | Der Einsatzplan wurde abgebrochen und ist nicht fertiggestellt. |
 | Nicht angetreten | Der Einsatzplan wurde nicht angetreten.                         |
-| Unbekannt        | Der Status des Einsatzplans ist unbekannt.                      |
 
 Ein neu angelegter Einsatzplan startet immer als Geplant. Von dort aus lässt er sich
 starten (Aktiv) oder abbrechen (Abgebrochen); ein gestarteter Einsatzplan lässt sich
 außerdem als nicht angetreten melden (Nicht angetreten) oder mit einer Auswertung
 beenden (Beendet), und ein versehentlicher Start lässt sich zurücknehmen. Beendet,
 Abgebrochen und Nicht angetreten sind Endzustände: Aus ihnen heraus lässt sich weder der
-Inhalt noch der Status eines Einsatzplans mehr ändern. Unbekannt ist ein technischer
-Übergangswert aus älteren Daten, dem du im laufenden Betrieb nicht begegnest.
+Inhalt noch der Status eines Einsatzplans mehr ändern.
 
 ![Das Board der Einsatzpläne mit den Spalten Vorschläge, Geplant, Unterwegs und Erledigt](../images/watering-plan-board.png)
 
