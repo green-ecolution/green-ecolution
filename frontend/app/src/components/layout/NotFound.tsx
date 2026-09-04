@@ -11,11 +11,11 @@ function NotFound() {
 
   return (
     <>
-      <figure aria-hidden="true" className="absolute top-0 inset-x-0 z-0">
-        <Lottie className="h-[50vh]" animationData={cableAnimation} />
+      <figure aria-hidden="true">
+        <Lottie className="h-[40vh] max-h-96" animationData={cableAnimation} />
       </figure>
-      <div className="mt-[45vh] mx-auto max-w-208 sm:mt-[50vh] xl:max-w-screen-lg">
-        <section className="my-28 px-4 md:px-6 lg:my-36 xl:my-52">
+      <div className="mx-auto max-w-208 xl:max-w-screen-lg">
+        <section className="mb-28 px-4 md:px-6 lg:mb-36">
           <h1 className="font-lato font-bold text-4xl mb-4 lg:mb-6 lg:text-5xl lg:text-center xl:text-6xl">
             {t('notFound.title')}
           </h1>
