@@ -111,6 +111,47 @@ describe('generate', () => {
     await expect(generate({ root, language: 'de' })).rejects.toThrow(/unknown chapter "missing"/)
   })
 
+  it('accepts a chapter reference whose anchor matches a section of the target', async () => {
+    await writeFile(
+      join(root, 'content', 'de', '10-a.md'),
+      chapter('a', 'intro', '## A\n\nSiehe [dort](./b.md#zweiter-abschnitt).'),
+    )
+    await writeFile(
+      join(root, 'content', 'de', '20-b.md'),
+      chapter('b', 'intro', '## Erster Abschnitt\n\nText.\n\n## Zweiter Abschnitt\n\nText.'),
+    )
+
+    await expect(generate({ root, language: 'de' })).resolves.toBeDefined()
+  })
+
+  it('rejects a chapter reference whose anchor is missing on the target', async () => {
+    await writeFile(
+      join(root, 'content', 'de', '10-a.md'),
+      chapter('a', 'intro', '## A\n\nSiehe [dort](./b.md#nirgendwo).'),
+    )
+    await writeFile(
+      join(root, 'content', 'de', '20-b.md'),
+      chapter('b', 'intro', '## Erster Abschnitt\n\nText.'),
+    )
+
+    await expect(generate({ root, language: 'de' })).rejects.toThrow(
+      /unknown anchor "nirgendwo" in chapter "b"/,
+    )
+  })
+
+  it('accepts a chapter reference with no anchor even when the target has sections', async () => {
+    await writeFile(
+      join(root, 'content', 'de', '10-a.md'),
+      chapter('a', 'intro', '## A\n\nSiehe [dort](./b.md).'),
+    )
+    await writeFile(
+      join(root, 'content', 'de', '20-b.md'),
+      chapter('b', 'intro', '## Erster Abschnitt\n\nText.'),
+    )
+
+    await expect(generate({ root, language: 'de' })).resolves.toBeDefined()
+  })
+
   it('writes one typst file per chapter plus an ordered include list', async () => {
     await writeFile(
       join(root, 'content', 'de', '10-introduction.md'),

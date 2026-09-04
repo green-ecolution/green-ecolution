@@ -10,7 +10,9 @@ const frontendDir = join(dirname(fileURLToPath(import.meta.url)), '..', '..')
 function chapterLinksInRuns(runs, seen) {
   for (const run of runs) {
     if (run.kind === 'link') {
-      if (run.target.kind === 'chapter') seen.push(run.target.slug)
+      if (run.target.kind === 'chapter') {
+        seen.push({ slug: run.target.slug, anchor: run.target.anchor })
+      }
       chapterLinksInRuns(run.children, seen)
       continue
     }
@@ -67,7 +69,20 @@ export async function generate({ root, language }) {
 
   for (const [slug, content] of Object.entries(contents)) {
     for (const target of chapterLinks(content.blocks)) {
-      if (!chapters[target]) throw new Error(`handbook: ${slug}: unknown chapter "${target}"`)
+      const targetChapter = chapters[target.slug]
+      if (!targetChapter) {
+        throw new Error(`handbook: ${slug}: unknown chapter "${target.slug}"`)
+      }
+      if (
+        target.anchor &&
+        !targetChapter.sections.some((section) => section.anchor === target.anchor)
+      ) {
+        const available = targetChapter.sections.map((section) => section.anchor).join(', ')
+        throw new Error(
+          `handbook: ${slug}: unknown anchor "${target.anchor}" in chapter "${target.slug}"` +
+            (available ? ` (available: ${available})` : ' (chapter has no headings)'),
+        )
+      }
     }
   }
 
