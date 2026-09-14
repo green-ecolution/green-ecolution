@@ -33,8 +33,6 @@ traefik_config     := if porkbun_api_key != "" { "traefik.yaml" } else { "traefi
 traefik_entrypoint := if porkbun_api_key != "" { "websecure" } else { "web" }
 app_proto          := if porkbun_api_key != "" { "https" } else { "http" }
 app_port           := if porkbun_api_key != "" { "3443" } else { "3000" }
-s3_dev_endpoint    := if porkbun_api_key != "" { "s3." + app_host + ":" + app_port } else { app_host + ":" + app_port }
-s3_use_ssl         := if porkbun_api_key != "" { "true" } else { "false" }
 
 db_url := "postgres://" + postgres_user + ":" + postgres_password + "@" + postgres_host + ":" + postgres_port + "/" + postgres_db
 sqlx_prepare_db := "sqlx_prepare"

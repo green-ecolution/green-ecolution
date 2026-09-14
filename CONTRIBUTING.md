@@ -42,7 +42,7 @@ Be respectful and constructive in all interactions. We welcome contributors of a
 
 ```bash
 just setup       # cargo fetch + pnpm install + build frontend workspace packages + domain WASM
-just infra-up    # Start infrastructure (Postgres, Keycloak, MinIO, etc.)
+just infra-up    # Start infrastructure (Postgres, Keycloak, Valhalla, etc.)
 just run-dev     # Backend + frontend dev via Traefik (bacon live reload)
 ```
 

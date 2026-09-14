@@ -47,7 +47,7 @@ services:
       - APP_AUTH__JWKS_REFRESH_INTERVAL_SECS=3600
       - APP_AUTH__JWKS_REFRESH_TIMEOUT_SECS=5
       - APP_AUTH__DEFAULT_REDIRECT_URL=${APP_PROTO:-https}://${APP_HOST:-localhost}:${APP_PORT:-3443}/auth/callback
-      # routing (Valhalla/Vroom), S3 (MinIO), MQTT and map config are not yet
+      # routing (Valhalla/Vroom), MQTT and map config are not yet
       # implemented in backend-rs. Re-add the matching env vars once the Rust
       # Settings struct exposes those sections.
     labels:

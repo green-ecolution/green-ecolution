@@ -33,7 +33,7 @@ Urban green spaces need water - but how much, and when? City maintenance teams o
 For a development setup with hot reload:
 
 ```bash
-just infra-up    # Start infra (Postgres, Keycloak, Traefik, MinIO, Valhalla, Streamlet)
+just infra-up    # Start infra (Postgres, Keycloak, Traefik, Valhalla, Streamlet)
 just migrate-up  # Apply database migrations
 just run-dev     # Run backend (hot reload) + frontend
 ```
@@ -100,7 +100,6 @@ just build       # Build frontend + backend
 |---------|-----|
 | Backend API | <http://localhost:3000/api> (needs `run-dev` / `run-docker`) |
 | Keycloak | <http://auth.localhost:3000> |
-| MinIO Console | <http://minio.localhost:3000> |
 | pgAdmin | <http://pgadmin.localhost:3000> |
 | Valhalla | <http://valhalla.localhost:3000> |
 | Streamlet | <http://streamlet.localhost:3000> |
@@ -111,7 +110,6 @@ just build       # Build frontend + backend
 |---------|-----|
 | Backend API | `https://<ip>.green-ecolution.dev:3443/api` (needs `run-dev` / `run-docker`) |
 | Keycloak | `https://auth.<ip>.green-ecolution.dev:3443` |
-| MinIO Console | `https://minio.<ip>.green-ecolution.dev:3443` |
 | pgAdmin | `https://pgadmin.<ip>.green-ecolution.dev:3443` |
 | Valhalla | `https://valhalla.<ip>.green-ecolution.dev:3443` |
 | Streamlet | `https://streamlet.<ip>.green-ecolution.dev:3443` |
