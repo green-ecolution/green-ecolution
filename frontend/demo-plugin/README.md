@@ -20,8 +20,9 @@ The view then lives at <http://localhost:5175>. Opened directly in a browser it 
 a notice: without the handshake with the application there is no context.
 
 The API base url comes from `GE_API_BASE_URL`. The default
-`http://host.docker.internal:3030/api` matches `just run-dev`; in the full docker stack
-`compose.app.yaml` overrides it with `http://backend:3000/api`.
+`http://host.docker.internal:3030/api` matches `just run-dev`; to run against the
+containerised backend (`just run-docker`, compose profile `app`) set it to
+`http://backend:3000/api`.
 
 ## Manual test
 

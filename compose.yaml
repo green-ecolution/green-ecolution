@@ -237,6 +237,122 @@ services:
       - "traefik.http.routers.traefik.service=traefik"
       - "traefik.http.services.traefik.loadbalancer.server.port=8080"
 
+  backend:
+    profiles: ["app"]
+    build:
+      context: ./backend/
+      args:
+        - APP_VERSION=${APP_VERSION:-dev}
+        - APP_REVISION=${APP_GIT_COMMIT:-unknown}
+        - GE_GIT_COMMIT=${APP_GIT_COMMIT:-unknown}
+        - GE_GIT_BRANCH=${APP_GIT_BRANCH:-unknown}
+        - GE_BUILD_TIME=${APP_BUILD_TIME:-unknown}
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3000/api/ready",
+        ]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+    depends_on:
+      db:
+        condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
+    environment:
+      - APP_ENVIRONMENT=local
+      - APP_APPLICATION__HOST=0.0.0.0
+      - APP_APPLICATION__PORT=3000
+      - APP_APPLICATION__BASE_URL=${APP_PROTO:-https}://${APP_HOST:-localhost}:${APP_PORT:-3443}
+      - APP_DATABASE__HOST=db
+      - APP_DATABASE__PORT=5432
+      - APP_DATABASE__DATABASE_NAME=${POSTGRES_DB:-postgres}
+      - APP_DATABASE__USERNAME=${POSTGRES_USER:-postgres}
+      - APP_DATABASE__PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - APP_LOG__LEVEL=info,sqlx=warn,tower_http=info
+      - APP_LOG__FORMAT=json
+      - APP_AUTH__ENABLED=true
+      - APP_AUTH__ISSUER_URL=${APP_PROTO:-http}://auth.${APP_HOST:-localhost}:${APP_PORT:-3443}/realms/green-ecolution
+      - APP_AUTH__FRONTEND_CLIENT_ID=frontend
+      - APP_AUTH__BACKEND_CLIENT_ID=backend
+      - APP_AUTH__BACKEND_CLIENT_SECRET=cVBGgWNlbwSLydLZfZMvTvmNCeiSmLGP
+      - APP_AUTH__JWKS_REFRESH_INTERVAL_SECS=3600
+      - APP_AUTH__JWKS_REFRESH_TIMEOUT_SECS=5
+      - APP_AUTH__DEFAULT_REDIRECT_URL=${APP_PROTO:-https}://${APP_HOST:-localhost}:${APP_PORT:-3443}/auth/callback
+      # routing (Valhalla/Vroom), MQTT and map config are not yet
+      # implemented in backend-rs. Re-add the matching env vars once the Rust
+      # Settings struct exposes those sections.
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.backend.rule=Host(`${APP_HOST:-localhost}`) && (PathPrefix(`/api`) || PathPrefix(`/swagger-ui`) || PathPrefix(`/api-docs`))"
+      - "traefik.http.routers.backend.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
+      - "traefik.http.services.backend.loadbalancer.server.port=3000"
+
+  frontend:
+    profiles: ["app"]
+    build:
+      context: ./frontend
+      args:
+        - ENV=dev
+        - BASEURL=/api
+        - APP_VERSION=${APP_VERSION:-$(git describe --tags --always --dirty)}
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "curl",
+          "--silent",
+          "--fail-with-body",
+          "--max-time",
+          "5",
+          "http://localhost:80/status",
+        ]
+      interval: 2s
+      timeout: 10s
+      retries: 5
+    depends_on:
+      keycloak:
+        condition: service_healthy
+      backend:
+        condition: service_started
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`${APP_HOST:-localhost}`)"
+      - "traefik.http.routers.frontend.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
+      - "traefik.http.services.frontend.loadbalancer.server.port=80"
+
+  migrations:
+    profiles: ["app"]
+    build:
+      context: ./backend/
+      args:
+        - APP_VERSION=${APP_VERSION:-dev}
+        - APP_REVISION=${APP_GIT_COMMIT:-unknown}
+        - GE_GIT_COMMIT=${APP_GIT_COMMIT:-unknown}
+        - GE_GIT_BRANCH=${APP_GIT_BRANCH:-unknown}
+        - GE_BUILD_TIME=${APP_BUILD_TIME:-unknown}
+    entrypoint: ["./migrate"]
+    command: ["reset", "--with-seed"]
+    depends_on:
+      db:
+        condition: service_healthy
+      keycloak-init-db:
+        condition: service_completed_successfully
+    environment:
+      - APP_ENVIRONMENT=local
+      - APP_DATABASE__HOST=db
+      - APP_DATABASE__PORT=5432
+      - APP_DATABASE__DATABASE_NAME=${POSTGRES_DB:-postgres}
+      - APP_DATABASE__USERNAME=${POSTGRES_USER:-postgres}
+      - APP_DATABASE__PASSWORD=${POSTGRES_PASSWORD:-postgres}
+
   demo-plugin:
     # Behind a profile so `just infra-up` does not build it; start it with
     # `just plugin-demo-up` when the plugin integration is being tested.
@@ -245,8 +361,8 @@ services:
       context: ./frontend
       dockerfile: demo-plugin/Dockerfile
     environment:
-      # Points at the backend `just run-dev` runs on the host. The full docker
-      # stack overrides this in compose.app.yaml.
+      # Points at the backend `just run-dev` runs on the host. Set it to
+      # http://backend:3000/api to run against the `app` profile instead.
       - GE_API_BASE_URL=${GE_API_BASE_URL:-http://host.docker.internal:3030/api}
     extra_hosts:
       - "host.docker.internal:host-gateway"

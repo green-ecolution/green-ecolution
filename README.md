@@ -176,7 +176,7 @@ All settings via environment variables (prefix `APP_`, separator `__`) or YAML f
 
 Key areas: `application.*`, `database.*`, `auth.*`, `mqtt.*`, `log.*`
 
-See `compose.app.yaml` for examples.
+See the `backend` service in `compose.yaml` for examples.
 
 ## Contributing
 

@@ -255,7 +255,7 @@ run-prod: build-domain-wasm _compile-backend
 [group('run')]
 run-docker: _acme-init _ensure-valhalla build-domain-wasm
     @echo "Running compose (infra + app)..."
-    @just _compose -f compose.yaml -f compose.app.yaml up -d --build
+    @just _compose --profile app up -d --build
 
 # Run docker compose with the shared Traefik/Porkbun/version env
 _compose *ARGS:
@@ -281,17 +281,17 @@ infra-up: _acme-init _ensure-valhalla
     @echo "Infra up..."
     @just _compose up -d
 
-# Stop infrastructure services
+# Stop all compose services (infra, app and plugins)
 [group('infra')]
 infra-stop:
     @echo "Infra stop..."
-    docker compose -f compose.yaml stop
+    @COMPOSE_PROFILES='*' just _compose stop
 
-# Stop infrastructure and delete volumes
+# Stop all compose services and delete volumes
 [group('infra')]
 infra-down:
     @echo "Infra down (delete volumes)..."
-    docker compose -f compose.yaml down -v
+    @COMPOSE_PROFILES='*' just _compose down -v
 
 # Start the demo plugin used for the manual plugin integration test
 [group('infra')]
