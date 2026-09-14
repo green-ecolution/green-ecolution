@@ -33,7 +33,7 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry,sharing=locked \
     && cp target/release/green-ecolution /usr/local/bin/green-ecolution \
     && cp target/release/migrate /usr/local/bin/migrate
 
-FROM debian:trixie-slim@sha256:d7e12182ce18b85b93007c1dedf31f2d29e01ccf3182cc4017c709b6259bc132 AS runtime
+FROM gcr.io/distroless/cc-debian13:nonroot@sha256:54df941ed0d06a1bd95ef5e0ce391fd8d9f94b64782dc9a60062727849ee3f97 AS runtime
 WORKDIR /app
 
 ARG APP_VERSION=dev
@@ -49,22 +49,18 @@ LABEL org.opencontainers.image.title="green-ecolution" \
       org.opencontainers.image.version="${APP_VERSION}" \
       org.opencontainers.image.revision="${APP_REVISION}"
 
-RUN apt-get update -y \
-  && apt-get install -y --no-install-recommends ca-certificates tini wget \
-  && rm -rf /var/lib/apt/lists/* \
-  && groupadd --gid 10001 app \
-  && useradd --uid 10001 --gid app --no-create-home --shell /usr/sbin/nologin app
-
 COPY --from=builder --chown=10001:10001 /usr/local/bin/green-ecolution green-ecolution
 COPY --from=builder --chown=10001:10001 /usr/local/bin/migrate migrate
 COPY --chown=10001:10001 config config
 
 USER 10001:10001
-EXPOSE 3020
+EXPOSE 3030
 
 ENV APP_ENVIRONMENT=production
 
+# Exec form: the distroless runtime has no shell. The binary resolves the port
+# from the same config the server uses, so it follows a port override.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD wget --quiet --tries=1 --spider http://localhost:3020/api/health || exit 1
+  CMD ["./green-ecolution", "healthcheck"]
 
-ENTRYPOINT ["/usr/bin/tini", "--", "./green-ecolution"]
+ENTRYPOINT ["./green-ecolution"]
