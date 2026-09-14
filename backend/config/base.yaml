@@ -30,6 +30,7 @@ mqtt:
   client_id: "green-ecolution"
   keep_alive_secs: 30
 map:
+  # The centre must lie inside bbox; the server refuses to start otherwise.
   center: [54.792277136221905, 9.43580607453268]
   bbox: [54.714822, 9.285796, 54.860127, 9.583800]
   nearest_tree_max_radius: 500.0
@@ -39,15 +40,15 @@ info:
   update_check_repo: "green-ecolution/green-ecolution"
   repository_url: "https://github.com/green-ecolution/"
 sensor:
-  offline_after_secs: 86400
-  defect_streak: 3
+  offline_after_secs: 86400 # 3600-2592000
+  defect_streak: 3 # 1-100
 watering:
-  just_watered_ttl_secs: 86400
+  just_watered_ttl_secs: 86400 # 3600-1209600
   just_watered_sweep_interval_secs: 3600
 routing:
   enabled: false
   streamlet_url: "http://localhost:2510"
-  tree_demand_liters: 80.0
+  tree_demand_liters: 80.0 # 1.0-1000.0
 plugins:
   enabled: false
 analytics:

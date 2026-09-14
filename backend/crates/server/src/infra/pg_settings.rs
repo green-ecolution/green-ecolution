@@ -1,7 +1,10 @@
+//! Nothing here is cached. Both tables are small, the same request already
+//! reads the whole organization tree uncached to walk it, and a per-process
+//! cache would keep serving pre-write values on every other replica.
+
 use std::collections::HashMap;
 use std::str::FromStr;
-use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
 
 use sqlx::PgPool;
 
@@ -22,17 +25,7 @@ type SettingsByOrg = HashMap<Id<Organization>, OrganizationSettings>;
 pub struct PgSettingsRepository {
     pool: PgPool,
     defaults: InstanceDefaults,
-    /// The tree is read per resolution rather than cached alongside the rows:
-    /// organizations are created and deleted without going through this
-    /// adapter, so a cached tree would silently miss them until a restart.
     org_reader: Arc<dyn OrganizationReader>,
-    /// Holds the stored rows only. Their sole writer is this adapter, which is
-    /// what makes caching them safe.
-    cache: RwLock<Option<Arc<SettingsByOrg>>>,
-    /// Bumped on every write. A fill that started before that write carries a
-    /// stale snapshot, and storing it would keep serving pre-write values
-    /// until some later write happened to invalidate again.
-    generation: AtomicU64,
 }
 
 impl PgSettingsRepository {
@@ -45,28 +38,10 @@ impl PgSettingsRepository {
             pool,
             defaults,
             org_reader,
-            cache: RwLock::new(None),
-            generation: AtomicU64::new(0),
         }
     }
 
-    /// Drops the cached rows. Called after a write, never before it commits.
-    fn invalidate(&self) {
-        self.generation.fetch_add(1, Ordering::SeqCst);
-        if let Ok(mut guard) = self.cache.write() {
-            *guard = None;
-        }
-    }
-
-    async fn by_org(&self) -> Result<Arc<SettingsByOrg>, RepositoryError> {
-        if let Ok(guard) = self.cache.read()
-            && let Some(cached) = guard.as_ref()
-        {
-            return Ok(cached.clone());
-        }
-
-        let started_at = self.generation.load(Ordering::SeqCst);
-
+    async fn by_org(&self) -> Result<SettingsByOrg, RepositoryError> {
         let rows = sqlx::query_as!(
             OrganizationSettingsSnapshot,
             r#"SELECT organization_id, water_demand_liters, just_watered_ttl_secs,
@@ -86,15 +61,6 @@ impl PgSettingsRepository {
             by_org.insert(settings.organization_id, settings);
         }
 
-        let by_org = Arc::new(by_org);
-        // Compared under the write lock, not before taking it: `invalidate`
-        // bumps the generation before it acquires, so a fill that still sees
-        // `started_at` here is holding off a writer that has yet to clear.
-        if let Ok(mut guard) = self.cache.write()
-            && self.generation.load(Ordering::SeqCst) == started_at
-        {
-            *guard = Some(by_org.clone());
-        }
         Ok(by_org)
     }
 
@@ -313,7 +279,6 @@ impl SettingsWriter for PgSettingsRepository {
         }
 
         tx.commit().await?;
-        self.invalidate();
         Ok(next)
     }
 }

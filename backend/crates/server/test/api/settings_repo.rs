@@ -54,9 +54,9 @@ async fn a_leaf_without_a_value_inherits_from_the_nearest_ancestor_that_has_one(
     );
 }
 
-/// An organization created after the cache is warm must still resolve against
-/// its parent. The tree is not part of what this adapter caches precisely
-/// because organizations are created without it ever being told.
+/// An organization created after an earlier resolution must still resolve
+/// against its parent: the adapter is told nothing when an organization
+/// appears, so it may remember nothing between reads.
 #[tokio::test]
 async fn an_organization_created_after_the_first_read_still_inherits() {
     let app = spawn_app().await;

@@ -15,7 +15,7 @@ use domain::{
 use super::ServiceError;
 
 /// Reads and writes an organization's own values. Thin by design: the
-/// resolution itself is domain logic, the cache belongs to the adapter.
+/// resolution itself is domain logic, the storage belongs to the adapter.
 pub struct SettingsService {
     reader: Arc<dyn SettingsReader>,
     writer: Arc<dyn SettingsWriter>,
@@ -60,6 +60,14 @@ impl SettingsService {
                 organization_id: enforcer.value(),
             });
         }
+        // Checked after the lock, so a write into a frozen subtree still fails
+        // rather than quietly succeeding because it happened to be empty.
+        if update.is_empty() {
+            return Ok(self.reader.own(org).await?);
+        }
+        // A nil actor is the demo bypass from `AuthorizationService`, not a
+        // user, so it is stored as NULL — which is also why the `changed_by`
+        // foreign key cannot be reached by a real caller.
         let actor = (!actor.is_nil()).then_some(actor);
         Ok(self.writer.apply(org, update, actor).await?)
     }

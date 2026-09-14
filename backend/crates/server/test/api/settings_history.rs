@@ -155,15 +155,15 @@ async fn a_write_that_fails_on_the_history_keeps_the_old_value() {
     assert!(result.is_err());
     assert!(history_rows(&app, org).await.is_empty());
 
+    // The rollback must leave no row at all, not a row with a NULL value.
     let stored = sqlx::query_scalar!(
         r#"SELECT water_demand_liters FROM organization_settings WHERE organization_id = $1"#,
         org
     )
     .fetch_optional(&app.db_pool)
     .await
-    .unwrap()
-    .flatten();
-    assert_eq!(stored, None);
+    .unwrap();
+    assert!(stored.is_none());
 }
 
 /// `changed_at` defaults to `now()`, which is transaction-start time, so every

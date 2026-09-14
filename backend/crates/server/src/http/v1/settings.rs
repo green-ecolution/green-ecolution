@@ -37,7 +37,7 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
         (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
-#[tracing::instrument(level = "info", skip_all)]
+#[tracing::instrument(level = "info", skip_all, fields(organization.id = %org_id))]
 pub async fn get_settings(
     State(state): State<Arc<AppState>>,
     user: AuthUserExtractor,
@@ -79,7 +79,7 @@ pub async fn get_settings(
         (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
-#[tracing::instrument(level = "info", skip_all)]
+#[tracing::instrument(level = "info", skip_all, fields(organization.id = %org_id))]
 pub async fn update_settings(
     State(state): State<Arc<AppState>>,
     user: AuthUserExtractor,

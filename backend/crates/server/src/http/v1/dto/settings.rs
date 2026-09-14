@@ -30,7 +30,6 @@ pub struct OrganizationRef {
 #[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct SettingChangeRef {
     pub changed_at: chrono::DateTime<chrono::Utc>,
-    #[schema(value_type = Option<String>)]
     pub changed_by: Option<Uuid>,
 }
 
@@ -93,7 +92,9 @@ pub struct OrganizationSettingsResponse {
     pub sensor_offline_after_secs: SettingField<i64>,
     pub defect_streak: SettingField<i32>,
     pub map_view: SettingField<MapViewDto>,
-    /// Whether sub-units may set their own values.
+    /// This organization's own switch for its sub-units. While `enforced_by`
+    /// is set, an organization above has frozen the subtree and no sub-unit
+    /// may set anything, whatever this says.
     pub descendants_may_override: bool,
     /// The organization that froze this subtree, if any.
     pub enforced_by: Option<OrganizationRef>,
@@ -118,6 +119,8 @@ pub struct OrganizationSettingsUpdateRequest {
     #[serde(default, deserialize_with = "double_option")]
     #[schema(value_type = Option<MapViewDto>)]
     pub map_view: Option<Option<MapViewDto>>,
+    /// A plain toggle, not a three-state field: `null` is equivalent to
+    /// omitting it and leaves the switch as it is.
     #[serde(default)]
     pub descendants_may_override: Option<bool>,
 }

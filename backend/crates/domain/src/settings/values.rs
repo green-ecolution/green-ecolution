@@ -167,7 +167,7 @@ mod tests {
     fn sensor_offline_after_spans_an_hour_to_thirty_days() {
         assert_ok!(SensorOfflineAfter::new(3_600));
         assert_ok!(SensorOfflineAfter::new(2_592_000));
-        assert_err!(SensorOfflineAfter::new(59));
+        assert_err!(SensorOfflineAfter::new(3_599));
         assert_err!(SensorOfflineAfter::new(2_592_001));
     }
 

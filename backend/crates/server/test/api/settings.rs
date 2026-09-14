@@ -195,6 +195,129 @@ async fn the_last_change_is_reported_per_field() {
 }
 
 #[tokio::test]
+async fn an_empty_write_leaves_the_organization_untouched() {
+    let app = spawn_app().await;
+    let org = child_org(&app, "Leer", Uuid::parse_str(ROOT_ORG_ID).unwrap()).await;
+
+    let resp = app
+        .put_json(&format!("/api/v1/organizations/{org}/settings"), &json!({}))
+        .await;
+    assert_eq!(resp.status(), 200);
+
+    let body = settings_of(&app, org).await;
+    assert_eq!(body["water_demand"]["origin"], "default");
+    assert_eq!(body["descendants_may_override"], true);
+
+    let stored = sqlx::query_scalar!(
+        r#"SELECT count(*) FROM organization_settings WHERE organization_id = $1"#,
+        org
+    )
+    .fetch_one(&app.db_pool)
+    .await
+    .unwrap();
+    assert_eq!(stored, Some(0));
+
+    let recorded = sqlx::query_scalar!(
+        r#"SELECT count(*) FROM organization_settings_history WHERE organization_id = $1"#,
+        org
+    )
+    .fetch_one(&app.db_pool)
+    .await
+    .unwrap();
+    assert_eq!(recorded, Some(0));
+}
+
+/// The six map columns are the only positionally encoded value on this
+/// endpoint, so a transposed argument anywhere between the DTO and the row
+/// would be silent. The order has to survive a full write and read back.
+#[tokio::test]
+async fn a_map_view_round_trips_with_its_numbers_in_place() {
+    let app = spawn_app().await;
+    let org = child_org(
+        &app,
+        "Kartenausschnitt",
+        Uuid::parse_str(ROOT_ORG_ID).unwrap(),
+    )
+    .await;
+
+    let center = json!([54.79, 9.43]);
+    let bbox = json!([54.71, 9.28, 54.86, 9.58]);
+
+    let resp = app
+        .put_json(
+            &format!("/api/v1/organizations/{org}/settings"),
+            &json!({ "map_view": { "center": center, "bbox": bbox } }),
+        )
+        .await;
+    assert_eq!(resp.status(), 200);
+
+    let body = settings_of(&app, org).await;
+    assert_eq!(body["map_view"]["origin"], "own");
+    assert_eq!(body["map_view"]["value"]["center"], center);
+    assert_eq!(body["map_view"]["value"]["bbox"], bbox);
+    assert_eq!(body["map_view"]["own_value"]["center"], center);
+    assert_eq!(body["map_view"]["own_value"]["bbox"], bbox);
+
+    let recorded = sqlx::query_scalar!(
+        r#"SELECT new_value FROM organization_settings_history
+           WHERE organization_id = $1 AND setting_key = 'map_view'"#,
+        org
+    )
+    .fetch_one(&app.db_pool)
+    .await
+    .unwrap();
+    assert_eq!(recorded, Some(json!({ "center": center, "bbox": bbox })));
+}
+
+#[tokio::test]
+async fn organization_read_alone_does_not_permit_a_settings_read() {
+    let (harness, app) = crate::auth_helpers::spawn_with_auth().await;
+    let root = Uuid::parse_str(ROOT_ORG_ID).unwrap();
+
+    let user_id = Uuid::new_v4();
+    sqlx::query!(
+        r#"INSERT INTO user_profiles (id, organization_id) VALUES ($1, $2)"#,
+        user_id,
+        root
+    )
+    .execute(&app.db_pool)
+    .await
+    .unwrap();
+
+    let role_id: Uuid = sqlx::query_scalar!(
+        r#"INSERT INTO roles (id, organization_id, name, permissions)
+           VALUES (gen_random_uuid(), $1, 'Nur Organisation lesen',
+                   ARRAY['organization:read'])
+           RETURNING id"#,
+        root
+    )
+    .fetch_one(&app.db_pool)
+    .await
+    .unwrap();
+    sqlx::query!(
+        r#"INSERT INTO role_assignments (user_id, role_id) VALUES ($1, $2)"#,
+        user_id,
+        role_id
+    )
+    .execute(&app.db_pool)
+    .await
+    .unwrap();
+
+    let token = harness.sign_token(json!({ "sub": user_id.to_string() }));
+    let resp = reqwest::Client::new()
+        .get(format!(
+            "{}/api/v1/organizations/{root}/settings",
+            app.address
+        ))
+        .bearer_auth(&token)
+        .send()
+        .await
+        .unwrap();
+
+    assert_eq!(resp.status(), 403);
+}
+
+#[tokio::test]
 async fn organization_update_alone_does_not_permit_a_settings_write() {
     let (harness, app) = crate::auth_helpers::spawn_with_auth().await;
     let root = Uuid::parse_str(ROOT_ORG_ID).unwrap();

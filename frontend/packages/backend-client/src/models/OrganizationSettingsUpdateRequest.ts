@@ -35,7 +35,8 @@ export interface OrganizationSettingsUpdateRequest {
      */
     defectStreak?: number | null;
     /**
-     * 
+     * A plain toggle, not a three-state field: `null` is equivalent to
+     * omitting it and leaves the switch as it is.
      * @type {boolean}
      * @memberof OrganizationSettingsUpdateRequest
      */

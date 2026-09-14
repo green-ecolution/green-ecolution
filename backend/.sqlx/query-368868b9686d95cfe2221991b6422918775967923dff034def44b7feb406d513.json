@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT new_value FROM organization_settings_history\n           WHERE organization_id = $1 AND setting_key = 'map_view'",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "new_value",
+        "type_info": "Jsonb"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "368868b9686d95cfe2221991b6422918775967923dff034def44b7feb406d513"
+}

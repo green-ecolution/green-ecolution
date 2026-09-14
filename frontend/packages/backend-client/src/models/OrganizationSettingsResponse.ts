@@ -62,7 +62,9 @@ export interface OrganizationSettingsResponse {
      */
     defectStreak: SettingFieldI32;
     /**
-     * Whether sub-units may set their own values.
+     * This organization's own switch for its sub-units. While `enforced_by`
+     * is set, an organization above has frozen the subtree and no sub-unit
+     * may set anything, whatever this says.
      * @type {boolean}
      * @memberof OrganizationSettingsResponse
      */

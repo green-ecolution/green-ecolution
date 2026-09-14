@@ -19,4 +19,4 @@ COMMENT ON COLUMN organization_settings_history.previous_value IS
   'NULL means the value was inherited before.';
 
 CREATE INDEX organization_settings_history_latest_idx
-    ON organization_settings_history (organization_id, setting_key, changed_at DESC);
+    ON organization_settings_history (organization_id, setting_key, changed_at DESC, id DESC);

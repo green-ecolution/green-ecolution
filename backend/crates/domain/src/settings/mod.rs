@@ -406,6 +406,38 @@ mod tests {
         assert!(update.changes(&stored()).is_empty());
     }
 
+    /// `changes` is hand-written and has no exhaustive match, so a seventh
+    /// setting could change with no history entry at all. This fails the day
+    /// one is added without a matching `push_change`.
+    #[test]
+    fn every_known_setting_can_produce_a_change() {
+        use crate::shared::{coordinates::Coordinate, geo::BoundingBox};
+        use std::collections::BTreeSet;
+
+        let update = SettingsUpdate {
+            water_demand: Patch::Set(WaterDemand::new(120.0).unwrap()),
+            just_watered_ttl: Patch::Set(JustWateredTtl::new(7_200).unwrap()),
+            sensor_offline_after: Patch::Set(SensorOfflineAfter::new(7_200).unwrap()),
+            defect_streak: Patch::Set(DefectStreak::new(5).unwrap()),
+            map_view: Patch::Set(
+                MapView::new(
+                    Coordinate::new(54.8, 9.4).unwrap(),
+                    BoundingBox::try_new(54.7, 9.2, 54.9, 9.6).unwrap(),
+                )
+                .unwrap(),
+            ),
+            descendants_may_override: Some(false),
+        };
+
+        let moved: BTreeSet<SettingKey> = update
+            .changes(&OrganizationSettings::empty(Id::new_v7()))
+            .into_iter()
+            .map(|change| change.key)
+            .collect();
+
+        assert_eq!(moved, BTreeSet::from(SettingKey::ALL));
+    }
+
     #[test]
     fn flipping_the_lock_is_recorded() {
         let update = SettingsUpdate {
