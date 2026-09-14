@@ -46,6 +46,7 @@ pub struct SettingField<T> {
     /// This organization's own value, reported even while a lock above makes
     /// it dormant — a value that silently disappears and reappears on unlock
     /// is the first thing someone reports as a bug.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub own_value: Option<T>,
     /// Always about this organization's own value, never the source's.
     pub last_change: Option<SettingChangeRef>,
@@ -229,5 +230,26 @@ impl OrganizationSettingsResponse {
                 .enforced_by
                 .map(|id: Id<Organization>| OrganizationRef { id: id.value() }),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// utoipa cannot carry `Option`'s nullability through a generic argument,
+    /// so the schema describes `own_value` as optional and not nullable. The
+    /// body has to match that: omit the key rather than send `null`.
+    #[test]
+    fn a_field_without_an_own_value_omits_the_key() {
+        let field = SettingField {
+            value: 80.0,
+            origin: SettingOriginDto::Default,
+            source: None,
+            own_value: None,
+            last_change: None,
+        };
+        let body = serde_json::to_value(&field).unwrap();
+        assert!(!body.as_object().unwrap().contains_key("own_value"));
     }
 }
