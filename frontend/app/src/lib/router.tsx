@@ -4,6 +4,7 @@ import type { ErrorComponentProps } from '@tanstack/react-router'
 import type { FetchQueryOptions, QueryClient, QueryKey } from '@tanstack/react-query'
 import type { ParseKeys } from 'i18next'
 import { Loading } from '@green-ecolution/ui'
+import { ResponseError } from '@green-ecolution/backend-client'
 import EntityNotFound from '@/components/layout/EntityNotFound'
 import ErrorFallback from '@/components/layout/ErrorFallback'
 import Forbidden from '@/components/layout/Forbidden'
@@ -43,9 +44,17 @@ export const pendingLoading = (label: LocalizedText) => {
   return PendingLoading
 }
 
-export const entityNotFound = (props: ComponentProps<typeof EntityNotFound>) => () => (
-  <EntityNotFound {...props} />
-)
+/**
+ * The card reads "not found" for every failure that reaches it, so the error
+ * itself is logged: without it a broken import or a 500 is indistinguishable
+ * from a genuinely missing entity, in the browser as well as in a bug report.
+ */
+export const entityNotFound =
+  (props: ComponentProps<typeof EntityNotFound>) =>
+  ({ error }: ErrorComponentProps) => {
+    console.error('Route error rendered as "not found":', error)
+    return <EntityNotFound {...props} />
+  }
 
 /** Fire-and-forget prefetch for route loaders; failures surface via the query itself. */
 export const prefetch = <TQueryFnData, TError, TData, TQueryKey extends QueryKey>(
@@ -117,7 +126,10 @@ export const entityRoute = <TEntity, TKey extends string>({
       crumb,
     } as Record<TKey, TEntity> & { crumb: EntityCrumb }
   },
-  errorComponent: () => <EntityNotFound {...notFound} />,
+  errorComponent: ({ error }: ErrorComponentProps) => {
+    console.error('Route error rendered as "not found":', error)
+    return <EntityNotFound {...notFound} />
+  },
 })
 
 export class ForbiddenError extends Error {
@@ -141,10 +153,19 @@ export const requirePermission =
     if (!satisfies(perms, required)) throw new ForbiddenError()
   }
 
+/**
+ * A 403 counts as forbidden as well: not every route can decide access before
+ * the request, and a plugin view (gated by the plugin's own required
+ * permissions) only learns of the denial from the backend.
+ */
+const isForbidden = (error: unknown): boolean =>
+  error instanceof ForbiddenError ||
+  (error instanceof ResponseError && error.response.status === 403)
+
 export const forbiddenErrorComponent =
   (fallback?: (props: ErrorComponentProps) => ReactNode) =>
   (props: ErrorComponentProps): ReactNode => {
-    if (props.error instanceof ForbiddenError) return <Forbidden />
+    if (isForbidden(props.error)) return <Forbidden />
     if (fallback) return fallback(props)
     return <ErrorFallback error={props.error} resetErrorBoundary={props.reset} />
   }

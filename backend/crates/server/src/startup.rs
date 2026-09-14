@@ -7,7 +7,8 @@ use tokio::net::TcpListener;
 use crate::{
     configuration::{CorsSettings, DatabaseSettings, Settings},
     http::{
-        AppState, FeatureFlags, NearestTreeLimits, OidcSwaggerSettings, auth::AuthLayer, router,
+        AppOrigins, AppState, FeatureFlags, NearestTreeLimits, OidcSwaggerSettings,
+        auth::AuthLayer, router,
     },
     infra::{
         self,
@@ -22,6 +23,7 @@ use crate::{
         pg_comment::PgCommentRepository,
         pg_evaluation::PgEvaluationRepository,
         pg_organization::PgOrganizationRepository,
+        pg_plugin::PgPluginRepository,
         pg_region::PgRegionRepository,
         pg_role::PgRoleRepository,
         pg_sensor::PgSensorRepository,
@@ -46,6 +48,8 @@ use crate::{
         handlers::cluster_status::ClusterStatusAggregatorHandler,
         handlers::tree_watering::TreeWateringFromSensorHandler,
         organization_service::OrganizationService,
+        plugin_ingest_service::PluginIngestService,
+        plugin_service::PluginService,
         region_service::RegionService,
         role_service::RoleService,
         sensor_service::SensorService,
@@ -195,6 +199,11 @@ impl Application {
             organization_service: services.organization,
             role_service: services.role,
             authorization_service: services.authorization,
+            plugin_reader: repos.plugin_reader,
+            plugin_writer: repos.plugin_writer,
+            plugin_service: services.plugin,
+            plugin_ingest_service: services.plugin_ingest,
+            app_origins: AppOrigins::from_settings(&settings.cors, &settings.application.base_url),
         });
 
         let listener = TcpListener::bind(address).await?;
@@ -314,6 +323,8 @@ struct Repositories {
     statistics: Arc<dyn StatisticsReader>,
     start_point_reader: Arc<dyn domain::start_point::StartPointReader>,
     start_point_writer: Arc<dyn domain::start_point::StartPointWriter>,
+    plugin_reader: Arc<dyn domain::plugin::PluginReader>,
+    plugin_writer: Arc<dyn domain::plugin::PluginWriter>,
 }
 
 impl Repositories {
@@ -332,6 +343,7 @@ impl Repositories {
         let comment_repo = Arc::new(PgCommentRepository::new(pool.clone()));
         let watering_plan_repo = Arc::new(PgWateringPlanRepository::new(pool.clone()));
         let start_point_repo = Arc::new(PgStartPointRepository::new(pool.clone()));
+        let plugin_repo = Arc::new(PgPluginRepository::new(pool.clone()));
 
         Self {
             organization_reader: organization_repo.clone(),
@@ -359,6 +371,8 @@ impl Repositories {
             statistics: Arc::new(PgStatisticsRepo::new(pool.clone())),
             start_point_reader: start_point_repo.clone(),
             start_point_writer: start_point_repo,
+            plugin_reader: plugin_repo.clone(),
+            plugin_writer: plugin_repo,
         }
     }
 }
@@ -377,6 +391,8 @@ struct Services {
     organization: Arc<OrganizationService>,
     role: Arc<RoleService>,
     authorization: Arc<AuthorizationService>,
+    plugin: Arc<PluginService>,
+    plugin_ingest: Arc<PluginIngestService>,
 }
 
 impl Services {
@@ -392,19 +408,43 @@ impl Services {
         user_repo: Arc<dyn domain::user::UserRepository>,
         auth_enabled: bool,
     ) -> Self {
+        let authorization = Arc::new(AuthorizationService::new(
+            repos.organization_reader.clone(),
+            repos.role_reader.clone(),
+            auth_enabled,
+        ));
+        let plugin = Arc::new(PluginService::new(
+            repos.plugin_reader.clone(),
+            repos.plugin_writer.clone(),
+            authorization.clone(),
+            Arc::new(crate::infra::plugin_key::RandomPluginKeyFactory),
+        ));
+        let tree = Arc::new(TreeService::new(
+            repos.tree_reader.clone(),
+            repos.tree_writer.clone(),
+            repos.cluster_reader.clone(),
+            repos.sensor_reader.clone(),
+            repos.sensor_writer.clone(),
+            event_bus.clone(),
+        ));
+        // Reuses `TreeService::delete` for its own delete flow so `TreeDeleted`
+        // fires and cluster centroid/status stay in sync, instead of a second
+        // copy of that logic.
+        let plugin_ingest = Arc::new(PluginIngestService::new(
+            repos.tree_reader.clone(),
+            repos.tree_writer.clone(),
+            repos.plugin_reader.clone(),
+            repos.plugin_writer.clone(),
+            tree.clone(),
+            event_bus.clone(),
+            authorization.clone(),
+        ));
         Self {
             region: Arc::new(RegionService::new(
                 repos.region_reader.clone(),
                 repos.region_writer.clone(),
             )),
-            tree: Arc::new(TreeService::new(
-                repos.tree_reader.clone(),
-                repos.tree_writer.clone(),
-                repos.cluster_reader.clone(),
-                repos.sensor_reader.clone(),
-                repos.sensor_writer.clone(),
-                event_bus.clone(),
-            )),
+            tree,
             sensor: Arc::new(SensorService::new(
                 repos.sensor_reader.clone(),
                 repos.sensor_writer.clone(),
@@ -470,11 +510,9 @@ impl Services {
                 profile_reader,
                 event_bus,
             )),
-            authorization: Arc::new(AuthorizationService::new(
-                repos.organization_reader.clone(),
-                repos.role_reader.clone(),
-                auth_enabled,
-            )),
+            authorization,
+            plugin,
+            plugin_ingest,
         }
     }
 }

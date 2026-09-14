@@ -10,3 +10,5 @@ log:
 cors:
   allowed_origins:
     - "https://app.green-ecolution.de"
+plugins:
+  enabled: false

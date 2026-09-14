@@ -51,12 +51,120 @@
   },
   "plugin": {
     "overviewTitle": "Plugin overview",
-    "overviewIntro": "Here you can find an overview of all installed plugins. These plugins extend the application's functionality and can offer a variety of useful features. Click a plugin to learn more about it.",
+    "overviewIntro": "A plugin connects an external system to Green Ecolution. It can write data and bring its own view. Select a plugin to manage its permissions and access.",
     "loading": "Loading plugins...",
-    "startAriaLabel": "Start {name}",
-    "startLabel": "Start {name}",
     "empty": "No plugins are currently registered.",
-    "unavailable": "The plugin {pluginName} cannot currently be loaded. The plugin system is being reworked."
+    "installButton": "Install plugin",
+    "detailAriaLabel": "Open {name}",
+    "neverSeen": "No contact yet",
+    "columns": {
+      "status": "Status",
+      "name": "Plugin",
+      "organization": "Organization",
+      "lastSeen": "Last seen"
+    },
+    "status": {
+      "enabled": "Enabled",
+      "disabled": "Disabled"
+    },
+    "entityName": "Plugin",
+    "backLabel": "Back to the overview",
+    "notFoundBackLabel": "Back to the overview",
+    "install": {
+      "title": "Install plugin",
+      "description": "Connects an external system to Green Ecolution and issues it an API credential.",
+      "slugLabel": "Slug",
+      "slugHint": "Lowercase letters, digits and hyphens. Also used as the provenance tag on imported data, and cannot be changed afterwards.",
+      "nameLabel": "Name",
+      "descriptionLabel": "Description",
+      "organizationLabel": "Organization",
+      "organizationPlaceholder": "Choose an organization",
+      "organizationSearchPlaceholder": "Search organization",
+      "frontendModeLabel": "View",
+      "frontendModeOption": {
+        "none": "No view",
+        "external": "Externally hosted",
+        "proxied": "Internal (proxied)"
+      },
+      "targetLabel": "Address",
+      "targetExternalHint": "Absolute https address, localhost excepted.",
+      "targetProxiedHint": "Host and port of the internal service, e.g. plugin-backend:8080.",
+      "permissionsHeading": "Plugin permissions",
+      "permissionsHint": "These are the rights the plugin itself may use when it writes data into Green Ecolution.",
+      "accessPermissionsHeading": "Access permissions for the view",
+      "accessPermissionsHint": "Who may open the plugin's view. Starts out mirroring the plugin's own rights; the first change made here ends that mirroring for good. A view with action buttons hands the plugin's rights to whoever operates it — loosen these rights only deliberately.",
+      "slugRequired": "Enter a slug.",
+      "slugInvalid": "Only lowercase letters, digits and hyphens, not at the start or end.",
+      "slugReserved": "The slug \"{slug}\" is reserved by the plugin api and cannot be used.",
+      "nameRequired": "Give the plugin a name.",
+      "organizationRequired": "Choose an organization.",
+      "targetRequired": "Enter an address.",
+      "targetInvalidUrl": "That is not a valid address.",
+      "targetRequiresHttps": "The external address must use https (localhost excepted).",
+      "targetMatchesAppOrigin": "The address must not be this application's own origin.",
+      "targetInvalidHostPort": "Expected host:port, for example plugin-backend:8080.",
+      "targetInvalidPort": "The port must be between 1 and 65535.",
+      "submit": "Install"
+    },
+    "permissionMatrix": {
+      "areaColumnLabel": "Area",
+      "actionShort": {
+        "read": "Read",
+        "create": "Create",
+        "update": "Update",
+        "delete": "Delete"
+      }
+    },
+    "keyDialog": {
+      "installedTitle": "Plugin installed",
+      "rotatedTitle": "Key rotated",
+      "installedDescription": "Copy the key and store it wherever the plugin needs it.",
+      "rotatedDescription": "The previous key is invalid from now on. Replace it everywhere the plugin uses it.",
+      "onceNotice": "Visible only now",
+      "activationHint": "The plugin starts out disabled. While it is, Green Ecolution rejects its adapter even with a valid key. Enable it on the detail page before you hand the key over.",
+      "copy": "Copy key",
+      "copied": "Copied",
+      "copyFailed": "Copying failed.",
+      "close": "Close"
+    },
+    "detail": {
+      "loading": "Loading plugin",
+      "credentialLabel": "API key",
+      "credentialSet": "Set",
+      "credentialMissing": "No key set",
+      "openViewButton": "Open view",
+      "rotateButton": "Rotate key",
+      "rotateConfirmTitle": "Rotate the key?",
+      "rotateConfirmDescription": "The current key becomes invalid immediately. Update it wherever the plugin needs it.",
+      "enableLabel": "Enabled",
+      "enableHint": "A disabled plugin can no longer authenticate or write any data.",
+      "uninstallButton": "Uninstall",
+      "uninstallConfirmTitle": "Uninstall the plugin?",
+      "uninstallConfirmDescription": "{name} will be removed. The records it has already imported stay in Green Ecolution, but the link between them and the plugin is lost. If the same plugin is installed again later, it will not recognise those records and will import everything a second time.",
+      "saveButton": "Save",
+      "cancelButton": "Cancel",
+      "toast": {
+        "saved": "Saved",
+        "saveFailed": "The plugin could not be saved.",
+        "rotated": "Key rotated",
+        "rotateFailed": "The key could not be rotated.",
+        "uninstalled": "Plugin uninstalled",
+        "uninstallFailed": "The plugin could not be uninstalled.",
+        "installed": "Plugin installed",
+        "installFailed": "The plugin could not be installed."
+      },
+      "operationHeading": "Operation",
+      "detailsHeading": "Details",
+      "permissionsHeading": "Permissions",
+      "lastSeenFactLabel": "Last contact",
+      "installedFactLabel": "Installed on"
+    },
+    "view": {
+      "loading": "Loading view",
+      "proxiedNotice": "This plugin is embedded internally through a proxy. Its view cannot be shown here yet.",
+      "noFrontendNotice": "This plugin has no view.",
+      "unsafeOriginNotice": "This plugin's view is served from the same address as Green Ecolution and therefore cannot be displayed. A plugin has to be reachable under its own domain."
+    }
   },
   "notProvided": "Not provided",
   "dialog": {
@@ -412,6 +520,18 @@
           "create": "Create or copy a new role",
           "update": "Change a role's permissions",
           "delete": "Delete role"
+        }
+      },
+      "plugin": {
+        "label": "Plugins",
+        "pluralNoun": "plugins",
+        "singular": "plugin",
+        "description": "External integrations",
+        "hint": {
+          "read": "View installed plugins",
+          "create": "Install a new plugin",
+          "update": "Change a plugin's configuration or rotate its key",
+          "delete": "Uninstall a plugin"
         }
       }
     }

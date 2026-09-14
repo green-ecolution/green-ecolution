@@ -61,6 +61,7 @@ const AREA_DEFINITIONS: readonly AreaDefinition[] = [
   { resource: 'user', group: 'administration' },
   { resource: 'organization', group: 'administration' },
   { resource: 'role', group: 'administration' },
+  { resource: 'plugin', group: 'administration' },
 ]
 
 const permissionFor = (resource: Resource, action: Action): Permission => `${resource}:${action}`

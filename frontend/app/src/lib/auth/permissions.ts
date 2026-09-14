@@ -10,6 +10,7 @@ export const RESOURCES = [
   'user',
   'organization',
   'role',
+  'plugin',
 ] as const
 
 export const ACTIONS = ['read', 'create', 'update', 'delete'] as const

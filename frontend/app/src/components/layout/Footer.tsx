@@ -19,6 +19,9 @@ type NavItem = NavItemInternal | NavItemExternal
 function Footer() {
   const location = useLocation()
   const isMapPage = location.pathname.includes('/map')
+  // A plugin view already stretches to the footer, so the usual gap after page
+  // content would only shrink the frame.
+  const isPluginView = location.pathname.startsWith('/plugin/')
   const collapsed = useSidebarCollapsed()
   const { data: appInfo } = useQuery(infoQueries.app())
   const { t } = useTranslation('navigation')
@@ -48,7 +51,7 @@ function Footer() {
 
   return (
     <footer
-      className={`bg-white transition-[padding] ease-in-out duration-300 motion-reduce:transition-none mt-16 ${collapsed ? 'lg:pl-[4.5rem]' : 'lg:pl-[16rem]'} ${isMapPage ? 'hidden' : ''}`}
+      className={`bg-white transition-[padding] ease-in-out duration-300 motion-reduce:transition-none ${isPluginView ? '' : 'mt-16'} ${collapsed ? 'lg:pl-[4.5rem]' : 'lg:pl-[16rem]'} ${isMapPage ? 'hidden' : ''}`}
     >
       <div className="container text-sm border-t border-dark-50 py-4 lg:flex lg:justify-between lg:items-center">
         <p className="text-dark-400 mb-5 lg:mb-0">{t('footer.tagline', { version })}</p>

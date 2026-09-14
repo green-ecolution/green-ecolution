@@ -79,33 +79,30 @@ fn body_response(
 
 /// Repository error details carry raw driver output (constraint and table
 /// names, connection errors). They are logged server-side; clients only ever
-/// see the generic per-variant message.
+/// see `RepositoryError::generic_message()` — the same text a plugin ingest
+/// per-item failure uses, so the two cannot drift apart.
 fn repository_error_response(e: &RepositoryError) -> (StatusCode, &'static str) {
-    match e {
-        RepositoryError::NotFound => (StatusCode::NOT_FOUND, "resource not found"),
-        RepositoryError::AlreadyExists(_) => (StatusCode::CONFLICT, "resource already exists"),
-        RepositoryError::ForeignKeyViolation(_) => (
-            StatusCode::UNPROCESSABLE_ENTITY,
-            "referenced resource does not exist",
-        ),
-        RepositoryError::ConstraintViolation(_) => (
-            StatusCode::BAD_REQUEST,
-            "request violates a data constraint",
-        ),
+    let status = match e {
+        RepositoryError::NotFound => StatusCode::NOT_FOUND,
+        RepositoryError::AlreadyExists(_) => StatusCode::CONFLICT,
+        RepositoryError::ForeignKeyViolation(_) => StatusCode::UNPROCESSABLE_ENTITY,
+        RepositoryError::ConstraintViolation(_) => StatusCode::BAD_REQUEST,
         RepositoryError::DataIntegrity(_) | RepositoryError::Internal(_) => {
-            (StatusCode::INTERNAL_SERVER_ERROR, "internal server error")
+            StatusCode::INTERNAL_SERVER_ERROR
         }
-    }
+    };
+    (status, e.generic_message())
 }
 
 /// Status and client-facing message for an auth failure. Shared by both
 /// `IntoResponse` impls so `ServiceError::Auth` cannot drift from `AuthError`.
 fn auth_error_response(e: &AuthError) -> (StatusCode, String) {
     let status = match e {
-        AuthError::MissingToken | AuthError::InvalidToken(_) | AuthError::TokenExpired => {
-            StatusCode::UNAUTHORIZED
-        }
-        AuthError::Forbidden => StatusCode::FORBIDDEN,
+        AuthError::MissingToken
+        | AuthError::InvalidToken(_)
+        | AuthError::TokenExpired
+        | AuthError::PluginKeyInvalid => StatusCode::UNAUTHORIZED,
+        AuthError::Forbidden | AuthError::PluginDisabled => StatusCode::FORBIDDEN,
         AuthError::IdpUnavailable(_) => StatusCode::SERVICE_UNAVAILABLE,
     };
     let message = match e {
@@ -194,6 +191,9 @@ impl IntoResponse for ServiceError {
             }
             ServiceError::FeatureDisabled { .. } => {
                 (StatusCode::SERVICE_UNAVAILABLE, self.to_string())
+            }
+            ServiceError::PayloadTooLarge { .. } => {
+                (StatusCode::PAYLOAD_TOO_LARGE, self.to_string())
             }
         };
         body_response(status, message, Some(code), validation)
@@ -324,6 +324,15 @@ mod tests {
         assert_eq!(routing.status(), StatusCode::SERVICE_UNAVAILABLE);
         let body: serde_json::Value = serde_json::from_str(&body_of(routing).await).unwrap();
         assert_eq!(body["code"], "feature.routing_disabled");
+    }
+
+    #[tokio::test]
+    async fn oversized_batch_is_payload_too_large() {
+        let err = ServiceError::PayloadTooLarge { limit: 500 };
+        let response = err.into_response();
+        assert_eq!(response.status(), StatusCode::PAYLOAD_TOO_LARGE);
+        let body: serde_json::Value = serde_json::from_str(&body_of(response).await).unwrap();
+        assert_eq!(body["code"], "plugin.batch_too_large");
     }
 
     #[tokio::test]

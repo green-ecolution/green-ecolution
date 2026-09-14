@@ -1,0 +1,96 @@
+name: "Publish plugin-interface to npm"
+
+# The SDK plugin authors install. Its version is deliberately not tied to the
+# application release train (release-please does not bump it): it describes the
+# handshake protocol and the exported API, which change on their own schedule.
+# A release whose version is already on npm is skipped, so running this on every
+# release is harmless and a publish happens exactly when someone bumps the
+# version in frontend/packages/plugin-interface/package.json.
+#
+# Authentication is npm's trusted publishing over OIDC, so there is no token to
+# store or rotate. The trusted publisher registered on npmjs.com pins this
+# repository, this filename and the `npm` environment below; renaming any of
+# them means deleting the connection on npm and creating a new one.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: publish-plugin-interface
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: npm
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup-frontend
+
+      # Trusted publishing landed in npm 11.5.1; the runner's bundled version
+      # is not guaranteed to be newer.
+      - name: Ensure an npm that can publish over OIDC
+        run: npm install -g npm@^11
+
+      - name: Resolve version
+        id: version
+        working-directory: ./frontend/packages/plugin-interface
+        run: |
+          version=$(node -p "require('./package.json').version")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if npm view "@green-ecolution/plugin-interface@$version" version >/dev/null 2>&1; then
+            echo "Version $version is already on npm, nothing to do."
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build
+        if: steps.version.outputs.publish == 'true'
+        working-directory: ./frontend
+        run: pnpm build:plugin-interface
+
+      # pnpm packs, npm publishes. Only pnpm resolves the `catalog:` protocol in
+      # peerDependencies into real ranges, and only npm speaks the OIDC exchange
+      # that trusted publishing needs. Publishing the tarball gets both.
+      - name: Pack
+        if: steps.version.outputs.publish == 'true'
+        id: pack
+        working-directory: ./frontend/packages/plugin-interface
+        run: |
+          pnpm pack --pack-destination "$RUNNER_TEMP" >/dev/null
+          path=$(ls "$RUNNER_TEMP"/green-ecolution-plugin-interface-*.tgz)
+          echo "tarball=$path" >> "$GITHUB_OUTPUT"
+          node -e "
+            const { execSync } = require('node:child_process')
+            const manifest = JSON.parse(
+              execSync('tar -xzOf ' + process.argv[1] + ' package/package.json').toString(),
+            )
+            const unresolved = Object.entries({
+              ...manifest.dependencies,
+              ...manifest.peerDependencies,
+            }).filter(([, range]) => /^(catalog|workspace):/.test(range))
+            if (unresolved.length > 0) {
+              console.error('Unresolved protocol in the packed manifest:', unresolved)
+              process.exit(1)
+            }
+          " "$path"
+
+      - name: Publish
+        if: steps.version.outputs.publish == 'true'
+        run: npm publish "${{ steps.pack.outputs.tarball }}" --access public
+
+      - name: Summary
+        run: |
+          if [ "${{ steps.version.outputs.publish }}" = "true" ]; then
+            echo "Published @green-ecolution/plugin-interface@${{ steps.version.outputs.version }}" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Skipped: @green-ecolution/plugin-interface@${{ steps.version.outputs.version }} is already published" >> "$GITHUB_STEP_SUMMARY"
+          fi

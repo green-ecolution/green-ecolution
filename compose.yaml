@@ -314,6 +314,38 @@ services:
       - "traefik.http.routers.traefik.service=traefik"
       - "traefik.http.services.traefik.loadbalancer.server.port=8080"
 
+  demo-plugin:
+    # Behind a profile so `just infra-up` does not build it; start it with
+    # `just plugin-demo-up` when the plugin integration is being tested.
+    profiles: ["plugins"]
+    build:
+      context: ./frontend
+      dockerfile: demo-plugin/Dockerfile
+    environment:
+      # Points at the backend `just run-dev` runs on the host. The full docker
+      # stack overrides this in compose.app.yaml.
+      - GE_API_BASE_URL=${GE_API_BASE_URL:-http://host.docker.internal:3030/api}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    # A published localhost port, not a traefik host: an external plugin
+    # frontend must be https unless its host is exactly `localhost`.
+    ports:
+      - "127.0.0.1:5175:80"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost/api/session",
+        ]
+      interval: 30s
+      timeout: 5s
+      start_period: 5s
+      retries: 3
+
 volumes:
   minio_store:
   db_data:

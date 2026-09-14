@@ -34,6 +34,8 @@ import {
   OrganizationDetailResponse,
   OrganizationResponse,
   pluginApi,
+  PluginResponse,
+  PluginViewResponse,
   regionApi,
   ResponseError,
   RoleResponse,
@@ -113,6 +115,7 @@ export const queryRoots = {
   role: [['roles']],
   organization: [['organizations']],
   comment: [['comments']],
+  plugin: [['plugins']],
 } as const satisfies Record<string, readonly QueryKey[]>
 
 export type Aggregate = keyof typeof queryRoots
@@ -499,6 +502,22 @@ export const pluginsQuery = () =>
   queryOptions({
     queryKey: ['plugins'],
     queryFn: () => pluginApi.listPlugins(),
+  })
+
+export const pluginQuery = (slug: string) =>
+  queryOptions<PluginResponse>({
+    queryKey: ['plugins', slug],
+    queryFn: () => pluginApi.getPlugin({ pluginSlug: slug }),
+  })
+
+/**
+ * The view surface: readable with the plugin's own required permissions,
+ * unlike `pluginQuery`, which needs `plugin:read`.
+ */
+export const pluginViewQuery = (slug: string) =>
+  queryOptions<PluginViewResponse>({
+    queryKey: ['plugins', slug, 'view'],
+    queryFn: () => pluginApi.getPluginView({ pluginSlug: slug }),
   })
 
 export const routingStartPointsQuery = () =>

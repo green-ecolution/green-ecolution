@@ -65,6 +65,22 @@ pub enum RepositoryError {
     Internal(String),
 }
 
+impl RepositoryError {
+    /// Client-safe text for this variant, never the driver detail carried
+    /// inside it. The single place both the HTTP layer and any other caller
+    /// that must not leak that detail (e.g. a batch response that reports a
+    /// per-item failure) get their wording from, so the two cannot drift.
+    pub fn generic_message(&self) -> &'static str {
+        match self {
+            Self::NotFound => "resource not found",
+            Self::AlreadyExists(_) => "resource already exists",
+            Self::ForeignKeyViolation(_) => "referenced resource does not exist",
+            Self::ConstraintViolation(_) => "request violates a data constraint",
+            Self::DataIntegrity(_) | Self::Internal(_) => "internal server error",
+        }
+    }
+}
+
 pub type RawId = Uuid;
 
 /// Typed UUID v7 identity.

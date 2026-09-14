@@ -295,6 +295,17 @@ infra-down:
     @echo "Infra down (delete volumes)..."
     docker compose -f compose.yaml down -v
 
+# Start the demo plugin used for the manual plugin integration test
+[group('infra')]
+plugin-demo-up:
+    @just _compose --profile plugins up -d --build demo-plugin
+    @echo "Demo plugin: http://localhost:5175"
+
+# Stop and remove the demo plugin
+[group('infra')]
+plugin-demo-down:
+    @just _compose --profile plugins rm -sf demo-plugin
+
 # Set up ACME storage for Let's Encrypt
 _acme-init:
     @if [ -n "{{ porkbun_api_key }}" ]; then \

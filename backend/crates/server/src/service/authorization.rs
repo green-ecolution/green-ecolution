@@ -6,7 +6,7 @@ use uuid::Uuid;
 use domain::{
     Id,
     authorization::{
-        AccessContext, Action, EffectivePermissions, Permission, Resource, Visibility,
+        AccessContext, Action, EffectivePermissions, OrgHierarchy, Permission, Resource, Visibility,
     },
     organization::{Organization, OrganizationReader},
     role::{Role, RoleReader},
@@ -108,8 +108,38 @@ impl AuthorizationService {
         }
     }
 
+    /// Opening a plugin's view is gated by that plugin's own
+    /// `required_permissions`, held in full, and deliberately not by
+    /// `plugin:read`: administering a plugin and working with its view are
+    /// different jobs, and the people the view is built for rarely administer
+    /// anything. Whoever may read the plugin passes as well, so an
+    /// administrator can check a view they just installed.
+    pub async fn require_plugin_view(
+        &self,
+        user_id: Uuid,
+        required: &BTreeSet<Permission>,
+        org: Id<Organization>,
+    ) -> Result<(), ServiceError> {
+        let ctx = self.context_for(user_id).await?;
+        if ctx.superset_of(required, org)
+            || ctx.allows_in(Permission::new(Resource::Plugin, Action::Read), org)
+        {
+            Ok(())
+        } else {
+            Err(AuthError::Forbidden.into())
+        }
+    }
+
     pub fn enforced(&self) -> bool {
         self.enforced
+    }
+
+    /// Loads the organization tree on its own, for callers that build an
+    /// [`AccessContext`] from something other than a user's roles — the
+    /// plugin ingest path scopes a plugin's own `(organization_id,
+    /// permissions)` grant instead, which has no `user_id` to resolve.
+    pub async fn hierarchy(&self) -> Result<OrgHierarchy, ServiceError> {
+        Ok(self.org_reader.hierarchy().await?)
     }
 
     /// Rejects a change to a role definition that would leave the caller

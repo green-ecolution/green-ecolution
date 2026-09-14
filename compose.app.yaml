@@ -111,3 +111,8 @@ services:
       - APP_DATABASE__DATABASE_NAME=${POSTGRES_DB:-postgres}
       - APP_DATABASE__USERNAME=${POSTGRES_USER:-postgres}
       - APP_DATABASE__PASSWORD=${POSTGRES_PASSWORD:-postgres}
+
+  demo-plugin:
+    profiles: ["plugins"]
+    environment:
+      - GE_API_BASE_URL=http://backend:3000/api

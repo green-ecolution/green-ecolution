@@ -10,3 +10,5 @@ log:
 cors:
   allowed_origins:
     - "https://app.stage.green-ecolution.de"
+plugins:
+  enabled: false

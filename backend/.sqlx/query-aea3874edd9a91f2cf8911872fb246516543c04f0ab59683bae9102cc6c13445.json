@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE plugins\n               SET name = $2, description = $3, frontend_mode = $4, frontend_target = $5,\n                   organization_id = $6, permissions = $7, required_permissions = $8,\n                   enabled = $9, key_hash = $10\n               WHERE id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Uuid",
+        "TextArray",
+        "TextArray",
+        "Bool",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "aea3874edd9a91f2cf8911872fb246516543c04f0ab59683bae9102cc6c13445"
+}

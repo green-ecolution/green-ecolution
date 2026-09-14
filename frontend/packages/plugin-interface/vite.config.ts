@@ -18,7 +18,11 @@ export default defineConfig({
       formats: ['es'],
     },
     rollupOptions: {
-      external: ['react', 'react-dom'],
+      // Subpaths have to stay external too, not just the bare specifiers: a
+      // bundled `react/jsx-runtime` resolves to react's CJS build, whose
+      // `require("react")` survives into the ESM output and throws in the
+      // browser on the first import of this package.
+      external: [/^react($|\/)/, /^react-dom($|\/)/],
     },
   },
 })

@@ -1,0 +1,110 @@
+:root {
+  color-scheme: light;
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    sans-serif;
+  color: #1f2933;
+}
+
+body {
+  margin: 0;
+  background: #f7f9f8;
+}
+
+.page {
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+  display: grid;
+  gap: 1.5rem;
+}
+
+h1 {
+  font-size: 1.5rem;
+  margin: 0;
+}
+
+h2 {
+  font-size: 1.1rem;
+  margin: 0 0 0.5rem;
+}
+
+section {
+  background: #fff;
+  border: 1px solid #dde3e1;
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
+
+dl {
+  display: grid;
+  grid-template-columns: 8rem 1fr;
+  gap: 0.25rem 1rem;
+  margin: 0;
+}
+
+dt {
+  color: #52616b;
+}
+
+dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+form {
+  display: grid;
+  gap: 0.5rem;
+  max-width: 32rem;
+}
+
+input {
+  padding: 0.5rem;
+  border: 1px solid #c3cdc9;
+  border-radius: 0.25rem;
+  font: inherit;
+}
+
+.hint {
+  margin: 0;
+  color: #52616b;
+  font-size: 0.875rem;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+button {
+  padding: 0.5rem 0.9rem;
+  border: 1px solid #2f6f4f;
+  border-radius: 0.25rem;
+  background: #2f6f4f;
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+pre {
+  margin: 0;
+  padding: 0.75rem;
+  background: #f2f5f4;
+  border-radius: 0.25rem;
+  overflow-x: auto;
+  font-size: 0.8125rem;
+}
+
+#not-embedded {
+  max-width: 40rem;
+  margin: 3rem auto;
+  padding: 0 1rem;
+}

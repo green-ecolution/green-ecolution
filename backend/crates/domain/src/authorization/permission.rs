@@ -13,10 +13,11 @@ pub enum Resource {
     User,
     Organization,
     Role,
+    Plugin,
 }
 
 impl Resource {
-    pub const ALL: [Resource; 9] = [
+    pub const ALL: [Resource; 10] = [
         Resource::Tree,
         Resource::TreeCluster,
         Resource::Sensor,
@@ -26,6 +27,7 @@ impl Resource {
         Resource::User,
         Resource::Organization,
         Resource::Role,
+        Resource::Plugin,
     ];
 
     pub fn as_str(&self) -> &'static str {
@@ -39,6 +41,7 @@ impl Resource {
             Resource::User => "user",
             Resource::Organization => "organization",
             Resource::Role => "role",
+            Resource::Plugin => "plugin",
         }
     }
 }
@@ -171,6 +174,18 @@ mod tests {
 
     #[test]
     fn catalog_has_all_combinations() {
-        assert_eq!(Permission::catalog().len(), 36);
+        assert_eq!(Permission::catalog().len(), 40);
+    }
+
+    #[test]
+    fn plugin_resource_round_trips() {
+        assert_eq!(Resource::Plugin.as_str(), "plugin");
+        assert_eq!("plugin".parse::<Resource>().unwrap(), Resource::Plugin);
+    }
+
+    #[test]
+    fn catalog_covers_ten_resources() {
+        assert_eq!(Resource::ALL.len(), 10);
+        assert_eq!(Permission::catalog().len(), 40);
     }
 }

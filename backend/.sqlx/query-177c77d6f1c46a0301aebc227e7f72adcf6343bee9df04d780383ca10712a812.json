@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO plugin_tree_refs (plugin_id, external_id, tree_id)\n               VALUES ($1, $2, $3)\n               ON CONFLICT (plugin_id, external_id) DO UPDATE SET tree_id = EXCLUDED.tree_id",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "177c77d6f1c46a0301aebc227e7f72adcf6343bee9df04d780383ca10712a812"
+}

@@ -99,7 +99,7 @@ async fn templates_endpoint_lists_the_five_seeded_templates() {
 async fn permissions_endpoint_lists_the_catalog() {
     let app = spawn_app().await;
     let perms: serde_json::Value = app.get("/api/v1/permissions").await.json().await.unwrap();
-    assert_eq!(perms.as_array().unwrap().len(), 36);
+    assert_eq!(perms.as_array().unwrap().len(), 40);
     assert!(
         perms
             .as_array()

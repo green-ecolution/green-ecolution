@@ -28,7 +28,7 @@ pub mod watering_plan;
 pub fn public_router() -> OpenApiRouter<Arc<AppState>> {
     OpenApiRouter::new()
         .merge(info::public_routes())
-        .merge(plugin::routes())
+        .merge(plugin::ingest_routes())
 }
 
 pub fn protected_router() -> OpenApiRouter<Arc<AppState>> {
@@ -39,6 +39,7 @@ pub fn protected_router() -> OpenApiRouter<Arc<AppState>> {
         .merge(evaluation::routes())
         .merge(info::protected_routes())
         .merge(organization::routes())
+        .merge(plugin::routes())
         .merge(role::routes())
         .merge(routing::routes())
         .merge(sensor::routes())

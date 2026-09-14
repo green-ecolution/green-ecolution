@@ -90,6 +90,39 @@ impl TestApp {
             .expect("failed to execute request")
     }
 
+    pub async fn post_json_with_bearer(
+        &self,
+        path: &str,
+        body: &serde_json::Value,
+        token: &str,
+    ) -> reqwest::Response {
+        reqwest::Client::new()
+            .post(format!("{}{}", self.address, path))
+            .bearer_auth(token)
+            .json(body)
+            .send()
+            .await
+            .expect("failed to execute request")
+    }
+
+    pub async fn get_with_bearer(&self, path: &str, token: &str) -> reqwest::Response {
+        reqwest::Client::new()
+            .get(format!("{}{}", self.address, path))
+            .bearer_auth(token)
+            .send()
+            .await
+            .expect("failed to execute request")
+    }
+
+    pub async fn delete_with_bearer(&self, path: &str, token: &str) -> reqwest::Response {
+        reqwest::Client::new()
+            .delete(format!("{}{}", self.address, path))
+            .bearer_auth(token)
+            .send()
+            .await
+            .expect("failed to execute request")
+    }
+
     /// Mirrors what `infra::mqtt::build_eco_drizzler` produces after parsing:
     /// three watermarks (30/60/90 cm) plus temperature and humidity at 15 cm.
     pub async fn ingest_ecodrizzler(
@@ -290,6 +323,61 @@ pub async fn spawn_app_with_routing_and_auth(streamlet_url: &str, auth: AuthSett
     let app = spawn_with_settings(settings).await;
     seed_routing_depots(&app.db_pool).await;
     app
+}
+
+pub async fn spawn_app_with_plugins() -> TestApp {
+    spawn_app_with_plugins_and_auth(disabled_auth_settings()).await
+}
+
+/// Same as [`spawn_app_with_plugins`], but with a chosen `application.base_url`
+/// so a test can submit a plugin `frontend_target` matching the app's own
+/// origin and assert it is rejected.
+pub async fn spawn_app_with_plugins_and_base_url(base_url: &str) -> TestApp {
+    let mut settings = Settings::for_test(disabled_auth_settings());
+    settings.info.health_check_interval_secs = 1;
+    settings.info.update_check_repo = None;
+    settings.plugins.enabled = true;
+    settings.application.base_url = url::Url::parse(base_url).expect("test base_url");
+    spawn_with_settings(settings).await
+}
+
+pub async fn spawn_app_with_plugins_and_auth(auth: AuthSettings) -> TestApp {
+    let mut settings = Settings::for_test(auth);
+    settings.info.health_check_interval_secs = 1;
+    settings.info.update_check_repo = None;
+    settings.plugins.enabled = true;
+    spawn_with_settings(settings).await
+}
+
+/// Installs an enabled plugin in the root org and returns its plaintext key.
+pub async fn install_plugin(app: &TestApp, slug: &str, permissions: &[&str]) -> String {
+    let created: serde_json::Value = app
+        .post_json(
+            "/api/v1/plugins",
+            &json!({
+                "slug": slug,
+                "name": slug,
+                "organization_id": ROOT_ORG_ID,
+                "permissions": permissions,
+                "required_permissions": [],
+                "frontend": { "mode": "none" }
+            }),
+        )
+        .await
+        .json()
+        .await
+        .expect("install failed");
+
+    app.patch_json(
+        &format!("/api/v1/plugins/{slug}"),
+        &json!({ "enabled": true }),
+    )
+    .await;
+
+    created["key"]
+        .as_str()
+        .expect("no key returned")
+        .to_string()
 }
 
 /// Seeds the same start points the production seed file provides, plus a

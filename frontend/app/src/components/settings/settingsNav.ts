@@ -65,6 +65,7 @@ export const SETTINGS_NAV: SettingsNavItem[] = [
     icon: 'Puzzle',
     to: '/settings/plugin',
     featureKey: 'plugins',
+    permission: ['plugin:read'],
   },
 ]
 

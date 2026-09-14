@@ -23,6 +23,26 @@ use domain::{
 
 use super::{OrganizationMismatch, ServiceError, event_bus::EventBus};
 
+/// The single tree operation another service needs from this one.
+///
+/// Deleting a tree publishes `TreeDeleted` and lets the cluster handlers
+/// recompute centroid and status, so a second caller must not reimplement it.
+/// The port stays narrow on purpose: a consumer depends on the one method it
+/// uses instead of on the whole `TreeService`, which keeps the service graph
+/// readable and its fakes to one method. `PluginIngestService` is the only
+/// consumer today.
+#[async_trait::async_trait]
+pub trait TreeDeletion: Send + Sync {
+    async fn delete(&self, id: Id<Tree>) -> Result<(), ServiceError>;
+}
+
+#[async_trait::async_trait]
+impl TreeDeletion for TreeService {
+    async fn delete(&self, id: Id<Tree>) -> Result<(), ServiceError> {
+        TreeService::delete(self, id).await
+    }
+}
+
 pub struct TreeService {
     reader: Arc<dyn TreeReader>,
     writer: Arc<dyn TreeWriter>,

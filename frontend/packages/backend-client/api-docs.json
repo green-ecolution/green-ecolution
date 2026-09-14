@@ -1866,16 +1866,29 @@
         "tags": [
           "Plugins"
         ],
-        "summary": "List all plugins",
-        "description": "Returns all registered plugins.",
+        "summary": "List plugins visible to the caller",
+        "description": "Returns every installed plugin the caller may read, scoped to their visible organization subtree. Requires plugin:read.",
         "operationId": "listPlugins",
         "responses": {
           "200": {
-            "description": "List of registered plugins",
+            "description": "Plugins visible to the caller",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PluginListResponse"
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PluginResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
                 }
               }
             }
@@ -1906,14 +1919,14 @@
         "tags": [
           "Plugins"
         ],
-        "summary": "Register a plugin",
-        "description": "Register a new external plugin and receive authentication tokens.",
-        "operationId": "registerPlugin",
+        "summary": "Install a plugin",
+        "description": "Creates a new plugin and returns its one-time plaintext API key. Requires plugin:create in the target organization, plus a permission set that does not exceed the caller's own grants.",
+        "operationId": "installPlugin",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PluginRegisterRequest"
+                "$ref": "#/components/schemas/PluginCreateRequest"
               }
             }
           },
@@ -1921,11 +1934,11 @@
         },
         "responses": {
           "201": {
-            "description": "Plugin registered",
+            "description": "Plugin installed; the plaintext key appears only in this response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ClientTokenResponse"
+                  "$ref": "#/components/schemas/PluginKeyResponse"
                 }
               }
             }
@@ -1940,8 +1953,306 @@
               }
             }
           },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Slug already in use (code `resource.already_exists`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
           "500": {
             "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Plugins feature is disabled (code `feature.plugins_disabled`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/plugins/ingest/trees": {
+      "get": {
+        "tags": [
+          "Plugins"
+        ],
+        "summary": "List a plugin's own tree references",
+        "description": "Keyset page over the calling plugin's external_id-to-tree mappings, ordered by external_id. A plugin never sees another plugin's references.",
+        "operationId": "listPluginTreeRefs",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "int32",
+              "minimum": 1
+            },
+            "example": 100
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "example": "12344"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Page of tree references",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TreeRefPageResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Plugin is disabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Plugins feature is disabled (code `feature.plugins_disabled`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Plugins"
+        ],
+        "summary": "Upsert trees from a plugin",
+        "description": "Creates or updates up to 500 trees per request, matched by the plugin's own external_id. Every entry is processed independently: one bad entry fails only itself, never the batch. Requires tree:create and tree:update in the plugin's organization.",
+        "operationId": "upsertPluginTrees",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TreeIngestBatchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Per-item results plus a summary",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngestBatchResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden or plugin disabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Batch too large (code `plugin.batch_too_large`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Plugins feature is disabled (code `feature.plugins_disabled`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/plugins/ingest/trees/{external_id}": {
+      "delete": {
+        "tags": [
+          "Plugins"
+        ],
+        "summary": "Delete a tree linked by a plugin",
+        "description": "Deletes the tree the plugin's external_id resolves to, through the same path as the regular tree deletion so cluster centroid and status are recalculated. Requires tree:delete in the plugin's organization.",
+        "operationId": "deletePluginTree",
+        "parameters": [
+          {
+            "name": "external_id",
+            "in": "path",
+            "description": "The plugin's own external identifier for the tree",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden or plugin disabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No tree is linked under this external_id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Plugins feature is disabled (code `feature.plugins_disabled`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/plugins/me": {
+      "get": {
+        "tags": [
+          "Plugins"
+        ],
+        "summary": "Get the authenticated plugin",
+        "description": "Returns the calling plugin's own registration, authenticated by its API key rather than a user session. Lets an adapter confirm its organization and rights before importing anything.",
+        "operationId": "getOwnPlugin",
+        "responses": {
+          "200": {
+            "description": "The authenticated plugin",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PluginResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Plugin is disabled",
             "content": {
               "application/json": {
                 "schema": {
@@ -1969,7 +2280,7 @@
           "Plugins"
         ],
         "summary": "Get a plugin",
-        "description": "Returns plugin information by slug.",
+        "description": "Returns plugin information by slug. Requires plugin:read in the plugin's organization.",
         "operationId": "getPlugin",
         "parameters": [
           {
@@ -1993,6 +2304,26 @@
               }
             }
           },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Plugin not found",
             "content": {
@@ -2024,16 +2355,14 @@
             }
           }
         }
-      }
-    },
-    "/v1/plugins/{plugin_slug}/heartbeat": {
-      "post": {
+      },
+      "delete": {
         "tags": [
           "Plugins"
         ],
-        "summary": "Send heartbeat",
-        "description": "Send a keepalive heartbeat for a registered plugin.",
-        "operationId": "pluginHeartbeat",
+        "summary": "Uninstall a plugin",
+        "description": "Removes an installed plugin. Requires plugin:delete in the plugin's organization.",
+        "operationId": "uninstallPlugin",
         "parameters": [
           {
             "name": "plugin_slug",
@@ -2046,8 +2375,28 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "Heartbeat received"
+          "204": {
+            "description": "Uninstalled"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
           },
           "404": {
             "description": "Plugin not found",
@@ -2080,16 +2429,14 @@
             }
           }
         }
-      }
-    },
-    "/v1/plugins/{plugin_slug}/token/refresh": {
-      "post": {
+      },
+      "patch": {
         "tags": [
           "Plugins"
         ],
-        "summary": "Refresh plugin token",
-        "description": "Refresh authentication token for a plugin.",
-        "operationId": "refreshPluginToken",
+        "summary": "Update a plugin",
+        "description": "Applies the given fields to an installed plugin; an omitted field is left untouched. Requires plugin:update in the plugin's organization, plus (when permissions change) a set that does not exceed the caller's own grants.",
+        "operationId": "updatePlugin",
         "parameters": [
           {
             "name": "plugin_slug",
@@ -2105,7 +2452,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PluginAuthRequest"
+                "$ref": "#/components/schemas/PluginUpdateRequest"
               }
             }
           },
@@ -2113,11 +2460,41 @@
         },
         "responses": {
           "200": {
-            "description": "Token refreshed",
+            "description": "Updated",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ClientTokenResponse"
+                  "$ref": "#/components/schemas/PluginResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
                 }
               }
             }
@@ -2155,14 +2532,14 @@
         }
       }
     },
-    "/v1/plugins/{plugin_slug}/unregister": {
+    "/v1/plugins/{plugin_slug}/key": {
       "post": {
         "tags": [
           "Plugins"
         ],
-        "summary": "Unregister a plugin",
-        "description": "Remove a plugin registration.",
-        "operationId": "unregisterPlugin",
+        "summary": "Rotate a plugin's API key",
+        "description": "Invalidates the current key and returns a new plaintext key, which appears only in this response. Requires plugin:update in the plugin's organization.",
+        "operationId": "rotatePluginKey",
         "parameters": [
           {
             "name": "plugin_slug",
@@ -2175,8 +2552,118 @@
           }
         ],
         "responses": {
-          "204": {
-            "description": "Plugin unregistered"
+          "200": {
+            "description": "Key rotated; the plaintext key appears only in this response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PluginKeyResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Plugin not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Plugins feature is disabled (code `feature.plugins_disabled`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/plugins/{plugin_slug}/view": {
+      "get": {
+        "tags": [
+          "Plugins"
+        ],
+        "summary": "Get a plugin's view",
+        "description": "Returns what is needed to embed a plugin's view. Requires the plugin's own required_permissions in its organization -- plugin:read administers a plugin and is not what opening its view is about, though it grants access here as well.",
+        "operationId": "getPluginView",
+        "parameters": [
+          {
+            "name": "plugin_slug",
+            "in": "path",
+            "description": "Plugin slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Plugin view",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PluginViewResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden, or the plugin is disabled (code `plugin.disabled`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
           },
           "404": {
             "description": "Plugin not found",
@@ -6864,72 +7351,6 @@
           "role_id": "01980000-0000-7000-8000-0000000000b2"
         }
       },
-      "ClientTokenResponse": {
-        "type": "object",
-        "description": "OIDC token response containing access, ID, and refresh tokens.",
-        "required": [
-          "access_token",
-          "id_token",
-          "expiry",
-          "expires_in",
-          "refresh_expires_in",
-          "refresh_token",
-          "token_type",
-          "not_before_policy",
-          "session_state",
-          "scope"
-        ],
-        "properties": {
-          "access_token": {
-            "type": "string"
-          },
-          "expires_in": {
-            "type": "integer",
-            "format": "int32",
-            "minimum": 0
-          },
-          "expiry": {
-            "type": "string"
-          },
-          "id_token": {
-            "type": "string"
-          },
-          "not_before_policy": {
-            "type": "integer",
-            "format": "int32",
-            "minimum": 0
-          },
-          "refresh_expires_in": {
-            "type": "integer",
-            "format": "int32",
-            "minimum": 0
-          },
-          "refresh_token": {
-            "type": "string"
-          },
-          "scope": {
-            "type": "string"
-          },
-          "session_state": {
-            "type": "string"
-          },
-          "token_type": {
-            "type": "string"
-          }
-        },
-        "example": {
-          "access_token": "eyJhbGciOiJSUzI1NiIs...",
-          "expires_in": 300,
-          "expiry": "2024-08-01T13:00:00+00:00",
-          "id_token": "eyJhbGciOiJSUzI1NiIs...",
-          "not_before_policy": 0,
-          "refresh_expires_in": 1800,
-          "refresh_token": "eyJhbGciOiJSUzI1NiIs...",
-          "scope": "openid profile email",
-          "session_state": "550e8400-e29b-41d4-a716-446655440000",
-          "token_type": "Bearer"
-        }
-      },
       "ClusterBoundaryListResponse": {
         "type": "object",
         "required": [
@@ -7512,6 +7933,95 @@
           "repository": {
             "type": "string",
             "example": "https://github.com/green-ecolution/green-ecolution/"
+          }
+        }
+      },
+      "IngestBatchResponse": {
+        "type": "object",
+        "required": [
+          "results",
+          "summary"
+        ],
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IngestResultResponse"
+            }
+          },
+          "summary": {
+            "$ref": "#/components/schemas/IngestSummaryResponse"
+          }
+        }
+      },
+      "IngestResultResponse": {
+        "type": "object",
+        "description": "Outcome of one batch entry. `tree_id` is present on every non-`failed`\nresult, `error` only on `failed`.",
+        "required": [
+          "external_id",
+          "status"
+        ],
+        "properties": {
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "external_id": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/IngestStatusResponse"
+          },
+          "tree_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          }
+        },
+        "example": {
+          "external_id": "12345",
+          "status": "created",
+          "tree_id": "01990000-0000-7000-8000-000000000001"
+        }
+      },
+      "IngestStatusResponse": {
+        "type": "string",
+        "enum": [
+          "created",
+          "updated",
+          "unchanged",
+          "failed"
+        ]
+      },
+      "IngestSummaryResponse": {
+        "type": "object",
+        "description": "Per-status counts across a batch, so a caller need not tally `results`\nitself.",
+        "required": [
+          "created",
+          "updated",
+          "unchanged",
+          "failed"
+        ],
+        "properties": {
+          "created": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "failed": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "unchanged": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "updated": {
+            "type": "integer",
+            "minimum": 0
           }
         }
       },
@@ -8896,139 +9406,325 @@
           "total_records": 42
         }
       },
-      "PluginAuthRequest": {
+      "PluginCreateRequest": {
         "type": "object",
-        "description": "Authentication credentials for a plugin's OIDC client.",
-        "required": [
-          "client_id",
-          "client_secret"
-        ],
-        "properties": {
-          "client_id": {
-            "type": "string",
-            "description": "OIDC client ID assigned to the plugin.",
-            "example": "weather-provider-client"
-          },
-          "client_secret": {
-            "type": "string",
-            "description": "OIDC client secret for authentication.",
-            "example": "s3cr3t-k3y"
-          }
-        }
-      },
-      "PluginListResponse": {
-        "type": "object",
-        "description": "Response containing a list of registered plugins.",
-        "required": [
-          "data"
-        ],
-        "properties": {
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/PluginResponse"
-            },
-            "description": "List of registered plugins."
-          }
-        }
-      },
-      "PluginRegisterRequest": {
-        "type": "object",
-        "description": "Request body for registering a new plugin.",
+        "description": "Request body for installing a new plugin.",
         "required": [
           "slug",
           "name",
-          "path",
-          "version",
-          "description",
-          "auth"
+          "organization_id",
+          "permissions",
+          "required_permissions",
+          "frontend"
         ],
         "properties": {
-          "auth": {
-            "$ref": "#/components/schemas/PluginAuthRequest",
-            "description": "Authentication credentials for the plugin."
-          },
           "description": {
-            "type": "string",
-            "description": "Short description of the plugin's purpose.",
-            "example": "Provides weather forecast data"
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "frontend": {
+            "$ref": "#/components/schemas/PluginFrontendDto"
           },
           "name": {
-            "type": "string",
-            "description": "Human-readable plugin name.",
-            "example": "Weather Provider Plugin"
+            "type": "string"
           },
-          "path": {
+          "organization_id": {
             "type": "string",
-            "description": "Base URL where the plugin is hosted.",
-            "example": "https://plugin.example.com"
+            "format": "uuid"
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "required_permissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "slug": {
-            "type": "string",
-            "description": "Unique slug identifier for the plugin.",
-            "example": "weather-provider"
-          },
-          "version": {
-            "type": "string",
-            "description": "Semantic version of the plugin.",
-            "example": "1.0.0"
+            "type": "string"
           }
         },
         "example": {
-          "auth": {
-            "client_id": "weather-provider-client",
-            "client_secret": "s3cr3t-k3y"
+          "frontend": {
+            "mode": "none"
           },
-          "description": "Provides weather forecast data",
-          "name": "Weather Provider Plugin",
-          "path": "https://plugin.example.com",
-          "slug": "weather-provider",
-          "version": "1.0.0"
+          "name": "TBZ Baumkataster",
+          "organization_id": "01980000-0000-7000-8000-000000000001",
+          "permissions": [
+            "tree:create"
+          ],
+          "required_permissions": [
+            "tree:read"
+          ],
+          "slug": "tbz-baumkataster"
+        }
+      },
+      "PluginFrontendDto": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "target",
+              "mode"
+            ],
+            "properties": {
+              "mode": {
+                "type": "string",
+                "enum": [
+                  "external"
+                ]
+              },
+              "target": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "target",
+              "mode"
+            ],
+            "properties": {
+              "mode": {
+                "type": "string",
+                "enum": [
+                  "proxied"
+                ]
+              },
+              "target": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "mode"
+            ],
+            "properties": {
+              "mode": {
+                "type": "string",
+                "enum": [
+                  "none"
+                ]
+              }
+            }
+          }
+        ],
+        "description": "Frontend wiring for a plugin, tagged so mode and target cannot be set\ninconsistently.\n\nVariant order is load-bearing for the generated TypeScript client, not a\nmatter of taste. utoipa emits the variants as a `oneOf` in declaration\norder and openapi-generator turns that into a first-match dispatch whose\nguards only test which properties are present. `None` carries nothing, so\nits guard is `\"mode\" in value` — true for every variant. Listed first it\nswallows the other two and serializes them without their `target`, which\nsilently drops the plugin's address. Payload-carrying variants therefore\ncome first. `External` and `Proxied` share a shape and stay\nindistinguishable to those guards, but both emit `{ mode, target }`\nverbatim, so the wire format is right either way."
+      },
+      "PluginKeyResponse": {
+        "type": "object",
+        "description": "One-time response carrying the plaintext API key, issued on install and\non rotation only — it never appears again afterwards.",
+        "required": [
+          "key"
+        ],
+        "properties": {
+          "key": {
+            "type": "string"
+          }
+        },
+        "example": {
+          "key": "gep_0199a1f0-4c3e-7b2d-8a41-6f5c2e9d3b70.7b1e3c9a4f2d6081b3c5e7a9d1f3b5c72e4a6c8e0f1d3b5a7c9e1f3d5b7a9c1e"
         }
       },
       "PluginResponse": {
         "type": "object",
-        "description": "Represents a registered plugin in the system.",
+        "description": "Represents an installed plugin, mirroring `PluginView` flat: no hash, no\nkey. A later task reads `frontend_target` directly off this response.",
         "required": [
+          "id",
           "slug",
           "name",
-          "host_path",
-          "version",
-          "description"
+          "organization_id",
+          "permissions",
+          "required_permissions",
+          "frontend_mode",
+          "enabled",
+          "has_credential"
         ],
         "properties": {
-          "description": {
-            "type": "string",
-            "description": "Short description of the plugin's purpose.",
-            "example": "Provides weather forecast data"
+          "created_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
           },
-          "host_path": {
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "frontend_mode": {
+            "type": "string"
+          },
+          "frontend_target": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "has_credential": {
+            "type": "boolean"
+          },
+          "id": {
             "type": "string",
-            "description": "Base URL where the plugin is hosted.",
-            "example": "https://plugin.example.com"
+            "format": "uuid"
+          },
+          "last_seen_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
           },
           "name": {
+            "type": "string"
+          },
+          "organization_id": {
             "type": "string",
-            "description": "Human-readable plugin name.",
-            "example": "Weather Provider Plugin"
+            "format": "uuid"
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "required_permissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "slug": {
-            "type": "string",
-            "description": "Unique slug identifier for the plugin.",
-            "example": "weather-provider"
-          },
-          "version": {
-            "type": "string",
-            "description": "Semantic version of the plugin.",
-            "example": "1.0.0"
+            "type": "string"
           }
         },
         "example": {
-          "description": "Provides weather forecast data",
-          "host_path": "https://plugin.example.com",
-          "name": "Weather Provider Plugin",
-          "slug": "weather-provider",
-          "version": "1.0.0"
+          "created_at": "2026-08-01T00:00:00Z",
+          "description": null,
+          "enabled": true,
+          "frontend_mode": "none",
+          "frontend_target": null,
+          "has_credential": true,
+          "id": "01990000-0000-7000-8000-000000000001",
+          "last_seen_at": "2026-09-01T10:00:00Z",
+          "name": "TBZ Baumkataster",
+          "organization_id": "01980000-0000-7000-8000-000000000001",
+          "permissions": [
+            "tree:create",
+            "tree:update"
+          ],
+          "required_permissions": [
+            "tree:read"
+          ],
+          "slug": "tbz-baumkataster"
+        }
+      },
+      "PluginUpdateRequest": {
+        "type": "object",
+        "description": "Request body for updating an installed plugin. Every field is optional; an\nomitted field leaves it untouched. `description` is a double-option so\n\"omitted\" and \"set to null\" (clear it) stay distinguishable, matching\n`PluginChange`.",
+        "properties": {
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "enabled": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "frontend": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PluginFrontendDto"
+              }
+            ]
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "permissions": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "required_permissions": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "example": {
+          "enabled": true
+        }
+      },
+      "PluginViewResponse": {
+        "type": "object",
+        "description": "What the plugin viewer needs to render a frame, and nothing else. Its\nreader holds the plugin's `required_permissions`, not `plugin:read`, so it\ndeliberately omits the administrative facts of [`PluginResponse`] — the\nplugin's own permissions, its credential state and its last sign of life.",
+        "required": [
+          "slug",
+          "name",
+          "frontend_mode"
+        ],
+        "properties": {
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "frontend_mode": {
+            "type": "string"
+          },
+          "frontend_target": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          }
+        },
+        "example": {
+          "description": null,
+          "frontend_mode": "external",
+          "frontend_target": "https://kataster.example.org/view",
+          "name": "TBZ Baumkataster",
+          "slug": "tbz-baumkataster"
         }
       },
       "ReadinessResponse": {
@@ -10693,6 +11389,86 @@
           }
         }
       },
+      "TreeIngestBatchRequest": {
+        "type": "object",
+        "description": "Request body for the tree ingest batch endpoint. Capped at\n`plugin_ingest_service::MAX_INGEST_ITEMS` entries; a larger batch is\nrejected wholesale (413) before any entry is processed.",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TreeIngestItemRequest"
+            }
+          }
+        }
+      },
+      "TreeIngestItemRequest": {
+        "type": "object",
+        "description": "One entry of a tree ingest batch. Field-by-field validation (species,\nnumber, planting year, coordinate, ...) happens in the service, per item,\nso a single malformed entry cannot fail the whole batch.",
+        "required": [
+          "external_id",
+          "number",
+          "species",
+          "planting_year",
+          "latitude",
+          "longitude"
+        ],
+        "properties": {
+          "additional_info": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "external_id": {
+            "type": "string"
+          },
+          "latitude": {
+            "type": "number",
+            "format": "double",
+            "maximum": 90,
+            "minimum": -90
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double",
+            "maximum": 180,
+            "minimum": -180
+          },
+          "number": {
+            "type": "string"
+          },
+          "planting_year": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 2100,
+            "minimum": 1900
+          },
+          "species": {
+            "type": "string"
+          }
+        },
+        "example": {
+          "additional_info": {
+            "objectid": 12345
+          },
+          "description": null,
+          "external_id": "12345",
+          "latitude": 54.7836,
+          "longitude": 9.4321,
+          "number": "FL-001",
+          "planting_year": 1998,
+          "species": "Quercus robur"
+        }
+      },
       "TreeMarkerListResponse": {
         "type": "object",
         "required": [
@@ -10754,6 +11530,44 @@
           },
           "watering_status": {
             "$ref": "#/components/schemas/WateringStatus"
+          }
+        }
+      },
+      "TreeRefPageResponse": {
+        "type": "object",
+        "description": "Keyset page over a plugin's own tree references, ordered by external_id.\nNo `total`: the adapter walks this to the end anyway, and a cursor stays\nstable while imports run concurrently.",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TreeRefResponse"
+            }
+          },
+          "next_cursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "TreeRefResponse": {
+        "type": "object",
+        "description": "One external_id-to-tree mapping owned by the calling plugin.",
+        "required": [
+          "external_id",
+          "tree_id"
+        ],
+        "properties": {
+          "external_id": {
+            "type": "string"
+          },
+          "tree_id": {
+            "type": "string",
+            "format": "uuid"
           }
         }
       },
@@ -12282,7 +13096,7 @@
     },
     {
       "name": "Plugins",
-      "description": "Plugin registration and lifecycle management. External plugins can register, authenticate, and maintain heartbeat connections."
+      "description": "Plugin installation and lifecycle management, plus the ingest surface external plugins authenticate against with their API key to push data."
     },
     {
       "name": "Routing",

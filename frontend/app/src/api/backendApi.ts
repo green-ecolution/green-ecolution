@@ -120,7 +120,6 @@ export type { MapInfoResponse as MapInfo } from '@green-ecolution/backend-client
 export type { ServerInfoResponse as ServerInfo } from '@green-ecolution/backend-client'
 export type { ServicesInfoResponse as ServicesInfo } from '@green-ecolution/backend-client'
 export type { DataStatisticsResponse as DataStatistics } from '@green-ecolution/backend-client'
-export type { ClientTokenResponse as ClientToken } from '@green-ecolution/backend-client'
 export type { NearestTreeListResponse as NearestTreeList } from '@green-ecolution/backend-client'
 export type { TreeWithDistanceResponse as TreeWithDistance } from '@green-ecolution/backend-client'
 export type { EvaluationValueResponse as EvaluationValue } from '@green-ecolution/backend-client'

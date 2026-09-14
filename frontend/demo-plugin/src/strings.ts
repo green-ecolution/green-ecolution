@@ -1,0 +1,48 @@
+export const strings = {
+  de: {
+    title: 'Demo-Plugin',
+    intro:
+      'Diese Ansicht läuft im iframe von Green Ecolution und zeigt den Kontext, den der Host beim Handshake geschickt hat.',
+    greeting: (name: string) => `Angemeldet als ${name}`,
+    slug: 'Slug',
+    locale: 'Sprache',
+    theme: 'Darstellung',
+    keyLabel: 'API-Key',
+    keyHint:
+      'Der Key wird beim Installieren einmalig angezeigt. Er wird an den Server des Demo-Plugins geschickt und dort nur im Speicher gehalten.',
+    connect: 'Key übernehmen',
+    disconnect: 'Key verwerfen',
+    connected: (slug: string) => `Verbunden als Plugin ${slug}`,
+    actions: 'Aktionen',
+    import: 'Import (6 Bäume)',
+    modify: 'Einen Baum ändern',
+    delete: 'Einen Baum löschen',
+    refs: 'Referenzen listen',
+    lastAnswer: 'Letzte Antwort des Backends',
+    noAnswer: 'Noch keine Aktion ausgeführt.',
+    status: 'Status',
+  },
+  en: {
+    title: 'Demo plugin',
+    intro:
+      "This view runs inside Green Ecolution's iframe and shows the context the host sent during the handshake.",
+    greeting: (name: string) => `Signed in as ${name}`,
+    slug: 'Slug',
+    locale: 'Language',
+    theme: 'Appearance',
+    keyLabel: 'API key',
+    keyHint:
+      'The key is shown once when the plugin is installed. It is sent to the demo plugin server and kept in memory only.',
+    connect: 'Use this key',
+    disconnect: 'Discard key',
+    connected: (slug: string) => `Connected as plugin ${slug}`,
+    actions: 'Actions',
+    import: 'Import (6 trees)',
+    modify: 'Modify one tree',
+    delete: 'Delete one tree',
+    refs: 'List references',
+    lastAnswer: 'Last backend answer',
+    noAnswer: 'No action run yet.',
+    status: 'Status',
+  },
+} as const

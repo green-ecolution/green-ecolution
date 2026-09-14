@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM plugin_tree_refs WHERE plugin_id = $1 AND external_id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "77152a645c2501afc60c28c2025c2f68f569cc3ca79477e216a378842e5cb212"
+}

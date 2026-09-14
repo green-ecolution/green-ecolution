@@ -5,6 +5,8 @@ pub mod evaluation_service;
 pub mod event_bus;
 pub mod handlers;
 pub mod organization_service;
+pub mod plugin_ingest_service;
+pub mod plugin_service;
 pub mod region_service;
 pub mod role_service;
 pub mod sensor_service;
@@ -52,6 +54,7 @@ pub enum Malformed {
     SensorId,
     BoundingBox,
     Permission,
+    PluginFrontend,
 }
 
 impl Malformed {
@@ -62,6 +65,7 @@ impl Malformed {
             Self::SensorId => "request.malformed_sensor_id",
             Self::BoundingBox => "request.malformed_bounding_box",
             Self::Permission => "request.unknown_permission",
+            Self::PluginFrontend => "request.malformed_plugin_frontend",
         }
     }
 }
@@ -74,6 +78,7 @@ impl std::fmt::Display for Malformed {
             Self::SensorId => "sensor id",
             Self::BoundingBox => "bounding box",
             Self::Permission => "permission",
+            Self::PluginFrontend => "plugin frontend",
         })
     }
 }
@@ -107,6 +112,9 @@ pub enum ServiceError {
     NotActivated,
     #[error("{feature} feature is disabled")]
     FeatureDisabled { feature: Feature },
+    /// A plugin ingest batch exceeded `plugin_ingest_service::MAX_INGEST_ITEMS`.
+    #[error("batch exceeds the limit of {limit} items")]
+    PayloadTooLarge { limit: usize },
     #[error(transparent)]
     Routing(#[from] RoutingError),
     #[error(transparent)]
@@ -169,6 +177,7 @@ impl ServiceError {
                 Feature::Routing => "feature.routing_disabled",
                 Feature::Plugins => "feature.plugins_disabled",
             },
+            Self::PayloadTooLarge { .. } => "plugin.batch_too_large",
         }
     }
 
@@ -295,6 +304,13 @@ pub enum AuthError {
     Forbidden,
     #[error("identity provider unavailable: {0}")]
     IdpUnavailable(String),
+    /// Separate from `InvalidToken`: a plugin key is not a JWT, and the code
+    /// must let a client tell it apart from a bad user token without parsing
+    /// prose. Never carries the key, the secret or the hash.
+    #[error("invalid plugin key")]
+    PluginKeyInvalid,
+    #[error("plugin is disabled")]
+    PluginDisabled,
 }
 
 impl AuthError {
@@ -305,6 +321,8 @@ impl AuthError {
             Self::TokenExpired => "auth.token_expired",
             Self::Forbidden => "auth.forbidden",
             Self::IdpUnavailable(_) => "auth.idp_unavailable",
+            Self::PluginKeyInvalid => "plugin.key_invalid",
+            Self::PluginDisabled => "plugin.disabled",
         }
     }
 }
@@ -350,12 +368,18 @@ mod tests {
                 kind: Malformed::Permission,
                 detail: "x".into(),
             },
+            ServiceError::Malformed {
+                kind: Malformed::PluginFrontend,
+                detail: "x".into(),
+            },
             ServiceError::InvalidInput("x".into()),
             ServiceError::Auth(AuthError::MissingToken),
             ServiceError::Auth(AuthError::InvalidToken("x".into())),
             ServiceError::Auth(AuthError::TokenExpired),
             ServiceError::Auth(AuthError::Forbidden),
             ServiceError::Auth(AuthError::IdpUnavailable("x".into())),
+            ServiceError::Auth(AuthError::PluginKeyInvalid),
+            ServiceError::Auth(AuthError::PluginDisabled),
             ServiceError::TreeAlreadyHasSensor,
             ServiceError::SensorAlreadyAssigned,
             ServiceError::AlreadyActivated,
@@ -366,6 +390,7 @@ mod tests {
             ServiceError::FeatureDisabled {
                 feature: Feature::Plugins,
             },
+            ServiceError::PayloadTooLarge { limit: 500 },
             ServiceError::Routing(RoutingError::Unavailable("x".into())),
             ServiceError::Routing(RoutingError::InvalidProblem("x".into())),
             ServiceError::Routing(RoutingError::Failed("x".into())),

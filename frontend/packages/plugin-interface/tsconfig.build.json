@@ -18,5 +18,9 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["lib"]
+  "include": ["lib"],
+  /* Tests are not part of the published library: keeping them out here stops
+     their declarations from landing in dist and keeps node types away from
+     the library sources. They are type-checked by tsconfig.test.json. */
+  "exclude": ["lib/**/*.test.ts", "lib/**/*.test.tsx"]
 }

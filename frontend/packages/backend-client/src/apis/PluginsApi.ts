@@ -15,47 +15,73 @@
 
 import * as runtime from '../runtime';
 import type {
-  ClientTokenResponse,
   ErrorBody,
-  PluginAuthRequest,
-  PluginListResponse,
-  PluginRegisterRequest,
+  IngestBatchResponse,
+  PluginCreateRequest,
+  PluginKeyResponse,
   PluginResponse,
+  PluginUpdateRequest,
+  PluginViewResponse,
+  TreeIngestBatchRequest,
+  TreeRefPageResponse,
 } from '../models/index';
 import {
-    ClientTokenResponseFromJSON,
-    ClientTokenResponseToJSON,
     ErrorBodyFromJSON,
     ErrorBodyToJSON,
-    PluginAuthRequestFromJSON,
-    PluginAuthRequestToJSON,
-    PluginListResponseFromJSON,
-    PluginListResponseToJSON,
-    PluginRegisterRequestFromJSON,
-    PluginRegisterRequestToJSON,
+    IngestBatchResponseFromJSON,
+    IngestBatchResponseToJSON,
+    PluginCreateRequestFromJSON,
+    PluginCreateRequestToJSON,
+    PluginKeyResponseFromJSON,
+    PluginKeyResponseToJSON,
     PluginResponseFromJSON,
     PluginResponseToJSON,
+    PluginUpdateRequestFromJSON,
+    PluginUpdateRequestToJSON,
+    PluginViewResponseFromJSON,
+    PluginViewResponseToJSON,
+    TreeIngestBatchRequestFromJSON,
+    TreeIngestBatchRequestToJSON,
+    TreeRefPageResponseFromJSON,
+    TreeRefPageResponseToJSON,
 } from '../models/index';
+
+export interface DeletePluginTreeRequest {
+    externalId: string;
+}
 
 export interface GetPluginRequest {
     pluginSlug: string;
 }
 
-export interface PluginHeartbeatRequest {
+export interface GetPluginViewRequest {
     pluginSlug: string;
 }
 
-export interface RefreshPluginTokenRequest {
-    pluginSlug: string;
-    pluginAuthRequest: PluginAuthRequest;
+export interface InstallPluginRequest {
+    pluginCreateRequest: PluginCreateRequest;
 }
 
-export interface RegisterPluginRequest {
-    pluginRegisterRequest: PluginRegisterRequest;
+export interface ListPluginTreeRefsRequest {
+    limit?: number | null;
+    cursor?: string | null;
 }
 
-export interface UnregisterPluginRequest {
+export interface RotatePluginKeyRequest {
     pluginSlug: string;
+}
+
+export interface UninstallPluginRequest {
+    pluginSlug: string;
+}
+
+export interface UpdatePluginRequest {
+    pluginSlug: string;
+    pluginUpdateRequest: PluginUpdateRequest;
+}
+
+export interface UpsertPluginTreesRequest {
+    treeIngestBatchRequest: TreeIngestBatchRequest;
 }
 
 /**
@@ -64,7 +90,76 @@ export interface UnregisterPluginRequest {
 export class PluginsApi extends runtime.BaseAPI {
 
     /**
-     * Returns plugin information by slug.
+     * Deletes the tree the plugin\'s external_id resolves to, through the same path as the regular tree deletion so cluster centroid and status are recalculated. Requires tree:delete in the plugin\'s organization.
+     * Delete a tree linked by a plugin
+     */
+    async deletePluginTreeRaw(requestParameters: DeletePluginTreeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['externalId'] == null) {
+            throw new runtime.RequiredError(
+                'externalId',
+                'Required parameter "externalId" was null or undefined when calling deletePluginTree().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/v1/plugins/ingest/trees/{external_id}`;
+        urlPath = urlPath.replace(`{${"external_id"}}`, encodeURIComponent(String(requestParameters['externalId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Deletes the tree the plugin\'s external_id resolves to, through the same path as the regular tree deletion so cluster centroid and status are recalculated. Requires tree:delete in the plugin\'s organization.
+     * Delete a tree linked by a plugin
+     */
+    async deletePluginTree(requestParameters: DeletePluginTreeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.deletePluginTreeRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * Returns the calling plugin\'s own registration, authenticated by its API key rather than a user session. Lets an adapter confirm its organization and rights before importing anything.
+     * Get the authenticated plugin
+     */
+    async getOwnPluginRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PluginResponse>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/v1/plugins/me`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PluginResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns the calling plugin\'s own registration, authenticated by its API key rather than a user session. Lets an adapter confirm its organization and rights before importing anything.
+     * Get the authenticated plugin
+     */
+    async getOwnPlugin(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PluginResponse> {
+        const response = await this.getOwnPluginRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns plugin information by slug. Requires plugin:read in the plugin\'s organization.
      * Get a plugin
      */
     async getPluginRaw(requestParameters: GetPluginRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PluginResponse>> {
@@ -94,7 +189,7 @@ export class PluginsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns plugin information by slug.
+     * Returns plugin information by slug. Requires plugin:read in the plugin\'s organization.
      * Get a plugin
      */
     async getPlugin(requestParameters: GetPluginRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PluginResponse> {
@@ -103,10 +198,129 @@ export class PluginsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns all registered plugins.
-     * List all plugins
+     * Returns what is needed to embed a plugin\'s view. Requires the plugin\'s own required_permissions in its organization -- plugin:read administers a plugin and is not what opening its view is about, though it grants access here as well.
+     * Get a plugin\'s view
      */
-    async listPluginsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PluginListResponse>> {
+    async getPluginViewRaw(requestParameters: GetPluginViewRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PluginViewResponse>> {
+        if (requestParameters['pluginSlug'] == null) {
+            throw new runtime.RequiredError(
+                'pluginSlug',
+                'Required parameter "pluginSlug" was null or undefined when calling getPluginView().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/v1/plugins/{plugin_slug}/view`;
+        urlPath = urlPath.replace(`{${"plugin_slug"}}`, encodeURIComponent(String(requestParameters['pluginSlug'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PluginViewResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns what is needed to embed a plugin\'s view. Requires the plugin\'s own required_permissions in its organization -- plugin:read administers a plugin and is not what opening its view is about, though it grants access here as well.
+     * Get a plugin\'s view
+     */
+    async getPluginView(requestParameters: GetPluginViewRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PluginViewResponse> {
+        const response = await this.getPluginViewRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Creates a new plugin and returns its one-time plaintext API key. Requires plugin:create in the target organization, plus a permission set that does not exceed the caller\'s own grants.
+     * Install a plugin
+     */
+    async installPluginRaw(requestParameters: InstallPluginRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PluginKeyResponse>> {
+        if (requestParameters['pluginCreateRequest'] == null) {
+            throw new runtime.RequiredError(
+                'pluginCreateRequest',
+                'Required parameter "pluginCreateRequest" was null or undefined when calling installPlugin().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+
+        let urlPath = `/v1/plugins`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: PluginCreateRequestToJSON(requestParameters['pluginCreateRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PluginKeyResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Creates a new plugin and returns its one-time plaintext API key. Requires plugin:create in the target organization, plus a permission set that does not exceed the caller\'s own grants.
+     * Install a plugin
+     */
+    async installPlugin(requestParameters: InstallPluginRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PluginKeyResponse> {
+        const response = await this.installPluginRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Keyset page over the calling plugin\'s external_id-to-tree mappings, ordered by external_id. A plugin never sees another plugin\'s references.
+     * List a plugin\'s own tree references
+     */
+    async listPluginTreeRefsRaw(requestParameters: ListPluginTreeRefsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TreeRefPageResponse>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['limit'] != null) {
+            queryParameters['limit'] = requestParameters['limit'];
+        }
+
+        if (requestParameters['cursor'] != null) {
+            queryParameters['cursor'] = requestParameters['cursor'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/v1/plugins/ingest/trees`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => TreeRefPageResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Keyset page over the calling plugin\'s external_id-to-tree mappings, ordered by external_id. A plugin never sees another plugin\'s references.
+     * List a plugin\'s own tree references
+     */
+    async listPluginTreeRefs(requestParameters: ListPluginTreeRefsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TreeRefPageResponse> {
+        const response = await this.listPluginTreeRefsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns every installed plugin the caller may read, scoped to their visible organization subtree. Requires plugin:read.
+     * List plugins visible to the caller
+     */
+    async listPluginsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<PluginResponse>>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -121,27 +335,27 @@ export class PluginsApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => PluginListResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(PluginResponseFromJSON));
     }
 
     /**
-     * Returns all registered plugins.
-     * List all plugins
+     * Returns every installed plugin the caller may read, scoped to their visible organization subtree. Requires plugin:read.
+     * List plugins visible to the caller
      */
-    async listPlugins(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PluginListResponse> {
+    async listPlugins(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<PluginResponse>> {
         const response = await this.listPluginsRaw(initOverrides);
         return await response.value();
     }
 
     /**
-     * Send a keepalive heartbeat for a registered plugin.
-     * Send heartbeat
+     * Invalidates the current key and returns a new plaintext key, which appears only in this response. Requires plugin:update in the plugin\'s organization.
+     * Rotate a plugin\'s API key
      */
-    async pluginHeartbeatRaw(requestParameters: PluginHeartbeatRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async rotatePluginKeyRaw(requestParameters: RotatePluginKeyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PluginKeyResponse>> {
         if (requestParameters['pluginSlug'] == null) {
             throw new runtime.RequiredError(
                 'pluginSlug',
-                'Required parameter "pluginSlug" was null or undefined when calling pluginHeartbeat().'
+                'Required parameter "pluginSlug" was null or undefined when calling rotatePluginKey().'
             );
         }
 
@@ -150,7 +364,7 @@ export class PluginsApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
 
-        let urlPath = `/v1/plugins/{plugin_slug}/heartbeat`;
+        let urlPath = `/v1/plugins/{plugin_slug}/key`;
         urlPath = urlPath.replace(`{${"plugin_slug"}}`, encodeURIComponent(String(requestParameters['pluginSlug'])));
 
         const response = await this.request({
@@ -160,33 +374,72 @@ export class PluginsApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
+        return new runtime.JSONApiResponse(response, (jsonValue) => PluginKeyResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Invalidates the current key and returns a new plaintext key, which appears only in this response. Requires plugin:update in the plugin\'s organization.
+     * Rotate a plugin\'s API key
+     */
+    async rotatePluginKey(requestParameters: RotatePluginKeyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PluginKeyResponse> {
+        const response = await this.rotatePluginKeyRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Removes an installed plugin. Requires plugin:delete in the plugin\'s organization.
+     * Uninstall a plugin
+     */
+    async uninstallPluginRaw(requestParameters: UninstallPluginRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['pluginSlug'] == null) {
+            throw new runtime.RequiredError(
+                'pluginSlug',
+                'Required parameter "pluginSlug" was null or undefined when calling uninstallPlugin().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/v1/plugins/{plugin_slug}`;
+        urlPath = urlPath.replace(`{${"plugin_slug"}}`, encodeURIComponent(String(requestParameters['pluginSlug'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
         return new runtime.VoidApiResponse(response);
     }
 
     /**
-     * Send a keepalive heartbeat for a registered plugin.
-     * Send heartbeat
+     * Removes an installed plugin. Requires plugin:delete in the plugin\'s organization.
+     * Uninstall a plugin
      */
-    async pluginHeartbeat(requestParameters: PluginHeartbeatRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.pluginHeartbeatRaw(requestParameters, initOverrides);
+    async uninstallPlugin(requestParameters: UninstallPluginRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.uninstallPluginRaw(requestParameters, initOverrides);
     }
 
     /**
-     * Refresh authentication token for a plugin.
-     * Refresh plugin token
+     * Applies the given fields to an installed plugin; an omitted field is left untouched. Requires plugin:update in the plugin\'s organization, plus (when permissions change) a set that does not exceed the caller\'s own grants.
+     * Update a plugin
      */
-    async refreshPluginTokenRaw(requestParameters: RefreshPluginTokenRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ClientTokenResponse>> {
+    async updatePluginRaw(requestParameters: UpdatePluginRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PluginResponse>> {
         if (requestParameters['pluginSlug'] == null) {
             throw new runtime.RequiredError(
                 'pluginSlug',
-                'Required parameter "pluginSlug" was null or undefined when calling refreshPluginToken().'
+                'Required parameter "pluginSlug" was null or undefined when calling updatePlugin().'
             );
         }
 
-        if (requestParameters['pluginAuthRequest'] == null) {
+        if (requestParameters['pluginUpdateRequest'] == null) {
             throw new runtime.RequiredError(
-                'pluginAuthRequest',
-                'Required parameter "pluginAuthRequest" was null or undefined when calling refreshPluginToken().'
+                'pluginUpdateRequest',
+                'Required parameter "pluginUpdateRequest" was null or undefined when calling updatePlugin().'
             );
         }
 
@@ -197,38 +450,38 @@ export class PluginsApi extends runtime.BaseAPI {
         headerParameters['Content-Type'] = 'application/json';
 
 
-        let urlPath = `/v1/plugins/{plugin_slug}/token/refresh`;
+        let urlPath = `/v1/plugins/{plugin_slug}`;
         urlPath = urlPath.replace(`{${"plugin_slug"}}`, encodeURIComponent(String(requestParameters['pluginSlug'])));
 
         const response = await this.request({
             path: urlPath,
-            method: 'POST',
+            method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
-            body: PluginAuthRequestToJSON(requestParameters['pluginAuthRequest']),
+            body: PluginUpdateRequestToJSON(requestParameters['pluginUpdateRequest']),
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => ClientTokenResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => PluginResponseFromJSON(jsonValue));
     }
 
     /**
-     * Refresh authentication token for a plugin.
-     * Refresh plugin token
+     * Applies the given fields to an installed plugin; an omitted field is left untouched. Requires plugin:update in the plugin\'s organization, plus (when permissions change) a set that does not exceed the caller\'s own grants.
+     * Update a plugin
      */
-    async refreshPluginToken(requestParameters: RefreshPluginTokenRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ClientTokenResponse> {
-        const response = await this.refreshPluginTokenRaw(requestParameters, initOverrides);
+    async updatePlugin(requestParameters: UpdatePluginRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PluginResponse> {
+        const response = await this.updatePluginRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Register a new external plugin and receive authentication tokens.
-     * Register a plugin
+     * Creates or updates up to 500 trees per request, matched by the plugin\'s own external_id. Every entry is processed independently: one bad entry fails only itself, never the batch. Requires tree:create and tree:update in the plugin\'s organization.
+     * Upsert trees from a plugin
      */
-    async registerPluginRaw(requestParameters: RegisterPluginRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ClientTokenResponse>> {
-        if (requestParameters['pluginRegisterRequest'] == null) {
+    async upsertPluginTreesRaw(requestParameters: UpsertPluginTreesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<IngestBatchResponse>> {
+        if (requestParameters['treeIngestBatchRequest'] == null) {
             throw new runtime.RequiredError(
-                'pluginRegisterRequest',
-                'Required parameter "pluginRegisterRequest" was null or undefined when calling registerPlugin().'
+                'treeIngestBatchRequest',
+                'Required parameter "treeIngestBatchRequest" was null or undefined when calling upsertPluginTrees().'
             );
         }
 
@@ -239,64 +492,26 @@ export class PluginsApi extends runtime.BaseAPI {
         headerParameters['Content-Type'] = 'application/json';
 
 
-        let urlPath = `/v1/plugins`;
+        let urlPath = `/v1/plugins/ingest/trees`;
 
         const response = await this.request({
             path: urlPath,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: PluginRegisterRequestToJSON(requestParameters['pluginRegisterRequest']),
+            body: TreeIngestBatchRequestToJSON(requestParameters['treeIngestBatchRequest']),
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => ClientTokenResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => IngestBatchResponseFromJSON(jsonValue));
     }
 
     /**
-     * Register a new external plugin and receive authentication tokens.
-     * Register a plugin
+     * Creates or updates up to 500 trees per request, matched by the plugin\'s own external_id. Every entry is processed independently: one bad entry fails only itself, never the batch. Requires tree:create and tree:update in the plugin\'s organization.
+     * Upsert trees from a plugin
      */
-    async registerPlugin(requestParameters: RegisterPluginRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ClientTokenResponse> {
-        const response = await this.registerPluginRaw(requestParameters, initOverrides);
+    async upsertPluginTrees(requestParameters: UpsertPluginTreesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<IngestBatchResponse> {
+        const response = await this.upsertPluginTreesRaw(requestParameters, initOverrides);
         return await response.value();
-    }
-
-    /**
-     * Remove a plugin registration.
-     * Unregister a plugin
-     */
-    async unregisterPluginRaw(requestParameters: UnregisterPluginRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters['pluginSlug'] == null) {
-            throw new runtime.RequiredError(
-                'pluginSlug',
-                'Required parameter "pluginSlug" was null or undefined when calling unregisterPlugin().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-
-        let urlPath = `/v1/plugins/{plugin_slug}/unregister`;
-        urlPath = urlPath.replace(`{${"plugin_slug"}}`, encodeURIComponent(String(requestParameters['pluginSlug'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     * Remove a plugin registration.
-     * Unregister a plugin
-     */
-    async unregisterPlugin(requestParameters: UnregisterPluginRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.unregisterPluginRaw(requestParameters, initOverrides);
     }
 
 }

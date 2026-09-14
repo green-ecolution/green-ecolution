@@ -25,10 +25,10 @@ use crate::{
     service::{
         authorization::AuthorizationService, cluster_service::ClusterService,
         comment_service::CommentService, evaluation_service::EvaluationService,
-        organization_service::OrganizationService, region_service::RegionService,
-        role_service::RoleService, sensor_service::SensorService,
-        start_point_service::StartPointService, tree_service::TreeService,
-        user_service::UserService, vehicle_service::VehicleService,
+        organization_service::OrganizationService, plugin_ingest_service::PluginIngestService,
+        plugin_service::PluginService, region_service::RegionService, role_service::RoleService,
+        sensor_service::SensorService, start_point_service::StartPointService,
+        tree_service::TreeService, user_service::UserService, vehicle_service::VehicleService,
         watering_execution_service::WateringExecutionService,
         watering_plan_service::WateringPlanService,
     },
@@ -63,6 +63,36 @@ pub struct NearestTreeLimits {
     pub max_limit: u32,
 }
 
+/// Origins the app's own frontend (and API) are served from, so an
+/// `external` plugin frontend target can be rejected when it points back at
+/// the app itself — see `PluginFrontendDto::into_domain`. A wildcard in
+/// `cors.allowed_origins` cannot discriminate a specific origin, so it is
+/// skipped in favor of `base_url` alone rather than treated as "reject
+/// everything".
+#[derive(Debug, Clone)]
+pub struct AppOrigins {
+    origins: Vec<url::Origin>,
+}
+
+impl AppOrigins {
+    pub fn from_settings(cors: &CorsSettings, base_url: &url::Url) -> Self {
+        let mut origins = vec![base_url.origin()];
+        if !cors.allowed_origins.iter().any(|o| o == "*") {
+            origins.extend(
+                cors.allowed_origins
+                    .iter()
+                    .filter_map(|o| url::Url::parse(o).ok())
+                    .map(|u| u.origin()),
+            );
+        }
+        Self { origins }
+    }
+
+    pub fn contains(&self, url: &url::Url) -> bool {
+        self.origins.iter().any(|o| *o == url.origin())
+    }
+}
+
 pub struct AppState {
     pub region_service: Arc<RegionService>,
     pub tree_service: Arc<TreeService>,
@@ -86,6 +116,11 @@ pub struct AppState {
     pub organization_service: Arc<OrganizationService>,
     pub role_service: Arc<RoleService>,
     pub authorization_service: Arc<AuthorizationService>,
+    pub plugin_reader: Arc<dyn domain::plugin::PluginReader>,
+    pub plugin_writer: Arc<dyn domain::plugin::PluginWriter>,
+    pub plugin_service: Arc<PluginService>,
+    pub plugin_ingest_service: Arc<PluginIngestService>,
+    pub app_origins: AppOrigins,
 }
 
 #[derive(OpenApi)]
@@ -110,7 +145,7 @@ pub struct AppState {
         (name = "Evaluation", description = "Aggregated statistics and evaluation data across all managed resources. Provides insights on watering plan coverage by region and vehicle usage."),
         (name = "Info", description = "Application metadata including version information, server status, map configuration, service health, and data statistics."),
         (name = "Users", description = "User registration and role management. Authentication is handled directly against Keycloak."),
-        (name = "Plugins", description = "Plugin registration and lifecycle management. External plugins can register, authenticate, and maintain heartbeat connections."),
+        (name = "Plugins", description = "Plugin installation and lifecycle management, plus the ingest surface external plugins authenticate against with their API key to push data."),
         (name = "Routing", description = "Routing configuration and start point management. Exposes the named depot locations available for watering route optimization."),
         (name = "Organizations", description = "Manage the organization tree used for RBAC scoping and multi-tenancy."),
         (name = "Roles", description = "Manage roles (named permission sets) and their assignment to users."),

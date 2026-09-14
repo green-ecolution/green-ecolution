@@ -12,6 +12,7 @@ Thank you for your interest in contributing to Green Ecolution! This document pr
 - [Pull Request Process](#pull-request-process)
 - [Issue Guidelines](#issue-guidelines)
 - [Coding Standards](#coding-standards)
+- [Writing a Plugin](#writing-a-plugin)
 - [License](#license)
 
 ## Code of Conduct
@@ -365,6 +366,44 @@ frontend/
     backend-client/          Generated OpenAPI client
     plugin-interface/        Plugin system interface
 ```
+
+## Writing a Plugin
+
+Green Ecolution can be extended by an external plugin: a separate system that writes
+data into a Green Ecolution instance (for example importing trees from a municipal
+register), optionally contributes its own view embedded inside the application, or
+both. A plugin is not part of this repository and does not need to be written in Rust
+or TypeScript; it only needs to speak the HTTP contract described below.
+
+A plugin is not self-registering. An administrator of the target Green Ecolution
+instance installs it from **Settings → Plugins**, choosing the permissions it receives
+and, if it has a view, where that view is hosted. Installing issues a one-time
+plaintext API key; that key, not a login, is what authenticates every request the
+plugin's own backend makes afterwards.
+
+Two pieces cover the whole surface:
+
+- **The ingest contract** — a plain HTTP API under `/api/v1/plugins/`, authenticated
+  with the plugin's API key as a bearer token, for writing data (currently trees) into
+  Green Ecolution. No SDK is required to use it, only an HTTP client.
+- **The view SDK**, `@green-ecolution/plugin-interface` — if the plugin also
+  contributes a view, this package provides the `postMessage` handshake between that
+  view (rendered in a sandboxed iframe) and the host application, plus a small React
+  helper around it.
+
+Both, including full request and response examples, are documented in
+[`frontend/packages/plugin-interface/README.md`](frontend/packages/plugin-interface/README.md).
+The full OpenAPI schema for every endpoint, including the plugin ones, is also part of
+the live API documentation linked under [Getting Help](#getting-help).
+
+### Testing the plugin integration
+
+The repository ships a demo plugin that exercises both halves of the contract.
+`just plugin-demo-up` builds and starts it on <http://localhost:5175>, and
+[`frontend/demo-plugin/README.md`](frontend/demo-plugin/README.md) walks through
+installing it under **Settings → Plugins**, pasting its one-time API key and importing
+demo trees. It runs behind the compose profile `plugins`, so a plain `just infra-up`
+neither builds nor starts it.
 
 ## Getting Help
 

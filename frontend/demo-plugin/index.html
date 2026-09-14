@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Green Ecolution Demo-Plugin</title>
+  </head>
+  <body>
+    <!-- Visible until the handshake completes and App removes it: PluginProvider
+         renders nothing while waiting, so an unembedded page would be blank. -->
+    <div id="not-embedded">
+      <h1>Green Ecolution Demo-Plugin</h1>
+      <p>
+        Diese Seite wartet auf den Handshake mit Green Ecolution. Sie wird als Plugin-Ansicht in
+        Green Ecolution geöffnet, nicht direkt im Browser.
+      </p>
+    </div>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

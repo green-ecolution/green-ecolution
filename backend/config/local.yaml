@@ -18,3 +18,5 @@ auth:
   expected_audience: "backend"
 routing:
   enabled: true
+plugins:
+  enabled: true

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { isValidElement } from 'react'
 import { QueryClient } from '@tanstack/react-query'
-import type { UserResponse } from '@green-ecolution/backend-client'
+import { ResponseError, type UserResponse } from '@green-ecolution/backend-client'
 
 const readAuthBypass = vi.fn(() => false)
 
@@ -78,6 +78,30 @@ describe('forbiddenErrorComponent', () => {
     })
 
     expect(isValidElement(element) && element.type).toBe(Forbidden)
+  })
+
+  it('renders the Forbidden page for a 403 response', () => {
+    const fallback = vi.fn(() => <div data-testid="original" />)
+
+    const element = forbiddenErrorComponent(fallback)({
+      error: new ResponseError(new Response(null, { status: 403 })),
+      reset: () => undefined,
+    })
+
+    expect(fallback).not.toHaveBeenCalled()
+    expect(isValidElement(element) && element.type).toBe(Forbidden)
+  })
+
+  it('leaves another failed response to the fallback', () => {
+    const fallback = vi.fn(() => <div data-testid="original" />)
+
+    const element = forbiddenErrorComponent(fallback)({
+      error: new ResponseError(new Response(null, { status: 404 })),
+      reset: () => undefined,
+    })
+
+    expect(fallback).toHaveBeenCalledOnce()
+    expect(isValidElement(element) && element.type).toBe('div')
   })
 
   it('delegates other errors to the provided fallback', () => {

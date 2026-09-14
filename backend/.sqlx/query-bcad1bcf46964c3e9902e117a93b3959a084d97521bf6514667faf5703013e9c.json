@@ -1,0 +1,30 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT external_id, tree_id FROM plugin_tree_refs\n               WHERE plugin_id = $1 AND ($2::text IS NULL OR external_id > $2)\n               ORDER BY external_id ASC\n               LIMIT $3",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "external_id",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "tree_id",
+        "type_info": "Uuid"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "bcad1bcf46964c3e9902e117a93b3959a084d97521bf6514667faf5703013e9c"
+}

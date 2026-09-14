@@ -14,52 +14,105 @@
 
 import { mapValues } from '../runtime';
 /**
- * Represents a registered plugin in the system.
+ * Represents an installed plugin, mirroring `PluginView` flat: no hash, no
+ * key. A later task reads `frontend_target` directly off this response.
  * @export
  * @interface PluginResponse
  */
 export interface PluginResponse {
     /**
-     * Short description of the plugin's purpose.
+     * 
+     * @type {Date}
+     * @memberof PluginResponse
+     */
+    createdAt?: Date | null;
+    /**
+     * 
      * @type {string}
      * @memberof PluginResponse
      */
-    description: string;
+    description?: string | null;
     /**
-     * Base URL where the plugin is hosted.
+     * 
+     * @type {boolean}
+     * @memberof PluginResponse
+     */
+    enabled: boolean;
+    /**
+     * 
      * @type {string}
      * @memberof PluginResponse
      */
-    hostPath: string;
+    frontendMode: string;
     /**
-     * Human-readable plugin name.
+     * 
+     * @type {string}
+     * @memberof PluginResponse
+     */
+    frontendTarget?: string | null;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof PluginResponse
+     */
+    hasCredential: boolean;
+    /**
+     * 
+     * @type {string}
+     * @memberof PluginResponse
+     */
+    id: string;
+    /**
+     * 
+     * @type {Date}
+     * @memberof PluginResponse
+     */
+    lastSeenAt?: Date | null;
+    /**
+     * 
      * @type {string}
      * @memberof PluginResponse
      */
     name: string;
     /**
-     * Unique slug identifier for the plugin.
+     * 
+     * @type {string}
+     * @memberof PluginResponse
+     */
+    organizationId: string;
+    /**
+     * 
+     * @type {Array<string>}
+     * @memberof PluginResponse
+     */
+    permissions: Array<string>;
+    /**
+     * 
+     * @type {Array<string>}
+     * @memberof PluginResponse
+     */
+    requiredPermissions: Array<string>;
+    /**
+     * 
      * @type {string}
      * @memberof PluginResponse
      */
     slug: string;
-    /**
-     * Semantic version of the plugin.
-     * @type {string}
-     * @memberof PluginResponse
-     */
-    version: string;
 }
 
 /**
  * Check if a given object implements the PluginResponse interface.
  */
 export function instanceOfPluginResponse(value: object): value is PluginResponse {
-    if (!('description' in value) || value['description'] === undefined) return false;
-    if (!('hostPath' in value) || value['hostPath'] === undefined) return false;
+    if (!('enabled' in value) || value['enabled'] === undefined) return false;
+    if (!('frontendMode' in value) || value['frontendMode'] === undefined) return false;
+    if (!('hasCredential' in value) || value['hasCredential'] === undefined) return false;
+    if (!('id' in value) || value['id'] === undefined) return false;
     if (!('name' in value) || value['name'] === undefined) return false;
+    if (!('organizationId' in value) || value['organizationId'] === undefined) return false;
+    if (!('permissions' in value) || value['permissions'] === undefined) return false;
+    if (!('requiredPermissions' in value) || value['requiredPermissions'] === undefined) return false;
     if (!('slug' in value) || value['slug'] === undefined) return false;
-    if (!('version' in value) || value['version'] === undefined) return false;
     return true;
 }
 
@@ -73,11 +126,19 @@ export function PluginResponseFromJSONTyped(json: any, ignoreDiscriminator: bool
     }
     return {
         
-        'description': json['description'],
-        'hostPath': json['host_path'],
+        'createdAt': json['created_at'] == null ? undefined : (new Date(json['created_at'])),
+        'description': json['description'] == null ? undefined : json['description'],
+        'enabled': json['enabled'],
+        'frontendMode': json['frontend_mode'],
+        'frontendTarget': json['frontend_target'] == null ? undefined : json['frontend_target'],
+        'hasCredential': json['has_credential'],
+        'id': json['id'],
+        'lastSeenAt': json['last_seen_at'] == null ? undefined : (new Date(json['last_seen_at'])),
         'name': json['name'],
+        'organizationId': json['organization_id'],
+        'permissions': json['permissions'],
+        'requiredPermissions': json['required_permissions'],
         'slug': json['slug'],
-        'version': json['version'],
     };
 }
 
@@ -92,11 +153,19 @@ export function PluginResponseToJSONTyped(value?: PluginResponse | null, ignoreD
 
     return {
         
+        'created_at': value['createdAt'] === null ? null : ((value['createdAt'] as any)?.toISOString()),
         'description': value['description'],
-        'host_path': value['hostPath'],
+        'enabled': value['enabled'],
+        'frontend_mode': value['frontendMode'],
+        'frontend_target': value['frontendTarget'],
+        'has_credential': value['hasCredential'],
+        'id': value['id'],
+        'last_seen_at': value['lastSeenAt'] === null ? null : ((value['lastSeenAt'] as any)?.toISOString()),
         'name': value['name'],
+        'organization_id': value['organizationId'],
+        'permissions': value['permissions'],
+        'required_permissions': value['requiredPermissions'],
         'slug': value['slug'],
-        'version': value['version'],
     };
 }
 
