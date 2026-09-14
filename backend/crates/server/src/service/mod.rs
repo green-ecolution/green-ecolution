@@ -10,6 +10,7 @@ pub mod plugin_service;
 pub mod region_service;
 pub mod role_service;
 pub mod sensor_service;
+pub mod settings_service;
 pub mod start_point_service;
 pub mod tree_service;
 pub mod user_service;
@@ -139,6 +140,10 @@ pub enum ServiceError {
     CannotChangeOwnAccess,
     #[error("this change would remove your own right to administer roles and members")]
     CannotRevokeOwnAdministration,
+    /// A write below an organization that froze its subtree. Not a missing
+    /// permission but a state conflict, hence 409 rather than 403.
+    #[error("settings are enforced by organization {organization_id}")]
+    SettingsEnforcedByAncestor { organization_id: uuid::Uuid },
     #[error(transparent)]
     WateringPlan(#[from] WateringPlanError),
 }
@@ -171,6 +176,7 @@ impl ServiceError {
             Self::SensorBoundToTree => "conflict.sensor_bound_to_tree",
             Self::CannotChangeOwnAccess => "conflict.cannot_change_own_access",
             Self::CannotRevokeOwnAdministration => "conflict.cannot_revoke_own_administration",
+            Self::SettingsEnforcedByAncestor { .. } => "settings.enforced_by_ancestor",
             Self::ContactPersonNotAMember => "organization.contact_person_not_a_member",
             Self::MissingOrganization => "organization.missing",
             Self::FeatureDisabled { feature } => match feature {
@@ -409,6 +415,9 @@ mod tests {
             ServiceError::MissingOrganization,
             ServiceError::CannotChangeOwnAccess,
             ServiceError::CannotRevokeOwnAdministration,
+            ServiceError::SettingsEnforcedByAncestor {
+                organization_id: uuid::Uuid::nil(),
+            },
             ServiceError::WateringPlan(WateringPlanError::InvalidStateTransition {
                 from: WateringPlanStatus::Planned,
                 to: WateringPlanStatus::Finished,

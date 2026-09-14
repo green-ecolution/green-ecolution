@@ -121,6 +121,10 @@ impl Application {
             instance_defaults(&settings),
             repos.organization_reader.clone(),
         ));
+        let settings_service = Arc::new(crate::service::settings_service::SettingsService::new(
+            settings_repo.clone(),
+            settings_repo.clone(),
+        ));
         let profile_repo = Arc::new(infra::pg_user_profile::PgUserProfileRepository::new(
             pool.clone(),
         ));
@@ -211,6 +215,7 @@ impl Application {
             plugin_ingest_service: services.plugin_ingest,
             settings_reader: settings_repo.clone(),
             settings_resolver: settings_repo.clone(),
+            settings_service,
             app_origins: AppOrigins::from_settings(&settings.cors, &settings.application.base_url),
         });
 

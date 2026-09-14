@@ -87,6 +87,14 @@ pub fn resolve(
             level.map_view,
             origin,
         );
+
+        // The switch speaks about an organization's descendants, not about
+        // itself, so it never stops the walk at the target. The topmost lock
+        // wins and reaches arbitrarily deep without inspecting lower ones.
+        if !level.descendants_may_override && level.organization_id != target {
+            effective.enforced_by = Some(level.organization_id);
+            break;
+        }
     }
 
     Resolution { effective, origins }
@@ -196,5 +204,62 @@ mod tests {
         assert_eq!(r.effective.defect_streak.count(), 7);
         assert_eq!(r.origins.defect_streak, SettingOrigin::Inherited(root));
         assert_eq!(r.origins.map_view, SettingOrigin::Default);
+    }
+
+    fn locked(org: Id<Organization>, liters: f64) -> OrganizationSettings {
+        OrganizationSettings {
+            descendants_may_override: false,
+            ..own(org, Some(liters))
+        }
+    }
+
+    #[test]
+    fn case_e_a_lock_at_the_root_freezes_the_whole_subtree() {
+        let (root, mid, leaf) = (Id::new_v7(), Id::new_v7(), Id::new_v7());
+        let chain = [
+            locked(root, 100.0),
+            own(mid, Some(90.0)),
+            own(leaf, Some(70.0)),
+        ];
+        let r = resolve(&defaults(), &chain, leaf);
+        assert_eq!(r.effective.water_demand.liters(), 100.0);
+        assert_eq!(r.effective.enforced_by, Some(root));
+        assert_eq!(r.origins.water_demand, SettingOrigin::Inherited(root));
+    }
+
+    #[test]
+    fn case_f_a_lock_in_the_middle_freezes_what_is_below_it() {
+        let (root, mid, leaf) = (Id::new_v7(), Id::new_v7(), Id::new_v7());
+        let chain = [
+            own(root, Some(100.0)),
+            locked(mid, 90.0),
+            own(leaf, Some(70.0)),
+        ];
+        let r = resolve(&defaults(), &chain, leaf);
+        assert_eq!(r.effective.water_demand.liters(), 90.0);
+        assert_eq!(r.effective.enforced_by, Some(mid));
+    }
+
+    #[test]
+    fn the_topmost_lock_wins_over_a_lower_one() {
+        let (root, mid, leaf) = (Id::new_v7(), Id::new_v7(), Id::new_v7());
+        let chain = [
+            locked(root, 100.0),
+            locked(mid, 90.0),
+            own(leaf, Some(70.0)),
+        ];
+        let r = resolve(&defaults(), &chain, leaf);
+        assert_eq!(r.effective.water_demand.liters(), 100.0);
+        assert_eq!(r.effective.enforced_by, Some(root));
+    }
+
+    #[test]
+    fn an_organizations_own_lock_does_not_freeze_itself() {
+        let (root, leaf) = (Id::new_v7(), Id::new_v7());
+        let chain = [own(root, Some(100.0)), locked(leaf, 70.0)];
+        let r = resolve(&defaults(), &chain, leaf);
+        assert_eq!(r.effective.water_demand.liters(), 70.0);
+        assert_eq!(r.effective.enforced_by, None);
+        assert_eq!(r.origins.water_demand, SettingOrigin::Own);
     }
 }

@@ -27,8 +27,9 @@ use crate::{
         comment_service::CommentService, evaluation_service::EvaluationService,
         organization_service::OrganizationService, plugin_ingest_service::PluginIngestService,
         plugin_service::PluginService, region_service::RegionService, role_service::RoleService,
-        sensor_service::SensorService, start_point_service::StartPointService,
-        tree_service::TreeService, user_service::UserService, vehicle_service::VehicleService,
+        sensor_service::SensorService, settings_service::SettingsService,
+        start_point_service::StartPointService, tree_service::TreeService,
+        user_service::UserService, vehicle_service::VehicleService,
         watering_execution_service::WateringExecutionService,
         watering_plan_service::WateringPlanService,
     },
@@ -122,6 +123,7 @@ pub struct AppState {
     pub plugin_ingest_service: Arc<PluginIngestService>,
     pub settings_reader: Arc<dyn domain::settings::SettingsReader>,
     pub settings_resolver: Arc<dyn domain::settings::SettingsResolver>,
+    pub settings_service: Arc<SettingsService>,
     pub app_origins: AppOrigins,
 }
 

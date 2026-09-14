@@ -6,6 +6,7 @@ use crate::{
     organization::Organization,
     settings::{
         EffectiveSettings, OrganizationSettings, Resolution, SettingChangeEntry, SettingKey,
+        SettingsUpdate,
     },
 };
 
@@ -20,6 +21,19 @@ pub trait SettingsReader: Send + Sync {
         &self,
         org: Id<Organization>,
     ) -> Result<HashMap<SettingKey, SettingChangeEntry>, RepositoryError>;
+}
+
+#[async_trait]
+pub trait SettingsWriter: Send + Sync {
+    /// Persists the change and returns the organization's own values as they
+    /// stand afterwards. `actor` is the person to credit; `None` where no user
+    /// is attributable.
+    async fn apply(
+        &self,
+        org: Id<Organization>,
+        update: SettingsUpdate,
+        actor: Option<uuid::Uuid>,
+    ) -> Result<OrganizationSettings, RepositoryError>;
 }
 
 /// Read port for the places that consume a value, kept separate from

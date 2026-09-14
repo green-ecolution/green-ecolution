@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, RwLock};
 
 use sqlx::PgPool;
@@ -9,6 +10,7 @@ use domain::{
     settings::{
         EffectiveSettings, InstanceDefaults, OrganizationSettings, OrganizationSettingsSnapshot,
         Resolution, SettingChangeEntry, SettingKey, SettingsReader, SettingsResolver,
+        SettingsUpdate, SettingsWriter,
         values::{DefectStreak, JustWateredTtl, MapView, SensorOfflineAfter, WaterDemand},
     },
     shared::{coordinates::Coordinate, geo::BoundingBox},
@@ -26,6 +28,10 @@ pub struct PgSettingsRepository {
     /// Holds the stored rows only. Their sole writer is this adapter, which is
     /// what makes caching them safe.
     cache: RwLock<Option<Arc<SettingsByOrg>>>,
+    /// Bumped on every write. A fill that started before that write carries a
+    /// stale snapshot, and storing it would keep serving pre-write values
+    /// until some later write happened to invalidate again.
+    generation: AtomicU64,
 }
 
 impl PgSettingsRepository {
@@ -39,6 +45,15 @@ impl PgSettingsRepository {
             defaults,
             org_reader,
             cache: RwLock::new(None),
+            generation: AtomicU64::new(0),
+        }
+    }
+
+    /// Drops the cached rows. Called after a write, never before it commits.
+    fn invalidate(&self) {
+        self.generation.fetch_add(1, Ordering::SeqCst);
+        if let Ok(mut guard) = self.cache.write() {
+            *guard = None;
         }
     }
 
@@ -48,6 +63,8 @@ impl PgSettingsRepository {
         {
             return Ok(cached.clone());
         }
+
+        let started_at = self.generation.load(Ordering::SeqCst);
 
         let rows = sqlx::query_as!(
             OrganizationSettingsSnapshot,
@@ -69,7 +86,9 @@ impl PgSettingsRepository {
         }
 
         let by_org = Arc::new(by_org);
-        if let Ok(mut guard) = self.cache.write() {
+        if self.generation.load(Ordering::SeqCst) == started_at
+            && let Ok(mut guard) = self.cache.write()
+        {
             *guard = Some(by_org.clone());
         }
         Ok(by_org)
@@ -154,6 +173,79 @@ impl SettingsReader for PgSettingsRepository {
         _org: Id<Organization>,
     ) -> Result<HashMap<SettingKey, SettingChangeEntry>, RepositoryError> {
         Ok(HashMap::new())
+    }
+}
+
+#[async_trait::async_trait]
+impl SettingsWriter for PgSettingsRepository {
+    #[tracing::instrument(level = "trace", skip_all)]
+    async fn apply(
+        &self,
+        org: Id<Organization>,
+        update: SettingsUpdate,
+        _actor: Option<uuid::Uuid>,
+    ) -> Result<OrganizationSettings, RepositoryError> {
+        let mut tx = self.pool.begin().await?;
+
+        let current = sqlx::query_as!(
+            OrganizationSettingsSnapshot,
+            r#"SELECT organization_id, water_demand_liters, just_watered_ttl_secs,
+                      sensor_offline_after_secs, defect_streak,
+                      map_center_lat, map_center_lng,
+                      map_bbox_sw_lat, map_bbox_sw_lng,
+                      map_bbox_ne_lat, map_bbox_ne_lng,
+                      descendants_may_override
+               FROM organization_settings WHERE organization_id = $1 FOR UPDATE"#,
+            org.value()
+        )
+        .fetch_optional(&mut *tx)
+        .await?
+        .map(reconstitute)
+        .transpose()?
+        .unwrap_or_else(|| OrganizationSettings::empty(org));
+
+        let next = update.apply_to(&current);
+        let map = next.map_view;
+
+        sqlx::query!(
+            r#"INSERT INTO organization_settings (
+                   organization_id, water_demand_liters, just_watered_ttl_secs,
+                   sensor_offline_after_secs, defect_streak,
+                   map_center_lat, map_center_lng,
+                   map_bbox_sw_lat, map_bbox_sw_lng, map_bbox_ne_lat, map_bbox_ne_lng,
+                   descendants_may_override)
+               VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+               ON CONFLICT (organization_id) DO UPDATE SET
+                   water_demand_liters = EXCLUDED.water_demand_liters,
+                   just_watered_ttl_secs = EXCLUDED.just_watered_ttl_secs,
+                   sensor_offline_after_secs = EXCLUDED.sensor_offline_after_secs,
+                   defect_streak = EXCLUDED.defect_streak,
+                   map_center_lat = EXCLUDED.map_center_lat,
+                   map_center_lng = EXCLUDED.map_center_lng,
+                   map_bbox_sw_lat = EXCLUDED.map_bbox_sw_lat,
+                   map_bbox_sw_lng = EXCLUDED.map_bbox_sw_lng,
+                   map_bbox_ne_lat = EXCLUDED.map_bbox_ne_lat,
+                   map_bbox_ne_lng = EXCLUDED.map_bbox_ne_lng,
+                   descendants_may_override = EXCLUDED.descendants_may_override"#,
+            org.value(),
+            next.water_demand.map(|v| v.liters()),
+            next.just_watered_ttl.map(|v| v.seconds()),
+            next.sensor_offline_after.map(|v| v.seconds()),
+            next.defect_streak.map(|v| v.count()),
+            map.map(|m| m.center().latitude()),
+            map.map(|m| m.center().longitude()),
+            map.map(|m| m.bbox().sw_lat()),
+            map.map(|m| m.bbox().sw_lng()),
+            map.map(|m| m.bbox().ne_lat()),
+            map.map(|m| m.bbox().ne_lng()),
+            next.descendants_may_override,
+        )
+        .execute(&mut *tx)
+        .await?;
+
+        tx.commit().await?;
+        self.invalidate();
+        Ok(next)
     }
 }
 
