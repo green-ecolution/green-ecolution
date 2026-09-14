@@ -81,6 +81,13 @@ impl OrgHierarchy {
             .collect()
     }
 
+    /// Whether the tree contains this organization at all. `parents` holds
+    /// every org, so a miss means the id does not exist — the walks above
+    /// cannot tell that apart from a node without a parent.
+    pub fn knows(&self, node: Id<Organization>) -> bool {
+        self.parents.contains_key(&node)
+    }
+
     /// Chain from the root down to `node`, `node` last. Cycle-safe like the
     /// other walks: a repeated node ends the walk instead of hanging it.
     pub fn ancestors_from_root(&self, node: Id<Organization>) -> Vec<Id<Organization>> {
@@ -264,6 +271,15 @@ mod tests {
         let ctx = AccessContext::unrestricted();
         assert!(ctx.allows_in(tree_read(), root));
         assert!(ctx.superset_of(&BTreeSet::from_iter(Permission::catalog()), root));
+    }
+
+    #[test]
+    fn knows_separates_a_missing_org_from_a_parentless_one() {
+        let (root, tbz, unknown) = ids();
+        let h = OrgHierarchy::from_pairs([(root, None), (tbz, Some(root))]);
+        assert!(h.knows(root));
+        assert!(h.knows(tbz));
+        assert!(!h.knows(unknown));
     }
 
     #[test]

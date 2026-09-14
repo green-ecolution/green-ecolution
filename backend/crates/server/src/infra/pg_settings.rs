@@ -67,6 +67,12 @@ impl PgSettingsRepository {
     async fn resolve_for(&self, org: Id<Organization>) -> Result<Resolution, RepositoryError> {
         let by_org = self.by_org().await?;
         let hierarchy = self.org_reader.hierarchy().await?;
+        // Without this an unknown id resolves to a one-element chain and comes
+        // back as a full set of instance defaults, which reads like a real
+        // answer. The tree is already loaded, so the check costs nothing.
+        if !hierarchy.knows(org) {
+            return Err(RepositoryError::NotFound);
+        }
         let chain: Vec<OrganizationSettings> = hierarchy
             .ancestors_from_root(org)
             .into_iter()

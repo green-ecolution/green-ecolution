@@ -424,3 +424,26 @@ async fn setting_read_alone_does_not_permit_a_write_but_permits_a_read() {
         .unwrap();
     assert_eq!(write.status(), 403);
 }
+
+/// Without an existence check an unknown id resolves to a full set of instance
+/// defaults and answers 200, which reads like a real organization.
+#[tokio::test]
+async fn an_unknown_organization_answers_404_on_both_verbs() {
+    let app = spawn_app().await;
+    let unknown = Uuid::now_v7();
+
+    let resp = app
+        .get(&format!("/api/v1/organizations/{unknown}/settings"))
+        .await;
+    assert_eq!(resp.status(), 404);
+    let body: serde_json::Value = resp.json().await.unwrap();
+    assert_eq!(body["code"], "resource.not_found");
+
+    let resp = app
+        .put_json(
+            &format!("/api/v1/organizations/{unknown}/settings"),
+            &json!({ "water_demand": 70.0 }),
+        )
+        .await;
+    assert_eq!(resp.status(), 404);
+}
