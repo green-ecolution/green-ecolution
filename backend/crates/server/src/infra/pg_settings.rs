@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::str::FromStr;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, RwLock};
 
@@ -9,7 +10,7 @@ use domain::{
     organization::{Organization, OrganizationReader},
     settings::{
         EffectiveSettings, InstanceDefaults, OrganizationSettings, OrganizationSettingsSnapshot,
-        Resolution, SettingChangeEntry, SettingKey, SettingsReader, SettingsResolver,
+        Resolution, SettingChangeEntry, SettingKey, SettingValue, SettingsReader, SettingsResolver,
         SettingsUpdate, SettingsWriter,
         values::{DefectStreak, JustWateredTtl, MapView, SensorOfflineAfter, WaterDemand},
     },
@@ -153,6 +154,21 @@ fn reconstitute(
     })
 }
 
+/// The history is display-only, so the shape mirrors what a reader wants to
+/// see: a bare number for the scalar values, an object for the viewport.
+fn to_json(value: SettingValue) -> serde_json::Value {
+    match value {
+        SettingValue::Liters(v) => serde_json::json!(v),
+        SettingValue::Seconds(v) => serde_json::json!(v),
+        SettingValue::Count(v) => serde_json::json!(v),
+        SettingValue::Flag(v) => serde_json::json!(v),
+        SettingValue::Viewport(m) => serde_json::json!({
+            "center": [m.center().latitude(), m.center().longitude()],
+            "bbox": [m.bbox().sw_lat(), m.bbox().sw_lng(), m.bbox().ne_lat(), m.bbox().ne_lng()],
+        }),
+    }
+}
+
 #[async_trait::async_trait]
 impl SettingsReader for PgSettingsRepository {
     #[tracing::instrument(level = "trace", skip_all)]
@@ -169,13 +185,43 @@ impl SettingsReader for PgSettingsRepository {
         self.resolve_for(org).await
     }
 
-    /// Stub until the history table lands with the writer that fills it.
     #[tracing::instrument(level = "trace", skip_all)]
     async fn last_changes(
         &self,
-        _org: Id<Organization>,
+        org: Id<Organization>,
     ) -> Result<HashMap<SettingKey, SettingChangeEntry>, RepositoryError> {
-        Ok(HashMap::new())
+        let rows = sqlx::query!(
+            r#"SELECT DISTINCT ON (setting_key)
+                      setting_key AS "setting_key!", previous_value, new_value,
+                      changed_at, changed_by
+               FROM organization_settings_history
+               WHERE organization_id = $1
+               ORDER BY setting_key, changed_at DESC"#,
+            org.value()
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        let mut out = HashMap::new();
+        for row in rows {
+            // A key the current build no longer knows is skipped rather than
+            // failing the whole read: the history outlives a renamed setting.
+            let Ok(key) = SettingKey::from_str(&row.setting_key) else {
+                continue;
+            };
+            out.insert(
+                key,
+                SettingChangeEntry {
+                    organization_id: org,
+                    key,
+                    previous: row.previous_value,
+                    next: row.new_value,
+                    changed_at: row.changed_at,
+                    changed_by: row.changed_by,
+                },
+            );
+        }
+        Ok(out)
     }
 }
 
@@ -186,7 +232,7 @@ impl SettingsWriter for PgSettingsRepository {
         &self,
         org: Id<Organization>,
         update: SettingsUpdate,
-        _actor: Option<uuid::Uuid>,
+        actor: Option<uuid::Uuid>,
     ) -> Result<OrganizationSettings, RepositoryError> {
         let mut tx = self.pool.begin().await?;
 
@@ -245,6 +291,22 @@ impl SettingsWriter for PgSettingsRepository {
         )
         .execute(&mut *tx)
         .await?;
+
+        for change in update.changes(&current) {
+            sqlx::query!(
+                r#"INSERT INTO organization_settings_history
+                       (id, organization_id, setting_key, previous_value, new_value, changed_by)
+                   VALUES ($1, $2, $3, $4, $5, $6)"#,
+                uuid::Uuid::now_v7(),
+                org.value(),
+                change.key.as_str(),
+                change.previous.map(to_json),
+                change.next.map(to_json),
+                actor,
+            )
+            .execute(&mut *tx)
+            .await?;
+        }
 
         tx.commit().await?;
         self.invalidate();

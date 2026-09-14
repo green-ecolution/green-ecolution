@@ -117,6 +117,99 @@ impl SettingsUpdate {
                 .unwrap_or(current.descendants_may_override),
         }
     }
+
+    /// Every field this update actually moves. A field submitted with the
+    /// value it already has produces nothing — the history records changes,
+    /// not saves.
+    pub fn changes(&self, current: &OrganizationSettings) -> Vec<SettingChange> {
+        let next = self.apply_to(current);
+        let mut changes = Vec::new();
+
+        push_change(
+            &mut changes,
+            SettingKey::WaterDemand,
+            current
+                .water_demand
+                .map(|v| SettingValue::Liters(v.liters())),
+            next.water_demand.map(|v| SettingValue::Liters(v.liters())),
+        );
+        push_change(
+            &mut changes,
+            SettingKey::JustWateredTtl,
+            current
+                .just_watered_ttl
+                .map(|v| SettingValue::Seconds(v.seconds())),
+            next.just_watered_ttl
+                .map(|v| SettingValue::Seconds(v.seconds())),
+        );
+        push_change(
+            &mut changes,
+            SettingKey::SensorOfflineAfter,
+            current
+                .sensor_offline_after
+                .map(|v| SettingValue::Seconds(v.seconds())),
+            next.sensor_offline_after
+                .map(|v| SettingValue::Seconds(v.seconds())),
+        );
+        push_change(
+            &mut changes,
+            SettingKey::DefectStreak,
+            current
+                .defect_streak
+                .map(|v| SettingValue::Count(v.count())),
+            next.defect_streak.map(|v| SettingValue::Count(v.count())),
+        );
+        push_change(
+            &mut changes,
+            SettingKey::MapView,
+            current.map_view.map(SettingValue::Viewport),
+            next.map_view.map(SettingValue::Viewport),
+        );
+        push_change(
+            &mut changes,
+            SettingKey::DescendantsMayOverride,
+            Some(SettingValue::Flag(current.descendants_may_override)),
+            Some(SettingValue::Flag(next.descendants_may_override)),
+        );
+
+        changes
+    }
+}
+
+/// One recorded value, in the unit it is stored in. A typed enum rather than a
+/// free-form value, so the history cannot record something that is not a
+/// setting.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum SettingValue {
+    Liters(f64),
+    Seconds(i64),
+    Count(i32),
+    Viewport(MapView),
+    Flag(bool),
+}
+
+/// What changed about one setting. `None` on either side means the value was,
+/// or becomes, inherited.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct SettingChange {
+    pub key: SettingKey,
+    pub previous: Option<SettingValue>,
+    pub next: Option<SettingValue>,
+}
+
+fn push_change(
+    out: &mut Vec<SettingChange>,
+    key: SettingKey,
+    previous: Option<SettingValue>,
+    next: Option<SettingValue>,
+) {
+    if previous != next {
+        out.push(SettingChange {
+            key,
+            previous,
+            next,
+        });
+    }
 }
 
 /// The floor every resolution starts from, filled from the instance's own
@@ -263,5 +356,66 @@ mod tests {
             }
             .is_empty()
         );
+    }
+
+    #[test]
+    fn only_touched_fields_produce_a_change() {
+        let current = stored();
+        let update = SettingsUpdate {
+            water_demand: Patch::Set(WaterDemand::new(120.0).unwrap()),
+            ..SettingsUpdate::default()
+        };
+        let changes = update.changes(&current);
+        assert_eq!(changes.len(), 1);
+        assert_eq!(changes[0].key, SettingKey::WaterDemand);
+        assert_eq!(changes[0].previous, Some(SettingValue::Liters(70.0)));
+        assert_eq!(changes[0].next, Some(SettingValue::Liters(120.0)));
+    }
+
+    #[test]
+    fn returning_to_inheritance_is_a_change_with_no_next_value() {
+        let update = SettingsUpdate {
+            water_demand: Patch::Clear,
+            ..SettingsUpdate::default()
+        };
+        let changes = update.changes(&stored());
+        assert_eq!(changes.len(), 1);
+        assert_eq!(changes[0].previous, Some(SettingValue::Liters(70.0)));
+        assert_eq!(changes[0].next, None);
+    }
+
+    #[test]
+    fn setting_a_previously_inherited_field_has_no_previous_value() {
+        let update = SettingsUpdate {
+            defect_streak: Patch::Set(DefectStreak::new(5).unwrap()),
+            ..SettingsUpdate::default()
+        };
+        let changes = update.changes(&stored());
+        assert_eq!(changes.len(), 1);
+        assert_eq!(changes[0].key, SettingKey::DefectStreak);
+        assert_eq!(changes[0].previous, None);
+        assert_eq!(changes[0].next, Some(SettingValue::Count(5)));
+    }
+
+    #[test]
+    fn writing_the_same_value_again_produces_no_change() {
+        let update = SettingsUpdate {
+            water_demand: Patch::Set(WaterDemand::new(70.0).unwrap()),
+            ..SettingsUpdate::default()
+        };
+        assert!(update.changes(&stored()).is_empty());
+    }
+
+    #[test]
+    fn flipping_the_lock_is_recorded() {
+        let update = SettingsUpdate {
+            descendants_may_override: Some(false),
+            ..SettingsUpdate::default()
+        };
+        let changes = update.changes(&stored());
+        assert_eq!(changes.len(), 1);
+        assert_eq!(changes[0].key, SettingKey::DescendantsMayOverride);
+        assert_eq!(changes[0].previous, Some(SettingValue::Flag(true)));
+        assert_eq!(changes[0].next, Some(SettingValue::Flag(false)));
     }
 }
