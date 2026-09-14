@@ -121,8 +121,9 @@ pub struct AppState {
     pub plugin_writer: Arc<dyn domain::plugin::PluginWriter>,
     pub plugin_service: Arc<PluginService>,
     pub plugin_ingest_service: Arc<PluginIngestService>,
+    /// No handler reads this: it exposes the port so the integration tests can
+    /// drive resolution directly instead of through the HTTP surface.
     pub settings_reader: Arc<dyn domain::settings::SettingsReader>,
-    pub settings_resolver: Arc<dyn domain::settings::SettingsResolver>,
     pub settings_service: Arc<SettingsService>,
     pub app_origins: AppOrigins,
 }

@@ -118,7 +118,7 @@ impl Application {
         let repos = Repositories::build(&pool, sensor_offline_after, settings.sensor.defect_streak);
         let settings_repo = Arc::new(PgSettingsRepository::new(
             pool.clone(),
-            instance_defaults(&settings),
+            instance_defaults(&settings)?,
             repos.organization_reader.clone(),
         ));
         let settings_service = Arc::new(crate::service::settings_service::SettingsService::new(
@@ -214,7 +214,6 @@ impl Application {
             plugin_service: services.plugin,
             plugin_ingest_service: services.plugin_ingest,
             settings_reader: settings_repo.clone(),
-            settings_resolver: settings_repo.clone(),
             settings_service,
             app_origins: AppOrigins::from_settings(&settings.cors, &settings.application.base_url),
         });
@@ -532,8 +531,11 @@ impl Services {
 
 /// Turns the instance's configured values into the floor every resolution
 /// starts from. A value outside the domain's range is a broken deployment,
-/// not a request, so it fails at boot rather than on the first read.
-fn instance_defaults(settings: &Settings) -> domain::settings::InstanceDefaults {
+/// not a request, so the boot fails with the offending field named rather
+/// than panicking on the way up or surfacing on the first read.
+fn instance_defaults(
+    settings: &Settings,
+) -> Result<domain::settings::InstanceDefaults, std::io::Error> {
     use domain::settings::{
         DefectStreak, InstanceDefaults, JustWateredTtl, MapView, SensorOfflineAfter, WaterDemand,
     };
@@ -542,28 +544,33 @@ fn instance_defaults(settings: &Settings) -> domain::settings::InstanceDefaults 
     let [lat, lng] = settings.map.center;
     let [sw_lat, sw_lng, ne_lat, ne_lng] = settings.map.bbox;
 
-    InstanceDefaults {
-        water_demand: WaterDemand::new(settings.routing.tree_demand_liters)
-            .expect("routing.tree_demand_liters must be within the documented range"),
+    let rejected = |err: domain::shared::error::ValidationError| {
+        std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            format!("invalid configuration: {err}"),
+        )
+    };
+
+    Ok(InstanceDefaults {
+        water_demand: WaterDemand::new(settings.routing.tree_demand_liters).map_err(rejected)?,
         just_watered_ttl: JustWateredTtl::new(
             i64::try_from(settings.watering.just_watered_ttl_secs).unwrap_or(i64::MAX),
         )
-        .expect("watering.just_watered_ttl_secs must be within the documented range"),
+        .map_err(rejected)?,
         sensor_offline_after: SensorOfflineAfter::new(
             i64::try_from(settings.sensor.offline_after_secs).unwrap_or(i64::MAX),
         )
-        .expect("sensor.offline_after_secs must be within the documented range"),
+        .map_err(rejected)?,
         defect_streak: DefectStreak::new(
             i32::try_from(settings.sensor.defect_streak).unwrap_or(i32::MAX),
         )
-        .expect("sensor.defect_streak must be within the documented range"),
+        .map_err(rejected)?,
         map_view: MapView::new(
-            Coordinate::new(lat, lng).expect("map.center must be a valid coordinate"),
-            BoundingBox::try_new(sw_lat, sw_lng, ne_lat, ne_lng)
-                .expect("map.bbox must be a valid bounding box"),
+            Coordinate::new(lat, lng).map_err(rejected)?,
+            BoundingBox::try_new(sw_lat, sw_lng, ne_lat, ne_lng).map_err(rejected)?,
         )
-        .expect("map.center must lie inside map.bbox"),
-    }
+        .map_err(rejected)?,
+    })
 }
 
 fn build_http_client(timeout: Duration) -> reqwest::Client {
