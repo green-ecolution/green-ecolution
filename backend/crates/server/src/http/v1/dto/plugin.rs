@@ -109,7 +109,7 @@ impl From<&PluginView> for PluginViewResponse {
 /// One-time response carrying the plaintext API key, issued on install and
 /// on rotation only — it never appears again afterwards.
 #[derive(Debug, Serialize, utoipa::ToSchema)]
-#[schema(example = json!({ "key": "gep_2f9a5c3e1b7d4a80.7b1e3c9a4f2d6081b3c5e7a9d1f3b5c7" }))]
+#[schema(example = json!({ "key": "gep_0199a1f0-4c3e-7b2d-8a41-6f5c2e9d3b70.7b1e3c9a4f2d6081b3c5e7a9d1f3b5c72e4a6c8e0f1d3b5a7c9e1f3d5b7a9c1e" }))]
 pub struct PluginKeyResponse {
     pub key: String,
 }
