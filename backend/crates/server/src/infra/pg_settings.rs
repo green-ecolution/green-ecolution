@@ -5,8 +5,7 @@ use sqlx::PgPool;
 
 use domain::{
     Id, RepositoryError,
-    authorization::OrgHierarchy,
-    organization::Organization,
+    organization::{Organization, OrganizationReader},
     settings::{
         EffectiveSettings, InstanceDefaults, OrganizationSettings, OrganizationSettingsSnapshot,
         Resolution, SettingChangeEntry, SettingKey, SettingsReader, SettingsResolver,
@@ -15,37 +14,39 @@ use domain::{
     shared::{coordinates::Coordinate, geo::BoundingBox},
 };
 
-/// Everything the resolution needs, loaded together and cached as one unit.
-#[derive(Clone, Default)]
-struct Loaded {
-    hierarchy: OrgHierarchy,
-    by_org: HashMap<Id<Organization>, OrganizationSettings>,
-}
+type SettingsByOrg = HashMap<Id<Organization>, OrganizationSettings>;
 
 pub struct PgSettingsRepository {
     pool: PgPool,
     defaults: InstanceDefaults,
-    /// Cleared as a whole on every write: a change at one organization moves
-    /// the effective values of its entire subtree, and flipping the lock even
-    /// more so. At a few dozen organizations a clever partial invalidation
-    /// would be a source of bugs without a payoff.
-    cache: RwLock<Option<Arc<Loaded>>>,
+    /// The tree is read per resolution rather than cached alongside the rows:
+    /// organizations are created and deleted without going through this
+    /// adapter, so a cached tree would silently miss them until a restart.
+    org_reader: Arc<dyn OrganizationReader>,
+    /// Holds the stored rows only. Their sole writer is this adapter, which is
+    /// what makes caching them safe.
+    cache: RwLock<Option<Arc<SettingsByOrg>>>,
 }
 
 impl PgSettingsRepository {
-    pub fn new(pool: PgPool, defaults: InstanceDefaults) -> Self {
+    pub fn new(
+        pool: PgPool,
+        defaults: InstanceDefaults,
+        org_reader: Arc<dyn OrganizationReader>,
+    ) -> Self {
         Self {
             pool,
             defaults,
+            org_reader,
             cache: RwLock::new(None),
         }
     }
 
-    async fn loaded(&self) -> Result<Arc<Loaded>, RepositoryError> {
+    async fn by_org(&self) -> Result<Arc<SettingsByOrg>, RepositoryError> {
         if let Ok(guard) = self.cache.read()
-            && let Some(loaded) = guard.as_ref()
+            && let Some(cached) = guard.as_ref()
         {
-            return Ok(loaded.clone());
+            return Ok(cached.clone());
         }
 
         let rows = sqlx::query_as!(
@@ -61,38 +62,27 @@ impl PgSettingsRepository {
         .fetch_all(&self.pool)
         .await?;
 
-        let mut by_org = HashMap::new();
+        let mut by_org = SettingsByOrg::new();
         for row in rows {
             let settings = reconstitute(row)?;
             by_org.insert(settings.organization_id, settings);
         }
 
-        let parents = sqlx::query!(r#"SELECT id, parent_id FROM organizations"#)
-            .fetch_all(&self.pool)
-            .await?;
-        let hierarchy = OrgHierarchy::from_pairs(parents.into_iter().map(|r| {
-            (
-                Id::<Organization>::new(r.id),
-                r.parent_id.map(Id::<Organization>::new),
-            )
-        }));
-
-        let loaded = Arc::new(Loaded { hierarchy, by_org });
+        let by_org = Arc::new(by_org);
         if let Ok(mut guard) = self.cache.write() {
-            *guard = Some(loaded.clone());
+            *guard = Some(by_org.clone());
         }
-        Ok(loaded)
+        Ok(by_org)
     }
 
     async fn resolve_for(&self, org: Id<Organization>) -> Result<Resolution, RepositoryError> {
-        let loaded = self.loaded().await?;
-        let chain: Vec<OrganizationSettings> = loaded
-            .hierarchy
+        let by_org = self.by_org().await?;
+        let hierarchy = self.org_reader.hierarchy().await?;
+        let chain: Vec<OrganizationSettings> = hierarchy
             .ancestors_from_root(org)
             .into_iter()
             .map(|id| {
-                loaded
-                    .by_org
+                by_org
                     .get(&id)
                     .copied()
                     .unwrap_or_else(|| OrganizationSettings::empty(id))
@@ -145,9 +135,8 @@ fn reconstitute(
 impl SettingsReader for PgSettingsRepository {
     #[tracing::instrument(level = "trace", skip_all)]
     async fn own(&self, org: Id<Organization>) -> Result<OrganizationSettings, RepositoryError> {
-        let loaded = self.loaded().await?;
-        Ok(loaded
-            .by_org
+        let by_org = self.by_org().await?;
+        Ok(by_org
             .get(&org)
             .copied()
             .unwrap_or_else(|| OrganizationSettings::empty(org)))
@@ -158,6 +147,7 @@ impl SettingsReader for PgSettingsRepository {
         self.resolve_for(org).await
     }
 
+    /// Stub until the history table lands with the writer that fills it.
     #[tracing::instrument(level = "trace", skip_all)]
     async fn last_changes(
         &self,

@@ -119,6 +119,7 @@ impl Application {
         let settings_repo = Arc::new(PgSettingsRepository::new(
             pool.clone(),
             instance_defaults(&settings),
+            repos.organization_reader.clone(),
         ));
         let profile_repo = Arc::new(infra::pg_user_profile::PgUserProfileRepository::new(
             pool.clone(),

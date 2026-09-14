@@ -54,6 +54,38 @@ async fn a_leaf_without_a_value_inherits_from_the_nearest_ancestor_that_has_one(
     );
 }
 
+/// An organization created after the cache is warm must still resolve against
+/// its parent. The tree is not part of what this adapter caches precisely
+/// because organizations are created without it ever being told.
+#[tokio::test]
+async fn an_organization_created_after_the_first_read_still_inherits() {
+    let app = spawn_app().await;
+    let root = Uuid::parse_str(ROOT_ORG_ID).unwrap();
+    set_water_demand(&app, root, 100.0).await;
+
+    let warm = app
+        .state
+        .settings_reader
+        .resolution(Id::<Organization>::new(root))
+        .await
+        .unwrap();
+    assert_eq!(warm.effective.water_demand.liters(), 100.0);
+
+    let fresh = child_org(&app, "Spaet gegruendet", root).await;
+    let resolution = app
+        .state
+        .settings_reader
+        .resolution(Id::<Organization>::new(fresh))
+        .await
+        .unwrap();
+
+    assert_eq!(resolution.effective.water_demand.liters(), 100.0);
+    assert_eq!(
+        resolution.origins.water_demand,
+        SettingOrigin::Inherited(Id::new(root))
+    );
+}
+
 #[tokio::test]
 async fn an_organization_without_any_value_gets_the_instance_default() {
     let app = spawn_app().await;
