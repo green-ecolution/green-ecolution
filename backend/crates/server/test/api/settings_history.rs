@@ -15,7 +15,7 @@ async fn history_rows(
         r#"SELECT setting_key AS "key!", previous_value, new_value
            FROM organization_settings_history
            WHERE organization_id = $1
-           ORDER BY changed_at ASC, setting_key ASC"#,
+           ORDER BY changed_at ASC, setting_key ASC, id ASC"#,
         org
     )
     .fetch_all(&app.db_pool)
@@ -164,6 +164,47 @@ async fn a_write_that_fails_on_the_history_keeps_the_old_value() {
     .unwrap()
     .flatten();
     assert_eq!(stored, None);
+}
+
+/// `changed_at` defaults to `now()`, which is transaction-start time, so every
+/// key touched by one patch carries the same timestamp — a tie is the normal
+/// case here, not a rare one. The newer entry has to win on `id`.
+#[tokio::test]
+async fn entries_sharing_a_timestamp_are_separated_by_their_id() {
+    let app = spawn_app().await;
+    let org = child_org(&app, "Gleichzeitig", Uuid::parse_str(ROOT_ORG_ID).unwrap()).await;
+
+    let older = Uuid::now_v7();
+    let newer = Uuid::now_v7();
+    let changed_at = chrono::Utc::now();
+
+    for (id, liters) in [(older, 90.0), (newer, 120.0)] {
+        sqlx::query!(
+            r#"INSERT INTO organization_settings_history
+                   (id, organization_id, setting_key, previous_value, new_value, changed_at)
+               VALUES ($1, $2, $3, NULL, $4, $5)"#,
+            id,
+            org,
+            SettingKey::WaterDemand.as_str(),
+            serde_json::json!(liters),
+            changed_at,
+        )
+        .execute(&app.db_pool)
+        .await
+        .unwrap();
+    }
+
+    let last = app
+        .state
+        .settings_service
+        .last_changes(Id::<Organization>::new(org))
+        .await
+        .unwrap();
+
+    let entry = last
+        .get(&SettingKey::WaterDemand)
+        .expect("entry for the changed key");
+    assert_eq!(entry.next, Some(serde_json::json!(120.0)));
 }
 
 #[tokio::test]

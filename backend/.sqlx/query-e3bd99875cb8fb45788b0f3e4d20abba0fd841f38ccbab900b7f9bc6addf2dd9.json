@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT setting_key AS \"key!\", previous_value, new_value\n           FROM organization_settings_history\n           WHERE organization_id = $1\n           ORDER BY changed_at ASC, setting_key ASC",
+  "query": "SELECT setting_key AS \"key!\", previous_value, new_value\n           FROM organization_settings_history\n           WHERE organization_id = $1\n           ORDER BY changed_at ASC, setting_key ASC, id ASC",
   "describe": {
     "columns": [
       {
@@ -30,5 +30,5 @@
       true
     ]
   },
-  "hash": "3981e526777178006daf38d8945cb89aa35a30053076052e8a8c2d4ea256c1a0"
+  "hash": "e3bd99875cb8fb45788b0f3e4d20abba0fd841f38ccbab900b7f9bc6addf2dd9"
 }

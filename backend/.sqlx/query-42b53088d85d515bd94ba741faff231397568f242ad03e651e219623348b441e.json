@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT DISTINCT ON (setting_key)\n                      setting_key AS \"setting_key!\", previous_value, new_value,\n                      changed_at, changed_by\n               FROM organization_settings_history\n               WHERE organization_id = $1\n               ORDER BY setting_key, changed_at DESC",
+  "query": "SELECT DISTINCT ON (setting_key)\n                      setting_key AS \"setting_key!\", previous_value, new_value,\n                      changed_at, changed_by\n               FROM organization_settings_history\n               WHERE organization_id = $1\n               ORDER BY setting_key, changed_at DESC, id DESC",
   "describe": {
     "columns": [
       {
@@ -42,5 +42,5 @@
       true
     ]
   },
-  "hash": "9e3802b132f21578d7c3d77bf590f1574c7778682ef564c12a8420f86a0476ea"
+  "hash": "42b53088d85d515bd94ba741faff231397568f242ad03e651e219623348b441e"
 }

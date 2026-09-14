@@ -190,13 +190,17 @@ impl SettingsReader for PgSettingsRepository {
         &self,
         org: Id<Organization>,
     ) -> Result<HashMap<SettingKey, SettingChangeEntry>, RepositoryError> {
+        // `changed_at` defaults to `now()`, which is transaction-start time, so
+        // every key touched by one patch carries the same timestamp. `id` is a
+        // uuid v7 and breaks the tie in insertion order; without it the planner
+        // decides which row counts as the last one.
         let rows = sqlx::query!(
             r#"SELECT DISTINCT ON (setting_key)
                       setting_key AS "setting_key!", previous_value, new_value,
                       changed_at, changed_by
                FROM organization_settings_history
                WHERE organization_id = $1
-               ORDER BY setting_key, changed_at DESC"#,
+               ORDER BY setting_key, changed_at DESC, id DESC"#,
             org.value()
         )
         .fetch_all(&self.pool)
