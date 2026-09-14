@@ -86,8 +86,11 @@ impl PgSettingsRepository {
         }
 
         let by_org = Arc::new(by_org);
-        if self.generation.load(Ordering::SeqCst) == started_at
-            && let Ok(mut guard) = self.cache.write()
+        // Compared under the write lock, not before taking it: `invalidate`
+        // bumps the generation before it acquires, so a fill that still sees
+        // `started_at` here is holding off a writer that has yet to clear.
+        if let Ok(mut guard) = self.cache.write()
+            && self.generation.load(Ordering::SeqCst) == started_at
         {
             *guard = Some(by_org.clone());
         }
