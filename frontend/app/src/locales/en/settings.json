@@ -118,9 +118,13 @@
     "keyDialog": {
       "installedTitle": "Plugin installed",
       "rotatedTitle": "Key rotated",
-      "description": "This key is shown only now and cannot be viewed again afterwards. Keep it safe.",
+      "installedDescription": "Copy the key and store it wherever the plugin needs it.",
+      "rotatedDescription": "The previous key is invalid from now on. Replace it everywhere the plugin uses it.",
+      "onceNotice": "Visible only now",
       "activationHint": "The plugin starts out disabled. While it is, Green Ecolution rejects its adapter even with a valid key. Enable it on the detail page before you hand the key over.",
-      "keyLabel": "API key",
+      "copy": "Copy key",
+      "copied": "Copied",
+      "copyFailed": "Copying failed.",
       "close": "Close"
     },
     "detail": {

@@ -118,9 +118,13 @@
     "keyDialog": {
       "installedTitle": "Plugin installiert",
       "rotatedTitle": "Schlüssel erneuert",
-      "description": "Dieser Schlüssel wird nur jetzt angezeigt und lässt sich später nicht erneut einsehen. Bewahre ihn sicher auf.",
+      "installedDescription": "Kopiere den Schlüssel und hinterlege ihn dort, wo das Plugin ihn braucht.",
+      "rotatedDescription": "Der bisherige Schlüssel ist ab jetzt ungültig. Ersetze ihn überall, wo das Plugin ihn nutzt.",
+      "onceNotice": "Nur jetzt sichtbar",
       "activationHint": "Das Plugin ist zunächst deaktiviert. Solange es das ist, weist Green Ecolution seinen Adapter auch mit gültigem Schlüssel ab. Aktiviere es auf der Detailseite, bevor du den Schlüssel weitergibst.",
-      "keyLabel": "API-Schlüssel",
+      "copy": "Schlüssel kopieren",
+      "copied": "Kopiert",
+      "copyFailed": "Kopieren fehlgeschlagen.",
       "close": "Schließen"
     },
     "detail": {

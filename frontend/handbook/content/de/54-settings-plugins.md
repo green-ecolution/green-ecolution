@@ -54,7 +54,9 @@ Zum Schluss legst du die beiden Rechtemengen fest, siehe
 Nach **Installieren** zeigt ein eigener Dialog den frisch erzeugten API-Schlüssel im
 Klartext. Das ist der einzige Moment, in dem du ihn zu sehen bekommst: Green Ecolution
 speichert nur einen Hashwert davon und kann ihn dir später nicht erneut anzeigen.
-Kopiere ihn also sofort dorthin, wo das Plugin ihn zur Anmeldung braucht.
+Nimm ihn deshalb gleich über **Schlüssel kopieren** mit und hinterlege ihn dort, wo
+das Plugin ihn zur Anmeldung braucht. Ein Klick neben den Dialog schließt ihn
+bewusst nicht, damit dir der Schlüssel nicht aus Versehen verloren geht.
 
 Ein frisch installiertes Plugin ist zunächst deaktiviert. Solange es das ist, weist
 Green Ecolution seine Anfragen auch mit gültigem Schlüssel ab. Aktiviere es deshalb
