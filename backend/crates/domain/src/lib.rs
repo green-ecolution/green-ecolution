@@ -37,6 +37,7 @@ pub mod role;
 pub mod routing;
 pub mod sensor;
 pub mod sensor_model;
+pub mod settings;
 pub mod shared;
 pub mod start_point;
 pub mod tree;

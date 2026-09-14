@@ -28,6 +28,7 @@ use crate::{
         pg_role::PgRoleRepository,
         pg_sensor::PgSensorRepository,
         pg_sensor_model::PgSensorModelRepository,
+        pg_settings::PgSettingsRepository,
         pg_start_point::PgStartPointRepository,
         pg_tree::PgTreeRepository,
         pg_vehicle::PgVehicleRepository,
@@ -115,6 +116,10 @@ impl Application {
             i64::try_from(settings.sensor.offline_after_secs).unwrap_or(i64::MAX),
         );
         let repos = Repositories::build(&pool, sensor_offline_after, settings.sensor.defect_streak);
+        let settings_repo = Arc::new(PgSettingsRepository::new(
+            pool.clone(),
+            instance_defaults(&settings),
+        ));
         let profile_repo = Arc::new(infra::pg_user_profile::PgUserProfileRepository::new(
             pool.clone(),
         ));
@@ -203,6 +208,8 @@ impl Application {
             plugin_writer: repos.plugin_writer,
             plugin_service: services.plugin,
             plugin_ingest_service: services.plugin_ingest,
+            settings_reader: settings_repo.clone(),
+            settings_resolver: settings_repo.clone(),
             app_origins: AppOrigins::from_settings(&settings.cors, &settings.application.base_url),
         });
 
@@ -514,6 +521,42 @@ impl Services {
             plugin,
             plugin_ingest,
         }
+    }
+}
+
+/// Turns the instance's configured values into the floor every resolution
+/// starts from. A value outside the domain's range is a broken deployment,
+/// not a request, so it fails at boot rather than on the first read.
+fn instance_defaults(settings: &Settings) -> domain::settings::InstanceDefaults {
+    use domain::settings::{
+        DefectStreak, InstanceDefaults, JustWateredTtl, MapView, SensorOfflineAfter, WaterDemand,
+    };
+    use domain::shared::{coordinates::Coordinate, geo::BoundingBox};
+
+    let [lat, lng] = settings.map.center;
+    let [sw_lat, sw_lng, ne_lat, ne_lng] = settings.map.bbox;
+
+    InstanceDefaults {
+        water_demand: WaterDemand::new(settings.routing.tree_demand_liters)
+            .expect("routing.tree_demand_liters must be within the documented range"),
+        just_watered_ttl: JustWateredTtl::new(
+            i64::try_from(settings.watering.just_watered_ttl_secs).unwrap_or(i64::MAX),
+        )
+        .expect("watering.just_watered_ttl_secs must be within the documented range"),
+        sensor_offline_after: SensorOfflineAfter::new(
+            i64::try_from(settings.sensor.offline_after_secs).unwrap_or(i64::MAX),
+        )
+        .expect("sensor.offline_after_secs must be within the documented range"),
+        defect_streak: DefectStreak::new(
+            i32::try_from(settings.sensor.defect_streak).unwrap_or(i32::MAX),
+        )
+        .expect("sensor.defect_streak must be within the documented range"),
+        map_view: MapView::new(
+            Coordinate::new(lat, lng).expect("map.center must be a valid coordinate"),
+            BoundingBox::try_new(sw_lat, sw_lng, ne_lat, ne_lng)
+                .expect("map.bbox must be a valid bounding box"),
+        )
+        .expect("map.center must lie inside map.bbox"),
     }
 }
 

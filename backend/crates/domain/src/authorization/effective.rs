@@ -80,6 +80,23 @@ impl OrgHierarchy {
             .chain(std::iter::once(ancestor))
             .collect()
     }
+
+    /// Chain from the root down to `node`, `node` last. Cycle-safe like the
+    /// other walks: a repeated node ends the walk instead of hanging it.
+    pub fn ancestors_from_root(&self, node: Id<Organization>) -> Vec<Id<Organization>> {
+        let mut chain = Vec::new();
+        let mut seen = HashSet::new();
+        let mut current = Some(node);
+        while let Some(id) = current {
+            if !seen.insert(id) {
+                break;
+            }
+            chain.push(id);
+            current = self.parents.get(&id).copied().flatten();
+        }
+        chain.reverse();
+        chain
+    }
 }
 
 /// Union of all role grants a user holds: each grant scopes a permission set
@@ -247,6 +264,29 @@ mod tests {
         let ctx = AccessContext::unrestricted();
         assert!(ctx.allows_in(tree_read(), root));
         assert!(ctx.superset_of(&BTreeSet::from_iter(Permission::catalog()), root));
+    }
+
+    #[test]
+    fn ancestors_from_root_returns_the_chain_root_first() {
+        let (root, tbz, sub) = ids();
+        let h = OrgHierarchy::from_pairs([(root, None), (tbz, Some(root)), (sub, Some(tbz))]);
+        assert_eq!(h.ancestors_from_root(sub), vec![root, tbz, sub]);
+        assert_eq!(h.ancestors_from_root(root), vec![root]);
+    }
+
+    #[test]
+    fn ancestors_from_root_is_cycle_safe() {
+        let (a, b, _) = ids();
+        let h = OrgHierarchy::from_pairs([(a, Some(b)), (b, Some(a))]);
+        let chain = h.ancestors_from_root(a);
+        assert_eq!(chain.len(), 2);
+    }
+
+    #[test]
+    fn ancestors_from_root_of_an_unknown_node_is_just_itself() {
+        let (root, _, unknown) = ids();
+        let h = OrgHierarchy::from_pairs([(root, None)]);
+        assert_eq!(h.ancestors_from_root(unknown), vec![unknown]);
     }
 
     #[test]

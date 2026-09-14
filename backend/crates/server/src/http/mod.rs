@@ -120,6 +120,8 @@ pub struct AppState {
     pub plugin_writer: Arc<dyn domain::plugin::PluginWriter>,
     pub plugin_service: Arc<PluginService>,
     pub plugin_ingest_service: Arc<PluginIngestService>,
+    pub settings_reader: Arc<dyn domain::settings::SettingsReader>,
+    pub settings_resolver: Arc<dyn domain::settings::SettingsResolver>,
     pub app_origins: AppOrigins,
 }
 
