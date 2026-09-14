@@ -8,6 +8,7 @@ apis/RegionsApi.ts
 apis/RolesApi.ts
 apis/RoutingApi.ts
 apis/SensorsApi.ts
+apis/SettingsApi.ts
 apis/TreeClustersApi.ts
 apis/TreesApi.ts
 apis/UsersApi.ts
@@ -64,10 +65,14 @@ models/ListResponseWateringPlanInListResponseDataInner.ts
 models/LorawanCredentialsRequest.ts
 models/LorawanInfoResponse.ts
 models/MapInfoResponse.ts
+models/MapViewDto.ts
 models/NearestTreeListResponse.ts
 models/OrganizationCreateRequest.ts
 models/OrganizationDetailResponse.ts
+models/OrganizationRef.ts
 models/OrganizationResponse.ts
+models/OrganizationSettingsResponse.ts
+models/OrganizationSettingsUpdateRequest.ts
 models/OrganizationUpdateRequest.ts
 models/PaginationResponse.ts
 models/PluginCreateRequest.ts
@@ -105,6 +110,13 @@ models/ServiceStatusResponse.ts
 models/ServicesInfoResponse.ts
 models/SetOrganizationRequest.ts
 models/SetSensorTreeRequest.ts
+models/SettingChangeRef.ts
+models/SettingFieldF64.ts
+models/SettingFieldI32.ts
+models/SettingFieldI64.ts
+models/SettingFieldMapViewDto.ts
+models/SettingFieldMapViewDtoOwnValue.ts
+models/SettingOriginDto.ts
 models/SignalResponse.ts
 models/SoilCondition.ts
 models/SoilMoistureConditionPointResponse.ts

@@ -20,6 +20,7 @@ pub mod role;
 pub mod routing;
 pub mod scope;
 pub mod sensor;
+pub mod settings;
 pub mod tree;
 pub mod user;
 pub mod vehicle;
@@ -43,6 +44,7 @@ pub fn protected_router() -> OpenApiRouter<Arc<AppState>> {
         .merge(role::routes())
         .merge(routing::routes())
         .merge(sensor::routes())
+        .merge(settings::routes())
         .merge(tree::routes())
         .merge(user::protected_routes())
         .merge(vehicle::routes())
