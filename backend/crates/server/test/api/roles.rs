@@ -99,7 +99,7 @@ async fn templates_endpoint_lists_the_five_seeded_templates() {
 async fn permissions_endpoint_lists_the_catalog() {
     let app = spawn_app().await;
     let perms: serde_json::Value = app.get("/api/v1/permissions").await.json().await.unwrap();
-    assert_eq!(perms.as_array().unwrap().len(), 40);
+    assert_eq!(perms.as_array().unwrap().len(), 44);
     assert!(
         perms
             .as_array()
@@ -436,4 +436,50 @@ mod cross_org_reads {
 
         assert_eq!(resp.status().as_u16(), 200);
     }
+}
+
+#[tokio::test]
+async fn the_setting_permission_lands_only_on_the_matching_templates() {
+    let app = spawn_app().await;
+
+    let rows = sqlx::query!(
+        r#"SELECT template_key AS "template_key!", permissions FROM roles
+           WHERE organization_id IS NULL AND template_key IS NOT NULL"#
+    )
+    .fetch_all(&app.db_pool)
+    .await
+    .unwrap();
+
+    for row in rows {
+        let has_read = row.permissions.iter().any(|p| p == "setting:read");
+        let has_update = row.permissions.iter().any(|p| p == "setting:update");
+        match row.template_key.as_str() {
+            "administrator" => assert!(has_read && has_update),
+            "observer" => assert!(has_read && !has_update),
+            _ => assert!(!has_read && !has_update),
+        }
+    }
+}
+
+#[tokio::test]
+async fn a_hand_edited_role_is_left_alone_by_the_setting_migration() {
+    let app = spawn_app().await;
+    let id = uuid::Uuid::now_v7();
+    let root = uuid::Uuid::parse_str(crate::organizations::ROOT_ORG_ID).unwrap();
+    sqlx::query!(
+        r#"INSERT INTO roles (id, organization_id, name, permissions, template_key)
+           VALUES ($1, $2, 'Handgemacht', ARRAY['tree:read'], NULL)"#,
+        id,
+        root,
+    )
+    .execute(&app.db_pool)
+    .await
+    .unwrap();
+
+    let permissions = sqlx::query_scalar!(r#"SELECT permissions FROM roles WHERE id = $1"#, id)
+        .fetch_one(&app.db_pool)
+        .await
+        .unwrap();
+
+    assert_eq!(permissions, vec!["tree:read".to_string()]);
 }

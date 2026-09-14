@@ -62,6 +62,7 @@ const AREA_DEFINITIONS: readonly AreaDefinition[] = [
   { resource: 'organization', group: 'administration' },
   { resource: 'role', group: 'administration' },
   { resource: 'plugin', group: 'administration' },
+  { resource: 'setting', group: 'administration' },
 ]
 
 const permissionFor = (resource: Resource, action: Action): Permission => `${resource}:${action}`
@@ -105,7 +106,7 @@ export const areaGroupLabels = (t: TFunction<'settings'>): Record<AreaGroup, str
 })
 
 /**
- * Composes the nine areas and their 36 actions from settings:permission.resource.*
+ * Composes the eleven areas and their 44 actions from settings:permission.resource.*
  * (label, singular noun, description, and the per-action hint, which genuinely
  * differs per permission) and settings:permission.action.* (the four verb
  * templates, "read" filled with the plural label, the rest with the singular

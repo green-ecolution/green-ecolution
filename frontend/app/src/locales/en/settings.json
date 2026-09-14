@@ -533,6 +533,18 @@
           "update": "Change a plugin's configuration or rotate its key",
           "delete": "Uninstall a plugin"
         }
+      },
+      "setting": {
+        "label": "Settings",
+        "pluralNoun": "settings",
+        "singular": "setting",
+        "description": "The organization's operational defaults",
+        "hint": {
+          "read": "View the organization's defaults",
+          "create": "Not used for settings",
+          "update": "Change the organization's defaults",
+          "delete": "Not used for settings"
+        }
       }
     }
   }
