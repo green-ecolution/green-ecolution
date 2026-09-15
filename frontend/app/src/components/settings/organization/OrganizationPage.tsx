@@ -17,9 +17,15 @@ import {
   DrawerFooter,
   Loading,
 } from '@green-ecolution/ui'
-import type { AddressDto, OrganizationDetailResponse, OrganizationResponse } from '@/api/backendApi'
-import { organizationQueries, userQueries } from '@/api/queries'
+import type {
+  AddressDto,
+  OrganizationDetailResponse,
+  OrganizationResponse,
+  OrganizationSettingsResponse,
+} from '@/api/backendApi'
+import { organizationQueries, settingsQueries, userQueries } from '@/api/queries'
 import { useOrganizationMutations } from '@/hooks/useOrganizationMutations'
+import { useSettingsMutations } from '@/hooks/useSettingsMutations'
 import { useContainerWiderThan } from '@/hooks/useContainerWiderThan'
 import { TWO_PANE_MIN_WIDTH } from '../twoPaneWidth'
 import { useHasPermission } from '@/lib/auth/useHasPermission'
@@ -29,9 +35,11 @@ import ContactPersonPicker from './ContactPersonPicker'
 import CreateOrganizationDialog from './CreateOrganizationDialog'
 import OrganizationActionButtons from './OrganizationActionButtons'
 import OrganizationDetail from './OrganizationDetail'
+import OrganizationSettingsSection from './OrganizationSettingsSection'
 import OrganizationTree from './OrganizationTree'
 import { buildTree, nodeOf, pathTo } from './organizationTree'
 import { useOrganizationDraft } from './useOrganizationDraft'
+import { useOrganizationSettingsDraft } from './useOrganizationSettingsDraft'
 
 const MEMBERS_PER_PAGE = 100
 
@@ -52,6 +60,8 @@ const OrganizationPage = () => {
   const canUpdate = useHasPermission(['organization:update'])
   const canDelete = useHasPermission(['organization:delete'])
   const canReadUsers = useHasPermission(['user:read'])
+  const canReadSettings = useHasPermission(['setting:read'])
+  const canUpdateSettings = useHasPermission(['setting:update'])
   const { ref: layoutRef, isWide } = useContainerWiderThan<HTMLDivElement>(TWO_PANE_MIN_WIDTH)
 
   const { data: me } = useQuery(userQueries.me())
@@ -64,12 +74,16 @@ const OrganizationPage = () => {
   } = useQuery(organizationQueries.list())
 
   const { createOrganization, updateOrganization, deleteOrganization } = useOrganizationMutations()
+  const { updateSettings } = useSettingsMutations()
   const draftState = useOrganizationDraft()
   const { draft, dirty, addressErrors, addressComplete, edit } = draftState
+  const settingsDraft = useOrganizationSettingsDraft()
+  const { load: loadSettings } = settingsDraft
 
   const [selection, setSelection] = useState<string | null>(null)
   const [expandedOverride, setExpandedOverride] = useState<ReadonlySet<string> | null>(null)
   const [loadedDetail, setLoadedDetail] = useState<OrganizationDetailResponse | null>(null)
+  const [loadedSettings, setLoadedSettings] = useState<OrganizationSettingsResponse | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
   const [pendingSelection, setPendingSelection] = useState<string | null | undefined>(undefined)
   const [pendingClose, setPendingClose] = useState(false)
@@ -95,10 +109,20 @@ const OrganizationPage = () => {
     enabled: canReadUsers && selectedId !== null,
   })
 
+  const { data: settings } = useQuery({
+    ...settingsQueries.byOrganization(selectedId ?? ''),
+    enabled: canReadSettings && selectedId !== null,
+  })
+
+  // An invalid settings draft builds no request, so `settingsDraft.dirty` is
+  // false for it. Typed input would then be dropped without a word on the way
+  // out, hence the `!valid` arm.
+  const unsaved = dirty || settingsDraft.dirty || !settingsDraft.valid
+
   const blocker = useBlocker({
-    shouldBlockFn: () => dirty,
+    shouldBlockFn: () => unsaved,
     // Also gates the browser's own unload prompt; see useFormNavigationBlocker.
-    enableBeforeUnload: () => dirty,
+    enableBeforeUnload: () => unsaved,
     withResolver: true,
   })
 
@@ -112,6 +136,14 @@ const OrganizationPage = () => {
     setLoadedDetail(detail)
     edit(detail)
   }, [detail, loadedDetail, edit])
+
+  useEffect(() => {
+    // Same reasoning as the detail effect above: keyed on the object.
+    if (!settings || settings === loadedSettings) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect, react-x/set-state-in-effect -- loads the freshly fetched settings into the draft
+    setLoadedSettings(settings)
+    loadSettings(settings)
+  }, [settings, loadedSettings, loadSettings])
 
   const members = memberPage?.data ?? []
   const memberInitials = members
@@ -178,7 +210,7 @@ const OrganizationPage = () => {
       setDetailOpen(true)
       return
     }
-    if (dirty) {
+    if (unsaved) {
       setPendingSelection(org.id)
       return
     }
@@ -187,12 +219,13 @@ const OrganizationPage = () => {
 
   const resetDraft = () => {
     if (detail) edit(detail)
+    if (settings) loadSettings(settings)
   }
 
   // null stands for "open the create dialog", mirroring how RolesPage encodes
   // "start a new role" in the same pending-intent state.
   const requestCreate = () => {
-    if (dirty) {
+    if (unsaved) {
       setPendingSelection(null)
       return
     }
@@ -215,7 +248,7 @@ const OrganizationPage = () => {
 
   const requestClose = (open: boolean) => {
     if (open) return
-    if (dirty) {
+    if (unsaved) {
       setPendingClose(true)
       return
     }
@@ -245,12 +278,22 @@ const OrganizationPage = () => {
     if (filled.length !== 0 && filled.length !== 3) return
     const address: AddressDto | null = filled.length === 3 ? { street, postalCode, city } : null
 
-    updateOrganization.mutate({
-      orgId: detail.id,
-      name,
-      address,
-      contactPersonId: draft.contactPersonId,
-    })
+    // One button, two endpoints: each part goes out only if it actually
+    // changed, and an invalid settings draft withholds its own request
+    // (`toRequest` returns null) without holding up the master data.
+    if (dirty) {
+      updateOrganization.mutate({
+        orgId: detail.id,
+        name,
+        address,
+        contactPersonId: draft.contactPersonId,
+      })
+    }
+
+    const settingsBody = settingsDraft.toRequest()
+    if (settingsBody) {
+      updateSettings.mutate({ orgId: detail.id, body: settingsBody })
+    }
   }
 
   const create = (name: string) => {
@@ -296,6 +339,31 @@ const OrganizationPage = () => {
     />
   )
 
+  // The list is already loaded, so the source and locking organizations are
+  // resolved here instead of costing the section its own request.
+  const nameOfOrg = (orgId: string | null | undefined): string | null => {
+    if (!orgId) return null
+    return (orgs ?? []).find((org) => org.id === orgId)?.name ?? null
+  }
+
+  const settingsSection =
+    canReadSettings && settings && settingsDraft.draft ? (
+      <OrganizationSettingsSection
+        settings={settings}
+        draft={settingsDraft.draft}
+        errors={settingsDraft.errors}
+        canUpdate={canUpdateSettings}
+        enforcedByName={nameOfOrg(settings.enforcedBy?.id)}
+        sourceNames={{
+          waterDemand: nameOfOrg(settings.waterDemand.source?.id),
+          justWateredTtlHours: nameOfOrg(settings.justWateredTtlSecs.source?.id),
+        }}
+        onOwnChange={settingsDraft.setOwn}
+        onTextChange={settingsDraft.setText}
+        onDescendantsMayOverrideChange={settingsDraft.setDescendantsMayOverride}
+      />
+    ) : null
+
   const renderDetail = (renderActionBar: boolean) => {
     if (detailError) {
       return (
@@ -313,7 +381,7 @@ const OrganizationPage = () => {
           path={selectionPath}
           detail={detail}
           draft={draft}
-          dirty={dirty}
+          dirty={unsaved}
           addressErrors={addressErrors}
           addressComplete={addressComplete}
           readOnly={readOnly}
@@ -322,7 +390,8 @@ const OrganizationPage = () => {
           canDelete={canDelete}
           canReadUsers={canReadUsers}
           memberInitials={memberInitials}
-          saving={updateOrganization.isPending}
+          settingsSection={settingsSection}
+          saving={updateOrganization.isPending || updateSettings.isPending}
           nameError={nameConflictMessage(updateOrganization.error, t)}
           contactPersonError={contactPersonMessage(updateOrganization.error, t)}
           onNameChange={draftState.setName}
@@ -365,10 +434,10 @@ const OrganizationPage = () => {
                 {/* Content scrolls in its own region; the actions live in a fixed
                     footer below so they stay anchored to the drawer bottom. */}
                 <div className="min-h-0 flex-1 overflow-y-auto p-4">{renderDetail(false)}</div>
-                {draft && dirty && !readOnly && (
+                {draft && unsaved && (
                   <DrawerFooter className="flex-col-reverse gap-2 border-t border-dark-200 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
                     <OrganizationActionButtons
-                      saving={updateOrganization.isPending}
+                      saving={updateOrganization.isPending || updateSettings.isPending}
                       nameEmpty={draft.name.trim().length === 0}
                       addressComplete={addressComplete}
                       onSave={save}

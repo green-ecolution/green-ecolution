@@ -391,6 +391,29 @@
       "deleteFailed": "Die Organisation konnte nicht gelöscht werden."
     },
     "settings": {
+      "title": "Fachliche Vorgaben",
+      "hint": "Diese Werte gelten für diese Organisation und für alle Untereinheiten, die nichts Eigenes gesetzt haben.",
+      "waterDemandLabel": "Wasserbedarf je Baum (Liter)",
+      "justWateredTtlLabel": "Nachwirkzeit frisch gegossen (Stunden)",
+      "origin": {
+        "default": "Vorgabe der Instanz",
+        "inherited": "Geerbt von {name}",
+        "inheritedUnknown": "Von einer übergeordneten Organisation geerbt",
+        "own": "Eigener Wert"
+      },
+      "setOwnValue": "Eigenen Wert setzen",
+      "inheritAgain": "Wieder erben",
+      "dormantOwnValue": "Der eigene Wert von {value} ruht, solange die Sperre gilt.",
+      "liters_one": "{count} Liter",
+      "liters_other": "{count} Liter",
+      "hours_one": "{count} Stunde",
+      "hours_other": "{count} Stunden",
+      "lastChange": "Zuletzt geändert am {date}",
+      "lastChangeBy": "Zuletzt geändert am {date} von {name}",
+      "enforcedNotice": "{name} hat die Vorgaben für diese Organisation gesperrt. Es gelten die Werte von dort, eigene Eingaben sind hier nicht möglich.",
+      "enforcedNoticeUnknown": "Eine übergeordnete Organisation hat die Vorgaben für diese Organisation gesperrt. Es gelten die Werte von dort, eigene Eingaben sind hier nicht möglich.",
+      "descendantsLabel": "Untereinheiten dürfen eigene Werte setzen",
+      "descendantsHint": "Ist der Schalter aus, gelten diese Vorgaben für alle Untereinheiten verbindlich und können dort nicht geändert werden.",
       "toast": {
         "saved": "Einstellungen gespeichert",
         "saveFailed": "Die Einstellungen konnten nicht gespeichert werden.",

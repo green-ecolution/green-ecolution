@@ -5,6 +5,7 @@ import { UNRESTRICTED, type Permissions } from '@/lib/auth/permissions'
 import type {
   OrganizationDetailResponse,
   OrganizationResponse,
+  OrganizationSettingsResponse,
   UserResponse,
 } from '@/api/backendApi'
 import type {
@@ -12,6 +13,7 @@ import type {
   DeleteOrganizationVariables,
   UpdateOrganizationVariables,
 } from '@/hooks/useOrganizationMutations'
+import type { UpdateSettingsVariables } from '@/hooks/useSettingsMutations'
 
 // The instance root ('root') sits above the user's own organization ('amt') and
 // must stay out of the tree. parentId is left off entirely rather than set to
@@ -55,9 +57,20 @@ const users: UserResponse[] = [
   member('u-bo', 'Bo', 'Boysen', 'nord'),
 ]
 
+// Water demand comes from the instance root above, the just-watered duration is
+// this organization's own — one field of each kind, as the section shows them.
+const settingsOf = (): OrganizationSettingsResponse =>
+  ({
+    waterDemand: { value: 80, origin: 'inherited', source: { id: 'root' }, lastChange: null },
+    justWateredTtlSecs: { value: 86400, origin: 'own', ownValue: 86400, lastChange: null },
+    descendantsMayOverride: true,
+    enforcedBy: null,
+  }) as unknown as OrganizationSettingsResponse
+
 // The create and delete mocks rewrite these, so every test starts from a copy.
 let orgList: OrganizationResponse[] = []
 let detailMap: Record<string, OrganizationDetailResponse> = {}
+let settingsMap: Record<string, OrganizationSettingsResponse> = {}
 
 const permissions = vi.fn((): Permissions => UNRESTRICTED)
 vi.mock('@/lib/auth/usePermissions', () => ({ usePermissions: () => permissions() }))
@@ -94,6 +107,13 @@ vi.mock('@/hooks/useOrganizationMutations', () => ({
   }),
 }))
 
+const updateSettingsMutate = vi.fn()
+vi.mock('@/hooks/useSettingsMutations', () => ({
+  useSettingsMutations: () => ({
+    updateSettings: { mutate: updateSettingsMutate, isPending: false, error: null, reset: vi.fn() },
+  }),
+}))
+
 const blockerStatus = vi.fn((): string => 'idle')
 const blockerProceed = vi.fn()
 const blockerReset = vi.fn()
@@ -111,8 +131,8 @@ vi.mock('@tanstack/react-query', async () => {
     await vi.importActual<typeof import('@tanstack/react-query')>('@tanstack/react-query')
   return {
     ...actual,
-    useQuery: (options: { queryKey: unknown[] }) => {
-      const [scope, second] = options.queryKey
+    useQuery: (options: { queryKey: unknown[]; enabled?: boolean }) => {
+      const [scope, second, third] = options.queryKey
       if (scope === 'users' && second === 'me') {
         return {
           data: {
@@ -134,6 +154,11 @@ vi.mock('@tanstack/react-query', async () => {
       }
       if (scope === 'organizations' && second === undefined) {
         return { data: orgList, isLoading: false, error: listError() }
+      }
+      if (scope === 'organizations' && third === 'settings') {
+        // Honouring `enabled` is what makes the missing-permission case real.
+        const data = options.enabled === false ? undefined : settingsMap[second as string]
+        return { data, isLoading: false }
       }
       if (scope === 'organizations') {
         return { data: detailMap[second as string], isLoading: false, error: detailError() }
@@ -167,6 +192,7 @@ describe('OrganizationPage', () => {
     vi.clearAllMocks()
     orgList = [...BASE_ORGS]
     detailMap = { ...BASE_DETAILS }
+    settingsMap = Object.fromEntries(BASE_ORGS.map((org) => [org.id, settingsOf()]))
     permissions.mockReturnValue(UNRESTRICTED)
     isWide.mockReturnValue(true)
     ownOrgId.mockReturnValue('amt')
@@ -564,6 +590,107 @@ describe('OrganizationPage', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Verlassen' }))
     expect(blockerProceed).toHaveBeenCalled()
+  })
+
+  it('saves changed settings alongside the organization master data', async () => {
+    render(<OrganizationPage />)
+    await selectNord()
+
+    // The section resolves the source organization from the already loaded list.
+    expect(cardOf('Fachliche Vorgaben').getByText(/Geerbt von Stadt Flensburg/)).toBeInTheDocument()
+
+    await userEvent.type(screen.getByRole('textbox', { name: 'Name' }), ' Ost')
+    const ttl = screen.getByLabelText(/Nachwirkzeit/)
+    await userEvent.clear(ttl)
+    await userEvent.type(ttl, '48')
+    await userEvent.click(screen.getByRole('button', { name: 'Speichern' }))
+
+    await waitFor(() => expect(updateSettingsMutate).toHaveBeenCalled())
+    // Only the field that moved travels; the untouched water demand stays out.
+    expect(updateSettingsMutate.mock.calls[0][0] as UpdateSettingsVariables).toEqual({
+      orgId: 'nord',
+      body: { justWateredTtlSecs: 172800 },
+    })
+    expect(updateMutate).toHaveBeenCalled()
+  })
+
+  it('does not call the settings endpoint when only the name changed', async () => {
+    render(<OrganizationPage />)
+    await selectNord()
+
+    await userEvent.type(screen.getByRole('textbox', { name: 'Name' }), ' Ost')
+    await userEvent.click(screen.getByRole('button', { name: 'Speichern' }))
+
+    await waitFor(() => expect(updateMutate).toHaveBeenCalled())
+    expect(updateSettingsMutate).not.toHaveBeenCalled()
+  })
+
+  it('leaves the organization alone when only a setting changed', async () => {
+    render(<OrganizationPage />)
+    await selectNord()
+
+    const ttl = screen.getByLabelText(/Nachwirkzeit/)
+    await userEvent.clear(ttl)
+    await userEvent.type(ttl, '48')
+    await userEvent.click(screen.getByRole('button', { name: 'Speichern' }))
+
+    await waitFor(() => expect(updateSettingsMutate).toHaveBeenCalled())
+    expect(updateMutate).not.toHaveBeenCalled()
+  })
+
+  // The instance root refuses its master data but still owns the defaults every
+  // organization below inherits, so the action bar has to appear for those.
+  it('offers saving on the read-only root when a setting changed', async () => {
+    ownOrgId.mockReturnValue('root')
+    render(<OrganizationPage />)
+
+    expect(screen.queryByRole('button', { name: 'Speichern' })).not.toBeInTheDocument()
+
+    const ttl = screen.getByLabelText(/Nachwirkzeit/)
+    await userEvent.clear(ttl)
+    await userEvent.type(ttl, '48')
+    await userEvent.click(screen.getByRole('button', { name: 'Speichern' }))
+
+    await waitFor(() => expect(updateSettingsMutate).toHaveBeenCalled())
+    expect(updateMutate).not.toHaveBeenCalled()
+  })
+
+  // An invalid draft builds no request, so `dirty` alone would let the typed
+  // value disappear on the way out.
+  it('still asks before leaving with an out-of-range value typed', async () => {
+    render(<OrganizationPage />)
+    await selectNord()
+
+    const ttl = screen.getByLabelText(/Nachwirkzeit/)
+    await userEvent.clear(ttl)
+    await userEvent.type(ttl, '9999')
+    expect(
+      await screen.findByText(/Nachwirkzeit muss zwischen 1 und 336 liegen/),
+    ).toBeInTheDocument()
+
+    await userEvent.click(tree().getByRole('button', { name: /Grünflächenamt/ }))
+    expect(await screen.findByText('Änderungen verwerfen?')).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Verwerfen' }))
+    await waitFor(() => expect(screen.getByLabelText(/Nachwirkzeit/)).toHaveValue(24))
+  })
+
+  it('hides the settings section without setting:read', () => {
+    permissions.mockReturnValue(new Set(['organization:read', 'organization:update', 'user:read']))
+    render(<OrganizationPage />)
+
+    expect(screen.queryByText('Fachliche Vorgaben')).not.toBeInTheDocument()
+  })
+
+  it('shows the settings read-only without setting:update', () => {
+    permissions.mockReturnValue(
+      new Set(['organization:read', 'organization:update', 'user:read', 'setting:read']),
+    )
+    render(<OrganizationPage />)
+
+    expect(screen.getByText('Fachliche Vorgaben')).toBeInTheDocument()
+    expect(screen.getByLabelText(/Nachwirkzeit/)).toBeDisabled()
+    expect(screen.getByRole('switch')).toBeDisabled()
   })
 
   it('renders the detail in a drawer on mobile', async () => {

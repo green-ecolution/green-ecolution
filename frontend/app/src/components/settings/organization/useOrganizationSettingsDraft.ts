@@ -25,7 +25,7 @@ export interface SettingsDraft {
   descendantsMayOverride: boolean
 }
 
-type NumericField = 'waterDemand' | 'justWateredTtlHours'
+export type NumericField = 'waterDemand' | 'justWateredTtlHours'
 
 // wasm-bindgen emits `(input: number) => any`; tighten the return type at the boundary,
 // same pattern as the draft resolvers in @green-ecolution/domain-wasm.

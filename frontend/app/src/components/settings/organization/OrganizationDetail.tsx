@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useRef } from 'react'
+import { Fragment, useEffect, useRef, type ReactNode } from 'react'
 import { Link } from '@tanstack/react-router'
 import { ArrowRight, ChevronRight, Lock, Plus, Trash2, UserPlus } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -42,6 +42,8 @@ interface OrganizationDetailProps {
   canDelete: boolean
   canReadUsers: boolean
   memberInitials: string[]
+  /** The operational defaults of this organization; null without `setting:read`. */
+  settingsSection: ReactNode
   saving: boolean
   nameError: string | null
   /** 422 from the backend when the person is not a member of this organization. */
@@ -59,8 +61,8 @@ interface OrganizationDetailProps {
   renderActionBar: boolean
 }
 
-const CARD = '@container rounded-xl border border-dark-50 bg-white p-5 shadow-cards'
-const CARD_TITLE = 'font-lato text-base font-semibold text-dark'
+export const CARD = '@container rounded-xl border border-dark-50 bg-white p-5 shadow-cards'
+export const CARD_TITLE = 'font-lato text-base font-semibold text-dark'
 const TILE = 'flex shrink-0 items-center justify-center rounded-lg font-semibold'
 
 const sinceLabel = (createdAt?: string | null): string | null => {
@@ -99,6 +101,7 @@ const OrganizationDetail = ({
   canDelete,
   canReadUsers,
   memberInitials,
+  settingsSection,
   saving,
   nameError,
   contactPersonError,
@@ -390,6 +393,8 @@ const OrganizationDetail = ({
         </div>
       </div>
 
+      {settingsSection}
+
       {canDelete && !readOnly && (
         <div className="flex flex-col gap-3">
           <Separator />
@@ -403,8 +408,11 @@ const OrganizationDetail = ({
         </div>
       )}
 
-      {/* --org-panel-bg lets the sticky action bar blend into its surface; the page sets it. */}
-      {renderActionBar && !readOnly && dirty && (
+      {/* --org-panel-bg lets the sticky action bar blend into its surface; the page sets it.
+          `readOnly` does not hide the bar: the instance root refuses its master
+          data but still keeps the defaults every organization below inherits,
+          and its fields are rendered static anyway, so nothing else can be dirty. */}
+      {renderActionBar && dirty && (
         <div className="sticky bottom-0 -mt-6 flex flex-col-reverse gap-2 border-t border-dark-200 bg-[var(--org-panel-bg,var(--color-dark-50))] pb-3 pt-6 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
           <OrganizationActionButtons
             saving={saving}

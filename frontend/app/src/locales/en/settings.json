@@ -391,6 +391,29 @@
       "deleteFailed": "The organization could not be deleted."
     },
     "settings": {
+      "title": "Operational defaults",
+      "hint": "These values apply to this organization and to every sub-unit that has not set its own.",
+      "waterDemandLabel": "Water demand per tree (liters)",
+      "justWateredTtlLabel": "Just-watered duration (hours)",
+      "origin": {
+        "default": "Instance default",
+        "inherited": "Inherited from {name}",
+        "inheritedUnknown": "Inherited from a parent organization",
+        "own": "Own value"
+      },
+      "setOwnValue": "Set own value",
+      "inheritAgain": "Inherit again",
+      "dormantOwnValue": "The own value of {value} lies dormant while the lock applies.",
+      "liters_one": "{count} liter",
+      "liters_other": "{count} liters",
+      "hours_one": "{count} hour",
+      "hours_other": "{count} hours",
+      "lastChange": "Last changed on {date}",
+      "lastChangeBy": "Last changed on {date} by {name}",
+      "enforcedNotice": "{name} has locked the defaults for this organization. The values from there apply and cannot be overridden here.",
+      "enforcedNoticeUnknown": "A parent organization has locked the defaults for this organization. The values from there apply and cannot be overridden here.",
+      "descendantsLabel": "Sub-units may set their own values",
+      "descendantsHint": "With the switch off these defaults are binding for every sub-unit and cannot be changed there.",
       "toast": {
         "saved": "Settings saved",
         "saveFailed": "The settings could not be saved.",
