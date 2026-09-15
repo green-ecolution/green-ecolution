@@ -101,7 +101,11 @@ export const useOrganizationSettingsDraft = () => {
   const valid = errors.waterDemand === null && errors.justWateredTtlHours === null
 
   const toRequest = (): OrganizationSettingsUpdateRequest | null => {
-    if (!draft || !server) return null
+    // A non-numeric own value would otherwise serialize to `null` over JSON
+    // and silently read as "give up the own value" on the server. Refuse to
+    // build a body at all while invalid; the caller already sees the error
+    // via `errors`, so nothing is lost by withholding the request.
+    if (!draft || !server || !valid) return null
     const body: OrganizationSettingsUpdateRequest = {}
 
     const waterDemandWasOwn = server.waterDemand.origin === SettingOriginDto.Own

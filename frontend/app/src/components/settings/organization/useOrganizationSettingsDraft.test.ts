@@ -49,4 +49,15 @@ describe('useOrganizationSettingsDraft', () => {
     expect(result.current.errors.waterDemand).not.toBeNull()
     expect(result.current.valid).toBe(false)
   })
+
+  it('does not silently give up an own value when the text is not numeric', () => {
+    const { result } = renderHook(() => useOrganizationSettingsDraft())
+    act(() => result.current.load(response))
+    act(() => result.current.setOwn('waterDemand', true))
+    act(() => result.current.setText('waterDemand', 'abc'))
+    expect(result.current.valid).toBe(false)
+    // Number('abc') is NaN, which JSON.stringify turns into null — that would
+    // read server-side as "give up the own value". Must not happen.
+    expect(result.current.toRequest()).toBeNull()
+  })
 })
