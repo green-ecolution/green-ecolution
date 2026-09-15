@@ -5,6 +5,7 @@ use domain::settings::{JustWateredTtl, WaterDemand};
 use domain::shared::coordinates::Coordinate;
 use domain::shared::distance::Distance;
 use domain::shared::email::Email;
+use domain::shared::error::ValidationError;
 use domain::shared::phone_number::PhoneNumber;
 use domain::shared::water_capacity::WaterCapacity;
 use domain::tree::{MAX_PLANTING_YEAR, MIN_PLANTING_YEAR, PlantingYear, Species, TreeNumber};
@@ -180,31 +181,75 @@ pub fn water_demand_max() -> f64 {
     WaterDemand::MAX
 }
 
+const SECONDS_PER_HOUR: f64 = 3600.0;
+
 /// Hours, not seconds: the form asks in hours, and a range check that speaks
 /// a different unit than the field is how off-by-3600 bugs get in.
 #[wasm_bindgen(js_name = validateJustWateredTtlHours)]
 pub fn validate_just_watered_ttl_hours(hours: f64) -> Result<JsValue, JsError> {
-    finish(
-        JustWateredTtl::new((hours * 3600.0).round() as i64),
-        "justWateredTtlHours",
-    )
+    match JustWateredTtl::new((hours * SECONDS_PER_HOUR).round() as i64) {
+        Ok(_) => Ok(JsValue::NULL),
+        Err(err) => to_js(&ttl_hours_issue(&err)),
+    }
+}
+
+/// `JustWateredTtl` checks seconds while the field asks for hours, so the raw
+/// domain error would tell someone typing hours to stay between 3600 and
+/// 1209600.
+fn ttl_hours_issue(err: &ValidationError) -> ValidationIssue {
+    let ValidationError::OutOfRange {
+        field,
+        min,
+        max,
+        got,
+    } = *err
+    else {
+        return ValidationIssue::from_error(err, "justWateredTtlHours");
+    };
+    let in_hours = ValidationError::OutOfRange {
+        field,
+        min: min / SECONDS_PER_HOUR,
+        max: max / SECONDS_PER_HOUR,
+        got: got / SECONDS_PER_HOUR,
+    };
+    ValidationIssue::from_error(&in_hours, "justWateredTtlHours")
 }
 
 #[wasm_bindgen(js_name = justWateredTtlMinHours)]
 pub fn just_watered_ttl_min_hours() -> f64 {
-    JustWateredTtl::MIN as f64 / 3600.0
+    JustWateredTtl::MIN as f64 / SECONDS_PER_HOUR
 }
 
 #[wasm_bindgen(js_name = justWateredTtlMaxHours)]
 pub fn just_watered_ttl_max_hours() -> f64 {
-    JustWateredTtl::MAX as f64 / 3600.0
+    JustWateredTtl::MAX as f64 / SECONDS_PER_HOUR
 }
 
 #[cfg(test)]
 mod tests {
-    // The wasm-bindgen exports cannot run on the host target. The pure-Rust
-    // logic is covered by the value-object tests in `domain` and by the
-    // issue-mapping tests. Aggregate validators (next module) cover the
+    // The exports returning `JsValue` need a JS runtime and cannot run on the
+    // host target; what is testable here is the pure-Rust logic around them.
+    // The ranges themselves are covered by the value-object tests in `domain`
+    // and by the issue-mapping tests. Aggregate validators (next module) cover the
     // serialisation round-trip via serde_json, which exercises the same
     // serde::Serialize impl as serde-wasm-bindgen.
+    use super::*;
+
+    #[test]
+    fn just_watered_ttl_reports_its_range_in_the_unit_the_field_asks_for() {
+        let err = JustWateredTtl::new(1_800).unwrap_err();
+        let issue = ttl_hours_issue(&err);
+
+        assert_eq!(issue.path, "justWateredTtlHours");
+        assert_eq!(issue.key, "settings.just_watered_ttl.outOfRange");
+        assert_eq!(issue.params["min"].as_f64(), Some(1.0));
+        assert_eq!(issue.params["max"].as_f64(), Some(336.0));
+        assert_eq!(issue.params["got"].as_f64(), Some(0.5));
+    }
+
+    #[test]
+    fn the_hour_bounds_agree_with_the_reported_range() {
+        assert_eq!(just_watered_ttl_min_hours(), 1.0);
+        assert_eq!(just_watered_ttl_max_hours(), 336.0);
+    }
 }
