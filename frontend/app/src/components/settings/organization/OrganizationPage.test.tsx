@@ -124,8 +124,10 @@ vi.mock('@/hooks/useSettingsMutations', () => ({
 const blockerStatus = vi.fn((): string => 'idle')
 const blockerProceed = vi.fn()
 const blockerReset = vi.fn()
+const routeSearch = vi.fn((): Record<string, unknown> => ({}))
 vi.mock('@tanstack/react-router', () => ({
   useBlocker: () => ({ status: blockerStatus(), proceed: blockerProceed, reset: blockerReset }),
+  useSearch: () => routeSearch(),
   Link: ({ children }: { children: ReactNode }) => <a href="#link">{children}</a>,
 }))
 

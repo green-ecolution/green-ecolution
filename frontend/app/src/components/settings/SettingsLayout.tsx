@@ -2,13 +2,13 @@ import type { CSSProperties, ReactNode } from 'react'
 import { Link } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { Bell, Building2, Droplet, Map, Puzzle, RadioTower, UserRound, Users } from 'lucide-react'
+import { Bell, Building, Building2, Puzzle, UserRound, Users } from 'lucide-react'
 import { Badge } from '@green-ecolution/ui'
-import { infoQueries } from '@/api/queries'
+import { infoQueries, userQueries } from '@/api/queries'
 import { usePermissions } from '@/lib/auth/usePermissions'
-import { SETTINGS_NAV, visibleSettingsNav } from './settingsNav'
+import { SETTINGS_NAV, visibleSettingsNav, type SettingsNavItem } from './settingsNav'
 
-const ICONS = { UserRound, Building2, Droplet, Bell, RadioTower, Users, Map, Puzzle } as const
+const ICONS = { UserRound, Building2, Building, Bell, Users, Puzzle } as const
 
 interface SettingsLayoutProps {
   children: ReactNode
@@ -18,10 +18,34 @@ const SettingsLayout = ({ children }: SettingsLayoutProps) => {
   const { t } = useTranslation('settings')
   const perms = usePermissions()
   const { data: services } = useQuery(infoQueries.services())
+  const { data: me } = useQuery(userQueries.me())
+  const ownOrgId = me?.organization?.id ?? null
   const enabledFeatures = new Set(
     (services?.items ?? []).filter((item) => item.enabled).map((item) => item.name),
   )
   const items = visibleSettingsNav(SETTINGS_NAV, perms, enabledFeatures)
+  const ownOrganizationTargets = new Set(
+    items.filter((item) => item.ownOrganization).map((item) => item.to),
+  )
+
+  // The organization shortcut and the plain organization entry share a route;
+  // `?org=` distinguishes them, and `explicitUndefined` keeps the plain entry
+  // from also lighting up while the shortcut's own-org search is active.
+  const linkParamsFor = (item: SettingsNavItem) => {
+    if (item.ownOrganization) {
+      return {
+        search: { org: ownOrgId ?? undefined },
+        activeOptions: { exact: false },
+      }
+    }
+    if (ownOrganizationTargets.has(item.to)) {
+      return {
+        search: { org: undefined },
+        activeOptions: { exact: false, explicitUndefined: true },
+      }
+    }
+    return { search: undefined, activeOptions: { exact: false } }
+  }
 
   return (
     <div
@@ -45,11 +69,13 @@ const SettingsLayout = ({ children }: SettingsLayoutProps) => {
           <ul className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-2 lg:mx-0 lg:flex-col lg:overflow-visible lg:px-0 lg:pb-0">
             {items.map((item) => {
               const Icon = ICONS[item.icon as keyof typeof ICONS]
+              const { search, activeOptions } = linkParamsFor(item)
               return (
                 <li key={item.key} className="shrink-0 lg:shrink">
                   <Link
                     to={item.to}
-                    activeOptions={{ exact: false }}
+                    search={search}
+                    activeOptions={activeOptions}
                     className="flex items-center gap-3 whitespace-nowrap rounded-xl border border-transparent px-3 py-2.5 font-nunito-sans text-sm transition-colors hover:bg-green-dark-50 data-[status=active]:border-green-dark data-[status=active]:bg-green-dark-50 data-[status=active]:font-semibold data-[status=active]:text-green-dark"
                   >
                     <Icon className="size-5 shrink-0" aria-hidden />

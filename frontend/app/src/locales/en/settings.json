@@ -6,31 +6,17 @@
   },
   "nav": {
     "profile": "Profile",
+    "myOrganization": "My organization",
     "organization": "Organization",
-    "irrigation": "Irrigation",
     "notifications": "Notifications",
-    "sensors": "Sensors & network",
     "team": "Team & roles",
-    "map": "Map & units",
     "plugin": "Plugins"
   },
   "comingSoon": {
     "inProgress": "In progress",
-    "irrigation": {
-      "title": "Irrigation",
-      "description": "This is where you'll set threshold values and watering rules for the whole application."
-    },
     "notifications": {
       "title": "Notifications",
       "description": "This is where you'll decide what the application notifies you about and how."
-    },
-    "sensors": {
-      "title": "Sensors & network",
-      "description": "This is where you'll configure the LoRaWAN connection and the defaults for new devices."
-    },
-    "map": {
-      "title": "Map & units",
-      "description": "This is where you'll choose the map background, the starting view, and the units for lengths and quantities."
     }
   },
   "profile": {

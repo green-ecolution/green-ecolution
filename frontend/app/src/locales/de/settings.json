@@ -6,31 +6,17 @@
   },
   "nav": {
     "profile": "Profil",
+    "myOrganization": "Meine Organisation",
     "organization": "Organisation",
-    "irrigation": "Bewässerung",
     "notifications": "Benachrichtigungen",
-    "sensors": "Sensoren & Netz",
     "team": "Team & Rollen",
-    "map": "Karte & Einheiten",
     "plugin": "Plugins"
   },
   "comingSoon": {
     "inProgress": "In Arbeit",
-    "irrigation": {
-      "title": "Bewässerung",
-      "description": "Hier legst du künftig Schwellenwerte und Bewässerungsregeln für die gesamte Anwendung fest."
-    },
     "notifications": {
       "title": "Benachrichtigungen",
       "description": "Hier bestimmst du künftig, worüber und auf welchem Weg dich die Anwendung informiert."
-    },
-    "sensors": {
-      "title": "Sensoren & Netz",
-      "description": "Hier konfigurierst du künftig die LoRaWAN-Anbindung und die Vorgaben für neue Geräte."
-    },
-    "map": {
-      "title": "Karte & Einheiten",
-      "description": "Hier wählst du künftig Kartenhintergrund, Startausschnitt und die Einheiten für Längen und Mengen."
     }
   },
   "profile": {

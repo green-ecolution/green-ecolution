@@ -1,6 +1,6 @@
 import { useEffect, useState, type CSSProperties } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { useBlocker } from '@tanstack/react-router'
+import { useBlocker, useSearch } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
 import {
@@ -146,6 +146,20 @@ const OrganizationPage = () => {
     enableBeforeUnload: () => unsaved,
     withResolver: true,
   })
+
+  const search = useSearch({ strict: false })
+  const requestedOrgId = 'org' in search && typeof search.org === 'string' ? search.org : null
+
+  useEffect(() => {
+    // `?org=` is the "my organization" shortcut's entry point, not the tree's
+    // sole source of truth: it seeds the selection once per value, but a plain
+    // tree click never touches the URL, so it's free to move on from here.
+    if (requestedOrgId === null) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect, react-x/set-state-in-effect -- seeds the selection from the `?org=` entry point
+    setSelection(requestedOrgId)
+    // eslint-disable-next-line react-x/set-state-in-effect -- opens the detail view the shortcut points to
+    setDetailOpen(true)
+  }, [requestedOrgId])
 
   useEffect(() => {
     // Keyed on the object, not the id: after a save the invalidated query hands

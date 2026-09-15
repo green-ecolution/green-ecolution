@@ -13,23 +13,28 @@ export interface SettingsNavItem {
   permission?: PermissionRequirement
   featureKey?: string
   comingSoon?: boolean
+  /** Shares its `to` with the plain `organization` entry; SettingsLayout appends
+   *  `?org=<ownOrgId>` and gates both entries' active state on that value so
+   *  only the one actually being viewed lights up. */
+  ownOrganization?: boolean
 }
 
 export const SETTINGS_NAV: SettingsNavItem[] = [
   { key: 'profile', labelKey: 'profile', icon: 'UserRound', to: '/settings/profile' },
+  {
+    key: 'myOrganization',
+    labelKey: 'myOrganization',
+    icon: 'Building',
+    to: '/settings/organization',
+    permission: ['setting:read'],
+    ownOrganization: true,
+  },
   {
     key: 'organization',
     labelKey: 'organization',
     icon: 'Building2',
     to: '/settings/organization',
     permission: ['organization:read'],
-  },
-  {
-    key: 'irrigation',
-    labelKey: 'irrigation',
-    icon: 'Droplet',
-    to: '/settings/irrigation',
-    comingSoon: true,
   },
   {
     key: 'notifications',
@@ -39,25 +44,11 @@ export const SETTINGS_NAV: SettingsNavItem[] = [
     comingSoon: true,
   },
   {
-    key: 'sensors',
-    labelKey: 'sensors',
-    icon: 'RadioTower',
-    to: '/settings/sensors',
-    comingSoon: true,
-  },
-  {
     key: 'team',
     labelKey: 'team',
     icon: 'Users',
     to: '/settings/team',
     permission: ['user:read', 'role:read'],
-  },
-  {
-    key: 'map',
-    labelKey: 'map',
-    icon: 'Map',
-    to: '/settings/map',
-    comingSoon: true,
   },
   {
     key: 'plugin',

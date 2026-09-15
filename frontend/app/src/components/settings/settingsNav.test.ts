@@ -5,22 +5,28 @@ import { SETTINGS_NAV, visibleSettingsNav } from './settingsNav'
 const keysOf = (items: { key: string }[]) => items.map((item) => item.key)
 
 describe('SETTINGS_NAV', () => {
-  it('lists the eight settings pages in order', () => {
+  it('lists the six settings pages in order', () => {
     expect(keysOf(SETTINGS_NAV)).toEqual([
       'profile',
+      'myOrganization',
       'organization',
-      'irrigation',
       'notifications',
-      'sensors',
       'team',
-      'map',
       'plugin',
     ])
   })
 
-  it('marks the four unbuilt pages as coming soon', () => {
+  it('marks only notifications as coming soon', () => {
     const comingSoon = SETTINGS_NAV.filter((item) => item.comingSoon).map((item) => item.key)
-    expect(comingSoon).toEqual(['irrigation', 'notifications', 'sensors', 'map'])
+    expect(comingSoon).toEqual(['notifications'])
+  })
+
+  it('no longer offers the placeholder areas whose values moved into the organization', () => {
+    const keys = keysOf(SETTINGS_NAV)
+    expect(keys).not.toContain('irrigation')
+    expect(keys).not.toContain('sensors')
+    expect(keys).not.toContain('map')
+    expect(keys).toContain('notifications')
   })
 })
 
@@ -53,5 +59,16 @@ describe('visibleSettingsNav', () => {
   it('always keeps profile', () => {
     const visible = visibleSettingsNav(SETTINGS_NAV, new Set(), new Set())
     expect(keysOf(visible)).toContain('profile')
+  })
+
+  it('offers the own organization only with setting:read', () => {
+    expect(
+      keysOf(
+        visibleSettingsNav(SETTINGS_NAV, new Set(['setting:read', 'organization:read']), new Set()),
+      ),
+    ).toContain('myOrganization')
+    expect(
+      keysOf(visibleSettingsNav(SETTINGS_NAV, new Set(['organization:read']), new Set())),
+    ).not.toContain('myOrganization')
   })
 })
