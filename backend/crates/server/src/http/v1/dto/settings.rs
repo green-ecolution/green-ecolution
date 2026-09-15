@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use serde::{Deserialize, Deserializer, Serialize};
 use uuid::Uuid;
 
@@ -31,6 +33,8 @@ pub struct OrganizationRef {
 pub struct SettingChangeRef {
     pub changed_at: chrono::DateTime<chrono::Utc>,
     pub changed_by: Option<Uuid>,
+    /// Resolved by the handler; absent when the account no longer resolves.
+    pub changed_by_name: Option<String>,
 }
 
 /// One value plus everything the interface needs to show where it comes from
@@ -169,6 +173,7 @@ fn field<T>(
     origin: SettingOrigin,
     own: Option<T>,
     last: Option<&SettingChangeEntry>,
+    names: &HashMap<Uuid, String>,
 ) -> SettingField<T> {
     SettingField {
         value,
@@ -185,6 +190,7 @@ fn field<T>(
         last_change: last.map(|e| SettingChangeRef {
             changed_at: e.changed_at,
             changed_by: e.changed_by,
+            changed_by_name: e.changed_by.and_then(|id| names.get(&id).cloned()),
         }),
     }
 }
@@ -193,7 +199,8 @@ impl OrganizationSettingsResponse {
     pub fn build(
         resolution: &Resolution,
         own: &OrganizationSettings,
-        last: &std::collections::HashMap<SettingKey, SettingChangeEntry>,
+        last: &HashMap<SettingKey, SettingChangeEntry>,
+        names: &HashMap<Uuid, String>,
     ) -> Self {
         let effective = resolution.effective;
         let origins = resolution.origins;
@@ -203,30 +210,35 @@ impl OrganizationSettingsResponse {
                 origins.water_demand,
                 own.water_demand.map(|v| v.liters()),
                 last.get(&SettingKey::WaterDemand),
+                names,
             ),
             just_watered_ttl_secs: field(
                 effective.just_watered_ttl.seconds(),
                 origins.just_watered_ttl,
                 own.just_watered_ttl.map(|v| v.seconds()),
                 last.get(&SettingKey::JustWateredTtl),
+                names,
             ),
             sensor_offline_after_secs: field(
                 effective.sensor_offline_after.seconds(),
                 origins.sensor_offline_after,
                 own.sensor_offline_after.map(|v| v.seconds()),
                 last.get(&SettingKey::SensorOfflineAfter),
+                names,
             ),
             defect_streak: field(
                 effective.defect_streak.count(),
                 origins.defect_streak,
                 own.defect_streak.map(|v| v.count()),
                 last.get(&SettingKey::DefectStreak),
+                names,
             ),
             map_view: field(
                 effective.map_view.into(),
                 origins.map_view,
                 own.map_view.map(MapViewDto::from),
                 last.get(&SettingKey::MapView),
+                names,
             ),
             descendants_may_override: own.descendants_may_override,
             enforced_by: effective

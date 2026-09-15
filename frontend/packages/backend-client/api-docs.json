@@ -10922,6 +10922,13 @@
               "null"
             ],
             "format": "uuid"
+          },
+          "changed_by_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Resolved by the handler; absent when the account no longer resolves."
           }
         }
       },

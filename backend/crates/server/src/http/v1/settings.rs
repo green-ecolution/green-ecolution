@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
 use axum::extract::State;
 use utoipa_axum::{router::OpenApiRouter, routes};
@@ -9,7 +9,10 @@ use crate::{
         AppState,
         auth::extractor::AuthUserExtractor,
         extractors::{Json, Path},
-        v1::dto::settings::{OrganizationSettingsResponse, OrganizationSettingsUpdateRequest},
+        v1::dto::{
+            settings::{OrganizationSettingsResponse, OrganizationSettingsUpdateRequest},
+            user::display_name,
+        },
         v1::error::ErrorBody,
     },
     service::ServiceError,
@@ -17,11 +20,34 @@ use crate::{
 use domain::{
     Id,
     authorization::{Action, Permission, Resource},
-    settings::SettingsUpdate,
+    settings::{SettingChangeEntry, SettingKey, SettingsUpdate},
 };
 
 pub fn routes() -> OpenApiRouter<Arc<AppState>> {
     OpenApiRouter::new().routes(routes!(get_settings, update_settings))
+}
+
+/// One lookup for every distinct author on the page. An IdP outage must not
+/// fail the read — the values are still valid, they just render without a name.
+async fn resolve_change_authors(
+    state: &AppState,
+    last: &HashMap<SettingKey, SettingChangeEntry>,
+) -> HashMap<Uuid, String> {
+    let mut ids: Vec<Uuid> = last.values().filter_map(|e| e.changed_by).collect();
+    ids.sort_unstable();
+    ids.dedup();
+    if ids.is_empty() {
+        return HashMap::new();
+    }
+    state
+        .user_service
+        .by_ids(&ids)
+        .await
+        .inspect_err(|error| tracing::warn!(%error, "failed to resolve settings change authors"))
+        .unwrap_or_default()
+        .iter()
+        .map(|user| (user.id, display_name(user)))
+        .collect()
 }
 
 #[utoipa::path(get, path = "/organizations/{org_id}/settings", tag = "Settings",
@@ -56,10 +82,12 @@ pub async fn get_settings(
     let resolution = state.settings_service.resolution(org).await?;
     let own = state.settings_service.own(org).await?;
     let last = state.settings_service.last_changes(org).await?;
+    let names = resolve_change_authors(&state, &last).await;
     Ok(Json(OrganizationSettingsResponse::build(
         &resolution,
         &own,
         &last,
+        &names,
     )))
 }
 
@@ -102,9 +130,11 @@ pub async fn update_settings(
     let resolution = state.settings_service.resolution(org).await?;
     let own = state.settings_service.own(org).await?;
     let last = state.settings_service.last_changes(org).await?;
+    let names = resolve_change_authors(&state, &last).await;
     Ok(Json(OrganizationSettingsResponse::build(
         &resolution,
         &own,
         &last,
+        &names,
     )))
 }
