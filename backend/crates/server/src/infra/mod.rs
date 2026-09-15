@@ -10,6 +10,7 @@ pub mod pg_region;
 pub mod pg_role;
 pub mod pg_sensor;
 pub mod pg_sensor_model;
+pub mod pg_settings;
 pub mod pg_start_point;
 pub mod pg_tree;
 pub mod pg_user_profile;

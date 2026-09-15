@@ -1,0 +1,26 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT template_key AS \"template_key!\", permissions FROM roles\n           WHERE organization_id IS NULL AND template_key IS NOT NULL",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "template_key!",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "permissions",
+        "type_info": "TextArray"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      true,
+      false
+    ]
+  },
+  "hash": "3fa3552544fa6683e21992e7d3714c802c3d40795da5a619a241785a88414988"
+}

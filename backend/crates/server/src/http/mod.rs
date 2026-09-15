@@ -27,8 +27,9 @@ use crate::{
         comment_service::CommentService, evaluation_service::EvaluationService,
         organization_service::OrganizationService, plugin_ingest_service::PluginIngestService,
         plugin_service::PluginService, region_service::RegionService, role_service::RoleService,
-        sensor_service::SensorService, start_point_service::StartPointService,
-        tree_service::TreeService, user_service::UserService, vehicle_service::VehicleService,
+        sensor_service::SensorService, settings_service::SettingsService,
+        start_point_service::StartPointService, tree_service::TreeService,
+        user_service::UserService, vehicle_service::VehicleService,
         watering_execution_service::WateringExecutionService,
         watering_plan_service::WateringPlanService,
     },
@@ -120,6 +121,10 @@ pub struct AppState {
     pub plugin_writer: Arc<dyn domain::plugin::PluginWriter>,
     pub plugin_service: Arc<PluginService>,
     pub plugin_ingest_service: Arc<PluginIngestService>,
+    /// No handler reads this: it exposes the port so the integration tests can
+    /// drive resolution directly instead of through the HTTP surface.
+    pub settings_reader: Arc<dyn domain::settings::SettingsReader>,
+    pub settings_service: Arc<SettingsService>,
     pub app_origins: AppOrigins,
 }
 
@@ -150,6 +155,7 @@ pub struct AppState {
         (name = "Organizations", description = "Manage the organization tree used for RBAC scoping and multi-tenancy."),
         (name = "Roles", description = "Manage roles (named permission sets) and their assignment to users."),
         (name = "Comments", description = "Free-text comments on tree clusters and watering plans. Reading follows the parent resource's read permission, writing its update permission."),
+        (name = "Settings", description = "Per-organization operational defaults — water demand, just-watered duration, sensor thresholds and the map viewport — resolved along the organization tree."),
     ),
 )]
 struct ApiDoc;

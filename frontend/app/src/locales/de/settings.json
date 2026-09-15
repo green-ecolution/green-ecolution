@@ -533,6 +533,18 @@
           "update": "Plugin-Konfiguration ändern oder Schlüssel erneuern",
           "delete": "Plugin deinstallieren"
         }
+      },
+      "setting": {
+        "label": "Einstellungen",
+        "pluralNoun": "Einstellungen",
+        "singular": "Einstellung",
+        "description": "Fachliche Vorgaben der Organisation",
+        "hint": {
+          "read": "Vorgaben der Organisation einsehen",
+          "create": "Wird für Einstellungen nicht verwendet",
+          "update": "Vorgaben der Organisation ändern",
+          "delete": "Wird für Einstellungen nicht verwendet"
+        }
       }
     }
   }

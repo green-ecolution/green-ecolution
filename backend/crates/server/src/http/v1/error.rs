@@ -156,7 +156,10 @@ impl IntoResponse for ServiceError {
             | ServiceError::CannotChangeOwnAccess
             | ServiceError::CannotRevokeOwnAdministration
             | ServiceError::SensorBoundToTree
-            | ServiceError::TreeInCluster => (StatusCode::CONFLICT, self.to_string()),
+            | ServiceError::TreeInCluster
+            | ServiceError::SettingsEnforcedByAncestor { .. } => {
+                (StatusCode::CONFLICT, self.to_string())
+            }
             // Not a conflict with stored state: the request combines two
             // entities that may not be linked, which is an input problem.
             ServiceError::OrganizationMismatch(kind) => {

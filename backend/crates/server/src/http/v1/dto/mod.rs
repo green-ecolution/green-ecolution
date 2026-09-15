@@ -8,6 +8,7 @@ pub mod region;
 pub mod role;
 pub mod routing;
 pub mod sensor;
+pub mod settings;
 pub mod tree;
 pub mod user;
 pub mod vehicle;

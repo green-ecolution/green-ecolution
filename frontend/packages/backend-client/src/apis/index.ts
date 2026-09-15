@@ -9,6 +9,7 @@ export * from './RegionsApi';
 export * from './RolesApi';
 export * from './RoutingApi';
 export * from './SensorsApi';
+export * from './SettingsApi';
 export * from './TreeClustersApi';
 export * from './TreesApi';
 export * from './UsersApi';

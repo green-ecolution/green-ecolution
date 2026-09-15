@@ -1,0 +1,88 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT organization_id, water_demand_liters, just_watered_ttl_secs,\n                      sensor_offline_after_secs, defect_streak,\n                      map_center_lat, map_center_lng,\n                      map_bbox_sw_lat, map_bbox_sw_lng,\n                      map_bbox_ne_lat, map_bbox_ne_lng,\n                      descendants_may_override\n               FROM organization_settings WHERE organization_id = $1 FOR UPDATE",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "organization_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "water_demand_liters",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 2,
+        "name": "just_watered_ttl_secs",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 3,
+        "name": "sensor_offline_after_secs",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 4,
+        "name": "defect_streak",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 5,
+        "name": "map_center_lat",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 6,
+        "name": "map_center_lng",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 7,
+        "name": "map_bbox_sw_lat",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 8,
+        "name": "map_bbox_sw_lng",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 9,
+        "name": "map_bbox_ne_lat",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 10,
+        "name": "map_bbox_ne_lng",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 11,
+        "name": "descendants_may_override",
+        "type_info": "Bool"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      false
+    ]
+  },
+  "hash": "092b2cfddff8ad4a8181ee19d56f51f6f37311f97b07490f3296c74bc112849b"
+}

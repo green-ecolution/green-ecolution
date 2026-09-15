@@ -1826,6 +1826,182 @@
         }
       }
     },
+    "/v1/organizations/{org_id}/settings": {
+      "get": {
+        "tags": [
+          "Settings"
+        ],
+        "summary": "Read an organization's operational defaults",
+        "description": "Each field carries the value in force, where it came from, this organization's own value (even while a lock above makes it dormant) and when it was last changed. Requires setting:read.",
+        "operationId": "getOrganizationSettings",
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "description": "Organization id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The resolved settings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationSettingsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Settings"
+        ],
+        "summary": "Set an organization's operational defaults",
+        "description": "An omitted field stays as it is, `null` drops the organization's own value and returns it to inheritance. Requires setting:update.",
+        "operationId": "updateOrganizationSettings",
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "description": "Organization id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrganizationSettingsUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationSettingsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Value outside its range",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "An organization above froze this subtree (code `settings.enforced_by_ancestor`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/permissions": {
       "get": {
         "tags": [
@@ -9119,6 +9295,30 @@
           }
         }
       },
+      "MapViewDto": {
+        "type": "object",
+        "required": [
+          "center",
+          "bbox"
+        ],
+        "properties": {
+          "bbox": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "format": "double"
+            },
+            "description": "`[sw_lat, sw_lng, ne_lat, ne_lng]`."
+          },
+          "center": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "format": "double"
+            }
+          }
+        }
+      },
       "NearestTreeListResponse": {
         "type": "object",
         "description": "Non-paginated list of nearest trees with distance information.",
@@ -9235,6 +9435,18 @@
           "parent_id": "01980000-0000-7000-8000-000000000001"
         }
       },
+      "OrganizationRef": {
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
       "OrganizationResponse": {
         "type": "object",
         "description": "A node in the organization tree.",
@@ -9298,6 +9510,100 @@
           "member_count": 14,
           "name": "Green Ecolution",
           "parent_id": null
+        }
+      },
+      "OrganizationSettingsResponse": {
+        "type": "object",
+        "required": [
+          "water_demand",
+          "just_watered_ttl_secs",
+          "sensor_offline_after_secs",
+          "defect_streak",
+          "map_view",
+          "descendants_may_override"
+        ],
+        "properties": {
+          "defect_streak": {
+            "$ref": "#/components/schemas/SettingField_i32"
+          },
+          "descendants_may_override": {
+            "type": "boolean",
+            "description": "This organization's own switch for its sub-units. While `enforced_by`\nis set, an organization above has frozen the subtree and no sub-unit\nmay set anything, whatever this says."
+          },
+          "enforced_by": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/OrganizationRef",
+                "description": "The organization that froze this subtree, if any."
+              }
+            ]
+          },
+          "just_watered_ttl_secs": {
+            "$ref": "#/components/schemas/SettingField_i64"
+          },
+          "map_view": {
+            "$ref": "#/components/schemas/SettingField_MapViewDto"
+          },
+          "sensor_offline_after_secs": {
+            "$ref": "#/components/schemas/SettingField_i64"
+          },
+          "water_demand": {
+            "$ref": "#/components/schemas/SettingField_f64"
+          }
+        }
+      },
+      "OrganizationSettingsUpdateRequest": {
+        "type": "object",
+        "description": "Three states per field. Absent means unchanged, `null` means go back to\ninheriting, a value means set it.",
+        "properties": {
+          "defect_streak": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "descendants_may_override": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "A plain toggle, not a three-state field: `null` is equivalent to\nomitting it and leaves the switch as it is."
+          },
+          "just_watered_ttl_secs": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "map_view": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/MapViewDto"
+              }
+            ]
+          },
+          "sensor_offline_after_secs": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "water_demand": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          }
         }
       },
       "OrganizationUpdateRequest": {
@@ -10599,6 +10905,245 @@
             "example": "0190a8e9-7c4f-7000-8000-000000000000"
           }
         }
+      },
+      "SettingChangeRef": {
+        "type": "object",
+        "required": [
+          "changed_at"
+        ],
+        "properties": {
+          "changed_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "changed_by": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          }
+        }
+      },
+      "SettingField_MapViewDto": {
+        "type": "object",
+        "description": "One value plus everything the interface needs to show where it comes from\nand to offer \"set my own\" or \"inherit again\".",
+        "required": [
+          "value",
+          "origin"
+        ],
+        "properties": {
+          "last_change": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/SettingChangeRef",
+                "description": "Always about this organization's own value, never the source's."
+              }
+            ]
+          },
+          "origin": {
+            "$ref": "#/components/schemas/SettingOriginDto"
+          },
+          "own_value": {
+            "type": "object",
+            "required": [
+              "center",
+              "bbox"
+            ],
+            "properties": {
+              "bbox": {
+                "type": "array",
+                "items": {
+                  "type": "number",
+                  "format": "double"
+                },
+                "description": "`[sw_lat, sw_lng, ne_lat, ne_lng]`."
+              },
+              "center": {
+                "type": "array",
+                "items": {
+                  "type": "number",
+                  "format": "double"
+                }
+              }
+            }
+          },
+          "source": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/OrganizationRef",
+                "description": "Set only where `origin` is `inherited`."
+              }
+            ]
+          },
+          "value": {
+            "type": "object",
+            "required": [
+              "center",
+              "bbox"
+            ],
+            "properties": {
+              "bbox": {
+                "type": "array",
+                "items": {
+                  "type": "number",
+                  "format": "double"
+                },
+                "description": "`[sw_lat, sw_lng, ne_lat, ne_lng]`."
+              },
+              "center": {
+                "type": "array",
+                "items": {
+                  "type": "number",
+                  "format": "double"
+                }
+              }
+            }
+          }
+        }
+      },
+      "SettingField_f64": {
+        "type": "object",
+        "description": "One value plus everything the interface needs to show where it comes from\nand to offer \"set my own\" or \"inherit again\".",
+        "required": [
+          "value",
+          "origin"
+        ],
+        "properties": {
+          "last_change": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/SettingChangeRef",
+                "description": "Always about this organization's own value, never the source's."
+              }
+            ]
+          },
+          "origin": {
+            "$ref": "#/components/schemas/SettingOriginDto"
+          },
+          "own_value": {
+            "type": "number",
+            "format": "double"
+          },
+          "source": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/OrganizationRef",
+                "description": "Set only where `origin` is `inherited`."
+              }
+            ]
+          },
+          "value": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "SettingField_i32": {
+        "type": "object",
+        "description": "One value plus everything the interface needs to show where it comes from\nand to offer \"set my own\" or \"inherit again\".",
+        "required": [
+          "value",
+          "origin"
+        ],
+        "properties": {
+          "last_change": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/SettingChangeRef",
+                "description": "Always about this organization's own value, never the source's."
+              }
+            ]
+          },
+          "origin": {
+            "$ref": "#/components/schemas/SettingOriginDto"
+          },
+          "own_value": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "source": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/OrganizationRef",
+                "description": "Set only where `origin` is `inherited`."
+              }
+            ]
+          },
+          "value": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "SettingField_i64": {
+        "type": "object",
+        "description": "One value plus everything the interface needs to show where it comes from\nand to offer \"set my own\" or \"inherit again\".",
+        "required": [
+          "value",
+          "origin"
+        ],
+        "properties": {
+          "last_change": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/SettingChangeRef",
+                "description": "Always about this organization's own value, never the source's."
+              }
+            ]
+          },
+          "origin": {
+            "$ref": "#/components/schemas/SettingOriginDto"
+          },
+          "own_value": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "source": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/OrganizationRef",
+                "description": "Set only where `origin` is `inherited`."
+              }
+            ]
+          },
+          "value": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "SettingOriginDto": {
+        "type": "string",
+        "enum": [
+          "default",
+          "inherited",
+          "own"
+        ]
       },
       "SignalResponse": {
         "type": "object",
@@ -13113,6 +13658,10 @@
     {
       "name": "Comments",
       "description": "Free-text comments on tree clusters and watering plans. Reading follows the parent resource's read permission, writing its update permission."
+    },
+    {
+      "name": "Settings",
+      "description": "Per-organization operational defaults — water demand, just-watered duration, sensor thresholds and the map viewport — resolved along the organization tree."
     }
   ]
 }

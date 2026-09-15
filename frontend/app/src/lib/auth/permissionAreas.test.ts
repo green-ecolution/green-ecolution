@@ -26,9 +26,9 @@ beforeAll(async () => {
 })
 
 describe('permissionAreasFor', () => {
-  it('covers all ten resources with four actions each', () => {
+  it('covers all eleven resources with four actions each', () => {
     const areas = permissionAreasFor(t)
-    expect(areas).toHaveLength(10)
+    expect(areas).toHaveLength(11)
     for (const area of areas) {
       expect(area.actions).toHaveLength(4)
     }

@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO roles (id, organization_id, name, permissions, template_key)\n           VALUES ($1, $2, 'Handgemacht', ARRAY['tree:read'], NULL)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "e34f966d7af4299b5300abbec0b2ae453f4447690bb841ab55f1b90b460c8a9d"
+}
