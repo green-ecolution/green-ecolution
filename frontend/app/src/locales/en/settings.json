@@ -389,6 +389,13 @@
       "deleted": "Organization deleted",
       "deleteConflict": "The organization still has sub-organizations or assigned people and cannot be deleted.",
       "deleteFailed": "The organization could not be deleted."
+    },
+    "settings": {
+      "toast": {
+        "saved": "Settings saved",
+        "saveFailed": "The settings could not be saved.",
+        "lockedByAncestor": "A parent organization has locked these settings."
+      }
     }
   },
   "permission": {

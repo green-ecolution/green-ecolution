@@ -33,6 +33,7 @@ import {
   organizationApi,
   OrganizationDetailResponse,
   OrganizationResponse,
+  OrganizationSettingsResponse,
   pluginApi,
   PluginResponse,
   PluginViewResponse,
@@ -48,6 +49,7 @@ import {
   sensorApi,
   ServerInfoResponse,
   ServicesInfoResponse,
+  settingsApi,
   SoilMoistureSeriesResponse,
   StartPointResponse,
   TreeClusterResponse,
@@ -462,6 +464,16 @@ export const organizationQueries = {
     queryOptions<OrganizationDetailResponse>({
       queryKey: ['organizations', orgId],
       queryFn: () => organizationApi.getOrganization({ orgId }),
+    }),
+}
+
+// Key lives under 'organizations' so the existing invalidation on that
+// prefix (queryRoots.organization) reaches it too.
+export const settingsQueries = {
+  byOrganization: (orgId: string) =>
+    queryOptions<OrganizationSettingsResponse>({
+      queryKey: ['organizations', orgId, 'settings'],
+      queryFn: () => settingsApi.getOrganizationSettings({ orgId }),
     }),
 }
 

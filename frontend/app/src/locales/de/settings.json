@@ -389,6 +389,13 @@
       "deleted": "Organisation gelöscht",
       "deleteConflict": "Die Organisation hat noch Unterorganisationen oder zugeordnete Personen und kann nicht gelöscht werden.",
       "deleteFailed": "Die Organisation konnte nicht gelöscht werden."
+    },
+    "settings": {
+      "toast": {
+        "saved": "Einstellungen gespeichert",
+        "saveFailed": "Die Einstellungen konnten nicht gespeichert werden.",
+        "lockedByAncestor": "Eine übergeordnete Organisation hat diese Einstellungen gesperrt."
+      }
     }
   },
   "permission": {

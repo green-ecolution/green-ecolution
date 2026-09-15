@@ -1,6 +1,7 @@
 use domain::cluster::{ClusterAddress, ClusterName};
 use domain::region::RegionName;
 use domain::sensor::SensorId;
+use domain::settings::{JustWateredTtl, WaterDemand};
 use domain::shared::coordinates::Coordinate;
 use domain::shared::distance::Distance;
 use domain::shared::email::Email;
@@ -160,6 +161,43 @@ pub fn validate_sensor_id(value: &str) -> Result<JsValue, JsError> {
 #[wasm_bindgen(js_name = validatePhoneNumber)]
 pub fn validate_phone_number(value: &str) -> Result<JsValue, JsError> {
     finish(PhoneNumber::new(value), "phoneNumber")
+}
+
+#[wasm_bindgen(js_name = validateWaterDemand)]
+pub fn validate_water_demand(liters: f64) -> Result<JsValue, JsError> {
+    finish(WaterDemand::new(liters), "waterDemand")
+}
+
+/// Exposed so the settings form can constrain its input to the same range the
+/// domain enforces, instead of restating the bounds in TypeScript.
+#[wasm_bindgen(js_name = waterDemandMin)]
+pub fn water_demand_min() -> f64 {
+    WaterDemand::MIN
+}
+
+#[wasm_bindgen(js_name = waterDemandMax)]
+pub fn water_demand_max() -> f64 {
+    WaterDemand::MAX
+}
+
+/// Hours, not seconds: the form asks in hours, and a range check that speaks
+/// a different unit than the field is how off-by-3600 bugs get in.
+#[wasm_bindgen(js_name = validateJustWateredTtlHours)]
+pub fn validate_just_watered_ttl_hours(hours: f64) -> Result<JsValue, JsError> {
+    finish(
+        JustWateredTtl::new((hours * 3600.0).round() as i64),
+        "justWateredTtlHours",
+    )
+}
+
+#[wasm_bindgen(js_name = justWateredTtlMinHours)]
+pub fn just_watered_ttl_min_hours() -> f64 {
+    JustWateredTtl::MIN as f64 / 3600.0
+}
+
+#[wasm_bindgen(js_name = justWateredTtlMaxHours)]
+pub fn just_watered_ttl_max_hours() -> f64 {
+    JustWateredTtl::MAX as f64 / 3600.0
 }
 
 #[cfg(test)]
