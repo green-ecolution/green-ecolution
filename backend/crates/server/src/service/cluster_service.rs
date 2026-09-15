@@ -204,16 +204,20 @@ impl ClusterService {
         Ok(self.writer.archive(id).await?)
     }
 
-    /// Releases `JustWatered` on every cluster last watered before `cutoff` and
-    /// returns how many were reset. Clusters keep advertising a fresh watering
-    /// until this runs, so a cluster without sensor-backed trees would stay on
-    /// `JustWatered` forever without it.
+    /// Releases `JustWatered` on every cluster of `org` last watered before
+    /// `cutoff` and returns how many were reset. Clusters keep advertising a
+    /// fresh watering until this runs, so a cluster without sensor-backed
+    /// trees would stay on `JustWatered` forever without it.
     ///
     /// A cluster that fails is logged and skipped — the sweep runs
     /// periodically, so the next pass retries it.
-    #[tracing::instrument(level = "debug", skip_all, fields(%cutoff))]
-    pub async fn expire_just_watered(&self, cutoff: DateTime<Utc>) -> Result<usize, ServiceError> {
-        let clusters = self.reader.just_watered_before(cutoff).await?;
+    #[tracing::instrument(level = "debug", skip_all, fields(%org, %cutoff))]
+    pub async fn expire_just_watered(
+        &self,
+        org: Id<Organization>,
+        cutoff: DateTime<Utc>,
+    ) -> Result<usize, ServiceError> {
+        let clusters = self.reader.just_watered_before(org, cutoff).await?;
         let mut expired = 0;
 
         for mut cluster in clusters {

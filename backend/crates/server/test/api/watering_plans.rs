@@ -422,10 +422,12 @@ async fn just_watered_expires_back_to_sensor_derived_status() {
 
     finish_plan_for_cluster(&app, tid, cid).await;
 
+    let root_org = domain::Id::new(uuid::Uuid::parse_str(ROOT_ORG_ID).unwrap());
+
     let fresh = app
         .state
         .cluster_service
-        .expire_just_watered(chrono::Utc::now() - chrono::Duration::hours(24))
+        .expire_just_watered(root_org, chrono::Utc::now() - chrono::Duration::hours(24))
         .await
         .expect("expiry sweep must succeed");
     assert_eq!(fresh, 0, "a cluster watered just now must not expire yet");
@@ -433,7 +435,7 @@ async fn just_watered_expires_back_to_sensor_derived_status() {
     let expired = app
         .state
         .cluster_service
-        .expire_just_watered(chrono::Utc::now() + chrono::Duration::hours(1))
+        .expire_just_watered(root_org, chrono::Utc::now() + chrono::Duration::hours(1))
         .await
         .expect("expiry sweep must succeed");
     assert_eq!(expired, 1);

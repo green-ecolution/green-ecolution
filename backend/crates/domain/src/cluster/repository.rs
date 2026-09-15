@@ -9,6 +9,7 @@ use crate::{
         SoilMoistureBucket, SoilMoistureDepthSeries, TreeCluster, TreeClusterDraft,
         TreeClusterSearchQuery, TreeClusterView,
     },
+    organization::Organization,
     shared::{
         coordinates::Coordinate,
         pagination::{Page, Pagination},
@@ -68,10 +69,12 @@ pub trait TreeClusterReader: Send + Sync {
         bucket: SoilMoistureBucket,
     ) -> Result<Vec<SoilMoistureDepthSeries>, RepositoryError>;
 
-    /// Clusters still flagged [`crate::shared::watering_status::WateringStatus::JustWatered`]
-    /// whose `last_watered` is older than `cutoff` (or missing entirely).
+    /// Clusters of this organization still flagged
+    /// [`crate::shared::watering_status::WateringStatus::JustWatered`] whose
+    /// `last_watered` is older than `cutoff` (or missing entirely).
     async fn just_watered_before(
         &self,
+        org: Id<Organization>,
         cutoff: DateTime<Utc>,
     ) -> Result<Vec<TreeCluster>, RepositoryError>;
 

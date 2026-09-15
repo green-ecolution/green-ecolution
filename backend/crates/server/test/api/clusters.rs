@@ -1,3 +1,7 @@
+use chrono::{Duration, Utc};
+use domain::{Id, cluster::TreeClusterReader, organization::Organization};
+use server::infra::pg_cluster::PgTreeClusterRepository;
+
 use crate::helpers::{self, spawn_app};
 
 #[tokio::test]
@@ -1455,4 +1459,68 @@ async fn list_clusters_query_rejects_overlong_input() {
     let q = "a".repeat(101);
     let response = app.get(&format!("/api/v1/clusters?query={q}")).await;
     assert_eq!(response.status().as_u16(), 400);
+}
+
+const ROOT_ORG_ID: &str = "01980000-0000-7000-8000-000000000001";
+
+async fn insert_sibling_org(app: &helpers::TestApp, name: &str) -> Id<Organization> {
+    let id = uuid::Uuid::now_v7();
+    sqlx::query!(
+        "INSERT INTO organizations (id, parent_id, name) VALUES ($1, $2, $3)",
+        id,
+        uuid::Uuid::parse_str(ROOT_ORG_ID).unwrap(),
+        name,
+    )
+    .execute(&app.db_pool)
+    .await
+    .unwrap();
+    Id::new(id)
+}
+
+async fn create_just_watered_cluster(
+    app: &helpers::TestApp,
+    org: Id<Organization>,
+    last_watered: chrono::DateTime<Utc>,
+) -> Id<domain::cluster::TreeCluster> {
+    let body = serde_json::json!({
+        "name": "Just Watered",
+        "address": "Gartenweg 1",
+        "description": "Test",
+        "soil_condition": "Su3",
+        "tree_ids": [],
+        "organization_id": org.value().to_string(),
+    });
+    let resp = app.post_json("/api/v1/clusters", &body).await;
+    assert_eq!(resp.status().as_u16(), 201);
+    let cluster: serde_json::Value = resp.json().await.unwrap();
+    let id = uuid::Uuid::parse_str(cluster["id"].as_str().unwrap()).unwrap();
+
+    sqlx::query!(
+        r#"UPDATE tree_clusters
+           SET watering_status = 'just_watered', last_watered = $2
+           WHERE id = $1"#,
+        id,
+        last_watered.naive_utc(),
+    )
+    .execute(&app.db_pool)
+    .await
+    .unwrap();
+
+    Id::new(id)
+}
+
+#[tokio::test]
+async fn just_watered_before_is_scoped_to_one_organization() {
+    let app = spawn_app().await;
+    let org_a = Id::<Organization>::new(uuid::Uuid::parse_str(ROOT_ORG_ID).unwrap());
+    let org_b = insert_sibling_org(&app, "Nachbarorganisation").await;
+
+    let a = create_just_watered_cluster(&app, org_a, Utc::now() - Duration::days(3)).await;
+    let b = create_just_watered_cluster(&app, org_b, Utc::now() - Duration::days(3)).await;
+
+    let repo = PgTreeClusterRepository::new(app.db_pool.clone());
+    let found = repo.just_watered_before(org_a, Utc::now()).await.unwrap();
+
+    assert_eq!(found.iter().map(|c| c.id).collect::<Vec<_>>(), vec![a]);
+    assert!(!found.iter().any(|c| c.id == b));
 }

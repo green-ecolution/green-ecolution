@@ -164,10 +164,9 @@ impl Application {
             spawn_health_probes(&pool, &settings, probe_http_client.clone(), mqtt_state).await;
         let _expiry_handle = infra::watering_status_expiry::spawn(
             services.cluster.clone(),
+            repos.organization_reader.clone(),
+            settings_repo.clone(),
             Duration::from_secs(settings.watering.just_watered_sweep_interval_secs),
-            chrono::Duration::seconds(
-                i64::try_from(settings.watering.just_watered_ttl_secs).unwrap_or(i64::MAX),
-            ),
         );
         let _update_handle = infra::update_checker::spawn(
             update_checker,
