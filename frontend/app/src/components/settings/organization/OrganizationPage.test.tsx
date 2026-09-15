@@ -62,7 +62,14 @@ const users: UserResponse[] = [
 const settingsOf = (): OrganizationSettingsResponse =>
   ({
     waterDemand: { value: 80, origin: 'inherited', source: { id: 'root' }, lastChange: null },
-    justWateredTtlSecs: { value: 86400, origin: 'own', ownValue: 86400, lastChange: null },
+    justWateredTtlSecs: {
+      value: 86400,
+      origin: 'own',
+      ownValue: 86400,
+      // A Date, as the generated client parses it — this is what keeps the
+      // response from ever being referentially stable across a refetch.
+      lastChange: { changedAt: new Date('2026-03-12T09:00:00Z'), changedByName: 'ge.admin' },
+    },
     descendantsMayOverride: true,
     enforcedBy: null,
   }) as unknown as OrganizationSettingsResponse
@@ -600,7 +607,7 @@ describe('OrganizationPage', () => {
     expect(cardOf('Fachliche Vorgaben').getByText(/Geerbt von Stadt Flensburg/)).toBeInTheDocument()
 
     await userEvent.type(screen.getByRole('textbox', { name: 'Name' }), ' Ost')
-    const ttl = screen.getByLabelText(/Nachwirkzeit/)
+    const ttl = screen.getByRole('spinbutton', { name: /Nachwirkzeit/ })
     await userEvent.clear(ttl)
     await userEvent.type(ttl, '48')
     await userEvent.click(screen.getByRole('button', { name: 'Speichern' }))
@@ -629,13 +636,57 @@ describe('OrganizationPage', () => {
     render(<OrganizationPage />)
     await selectNord()
 
-    const ttl = screen.getByLabelText(/Nachwirkzeit/)
+    const ttl = screen.getByRole('spinbutton', { name: /Nachwirkzeit/ })
     await userEvent.clear(ttl)
     await userEvent.type(ttl, '48')
     await userEvent.click(screen.getByRole('button', { name: 'Speichern' }))
 
     await waitFor(() => expect(updateSettingsMutate).toHaveBeenCalled())
     expect(updateMutate).not.toHaveBeenCalled()
+  })
+
+  it('keeps a typed setting when the organization save succeeds and the settings save fails', async () => {
+    // Saving the organization invalidates the whole `organizations` prefix, so
+    // the settings come back — as a new object, because `changedAt` is a Date.
+    updateMutate.mockImplementation(() => {
+      settingsMap.nord = { ...settingsMap.nord }
+    })
+    const { rerender } = render(<OrganizationPage />)
+    await selectNord()
+
+    const ttl = screen.getByRole('spinbutton', { name: /Nachwirkzeit/ })
+    await userEvent.clear(ttl)
+    await userEvent.type(ttl, '48')
+    await userEvent.type(screen.getByRole('textbox', { name: 'Name' }), ' Ost')
+    await userEvent.click(screen.getByRole('button', { name: 'Speichern' }))
+
+    await waitFor(() => expect(updateSettingsMutate).toHaveBeenCalled())
+    // The settings request is still in flight and may yet be refused; nothing
+    // has come back for it, so the typed value must survive the next render.
+    rerender(<OrganizationPage />)
+    expect(screen.getByRole('spinbutton', { name: /Nachwirkzeit/ })).toHaveValue(48)
+    expect(screen.getByRole('button', { name: 'Speichern' })).toBeInTheDocument()
+  })
+
+  it('takes over a settings value that changed on the server', async () => {
+    const { rerender } = render(<OrganizationPage />)
+    await selectNord()
+
+    const ttl = screen.getByRole('spinbutton', { name: /Nachwirkzeit/ })
+    await userEvent.clear(ttl)
+    await userEvent.type(ttl, '48')
+
+    // Content, not identity, decides: a value that really moved must reach the
+    // draft, the same way the master data picks up the server's truth.
+    settingsMap.nord = {
+      ...settingsMap.nord,
+      justWateredTtlSecs: { ...settingsMap.nord.justWateredTtlSecs, value: 259200 },
+    }
+    rerender(<OrganizationPage />)
+
+    await waitFor(() =>
+      expect(screen.getByRole('spinbutton', { name: /Nachwirkzeit/ })).toHaveValue(72),
+    )
   })
 
   // The instance root refuses its master data but still owns the defaults every
@@ -646,7 +697,7 @@ describe('OrganizationPage', () => {
 
     expect(screen.queryByRole('button', { name: 'Speichern' })).not.toBeInTheDocument()
 
-    const ttl = screen.getByLabelText(/Nachwirkzeit/)
+    const ttl = screen.getByRole('spinbutton', { name: /Nachwirkzeit/ })
     await userEvent.clear(ttl)
     await userEvent.type(ttl, '48')
     await userEvent.click(screen.getByRole('button', { name: 'Speichern' }))
@@ -661,7 +712,7 @@ describe('OrganizationPage', () => {
     render(<OrganizationPage />)
     await selectNord()
 
-    const ttl = screen.getByLabelText(/Nachwirkzeit/)
+    const ttl = screen.getByRole('spinbutton', { name: /Nachwirkzeit/ })
     await userEvent.clear(ttl)
     await userEvent.type(ttl, '9999')
     expect(
@@ -672,7 +723,9 @@ describe('OrganizationPage', () => {
     expect(await screen.findByText('Änderungen verwerfen?')).toBeInTheDocument()
 
     await userEvent.click(screen.getByRole('button', { name: 'Verwerfen' }))
-    await waitFor(() => expect(screen.getByLabelText(/Nachwirkzeit/)).toHaveValue(24))
+    await waitFor(() =>
+      expect(screen.getByRole('spinbutton', { name: /Nachwirkzeit/ })).toHaveValue(24),
+    )
   })
 
   it('hides the settings section without setting:read', () => {
@@ -689,7 +742,7 @@ describe('OrganizationPage', () => {
     render(<OrganizationPage />)
 
     expect(screen.getByText('Fachliche Vorgaben')).toBeInTheDocument()
-    expect(screen.getByLabelText(/Nachwirkzeit/)).toBeDisabled()
+    expect(screen.getByRole('spinbutton', { name: /Nachwirkzeit/ })).toBeDisabled()
     expect(screen.getByRole('switch')).toBeDisabled()
   })
 

@@ -402,7 +402,9 @@
         "own": "Own value"
       },
       "setOwnValue": "Set own value",
+      "setOwnValueFor": "Set own value for {field}",
       "inheritAgain": "Inherit again",
+      "inheritAgainFor": "Inherit {field} again",
       "dormantOwnValue": "The own value of {value} lies dormant while the lock applies.",
       "liters_one": "{count} liter",
       "liters_other": "{count} liters",

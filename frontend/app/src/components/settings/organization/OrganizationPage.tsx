@@ -54,6 +54,26 @@ const nameConflictMessage = (error: unknown, t: TFunction<'settings'>): string |
 const contactPersonMessage = (error: unknown, t: TFunction<'settings'>): string | null =>
   statusOf(error) === 422 ? t('organization.contactPersonNotAssigned') : null
 
+/** Everything the settings draft is built from; a refetch that changes none of
+ *  it must leave an edit in progress alone. */
+const settingsFingerprint = (
+  orgId: string | null,
+  settings: OrganizationSettingsResponse | undefined,
+): string | null =>
+  settings
+    ? JSON.stringify([
+        orgId,
+        settings.waterDemand.value,
+        settings.waterDemand.origin,
+        settings.waterDemand.ownValue ?? null,
+        settings.justWateredTtlSecs.value,
+        settings.justWateredTtlSecs.origin,
+        settings.justWateredTtlSecs.ownValue ?? null,
+        settings.descendantsMayOverride,
+        settings.enforcedBy?.id ?? null,
+      ])
+    : null
+
 const OrganizationPage = () => {
   const { t } = useTranslation(['settings', 'common'])
   const canCreate = useHasPermission(['organization:create'])
@@ -83,7 +103,7 @@ const OrganizationPage = () => {
   const [selection, setSelection] = useState<string | null>(null)
   const [expandedOverride, setExpandedOverride] = useState<ReadonlySet<string> | null>(null)
   const [loadedDetail, setLoadedDetail] = useState<OrganizationDetailResponse | null>(null)
-  const [loadedSettings, setLoadedSettings] = useState<OrganizationSettingsResponse | null>(null)
+  const [loadedSettingsKey, setLoadedSettingsKey] = useState<string | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
   const [pendingSelection, setPendingSelection] = useState<string | null | undefined>(undefined)
   const [pendingClose, setPendingClose] = useState(false)
@@ -113,6 +133,7 @@ const OrganizationPage = () => {
     ...settingsQueries.byOrganization(selectedId ?? ''),
     enabled: canReadSettings && selectedId !== null,
   })
+  const settingsKey = settingsFingerprint(selectedId, settings)
 
   // An invalid settings draft builds no request, so `settingsDraft.dirty` is
   // false for it. Typed input would then be dropped without a word on the way
@@ -138,12 +159,17 @@ const OrganizationPage = () => {
   }, [detail, loadedDetail, edit])
 
   useEffect(() => {
-    // Same reasoning as the detail effect above: keyed on the object.
-    if (!settings || settings === loadedSettings) return
+    // Keyed on the content, not on the object: `lastChange.changedAt` is parsed
+    // into a Date, which structural sharing cannot keep referentially stable, so
+    // every refetch hands back a new object. Saving the organization invalidates
+    // the whole `organizations` prefix and therefore refetches these settings —
+    // an identity check would reset the draft while the settings request is
+    // still in flight and lose the typed value if that request then fails.
+    if (!settings || settingsKey === loadedSettingsKey) return
     // eslint-disable-next-line react-hooks/set-state-in-effect, react-x/set-state-in-effect -- loads the freshly fetched settings into the draft
-    setLoadedSettings(settings)
+    setLoadedSettingsKey(settingsKey)
     loadSettings(settings)
-  }, [settings, loadedSettings, loadSettings])
+  }, [settings, settingsKey, loadedSettingsKey, loadSettings])
 
   const members = memberPage?.data ?? []
   const memberInitials = members

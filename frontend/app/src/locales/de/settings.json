@@ -402,7 +402,9 @@
         "own": "Eigener Wert"
       },
       "setOwnValue": "Eigenen Wert setzen",
+      "setOwnValueFor": "Eigenen Wert für {field} setzen",
       "inheritAgain": "Wieder erben",
+      "inheritAgainFor": "{field} wieder erben",
       "dormantOwnValue": "Der eigene Wert von {value} ruht, solange die Sperre gilt.",
       "liters_one": "{count} Liter",
       "liters_other": "{count} Liter",

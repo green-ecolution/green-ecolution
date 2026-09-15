@@ -82,42 +82,47 @@ describe('OrganizationSettingsSection', () => {
   it('keeps an inherited field out of reach until it is taken over', async () => {
     render(<OrganizationSettingsSection {...props()} />)
 
-    expect(screen.getByLabelText(/Wasserbedarf/i)).toBeDisabled()
-    expect(screen.getByLabelText(/Nachwirkzeit/i)).toBeEnabled()
+    expect(screen.getByRole('spinbutton', { name: /Wasserbedarf/i })).toBeDisabled()
+    expect(screen.getByRole('spinbutton', { name: /Nachwirkzeit/i })).toBeEnabled()
 
-    await userEvent.click(screen.getByRole('button', { name: 'Eigenen Wert setzen' }))
+    // The accessible name carries the field, so the two rows stay tellable apart.
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Eigenen Wert für Wasserbedarf je Baum (Liter) setzen' }),
+    )
     expect(onOwnChange).toHaveBeenCalledWith('waterDemand', true)
   })
 
   it('gives an own value back to inheritance', async () => {
     render(<OrganizationSettingsSection {...props()} />)
 
-    await userEvent.click(screen.getByRole('button', { name: 'Wieder erben' }))
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Nachwirkzeit frisch gegossen (Stunden) wieder erben' }),
+    )
     expect(onOwnChange).toHaveBeenCalledWith('justWateredTtlHours', false)
   })
 
   it('hands every keystroke to the draft instead of coercing it', async () => {
     render(<OrganizationSettingsSection {...props()} />)
 
-    await userEvent.type(screen.getByLabelText(/Nachwirkzeit/i), '8')
+    await userEvent.type(screen.getByRole('spinbutton', { name: /Nachwirkzeit/i }), '8')
     expect(onTextChange).toHaveBeenCalledWith('justWateredTtlHours', '248')
   })
 
   it('disables the inputs without setting:update', () => {
     render(<OrganizationSettingsSection {...props({ canUpdate: false })} />)
 
-    expect(screen.getByLabelText(/Wasserbedarf/i)).toBeDisabled()
-    expect(screen.getByLabelText(/Nachwirkzeit/i)).toBeDisabled()
+    expect(screen.getByRole('spinbutton', { name: /Wasserbedarf/i })).toBeDisabled()
+    expect(screen.getByRole('spinbutton', { name: /Nachwirkzeit/i })).toBeDisabled()
     expect(screen.getByRole('switch')).toBeDisabled()
-    expect(screen.getByRole('button', { name: 'Wieder erben' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: /wieder erben/i })).toBeDisabled()
   })
 
   it('shows the locking organization and keeps the dormant own value visible', () => {
     render(<OrganizationSettingsSection {...enforced()} />)
 
     expect(screen.getByRole('alert')).toHaveTextContent(/Stadt Flensburg/)
-    expect(screen.getByLabelText(/Nachwirkzeit/i)).toHaveValue(24)
-    expect(screen.getByLabelText(/Nachwirkzeit/i)).toBeDisabled()
+    expect(screen.getByRole('spinbutton', { name: /Nachwirkzeit/i })).toHaveValue(24)
+    expect(screen.getByRole('spinbutton', { name: /Nachwirkzeit/i })).toBeDisabled()
     expect(screen.getByText(/48 Stunden.*ruht/i)).toBeInTheDocument()
     // The lock covers the switch too — the backend refuses it as well.
     expect(screen.getByRole('switch')).toBeDisabled()
@@ -141,7 +146,7 @@ describe('OrganizationSettingsSection', () => {
       />,
     )
 
-    expect(screen.getByLabelText(/Nachwirkzeit/i)).toHaveAccessibleDescription(
+    expect(screen.getByRole('spinbutton', { name: /Nachwirkzeit/i })).toHaveAccessibleDescription(
       'Nachwirkzeit muss zwischen 1 und 336 liegen.',
     )
   })

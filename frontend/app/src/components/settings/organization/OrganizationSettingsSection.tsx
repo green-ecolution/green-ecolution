@@ -29,7 +29,7 @@ import {
 } from '@/api/backendApi'
 import { useDateLocale } from '@/lib/i18n/useFormatters'
 import { CARD, CARD_TITLE } from './OrganizationDetail'
-import type { NumericField, SettingsDraft } from './useOrganizationSettingsDraft'
+import { hoursOf, type NumericField, type SettingsDraft } from './useOrganizationSettingsDraft'
 
 export interface SettingsFieldErrors {
   waterDemand: string | null
@@ -143,6 +143,13 @@ const SettingRow = ({
           variant="outline"
           size="sm"
           disabled={locked}
+          // Both fields can inherit at once, and then two identically named
+          // buttons sit side by side with nothing tying either to its row.
+          aria-label={
+            own
+              ? t('organization.settings.inheritAgainFor', { field: label })
+              : t('organization.settings.setOwnValueFor', { field: label })
+          }
           onClick={() => onOwn(!own)}
         >
           {own ? t('organization.settings.inheritAgain') : t('organization.settings.setOwnValue')}
@@ -226,7 +233,7 @@ const OrganizationSettingsSection = ({
           sourceName={sourceNames.justWateredTtlHours}
           dormantValue={
             enforced && ttlOwnValue != null
-              ? t('organization.settings.hours', { count: ttlOwnValue / 3600 })
+              ? t('organization.settings.hours', { count: hoursOf(ttlOwnValue) })
               : null
           }
           lastChange={settings.justWateredTtlSecs.lastChange}

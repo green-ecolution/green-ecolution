@@ -34,7 +34,8 @@ const justWateredTtlValidator = validateJustWateredTtlHours as (
   hours: number,
 ) => ValidationIssue | null
 
-const hoursOf = (seconds: number): string => String(seconds / 3600)
+/** The API speaks seconds, the field asks for hours. */
+export const hoursOf = (seconds: number): number => seconds / 3600
 const secondsOf = (hours: string): number => Math.round(Number(hours) * 3600)
 
 const draftOf = (response: OrganizationSettingsResponse): SettingsDraft => ({
@@ -44,7 +45,7 @@ const draftOf = (response: OrganizationSettingsResponse): SettingsDraft => ({
   },
   justWateredTtlHours: {
     own: response.justWateredTtlSecs.origin === SettingOriginDto.Own,
-    text: hoursOf(response.justWateredTtlSecs.value),
+    text: String(hoursOf(response.justWateredTtlSecs.value)),
   },
   descendantsMayOverride: response.descendantsMayOverride,
 })
@@ -69,7 +70,7 @@ export const useOrganizationSettingsDraft = () => {
       const text =
         field === 'waterDemand'
           ? String(server.waterDemand.value)
-          : hoursOf(server.justWateredTtlSecs.value)
+          : String(hoursOf(server.justWateredTtlSecs.value))
       return { ...current, [field]: { own: true, text } }
     })
   }
