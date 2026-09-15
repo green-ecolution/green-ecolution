@@ -13,10 +13,8 @@ routes: ['/settings/organization']
 
 Neben **Organisation** führt ein zweiter Eintrag in der Einstellungsnavigation auf
 dieselbe Seite: **Meine Organisation** springt direkt zur eigenen Organisation, ohne
-dass du sie erst im Baum suchen musst. Diesen Eintrag siehst du bereits mit der
-Berechtigung `setting:read`, unabhängig von `organization:read`; er bringt dich also
-auch dann zu den [Fachlichen Vorgaben](./settings-organization.md#fachliche-vorgaben)
-deiner eigenen Organisation, wenn dir die Berechtigung für den vollen Baum fehlt.
+dass du sie erst im Baum suchen musst. Du siehst ihn, wenn du zusätzlich zu
+`organization:read` auch `setting:read` besitzt.
 
 ## Der Organisationsbaum
 
@@ -71,15 +69,16 @@ lassen, steht in [Team und Rollen](./settings-team.md).
 
 Mit der Berechtigung `setting:read` zeigt die Detailansicht einer Organisation
 zusätzlich den Abschnitt **Fachliche Vorgaben** mit zwei Werten: dem Wasserbedarf je
-Baum in Litern und der Nachwirkzeit von **Soeben bewässert** in Stunden. Der
-Wasserbedarf geht in die Bedarfsrechnung jeder Bewässerungsgruppe ein und bestimmt
-damit, wie viele Gruppen eine Tourenplanung in eine Fahrt legt; eine spätere Änderung
-rechnet einen bereits berechneten Einsatzplan nicht rückwirkend um. Die Nachwirkzeit
-bestimmt, wie lange ein Baum nach einem abgeschlossenen Einsatzplan seiner Gruppe als
+Baum in Litern und der Nachwirkzeit frisch gegossen in Stunden. Der Wasserbedarf geht
+in die Bedarfsrechnung jeder Bewässerungsgruppe ein und bestimmt damit, wie viele
+Gruppen eine Tourenplanung in eine Fahrt legt; eine spätere Änderung rechnet einen
+bereits berechneten Einsatzplan nicht rückwirkend um. Die Nachwirkzeit bestimmt, wie
+lange ein Baum nach einem abgeschlossenen Einsatzplan seiner Gruppe als
 [Soeben bewässert](./treecluster.md#bewasserungsstatus-und-wie-er-zustande-kommt) gilt,
-bevor wieder der aus den Sensordaten abgeleitete Bewässerungszustand zählt; eine
-Änderung wirkt beim nächsten Lauf des dafür zuständigen Hintergrundjobs, ohne dass die
-Anwendung dafür neu gestartet werden müsste.
+bevor er auf **Unbekannt** zurückfällt; einen aus Sensordaten berechneten
+Bewässerungszustand zeigt er erst wieder, sobald tatsächlich neue Messwerte eintreffen.
+Eine Änderung der Nachwirkzeit wirkt beim nächsten Lauf des dafür zuständigen
+Hintergrundjobs, ohne dass die Anwendung dafür neu gestartet werden müsste.
 
 Jeder der beiden Werte trägt ein Abzeichen, das seine Herkunft zeigt: **Vorgabe der
 Instanz** für den mitgelieferten Standardwert, **Geerbt von …** mit dem Namen der
