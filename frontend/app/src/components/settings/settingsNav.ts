@@ -1,5 +1,5 @@
 import type de from '@/locales/de'
-import { satisfies, type PermissionRequirement, type Permissions } from '@/lib/auth/permissions'
+import { satisfies, type Permission, type PermissionRequirement, type Permissions } from '@/lib/auth/permissions'
 
 type SettingsNavKey = keyof (typeof de)['settings']['nav']
 
@@ -11,6 +11,10 @@ export interface SettingsNavItem {
   icon: string
   to: string
   permission?: PermissionRequirement
+  /** Unlike `permission` (OR: any one right suffices), every entry here is required.
+   *  Needed for `myOrganization`: the page it links to fetches the organization tree
+   *  regardless, so `setting:read` alone still lands on a load error. */
+  requireAll?: readonly Permission[]
   featureKey?: string
   comingSoon?: boolean
   /** Shares its `to` with the plain `organization` entry; SettingsLayout appends
@@ -26,7 +30,7 @@ export const SETTINGS_NAV: SettingsNavItem[] = [
     labelKey: 'myOrganization',
     icon: 'Building',
     to: '/settings/organization',
-    permission: ['setting:read'],
+    requireAll: ['setting:read', 'organization:read'],
     ownOrganization: true,
   },
   {
@@ -68,5 +72,7 @@ export const visibleSettingsNav = (
   items.filter((item) => {
     if (item.featureKey && !enabledFeatures.has(item.featureKey)) return false
     if (item.permission && !satisfies(perms, item.permission)) return false
+    if (item.requireAll && !item.requireAll.every((permission) => satisfies(perms, [permission])))
+      return false
     return true
   })

@@ -61,7 +61,7 @@ describe('visibleSettingsNav', () => {
     expect(keysOf(visible)).toContain('profile')
   })
 
-  it('offers the own organization only with setting:read', () => {
+  it('offers the own organization shortcut only with both setting:read and organization:read', () => {
     expect(
       keysOf(
         visibleSettingsNav(SETTINGS_NAV, new Set(['setting:read', 'organization:read']), new Set()),
@@ -69,6 +69,12 @@ describe('visibleSettingsNav', () => {
     ).toContain('myOrganization')
     expect(
       keysOf(visibleSettingsNav(SETTINGS_NAV, new Set(['organization:read']), new Set())),
+    ).not.toContain('myOrganization')
+    // The Beobachter template holds exactly this combination: setting:read without
+    // organization:read. The page it links to fetches the organization tree
+    // regardless, so setting:read alone would land on a load error.
+    expect(
+      keysOf(visibleSettingsNav(SETTINGS_NAV, new Set(['setting:read']), new Set())),
     ).not.toContain('myOrganization')
   })
 })
