@@ -11,6 +11,13 @@ routes: ['/settings/organization']
 > **Organisation** in deiner Einstellungsnavigation gar nicht erst auf; wende dich an
 > die Verwaltung deiner Organisation, wenn du sie brauchst.
 
+Neben **Organisation** führt ein zweiter Eintrag in der Einstellungsnavigation auf
+dieselbe Seite: **Meine Organisation** springt direkt zur eigenen Organisation, ohne
+dass du sie erst im Baum suchen musst. Diesen Eintrag siehst du bereits mit der
+Berechtigung `setting:read`, unabhängig von `organization:read`; er bringt dich also
+auch dann zu den [Fachlichen Vorgaben](./settings-organization.md#fachliche-vorgaben)
+deiner eigenen Organisation, wenn dir die Berechtigung für den vollen Baum fehlt.
+
 ## Der Organisationsbaum
 
 Jede Organisation in Green Ecolution ist ein Knoten in einem Baum: Sie hat höchstens
@@ -59,3 +66,45 @@ bleibt dagegen auf deren eigenen Ast beschränkt und erreicht weder Geschwister-
 Organisationen hinweg zuständig sein soll, sinnvollerweise weiter oben im Baum. Wie
 Rollen im Einzelnen zugeschnitten werden und welche Rechte sich darin kombinieren
 lassen, steht in [Team und Rollen](./settings-team.md).
+
+## Fachliche Vorgaben
+
+Mit der Berechtigung `setting:read` zeigt die Detailansicht einer Organisation
+zusätzlich den Abschnitt **Fachliche Vorgaben** mit zwei Werten: dem Wasserbedarf je
+Baum in Litern und der Nachwirkzeit von **Soeben bewässert** in Stunden. Der
+Wasserbedarf geht in die Bedarfsrechnung jeder Bewässerungsgruppe ein und bestimmt
+damit, wie viele Gruppen eine Tourenplanung in eine Fahrt legt; eine spätere Änderung
+rechnet einen bereits berechneten Einsatzplan nicht rückwirkend um. Die Nachwirkzeit
+bestimmt, wie lange ein Baum nach einem abgeschlossenen Einsatzplan seiner Gruppe als
+[Soeben bewässert](./treecluster.md#bewasserungsstatus-und-wie-er-zustande-kommt) gilt,
+bevor wieder der aus den Sensordaten abgeleitete Bewässerungszustand zählt; eine
+Änderung wirkt beim nächsten Lauf des dafür zuständigen Hintergrundjobs, ohne dass die
+Anwendung dafür neu gestartet werden müsste.
+
+Jeder der beiden Werte trägt ein Abzeichen, das seine Herkunft zeigt: **Vorgabe der
+Instanz** für den mitgelieferten Standardwert, **Geerbt von …** mit dem Namen der
+Organisation, von der der Wert stammt, oder **Eigener Wert**, wenn diese Organisation
+selbst einen gesetzt hat. Ohne eigenen Wert übernimmt eine Organisation also
+automatisch, was ihre übergeordnete Organisation vorgibt, den Baum hinauf bis zur
+obersten Organisation und von dort zur Vorgabe der Instanz. Über **Eigenen Wert
+setzen** löst du ein Feld aus dieser Vererbung und trägst eine eigene Zahl ein; **Wieder
+erben** verwirft den eigenen Wert wieder, und die Organisation folgt von da an erneut
+dem geerbten Wert. Unter dem Feld steht, wann und von wem der Wert zuletzt geändert
+wurde, sofern das schon einmal geschehen ist; das beantwortet die Frage, wer für eine
+überraschende Änderung verantwortlich ist.
+
+![Der Abschnitt Fachliche Vorgaben mit einem geerbten und einem eigenen Wert](../images/settings-organization-values.png)
+
+Der Schalter **Untereinheiten dürfen eigene Werte setzen** entscheidet, ob die
+Organisationen unterhalb der gerade ausgewählten überhaupt eigene Werte setzen dürfen.
+Steht er aus, sperrt die Organisation die Vorgaben für ihren gesamten Ast: Der
+Abschnitt einer betroffenen Untereinheit wird dadurch nur noch lesbar, ein Hinweis oben
+im Abschnitt nennt die sperrende Organisation, und es gelten dort deren Werte, nicht
+mehr die eigenen. Hatte eine Untereinheit vor der Sperre bereits einen eigenen Wert
+gesetzt, bleibt er sichtbar, unter dem Feld steht aber, dass er ruht, solange die
+Sperre gilt; er kommt unverändert wieder zum Tragen, sobald sie wieder aufgehoben
+wird.
+
+Zum Ändern eines Werts oder des Schalters brauchst du zusätzlich zu `setting:read` die
+Berechtigung `setting:update`; ohne sie zeigt die Anwendung den Abschnitt nur an. Wie
+die übrigen Stammdaten dieser Seite wirkt eine Änderung erst mit **Speichern**.
