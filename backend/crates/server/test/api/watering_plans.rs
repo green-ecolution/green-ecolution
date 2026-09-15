@@ -1,4 +1,6 @@
 use crate::helpers::{self, spawn_app};
+use crate::organizations::ROOT_ORG_ID;
+use crate::settings_repo::{child_org, set_water_demand};
 
 async fn create_transporter(app: &helpers::TestApp) -> serde_json::Value {
     let body = serde_json::json!({
@@ -981,4 +983,133 @@ async fn route_geometry_round_trips_through_repository() {
     assert_eq!(reloaded.route_geometry(), Some(geometry.as_slice()));
     assert_eq!(reloaded.distance.map(|d| d.meters()), Some(1234.0));
     assert_eq!(reloaded.start_point_name.as_deref(), Some("Depot Nord"));
+}
+
+fn demand_encoded_line() -> String {
+    let line = geo_types::LineString::from(vec![(9.4347, 54.7687), (9.4358, 54.7922)]);
+    polyline::encode_coordinates(line, 6).unwrap()
+}
+
+fn demand_streamlet_ok() -> serde_json::Value {
+    serde_json::json!({
+        "routes": [{
+            "vehicle": 1,
+            "stops": [
+                {"VehicleStart": 1}, {"Customer": 1}, {"Depot": 1}
+            ],
+            "distance": 1000.0,
+            "travel_time": 600.0,
+            "wait_time": 0.0,
+            "geometry": {"format": "polyline", "value": demand_encoded_line()}
+        }],
+        "unserved": [],
+        "total_distance": 1000.0,
+        "total_travel_time": 600.0
+    })
+}
+
+async fn mock_streamlet_ok() -> wiremock::MockServer {
+    let server = wiremock::MockServer::start().await;
+    wiremock::Mock::given(wiremock::matchers::method("POST"))
+        .and(wiremock::matchers::path("/v1/solve"))
+        .respond_with(wiremock::ResponseTemplate::new(200).set_body_json(demand_streamlet_ok()))
+        .mount(&server)
+        .await;
+    server
+}
+
+/// Inserts `tree_count` trees for `org` at `(lat, lon)` and wraps them in a
+/// new cluster, giving route computation a stop with a known tree count.
+async fn create_cluster_with_trees_in_org(
+    app: &helpers::TestApp,
+    org: uuid::Uuid,
+    tree_count: usize,
+    lat: f64,
+    lon: f64,
+) -> String {
+    let mut tree_ids = Vec::new();
+    for i in 0..tree_count {
+        let tree_id = uuid::Uuid::now_v7();
+        sqlx::query(
+            r#"INSERT INTO trees (id, planting_year, species, number, latitude, longitude, geometry, description, organization_id)
+            VALUES ($1, 2020, 'Eiche', $2, $3, $4, ST_SetSRID(ST_MakePoint($4, $3), 4326), 'Demand-Test', $5)"#,
+        )
+        .bind(tree_id)
+        .bind(format!("DT-{i}"))
+        .bind(lat)
+        .bind(lon)
+        .bind(org)
+        .execute(&app.db_pool)
+        .await
+        .unwrap();
+        tree_ids.push(tree_id.to_string());
+    }
+    let body = serde_json::json!({
+        "name": "Demand-Cluster",
+        "address": "Testweg 1",
+        "description": "Demand",
+        "soil_condition": "Su3",
+        "tree_ids": tree_ids,
+        "organization_id": org.to_string(),
+    });
+    let resp = app.post_json("/api/v1/clusters", &body).await;
+    assert_eq!(resp.status().as_u16(), 201, "cluster setup failed");
+    let cluster: serde_json::Value = resp.json().await.unwrap();
+    cluster["id"].as_str().unwrap().to_string()
+}
+
+fn demand_plan_body(
+    transporter_id: &str,
+    cluster_ids: Vec<&str>,
+    org: uuid::Uuid,
+) -> serde_json::Value {
+    serde_json::json!({
+        "date": "2026-05-01T08:00:00Z",
+        "description": "Bewaesserung",
+        "transporter_id": transporter_id,
+        "tree_cluster_ids": cluster_ids,
+        "user_ids": [],
+        "organization_id": org.to_string(),
+    })
+}
+
+/// Two sibling organizations set different water demands; each plan must use
+/// its own organization's value, not the YAML instance default.
+#[tokio::test]
+async fn two_organizations_plan_with_their_own_water_demand() {
+    let streamlet = mock_streamlet_ok().await;
+    let app = helpers::spawn_app_with_routing(&streamlet.uri()).await;
+
+    let root = uuid::Uuid::parse_str(ROOT_ORG_ID).unwrap();
+    let org_a = child_org(&app, "Bewaesserung Nord", root).await;
+    let org_b = child_org(&app, "Bewaesserung Sued", root).await;
+    set_water_demand(&app, org_a, 50.0).await;
+    set_water_demand(&app, org_b, 200.0).await;
+
+    let cluster_a = create_cluster_with_trees_in_org(&app, org_a, 3, 54.79, 9.43).await;
+    let cluster_b = create_cluster_with_trees_in_org(&app, org_b, 3, 54.80, 9.45).await;
+
+    let transporter = create_transporter(&app).await;
+    let tid = transporter["id"].as_str().unwrap();
+
+    let resp_a = app
+        .post_json(
+            "/api/v1/watering-plans",
+            &demand_plan_body(tid, vec![&cluster_a], org_a),
+        )
+        .await;
+    assert_eq!(resp_a.status().as_u16(), 201);
+    let plan_a: serde_json::Value = resp_a.json().await.unwrap();
+
+    let resp_b = app
+        .post_json(
+            "/api/v1/watering-plans",
+            &demand_plan_body(tid, vec![&cluster_b], org_b),
+        )
+        .await;
+    assert_eq!(resp_b.status().as_u16(), 201);
+    let plan_b: serde_json::Value = resp_b.json().await.unwrap();
+
+    assert_eq!(plan_a["total_water_required"], 150.0, "3 trees x 50 l");
+    assert_eq!(plan_b["total_water_required"], 600.0, "3 trees x 200 l");
 }
