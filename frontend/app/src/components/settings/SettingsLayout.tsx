@@ -33,8 +33,12 @@ const SettingsLayout = ({ children }: SettingsLayoutProps) => {
   // from also lighting up while the shortcut's own-org search is active.
   const linkParamsFor = (item: SettingsNavItem) => {
     if (item.ownOrganization) {
+      // Before `me` resolves there's no real id to compare against. An empty
+      // sentinel (never a real org id) keeps this entry inactive instead of
+      // falling back to "any path under this route", which would light up
+      // together with the plain organization entry below.
       return {
-        search: { org: ownOrgId ?? undefined },
+        search: { org: ownOrgId ?? '' },
         activeOptions: { exact: false },
       }
     }
