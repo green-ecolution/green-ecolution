@@ -259,8 +259,8 @@ function Debug() {
             <KV label="Grenzen">
               <span className="font-mono">
                 {mapBounds
-                  ? `Zoom ${mapBounds.minZoom}–${mapBounds.maxZoom}, bbox ${mapBounds.bbox.join(", ")}`
-                  : "keine Einschränkung"}
+                  ? `Zoom ${mapBounds.minZoom}–${mapBounds.maxZoom}, bbox ${mapBounds.bbox.join(', ')}`
+                  : 'keine Einschränkung'}
               </span>
             </KV>
           </CardContent>
