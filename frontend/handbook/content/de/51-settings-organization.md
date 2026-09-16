@@ -63,8 +63,8 @@ lassen, steht in [Team und Rollen](./settings-team.md).
 ## Fachliche Vorgaben
 
 Mit der Berechtigung `setting:read` zeigt die Detailansicht einer Organisation
-zusätzlich den Abschnitt **Fachliche Vorgaben** mit zwei Werten: dem Wasserbedarf je
-Baum in Litern und der Nachwirkzeit frisch gegossen in Stunden. Der Wasserbedarf geht
+zusätzlich den Abschnitt **Fachliche Vorgaben** mit dem Wasserbedarf je Baum in Litern,
+der Nachwirkzeit frisch gegossen in Stunden und dem Kartenausschnitt. Der Wasserbedarf geht
 in die Bedarfsrechnung jeder Bewässerungsgruppe ein und bestimmt damit, wie viele
 Gruppen eine Tourenplanung in eine Fahrt legt; eine spätere Änderung rechnet einen
 bereits berechneten Einsatzplan nicht rückwirkend um. Die Nachwirkzeit bestimmt, wie
@@ -91,6 +91,53 @@ von wem der Wert zuletzt geändert wurde, sofern das schon einmal geschehen ist;
 beantwortet die Frage, wer für eine überraschende Änderung verantwortlich ist.
 
 ![Der Abschnitt Fachliche Vorgaben mit einem geerbten und einem eigenen Wert](../images/settings-organization-values.png)
+
+### Kartenausschnitt
+
+Der **Kartenausschnitt** bestimmt, wo die Karte für die Mitarbeitenden dieser
+Organisation aufgeht und welchen Bereich sie überhaupt freigibt. Beides gehört
+zusammen: Der Ausschnitt ist die Grenze, über die hinaus sich die Karte nicht schwenken
+lässt, und der Mittelpunkt ist der Punkt, an dem sie startet. Ohne eigenen Wert erbt
+eine Organisation auch hier nach oben, bis zur Vorgabe der Instanz. Eine Instanz, die
+mehrere Kommunen verwaltet, zeigt damit nicht mehr allen denselben Ort.
+
+Anders als die beiden Zahlenwerte wird der Kartenausschnitt nicht eingetippt, sondern
+auf einer Karte festgelegt. Nach **Eigenen Wert setzen** wird die Vorschau bedienbar:
+Du schwenkst und zoomst, bis der sichtbare Bereich genau den Bereich zeigt, den deine
+Mitarbeitenden erreichen können sollen, und ziehst die Markierung an die Stelle, an der
+die Karte aufgehen soll. **Ausschnitt übernehmen** schreibt beides in den Entwurf;
+gespeichert wird wie bei den übrigen Werten erst mit **Speichern**. Liegt die Markierung
+am Ende außerhalb des gewählten Bereichs, weist die Anwendung das zurück und sagt es
+unter dem Wert, denn ein Mittelpunkt außerhalb der eigenen Grenze wäre ein Ausschnitt,
+den niemand sehen könnte.
+
+Unter der Karte stehen zusätzlich die beiden Zoomstufen, zwischen denen sich die Karte
+bewegen darf. Kleine Werte zeigen mehr Fläche, große mehr Detail; die Skala reicht von 0
+bis 24, wobei der mitgelieferte Bereich von 13 bis 18 ungefähr vom Stadtgebiet bis zum
+einzelnen Baum reicht. Eine untere Stufe hält davon ab, aus dem Arbeitsgebiet
+herauszuzoomen, eine obere davon, tiefer hineinzugehen, als die Kartendaten hergeben.
+Läuft der Bereich verkehrt herum, also die untere Stufe über der oberen, weist die
+Anwendung das unter dem Wert zurück.
+
+Nicht jede Organisation arbeitet in einem abgegrenzten Gebiet. Der Schalter **Keine
+Einschränkung** oben rechts hebt die Grenze deshalb ganz auf, und zwar vollständig: Weder
+der Ausschnitt noch die Zoomstufen gelten dann noch, die Karte lässt sich überallhin
+schwenken und so weit zoomen, wie das Kartenmaterial reicht. Bestehen bleibt nur der
+Mittelpunkt, denn aufgehen muss sie weiterhin irgendwo. Solange der Schalter an ist,
+spielt der sichtbare Bereich keine Rolle mehr, die Zoomfelder verschwinden, und aus dem
+Knopf wird entsprechend **Mittelpunkt übernehmen**. Wer die Grenze später wieder
+einführt, bekommt einen Vorschlag rund um den Mittelpunkt samt Standard-Zoombereich, den
+er wie gewohnt zurechtschieben kann. Der Schalter gehört zum Wert selbst und lässt sich
+erst bedienen, wenn diese Organisation den Kartenausschnitt über **Eigenen Wert setzen**
+übernommen hat; bei einem geerbten Ausschnitt gibt es hier nichts aufzuheben.
+
+Die Änderung greift, sobald eine Karte neu geöffnet wird. Wer die Karte bereits vor sich
+hat und darin verschoben hat, bleibt an seiner Stelle; das ist gewollt, denn eine Karte,
+die einem unter der Hand wegspringt, verliert genau den Ausschnitt, den man gerade
+angesehen hat. Ein Link auf eine Karte mit Koordinaten führt weiterhin dorthin, wohin er
+zeigt.
+
+![Der Kartenausschnitt im Bearbeitungszustand mit verschiebbarer Karte und Markierung](../images/settings-organization-map-view.png)
 
 Der Schalter **Untereinheiten dürfen eigene Werte setzen** entscheidet, ob die
 Organisationen unterhalb der gerade ausgewählten überhaupt eigene Werte setzen dürfen.
