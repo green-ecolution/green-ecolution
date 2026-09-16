@@ -18,6 +18,7 @@ pub mod health;
 pub mod health_probes;
 pub mod helpers;
 pub mod info;
+pub mod map_view;
 pub mod organizations;
 pub mod plugin_auth;
 pub mod plugin_ingest;

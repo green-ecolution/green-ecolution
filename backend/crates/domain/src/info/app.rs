@@ -37,6 +37,8 @@ pub struct Server {
 pub struct Map {
     pub center: [f64; 2],
     pub bbox: [f64; 4],
+    pub min_zoom: u8,
+    pub max_zoom: u8,
 }
 
 #[derive(Debug, Clone)]

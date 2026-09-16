@@ -116,17 +116,21 @@ impl Application {
             i64::try_from(settings.sensor.offline_after_secs).unwrap_or(i64::MAX),
         );
         let repos = Repositories::build(&pool, sensor_offline_after, settings.sensor.defect_streak);
+        let defaults = instance_defaults(&settings)?;
         let settings_repo = Arc::new(PgSettingsRepository::new(
             pool.clone(),
-            instance_defaults(&settings)?,
+            defaults,
             repos.organization_reader.clone(),
+        ));
+        let profile_repo = Arc::new(infra::pg_user_profile::PgUserProfileRepository::new(
+            pool.clone(),
         ));
         let settings_service = Arc::new(crate::service::settings_service::SettingsService::new(
             settings_repo.clone(),
             settings_repo.clone(),
-        ));
-        let profile_repo = Arc::new(infra::pg_user_profile::PgUserProfileRepository::new(
-            pool.clone(),
+            settings_repo.clone(),
+            profile_repo.clone(),
+            defaults,
         ));
         let user_service = Arc::new(UserService::new(
             user_repo.clone(),
@@ -536,7 +540,8 @@ fn instance_defaults(
     settings: &Settings,
 ) -> Result<domain::settings::InstanceDefaults, std::io::Error> {
     use domain::settings::{
-        DefectStreak, InstanceDefaults, JustWateredTtl, MapView, SensorOfflineAfter, WaterDemand,
+        DefectStreak, InstanceDefaults, JustWateredTtl, MapBounds, MapView, SensorOfflineAfter,
+        WaterDemand, ZoomLevel,
     };
     use domain::shared::{coordinates::Coordinate, geo::BoundingBox};
 
@@ -566,7 +571,14 @@ fn instance_defaults(
         .map_err(rejected)?,
         map_view: MapView::new(
             Coordinate::new(lat, lng).map_err(rejected)?,
-            BoundingBox::try_new(sw_lat, sw_lng, ne_lat, ne_lng).map_err(rejected)?,
+            Some(
+                MapBounds::new(
+                    BoundingBox::try_new(sw_lat, sw_lng, ne_lat, ne_lng).map_err(rejected)?,
+                    ZoomLevel::new(settings.map.min_zoom).map_err(rejected)?,
+                    ZoomLevel::new(settings.map.max_zoom).map_err(rejected)?,
+                )
+                .map_err(rejected)?,
+            ),
         )
         .map_err(rejected)?,
     })

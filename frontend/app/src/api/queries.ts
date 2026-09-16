@@ -391,12 +391,6 @@ export const infoQueries = {
       queryFn: () => infoApi.getInfo(),
     }),
 
-  map: () =>
-    queryOptions<MapInfoResponse>({
-      queryKey: ['info', 'map'],
-      queryFn: () => infoApi.getMapInfo(),
-    }),
-
   server: () =>
     queryOptions<ServerInfoResponse>({
       queryKey: ['info', 'server'],
@@ -421,6 +415,16 @@ export const userQueries = {
     queryOptions<UserResponse>({
       queryKey: ['users', 'me'],
       queryFn: () => userApi.getMe(),
+    }),
+
+  // The viewport the caller's organization opens at. The instance-wide
+  // `/info/map` stays unauthenticated and deliberately answers only the
+  // instance default, so it is no use here.
+  mapView: () =>
+    queryOptions<MapInfoResponse>({
+      queryKey: ['users', 'me', 'map-view'],
+      queryFn: () => userApi.getMyMapView(),
+      staleTime: Infinity,
     }),
 
   list: (params?: ListUsersRequest) =>

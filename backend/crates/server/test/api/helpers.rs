@@ -105,6 +105,21 @@ impl TestApp {
             .expect("failed to execute request")
     }
 
+    pub async fn put_json_with_bearer(
+        &self,
+        path: &str,
+        body: &serde_json::Value,
+        token: &str,
+    ) -> reqwest::Response {
+        reqwest::Client::new()
+            .put(format!("{}{}", self.address, path))
+            .bearer_auth(token)
+            .json(body)
+            .send()
+            .await
+            .expect("failed to execute request")
+    }
+
     pub async fn get_with_bearer(&self, path: &str, token: &str) -> reqwest::Response {
         reqwest::Client::new()
             .get(format!("{}{}", self.address, path))

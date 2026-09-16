@@ -28,19 +28,22 @@ import {
 } from '@green-ecolution/ui'
 import {
   SettingOriginDto,
+  type MapViewDto,
   type OrganizationSettingsResponse,
   type SettingChangeRef,
 } from '@/api/backendApi'
 import { useDateLocale } from '@/lib/i18n/useFormatters'
 import { CARD, CARD_TITLE } from './OrganizationDetail'
+import MapViewSettingRow from './MapViewSettingRow'
 import { hoursOf, type NumericField, type SettingsDraft } from './useOrganizationSettingsDraft'
 
 export interface SettingsFieldErrors {
   waterDemand: string | null
   justWateredTtlHours: string | null
+  mapView: string | null
 }
 
-export type SettingsSourceNames = Record<NumericField, string | null>
+export type SettingsSourceNames = Record<NumericField | 'mapView', string | null>
 
 interface OrganizationSettingsSectionProps {
   settings: OrganizationSettingsResponse
@@ -52,6 +55,10 @@ interface OrganizationSettingsSectionProps {
   sourceNames: SettingsSourceNames
   onOwnChange: (field: NumericField, own: boolean) => void
   onTextChange: (field: NumericField, text: string) => void
+  onMapViewOwnChange: (own: boolean) => void
+  onMapViewChange: (view: MapViewDto) => void
+  onMapViewRestrictedChange: (restricted: boolean) => void
+  onMapViewZoomChange: (which: 'minZoom' | 'maxZoom', level: number) => void
   onDescendantsMayOverrideChange: (value: boolean) => void
 }
 
@@ -238,6 +245,10 @@ const OrganizationSettingsSection = ({
   sourceNames,
   onOwnChange,
   onTextChange,
+  onMapViewOwnChange,
+  onMapViewChange,
+  onMapViewRestrictedChange,
+  onMapViewZoomChange,
   onDescendantsMayOverrideChange,
 }: OrganizationSettingsSectionProps) => {
   const { t } = useTranslation('settings')
@@ -319,6 +330,28 @@ const OrganizationSettingsSection = ({
           step={1}
           onOwn={(own) => onOwnChange('justWateredTtlHours', own)}
           onText={(value) => onTextChange('justWateredTtlHours', value)}
+        />
+      </div>
+
+      {/* Its own row rather than a third cell: a map needs the full width to be
+          worth looking at. */}
+      <div className="mt-6">
+        <MapViewSettingRow
+          label={t('organization.settings.mapView.label')}
+          description={t('organization.settings.mapView.hint')}
+          effective={settings.mapView.value}
+          draft={draft.mapView.value}
+          origin={settings.mapView.origin}
+          sourceName={sourceNames.mapView}
+          dormant={enforced ? (settings.mapView.ownValue ?? null) : null}
+          lastChange={settings.mapView.lastChange}
+          own={draft.mapView.own}
+          locked={locked}
+          error={errors.mapView}
+          onOwn={onMapViewOwnChange}
+          onChange={onMapViewChange}
+          onRestrictedChange={onMapViewRestrictedChange}
+          onZoomChange={onMapViewZoomChange}
         />
       </div>
 

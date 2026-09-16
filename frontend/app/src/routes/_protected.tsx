@@ -2,6 +2,7 @@ import { createFileRoute, redirect } from '@tanstack/react-router'
 import { userQueries } from '@/api/queries'
 import { startSigninHandover } from '@/lib/auth/handover'
 import { readAuthBypass } from '@/lib/auth/runtimeConfig'
+import { prefetch } from '@/lib/router'
 
 export const Route = createFileRoute('/_protected')({
   beforeLoad: async ({ context, location, preload }) => {
@@ -22,5 +23,9 @@ export const Route = createFileRoute('/_protected')({
     if (!readAuthBypass()) {
       await context.queryClient.ensureQueryData(userQueries.me())
     }
+    // Every map below here opens at this viewport and suspends on it. Warming
+    // it once at the top means no page pays for it individually, and the small
+    // previews never render a frame at the wrong place.
+    prefetch(context.queryClient, userQueries.mapView(), 'userQueries.mapView')
   },
 })

@@ -7,9 +7,10 @@ use domain::{
     Id,
     organization::Organization,
     settings::{
-        OrganizationSettings, Resolution, SettingChangeEntry, SettingKey, SettingsReader,
-        SettingsUpdate, SettingsWriter,
+        InstanceDefaults, MapView, OrganizationSettings, Resolution, SettingChangeEntry,
+        SettingKey, SettingsReader, SettingsResolver, SettingsUpdate, SettingsWriter,
     },
+    user::UserProfileReader,
 };
 
 use super::ServiceError;
@@ -19,11 +20,47 @@ use super::ServiceError;
 pub struct SettingsService {
     reader: Arc<dyn SettingsReader>,
     writer: Arc<dyn SettingsWriter>,
+    resolver: Arc<dyn SettingsResolver>,
+    profiles: Arc<dyn UserProfileReader>,
+    defaults: InstanceDefaults,
 }
 
 impl SettingsService {
-    pub fn new(reader: Arc<dyn SettingsReader>, writer: Arc<dyn SettingsWriter>) -> Self {
-        Self { reader, writer }
+    pub fn new(
+        reader: Arc<dyn SettingsReader>,
+        writer: Arc<dyn SettingsWriter>,
+        resolver: Arc<dyn SettingsResolver>,
+        profiles: Arc<dyn UserProfileReader>,
+        defaults: InstanceDefaults,
+    ) -> Self {
+        Self {
+            reader,
+            writer,
+            resolver,
+            profiles,
+            defaults,
+        }
+    }
+
+    /// The viewport one user's map opens at. Falls back to the instance
+    /// default wherever no organization is on file, which also covers the demo
+    /// bypass: there the caller is an anonymous id that resolves to no profile
+    /// at all. Deliberately without a permission check — this is the caller's
+    /// own opening view, not a reading of someone else's settings.
+    #[tracing::instrument(level = "info", skip(self))]
+    pub async fn map_view_for_user(&self, user: Uuid) -> Result<MapView, ServiceError> {
+        let organization = self
+            .profiles
+            .organizations_for(&[user])
+            .await?
+            .into_iter()
+            .next()
+            .map(|(_, org)| org);
+
+        match organization {
+            Some(org) => Ok(self.resolver.effective_for(org).await?.map_view),
+            None => Ok(self.defaults.map_view),
+        }
     }
 
     #[tracing::instrument(level = "info", skip(self))]

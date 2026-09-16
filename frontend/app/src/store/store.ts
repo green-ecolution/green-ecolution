@@ -1,16 +1,19 @@
 import { create, StateCreator } from 'zustand'
 import { devtools, persist } from 'zustand/middleware'
 import { immer } from 'zustand/middleware/immer'
-import { MAP_DEFAULT_CENTER, MAP_MIN_ZOOM } from '@/lib/mapConfig'
 import { FormDraftSlice } from './form/formDraftSlice'
 import { emptyFilters, FilterDraftSlice } from './filter/filterDraftSlice'
 
 // Live map viewport, mirrored from MapLibre on every move/zoom end. On /map the
 // URL search params are the deep-link source of truth (synced debounced in
 // useMapStoreSync); embedded maps elsewhere read this as their initial position.
+//
+// `null` means no position has been established yet — neither a deep link nor a
+// move by the user. Readers fall back to the organization's configured centre
+// then, which is why this is not seeded with a hardcoded default.
 interface MapSlice {
-  mapCenter: [number, number]
-  mapZoom: number
+  mapCenter: [number, number] | null
+  mapZoom: number | null
   setMapCenter: (center: [number, number]) => void
   setMapZoom: (zoom: number) => void
 }
@@ -33,8 +36,8 @@ type Mutators = [
 ]
 
 const createMapSlice: StateCreator<Store, Mutators, [], MapSlice> = (set) => ({
-  mapCenter: MAP_DEFAULT_CENTER,
-  mapZoom: MAP_MIN_ZOOM,
+  mapCenter: null,
+  mapZoom: null,
   setMapCenter: (center) =>
     set((state) => {
       state.mapCenter = center

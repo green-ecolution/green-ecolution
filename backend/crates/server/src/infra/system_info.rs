@@ -85,6 +85,8 @@ impl DefaultSystemInfoProvider {
             map: Map {
                 center: settings.map.center,
                 bbox: settings.map.bbox,
+                min_zoom: settings.map.min_zoom,
+                max_zoom: settings.map.max_zoom,
             },
             release_url,
             server_base_url: settings.application.base_url.clone(),

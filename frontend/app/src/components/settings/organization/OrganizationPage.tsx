@@ -76,6 +76,9 @@ const settingsFingerprint = (
         settings.justWateredTtlSecs.value,
         settings.justWateredTtlSecs.origin,
         settings.justWateredTtlSecs.ownValue ?? null,
+        settings.mapView.value,
+        settings.mapView.origin,
+        settings.mapView.ownValue ?? null,
         settings.descendantsMayOverride,
         settings.enforcedBy?.id ?? null,
       ])
@@ -399,9 +402,14 @@ const OrganizationPage = () => {
       sourceNames={{
         waterDemand: nameOfOrg(settings.waterDemand.source?.id),
         justWateredTtlHours: nameOfOrg(settings.justWateredTtlSecs.source?.id),
+        mapView: nameOfOrg(settings.mapView.source?.id),
       }}
       onOwnChange={settingsDraft.setOwn}
       onTextChange={settingsDraft.setText}
+      onMapViewOwnChange={settingsDraft.setMapViewOwn}
+      onMapViewChange={settingsDraft.setMapView}
+      onMapViewRestrictedChange={settingsDraft.setMapViewRestricted}
+      onMapViewZoomChange={settingsDraft.setMapViewZoom}
       onDescendantsMayOverrideChange={settingsDraft.setDescendantsMayOverride}
     />
   ) : null

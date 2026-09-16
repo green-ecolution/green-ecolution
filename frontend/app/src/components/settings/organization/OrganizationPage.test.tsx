@@ -70,6 +70,11 @@ const settingsOf = (): OrganizationSettingsResponse =>
       // response from ever being referentially stable across a refetch.
       lastChange: { changedAt: new Date('2026-03-12T09:00:00Z'), changedByName: 'ge.admin' },
     },
+    mapView: {
+      value: { center: [54.7923, 9.4358], bbox: [54.7148, 9.2858, 54.8601, 9.5838] },
+      origin: 'default',
+      lastChange: null,
+    },
     descendantsMayOverride: true,
     enforcedBy: null,
   }) as unknown as OrganizationSettingsResponse
@@ -175,6 +180,11 @@ vi.mock('@tanstack/react-query', async () => {
     },
   }
 })
+
+// MapLibre needs a WebGL context, which jsdom does not provide.
+vi.mock('@/components/map-gl/MapPreview', () => ({
+  default: () => <div data-testid="map-preview" />,
+}))
 
 const { default: OrganizationPage } = await import('./OrganizationPage')
 
@@ -776,7 +786,9 @@ describe('OrganizationPage', () => {
     expect(screen.getByText('Fachliche Vorgaben')).toBeInTheDocument()
     expect(screen.queryByRole('spinbutton', { name: /Nachwirkzeit/ })).not.toBeInTheDocument()
     expect(cardOf('Fachliche Vorgaben').getByText('24 Stunden')).toBeInTheDocument()
-    expect(screen.getByRole('switch')).toBeDisabled()
+    expect(
+      screen.getByRole('switch', { name: /Untereinheiten dürfen eigene Werte setzen/ }),
+    ).toBeDisabled()
   })
 
   it('renders the detail in a drawer on mobile', async () => {

@@ -1,0 +1,27 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO organization_settings (\n                   organization_id, water_demand_liters, just_watered_ttl_secs,\n                   sensor_offline_after_secs, defect_streak,\n                   map_center_lat, map_center_lng,\n                   map_bbox_sw_lat, map_bbox_sw_lng, map_bbox_ne_lat, map_bbox_ne_lng,\n                   map_min_zoom, map_max_zoom,\n                   descendants_may_override)\n               VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)\n               ON CONFLICT (organization_id) DO UPDATE SET\n                   water_demand_liters = EXCLUDED.water_demand_liters,\n                   just_watered_ttl_secs = EXCLUDED.just_watered_ttl_secs,\n                   sensor_offline_after_secs = EXCLUDED.sensor_offline_after_secs,\n                   defect_streak = EXCLUDED.defect_streak,\n                   map_center_lat = EXCLUDED.map_center_lat,\n                   map_center_lng = EXCLUDED.map_center_lng,\n                   map_bbox_sw_lat = EXCLUDED.map_bbox_sw_lat,\n                   map_bbox_sw_lng = EXCLUDED.map_bbox_sw_lng,\n                   map_bbox_ne_lat = EXCLUDED.map_bbox_ne_lat,\n                   map_bbox_ne_lng = EXCLUDED.map_bbox_ne_lng,\n                   map_min_zoom = EXCLUDED.map_min_zoom,\n                   map_max_zoom = EXCLUDED.map_max_zoom,\n                   descendants_may_override = EXCLUDED.descendants_may_override",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Float8",
+        "Int8",
+        "Int8",
+        "Int4",
+        "Float8",
+        "Float8",
+        "Float8",
+        "Float8",
+        "Float8",
+        "Float8",
+        "Int2",
+        "Int2",
+        "Bool"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "5248efa48f91a268ab76241cc1677ad8c195089a1729123b91ad8fe7549cfd73"
+}

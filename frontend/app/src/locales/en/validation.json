@@ -116,6 +116,26 @@
     },
     "just_watered_ttl": {
       "outOfRange": "Just-watered duration must be between {min} and {max}."
+    },
+    "map_view": {
+      "invalidFormat": "The centre must lie inside the chosen extent."
+    }
+  },
+  "geo": {
+    "bbox": {
+      "sw_lat": {
+        "outOfRange": "Southern latitude must be between {min} and {max}."
+      },
+      "sw_lng": {
+        "outOfRange": "Western longitude must be between {min} and {max}."
+      },
+      "ne_lat": {
+        "outOfRange": "Northern latitude must be between {min} and {max}."
+      },
+      "ne_lng": {
+        "outOfRange": "Eastern longitude must be between {min} and {max}."
+      },
+      "invalidFormat": "The extent is invalid: south must be below north and west below east."
     }
   },
   "provenance": {

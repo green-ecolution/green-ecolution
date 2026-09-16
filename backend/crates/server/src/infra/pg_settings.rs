@@ -15,7 +15,10 @@ use domain::{
         EffectiveSettings, InstanceDefaults, OrganizationSettings, OrganizationSettingsSnapshot,
         Resolution, SettingChangeEntry, SettingKey, SettingValue, SettingsReader, SettingsResolver,
         SettingsUpdate, SettingsWriter,
-        values::{DefectStreak, JustWateredTtl, MapView, SensorOfflineAfter, WaterDemand},
+        values::{
+            DefectStreak, JustWateredTtl, MapBounds, MapView, SensorOfflineAfter, WaterDemand,
+            ZoomLevel,
+        },
     },
     shared::{coordinates::Coordinate, geo::BoundingBox},
 };
@@ -49,6 +52,7 @@ impl PgSettingsRepository {
                       map_center_lat, map_center_lng,
                       map_bbox_sw_lat, map_bbox_sw_lng,
                       map_bbox_ne_lat, map_bbox_ne_lng,
+                      map_min_zoom, map_max_zoom,
                       descendants_may_override
                FROM organization_settings"#
         )
@@ -87,25 +91,40 @@ impl PgSettingsRepository {
     }
 }
 
+/// Zoom is a SMALLINT because Postgres has no unsigned type; the column's own
+/// check keeps it inside the domain's range, so this only narrows the type.
+fn zoom_from_db(level: i16) -> Result<u8, RepositoryError> {
+    u8::try_from(level).map_err(|_| {
+        RepositoryError::DataIntegrity(format!("stored zoom level {level} is out of range"))
+    })
+}
+
 /// Rehydration may fail only where the stored row breaks a domain rule the
 /// schema cannot express; that is a data-integrity fault, not a not-found.
 fn reconstitute(
     snap: OrganizationSettingsSnapshot,
 ) -> Result<OrganizationSettings, RepositoryError> {
-    let map_view = match (
-        snap.map_center_lat,
-        snap.map_center_lng,
+    // The six limit columns are set or absent as a whole; the table's check
+    // constraint keeps a half-set group out, so a partial one is impossible.
+    let bounds = match (
         snap.map_bbox_sw_lat,
         snap.map_bbox_sw_lng,
         snap.map_bbox_ne_lat,
         snap.map_bbox_ne_lng,
+        snap.map_min_zoom,
+        snap.map_max_zoom,
     ) {
-        (Some(lat), Some(lng), Some(s_lat), Some(s_lng), Some(n_lat), Some(n_lng)) => {
-            Some(MapView::new(
-                Coordinate::new(lat, lng)?,
+        (Some(s_lat), Some(s_lng), Some(n_lat), Some(n_lng), Some(min), Some(max)) => {
+            Some(MapBounds::new(
                 BoundingBox::try_new(s_lat, s_lng, n_lat, n_lng)?,
+                ZoomLevel::new(zoom_from_db(min)?)?,
+                ZoomLevel::new(zoom_from_db(max)?)?,
             )?)
         }
+        _ => None,
+    };
+    let map_view = match (snap.map_center_lat, snap.map_center_lng) {
+        (Some(lat), Some(lng)) => Some(MapView::new(Coordinate::new(lat, lng)?, bounds)?),
         _ => None,
     };
 
@@ -136,7 +155,12 @@ fn to_json(value: SettingValue) -> serde_json::Value {
         SettingValue::Flag(v) => serde_json::json!(v),
         SettingValue::Viewport(m) => serde_json::json!({
             "center": [m.center().latitude(), m.center().longitude()],
-            "bbox": [m.bbox().sw_lat(), m.bbox().sw_lng(), m.bbox().ne_lat(), m.bbox().ne_lng()],
+            "bbox": m.bounds().map(|b| {
+                let bbox = b.bbox();
+                [bbox.sw_lat(), bbox.sw_lng(), bbox.ne_lat(), bbox.ne_lng()]
+            }),
+            "min_zoom": m.bounds().map(|b| b.min_zoom().level()),
+            "max_zoom": m.bounds().map(|b| b.max_zoom().level()),
         }),
     }
 }
@@ -219,6 +243,7 @@ impl SettingsWriter for PgSettingsRepository {
                       map_center_lat, map_center_lng,
                       map_bbox_sw_lat, map_bbox_sw_lng,
                       map_bbox_ne_lat, map_bbox_ne_lng,
+                      map_min_zoom, map_max_zoom,
                       descendants_may_override
                FROM organization_settings WHERE organization_id = $1 FOR UPDATE"#,
             org.value()
@@ -238,8 +263,9 @@ impl SettingsWriter for PgSettingsRepository {
                    sensor_offline_after_secs, defect_streak,
                    map_center_lat, map_center_lng,
                    map_bbox_sw_lat, map_bbox_sw_lng, map_bbox_ne_lat, map_bbox_ne_lng,
+                   map_min_zoom, map_max_zoom,
                    descendants_may_override)
-               VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+               VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
                ON CONFLICT (organization_id) DO UPDATE SET
                    water_demand_liters = EXCLUDED.water_demand_liters,
                    just_watered_ttl_secs = EXCLUDED.just_watered_ttl_secs,
@@ -251,6 +277,8 @@ impl SettingsWriter for PgSettingsRepository {
                    map_bbox_sw_lng = EXCLUDED.map_bbox_sw_lng,
                    map_bbox_ne_lat = EXCLUDED.map_bbox_ne_lat,
                    map_bbox_ne_lng = EXCLUDED.map_bbox_ne_lng,
+                   map_min_zoom = EXCLUDED.map_min_zoom,
+                   map_max_zoom = EXCLUDED.map_max_zoom,
                    descendants_may_override = EXCLUDED.descendants_may_override"#,
             org.value(),
             next.water_demand.map(|v| v.liters()),
@@ -259,10 +287,14 @@ impl SettingsWriter for PgSettingsRepository {
             next.defect_streak.map(|v| v.count()),
             map.map(|m| m.center().latitude()),
             map.map(|m| m.center().longitude()),
-            map.map(|m| m.bbox().sw_lat()),
-            map.map(|m| m.bbox().sw_lng()),
-            map.map(|m| m.bbox().ne_lat()),
-            map.map(|m| m.bbox().ne_lng()),
+            map.and_then(|m| m.bounds()).map(|b| b.bbox().sw_lat()),
+            map.and_then(|m| m.bounds()).map(|b| b.bbox().sw_lng()),
+            map.and_then(|m| m.bounds()).map(|b| b.bbox().ne_lat()),
+            map.and_then(|m| m.bounds()).map(|b| b.bbox().ne_lng()),
+            map.and_then(|m| m.bounds())
+                .map(|b| i16::from(b.min_zoom().level())),
+            map.and_then(|m| m.bounds())
+                .map(|b| i16::from(b.max_zoom().level())),
             next.descendants_may_override,
         )
         .execute(&mut *tx)

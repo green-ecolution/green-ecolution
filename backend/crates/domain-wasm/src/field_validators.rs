@@ -1,11 +1,12 @@
 use domain::cluster::{ClusterAddress, ClusterName};
 use domain::region::RegionName;
 use domain::sensor::SensorId;
-use domain::settings::{JustWateredTtl, WaterDemand};
+use domain::settings::{JustWateredTtl, MapBounds, MapView, WaterDemand, ZoomLevel};
 use domain::shared::coordinates::Coordinate;
 use domain::shared::distance::Distance;
 use domain::shared::email::Email;
 use domain::shared::error::ValidationError;
+use domain::shared::geo::BoundingBox;
 use domain::shared::phone_number::PhoneNumber;
 use domain::shared::water_capacity::WaterCapacity;
 use domain::tree::{MAX_PLANTING_YEAR, MIN_PLANTING_YEAR, PlantingYear, Species, TreeNumber};
@@ -223,6 +224,46 @@ pub fn just_watered_ttl_min_hours() -> f64 {
 #[wasm_bindgen(js_name = justWateredTtlMaxHours)]
 pub fn just_watered_ttl_max_hours() -> f64 {
     JustWateredTtl::MAX as f64 / SECONDS_PER_HOUR
+}
+
+/// The whole viewport at once, because its rules are relational: the box must
+/// not be inverted and the centre has to lie inside it. Checking centre and
+/// corners separately cannot see either condition.
+///
+/// Leaving the limits out entirely means the map is not penned in, which is a
+/// viewport with nothing to contradict; passing only some of them is a caller
+/// error and is reported as such rather than silently ignored.
+#[wasm_bindgen(js_name = validateMapView)]
+#[allow(clippy::too_many_arguments)] // reason: one flat call per wire field, to keep the JS side free of a wrapper type
+pub fn validate_map_view(
+    center_lat: f64,
+    center_lng: f64,
+    sw_lat: Option<f64>,
+    sw_lng: Option<f64>,
+    ne_lat: Option<f64>,
+    ne_lng: Option<f64>,
+    min_zoom: Option<u8>,
+    max_zoom: Option<u8>,
+) -> Result<JsValue, JsError> {
+    let bounds = match (sw_lat, sw_lng, ne_lat, ne_lng, min_zoom, max_zoom) {
+        (None, None, None, None, None, None) => Ok(None),
+        (Some(s_lat), Some(s_lng), Some(n_lat), Some(n_lng), Some(min), Some(max)) => {
+            BoundingBox::try_new(s_lat, s_lng, n_lat, n_lng).and_then(|bbox| {
+                Ok(Some(MapBounds::new(
+                    bbox,
+                    ZoomLevel::new(min)?,
+                    ZoomLevel::new(max)?,
+                )?))
+            })
+        }
+        _ => Err(ValidationError::InvalidFormat {
+            field: "settings.map_view",
+            reason: "the map limits are given in full or not at all".into(),
+        }),
+    };
+    let view = Coordinate::new(center_lat, center_lng)
+        .and_then(|center| bounds.and_then(|bounds| MapView::new(center, bounds)));
+    finish(view, "mapView")
 }
 
 #[cfg(test)]

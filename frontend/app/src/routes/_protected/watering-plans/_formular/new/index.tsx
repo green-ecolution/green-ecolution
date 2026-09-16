@@ -7,7 +7,7 @@ import BackLink from '@/components/general/links/BackLink'
 import { userQueries, vehicleQueries } from '@/api/queries'
 import { WateringPlanForm } from '@/schema/wateringPlanSchema'
 import FormForWateringPlan from '@/components/general/form/FormForWateringPlan'
-import useStore from '@/store/store'
+import { useMapCenter, useMapZoom } from '@/components/map-gl/useMapView'
 import { useWateringPlanForm } from '@/hooks/form/useWateringPlanForm'
 import { useWateringPlanDraft } from '@/store/form/useFormDraft'
 import UnsavedChangesDialog from '@/components/general/form/UnsavedChangesDialog'
@@ -45,8 +45,8 @@ function NewWateringPlan() {
   )
   const { getValues } = form
 
-  const mapCenter = useStore((state) => state.mapCenter)
-  const mapZoom = useStore((state) => state.mapZoom)
+  const mapCenter = useMapCenter()
+  const mapZoom = useMapZoom()
   const mapPosition = { lat: mapCenter[0], lng: mapCenter[1], zoom: mapZoom }
 
   const onSubmit: SubmitHandler<WateringPlanForm> = (data) => {

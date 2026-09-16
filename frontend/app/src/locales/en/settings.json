@@ -385,6 +385,22 @@
       "justWateredTtlLabel": "Just-watered duration",
       "justWateredTtlHint": "How long a tree counts as just watered after a finished watering plan before it falls back to unknown.",
       "justWateredTtlUnit": "hours",
+      "mapView": {
+        "label": "Map viewport",
+        "hint": "Where the map opens and how far it may be panned. Members of this organization start in this extent and cannot move beyond it.",
+        "pickerHint": "The visible extent becomes the boundary the map may pan in. The marker sets the point the map opens at.",
+        "pickerHintUnrestricted": "The map is not penned in, so the visible extent does not matter. The marker sets the point the map opens at.",
+        "unrestrictedLabel": "No limit",
+        "minZoomLabel": "Zoom from",
+        "maxZoomLabel": "to",
+        "zoomHint": "Lower values show more ground, higher values more detail.",
+        "apply": "Apply this extent",
+        "applyCentre": "Apply this centre",
+        "centre": "Centre {value}",
+        "pickerAriaLabel": "Map for choosing the viewport",
+        "previewAriaLabel": "Preview of the viewport in force",
+        "pinAriaLabel": "Map centre, draggable"
+      },
       "origin": {
         "default": "Instance default",
         "inherited": "Inherited from {name}",

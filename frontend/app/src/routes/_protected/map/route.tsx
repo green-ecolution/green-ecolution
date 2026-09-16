@@ -1,5 +1,5 @@
 import useStore from '@/store/store'
-import { MAP_DEFAULT_CENTER, MAP_MAX_ZOOM, MAP_MIN_ZOOM } from '@/lib/mapConfig'
+import { MAP_ZOOM_SCALE_MAX, MAP_ZOOM_SCALE_MIN } from '@/lib/mapConfig'
 import {
   createFileRoute,
   Outlet,
@@ -21,17 +21,22 @@ import { Suspense, useCallback, useState } from 'react'
 
 const mapSearchParamsSchema = z.object({
   selected: z.string().optional(),
-  lat: z.number().default(MAP_DEFAULT_CENTER[0]).catch(MAP_DEFAULT_CENTER[0]),
-  lng: z.number().default(MAP_DEFAULT_CENTER[1]).catch(MAP_DEFAULT_CENTER[1]),
+  // No default: the absence of a deep link is what lets the organization's own
+  // centre decide where the map opens. A hardcoded fallback here would win over
+  // it on every plain /map visit.
+  lat: z.number().optional().catch(undefined),
+  lng: z.number().optional().catch(undefined),
   clusterId: z.string().optional(),
   sensorId: z.string().optional(),
+  // Checked against the scale, not against a working range: how far this
+  // organization lets its map zoom is a setting, and MapLibre clamps to it.
   zoom: z
     .number()
     .int()
-    .max(MAP_MAX_ZOOM)
-    .min(MAP_MIN_ZOOM)
-    .default(MAP_MIN_ZOOM)
-    .catch(MAP_MIN_ZOOM),
+    .min(MAP_ZOOM_SCALE_MIN)
+    .max(MAP_ZOOM_SCALE_MAX)
+    .optional()
+    .catch(undefined),
 })
 
 export const Route = createFileRoute('/_protected/map')({
@@ -48,7 +53,8 @@ export const Route = createFileRoute('/_protected/map')({
     prefetch(queryClient, clusterQueries.markers(), 'clusterQueries.markers')
     prefetch(queryClient, clusterQueries.boundaries(), 'clusterQueries.boundaries')
 
-    useStore.setState({ mapCenter: [lat, lng], mapZoom: zoom })
+    if (lat != null && lng != null) useStore.setState({ mapCenter: [lat, lng] })
+    if (zoom != null) useStore.setState({ mapZoom: zoom })
 
     return {
       crumb: { titleKey: 'map' as const },

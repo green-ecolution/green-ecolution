@@ -7,11 +7,11 @@ use domain::{
     Id,
     organization::Organization,
     settings::{
-        DefectStreak, JustWateredTtl, MapView, OrganizationSettings, Patch, Resolution,
+        DefectStreak, JustWateredTtl, MapBounds, MapView, OrganizationSettings, Patch, Resolution,
         SensorOfflineAfter, SettingChangeEntry, SettingKey, SettingOrigin, SettingsUpdate,
-        WaterDemand,
+        WaterDemand, ZoomLevel,
     },
-    shared::{coordinates::Coordinate, geo::BoundingBox},
+    shared::{coordinates::Coordinate, error::ValidationError, geo::BoundingBox},
 };
 
 use crate::service::ServiceError;
@@ -58,20 +58,32 @@ pub struct SettingField<T> {
 #[derive(Debug, Serialize, Deserialize, utoipa::ToSchema, Clone, Copy)]
 pub struct MapViewDto {
     pub center: [f64; 2],
-    /// `[sw_lat, sw_lng, ne_lat, ne_lng]`.
-    pub bbox: [f64; 4],
+    /// `[sw_lat, sw_lng, ne_lat, ne_lng]`, or `null` where the map may be
+    /// panned and zoomed freely. Absent reads the same as `null`: the generated
+    /// client parses a null back into `undefined` and then omits the key
+    /// entirely on the way out, so a round-tripped viewport must not be
+    /// rejected.
+    #[serde(default)]
+    pub bbox: Option<[f64; 4]>,
+    /// Set together with `bbox`, never on their own: the limits are one
+    /// decision, and half of them would restrict a map for no stated reason.
+    #[serde(default)]
+    pub min_zoom: Option<u8>,
+    #[serde(default)]
+    pub max_zoom: Option<u8>,
 }
 
 impl From<MapView> for MapViewDto {
     fn from(m: MapView) -> Self {
+        let bounds = m.bounds();
         Self {
             center: [m.center().latitude(), m.center().longitude()],
-            bbox: [
-                m.bbox().sw_lat(),
-                m.bbox().sw_lng(),
-                m.bbox().ne_lat(),
-                m.bbox().ne_lng(),
-            ],
+            bbox: bounds.map(|b| {
+                let bbox = b.bbox();
+                [bbox.sw_lat(), bbox.sw_lng(), bbox.ne_lat(), bbox.ne_lng()]
+            }),
+            min_zoom: bounds.map(|b| b.min_zoom().level()),
+            max_zoom: bounds.map(|b| b.max_zoom().level()),
         }
     }
 }
@@ -81,11 +93,23 @@ impl TryFrom<MapViewDto> for MapView {
 
     fn try_from(dto: MapViewDto) -> Result<Self, Self::Error> {
         let [lat, lng] = dto.center;
-        let [sw_lat, sw_lng, ne_lat, ne_lng] = dto.bbox;
-        Ok(MapView::new(
-            Coordinate::new(lat, lng)?,
-            BoundingBox::try_new(sw_lat, sw_lng, ne_lat, ne_lng)?,
-        )?)
+        let bounds = match (dto.bbox, dto.min_zoom, dto.max_zoom) {
+            (None, None, None) => None,
+            (Some([sw_lat, sw_lng, ne_lat, ne_lng]), Some(min), Some(max)) => Some(MapBounds::new(
+                BoundingBox::try_new(sw_lat, sw_lng, ne_lat, ne_lng)?,
+                ZoomLevel::new(min)?,
+                ZoomLevel::new(max)?,
+            )?),
+            // Naming only part of the group is a caller error, not a viewport
+            // with defaults quietly filled in around it.
+            _ => {
+                return Err(ServiceError::from(ValidationError::InvalidFormat {
+                    field: "settings.map_view",
+                    reason: "bbox, min_zoom and max_zoom are set together or not at all".into(),
+                }));
+            }
+        };
+        Ok(MapView::new(Coordinate::new(lat, lng)?, bounds)?)
     }
 }
 

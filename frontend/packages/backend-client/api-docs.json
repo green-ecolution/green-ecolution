@@ -5636,6 +5636,48 @@
         }
       }
     },
+    "/v1/users/me/map-view": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Get the map viewport for the authenticated user",
+        "description": "Returns the centre and bounding box the map opens at for the caller's organization, resolved along the organization tree. Falls back to the instance default where the account belongs to no organization. Unlike `/info/map`, which stays unauthenticated and always reports the instance default, this answer is organization-specific and therefore requires a token.",
+        "operationId": "getMyMapView",
+        "responses": {
+          "200": {
+            "description": "The map viewport in force for the caller",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MapInfoResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/users/{user_id}": {
       "put": {
         "tags": [
@@ -9265,16 +9307,19 @@
       "MapInfoResponse": {
         "type": "object",
         "required": [
-          "center",
-          "bbox"
+          "center"
         ],
         "properties": {
           "bbox": {
-            "type": "array",
+            "type": [
+              "array",
+              "null"
+            ],
             "items": {
               "type": "number",
               "format": "double"
             },
+            "description": "Absent where the map may be panned anywhere. The instance default\nalways carries one; an organization may choose to drop the limit.",
             "example": [
               54.75,
               9.4,
@@ -9292,23 +9337,44 @@
               54.7937,
               9.4469
             ]
+          },
+          "max_zoom": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "example": 18,
+            "minimum": 0
+          },
+          "min_zoom": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "The zoom range the map is held to, absent together with `bbox`.",
+            "example": 13,
+            "minimum": 0
           }
         }
       },
       "MapViewDto": {
         "type": "object",
         "required": [
-          "center",
-          "bbox"
+          "center"
         ],
         "properties": {
           "bbox": {
-            "type": "array",
+            "type": [
+              "array",
+              "null"
+            ],
             "items": {
               "type": "number",
               "format": "double"
             },
-            "description": "`[sw_lat, sw_lng, ne_lat, ne_lng]`."
+            "description": "`[sw_lat, sw_lng, ne_lat, ne_lng]`, or `null` where the map may be\npanned and zoomed freely. Absent reads the same as `null`: the generated\nclient parses a null back into `undefined` and then omits the key\nentirely on the way out, so a round-tripped viewport must not be\nrejected."
           },
           "center": {
             "type": "array",
@@ -9316,6 +9382,23 @@
               "type": "number",
               "format": "double"
             }
+          },
+          "max_zoom": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "minimum": 0
+          },
+          "min_zoom": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Set together with `bbox`, never on their own: the limits are one\ndecision, and half of them would restrict a map for no stated reason.",
+            "minimum": 0
           }
         }
       },
@@ -10957,17 +11040,19 @@
           "own_value": {
             "type": "object",
             "required": [
-              "center",
-              "bbox"
+              "center"
             ],
             "properties": {
               "bbox": {
-                "type": "array",
+                "type": [
+                  "array",
+                  "null"
+                ],
                 "items": {
                   "type": "number",
                   "format": "double"
                 },
-                "description": "`[sw_lat, sw_lng, ne_lat, ne_lng]`."
+                "description": "`[sw_lat, sw_lng, ne_lat, ne_lng]`, or `null` where the map may be\npanned and zoomed freely. Absent reads the same as `null`: the generated\nclient parses a null back into `undefined` and then omits the key\nentirely on the way out, so a round-tripped viewport must not be\nrejected."
               },
               "center": {
                 "type": "array",
@@ -10975,6 +11060,23 @@
                   "type": "number",
                   "format": "double"
                 }
+              },
+              "max_zoom": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "int32",
+                "minimum": 0
+              },
+              "min_zoom": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "int32",
+                "description": "Set together with `bbox`, never on their own: the limits are one\ndecision, and half of them would restrict a map for no stated reason.",
+                "minimum": 0
               }
             }
           },
@@ -10992,17 +11094,19 @@
           "value": {
             "type": "object",
             "required": [
-              "center",
-              "bbox"
+              "center"
             ],
             "properties": {
               "bbox": {
-                "type": "array",
+                "type": [
+                  "array",
+                  "null"
+                ],
                 "items": {
                   "type": "number",
                   "format": "double"
                 },
-                "description": "`[sw_lat, sw_lng, ne_lat, ne_lng]`."
+                "description": "`[sw_lat, sw_lng, ne_lat, ne_lng]`, or `null` where the map may be\npanned and zoomed freely. Absent reads the same as `null`: the generated\nclient parses a null back into `undefined` and then omits the key\nentirely on the way out, so a round-tripped viewport must not be\nrejected."
               },
               "center": {
                 "type": "array",
@@ -11010,6 +11114,23 @@
                   "type": "number",
                   "format": "double"
                 }
+              },
+              "max_zoom": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "int32",
+                "minimum": 0
+              },
+              "min_zoom": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "int32",
+                "description": "Set together with `bbox`, never on their own: the limits are one\ndecision, and half of them would restrict a map for no stated reason.",
+                "minimum": 0
               }
             }
           }

@@ -68,6 +68,14 @@ export const VALIDATION_KEYS = [
   // Settings
   'settings.water_demand.outOfRange',
   'settings.just_watered_ttl.outOfRange',
+  'settings.map_view.invalidFormat',
+
+  // Bounding box, reachable through the map viewport setting.
+  'geo.bbox.sw_lat.outOfRange',
+  'geo.bbox.sw_lng.outOfRange',
+  'geo.bbox.ne_lat.outOfRange',
+  'geo.bbox.ne_lng.outOfRange',
+  'geo.bbox.invalidFormat',
 
   // Provenance. Only reachable through the server's validation block, not the
   // in-browser validators: a provider is set by an import, never typed in.

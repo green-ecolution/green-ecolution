@@ -116,7 +116,8 @@ fn apply<T: Copy>(
 mod tests {
     use super::*;
     use crate::settings::values::{
-        DefectStreak, JustWateredTtl, MapView, SensorOfflineAfter, WaterDemand,
+        DefectStreak, JustWateredTtl, MapBounds, MapView, SensorOfflineAfter, WaterDemand,
+        ZoomLevel,
     };
     use crate::settings::{InstanceDefaults, OrganizationSettings};
     use crate::shared::{coordinates::Coordinate, geo::BoundingBox};
@@ -129,7 +130,14 @@ mod tests {
             defect_streak: DefectStreak::new(3).unwrap(),
             map_view: MapView::new(
                 Coordinate::new(54.79, 9.43).unwrap(),
-                BoundingBox::try_new(54.71, 9.28, 54.86, 9.58).unwrap(),
+                Some(
+                    MapBounds::new(
+                        BoundingBox::try_new(54.71, 9.28, 54.86, 9.58).unwrap(),
+                        ZoomLevel::new(13).unwrap(),
+                        ZoomLevel::new(18).unwrap(),
+                    )
+                    .unwrap(),
+                ),
             )
             .unwrap(),
         }
