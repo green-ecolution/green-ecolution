@@ -89,24 +89,34 @@ describe('OrganizationSettingsSection', () => {
     expect(badge.className).not.toMatch(/green/)
   })
 
-  it('keeps an inherited field out of reach until it is taken over', async () => {
+  // An inherited value is a statement of where it comes from, not a greyed-out
+  // input: there is nothing to type into until the organization takes it over.
+  it('states an inherited value instead of offering a field for it', async () => {
     render(<OrganizationSettingsSection {...props()} />)
 
-    expect(screen.getByRole('spinbutton', { name: /Wasserbedarf/i })).toBeDisabled()
+    expect(screen.queryByRole('spinbutton', { name: /Wasserbedarf/i })).not.toBeInTheDocument()
+    expect(screen.getByText('80 Liter')).toBeInTheDocument()
     expect(screen.getByRole('spinbutton', { name: /Nachwirkzeit/i })).toBeEnabled()
 
     // The accessible name carries the field, so the two rows stay tellable apart.
     await userEvent.click(
-      screen.getByRole('button', { name: 'Eigenen Wert für Wasserbedarf je Baum (Liter) setzen' }),
+      screen.getByRole('button', { name: 'Eigenen Wert für Wasserbedarf je Baum setzen' }),
     )
     expect(onOwnChange).toHaveBeenCalledWith('waterDemand', true)
+  })
+
+  it('says what each value actually controls', () => {
+    render(<OrganizationSettingsSection {...props()} />)
+
+    expect(screen.getByText(/Bedarfsrechnung jeder Bewässerungsgruppe/)).toBeInTheDocument()
+    expect(screen.getByText(/als soeben bewässert/)).toBeInTheDocument()
   })
 
   it('gives an own value back to inheritance', async () => {
     render(<OrganizationSettingsSection {...props()} />)
 
     await userEvent.click(
-      screen.getByRole('button', { name: 'Nachwirkzeit frisch gegossen (Stunden) wieder erben' }),
+      screen.getByRole('button', { name: 'Nachwirkzeit frisch gegossen wieder erben' }),
     )
     expect(onOwnChange).toHaveBeenCalledWith('justWateredTtlHours', false)
   })
@@ -118,21 +128,24 @@ describe('OrganizationSettingsSection', () => {
     expect(onTextChange).toHaveBeenCalledWith('justWateredTtlHours', '248')
   })
 
-  it('disables the inputs without setting:update', () => {
+  it('reads as a plain overview without setting:update', () => {
     render(<OrganizationSettingsSection {...props({ canUpdate: false })} />)
 
-    expect(screen.getByRole('spinbutton', { name: /Wasserbedarf/i })).toBeDisabled()
-    expect(screen.getByRole('spinbutton', { name: /Nachwirkzeit/i })).toBeDisabled()
+    expect(screen.queryByRole('spinbutton')).not.toBeInTheDocument()
+    expect(screen.getByText('80 Liter')).toBeInTheDocument()
+    expect(screen.getByText('24 Stunden')).toBeInTheDocument()
     expect(screen.getByRole('switch')).toBeDisabled()
-    expect(screen.getByRole('button', { name: /wieder erben/i })).toBeDisabled()
+    // No dead controls: the actions are gone and a line says why.
+    expect(screen.queryByRole('button', { name: /wieder erben/i })).not.toBeInTheDocument()
+    expect(screen.getByText(/ansehen, aber nicht ändern/)).toBeInTheDocument()
   })
 
   it('shows the locking organization and keeps the dormant own value visible', () => {
     render(<OrganizationSettingsSection {...enforced()} />)
 
     expect(screen.getByRole('alert')).toHaveTextContent(/Stadt Flensburg/)
-    expect(screen.getByRole('spinbutton', { name: /Nachwirkzeit/i })).toHaveValue(24)
-    expect(screen.getByRole('spinbutton', { name: /Nachwirkzeit/i })).toBeDisabled()
+    expect(screen.queryByRole('spinbutton', { name: /Nachwirkzeit/i })).not.toBeInTheDocument()
+    expect(screen.getByText('24 Stunden')).toBeInTheDocument()
     expect(screen.getByText(/48 Stunden.*ruht/i)).toBeInTheDocument()
     // The lock covers the switch too — the backend refuses it as well.
     expect(screen.getByRole('switch')).toBeDisabled()
@@ -156,8 +169,10 @@ describe('OrganizationSettingsSection', () => {
       />,
     )
 
+    // The description also carries what the value does and its unit; the error
+    // comes first, so it is the first thing announced.
     expect(screen.getByRole('spinbutton', { name: /Nachwirkzeit/i })).toHaveAccessibleDescription(
-      'Nachwirkzeit muss zwischen 1 und 336 liegen.',
+      /^Nachwirkzeit muss zwischen 1 und 336 liegen\./,
     )
   })
 

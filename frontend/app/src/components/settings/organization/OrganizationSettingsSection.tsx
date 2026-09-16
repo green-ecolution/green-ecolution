@@ -1,7 +1,7 @@
 import { useId } from 'react'
 import { format } from 'date-fns'
 import type { Locale } from 'date-fns'
-import { Lock } from 'lucide-react'
+import { Lock, LockOpen } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
 import {
@@ -17,10 +17,14 @@ import {
   AlertIcon,
   Badge,
   Button,
-  FormField,
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+  InputGroupText,
   Label,
   Separator,
   Switch,
+  cn,
 } from '@green-ecolution/ui'
 import {
   SettingOriginDto,
@@ -84,6 +88,11 @@ const lastChangeLine = (
 
 interface SettingRowProps {
   label: string
+  description: string
+  /** Unit of the input, e.g. "Liter"; the read state carries its own wording. */
+  unit: string
+  /** The value in effect, already worded with its unit, for the read state. */
+  effective: string
   origin: SettingOriginDto
   sourceName: string | null
   /** Own value while a lock above keeps it from taking effect. */
@@ -102,6 +111,9 @@ interface SettingRowProps {
 
 const SettingRow = ({
   label,
+  description,
+  unit,
+  effective,
   origin,
   sourceName,
   dormantValue,
@@ -118,47 +130,96 @@ const SettingRow = ({
 }: SettingRowProps) => {
   const { t } = useTranslation('settings')
   const dateLocale = useDateLocale()
+  const fieldId = useId()
   const history = lastChangeLine(lastChange, dateLocale, t)
+  // A value is a field only while this organization owns it and may change it.
+  // Everywhere else it is a fact to read, not a greyed-out box to puzzle over.
+  const editable = own && !locked
+  const notes = [error && `${fieldId}-error`, `${fieldId}-hint`, `${fieldId}-unit`].filter(Boolean)
 
   return (
-    <div className="flex flex-col gap-2">
-      {/* Colour and wording both come from the stored origin: an unsaved
-          takeover has not moved the value yet, and the toggle below already
-          shows what the person is about to do. */}
-      <Badge variant={origin === 'own' ? 'outline-green-dark' : 'muted'} className="self-start">
-        {originLabel(origin, sourceName, t)}
-      </Badge>
-      <FormField
-        label={label}
-        type="number"
-        inputMode="decimal"
-        min={min}
-        max={max}
-        step={step}
-        value={text}
-        disabled={locked || !own}
-        error={error ?? undefined}
-        onChange={(event) => onText(event.target.value)}
-      />
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={locked}
-          // Both fields can inherit at once, and then two identically named
-          // buttons sit side by side with nothing tying either to its row.
-          aria-label={
-            own
-              ? t('organization.settings.inheritAgainFor', { field: label })
-              : t('organization.settings.setOwnValueFor', { field: label })
-          }
-          onClick={() => onOwn(!own)}
-        >
-          {own ? t('organization.settings.inheritAgain') : t('organization.settings.setOwnValue')}
-        </Button>
-        {history && <p className="text-xs text-dark-600">{history}</p>}
+    <div
+      className={cn(
+        'flex flex-col gap-2 border-l-2 pl-4',
+        // The rail carries the origin down the column, so ownership reads at a
+        // glance without parsing either badge.
+        origin === SettingOriginDto.Own ? 'border-green-dark' : 'border-dark-200',
+      )}
+    >
+      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        {editable ? (
+          <Label htmlFor={fieldId}>{label}</Label>
+        ) : (
+          <p className="text-sm font-medium text-dark">{label}</p>
+        )}
+        {/* Colour and wording both come from the stored origin: an unsaved
+            takeover has not moved the value yet, and the action below already
+            says what the person is about to do. */}
+        <Badge variant={origin === SettingOriginDto.Own ? 'outline-green-dark' : 'muted'}>
+          {originLabel(origin, sourceName, t)}
+        </Badge>
       </div>
+
+      <p id={`${fieldId}-hint`} className="max-w-[62ch] text-sm text-dark-600">
+        {description}
+      </p>
+
+      <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-2">
+        {editable ? (
+          <InputGroup className="w-fit">
+            <InputGroupInput
+              id={fieldId}
+              className="w-24 flex-none"
+              type="number"
+              inputMode="decimal"
+              min={min}
+              max={max}
+              step={step}
+              value={text}
+              aria-invalid={!!error}
+              aria-describedby={notes.join(' ')}
+              onChange={(event) => onText(event.target.value)}
+            />
+            <InputGroupAddon align="inline-end">
+              <InputGroupText id={`${fieldId}-unit`}>{unit}</InputGroupText>
+            </InputGroupAddon>
+          </InputGroup>
+        ) : (
+          <p className="flex h-10 items-center rounded-lg bg-dark-50 px-3 font-lato text-base font-semibold text-dark">
+            {effective}
+          </p>
+        )}
+        {!locked && (
+          <Button
+            type="button"
+            variant="link"
+            size="sm"
+            className="h-auto px-0 text-sm"
+            // Both fields can inherit at once, and then two identically named
+            // actions sit side by side with nothing tying either to its row.
+            aria-label={
+              own
+                ? t('organization.settings.inheritAgainFor', { field: label })
+                : t('organization.settings.setOwnValueFor', { field: label })
+            }
+            onClick={() => onOwn(!own)}
+          >
+            {own ? t('organization.settings.inheritAgain') : t('organization.settings.setOwnValue')}
+          </Button>
+        )}
+      </div>
+
+      {error && (
+        <p
+          id={`${fieldId}-error`}
+          role="alert"
+          aria-live="assertive"
+          className="text-sm text-destructive"
+        >
+          {error}
+        </p>
+      )}
+      {history && <p className="text-xs text-dark-600">{history}</p>}
       {dormantValue && (
         <p className="text-xs text-dark-600">
           {t('organization.settings.dormantOwnValue', { value: dormantValue })}
@@ -190,13 +251,16 @@ const OrganizationSettingsSection = ({
 
   const waterDemandOwnValue = settings.waterDemand.ownValue
   const ttlOwnValue = settings.justWateredTtlSecs.ownValue
+  const liters = (value: number) => t('organization.settings.liters', { count: value })
+  const hours = (seconds: number) => t('organization.settings.hours', { count: hoursOf(seconds) })
+  const descendantsMayOverride = draft.descendantsMayOverride
 
   return (
     <section className={CARD}>
       <h3 className={CARD_TITLE}>{t('organization.settings.title')}</h3>
-      <p className="mt-0.5 text-sm text-dark-600">{t('organization.settings.hint')}</p>
+      <p className="mt-1 max-w-[70ch] text-sm text-dark-600">{t('organization.settings.hint')}</p>
 
-      {enforced && (
+      {enforced ? (
         <Alert variant="info" size="default" className="mt-4 flex w-full gap-4" role="alert">
           <AlertIcon variant="info" icon={Lock} />
           <AlertContent>
@@ -207,17 +271,24 @@ const OrganizationSettingsSection = ({
             </AlertDescription>
           </AlertContent>
         </Alert>
+      ) : (
+        // Without the permission the take-over actions are gone; say why rather
+        // than leave an unexplained gap where they were.
+        !canUpdate && (
+          <p className="mt-2 text-sm text-dark-600">{t('organization.settings.readOnlyNotice')}</p>
+        )
       )}
 
-      <div className="mt-4 grid gap-6 @min-[48rem]:grid-cols-2">
+      <div className="mt-5 grid gap-6 @min-[48rem]:grid-cols-2">
         <SettingRow
           label={t('organization.settings.waterDemandLabel')}
+          description={t('organization.settings.waterDemandHint')}
+          unit={t('organization.settings.waterDemandUnit')}
+          effective={liters(settings.waterDemand.value)}
           origin={settings.waterDemand.origin}
           sourceName={sourceNames.waterDemand}
           dormantValue={
-            enforced && waterDemandOwnValue != null
-              ? t('organization.settings.liters', { count: waterDemandOwnValue })
-              : null
+            enforced && waterDemandOwnValue != null ? liters(waterDemandOwnValue) : null
           }
           lastChange={settings.waterDemand.lastChange}
           text={draft.waterDemand.text}
@@ -232,13 +303,12 @@ const OrganizationSettingsSection = ({
         />
         <SettingRow
           label={t('organization.settings.justWateredTtlLabel')}
+          description={t('organization.settings.justWateredTtlHint')}
+          unit={t('organization.settings.justWateredTtlUnit')}
+          effective={hours(settings.justWateredTtlSecs.value)}
           origin={settings.justWateredTtlSecs.origin}
           sourceName={sourceNames.justWateredTtlHours}
-          dormantValue={
-            enforced && ttlOwnValue != null
-              ? t('organization.settings.hours', { count: hoursOf(ttlOwnValue) })
-              : null
-          }
+          dormantValue={enforced && ttlOwnValue != null ? hours(ttlOwnValue) : null}
           lastChange={settings.justWateredTtlSecs.lastChange}
           text={draft.justWateredTtlHours.text}
           own={draft.justWateredTtlHours.own}
@@ -254,16 +324,27 @@ const OrganizationSettingsSection = ({
 
       <Separator className="my-5" />
 
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <Label htmlFor={switchId}>{t('organization.settings.descendantsLabel')}</Label>
-          <p className="mt-0.5 text-sm text-dark-600">
-            {t('organization.settings.descendantsHint')}
-          </p>
+      <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
+        <div className="flex min-w-0 flex-1 gap-3">
+          {descendantsMayOverride ? (
+            <LockOpen className="mt-0.5 size-4 shrink-0 text-dark-500" aria-hidden />
+          ) : (
+            <Lock className="mt-0.5 size-4 shrink-0 text-dark" aria-hidden />
+          )}
+          <div className="min-w-0">
+            <Label htmlFor={switchId}>{t('organization.settings.descendantsLabel')}</Label>
+            {/* The consequence of switching it off reaches the whole subtree, so
+                spell out the state the person is in rather than both at once. */}
+            <p className="mt-1 max-w-[62ch] text-sm text-dark-600">
+              {descendantsMayOverride
+                ? t('organization.settings.descendantsHintOn')
+                : t('organization.settings.descendantsHintOff')}
+            </p>
+          </div>
         </div>
         <Switch
           id={switchId}
-          checked={draft.descendantsMayOverride}
+          checked={descendantsMayOverride}
           disabled={locked}
           onCheckedChange={onDescendantsMayOverrideChange}
         />

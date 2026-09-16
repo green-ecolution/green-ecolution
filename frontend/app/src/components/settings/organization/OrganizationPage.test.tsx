@@ -777,7 +777,8 @@ describe('OrganizationPage', () => {
     render(<OrganizationPage />)
 
     expect(screen.getByText('Fachliche Vorgaben')).toBeInTheDocument()
-    expect(screen.getByRole('spinbutton', { name: /Nachwirkzeit/ })).toBeDisabled()
+    expect(screen.queryByRole('spinbutton', { name: /Nachwirkzeit/ })).not.toBeInTheDocument()
+    expect(cardOf('Fachliche Vorgaben').getByText('24 Stunden')).toBeInTheDocument()
     expect(screen.getByRole('switch')).toBeDisabled()
   })
 

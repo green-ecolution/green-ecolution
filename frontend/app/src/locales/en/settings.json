@@ -378,9 +378,14 @@
     },
     "settings": {
       "title": "Operational defaults",
-      "hint": "These values apply to this organization and to every sub-unit that has not set its own.",
-      "waterDemandLabel": "Water demand per tree (liters)",
-      "justWateredTtlLabel": "Just-watered duration (hours)",
+      "hint": "These values apply to this organization and to every sub-unit that has not set its own. Without an own value a sub-unit follows its parent organization, all the way up to the instance default.",
+      "readOnlyNotice": "You can view these defaults but not change them.",
+      "waterDemandLabel": "Water demand per tree",
+      "waterDemandHint": "Feeds the demand calculation of every watering group and decides how many groups a route plan puts into one trip. Watering plans that already exist stay as they are.",
+      "waterDemandUnit": "liters",
+      "justWateredTtlLabel": "Just-watered duration",
+      "justWateredTtlHint": "How long a tree counts as just watered after a finished watering plan before it falls back to unknown.",
+      "justWateredTtlUnit": "hours",
       "origin": {
         "default": "Instance default",
         "inherited": "Inherited from {name}",
@@ -401,7 +406,8 @@
       "enforcedNotice": "{name} has locked the defaults for this organization. The values from there apply and cannot be overridden here.",
       "enforcedNoticeUnknown": "A parent organization has locked the defaults for this organization. The values from there apply and cannot be overridden here.",
       "descendantsLabel": "Sub-units may set their own values",
-      "descendantsHint": "With the switch off these defaults are binding for every sub-unit and cannot be changed there.",
+      "descendantsHintOn": "A sub-unit that sets none keeps following what is set here.",
+      "descendantsHintOff": "These defaults are binding for every sub-unit. The section is read-only there.",
       "loadErrorForbidden": "You aren't allowed to view this organization's defaults. Your role probably only applies to a sub-organization.",
       "loadErrorGeneric": "The defaults could not be loaded. Please try again later.",
       "toast": {

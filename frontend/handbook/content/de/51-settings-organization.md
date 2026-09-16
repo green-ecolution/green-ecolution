@@ -80,17 +80,20 @@ Bewässerungszustand zeigt er erst wieder, sobald tatsächlich neue Messwerte ei
 Eine Änderung der Nachwirkzeit wirkt beim nächsten Lauf des dafür zuständigen
 Hintergrundjobs, ohne dass die Anwendung dafür neu gestartet werden müsste.
 
-Jeder der beiden Werte trägt ein Abzeichen, das seine Herkunft zeigt: **Vorgabe der
-Instanz** für den mitgelieferten Standardwert, **Geerbt von …** mit dem Namen der
-Organisation, von der der Wert stammt, oder **Eigener Wert**, wenn diese Organisation
-selbst einen gesetzt hat. Ohne eigenen Wert übernimmt eine Organisation also
-automatisch, was ihre übergeordnete Organisation vorgibt, den Baum hinauf bis zur
-obersten Organisation und von dort zur Vorgabe der Instanz. Über **Eigenen Wert
-setzen** löst du ein Feld aus dieser Vererbung und trägst eine eigene Zahl ein; **Wieder
-erben** verwirft den eigenen Wert wieder, und die Organisation folgt von da an erneut
-dem geerbten Wert. Unter dem Feld steht, wann und von wem der Wert zuletzt geändert
-wurde, sofern das schon einmal geschehen ist; das beantwortet die Frage, wer für eine
-überraschende Änderung verantwortlich ist.
+Unter dem Namen jedes Werts steht, was er bewirkt, und daneben ein Abzeichen, das
+seine Herkunft zeigt: **Vorgabe der Instanz** für den mitgelieferten Standardwert,
+**Geerbt von …** mit dem Namen der Organisation, von der der Wert stammt, oder
+**Eigener Wert**, wenn diese Organisation selbst einen gesetzt hat. Ohne eigenen Wert
+übernimmt eine Organisation also automatisch, was ihre übergeordnete Organisation
+vorgibt, den Baum hinauf bis zur obersten Organisation und von dort zur Vorgabe der
+Instanz. Ein geerbter Wert steht schlicht als Zahl mit seiner Einheit da, denn es gibt
+nichts einzutragen, solange er von woanders kommt; erst über **Eigenen Wert setzen**
+wird daraus ein Eingabefeld, in das du eine eigene Zahl schreibst. **Wieder erben**
+verwirft den eigenen Wert, und die Organisation folgt von da an erneut dem geerbten.
+Ein senkrechter Strich links an jedem Wert greift dieselbe Unterscheidung auf: grün,
+solange die Organisation den Wert selbst setzt, sonst grau. Darunter steht, wann und
+von wem der Wert zuletzt geändert wurde, sofern das schon einmal geschehen ist; das
+beantwortet die Frage, wer für eine überraschende Änderung verantwortlich ist.
 
 ![Der Abschnitt Fachliche Vorgaben mit einem geerbten und einem eigenen Wert](../images/settings-organization-values.png)
 
@@ -100,10 +103,13 @@ Steht er aus, sperrt die Organisation die Vorgaben für ihren gesamten Ast: Der
 Abschnitt einer betroffenen Untereinheit wird dadurch nur noch lesbar, ein Hinweis oben
 im Abschnitt nennt die sperrende Organisation, und es gelten dort deren Werte, nicht
 mehr die eigenen. Hatte eine Untereinheit vor der Sperre bereits einen eigenen Wert
-gesetzt, bleibt er sichtbar, unter dem Feld steht aber, dass er ruht, solange die
+gesetzt, bleibt er sichtbar, unter dem Wert steht aber, dass er ruht, solange die
 Sperre gilt; er kommt unverändert wieder zum Tragen, sobald sie wieder aufgehoben
-wird.
+wird. Der Satz unter dem Schalter beschreibt jeweils den Zustand, in dem er gerade
+steht, damit die Tragweite des Ausschaltens nicht erst beim Ausprobieren auffällt.
 
 Zum Ändern eines Werts oder des Schalters brauchst du zusätzlich zu `setting:read` die
-Berechtigung `setting:update`; ohne sie zeigt die Anwendung den Abschnitt nur an. Wie
-die übrigen Stammdaten dieser Seite wirkt eine Änderung erst mit **Speichern**.
+Berechtigung `setting:update`. Ohne sie zeigt die Anwendung den Abschnitt nur an: alle
+Werte stehen als Zahl da, **Eigenen Wert setzen** und **Wieder erben** fehlen, und ein
+Hinweis oben im Abschnitt sagt, dass du die Vorgaben ansehen, aber nicht ändern kannst.
+Wie die übrigen Stammdaten dieser Seite wirkt eine Änderung erst mit **Speichern**.
