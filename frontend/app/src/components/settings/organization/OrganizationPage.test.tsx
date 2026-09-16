@@ -124,10 +124,8 @@ vi.mock('@/hooks/useSettingsMutations', () => ({
 const blockerStatus = vi.fn((): string => 'idle')
 const blockerProceed = vi.fn()
 const blockerReset = vi.fn()
-const routeSearch = vi.fn((): Record<string, unknown> => ({}))
 vi.mock('@tanstack/react-router', () => ({
   useBlocker: () => ({ status: blockerStatus(), proceed: blockerProceed, reset: blockerReset }),
-  useSearch: () => routeSearch(),
   Link: ({ children }: { children: ReactNode }) => <a href="#link">{children}</a>,
 }))
 
@@ -206,7 +204,6 @@ describe('OrganizationPage', () => {
     permissions.mockReturnValue(UNRESTRICTED)
     isWide.mockReturnValue(true)
     ownOrgId.mockReturnValue('amt')
-    routeSearch.mockReturnValue({})
     blockerStatus.mockReturnValue('idle')
     createError.mockReturnValue(null)
     updateError.mockReturnValue(null)
@@ -793,53 +790,5 @@ describe('OrganizationPage', () => {
 
     const drawer = await screen.findByRole('dialog')
     expect(within(drawer).getByRole('textbox', { name: 'Name' })).toHaveValue('Stadtgärtnerei Nord')
-  })
-
-  describe('the ?org= shortcut from the settings navigation', () => {
-    it('selects the named organization and opens its detail view', async () => {
-      isWide.mockReturnValue(false)
-      routeSearch.mockReturnValue({ org: 'nord' })
-      render(<OrganizationPage />)
-
-      const drawer = await screen.findByRole('dialog')
-      expect(within(drawer).getByRole('textbox', { name: 'Name' })).toHaveValue(
-        'Stadtgärtnerei Nord',
-      )
-    })
-
-    it('is overridden by a later click in the tree', async () => {
-      routeSearch.mockReturnValue({ org: 'nord' })
-      render(<OrganizationPage />)
-
-      await waitFor(() =>
-        expect(screen.getByRole('textbox', { name: 'Name' })).toHaveValue('Stadtgärtnerei Nord'),
-      )
-
-      // A tree click never touches the URL, so the same `?org=` stays in place
-      // while the local selection moves on.
-      await userEvent.click(tree().getByRole('button', { name: /Grünflächenamt/ }))
-
-      expect(screen.getByRole('textbox', { name: 'Name' })).toHaveValue('Grünflächenamt')
-    })
-
-    it('still asks before discarding an unsaved edit instead of switching silently', async () => {
-      routeSearch.mockReturnValue({})
-      const { rerender } = render(<OrganizationPage />)
-      await selectNord()
-      await userEvent.type(screen.getByRole('textbox', { name: 'Name' }), ' Ost')
-
-      routeSearch.mockReturnValue({ org: 'amt' })
-      rerender(<OrganizationPage />)
-
-      expect(await screen.findByText('Änderungen verwerfen?')).toBeInTheDocument()
-      // The modal hides the pane from the a11y tree, so probe the still-mounted draft.
-      expect(screen.getByDisplayValue('Stadtgärtnerei Nord Ost')).toBeInTheDocument()
-
-      await userEvent.click(screen.getByRole('button', { name: 'Verwerfen' }))
-
-      await waitFor(() =>
-        expect(screen.getByRole('textbox', { name: 'Name' })).toHaveValue('Grünflächenamt'),
-      )
-    })
   })
 })

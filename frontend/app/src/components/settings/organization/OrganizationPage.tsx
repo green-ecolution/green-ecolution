@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState, type CSSProperties } from 'react'
+import { useEffect, useState, type CSSProperties } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { useBlocker, useSearch } from '@tanstack/react-router'
+import { useBlocker } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
 import {
@@ -159,39 +159,6 @@ const OrganizationPage = () => {
     enableBeforeUnload: () => unsaved,
     withResolver: true,
   })
-
-  const search = useSearch({ strict: false })
-  // The empty string is the nav's own-org sentinel for an id it doesn't have yet
-  // (see SettingsLayout), never a real selection.
-  const requestedOrgId =
-    'org' in search && typeof search.org === 'string' && search.org.length > 0 ? search.org : null
-
-  // Read inside the effect below without joining its dependency array: the
-  // effect must react only to `requestedOrgId` changing, not to every
-  // keystroke that flips `unsaved` on an org it already navigated to.
-  const unsavedRef = useRef(unsaved)
-  const selectedIdRef = useRef(selectedId)
-  useEffect(() => {
-    unsavedRef.current = unsaved
-    selectedIdRef.current = selectedId
-  })
-
-  useEffect(() => {
-    // `?org=` is the "my organization" shortcut's entry point, not the tree's
-    // sole source of truth: it seeds the selection once per value, but a plain
-    // tree click never touches the URL, so it's free to move on from here.
-    if (requestedOrgId === null || requestedOrgId === selectedIdRef.current) return
-    if (unsavedRef.current) {
-      // Same discard prompt a tree click would trigger — the shortcut must not
-      // silently overwrite an edit in progress.
-      setPendingSelection(requestedOrgId)
-      return
-    }
-    // eslint-disable-next-line react-x/set-state-in-effect -- seeds the selection from the `?org=` entry point
-    setSelection(requestedOrgId)
-    // eslint-disable-next-line react-x/set-state-in-effect -- opens the detail view the shortcut points to
-    setDetailOpen(true)
-  }, [requestedOrgId])
 
   useEffect(() => {
     // Keyed on the object, not the id: after a save the invalidated query hands

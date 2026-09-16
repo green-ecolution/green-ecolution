@@ -5,10 +5,9 @@ import { SETTINGS_NAV, visibleSettingsNav } from './settingsNav'
 const keysOf = (items: { key: string }[]) => items.map((item) => item.key)
 
 describe('SETTINGS_NAV', () => {
-  it('lists the six settings pages in order', () => {
+  it('lists the five settings pages in order', () => {
     expect(keysOf(SETTINGS_NAV)).toEqual([
       'profile',
-      'myOrganization',
       'organization',
       'notifications',
       'team',
@@ -59,22 +58,5 @@ describe('visibleSettingsNav', () => {
   it('always keeps profile', () => {
     const visible = visibleSettingsNav(SETTINGS_NAV, new Set(), new Set())
     expect(keysOf(visible)).toContain('profile')
-  })
-
-  it('offers the own organization shortcut only with both setting:read and organization:read', () => {
-    expect(
-      keysOf(
-        visibleSettingsNav(SETTINGS_NAV, new Set(['setting:read', 'organization:read']), new Set()),
-      ),
-    ).toContain('myOrganization')
-    expect(
-      keysOf(visibleSettingsNav(SETTINGS_NAV, new Set(['organization:read']), new Set())),
-    ).not.toContain('myOrganization')
-    // The Beobachter template holds exactly this combination: setting:read without
-    // organization:read. The page it links to fetches the organization tree
-    // regardless, so setting:read alone would land on a load error.
-    expect(
-      keysOf(visibleSettingsNav(SETTINGS_NAV, new Set(['setting:read']), new Set())),
-    ).not.toContain('myOrganization')
   })
 })

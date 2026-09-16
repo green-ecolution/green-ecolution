@@ -11,11 +11,6 @@ routes: ['/settings/organization']
 > **Organisation** in deiner Einstellungsnavigation gar nicht erst auf; wende dich an
 > die Verwaltung deiner Organisation, wenn du sie brauchst.
 
-Neben **Organisation** führt ein zweiter Eintrag in der Einstellungsnavigation auf
-dieselbe Seite: **Meine Organisation** springt direkt zur eigenen Organisation, ohne
-dass du sie erst im Baum suchen musst. Du siehst ihn, wenn du zusätzlich zu
-`organization:read` auch `setting:read` besitzt.
-
 ## Der Organisationsbaum
 
 Jede Organisation in Green Ecolution ist ein Knoten in einem Baum: Sie hat höchstens
