@@ -48,6 +48,13 @@ const MEMBERS_PER_PAGE = 100
 const loadErrorMessage = (error: unknown, t: TFunction<'settings'>): string =>
   t(statusOf(error) === 403 ? 'organization.loadErrorForbidden' : 'organization.loadErrorGeneric')
 
+const settingsLoadErrorMessage = (error: unknown, t: TFunction<'settings'>): string =>
+  t(
+    statusOf(error) === 403
+      ? 'organization.settings.loadErrorForbidden'
+      : 'organization.settings.loadErrorGeneric',
+  )
+
 const nameConflictMessage = (error: unknown, t: TFunction<'settings'>): string | null =>
   statusOf(error) === 409 ? t('organization.nameConflict') : null
 
@@ -129,7 +136,7 @@ const OrganizationPage = () => {
     enabled: canReadUsers && selectedId !== null,
   })
 
-  const { data: settings } = useQuery({
+  const { data: settings, error: settingsError } = useQuery({
     ...settingsQueries.byOrganization(selectedId ?? ''),
     enabled: canReadSettings && selectedId !== null,
   })
@@ -409,23 +416,28 @@ const OrganizationPage = () => {
     return (orgs ?? []).find((org) => org.id === orgId)?.name ?? null
   }
 
-  const settingsSection =
-    canReadSettings && settings && settingsDraft.draft ? (
-      <OrganizationSettingsSection
-        settings={settings}
-        draft={settingsDraft.draft}
-        errors={settingsDraft.errors}
-        canUpdate={canUpdateSettings}
-        enforcedByName={nameOfOrg(settings.enforcedBy?.id)}
-        sourceNames={{
-          waterDemand: nameOfOrg(settings.waterDemand.source?.id),
-          justWateredTtlHours: nameOfOrg(settings.justWateredTtlSecs.source?.id),
-        }}
-        onOwnChange={settingsDraft.setOwn}
-        onTextChange={settingsDraft.setText}
-        onDescendantsMayOverrideChange={settingsDraft.setDescendantsMayOverride}
-      />
-    ) : null
+  // Without `setting:read` the section is absent by design; a failed request is
+  // a different thing and must not look the same.
+  const settingsSection = !canReadSettings ? null : settingsError ? (
+    <p role="alert" className="text-sm text-dark-600">
+      {settingsLoadErrorMessage(settingsError, t)}
+    </p>
+  ) : settings && settingsDraft.draft ? (
+    <OrganizationSettingsSection
+      settings={settings}
+      draft={settingsDraft.draft}
+      errors={settingsDraft.errors}
+      canUpdate={canUpdateSettings}
+      enforcedByName={nameOfOrg(settings.enforcedBy?.id)}
+      sourceNames={{
+        waterDemand: nameOfOrg(settings.waterDemand.source?.id),
+        justWateredTtlHours: nameOfOrg(settings.justWateredTtlSecs.source?.id),
+      }}
+      onOwnChange={settingsDraft.setOwn}
+      onTextChange={settingsDraft.setText}
+      onDescendantsMayOverrideChange={settingsDraft.setDescendantsMayOverride}
+    />
+  ) : null
 
   const renderDetail = (renderActionBar: boolean) => {
     if (detailError) {

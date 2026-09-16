@@ -402,6 +402,8 @@
       "enforcedNoticeUnknown": "Eine übergeordnete Organisation hat die Vorgaben für diese Organisation gesperrt. Es gelten die Werte von dort, eigene Eingaben sind hier nicht möglich.",
       "descendantsLabel": "Untereinheiten dürfen eigene Werte setzen",
       "descendantsHint": "Ist der Schalter aus, gelten diese Vorgaben für alle Untereinheiten verbindlich und können dort nicht geändert werden.",
+      "loadErrorForbidden": "Du darfst die Vorgaben dieser Organisation nicht einsehen. Vermutlich gilt deine Rolle nur für eine untergeordnete Organisation.",
+      "loadErrorGeneric": "Die Vorgaben konnten nicht geladen werden. Bitte versuche es später erneut.",
       "toast": {
         "saved": "Einstellungen gespeichert",
         "saveFailed": "Die Einstellungen konnten nicht gespeichert werden.",

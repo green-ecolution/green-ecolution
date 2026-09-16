@@ -134,6 +134,7 @@ vi.mock('@tanstack/react-router', () => ({
 const ownOrgId = vi.fn((): string => 'amt')
 const listError = vi.fn((): unknown => null)
 const detailError = vi.fn((): unknown => null)
+const settingsError = vi.fn((): unknown => null)
 
 vi.mock('@tanstack/react-query', async () => {
   const actual =
@@ -167,7 +168,7 @@ vi.mock('@tanstack/react-query', async () => {
       if (scope === 'organizations' && third === 'settings') {
         // Honouring `enabled` is what makes the missing-permission case real.
         const data = options.enabled === false ? undefined : settingsMap[second as string]
-        return { data, isLoading: false }
+        return { data, isLoading: false, error: settingsError() }
       }
       if (scope === 'organizations') {
         return { data: detailMap[second as string], isLoading: false, error: detailError() }
@@ -211,6 +212,7 @@ describe('OrganizationPage', () => {
     updateError.mockReturnValue(null)
     listError.mockReturnValue(null)
     detailError.mockReturnValue(null)
+    settingsError.mockReturnValue(null)
     updateMutate.mockReset()
     createMutate.mockImplementation(
       (
@@ -755,6 +757,17 @@ describe('OrganizationPage', () => {
     render(<OrganizationPage />)
 
     expect(screen.queryByText('Fachliche Vorgaben')).not.toBeInTheDocument()
+  })
+
+  // Silently dropping the section would look exactly like the case above, so a
+  // 403 on the settings alone has to say what happened.
+  it('reports a failed settings load instead of hiding the section', () => {
+    settingsError.mockReturnValue({ response: { status: 403 } })
+    render(<OrganizationPage />)
+
+    expect(screen.getByRole('alert')).toHaveTextContent(/Vorgaben dieser Organisation nicht/)
+    // The rest of the detail view is unaffected — only the settings failed.
+    expect(screen.getByRole('textbox', { name: 'Name' })).toBeInTheDocument()
   })
 
   it('shows the settings read-only without setting:update', () => {

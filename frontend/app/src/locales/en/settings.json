@@ -402,6 +402,8 @@
       "enforcedNoticeUnknown": "A parent organization has locked the defaults for this organization. The values from there apply and cannot be overridden here.",
       "descendantsLabel": "Sub-units may set their own values",
       "descendantsHint": "With the switch off these defaults are binding for every sub-unit and cannot be changed there.",
+      "loadErrorForbidden": "You aren't allowed to view this organization's defaults. Your role probably only applies to a sub-organization.",
+      "loadErrorGeneric": "The defaults could not be loaded. Please try again later.",
       "toast": {
         "saved": "Settings saved",
         "saveFailed": "The settings could not be saved.",
