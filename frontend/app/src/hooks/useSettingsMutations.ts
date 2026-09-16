@@ -23,6 +23,9 @@ export const useSettingsMutations = () => {
       }),
     onSuccess: (_data, { orgId }) => {
       void queryClient.invalidateQueries({ queryKey: ['organizations', orgId, 'settings'] })
+      // Saving any organization in the caller's own chain moves the viewport
+      // their map opens at, and the answer is cached until told otherwise.
+      void queryClient.invalidateQueries({ queryKey: ['users', 'me', 'map-view'] })
       showToast(t('organization.settings.toast.saved'))
     },
     onError: (error) => {

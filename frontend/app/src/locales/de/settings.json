@@ -385,6 +385,22 @@
       "justWateredTtlLabel": "Nachwirkzeit frisch gegossen",
       "justWateredTtlHint": "So lange gilt ein Baum nach einem abgeschlossenen Einsatzplan als soeben bewässert, bevor er auf Unbekannt zurückfällt.",
       "justWateredTtlUnit": "Stunden",
+      "mapView": {
+        "label": "Kartenausschnitt",
+        "hint": "Wo die Karte aufgeht und welchen Bereich sie freigibt. Mitarbeitende dieser Organisation starten in diesem Ausschnitt und können nicht darüber hinaus schwenken.",
+        "pickerHint": "Der sichtbare Bereich wird zur Grenze, in der die Karte schwenken darf. Die Markierung setzt den Punkt, an dem die Karte aufgeht.",
+        "pickerHintUnrestricted": "Die Karte ist nicht eingegrenzt, der sichtbare Bereich spielt also keine Rolle. Die Markierung setzt den Punkt, an dem die Karte aufgeht.",
+        "unrestrictedLabel": "Keine Einschränkung",
+        "minZoomLabel": "Zoom von",
+        "maxZoomLabel": "bis",
+        "zoomHint": "Kleine Werte zeigen mehr Fläche, große Werte mehr Detail.",
+        "apply": "Ausschnitt übernehmen",
+        "applyCentre": "Mittelpunkt übernehmen",
+        "centre": "Mittelpunkt {value}",
+        "pickerAriaLabel": "Karte zum Festlegen des Ausschnitts",
+        "previewAriaLabel": "Vorschau des geltenden Kartenausschnitts",
+        "pinAriaLabel": "Mittelpunkt der Karte, ziehbar"
+      },
       "origin": {
         "default": "Vorgabe der Instanz",
         "inherited": "Geerbt von {name}",

@@ -116,6 +116,26 @@
     },
     "just_watered_ttl": {
       "outOfRange": "Nachwirkzeit muss zwischen {min} und {max} liegen."
+    },
+    "map_view": {
+      "invalidFormat": "Der Mittelpunkt muss innerhalb des gewählten Ausschnitts liegen."
+    }
+  },
+  "geo": {
+    "bbox": {
+      "sw_lat": {
+        "outOfRange": "Südlicher Breitengrad muss zwischen {min} und {max} liegen."
+      },
+      "sw_lng": {
+        "outOfRange": "Westlicher Längengrad muss zwischen {min} und {max} liegen."
+      },
+      "ne_lat": {
+        "outOfRange": "Nördlicher Breitengrad muss zwischen {min} und {max} liegen."
+      },
+      "ne_lng": {
+        "outOfRange": "Östlicher Längengrad muss zwischen {min} und {max} liegen."
+      },
+      "invalidFormat": "Der Ausschnitt ist ungültig: Süd muss unter Nord und West unter Ost liegen."
     }
   },
   "provenance": {
