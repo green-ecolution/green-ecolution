@@ -483,3 +483,21 @@ async fn a_hand_edited_role_is_left_alone_by_the_setting_migration() {
 
     assert_eq!(permissions, vec!["tree:read".to_string()]);
 }
+
+// The "Meine Organisation" entry requires both rights at once, so a template
+// that carries only one of them sends its holders to a load error.
+#[tokio::test]
+async fn the_observer_template_can_reach_the_organization_settings() {
+    let app = spawn_app().await;
+
+    let permissions = sqlx::query_scalar!(
+        r#"SELECT permissions AS "permissions!" FROM roles
+           WHERE organization_id IS NULL AND template_key = 'observer'"#
+    )
+    .fetch_one(&app.db_pool)
+    .await
+    .unwrap();
+
+    assert!(permissions.iter().any(|p| p == "setting:read"));
+    assert!(permissions.iter().any(|p| p == "organization:read"));
+}
