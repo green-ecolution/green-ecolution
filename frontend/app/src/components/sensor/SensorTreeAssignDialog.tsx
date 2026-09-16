@@ -17,10 +17,10 @@ import type { ExpressionSpecification, LngLatBoundsLike } from 'maplibre-gl'
 import { WateringStatus } from '@/api/backendApi'
 import type { Sensor, TreeResponse } from '@/api/backendApi'
 import { treeQueries } from '@/api/queries'
-import useStore from '@/store/store'
 import { useTreeSearch } from '@/hooks/useTreeSearch'
 import { useMaplibreMap } from '@/components/map-gl/MapContext'
 import MapPreview from '@/components/map-gl/MapPreview'
+import { useMapCenter, useMapZoom } from '@/components/map-gl/useMapView'
 import useTreeMarkerLayer, {
   type TreeMarkerPoint,
 } from '@/components/map-gl/layers/useTreeMarkerLayer'
@@ -137,8 +137,8 @@ const DialogBody = ({
   )
   const [showAll, setShowAll] = useState(false)
   const { items, enabled } = useTreeSearch(q, showAll)
-  const mapCenter = useStore((s) => s.mapCenter)
-  const mapZoom = useStore((s) => s.mapZoom)
+  const mapCenter = useMapCenter()
+  const mapZoom = useMapZoom()
 
   const visibleItems = useMemo(() => (enabled ? items : []), [enabled, items])
 

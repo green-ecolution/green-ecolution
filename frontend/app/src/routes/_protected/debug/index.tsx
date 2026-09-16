@@ -1,7 +1,8 @@
 import KV from '@/components/debug/KV'
 import { boolBadge } from '@/components/debug/debugHelpers'
 import useStore from '@/store/store'
-import { MAP_MAX_ZOOM, MAP_MIN_ZOOM } from '@/lib/mapConfig'
+import useMapView, { useMapCenter, useMapZoom } from '@/components/map-gl/useMapView'
+
 import { useAuthSession } from '@/lib/auth/authSessionContext'
 import { useCurrentUser } from '@/lib/auth/useCurrentUser'
 import {
@@ -63,8 +64,11 @@ const clearServiceWorkerAndCache = async () => {
 
 function Debug() {
   const auth = useAuthSession()
-  const mapCenter = useStore((s) => s.mapCenter)
-  const mapZoom = useStore((s) => s.mapZoom)
+  // The centre the map would use: the live one once moved, the organization's
+  // configured one before that.
+  const mapCenter = useMapCenter()
+  const mapZoom = useMapZoom()
+  const { bounds: mapBounds } = useMapView()
   const userStore = useCurrentUser()
   const formDrafts = useStore((s) => s.formDrafts)
 
@@ -252,11 +256,12 @@ function Debug() {
             <KV label="Zoom">
               <span className="font-mono">{mapZoom}</span>
             </KV>
-            <KV label="Min-Zoom">
-              <span className="font-mono">{MAP_MIN_ZOOM}</span>
-            </KV>
-            <KV label="Max-Zoom">
-              <span className="font-mono">{MAP_MAX_ZOOM}</span>
+            <KV label="Grenzen">
+              <span className="font-mono">
+                {mapBounds
+                  ? `Zoom ${mapBounds.minZoom}–${mapBounds.maxZoom}, bbox ${mapBounds.bbox.join(", ")}`
+                  : "keine Einschränkung"}
+              </span>
             </KV>
           </CardContent>
         </Card>

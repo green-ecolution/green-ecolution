@@ -6,7 +6,7 @@ import { format } from 'date-fns'
 import FormForWateringPlan from '../general/form/FormForWateringPlan'
 import { useNavigate } from '@tanstack/react-router'
 import { Route } from '@/routes'
-import useStore from '@/store/store'
+import { useMapCenter, useMapZoom } from '@/components/map-gl/useMapView'
 import GeneralLink from '../general/links/GeneralLink'
 import { showWateringPlanStatusButton } from '@/hooks/details/useDetailsForWateringPlanStatus'
 import { Loading } from '@green-ecolution/ui'
@@ -75,8 +75,8 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
     })
   }
 
-  const mapCenter = useStore((state) => state.mapCenter)
-  const mapZoom = useStore((state) => state.mapZoom)
+  const mapCenter = useMapCenter()
+  const mapZoom = useMapZoom()
   const mapPosition = { lat: mapCenter[0], lng: mapCenter[1], zoom: mapZoom }
 
   const navigateToClusterSelect = () => {

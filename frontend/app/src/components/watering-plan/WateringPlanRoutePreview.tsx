@@ -9,7 +9,7 @@ import RoutePointMarkers, {
   buildRoutePoints,
   type RoutePointMarkerData,
 } from '@/components/map-gl/RoutePointMarkers'
-import useStore from '@/store/store'
+import { useMapCenter } from '@/components/map-gl/useMapView'
 import MapPreview from '@/components/map-gl/MapPreview'
 import { useMaplibreMap } from '@/components/map-gl/MapContext'
 import useClusterBoundaryLayer from '@/components/map-gl/layers/useClusterBoundaryLayer'
@@ -84,7 +84,7 @@ const RoutePreviewLayers = ({
 
 const WateringPlanPreviewRoute = ({ wateringPlan }: WateringPlanPreviewRouteProps) => {
   const { t } = useTranslation('wateringPlan')
-  const [centerLat, centerLng] = useStore.getState().mapCenter
+  const [centerLat, centerLng] = useMapCenter()
   const clusterIds = wateringPlan.treeclusters.map((tc) => tc.id)
   const [selectedClusterId, setSelectedClusterId] = useState<string | null>(null)
   const navigate = useNavigate()
