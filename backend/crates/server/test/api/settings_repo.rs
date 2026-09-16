@@ -122,3 +122,17 @@ async fn an_own_value_beats_the_inherited_one() {
     assert_eq!(resolution.effective.water_demand.liters(), 70.0);
     assert_eq!(resolution.origins.water_demand, SettingOrigin::Own);
 }
+
+pub(crate) async fn set_just_watered_ttl(app: &crate::helpers::TestApp, org: Uuid, secs: i64) {
+    sqlx::query!(
+        r#"INSERT INTO organization_settings (organization_id, just_watered_ttl_secs)
+           VALUES ($1, $2)
+           ON CONFLICT (organization_id)
+           DO UPDATE SET just_watered_ttl_secs = EXCLUDED.just_watered_ttl_secs"#,
+        org,
+        secs,
+    )
+    .execute(&app.db_pool)
+    .await
+    .unwrap();
+}

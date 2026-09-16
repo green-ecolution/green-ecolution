@@ -1524,3 +1524,67 @@ async fn just_watered_before_is_scoped_to_one_organization() {
     assert_eq!(found.iter().map(|c| c.id).collect::<Vec<_>>(), vec![a]);
     assert!(!found.iter().any(|c| c.id == b));
 }
+
+/// The sweep reads a TTL per organization, so two organizations that watered
+/// at the same moment must fall due at different times.
+#[tokio::test]
+async fn the_sweep_expires_each_organization_on_its_own_ttl() {
+    use domain::settings::{
+        DefectStreak, InstanceDefaults, JustWateredTtl, MapView, SensorOfflineAfter, WaterDemand,
+    };
+    use domain::shared::{coordinates::Coordinate, geo::BoundingBox};
+    use std::sync::Arc;
+
+    let app = spawn_app().await;
+    let short = Id::<Organization>::new(uuid::Uuid::parse_str(ROOT_ORG_ID).unwrap());
+    let long = insert_sibling_org(&app, "Lange Nachwirkzeit").await;
+
+    crate::settings_repo::set_just_watered_ttl(&app, short.value(), 3_600).await;
+    crate::settings_repo::set_just_watered_ttl(&app, long.value(), 1_209_600).await;
+
+    let watered_at = Utc::now() - Duration::hours(2);
+    let due = create_just_watered_cluster(&app, short, watered_at).await;
+    let not_due = create_just_watered_cluster(&app, long, watered_at).await;
+
+    // Only the org-specific values matter here; both organizations carry their
+    // own TTL, so the instance defaults are never consulted.
+    let defaults = InstanceDefaults {
+        water_demand: WaterDemand::new(100.0).unwrap(),
+        just_watered_ttl: JustWateredTtl::new(86_400).unwrap(),
+        sensor_offline_after: SensorOfflineAfter::new(86_400).unwrap(),
+        defect_streak: DefectStreak::new(3).unwrap(),
+        map_view: MapView::new(
+            Coordinate::new(54.78, 9.43).unwrap(),
+            BoundingBox::try_new(54.7, 9.3, 54.9, 9.6).unwrap(),
+        )
+        .unwrap(),
+    };
+    let org_reader = Arc::new(
+        server::infra::pg_organization::PgOrganizationRepository::new(app.db_pool.clone()),
+    );
+    let settings = server::infra::pg_settings::PgSettingsRepository::new(
+        app.db_pool.clone(),
+        defaults,
+        org_reader.clone(),
+    );
+
+    let released = server::infra::watering_status_expiry::sweep_once(
+        &app.state.cluster_service,
+        org_reader.as_ref(),
+        &settings,
+        Utc::now(),
+    )
+    .await;
+
+    assert_eq!(released, 1, "only the one-hour organization may fall due");
+
+    let repo = PgTreeClusterRepository::new(app.db_pool.clone());
+    assert_eq!(
+        repo.by_id(due).await.unwrap().watering_status(),
+        domain::shared::watering_status::WateringStatus::Unknown,
+    );
+    assert_eq!(
+        repo.by_id(not_due).await.unwrap().watering_status(),
+        domain::shared::watering_status::WateringStatus::JustWatered,
+    );
+}
