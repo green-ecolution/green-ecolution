@@ -59,3 +59,52 @@ bleibt dagegen auf deren eigenen Ast beschränkt und erreicht weder Geschwister-
 Organisationen hinweg zuständig sein soll, sinnvollerweise weiter oben im Baum. Wie
 Rollen im Einzelnen zugeschnitten werden und welche Rechte sich darin kombinieren
 lassen, steht in [Team und Rollen](./settings-team.md).
+
+## Fachliche Vorgaben
+
+Mit der Berechtigung `setting:read` zeigt die Detailansicht einer Organisation
+zusätzlich den Abschnitt **Fachliche Vorgaben** mit zwei Werten: dem Wasserbedarf je
+Baum in Litern und der Nachwirkzeit frisch gegossen in Stunden. Der Wasserbedarf geht
+in die Bedarfsrechnung jeder Bewässerungsgruppe ein und bestimmt damit, wie viele
+Gruppen eine Tourenplanung in eine Fahrt legt; eine spätere Änderung rechnet einen
+bereits berechneten Einsatzplan nicht rückwirkend um. Die Nachwirkzeit bestimmt, wie
+lange ein Baum nach einem abgeschlossenen Einsatzplan seiner Gruppe als
+[Soeben bewässert](./treecluster.md#bewasserungsstatus-und-wie-er-zustande-kommt) gilt,
+bevor er auf **Unbekannt** zurückfällt; einen aus Sensordaten berechneten
+Bewässerungszustand zeigt er erst wieder, sobald tatsächlich neue Messwerte eintreffen.
+Eine Änderung der Nachwirkzeit wirkt beim nächsten Lauf des dafür zuständigen
+Hintergrundjobs, ohne dass die Anwendung dafür neu gestartet werden müsste.
+
+Unter dem Namen jedes Werts steht, was er bewirkt, und daneben ein Abzeichen, das
+seine Herkunft zeigt: **Vorgabe der Instanz** für den mitgelieferten Standardwert,
+**Geerbt von …** mit dem Namen der Organisation, von der der Wert stammt, oder
+**Eigener Wert**, wenn diese Organisation selbst einen gesetzt hat. Ohne eigenen Wert
+übernimmt eine Organisation also automatisch, was ihre übergeordnete Organisation
+vorgibt, den Baum hinauf bis zur obersten Organisation und von dort zur Vorgabe der
+Instanz. Ein geerbter Wert steht schlicht als Zahl mit seiner Einheit da, denn es gibt
+nichts einzutragen, solange er von woanders kommt; erst über **Eigenen Wert setzen**
+wird daraus ein Eingabefeld, in das du eine eigene Zahl schreibst. **Wieder erben**
+verwirft den eigenen Wert, und die Organisation folgt von da an erneut dem geerbten.
+Ein senkrechter Strich links an jedem Wert greift dieselbe Unterscheidung auf: grün,
+solange die Organisation den Wert selbst setzt, sonst grau. Darunter steht, wann und
+von wem der Wert zuletzt geändert wurde, sofern das schon einmal geschehen ist; das
+beantwortet die Frage, wer für eine überraschende Änderung verantwortlich ist.
+
+![Der Abschnitt Fachliche Vorgaben mit einem geerbten und einem eigenen Wert](../images/settings-organization-values.png)
+
+Der Schalter **Untereinheiten dürfen eigene Werte setzen** entscheidet, ob die
+Organisationen unterhalb der gerade ausgewählten überhaupt eigene Werte setzen dürfen.
+Steht er aus, sperrt die Organisation die Vorgaben für ihren gesamten Ast: Der
+Abschnitt einer betroffenen Untereinheit wird dadurch nur noch lesbar, ein Hinweis oben
+im Abschnitt nennt die sperrende Organisation, und es gelten dort deren Werte, nicht
+mehr die eigenen. Hatte eine Untereinheit vor der Sperre bereits einen eigenen Wert
+gesetzt, bleibt er sichtbar, unter dem Wert steht aber, dass er ruht, solange die
+Sperre gilt; er kommt unverändert wieder zum Tragen, sobald sie wieder aufgehoben
+wird. Der Satz unter dem Schalter beschreibt jeweils den Zustand, in dem er gerade
+steht, damit die Tragweite des Ausschaltens nicht erst beim Ausprobieren auffällt.
+
+Zum Ändern eines Werts oder des Schalters brauchst du zusätzlich zu `setting:read` die
+Berechtigung `setting:update`. Ohne sie zeigt die Anwendung den Abschnitt nur an: alle
+Werte stehen als Zahl da, **Eigenen Wert setzen** und **Wieder erben** fehlen, und ein
+Hinweis oben im Abschnitt sagt, dass du die Vorgaben ansehen, aber nicht ändern kannst.
+Wie die übrigen Stammdaten dieser Seite wirkt eine Änderung erst mit **Speichern**.

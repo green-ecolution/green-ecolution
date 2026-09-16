@@ -447,3 +447,68 @@ async fn an_unknown_organization_answers_404_on_both_verbs() {
         .await;
     assert_eq!(resp.status(), 404);
 }
+
+#[tokio::test]
+async fn last_change_carries_the_author_name() {
+    let (harness, app) = crate::auth_helpers::spawn_with_auth().await;
+    let root = Uuid::parse_str(ROOT_ORG_ID).unwrap();
+
+    let actor = Uuid::new_v4();
+    sqlx::query!(
+        r#"INSERT INTO user_profiles (id, organization_id) VALUES ($1, $2)"#,
+        actor,
+        root
+    )
+    .execute(&app.db_pool)
+    .await
+    .unwrap();
+    let role_id: Uuid = sqlx::query_scalar!(
+        r#"INSERT INTO roles (id, organization_id, name, permissions)
+           VALUES (gen_random_uuid(), $1, 'Einstellungen', ARRAY['setting:read','setting:update'])
+           RETURNING id"#,
+        root
+    )
+    .fetch_one(&app.db_pool)
+    .await
+    .unwrap();
+    sqlx::query!(
+        r#"INSERT INTO role_assignments (user_id, role_id) VALUES ($1, $2)"#,
+        actor,
+        role_id
+    )
+    .execute(&app.db_pool)
+    .await
+    .unwrap();
+
+    harness.mock_identity_lookups(&[(actor, "ge.admin")]).await;
+    let token = harness.sign_token(json!({ "sub": actor.to_string() }));
+    let client = reqwest::Client::new();
+
+    let put = client
+        .put(format!(
+            "{}/api/v1/organizations/{root}/settings",
+            app.address
+        ))
+        .bearer_auth(&token)
+        .json(&json!({ "water_demand": 120.0 }))
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(put.status(), 200);
+
+    let get = client
+        .get(format!(
+            "{}/api/v1/organizations/{root}/settings",
+            app.address
+        ))
+        .bearer_auth(&token)
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(get.status(), 200);
+    let body: serde_json::Value = get.json().await.unwrap();
+
+    let change = &body["water_demand"]["last_change"];
+    assert_eq!(change["changed_by"], json!(actor.to_string()));
+    assert_eq!(change["changed_by_name"], json!("Test ge.admin"));
+}

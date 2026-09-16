@@ -162,5 +162,6 @@ liefert fünf Vorlagen mit:
 - **Routenplanung**: Einsatzpläne und Fahrzeuge vollständig verwalten, Bäume,
   Bewässerungsgruppen, Sensoren und Gebiete ansehen.
 - **Beobachter**: lesender Zugriff auf Bäume, Bewässerungsgruppen, Sensoren,
-  Einsatzpläne, Fahrzeuge und Gebiete, ohne Zugriff auf Mitarbeitende, Organisation
-  oder Rollen.
+  Einsatzpläne, Fahrzeuge und Gebiete sowie auf die Organisationsstruktur mit ihren
+  fachlichen Vorgaben, ohne Zugriff auf Mitarbeitende oder Rollen und ohne die
+  Vorgaben ändern zu können.

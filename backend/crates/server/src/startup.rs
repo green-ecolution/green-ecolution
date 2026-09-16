@@ -149,7 +149,7 @@ impl Application {
             &repos,
             event_bus,
             route_optimizer,
-            settings.routing.tree_demand_liters,
+            settings_repo.clone(),
             repos.start_point_reader.clone(),
             repos.start_point_writer.clone(),
             profile_repo,
@@ -164,10 +164,9 @@ impl Application {
             spawn_health_probes(&pool, &settings, probe_http_client.clone(), mqtt_state).await;
         let _expiry_handle = infra::watering_status_expiry::spawn(
             services.cluster.clone(),
+            repos.organization_reader.clone(),
+            settings_repo.clone(),
             Duration::from_secs(settings.watering.just_watered_sweep_interval_secs),
-            chrono::Duration::seconds(
-                i64::try_from(settings.watering.just_watered_ttl_secs).unwrap_or(i64::MAX),
-            ),
         );
         let _update_handle = infra::update_checker::spawn(
             update_checker,
@@ -413,7 +412,7 @@ impl Services {
         repos: &Repositories,
         event_bus: Arc<dyn EventBus>,
         route_optimizer: Option<Arc<dyn domain::routing::RouteOptimizer>>,
-        tree_demand_liters: f64,
+        settings_resolver: Arc<dyn domain::settings::SettingsResolver>,
         start_point_reader: Arc<dyn domain::start_point::StartPointReader>,
         start_point_writer: Arc<dyn domain::start_point::StartPointWriter>,
         profile_reader: Arc<dyn domain::user::UserProfileReader>,
@@ -493,7 +492,7 @@ impl Services {
                 repos.vehicle_reader.clone(),
                 event_bus.clone(),
                 route_optimizer,
-                tree_demand_liters,
+                settings_resolver,
                 start_point_reader.clone(),
                 repos.organization_reader.clone(),
                 repos.comment_writer.clone(),

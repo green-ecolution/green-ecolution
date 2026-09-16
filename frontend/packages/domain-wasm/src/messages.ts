@@ -65,6 +65,10 @@ export const VALIDATION_KEYS = [
   'watering_plan.date.outOfRange',
   'watering_plan.start_point_name.empty',
 
+  // Settings
+  'settings.water_demand.outOfRange',
+  'settings.just_watered_ttl.outOfRange',
+
   // Provenance. Only reachable through the server's validation block, not the
   // in-browser validators: a provider is set by an import, never typed in.
   'provenance.provider.empty',

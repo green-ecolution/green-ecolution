@@ -31,6 +31,12 @@ export interface SettingChangeRef {
      * @memberof SettingChangeRef
      */
     changedBy?: string | null;
+    /**
+     * Resolved by the handler; absent when the account no longer resolves.
+     * @type {string}
+     * @memberof SettingChangeRef
+     */
+    changedByName?: string | null;
 }
 
 /**
@@ -53,6 +59,7 @@ export function SettingChangeRefFromJSONTyped(json: any, ignoreDiscriminator: bo
         
         'changedAt': (new Date(json['changed_at'])),
         'changedBy': json['changed_by'] == null ? undefined : json['changed_by'],
+        'changedByName': json['changed_by_name'] == null ? undefined : json['changed_by_name'],
     };
 }
 
@@ -69,6 +76,7 @@ export function SettingChangeRefToJSONTyped(value?: SettingChangeRef | null, ign
         
         'changed_at': ((value['changedAt']).toISOString()),
         'changed_by': value['changedBy'],
+        'changed_by_name': value['changedByName'],
     };
 }
 

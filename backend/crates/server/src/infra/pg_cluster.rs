@@ -14,6 +14,7 @@ use domain::{
         TreeClusterDraft, TreeClusterReader, TreeClusterSearchQuery, TreeClusterView,
         TreeClusterWriter,
     },
+    organization::Organization,
     shared::{
         coordinates::Coordinate,
         pagination::{Page, Pagination},
@@ -495,6 +496,7 @@ impl TreeClusterReader for PgTreeClusterRepository {
     #[tracing::instrument(level = "trace", skip_all)]
     async fn just_watered_before(
         &self,
+        org: Id<Organization>,
         cutoff: DateTime<Utc>,
     ) -> Result<Vec<TreeCluster>, RepositoryError> {
         let snaps = sqlx::query_as!(
@@ -513,8 +515,10 @@ impl TreeClusterReader for PgTreeClusterRepository {
             LEFT JOIN trees t ON t.tree_cluster_id = tc.id
             WHERE tc.watering_status = 'just_watered'
               AND (tc.last_watered IS NULL OR tc.last_watered < $1)
+              AND tc.organization_id = $2
             GROUP BY tc.id"#,
-            cutoff.naive_utc()
+            cutoff.naive_utc(),
+            org.value(),
         )
         .fetch_all(&self.pool)
         .await?;

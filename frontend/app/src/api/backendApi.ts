@@ -12,6 +12,7 @@ import {
   RolesApi,
   RoutingApi,
   SensorsApi,
+  SettingsApi,
   TreesApi,
   TreeClustersApi,
   UsersApi,
@@ -92,6 +93,7 @@ export const routingApi = new RoutingApi(config)
 export const roleApi = new RolesApi(config)
 export const organizationApi = new OrganizationsApi(config)
 export const commentApi = new CommentsApi(config)
+export const settingsApi = new SettingsApi(config)
 
 export * from '@green-ecolution/backend-client'
 

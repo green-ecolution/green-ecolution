@@ -2,13 +2,13 @@ import type { CSSProperties, ReactNode } from 'react'
 import { Link } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { Bell, Building2, Droplet, Map, Puzzle, RadioTower, UserRound, Users } from 'lucide-react'
+import { Bell, Building2, Puzzle, UserRound, Users } from 'lucide-react'
 import { Badge } from '@green-ecolution/ui'
 import { infoQueries } from '@/api/queries'
 import { usePermissions } from '@/lib/auth/usePermissions'
 import { SETTINGS_NAV, visibleSettingsNav } from './settingsNav'
 
-const ICONS = { UserRound, Building2, Droplet, Bell, RadioTower, Users, Map, Puzzle } as const
+const ICONS = { UserRound, Building2, Bell, Users, Puzzle } as const
 
 interface SettingsLayoutProps {
   children: ReactNode

@@ -3,16 +3,17 @@ import { Button, Spinner } from '@green-ecolution/ui'
 
 interface OrganizationActionButtonsProps {
   saving: boolean
-  nameEmpty: boolean
-  addressComplete: boolean
+  /** True while at least one of the two endpoints has something valid to send.
+   *  The halves are judged separately: a half-filled address blocks the master
+   *  data, not a settings edit. */
+  canSave: boolean
   onSave: () => void
   onCancel: () => void
 }
 
 const OrganizationActionButtons = ({
   saving,
-  nameEmpty,
-  addressComplete,
+  canSave,
   onSave,
   onCancel,
 }: OrganizationActionButtonsProps) => {
@@ -32,7 +33,7 @@ const OrganizationActionButtons = ({
       <Button
         type="button"
         onClick={onSave}
-        disabled={saving || nameEmpty || !addressComplete}
+        disabled={saving || !canSave}
         className="w-full sm:w-auto"
       >
         {saving && <Spinner className="size-4" />}

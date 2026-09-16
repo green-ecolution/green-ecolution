@@ -17,9 +17,15 @@ import {
   DrawerFooter,
   Loading,
 } from '@green-ecolution/ui'
-import type { AddressDto, OrganizationDetailResponse, OrganizationResponse } from '@/api/backendApi'
-import { organizationQueries, userQueries } from '@/api/queries'
+import type {
+  AddressDto,
+  OrganizationDetailResponse,
+  OrganizationResponse,
+  OrganizationSettingsResponse,
+} from '@/api/backendApi'
+import { organizationQueries, settingsQueries, userQueries } from '@/api/queries'
 import { useOrganizationMutations } from '@/hooks/useOrganizationMutations'
+import { useSettingsMutations } from '@/hooks/useSettingsMutations'
 import { useContainerWiderThan } from '@/hooks/useContainerWiderThan'
 import { TWO_PANE_MIN_WIDTH } from '../twoPaneWidth'
 import { useHasPermission } from '@/lib/auth/useHasPermission'
@@ -29,9 +35,11 @@ import ContactPersonPicker from './ContactPersonPicker'
 import CreateOrganizationDialog from './CreateOrganizationDialog'
 import OrganizationActionButtons from './OrganizationActionButtons'
 import OrganizationDetail from './OrganizationDetail'
+import OrganizationSettingsSection from './OrganizationSettingsSection'
 import OrganizationTree from './OrganizationTree'
 import { buildTree, nodeOf, pathTo } from './organizationTree'
 import { useOrganizationDraft } from './useOrganizationDraft'
+import { useOrganizationSettingsDraft } from './useOrganizationSettingsDraft'
 
 const MEMBERS_PER_PAGE = 100
 
@@ -40,11 +48,38 @@ const MEMBERS_PER_PAGE = 100
 const loadErrorMessage = (error: unknown, t: TFunction<'settings'>): string =>
   t(statusOf(error) === 403 ? 'organization.loadErrorForbidden' : 'organization.loadErrorGeneric')
 
+const settingsLoadErrorMessage = (error: unknown, t: TFunction<'settings'>): string =>
+  t(
+    statusOf(error) === 403
+      ? 'organization.settings.loadErrorForbidden'
+      : 'organization.settings.loadErrorGeneric',
+  )
+
 const nameConflictMessage = (error: unknown, t: TFunction<'settings'>): string | null =>
   statusOf(error) === 409 ? t('organization.nameConflict') : null
 
 const contactPersonMessage = (error: unknown, t: TFunction<'settings'>): string | null =>
   statusOf(error) === 422 ? t('organization.contactPersonNotAssigned') : null
+
+/** Everything the settings draft is built from; a refetch that changes none of
+ *  it must leave an edit in progress alone. */
+const settingsFingerprint = (
+  orgId: string | null,
+  settings: OrganizationSettingsResponse | undefined,
+): string | null =>
+  settings
+    ? JSON.stringify([
+        orgId,
+        settings.waterDemand.value,
+        settings.waterDemand.origin,
+        settings.waterDemand.ownValue ?? null,
+        settings.justWateredTtlSecs.value,
+        settings.justWateredTtlSecs.origin,
+        settings.justWateredTtlSecs.ownValue ?? null,
+        settings.descendantsMayOverride,
+        settings.enforcedBy?.id ?? null,
+      ])
+    : null
 
 const OrganizationPage = () => {
   const { t } = useTranslation(['settings', 'common'])
@@ -52,6 +87,8 @@ const OrganizationPage = () => {
   const canUpdate = useHasPermission(['organization:update'])
   const canDelete = useHasPermission(['organization:delete'])
   const canReadUsers = useHasPermission(['user:read'])
+  const canReadSettings = useHasPermission(['setting:read'])
+  const canUpdateSettings = useHasPermission(['setting:update'])
   const { ref: layoutRef, isWide } = useContainerWiderThan<HTMLDivElement>(TWO_PANE_MIN_WIDTH)
 
   const { data: me } = useQuery(userQueries.me())
@@ -64,12 +101,16 @@ const OrganizationPage = () => {
   } = useQuery(organizationQueries.list())
 
   const { createOrganization, updateOrganization, deleteOrganization } = useOrganizationMutations()
+  const { updateSettings } = useSettingsMutations()
   const draftState = useOrganizationDraft()
   const { draft, dirty, addressErrors, addressComplete, edit } = draftState
+  const settingsDraft = useOrganizationSettingsDraft()
+  const { load: loadSettings } = settingsDraft
 
   const [selection, setSelection] = useState<string | null>(null)
   const [expandedOverride, setExpandedOverride] = useState<ReadonlySet<string> | null>(null)
   const [loadedDetail, setLoadedDetail] = useState<OrganizationDetailResponse | null>(null)
+  const [loadedSettingsKey, setLoadedSettingsKey] = useState<string | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
   const [pendingSelection, setPendingSelection] = useState<string | null | undefined>(undefined)
   const [pendingClose, setPendingClose] = useState(false)
@@ -95,10 +136,27 @@ const OrganizationPage = () => {
     enabled: canReadUsers && selectedId !== null,
   })
 
+  const { data: settings, error: settingsError } = useQuery({
+    ...settingsQueries.byOrganization(selectedId ?? ''),
+    enabled: canReadSettings && selectedId !== null,
+  })
+  const settingsKey = settingsFingerprint(selectedId, settings)
+
+  // An invalid settings draft builds no request, so `settingsDraft.dirty` is
+  // false for it. Typed input would then be dropped without a word on the way
+  // out, hence the `!valid` arm.
+  const unsaved = dirty || settingsDraft.dirty || !settingsDraft.valid
+
+  // Master data and settings travel to different endpoints, so each is judged
+  // on its own. The button asks only whether either half has something valid to
+  // send; the other half keeps its error in the form until it is fixed.
+  const masterDataValid = draft !== null && draft.name.trim().length > 0 && addressComplete
+  const canSave = (dirty && masterDataValid) || settingsDraft.dirty
+
   const blocker = useBlocker({
-    shouldBlockFn: () => dirty,
+    shouldBlockFn: () => unsaved,
     // Also gates the browser's own unload prompt; see useFormNavigationBlocker.
-    enableBeforeUnload: () => dirty,
+    enableBeforeUnload: () => unsaved,
     withResolver: true,
   })
 
@@ -112,6 +170,19 @@ const OrganizationPage = () => {
     setLoadedDetail(detail)
     edit(detail)
   }, [detail, loadedDetail, edit])
+
+  useEffect(() => {
+    // Keyed on the content, not on the object: `lastChange.changedAt` is parsed
+    // into a Date, which structural sharing cannot keep referentially stable, so
+    // every refetch hands back a new object. Saving the organization invalidates
+    // the whole `organizations` prefix and therefore refetches these settings —
+    // an identity check would reset the draft while the settings request is
+    // still in flight and lose the typed value if that request then fails.
+    if (!settings || settingsKey === loadedSettingsKey) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect, react-x/set-state-in-effect -- loads the freshly fetched settings into the draft
+    setLoadedSettingsKey(settingsKey)
+    loadSettings(settings)
+  }, [settings, settingsKey, loadedSettingsKey, loadSettings])
 
   const members = memberPage?.data ?? []
   const memberInitials = members
@@ -178,7 +249,7 @@ const OrganizationPage = () => {
       setDetailOpen(true)
       return
     }
-    if (dirty) {
+    if (unsaved) {
       setPendingSelection(org.id)
       return
     }
@@ -187,12 +258,13 @@ const OrganizationPage = () => {
 
   const resetDraft = () => {
     if (detail) edit(detail)
+    if (settings) loadSettings(settings)
   }
 
   // null stands for "open the create dialog", mirroring how RolesPage encodes
   // "start a new role" in the same pending-intent state.
   const requestCreate = () => {
-    if (dirty) {
+    if (unsaved) {
       setPendingSelection(null)
       return
     }
@@ -215,7 +287,7 @@ const OrganizationPage = () => {
 
   const requestClose = (open: boolean) => {
     if (open) return
-    if (dirty) {
+    if (unsaved) {
       setPendingClose(true)
       return
     }
@@ -239,18 +311,26 @@ const OrganizationPage = () => {
     const city = draft.city.trim()
     const name = draft.name.trim()
     const filled = [street, postalCode, city].filter((value) => value.length > 0)
-    // Repeats what the disabled action bar already prevents: neither an empty name
-    // nor half an address may reach the backend, whoever calls this.
-    if (name.length === 0) return
-    if (filled.length !== 0 && filled.length !== 3) return
     const address: AddressDto | null = filled.length === 3 ? { street, postalCode, city } : null
 
-    updateOrganization.mutate({
-      orgId: detail.id,
-      name,
-      address,
-      contactPersonId: draft.contactPersonId,
-    })
+    // One button, two endpoints: each part goes out only if it actually changed
+    // AND is valid on its own. Neither invalid half may hold the other back —
+    // an invalid settings draft withholds its own request (`toRequest` returns
+    // null), and incomplete master data withholds only the organization PUT.
+    // What stays behind stays in the form with its error, so nothing is lost.
+    if (dirty && masterDataValid) {
+      updateOrganization.mutate({
+        orgId: detail.id,
+        name,
+        address,
+        contactPersonId: draft.contactPersonId,
+      })
+    }
+
+    const settingsBody = settingsDraft.toRequest()
+    if (settingsBody) {
+      updateSettings.mutate({ orgId: detail.id, body: settingsBody })
+    }
   }
 
   const create = (name: string) => {
@@ -296,6 +376,36 @@ const OrganizationPage = () => {
     />
   )
 
+  // The list is already loaded, so the source and locking organizations are
+  // resolved here instead of costing the section its own request.
+  const nameOfOrg = (orgId: string | null | undefined): string | null => {
+    if (!orgId) return null
+    return (orgs ?? []).find((org) => org.id === orgId)?.name ?? null
+  }
+
+  // Without `setting:read` the section is absent by design; a failed request is
+  // a different thing and must not look the same.
+  const settingsSection = !canReadSettings ? null : settingsError ? (
+    <p role="alert" className="text-sm text-dark-600">
+      {settingsLoadErrorMessage(settingsError, t)}
+    </p>
+  ) : settings && settingsDraft.draft ? (
+    <OrganizationSettingsSection
+      settings={settings}
+      draft={settingsDraft.draft}
+      errors={settingsDraft.errors}
+      canUpdate={canUpdateSettings}
+      enforcedByName={nameOfOrg(settings.enforcedBy?.id)}
+      sourceNames={{
+        waterDemand: nameOfOrg(settings.waterDemand.source?.id),
+        justWateredTtlHours: nameOfOrg(settings.justWateredTtlSecs.source?.id),
+      }}
+      onOwnChange={settingsDraft.setOwn}
+      onTextChange={settingsDraft.setText}
+      onDescendantsMayOverrideChange={settingsDraft.setDescendantsMayOverride}
+    />
+  ) : null
+
   const renderDetail = (renderActionBar: boolean) => {
     if (detailError) {
       return (
@@ -313,16 +423,17 @@ const OrganizationPage = () => {
           path={selectionPath}
           detail={detail}
           draft={draft}
-          dirty={dirty}
+          dirty={unsaved}
           addressErrors={addressErrors}
-          addressComplete={addressComplete}
+          canSave={canSave}
           readOnly={readOnly}
           canUpdate={canUpdate}
           canCreate={canCreate}
           canDelete={canDelete}
           canReadUsers={canReadUsers}
           memberInitials={memberInitials}
-          saving={updateOrganization.isPending}
+          settingsSection={settingsSection}
+          saving={updateOrganization.isPending || updateSettings.isPending}
           nameError={nameConflictMessage(updateOrganization.error, t)}
           contactPersonError={contactPersonMessage(updateOrganization.error, t)}
           onNameChange={draftState.setName}
@@ -365,12 +476,11 @@ const OrganizationPage = () => {
                 {/* Content scrolls in its own region; the actions live in a fixed
                     footer below so they stay anchored to the drawer bottom. */}
                 <div className="min-h-0 flex-1 overflow-y-auto p-4">{renderDetail(false)}</div>
-                {draft && dirty && !readOnly && (
+                {draft && unsaved && (
                   <DrawerFooter className="flex-col-reverse gap-2 border-t border-dark-200 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
                     <OrganizationActionButtons
-                      saving={updateOrganization.isPending}
-                      nameEmpty={draft.name.trim().length === 0}
-                      addressComplete={addressComplete}
+                      saving={updateOrganization.isPending || updateSettings.isPending}
+                      canSave={canSave}
                       onSave={save}
                       onCancel={resetDraft}
                     />

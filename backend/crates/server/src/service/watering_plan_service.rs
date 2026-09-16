@@ -8,6 +8,7 @@ use domain::{
     events::DomainEvent,
     organization::{Organization, OrganizationReader},
     routing::{OptimizedRoute, RouteOptimizer, RouteStop},
+    settings::SettingsResolver,
     shared::pagination::{Page, Pagination},
     start_point::{StartPoint, StartPointReader},
     vehicle::{Vehicle, VehicleReader},
@@ -27,7 +28,7 @@ pub struct WateringPlanService {
     vehicle_reader: Arc<dyn VehicleReader>,
     event_bus: Arc<dyn EventBus>,
     route_optimizer: Option<Arc<dyn RouteOptimizer>>,
-    tree_demand_liters: f64,
+    settings: Arc<dyn SettingsResolver>,
     start_point_reader: Arc<dyn StartPointReader>,
     org_reader: Arc<dyn OrganizationReader>,
     comment_writer: Arc<dyn CommentWriter>,
@@ -50,7 +51,7 @@ impl WateringPlanService {
         vehicle_reader: Arc<dyn VehicleReader>,
         event_bus: Arc<dyn EventBus>,
         route_optimizer: Option<Arc<dyn RouteOptimizer>>,
-        tree_demand_liters: f64,
+        settings: Arc<dyn SettingsResolver>,
         start_point_reader: Arc<dyn StartPointReader>,
         org_reader: Arc<dyn OrganizationReader>,
         comment_writer: Arc<dyn CommentWriter>,
@@ -62,7 +63,7 @@ impl WateringPlanService {
             vehicle_reader,
             event_bus,
             route_optimizer,
-            tree_demand_liters,
+            settings,
             start_point_reader,
             org_reader,
             comment_writer,
@@ -188,8 +189,14 @@ impl WateringPlanService {
         org: Id<Organization>,
     ) -> Result<ComputedRoute, ServiceError> {
         self.ensure_clusters_accessible(&cluster_ids, org).await?;
-        self.compute_route(&cluster_ids, transporter_id, trailer_id, start_point_name)
-            .await
+        self.compute_route(
+            org,
+            &cluster_ids,
+            transporter_id,
+            trailer_id,
+            start_point_name,
+        )
+        .await
     }
 
     /// Route failures must never block plan persistence: the plan is already
@@ -200,6 +207,7 @@ impl WateringPlanService {
         };
         match self
             .compute_route(
+                plan.organization_id(),
                 plan.cluster_ids(),
                 transporter_id,
                 plan.trailer_id(),
@@ -228,6 +236,7 @@ impl WateringPlanService {
 
     async fn compute_route(
         &self,
+        org: Id<Organization>,
         cluster_ids: &[Id<TreeCluster>],
         transporter_id: Id<Vehicle>,
         trailer_id: Option<Id<Vehicle>>,
@@ -239,6 +248,12 @@ impl WateringPlanService {
             .ok_or(ServiceError::FeatureDisabled {
                 feature: Feature::Routing,
             })?;
+        let demand_per_tree = self
+            .settings
+            .effective_for(org)
+            .await?
+            .water_demand
+            .liters();
         let transporter = self.vehicle_reader.by_id(transporter_id).await?;
         let trailer = match trailer_id {
             Some(id) => Some(self.vehicle_reader.by_id(id).await?),
@@ -251,7 +266,7 @@ impl WateringPlanService {
                 cluster.coordinates().map(|location| RouteStop {
                     cluster_id: cluster.id,
                     location,
-                    demand_liters: cluster.tree_ids.len() as f64 * self.tree_demand_liters,
+                    demand_liters: cluster.tree_ids.len() as f64 * demand_per_tree,
                 })
             })
             .collect();

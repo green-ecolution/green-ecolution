@@ -25,24 +25,10 @@ export const SETTINGS_NAV: SettingsNavItem[] = [
     permission: ['organization:read'],
   },
   {
-    key: 'irrigation',
-    labelKey: 'irrigation',
-    icon: 'Droplet',
-    to: '/settings/irrigation',
-    comingSoon: true,
-  },
-  {
     key: 'notifications',
     labelKey: 'notifications',
     icon: 'Bell',
     to: '/settings/notifications',
-    comingSoon: true,
-  },
-  {
-    key: 'sensors',
-    labelKey: 'sensors',
-    icon: 'RadioTower',
-    to: '/settings/sensors',
     comingSoon: true,
   },
   {
@@ -51,13 +37,6 @@ export const SETTINGS_NAV: SettingsNavItem[] = [
     icon: 'Users',
     to: '/settings/team',
     permission: ['user:read', 'role:read'],
-  },
-  {
-    key: 'map',
-    labelKey: 'map',
-    icon: 'Map',
-    to: '/settings/map',
-    comingSoon: true,
   },
   {
     key: 'plugin',

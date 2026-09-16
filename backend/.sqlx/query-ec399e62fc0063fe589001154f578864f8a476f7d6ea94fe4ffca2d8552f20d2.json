@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO organization_settings (organization_id, just_watered_ttl_secs)\n           VALUES ($1, $2)\n           ON CONFLICT (organization_id)\n           DO UPDATE SET just_watered_ttl_secs = EXCLUDED.just_watered_ttl_secs",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "ec399e62fc0063fe589001154f578864f8a476f7d6ea94fe4ffca2d8552f20d2"
+}

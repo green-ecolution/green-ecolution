@@ -110,6 +110,14 @@
       "empty": "Es muss ein Startpunkt ausgewählt werden."
     }
   },
+  "settings": {
+    "water_demand": {
+      "outOfRange": "Wasserbedarf muss zwischen {min} und {max} Liter liegen."
+    },
+    "just_watered_ttl": {
+      "outOfRange": "Nachwirkzeit muss zwischen {min} und {max} liegen."
+    }
+  },
   "provenance": {
     "provider": {
       "empty": "Datenquelle ist erforderlich.",
