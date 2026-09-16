@@ -18,6 +18,7 @@ import type {
   AssignRoleRequest,
   ErrorBody,
   ListResponseUserResponse,
+  MapInfoResponse,
   RoleResponse,
   SetOrganizationRequest,
   UserRegisterRequest,
@@ -31,6 +32,8 @@ import {
     ErrorBodyToJSON,
     ListResponseUserResponseFromJSON,
     ListResponseUserResponseToJSON,
+    MapInfoResponseFromJSON,
+    MapInfoResponseToJSON,
     RoleResponseFromJSON,
     RoleResponseToJSON,
     SetOrganizationRequestFromJSON,
@@ -202,6 +205,37 @@ export class UsersApi extends runtime.BaseAPI {
      */
     async getMe(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UserResponse> {
         const response = await this.getMeRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns the centre and bounding box the map opens at for the caller\'s organization, resolved along the organization tree. Falls back to the instance default where the account belongs to no organization. Unlike `/info/map`, which stays unauthenticated and always reports the instance default, this answer is organization-specific and therefore requires a token.
+     * Get the map viewport for the authenticated user
+     */
+    async getMyMapViewRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<MapInfoResponse>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/v1/users/me/map-view`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => MapInfoResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns the centre and bounding box the map opens at for the caller\'s organization, resolved along the organization tree. Falls back to the instance default where the account belongs to no organization. Unlike `/info/map`, which stays unauthenticated and always reports the instance default, this answer is organization-specific and therefore requires a token.
+     * Get the map viewport for the authenticated user
+     */
+    async getMyMapView(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<MapInfoResponse> {
+        const response = await this.getMyMapViewRaw(initOverrides);
         return await response.value();
     }
 

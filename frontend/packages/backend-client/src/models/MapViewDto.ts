@@ -20,24 +20,40 @@ import { mapValues } from '../runtime';
  */
 export interface MapViewDto {
     /**
-     * `[sw_lat, sw_lng, ne_lat, ne_lng]`.
+     * `[sw_lat, sw_lng, ne_lat, ne_lng]`, or `null` where the map may be
+     * panned and zoomed freely. Absent reads the same as `null`: the generated
+     * client parses a null back into `undefined` and then omits the key
+     * entirely on the way out, so a round-tripped viewport must not be
+     * rejected.
      * @type {Array<number>}
      * @memberof MapViewDto
      */
-    bbox: Array<number>;
+    bbox?: Array<number> | null;
     /**
      * 
      * @type {Array<number>}
      * @memberof MapViewDto
      */
     center: Array<number>;
+    /**
+     * 
+     * @type {number}
+     * @memberof MapViewDto
+     */
+    maxZoom?: number | null;
+    /**
+     * Set together with `bbox`, never on their own: the limits are one
+     * decision, and half of them would restrict a map for no stated reason.
+     * @type {number}
+     * @memberof MapViewDto
+     */
+    minZoom?: number | null;
 }
 
 /**
  * Check if a given object implements the MapViewDto interface.
  */
 export function instanceOfMapViewDto(value: object): value is MapViewDto {
-    if (!('bbox' in value) || value['bbox'] === undefined) return false;
     if (!('center' in value) || value['center'] === undefined) return false;
     return true;
 }
@@ -52,8 +68,10 @@ export function MapViewDtoFromJSONTyped(json: any, ignoreDiscriminator: boolean)
     }
     return {
         
-        'bbox': json['bbox'],
+        'bbox': json['bbox'] == null ? undefined : json['bbox'],
         'center': json['center'],
+        'maxZoom': json['max_zoom'] == null ? undefined : json['max_zoom'],
+        'minZoom': json['min_zoom'] == null ? undefined : json['min_zoom'],
     };
 }
 
@@ -70,6 +88,8 @@ export function MapViewDtoToJSONTyped(value?: MapViewDto | null, ignoreDiscrimin
         
         'bbox': value['bbox'],
         'center': value['center'],
+        'max_zoom': value['maxZoom'],
+        'min_zoom': value['minZoom'],
     };
 }
 

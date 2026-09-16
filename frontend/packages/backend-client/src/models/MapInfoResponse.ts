@@ -20,24 +20,36 @@ import { mapValues } from '../runtime';
  */
 export interface MapInfoResponse {
     /**
-     * 
+     * Absent where the map may be panned anywhere. The instance default
+     * always carries one; an organization may choose to drop the limit.
      * @type {Array<number>}
      * @memberof MapInfoResponse
      */
-    bbox: Array<number>;
+    bbox?: Array<number> | null;
     /**
      * 
      * @type {Array<number>}
      * @memberof MapInfoResponse
      */
     center: Array<number>;
+    /**
+     * 
+     * @type {number}
+     * @memberof MapInfoResponse
+     */
+    maxZoom?: number | null;
+    /**
+     * The zoom range the map is held to, absent together with `bbox`.
+     * @type {number}
+     * @memberof MapInfoResponse
+     */
+    minZoom?: number | null;
 }
 
 /**
  * Check if a given object implements the MapInfoResponse interface.
  */
 export function instanceOfMapInfoResponse(value: object): value is MapInfoResponse {
-    if (!('bbox' in value) || value['bbox'] === undefined) return false;
     if (!('center' in value) || value['center'] === undefined) return false;
     return true;
 }
@@ -52,8 +64,10 @@ export function MapInfoResponseFromJSONTyped(json: any, ignoreDiscriminator: boo
     }
     return {
         
-        'bbox': json['bbox'],
+        'bbox': json['bbox'] == null ? undefined : json['bbox'],
         'center': json['center'],
+        'maxZoom': json['max_zoom'] == null ? undefined : json['max_zoom'],
+        'minZoom': json['min_zoom'] == null ? undefined : json['min_zoom'],
     };
 }
 
@@ -70,6 +84,8 @@ export function MapInfoResponseToJSONTyped(value?: MapInfoResponse | null, ignor
         
         'bbox': value['bbox'],
         'center': value['center'],
+        'max_zoom': value['maxZoom'],
+        'min_zoom': value['minZoom'],
     };
 }
 
