@@ -79,6 +79,16 @@ describe('OrganizationSettingsSection', () => {
     expect(screen.getByText('Eigener Wert')).toBeInTheDocument()
   })
 
+  // The badge names where the stored value comes from, which an unsaved toggle
+  // has not changed yet; colour and wording must not tell different stories.
+  it('keeps the origin badge on the stored origin while a takeover is unsaved', () => {
+    const draft: SettingsDraft = { ...DRAFT, waterDemand: { own: true, text: '90' } }
+    render(<OrganizationSettingsSection {...props({ draft })} />)
+
+    const badge = screen.getByText(/Geerbt von Stadt Flensburg/i)
+    expect(badge.className).not.toMatch(/green/)
+  })
+
   it('keeps an inherited field out of reach until it is taken over', async () => {
     render(<OrganizationSettingsSection {...props()} />)
 

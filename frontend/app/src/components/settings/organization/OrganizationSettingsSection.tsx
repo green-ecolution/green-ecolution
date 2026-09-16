@@ -122,7 +122,10 @@ const SettingRow = ({
 
   return (
     <div className="flex flex-col gap-2">
-      <Badge variant={own ? 'outline-green-dark' : 'muted'} className="self-start">
+      {/* Colour and wording both come from the stored origin: an unsaved
+          takeover has not moved the value yet, and the toggle below already
+          shows what the person is about to do. */}
+      <Badge variant={origin === 'own' ? 'outline-green-dark' : 'muted'} className="self-start">
         {originLabel(origin, sourceName, t)}
       </Badge>
       <FormField
@@ -180,7 +183,7 @@ const OrganizationSettingsSection = ({
   const switchId = useId()
   // Read off the response, not off the name: an organization above the visible
   // list locks just the same, it just cannot be named.
-  const enforced = enforcedByName !== null || settings.enforcedBy != null
+  const enforced = settings.enforcedBy != null
   // The lock covers the switch itself — the backend refuses the whole write,
   // so a sub-unit cannot unlock itself.
   const locked = enforced || !canUpdate
