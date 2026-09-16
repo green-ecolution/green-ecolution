@@ -1530,7 +1530,8 @@ async fn just_watered_before_is_scoped_to_one_organization() {
 #[tokio::test]
 async fn the_sweep_expires_each_organization_on_its_own_ttl() {
     use domain::settings::{
-        DefectStreak, InstanceDefaults, JustWateredTtl, MapView, SensorOfflineAfter, WaterDemand,
+        DefectStreak, InstanceDefaults, JustWateredTtl, MapBounds, MapView, SensorOfflineAfter,
+        WaterDemand, ZoomLevel,
     };
     use domain::shared::{coordinates::Coordinate, geo::BoundingBox};
     use std::sync::Arc;
@@ -1555,7 +1556,14 @@ async fn the_sweep_expires_each_organization_on_its_own_ttl() {
         defect_streak: DefectStreak::new(3).unwrap(),
         map_view: MapView::new(
             Coordinate::new(54.78, 9.43).unwrap(),
-            BoundingBox::try_new(54.7, 9.3, 54.9, 9.6).unwrap(),
+            Some(
+                MapBounds::new(
+                    BoundingBox::try_new(54.7, 9.3, 54.9, 9.6).unwrap(),
+                    ZoomLevel::new(13).unwrap(),
+                    ZoomLevel::new(18).unwrap(),
+                )
+                .unwrap(),
+            ),
         )
         .unwrap(),
     };

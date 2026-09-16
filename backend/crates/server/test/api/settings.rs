@@ -246,7 +246,9 @@ async fn a_map_view_round_trips_with_its_numbers_in_place() {
     let resp = app
         .put_json(
             &format!("/api/v1/organizations/{org}/settings"),
-            &json!({ "map_view": { "center": center, "bbox": bbox } }),
+            &json!({ "map_view": {
+                "center": center, "bbox": bbox, "min_zoom": 13, "max_zoom": 18
+            } }),
         )
         .await;
     assert_eq!(resp.status(), 200);
@@ -255,6 +257,8 @@ async fn a_map_view_round_trips_with_its_numbers_in_place() {
     assert_eq!(body["map_view"]["origin"], "own");
     assert_eq!(body["map_view"]["value"]["center"], center);
     assert_eq!(body["map_view"]["value"]["bbox"], bbox);
+    assert_eq!(body["map_view"]["value"]["min_zoom"], 13);
+    assert_eq!(body["map_view"]["value"]["max_zoom"], 18);
     assert_eq!(body["map_view"]["own_value"]["center"], center);
     assert_eq!(body["map_view"]["own_value"]["bbox"], bbox);
 
@@ -266,7 +270,10 @@ async fn a_map_view_round_trips_with_its_numbers_in_place() {
     .fetch_one(&app.db_pool)
     .await
     .unwrap();
-    assert_eq!(recorded, Some(json!({ "center": center, "bbox": bbox })));
+    assert_eq!(
+        recorded,
+        Some(json!({ "center": center, "bbox": bbox, "min_zoom": 13, "max_zoom": 18 }))
+    );
 }
 
 #[tokio::test]

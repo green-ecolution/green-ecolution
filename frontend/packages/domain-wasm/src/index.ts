@@ -36,6 +36,7 @@ export {
   validateJustWateredTtlHours,
   justWateredTtlMinHours,
   justWateredTtlMaxHours,
+  validateMapView,
   validateTreeDraft,
   validateTreeClusterDraft,
   validateVehicleDraft,

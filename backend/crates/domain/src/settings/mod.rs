@@ -24,7 +24,9 @@ pub use repository::{SettingsReader, SettingsResolver, SettingsWriter};
 pub use resolve::{Resolution, SettingOrigin, SettingOrigins, resolve};
 #[doc(hidden)]
 pub use snapshot::OrganizationSettingsSnapshot;
-pub use values::{DefectStreak, JustWateredTtl, MapView, SensorOfflineAfter, WaterDemand};
+pub use values::{
+    DefectStreak, JustWateredTtl, MapBounds, MapView, SensorOfflineAfter, WaterDemand, ZoomLevel,
+};
 
 /// What one organization set for itself. `None` means inherit.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -422,7 +424,14 @@ mod tests {
             map_view: Patch::Set(
                 MapView::new(
                     Coordinate::new(54.8, 9.4).unwrap(),
-                    BoundingBox::try_new(54.7, 9.2, 54.9, 9.6).unwrap(),
+                    Some(
+                        MapBounds::new(
+                            BoundingBox::try_new(54.7, 9.2, 54.9, 9.6).unwrap(),
+                            ZoomLevel::new(13).unwrap(),
+                            ZoomLevel::new(18).unwrap(),
+                        )
+                        .unwrap(),
+                    ),
                 )
                 .unwrap(),
             ),

@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT organization_id, water_demand_liters, just_watered_ttl_secs,\n                      sensor_offline_after_secs, defect_streak,\n                      map_center_lat, map_center_lng,\n                      map_bbox_sw_lat, map_bbox_sw_lng,\n                      map_bbox_ne_lat, map_bbox_ne_lng,\n                      descendants_may_override\n               FROM organization_settings WHERE organization_id = $1 FOR UPDATE",
+  "query": "SELECT organization_id, water_demand_liters, just_watered_ttl_secs,\n                      sensor_offline_after_secs, defect_streak,\n                      map_center_lat, map_center_lng,\n                      map_bbox_sw_lat, map_bbox_sw_lng,\n                      map_bbox_ne_lat, map_bbox_ne_lng,\n                      map_min_zoom, map_max_zoom,\n                      descendants_may_override\n               FROM organization_settings",
   "describe": {
     "columns": [
       {
@@ -60,14 +60,22 @@
       },
       {
         "ordinal": 11,
+        "name": "map_min_zoom",
+        "type_info": "Int2"
+      },
+      {
+        "ordinal": 12,
+        "name": "map_max_zoom",
+        "type_info": "Int2"
+      },
+      {
+        "ordinal": 13,
         "name": "descendants_may_override",
         "type_info": "Bool"
       }
     ],
     "parameters": {
-      "Left": [
-        "Uuid"
-      ]
+      "Left": []
     },
     "nullable": [
       false,
@@ -81,8 +89,10 @@
       true,
       true,
       true,
+      true,
+      true,
       false
     ]
   },
-  "hash": "092b2cfddff8ad4a8181ee19d56f51f6f37311f97b07490f3296c74bc112849b"
+  "hash": "02ee32e5d3782ea70db6b6a3850ca346d5c552cd7cb76bde8d64c6ef20d8ec26"
 }

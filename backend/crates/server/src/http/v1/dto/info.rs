@@ -59,15 +59,40 @@ impl From<&Git> for GitInfoResponse {
 pub struct MapInfoResponse {
     #[schema(example = json!([54.7937, 9.4469]))]
     pub center: [f64; 2],
+    /// Absent where the map may be panned anywhere. The instance default
+    /// always carries one; an organization may choose to drop the limit.
     #[schema(example = json!([54.75, 9.40, 54.83, 9.50]))]
-    pub bbox: [f64; 4],
+    pub bbox: Option<[f64; 4]>,
+    /// The zoom range the map is held to, absent together with `bbox`.
+    #[schema(example = 13)]
+    pub min_zoom: Option<u8>,
+    #[schema(example = 18)]
+    pub max_zoom: Option<u8>,
 }
 
 impl From<&Map> for MapInfoResponse {
     fn from(value: &Map) -> Self {
         Self {
             center: value.center,
-            bbox: value.bbox,
+            bbox: Some(value.bbox),
+            min_zoom: Some(value.min_zoom),
+            max_zoom: Some(value.max_zoom),
+        }
+    }
+}
+
+impl From<domain::settings::MapView> for MapInfoResponse {
+    fn from(value: domain::settings::MapView) -> Self {
+        let center = value.center();
+        let bounds = value.bounds();
+        Self {
+            center: [center.latitude(), center.longitude()],
+            bbox: bounds.map(|b| {
+                let bbox = b.bbox();
+                [bbox.sw_lat(), bbox.sw_lng(), bbox.ne_lat(), bbox.ne_lng()]
+            }),
+            min_zoom: bounds.map(|b| b.min_zoom().level()),
+            max_zoom: bounds.map(|b| b.max_zoom().level()),
         }
     }
 }

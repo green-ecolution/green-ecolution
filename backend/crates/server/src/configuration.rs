@@ -223,6 +223,10 @@ impl AnalyticsSettings {
 pub struct MapSettings {
     pub center: [f64; 2],
     pub bbox: [f64; 4],
+    #[serde(default = "default_map_min_zoom")]
+    pub min_zoom: u8,
+    #[serde(default = "default_map_max_zoom")]
+    pub max_zoom: u8,
     #[serde(default = "default_nearest_tree_max_radius")]
     pub nearest_tree_max_radius: f64,
     #[serde(default = "default_nearest_tree_default_limit")]
@@ -231,6 +235,12 @@ pub struct MapSettings {
     pub nearest_tree_max_limit: u32,
 }
 
+fn default_map_min_zoom() -> u8 {
+    13
+}
+fn default_map_max_zoom() -> u8 {
+    18
+}
 fn default_nearest_tree_max_radius() -> f64 {
     500.0
 }
@@ -246,6 +256,8 @@ impl Default for MapSettings {
         Self {
             center: [54.792277136221905, 9.43580607453268],
             bbox: [54.714822, 9.285796, 54.860127, 9.583800],
+            min_zoom: default_map_min_zoom(),
+            max_zoom: default_map_max_zoom(),
             nearest_tree_max_radius: default_nearest_tree_max_radius(),
             nearest_tree_default_limit: default_nearest_tree_default_limit(),
             nearest_tree_max_limit: default_nearest_tree_max_limit(),

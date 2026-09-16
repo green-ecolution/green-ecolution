@@ -33,6 +33,9 @@ map:
   # The centre must lie inside bbox; the server refuses to start otherwise.
   center: [54.792277136221905, 9.43580607453268]
   bbox: [54.714822, 9.285796, 54.860127, 9.583800]
+  # Zoom range the map is held to; also the instance default for organizations.
+  min_zoom: 13
+  max_zoom: 18
   nearest_tree_max_radius: 500.0
   nearest_tree_default_limit: 10
   nearest_tree_max_limit: 50

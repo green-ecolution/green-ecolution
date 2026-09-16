@@ -13,6 +13,7 @@ use crate::{
         auth::extractor::AuthUserExtractor,
         v1::dto::{
             ListResponse,
+            info::MapInfoResponse,
             role::RoleResponse,
             user::{
                 AssignRoleRequest, SetOrganizationRequest, UserListParams, UserRegisterRequest,
@@ -34,6 +35,7 @@ pub fn protected_routes() -> OpenApiRouter<Arc<AppState>> {
     OpenApiRouter::new()
         .routes(routes!(list_users, create_user))
         .routes(routes!(get_me))
+        .routes(routes!(get_my_map_view))
         .routes(routes!(update_user))
         .routes(routes!(list_user_roles, assign_user_role))
         .routes(routes!(revoke_user_role))
@@ -74,6 +76,25 @@ pub async fn get_me(
         .next()
         .ok_or(ServiceError::Repository(domain::RepositoryError::NotFound))?;
     Ok(Json((&view).into()))
+}
+
+#[utoipa::path(get, path = "/users/me/map-view", tag = "Users",
+    operation_id = "getMyMapView",
+    summary = "Get the map viewport for the authenticated user",
+    description = "Returns the centre and bounding box the map opens at for the caller's organization, resolved along the organization tree. Falls back to the instance default where the account belongs to no organization. Unlike `/info/map`, which stays unauthenticated and always reports the instance default, this answer is organization-specific and therefore requires a token.",
+    responses(
+        (status = 200, description = "The map viewport in force for the caller", body = MapInfoResponse),
+        (status = 401, description = "Unauthorized", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
+    )
+)]
+#[tracing::instrument(level = "info", skip_all)]
+pub async fn get_my_map_view(
+    State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
+) -> Result<Json<MapInfoResponse>, ServiceError> {
+    let view = state.settings_service.map_view_for_user(user.id).await?;
+    Ok(Json(MapInfoResponse::from(view)))
 }
 
 #[utoipa::path(get, path = "/users", tag = "Users",
