@@ -648,6 +648,25 @@ describe('OrganizationPage', () => {
     expect(updateMutate).not.toHaveBeenCalled()
   })
 
+  it('saves a changed setting although the master data is still incomplete', async () => {
+    render(<OrganizationPage />)
+    await selectNord()
+
+    // Half an address is not enough for the organization endpoint, but the
+    // settings endpoint is a separate request and must not wait for it.
+    await userEvent.type(
+      screen.getByRole('textbox', { name: 'Straße und Hausnummer' }),
+      'Gartenweg 1',
+    )
+    const ttl = screen.getByRole('spinbutton', { name: /Nachwirkzeit/ })
+    await userEvent.clear(ttl)
+    await userEvent.type(ttl, '48')
+    await userEvent.click(screen.getByRole('button', { name: 'Speichern' }))
+
+    await waitFor(() => expect(updateSettingsMutate).toHaveBeenCalled())
+    expect(updateMutate).not.toHaveBeenCalled()
+  })
+
   it('keeps a typed setting when the organization save succeeds and the settings save fails', async () => {
     // Saving the organization invalidates the whole `organizations` prefix, so
     // the settings come back — as a new object, because `changedAt` is a Date.

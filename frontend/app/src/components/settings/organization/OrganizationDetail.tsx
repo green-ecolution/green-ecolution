@@ -34,7 +34,9 @@ interface OrganizationDetailProps {
   draft: OrganizationDraft
   dirty: boolean
   addressErrors: AddressFieldErrors
-  addressComplete: boolean
+  /** Whether pressing save would send anything; decided on the page, which is
+   *  the only place that sees both endpoints. */
+  canSave: boolean
   /** True for the topmost organization of the instance, which nobody may edit. */
   readOnly: boolean
   canUpdate: boolean
@@ -94,7 +96,7 @@ const OrganizationDetail = ({
   draft,
   dirty,
   addressErrors,
-  addressComplete,
+  canSave,
   readOnly,
   canUpdate,
   canCreate,
@@ -416,8 +418,7 @@ const OrganizationDetail = ({
         <div className="sticky bottom-0 -mt-6 flex flex-col-reverse gap-2 border-t border-dark-200 bg-[var(--org-panel-bg,var(--color-dark-50))] pb-3 pt-6 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
           <OrganizationActionButtons
             saving={saving}
-            nameEmpty={nameEmpty}
-            addressComplete={addressComplete}
+            canSave={canSave}
             onSave={onSave}
             onCancel={onCancel}
           />

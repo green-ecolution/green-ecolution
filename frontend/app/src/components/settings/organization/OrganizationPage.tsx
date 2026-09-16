@@ -140,6 +140,12 @@ const OrganizationPage = () => {
   // out, hence the `!valid` arm.
   const unsaved = dirty || settingsDraft.dirty || !settingsDraft.valid
 
+  // Master data and settings travel to different endpoints, so each is judged
+  // on its own. The button asks only whether either half has something valid to
+  // send; the other half keeps its error in the form until it is fixed.
+  const masterDataValid = draft !== null && draft.name.trim().length > 0 && addressComplete
+  const canSave = (dirty && masterDataValid) || settingsDraft.dirty
+
   const blocker = useBlocker({
     shouldBlockFn: () => unsaved,
     // Also gates the browser's own unload prompt; see useFormNavigationBlocker.
@@ -331,16 +337,14 @@ const OrganizationPage = () => {
     const city = draft.city.trim()
     const name = draft.name.trim()
     const filled = [street, postalCode, city].filter((value) => value.length > 0)
-    // Repeats what the disabled action bar already prevents: neither an empty name
-    // nor half an address may reach the backend, whoever calls this.
-    if (name.length === 0) return
-    if (filled.length !== 0 && filled.length !== 3) return
     const address: AddressDto | null = filled.length === 3 ? { street, postalCode, city } : null
 
-    // One button, two endpoints: each part goes out only if it actually
-    // changed, and an invalid settings draft withholds its own request
-    // (`toRequest` returns null) without holding up the master data.
-    if (dirty) {
+    // One button, two endpoints: each part goes out only if it actually changed
+    // AND is valid on its own. Neither invalid half may hold the other back —
+    // an invalid settings draft withholds its own request (`toRequest` returns
+    // null), and incomplete master data withholds only the organization PUT.
+    // What stays behind stays in the form with its error, so nothing is lost.
+    if (dirty && masterDataValid) {
       updateOrganization.mutate({
         orgId: detail.id,
         name,
@@ -442,7 +446,7 @@ const OrganizationPage = () => {
           draft={draft}
           dirty={unsaved}
           addressErrors={addressErrors}
-          addressComplete={addressComplete}
+          canSave={canSave}
           readOnly={readOnly}
           canUpdate={canUpdate}
           canCreate={canCreate}
@@ -497,8 +501,7 @@ const OrganizationPage = () => {
                   <DrawerFooter className="flex-col-reverse gap-2 border-t border-dark-200 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
                     <OrganizationActionButtons
                       saving={updateOrganization.isPending || updateSettings.isPending}
-                      nameEmpty={draft.name.trim().length === 0}
-                      addressComplete={addressComplete}
+                      canSave={canSave}
                       onSave={save}
                       onCancel={resetDraft}
                     />
