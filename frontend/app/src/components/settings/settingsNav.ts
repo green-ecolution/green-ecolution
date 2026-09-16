@@ -1,5 +1,10 @@
 import type de from '@/locales/de'
-import { satisfies, type Permission, type PermissionRequirement, type Permissions } from '@/lib/auth/permissions'
+import {
+  satisfies,
+  type Permission,
+  type PermissionRequirement,
+  type Permissions,
+} from '@/lib/auth/permissions'
 
 type SettingsNavKey = keyof (typeof de)['settings']['nav']
 
