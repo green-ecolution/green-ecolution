@@ -8,7 +8,10 @@ import type { ComboboxOption } from '@green-ecolution/ui'
 const ClusterToolbar: React.FC = () => {
   const { t } = useTranslation('treecluster')
   const search = useSearch({ strict: false })
-  const navigate = useNavigate()
+  // Scoped to /treecluster: an unscoped navigate's `prev` type is the union of
+  // every route's search schema, which breaks as soon as another route (e.g.
+  // /trees) defines its own differently-typed `sort` field.
+  const navigate = useNavigate({ from: '/treecluster' })
   const sortOptions: ComboboxOption[] = [
     { value: 'name', label: t('toolbar.sortOptionName') },
     { value: 'moisture', label: t('toolbar.sortOptionMoisture') },
