@@ -11,18 +11,18 @@ routes: ['/trees', '/trees/$treeId']
 Die Seite **Bäume** zeigt jeden Baum mit seiner Baumnummer, seiner Art und seinem
 Bewässerungszustand als Badge; darunter stehen die Bewässerungsgruppe und der verknüpfte
 Sensor, und fehlt eines von beidem, sagt die Zeile das ausdrücklich, statt es einfach
-wegzulassen. Ein Klick auf einen Eintrag führt zur Detailseite. Über dem Suchfeld
+wegzulassen. Ein Klick auf einen Eintrag führt zur Detailseite. Über das Suchfeld
 durchsuchst du die Liste nach Baumnummer und Art, ohne Rücksicht auf Groß- und
 Kleinschreibung; die Suche greift erst kurz nach dem letzten Tastendruck, und der
 gefundene Teil des Textes erscheint in den Ergebnissen hervorgehoben.
 
 Daneben stehen vier Filter, die jeweils sofort wirken, ohne dass eine Bestätigung nötig
-wäre: nach dem Bewässerungszustand, nach dem Pflanzjahr, nach dem Vorhandensein eines
-Sensors mit den Optionen **Mit Sensor** und **Ohne Sensor**, sowie nach der
-Bewässerungsgruppe, wo sich einzelne Gruppen ebenso wählen lassen wie **Mit Gruppe** und
-**Ohne Gruppe** für die bloße Zugehörigkeit, unabhängig davon, um welche Gruppe es sich
-handelt. Jede gesetzte Auswahl erscheint darunter als entfernbarer Chip, daneben ein Link,
-der alle Filter auf einmal zurücksetzt, sowie die Anzahl der gefundenen Bäume.
+wäre: nach dem Bewässerungszustand, nach der Bewässerungsgruppe, wo sich einzelne Gruppen
+ebenso wählen lassen wie **Mit Gruppe** und **Ohne Gruppe** für die bloße Zugehörigkeit,
+unabhängig davon, um welche Gruppe es sich handelt, nach dem Vorhandensein eines Sensors
+mit den Optionen **Mit Sensor** und **Ohne Sensor**, sowie nach dem Pflanzjahr. Jede
+gesetzte Auswahl erscheint darunter als entfernbarer Chip, daneben ein Link, der alle
+Filter auf einmal zurücksetzt, sowie die Anzahl der gefundenen Bäume.
 
 Über das Sortiermenü ordnest du die Liste nach Baumnummer, Art, Bewässerungszustand,
 Pflanzjahr, letzter Bewässerung oder Bewässerungsgruppe, jeweils auf- oder absteigend;
