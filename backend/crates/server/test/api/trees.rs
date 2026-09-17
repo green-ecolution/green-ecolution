@@ -1214,9 +1214,9 @@ async fn list_trees_filters_by_cluster_id() {
 
 async fn seed_sortable_trees(app: &TestApp) {
     for (number, species, year) in [
-        ("T-003", "Carpinus betulus", 2019),
-        ("T-001", "Acer platanoides", 2021),
-        ("T-002", "Betula pendula", 2020),
+        ("T-001", "Betula pendula", 2020),
+        ("T-002", "Acer platanoides", 2019),
+        ("T-003", "Carpinus betulus", 2021),
     ] {
         app.post_json(
             "/api/v1/trees",
@@ -1264,7 +1264,7 @@ async fn list_trees_sorts_by_species_descending() {
         .await
         .unwrap();
 
-    assert_eq!(numbers(&body), vec!["T-003", "T-002", "T-001"]);
+    assert_eq!(numbers(&body), vec!["T-003", "T-001", "T-002"]);
 }
 
 #[tokio::test]
@@ -1279,7 +1279,7 @@ async fn list_trees_sorts_by_planting_year_ascending() {
         .await
         .unwrap();
 
-    assert_eq!(numbers(&body), vec!["T-003", "T-002", "T-001"]);
+    assert_eq!(numbers(&body), vec!["T-002", "T-001", "T-003"]);
 }
 
 #[tokio::test]
@@ -1321,7 +1321,24 @@ async fn list_trees_sorts_by_status_with_critical_first() {
 async fn list_trees_sorts_by_cluster_name_with_unassigned_last() {
     let app = spawn_app().await;
 
-    let cluster = app
+    let bahnhofsviertel = app
+        .post_json(
+            "/api/v1/clusters",
+            &serde_json::json!({
+                "name": "Bahnhofsviertel",
+                "address": "Bahnhofstraße 1",
+                "description": "Testgruppe",
+                "soil_condition": "Su3",
+                "tree_ids": []
+            }),
+        )
+        .await
+        .json::<serde_json::Value>()
+        .await
+        .unwrap();
+    let bahnhofsviertel_id = bahnhofsviertel["id"].as_str().unwrap().to_string();
+
+    let alsterufer = app
         .post_json(
             "/api/v1/clusters",
             &serde_json::json!({
@@ -1336,7 +1353,7 @@ async fn list_trees_sorts_by_cluster_name_with_unassigned_last() {
         .json::<serde_json::Value>()
         .await
         .unwrap();
-    let cluster_id = cluster["id"].as_str().unwrap().to_string();
+    let alsterufer_id = alsterufer["id"].as_str().unwrap().to_string();
 
     app.post_json(
         "/api/v1/trees",
@@ -1346,8 +1363,7 @@ async fn list_trees_sorts_by_cluster_name_with_unassigned_last() {
             "planting_year": 2020,
             "latitude": 53.55,
             "longitude": 9.99,
-            "description": "",
-            "tree_cluster_id": cluster_id
+            "description": ""
         }),
     )
     .await;
@@ -1359,7 +1375,21 @@ async fn list_trees_sorts_by_cluster_name_with_unassigned_last() {
             "planting_year": 2020,
             "latitude": 53.56,
             "longitude": 9.98,
-            "description": ""
+            "description": "",
+            "tree_cluster_id": bahnhofsviertel_id
+        }),
+    )
+    .await;
+    app.post_json(
+        "/api/v1/trees",
+        &serde_json::json!({
+            "species": "Linde",
+            "number": "T-022",
+            "planting_year": 2020,
+            "latitude": 53.57,
+            "longitude": 9.97,
+            "description": "",
+            "tree_cluster_id": alsterufer_id
         }),
     )
     .await;
@@ -1370,7 +1400,7 @@ async fn list_trees_sorts_by_cluster_name_with_unassigned_last() {
         .json()
         .await
         .unwrap();
-    assert_eq!(numbers(&asc), vec!["T-020", "T-021"]);
+    assert_eq!(numbers(&asc), vec!["T-022", "T-021", "T-020"]);
 
     let desc: serde_json::Value = app
         .get("/api/v1/trees?sort=cluster&order=desc")
@@ -1380,7 +1410,7 @@ async fn list_trees_sorts_by_cluster_name_with_unassigned_last() {
         .unwrap();
     // NULLS LAST holds in both directions, so the tree without a cluster stays
     // at the end rather than jumping to the front.
-    assert_eq!(numbers(&desc), vec!["T-020", "T-021"]);
+    assert_eq!(numbers(&desc), vec!["T-021", "T-022", "T-020"]);
 }
 
 #[tokio::test]
@@ -1388,8 +1418,10 @@ async fn list_trees_sorts_by_last_watered_in_both_directions() {
     let app = spawn_app().await;
 
     for (number, watered) in [
-        ("T-030", "2026-01-10T08:00:00Z"),
-        ("T-031", "2026-03-20T08:00:00Z"),
+        ("T-030", Some("2026-02-15T08:00:00Z")),
+        ("T-031", Some("2026-01-10T08:00:00Z")),
+        ("T-032", Some("2026-03-20T08:00:00Z")),
+        ("T-033", None),
     ] {
         let created: serde_json::Value = app
             .post_json(
@@ -1407,8 +1439,10 @@ async fn list_trees_sorts_by_last_watered_in_both_directions() {
             .json()
             .await
             .unwrap();
-        app.set_last_watered(created["id"].as_str().unwrap(), watered)
-            .await;
+        if let Some(watered_at) = watered {
+            app.set_last_watered(created["id"].as_str().unwrap(), watered_at)
+                .await;
+        }
     }
 
     let asc: serde_json::Value = app
@@ -1417,7 +1451,7 @@ async fn list_trees_sorts_by_last_watered_in_both_directions() {
         .json()
         .await
         .unwrap();
-    assert_eq!(numbers(&asc), vec!["T-030", "T-031"]);
+    assert_eq!(numbers(&asc), vec!["T-031", "T-030", "T-032", "T-033"]);
 
     let desc: serde_json::Value = app
         .get("/api/v1/trees?sort=last_watered&order=desc")
@@ -1425,7 +1459,8 @@ async fn list_trees_sorts_by_last_watered_in_both_directions() {
         .json()
         .await
         .unwrap();
-    assert_eq!(numbers(&desc), vec!["T-031", "T-030"]);
+    // T-033 (never watered) stays last in both directions: NULLS LAST.
+    assert_eq!(numbers(&desc), vec!["T-032", "T-030", "T-031", "T-033"]);
 }
 
 #[tokio::test]
@@ -1490,7 +1525,7 @@ async fn list_trees_sorts_by_planting_year_descending() {
         .await
         .unwrap();
 
-    assert_eq!(numbers(&body), vec!["T-001", "T-002", "T-003"]);
+    assert_eq!(numbers(&body), vec!["T-003", "T-001", "T-002"]);
 }
 
 #[tokio::test]
@@ -1505,7 +1540,7 @@ async fn list_trees_sorts_by_species_ascending() {
         .await
         .unwrap();
 
-    assert_eq!(numbers(&body), vec!["T-001", "T-002", "T-003"]);
+    assert_eq!(numbers(&body), vec!["T-002", "T-001", "T-003"]);
 }
 
 #[tokio::test]
