@@ -19,9 +19,29 @@ import { filterSearchSchema } from '@/lib/filterSearchSchema'
 import { pendingLoading, prefetch } from '@/lib/router'
 import { Can } from '@/lib/auth/Can'
 
+const sortFields = [
+  'number',
+  'species',
+  'status',
+  'planting_year',
+  'last_watered',
+  'cluster',
+] as const
+
 const treeFilterSchema = filterSearchSchema
-  .pick({ wateringStatuses: true, hasCluster: true, plantingYears: true })
-  .extend({ page: z.number().int().min(1).catch(1) })
+  .pick({
+    wateringStatuses: true,
+    hasCluster: true,
+    hasSensor: true,
+    clusterIds: true,
+    plantingYears: true,
+  })
+  .extend({
+    page: z.number().int().min(1).catch(1),
+    q: z.string().optional().catch(undefined),
+    sort: z.enum(sortFields).optional().catch(undefined),
+    order: z.enum(['asc', 'desc']).optional().catch(undefined),
+  })
 
 function Trees() {
   const { t } = useTranslation('tree')
@@ -109,9 +129,14 @@ export const Route = createFileRoute('/_protected/trees/')({
   pendingComponent: pendingLoading({ key: 'tree:list.loadingLabel' }),
   loaderDeps: ({ search }) => ({
     page: search.page,
+    q: search.q,
     wateringStatuses: search.wateringStatuses,
     hasCluster: search.hasCluster,
+    hasSensor: search.hasSensor,
+    clusterIds: search.clusterIds,
     plantingYears: search.plantingYears,
+    sort: search.sort,
+    order: search.order,
   }),
   loader: ({
     deps: { page, wateringStatuses, hasCluster, plantingYears },

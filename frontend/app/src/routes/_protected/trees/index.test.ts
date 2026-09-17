@@ -50,3 +50,53 @@ describe('/trees route filters (GECO-133)', () => {
     expect(deps.plantingYears).toEqual([2018])
   })
 })
+
+describe('/trees route search, sort and new filters', () => {
+  it('parses the query string', () => {
+    const result = parseSearch({ q: 'Quercus' }) as Record<string, unknown>
+    expect(result.q).toBe('Quercus')
+  })
+
+  it('parses sort and order', () => {
+    const result = parseSearch({ sort: 'species', order: 'desc' }) as Record<string, unknown>
+    expect(result.sort).toBe('species')
+    expect(result.order).toBe('desc')
+  })
+
+  it('drops an unknown sort field instead of throwing', () => {
+    const result = parseSearch({ sort: 'height' }) as Record<string, unknown>
+    expect(result.sort).toBeUndefined()
+  })
+
+  it('drops an unknown order instead of throwing', () => {
+    const result = parseSearch({ order: 'sideways' }) as Record<string, unknown>
+    expect(result.order).toBeUndefined()
+  })
+
+  it('parses the cluster and sensor filters', () => {
+    const result = parseSearch({
+      clusterIds: ['0190a8e9-7c4f-7000-8000-000000000000'],
+      hasSensor: false,
+    }) as Record<string, unknown>
+    expect(result.clusterIds).toEqual(['0190a8e9-7c4f-7000-8000-000000000000'])
+    expect(result.hasSensor).toBe(false)
+  })
+
+  it('passes every new key through loaderDeps', () => {
+    const deps = loaderDeps({
+      search: {
+        page: 1,
+        q: 'Quercus',
+        sort: 'species',
+        order: 'desc',
+        clusterIds: ['0190a8e9-7c4f-7000-8000-000000000000'],
+        hasSensor: true,
+      },
+    })
+    expect(deps.q).toBe('Quercus')
+    expect(deps.sort).toBe('species')
+    expect(deps.order).toBe('desc')
+    expect(deps.clusterIds).toEqual(['0190a8e9-7c4f-7000-8000-000000000000'])
+    expect(deps.hasSensor).toBe(true)
+  })
+})

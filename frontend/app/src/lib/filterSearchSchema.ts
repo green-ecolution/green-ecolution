@@ -7,6 +7,8 @@ export const filterSearchSchema = z.object({
   regions: z.array(z.string()).optional().catch(undefined),
   soil: z.array(z.string()).optional().catch(undefined),
   hasCluster: z.boolean().optional().catch(undefined),
+  hasSensor: z.boolean().optional().catch(undefined),
+  clusterIds: z.array(z.string()).optional().catch(undefined),
   plantingYears: z.array(z.number()).optional().catch(undefined),
 })
 
