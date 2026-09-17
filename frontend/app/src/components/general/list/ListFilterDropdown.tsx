@@ -1,5 +1,6 @@
-import type { ComponentType } from 'react'
+import { useId, type ComponentType } from 'react'
 import { Check, ChevronDown } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import {
   Badge,
   Button,
@@ -36,6 +37,8 @@ const ListFilterDropdown = ({
   icon: Icon,
   emptyText,
 }: ListFilterDropdownProps) => {
+  const { t } = useTranslation('common')
+  const stateIdPrefix = useId()
   const toggle = (option: string) =>
     onChange(value.includes(option) ? value.filter((v) => v !== option) : [...value, option])
 
@@ -61,23 +64,35 @@ const ListFilterDropdown = ({
           <CommandList>
             <CommandEmpty>{emptyText}</CommandEmpty>
             <CommandGroup>
-              {options.map((option) => (
-                <CommandItem
-                  key={option.value}
-                  value={option.label}
-                  onSelect={() => toggle(option.value)}
-                  aria-checked={value.includes(option.value)}
-                >
-                  <Check
-                    aria-hidden
-                    className={cn(
-                      'mr-2 size-4',
-                      value.includes(option.value) ? 'opacity-100' : 'opacity-0',
-                    )}
-                  />
-                  {option.label}
-                </CommandItem>
-              ))}
+              {options.map((option) => {
+                const selected = value.includes(option.value)
+                const stateId = `${stateIdPrefix}-${option.value}`
+                return (
+                  <CommandItem
+                    key={option.value}
+                    value={option.label}
+                    onSelect={() => toggle(option.value)}
+                    // cmdk forces role="option", which the ARIA spec gives no
+                    // supported "checked" state; aria-label pins the accessible
+                    // name to the plain label so the state text (reachable via
+                    // aria-describedby) can't merge into it and can't be
+                    // stripped by the check icon's aria-hidden.
+                    aria-label={option.label}
+                    aria-describedby={stateId}
+                  >
+                    <Check
+                      aria-hidden
+                      className={cn('mr-2 size-4', selected ? 'opacity-100' : 'opacity-0')}
+                    />
+                    {option.label}
+                    <span id={stateId} className="sr-only">
+                      {selected
+                        ? t('list.filterOptionSelected')
+                        : t('list.filterOptionNotSelected')}
+                    </span>
+                  </CommandItem>
+                )
+              })}
             </CommandGroup>
           </CommandList>
         </Command>

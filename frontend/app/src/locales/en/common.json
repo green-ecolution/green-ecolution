@@ -63,7 +63,9 @@
     "resetFilters": "Reset all filters",
     "sortLabel": "Sort",
     "sortAscending": "Ascending",
-    "sortDescending": "Descending"
+    "sortDescending": "Descending",
+    "filterOptionSelected": "Selected",
+    "filterOptionNotSelected": "Not selected"
   },
   "form": {
     "error": {

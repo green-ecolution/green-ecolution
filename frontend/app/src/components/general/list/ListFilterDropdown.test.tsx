@@ -74,7 +74,7 @@ describe('ListFilterDropdown', () => {
     expect(screen.getByText('1')).toBeInTheDocument()
   })
 
-  it('exposes the selected option as checked to assistive technology', () => {
+  it('announces the selected option to assistive technology', () => {
     render(
       <ListFilterDropdown
         label="Zustand"
@@ -87,7 +87,14 @@ describe('ListFilterDropdown', () => {
 
     openDropdown('Zustand')
 
-    expect(screen.getByRole('option', { name: 'Kritisch' })).toHaveAttribute('aria-checked', 'true')
-    expect(screen.getByRole('option', { name: 'Unbekannt' })).toHaveAttribute('aria-checked', 'false')
+    const selectedOption = screen.getByRole('option', { name: 'Kritisch' })
+    const describedById = selectedOption.getAttribute('aria-describedby')
+    expect(describedById).toBeTruthy()
+    expect(document.getElementById(describedById!)).toHaveTextContent('Ausgewählt')
+
+    const unselectedOption = screen.getByRole('option', { name: 'Unbekannt' })
+    const unselectedDescribedById = unselectedOption.getAttribute('aria-describedby')
+    expect(unselectedDescribedById).toBeTruthy()
+    expect(document.getElementById(unselectedDescribedById!)).toHaveTextContent('Nicht ausgewählt')
   })
 })
