@@ -33,7 +33,7 @@
     "@tanstack/router-generator": "1.167.33",
     "barcode-detector": "^3.2.2",
     "date-fns": "^4.4.0",
-    "i18next": "^25.6.1",
+    "i18next": "^26.4.2",
     "i18next-browser-languagedetector": "^8.2.0",
     "immer": "^11.1.18",
     "lottie-react": "^3.1.2",
