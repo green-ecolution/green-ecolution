@@ -22,7 +22,16 @@ interface TreeListToolbarProps {
 
 const TreeListToolbar = ({ filteredRecords, action }: TreeListToolbarProps) => {
   const { t } = useTranslation('tree')
-  const { search, setQuery, setSort, setFilter, setHasSensor, resetFilters } = useTreeListSearch()
+  const {
+    search,
+    setQuery,
+    setSort,
+    setFilter,
+    setHasSensor,
+    setHasCluster,
+    setClusterAssignment,
+    resetFilters,
+  } = useTreeListSearch()
   const getWateringStatusDetails = useWateringStatusDetails()
 
   const { data: clusterPage } = useQuery(clusterQueries.list({ perPage: 100 }))
@@ -33,7 +42,7 @@ const TreeListToolbar = ({ filteredRecords, action }: TreeListToolbarProps) => {
     ...treeQueries.list({ page: 1, perPage: 1 }),
     staleTime: 60_000,
   })
-  const totalRecords = unfiltered?.pagination?.totalRecords ?? filteredRecords
+  const totalRecords = unfiltered?.pagination?.totalRecords
 
   const statusOptions = Object.values(WateringStatus).map((status) => ({
     value: status,
@@ -43,6 +52,13 @@ const TreeListToolbar = ({ filteredRecords, action }: TreeListToolbarProps) => {
     value: String(cluster.id),
     label: cluster.name,
   }))
+  // 'any' / 'none' answer "is this tree in a cluster at all", not a narrowing
+  // of the cluster list, so they sit ahead of the real clusters.
+  const clusterDropdownOptions = [
+    { value: 'any', label: t('list.clusterOptionAny') },
+    { value: 'none', label: t('list.clusterOptionNone') },
+    ...clusterOptions,
+  ]
   const yearOptions = (plantingYears ?? []).map((year) => ({
     value: String(year),
     label: String(year),
@@ -83,6 +99,15 @@ const TreeListToolbar = ({ filteredRecords, action }: TreeListToolbarProps) => {
           clusterIds.filter((value) => value !== id),
         ),
     })),
+    ...(search.hasCluster === undefined
+      ? []
+      : [
+          {
+            id: 'cluster-assignment',
+            label: search.hasCluster ? t('list.clusterOptionAny') : t('list.clusterOptionNone'),
+            onRemove: () => setHasCluster(undefined),
+          },
+        ]),
     ...years.map((year) => ({
       id: `year-${year}`,
       label: `${t('list.filterPlantingYear')} ${year}`,
@@ -104,9 +129,12 @@ const TreeListToolbar = ({ filteredRecords, action }: TreeListToolbarProps) => {
   ]
 
   const isFiltered = chips.length > 0 || (search.q ?? '').length > 0
-  const resultLabel = isFiltered
-    ? t('list.resultCountFiltered', { filtered: filteredRecords, total: totalRecords })
-    : t('list.resultCount', { count: totalRecords })
+  // Before the unfiltered total loads, showing the plain count avoids a
+  // flash of e.g. "17 of 17" comparing filteredRecords against itself.
+  const resultLabel =
+    isFiltered && totalRecords !== undefined
+      ? t('list.resultCountFiltered', { filtered: filteredRecords, total: totalRecords })
+      : t('list.resultCount', { count: totalRecords ?? filteredRecords })
 
   return (
     <>
@@ -131,9 +159,26 @@ const TreeListToolbar = ({ filteredRecords, action }: TreeListToolbarProps) => {
             <ListFilterDropdown
               label={t('list.filterCluster')}
               icon={FolderClosed}
-              options={clusterOptions}
-              value={clusterIds}
-              onChange={(values) => setFilter('clusterIds', values)}
+              options={clusterDropdownOptions}
+              value={
+                search.hasCluster === true
+                  ? ['any']
+                  : search.hasCluster === false
+                    ? ['none']
+                    : clusterIds
+              }
+              onChange={(values) => {
+                const last = values[values.length - 1]
+                if (last === 'any') {
+                  setClusterAssignment({ hasCluster: true })
+                } else if (last === 'none') {
+                  setClusterAssignment({ hasCluster: false })
+                } else {
+                  setClusterAssignment({
+                    clusterIds: values.filter((value) => value !== 'any' && value !== 'none'),
+                  })
+                }
+              }}
               emptyText={t('list.filterNoOptions')}
             />
             <ListFilterDropdown

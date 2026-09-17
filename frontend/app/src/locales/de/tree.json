@@ -68,6 +68,7 @@
     "filterNoOptions": "Keine Auswahl vorhanden.",
     "sensorOptionWith": "Mit Sensor",
     "sensorOptionWithout": "Ohne Sensor",
+    "clusterOptionAny": "Mit Gruppe",
     "clusterOptionNone": "Ohne Gruppe",
     "sortNumber": "Baumnummer",
     "sortSpecies": "Baumart",

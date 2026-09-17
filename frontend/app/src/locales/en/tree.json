@@ -68,6 +68,7 @@
     "filterNoOptions": "No options available.",
     "sensorOptionWith": "With sensor",
     "sensorOptionWithout": "Without sensor",
+    "clusterOptionAny": "With group",
     "clusterOptionNone": "No group",
     "sortNumber": "Tree number",
     "sortSpecies": "Species",

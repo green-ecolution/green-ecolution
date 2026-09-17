@@ -53,6 +53,22 @@ export const useTreeListSearch = () => {
     [patch],
   )
 
+  const setHasCluster = useCallback(
+    (value: boolean | undefined) => patch({ hasCluster: value }),
+    [patch],
+  )
+
+  // clusterIds and hasCluster are mutually exclusive; patched together so a
+  // switch between them is one navigation, not two racing ones.
+  const setClusterAssignment = useCallback(
+    (next: { clusterIds?: string[]; hasCluster?: boolean }) =>
+      patch({
+        clusterIds: next.clusterIds && next.clusterIds.length > 0 ? next.clusterIds : undefined,
+        hasCluster: next.hasCluster,
+      }),
+    [patch],
+  )
+
   const resetFilters = useCallback(
     () =>
       patch({
@@ -66,5 +82,14 @@ export const useTreeListSearch = () => {
     [patch],
   )
 
-  return { search, setQuery, setSort, setFilter, setHasSensor, resetFilters }
+  return {
+    search,
+    setQuery,
+    setSort,
+    setFilter,
+    setHasSensor,
+    setHasCluster,
+    setClusterAssignment,
+    resetFilters,
+  }
 }
