@@ -13,19 +13,24 @@ import {
 
 export type SortDirection = 'asc' | 'desc'
 
-export interface SortOption {
-  value: string
+export interface SortOption<T extends string = string> {
+  value: T
   label: string
 }
 
-interface ListSortMenuProps {
-  options: SortOption[]
-  field: string
+interface ListSortMenuProps<T extends string> {
+  options: SortOption<T>[]
+  field: T
   direction: SortDirection
-  onChange: (field: string, direction: SortDirection) => void
+  onChange: (field: T, direction: SortDirection) => void
 }
 
-const ListSortMenu = ({ options, field, direction, onChange }: ListSortMenuProps) => {
+const ListSortMenu = <T extends string>({
+  options,
+  field,
+  direction,
+  onChange,
+}: ListSortMenuProps<T>) => {
   const { t } = useTranslation('common')
   const active = options.find((option) => option.value === field)
   const DirectionIcon = direction === 'asc' ? ArrowUp : ArrowDown
@@ -41,7 +46,12 @@ const ListSortMenu = ({ options, field, direction, onChange }: ListSortMenuProps
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuLabel>{t('list.sortLabel')}</DropdownMenuLabel>
-        <DropdownMenuRadioGroup value={field} onValueChange={(newField) => onChange(newField, direction)}>
+        <DropdownMenuRadioGroup
+          value={field}
+          // Radix hands back the raw string value; it is always one of `options`'
+          // T-typed values since those are the only items rendered.
+          onValueChange={(newField) => onChange(newField as T, direction)}
+        >
           {options.map((option) => (
             <DropdownMenuRadioItem key={option.value} value={option.value}>
               {option.label}

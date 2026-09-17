@@ -13,9 +13,8 @@ const { searchMock, resetFilters } = vi.hoisted(() => {
 // on the fake route (validateSearch, loaderDeps, loader) is irrelevant here: the
 // component under test is rendered directly, never through a real router match.
 vi.mock('@tanstack/react-router', async () => {
-  const actual = await vi.importActual<typeof import('@tanstack/react-router')>(
-    '@tanstack/react-router',
-  )
+  const actual =
+    await vi.importActual<typeof import('@tanstack/react-router')>('@tanstack/react-router')
   return {
     ...actual,
     createFileRoute: () => (options: Record<string, unknown>) => ({
@@ -26,9 +25,9 @@ vi.mock('@tanstack/react-router', async () => {
 })
 
 vi.mock('@/components/tree/list/useTreeListSearch', async () => {
-  const actual = await vi.importActual<
-    typeof import('@/components/tree/list/useTreeListSearch')
-  >('@/components/tree/list/useTreeListSearch')
+  const actual = await vi.importActual<typeof import('@/components/tree/list/useTreeListSearch')>(
+    '@/components/tree/list/useTreeListSearch',
+  )
   return {
     ...actual,
     useTreeListSearch: () => ({

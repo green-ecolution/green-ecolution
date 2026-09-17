@@ -21,7 +21,9 @@ describe('ListSearchInput', () => {
 
   it('does not fire again when the debounced value is unchanged', () => {
     const onChange = vi.fn()
-    render(<ListSearchInput value="Eiche" onChange={onChange} label="Bäume suchen" debounceMs={300} />)
+    render(
+      <ListSearchInput value="Eiche" onChange={onChange} label="Bäume suchen" debounceMs={300} />,
+    )
 
     act(() => {
       vi.advanceTimersByTime(300)
@@ -31,7 +33,9 @@ describe('ListSearchInput', () => {
 
   it('clears the field through the clear button', () => {
     const onChange = vi.fn()
-    render(<ListSearchInput value="Eiche" onChange={onChange} label="Bäume suchen" debounceMs={300} />)
+    render(
+      <ListSearchInput value="Eiche" onChange={onChange} label="Bäume suchen" debounceMs={300} />,
+    )
 
     fireEvent.click(screen.getByRole('button', { name: /leeren/i }))
     act(() => {
