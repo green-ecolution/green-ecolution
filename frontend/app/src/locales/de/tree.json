@@ -91,10 +91,6 @@
     "label": "Baum:",
     "removeAriaLabel": "Baum aus Auswahl löschen"
   },
-  "filter": {
-    "plantingYearLegend": "Pflanzjahr:",
-    "plantingYearRange": "Pflanzjahr: {min} - {max}"
-  },
   "foreignDialog": {
     "titleSwitch": "Organisation wechseln?",
     "titleBlocked": "Baum nicht auswählbar",

@@ -91,10 +91,6 @@
     "label": "Tree:",
     "removeAriaLabel": "Remove tree from selection"
   },
-  "filter": {
-    "plantingYearLegend": "Planting year:",
-    "plantingYearRange": "Planting year: {min} - {max}"
-  },
   "foreignDialog": {
     "titleSwitch": "Switch organization?",
     "titleBlocked": "Tree cannot be selected",

@@ -136,11 +136,6 @@
     "siltAxisLabel": "Schluff [%]",
     "clayAxisLabel": "Ton [%]"
   },
-  "clusterFieldset": {
-    "legend": "Zugehörigkeit einer Bewässerungsgruppe:",
-    "hasCluster": "Gruppe zugehörig",
-    "noCluster": "Keiner Gruppe zugehörig"
-  },
   "regionFieldset": {
     "legend": "Stadtteil in Flensburg:",
     "placeholder": "Alle Bezirke",
