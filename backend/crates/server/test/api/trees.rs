@@ -1172,6 +1172,23 @@ async fn list_trees_filters_by_cluster_id() {
         .unwrap();
     let cluster_id = cluster["id"].as_str().unwrap().to_string();
 
+    let other_cluster = app
+        .post_json(
+            "/api/v1/clusters",
+            &serde_json::json!({
+                "name": "Nordstrand",
+                "address": "Nordstrandweg 1",
+                "description": "Zweite Testgruppe",
+                "soil_condition": "Su3",
+                "tree_ids": []
+            }),
+        )
+        .await
+        .json::<serde_json::Value>()
+        .await
+        .unwrap();
+    let other_cluster_id = other_cluster["id"].as_str().unwrap().to_string();
+
     app.post_json(
         "/api/v1/trees",
         &serde_json::json!({
@@ -1182,6 +1199,20 @@ async fn list_trees_filters_by_cluster_id() {
             "longitude": 9.99,
             "description": "",
             "tree_cluster_id": cluster_id
+        }),
+    )
+    .await;
+
+    app.post_json(
+        "/api/v1/trees",
+        &serde_json::json!({
+            "species": "Ulme",
+            "number": "T-450",
+            "planting_year": 2022,
+            "latitude": 53.57,
+            "longitude": 9.97,
+            "description": "",
+            "tree_cluster_id": other_cluster_id
         }),
     )
     .await;
@@ -1210,6 +1241,25 @@ async fn list_trees_filters_by_cluster_id() {
     assert_eq!(rows.len(), 1);
     assert_eq!(rows[0]["number"], "T-400");
     assert_eq!(body["pagination"]["total_records"], 1);
+
+    // The frontend sends several cluster_id values at once (one dropdown can
+    // select multiple groups), so the filter has to be repeatable, not just
+    // single-valued.
+    let body: serde_json::Value = app
+        .get(&format!(
+            "/api/v1/trees?cluster_id={cluster_id}&cluster_id={other_cluster_id}"
+        ))
+        .await
+        .json()
+        .await
+        .unwrap();
+
+    let rows = body["data"].as_array().unwrap();
+    let numbers: Vec<&str> = rows.iter().map(|t| t["number"].as_str().unwrap()).collect();
+    assert_eq!(numbers.len(), 2);
+    assert!(numbers.contains(&"T-400"));
+    assert!(numbers.contains(&"T-450"));
+    assert_eq!(body["pagination"]["total_records"], 2);
 }
 
 async fn seed_sortable_trees(app: &TestApp) {
