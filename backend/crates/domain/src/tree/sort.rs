@@ -1,8 +1,6 @@
 //! Sort options for the tree list.
 
-use std::{fmt, str::FromStr};
-
-use crate::shared::{error::ValidationError, sort::SortDirection};
+use crate::shared::sort::SortDirection;
 
 /// The sortable columns of the tree list.
 ///
@@ -32,31 +30,6 @@ impl TreeSortField {
     }
 }
 
-impl fmt::Display for TreeSortField {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(self.as_sql_key())
-    }
-}
-
-impl FromStr for TreeSortField {
-    type Err = ValidationError;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "number" => Ok(Self::Number),
-            "species" => Ok(Self::Species),
-            "status" => Ok(Self::Status),
-            "planting_year" => Ok(Self::PlantingYear),
-            "last_watered" => Ok(Self::LastWatered),
-            "cluster" => Ok(Self::Cluster),
-            other => Err(ValidationError::InvalidFormat {
-                field: "tree.sort",
-                reason: format!("unknown sort field `{other}`"),
-            }),
-        }
-    }
-}
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct TreeSort {
     pub field: TreeSortField,
@@ -68,22 +41,32 @@ mod tests {
     use super::*;
 
     #[test]
-    fn every_field_round_trips_through_its_sql_key() {
-        for field in [
+    fn sql_keys_are_exactly_the_contracted_set() {
+        // This string set is a contract with the SQL ORDER BY clause in
+        // pg_tree.rs; changing it requires a matching migration there.
+        let keys: Vec<&str> = [
             TreeSortField::Number,
             TreeSortField::Species,
             TreeSortField::Status,
             TreeSortField::PlantingYear,
             TreeSortField::LastWatered,
             TreeSortField::Cluster,
-        ] {
-            assert_eq!(field.as_sql_key().parse::<TreeSortField>().unwrap(), field);
-        }
-    }
+        ]
+        .into_iter()
+        .map(TreeSortField::as_sql_key)
+        .collect();
 
-    #[test]
-    fn rejects_unknown_field() {
-        assert!("height".parse::<TreeSortField>().is_err());
+        assert_eq!(
+            keys,
+            vec![
+                "number",
+                "species",
+                "status",
+                "planting_year",
+                "last_watered",
+                "cluster",
+            ]
+        );
     }
 
     #[test]
