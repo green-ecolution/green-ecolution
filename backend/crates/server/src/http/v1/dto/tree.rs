@@ -41,6 +41,9 @@ pub struct TreeResponse {
     #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000", nullable)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tree_cluster_id: Option<uuid::Uuid>,
+    #[schema(example = "Solitüde Strand", nullable)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tree_cluster_name: Option<String>,
     #[schema(nullable)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub sensor: Option<SensorResponse>,
@@ -71,6 +74,7 @@ impl From<(&TreeView, Option<&SensorView>)> for TreeResponse {
             watering_status: tree.watering_status.into(),
             description: tree.description.clone().unwrap_or_default(),
             tree_cluster_id: tree.cluster_id,
+            tree_cluster_name: tree.cluster_name.clone(),
             sensor: sensor.map(SensorResponse::from),
             last_watered: tree.last_watered.map(|dt| dt.to_rfc3339()),
             provider: tree.provider.clone(),

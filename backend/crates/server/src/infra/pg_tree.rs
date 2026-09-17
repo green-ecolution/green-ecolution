@@ -56,10 +56,14 @@ impl PgTreeRepository {
 /// so the original SQL (and `.sqlx/` query cache) stays unchanged; the
 /// rename to `TreeView` (`tree_cluster_id` → `cluster_id`, `number` →
 /// `tree_number`) happens in the `From` impl.
+///
+/// `cluster_name` is resolved only by `view_search`; the other reads select a
+/// typed NULL so one row struct serves every query.
 struct TreeViewRow {
     id: RawId,
     updated_at: NaiveDateTime,
     tree_cluster_id: Option<RawId>,
+    cluster_name: Option<String>,
     sensor_id: Option<String>,
     planting_year: i32,
     species: String,
@@ -84,6 +88,7 @@ impl From<TreeViewRow> for TreeView {
             created_at,
             updated_at: row.updated_at.and_utc(),
             cluster_id: row.tree_cluster_id,
+            cluster_name: row.cluster_name,
             sensor_id: row.sensor_id,
             planting_year: row.planting_year as u32,
             species: row.species,
@@ -130,6 +135,7 @@ impl TryFrom<TreeViewWithDistanceRow> for TreeViewWithDistance {
             id: row.id,
             updated_at: row.updated_at,
             tree_cluster_id: row.tree_cluster_id,
+            cluster_name: None,
             sensor_id: row.sensor_id,
             planting_year: row.planting_year,
             species: row.species,
@@ -246,7 +252,9 @@ impl TreeReader for PgTreeRepository {
     async fn view_by_id(&self, id: Id<Tree>) -> Result<TreeView, RepositoryError> {
         let row = sqlx::query_as!(
             TreeViewRow,
-            r#"SELECT id, updated_at, tree_cluster_id, sensor_id,
+            r#"SELECT id, updated_at, tree_cluster_id,
+                      NULL::text AS "cluster_name?",
+                      sensor_id,
                       planting_year, species, number, latitude, longitude,
                       watering_status AS "watering_status: WateringStatus",
                       description,
@@ -271,7 +279,9 @@ impl TreeReader for PgTreeRepository {
     ) -> Result<Option<TreeView>, RepositoryError> {
         let row = sqlx::query_as!(
             TreeViewRow,
-            r#"SELECT id, updated_at, tree_cluster_id, sensor_id,
+            r#"SELECT id, updated_at, tree_cluster_id,
+                      NULL::text AS "cluster_name?",
+                      sensor_id,
                       planting_year, species, number, latitude, longitude,
                       watering_status AS "watering_status: WateringStatus",
                       description,
@@ -293,7 +303,9 @@ impl TreeReader for PgTreeRepository {
         let id_values: Vec<RawId> = ids.to_values();
         let rows = sqlx::query_as!(
             TreeViewRow,
-            r#"SELECT id, updated_at, tree_cluster_id, sensor_id,
+            r#"SELECT id, updated_at, tree_cluster_id,
+                      NULL::text AS "cluster_name?",
+                      sensor_id,
                       planting_year, species, number, latitude, longitude,
                       watering_status AS "watering_status: WateringStatus",
                       description,
@@ -348,22 +360,25 @@ impl TreeReader for PgTreeRepository {
 
         let rows = sqlx::query_as!(
             TreeViewRow,
-            r#"SELECT id, updated_at, tree_cluster_id, sensor_id,
-                      planting_year, species, number, latitude, longitude,
-                      watering_status AS "watering_status: WateringStatus",
-                      description,
-                      last_watered AS "last_watered: DateTime<Utc>",
-                      provider,
-                      additional_informations AS additional_info,
-                      organization_id
-            FROM trees
-            WHERE ($1::watering_status[] = '{}' OR watering_status = ANY($1))
-              AND ($2::int[] = '{}' OR planting_year = ANY($2))
-              AND ($3::text IS NULL OR provider = $3)
-              AND ($4::bool IS NULL OR ($4 = true AND tree_cluster_id IS NOT NULL) OR ($4 = false AND tree_cluster_id IS NULL))
-              AND ($5::text IS NULL OR number ILIKE $5 ESCAPE '\' OR species ILIKE $5 ESCAPE '\')
-              AND ($6::uuid[] IS NULL OR organization_id = ANY($6))
-            ORDER BY number ASC
+            r#"SELECT t.id, t.updated_at, t.tree_cluster_id,
+                      c.name AS "cluster_name?",
+                      t.sensor_id,
+                      t.planting_year, t.species, t.number, t.latitude, t.longitude,
+                      t.watering_status AS "watering_status: WateringStatus",
+                      t.description,
+                      t.last_watered AS "last_watered: DateTime<Utc>",
+                      t.provider,
+                      t.additional_informations AS additional_info,
+                      t.organization_id
+            FROM trees t
+            LEFT JOIN tree_clusters c ON c.id = t.tree_cluster_id
+            WHERE ($1::watering_status[] = '{}' OR t.watering_status = ANY($1))
+              AND ($2::int[] = '{}' OR t.planting_year = ANY($2))
+              AND ($3::text IS NULL OR t.provider = $3)
+              AND ($4::bool IS NULL OR ($4 = true AND t.tree_cluster_id IS NOT NULL) OR ($4 = false AND t.tree_cluster_id IS NULL))
+              AND ($5::text IS NULL OR t.number ILIKE $5 ESCAPE '\' OR t.species ILIKE $5 ESCAPE '\')
+              AND ($6::uuid[] IS NULL OR t.organization_id = ANY($6))
+            ORDER BY t.number ASC
             LIMIT $7 OFFSET $8"#,
             &watering_statuses as &[WateringStatus],
             &planting_years,

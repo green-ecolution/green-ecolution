@@ -1060,3 +1060,67 @@ async fn moving_a_tree_into_the_future_while_dropping_its_sensor_succeeds() {
     let body: serde_json::Value = response.json().await.unwrap();
     assert!(body["sensor_id"].is_null());
 }
+
+#[tokio::test]
+async fn list_trees_includes_cluster_name() {
+    let app = spawn_app().await;
+
+    let cluster = app
+        .post_json(
+            "/api/v1/clusters",
+            &serde_json::json!({
+                "name": "Solitüde Strand",
+                "address": "Strandweg 1",
+                "description": "Testgruppe",
+                "soil_condition": "Su3",
+                "tree_ids": []
+            }),
+        )
+        .await
+        .json::<serde_json::Value>()
+        .await
+        .unwrap();
+    let cluster_id = cluster["id"].as_str().unwrap().to_string();
+
+    app.post_json(
+        "/api/v1/trees",
+        &serde_json::json!({
+            "species": "Eiche",
+            "number": "T-100",
+            "planting_year": 2020,
+            "latitude": 53.55,
+            "longitude": 9.99,
+            "description": "",
+            "tree_cluster_id": cluster_id
+        }),
+    )
+    .await;
+
+    app.post_json(
+        "/api/v1/trees",
+        &serde_json::json!({
+            "species": "Buche",
+            "number": "T-200",
+            "planting_year": 2021,
+            "latitude": 53.56,
+            "longitude": 9.98,
+            "description": ""
+        }),
+    )
+    .await;
+
+    let body: serde_json::Value = app.get("/api/v1/trees").await.json().await.unwrap();
+    let rows = body["data"].as_array().unwrap();
+
+    let with_cluster = rows
+        .iter()
+        .find(|t| t["number"] == "T-100")
+        .expect("tree with cluster is listed");
+    assert_eq!(with_cluster["tree_cluster_name"], "Solitüde Strand");
+
+    let without_cluster = rows
+        .iter()
+        .find(|t| t["number"] == "T-200")
+        .expect("tree without cluster is listed");
+    assert!(without_cluster.get("tree_cluster_name").is_none());
+}
