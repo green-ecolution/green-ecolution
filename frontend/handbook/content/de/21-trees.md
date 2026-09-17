@@ -2,23 +2,43 @@
 slug: trees
 title: Bäume
 part: greenspaces
-summary: Die Baumliste und ihre Filter, die Detailseite eines Baums und die Besonderheit von Bäumen aus dem Baumkataster.
+summary: Die Baumliste mit Suche, Filtern und Sortierung, die Detailseite eines Baums und die Besonderheit von Bäumen aus dem Baumkataster.
 routes: ['/trees', '/trees/$treeId']
 ---
 
 ## Die Baumliste und ihre Filter
 
-Die Auflistung aller Bäume zeigt jeden Baum mit seinem Bewässerungszustand, seiner
-Baumart, seiner Baumnummer und der Bewässerungsgruppe, der er zugeordnet ist. Ein Klick
-auf einen Eintrag führt zu dessen Detailseite; ohne zugeordnete Gruppe steht dort
-**Nicht zugeordnet**. Über den Filter engst du die Liste nach dem Zustand der
-Bewässerung, nach der Zugehörigkeit zu einer Gruppe und nach dem Pflanzjahr ein. Wer
-einen neuen Baum anlegen darf, findet oben die Schaltfläche **Neuen Baum erstellen**; sie
-führt zur Erfassung [auf der Karte](./map.md#baume-und-gruppen-direkt-auf-der-karte-erfassen),
+Die Seite **Bäume** zeigt jeden Baum mit seiner Baumnummer, seiner Art und seinem
+Bewässerungszustand als Badge; darunter stehen die Bewässerungsgruppe und der verknüpfte
+Sensor, und fehlt eines von beidem, sagt die Zeile das ausdrücklich, statt es einfach
+wegzulassen. Ein Klick auf einen Eintrag führt zur Detailseite. Über dem Suchfeld
+durchsuchst du die Liste nach Baumnummer und Art, ohne Rücksicht auf Groß- und
+Kleinschreibung; die Suche greift erst kurz nach dem letzten Tastendruck, und der
+gefundene Teil des Textes erscheint in den Ergebnissen hervorgehoben.
+
+Daneben stehen vier Filter, die jeweils sofort wirken, ohne dass eine Bestätigung nötig
+wäre: nach dem Bewässerungszustand, nach dem Pflanzjahr, nach dem Vorhandensein eines
+Sensors mit den Optionen **Mit Sensor** und **Ohne Sensor**, sowie nach der
+Bewässerungsgruppe, wo sich einzelne Gruppen ebenso wählen lassen wie **Mit Gruppe** und
+**Ohne Gruppe** für die bloße Zugehörigkeit, unabhängig davon, um welche Gruppe es sich
+handelt. Jede gesetzte Auswahl erscheint darunter als entfernbarer Chip, daneben ein Link,
+der alle Filter auf einmal zurücksetzt, sowie die Anzahl der gefundenen Bäume.
+
+Über das Sortiermenü ordnest du die Liste nach Baumnummer, Art, Bewässerungszustand,
+Pflanzjahr, letzter Bewässerung oder Bewässerungsgruppe, jeweils auf- oder absteigend;
+eine Sortierung nach Bewässerungszustand richtet sich nach der Dringlichkeit, sodass der
+schlechteste Zustand zuerst erscheint. Suchbegriff, Filter, Sortierung und die aktuelle
+Seite stehen in der Adresszeile: Eine gefilterte Ansicht lässt sich damit als Link
+weitergeben, und der Zurück-Button des Browsers macht eine Filteränderung rückgängig.
+
+Findet sich zu den aktuellen Filtern kein Baum, bietet die Anwendung an, sie
+zurückzusetzen; ist überhaupt noch kein Baum erfasst, weist sie stattdessen darauf hin.
+Wer einen neuen Baum anlegen darf, findet oben die Schaltfläche **Neuen Baum erstellen**;
+sie führt zur Erfassung [auf der Karte](./map.md#baume-und-gruppen-direkt-auf-der-karte-erfassen),
 denn ein Baum braucht immer einen Standort. Dieselben Bäume lassen sich auch direkt
 [auf der Karte](./map.md) ansehen.
 
-![Die Baumliste mit geöffnetem Filter nach Bewässerungszustand, Gruppe und Pflanzjahr](../images/tree-list-filter.png)
+![Die Baumliste mit Suchfeld, Filterleiste und aktiven Filtern](../images/tree-list.png)
 
 ## Die Detailseite lesen
 
