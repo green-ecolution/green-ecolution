@@ -344,6 +344,8 @@ impl TreeReader for PgTreeRepository {
         } else {
             Some(query.cluster_ids.to_values())
         };
+        let sort_field = query.sort.field.as_sql_key();
+        let sort_desc = query.sort.direction.is_descending();
 
         let total = sqlx::query_scalar!(
             r#"SELECT COUNT(*) AS "count!: i64" FROM trees
@@ -367,6 +369,10 @@ impl TreeReader for PgTreeRepository {
         .fetch_one(&self.pool)
         .await? as u64;
 
+        // One CASE pair per sortable column instead of a runtime-built query:
+        // query_as! cannot interpolate an ORDER BY, and the closed TreeSortField
+        // set is what keeps caller text out of the SQL. t.id breaks ties so a
+        // row cannot shift between pages.
         let rows = sqlx::query_as!(
             TreeViewRow,
             r#"SELECT t.id, t.updated_at, t.tree_cluster_id,
@@ -389,7 +395,30 @@ impl TreeReader for PgTreeRepository {
               AND ($6::uuid[] IS NULL OR t.organization_id = ANY($6))
               AND ($7::uuid[] IS NULL OR t.tree_cluster_id = ANY($7))
               AND ($8::bool IS NULL OR ($8 = true AND t.sensor_id IS NOT NULL) OR ($8 = false AND t.sensor_id IS NULL))
-            ORDER BY t.number ASC
+            ORDER BY
+              (CASE WHEN $11 = 'number' AND NOT $12 THEN t.number END) ASC NULLS LAST,
+              (CASE WHEN $11 = 'number' AND $12 THEN t.number END) DESC NULLS LAST,
+              (CASE WHEN $11 = 'species' AND NOT $12 THEN t.species END) ASC NULLS LAST,
+              (CASE WHEN $11 = 'species' AND $12 THEN t.species END) DESC NULLS LAST,
+              (CASE WHEN $11 = 'planting_year' AND NOT $12 THEN t.planting_year END) ASC NULLS LAST,
+              (CASE WHEN $11 = 'planting_year' AND $12 THEN t.planting_year END) DESC NULLS LAST,
+              (CASE WHEN $11 = 'last_watered' AND NOT $12 THEN t.last_watered END) ASC NULLS LAST,
+              (CASE WHEN $11 = 'last_watered' AND $12 THEN t.last_watered END) DESC NULLS LAST,
+              (CASE WHEN $11 = 'cluster' AND NOT $12 THEN c.name END) ASC NULLS LAST,
+              (CASE WHEN $11 = 'cluster' AND $12 THEN c.name END) DESC NULLS LAST,
+              -- Urgency rank, not the enum's declaration order (good, moderate, bad,
+              -- unknown, just_watered), which would be meaningless to a user here.
+              (CASE WHEN $11 = 'status' AND NOT $12 THEN
+                 CASE t.watering_status
+                   WHEN 'bad' THEN 0 WHEN 'moderate' THEN 1 WHEN 'good' THEN 2
+                   WHEN 'just_watered' THEN 3 ELSE 4 END
+               END) ASC NULLS LAST,
+              (CASE WHEN $11 = 'status' AND $12 THEN
+                 CASE t.watering_status
+                   WHEN 'bad' THEN 0 WHEN 'moderate' THEN 1 WHEN 'good' THEN 2
+                   WHEN 'just_watered' THEN 3 ELSE 4 END
+               END) DESC NULLS LAST,
+              t.id ASC
             LIMIT $9 OFFSET $10"#,
             &watering_statuses as &[WateringStatus],
             &planting_years,
@@ -401,6 +430,8 @@ impl TreeReader for PgTreeRepository {
             query.has_sensor,
             limit,
             offset,
+            sort_field,
+            sort_desc,
         )
         .fetch_all(&self.pool)
         .await?;
