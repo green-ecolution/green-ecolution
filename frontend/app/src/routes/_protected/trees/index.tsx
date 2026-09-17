@@ -158,10 +158,6 @@ export const Route = createFileRoute('/_protected/trees/')({
     order: search.order,
   }),
   loader: ({ deps, context: { queryClient } }) => {
-    prefetch(
-      queryClient,
-      treeQueries.list(listParams(deps as z.infer<typeof treeFilterSchema>)),
-      'treeQueries.list',
-    )
+    prefetch(queryClient, treeQueries.list(listParams(deps)), 'treeQueries.list')
   },
 })
