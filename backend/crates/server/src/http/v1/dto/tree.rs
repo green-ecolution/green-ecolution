@@ -165,9 +165,9 @@ pub struct TreeListParams {
     #[param(nullable)]
     #[serde(default)]
     pub has_sensor: Option<bool>,
-    #[param(nullable)]
+    #[param(nullable, inline)]
     pub sort: Option<TreeSortParam>,
-    #[param(nullable)]
+    #[param(nullable, inline)]
     pub order: Option<SortOrderParam>,
     /// Repeatable: `?planting_year=2018&planting_year=2020`.
     #[serde(default)]
