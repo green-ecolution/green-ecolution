@@ -123,6 +123,12 @@ export interface TreeResponse {
      * @type {string}
      * @memberof TreeResponse
      */
+    treeClusterName?: string | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof TreeResponse
+     */
     updatedAt: string;
     /**
      * 
@@ -176,6 +182,7 @@ export function TreeResponseFromJSONTyped(json: any, ignoreDiscriminator: boolea
         'sensor': json['sensor'] == null ? undefined : SensorResponseFromJSON(json['sensor']),
         'species': json['species'],
         'treeClusterId': json['tree_cluster_id'] == null ? undefined : json['tree_cluster_id'],
+        'treeClusterName': json['tree_cluster_name'] == null ? undefined : json['tree_cluster_name'],
         'updatedAt': json['updated_at'],
         'wateringStatus': WateringStatusFromJSON(json['watering_status']),
     };
@@ -206,6 +213,7 @@ export function TreeResponseToJSONTyped(value?: TreeResponse | null, ignoreDiscr
         'sensor': SensorResponseToJSON(value['sensor']),
         'species': value['species'],
         'tree_cluster_id': value['treeClusterId'],
+        'tree_cluster_name': value['treeClusterName'],
         'updated_at': value['updatedAt'],
         'watering_status': WateringStatusToJSON(value['wateringStatus']),
     };

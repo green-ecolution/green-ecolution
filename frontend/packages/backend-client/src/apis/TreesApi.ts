@@ -82,6 +82,10 @@ export interface ListTreesRequest {
     q?: string | null;
     wateringStatus?: Array<WateringStatus>;
     hasCluster?: boolean | null;
+    clusterId?: Array<string>;
+    hasSensor?: boolean | null;
+    sort?: ListTreesSortEnum;
+    order?: ListTreesOrderEnum;
     plantingYear?: Array<number>;
 }
 
@@ -404,7 +408,7 @@ export class TreesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a paginated list of all trees with their associated sensor data. Optional `q` parameter case-insensitively filters by tree number or species. Optional filter parameters (watering_status, has_cluster, planting_year) narrow the result; array parameters are repeatable.
+     * Returns a paginated list of all trees with their associated sensor data. Optional `q` parameter case-insensitively filters by tree number or species. Optional filter parameters (watering_status, has_cluster, has_sensor, cluster_id, planting_year) narrow the result; array parameters are repeatable. Optional `sort` (number, species, status, planting_year, last_watered, cluster) and `order` (asc, desc) control the result order; the default is number ascending.
      * List all trees
      */
     async listTreesRaw(requestParameters: ListTreesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListResponseTreeResponse>> {
@@ -430,6 +434,22 @@ export class TreesApi extends runtime.BaseAPI {
             queryParameters['has_cluster'] = requestParameters['hasCluster'];
         }
 
+        if (requestParameters['clusterId'] != null) {
+            queryParameters['cluster_id'] = requestParameters['clusterId'];
+        }
+
+        if (requestParameters['hasSensor'] != null) {
+            queryParameters['has_sensor'] = requestParameters['hasSensor'];
+        }
+
+        if (requestParameters['sort'] != null) {
+            queryParameters['sort'] = requestParameters['sort'];
+        }
+
+        if (requestParameters['order'] != null) {
+            queryParameters['order'] = requestParameters['order'];
+        }
+
         if (requestParameters['plantingYear'] != null) {
             queryParameters['planting_year'] = requestParameters['plantingYear'];
         }
@@ -450,7 +470,7 @@ export class TreesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a paginated list of all trees with their associated sensor data. Optional `q` parameter case-insensitively filters by tree number or species. Optional filter parameters (watering_status, has_cluster, planting_year) narrow the result; array parameters are repeatable.
+     * Returns a paginated list of all trees with their associated sensor data. Optional `q` parameter case-insensitively filters by tree number or species. Optional filter parameters (watering_status, has_cluster, has_sensor, cluster_id, planting_year) narrow the result; array parameters are repeatable. Optional `sort` (number, species, status, planting_year, last_watered, cluster) and `order` (asc, desc) control the result order; the default is number ascending.
      * List all trees
      */
     async listTrees(requestParameters: ListTreesRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ListResponseTreeResponse> {
@@ -556,3 +576,24 @@ export class TreesApi extends runtime.BaseAPI {
     }
 
 }
+
+/**
+ * @export
+ */
+export const ListTreesSortEnum = {
+    Number: 'number',
+    Species: 'species',
+    Status: 'status',
+    PlantingYear: 'planting_year',
+    LastWatered: 'last_watered',
+    Cluster: 'cluster'
+} as const;
+export type ListTreesSortEnum = typeof ListTreesSortEnum[keyof typeof ListTreesSortEnum];
+/**
+ * @export
+ */
+export const ListTreesOrderEnum = {
+    Asc: 'asc',
+    Desc: 'desc'
+} as const;
+export type ListTreesOrderEnum = typeof ListTreesOrderEnum[keyof typeof ListTreesOrderEnum];

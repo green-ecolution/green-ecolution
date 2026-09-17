@@ -123,6 +123,12 @@ export interface ListResponseTreeResponseDataInner {
      * @type {string}
      * @memberof ListResponseTreeResponseDataInner
      */
+    treeClusterName?: string | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof ListResponseTreeResponseDataInner
+     */
     updatedAt: string;
     /**
      * 
@@ -176,6 +182,7 @@ export function ListResponseTreeResponseDataInnerFromJSONTyped(json: any, ignore
         'sensor': json['sensor'] == null ? undefined : SensorResponseFromJSON(json['sensor']),
         'species': json['species'],
         'treeClusterId': json['tree_cluster_id'] == null ? undefined : json['tree_cluster_id'],
+        'treeClusterName': json['tree_cluster_name'] == null ? undefined : json['tree_cluster_name'],
         'updatedAt': json['updated_at'],
         'wateringStatus': WateringStatusFromJSON(json['watering_status']),
     };
@@ -206,6 +213,7 @@ export function ListResponseTreeResponseDataInnerToJSONTyped(value?: ListRespons
         'sensor': SensorResponseToJSON(value['sensor']),
         'species': value['species'],
         'tree_cluster_id': value['treeClusterId'],
+        'tree_cluster_name': value['treeClusterName'],
         'updated_at': value['updatedAt'],
         'watering_status': WateringStatusToJSON(value['wateringStatus']),
     };
