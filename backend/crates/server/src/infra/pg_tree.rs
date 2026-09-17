@@ -339,6 +339,11 @@ impl TreeReader for PgTreeRepository {
         let offset = i64::try_from(pagination.offset()).unwrap_or(i64::MAX);
         let q_pattern: Option<String> = query.q.as_deref().map(|s| format!("%{}%", like_escape(s)));
         let scope_ids = org_scope_ids(query.visible.clone(), query.organization_id);
+        let cluster_ids: Option<Vec<RawId>> = if query.cluster_ids.is_empty() {
+            None
+        } else {
+            Some(query.cluster_ids.to_values())
+        };
 
         let total = sqlx::query_scalar!(
             r#"SELECT COUNT(*) AS "count!: i64" FROM trees
@@ -347,13 +352,17 @@ impl TreeReader for PgTreeRepository {
               AND ($3::text IS NULL OR provider = $3)
               AND ($4::bool IS NULL OR ($4 = true AND tree_cluster_id IS NOT NULL) OR ($4 = false AND tree_cluster_id IS NULL))
               AND ($5::text IS NULL OR number ILIKE $5 ESCAPE '\' OR species ILIKE $5 ESCAPE '\')
-              AND ($6::uuid[] IS NULL OR organization_id = ANY($6))"#,
+              AND ($6::uuid[] IS NULL OR organization_id = ANY($6))
+              AND ($7::uuid[] IS NULL OR tree_cluster_id = ANY($7))
+              AND ($8::bool IS NULL OR ($8 = true AND sensor_id IS NOT NULL) OR ($8 = false AND sensor_id IS NULL))"#,
             &watering_statuses as &[WateringStatus],
             &planting_years,
             provider.as_deref(),
             query.has_cluster,
             q_pattern.as_deref(),
             scope_ids.as_deref(),
+            cluster_ids.as_deref(),
+            query.has_sensor,
         )
         .fetch_one(&self.pool)
         .await? as u64;
@@ -378,14 +387,18 @@ impl TreeReader for PgTreeRepository {
               AND ($4::bool IS NULL OR ($4 = true AND t.tree_cluster_id IS NOT NULL) OR ($4 = false AND t.tree_cluster_id IS NULL))
               AND ($5::text IS NULL OR t.number ILIKE $5 ESCAPE '\' OR t.species ILIKE $5 ESCAPE '\')
               AND ($6::uuid[] IS NULL OR t.organization_id = ANY($6))
+              AND ($7::uuid[] IS NULL OR t.tree_cluster_id = ANY($7))
+              AND ($8::bool IS NULL OR ($8 = true AND t.sensor_id IS NOT NULL) OR ($8 = false AND t.sensor_id IS NULL))
             ORDER BY t.number ASC
-            LIMIT $7 OFFSET $8"#,
+            LIMIT $9 OFFSET $10"#,
             &watering_statuses as &[WateringStatus],
             &planting_years,
             provider.as_deref(),
             query.has_cluster,
             q_pattern.as_deref(),
             scope_ids.as_deref(),
+            cluster_ids.as_deref(),
+            query.has_sensor,
             limit,
             offset,
         )

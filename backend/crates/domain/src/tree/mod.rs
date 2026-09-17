@@ -98,6 +98,10 @@ pub struct TreeSearchQuery {
     pub planting_years: Vec<PlantingYear>,
     pub ids: Vec<Id<Tree>>,
     pub cluster_id: Option<Id<TreeCluster>>,
+    /// List filter for one or more clusters. Independent of `cluster_id`,
+    /// which single-cluster callers use.
+    pub cluster_ids: Vec<Id<TreeCluster>>,
+    pub has_sensor: Option<bool>,
     pub sensor_id: Option<SensorId>,
     pub provider: Option<ProviderId>,
     pub bbox: Option<BoundingBox>,

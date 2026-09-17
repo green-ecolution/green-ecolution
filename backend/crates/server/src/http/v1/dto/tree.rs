@@ -117,6 +117,12 @@ pub struct TreeListParams {
     #[param(nullable)]
     #[serde(default)]
     pub has_cluster: Option<bool>,
+    /// Repeatable: `?cluster_id=<uuid>&cluster_id=<uuid>`.
+    #[serde(default)]
+    pub cluster_id: Vec<uuid::Uuid>,
+    #[param(nullable)]
+    #[serde(default)]
+    pub has_sensor: Option<bool>,
     /// Repeatable: `?planting_year=2018&planting_year=2020`.
     #[serde(default)]
     pub planting_year: Vec<i32>,
