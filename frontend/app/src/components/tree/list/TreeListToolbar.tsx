@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react'
 import { FolderClosed } from 'lucide-react'
-import { useQuery } from '@tanstack/react-query'
+import { useQueries, useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { WateringStatus } from '@green-ecolution/backend-client'
+import { ListTreesSortEnum, WateringStatus } from '@green-ecolution/backend-client'
 import ListToolbar from '@/components/general/list/ListToolbar'
 import ListSearchInput from '@/components/general/list/ListSearchInput'
 import ListFilterDropdown from '@/components/general/list/ListFilterDropdown'
@@ -13,7 +13,7 @@ import ActiveFilterChips, {
 import SensorIcon from '@/components/icons/Sensor'
 import { clusterQueries, treeQueries } from '@/api/queries'
 import { useWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
-import { useTreeListSearch, type TreeSortField } from './useTreeListSearch'
+import { useTreeListSearch } from './useTreeListSearch'
 
 interface TreeListToolbarProps {
   filteredRecords: number
@@ -52,6 +52,21 @@ const TreeListToolbar = ({ filteredRecords, action }: TreeListToolbarProps) => {
     value: String(cluster.id),
     label: cluster.name,
   }))
+  // A cluster selected via a shared link can sit outside the first 100
+  // clusters (backend's Pagination::MAX_PER_PAGE), so its name never
+  // reaches clusterOptions; resolve it individually rather than showing the
+  // raw id.
+  const missingClusterIds = (search.clusterIds ?? []).filter(
+    (id) => !clusterOptions.some((option) => option.value === id),
+  )
+  const missingClusterQueries = useQueries({
+    queries: missingClusterIds.map((id) => clusterQueries.detail(id)),
+  })
+  const missingClusterNames = new Map(
+    missingClusterIds
+      .map((id, index) => [id, missingClusterQueries[index]?.data?.name] as const)
+      .filter((entry): entry is [string, string] => entry[1] !== undefined),
+  )
   // 'any' / 'none' answer "is this tree in a cluster at all", not a narrowing
   // of the cluster list, so they sit ahead of the real clusters.
   const clusterDropdownOptions = [
@@ -67,13 +82,13 @@ const TreeListToolbar = ({ filteredRecords, action }: TreeListToolbarProps) => {
     { value: 'true', label: t('list.sensorOptionWith') },
     { value: 'false', label: t('list.sensorOptionWithout') },
   ]
-  const sortOptions: { value: TreeSortField; label: string }[] = [
-    { value: 'number', label: t('list.sortNumber') },
-    { value: 'species', label: t('list.sortSpecies') },
-    { value: 'status', label: t('list.sortStatus') },
-    { value: 'planting_year', label: t('list.sortPlantingYear') },
-    { value: 'last_watered', label: t('list.sortLastWatered') },
-    { value: 'cluster', label: t('list.sortCluster') },
+  const sortOptions: { value: ListTreesSortEnum; label: string }[] = [
+    { value: ListTreesSortEnum.Number, label: t('list.sortNumber') },
+    { value: ListTreesSortEnum.Species, label: t('list.sortSpecies') },
+    { value: ListTreesSortEnum.Status, label: t('list.sortStatus') },
+    { value: ListTreesSortEnum.PlantingYear, label: t('list.sortPlantingYear') },
+    { value: ListTreesSortEnum.LastWatered, label: t('list.sortLastWatered') },
+    { value: ListTreesSortEnum.Cluster, label: t('list.sortCluster') },
   ]
 
   const statuses = search.wateringStatuses ?? []
@@ -92,7 +107,10 @@ const TreeListToolbar = ({ filteredRecords, action }: TreeListToolbarProps) => {
     })),
     ...clusterIds.map((id) => ({
       id: `cluster-${id}`,
-      label: clusterOptions.find((option) => option.value === id)?.label ?? id,
+      label:
+        clusterOptions.find((option) => option.value === id)?.label ??
+        missingClusterNames.get(id) ??
+        t('list.clusterUnknown'),
       onRemove: () =>
         setFilter(
           'clusterIds',
@@ -204,9 +222,9 @@ const TreeListToolbar = ({ filteredRecords, action }: TreeListToolbarProps) => {
         sort={
           <ListSortMenu
             options={sortOptions}
-            field={search.sort ?? 'number'}
+            field={search.sort ?? ListTreesSortEnum.Number}
             direction={search.order ?? 'asc'}
-            onChange={(field, direction) => setSort(field as TreeSortField, direction)}
+            onChange={setSort}
           />
         }
         action={action}

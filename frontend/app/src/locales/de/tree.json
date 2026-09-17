@@ -65,6 +65,7 @@
     "sensorOptionWithout": "Ohne Sensor",
     "clusterOptionAny": "Mit Gruppe",
     "clusterOptionNone": "Ohne Gruppe",
+    "clusterUnknown": "Unbekannte Gruppe",
     "sortNumber": "Baumnummer",
     "sortSpecies": "Baumart",
     "sortStatus": "Bewässerungszustand",

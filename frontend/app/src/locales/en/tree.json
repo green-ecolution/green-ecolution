@@ -65,6 +65,7 @@
     "sensorOptionWithout": "Without sensor",
     "clusterOptionAny": "With group",
     "clusterOptionNone": "No group",
+    "clusterUnknown": "Unknown group",
     "sortNumber": "Tree number",
     "sortSpecies": "Species",
     "sortStatus": "Watering status",
