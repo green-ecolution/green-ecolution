@@ -66,6 +66,7 @@ const ListFilterDropdown = ({
                   key={option.value}
                   value={option.label}
                   onSelect={() => toggle(option.value)}
+                  aria-checked={value.includes(option.value)}
                 >
                   <Check
                     aria-hidden

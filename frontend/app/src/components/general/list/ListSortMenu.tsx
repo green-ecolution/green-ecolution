@@ -4,8 +4,9 @@ import {
   Button,
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@green-ecolution/ui'
@@ -40,20 +41,27 @@ const ListSortMenu = ({ options, field, direction, onChange }: ListSortMenuProps
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuLabel>{t('list.sortLabel')}</DropdownMenuLabel>
-        {options.map((option) => (
-          <DropdownMenuItem key={option.value} onSelect={() => onChange(option.value, direction)}>
-            {option.label}
-          </DropdownMenuItem>
-        ))}
+        <DropdownMenuRadioGroup value={field} onValueChange={(newField) => onChange(newField, direction)}>
+          {options.map((option) => (
+            <DropdownMenuRadioItem key={option.value} value={option.value}>
+              {option.label}
+            </DropdownMenuRadioItem>
+          ))}
+        </DropdownMenuRadioGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onSelect={() => onChange(field, 'asc')}>
-          <ArrowUp aria-hidden className="mr-2 size-4" />
-          {t('list.sortAscending')}
-        </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => onChange(field, 'desc')}>
-          <ArrowDown aria-hidden className="mr-2 size-4" />
-          {t('list.sortDescending')}
-        </DropdownMenuItem>
+        <DropdownMenuRadioGroup
+          value={direction}
+          onValueChange={(newDirection) => onChange(field, newDirection as SortDirection)}
+        >
+          <DropdownMenuRadioItem value="asc">
+            <ArrowUp aria-hidden className="mr-2 size-4" />
+            {t('list.sortAscending')}
+          </DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="desc">
+            <ArrowDown aria-hidden className="mr-2 size-4" />
+            {t('list.sortDescending')}
+          </DropdownMenuRadioItem>
+        </DropdownMenuRadioGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   )
