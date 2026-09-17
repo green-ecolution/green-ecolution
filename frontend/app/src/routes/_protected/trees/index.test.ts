@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { z } from 'zod'
-import { Route } from './index'
+import { Route, PER_PAGE } from './index'
 
 const parseSearch = (input: Record<string, unknown>) =>
   (Route.options.validateSearch as unknown as z.ZodSchema<{ page: number }>).parse(input)
@@ -98,5 +98,11 @@ describe('/trees route search, sort and new filters', () => {
     expect(deps.order).toBe('desc')
     expect(deps.clusterIds).toEqual(['0190a8e9-7c4f-7000-8000-000000000000'])
     expect(deps.hasSensor).toBe(true)
+  })
+})
+
+describe('/trees route paging size', () => {
+  it('requests 25 rows per page', () => {
+    expect(PER_PAGE).toBe(25)
   })
 })
