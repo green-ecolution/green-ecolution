@@ -180,6 +180,10 @@ export {
 export { FileUpload } from './components/ui/file-upload'
 export type { FileUploadProps } from './components/ui/file-upload'
 
+// FilterChip
+export { FilterChip } from './components/ui/filter-chip'
+export type { FilterChipProps } from './components/ui/filter-chip'
+
 // FormField
 export { FormField, TextareaField } from './components/ui/form-field'
 export type { FormFieldProps, TextareaFieldProps } from './components/ui/form-field'
