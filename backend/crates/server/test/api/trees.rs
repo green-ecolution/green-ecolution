@@ -1128,37 +1128,27 @@ async fn list_trees_includes_cluster_name() {
 #[tokio::test]
 async fn list_trees_filters_by_has_sensor() {
     let app = spawn_app().await;
+    insert_sensor(&app, "eui-has-sensor-filter-1").await;
+    insert_tree_with_sensor(&app, "T-300", "eui-has-sensor-filter-1").await;
+    create_tree_with(&app, "T-301", 2020, None).await;
 
-    app.post_json(
-        "/api/v1/trees",
-        &serde_json::json!({
-            "species": "Eiche",
-            "number": "T-300",
-            "planting_year": 2020,
-            "latitude": 53.55,
-            "longitude": 9.99,
-            "description": ""
-        }),
-    )
-    .await;
+    let response = app.get("/api/v1/trees?has_sensor=true").await;
+    let body: serde_json::Value = response.json().await.unwrap();
+    let data = body["data"].as_array().unwrap();
+    assert_eq!(data.len(), 1);
+    assert_eq!(data[0]["number"], "T-300");
+    assert_eq!(body["pagination"]["total_records"], 1);
 
-    let without: serde_json::Value = app
-        .get("/api/v1/trees?has_sensor=false")
-        .await
-        .json()
-        .await
-        .unwrap();
-    assert_eq!(without["data"].as_array().unwrap().len(), 1);
-    assert_eq!(without["pagination"]["total_records"], 1);
+    let response = app.get("/api/v1/trees?has_sensor=false").await;
+    let body: serde_json::Value = response.json().await.unwrap();
+    let data = body["data"].as_array().unwrap();
+    assert_eq!(data.len(), 1);
+    assert_eq!(data[0]["number"], "T-301");
+    assert_eq!(body["pagination"]["total_records"], 1);
 
-    let with: serde_json::Value = app
-        .get("/api/v1/trees?has_sensor=true")
-        .await
-        .json()
-        .await
-        .unwrap();
-    assert_eq!(with["data"].as_array().unwrap().len(), 0);
-    assert_eq!(with["pagination"]["total_records"], 0);
+    let response = app.get("/api/v1/trees").await;
+    let body: serde_json::Value = response.json().await.unwrap();
+    assert_eq!(body["data"].as_array().unwrap().len(), 2);
 }
 
 #[tokio::test]
