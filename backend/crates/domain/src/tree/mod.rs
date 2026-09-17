@@ -15,6 +15,7 @@ pub mod marker;
 pub mod planting_year;
 pub mod repository;
 pub mod snapshot;
+pub mod sort;
 pub mod view;
 mod volumetric_calibration;
 mod watermark_calibration;
@@ -42,6 +43,7 @@ pub use planting_year::{MAX_PLANTING_YEAR, MIN_PLANTING_YEAR, PlantingYear};
 pub use repository::{TreeReader, TreeWriter};
 #[doc(hidden)]
 pub use snapshot::TreeSnapshot;
+pub use sort::{TreeSort, TreeSortField};
 pub use view::{TreeView, TreeViewWithDistance};
 pub use volumetric_calibration::{
     REW_CRIT, REW_MIN, VolumetricThresholds, rew_fraction, volumetric_thresholds,
@@ -101,6 +103,8 @@ pub struct TreeSearchQuery {
     pub bbox: Option<BoundingBox>,
     /// Case-insensitive text filter on tree number or species.
     pub q: Option<String>,
+    /// Result order. Defaults to tree number ascending.
+    pub sort: TreeSort,
     /// Narrows the result to one owning organization. Independent of
     /// `visible`: the caller asks for a single org, `visible` decides whether
     /// they are allowed to see it at all.
