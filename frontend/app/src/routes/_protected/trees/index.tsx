@@ -1,4 +1,5 @@
 import { Button, Loading } from '@green-ecolution/ui'
+import { ListTreesOrderEnum, ListTreesSortEnum } from '@green-ecolution/backend-client'
 import { useQuery, keepPreviousData } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
@@ -18,15 +19,6 @@ import { Can } from '@/lib/auth/Can'
 
 export const PER_PAGE = 25
 
-const sortFields = [
-  'number',
-  'species',
-  'status',
-  'planting_year',
-  'last_watered',
-  'cluster',
-] as const
-
 const treeFilterSchema = filterSearchSchema
   .pick({
     wateringStatuses: true,
@@ -38,8 +30,8 @@ const treeFilterSchema = filterSearchSchema
   .extend({
     page: z.number().int().min(1).catch(1),
     q: z.string().optional().catch(undefined),
-    sort: z.enum(sortFields).optional().catch(undefined),
-    order: z.enum(['asc', 'desc']).optional().catch(undefined),
+    sort: z.enum(ListTreesSortEnum).optional().catch(undefined),
+    order: z.enum(ListTreesOrderEnum).optional().catch(undefined),
   })
 
 const listParams = (search: z.infer<typeof treeFilterSchema>) => ({

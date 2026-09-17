@@ -1,14 +1,7 @@
 import { useCallback } from 'react'
 import { getRouteApi } from '@tanstack/react-router'
+import type { ListTreesSortEnum } from '@green-ecolution/backend-client'
 import type { SortDirection } from '@/components/general/list/ListSortMenu'
-
-export type TreeSortField =
-  | 'number'
-  | 'species'
-  | 'status'
-  | 'planting_year'
-  | 'last_watered'
-  | 'cluster'
 
 // getRouteApi instead of importing Route: the route module imports this hook,
 // so a direct import would close a cycle.
@@ -24,10 +17,10 @@ export const useTreeListSearch = () => {
   // below the current page, which would otherwise render an empty list.
   const patch = useCallback(
     (next: Partial<TreeSearch>, replace = false) => {
-      void navigate({
+      navigate({
         search: (prev) => ({ ...prev, ...next, page: 1 }),
         replace,
-      })
+      }).catch((error) => console.error('Navigation failed:', error))
     },
     [navigate],
   )
@@ -38,7 +31,8 @@ export const useTreeListSearch = () => {
   )
 
   const setSort = useCallback(
-    (field: TreeSortField, direction: SortDirection) => patch({ sort: field, order: direction }),
+    (field: ListTreesSortEnum, direction: SortDirection) =>
+      patch({ sort: field, order: direction }),
     [patch],
   )
 
