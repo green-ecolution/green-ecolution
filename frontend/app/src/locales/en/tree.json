@@ -88,7 +88,9 @@
     "numberSrLabel": "Tree number: ",
     "numberUnknown": "Unknown",
     "clusterSrLabel": "Watering group: ",
-    "clusterUnassigned": "Not assigned"
+    "clusterUnassigned": "no group",
+    "sensorSrLabel": "Sensor: ",
+    "sensorUnassigned": "no sensor"
   },
   "selectedCard": {
     "label": "Tree:",
