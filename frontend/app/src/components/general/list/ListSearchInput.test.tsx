@@ -39,4 +39,20 @@ describe('ListSearchInput', () => {
     })
     expect(onChange).toHaveBeenCalledExactlyOnceWith('')
   })
+
+  it('adopts a value changed externally, e.g. by a filter reset', () => {
+    const onChange = vi.fn()
+    const { rerender } = render(
+      <ListSearchInput value="Eiche" onChange={onChange} label="Bäume suchen" debounceMs={300} />,
+    )
+
+    rerender(<ListSearchInput value="" onChange={onChange} label="Bäume suchen" debounceMs={300} />)
+
+    expect(screen.getByLabelText('Bäume suchen')).toHaveValue('')
+
+    act(() => {
+      vi.advanceTimersByTime(300)
+    })
+    expect(onChange).not.toHaveBeenCalled()
+  })
 })
