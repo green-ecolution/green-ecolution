@@ -17,10 +17,12 @@ import { useTreeListSearch } from './useTreeListSearch'
 
 interface TreeListToolbarProps {
   filteredRecords: number
+  /** Trees in scope before the toolbar's own filters; undefined until the list loads. */
+  totalRecords?: number
   action?: ReactNode
 }
 
-const TreeListToolbar = ({ filteredRecords, action }: TreeListToolbarProps) => {
+const TreeListToolbar = ({ filteredRecords, totalRecords, action }: TreeListToolbarProps) => {
   const { t } = useTranslation('tree')
   const {
     search,
@@ -36,13 +38,6 @@ const TreeListToolbar = ({ filteredRecords, action }: TreeListToolbarProps) => {
 
   const { data: clusterPage } = useQuery(clusterQueries.list({ perPage: 100 }))
   const { data: plantingYears } = useQuery(treeQueries.plantingYears())
-  // One row is enough: only pagination.totalRecords is read, and react-query
-  // serves it from cache for the rest of the session.
-  const { data: unfiltered } = useQuery({
-    ...treeQueries.list({ page: 1, perPage: 1 }),
-    staleTime: 60_000,
-  })
-  const totalRecords = unfiltered?.pagination?.totalRecords
 
   const statusOptions = Object.values(WateringStatus).map((status) => ({
     value: status,
@@ -147,8 +142,6 @@ const TreeListToolbar = ({ filteredRecords, action }: TreeListToolbarProps) => {
   ]
 
   const isFiltered = chips.length > 0 || (search.q ?? '').length > 0
-  // Before the unfiltered total loads, showing the plain count avoids a
-  // flash of e.g. "17 of 17" comparing filteredRecords against itself.
   const resultLabel =
     isFiltered && totalRecords !== undefined
       ? t('list.resultCountFiltered', { filtered: filteredRecords, total: totalRecords })

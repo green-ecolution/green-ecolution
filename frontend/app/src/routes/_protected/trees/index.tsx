@@ -90,6 +90,7 @@ function Trees() {
       <section className="mt-10">
         <TreeListToolbar
           filteredRecords={treesRes?.pagination?.totalRecords ?? 0}
+          totalRecords={treesRes?.pagination?.totalUnfiltered ?? undefined}
           action={
             <Can permission={['tree:create']}>
               <ButtonLink

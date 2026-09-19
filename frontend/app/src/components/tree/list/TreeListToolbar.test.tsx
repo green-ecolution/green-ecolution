@@ -81,14 +81,6 @@ vi.mock('@/api/queries', async () => {
         queryKey: ['planting-years-toolbar-test'],
         queryFn: () => Promise.resolve([]),
       }),
-      list: () => ({
-        queryKey: ['tree-list-toolbar-test'],
-        queryFn: () =>
-          Promise.resolve({
-            data: [],
-            pagination: { currentPage: 1, perPage: 1, totalPages: 1, totalRecords: 0 },
-          }),
-      }),
     },
   }
 })
