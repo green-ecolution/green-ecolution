@@ -548,6 +548,27 @@ bench-check:
     @echo "Benchmark smoke run..."
     cd {{ backend_dir }} && cargo bench -p domain --locked -- --test
 
+# Seed a dedicated benchmark database to one scale (xs|s|m|l)
+[group('check')]
+bench-db-seed scale="s" history="730":
+    @test -n "${BENCH_DATABASE_URL:-}" || (echo "BENCH_DATABASE_URL is required; never point this at your dev database" >&2; exit 1)
+    cd {{ backend_dir }} && cargo run --release --locked --bin benchdb -- \
+      seed --database-url "$BENCH_DATABASE_URL" --scale {{ scale }} --history-days {{ history }}
+
+# Measure the read paths against an already seeded benchmark database
+[group('check')]
+bench-db-run out="target/bench/manual":
+    @test -n "${BENCH_DATABASE_URL:-}" || (echo "BENCH_DATABASE_URL is required" >&2; exit 1)
+    cd {{ backend_dir }} && cargo run --release --locked --bin benchdb -- \
+      run --database-url "$BENCH_DATABASE_URL" --out {{ out }}
+
+# Grow through every scale, measure after each and write the full report
+[group('check')]
+bench-db-campaign out="target/bench/campaign" history="730":
+    @test -n "${BENCH_DATABASE_URL:-}" || (echo "BENCH_DATABASE_URL is required" >&2; exit 1)
+    cd {{ backend_dir }} && cargo run --release --locked --bin benchdb -- \
+      campaign --database-url "$BENCH_DATABASE_URL" --out {{ out }} --history-days {{ history }}
+
 # Run Rust tests with verbose output
 [group('check')]
 test-verbose:
