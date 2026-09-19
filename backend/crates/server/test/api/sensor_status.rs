@@ -376,3 +376,134 @@ async fn acknowledging_rejects_an_empty_note() {
         .await;
     assert_eq!(r.status().as_u16(), 400);
 }
+
+/// A reading whose id timestamp and `updated_at` name the same past instant.
+/// The two derivations read different columns — the Rust one takes the id's v7
+/// timestamp, the SQL filter takes `updated_at` — so a fixture that wants them
+/// to agree has to set both.
+async fn insert_stale_reading(app: &TestApp, sensor_id: &str) {
+    let stale = chrono::DateTime::from_timestamp(1_704_067_200, 0)
+        .unwrap()
+        .naive_utc();
+    // Raw sqlx::query so this fixture doesn't need an offline-cache entry.
+    sqlx::query(
+        r#"INSERT INTO sensor_data (id, sensor_id, data, updated_at)
+           VALUES ($1, $2, '{}'::jsonb, $3)"#,
+    )
+    .bind(stale_reading_id())
+    .bind(sensor_id)
+    .bind(stale)
+    .execute(&app.db_pool)
+    .await
+    .unwrap();
+}
+
+async fn sensor_list(app: &TestApp, query: &str) -> Vec<serde_json::Value> {
+    let body: serde_json::Value = app
+        .get(&format!("/api/v1/sensors?{query}"))
+        .await
+        .json()
+        .await
+        .unwrap();
+    body["data"]
+        .as_array()
+        .expect("list response carries a data array")
+        .clone()
+}
+
+fn ids(sensors: &[serde_json::Value]) -> Vec<String> {
+    sensors
+        .iter()
+        .map(|s| s["id"].as_str().unwrap().to_owned())
+        .collect()
+}
+
+#[tokio::test]
+async fn sensor_list_status_filter_agrees_with_the_rust_derivation() {
+    // The SQL CASE and sensor::derive_connectivity answer the same question in
+    // two places; this pins them together so one cannot drift.
+    let app = spawn_app().await;
+    insert_sensor(&app, "eui-status-prepared", false).await;
+    insert_sensor(&app, "eui-status-online", true).await;
+    insert_reading(&app, "eui-status-online", Uuid::now_v7()).await;
+    // Both offline shapes: never reported at all, and reported too long ago.
+    insert_sensor(&app, "eui-status-silent", true).await;
+    insert_sensor(&app, "eui-status-stale", true).await;
+    insert_stale_reading(&app, "eui-status-stale").await;
+
+    let all = sensor_list(&app, "per_page=100").await;
+    assert_eq!(all.len(), 4, "every fixture sensor must be listed");
+
+    for status in ["prepared", "online", "offline"] {
+        let expected: Vec<String> = ids(&all
+            .iter()
+            .filter(|s| s["status"].as_str() == Some(status))
+            .cloned()
+            .collect::<Vec<_>>());
+        assert!(
+            !expected.is_empty(),
+            "the fixture set must populate the {status} branch, or this \
+             comparison passes vacuously"
+        );
+
+        let actual = ids(&sensor_list(&app, &format!("per_page=100&status={status}")).await);
+
+        assert_eq!(actual, expected, "status filter disagrees for {status}");
+    }
+}
+
+#[tokio::test]
+async fn sensor_list_data_health_filter_agrees_with_the_rust_derivation() {
+    // Same contract as the status filter: derive_data_health in Rust and the
+    // SQL CASE must pick the same sensors out of one fixture set.
+    let app = spawn_app().await;
+
+    // Three consecutive unusable uplinks trip the default streak of 3.
+    insert_sensor(&app, "eui-health-suspect", true).await;
+    for _ in 0..3 {
+        insert_uplink(&app, "eui-health-suspect", 6553.5, false).await;
+    }
+    // Every uplink usable.
+    insert_sensor(&app, "eui-health-ok", true).await;
+    for _ in 0..3 {
+        insert_uplink(&app, "eui-health-ok", 25.0, true).await;
+    }
+    // The newest uplink interrupts a two-long streak.
+    insert_sensor(&app, "eui-health-interrupted", true).await;
+    insert_uplink(&app, "eui-health-interrupted", 6553.5, false).await;
+    insert_uplink(&app, "eui-health-interrupted", 6553.5, false).await;
+    insert_uplink(&app, "eui-health-interrupted", 25.0, true).await;
+    // Fewer uplinks than the streak length.
+    insert_sensor(&app, "eui-health-short", true).await;
+    insert_uplink(&app, "eui-health-short", 6553.5, false).await;
+    insert_uplink(&app, "eui-health-short", 6553.5, false).await;
+
+    let all = sensor_list(&app, "per_page=100").await;
+    assert_eq!(all.len(), 4, "every fixture sensor must be listed");
+
+    for health in ["ok", "suspect"] {
+        let expected: Vec<String> = ids(&all
+            .iter()
+            .filter(|s| s["data_health"].as_str() == Some(health))
+            .cloned()
+            .collect::<Vec<_>>());
+        assert!(
+            !expected.is_empty(),
+            "the fixture set must populate the {health} branch, or this \
+             comparison passes vacuously"
+        );
+
+        let actual = ids(&sensor_list(&app, &format!("per_page=100&data_health={health}")).await);
+
+        assert_eq!(
+            actual, expected,
+            "data health filter disagrees for {health}"
+        );
+    }
+
+    assert_eq!(
+        ids(&sensor_list(&app, "per_page=100&data_health=suspect").await),
+        vec!["eui-health-suspect".to_owned()],
+        "only the uninterrupted streak is suspect"
+    );
+}

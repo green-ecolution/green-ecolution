@@ -20,7 +20,7 @@ use crate::service::{
     sensor_service::{SensorDataQuality, SensorService},
 };
 
-use super::{DataHealth, SensorStatus};
+use super::{DataHealth, SensorStatus, tree::SortOrderParam};
 
 /// Resolves a batch of raw sensor-id strings (e.g. from `TreeView::sensor_id`)
 /// into a lookup map keyed by id. Strings that fail [`SensorId`] validation
@@ -676,4 +676,54 @@ impl SensorDataQualityResponse {
 pub struct AcknowledgeDataQualityRequest {
     #[schema(example = "Sonde bei der Vorbereitung nicht angeschlossen", nullable)]
     pub note: Option<String>,
+}
+
+/// Query parameters for the paginated sensor list endpoint.
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
+#[into_params(parameter_in = Query)]
+pub struct SensorListParams {
+    #[param(default = 1, minimum = 1, example = 1)]
+    #[serde(default = "crate::http::v1::pagination::default_page")]
+    pub page: u64,
+    #[param(default = 25, minimum = 1, maximum = 100, example = 25)]
+    #[serde(default = "crate::http::v1::pagination::default_per_page")]
+    pub per_page: u64,
+    #[param(example = "eui-a81758")]
+    pub q: Option<String>,
+    /// Repeatable: `?status=online&status=offline`.
+    #[serde(default)]
+    pub status: Vec<SensorStatus>,
+    /// Repeatable: `?model_id=<uuid>&model_id=<uuid>`.
+    #[serde(default)]
+    pub model_id: Vec<uuid::Uuid>,
+    /// Repeatable: `?data_health=suspect`.
+    #[serde(default)]
+    pub data_health: Vec<DataHealth>,
+    #[param(nullable)]
+    #[serde(default)]
+    pub has_tree: Option<bool>,
+    #[param(nullable, inline)]
+    pub sort: Option<SensorSortParam>,
+    #[param(nullable, inline)]
+    pub order: Option<SortOrderParam>,
+}
+
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum SensorSortParam {
+    Id,
+    Status,
+    LastReading,
+    CreatedAt,
+}
+
+impl From<SensorSortParam> for domain::sensor::SensorSortField {
+    fn from(param: SensorSortParam) -> Self {
+        match param {
+            SensorSortParam::Id => Self::Id,
+            SensorSortParam::Status => Self::Status,
+            SensorSortParam::LastReading => Self::LastReading,
+            SensorSortParam::CreatedAt => Self::CreatedAt,
+        }
+    }
 }

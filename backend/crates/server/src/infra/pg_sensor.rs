@@ -11,10 +11,10 @@ use domain::{
     RepositoryError,
     cluster::{SoilMoistureBucket, SoilMoistureDepthSeries, SoilMoisturePoint},
     sensor::{
-        AcknowledgementNote, DataQualityAcknowledgement, LastPlausibleValue, LorawanCredentials,
-        ReadingQualityIssue, Sensor, SensorDraft, SensorId, SensorReader, SensorReadingReader,
-        SensorReadingWriter, SensorSearchQuery, SensorSnapshot, SensorSortField, SensorType,
-        SensorView, SensorWriter,
+        AcknowledgementNote, DataHealth, DataQualityAcknowledgement, LastPlausibleValue,
+        LorawanCredentials, ReadingQualityIssue, Sensor, SensorDraft, SensorId, SensorReader,
+        SensorReadingReader, SensorReadingWriter, SensorSearchQuery, SensorSnapshot, SensorStatus,
+        SensorType, SensorView, SensorWriter,
         data::{SensorReading, SensorReadingDraft, SensorReadingSnapshot, SensorReadingView},
         derive_connectivity, derive_data_health,
         repository::NormalizedValue,
@@ -36,9 +36,8 @@ pub struct PgSensorRepository {
     defect_streak: i64,
     quality_join: String,
     history_join: String,
-    // reason: wired into the status filter in a later task of this rollout.
-    #[allow(dead_code)]
     status_sql: String,
+    data_health_sql: String,
 }
 
 /// Window the `implausible_recent` counter on [`SensorView`] covers.
@@ -54,6 +53,11 @@ const LATEST_READING_JOIN: &str = "LEFT JOIN LATERAL ( \
     ORDER BY sd.id DESC \
     LIMIT 1 \
 ) lr ON true";
+
+/// Acknowledgement watermark. Both quality laterals read it, so it has to be
+/// emitted before them whichever group it sits in.
+const QUALITY_ACK_JOIN: &str =
+    "LEFT JOIN sensor_quality_acknowledgements qa ON qa.sensor_id = s.id";
 
 impl PgSensorRepository {
     pub fn new(pool: PgPool, offline_after: chrono::Duration, defect_streak: usize) -> Self {
@@ -97,16 +101,40 @@ impl PgSensorRepository {
         );
         // The SQL twin of `derive_connectivity`. It reads the reading's
         // `updated_at` where the Rust side reads the v7 timestamp off the
-        // reading's id: a reading is only ever inserted, never updated, so the
-        // two name the same instant.
+        // reading's id. For every row this codebase writes the two name the
+        // same instant, because a reading is inserted once and never updated;
+        // the exception is a row that predates
+        // `20260518090000_migrate_int_ids_to_uuid_v7_from_created_at`, which
+        // minted ids from `created_at` but copied `updated_at` verbatim, so a
+        // pre-migration row that had been updated carries two different
+        // instants.
+        //
+        // `updated_at` is `timestamp without time zone` holding UTC, so it is
+        // lifted into UTC explicitly rather than left to the session timezone,
+        // which would otherwise decide what `NOW() - lr.updated_at` means.
         let status_sql = format!(
             "CASE \
                 WHEN s.activated_at IS NULL THEN 'prepared' \
                 WHEN lr.updated_at IS NOT NULL \
-                     AND NOW() - lr.updated_at <= make_interval(secs => {}) THEN 'online' \
+                     AND NOW() - (lr.updated_at AT TIME ZONE 'UTC') \
+                         <= make_interval(secs => {}) THEN 'online' \
                 ELSE 'offline' END",
             offline_after.num_seconds()
         );
+        // The SQL twin of `derive_data_health`. `recent_unusable` is already
+        // capped at `defect_streak` by the history join and ordered newest
+        // first, so "the streak is unbroken" is "the array is full and holds
+        // no usable uplink". A streak of zero never reports suspect, which the
+        // Rust side short-circuits the same way.
+        let data_health_sql = if defect_streak > 0 {
+            format!(
+                "CASE WHEN cardinality(h.recent_unusable) >= {defect_streak} \
+                      AND true = ALL(h.recent_unusable[1:{defect_streak}]) \
+                 THEN 'suspect' ELSE 'ok' END"
+            )
+        } else {
+            "'ok'".to_owned()
+        };
 
         Self {
             pool,
@@ -115,6 +143,7 @@ impl PgSensorRepository {
             quality_join,
             history_join,
             status_sql,
+            data_health_sql,
         }
     }
 
@@ -583,17 +612,51 @@ impl SensorReader for PgSensorRepository {
         query: SensorSearchQuery,
         pagination: Pagination,
     ) -> Result<SearchPage<SensorView>, RepositoryError> {
+        let status_texts: Vec<String> = query
+            .statuses
+            .iter()
+            .map(|status| {
+                match status {
+                    SensorStatus::Prepared => "prepared",
+                    SensorStatus::Online => "online",
+                    SensorStatus::Offline => "offline",
+                }
+                .to_owned()
+            })
+            .collect();
+        let health_texts: Vec<String> = query
+            .data_health
+            .iter()
+            .map(|health| {
+                match health {
+                    DataHealth::Ok => "ok",
+                    DataHealth::Suspect => "suspect",
+                }
+                .to_owned()
+            })
+            .collect();
+        let model_ids: Vec<Uuid> = query.model_ids.iter().map(|id| id.value()).collect();
+
         // `qa` has to precede the two quality laterals, which read its
         // acknowledgement watermark; the builder emits filtering joins before
-        // projection joins and projection joins in order, so this order holds.
-        let page = ListSpec::new("sensors s", "s.id")
+        // projection joins and each group in order, so this order holds either
+        // way. The history lateral is the expensive one, and only the data
+        // health filter makes the counts depend on it — without that filter it
+        // stays projection-only, so the counts never pay for it.
+        let mut spec = ListSpec::new("sensors s", "s.id")
             .join("INNER JOIN sensor_models sm ON sm.id = s.model_id")
             .join(LATEST_READING_JOIN)
+            .join("LEFT JOIN trees t ON t.sensor_id = s.id");
+        spec = if health_texts.is_empty() {
+            spec.projection_join(QUALITY_ACK_JOIN)
+                .projection_join(&self.history_join)
+        } else {
+            spec.join(QUALITY_ACK_JOIN).join(&self.history_join)
+        };
+
+        let page = spec
             .projection_join("LEFT JOIN sensor_lorawan sl ON sl.id = s.id")
-            .projection_join("LEFT JOIN trees t ON t.sensor_id = s.id")
-            .projection_join("LEFT JOIN sensor_quality_acknowledgements qa ON qa.sensor_id = s.id")
             .projection_join(&self.quality_join)
-            .projection_join(&self.history_join)
             .scope(Predicate::equals(
                 "s.provider",
                 query.provider.as_ref().map(|p| p.as_str().to_owned()),
@@ -602,9 +665,20 @@ impl SensorReader for PgSensorRepository {
                 "s.organization_id",
                 query.visible.into_raw_ids(),
             ))
+            .filter(Predicate::text_search(&["s.id", "sm.name"], query.q))
+            .filter(Predicate::any_of_expr(
+                self.status_sql.clone(),
+                status_texts,
+            ))
+            .filter(Predicate::any_of("s.model_id", model_ids))
+            .filter(Predicate::any_of_expr(
+                self.data_health_sql.clone(),
+                health_texts,
+            ))
+            .filter(Predicate::is_present("t.id", query.has_tree))
             .sort(
-                SensorSortField::default().as_sql_key(),
-                false,
+                query.sort.field.as_sql_key(),
+                query.sort.direction.is_descending(),
                 SENSOR_SORT_COLUMNS,
             )
             .page(pagination)

@@ -2,6 +2,10 @@ use crate::helpers::spawn_app;
 
 async fn insert_sensor(app: &crate::helpers::TestApp, id: &str) {
     let model_id = app.ecodrizzler_model_id().await;
+    insert_sensor_with_model(app, id, model_id).await;
+}
+
+async fn insert_sensor_with_model(app: &crate::helpers::TestApp, id: &str, model_id: uuid::Uuid) {
     sqlx::query!(
         r#"INSERT INTO sensors (id, activated_at, type, model_id, organization_id)
         VALUES ($1, NOW(), 'lorawan', $2, '01980000-0000-7000-8000-000000000001')"#,
@@ -19,6 +23,38 @@ async fn insert_sensor(app: &crate::helpers::TestApp, id: &str) {
     .execute(&app.db_pool)
     .await
     .unwrap();
+}
+
+// Raw sqlx::query so this fixture doesn't need an offline-cache entry.
+async fn link_sensor_to_new_tree(app: &crate::helpers::TestApp, sensor_id: &str) {
+    sqlx::query(
+        r#"INSERT INTO trees (id, sensor_id, planting_year, species, number, latitude, longitude,
+                              geometry, description, organization_id)
+        VALUES ($1, $2, 2020, 'Eiche', $3, 53.55, 9.99,
+                ST_SetSRID(ST_MakePoint(9.99, 53.55), 4326), 'Test',
+                '01980000-0000-7000-8000-000000000001')"#,
+    )
+    .bind(uuid::Uuid::now_v7())
+    .bind(sensor_id)
+    .bind(format!("T-{sensor_id}"))
+    .execute(&app.db_pool)
+    .await
+    .unwrap();
+}
+
+async fn list_ids(app: &crate::helpers::TestApp, query: &str) -> Vec<String> {
+    let body: serde_json::Value = app
+        .get(&format!("/api/v1/sensors?{query}"))
+        .await
+        .json()
+        .await
+        .unwrap();
+    body["data"]
+        .as_array()
+        .expect("list response carries a data array")
+        .iter()
+        .map(|s| s["id"].as_str().unwrap().to_owned())
+        .collect()
 }
 
 async fn insert_reading(app: &crate::helpers::TestApp, sensor_id: &str, data: serde_json::Value) {
@@ -511,4 +547,106 @@ async fn ingest_for_known_sensor_updates_tree_watering_status() {
     .await
     .unwrap();
     assert_eq!(tree_status, "good");
+}
+
+#[tokio::test]
+async fn sensor_list_searches_eui_and_model_name() {
+    let app = spawn_app().await;
+    let eco = app.ecodrizzler_model_id().await;
+    let ges = app.ges_1000_model_id().await;
+    insert_sensor_with_model(&app, "eui-a81758fffe0c3b52", eco).await;
+    insert_sensor_with_model(&app, "eui-b91869fffe1d4c63", ges).await;
+
+    // Matches neither EUI, only the `GES-1000` model name.
+    assert_eq!(
+        list_ids(&app, "q=ges").await,
+        vec!["eui-b91869fffe1d4c63".to_owned()]
+    );
+    assert_eq!(
+        list_ids(&app, "q=A81758").await,
+        vec!["eui-a81758fffe0c3b52".to_owned()]
+    );
+}
+
+#[tokio::test]
+async fn sensor_list_filters_by_linked_tree() {
+    let app = spawn_app().await;
+    insert_sensor(&app, "eui-000000000000000a").await;
+    insert_sensor(&app, "eui-000000000000000b").await;
+    link_sensor_to_new_tree(&app, "eui-000000000000000a").await;
+
+    assert_eq!(
+        list_ids(&app, "has_tree=true").await,
+        vec!["eui-000000000000000a".to_owned()]
+    );
+    assert_eq!(
+        list_ids(&app, "has_tree=false").await,
+        vec!["eui-000000000000000b".to_owned()]
+    );
+}
+
+#[tokio::test]
+async fn sensor_list_model_parameter_is_repeatable() {
+    let app = spawn_app().await;
+    let eco = app.ecodrizzler_model_id().await;
+    let ges = app.ges_1000_model_id().await;
+    insert_sensor_with_model(&app, "eui-000000000000000a", eco).await;
+    insert_sensor_with_model(&app, "eui-000000000000000b", ges).await;
+
+    assert_eq!(
+        list_ids(&app, &format!("model_id={eco}")).await,
+        vec!["eui-000000000000000a".to_owned()]
+    );
+    assert_eq!(
+        list_ids(&app, &format!("model_id={eco}&model_id={ges}"))
+            .await
+            .len(),
+        2
+    );
+}
+
+#[tokio::test]
+async fn sensor_list_sorts_by_last_reading_descending() {
+    let app = spawn_app().await;
+    insert_sensor(&app, "eui-000000000000000a").await;
+    insert_sensor(&app, "eui-000000000000000b").await;
+    insert_reading(&app, "eui-000000000000000a", serde_json::json!({"n": 1})).await;
+    insert_reading(&app, "eui-000000000000000b", serde_json::json!({"n": 2})).await;
+
+    let ids = list_ids(&app, "sort=last_reading&order=desc").await;
+
+    assert_eq!(
+        ids.first().map(String::as_str),
+        Some("eui-000000000000000b")
+    );
+}
+
+#[tokio::test]
+async fn sensor_list_reports_the_prefilter_total() {
+    let app = spawn_app().await;
+    insert_sensor(&app, "eui-000000000000000a").await;
+    insert_sensor(&app, "eui-000000000000000b").await;
+
+    let body: serde_json::Value = app
+        .get("/api/v1/sensors?q=000000000000000a")
+        .await
+        .json()
+        .await
+        .unwrap();
+
+    assert_eq!(body["pagination"]["total_records"], 1);
+    assert_eq!(body["pagination"]["total_unfiltered"], 2);
+}
+
+#[tokio::test]
+async fn sensor_list_rejects_an_overlong_search_term() {
+    let app = spawn_app().await;
+
+    let response = app
+        .get(&format!("/api/v1/sensors?q={}", "x".repeat(101)))
+        .await;
+
+    assert_eq!(response.status().as_u16(), 400);
+    let body: serde_json::Value = response.json().await.unwrap();
+    assert!(body["error"].is_string());
 }

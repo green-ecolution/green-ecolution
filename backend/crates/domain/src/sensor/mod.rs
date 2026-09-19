@@ -251,10 +251,25 @@ impl Sensor {
 
 #[derive(Debug, Default, Clone)]
 pub struct SensorSearchQuery {
+    // Scope
     pub provider: Option<ProviderId>,
     /// Which organizations may see the result. Callers must set this per
     /// request; defaults to unrestricted for internal consumers.
     pub visible: Visibility,
+
+    // Filters
+    /// Connectivity, which is derived rather than stored — the repository has
+    /// to reproduce [`derive_connectivity`] in SQL to filter on it.
+    pub statuses: Vec<SensorStatus>,
+    pub model_ids: Vec<Id<SensorModel>>,
+    /// Data health, derived the same way from [`derive_data_health`].
+    pub data_health: Vec<DataHealth>,
+    /// Whether the sensor is linked to a tree.
+    pub has_tree: Option<bool>,
+
+    // Search and order
+    pub q: Option<String>,
+    pub sort: SensorSort,
 }
 
 #[cfg(test)]

@@ -14,9 +14,15 @@ pub enum ArchiveFilter {
 type PushFn = Box<dyn Fn(&mut QueryBuilder<'_, Postgres>) + Send + Sync>;
 
 /// One `WHERE` term. Values travel through `push_bind`; the expression text is
-/// always a `&'static str` written in this repository, never caller input.
-/// That split is what keeps query text free of anything a request supplied,
-/// now that these queries no longer go through the checked macros.
+/// written in this repository, never caller input. That split is what keeps
+/// query text free of anything a request supplied, now that these queries no
+/// longer go through the checked macros.
+///
+/// Expressions are `&'static str` wherever they can be. The `_expr` variants
+/// take an owned `String` for the handful a repository has to compose at
+/// startup because they carry a configured constant — an offline threshold, a
+/// defect streak. That string still originates here and is built once per
+/// process, never per request.
 pub struct Predicate {
     push: PushFn,
 }
@@ -72,6 +78,26 @@ impl Predicate {
 
         Some(Self::new(move |qb| {
             qb.push(expr)
+                .push(" = ANY(")
+                .push_bind(values.clone())
+                .push(")");
+        }))
+    }
+
+    /// Same as [`Self::any_of`], for an expression the repository had to
+    /// compose at startup because it carries a configured constant. The string
+    /// still originates in this repository, never in a request.
+    pub fn any_of_expr<T>(expr: String, values: Vec<T>) -> Option<Self>
+    where
+        T: Clone + Send + Sync + 'static,
+        Vec<T>: for<'q> Encode<'q, Postgres> + Type<Postgres>,
+    {
+        if values.is_empty() {
+            return None;
+        }
+
+        Some(Self::new(move |qb| {
+            qb.push(&expr)
                 .push(" = ANY(")
                 .push_bind(values.clone())
                 .push(")");
@@ -144,6 +170,24 @@ mod tests {
     #[test]
     fn empty_collection_writes_nothing() {
         assert!(Predicate::any_of::<uuid::Uuid>("v.id", Vec::new()).is_none());
+    }
+
+    #[test]
+    fn any_of_expr_renders_the_composed_expression() {
+        let sql = rendered(Predicate::any_of_expr(
+            "CASE WHEN s.activated_at IS NULL THEN 'prepared' ELSE 'offline' END".to_owned(),
+            vec!["prepared".to_owned()],
+        ));
+
+        assert_eq!(
+            sql,
+            "CASE WHEN s.activated_at IS NULL THEN 'prepared' ELSE 'offline' END = ANY($1)"
+        );
+    }
+
+    #[test]
+    fn any_of_expr_empty_collection_writes_nothing() {
+        assert!(Predicate::any_of_expr::<String>("'ok'".to_owned(), Vec::new()).is_none());
     }
 
     #[test]
