@@ -12,6 +12,16 @@ pub struct Page<T> {
     pub total: u64,
 }
 
+/// A page plus the count the same request would return without its own
+/// narrowing filters. Scope restrictions (visibility, provider) are part of
+/// `total_unfiltered`; only the caller's own filters are left out, so a client
+/// can show "5 of 563" without a second request.
+#[derive(Debug, Clone)]
+pub struct SearchPage<T> {
+    pub page: Page<T>,
+    pub total_unfiltered: u64,
+}
+
 /// Validated pagination cursor.
 ///
 /// `page` is clamped to `≥ 1`; `per_page` is clamped to `[1, MAX_PER_PAGE]`.
@@ -107,5 +117,20 @@ mod tests {
         let p = Pagination::with_max_per_page(0, 0, 5_000);
         assert_eq!(p.page(), 1);
         assert_eq!(p.per_page(), 1);
+    }
+
+    #[test]
+    fn search_page_carries_the_prefilter_total() {
+        let page = SearchPage {
+            page: Page {
+                items: vec!["a", "b"],
+                total: 2,
+            },
+            total_unfiltered: 17,
+        };
+
+        assert_eq!(page.page.items.len(), 2);
+        assert_eq!(page.page.total, 2);
+        assert_eq!(page.total_unfiltered, 17);
     }
 }
