@@ -6,11 +6,12 @@
 //! written once and reused across all three, which is the duplication this
 //! module exists to remove.
 //!
-//! **Invariant.** Every value reaches SQL through `push_bind`. Every piece of
-//! query text (table, join, column, expression) is a `&'static str` written in
-//! this repository. These queries are assembled at runtime and are therefore
-//! not covered by sqlx's compile-time checks; that split is what keeps them
-//! safe, and the integration tests are what keep the column names honest.
+//! **Invariant.** Query text is authored in this repository and never derived
+//! from request input; where a fragment must carry a configured constant it is
+//! composed once at startup, never per request. Values always travel through
+//! `push_bind`. These queries are assembled at runtime and are therefore not
+//! covered by sqlx's compile-time checks; that split is what keeps them safe,
+//! and the integration tests are what keep the column names honest.
 
 pub mod order;
 pub mod predicate;
@@ -57,7 +58,10 @@ impl<'a> ListSpec<'a> {
 
     /// A join a filter or a sort expression depends on. Counts include it, and
     /// they switch to `COUNT(DISTINCT pk)` because such a join can multiply
-    /// rows.
+    /// rows. A join that can multiply rows must be paired with a `group_by` on
+    /// the primary key, or the page will return more rows than `total`
+    /// reports — the builder cannot add `DISTINCT` itself without breaking
+    /// aggregate projections.
     pub fn join(mut self, join: &'a str) -> Self {
         self.filter_joins.push(join);
         self
@@ -146,11 +150,13 @@ impl<'a> ListSpec<'a> {
         }
         if let Some((key, descending, columns)) = self.sort {
             push_order_by(&mut qb, key, descending, columns, self.primary_key);
+        } else {
+            qb.push(" ORDER BY ").push(self.primary_key).push(" ASC");
         }
         qb.push(" LIMIT ")
-            .push_bind(self.pagination.limit() as i64)
+            .push_bind(i64::try_from(self.pagination.limit()).unwrap_or(i64::MAX))
             .push(" OFFSET ")
-            .push_bind(self.pagination.offset() as i64);
+            .push_bind(i64::try_from(self.pagination.offset()).unwrap_or(i64::MAX));
         qb
     }
 
@@ -278,5 +284,22 @@ mod tests {
             .page(Pagination::default());
 
         assert!(!spec.has_filters());
+    }
+
+    #[test]
+    fn limit_and_offset_are_bound_not_formatted() {
+        let sql = spec().page_sql("v.id, v.model");
+
+        assert!(sql.contains("LIMIT $"), "limit must be bound: {sql}");
+        assert!(sql.contains("OFFSET $"), "offset must be bound: {sql}");
+    }
+
+    #[test]
+    fn no_sort_still_orders_by_the_primary_key() {
+        let sql = ListSpec::new("regions r", "r.id")
+            .page(Pagination::default())
+            .page_sql("r.id");
+
+        assert!(sql.ends_with("ORDER BY r.id ASC LIMIT $1 OFFSET $2"));
     }
 }
