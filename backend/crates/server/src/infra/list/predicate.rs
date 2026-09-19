@@ -18,9 +18,6 @@ type PushFn = Box<dyn Fn(&mut QueryBuilder<'_, Postgres>) + Send + Sync>;
 /// That split is what keeps query text free of anything a request supplied,
 /// now that these queries no longer go through the checked macros.
 pub struct Predicate {
-    // reason: read by `push` below, which the list-builder task wires up; no
-    // caller in this crate exists yet.
-    #[allow(dead_code)]
     push: PushFn,
 }
 
@@ -31,8 +28,6 @@ impl std::fmt::Debug for Predicate {
 }
 
 impl Predicate {
-    // reason: called by the ListSpec builder added in a later task of this rollout.
-    #[allow(dead_code)]
     pub(crate) fn push(&self, qb: &mut QueryBuilder<'_, Postgres>) {
         (self.push)(qb)
     }

@@ -8,7 +8,6 @@ pub type SortColumns = &'static [(&'static str, &'static [&'static str])];
 /// Appends `ORDER BY` for `key`, always `NULLS LAST` and always followed by a
 /// tiebreaker on the primary key, so a row cannot shift between pages when two
 /// rows compare equal.
-#[allow(dead_code)] // reason: implementation for list builder (consumed by ListSpec assembly)
 pub(crate) fn push_order_by(
     qb: &mut QueryBuilder<'_, Postgres>,
     key: &str,
