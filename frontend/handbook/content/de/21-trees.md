@@ -8,21 +8,27 @@ routes: ['/trees', '/trees/$treeId']
 
 ## Die Baumliste und ihre Filter
 
-Die Seite **Bäume** zeigt jeden Baum mit seiner Baumnummer, seiner Art und seinem
-Bewässerungszustand als Badge; darunter stehen die Bewässerungsgruppe und der verknüpfte
+Die Seite **Bäume** zeigt jeden Baum mit seiner Baumnummer und seiner Art. Ein farbiger
+Punkt davor steht für den Bewässerungszustand; verweilst du mit dem Zeiger darauf, nennt
+die Anwendung ihn beim Namen. Darunter stehen die Bewässerungsgruppe und der verknüpfte
 Sensor, und fehlt eines von beidem, sagt die Zeile das ausdrücklich, statt es einfach
-wegzulassen. Ein Klick auf einen Eintrag führt zur Detailseite. Über das Suchfeld
-durchsuchst du die Liste nach Baumnummer und Art, ohne Rücksicht auf Groß- und
-Kleinschreibung; die Suche greift erst kurz nach dem letzten Tastendruck, und der
+wegzulassen. Ist das Fenster breit genug, ergänzt dieselbe Zeile das Pflanzjahr und den
+Zeitpunkt der letzten Bewässerung; auf schmalen Bildschirmen entfallen beide wieder,
+damit die Zeile nicht umbricht. Ein Klick auf einen Eintrag führt zur Detailseite. Über
+das Suchfeld durchsuchst du die Liste nach Baumnummer und Art, ohne Rücksicht auf Groß-
+und Kleinschreibung; die Suche greift erst kurz nach dem letzten Tastendruck, und der
 gefundene Teil des Textes erscheint in den Ergebnissen hervorgehoben.
 
-Daneben stehen vier Filter, die jeweils sofort wirken, ohne dass eine Bestätigung nötig
-wäre: nach dem Bewässerungszustand, nach der Bewässerungsgruppe, wo sich einzelne Gruppen
-ebenso wählen lassen wie **Mit Gruppe** und **Ohne Gruppe** für die bloße Zugehörigkeit,
-unabhängig davon, um welche Gruppe es sich handelt, nach dem Vorhandensein eines Sensors
-mit den Optionen **Mit Sensor** und **Ohne Sensor**, sowie nach dem Pflanzjahr. Jede
-gesetzte Auswahl erscheint darunter als entfernbarer Chip, daneben ein Link, der alle
-Filter auf einmal zurücksetzt, sowie die Anzahl der gefundenen Bäume.
+Unter dem Suchfeld stehen vier Filter, die jeweils sofort wirken, ohne dass eine
+Bestätigung nötig wäre: nach dem Bewässerungszustand, nach der Bewässerungsgruppe, wo
+sich einzelne Gruppen ebenso wählen lassen wie **Mit Gruppe** und **Ohne Gruppe** für die
+bloße Zugehörigkeit, unabhängig davon, um welche Gruppe es sich handelt, nach dem
+Vorhandensein eines Sensors mit den Optionen **Mit Sensor** und **Ohne Sensor**, sowie
+nach dem Pflanzjahr. Wird die Auswahl eines Filters lang, wie bei der
+Bewässerungsgruppe und beim Pflanzjahr, bringt er ein eigenes Suchfeld mit, über das du
+die Liste einengst, statt sie durchzublättern. Jede gesetzte Auswahl erscheint darunter
+als entfernbarer Chip, daneben ein Link, der alle Filter auf einmal zurücksetzt, sowie
+die Anzahl der gefundenen Bäume.
 
 Über das Sortiermenü ordnest du die Liste nach Baumnummer, Art, Bewässerungszustand,
 Pflanzjahr, letzter Bewässerung oder Bewässerungsgruppe, jeweils auf- oder absteigend;
