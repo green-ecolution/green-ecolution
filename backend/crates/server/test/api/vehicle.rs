@@ -435,6 +435,45 @@ async fn seed_vehicle_with_capacity(app: &TestApp, plate: &str, capacity: f64) -
     uuid::Uuid::parse_str(created["id"].as_str().unwrap()).unwrap()
 }
 
+/// Creates a watering plan for `vehicle_id` and starts it, so the vehicle's
+/// derived status reads `active`. Mirrors the plan-lifecycle calls in
+/// `vehicle_status_follows_the_plan_it_is_assigned_to`.
+async fn put_vehicle_on_active_plan(app: &TestApp, vehicle_id: uuid::Uuid) {
+    let plan: serde_json::Value = app
+        .post_json(
+            "/api/v1/watering-plans",
+            &serde_json::json!({
+                "date": "2026-05-01T08:00:00Z",
+                "description": "Bewaesserung Innenstadt",
+                "transporter_id": vehicle_id,
+                "tree_cluster_ids": [],
+                "user_ids": []
+            }),
+        )
+        .await
+        .json()
+        .await
+        .unwrap();
+    let plan_id = plan["id"].as_str().unwrap();
+
+    let start = app
+        .put_json(
+            &format!("/api/v1/watering-plans/{}", plan_id),
+            &serde_json::json!({
+                "date": "2026-05-01T08:00:00Z",
+                "description": "Bewaesserung Innenstadt",
+                "status": "active",
+                "transporter_id": vehicle_id,
+                "tree_cluster_ids": [],
+                "user_ids": [],
+                "cancellation_note": "",
+                "evaluation": [],
+            }),
+        )
+        .await;
+    assert_eq!(start.status().as_u16(), 200);
+}
+
 // Raw sqlx::query so this fixture doesn't need an offline-cache entry.
 async fn set_unavailable(app: &TestApp, id: uuid::Uuid) {
     sqlx::query("UPDATE vehicles SET availability = 'not_available' WHERE id = $1")
@@ -493,11 +532,17 @@ async fn vehicle_list_filters_by_derived_status() {
 #[tokio::test]
 async fn vehicle_list_status_filter_agrees_with_the_rust_derivation() {
     // The SQL CASE and vehicle::derive_status answer the same question in two
-    // places; this pins them together so one cannot drift.
+    // places; this pins them together so one cannot drift. `active` is the
+    // interesting branch: SQL evaluates an EXISTS over vehicle_watering_plans
+    // joined to watering_plans, while Rust receives a pre-computed bool, so a
+    // fixture without a genuinely active vehicle would let this pass
+    // vacuously.
     let app = spawn_app().await;
     seed_vehicle(&app, "FL-GE 100", "MAN TGE", "").await;
     let blocked = seed_vehicle(&app, "FL-GE 200", "MAN TGE", "").await;
     set_unavailable(&app, blocked).await;
+    let active_vehicle = seed_vehicle(&app, "FL-GE 300", "MAN TGE", "").await;
+    put_vehicle_on_active_plan(&app, active_vehicle).await;
 
     let all: serde_json::Value = app
         .get("/api/v1/vehicles?per_page=100")
@@ -514,6 +559,14 @@ async fn vehicle_list_status_filter_agrees_with_the_rust_derivation() {
             .filter(|v| v["status"].as_str() == Some(status))
             .map(|v| v["id"].as_str().unwrap().to_owned())
             .collect();
+
+        if status == "active" {
+            assert!(
+                !expected.is_empty(),
+                "fixture must contain a genuinely active vehicle, or this iteration \
+                 would pass vacuously"
+            );
+        }
 
         let filtered: serde_json::Value = app
             .get(&format!("/api/v1/vehicles?per_page=100&status={status}"))
