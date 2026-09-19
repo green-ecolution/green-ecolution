@@ -82,8 +82,8 @@ pub async fn list_sensors(
         visible,
         ..SensorSearchQuery::default()
     };
-    let page = state.sensor_service.search_view(query, pagination).await?;
-    let response = ListResponse::<SensorResponse>::from_page(page, &pagination);
+    let result = state.sensor_service.search_view(query, pagination).await?;
+    let response = ListResponse::<SensorResponse>::from_page(result.page, &pagination);
     Ok(Json(response))
 }
 

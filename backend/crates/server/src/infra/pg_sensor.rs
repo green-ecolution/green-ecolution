@@ -1,9 +1,11 @@
 use async_trait::async_trait;
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDateTime, Utc};
 use rust_decimal::Decimal;
 use sqlx::PgPool;
+use std::collections::HashMap;
 use uuid::Uuid;
 
+use crate::infra::list::{ListSpec, Predicate, SortColumns};
 use crate::infra::pg_sensor_model::load_abilities_by_model;
 use domain::{
     RepositoryError,
@@ -11,16 +13,17 @@ use domain::{
     sensor::{
         AcknowledgementNote, DataQualityAcknowledgement, LastPlausibleValue, LorawanCredentials,
         ReadingQualityIssue, Sensor, SensorDraft, SensorId, SensorReader, SensorReadingReader,
-        SensorReadingWriter, SensorSearchQuery, SensorSnapshot, SensorType, SensorView,
-        SensorWriter,
+        SensorReadingWriter, SensorSearchQuery, SensorSnapshot, SensorSortField, SensorType,
+        SensorView, SensorWriter,
         data::{SensorReading, SensorReadingDraft, SensorReadingSnapshot, SensorReadingView},
         derive_connectivity, derive_data_health,
         repository::NormalizedValue,
         view::{LorawanInfo, SensorModelSummary},
     },
+    sensor_model::SensorModelAbility,
     shared::{
         coordinates::Coordinate,
-        pagination::{Page, Pagination},
+        pagination::{Page, Pagination, SearchPage},
         provenance::ProviderId,
         string_value::NonEmptyString,
     },
@@ -31,20 +34,201 @@ pub struct PgSensorRepository {
     pool: PgPool,
     offline_after: chrono::Duration,
     defect_streak: i64,
+    quality_join: String,
+    history_join: String,
+    // reason: wired into the status filter in a later task of this rollout.
+    #[allow(dead_code)]
+    status_sql: String,
 }
 
 /// Window the `implausible_recent` counter on [`SensorView`] covers.
 const QUALITY_WINDOW_DAYS: i32 = 7;
 
+/// Newest reading per sensor. Backs both the embedded `latest_reading` and the
+/// `last_reading` sort, which is why the list registers it as a filtering join
+/// rather than a projection-only one.
+const LATEST_READING_JOIN: &str = "LEFT JOIN LATERAL ( \
+    SELECT sd.id, sd.updated_at, sd.data \
+    FROM sensor_data sd \
+    WHERE sd.sensor_id = s.id \
+    ORDER BY sd.id DESC \
+    LIMIT 1 \
+) lr ON true";
+
 impl PgSensorRepository {
     pub fn new(pool: PgPool, offline_after: chrono::Duration, defect_streak: usize) -> Self {
+        let defect_streak = i64::try_from(defect_streak).unwrap_or(i64::MAX);
+
+        // The quality window, the defect streak and the offline threshold come
+        // from configuration and are numbers, not request input, so writing
+        // them into the join text is safe. Everything that originates in a
+        // request goes through push_bind. Composed once here because the text
+        // is the same for every request.
+        let quality_join = format!(
+            "LEFT JOIN LATERAL ( \
+                SELECT COUNT(*) AS implausible_recent \
+                FROM sensor_data sdq \
+                JOIN sensor_data_ability_values davq ON davq.sensor_data_id = sdq.id \
+                WHERE sdq.sensor_id = s.id \
+                  AND NOT davq.plausible \
+                  AND s.activated_at IS NOT NULL \
+                  AND sdq.updated_at > COALESCE(qa.acknowledged_at, '-infinity'::timestamp) \
+                  AND sdq.updated_at >= NOW() - make_interval(days => {QUALITY_WINDOW_DAYS}) \
+            ) q ON true"
+        );
+        let history_join = format!(
+            "LEFT JOIN LATERAL ( \
+                SELECT array_agg(u.unusable ORDER BY u.id DESC) AS recent_unusable \
+                FROM ( \
+                    SELECT sdh.id, bool_and(NOT davh.plausible) AS unusable \
+                    FROM sensor_data sdh \
+                    JOIN sensor_data_ability_values davh ON davh.sensor_data_id = sdh.id \
+                    JOIN sensor_model_abilities smah ON smah.id = davh.sensor_model_ability_id \
+                    JOIN sensor_abilities sah ON sah.id = smah.sensor_ability_id \
+                    WHERE sdh.sensor_id = s.id \
+                      AND s.activated_at IS NOT NULL \
+                      AND sdh.updated_at > COALESCE(qa.acknowledged_at, '-infinity'::timestamp) \
+                      AND sah.ability IN ('soil_moisture', 'soil_tension') \
+                    GROUP BY sdh.id \
+                    ORDER BY sdh.id DESC \
+                    LIMIT {defect_streak} \
+                ) u \
+            ) h ON true"
+        );
+        // The SQL twin of `derive_connectivity`. It reads the reading's
+        // `updated_at` where the Rust side reads the v7 timestamp off the
+        // reading's id: a reading is only ever inserted, never updated, so the
+        // two name the same instant.
+        let status_sql = format!(
+            "CASE \
+                WHEN s.activated_at IS NULL THEN 'prepared' \
+                WHEN lr.updated_at IS NOT NULL \
+                     AND NOW() - lr.updated_at <= make_interval(secs => {}) THEN 'online' \
+                ELSE 'offline' END",
+            offline_after.num_seconds()
+        );
+
         Self {
             pool,
             offline_after,
-            defect_streak: i64::try_from(defect_streak).unwrap_or(i64::MAX),
+            defect_streak,
+            quality_join,
+            history_join,
+            status_sql,
         }
     }
+
+    /// The one place a projected row becomes a [`SensorView`]. Both derived
+    /// fields — connectivity and data health — are computed here so the three
+    /// read paths cannot drift apart.
+    fn build_view(
+        &self,
+        row: SensorViewRow,
+        abilities: &HashMap<Uuid, Vec<SensorModelAbility>>,
+    ) -> Result<SensorView, RepositoryError> {
+        let latest_reading = build_latest_reading(
+            &row.id,
+            row.last_reading_id,
+            row.last_reading_updated_at,
+            row.last_reading_data,
+        );
+        let status = derive_connectivity(
+            row.activated_at.map(|t| t.and_utc()),
+            latest_reading.as_ref().map(|lr| lr.created_at),
+            Utc::now(),
+            self.offline_after,
+        );
+
+        Ok(SensorView {
+            data_health: derive_data_health(
+                row.recent_unusable.as_deref().unwrap_or(&[]),
+                self.defect_streak as usize,
+            ),
+            implausible_recent: row.implausible_recent,
+            id: row.id,
+            created_at: row.created_at.and_utc(),
+            updated_at: row.updated_at.and_utc(),
+            status,
+            sensor_type: row.sensor_type,
+            coordinate: build_coord(row.tree_lat, row.tree_lng)?,
+            linked_tree_id: row.linked_tree_id,
+            provider: row.provider.map(ProviderId::reconstitute),
+            additional_info: row.additional_info,
+            model: SensorModelSummary {
+                id: row.model_id,
+                name: row.model_name,
+                abilities: abilities.get(&row.model_id).cloned().unwrap_or_default(),
+            },
+            lorawan: build_lorawan_info(
+                row.serial_number,
+                row.dev_eui,
+                row.app_eui,
+                row.at_pin,
+                row.ota_pin,
+                row.config,
+            ),
+            latest_reading,
+            organization_id: row.organization_id,
+        })
+    }
 }
+
+/// Flat row shape behind every `SensorView`. Field names match the aliases in
+/// [`SENSOR_COLUMNS`]. The timestamps stay naive because their columns are
+/// `timestamp without time zone`; `build_view` is the single place that
+/// attaches UTC.
+#[derive(sqlx::FromRow)]
+struct SensorViewRow {
+    id: String,
+    created_at: NaiveDateTime,
+    updated_at: NaiveDateTime,
+    activated_at: Option<NaiveDateTime>,
+    sensor_type: SensorType,
+    provider: Option<String>,
+    additional_info: Option<serde_json::Value>,
+    model_id: Uuid,
+    model_name: String,
+    linked_tree_id: Option<Uuid>,
+    tree_lat: Option<f64>,
+    tree_lng: Option<f64>,
+    serial_number: Option<String>,
+    dev_eui: Option<String>,
+    app_eui: Option<String>,
+    at_pin: Option<String>,
+    ota_pin: Option<String>,
+    config: Option<serde_json::Value>,
+    last_reading_id: Option<Uuid>,
+    last_reading_updated_at: Option<NaiveDateTime>,
+    last_reading_data: Option<serde_json::Value>,
+    organization_id: Uuid,
+    implausible_recent: i64,
+    recent_unusable: Option<Vec<bool>>,
+}
+
+const SENSOR_COLUMNS: &str = "s.id, s.created_at, s.updated_at, s.activated_at, \
+    s.type AS sensor_type, s.provider, \
+    s.additional_informations AS additional_info, \
+    sm.id AS model_id, sm.name AS model_name, \
+    t.id AS linked_tree_id, t.latitude AS tree_lat, t.longitude AS tree_lng, \
+    sl.serial_number, sl.dev_eui, sl.app_eui, sl.at_pin, sl.ota_pin, sl.config, \
+    lr.id AS last_reading_id, lr.updated_at AS last_reading_updated_at, \
+    lr.data AS last_reading_data, s.organization_id, \
+    q.implausible_recent, h.recent_unusable";
+
+// Offline first: a sensor that stopped reporting is what the list is opened
+// for. The rank needs no offline threshold because it only separates "never
+// reported", "reported" and "not activated"; the finer online/offline split is
+// the status filter's job.
+const SENSOR_SORT_COLUMNS: SortColumns = &[
+    ("id", &["s.id"]),
+    (
+        "status",
+        &["CASE WHEN s.activated_at IS NULL THEN 2 \
+           WHEN lr.updated_at IS NULL THEN 0 ELSE 1 END"],
+    ),
+    ("last_reading", &["lr.updated_at"]),
+    ("created_at", &["s.created_at"]),
+];
 
 #[async_trait]
 impl SensorReader for PgSensorRepository {
@@ -197,27 +381,13 @@ impl SensorReader for PgSensorRepository {
         .ok_or(RepositoryError::NotFound)?;
 
         let latest_reading = sqlx::query!(
-            r#"SELECT id, sensor_id, updated_at, data
+            r#"SELECT id, updated_at, data
             FROM sensor_data WHERE sensor_id = $1
             ORDER BY id DESC LIMIT 1"#,
             id.as_str()
         )
         .fetch_optional(&self.pool)
-        .await?
-        .map(|r| SensorReadingView {
-            created_at: uuid_v7_timestamp(&r.id).expect("sensor_data.id is minted as uuid v7"),
-            id: r.id,
-            sensor_id: r.sensor_id,
-            updated_at: r.updated_at.and_utc(),
-            data: r.data,
-        });
-
-        let status = derive_connectivity(
-            row.activated_at.map(|t| t.and_utc()),
-            latest_reading.as_ref().map(|r| r.created_at),
-            Utc::now(),
-            self.offline_after,
-        );
+        .await?;
 
         // A sensor still in preparation reports nothing: an unplugged probe is
         // the normal case there, not a finding. `cutoff` is the acknowledgement
@@ -262,40 +432,37 @@ impl SensorReader for PgSensorRepository {
         .fetch_one(&self.pool)
         .await?;
 
-        Ok(SensorView {
-            data_health: derive_data_health(
-                quality.recent_unusable.as_deref().unwrap_or(&[]),
-                self.defect_streak as usize,
-            ),
-            implausible_recent: quality.implausible_recent,
-            id: row.id,
-            created_at: row.created_at.and_utc(),
-            updated_at: row.updated_at.and_utc(),
-            status,
-            sensor_type: row.sensor_type,
-            coordinate: build_coord(row.tree_lat, row.tree_lng)?,
-            linked_tree_id: row.linked_tree_id,
-            provider: row.provider.map(ProviderId::reconstitute),
-            additional_info: row.additional_info,
-            model: SensorModelSummary {
-                id: row.model_id,
-                name: row.model_name,
-                abilities: load_abilities_by_model(&self.pool, &[row.model_id])
-                    .await?
-                    .remove(&row.model_id)
-                    .unwrap_or_default(),
+        let abilities = load_abilities_by_model(&self.pool, &[row.model_id]).await?;
+
+        self.build_view(
+            SensorViewRow {
+                id: row.id,
+                created_at: row.created_at,
+                updated_at: row.updated_at,
+                activated_at: row.activated_at,
+                sensor_type: row.sensor_type,
+                provider: row.provider,
+                additional_info: row.additional_info,
+                model_id: row.model_id,
+                model_name: row.model_name,
+                linked_tree_id: row.linked_tree_id,
+                tree_lat: row.tree_lat,
+                tree_lng: row.tree_lng,
+                serial_number: row.serial_number,
+                dev_eui: row.dev_eui,
+                app_eui: row.app_eui,
+                at_pin: row.at_pin,
+                ota_pin: row.ota_pin,
+                config: row.config,
+                last_reading_id: latest_reading.as_ref().map(|r| r.id),
+                last_reading_updated_at: latest_reading.as_ref().map(|r| r.updated_at),
+                last_reading_data: latest_reading.map(|r| r.data),
+                organization_id: row.organization_id,
+                implausible_recent: quality.implausible_recent,
+                recent_unusable: quality.recent_unusable,
             },
-            lorawan: build_lorawan_info(
-                row.serial_number,
-                row.dev_eui,
-                row.app_eui,
-                row.at_pin,
-                row.ota_pin,
-                row.config,
-            ),
-            latest_reading,
-            organization_id: row.organization_id,
-        })
+            &abilities,
+        )
     }
 
     #[tracing::instrument(level = "trace", skip_all)]
@@ -377,49 +544,35 @@ impl SensorReader for PgSensorRepository {
 
         rows.into_iter()
             .map(|r| {
-                let latest_reading = build_latest_reading(
-                    &r.id,
-                    r.last_reading_id,
-                    r.last_reading_updated_at,
-                    r.last_reading_data,
-                );
-                let status = derive_connectivity(
-                    r.activated_at.map(|t| t.and_utc()),
-                    latest_reading.as_ref().map(|lr| lr.created_at),
-                    Utc::now(),
-                    self.offline_after,
-                );
-                Ok(SensorView {
-                    data_health: derive_data_health(
-                        r.recent_unusable.as_deref().unwrap_or(&[]),
-                        self.defect_streak as usize,
-                    ),
-                    implausible_recent: r.implausible_recent,
-                    id: r.id,
-                    created_at: r.created_at.and_utc(),
-                    updated_at: r.updated_at.and_utc(),
-                    status,
-                    sensor_type: r.sensor_type,
-                    coordinate: build_coord(r.tree_lat, r.tree_lng)?,
-                    linked_tree_id: r.linked_tree_id,
-                    provider: r.provider.map(ProviderId::reconstitute),
-                    additional_info: r.additional_info,
-                    model: SensorModelSummary {
-                        id: r.model_id,
-                        name: r.model_name,
-                        abilities: abilities.get(&r.model_id).cloned().unwrap_or_default(),
+                self.build_view(
+                    SensorViewRow {
+                        id: r.id,
+                        created_at: r.created_at,
+                        updated_at: r.updated_at,
+                        activated_at: r.activated_at,
+                        sensor_type: r.sensor_type,
+                        provider: r.provider,
+                        additional_info: r.additional_info,
+                        model_id: r.model_id,
+                        model_name: r.model_name,
+                        linked_tree_id: r.linked_tree_id,
+                        tree_lat: r.tree_lat,
+                        tree_lng: r.tree_lng,
+                        serial_number: r.serial_number,
+                        dev_eui: r.dev_eui,
+                        app_eui: r.app_eui,
+                        at_pin: r.at_pin,
+                        ota_pin: r.ota_pin,
+                        config: r.config,
+                        last_reading_id: r.last_reading_id,
+                        last_reading_updated_at: r.last_reading_updated_at,
+                        last_reading_data: r.last_reading_data,
+                        organization_id: r.organization_id,
+                        implausible_recent: r.implausible_recent,
+                        recent_unusable: r.recent_unusable,
                     },
-                    lorawan: build_lorawan_info(
-                        r.serial_number,
-                        r.dev_eui,
-                        r.app_eui,
-                        r.at_pin,
-                        r.ota_pin,
-                        r.config,
-                    ),
-                    latest_reading,
-                    organization_id: r.organization_id,
-                })
+                    &abilities,
+                )
             })
             .collect()
     }
@@ -429,151 +582,52 @@ impl SensorReader for PgSensorRepository {
         &self,
         query: SensorSearchQuery,
         pagination: Pagination,
-    ) -> Result<Page<SensorView>, RepositoryError> {
-        let provider = query.provider.as_ref().map(|p| p.as_str().to_owned());
-        let visible_ids = query.visible.into_raw_ids();
-        let limit = i64::try_from(pagination.limit()).unwrap_or(i64::MAX);
-        let offset = i64::try_from(pagination.offset()).unwrap_or(i64::MAX);
+    ) -> Result<SearchPage<SensorView>, RepositoryError> {
+        // `qa` has to precede the two quality laterals, which read its
+        // acknowledgement watermark; the builder emits filtering joins before
+        // projection joins and projection joins in order, so this order holds.
+        let page = ListSpec::new("sensors s", "s.id")
+            .join("INNER JOIN sensor_models sm ON sm.id = s.model_id")
+            .join(LATEST_READING_JOIN)
+            .projection_join("LEFT JOIN sensor_lorawan sl ON sl.id = s.id")
+            .projection_join("LEFT JOIN trees t ON t.sensor_id = s.id")
+            .projection_join("LEFT JOIN sensor_quality_acknowledgements qa ON qa.sensor_id = s.id")
+            .projection_join(&self.quality_join)
+            .projection_join(&self.history_join)
+            .scope(Predicate::equals(
+                "s.provider",
+                query.provider.as_ref().map(|p| p.as_str().to_owned()),
+            ))
+            .scope(Predicate::any_of_opt(
+                "s.organization_id",
+                query.visible.into_raw_ids(),
+            ))
+            .sort(
+                SensorSortField::default().as_sql_key(),
+                false,
+                SENSOR_SORT_COLUMNS,
+            )
+            .page(pagination)
+            .fetch::<SensorViewRow>(&self.pool, SENSOR_COLUMNS)
+            .await?;
 
-        let total = sqlx::query_scalar!(
-            r#"SELECT COUNT(*) AS "count!: i64" FROM sensors s
-            WHERE ($1::text IS NULL OR s.provider = $1)
-              AND ($2::uuid[] IS NULL OR s.organization_id = ANY($2))"#,
-            provider,
-            visible_ids.as_deref(),
-        )
-        .fetch_one(&self.pool)
-        .await? as u64;
-
-        let rows = sqlx::query!(
-            r#"SELECT s.id, s.created_at, s.updated_at,
-                      s.activated_at,
-                      s.type          AS "sensor_type: SensorType",
-                      s.provider,
-                      s.additional_informations AS "additional_info: serde_json::Value",
-                      sm.id           AS model_id,
-                      sm.name         AS model_name,
-                      t.id            AS "linked_tree_id?",
-                      t.latitude      AS "tree_lat?",
-                      t.longitude     AS "tree_lng?",
-                      sl.serial_number AS "serial_number?",
-                      sl.dev_eui       AS "dev_eui?",
-                      sl.app_eui       AS "app_eui?",
-                      sl.at_pin,
-                      sl.ota_pin,
-                      sl.config        AS "config: serde_json::Value",
-                      lr.id            AS "last_reading_id?: Uuid",
-                      lr.updated_at    AS "last_reading_updated_at?",
-                      lr.data          AS "last_reading_data?",
-                      s.organization_id,
-                      q.implausible_recent AS "implausible_recent!",
-                      h.recent_unusable    AS "recent_unusable?: Vec<bool>"
-            FROM sensors s
-            INNER JOIN sensor_models sm ON sm.id = s.model_id
-            LEFT JOIN sensor_lorawan sl ON sl.id = s.id
-            LEFT JOIN trees t          ON t.sensor_id = s.id
-            LEFT JOIN sensor_quality_acknowledgements qa ON qa.sensor_id = s.id
-            LEFT JOIN LATERAL (
-                SELECT sd.id, sd.updated_at, sd.data
-                FROM sensor_data sd
-                WHERE sd.sensor_id = s.id
-                ORDER BY sd.id DESC
-                LIMIT 1
-            ) lr ON true
-            LEFT JOIN LATERAL (
-                SELECT COUNT(*) AS implausible_recent
-                FROM sensor_data sdq
-                JOIN sensor_data_ability_values davq ON davq.sensor_data_id = sdq.id
-                WHERE sdq.sensor_id = s.id
-                  AND NOT davq.plausible
-                  AND s.activated_at IS NOT NULL
-                  AND sdq.updated_at > COALESCE(qa.acknowledged_at, '-infinity'::timestamp)
-                  AND sdq.updated_at >= NOW() - make_interval(days => $5)
-            ) q ON true
-            LEFT JOIN LATERAL (
-                SELECT array_agg(u.unusable ORDER BY u.id DESC) AS recent_unusable
-                FROM (
-                    SELECT sdh.id, bool_and(NOT davh.plausible) AS unusable
-                    FROM sensor_data sdh
-                    JOIN sensor_data_ability_values davh ON davh.sensor_data_id = sdh.id
-                    JOIN sensor_model_abilities smah ON smah.id = davh.sensor_model_ability_id
-                    JOIN sensor_abilities sah ON sah.id = smah.sensor_ability_id
-                    WHERE sdh.sensor_id = s.id
-                      AND s.activated_at IS NOT NULL
-                      AND sdh.updated_at > COALESCE(qa.acknowledged_at, '-infinity'::timestamp)
-                      AND sah.ability IN ('soil_moisture', 'soil_tension')
-                    GROUP BY sdh.id
-                    ORDER BY sdh.id DESC
-                    LIMIT $6
-                ) u
-            ) h ON true
-            WHERE ($1::text IS NULL OR s.provider = $1)
-              AND ($4::uuid[] IS NULL OR s.organization_id = ANY($4))
-            ORDER BY s.id
-            LIMIT $2 OFFSET $3"#,
-            provider,
-            limit,
-            offset,
-            visible_ids.as_deref(),
-            QUALITY_WINDOW_DAYS,
-            self.defect_streak,
-        )
-        .fetch_all(&self.pool)
-        .await?;
-
-        let model_ids: Vec<Uuid> = rows.iter().map(|r| r.model_id).collect();
+        let model_ids: Vec<Uuid> = page.page.items.iter().map(|r| r.model_id).collect();
         let abilities = load_abilities_by_model(&self.pool, &model_ids).await?;
 
-        let items = rows
+        let items = page
+            .page
+            .items
             .into_iter()
-            .map(|r| {
-                let latest_reading = build_latest_reading(
-                    &r.id,
-                    r.last_reading_id,
-                    r.last_reading_updated_at,
-                    r.last_reading_data,
-                );
-                let status = derive_connectivity(
-                    r.activated_at.map(|t| t.and_utc()),
-                    latest_reading.as_ref().map(|lr| lr.created_at),
-                    Utc::now(),
-                    self.offline_after,
-                );
-                Ok(SensorView {
-                    data_health: derive_data_health(
-                        r.recent_unusable.as_deref().unwrap_or(&[]),
-                        self.defect_streak as usize,
-                    ),
-                    implausible_recent: r.implausible_recent,
-                    id: r.id,
-                    created_at: r.created_at.and_utc(),
-                    updated_at: r.updated_at.and_utc(),
-                    status,
-                    sensor_type: r.sensor_type,
-                    coordinate: build_coord(r.tree_lat, r.tree_lng)?,
-                    linked_tree_id: r.linked_tree_id,
-                    provider: r.provider.map(ProviderId::reconstitute),
-                    additional_info: r.additional_info,
-                    model: SensorModelSummary {
-                        id: r.model_id,
-                        name: r.model_name,
-                        abilities: abilities.get(&r.model_id).cloned().unwrap_or_default(),
-                    },
-                    lorawan: build_lorawan_info(
-                        r.serial_number,
-                        r.dev_eui,
-                        r.app_eui,
-                        r.at_pin,
-                        r.ota_pin,
-                        r.config,
-                    ),
-                    latest_reading,
-                    organization_id: r.organization_id,
-                })
-            })
+            .map(|row| self.build_view(row, &abilities))
             .collect::<Result<Vec<_>, RepositoryError>>()?;
 
-        Ok(Page { items, total })
+        Ok(SearchPage {
+            page: Page {
+                items,
+                total: page.page.total,
+            },
+            total_unfiltered: page.total_unfiltered,
+        })
     }
 }
 
