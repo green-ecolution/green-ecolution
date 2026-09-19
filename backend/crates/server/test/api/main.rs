@@ -1,6 +1,7 @@
 pub mod auth;
 pub mod auth_helpers;
 pub mod authorization;
+pub mod benchdb_seed;
 pub mod cluster_soil_moisture;
 pub mod clusters;
 pub mod comments;
