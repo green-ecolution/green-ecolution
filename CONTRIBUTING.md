@@ -89,12 +89,13 @@ start without it.
 export BENCH_DATABASE_URL=postgres://postgres:postgres@localhost:5432/bench
 just bench-db-seed s 90       # seed 10k trees with 90 days of sensor history
 just bench-db-run             # measure once against what is there
-just bench-db-campaign        # grow through every scale and write the report
+just bench-db-campaign        # grow through every scale and measure after each
 ```
 
-A campaign writes `results.csv`, the captured query plans, an
-`environment.json` and a `report.md` into `backend/target/bench/`. The report
-names the paths whose response time grows faster than the data set does.
+A campaign writes `results.csv`, the captured query plans and an
+`environment.json` into `backend/target/bench/`. The CSV carries one row per
+path and scale, so the growth from one scale to the next is read off it
+directly.
 
 Two things to plan for: the sensor time series dominates the data volume, so
 the full default of 730 days at the largest scale is a multi-hour, multi-GB job

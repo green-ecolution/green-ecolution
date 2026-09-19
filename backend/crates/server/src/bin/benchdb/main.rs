@@ -9,7 +9,6 @@ mod environment;
 mod explain;
 mod measure;
 mod paths;
-mod report;
 
 use server::bench::{scale::Scale, seed};
 use sqlx::{PgPool, postgres::PgPoolOptions};
@@ -90,7 +89,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             std::fs::create_dir_all(&out)?;
 
             let mut samples = Vec::new();
-            let mut row_counts = Vec::new();
 
             for current in Scale::ALL {
                 // Grow into the next step rather than rebuilding: the seeder
@@ -106,7 +104,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .await?;
                 seed::analyze(&pool).await?;
 
-                row_counts.push((current.name().to_string(), counts.trees as u64));
                 samples.extend(paths::measure_all(&pool, current, None).await?);
 
                 capture_plans(&pool, current.name(), &out).await?;
@@ -117,12 +114,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             environment::capture(&pool, &out).await?;
             measure::write_csv(&samples, &out.join("results.csv"))?;
 
-            let largest = Scale::ALL.last().expect("Scale::ALL is never empty");
-            let seq_scans = seq_scans_at(&out, largest.name())?;
-            let growths = report::growth(&samples, &row_counts);
-            report::write_markdown(&growths, &samples, &seq_scans, &out)?;
-
-            println!("report written to {}", out.join("report.md").display());
+            println!(
+                "measured {} paths across {} scales into {}",
+                samples.len(),
+                Scale::ALL.len(),
+                out.display()
+            );
             Ok(())
         }
     }
@@ -176,42 +173,6 @@ fn reject_unknown_paths(requested: &[String]) -> Result<(), Box<dyn std::error::
         }
     }
     Ok(())
-}
-
-/// Reads back the plans captured at the largest scale and reports which of the
-/// big tables are still being scanned sequentially there. A plan that still
-/// scans at the top of the range says more than any single timing does.
-fn seq_scans_at(
-    out: &std::path::Path,
-    scale: &str,
-) -> Result<Vec<(String, String)>, Box<dyn std::error::Error>> {
-    const BIG_TABLES: [&str; 3] = ["trees", "tree_clusters", "sensor_data"];
-
-    let plans_dir = out.join("plans");
-    if !plans_dir.exists() {
-        return Ok(Vec::new());
-    }
-
-    let mut found = Vec::new();
-    for entry in std::fs::read_dir(&plans_dir)? {
-        let path = entry?.path();
-        let name = path
-            .file_stem()
-            .and_then(|s| s.to_str())
-            .unwrap_or_default()
-            .to_string();
-        if !name.ends_with(&format!("_{scale}")) {
-            continue;
-        }
-        let plan: serde_json::Value = serde_json::from_slice(&std::fs::read(&path)?)?;
-        for table in BIG_TABLES {
-            if explain::has_seq_scan_on(&plan, table) {
-                found.push((name.clone(), table.to_string()));
-            }
-        }
-    }
-    found.sort();
-    Ok(found)
 }
 
 /// Captures the plan probes for one scale. Both halves of the tree list are

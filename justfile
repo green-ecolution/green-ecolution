@@ -562,7 +562,7 @@ bench-db-run out="target/bench/manual":
     cd {{ backend_dir }} && cargo run --release --locked --bin benchdb -- \
       run --database-url "$BENCH_DATABASE_URL" --out {{ out }}
 
-# Grow through every scale, measure after each and write the full report
+# Grow through every scale and measure after each
 [group('check')]
 bench-db-campaign out="target/bench/campaign" history="730":
     @test -n "${BENCH_DATABASE_URL:-}" || (echo "BENCH_DATABASE_URL is required" >&2; exit 1)
