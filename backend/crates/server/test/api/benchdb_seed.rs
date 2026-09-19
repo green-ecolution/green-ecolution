@@ -1,4 +1,5 @@
 use domain::{
+    sensor::repository::SensorReadingReader,
     shared::pagination::Pagination,
     tree::{TreeSearchQuery, repository::TreeReader},
 };
@@ -103,4 +104,65 @@ async fn seeding_twice_tops_up_instead_of_duplicating() {
     // repeated call at the same scale has to be a no-op rather than a doubling.
     assert_eq!(second.trees, 1_000);
     assert_eq!(second.clusters, 20);
+}
+
+#[tokio::test]
+async fn seeded_readings_are_readable_and_spread_over_time() {
+    let app = spawn_app().await;
+
+    let counts = seed_core(&app.db_pool, &xs_plan())
+        .await
+        .expect("seeding must succeed");
+
+    assert_eq!(counts.sensors, 10);
+    // 10 sensors * 4 uplinks per day * 2 days
+    assert_eq!(counts.readings, 80);
+
+    let sensor_id: String = sqlx::query_scalar("SELECT id FROM sensors LIMIT 1")
+        .fetch_one(&app.db_pool)
+        .await
+        .expect("a seeded sensor must exist");
+    let sensor_id = domain::sensor::SensorId::new(&sensor_id).expect("seeded EUI must be valid");
+
+    let repo = server::infra::pg_sensor::PgSensorRepository::new(
+        app.db_pool.clone(),
+        chrono::Duration::days(1),
+        3,
+    );
+
+    let latest = repo
+        .latest(&sensor_id)
+        .await
+        .expect("the reader must accept the seeded readings");
+    let latest = latest.expect("the seeded time series must be readable");
+
+    let history = repo
+        .history(&sensor_id, 100)
+        .await
+        .expect("history must read back");
+    assert_eq!(history.len(), 8, "4 uplinks per day over 2 days");
+
+    // recorded_at is derived from the id's v7 timestamp, so ids carrying insert
+    // time would collapse the whole series onto one moment.
+    let oldest = history
+        .iter()
+        .map(|r| r.recorded_at)
+        .min()
+        .expect("history is not empty");
+    assert!(
+        latest.recorded_at - oldest > chrono::Duration::hours(24),
+        "expected the series to span more than a day, got {} to {}",
+        oldest,
+        latest.recorded_at
+    );
+
+    let moisture = repo
+        .latest_volumetric_moisture(&sensor_id)
+        .await
+        .expect("the normalized ability values must read back");
+    assert_eq!(
+        moisture.len(),
+        2,
+        "GES-1000 reports moisture at 40 and 80 cm"
+    );
 }
