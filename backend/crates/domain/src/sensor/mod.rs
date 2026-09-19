@@ -19,6 +19,7 @@ pub mod payload;
 pub mod plausibility;
 pub mod repository;
 pub mod snapshot;
+pub mod sort;
 pub mod view;
 
 use chrono::{DateTime, Duration, Utc};
@@ -42,6 +43,7 @@ pub use repository::{
 };
 #[doc(hidden)]
 pub use snapshot::SensorSnapshot;
+pub use sort::{SensorSort, SensorSortField};
 pub use view::SensorView;
 
 /// Display-only connectivity state, derived via [`derive_connectivity`] —

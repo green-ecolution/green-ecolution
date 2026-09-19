@@ -12,6 +12,7 @@ pub mod error;
 pub mod license;
 pub mod repository;
 pub mod snapshot;
+pub mod sort;
 pub mod view;
 
 use chrono::{DateTime, Utc};
@@ -33,6 +34,7 @@ pub use license::DrivingLicense;
 pub use repository::{VehicleReader, VehicleWriter};
 #[doc(hidden)]
 pub use snapshot::VehicleSnapshot;
+pub use sort::{VehicleSort, VehicleSortField};
 pub use view::VehicleView;
 
 /// Whether a vehicle may be assigned at all — the one part of its state only a
