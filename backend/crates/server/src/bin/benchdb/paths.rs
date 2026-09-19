@@ -4,29 +4,38 @@
 //! hand-written SQL, so a measurement covers the same code the HTTP layer
 //! calls, including any N+1 pattern a service happens to have.
 
-use std::time::Instant;
+use std::{sync::Arc, time::Instant};
 
 use domain::{
     Id,
     authorization::Visibility,
-    cluster::{TreeClusterSearchQuery, repository::TreeClusterReader},
-    sensor::{SensorId, repository::SensorReadingReader},
+    cluster::{
+        SoilMoistureBucket, TreeCluster, TreeClusterSearchQuery, repository::TreeClusterReader,
+    },
+    evaluation::EvaluationRepository,
+    sensor::{
+        SensorId, SensorSearchQuery,
+        data::SensorReadingDraft,
+        repository::{SensorReader, SensorReadingReader, SensorReadingWriter},
+    },
     shared::{
         coordinates::Coordinate, distance::Distance, pagination::Pagination,
         watering_status::WateringStatus,
     },
     tree::{
-        TreeSearchQuery,
+        Tree, TreeSearchQuery,
         repository::TreeReader,
         sort::{TreeSort, TreeSortField},
     },
 };
 use server::{
-    bench::scale::Scale,
+    bench::{scale::Scale, seed::BENCH_USER_ID},
     infra::{
-        pg_cluster::PgTreeClusterRepository, pg_sensor::PgSensorRepository,
-        pg_tree::PgTreeRepository,
+        pg_cluster::PgTreeClusterRepository, pg_evaluation::PgEvaluationRepository,
+        pg_organization::PgOrganizationRepository, pg_role::PgRoleRepository,
+        pg_sensor::PgSensorRepository, pg_tree::PgTreeRepository,
     },
+    service::authorization::AuthorizationService,
 };
 use sqlx::PgPool;
 
@@ -43,13 +52,29 @@ pub const NAMES: &[&str] = &[
     "tree.view_search.deep_offset",
     "tree.view_markers",
     "tree.view_nearest",
+    "tree.find_nearest",
+    "tree.view_by_ids",
+    "tree.distinct_planting_years",
     "cluster.view_search",
     "cluster.view_markers",
     "cluster.boundaries",
     "cluster.statistics",
+    "cluster.center_point",
+    "cluster.soil_moisture_series",
+    "cluster.watering_events",
+    "sensor.view_search",
     "sensor.latest",
     "sensor.history",
+    "sensor.view_history",
+    "sensor.last_plausible_values",
+    "sensor.quality_issues",
     "sensor.latest_volumetric_moisture",
+    "sensor.record",
+    "evaluation.regions_with_watering_plan",
+    "evaluation.vehicle_with_watering_plan",
+    "evaluation.total_consumed_water",
+    "evaluation.watering_plan_user",
+    "authorization.context_for",
 ];
 
 /// Plan probes: shapes copied from `view_search` in
@@ -151,6 +176,28 @@ async fn some_sensor_id(pool: &PgPool) -> Result<Option<SensorId>, Failure> {
     Ok(raw.and_then(|id| SensorId::new(&id).ok()))
 }
 
+/// A cluster that actually has trees with sensors on them, so the moisture
+/// series has something to aggregate instead of returning an empty result.
+async fn cluster_with_sensors(pool: &PgPool) -> Result<Option<Id<TreeCluster>>, Failure> {
+    let id: Option<uuid::Uuid> = sqlx::query_scalar(
+        r#"SELECT t.tree_cluster_id
+           FROM trees t
+           WHERE t.sensor_id IS NOT NULL AND t.tree_cluster_id IS NOT NULL
+           LIMIT 1"#,
+    )
+    .fetch_optional(pool)
+    .await?;
+    Ok(id.map(Id::new))
+}
+
+async fn some_tree_ids(pool: &PgPool, limit: i64) -> Result<Vec<Id<Tree>>, Failure> {
+    let ids: Vec<uuid::Uuid> = sqlx::query_scalar("SELECT id FROM trees ORDER BY id LIMIT $1")
+        .bind(limit)
+        .fetch_all(pool)
+        .await?;
+    Ok(ids.into_iter().map(Id::new).collect())
+}
+
 pub async fn measure_all(
     pool: &PgPool,
     scale: Scale,
@@ -161,6 +208,14 @@ pub async fn measure_all(
     let trees = PgTreeRepository::new(pool.clone());
     let clusters = PgTreeClusterRepository::new(pool.clone());
     let sensors = PgSensorRepository::new(pool.clone(), chrono::Duration::days(1), 3);
+    let evaluation = PgEvaluationRepository::new(pool.clone());
+    // `enforced = true`, otherwise context_for short-circuits to unrestricted
+    // and measures nothing.
+    let authorization = AuthorizationService::new(
+        Arc::new(PgOrganizationRepository::new(pool.clone())),
+        Arc::new(PgRoleRepository::new(pool.clone())),
+        true,
+    );
 
     let first_page = Pagination::new(1, 25);
     let cluster_ids = some_cluster_ids(pool, 50).await?;
@@ -333,10 +388,176 @@ pub async fn measure_all(
                 .await?,
             );
         }
+
+        if wanted("tree.distinct_planting_years") {
+            let visible = visibility.clone();
+            samples.push(
+                measure("tree.distinct_planting_years", scale, label, || async {
+                    let years = trees.distinct_planting_years(visible.clone()).await?;
+                    Ok(years.len() as u64)
+                })
+                .await?,
+            );
+        }
+
+        if wanted("sensor.view_search") {
+            let query = SensorSearchQuery {
+                visible: visibility.clone(),
+                ..SensorSearchQuery::default()
+            };
+            samples.push(
+                measure("sensor.view_search", scale, label, || async {
+                    let page = sensors.view_search(query.clone(), first_page).await?;
+                    Ok(page.items.len() as u64)
+                })
+                .await?,
+            );
+        }
+
+        if wanted("evaluation.regions_with_watering_plan") {
+            let visible = visibility.clone();
+            samples.push(
+                measure(
+                    "evaluation.regions_with_watering_plan",
+                    scale,
+                    label,
+                    || async {
+                        let rows = evaluation
+                            .regions_with_watering_plan(visible.clone())
+                            .await?;
+                        Ok(rows.len() as u64)
+                    },
+                )
+                .await?,
+            );
+        }
+
+        if wanted("evaluation.vehicle_with_watering_plan") {
+            let visible = visibility.clone();
+            samples.push(
+                measure(
+                    "evaluation.vehicle_with_watering_plan",
+                    scale,
+                    label,
+                    || async {
+                        let rows = evaluation
+                            .vehicle_with_watering_plan(visible.clone(), visible.clone())
+                            .await?;
+                        Ok(rows.len() as u64)
+                    },
+                )
+                .await?,
+            );
+        }
+
+        if wanted("evaluation.total_consumed_water") {
+            let visible = visibility.clone();
+            samples.push(
+                measure("evaluation.total_consumed_water", scale, label, || async {
+                    evaluation.total_consumed_water(visible.clone()).await?;
+                    Ok(1)
+                })
+                .await?,
+            );
+        }
+
+        if wanted("evaluation.watering_plan_user") {
+            let visible = visibility.clone();
+            samples.push(
+                measure("evaluation.watering_plan_user", scale, label, || async {
+                    evaluation.watering_plan_user(visible.clone()).await?;
+                    Ok(1)
+                })
+                .await?,
+            );
+        }
     }
 
-    // Sensor readings carry no visibility filter, so measuring them per
-    // variant would record the same number twice.
+    // The remaining paths take no visibility argument, so measuring them once
+    // per variant would record the same number twice.
+
+    if wanted("tree.find_nearest") {
+        samples.push(
+            measure("tree.find_nearest", scale, "unrestricted", || async {
+                let found = trees.find_nearest(centre, radius).await?;
+                Ok(found.is_some() as u64)
+            })
+            .await?,
+        );
+    }
+
+    if wanted("tree.view_by_ids") {
+        // 500 ids is what a map viewport or a bulk edit hands over; the
+        // interesting question is whether the ANY($1) lookup stays indexed.
+        let ids = some_tree_ids(pool, 500).await?;
+        samples.push(
+            measure("tree.view_by_ids", scale, "unrestricted", || async {
+                let views = trees.view_by_ids(&ids).await?;
+                Ok(views.len() as u64)
+            })
+            .await?,
+        );
+    }
+
+    if let Some(cluster_id) = cluster_with_sensors(pool).await? {
+        if wanted("cluster.center_point") {
+            samples.push(
+                measure("cluster.center_point", scale, "unrestricted", || async {
+                    let point = clusters.center_point(cluster_id).await?;
+                    Ok(point.is_some() as u64)
+                })
+                .await?,
+            );
+        }
+
+        if wanted("cluster.soil_moisture_series") {
+            let to = chrono::Utc::now();
+            let from = to - chrono::Duration::days(30);
+            samples.push(
+                measure(
+                    "cluster.soil_moisture_series",
+                    scale,
+                    "unrestricted",
+                    || async {
+                        let series = clusters
+                            .soil_moisture_series(cluster_id, from, to, SoilMoistureBucket::Day)
+                            .await?;
+                        Ok(series.len() as u64)
+                    },
+                )
+                .await?,
+            );
+        }
+
+        if wanted("cluster.watering_events") {
+            samples.push(
+                measure("cluster.watering_events", scale, "unrestricted", || async {
+                    let events = clusters.watering_events(cluster_id).await?;
+                    Ok(events.len() as u64)
+                })
+                .await?,
+            );
+        }
+    }
+
+    if wanted("authorization.context_for") {
+        // Runs once per authenticated request before any query does, so its
+        // cost is added to every other number in this table.
+        let user_id: uuid::Uuid = BENCH_USER_ID.parse()?;
+        samples.push(
+            measure(
+                "authorization.context_for",
+                scale,
+                "unrestricted",
+                || async {
+                    let context = authorization.context_for(user_id).await?;
+                    Ok(context.permissions.grants().len() as u64)
+                },
+            )
+            .await?,
+        );
+    }
+
     if let Some(sensor_id) = sensor_id {
         if wanted("sensor.latest") {
             samples.push(
@@ -369,6 +590,69 @@ pub async fn measure_all(
                         Ok(values.len() as u64)
                     },
                 )
+                .await?,
+            );
+        }
+
+        if wanted("sensor.view_history") {
+            samples.push(
+                measure("sensor.view_history", scale, "unrestricted", || async {
+                    let page = sensors
+                        .view_history(&sensor_id, first_page, None, None)
+                        .await?;
+                    Ok(page.items.len() as u64)
+                })
+                .await?,
+            );
+        }
+
+        if wanted("sensor.last_plausible_values") {
+            samples.push(
+                measure(
+                    "sensor.last_plausible_values",
+                    scale,
+                    "unrestricted",
+                    || async {
+                        let values = sensors.last_plausible_values(&sensor_id).await?;
+                        Ok(values.len() as u64)
+                    },
+                )
+                .await?,
+            );
+        }
+
+        if wanted("sensor.quality_issues") {
+            samples.push(
+                measure("sensor.quality_issues", scale, "unrestricted", || async {
+                    let issues = sensors.quality_issues(&sensor_id, 50).await?;
+                    Ok(issues.len() as u64)
+                })
+                .await?,
+            );
+        }
+
+        // The write path as a counter-check: insert rate into a growing time
+        // series behaves differently from any read. The twenty rows this adds
+        // are negligible against the seeded volume.
+        if wanted("sensor.record") {
+            let payload = serde_json::json!({
+                "battery": 3.6,
+                "temperature": 14.2,
+                "soil_moisture": [
+                    { "depth_cm": 40, "moisture_percent": 22.5 },
+                    { "depth_cm": 80, "moisture_percent": 27.0 }
+                ]
+            });
+            samples.push(
+                measure("sensor.record", scale, "unrestricted", || async {
+                    sensors
+                        .record(SensorReadingDraft {
+                            sensor_id: sensor_id.clone(),
+                            data: payload.clone(),
+                        })
+                        .await?;
+                    Ok(1)
+                })
                 .await?,
             );
         }

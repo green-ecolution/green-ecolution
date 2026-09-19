@@ -16,6 +16,15 @@ use crate::bench::scale::Scale;
 /// Seeded by migration; every tenant hangs below it.
 pub const ROOT_ORG_ID: &str = "01980000-0000-7000-8000-000000000001";
 
+/// The benchmark user whose access context is measured. Fixed so the harness
+/// can look it up without first querying for "some user".
+pub const BENCH_USER_ID: &str = "01990000-0000-7000-8000-0000000000be";
+
+/// Tenants the benchmark user holds roles in. A real user holds a handful of
+/// grants however large the installation gets, and `visible_orgs` walks the
+/// whole organization tree once per grant.
+const GRANTED_TENANTS: i64 = 8;
+
 /// Tenants directly under the root. A large installation is wide, not deep.
 const TENANT_COUNT: i32 = 200;
 
@@ -46,6 +55,7 @@ pub struct SeedCounts {
     pub sensors: i64,
     pub readings: i64,
     pub plans: i64,
+    pub grants: i64,
 }
 
 pub async fn seed_core(pool: &PgPool, plan: &SeedPlan) -> Result<SeedCounts, sqlx::Error> {
@@ -65,6 +75,7 @@ pub async fn seed_core(pool: &PgPool, plan: &SeedPlan) -> Result<SeedCounts, sql
     let sensors = seed_sensors(pool, plan.scale).await?;
     let readings = seed_readings(pool, plan.history_days).await?;
     let plans = seed_plans(pool, plan.scale).await?;
+    let grants = seed_user_and_roles(pool).await?;
 
     Ok(SeedCounts {
         organizations: count(pool, "organizations").await?,
@@ -73,7 +84,68 @@ pub async fn seed_core(pool: &PgPool, plan: &SeedPlan) -> Result<SeedCounts, sql
         sensors,
         readings,
         plans,
+        grants,
     })
+}
+
+/// Org-owned role copies plus one user holding them, so the per-request
+/// `AccessContext` can be measured at all. Creating an organization through
+/// the service instantiates these copies; the seeder writes SQL directly and
+/// therefore has to do it itself.
+async fn seed_user_and_roles(pool: &PgPool) -> Result<i64, sqlx::Error> {
+    sqlx::query(
+        r#"
+        INSERT INTO roles (id, organization_id, name, description, permissions, template_key)
+        SELECT bench_uuid_v7(), t.id, tpl.name, tpl.description, tpl.permissions, tpl.template_key
+        FROM (
+            SELECT id FROM organizations
+            WHERE parent_id IS NOT NULL
+            ORDER BY id
+            LIMIT $1
+        ) AS t
+        CROSS JOIN (SELECT * FROM roles WHERE organization_id IS NULL) AS tpl
+        ON CONFLICT (organization_id, name) DO NOTHING
+        "#,
+    )
+    .bind(GRANTED_TENANTS)
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        r#"
+        INSERT INTO user_profiles (id, organization_id)
+        SELECT $1::uuid, id
+        FROM organizations
+        WHERE parent_id IS NOT NULL
+        ORDER BY id
+        LIMIT 1
+        ON CONFLICT (id) DO NOTHING
+        "#,
+    )
+    .bind(BENCH_USER_ID)
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        r#"
+        INSERT INTO role_assignments (user_id, role_id)
+        SELECT $1::uuid, r.id
+        FROM roles r
+        WHERE r.organization_id IN (
+            SELECT id FROM organizations
+            WHERE parent_id IS NOT NULL
+            ORDER BY id
+            LIMIT $2
+        )
+        ON CONFLICT (user_id, role_id) DO NOTHING
+        "#,
+    )
+    .bind(BENCH_USER_ID)
+    .bind(GRANTED_TENANTS)
+    .execute(pool)
+    .await?;
+
+    count(pool, "role_assignments").await
 }
 
 /// Postgres 17 has no v7 generator, and `gen_random_uuid` yields v4. That is
@@ -518,7 +590,7 @@ async fn count(pool: &PgPool, table: &str) -> Result<i64, sqlx::Error> {
 /// previous table size, and the next measurement is an artefact of that.
 pub async fn analyze(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query(
-        "ANALYZE organizations, tree_clusters, trees, sensors, sensor_data, sensor_data_ability_values, vehicles, watering_plans",
+        "ANALYZE organizations, roles, role_assignments, user_profiles, tree_clusters, trees, sensors, sensor_data, sensor_data_ability_values, vehicles, watering_plans",
     )
         .execute(pool)
         .await?;

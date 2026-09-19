@@ -225,3 +225,50 @@ async fn seeded_rows_are_spread_rather_than_identical() {
         "expected trees to span kilometres, got {span:.0} m"
     );
 }
+
+#[tokio::test]
+async fn seeding_creates_a_user_with_role_grants() {
+    let app = spawn_app().await;
+
+    let counts = seed_core(&app.db_pool, &xs_plan())
+        .await
+        .expect("seeding must succeed");
+
+    // Without org-owned roles and a user holding them, AccessContext
+    // construction has nothing to resolve and the measurement is vacuous.
+    assert!(counts.grants > 0, "no role assignments were seeded");
+
+    let org_roles: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM roles WHERE organization_id IS NOT NULL")
+            .fetch_one(&app.db_pool)
+            .await
+            .expect("the role probe must run");
+    assert!(org_roles > 0, "no organization-owned roles were seeded");
+
+    let service = server::service::authorization::AuthorizationService::new(
+        std::sync::Arc::new(
+            server::infra::pg_organization::PgOrganizationRepository::new(app.db_pool.clone()),
+        ),
+        std::sync::Arc::new(server::infra::pg_role::PgRoleRepository::new(
+            app.db_pool.clone(),
+        )),
+        true,
+    );
+    let user_id: uuid::Uuid = server::bench::seed::BENCH_USER_ID
+        .parse()
+        .expect("the constant is a valid uuid");
+
+    let context = service
+        .context_for(user_id)
+        .await
+        .expect("the access context must resolve");
+
+    assert!(
+        !context.permissions.grants().is_empty(),
+        "the seeded user must actually hold grants"
+    );
+    assert!(
+        !context.permissions.is_unrestricted(),
+        "an unrestricted context would mean the enforcement bypass kicked in"
+    );
+}
