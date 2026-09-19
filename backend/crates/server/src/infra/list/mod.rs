@@ -6,6 +6,8 @@
 //! expression) is a `&'static str` written in this repository, never text
 //! that came from a request.
 
+pub mod order;
 pub mod predicate;
 
+pub use order::SortColumns;
 pub use predicate::{ArchiveFilter, Predicate};
