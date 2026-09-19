@@ -3,7 +3,7 @@ use async_trait::async_trait;
 use crate::{
     Id, RepositoryError,
     authorization::Visibility,
-    shared::pagination::{Page, Pagination},
+    shared::pagination::{Page, Pagination, SearchPage},
     vehicle::{NumberPlate, Vehicle, VehicleDraft, VehicleSearchQuery, VehicleType, VehicleView},
 };
 
@@ -21,7 +21,7 @@ pub trait VehicleReader: Send + Sync {
         &self,
         query: VehicleSearchQuery,
         pagination: Pagination,
-    ) -> Result<Page<VehicleView>, RepositoryError>;
+    ) -> Result<SearchPage<VehicleView>, RepositoryError>;
     async fn view_by_type(
         &self,
         vehicle_type: VehicleType,

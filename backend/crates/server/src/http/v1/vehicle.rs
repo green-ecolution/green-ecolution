@@ -64,8 +64,8 @@ pub async fn list_vehicles(
         visible,
         ..VehicleSearchQuery::default()
     };
-    let page = state.vehicle_service.search_view(query, pagination).await?;
-    let response = ListResponse::<VehicleResponse>::from_page(page, &pagination);
+    let result = state.vehicle_service.search_view(query, pagination).await?;
+    let response = ListResponse::<VehicleResponse>::from_page(result.page, &pagination);
     Ok(Json(response))
 }
 
@@ -234,8 +234,8 @@ pub async fn list_archived_vehicles(
         visible,
         ..Default::default()
     };
-    let page = state.vehicle_service.search_view(query, pagination).await?;
-    let response = ListResponse::<VehicleResponse>::from_page(page, &pagination);
+    let result = state.vehicle_service.search_view(query, pagination).await?;
+    let response = ListResponse::<VehicleResponse>::from_page(result.page, &pagination);
     Ok(Json(response))
 }
 
