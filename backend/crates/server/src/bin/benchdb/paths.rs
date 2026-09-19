@@ -69,6 +69,7 @@ pub const NAMES: &[&str] = &[
     "sensor.last_plausible_values",
     "sensor.quality_issues",
     "sensor.latest_volumetric_moisture",
+    "sensor.soil_moisture_series",
     "sensor.record",
     "evaluation.regions_with_watering_plan",
     "evaluation.vehicle_with_watering_plan",
@@ -627,6 +628,25 @@ pub async fn measure_all(
                     let issues = sensors.quality_issues(&sensor_id, 50).await?;
                     Ok(issues.len() as u64)
                 })
+                .await?,
+            );
+        }
+
+        if wanted("sensor.soil_moisture_series") {
+            let to = chrono::Utc::now();
+            let from = to - chrono::Duration::days(30);
+            samples.push(
+                measure(
+                    "sensor.soil_moisture_series",
+                    scale,
+                    "unrestricted",
+                    || async {
+                        let series = sensors
+                            .soil_moisture_series(&sensor_id, from, to, SoilMoistureBucket::Day)
+                            .await?;
+                        Ok(series.len() as u64)
+                    },
+                )
                 .await?,
             );
         }
