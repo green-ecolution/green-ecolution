@@ -166,3 +166,62 @@ async fn seeded_readings_are_readable_and_spread_over_time() {
         "GES-1000 reports moisture at 40 and 80 cm"
     );
 }
+
+#[tokio::test]
+async fn seeded_rows_are_spread_rather_than_identical() {
+    let app = spawn_app().await;
+
+    let counts = seed_core(&app.db_pool, &xs_plan())
+        .await
+        .expect("seeding must succeed");
+
+    // An uncorrelated scalar subquery is evaluated once for the whole
+    // statement, which silently gives every row the same value. That produces
+    // a database which seeds fast, reads fast and measures nothing: all points
+    // land on one spot, so no spatial index is exercised, and all rows belong
+    // to one organization, so no scope filter is either.
+    let distinct_coords: i64 =
+        sqlx::query_scalar("SELECT COUNT(DISTINCT (latitude, longitude)) FROM tree_clusters")
+            .fetch_one(&app.db_pool)
+            .await
+            .expect("the coordinate probe must run");
+    assert_eq!(
+        distinct_coords, counts.clusters,
+        "every cluster must sit somewhere of its own"
+    );
+
+    let distinct_cluster_orgs: i64 =
+        sqlx::query_scalar("SELECT COUNT(DISTINCT organization_id) FROM tree_clusters")
+            .fetch_one(&app.db_pool)
+            .await
+            .expect("the cluster org probe must run");
+    assert!(
+        distinct_cluster_orgs > 1,
+        "clusters must span several organizations, got {distinct_cluster_orgs}"
+    );
+
+    let distinct_tree_orgs: i64 =
+        sqlx::query_scalar("SELECT COUNT(DISTINCT organization_id) FROM trees")
+            .fetch_one(&app.db_pool)
+            .await
+            .expect("the tree org probe must run");
+    assert!(
+        distinct_tree_orgs > 1,
+        "trees must span several organizations, got {distinct_tree_orgs}"
+    );
+
+    // Roughly 11 km by 6 km of scatter; a degenerate seed collapses to metres.
+    let span: f64 = sqlx::query_scalar(
+        "SELECT ST_Distance(
+             ST_SetSRID(ST_MakePoint(MIN(longitude), MIN(latitude)), 4326)::geography,
+             ST_SetSRID(ST_MakePoint(MAX(longitude), MAX(latitude)), 4326)::geography
+         ) FROM trees",
+    )
+    .fetch_one(&app.db_pool)
+    .await
+    .expect("the span probe must run");
+    assert!(
+        span > 5_000.0,
+        "expected trees to span kilometres, got {span:.0} m"
+    );
+}

@@ -159,8 +159,25 @@ async fn seed_clusters(pool: &PgPool, scale: Scale) -> Result<i64, sqlx::Error> 
         return Ok(existing);
     }
 
+    // Every per-row value is computed inside a CTE over generate_series.
+    // A scalar subquery or an uncorrelated LATERAL would be evaluated once for
+    // the whole statement, giving every cluster the same coordinate and the
+    // same owner, which reads fast and measures nothing.
     sqlx::query(
         r#"
+        WITH tenants AS (
+            SELECT id,
+                   row_number() OVER (ORDER BY id) AS rn,
+                   count(*) OVER ()                AS total
+            FROM organizations
+            WHERE parent_id IS NOT NULL
+        ),
+        generated AS (
+            SELECT $2 + i               AS seq,
+                   54.75 + random() * 0.1 AS lat,
+                   9.40  + random() * 0.1 AS lng
+            FROM generate_series(1, $1) AS i
+        )
         INSERT INTO tree_clusters
             (id, region_id, name, address, description, moisture_level,
              soil_condition, watering_status, archived, latitude, longitude,
@@ -168,22 +185,19 @@ async fn seed_clusters(pool: &PgPool, scale: Scale) -> Result<i64, sqlx::Error> 
         SELECT
             bench_uuid_v7(),
             NULL,
-            'Bench-Cluster ' || ($2 + i),
-            'Benchweg ' || ($2 + i) || ', 24937 Flensburg',
+            'Bench-Cluster ' || g.seq,
+            'Benchweg ' || g.seq || ', 24937 Flensburg',
             'seeded',
             0.5,
             'Lu'::tree_soil_condition,
-            (ARRAY['good','moderate','bad','unknown'])[1 + (i % 4)]::watering_status,
+            (ARRAY['good','moderate','bad','unknown'])[1 + (g.seq % 4)]::watering_status,
             false,
-            lat.value,
-            lng.value,
-            ST_SetSRID(ST_MakePoint(lng.value, lat.value), 4326),
-            (SELECT id FROM organizations WHERE parent_id IS NOT NULL
-             OFFSET floor(random() * GREATEST((SELECT COUNT(*) FROM organizations WHERE parent_id IS NOT NULL), 1))
-             LIMIT 1)
-        FROM generate_series(1, $1) AS i
-        CROSS JOIN LATERAL (SELECT 54.75 + random() * 0.1 AS value) AS lat
-        CROSS JOIN LATERAL (SELECT 9.40 + random() * 0.1 AS value) AS lng
+            g.lat,
+            g.lng,
+            ST_SetSRID(ST_MakePoint(g.lng, g.lat), 4326),
+            t.id
+        FROM generated g
+        JOIN tenants t ON t.rn = 1 + (g.seq % t.total)
         "#,
     )
     .bind(missing)
@@ -261,14 +275,25 @@ async fn seed_sensors(pool: &PgPool, scale: Scale) -> Result<i64, sqlx::Error> {
 
     sqlx::query(
         r#"
+        WITH tenants AS (
+            SELECT id,
+                   row_number() OVER (ORDER BY id) AS rn,
+                   count(*) OVER ()                AS total
+            FROM organizations
+            WHERE parent_id IS NOT NULL
+        ),
+        generated AS (
+            SELECT $2 + i AS seq FROM generate_series(1, $1) AS i
+        )
         INSERT INTO sensors (id, model_id, type, activated_at, organization_id)
         SELECT
-            lpad(to_hex($2 + i), 16, '0'),
+            lpad(to_hex(g.seq), 16, '0'),
             (SELECT id FROM sensor_models WHERE name = $3),
             'lorawan'::sensor_type,
             now() - interval '1 year',
-            (SELECT organization_id FROM tree_clusters ORDER BY id LIMIT 1)
-        FROM generate_series(1, $1) AS i
+            t.id
+        FROM generated g
+        JOIN tenants t ON t.rn = 1 + (g.seq % t.total)
         ON CONFLICT (id) DO NOTHING
         "#,
     )
@@ -297,6 +322,20 @@ async fn seed_sensors(pool: &PgPool, scale: Scale) -> Result<i64, sqlx::Error> {
         FROM unlinked
         JOIN targets ON targets.rn = unlinked.rn
         WHERE t.id = targets.tree_id
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // A sensor belongs to whoever owns the tree it sits on; production keeps
+    // the two in step through the transfer flows.
+    sqlx::query(
+        r#"
+        UPDATE sensors s
+        SET organization_id = t.organization_id
+        FROM trees t
+        WHERE t.sensor_id = s.id
+          AND s.organization_id <> t.organization_id
         "#,
     )
     .execute(pool)
@@ -386,6 +425,13 @@ async fn seed_plans(pool: &PgPool, scale: Scale) -> Result<i64, sqlx::Error> {
 
     sqlx::query(
         r#"
+        WITH tenants AS (
+            SELECT id,
+                   row_number() OVER (ORDER BY id) AS rn,
+                   count(*) OVER ()                AS total
+            FROM organizations
+            WHERE parent_id IS NOT NULL
+        )
         INSERT INTO vehicles
             (id, number_plate, model, description, type, availability,
              driving_license, water_capacity, width, height, length, weight,
@@ -399,8 +445,9 @@ async fn seed_plans(pool: &PgPool, scale: Scale) -> Result<i64, sqlx::Error> {
             'available'::vehicle_availability,
             'B'::driving_license,
             2000, 2.2, 2.5, 6.0, 3500,
-            (SELECT organization_id FROM tree_clusters ORDER BY id LIMIT 1)
+            t.id
         FROM generate_series(1, 20) AS i
+        JOIN tenants t ON t.rn = 1 + (i % t.total)
         ON CONFLICT DO NOTHING
         "#,
     )
@@ -409,6 +456,13 @@ async fn seed_plans(pool: &PgPool, scale: Scale) -> Result<i64, sqlx::Error> {
 
     sqlx::query(
         r#"
+        WITH tenants AS (
+            SELECT id,
+                   row_number() OVER (ORDER BY id) AS rn,
+                   count(*) OVER ()                AS total
+            FROM organizations
+            WHERE parent_id IS NOT NULL
+        )
         INSERT INTO watering_plans
             (id, date, status, description, distance, total_water_required,
              duration, refill_count, organization_id)
@@ -421,8 +475,9 @@ async fn seed_plans(pool: &PgPool, scale: Scale) -> Result<i64, sqlx::Error> {
             600 + random() * 400,
             4 + random() * 4,
             1,
-            (SELECT organization_id FROM tree_clusters ORDER BY id LIMIT 1)
+            t.id
         FROM generate_series(1, $1) AS i
+        JOIN tenants t ON t.rn = 1 + (($2 + i) % t.total)
         "#,
     )
     .bind(missing)
