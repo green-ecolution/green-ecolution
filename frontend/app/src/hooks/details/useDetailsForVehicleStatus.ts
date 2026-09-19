@@ -5,13 +5,22 @@ import { EnumsTranslate, StatusColor } from './types'
 
 interface StatusStyle {
   color: StatusColor
+  colorHex: string
   bgcolor: string
 }
 
 const VehicleStatusStyles: Record<VehicleStatus, StatusStyle> = {
-  [VehicleStatus.NotAvailable]: { color: 'outline-red', bgcolor: 'none' },
-  [VehicleStatus.Available]: { color: 'outline-green-dark', bgcolor: 'none' },
-  [VehicleStatus.Active]: { color: 'outline-green-light', bgcolor: 'green-light-200' },
+  [VehicleStatus.NotAvailable]: { color: 'outline-red', colorHex: '#E44E4D', bgcolor: 'none' },
+  [VehicleStatus.Available]: {
+    color: 'outline-green-dark',
+    colorHex: '#4C7741',
+    bgcolor: 'none',
+  },
+  [VehicleStatus.Active]: {
+    color: 'outline-green-light',
+    colorHex: '#ACB63B',
+    bgcolor: 'green-light-200',
+  },
 }
 
 /** Only a human can assert these two; `active` is derived and never chosen. */
