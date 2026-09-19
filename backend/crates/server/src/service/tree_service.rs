@@ -10,9 +10,7 @@ use domain::{
     organization::Organization,
     sensor::{SensorId, SensorReader, SensorWriter},
     shared::{
-        coordinates::Coordinate,
-        distance::Distance,
-        pagination::Pagination,
+        coordinates::Coordinate, distance::Distance, pagination::Pagination,
         watering_status::WateringStatus,
     },
     tree::{

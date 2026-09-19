@@ -127,7 +127,11 @@ pub async fn list_trees(
 
     let sensor_map = resolve_sensors_by_str_ids(
         &state.sensor_service,
-        result.page.items.iter().filter_map(|t| t.sensor_id.as_deref()),
+        result
+            .page
+            .items
+            .iter()
+            .filter_map(|t| t.sensor_id.as_deref()),
     )
     .await?;
 
