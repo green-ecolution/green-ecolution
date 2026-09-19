@@ -36,6 +36,7 @@ pub struct ListSpec<'a> {
     scope: Vec<Predicate>,
     filters: Vec<Predicate>,
     sort: Option<(&'a str, bool, SortColumns)>,
+    tiebreak: Option<&'a str>,
     pagination: Pagination,
 }
 
@@ -52,6 +53,7 @@ impl<'a> ListSpec<'a> {
             scope: Vec::new(),
             filters: Vec::new(),
             sort: None,
+            tiebreak: None,
             pagination: Pagination::default(),
         }
     }
@@ -93,6 +95,18 @@ impl<'a> ListSpec<'a> {
 
     pub fn sort(mut self, key: &'a str, descending: bool, columns: SortColumns) -> Self {
         self.sort = Some((key, descending, columns));
+        self
+    }
+
+    /// Extra ordering appended after the sort column and before the primary
+    /// key, always ascending. Use it where a list has a natural secondary
+    /// order a reader expects among ties — a name, say — that is not the
+    /// primary key. Without it, ties on the sort column fall back straight to
+    /// the primary key's own order, which for a UUIDv7 key is creation order
+    /// — rarely what a reader expects among, say, several clusters tied at
+    /// the same moisture level.
+    pub fn tiebreak(mut self, expr: &'a str) -> Self {
+        self.tiebreak = Some(expr);
         self
     }
 
@@ -149,9 +163,20 @@ impl<'a> ListSpec<'a> {
             qb.push(" GROUP BY ").push(group_by);
         }
         if let Some((key, descending, columns)) = self.sort {
-            push_order_by(&mut qb, key, descending, columns, self.primary_key);
+            push_order_by(
+                &mut qb,
+                key,
+                descending,
+                columns,
+                self.tiebreak,
+                self.primary_key,
+            );
         } else {
-            qb.push(" ORDER BY ").push(self.primary_key).push(" ASC");
+            qb.push(" ORDER BY ");
+            if let Some(tiebreak) = self.tiebreak {
+                qb.push(tiebreak).push(" ASC, ");
+            }
+            qb.push(self.primary_key).push(" ASC");
         }
         qb.push(" LIMIT ")
             .push_bind(i64::try_from(self.pagination.limit()).unwrap_or(i64::MAX))
@@ -240,6 +265,32 @@ mod tests {
         assert!(sql.contains("ORDER BY v.model ASC NULLS LAST, v.id ASC"));
         assert!(sql.contains("LIMIT "));
         assert!(sql.contains("OFFSET "));
+    }
+
+    #[test]
+    fn a_tiebreak_lands_ascending_before_the_primary_key() {
+        let sql = spec().tiebreak("v.number_plate").page_sql("v.id, v.model");
+
+        assert!(sql.contains("ORDER BY v.model ASC NULLS LAST, v.number_plate ASC, v.id ASC"));
+    }
+
+    #[test]
+    fn without_a_tiebreak_the_order_by_is_unchanged() {
+        // Pins that adding the `tiebreak` field didn't alter any spec that
+        // never calls `.tiebreak(...)`.
+        let sql = spec().page_sql("v.id, v.model");
+
+        assert!(sql.contains("ORDER BY v.model ASC NULLS LAST, v.id ASC"));
+    }
+
+    #[test]
+    fn a_tiebreak_still_applies_when_no_sort_was_set() {
+        let sql = ListSpec::new("regions r", "r.id")
+            .tiebreak("r.name")
+            .page(Pagination::default())
+            .page_sql("r.id");
+
+        assert!(sql.ends_with("ORDER BY r.name ASC, r.id ASC LIMIT $1 OFFSET $2"));
     }
 
     #[test]

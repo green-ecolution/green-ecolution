@@ -263,6 +263,7 @@ impl TreeClusterReader for PgTreeClusterRepository {
                 query.sort.direction.is_descending(),
                 CLUSTER_SORT_COLUMNS,
             )
+            .tiebreak("tc.name")
             .page(pagination)
             .fetch::<TreeClusterViewRow>(&self.pool, CLUSTER_COLUMNS)
             .await?;

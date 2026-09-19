@@ -5,15 +5,22 @@ use sqlx::{Postgres, QueryBuilder};
 /// as tree numbers do: letter prefix first, digits numerically second.
 pub type SortColumns = &'static [(&'static str, &'static [&'static str])];
 
-/// Appends `ORDER BY` for `key`, always `NULLS LAST` and always followed by a
-/// tiebreaker on the primary key, so a row cannot shift between pages when two
-/// rows compare equal.
+/// Appends `ORDER BY` for `key`, always `NULLS LAST`, optionally followed by
+/// `tiebreak` (always ascending), and always followed by a final tiebreaker on
+/// the primary key, so a row cannot shift between pages when two rows compare
+/// equal.
+///
+/// `tiebreak` matters whenever the sort column itself has frequent ties (a
+/// default value, a count that is often zero): without it, ties fall back to
+/// the primary key's own order (UUIDv7 creation order here), not whatever
+/// secondary order a reader would expect.
 pub(crate) fn push_order_by(
     qb: &mut QueryBuilder<'_, Postgres>,
     key: &str,
     descending: bool,
     columns: SortColumns,
-    tiebreaker: &str,
+    tiebreak: Option<&str>,
+    primary_key: &str,
 ) {
     let exprs = match columns.iter().find(|(name, _)| *name == key) {
         Some((_, exprs)) => *exprs,
@@ -35,7 +42,10 @@ pub(crate) fn push_order_by(
             .push(if descending { " DESC" } else { " ASC" })
             .push(" NULLS LAST, ");
     }
-    qb.push(tiebreaker).push(" ASC");
+    if let Some(tiebreak) = tiebreak {
+        qb.push(tiebreak).push(" ASC, ");
+    }
+    qb.push(primary_key).push(" ASC");
 }
 
 #[cfg(test)]
@@ -56,7 +66,13 @@ mod tests {
 
     fn rendered(key: &str, descending: bool) -> String {
         let mut qb: QueryBuilder<'_, Postgres> = QueryBuilder::new("");
-        push_order_by(&mut qb, key, descending, COLUMNS, "t.id");
+        push_order_by(&mut qb, key, descending, COLUMNS, None, "t.id");
+        qb.into_sql()
+    }
+
+    fn rendered_with_tiebreak(key: &str, descending: bool, tiebreak: &str) -> String {
+        let mut qb: QueryBuilder<'_, Postgres> = QueryBuilder::new("");
+        push_order_by(&mut qb, key, descending, COLUMNS, Some(tiebreak), "t.id");
         qb.into_sql()
     }
 
@@ -88,6 +104,26 @@ mod tests {
         assert_eq!(
             rendered("does-not-exist", false),
             " ORDER BY tc.name ASC NULLS LAST, t.id ASC"
+        );
+    }
+
+    #[test]
+    fn a_tiebreak_is_inserted_ascending_between_the_sort_and_the_primary_key() {
+        assert_eq!(
+            rendered_with_tiebreak("name", true, "tc.moisture_level"),
+            " ORDER BY tc.name DESC NULLS LAST, tc.moisture_level ASC, t.id ASC"
+        );
+    }
+
+    #[test]
+    fn without_a_tiebreak_the_rendering_is_exactly_the_pre_tiebreak_form() {
+        // Pins that `None` is a true no-op: no stray separator, no extra
+        // clause — the two-argument callers (every spec without `.tiebreak`)
+        // keep rendering byte-for-byte what they did before this parameter
+        // existed.
+        assert_eq!(
+            rendered("name", true),
+            " ORDER BY tc.name DESC NULLS LAST, t.id ASC"
         );
     }
 }
