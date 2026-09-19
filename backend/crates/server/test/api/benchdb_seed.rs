@@ -272,3 +272,36 @@ async fn seeding_creates_a_user_with_role_grants() {
         "an unrestricted context would mean the enforcement bypass kicked in"
     );
 }
+
+#[tokio::test]
+async fn seeded_reference_data_makes_the_dashboard_paths_non_empty() {
+    let app = spawn_app().await;
+
+    seed_core(&app.db_pool, &xs_plan())
+        .await
+        .expect("seeding must succeed");
+
+    // A path that returns nothing looks fast and says nothing. Regions, the
+    // vehicle-to-plan link and a share of implausible readings are what keep
+    // the dashboard and quality paths from measuring an empty result.
+    for (label, sql) in [
+        (
+            "clusters assigned to a region",
+            "SELECT COUNT(*) FROM tree_clusters WHERE region_id IS NOT NULL",
+        ),
+        (
+            "vehicles linked to a plan",
+            "SELECT COUNT(*) FROM vehicle_watering_plans",
+        ),
+        (
+            "implausible ability values",
+            "SELECT COUNT(*) FROM sensor_data_ability_values WHERE NOT plausible",
+        ),
+    ] {
+        let count: i64 = sqlx::query_scalar(sql)
+            .fetch_one(&app.db_pool)
+            .await
+            .unwrap_or_else(|e| panic!("the probe for {label} must run: {e}"));
+        assert!(count > 0, "expected seeded {label}, got {count}");
+    }
+}

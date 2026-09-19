@@ -32,6 +32,10 @@ const TENANT_COUNT: i32 = 200;
 /// ancestry walk costs depth, not width, so the flat shape alone would hide it.
 const CHAIN_DEPTH: i32 = 8;
 
+/// Reference data, independent of the scale: clusters are spread across them
+/// so the evaluation dashboard has regions to group by.
+const REGION_COUNT: i32 = 20;
+
 pub struct SeedPlan {
     pub scale: Scale,
     pub history_days: i64,
@@ -70,6 +74,7 @@ pub async fn seed_core(pool: &PgPool, plan: &SeedPlan) -> Result<SeedCounts, sql
         .await?;
 
     seed_organizations(pool).await?;
+    seed_regions(pool).await?;
     let clusters = seed_clusters(pool, plan.scale).await?;
     let trees = seed_trees(pool, plan.scale).await?;
     let sensors = seed_sensors(pool, plan.scale).await?;
@@ -224,6 +229,24 @@ async fn seed_organizations(pool: &PgPool) -> Result<(), sqlx::Error> {
     Ok(())
 }
 
+/// Regions are reference data, not part of the scale. Without them
+/// `regions_with_watering_plan` joins against an empty table and measures a
+/// query that returns nothing, which looks fast and says nothing.
+async fn seed_regions(pool: &PgPool) -> Result<(), sqlx::Error> {
+    sqlx::query(
+        r#"
+        INSERT INTO regions (id, name)
+        SELECT bench_uuid_v7(), 'Bench-Region ' || i
+        FROM generate_series(1, $1) AS i
+        WHERE NOT EXISTS (SELECT 1 FROM regions WHERE name = 'Bench-Region ' || i)
+        "#,
+    )
+    .bind(REGION_COUNT)
+    .execute(pool)
+    .await?;
+    Ok(())
+}
+
 async fn seed_clusters(pool: &PgPool, scale: Scale) -> Result<i64, sqlx::Error> {
     let existing = count(pool, "tree_clusters").await?;
     let missing = scale.clusters() - existing;
@@ -244,6 +267,12 @@ async fn seed_clusters(pool: &PgPool, scale: Scale) -> Result<i64, sqlx::Error> 
             FROM organizations
             WHERE parent_id IS NOT NULL
         ),
+        regions_ranked AS (
+            SELECT id,
+                   row_number() OVER (ORDER BY id) AS rn,
+                   count(*) OVER ()                AS total
+            FROM regions
+        ),
         generated AS (
             SELECT $2 + i               AS seq,
                    54.75 + random() * 0.1 AS lat,
@@ -256,7 +285,7 @@ async fn seed_clusters(pool: &PgPool, scale: Scale) -> Result<i64, sqlx::Error> 
              geometry, organization_id)
         SELECT
             bench_uuid_v7(),
-            NULL,
+            r.id,
             'Bench-Cluster ' || g.seq,
             'Benchweg ' || g.seq || ', 24937 Flensburg',
             'seeded',
@@ -270,6 +299,7 @@ async fn seed_clusters(pool: &PgPool, scale: Scale) -> Result<i64, sqlx::Error> 
             t.id
         FROM generated g
         JOIN tenants t ON t.rn = 1 + (g.seq % t.total)
+        JOIN regions_ranked r ON r.rn = 1 + (g.seq % r.total)
         "#,
     )
     .bind(missing)
@@ -485,6 +515,32 @@ async fn seed_readings(pool: &PgPool, history_days: i64) -> Result<i64, sqlx::Er
     .execute(pool)
     .await?;
 
+    // Some unusable uplinks, because a database where everything is plausible
+    // lets `quality_issues` return early and measure nothing. Every fifth
+    // historical reading is more than a healthy fleet produces; it is picked
+    // so the path has something to find even at the smallest scale. The newest
+    // reading per sensor is deliberately excluded, since
+    // `latest_volumetric_moisture` reads exactly that one and filters on
+    // `plausible`.
+    sqlx::query(
+        r#"
+        WITH ranked AS (
+            SELECT id, row_number() OVER (PARTITION BY sensor_id ORDER BY id DESC) AS rn
+            FROM sensor_data
+        )
+        UPDATE sensor_data_ability_values dav
+        SET plausible = false,
+            quality_reason = 'out_of_range'
+        FROM ranked
+        WHERE dav.sensor_data_id = ranked.id
+          AND ranked.rn > 1
+          AND ranked.rn % 5 = 0
+          AND dav.plausible
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
     count(pool, "sensor_data").await
 }
 
@@ -569,6 +625,34 @@ async fn seed_plans(pool: &PgPool, scale: Scale) -> Result<i64, sqlx::Error> {
             SELECT 1 FROM tree_cluster_watering_plans existing
             WHERE existing.watering_plan_id = p.id
         )
+        ON CONFLICT DO NOTHING
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // Without this link `vehicle_with_watering_plan` joins against an empty
+    // table and reports a query that returns nothing.
+    sqlx::query(
+        r#"
+        WITH vehicles_ranked AS (
+            SELECT id,
+                   row_number() OVER (ORDER BY id) AS rn,
+                   count(*) OVER ()                AS total
+            FROM vehicles
+        ),
+        plans_ranked AS (
+            SELECT id, row_number() OVER (ORDER BY id) AS rn
+            FROM watering_plans p
+            WHERE NOT EXISTS (
+                SELECT 1 FROM vehicle_watering_plans existing
+                WHERE existing.watering_plan_id = p.id
+            )
+        )
+        INSERT INTO vehicle_watering_plans (vehicle_id, watering_plan_id, role)
+        SELECT v.id, p.id, 'transporter'::vehicle_type
+        FROM plans_ranked p
+        JOIN vehicles_ranked v ON v.rn = 1 + (p.rn % v.total)
         ON CONFLICT DO NOTHING
         "#,
     )
