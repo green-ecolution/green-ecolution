@@ -713,6 +713,38 @@ async fn list_trees_filters_by_planting_year() {
     assert_eq!(body["pagination"]["total_records"], 1);
 }
 
+#[tokio::test]
+async fn list_trees_reports_the_total_before_the_request_filters() {
+    let app = spawn_app().await;
+    create_tree_with(&app, "T-001", 2018, None).await;
+    create_tree_with(&app, "T-002", 2020, None).await;
+    create_tree_with(&app, "T-003", 2020, None).await;
+
+    let response = app.get("/api/v1/trees?planting_year=2018").await;
+
+    assert_eq!(response.status().as_u16(), 200);
+    let body: serde_json::Value = response.json().await.unwrap();
+    assert_eq!(body["pagination"]["total_records"], 1);
+    assert_eq!(body["pagination"]["total_unfiltered"], 3);
+}
+
+#[tokio::test]
+async fn list_trees_total_unfiltered_ignores_paging_but_not_the_result() {
+    let app = spawn_app().await;
+    for n in 1..=5 {
+        create_tree_with(&app, &format!("T-00{n}"), 2020, None).await;
+    }
+
+    let response = app.get("/api/v1/trees?per_page=2&page=2").await;
+
+    assert_eq!(response.status().as_u16(), 200);
+    let body: serde_json::Value = response.json().await.unwrap();
+    // No narrowing filter, so both totals describe the same set; paging must
+    // not shrink either of them.
+    assert_eq!(body["pagination"]["total_records"], 5);
+    assert_eq!(body["pagination"]["total_unfiltered"], 5);
+}
+
 // Rows predating the lower bound exist (imports, the old unbounded API), and the
 // year slider offers them. Filtering is a lookup and must not validate like a write.
 #[tokio::test]
@@ -1059,4 +1091,633 @@ async fn moving_a_tree_into_the_future_while_dropping_its_sensor_succeeds() {
     assert_eq!(response.status().as_u16(), 200);
     let body: serde_json::Value = response.json().await.unwrap();
     assert!(body["sensor_id"].is_null());
+}
+
+#[tokio::test]
+async fn list_trees_includes_cluster_name() {
+    let app = spawn_app().await;
+
+    let cluster = app
+        .post_json(
+            "/api/v1/clusters",
+            &serde_json::json!({
+                "name": "Solitüde Strand",
+                "address": "Strandweg 1",
+                "description": "Testgruppe",
+                "soil_condition": "Su3",
+                "tree_ids": []
+            }),
+        )
+        .await
+        .json::<serde_json::Value>()
+        .await
+        .unwrap();
+    let cluster_id = cluster["id"].as_str().unwrap().to_string();
+
+    app.post_json(
+        "/api/v1/trees",
+        &serde_json::json!({
+            "species": "Eiche",
+            "number": "T-100",
+            "planting_year": 2020,
+            "latitude": 53.55,
+            "longitude": 9.99,
+            "description": "",
+            "tree_cluster_id": cluster_id
+        }),
+    )
+    .await;
+
+    app.post_json(
+        "/api/v1/trees",
+        &serde_json::json!({
+            "species": "Buche",
+            "number": "T-200",
+            "planting_year": 2021,
+            "latitude": 53.56,
+            "longitude": 9.98,
+            "description": ""
+        }),
+    )
+    .await;
+
+    let body: serde_json::Value = app.get("/api/v1/trees").await.json().await.unwrap();
+    let rows = body["data"].as_array().unwrap();
+
+    let with_cluster = rows
+        .iter()
+        .find(|t| t["number"] == "T-100")
+        .expect("tree with cluster is listed");
+    assert_eq!(with_cluster["tree_cluster_name"], "Solitüde Strand");
+
+    let without_cluster = rows
+        .iter()
+        .find(|t| t["number"] == "T-200")
+        .expect("tree without cluster is listed");
+    assert!(without_cluster.get("tree_cluster_name").is_none());
+}
+
+#[tokio::test]
+async fn list_trees_filters_by_has_sensor() {
+    let app = spawn_app().await;
+    insert_sensor(&app, "eui-has-sensor-filter-1").await;
+    insert_tree_with_sensor(&app, "T-300", "eui-has-sensor-filter-1").await;
+    create_tree_with(&app, "T-301", 2020, None).await;
+
+    let response = app.get("/api/v1/trees?has_sensor=true").await;
+    let body: serde_json::Value = response.json().await.unwrap();
+    let data = body["data"].as_array().unwrap();
+    assert_eq!(data.len(), 1);
+    assert_eq!(data[0]["number"], "T-300");
+    assert_eq!(body["pagination"]["total_records"], 1);
+
+    let response = app.get("/api/v1/trees?has_sensor=false").await;
+    let body: serde_json::Value = response.json().await.unwrap();
+    let data = body["data"].as_array().unwrap();
+    assert_eq!(data.len(), 1);
+    assert_eq!(data[0]["number"], "T-301");
+    assert_eq!(body["pagination"]["total_records"], 1);
+
+    let response = app.get("/api/v1/trees").await;
+    let body: serde_json::Value = response.json().await.unwrap();
+    assert_eq!(body["data"].as_array().unwrap().len(), 2);
+}
+
+#[tokio::test]
+async fn list_trees_filters_by_cluster_id() {
+    let app = spawn_app().await;
+
+    let cluster = app
+        .post_json(
+            "/api/v1/clusters",
+            &serde_json::json!({
+                "name": "Campusallee",
+                "address": "Campusweg 1",
+                "description": "Testgruppe",
+                "soil_condition": "Su3",
+                "tree_ids": []
+            }),
+        )
+        .await
+        .json::<serde_json::Value>()
+        .await
+        .unwrap();
+    let cluster_id = cluster["id"].as_str().unwrap().to_string();
+
+    let other_cluster = app
+        .post_json(
+            "/api/v1/clusters",
+            &serde_json::json!({
+                "name": "Nordstrand",
+                "address": "Nordstrandweg 1",
+                "description": "Zweite Testgruppe",
+                "soil_condition": "Su3",
+                "tree_ids": []
+            }),
+        )
+        .await
+        .json::<serde_json::Value>()
+        .await
+        .unwrap();
+    let other_cluster_id = other_cluster["id"].as_str().unwrap().to_string();
+
+    app.post_json(
+        "/api/v1/trees",
+        &serde_json::json!({
+            "species": "Eiche",
+            "number": "T-400",
+            "planting_year": 2020,
+            "latitude": 53.55,
+            "longitude": 9.99,
+            "description": "",
+            "tree_cluster_id": cluster_id
+        }),
+    )
+    .await;
+
+    app.post_json(
+        "/api/v1/trees",
+        &serde_json::json!({
+            "species": "Ulme",
+            "number": "T-450",
+            "planting_year": 2022,
+            "latitude": 53.57,
+            "longitude": 9.97,
+            "description": "",
+            "tree_cluster_id": other_cluster_id
+        }),
+    )
+    .await;
+
+    app.post_json(
+        "/api/v1/trees",
+        &serde_json::json!({
+            "species": "Buche",
+            "number": "T-500",
+            "planting_year": 2021,
+            "latitude": 53.56,
+            "longitude": 9.98,
+            "description": ""
+        }),
+    )
+    .await;
+
+    let body: serde_json::Value = app
+        .get(&format!("/api/v1/trees?cluster_id={cluster_id}"))
+        .await
+        .json()
+        .await
+        .unwrap();
+
+    let rows = body["data"].as_array().unwrap();
+    assert_eq!(rows.len(), 1);
+    assert_eq!(rows[0]["number"], "T-400");
+    assert_eq!(body["pagination"]["total_records"], 1);
+
+    // The frontend sends several cluster_id values at once (one dropdown can
+    // select multiple groups), so the filter has to be repeatable, not just
+    // single-valued.
+    let body: serde_json::Value = app
+        .get(&format!(
+            "/api/v1/trees?cluster_id={cluster_id}&cluster_id={other_cluster_id}"
+        ))
+        .await
+        .json()
+        .await
+        .unwrap();
+
+    let rows = body["data"].as_array().unwrap();
+    let numbers: Vec<&str> = rows.iter().map(|t| t["number"].as_str().unwrap()).collect();
+    assert_eq!(numbers.len(), 2);
+    assert!(numbers.contains(&"T-400"));
+    assert!(numbers.contains(&"T-450"));
+    assert_eq!(body["pagination"]["total_records"], 2);
+}
+
+async fn seed_sortable_trees(app: &TestApp) {
+    for (number, species, year) in [
+        ("T-001", "Betula pendula", 2020),
+        ("T-002", "Acer platanoides", 2019),
+        ("T-003", "Carpinus betulus", 2021),
+    ] {
+        app.post_json(
+            "/api/v1/trees",
+            &serde_json::json!({
+                "species": species,
+                "number": number,
+                "planting_year": year,
+                "latitude": 53.55,
+                "longitude": 9.99,
+                "description": ""
+            }),
+        )
+        .await;
+    }
+}
+
+fn numbers(body: &serde_json::Value) -> Vec<String> {
+    body["data"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|t| t["number"].as_str().unwrap().to_string())
+        .collect()
+}
+
+#[tokio::test]
+async fn list_trees_sorts_by_number_ascending_by_default() {
+    let app = spawn_app().await;
+    seed_sortable_trees(&app).await;
+
+    let body: serde_json::Value = app.get("/api/v1/trees").await.json().await.unwrap();
+
+    assert_eq!(numbers(&body), vec!["T-001", "T-002", "T-003"]);
+}
+
+#[tokio::test]
+async fn list_trees_sorts_by_species_descending() {
+    let app = spawn_app().await;
+    seed_sortable_trees(&app).await;
+
+    let body: serde_json::Value = app
+        .get("/api/v1/trees?sort=species&order=desc")
+        .await
+        .json()
+        .await
+        .unwrap();
+
+    assert_eq!(numbers(&body), vec!["T-003", "T-001", "T-002"]);
+}
+
+#[tokio::test]
+async fn list_trees_sorts_by_planting_year_ascending() {
+    let app = spawn_app().await;
+    seed_sortable_trees(&app).await;
+
+    let body: serde_json::Value = app
+        .get("/api/v1/trees?sort=planting_year&order=asc")
+        .await
+        .json()
+        .await
+        .unwrap();
+
+    assert_eq!(numbers(&body), vec!["T-002", "T-001", "T-003"]);
+}
+
+#[tokio::test]
+async fn list_trees_sorts_by_status_with_critical_first() {
+    let app = spawn_app().await;
+
+    for (number, status) in [("T-010", "good"), ("T-011", "bad"), ("T-012", "moderate")] {
+        let created: serde_json::Value = app
+            .post_json(
+                "/api/v1/trees",
+                &serde_json::json!({
+                    "species": "Eiche",
+                    "number": number,
+                    "planting_year": 2020,
+                    "latitude": 53.55,
+                    "longitude": 9.99,
+                    "description": ""
+                }),
+            )
+            .await
+            .json()
+            .await
+            .unwrap();
+        app.set_watering_status(created["id"].as_str().unwrap(), status)
+            .await;
+    }
+
+    let body: serde_json::Value = app
+        .get("/api/v1/trees?sort=status&order=asc")
+        .await
+        .json()
+        .await
+        .unwrap();
+
+    assert_eq!(numbers(&body), vec!["T-011", "T-012", "T-010"]);
+}
+
+#[tokio::test]
+async fn list_trees_sorts_by_cluster_name_with_unassigned_last() {
+    let app = spawn_app().await;
+
+    let bahnhofsviertel = app
+        .post_json(
+            "/api/v1/clusters",
+            &serde_json::json!({
+                "name": "Bahnhofsviertel",
+                "address": "Bahnhofstraße 1",
+                "description": "Testgruppe",
+                "soil_condition": "Su3",
+                "tree_ids": []
+            }),
+        )
+        .await
+        .json::<serde_json::Value>()
+        .await
+        .unwrap();
+    let bahnhofsviertel_id = bahnhofsviertel["id"].as_str().unwrap().to_string();
+
+    let alsterufer = app
+        .post_json(
+            "/api/v1/clusters",
+            &serde_json::json!({
+                "name": "Alsterufer",
+                "address": "Alsterweg 1",
+                "description": "Testgruppe",
+                "soil_condition": "Su3",
+                "tree_ids": []
+            }),
+        )
+        .await
+        .json::<serde_json::Value>()
+        .await
+        .unwrap();
+    let alsterufer_id = alsterufer["id"].as_str().unwrap().to_string();
+
+    app.post_json(
+        "/api/v1/trees",
+        &serde_json::json!({
+            "species": "Eiche",
+            "number": "T-020",
+            "planting_year": 2020,
+            "latitude": 53.55,
+            "longitude": 9.99,
+            "description": ""
+        }),
+    )
+    .await;
+    app.post_json(
+        "/api/v1/trees",
+        &serde_json::json!({
+            "species": "Buche",
+            "number": "T-021",
+            "planting_year": 2020,
+            "latitude": 53.56,
+            "longitude": 9.98,
+            "description": "",
+            "tree_cluster_id": bahnhofsviertel_id
+        }),
+    )
+    .await;
+    app.post_json(
+        "/api/v1/trees",
+        &serde_json::json!({
+            "species": "Linde",
+            "number": "T-022",
+            "planting_year": 2020,
+            "latitude": 53.57,
+            "longitude": 9.97,
+            "description": "",
+            "tree_cluster_id": alsterufer_id
+        }),
+    )
+    .await;
+
+    let asc: serde_json::Value = app
+        .get("/api/v1/trees?sort=cluster&order=asc")
+        .await
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(numbers(&asc), vec!["T-022", "T-021", "T-020"]);
+
+    let desc: serde_json::Value = app
+        .get("/api/v1/trees?sort=cluster&order=desc")
+        .await
+        .json()
+        .await
+        .unwrap();
+    // NULLS LAST holds in both directions, so the tree without a cluster stays
+    // at the end rather than jumping to the front.
+    assert_eq!(numbers(&desc), vec!["T-021", "T-022", "T-020"]);
+}
+
+#[tokio::test]
+async fn list_trees_sorts_by_last_watered_in_both_directions() {
+    let app = spawn_app().await;
+
+    for (number, watered) in [
+        ("T-030", Some("2026-02-15T08:00:00Z")),
+        ("T-031", Some("2026-01-10T08:00:00Z")),
+        ("T-032", Some("2026-03-20T08:00:00Z")),
+        ("T-033", None),
+    ] {
+        let created: serde_json::Value = app
+            .post_json(
+                "/api/v1/trees",
+                &serde_json::json!({
+                    "species": "Eiche",
+                    "number": number,
+                    "planting_year": 2020,
+                    "latitude": 53.55,
+                    "longitude": 9.99,
+                    "description": ""
+                }),
+            )
+            .await
+            .json()
+            .await
+            .unwrap();
+        if let Some(watered_at) = watered {
+            app.set_last_watered(created["id"].as_str().unwrap(), watered_at)
+                .await;
+        }
+    }
+
+    let asc: serde_json::Value = app
+        .get("/api/v1/trees?sort=last_watered&order=asc")
+        .await
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(numbers(&asc), vec!["T-031", "T-030", "T-032", "T-033"]);
+
+    let desc: serde_json::Value = app
+        .get("/api/v1/trees?sort=last_watered&order=desc")
+        .await
+        .json()
+        .await
+        .unwrap();
+    // T-033 (never watered) stays last in both directions: NULLS LAST.
+    assert_eq!(numbers(&desc), vec!["T-032", "T-030", "T-031", "T-033"]);
+}
+
+#[tokio::test]
+async fn list_trees_sorts_by_number_descending() {
+    let app = spawn_app().await;
+    seed_sortable_trees(&app).await;
+
+    let body: serde_json::Value = app
+        .get("/api/v1/trees?sort=number&order=desc")
+        .await
+        .json()
+        .await
+        .unwrap();
+
+    assert_eq!(numbers(&body), vec!["T-003", "T-002", "T-001"]);
+}
+
+// Kataster numbers are text and mix plain digits with letter-prefixed series
+// (A1001, B2012). A text sort would read "1005" before "9"; the user expects
+// the digits compared as numbers, with each letter series kept together.
+#[tokio::test]
+async fn list_trees_sort_by_number_is_natural_across_letter_prefixes() {
+    let app = spawn_app().await;
+    for number in ["A1001", "9", "B2012", "1005", "A9", "99"] {
+        create_tree_with(&app, number, 2020, None).await;
+    }
+
+    let asc: serde_json::Value = app
+        .get("/api/v1/trees?sort=number&order=asc")
+        .await
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(
+        numbers(&asc),
+        vec!["9", "99", "1005", "A9", "A1001", "B2012"]
+    );
+
+    let desc: serde_json::Value = app
+        .get("/api/v1/trees?sort=number&order=desc")
+        .await
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(
+        numbers(&desc),
+        vec!["B2012", "A1001", "A9", "1005", "99", "9"]
+    );
+}
+
+#[tokio::test]
+async fn list_trees_sorts_by_status_descending() {
+    let app = spawn_app().await;
+
+    for (number, status) in [("T-040", "good"), ("T-041", "bad"), ("T-042", "moderate")] {
+        let created: serde_json::Value = app
+            .post_json(
+                "/api/v1/trees",
+                &serde_json::json!({
+                    "species": "Eiche",
+                    "number": number,
+                    "planting_year": 2020,
+                    "latitude": 53.55,
+                    "longitude": 9.99,
+                    "description": ""
+                }),
+            )
+            .await
+            .json()
+            .await
+            .unwrap();
+        app.set_watering_status(created["id"].as_str().unwrap(), status)
+            .await;
+    }
+
+    let body: serde_json::Value = app
+        .get("/api/v1/trees?sort=status&order=desc")
+        .await
+        .json()
+        .await
+        .unwrap();
+
+    assert_eq!(numbers(&body), vec!["T-040", "T-042", "T-041"]);
+}
+
+#[tokio::test]
+async fn list_trees_sorts_by_planting_year_descending() {
+    let app = spawn_app().await;
+    seed_sortable_trees(&app).await;
+
+    let body: serde_json::Value = app
+        .get("/api/v1/trees?sort=planting_year&order=desc")
+        .await
+        .json()
+        .await
+        .unwrap();
+
+    assert_eq!(numbers(&body), vec!["T-003", "T-001", "T-002"]);
+}
+
+#[tokio::test]
+async fn list_trees_sorts_by_species_ascending() {
+    let app = spawn_app().await;
+    seed_sortable_trees(&app).await;
+
+    let body: serde_json::Value = app
+        .get("/api/v1/trees?sort=species&order=asc")
+        .await
+        .json()
+        .await
+        .unwrap();
+
+    assert_eq!(numbers(&body), vec!["T-002", "T-001", "T-003"]);
+}
+
+#[tokio::test]
+async fn list_trees_keeps_a_stable_order_across_pages() {
+    let app = spawn_app().await;
+
+    for index in 0..6 {
+        app.post_json(
+            "/api/v1/trees",
+            &serde_json::json!({
+                "species": "Quercus robur",
+                "number": format!("T-{index:03}"),
+                "planting_year": 2020,
+                "latitude": 53.55,
+                "longitude": 9.99,
+                "description": ""
+            }),
+        )
+        .await;
+    }
+
+    let first: serde_json::Value = app
+        .get("/api/v1/trees?sort=species&order=asc&page=1&per_page=3")
+        .await
+        .json()
+        .await
+        .unwrap();
+    let second: serde_json::Value = app
+        .get("/api/v1/trees?sort=species&order=asc&page=2&per_page=3")
+        .await
+        .json()
+        .await
+        .unwrap();
+
+    let mut seen = numbers(&first);
+    seen.extend(numbers(&second));
+    seen.sort();
+    seen.dedup();
+
+    assert_eq!(
+        seen.len(),
+        6,
+        "every tree appears exactly once across both pages"
+    );
+}
+
+#[tokio::test]
+async fn list_trees_rejects_an_unknown_sort_field() {
+    let app = spawn_app().await;
+
+    let response = app.get("/api/v1/trees?sort=height").await;
+
+    assert_eq!(response.status().as_u16(), 400);
+    let body: serde_json::Value = response.json().await.unwrap();
+    assert!(body["error"].is_string());
+}
+
+#[tokio::test]
+async fn list_trees_rejects_an_unknown_sort_order() {
+    let app = spawn_app().await;
+
+    let response = app.get("/api/v1/trees?order=sideways").await;
+
+    assert_eq!(response.status().as_u16(), 400);
 }

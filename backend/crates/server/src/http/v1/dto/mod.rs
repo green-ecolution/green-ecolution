@@ -61,6 +61,12 @@ impl<T: Serialize + utoipa::ToSchema> ListResponse<T> {
         }
     }
 
+    /// Adds the pre-filter total to the pagination block.
+    pub fn with_total_unfiltered(mut self, total_unfiltered: u64) -> Self {
+        self.pagination = self.pagination.with_total_unfiltered(total_unfiltered);
+        self
+    }
+
     /// Like [`Self::from_page_with`], but drops items the mapping declines.
     /// Use this when a data inconsistency in a single item (logged by the
     /// caller) must not take down the whole list response. `total` still

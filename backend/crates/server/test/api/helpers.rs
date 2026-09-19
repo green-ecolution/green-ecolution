@@ -211,6 +211,25 @@ impl TestApp {
             })
             .await
     }
+
+    // Raw sqlx::query so this fixture doesn't need an offline-cache entry.
+    pub async fn set_watering_status(&self, tree_id: &str, status: &str) {
+        sqlx::query("UPDATE trees SET watering_status = $2::watering_status WHERE id = $1::uuid")
+            .bind(tree_id)
+            .bind(status)
+            .execute(&self.db_pool)
+            .await
+            .expect("test fixture updates watering status");
+    }
+
+    pub async fn set_last_watered(&self, tree_id: &str, watered_at: &str) {
+        sqlx::query("UPDATE trees SET last_watered = $2::timestamptz WHERE id = $1::uuid")
+            .bind(tree_id)
+            .bind(watered_at)
+            .execute(&self.db_pool)
+            .await
+            .expect("test fixture updates last_watered");
+    }
 }
 
 struct SharedContainer {

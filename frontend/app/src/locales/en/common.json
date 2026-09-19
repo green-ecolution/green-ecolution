@@ -58,6 +58,16 @@
       "removeAriaLabel": "Remove {label}"
     }
   },
+  "list": {
+    "clearSearch": "Clear search",
+    "resetFilters": "Reset all filters",
+    "sortLabel": "Sort",
+    "sortAscending": "Ascending",
+    "sortDescending": "Descending",
+    "filterOptionSelected": "Selected",
+    "filterOptionNotSelected": "Not selected",
+    "filterSearch": "Search option"
+  },
   "form": {
     "error": {
       "fallback": "Unfortunately a problem occurred. Please try again or contact a system administrator."

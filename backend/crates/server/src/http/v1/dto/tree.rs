@@ -8,8 +8,9 @@ use domain::{
         coordinates::Coordinate,
         geo::BoundingBox,
         provenance::{Provenance, ProviderId},
+        sort::SortDirection,
     },
-    tree::{PlantingYear, Species, TreeDraft, TreeMarker, TreeNumber, TreeView},
+    tree::{PlantingYear, Species, TreeDraft, TreeMarker, TreeNumber, TreeSortField, TreeView},
 };
 
 use crate::service::ServiceError;
@@ -41,6 +42,9 @@ pub struct TreeResponse {
     #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000", nullable)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tree_cluster_id: Option<uuid::Uuid>,
+    #[schema(example = "Solitüde Strand", nullable)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tree_cluster_name: Option<String>,
     #[schema(nullable)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub sensor: Option<SensorResponse>,
@@ -71,6 +75,7 @@ impl From<(&TreeView, Option<&SensorView>)> for TreeResponse {
             watering_status: tree.watering_status.into(),
             description: tree.description.clone().unwrap_or_default(),
             tree_cluster_id: tree.cluster_id,
+            tree_cluster_name: tree.cluster_name.clone(),
             sensor: sensor.map(SensorResponse::from),
             last_watered: tree.last_watered.map(|dt| dt.to_rfc3339()),
             provider: tree.provider.clone(),
@@ -96,6 +101,47 @@ pub struct TreeWithDistanceResponse {
     pub distance_meters: f64,
 }
 
+/// Sortable columns of the tree list.
+#[derive(Debug, Clone, Copy, Deserialize, utoipa::ToSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum TreeSortParam {
+    Number,
+    Species,
+    Status,
+    PlantingYear,
+    LastWatered,
+    Cluster,
+}
+
+impl From<TreeSortParam> for TreeSortField {
+    fn from(value: TreeSortParam) -> Self {
+        match value {
+            TreeSortParam::Number => Self::Number,
+            TreeSortParam::Species => Self::Species,
+            TreeSortParam::Status => Self::Status,
+            TreeSortParam::PlantingYear => Self::PlantingYear,
+            TreeSortParam::LastWatered => Self::LastWatered,
+            TreeSortParam::Cluster => Self::Cluster,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, utoipa::ToSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum SortOrderParam {
+    Asc,
+    Desc,
+}
+
+impl From<SortOrderParam> for SortDirection {
+    fn from(value: SortOrderParam) -> Self {
+        match value {
+            SortOrderParam::Asc => Self::Ascending,
+            SortOrderParam::Desc => Self::Descending,
+        }
+    }
+}
+
 /// Query parameters for the paginated tree list endpoint.
 #[derive(Debug, serde::Deserialize, utoipa::IntoParams)]
 pub struct TreeListParams {
@@ -113,6 +159,16 @@ pub struct TreeListParams {
     #[param(nullable)]
     #[serde(default)]
     pub has_cluster: Option<bool>,
+    /// Repeatable: `?cluster_id=<uuid>&cluster_id=<uuid>`.
+    #[serde(default)]
+    pub cluster_id: Vec<uuid::Uuid>,
+    #[param(nullable)]
+    #[serde(default)]
+    pub has_sensor: Option<bool>,
+    #[param(nullable, inline)]
+    pub sort: Option<TreeSortParam>,
+    #[param(nullable, inline)]
+    pub order: Option<SortOrderParam>,
     /// Repeatable: `?planting_year=2018&planting_year=2020`.
     #[serde(default)]
     pub planting_year: Vec<i32>,

@@ -136,11 +136,6 @@
     "siltAxisLabel": "Silt [%]",
     "clayAxisLabel": "Clay [%]"
   },
-  "clusterFieldset": {
-    "legend": "Watering group membership:",
-    "hasCluster": "Belongs to a group",
-    "noCluster": "Does not belong to a group"
-  },
   "regionFieldset": {
     "legend": "District in Flensburg:",
     "placeholder": "All districts",

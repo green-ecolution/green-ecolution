@@ -4716,7 +4716,7 @@
           "Trees"
         ],
         "summary": "List all trees",
-        "description": "Returns a paginated list of all trees with their associated sensor data. Optional `q` parameter case-insensitively filters by tree number or species. Optional filter parameters (watering_status, has_cluster, planting_year) narrow the result; array parameters are repeatable.",
+        "description": "Returns a paginated list of all trees with their associated sensor data. Optional `q` parameter case-insensitively filters by tree number or species. Optional filter parameters (watering_status, has_cluster, has_sensor, cluster_id, planting_year) narrow the result; array parameters are repeatable. Optional `sort` (number, species, status, planting_year, last_watered, cluster) and `order` (asc, desc) control the result order; the default is number ascending.",
         "operationId": "listTrees",
         "parameters": [
           {
@@ -4776,6 +4776,73 @@
               "type": [
                 "boolean",
                 "null"
+              ]
+            }
+          },
+          {
+            "name": "cluster_id",
+            "in": "query",
+            "description": "Repeatable: `?cluster_id=<uuid>&cluster_id=<uuid>`.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "uuid"
+              }
+            }
+          },
+          {
+            "name": "has_sensor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string",
+                  "description": "Sortable columns of the tree list.",
+                  "enum": [
+                    "number",
+                    "species",
+                    "status",
+                    "planting_year",
+                    "last_watered",
+                    "cluster"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "asc",
+                    "desc"
+                  ]
+                }
               ]
             }
           },
@@ -8779,6 +8846,13 @@
                   "format": "uuid",
                   "example": "0190a8e9-7c4f-7000-8000-000000000000"
                 },
+                "tree_cluster_name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "example": "Solitüde Strand"
+                },
                 "updated_at": {
                   "type": "string",
                   "example": "2024-06-20T14:00:00+00:00"
@@ -9783,6 +9857,16 @@
             "format": "int64",
             "description": "Total number of records matching the query.",
             "example": 42,
+            "minimum": 0
+          },
+          "total_unfiltered": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Total number of records the same request would match without its own\nnarrowing filters, so a client can show \"5 of 563\" without a second\nrequest. Authorization scope still applies. Absent on endpoints that do\nnot compute it.",
+            "example": 563,
             "minimum": 0
           }
         },
@@ -12344,6 +12428,13 @@
             ],
             "format": "uuid",
             "example": "0190a8e9-7c4f-7000-8000-000000000000"
+          },
+          "tree_cluster_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "Solitüde Strand"
           },
           "updated_at": {
             "type": "string",

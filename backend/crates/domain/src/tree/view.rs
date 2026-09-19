@@ -14,6 +14,8 @@ pub struct TreeView {
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     pub cluster_id: Option<Uuid>,
+    /// Only the list query resolves this; every other read leaves it `None`.
+    pub cluster_name: Option<String>,
     pub sensor_id: Option<String>,
     pub planting_year: u32,
     pub species: String,

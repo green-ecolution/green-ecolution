@@ -55,6 +55,15 @@ export interface PaginationResponse {
      * @memberof PaginationResponse
      */
     totalRecords: number;
+    /**
+     * Total number of records the same request would match without its own
+     * narrowing filters, so a client can show "5 of 563" without a second
+     * request. Authorization scope still applies. Absent on endpoints that do
+     * not compute it.
+     * @type {number}
+     * @memberof PaginationResponse
+     */
+    totalUnfiltered?: number | null;
 }
 
 /**
@@ -84,6 +93,7 @@ export function PaginationResponseFromJSONTyped(json: any, ignoreDiscriminator: 
         'prevPage': json['prev_page'] == null ? undefined : json['prev_page'],
         'totalPages': json['total_pages'],
         'totalRecords': json['total_records'],
+        'totalUnfiltered': json['total_unfiltered'] == null ? undefined : json['total_unfiltered'],
     };
 }
 
@@ -104,6 +114,7 @@ export function PaginationResponseToJSONTyped(value?: PaginationResponse | null,
         'prev_page': value['prevPage'],
         'total_pages': value['totalPages'],
         'total_records': value['totalRecords'],
+        'total_unfiltered': value['totalUnfiltered'],
     };
 }
 

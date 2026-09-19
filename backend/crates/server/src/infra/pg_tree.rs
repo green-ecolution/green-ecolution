@@ -18,8 +18,8 @@ use domain::{
         watering_status::WateringStatus,
     },
     tree::{
-        PlantingYear, Tree, TreeDraft, TreeMarker, TreeReader, TreeSearchQuery, TreeView,
-        TreeViewWithDistance, TreeWriter,
+        PlantingYear, Tree, TreeDraft, TreeMarker, TreeReader, TreeSearchPage, TreeSearchQuery,
+        TreeView, TreeViewWithDistance, TreeWriter,
     },
 };
 
@@ -56,10 +56,14 @@ impl PgTreeRepository {
 /// so the original SQL (and `.sqlx/` query cache) stays unchanged; the
 /// rename to `TreeView` (`tree_cluster_id` → `cluster_id`, `number` →
 /// `tree_number`) happens in the `From` impl.
+///
+/// `cluster_name` is resolved only by `view_search`; the other reads select a
+/// typed NULL so one row struct serves every query.
 struct TreeViewRow {
     id: RawId,
     updated_at: NaiveDateTime,
     tree_cluster_id: Option<RawId>,
+    cluster_name: Option<String>,
     sensor_id: Option<String>,
     planting_year: i32,
     species: String,
@@ -84,6 +88,7 @@ impl From<TreeViewRow> for TreeView {
             created_at,
             updated_at: row.updated_at.and_utc(),
             cluster_id: row.tree_cluster_id,
+            cluster_name: row.cluster_name,
             sensor_id: row.sensor_id,
             planting_year: row.planting_year as u32,
             species: row.species,
@@ -130,6 +135,7 @@ impl TryFrom<TreeViewWithDistanceRow> for TreeViewWithDistance {
             id: row.id,
             updated_at: row.updated_at,
             tree_cluster_id: row.tree_cluster_id,
+            cluster_name: None,
             sensor_id: row.sensor_id,
             planting_year: row.planting_year,
             species: row.species,
@@ -246,7 +252,9 @@ impl TreeReader for PgTreeRepository {
     async fn view_by_id(&self, id: Id<Tree>) -> Result<TreeView, RepositoryError> {
         let row = sqlx::query_as!(
             TreeViewRow,
-            r#"SELECT id, updated_at, tree_cluster_id, sensor_id,
+            r#"SELECT id, updated_at, tree_cluster_id,
+                      NULL::text AS "cluster_name?",
+                      sensor_id,
                       planting_year, species, number, latitude, longitude,
                       watering_status AS "watering_status: WateringStatus",
                       description,
@@ -271,7 +279,9 @@ impl TreeReader for PgTreeRepository {
     ) -> Result<Option<TreeView>, RepositoryError> {
         let row = sqlx::query_as!(
             TreeViewRow,
-            r#"SELECT id, updated_at, tree_cluster_id, sensor_id,
+            r#"SELECT id, updated_at, tree_cluster_id,
+                      NULL::text AS "cluster_name?",
+                      sensor_id,
                       planting_year, species, number, latitude, longitude,
                       watering_status AS "watering_status: WateringStatus",
                       description,
@@ -293,7 +303,9 @@ impl TreeReader for PgTreeRepository {
         let id_values: Vec<RawId> = ids.to_values();
         let rows = sqlx::query_as!(
             TreeViewRow,
-            r#"SELECT id, updated_at, tree_cluster_id, sensor_id,
+            r#"SELECT id, updated_at, tree_cluster_id,
+                      NULL::text AS "cluster_name?",
+                      sensor_id,
                       planting_year, species, number, latitude, longitude,
                       watering_status AS "watering_status: WateringStatus",
                       description,
@@ -315,7 +327,7 @@ impl TreeReader for PgTreeRepository {
         &self,
         query: TreeSearchQuery,
         pagination: Pagination,
-    ) -> Result<Page<TreeView>, RepositoryError> {
+    ) -> Result<TreeSearchPage, RepositoryError> {
         let watering_statuses: Vec<WateringStatus> = query.watering_statuses;
         let planting_years: Vec<i32> = query
             .planting_years
@@ -327,14 +339,31 @@ impl TreeReader for PgTreeRepository {
         let offset = i64::try_from(pagination.offset()).unwrap_or(i64::MAX);
         let q_pattern: Option<String> = query.q.as_deref().map(|s| format!("%{}%", like_escape(s)));
         let scope_ids = org_scope_ids(query.visible.clone(), query.organization_id);
+        let cluster_ids: Option<Vec<RawId>> = if query.cluster_ids.is_empty() {
+            None
+        } else {
+            Some(query.cluster_ids.to_values())
+        };
+        let sort_field = query.sort.field.as_sql_key();
+        let sort_desc = query.sort.direction.is_descending();
 
-        let total = sqlx::query_scalar!(
-            r#"SELECT COUNT(*) AS "count!: i64" FROM trees
-            WHERE ($1::watering_status[] = '{}' OR watering_status = ANY($1))
-              AND ($2::int[] = '{}' OR planting_year = ANY($2))
-              AND ($3::text IS NULL OR provider = $3)
-              AND ($4::bool IS NULL OR ($4 = true AND tree_cluster_id IS NOT NULL) OR ($4 = false AND tree_cluster_id IS NULL))
-              AND ($5::text IS NULL OR number ILIKE $5 ESCAPE '\' OR species ILIKE $5 ESCAPE '\')
+        // Both totals in one pass: the narrowing filters move into a FILTER
+        // clause so the same scan also yields the count without them, which is
+        // what the list header's "5 of 563" compares against. Scope and
+        // provider stay in the WHERE — they are not the user's filters.
+        let counts = sqlx::query!(
+            r#"SELECT
+                 COUNT(*) FILTER (
+                   WHERE ($1::watering_status[] = '{}' OR watering_status = ANY($1))
+                     AND ($2::int[] = '{}' OR planting_year = ANY($2))
+                     AND ($4::bool IS NULL OR ($4 = true AND tree_cluster_id IS NOT NULL) OR ($4 = false AND tree_cluster_id IS NULL))
+                     AND ($5::text IS NULL OR number ILIKE $5 ESCAPE '\' OR species ILIKE $5 ESCAPE '\')
+                     AND ($7::uuid[] IS NULL OR tree_cluster_id = ANY($7))
+                     AND ($8::bool IS NULL OR ($8 = true AND sensor_id IS NOT NULL) OR ($8 = false AND sensor_id IS NULL))
+                 ) AS "total!: i64",
+                 COUNT(*) AS "total_unfiltered!: i64"
+            FROM trees
+            WHERE ($3::text IS NULL OR provider = $3)
               AND ($6::uuid[] IS NULL OR organization_id = ANY($6))"#,
             &watering_statuses as &[WateringStatus],
             &planting_years,
@@ -342,44 +371,93 @@ impl TreeReader for PgTreeRepository {
             query.has_cluster,
             q_pattern.as_deref(),
             scope_ids.as_deref(),
+            cluster_ids.as_deref(),
+            query.has_sensor,
         )
         .fetch_one(&self.pool)
-        .await? as u64;
+        .await?;
+        let total = counts.total as u64;
+        let total_unfiltered = counts.total_unfiltered as u64;
 
+        // One CASE pair per sortable column instead of a runtime-built query:
+        // query_as! cannot interpolate an ORDER BY, and the closed TreeSortField
+        // set is what keeps caller text out of the SQL. t.id breaks ties so a
+        // row cannot shift between pages.
         let rows = sqlx::query_as!(
             TreeViewRow,
-            r#"SELECT id, updated_at, tree_cluster_id, sensor_id,
-                      planting_year, species, number, latitude, longitude,
-                      watering_status AS "watering_status: WateringStatus",
-                      description,
-                      last_watered AS "last_watered: DateTime<Utc>",
-                      provider,
-                      additional_informations AS additional_info,
-                      organization_id
-            FROM trees
-            WHERE ($1::watering_status[] = '{}' OR watering_status = ANY($1))
-              AND ($2::int[] = '{}' OR planting_year = ANY($2))
-              AND ($3::text IS NULL OR provider = $3)
-              AND ($4::bool IS NULL OR ($4 = true AND tree_cluster_id IS NOT NULL) OR ($4 = false AND tree_cluster_id IS NULL))
-              AND ($5::text IS NULL OR number ILIKE $5 ESCAPE '\' OR species ILIKE $5 ESCAPE '\')
-              AND ($6::uuid[] IS NULL OR organization_id = ANY($6))
-            ORDER BY number ASC
-            LIMIT $7 OFFSET $8"#,
+            r#"SELECT t.id, t.updated_at, t.tree_cluster_id,
+                      c.name AS "cluster_name?",
+                      t.sensor_id,
+                      t.planting_year, t.species, t.number, t.latitude, t.longitude,
+                      t.watering_status AS "watering_status: WateringStatus",
+                      t.description,
+                      t.last_watered AS "last_watered: DateTime<Utc>",
+                      t.provider,
+                      t.additional_informations AS additional_info,
+                      t.organization_id
+            FROM trees t
+            LEFT JOIN tree_clusters c ON c.id = t.tree_cluster_id
+            WHERE ($1::watering_status[] = '{}' OR t.watering_status = ANY($1))
+              AND ($2::int[] = '{}' OR t.planting_year = ANY($2))
+              AND ($3::text IS NULL OR t.provider = $3)
+              AND ($4::bool IS NULL OR ($4 = true AND t.tree_cluster_id IS NOT NULL) OR ($4 = false AND t.tree_cluster_id IS NULL))
+              AND ($5::text IS NULL OR t.number ILIKE $5 ESCAPE '\' OR t.species ILIKE $5 ESCAPE '\')
+              AND ($6::uuid[] IS NULL OR t.organization_id = ANY($6))
+              AND ($7::uuid[] IS NULL OR t.tree_cluster_id = ANY($7))
+              AND ($8::bool IS NULL OR ($8 = true AND t.sensor_id IS NOT NULL) OR ($8 = false AND t.sensor_id IS NULL))
+            ORDER BY
+              -- Tree numbers are text and may carry a letter prefix (A1001, B2012),
+              -- so a plain text sort puts 1005 before 9 and an ::bigint cast throws.
+              -- Prefix first, then the digits numerically; ::numeric cannot overflow
+              -- on an absurdly long number the way ::bigint would.
+              (CASE WHEN $11 = 'number' AND NOT $12 THEN substring(t.number from '^\D*') END) ASC NULLS LAST,
+              (CASE WHEN $11 = 'number' AND NOT $12 THEN NULLIF(substring(t.number from '\d+'), '')::numeric END) ASC NULLS LAST,
+              (CASE WHEN $11 = 'number' AND $12 THEN substring(t.number from '^\D*') END) DESC NULLS LAST,
+              (CASE WHEN $11 = 'number' AND $12 THEN NULLIF(substring(t.number from '\d+'), '')::numeric END) DESC NULLS LAST,
+              (CASE WHEN $11 = 'species' AND NOT $12 THEN t.species END) ASC NULLS LAST,
+              (CASE WHEN $11 = 'species' AND $12 THEN t.species END) DESC NULLS LAST,
+              (CASE WHEN $11 = 'planting_year' AND NOT $12 THEN t.planting_year END) ASC NULLS LAST,
+              (CASE WHEN $11 = 'planting_year' AND $12 THEN t.planting_year END) DESC NULLS LAST,
+              (CASE WHEN $11 = 'last_watered' AND NOT $12 THEN t.last_watered END) ASC NULLS LAST,
+              (CASE WHEN $11 = 'last_watered' AND $12 THEN t.last_watered END) DESC NULLS LAST,
+              (CASE WHEN $11 = 'cluster' AND NOT $12 THEN c.name END) ASC NULLS LAST,
+              (CASE WHEN $11 = 'cluster' AND $12 THEN c.name END) DESC NULLS LAST,
+              -- Urgency rank, not the enum's declaration order (good, moderate, bad,
+              -- unknown, just_watered), which would be meaningless to a user here.
+              (CASE WHEN $11 = 'status' AND NOT $12 THEN
+                 CASE t.watering_status
+                   WHEN 'bad' THEN 0 WHEN 'moderate' THEN 1 WHEN 'good' THEN 2
+                   WHEN 'just_watered' THEN 3 ELSE 4 END
+               END) ASC NULLS LAST,
+              (CASE WHEN $11 = 'status' AND $12 THEN
+                 CASE t.watering_status
+                   WHEN 'bad' THEN 0 WHEN 'moderate' THEN 1 WHEN 'good' THEN 2
+                   WHEN 'just_watered' THEN 3 ELSE 4 END
+               END) DESC NULLS LAST,
+              t.id ASC
+            LIMIT $9 OFFSET $10"#,
             &watering_statuses as &[WateringStatus],
             &planting_years,
             provider.as_deref(),
             query.has_cluster,
             q_pattern.as_deref(),
             scope_ids.as_deref(),
+            cluster_ids.as_deref(),
+            query.has_sensor,
             limit,
             offset,
+            sort_field,
+            sort_desc,
         )
         .fetch_all(&self.pool)
         .await?;
 
         let items = rows.into_iter().map(Into::into).collect();
 
-        Ok(Page { items, total })
+        Ok(TreeSearchPage {
+            page: Page { items, total },
+            total_unfiltered,
+        })
     }
 
     #[tracing::instrument(level = "trace", skip_all)]

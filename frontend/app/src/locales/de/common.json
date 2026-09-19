@@ -58,6 +58,16 @@
       "removeAriaLabel": "{label} entfernen"
     }
   },
+  "list": {
+    "clearSearch": "Suche leeren",
+    "resetFilters": "Alle Filter zurücksetzen",
+    "sortLabel": "Sortieren",
+    "sortAscending": "Aufsteigend",
+    "sortDescending": "Absteigend",
+    "filterOptionSelected": "Ausgewählt",
+    "filterOptionNotSelected": "Nicht ausgewählt",
+    "filterSearch": "Option suchen"
+  },
   "form": {
     "error": {
       "fallback": "Es ist leider ein Problem aufgetreten. Bitte probiere es erneut oder wende dich an einen Systemadministrierenden."

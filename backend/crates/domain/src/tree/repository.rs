@@ -15,6 +15,19 @@ use crate::{
     },
 };
 
+/// A page of trees together with the count the same scope yields once the
+/// list's own narrowing filters are dropped.
+///
+/// The list header reads "5 of 563": `page.total` is the 5, `total_unfiltered`
+/// the 563. Both come out of one count, so asking for the second number costs
+/// no extra query. Authorization scope and provider still apply to it — it is
+/// "everything you could see here", not "everything there is".
+#[derive(Debug, Clone)]
+pub struct TreeSearchPage {
+    pub page: Page<TreeView>,
+    pub total_unfiltered: u64,
+}
+
 /// Read-side access to trees, including aggregate hydration and the
 /// HTTP-friendly [`TreeView`] read model.
 #[async_trait]
@@ -44,7 +57,7 @@ pub trait TreeReader: Send + Sync {
         &self,
         query: TreeSearchQuery,
         pagination: Pagination,
-    ) -> Result<Page<TreeView>, RepositoryError>;
+    ) -> Result<TreeSearchPage, RepositoryError>;
     /// Returns trees within `radius` of `coord`, ordered by distance ascending,
     /// up to `limit` results.
     async fn view_nearest(

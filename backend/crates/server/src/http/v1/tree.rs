@@ -29,8 +29,10 @@ use domain::{
     Id,
     authorization::{Action, Permission, Resource},
     sensor::SensorId,
-    shared::{coordinates::Coordinate, distance::Distance, pagination::Pagination},
-    tree::{PlantingYear, TreeMarker, TreeSearchQuery, TreeView},
+    shared::{
+        coordinates::Coordinate, distance::Distance, pagination::Pagination, sort::SortDirection,
+    },
+    tree::{PlantingYear, TreeMarker, TreeSearchQuery, TreeSort, TreeSortField, TreeView},
 };
 
 pub fn routes() -> OpenApiRouter<Arc<AppState>> {
@@ -50,7 +52,8 @@ const TREE_LIST_Q_MAX_LEN: usize = 100;
     summary = "List all trees",
     description = "Returns a paginated list of all trees with their associated sensor data. \
                    Optional `q` parameter case-insensitively filters by tree number or species. \
-                   Optional filter parameters (watering_status, has_cluster, planting_year) narrow the result; array parameters are repeatable.",
+                   Optional filter parameters (watering_status, has_cluster, has_sensor, cluster_id, planting_year) narrow the result; array parameters are repeatable. \
+                   Optional `sort` (number, species, status, planting_year, last_watered, cluster) and `order` (asc, desc) control the result order; the default is number ascending.",
     params(TreeListParams),
     responses(
         (status = 200, description = "Paginated list of trees", body = ListResponse<TreeResponse>),
@@ -103,27 +106,40 @@ pub async fn list_trees(
         .visible_orgs_for(user.id, Permission::new(Resource::Tree, Action::Read))
         .await?;
 
+    let sort = TreeSort {
+        field: params.sort.map(TreeSortField::from).unwrap_or_default(),
+        direction: params.order.map(SortDirection::from).unwrap_or_default(),
+    };
+
     let query = TreeSearchQuery {
         q,
         watering_statuses,
         has_cluster: params.has_cluster,
+        has_sensor: params.has_sensor,
+        cluster_ids: params.cluster_id.into_iter().map(Id::new).collect(),
         planting_years,
+        sort,
         visible,
         ..TreeSearchQuery::default()
     };
 
-    let page = state.tree_service.search_view(query, pagination).await?;
+    let result = state.tree_service.search_view(query, pagination).await?;
 
     let sensor_map = resolve_sensors_by_str_ids(
         &state.sensor_service,
-        page.items.iter().filter_map(|t| t.sensor_id.as_deref()),
+        result
+            .page
+            .items
+            .iter()
+            .filter_map(|t| t.sensor_id.as_deref()),
     )
     .await?;
 
-    let response = ListResponse::from_page_with(page, &pagination, |tree: &TreeView| {
+    let response = ListResponse::from_page_with(result.page, &pagination, |tree: &TreeView| {
         let sensor = tree.sensor_id.as_deref().and_then(|id| sensor_map.get(id));
         TreeResponse::from((tree, sensor))
-    });
+    })
+    .with_total_unfiltered(result.total_unfiltered);
     Ok(Json(response))
 }
 

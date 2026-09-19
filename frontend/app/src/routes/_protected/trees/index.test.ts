@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { z } from 'zod'
-import { Route } from './index'
+import { Route, PER_PAGE } from './index'
 
 const parseSearch = (input: Record<string, unknown>) =>
   (Route.options.validateSearch as unknown as z.ZodSchema<{ page: number }>).parse(input)
@@ -48,5 +48,61 @@ describe('/trees route filters (GECO-133)', () => {
     expect(deps.wateringStatuses).toEqual(['good'])
     expect(deps.hasCluster).toBe(false)
     expect(deps.plantingYears).toEqual([2018])
+  })
+})
+
+describe('/trees route search, sort and new filters', () => {
+  it('parses the query string', () => {
+    const result = parseSearch({ q: 'Quercus' }) as Record<string, unknown>
+    expect(result.q).toBe('Quercus')
+  })
+
+  it('parses sort and order', () => {
+    const result = parseSearch({ sort: 'species', order: 'desc' }) as Record<string, unknown>
+    expect(result.sort).toBe('species')
+    expect(result.order).toBe('desc')
+  })
+
+  it('drops an unknown sort field instead of throwing', () => {
+    const result = parseSearch({ sort: 'height' }) as Record<string, unknown>
+    expect(result.sort).toBeUndefined()
+  })
+
+  it('drops an unknown order instead of throwing', () => {
+    const result = parseSearch({ order: 'sideways' }) as Record<string, unknown>
+    expect(result.order).toBeUndefined()
+  })
+
+  it('parses the cluster and sensor filters', () => {
+    const result = parseSearch({
+      clusterIds: ['0190a8e9-7c4f-7000-8000-000000000000'],
+      hasSensor: false,
+    }) as Record<string, unknown>
+    expect(result.clusterIds).toEqual(['0190a8e9-7c4f-7000-8000-000000000000'])
+    expect(result.hasSensor).toBe(false)
+  })
+
+  it('passes every new key through loaderDeps', () => {
+    const deps = loaderDeps({
+      search: {
+        page: 1,
+        q: 'Quercus',
+        sort: 'species',
+        order: 'desc',
+        clusterIds: ['0190a8e9-7c4f-7000-8000-000000000000'],
+        hasSensor: true,
+      },
+    })
+    expect(deps.q).toBe('Quercus')
+    expect(deps.sort).toBe('species')
+    expect(deps.order).toBe('desc')
+    expect(deps.clusterIds).toEqual(['0190a8e9-7c4f-7000-8000-000000000000'])
+    expect(deps.hasSensor).toBe(true)
+  })
+})
+
+describe('/trees route paging size', () => {
+  it('requests 25 rows per page', () => {
+    expect(PER_PAGE).toBe(25)
   })
 })

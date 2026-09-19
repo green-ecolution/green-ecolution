@@ -49,32 +49,52 @@
     "notFoundBackLabel": "To the tree list"
   },
   "list": {
-    "title": "List of all trees",
+    "title": "Trees",
     "descriptionIntro": "Here you'll find an overview of all trees in a list view. The trees can also be displayed on a",
     "mapLinkLabel": "map",
     "descriptionOutro": ".",
     "createButton": "Create new tree",
-    "filterHeadline": "Filter trees",
-    "columnStatus": "Status",
-    "columnSpecies": "Species",
-    "columnNumber": "Tree number",
-    "columnCluster": "Watering group",
+    "searchLabel": "Search trees",
+    "searchPlaceholder": "Search by number or species",
+    "filterStatus": "Status",
+    "filterCluster": "Group",
+    "filterSensor": "Sensor",
+    "filterPlantingYear": "Planting year",
+    "filterNoOptions": "No options available.",
+    "sensorOptionWith": "With sensor",
+    "sensorOptionWithout": "Without sensor",
+    "clusterOptionAny": "With group",
+    "clusterOptionNone": "No group",
+    "clusterUnknown": "Unknown group",
+    "sortNumber": "Tree number",
+    "sortSpecies": "Species",
+    "sortStatus": "Watering status",
+    "sortPlantingYear": "Planting year",
+    "sortLastWatered": "Last watered",
+    "sortCluster": "Watering group",
+    "resultCount_one": "{count} tree",
+    "resultCount_other": "{count} trees",
+    "resultCountFiltered": "{filtered} of {total} trees",
     "loadingLabel": "Loading data",
-    "emptyMessage": "Unfortunately, no trees were found."
+    "emptyMessage": "No trees have been recorded yet.",
+    "emptyFilteredMessage": "No tree matches these filters.",
+    "emptyFilteredAction": "Reset filters"
   },
   "card": {
+    "statusSrLabel": "Watering status: ",
     "numberSrLabel": "Tree number: ",
     "numberUnknown": "Unknown",
     "clusterSrLabel": "Watering group: ",
-    "clusterUnassigned": "Not assigned"
+    "clusterUnassigned": "no group",
+    "sensorSrLabel": "Sensor: ",
+    "sensorUnassigned": "no sensor",
+    "plantingYearSrLabel": "Planting year: ",
+    "lastWateredSrLabel": "Last watered: ",
+    "lastWateredNever": "never watered"
   },
   "selectedCard": {
     "label": "Tree:",
     "removeAriaLabel": "Remove tree from selection"
-  },
-  "filter": {
-    "plantingYearLegend": "Planting year:",
-    "plantingYearRange": "Planting year: {min} - {max}"
   },
   "foreignDialog": {
     "titleSwitch": "Switch organization?",

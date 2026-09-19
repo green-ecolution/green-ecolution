@@ -49,32 +49,52 @@
     "notFoundBackLabel": "Zur Baumliste"
   },
   "list": {
-    "title": "Auflistung aller Bäume",
+    "title": "Bäume",
     "descriptionIntro": "Hier findest du eine Übersicht aller Bäume in einer Listenansicht. Die Bäume lassen sich allerdings auch auf einer",
     "mapLinkLabel": "Karte",
     "descriptionOutro": "visualisieren.",
     "createButton": "Neuen Baum erstellen",
-    "filterHeadline": "Bäume filtern",
-    "columnStatus": "Status",
-    "columnSpecies": "Baumart",
-    "columnNumber": "Baumnummer",
-    "columnCluster": "Bewässerungsgruppe",
+    "searchLabel": "Bäume durchsuchen",
+    "searchPlaceholder": "Nummer oder Baumart suchen",
+    "filterStatus": "Status",
+    "filterCluster": "Gruppe",
+    "filterSensor": "Sensor",
+    "filterPlantingYear": "Pflanzjahr",
+    "filterNoOptions": "Keine Auswahl vorhanden.",
+    "sensorOptionWith": "Mit Sensor",
+    "sensorOptionWithout": "Ohne Sensor",
+    "clusterOptionAny": "Mit Gruppe",
+    "clusterOptionNone": "Ohne Gruppe",
+    "clusterUnknown": "Unbekannte Gruppe",
+    "sortNumber": "Baumnummer",
+    "sortSpecies": "Baumart",
+    "sortStatus": "Bewässerungszustand",
+    "sortPlantingYear": "Pflanzjahr",
+    "sortLastWatered": "Letzte Bewässerung",
+    "sortCluster": "Bewässerungsgruppe",
+    "resultCount_one": "{count} Baum",
+    "resultCount_other": "{count} Bäume",
+    "resultCountFiltered": "{filtered} von {total} Bäumen",
     "loadingLabel": "Daten werden geladen",
-    "emptyMessage": "Es wurden leider keine Bäume gefunden."
+    "emptyMessage": "Es ist noch kein Baum erfasst.",
+    "emptyFilteredMessage": "Kein Baum passt zu diesen Filtern.",
+    "emptyFilteredAction": "Filter zurücksetzen"
   },
   "card": {
+    "statusSrLabel": "Bewässerungszustand: ",
     "numberSrLabel": "Baumnummer: ",
     "numberUnknown": "Unbekannt",
     "clusterSrLabel": "Bewässerungsgruppe: ",
-    "clusterUnassigned": "Nicht zugeordnet"
+    "clusterUnassigned": "keine Gruppe",
+    "sensorSrLabel": "Sensor: ",
+    "sensorUnassigned": "kein Sensor",
+    "plantingYearSrLabel": "Pflanzjahr: ",
+    "lastWateredSrLabel": "Letzte Bewässerung: ",
+    "lastWateredNever": "noch nie gegossen"
   },
   "selectedCard": {
     "label": "Baum:",
     "removeAriaLabel": "Baum aus Auswahl löschen"
-  },
-  "filter": {
-    "plantingYearLegend": "Pflanzjahr:",
-    "plantingYearRange": "Pflanzjahr: {min} - {max}"
   },
   "foreignDialog": {
     "titleSwitch": "Organisation wechseln?",
