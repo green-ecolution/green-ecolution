@@ -336,6 +336,16 @@ impl From<DrivingLicense> for DomainDrivingLicense {
     }
 }
 
+impl From<VehicleStatus> for DomainVehicleStatus {
+    fn from(value: VehicleStatus) -> Self {
+        match value {
+            VehicleStatus::Active => Self::Active,
+            VehicleStatus::Available => Self::Available,
+            VehicleStatus::NotAvailable => Self::NotAvailable,
+        }
+    }
+}
+
 impl From<WateringPlanStatus> for DomainWateringPlanStatus {
     fn from(value: WateringPlanStatus) -> Self {
         match value {

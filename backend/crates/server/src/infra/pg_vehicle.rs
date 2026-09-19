@@ -9,9 +9,9 @@ use domain::{
     authorization::Visibility,
     shared::pagination::{Page, Pagination, SearchPage},
     vehicle::{
-        DrivingLicense, NumberPlate, Vehicle, VehicleAvailability, VehicleDraft, VehicleReader,
-        VehicleSearchQuery, VehicleSnapshot, VehicleSortField, VehicleType, VehicleView,
-        VehicleWriter, derive_status,
+        ArchiveFilterKind, DrivingLicense, NumberPlate, Vehicle, VehicleAvailability, VehicleDraft,
+        VehicleReader, VehicleSearchQuery, VehicleSnapshot, VehicleStatus, VehicleType,
+        VehicleView, VehicleWriter, derive_status,
     },
 };
 
@@ -90,8 +90,6 @@ const VEHICLE_COLUMNS: &str = "v.id, v.updated_at, v.archived_at, v.number_plate
 // Availability beats a running plan, the same precedence vehicle::derive_status
 // applies. Kept as one expression so WHERE, ORDER BY and the projection cannot
 // drift apart.
-// reason: wired into the status filter/sort in a later task of this rollout.
-#[allow(dead_code)]
 const VEHICLE_STATUS_SQL: &str = "CASE \
     WHEN v.availability = 'not_available' THEN 'not_available' \
     WHEN EXISTS (SELECT 1 FROM vehicle_watering_plans vwp \
@@ -256,13 +254,21 @@ impl VehicleReader for PgVehicleRepository {
         query: VehicleSearchQuery,
         pagination: Pagination,
     ) -> Result<SearchPage<VehicleView>, RepositoryError> {
-        let archive = if query.only_archived {
-            ArchiveFilter::ArchivedOnly
-        } else if query.with_archived {
-            ArchiveFilter::Include
-        } else {
-            ArchiveFilter::ActiveOnly
+        let archive = match query.archive {
+            ArchiveFilterKind::ActiveOnly => ArchiveFilter::ActiveOnly,
+            ArchiveFilterKind::Include => ArchiveFilter::Include,
+            ArchiveFilterKind::ArchivedOnly => ArchiveFilter::ArchivedOnly,
         };
+
+        let status_texts: Vec<String> = query
+            .statuses
+            .iter()
+            .map(|status| match status {
+                VehicleStatus::Active => "active".to_owned(),
+                VehicleStatus::Available => "available".to_owned(),
+                VehicleStatus::NotAvailable => "not_available".to_owned(),
+            })
+            .collect();
 
         let page = ListSpec::new("vehicles v", "v.id")
             .scope(Predicate::equals(
@@ -273,11 +279,21 @@ impl VehicleReader for PgVehicleRepository {
                 "v.organization_id",
                 query.visible.into_raw_ids(),
             ))
+            .filter(Predicate::text_search(
+                &["v.number_plate", "v.model", "v.description"],
+                query.q,
+            ))
+            .filter(Predicate::any_of(VEHICLE_STATUS_SQL, status_texts))
+            .filter(Predicate::any_of("v.type", query.types))
+            .filter(Predicate::any_of(
+                "v.driving_license",
+                query.driving_licenses,
+            ))
             .filter(Predicate::equals("v.type", query.vehicle_type))
             .filter(Predicate::archived("v.archived_at", archive))
             .sort(
-                VehicleSortField::default().as_sql_key(),
-                false,
+                query.sort.field.as_sql_key(),
+                query.sort.direction.is_descending(),
                 VEHICLE_SORT_COLUMNS,
             )
             .page(pagination)

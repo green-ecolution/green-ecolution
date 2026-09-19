@@ -1,4 +1,4 @@
-use crate::helpers::spawn_app;
+use crate::helpers::{TestApp, spawn_app};
 
 fn vehicle_json(plate: &str) -> serde_json::Value {
     serde_json::json!({
@@ -395,4 +395,234 @@ async fn not_available_vehicle_stays_not_available_on_an_active_plan() {
         updated["status"], "not_available",
         "a vehicle in the workshop must not read as active"
     );
+}
+
+/// Creates a vehicle with the given plate/model/description, returning its id.
+async fn seed_vehicle(app: &TestApp, plate: &str, model: &str, description: &str) -> uuid::Uuid {
+    let mut body = vehicle_json(plate);
+    body["model"] = serde_json::json!(model);
+    body["description"] = serde_json::json!(description);
+    let created: serde_json::Value = app
+        .post_json("/api/v1/vehicles", &body)
+        .await
+        .json()
+        .await
+        .unwrap();
+    uuid::Uuid::parse_str(created["id"].as_str().unwrap()).unwrap()
+}
+
+async fn seed_vehicle_of_type(app: &TestApp, plate: &str, vehicle_type: &str) -> uuid::Uuid {
+    let mut body = vehicle_json(plate);
+    body["type"] = serde_json::json!(vehicle_type);
+    let created: serde_json::Value = app
+        .post_json("/api/v1/vehicles", &body)
+        .await
+        .json()
+        .await
+        .unwrap();
+    uuid::Uuid::parse_str(created["id"].as_str().unwrap()).unwrap()
+}
+
+async fn seed_vehicle_with_capacity(app: &TestApp, plate: &str, capacity: f64) -> uuid::Uuid {
+    let mut body = vehicle_json(plate);
+    body["water_capacity"] = serde_json::json!(capacity);
+    let created: serde_json::Value = app
+        .post_json("/api/v1/vehicles", &body)
+        .await
+        .json()
+        .await
+        .unwrap();
+    uuid::Uuid::parse_str(created["id"].as_str().unwrap()).unwrap()
+}
+
+// Raw sqlx::query so this fixture doesn't need an offline-cache entry.
+async fn set_unavailable(app: &TestApp, id: uuid::Uuid) {
+    sqlx::query("UPDATE vehicles SET availability = 'not_available' WHERE id = $1")
+        .bind(id)
+        .execute(&app.db_pool)
+        .await
+        .expect("test fixture updates vehicle availability");
+}
+
+#[tokio::test]
+async fn vehicle_list_searches_plate_model_and_description() {
+    let app = spawn_app().await;
+    seed_vehicle(&app, "FL-GE 100", "MAN TGE", "Innenstadt").await;
+    seed_vehicle(&app, "SL-XY 200", "Iveco Daily", "Hafen").await;
+
+    let body: serde_json::Value = app
+        .get("/api/v1/vehicles?q=iveco")
+        .await
+        .json()
+        .await
+        .unwrap();
+
+    let plates: Vec<&str> = body["data"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|v| v["number_plate"].as_str().unwrap())
+        .collect();
+    assert_eq!(plates, vec!["SL-XY 200"]);
+}
+
+#[tokio::test]
+async fn vehicle_list_filters_by_derived_status() {
+    let app = spawn_app().await;
+    let available = seed_vehicle(&app, "FL-GE 100", "MAN TGE", "").await;
+    let blocked = seed_vehicle(&app, "FL-GE 200", "MAN TGE", "").await;
+    set_unavailable(&app, blocked).await;
+
+    let body: serde_json::Value = app
+        .get("/api/v1/vehicles?status=not_available")
+        .await
+        .json()
+        .await
+        .unwrap();
+
+    let ids: Vec<&str> = body["data"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|v| v["id"].as_str().unwrap())
+        .collect();
+    assert_eq!(ids, vec![blocked.to_string()]);
+    assert!(!ids.contains(&available.to_string().as_str()));
+}
+
+#[tokio::test]
+async fn vehicle_list_status_filter_agrees_with_the_rust_derivation() {
+    // The SQL CASE and vehicle::derive_status answer the same question in two
+    // places; this pins them together so one cannot drift.
+    let app = spawn_app().await;
+    seed_vehicle(&app, "FL-GE 100", "MAN TGE", "").await;
+    let blocked = seed_vehicle(&app, "FL-GE 200", "MAN TGE", "").await;
+    set_unavailable(&app, blocked).await;
+
+    let all: serde_json::Value = app
+        .get("/api/v1/vehicles?per_page=100")
+        .await
+        .json()
+        .await
+        .unwrap();
+
+    for status in ["available", "not_available", "active"] {
+        let expected: Vec<String> = all["data"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter(|v| v["status"].as_str() == Some(status))
+            .map(|v| v["id"].as_str().unwrap().to_owned())
+            .collect();
+
+        let filtered: serde_json::Value = app
+            .get(&format!("/api/v1/vehicles?per_page=100&status={status}"))
+            .await
+            .json()
+            .await
+            .unwrap();
+        let actual: Vec<String> = filtered["data"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|v| v["id"].as_str().unwrap().to_owned())
+            .collect();
+
+        assert_eq!(actual, expected, "status filter disagrees for {status}");
+    }
+}
+
+#[tokio::test]
+async fn vehicle_list_type_parameter_is_repeatable() {
+    let app = spawn_app().await;
+    seed_vehicle_of_type(&app, "FL-GE 100", "transporter").await;
+    seed_vehicle_of_type(&app, "FL-GE 200", "trailer").await;
+
+    let body: serde_json::Value = app
+        .get("/api/v1/vehicles?type=transporter&type=trailer")
+        .await
+        .json()
+        .await
+        .unwrap();
+
+    assert_eq!(body["data"].as_array().unwrap().len(), 2);
+}
+
+#[tokio::test]
+async fn vehicle_list_sorts_by_water_capacity_descending() {
+    let app = spawn_app().await;
+    seed_vehicle_with_capacity(&app, "FL-GE 100", 2000.0).await;
+    seed_vehicle_with_capacity(&app, "FL-GE 200", 8000.0).await;
+
+    let body: serde_json::Value = app
+        .get("/api/v1/vehicles?sort=water_capacity&order=desc")
+        .await
+        .json()
+        .await
+        .unwrap();
+
+    let plates: Vec<&str> = body["data"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|v| v["number_plate"].as_str().unwrap())
+        .collect();
+    // Fixtures deliberately disagree with the default plate order, so a sort
+    // that silently did nothing would fail here.
+    assert_eq!(plates, vec!["FL-GE 200", "FL-GE 100"]);
+}
+
+#[tokio::test]
+async fn vehicle_list_reports_the_prefilter_total() {
+    let app = spawn_app().await;
+    seed_vehicle(&app, "FL-GE 100", "MAN TGE", "").await;
+    seed_vehicle(&app, "SL-XY 200", "Iveco Daily", "").await;
+
+    let body: serde_json::Value = app
+        .get("/api/v1/vehicles?q=iveco")
+        .await
+        .json()
+        .await
+        .unwrap();
+
+    assert_eq!(body["pagination"]["total_records"], 1);
+    assert_eq!(body["pagination"]["total_unfiltered"], 2);
+}
+
+#[tokio::test]
+async fn vehicle_list_can_include_and_isolate_archived_vehicles() {
+    let app = spawn_app().await;
+    let active = seed_vehicle(&app, "FL-GE 100", "MAN TGE", "").await;
+    let archived = seed_vehicle(&app, "FL-GE 200", "MAN TGE", "").await;
+    app.post_json(
+        &format!("/api/v1/vehicles/archived/{archived}"),
+        &serde_json::json!({}),
+    )
+    .await;
+
+    let default_list: serde_json::Value = app.get("/api/v1/vehicles").await.json().await.unwrap();
+    assert_eq!(default_list["data"].as_array().unwrap().len(), 1);
+
+    let including: serde_json::Value = app
+        .get("/api/v1/vehicles?archive=include")
+        .await
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(including["data"].as_array().unwrap().len(), 2);
+
+    let only: serde_json::Value = app
+        .get("/api/v1/vehicles?archive=only")
+        .await
+        .json()
+        .await
+        .unwrap();
+    let ids: Vec<&str> = only["data"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|v| v["id"].as_str().unwrap())
+        .collect();
+    assert_eq!(ids, vec![archived.to_string()]);
+    assert!(!ids.contains(&active.to_string().as_str()));
 }
