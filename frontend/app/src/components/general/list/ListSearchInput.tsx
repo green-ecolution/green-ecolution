@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Search, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { Input, InputGroup, InputGroupAddon } from '@green-ecolution/ui'
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@green-ecolution/ui'
 
 interface ListSearchInputProps {
   value: string
@@ -40,11 +40,11 @@ const ListSearchInput = ({
   }, [draft, value, debounceMs, onChange])
 
   return (
-    <InputGroup className="w-full sm:max-w-80">
+    <InputGroup>
       <InputGroupAddon align="inline-start">
         <Search aria-hidden className="size-4 text-dark-600" />
       </InputGroupAddon>
-      <Input
+      <InputGroupInput
         type="search"
         aria-label={label}
         placeholder={placeholder}
