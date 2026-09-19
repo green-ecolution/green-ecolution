@@ -8,6 +8,7 @@ import {
   Command,
   CommandEmpty,
   CommandGroup,
+  CommandInput,
   CommandItem,
   CommandList,
   Popover,
@@ -19,6 +20,9 @@ export interface FilterOption {
   value: string
   label: string
 }
+
+/** Above this many options the list stops being scannable and gets its own search field. */
+const SEARCHABLE_FROM = 8
 
 interface ListFilterDropdownProps {
   label: string
@@ -61,6 +65,12 @@ const ListFilterDropdown = ({
       </PopoverTrigger>
       <PopoverContent align="start" className="w-64 p-0">
         <Command>
+          {options.length >= SEARCHABLE_FROM && (
+            <CommandInput
+              placeholder={t('list.filterSearch')}
+              aria-label={t('list.filterSearch')}
+            />
+          )}
           <CommandList>
             <CommandEmpty>{emptyText}</CommandEmpty>
             <CommandGroup>

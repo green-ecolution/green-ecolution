@@ -65,7 +65,8 @@
     "sortAscending": "Aufsteigend",
     "sortDescending": "Absteigend",
     "filterOptionSelected": "Ausgewählt",
-    "filterOptionNotSelected": "Nicht ausgewählt"
+    "filterOptionNotSelected": "Nicht ausgewählt",
+    "filterSearch": "Option suchen"
   },
   "form": {
     "error": {
