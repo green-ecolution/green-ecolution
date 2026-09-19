@@ -52,18 +52,35 @@ pub const NAMES: &[&str] = &[
     "sensor.latest_volumetric_moisture",
 ];
 
-/// A verbatim copy of the count half of `view_search` in
-/// `crates/server/src/infra/pg_tree.rs`, kept only so `EXPLAIN` has something
-/// to plan. Measurements always go through the repository; this copy is never
-/// the source of truth and has to be refreshed when that query changes.
-pub const TREE_VIEW_SEARCH_SQL: &str = r#"
+/// Plan probes: shapes copied from `view_search` in
+/// `crates/server/src/infra/pg_tree.rs` so `EXPLAIN` has something to plan.
+/// Measurements always go through the repository; these copies are never the
+/// source of truth and have to be refreshed when that query changes.
+///
+/// The filters are inlined as literals rather than parameters on purpose. A
+/// `$1::text IS NULL` branch folds away at planning time, and the plan then
+/// shows an index-only scan that no real request ever gets.
+pub const TREE_COUNT_SQL: &str = r#"
 SELECT
   COUNT(*) FILTER (
-    WHERE ($1::text IS NULL OR number ILIKE $1 ESCAPE '\' OR species ILIKE $1 ESCAPE '\')
+    WHERE number ILIKE '%Tilia%' ESCAPE '\' OR species ILIKE '%Tilia%' ESCAPE '\'
   ) AS total,
   COUNT(*) AS total_unfiltered
 FROM trees
-WHERE ($2::uuid[] IS NULL OR organization_id = ANY($2))
+"#;
+
+/// The row half, in the list's default order: prefix first, then the digits
+/// numerically. No index can serve that, so the plan shows what the sort
+/// actually costs.
+pub const TREE_ROWS_SQL: &str = r#"
+SELECT t.id, t.number, c.name
+FROM trees t
+LEFT JOIN tree_clusters c ON c.id = t.tree_cluster_id
+ORDER BY
+  substring(t.number from '^\D*') ASC NULLS LAST,
+  NULLIF(substring(t.number from '\d+'), '')::numeric ASC NULLS LAST,
+  t.id ASC
+LIMIT 25 OFFSET 0
 "#;
 
 /// Runs the closure `WARMUP` times untimed, then `ITERATIONS` times timed.

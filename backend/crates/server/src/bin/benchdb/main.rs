@@ -69,13 +69,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             let samples = paths::measure_all(&pool, scale, only.as_deref()).await?;
             measure::write_csv(&samples, &out.join("results.csv"))?;
             environment::capture(&pool, &out).await?;
-            explain::capture(
-                &pool,
-                &format!("tree.view_search.count_{}", scale.name()),
-                paths::TREE_VIEW_SEARCH_SQL,
-                &out,
-            )
-            .await?;
+            capture_plans(&pool, scale.name(), &out).await?;
 
             println!(
                 "measured {} paths at scale {} into {}",
@@ -115,8 +109,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 row_counts.push((current.name().to_string(), counts.trees as u64));
                 samples.extend(paths::measure_all(&pool, current, None).await?);
 
-                let plan_name = format!("tree.view_search.count_{}", current.name());
-                explain::capture(&pool, &plan_name, paths::TREE_VIEW_SEARCH_SQL, &out).await?;
+                capture_plans(&pool, current.name(), &out).await?;
 
                 println!("scale {} done: {counts:?}", current.name());
             }
@@ -219,4 +212,28 @@ fn seq_scans_at(
     }
     found.sort();
     Ok(found)
+}
+
+/// Captures the plan probes for one scale. Both halves of the tree list are
+/// interesting: the count decides whether the whole table is read, the row
+/// query whether the sort can use an index.
+async fn capture_plans(
+    pool: &PgPool,
+    scale: &str,
+    out: &std::path::Path,
+) -> Result<(), Box<dyn std::error::Error>> {
+    explain::capture(
+        pool,
+        &format!("tree.view_search.count_{scale}"),
+        paths::TREE_COUNT_SQL,
+        out,
+    )
+    .await?;
+    explain::capture(
+        pool,
+        &format!("tree.view_search.rows_{scale}"),
+        paths::TREE_ROWS_SQL,
+        out,
+    )
+    .await
 }
