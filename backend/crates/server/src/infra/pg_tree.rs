@@ -406,8 +406,14 @@ impl TreeReader for PgTreeRepository {
               AND ($7::uuid[] IS NULL OR t.tree_cluster_id = ANY($7))
               AND ($8::bool IS NULL OR ($8 = true AND t.sensor_id IS NOT NULL) OR ($8 = false AND t.sensor_id IS NULL))
             ORDER BY
-              (CASE WHEN $11 = 'number' AND NOT $12 THEN t.number END) ASC NULLS LAST,
-              (CASE WHEN $11 = 'number' AND $12 THEN t.number END) DESC NULLS LAST,
+              -- Tree numbers are text and may carry a letter prefix (A1001, B2012),
+              -- so a plain text sort puts 1005 before 9 and an ::bigint cast throws.
+              -- Prefix first, then the digits numerically; ::numeric cannot overflow
+              -- on an absurdly long number the way ::bigint would.
+              (CASE WHEN $11 = 'number' AND NOT $12 THEN substring(t.number from '^\D*') END) ASC NULLS LAST,
+              (CASE WHEN $11 = 'number' AND NOT $12 THEN NULLIF(substring(t.number from '\d+'), '')::numeric END) ASC NULLS LAST,
+              (CASE WHEN $11 = 'number' AND $12 THEN substring(t.number from '^\D*') END) DESC NULLS LAST,
+              (CASE WHEN $11 = 'number' AND $12 THEN NULLIF(substring(t.number from '\d+'), '')::numeric END) DESC NULLS LAST,
               (CASE WHEN $11 = 'species' AND NOT $12 THEN t.species END) ASC NULLS LAST,
               (CASE WHEN $11 = 'species' AND $12 THEN t.species END) DESC NULLS LAST,
               (CASE WHEN $11 = 'planting_year' AND NOT $12 THEN t.planting_year END) ASC NULLS LAST,

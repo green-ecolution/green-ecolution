@@ -1560,6 +1560,39 @@ async fn list_trees_sorts_by_number_descending() {
     assert_eq!(numbers(&body), vec!["T-003", "T-002", "T-001"]);
 }
 
+// Kataster numbers are text and mix plain digits with letter-prefixed series
+// (A1001, B2012). A text sort would read "1005" before "9"; the user expects
+// the digits compared as numbers, with each letter series kept together.
+#[tokio::test]
+async fn list_trees_sort_by_number_is_natural_across_letter_prefixes() {
+    let app = spawn_app().await;
+    for number in ["A1001", "9", "B2012", "1005", "A9", "99"] {
+        create_tree_with(&app, number, 2020, None).await;
+    }
+
+    let asc: serde_json::Value = app
+        .get("/api/v1/trees?sort=number&order=asc")
+        .await
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(
+        numbers(&asc),
+        vec!["9", "99", "1005", "A9", "A1001", "B2012"]
+    );
+
+    let desc: serde_json::Value = app
+        .get("/api/v1/trees?sort=number&order=desc")
+        .await
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(
+        numbers(&desc),
+        vec!["B2012", "A1001", "A9", "1005", "99", "9"]
+    );
+}
+
 #[tokio::test]
 async fn list_trees_sorts_by_status_descending() {
     let app = spawn_app().await;

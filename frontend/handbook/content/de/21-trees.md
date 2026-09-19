@@ -33,9 +33,12 @@ die Anzahl der gefundenen Bäume.
 Über das Sortiermenü ordnest du die Liste nach Baumnummer, Art, Bewässerungszustand,
 Pflanzjahr, letzter Bewässerung oder Bewässerungsgruppe, jeweils auf- oder absteigend;
 eine Sortierung nach Bewässerungszustand richtet sich nach der Dringlichkeit, sodass der
-schlechteste Zustand zuerst erscheint. Suchbegriff, Filter, Sortierung und die aktuelle
-Seite stehen in der Adresszeile: Eine gefilterte Ansicht lässt sich damit als Link
-weitergeben, und der Zurück-Button des Browsers macht eine Filteränderung rückgängig.
+schlechteste Zustand zuerst erscheint. Bei der Baumnummer werden die Ziffern als Zahl
+verglichen, 9 steht also vor 1005; Nummern mit einem Buchstaben davor bilden dahinter
+eigene Blöcke, in denen wieder numerisch sortiert wird. Suchbegriff, Filter, Sortierung
+und die aktuelle Seite stehen in der Adresszeile: Eine gefilterte Ansicht lässt sich
+damit als Link weitergeben, und der Zurück-Button des Browsers macht eine Filteränderung
+rückgängig.
 
 Findet sich zu den aktuellen Filtern kein Baum, bietet die Anwendung an, sie
 zurückzusetzen; ist überhaupt noch kein Baum erfasst, weist sie stattdessen darauf hin.
