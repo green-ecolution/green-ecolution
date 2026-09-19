@@ -18,6 +18,8 @@ use domain::{
     },
 };
 
+use crate::infra::list::{ListSpec, Predicate, SortColumns};
+
 pub struct PgWateringPlanRepository {
     pool: PgPool,
 }
@@ -31,6 +33,7 @@ impl PgWateringPlanRepository {
 /// Flat row shape shared by `view_by_id` and `view_search` on
 /// `watering_plans`. `From` derives `created_at` from the UUID v7 id;
 /// transporter/trailer come from the role column on the vehicle join table.
+#[derive(sqlx::FromRow)]
 #[allow(dead_code)] // fields are read via the `From<WateringPlanViewRow>` impl
 struct WateringPlanViewRow {
     id: RawId,
@@ -83,6 +86,17 @@ impl From<WateringPlanViewRow> for WateringPlanView {
         }
     }
 }
+
+const WATERING_PLAN_COLUMNS: &str = "wp.id, wp.updated_at, wp.date, wp.description, \
+    wp.start_point_name, wp.status, wp.distance, wp.total_water_required, \
+    wp.cancellation_note, wp.refill_count, wp.duration, wp.provider, \
+    wp.additional_informations, wp.organization_id, \
+    (ARRAY_AGG(vwp.vehicle_id) FILTER (WHERE vwp.role = 'transporter'))[1] AS transporter_id, \
+    (ARRAY_AGG(vwp.vehicle_id) FILTER (WHERE vwp.role = 'trailer'))[1] AS trailer_id, \
+    COALESCE(ARRAY_AGG(DISTINCT twp.tree_cluster_id) FILTER (WHERE twp.tree_cluster_id IS NOT NULL), ARRAY[]::uuid[]) AS cluster_ids, \
+    COALESCE(ARRAY_AGG(DISTINCT uwp.user_id) FILTER (WHERE uwp.user_id IS NOT NULL), ARRAY[]::uuid[]) AS user_ids";
+
+const WATERING_PLAN_SORT_COLUMNS: SortColumns = &[("date", &["wp.date"])];
 
 #[async_trait]
 impl WateringPlanReader for PgWateringPlanRepository {
@@ -219,58 +233,31 @@ impl WateringPlanReader for PgWateringPlanRepository {
         query: WateringPlanSearchQuery,
         pagination: Pagination,
     ) -> Result<Page<WateringPlanView>, RepositoryError> {
-        let limit = i64::try_from(pagination.limit()).unwrap_or(i64::MAX);
-        let offset = i64::try_from(pagination.offset()).unwrap_or(i64::MAX);
-        let provider = query.provider.as_ref().map(|p| p.as_str().to_owned());
-        let statuses: Vec<WateringPlanStatus> = query.statuses;
-        let visible_ids = query.visible.into_raw_ids();
+        let page = ListSpec::new("watering_plans wp", "wp.id")
+            .projection_join("LEFT JOIN vehicle_watering_plans vwp ON vwp.watering_plan_id = wp.id")
+            .projection_join(
+                "LEFT JOIN tree_cluster_watering_plans twp ON twp.watering_plan_id = wp.id",
+            )
+            .projection_join("LEFT JOIN user_watering_plans uwp ON uwp.watering_plan_id = wp.id")
+            .group_by("wp.id")
+            .scope(Predicate::equals(
+                "wp.provider",
+                query.provider.as_ref().map(|p| p.as_str().to_owned()),
+            ))
+            .scope(Predicate::any_of_opt(
+                "wp.organization_id",
+                query.visible.into_raw_ids(),
+            ))
+            .filter(Predicate::any_of("wp.status", query.statuses))
+            .sort("date", true, WATERING_PLAN_SORT_COLUMNS)
+            .page(pagination)
+            .fetch::<WateringPlanViewRow>(&self.pool, WATERING_PLAN_COLUMNS)
+            .await?;
 
-        let total = sqlx::query_scalar!(
-            r#"SELECT COUNT(*) AS "count!: i64" FROM watering_plans wp
-            WHERE ($1::text IS NULL OR wp.provider = $1)
-              AND ($2::watering_plan_status[] = '{}' OR wp.status = ANY($2))
-              AND ($3::uuid[] IS NULL OR wp.organization_id = ANY($3))"#,
-            provider,
-            &statuses as &[WateringPlanStatus],
-            visible_ids.as_deref(),
-        )
-        .fetch_one(&self.pool)
-        .await? as u64;
-
-        let rows = sqlx::query_as!(
-            WateringPlanViewRow,
-            r#"SELECT wp.id, wp.updated_at, wp.date, wp.description, wp.start_point_name,
-                      wp.status AS "status: WateringPlanStatus",
-                      wp.distance, wp.total_water_required, wp.cancellation_note,
-                      wp.refill_count, wp.duration,
-                      wp.provider, wp.additional_informations,
-                      wp.organization_id,
-                      (ARRAY_AGG(vwp.vehicle_id) FILTER (WHERE vwp.role = 'transporter'))[1] AS "transporter_id: RawId",
-                      (ARRAY_AGG(vwp.vehicle_id) FILTER (WHERE vwp.role = 'trailer'))[1] AS "trailer_id: RawId",
-                      COALESCE(ARRAY_AGG(DISTINCT twp.tree_cluster_id) FILTER (WHERE twp.tree_cluster_id IS NOT NULL), ARRAY[]::uuid[]) AS "cluster_ids!: Vec<RawId>",
-                      COALESCE(ARRAY_AGG(DISTINCT uwp.user_id) FILTER (WHERE uwp.user_id IS NOT NULL), ARRAY[]::uuid[]) AS "user_ids!: Vec<RawId>"
-            FROM watering_plans wp
-            LEFT JOIN vehicle_watering_plans vwp ON vwp.watering_plan_id = wp.id
-            LEFT JOIN tree_cluster_watering_plans twp ON twp.watering_plan_id = wp.id
-            LEFT JOIN user_watering_plans uwp ON uwp.watering_plan_id = wp.id
-            WHERE ($1::text IS NULL OR wp.provider = $1)
-              AND ($2::watering_plan_status[] = '{}' OR wp.status = ANY($2))
-              AND ($5::uuid[] IS NULL OR wp.organization_id = ANY($5))
-            GROUP BY wp.id
-            ORDER BY wp.date DESC
-            LIMIT $3 OFFSET $4"#,
-            provider,
-            &statuses as &[WateringPlanStatus],
-            limit,
-            offset,
-            visible_ids.as_deref(),
-        )
-        .fetch_all(&self.pool)
-        .await?;
-
-        let items = rows.into_iter().map(Into::into).collect();
-
-        Ok(Page { items, total })
+        Ok(Page {
+            items: page.page.items.into_iter().map(Into::into).collect(),
+            total: page.page.total,
+        })
     }
 
     #[tracing::instrument(level = "trace", skip_all)]
