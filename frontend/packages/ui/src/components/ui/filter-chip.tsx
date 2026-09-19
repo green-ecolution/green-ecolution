@@ -26,7 +26,7 @@ const FilterChip = React.forwardRef<HTMLSpanElement, FilterChipProps>(
           type="button"
           onClick={onRemove}
           aria-label={t('filterChip.remove', { label })}
-          className="rounded-full p-0.5 text-dark-600 transition-colors hover:text-green-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="cursor-pointer rounded-full p-0.5 text-dark-600 transition-[color,opacity] duration-quick ease-out hover:text-green-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring active:opacity-70 motion-reduce:transition-none"
         >
           <X aria-hidden className="size-3" />
         </button>

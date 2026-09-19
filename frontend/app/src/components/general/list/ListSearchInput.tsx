@@ -57,7 +57,7 @@ const ListSearchInput = ({
             type="button"
             onClick={() => setDraft('')}
             aria-label={t('list.clearSearch')}
-            className="rounded-full p-1 text-dark-600 transition-colors hover:text-green-dark"
+            className="cursor-pointer rounded-full p-1 text-dark-600 transition-[color,opacity] duration-quick ease-out hover:text-green-dark active:opacity-70 motion-reduce:transition-none"
           >
             <X aria-hidden className="size-4" />
           </button>

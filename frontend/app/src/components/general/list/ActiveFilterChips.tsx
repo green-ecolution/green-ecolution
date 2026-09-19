@@ -26,7 +26,7 @@ const ActiveFilterChips = ({ chips, onReset, resultLabel }: ActiveFilterChipsPro
         <button
           type="button"
           onClick={onReset}
-          className="flex items-center gap-1.5 text-sm text-dark-600 underline transition-colors hover:text-green-dark"
+          className="flex cursor-pointer items-center gap-1.5 text-sm text-dark-600 underline transition-[color,opacity] duration-quick ease-out hover:text-green-dark active:opacity-70 motion-reduce:transition-none"
         >
           <RotateCcw aria-hidden className="size-3.5" />
           {t('list.resetFilters')}
