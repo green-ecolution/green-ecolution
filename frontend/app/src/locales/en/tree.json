@@ -81,12 +81,16 @@
     "emptyFilteredAction": "Reset filters"
   },
   "card": {
+    "statusSrLabel": "Watering status: ",
     "numberSrLabel": "Tree number: ",
     "numberUnknown": "Unknown",
     "clusterSrLabel": "Watering group: ",
     "clusterUnassigned": "no group",
     "sensorSrLabel": "Sensor: ",
-    "sensorUnassigned": "no sensor"
+    "sensorUnassigned": "no sensor",
+    "plantingYearSrLabel": "Planting year: ",
+    "lastWateredSrLabel": "Last watered: ",
+    "lastWateredNever": "never watered"
   },
   "selectedCard": {
     "label": "Tree:",

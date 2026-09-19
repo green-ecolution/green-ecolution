@@ -81,12 +81,16 @@
     "emptyFilteredAction": "Filter zurücksetzen"
   },
   "card": {
+    "statusSrLabel": "Bewässerungszustand: ",
     "numberSrLabel": "Baumnummer: ",
     "numberUnknown": "Unbekannt",
     "clusterSrLabel": "Bewässerungsgruppe: ",
     "clusterUnassigned": "keine Gruppe",
     "sensorSrLabel": "Sensor: ",
-    "sensorUnassigned": "kein Sensor"
+    "sensorUnassigned": "kein Sensor",
+    "plantingYearSrLabel": "Pflanzjahr: ",
+    "lastWateredSrLabel": "Letzte Bewässerung: ",
+    "lastWateredNever": "noch nie gegossen"
   },
   "selectedCard": {
     "label": "Baum:",
