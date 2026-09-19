@@ -130,7 +130,7 @@ pub async fn get_evaluation(
         .await?;
 
     let response = EvaluationResponse {
-        tree_count: tree_page.total as u32,
+        tree_count: tree_page.page.total as u32,
         treecluster_count: cluster_page.total as u32,
         sensor_count: sensor_page.total as u32,
         watering_plan_count: watering_plan_page.total as i32,

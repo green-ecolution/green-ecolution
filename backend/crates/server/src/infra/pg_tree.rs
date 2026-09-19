@@ -18,8 +18,8 @@ use domain::{
         watering_status::WateringStatus,
     },
     tree::{
-        PlantingYear, Tree, TreeDraft, TreeMarker, TreeReader, TreeSearchQuery, TreeView,
-        TreeViewWithDistance, TreeWriter,
+        PlantingYear, Tree, TreeDraft, TreeMarker, TreeReader, TreeSearchPage, TreeSearchQuery,
+        TreeView, TreeViewWithDistance, TreeWriter,
     },
 };
 
@@ -327,7 +327,7 @@ impl TreeReader for PgTreeRepository {
         &self,
         query: TreeSearchQuery,
         pagination: Pagination,
-    ) -> Result<Page<TreeView>, RepositoryError> {
+    ) -> Result<TreeSearchPage, RepositoryError> {
         let watering_statuses: Vec<WateringStatus> = query.watering_statuses;
         let planting_years: Vec<i32> = query
             .planting_years
@@ -347,16 +347,24 @@ impl TreeReader for PgTreeRepository {
         let sort_field = query.sort.field.as_sql_key();
         let sort_desc = query.sort.direction.is_descending();
 
-        let total = sqlx::query_scalar!(
-            r#"SELECT COUNT(*) AS "count!: i64" FROM trees
-            WHERE ($1::watering_status[] = '{}' OR watering_status = ANY($1))
-              AND ($2::int[] = '{}' OR planting_year = ANY($2))
-              AND ($3::text IS NULL OR provider = $3)
-              AND ($4::bool IS NULL OR ($4 = true AND tree_cluster_id IS NOT NULL) OR ($4 = false AND tree_cluster_id IS NULL))
-              AND ($5::text IS NULL OR number ILIKE $5 ESCAPE '\' OR species ILIKE $5 ESCAPE '\')
-              AND ($6::uuid[] IS NULL OR organization_id = ANY($6))
-              AND ($7::uuid[] IS NULL OR tree_cluster_id = ANY($7))
-              AND ($8::bool IS NULL OR ($8 = true AND sensor_id IS NOT NULL) OR ($8 = false AND sensor_id IS NULL))"#,
+        // Both totals in one pass: the narrowing filters move into a FILTER
+        // clause so the same scan also yields the count without them, which is
+        // what the list header's "5 of 563" compares against. Scope and
+        // provider stay in the WHERE — they are not the user's filters.
+        let counts = sqlx::query!(
+            r#"SELECT
+                 COUNT(*) FILTER (
+                   WHERE ($1::watering_status[] = '{}' OR watering_status = ANY($1))
+                     AND ($2::int[] = '{}' OR planting_year = ANY($2))
+                     AND ($4::bool IS NULL OR ($4 = true AND tree_cluster_id IS NOT NULL) OR ($4 = false AND tree_cluster_id IS NULL))
+                     AND ($5::text IS NULL OR number ILIKE $5 ESCAPE '\' OR species ILIKE $5 ESCAPE '\')
+                     AND ($7::uuid[] IS NULL OR tree_cluster_id = ANY($7))
+                     AND ($8::bool IS NULL OR ($8 = true AND sensor_id IS NOT NULL) OR ($8 = false AND sensor_id IS NULL))
+                 ) AS "total!: i64",
+                 COUNT(*) AS "total_unfiltered!: i64"
+            FROM trees
+            WHERE ($3::text IS NULL OR provider = $3)
+              AND ($6::uuid[] IS NULL OR organization_id = ANY($6))"#,
             &watering_statuses as &[WateringStatus],
             &planting_years,
             provider.as_deref(),
@@ -367,7 +375,9 @@ impl TreeReader for PgTreeRepository {
             query.has_sensor,
         )
         .fetch_one(&self.pool)
-        .await? as u64;
+        .await?;
+        let total = counts.total as u64;
+        let total_unfiltered = counts.total_unfiltered as u64;
 
         // One CASE pair per sortable column instead of a runtime-built query:
         // query_as! cannot interpolate an ORDER BY, and the closed TreeSortField
@@ -438,7 +448,10 @@ impl TreeReader for PgTreeRepository {
 
         let items = rows.into_iter().map(Into::into).collect();
 
-        Ok(Page { items, total })
+        Ok(TreeSearchPage {
+            page: Page { items, total },
+            total_unfiltered,
+        })
     }
 
     #[tracing::instrument(level = "trace", skip_all)]

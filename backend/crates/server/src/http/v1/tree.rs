@@ -123,18 +123,19 @@ pub async fn list_trees(
         ..TreeSearchQuery::default()
     };
 
-    let page = state.tree_service.search_view(query, pagination).await?;
+    let result = state.tree_service.search_view(query, pagination).await?;
 
     let sensor_map = resolve_sensors_by_str_ids(
         &state.sensor_service,
-        page.items.iter().filter_map(|t| t.sensor_id.as_deref()),
+        result.page.items.iter().filter_map(|t| t.sensor_id.as_deref()),
     )
     .await?;
 
-    let response = ListResponse::from_page_with(page, &pagination, |tree: &TreeView| {
+    let response = ListResponse::from_page_with(result.page, &pagination, |tree: &TreeView| {
         let sensor = tree.sensor_id.as_deref().and_then(|id| sensor_map.get(id));
         TreeResponse::from((tree, sensor))
-    });
+    })
+    .with_total_unfiltered(result.total_unfiltered);
     Ok(Json(response))
 }
 

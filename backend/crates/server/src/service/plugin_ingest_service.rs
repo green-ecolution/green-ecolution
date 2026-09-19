@@ -447,8 +447,7 @@ mod tests {
             &self,
             _query: domain::tree::TreeSearchQuery,
             _pagination: domain::shared::pagination::Pagination,
-        ) -> Result<domain::shared::pagination::Page<domain::tree::TreeView>, RepositoryError>
-        {
+        ) -> Result<domain::tree::TreeSearchPage, RepositoryError> {
             unimplemented!()
         }
         async fn view_nearest(

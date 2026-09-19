@@ -27,6 +27,14 @@ pub struct PaginationResponse {
     /// Previous page number, if available.
     #[schema(example = 1, nullable)]
     pub prev_page: Option<u64>,
+
+    /// Total number of records the same request would match without its own
+    /// narrowing filters, so a client can show "5 of 563" without a second
+    /// request. Authorization scope still applies. Absent on endpoints that do
+    /// not compute it.
+    #[schema(example = 563, minimum = 0, nullable)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub total_unfiltered: Option<u64>,
 }
 
 impl PaginationResponse {
@@ -48,7 +56,14 @@ impl PaginationResponse {
             total_pages,
             next_page,
             prev_page,
+            total_unfiltered: None,
         }
+    }
+
+    /// Adds the pre-filter total to an already-built response.
+    pub fn with_total_unfiltered(mut self, total_unfiltered: u64) -> Self {
+        self.total_unfiltered = Some(total_unfiltered);
+        self
     }
 }
 

@@ -40,7 +40,7 @@ use crate::{
 pub use error::TreeError;
 pub use marker::TreeMarker;
 pub use planting_year::{MAX_PLANTING_YEAR, MIN_PLANTING_YEAR, PlantingYear};
-pub use repository::{TreeReader, TreeWriter};
+pub use repository::{TreeReader, TreeSearchPage, TreeWriter};
 #[doc(hidden)]
 pub use snapshot::TreeSnapshot;
 pub use sort::{TreeSort, TreeSortField};

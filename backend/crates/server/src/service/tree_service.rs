@@ -12,12 +12,12 @@ use domain::{
     shared::{
         coordinates::Coordinate,
         distance::Distance,
-        pagination::{Page, Pagination},
+        pagination::Pagination,
         watering_status::WateringStatus,
     },
     tree::{
-        PlantingYear, Tree, TreeDraft, TreeMarker, TreeReader, TreeSearchQuery, TreeView,
-        TreeViewWithDistance, TreeWriter,
+        PlantingYear, Tree, TreeDraft, TreeMarker, TreeReader, TreeSearchPage, TreeSearchQuery,
+        TreeView, TreeViewWithDistance, TreeWriter,
     },
 };
 
@@ -107,7 +107,7 @@ impl TreeService {
         &self,
         query: TreeSearchQuery,
         pagination: Pagination,
-    ) -> Result<Page<TreeView>, ServiceError> {
+    ) -> Result<TreeSearchPage, ServiceError> {
         Ok(self.reader.view_search(query, pagination).await?)
     }
 

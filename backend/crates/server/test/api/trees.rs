@@ -713,6 +713,38 @@ async fn list_trees_filters_by_planting_year() {
     assert_eq!(body["pagination"]["total_records"], 1);
 }
 
+#[tokio::test]
+async fn list_trees_reports_the_total_before_the_request_filters() {
+    let app = spawn_app().await;
+    create_tree_with(&app, "T-001", 2018, None).await;
+    create_tree_with(&app, "T-002", 2020, None).await;
+    create_tree_with(&app, "T-003", 2020, None).await;
+
+    let response = app.get("/api/v1/trees?planting_year=2018").await;
+
+    assert_eq!(response.status().as_u16(), 200);
+    let body: serde_json::Value = response.json().await.unwrap();
+    assert_eq!(body["pagination"]["total_records"], 1);
+    assert_eq!(body["pagination"]["total_unfiltered"], 3);
+}
+
+#[tokio::test]
+async fn list_trees_total_unfiltered_ignores_paging_but_not_the_result() {
+    let app = spawn_app().await;
+    for n in 1..=5 {
+        create_tree_with(&app, &format!("T-00{n}"), 2020, None).await;
+    }
+
+    let response = app.get("/api/v1/trees?per_page=2&page=2").await;
+
+    assert_eq!(response.status().as_u16(), 200);
+    let body: serde_json::Value = response.json().await.unwrap();
+    // No narrowing filter, so both totals describe the same set; paging must
+    // not shrink either of them.
+    assert_eq!(body["pagination"]["total_records"], 5);
+    assert_eq!(body["pagination"]["total_unfiltered"], 5);
+}
+
 // Rows predating the lower bound exist (imports, the old unbounded API), and the
 // year slider offers them. Filtering is a lookup and must not validate like a write.
 #[tokio::test]
