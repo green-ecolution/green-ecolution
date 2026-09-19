@@ -1,0 +1,61 @@
+name: "Benchmark Baseline"
+
+on:
+  schedule:
+    - cron: "0 4 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  SQLX_OFFLINE: "true"
+
+jobs:
+  baseline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo build
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: backend
+          cache-on-failure: "true"
+
+      # Last week's measurements, if any were ever stored. The first run has
+      # nothing to compare against and only records.
+      - name: Restore previous baseline
+        uses: actions/cache/restore@v4
+        with:
+          path: backend/target/criterion
+          key: criterion-baseline
+
+      # Reports deviations in the log and the artifact, but never fails the
+      # job: shared runners are too noisy for a timing gate. Promote this to a
+      # real gate only once the numbers have proven stable over several weeks.
+      - name: Run benchmarks
+        working-directory: ./backend
+        run: cargo bench -p domain --locked -- --save-baseline weekly
+
+      - name: Store baseline
+        uses: actions/cache/save@v4
+        with:
+          path: backend/target/criterion
+          key: criterion-baseline
+
+      - name: Upload report
+        uses: actions/upload-artifact@v5
+        with:
+          name: criterion-report
+          path: backend/target/criterion
+          retention-days: 90

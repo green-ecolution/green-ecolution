@@ -59,6 +59,12 @@ jobs:
         working-directory: ./backend
         run: cargo test --workspace --locked
 
+      # Runs each benchmark once without measuring: proves they still compile
+      # and execute. Timing is not gated here, shared runners are too noisy.
+      - name: Benchmark smoke run
+        working-directory: ./backend
+        run: cargo bench -p domain --locked -- --test
+
   msrv:
     needs: changes
     if: needs.changes.outputs.backend == 'true'

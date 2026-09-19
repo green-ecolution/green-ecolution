@@ -536,6 +536,18 @@ test:
     @echo "Frontend tests..."
     cd {{ frontend_dir }} && pnpm run test
 
+# Run the domain micro-benchmarks and record measurements
+[group('check')]
+bench:
+    @echo "Criterion benchmarks (domain)..."
+    cd {{ backend_dir }} && cargo bench -p domain --locked
+
+# Execute every benchmark once without measuring; this is what CI runs
+[group('check')]
+bench-check:
+    @echo "Benchmark smoke run..."
+    cd {{ backend_dir }} && cargo bench -p domain --locked -- --test
+
 # Run Rust tests with verbose output
 [group('check')]
 test-verbose:
