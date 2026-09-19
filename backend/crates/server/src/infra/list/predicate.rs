@@ -78,6 +78,25 @@ impl Predicate {
         }))
     }
 
+    /// `None` writes nothing; `Some(ids)` writes `= ANY(ids)` even when `ids` is
+    /// empty, which matches no row. The empty case is load-bearing: an
+    /// authorization scope that resolves to no organizations must hide
+    /// everything, not everything-is-visible.
+    pub fn any_of_opt<T>(expr: &'static str, values: Option<Vec<T>>) -> Option<Self>
+    where
+        T: Clone + Send + Sync + 'static,
+        Vec<T>: for<'q> Encode<'q, Postgres> + Type<Postgres>,
+    {
+        let values = values?;
+
+        Some(Self::new(move |qb| {
+            qb.push(expr)
+                .push(" = ANY(")
+                .push_bind(values.clone())
+                .push(")");
+        }))
+    }
+
     pub fn equals<T>(expr: &'static str, value: Option<T>) -> Option<Self>
     where
         T: Clone + Send + Sync + 'static + for<'q> Encode<'q, Postgres> + Type<Postgres>,
@@ -125,6 +144,21 @@ mod tests {
     #[test]
     fn empty_collection_writes_nothing() {
         assert!(Predicate::any_of::<uuid::Uuid>("v.id", Vec::new()).is_none());
+    }
+
+    #[test]
+    fn any_of_opt_none_writes_nothing() {
+        assert!(Predicate::any_of_opt::<uuid::Uuid>("t.organization_id", None).is_none());
+    }
+
+    #[test]
+    fn any_of_opt_some_empty_still_writes_a_predicate_that_matches_nothing() {
+        let sql = rendered(Predicate::any_of_opt::<uuid::Uuid>(
+            "t.organization_id",
+            Some(Vec::new()),
+        ));
+
+        assert_eq!(sql, "t.organization_id = ANY($1)");
     }
 
     #[test]

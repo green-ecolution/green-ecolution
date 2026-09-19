@@ -379,9 +379,9 @@ impl TreeReader for PgTreeRepository {
                 "t.provider",
                 query.provider.as_ref().map(|p| p.as_str().to_owned()),
             ))
-            .scope(Predicate::any_of(
+            .scope(Predicate::any_of_opt(
                 "t.organization_id",
-                query.visible.into_raw_ids().unwrap_or_default(),
+                org_scope_ids(query.visible, query.organization_id),
             ))
             .filter(Predicate::text_search(&["t.number", "t.species"], query.q))
             .filter(Predicate::any_of(
