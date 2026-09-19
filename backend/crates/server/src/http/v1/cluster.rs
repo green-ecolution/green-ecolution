@@ -147,9 +147,10 @@ pub async fn list_clusters(
         visible,
         ..TreeClusterSearchQuery::default()
     };
-    let page = state.cluster_service.search_view(query, pagination).await?;
+    let result = state.cluster_service.search_view(query, pagination).await?;
 
-    let region_ids: Vec<Id<Region>> = page
+    let region_ids: Vec<Id<Region>> = result
+        .page
         .items
         .iter()
         .filter_map(|c| c.region_id.map(Id::new))
@@ -157,13 +158,14 @@ pub async fn list_clusters(
     let regions = state.region_service.by_ids(&region_ids).await?;
     let region_map: HashMap<Id<Region>, &_> = regions.iter().map(|r| (r.id, r)).collect();
 
-    let response = ListResponse::from_page_with(page, &pagination, |cluster: &TreeClusterView| {
-        let region = cluster
-            .region_id
-            .map(Id::new)
-            .and_then(|id| region_map.get(&id).copied());
-        TreeClusterInListResponse::from((cluster, region))
-    });
+    let response =
+        ListResponse::from_page_with(result.page, &pagination, |cluster: &TreeClusterView| {
+            let region = cluster
+                .region_id
+                .map(Id::new)
+                .and_then(|id| region_map.get(&id).copied());
+            TreeClusterInListResponse::from((cluster, region))
+        });
     Ok(Json(response))
 }
 
