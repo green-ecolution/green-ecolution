@@ -3,3 +3,4 @@
 //! against it.
 
 pub mod scale;
+pub mod seed;

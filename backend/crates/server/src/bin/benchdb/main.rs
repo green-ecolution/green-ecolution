@@ -6,7 +6,7 @@
 
 mod cli;
 
-use server::bench::scale::Scale;
+use server::bench::{scale::Scale, seed};
 use sqlx::{PgPool, postgres::PgPoolOptions};
 
 #[tokio::main]
@@ -36,6 +36,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 scale.name(),
                 scale.trees()
             );
+            let counts = seed::seed_core(
+                &pool,
+                &seed::SeedPlan {
+                    scale,
+                    history_days,
+                    seed,
+                },
+            )
+            .await?;
+            seed::analyze(&pool).await?;
+            println!("{counts:?}");
             Ok(())
         }
         cli::Command::Run { .. } | cli::Command::Campaign { .. } => {
