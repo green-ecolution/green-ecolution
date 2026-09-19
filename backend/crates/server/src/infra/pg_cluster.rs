@@ -225,8 +225,8 @@ impl TreeClusterReader for PgTreeClusterRepository {
             .filter(|s| !s.is_empty())
             .map(|s| format!("%{}%", like_escape(s)));
         let search = search.as_deref();
-        let sort = query.sort.as_str();
-        let order = query.order.as_str();
+        let sort = query.sort.field.as_sql_key();
+        let sort_desc = query.sort.direction.is_descending();
         let visible_ids = query.visible.clone().into_raw_ids();
 
         let total = sqlx::query_scalar!(
@@ -271,11 +271,11 @@ impl TreeClusterReader for PgTreeClusterRepository {
               AND ($6::uuid[] IS NULL OR tc.organization_id = ANY($6))
             GROUP BY tc.id
             ORDER BY
-              CASE WHEN $7 = 'moisture' AND $8 = 'asc'  THEN tc.moisture_level END ASC NULLS LAST,
-              CASE WHEN $7 = 'moisture' AND $8 = 'desc' THEN tc.moisture_level END DESC NULLS LAST,
-              CASE WHEN $7 = 'trees'    AND $8 = 'asc'  THEN COUNT(t.id) END ASC,
-              CASE WHEN $7 = 'trees'    AND $8 = 'desc' THEN COUNT(t.id) END DESC,
-              CASE WHEN $7 = 'name'     AND $8 = 'desc' THEN tc.name END DESC,
+              CASE WHEN $7 = 'moisture' AND NOT $8 THEN tc.moisture_level END ASC NULLS LAST,
+              CASE WHEN $7 = 'moisture' AND $8     THEN tc.moisture_level END DESC NULLS LAST,
+              CASE WHEN $7 = 'trees'    AND NOT $8 THEN COUNT(t.id) END ASC,
+              CASE WHEN $7 = 'trees'    AND $8     THEN COUNT(t.id) END DESC,
+              CASE WHEN $7 = 'name'     AND $8     THEN tc.name END DESC,
               tc.name ASC, tc.id ASC
             LIMIT $9 OFFSET $10"#,
             &watering_statuses as &[WateringStatus],
@@ -285,7 +285,7 @@ impl TreeClusterReader for PgTreeClusterRepository {
             &query.soil_conditions as &[SoilCondition],
             visible_ids.as_deref(),
             sort,
-            order,
+            sort_desc,
             limit,
             offset,
         )

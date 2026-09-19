@@ -31,13 +31,14 @@ use domain::{
     Id,
     authorization::{Action, Permission, Resource},
     cluster::{
-        ClusterAddress, ClusterName, ClusterSort, SortOrder, TreeClusterSearchQuery,
+        ClusterAddress, ClusterName, ClusterSort, ClusterSortField, TreeClusterSearchQuery,
         TreeClusterUpdate, TreeClusterView,
     },
     region::Region,
     shared::{
         pagination::Pagination,
         provenance::{Provenance, ProviderId},
+        sort::SortDirection,
     },
 };
 
@@ -125,6 +126,10 @@ pub async fn list_clusters(
             Permission::new(Resource::TreeCluster, Action::Read),
         )
         .await?;
+    let sort = ClusterSort {
+        field: params.sort.map(ClusterSortField::from).unwrap_or_default(),
+        direction: params.order.map(SortDirection::from).unwrap_or_default(),
+    };
     let query = TreeClusterSearchQuery {
         watering_statuses: params
             .watering_status
@@ -138,16 +143,7 @@ pub async fn list_clusters(
             .map(domain::cluster::SoilCondition::from)
             .collect(),
         query: search,
-        sort: params
-            .sort
-            .as_deref()
-            .and_then(|s| s.parse::<ClusterSort>().ok())
-            .unwrap_or_default(),
-        order: params
-            .order
-            .as_deref()
-            .and_then(|s| s.parse::<SortOrder>().ok())
-            .unwrap_or_default(),
+        sort,
         visible,
         ..TreeClusterSearchQuery::default()
     };

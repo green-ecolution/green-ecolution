@@ -17,6 +17,7 @@ pub mod repository;
 pub mod snapshot;
 pub mod soil_condition;
 pub mod soil_moisture;
+pub mod sort;
 pub mod view;
 
 use chrono::{DateTime, Utc};
@@ -45,6 +46,7 @@ pub use soil_moisture::{
     ClusterWateringEvent, SoilMoistureBucket, SoilMoistureConditionPoint, SoilMoistureDepthSeries,
     SoilMoistureOverview, SoilMoisturePoint, condition_series,
 };
+pub use sort::{ClusterSort, ClusterSortField};
 pub use view::{ClusterBoundaryView, TreeClusterView};
 
 #[derive(Debug, Clone, Default)]
@@ -100,63 +102,6 @@ pub struct TreeClusterDraft {
     pub organization_id: Id<Organization>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
-pub enum ClusterSort {
-    #[default]
-    Name,
-    Moisture,
-    Trees,
-}
-
-impl ClusterSort {
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            ClusterSort::Name => "name",
-            ClusterSort::Moisture => "moisture",
-            ClusterSort::Trees => "trees",
-        }
-    }
-}
-
-impl std::str::FromStr for ClusterSort {
-    type Err = ();
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "name" => Ok(ClusterSort::Name),
-            "moisture" => Ok(ClusterSort::Moisture),
-            "trees" => Ok(ClusterSort::Trees),
-            _ => Err(()),
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
-pub enum SortOrder {
-    #[default]
-    Asc,
-    Desc,
-}
-
-impl SortOrder {
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            SortOrder::Asc => "asc",
-            SortOrder::Desc => "desc",
-        }
-    }
-}
-
-impl std::str::FromStr for SortOrder {
-    type Err = ();
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "asc" => Ok(SortOrder::Asc),
-            "desc" => Ok(SortOrder::Desc),
-            _ => Err(()),
-        }
-    }
-}
-
 #[derive(Debug, Default, Clone)]
 pub struct TreeClusterSearchQuery {
     pub watering_statuses: Vec<WateringStatus>,
@@ -166,7 +111,6 @@ pub struct TreeClusterSearchQuery {
     pub query: Option<String>,
     pub soil_conditions: Vec<SoilCondition>,
     pub sort: ClusterSort,
-    pub order: SortOrder,
     /// Which organizations may see the result. Callers must set this per
     /// request; defaults to unrestricted for internal consumers (e.g. event
     /// handlers).

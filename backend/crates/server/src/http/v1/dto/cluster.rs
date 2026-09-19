@@ -4,12 +4,15 @@ use serde::{Deserialize, Serialize};
 use domain::{
     Id,
     cluster::{
-        ClusterAddress, ClusterBoundaryView, ClusterMarker, ClusterName, ClusterStatistics,
-        TreeCluster, TreeClusterDraft, TreeClusterView,
+        ClusterAddress, ClusterBoundaryView, ClusterMarker, ClusterName, ClusterSortField,
+        ClusterStatistics, TreeCluster, TreeClusterDraft, TreeClusterView,
     },
     organization::Organization,
     region::Region,
-    shared::provenance::{Provenance, ProviderId},
+    shared::{
+        provenance::{Provenance, ProviderId},
+        sort::SortDirection,
+    },
 };
 
 use crate::service::ServiceError;
@@ -190,6 +193,41 @@ impl From<(&TreeCluster, Option<&Region>)> for TreeClusterInListResponse {
     }
 }
 
+/// Sortable columns of the cluster list.
+#[derive(Debug, Clone, Copy, Deserialize, utoipa::ToSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum ClusterSortParam {
+    Name,
+    Moisture,
+    Trees,
+}
+
+impl From<ClusterSortParam> for ClusterSortField {
+    fn from(value: ClusterSortParam) -> Self {
+        match value {
+            ClusterSortParam::Name => Self::Name,
+            ClusterSortParam::Moisture => Self::Moisture,
+            ClusterSortParam::Trees => Self::Trees,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, utoipa::ToSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum SortOrderParam {
+    Asc,
+    Desc,
+}
+
+impl From<SortOrderParam> for SortDirection {
+    fn from(value: SortOrderParam) -> Self {
+        match value {
+            SortOrderParam::Asc => Self::Ascending,
+            SortOrderParam::Desc => Self::Descending,
+        }
+    }
+}
+
 /// Query parameters for the paginated cluster list endpoint.
 #[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct ClusterListParams {
@@ -212,11 +250,11 @@ pub struct ClusterListParams {
     #[param(example = "Hafen")]
     pub query: Option<String>,
     /// Sort field. Allowed: `name|moisture|trees`.
-    #[param(example = "name")]
-    pub sort: Option<String>,
+    #[param(nullable, inline)]
+    pub sort: Option<ClusterSortParam>,
     /// Sort direction. Allowed: `asc|desc`.
-    #[param(example = "asc")]
-    pub order: Option<String>,
+    #[param(nullable, inline)]
+    pub order: Option<SortOrderParam>,
 }
 
 // -- Requests --
