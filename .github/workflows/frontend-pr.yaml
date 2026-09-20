@@ -145,7 +145,8 @@ jobs:
           if-no-files-found: error
 
   # The app build is already covered by the build job; this only needs to
-  # run when the image definition itself changes.
+  # run when the image definition itself changes. It reads the release build's
+  # registry cache and writes nothing.
   test_dockerfile:
     needs: changes
     if: needs.changes.outputs.docker == 'true'
@@ -162,8 +163,7 @@ jobs:
           file: ./frontend/Dockerfile
           push: false
           tags: frontend:test
-          cache-from: type=gha,scope=frontend-dockerfile
-          cache-to: type=gha,mode=max,scope=frontend-dockerfile
+          cache-from: type=registry,ref=ghcr.io/green-ecolution/green-ecolution/frontend:buildcache
 
   keycloak_theme:
     needs: changes

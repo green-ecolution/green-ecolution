@@ -163,7 +163,9 @@ jobs:
         run: cargo sqlx prepare --workspace --check -- --all-targets
 
   # Full workspace compilation is already covered by build_and_test; this
-  # only needs to run when the image definition itself changes.
+  # only needs to run when the image definition itself changes. It reads the
+  # release build's registry cache and writes nothing: a verification build
+  # that runs this rarely is not worth a cache entry of its own.
   test_dockerfile:
     needs: changes
     if: needs.changes.outputs.docker == 'true'
@@ -179,8 +181,7 @@ jobs:
           file: ./backend/Dockerfile
           push: false
           tags: backend:test
-          cache-from: type=gha,scope=backend-dockerfile
-          cache-to: type=gha,mode=max,scope=backend-dockerfile
+          cache-from: type=registry,ref=ghcr.io/green-ecolution/green-ecolution/backend:buildcache
 
   backend-pr-ok:
     name: Backend PR OK

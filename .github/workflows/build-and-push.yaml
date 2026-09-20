@@ -153,8 +153,11 @@ jobs:
             GE_GIT_COMMIT=${{ steps.short-sha.outputs.short }}
             GE_GIT_BRANCH=${{ github.event_name == 'pull_request' && github.event.pull_request.head.ref || github.ref_name }}
             GE_BUILD_TIME=${{ steps.build-time.outputs.timestamp }}
-          cache-from: type=gha,scope=build-backend
-          cache-to: type=gha,mode=max,scope=build-backend
+          # Registry rather than gha: with the cargo-chef dependency layer now
+          # part of the image, mode=max runs into several GB and the repository
+          # cache budget is 10 GB shared with every rust-cache entry.
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/backend:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/backend:buildcache,mode=max
 
   build-frontend:
     runs-on: ubuntu-latest
@@ -193,8 +196,8 @@ jobs:
             ENV=${{ needs.determine-environment.outputs.environment == 'stage' && 'dev' || 'prod' }}
             BASEURL=/api
             APP_VERSION=${{ needs.determine-environment.outputs.image-tag }}
-          cache-from: type=gha,scope=build-frontend
-          cache-to: type=gha,mode=max,scope=build-frontend
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/frontend:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/frontend:buildcache,mode=max
 
   build-keycloak:
     runs-on: ubuntu-latest
@@ -229,8 +232,8 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/keycloak:${{ needs.determine-environment.outputs.image-tag }}
-          cache-from: type=gha,scope=build-keycloak
-          cache-to: type=gha,mode=max,scope=build-keycloak
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/keycloak:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/keycloak:buildcache,mode=max
 
   comment-stage:
     runs-on: ubuntu-latest

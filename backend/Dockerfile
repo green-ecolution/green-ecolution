@@ -9,11 +9,12 @@ FROM chef AS builder
 RUN apt-get update && apt-get install -y --no-install-recommends lld clang \
   && rm -rf /var/lib/apt/lists/*
 
+# Deliberately no --mount=type=cache here. BuildKit cache exporters (gha,
+# registry) export layer diffs, never cache mounts, so a mounted /app/target
+# left this layer empty and CI recompiled the whole dependency tree every run.
+# Writing into the layer is what makes cargo-chef work across machines.
 COPY --from=planner /app/recipe.json recipe.json
-RUN --mount=type=cache,target=/usr/local/cargo/registry,sharing=locked \
-    --mount=type=cache,target=/usr/local/cargo/git,sharing=locked \
-    --mount=type=cache,target=/app/target,sharing=locked \
-    cargo chef cook --release --locked --recipe-path recipe.json
+RUN cargo chef cook --release --locked --recipe-path recipe.json
 
 COPY . .
 
@@ -26,10 +27,7 @@ ENV SQLX_OFFLINE=true \
     GE_GIT_BRANCH=$GE_GIT_BRANCH \
     GE_BUILD_TIME=$GE_BUILD_TIME
 
-RUN --mount=type=cache,target=/usr/local/cargo/registry,sharing=locked \
-    --mount=type=cache,target=/usr/local/cargo/git,sharing=locked \
-    --mount=type=cache,target=/app/target,sharing=locked \
-    cargo build --release --locked --bin green-ecolution --bin migrate \
+RUN cargo build --release --locked --bin green-ecolution --bin migrate \
     && cp target/release/green-ecolution /usr/local/bin/green-ecolution \
     && cp target/release/migrate /usr/local/bin/migrate
 
