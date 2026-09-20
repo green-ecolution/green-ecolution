@@ -14,7 +14,9 @@ use crate::{
             dto::{
                 ListResponse,
                 tree::TransferRequest,
-                vehicle::{VehicleCreateRequest, VehicleResponse, VehicleUpdateRequest},
+                vehicle::{
+                    VehicleCreateRequest, VehicleListParams, VehicleResponse, VehicleUpdateRequest,
+                },
             },
             pagination::PaginationParams,
             scope,
@@ -25,8 +27,8 @@ use crate::{
 use domain::{
     Id,
     authorization::{Action, Permission, Resource},
-    shared::pagination::Pagination,
-    vehicle::VehicleSearchQuery,
+    shared::{pagination::Pagination, sort::SortDirection},
+    vehicle::{ArchiveFilterKind, VehicleSearchQuery, VehicleSort, VehicleSortField},
 };
 
 pub fn routes() -> OpenApiRouter<Arc<AppState>> {
@@ -39,33 +41,87 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
         .routes(routes!(transfer_vehicle))
 }
 
+const VEHICLE_LIST_Q_MAX_LEN: usize = 100;
+
 #[utoipa::path(get, path = "/vehicles", tag = "Vehicles",
     operation_id = "listVehicles",
     summary = "List all vehicles",
-    description = "Returns a paginated list of active vehicles.",
-    params(PaginationParams),
+    description = "Returns a paginated list of active vehicles. \
+                   Optional `q` parameter case-insensitively filters by number plate, model or description. \
+                   Optional filter parameters (status, type, driving_license, archive) narrow the result; array parameters are repeatable. \
+                   Optional `sort` (number_plate, water_capacity, model, type) and `order` (asc, desc) control the result order; the default is number_plate ascending.",
+    params(VehicleListParams),
     responses(
         (status = 200, description = "Paginated list of vehicles", body = ListResponse<VehicleResponse>),
+        (status = 400, description = "Invalid query parameter", body = ErrorBody),
         (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
-#[tracing::instrument(level = "info", skip_all)]
+#[tracing::instrument(level = "info", skip_all, fields(query.len = tracing::field::Empty))]
 pub async fn list_vehicles(
     State(state): State<Arc<AppState>>,
     user: AuthUserExtractor,
-    Query(params): Query<PaginationParams>,
+    Query(params): Query<VehicleListParams>,
 ) -> Result<Json<ListResponse<VehicleResponse>>, ServiceError> {
-    let pagination = Pagination::from(&params);
+    let pagination = Pagination::new(params.page, params.per_page);
+
+    let q = params
+        .q
+        .as_deref()
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+        .map(str::to_owned);
+
+    if let Some(ref qv) = q
+        && qv.chars().count() > VEHICLE_LIST_Q_MAX_LEN
+    {
+        return Err(ServiceError::InvalidInput(format!(
+            "q must be at most {VEHICLE_LIST_Q_MAX_LEN} characters"
+        )));
+    }
+
+    if let Some(ref qv) = q {
+        tracing::Span::current().record("query.len", qv.chars().count());
+    }
+
     let visible = state
         .authorization_service
         .visible_orgs_for(user.id, Permission::new(Resource::Vehicle, Action::Read))
         .await?;
+
+    let sort = VehicleSort {
+        field: params.sort.map(VehicleSortField::from).unwrap_or_default(),
+        direction: params.order.map(SortDirection::from).unwrap_or_default(),
+    };
+
     let query = VehicleSearchQuery {
+        q,
+        statuses: params
+            .status
+            .into_iter()
+            .map(domain::vehicle::VehicleStatus::from)
+            .collect(),
+        types: params
+            .vehicle_type
+            .into_iter()
+            .map(domain::vehicle::VehicleType::from)
+            .collect(),
+        driving_licenses: params
+            .driving_license
+            .into_iter()
+            .map(domain::vehicle::DrivingLicense::from)
+            .collect(),
+        archive: params
+            .archive
+            .map(ArchiveFilterKind::from)
+            .unwrap_or_default(),
+        sort,
         visible,
         ..VehicleSearchQuery::default()
     };
-    let page = state.vehicle_service.search_view(query, pagination).await?;
-    let response = ListResponse::<VehicleResponse>::from_page(page, &pagination);
+    let result = state.vehicle_service.search_view(query, pagination).await?;
+    let response = ListResponse::<VehicleResponse>::from_page(result.page, &pagination)
+        .with_total_unfiltered(result.total_unfiltered);
     Ok(Json(response))
 }
 
@@ -229,13 +285,12 @@ pub async fn list_archived_vehicles(
         .visible_orgs_for(user.id, Permission::new(Resource::Vehicle, Action::Read))
         .await?;
     let query = VehicleSearchQuery {
-        only_archived: true,
-        with_archived: true,
+        archive: ArchiveFilterKind::ArchivedOnly,
         visible,
         ..Default::default()
     };
-    let page = state.vehicle_service.search_view(query, pagination).await?;
-    let response = ListResponse::<VehicleResponse>::from_page(page, &pagination);
+    let result = state.vehicle_service.search_view(query, pagination).await?;
+    let response = ListResponse::<VehicleResponse>::from_page(result.page, &pagination);
     Ok(Json(response))
 }
 

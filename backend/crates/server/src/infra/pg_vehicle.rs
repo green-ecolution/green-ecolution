@@ -3,14 +3,15 @@ use chrono::{DateTime, NaiveDateTime};
 use serde_json::Value;
 use sqlx::PgPool;
 
+use crate::infra::list::{ArchiveFilter, ListSpec, Predicate, SortColumns};
 use domain::{
     Id, IdSliceExt, RawId, RepositoryError,
     authorization::Visibility,
-    shared::pagination::{Page, Pagination},
+    shared::pagination::{Page, Pagination, SearchPage},
     vehicle::{
-        DrivingLicense, NumberPlate, Vehicle, VehicleAvailability, VehicleDraft, VehicleReader,
-        VehicleSearchQuery, VehicleSnapshot, VehicleType, VehicleView, VehicleWriter,
-        derive_status,
+        ArchiveFilterKind, DrivingLicense, NumberPlate, Vehicle, VehicleAvailability, VehicleDraft,
+        VehicleReader, VehicleSearchQuery, VehicleSnapshot, VehicleStatus, VehicleType,
+        VehicleView, VehicleWriter, derive_status,
     },
 };
 
@@ -27,7 +28,7 @@ impl PgVehicleRepository {
 /// Flat row shape shared by every `view_*` query on `vehicles`. The `From`
 /// impl derives `created_at` from the UUID v7 id and the visible status from
 /// the availability plus the `on_active_plan` flag each query computes.
-#[allow(dead_code)] // fields are read via the `From<VehicleViewRow>` impl
+#[derive(sqlx::FromRow)]
 struct VehicleViewRow {
     id: RawId,
     updated_at: NaiveDateTime,
@@ -77,6 +78,31 @@ impl From<VehicleViewRow> for VehicleView {
         }
     }
 }
+
+const VEHICLE_COLUMNS: &str = "v.id, v.updated_at, v.archived_at, v.number_plate, \
+    v.description, v.water_capacity, v.type AS vehicle_type, v.availability, \
+    v.model, v.driving_license, v.height, v.width, v.length, v.weight, \
+    v.provider, v.additional_informations AS additional_info, v.organization_id, \
+    EXISTS (SELECT 1 FROM vehicle_watering_plans vwp \
+            JOIN watering_plans wp ON wp.id = vwp.watering_plan_id \
+            WHERE vwp.vehicle_id = v.id AND wp.status = 'active') AS on_active_plan";
+
+// Availability beats a running plan, the same precedence vehicle::derive_status
+// applies. Kept as one expression so WHERE, ORDER BY and the projection cannot
+// drift apart.
+const VEHICLE_STATUS_SQL: &str = "CASE \
+    WHEN v.availability = 'not_available' THEN 'not_available' \
+    WHEN EXISTS (SELECT 1 FROM vehicle_watering_plans vwp \
+                 JOIN watering_plans wp ON wp.id = vwp.watering_plan_id \
+                 WHERE vwp.vehicle_id = v.id AND wp.status = 'active') THEN 'active' \
+    ELSE 'available' END";
+
+const VEHICLE_SORT_COLUMNS: SortColumns = &[
+    ("number_plate", &["v.number_plate"]),
+    ("water_capacity", &["v.water_capacity"]),
+    ("model", &["v.model"]),
+    ("type", &["v.type"]),
+];
 
 #[async_trait]
 impl VehicleReader for PgVehicleRepository {
@@ -227,69 +253,60 @@ impl VehicleReader for PgVehicleRepository {
         &self,
         query: VehicleSearchQuery,
         pagination: Pagination,
-    ) -> Result<Page<VehicleView>, RepositoryError> {
-        let limit = i64::try_from(pagination.limit()).unwrap_or(i64::MAX);
-        let offset = i64::try_from(pagination.offset()).unwrap_or(i64::MAX);
-        let provider = query.provider.as_ref().map(|p| p.as_str().to_owned());
-        let visible_ids = query.visible.into_raw_ids();
+    ) -> Result<SearchPage<VehicleView>, RepositoryError> {
+        let archive = match query.archive {
+            ArchiveFilterKind::ActiveOnly => ArchiveFilter::ActiveOnly,
+            ArchiveFilterKind::Include => ArchiveFilter::Include,
+            ArchiveFilterKind::ArchivedOnly => ArchiveFilter::ArchivedOnly,
+        };
 
-        let total = sqlx::query_scalar!(
-            r#"SELECT COUNT(*) AS "count!: i64" FROM vehicles
-            WHERE ($1::text IS NULL OR provider = $1)
-              AND ($2::vehicle_type IS NULL OR type = $2)
-              AND ($3::bool OR archived_at IS NULL)
-              AND (NOT $4::bool OR archived_at IS NOT NULL)
-              AND ($5::uuid[] IS NULL OR organization_id = ANY($5))"#,
-            provider,
-            query.vehicle_type as Option<VehicleType>,
-            query.with_archived,
-            query.only_archived,
-            visible_ids.as_deref(),
-        )
-        .fetch_one(&self.pool)
-        .await? as u64;
+        let status_texts: Vec<String> = query
+            .statuses
+            .iter()
+            .map(|status| match status {
+                VehicleStatus::Active => "active".to_owned(),
+                VehicleStatus::Available => "available".to_owned(),
+                VehicleStatus::NotAvailable => "not_available".to_owned(),
+            })
+            .collect();
 
-        let rows = sqlx::query_as!(
-            VehicleViewRow,
-            r#"SELECT id, updated_at,
-                      archived_at,
-                      number_plate,
-                      description,
-                      water_capacity,
-                      type AS "vehicle_type: VehicleType",
-                      availability AS "availability: VehicleAvailability",
-                      model,
-                      driving_license AS "driving_license: DrivingLicense",
-                      height, width, length, weight,
-                      provider,
-                      additional_informations AS "additional_info: Value",
-                      organization_id,
-                      EXISTS (SELECT 1 FROM vehicle_watering_plans vwp
-                              JOIN watering_plans wp ON wp.id = vwp.watering_plan_id
-                              WHERE vwp.vehicle_id = vehicles.id
-                                AND wp.status = 'active') AS "on_active_plan!: bool"
-            FROM vehicles
-            WHERE ($1::text IS NULL OR provider = $1)
-              AND ($2::vehicle_type IS NULL OR type = $2)
-              AND ($3::bool OR archived_at IS NULL)
-              AND (NOT $4::bool OR archived_at IS NOT NULL)
-              AND ($7::uuid[] IS NULL OR organization_id = ANY($7))
-            ORDER BY water_capacity DESC
-            LIMIT $5 OFFSET $6"#,
-            provider,
-            query.vehicle_type as Option<VehicleType>,
-            query.with_archived,
-            query.only_archived,
-            limit,
-            offset,
-            visible_ids.as_deref(),
-        )
-        .fetch_all(&self.pool)
-        .await?;
+        let page = ListSpec::new("vehicles v", "v.id")
+            .scope(Predicate::equals(
+                "v.provider",
+                query.provider.as_ref().map(|p| p.as_str().to_owned()),
+            ))
+            .scope(Predicate::any_of_opt(
+                "v.organization_id",
+                query.visible.into_raw_ids(),
+            ))
+            .filter(Predicate::text_search(
+                &["v.number_plate", "v.model", "v.description"],
+                query.q,
+            ))
+            .filter(Predicate::any_of(VEHICLE_STATUS_SQL, status_texts))
+            .filter(Predicate::any_of("v.type", query.types))
+            .filter(Predicate::any_of(
+                "v.driving_license",
+                query.driving_licenses,
+            ))
+            .filter(Predicate::equals("v.type", query.vehicle_type))
+            .filter(Predicate::archived("v.archived_at", archive))
+            .sort(
+                query.sort.field.as_sql_key(),
+                query.sort.direction.is_descending(),
+                VEHICLE_SORT_COLUMNS,
+            )
+            .page(pagination)
+            .fetch::<VehicleViewRow>(&self.pool, VEHICLE_COLUMNS)
+            .await?;
 
-        let items = rows.into_iter().map(Into::into).collect();
-
-        Ok(Page { items, total })
+        Ok(SearchPage {
+            page: Page {
+                items: page.page.items.into_iter().map(Into::into).collect(),
+                total: page.page.total,
+            },
+            total_unfiltered: page.total_unfiltered,
+        })
     }
 
     #[tracing::instrument(level = "trace", skip_all)]
@@ -304,7 +321,7 @@ impl VehicleReader for PgVehicleRepository {
             visible,
             ..Default::default()
         };
-        self.view_search(query, pagination).await
+        Ok(self.view_search(query, pagination).await?.page)
     }
 }
 

@@ -10,6 +10,8 @@ use domain::{
     },
 };
 
+use crate::infra::list::{ListSpec, SortColumns};
+
 pub struct PgRegionRepository {
     pool: PgPool,
 }
@@ -19,6 +21,28 @@ impl PgRegionRepository {
         Self { pool }
     }
 }
+
+/// `RegionSnapshot` lives in `domain`, which must not depend on sqlx outside
+/// its optional feature; `search` runs through the runtime-built list query,
+/// which requires `sqlx::FromRow`, so this row type stays local to `infra`
+/// and is mapped onto the snapshot.
+#[derive(sqlx::FromRow)]
+struct RegionRow {
+    id: RawId,
+    name: String,
+}
+
+impl From<RegionRow> for RegionSnapshot {
+    fn from(row: RegionRow) -> Self {
+        Self {
+            id: row.id,
+            name: row.name,
+        }
+    }
+}
+
+const REGION_COLUMNS: &str = "r.id, r.name";
+const REGION_SORT_COLUMNS: SortColumns = &[("name", &["r.name"])];
 
 #[async_trait::async_trait]
 impl RegionReader for PgRegionRepository {
@@ -89,26 +113,21 @@ impl RegionReader for PgRegionRepository {
         _query: RegionSearchQuery,
         pagination: Pagination,
     ) -> Result<Page<Region>, RepositoryError> {
-        let limit = i64::try_from(pagination.limit()).unwrap_or(i64::MAX);
-        let offset = i64::try_from(pagination.offset()).unwrap_or(i64::MAX);
+        let page = ListSpec::new("regions r", "r.id")
+            .sort("name", false, REGION_SORT_COLUMNS)
+            .page(pagination)
+            .fetch::<RegionRow>(&self.pool, REGION_COLUMNS)
+            .await?;
 
-        let total = sqlx::query_scalar!(r#"SELECT COUNT(*) AS "count!: i64" FROM regions"#)
-            .fetch_one(&self.pool)
-            .await? as u64;
-
-        let items = sqlx::query_as!(
-            RegionSnapshot,
-            r#"SELECT id, name FROM regions ORDER BY name ASC, id ASC LIMIT $1 OFFSET $2"#,
-            limit,
-            offset
-        )
-        .fetch_all(&self.pool)
-        .await?
-        .into_iter()
-        .map(Region::reconstitute)
-        .collect();
-
-        Ok(Page { items, total })
+        Ok(Page {
+            items: page
+                .page
+                .items
+                .into_iter()
+                .map(|row| Region::reconstitute(row.into()))
+                .collect(),
+            total: page.page.total,
+        })
     }
 }
 

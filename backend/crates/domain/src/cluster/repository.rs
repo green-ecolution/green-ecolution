@@ -12,7 +12,7 @@ use crate::{
     organization::Organization,
     shared::{
         coordinates::Coordinate,
-        pagination::{Page, Pagination},
+        pagination::{Pagination, SearchPage},
     },
 };
 
@@ -32,7 +32,7 @@ pub trait TreeClusterReader: Send + Sync {
         &self,
         query: TreeClusterSearchQuery,
         pagination: Pagination,
-    ) -> Result<Page<TreeClusterView>, RepositoryError>;
+    ) -> Result<SearchPage<TreeClusterView>, RepositoryError>;
 
     /// Returns marker-projected clusters that have a centroid.
     /// Archived clusters and clusters without trees are excluded.

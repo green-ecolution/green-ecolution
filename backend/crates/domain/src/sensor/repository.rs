@@ -8,7 +8,7 @@ use crate::{
         Sensor, SensorDraft, SensorId, SensorSearchQuery, SensorView,
         data::{SensorReading, SensorReadingDraft, SensorReadingView},
     },
-    shared::pagination::{Page, Pagination},
+    shared::pagination::{Page, Pagination, SearchPage},
 };
 
 #[derive(Debug, Clone)]
@@ -42,7 +42,7 @@ pub trait SensorReader: Send + Sync {
         &self,
         query: SensorSearchQuery,
         pagination: Pagination,
-    ) -> Result<Page<SensorView>, RepositoryError>;
+    ) -> Result<SearchPage<SensorView>, RepositoryError>;
 }
 
 /// Write-side access to sensors.

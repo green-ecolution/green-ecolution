@@ -20,7 +20,7 @@ use crate::service::{
     sensor_service::{SensorDataQuality, SensorService},
 };
 
-use super::{DataHealth, SensorStatus};
+use super::{DataHealth, SensorStatus, tree::SortOrderParam};
 
 /// Resolves a batch of raw sensor-id strings (e.g. from `TreeView::sensor_id`)
 /// into a lookup map keyed by id. Strings that fail [`SensorId`] validation
@@ -254,6 +254,17 @@ pub struct SensorResponse {
     #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000", nullable)]
     pub linked_tree_id: Option<uuid::Uuid>,
 
+    /// Cluster of the linked tree. Absent when the sensor has no tree or that
+    /// tree belongs to no cluster.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000", nullable)]
+    pub linked_cluster_id: Option<uuid::Uuid>,
+
+    /// Display name of [`Self::linked_cluster_id`].
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(example = "Bahnhofstraße Nord", nullable)]
+    pub linked_cluster_name: Option<String>,
+
     /// LoRaWAN credentials (omits `app_key`).
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(nullable)]
@@ -294,6 +305,8 @@ impl From<&SensorView> for SensorResponse {
                 longitude: c.longitude(),
             }),
             linked_tree_id: value.linked_tree_id,
+            linked_cluster_id: value.linked_cluster_id,
+            linked_cluster_name: value.linked_cluster_name.clone(),
             lorawan: value.lorawan.as_ref().map(LorawanInfoResponse::from),
             latest_data: value.latest_reading.as_ref().map(SensorDataResponse::from),
             provider: value.provider.as_ref().map(|p| p.as_str().to_owned()),
@@ -676,4 +689,57 @@ impl SensorDataQualityResponse {
 pub struct AcknowledgeDataQualityRequest {
     #[schema(example = "Sonde bei der Vorbereitung nicht angeschlossen", nullable)]
     pub note: Option<String>,
+}
+
+/// Query parameters for the paginated sensor list endpoint.
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
+#[into_params(parameter_in = Query)]
+pub struct SensorListParams {
+    #[param(default = 1, minimum = 1, example = 1)]
+    #[serde(default = "crate::http::v1::pagination::default_page")]
+    pub page: u64,
+    #[param(default = 25, minimum = 1, maximum = 100, example = 25)]
+    #[serde(default = "crate::http::v1::pagination::default_per_page")]
+    pub per_page: u64,
+    /// Case-insensitive match on sensor id, model name or the name of the
+    /// linked tree's cluster.
+    #[param(example = "eui-a81758")]
+    pub q: Option<String>,
+    /// Repeatable: `?status=online&status=offline`.
+    #[serde(default)]
+    pub status: Vec<SensorStatus>,
+    /// Repeatable: `?model_id=<uuid>&model_id=<uuid>`.
+    #[serde(default)]
+    pub model_id: Vec<uuid::Uuid>,
+    /// Repeatable: `?data_health=suspect`.
+    #[serde(default)]
+    pub data_health: Vec<DataHealth>,
+    #[param(nullable)]
+    #[serde(default)]
+    pub has_tree: Option<bool>,
+    /// Cluster of the linked tree. Repeatable: `?cluster_id=<uuid>&cluster_id=<uuid>`.
+    #[serde(default)]
+    pub cluster_id: Vec<uuid::Uuid>,
+    #[param(nullable, inline)]
+    pub sort: Option<SensorSortParam>,
+    #[param(nullable, inline)]
+    pub order: Option<SortOrderParam>,
+}
+
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum SensorSortParam {
+    Id,
+    LastReading,
+    CreatedAt,
+}
+
+impl From<SensorSortParam> for domain::sensor::SensorSortField {
+    fn from(param: SensorSortParam) -> Self {
+        match param {
+            SensorSortParam::Id => Self::Id,
+            SensorSortParam::LastReading => Self::LastReading,
+            SensorSortParam::CreatedAt => Self::CreatedAt,
+        }
+    }
 }

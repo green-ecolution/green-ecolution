@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import ListFilterDropdown from './ListFilterDropdown'
 
 const options = [
@@ -96,5 +97,48 @@ describe('ListFilterDropdown', () => {
     const unselectedDescribedById = unselectedOption.getAttribute('aria-describedby')
     expect(unselectedDescribedById).toBeTruthy()
     expect(document.getElementById(unselectedDescribedById!)).toHaveTextContent('Nicht ausgewählt')
+  })
+
+  it('replaces the previous value in single mode', async () => {
+    const onChange = vi.fn()
+    const user = userEvent.setup()
+    render(
+      <ListFilterDropdown
+        label="Sensor"
+        mode="single"
+        options={[
+          { value: 'true', label: 'Mit Sensor' },
+          { value: 'false', label: 'Ohne Sensor' },
+        ]}
+        value={['true']}
+        onChange={onChange}
+        emptyText="Keine Optionen"
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: /Sensor/ }))
+    await user.click(screen.getByRole('option', { name: 'Ohne Sensor' }))
+
+    expect(onChange).toHaveBeenCalledWith(['false'])
+  })
+
+  it('clears the value when the selected option is picked again in single mode', async () => {
+    const onChange = vi.fn()
+    const user = userEvent.setup()
+    render(
+      <ListFilterDropdown
+        label="Sensor"
+        mode="single"
+        options={[{ value: 'true', label: 'Mit Sensor' }]}
+        value={['true']}
+        onChange={onChange}
+        emptyText="Keine Optionen"
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: /Sensor/ }))
+    await user.click(screen.getByRole('option', { name: 'Mit Sensor' }))
+
+    expect(onChange).toHaveBeenCalledWith([])
   })
 })

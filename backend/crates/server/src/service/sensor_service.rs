@@ -18,7 +18,7 @@ use domain::{
         repository::NormalizedValue,
     },
     sensor_model::{SensorAbilityName, SensorModel, SensorModelReader},
-    shared::pagination::{Page, Pagination},
+    shared::pagination::{Page, Pagination, SearchPage},
     tree::{Tree, TreeReader, TreeWriter, volumetric_thresholds},
 };
 use rust_decimal::prelude::ToPrimitive;
@@ -93,7 +93,7 @@ impl SensorService {
         &self,
         query: SensorSearchQuery,
         pagination: Pagination,
-    ) -> Result<Page<SensorView>, ServiceError> {
+    ) -> Result<SearchPage<SensorView>, ServiceError> {
         Ok(self.reader.view_search(query, pagination).await?)
     }
 

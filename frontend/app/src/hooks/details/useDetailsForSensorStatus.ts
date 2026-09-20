@@ -3,14 +3,15 @@ import { useTranslation } from 'react-i18next'
 import { SensorStatus } from '@green-ecolution/backend-client'
 import type { EnumsTranslate, StatusColor } from './types'
 
-const SensorStatusColors: Record<SensorStatus, { color: StatusColor }> = {
-  [SensorStatus.Prepared]: { color: 'outline-dark' },
-  [SensorStatus.Offline]: { color: 'outline-red' },
-  [SensorStatus.Online]: { color: 'outline-green-dark' },
+const SensorStatusColors: Record<SensorStatus, { color: StatusColor; colorHex: string }> = {
+  [SensorStatus.Prepared]: { color: 'outline-dark', colorHex: '#A2A2A2' },
+  [SensorStatus.Offline]: { color: 'outline-red', colorHex: '#E44E4D' },
+  [SensorStatus.Online]: { color: 'outline-green-dark', colorHex: '#4C7741' },
 }
 
 export interface SensorStatusDetails {
   color: StatusColor
+  colorHex: string
   label: string
   description: string
 }

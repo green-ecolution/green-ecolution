@@ -19,6 +19,7 @@ pub mod payload;
 pub mod plausibility;
 pub mod repository;
 pub mod snapshot;
+pub mod sort;
 pub mod view;
 
 use chrono::{DateTime, Duration, Utc};
@@ -26,6 +27,7 @@ use chrono::{DateTime, Duration, Utc};
 use crate::{
     Id,
     authorization::Visibility,
+    cluster::TreeCluster,
     organization::Organization,
     sensor_model::SensorModel,
     shared::provenance::{Provenance, ProviderId},
@@ -42,6 +44,7 @@ pub use repository::{
 };
 #[doc(hidden)]
 pub use snapshot::SensorSnapshot;
+pub use sort::{SensorSort, SensorSortField};
 pub use view::SensorView;
 
 /// Display-only connectivity state, derived via [`derive_connectivity`] —
@@ -249,10 +252,30 @@ impl Sensor {
 
 #[derive(Debug, Default, Clone)]
 pub struct SensorSearchQuery {
+    // Scope
     pub provider: Option<ProviderId>,
     /// Which organizations may see the result. Callers must set this per
     /// request; defaults to unrestricted for internal consumers.
     pub visible: Visibility,
+
+    // Filters
+    /// Connectivity, which is derived rather than stored — the repository has
+    /// to reproduce [`derive_connectivity`] in SQL to filter on it.
+    pub statuses: Vec<SensorStatus>,
+    pub model_ids: Vec<Id<SensorModel>>,
+    /// Data health, derived the same way from [`derive_data_health`].
+    pub data_health: Vec<DataHealth>,
+    /// Whether the sensor is linked to a tree.
+    pub has_tree: Option<bool>,
+    /// Clusters of the linked tree. A sensor has no cluster of its own — the
+    /// relation runs through the tree it is attached to.
+    pub cluster_ids: Vec<Id<TreeCluster>>,
+
+    // Search and order
+    /// Case-insensitive text filter on sensor id, model name or the name of
+    /// the linked tree's cluster.
+    pub q: Option<String>,
+    pub sort: SensorSort,
 }
 
 #[cfg(test)]

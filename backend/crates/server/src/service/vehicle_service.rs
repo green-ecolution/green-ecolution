@@ -4,7 +4,7 @@ use domain::{
     Id,
     authorization::Visibility,
     organization::Organization,
-    shared::pagination::{Page, Pagination},
+    shared::pagination::{Page, Pagination, SearchPage},
     vehicle::{
         NumberPlate, Vehicle, VehicleDraft, VehicleReader, VehicleSearchQuery, VehicleType,
         VehicleUpdate, VehicleView, VehicleWriter,
@@ -28,7 +28,7 @@ impl VehicleService {
         &self,
         query: VehicleSearchQuery,
         pagination: Pagination,
-    ) -> Result<Page<VehicleView>, ServiceError> {
+    ) -> Result<SearchPage<VehicleView>, ServiceError> {
         Ok(self.reader.view_search(query, pagination).await?)
     }
 

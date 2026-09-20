@@ -48,19 +48,6 @@
     "sensorCount_one": "{withSensor} of {count} tree with a sensor",
     "sensorCount_other": "{withSensor} of {count} trees with a sensor"
   },
-  "statusChips": {
-    "groupAriaLabel": "Filter by watering status"
-  },
-  "toolbar": {
-    "searchPlaceholder": "Search group",
-    "sortLabel": "Sort:",
-    "sortPlaceholder": "Sort",
-    "sortSearchPlaceholder": "Search sort order",
-    "sortAriaLabel": "Sort groups",
-    "sortOptionName": "Name",
-    "sortOptionMoisture": "Moisture",
-    "sortOptionTrees": "Tree count"
-  },
   "treeDots": {
     "noTreesNotice": "No trees assigned yet",
     "legend": "Sensor tree · measures the group"
@@ -136,16 +123,6 @@
     "siltAxisLabel": "Silt [%]",
     "clayAxisLabel": "Clay [%]"
   },
-  "regionFieldset": {
-    "legend": "District in Flensburg:",
-    "placeholder": "All districts",
-    "searchPlaceholder": "Search district"
-  },
-  "soilFieldset": {
-    "legend": "Soil type:",
-    "placeholder": "All soil types",
-    "searchPlaceholder": "Search soil type"
-  },
   "listRow": {
     "treeCount_one": "{count} tree",
     "treeCount_other": "{count} trees"
@@ -179,13 +156,28 @@
     "statsLabel": "{total} groups · {trees} trees",
     "description": "Here you'll find an overview of all watering groups. A watering group consists of several trees grouped together based on their proximity and site conditions. Equipping individual trees with sensors allows an overall assessment of the watering status of the whole group.",
     "createButton": "Create group",
-    "filterHeadline": "Filter watering groups",
     "loadingLabel": "Loading data",
     "columnStatus": "Status",
     "columnName": "Name",
     "columnLocation": "Location",
     "columnTreeCount": "No. of trees",
-    "emptyMessage": "Unfortunately, no watering groups were found."
+    "emptyMessage": "Unfortunately, no watering groups were found.",
+    "searchLabel": "Search watering groups",
+    "searchPlaceholder": "Search by name",
+    "filterStatus": "Status",
+    "filterRegion": "Region",
+    "filterSoil": "Soil type",
+    "filterNoOptions": "No options available.",
+    "regionUnknown": "Unknown region",
+    "sortName": "Name",
+    "sortMoisture": "Moisture",
+    "sortTrees": "Tree count",
+    "sortLastWatered": "Last watered",
+    "resultCount_one": "{count} group",
+    "resultCount_other": "{count} groups",
+    "resultCountFiltered": "{filtered} of {total} groups",
+    "emptyFilteredMessage": "No watering group matches these filters.",
+    "emptyFilteredAction": "Reset filters"
   },
   "detail": {
     "loadingLabel": "Loading watering group …",

@@ -7,10 +7,15 @@ use domain::{
         provenance::{Provenance, ProviderId},
         water_capacity::WaterCapacity,
     },
-    vehicle::{NumberPlate, VehicleDimension, VehicleDraft, VehicleModel, VehicleView},
+    vehicle::{
+        ArchiveFilterKind, NumberPlate, VehicleDimension, VehicleDraft, VehicleModel,
+        VehicleSortField, VehicleView,
+    },
 };
 
-use super::{DrivingLicense, VehicleAvailability, VehicleStatus, VehicleType};
+use super::{
+    DrivingLicense, VehicleAvailability, VehicleStatus, VehicleType, tree::SortOrderParam,
+};
 
 /// Represents a watering vehicle used for urban green-space irrigation.
 #[derive(Debug, Serialize, utoipa::ToSchema)]
@@ -249,5 +254,72 @@ impl VehicleUpdateRequest {
             dimension,
             provenance,
         })
+    }
+}
+
+/// Query parameters for the paginated vehicle list endpoint.
+#[derive(Debug, serde::Deserialize, utoipa::IntoParams)]
+pub struct VehicleListParams {
+    #[param(default = 1, minimum = 1, example = 1)]
+    #[serde(default = "crate::http::v1::pagination::default_page")]
+    pub page: u64,
+    #[param(default = 25, minimum = 1, maximum = 100, example = 25)]
+    #[serde(default = "crate::http::v1::pagination::default_per_page")]
+    pub per_page: u64,
+    #[param(example = "MAN")]
+    pub q: Option<String>,
+    /// Repeatable: `?status=available&status=active`.
+    #[serde(default)]
+    pub status: Vec<VehicleStatus>,
+    /// Repeatable: `?type=transporter&type=trailer`.
+    #[serde(default, rename = "type")]
+    pub vehicle_type: Vec<VehicleType>,
+    /// Repeatable: `?driving_license=B&driving_license=C`.
+    #[serde(default)]
+    pub driving_license: Vec<DrivingLicense>,
+    #[param(nullable, inline)]
+    #[serde(default)]
+    pub archive: Option<ArchiveParam>,
+    #[param(nullable, inline)]
+    pub sort: Option<VehicleSortParam>,
+    #[param(nullable, inline)]
+    pub order: Option<SortOrderParam>,
+}
+
+#[derive(Debug, serde::Deserialize, utoipa::ToSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum ArchiveParam {
+    Active,
+    Include,
+    Only,
+}
+
+impl From<ArchiveParam> for ArchiveFilterKind {
+    fn from(value: ArchiveParam) -> Self {
+        match value {
+            ArchiveParam::Active => Self::ActiveOnly,
+            ArchiveParam::Include => Self::Include,
+            ArchiveParam::Only => Self::ArchivedOnly,
+        }
+    }
+}
+
+#[derive(Debug, serde::Deserialize, utoipa::ToSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum VehicleSortParam {
+    NumberPlate,
+    WaterCapacity,
+    Model,
+    Type,
+}
+
+impl From<VehicleSortParam> for VehicleSortField {
+    fn from(value: VehicleSortParam) -> Self {
+        match value {
+            VehicleSortParam::NumberPlate => Self::NumberPlate,
+            VehicleSortParam::WaterCapacity => Self::WaterCapacity,
+            VehicleSortParam::Model => Self::Model,
+            VehicleSortParam::Type => Self::Type,
+        }
     }
 }

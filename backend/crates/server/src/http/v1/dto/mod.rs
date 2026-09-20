@@ -181,6 +181,15 @@ impl From<domain::sensor::DataHealth> for DataHealth {
     }
 }
 
+impl From<DataHealth> for domain::sensor::DataHealth {
+    fn from(value: DataHealth) -> Self {
+        match value {
+            DataHealth::Ok => Self::Ok,
+            DataHealth::Suspect => Self::Suspect,
+        }
+    }
+}
+
 /// European driving license category required to operate a vehicle.
 #[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
 #[schema(example = "BE")]
@@ -336,6 +345,16 @@ impl From<DrivingLicense> for DomainDrivingLicense {
     }
 }
 
+impl From<VehicleStatus> for DomainVehicleStatus {
+    fn from(value: VehicleStatus) -> Self {
+        match value {
+            VehicleStatus::Active => Self::Active,
+            VehicleStatus::Available => Self::Available,
+            VehicleStatus::NotAvailable => Self::NotAvailable,
+        }
+    }
+}
+
 impl From<WateringPlanStatus> for DomainWateringPlanStatus {
     fn from(value: WateringPlanStatus) -> Self {
         match value {
@@ -422,6 +441,16 @@ impl From<DomainSensorStatus> for SensorStatus {
             DomainSensorStatus::Prepared => Self::Prepared,
             DomainSensorStatus::Online => Self::Online,
             DomainSensorStatus::Offline => Self::Offline,
+        }
+    }
+}
+
+impl From<SensorStatus> for DomainSensorStatus {
+    fn from(value: SensorStatus) -> Self {
+        match value {
+            SensorStatus::Prepared => Self::Prepared,
+            SensorStatus::Online => Self::Online,
+            SensorStatus::Offline => Self::Offline,
         }
     }
 }

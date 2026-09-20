@@ -81,8 +81,8 @@ export interface ListClustersRequest {
     region?: Array<string>;
     soilCondition?: Array<SoilCondition>;
     query?: string | null;
-    sort?: string | null;
-    order?: string | null;
+    sort?: ListClustersSortEnum;
+    order?: ListClustersOrderEnum;
 }
 
 export interface TransferClusterRequest {
@@ -363,7 +363,7 @@ export class TreeClustersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a paginated list of all tree clusters with a compact representation including region info. Optional filter parameters (watering_status, region) narrow the result; array parameters are repeatable.
+     * Returns a paginated list of all tree clusters with a compact representation including region info. Optional filter parameters (watering_status, region) narrow the result; array parameters are repeatable. Sortable by name, moisture, trees or last_watered.
      * List all tree clusters
      */
     async listClustersRaw(requestParameters: ListClustersRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListResponseTreeClusterInListResponse>> {
@@ -417,7 +417,7 @@ export class TreeClustersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a paginated list of all tree clusters with a compact representation including region info. Optional filter parameters (watering_status, region) narrow the result; array parameters are repeatable.
+     * Returns a paginated list of all tree clusters with a compact representation including region info. Optional filter parameters (watering_status, region) narrow the result; array parameters are repeatable. Sortable by name, moisture, trees or last_watered.
      * List all tree clusters
      */
     async listClusters(requestParameters: ListClustersRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ListResponseTreeClusterInListResponse> {
@@ -523,3 +523,22 @@ export class TreeClustersApi extends runtime.BaseAPI {
     }
 
 }
+
+/**
+ * @export
+ */
+export const ListClustersSortEnum = {
+    Name: 'name',
+    Moisture: 'moisture',
+    Trees: 'trees',
+    LastWatered: 'last_watered'
+} as const;
+export type ListClustersSortEnum = typeof ListClustersSortEnum[keyof typeof ListClustersSortEnum];
+/**
+ * @export
+ */
+export const ListClustersOrderEnum = {
+    Asc: 'asc',
+    Desc: 'desc'
+} as const;
+export type ListClustersOrderEnum = typeof ListClustersOrderEnum[keyof typeof ListClustersOrderEnum];

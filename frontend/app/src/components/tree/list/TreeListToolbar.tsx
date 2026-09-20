@@ -197,10 +197,10 @@ const TreeListToolbar = ({ filteredRecords, totalRecords, action }: TreeListTool
               icon={SensorIcon}
               options={sensorOptions}
               value={search.hasSensor === undefined ? [] : [String(search.hasSensor)]}
-              onChange={(values) => {
-                const picked = values[values.length - 1]
-                setHasSensor(picked === undefined ? undefined : picked === 'true')
-              }}
+              mode="single"
+              onChange={(values) =>
+                setHasSensor(values[0] === undefined ? undefined : values[0] === 'true')
+              }
               emptyText={t('list.filterNoOptions')}
             />
             <ListFilterDropdown

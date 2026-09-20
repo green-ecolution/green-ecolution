@@ -131,8 +131,8 @@ pub async fn get_evaluation(
 
     let response = EvaluationResponse {
         tree_count: tree_page.page.total as u32,
-        treecluster_count: cluster_page.total as u32,
-        sensor_count: sensor_page.total as u32,
+        treecluster_count: cluster_page.page.total as u32,
+        sensor_count: sensor_page.page.total as u32,
         watering_plan_count: watering_plan_page.total as i32,
         user_watering_plan_count: user_count as u32,
         total_water_consumption: total_water as u64,

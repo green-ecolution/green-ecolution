@@ -18,13 +18,13 @@ use crate::{
                 cluster::{SoilMoistureParams, SoilMoistureSeriesResponse},
                 sensor::{
                     AcknowledgeDataQualityRequest, ActivateSensorRequest, CreateSensorRequest,
-                    SensorDataQualityResponse, SensorDataResponse, SensorModelResponse,
-                    SensorResponse, SetSensorTreeRequest,
+                    SensorDataQualityResponse, SensorDataResponse, SensorListParams,
+                    SensorModelResponse, SensorResponse, SetSensorTreeRequest,
                 },
                 tree::{TransferRequest, TreeResponse},
                 user::display_name,
             },
-            pagination::{PaginationParams, default_page},
+            pagination::default_page,
             scope,
         },
     },
@@ -33,9 +33,9 @@ use crate::{
 use domain::{
     Id, RepositoryError,
     authorization::{Action, Permission, Resource},
-    sensor::{AcknowledgementNote, SensorSearchQuery},
+    sensor::{AcknowledgementNote, SensorSearchQuery, SensorSort, SensorSortField},
     sensor_model::SensorModel,
-    shared::pagination::Pagination,
+    shared::{pagination::Pagination, sort::SortDirection},
 };
 
 pub fn routes() -> OpenApiRouter<Arc<AppState>> {
@@ -57,33 +57,80 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
         .routes(routes!(transfer_sensor))
 }
 
+const SENSOR_LIST_Q_MAX_LEN: usize = 100;
+
 #[utoipa::path(get, path = "/sensors", tag = "Sensors",
     operation_id = "listSensors",
     summary = "List all sensors",
-    description = "Returns a paginated list of all LoRaWAN sensors.",
-    params(PaginationParams),
+    description = "Returns a paginated list of all LoRaWAN sensors. \
+                   Optional `q` parameter case-insensitively filters by sensor EUI or model name. \
+                   Optional filter parameters (status, model_id, data_health, has_tree) narrow the result; array parameters are repeatable. \
+                   Optional `sort` (id, last_reading, created_at) and `order` (asc, desc) control the result order; the default is id ascending.",
+    params(SensorListParams),
     responses(
         (status = 200, description = "Paginated list of sensors", body = ListResponse<SensorResponse>),
+        (status = 400, description = "Invalid query parameter", body = ErrorBody),
         (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
-#[tracing::instrument(level = "info", skip_all)]
+#[tracing::instrument(level = "info", skip_all, fields(query.len = tracing::field::Empty))]
 pub async fn list_sensors(
     State(state): State<Arc<AppState>>,
     user: AuthUserExtractor,
-    Query(params): Query<PaginationParams>,
+    Query(params): Query<SensorListParams>,
 ) -> Result<Json<ListResponse<SensorResponse>>, ServiceError> {
-    let pagination = Pagination::from(&params);
+    let pagination = Pagination::new(params.page, params.per_page);
+
+    let q = params
+        .q
+        .as_deref()
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+        .map(str::to_owned);
+
+    if let Some(ref qv) = q
+        && qv.chars().count() > SENSOR_LIST_Q_MAX_LEN
+    {
+        return Err(ServiceError::InvalidInput(format!(
+            "q must be at most {SENSOR_LIST_Q_MAX_LEN} characters"
+        )));
+    }
+
+    if let Some(ref qv) = q {
+        tracing::Span::current().record("query.len", qv.chars().count());
+    }
+
     let visible = state
         .authorization_service
         .visible_orgs_for(user.id, Permission::new(Resource::Sensor, Action::Read))
         .await?;
+
     let query = SensorSearchQuery {
+        q,
+        statuses: params
+            .status
+            .into_iter()
+            .map(domain::sensor::SensorStatus::from)
+            .collect(),
+        model_ids: params.model_id.into_iter().map(Id::new).collect(),
+        data_health: params
+            .data_health
+            .into_iter()
+            .map(domain::sensor::DataHealth::from)
+            .collect(),
+        has_tree: params.has_tree,
+        cluster_ids: params.cluster_id.into_iter().map(Id::new).collect(),
+        sort: SensorSort {
+            field: params.sort.map(SensorSortField::from).unwrap_or_default(),
+            direction: params.order.map(SortDirection::from).unwrap_or_default(),
+        },
         visible,
         ..SensorSearchQuery::default()
     };
-    let page = state.sensor_service.search_view(query, pagination).await?;
-    let response = ListResponse::<SensorResponse>::from_page(page, &pagination);
+
+    let result = state.sensor_service.search_view(query, pagination).await?;
+    let response = ListResponse::<SensorResponse>::from_page(result.page, &pagination)
+        .with_total_unfiltered(result.total_unfiltered);
     Ok(Json(response))
 }
 

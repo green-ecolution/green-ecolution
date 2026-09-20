@@ -72,7 +72,7 @@
           "Tree Clusters"
         ],
         "summary": "List all tree clusters",
-        "description": "Returns a paginated list of all tree clusters with a compact representation including region info. Optional filter parameters (watering_status, region) narrow the result; array parameters are repeatable.",
+        "description": "Returns a paginated list of all tree clusters with a compact representation including region info. Optional filter parameters (watering_status, region) narrow the result; array parameters are repeatable. Sortable by name, moisture, trees or last_watered.",
         "operationId": "listClusters",
         "parameters": [
           {
@@ -153,15 +153,25 @@
           {
             "name": "sort",
             "in": "query",
-            "description": "Sort field. Allowed: `name|moisture|trees`.",
+            "description": "Sort field. Allowed: `name|moisture|trees|last_watered`.",
             "required": false,
             "schema": {
-              "type": [
-                "string",
-                "null"
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string",
+                  "description": "Sortable columns of the cluster list.",
+                  "enum": [
+                    "name",
+                    "moisture",
+                    "trees",
+                    "last_watered"
+                  ]
+                }
               ]
-            },
-            "example": "name"
+            }
           },
           {
             "name": "order",
@@ -169,12 +179,19 @@
             "description": "Sort direction. Allowed: `asc|desc`.",
             "required": false,
             "schema": {
-              "type": [
-                "string",
-                "null"
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "asc",
+                    "desc"
+                  ]
+                }
               ]
-            },
-            "example": "asc"
+            }
           }
         ],
         "responses": {
@@ -3690,13 +3707,12 @@
           "Sensors"
         ],
         "summary": "List all sensors",
-        "description": "Returns a paginated list of all LoRaWAN sensors.",
+        "description": "Returns a paginated list of all LoRaWAN sensors. Optional `q` parameter case-insensitively filters by sensor EUI or model name. Optional filter parameters (status, model_id, data_health, has_tree) narrow the result; array parameters are repeatable. Optional `sort` (id, last_reading, created_at) and `order` (asc, desc) control the result order; the default is id ascending.",
         "operationId": "listSensors",
         "parameters": [
           {
             "name": "page",
             "in": "query",
-            "description": "Page number to retrieve (1-based).",
             "required": false,
             "schema": {
               "type": "integer",
@@ -3709,7 +3725,6 @@
           {
             "name": "per_page",
             "in": "query",
-            "description": "Number of items per page.",
             "required": false,
             "schema": {
               "type": "integer",
@@ -3719,6 +3734,116 @@
               "minimum": 1
             },
             "example": 25
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "description": "Case-insensitive match on sensor id, model name or the name of the\nlinked tree's cluster.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "eui-a81758"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Repeatable: `?status=online&status=offline`.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/SensorStatus"
+              }
+            }
+          },
+          {
+            "name": "model_id",
+            "in": "query",
+            "description": "Repeatable: `?model_id=<uuid>&model_id=<uuid>`.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "uuid"
+              }
+            }
+          },
+          {
+            "name": "data_health",
+            "in": "query",
+            "description": "Repeatable: `?data_health=suspect`.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/DataHealth"
+              }
+            }
+          },
+          {
+            "name": "has_tree",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            }
+          },
+          {
+            "name": "cluster_id",
+            "in": "query",
+            "description": "Cluster of the linked tree. Repeatable: `?cluster_id=<uuid>&cluster_id=<uuid>`.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "uuid"
+              }
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "id",
+                    "last_reading",
+                    "created_at"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "asc",
+                    "desc"
+                  ]
+                }
+              ]
+            }
           }
         ],
         "responses": {
@@ -3728,6 +3853,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ListResponse_SensorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid query parameter",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
                 }
               }
             }
@@ -6185,13 +6320,12 @@
           "Vehicles"
         ],
         "summary": "List all vehicles",
-        "description": "Returns a paginated list of active vehicles.",
+        "description": "Returns a paginated list of active vehicles. Optional `q` parameter case-insensitively filters by number plate, model or description. Optional filter parameters (status, type, driving_license, archive) narrow the result; array parameters are repeatable. Optional `sort` (number_plate, water_capacity, model, type) and `order` (asc, desc) control the result order; the default is number_plate ascending.",
         "operationId": "listVehicles",
         "parameters": [
           {
             "name": "page",
             "in": "query",
-            "description": "Page number to retrieve (1-based).",
             "required": false,
             "schema": {
               "type": "integer",
@@ -6204,7 +6338,6 @@
           {
             "name": "per_page",
             "in": "query",
-            "description": "Number of items per page.",
             "required": false,
             "schema": {
               "type": "integer",
@@ -6214,6 +6347,114 @@
               "minimum": 1
             },
             "example": 25
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "example": "MAN"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Repeatable: `?status=available&status=active`.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/VehicleStatus"
+              }
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "description": "Repeatable: `?type=transporter&type=trailer`.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/VehicleType"
+              }
+            }
+          },
+          {
+            "name": "driving_license",
+            "in": "query",
+            "description": "Repeatable: `?driving_license=B&driving_license=C`.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/DrivingLicense"
+              }
+            }
+          },
+          {
+            "name": "archive",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "active",
+                    "include",
+                    "only"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "number_plate",
+                    "water_capacity",
+                    "model",
+                    "type"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "asc",
+                    "desc"
+                  ]
+                }
+              ]
+            }
           }
         ],
         "responses": {
@@ -6223,6 +6464,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ListResponse_VehicleResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid query parameter",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
                 }
               }
             }
@@ -8539,6 +8790,23 @@
                       "description": "Most recent data payload from the sensor, if available."
                     }
                   ]
+                },
+                "linked_cluster_id": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "uuid",
+                  "description": "Cluster of the linked tree. Absent when the sensor has no tree or that\ntree belongs to no cluster.",
+                  "example": "0190a8e9-7c4f-7000-8000-000000000000"
+                },
+                "linked_cluster_name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Display name of [`Self::linked_cluster_id`].",
+                  "example": "Bahnhofstraße Nord"
                 },
                 "linked_tree_id": {
                   "type": [
@@ -10876,6 +11144,23 @@
                 "description": "Most recent data payload from the sensor, if available."
               }
             ]
+          },
+          "linked_cluster_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Cluster of the linked tree. Absent when the sensor has no tree or that\ntree belongs to no cluster.",
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
+          },
+          "linked_cluster_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Display name of [`Self::linked_cluster_id`].",
+            "example": "Bahnhofstraße Nord"
           },
           "linked_tree_id": {
             "type": [

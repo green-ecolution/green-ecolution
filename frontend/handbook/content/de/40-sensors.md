@@ -17,12 +17,33 @@ Einbau vor Ort das Kapitel [Sensor einbauen und aktivieren](./sensor-installatio
 ## Die Geräteliste lesen
 
 Die Übersicht unter **Sensoren** listet jeden im System hinterlegten Sensor mit seinem
-Verbindungszustand, seiner ID, seinem Erstelldatum und dem Zeitpunkt der letzten
-Datenübertragung. Ein Sensor hat keinen eigenen Namen; seine ID ist zugleich seine
+Verbindungszustand, seiner ID und seinem Modellnamen. Ein farbiger Punkt vor der ID steht
+für den Verbindungszustand; verweilst du mit dem Zeiger darauf, nennt die Anwendung ihn
+beim Namen. Darunter stehen, ob der Sensor mit einem Baum verknüpft ist und der Zeitpunkt
+seiner letzten Messung, und ist das Fenster breit genug, ergänzt dieselbe Zeile das
+Erstelldatum; auf schmalen Bildschirmen entfällt es wieder, damit die Zeile nicht
+umbricht. Gehört der verknüpfte Baum zu einer Bewässerungsgruppe, nennt dieselbe Zeile
+deren Namen, sodass du die Geräte einer Gruppe in der Liste erkennst, ohne jeden Eintrag
+zu öffnen. Ein Sensor hat keinen eigenen Namen; seine ID ist zugleich seine
 LoRaWAN-Kennung und dient in der Liste als Bezeichnung. Ein Klick auf einen Eintrag
-führt zur Detailseite; ob und mit welchem Baum der Sensor verknüpft ist, siehst du erst
-dort. Wer Sensoren aktivieren darf, findet oben die Schaltfläche **Sensor aktivieren**,
-die zum [Aktivierungsassistenten](./sensor-installation.md#sensor-aktivieren) führt.
+führt zur Detailseite; um welchen Baum es sich handelt, siehst du erst dort.
+
+Über das Suchfeld durchsuchst du die Liste nach der Sensor-ID, dem Modellnamen und dem
+Namen der Bewässerungsgruppe, zu der der verknüpfte Baum gehört, ohne Rücksicht auf Groß-
+und Kleinschreibung; der gefundene Teil des Textes erscheint in den Ergebnissen
+hervorgehoben. Darunter stehen fünf Filter, die jeweils sofort wirken, ohne
+dass eine Bestätigung nötig wäre: nach dem Verbindungszustand, nach dem Modell, nach der
+Datenqualität, danach, ob ein Baum verknüpft ist, mit den Optionen **Mit Baum** und
+**Ohne Baum**, und schließlich nach der Bewässerungsgruppe. Der Gruppenfilter listet die
+angelegten Gruppen zur Auswahl und lässt sich auf mehrere gleichzeitig setzen; er greift
+auf die Gruppe des verknüpften Baums zurück, denn ein Sensor gehört nie selbst zu einer
+Gruppe. Über das Sortiermenü ordnest du die Liste nach Sensor-ID, letzter Messung
+oder Anlagedatum, jeweils auf- oder absteigend. Jede gesetzte Auswahl erscheint darunter
+als entfernbarer Chip, daneben ein Link, der alle Filter auf einmal zurücksetzt, sowie
+die Anzahl der gefundenen Sensoren.
+
+Wer Sensoren aktivieren darf, findet oben die Schaltfläche **Sensor aktivieren**, die zum
+[Aktivierungsassistenten](./sensor-installation.md#sensor-aktivieren) führt.
 
 Damit ein Sensor überhaupt in dieser Liste erscheint, muss er im System angelegt sein.
 Das geschieht nicht über diese Anwendung: Bringst du eine neue Sensoreinheit ins Feld
@@ -30,7 +51,7 @@ und ihre ID ist der Anwendung unbekannt, meldet der Aktivierungsassistent das be
 und verweist auf die Verwaltung oder eine zuständige Administratorin. Erst ein bereits
 angelegter Sensor lässt sich hier aktivieren.
 
-![Die Geräteliste mit vorbereiteten, online und offline gemeldeten Sensoren nebeneinander](../images/sensor-list.png)
+![Die Geräteliste mit Suchfeld, Filterleiste und aktiven Filtern](../images/sensor-list.png)
 
 ## Die Verbindungszustände: vorbereitet, online und offline
 

@@ -31,13 +31,14 @@ use domain::{
     Id,
     authorization::{Action, Permission, Resource},
     cluster::{
-        ClusterAddress, ClusterName, ClusterSort, SortOrder, TreeClusterSearchQuery,
+        ClusterAddress, ClusterName, ClusterSort, ClusterSortField, TreeClusterSearchQuery,
         TreeClusterUpdate, TreeClusterView,
     },
     region::Region,
     shared::{
         pagination::Pagination,
         provenance::{Provenance, ProviderId},
+        sort::SortDirection,
     },
 };
 
@@ -95,7 +96,8 @@ const CLUSTER_LIST_QUERY_MAX_LEN: usize = 100;
     operation_id = "listClusters",
     summary = "List all tree clusters",
     description = "Returns a paginated list of all tree clusters with a compact representation including region info. \
-                   Optional filter parameters (watering_status, region) narrow the result; array parameters are repeatable.",
+                   Optional filter parameters (watering_status, region) narrow the result; array parameters are repeatable. \
+                   Sortable by name, moisture, trees or last_watered.",
     params(ClusterListParams),
     responses(
         (status = 200, description = "Paginated list of tree clusters", body = ListResponse<TreeClusterInListResponse>),
@@ -125,6 +127,10 @@ pub async fn list_clusters(
             Permission::new(Resource::TreeCluster, Action::Read),
         )
         .await?;
+    let sort = ClusterSort {
+        field: params.sort.map(ClusterSortField::from).unwrap_or_default(),
+        direction: params.order.map(SortDirection::from).unwrap_or_default(),
+    };
     let query = TreeClusterSearchQuery {
         watering_statuses: params
             .watering_status
@@ -138,22 +144,14 @@ pub async fn list_clusters(
             .map(domain::cluster::SoilCondition::from)
             .collect(),
         query: search,
-        sort: params
-            .sort
-            .as_deref()
-            .and_then(|s| s.parse::<ClusterSort>().ok())
-            .unwrap_or_default(),
-        order: params
-            .order
-            .as_deref()
-            .and_then(|s| s.parse::<SortOrder>().ok())
-            .unwrap_or_default(),
+        sort,
         visible,
         ..TreeClusterSearchQuery::default()
     };
-    let page = state.cluster_service.search_view(query, pagination).await?;
+    let result = state.cluster_service.search_view(query, pagination).await?;
 
-    let region_ids: Vec<Id<Region>> = page
+    let region_ids: Vec<Id<Region>> = result
+        .page
         .items
         .iter()
         .filter_map(|c| c.region_id.map(Id::new))
@@ -161,13 +159,15 @@ pub async fn list_clusters(
     let regions = state.region_service.by_ids(&region_ids).await?;
     let region_map: HashMap<Id<Region>, &_> = regions.iter().map(|r| (r.id, r)).collect();
 
-    let response = ListResponse::from_page_with(page, &pagination, |cluster: &TreeClusterView| {
-        let region = cluster
-            .region_id
-            .map(Id::new)
-            .and_then(|id| region_map.get(&id).copied());
-        TreeClusterInListResponse::from((cluster, region))
-    });
+    let response =
+        ListResponse::from_page_with(result.page, &pagination, |cluster: &TreeClusterView| {
+            let region = cluster
+                .region_id
+                .map(Id::new)
+                .and_then(|id| region_map.get(&id).copied());
+            TreeClusterInListResponse::from((cluster, region))
+        })
+        .with_total_unfiltered(result.total_unfiltered);
     Ok(Json(response))
 }
 

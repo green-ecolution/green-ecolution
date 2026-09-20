@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT s.id, s.created_at, s.updated_at,\n                      s.activated_at,\n                      s.type          AS \"sensor_type: SensorType\",\n                      s.provider,\n                      s.additional_informations AS \"additional_info: serde_json::Value\",\n                      s.organization_id,\n                      sm.id           AS model_id,\n                      sm.name         AS model_name,\n                      t.id            AS \"linked_tree_id?\",\n                      t.latitude      AS \"tree_lat?\",\n                      t.longitude     AS \"tree_lng?\",\n                      sl.serial_number AS \"serial_number?\",\n                      sl.dev_eui       AS \"dev_eui?\",\n                      sl.app_eui       AS \"app_eui?\",\n                      sl.at_pin,\n                      sl.ota_pin,\n                      sl.config        AS \"config: serde_json::Value\"\n            FROM sensors s\n            INNER JOIN sensor_models sm ON sm.id = s.model_id\n            LEFT JOIN sensor_lorawan sl ON sl.id = s.id\n            LEFT JOIN trees t          ON t.sensor_id = s.id\n            WHERE s.id = $1",
+  "query": "SELECT s.id, s.created_at, s.updated_at,\n                      s.activated_at,\n                      s.type          AS \"sensor_type: SensorType\",\n                      s.provider,\n                      s.additional_informations AS \"additional_info: serde_json::Value\",\n                      s.organization_id,\n                      sm.id           AS model_id,\n                      sm.name         AS model_name,\n                      t.id            AS \"linked_tree_id?\",\n                      t.latitude      AS \"tree_lat?\",\n                      t.longitude     AS \"tree_lng?\",\n                      tc.id           AS \"linked_cluster_id?\",\n                      tc.name         AS \"linked_cluster_name?\",\n                      sl.serial_number AS \"serial_number?\",\n                      sl.dev_eui       AS \"dev_eui?\",\n                      sl.app_eui       AS \"app_eui?\",\n                      sl.at_pin,\n                      sl.ota_pin,\n                      sl.config        AS \"config: serde_json::Value\"\n            FROM sensors s\n            INNER JOIN sensor_models sm ON sm.id = s.model_id\n            LEFT JOIN sensor_lorawan sl ON sl.id = s.id\n            LEFT JOIN trees t          ON t.sensor_id = s.id\n            LEFT JOIN tree_clusters tc ON tc.id = t.tree_cluster_id\n            WHERE s.id = $1",
   "describe": {
     "columns": [
       {
@@ -79,31 +79,41 @@
       },
       {
         "ordinal": 13,
+        "name": "linked_cluster_id?",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 14,
+        "name": "linked_cluster_name?",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 15,
         "name": "serial_number?",
         "type_info": "Text"
       },
       {
-        "ordinal": 14,
+        "ordinal": 16,
         "name": "dev_eui?",
         "type_info": "Varchar"
       },
       {
-        "ordinal": 15,
+        "ordinal": 17,
         "name": "app_eui?",
         "type_info": "Varchar"
       },
       {
-        "ordinal": 16,
+        "ordinal": 18,
         "name": "at_pin",
         "type_info": "Text"
       },
       {
-        "ordinal": 17,
+        "ordinal": 19,
         "name": "ota_pin",
         "type_info": "Text"
       },
       {
-        "ordinal": 18,
+        "ordinal": 20,
         "name": "config: serde_json::Value",
         "type_info": "Jsonb"
       }
@@ -130,10 +140,12 @@
       false,
       false,
       false,
+      false,
+      false,
       true,
       true,
       true
     ]
   },
-  "hash": "936776cf617c952d67dfd089aa3a04199a9002d6d2e467842506c151ff94de8e"
+  "hash": "919a1c3dc1d1dd1bec20f0ad6def8f1b04390c7b7bc24969add4cee07a6e46b0"
 }

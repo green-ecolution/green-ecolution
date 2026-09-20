@@ -31,6 +31,8 @@ interface ListFilterDropdownProps {
   onChange: (value: string[]) => void
   icon?: ComponentType<{ className?: string }>
   emptyText: string
+  /** `single` answers a one-of question ("with sensor" / "without sensor"); picking the selected option again clears it. */
+  mode?: 'multi' | 'single'
 }
 
 const ListFilterDropdown = ({
@@ -40,11 +42,17 @@ const ListFilterDropdown = ({
   onChange,
   icon: Icon,
   emptyText,
+  mode = 'multi',
 }: ListFilterDropdownProps) => {
   const { t } = useTranslation('common')
   const stateIdPrefix = useId()
-  const toggle = (option: string) =>
+  const toggle = (option: string) => {
+    if (mode === 'single') {
+      onChange(value.includes(option) ? [] : [option])
+      return
+    }
     onChange(value.includes(option) ? value.filter((v) => v !== option) : [...value, option])
+  }
 
   return (
     <Popover>

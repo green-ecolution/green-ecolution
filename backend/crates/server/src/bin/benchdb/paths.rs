@@ -351,7 +351,7 @@ pub async fn measure_all(
             samples.push(
                 measure("cluster.view_search", scale, label, || async {
                     let page = clusters.view_search(query.clone(), first_page).await?;
-                    Ok(page.items.len() as u64)
+                    Ok(page.page.items.len() as u64)
                 })
                 .await?,
             );
@@ -409,7 +409,7 @@ pub async fn measure_all(
             samples.push(
                 measure("sensor.view_search", scale, label, || async {
                     let page = sensors.view_search(query.clone(), first_page).await?;
-                    Ok(page.items.len() as u64)
+                    Ok(page.page.items.len() as u64)
                 })
                 .await?,
             );

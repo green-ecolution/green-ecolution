@@ -48,19 +48,6 @@
     "sensorCount_one": "{withSensor} von {count} Baum mit Sensor",
     "sensorCount_other": "{withSensor} von {count} Bäumen mit Sensor"
   },
-  "statusChips": {
-    "groupAriaLabel": "Nach Bewässerungszustand filtern"
-  },
-  "toolbar": {
-    "searchPlaceholder": "Gruppe suchen",
-    "sortLabel": "Sortieren:",
-    "sortPlaceholder": "Sortieren",
-    "sortSearchPlaceholder": "Sortierung suchen",
-    "sortAriaLabel": "Gruppen sortieren",
-    "sortOptionName": "Name",
-    "sortOptionMoisture": "Feuchte",
-    "sortOptionTrees": "Anzahl Bäume"
-  },
   "treeDots": {
     "noTreesNotice": "Noch keine Bäume zugeordnet",
     "legend": "Sensor-Baum · misst die Gruppe"
@@ -136,16 +123,6 @@
     "siltAxisLabel": "Schluff [%]",
     "clayAxisLabel": "Ton [%]"
   },
-  "regionFieldset": {
-    "legend": "Stadtteil in Flensburg:",
-    "placeholder": "Alle Bezirke",
-    "searchPlaceholder": "Bezirk suchen"
-  },
-  "soilFieldset": {
-    "legend": "Bodenart:",
-    "placeholder": "Alle Bodenarten",
-    "searchPlaceholder": "Bodenart suchen"
-  },
   "listRow": {
     "treeCount_one": "{count} Baum",
     "treeCount_other": "{count} Bäume"
@@ -179,13 +156,28 @@
     "statsLabel": "{total} Gruppen · {trees} Bäume",
     "description": "Hier findest du eine Übersicht aller Bewässerungsgruppen. Eine Bewässerungsgruppe besteht aus mehreren Bäumen, welche aufgrund ihrer Nähe und Standortbedingungen in einer Gruppe zusammengefasst wurden. Die Ausstattung einzelner Bäume mit Sensoren erlaubt eine Gesamtaussage über den Bewässerungszustand der vollständigen Gruppe.",
     "createButton": "Gruppe anlegen",
-    "filterHeadline": "Bewässerungsgruppen filtern",
     "loadingLabel": "Daten werden geladen",
     "columnStatus": "Status",
     "columnName": "Name",
     "columnLocation": "Standort",
     "columnTreeCount": "Anzahl d. Bäume",
-    "emptyMessage": "Es wurden leider keine Bewässerungsgruppen gefunden."
+    "emptyMessage": "Es wurden leider keine Bewässerungsgruppen gefunden.",
+    "searchLabel": "Bewässerungsgruppen durchsuchen",
+    "searchPlaceholder": "Name suchen",
+    "filterStatus": "Status",
+    "filterRegion": "Region",
+    "filterSoil": "Bodenart",
+    "filterNoOptions": "Keine Auswahl vorhanden.",
+    "regionUnknown": "Unbekannte Region",
+    "sortName": "Name",
+    "sortMoisture": "Feuchte",
+    "sortTrees": "Anzahl Bäume",
+    "sortLastWatered": "Letzte Bewässerung",
+    "resultCount_one": "{count} Gruppe",
+    "resultCount_other": "{count} Gruppen",
+    "resultCountFiltered": "{filtered} von {total} Gruppen",
+    "emptyFilteredMessage": "Keine Bewässerungsgruppe passt zu diesen Filtern.",
+    "emptyFilteredAction": "Filter zurücksetzen"
   },
   "detail": {
     "loadingLabel": "Bewässerungsgruppe wird geladen …",

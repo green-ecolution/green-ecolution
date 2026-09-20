@@ -18,12 +18,14 @@ import type {
   AcknowledgeDataQualityRequest,
   ActivateSensorRequest,
   CreateSensorRequest,
+  DataHealth,
   ErrorBody,
   ListResponseSensorDataResponse,
   ListResponseSensorResponse,
   SensorDataQualityResponse,
   SensorModelResponse,
   SensorResponse,
+  SensorStatus,
   SetSensorTreeRequest,
   SoilMoistureSeriesResponse,
   TransferRequest,
@@ -35,6 +37,8 @@ import {
     ActivateSensorRequestToJSON,
     CreateSensorRequestFromJSON,
     CreateSensorRequestToJSON,
+    DataHealthFromJSON,
+    DataHealthToJSON,
     ErrorBodyFromJSON,
     ErrorBodyToJSON,
     ListResponseSensorDataResponseFromJSON,
@@ -47,6 +51,8 @@ import {
     SensorModelResponseToJSON,
     SensorResponseFromJSON,
     SensorResponseToJSON,
+    SensorStatusFromJSON,
+    SensorStatusToJSON,
     SetSensorTreeRequestFromJSON,
     SetSensorTreeRequestToJSON,
     SoilMoistureSeriesResponseFromJSON,
@@ -103,6 +109,14 @@ export interface ListSensorDataRequest {
 export interface ListSensorsRequest {
     page?: number;
     perPage?: number;
+    q?: string;
+    status?: Array<SensorStatus>;
+    modelId?: Array<string>;
+    dataHealth?: Array<DataHealth>;
+    hasTree?: boolean | null;
+    clusterId?: Array<string>;
+    sort?: ListSensorsSortEnum;
+    order?: ListSensorsOrderEnum;
 }
 
 export interface RemoveSensorTreeRequest {
@@ -554,7 +568,7 @@ export class SensorsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a paginated list of all LoRaWAN sensors.
+     * Returns a paginated list of all LoRaWAN sensors. Optional `q` parameter case-insensitively filters by sensor EUI or model name. Optional filter parameters (status, model_id, data_health, has_tree) narrow the result; array parameters are repeatable. Optional `sort` (id, last_reading, created_at) and `order` (asc, desc) control the result order; the default is id ascending.
      * List all sensors
      */
     async listSensorsRaw(requestParameters: ListSensorsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListResponseSensorResponse>> {
@@ -566,6 +580,38 @@ export class SensorsApi extends runtime.BaseAPI {
 
         if (requestParameters['perPage'] != null) {
             queryParameters['per_page'] = requestParameters['perPage'];
+        }
+
+        if (requestParameters['q'] != null) {
+            queryParameters['q'] = requestParameters['q'];
+        }
+
+        if (requestParameters['status'] != null) {
+            queryParameters['status'] = requestParameters['status'];
+        }
+
+        if (requestParameters['modelId'] != null) {
+            queryParameters['model_id'] = requestParameters['modelId'];
+        }
+
+        if (requestParameters['dataHealth'] != null) {
+            queryParameters['data_health'] = requestParameters['dataHealth'];
+        }
+
+        if (requestParameters['hasTree'] != null) {
+            queryParameters['has_tree'] = requestParameters['hasTree'];
+        }
+
+        if (requestParameters['clusterId'] != null) {
+            queryParameters['cluster_id'] = requestParameters['clusterId'];
+        }
+
+        if (requestParameters['sort'] != null) {
+            queryParameters['sort'] = requestParameters['sort'];
+        }
+
+        if (requestParameters['order'] != null) {
+            queryParameters['order'] = requestParameters['order'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -584,7 +630,7 @@ export class SensorsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a paginated list of all LoRaWAN sensors.
+     * Returns a paginated list of all LoRaWAN sensors. Optional `q` parameter case-insensitively filters by sensor EUI or model name. Optional filter parameters (status, model_id, data_health, has_tree) narrow the result; array parameters are repeatable. Optional `sort` (id, last_reading, created_at) and `order` (asc, desc) control the result order; the default is id ascending.
      * List all sensors
      */
     async listSensors(requestParameters: ListSensorsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ListResponseSensorResponse> {
@@ -729,3 +775,21 @@ export class SensorsApi extends runtime.BaseAPI {
     }
 
 }
+
+/**
+ * @export
+ */
+export const ListSensorsSortEnum = {
+    Id: 'id',
+    LastReading: 'last_reading',
+    CreatedAt: 'created_at'
+} as const;
+export type ListSensorsSortEnum = typeof ListSensorsSortEnum[keyof typeof ListSensorsSortEnum];
+/**
+ * @export
+ */
+export const ListSensorsOrderEnum = {
+    Asc: 'asc',
+    Desc: 'desc'
+} as const;
+export type ListSensorsOrderEnum = typeof ListSensorsOrderEnum[keyof typeof ListSensorsOrderEnum];

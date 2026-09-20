@@ -3,7 +3,7 @@ use domain::{IdSliceExt, RawId};
 use serde_json::Value;
 use sqlx::PgPool;
 
-use crate::infra::sql::like_escape;
+use crate::infra::list::{ListSpec, Predicate, SortColumns};
 use domain::cluster::snapshot::TreeClusterSnapshot;
 use domain::{
     Id, RepositoryError,
@@ -17,7 +17,7 @@ use domain::{
     organization::Organization,
     shared::{
         coordinates::Coordinate,
-        pagination::{Page, Pagination},
+        pagination::{Page, Pagination, SearchPage},
         watering_status::WateringStatus,
     },
 };
@@ -42,7 +42,12 @@ impl PgTreeClusterRepository {
 /// trees aggregate join). Field names match the SELECT column names so the
 /// `.sqlx/` query cache stays valid; `From` derives `created_at` from the
 /// UUID v7 id.
-#[allow(dead_code)] // fields are read via the `From<TreeClusterViewRow>` impl
+///
+/// `last_watered` is stored as a naive `timestamp`, but the field is
+/// `DateTime<Utc>`; `sqlx::FromRow` checks the column's Postgres type against
+/// the Rust type (unlike `query_as!`'s unchecked override), so `view_search`
+/// projects it as `tc.last_watered AT TIME ZONE 'UTC'`.
+#[derive(sqlx::FromRow)]
 struct TreeClusterViewRow {
     id: RawId,
     updated_at: NaiveDateTime,
@@ -92,6 +97,21 @@ impl From<TreeClusterViewRow> for TreeClusterView {
         }
     }
 }
+
+const CLUSTER_COLUMNS: &str = "tc.id, tc.updated_at, tc.name, tc.address, \
+    tc.description, tc.archived, tc.moisture_level, tc.region_id, \
+    tc.watering_status, tc.soil_condition, tc.latitude, tc.longitude, \
+    tc.last_watered AT TIME ZONE 'UTC' AS last_watered, tc.provider, \
+    tc.additional_informations AS additional_info, tc.organization_id, \
+    COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::uuid[]) AS tree_ids, \
+    COUNT(t.id) FILTER (WHERE t.sensor_id IS NOT NULL AND t.sensor_id <> '') AS sensor_count";
+
+const CLUSTER_SORT_COLUMNS: SortColumns = &[
+    ("name", &["tc.name"]),
+    ("moisture", &["tc.moisture_level"]),
+    ("trees", &["COUNT(t.id)"]),
+    ("last_watered", &["tc.last_watered"]),
+];
 
 #[async_trait::async_trait]
 impl TreeClusterReader for PgTreeClusterRepository {
@@ -213,88 +233,48 @@ impl TreeClusterReader for PgTreeClusterRepository {
         &self,
         query: TreeClusterSearchQuery,
         pagination: Pagination,
-    ) -> Result<Page<TreeClusterView>, RepositoryError> {
-        let watering_statuses: Vec<WateringStatus> = query.watering_statuses;
-        let limit = i64::try_from(pagination.limit()).unwrap_or(i64::MAX);
-        let offset = i64::try_from(pagination.offset()).unwrap_or(i64::MAX);
-        let provider = query.provider.as_ref().map(|p| p.as_str().to_string());
-        let search = query
-            .query
-            .as_deref()
-            .map(str::trim)
-            .filter(|s| !s.is_empty())
-            .map(|s| format!("%{}%", like_escape(s)));
-        let search = search.as_deref();
-        let sort = query.sort.as_str();
-        let order = query.order.as_str();
-        let visible_ids = query.visible.clone().into_raw_ids();
+    ) -> Result<SearchPage<TreeClusterView>, RepositoryError> {
+        // The tree join both aggregates the children and backs the "trees"
+        // sort, so it is a filtering join: the counts keep it and switch to a
+        // distinct count over cluster ids.
+        let page = ListSpec::new("tree_clusters tc", "tc.id")
+            .join("LEFT JOIN trees t ON t.tree_cluster_id = tc.id")
+            .group_by("tc.id")
+            .scope(Predicate::equals(
+                "tc.provider",
+                query.provider.as_ref().map(|p| p.as_str().to_owned()),
+            ))
+            .scope(Predicate::any_of_opt(
+                "tc.organization_id",
+                query.visible.into_raw_ids(),
+            ))
+            .filter(Predicate::text_search(&["tc.name"], query.query))
+            .filter(Predicate::any_of(
+                "tc.watering_status",
+                query.watering_statuses,
+            ))
+            .filter(Predicate::any_of("tc.region_id", query.regions))
+            .filter(Predicate::any_of(
+                "tc.soil_condition",
+                query.soil_conditions,
+            ))
+            .sort(
+                query.sort.field.as_sql_key(),
+                query.sort.direction.is_descending(),
+                CLUSTER_SORT_COLUMNS,
+            )
+            .tiebreak("tc.name")
+            .page(pagination)
+            .fetch::<TreeClusterViewRow>(&self.pool, CLUSTER_COLUMNS)
+            .await?;
 
-        let total = sqlx::query_scalar!(
-            r#"SELECT COUNT(*) AS "count!: i64" FROM tree_clusters tc
-            WHERE ($1::watering_status[] = '{}' OR tc.watering_status = ANY($1))
-              AND ($2::uuid[] = '{}' OR tc.region_id = ANY($2))
-              AND ($3::text IS NULL OR tc.provider = $3)
-              AND ($4::text IS NULL OR tc.name ILIKE $4 ESCAPE '\')
-              AND ($5::tree_soil_condition[] = '{}' OR tc.soil_condition = ANY($5))
-              AND ($6::uuid[] IS NULL OR tc.organization_id = ANY($6))"#,
-            &watering_statuses as &[WateringStatus],
-            &query.regions,
-            provider,
-            search,
-            &query.soil_conditions as &[SoilCondition],
-            visible_ids.as_deref(),
-        )
-        .fetch_one(&self.pool)
-        .await? as u64;
-
-        let visible_ids = query.visible.into_raw_ids();
-        let rows = sqlx::query_as!(
-            TreeClusterViewRow,
-            r#"SELECT tc.id, tc.updated_at, tc.name, tc.address, tc.description,
-                      tc.archived, tc.moisture_level, tc.region_id,
-                      tc.watering_status AS "watering_status: WateringStatus",
-                      tc.soil_condition AS "soil_condition: Option<SoilCondition>",
-                      tc.latitude, tc.longitude,
-                      tc.last_watered AS "last_watered: DateTime<Utc>",
-                      tc.provider,
-                      tc.additional_informations AS additional_info,
-                      tc.organization_id,
-                      COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::uuid[]) AS "tree_ids!: Vec<RawId>",
-                      COUNT(t.id) FILTER (WHERE t.sensor_id IS NOT NULL AND t.sensor_id <> '') AS "sensor_count!: i64"
-            FROM tree_clusters tc
-            LEFT JOIN trees t ON t.tree_cluster_id = tc.id
-            WHERE ($1::watering_status[] = '{}' OR tc.watering_status = ANY($1))
-              AND ($2::uuid[] = '{}' OR tc.region_id = ANY($2))
-              AND ($3::text IS NULL OR tc.provider = $3)
-              AND ($4::text IS NULL OR tc.name ILIKE $4 ESCAPE '\')
-              AND ($5::tree_soil_condition[] = '{}' OR tc.soil_condition = ANY($5))
-              AND ($6::uuid[] IS NULL OR tc.organization_id = ANY($6))
-            GROUP BY tc.id
-            ORDER BY
-              CASE WHEN $7 = 'moisture' AND $8 = 'asc'  THEN tc.moisture_level END ASC NULLS LAST,
-              CASE WHEN $7 = 'moisture' AND $8 = 'desc' THEN tc.moisture_level END DESC NULLS LAST,
-              CASE WHEN $7 = 'trees'    AND $8 = 'asc'  THEN COUNT(t.id) END ASC,
-              CASE WHEN $7 = 'trees'    AND $8 = 'desc' THEN COUNT(t.id) END DESC,
-              CASE WHEN $7 = 'name'     AND $8 = 'desc' THEN tc.name END DESC,
-              tc.name ASC, tc.id ASC
-            LIMIT $9 OFFSET $10"#,
-            &watering_statuses as &[WateringStatus],
-            &query.regions,
-            provider,
-            search,
-            &query.soil_conditions as &[SoilCondition],
-            visible_ids.as_deref(),
-            sort,
-            order,
-            limit,
-            offset,
-        )
-        .fetch_all(&self.pool)
-        .await?;
-
-        let items = rows.into_iter().map(Into::into).collect();
-
-        Ok(Page { items, total })
+        Ok(SearchPage {
+            page: Page {
+                items: page.page.items.into_iter().map(Into::into).collect(),
+                total: page.page.total,
+            },
+            total_unfiltered: page.total_unfiltered,
+        })
     }
 
     #[tracing::instrument(level = "trace", skip_all)]

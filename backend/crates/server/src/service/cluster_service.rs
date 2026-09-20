@@ -16,7 +16,7 @@ use domain::{
     sensor::{SensorReader, SensorWriter},
     shared::{
         coordinates::Coordinate,
-        pagination::{Page, Pagination},
+        pagination::{Pagination, SearchPage},
     },
     tree::{Tree, TreeReader, TreeWriter, volumetric_thresholds},
 };
@@ -63,7 +63,7 @@ impl ClusterService {
         &self,
         query: TreeClusterSearchQuery,
         pagination: Pagination,
-    ) -> Result<Page<TreeClusterView>, ServiceError> {
+    ) -> Result<SearchPage<TreeClusterView>, ServiceError> {
         Ok(self.reader.view_search(query, pagination).await?)
     }
 

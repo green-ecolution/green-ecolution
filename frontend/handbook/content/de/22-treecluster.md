@@ -10,14 +10,18 @@ routes: ['/treecluster', '/treecluster/$treeclusterId']
 
 Der Bereich **Bewässerungsgruppen** listet alle Gruppen auf, auf die du zugreifen darfst,
 und nennt über der Liste ihre Gesamtzahl sowie die Zahl der darin zusammengefassten Bäume.
-Oben rechts wechselst du zwischen der Ansicht **Karten** und der Ansicht **Tabelle**. Die
-Suche greift auf den Namen der Gruppe, über **Filter** schränkst du die Liste zusätzlich
-nach Bewässerungszustand, Region und Bodenart ein, und sortieren lässt sie sich nach Name,
-Feuchte und Anzahl der Bäume. Die Chips darunter zeigen, wie sich alle Gruppen auf die
-Bewässerungszustände verteilen, und wirken zugleich als Filter: Ein Klick auf einen Chip
-zeigt nur noch die Gruppen dieses Zustands, ein zweiter nimmt ihn wieder heraus.
+Oben rechts wechselst du zwischen der Ansicht **Karten** und der Ansicht **Tabelle**. Über
+das Suchfeld durchsuchst du die Liste nach dem Namen der Gruppe, ohne Rücksicht auf Groß-
+und Kleinschreibung.
 
-![Die Übersicht der Bewässerungsgruppen in der Kartenansicht mit den Status-Chips](../images/treecluster-list.png)
+Darunter stehen drei Filter, die jeweils sofort wirken, ohne dass eine Bestätigung nötig
+wäre: nach dem Bewässerungszustand, nach der Region und nach der Bodenart. Über das
+Sortiermenü ordnest du die Liste nach Name, Feuchte, Anzahl der Bäume oder dem Zeitpunkt
+der letzten Bewässerung, jeweils auf- oder absteigend. Jede gesetzte Auswahl erscheint
+darunter als entfernbarer Chip, daneben ein Link, der alle Filter auf einmal zurücksetzt,
+sowie die Anzahl der gefundenen Gruppen.
+
+![Die Übersicht der Bewässerungsgruppen in der Kartenansicht mit Filterleiste und aktiven Filtern](../images/treecluster-list.png)
 
 ### Eine Gruppenkarte lesen
 

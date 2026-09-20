@@ -12,6 +12,7 @@ pub mod error;
 pub mod license;
 pub mod repository;
 pub mod snapshot;
+pub mod sort;
 pub mod view;
 
 use chrono::{DateTime, Utc};
@@ -33,6 +34,7 @@ pub use license::DrivingLicense;
 pub use repository::{VehicleReader, VehicleWriter};
 #[doc(hidden)]
 pub use snapshot::VehicleSnapshot;
+pub use sort::{VehicleSort, VehicleSortField};
 pub use view::VehicleView;
 
 /// Whether a vehicle may be assigned at all — the one part of its state only a
@@ -178,15 +180,34 @@ pub struct VehicleDraft {
     pub organization_id: Id<Organization>,
 }
 
-#[derive(Debug, Default, Clone)]
+/// How a list treats rows that carry an archive timestamp. The infra layer
+/// maps this onto its own predicate; the domain must not know that type.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum ArchiveFilterKind {
+    #[default]
+    ActiveOnly,
+    Include,
+    ArchivedOnly,
+}
+
+#[derive(Debug, Clone, Default)]
 pub struct VehicleSearchQuery {
-    pub vehicle_type: Option<VehicleType>,
-    pub with_archived: bool,
-    pub only_archived: bool,
+    // Scope
     pub provider: Option<ProviderId>,
     /// Which organizations may see the result. Callers must set this per
     /// request; defaults to unrestricted for internal consumers.
     pub visible: Visibility,
+
+    // Filters
+    pub vehicle_type: Option<VehicleType>,
+    pub types: Vec<VehicleType>,
+    pub statuses: Vec<VehicleStatus>,
+    pub driving_licenses: Vec<DrivingLicense>,
+    pub archive: ArchiveFilterKind,
+
+    // Search and order
+    pub q: Option<String>,
+    pub sort: VehicleSort,
 }
 
 /// Replacement input for [`Vehicle`] updates.
