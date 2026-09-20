@@ -3,19 +3,16 @@ import { useQuery, useSuspenseQuery, keepPreviousData } from '@tanstack/react-qu
 import { useTranslation } from 'react-i18next'
 import ButtonLink from '@/components/general/links/ButtonLink'
 import { Plus } from 'lucide-react'
-import { Loading } from '@green-ecolution/ui'
+import { Button, Loading } from '@green-ecolution/ui'
 import EntityList from '@/components/general/EntityList'
 import TreeclusterCard from '@/components/general/cards/TreeclusterCard'
 import ClusterCard from '@/components/treecluster/ClusterCard'
 import Pagination from '@/components/general/Pagination'
-import Dialog from '@/components/general/filter/Dialog'
-import StatusFieldset from '@/components/general/filter/fieldsets/StatusFieldset'
-import RegionFieldset from '@/components/general/filter/fieldsets/RegionFieldset'
-import SoilFieldset from '@/components/general/filter/fieldsets/SoilFieldset'
-import ClusterToolbar from '@/components/treecluster/ClusterToolbar'
-import ClusterStatusChips from '@/components/treecluster/ClusterStatusChips'
+import ClusterListToolbar from '@/components/treecluster/list/ClusterListToolbar'
+import { useClusterListSearch } from '@/components/treecluster/list/useClusterListSearch'
 import ClusterViewToggle from '@/components/treecluster/ClusterViewToggle'
 import { z } from 'zod'
+import { ListClustersSortEnum, ListClustersOrderEnum } from '@green-ecolution/backend-client'
 import { clusterQueries, regionsQuery } from '@/api/queries'
 import { ListCardHeader } from '@green-ecolution/ui'
 import { filterSearchSchema } from '@/lib/filterSearchSchema'
@@ -23,48 +20,51 @@ import { pendingLoading, prefetch } from '@/lib/router'
 import { SoilCondition } from '@/api/backendApi'
 import { Can } from '@/lib/auth/Can'
 
+export const PER_PAGE = 25
+
 const treeclusterFilterSchema = filterSearchSchema
   .pick({ wateringStatuses: true, regions: true })
   .extend({
     page: z.number().int().min(1).catch(1),
     q: z.string().optional().catch(undefined),
-    sort: z.enum(['name', 'moisture', 'trees']).optional().catch(undefined),
-    order: z.enum(['asc', 'desc']).optional().catch(undefined),
+    sort: z.enum(ListClustersSortEnum).optional().catch(undefined),
+    order: z.enum(ListClustersOrderEnum).optional().catch(undefined),
     soil: z.array(z.string()).optional().catch(undefined),
     view: z.enum(['cards', 'table']).optional().catch(undefined),
   })
 
+const listParams = (search: z.infer<typeof treeclusterFilterSchema>) => ({
+  page: search.page,
+  perPage: PER_PAGE,
+  wateringStatus: search.wateringStatuses,
+  region: search.regions,
+  query: search.q,
+  sort: search.sort,
+  order: search.order,
+  soilCondition: search.soil as SoilCondition[] | undefined,
+})
+
 function Treecluster() {
   const { t } = useTranslation('treecluster')
-  const {
-    page,
-    wateringStatuses,
-    regions,
-    q,
-    sort = 'name',
-    order = 'asc',
-    soil,
-    view = 'cards',
-  } = Route.useSearch()
+  const search = Route.useSearch()
+  const { view = 'cards' } = search
+  const { resetFilters } = useClusterListSearch()
   const {
     data: clustersRes,
     isPlaceholderData,
     error,
   } = useQuery({
-    ...clusterQueries.list({
-      page,
-      perPage: 12,
-      wateringStatus: wateringStatuses,
-      region: regions,
-      query: q,
-      sort,
-      order,
-      soilCondition: soil as SoilCondition[] | undefined,
-    }),
+    ...clusterQueries.list(listParams(search)),
     placeholderData: keepPreviousData,
   })
   const { data: stats } = useSuspenseQuery(clusterQueries.statistics())
   if (error) throw error
+
+  const isFiltered =
+    (search.q ?? '').length > 0 ||
+    (search.wateringStatuses?.length ?? 0) > 0 ||
+    (search.regions?.length ?? 0) > 0 ||
+    (search.soil?.length ?? 0) > 0
 
   return (
     <div className="container mt-6">
@@ -91,29 +91,27 @@ function Treecluster() {
       </header>
 
       <section className="mt-8">
-        <div className="mb-6 flex flex-col gap-3 lg:mb-8">
-          <div className="flex items-center gap-2 sm:flex-wrap sm:gap-3">
-            <ClusterToolbar />
-            <Dialog headline={t('list.filterHeadline')} fullUrlPath={Route.fullPath}>
-              <StatusFieldset />
-              <RegionFieldset />
-              <SoilFieldset />
-            </Dialog>
-          </div>
-          <div className="hidden sm:block">
-            <ClusterStatusChips />
-          </div>
-        </div>
+        <ClusterListToolbar
+          filteredRecords={clustersRes?.pagination?.totalRecords ?? 0}
+          totalRecords={clustersRes?.pagination?.totalUnfiltered ?? undefined}
+        />
 
         {!clustersRes ? (
           <Loading className="mt-10 justify-center" label={t('list.loadingLabel')} />
         ) : (
           <div
-            className="transition-opacity duration-200"
+            className="mt-6 transition-opacity duration-200"
             style={{ opacity: isPlaceholderData ? 0.6 : 1 }}
             aria-busy={isPlaceholderData}
           >
-            {view === 'table' ? (
+            {clustersRes.data.length === 0 && isFiltered ? (
+              <div className="mt-10 text-center">
+                <p className="text-dark-600">{t('list.emptyFilteredMessage')}</p>
+                <Button variant="outline" className="mt-4" onClick={resetFilters}>
+                  {t('list.emptyFilteredAction')}
+                </Button>
+              </div>
+            ) : view === 'table' ? (
               <>
                 <ListCardHeader columns="1fr 2fr 1.5fr 1fr">
                   <p>{t('list.columnStatus')}</p>
@@ -161,24 +159,8 @@ export const Route = createFileRoute('/_protected/treecluster/')({
     order: search.order,
     soil: search.soil,
   }),
-  loader: ({
-    context: { queryClient },
-    deps: { page, wateringStatuses, regions, q, sort = 'name', order = 'asc', soil },
-  }) => {
-    prefetch(
-      queryClient,
-      clusterQueries.list({
-        page,
-        perPage: 12,
-        wateringStatus: wateringStatuses,
-        region: regions,
-        query: q,
-        sort,
-        order,
-        soilCondition: soil as SoilCondition[] | undefined,
-      }),
-      'clusterQueries.list',
-    )
+  loader: ({ deps, context: { queryClient } }) => {
+    prefetch(queryClient, clusterQueries.list(listParams(deps)), 'clusterQueries.list')
     prefetch(queryClient, clusterQueries.statistics(), 'clusterQueries.statistics')
     prefetch(queryClient, regionsQuery(), 'regionsQuery')
   },
