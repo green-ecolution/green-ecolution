@@ -1,5 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { treeQueries, vehicleQueries, clusterQueries, wateringPlanQueries } from './queries'
+import {
+  treeQueries,
+  vehicleQueries,
+  clusterQueries,
+  wateringPlanQueries,
+  sensorQueries,
+} from './queries'
 import type { Tree, Vehicle, TreeCluster, WateringPlan } from '@/api/backendApi'
 import type {
   ListResponseTreeResponse,
@@ -8,6 +14,7 @@ import type {
   ListResponseWateringPlanInListResponse,
   RouteResponse,
 } from '@green-ecolution/backend-client'
+import { SensorStatus } from '@green-ecolution/backend-client'
 
 vi.mock('./backendApi', () => ({
   treeApi: {
@@ -217,6 +224,33 @@ describe('Query Functions', () => {
         // eslint-disable-next-line @typescript-eslint/unbound-method
         expect(vehicleApi.getVehicle).toHaveBeenCalledWith({ vehicleId: 'vehicle-uuid-1' })
         expect(result).toEqual(mockVehicle)
+      })
+    })
+  })
+
+  describe('Sensor Queries', () => {
+    describe('sensorQueries.list', () => {
+      it('returns correct query options for fetching all sensors', () => {
+        const options = sensorQueries.list()
+
+        expect(options.queryKey).toEqual(['sensors', {}])
+        expect(options.queryFn).toBeDefined()
+      })
+
+      it('includes the full params object in the query key, not just the page', () => {
+        const options = sensorQueries.list({ page: 2 })
+
+        expect(options.queryKey).toEqual(['sensors', { page: 2 }])
+      })
+
+      // Guards the cache-key bug directly: a key that dropped everything but
+      // the page would pass the assertion above yet still fail this one,
+      // since both calls share `page: 1`.
+      it('produces different keys for different filter combinations on the same page', () => {
+        const online = sensorQueries.list({ page: 1, status: [SensorStatus.Online] })
+        const offline = sensorQueries.list({ page: 1, status: [SensorStatus.Offline] })
+
+        expect(online.queryKey).not.toEqual(offline.queryKey)
       })
     })
   })
