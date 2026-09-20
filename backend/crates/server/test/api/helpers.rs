@@ -244,10 +244,14 @@ static CONTAINER_ID: OnceLock<String> = OnceLock::new();
 // `watchdog` feature only fires on SIGTERM/SIGINT/SIGQUIT — neither covers a
 // clean test-runner exit. Register a libc `atexit` hook that force-removes the
 // container via the docker CLI as a synchronous fallback.
+//
+// `-v` is load-bearing: the postgis image declares a VOLUME for the data
+// directory, so every run creates an anonymous volume holding one database per
+// `spawn_app`. Without it the container goes but multiple GB of volume stay.
 extern "C" fn cleanup_container_at_exit() {
     if let Some(id) = CONTAINER_ID.get() {
         let _ = std::process::Command::new("docker")
-            .args(["rm", "-f", id])
+            .args(["rm", "-f", "-v", id])
             .stdout(std::process::Stdio::null())
             .stderr(std::process::Stdio::null())
             .status();

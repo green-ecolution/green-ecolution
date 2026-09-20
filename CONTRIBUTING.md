@@ -59,6 +59,7 @@ For a reproducible environment, use `nix develop`.
 | Command | Description |
 |---------|-------------|
 | `just test` | Run all tests (Rust workspace + frontend) |
+| `just test-clean` | Remove testcontainer leftovers (only a hard kill of the test runner can leave any behind) |
 | `just lint` | Lint Rust workspace + frontend |
 | `just generate` | Run code generation |
 | `just migrate-up` | Apply database migrations |

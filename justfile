@@ -536,6 +536,15 @@ test:
     @echo "Frontend tests..."
     cd {{ frontend_dir }} && pnpm run test
 
+# Remove testcontainer leftovers; only a hard kill (SIGKILL) can leave any behind
+[group('check')]
+test-clean:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    ids=$(docker ps -aq --filter label=org.testcontainers.managed-by=testcontainers)
+    if [ -z "$ids" ]; then echo "No testcontainer leftovers."; exit 0; fi
+    echo "$ids" | xargs docker rm -f -v
+
 # Run the domain micro-benchmarks and record measurements
 [group('check')]
 bench:
