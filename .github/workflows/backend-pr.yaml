@@ -59,8 +59,18 @@ jobs:
         working-directory: ./backend
         run: cargo test --workspace --locked
 
-      # Runs each benchmark once without measuring: proves they still compile
-      # and execute. Timing is not gated here, shared runners are too noisy.
+  # Runs each benchmark once without measuring: proves they still compile and
+  # execute. Timing is not gated here, shared runners are too noisy. Its own job
+  # so the bench profile does not sit on the critical path of build_and_test.
+  bench_smoke:
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup-backend
+
       - name: Benchmark smoke run
         working-directory: ./backend
         run: cargo bench -p domain --locked -- --test
@@ -102,11 +112,14 @@ jobs:
         working-directory: ./backend
         run: cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
 
-  check_sqlx_prepared:
+  # Migrations and the offline query cache share a job: both need the same
+  # Postgres service and the same freshly built migrate binary, and splitting
+  # them meant building that binary twice per PR.
+  database:
     needs: changes
     if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     services:
       postgres:
         image: postgis/postgis:17-3.5-alpine
@@ -139,48 +152,15 @@ jobs:
         with:
           tool: sqlx-cli
 
-      - name: Apply migrations
-        run: just migrate-up
-
-      - name: Check that queries are fresh
-        working-directory: ./backend
-        run: cargo sqlx prepare --workspace --check -- --all-targets
-
-  test_migrations:
-    needs: changes
-    if: needs.changes.outputs.backend == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    services:
-      postgres:
-        image: postgis/postgis:17-3.5-alpine
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: postgres
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 10
-          --health-start-period 5s
-        ports:
-          - 5432:5432
-    env:
-      POSTGRES_HOST: localhost
-      POSTGRES_PORT: 5432
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: postgres
-    steps:
-      - uses: actions/checkout@v7
-      - uses: ./.github/actions/setup-backend
-
       - name: Apply migrations up
         run: just migrate-up
 
       - name: Reset and re-apply migrations
         run: just migrate-reset
+
+      - name: Check that queries are fresh
+        working-directory: ./backend
+        run: cargo sqlx prepare --workspace --check -- --all-targets
 
   # Full workspace compilation is already covered by build_and_test; this
   # only needs to run when the image definition itself changes.
@@ -208,10 +188,10 @@ jobs:
     needs:
       [
         build_and_test,
+        bench_smoke,
         msrv,
         lint,
-        check_sqlx_prepared,
-        test_migrations,
+        database,
         test_dockerfile,
       ]
     runs-on: ubuntu-latest
@@ -221,10 +201,10 @@ jobs:
         run: |
           results=(
             "${{ needs.build_and_test.result }}"
+            "${{ needs.bench_smoke.result }}"
             "${{ needs.msrv.result }}"
             "${{ needs.lint.result }}"
-            "${{ needs.check_sqlx_prepared.result }}"
-            "${{ needs.test_migrations.result }}"
+            "${{ needs.database.result }}"
             "${{ needs.test_dockerfile.result }}"
           )
           for r in "${results[@]}"; do
