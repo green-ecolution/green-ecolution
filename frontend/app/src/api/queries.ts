@@ -257,7 +257,7 @@ export const sensorQueries = {
 
   list: (params?: ListSensorsRequest) =>
     queryOptions<ListResponseSensorResponse>({
-      queryKey: [...SENSORS_KEY, params?.page ?? '1'],
+      queryKey: [...SENSORS_KEY, params ?? {}],
       queryFn: () => sensorApi.listSensors(params),
     }),
 
@@ -295,6 +295,12 @@ export const sensorQueries = {
       queryKey: ['sensor-model', id],
       queryFn: () => sensorApi.getSensorModel({ id }),
       enabled: isValidUuid(id),
+    }),
+
+  models: () =>
+    queryOptions<SensorModelResponse[]>({
+      queryKey: ['sensor-model', 'list'],
+      queryFn: () => sensorApi.listSensorModels(),
     }),
 
   dataQuality: (id: string) =>

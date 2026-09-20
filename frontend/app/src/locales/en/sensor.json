@@ -6,12 +6,25 @@
     "title": "Sensors",
     "description": "Overview of all sensors registered in the system. You can add new sensors by scanning the QR code on the sensor unit.",
     "activateButton": "Activate sensor",
-    "statusColumn": "Status",
-    "nameAndLinkColumn": "Name and link",
-    "createdAtColumn": "Created on",
-    "lastUpdateColumn": "Last data update",
     "loadingLabel": "Sensors are loading",
-    "emptyMessage": "No sensors were found."
+    "emptyMessage": "No sensors were found.",
+    "searchLabel": "Search sensors",
+    "searchPlaceholder": "Search by EUI or model",
+    "filterStatus": "Status",
+    "filterModel": "Model",
+    "filterDataHealth": "Data quality",
+    "filterTree": "Tree",
+    "treeOptionWith": "With tree",
+    "treeOptionWithout": "Without tree",
+    "filterNoOptions": "No options available.",
+    "sortId": "ID",
+    "sortLastReading": "Last reading",
+    "sortCreatedAt": "Created on",
+    "resultCount_one": "{count} sensor",
+    "resultCount_other": "{count} sensors",
+    "resultCountFiltered": "{filtered} of {total} sensors",
+    "emptyFilteredMessage": "No sensor matches these filters.",
+    "emptyFilteredAction": "Reset filters"
   },
   "detail": {
     "backToList": "To all sensors",
@@ -20,10 +33,14 @@
     "notFoundBackLabel": "To the sensor list"
   },
   "card": {
-    "idLabel": "ID: {id}",
-    "detailsLabel": "Sensor details",
-    "createdAtLabel": "Created on:",
-    "lastUpdateLabel": "Last update:"
+    "statusSrLabel": "Status: ",
+    "idSrLabel": "Sensor ID: ",
+    "modelUnknown": "Unknown model",
+    "treeSrLabel": "Linked tree: ",
+    "treeLinked": "Tree linked",
+    "treeUnlinked": "No tree linked",
+    "createdAtLabel": "Created on: ",
+    "lastUpdateLabel": "Last update: "
   },
   "hero": {
     "typeLabel": "{type} sensor",
