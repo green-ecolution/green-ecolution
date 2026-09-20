@@ -1596,3 +1596,53 @@ async fn the_sweep_expires_each_organization_on_its_own_ttl() {
         domain::shared::watering_status::WateringStatus::JustWatered,
     );
 }
+
+async fn set_cluster_last_watered(app: &helpers::TestApp, id: &str, last_watered: &str) {
+    let last_watered = chrono::DateTime::parse_from_rfc3339(last_watered)
+        .unwrap()
+        .with_timezone(&Utc);
+    sqlx::query("UPDATE tree_clusters SET last_watered = $2 WHERE id = $1")
+        .bind(uuid::Uuid::parse_str(id).unwrap())
+        .bind(last_watered.naive_utc())
+        .execute(&app.db_pool)
+        .await
+        .unwrap();
+}
+
+#[tokio::test]
+async fn list_clusters_sorts_by_last_watered_descending() {
+    let app = spawn_app().await;
+    let dry = create_cluster_named(&app, "Alte Allee").await;
+    let fresh = create_cluster_named(&app, "Bahnhofsplatz").await;
+    set_cluster_last_watered(&app, &fresh, "2026-09-01T08:00:00Z").await;
+    set_cluster_last_watered(&app, &dry, "2026-08-01T08:00:00Z").await;
+
+    let response = app
+        .get("/api/v1/clusters?sort=last_watered&order=desc")
+        .await;
+    assert_eq!(response.status().as_u16(), 200);
+    let body: serde_json::Value = response.json().await.unwrap();
+
+    let names: Vec<&str> = body["data"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|c| c["name"].as_str().unwrap())
+        .collect();
+    // The fixtures disagree with the default name order on purpose.
+    assert_eq!(names, vec!["Bahnhofsplatz", "Alte Allee"]);
+}
+
+#[tokio::test]
+async fn list_clusters_reports_the_prefilter_total() {
+    let app = spawn_app().await;
+    create_cluster_named(&app, "Alte Allee").await;
+    create_cluster_named(&app, "Bahnhofsplatz").await;
+
+    let response = app.get("/api/v1/clusters?query=bahnhof").await;
+    assert_eq!(response.status().as_u16(), 200);
+    let body: serde_json::Value = response.json().await.unwrap();
+
+    assert_eq!(body["pagination"]["total_records"], 1);
+    assert_eq!(body["pagination"]["total_unfiltered"], 2);
+}

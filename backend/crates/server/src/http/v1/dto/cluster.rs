@@ -200,6 +200,7 @@ pub enum ClusterSortParam {
     Name,
     Moisture,
     Trees,
+    LastWatered,
 }
 
 impl From<ClusterSortParam> for ClusterSortField {
@@ -208,6 +209,7 @@ impl From<ClusterSortParam> for ClusterSortField {
             ClusterSortParam::Name => Self::Name,
             ClusterSortParam::Moisture => Self::Moisture,
             ClusterSortParam::Trees => Self::Trees,
+            ClusterSortParam::LastWatered => Self::LastWatered,
         }
     }
 }
@@ -249,7 +251,7 @@ pub struct ClusterListParams {
     /// Free-text search across cluster name and address.
     #[param(example = "Hafen")]
     pub query: Option<String>,
-    /// Sort field. Allowed: `name|moisture|trees`.
+    /// Sort field. Allowed: `name|moisture|trees|last_watered`.
     #[param(nullable, inline)]
     pub sort: Option<ClusterSortParam>,
     /// Sort direction. Allowed: `asc|desc`.

@@ -15,14 +15,19 @@
 
 import * as runtime from '../runtime';
 import type {
+  DrivingLicense,
   ErrorBody,
   ListResponseVehicleResponse,
   TransferRequest,
   VehicleCreateRequest,
   VehicleResponse,
+  VehicleStatus,
+  VehicleType,
   VehicleUpdateRequest,
 } from '../models/index';
 import {
+    DrivingLicenseFromJSON,
+    DrivingLicenseToJSON,
     ErrorBodyFromJSON,
     ErrorBodyToJSON,
     ListResponseVehicleResponseFromJSON,
@@ -33,6 +38,10 @@ import {
     VehicleCreateRequestToJSON,
     VehicleResponseFromJSON,
     VehicleResponseToJSON,
+    VehicleStatusFromJSON,
+    VehicleStatusToJSON,
+    VehicleTypeFromJSON,
+    VehicleTypeToJSON,
     VehicleUpdateRequestFromJSON,
     VehicleUpdateRequestToJSON,
 } from '../models/index';
@@ -65,6 +74,13 @@ export interface ListArchivedVehiclesRequest {
 export interface ListVehiclesRequest {
     page?: number;
     perPage?: number;
+    q?: string | null;
+    status?: Array<VehicleStatus>;
+    type?: Array<VehicleType>;
+    drivingLicense?: Array<DrivingLicense>;
+    archive?: ListVehiclesArchiveEnum;
+    sort?: ListVehiclesSortEnum;
+    order?: ListVehiclesOrderEnum;
 }
 
 export interface TransferVehicleRequest {
@@ -317,7 +333,7 @@ export class VehiclesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a paginated list of active vehicles.
+     * Returns a paginated list of active vehicles. Optional `q` parameter case-insensitively filters by number plate, model or description. Optional filter parameters (status, type, driving_license, archive) narrow the result; array parameters are repeatable. Optional `sort` (number_plate, water_capacity, model, type) and `order` (asc, desc) control the result order; the default is number_plate ascending.
      * List all vehicles
      */
     async listVehiclesRaw(requestParameters: ListVehiclesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListResponseVehicleResponse>> {
@@ -329,6 +345,34 @@ export class VehiclesApi extends runtime.BaseAPI {
 
         if (requestParameters['perPage'] != null) {
             queryParameters['per_page'] = requestParameters['perPage'];
+        }
+
+        if (requestParameters['q'] != null) {
+            queryParameters['q'] = requestParameters['q'];
+        }
+
+        if (requestParameters['status'] != null) {
+            queryParameters['status'] = requestParameters['status'];
+        }
+
+        if (requestParameters['type'] != null) {
+            queryParameters['type'] = requestParameters['type'];
+        }
+
+        if (requestParameters['drivingLicense'] != null) {
+            queryParameters['driving_license'] = requestParameters['drivingLicense'];
+        }
+
+        if (requestParameters['archive'] != null) {
+            queryParameters['archive'] = requestParameters['archive'];
+        }
+
+        if (requestParameters['sort'] != null) {
+            queryParameters['sort'] = requestParameters['sort'];
+        }
+
+        if (requestParameters['order'] != null) {
+            queryParameters['order'] = requestParameters['order'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -347,7 +391,7 @@ export class VehiclesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a paginated list of active vehicles.
+     * Returns a paginated list of active vehicles. Optional `q` parameter case-insensitively filters by number plate, model or description. Optional filter parameters (status, type, driving_license, archive) narrow the result; array parameters are repeatable. Optional `sort` (number_plate, water_capacity, model, type) and `order` (asc, desc) control the result order; the default is number_plate ascending.
      * List all vehicles
      */
     async listVehicles(requestParameters: ListVehiclesRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ListResponseVehicleResponse> {
@@ -453,3 +497,31 @@ export class VehiclesApi extends runtime.BaseAPI {
     }
 
 }
+
+/**
+ * @export
+ */
+export const ListVehiclesArchiveEnum = {
+    Active: 'active',
+    Include: 'include',
+    Only: 'only'
+} as const;
+export type ListVehiclesArchiveEnum = typeof ListVehiclesArchiveEnum[keyof typeof ListVehiclesArchiveEnum];
+/**
+ * @export
+ */
+export const ListVehiclesSortEnum = {
+    NumberPlate: 'number_plate',
+    WaterCapacity: 'water_capacity',
+    Model: 'model',
+    Type: 'type'
+} as const;
+export type ListVehiclesSortEnum = typeof ListVehiclesSortEnum[keyof typeof ListVehiclesSortEnum];
+/**
+ * @export
+ */
+export const ListVehiclesOrderEnum = {
+    Asc: 'asc',
+    Desc: 'desc'
+} as const;
+export type ListVehiclesOrderEnum = typeof ListVehiclesOrderEnum[keyof typeof ListVehiclesOrderEnum];

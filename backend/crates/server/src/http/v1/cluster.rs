@@ -96,7 +96,8 @@ const CLUSTER_LIST_QUERY_MAX_LEN: usize = 100;
     operation_id = "listClusters",
     summary = "List all tree clusters",
     description = "Returns a paginated list of all tree clusters with a compact representation including region info. \
-                   Optional filter parameters (watering_status, region) narrow the result; array parameters are repeatable.",
+                   Optional filter parameters (watering_status, region) narrow the result; array parameters are repeatable. \
+                   Sortable by name, moisture, trees or last_watered.",
     params(ClusterListParams),
     responses(
         (status = 200, description = "Paginated list of tree clusters", body = ListResponse<TreeClusterInListResponse>),
@@ -165,7 +166,8 @@ pub async fn list_clusters(
                 .map(Id::new)
                 .and_then(|id| region_map.get(&id).copied());
             TreeClusterInListResponse::from((cluster, region))
-        });
+        })
+        .with_total_unfiltered(result.total_unfiltered);
     Ok(Json(response))
 }
 
