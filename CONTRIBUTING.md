@@ -316,6 +316,65 @@ Use the [Feature Request template](https://github.com/green-ecolution/green-ecol
 - Errors are typed: repository traits return `RepositoryError`; the HTTP layer maps to `ApiError`. Avoid `unwrap()` / `expect()` / `panic!` outside `reconstitute` paths and tests.
 - Write tests next to the code (`#[cfg(test)] mod tests`) for unit tests; integration tests live in `backend/crates/server/test/api/`.
 
+### Writing a new list query
+
+The cluster, vehicle and sensor list endpoints (and every list endpoint since) are built
+on a shared builder, `ListSpec` in `backend/crates/server/src/infra/list/mod.rs`. A
+repository's `view_search` method constructs one `ListSpec` with the `FROM` clause and
+primary key (`ListSpec::new("vehicles v", "v.id")`), attaches the scope predicates that
+are not the caller's own filters (organization visibility, provider), attaches the
+caller's filter predicates, sets the sort, and calls `.fetch::<RowType>(&self.pool,
+COLUMNS)`. `ListSpec` runs the count, the pre-filter count and the page itself from that
+one description, so the three statements cannot drift apart the way three hand-written
+queries would.
+
+To add a predicate, reach for one of the constructors in `infra/list/predicate.rs`, then
+pass the result to `.filter(...)` on the spec: `Predicate::text_search` for a search
+field, `Predicate::any_of` for a multi-select filter, `Predicate::equals` or
+`Predicate::is_present` for a single value or a presence check, and `Predicate::archived`
+for the include/active-only/archived-only three-way a list with archiving needs. Each
+constructor returns `None` for an absent or empty filter, so a repository can chain
+`.filter(...)` calls unconditionally without an `if` for every optional query parameter.
+
+To add a sort column, add an entry to the repository's own `&'static` `SortColumns` table
+(for example `VEHICLE_SORT_COLUMNS` in `pg_vehicle.rs`), mapping the sort key string to
+the SQL expression(s) that implement it. That key string comes from the domain enum's
+`as_sql_key()` (`VehicleSortField` in `crates/domain/src/vehicle/sort.rs`, and its
+counterparts for the other aggregates), which is the only place a new sort option
+originates: add the variant there, wire it through the HTTP sort DTO, and extend the sort
+column table to match. Each of these domain sort enums carries a test asserting that
+`as_sql_key()` produces exactly the set of strings the corresponding `SortColumns` table
+expects (`sql_keys_are_exactly_the_contracted_set` in `vehicle/sort.rs` is the pattern to
+copy); adding a sort option without extending that test leaves the contract unchecked, so
+update it in the same change.
+
+Finally, add an integration test per filter and per sort option in
+`backend/crates/server/test/api/`, following the existing naming
+(`vehicle_list_searches_plate_model_and_description`,
+`vehicle_list_filters_by_derived_status`, `vehicle_list_sorts_by_water_capacity_descending`,
+`vehicle_list_can_include_and_isolate_archived_vehicles`). These are what actually catch a
+wrong column name or a sort direction applied to the wrong expression.
+
+That last point matters because these queries are deliberately not covered by sqlx's
+compile-time checks: `ListSpec` assembles its SQL at runtime through `QueryBuilder`, since
+the set of active filters and the sort column are only known once a request arrives, and
+`query!`/`query_as!` can only check a query whose text is fixed at compile time. A typo in
+a column name inside a `SortColumns` table or a `Predicate` expression therefore compiles
+without complaint and fails only when a test (or a request) actually runs it, which is
+exactly why every filter and sort key needs its own integration test rather than relying
+on the workspace build to catch a mistake here.
+
+This is safe regardless, for two reasons that hold in every repository built on
+`ListSpec`. Every value a request supplies, a search term, a selected status, a page
+number, reaches SQL only through `push_bind`, never through string interpolation, so a
+request body can never inject SQL text no matter what it contains. And the query text
+itself, meaning table names, joins, column names and the `WHERE` clause structure, is
+authored entirely in the repository by whoever writes the code; a request can only ever
+select among fixed, closed alternatives (a domain enum's variants, a boolean, a UUID from a
+known set), never supply a column name or expression of its own. `infra/list/mod.rs`
+states this as the module's own invariant, and it is what makes runtime-assembled SQL
+here no less safe than a `query!` macro would be.
+
 ### TypeScript/React (Frontend)
 
 - Use TypeScript strict mode

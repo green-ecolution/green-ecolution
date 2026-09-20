@@ -6,6 +6,32 @@ summary: Ein Fahrzeug anlegen, Führerscheinklassen und Wasserkapazität für di
 routes: ['/vehicles', '/vehicles/$vehicleId', '/vehicles/new']
 ---
 
+## Die Fahrzeugliste lesen
+
+Die Seite **Alle Fahrzeuge** zeigt jedes Fahrzeug mit seinem Kennzeichen und seinem Modell.
+Ein farbiger Punkt davor steht für den Status; verweilst du mit dem Zeiger darauf, nennt
+die Anwendung ihn beim Namen. Darunter stehen der Fahrzeugtyp und die Wasserkapazität, und
+ist das Fenster breit genug, ergänzt dieselbe Zeile die erforderliche Führerscheinklasse;
+auf schmalen Bildschirmen entfällt sie wieder, damit die Zeile nicht umbricht. Ein
+archiviertes Fahrzeug trägt zusätzlich die Kennzeichnung **Archiviert**. Ein Klick auf
+einen Eintrag führt zur Detailseite. Über das Suchfeld durchsuchst du die Liste nach
+Kennzeichen, Modell und Beschreibung, ohne Rücksicht auf Groß- und Kleinschreibung; der
+gefundene Teil des Textes erscheint in den Ergebnissen hervorgehoben.
+
+Unter dem Suchfeld stehen vier Filter, die jeweils sofort wirken, ohne dass eine
+Bestätigung nötig wäre: nach dem Status, nach dem Fahrzeugtyp, nach der
+Führerscheinklasse und nach dem Archiv. Der Archiv-Filter ist eine Einzelauswahl: Ein
+archiviertes Fahrzeug bleibt so lange aus der Liste ausgeblendet, bis du **Nur
+archivierte** wählst, um ausschließlich archivierte Fahrzeuge zu sehen, oder **Inkl.
+archivierte**, um sie zusammen mit den aktiven anzuzeigen; ein erneuter Klick auf die
+gewählte Option oder das Entfernen ihres Chips bringt dich zurück zur Standardansicht mit
+ausschließlich aktiven Fahrzeugen. Über das Sortiermenü ordnest du die Liste nach
+Kennzeichen, Wasserkapazität, Modell oder Fahrzeugtyp, jeweils auf- oder absteigend. Jede
+gesetzte Auswahl erscheint darunter als entfernbarer Chip, daneben ein Link, der alle
+Filter auf einmal zurücksetzt, sowie die Anzahl der gefundenen Fahrzeuge.
+
+![Die Fahrzeugliste mit Suchfeld, Filterleiste und aktiven Filtern](../images/vehicle-list.png)
+
 ## Fahrzeug anlegen
 
 Auf der Seite **Alle Fahrzeuge** legst du ein neues Fahrzeug über
