@@ -1,5 +1,20 @@
 name: "Setup Frontend"
-description: "Shared setup for frontend CI jobs: pnpm + Node.js + Rust/wasm-pack + install deps"
+description: "Shared setup for frontend CI jobs: pnpm + Node.js + optional Rust/wasm-pack + install deps"
+inputs:
+  rust:
+    description: >-
+      Install the Rust toolchain and build the domain WASM bindings. Jobs that
+      touch neither (handbook, keycloak theme) set this to "false".
+    required: false
+    default: "true"
+  shared-key:
+    description: "rust-cache shared key, see the backend setup action for why the job name must stay out of it."
+    required: false
+    default: "frontend"
+  save-if:
+    description: "Whether this job may write the cargo cache. Only the warm-cache job on main sets this."
+    required: false
+    default: "false"
 runs:
   using: "composite"
   steps:
@@ -16,27 +31,31 @@ runs:
       with:
         tool: just
     - name: Setup Rust toolchain
+      if: inputs.rust == 'true'
       uses: dtolnay/rust-toolchain@stable
       with:
         targets: wasm32-unknown-unknown
     - name: Install wasm-pack
+      if: inputs.rust == 'true'
       uses: taiki-e/install-action@v2
       with:
         tool: wasm-pack
-    - name: Cache cargo registry + target
-      uses: actions/cache@v4
+    # rust-cache rather than actions/cache: a plain cache keyed on Cargo.lock
+    # hits on every run and therefore never saves again, freezing its contents
+    # at whatever the lockfile bump happened to build.
+    - name: Cache cargo build
+      if: inputs.rust == 'true'
+      uses: Swatinem/rust-cache@v2
       with:
-        path: |
-          ~/.cargo/registry
-          ~/.cargo/git
-          backend/target
-        key: ${{ runner.os }}-cargo-domain-wasm-${{ hashFiles('backend/Cargo.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-cargo-domain-wasm-
+        workspaces: backend
+        shared-key: ${{ inputs.shared-key }}
+        save-if: ${{ inputs.save-if }}
+        cache-on-failure: "true"
     - name: Install dependencies
       shell: bash
       working-directory: ./frontend
       run: pnpm install --frozen-lockfile
     - name: Build domain WASM bindings
+      if: inputs.rust == 'true'
       shell: bash
       run: just build-domain-wasm

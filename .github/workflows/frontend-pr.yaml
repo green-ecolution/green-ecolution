@@ -96,6 +96,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-frontend
+        with:
+          rust: "false"
       - name: Generate manifest and typst sources
         run: node frontend/handbook/src/cli.mjs
       # frontend/Dockerfile pins the typst version the handbook layout was verified
@@ -158,6 +160,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-frontend
+        with:
+          rust: "false"
       - name: Set up JDK for the keycloakify jar build
         uses: actions/setup-java@v6
         with:

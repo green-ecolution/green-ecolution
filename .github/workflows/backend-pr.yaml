@@ -77,16 +77,9 @@ jobs:
         id: msrv
         run: echo "msrv=$(grep -m1 '^rust-version' backend/Cargo.toml | cut -d'"' -f2)" >> "$GITHUB_OUTPUT"
 
-      - name: Setup MSRV toolchain
-        uses: dtolnay/rust-toolchain@master
+      - uses: ./.github/actions/setup-backend
         with:
           toolchain: ${{ steps.msrv.outputs.msrv }}
-
-      - name: Cache cargo build
-        uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: backend
-          cache-on-failure: "true"
 
       - name: Check workspace with MSRV
         working-directory: ./backend
