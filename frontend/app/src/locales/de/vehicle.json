@@ -29,11 +29,11 @@
     "emptyFilteredAction": "Filter zurücksetzen"
   },
   "card": {
-    "statusSrLabel": "Status:",
-    "numberPlateSrLabel": "Kennzeichen:",
-    "waterCapacitySrLabel": "Wasserkapazität:",
-    "typeSrLabel": "Fahrzeug-Typ:",
-    "drivingLicenseSrLabel": "Benötigte Führerscheinklasse:",
+    "statusSrLabel": "Status: ",
+    "numberPlateSrLabel": "Kennzeichen: ",
+    "waterCapacitySrLabel": "Wasserkapazität: ",
+    "typeSrLabel": "Fahrzeug-Typ: ",
+    "drivingLicenseSrLabel": "Benötigte Führerscheinklasse: ",
     "waterCapacityValue": "{value} Liter",
     "archivedBadge": "Archiviert"
   },

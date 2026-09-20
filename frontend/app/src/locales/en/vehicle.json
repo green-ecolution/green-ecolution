@@ -29,11 +29,11 @@
     "emptyFilteredAction": "Reset filters"
   },
   "card": {
-    "statusSrLabel": "Status:",
-    "numberPlateSrLabel": "Number plate:",
-    "waterCapacitySrLabel": "Water capacity:",
-    "typeSrLabel": "Vehicle type:",
-    "drivingLicenseSrLabel": "Required driving licence class:",
+    "statusSrLabel": "Status: ",
+    "numberPlateSrLabel": "Number plate: ",
+    "waterCapacitySrLabel": "Water capacity: ",
+    "typeSrLabel": "Vehicle type: ",
+    "drivingLicenseSrLabel": "Required driving licence class: ",
     "waterCapacityValue": "{value} liters",
     "archivedBadge": "Archived"
   },
