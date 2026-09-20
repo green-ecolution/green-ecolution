@@ -1,5 +1,5 @@
 import { ReactNode } from 'react'
-import { LogOut, UserRound } from 'lucide-react'
+import { Globe, LogOut, UserRound } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import {
@@ -9,6 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@green-ecolution/ui'
+import LanguageSwitcher from '@/components/settings/LanguageSwitcher'
 
 interface NavUserMenuProps {
   email: string
@@ -52,6 +53,13 @@ const NavUserMenu = ({ email, side, onNavigate, children }: NavUserMenuProps) =>
               {t('user.logout')}
             </Link>
           </DropdownMenuItem>
+        </div>
+        <DropdownMenuSeparator className="mx-3 bg-dark-800" />
+        {/* Not a DropdownMenuItem: selecting one would close the menu. */}
+        <div className="flex items-center gap-x-3 px-3 pt-4 pb-1 font-lato font-semibold tracking-[0.1] text-light">
+          <Globe className="size-5 shrink-0" aria-hidden />
+          <span>{t('user.language')}</span>
+          <LanguageSwitcher tone="dark" size="sm" className="ml-auto" />
         </div>
       </DropdownMenuContent>
     </DropdownMenu>

@@ -90,8 +90,14 @@ function Profile() {
         ]}
       />
 
-      <section className="mt-16">
-        <LanguageSwitcher />
+      <section className="mt-12 border-t border-dark-200 pt-8 lg:mt-16">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-8">
+          <div>
+            <h2 className="font-lato font-bold text-xl">{t('profile.languageHeading')}</h2>
+            <p className="mt-1 text-sm text-dark-600">{t('common:language.description')}</p>
+          </div>
+          <LanguageSwitcher className="self-start sm:self-auto" />
+        </div>
       </section>
     </div>
   )

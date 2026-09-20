@@ -67,9 +67,12 @@ die Karte den vollen Platz erhält.
 
 ## Sprache wechseln
 
-Auf deiner Profilseite, erreichbar über **Dein Profil** im Benutzermenü, findest du den
-Bereich **Sprache** mit den Optionen **Deutsch** und **Englisch**. Die Auswahl wirkt
-sofort und gilt für den jeweiligen Browser, in dem du angemeldet bist.
+Green Ecolution spricht Deutsch und Englisch. Am schnellsten wechselst du im
+Benutzermenü, das sich über dein Namenskürzel am Fuß der Seitennavigation öffnet: Dort
+liegt unter den Einträgen **Dein Profil** und **Abmelden** der Umschalter **Sprache**
+mit den beiden Optionen. Dieselbe Auswahl findest du im Abschnitt **Sprache** am Fuß
+deiner Profilseite. Die Auswahl wirkt sofort und gilt für den jeweiligen Browser, in dem
+du angemeldet bist.
 
 ## Green Ecolution als App installieren
 

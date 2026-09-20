@@ -27,7 +27,8 @@
     "drivingLicenseLabel": "Driving licence:",
     "lastNameLabel": "Last name:",
     "rolesLabel": "Roles:",
-    "emailLabel": "Email:"
+    "emailLabel": "Email:",
+    "languageHeading": "Language"
   },
   "team": {
     "navAriaLabel": "Team and roles",

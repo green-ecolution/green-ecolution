@@ -27,7 +27,8 @@
     "drivingLicenseLabel": "Führerscheinklasse:",
     "lastNameLabel": "Nachname:",
     "rolesLabel": "Rollen:",
-    "emailLabel": "E-Mail:"
+    "emailLabel": "E-Mail:",
+    "languageHeading": "Sprache"
   },
   "team": {
     "navAriaLabel": "Team und Rollen",
