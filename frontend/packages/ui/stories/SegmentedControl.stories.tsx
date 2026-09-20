@@ -46,3 +46,25 @@ export const OhneAuswahl: Story = {
     </div>
   ),
 }
+
+export const AufDunklerFlaeche: Story = {
+  name: 'Auf dunkler Fläche',
+  render: () => {
+    const [value, setValue] = useState('de')
+    return (
+      <div className="rounded-lg bg-dark p-6">
+        <SegmentedControl
+          options={[
+            { value: 'de', label: 'Deutsch' },
+            { value: 'en', label: 'Englisch' },
+          ]}
+          value={value}
+          onChange={setValue}
+          ariaLabel="Sprache"
+          size="sm"
+          tone="dark"
+        />
+      </div>
+    )
+  },
+}

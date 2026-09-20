@@ -27,7 +27,8 @@
     "openMenu": "Open user menu",
     "signedInAs": "Signed in as:",
     "profile": "Your profile",
-    "logout": "Log out"
+    "logout": "Log out",
+    "language": "Language"
   },
   "breadcrumb": {
     "nav": "Breadcrumb navigation",

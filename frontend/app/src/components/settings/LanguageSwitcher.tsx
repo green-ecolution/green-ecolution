@@ -4,7 +4,13 @@ import { SUPPORTED_LANGUAGES, languageOf } from '@/lib/i18n/languages'
 import { switchLanguage } from '@/lib/i18n'
 import createToast from '@/hooks/createToast'
 
-function LanguageSwitcher() {
+interface LanguageSwitcherProps {
+  tone?: 'light' | 'dark'
+  size?: 'default' | 'sm'
+  className?: string
+}
+
+function LanguageSwitcher({ tone, size, className }: LanguageSwitcherProps) {
   const { t, i18n } = useTranslation()
   const showToast = createToast()
 
@@ -24,15 +30,15 @@ function LanguageSwitcher() {
   }
 
   return (
-    <div className="flex flex-col gap-y-2">
-      <SegmentedControl
-        ariaLabel={t('language.label')}
-        options={options}
-        value={languageOf(i18n.language)}
-        onChange={handleChange}
-      />
-      <p className="text-sm text-dark-600">{t('language.description')}</p>
-    </div>
+    <SegmentedControl
+      ariaLabel={t('language.label')}
+      options={options}
+      value={languageOf(i18n.language)}
+      onChange={handleChange}
+      tone={tone}
+      size={size}
+      className={className}
+    />
   )
 }
 

@@ -12,6 +12,7 @@ import {
   Outlet,
 } from '@tanstack/react-router'
 import NavUser from './NavUser'
+import { getI18n } from '@/lib/i18n'
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 const noop = () => {}
@@ -110,6 +111,26 @@ describe('NavUser', () => {
       expect(screen.getByTestId('logout-page')).toBeInTheDocument()
     })
     expect(closeSidebar).toHaveBeenCalled()
+  })
+
+  it('switches the language from the menu without closing it', async () => {
+    const user = userEvent.setup()
+    renderNavUser()
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /benutzermenü/i })).toBeInTheDocument()
+    })
+    await user.click(screen.getByRole('button', { name: /benutzermenü/i }))
+    await waitFor(() => {
+      expect(screen.getByRole('radiogroup', { name: 'Sprache' })).toBeInTheDocument()
+    })
+
+    await user.click(screen.getByRole('radio', { name: 'Englisch' }))
+
+    expect(await screen.findByRole('radiogroup', { name: 'Language' })).toBeInTheDocument()
+    expect(screen.getByRole('menuitem', { name: /log out/i })).toBeInTheDocument()
+
+    await getI18n().changeLanguage('de')
   })
 
   it('hides name and email on desktop widths when collapsed', async () => {

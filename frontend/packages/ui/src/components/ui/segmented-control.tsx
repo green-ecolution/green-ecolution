@@ -12,9 +12,24 @@ export interface SegmentedControlProps<T extends string> {
   onChange: (value: T) => void
   ariaLabel: string
   size?: 'default' | 'sm'
+  /** `dark` inverts track and pill for use on the dark surfaces (sidebar, user menu). */
+  tone?: 'light' | 'dark'
   disabled?: boolean
   className?: string
 }
+
+const toneStyles = {
+  light: {
+    track: 'bg-dark-100',
+    selected: 'bg-white font-semibold text-dark shadow-sm',
+    unselected: 'text-dark-600 hover:text-dark',
+  },
+  dark: {
+    track: 'bg-white/10',
+    selected: 'bg-light font-semibold text-dark shadow-sm',
+    unselected: 'text-light/70 hover:text-light',
+  },
+} as const
 
 export const SegmentedControl = <T extends string>({
   options,
@@ -22,9 +37,12 @@ export const SegmentedControl = <T extends string>({
   onChange,
   ariaLabel,
   size = 'default',
+  tone = 'light',
   disabled = false,
   className,
 }: SegmentedControlProps<T>) => {
+  const styles = toneStyles[tone]
+
   const shift = (offset: number) => {
     if (options.length === 0) return
     const current = options.findIndex((option) => option.value === value)
@@ -35,21 +53,25 @@ export const SegmentedControl = <T extends string>({
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>) => {
     if (disabled) return
-    if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
-      event.preventDefault()
-      shift(1)
-    }
-    if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
-      event.preventDefault()
-      shift(-1)
-    }
+    const offset =
+      event.key === 'ArrowRight' || event.key === 'ArrowDown'
+        ? 1
+        : event.key === 'ArrowLeft' || event.key === 'ArrowUp'
+          ? -1
+          : 0
+    if (offset === 0) return
+    event.preventDefault()
+    // Claim the arrow keys: inside a Radix menu the same event would otherwise
+    // also move the menu highlight. Other keys still bubble, so Escape closes.
+    event.stopPropagation()
+    shift(offset)
   }
 
   return (
     <div
       role="radiogroup"
       aria-label={ariaLabel}
-      className={cn('inline-flex items-center gap-0.5 rounded-lg bg-dark-100 p-0.5', className)}
+      className={cn('inline-flex items-center gap-0.5 rounded-lg p-0.5', styles.track, className)}
     >
       {options.map((option, index) => {
         const selected = option.value === value
@@ -68,9 +90,7 @@ export const SegmentedControl = <T extends string>({
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
               'disabled:cursor-not-allowed disabled:opacity-50',
               size === 'sm' ? 'px-2.5 py-1 text-xs' : 'px-3 py-1.5 text-sm',
-              selected
-                ? 'bg-white font-semibold text-dark shadow-sm'
-                : 'text-dark-600 hover:text-dark',
+              selected ? styles.selected : styles.unselected,
             )}
           >
             {option.label}

@@ -27,7 +27,8 @@
     "openMenu": "Benutzermenü öffnen",
     "signedInAs": "Angemeldet als:",
     "profile": "Dein Profil",
-    "logout": "Abmelden"
+    "logout": "Abmelden",
+    "language": "Sprache"
   },
   "breadcrumb": {
     "nav": "Seitennavigation",

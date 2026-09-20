@@ -24,6 +24,7 @@ Organisation gilt das nicht: Die kann selbst diese Person nicht am eigenen Konto
 
 ## Sprache
 
-Wie du zwischen Deutsch und Englisch wechselst, steht in
-[Erste Schritte](./getting-started.md#sprache-wechseln); der dort beschriebene Bereich
-**Sprache** liegt am Fuß dieser Profilseite.
+Der Abschnitt **Sprache** am Fuß dieser Seite schaltet die Oberfläche zwischen Deutsch
+und Englisch um. Derselbe Umschalter liegt im Benutzermenü, sodass du die Sprache auch
+von jeder anderen Seite aus wechseln kannst;
+[Erste Schritte](./getting-started.md#sprache-wechseln) beschreibt beide Wege.
