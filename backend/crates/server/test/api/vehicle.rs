@@ -423,6 +423,22 @@ async fn seed_vehicle_of_type(app: &TestApp, plate: &str, vehicle_type: &str) ->
     uuid::Uuid::parse_str(created["id"].as_str().unwrap()).unwrap()
 }
 
+async fn seed_vehicle_with_license(
+    app: &TestApp,
+    plate: &str,
+    driving_license: &str,
+) -> uuid::Uuid {
+    let mut body = vehicle_json(plate);
+    body["driving_license"] = serde_json::json!(driving_license);
+    let created: serde_json::Value = app
+        .post_json("/api/v1/vehicles", &body)
+        .await
+        .json()
+        .await
+        .unwrap();
+    uuid::Uuid::parse_str(created["id"].as_str().unwrap()).unwrap()
+}
+
 async fn seed_vehicle_with_capacity(app: &TestApp, plate: &str, capacity: f64) -> uuid::Uuid {
     let mut body = vehicle_json(plate);
     body["water_capacity"] = serde_json::json!(capacity);
@@ -599,6 +615,29 @@ async fn vehicle_list_type_parameter_is_repeatable() {
         .unwrap();
 
     assert_eq!(body["data"].as_array().unwrap().len(), 2);
+}
+
+#[tokio::test]
+async fn vehicle_list_filters_by_driving_license() {
+    let app = spawn_app().await;
+    let ce = seed_vehicle_with_license(&app, "FL-GE 100", "CE").await;
+    let b = seed_vehicle_with_license(&app, "FL-GE 200", "B").await;
+
+    let body: serde_json::Value = app
+        .get("/api/v1/vehicles?driving_license=CE")
+        .await
+        .json()
+        .await
+        .unwrap();
+
+    let ids: Vec<&str> = body["data"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|v| v["id"].as_str().unwrap())
+        .collect();
+    assert_eq!(ids, vec![ce.to_string()]);
+    assert!(!ids.contains(&b.to_string().as_str()));
 }
 
 #[tokio::test]
