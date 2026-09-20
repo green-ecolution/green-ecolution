@@ -98,10 +98,14 @@ const VehicleListToolbar = ({ filteredRecords, totalRecords, action }: VehicleLi
   ]
 
   const isFiltered = chips.length > 0 || (search.q ?? '').length > 0
-  const resultLabel =
-    isFiltered && totalRecords !== undefined
-      ? t('list.resultCountFiltered', { filtered: filteredRecords, total: totalRecords })
-      : t('list.resultCount', { count: totalRecords ?? filteredRecords })
+  // The default (active-only) archive filter has no chip, so the filtered
+  // and unfiltered counts can differ even when isFiltered is false — show
+  // the "X of Y" form whenever the numbers actually diverge.
+  const showFilteredCount =
+    totalRecords !== undefined && (isFiltered || filteredRecords !== totalRecords)
+  const resultLabel = showFilteredCount
+    ? t('list.resultCountFiltered', { filtered: filteredRecords, total: totalRecords })
+    : t('list.resultCount', { count: totalRecords ?? filteredRecords })
 
   return (
     <>

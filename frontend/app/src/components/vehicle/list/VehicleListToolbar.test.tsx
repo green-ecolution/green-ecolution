@@ -1,3 +1,4 @@
+import type { ComponentProps } from 'react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { VehicleStatus, ListVehiclesArchiveEnum } from '@green-ecolution/backend-client'
@@ -32,7 +33,8 @@ vi.mock('./useVehicleListSearch', async () => {
 
 const { default: VehicleListToolbar } = await import('./VehicleListToolbar')
 
-const renderToolbar = () => render(<VehicleListToolbar filteredRecords={0} />)
+const renderToolbar = (props: Partial<ComponentProps<typeof VehicleListToolbar>> = {}) =>
+  render(<VehicleListToolbar filteredRecords={0} {...props} />)
 
 describe('VehicleListToolbar', () => {
   beforeEach(() => {
@@ -57,5 +59,17 @@ describe('VehicleListToolbar', () => {
     fireEvent.click(screen.getByRole('option', { name: 'Nur archivierte' }))
 
     expect(setArchive).toHaveBeenCalledExactlyOnceWith(ListVehiclesArchiveEnum.Only)
+  })
+
+  it('shows the "X von Y" count when the numbers differ, even with no chips set', () => {
+    renderToolbar({ filteredRecords: 10, totalRecords: 12 })
+
+    expect(screen.getByText('10 von 12 Fahrzeugen')).toBeInTheDocument()
+  })
+
+  it('shows the plain count when nothing is filtered and the numbers agree', () => {
+    renderToolbar({ filteredRecords: 12, totalRecords: 12 })
+
+    expect(screen.getByText('12 Fahrzeuge')).toBeInTheDocument()
   })
 })
