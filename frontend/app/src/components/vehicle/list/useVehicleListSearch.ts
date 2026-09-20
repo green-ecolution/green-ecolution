@@ -1,6 +1,6 @@
-import { useCallback } from 'react'
+import { useCallback, useMemo } from 'react'
 import { getRouteApi } from '@tanstack/react-router'
-import type { ListVehiclesArchiveEnum, ListVehiclesSortEnum } from '@green-ecolution/backend-client'
+import { ListVehiclesArchiveEnum, type ListVehiclesSortEnum } from '@green-ecolution/backend-client'
 import type { SortDirection } from '@/components/general/list/ListSortMenu'
 
 // getRouteApi instead of importing Route: the route module imports this hook,
@@ -10,8 +10,18 @@ const routeApi = getRouteApi('/_protected/vehicles/')
 type VehicleSearch = ReturnType<typeof routeApi.useSearch>
 
 export const useVehicleListSearch = () => {
-  const search = routeApi.useSearch()
+  const rawSearch = routeApi.useSearch()
   const navigate = routeApi.useNavigate()
+
+  // A hand-edited URL can carry the enum's explicit default value; treat it
+  // the same as the implicit default so toolbar and filter logic agree.
+  const search = useMemo(
+    () =>
+      rawSearch.archive === ListVehiclesArchiveEnum.Active
+        ? { ...rawSearch, archive: undefined }
+        : rawSearch,
+    [rawSearch],
+  )
 
   // Every setter resets `page`: a filter change can shrink the result below
   // the current page, which would otherwise render an empty list.

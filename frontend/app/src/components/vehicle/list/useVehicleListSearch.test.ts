@@ -1,8 +1,16 @@
 import { renderHook } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
+import { ListVehiclesArchiveEnum } from '@green-ecolution/backend-client'
 
 const navigate = vi.fn((_options: unknown) => Promise.resolve())
-const search = {
+const search: {
+  page: number
+  q?: string
+  statuses?: string[]
+  types?: string[]
+  drivingLicenses?: string[]
+  archive?: ListVehiclesArchiveEnum
+} = {
   page: 4,
   q: 'man',
   statuses: undefined,
@@ -97,5 +105,17 @@ describe('useVehicleListSearch', () => {
 
     expect(appliedSearch().archive).toBeUndefined()
     expect(appliedSearch().page).toBe(1)
+  })
+
+  it('normalises a hand-edited ?archive=active to the default state', () => {
+    search.archive = ListVehiclesArchiveEnum.Active
+
+    try {
+      const { result } = renderHook(() => useVehicleListSearch())
+
+      expect(result.current.search.archive).toBeUndefined()
+    } finally {
+      search.archive = undefined
+    }
   })
 })
