@@ -1,0 +1,48 @@
+name: "Cleanup PR Caches"
+
+# Caches written on refs/pull/N/merge are unreadable outside their own pull
+# request, but they keep counting against the repository's 10 GB budget and
+# push the shared entries on main out by LRU. Drop them once the PR is done.
+#
+# pull_request_target, not pull_request: the GITHUB_TOKEN on a fork or
+# Dependabot PR is read-only and cannot delete caches. Nothing from the PR is
+# checked out or executed here, only its number is read.
+on:
+  pull_request_target:
+    types: [closed]
+
+permissions:
+  actions: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Delete the caches of this pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          REF: refs/pull/${{ github.event.pull_request.number }}/merge
+        run: |
+          set -euo pipefail
+          deleted=0
+          # Deleting shifts the pagination, so re-query the first page instead
+          # of walking pages. The bound keeps a failing delete from looping.
+          for _ in $(seq 1 30); do
+            ids=$(gh api "repos/${REPO}/actions/caches?ref=${REF}&per_page=100" \
+                    --jq '.actions_caches[].id' || true)
+            if [ -z "$ids" ]; then
+              break
+            fi
+            for id in $ids; do
+              if gh api -X DELETE "repos/${REPO}/actions/caches/${id}" --silent; then
+                deleted=$((deleted + 1))
+              fi
+            done
+          done
+          echo "Deleted ${deleted} cache entries for ${REF}." >> "$GITHUB_STEP_SUMMARY"
