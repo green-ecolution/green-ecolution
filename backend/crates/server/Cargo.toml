@@ -32,6 +32,10 @@ name = "dump-openapi"
 path = "src/bin/import_kataster_fl.rs"
 name = "import-kataster-fl"
 
+[[bin]]
+path = "src/bin/benchdb/main.rs"
+name = "benchdb"
+
 [[test]]
 name = "api"
 path = "test/api/main.rs"

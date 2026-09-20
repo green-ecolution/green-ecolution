@@ -10,9 +10,14 @@ homepage.workspace = true
 description = "Green Ecolution domain layer"
 readme = "../../../README.md"
 publish.workspace = true
+# benches/fixtures.rs is a module of the `scaling` bench, not a bench of its own.
+autobenches = false
 
 [lib]
 path = "src/lib.rs"
+# No #[bench] fns here; otherwise `cargo bench` also runs the libtest harness,
+# which rejects criterion flags like --save-baseline.
+bench = false
 
 [features]
 default = []
@@ -34,5 +39,10 @@ sqlx = { workspace = true, features = ["derive", "postgres", "chrono", "uuid", "
 
 [dev-dependencies]
 claims = "0.8"
+criterion = { version = "0.8", features = ["html_reports"] }
 quickcheck = "1"
 quickcheck_macros = "1"
+
+[[bench]]
+name = "scaling"
+harness = false
