@@ -244,17 +244,8 @@ const SENSOR_COLUMNS: &str = "s.id, s.created_at, s.updated_at, s.activated_at, 
     lr.data AS last_reading_data, s.organization_id, \
     q.implausible_recent, h.recent_unusable";
 
-// Offline first: a sensor that stopped reporting is what the list is opened
-// for. The rank needs no offline threshold because it only separates "never
-// reported", "reported" and "not activated"; the finer online/offline split is
-// the status filter's job.
 const SENSOR_SORT_COLUMNS: SortColumns = &[
     ("id", &["s.id"]),
-    (
-        "status",
-        &["CASE WHEN s.activated_at IS NULL THEN 2 \
-           WHEN lr.updated_at IS NULL THEN 0 ELSE 1 END"],
-    ),
     ("last_reading", &["lr.updated_at"]),
     ("created_at", &["s.created_at"]),
 ];

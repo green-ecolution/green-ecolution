@@ -65,7 +65,7 @@ const SENSOR_LIST_Q_MAX_LEN: usize = 100;
     description = "Returns a paginated list of all LoRaWAN sensors. \
                    Optional `q` parameter case-insensitively filters by sensor EUI or model name. \
                    Optional filter parameters (status, model_id, data_health, has_tree) narrow the result; array parameters are repeatable. \
-                   Optional `sort` (id, status, last_reading, created_at) and `order` (asc, desc) control the result order; the default is id ascending.",
+                   Optional `sort` (id, last_reading, created_at) and `order` (asc, desc) control the result order; the default is id ascending.",
     params(SensorListParams),
     responses(
         (status = 200, description = "Paginated list of sensors", body = ListResponse<SensorResponse>),

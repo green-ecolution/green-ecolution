@@ -712,7 +712,6 @@ pub struct SensorListParams {
 #[serde(rename_all = "snake_case")]
 pub enum SensorSortParam {
     Id,
-    Status,
     LastReading,
     CreatedAt,
 }
@@ -721,7 +720,6 @@ impl From<SensorSortParam> for domain::sensor::SensorSortField {
     fn from(param: SensorSortParam) -> Self {
         match param {
             SensorSortParam::Id => Self::Id,
-            SensorSortParam::Status => Self::Status,
             SensorSortParam::LastReading => Self::LastReading,
             SensorSortParam::CreatedAt => Self::CreatedAt,
         }

@@ -567,7 +567,7 @@ export class SensorsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a paginated list of all LoRaWAN sensors. Optional `q` parameter case-insensitively filters by sensor EUI or model name. Optional filter parameters (status, model_id, data_health, has_tree) narrow the result; array parameters are repeatable. Optional `sort` (id, status, last_reading, created_at) and `order` (asc, desc) control the result order; the default is id ascending.
+     * Returns a paginated list of all LoRaWAN sensors. Optional `q` parameter case-insensitively filters by sensor EUI or model name. Optional filter parameters (status, model_id, data_health, has_tree) narrow the result; array parameters are repeatable. Optional `sort` (id, last_reading, created_at) and `order` (asc, desc) control the result order; the default is id ascending.
      * List all sensors
      */
     async listSensorsRaw(requestParameters: ListSensorsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListResponseSensorResponse>> {
@@ -625,7 +625,7 @@ export class SensorsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a paginated list of all LoRaWAN sensors. Optional `q` parameter case-insensitively filters by sensor EUI or model name. Optional filter parameters (status, model_id, data_health, has_tree) narrow the result; array parameters are repeatable. Optional `sort` (id, status, last_reading, created_at) and `order` (asc, desc) control the result order; the default is id ascending.
+     * Returns a paginated list of all LoRaWAN sensors. Optional `q` parameter case-insensitively filters by sensor EUI or model name. Optional filter parameters (status, model_id, data_health, has_tree) narrow the result; array parameters are repeatable. Optional `sort` (id, last_reading, created_at) and `order` (asc, desc) control the result order; the default is id ascending.
      * List all sensors
      */
     async listSensors(requestParameters: ListSensorsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ListResponseSensorResponse> {
@@ -776,7 +776,6 @@ export class SensorsApi extends runtime.BaseAPI {
  */
 export const ListSensorsSortEnum = {
     Id: 'id',
-    Status: 'status',
     LastReading: 'last_reading',
     CreatedAt: 'created_at'
 } as const;

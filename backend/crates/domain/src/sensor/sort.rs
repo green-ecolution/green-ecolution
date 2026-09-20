@@ -10,7 +10,6 @@ use crate::shared::sort::SortDirection;
 pub enum SensorSortField {
     #[default]
     Id,
-    Status,
     LastReading,
     CreatedAt,
 }
@@ -19,7 +18,6 @@ impl SensorSortField {
     pub fn as_sql_key(self) -> &'static str {
         match self {
             Self::Id => "id",
-            Self::Status => "status",
             Self::LastReading => "last_reading",
             Self::CreatedAt => "created_at",
         }
@@ -42,7 +40,6 @@ mod tests {
         // pg_sensor.rs; changing it requires a matching change there.
         let keys: Vec<&str> = [
             SensorSortField::Id,
-            SensorSortField::Status,
             SensorSortField::LastReading,
             SensorSortField::CreatedAt,
         ]
@@ -50,7 +47,7 @@ mod tests {
         .map(SensorSortField::as_sql_key)
         .collect();
 
-        assert_eq!(keys, vec!["id", "status", "last_reading", "created_at"]);
+        assert_eq!(keys, vec!["id", "last_reading", "created_at"]);
     }
 
     #[test]
