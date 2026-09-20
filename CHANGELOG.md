@@ -11,6 +11,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > single repository. For legacy releases, see the
 > [GitHub Releases](https://github.com/green-ecolution/green-ecolution/releases) page.
 
+## [0.7.0](https://github.com/green-ecolution/green-ecolution/compare/v0.6.0...v0.7.0) (2026-09-20)
+
+
+### Features
+
+* accept planned plantings and surface form validation errors ([#1024](https://github.com/green-ecolution/green-ecolution/issues/1024)) ([79938f2](https://github.com/green-ecolution/green-ecolution/commit/79938f2e1446ad272e5f865e6fb0fa1817994398))
+* **bench:** add criterion and benchdb scaling benchmarks ([#1054](https://github.com/green-ecolution/green-ecolution/issues/1054)) ([7c5f970](https://github.com/green-ecolution/green-ecolution/commit/7c5f970e6495a29204bb9fa78e589dfcd6ff0776))
+* **frontend:** drag an active watering plan back to planned ([#1023](https://github.com/green-ecolution/green-ecolution/issues/1023)) ([0513bf0](https://github.com/green-ecolution/green-ecolution/commit/0513bf023b7c7ba3417a4f1c13f11f2a13ba3a7c))
+* **handbook:** add the user handbook as in-app help and PDF ([#1018](https://github.com/green-ecolution/green-ecolution/issues/1018)) ([24db439](https://github.com/green-ecolution/green-ecolution/commit/24db43984f1a57051fbb493d0aa63b1547e33e7b))
+* **lists:** server-side search, filters and sorting for all entity lists ([#1055](https://github.com/green-ecolution/green-ecolution/issues/1055)) ([7a43739](https://github.com/green-ecolution/green-ecolution/commit/7a43739065c7cd5c28cfaa7278908230f5d2a9bc))
+* **plugin:** add plugin system with api-key ingest and embedded views ([#1034](https://github.com/green-ecolution/green-ecolution/issues/1034)) ([7c96fb6](https://github.com/green-ecolution/green-ecolution/commit/7c96fb6a914ef66aeb224a7ff86a0b2e7060ea81))
+* **settings:** add per-organization settings with inheritance and history ([#1035](https://github.com/green-ecolution/green-ecolution/issues/1035)) ([4bff1e4](https://github.com/green-ecolution/green-ecolution/commit/4bff1e40dfabbc961922b87b0bd0ca81a91e8bf3))
+* **settings:** manage operational defaults per organization ([#1051](https://github.com/green-ecolution/green-ecolution/issues/1051)) ([4aecf1c](https://github.com/green-ecolution/green-ecolution/commit/4aecf1c0d74264d9dd1977918e7416916f116362))
+* **settings:** set the map viewport per organization ([#1052](https://github.com/green-ecolution/green-ecolution/issues/1052)) ([14bc171](https://github.com/green-ecolution/green-ecolution/commit/14bc171b3a5efa1c41c489d9dd13b3f68a28d4b2))
+* **trees:** redesign the tree list with server-side search, filters and sorting ([#1053](https://github.com/green-ecolution/green-ecolution/issues/1053)) ([29dc520](https://github.com/green-ecolution/green-ecolution/commit/29dc520a5b8d80839a54147719c71897e25e4f1a))
+
+
+### Bug Fixes
+
+* derive the vehicle status from its watering plan ([#1020](https://github.com/green-ecolution/green-ecolution/issues/1020)) ([707cdf6](https://github.com/green-ecolution/green-ecolution/commit/707cdf68aa428d267b853914a48007a4e9b8c54d))
+* **frontend:** exclude the handbook PDF from the PWA navigation fallback ([#1032](https://github.com/green-ecolution/green-ecolution/issues/1032)) ([769273f](https://github.com/green-ecolution/green-ecolution/commit/769273f002a4dfee3aacc249afe906ddd887065f))
+* **frontend:** keep the error page cable above the text ([#1016](https://github.com/green-ecolution/green-ecolution/issues/1016)) ([114eb7c](https://github.com/green-ecolution/green-ecolution/commit/114eb7c7bf7b7ae301afd8280f38eab803c4d845))
+* **map:** keep the map panel content inside the panel ([#1031](https://github.com/green-ecolution/green-ecolution/issues/1031)) ([af2b842](https://github.com/green-ecolution/green-ecolution/commit/af2b842f574b13dba6e831dc8b412fe6713602b3))
+
+
+### Documentation
+
+* **handbook:** document how to navigate the map ([2121328](https://github.com/green-ecolution/green-ecolution/commit/2121328dc976fbabb1b4b209fedac3b50697b067))
+* **handbook:** mention the in-app help button in the intro chapter ([33df976](https://github.com/green-ecolution/green-ecolution/commit/33df976679ab1569d3e504d12c36ea24cd2bf6ae))
+* **handbook:** re-shoot the plugin install figure ([1a8cbf5](https://github.com/green-ecolution/green-ecolution/commit/1a8cbf5cbb182e2bc6f3d83d54f8d7cbee1afa9f))
+
 ## [0.6.0](https://github.com/green-ecolution/green-ecolution/compare/v0.5.1...v0.6.0) (2026-09-03)
 
 
