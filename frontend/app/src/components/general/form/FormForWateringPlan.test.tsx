@@ -173,9 +173,9 @@ describe('FormForWateringPlan', () => {
     await user.click(transporterSelect)
 
     const listbox = await screen.findByRole('listbox')
-    expect(within(listbox).getByText('Kein Fahrzeug')).toBeInTheDocument()
     expect(within(listbox).getByText(/HH-AB-1234/)).toBeInTheDocument()
     expect(within(listbox).getByText(/HH-XY-5678/)).toBeInTheDocument()
+    expect(within(listbox).queryByText('Kein Fahrzeug')).not.toBeInTheDocument()
   })
 
   it('renders trailer select with options', async () => {

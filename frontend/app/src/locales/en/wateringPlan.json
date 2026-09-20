@@ -82,7 +82,6 @@
     "dateLabel": "Watering plan date",
     "transporterLabel": "Linked vehicle",
     "transporterPlaceholder": "Choose a vehicle",
-    "noTransporterOption": "No vehicle",
     "startPointLabel": "Start point",
     "startPointPlaceholder": "Choose a start point",
     "noStartPointsError": "No start points are available. A watering plan cannot be created without a start point.",
