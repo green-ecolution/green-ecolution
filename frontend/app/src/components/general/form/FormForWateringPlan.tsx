@@ -119,13 +119,10 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
               value={field.value ?? ''}
               onValueChange={(val) => field.onChange(val)}
               error={errors.transporterId?.message}
-              options={[
-                { value: '-1', label: t('form.noTransporterOption') },
-                ...props.transporters.map((transporter) => ({
-                  value: transporter.id.toString(),
-                  label: `${transporter.numberPlate} · ${getDrivingLicenseDetails(transporter.drivingLicense).label}`,
-                })),
-              ]}
+              options={props.transporters.map((transporter) => ({
+                value: transporter.id.toString(),
+                label: `${transporter.numberPlate} · ${getDrivingLicenseDetails(transporter.drivingLicense).label}`,
+              }))}
             />
           )}
         />

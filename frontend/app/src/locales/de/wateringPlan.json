@@ -82,7 +82,6 @@
     "dateLabel": "Datum des Einsatzplans",
     "transporterLabel": "Verknüpftes Fahrzeug",
     "transporterPlaceholder": "Wähle ein Fahrzeug aus",
-    "noTransporterOption": "Kein Fahrzeug",
     "startPointLabel": "Startpunkt",
     "startPointPlaceholder": "Startpunkt auswählen",
     "noStartPointsError": "Es sind keine Startpunkte verfügbar. Ohne Startpunkt kann kein Einsatzplan erstellt werden.",
