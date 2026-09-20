@@ -163,7 +163,7 @@
     "columnTreeCount": "No. of trees",
     "emptyMessage": "Unfortunately, no watering groups were found.",
     "searchLabel": "Search watering groups",
-    "searchPlaceholder": "Search by name or address",
+    "searchPlaceholder": "Search by name",
     "filterStatus": "Status",
     "filterRegion": "Region",
     "filterSoil": "Soil type",

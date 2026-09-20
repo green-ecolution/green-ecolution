@@ -163,7 +163,7 @@
     "columnTreeCount": "Anzahl d. Bäume",
     "emptyMessage": "Es wurden leider keine Bewässerungsgruppen gefunden.",
     "searchLabel": "Bewässerungsgruppen durchsuchen",
-    "searchPlaceholder": "Name oder Adresse suchen",
+    "searchPlaceholder": "Name suchen",
     "filterStatus": "Status",
     "filterRegion": "Region",
     "filterSoil": "Bodenart",
