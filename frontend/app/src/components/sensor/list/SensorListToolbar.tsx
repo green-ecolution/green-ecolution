@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
-import { TreeDeciduous } from 'lucide-react'
-import { useQuery } from '@tanstack/react-query'
+import { FolderClosed, TreeDeciduous } from 'lucide-react'
+import { useQueries, useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { DataHealth, ListSensorsSortEnum, SensorStatus } from '@green-ecolution/backend-client'
 import ListToolbar from '@/components/general/list/ListToolbar'
@@ -10,7 +10,7 @@ import ListSortMenu from '@/components/general/list/ListSortMenu'
 import ActiveFilterChips, {
   type FilterChipDescriptor,
 } from '@/components/general/list/ActiveFilterChips'
-import { sensorQueries } from '@/api/queries'
+import { clusterQueries, sensorQueries } from '@/api/queries'
 import { useSensorStatusDetails } from '@/hooks/details/useDetailsForSensorStatus'
 import { useDataQualityDetails } from '@/hooks/details/useDetailsForDataHealth'
 import { useSensorListSearch } from './useSensorListSearch'
@@ -29,6 +29,7 @@ const SensorListToolbar = ({ filteredRecords, totalRecords, action }: SensorList
   const getDataQualityDetails = useDataQualityDetails()
 
   const { data: models } = useQuery(sensorQueries.models())
+  const { data: clusterPage } = useQuery(clusterQueries.list({ perPage: 100 }))
 
   const statusOptions = Object.values(SensorStatus).map((status) => ({
     value: status,
@@ -42,6 +43,24 @@ const SensorListToolbar = ({ filteredRecords, totalRecords, action }: SensorList
     value: health,
     label: getDataQualityDetails({ dataHealth: health, implausibleRecent: 0 }).label,
   }))
+  const clusterOptions = (clusterPage?.data ?? []).map((cluster) => ({
+    value: String(cluster.id),
+    label: cluster.name,
+  }))
+  // A cluster selected via a shared link can sit outside the first 100
+  // clusters (backend's Pagination::MAX_PER_PAGE), so its name never reaches
+  // clusterOptions; resolve it individually rather than showing the raw id.
+  const missingClusterIds = (search.clusterIds ?? []).filter(
+    (id) => !clusterOptions.some((option) => option.value === id),
+  )
+  const missingClusterQueries = useQueries({
+    queries: missingClusterIds.map((id) => clusterQueries.detail(id)),
+  })
+  const missingClusterNames = new Map(
+    missingClusterIds
+      .map((id, index) => [id, missingClusterQueries[index]?.data?.name] as const)
+      .filter((entry): entry is [string, string] => entry[1] !== undefined),
+  )
   const treeOptions = [
     { value: 'true', label: t('list.treeOptionWith') },
     { value: 'false', label: t('list.treeOptionWithout') },
@@ -58,6 +77,7 @@ const SensorListToolbar = ({ filteredRecords, totalRecords, action }: SensorList
   const statuses = search.statuses ?? []
   const modelIds = search.modelIds ?? []
   const dataHealth = search.dataHealth ?? []
+  const clusterIds = search.clusterIds ?? []
 
   const chips: FilterChipDescriptor[] = [
     ...statuses.map((status) => ({
@@ -85,6 +105,18 @@ const SensorListToolbar = ({ filteredRecords, totalRecords, action }: SensorList
         setFilter(
           'dataHealth',
           dataHealth.filter((value) => value !== health),
+        ),
+    })),
+    ...clusterIds.map((id) => ({
+      id: `cluster-${id}`,
+      label:
+        clusterOptions.find((option) => option.value === id)?.label ??
+        missingClusterNames.get(id) ??
+        t('list.clusterUnknown'),
+      onRemove: () =>
+        setFilter(
+          'clusterIds',
+          clusterIds.filter((value) => value !== id),
         ),
     })),
     ...(search.hasTree === undefined
@@ -147,6 +179,16 @@ const SensorListToolbar = ({ filteredRecords, totalRecords, action }: SensorList
               onChange={(values) =>
                 setHasTree(values[0] === undefined ? undefined : values[0] === 'true')
               }
+              emptyText={t('list.filterNoOptions')}
+            />
+            {/* No 'any' / 'none' options: whether a sensor is linked at all is
+                what the tree filter next to it already answers. */}
+            <ListFilterDropdown
+              label={t('list.filterCluster')}
+              icon={FolderClosed}
+              options={clusterOptions}
+              value={clusterIds}
+              onChange={(values) => setFilter('clusterIds', values)}
               emptyText={t('list.filterNoOptions')}
             />
           </>

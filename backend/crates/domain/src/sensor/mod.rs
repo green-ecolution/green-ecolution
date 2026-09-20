@@ -27,6 +27,7 @@ use chrono::{DateTime, Duration, Utc};
 use crate::{
     Id,
     authorization::Visibility,
+    cluster::TreeCluster,
     organization::Organization,
     sensor_model::SensorModel,
     shared::provenance::{Provenance, ProviderId},
@@ -266,8 +267,13 @@ pub struct SensorSearchQuery {
     pub data_health: Vec<DataHealth>,
     /// Whether the sensor is linked to a tree.
     pub has_tree: Option<bool>,
+    /// Clusters of the linked tree. A sensor has no cluster of its own — the
+    /// relation runs through the tree it is attached to.
+    pub cluster_ids: Vec<Id<TreeCluster>>,
 
     // Search and order
+    /// Case-insensitive text filter on sensor id, model name or the name of
+    /// the linked tree's cluster.
     pub q: Option<String>,
     pub sort: SensorSort,
 }

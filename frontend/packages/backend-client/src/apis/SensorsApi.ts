@@ -114,6 +114,7 @@ export interface ListSensorsRequest {
     modelId?: Array<string>;
     dataHealth?: Array<DataHealth>;
     hasTree?: boolean | null;
+    clusterId?: Array<string>;
     sort?: ListSensorsSortEnum;
     order?: ListSensorsOrderEnum;
 }
@@ -599,6 +600,10 @@ export class SensorsApi extends runtime.BaseAPI {
 
         if (requestParameters['hasTree'] != null) {
             queryParameters['has_tree'] = requestParameters['hasTree'];
+        }
+
+        if (requestParameters['clusterId'] != null) {
+            queryParameters['cluster_id'] = requestParameters['clusterId'];
         }
 
         if (requestParameters['sort'] != null) {

@@ -1,4 +1,4 @@
-import { CalendarDays, Radio, TreeDeciduous } from 'lucide-react'
+import { CalendarDays, FolderClosed, Radio, TreeDeciduous } from 'lucide-react'
 import { format, formatDistanceToNow } from 'date-fns'
 import type { Sensor } from '@/api/backendApi'
 import { Link } from '@tanstack/react-router'
@@ -64,6 +64,13 @@ const SensorCard: React.FC<SensorCardProps> = ({ sensor, query = '' }) => {
             <span className="sr-only">{t('card.treeSrLabel')}</span>
             {sensor.linkedTreeId ? t('card.treeLinked') : t('card.treeUnlinked')}
           </span>
+          {sensor.linkedClusterName && (
+            <span className="flex items-center gap-2">
+              <FolderClosed aria-hidden className="size-4" />
+              <span className="sr-only">{t('card.clusterSrLabel')}</span>
+              {highlightMatch(sensor.linkedClusterName, query)}
+            </span>
+          )}
           <span className="flex items-center gap-2">
             <Radio aria-hidden className="size-4" />
             <span className="sr-only">{t('card.lastUpdateLabel')}</span>

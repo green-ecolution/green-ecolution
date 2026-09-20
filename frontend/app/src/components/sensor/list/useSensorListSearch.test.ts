@@ -66,6 +66,9 @@ describe('useSensorListSearch', () => {
     result.current.setFilter('dataHealth', ['suspect'])
     expect(appliedSearch().dataHealth).toEqual(['suspect'])
 
+    result.current.setFilter('clusterIds', ['cluster-1'])
+    expect(appliedSearch().clusterIds).toEqual(['cluster-1'])
+
     result.current.setSort('last_reading', 'desc')
     expect(appliedSearch().sort).toBe('last_reading')
     expect(appliedSearch().order).toBe('desc')
@@ -80,6 +83,7 @@ describe('useSensorListSearch', () => {
     expect(reset.modelIds).toBeUndefined()
     expect(reset.dataHealth).toBeUndefined()
     expect(reset.hasTree).toBeUndefined()
+    expect(reset.clusterIds).toBeUndefined()
   })
 
   it('drops an empty filter instead of writing an empty array to the url', () => {

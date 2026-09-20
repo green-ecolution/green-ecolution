@@ -37,7 +37,7 @@ export const useSensorListSearch = () => {
   )
 
   const setFilter = useCallback(
-    (key: 'statuses' | 'modelIds' | 'dataHealth', values: string[]) =>
+    (key: 'statuses' | 'modelIds' | 'dataHealth' | 'clusterIds', values: string[]) =>
       patch({ [key]: values.length > 0 ? values : undefined }),
     [patch],
   )
@@ -52,6 +52,7 @@ export const useSensorListSearch = () => {
         modelIds: undefined,
         dataHealth: undefined,
         hasTree: undefined,
+        clusterIds: undefined,
       }),
     [patch],
   )

@@ -29,6 +29,34 @@ describe('SensorCard', () => {
     expect(screen.getByText('a81758').tagName).toBe('MARK')
   })
 
+  it('names the watering group of the linked tree', () => {
+    render(
+      <SensorCard
+        sensor={sensorFixture({ linkedTreeId: 'tree-1', linkedClusterName: 'Hafenspitze' })}
+        query=""
+      />,
+    )
+
+    expect(screen.getByText('Hafenspitze')).toBeInTheDocument()
+  })
+
+  it('marks the search match in the group name', () => {
+    render(
+      <SensorCard
+        sensor={sensorFixture({ linkedTreeId: 'tree-1', linkedClusterName: 'Hafenspitze' })}
+        query="hafen"
+      />,
+    )
+
+    expect(screen.getByText('Hafen').tagName).toBe('MARK')
+  })
+
+  it('omits the group line for a sensor whose tree is in no group', () => {
+    render(<SensorCard sensor={sensorFixture({ linkedTreeId: 'tree-1' })} query="" />)
+
+    expect(screen.queryByText(/Bewässerungsgruppe/)).not.toBeInTheDocument()
+  })
+
   it('shows a quality warning badge for a sensor under data-quality suspicion', () => {
     render(<SensorCard sensor={sensorFixture({ dataHealth: DataHealth.Suspect })} query="" />)
 

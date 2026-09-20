@@ -112,6 +112,19 @@ export interface ListResponseSensorResponseDataInner {
      */
     latestData?: SensorDataResponse | null;
     /**
+     * Cluster of the linked tree. Absent when the sensor has no tree or that
+     * tree belongs to no cluster.
+     * @type {string}
+     * @memberof ListResponseSensorResponseDataInner
+     */
+    linkedClusterId?: string | null;
+    /**
+     * Display name of [`Self::linked_cluster_id`].
+     * @type {string}
+     * @memberof ListResponseSensorResponseDataInner
+     */
+    linkedClusterName?: string | null;
+    /**
      * Database id of the linked tree, if the sensor is currently attached.
      * @type {string}
      * @memberof ListResponseSensorResponseDataInner
@@ -196,6 +209,8 @@ export function ListResponseSensorResponseDataInnerFromJSONTyped(json: any, igno
         'id': json['id'],
         'implausibleRecent': json['implausible_recent'],
         'latestData': json['latest_data'] == null ? undefined : SensorDataResponseFromJSON(json['latest_data']),
+        'linkedClusterId': json['linked_cluster_id'] == null ? undefined : json['linked_cluster_id'],
+        'linkedClusterName': json['linked_cluster_name'] == null ? undefined : json['linked_cluster_name'],
         'linkedTreeId': json['linked_tree_id'] == null ? undefined : json['linked_tree_id'],
         'lorawan': json['lorawan'] == null ? undefined : LorawanInfoResponseFromJSON(json['lorawan']),
         'model': SensorModelSummaryResponseFromJSON(json['model']),
@@ -225,6 +240,8 @@ export function ListResponseSensorResponseDataInnerToJSONTyped(value?: ListRespo
         'id': value['id'],
         'implausible_recent': value['implausibleRecent'],
         'latest_data': SensorDataResponseToJSON(value['latestData']),
+        'linked_cluster_id': value['linkedClusterId'],
+        'linked_cluster_name': value['linkedClusterName'],
         'linked_tree_id': value['linkedTreeId'],
         'lorawan': LorawanInfoResponseToJSON(value['lorawan']),
         'model': SensorModelSummaryResponseToJSON(value['model']),

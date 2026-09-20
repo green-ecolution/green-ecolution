@@ -119,6 +119,7 @@ pub async fn list_sensors(
             .map(domain::sensor::DataHealth::from)
             .collect(),
         has_tree: params.has_tree,
+        cluster_ids: params.cluster_id.into_iter().map(Id::new).collect(),
         sort: SensorSort {
             field: params.sort.map(SensorSortField::from).unwrap_or_default(),
             direction: params.order.map(SortDirection::from).unwrap_or_default(),

@@ -46,6 +46,23 @@ vi.mock('@/api/queries', async () => {
           ]),
       }),
     },
+    clusterQueries: {
+      ...actual.clusterQueries,
+      list: () => ({
+        queryKey: ['clusters-toolbar-test'],
+        queryFn: () =>
+          Promise.resolve({
+            data: [
+              { id: 'cluster-1', name: 'Bahnhofstraße Nord' },
+              { id: 'cluster-2', name: 'Hafenspitze' },
+            ],
+          }),
+      }),
+      detail: (id: string) => ({
+        queryKey: ['cluster-toolbar-test', id],
+        queryFn: () => Promise.resolve({ id, name: `Gruppe ${id}` }),
+      }),
+    },
   }
 })
 
@@ -91,6 +108,26 @@ describe('SensorListToolbar', () => {
     fireEvent.click(screen.getByRole('option', { name: 'Mit Baum' }))
 
     expect(setHasTree).toHaveBeenCalledExactlyOnceWith(true)
+  })
+
+  it('picking a group option calls setFilter with the selected cluster', async () => {
+    renderToolbar()
+
+    fireEvent.click(screen.getByRole('button', { name: /^Gruppe/ }))
+    fireEvent.click(await screen.findByRole('option', { name: 'Bahnhofstraße Nord' }))
+
+    expect(setFilter).toHaveBeenCalledExactlyOnceWith('clusterIds', ['cluster-1'])
+  })
+
+  it('removing an active group chip calls setFilter without that cluster', async () => {
+    searchMock.current = { clusterIds: ['cluster-1'] }
+    renderToolbar()
+
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Filter Bahnhofstraße Nord entfernen' }),
+    )
+
+    expect(setFilter).toHaveBeenCalledExactlyOnceWith('clusterIds', [])
   })
 
   it('picking the already-selected tree option again clears it', () => {

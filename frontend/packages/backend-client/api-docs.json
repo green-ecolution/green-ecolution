@@ -3738,6 +3738,7 @@
           {
             "name": "q",
             "in": "query",
+            "description": "Case-insensitive match on sensor id, model name or the name of the\nlinked tree's cluster.",
             "required": false,
             "schema": {
               "type": "string"
@@ -3790,6 +3791,19 @@
                 "boolean",
                 "null"
               ]
+            }
+          },
+          {
+            "name": "cluster_id",
+            "in": "query",
+            "description": "Cluster of the linked tree. Repeatable: `?cluster_id=<uuid>&cluster_id=<uuid>`.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "uuid"
+              }
             }
           },
           {
@@ -8777,6 +8791,23 @@
                     }
                   ]
                 },
+                "linked_cluster_id": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "uuid",
+                  "description": "Cluster of the linked tree. Absent when the sensor has no tree or that\ntree belongs to no cluster.",
+                  "example": "0190a8e9-7c4f-7000-8000-000000000000"
+                },
+                "linked_cluster_name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Display name of [`Self::linked_cluster_id`].",
+                  "example": "Bahnhofstraße Nord"
+                },
                 "linked_tree_id": {
                   "type": [
                     "string",
@@ -11113,6 +11144,23 @@
                 "description": "Most recent data payload from the sensor, if available."
               }
             ]
+          },
+          "linked_cluster_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Cluster of the linked tree. Absent when the sensor has no tree or that\ntree belongs to no cluster.",
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
+          },
+          "linked_cluster_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Display name of [`Self::linked_cluster_id`].",
+            "example": "Bahnhofstraße Nord"
           },
           "linked_tree_id": {
             "type": [

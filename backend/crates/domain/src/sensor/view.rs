@@ -22,6 +22,10 @@ pub struct SensorView {
     pub sensor_type: SensorType,
     pub coordinate: Option<Coordinate>,
     pub linked_tree_id: Option<Uuid>,
+    /// Cluster of the linked tree, resolved for display. `None` whenever the
+    /// sensor has no tree or that tree sits in no cluster.
+    pub linked_cluster_id: Option<Uuid>,
+    pub linked_cluster_name: Option<String>,
     pub provider: Option<ProviderId>,
     pub additional_info: Option<Value>,
     pub model: SensorModelSummary,

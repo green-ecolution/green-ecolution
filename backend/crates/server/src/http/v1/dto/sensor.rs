@@ -254,6 +254,17 @@ pub struct SensorResponse {
     #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000", nullable)]
     pub linked_tree_id: Option<uuid::Uuid>,
 
+    /// Cluster of the linked tree. Absent when the sensor has no tree or that
+    /// tree belongs to no cluster.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000", nullable)]
+    pub linked_cluster_id: Option<uuid::Uuid>,
+
+    /// Display name of [`Self::linked_cluster_id`].
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(example = "Bahnhofstraße Nord", nullable)]
+    pub linked_cluster_name: Option<String>,
+
     /// LoRaWAN credentials (omits `app_key`).
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(nullable)]
@@ -294,6 +305,8 @@ impl From<&SensorView> for SensorResponse {
                 longitude: c.longitude(),
             }),
             linked_tree_id: value.linked_tree_id,
+            linked_cluster_id: value.linked_cluster_id,
+            linked_cluster_name: value.linked_cluster_name.clone(),
             lorawan: value.lorawan.as_ref().map(LorawanInfoResponse::from),
             latest_data: value.latest_reading.as_ref().map(SensorDataResponse::from),
             provider: value.provider.as_ref().map(|p| p.as_str().to_owned()),
@@ -688,6 +701,8 @@ pub struct SensorListParams {
     #[param(default = 25, minimum = 1, maximum = 100, example = 25)]
     #[serde(default = "crate::http::v1::pagination::default_per_page")]
     pub per_page: u64,
+    /// Case-insensitive match on sensor id, model name or the name of the
+    /// linked tree's cluster.
     #[param(example = "eui-a81758")]
     pub q: Option<String>,
     /// Repeatable: `?status=online&status=offline`.
@@ -702,6 +717,9 @@ pub struct SensorListParams {
     #[param(nullable)]
     #[serde(default)]
     pub has_tree: Option<bool>,
+    /// Cluster of the linked tree. Repeatable: `?cluster_id=<uuid>&cluster_id=<uuid>`.
+    #[serde(default)]
+    pub cluster_id: Vec<uuid::Uuid>,
     #[param(nullable, inline)]
     pub sort: Option<SensorSortParam>,
     #[param(nullable, inline)]

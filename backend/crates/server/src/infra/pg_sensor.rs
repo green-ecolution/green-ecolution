@@ -181,6 +181,8 @@ impl PgSensorRepository {
             sensor_type: row.sensor_type,
             coordinate: build_coord(row.tree_lat, row.tree_lng)?,
             linked_tree_id: row.linked_tree_id,
+            linked_cluster_id: row.linked_cluster_id,
+            linked_cluster_name: row.linked_cluster_name,
             provider: row.provider.map(ProviderId::reconstitute),
             additional_info: row.additional_info,
             model: SensorModelSummary {
@@ -218,6 +220,8 @@ struct SensorViewRow {
     model_id: Uuid,
     model_name: String,
     linked_tree_id: Option<Uuid>,
+    linked_cluster_id: Option<Uuid>,
+    linked_cluster_name: Option<String>,
     tree_lat: Option<f64>,
     tree_lng: Option<f64>,
     serial_number: Option<String>,
@@ -239,6 +243,7 @@ const SENSOR_COLUMNS: &str = "s.id, s.created_at, s.updated_at, s.activated_at, 
     s.additional_informations AS additional_info, \
     sm.id AS model_id, sm.name AS model_name, \
     t.id AS linked_tree_id, t.latitude AS tree_lat, t.longitude AS tree_lng, \
+    tc.id AS linked_cluster_id, tc.name AS linked_cluster_name, \
     sl.serial_number, sl.dev_eui, sl.app_eui, sl.at_pin, sl.ota_pin, sl.config, \
     lr.id AS last_reading_id, lr.updated_at AS last_reading_updated_at, \
     lr.data AS last_reading_data, s.organization_id, \
@@ -383,6 +388,8 @@ impl SensorReader for PgSensorRepository {
                       t.id            AS "linked_tree_id?",
                       t.latitude      AS "tree_lat?",
                       t.longitude     AS "tree_lng?",
+                      tc.id           AS "linked_cluster_id?",
+                      tc.name         AS "linked_cluster_name?",
                       sl.serial_number AS "serial_number?",
                       sl.dev_eui       AS "dev_eui?",
                       sl.app_eui       AS "app_eui?",
@@ -393,6 +400,7 @@ impl SensorReader for PgSensorRepository {
             INNER JOIN sensor_models sm ON sm.id = s.model_id
             LEFT JOIN sensor_lorawan sl ON sl.id = s.id
             LEFT JOIN trees t          ON t.sensor_id = s.id
+            LEFT JOIN tree_clusters tc ON tc.id = t.tree_cluster_id
             WHERE s.id = $1"#,
             id.as_str()
         )
@@ -466,6 +474,8 @@ impl SensorReader for PgSensorRepository {
                 model_id: row.model_id,
                 model_name: row.model_name,
                 linked_tree_id: row.linked_tree_id,
+                linked_cluster_id: row.linked_cluster_id,
+                linked_cluster_name: row.linked_cluster_name,
                 tree_lat: row.tree_lat,
                 tree_lng: row.tree_lng,
                 serial_number: row.serial_number,
@@ -500,6 +510,8 @@ impl SensorReader for PgSensorRepository {
                       t.id            AS "linked_tree_id?",
                       t.latitude      AS "tree_lat?",
                       t.longitude     AS "tree_lng?",
+                      tc.id           AS "linked_cluster_id?",
+                      tc.name         AS "linked_cluster_name?",
                       sl.serial_number AS "serial_number?",
                       sl.dev_eui       AS "dev_eui?",
                       sl.app_eui       AS "app_eui?",
@@ -516,6 +528,7 @@ impl SensorReader for PgSensorRepository {
             INNER JOIN sensor_models sm ON sm.id = s.model_id
             LEFT JOIN sensor_lorawan sl ON sl.id = s.id
             LEFT JOIN trees t          ON t.sensor_id = s.id
+            LEFT JOIN tree_clusters tc ON tc.id = t.tree_cluster_id
             LEFT JOIN sensor_quality_acknowledgements qa ON qa.sensor_id = s.id
             LEFT JOIN LATERAL (
                 SELECT sd.id, sd.updated_at, sd.data
@@ -576,6 +589,8 @@ impl SensorReader for PgSensorRepository {
                         model_id: r.model_id,
                         model_name: r.model_name,
                         linked_tree_id: r.linked_tree_id,
+                        linked_cluster_id: r.linked_cluster_id,
+                        linked_cluster_name: r.linked_cluster_name,
                         tree_lat: r.tree_lat,
                         tree_lng: r.tree_lng,
                         serial_number: r.serial_number,
@@ -627,6 +642,7 @@ impl SensorReader for PgSensorRepository {
             })
             .collect();
         let model_ids: Vec<Uuid> = query.model_ids.iter().map(|id| id.value()).collect();
+        let cluster_ids: Vec<Uuid> = query.cluster_ids.iter().map(|id| id.value()).collect();
 
         // `qa` has to precede the two quality laterals, which read its
         // acknowledgement watermark; the builder emits filtering joins before
@@ -637,7 +653,10 @@ impl SensorReader for PgSensorRepository {
         let mut spec = ListSpec::new("sensors s", "s.id")
             .join("INNER JOIN sensor_models sm ON sm.id = s.model_id")
             .join(LATEST_READING_JOIN)
-            .join("LEFT JOIN trees t ON t.sensor_id = s.id");
+            .join("LEFT JOIN trees t ON t.sensor_id = s.id")
+            // Filtering join, not projection-only: the text search reads
+            // `tc.name`, so the count queries need the table too.
+            .join("LEFT JOIN tree_clusters tc ON tc.id = t.tree_cluster_id");
         spec = if health_texts.is_empty() {
             spec.projection_join(QUALITY_ACK_JOIN)
                 .projection_join(&self.history_join)
@@ -656,7 +675,10 @@ impl SensorReader for PgSensorRepository {
                 "s.organization_id",
                 query.visible.into_raw_ids(),
             ))
-            .filter(Predicate::text_search(&["s.id", "sm.name"], query.q))
+            .filter(Predicate::text_search(
+                &["s.id", "sm.name", "tc.name"],
+                query.q,
+            ))
             .filter(Predicate::any_of_expr(
                 self.status_sql.clone(),
                 status_texts,
@@ -667,6 +689,7 @@ impl SensorReader for PgSensorRepository {
                 health_texts,
             ))
             .filter(Predicate::is_present("t.id", query.has_tree))
+            .filter(Predicate::any_of("t.tree_cluster_id", cluster_ids))
             .sort(
                 query.sort.field.as_sql_key(),
                 query.sort.direction.is_descending(),

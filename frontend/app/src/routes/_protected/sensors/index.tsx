@@ -28,6 +28,7 @@ const sensorFilterSchema = z.object({
   modelIds: z.array(z.string()).optional().catch(undefined),
   dataHealth: z.array(z.enum(DataHealth)).optional().catch(undefined),
   hasTree: z.boolean().optional().catch(undefined),
+  clusterIds: z.array(z.string()).optional().catch(undefined),
   sort: z.enum(ListSensorsSortEnum).optional().catch(undefined),
   order: z.enum(ListSensorsOrderEnum).optional().catch(undefined),
 })
@@ -40,6 +41,7 @@ const listParams = (search: z.infer<typeof sensorFilterSchema>) => ({
   modelId: search.modelIds,
   dataHealth: search.dataHealth,
   hasTree: search.hasTree,
+  clusterId: search.clusterIds,
   sort: search.sort,
   order: search.order,
 })
@@ -63,6 +65,7 @@ function Sensors() {
     (search.statuses?.length ?? 0) > 0 ||
     (search.modelIds?.length ?? 0) > 0 ||
     (search.dataHealth?.length ?? 0) > 0 ||
+    (search.clusterIds?.length ?? 0) > 0 ||
     search.hasTree !== undefined
 
   return (
@@ -136,6 +139,7 @@ export const Route = createFileRoute('/_protected/sensors/')({
     modelIds: search.modelIds,
     dataHealth: search.dataHealth,
     hasTree: search.hasTree,
+    clusterIds: search.clusterIds,
     sort: search.sort,
     order: search.order,
   }),
