@@ -1,0 +1,119 @@
+name: "Warm CI Caches"
+
+# The PR workflows only run on `pull_request`, so every cache they write lands
+# on refs/pull/N/merge, which no other pull request can read. Without an entry
+# on main every new branch compiles the workspace from scratch on its first
+# run. This workflow writes exactly the shared-key entries the PR jobs look up.
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "backend/**"
+      - "frontend/**"
+      - "justfile"
+      - ".github/actions/**"
+      - ".github/workflows/warm-cache.yaml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  SQLX_OFFLINE: "true"
+
+jobs:
+  # Same filters as the PR workflows: a frontend-only merge should not spend
+  # three quarters of an hour rebuilding the Rust workspace.
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dorny/paths-filter@v4
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'backend/**'
+              - 'justfile'
+              - '.github/actions/setup-backend/**'
+              - '.github/workflows/warm-cache.yaml'
+            frontend:
+              - 'frontend/**'
+              - 'backend/crates/domain/**'
+              - 'backend/crates/domain-wasm/**'
+              - 'backend/Cargo.toml'
+              - 'backend/Cargo.lock'
+              - 'justfile'
+              - '.github/actions/setup-frontend/**'
+              - '.github/workflows/warm-cache.yaml'
+
+  backend:
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup-backend
+        with:
+          save-if: "true"
+
+      # Each line mirrors a PR job's invocation. Feature flags and profile are
+      # part of a unit's fingerprint, so a warm entry only helps where they match.
+      - name: Warm the workspace build
+        working-directory: ./backend
+        run: |
+          cargo build -p domain --no-default-features --locked
+          cargo build --locked --bin migrate
+          cargo test --workspace --locked --no-run
+          cargo clippy --workspace --all-targets --all-features --locked
+          cargo bench -p domain --locked --no-run
+
+  backend-msrv:
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Read MSRV from Cargo.toml
+        id: msrv
+        run: echo "msrv=$(grep -m1 '^rust-version' backend/Cargo.toml | cut -d'"' -f2)" >> "$GITHUB_OUTPUT"
+
+      # rust-cache hashes the compiler version into the key, so the MSRV
+      # toolchain lands in its own entry even under the same shared key.
+      - uses: ./.github/actions/setup-backend
+        with:
+          toolchain: ${{ steps.msrv.outputs.msrv }}
+          save-if: "true"
+
+      - name: Warm the MSRV check
+        working-directory: ./backend
+        run: cargo check --workspace --locked
+
+  frontend:
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup-frontend
+        with:
+          save-if: "true"
+
+      # check_generated is the only frontend job that compiles host-target Rust;
+      # setup-frontend itself has already warmed the wasm32 side.
+      - name: Warm the OpenAPI dump
+        run: just dump-openapi

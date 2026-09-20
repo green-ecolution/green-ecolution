@@ -73,20 +73,33 @@ jobs:
         working-directory: ./frontend
         run: pnpm lint
 
+  # The app suite is ~190 files whose cost is dominated by per-file jsdom and
+  # setup work, so it splits cleanly across runners. The workspace packages are
+  # seconds and run alongside the first shard.
   test:
     needs: changes
     if: needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-frontend
       - name: Build workspace dependencies
         working-directory: ./frontend
         run: pnpm --filter=!frontend -r build
-      - name: Test
+      - name: Test app (shard ${{ matrix.shard }}/2)
         working-directory: ./frontend
-        run: pnpm test
+        # No `--` before the flag: pnpm swallows it and the shard silently
+        # widens back to the full suite.
+        run: pnpm --filter frontend run test:run --shard=${{ matrix.shard }}/2
+      - name: Test workspace packages
+        if: matrix.shard == 1
+        working-directory: ./frontend
+        run: pnpm run test:packages
 
   handbook:
     needs: changes
@@ -96,6 +109,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-frontend
+        with:
+          rust: "false"
       - name: Generate manifest and typst sources
         run: node frontend/handbook/src/cli.mjs
       # frontend/Dockerfile pins the typst version the handbook layout was verified
@@ -130,7 +145,8 @@ jobs:
           if-no-files-found: error
 
   # The app build is already covered by the build job; this only needs to
-  # run when the image definition itself changes.
+  # run when the image definition itself changes. It reads the release build's
+  # registry cache and writes nothing.
   test_dockerfile:
     needs: changes
     if: needs.changes.outputs.docker == 'true'
@@ -147,8 +163,7 @@ jobs:
           file: ./frontend/Dockerfile
           push: false
           tags: frontend:test
-          cache-from: type=gha,scope=frontend-dockerfile
-          cache-to: type=gha,mode=max,scope=frontend-dockerfile
+          cache-from: type=registry,ref=ghcr.io/green-ecolution/green-ecolution/frontend:buildcache
 
   keycloak_theme:
     needs: changes
@@ -158,6 +173,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-frontend
+        with:
+          rust: "false"
       - name: Set up JDK for the keycloakify jar build
         uses: actions/setup-java@v6
         with:

@@ -1,5 +1,21 @@
 name: "Setup Backend"
 description: "Shared setup for backend CI jobs: system deps + Rust toolchain"
+inputs:
+  toolchain:
+    description: "Rust toolchain to install"
+    required: false
+    default: "stable"
+  shared-key:
+    description: >-
+      rust-cache shared key. Every backend job uses the same one so a single
+      warm cache written on main serves all of them; the job name must not
+      enter the key or PR jobs find nothing to restore.
+    required: false
+    default: "backend"
+  save-if:
+    description: "Whether this job may write the cache. Only the warm-cache job on main sets this."
+    required: false
+    default: "false"
 runs:
   using: "composite"
   steps:
@@ -8,11 +24,14 @@ runs:
       with:
         tool: just
     - name: Setup Rust toolchain
-      uses: dtolnay/rust-toolchain@stable
+      uses: dtolnay/rust-toolchain@master
       with:
+        toolchain: ${{ inputs.toolchain }}
         components: rustfmt, clippy
     - name: Cache cargo build
       uses: Swatinem/rust-cache@v2
       with:
         workspaces: backend
+        shared-key: ${{ inputs.shared-key }}
+        save-if: ${{ inputs.save-if }}
         cache-on-failure: "true"
