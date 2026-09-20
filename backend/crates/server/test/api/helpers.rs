@@ -239,6 +239,7 @@ struct SharedContainer {
 
 static CONTAINER: OnceCell<SharedContainer> = OnceCell::const_new();
 static CONTAINER_ID: OnceLock<String> = OnceLock::new();
+static TEMPLATE_DB: OnceCell<String> = OnceCell::const_new();
 
 // `static` destructors don't run on process exit, and the testcontainers
 // `watchdog` feature only fires on SIGTERM/SIGINT/SIGQUIT — neither covers a
@@ -293,15 +294,68 @@ async fn shared_container() -> &'static SharedContainer {
         .await
 }
 
+async fn admin_connection(host_port: u16) -> PgConnection {
+    PgConnection::connect(&format!(
+        "postgres://postgres:postgres@127.0.0.1:{host_port}/postgres"
+    ))
+    .await
+    .expect("failed to connect to admin database")
+}
+
+/// The migrated blueprint every test database is cloned from. Replaying all
+/// migrations once per test used to dominate the suite runtime; copying a
+/// template is close to constant time regardless of how many migrations exist.
+async fn template_database() -> &'static str {
+    TEMPLATE_DB
+        .get_or_init(|| async {
+            let host_port = shared_container().await.host_port;
+            let db_name = format!("template_{}", Uuid::new_v4().simple());
+
+            let mut admin = admin_connection(host_port).await;
+            admin
+                .execute(format!(r#"CREATE DATABASE "{db_name}""#).as_str())
+                .await
+                .expect("failed to create template database");
+
+            let mut conn = PgConnection::connect(&format!(
+                "postgres://postgres:postgres@127.0.0.1:{host_port}/{db_name}"
+            ))
+            .await
+            .expect("failed to connect to template database");
+            sqlx::migrate!("../../migrations")
+                .run(&mut conn)
+                .await
+                .expect("failed to migrate template database");
+            conn.close()
+                .await
+                .expect("failed to close template connection");
+
+            // CREATE DATABASE refuses a template that still has a session on
+            // it, and the close above is not necessarily reaped by the server
+            // before the first clone asks for it.
+            admin
+                .execute(
+                    format!(
+                        "SELECT pg_terminate_backend(pid) FROM pg_stat_activity \
+                         WHERE datname = '{db_name}' AND pid <> pg_backend_pid()"
+                    )
+                    .as_str(),
+                )
+                .await
+                .expect("failed to drain template connections");
+
+            db_name
+        })
+        .await
+}
+
 async fn create_test_database(host_port: u16) -> (String, PgPool) {
+    let template = template_database().await;
     let db_name = format!("test_{}", Uuid::new_v4().simple());
 
-    let admin_url = format!("postgres://postgres:postgres@127.0.0.1:{host_port}/postgres");
-    let mut admin = PgConnection::connect(&admin_url)
-        .await
-        .expect("failed to connect to admin database");
+    let mut admin = admin_connection(host_port).await;
     admin
-        .execute(format!(r#"CREATE DATABASE "{db_name}""#).as_str())
+        .execute(format!(r#"CREATE DATABASE "{db_name}" TEMPLATE "{template}""#).as_str())
         .await
         .expect("failed to create test database");
 
@@ -312,11 +366,6 @@ async fn create_test_database(host_port: u16) -> (String, PgPool) {
         .connect(&connection_string)
         .await
         .expect("failed to connect to test database");
-
-    sqlx::migrate!("../../migrations")
-        .run(&pool)
-        .await
-        .expect("failed to run migrations");
 
     (db_name, pool)
 }
