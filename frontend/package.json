@@ -27,7 +27,7 @@
     "build-storybook": "pnpm --filter @green-ecolution/ui build-storybook"
   },
   "devDependencies": {
-    "prettier": "^3.9.6",
+    "prettier": "^3.9.8",
     "remark-frontmatter": "^5.0.0",
     "remark-gfm": "^4.0.1",
     "remark-parse": "^11.0.0",
