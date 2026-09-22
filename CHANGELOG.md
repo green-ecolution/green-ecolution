@@ -11,6 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > single repository. For legacy releases, see the
 > [GitHub Releases](https://github.com/green-ecolution/green-ecolution/releases) page.
 
+## [0.7.1](https://github.com/green-ecolution/green-ecolution/compare/v0.7.0...v0.7.1) (2026-09-22)
+
+
+### Bug Fixes
+
+* **frontend:** make the language switcher reachable and stop it stretching ([#1059](https://github.com/green-ecolution/green-ecolution/issues/1059)) ([d0d84ab](https://github.com/green-ecolution/green-ecolution/commit/d0d84ab9520eb7390863524b3a75af3ae021045d))
+* **watering-plan:** drop the 'Kein Fahrzeug' option from the vehicle select ([#1057](https://github.com/green-ecolution/green-ecolution/issues/1057)) ([c024984](https://github.com/green-ecolution/green-ecolution/commit/c024984747102dc85a9605c7e303d553a4d0a47e)), closes [#60](https://github.com/green-ecolution/green-ecolution/issues/60)
+
 ## [0.7.0](https://github.com/green-ecolution/green-ecolution/compare/v0.6.0...v0.7.0) (2026-09-20)
 
 
