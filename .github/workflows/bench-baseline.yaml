@@ -39,7 +39,7 @@ jobs:
       # immutable, so the key rotates per run and the prefix restores the
       # newest one; a fixed key would pin every run to the very first baseline.
       - name: Restore previous baseline
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: backend/target/criterion
           key: criterion-baseline-${{ github.run_id }}
@@ -53,7 +53,7 @@ jobs:
         run: cargo bench -p domain --locked -- --save-baseline scheduled
 
       - name: Store baseline
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v6
         with:
           path: backend/target/criterion
           key: criterion-baseline-${{ github.run_id }}
