@@ -232,3 +232,34 @@ async fn flagged_values_are_absent_from_the_soil_moisture_series() {
         "the flagged reading must not be counted"
     );
 }
+
+#[tokio::test]
+async fn last_plausible_values_skip_newer_flagged_readings_per_depth() {
+    use domain::sensor::{SensorId, repository::SensorReadingReader};
+    use rust_decimal::prelude::ToPrimitive;
+
+    let app = spawn_app().await;
+    insert_sensor(&app, None, "eui-ssm-last").await;
+    insert_reading(&app, "eui-ssm-last", "2026-07-02 08:00:00", 40, 21.0).await;
+    insert_reading(&app, "eui-ssm-last", "2026-07-02 09:00:00", 40, 23.0).await;
+    insert_flagged_reading(&app, "eui-ssm-last", "2026-07-02 10:00:00", 40, 99.0).await;
+    insert_reading(&app, "eui-ssm-last", "2026-07-02 08:00:00", 80, 31.0).await;
+
+    let repo = server::infra::pg_sensor::PgSensorRepository::new(
+        app.db_pool.clone(),
+        chrono::Duration::days(1),
+        3,
+    );
+    let values = repo
+        .last_plausible_values(&SensorId::new("eui-ssm-last").unwrap())
+        .await
+        .unwrap();
+
+    let by_ability: std::collections::HashMap<Uuid, f64> = values
+        .iter()
+        .map(|v| (v.model_ability_id, v.value.to_f64().unwrap()))
+        .collect();
+    assert_eq!(values.len(), 2, "abilities without readings are omitted");
+    assert_eq!(by_ability[&soil_moisture_ability_id(&app, 40).await], 23.0);
+    assert_eq!(by_ability[&soil_moisture_ability_id(&app, 80).await], 31.0);
+}

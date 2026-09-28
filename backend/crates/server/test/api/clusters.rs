@@ -1434,6 +1434,28 @@ async fn list_clusters_search_sort_and_sensor_count() {
         hafen_pos < zob_pos,
         "Hafenspitze (moisture 0.2) must come before Zob-Vorplatz (moisture 0.8) when sorted asc"
     );
+
+    // 3. sort=trees → ordered by tree count in both directions
+    for (order, hafen_first) in [("desc", true), ("asc", false)] {
+        let resp = app
+            .get(&format!("/api/v1/clusters?sort=trees&order={order}"))
+            .await;
+        assert_eq!(resp.status().as_u16(), 200);
+        let body: serde_json::Value = resp.json().await.unwrap();
+        let names: Vec<&str> = body["data"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter_map(|c| c["name"].as_str())
+            .collect();
+        let hafen_pos = names.iter().position(|&n| n == "Hafenspitze").unwrap();
+        let zob_pos = names.iter().position(|&n| n == "Zob-Vorplatz").unwrap();
+        assert_eq!(
+            hafen_pos < zob_pos,
+            hafen_first,
+            "sort=trees&order={order}: Hafenspitze has 3 trees, Zob-Vorplatz 1"
+        );
+    }
 }
 
 #[tokio::test]

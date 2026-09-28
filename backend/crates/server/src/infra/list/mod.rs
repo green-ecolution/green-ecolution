@@ -58,7 +58,7 @@ impl<'a> ListSpec<'a> {
         }
     }
 
-    /// A join a filter or a sort expression depends on. Counts include it, and
+    /// A join a filter depends on. Counts include it, and
     /// they switch to `COUNT(DISTINCT pk)` because such a join can multiply
     /// rows. A join that can multiply rows must be paired with a `group_by` on
     /// the primary key, or the page will return more rows than `total`
@@ -69,8 +69,9 @@ impl<'a> ListSpec<'a> {
         self
     }
 
-    /// A join only the projection needs, typically to aggregate children. The
-    /// counts leave it out so they count records and not join rows.
+    /// A join only the projection or the sort needs, typically to aggregate
+    /// children or to order by a parent's column. The counts leave it out so
+    /// they count records and not join rows, and stay a plain `COUNT(*)`.
     pub fn projection_join(mut self, join: &'a str) -> Self {
         self.projection_joins.push(join);
         self

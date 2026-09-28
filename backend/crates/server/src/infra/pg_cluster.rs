@@ -103,13 +103,23 @@ const CLUSTER_COLUMNS: &str = "tc.id, tc.updated_at, tc.name, tc.address, \
     tc.watering_status, tc.soil_condition, tc.latitude, tc.longitude, \
     tc.last_watered AT TIME ZONE 'UTC' AS last_watered, tc.provider, \
     tc.additional_informations AS additional_info, tc.organization_id, \
-    COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::uuid[]) AS tree_ids, \
-    COUNT(t.id) FILTER (WHERE t.sensor_id IS NOT NULL AND t.sensor_id <> '') AS sensor_count";
+    (SELECT COALESCE(ARRAY_AGG(t.id ORDER BY t.number), ARRAY[]::uuid[]) \
+        FROM trees t WHERE t.tree_cluster_id = tc.id) AS tree_ids, \
+    (SELECT COUNT(*) FROM trees t \
+        WHERE t.tree_cluster_id = tc.id AND t.sensor_id IS NOT NULL AND t.sensor_id <> '') \
+        AS sensor_count";
 
+// Children are aggregated by correlated subqueries rather than a join plus
+// GROUP BY: Postgres evaluates projection subqueries after LIMIT, so only the
+// page's clusters are aggregated instead of every cluster with all its trees.
+// The "trees" sort still has to count every cluster, but through the index.
 const CLUSTER_SORT_COLUMNS: SortColumns = &[
     ("name", &["tc.name"]),
     ("moisture", &["tc.moisture_level"]),
-    ("trees", &["COUNT(t.id)"]),
+    (
+        "trees",
+        &["(SELECT COUNT(*) FROM trees t WHERE t.tree_cluster_id = tc.id)"],
+    ),
     ("last_watered", &["tc.last_watered"]),
 ];
 
@@ -234,12 +244,7 @@ impl TreeClusterReader for PgTreeClusterRepository {
         query: TreeClusterSearchQuery,
         pagination: Pagination,
     ) -> Result<SearchPage<TreeClusterView>, RepositoryError> {
-        // The tree join both aggregates the children and backs the "trees"
-        // sort, so it is a filtering join: the counts keep it and switch to a
-        // distinct count over cluster ids.
         let page = ListSpec::new("tree_clusters tc", "tc.id")
-            .join("LEFT JOIN trees t ON t.tree_cluster_id = tc.id")
-            .group_by("tc.id")
             .scope(Predicate::equals(
                 "tc.provider",
                 query.provider.as_ref().map(|p| p.as_str().to_owned()),
