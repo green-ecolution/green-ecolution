@@ -11,7 +11,11 @@ mod measure;
 mod paths;
 
 use server::bench::{scale::Scale, seed};
-use sqlx::{PgPool, postgres::PgPoolOptions};
+use server::configuration::SESSION_OPTIONS;
+use sqlx::{
+    PgPool,
+    postgres::{PgConnectOptions, PgPoolOptions},
+};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -126,11 +130,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 /// One connection throughout: the measurements report latency, and a pool
-/// would report connection scheduling on top of it.
+/// would report connection scheduling on top of it. The session options are
+/// the server's, so a measurement sees the same planner behaviour.
 async fn connect(database_url: &str) -> Result<PgPool, sqlx::Error> {
+    let options: PgConnectOptions = database_url.parse()?;
     PgPoolOptions::new()
         .max_connections(1)
-        .connect(database_url)
+        .connect_with(options.options(SESSION_OPTIONS))
         .await
 }
 

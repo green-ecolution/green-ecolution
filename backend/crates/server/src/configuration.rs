@@ -66,6 +66,13 @@ pub fn search_path_for(schema: &str) -> String {
     }
 }
 
+/// Session settings every connection carries, the benchmark harness included.
+///
+/// JIT is off because the list queries' lateral joins inflate the planner's
+/// cost estimates past `jit_above_cost`: compiling then took 120–480 ms per
+/// call on the benchmark data while the queries themselves ran in 30–70 ms.
+pub const SESSION_OPTIONS: [(&str, &str); 1] = [("jit", "off")];
+
 impl DatabaseSettings {
     pub fn connection_options(&self) -> PgConnectOptions {
         let ssl_mode = if self.require_ssl {
@@ -82,6 +89,7 @@ impl DatabaseSettings {
             .database(&self.database_name)
             .ssl_mode(ssl_mode)
             .options([("search_path", search_path_for(&self.schema))])
+            .options(SESSION_OPTIONS)
             .log_statements(self.log_statements_level.into())
             .log_slow_statements(
                 log::LevelFilter::Warn,
