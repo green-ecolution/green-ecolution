@@ -96,8 +96,8 @@ FROM trees
 "#;
 
 /// The row half, in the list's default order: prefix first, then the digits
-/// numerically. No index can serve that, so the plan shows what the sort
-/// actually costs.
+/// numerically. `idx_trees_number_sort` serves that order; the plan shows
+/// whether it still does after the sort expressions change.
 pub const TREE_ROWS_SQL: &str = r#"
 SELECT t.id, t.number, c.name
 FROM trees t
