@@ -8,5 +8,5 @@ minimumReleaseAge: 1440
 
 catalogs:
   react19:
-    react: ^19.2.8
-    react-dom: ^19.2.8
+    react: ^19.3.0
+    react-dom: ^19.3.0
