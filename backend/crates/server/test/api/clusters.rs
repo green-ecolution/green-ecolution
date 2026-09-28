@@ -1238,6 +1238,78 @@ async fn list_cluster_boundaries_excludes_archived_clusters() {
     );
 }
 
+async fn boundary_max_latitude(app: &helpers::TestApp) -> Option<f64> {
+    let resp = app.get("/api/v1/clusters/boundaries").await;
+    assert_eq!(resp.status().as_u16(), 200);
+    let json: serde_json::Value = resp.json().await.unwrap();
+    let cluster = json["data"].as_array().unwrap().first()?.clone();
+    cluster["boundary"]["coordinates"][0]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|position| position[1].as_f64().unwrap())
+        .reduce(f64::max)
+}
+
+#[tokio::test]
+async fn cluster_boundary_follows_tree_moves_and_removals() {
+    let app = spawn_app().await;
+
+    let t1 = insert_tree_at(&app, 53.550, 9.990, "T-BND-MOVE-1").await;
+    let t2 = insert_tree_at(&app, 53.560, 9.990, "T-BND-MOVE-2").await;
+    let t3 = insert_tree_at(&app, 53.555, 10.000, "T-BND-MOVE-3").await;
+    let cluster = serde_json::json!({
+        "name": "Wandernde Gruppe",
+        "address": "Hüllenweg 2",
+        "description": "Test",
+        "soil_condition": "Su3",
+        "tree_ids": [t1, t2, t3],
+    });
+    let resp = app.post_json("/api/v1/clusters", &cluster).await;
+    assert_eq!(resp.status().as_u16(), 201);
+    let cluster_id = resp.json::<serde_json::Value>().await.unwrap()["id"]
+        .as_str()
+        .unwrap()
+        .to_owned();
+
+    let before = boundary_max_latitude(&app).await.unwrap();
+    assert!(before < 53.570, "outline starts around the triangle");
+
+    let moved = serde_json::json!({
+        "species": "Eiche",
+        "number": "T-BND-MOVE-3",
+        "planting_year": 2020,
+        "latitude": 53.600,
+        "longitude": 10.000,
+        "description": "Test",
+        "tree_cluster_id": cluster_id,
+    });
+    let resp = app.put_json(&format!("/api/v1/trees/{t3}"), &moved).await;
+    assert_eq!(resp.status().as_u16(), 200);
+    let after_move = boundary_max_latitude(&app).await.unwrap();
+    assert!(
+        after_move > 53.600,
+        "outline must grow to the moved tree, reached {after_move}"
+    );
+
+    let emptied = serde_json::json!({
+        "name": "Wandernde Gruppe",
+        "address": "Hüllenweg 2",
+        "description": "Test",
+        "soil_condition": "Su3",
+        "tree_ids": [],
+    });
+    let resp = app
+        .put_json(&format!("/api/v1/clusters/{cluster_id}"), &emptied)
+        .await;
+    assert_eq!(resp.status().as_u16(), 200);
+    assert_eq!(
+        boundary_max_latitude(&app).await,
+        None,
+        "a cluster without trees has no outline"
+    );
+}
+
 // -- GET /clusters/statistics --
 
 #[tokio::test]
@@ -1434,6 +1506,28 @@ async fn list_clusters_search_sort_and_sensor_count() {
         hafen_pos < zob_pos,
         "Hafenspitze (moisture 0.2) must come before Zob-Vorplatz (moisture 0.8) when sorted asc"
     );
+
+    // 3. sort=trees → ordered by tree count in both directions
+    for (order, hafen_first) in [("desc", true), ("asc", false)] {
+        let resp = app
+            .get(&format!("/api/v1/clusters?sort=trees&order={order}"))
+            .await;
+        assert_eq!(resp.status().as_u16(), 200);
+        let body: serde_json::Value = resp.json().await.unwrap();
+        let names: Vec<&str> = body["data"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter_map(|c| c["name"].as_str())
+            .collect();
+        let hafen_pos = names.iter().position(|&n| n == "Hafenspitze").unwrap();
+        let zob_pos = names.iter().position(|&n| n == "Zob-Vorplatz").unwrap();
+        assert_eq!(
+            hafen_pos < zob_pos,
+            hafen_first,
+            "sort=trees&order={order}: Hafenspitze has 3 trees, Zob-Vorplatz 1"
+        );
+    }
 }
 
 #[tokio::test]

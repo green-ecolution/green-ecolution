@@ -25,7 +25,9 @@ use domain::{
 /// Boundary buffer applied to a cluster's convex hull, in meters. Keeps the
 /// outermost trees inside the drawn area and rounds off the corners. A buffer
 /// also turns the degenerate hulls (1 tree → point, 2 trees → line) into a
-/// proper polygon, so no special-casing is needed.
+/// proper polygon, so no special-casing is needed. The backfill in
+/// `20260928100000_store_cluster_boundary.sql` repeats the value; a change
+/// here reaches existing clusters only once their trees change again.
 const CLUSTER_BOUNDARY_BUFFER_METERS: f64 = 10.0;
 
 pub struct PgTreeClusterRepository {
@@ -103,13 +105,23 @@ const CLUSTER_COLUMNS: &str = "tc.id, tc.updated_at, tc.name, tc.address, \
     tc.watering_status, tc.soil_condition, tc.latitude, tc.longitude, \
     tc.last_watered AT TIME ZONE 'UTC' AS last_watered, tc.provider, \
     tc.additional_informations AS additional_info, tc.organization_id, \
-    COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::uuid[]) AS tree_ids, \
-    COUNT(t.id) FILTER (WHERE t.sensor_id IS NOT NULL AND t.sensor_id <> '') AS sensor_count";
+    (SELECT COALESCE(ARRAY_AGG(t.id ORDER BY t.number), ARRAY[]::uuid[]) \
+        FROM trees t WHERE t.tree_cluster_id = tc.id) AS tree_ids, \
+    (SELECT COUNT(*) FROM trees t \
+        WHERE t.tree_cluster_id = tc.id AND t.sensor_id IS NOT NULL AND t.sensor_id <> '') \
+        AS sensor_count";
 
+// Children are aggregated by correlated subqueries rather than a join plus
+// GROUP BY: Postgres evaluates projection subqueries after LIMIT, so only the
+// page's clusters are aggregated instead of every cluster with all its trees.
+// The "trees" sort still has to count every cluster, but through the index.
 const CLUSTER_SORT_COLUMNS: SortColumns = &[
     ("name", &["tc.name"]),
     ("moisture", &["tc.moisture_level"]),
-    ("trees", &["COUNT(t.id)"]),
+    (
+        "trees",
+        &["(SELECT COUNT(*) FROM trees t WHERE t.tree_cluster_id = tc.id)"],
+    ),
     ("last_watered", &["tc.last_watered"]),
 ];
 
@@ -234,12 +246,7 @@ impl TreeClusterReader for PgTreeClusterRepository {
         query: TreeClusterSearchQuery,
         pagination: Pagination,
     ) -> Result<SearchPage<TreeClusterView>, RepositoryError> {
-        // The tree join both aggregates the children and backs the "trees"
-        // sort, so it is a filtering join: the counts keep it and switch to a
-        // distinct count over cluster ids.
         let page = ListSpec::new("tree_clusters tc", "tc.id")
-            .join("LEFT JOIN trees t ON t.tree_cluster_id = tc.id")
-            .group_by("tc.id")
             .scope(Predicate::equals(
                 "tc.provider",
                 query.provider.as_ref().map(|p| p.as_str().to_owned()),
@@ -342,24 +349,18 @@ impl TreeClusterReader for PgTreeClusterRepository {
         visible: Visibility,
     ) -> Result<Vec<ClusterBoundaryView>, RepositoryError> {
         let visible_ids = visible.into_raw_ids();
+        // `json`, not `jsonb`: the value is parsed again client-side anyway,
+        // and building the binary form cost half of this query's server time.
         let rows = sqlx::query!(
             r#"SELECT
                 tc.id                                            AS "cluster_id!",
                 tc.name                                          AS "name!",
                 tc.watering_status AS "watering_status: WateringStatus",
-                ST_AsGeoJSON(
-                    ST_Buffer(
-                        ST_ConvexHull(ST_Collect(t.geometry))::geography,
-                        $1::float8
-                    )::geometry
-                )::jsonb                                         AS "boundary!: serde_json::Value"
-            FROM trees t
-            JOIN tree_clusters tc ON tc.id = t.tree_cluster_id
-            WHERE t.geometry IS NOT NULL
+                ST_AsGeoJSON(tc.boundary)::json                  AS "boundary!: serde_json::Value"
+            FROM tree_clusters tc
+            WHERE tc.boundary IS NOT NULL
               AND tc.archived = false
-              AND ($2::uuid[] IS NULL OR tc.organization_id = ANY($2))
-            GROUP BY tc.id, tc.name, tc.watering_status"#,
-            CLUSTER_BOUNDARY_BUFFER_METERS,
+              AND ($1::uuid[] IS NULL OR tc.organization_id = ANY($1))"#,
             visible_ids.as_deref(),
         )
         .fetch_all(&self.pool)
@@ -674,6 +675,35 @@ impl TreeClusterWriter for PgTreeClusterRepository {
         let result = sqlx::query!(
             "UPDATE tree_clusters SET archived = true WHERE id = $1",
             id.value()
+        )
+        .execute(&self.pool)
+        .await?;
+
+        if result.rows_affected() == 0 {
+            return Err(RepositoryError::NotFound);
+        }
+
+        Ok(())
+    }
+
+    #[tracing::instrument(level = "trace", skip_all)]
+    async fn refresh_boundary(&self, id: Id<TreeCluster>) -> Result<(), RepositoryError> {
+        // The subquery aggregates to NULL when no tree has a position left,
+        // which clears the outline of an emptied cluster.
+        let result = sqlx::query!(
+            r#"UPDATE tree_clusters
+            SET boundary = (
+                SELECT ST_Buffer(
+                           ST_ConvexHull(ST_Collect(t.geometry))::geography,
+                           $2::float8
+                       )::geometry
+                FROM trees t
+                WHERE t.tree_cluster_id = $1
+                  AND t.geometry IS NOT NULL
+            )
+            WHERE id = $1"#,
+            id.value(),
+            CLUSTER_BOUNDARY_BUFFER_METERS,
         )
         .execute(&self.pool)
         .await?;

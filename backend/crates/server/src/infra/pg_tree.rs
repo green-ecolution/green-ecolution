@@ -167,7 +167,9 @@ const TREE_COLUMNS: &str = "t.id, t.updated_at, t.tree_cluster_id, \
 // Tree numbers are text and may carry a letter prefix (A1001, B2012), so a
 // plain text sort puts 1005 before 9 and a ::bigint cast throws. Prefix first,
 // then the digits numerically; ::numeric cannot overflow the way ::bigint
-// would on an absurdly long number.
+// would on an absurdly long number. `idx_trees_number_sort` indexes exactly
+// these two expressions; change them together or the ascending sort falls
+// back to sorting the whole table.
 //
 // The status rank is urgency, not the enum's declaration order, which would be
 // meaningless to a reader of the list.
@@ -373,8 +375,9 @@ impl TreeReader for PgTreeRepository {
             .collect();
         let cluster_ids: Vec<RawId> = query.cluster_ids.iter().map(|id| id.value()).collect();
 
+        // No filter reads `c`, only the projection and the cluster sort do.
         let page = ListSpec::new("trees t", "t.id")
-            .join("LEFT JOIN tree_clusters c ON c.id = t.tree_cluster_id")
+            .projection_join("LEFT JOIN tree_clusters c ON c.id = t.tree_cluster_id")
             .scope(Predicate::equals(
                 "t.provider",
                 query.provider.as_ref().map(|p| p.as_str().to_owned()),

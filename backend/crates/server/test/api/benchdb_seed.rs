@@ -290,6 +290,10 @@ async fn seeded_reference_data_makes_the_dashboard_paths_non_empty() {
             "SELECT COUNT(*) FROM tree_clusters WHERE region_id IS NOT NULL",
         ),
         (
+            "clusters with an outline",
+            "SELECT COUNT(*) FROM tree_clusters WHERE boundary IS NOT NULL",
+        ),
+        (
             "vehicles linked to a plan",
             "SELECT COUNT(*) FROM vehicle_watering_plans",
         ),

@@ -864,16 +864,29 @@ impl SensorReadingReader for PgSensorRepository {
         &self,
         sensor_id: &SensorId,
     ) -> Result<Vec<LastPlausibleValue>, RepositoryError> {
+        // One newest-first index walk per ability of the sensor's model, which
+        // stops at the first plausible value. A DISTINCT ON over the readings
+        // would visit the sensor's whole history on every ingest. Starting
+        // from the model is exact because a sensor never changes its model.
         let rows = sqlx::query!(
-            r#"SELECT DISTINCT ON (dav.sensor_model_ability_id)
-                      dav.sensor_model_ability_id AS "model_ability_id!",
-                      dav.value                   AS "value!",
-                      sd.id                       AS "reading_id!"
-               FROM sensor_data sd
-               JOIN sensor_data_ability_values dav ON dav.sensor_data_id = sd.id
-               WHERE sd.sensor_id = $1
-                 AND dav.plausible
-               ORDER BY dav.sensor_model_ability_id, sd.id DESC"#,
+            r#"SELECT sma.id   AS "model_ability_id!",
+                      lp.value AS "value!",
+                      lp.id    AS "reading_id!"
+               FROM sensors s
+               JOIN sensor_model_abilities sma ON sma.sensor_model_id = s.model_id
+               CROSS JOIN LATERAL (
+                   SELECT dav.value, sd.id
+                   FROM sensor_data sd
+                   JOIN sensor_data_ability_values dav
+                     ON dav.sensor_data_id = sd.id
+                    AND dav.sensor_model_ability_id = sma.id
+                   WHERE sd.sensor_id = s.id
+                     AND dav.plausible
+                   ORDER BY sd.id DESC
+                   LIMIT 1
+               ) lp
+               WHERE s.id = $1
+               ORDER BY sma.id"#,
             sensor_id.as_str(),
         )
         .fetch_all(&self.pool)

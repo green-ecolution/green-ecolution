@@ -77,6 +77,7 @@ pub async fn seed_core(pool: &PgPool, plan: &SeedPlan) -> Result<SeedCounts, sql
     seed_regions(pool).await?;
     let clusters = seed_clusters(pool, plan.scale).await?;
     let trees = seed_trees(pool, plan.scale).await?;
+    seed_boundaries(pool).await?;
     let sensors = seed_sensors(pool, plan.scale).await?;
     let readings = seed_readings(pool, plan.history_days).await?;
     let plans = seed_plans(pool, plan.scale).await?;
@@ -315,6 +316,32 @@ async fn seed_clusters(pool: &PgPool, scale: Scale) -> Result<i64, sqlx::Error> 
 /// numeric, and pure digits would exercise only half of that path. Coordinates
 /// scatter around their cluster's centre rather than over the whole rectangle,
 /// because a spatial index behaves differently on clustered points.
+/// The application refreshes a cluster's outline when its trees change; the
+/// seeder writes trees directly and has to derive the outlines itself, or
+/// `cluster.boundaries` would measure an empty map. Recomputed for every
+/// cluster because topping up adds trees to existing ones too.
+async fn seed_boundaries(pool: &PgPool) -> Result<(), sqlx::Error> {
+    sqlx::query(
+        r#"
+        UPDATE tree_clusters tc
+        SET boundary = hull.boundary
+        FROM (
+            SELECT tree_cluster_id,
+                   ST_Buffer(ST_ConvexHull(ST_Collect(geometry))::geography, 10)::geometry
+                       AS boundary
+            FROM trees
+            WHERE tree_cluster_id IS NOT NULL
+              AND geometry IS NOT NULL
+            GROUP BY tree_cluster_id
+        ) hull
+        WHERE hull.tree_cluster_id = tc.id
+        "#,
+    )
+    .execute(pool)
+    .await?;
+    Ok(())
+}
+
 async fn seed_trees(pool: &PgPool, scale: Scale) -> Result<i64, sqlx::Error> {
     let existing = count(pool, "trees").await?;
     let missing = scale.trees() - existing;
