@@ -25,7 +25,9 @@ use domain::{
 /// Boundary buffer applied to a cluster's convex hull, in meters. Keeps the
 /// outermost trees inside the drawn area and rounds off the corners. A buffer
 /// also turns the degenerate hulls (1 tree → point, 2 trees → line) into a
-/// proper polygon, so no special-casing is needed.
+/// proper polygon, so no special-casing is needed. The backfill in
+/// `20260928100000_store_cluster_boundary.sql` repeats the value; a change
+/// here reaches existing clusters only once their trees change again.
 const CLUSTER_BOUNDARY_BUFFER_METERS: f64 = 10.0;
 
 pub struct PgTreeClusterRepository {
@@ -347,24 +349,18 @@ impl TreeClusterReader for PgTreeClusterRepository {
         visible: Visibility,
     ) -> Result<Vec<ClusterBoundaryView>, RepositoryError> {
         let visible_ids = visible.into_raw_ids();
+        // `json`, not `jsonb`: the value is parsed again client-side anyway,
+        // and building the binary form cost half of this query's server time.
         let rows = sqlx::query!(
             r#"SELECT
                 tc.id                                            AS "cluster_id!",
                 tc.name                                          AS "name!",
                 tc.watering_status AS "watering_status: WateringStatus",
-                ST_AsGeoJSON(
-                    ST_Buffer(
-                        ST_ConvexHull(ST_Collect(t.geometry))::geography,
-                        $1::float8
-                    )::geometry
-                )::jsonb                                         AS "boundary!: serde_json::Value"
-            FROM trees t
-            JOIN tree_clusters tc ON tc.id = t.tree_cluster_id
-            WHERE t.geometry IS NOT NULL
+                ST_AsGeoJSON(tc.boundary)::json                  AS "boundary!: serde_json::Value"
+            FROM tree_clusters tc
+            WHERE tc.boundary IS NOT NULL
               AND tc.archived = false
-              AND ($2::uuid[] IS NULL OR tc.organization_id = ANY($2))
-            GROUP BY tc.id, tc.name, tc.watering_status"#,
-            CLUSTER_BOUNDARY_BUFFER_METERS,
+              AND ($1::uuid[] IS NULL OR tc.organization_id = ANY($1))"#,
             visible_ids.as_deref(),
         )
         .fetch_all(&self.pool)
@@ -679,6 +675,35 @@ impl TreeClusterWriter for PgTreeClusterRepository {
         let result = sqlx::query!(
             "UPDATE tree_clusters SET archived = true WHERE id = $1",
             id.value()
+        )
+        .execute(&self.pool)
+        .await?;
+
+        if result.rows_affected() == 0 {
+            return Err(RepositoryError::NotFound);
+        }
+
+        Ok(())
+    }
+
+    #[tracing::instrument(level = "trace", skip_all)]
+    async fn refresh_boundary(&self, id: Id<TreeCluster>) -> Result<(), RepositoryError> {
+        // The subquery aggregates to NULL when no tree has a position left,
+        // which clears the outline of an emptied cluster.
+        let result = sqlx::query!(
+            r#"UPDATE tree_clusters
+            SET boundary = (
+                SELECT ST_Buffer(
+                           ST_ConvexHull(ST_Collect(t.geometry))::geography,
+                           $2::float8
+                       )::geometry
+                FROM trees t
+                WHERE t.tree_cluster_id = $1
+                  AND t.geometry IS NOT NULL
+            )
+            WHERE id = $1"#,
+            id.value(),
+            CLUSTER_BOUNDARY_BUFFER_METERS,
         )
         .execute(&self.pool)
         .await?;

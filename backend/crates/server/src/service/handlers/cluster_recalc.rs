@@ -88,6 +88,7 @@ impl EventHandler for ClusterRecalculationHandler {
             cluster.assign_region(region_id);
 
             self.cluster_writer.save(&cluster).await?;
+            self.cluster_writer.refresh_boundary(cluster_id).await?;
         }
         Ok(vec![])
     }

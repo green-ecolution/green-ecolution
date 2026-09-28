@@ -466,3 +466,15 @@ INSERT INTO sensor_lorawan (id, serial_number, dev_eui, app_eui, app_key)
 VALUES
     ('sensor-prepared-1', 'GES-2026-0001', '0004A30B00AB0001', '0004A30B00AB0000', 'AAB1C2D3E4F506172839405162738401'),
     ('sensor-prepared-2', 'GES-2026-0002', '0004A30B00AB0002', '0004A30B00AB0000', 'BBC2D3E4F50617283940516273840102');
+
+
+-- Cluster outlines are maintained by the application whenever trees change;
+-- rows written here bypass it, so derive them once from the final positions.
+-- Same shape as TreeClusterWriter::refresh_boundary (10 m margin).
+UPDATE tree_clusters tc
+   SET boundary = (
+       SELECT ST_Buffer(ST_ConvexHull(ST_Collect(t.geometry))::geography, 10)::geometry
+         FROM trees t
+        WHERE t.tree_cluster_id = tc.id
+          AND t.geometry IS NOT NULL
+   );

@@ -92,4 +92,8 @@ pub trait TreeClusterWriter: Send + Sync {
     async fn save(&self, cluster: &TreeCluster) -> Result<(), RepositoryError>;
     async fn delete(&self, id: Id<TreeCluster>) -> Result<(), RepositoryError>;
     async fn archive(&self, id: Id<TreeCluster>) -> Result<(), RepositoryError>;
+    /// Re-derives the outline from the trees' current positions. The outline
+    /// is not tracked by the aggregate, so whoever changes a cluster's trees
+    /// or moves one of them has to call this afterwards.
+    async fn refresh_boundary(&self, id: Id<TreeCluster>) -> Result<(), RepositoryError>;
 }
