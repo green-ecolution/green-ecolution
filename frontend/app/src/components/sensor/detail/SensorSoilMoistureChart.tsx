@@ -10,6 +10,7 @@ import {
   CardTitle,
   Loading,
   TimeRangeToggle,
+  cn,
   type ChartConfig,
 } from '@green-ecolution/ui'
 import { sensorQueries } from '@/api/queries'
@@ -26,6 +27,7 @@ import {
 } from '@/components/general/charts/soilMoistureChart'
 import { useDateLocale } from '@/lib/i18n/useFormatters'
 import type { Sensor } from '@/api/backendApi'
+import { compactCardContent, compactCardHeader, compactCardTitle } from './cardDensity'
 
 const RANGE_KEYS = ['24h', '7d', '30d'] satisfies TimeWindowKey[]
 type RangeKey = (typeof RANGE_KEYS)[number]
@@ -94,9 +96,11 @@ const SensorSoilMoistureChart = ({ sensor }: SensorSoilMoistureChartProps) => {
 
   return (
     <Card variant="outlined">
-      <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-2">
+      <CardHeader
+        className={cn(compactCardHeader, 'flex-row flex-wrap items-start justify-between gap-2')}
+      >
         <div>
-          <CardTitle>{t('soilMoistureChart.title')}</CardTitle>
+          <CardTitle className={compactCardTitle}>{t('soilMoistureChart.title')}</CardTitle>
           <p className="text-xs text-muted-foreground">{bucketSubtitle[bucket]}</p>
         </div>
         <TimeRangeToggle
@@ -105,14 +109,14 @@ const SensorSoilMoistureChart = ({ sensor }: SensorSoilMoistureChartProps) => {
           onChange={setRangeKey}
         />
       </CardHeader>
-      <CardContent>
+      <CardContent className={compactCardContent}>
         {!data ? (
           <Loading
             className="h-[260px] justify-center"
             label={t('soilMoistureChart.loadingLabel')}
           />
         ) : rows.length <= 1 ? (
-          <p className="flex h-[260px] items-center justify-center text-sm text-muted-foreground">
+          <p className="rounded-xl bg-dark-50 px-4 py-6 text-center text-sm text-muted-foreground">
             {t('soilMoistureChart.tooFewDataPoints')}
           </p>
         ) : (

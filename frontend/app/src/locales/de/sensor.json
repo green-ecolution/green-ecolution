@@ -46,19 +46,20 @@
     "lastUpdateLabel": "Letztes Update: "
   },
   "hero": {
-    "typeLabel": "{type} Sensor",
     "modelImageAlt": "Modellabbildung: {model}",
     "viaLabel": "via"
   },
-  "statusGrid": {
-    "srHeading": "Status",
+  "kpi": {
+    "srHeading": "Zustand",
     "statusLabel": "Status",
     "batteryLabel": "Akkustand",
-    "batteryNoDataDescription": "Noch keine Akku-Daten empfangen.",
-    "batteryShutoffDescription": "Ab 2.8 V schaltet sich die Batterie ab.",
+    "batteryNoData": "Noch keine Daten",
+    "batteryShutoffInfo": "Ab 2,8 V schaltet sich die Batterie ab.",
     "lastSignalLabel": "Letztes Signal",
-    "lastSignalDescriptionWithInterval": "Letzte Datenübermittlung · sendet {interval}",
-    "lastSignalDescription": "Letzte Datenübermittlung"
+    "sendsEvery": "Sendet {interval}",
+    "receptionLabel": "Empfang",
+    "receptionNoData": "Keine Daten",
+    "receptionInfo": "RSSI der letzten Übertragung. Höher (weniger negativ) bedeutet besseren Empfang."
   },
   "sendInterval": {
     "seconds": "alle {count} Sek.",
@@ -66,11 +67,8 @@
     "hours": "alle {count} Std."
   },
   "identity": {
-    "title": "Identität",
+    "title": "Stammdaten",
     "modelLabel": "Modell",
-    "modelIdLabel": "Modell-ID: {id}",
-    "providerLabel": "Provider",
-    "providerSourceLabel": "Datenquelle / Integration",
     "serialNumberLabel": "Serial Number",
     "devEuiLabel": "Dev EUI",
     "appEuiLabel": "App EUI",
@@ -88,6 +86,7 @@
     "acknowledgeButton": "Zur Kenntnis genommen",
     "issueDepth": "{depth} cm Tiefe",
     "issueReading": "Messwert {value}",
+    "pendingIssues": "Betroffene Messwerte ({count})",
     "pastIssues": "Frühere Auffälligkeiten ({count})",
     "showAllIssues": "Alle {count} anzeigen",
     "showFewerIssues": "Weniger anzeigen",
@@ -109,18 +108,17 @@
     "autoHideNotice": "Wird in {seconds}s automatisch verborgen."
   },
   "signal": {
-    "title": "Signal",
-    "noSignalData": "Keine Signaldaten empfangen.",
-    "snrLabel": "SNR",
-    "gatewaysLabel": "Gateways",
+    "title": "Signalverlauf",
     "level": {
       "good": "Gut",
       "fair": "Ausreichend",
       "weak": "Schwach"
-    }
+    },
+    "snrLabel": "SNR",
+    "gatewayCount_one": "{count} Gateway",
+    "gatewayCount_other": "{count} Gateways"
   },
   "signalChart": {
-    "title": "RSSI-Verlauf",
     "subtitle": "Höher (weniger negativ) = besserer Empfang",
     "seriesLabel": "RSSI (dBm)",
     "loadingLabel": "Signaldaten werden geladen",
@@ -136,11 +134,10 @@
     "wateredOnLabel": "Bewässert am {date}",
     "discardedLabel": "Messwert verworfen"
   },
-  "abilities": {
-    "title": "Was dieser Sensor misst",
-    "unitLabel": "Einheit",
-    "depthLabel_one": "Tiefe",
-    "depthLabel_other": "Tiefen"
+  "profile": {
+    "title": "Messprofil",
+    "surfaceLabel": "Bodenoberfläche",
+    "depthLabel": "{depth} cm"
   },
   "ability": {
     "soil_moisture": "Bodenfeuchtigkeit",
@@ -148,8 +145,15 @@
     "temperature": "Temperatur",
     "humidity": "Luftfeuchtigkeit"
   },
+  "placement": {
+    "title": "Einsatzort",
+    "clusterLabel": "Bewässerungsgruppe",
+    "treeLabel": "Sitzt am Baum",
+    "treeCount_one": "{count} Baum",
+    "treeCount_other": "{count} Bäume",
+    "noClusterDescription": "Der Baum gehört zu keiner Bewässerungsgruppe."
+  },
   "linkedTree": {
-    "title": "Verknüpfter Baum",
     "noLinkTitle": "Noch keine Verknüpfung",
     "noLinkDescription": "Dieser Sensor ist mit keinem Baum verknüpft. Ohne Verknüpfung können seine Messdaten keiner Vegetation zugeordnet werden.",
     "loadFailedTitle": "Baum nicht geladen",
@@ -159,14 +163,11 @@
     "plantedLabel": "Gepflanzt {year}"
   },
   "location": {
-    "title": "Standort",
     "coordinatesToggle": "Koordinaten",
     "mapAriaLabel": "Karte mit der Sensor-Position, nahegelegenen Bäumen und Bewässerungsgruppen",
     "latitudeLabel": "Latitude",
     "longitudeLabel": "Longitude",
-    "derivedFromTreeNotice": "Die Position wird vom verknüpften Baum übernommen.",
-    "notInFieldTitle": "Sensor noch nicht im Feld",
-    "notInFieldDescription": "Dieser Sensor wurde noch nicht aktiviert und hat keinen Standort. Sobald er einem Baum oder Beet zugeordnet wird, erscheint hier eine Karte."
+    "derivedFromTreeNotice": "Die Position wird vom verknüpften Baum übernommen."
   },
   "lorawanConfig": {
     "emptyValue": "leer",

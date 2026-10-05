@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { format } from 'date-fns'
 import { useTranslation } from 'react-i18next'
+import { CircleCheck, ChevronRight } from 'lucide-react'
 import {
   Alert,
   AlertContent,
@@ -9,10 +10,7 @@ import {
   AlertIcon,
   AlertTitle,
   Button,
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
+  cn,
   Dialog,
   DialogContent,
   DialogDescription,
@@ -45,21 +43,21 @@ const IssueList = ({ issues }: { issues: SensorQualityIssueResponse[] }) => {
   const isCollapsible = issues.length > COLLAPSED_ISSUE_COUNT
   const visibleIssues = expanded ? issues : issues.slice(0, COLLAPSED_ISSUE_COUNT)
   return (
-    <div className="flex flex-col gap-2">
-      <ul className="flex flex-col gap-2">
+    <div className="flex flex-col gap-1">
+      <ul className="divide-y divide-dark-100 rounded-lg border border-dark-100 bg-white text-sm">
         {visibleIssues.map((issue) => (
           <li
             key={`${issue.recordedAt}-${issue.ability}-${issue.depthCm}`}
-            className="rounded-lg border border-dark-50 bg-white p-3 text-sm"
+            className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5 px-3 py-2"
           >
-            <p className="font-bold">
+            <span className="font-semibold tabular-nums">
               {format(new Date(issue.recordedAt), 'dd.MM.yyyy HH:mm', { locale: dateLocale })} ·{' '}
               {t('dataQuality.issueDepth', { depth: issue.depthCm })}
-            </p>
-            <p className="text-dark-800">
+            </span>
+            <span className="text-dark-800">
               {t('dataQuality.issueReading', { value: issue.value })} ·{' '}
               {getQualityReasonLabel(issue.reason)}
-            </p>
+            </span>
           </li>
         ))}
       </ul>
@@ -79,6 +77,25 @@ const IssueList = ({ issues }: { issues: SensorQualityIssueResponse[] }) => {
     </div>
   )
 }
+
+interface IssueDisclosureProps {
+  summary: string
+  className?: string
+  children: ReactNode
+}
+
+const IssueDisclosure = ({ summary, className, children }: IssueDisclosureProps) => (
+  <details className={cn('group mt-3', className)}>
+    <summary className="inline-flex min-h-11 cursor-pointer list-none items-center gap-1 text-sm font-medium text-foreground [&::-webkit-details-marker]:hidden">
+      <ChevronRight
+        className="size-4 transition-transform duration-base group-open:rotate-90 motion-reduce:transition-none"
+        aria-hidden
+      />
+      {summary}
+    </summary>
+    <div className="mt-1">{children}</div>
+  </details>
+)
 
 const SensorDataQualitySection = ({ sensorId }: SensorDataQualitySectionProps) => {
   const { t } = useTranslation(['sensor', 'common'])
@@ -114,60 +131,75 @@ const SensorDataQualitySection = ({ sensorId }: SensorDataQualitySectionProps) =
     )
   }
 
+  const acknowledgedLine =
+    data.acknowledged &&
+    `${t('dataQuality.acknowledgedBy', {
+      name: data.acknowledged.byName ?? t('dataQuality.unknownReviewer'),
+      date: format(new Date(data.acknowledged.at), 'dd.MM.yyyy HH:mm', { locale: dateLocale }),
+    })}${data.acknowledged.note ? `: ${data.acknowledged.note}` : ''}`
+
+  // Nothing left to review: only the history remains, which should not compete with the KPIs.
+  if (pending.length === 0 && quality.alert === 'success') {
+    return (
+      <section
+        aria-label={t('dataQuality.title')}
+        className="flex flex-wrap items-center gap-x-3 rounded-xl border border-dark-100 bg-white px-4 py-1 text-sm"
+      >
+        <span className="inline-flex items-center gap-1.5 font-semibold">
+          <CircleCheck className="size-4 text-green-dark" aria-hidden />
+          {quality.label}
+        </span>
+        {acknowledgedLine && <span className="text-muted-foreground">{acknowledgedLine}</span>}
+        <IssueDisclosure
+          summary={t('dataQuality.pastIssues', { count: reviewed.length })}
+          className="mt-0 open:basis-full sm:ml-auto sm:open:ml-0"
+        >
+          <div className="pb-2">
+            <IssueList issues={reviewed} />
+          </div>
+        </IssueDisclosure>
+      </section>
+    )
+  }
+
   return (
-    <Card variant="outlined">
-      <CardHeader>
-        <CardTitle>{t('dataQuality.title')}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Alert variant={quality.alert} className="mb-4 flex w-full items-start gap-3">
-          <AlertIcon variant={quality.alert} />
-          <AlertContent>
-            <AlertTitle>{quality.label}</AlertTitle>
-            <AlertDescription>
-              {quality.description}{' '}
-              {data.implausibleRecent > 0 &&
-                t('dataQuality.discardedSummary', { count: data.implausibleRecent })}
-            </AlertDescription>
-            {data.acknowledged && (
-              <AlertDescription className="mt-1 italic">
-                {t('dataQuality.acknowledgedBy', {
-                  name: data.acknowledged.byName ?? t('dataQuality.unknownReviewer'),
-                  date: format(new Date(data.acknowledged.at), 'dd.MM.yyyy HH:mm', {
-                    locale: dateLocale,
-                  }),
-                })}
-                {data.acknowledged.note ? `: ${data.acknowledged.note}` : ''}
-              </AlertDescription>
-            )}
-            {pending.length > 0 && (
-              <Can permission={['sensor:update']}>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mt-3 w-fit"
-                  onClick={() => setDialogOpen(true)}
-                >
-                  {t('dataQuality.acknowledgeButton')}
-                </Button>
-              </Can>
-            )}
-          </AlertContent>
-        </Alert>
-
-        {pending.length > 0 && <IssueList issues={pending} />}
-
-        {reviewed.length > 0 && (
-          <details className={pending.length > 0 ? 'mt-4' : undefined}>
-            <summary className="cursor-pointer text-sm text-muted-foreground">
-              {t('dataQuality.pastIssues', { count: reviewed.length })}
-            </summary>
-            <div className="mt-2">
+    <section aria-label={t('dataQuality.title')}>
+      <Alert variant={quality.alert} className="flex w-full items-start gap-3">
+        <AlertIcon variant={quality.alert} />
+        <AlertContent className="min-w-0 flex-1">
+          <AlertTitle>{quality.label}</AlertTitle>
+          <AlertDescription>
+            {quality.description}{' '}
+            {data.implausibleRecent > 0 &&
+              t('dataQuality.discardedSummary', { count: data.implausibleRecent })}
+          </AlertDescription>
+          {acknowledgedLine && (
+            <AlertDescription className="mt-1 italic">{acknowledgedLine}</AlertDescription>
+          )}
+          {pending.length > 0 && (
+            <Can permission={['sensor:update']}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-3 w-fit"
+                onClick={() => setDialogOpen(true)}
+              >
+                {t('dataQuality.acknowledgeButton')}
+              </Button>
+            </Can>
+          )}
+          {pending.length > 0 && (
+            <IssueDisclosure summary={t('dataQuality.pendingIssues', { count: pending.length })}>
+              <IssueList issues={pending} />
+            </IssueDisclosure>
+          )}
+          {reviewed.length > 0 && (
+            <IssueDisclosure summary={t('dataQuality.pastIssues', { count: reviewed.length })}>
               <IssueList issues={reviewed} />
-            </div>
-          </details>
-        )}
-      </CardContent>
+            </IssueDisclosure>
+          )}
+        </AlertContent>
+      </Alert>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
@@ -191,7 +223,7 @@ const SensorDataQualitySection = ({ sensorId }: SensorDataQualitySectionProps) =
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </Card>
+    </section>
   )
 }
 
