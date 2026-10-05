@@ -33,7 +33,8 @@ Bewässerungszustand wird, erklärt das
 Erkennt die Anwendung in den letzten sieben Tagen wiederholt unplausible Werte, weist
 ein Hinweis zur **Datenqualität** darauf hin; das betrifft die Verlässlichkeit der
 Messwerte, nicht den Verbindungszustand, der weiterhin allein aus der Übertragungszeit
-folgt. Die Stammdaten darunter fassen Modell, Provider sowie bei LoRaWAN-Sensoren
+folgt. Unter dem Hinweis stehen zunächst die fünf jüngsten auffälligen Messwerte; über
+**Alle … anzeigen** klappt die vollständige Liste auf. Die Stammdaten darunter fassen Modell, Provider sowie bei LoRaWAN-Sensoren
 Seriennummer und Geräteschlüssel zusammen.
 
 ![Die Detailseite eines Sensors mit Messwerten und Signalqualität](../images/sensor-detail.png)

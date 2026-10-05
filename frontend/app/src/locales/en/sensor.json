@@ -89,6 +89,8 @@
     "issueDepth": "{depth} cm depth",
     "issueReading": "Reading {value}",
     "pastIssues": "Past anomalies ({count})",
+    "showAllIssues": "Show all {count}",
+    "showFewerIssues": "Show fewer",
     "acknowledgeDialogTitle": "Acknowledge data quality",
     "acknowledgeDialogDescription": "The previously discarded readings are then considered reviewed. If implausible values occur again, the sensor will flag them again on its own.",
     "acknowledgeNotePlaceholder": "Reason, e.g. probe was not connected during setup",

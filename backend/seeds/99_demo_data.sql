@@ -270,17 +270,6 @@ INSERT INTO sensor_data (id, sensor_id, data) VALUES
             {"resistance": 1010, "centibar": 50, "depth": 90}
         ]
     }'),
-  (uuidv7_from_timestamp(now()::timestamp), 'sensor-6', '{
-        "device": "sensor-6",
-        "temperature": 2.0,
-        "humidity": 0.5,
-        "battery": 3.7,
-        "watermarks": [
-            {"resistance": 400, "centibar": 35, "depth": 30},
-            {"resistance": 500, "centibar": 40, "depth": 60},
-            {"resistance": 600, "centibar": 45, "depth": 90}
-        ]
-    }'),
   (uuidv7_from_timestamp(now()::timestamp), 'sensor-7', '{
         "device": "sensor-8",
         "temperature": 2.23,
@@ -325,6 +314,38 @@ INSERT INTO sensor_data (id, sensor_id, data) VALUES
             {"resistance": 1000, "centibar": 55, "depth": 90}
         ]
     }');
+
+-- sensor-6 demonstrates the data-quality section: its probes are unplugged,
+-- so the Dragino gateway reports the 6553.5 sentinel on every uplink. The
+-- readings above carry no normalized values and therefore never count as
+-- implausible; these do. 25 uplinks at 40/80 cm fill the 50-issue cap.
+WITH stamps AS (
+    SELECT now()::timestamp - (n * interval '20 minutes') AS at
+    FROM generate_series(0, 24) AS n
+),
+readings AS (
+    INSERT INTO sensor_data (id, sensor_id, updated_at, data)
+    SELECT uuidv7_from_timestamp(at), 'sensor-6', at, jsonb_build_object(
+        'battery', 3.6,
+        'temperature', 12.4,
+        'soil_moisture', jsonb_build_array(
+            jsonb_build_object('depth_cm', 40, 'moisture_percent', 6553.5),
+            jsonb_build_object('depth_cm', 80, 'moisture_percent', 6553.5)
+        )
+    )
+    FROM stamps
+    RETURNING id
+)
+INSERT INTO sensor_data_ability_values
+    (sensor_data_id, sensor_model_ability_id, value, plausible, quality_reason)
+SELECT r.id, sma.id,
+       CASE a.ability WHEN 'soil_moisture' THEN 6553.5 WHEN 'temperature' THEN 12.4 ELSE 3.6 END,
+       a.ability <> 'soil_moisture',
+       CASE WHEN a.ability = 'soil_moisture' THEN 'out_of_range' END
+FROM readings r
+CROSS JOIN sensor_model_abilities sma
+JOIN sensor_abilities a ON a.id = sma.sensor_ability_id
+WHERE sma.sensor_model_id = (SELECT id FROM sensor_models WHERE name = 'GES-1000');
 
 
 INSERT INTO watering_plans (id, date, description, status, distance, total_water_required, cancellation_note, organization_id) VALUES
