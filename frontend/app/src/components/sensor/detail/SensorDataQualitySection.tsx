@@ -35,28 +35,48 @@ interface SensorDataQualitySectionProps {
   sensorId: string
 }
 
+const COLLAPSED_ISSUE_COUNT = 5
+
 const IssueList = ({ issues }: { issues: SensorQualityIssueResponse[] }) => {
   const { t } = useTranslation('sensor')
   const getQualityReasonLabel = useQualityReasonLabel()
   const dateLocale = useDateLocale()
+  const [expanded, setExpanded] = useState(false)
+  const isCollapsible = issues.length > COLLAPSED_ISSUE_COUNT
+  const visibleIssues = expanded ? issues : issues.slice(0, COLLAPSED_ISSUE_COUNT)
   return (
-    <ul className="flex flex-col gap-2">
-      {issues.map((issue) => (
-        <li
-          key={`${issue.recordedAt}-${issue.ability}-${issue.depthCm}`}
-          className="rounded-lg border border-dark-50 bg-white p-3 text-sm"
+    <div className="flex flex-col gap-2">
+      <ul className="flex flex-col gap-2">
+        {visibleIssues.map((issue) => (
+          <li
+            key={`${issue.recordedAt}-${issue.ability}-${issue.depthCm}`}
+            className="rounded-lg border border-dark-50 bg-white p-3 text-sm"
+          >
+            <p className="font-bold">
+              {format(new Date(issue.recordedAt), 'dd.MM.yyyy HH:mm', { locale: dateLocale })} ·{' '}
+              {t('dataQuality.issueDepth', { depth: issue.depthCm })}
+            </p>
+            <p className="text-dark-800">
+              {t('dataQuality.issueReading', { value: issue.value })} ·{' '}
+              {getQualityReasonLabel(issue.reason)}
+            </p>
+          </li>
+        ))}
+      </ul>
+      {isCollapsible && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="w-fit"
+          aria-expanded={expanded}
+          onClick={() => setExpanded((value) => !value)}
         >
-          <p className="font-bold">
-            {format(new Date(issue.recordedAt), 'dd.MM.yyyy HH:mm', { locale: dateLocale })} ·{' '}
-            {t('dataQuality.issueDepth', { depth: issue.depthCm })}
-          </p>
-          <p className="text-dark-800">
-            {t('dataQuality.issueReading', { value: issue.value })} ·{' '}
-            {getQualityReasonLabel(issue.reason)}
-          </p>
-        </li>
-      ))}
-    </ul>
+          {expanded
+            ? t('dataQuality.showFewerIssues')
+            : t('dataQuality.showAllIssues', { count: issues.length })}
+        </Button>
+      )}
+    </div>
   )
 }
 

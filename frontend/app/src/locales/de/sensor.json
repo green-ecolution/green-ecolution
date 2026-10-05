@@ -89,6 +89,8 @@
     "issueDepth": "{depth} cm Tiefe",
     "issueReading": "Messwert {value}",
     "pastIssues": "Frühere Auffälligkeiten ({count})",
+    "showAllIssues": "Alle {count} anzeigen",
+    "showFewerIssues": "Weniger anzeigen",
     "acknowledgeDialogTitle": "Datenqualität zur Kenntnis nehmen",
     "acknowledgeDialogDescription": "Die bisher verworfenen Messwerte gelten damit als geprüft. Kommen danach wieder unplausible Werte, meldet sich der Sensor von selbst erneut.",
     "acknowledgeNotePlaceholder": "Grund, z. B. Sonde war bei der Vorbereitung nicht angeschlossen",

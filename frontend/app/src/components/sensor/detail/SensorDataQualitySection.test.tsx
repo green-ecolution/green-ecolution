@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { DataHealth } from '@green-ecolution/backend-client'
 import SensorDataQualitySection from './SensorDataQualitySection'
 
@@ -87,6 +88,27 @@ describe('SensorDataQualitySection', () => {
 
     expect(screen.getByRole('button', { name: 'Zur Kenntnis genommen' })).toBeInTheDocument()
     expect(screen.getByText(/Frühere Auffälligkeiten \(1\)/)).toBeInTheDocument()
+  })
+
+  it('shows only the newest five values until the list is expanded', async () => {
+    const user = userEvent.setup()
+    useQueryMock.mockReturnValue({
+      data: {
+        health: DataHealth.Suspect,
+        implausibleRecent: 7,
+        issues: Array.from({ length: 7 }, (_, index) => issue(`2026-08-20T0${index}:15:00+00:00`)),
+      },
+    })
+
+    render(<SensorDataQualitySection sensorId="eui-test" />)
+
+    expect(screen.getAllByRole('listitem')).toHaveLength(5)
+
+    await user.click(screen.getByRole('button', { name: 'Alle 7 anzeigen' }))
+    expect(screen.getAllByRole('listitem')).toHaveLength(7)
+
+    await user.click(screen.getByRole('button', { name: 'Weniger anzeigen' }))
+    expect(screen.getAllByRole('listitem')).toHaveLength(5)
   })
 
   it('renders nothing when no value was flagged', () => {
