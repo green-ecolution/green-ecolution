@@ -12,7 +12,7 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "keycloakify": "11.16.0",
+    "keycloakify": "11.16.1",
     "react": "catalog:react19",
     "react-dom": "catalog:react19"
   },
