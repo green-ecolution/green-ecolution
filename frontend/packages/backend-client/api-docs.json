@@ -158,9 +158,6 @@
             "schema": {
               "oneOf": [
                 {
-                  "type": "null"
-                },
-                {
                   "type": "string",
                   "description": "Sortable columns of the cluster list.",
                   "enum": [
@@ -169,6 +166,9 @@
                     "trees",
                     "last_watered"
                   ]
+                },
+                {
+                  "type": "null"
                 }
               ]
             }
@@ -181,14 +181,14 @@
             "schema": {
               "oneOf": [
                 {
-                  "type": "null"
-                },
-                {
                   "type": "string",
                   "enum": [
                     "asc",
                     "desc"
                   ]
+                },
+                {
+                  "type": "null"
                 }
               ]
             }
@@ -3813,15 +3813,15 @@
             "schema": {
               "oneOf": [
                 {
-                  "type": "null"
-                },
-                {
                   "type": "string",
                   "enum": [
                     "id",
                     "last_reading",
                     "created_at"
                   ]
+                },
+                {
+                  "type": "null"
                 }
               ]
             }
@@ -3833,14 +3833,14 @@
             "schema": {
               "oneOf": [
                 {
-                  "type": "null"
-                },
-                {
                   "type": "string",
                   "enum": [
                     "asc",
                     "desc"
                   ]
+                },
+                {
+                  "type": "null"
                 }
               ]
             }
@@ -4945,9 +4945,6 @@
             "schema": {
               "oneOf": [
                 {
-                  "type": "null"
-                },
-                {
                   "type": "string",
                   "description": "Sortable columns of the tree list.",
                   "enum": [
@@ -4958,6 +4955,9 @@
                     "last_watered",
                     "cluster"
                   ]
+                },
+                {
+                  "type": "null"
                 }
               ]
             }
@@ -4969,14 +4969,14 @@
             "schema": {
               "oneOf": [
                 {
-                  "type": "null"
-                },
-                {
                   "type": "string",
                   "enum": [
                     "asc",
                     "desc"
                   ]
+                },
+                {
+                  "type": "null"
                 }
               ]
             }
@@ -6403,15 +6403,15 @@
             "schema": {
               "oneOf": [
                 {
-                  "type": "null"
-                },
-                {
                   "type": "string",
                   "enum": [
                     "active",
                     "include",
                     "only"
                   ]
+                },
+                {
+                  "type": "null"
                 }
               ]
             }
@@ -6423,9 +6423,6 @@
             "schema": {
               "oneOf": [
                 {
-                  "type": "null"
-                },
-                {
                   "type": "string",
                   "enum": [
                     "number_plate",
@@ -6433,6 +6430,9 @@
                     "model",
                     "type"
                   ]
+                },
+                {
+                  "type": "null"
                 }
               ]
             }
@@ -6444,14 +6444,14 @@
             "schema": {
               "oneOf": [
                 {
-                  "type": "null"
-                },
-                {
                   "type": "string",
                   "enum": [
                     "asc",
                     "desc"
                   ]
+                },
+                {
+                  "type": "null"
                 }
               ]
             }
@@ -8159,11 +8159,11 @@
           "lorawan": {
             "oneOf": [
               {
-                "type": "null"
-              },
-              {
                 "$ref": "#/components/schemas/LorawanCredentialsRequest",
                 "description": "Required when `sensor_type = lorawan`."
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -8304,11 +8304,11 @@
           "validation": {
             "oneOf": [
               {
-                "type": "null"
-              },
-              {
                 "$ref": "#/components/schemas/ValidationIssue",
                 "description": "Which input field broke which rule, present only when one field is to\nblame. Carries the same `key` and `params` the in-browser validator\nemits, so one catalog entry serves both paths."
+              },
+              {
+                "type": "null"
               }
             ]
           }
@@ -8697,11 +8697,11 @@
                 "signal": {
                   "oneOf": [
                     {
-                      "type": "null"
-                    },
-                    {
                       "$ref": "#/components/schemas/SignalResponse",
                       "description": "LoRaWAN radio quality of the strongest gateway for this reading, if present."
+                    },
+                    {
+                      "type": "null"
                     }
                   ]
                 },
@@ -8752,11 +8752,11 @@
                 "coordinate": {
                   "oneOf": [
                     {
-                      "type": "null"
-                    },
-                    {
                       "$ref": "#/components/schemas/SensorCoordinate",
                       "description": "WGS-84 coordinate derived from the linked tree (if any)."
+                    },
+                    {
+                      "type": "null"
                     }
                   ]
                 },
@@ -8783,11 +8783,11 @@
                 "latest_data": {
                   "oneOf": [
                     {
-                      "type": "null"
-                    },
-                    {
                       "$ref": "#/components/schemas/SensorDataResponse",
                       "description": "Most recent data payload from the sensor, if available."
+                    },
+                    {
+                      "type": "null"
                     }
                   ]
                 },
@@ -8820,11 +8820,11 @@
                 "lorawan": {
                   "oneOf": [
                     {
-                      "type": "null"
-                    },
-                    {
                       "$ref": "#/components/schemas/LorawanInfoResponse",
                       "description": "LoRaWAN credentials (omits `app_key`)."
+                    },
+                    {
+                      "type": "null"
                     }
                   ]
                 },
@@ -8963,10 +8963,10 @@
                 "region": {
                   "oneOf": [
                     {
-                      "type": "null"
+                      "$ref": "#/components/schemas/RegionResponse"
                     },
                     {
-                      "$ref": "#/components/schemas/RegionResponse"
+                      "type": "null"
                     }
                   ]
                 },
@@ -9095,10 +9095,10 @@
                 "sensor": {
                   "oneOf": [
                     {
-                      "type": "null"
+                      "$ref": "#/components/schemas/SensorResponse"
                     },
                     {
-                      "$ref": "#/components/schemas/SensorResponse"
+                      "type": "null"
                     }
                   ]
                 },
@@ -9215,11 +9215,11 @@
                 "organization": {
                   "oneOf": [
                     {
-                      "type": "null"
-                    },
-                    {
                       "$ref": "#/components/schemas/OrganizationResponse",
                       "description": "Organization the user belongs to; null for legacy users without one."
+                    },
+                    {
+                      "type": "null"
                     }
                   ]
                 },
@@ -9514,11 +9514,11 @@
                 "trailer": {
                   "oneOf": [
                     {
-                      "type": "null"
-                    },
-                    {
                       "$ref": "#/components/schemas/VehicleResponse",
                       "description": "The trailer vehicle assigned to this plan, if any."
+                    },
+                    {
+                      "type": "null"
                     }
                   ]
                 },
@@ -9792,21 +9792,21 @@
           "address": {
             "oneOf": [
               {
-                "type": "null"
+                "$ref": "#/components/schemas/AddressDto"
               },
               {
-                "$ref": "#/components/schemas/AddressDto"
+                "type": "null"
               }
             ]
           },
           "contact_person": {
             "oneOf": [
               {
-                "type": "null"
-              },
-              {
                 "$ref": "#/components/schemas/ContactPersonDto",
                 "description": "Null when no contact person is stored *or* when the stored id could not\nbe resolved; `contact_person_id` distinguishes the two."
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -9884,11 +9884,11 @@
           "address": {
             "oneOf": [
               {
-                "type": "null"
-              },
-              {
                 "$ref": "#/components/schemas/AddressDto",
                 "description": "Postal address; null when the organization has none."
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -9958,11 +9958,11 @@
           "enforced_by": {
             "oneOf": [
               {
-                "type": "null"
-              },
-              {
                 "$ref": "#/components/schemas/OrganizationRef",
                 "description": "The organization that froze this subtree, if any."
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -10008,10 +10008,10 @@
           "map_view": {
             "oneOf": [
               {
-                "type": "null"
+                "$ref": "#/components/schemas/MapViewDto"
               },
               {
-                "$ref": "#/components/schemas/MapViewDto"
+                "type": "null"
               }
             ]
           },
@@ -10041,10 +10041,10 @@
           "address": {
             "oneOf": [
               {
-                "type": "null"
+                "$ref": "#/components/schemas/AddressDto"
               },
               {
-                "$ref": "#/components/schemas/AddressDto"
+                "type": "null"
               }
             ]
           },
@@ -10393,10 +10393,10 @@
           "frontend": {
             "oneOf": [
               {
-                "type": "null"
+                "$ref": "#/components/schemas/PluginFrontendDto"
               },
               {
-                "$ref": "#/components/schemas/PluginFrontendDto"
+                "type": "null"
               }
             ]
           },
@@ -10891,10 +10891,10 @@
           "acknowledged": {
             "oneOf": [
               {
-                "type": "null"
+                "$ref": "#/components/schemas/DataQualityAcknowledgementResponse"
               },
               {
-                "$ref": "#/components/schemas/DataQualityAcknowledgementResponse"
+                "type": "null"
               }
             ]
           },
@@ -10942,11 +10942,11 @@
           "signal": {
             "oneOf": [
               {
-                "type": "null"
-              },
-              {
                 "$ref": "#/components/schemas/SignalResponse",
                 "description": "LoRaWAN radio quality of the strongest gateway for this reading, if present."
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -11106,11 +11106,11 @@
           "coordinate": {
             "oneOf": [
               {
-                "type": "null"
-              },
-              {
                 "$ref": "#/components/schemas/SensorCoordinate",
                 "description": "WGS-84 coordinate derived from the linked tree (if any)."
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -11137,11 +11137,11 @@
           "latest_data": {
             "oneOf": [
               {
-                "type": "null"
-              },
-              {
                 "$ref": "#/components/schemas/SensorDataResponse",
                 "description": "Most recent data payload from the sensor, if available."
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -11174,11 +11174,11 @@
           "lorawan": {
             "oneOf": [
               {
-                "type": "null"
-              },
-              {
                 "$ref": "#/components/schemas/LorawanInfoResponse",
                 "description": "LoRaWAN credentials (omits `app_key`)."
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -11395,11 +11395,11 @@
           "last_change": {
             "oneOf": [
               {
-                "type": "null"
-              },
-              {
                 "$ref": "#/components/schemas/SettingChangeRef",
                 "description": "Always about this organization's own value, never the source's."
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -11452,11 +11452,11 @@
           "source": {
             "oneOf": [
               {
-                "type": "null"
-              },
-              {
                 "$ref": "#/components/schemas/OrganizationRef",
                 "description": "Set only where `origin` is `inherited`."
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -11516,11 +11516,11 @@
           "last_change": {
             "oneOf": [
               {
-                "type": "null"
-              },
-              {
                 "$ref": "#/components/schemas/SettingChangeRef",
                 "description": "Always about this organization's own value, never the source's."
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -11534,11 +11534,11 @@
           "source": {
             "oneOf": [
               {
-                "type": "null"
-              },
-              {
                 "$ref": "#/components/schemas/OrganizationRef",
                 "description": "Set only where `origin` is `inherited`."
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -11559,11 +11559,11 @@
           "last_change": {
             "oneOf": [
               {
-                "type": "null"
-              },
-              {
                 "$ref": "#/components/schemas/SettingChangeRef",
                 "description": "Always about this organization's own value, never the source's."
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -11577,11 +11577,11 @@
           "source": {
             "oneOf": [
               {
-                "type": "null"
-              },
-              {
                 "$ref": "#/components/schemas/OrganizationRef",
                 "description": "Set only where `origin` is `inherited`."
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -11602,11 +11602,11 @@
           "last_change": {
             "oneOf": [
               {
-                "type": "null"
-              },
-              {
                 "$ref": "#/components/schemas/SettingChangeRef",
                 "description": "Always about this organization's own value, never the source's."
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -11620,11 +11620,11 @@
           "source": {
             "oneOf": [
               {
-                "type": "null"
-              },
-              {
                 "$ref": "#/components/schemas/OrganizationRef",
                 "description": "Set only where `origin` is `inherited`."
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -12144,10 +12144,10 @@
           "region": {
             "oneOf": [
               {
-                "type": "null"
+                "$ref": "#/components/schemas/RegionResponse"
               },
               {
-                "$ref": "#/components/schemas/RegionResponse"
+                "type": "null"
               }
             ]
           },
@@ -12272,10 +12272,10 @@
           "region": {
             "oneOf": [
               {
-                "type": "null"
+                "$ref": "#/components/schemas/RegionResponse"
               },
               {
-                "$ref": "#/components/schemas/RegionResponse"
+                "type": "null"
               }
             ]
           },
@@ -12695,10 +12695,10 @@
           "sensor": {
             "oneOf": [
               {
-                "type": "null"
+                "$ref": "#/components/schemas/SensorResponse"
               },
               {
-                "$ref": "#/components/schemas/SensorResponse"
+                "type": "null"
               }
             ]
           },
@@ -12918,11 +12918,11 @@
           "status": {
             "oneOf": [
               {
-                "type": "null"
-              },
-              {
                 "$ref": "#/components/schemas/UserStatus",
                 "description": "Initial availability status (defaults to Available)."
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -13028,11 +13028,11 @@
           "organization": {
             "oneOf": [
               {
-                "type": "null"
-              },
-              {
                 "$ref": "#/components/schemas/OrganizationResponse",
                 "description": "Organization the user belongs to; null for legacy users without one."
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -13781,11 +13781,11 @@
           "trailer": {
             "oneOf": [
               {
-                "type": "null"
-              },
-              {
                 "$ref": "#/components/schemas/VehicleResponse",
                 "description": "The trailer vehicle assigned to this plan, if any."
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -13941,11 +13941,11 @@
           "trailer": {
             "oneOf": [
               {
-                "type": "null"
-              },
-              {
                 "$ref": "#/components/schemas/VehicleResponse",
                 "description": "The trailer vehicle assigned to this plan, if any."
+              },
+              {
+                "type": "null"
               }
             ]
           },
