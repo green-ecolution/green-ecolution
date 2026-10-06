@@ -13,6 +13,10 @@ import {
 
 const PER_PAGE = 5000
 
+// Raw, unbucketed readings: an all-time window would fetch and draw thousands of points.
+const RANGE_KEYS = ['24h', '7d', '30d'] satisfies TimeWindowKey[]
+type RangeKey = (typeof RANGE_KEYS)[number]
+
 interface ChartSignalDataProps {
   sensorId: string
 }
@@ -26,7 +30,7 @@ const ChartSignalData: React.FC<ChartSignalDataProps> = ({ sensorId }) => {
   const chartConfig = {
     rssi: { label: t('signalChart.seriesLabel'), color: '#4C7741' },
   } satisfies ChartConfig
-  const [selectedWindow, setSelectedWindow] = useState<TimeWindowKey>('7d')
+  const [selectedWindow, setSelectedWindow] = useState<RangeKey>('7d')
   // eslint-disable-next-line react-hooks/purity, react-x/purity -- windowStart truncates to the hour, keeping the query key stable
   const from = windowStart(selectedWindow, Date.now())
   const {
@@ -51,22 +55,19 @@ const ChartSignalData: React.FC<ChartSignalDataProps> = ({ sensorId }) => {
     .sort((a, b) => a.ts - b.ts)
 
   return (
-    <div className="mt-6 border-t border-dark-100 pt-5">
+    <div>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <p className="text-sm font-semibold">{t('signalChart.title')}</p>
-          <p className="text-xs text-muted-foreground">{t('signalChart.subtitle')}</p>
-        </div>
+        <p className="text-xs text-muted-foreground">{t('signalChart.subtitle')}</p>
         <TimeRangeToggle
-          options={timeWindowOptions(['24h', '7d', '30d', 'all'], tCommon)}
+          options={timeWindowOptions(RANGE_KEYS, tCommon)}
           value={selectedWindow}
           onChange={setSelectedWindow}
         />
       </div>
       {!sensorDataRes ? (
-        <Loading className="h-[220px] justify-center" label={t('signalChart.loadingLabel')} />
+        <Loading className="h-[180px] justify-center" label={t('signalChart.loadingLabel')} />
       ) : signalData.length <= 1 ? (
-        <p className="flex h-[220px] items-center justify-center text-sm text-muted-foreground">
+        <p className="rounded-xl bg-dark-50 px-4 py-6 text-center text-sm text-muted-foreground">
           {t('signalChart.tooFewDataPoints')}
         </p>
       ) : (
@@ -78,6 +79,7 @@ const ChartSignalData: React.FC<ChartSignalDataProps> = ({ sensorId }) => {
           <TimeSeriesFrame
             config={chartConfig}
             data={signalData}
+            className="h-[180px] w-full"
             yDomain={['dataMin - 2', 'dataMax + 2']}
           >
             <defs>

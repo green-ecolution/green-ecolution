@@ -13,29 +13,55 @@ hängt. Dorthin gelangst du über einen Klick auf einen Eintrag in der
 
 ## Die Detailseite lesen
 
-Der Kopf der Detailseite zeigt Sensortyp, ID, Verbindungszustand, Modell und, falls
-vorhanden, den anbindenden Provider. Darunter fassen drei Kennzahlen den aktuellen
-Zustand zusammen: **Status**, **Akkustand** und **Letztes Signal** mit dem Zeitpunkt der
-letzten Übertragung; ab einer Spannung von 2,8 V schaltet sich die Batterie ab, was die
-Anwendung an dieser Stelle vermerkt.
+Der Kopf der Detailseite zeigt ein Foto des Sensormodells, die ID des Sensors mit seinem
+Verbindungszustand, darunter Modell, Sensortyp und, falls vorhanden, den anbindenden
+Provider. Darunter fassen vier
+Kennzahlen den aktuellen Zustand zusammen: **Status**, **Akkustand**, **Letztes Signal**
+mit dem Zeitpunkt der letzten Übertragung und bei LoRaWAN-Sensoren **Empfang**. Ab einer
+Spannung von 2,8 V schaltet sich die Batterie ab; das Infosymbol neben dem Akkustand
+erinnert daran.
+
+Auf einem breiten Bildschirm teilt sich die Seite darunter in zwei Spalten. Links stehen
+die Verläufe, rechts, wo der Sensor sitzt und was ihn ausmacht. Auf Tablet und Smartphone
+folgen die Abschnitte untereinander, der Einsatzort direkt nach dem Messverlauf.
+
+## Einsatzort und Messprofil
+
+Der Abschnitt **Einsatzort** zeigt den Sensor auf einer kleinen Karte zwischen den Bäumen
+der Umgebung. Darunter steht die Bewässerungsgruppe mit ihrem Bewässerungszustand und der
+Zahl ihrer Bäume, und darunter der Baum, an dem der Sensor steckt, mit Baumnummer, Art und
+Pflanzjahr. Beide Zeilen führen per Klick auf die jeweilige Detailseite. Gehört der Baum
+zu keiner Bewässerungsgruppe, steht das an dieser Stelle. Ist der Sensor noch mit keinem
+Baum verknüpft, erscheint stattdessen ein Hinweis mit der Schaltfläche **Aktivieren &
+Baum zuweisen**. Über **Koordinaten** lässt sich die genaue Position einblenden, die
+immer vom verknüpften Baum übernommen wird.
+
+Das **Messprofil** zeigt als schmalen Tiefenschnitt, in welchen Tiefen der Sensor misst
+und was er dort erfasst, etwa Bodenfeuchtigkeit in Prozent oder Temperatur in °C. Die
+Punkte haben dieselbe Farbe wie die Linie der jeweiligen Tiefe im Messverlauf, so lassen
+sich Profil und Kurve einander zuordnen.
 
 ## Signal, Messwerte und Datenqualität
 
-Der Abschnitt **Signal** zeigt die Empfangsqualität der letzten Übertragung als
-RSSI-Wert in dBm, eingeordnet in **Gut**, **Ausreichend** oder **Schwach**, dazu SNR und
-die Zahl der empfangenden Gateways sowie einen Verlauf der letzten Werte. Darunter folgt
-bei Sensoren mit Bodenfeuchte- oder Bodenspannungsmessung ein Verlauf der Messwerte je
-Tiefe, mit eingezeichneter kritischer Schwelle und den Zeitpunkten vergangener
-Bewässerungen. Wofür diese Messwerte am zugehörigen Baum stehen und wie daraus ein
-Bewässerungszustand wird, erklärt das
+Bei Sensoren mit Bodenfeuchte- oder Bodenspannungsmessung steht ganz oben ein Verlauf der
+Messwerte je Tiefe, mit eingezeichneter kritischer Schwelle und den Zeitpunkten
+vergangener Bewässerungen. Wofür diese Messwerte am zugehörigen Baum stehen und wie
+daraus ein Bewässerungszustand wird, erklärt das
 [Kapitel zu Bewässerungsgruppen](./treecluster.md#bewasserungsstatus-und-wie-er-zustande-kommt).
 
-Erkennt die Anwendung in den letzten sieben Tagen wiederholt unplausible Werte, weist
-ein Hinweis zur **Datenqualität** darauf hin; das betrifft die Verlässlichkeit der
-Messwerte, nicht den Verbindungszustand, der weiterhin allein aus der Übertragungszeit
-folgt. Unter dem Hinweis stehen zunächst die fünf jüngsten auffälligen Messwerte; über
-**Alle … anzeigen** klappt die vollständige Liste auf. Die Stammdaten darunter fassen Modell, Provider sowie bei LoRaWAN-Sensoren
-Seriennummer und Geräteschlüssel zusammen.
+Die Kennzahl **Empfang** zeigt die Empfangsqualität der letzten Übertragung als RSSI-Wert
+in dBm, eingeordnet in **Gut**, **Ausreichend** oder **Schwach**. Der Abschnitt
+**Signalverlauf** ergänzt SNR und die Zahl der empfangenden Gateways sowie den Verlauf der
+letzten Werte.
+
+Erkennt die Anwendung in den letzten sieben Tagen wiederholt unplausible Werte, erscheint
+direkt unter dem Kopf ein Hinweis zur **Datenqualität**; das betrifft die Verlässlichkeit
+der Messwerte, nicht den Verbindungszustand, der weiterhin allein aus der
+Übertragungszeit folgt. Unter **Betroffene Messwerte** lässt sich die Liste der
+verworfenen Werte aufklappen; sie zeigt zunächst die fünf jüngsten, über **Alle …
+anzeigen** die vollständige Liste. Die **Stammdaten** fassen bei LoRaWAN-Sensoren Dev EUI,
+App EUI, Seriennummer und Geräteschlüssel zusammen, dazu wann der Sensor angelegt und
+zuletzt aktualisiert wurde.
 
 ![Die Detailseite eines Sensors mit Messwerten und Signalqualität](../images/sensor-detail.png)
 

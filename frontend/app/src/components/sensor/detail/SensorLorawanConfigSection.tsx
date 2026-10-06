@@ -21,19 +21,11 @@ import {
   cn,
   toast,
 } from '@green-ecolution/ui'
-import {
-  ChevronDown,
-  ChevronUp,
-  Copy,
-  Eye,
-  EyeOff,
-  Search,
-  ShieldAlert,
-  SlidersHorizontal,
-} from 'lucide-react'
+import { ChevronDown, ChevronUp, Copy, Eye, EyeOff, Search, ShieldAlert } from 'lucide-react'
 import type { Sensor } from '@/api/backendApi'
 import { SECRET_MASK, isSensitiveConfigKey, redactConfig } from './secrets'
 import { useSecretReveal } from '@/hooks/useSecretReveal'
+import { compactCardContent, compactCardHeader, compactCardTitle } from './cardDensity'
 
 interface SensorLorawanConfigSectionProps {
   sensor: Sensor
@@ -151,24 +143,19 @@ const SensorLorawanConfigSection = ({ sensor }: SensorLorawanConfigSectionProps)
 
   return (
     <Card variant="outlined">
-      <CardHeader>
+      <CardHeader className={compactCardHeader}>
         <button
           type="button"
           onClick={() => setExpanded((v) => !v)}
           aria-expanded={expanded}
           className="flex w-full items-center justify-between gap-3 text-left cursor-pointer group"
         >
-          <div className="flex items-center gap-3">
-            <div className="grid place-items-center size-9 rounded-lg bg-dark text-green-light">
-              <SlidersHorizontal className="size-5" />
-            </div>
-            <div className="flex flex-col">
-              <CardTitle>{t('lorawanConfig.title')}</CardTitle>
-              <span className="text-xs text-muted-foreground mt-1">
-                {t('lorawanConfig.keyCountLabel', { count: entries.length })} ·{' '}
-                {expanded ? t('lorawanConfig.collapseLabel') : t('lorawanConfig.expandLabel')}
-              </span>
-            </div>
+          <div className="flex flex-col">
+            <CardTitle className={compactCardTitle}>{t('lorawanConfig.title')}</CardTitle>
+            <span className="text-xs text-muted-foreground mt-1">
+              {t('lorawanConfig.keyCountLabel', { count: entries.length })} ·{' '}
+              {expanded ? t('lorawanConfig.collapseLabel') : t('lorawanConfig.expandLabel')}
+            </span>
           </div>
           {expanded ? (
             <ChevronUp className="size-5 text-muted-foreground transition group-hover:text-foreground shrink-0" />
@@ -178,7 +165,7 @@ const SensorLorawanConfigSection = ({ sensor }: SensorLorawanConfigSectionProps)
         </button>
       </CardHeader>
       {expanded && (
-        <CardContent className="flex flex-col gap-4">
+        <CardContent className={cn(compactCardContent, 'flex flex-col gap-4')}>
           {hasSecrets && (
             <Alert variant="warning" className="w-full">
               <div className="flex gap-3">

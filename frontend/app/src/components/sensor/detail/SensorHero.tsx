@@ -17,53 +17,36 @@ const SensorHero = ({ sensor }: SensorHeroProps) => {
   const sensorTypeLabel = sensor.sensorType === 'lorawan' ? 'LoRaWAN' : sensor.sensorType
 
   return (
-    <header className="flex flex-col gap-8 md:flex-row md:items-center md:gap-10">
-      <div className="relative shrink-0 self-start">
-        <div
-          aria-hidden
-          className="absolute -inset-4 -z-10 rounded-[2rem] bg-gradient-to-br from-green-light-100/70 via-white to-green-dark-50/80"
+    <header className="flex flex-wrap items-start gap-x-5 gap-y-4">
+      <div className="aspect-[3/2] w-32 shrink-0 overflow-hidden rounded-xl border border-dark-100 bg-white md:w-48 xl:w-56">
+        <img
+          src={image}
+          alt={t('hero.modelImageAlt', { model: sensor.model.name })}
+          className="size-full object-cover"
+          loading="lazy"
         />
-        <div className="size-44 md:size-56 rounded-3xl border border-dark-100 bg-white shadow-cards p-5 grid place-items-center">
-          <img
-            src={image}
-            alt={t('hero.modelImageAlt', { model: sensor.model.name })}
-            className="size-full object-cover"
-            loading="lazy"
-          />
-        </div>
       </div>
 
-      <div className="flex-1 min-w-0">
-        <p className="font-lato text-xs font-bold uppercase tracking-[0.22em] text-green-dark mb-3">
-          {t('hero.typeLabel', { type: sensorTypeLabel })}
-        </p>
-        <h1 className="font-lato font-bold text-3xl lg:text-4xl xl:text-5xl tracking-tight leading-[1.05] break-all">
+      <div className="min-w-0 flex-1 basis-40 self-center">
+        <h1 className="font-lato text-2xl font-bold leading-tight tracking-tight break-all md:text-3xl xl:text-4xl">
           {sensor.id}
         </h1>
-        <div className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-2">
-          <Badge variant={status.color} size="lg" className="gap-2">
-            <span className="size-2 rounded-full bg-current" aria-hidden />
+        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm">
+          <Badge variant={status.color} className="gap-1.5">
+            <span className="size-1.5 rounded-full bg-current" aria-hidden />
             {status.label}
           </Badge>
-          <span className="text-dark-300" aria-hidden>
-            ·
-          </span>
-          <span className="font-lato font-semibold text-lg">{sensor.model.name}</span>
+          <span className="font-semibold">{sensor.model.name}</span>
+          <span className="text-muted-foreground">{sensorTypeLabel}</span>
           {sensor.provider && (
-            <>
-              <span className="text-dark-300" aria-hidden>
-                ·
-              </span>
-              <span className="text-sm text-muted-foreground">
-                {t('hero.viaLabel')}{' '}
-                <span className="font-semibold text-foreground">{sensor.provider}</span>
-              </span>
-            </>
+            <span className="text-muted-foreground">
+              {t('hero.viaLabel')} <span className="text-foreground">{sensor.provider}</span>
+            </span>
           )}
         </div>
       </div>
 
-      <div className="md:self-start md:pt-2">
+      <div className="w-full sm:w-auto sm:self-start">
         <SensorActionsMenu sensor={sensor} />
       </div>
     </header>

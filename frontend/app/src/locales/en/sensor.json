@@ -46,19 +46,20 @@
     "lastUpdateLabel": "Last update: "
   },
   "hero": {
-    "typeLabel": "{type} sensor",
     "modelImageAlt": "Model image: {model}",
     "viaLabel": "via"
   },
-  "statusGrid": {
-    "srHeading": "Status",
+  "kpi": {
+    "srHeading": "Condition",
     "statusLabel": "Status",
     "batteryLabel": "Battery level",
-    "batteryNoDataDescription": "No battery data received yet.",
-    "batteryShutoffDescription": "The battery switches off below 2.8 V.",
+    "batteryNoData": "No data yet",
+    "batteryShutoffInfo": "The battery switches off below 2.8 V.",
     "lastSignalLabel": "Last signal",
-    "lastSignalDescriptionWithInterval": "Last data transmission · sends {interval}",
-    "lastSignalDescription": "Last data transmission"
+    "sendsEvery": "Sends {interval}",
+    "receptionLabel": "Reception",
+    "receptionNoData": "No data",
+    "receptionInfo": "RSSI of the last transmission. Higher (less negative) means better reception."
   },
   "sendInterval": {
     "seconds": "every {count} sec.",
@@ -66,11 +67,8 @@
     "hours": "every {count} h."
   },
   "identity": {
-    "title": "Identity",
+    "title": "Device details",
     "modelLabel": "Model",
-    "modelIdLabel": "Model ID: {id}",
-    "providerLabel": "Provider",
-    "providerSourceLabel": "Data source / integration",
     "serialNumberLabel": "Serial Number",
     "devEuiLabel": "Dev EUI",
     "appEuiLabel": "App EUI",
@@ -88,6 +86,7 @@
     "acknowledgeButton": "Acknowledged",
     "issueDepth": "{depth} cm depth",
     "issueReading": "Reading {value}",
+    "pendingIssues": "Affected readings ({count})",
     "pastIssues": "Past anomalies ({count})",
     "showAllIssues": "Show all {count}",
     "showFewerIssues": "Show fewer",
@@ -109,18 +108,17 @@
     "autoHideNotice": "Automatically hides again in {seconds}s."
   },
   "signal": {
-    "title": "Signal",
-    "noSignalData": "No signal data received.",
-    "snrLabel": "SNR",
-    "gatewaysLabel": "Gateways",
+    "title": "Signal history",
     "level": {
       "good": "Good",
       "fair": "Fair",
       "weak": "Weak"
-    }
+    },
+    "snrLabel": "SNR",
+    "gatewayCount_one": "{count} gateway",
+    "gatewayCount_other": "{count} gateways"
   },
   "signalChart": {
-    "title": "RSSI history",
     "subtitle": "Higher (less negative) = better reception",
     "seriesLabel": "RSSI (dBm)",
     "loadingLabel": "Signal data is loading",
@@ -136,11 +134,10 @@
     "wateredOnLabel": "Watered on {date}",
     "discardedLabel": "Reading discarded"
   },
-  "abilities": {
-    "title": "What this sensor measures",
-    "unitLabel": "Unit",
-    "depthLabel_one": "Depth",
-    "depthLabel_other": "Depths"
+  "profile": {
+    "title": "Measurement profile",
+    "surfaceLabel": "Ground surface",
+    "depthLabel": "{depth} cm"
   },
   "ability": {
     "soil_moisture": "Soil moisture",
@@ -148,8 +145,15 @@
     "temperature": "Temperature",
     "humidity": "Humidity"
   },
+  "placement": {
+    "title": "Placement",
+    "clusterLabel": "Watering group",
+    "treeLabel": "Mounted on tree",
+    "treeCount_one": "{count} tree",
+    "treeCount_other": "{count} trees",
+    "noClusterDescription": "The tree is not part of any watering group."
+  },
   "linkedTree": {
-    "title": "Linked tree",
     "noLinkTitle": "Not linked yet",
     "noLinkDescription": "This sensor is not linked to any tree. Without a link, its readings cannot be attributed to any vegetation.",
     "loadFailedTitle": "Tree not loaded",
@@ -159,14 +163,11 @@
     "plantedLabel": "Planted {year}"
   },
   "location": {
-    "title": "Location",
     "coordinatesToggle": "Coordinates",
     "mapAriaLabel": "Map with the sensor position, nearby trees and watering groups",
     "latitudeLabel": "Latitude",
     "longitudeLabel": "Longitude",
-    "derivedFromTreeNotice": "The position is taken from the linked tree.",
-    "notInFieldTitle": "Sensor not yet in the field",
-    "notInFieldDescription": "This sensor has not been activated yet and has no location. Once it is assigned to a tree or bed, a map will appear here."
+    "derivedFromTreeNotice": "The position is taken from the linked tree."
   },
   "lorawanConfig": {
     "emptyValue": "empty",
