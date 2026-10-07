@@ -1,43 +1,33 @@
 import { sensorQueries } from '@/api/queries'
-import { Button, Loading } from '@green-ecolution/ui'
+import { Badge, Button, Loading, Tabs, TabsList, TabsTrigger } from '@green-ecolution/ui'
 import Pagination from '@/components/general/Pagination'
 import EntityList from '@/components/general/EntityList'
 import SensorCard from '@/components/general/cards/SensorCard'
 import SensorListToolbar from '@/components/sensor/list/SensorListToolbar'
 import { useSensorListSearch } from '@/components/sensor/list/useSensorListSearch'
+import {
+  ACTIVATED_STATUSES,
+  legacyPreparedRedirect,
+  sensorFilterSchema,
+  statusesForView,
+  type SensorListSearch,
+  type SensorListView,
+} from '@/components/sensor/list/sensorListView'
 import { useQuery, keepPreviousData } from '@tanstack/react-query'
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, Link, redirect } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { Zap } from 'lucide-react'
-import { z } from 'zod'
-import {
-  DataHealth,
-  ListSensorsOrderEnum,
-  ListSensorsSortEnum,
-  SensorStatus,
-} from '@green-ecolution/backend-client'
+import { SensorStatus } from '@green-ecolution/backend-client'
 import { pendingLoading, prefetch } from '@/lib/router'
 import { Can } from '@/lib/auth/Can'
 
 export const PER_PAGE = 25
 
-const sensorFilterSchema = z.object({
-  page: z.number().int().min(1).catch(1),
-  q: z.string().optional().catch(undefined),
-  statuses: z.array(z.enum(SensorStatus)).optional().catch(undefined),
-  modelIds: z.array(z.string()).optional().catch(undefined),
-  dataHealth: z.array(z.enum(DataHealth)).optional().catch(undefined),
-  hasTree: z.boolean().optional().catch(undefined),
-  clusterIds: z.array(z.string()).optional().catch(undefined),
-  sort: z.enum(ListSensorsSortEnum).optional().catch(undefined),
-  order: z.enum(ListSensorsOrderEnum).optional().catch(undefined),
-})
-
-const listParams = (search: z.infer<typeof sensorFilterSchema>) => ({
+const listParams = (search: SensorListSearch) => ({
   page: search.page,
   perPage: PER_PAGE,
   q: search.q,
-  status: search.statuses,
+  status: statusesForView(search.view ?? 'activated', search.statuses),
   modelId: search.modelIds,
   dataHealth: search.dataHealth,
   hasTree: search.hasTree,
@@ -46,10 +36,18 @@ const listParams = (search: z.infer<typeof sensorFilterSchema>) => ({
   order: search.order,
 })
 
+const viewTotalParams = (statuses: SensorStatus[]) => ({ page: 1, perPage: 1, status: statuses })
+
+const useViewTotal = (statuses: SensorStatus[]) => {
+  const { data } = useQuery(sensorQueries.list(viewTotalParams(statuses)))
+  return data?.pagination?.totalRecords
+}
+
 function Sensors() {
   const { t } = useTranslation('sensor')
   const search = Route.useSearch()
-  const { resetFilters } = useSensorListSearch()
+  const view = search.view ?? 'activated'
+  const { resetFilters, setView } = useSensorListSearch()
   const {
     data: sensorsRes,
     isPlaceholderData,
@@ -60,6 +58,9 @@ function Sensors() {
   })
   if (error) throw error
 
+  const activatedTotal = useViewTotal(ACTIVATED_STATUSES)
+  const preparedTotal = useViewTotal([SensorStatus.Prepared])
+
   const isFiltered =
     (search.q ?? '').length > 0 ||
     (search.statuses?.length ?? 0) > 0 ||
@@ -67,6 +68,11 @@ function Sensors() {
     (search.dataHealth?.length ?? 0) > 0 ||
     (search.clusterIds?.length ?? 0) > 0 ||
     search.hasTree !== undefined
+
+  const viewTabs: { value: SensorListView; label: string; total: number | undefined }[] = [
+    { value: 'activated', label: t('list.viewActivated'), total: activatedTotal },
+    { value: 'prepared', label: t('list.viewPrepared'), total: preparedTotal },
+  ]
 
   return (
     <div className="container mt-6">
@@ -79,10 +85,27 @@ function Sensors() {
         </article>
       </div>
 
-      <section className="mt-8">
+      <Tabs
+        value={view}
+        onValueChange={(value) => {
+          if (value === 'activated' || value === 'prepared') setView(value)
+        }}
+        className="mt-8"
+      >
+        <TabsList aria-label={t('list.viewsAriaLabel')}>
+          {viewTabs.map((tab) => (
+            <TabsTrigger key={tab.value} value={tab.value}>
+              {tab.label}
+              {tab.total !== undefined && <Badge variant="muted">{tab.total}</Badge>}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
+
+      <section className="mt-6">
         <SensorListToolbar
           filteredRecords={sensorsRes?.pagination?.totalRecords ?? 0}
-          totalRecords={sensorsRes?.pagination?.totalUnfiltered ?? undefined}
+          totalRecords={view === 'prepared' ? preparedTotal : activatedTotal}
           action={
             <Can permission={['sensor:create']}>
               <Button asChild size="sm" className="w-full sm:w-auto sm:shrink-0">
@@ -114,7 +137,9 @@ function Sensors() {
               <EntityList
                 items={sensorsRes.data}
                 getKey={(sensor) => sensor.id}
-                emptyMessage={t('list.emptyMessage')}
+                emptyMessage={
+                  view === 'prepared' ? t('list.emptyPreparedMessage') : t('list.emptyMessage')
+                }
                 renderItem={(sensor) => <SensorCard sensor={sensor} query={search.q ?? ''} />}
               />
             )}
@@ -131,9 +156,14 @@ function Sensors() {
 export const Route = createFileRoute('/_protected/sensors/')({
   component: Sensors,
   validateSearch: sensorFilterSchema,
+  beforeLoad: ({ search }) => {
+    const legacy = legacyPreparedRedirect(search)
+    if (legacy) throw redirect({ to: '/sensors', search: legacy, replace: true })
+  },
   pendingComponent: pendingLoading({ key: 'sensor:list.loadingLabel' }),
   loaderDeps: ({ search }) => ({
     page: search.page,
+    view: search.view,
     q: search.q,
     statuses: search.statuses,
     modelIds: search.modelIds,

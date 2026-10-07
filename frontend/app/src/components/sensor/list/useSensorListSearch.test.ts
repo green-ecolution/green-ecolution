@@ -101,4 +101,27 @@ describe('useSensorListSearch', () => {
 
     expect(appliedSearch().hasTree).toBeUndefined()
   })
+
+  it('switching to the prepared view drops the filters only activated sensors can match', () => {
+    const { result } = renderHook(() => useSensorListSearch())
+
+    result.current.setView('prepared')
+
+    const applied = appliedSearch()
+    expect(applied.view).toBe('prepared')
+    expect(applied.page).toBe(1)
+    expect(applied.q).toBe('eui')
+    expect(applied.hasTree).toBeUndefined()
+    expect(applied.statuses).toBeUndefined()
+    expect(applied.dataHealth).toBeUndefined()
+    expect(applied.clusterIds).toBeUndefined()
+  })
+
+  it('keeps the default activated view out of the url', () => {
+    const { result } = renderHook(() => useSensorListSearch())
+
+    result.current.setView('activated')
+
+    expect(appliedSearch().view).toBeUndefined()
+  })
 })

@@ -16,9 +16,16 @@ Einbau vor Ort das Kapitel [Sensor einbauen und aktivieren](./sensor-installatio
 
 ## Die Geräteliste lesen
 
-Die Übersicht unter **Sensoren** listet jeden im System hinterlegten Sensor mit seinem
-Verbindungszustand, seiner ID und seinem Modellnamen. Ein farbiger Punkt vor der ID steht
-für den Verbindungszustand; verweilst du mit dem Zeiger darauf, nennt die Anwendung ihn
+Die Übersicht unter **Sensoren** teilt die Geräte auf zwei Reiter auf. **Aktiviert** ist
+beim Öffnen ausgewählt und zeigt die Sensoren, die bereits im Einsatz sind, also online
+oder offline. **Vorbereitet** sammelt die Geräte, die zwar angelegt, aber noch nicht
+aktiviert sind und auf ihren Einbau warten. Neben jedem Reiter steht, wie viele Sensoren
+er umfasst, sodass du auch ohne Wechsel siehst, ob noch Geräte auf ihre Aktivierung
+warten. Beim Wechsel des Reiters bleibt dein Suchbegriff erhalten, die Filter, die nur
+für aktivierte Sensoren sinnvoll sind, werden dagegen zurückgesetzt.
+
+Jeder Reiter listet seine Sensoren mit ihrem Verbindungszustand, ihrer ID und ihrem
+Modellnamen. Ein farbiger Punkt vor der ID steht für den Verbindungszustand; verweilst du mit dem Zeiger darauf, nennt die Anwendung ihn
 beim Namen. Darunter stehen, ob der Sensor mit einem Baum verknüpft ist und der Zeitpunkt
 seiner letzten Messung, und ist das Fenster breit genug, ergänzt dieselbe Zeile das
 Erstelldatum; auf schmalen Bildschirmen entfällt es wieder, damit die Zeile nicht
@@ -31,13 +38,15 @@ führt zur Detailseite; um welchen Baum es sich handelt, siehst du erst dort.
 Über das Suchfeld durchsuchst du die Liste nach der Sensor-ID, dem Modellnamen und dem
 Namen der Bewässerungsgruppe, zu der der verknüpfte Baum gehört, ohne Rücksicht auf Groß-
 und Kleinschreibung; der gefundene Teil des Textes erscheint in den Ergebnissen
-hervorgehoben. Darunter stehen fünf Filter, die jeweils sofort wirken, ohne
-dass eine Bestätigung nötig wäre: nach dem Verbindungszustand, nach dem Modell, nach der
-Datenqualität, danach, ob ein Baum verknüpft ist, mit den Optionen **Mit Baum** und
-**Ohne Baum**, und schließlich nach der Bewässerungsgruppe. Der Gruppenfilter listet die
+hervorgehoben. Im Reiter **Aktiviert** stehen darunter fünf Filter, die jeweils sofort
+wirken, ohne dass eine Bestätigung nötig wäre: nach dem Verbindungszustand (online oder
+offline), nach dem Modell, nach der Datenqualität, danach, ob ein Baum verknüpft ist, mit
+den Optionen **Mit Baum** und **Ohne Baum**, und schließlich nach der Bewässerungsgruppe. Der Gruppenfilter listet die
 angelegten Gruppen zur Auswahl und lässt sich auf mehrere gleichzeitig setzen; er greift
 auf die Gruppe des verknüpften Baums zurück, denn ein Sensor gehört nie selbst zu einer
-Gruppe. Über das Sortiermenü ordnest du die Liste nach Sensor-ID, letzter Messung
+Gruppe. Im Reiter **Vorbereitet** bleibt nur der Modellfilter, denn ein noch nicht
+aktiviertes Gerät hat weder Messwerte noch einen verknüpften Baum, nach denen sich filtern
+ließe. Über das Sortiermenü ordnest du die Liste nach Sensor-ID, letzter Messung
 oder Anlagedatum, jeweils auf- oder absteigend. Jede gesetzte Auswahl erscheint darunter
 als entfernbarer Chip, daneben ein Link, der alle Filter auf einmal zurücksetzt, sowie
 die Anzahl der gefundenen Sensoren.
@@ -51,7 +60,7 @@ und ihre ID ist der Anwendung unbekannt, meldet der Aktivierungsassistent das be
 und verweist auf die Verwaltung oder eine zuständige Administratorin. Erst ein bereits
 angelegter Sensor lässt sich hier aktivieren.
 
-![Die Geräteliste mit Suchfeld, Filterleiste und aktiven Filtern](../images/sensor-list.png)
+![Die Geräteliste im Reiter Aktiviert mit Suchbegriff, Filterleiste und hervorgehobenen Treffern](../images/sensor-list.png)
 
 ## Die Verbindungszustände: vorbereitet, online und offline
 
