@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { pluginViewKind } from './pluginView'
+import { iframeAllow, pluginViewKind } from './pluginView'
 
 describe('pluginViewKind', () => {
   it('renders the iframe for an external plugin with a target', () => {
@@ -57,5 +57,19 @@ describe('pluginViewKind', () => {
     expect(
       pluginViewKind({ frontendMode: 'external', frontendTarget: window.location.origin }),
     ).toEqual({ kind: 'unsafeOrigin' })
+  })
+})
+
+describe('iframeAllow', () => {
+  it('lists granted capabilities as permission policy features', () => {
+    expect(iframeAllow(['camera', 'bluetooth'])).toBe('camera; bluetooth')
+  })
+
+  it('is empty without capabilities', () => {
+    expect(iframeAllow([])).toBe('')
+  })
+
+  it('drops values the app does not know', () => {
+    expect(iframeAllow(['bluetooth', 'geolocation'])).toBe('bluetooth')
   })
 })
