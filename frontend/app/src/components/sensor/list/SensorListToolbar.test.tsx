@@ -139,4 +139,24 @@ describe('SensorListToolbar', () => {
 
     expect(setHasTree).toHaveBeenCalledExactlyOnceWith(undefined)
   })
+
+  it('offers no prepared status in the activated view', () => {
+    renderToolbar()
+
+    fireEvent.click(screen.getByRole('button', { name: /^Status/ }))
+
+    expect(screen.getByRole('option', { name: 'Online' })).toBeInTheDocument()
+    expect(screen.queryByRole('option', { name: 'Vorbereitet' })).not.toBeInTheDocument()
+  })
+
+  it('shows only the filters a prepared sensor can match in the prepared view', () => {
+    searchMock.current = { view: 'prepared' }
+    renderToolbar()
+
+    expect(screen.getByRole('button', { name: /^Modell/ })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Status/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Datenqualität/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Baum/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Gruppe/ })).not.toBeInTheDocument()
+  })
 })

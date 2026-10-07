@@ -2,6 +2,7 @@ import { useCallback } from 'react'
 import { getRouteApi } from '@tanstack/react-router'
 import type { ListSensorsSortEnum } from '@green-ecolution/backend-client'
 import type { SortDirection } from '@/components/general/list/ListSortMenu'
+import { ACTIVATED_ONLY_FILTERS, type SensorListView } from './sensorListView'
 
 // getRouteApi instead of importing Route: the route module imports this hook,
 // so a direct import would close a cycle.
@@ -44,6 +45,12 @@ export const useSensorListSearch = () => {
 
   const setHasTree = useCallback((value: boolean | undefined) => patch({ hasTree: value }), [patch])
 
+  const setView = useCallback(
+    (view: SensorListView) =>
+      patch({ ...ACTIVATED_ONLY_FILTERS, view: view === 'activated' ? undefined : view }),
+    [patch],
+  )
+
   const resetFilters = useCallback(
     () =>
       patch({
@@ -57,5 +64,5 @@ export const useSensorListSearch = () => {
     [patch],
   )
 
-  return { search, setQuery, setSort, setFilter, setHasTree, resetFilters }
+  return { search, setQuery, setSort, setFilter, setHasTree, setView, resetFilters }
 }

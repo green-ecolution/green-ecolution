@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { FolderClosed, TreeDeciduous } from 'lucide-react'
 import { useQueries, useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { DataHealth, ListSensorsSortEnum, SensorStatus } from '@green-ecolution/backend-client'
+import { DataHealth, ListSensorsSortEnum } from '@green-ecolution/backend-client'
 import ListToolbar from '@/components/general/list/ListToolbar'
 import ListSearchInput from '@/components/general/list/ListSearchInput'
 import ListFilterDropdown from '@/components/general/list/ListFilterDropdown'
@@ -14,6 +14,7 @@ import { clusterQueries, sensorQueries } from '@/api/queries'
 import { useSensorStatusDetails } from '@/hooks/details/useDetailsForSensorStatus'
 import { useDataQualityDetails } from '@/hooks/details/useDetailsForDataHealth'
 import { useSensorListSearch } from './useSensorListSearch'
+import { ACTIVATED_STATUSES } from './sensorListView'
 
 interface SensorListToolbarProps {
   filteredRecords: number
@@ -31,7 +32,9 @@ const SensorListToolbar = ({ filteredRecords, totalRecords, action }: SensorList
   const { data: models } = useQuery(sensorQueries.models())
   const { data: clusterPage } = useQuery(clusterQueries.list({ perPage: 100 }))
 
-  const statusOptions = Object.values(SensorStatus).map((status) => ({
+  const isPreparedView = search.view === 'prepared'
+
+  const statusOptions = ACTIVATED_STATUSES.map((status) => ({
     value: status,
     label: getSensorStatusDetails(status).label,
   }))
@@ -149,13 +152,15 @@ const SensorListToolbar = ({ filteredRecords, totalRecords, action }: SensorList
         }
         filters={
           <>
-            <ListFilterDropdown
-              label={t('list.filterStatus')}
-              options={statusOptions}
-              value={statuses}
-              onChange={(values) => setFilter('statuses', values)}
-              emptyText={t('list.filterNoOptions')}
-            />
+            {!isPreparedView && (
+              <ListFilterDropdown
+                label={t('list.filterStatus')}
+                options={statusOptions}
+                value={statuses}
+                onChange={(values) => setFilter('statuses', values)}
+                emptyText={t('list.filterNoOptions')}
+              />
+            )}
             <ListFilterDropdown
               label={t('list.filterModel')}
               options={modelOptions}
@@ -163,34 +168,38 @@ const SensorListToolbar = ({ filteredRecords, totalRecords, action }: SensorList
               onChange={(values) => setFilter('modelIds', values)}
               emptyText={t('list.filterNoOptions')}
             />
-            <ListFilterDropdown
-              label={t('list.filterDataHealth')}
-              options={dataHealthOptions}
-              value={dataHealth}
-              onChange={(values) => setFilter('dataHealth', values)}
-              emptyText={t('list.filterNoOptions')}
-            />
-            <ListFilterDropdown
-              label={t('list.filterTree')}
-              icon={TreeDeciduous}
-              mode="single"
-              options={treeOptions}
-              value={search.hasTree === undefined ? [] : [String(search.hasTree)]}
-              onChange={(values) =>
-                setHasTree(values[0] === undefined ? undefined : values[0] === 'true')
-              }
-              emptyText={t('list.filterNoOptions')}
-            />
-            {/* No 'any' / 'none' options: whether a sensor is linked at all is
-                what the tree filter next to it already answers. */}
-            <ListFilterDropdown
-              label={t('list.filterCluster')}
-              icon={FolderClosed}
-              options={clusterOptions}
-              value={clusterIds}
-              onChange={(values) => setFilter('clusterIds', values)}
-              emptyText={t('list.filterNoOptions')}
-            />
+            {!isPreparedView && (
+              <>
+                <ListFilterDropdown
+                  label={t('list.filterDataHealth')}
+                  options={dataHealthOptions}
+                  value={dataHealth}
+                  onChange={(values) => setFilter('dataHealth', values)}
+                  emptyText={t('list.filterNoOptions')}
+                />
+                <ListFilterDropdown
+                  label={t('list.filterTree')}
+                  icon={TreeDeciduous}
+                  mode="single"
+                  options={treeOptions}
+                  value={search.hasTree === undefined ? [] : [String(search.hasTree)]}
+                  onChange={(values) =>
+                    setHasTree(values[0] === undefined ? undefined : values[0] === 'true')
+                  }
+                  emptyText={t('list.filterNoOptions')}
+                />
+                {/* No 'any' / 'none' options: whether a sensor is linked at all is
+                    what the tree filter next to it already answers. */}
+                <ListFilterDropdown
+                  label={t('list.filterCluster')}
+                  icon={FolderClosed}
+                  options={clusterOptions}
+                  value={clusterIds}
+                  onChange={(values) => setFilter('clusterIds', values)}
+                  emptyText={t('list.filterNoOptions')}
+                />
+              </>
+            )}
           </>
         }
         sort={
