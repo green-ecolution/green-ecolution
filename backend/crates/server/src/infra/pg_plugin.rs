@@ -31,8 +31,8 @@ impl PluginReader for PgPluginRepository {
         sqlx::query_as!(
             PluginSnapshot,
             r#"SELECT id, slug, name, description, frontend_mode, frontend_target,
-                      organization_id, permissions, required_permissions, enabled,
-                      key_hash, last_seen_at
+                      organization_id, permissions, required_permissions, device_capabilities,
+                      enabled, key_hash, last_seen_at
                FROM plugins WHERE id = $1"#,
             id.value()
         )
@@ -47,8 +47,8 @@ impl PluginReader for PgPluginRepository {
         sqlx::query_as!(
             PluginSnapshot,
             r#"SELECT id, slug, name, description, frontend_mode, frontend_target,
-                      organization_id, permissions, required_permissions, enabled,
-                      key_hash, last_seen_at
+                      organization_id, permissions, required_permissions, device_capabilities,
+                      enabled, key_hash, last_seen_at
                FROM plugins WHERE slug = $1"#,
             slug.as_str()
         )
@@ -63,8 +63,8 @@ impl PluginReader for PgPluginRepository {
         let snapshots = sqlx::query_as!(
             PluginSnapshot,
             r#"SELECT id, slug, name, description, frontend_mode, frontend_target,
-                      organization_id, permissions, required_permissions, enabled,
-                      key_hash, last_seen_at
+                      organization_id, permissions, required_permissions, device_capabilities,
+                      enabled, key_hash, last_seen_at
                FROM plugins ORDER BY name ASC, id ASC"#
         )
         .fetch_all(&self.pool)
@@ -85,8 +85,8 @@ impl PluginReader for PgPluginRepository {
         let snap = sqlx::query_as!(
             PluginSnapshot,
             r#"SELECT id, slug, name, description, frontend_mode, frontend_target,
-                      organization_id, permissions, required_permissions, enabled,
-                      key_hash, last_seen_at
+                      organization_id, permissions, required_permissions, device_capabilities,
+                      enabled, key_hash, last_seen_at
                FROM plugins WHERE slug = $1"#,
             slug.as_str()
         )
@@ -186,6 +186,11 @@ impl PluginWriter for PgPluginRepository {
     ) -> Result<Plugin, RepositoryError> {
         let (frontend_mode, frontend_target) = frontend_parts(&draft.frontend);
         let permissions: Vec<String> = draft.permissions.iter().map(|p| p.to_string()).collect();
+        let device_capabilities: Vec<String> = draft
+            .device_capabilities
+            .iter()
+            .map(|c| c.as_str().to_string())
+            .collect();
         let required_permissions: Vec<String> = draft
             .required_permissions
             .iter()
@@ -194,9 +199,9 @@ impl PluginWriter for PgPluginRepository {
 
         sqlx::query!(
             r#"INSERT INTO plugins (id, slug, name, description, frontend_mode, frontend_target,
-                                     organization_id, permissions, required_permissions, enabled,
-                                     key_hash)
-               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, FALSE, $10)"#,
+                                     organization_id, permissions, required_permissions,
+                                     device_capabilities, enabled, key_hash)
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, FALSE, $11)"#,
             id.value(),
             draft.slug.as_str(),
             draft.name.as_str(),
@@ -206,6 +211,7 @@ impl PluginWriter for PgPluginRepository {
             draft.organization_id.value(),
             &permissions,
             &required_permissions,
+            &device_capabilities,
             key_hash.as_ref().map(|k| k.as_str()),
         )
         .execute(&self.pool)
@@ -221,6 +227,7 @@ impl PluginWriter for PgPluginRepository {
             organization_id: draft.organization_id.value(),
             permissions,
             required_permissions,
+            device_capabilities,
             enabled: false,
             key_hash: key_hash.map(|k| k.as_str().to_string()),
             last_seen_at: None,
@@ -231,6 +238,11 @@ impl PluginWriter for PgPluginRepository {
     async fn save(&self, plugin: &Plugin) -> Result<(), RepositoryError> {
         let (frontend_mode, frontend_target) = frontend_parts(plugin.frontend());
         let permissions: Vec<String> = plugin.permissions().iter().map(|p| p.to_string()).collect();
+        let device_capabilities: Vec<String> = plugin
+            .device_capabilities()
+            .iter()
+            .map(|c| c.as_str().to_string())
+            .collect();
         let required_permissions: Vec<String> = plugin
             .required_permissions()
             .iter()
@@ -241,7 +253,7 @@ impl PluginWriter for PgPluginRepository {
             r#"UPDATE plugins
                SET name = $2, description = $3, frontend_mode = $4, frontend_target = $5,
                    organization_id = $6, permissions = $7, required_permissions = $8,
-                   enabled = $9, key_hash = $10
+                   enabled = $9, key_hash = $10, device_capabilities = $11
                WHERE id = $1"#,
             plugin.id.value(),
             plugin.name.as_str(),
@@ -253,6 +265,7 @@ impl PluginWriter for PgPluginRepository {
             &required_permissions,
             plugin.enabled(),
             plugin.key_hash().map(|k| k.as_str()),
+            &device_capabilities,
         )
         .execute(&self.pool)
         .await?;

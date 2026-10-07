@@ -1,3 +1,5 @@
+use std::collections::BTreeSet;
+
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Deserializer, Serialize};
 use url::Url;
@@ -6,8 +8,8 @@ use uuid::Uuid;
 use domain::{
     Id,
     plugin::{
-        PluginDraft, PluginFrontend, PluginName, PluginSlug, PluginView, ServiceEndpoint, TreeRef,
-        TreeRefPage,
+        DeviceCapability, PluginDraft, PluginFrontend, PluginName, PluginSlug, PluginView,
+        ServiceEndpoint, TreeRef, TreeRefPage,
     },
 };
 
@@ -20,6 +22,12 @@ use crate::service::{
 
 use super::role::parse_permissions;
 
+fn parse_device_capabilities(raw: &[String]) -> Result<BTreeSet<DeviceCapability>, ServiceError> {
+    raw.iter()
+        .map(|c| c.parse::<DeviceCapability>().map_err(ServiceError::from))
+        .collect()
+}
+
 /// Represents an installed plugin, mirroring `PluginView` flat: no hash, no
 /// key. A later task reads `frontend_target` directly off this response.
 #[derive(Debug, Serialize, utoipa::ToSchema)]
@@ -31,6 +39,7 @@ use super::role::parse_permissions;
     "organization_id": "01980000-0000-7000-8000-000000000001",
     "permissions": ["tree:create", "tree:update"],
     "required_permissions": ["tree:read"],
+    "device_capabilities": [],
     "frontend_mode": "none",
     "frontend_target": null,
     "enabled": true,
@@ -46,6 +55,7 @@ pub struct PluginResponse {
     pub organization_id: Uuid,
     pub permissions: Vec<String>,
     pub required_permissions: Vec<String>,
+    pub device_capabilities: Vec<String>,
     pub frontend_mode: String,
     pub frontend_target: Option<String>,
     pub enabled: bool,
@@ -64,6 +74,7 @@ impl From<&PluginView> for PluginResponse {
             organization_id: view.organization_id.value(),
             permissions: view.permissions.clone(),
             required_permissions: view.required_permissions.clone(),
+            device_capabilities: view.device_capabilities.clone(),
             frontend_mode: view.frontend_mode.to_string(),
             frontend_target: view.frontend_target.clone(),
             enabled: view.enabled,
@@ -84,7 +95,8 @@ impl From<&PluginView> for PluginResponse {
     "name": "TBZ Baumkataster",
     "description": null,
     "frontend_mode": "external",
-    "frontend_target": "https://kataster.example.org/view"
+    "frontend_target": "https://kataster.example.org/view",
+    "device_capabilities": ["camera", "bluetooth"]
 }))]
 pub struct PluginViewResponse {
     pub slug: String,
@@ -92,6 +104,7 @@ pub struct PluginViewResponse {
     pub description: Option<String>,
     pub frontend_mode: String,
     pub frontend_target: Option<String>,
+    pub device_capabilities: Vec<String>,
 }
 
 impl From<&PluginView> for PluginViewResponse {
@@ -102,6 +115,7 @@ impl From<&PluginView> for PluginViewResponse {
             description: view.description.clone(),
             frontend_mode: view.frontend_mode.to_string(),
             frontend_target: view.frontend_target.clone(),
+            device_capabilities: view.device_capabilities.clone(),
         }
     }
 }
@@ -204,6 +218,8 @@ pub struct PluginCreateRequest {
     pub organization_id: Uuid,
     pub permissions: Vec<String>,
     pub required_permissions: Vec<String>,
+    #[serde(default)]
+    pub device_capabilities: Vec<String>,
     pub frontend: PluginFrontendDto,
 }
 
@@ -216,6 +232,7 @@ impl PluginCreateRequest {
             organization_id: Id::new(self.organization_id),
             permissions: parse_permissions(&self.permissions)?,
             required_permissions: parse_permissions(&self.required_permissions)?,
+            device_capabilities: parse_device_capabilities(&self.device_capabilities)?,
             frontend: self.frontend.into_domain(app_origins)?,
         })
     }
@@ -235,6 +252,7 @@ pub struct PluginUpdateRequest {
     pub frontend: Option<PluginFrontendDto>,
     pub permissions: Option<Vec<String>>,
     pub required_permissions: Option<Vec<String>>,
+    pub device_capabilities: Option<Vec<String>>,
     pub enabled: Option<bool>,
 }
 
@@ -254,6 +272,10 @@ impl PluginUpdateRequest {
             required_permissions: self
                 .required_permissions
                 .map(|p| parse_permissions(&p))
+                .transpose()?,
+            device_capabilities: self
+                .device_capabilities
+                .map(|c| parse_device_capabilities(&c))
                 .transpose()?,
             enabled: self.enabled,
         })

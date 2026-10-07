@@ -17,8 +17,8 @@ use domain::{
     Id,
     authorization::{Action, Permission, Resource},
     plugin::{
-        Plugin, PluginDraft, PluginFrontend, PluginKeyHash, PluginName, PluginReader, PluginSlug,
-        PluginView, PluginWriter,
+        DeviceCapability, Plugin, PluginDraft, PluginFrontend, PluginKeyHash, PluginName,
+        PluginReader, PluginSlug, PluginView, PluginWriter,
     },
 };
 
@@ -40,6 +40,7 @@ pub struct PluginChange {
     pub frontend: Option<PluginFrontend>,
     pub permissions: Option<BTreeSet<Permission>>,
     pub required_permissions: Option<BTreeSet<Permission>>,
+    pub device_capabilities: Option<BTreeSet<DeviceCapability>>,
     pub enabled: Option<bool>,
 }
 
@@ -181,6 +182,9 @@ impl PluginService {
         }
         if let Some(required_permissions) = change.required_permissions {
             plugin.replace_required_permissions(required_permissions);
+        }
+        if let Some(device_capabilities) = change.device_capabilities {
+            plugin.replace_device_capabilities(device_capabilities);
         }
         if let Some(enabled) = change.enabled {
             if enabled {
@@ -496,6 +500,11 @@ mod tests {
                     .iter()
                     .map(|p| p.to_string())
                     .collect(),
+                device_capabilities: draft
+                    .device_capabilities
+                    .iter()
+                    .map(|c| c.as_str().to_string())
+                    .collect(),
                 enabled: false,
                 key_hash: key_hash.map(|h| h.as_str().to_string()),
                 last_seen_at: None,
@@ -673,6 +682,7 @@ mod tests {
             frontend: None,
             permissions: None,
             required_permissions: None,
+            device_capabilities: None,
             enabled: None,
         }
     }
@@ -685,6 +695,7 @@ mod tests {
             organization_id: test_org(),
             permissions: BTreeSet::new(),
             required_permissions: BTreeSet::new(),
+            device_capabilities: BTreeSet::new(),
             frontend: PluginFrontend::None,
         }
     }

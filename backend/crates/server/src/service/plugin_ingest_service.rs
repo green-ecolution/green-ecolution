@@ -784,6 +784,7 @@ mod tests {
             organization_id: Uuid::now_v7(),
             permissions: permissions.iter().map(|p| p.to_string()).collect(),
             required_permissions: Vec::new(),
+            device_capabilities: Vec::new(),
             enabled: true,
             key_hash: None,
             last_seen_at: None,

@@ -275,6 +275,7 @@ async fn get_plugin_is_forbidden_across_organizations() {
             organization_id: domain::Id::new(Uuid::parse_str(OTHER_ORG).unwrap()),
             permissions: BTreeSet::new(),
             required_permissions: BTreeSet::new(),
+            device_capabilities: BTreeSet::new(),
             frontend: PluginFrontend::None,
         },
         None,
@@ -312,6 +313,7 @@ async fn seed_plugin_with_view(
                 .iter()
                 .map(|p| p.parse().unwrap())
                 .collect(),
+            device_capabilities: BTreeSet::new(),
             frontend: PluginFrontend::External("https://plugin.example.org/view".parse().unwrap()),
         },
         None,
@@ -420,4 +422,111 @@ async fn plugin_view_is_forbidden_across_organizations() {
         .get_with_bearer("/api/v1/plugins/other-org-view/view", &token)
         .await;
     assert_eq!(resp.status().as_u16(), 403);
+}
+
+#[tokio::test]
+async fn device_capabilities_are_stored_and_shown_in_the_view() {
+    let app = spawn_app_with_plugins().await;
+    let resp = app
+        .post_json(
+            "/api/v1/plugins",
+            &serde_json::json!({
+                "slug": "sensor-setup",
+                "name": "Sensor Setup",
+                "organization_id": ROOT_ORG,
+                "permissions": [],
+                "required_permissions": [],
+                "device_capabilities": ["bluetooth", "camera"],
+                "frontend": { "mode": "external", "target": "https://plugin.example.org/view" }
+            }),
+        )
+        .await;
+    assert_eq!(resp.status().as_u16(), 201);
+    app.patch_json(
+        "/api/v1/plugins/sensor-setup",
+        &serde_json::json!({ "enabled": true }),
+    )
+    .await;
+
+    let plugin: serde_json::Value = app
+        .get("/api/v1/plugins/sensor-setup")
+        .await
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(
+        plugin["device_capabilities"],
+        serde_json::json!(["camera", "bluetooth"])
+    );
+
+    let view: serde_json::Value = app
+        .get("/api/v1/plugins/sensor-setup/view")
+        .await
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(
+        view["device_capabilities"],
+        serde_json::json!(["camera", "bluetooth"])
+    );
+}
+
+#[tokio::test]
+async fn unknown_device_capability_is_rejected() {
+    let app = spawn_app_with_plugins().await;
+    let resp = app
+        .post_json(
+            "/api/v1/plugins",
+            &serde_json::json!({
+                "slug": "too-curious",
+                "name": "Too Curious",
+                "organization_id": ROOT_ORG,
+                "permissions": [],
+                "required_permissions": [],
+                "device_capabilities": ["geolocation"],
+                "frontend": { "mode": "none" }
+            }),
+        )
+        .await;
+    assert_eq!(resp.status().as_u16(), 400);
+}
+
+#[tokio::test]
+async fn device_capabilities_can_be_changed_and_cleared() {
+    let app = spawn_app_with_plugins().await;
+    app.post_json(
+        "/api/v1/plugins",
+        &serde_json::json!({
+            "slug": "cam-only",
+            "name": "Cam Only",
+            "organization_id": ROOT_ORG,
+            "permissions": [],
+            "required_permissions": [],
+            "device_capabilities": ["camera"],
+            "frontend": { "mode": "none" }
+        }),
+    )
+    .await;
+
+    let updated: serde_json::Value = app
+        .patch_json(
+            "/api/v1/plugins/cam-only",
+            &serde_json::json!({ "device_capabilities": [] }),
+        )
+        .await
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(updated["device_capabilities"], serde_json::json!([]));
+
+    let renamed: serde_json::Value = app
+        .patch_json(
+            "/api/v1/plugins/cam-only",
+            &serde_json::json!({ "name": "Renamed" }),
+        )
+        .await
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(renamed["device_capabilities"], serde_json::json!([]));
 }

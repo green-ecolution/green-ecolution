@@ -14,6 +14,7 @@ pub struct PluginSnapshot {
     pub organization_id: Uuid,
     pub permissions: Vec<String>,
     pub required_permissions: Vec<String>,
+    pub device_capabilities: Vec<String>,
     pub enabled: bool,
     pub key_hash: Option<String>,
     pub last_seen_at: Option<DateTime<Utc>>,
