@@ -36,3 +36,9 @@ export const pluginViewKind = (
 
   return { kind: 'iframe', target: plugin.frontendTarget }
 }
+
+const IFRAME_FEATURES = ['camera', 'bluetooth'] as const
+
+/** The iframe's `allow` attribute from the capabilities an operator granted. */
+export const iframeAllow = (capabilities: readonly string[]): string =>
+  IFRAME_FEATURES.filter((feature) => capabilities.includes(feature)).join('; ')

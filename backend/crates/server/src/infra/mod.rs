@@ -7,6 +7,7 @@ pub mod pg_comment;
 pub mod pg_evaluation;
 pub mod pg_organization;
 pub mod pg_plugin;
+pub mod pg_plugin_view_ticket;
 pub mod pg_region;
 pub mod pg_role;
 pub mod pg_sensor;

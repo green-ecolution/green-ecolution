@@ -7,11 +7,13 @@ import {
   LogIn,
   Map,
   PieChart,
+  Puzzle,
   Settings,
 } from 'lucide-react'
 import * as React from 'react'
 import { useCallback } from 'react'
 import { LinkProps } from '@tanstack/react-router'
+import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
 import NavLink from '../navigation/NavLink'
@@ -27,6 +29,8 @@ import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { useSidebarCollapsed } from '@/hooks/useSidebarCollapsed'
 import { visibleNavSections } from '@/lib/auth/routePermissions'
 import { usePermissions } from '@/lib/auth/usePermissions'
+import { pluginViewsQuery } from '@/api/queries'
+import type { PluginNavEntryResponse } from '@/api/backendApi'
 
 interface NavigationProps {
   isOpen: boolean
@@ -153,6 +157,21 @@ const protectedNavData = (t: TFunction<'navigation'>): NavSectionData[] => [
   },
 ]
 
+const pluginNavSection = (
+  t: TFunction<'navigation'>,
+  views: PluginNavEntryResponse[],
+): NavSectionData => ({
+  id: 4,
+  headline: t('sidebar.headlinePlugins'),
+  links: views.map((view) => ({
+    key: `nav-plugin-${view.slug}`,
+    label: view.name,
+    icon: <Puzzle className="w-5 h-5" />,
+    to: '/plugin/$slug',
+    params: { slug: view.slug },
+  })),
+})
+
 const Navigation: React.FC<NavigationProps> = ({ isOpen, closeSidebar }) => {
   const isLargeScreen = useMediaQuery('(min-width: 1024px)')
   const { isAuthenticated: isLoggedIn } = useAuthSession()
@@ -166,9 +185,10 @@ const Navigation: React.FC<NavigationProps> = ({ isOpen, closeSidebar }) => {
     if (!isLargeScreen) closeSidebar()
   }, [isLargeScreen, closeSidebar])
 
+  const { data: pluginViews = [] } = useQuery({ ...pluginViewsQuery(), enabled: isLoggedIn })
   const perms = usePermissions()
   const navigationData = isLoggedIn
-    ? visibleNavSections(protectedNavData(t), perms)
+    ? visibleNavSections([...protectedNavData(t), pluginNavSection(t, pluginViews)], perms)
     : publicNavData(t)
 
   return (

@@ -3,12 +3,13 @@ import { useEffect, useRef } from 'react'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { Alert, AlertContent, AlertDescription, AlertIcon } from '@green-ecolution/ui'
-import { createPluginHost, type PluginContext } from '@green-ecolution/plugin-interface'
+import { createPluginHost } from '@green-ecolution/plugin-interface'
 import { pluginViewQuery } from '@/api/queries'
 import { useCurrentUser } from '@/lib/auth/useCurrentUser'
 import { languageOf } from '@/lib/i18n/languages'
 import { entityNotFound, forbiddenErrorComponent, pendingLoading } from '@/lib/router'
-import { pluginViewKind } from '@/components/plugin/pluginView'
+import { iframeAllow, pluginViewKind } from '@/components/plugin/pluginView'
+import { pluginContextFactory } from '@/components/plugin/pluginContext'
 
 export const Route = createFileRoute('/_protected/plugin/$slug/')({
   component: PluginViewPage,
@@ -61,15 +62,19 @@ function PluginViewPage() {
     const iframe = frameRef.current
     if (!iframe || !target) return
 
-    const context: PluginContext = {
+    const context = pluginContextFactory({
       locale: languageOf(i18n.language),
       // The app has no theme switch yet, so every plugin view starts in light mode.
       theme: 'light',
       user: { displayName },
       plugin: { slug: plugin.slug },
-    }
+    })
 
-    return createPluginHost(iframe, { origin: new URL(target).origin, context })
+    return createPluginHost(iframe, {
+      origin: new URL(target).origin,
+      context,
+      onContextError: (error) => console.error('Plugin view ticket could not be issued', error),
+    })
   }, [target, plugin.slug, displayName, i18n.language])
 
   if (view.kind === 'proxied') {
@@ -95,7 +100,7 @@ function PluginViewPage() {
       // eslint-disable-next-line react-dom/no-unsafe-iframe-sandbox -- see comment above
       sandbox="allow-scripts allow-forms allow-popups allow-same-origin"
       referrerPolicy="no-referrer"
-      allow=""
+      allow={iframeAllow(plugin.deviceCapabilities)}
       // Grows into the space left between header and footer. A percentage height
       // would resolve to auto here, so App turns main into a flex column for
       // plugin routes and the frame claims the remaining main-axis space.

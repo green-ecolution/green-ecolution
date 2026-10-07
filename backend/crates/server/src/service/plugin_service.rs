@@ -17,12 +17,15 @@ use domain::{
     Id,
     authorization::{Action, Permission, Resource},
     plugin::{
-        Plugin, PluginDraft, PluginFrontend, PluginKeyHash, PluginName, PluginReader, PluginSlug,
-        PluginView, PluginWriter,
+        DeviceCapability, Plugin, PluginDraft, PluginFrontend, PluginKeyHash, PluginName,
+        PluginReader, PluginSlug, PluginView, PluginWriter,
     },
 };
 
-use super::{AuthError, ServiceError, authorization::AuthorizationService};
+use super::{
+    AuthError, ServiceError,
+    authorization::{AuthorizationService, may_open_plugin_view},
+};
 
 /// Mints the plaintext key shown once to the operator plus the hash to
 /// persist. A CSPRNG and a digest are adapter concerns, so the service takes
@@ -40,6 +43,7 @@ pub struct PluginChange {
     pub frontend: Option<PluginFrontend>,
     pub permissions: Option<BTreeSet<Permission>>,
     pub required_permissions: Option<BTreeSet<Permission>>,
+    pub device_capabilities: Option<BTreeSet<DeviceCapability>>,
     pub enabled: Option<bool>,
 }
 
@@ -114,6 +118,28 @@ impl PluginService {
         Ok(PluginView::from_aggregate(&plugin, None))
     }
 
+    /// The plugins whose view the actor may open right now, for the navigation.
+    /// Roles are resolved once for the whole list instead of once per plugin.
+    #[tracing::instrument(level = "debug", skip_all)]
+    pub async fn openable_views(&self, actor: Uuid) -> Result<Vec<PluginView>, ServiceError> {
+        let ctx = self.authorization.context_for(actor).await?;
+        Ok(self
+            .reader
+            .all()
+            .await?
+            .into_iter()
+            .filter(|view| view.enabled && view.frontend_mode != "none")
+            .filter(|view| {
+                let required: BTreeSet<Permission> = view
+                    .required_permissions
+                    .iter()
+                    .filter_map(|p| p.parse().ok())
+                    .collect();
+                may_open_plugin_view(&ctx, &required, view.organization_id)
+            })
+            .collect())
+    }
+
     #[tracing::instrument(level = "debug", skip_all)]
     pub async fn install(
         &self,
@@ -181,6 +207,9 @@ impl PluginService {
         }
         if let Some(required_permissions) = change.required_permissions {
             plugin.replace_required_permissions(required_permissions);
+        }
+        if let Some(device_capabilities) = change.device_capabilities {
+            plugin.replace_device_capabilities(device_capabilities);
         }
         if let Some(enabled) = change.enabled {
             if enabled {
@@ -496,6 +525,11 @@ mod tests {
                     .iter()
                     .map(|p| p.to_string())
                     .collect(),
+                device_capabilities: draft
+                    .device_capabilities
+                    .iter()
+                    .map(|c| c.as_str().to_string())
+                    .collect(),
                 enabled: false,
                 key_hash: key_hash.map(|h| h.as_str().to_string()),
                 last_seen_at: None,
@@ -673,6 +707,7 @@ mod tests {
             frontend: None,
             permissions: None,
             required_permissions: None,
+            device_capabilities: None,
             enabled: None,
         }
     }
@@ -685,6 +720,7 @@ mod tests {
             organization_id: test_org(),
             permissions: BTreeSet::new(),
             required_permissions: BTreeSet::new(),
+            device_capabilities: BTreeSet::new(),
             frontend: PluginFrontend::None,
         }
     }

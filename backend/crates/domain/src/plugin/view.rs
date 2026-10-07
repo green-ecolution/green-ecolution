@@ -15,6 +15,7 @@ pub struct PluginView {
     pub organization_id: crate::Id<crate::organization::Organization>,
     pub permissions: Vec<String>,
     pub required_permissions: Vec<String>,
+    pub device_capabilities: Vec<String>,
     pub frontend_mode: &'static str,
     pub frontend_target: Option<String>,
     pub enabled: bool,
@@ -43,6 +44,11 @@ impl PluginView {
                 .required_permissions()
                 .iter()
                 .map(|p| p.to_string())
+                .collect(),
+            device_capabilities: plugin
+                .device_capabilities()
+                .iter()
+                .map(|c| c.as_str().to_string())
                 .collect(),
             frontend_mode,
             frontend_target,

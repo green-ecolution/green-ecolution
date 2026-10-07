@@ -2199,6 +2199,153 @@
         }
       }
     },
+    "/v1/plugins/ingest/sensor-models": {
+      "get": {
+        "tags": [
+          "Plugins"
+        ],
+        "summary": "List sensor models for a plugin",
+        "description": "Same catalogue as GET /sensors/models, for a plugin key. Requires sensor:read in the plugin's organization.",
+        "operationId": "listPluginSensorModels",
+        "responses": {
+          "200": {
+            "description": "Sensor models",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SensorModelResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden or plugin disabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Plugins feature is disabled (code `feature.plugins_disabled`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/plugins/ingest/sensors": {
+      "post": {
+        "tags": [
+          "Plugins"
+        ],
+        "summary": "Register a prepared sensor from a plugin",
+        "description": "Creates a sensor in `Prepared` state in the plugin's organization, with the plugin's slug as provider. Requires sensor:create in the plugin's organization.",
+        "operationId": "createPluginSensor",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PluginSensorCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Sensor created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SensorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request body",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden or plugin disabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Sensor model not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Sensor id already exists (code `resource.already_exists`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Plugins feature is disabled (code `feature.plugins_disabled`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/plugins/ingest/trees": {
       "get": {
         "tags": [
@@ -2446,6 +2593,123 @@
           },
           "403": {
             "description": "Plugin is disabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Plugins feature is disabled (code `feature.plugins_disabled`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/plugins/view-tickets/redeem": {
+      "post": {
+        "tags": [
+          "Plugins"
+        ],
+        "summary": "Redeem a view ticket",
+        "description": "Exchanges a view ticket handed to the plugin's view for the identity of the user who opened it. A ticket is valid for two minutes, can be redeemed once and only by the plugin it was issued for. Any failure answers 401 with code `plugin.view_ticket_invalid`.",
+        "operationId": "redeemPluginViewTicket",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ViewTicketRedeemRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The user who opened the view",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ViewTicketRedeemResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid plugin key or view ticket",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Plugin is disabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Plugins feature is disabled (code `feature.plugins_disabled`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/plugins/views": {
+      "get": {
+        "tags": [
+          "Plugins"
+        ],
+        "summary": "List the plugin views the caller may open",
+        "description": "Returns every enabled plugin with a view whose required_permissions the caller holds in the plugin's organization. Does not require plugin:read.",
+        "operationId": "listPluginViews",
+        "responses": {
+          "200": {
+            "description": "Openable plugin views",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PluginNavEntryResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
             "content": {
               "application/json": {
                 "schema": {
@@ -2814,7 +3078,7 @@
           "Plugins"
         ],
         "summary": "Get a plugin's view",
-        "description": "Returns what is needed to embed a plugin's view. Requires the plugin's own required_permissions in its organization -- plugin:read administers a plugin and is not what opening its view is about, though it grants access here as well.",
+        "description": "Returns what is needed to embed a plugin's view. Requires the plugin's own required_permissions in its organization -- plugin:read administers a plugin and is not what opening its view is about, though it grants access here as well. Every call issues a fresh single-use view ticket for the caller.",
         "operationId": "getPluginView",
         "parameters": [
           {
@@ -10165,6 +10429,12 @@
               "null"
             ]
           },
+          "device_capabilities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "frontend": {
             "$ref": "#/components/schemas/PluginFrontendDto"
           },
@@ -10276,6 +10546,26 @@
           "key": "gep_0199a1f0-4c3e-7b2d-8a41-6f5c2e9d3b70.7b1e3c9a4f2d6081b3c5e7a9d1f3b5c72e4a6c8e0f1d3b5a7c9e1f3d5b7a9c1e"
         }
       },
+      "PluginNavEntryResponse": {
+        "type": "object",
+        "description": "One navigation entry: just enough to link to `/plugin/{slug}`.",
+        "required": [
+          "slug",
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          }
+        },
+        "example": {
+          "name": "Sensor-Einrichtung",
+          "slug": "sensor-setup"
+        }
+      },
       "PluginResponse": {
         "type": "object",
         "description": "Represents an installed plugin, mirroring `PluginView` flat: no hash, no\nkey. A later task reads `frontend_target` directly off this response.",
@@ -10286,6 +10576,7 @@
           "organization_id",
           "permissions",
           "required_permissions",
+          "device_capabilities",
           "frontend_mode",
           "enabled",
           "has_credential"
@@ -10303,6 +10594,12 @@
               "string",
               "null"
             ]
+          },
+          "device_capabilities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "enabled": {
             "type": "boolean"
@@ -10356,6 +10653,7 @@
         "example": {
           "created_at": "2026-08-01T00:00:00Z",
           "description": null,
+          "device_capabilities": [],
           "enabled": true,
           "frontend_mode": "none",
           "frontend_target": null,
@@ -10374,6 +10672,44 @@
           "slug": "tbz-baumkataster"
         }
       },
+      "PluginSensorCreateRequest": {
+        "type": "object",
+        "description": "Body for `POST /plugins/ingest/sensors`: the user-facing create request\nwithout `organization_id` and `provider`, which always come from the plugin.",
+        "required": [
+          "id",
+          "sensor_type",
+          "model_id"
+        ],
+        "properties": {
+          "additional_information": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "example": "eui-a84041000181c001"
+          },
+          "lorawan": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/LorawanCredentialsRequest"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "model_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sensor_type": {
+            "$ref": "#/components/schemas/SensorTypeResponse"
+          }
+        }
+      },
       "PluginUpdateRequest": {
         "type": "object",
         "description": "Request body for updating an installed plugin. Every field is optional; an\nomitted field leaves it untouched. `description` is a double-option so\n\"omitted\" and \"set to null\" (clear it) stay distinguishable, matching\n`PluginChange`.",
@@ -10383,6 +10719,15 @@
               "string",
               "null"
             ]
+          },
+          "device_capabilities": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
           },
           "enabled": {
             "type": [
@@ -10435,7 +10780,9 @@
         "required": [
           "slug",
           "name",
-          "frontend_mode"
+          "frontend_mode",
+          "device_capabilities",
+          "view_ticket"
         ],
         "properties": {
           "description": {
@@ -10443,6 +10790,12 @@
               "string",
               "null"
             ]
+          },
+          "device_capabilities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "frontend_mode": {
             "type": "string"
@@ -10458,14 +10811,23 @@
           },
           "slug": {
             "type": "string"
+          },
+          "view_ticket": {
+            "type": "string",
+            "description": "Single-use, valid for two minutes. Hand it to the plugin's own backend,\nwhich redeems it to learn who opened the view."
           }
         },
         "example": {
           "description": null,
+          "device_capabilities": [
+            "camera",
+            "bluetooth"
+          ],
           "frontend_mode": "external",
           "frontend_target": "https://kataster.example.org/view",
           "name": "TBZ Baumkataster",
-          "slug": "tbz-baumkataster"
+          "slug": "tbz-baumkataster",
+          "view_ticket": "gev_3f2a9c41d7b05e6a8f1c2d3e4b5a69788796a5b4c3d2e1f00112233445566778"
         }
       },
       "ReadinessResponse": {
@@ -13607,6 +13969,59 @@
           "updateAvailable": {
             "type": "boolean",
             "example": false
+          }
+        }
+      },
+      "ViewTicketRedeemRequest": {
+        "type": "object",
+        "required": [
+          "ticket"
+        ],
+        "properties": {
+          "ticket": {
+            "type": "string"
+          }
+        },
+        "example": {
+          "ticket": "gev_3f2a…"
+        }
+      },
+      "ViewTicketRedeemResponse": {
+        "type": "object",
+        "required": [
+          "user",
+          "organization_id"
+        ],
+        "properties": {
+          "organization_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "user": {
+            "$ref": "#/components/schemas/ViewTicketUserResponse"
+          }
+        },
+        "example": {
+          "organization_id": "01980000-0000-7000-8000-000000000001",
+          "user": {
+            "display_name": "Jane Doe",
+            "id": "01990000-0000-7000-8000-0000000000aa"
+          }
+        }
+      },
+      "ViewTicketUserResponse": {
+        "type": "object",
+        "required": [
+          "id",
+          "display_name"
+        ],
+        "properties": {
+          "display_name": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
           }
         }
       },

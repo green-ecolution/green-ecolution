@@ -43,7 +43,8 @@ straight to the ingest contract.
 
 When a plugin has a view, Green Ecolution renders it in a sandboxed iframe
 (`allow-scripts allow-forms allow-popups allow-same-origin`, `referrerPolicy="no-referrer"`,
-no `allow` features) and waits for it to say hello. The protocol is a small envelope
+`allow` only lists the device capabilities an administrator granted the plugin
+(`camera`, `bluetooth`), and is empty otherwise) and waits for it to say hello. The protocol is a small envelope
 carried over `window.postMessage`:
 
 ```typescript
@@ -67,7 +68,8 @@ to a `ge:hello` whose `event.source` is the iframe's own `contentWindow` (checki
 host page), and the plugin only accepts a `ge:init` whose `event.source` is
 `window.parent`. None of this carries a secret, so the target origin on the plugin's
 side is `'*'`; the check is about which window sent the message, not about hiding its
-contents.
+contents. The view ticket is the one exception, which is why the host answers only its own
+iframe's `contentWindow` on the plugin's registered origin.
 
 ### `connectToHost()`
 
@@ -148,15 +150,25 @@ interface PluginContext {
   theme: 'light' | 'dark'
   user: { displayName: string }
   plugin: { slug: string }
+  /**
+   * Single-use, valid for two minutes. Not a credential for the Green
+   * Ecolution API: hand it to your own backend, which redeems it with the
+   * plugin key to learn who opened the view.
+   */
+  viewTicket?: string
 }
 ```
 
-This is presentation context only: a display name to greet the operator with, the
-interface language and colour scheme to match, and the plugin's own slug. It carries no
-token and no credential. A plugin's view runs as a visitor, not as an authenticated
-API client; if your plugin needs to write data, that happens through your own backend
-using the plugin's API key against the ingest endpoints below, never from the browser
-using anything handed to it in `PluginContext`.
+This is presentation context plus one optional ticket: a display name to greet the
+operator with, the interface language and colour scheme to match, the plugin's own slug,
+and `viewTicket`. The ticket is not a credential for the Green Ecolution API. It is
+single-use, valid for two minutes, and only your plugin can redeem it: send it to your own
+backend, which calls `POST /api/v1/plugins/view-tickets/redeem` with the plugin key and
+`{ "ticket": "<viewTicket>" }`. The answer names the user who opened the view
+(`user.id`, `user.display_name`) and the plugin's `organization_id`. Use it to start your
+own session for the view; every new handshake carries a fresh ticket. An expired, already
+redeemed or foreign ticket answers `401` with code `plugin.view_ticket_invalid`; a disabled
+plugin gets `403`.
 
 ## The ingest contract
 
@@ -277,6 +289,25 @@ your own source system:
 Pass `next_cursor` back as `cursor` to fetch the next page; a response with no
 `next_cursor` is the last page. There is no `total`; walk the pages to the end rather
 than trying to estimate how many are left.
+
+### List sensor models
+
+```
+GET /api/v1/plugins/ingest/sensor-models
+```
+
+Lists the sensor models a plugin can reference when it creates a sensor. Requires `sensor:read`.
+
+### Create a sensor
+
+```
+POST /api/v1/plugins/ingest/sensors
+```
+
+Creates a sensor with the same body as the user-facing sensor creation, minus
+`organization_id` and `provider`: the sensor always belongs to the plugin's organization and
+its `provider` is the plugin's slug. Requires `sensor:create`; answers `201`, `400`, `403`,
+`404` for an unknown `model_id`, or `409`.
 
 ## What a plugin cannot do
 

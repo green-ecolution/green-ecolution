@@ -101,7 +101,8 @@ fn auth_error_response(e: &AuthError) -> (StatusCode, String) {
         AuthError::MissingToken
         | AuthError::InvalidToken(_)
         | AuthError::TokenExpired
-        | AuthError::PluginKeyInvalid => StatusCode::UNAUTHORIZED,
+        | AuthError::PluginKeyInvalid
+        | AuthError::PluginViewTicketInvalid => StatusCode::UNAUTHORIZED,
         AuthError::Forbidden | AuthError::PluginDisabled => StatusCode::FORBIDDEN,
         AuthError::IdpUnavailable(_) => StatusCode::SERVICE_UNAVAILABLE,
     };
@@ -380,6 +381,14 @@ mod tests {
         assert_eq!(response.status(), StatusCode::FORBIDDEN);
         let body: serde_json::Value = serde_json::from_str(&body_of(response).await).unwrap();
         assert!(body["error"].is_string());
+    }
+
+    #[tokio::test]
+    async fn invalid_view_ticket_is_unauthorized_with_its_code() {
+        let response = ServiceError::Auth(AuthError::PluginViewTicketInvalid).into_response();
+        assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+        let body: serde_json::Value = serde_json::from_str(&body_of(response).await).unwrap();
+        assert_eq!(body["code"], "plugin.view_ticket_invalid");
     }
 }
 

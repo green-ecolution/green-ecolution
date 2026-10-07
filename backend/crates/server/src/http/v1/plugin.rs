@@ -13,13 +13,16 @@ use domain::{
 };
 
 use super::dto::plugin::{
-    IngestBatchResponse, PluginCreateRequest, PluginKeyResponse, PluginResponse,
-    PluginUpdateRequest, PluginViewResponse, TreeIngestBatchRequest, TreeRefListParams,
-    TreeRefPageResponse,
+    IngestBatchResponse, PluginCreateRequest, PluginKeyResponse, PluginNavEntryResponse,
+    PluginResponse, PluginSensorCreateRequest, PluginUpdateRequest, PluginViewResponse,
+    TreeIngestBatchRequest, TreeRefListParams, TreeRefPageResponse, ViewTicketRedeemRequest,
+    ViewTicketRedeemResponse, ViewTicketUserResponse,
 };
+use super::dto::sensor::{SensorModelResponse, SensorResponse};
 
 pub fn routes() -> OpenApiRouter<Arc<AppState>> {
     OpenApiRouter::new()
+        .routes(routes!(list_plugin_views))
         .routes(routes!(list_plugins, install_plugin))
         .routes(routes!(get_plugin, update_plugin, uninstall_plugin))
         .routes(routes!(rotate_plugin_key))
@@ -32,8 +35,11 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
 pub fn ingest_routes() -> OpenApiRouter<Arc<AppState>> {
     OpenApiRouter::new()
         .routes(routes!(get_own_plugin))
+        .routes(routes!(redeem_view_ticket))
         .routes(routes!(list_tree_refs, upsert_trees))
         .routes(routes!(delete_tree_ref))
+        .routes(routes!(list_plugin_sensor_models))
+        .routes(routes!(create_plugin_sensor))
 }
 
 fn guard(state: &AppState) -> Result<(), ServiceError> {
@@ -64,6 +70,29 @@ pub async fn list_plugins(
     guard(&state)?;
     let views = state.plugin_service.list(user.id).await?;
     Ok(Json(views.iter().map(Into::into).collect()))
+}
+
+#[utoipa::path(get, path = "/plugins/views", tag = "Plugins",
+    operation_id = "listPluginViews",
+    summary = "List the plugin views the caller may open",
+    description = "Returns every enabled plugin with a view whose required_permissions the caller holds in the plugin's organization. Does not require plugin:read.",
+    responses(
+        (status = 200, description = "Openable plugin views", body = Vec<PluginNavEntryResponse>),
+        (status = 401, description = "Unauthorized", body = ErrorBody),
+        (status = 503, description = "Plugins feature is disabled (code `feature.plugins_disabled`)", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
+    )
+)]
+#[tracing::instrument(level = "info", skip_all)]
+pub async fn list_plugin_views(
+    State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
+) -> Result<Json<Vec<PluginNavEntryResponse>>, ServiceError> {
+    guard(&state)?;
+    let views = state.plugin_service.openable_views(user.id).await?;
+    Ok(Json(
+        views.iter().map(PluginNavEntryResponse::from).collect(),
+    ))
 }
 
 #[utoipa::path(post, path = "/plugins", tag = "Plugins",
@@ -135,7 +164,7 @@ pub async fn get_plugin(
 #[utoipa::path(get, path = "/plugins/{plugin_slug}/view", tag = "Plugins",
     operation_id = "getPluginView",
     summary = "Get a plugin's view",
-    description = "Returns what is needed to embed a plugin's view. Requires the plugin's own required_permissions in its organization -- plugin:read administers a plugin and is not what opening its view is about, though it grants access here as well.",
+    description = "Returns what is needed to embed a plugin's view. Requires the plugin's own required_permissions in its organization -- plugin:read administers a plugin and is not what opening its view is about, though it grants access here as well. Every call issues a fresh single-use view ticket for the caller.",
     params(("plugin_slug" = String, Path, description = "Plugin slug")),
     responses(
         (status = 200, description = "Plugin view", body = PluginViewResponse),
@@ -155,7 +184,11 @@ pub async fn get_plugin_view(
     guard(&state)?;
     let slug = PluginSlug::new(slug)?;
     let view = state.plugin_service.view_for(user.id, &slug).await?;
-    Ok(Json((&view).into()))
+    let ticket = state
+        .plugin_view_ticket_service
+        .issue(view.id, &user)
+        .await?;
+    Ok(Json(PluginViewResponse::new(&view, ticket)))
 }
 
 #[utoipa::path(patch, path = "/plugins/{plugin_slug}", tag = "Plugins",
@@ -262,6 +295,38 @@ pub async fn get_own_plugin(
     Ok(Json((&view).into()))
 }
 
+#[utoipa::path(post, path = "/plugins/view-tickets/redeem", tag = "Plugins",
+    operation_id = "redeemPluginViewTicket",
+    summary = "Redeem a view ticket",
+    description = "Exchanges a view ticket handed to the plugin's view for the identity of the user who opened it. A ticket is valid for two minutes, can be redeemed once and only by the plugin it was issued for. Any failure answers 401 with code `plugin.view_ticket_invalid`.",
+    request_body = ViewTicketRedeemRequest,
+    responses(
+        (status = 200, description = "The user who opened the view", body = ViewTicketRedeemResponse),
+        (status = 401, description = "Invalid plugin key or view ticket", body = ErrorBody),
+        (status = 403, description = "Plugin is disabled", body = ErrorBody),
+        (status = 503, description = "Plugins feature is disabled (code `feature.plugins_disabled`)", body = ErrorBody),
+    )
+)]
+#[tracing::instrument(level = "info", skip_all)]
+pub async fn redeem_view_ticket(
+    State(state): State<Arc<AppState>>,
+    plugin: PluginPrincipal,
+    Json(body): Json<ViewTicketRedeemRequest>,
+) -> Result<Json<ViewTicketRedeemResponse>, ServiceError> {
+    guard(&state)?;
+    let redeemed = state
+        .plugin_view_ticket_service
+        .redeem(&plugin.0, &body.ticket)
+        .await?;
+    Ok(Json(ViewTicketRedeemResponse {
+        user: ViewTicketUserResponse {
+            id: redeemed.user_id,
+            display_name: redeemed.user_display_name,
+        },
+        organization_id: plugin.0.organization_id().value(),
+    }))
+}
+
 #[utoipa::path(get, path = "/plugins/ingest/trees", tag = "Plugins",
     operation_id = "listPluginTreeRefs",
     summary = "List a plugin's own tree references",
@@ -350,4 +415,58 @@ pub async fn delete_tree_ref(
         .delete_tree(&plugin.0, &external_id)
         .await?;
     Ok(StatusCode::NO_CONTENT)
+}
+
+#[utoipa::path(get, path = "/plugins/ingest/sensor-models", tag = "Plugins",
+    operation_id = "listPluginSensorModels",
+    summary = "List sensor models for a plugin",
+    description = "Same catalogue as GET /sensors/models, for a plugin key. Requires sensor:read in the plugin's organization.",
+    responses(
+        (status = 200, description = "Sensor models", body = Vec<SensorModelResponse>),
+        (status = 401, description = "Unauthorized", body = ErrorBody),
+        (status = 403, description = "Forbidden or plugin disabled", body = ErrorBody),
+        (status = 503, description = "Plugins feature is disabled (code `feature.plugins_disabled`)", body = ErrorBody),
+    )
+)]
+#[tracing::instrument(level = "info", skip_all)]
+pub async fn list_plugin_sensor_models(
+    State(state): State<Arc<AppState>>,
+    plugin: PluginPrincipal,
+) -> Result<Json<Vec<SensorModelResponse>>, ServiceError> {
+    guard(&state)?;
+    let models = state
+        .plugin_sensor_ingest_service
+        .list_models(&plugin.0)
+        .await?;
+    Ok(Json(models.iter().map(SensorModelResponse::from).collect()))
+}
+
+#[utoipa::path(post, path = "/plugins/ingest/sensors", tag = "Plugins",
+    operation_id = "createPluginSensor",
+    summary = "Register a prepared sensor from a plugin",
+    description = "Creates a sensor in `Prepared` state in the plugin's organization, with the plugin's slug as provider. Requires sensor:create in the plugin's organization.",
+    request_body = PluginSensorCreateRequest,
+    responses(
+        (status = 201, description = "Sensor created", body = SensorResponse),
+        (status = 400, description = "Invalid request body", body = ErrorBody),
+        (status = 401, description = "Unauthorized", body = ErrorBody),
+        (status = 403, description = "Forbidden or plugin disabled", body = ErrorBody),
+        (status = 404, description = "Sensor model not found", body = ErrorBody),
+        (status = 409, description = "Sensor id already exists (code `resource.already_exists`)", body = ErrorBody),
+        (status = 503, description = "Plugins feature is disabled (code `feature.plugins_disabled`)", body = ErrorBody),
+    )
+)]
+#[tracing::instrument(level = "info", skip_all)]
+pub async fn create_plugin_sensor(
+    State(state): State<Arc<AppState>>,
+    plugin: PluginPrincipal,
+    Json(body): Json<PluginSensorCreateRequest>,
+) -> Result<(StatusCode, Json<SensorResponse>), ServiceError> {
+    guard(&state)?;
+    let draft = body.into_draft(&plugin.0)?;
+    let view = state
+        .plugin_sensor_ingest_service
+        .create(&plugin.0, draft)
+        .await?;
+    Ok((StatusCode::CREATED, Json(SensorResponse::from(&view))))
 }

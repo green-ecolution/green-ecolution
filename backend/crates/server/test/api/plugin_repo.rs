@@ -15,6 +15,7 @@ fn draft(slug: &str) -> PluginDraft {
         organization_id: domain::Id::new(Uuid::parse_str(ROOT_ORG).unwrap()),
         permissions: BTreeSet::new(),
         required_permissions: BTreeSet::new(),
+        device_capabilities: BTreeSet::new(),
         frontend: domain::plugin::PluginFrontend::None,
     }
 }

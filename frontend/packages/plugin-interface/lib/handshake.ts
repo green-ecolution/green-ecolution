@@ -6,7 +6,15 @@ export interface PluginContext {
   theme: 'light' | 'dark'
   user: { displayName: string }
   plugin: { slug: string }
+  /**
+   * Single-use, valid for two minutes. Not a credential for the Green
+   * Ecolution API: hand it to your own backend, which redeems it with the
+   * plugin key to learn who opened the view.
+   */
+  viewTicket?: string
 }
+
+export type PluginContextSource = PluginContext | (() => Promise<PluginContext>)
 
 export type Envelope<T> = {
   ns: typeof NAMESPACE
@@ -35,8 +43,9 @@ function isResizePayload(payload: unknown): payload is { height: number } {
 
 export interface CreatePluginHostOptions {
   origin: string
-  context: PluginContext
+  context: PluginContextSource
   onResize?: (height: number) => void
+  onContextError?: (error: unknown) => void
 }
 
 /**
@@ -46,15 +55,38 @@ export interface CreatePluginHostOptions {
  */
 export function createPluginHost(
   iframe: HTMLIFrameElement,
-  { origin, context, onResize }: CreatePluginHostOptions,
+  { origin, context, onResize, onContextError }: CreatePluginHostOptions,
 ): () => void {
+  let disposed = false
+  let pending: Promise<PluginContext> | null = null
+
+  const answer = (payload: PluginContext) => {
+    if (disposed) return
+    iframe.contentWindow?.postMessage(envelope('ge:init', payload), origin)
+  }
+
+  // The plugin repeats its hello until answered, so concurrent hellos share
+  // one factory call instead of each minting a fresh view ticket.
+  const contextFromFactory = (factory: () => Promise<PluginContext>) => {
+    pending ??= factory().finally(() => {
+      pending = null
+    })
+    return pending
+  }
+
   const handleMessage = (event: MessageEvent) => {
     if (event.origin !== origin) return
     if (event.source !== iframe.contentWindow) return
     if (!isEnvelope(event.data)) return
 
     if (event.data.type === 'ge:hello') {
-      iframe.contentWindow?.postMessage(envelope('ge:init', context), origin)
+      if (typeof context === 'function') {
+        contextFromFactory(context).then(answer, (error: unknown) => {
+          if (!disposed) onContextError?.(error)
+        })
+      } else {
+        answer(context)
+      }
       return
     }
 
@@ -64,7 +96,10 @@ export function createPluginHost(
   }
 
   window.addEventListener('message', handleMessage)
-  return () => window.removeEventListener('message', handleMessage)
+  return () => {
+    disposed = true
+    window.removeEventListener('message', handleMessage)
+  }
 }
 
 /**

@@ -50,7 +50,9 @@ use crate::{
         handlers::tree_watering::TreeWateringFromSensorHandler,
         organization_service::OrganizationService,
         plugin_ingest_service::PluginIngestService,
+        plugin_sensor_ingest_service::PluginSensorIngestService,
         plugin_service::PluginService,
+        plugin_view_ticket_service::PluginViewTicketService,
         region_service::RegionService,
         role_service::RoleService,
         sensor_service::SensorService,
@@ -216,6 +218,8 @@ impl Application {
             plugin_writer: repos.plugin_writer,
             plugin_service: services.plugin,
             plugin_ingest_service: services.plugin_ingest,
+            plugin_sensor_ingest_service: services.plugin_sensor_ingest,
+            plugin_view_ticket_service: services.plugin_view_tickets,
             settings_reader: settings_repo.clone(),
             settings_service,
             app_origins: AppOrigins::from_settings(&settings.cors, &settings.application.base_url),
@@ -340,6 +344,7 @@ struct Repositories {
     start_point_writer: Arc<dyn domain::start_point::StartPointWriter>,
     plugin_reader: Arc<dyn domain::plugin::PluginReader>,
     plugin_writer: Arc<dyn domain::plugin::PluginWriter>,
+    plugin_view_tickets: Arc<dyn crate::service::plugin_view_ticket_service::ViewTicketStore>,
 }
 
 impl Repositories {
@@ -388,6 +393,9 @@ impl Repositories {
             start_point_writer: start_point_repo,
             plugin_reader: plugin_repo.clone(),
             plugin_writer: plugin_repo,
+            plugin_view_tickets: Arc::new(
+                crate::infra::pg_plugin_view_ticket::PgViewTicketStore::new(pool.clone()),
+            ),
         }
     }
 }
@@ -408,6 +416,8 @@ struct Services {
     authorization: Arc<AuthorizationService>,
     plugin: Arc<PluginService>,
     plugin_ingest: Arc<PluginIngestService>,
+    plugin_sensor_ingest: Arc<PluginSensorIngestService>,
+    plugin_view_tickets: Arc<PluginViewTicketService>,
 }
 
 impl Services {
@@ -454,23 +464,28 @@ impl Services {
             event_bus.clone(),
             authorization.clone(),
         ));
+        let sensor = Arc::new(SensorService::new(
+            repos.sensor_reader.clone(),
+            repos.sensor_writer.clone(),
+            repos.sensor_reading_reader.clone(),
+            repos.sensor_reading_writer.clone(),
+            repos.sensor_model_reader.clone(),
+            repos.tree_reader.clone(),
+            repos.tree_writer.clone(),
+            repos.cluster_reader.clone(),
+            event_bus.clone(),
+        ));
+        let plugin_sensor_ingest = Arc::new(PluginSensorIngestService::new(
+            sensor.clone(),
+            authorization.clone(),
+        ));
         Self {
             region: Arc::new(RegionService::new(
                 repos.region_reader.clone(),
                 repos.region_writer.clone(),
             )),
             tree,
-            sensor: Arc::new(SensorService::new(
-                repos.sensor_reader.clone(),
-                repos.sensor_writer.clone(),
-                repos.sensor_reading_reader.clone(),
-                repos.sensor_reading_writer.clone(),
-                repos.sensor_model_reader.clone(),
-                repos.tree_reader.clone(),
-                repos.tree_writer.clone(),
-                repos.cluster_reader.clone(),
-                event_bus.clone(),
-            )),
+            sensor,
             vehicle: Arc::new(VehicleService::new(
                 repos.vehicle_reader.clone(),
                 repos.vehicle_writer.clone(),
@@ -528,6 +543,10 @@ impl Services {
             authorization,
             plugin,
             plugin_ingest,
+            plugin_sensor_ingest,
+            plugin_view_tickets: Arc::new(PluginViewTicketService::new(
+                repos.plugin_view_tickets.clone(),
+            )),
         }
     }
 }

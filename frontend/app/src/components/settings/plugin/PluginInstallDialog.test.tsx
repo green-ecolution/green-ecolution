@@ -89,4 +89,33 @@ describe('PluginInstallDialog', { timeout: 20_000 }, () => {
       }),
     )
   })
+
+  it('submits the granted device capabilities', async () => {
+    const user = userEvent.setup()
+    const onSubmit = vi.fn()
+    render(
+      <PluginInstallDialog
+        open
+        organizations={[ORGANIZATION]}
+        onSubmit={onSubmit}
+        onOpenChange={vi.fn()}
+      />,
+    )
+
+    await user.type(screen.getByLabelText(/slug/i), 'sensor-setup')
+    await user.type(screen.getByLabelText(/name/i), 'Sensor-Einrichtung')
+    await user.click(screen.getByRole('combobox', { name: /organisation/i }))
+    await user.click(screen.getByRole('option', { name: ORGANIZATION.name }))
+    // The capabilities only appear once the plugin has a view.
+    screen.getByRole('combobox', { name: /ansicht/i }).focus()
+    await user.keyboard('{Enter}{ArrowDown}{Enter}')
+    await user.type(screen.getByLabelText(/adresse/i), 'https://sensor-setup.example.org')
+    await user.click(screen.getByRole('checkbox', { name: /kamera/i }))
+    await user.click(screen.getByRole('checkbox', { name: /bluetooth/i }))
+    await user.click(screen.getByRole('button', { name: /installieren/i }))
+
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({ deviceCapabilities: ['camera', 'bluetooth'] }),
+    )
+  })
 })

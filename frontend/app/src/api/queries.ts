@@ -36,6 +36,7 @@ import {
   OrganizationSettingsResponse,
   pluginApi,
   PluginResponse,
+  PluginNavEntryResponse,
   PluginViewResponse,
   regionApi,
   ResponseError,
@@ -530,6 +531,15 @@ export const pluginQuery = (slug: string) =>
   queryOptions<PluginResponse>({
     queryKey: ['plugins', slug],
     queryFn: () => pluginApi.getPlugin({ pluginSlug: slug }),
+  })
+
+/** Navigation entries: the plugin views the signed-in user may open. */
+export const pluginViewsQuery = () =>
+  queryOptions<PluginNavEntryResponse[]>({
+    queryKey: ['plugins', 'views'],
+    queryFn: () => pluginApi.listPluginViews(),
+    // A disabled plugin feature answers 503; the navigation just stays without plugins.
+    retry: false,
   })
 
 /**

@@ -8,6 +8,7 @@
 //! `permissions` is what the plugin itself may do, `required_permissions` is
 //! what a user needs in order to open its view.
 
+pub mod capability;
 pub mod error;
 pub mod repository;
 pub mod snapshot;
@@ -21,6 +22,7 @@ use crate::{
     Id, authorization::Permission, organization::Organization, shared::error::ValidationError,
 };
 
+pub use capability::DeviceCapability;
 pub use error::PluginError;
 pub use repository::{PluginReader, PluginWriter, TreeRef, TreeRefPage};
 #[doc(hidden)]
@@ -44,8 +46,8 @@ crate::newtype_nonempty! {
 /// database access, while still pinning its organization against deletion.
 /// Only single-segment collisions belong here: `ingest` is safe because the
 /// route below it is `/plugins/ingest/trees`, one level deeper than any
-/// admin endpoint.
-pub const RESERVED_PLUGIN_SLUGS: &[&str] = &["me"];
+/// admin endpoint. `view-tickets` is safe for the same reason.
+pub const RESERVED_PLUGIN_SLUGS: &[&str] = &["me", "views"];
 
 /// Immutable identifier, also used as the `ProviderId` on imported records.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -145,6 +147,7 @@ pub struct Plugin {
     organization_id: Id<Organization>,
     permissions: BTreeSet<Permission>,
     required_permissions: BTreeSet<Permission>,
+    device_capabilities: BTreeSet<DeviceCapability>,
     frontend: PluginFrontend,
     enabled: bool,
     key_hash: Option<PluginKeyHash>,
@@ -160,6 +163,7 @@ pub struct PluginDraft {
     pub organization_id: Id<Organization>,
     pub permissions: BTreeSet<Permission>,
     pub required_permissions: BTreeSet<Permission>,
+    pub device_capabilities: BTreeSet<DeviceCapability>,
     pub frontend: PluginFrontend,
 }
 
@@ -197,6 +201,11 @@ impl Plugin {
             organization_id: Id::new(snap.organization_id),
             permissions: parse_persisted(&snap.permissions),
             required_permissions: parse_persisted(&snap.required_permissions),
+            device_capabilities: snap
+                .device_capabilities
+                .iter()
+                .filter_map(|c| c.parse().ok())
+                .collect(),
             frontend,
             enabled: snap.enabled,
             key_hash: snap.key_hash.map(PluginKeyHash::reconstitute),
@@ -217,6 +226,10 @@ impl Plugin {
 
     pub fn required_permissions(&self) -> &BTreeSet<Permission> {
         &self.required_permissions
+    }
+
+    pub fn device_capabilities(&self) -> &BTreeSet<DeviceCapability> {
+        &self.device_capabilities
     }
 
     pub fn frontend(&self) -> &PluginFrontend {
@@ -254,6 +267,10 @@ impl Plugin {
         self.required_permissions = permissions;
     }
 
+    pub fn replace_device_capabilities(&mut self, capabilities: BTreeSet<DeviceCapability>) {
+        self.device_capabilities = capabilities;
+    }
+
     pub fn enable(&mut self) {
         self.enabled = true;
     }
@@ -289,6 +306,7 @@ mod tests {
             organization_id: Id::new_v7(),
             permissions: BTreeSet::from([Permission::new(Resource::Tree, Action::Create)]),
             required_permissions: BTreeSet::new(),
+            device_capabilities: BTreeSet::new(),
             frontend: PluginFrontend::None,
             enabled: false,
             key_hash: None,
@@ -419,6 +437,7 @@ mod tests {
             organization_id: p.organization_id.value(),
             permissions: vec![],
             required_permissions: vec![],
+            device_capabilities: vec![],
             enabled: p.enabled,
             key_hash: None,
             last_seen_at: None,

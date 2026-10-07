@@ -1,0 +1,24 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO plugins (id, slug, name, description, frontend_mode, frontend_target,\n                                     organization_id, permissions, required_permissions,\n                                     device_capabilities, enabled, key_hash)\n               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, FALSE, $11)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Uuid",
+        "TextArray",
+        "TextArray",
+        "TextArray",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "6fd6b8ce8833f53d5f596c31cd6954f32511bdf4192a9a3aee75e0bac3b5314a"
+}

@@ -24,6 +24,8 @@ pub mod organizations;
 pub mod plugin_auth;
 pub mod plugin_ingest;
 pub mod plugin_repo;
+pub mod plugin_sensor_ingest;
+pub mod plugin_view_tickets;
 pub mod plugins;
 pub mod regions;
 pub mod request_id;

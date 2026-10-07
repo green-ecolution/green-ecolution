@@ -34,10 +34,13 @@ containerised backend (`just run-docker`, compose profile `app`) set it to
    - the plugin's own permissions: `tree:create`, `tree:update`, `tree:delete`
    - permission required to open the view: `tree:read`
    - frontend: `external` with `http://localhost:5175`
+   - device access: tick "Camera"
 3. Copy the API key shown once on installation.
 4. Enable the plugin; a newly installed plugin is deliberately disabled.
 5. Open the view. It shows the signed-in person's name, the slug, the language and the
-   appearance, which means the handshake worked.
+   appearance, which means the handshake worked. Also check that the demo plugin appears
+   in the side navigation under "Plugins", and that the iframe in the developer tools
+   has `allow="camera"` (it is only set when camera access was granted at install).
 6. Paste the key. The view then shows the identity the backend returns from
    `/plugins/me`.
 7. Run the import: six trees, answer `created: 6`. Run it again: `unchanged: 6`.

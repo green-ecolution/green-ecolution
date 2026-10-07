@@ -151,6 +151,14 @@ impl EffectivePermissions {
         required.iter().all(|p| self.allows_in(*p, org, tree))
     }
 
+    /// Whether at least one permission, whichever it is, reaches `org`.
+    pub fn holds_any_in(&self, org: Id<Organization>, tree: &OrgHierarchy) -> bool {
+        self.unrestricted
+            || self.grants.iter().any(|(granted, perms)| {
+                !perms.is_empty() && tree.is_descendant_or_self(org, *granted)
+            })
+    }
+
     pub fn is_unrestricted(&self) -> bool {
         self.unrestricted
     }
@@ -181,6 +189,10 @@ impl AccessContext {
 
     pub fn superset_of(&self, required: &BTreeSet<Permission>, org: Id<Organization>) -> bool {
         self.permissions.superset_of(required, org, &self.hierarchy)
+    }
+
+    pub fn holds_any_in(&self, org: Id<Organization>) -> bool {
+        self.permissions.holds_any_in(org, &self.hierarchy)
     }
 
     pub fn visible_orgs(&self, p: Permission) -> Visibility {
@@ -263,6 +275,27 @@ mod tests {
         let eff = EffectivePermissions::from_grants(vec![(tbz, BTreeSet::from([tree_read()]))]);
         assert!(eff.superset_of(&BTreeSet::from([tree_read()]), tbz, &h));
         assert!(!eff.superset_of(&BTreeSet::from([tree_read(), write]), tbz, &h));
+    }
+
+    #[test]
+    fn holds_any_in_follows_the_subtree_and_skips_empty_grants() {
+        let (root, tbz, sub) = ids();
+        let sibling = Id::new_v7();
+        let h = OrgHierarchy::from_pairs([
+            (root, None),
+            (tbz, Some(root)),
+            (sub, Some(tbz)),
+            (sibling, Some(root)),
+        ]);
+        let eff = EffectivePermissions::from_grants(vec![
+            (tbz, BTreeSet::from([tree_read()])),
+            (sibling, BTreeSet::new()),
+        ]);
+        assert!(eff.holds_any_in(tbz, &h));
+        assert!(eff.holds_any_in(sub, &h));
+        assert!(!eff.holds_any_in(root, &h));
+        assert!(!eff.holds_any_in(sibling, &h));
+        assert!(EffectivePermissions::unrestricted().holds_any_in(root, &h));
     }
 
     #[test]

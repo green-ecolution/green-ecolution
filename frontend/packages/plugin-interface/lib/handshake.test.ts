@@ -101,6 +101,91 @@ describe('createPluginHost', () => {
 
     expect(onResize).toHaveBeenCalledWith(420)
   })
+
+  it('answers a hello with a context produced by an async factory', async () => {
+    const iframe = fakeIframe()
+    const factory = vi.fn(async () => ({ ...context, viewTicket: 'gev_abc' }))
+    createPluginHost(iframe, { origin: ORIGIN, context: factory })
+
+    window.dispatchEvent(hello(ORIGIN, iframe.contentWindow))
+
+    await vi.waitFor(() =>
+      expect(iframe.contentWindow!.postMessage).toHaveBeenCalledWith(
+        {
+          ns: 'green-ecolution',
+          v: 1,
+          type: 'ge:init',
+          payload: { ...context, viewTicket: 'gev_abc' },
+        },
+        ORIGIN,
+      ),
+    )
+  })
+
+  it('shares one in-flight factory call between repeated hellos', async () => {
+    const iframe = fakeIframe()
+    let release!: () => void
+    const factory = vi.fn(
+      () =>
+        new Promise<typeof context>((resolve) => {
+          release = () => resolve(context)
+        }),
+    )
+    createPluginHost(iframe, { origin: ORIGIN, context: factory })
+
+    window.dispatchEvent(hello(ORIGIN, iframe.contentWindow))
+    window.dispatchEvent(hello(ORIGIN, iframe.contentWindow))
+    release()
+
+    await vi.waitFor(() => expect(iframe.contentWindow!.postMessage).toHaveBeenCalledTimes(2))
+    expect(factory).toHaveBeenCalledTimes(1)
+  })
+
+  it('asks the factory again for a hello after the previous answer', async () => {
+    const iframe = fakeIframe()
+    const factory = vi.fn(async () => context)
+    createPluginHost(iframe, { origin: ORIGIN, context: factory })
+
+    window.dispatchEvent(hello(ORIGIN, iframe.contentWindow))
+    await vi.waitFor(() => expect(iframe.contentWindow!.postMessage).toHaveBeenCalledTimes(1))
+    window.dispatchEvent(hello(ORIGIN, iframe.contentWindow))
+    await vi.waitFor(() => expect(iframe.contentWindow!.postMessage).toHaveBeenCalledTimes(2))
+
+    expect(factory).toHaveBeenCalledTimes(2)
+  })
+
+  it('stays silent after cleanup even if the factory resolves later', async () => {
+    const iframe = fakeIframe()
+    let release!: () => void
+    const factory = () =>
+      new Promise<typeof context>((resolve) => {
+        release = () => resolve(context)
+      })
+    const cleanup = createPluginHost(iframe, { origin: ORIGIN, context: factory })
+
+    window.dispatchEvent(hello(ORIGIN, iframe.contentWindow))
+    cleanup()
+    release()
+    await Promise.resolve()
+    await Promise.resolve()
+
+    expect(iframe.contentWindow!.postMessage).not.toHaveBeenCalled()
+  })
+
+  it('reports a failing factory and answers nothing', async () => {
+    const iframe = fakeIframe()
+    const onContextError = vi.fn()
+    createPluginHost(iframe, {
+      origin: ORIGIN,
+      context: () => Promise.reject(new Error('403')),
+      onContextError,
+    })
+
+    window.dispatchEvent(hello(ORIGIN, iframe.contentWindow))
+
+    await vi.waitFor(() => expect(onContextError).toHaveBeenCalledTimes(1))
+    expect(iframe.contentWindow!.postMessage).not.toHaveBeenCalled()
+  })
 })
 
 describe('connectToHost', () => {

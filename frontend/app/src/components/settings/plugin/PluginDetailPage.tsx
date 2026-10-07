@@ -32,6 +32,8 @@ import { useHasPermission } from '@/lib/auth/useHasPermission'
 import { useDateLocale } from '@/lib/i18n/useFormatters'
 import { intlLocale } from '@/lib/i18n/format'
 import PluginPermissionMatrix from './PluginPermissionMatrix'
+import PluginDeviceCapabilities from './PluginDeviceCapabilities'
+import { orderedCapabilities, toggledCapability } from './deviceCapabilities'
 import PluginKeyDialog from './PluginKeyDialog'
 import { usePluginPermissionDraft } from './usePluginPermissionDraft'
 import { formatLastSeenAt, organizationNameOf } from './pluginList'
@@ -66,6 +68,9 @@ const PluginDetailPage = ({ plugin }: PluginDetailPageProps) => {
   )
   const [target, setTarget] = useState(plugin.frontendTarget ?? '')
   const [targetError, setTargetError] = useState<string | null>(null)
+  const [deviceCapabilities, setDeviceCapabilities] = useState<ReadonlySet<string>>(
+    () => new Set(plugin.deviceCapabilities),
+  )
   const { permissions, accessPermissions, togglePermission, toggleAccessPermission } =
     usePluginPermissionDraft(plugin.permissions, plugin.requiredPermissions)
 
@@ -82,6 +87,9 @@ const PluginDetailPage = ({ plugin }: PluginDetailPageProps) => {
     ? updatePlugin.variables?.change.enabled
     : undefined
   const enabled = requestedEnabled ?? plugin.enabled
+
+  const toggleDeviceCapability = (capability: string) =>
+    setDeviceCapabilities((current) => toggledCapability(current, capability))
 
   const handleSave = () => {
     // Same check the install dialog runs. Without it an empty or http:// target
@@ -108,6 +116,9 @@ const PluginDetailPage = ({ plugin }: PluginDetailPageProps) => {
         ...(unchangedSet(accessPermissions, plugin.requiredPermissions)
           ? {}
           : { requiredPermissions: [...accessPermissions] }),
+        ...(unchangedSet(deviceCapabilities, plugin.deviceCapabilities)
+          ? {}
+          : { deviceCapabilities: orderedCapabilities(deviceCapabilities) }),
       },
     })
   }
@@ -280,6 +291,14 @@ const PluginDetailPage = ({ plugin }: PluginDetailPageProps) => {
               error={targetError ?? undefined}
               disabled={!canUpdate}
               className="max-w-sm"
+            />
+          )}
+
+          {frontendMode !== 'none' && (
+            <PluginDeviceCapabilities
+              capabilities={deviceCapabilities}
+              onToggle={toggleDeviceCapability}
+              disabled={!canUpdate}
             />
           )}
         </CardContent>

@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id, slug, name, description, frontend_mode, frontend_target,\n                      organization_id, permissions, required_permissions, enabled,\n                      key_hash, last_seen_at\n               FROM plugins WHERE slug = $1",
+  "query": "SELECT id, slug, name, description, frontend_mode, frontend_target,\n                      organization_id, permissions, required_permissions, device_capabilities,\n                      enabled, key_hash, last_seen_at\n               FROM plugins WHERE slug = $1",
   "describe": {
     "columns": [
       {
@@ -50,16 +50,21 @@
       },
       {
         "ordinal": 9,
+        "name": "device_capabilities",
+        "type_info": "TextArray"
+      },
+      {
+        "ordinal": 10,
         "name": "enabled",
         "type_info": "Bool"
       },
       {
-        "ordinal": 10,
+        "ordinal": 11,
         "name": "key_hash",
         "type_info": "Text"
       },
       {
-        "ordinal": 11,
+        "ordinal": 12,
         "name": "last_seen_at",
         "type_info": "Timestamptz"
       }
@@ -80,9 +85,10 @@
       false,
       false,
       false,
+      false,
       true,
       true
     ]
   },
-  "hash": "632a770fa2ed253fed84a744e3442771568bf3ad0f62305cdd42942ce113932e"
+  "hash": "c4293f23025fb7a8fc9ef774094293575f6456385ab8b99548de47e57f30d507"
 }

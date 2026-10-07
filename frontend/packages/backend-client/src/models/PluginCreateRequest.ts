@@ -35,6 +35,12 @@ export interface PluginCreateRequest {
     description?: string | null;
     /**
      * 
+     * @type {Array<string>}
+     * @memberof PluginCreateRequest
+     */
+    deviceCapabilities?: Array<string>;
+    /**
+     * 
      * @type {PluginFrontendDto}
      * @memberof PluginCreateRequest
      */
@@ -95,6 +101,7 @@ export function PluginCreateRequestFromJSONTyped(json: any, ignoreDiscriminator:
     return {
         
         'description': json['description'] == null ? undefined : json['description'],
+        'deviceCapabilities': json['device_capabilities'] == null ? undefined : json['device_capabilities'],
         'frontend': PluginFrontendDtoFromJSON(json['frontend']),
         'name': json['name'],
         'organizationId': json['organization_id'],
@@ -116,6 +123,7 @@ export function PluginCreateRequestToJSONTyped(value?: PluginCreateRequest | nul
     return {
         
         'description': value['description'],
+        'device_capabilities': value['deviceCapabilities'],
         'frontend': PluginFrontendDtoToJSON(value['frontend']),
         'name': value['name'],
         'organization_id': value['organizationId'],

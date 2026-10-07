@@ -1,3 +1,5 @@
+use std::collections::BTreeSet;
+
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Deserializer, Serialize};
 use url::Url;
@@ -6,9 +8,10 @@ use uuid::Uuid;
 use domain::{
     Id,
     plugin::{
-        PluginDraft, PluginFrontend, PluginName, PluginSlug, PluginView, ServiceEndpoint, TreeRef,
-        TreeRefPage,
+        DeviceCapability, Plugin, PluginDraft, PluginFrontend, PluginName, PluginSlug, PluginView,
+        ServiceEndpoint, TreeRef, TreeRefPage,
     },
+    sensor::SensorDraft,
 };
 
 use crate::http::AppOrigins;
@@ -19,6 +22,13 @@ use crate::service::{
 };
 
 use super::role::parse_permissions;
+use super::sensor::{CreateSensorRequest, LorawanCredentialsRequest, SensorTypeResponse};
+
+fn parse_device_capabilities(raw: &[String]) -> Result<BTreeSet<DeviceCapability>, ServiceError> {
+    raw.iter()
+        .map(|c| c.parse::<DeviceCapability>().map_err(ServiceError::from))
+        .collect()
+}
 
 /// Represents an installed plugin, mirroring `PluginView` flat: no hash, no
 /// key. A later task reads `frontend_target` directly off this response.
@@ -31,6 +41,7 @@ use super::role::parse_permissions;
     "organization_id": "01980000-0000-7000-8000-000000000001",
     "permissions": ["tree:create", "tree:update"],
     "required_permissions": ["tree:read"],
+    "device_capabilities": [],
     "frontend_mode": "none",
     "frontend_target": null,
     "enabled": true,
@@ -46,6 +57,7 @@ pub struct PluginResponse {
     pub organization_id: Uuid,
     pub permissions: Vec<String>,
     pub required_permissions: Vec<String>,
+    pub device_capabilities: Vec<String>,
     pub frontend_mode: String,
     pub frontend_target: Option<String>,
     pub enabled: bool,
@@ -64,6 +76,7 @@ impl From<&PluginView> for PluginResponse {
             organization_id: view.organization_id.value(),
             permissions: view.permissions.clone(),
             required_permissions: view.required_permissions.clone(),
+            device_capabilities: view.device_capabilities.clone(),
             frontend_mode: view.frontend_mode.to_string(),
             frontend_target: view.frontend_target.clone(),
             enabled: view.enabled,
@@ -84,7 +97,9 @@ impl From<&PluginView> for PluginResponse {
     "name": "TBZ Baumkataster",
     "description": null,
     "frontend_mode": "external",
-    "frontend_target": "https://kataster.example.org/view"
+    "frontend_target": "https://kataster.example.org/view",
+    "device_capabilities": ["camera", "bluetooth"],
+    "view_ticket": "gev_3f2a9c41d7b05e6a8f1c2d3e4b5a69788796a5b4c3d2e1f00112233445566778"
 }))]
 pub struct PluginViewResponse {
     pub slug: String,
@@ -92,16 +107,22 @@ pub struct PluginViewResponse {
     pub description: Option<String>,
     pub frontend_mode: String,
     pub frontend_target: Option<String>,
+    pub device_capabilities: Vec<String>,
+    /// Single-use, valid for two minutes. Hand it to the plugin's own backend,
+    /// which redeems it to learn who opened the view.
+    pub view_ticket: String,
 }
 
-impl From<&PluginView> for PluginViewResponse {
-    fn from(view: &PluginView) -> Self {
+impl PluginViewResponse {
+    pub fn new(view: &PluginView, view_ticket: String) -> Self {
         Self {
             slug: view.slug.clone(),
             name: view.name.clone(),
             description: view.description.clone(),
             frontend_mode: view.frontend_mode.to_string(),
             frontend_target: view.frontend_target.clone(),
+            device_capabilities: view.device_capabilities.clone(),
+            view_ticket,
         }
     }
 }
@@ -204,6 +225,8 @@ pub struct PluginCreateRequest {
     pub organization_id: Uuid,
     pub permissions: Vec<String>,
     pub required_permissions: Vec<String>,
+    #[serde(default)]
+    pub device_capabilities: Vec<String>,
     pub frontend: PluginFrontendDto,
 }
 
@@ -216,6 +239,7 @@ impl PluginCreateRequest {
             organization_id: Id::new(self.organization_id),
             permissions: parse_permissions(&self.permissions)?,
             required_permissions: parse_permissions(&self.required_permissions)?,
+            device_capabilities: parse_device_capabilities(&self.device_capabilities)?,
             frontend: self.frontend.into_domain(app_origins)?,
         })
     }
@@ -235,6 +259,7 @@ pub struct PluginUpdateRequest {
     pub frontend: Option<PluginFrontendDto>,
     pub permissions: Option<Vec<String>>,
     pub required_permissions: Option<Vec<String>>,
+    pub device_capabilities: Option<Vec<String>>,
     pub enabled: Option<bool>,
 }
 
@@ -254,6 +279,10 @@ impl PluginUpdateRequest {
             required_permissions: self
                 .required_permissions
                 .map(|p| parse_permissions(&p))
+                .transpose()?,
+            device_capabilities: self
+                .device_capabilities
+                .map(|c| parse_device_capabilities(&c))
                 .transpose()?,
             enabled: self.enabled,
         })
@@ -442,4 +471,74 @@ pub struct TreeRefListParams {
     pub limit: Option<u32>,
     #[param(example = "12344")]
     pub cursor: Option<String>,
+}
+
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
+#[schema(example = json!({ "ticket": "gev_3f2a…" }))]
+pub struct ViewTicketRedeemRequest {
+    pub ticket: String,
+}
+
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+pub struct ViewTicketUserResponse {
+    pub id: Uuid,
+    pub display_name: String,
+}
+
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+#[schema(example = json!({
+    "user": { "id": "01990000-0000-7000-8000-0000000000aa", "display_name": "Jane Doe" },
+    "organization_id": "01980000-0000-7000-8000-000000000001"
+}))]
+pub struct ViewTicketRedeemResponse {
+    pub user: ViewTicketUserResponse,
+    pub organization_id: Uuid,
+}
+
+/// One navigation entry: just enough to link to `/plugin/{slug}`.
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+#[schema(example = json!({ "slug": "sensor-setup", "name": "Sensor-Einrichtung" }))]
+pub struct PluginNavEntryResponse {
+    pub slug: String,
+    pub name: String,
+}
+
+impl From<&PluginView> for PluginNavEntryResponse {
+    fn from(view: &PluginView) -> Self {
+        Self {
+            slug: view.slug.clone(),
+            name: view.name.clone(),
+        }
+    }
+}
+
+/// Body for `POST /plugins/ingest/sensors`: the user-facing create request
+/// without `organization_id` and `provider`, which always come from the plugin.
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
+pub struct PluginSensorCreateRequest {
+    #[schema(example = "eui-a84041000181c001")]
+    pub id: String,
+    pub sensor_type: SensorTypeResponse,
+    pub model_id: Uuid,
+    #[serde(default)]
+    #[schema(value_type = Option<Object>, nullable)]
+    pub additional_information: Option<serde_json::Value>,
+    #[serde(default)]
+    #[schema(nullable)]
+    pub lorawan: Option<LorawanCredentialsRequest>,
+}
+
+impl PluginSensorCreateRequest {
+    pub fn into_draft(self, plugin: &Plugin) -> Result<SensorDraft, ServiceError> {
+        CreateSensorRequest {
+            id: self.id,
+            sensor_type: self.sensor_type,
+            model_id: self.model_id,
+            provider: Some(plugin.slug().as_str().to_string()),
+            additional_information: self.additional_information,
+            lorawan: self.lorawan,
+            organization_id: None,
+        }
+        .into_draft(plugin.organization_id())
+    }
 }

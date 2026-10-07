@@ -58,6 +58,12 @@
     "notFoundBackLabel": "Zurück zur Übersicht",
     "install": {
       "title": "Plugin installieren",
+      "deviceCapabilitiesHeading": "Gerätezugriff der Ansicht",
+      "deviceCapabilitiesHint": "Die Ansicht darf diese Funktionen des Geräts nutzen, sobald jemand der Abfrage im Browser zustimmt. Nur für Plugins freigeben, denen du vertraust.",
+      "deviceCapability": {
+        "camera": "Kamera",
+        "bluetooth": "Bluetooth"
+      },
       "description": "Verbindet ein externes System mit Green Ecolution und stellt ihm ein API-Zugriffsrecht aus.",
       "slugLabel": "Slug",
       "slugHint": "Kleinbuchstaben, Ziffern und Bindestriche. Dient auch als Herkunftskennung importierter Daten und lässt sich später nicht mehr ändern.",

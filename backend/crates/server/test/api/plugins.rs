@@ -275,6 +275,7 @@ async fn get_plugin_is_forbidden_across_organizations() {
             organization_id: domain::Id::new(Uuid::parse_str(OTHER_ORG).unwrap()),
             permissions: BTreeSet::new(),
             required_permissions: BTreeSet::new(),
+            device_capabilities: BTreeSet::new(),
             frontend: PluginFrontend::None,
         },
         None,
@@ -312,6 +313,7 @@ async fn seed_plugin_with_view(
                 .iter()
                 .map(|p| p.parse().unwrap())
                 .collect(),
+            device_capabilities: BTreeSet::new(),
             frontend: PluginFrontend::External("https://plugin.example.org/view".parse().unwrap()),
         },
         None,
@@ -420,4 +422,220 @@ async fn plugin_view_is_forbidden_across_organizations() {
         .get_with_bearer("/api/v1/plugins/other-org-view/view", &token)
         .await;
     assert_eq!(resp.status().as_u16(), 403);
+}
+
+#[tokio::test]
+async fn device_capabilities_are_stored_and_shown_in_the_view() {
+    let app = spawn_app_with_plugins().await;
+    let resp = app
+        .post_json(
+            "/api/v1/plugins",
+            &serde_json::json!({
+                "slug": "sensor-setup",
+                "name": "Sensor Setup",
+                "organization_id": ROOT_ORG,
+                "permissions": [],
+                "required_permissions": [],
+                "device_capabilities": ["bluetooth", "camera"],
+                "frontend": { "mode": "external", "target": "https://plugin.example.org/view" }
+            }),
+        )
+        .await;
+    assert_eq!(resp.status().as_u16(), 201);
+    app.patch_json(
+        "/api/v1/plugins/sensor-setup",
+        &serde_json::json!({ "enabled": true }),
+    )
+    .await;
+
+    let plugin: serde_json::Value = app
+        .get("/api/v1/plugins/sensor-setup")
+        .await
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(
+        plugin["device_capabilities"],
+        serde_json::json!(["camera", "bluetooth"])
+    );
+
+    let view: serde_json::Value = app
+        .get("/api/v1/plugins/sensor-setup/view")
+        .await
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(
+        view["device_capabilities"],
+        serde_json::json!(["camera", "bluetooth"])
+    );
+}
+
+#[tokio::test]
+async fn unknown_device_capability_is_rejected() {
+    let app = spawn_app_with_plugins().await;
+    let resp = app
+        .post_json(
+            "/api/v1/plugins",
+            &serde_json::json!({
+                "slug": "too-curious",
+                "name": "Too Curious",
+                "organization_id": ROOT_ORG,
+                "permissions": [],
+                "required_permissions": [],
+                "device_capabilities": ["geolocation"],
+                "frontend": { "mode": "none" }
+            }),
+        )
+        .await;
+    assert_eq!(resp.status().as_u16(), 400);
+}
+
+#[tokio::test]
+async fn device_capabilities_can_be_changed_and_cleared() {
+    let app = spawn_app_with_plugins().await;
+    app.post_json(
+        "/api/v1/plugins",
+        &serde_json::json!({
+            "slug": "cam-only",
+            "name": "Cam Only",
+            "organization_id": ROOT_ORG,
+            "permissions": [],
+            "required_permissions": [],
+            "device_capabilities": ["camera"],
+            "frontend": { "mode": "none" }
+        }),
+    )
+    .await;
+
+    let updated: serde_json::Value = app
+        .patch_json(
+            "/api/v1/plugins/cam-only",
+            &serde_json::json!({ "device_capabilities": [] }),
+        )
+        .await
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(updated["device_capabilities"], serde_json::json!([]));
+
+    let renamed: serde_json::Value = app
+        .patch_json(
+            "/api/v1/plugins/cam-only",
+            &serde_json::json!({ "name": "Renamed" }),
+        )
+        .await
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(renamed["device_capabilities"], serde_json::json!([]));
+}
+
+#[tokio::test]
+async fn views_list_contains_exactly_the_openable_plugins() {
+    let harness = AuthHarness::start().await;
+    let app = spawn_app_with_plugins_and_auth(harness.auth_settings(true)).await;
+    let (org_id, token) =
+        seed_user_with_permissions(&harness, &app, "Sensorik Org", &["sensor:create"]).await;
+
+    seed_plugin_with_view(&app, "sensor-setup", org_id, &["sensor:create"]).await;
+    seed_plugin_with_view(&app, "tree-admin", org_id, &["tree:delete"]).await;
+    seed_plugin_with_view(&app, "switched-off", org_id, &["sensor:create"]).await;
+    sqlx::query("UPDATE plugins SET enabled = FALSE WHERE slug = 'switched-off'")
+        .execute(&app.db_pool)
+        .await
+        .unwrap();
+    seed_plugin_with_view(&app, "headless", org_id, &["sensor:create"]).await;
+    sqlx::query(
+        "UPDATE plugins SET frontend_mode = 'none', frontend_target = NULL WHERE slug = 'headless'",
+    )
+    .execute(&app.db_pool)
+    .await
+    .unwrap();
+
+    let resp = app.get_with_bearer("/api/v1/plugins/views", &token).await;
+    assert_eq!(resp.status().as_u16(), 200);
+    let body: serde_json::Value = resp.json().await.unwrap();
+    assert_eq!(
+        body,
+        serde_json::json!([{ "slug": "sensor-setup", "name": "Demo Plugin" }])
+    );
+
+    // The list must never offer a view that the view endpoint would refuse.
+    let view = app
+        .get_with_bearer("/api/v1/plugins/sensor-setup/view", &token)
+        .await;
+    assert_eq!(view.status().as_u16(), 200);
+}
+
+#[tokio::test]
+async fn views_list_does_not_need_plugin_read() {
+    let harness = AuthHarness::start().await;
+    let app = spawn_app_with_plugins_and_auth(harness.auth_settings(true)).await;
+    let (_, token) = seed_user_with_permissions(&harness, &app, "Leere Org", &["tree:read"]).await;
+
+    let resp = app.get_with_bearer("/api/v1/plugins/views", &token).await;
+    assert_eq!(resp.status().as_u16(), 200);
+    let body: serde_json::Value = resp.json().await.unwrap();
+    assert_eq!(body, serde_json::json!([]));
+}
+
+#[tokio::test]
+async fn install_rejects_the_views_slug() {
+    let app = spawn_app_with_plugins().await;
+    let resp = app
+        .post_json(
+            "/api/v1/plugins",
+            &serde_json::json!({
+                "slug": "views",
+                "name": "Views",
+                "organization_id": ROOT_ORG,
+                "permissions": [],
+                "required_permissions": [],
+                "frontend": { "mode": "none" }
+            }),
+        )
+        .await;
+    assert_eq!(resp.status().as_u16(), 400);
+}
+
+/// A view without `required_permissions` is meant for everyone of the
+/// plugin's organization, not for every authenticated user of every
+/// organization.
+#[tokio::test]
+async fn view_without_required_permissions_stays_within_its_organization() {
+    let harness = AuthHarness::start().await;
+    let app = spawn_app_with_plugins_and_auth(harness.auth_settings(true)).await;
+    let (_, outsider) =
+        seed_user_with_permissions(&harness, &app, "Nachbar Org", &["tree:read"]).await;
+    let (plugin_org, member) =
+        seed_user_with_permissions(&harness, &app, "Plugin Org", &["tree:read"]).await;
+    seed_plugin_with_view(&app, "open-view", plugin_org, &[]).await;
+
+    let listed: serde_json::Value = app
+        .get_with_bearer("/api/v1/plugins/views", &outsider)
+        .await
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(listed, serde_json::json!([]));
+    let view = app
+        .get_with_bearer("/api/v1/plugins/open-view/view", &outsider)
+        .await;
+    assert_eq!(view.status().as_u16(), 403);
+
+    let listed: serde_json::Value = app
+        .get_with_bearer("/api/v1/plugins/views", &member)
+        .await
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(
+        listed,
+        serde_json::json!([{ "slug": "open-view", "name": "Demo Plugin" }])
+    );
+    let view = app
+        .get_with_bearer("/api/v1/plugins/open-view/view", &member)
+        .await;
+    assert_eq!(view.status().as_u16(), 200);
 }

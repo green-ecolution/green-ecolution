@@ -37,6 +37,7 @@ function PluginView() {
         organizationId: payload.organizationId,
         permissions: payload.permissions,
         requiredPermissions: payload.requiredPermissions,
+        deviceCapabilities: payload.deviceCapabilities,
         frontend: payload.frontend,
       },
       {

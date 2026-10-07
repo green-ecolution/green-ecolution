@@ -3,13 +3,13 @@ import type { TFunction } from 'i18next'
 const SLUG_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/
 
 /**
- * Mirrors `RESERVED_PLUGIN_SLUGS` in the Rust domain. `/plugins/me` is the
- * ingest self-lookup route and matches before the dynamic
- * `/plugins/{plugin_slug}`, so a plugin under this slug would be unreachable
- * by every admin endpoint afterwards. The backend rejects it either way; this
+ * Mirrors `RESERVED_PLUGIN_SLUGS` in the Rust domain. `/plugins/me` (ingest
+ * self-lookup) and `/plugins/views` (navigation list) match before the dynamic
+ * `/plugins/{plugin_slug}`, so a plugin under either slug would be unreachable
+ * by every admin endpoint afterwards. The backend rejects them either way; this
  * copy exists so the admin is told in the form rather than by a 400.
  */
-export const RESERVED_SLUGS = ['me']
+export const RESERVED_SLUGS = ['me', 'views']
 
 export const validateSlug = (value: string, t: TFunction<'settings'>): string | null => {
   if (value === '') return t('plugin.install.slugRequired')

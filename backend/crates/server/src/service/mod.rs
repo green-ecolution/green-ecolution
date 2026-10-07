@@ -6,7 +6,9 @@ pub mod event_bus;
 pub mod handlers;
 pub mod organization_service;
 pub mod plugin_ingest_service;
+pub mod plugin_sensor_ingest_service;
 pub mod plugin_service;
+pub mod plugin_view_ticket_service;
 pub mod region_service;
 pub mod role_service;
 pub mod sensor_service;
@@ -317,6 +319,8 @@ pub enum AuthError {
     PluginKeyInvalid,
     #[error("plugin is disabled")]
     PluginDisabled,
+    #[error("invalid plugin view ticket")]
+    PluginViewTicketInvalid,
 }
 
 impl AuthError {
@@ -329,6 +333,7 @@ impl AuthError {
             Self::IdpUnavailable(_) => "auth.idp_unavailable",
             Self::PluginKeyInvalid => "plugin.key_invalid",
             Self::PluginDisabled => "plugin.disabled",
+            Self::PluginViewTicketInvalid => "plugin.view_ticket_invalid",
         }
     }
 }
@@ -386,6 +391,7 @@ mod tests {
             ServiceError::Auth(AuthError::IdpUnavailable("x".into())),
             ServiceError::Auth(AuthError::PluginKeyInvalid),
             ServiceError::Auth(AuthError::PluginDisabled),
+            ServiceError::Auth(AuthError::PluginViewTicketInvalid),
             ServiceError::TreeAlreadyHasSensor,
             ServiceError::SensorAlreadyAssigned,
             ServiceError::AlreadyActivated,

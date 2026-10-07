@@ -64,6 +64,22 @@ pub struct IngestResult {
     pub error: Option<String>,
 }
 
+/// The plugin's own access context: exactly the grants it was installed with,
+/// scoped to its organization subtree. A plugin key carries no user identity,
+/// so this does not go through `AuthorizationService::context_for`.
+pub(crate) async fn plugin_access_context(
+    plugin: &Plugin,
+    authorization: &AuthorizationService,
+) -> Result<AccessContext, ServiceError> {
+    Ok(AccessContext {
+        permissions: EffectivePermissions::from_grants(vec![(
+            plugin.organization_id(),
+            plugin.permissions().clone(),
+        )]),
+        hierarchy: authorization.hierarchy().await?,
+    })
+}
+
 pub struct PluginIngestService {
     tree_reader: Arc<dyn TreeReader>,
     tree_writer: Arc<dyn TreeWriter>,
@@ -99,18 +115,8 @@ impl PluginIngestService {
         }
     }
 
-    /// Builds the plugin's own access context: exactly the grants it was
-    /// installed with, scoped to its organization subtree. A plugin key
-    /// carries no user identity to resolve roles from, so this does not go
-    /// through `AuthorizationService::context_for`.
     async fn context_for(&self, plugin: &Plugin) -> Result<AccessContext, ServiceError> {
-        Ok(AccessContext {
-            permissions: EffectivePermissions::from_grants(vec![(
-                plugin.organization_id(),
-                plugin.permissions().clone(),
-            )]),
-            hierarchy: self.authorization.hierarchy().await?,
-        })
+        plugin_access_context(plugin, &self.authorization).await
     }
 
     #[tracing::instrument(level = "debug", skip_all, fields(plugin.id = %plugin.id))]
@@ -784,6 +790,7 @@ mod tests {
             organization_id: Uuid::now_v7(),
             permissions: permissions.iter().map(|p| p.to_string()).collect(),
             required_permissions: Vec::new(),
+            device_capabilities: Vec::new(),
             enabled: true,
             key_hash: None,
             last_seen_at: None,

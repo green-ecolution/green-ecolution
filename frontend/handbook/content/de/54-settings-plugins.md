@@ -39,7 +39,7 @@ Pflichtangaben. Der Slug besteht aus Kleinbuchstaben, Ziffern und Bindestrichen 
 lässt sich nach dem Anlegen nicht mehr ändern: Er dient zugleich als Herkunftskennung
 aller Daten, die das Plugin importiert, und ein nachträglicher Wechsel würde diese
 Zuordnung verwaisen lassen. Einzelne Wörter sind für die Plugin-Schnittstelle selbst
-reserviert, derzeit `me`; der Dialog weist sie mit einem Hinweis zurück.
+reserviert, derzeit `me` und `views`; der Dialog weist sie mit einem Hinweis zurück.
 
 Darunter legst du fest, ob und wie das Plugin eine eigene Ansicht mitbringt: **Keine
 Ansicht** für ein reines Datenplugin oder **Extern gehostet** für eine öffentlich
@@ -48,6 +48,12 @@ sein, mit Ausnahme von localhost für die lokale Entwicklung, und darf nicht auf
 Adresse von Green Ecolution selbst zeigen. Ein dritter Modus für Dienste, die nur
 intern laufen und von Green Ecolution durchgereicht werden, ist vorbereitet, aber
 noch nicht auswählbar, solange die Durchreichung fehlt.
+
+Bringt das Plugin eine Ansicht mit, kannst du ihr außerdem Gerätezugriff für Kamera
+und Bluetooth freigeben. Die Auswahl erscheint nur bei Plugins mit Ansicht. Die Ansicht
+kann diese Funktionen erst nutzen, wenn die Person im Browser zustimmt; die Freigabe
+ersetzt diese Rückfrage also nicht. Gib sie nur Plugins frei, denen du vertraust. Auch
+auf der Detailseite des Plugins lässt sich der Gerätezugriff später anpassen.
 
 Zum Schluss legst du die beiden Rechtemengen fest, siehe
 [Die beiden Rechtemengen](./settings-plugins.md#die-beiden-rechtemengen) weiter unten.
@@ -103,7 +109,9 @@ Wer die Ansicht öffnen will, muss alle hier gewählten Rechte besitzen, und zwa
 Organisation des Plugins oder darüber. Ein einzelnes davon genügt nicht. Umgekehrt ist
 `plugin:read` dafür nicht nötig: Diese Berechtigung verwaltet Plugins, sie bedient sie
 nicht. Genau darum können Kolleginnen und Kollegen ohne jede Plugin-Berechtigung die
-Ansicht nutzen, sobald ihre Rolle die hier gewählten Rechte enthält.
+Ansicht nutzen, sobald ihre Rolle die hier gewählten Rechte enthält. Bleibt die Menge
+leer, genügt irgendein Recht in der Organisation des Plugins oder darüber; Personen aus
+anderen Organisationen sehen die Ansicht auch dann nicht.
 
 ## Den API-Schlüssel rotieren
 
@@ -125,13 +133,16 @@ verlangen das nicht, damit niemand daran gehindert wird, ein Plugin abzuschalten
 Bringt ein Plugin eine externe Ansicht mit, öffnest du sie über **Ansicht öffnen** auf
 seiner Detailseite. Green Ecolution bettet sie in einem eigenen, abgeschotteten Rahmen
 ein und übergibt ihr deinen Anzeigenamen, die Oberflächensprache und den Slug des
-Plugins, aber keinen Zugriff auf deine Anmeldedaten. Ein Plugin ohne eigene Ansicht
-zeigt an dieser Stelle stattdessen einen Hinweis, dass es keine besitzt.
+Plugins. Über ein einmalig gültiges Ansichtsticket kann das eigene Backend des Plugins
+außerdem erfahren, welche Person die Ansicht geöffnet hat, nämlich deine Kennung und
+deinen Namen. Zugriff auf deine Anmeldedaten erhält das Plugin dadurch trotzdem nicht.
+Ein Plugin ohne eigene Ansicht zeigt an dieser Stelle stattdessen einen Hinweis, dass
+es keine besitzt.
 
-Die Detailseite ist allerdings nur der Weg der Administration. Alle anderen erreichen
-die Ansicht über ihre eigene Adresse `/plugin/<slug>`, also etwa
-`https://deine-instanz.example/plugin/demo-plugin`. Einen Eintrag in der Navigation gibt
-es dafür bislang nicht; gib den Link deshalb nach dem Installieren an die Personen
-weiter, die mit dem Plugin arbeiten sollen. Fehlt jemandem eines der Zugriffsrechte,
-erscheint die übliche Meldung über den fehlenden Zugriff, und dasselbe passiert, solange
-das Plugin deaktiviert ist.
+Die Detailseite ist allerdings nur der Weg der Administration. Plugins mit Ansicht
+erscheinen für alle, die sie öffnen dürfen, im Abschnitt **Plugins** der
+Seitennavigation. Dafür sind keine Rechte zur Plugin-Verwaltung nötig. Zusätzlich lässt
+sich die Ansicht über ihre eigene Adresse `/plugin/<slug>` aufrufen, also etwa
+`https://deine-instanz.example/plugin/demo-plugin`. Fehlt jemandem eines der
+Zugriffsrechte, erscheint die übliche Meldung über den fehlenden Zugriff, und dasselbe
+passiert, solange das Plugin deaktiviert ist.
