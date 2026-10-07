@@ -49,6 +49,12 @@ Adresse von Green Ecolution selbst zeigen. Ein dritter Modus für Dienste, die n
 intern laufen und von Green Ecolution durchgereicht werden, ist vorbereitet, aber
 noch nicht auswählbar, solange die Durchreichung fehlt.
 
+Bringt das Plugin eine Ansicht mit, kannst du ihr außerdem Gerätezugriff für Kamera
+und Bluetooth freigeben. Die Auswahl erscheint nur bei Plugins mit Ansicht. Die Ansicht
+kann diese Funktionen erst nutzen, wenn die Person im Browser zustimmt; die Freigabe
+ersetzt diese Rückfrage also nicht. Gib sie nur Plugins frei, denen du vertraust. Auch
+auf der Detailseite des Plugins lässt sich der Gerätezugriff später anpassen.
+
 Zum Schluss legst du die beiden Rechtemengen fest, siehe
 [Die beiden Rechtemengen](./settings-plugins.md#die-beiden-rechtemengen) weiter unten.
 Nach **Installieren** zeigt ein eigener Dialog den frisch erzeugten API-Schlüssel im
@@ -128,10 +134,10 @@ ein und übergibt ihr deinen Anzeigenamen, die Oberflächensprache und den Slug 
 Plugins, aber keinen Zugriff auf deine Anmeldedaten. Ein Plugin ohne eigene Ansicht
 zeigt an dieser Stelle stattdessen einen Hinweis, dass es keine besitzt.
 
-Die Detailseite ist allerdings nur der Weg der Administration. Alle anderen erreichen
-die Ansicht über ihre eigene Adresse `/plugin/<slug>`, also etwa
-`https://deine-instanz.example/plugin/demo-plugin`. Einen Eintrag in der Navigation gibt
-es dafür bislang nicht; gib den Link deshalb nach dem Installieren an die Personen
-weiter, die mit dem Plugin arbeiten sollen. Fehlt jemandem eines der Zugriffsrechte,
-erscheint die übliche Meldung über den fehlenden Zugriff, und dasselbe passiert, solange
-das Plugin deaktiviert ist.
+Die Detailseite ist allerdings nur der Weg der Administration. Plugins mit Ansicht
+erscheinen für alle, die sie öffnen dürfen, im Abschnitt **Plugins** der
+Seitennavigation. Dafür sind keine Rechte zur Plugin-Verwaltung nötig. Zusätzlich lässt
+sich die Ansicht über ihre eigene Adresse `/plugin/<slug>` aufrufen, also etwa
+`https://deine-instanz.example/plugin/demo-plugin`. Fehlt jemandem eines der
+Zugriffsrechte, erscheint die übliche Meldung über den fehlenden Zugriff, und dasselbe
+passiert, solange das Plugin deaktiviert ist.
