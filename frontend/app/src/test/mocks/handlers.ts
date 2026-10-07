@@ -3,6 +3,8 @@ import { http, HttpResponse } from 'msw'
 const baseUrl = '/api-local'
 
 export const handlers = [
+  http.get(`${baseUrl}/v1/plugins/views`, () => HttpResponse.json([])),
+
   // Tree API handlers
   http.get(`${baseUrl}/v1/tree`, () => {
     return HttpResponse.json({
