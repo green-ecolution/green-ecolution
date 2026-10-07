@@ -6,8 +6,9 @@ import { useWateringStatusDetails } from '@/hooks/details/useDetailsForWateringS
 import { useDateLocale } from '@/lib/i18n/useFormatters'
 import { roundTo } from '@/lib/utils'
 import Tree from '@/components/icons/Tree'
-import type { SensorPayload, TreeClusterResponse } from '@/api/backendApi'
-import { latestSensorReading, sortTreesSensorFirst, summarizeTopSpecies } from './clusterPanelUtils'
+import type { TreeClusterResponse } from '@/api/backendApi'
+import { latestClusterReading } from '@/components/treecluster/clusterLatestReading'
+import { sortTreesSensorFirst, summarizeTopSpecies } from './clusterPanelUtils'
 
 interface ClusterPanelViewProps {
   treecluster: TreeClusterResponse
@@ -26,14 +27,11 @@ const ClusterPanelView = ({ treecluster, onOpenDashboard }: ClusterPanelViewProp
   const previewTrees = sortedTrees.slice(0, PREVIEW_COUNT)
   const remaining = sortedTrees.length - previewTrees.length
   const treeCount = treecluster.trees.length
-  const reading = latestSensorReading(treecluster.trees)
-  const temperatureValue = (reading?.data as SensorPayload | undefined)?.temperature
+  const reading = latestClusterReading(treecluster.trees)
   const temperature =
-    typeof temperatureValue === 'number'
-      ? `${roundTo(temperatureValue, 1)} °C`
-      : t('cluster.noData')
-  const lastMeasurement = reading
-    ? formatDistanceToNow(new Date(reading.createdAt), { addSuffix: true, locale: dateLocale })
+    reading.temperature != null ? `${roundTo(reading.temperature, 1)} °C` : t('cluster.noData')
+  const lastMeasurement = reading.measuredAt
+    ? formatDistanceToNow(reading.measuredAt, { addSuffix: true, locale: dateLocale })
     : t('cluster.noData')
   const lastWatered = treecluster.lastWatered
     ? format(new Date(treecluster.lastWatered), 'dd.MM.yyyy')

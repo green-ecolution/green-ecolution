@@ -20,7 +20,11 @@ const cluster = {
       number: '10428',
       sensor: {
         id: 's1',
-        latestData: { createdAt: '2026-06-09T08:00:00Z', data: { temperature: 21.4 } },
+        latestData: {
+          createdAt: '2026-06-09T08:00:00Z',
+          updatedAt: '2026-06-09T08:00:00Z',
+          data: { temperature: 21.4 },
+        },
       },
     },
   ],
@@ -51,6 +55,29 @@ describe('ClusterPanelView', () => {
   it('shows the soil temperature from the latest sensor reading', () => {
     render(<ClusterPanelView treecluster={cluster} onOpenDashboard={vi.fn()} />)
     expect(screen.getByText('21.4 °C')).toBeInTheDocument()
+  })
+
+  it('shows the soil temperature from a generic readings payload', () => {
+    const genericCluster = {
+      ...cluster,
+      trees: [
+        {
+          id: 't3',
+          species: 'Cercis',
+          number: 'FL-129-376',
+          sensor: {
+            id: 's2',
+            latestData: {
+              createdAt: '2026-06-09T08:00:00Z',
+              updatedAt: '2026-06-09T08:00:00Z',
+              data: { readings: [{ ability: 'temperature', depth: 30, value: 16.7 }] },
+            },
+          },
+        },
+      ],
+    } as unknown as TreeClusterResponse
+    render(<ClusterPanelView treecluster={genericCluster} onOpenDashboard={vi.fn()} />)
+    expect(screen.getByText('16.7 °C')).toBeInTheDocument()
   })
 
   it('fires onOpenDashboard', async () => {
