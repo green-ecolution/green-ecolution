@@ -96,6 +96,8 @@ fn to_hex(bytes: &[u8]) -> String {
     bytes.iter().map(|b| format!("{b:02x}")).collect()
 }
 
+/// Deliberately no email fallback: the plugin learns who opened the view,
+/// not how to contact them.
 fn display_name(user: &AuthUser) -> String {
     user.raw_claims
         .get("name")
@@ -103,7 +105,6 @@ fn display_name(user: &AuthUser) -> String {
         .filter(|n| !n.trim().is_empty())
         .map(str::to_string)
         .or_else(|| user.username.clone())
-        .or_else(|| user.email.clone())
         .unwrap_or_default()
 }
 
@@ -224,6 +225,21 @@ mod tests {
 
         let redeemed = service.redeem(&plugin, &ticket).await.unwrap();
         assert_eq!(redeemed.user_display_name, "jdoe");
+    }
+
+    #[tokio::test]
+    async fn display_name_never_falls_back_to_the_email_address() {
+        let service = PluginViewTicketService::new(Arc::new(MemoryStore::default()));
+        let plugin = plugin();
+        let operator = AuthUser {
+            username: None,
+            email: Some("jane.doe@example.org".into()),
+            ..user(None)
+        };
+        let ticket = service.issue(plugin.id, &operator).await.unwrap();
+
+        let redeemed = service.redeem(&plugin, &ticket).await.unwrap();
+        assert_eq!(redeemed.user_display_name, "");
     }
 
     #[tokio::test]
