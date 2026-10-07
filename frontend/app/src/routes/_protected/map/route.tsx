@@ -100,7 +100,8 @@ function MapRoot() {
   }, [navigate, panelClusterId])
 
   return (
-    <div className="flex h-[calc(100dvh-4.563rem)] flex-col">
+    // data-fullscreen-map sizes the page to the viewport, see site.css.
+    <div data-fullscreen-map className="relative flex min-h-0 flex-1 flex-col">
       {isIndex && <MapToolbarBar />}
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <div className="relative flex-1">

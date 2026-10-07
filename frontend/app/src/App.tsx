@@ -14,10 +14,10 @@ function App() {
   const { pathname } = useLocation()
   const { i18n } = useTranslation()
 
-  // A plugin view fills whatever the header and footer leave over. That only
-  // works if main is a flex column -- a percentage height on the frame would
-  // resolve against an indefinite flex item and collapse to the 150px default.
-  const fillsFreeSpace = pathname.startsWith('/plugin/')
+  // A plugin view and the map fill whatever the header and footer leave over.
+  // That only works if main is a flex column -- a percentage height would
+  // resolve against an indefinite flex item and collapse.
+  const fillsFreeSpace = pathname.startsWith('/plugin/') || pathname.startsWith('/map')
 
   // Screen readers and the browser's spell checker read this attribute, not
   // the i18next state.
