@@ -83,6 +83,8 @@ async fn expired_ticket_is_rejected() {
 
     let resp = redeem(&app, &key, &ticket).await;
     assert_eq!(resp.status().as_u16(), 401);
+    let body: serde_json::Value = resp.json().await.unwrap();
+    assert_eq!(body["code"], "plugin.view_ticket_invalid");
 }
 
 #[tokio::test]
@@ -94,6 +96,8 @@ async fn ticket_cannot_be_redeemed_by_another_plugin() {
 
     let resp = redeem(&app, &other_key, &ticket).await;
     assert_eq!(resp.status().as_u16(), 401);
+    let body: serde_json::Value = resp.json().await.unwrap();
+    assert_eq!(body["code"], "plugin.view_ticket_invalid");
 }
 
 #[tokio::test]
