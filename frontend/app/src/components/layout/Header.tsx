@@ -42,12 +42,14 @@ function Header() {
     })
   }, [isLargeScreen])
 
-  // z-50: the fullscreen mobile nav overlay lives inside this stacking
-  // context, so it must sit on the overlay layer or page content (e.g.
-  // map controls) paints above it
+  // The fullscreen mobile nav lives inside this stacking context. z-50 keeps it
+  // above page content; while open it goes one layer higher, because portals on
+  // z-50 (e.g. the map's bottom drawer) come later in the DOM and would win.
+  // z-index transitions with the nav's slide so it only drops back to 50 once
+  // the closing nav is off screen.
   return (
     <header
-      className={`sticky top-0 z-50 bg-white transition-[padding] ease-in-out duration-300 motion-reduce:transition-none ${collapsed ? 'lg:pl-[4.5rem]' : 'lg:pl-[16rem]'}`}
+      className={`sticky top-0 ${open ? 'z-[60]' : 'z-50'} bg-white transition-[padding,z-index] ease-in-out duration-300 motion-reduce:transition-none ${collapsed ? 'lg:pl-[4.5rem]' : 'lg:pl-[16rem]'}`}
     >
       {/* min-h keeps the pre-NavUser header height (40px avatar + py-4 + border);
           the map height calc (100dvh - 4.563rem) depends on it */}
