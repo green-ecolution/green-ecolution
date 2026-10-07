@@ -14,10 +14,11 @@ use domain::{
 
 use super::dto::plugin::{
     IngestBatchResponse, PluginCreateRequest, PluginKeyResponse, PluginNavEntryResponse,
-    PluginResponse, PluginUpdateRequest, PluginViewResponse, TreeIngestBatchRequest,
-    TreeRefListParams, TreeRefPageResponse, ViewTicketRedeemRequest, ViewTicketRedeemResponse,
-    ViewTicketUserResponse,
+    PluginResponse, PluginSensorCreateRequest, PluginUpdateRequest, PluginViewResponse,
+    TreeIngestBatchRequest, TreeRefListParams, TreeRefPageResponse, ViewTicketRedeemRequest,
+    ViewTicketRedeemResponse, ViewTicketUserResponse,
 };
+use super::dto::sensor::{SensorModelResponse, SensorResponse};
 
 pub fn routes() -> OpenApiRouter<Arc<AppState>> {
     OpenApiRouter::new()
@@ -37,6 +38,8 @@ pub fn ingest_routes() -> OpenApiRouter<Arc<AppState>> {
         .routes(routes!(redeem_view_ticket))
         .routes(routes!(list_tree_refs, upsert_trees))
         .routes(routes!(delete_tree_ref))
+        .routes(routes!(list_plugin_sensor_models))
+        .routes(routes!(create_plugin_sensor))
 }
 
 fn guard(state: &AppState) -> Result<(), ServiceError> {
@@ -412,4 +415,58 @@ pub async fn delete_tree_ref(
         .delete_tree(&plugin.0, &external_id)
         .await?;
     Ok(StatusCode::NO_CONTENT)
+}
+
+#[utoipa::path(get, path = "/plugins/ingest/sensor-models", tag = "Plugins",
+    operation_id = "listPluginSensorModels",
+    summary = "List sensor models for a plugin",
+    description = "Same catalogue as GET /sensors/models, for a plugin key. Requires sensor:read in the plugin's organization.",
+    responses(
+        (status = 200, description = "Sensor models", body = Vec<SensorModelResponse>),
+        (status = 401, description = "Unauthorized", body = ErrorBody),
+        (status = 403, description = "Forbidden or plugin disabled", body = ErrorBody),
+        (status = 503, description = "Plugins feature is disabled (code `feature.plugins_disabled`)", body = ErrorBody),
+    )
+)]
+#[tracing::instrument(level = "info", skip_all)]
+pub async fn list_plugin_sensor_models(
+    State(state): State<Arc<AppState>>,
+    plugin: PluginPrincipal,
+) -> Result<Json<Vec<SensorModelResponse>>, ServiceError> {
+    guard(&state)?;
+    let models = state
+        .plugin_sensor_ingest_service
+        .list_models(&plugin.0)
+        .await?;
+    Ok(Json(models.iter().map(SensorModelResponse::from).collect()))
+}
+
+#[utoipa::path(post, path = "/plugins/ingest/sensors", tag = "Plugins",
+    operation_id = "createPluginSensor",
+    summary = "Register a prepared sensor from a plugin",
+    description = "Creates a sensor in `Prepared` state in the plugin's organization, with the plugin's slug as provider. Requires sensor:create in the plugin's organization.",
+    request_body = PluginSensorCreateRequest,
+    responses(
+        (status = 201, description = "Sensor created", body = SensorResponse),
+        (status = 400, description = "Invalid request body", body = ErrorBody),
+        (status = 401, description = "Unauthorized", body = ErrorBody),
+        (status = 403, description = "Forbidden or plugin disabled", body = ErrorBody),
+        (status = 404, description = "Sensor model not found", body = ErrorBody),
+        (status = 409, description = "Sensor id already exists (code `resource.already_exists`)", body = ErrorBody),
+        (status = 503, description = "Plugins feature is disabled (code `feature.plugins_disabled`)", body = ErrorBody),
+    )
+)]
+#[tracing::instrument(level = "info", skip_all)]
+pub async fn create_plugin_sensor(
+    State(state): State<Arc<AppState>>,
+    plugin: PluginPrincipal,
+    Json(body): Json<PluginSensorCreateRequest>,
+) -> Result<(StatusCode, Json<SensorResponse>), ServiceError> {
+    guard(&state)?;
+    let draft = body.into_draft(&plugin.0)?;
+    let view = state
+        .plugin_sensor_ingest_service
+        .create(&plugin.0, draft)
+        .await?;
+    Ok((StatusCode::CREATED, Json(SensorResponse::from(&view))))
 }

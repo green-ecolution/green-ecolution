@@ -8,9 +8,10 @@ use uuid::Uuid;
 use domain::{
     Id,
     plugin::{
-        DeviceCapability, PluginDraft, PluginFrontend, PluginName, PluginSlug, PluginView,
+        DeviceCapability, Plugin, PluginDraft, PluginFrontend, PluginName, PluginSlug, PluginView,
         ServiceEndpoint, TreeRef, TreeRefPage,
     },
+    sensor::SensorDraft,
 };
 
 use crate::http::AppOrigins;
@@ -21,6 +22,7 @@ use crate::service::{
 };
 
 use super::role::parse_permissions;
+use super::sensor::{CreateSensorRequest, LorawanCredentialsRequest, SensorTypeResponse};
 
 fn parse_device_capabilities(raw: &[String]) -> Result<BTreeSet<DeviceCapability>, ServiceError> {
     raw.iter()
@@ -507,5 +509,36 @@ impl From<&PluginView> for PluginNavEntryResponse {
             slug: view.slug.clone(),
             name: view.name.clone(),
         }
+    }
+}
+
+/// Body for `POST /plugins/ingest/sensors`: the user-facing create request
+/// without `organization_id` and `provider`, which always come from the plugin.
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
+pub struct PluginSensorCreateRequest {
+    #[schema(example = "eui-a84041000181c001")]
+    pub id: String,
+    pub sensor_type: SensorTypeResponse,
+    pub model_id: Uuid,
+    #[serde(default)]
+    #[schema(value_type = Option<Object>, nullable)]
+    pub additional_information: Option<serde_json::Value>,
+    #[serde(default)]
+    #[schema(nullable)]
+    pub lorawan: Option<LorawanCredentialsRequest>,
+}
+
+impl PluginSensorCreateRequest {
+    pub fn into_draft(self, plugin: &Plugin) -> Result<SensorDraft, ServiceError> {
+        CreateSensorRequest {
+            id: self.id,
+            sensor_type: self.sensor_type,
+            model_id: self.model_id,
+            provider: Some(plugin.slug().as_str().to_string()),
+            additional_information: self.additional_information,
+            lorawan: self.lorawan,
+            organization_id: None,
+        }
+        .into_draft(plugin.organization_id())
     }
 }

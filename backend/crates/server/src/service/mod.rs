@@ -6,6 +6,7 @@ pub mod event_bus;
 pub mod handlers;
 pub mod organization_service;
 pub mod plugin_ingest_service;
+pub mod plugin_sensor_ingest_service;
 pub mod plugin_service;
 pub mod plugin_view_ticket_service;
 pub mod region_service;
