@@ -39,6 +39,10 @@ describe('validateSlug', () => {
     expect(validateSlug('me', t)).toContain('me')
   })
 
+  it('rejects the views slug, which the navigation list route occupies', () => {
+    expect(validateSlug('views', t)).toContain('views')
+  })
+
   it('accepts a reserved segment used as a prefix', () => {
     expect(validateSlug('me-too', t)).toBeNull()
     expect(validateSlug('ingest', t)).toBeNull()
