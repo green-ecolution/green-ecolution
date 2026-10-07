@@ -492,3 +492,20 @@ pub struct ViewTicketRedeemResponse {
     pub user: ViewTicketUserResponse,
     pub organization_id: Uuid,
 }
+
+/// One navigation entry: just enough to link to `/plugin/{slug}`.
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+#[schema(example = json!({ "slug": "sensor-setup", "name": "Sensor-Einrichtung" }))]
+pub struct PluginNavEntryResponse {
+    pub slug: String,
+    pub name: String,
+}
+
+impl From<&PluginView> for PluginNavEntryResponse {
+    fn from(view: &PluginView) -> Self {
+        Self {
+            slug: view.slug.clone(),
+            name: view.name.clone(),
+        }
+    }
+}

@@ -14,6 +14,17 @@ use domain::{
 
 use super::{AuthError, ServiceError};
 
+/// Shared by the single view check and the navigation list, so the list can
+/// never offer a view the view endpoint would refuse.
+pub fn may_open_plugin_view(
+    ctx: &AccessContext,
+    required: &BTreeSet<Permission>,
+    org: Id<Organization>,
+) -> bool {
+    ctx.superset_of(required, org)
+        || ctx.allows_in(Permission::new(Resource::Plugin, Action::Read), org)
+}
+
 /// A pending change to a role definition, expressed as what the role would
 /// still grant afterwards.
 #[derive(Debug, Clone, Copy)]
@@ -121,9 +132,7 @@ impl AuthorizationService {
         org: Id<Organization>,
     ) -> Result<(), ServiceError> {
         let ctx = self.context_for(user_id).await?;
-        if ctx.superset_of(required, org)
-            || ctx.allows_in(Permission::new(Resource::Plugin, Action::Read), org)
-        {
+        if may_open_plugin_view(&ctx, required, org) {
             Ok(())
         } else {
             Err(AuthError::Forbidden.into())

@@ -530,3 +530,71 @@ async fn device_capabilities_can_be_changed_and_cleared() {
         .unwrap();
     assert_eq!(renamed["device_capabilities"], serde_json::json!([]));
 }
+
+#[tokio::test]
+async fn views_list_contains_exactly_the_openable_plugins() {
+    let harness = AuthHarness::start().await;
+    let app = spawn_app_with_plugins_and_auth(harness.auth_settings(true)).await;
+    let (org_id, token) =
+        seed_user_with_permissions(&harness, &app, "Sensorik Org", &["sensor:create"]).await;
+
+    seed_plugin_with_view(&app, "sensor-setup", org_id, &["sensor:create"]).await;
+    seed_plugin_with_view(&app, "tree-admin", org_id, &["tree:delete"]).await;
+    seed_plugin_with_view(&app, "switched-off", org_id, &["sensor:create"]).await;
+    sqlx::query("UPDATE plugins SET enabled = FALSE WHERE slug = 'switched-off'")
+        .execute(&app.db_pool)
+        .await
+        .unwrap();
+    seed_plugin_with_view(&app, "headless", org_id, &["sensor:create"]).await;
+    sqlx::query(
+        "UPDATE plugins SET frontend_mode = 'none', frontend_target = NULL WHERE slug = 'headless'",
+    )
+    .execute(&app.db_pool)
+    .await
+    .unwrap();
+
+    let resp = app.get_with_bearer("/api/v1/plugins/views", &token).await;
+    assert_eq!(resp.status().as_u16(), 200);
+    let body: serde_json::Value = resp.json().await.unwrap();
+    assert_eq!(
+        body,
+        serde_json::json!([{ "slug": "sensor-setup", "name": "Demo Plugin" }])
+    );
+
+    // The list must never offer a view that the view endpoint would refuse.
+    let view = app
+        .get_with_bearer("/api/v1/plugins/sensor-setup/view", &token)
+        .await;
+    assert_eq!(view.status().as_u16(), 200);
+}
+
+#[tokio::test]
+async fn views_list_does_not_need_plugin_read() {
+    let harness = AuthHarness::start().await;
+    let app = spawn_app_with_plugins_and_auth(harness.auth_settings(true)).await;
+    let (_, token) = seed_user_with_permissions(&harness, &app, "Leere Org", &["tree:read"]).await;
+
+    let resp = app.get_with_bearer("/api/v1/plugins/views", &token).await;
+    assert_eq!(resp.status().as_u16(), 200);
+    let body: serde_json::Value = resp.json().await.unwrap();
+    assert_eq!(body, serde_json::json!([]));
+}
+
+#[tokio::test]
+async fn install_rejects_the_views_slug() {
+    let app = spawn_app_with_plugins().await;
+    let resp = app
+        .post_json(
+            "/api/v1/plugins",
+            &serde_json::json!({
+                "slug": "views",
+                "name": "Views",
+                "organization_id": ROOT_ORG,
+                "permissions": [],
+                "required_permissions": [],
+                "frontend": { "mode": "none" }
+            }),
+        )
+        .await;
+    assert_eq!(resp.status().as_u16(), 400);
+}

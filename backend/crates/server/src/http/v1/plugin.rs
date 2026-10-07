@@ -13,13 +13,15 @@ use domain::{
 };
 
 use super::dto::plugin::{
-    IngestBatchResponse, PluginCreateRequest, PluginKeyResponse, PluginResponse,
-    PluginUpdateRequest, PluginViewResponse, TreeIngestBatchRequest, TreeRefListParams,
-    TreeRefPageResponse, ViewTicketRedeemRequest, ViewTicketRedeemResponse, ViewTicketUserResponse,
+    IngestBatchResponse, PluginCreateRequest, PluginKeyResponse, PluginNavEntryResponse,
+    PluginResponse, PluginUpdateRequest, PluginViewResponse, TreeIngestBatchRequest,
+    TreeRefListParams, TreeRefPageResponse, ViewTicketRedeemRequest, ViewTicketRedeemResponse,
+    ViewTicketUserResponse,
 };
 
 pub fn routes() -> OpenApiRouter<Arc<AppState>> {
     OpenApiRouter::new()
+        .routes(routes!(list_plugin_views))
         .routes(routes!(list_plugins, install_plugin))
         .routes(routes!(get_plugin, update_plugin, uninstall_plugin))
         .routes(routes!(rotate_plugin_key))
@@ -65,6 +67,29 @@ pub async fn list_plugins(
     guard(&state)?;
     let views = state.plugin_service.list(user.id).await?;
     Ok(Json(views.iter().map(Into::into).collect()))
+}
+
+#[utoipa::path(get, path = "/plugins/views", tag = "Plugins",
+    operation_id = "listPluginViews",
+    summary = "List the plugin views the caller may open",
+    description = "Returns every enabled plugin with a view whose required_permissions the caller holds in the plugin's organization. Does not require plugin:read.",
+    responses(
+        (status = 200, description = "Openable plugin views", body = Vec<PluginNavEntryResponse>),
+        (status = 401, description = "Unauthorized", body = ErrorBody),
+        (status = 503, description = "Plugins feature is disabled (code `feature.plugins_disabled`)", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
+    )
+)]
+#[tracing::instrument(level = "info", skip_all)]
+pub async fn list_plugin_views(
+    State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
+) -> Result<Json<Vec<PluginNavEntryResponse>>, ServiceError> {
+    guard(&state)?;
+    let views = state.plugin_service.openable_views(user.id).await?;
+    Ok(Json(
+        views.iter().map(PluginNavEntryResponse::from).collect(),
+    ))
 }
 
 #[utoipa::path(post, path = "/plugins", tag = "Plugins",

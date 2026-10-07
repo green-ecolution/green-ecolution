@@ -46,8 +46,8 @@ crate::newtype_nonempty! {
 /// database access, while still pinning its organization against deletion.
 /// Only single-segment collisions belong here: `ingest` is safe because the
 /// route below it is `/plugins/ingest/trees`, one level deeper than any
-/// admin endpoint.
-pub const RESERVED_PLUGIN_SLUGS: &[&str] = &["me"];
+/// admin endpoint. `view-tickets` is safe for the same reason.
+pub const RESERVED_PLUGIN_SLUGS: &[&str] = &["me", "views"];
 
 /// Immutable identifier, also used as the `ProviderId` on imported records.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]

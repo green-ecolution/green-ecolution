@@ -22,7 +22,10 @@ use domain::{
     },
 };
 
-use super::{AuthError, ServiceError, authorization::AuthorizationService};
+use super::{
+    AuthError, ServiceError,
+    authorization::{AuthorizationService, may_open_plugin_view},
+};
 
 /// Mints the plaintext key shown once to the operator plus the hash to
 /// persist. A CSPRNG and a digest are adapter concerns, so the service takes
@@ -113,6 +116,28 @@ impl PluginService {
             return Err(AuthError::PluginDisabled.into());
         }
         Ok(PluginView::from_aggregate(&plugin, None))
+    }
+
+    /// The plugins whose view the actor may open right now, for the navigation.
+    /// Roles are resolved once for the whole list instead of once per plugin.
+    #[tracing::instrument(level = "debug", skip_all)]
+    pub async fn openable_views(&self, actor: Uuid) -> Result<Vec<PluginView>, ServiceError> {
+        let ctx = self.authorization.context_for(actor).await?;
+        Ok(self
+            .reader
+            .all()
+            .await?
+            .into_iter()
+            .filter(|view| view.enabled && view.frontend_mode != "none")
+            .filter(|view| {
+                let required: BTreeSet<Permission> = view
+                    .required_permissions
+                    .iter()
+                    .filter_map(|p| p.parse().ok())
+                    .collect();
+                may_open_plugin_view(&ctx, &required, view.organization_id)
+            })
+            .collect())
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
