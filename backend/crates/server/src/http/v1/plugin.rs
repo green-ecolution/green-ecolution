@@ -15,7 +15,7 @@ use domain::{
 use super::dto::plugin::{
     IngestBatchResponse, PluginCreateRequest, PluginKeyResponse, PluginResponse,
     PluginUpdateRequest, PluginViewResponse, TreeIngestBatchRequest, TreeRefListParams,
-    TreeRefPageResponse,
+    TreeRefPageResponse, ViewTicketRedeemRequest, ViewTicketRedeemResponse, ViewTicketUserResponse,
 };
 
 pub fn routes() -> OpenApiRouter<Arc<AppState>> {
@@ -32,6 +32,7 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
 pub fn ingest_routes() -> OpenApiRouter<Arc<AppState>> {
     OpenApiRouter::new()
         .routes(routes!(get_own_plugin))
+        .routes(routes!(redeem_view_ticket))
         .routes(routes!(list_tree_refs, upsert_trees))
         .routes(routes!(delete_tree_ref))
 }
@@ -135,7 +136,7 @@ pub async fn get_plugin(
 #[utoipa::path(get, path = "/plugins/{plugin_slug}/view", tag = "Plugins",
     operation_id = "getPluginView",
     summary = "Get a plugin's view",
-    description = "Returns what is needed to embed a plugin's view. Requires the plugin's own required_permissions in its organization -- plugin:read administers a plugin and is not what opening its view is about, though it grants access here as well.",
+    description = "Returns what is needed to embed a plugin's view. Requires the plugin's own required_permissions in its organization -- plugin:read administers a plugin and is not what opening its view is about, though it grants access here as well. Every call issues a fresh single-use view ticket for the caller.",
     params(("plugin_slug" = String, Path, description = "Plugin slug")),
     responses(
         (status = 200, description = "Plugin view", body = PluginViewResponse),
@@ -155,7 +156,11 @@ pub async fn get_plugin_view(
     guard(&state)?;
     let slug = PluginSlug::new(slug)?;
     let view = state.plugin_service.view_for(user.id, &slug).await?;
-    Ok(Json((&view).into()))
+    let ticket = state
+        .plugin_view_ticket_service
+        .issue(view.id, &user)
+        .await?;
+    Ok(Json(PluginViewResponse::new(&view, ticket)))
 }
 
 #[utoipa::path(patch, path = "/plugins/{plugin_slug}", tag = "Plugins",
@@ -260,6 +265,38 @@ pub async fn get_own_plugin(
     let last_seen_at = state.plugin_reader.last_seen_at(plugin.0.id).await?;
     let view = PluginView::from_aggregate(&plugin.0, last_seen_at);
     Ok(Json((&view).into()))
+}
+
+#[utoipa::path(post, path = "/plugins/view-tickets/redeem", tag = "Plugins",
+    operation_id = "redeemPluginViewTicket",
+    summary = "Redeem a view ticket",
+    description = "Exchanges a view ticket handed to the plugin's view for the identity of the user who opened it. A ticket is valid for two minutes, can be redeemed once and only by the plugin it was issued for. Any failure answers 401 with code `plugin.view_ticket_invalid`.",
+    request_body = ViewTicketRedeemRequest,
+    responses(
+        (status = 200, description = "The user who opened the view", body = ViewTicketRedeemResponse),
+        (status = 401, description = "Invalid plugin key or view ticket", body = ErrorBody),
+        (status = 403, description = "Plugin is disabled", body = ErrorBody),
+        (status = 503, description = "Plugins feature is disabled (code `feature.plugins_disabled`)", body = ErrorBody),
+    )
+)]
+#[tracing::instrument(level = "info", skip_all)]
+pub async fn redeem_view_ticket(
+    State(state): State<Arc<AppState>>,
+    plugin: PluginPrincipal,
+    Json(body): Json<ViewTicketRedeemRequest>,
+) -> Result<Json<ViewTicketRedeemResponse>, ServiceError> {
+    guard(&state)?;
+    let redeemed = state
+        .plugin_view_ticket_service
+        .redeem(&plugin.0, &body.ticket)
+        .await?;
+    Ok(Json(ViewTicketRedeemResponse {
+        user: ViewTicketUserResponse {
+            id: redeemed.user_id,
+            display_name: redeemed.user_display_name,
+        },
+        organization_id: plugin.0.organization_id().value(),
+    }))
 }
 
 #[utoipa::path(get, path = "/plugins/ingest/trees", tag = "Plugins",

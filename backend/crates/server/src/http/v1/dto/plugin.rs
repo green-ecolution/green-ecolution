@@ -96,7 +96,8 @@ impl From<&PluginView> for PluginResponse {
     "description": null,
     "frontend_mode": "external",
     "frontend_target": "https://kataster.example.org/view",
-    "device_capabilities": ["camera", "bluetooth"]
+    "device_capabilities": ["camera", "bluetooth"],
+    "view_ticket": "gev_3f2a9c41d7b05e6a8f1c2d3e4b5a69788796a5b4c3d2e1f00112233445566778"
 }))]
 pub struct PluginViewResponse {
     pub slug: String,
@@ -105,10 +106,13 @@ pub struct PluginViewResponse {
     pub frontend_mode: String,
     pub frontend_target: Option<String>,
     pub device_capabilities: Vec<String>,
+    /// Single-use, valid for two minutes. Hand it to the plugin's own backend,
+    /// which redeems it to learn who opened the view.
+    pub view_ticket: String,
 }
 
-impl From<&PluginView> for PluginViewResponse {
-    fn from(view: &PluginView) -> Self {
+impl PluginViewResponse {
+    pub fn new(view: &PluginView, view_ticket: String) -> Self {
         Self {
             slug: view.slug.clone(),
             name: view.name.clone(),
@@ -116,6 +120,7 @@ impl From<&PluginView> for PluginViewResponse {
             frontend_mode: view.frontend_mode.to_string(),
             frontend_target: view.frontend_target.clone(),
             device_capabilities: view.device_capabilities.clone(),
+            view_ticket,
         }
     }
 }
@@ -464,4 +469,26 @@ pub struct TreeRefListParams {
     pub limit: Option<u32>,
     #[param(example = "12344")]
     pub cursor: Option<String>,
+}
+
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
+#[schema(example = json!({ "ticket": "gev_3f2a…" }))]
+pub struct ViewTicketRedeemRequest {
+    pub ticket: String,
+}
+
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+pub struct ViewTicketUserResponse {
+    pub id: Uuid,
+    pub display_name: String,
+}
+
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+#[schema(example = json!({
+    "user": { "id": "01990000-0000-7000-8000-0000000000aa", "display_name": "Jane Doe" },
+    "organization_id": "01980000-0000-7000-8000-000000000001"
+}))]
+pub struct ViewTicketRedeemResponse {
+    pub user: ViewTicketUserResponse,
+    pub organization_id: Uuid,
 }

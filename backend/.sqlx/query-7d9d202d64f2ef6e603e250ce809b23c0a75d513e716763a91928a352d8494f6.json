@@ -1,0 +1,29 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE plugin_view_tickets\n                  SET redeemed_at = now()\n                WHERE token_hash = $1\n                  AND plugin_id = $2\n                  AND redeemed_at IS NULL\n                  AND expires_at > now()\n            RETURNING user_id, user_display_name",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "user_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "user_display_name",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "7d9d202d64f2ef6e603e250ce809b23c0a75d513e716763a91928a352d8494f6"
+}
