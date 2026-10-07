@@ -70,3 +70,24 @@
 body {
   padding-inline: env(safe-area-inset-left) env(safe-area-inset-right);
 }
+
+/* The map page must not scroll. 100vh (min-h-screen on #root) is the large
+   viewport, taller than what Android Chrome or an installed PWA actually shows.
+   --map-bottom-inset is what covers the map's bottom edge; controls lift by it. */
+#root:has([data-fullscreen-map]) {
+  min-height: 100dvh;
+  max-height: 100dvh;
+  --map-bottom-inset: env(safe-area-inset-bottom);
+}
+
+/* iOS Safari outside the PWA cannot scroll this page anyway, and 100lvh lets
+   the map run on behind its floating toolbar. */
+@supports (-webkit-touch-callout: none) {
+  @media not all and (display-mode: standalone) {
+    #root:has([data-fullscreen-map]) {
+      min-height: 100lvh;
+      max-height: 100lvh;
+      --map-bottom-inset: max(env(safe-area-inset-bottom), 100lvh - 100dvh);
+    }
+  }
+}
