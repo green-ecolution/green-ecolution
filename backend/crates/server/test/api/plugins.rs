@@ -598,3 +598,44 @@ async fn install_rejects_the_views_slug() {
         .await;
     assert_eq!(resp.status().as_u16(), 400);
 }
+
+/// A view without `required_permissions` is meant for everyone of the
+/// plugin's organization, not for every authenticated user of every
+/// organization.
+#[tokio::test]
+async fn view_without_required_permissions_stays_within_its_organization() {
+    let harness = AuthHarness::start().await;
+    let app = spawn_app_with_plugins_and_auth(harness.auth_settings(true)).await;
+    let (_, outsider) =
+        seed_user_with_permissions(&harness, &app, "Nachbar Org", &["tree:read"]).await;
+    let (plugin_org, member) =
+        seed_user_with_permissions(&harness, &app, "Plugin Org", &["tree:read"]).await;
+    seed_plugin_with_view(&app, "open-view", plugin_org, &[]).await;
+
+    let listed: serde_json::Value = app
+        .get_with_bearer("/api/v1/plugins/views", &outsider)
+        .await
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(listed, serde_json::json!([]));
+    let view = app
+        .get_with_bearer("/api/v1/plugins/open-view/view", &outsider)
+        .await;
+    assert_eq!(view.status().as_u16(), 403);
+
+    let listed: serde_json::Value = app
+        .get_with_bearer("/api/v1/plugins/views", &member)
+        .await
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(
+        listed,
+        serde_json::json!([{ "slug": "open-view", "name": "Demo Plugin" }])
+    );
+    let view = app
+        .get_with_bearer("/api/v1/plugins/open-view/view", &member)
+        .await;
+    assert_eq!(view.status().as_u16(), 200);
+}

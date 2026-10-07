@@ -15,14 +15,21 @@ use domain::{
 use super::{AuthError, ServiceError};
 
 /// Shared by the single view check and the navigation list, so the list can
-/// never offer a view the view endpoint would refuse.
+/// never offer a view the view endpoint would refuse. An empty `required` set
+/// means "anyone with some permission in the plugin's organization"; a plain
+/// superset check would be vacuously true and open the view to every
+/// organization.
 pub fn may_open_plugin_view(
     ctx: &AccessContext,
     required: &BTreeSet<Permission>,
     org: Id<Organization>,
 ) -> bool {
-    ctx.superset_of(required, org)
-        || ctx.allows_in(Permission::new(Resource::Plugin, Action::Read), org)
+    let holds_required = if required.is_empty() {
+        ctx.holds_any_in(org)
+    } else {
+        ctx.superset_of(required, org)
+    };
+    holds_required || ctx.allows_in(Permission::new(Resource::Plugin, Action::Read), org)
 }
 
 /// A pending change to a role definition, expressed as what the role would
@@ -120,7 +127,8 @@ impl AuthorizationService {
     }
 
     /// Opening a plugin's view is gated by that plugin's own
-    /// `required_permissions`, held in full, and deliberately not by
+    /// `required_permissions`, held in full (an empty set asks for any
+    /// permission in the plugin's organization), and deliberately not by
     /// `plugin:read`: administering a plugin and working with its view are
     /// different jobs, and the people the view is built for rarely administer
     /// anything. Whoever may read the plugin passes as well, so an
@@ -630,5 +638,90 @@ mod tests {
             .await;
 
         assert!(result.is_ok());
+    }
+
+    fn view_ctx(
+        hierarchy: &[(Id<Organization>, Option<Id<Organization>>)],
+        grants: Vec<(Id<Organization>, BTreeSet<Permission>)>,
+    ) -> AccessContext {
+        AccessContext {
+            permissions: EffectivePermissions::from_grants(grants),
+            hierarchy: OrgHierarchy::from_pairs(hierarchy.to_vec()),
+        }
+    }
+
+    #[test]
+    fn view_without_required_permissions_opens_for_a_grant_in_its_org() {
+        let (root, org) = (Id::new_v7(), Id::new_v7());
+        let ctx = view_ctx(
+            &[(root, None), (org, Some(root))],
+            vec![(org, BTreeSet::from([tree_read()]))],
+        );
+
+        assert!(may_open_plugin_view(&ctx, &BTreeSet::new(), org));
+    }
+
+    #[test]
+    fn view_without_required_permissions_stays_closed_for_a_sibling_org() {
+        let (root, own, sibling) = (Id::new_v7(), Id::new_v7(), Id::new_v7());
+        let ctx = view_ctx(
+            &[(root, None), (own, Some(root)), (sibling, Some(root))],
+            vec![(own, BTreeSet::from_iter(Permission::catalog()))],
+        );
+
+        assert!(!may_open_plugin_view(&ctx, &BTreeSet::new(), sibling));
+    }
+
+    #[test]
+    fn view_without_required_permissions_ignores_an_empty_grant() {
+        let (root, org) = (Id::new_v7(), Id::new_v7());
+        let ctx = view_ctx(
+            &[(root, None), (org, Some(root))],
+            vec![(org, BTreeSet::new())],
+        );
+
+        assert!(!may_open_plugin_view(&ctx, &BTreeSet::new(), org));
+    }
+
+    #[test]
+    fn plugin_read_opens_any_view_of_its_org() {
+        let (root, org) = (Id::new_v7(), Id::new_v7());
+        let plugin_read = Permission::new(Resource::Plugin, Action::Read);
+        let ctx = view_ctx(
+            &[(root, None), (org, Some(root))],
+            vec![(org, BTreeSet::from([plugin_read]))],
+        );
+        let tree_delete = BTreeSet::from([Permission::new(Resource::Tree, Action::Delete)]);
+
+        assert!(may_open_plugin_view(&ctx, &BTreeSet::new(), org));
+        assert!(may_open_plugin_view(&ctx, &tree_delete, org));
+    }
+
+    #[test]
+    fn view_with_required_permissions_needs_all_of_them() {
+        let (root, org) = (Id::new_v7(), Id::new_v7());
+        let tree_update = Permission::new(Resource::Tree, Action::Update);
+        let ctx = view_ctx(
+            &[(root, None), (org, Some(root))],
+            vec![(org, BTreeSet::from([tree_read()]))],
+        );
+
+        assert!(may_open_plugin_view(
+            &ctx,
+            &BTreeSet::from([tree_read()]),
+            org
+        ));
+        assert!(!may_open_plugin_view(
+            &ctx,
+            &BTreeSet::from([tree_read(), tree_update]),
+            org
+        ));
+    }
+
+    #[test]
+    fn unrestricted_context_opens_every_view() {
+        let ctx = AccessContext::unrestricted();
+
+        assert!(may_open_plugin_view(&ctx, &BTreeSet::new(), Id::new_v7()));
     }
 }
