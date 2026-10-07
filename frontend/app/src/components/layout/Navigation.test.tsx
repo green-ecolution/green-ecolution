@@ -37,6 +37,12 @@ vi.mock('@/lib/auth/useCurrentUserAvatar', () => ({
 
 const { default: Navigation } = await import('./Navigation')
 
+const settledPluginViews = (queryClient: QueryClient) =>
+  waitFor(() => {
+    const state = queryClient.getQueryState(['plugins', 'views'])
+    expect(state?.status === 'success' || state?.status === 'error').toBe(true)
+  })
+
 const renderNavigation = () => {
   const rootRoute = createRootRoute({ component: () => <Outlet /> })
   const indexRoute = createRoute({
@@ -55,11 +61,12 @@ const renderNavigation = () => {
   })
 
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  return render(
+  const result = render(
     <QueryClientProvider client={queryClient}>
       <RouterProvider router={router} />
     </QueryClientProvider>,
   )
+  return { ...result, queryClient }
 }
 
 describe('Navigation', () => {
@@ -140,9 +147,10 @@ describe('Navigation', () => {
 
   it('shows no plugin section when no view is openable', async () => {
     permissions.mockReturnValue(UNRESTRICTED)
-    renderNavigation()
+    const { queryClient } = renderNavigation()
 
     await screen.findByText('Sensoren')
+    await settledPluginViews(queryClient)
     expect(screen.queryByText('Plugins')).not.toBeInTheDocument()
   })
 
@@ -153,9 +161,10 @@ describe('Navigation', () => {
         HttpResponse.json({ error: 'disabled', code: 'feature.plugins_disabled' }, { status: 503 }),
       ),
     )
-    renderNavigation()
+    const { queryClient } = renderNavigation()
 
     await screen.findByText('Sensoren')
+    await settledPluginViews(queryClient)
     expect(screen.queryByText('Plugins')).not.toBeInTheDocument()
   })
 })
