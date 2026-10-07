@@ -100,7 +100,10 @@ function MapRoot() {
   }, [navigate, panelClusterId])
 
   return (
-    <div className="flex h-[calc(100dvh-4.563rem)] flex-col">
+    // The page is 100lvh tall and viewport-fit=cover, so on iOS the map runs on
+    // behind Safari's floating toolbar and the home indicator. --map-bottom-inset
+    // is the part they cover; everything anchored to the bottom lifts itself by it.
+    <div className="relative flex min-h-0 flex-1 flex-col [--map-bottom-inset:max(env(safe-area-inset-bottom),100lvh_-_100dvh)]">
       {isIndex && <MapToolbarBar />}
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <div className="relative flex-1">

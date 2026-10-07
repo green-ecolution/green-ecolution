@@ -59,3 +59,14 @@
     transform: translateX(0);
   }
 }
+
+/* Unlayered and one class deeper than maplibre-gl.css, which loads later with the map chunk. */
+.maplibregl-map .maplibregl-ctrl-bottom-left,
+.maplibregl-map .maplibregl-ctrl-bottom-right {
+  bottom: var(--map-bottom-inset, 0px);
+}
+
+/* viewport-fit=cover lets the page run under the notch in landscape. */
+body {
+  padding-inline: env(safe-area-inset-left) env(safe-area-inset-right);
+}

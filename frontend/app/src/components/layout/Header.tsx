@@ -49,10 +49,9 @@ function Header() {
   // the closing nav is off screen.
   return (
     <header
-      className={`sticky top-0 ${open ? 'z-[60]' : 'z-50'} bg-white transition-[padding,z-index] ease-in-out duration-300 motion-reduce:transition-none ${collapsed ? 'lg:pl-[4.5rem]' : 'lg:pl-[16rem]'}`}
+      className={`sticky top-0 pt-[env(safe-area-inset-top)] ${open ? 'z-[60]' : 'z-50'} bg-white transition-[padding,z-index] ease-in-out duration-300 motion-reduce:transition-none ${collapsed ? 'lg:pl-[4.5rem]' : 'lg:pl-[16rem]'}`}
     >
-      {/* min-h keeps the pre-NavUser header height (40px avatar + py-4 + border);
-          the map height calc (100dvh - 4.563rem) depends on it */}
+      {/* min-h keeps the pre-NavUser header height (40px avatar + py-4 + border) */}
       <div className="container min-h-[4.563rem] text-sm border-b border-dark-50 py-4 flex justify-start items-center">
         {isLargeScreen && (
           <div className="mr-4 flex items-center">

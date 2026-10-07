@@ -40,7 +40,7 @@ const MapStatusLegend = () => {
   return (
     <div
       ref={rootRef}
-      className="absolute bottom-6 left-4 z-10 flex flex-col items-start gap-2 lg:bottom-10 lg:left-10"
+      className="absolute bottom-[calc(1.5rem_+_var(--map-bottom-inset,0px))] left-4 z-10 flex flex-col items-start gap-2 lg:bottom-10 lg:left-10"
     >
       {open && (
         <div

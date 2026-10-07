@@ -45,7 +45,9 @@ const MapToolbarBar = () => {
   )
 
   return (
-    <div className="flex shrink-0 items-center gap-2 border-b border-dark-100 bg-[#FCFCFC] px-4 py-3">
+    // Below lg the toolbar floats over the map; only its controls take touches,
+    // so the gaps between them still pan the map.
+    <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-center gap-2 p-3 [&_a,&_button,&_input]:pointer-events-auto lg:pointer-events-auto lg:static lg:shrink-0 lg:border-b lg:border-dark-100 lg:bg-[#FCFCFC] lg:px-4 lg:py-3">
       <MapFilterToolbar
         searchTerm={searchTerm}
         onSearchTermChange={handleSearchTermChange}

@@ -9,7 +9,7 @@ const MapControls = () => {
   useMapStoreSync()
   useMapResize()
   return (
-    <div className="absolute bottom-6 right-4 z-10 flex flex-col gap-4 lg:bottom-10 lg:right-10">
+    <div className="absolute bottom-[calc(1.5rem_+_var(--map-bottom-inset,0px))] right-4 z-10 flex flex-col gap-4 lg:bottom-10 lg:right-10">
       <div className="flex flex-col gap-2">
         <CompassButton />
         <Map3DToggle />
