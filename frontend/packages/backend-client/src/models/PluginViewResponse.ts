@@ -30,6 +30,12 @@ export interface PluginViewResponse {
     description?: string | null;
     /**
      * 
+     * @type {Array<string>}
+     * @memberof PluginViewResponse
+     */
+    deviceCapabilities: Array<string>;
+    /**
+     * 
      * @type {string}
      * @memberof PluginViewResponse
      */
@@ -52,15 +58,24 @@ export interface PluginViewResponse {
      * @memberof PluginViewResponse
      */
     slug: string;
+    /**
+     * Single-use, valid for two minutes. Hand it to the plugin's own backend,
+     * which redeems it to learn who opened the view.
+     * @type {string}
+     * @memberof PluginViewResponse
+     */
+    viewTicket: string;
 }
 
 /**
  * Check if a given object implements the PluginViewResponse interface.
  */
 export function instanceOfPluginViewResponse(value: object): value is PluginViewResponse {
+    if (!('deviceCapabilities' in value) || value['deviceCapabilities'] === undefined) return false;
     if (!('frontendMode' in value) || value['frontendMode'] === undefined) return false;
     if (!('name' in value) || value['name'] === undefined) return false;
     if (!('slug' in value) || value['slug'] === undefined) return false;
+    if (!('viewTicket' in value) || value['viewTicket'] === undefined) return false;
     return true;
 }
 
@@ -75,10 +90,12 @@ export function PluginViewResponseFromJSONTyped(json: any, ignoreDiscriminator: 
     return {
         
         'description': json['description'] == null ? undefined : json['description'],
+        'deviceCapabilities': json['device_capabilities'],
         'frontendMode': json['frontend_mode'],
         'frontendTarget': json['frontend_target'] == null ? undefined : json['frontend_target'],
         'name': json['name'],
         'slug': json['slug'],
+        'viewTicket': json['view_ticket'],
     };
 }
 
@@ -94,10 +111,12 @@ export function PluginViewResponseToJSONTyped(value?: PluginViewResponse | null,
     return {
         
         'description': value['description'],
+        'device_capabilities': value['deviceCapabilities'],
         'frontend_mode': value['frontendMode'],
         'frontend_target': value['frontendTarget'],
         'name': value['name'],
         'slug': value['slug'],
+        'view_ticket': value['viewTicket'],
     };
 }
 

@@ -38,6 +38,12 @@ export interface PluginUpdateRequest {
     description?: string | null;
     /**
      * 
+     * @type {Array<string>}
+     * @memberof PluginUpdateRequest
+     */
+    deviceCapabilities?: Array<string> | null;
+    /**
+     * 
      * @type {boolean}
      * @memberof PluginUpdateRequest
      */
@@ -86,6 +92,7 @@ export function PluginUpdateRequestFromJSONTyped(json: any, ignoreDiscriminator:
     return {
         
         'description': json['description'] == null ? undefined : json['description'],
+        'deviceCapabilities': json['device_capabilities'] == null ? undefined : json['device_capabilities'],
         'enabled': json['enabled'] == null ? undefined : json['enabled'],
         'frontend': json['frontend'] == null ? undefined : PluginFrontendDtoFromJSON(json['frontend']),
         'name': json['name'] == null ? undefined : json['name'],
@@ -106,6 +113,7 @@ export function PluginUpdateRequestToJSONTyped(value?: PluginUpdateRequest | nul
     return {
         
         'description': value['description'],
+        'device_capabilities': value['deviceCapabilities'],
         'enabled': value['enabled'],
         'frontend': PluginFrontendDtoToJSON(value['frontend']),
         'name': value['name'],

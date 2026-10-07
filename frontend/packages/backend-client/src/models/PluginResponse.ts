@@ -34,6 +34,12 @@ export interface PluginResponse {
     description?: string | null;
     /**
      * 
+     * @type {Array<string>}
+     * @memberof PluginResponse
+     */
+    deviceCapabilities: Array<string>;
+    /**
+     * 
      * @type {boolean}
      * @memberof PluginResponse
      */
@@ -104,6 +110,7 @@ export interface PluginResponse {
  * Check if a given object implements the PluginResponse interface.
  */
 export function instanceOfPluginResponse(value: object): value is PluginResponse {
+    if (!('deviceCapabilities' in value) || value['deviceCapabilities'] === undefined) return false;
     if (!('enabled' in value) || value['enabled'] === undefined) return false;
     if (!('frontendMode' in value) || value['frontendMode'] === undefined) return false;
     if (!('hasCredential' in value) || value['hasCredential'] === undefined) return false;
@@ -128,6 +135,7 @@ export function PluginResponseFromJSONTyped(json: any, ignoreDiscriminator: bool
         
         'createdAt': json['created_at'] == null ? undefined : (new Date(json['created_at'])),
         'description': json['description'] == null ? undefined : json['description'],
+        'deviceCapabilities': json['device_capabilities'],
         'enabled': json['enabled'],
         'frontendMode': json['frontend_mode'],
         'frontendTarget': json['frontend_target'] == null ? undefined : json['frontend_target'],
@@ -155,6 +163,7 @@ export function PluginResponseToJSONTyped(value?: PluginResponse | null, ignoreD
         
         'created_at': value['createdAt'] === null ? null : ((value['createdAt'] as any)?.toISOString()),
         'description': value['description'],
+        'device_capabilities': value['deviceCapabilities'],
         'enabled': value['enabled'],
         'frontend_mode': value['frontendMode'],
         'frontend_target': value['frontendTarget'],

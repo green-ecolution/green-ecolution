@@ -81,7 +81,9 @@ models/PluginFrontendDtoOneOf.ts
 models/PluginFrontendDtoOneOf1.ts
 models/PluginFrontendDtoOneOf2.ts
 models/PluginKeyResponse.ts
+models/PluginNavEntryResponse.ts
 models/PluginResponse.ts
+models/PluginSensorCreateRequest.ts
 models/PluginUpdateRequest.ts
 models/PluginViewResponse.ts
 models/ReadinessResponse.ts
@@ -156,6 +158,9 @@ models/VehicleStatus.ts
 models/VehicleType.ts
 models/VehicleUpdateRequest.ts
 models/VersionInfoResponse.ts
+models/ViewTicketRedeemRequest.ts
+models/ViewTicketRedeemResponse.ts
+models/ViewTicketUserResponse.ts
 models/WateringPlanCreateRequest.ts
 models/WateringPlanInListResponse.ts
 models/WateringPlanResponse.ts

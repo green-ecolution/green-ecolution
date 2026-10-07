@@ -19,11 +19,17 @@ import type {
   IngestBatchResponse,
   PluginCreateRequest,
   PluginKeyResponse,
+  PluginNavEntryResponse,
   PluginResponse,
+  PluginSensorCreateRequest,
   PluginUpdateRequest,
   PluginViewResponse,
+  SensorModelResponse,
+  SensorResponse,
   TreeIngestBatchRequest,
   TreeRefPageResponse,
+  ViewTicketRedeemRequest,
+  ViewTicketRedeemResponse,
 } from '../models/index';
 import {
     ErrorBodyFromJSON,
@@ -34,17 +40,33 @@ import {
     PluginCreateRequestToJSON,
     PluginKeyResponseFromJSON,
     PluginKeyResponseToJSON,
+    PluginNavEntryResponseFromJSON,
+    PluginNavEntryResponseToJSON,
     PluginResponseFromJSON,
     PluginResponseToJSON,
+    PluginSensorCreateRequestFromJSON,
+    PluginSensorCreateRequestToJSON,
     PluginUpdateRequestFromJSON,
     PluginUpdateRequestToJSON,
     PluginViewResponseFromJSON,
     PluginViewResponseToJSON,
+    SensorModelResponseFromJSON,
+    SensorModelResponseToJSON,
+    SensorResponseFromJSON,
+    SensorResponseToJSON,
     TreeIngestBatchRequestFromJSON,
     TreeIngestBatchRequestToJSON,
     TreeRefPageResponseFromJSON,
     TreeRefPageResponseToJSON,
+    ViewTicketRedeemRequestFromJSON,
+    ViewTicketRedeemRequestToJSON,
+    ViewTicketRedeemResponseFromJSON,
+    ViewTicketRedeemResponseToJSON,
 } from '../models/index';
+
+export interface CreatePluginSensorRequest {
+    pluginSensorCreateRequest: PluginSensorCreateRequest;
+}
 
 export interface DeletePluginTreeRequest {
     externalId: string;
@@ -65,6 +87,10 @@ export interface InstallPluginRequest {
 export interface ListPluginTreeRefsRequest {
     limit?: number | null;
     cursor?: string | null;
+}
+
+export interface RedeemPluginViewTicketRequest {
+    viewTicketRedeemRequest: ViewTicketRedeemRequest;
 }
 
 export interface RotatePluginKeyRequest {
@@ -88,6 +114,47 @@ export interface UpsertPluginTreesRequest {
  * 
  */
 export class PluginsApi extends runtime.BaseAPI {
+
+    /**
+     * Creates a sensor in `Prepared` state in the plugin\'s organization, with the plugin\'s slug as provider. Requires sensor:create in the plugin\'s organization.
+     * Register a prepared sensor from a plugin
+     */
+    async createPluginSensorRaw(requestParameters: CreatePluginSensorRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SensorResponse>> {
+        if (requestParameters['pluginSensorCreateRequest'] == null) {
+            throw new runtime.RequiredError(
+                'pluginSensorCreateRequest',
+                'Required parameter "pluginSensorCreateRequest" was null or undefined when calling createPluginSensor().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+
+        let urlPath = `/v1/plugins/ingest/sensors`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: PluginSensorCreateRequestToJSON(requestParameters['pluginSensorCreateRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => SensorResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Creates a sensor in `Prepared` state in the plugin\'s organization, with the plugin\'s slug as provider. Requires sensor:create in the plugin\'s organization.
+     * Register a prepared sensor from a plugin
+     */
+    async createPluginSensor(requestParameters: CreatePluginSensorRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SensorResponse> {
+        const response = await this.createPluginSensorRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
 
     /**
      * Deletes the tree the plugin\'s external_id resolves to, through the same path as the regular tree deletion so cluster centroid and status are recalculated. Requires tree:delete in the plugin\'s organization.
@@ -198,7 +265,7 @@ export class PluginsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns what is needed to embed a plugin\'s view. Requires the plugin\'s own required_permissions in its organization -- plugin:read administers a plugin and is not what opening its view is about, though it grants access here as well.
+     * Returns what is needed to embed a plugin\'s view. Requires the plugin\'s own required_permissions in its organization -- plugin:read administers a plugin and is not what opening its view is about, though it grants access here as well. Every call issues a fresh single-use view ticket for the caller.
      * Get a plugin\'s view
      */
     async getPluginViewRaw(requestParameters: GetPluginViewRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PluginViewResponse>> {
@@ -228,7 +295,7 @@ export class PluginsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns what is needed to embed a plugin\'s view. Requires the plugin\'s own required_permissions in its organization -- plugin:read administers a plugin and is not what opening its view is about, though it grants access here as well.
+     * Returns what is needed to embed a plugin\'s view. Requires the plugin\'s own required_permissions in its organization -- plugin:read administers a plugin and is not what opening its view is about, though it grants access here as well. Every call issues a fresh single-use view ticket for the caller.
      * Get a plugin\'s view
      */
     async getPluginView(requestParameters: GetPluginViewRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PluginViewResponse> {
@@ -278,6 +345,37 @@ export class PluginsApi extends runtime.BaseAPI {
     }
 
     /**
+     * Same catalogue as GET /sensors/models, for a plugin key. Requires sensor:read in the plugin\'s organization.
+     * List sensor models for a plugin
+     */
+    async listPluginSensorModelsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<SensorModelResponse>>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/v1/plugins/ingest/sensor-models`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(SensorModelResponseFromJSON));
+    }
+
+    /**
+     * Same catalogue as GET /sensors/models, for a plugin key. Requires sensor:read in the plugin\'s organization.
+     * List sensor models for a plugin
+     */
+    async listPluginSensorModels(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<SensorModelResponse>> {
+        const response = await this.listPluginSensorModelsRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
      * Keyset page over the calling plugin\'s external_id-to-tree mappings, ordered by external_id. A plugin never sees another plugin\'s references.
      * List a plugin\'s own tree references
      */
@@ -317,6 +415,37 @@ export class PluginsApi extends runtime.BaseAPI {
     }
 
     /**
+     * Returns every enabled plugin with a view whose required_permissions the caller holds in the plugin\'s organization. Does not require plugin:read.
+     * List the plugin views the caller may open
+     */
+    async listPluginViewsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<PluginNavEntryResponse>>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/v1/plugins/views`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(PluginNavEntryResponseFromJSON));
+    }
+
+    /**
+     * Returns every enabled plugin with a view whose required_permissions the caller holds in the plugin\'s organization. Does not require plugin:read.
+     * List the plugin views the caller may open
+     */
+    async listPluginViews(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<PluginNavEntryResponse>> {
+        const response = await this.listPluginViewsRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
      * Returns every installed plugin the caller may read, scoped to their visible organization subtree. Requires plugin:read.
      * List plugins visible to the caller
      */
@@ -344,6 +473,47 @@ export class PluginsApi extends runtime.BaseAPI {
      */
     async listPlugins(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<PluginResponse>> {
         const response = await this.listPluginsRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Exchanges a view ticket handed to the plugin\'s view for the identity of the user who opened it. A ticket is valid for two minutes, can be redeemed once and only by the plugin it was issued for. Any failure answers 401 with code `plugin.view_ticket_invalid`.
+     * Redeem a view ticket
+     */
+    async redeemPluginViewTicketRaw(requestParameters: RedeemPluginViewTicketRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ViewTicketRedeemResponse>> {
+        if (requestParameters['viewTicketRedeemRequest'] == null) {
+            throw new runtime.RequiredError(
+                'viewTicketRedeemRequest',
+                'Required parameter "viewTicketRedeemRequest" was null or undefined when calling redeemPluginViewTicket().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+
+        let urlPath = `/v1/plugins/view-tickets/redeem`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: ViewTicketRedeemRequestToJSON(requestParameters['viewTicketRedeemRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ViewTicketRedeemResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Exchanges a view ticket handed to the plugin\'s view for the identity of the user who opened it. A ticket is valid for two minutes, can be redeemed once and only by the plugin it was issued for. Any failure answers 401 with code `plugin.view_ticket_invalid`.
+     * Redeem a view ticket
+     */
+    async redeemPluginViewTicket(requestParameters: RedeemPluginViewTicketRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ViewTicketRedeemResponse> {
+        const response = await this.redeemPluginViewTicketRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

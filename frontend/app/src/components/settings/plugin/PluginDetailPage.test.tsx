@@ -38,6 +38,7 @@ const plugin: PluginResponse = {
   organizationId: 'org-1',
   permissions: ['tree:create', 'tree:delete'],
   requiredPermissions: ['tree:read'],
+  deviceCapabilities: [],
   frontendMode: 'none',
   frontendTarget: null,
   enabled: true,
