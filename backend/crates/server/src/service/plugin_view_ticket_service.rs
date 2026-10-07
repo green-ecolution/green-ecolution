@@ -2,16 +2,23 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use chrono::{DateTime, Duration, Utc};
-use rand::Rng;
-use sha2::{Digest, Sha256};
 use uuid::Uuid;
 
 use domain::{Id, RepositoryError, auth::AuthUser, plugin::Plugin};
 
 use super::{AuthError, ServiceError};
 
-const PREFIX: &str = "gev_";
 const TTL_SECONDS: i64 = 120;
+
+/// Mints view tickets and derives the hash a ticket is stored under. Same
+/// reasoning as `PluginKeyFactory`: a CSPRNG and a digest are adapter
+/// concerns, kept out of a layer that must stay portable.
+pub trait ViewTicketFactory: Send + Sync {
+    /// Returns the plaintext ticket and the hash to persist.
+    fn generate(&self) -> (String, String);
+    /// `None` for anything that is not shaped like a ticket this factory issues.
+    fn hash(&self, ticket: &str) -> Option<String>;
+}
 
 pub struct NewViewTicket {
     pub token_hash: String,
@@ -44,25 +51,22 @@ pub trait ViewTicketStore: Send + Sync {
 /// inside Green Ecolution; it only names the person in front of the screen.
 pub struct PluginViewTicketService {
     store: Arc<dyn ViewTicketStore>,
+    tickets: Arc<dyn ViewTicketFactory>,
 }
 
 impl PluginViewTicketService {
-    pub fn new(store: Arc<dyn ViewTicketStore>) -> Self {
-        Self { store }
+    pub fn new(store: Arc<dyn ViewTicketStore>, tickets: Arc<dyn ViewTicketFactory>) -> Self {
+        Self { store, tickets }
     }
 
     #[tracing::instrument(level = "debug", skip_all, fields(plugin.id = %plugin))]
     pub async fn issue(&self, plugin: Id<Plugin>, user: &AuthUser) -> Result<String, ServiceError> {
         self.store.purge_expired(plugin).await?;
 
-        let mut bytes = [0u8; 32];
-        rand::rng().fill_bytes(&mut bytes);
-        let secret = to_hex(&bytes);
-        let ticket = format!("{PREFIX}{secret}");
-
+        let (ticket, token_hash) = self.tickets.generate();
         self.store
             .insert(NewViewTicket {
-                token_hash: hash_ticket(&ticket),
+                token_hash,
                 plugin_id: plugin,
                 user_id: user.id,
                 user_display_name: display_name(user),
@@ -78,22 +82,14 @@ impl PluginViewTicketService {
         plugin: &Plugin,
         ticket: &str,
     ) -> Result<RedeemedTicket, ServiceError> {
-        if !ticket.starts_with(PREFIX) {
+        let Some(token_hash) = self.tickets.hash(ticket) else {
             return Err(AuthError::PluginViewTicketInvalid.into());
-        }
+        };
         self.store
-            .redeem(plugin.id, &hash_ticket(ticket))
+            .redeem(plugin.id, &token_hash)
             .await?
             .ok_or_else(|| AuthError::PluginViewTicketInvalid.into())
     }
-}
-
-fn hash_ticket(ticket: &str) -> String {
-    to_hex(&Sha256::digest(ticket.as_bytes()))
-}
-
-fn to_hex(bytes: &[u8]) -> String {
-    bytes.iter().map(|b| format!("{b:02x}")).collect()
 }
 
 /// Deliberately no email fallback: the plugin learns who opened the view,
@@ -110,7 +106,10 @@ fn display_name(user: &AuthUser) -> String {
 
 #[cfg(test)]
 mod tests {
-    use std::sync::Mutex;
+    use std::sync::{
+        Mutex,
+        atomic::{AtomicU64, Ordering},
+    };
 
     use domain::plugin::{Plugin, PluginSnapshot};
 
@@ -154,6 +153,30 @@ mod tests {
         }
     }
 
+    #[derive(Default)]
+    struct CountingTickets(AtomicU64);
+
+    impl ViewTicketFactory for CountingTickets {
+        fn generate(&self) -> (String, String) {
+            let ticket = format!("ticket-{}", self.0.fetch_add(1, Ordering::Relaxed));
+            let hash = format!("hash:{ticket}");
+            (ticket, hash)
+        }
+
+        fn hash(&self, ticket: &str) -> Option<String> {
+            ticket
+                .starts_with("ticket-")
+                .then(|| format!("hash:{ticket}"))
+        }
+    }
+
+    fn service() -> PluginViewTicketService {
+        PluginViewTicketService::new(
+            Arc::new(MemoryStore::default()),
+            Arc::new(CountingTickets::default()),
+        )
+    }
+
     fn plugin() -> Plugin {
         Plugin::reconstitute(PluginSnapshot {
             id: Uuid::now_v7(),
@@ -186,14 +209,11 @@ mod tests {
 
     #[tokio::test]
     async fn issued_ticket_redeems_once_for_its_plugin() {
-        let service = PluginViewTicketService::new(Arc::new(MemoryStore::default()));
+        let service = service();
         let plugin = plugin();
         let operator = user(Some("Jane Doe"));
 
         let ticket = service.issue(plugin.id, &operator).await.unwrap();
-        assert!(ticket.starts_with("gev_"));
-        assert_eq!(ticket.len(), 4 + 64);
-
         let redeemed = service.redeem(&plugin, &ticket).await.unwrap();
         assert_eq!(redeemed.user_id, operator.id);
         assert_eq!(redeemed.user_display_name, "Jane Doe");
@@ -207,7 +227,7 @@ mod tests {
 
     #[tokio::test]
     async fn ticket_of_another_plugin_is_rejected() {
-        let service = PluginViewTicketService::new(Arc::new(MemoryStore::default()));
+        let service = service();
         let ticket = service.issue(plugin().id, &user(None)).await.unwrap();
 
         let result = service.redeem(&plugin(), &ticket).await;
@@ -219,7 +239,7 @@ mod tests {
 
     #[tokio::test]
     async fn display_name_falls_back_to_username() {
-        let service = PluginViewTicketService::new(Arc::new(MemoryStore::default()));
+        let service = service();
         let plugin = plugin();
         let ticket = service.issue(plugin.id, &user(None)).await.unwrap();
 
@@ -229,7 +249,7 @@ mod tests {
 
     #[tokio::test]
     async fn display_name_never_falls_back_to_the_email_address() {
-        let service = PluginViewTicketService::new(Arc::new(MemoryStore::default()));
+        let service = service();
         let plugin = plugin();
         let operator = AuthUser {
             username: None,
@@ -244,7 +264,7 @@ mod tests {
 
     #[tokio::test]
     async fn malformed_ticket_is_rejected_without_store_lookup() {
-        let service = PluginViewTicketService::new(Arc::new(MemoryStore::default()));
+        let service = service();
         let result = service.redeem(&plugin(), "gep_not-a-ticket").await;
         assert!(matches!(
             result,

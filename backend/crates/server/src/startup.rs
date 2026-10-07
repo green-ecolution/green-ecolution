@@ -546,6 +546,7 @@ impl Services {
             plugin_sensor_ingest,
             plugin_view_tickets: Arc::new(PluginViewTicketService::new(
                 repos.plugin_view_tickets.clone(),
+                Arc::new(crate::infra::plugin_view_ticket::RandomViewTicketFactory),
             )),
         }
     }
