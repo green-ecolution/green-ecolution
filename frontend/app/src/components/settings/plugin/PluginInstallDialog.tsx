@@ -16,6 +16,8 @@ import {
 } from '@green-ecolution/ui'
 import type { OrganizationResponse, PluginFrontendDto } from '@/api/backendApi'
 import PluginPermissionMatrix from './PluginPermissionMatrix'
+import PluginDeviceCapabilities from './PluginDeviceCapabilities'
+import { orderedCapabilities, toggledCapability } from './deviceCapabilities'
 import { usePluginPermissionDraft } from './usePluginPermissionDraft'
 import {
   buildFrontendDto,
@@ -34,6 +36,7 @@ export interface PluginInstallPayload {
   organizationId: string
   permissions: string[]
   requiredPermissions: string[]
+  deviceCapabilities: string[]
   frontend: PluginFrontendDto
 }
 
@@ -67,6 +70,7 @@ export const PluginInstallDialog = ({
   const [organizationId, setOrganizationId] = useState('')
   const [frontendMode, setFrontendMode] = useState<FrontendMode>('none')
   const [target, setTarget] = useState('')
+  const [deviceCapabilities, setDeviceCapabilities] = useState<ReadonlySet<string>>(() => new Set())
   const [errors, setErrors] = useState<FieldErrors>({})
   const {
     permissions,
@@ -84,8 +88,12 @@ export const PluginInstallDialog = ({
     setFrontendMode('none')
     setTarget('')
     resetPermissionDraft()
+    setDeviceCapabilities(new Set())
     setErrors({})
   }
+
+  const toggleDeviceCapability = (capability: string) =>
+    setDeviceCapabilities((current) => toggledCapability(current, capability))
 
   const handleOpenChange = (next: boolean) => {
     if (!next) reset()
@@ -117,6 +125,7 @@ export const PluginInstallDialog = ({
       organizationId,
       permissions: [...permissions],
       requiredPermissions: [...accessPermissions],
+      deviceCapabilities: orderedCapabilities(deviceCapabilities),
       frontend: buildFrontendDto(frontendMode, target),
     })
   }
@@ -209,6 +218,13 @@ export const PluginInstallDialog = ({
                   frontendMode === 'external' ? 'https://plugin.example.com' : 'plugin-backend:8080'
                 }
                 required
+              />
+            )}
+
+            {frontendMode !== 'none' && (
+              <PluginDeviceCapabilities
+                capabilities={deviceCapabilities}
+                onToggle={toggleDeviceCapability}
               />
             )}
 

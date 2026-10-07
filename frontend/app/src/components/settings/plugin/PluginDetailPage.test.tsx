@@ -47,6 +47,13 @@ const plugin: PluginResponse = {
   createdAt: null,
 }
 
+const pluginWithView: PluginResponse = {
+  ...plugin,
+  frontendMode: 'external',
+  frontendTarget: 'https://sensor-setup.example.org',
+  deviceCapabilities: ['camera'],
+}
+
 const pluginMatrixOf = () => within(screen.getByRole('group', { name: /rechte des plugins/i }))
 
 const accessMatrixOf = () =>
@@ -110,5 +117,28 @@ describe('PluginDetailPage', () => {
     expect(change.requiredPermissions).toEqual(
       expect.arrayContaining(['tree:read', 'vehicle:read']),
     )
+  })
+
+  it('sends the device capabilities once they changed', async () => {
+    const user = userEvent.setup()
+    render(<PluginDetailPage plugin={pluginWithView} />)
+
+    await user.click(screen.getByRole('checkbox', { name: /bluetooth/i }))
+    await save()
+
+    const { change } = updateMutate.mock.calls[0][0] as { change: Record<string, unknown> }
+    expect(change.deviceCapabilities).toEqual(['camera', 'bluetooth'])
+  })
+
+  it('leaves the device capabilities out when they did not change', async () => {
+    const user = userEvent.setup()
+    render(<PluginDetailPage plugin={pluginWithView} />)
+
+    await user.clear(screen.getByLabelText(/^name/i))
+    await user.type(screen.getByLabelText(/^name/i), 'Sensor-Einrichtung')
+    await save()
+
+    const { change } = updateMutate.mock.calls[0][0] as { change: Record<string, unknown> }
+    expect(change).not.toHaveProperty('deviceCapabilities')
   })
 })

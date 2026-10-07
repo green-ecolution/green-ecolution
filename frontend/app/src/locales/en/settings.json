@@ -58,6 +58,12 @@
     "notFoundBackLabel": "Back to the overview",
     "install": {
       "title": "Install plugin",
+      "deviceCapabilitiesHeading": "Device access for the view",
+      "deviceCapabilitiesHint": "The view may use these device features once someone accepts the browser prompt. Only grant them to plugins you trust.",
+      "deviceCapability": {
+        "camera": "Camera",
+        "bluetooth": "Bluetooth"
+      },
       "description": "Connects an external system to Green Ecolution and issues it an API credential.",
       "slugLabel": "Slug",
       "slugHint": "Lowercase letters, digits and hyphens. Also used as the provenance tag on imported data, and cannot be changed afterwards.",
