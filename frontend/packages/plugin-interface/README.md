@@ -166,7 +166,9 @@ single-use, valid for two minutes, and only your plugin can redeem it: send it t
 backend, which calls `POST /api/v1/plugins/view-tickets/redeem` with the plugin key and
 `{ "ticket": "<viewTicket>" }`. The answer names the user who opened the view
 (`user.id`, `user.display_name`) and the plugin's `organization_id`. Use it to start your
-own session for the view; every new handshake carries a fresh ticket.
+own session for the view; every new handshake carries a fresh ticket. An expired, already
+redeemed or foreign ticket answers `401` with code `plugin.view_ticket_invalid`; a disabled
+plugin gets `403`.
 
 ## The ingest contract
 
@@ -304,8 +306,8 @@ POST /api/v1/plugins/ingest/sensors
 
 Creates a sensor with the same body as the user-facing sensor creation, minus
 `organization_id` and `provider`: the sensor always belongs to the plugin's organization and
-its `provider` is the plugin's slug. Requires `sensor:create`; answers `201`, `400`, `403` or
-`409`.
+its `provider` is the plugin's slug. Requires `sensor:create`; answers `201`, `400`, `403`,
+`404` for an unknown `model_id`, or `409`.
 
 ## What a plugin cannot do
 
