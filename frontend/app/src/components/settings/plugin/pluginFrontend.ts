@@ -3,6 +3,16 @@ import type { PluginFrontendDto } from '@/api/backendApi'
 
 export type FrontendMode = 'none' | 'external' | 'proxied'
 
+const DNS_LABEL = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/
+
+/** Same grammar the backend's proxy allowlist (`ProxyPolicy::allows`) requires. */
+const isDnsName = (host: string): boolean =>
+  host.length <= 253 &&
+  host
+    .toLowerCase()
+    .split('.')
+    .every((label) => DNS_LABEL.test(label))
+
 /**
  * Mirrors the backend's own check (`PluginFrontendDto::into_domain` in
  * `http/v1/dto/plugin.rs`) so an invalid external URL is caught before the
@@ -38,7 +48,7 @@ export const validateTarget = (
   }
 
   const match = /^([^\s:]+):(\d+)$/.exec(trimmed)
-  if (!match) return t('plugin.install.targetInvalidHostPort')
+  if (!match || !isDnsName(match[1])) return t('plugin.install.targetInvalidHostPort')
   const port = Number(match[2])
   if (port < 1 || port > 65535) return t('plugin.install.targetInvalidPort')
   return null
