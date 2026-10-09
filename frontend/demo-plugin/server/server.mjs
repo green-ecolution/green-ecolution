@@ -79,7 +79,14 @@ const server = createServer((req, res) => {
   void (async () => {
     try {
       const payload = req.method === 'POST' ? await readJsonBody(req) : null
-      const { status, body } = await handleApi(req.method, pathname, payload, session, client)
+      const { status, body } = await handleApi(
+        req.method,
+        pathname,
+        payload,
+        session,
+        client,
+        req.headers,
+      )
       sendJson(res, status, body)
     } catch (error) {
       sendJson(res, 400, { error: error.message })

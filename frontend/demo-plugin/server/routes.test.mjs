@@ -113,4 +113,57 @@ describe('handleApi', () => {
 
     expect(result.status).toBe(404)
   })
+
+  it('reports the identity the GE proxy forwarded', async () => {
+    const client = clientStub()
+    const headers = { 'x-ge-user-id': 'abc', 'x-ge-user-name': 'J%C3%B6rg%20M%C3%BCller' }
+
+    const result = await handleApi(
+      'GET',
+      '/api/proxy-identity',
+      null,
+      createSession(client),
+      client,
+      headers,
+    )
+
+    expect(result).toEqual({
+      status: 200,
+      body: { proxied: true, userId: 'abc', userName: 'Jörg Müller' },
+    })
+  })
+
+  it('says so when the request did not come through the proxy', async () => {
+    const client = clientStub()
+
+    const result = await handleApi(
+      'GET',
+      '/api/proxy-identity',
+      null,
+      createSession(client),
+      client,
+      {},
+    )
+
+    expect(result).toEqual({ status: 200, body: { proxied: false, userId: null, userName: null } })
+  })
+
+  it('passes a malformed percent-encoded name through unchanged', async () => {
+    const client = clientStub()
+    const headers = { 'x-ge-user-id': 'abc', 'x-ge-user-name': '100%' }
+
+    const result = await handleApi(
+      'GET',
+      '/api/proxy-identity',
+      null,
+      createSession(client),
+      client,
+      headers,
+    )
+
+    expect(result).toEqual({
+      status: 200,
+      body: { proxied: true, userId: 'abc', userName: '100%' },
+    })
+  })
 })

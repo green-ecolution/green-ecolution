@@ -3,10 +3,12 @@ import { notifyResize, usePluginContext } from '@green-ecolution/plugin-interfac
 import {
   connect,
   disconnect,
+  getProxyIdentity,
   getSession,
   runAction,
   type ActionName,
   type ActionResult,
+  type ProxyIdentity,
   type SessionState,
 } from './api'
 import { strings } from './strings'
@@ -21,9 +23,11 @@ export default function App() {
   const [key, setKey] = useState('')
   const [answer, setAnswer] = useState<ActionResult | null>(null)
   const [busy, setBusy] = useState(false)
+  const [proxyIdentity, setProxyIdentity] = useState<ProxyIdentity | null>(null)
 
   useEffect(() => {
     void getSession().then(setSession)
+    void getProxyIdentity().then(setProxyIdentity)
   }, [])
 
   // The static placeholder in index.html covers the time before the handshake
@@ -81,6 +85,18 @@ export default function App() {
           <dd>{theme}</dd>
         </dl>
       </section>
+
+      {proxyIdentity?.proxied && (
+        <section>
+          <h2>{t.proxyTitle}</h2>
+          <dl>
+            <dt>{t.proxyUser}</dt>
+            <dd>{proxyIdentity.userId}</dd>
+            <dt>{t.proxyName}</dt>
+            <dd>{proxyIdentity.userName}</dd>
+          </dl>
+        </section>
+      )}
 
       <section>
         {session.connected && session.identity ? (
