@@ -15,9 +15,11 @@ export const Route = createFileRoute('/_protected/plugin/$slug/')({
   component: PluginViewPage,
   pendingComponent: pendingLoading({ key: 'settings:plugin.view.loading' }),
   // Awaited rather than prefetched: the breadcrumb needs the plugin's name,
-  // which only the response carries.
+  // which only the response carries. Never served from the cache: a proxied
+  // view's frontend URL carries a one-time ticket an earlier visit redeemed
+  // (same hazard as in pluginContextFactory).
   loader: async ({ context: { queryClient }, params: { slug } }) => {
-    const plugin = await queryClient.fetchQuery(pluginViewQuery(slug))
+    const plugin = await queryClient.fetchQuery({ ...pluginViewQuery(slug), staleTime: 0 })
     return { crumb: { title: plugin.name } }
   },
   // Who may open a view is the plugin's own `required_permissions`, which the
