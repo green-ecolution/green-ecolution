@@ -24,9 +24,14 @@ impl ProxyPolicy {
         }
     }
 
+    /// The suffix match alone is not enough: a URL parser reads characters
+    /// like `\`, `?` or `@` as delimiters, so a host that ends in an allowed
+    /// suffix could still resolve to a different machine. Only a plain DNS
+    /// name gets compared at all.
     pub fn allows(&self, endpoint: &ServiceEndpoint) -> bool {
         let host = endpoint.host().to_ascii_lowercase();
-        self.ports.contains(&endpoint.port())
+        is_dns_name(&host)
+            && self.ports.contains(&endpoint.port())
             && self.service_suffixes.iter().any(|suffix| {
                 host == *suffix
                     || host
@@ -34,6 +39,18 @@ impl ProxyPolicy {
                         .is_some_and(|rest| rest.ends_with('.'))
             })
     }
+}
+
+fn is_dns_name(host: &str) -> bool {
+    host.len() <= 253
+        && host.split('.').all(|label| {
+            (1..=63).contains(&label.len())
+                && !label.starts_with('-')
+                && !label.ends_with('-')
+                && label
+                    .bytes()
+                    .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'-')
+        })
 }
 
 #[cfg(test)]
@@ -87,6 +104,43 @@ mod tests {
     #[test]
     fn host_comparison_ignores_case() {
         assert!(policy().allows(&ep("Demo-Plugin", 80)));
+    }
+
+    #[test]
+    fn refuses_hosts_that_a_url_parser_would_read_differently() {
+        let suffix = ".plugins.svc.cluster.local";
+        for host in [
+            format!("169.254.169.254\\latest\\meta-data\\?{suffix}"),
+            format!("169.254.169.254:1234\\?{suffix}"),
+            format!("evil?x{suffix}"),
+            format!("evil#x{suffix}"),
+            format!("user@evil{suffix}"),
+            format!("evil:8080{suffix}"),
+            format!("kataster{suffix}."),
+            format!("kataster.{suffix}"),
+            format!("{}{suffix}", "a".repeat(64)),
+            format!("-kataster{suffix}"),
+            format!("kataster-{suffix}"),
+            format!("kata ster{suffix}"),
+        ] {
+            assert!(!policy().allows(&ep(&host, 8080)), "{host} was allowed");
+        }
+    }
+
+    #[test]
+    fn allows_a_label_of_exactly_63_chars() {
+        let host = format!("{}.plugins.svc.cluster.local", "a".repeat(63));
+        assert!(policy().allows(&ep(&host, 8080)));
+    }
+
+    #[test]
+    fn refuses_a_host_longer_than_253_chars() {
+        let host = format!(
+            "{}plugins.svc.cluster.local",
+            format!("{}.", "a".repeat(60)).repeat(4)
+        );
+        assert!(host.len() > 253);
+        assert!(!policy().allows(&ServiceEndpoint::reconstitute(host, 8080)));
     }
 
     #[test]

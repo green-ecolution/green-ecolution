@@ -13,7 +13,7 @@ use axum::{
 };
 use percent_encoding::{AsciiSet, NON_ALPHANUMERIC, utf8_percent_encode};
 
-use domain::plugin::PluginSlug;
+use domain::plugin::{PluginSlug, ServiceEndpoint};
 
 use crate::{
     http::AppState,
@@ -245,6 +245,20 @@ pub fn apply_frame_ancestors(headers: &mut HeaderMap, sources: &str) {
     }
 }
 
+/// `None` when the parsed URL would not point at exactly the endpoint's host
+/// and port, e.g. for a numeric host the parser rewrites to an IP address.
+pub fn upstream_url(endpoint: &ServiceEndpoint, uri: &Uri) -> Option<url::Url> {
+    let mut url = url::Url::parse("http://placeholder/").expect("static url parses");
+    url.set_host(Some(endpoint.host())).ok()?;
+    url.set_port(Some(endpoint.port())).ok()?;
+    url.set_path(uri.path());
+    url.set_query(uri.query());
+    let same_host = url
+        .host_str()
+        .is_some_and(|h| h.eq_ignore_ascii_case(endpoint.host()));
+    (same_host && url.port_or_known_default() == Some(endpoint.port())).then_some(url)
+}
+
 pub struct PluginProxy {
     hosts: PluginHosts,
     client: reqwest::Client,
@@ -320,12 +334,8 @@ impl PluginProxy {
         request: Request,
     ) -> Result<Response, ServiceError> {
         let (parts, body) = request.into_parts();
-        let path_and_query = parts.uri.path_and_query().map_or("/", |pq| pq.as_str());
-        let url = format!(
-            "http://{}:{}{path_and_query}",
-            grant.endpoint.host(),
-            grant.endpoint.port()
-        );
+        let url = upstream_url(&grant.endpoint, &parts.uri)
+            .ok_or(ServiceError::PluginProxyTargetNotAllowed)?;
         let headers = upstream_headers(
             &parts.headers,
             self.hosts.cookie_name(),
@@ -410,6 +420,47 @@ mod tests {
             endpoint: ServiceEndpoint::new("kataster.plugins.svc", 8080).unwrap(),
             user_id: uuid::Uuid::nil(),
             user_display_name: name.into(),
+        }
+    }
+
+    #[test]
+    fn upstream_url_targets_the_endpoint_with_path_and_query() {
+        let uri: Uri = "/map/a%2Fb%20c?q=%C3%A4&x=1".parse().unwrap();
+        let url = upstream_url(
+            &ServiceEndpoint::new("Kataster.plugins.svc", 8080).unwrap(),
+            &uri,
+        )
+        .unwrap();
+        assert_eq!(
+            url.as_str(),
+            "http://kataster.plugins.svc:8080/map/a%2Fb%20c?q=%C3%A4&x=1"
+        );
+
+        let url = upstream_url(
+            &ServiceEndpoint::new("demo-plugin", 80).unwrap(),
+            &"/".parse().unwrap(),
+        )
+        .unwrap();
+        assert_eq!(url.as_str(), "http://demo-plugin/");
+    }
+
+    #[test]
+    fn upstream_url_refuses_a_host_the_parser_reads_differently() {
+        let uri: Uri = "/".parse().unwrap();
+        for host in [
+            "169.254.169.254\\latest\\meta-data\\?.plugins.svc",
+            "169.254.169.254:1234\\?.plugins.svc",
+            "evil?x.plugins.svc",
+            "evil#x.plugins.svc",
+            "user@evil.plugins.svc",
+            "evil:1234.plugins.svc",
+            "0x7f.1",
+        ] {
+            let endpoint = ServiceEndpoint::reconstitute(host.into(), 8080);
+            assert!(
+                upstream_url(&endpoint, &uri).is_none(),
+                "{host} was accepted"
+            );
         }
     }
 
