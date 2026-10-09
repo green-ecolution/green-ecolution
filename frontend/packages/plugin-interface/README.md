@@ -309,6 +309,26 @@ Creates a sensor with the same body as the user-facing sensor creation, minus
 its `provider` is the plugin's slug. Requires `sensor:create`; answers `201`, `400`, `403`,
 `404` for an unknown `model_id`, or `409`.
 
+## Proxied plugins
+
+A plugin that runs inside the cluster can let Green Ecolution serve its view
+under `https://<slug>.<plugin host suffix>/`. The administrator enters the
+service as `host:port`; it must be on the instance's allowlist.
+
+Every request reaches the plugin with two headers set by Green Ecolution:
+
+- `X-GE-User-Id`: the viewer's user id.
+- `X-GE-User-Name`: the viewer's display name, percent-encoded (RFC 3986).
+
+Incoming `X-GE-*` headers from the browser are dropped, so the values are
+trustworthy as long as the pod accepts traffic from Green Ecolution only
+(enforce that with a NetworkPolicy). `Authorization` never reaches the plugin.
+The view runs at the root of its own host, so absolute paths like `/api/...`
+work, and its own cookies stay on that host. The `viewTicket` in the handshake
+context is not needed in this mode. The plugin handles its own CORS; the proxy
+adds a `frame-ancestors` CSP limited to the app origins unless the plugin sends
+its own.
+
 ## What a plugin cannot do
 
 A plugin acts only within the organization it was installed into and only with the

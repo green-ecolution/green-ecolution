@@ -502,6 +502,12 @@ installing it under **Settings → Plugins**, pasting its one-time API key and i
 demo trees. It runs behind the compose profile `plugins`, so a plain `just infra-up`
 neither builds nor starts it.
 
+Proxied plugin views are served under `http://<slug>.plugins.localhost:3000`
+(`plugins.proxy.public_url`, overridable via `APP_PLUGINS__PROXY__PUBLIC_URL`).
+`backend/config/local.yaml` allows the demo plugin as a proxied target:
+`demo-plugin:80` when the backend runs in compose, `localhost:5175` when it
+runs via `just run-dev`.
+
 ## Getting Help
 
 - Open an issue for bugs or feature requests
