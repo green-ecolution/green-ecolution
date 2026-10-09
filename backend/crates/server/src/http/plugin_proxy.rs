@@ -1,6 +1,8 @@
-//! The building blocks of the plugin reverse proxy that need no network:
-//! host parsing, the session cookie and header filtering. The request
-//! forwarding itself follows in the same module.
+//! The plugin reverse proxy: the `dispatch` middleware takes every request
+//! for `<slug>.<host of plugins.proxy.public_url>` away from the API router,
+//! exchanges a view ticket for a session cookie at `/__ge/session`, and
+//! forwards everything else, with the viewer's identity, to the plugin's
+//! in-cluster service.
 
 use std::{sync::Arc, time::Duration};
 
@@ -51,16 +53,33 @@ pub struct PluginHosts {
 }
 
 impl PluginHosts {
+    /// Plugin hosts are `<slug>.<host>`, which only works below a domain name.
     pub fn from_public_url(url: &url::Url) -> Option<Self> {
-        let host = url.host_str()?.to_ascii_lowercase();
-        if url.path() != "/" || url.query().is_some() {
+        let Some(url::Host::Domain(host)) = url.host() else {
+            return None;
+        };
+        if !matches!(url.scheme(), "http" | "https") || url.path() != "/" || url.query().is_some() {
             return None;
         }
         Some(Self {
-            suffix: host,
+            suffix: host.to_ascii_lowercase(),
             scheme: url.scheme().to_string(),
             port: url.port(),
         })
+    }
+
+    /// The proxy answers before the API router, so an app host that also
+    /// parses as a plugin host would lose its API.
+    pub fn for_app(public_url: &url::Url, base_url: &url::Url) -> Result<Self, &'static str> {
+        let hosts = Self::from_public_url(public_url)
+            .ok_or("plugins.proxy.public_url must be a bare http(s) origin with a domain name")?;
+        if base_url.host_str().and_then(|h| hosts.slug_of(h)).is_some() {
+            return Err(
+                "application.base_url must not lie directly below plugins.proxy.public_url, \
+                 its host would be served as a plugin host",
+            );
+        }
+        Ok(hosts)
     }
 
     pub fn slug_of(&self, host_header: &str) -> Option<PluginSlug> {
@@ -473,6 +492,38 @@ mod tests {
         assert!(
             PluginHosts::from_public_url(&"https://plugins.example.org/".parse().unwrap())
                 .is_some()
+        );
+    }
+
+    #[test]
+    fn public_url_needs_http_or_https_and_a_domain() {
+        for url in [
+            "ftp://plugins.example.org/",
+            "ws://plugins.example.org/",
+            "http://127.0.0.1:3000/",
+            "http://[::1]:3000/",
+        ] {
+            assert!(
+                PluginHosts::from_public_url(&url.parse().unwrap()).is_none(),
+                "{url} was accepted"
+            );
+        }
+        assert!(
+            PluginHosts::from_public_url(&"http://plugins.localhost:3000/".parse().unwrap())
+                .is_some()
+        );
+    }
+
+    #[test]
+    fn the_app_host_must_not_be_a_plugin_host() {
+        let public: url::Url = "https://plugins.example.org".parse().unwrap();
+        assert!(
+            PluginHosts::for_app(&public, &"https://app.plugins.example.org".parse().unwrap())
+                .is_err()
+        );
+        assert!(PluginHosts::for_app(&public, &"https://app.example.org".parse().unwrap()).is_ok());
+        assert!(
+            PluginHosts::for_app(&public, &"https://plugins.example.org".parse().unwrap()).is_ok()
         );
     }
 

@@ -189,10 +189,12 @@ impl Application {
         );
 
         let plugin_proxy_service = settings.plugins.proxy.as_ref().map(|proxy| {
-            if proxy.session_ttl_minutes > crate::configuration::MAX_PLUGIN_SESSION_TTL_MINUTES {
+            if proxy.session_ttl_minutes != proxy.effective_session_ttl_minutes() {
                 tracing::warn!(
                     configured = proxy.session_ttl_minutes,
-                    "plugins.proxy.session_ttl_minutes exceeds the maximum and is capped at 480"
+                    effective = proxy.effective_session_ttl_minutes(),
+                    "plugins.proxy.session_ttl_minutes lies outside 1..={} and is clamped",
+                    crate::configuration::MAX_PLUGIN_SESSION_TTL_MINUTES
                 );
             }
             Arc::new(PluginProxyService::new(
@@ -214,14 +216,11 @@ impl Application {
         let app_origins = AppOrigins::from_settings(&settings.cors, &settings.application.base_url);
         let plugin_proxy = match &settings.plugins.proxy {
             Some(proxy) => {
-                let hosts =
-                    crate::http::plugin_proxy::PluginHosts::from_public_url(&proxy.public_url)
-                        .ok_or_else(|| {
-                            std::io::Error::new(
-                                std::io::ErrorKind::InvalidInput,
-                                "plugins.proxy.public_url must be a bare origin with a host name",
-                            )
-                        })?;
+                let hosts = crate::http::plugin_proxy::PluginHosts::for_app(
+                    &proxy.public_url,
+                    &settings.application.base_url,
+                )
+                .map_err(|reason| std::io::Error::new(std::io::ErrorKind::InvalidInput, reason))?;
                 Some(Arc::new(crate::http::plugin_proxy::PluginProxy::new(
                     hosts,
                     app_origins.frame_ancestors(),

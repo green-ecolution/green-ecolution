@@ -230,7 +230,8 @@ pub struct PluginProxySettings {
 
 impl PluginProxySettings {
     pub fn effective_session_ttl_minutes(&self) -> u32 {
-        self.session_ttl_minutes.min(MAX_PLUGIN_SESSION_TTL_MINUTES)
+        self.session_ttl_minutes
+            .clamp(1, MAX_PLUGIN_SESSION_TTL_MINUTES)
     }
 }
 
@@ -871,5 +872,16 @@ proxy:
             session_ttl_minutes: 10_000,
         };
         assert_eq!(proxy.effective_session_ttl_minutes(), 480);
+    }
+
+    #[test]
+    fn a_zero_plugin_session_ttl_is_raised_to_one_minute() {
+        let proxy = PluginProxySettings {
+            public_url: Url::parse("https://plugins.example.org").unwrap(),
+            allowed_service_suffixes: vec![],
+            allowed_ports: vec![],
+            session_ttl_minutes: 0,
+        };
+        assert_eq!(proxy.effective_session_ttl_minutes(), 1);
     }
 }
