@@ -54,6 +54,12 @@ const pluginWithView: PluginResponse = {
   deviceCapabilities: ['camera'],
 }
 
+const proxiedPlugin: PluginResponse = {
+  ...plugin,
+  frontendMode: 'proxied',
+  frontendTarget: 'kataster.plugins.svc.cluster.local:8080',
+}
+
 const pluginMatrixOf = () => within(screen.getByRole('group', { name: /rechte des plugins/i }))
 
 const accessMatrixOf = () =>
@@ -140,5 +146,51 @@ describe('PluginDetailPage', () => {
 
     const { change } = updateMutate.mock.calls[0][0] as { change: Record<string, unknown> }
     expect(change).not.toHaveProperty('deviceCapabilities')
+  })
+
+  /**
+   * PluginService::update checks a frontend against the proxy allowlist
+   * whenever the request carries one. A stored target that has since left the
+   * allowlist would then block every save, even a rename.
+   */
+  it('leaves the frontend out when mode and target did not change', async () => {
+    const user = userEvent.setup()
+    render(<PluginDetailPage plugin={proxiedPlugin} />)
+
+    await user.clear(screen.getByLabelText(/^name/i))
+    await user.type(screen.getByLabelText(/^name/i), 'Kataster')
+    await save()
+
+    const { change } = updateMutate.mock.calls[0][0] as { change: Record<string, unknown> }
+    expect(change.name).toBe('Kataster')
+    expect(change).not.toHaveProperty('frontend')
+  })
+
+  it('sends the frontend once the target changed', async () => {
+    const user = userEvent.setup()
+    render(<PluginDetailPage plugin={proxiedPlugin} />)
+
+    await user.clear(screen.getByLabelText(/^adresse/i))
+    await user.type(screen.getByLabelText(/^adresse/i), 'kataster.plugins.svc.cluster.local:80')
+    await save()
+
+    const { change } = updateMutate.mock.calls[0][0] as { change: Record<string, unknown> }
+    expect(change.frontend).toEqual({
+      mode: 'proxied',
+      target: 'kataster.plugins.svc.cluster.local:80',
+    })
+  })
+
+  it.each([
+    ['external', pluginWithView],
+    ['proxied', proxiedPlugin],
+  ])('offers to open the view of a plugin whose frontend is %s', (_, withView) => {
+    render(<PluginDetailPage plugin={withView} />)
+    expect(screen.getByText(/ansicht öffnen/i)).toBeInTheDocument()
+  })
+
+  it('offers no view for a plugin without a frontend', () => {
+    render(<PluginDetailPage plugin={plugin} />)
+    expect(screen.queryByText(/ansicht öffnen/i)).not.toBeInTheDocument()
   })
 })
