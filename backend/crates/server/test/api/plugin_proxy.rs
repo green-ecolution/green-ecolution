@@ -613,3 +613,40 @@ async fn the_api_path_on_a_plugin_host_belongs_to_the_plugin() {
 
     assert_eq!(resp.text().await.unwrap(), "plugin");
 }
+
+#[tokio::test]
+async fn the_api_host_keeps_its_cors_with_the_proxy_on() {
+    let upstream = MockServer::start().await;
+    let app = proxy_app_with(&upstream).await;
+    let client = reqwest::Client::new();
+
+    let preflight = client
+        .request(
+            reqwest::Method::OPTIONS,
+            format!("{}/api/v1/plugins", app.address),
+        )
+        .header("origin", "http://app.example.org")
+        .header("access-control-request-method", "POST")
+        .send()
+        .await
+        .unwrap();
+    assert!(preflight.status().is_success());
+    assert!(
+        preflight
+            .headers()
+            .contains_key("access-control-allow-origin")
+    );
+
+    let missing = client
+        .get(format!("{}/api/v1/nope", app.address))
+        .header("origin", "http://app.example.org")
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(missing.status().as_u16(), 404);
+    assert!(
+        missing
+            .headers()
+            .contains_key("access-control-allow-origin")
+    );
+}

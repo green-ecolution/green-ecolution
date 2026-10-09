@@ -354,6 +354,15 @@ impl PluginProxy {
     }
 }
 
+/// HTTP/2 carries the host in `:authority` and sends no `Host` header.
+pub fn request_host<B>(request: &axum::http::Request<B>) -> Option<&str> {
+    request
+        .headers()
+        .get(header::HOST)
+        .and_then(|h| h.to_str().ok())
+        .or_else(|| request.uri().authority().map(|a| a.as_str()))
+}
+
 /// Requests to `<slug>.<suffix>` never reach the API router; everything else
 /// passes through untouched.
 pub async fn dispatch(
@@ -367,13 +376,7 @@ pub async fn dispatch(
     ) else {
         return next.run(request).await;
     };
-    // HTTP/2 carries the host in `:authority` and sends no `Host` header.
-    let host = request
-        .headers()
-        .get(header::HOST)
-        .and_then(|h| h.to_str().ok())
-        .or_else(|| request.uri().authority().map(|a| a.as_str()));
-    let Some(slug) = host.and_then(|h| proxy.hosts.slug_of(h)) else {
+    let Some(slug) = request_host(&request).and_then(|h| proxy.hosts.slug_of(h)) else {
         return next.run(request).await;
     };
 
