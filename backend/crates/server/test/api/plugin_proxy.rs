@@ -650,3 +650,41 @@ async fn the_api_host_keeps_its_cors_with_the_proxy_on() {
             .contains_key("access-control-allow-origin")
     );
 }
+
+#[tokio::test]
+async fn an_unknown_plugin_host_without_a_session_is_unauthorized() {
+    let upstream = MockServer::start().await;
+    let app = proxy_app_with(&upstream).await;
+    let (client, base) = plugin_client(&app, "nobody");
+
+    let resp = client.get(format!("{base}/")).send().await.unwrap();
+
+    assert_eq!(resp.status().as_u16(), 401);
+    assert_eq!(code_of(resp).await, "plugin.proxy_session_invalid");
+}
+
+#[tokio::test]
+async fn a_stored_target_off_the_allowlist_is_refused_at_request_time() {
+    let upstream = MockServer::start().await;
+    Mock::given(method("GET"))
+        .respond_with(ResponseTemplate::new(200))
+        .mount(&upstream)
+        .await;
+    let off_list_port = upstream.address().port();
+    let app =
+        spawn_app_with_plugin_proxy(proxy_settings(vec![off_list_port.wrapping_add(1)])).await;
+    seed_proxied_plugin(&app, "acme", ROOT_ORG.parse().unwrap(), off_list_port, &[]).await;
+    let cookie = session_cookie(&app, "acme").await;
+    let (client, base) = plugin_client(&app, "acme");
+
+    let resp = client
+        .get(format!("{base}/"))
+        .header("cookie", &cookie)
+        .send()
+        .await
+        .unwrap();
+
+    assert_eq!(resp.status().as_u16(), 400);
+    assert_eq!(code_of(resp).await, "plugin.proxy_target_not_allowed");
+    assert!(upstream.received_requests().await.unwrap().is_empty());
+}
