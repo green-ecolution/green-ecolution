@@ -47,6 +47,7 @@ const createRequest = {
   organizationId: 'org-1',
   permissions: [],
   requiredPermissions: [],
+  frontend: { mode: 'proxied' as const, target: 'kataster.plugins.svc:8080' },
 }
 
 describe('usePluginMutations', () => {
