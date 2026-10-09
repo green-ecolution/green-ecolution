@@ -211,7 +211,11 @@ impl PluginService {
                 .await?;
         }
 
-        if let Some(frontend) = &change.frontend {
+        // Only a new target is checked: a stored one that has since left the
+        // allowlist must not block renaming the plugin.
+        if let Some(frontend) = &change.frontend
+            && frontend != plugin.frontend()
+        {
             self.check_frontend(frontend)?;
         }
 
@@ -775,6 +779,32 @@ mod tests {
             .await
             .unwrap_err();
         assert!(matches!(err, ServiceError::PluginProxyTargetNotAllowed));
+    }
+
+    #[tokio::test]
+    async fn update_keeps_an_unchanged_proxied_frontend_without_rechecking_it() {
+        let repo = Arc::new(FakePluginRepo::default());
+        let stored = proxied("kataster.plugins.svc.cluster.local", 8080);
+        let mut d = draft("acme");
+        d.frontend = stored.clone();
+        service_over(repo.clone(), None, Some(cluster_policy()))
+            .install(Uuid::nil(), d)
+            .await
+            .unwrap();
+
+        let view = service_over(repo, None, None)
+            .update(
+                Uuid::nil(),
+                &PluginSlug::new("acme").unwrap(),
+                PluginChange {
+                    name: Some(PluginName::new("Kataster").unwrap()),
+                    frontend: Some(stored),
+                    ..no_change()
+                },
+            )
+            .await
+            .unwrap();
+        assert_eq!(view.name, "Kataster");
     }
 
     fn service_with_unrestricted_auth() -> PluginService {
