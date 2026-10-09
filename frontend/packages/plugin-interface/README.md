@@ -312,8 +312,17 @@ its `provider` is the plugin's slug. Requires `sensor:create`; answers `201`, `4
 ## Proxied plugins
 
 A plugin that runs inside the cluster can let Green Ecolution serve its view
-under `https://<slug>.<plugin host suffix>/`. The administrator enters the
-service as `host:port`; it must be on the instance's allowlist.
+under `<scheme>://<slug>.<plugin host suffix>/`, where the scheme is the one the
+instance is configured with (`https` in production, plain `http` in a local
+setup). The administrator enters the service as `host:port`; the host must be a
+plain DNS name and, together with the port, on the instance's allowlist.
+
+The path `/__ge/session` on the plugin host belongs to Green Ecolution for every
+method: it exchanges the view ticket for the session cookie and never reaches
+the plugin. The session cookie is `SameSite=Lax`, so the plugin host has to be
+same-site with the app (for example `app.example.org` and
+`kataster.plugins.example.org`). On a host from another site the browser drops
+the cookie inside the iframe and every request answers 401.
 
 Every request reaches the plugin with two headers set by Green Ecolution:
 

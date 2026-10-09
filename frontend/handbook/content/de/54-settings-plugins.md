@@ -50,7 +50,9 @@ Green Ecolution selbst zeigen. Bei einer internen Ansicht gibst du Dienstname un
 an, etwa `kataster.plugins.svc.cluster.local:8080`. Green Ecolution reicht die Ansicht
 dann unter einer eigenen Adresse durch und prüft bei jedem Aufruf, ob die Person sie
 öffnen darf. Welche Dienste dafür in Frage kommen, legt der Betrieb fest; ein Dienst
-außerhalb dieser Liste wird abgelehnt. Ist der Proxy in deiner Installation nicht
+außerhalb dieser Liste wird abgelehnt. Fällt ein bereits eingetragener Dienst später
+aus der Liste, kannst du das Plugin weiterhin umbenennen und bearbeiten, seine Ansicht
+liefert Green Ecolution dann aber nicht mehr aus. Ist der Proxy in deiner Installation nicht
 eingerichtet, lässt sich der Modus zwar auswählen, das Speichern scheitert aber mit
 einem Hinweis.
 
