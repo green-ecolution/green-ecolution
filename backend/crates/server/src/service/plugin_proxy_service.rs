@@ -95,8 +95,9 @@ impl PluginProxyService {
         ticket: &str,
     ) -> Result<String, ServiceError> {
         let plugin = self.plugins.by_slug(slug).await?;
-        let holder = self.tickets.redeem(&plugin, ticket).await?;
+        // Before the redeem, so a failing purge leaves the one-time ticket usable.
         self.sessions.purge_expired(plugin.id).await?;
+        let holder = self.tickets.redeem(&plugin, ticket).await?;
 
         let (token, token_hash) = self.tokens.generate();
         self.sessions
