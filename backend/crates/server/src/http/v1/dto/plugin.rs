@@ -99,7 +99,8 @@ impl From<&PluginView> for PluginResponse {
     "frontend_mode": "external",
     "frontend_target": "https://kataster.example.org/view",
     "device_capabilities": ["camera", "bluetooth"],
-    "view_ticket": "gev_3f2a9c41d7b05e6a8f1c2d3e4b5a69788796a5b4c3d2e1f00112233445566778"
+    "view_ticket": "gev_3f2a9c41d7b05e6a8f1c2d3e4b5a69788796a5b4c3d2e1f00112233445566778",
+    "frontend_url": null
 }))]
 pub struct PluginViewResponse {
     pub slug: String,
@@ -111,10 +112,13 @@ pub struct PluginViewResponse {
     /// Single-use, valid for two minutes. Hand it to the plugin's own backend,
     /// which redeems it to learn who opened the view.
     pub view_ticket: String,
+    /// Where the iframe starts for a `proxied` plugin: the session URL on the
+    /// plugin's own host, carrying this response's ticket. `None` otherwise.
+    pub frontend_url: Option<String>,
 }
 
 impl PluginViewResponse {
-    pub fn new(view: &PluginView, view_ticket: String) -> Self {
+    pub fn new(view: &PluginView, view_ticket: String, frontend_url: Option<String>) -> Self {
         Self {
             slug: view.slug.clone(),
             name: view.name.clone(),
@@ -123,6 +127,7 @@ impl PluginViewResponse {
             frontend_target: view.frontend_target.clone(),
             device_capabilities: view.device_capabilities.clone(),
             view_ticket,
+            frontend_url,
         }
     }
 }

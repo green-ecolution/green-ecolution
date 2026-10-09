@@ -211,6 +211,26 @@ impl Application {
             ))
         });
 
+        let app_origins = AppOrigins::from_settings(&settings.cors, &settings.application.base_url);
+        let plugin_proxy = match &settings.plugins.proxy {
+            Some(proxy) => {
+                let hosts =
+                    crate::http::plugin_proxy::PluginHosts::from_public_url(&proxy.public_url)
+                        .ok_or_else(|| {
+                            std::io::Error::new(
+                                std::io::ErrorKind::InvalidInput,
+                                "plugins.proxy.public_url must be a bare origin with a host name",
+                            )
+                        })?;
+                Some(Arc::new(crate::http::plugin_proxy::PluginProxy::new(
+                    hosts,
+                    app_origins.frame_ancestors(),
+                    proxy.effective_session_ttl_minutes(),
+                )))
+            }
+            None => None,
+        };
+
         let state = Arc::new(AppState {
             region_service: services.region,
             tree_service: services.tree,
@@ -252,9 +272,10 @@ impl Application {
             plugin_sensor_ingest_service: services.plugin_sensor_ingest,
             plugin_view_ticket_service: services.plugin_view_tickets,
             plugin_proxy_service,
+            plugin_proxy,
             settings_reader: settings_repo.clone(),
             settings_service,
-            app_origins: AppOrigins::from_settings(&settings.cors, &settings.application.base_url),
+            app_origins,
         });
 
         let listener = TcpListener::bind(address).await?;

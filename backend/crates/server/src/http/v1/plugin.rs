@@ -164,7 +164,7 @@ pub async fn get_plugin(
 #[utoipa::path(get, path = "/plugins/{plugin_slug}/view", tag = "Plugins",
     operation_id = "getPluginView",
     summary = "Get a plugin's view",
-    description = "Returns what is needed to embed a plugin's view. Requires the plugin's own required_permissions in its organization -- plugin:read administers a plugin and is not what opening its view is about, though it grants access here as well. Every call issues a fresh single-use view ticket for the caller.",
+    description = "Returns what is needed to embed a plugin's view. Requires the plugin's own required_permissions in its organization -- plugin:read administers a plugin and is not what opening its view is about, though it grants access here as well. Every call issues a fresh single-use view ticket for the caller. For a proxied plugin, frontend_url is the iframe's start address on the plugin's own host.",
     params(("plugin_slug" = String, Path, description = "Plugin slug")),
     responses(
         (status = 200, description = "Plugin view", body = PluginViewResponse),
@@ -188,7 +188,12 @@ pub async fn get_plugin_view(
         .plugin_view_ticket_service
         .issue(view.id, &user)
         .await?;
-    Ok(Json(PluginViewResponse::new(&view, ticket)))
+    let frontend_url = state
+        .plugin_proxy
+        .as_ref()
+        .filter(|_| view.frontend_mode == "proxied")
+        .map(|proxy| proxy.hosts().session_url(&slug, &ticket));
+    Ok(Json(PluginViewResponse::new(&view, ticket, frontend_url)))
 }
 
 #[utoipa::path(patch, path = "/plugins/{plugin_slug}", tag = "Plugins",

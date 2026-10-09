@@ -135,6 +135,7 @@ pub struct AppState {
     pub plugin_view_ticket_service: Arc<PluginViewTicketService>,
     /// `None` when `plugins.proxy` is not configured.
     pub plugin_proxy_service: Option<Arc<crate::service::plugin_proxy_service::PluginProxyService>>,
+    pub plugin_proxy: Option<Arc<plugin_proxy::PluginProxy>>,
     /// No handler reads this: it exposes the port so the integration tests can
     /// drive resolution directly instead of through the HTTP surface.
     pub settings_reader: Arc<dyn domain::settings::SettingsReader>,
@@ -234,7 +235,11 @@ pub fn router(
         // empty body, which a client that parses every response as JSON reads
         // as a parse failure rather than as the 404/405 it is.
         .fallback(route_not_found)
-        .method_not_allowed_fallback(method_not_allowed);
+        .method_not_allowed_fallback(method_not_allowed)
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            plugin_proxy::dispatch,
+        ));
 
     apply_middleware(router, cors, request_timeout).with_state(state)
 }

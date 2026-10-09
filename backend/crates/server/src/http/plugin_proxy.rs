@@ -2,12 +2,26 @@
 //! host parsing, the session cookie and header filtering. The request
 //! forwarding itself follows in the same module.
 
-use axum::http::{HeaderMap, HeaderName, HeaderValue, header};
+use std::{sync::Arc, time::Duration};
+
+use axum::{
+    body::Body,
+    extract::{Request, State},
+    http::{HeaderMap, HeaderName, HeaderValue, StatusCode, Uri, header},
+    middleware::Next,
+    response::{IntoResponse, Response},
+};
 use percent_encoding::{AsciiSet, NON_ALPHANUMERIC, utf8_percent_encode};
 
 use domain::plugin::PluginSlug;
 
-use crate::service::plugin_proxy_service::ProxyGrant;
+use crate::{
+    http::AppState,
+    service::{
+        AuthError, Feature, ServiceError,
+        plugin_proxy_service::{PluginProxyService, ProxyGrant},
+    },
+};
 
 pub const SESSION_PATH: &str = "/__ge/session";
 
@@ -229,6 +243,155 @@ pub fn apply_frame_ancestors(headers: &mut HeaderMap, sources: &str) {
     if let Ok(value) = HeaderValue::from_str(&format!("frame-ancestors {sources}")) {
         headers.append(header::CONTENT_SECURITY_POLICY, value);
     }
+}
+
+pub struct PluginProxy {
+    hosts: PluginHosts,
+    client: reqwest::Client,
+    frame_ancestors: String,
+    session_max_age_secs: u64,
+}
+
+impl PluginProxy {
+    pub fn new(hosts: PluginHosts, frame_ancestors: String, session_ttl_minutes: u32) -> Self {
+        Self {
+            hosts,
+            // The upstream's redirects belong to the browser, not to us.
+            client: reqwest::Client::builder()
+                .redirect(reqwest::redirect::Policy::none())
+                .connect_timeout(Duration::from_secs(5))
+                .build()
+                .expect("plugin proxy client must build"),
+            frame_ancestors,
+            session_max_age_secs: u64::from(session_ttl_minutes) * 60,
+        }
+    }
+
+    pub fn hosts(&self) -> &PluginHosts {
+        &self.hosts
+    }
+
+    async fn handle(
+        &self,
+        service: &PluginProxyService,
+        slug: &PluginSlug,
+        request: Request,
+    ) -> Result<Response, ServiceError> {
+        if request.uri().path() == SESSION_PATH {
+            return self.open_session(service, slug, request.uri()).await;
+        }
+        let token = read_cookie(request.headers(), self.hosts.cookie_name()).map(str::to_owned);
+        let grant = service.authorize(slug, token.as_deref()).await?;
+        self.forward(slug, &grant, request).await
+    }
+
+    async fn open_session(
+        &self,
+        service: &PluginProxyService,
+        slug: &PluginSlug,
+        uri: &Uri,
+    ) -> Result<Response, ServiceError> {
+        let ticket = uri
+            .query()
+            .and_then(|q| {
+                url::form_urlencoded::parse(q.as_bytes())
+                    .find(|(key, _)| key == "ticket")
+                    .map(|(_, value)| value.into_owned())
+            })
+            .ok_or(AuthError::PluginViewTicketInvalid)?;
+        let token = service.open_session(slug, &ticket).await?;
+        Ok((
+            StatusCode::SEE_OTHER,
+            [
+                (header::LOCATION, HeaderValue::from_static("/")),
+                (
+                    header::SET_COOKIE,
+                    self.hosts.session_cookie(&token, self.session_max_age_secs),
+                ),
+            ],
+        )
+            .into_response())
+    }
+
+    async fn forward(
+        &self,
+        slug: &PluginSlug,
+        grant: &ProxyGrant,
+        request: Request,
+    ) -> Result<Response, ServiceError> {
+        let (parts, body) = request.into_parts();
+        let path_and_query = parts.uri.path_and_query().map_or("/", |pq| pq.as_str());
+        let url = format!(
+            "http://{}:{}{path_and_query}",
+            grant.endpoint.host(),
+            grant.endpoint.port()
+        );
+        let headers = upstream_headers(
+            &parts.headers,
+            self.hosts.cookie_name(),
+            grant,
+            &self.hosts.authority_of(slug),
+            self.hosts.scheme(),
+        );
+        // A GET without a body must not turn into a chunked request upstream.
+        let has_body = parts.headers.contains_key(header::CONTENT_LENGTH)
+            || parts.headers.contains_key(header::TRANSFER_ENCODING);
+
+        let mut outgoing = self.client.request(parts.method, url).headers(headers);
+        if has_body {
+            outgoing = outgoing.body(reqwest::Body::wrap_stream(body.into_data_stream()));
+        }
+        let upstream = outgoing.send().await.map_err(|e| {
+            tracing::warn!(error = %e, plugin.slug = %slug.as_str(), "plugin upstream unreachable");
+            ServiceError::PluginUpstreamUnreachable
+        })?;
+
+        // `bytes_stream` consumes the response, so status and headers go first.
+        let status = upstream.status();
+        let headers = downstream_headers(upstream.headers());
+        let mut response = Response::new(Body::from_stream(upstream.bytes_stream()));
+        *response.status_mut() = status;
+        *response.headers_mut() = headers;
+        Ok(response)
+    }
+}
+
+/// Requests to `<slug>.<suffix>` never reach the API router; everything else
+/// passes through untouched.
+pub async fn dispatch(
+    State(state): State<Arc<AppState>>,
+    request: Request,
+    next: Next,
+) -> Response {
+    let (Some(proxy), Some(service)) = (
+        state.plugin_proxy.clone(),
+        state.plugin_proxy_service.clone(),
+    ) else {
+        return next.run(request).await;
+    };
+    // HTTP/2 carries the host in `:authority` and sends no `Host` header.
+    let host = request
+        .headers()
+        .get(header::HOST)
+        .and_then(|h| h.to_str().ok())
+        .or_else(|| request.uri().authority().map(|a| a.as_str()));
+    let Some(slug) = host.and_then(|h| proxy.hosts.slug_of(h)) else {
+        return next.run(request).await;
+    };
+
+    let mut response = if state.feature_flags.plugins_enabled {
+        proxy
+            .handle(&service, &slug, request)
+            .await
+            .unwrap_or_else(IntoResponse::into_response)
+    } else {
+        ServiceError::FeatureDisabled {
+            feature: Feature::Plugins,
+        }
+        .into_response()
+    };
+    apply_frame_ancestors(response.headers_mut(), &proxy.frame_ancestors);
+    response
 }
 
 #[cfg(test)]
