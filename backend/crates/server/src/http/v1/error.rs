@@ -193,6 +193,10 @@ impl IntoResponse for ServiceError {
                 tracing::error!(error = %e, kind = "routing", "request failed");
                 (status, message)
             }
+            ServiceError::PluginProxyUnavailable | ServiceError::PluginProxyTargetNotAllowed => {
+                (StatusCode::BAD_REQUEST, self.to_string())
+            }
+            ServiceError::PluginUpstreamUnreachable => (StatusCode::BAD_GATEWAY, self.to_string()),
             ServiceError::FeatureDisabled { .. } => {
                 (StatusCode::SERVICE_UNAVAILABLE, self.to_string())
             }

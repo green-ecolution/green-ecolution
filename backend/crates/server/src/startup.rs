@@ -50,6 +50,7 @@ use crate::{
         handlers::tree_watering::TreeWateringFromSensorHandler,
         organization_service::OrganizationService,
         plugin_ingest_service::PluginIngestService,
+        plugin_proxy_policy::ProxyPolicy,
         plugin_sensor_ingest_service::PluginSensorIngestService,
         plugin_service::PluginService,
         plugin_view_ticket_service::PluginViewTicketService,
@@ -161,6 +162,12 @@ impl Application {
             profile_repo,
             user_repo.clone(),
             settings.auth.enabled,
+            settings.plugins.proxy.as_ref().map(|proxy| {
+                ProxyPolicy::new(
+                    proxy.allowed_service_suffixes.clone(),
+                    proxy.allowed_ports.clone(),
+                )
+            }),
         );
 
         let (shutdown_tx, shutdown_rx) = tokio::sync::watch::channel(false);
@@ -432,6 +439,7 @@ impl Services {
         profile_reader: Arc<dyn domain::user::UserProfileReader>,
         user_repo: Arc<dyn domain::user::UserRepository>,
         auth_enabled: bool,
+        proxy_policy: Option<ProxyPolicy>,
     ) -> Self {
         let authorization = Arc::new(AuthorizationService::new(
             repos.organization_reader.clone(),
@@ -443,6 +451,7 @@ impl Services {
             repos.plugin_writer.clone(),
             authorization.clone(),
             Arc::new(crate::infra::plugin_key::RandomPluginKeyFactory),
+            proxy_policy,
         ));
         let tree = Arc::new(TreeService::new(
             repos.tree_reader.clone(),

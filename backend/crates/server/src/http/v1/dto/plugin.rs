@@ -200,8 +200,6 @@ impl PluginFrontendDto {
                     kind: Malformed::PluginFrontend,
                     detail: "proxied frontend target must carry a numeric port".into(),
                 })?;
-                // The service allowlist check arrives with the proxy plan; not
-                // required here yet.
                 Ok(PluginFrontend::Proxied(ServiceEndpoint::new(host, port)?))
             }
         }
