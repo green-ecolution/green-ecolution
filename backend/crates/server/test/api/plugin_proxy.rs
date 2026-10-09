@@ -538,3 +538,78 @@ async fn the_api_still_answers_on_the_app_host() {
     let app = proxy_app_with(&upstream).await;
     assert_eq!(app.get("/api/v1/plugins").await.status().as_u16(), 200);
 }
+
+#[tokio::test]
+async fn a_preflight_on_a_plugin_host_reaches_the_upstream_without_the_apps_cors() {
+    let upstream = MockServer::start().await;
+    Mock::given(method("OPTIONS"))
+        .and(path("/items"))
+        .respond_with(ResponseTemplate::new(204))
+        .expect(1)
+        .mount(&upstream)
+        .await;
+    let app = proxy_app_with(&upstream).await;
+    let cookie = session_cookie(&app, "acme").await;
+    let (client, base) = plugin_client(&app, "acme");
+
+    let resp = client
+        .request(reqwest::Method::OPTIONS, format!("{base}/items"))
+        .header("cookie", &cookie)
+        .header("origin", "http://somewhere.example")
+        .header("access-control-request-method", "POST")
+        .send()
+        .await
+        .unwrap();
+
+    assert_eq!(resp.status().as_u16(), 204);
+    assert!(resp.headers().get("access-control-allow-origin").is_none());
+}
+
+#[tokio::test]
+async fn a_body_without_content_length_still_reaches_the_upstream() {
+    let upstream = MockServer::start().await;
+    Mock::given(method("POST"))
+        .and(path("/items"))
+        .and(body_string("streamed"))
+        .respond_with(ResponseTemplate::new(201))
+        .expect(1)
+        .mount(&upstream)
+        .await;
+    let app = proxy_app_with(&upstream).await;
+    let cookie = session_cookie(&app, "acme").await;
+    let (client, base) = plugin_client(&app, "acme");
+    let chunks = futures::stream::iter([Ok::<_, std::io::Error>("stream"), Ok("ed")]);
+
+    let resp = client
+        .post(format!("{base}/items"))
+        .header("cookie", &cookie)
+        .body(reqwest::Body::wrap_stream(chunks))
+        .send()
+        .await
+        .unwrap();
+
+    assert_eq!(resp.status().as_u16(), 201);
+}
+
+#[tokio::test]
+async fn the_api_path_on_a_plugin_host_belongs_to_the_plugin() {
+    let upstream = MockServer::start().await;
+    Mock::given(method("GET"))
+        .and(path("/api/v1/plugins"))
+        .respond_with(ResponseTemplate::new(200).set_body_string("plugin"))
+        .expect(1)
+        .mount(&upstream)
+        .await;
+    let app = proxy_app_with(&upstream).await;
+    let cookie = session_cookie(&app, "acme").await;
+    let (client, base) = plugin_client(&app, "acme");
+
+    let resp = client
+        .get(format!("{base}/api/v1/plugins"))
+        .header("cookie", &cookie)
+        .send()
+        .await
+        .unwrap();
+
+    assert_eq!(resp.text().await.unwrap(), "plugin");
+}

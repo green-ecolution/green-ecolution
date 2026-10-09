@@ -236,22 +236,21 @@ pub fn router(
         // as a parse failure rather than as the 404/405 it is.
         .fallback(route_not_found)
         .method_not_allowed_fallback(method_not_allowed)
+        // CORS sits inside `dispatch`: a plugin host answers with its own
+        // headers, so the app policy must not see its requests.
+        .layer(cors_layer(cors))
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
             plugin_proxy::dispatch,
         ));
 
-    apply_middleware(router, cors, request_timeout).with_state(state)
+    apply_middleware(router, request_timeout).with_state(state)
 }
 
 /// The outer middleware stack, innermost layer first. Kept separate from
 /// [`router`] so the cross-cutting behaviour can be exercised against a toy
 /// router instead of the whole application.
-fn apply_middleware<S>(
-    router: Router<S>,
-    cors: &CorsSettings,
-    request_timeout: Duration,
-) -> Router<S>
+fn apply_middleware<S>(router: Router<S>, request_timeout: Duration) -> Router<S>
 where
     S: Clone + Send + Sync + 'static,
 {
@@ -266,7 +265,6 @@ where
             enforce_timeout,
         ))
         .layer(CatchPanicLayer::custom(panic_response))
-        .layer(cors_layer(cors))
         .layer(PropagateRequestIdLayer::new(REQUEST_ID_HEADER))
         .layer(trace_layer)
         .layer(SetRequestIdLayer::new(REQUEST_ID_HEADER, MakeRequestUuid))
@@ -475,12 +473,6 @@ mod middleware_tests {
     };
     use tower::ServiceExt;
 
-    fn permissive_cors() -> CorsSettings {
-        CorsSettings {
-            allowed_origins: vec!["*".to_string()],
-        }
-    }
-
     async fn body_json(response: axum::response::Response) -> serde_json::Value {
         let bytes = axum::body::to_bytes(response.into_body(), usize::MAX)
             .await
@@ -499,7 +491,6 @@ mod middleware_tests {
     async fn a_panicking_handler_answers_with_a_json_500() {
         let app = apply_middleware(
             Router::new().route("/boom", get(boom)),
-            &permissive_cors(),
             Duration::from_secs(30),
         );
 
@@ -523,7 +514,6 @@ mod middleware_tests {
                     "never"
                 }),
             ),
-            &permissive_cors(),
             Duration::from_millis(50),
         );
 
@@ -541,7 +531,6 @@ mod middleware_tests {
     async fn a_handler_within_the_timeout_is_untouched() {
         let app = apply_middleware(
             Router::new().route("/fast", get(|| async { "ok" })),
-            &permissive_cors(),
             Duration::from_secs(30),
         );
 

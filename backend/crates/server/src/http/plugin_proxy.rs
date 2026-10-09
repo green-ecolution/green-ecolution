@@ -5,7 +5,7 @@
 use std::{sync::Arc, time::Duration};
 
 use axum::{
-    body::Body,
+    body::{Body, HttpBody},
     extract::{Request, State},
     http::{HeaderMap, HeaderName, HeaderValue, StatusCode, Uri, header},
     middleware::Next,
@@ -333,12 +333,10 @@ impl PluginProxy {
             &self.hosts.authority_of(slug),
             self.hosts.scheme(),
         );
-        // A GET without a body must not turn into a chunked request upstream.
-        let has_body = parts.headers.contains_key(header::CONTENT_LENGTH)
-            || parts.headers.contains_key(header::TRANSFER_ENCODING);
-
+        // A GET without a body must not turn into a chunked request upstream;
+        // h2 may omit Content-Length, so ask the body itself.
         let mut outgoing = self.client.request(parts.method, url).headers(headers);
-        if has_body {
+        if !body.is_end_stream() {
             outgoing = outgoing.body(reqwest::Body::wrap_stream(body.into_data_stream()));
         }
         let upstream = outgoing.send().await.map_err(|e| {
