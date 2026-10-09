@@ -40,6 +40,7 @@ use domain::info::{HealthSnapshotReader, ReadinessReader, StatisticsReader, Syst
 pub mod auth;
 pub mod extractors;
 pub mod health;
+pub mod plugin_proxy;
 mod tracing;
 pub mod v1;
 
@@ -92,6 +93,14 @@ impl AppOrigins {
 
     pub fn contains(&self, url: &url::Url) -> bool {
         self.origins.iter().any(|o| *o == url.origin())
+    }
+
+    pub fn frame_ancestors(&self) -> String {
+        self.origins
+            .iter()
+            .map(url::Origin::ascii_serialization)
+            .collect::<Vec<_>>()
+            .join(" ")
     }
 }
 
@@ -537,5 +546,23 @@ mod middleware_tests {
             .unwrap();
 
         assert_eq!(response.status(), StatusCode::OK);
+    }
+}
+
+#[cfg(test)]
+mod app_origins_tests {
+    use super::*;
+
+    #[test]
+    fn frame_ancestors_lists_every_app_origin() {
+        let cors = CorsSettings {
+            allowed_origins: vec!["https://app.example.org".into()],
+        };
+        let origins =
+            AppOrigins::from_settings(&cors, &url::Url::parse("https://api.example.org").unwrap());
+        assert_eq!(
+            origins.frame_ancestors(),
+            "https://api.example.org https://app.example.org"
+        );
     }
 }
