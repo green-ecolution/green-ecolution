@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM plugin_proxy_sessions WHERE plugin_id = $1 AND expires_at <= now()",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "c8335f7d4e09dd9a8d01b3a2d50dd129717b78b90e392b02844dc2425bd29850"
+}

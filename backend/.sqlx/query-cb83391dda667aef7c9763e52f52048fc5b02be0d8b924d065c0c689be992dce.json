@@ -1,0 +1,18 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO plugin_proxy_sessions\n                   (token_hash, plugin_id, user_id, user_display_name, expires_at)\n               VALUES ($1, $2, $3, $4, $5)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "cb83391dda667aef7c9763e52f52048fc5b02be0d8b924d065c0c689be992dce"
+}
