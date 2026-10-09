@@ -11,6 +11,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > single repository. For legacy releases, see the
 > [GitHub Releases](https://github.com/green-ecolution/green-ecolution/releases) page.
 
+## [0.8.0](https://github.com/green-ecolution/green-ecolution/compare/v0.7.0...v0.8.0) (2026-10-09)
+
+
+### Features
+
+* **frontend:** give the map more room on mobile ([#1090](https://github.com/green-ecolution/green-ecolution/issues/1090)) ([efe2a4b](https://github.com/green-ecolution/green-ecolution/commit/efe2a4bb731d6628d2b4ddf0752c5c1853969016))
+* **frontend:** show prepared sensors in a separate tab of the sensor list ([#1088](https://github.com/green-ecolution/green-ecolution/issues/1088)) ([2249172](https://github.com/green-ecolution/green-ecolution/commit/224917269853620c7019bbdafbf7b714fa36fe0c))
+* **plugin:** grant device access to plugin views and issue single-use view tickets ([#1086](https://github.com/green-ecolution/green-ecolution/issues/1086)) ([2bf0b80](https://github.com/green-ecolution/green-ecolution/commit/2bf0b80724d957bf6103a4d8e91f877fb2af535a))
+* **plugin:** serve in-cluster plugin views through a backend reverse proxy ([#1091](https://github.com/green-ecolution/green-ecolution/issues/1091)) ([c8b027d](https://github.com/green-ecolution/green-ecolution/commit/c8b027d1b80b1d4f707a64fbf6bebb0d8ad1030d))
+* **sensor:** collapse data quality issue list to the newest five ([#1084](https://github.com/green-ecolution/green-ecolution/issues/1084)) ([5a610bd](https://github.com/green-ecolution/green-ecolution/commit/5a610bd8e30ccfefd02e3d5df1e00d0d1f6a6b5b))
+* **sensor:** redesign sensor detail dashboard ([#1085](https://github.com/green-ecolution/green-ecolution/issues/1085)) ([99fa873](https://github.com/green-ecolution/green-ecolution/commit/99fa873d4b3cfb5b047c16a249149f47dbecb22c))
+
+
+### Bug Fixes
+
+* **frontend:** keep mobile nav above the map drawer ([#1087](https://github.com/green-ecolution/green-ecolution/issues/1087)) ([fd915a8](https://github.com/green-ecolution/green-ecolution/commit/fd915a86aa3b956f7e5d97681c058ddf2b62f548))
+* **frontend:** make the language switcher reachable and stop it stretching ([#1059](https://github.com/green-ecolution/green-ecolution/issues/1059)) ([d0d84ab](https://github.com/green-ecolution/green-ecolution/commit/d0d84ab9520eb7390863524b3a75af3ae021045d))
+* **frontend:** read soil temperature from generic sensor readings in map panel ([#1089](https://github.com/green-ecolution/green-ecolution/issues/1089)) ([346998d](https://github.com/green-ecolution/green-ecolution/commit/346998d8b860d6c5648ba126bac834db09927033))
+* **watering-plan:** drop the 'Kein Fahrzeug' option from the vehicle select ([#1057](https://github.com/green-ecolution/green-ecolution/issues/1057)) ([c024984](https://github.com/green-ecolution/green-ecolution/commit/c024984747102dc85a9605c7e303d553a4d0a47e)), closes [#60](https://github.com/green-ecolution/green-ecolution/issues/60)
+
+
+### Performance Improvements
+
+* **backend:** speed up large-data read paths and store cluster boundaries ([#1066](https://github.com/green-ecolution/green-ecolution/issues/1066)) ([7a77816](https://github.com/green-ecolution/green-ecolution/commit/7a778169edead57699c4a009c2045c2952b6458a))
+
 ## [0.7.0](https://github.com/green-ecolution/green-ecolution/compare/v0.6.0...v0.7.0) (2026-09-20)
 
 
