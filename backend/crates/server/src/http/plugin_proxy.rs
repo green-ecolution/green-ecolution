@@ -145,13 +145,25 @@ pub fn upstream_headers(
 ) -> HeaderMap {
     let connection = connection_tokens(incoming);
     let mut out = HeaderMap::new();
+    // A stale length must not frame a body the client declared as chunked.
+    let drop_content_length = incoming.contains_key(header::TRANSFER_ENCODING);
     for (name, value) in incoming {
         let n = name.as_str();
         if is_hop_by_hop(name, &connection)
+            || n.contains('_')
             || n.starts_with("x-ge-")
+            || (n == "content-length" && drop_content_length)
             || matches!(
                 n,
-                "host" | "authorization" | "cookie" | "x-forwarded-host" | "x-forwarded-proto"
+                "host"
+                    | "authorization"
+                    | "cookie"
+                    | "forwarded"
+                    | "x-forwarded-host"
+                    | "x-forwarded-proto"
+                    | "x-forwarded-port"
+                    | "x-forwarded-prefix"
+                    | "x-forwarded-server"
             )
         {
             continue;
@@ -198,24 +210,31 @@ pub fn downstream_headers(upstream: &HeaderMap) -> HeaderMap {
 /// Only Green Ecolution may frame a proxied view, unless the plugin states
 /// its own `frame-ancestors`, which then stands.
 pub fn apply_frame_ancestors(headers: &mut HeaderMap, sources: &str) {
-    let directive = format!("frame-ancestors {sources}");
-    let merged = match headers
-        .get(header::CONTENT_SECURITY_POLICY)
-        .and_then(|v| v.to_str().ok())
-    {
-        None => directive,
-        Some(policy) if policy.to_ascii_lowercase().contains("frame-ancestors") => return,
-        Some(policy) => format!("{policy}; {directive}"),
-    };
-    if let Ok(value) = HeaderValue::from_str(&merged) {
-        headers.insert(header::CONTENT_SECURITY_POLICY, value);
+    let plugin_sets_it = headers
+        .get_all(header::CONTENT_SECURITY_POLICY)
+        .iter()
+        .map(|v| String::from_utf8_lossy(v.as_bytes()))
+        .any(|policy| {
+            policy.split(';').any(|directive| {
+                directive
+                    .split_whitespace()
+                    .next()
+                    .is_some_and(|name| name.eq_ignore_ascii_case("frame-ancestors"))
+            })
+        });
+    if plugin_sets_it {
+        return;
+    }
+    // A separate header: browsers enforce every CSP header, so the plugin's own policy stays untouched.
+    if let Ok(value) = HeaderValue::from_str(&format!("frame-ancestors {sources}")) {
+        headers.append(header::CONTENT_SECURITY_POLICY, value);
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use axum::http::{HeaderMap, HeaderValue, header};
+    use axum::http::{HeaderMap, HeaderName, HeaderValue, header};
     use domain::plugin::ServiceEndpoint;
 
     fn hosts(url: &str) -> PluginHosts {
@@ -419,9 +438,16 @@ mod tests {
             HeaderValue::from_static("default-src 'self'"),
         );
         apply_frame_ancestors(&mut other, "https://app.example.org");
+        let values: Vec<_> = other
+            .get_all(header::CONTENT_SECURITY_POLICY)
+            .iter()
+            .collect();
         assert_eq!(
-            other.get(header::CONTENT_SECURITY_POLICY).unwrap(),
-            "default-src 'self'; frame-ancestors https://app.example.org"
+            values,
+            [
+                "default-src 'self'",
+                "frame-ancestors https://app.example.org"
+            ]
         );
 
         let mut own = HeaderMap::new();
@@ -434,5 +460,93 @@ mod tests {
             own.get(header::CONTENT_SECURITY_POLICY).unwrap(),
             "Frame-Ancestors 'none'"
         );
+    }
+
+    #[test]
+    fn underscore_header_names_and_extra_forwarding_headers_are_dropped() {
+        let mut incoming = HeaderMap::new();
+        for (k, v) in [
+            ("x_ge_user_id", "forged"),
+            ("X_GE_User_Name", "forged"),
+            ("x_forwarded_host", "evil"),
+            ("forwarded", "for=evil"),
+            ("x-forwarded-port", "1"),
+            ("x-forwarded-prefix", "/p"),
+            ("x-forwarded-server", "evil"),
+        ] {
+            incoming.insert(
+                HeaderName::from_bytes(k.as_bytes()).unwrap(),
+                HeaderValue::from_static(v),
+            );
+        }
+        let out = upstream_headers(&incoming, "c", &grant("T"), "h", "https");
+        for k in [
+            "x_ge_user_id",
+            "x_ge_user_name",
+            "x_forwarded_host",
+            "forwarded",
+            "x-forwarded-port",
+            "x-forwarded-prefix",
+            "x-forwarded-server",
+        ] {
+            assert!(out.get(k).is_none(), "{k} leaked");
+        }
+        assert_eq!(
+            out.get("x-ge-user-id").unwrap(),
+            "00000000-0000-0000-0000-000000000000"
+        );
+        assert_eq!(out.get("x-forwarded-host").unwrap(), "h");
+    }
+
+    #[test]
+    fn content_length_is_dropped_only_next_to_transfer_encoding() {
+        let mut both = HeaderMap::new();
+        both.insert(header::CONTENT_LENGTH, HeaderValue::from_static("5"));
+        both.insert(
+            header::TRANSFER_ENCODING,
+            HeaderValue::from_static("chunked"),
+        );
+        assert!(
+            upstream_headers(&both, "c", &grant("T"), "h", "http")
+                .get(header::CONTENT_LENGTH)
+                .is_none()
+        );
+
+        let mut only = HeaderMap::new();
+        only.insert(header::CONTENT_LENGTH, HeaderValue::from_static("5"));
+        assert_eq!(
+            upstream_headers(&only, "c", &grant("T"), "h", "http")
+                .get(header::CONTENT_LENGTH)
+                .unwrap(),
+            "5"
+        );
+    }
+
+    #[test]
+    fn frame_ancestors_in_a_later_csp_header_is_respected() {
+        let mut h = HeaderMap::new();
+        h.append(
+            header::CONTENT_SECURITY_POLICY,
+            HeaderValue::from_static("default-src 'self'"),
+        );
+        h.append(
+            header::CONTENT_SECURITY_POLICY,
+            HeaderValue::from_static("frame-ancestors 'none'"),
+        );
+        apply_frame_ancestors(&mut h, "https://app.example.org");
+        assert_eq!(h.get_all(header::CONTENT_SECURITY_POLICY).iter().count(), 2);
+    }
+
+    #[test]
+    fn frame_ancestors_inside_a_url_does_not_count() {
+        let mut h = HeaderMap::new();
+        h.insert(
+            header::CONTENT_SECURITY_POLICY,
+            HeaderValue::from_static(
+                "default-src 'self'; report-uri https://r.example/frame-ancestors",
+            ),
+        );
+        apply_frame_ancestors(&mut h, "https://app.example.org");
+        assert_eq!(h.get_all(header::CONTENT_SECURITY_POLICY).iter().count(), 2);
     }
 }
