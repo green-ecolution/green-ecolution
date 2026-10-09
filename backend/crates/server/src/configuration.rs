@@ -215,6 +215,7 @@ fn default_plugin_session_ttl_minutes() -> u32 {
 /// Absent, the `proxied` frontend mode is unavailable.
 #[derive(serde::Deserialize, Clone)]
 pub struct PluginProxySettings {
+    #[serde(deserialize_with = "deserialize_url")]
     pub public_url: Url,
     #[serde(default)]
     pub allowed_service_suffixes: Vec<String>,
