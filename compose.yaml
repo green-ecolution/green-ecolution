@@ -263,6 +263,7 @@ services:
       - APP_APPLICATION__HOST=0.0.0.0
       - APP_APPLICATION__PORT=3000
       - APP_APPLICATION__BASE_URL=${APP_PROTO:-https}://${APP_HOST:-localhost}:${APP_PORT:-3443}
+      - APP_PLUGINS__PROXY__PUBLIC_URL=${APP_PROTO:-https}://plugins.${APP_HOST:-localhost}:${APP_PORT:-3443}
       - APP_DATABASE__HOST=db
       - APP_DATABASE__PORT=5432
       - APP_DATABASE__DATABASE_NAME=${POSTGRES_DB:-postgres}
@@ -285,6 +286,9 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.backend.rule=Host(`${APP_HOST:-localhost}`) && (PathPrefix(`/api`) || PathPrefix(`/swagger-ui`) || PathPrefix(`/api-docs`))"
       - "traefik.http.routers.backend.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
+      - "traefik.http.routers.backend-plugins.rule=HostRegexp(`^[a-z0-9-]+\\.plugins\\.${APP_HOST:-localhost}$$`)"
+      - "traefik.http.routers.backend-plugins.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
+      - "traefik.http.routers.backend-plugins.service=backend"
       - "traefik.http.services.backend.loadbalancer.server.port=3000"
 
   frontend:

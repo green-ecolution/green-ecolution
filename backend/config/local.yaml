@@ -20,3 +20,9 @@ routing:
   enabled: true
 plugins:
   enabled: true
+  proxy:
+    public_url: "http://plugins.localhost:3000"
+    # demo-plugin:80 when the backend runs in compose, localhost:5175 when it
+    # runs on the host via `just run-dev`.
+    allowed_service_suffixes: ["demo-plugin", "localhost"]
+    allowed_ports: [80, 5175]
