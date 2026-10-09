@@ -51,6 +51,7 @@ use crate::{
         organization_service::OrganizationService,
         plugin_ingest_service::PluginIngestService,
         plugin_proxy_policy::ProxyPolicy,
+        plugin_proxy_service::PluginProxyService,
         plugin_sensor_ingest_service::PluginSensorIngestService,
         plugin_service::PluginService,
         plugin_view_ticket_service::PluginViewTicketService,
@@ -187,6 +188,29 @@ impl Application {
             Duration::from_secs(settings.info.update_check_interval_secs),
         );
 
+        let plugin_proxy_service = settings.plugins.proxy.as_ref().map(|proxy| {
+            if proxy.session_ttl_minutes > crate::configuration::MAX_PLUGIN_SESSION_TTL_MINUTES {
+                tracing::warn!(
+                    configured = proxy.session_ttl_minutes,
+                    "plugins.proxy.session_ttl_minutes exceeds the maximum and is capped at 480"
+                );
+            }
+            Arc::new(PluginProxyService::new(
+                repos.plugin_reader.clone(),
+                services.plugin_view_tickets.clone(),
+                services.authorization.clone(),
+                Arc::new(infra::pg_plugin_proxy_session::PgProxySessionStore::new(
+                    pool.clone(),
+                )),
+                Arc::new(infra::plugin_proxy_session::RandomProxySessionFactory),
+                ProxyPolicy::new(
+                    proxy.allowed_service_suffixes.clone(),
+                    proxy.allowed_ports.clone(),
+                ),
+                chrono::Duration::minutes(i64::from(proxy.effective_session_ttl_minutes())),
+            ))
+        });
+
         let state = Arc::new(AppState {
             region_service: services.region,
             tree_service: services.tree,
@@ -227,6 +251,7 @@ impl Application {
             plugin_ingest_service: services.plugin_ingest,
             plugin_sensor_ingest_service: services.plugin_sensor_ingest,
             plugin_view_ticket_service: services.plugin_view_tickets,
+            plugin_proxy_service,
             settings_reader: settings_repo.clone(),
             settings_service,
             app_origins: AppOrigins::from_settings(&settings.cors, &settings.application.base_url),

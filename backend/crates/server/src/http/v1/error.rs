@@ -102,7 +102,8 @@ fn auth_error_response(e: &AuthError) -> (StatusCode, String) {
         | AuthError::InvalidToken(_)
         | AuthError::TokenExpired
         | AuthError::PluginKeyInvalid
-        | AuthError::PluginViewTicketInvalid => StatusCode::UNAUTHORIZED,
+        | AuthError::PluginViewTicketInvalid
+        | AuthError::PluginProxySessionInvalid => StatusCode::UNAUTHORIZED,
         AuthError::Forbidden | AuthError::PluginDisabled => StatusCode::FORBIDDEN,
         AuthError::IdpUnavailable(_) => StatusCode::SERVICE_UNAVAILABLE,
     };

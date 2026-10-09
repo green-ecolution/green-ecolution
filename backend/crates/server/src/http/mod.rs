@@ -124,6 +124,8 @@ pub struct AppState {
     pub plugin_ingest_service: Arc<PluginIngestService>,
     pub plugin_sensor_ingest_service: Arc<PluginSensorIngestService>,
     pub plugin_view_ticket_service: Arc<PluginViewTicketService>,
+    /// `None` when `plugins.proxy` is not configured.
+    pub plugin_proxy_service: Option<Arc<crate::service::plugin_proxy_service::PluginProxyService>>,
     /// No handler reads this: it exposes the port so the integration tests can
     /// drive resolution directly instead of through the HTTP surface.
     pub settings_reader: Arc<dyn domain::settings::SettingsReader>,

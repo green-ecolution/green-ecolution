@@ -332,6 +332,8 @@ pub enum AuthError {
     PluginDisabled,
     #[error("invalid plugin view ticket")]
     PluginViewTicketInvalid,
+    #[error("invalid plugin proxy session")]
+    PluginProxySessionInvalid,
 }
 
 impl AuthError {
@@ -345,6 +347,7 @@ impl AuthError {
             Self::PluginKeyInvalid => "plugin.key_invalid",
             Self::PluginDisabled => "plugin.disabled",
             Self::PluginViewTicketInvalid => "plugin.view_ticket_invalid",
+            Self::PluginProxySessionInvalid => "plugin.proxy_session_invalid",
         }
     }
 }
