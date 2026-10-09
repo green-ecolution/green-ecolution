@@ -25,6 +25,7 @@ use domain::{
 use super::{
     AuthError, ServiceError,
     authorization::{AuthorizationService, may_open_plugin_view},
+    plugin_proxy_policy::ProxyPolicy,
 };
 
 /// Mints the plaintext key shown once to the operator plus the hash to
@@ -52,6 +53,7 @@ pub struct PluginService {
     writer: Arc<dyn PluginWriter>,
     authorization: Arc<AuthorizationService>,
     keys: Arc<dyn PluginKeyFactory>,
+    proxy: Option<ProxyPolicy>,
 }
 
 impl PluginService {
@@ -60,12 +62,27 @@ impl PluginService {
         writer: Arc<dyn PluginWriter>,
         authorization: Arc<AuthorizationService>,
         keys: Arc<dyn PluginKeyFactory>,
+        proxy: Option<ProxyPolicy>,
     ) -> Self {
         Self {
             reader,
             writer,
             authorization,
             keys,
+            proxy,
+        }
+    }
+
+    /// Whether a host is allowed is a deployment question, so the allowlist
+    /// lives in the server config and is checked here rather than in the domain.
+    fn check_frontend(&self, frontend: &PluginFrontend) -> Result<(), ServiceError> {
+        let PluginFrontend::Proxied(endpoint) = frontend else {
+            return Ok(());
+        };
+        match &self.proxy {
+            None => Err(ServiceError::PluginProxyUnavailable),
+            Some(policy) if policy.allows(endpoint) => Ok(()),
+            Some(_) => Err(ServiceError::PluginProxyTargetNotAllowed),
         }
     }
 
@@ -156,6 +173,7 @@ impl PluginService {
         self.authorization
             .require_superset(actor, &draft.permissions, draft.organization_id)
             .await?;
+        self.check_frontend(&draft.frontend)?;
 
         let id = Id::<Plugin>::new_v7();
         let (plaintext, hash) = self.keys.generate(id);
@@ -191,6 +209,14 @@ impl PluginService {
             self.authorization
                 .require_superset(actor, effective, org)
                 .await?;
+        }
+
+        // Only a new target is checked: a stored one that has since left the
+        // allowlist must not block renaming the plugin.
+        if let Some(frontend) = &change.frontend
+            && frontend != plugin.frontend()
+        {
+            self.check_frontend(frontend)?;
         }
 
         if let Some(name) = change.name {
@@ -344,6 +370,7 @@ mod tests {
         let svc = service_over(
             repo,
             Some(&[Permission::new(Resource::Plugin, Action::Update)]),
+            None,
         );
 
         let err = svc
@@ -359,6 +386,7 @@ mod tests {
         let svc = service_over(
             repo,
             Some(&[Permission::new(Resource::Plugin, Action::Update)]),
+            None,
         );
 
         let err = svc
@@ -383,6 +411,7 @@ mod tests {
         let svc = service_over(
             repo,
             Some(&[Permission::new(Resource::Plugin, Action::Update)]),
+            None,
         );
 
         let view = svc
@@ -406,6 +435,7 @@ mod tests {
         let svc = service_over(
             repo,
             Some(&[Permission::new(Resource::Plugin, Action::Update)]),
+            None,
         );
 
         let view = svc
@@ -657,7 +687,11 @@ mod tests {
     /// Builds a service over an existing repository, so a test can install a
     /// plugin as one actor and then act on it as a less privileged one.
     /// `allowing: None` disables authorization entirely (the demo bypass).
-    fn service_over(repo: Arc<FakePluginRepo>, allowing: Option<&[Permission]>) -> PluginService {
+    fn service_over(
+        repo: Arc<FakePluginRepo>,
+        allowing: Option<&[Permission]>,
+        proxy: Option<ProxyPolicy>,
+    ) -> PluginService {
         let org = test_org();
         let authorization = Arc::new(AuthorizationService::new(
             Arc::new(StubOrgs {
@@ -677,15 +711,108 @@ mod tests {
             repo,
             authorization,
             Arc::new(RandomPluginKeyFactory),
+            proxy,
         )
     }
 
+    use domain::plugin::ServiceEndpoint;
+
+    fn service_with_proxy(policy: Option<ProxyPolicy>) -> PluginService {
+        service_over(Arc::new(FakePluginRepo::default()), None, policy)
+    }
+
+    fn cluster_policy() -> ProxyPolicy {
+        ProxyPolicy::new([".plugins.svc.cluster.local".to_string()], [8080])
+    }
+
+    fn proxied(host: &str, port: u16) -> PluginFrontend {
+        PluginFrontend::Proxied(ServiceEndpoint::new(host, port).unwrap())
+    }
+
+    #[tokio::test]
+    async fn install_rejects_a_proxied_frontend_without_a_proxy() {
+        let mut d = draft("acme");
+        d.frontend = proxied("kataster.plugins.svc.cluster.local", 8080);
+        let err = service_with_proxy(None)
+            .install(Uuid::nil(), d)
+            .await
+            .unwrap_err();
+        assert!(matches!(err, ServiceError::PluginProxyUnavailable));
+    }
+
+    #[tokio::test]
+    async fn install_rejects_a_proxied_target_outside_the_allowlist() {
+        let mut d = draft("acme");
+        d.frontend = proxied("metadata.google.internal", 80);
+        let err = service_with_proxy(Some(cluster_policy()))
+            .install(Uuid::nil(), d)
+            .await
+            .unwrap_err();
+        assert!(matches!(err, ServiceError::PluginProxyTargetNotAllowed));
+    }
+
+    #[tokio::test]
+    async fn install_accepts_an_allowlisted_proxied_target() {
+        let mut d = draft("acme");
+        d.frontend = proxied("kataster.plugins.svc.cluster.local", 8080);
+        assert!(
+            service_with_proxy(Some(cluster_policy()))
+                .install(Uuid::nil(), d)
+                .await
+                .is_ok()
+        );
+    }
+
+    #[tokio::test]
+    async fn update_rejects_a_proxied_target_outside_the_allowlist() {
+        let svc = service_with_proxy(Some(cluster_policy()));
+        svc.install(Uuid::nil(), draft("acme")).await.unwrap();
+        let err = svc
+            .update(
+                Uuid::nil(),
+                &PluginSlug::new("acme").unwrap(),
+                PluginChange {
+                    frontend: Some(proxied("db.internal", 5432)),
+                    ..no_change()
+                },
+            )
+            .await
+            .unwrap_err();
+        assert!(matches!(err, ServiceError::PluginProxyTargetNotAllowed));
+    }
+
+    #[tokio::test]
+    async fn update_keeps_an_unchanged_proxied_frontend_without_rechecking_it() {
+        let repo = Arc::new(FakePluginRepo::default());
+        let stored = proxied("kataster.plugins.svc.cluster.local", 8080);
+        let mut d = draft("acme");
+        d.frontend = stored.clone();
+        service_over(repo.clone(), None, Some(cluster_policy()))
+            .install(Uuid::nil(), d)
+            .await
+            .unwrap();
+
+        let view = service_over(repo, None, None)
+            .update(
+                Uuid::nil(),
+                &PluginSlug::new("acme").unwrap(),
+                PluginChange {
+                    name: Some(PluginName::new("Kataster").unwrap()),
+                    frontend: Some(stored),
+                    ..no_change()
+                },
+            )
+            .await
+            .unwrap();
+        assert_eq!(view.name, "Kataster");
+    }
+
     fn service_with_unrestricted_auth() -> PluginService {
-        service_over(Arc::new(FakePluginRepo::default()), None)
+        service_over(Arc::new(FakePluginRepo::default()), None, None)
     }
 
     fn service_with_auth_allowing(permissions: &[Permission]) -> PluginService {
-        service_over(Arc::new(FakePluginRepo::default()), Some(permissions))
+        service_over(Arc::new(FakePluginRepo::default()), Some(permissions), None)
     }
 
     /// A plugin that may delete trees, installed by an unrestricted actor.
@@ -693,7 +820,7 @@ mod tests {
         let repo = Arc::new(FakePluginRepo::default());
         let mut d = draft("acme");
         d.permissions = BTreeSet::from([Permission::new(Resource::Tree, Action::Delete)]);
-        service_over(repo.clone(), None)
+        service_over(repo.clone(), None, None)
             .install(Uuid::nil(), d)
             .await
             .unwrap();

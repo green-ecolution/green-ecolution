@@ -9,7 +9,7 @@ use rust_decimal::Decimal;
 use secrecy::SecretString;
 use serde_json::json;
 use server::{
-    configuration::{AuthSettings, Settings},
+    configuration::{AuthSettings, PluginProxySettings, Settings},
     http::AppState,
     service::{ServiceError, sensor_service::ReadingIngest},
     startup::Application,
@@ -433,6 +433,22 @@ pub async fn spawn_app_with_plugins_and_auth(auth: AuthSettings) -> TestApp {
     settings.info.health_check_interval_secs = 1;
     settings.info.update_check_repo = None;
     settings.plugins.enabled = true;
+    spawn_with_settings(settings).await
+}
+
+pub async fn spawn_app_with_plugin_proxy(proxy: PluginProxySettings) -> TestApp {
+    spawn_app_with_plugin_proxy_and_auth(proxy, disabled_auth_settings()).await
+}
+
+pub async fn spawn_app_with_plugin_proxy_and_auth(
+    proxy: PluginProxySettings,
+    auth: AuthSettings,
+) -> TestApp {
+    let mut settings = Settings::for_test(auth);
+    settings.info.health_check_interval_secs = 1;
+    settings.info.update_check_repo = None;
+    settings.plugins.enabled = true;
+    settings.plugins.proxy = Some(proxy);
     spawn_with_settings(settings).await
 }
 

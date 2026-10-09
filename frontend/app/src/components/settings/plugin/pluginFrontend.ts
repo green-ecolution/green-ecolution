@@ -3,6 +3,16 @@ import type { PluginFrontendDto } from '@/api/backendApi'
 
 export type FrontendMode = 'none' | 'external' | 'proxied'
 
+const DNS_LABEL = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/
+
+/** Same grammar the backend's proxy allowlist (`ProxyPolicy::allows`) requires. */
+const isDnsName = (host: string): boolean =>
+  host.length <= 253 &&
+  host
+    .toLowerCase()
+    .split('.')
+    .every((label) => DNS_LABEL.test(label))
+
 /**
  * Mirrors the backend's own check (`PluginFrontendDto::into_domain` in
  * `http/v1/dto/plugin.rs`) so an invalid external URL is caught before the
@@ -38,32 +48,19 @@ export const validateTarget = (
   }
 
   const match = /^([^\s:]+):(\d+)$/.exec(trimmed)
-  if (!match) return t('plugin.install.targetInvalidHostPort')
+  if (!match || !isDnsName(match[1])) return t('plugin.install.targetInvalidHostPort')
   const port = Number(match[2])
   if (port < 1 || port > 65535) return t('plugin.install.targetInvalidPort')
   return null
 }
 
-/**
- * The modes an administrator may pick. `proxied` is missing on purpose: the
- * domain accepts it, but nothing serves such a view yet, so choosing it only
- * produces a plugin whose view is a placeholder. A plugin that already carries
- * the mode keeps it in the list, otherwise editing its name would silently
- * rewrite its frontend to something else.
- */
 export const frontendModeOptions = (
   t: TFunction<'settings'>,
-  stored?: string,
-): { value: FrontendMode; label: string }[] => {
-  const options: { value: FrontendMode; label: string }[] = [
-    { value: 'none', label: t('plugin.install.frontendModeOption.none') },
-    { value: 'external', label: t('plugin.install.frontendModeOption.external') },
-  ]
-  if (stored === 'proxied') {
-    options.push({ value: 'proxied', label: t('plugin.install.frontendModeOption.proxied') })
-  }
-  return options
-}
+): { value: FrontendMode; label: string }[] => [
+  { value: 'none', label: t('plugin.install.frontendModeOption.none') },
+  { value: 'external', label: t('plugin.install.frontendModeOption.external') },
+  { value: 'proxied', label: t('plugin.install.frontendModeOption.proxied') },
+]
 
 export const buildFrontendDto = (mode: FrontendMode, target: string): PluginFrontendDto => {
   if (mode === 'none') return { mode: 'none' }

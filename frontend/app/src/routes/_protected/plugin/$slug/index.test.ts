@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { isValidElement } from 'react'
 import { QueryClient } from '@tanstack/react-query'
 import { ResponseError } from '@green-ecolution/backend-client'
+import { pluginApi, type PluginViewResponse } from '@/api/backendApi'
 
 const { Route } = await import('./index')
 const { default: Forbidden } = await import('@/components/layout/Forbidden')
@@ -32,6 +33,26 @@ describe('/plugin/$slug', () => {
     expect(spy).toHaveBeenCalledOnce()
     expect(spy.mock.calls[0][0]).toMatchObject({ queryKey: ['plugins', 'acme', 'view'] })
     expect(data).toEqual({ crumb: { title: 'Acme' } })
+  })
+
+  // A proxied view's frontend_url carries a one-time ticket; the cached
+  // response of an earlier visit would replay a redeemed one.
+  it('fetches a fresh view on every visit, even within the stale time', async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false, staleTime: 60_000 } },
+    })
+    const getPluginView = vi
+      .spyOn(pluginApi, 'getPluginView')
+      .mockResolvedValueOnce({ name: 'Acme', frontendUrl: 'ticket-1' } as PluginViewResponse)
+      .mockResolvedValueOnce({ name: 'Acme', frontendUrl: 'ticket-2' } as PluginViewResponse)
+
+    await loader({ context: { queryClient }, params: { slug: 'acme' } })
+    await loader({ context: { queryClient }, params: { slug: 'acme' } })
+
+    expect(getPluginView).toHaveBeenCalledTimes(2)
+    expect(
+      queryClient.getQueryData<PluginViewResponse>(['plugins', 'acme', 'view'])?.frontendUrl,
+    ).toBe('ticket-2')
   })
 
   it('shows the forbidden page when the backend denies access', () => {

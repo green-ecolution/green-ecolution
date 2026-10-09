@@ -263,6 +263,7 @@ services:
       - APP_APPLICATION__HOST=0.0.0.0
       - APP_APPLICATION__PORT=3000
       - APP_APPLICATION__BASE_URL=${APP_PROTO:-https}://${APP_HOST:-localhost}:${APP_PORT:-3443}
+      - APP_PLUGINS__PROXY__PUBLIC_URL=${APP_PROTO:-https}://plugins.${APP_HOST:-localhost}:${APP_PORT:-3443}
       - APP_DATABASE__HOST=db
       - APP_DATABASE__PORT=5432
       - APP_DATABASE__DATABASE_NAME=${POSTGRES_DB:-postgres}
@@ -285,6 +286,9 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.backend.rule=Host(`${APP_HOST:-localhost}`) && (PathPrefix(`/api`) || PathPrefix(`/swagger-ui`) || PathPrefix(`/api-docs`))"
       - "traefik.http.routers.backend.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
+      - "traefik.http.routers.backend-plugins.rule=HostRegexp(`^[a-z0-9-]+\\.plugins\\.${APP_HOST:-localhost}$$`)"
+      - "traefik.http.routers.backend-plugins.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
+      - "traefik.http.routers.backend-plugins.service=backend"
       - "traefik.http.services.backend.loadbalancer.server.port=3000"
 
   frontend:
@@ -358,8 +362,10 @@ services:
       - GE_API_BASE_URL=${GE_API_BASE_URL:-http://host.docker.internal:3030/api}
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    # A published localhost port, not a traefik host: an external plugin
-    # frontend must be https unless its host is exactly `localhost`.
+    # A published localhost port for the `external` mode, where a frontend
+    # must be https unless its host is exactly `localhost`. In the `proxied`
+    # mode the target is `demo-plugin:80` (backend in compose) or
+    # `localhost:5175` (backend via `just run-dev`).
     ports:
       - "127.0.0.1:5175:80"
     healthcheck:

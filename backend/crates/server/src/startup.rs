@@ -50,6 +50,8 @@ use crate::{
         handlers::tree_watering::TreeWateringFromSensorHandler,
         organization_service::OrganizationService,
         plugin_ingest_service::PluginIngestService,
+        plugin_proxy_policy::ProxyPolicy,
+        plugin_proxy_service::PluginProxyService,
         plugin_sensor_ingest_service::PluginSensorIngestService,
         plugin_service::PluginService,
         plugin_view_ticket_service::PluginViewTicketService,
@@ -161,6 +163,12 @@ impl Application {
             profile_repo,
             user_repo.clone(),
             settings.auth.enabled,
+            settings.plugins.proxy.as_ref().map(|proxy| {
+                ProxyPolicy::new(
+                    proxy.allowed_service_suffixes.clone(),
+                    proxy.allowed_ports.clone(),
+                )
+            }),
         );
 
         let (shutdown_tx, shutdown_rx) = tokio::sync::watch::channel(false);
@@ -179,6 +187,48 @@ impl Application {
             probe_http_client,
             Duration::from_secs(settings.info.update_check_interval_secs),
         );
+
+        let plugin_proxy_service = settings.plugins.proxy.as_ref().map(|proxy| {
+            if proxy.session_ttl_minutes != proxy.effective_session_ttl_minutes() {
+                tracing::warn!(
+                    configured = proxy.session_ttl_minutes,
+                    effective = proxy.effective_session_ttl_minutes(),
+                    "plugins.proxy.session_ttl_minutes lies outside 1..={} and is clamped",
+                    crate::configuration::MAX_PLUGIN_SESSION_TTL_MINUTES
+                );
+            }
+            Arc::new(PluginProxyService::new(
+                repos.plugin_reader.clone(),
+                services.plugin_view_tickets.clone(),
+                services.authorization.clone(),
+                Arc::new(infra::pg_plugin_proxy_session::PgProxySessionStore::new(
+                    pool.clone(),
+                )),
+                Arc::new(infra::plugin_proxy_session::RandomProxySessionFactory),
+                ProxyPolicy::new(
+                    proxy.allowed_service_suffixes.clone(),
+                    proxy.allowed_ports.clone(),
+                ),
+                chrono::Duration::minutes(i64::from(proxy.effective_session_ttl_minutes())),
+            ))
+        });
+
+        let app_origins = AppOrigins::from_settings(&settings.cors, &settings.application.base_url);
+        let plugin_proxy = match &settings.plugins.proxy {
+            Some(proxy) => {
+                let hosts = crate::http::plugin_proxy::PluginHosts::for_app(
+                    &proxy.public_url,
+                    &settings.application.base_url,
+                )
+                .map_err(|reason| std::io::Error::new(std::io::ErrorKind::InvalidInput, reason))?;
+                Some(Arc::new(crate::http::plugin_proxy::PluginProxy::new(
+                    hosts,
+                    app_origins.frame_ancestors(),
+                    proxy.effective_session_ttl_minutes(),
+                )))
+            }
+            None => None,
+        };
 
         let state = Arc::new(AppState {
             region_service: services.region,
@@ -220,9 +270,11 @@ impl Application {
             plugin_ingest_service: services.plugin_ingest,
             plugin_sensor_ingest_service: services.plugin_sensor_ingest,
             plugin_view_ticket_service: services.plugin_view_tickets,
+            plugin_proxy_service,
+            plugin_proxy,
             settings_reader: settings_repo.clone(),
             settings_service,
-            app_origins: AppOrigins::from_settings(&settings.cors, &settings.application.base_url),
+            app_origins,
         });
 
         let listener = TcpListener::bind(address).await?;
@@ -432,6 +484,7 @@ impl Services {
         profile_reader: Arc<dyn domain::user::UserProfileReader>,
         user_repo: Arc<dyn domain::user::UserRepository>,
         auth_enabled: bool,
+        proxy_policy: Option<ProxyPolicy>,
     ) -> Self {
         let authorization = Arc::new(AuthorizationService::new(
             repos.organization_reader.clone(),
@@ -443,6 +496,7 @@ impl Services {
             repos.plugin_writer.clone(),
             authorization.clone(),
             Arc::new(crate::infra::plugin_key::RandomPluginKeyFactory),
+            proxy_policy,
         ));
         let tree = Arc::new(TreeService::new(
             repos.tree_reader.clone(),

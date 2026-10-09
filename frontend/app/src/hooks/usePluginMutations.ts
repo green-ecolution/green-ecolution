@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import type { PluginCreateRequest, PluginUpdateRequest } from '@/api/backendApi'
 import { pluginApi } from '@/api/backendApi'
 import createToast from '@/hooks/createToast'
+import { resolveApiError } from '@/lib/apiError'
 import { useInvalidateAggregates } from '@/lib/queryInvalidation'
 
 export interface UpdatePluginVariables {
@@ -21,6 +22,14 @@ export const usePluginMutations = () => {
   // re-running the loader of the deleted plugin renders EntityNotFound first.
   const refresh = (reloadRoutes = true) => invalidate(['plugin'], { reloadRoutes })
 
+  // A named cause such as an unconfigured proxy or a target off the allowlist
+  // tells the admin what to fix; anything else keeps the generic text.
+  const showFailure = (fallback: string) => (error: unknown) => {
+    void resolveApiError(error).then((info) =>
+      showToast(info.messageKey.startsWith('code.') ? info.message : fallback, 'error'),
+    )
+  }
+
   const installPlugin = useMutation({
     mutationFn: (pluginCreateRequest: PluginCreateRequest) =>
       pluginApi.installPlugin({ pluginCreateRequest }),
@@ -28,7 +37,7 @@ export const usePluginMutations = () => {
       void refresh(false)
       showToast(t('plugin.detail.toast.installed'))
     },
-    onError: () => showToast(t('plugin.detail.toast.installFailed'), 'error'),
+    onError: showFailure(t('plugin.detail.toast.installFailed')),
   })
 
   const updatePlugin = useMutation({
@@ -38,7 +47,7 @@ export const usePluginMutations = () => {
       void refresh()
       showToast(t('plugin.detail.toast.saved'))
     },
-    onError: () => showToast(t('plugin.detail.toast.saveFailed'), 'error'),
+    onError: showFailure(t('plugin.detail.toast.saveFailed')),
   })
 
   const rotatePluginKey = useMutation({

@@ -7,6 +7,9 @@ export const strings = {
     slug: 'Slug',
     locale: 'Sprache',
     theme: 'Darstellung',
+    proxyTitle: 'Durchgereicht von Green Ecolution',
+    proxyUser: 'Nutzerkennung',
+    proxyName: 'Name',
     keyLabel: 'API-Key',
     keyHint:
       'Der Key wird beim Installieren einmalig angezeigt. Er wird an den Server des Demo-Plugins geschickt und dort nur im Speicher gehalten.',
@@ -30,6 +33,9 @@ export const strings = {
     slug: 'Slug',
     locale: 'Language',
     theme: 'Appearance',
+    proxyTitle: 'Forwarded by Green Ecolution',
+    proxyUser: 'User id',
+    proxyName: 'Name',
     keyLabel: 'API key',
     keyHint:
       'The key is shown once when the plugin is installed. It is sent to the demo plugin server and kept in memory only.',

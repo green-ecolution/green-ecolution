@@ -206,6 +206,7 @@ run-dev: _handbook-pdf-if-missing
         SQLX_OFFLINE=true \
         APP_APPLICATION__HOST=0.0.0.0 \
         APP_APPLICATION__BASE_URL={{ app_proto }}://{{ app_host }}:{{ app_port }} \
+        APP_PLUGINS__PROXY__PUBLIC_URL={{ app_proto }}://plugins.{{ app_host }}:{{ app_port }} \
         APP_AUTH__ISSUER_URL={{ app_proto }}://auth.{{ app_host }}:{{ app_port }}/realms/green-ecolution \
         APP_AUTH__DEFAULT_REDIRECT_URL={{ app_proto }}://{{ app_host }}:{{ app_port }}/auth/callback \
         APP_DATABASE__HOST={{ postgres_host }} \
@@ -240,6 +241,7 @@ run-prod: build-domain-wasm _compile-backend
         APP_ENVIRONMENT=local \
         APP_APPLICATION__HOST=0.0.0.0 \
         APP_APPLICATION__BASE_URL={{ app_proto }}://{{ app_host }}:{{ app_port }} \
+        APP_PLUGINS__PROXY__PUBLIC_URL={{ app_proto }}://plugins.{{ app_host }}:{{ app_port }} \
         APP_AUTH__ISSUER_URL={{ app_proto }}://auth.{{ app_host }}:{{ app_port }}/realms/green-ecolution \
         APP_AUTH__DEFAULT_REDIRECT_URL={{ app_proto }}://{{ app_host }}:{{ app_port }}/auth/callback \
         APP_DATABASE__HOST={{ postgres_host }} \

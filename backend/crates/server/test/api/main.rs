@@ -23,6 +23,8 @@ pub mod map_view;
 pub mod organizations;
 pub mod plugin_auth;
 pub mod plugin_ingest;
+pub mod plugin_proxy;
+pub mod plugin_proxy_sessions;
 pub mod plugin_repo;
 pub mod plugin_sensor_ingest;
 pub mod plugin_view_tickets;

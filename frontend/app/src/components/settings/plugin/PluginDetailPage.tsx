@@ -92,10 +92,18 @@ const PluginDetailPage = ({ plugin }: PluginDetailPageProps) => {
     setDeviceCapabilities((current) => toggledCapability(current, capability))
 
   const handleSave = () => {
+    // An unchanged frontend is left out of the request, like the permission
+    // sets below: the backend checks a sent target against the proxy
+    // allowlist, so echoing a stored one that has since left it would block
+    // even a rename.
+    const frontendUnchanged =
+      frontendMode === plugin.frontendMode &&
+      (frontendMode === 'none' || target.trim() === (plugin.frontendTarget ?? ''))
+
     // Same check the install dialog runs. Without it an empty or http:// target
     // only comes back as the generic save-failed toast, with nothing pointing
     // at the field that caused it.
-    const invalidTarget = validateTarget(frontendMode, target, t)
+    const invalidTarget = frontendUnchanged ? null : validateTarget(frontendMode, target, t)
     setTargetError(invalidTarget)
     if (invalidTarget) return
 
@@ -111,7 +119,7 @@ const PluginDetailPage = ({ plugin }: PluginDetailPageProps) => {
       change: {
         name: name.trim(),
         description: trimmedDescription === '' ? null : trimmedDescription,
-        frontend: buildFrontendDto(frontendMode, target),
+        ...(frontendUnchanged ? {} : { frontend: buildFrontendDto(frontendMode, target) }),
         ...(unchangedSet(permissions, plugin.permissions) ? {} : { permissions: [...permissions] }),
         ...(unchangedSet(accessPermissions, plugin.requiredPermissions)
           ? {}
@@ -179,7 +187,7 @@ const PluginDetailPage = ({ plugin }: PluginDetailPageProps) => {
             <p className="mt-1 font-mono text-sm text-dark-600">{plugin.slug}</p>
           </div>
 
-          {plugin.frontendMode === 'external' && plugin.frontendTarget && (
+          {plugin.frontendMode !== 'none' && plugin.frontendTarget && (
             <Button asChild variant="outline" size="sm" className="sm:shrink-0">
               <Link to="/plugin/$slug" params={{ slug: plugin.slug }}>
                 <ExternalLink className="size-4" aria-hidden />
@@ -276,7 +284,7 @@ const PluginDetailPage = ({ plugin }: PluginDetailPageProps) => {
             disabled={!canUpdate}
             onValueChange={(value) => setFrontendMode(value as FrontendMode)}
             className="max-w-sm"
-            options={frontendModeOptions(t, plugin.frontendMode)}
+            options={frontendModeOptions(t)}
           />
 
           {frontendMode !== 'none' && (

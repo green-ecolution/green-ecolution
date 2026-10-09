@@ -40,6 +40,7 @@ use domain::info::{HealthSnapshotReader, ReadinessReader, StatisticsReader, Syst
 pub mod auth;
 pub mod extractors;
 pub mod health;
+pub mod plugin_proxy;
 mod tracing;
 pub mod v1;
 
@@ -93,6 +94,14 @@ impl AppOrigins {
     pub fn contains(&self, url: &url::Url) -> bool {
         self.origins.iter().any(|o| *o == url.origin())
     }
+
+    pub fn frame_ancestors(&self) -> String {
+        self.origins
+            .iter()
+            .map(url::Origin::ascii_serialization)
+            .collect::<Vec<_>>()
+            .join(" ")
+    }
 }
 
 pub struct AppState {
@@ -124,6 +133,9 @@ pub struct AppState {
     pub plugin_ingest_service: Arc<PluginIngestService>,
     pub plugin_sensor_ingest_service: Arc<PluginSensorIngestService>,
     pub plugin_view_ticket_service: Arc<PluginViewTicketService>,
+    /// `None` when `plugins.proxy` is not configured.
+    pub plugin_proxy_service: Option<Arc<crate::service::plugin_proxy_service::PluginProxyService>>,
+    pub plugin_proxy: Option<Arc<plugin_proxy::PluginProxy>>,
     /// No handler reads this: it exposes the port so the integration tests can
     /// drive resolution directly instead of through the HTTP surface.
     pub settings_reader: Arc<dyn domain::settings::SettingsReader>,
@@ -223,9 +235,17 @@ pub fn router(
         // empty body, which a client that parses every response as JSON reads
         // as a parse failure rather than as the 404/405 it is.
         .fallback(route_not_found)
-        .method_not_allowed_fallback(method_not_allowed);
+        .method_not_allowed_fallback(method_not_allowed)
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            plugin_proxy::dispatch,
+        ));
 
-    apply_middleware(router, cors, request_timeout).with_state(state)
+    let plugin_hosts = state
+        .plugin_proxy
+        .as_ref()
+        .map(|proxy| proxy.hosts().clone());
+    apply_middleware(router, cors, request_timeout, plugin_hosts).with_state(state)
 }
 
 /// The outer middleware stack, innermost layer first. Kept separate from
@@ -235,6 +255,7 @@ fn apply_middleware<S>(
     router: Router<S>,
     cors: &CorsSettings,
     request_timeout: Duration,
+    plugin_hosts: Option<plugin_proxy::PluginHosts>,
 ) -> Router<S>
 where
     S: Clone + Send + Sync + 'static,
@@ -250,7 +271,13 @@ where
             enforce_timeout,
         ))
         .layer(CatchPanicLayer::custom(panic_response))
-        .layer(cors_layer(cors))
+        .layer(axum::middleware::from_fn_with_state(
+            Arc::new(HostAwareCors {
+                layer: cors_layer(cors),
+                plugin_hosts,
+            }),
+            host_aware_cors,
+        ))
         .layer(PropagateRequestIdLayer::new(REQUEST_ID_HEADER))
         .layer(trace_layer)
         .layer(SetRequestIdLayer::new(REQUEST_ID_HEADER, MakeRequestUuid))
@@ -377,6 +404,32 @@ fn rewrite_paths_for_client(api: &mut utoipa::openapi::OpenApi, base_url: &str) 
     api.servers = Some(vec![Server::new(server_url)]);
 }
 
+/// The app's CORS policy belongs to the app's own host. A plugin host answers
+/// with the plugin's headers, and the layer would otherwise swallow its
+/// preflights and overwrite its `Access-Control-*` headers.
+struct HostAwareCors {
+    layer: CorsLayer,
+    plugin_hosts: Option<plugin_proxy::PluginHosts>,
+}
+
+async fn host_aware_cors(
+    axum::extract::State(cors): axum::extract::State<Arc<HostAwareCors>>,
+    request: axum::extract::Request,
+    next: axum::middleware::Next,
+) -> axum::response::Response {
+    let on_plugin_host = cors.plugin_hosts.as_ref().is_some_and(|hosts| {
+        plugin_proxy::request_host(&request).is_some_and(|host| hosts.slug_of(host).is_some())
+    });
+    if on_plugin_host {
+        return next.run(request).await;
+    }
+    use tower::{Layer, ServiceExt};
+    match cors.layer.clone().layer(next).oneshot(request).await {
+        Ok(response) => response.map(axum::body::Body::new),
+        Err(never) => match never {},
+    }
+}
+
 fn cors_layer(config: &CorsSettings) -> CorsLayer {
     if config.allowed_origins.iter().any(|o| o == "*") {
         return CorsLayer::new()
@@ -485,6 +538,7 @@ mod middleware_tests {
             Router::new().route("/boom", get(boom)),
             &permissive_cors(),
             Duration::from_secs(30),
+            None,
         );
 
         let response = app
@@ -495,6 +549,65 @@ mod middleware_tests {
         assert_eq!(response.status(), StatusCode::INTERNAL_SERVER_ERROR);
         let body = body_json(response).await;
         assert_eq!(body["code"], "request.panic");
+    }
+
+    #[tokio::test]
+    async fn a_panic_response_on_the_api_host_carries_cors_headers() {
+        let app = apply_middleware(
+            Router::new().route("/boom", get(boom)),
+            &permissive_cors(),
+            Duration::from_secs(30),
+            None,
+        );
+
+        let response = app
+            .oneshot(
+                Request::builder()
+                    .uri("/boom")
+                    .header("origin", "https://app.example.org")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(response.headers()["access-control-allow-origin"], "*");
+    }
+
+    #[tokio::test]
+    async fn a_plugin_host_is_left_out_of_the_apps_cors() {
+        let hosts =
+            plugin_proxy::PluginHosts::from_public_url(&"http://plugins.test".parse().unwrap());
+        let app = apply_middleware(
+            Router::new().route("/x", get(|| async { "ok" })),
+            &permissive_cors(),
+            Duration::from_secs(30),
+            hosts,
+        );
+        let request = |host: &str| {
+            Request::builder()
+                .uri("/x")
+                .header("host", host)
+                .header("origin", "https://app.example.org")
+                .body(Body::empty())
+                .unwrap()
+        };
+
+        let plugin = app
+            .clone()
+            .oneshot(request("acme.plugins.test"))
+            .await
+            .unwrap();
+        let api = app.oneshot(request("api.example.org")).await.unwrap();
+
+        assert!(
+            plugin
+                .headers()
+                .get("access-control-allow-origin")
+                .is_none()
+        );
+        assert_eq!(api.headers()["access-control-allow-origin"], "*");
     }
 
     #[tokio::test]
@@ -509,6 +622,7 @@ mod middleware_tests {
             ),
             &permissive_cors(),
             Duration::from_millis(50),
+            None,
         );
 
         let response = app
@@ -527,6 +641,7 @@ mod middleware_tests {
             Router::new().route("/fast", get(|| async { "ok" })),
             &permissive_cors(),
             Duration::from_secs(30),
+            None,
         );
 
         let response = app
@@ -535,5 +650,23 @@ mod middleware_tests {
             .unwrap();
 
         assert_eq!(response.status(), StatusCode::OK);
+    }
+}
+
+#[cfg(test)]
+mod app_origins_tests {
+    use super::*;
+
+    #[test]
+    fn frame_ancestors_lists_every_app_origin() {
+        let cors = CorsSettings {
+            allowed_origins: vec!["https://app.example.org".into()],
+        };
+        let origins =
+            AppOrigins::from_settings(&cors, &url::Url::parse("https://api.example.org").unwrap());
+        assert_eq!(
+            origins.frame_ancestors(),
+            "https://api.example.org https://app.example.org"
+        );
     }
 }

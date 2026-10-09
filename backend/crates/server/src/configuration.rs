@@ -201,6 +201,38 @@ fn default_tree_demand_liters() -> f64 {
 pub struct PluginsSettings {
     #[serde(default)]
     pub enabled: bool,
+    #[serde(default)]
+    pub proxy: Option<PluginProxySettings>,
+}
+
+pub const MAX_PLUGIN_SESSION_TTL_MINUTES: u32 = 480;
+
+fn default_plugin_session_ttl_minutes() -> u32 {
+    MAX_PLUGIN_SESSION_TTL_MINUTES
+}
+
+/// Serves in-cluster plugin views under `<slug>.<host of public_url>`.
+/// Absent, the `proxied` frontend mode is unavailable.
+#[derive(serde::Deserialize, Clone)]
+pub struct PluginProxySettings {
+    #[serde(deserialize_with = "deserialize_url")]
+    pub public_url: Url,
+    #[serde(default)]
+    pub allowed_service_suffixes: Vec<String>,
+    #[serde(default)]
+    pub allowed_ports: Vec<u16>,
+    #[serde(
+        default = "default_plugin_session_ttl_minutes",
+        deserialize_with = "deserialize_number_from_string"
+    )]
+    pub session_ttl_minutes: u32,
+}
+
+impl PluginProxySettings {
+    pub fn effective_session_ttl_minutes(&self) -> u32 {
+        self.session_ttl_minutes
+            .clamp(1, MAX_PLUGIN_SESSION_TTL_MINUTES)
+    }
 }
 
 /// Page-view counting for the frontend, handed to it through the runtime
@@ -797,5 +829,59 @@ mod tests {
         assert!(!settings.enabled);
         assert_eq!(settings.streamlet_url, "http://localhost:2510");
         assert_eq!(settings.tree_demand_liters, 80.0);
+    }
+
+    fn parse_plugins(yaml: &str) -> PluginsSettings {
+        config::Config::builder()
+            .add_source(config::File::from_str(yaml, config::FileFormat::Yaml))
+            .build()
+            .unwrap()
+            .try_deserialize()
+            .unwrap()
+    }
+
+    #[test]
+    fn plugin_proxy_is_absent_by_default() {
+        let settings = parse_plugins("enabled: true");
+        assert!(settings.proxy.is_none());
+    }
+
+    #[test]
+    fn plugin_proxy_reads_its_block() {
+        let settings = parse_plugins(
+            r#"
+enabled: true
+proxy:
+  public_url: "https://plugins.example.org"
+  allowed_service_suffixes: ["plugins.svc.cluster.local"]
+  allowed_ports: [80, 8080]
+"#,
+        );
+        let proxy = settings.proxy.expect("proxy block");
+        assert_eq!(proxy.public_url.host_str(), Some("plugins.example.org"));
+        assert_eq!(proxy.allowed_ports, vec![80, 8080]);
+        assert_eq!(proxy.session_ttl_minutes, MAX_PLUGIN_SESSION_TTL_MINUTES);
+    }
+
+    #[test]
+    fn plugin_session_ttl_is_capped() {
+        let proxy = PluginProxySettings {
+            public_url: Url::parse("https://plugins.example.org").unwrap(),
+            allowed_service_suffixes: vec![],
+            allowed_ports: vec![],
+            session_ttl_minutes: 10_000,
+        };
+        assert_eq!(proxy.effective_session_ttl_minutes(), 480);
+    }
+
+    #[test]
+    fn a_zero_plugin_session_ttl_is_raised_to_one_minute() {
+        let proxy = PluginProxySettings {
+            public_url: Url::parse("https://plugins.example.org").unwrap(),
+            allowed_service_suffixes: vec![],
+            allowed_ports: vec![],
+            session_ttl_minutes: 0,
+        };
+        assert_eq!(proxy.effective_session_ttl_minutes(), 1);
     }
 }

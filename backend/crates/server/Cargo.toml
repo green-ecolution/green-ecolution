@@ -54,8 +54,9 @@ hostname = "0.4"
 include_dir = "0.7"
 jsonwebtoken = { version = "11.0", default-features = false, features = ["use_pem", "aws_lc_rs"] }
 log = "0.4"
+percent-encoding = "2"
 rand = { workspace = true }
-reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls", "stream"] }
 rumqttc = "0.25"
 rust_decimal = { version = "1.42", default-features = false }
 secrecy = { workspace = true }

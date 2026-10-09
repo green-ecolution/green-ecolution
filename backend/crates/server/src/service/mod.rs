@@ -6,6 +6,8 @@ pub mod event_bus;
 pub mod handlers;
 pub mod organization_service;
 pub mod plugin_ingest_service;
+pub mod plugin_proxy_policy;
+pub mod plugin_proxy_service;
 pub mod plugin_sensor_ingest_service;
 pub mod plugin_service;
 pub mod plugin_view_ticket_service;
@@ -146,6 +148,12 @@ pub enum ServiceError {
     /// permission but a state conflict, hence 409 rather than 403.
     #[error("settings are enforced by organization {organization_id}")]
     SettingsEnforcedByAncestor { organization_id: uuid::Uuid },
+    #[error("the plugin proxy is not configured on this instance")]
+    PluginProxyUnavailable,
+    #[error("proxied frontend target is not on the service allowlist")]
+    PluginProxyTargetNotAllowed,
+    #[error("plugin upstream unreachable")]
+    PluginUpstreamUnreachable,
     #[error(transparent)]
     WateringPlan(#[from] WateringPlanError),
 }
@@ -186,6 +194,9 @@ impl ServiceError {
                 Feature::Plugins => "feature.plugins_disabled",
             },
             Self::PayloadTooLarge { .. } => "plugin.batch_too_large",
+            Self::PluginProxyUnavailable => "plugin.proxy_unavailable",
+            Self::PluginProxyTargetNotAllowed => "plugin.proxy_target_not_allowed",
+            Self::PluginUpstreamUnreachable => "plugin.upstream_unreachable",
         }
     }
 
@@ -321,6 +332,8 @@ pub enum AuthError {
     PluginDisabled,
     #[error("invalid plugin view ticket")]
     PluginViewTicketInvalid,
+    #[error("invalid plugin proxy session")]
+    PluginProxySessionInvalid,
 }
 
 impl AuthError {
@@ -334,6 +347,7 @@ impl AuthError {
             Self::PluginKeyInvalid => "plugin.key_invalid",
             Self::PluginDisabled => "plugin.disabled",
             Self::PluginViewTicketInvalid => "plugin.view_ticket_invalid",
+            Self::PluginProxySessionInvalid => "plugin.proxy_session_invalid",
         }
     }
 }

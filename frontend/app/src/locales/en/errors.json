@@ -35,6 +35,12 @@
       "routing_disabled": "Route planning is not enabled in this environment.",
       "plugins_disabled": "The plugin system is not enabled in this environment."
     },
+    "plugin": {
+      "proxy_unavailable": "The internal plugin proxy is not set up on this installation.",
+      "proxy_target_not_allowed": "This service is not on the plugin allowlist.",
+      "upstream_unreachable": "The plugin is unreachable right now.",
+      "proxy_session_invalid": "The session for this plugin has expired. Open the view again."
+    },
     "routing": {
       "unavailable": "The routing service is currently unreachable.",
       "invalid_problem": "No route can be calculated from the selected data. Check the vehicle, start point and groups.",

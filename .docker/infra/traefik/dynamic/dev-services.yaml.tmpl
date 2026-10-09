@@ -4,6 +4,10 @@ http:
       rule: "Host(`${APP_HOST}`) && (PathPrefix(`/api`) || PathPrefix(`/swagger-ui`) || PathPrefix(`/api-docs`))"
       entryPoints: [${TRAEFIK_ENTRYPOINT}]
       service: backend-dev
+    backend-plugins-dev:
+      rule: "HostRegexp(`^[a-z0-9-]+\\.plugins\\.${APP_HOST}$`)"
+      entryPoints: [${TRAEFIK_ENTRYPOINT}]
+      service: backend-dev
     frontend-dev:
       rule: "Host(`${APP_HOST}`)"
       entryPoints: [${TRAEFIK_ENTRYPOINT}]

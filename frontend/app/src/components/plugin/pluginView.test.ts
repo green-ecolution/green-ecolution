@@ -8,10 +8,43 @@ describe('pluginViewKind', () => {
     ).toEqual({ kind: 'iframe', target: 'https://plugin.example.com' })
   })
 
-  it('shows the proxied notice instead of an iframe, even with a target set', () => {
+  it('renders the iframe at the session url for a proxied plugin', () => {
     expect(
-      pluginViewKind({ frontendMode: 'proxied', frontendTarget: 'plugin-backend:8080' }),
+      pluginViewKind(
+        {
+          frontendMode: 'proxied',
+          frontendTarget: 'kataster.plugins.svc:8080',
+          frontendUrl: 'https://kataster.plugins.example.com/__ge/session?ticket=gev_x',
+        },
+        'https://app.example.com',
+      ),
+    ).toEqual({
+      kind: 'iframe',
+      target: 'https://kataster.plugins.example.com/__ge/session?ticket=gev_x',
+    })
+  })
+
+  it('shows the proxied notice when the instance has no proxy', () => {
+    expect(
+      pluginViewKind({
+        frontendMode: 'proxied',
+        frontendTarget: 'kataster.plugins.svc:8080',
+        frontendUrl: null,
+      }),
     ).toEqual({ kind: 'proxied' })
+  })
+
+  it('refuses a proxied url on the apps own origin', () => {
+    expect(
+      pluginViewKind(
+        {
+          frontendMode: 'proxied',
+          frontendTarget: 'x:80',
+          frontendUrl: 'https://app.example.com/__ge/session',
+        },
+        'https://app.example.com',
+      ),
+    ).toEqual({ kind: 'unsafeOrigin' })
   })
 
   it('shows the no-frontend notice for mode none', () => {

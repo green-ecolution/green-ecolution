@@ -42,12 +42,19 @@ Zuordnung verwaisen lassen. Einzelne Wörter sind für die Plugin-Schnittstelle 
 reserviert, derzeit `me` und `views`; der Dialog weist sie mit einem Hinweis zurück.
 
 Darunter legst du fest, ob und wie das Plugin eine eigene Ansicht mitbringt: **Keine
-Ansicht** für ein reines Datenplugin oder **Extern gehostet** für eine öffentlich
-erreichbare Adresse. Eine extern gehostete Ansicht muss eine absolute https-Adresse
-sein, mit Ausnahme von localhost für die lokale Entwicklung, und darf nicht auf die
-Adresse von Green Ecolution selbst zeigen. Ein dritter Modus für Dienste, die nur
-intern laufen und von Green Ecolution durchgereicht werden, ist vorbereitet, aber
-noch nicht auswählbar, solange die Durchreichung fehlt.
+Ansicht** für ein reines Datenplugin, **Extern gehostet** für eine öffentlich
+erreichbare Adresse oder **Intern (per Proxy)** für einen Dienst, der nur im Cluster
+läuft. Eine extern gehostete Ansicht muss eine absolute https-Adresse sein, mit
+Ausnahme von localhost für die lokale Entwicklung, und darf nicht auf die Adresse von
+Green Ecolution selbst zeigen. Bei einer internen Ansicht gibst du Dienstname und Port
+an, etwa `kataster.plugins.svc.cluster.local:8080`. Green Ecolution reicht die Ansicht
+dann unter einer eigenen Adresse durch und prüft bei jedem Aufruf, ob die Person sie
+öffnen darf. Welche Dienste dafür in Frage kommen, legt der Betrieb fest; ein Dienst
+außerhalb dieser Liste wird abgelehnt. Fällt ein bereits eingetragener Dienst später
+aus der Liste, kannst du das Plugin weiterhin umbenennen und bearbeiten, seine Ansicht
+liefert Green Ecolution dann aber nicht mehr aus. Ist der Proxy in deiner Installation nicht
+eingerichtet, lässt sich der Modus zwar auswählen, das Speichern scheitert aber mit
+einem Hinweis.
 
 Bringt das Plugin eine Ansicht mit, kannst du ihr außerdem Gerätezugriff für Kamera
 und Bluetooth freigeben. Die Auswahl erscheint nur bei Plugins mit Ansicht. Die Ansicht
@@ -130,12 +137,15 @@ verlangen das nicht, damit niemand daran gehindert wird, ein Plugin abzuschalten
 
 ## Die Ansicht eines Plugins öffnen
 
-Bringt ein Plugin eine externe Ansicht mit, öffnest du sie über **Ansicht öffnen** auf
+Bringt ein Plugin eine Ansicht mit, öffnest du sie über **Ansicht öffnen** auf
 seiner Detailseite. Green Ecolution bettet sie in einem eigenen, abgeschotteten Rahmen
 ein und übergibt ihr deinen Anzeigenamen, die Oberflächensprache und den Slug des
 Plugins. Über ein einmalig gültiges Ansichtsticket kann das eigene Backend des Plugins
 außerdem erfahren, welche Person die Ansicht geöffnet hat, nämlich deine Kennung und
 deinen Namen. Zugriff auf deine Anmeldedaten erhält das Plugin dadurch trotzdem nicht.
+Eine intern durchgereichte Ansicht erfährt deine Kennung und deinen Namen direkt von
+Green Ecolution. Entziehst du einer Person die nötigen Rechte oder deaktivierst du das
+Plugin, endet ihr Zugriff mit dem nächsten Aufruf.
 Ein Plugin ohne eigene Ansicht zeigt an dieser Stelle stattdessen einen Hinweis, dass
 es keine besitzt.
 

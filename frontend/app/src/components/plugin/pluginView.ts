@@ -1,12 +1,11 @@
 import type { PluginViewResponse } from '@/api/backendApi'
 
 /**
- * What the plugin viewer route renders for a given plugin. Only `external`
- * mode has a browser-reachable url today; `proxied`, `none` and a target on
- * the app's own origin each get a distinct message rather than being folded
- * into one generic fallback, since "in the cluster, not embeddable yet",
- * "this plugin has no view" and "this target is not safe to embed" are
- * different facts to report.
+ * What the plugin viewer route renders for a given plugin. `external` mode
+ * embeds the operator's own url, `proxied` mode the session url the backend
+ * hands out on the plugin's own host. `proxied` without that url (the
+ * instance has no proxy configured), `none` and a target on the app's own
+ * origin each get a distinct message rather than one generic fallback.
  */
 export type PluginViewKind =
   | { kind: 'iframe'; target: string }
@@ -14,13 +13,7 @@ export type PluginViewKind =
   | { kind: 'unavailable' }
   | { kind: 'unsafeOrigin' }
 
-export const pluginViewKind = (
-  plugin: Pick<PluginViewResponse, 'frontendMode' | 'frontendTarget'>,
-  appOrigin: string = window.location.origin,
-): PluginViewKind => {
-  if (plugin.frontendMode === 'proxied') return { kind: 'proxied' }
-  if (plugin.frontendMode !== 'external' || !plugin.frontendTarget) return { kind: 'unavailable' }
-
+const embeddable = (raw: string, appOrigin: string): PluginViewKind => {
   // The iframe carries allow-same-origin, which is only safe while the plugin
   // document sits on a foreign origin. The write paths reject the app's own
   // origin, but that check degrades to application.base_url alone under a CORS
@@ -28,13 +21,23 @@ export const pluginViewKind = (
   // stored string.
   let target: URL
   try {
-    target = new URL(plugin.frontendTarget)
+    target = new URL(raw)
   } catch {
     return { kind: 'unavailable' }
   }
   if (target.origin === appOrigin) return { kind: 'unsafeOrigin' }
+  return { kind: 'iframe', target: raw }
+}
 
-  return { kind: 'iframe', target: plugin.frontendTarget }
+export const pluginViewKind = (
+  plugin: Pick<PluginViewResponse, 'frontendMode' | 'frontendTarget' | 'frontendUrl'>,
+  appOrigin: string = window.location.origin,
+): PluginViewKind => {
+  if (plugin.frontendMode === 'proxied') {
+    return plugin.frontendUrl ? embeddable(plugin.frontendUrl, appOrigin) : { kind: 'proxied' }
+  }
+  if (plugin.frontendMode !== 'external' || !plugin.frontendTarget) return { kind: 'unavailable' }
+  return embeddable(plugin.frontendTarget, appOrigin)
 }
 
 const IFRAME_FEATURES = ['camera', 'bluetooth'] as const

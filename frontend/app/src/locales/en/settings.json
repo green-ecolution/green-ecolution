@@ -80,7 +80,7 @@
       },
       "targetLabel": "Address",
       "targetExternalHint": "Absolute https address, localhost excepted.",
-      "targetProxiedHint": "Host and port of the internal service, e.g. plugin-backend:8080.",
+      "targetProxiedHint": "Service name and port inside the cluster, e.g. kataster.plugins.svc.cluster.local:8080. Only services on this installation's allowlist are accepted.",
       "permissionsHeading": "Plugin permissions",
       "permissionsHint": "These are the rights the plugin itself may use when it writes data into Green Ecolution.",
       "accessPermissionsHeading": "Access permissions for the view",
@@ -153,7 +153,7 @@
     },
     "view": {
       "loading": "Loading view",
-      "proxiedNotice": "This plugin is embedded internally through a proxy. Its view cannot be shown here yet.",
+      "proxiedNotice": "This plugin is embedded through the internal proxy, but the proxy is not set up on this installation.",
       "noFrontendNotice": "This plugin has no view.",
       "unsafeOriginNotice": "This plugin's view is served from the same address as Green Ecolution and therefore cannot be displayed. A plugin has to be reachable under its own domain."
     }

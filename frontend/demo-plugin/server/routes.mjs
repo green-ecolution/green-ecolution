@@ -2,7 +2,16 @@ import { DELETED_EXTERNAL_ID, importBatch, modifiedBatch } from './demoTrees.mjs
 
 const answer = (status, body) => ({ status, body })
 
-export const handleApi = async (method, pathname, payload, session, client) => {
+// The proxy percent-encodes names (RFC 3986); a malformed escape must not turn the view into a 400.
+const decodeName = (raw) => {
+  try {
+    return decodeURIComponent(raw)
+  } catch {
+    return raw
+  }
+}
+
+export const handleApi = async (method, pathname, payload, session, client, headers = {}) => {
   if (pathname === '/api/session') {
     if (method === 'GET') return answer(200, session.state())
     if (method === 'POST') {
@@ -13,6 +22,16 @@ export const handleApi = async (method, pathname, payload, session, client) => {
       session.clear()
       return answer(200, session.state())
     }
+  }
+
+  if (pathname === '/api/proxy-identity' && method === 'GET') {
+    const userId = headers['x-ge-user-id'] ?? null
+    const rawName = headers['x-ge-user-name'] ?? null
+    return answer(200, {
+      proxied: userId !== null,
+      userId,
+      userName: rawName === null ? null : decodeName(rawName),
+    })
   }
 
   if (pathname.startsWith('/api/actions/')) {

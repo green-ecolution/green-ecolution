@@ -28,17 +28,20 @@ const renderApp = () =>
 
 // A fresh Response per call: a body can only be read once, and StrictMode runs
 // the session effect twice.
-const stubFetch = (body: unknown) =>
+const NOT_PROXIED = { proxied: false, userId: null, userName: null }
+
+const stubFetch = (body: unknown, proxyIdentity: unknown = NOT_PROXIED) =>
   vi.stubGlobal(
     'fetch',
-    vi.fn(() =>
-      Promise.resolve(
-        new Response(JSON.stringify(body), {
+    vi.fn((input: string) => {
+      const payload = input === '/api/proxy-identity' ? proxyIdentity : body
+      return Promise.resolve(
+        new Response(JSON.stringify(payload), {
           status: 200,
           headers: { 'content-type': 'application/json' },
         }),
-      ),
-    ),
+      )
+    }),
   )
 
 beforeEach(() => {
@@ -58,6 +61,19 @@ describe('App', () => {
 
     expect(await screen.findByText(/Test Nutzer/)).toBeInTheDocument()
     expect(screen.getByText('demo-plugin')).toBeInTheDocument()
+  })
+
+  it('shows the identity the proxy forwarded', async () => {
+    stubFetch(
+      { connected: false, identity: null },
+      { proxied: true, userId: 'abc', userName: 'Jörg Müller' },
+    )
+
+    renderApp()
+    completeHandshake()
+
+    expect(await screen.findByText('Jörg Müller')).toBeInTheDocument()
+    expect(screen.getByText('abc')).toBeInTheDocument()
   })
 
   it('asks for the api key while no session exists', async () => {

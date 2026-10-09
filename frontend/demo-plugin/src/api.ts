@@ -18,6 +18,12 @@ export interface ActionResult {
 
 export type ActionName = 'import' | 'modify' | 'delete' | 'refs'
 
+export interface ProxyIdentity {
+  proxied: boolean
+  userId: string | null
+  userName: string | null
+}
+
 const result = async (response: Response): Promise<ActionResult> => ({
   status: response.status,
   body: await response.json().catch(() => null),
@@ -26,6 +32,11 @@ const result = async (response: Response): Promise<ActionResult> => ({
 export const getSession = async (): Promise<SessionState> => {
   const response = await fetch('/api/session')
   return (await response.json()) as SessionState
+}
+
+export const getProxyIdentity = async (): Promise<ProxyIdentity> => {
+  const response = await fetch('/api/proxy-identity')
+  return (await response.json()) as ProxyIdentity
 }
 
 export const connect = async (key: string): Promise<ActionResult> =>

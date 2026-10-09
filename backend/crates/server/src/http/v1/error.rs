@@ -102,7 +102,8 @@ fn auth_error_response(e: &AuthError) -> (StatusCode, String) {
         | AuthError::InvalidToken(_)
         | AuthError::TokenExpired
         | AuthError::PluginKeyInvalid
-        | AuthError::PluginViewTicketInvalid => StatusCode::UNAUTHORIZED,
+        | AuthError::PluginViewTicketInvalid
+        | AuthError::PluginProxySessionInvalid => StatusCode::UNAUTHORIZED,
         AuthError::Forbidden | AuthError::PluginDisabled => StatusCode::FORBIDDEN,
         AuthError::IdpUnavailable(_) => StatusCode::SERVICE_UNAVAILABLE,
     };
@@ -193,6 +194,10 @@ impl IntoResponse for ServiceError {
                 tracing::error!(error = %e, kind = "routing", "request failed");
                 (status, message)
             }
+            ServiceError::PluginProxyUnavailable | ServiceError::PluginProxyTargetNotAllowed => {
+                (StatusCode::BAD_REQUEST, self.to_string())
+            }
+            ServiceError::PluginUpstreamUnreachable => (StatusCode::BAD_GATEWAY, self.to_string()),
             ServiceError::FeatureDisabled { .. } => {
                 (StatusCode::SERVICE_UNAVAILABLE, self.to_string())
             }

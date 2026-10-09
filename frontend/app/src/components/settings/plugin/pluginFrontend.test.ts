@@ -54,20 +54,35 @@ describe('validateTarget', () => {
       expect(validateTarget('proxied', 'svc.plugins.svc.cluster.local:abc', t)).not.toBeNull()
     })
 
-    /**
-     * Documents current behaviour rather than prescribing it — see the report
-     * for task 10's permission-matrix follow-up: the backend's
-     * `PluginFrontendDto::into_domain` splits on the *last* ':' via
-     * `str::rsplit_once`, so a bare (unbracketed) IPv6 host like `::1` followed
-     * by `:8080` is accepted there (host `::1`, port `8080` — `ServiceEndpoint::new`
-     * only rejects empty/too-long/slash-containing hosts, not colons). This
-     * module's regex (`/^([^\s:]+):(\d+)$/`) instead forbids any colon in the
-     * host segment, so the same input is rejected here. That is a genuine
-     * client/backend disagreement, not something this test should paper over
-     * by asserting a behaviour the code doesn't have.
-     */
-    it('rejects a bare IPv6 host with a port (diverges from the backend, see comment)', () => {
+    it('rejects a bare IPv6 host with a port', () => {
       expect(validateTarget('proxied', '::1:8080', t)).not.toBeNull()
+    })
+
+    it('accepts an upper-case host, since DNS names ignore case', () => {
+      expect(validateTarget('proxied', 'Demo-Plugin:80', t)).toBeNull()
+    })
+
+    it('accepts a label of exactly 63 characters', () => {
+      expect(validateTarget('proxied', `${'a'.repeat(63)}.plugins.svc:8080`, t)).toBeNull()
+    })
+
+    // The backend's allowlist only compares plain DNS names: a URL parser
+    // reads these characters as delimiters and would reach another host.
+    it.each([
+      ['a backslash', '169.254.169.254\\latest\\?.plugins.svc:8080'],
+      ['a question mark', 'evil?x.plugins.svc:8080'],
+      ['a hash', 'evil#x.plugins.svc:8080'],
+      ['an at sign', 'user@evil.plugins.svc:8080'],
+      ['an embedded colon', 'evil:1234.plugins.svc:8080'],
+      ['a trailing dot', 'kataster.plugins.svc.:8080'],
+      ['an empty label', 'kataster..plugins.svc:8080'],
+      ['a label longer than 63 characters', `${'a'.repeat(64)}.plugins.svc:8080`],
+      ['a label with a leading dash', '-kataster.plugins.svc:8080'],
+      ['a label with a trailing dash', 'kataster-.plugins.svc:8080'],
+      ['an underscore', 'kata_ster.plugins.svc:8080'],
+      ['a host longer than 253 characters', `${`${'a'.repeat(60)}.`.repeat(5)}svc:8080`],
+    ])('rejects a host with %s', (_, target) => {
+      expect(validateTarget('proxied', target, t)).toBe(t('plugin.install.targetInvalidHostPort'))
     })
   })
 })
@@ -99,13 +114,8 @@ describe('buildFrontendDto through the generated serializer', () => {
 })
 
 describe('frontendModeOptions', () => {
-  it('does not offer the proxied mode, since nothing serves such a view yet', () => {
-    expect(frontendModeOptions(t).map((option) => option.value)).toEqual(['none', 'external'])
-  })
-
-  it('keeps the proxied mode for a plugin that already carries it', () => {
-    // Otherwise renaming such a plugin would silently rewrite its frontend.
-    expect(frontendModeOptions(t, 'proxied').map((option) => option.value)).toEqual([
+  it('offers all three modes', () => {
+    expect(frontendModeOptions(t).map((option) => option.value)).toEqual([
       'none',
       'external',
       'proxied',
