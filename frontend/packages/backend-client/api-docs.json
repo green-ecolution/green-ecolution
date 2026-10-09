@@ -3078,7 +3078,7 @@
           "Plugins"
         ],
         "summary": "Get a plugin's view",
-        "description": "Returns what is needed to embed a plugin's view. Requires the plugin's own required_permissions in its organization -- plugin:read administers a plugin and is not what opening its view is about, though it grants access here as well. Every call issues a fresh single-use view ticket for the caller.",
+        "description": "Returns what is needed to embed a plugin's view. Requires the plugin's own required_permissions in its organization -- plugin:read administers a plugin and is not what opening its view is about, though it grants access here as well. Every call issues a fresh single-use view ticket for the caller. For a proxied plugin, frontend_url is the iframe's start address on the plugin's own host.",
         "operationId": "getPluginView",
         "parameters": [
           {
@@ -10806,6 +10806,13 @@
               "null"
             ]
           },
+          "frontend_url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Where the iframe starts for a `proxied` plugin: the session URL on the\nplugin's own host, carrying this response's ticket. `None` otherwise."
+          },
           "name": {
             "type": "string"
           },
@@ -10825,6 +10832,7 @@
           ],
           "frontend_mode": "external",
           "frontend_target": "https://kataster.example.org/view",
+          "frontend_url": null,
           "name": "TBZ Baumkataster",
           "slug": "tbz-baumkataster",
           "view_ticket": "gev_3f2a9c41d7b05e6a8f1c2d3e4b5a69788796a5b4c3d2e1f00112233445566778"

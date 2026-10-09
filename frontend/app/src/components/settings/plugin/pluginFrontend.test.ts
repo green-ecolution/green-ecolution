@@ -99,13 +99,8 @@ describe('buildFrontendDto through the generated serializer', () => {
 })
 
 describe('frontendModeOptions', () => {
-  it('does not offer the proxied mode, since nothing serves such a view yet', () => {
-    expect(frontendModeOptions(t).map((option) => option.value)).toEqual(['none', 'external'])
-  })
-
-  it('keeps the proxied mode for a plugin that already carries it', () => {
-    // Otherwise renaming such a plugin would silently rewrite its frontend.
-    expect(frontendModeOptions(t, 'proxied').map((option) => option.value)).toEqual([
+  it('offers all three modes', () => {
+    expect(frontendModeOptions(t).map((option) => option.value)).toEqual([
       'none',
       'external',
       'proxied',

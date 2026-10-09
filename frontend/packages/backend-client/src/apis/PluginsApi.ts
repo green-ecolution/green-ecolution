@@ -265,7 +265,7 @@ export class PluginsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns what is needed to embed a plugin\'s view. Requires the plugin\'s own required_permissions in its organization -- plugin:read administers a plugin and is not what opening its view is about, though it grants access here as well. Every call issues a fresh single-use view ticket for the caller.
+     * Returns what is needed to embed a plugin\'s view. Requires the plugin\'s own required_permissions in its organization -- plugin:read administers a plugin and is not what opening its view is about, though it grants access here as well. Every call issues a fresh single-use view ticket for the caller. For a proxied plugin, frontend_url is the iframe\'s start address on the plugin\'s own host.
      * Get a plugin\'s view
      */
     async getPluginViewRaw(requestParameters: GetPluginViewRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PluginViewResponse>> {
@@ -295,7 +295,7 @@ export class PluginsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns what is needed to embed a plugin\'s view. Requires the plugin\'s own required_permissions in its organization -- plugin:read administers a plugin and is not what opening its view is about, though it grants access here as well. Every call issues a fresh single-use view ticket for the caller.
+     * Returns what is needed to embed a plugin\'s view. Requires the plugin\'s own required_permissions in its organization -- plugin:read administers a plugin and is not what opening its view is about, though it grants access here as well. Every call issues a fresh single-use view ticket for the caller. For a proxied plugin, frontend_url is the iframe\'s start address on the plugin\'s own host.
      * Get a plugin\'s view
      */
     async getPluginView(requestParameters: GetPluginViewRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PluginViewResponse> {

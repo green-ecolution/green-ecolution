@@ -276,7 +276,7 @@ const PluginDetailPage = ({ plugin }: PluginDetailPageProps) => {
             disabled={!canUpdate}
             onValueChange={(value) => setFrontendMode(value as FrontendMode)}
             className="max-w-sm"
-            options={frontendModeOptions(t, plugin.frontendMode)}
+            options={frontendModeOptions(t)}
           />
 
           {frontendMode !== 'none' && (

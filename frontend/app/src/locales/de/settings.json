@@ -80,7 +80,7 @@
       },
       "targetLabel": "Adresse",
       "targetExternalHint": "Absolute https-Adresse, localhost ausgenommen.",
-      "targetProxiedHint": "Host und Port des internen Dienstes, z. B. plugin-backend:8080.",
+      "targetProxiedHint": "Dienstname und Port im Cluster, z. B. kataster.plugins.svc.cluster.local:8080. Erlaubt sind nur Dienste aus der Freigabeliste dieser Installation.",
       "permissionsHeading": "Rechte des Plugins",
       "permissionsHint": "Diese Rechte darf das Plugin selbst nutzen, wenn es Daten in Green Ecolution schreibt.",
       "accessPermissionsHeading": "Zugriffsrechte für die Ansicht",
@@ -153,7 +153,7 @@
     },
     "view": {
       "loading": "Ansicht wird geladen",
-      "proxiedNotice": "Dieses Plugin wird intern per Proxy eingebunden. Seine Ansicht lässt sich hier noch nicht anzeigen.",
+      "proxiedNotice": "Dieses Plugin wird intern per Proxy eingebunden, in dieser Installation ist der Proxy aber nicht eingerichtet.",
       "noFrontendNotice": "Dieses Plugin hat keine eigene Ansicht.",
       "unsafeOriginNotice": "Die Ansicht dieses Plugins liegt auf derselben Adresse wie Green Ecolution und kann deshalb nicht angezeigt werden. Ein Plugin muss unter einer eigenen Domain erreichbar sein."
     }

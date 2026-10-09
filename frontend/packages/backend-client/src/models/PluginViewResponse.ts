@@ -47,6 +47,13 @@ export interface PluginViewResponse {
      */
     frontendTarget?: string | null;
     /**
+     * Where the iframe starts for a `proxied` plugin: the session URL on the
+     * plugin's own host, carrying this response's ticket. `None` otherwise.
+     * @type {string}
+     * @memberof PluginViewResponse
+     */
+    frontendUrl?: string | null;
+    /**
      * 
      * @type {string}
      * @memberof PluginViewResponse
@@ -93,6 +100,7 @@ export function PluginViewResponseFromJSONTyped(json: any, ignoreDiscriminator: 
         'deviceCapabilities': json['device_capabilities'],
         'frontendMode': json['frontend_mode'],
         'frontendTarget': json['frontend_target'] == null ? undefined : json['frontend_target'],
+        'frontendUrl': json['frontend_url'] == null ? undefined : json['frontend_url'],
         'name': json['name'],
         'slug': json['slug'],
         'viewTicket': json['view_ticket'],
@@ -114,6 +122,7 @@ export function PluginViewResponseToJSONTyped(value?: PluginViewResponse | null,
         'device_capabilities': value['deviceCapabilities'],
         'frontend_mode': value['frontendMode'],
         'frontend_target': value['frontendTarget'],
+        'frontend_url': value['frontendUrl'],
         'name': value['name'],
         'slug': value['slug'],
         'view_ticket': value['viewTicket'],

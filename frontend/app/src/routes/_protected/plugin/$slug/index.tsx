@@ -92,11 +92,10 @@ function PluginViewPage() {
       ref={frameRef}
       src={view.target}
       title={plugin.name}
-      // allow-same-origin is safe here only because frontend_target is always a
-      // foreign origin (enforced on install/update, and re-checked against
-      // window.location.origin by pluginViewKind before this branch is reached);
-      // serving a plugin from the app's own origin would give it an
-      // unrestricted same-origin document.
+      // allow-same-origin is safe here only because the frame's document sits
+      // on a foreign origin: an external target (checked on install/update)
+      // or the plugin's own proxy host. pluginViewKind re-checks it against
+      // window.location.origin before this branch is reached.
       // eslint-disable-next-line react-dom/no-unsafe-iframe-sandbox -- see comment above
       sandbox="allow-scripts allow-forms allow-popups allow-same-origin"
       referrerPolicy="no-referrer"
