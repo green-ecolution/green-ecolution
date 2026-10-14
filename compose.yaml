@@ -183,7 +183,7 @@ services:
       - "traefik.http.routers.streamlet.rule=Host(`streamlet.${APP_HOST:-localhost}`)"
       - "traefik.http.routers.streamlet.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
   valhalla:
-    image: ghcr.io/valhalla/valhalla-scripted:3.9.0
+    image: ghcr.io/valhalla/valhalla-scripted:3.9.1
     volumes:
       - ./.docker/infra/valhalla/custom_files:/custom_files
     environment:
@@ -215,7 +215,7 @@ services:
       - "traefik.http.routers.valhalla.rule=Host(`valhalla.${APP_HOST:-localhost}`)"
       - "traefik.http.routers.valhalla.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
   reverse-proxy:
-    image: traefik:v3.7.13
+    image: traefik:v3.7.14
     extra_hosts:
       - "host.docker.internal:host-gateway"
     environment:
