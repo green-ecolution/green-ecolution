@@ -1,4 +1,4 @@
-FROM lukemathwalker/cargo-chef:latest-rust-1.98@sha256:94a624f8475651c2b56281b29936cab5cbe21c431677880b6a98d47561fa3289 AS chef
+FROM lukemathwalker/cargo-chef:latest-rust-1.99@sha256:c11fb4b1e7a7caf6ba0dfed8f059011bb2024465b8be5c4dfa330672698cca1a AS chef
 WORKDIR /app
 
 FROM chef AS planner
