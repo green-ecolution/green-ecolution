@@ -4,11 +4,12 @@ use ratatui::{
     layout::{Constraint, Layout, Position, Rect},
     style::{Color, Modifier, Style},
     text::{Line, Span},
-    widgets::{Block, List, ListItem, ListState, Paragraph, Wrap},
+    widgets::{Block, Clear, List, ListItem, ListState, Paragraph, Wrap},
 };
 
 use super::{
     app::{App, LogScope, Mode, Pane},
+    picker::Picker,
     requests::RequestOrder,
 };
 use crate::{
@@ -75,7 +76,45 @@ pub fn draw(frame: &mut Frame, app: &App) {
             draw_finding_detail(frame, detail, app);
         }
     }
+    if let Some(picker) = &app.picker {
+        draw_picker(frame, frame.area(), picker);
+    }
     draw_status(frame, status, app, now);
+}
+
+fn draw_picker(frame: &mut Frame, area: Rect, picker: &Picker) {
+    let height = u16::try_from(picker.items.len())
+        .unwrap_or(u16::MAX)
+        .saturating_add(2);
+    let width = picker
+        .items
+        .iter()
+        .map(|item| item.chars().count())
+        .max()
+        .unwrap_or(0)
+        .max(picker.title.chars().count() + 4);
+    let width = u16::try_from(width).unwrap_or(u16::MAX).saturating_add(6);
+    let popup = Rect {
+        x: area.x + area.width.saturating_sub(width) / 2,
+        y: area.y + area.height.saturating_sub(height) / 2,
+        width: width.min(area.width),
+        height: height.min(area.height),
+    };
+    let items: Vec<ListItem> = picker
+        .items
+        .iter()
+        .map(|item| ListItem::new(item.as_str()))
+        .collect();
+    let list = List::new(items)
+        .block(
+            Block::bordered()
+                .title(format!(" {} ", picker.title))
+                .border_style(Style::new().fg(Color::Green)),
+        )
+        .highlight_style(Style::new().add_modifier(Modifier::REVERSED));
+    let mut state = ListState::default().with_selected(Some(picker.selected));
+    frame.render_widget(Clear, popup);
+    frame.render_stateful_widget(list, popup, &mut state);
 }
 
 fn pane_block(app: &App, pane: Pane, title: String) -> Block<'static> {
@@ -411,21 +450,26 @@ fn draw_status(frame: &mut Frame, area: Rect, app: &App, now: DateTime<Utc>) {
             Mode::Logs => {
                 "q quit · h/l pane · j/k select or scroll · ^u/^d half page · \
                  g/G oldest/follow · Enter unit logs · Tab all/selected · / filter · \
-                 t requests · d doctor · f fix · r restart · R restart with dependents · s start/stop"
+                 t requests · d doctor · f fix · r restart · R restart with dependents · s start/stop · p profile"
             }
             Mode::Doctor => {
-                "d/Esc logs · j/k select · f fix · r check again · R deep check · q quit"
+                "d/Esc logs · j/k select · f fix · r check again · R deep check · p profile · q quit"
             }
             Mode::Requests => {
                 "t/Esc logs · h/l pane · j/k select or scroll · Enter open trace · \
-                 o newest/slowest · ^u/^d half page · g/G top/bottom · q quit"
+                 o newest/slowest · ^u/^d half page · g/G top/bottom · p profile · q quit"
             }
         }
         .to_owned()
     } else {
         let ready = app.units.iter().filter(|u| u.state.is_satisfied()).count();
         let mode = if app.hosted { "hosting" } else { "attached" };
-        let mut parts = vec![format!("{mode} · {ready}/{} ready", app.units.len())];
+        let mut head = vec![mode.to_owned()];
+        if let Some(profile) = &app.profile {
+            head.push(profile.clone());
+        }
+        head.push(format!("{ready}/{} ready", app.units.len()));
+        let mut parts = vec![head.join(" · ")];
         if app.mode == Mode::Requests {
             parts.push(format!("{} requests", app.requests.len()));
         }
@@ -485,6 +529,23 @@ mod tests {
         let mut terminal = Terminal::new(TestBackend::new(110, 10)).unwrap();
         terminal.draw(|frame| draw(frame, app)).unwrap();
         terminal.backend().buffer().clone()
+    }
+
+    #[test]
+    fn the_status_line_names_the_profile_and_the_picker_lists_them() {
+        let mut app = App::new(true);
+        app.update(Msg::Profiles(vec!["full".into(), "minimal".into()]));
+        app.update(Msg::Profile("minimal".into()));
+        assert!(render(&app).contains("hosting · minimal · 0/0 ready"));
+
+        app.update(Msg::Key(KeyEvent::new(
+            KeyCode::Char('p'),
+            KeyModifiers::NONE,
+        )));
+        let screen = render(&app);
+        assert!(screen.contains("Profile"), "{screen}");
+        assert!(screen.contains("full"), "{screen}");
+        assert!(screen.contains("minimal"), "{screen}");
     }
 
     fn render(app: &App) -> String {

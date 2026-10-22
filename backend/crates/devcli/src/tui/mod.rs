@@ -1,5 +1,6 @@
 mod app;
 mod input;
+mod picker;
 mod requests;
 mod view;
 
@@ -31,10 +32,20 @@ pub async fn run(paths: &Paths, profile: Option<&str>) -> anyhow::Result<ExitCod
         Err(IpcError::NotRunning) => Some(Host::start(paths, profile, OrphanPolicy::Ask).await?),
         Err(err) => return Err(err.into()),
     };
-    let warnings = host
+    let mut warnings = host
         .as_ref()
         .map(|h| h.warnings.clone())
         .unwrap_or_default();
+    if host.is_none()
+        && let Some(requested) = profile
+        && let Ok(Reply::Profiles(list)) = client.call(Call::Profiles).await
+        && list.active != requested
+    {
+        warnings.push(format!(
+            "the running supervisor uses profile `{}`; switch with p or `geco profile {requested}`",
+            list.active
+        ));
+    }
     let registry = host.as_ref().map(|h| h.registry.clone());
     let shutdown = host.as_ref().map(|h| h.shutdown.clone());
 
@@ -114,6 +125,9 @@ async fn event_loop(
             filter: String::new(),
         })
         .await?;
+    if let Ok(Reply::Profiles(list)) = client.call(Call::Profiles).await {
+        app.update(Msg::Profiles(list.available));
+    }
     let mut keys = EventStream::new();
     let mut ticks = tokio::time::interval(Duration::from_secs(1));
     let (flash_tx, mut flash_rx) = mpsc::unbounded_channel::<String>();
@@ -129,6 +143,8 @@ async fn event_loop(
         let msg = tokio::select! {
             reply = states.next(), if connected => match reply? {
                 Some(Reply::State(status)) => Msg::State(status),
+                Some(Reply::Status(units)) => Msg::Units(units),
+                Some(Reply::Profile(name)) => Msg::Profile(name),
                 Some(_) => continue,
                 None => Msg::Disconnected,
             },

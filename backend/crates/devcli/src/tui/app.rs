@@ -6,6 +6,7 @@ use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
 use super::{
     input::{InputOutcome, LineInput},
+    picker::{Picker, PickerOutcome},
     requests::Requests,
 };
 use crate::{
@@ -52,6 +53,9 @@ pub enum Msg {
     },
     Focus(Pane),
     State(UnitStatus),
+    Units(Vec<UnitStatus>),
+    Profile(String),
+    Profiles(Vec<String>),
     Log(LogRecord),
     Trace(Trace),
     Findings(Vec<Finding>),
@@ -84,6 +88,9 @@ pub struct App {
     pub findings: Vec<Finding>,
     pub finding_selected: usize,
     pub pending_fix: Option<Finding>,
+    pub profile: Option<String>,
+    pub profiles: Vec<String>,
+    pub picker: Option<Picker>,
     /// Lines between the bottom of the view and the newest matching line; 0 follows.
     pub scroll: usize,
     pub hosted: bool,
@@ -109,6 +116,9 @@ impl App {
             findings: Vec::new(),
             finding_selected: 0,
             pending_fix: None,
+            profile: None,
+            profiles: Vec::new(),
+            picker: None,
             scroll: 0,
             hosted,
             flash: None,
@@ -131,6 +141,12 @@ impl App {
                 Some(unit) => *unit = status,
                 None => self.units.push(status),
             },
+            Msg::Units(units) => {
+                self.selected = self.selected.min(units.len().saturating_sub(1));
+                self.units = units;
+            }
+            Msg::Profile(profile) => self.profile = Some(profile),
+            Msg::Profiles(profiles) => self.profiles = profiles,
             Msg::Log(record) => {
                 let added = self.requests.observe(&record);
                 let evicted = if self.logs.len() == LOG_CAPACITY {
@@ -182,6 +198,18 @@ impl App {
             self.flash = Some("fix cancelled".to_owned());
             return None;
         }
+        if let Some(picker) = &mut self.picker {
+            match picker.handle(key) {
+                PickerOutcome::Open => {}
+                PickerOutcome::Cancelled => self.picker = None,
+                PickerOutcome::Chosen(profile) => {
+                    self.picker = None;
+                    self.flash = Some(format!("switching to {profile}…"));
+                    return Some(Effect::Call(Call::SwitchProfile { profile }));
+                }
+            }
+            return None;
+        }
         let ctrl = key.modifiers.contains(KeyModifiers::CONTROL);
         let logs_mode = self.mode == Mode::Logs;
         match key.code {
@@ -203,6 +231,7 @@ impl App {
             KeyCode::Esc if !logs_mode => return self.switch(Mode::Logs),
             KeyCode::Char('o') if self.mode == Mode::Requests => self.requests.toggle_order(),
             KeyCode::Char('f') => self.ask_fix(),
+            KeyCode::Char('p') => self.open_profile_picker(),
             KeyCode::Char('r') if self.mode == Mode::Doctor => {
                 return Some(Effect::Call(Call::Doctor { deep: false }));
             }
@@ -369,6 +398,18 @@ impl App {
             })
     }
 
+    fn open_profile_picker(&mut self) {
+        if self.profiles.is_empty() {
+            self.flash = Some("no profiles known".to_owned());
+            return;
+        }
+        self.picker = Some(Picker::new(
+            "Profile",
+            self.profiles.clone(),
+            self.profile.as_deref(),
+        ));
+    }
+
     fn ask_fix(&mut self) {
         let finding = match self.mode {
             Mode::Doctor => self.findings.get(self.finding_selected).cloned(),
@@ -467,6 +508,49 @@ pub(crate) mod tests {
         app.update(Msg::State(status("db", UnitState::Ready)));
         app.update(Msg::State(status("backend", UnitState::Stopped)));
         app
+    }
+
+    #[test]
+    fn p_switches_the_profile_through_the_picker() {
+        let mut app = app_with_two_units();
+        app.update(Msg::Profiles(vec!["full".into(), "minimal".into()]));
+        app.update(Msg::Profile("minimal".into()));
+
+        app.update(key(KeyCode::Char('p')));
+        assert!(app.picker.is_some());
+        assert_eq!(
+            app.update(key(KeyCode::Char('q'))),
+            None,
+            "keys go to the picker"
+        );
+        assert!(app.picker.is_none());
+
+        app.update(key(KeyCode::Char('p')));
+        app.update(key(KeyCode::Char('k')));
+        assert_eq!(
+            app.update(key(KeyCode::Enter)),
+            Some(Effect::Call(Call::SwitchProfile {
+                profile: "full".into()
+            }))
+        );
+        assert_eq!(app.flash.as_deref(), Some("switching to full…"));
+    }
+
+    #[test]
+    fn a_unit_snapshot_replaces_the_list() {
+        let mut app = app_with_two_units();
+        app.update(key(KeyCode::Char('j')));
+        app.update(Msg::Units(vec![status("db", UnitState::Ready)]));
+        assert_eq!(app.units.len(), 1);
+        assert_eq!(app.selected, 0);
+    }
+
+    #[test]
+    fn without_profiles_p_says_so() {
+        let mut app = app_with_two_units();
+        app.update(key(KeyCode::Char('p')));
+        assert!(app.picker.is_none());
+        assert_eq!(app.flash.as_deref(), Some("no profiles known"));
     }
 
     #[test]
