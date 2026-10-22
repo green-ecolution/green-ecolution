@@ -91,6 +91,32 @@ impl Client {
             None => Err(IpcError::Closed),
         }
     }
+
+    /// Hands each log record of the task to `on_log` and resolves once the task ended.
+    pub async fn run(
+        &self,
+        recipe: &str,
+        args: &[String],
+        confirmed: bool,
+        mut on_log: impl FnMut(LogRecord) -> io::Result<()>,
+    ) -> Result<(), IpcError> {
+        let mut stream = self
+            .open(Call::Run {
+                recipe: recipe.to_owned(),
+                args: args.to_vec(),
+                confirmed,
+            })
+            .await?;
+        while let Some(reply) = stream.next().await? {
+            match reply {
+                Reply::Log(record) => on_log(record)?,
+                Reply::Done => return Ok(()),
+                Reply::Error(message) => return Err(IpcError::Remote(message)),
+                _ => {}
+            }
+        }
+        Err(IpcError::Closed)
+    }
 }
 
 pub struct ReplyStream {

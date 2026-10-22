@@ -12,15 +12,17 @@ use crate::{
     logs::LogRecord,
     profiles::{ProfileList, Profiles},
     supervisor::{ProfileChange, Supervisor, UnitStatus},
+    tasks::{Recipe, Tasks},
 };
 
-pub const PROTOCOL_VERSION: u32 = 4;
+pub const PROTOCOL_VERSION: u32 = 5;
 
 #[derive(Clone)]
 pub struct Services {
     pub supervisor: Arc<Supervisor>,
     pub doctor: Arc<Doctor>,
     pub profiles: Arc<Profiles>,
+    pub tasks: Arc<Tasks>,
 }
 
 /// One call per connection; clients that need several streams open several connections.
@@ -58,6 +60,12 @@ pub enum Call {
     },
     SubscribeFindings,
     Profiles,
+    Recipes,
+    Run {
+        recipe: String,
+        args: Vec<String>,
+        confirmed: bool,
+    },
     SwitchProfile {
         profile: String,
     },
@@ -82,6 +90,7 @@ pub enum Reply {
     Profiles(ProfileList),
     Switched(ProfileChange),
     Profile(String),
+    Recipes(Vec<Recipe>),
 }
 
 #[cfg(test)]
@@ -123,11 +132,17 @@ mod tests {
         let supervisor = Supervisor::new(units, graph, LogStore::new(100));
         let shutdown = CancellationToken::new();
         let listener = UnixListener::bind(&socket).unwrap();
-        let tasks = Arc::new(crate::tasks::Tasks::new(
-            dir.path().to_path_buf(),
-            crate::state::ProcessRegistry::in_memory(),
-            Arc::clone(&supervisor),
-        ));
+        let tasks = Arc::new(
+            crate::tasks::Tasks::new(
+                dir.path().to_path_buf(),
+                crate::state::ProcessRegistry::in_memory(),
+                Arc::clone(&supervisor),
+            )
+            .with_recipes(Arc::new(crate::tasks::StaticRecipes(
+                crate::tasks::catalog::tests::DUMP.to_owned(),
+            )))
+            .with_program("echo"),
+        );
         let doctor = crate::doctor::service::Doctor::new(
             vec![
                 crate::doctor::fake::FakeCheck::new("ports")
@@ -144,7 +159,7 @@ mod tests {
         );
         std::fs::write(
             dir.path().join("geco.toml"),
-            "[profile.minimal]\nunits = []\n[profile.full]\nunits = []\n",
+            "[profile.minimal]\nunits = []\n[profile.full]\nunits = []\n[tasks]\ndestructive = [\"migrate-reset\"]\n",
         )
         .unwrap();
         supervisor.set_profile("minimal");
@@ -159,6 +174,7 @@ mod tests {
                 supervisor: Arc::clone(&supervisor),
                 doctor: Arc::clone(&doctor),
                 profiles,
+                tasks,
             },
             shutdown.clone(),
         ));
@@ -172,6 +188,87 @@ mod tests {
 
     fn log(message: &str) -> LogRecord {
         parse_line("db", LogFormat::Plain, message, Utc::now())
+    }
+
+    #[tokio::test]
+    async fn recipes_are_listed_with_their_destructive_flag() {
+        let f = fixture().await;
+        let Reply::Recipes(recipes) = f.client.call(Call::Recipes).await.unwrap() else {
+            panic!("expected recipes");
+        };
+        let reset = recipes.iter().find(|r| r.name == "migrate-reset").unwrap();
+        assert!(reset.destructive);
+        assert!(recipes.iter().any(|r| r.name == "_compose" && r.private));
+    }
+
+    #[tokio::test]
+    async fn run_streams_the_task_log_and_finishes() {
+        let f = fixture().await;
+        let mut lines = Vec::new();
+        f.client
+            .run("migrate-new", &["x".into()], false, |record| {
+                lines.push(record.message);
+                Ok(())
+            })
+            .await
+            .unwrap();
+        assert_eq!(lines, ["$ echo migrate-new x", "migrate-new x"]);
+    }
+
+    #[tokio::test]
+    async fn run_refuses_destructive_and_unknown_recipes() {
+        let f = fixture().await;
+        let err = f
+            .client
+            .run("migrate-reset", &[], false, |_| Ok(()))
+            .await
+            .unwrap_err();
+        assert!(
+            matches!(&err, IpcError::Remote(m) if m == "`echo migrate-reset` is destructive and needs confirmation"),
+            "{err:?}"
+        );
+        let err = f
+            .client
+            .run("nope", &[], false, |_| Ok(()))
+            .await
+            .unwrap_err();
+        assert!(
+            matches!(&err, IpcError::Remote(m) if m == "unknown recipe `nope`"),
+            "{err:?}"
+        );
+        f.client
+            .run("migrate-reset", &[], true, |_| Ok(()))
+            .await
+            .unwrap();
+    }
+
+    #[tokio::test]
+    async fn tasks_appear_on_the_state_stream() {
+        let f = fixture().await;
+        let mut stream = f.client.open(Call::SubscribeState).await.unwrap();
+        let Some(Reply::Profile(_)) = stream.next().await.unwrap() else {
+            panic!("expected the profile first");
+        };
+        let Some(Reply::State(_)) = stream.next().await.unwrap() else {
+            panic!("expected the db state");
+        };
+
+        f.client
+            .run("migrate-up", &[], false, |_| Ok(()))
+            .await
+            .unwrap();
+
+        let Some(Reply::State(starting)) = stream.next().await.unwrap() else {
+            panic!("expected the task");
+        };
+        assert_eq!(
+            (starting.name.as_str(), starting.origin),
+            ("migrate-up", crate::units::Origin::Task)
+        );
+        let Some(Reply::State(done)) = stream.next().await.unwrap() else {
+            panic!("expected the task to finish");
+        };
+        assert_eq!(done.state, UnitState::Done);
     }
 
     #[tokio::test]

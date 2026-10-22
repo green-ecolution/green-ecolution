@@ -123,6 +123,7 @@ impl Host {
                 supervisor: Arc::clone(&supervisor),
                 doctor: Arc::clone(&doctor),
                 profiles,
+                tasks,
             },
             shutdown.clone(),
         ));

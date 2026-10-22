@@ -4,7 +4,7 @@ use chrono::Utc;
 use tokio::{
     io::{AsyncBufReadExt, AsyncWriteExt, BufReader},
     net::{UnixListener, UnixStream, unix::OwnedWriteHalf},
-    sync::broadcast::error::RecvError,
+    sync::broadcast::error::{RecvError, TryRecvError},
 };
 use tokio_util::sync::CancellationToken;
 
@@ -13,6 +13,7 @@ use crate::{
     doctor::service::Doctor,
     logs::Filter,
     supervisor::{Supervisor, SupervisorError},
+    tasks::Tasks,
 };
 
 pub async fn serve(listener: UnixListener, services: Services, shutdown: CancellationToken) {
@@ -70,6 +71,7 @@ async fn handle(
         supervisor,
         doctor,
         profiles,
+        tasks,
     } = services;
     match request.call {
         Call::Status => send(&mut write, &Reply::Status(supervisor.status())).await,
@@ -131,7 +133,61 @@ async fn handle(
             };
             send(&mut write, &reply).await
         }
+        Call::Recipes => {
+            let reply = match tasks.catalog() {
+                Ok(catalog) => Reply::Recipes(catalog.recipes().cloned().collect()),
+                Err(err) => Reply::Error(err.to_string()),
+            };
+            send(&mut write, &reply).await
+        }
+        Call::Run {
+            recipe,
+            args,
+            confirmed,
+        } => run_task(&mut write, &tasks, &supervisor, &recipe, &args, confirmed).await,
     }
+}
+
+/// A client that hangs up only ends the stream; the task keeps running in the supervisor.
+async fn run_task(
+    write: &mut OwnedWriteHalf,
+    tasks: &Tasks,
+    supervisor: &Supervisor,
+    recipe: &str,
+    args: &[String],
+    confirmed: bool,
+) -> io::Result<()> {
+    let spec = match tasks.recipe(recipe, args) {
+        Ok(spec) => spec,
+        Err(err) => return send(write, &Reply::Error(err.to_string())).await,
+    };
+    let unit = spec.name.clone();
+    let mut live = supervisor.logs().subscribe();
+    let run = tasks.run(spec, confirmed);
+    tokio::pin!(run);
+    let result = loop {
+        tokio::select! {
+            result = &mut run => break result,
+            received = live.recv() => match received {
+                Ok(record) if record.unit == unit => send(write, &Reply::Log(record)).await?,
+                Ok(_) | Err(RecvError::Lagged(_)) => {}
+                Err(RecvError::Closed) => break run.await,
+            },
+        }
+    };
+    // A oneshot resolves only after its output was pushed, but those records may still wait here.
+    loop {
+        match live.try_recv() {
+            Ok(record) if record.unit == unit => send(write, &Reply::Log(record)).await?,
+            Ok(_) | Err(TryRecvError::Lagged(_)) => {}
+            Err(_) => break,
+        }
+    }
+    let reply = match result {
+        Ok(()) => Reply::Done,
+        Err(err) => Reply::Error(err.to_string()),
+    };
+    send(write, &reply).await
 }
 
 fn outcome(result: Result<(), SupervisorError>) -> Reply {
