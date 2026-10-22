@@ -103,7 +103,7 @@ impl Host {
         })
     }
 
-    /// Resolves on `geco down`, Ctrl-C or SIGTERM.
+    /// Resolves on `geco down`, Ctrl-C, SIGTERM or SIGHUP.
     pub async fn wait(&self) {
         tokio::select! {
             () = self.shutdown.cancelled() => {}
@@ -120,18 +120,23 @@ impl Host {
     }
 }
 
+/// SIGHUP arrives when the terminal closes; the units sit in their own process groups and
+/// would survive geco dying from it.
 pub async fn termination() {
-    let terminate = async {
-        match signal(SignalKind::terminate()) {
-            Ok(mut stream) => {
-                stream.recv().await;
-            }
-            Err(_) => futures::future::pending::<()>().await,
-        }
-    };
     tokio::select! {
-        _ = tokio::signal::ctrl_c() => {}
-        () = terminate => {}
+        () = received(SignalKind::interrupt()) => {}
+        () = received(SignalKind::terminate()) => {}
+        () = received(SignalKind::hangup()) => {}
+    }
+}
+
+/// A signal that cannot be registered never arrives.
+async fn received(kind: SignalKind) {
+    match signal(kind) {
+        Ok(mut stream) => {
+            stream.recv().await;
+        }
+        Err(_) => futures::future::pending::<()>().await,
     }
 }
 
@@ -164,12 +169,29 @@ pub fn confirm(prompt: &str) -> io::Result<bool> {
 
 #[cfg(test)]
 mod tests {
+    use std::time::Duration;
+
+    use rustix::process::Signal;
+
     use super::*;
 
     fn paths() -> (tempfile::TempDir, Paths) {
         let dir = tempfile::tempdir().unwrap();
         let paths = Paths::new(dir.path().to_path_buf());
         (dir, paths)
+    }
+
+    #[tokio::test]
+    async fn a_hangup_ends_termination() {
+        let mut terminated = std::pin::pin!(termination());
+        // The first poll registers the handlers; a hangup before that would kill the test run.
+        let early = tokio::time::timeout(Duration::from_millis(50), &mut terminated).await;
+        assert!(early.is_err());
+
+        rustix::process::kill_process(rustix::process::getpid(), Signal::HUP).unwrap();
+
+        let ended = tokio::time::timeout(Duration::from_secs(5), terminated).await;
+        assert!(ended.is_ok(), "SIGHUP did not end termination()");
     }
 
     #[tokio::test]

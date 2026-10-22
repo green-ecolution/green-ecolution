@@ -1,7 +1,7 @@
 mod app;
 mod view;
 
-use std::{process::ExitCode, time::Duration};
+use std::{io::Write, process::ExitCode, time::Duration};
 
 use crossterm::event::{Event, EventStream, KeyEventKind};
 use futures::StreamExt;
@@ -33,7 +33,8 @@ pub async fn run(paths: &Paths, profile: Option<&str>) -> anyhow::Result<ExitCod
     let result = run_terminal(&client, host.is_some(), registry, warnings).await;
 
     if let Some(host) = host {
-        anstream::eprintln!("stopping units…");
+        // After a hangup stderr fails with EIO; eprintln! would panic and skip stop().
+        let _ = writeln!(std::io::stderr(), "stopping units…");
         host.stop().await;
     }
     result.map(|()| ExitCode::SUCCESS)
@@ -56,7 +57,8 @@ async fn run_terminal(
         }));
     }
     let result = event_loop(&mut terminal, client, hosted, warnings).await;
-    ratatui::restore();
+    // restore() reports its own failure with eprintln!, which panics once the terminal is gone.
+    let _ = ratatui::try_restore();
     result
 }
 

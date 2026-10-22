@@ -53,7 +53,8 @@ async fn up(paths: &Paths, profile: Option<&str>) -> anyhow::Result<ExitCode> {
     }
     // Errors must not skip stop(), or the units would outlive geco.
     let result = print_until_shutdown(&host, &Client::new(paths.socket())).await;
-    anstream::eprintln!("stopping units…");
+    // After a hangup stderr fails with EIO; eprintln! would panic and skip stop().
+    let _ = writeln!(std::io::stderr(), "stopping units…");
     host.stop().await;
     result.map(|()| ExitCode::SUCCESS)
 }
@@ -155,7 +156,7 @@ async fn down(paths: &Paths, client: &Client) -> anyhow::Result<ExitCode> {
         }
         Err(err) => return Err(err.into()),
     }
-    anstream::eprintln!("stopping units…");
+    let _ = writeln!(std::io::stderr(), "stopping units…");
     // The socket stops answering right away; the lock is released only once every unit stopped.
     for _ in 0..1200 {
         if InstanceLock::try_acquire(&paths.lock())?.is_some() {
