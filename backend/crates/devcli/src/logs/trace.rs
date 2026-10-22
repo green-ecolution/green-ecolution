@@ -160,7 +160,6 @@ pub(crate) mod tests {
     }
 
     /// An event logged after the response, which is what the request list is built from.
-    #[allow(dead_code)] // reason: used by the TUI tests
     pub(crate) fn finished_request(
         id: &str,
         path: &str,

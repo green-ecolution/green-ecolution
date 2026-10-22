@@ -1,5 +1,6 @@
 mod app;
 mod input;
+mod requests;
 mod view;
 
 use std::{io::Write, process::ExitCode, time::Duration};
@@ -13,10 +14,11 @@ use ratatui::{DefaultTerminal, layout::Rect};
 use tokio::{sync::mpsc, time::MissedTickBehavior};
 use tokio_util::sync::CancellationToken;
 
-use self::app::{App, Effect, LOG_CAPACITY, Msg, Pane};
+use self::app::{App, Effect, LOG_CAPACITY, Mode, Msg, Pane};
 use crate::{
     host::{Host, OrphanPolicy, termination},
     ipc::{Call, Client, IpcError, Reply},
+    logs::trace::Trace,
     paths::Paths,
     state::ProcessRegistry,
 };
@@ -74,7 +76,11 @@ async fn run_terminal(
     result
 }
 
-fn mouse_msg(terminal: &DefaultTerminal, mouse: MouseEvent) -> anyhow::Result<Option<Msg>> {
+fn mouse_msg(
+    terminal: &DefaultTerminal,
+    mode: Mode,
+    mouse: MouseEvent,
+) -> anyhow::Result<Option<Msg>> {
     let msg: fn(Pane) -> Msg = match mouse.kind {
         MouseEventKind::ScrollDown => |pane| Msg::Scroll { pane, down: true },
         MouseEventKind::ScrollUp => |pane| Msg::Scroll { pane, down: false },
@@ -82,7 +88,7 @@ fn mouse_msg(terminal: &DefaultTerminal, mouse: MouseEvent) -> anyhow::Result<Op
         _ => return Ok(None),
     };
     let area = Rect::from(terminal.size()?);
-    Ok(view::pane_at(area, mouse.column, mouse.row).map(msg))
+    Ok(view::pane_at(area, mode, mouse.column, mouse.row).map(msg))
 }
 
 /// `shutdown` is the hosted supervisor's token, `None` when attached to another process.
@@ -110,6 +116,7 @@ async fn event_loop(
     let mut keys = EventStream::new();
     let mut ticks = tokio::time::interval(Duration::from_secs(1));
     let (flash_tx, mut flash_rx) = mpsc::unbounded_channel::<String>();
+    let (trace_tx, mut trace_rx) = mpsc::unbounded_channel::<Trace>();
 
     let mut frames = tokio::time::interval(Duration::from_millis(33));
     frames.set_missed_tick_behavior(MissedTickBehavior::Skip);
@@ -131,7 +138,7 @@ async fn event_loop(
             },
             event = keys.next() => match event {
                 Some(Ok(Event::Key(key))) if key.kind == KeyEventKind::Press => Msg::Key(key),
-                Some(Ok(Event::Mouse(mouse))) => match mouse_msg(terminal, mouse)? {
+                Some(Ok(Event::Mouse(mouse))) => match mouse_msg(terminal, app.mode, mouse)? {
                     Some(msg) => msg,
                     None => continue,
                 },
@@ -140,6 +147,7 @@ async fn event_loop(
                 None => return Ok(()),
             },
             Some(text) = flash_rx.recv() => Msg::Flash(text),
+            Some(trace) = trace_rx.recv() => Msg::Trace(trace),
             _ = ticks.tick() => Msg::Tick,
             _ = frames.tick() => {
                 if dirty {
@@ -168,6 +176,21 @@ async fn event_loop(
                 tokio::spawn(async move {
                     if let Err(err) = client.call(call).await {
                         let _ = flash.send(err.to_string());
+                    }
+                });
+            }
+            Some(Effect::FetchTrace(request_id)) => {
+                let client = client.clone();
+                let traces = trace_tx.clone();
+                let flash = flash_tx.clone();
+                tokio::spawn(async move {
+                    match client.request_logs(&request_id).await {
+                        Ok(records) => {
+                            let _ = traces.send(Trace::build(&request_id, &records));
+                        }
+                        Err(err) => {
+                            let _ = flash.send(err.to_string());
+                        }
                     }
                 });
             }

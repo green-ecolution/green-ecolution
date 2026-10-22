@@ -4,10 +4,13 @@ use chrono::Utc;
 
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
-use super::input::{InputOutcome, LineInput};
+use super::{
+    input::{InputOutcome, LineInput},
+    requests::Requests,
+};
 use crate::{
     ipc::Call,
-    logs::{Filter, LogRecord},
+    logs::{Filter, LogRecord, trace::Trace},
     supervisor::{UnitState, UnitStatus},
 };
 
@@ -17,9 +20,17 @@ const HALF_PAGE: usize = PAGE / 2;
 const WHEEL_STEP: usize = 3;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Mode {
+    Logs,
+    Requests,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Pane {
     Units,
     Logs,
+    Requests,
+    Trace,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -39,6 +50,7 @@ pub enum Msg {
     Focus(Pane),
     State(UnitStatus),
     Log(LogRecord),
+    Trace(Trace),
     Flash(String),
     Tick,
     Disconnected,
@@ -49,12 +61,14 @@ pub enum Msg {
 #[derive(Debug, PartialEq, Eq)]
 pub enum Effect {
     Call(Call),
+    FetchTrace(String),
     Quit,
 }
 
 pub struct App {
     pub units: Vec<UnitStatus>,
     pub selected: usize,
+    pub mode: Mode,
     pub focus: Pane,
     pub scope: LogScope,
     pub filter: Filter,
@@ -62,6 +76,7 @@ pub struct App {
     pub input: Option<LineInput>,
     pub filter_error: Option<String>,
     pub logs: VecDeque<LogRecord>,
+    pub requests: Requests,
     /// Lines between the bottom of the view and the newest matching line; 0 follows.
     pub scroll: usize,
     pub hosted: bool,
@@ -75,6 +90,7 @@ impl App {
         Self {
             units: Vec::new(),
             selected: 0,
+            mode: Mode::Logs,
             focus: Pane::Units,
             scope: LogScope::All,
             filter: Filter::default(),
@@ -82,6 +98,7 @@ impl App {
             input: None,
             filter_error: None,
             logs: VecDeque::new(),
+            requests: Requests::default(),
             scroll: 0,
             hosted,
             flash: None,
@@ -93,13 +110,15 @@ impl App {
     pub fn update(&mut self, msg: Msg) -> Option<Effect> {
         match msg {
             Msg::Key(key) => return self.on_key(key),
-            Msg::Scroll { pane, down } => self.step(pane, down, WHEEL_STEP),
+            Msg::Scroll { pane, down } => return self.step(pane, down, WHEEL_STEP),
+            Msg::Trace(trace) => self.requests.set_trace(trace),
             Msg::Focus(pane) => self.focus = pane,
             Msg::State(status) => match self.units.iter_mut().find(|u| u.name == status.name) {
                 Some(unit) => *unit = status,
                 None => self.units.push(status),
             },
             Msg::Log(record) => {
+                self.requests.observe(&record);
                 if self.logs.len() == LOG_CAPACITY {
                     self.logs.pop_front();
                 }
@@ -134,45 +153,52 @@ impl App {
             return None;
         }
         let ctrl = key.modifiers.contains(KeyModifiers::CONTROL);
+        let logs_mode = self.mode == Mode::Logs;
         match key.code {
             KeyCode::Char('q') => return Some(Effect::Quit),
             KeyCode::Char('c') if ctrl => return Some(Effect::Quit),
-            KeyCode::Char('d') if ctrl => self.scroll_down(HALF_PAGE),
-            KeyCode::Char('u') if ctrl => self.scroll_up(HALF_PAGE),
-            KeyCode::Left | KeyCode::Char('h' | '[') => self.focus = Pane::Units,
-            KeyCode::Right | KeyCode::Char('l' | ']') => self.focus = Pane::Logs,
-            KeyCode::Down | KeyCode::Char('j') => self.step(self.focus, true, 1),
-            KeyCode::Up | KeyCode::Char('k') => self.step(self.focus, false, 1),
-            KeyCode::Tab => {
+            KeyCode::Char('d') if ctrl => self.page(true, HALF_PAGE),
+            KeyCode::Char('u') if ctrl => self.page(false, HALF_PAGE),
+            KeyCode::Left | KeyCode::Char('h' | '[') => self.focus = self.side_pane(false),
+            KeyCode::Right | KeyCode::Char('l' | ']') => self.focus = self.side_pane(true),
+            KeyCode::Down | KeyCode::Char('j') => return self.step(self.focus, true, 1),
+            KeyCode::Up | KeyCode::Char('k') => return self.step(self.focus, false, 1),
+            KeyCode::PageUp => self.page(false, PAGE),
+            KeyCode::PageDown => self.page(true, PAGE),
+            KeyCode::Home | KeyCode::Char('g') => self.jump(true),
+            KeyCode::End | KeyCode::Char('G') => self.jump(false),
+            KeyCode::Char('?') => self.show_help = !self.show_help,
+            KeyCode::Char('t') => return self.toggle_mode(),
+            KeyCode::Esc if !logs_mode => return self.toggle_mode(),
+            KeyCode::Char('o') if !logs_mode => self.requests.toggle_order(),
+            KeyCode::Enter if self.focus == Pane::Requests => self.focus = Pane::Trace,
+            KeyCode::Enter if self.focus == Pane::Units => {
+                self.scope = LogScope::Selected;
+                self.scroll = 0;
+            }
+            KeyCode::Char('/') if logs_mode => {
+                self.input = Some(LineInput::new(&self.filter_text));
+            }
+            KeyCode::Tab if logs_mode => {
                 self.scope = match self.scope {
                     LogScope::All => LogScope::Selected,
                     LogScope::Selected => LogScope::All,
                 };
                 self.scroll = 0;
             }
-            KeyCode::Enter if self.focus == Pane::Units => {
-                self.scope = LogScope::Selected;
-                self.scroll = 0;
-            }
-            KeyCode::PageUp => self.scroll_up(PAGE),
-            KeyCode::PageDown => self.scroll_down(PAGE),
-            KeyCode::Home | KeyCode::Char('g') => self.scroll = self.max_scroll(),
-            KeyCode::End | KeyCode::Char('G') => self.scroll = 0,
-            KeyCode::Char('?') => self.show_help = !self.show_help,
-            KeyCode::Char('/') => self.input = Some(LineInput::new(&self.filter_text)),
-            KeyCode::Char('r') => {
+            KeyCode::Char('r') if logs_mode => {
                 return self.call(|unit| Call::Restart {
                     unit,
                     cascade: false,
                 });
             }
-            KeyCode::Char('R') => {
+            KeyCode::Char('R') if logs_mode => {
                 return self.call(|unit| Call::Restart {
                     unit,
                     cascade: true,
                 });
             }
-            KeyCode::Char('s') => {
+            KeyCode::Char('s') if logs_mode => {
                 let stopped = self.selected_unit()?.state == UnitState::Stopped;
                 return self.call(|unit| {
                     if stopped {
@@ -192,11 +218,53 @@ impl App {
             .map(|unit| Effect::Call(build(unit.name.clone())))
     }
 
-    fn step(&mut self, pane: Pane, down: bool, lines: usize) {
+    fn step(&mut self, pane: Pane, down: bool, lines: usize) -> Option<Effect> {
         match pane {
             Pane::Units => self.select(down),
             Pane::Logs if down => self.scroll_down(lines),
             Pane::Logs => self.scroll_up(lines),
+            Pane::Requests => return self.requests.select(down).map(Effect::FetchTrace),
+            Pane::Trace => self.requests.scroll_trace(down, lines),
+        }
+        None
+    }
+
+    fn side_pane(&self, right: bool) -> Pane {
+        match (self.mode, right) {
+            (Mode::Logs, false) => Pane::Units,
+            (Mode::Logs, true) => Pane::Logs,
+            (Mode::Requests, false) => Pane::Requests,
+            (Mode::Requests, true) => Pane::Trace,
+        }
+    }
+
+    fn toggle_mode(&mut self) -> Option<Effect> {
+        match self.mode {
+            Mode::Logs => {
+                self.mode = Mode::Requests;
+                self.focus = Pane::Requests;
+                self.requests.pin_selection().map(Effect::FetchTrace)
+            }
+            Mode::Requests => {
+                self.mode = Mode::Logs;
+                self.focus = Pane::Units;
+                None
+            }
+        }
+    }
+
+    fn page(&mut self, down: bool, lines: usize) {
+        match self.mode {
+            Mode::Logs if down => self.scroll_down(lines),
+            Mode::Logs => self.scroll_up(lines),
+            Mode::Requests => self.requests.scroll_trace(down, lines),
+        }
+    }
+
+    fn jump(&mut self, top: bool) {
+        match self.mode {
+            Mode::Logs => self.scroll = if top { self.max_scroll() } else { 0 },
+            Mode::Requests => self.requests.jump_trace(top),
         }
     }
 
@@ -271,7 +339,10 @@ pub(crate) mod tests {
     use super::*;
     use crate::{
         config::LogFormat,
-        logs::parse_line,
+        logs::{
+            parse_line,
+            trace::{Trace, tests::finished_request},
+        },
         units::{Origin, UnitKind},
     };
 
@@ -588,5 +659,57 @@ pub(crate) mod tests {
         app.update(key(KeyCode::Enter));
         assert!(app.filter.is_empty());
         assert_eq!(app.filter_text, "");
+    }
+
+    #[test]
+    fn t_opens_the_requests_and_fetches_the_newest_trace() {
+        let mut app = app_with_two_units();
+        app.update(Msg::Log(finished_request("old", "/a", 200, 3)));
+        app.update(Msg::Log(finished_request("new", "/b", 500, 9)));
+
+        assert_eq!(
+            app.update(key(KeyCode::Char('t'))),
+            Some(Effect::FetchTrace("new".into()))
+        );
+        assert_eq!((app.mode, app.focus), (Mode::Requests, Pane::Requests));
+        assert_eq!(
+            app.update(key(KeyCode::Char('j'))),
+            Some(Effect::FetchTrace("old".into()))
+        );
+        assert_eq!(
+            app.update(key(KeyCode::Char('r'))),
+            None,
+            "no unit actions here"
+        );
+
+        app.update(Msg::Trace(Trace::build(
+            "old",
+            &[finished_request("old", "/a", 200, 3)],
+        )));
+        assert!(app.requests.trace.is_some());
+
+        app.update(key(KeyCode::Enter));
+        assert_eq!(app.focus, Pane::Trace);
+        app.update(key(KeyCode::Char('h')));
+        assert_eq!(app.focus, Pane::Requests);
+
+        app.update(key(KeyCode::Esc));
+        assert_eq!((app.mode, app.focus), (Mode::Logs, Pane::Units));
+    }
+
+    #[test]
+    fn the_wheel_over_the_request_list_selects_and_fetches() {
+        let mut app = app_with_two_units();
+        app.update(Msg::Log(finished_request("a", "/a", 200, 3)));
+        app.update(Msg::Log(finished_request("b", "/b", 200, 3)));
+        app.update(key(KeyCode::Char('t')));
+
+        assert_eq!(
+            app.update(Msg::Scroll {
+                pane: Pane::Requests,
+                down: true
+            }),
+            Some(Effect::FetchTrace("a".into()))
+        );
     }
 }
