@@ -81,13 +81,19 @@ cargo install --path backend/crates/devcli --locked   # installs the `geco` bina
 geco                      # TUI; starts the default profile if nothing runs yet
 geco up [--detach]        # start without the TUI (foreground log stream, or in the background)
 geco status [--json]      # unit states; exit code 1 while a unit is not ready
-geco logs backend -f      # follow one or more units
+geco logs backend -f      # follow one or more units; -F 'level>=warn "jwks"' filters
+geco trace <request-id>   # one request's log lines, indented by span (a unique prefix is enough)
 geco restart backend      # --cascade also restarts dependent units
 geco down                 # stop everything geco started
 ```
 
 Units and profiles (`minimal`, `full`) are defined in `geco.toml` at the repository root.
 Runtime state lives in `.geco/` and is git-ignored. geco needs Linux or macOS.
+
+The filter language combines terms with AND: `level>=warn`, `level:warn,error`,
+`unit:backend,db`, `target:sqlx` (prefix), `req:<id prefix>`, `since:5m` and quoted or bare
+text, matched case-insensitively against the message. In the TUI, `/` opens the same filter
+and `t` lists the backend's requests next to the selected request's trace.
 
 ### Benchmarks
 
