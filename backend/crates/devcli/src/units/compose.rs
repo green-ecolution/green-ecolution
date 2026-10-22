@@ -100,17 +100,16 @@ impl ComposeCli {
         let output = output_in_own_group(command)
             .await
             .map_err(|source| UnitError::Spawn {
-                command: format!("just _compose {}", args.join(" ")),
+                command: "just _compose".to_owned(),
                 source,
             })?;
         if output.status.success() {
             return Ok(String::from_utf8_lossy(&output.stdout).into_owned());
         }
-        Err(UnitError::Docker(format!(
-            "`docker compose {}` failed: {}",
-            args.join(" "),
-            String::from_utf8_lossy(&output.stderr).trim()
-        )))
+        Err(compose_failure(
+            args,
+            String::from_utf8_lossy(&output.stderr).trim(),
+        ))
     }
 
     pub async fn project(&self) -> Result<ComposeProject, UnitError> {
@@ -118,6 +117,12 @@ impl ComposeCli {
         parse_config(&json)
             .map_err(|err| UnitError::Docker(format!("cannot read the compose config: {err}")))
     }
+}
+
+/// Names only the subcommand: the arguments can hold values evaluated from the justfile.
+fn compose_failure(args: &[&str], stderr: &str) -> UnitError {
+    let subcommand = args.first().copied().unwrap_or_default();
+    UnitError::Docker(format!("`docker compose {subcommand}` failed: {stderr}"))
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -412,6 +417,16 @@ mod tests {
             }),
             ..Default::default()
         }
+    }
+
+    #[test]
+    fn compose_failures_name_only_the_subcommand() {
+        let err = compose_failure(
+            &["exec", "-T", "db", "psql", "-U", "evaluated_user"],
+            "boom",
+        );
+
+        assert_eq!(err.to_string(), "`docker compose exec` failed: boom");
     }
 
     #[test]
