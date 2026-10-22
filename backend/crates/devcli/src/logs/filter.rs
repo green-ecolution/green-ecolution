@@ -77,9 +77,16 @@ impl Term {
                 .and_then(TimeDelta::try_seconds)
                 .and_then(|age| now.checked_sub_signed(age))
                 .is_none_or(|cutoff| record.timestamp >= cutoff),
-            Self::Text(needle) => record.message.to_lowercase().contains(needle.as_str()),
+            Self::Text(needle) => contains_ignore_case(&record.message, needle),
         }
     }
+}
+
+fn contains_ignore_case(haystack: &str, lowercase_needle: &str) -> bool {
+    haystack.char_indices().any(|(start, _)| {
+        let mut lowered = haystack[start..].chars().flat_map(char::to_lowercase);
+        lowercase_needle.chars().all(|n| lowered.next() == Some(n))
+    }) || lowercase_needle.is_empty()
 }
 
 fn starts_with_any(value: Option<&str>, prefixes: &[String]) -> bool {
@@ -258,6 +265,17 @@ mod tests {
     use quickcheck_macros::quickcheck;
 
     use super::*;
+
+    #[test]
+    fn contains_ignore_case_matches_across_case_and_edges() {
+        assert!(contains_ignore_case("Connection REFUSED", "refused"));
+        assert!(contains_ignore_case("Frisch GRÜN", "grün"));
+        assert!(contains_ignore_case("abc", "c"));
+        assert!(!contains_ignore_case("ab", "abc"));
+        assert!(!contains_ignore_case("", "a"));
+        assert!(contains_ignore_case("İstanbul", "i̇stanbul"));
+    }
+
     use crate::{config::LogFormat, logs::parse_line};
 
     fn now() -> DateTime<Utc> {
