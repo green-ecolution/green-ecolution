@@ -1,5 +1,6 @@
 pub mod assemble;
 pub mod cli;
+pub mod commands;
 pub mod config;
 pub mod graph;
 pub mod host;

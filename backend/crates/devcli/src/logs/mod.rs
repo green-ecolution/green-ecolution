@@ -8,6 +8,8 @@ use serde::{Deserialize, Serialize};
 
 pub use buffer::LogStore;
 pub use parse::parse_line;
+#[cfg(test)]
+pub(crate) use parse::strip_ansi;
 
 use crate::config::LogFormat;
 
