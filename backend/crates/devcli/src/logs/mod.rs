@@ -2,6 +2,7 @@ mod buffer;
 mod filter;
 mod formats;
 mod parse;
+pub mod trace;
 
 use std::sync::{Arc, Mutex};
 
