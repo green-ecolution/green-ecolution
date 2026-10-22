@@ -260,6 +260,8 @@ run-docker: _acme-init _ensure-valhalla build-domain-wasm
     @just _compose --profile app up -d --build
 
 # Run docker compose with the shared Traefik/Porkbun/version env
+# Positional arguments keep args with spaces intact (e.g. a psql -c query).
+[positional-arguments]
 _compose *ARGS:
     @APP_HOST="{{ app_host }}" \
     BIND_ADDR="{{ bind_addr }}" \
@@ -273,7 +275,7 @@ _compose *ARGS:
     APP_GIT_COMMIT="{{ app_git_commit }}" \
     APP_GIT_BRANCH="{{ app_git_branch }}" \
     APP_BUILD_TIME="{{ app_build_time }}" \
-    docker compose {{ ARGS }}
+    docker compose "$@"
 
 # Start infrastructure services
 [group('infra')]
