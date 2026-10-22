@@ -1,7 +1,6 @@
 use std::{
     collections::{BTreeMap, BTreeSet, HashMap},
     path::PathBuf,
-    process::Stdio,
     sync::{Arc, Mutex},
     time::Duration,
 };
@@ -17,7 +16,7 @@ use futures::StreamExt;
 use serde::Deserialize;
 use tokio::{process::Command, task::JoinHandle};
 
-use super::{Origin, Running, Unit, UnitError, UnitKind};
+use super::{Origin, Running, Unit, UnitError, UnitKind, process::output_in_own_group};
 use crate::{
     config::LogFormat,
     logs::{LogSink, LogStore},
@@ -96,12 +95,9 @@ impl ComposeCli {
     /// Goes through `just _compose` so the environment compose needs stays defined in the
     /// justfile alone. The output can contain secrets and is never logged.
     pub async fn run(&self, args: &[&str]) -> Result<String, UnitError> {
-        let output = Command::new("just")
-            .arg("_compose")
-            .args(args)
-            .current_dir(&self.root)
-            .stdin(Stdio::null())
-            .output()
+        let mut command = Command::new("just");
+        command.arg("_compose").args(args).current_dir(&self.root);
+        let output = output_in_own_group(command)
             .await
             .map_err(|source| UnitError::Spawn {
                 command: format!("just _compose {}", args.join(" ")),

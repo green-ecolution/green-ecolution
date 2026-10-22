@@ -1,7 +1,8 @@
 use std::{
     collections::BTreeMap,
+    io,
     path::PathBuf,
-    process::{ExitStatus, Stdio},
+    process::{ExitStatus, Output, Stdio},
     sync::{Arc, Mutex},
     time::Duration,
 };
@@ -251,8 +252,37 @@ where
     }))
 }
 
+/// Runs a short-lived command in its own process group and collects its output. Dropping the
+/// future kills the group, so a cancelled `compose up` or hook cannot finish after the unit
+/// was stopped.
+pub(crate) async fn output_in_own_group(mut command: Command) -> io::Result<Output> {
+    let child = command
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .process_group(0)
+        .spawn()?;
+    let mut guard = KillGroupOnDrop(child.id().and_then(|id| i32::try_from(id).ok()));
+    let output = child.wait_with_output().await;
+    if output.is_ok() {
+        guard.0 = None;
+    }
+    output
+}
+
+struct KillGroupOnDrop(Option<i32>);
+
+impl Drop for KillGroupOnDrop {
+    fn drop(&mut self) {
+        // Drop cannot wait out a grace period, and these commands hold no state worth saving.
+        if let Some(pid) = self.0.and_then(Pid::from_raw) {
+            let _ = kill_process_group(pid, Signal::KILL);
+        }
+    }
+}
+
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use std::path::Path;
 
     use rustix::process::test_kill_process;
@@ -276,7 +306,7 @@ mod tests {
         ProcessUnit::new(spec, ProcessRegistry::in_memory()).with_grace(Duration::from_secs(1))
     }
 
-    async fn pid_from(path: &Path) -> Pid {
+    pub(crate) async fn pid_from(path: &Path) -> Pid {
         for _ in 0..100 {
             if let Some(pid) = std::fs::read_to_string(path)
                 .ok()
@@ -290,7 +320,7 @@ mod tests {
         panic!("child pid was never written");
     }
 
-    async fn gone(pid: Pid) -> bool {
+    pub(crate) async fn gone(pid: Pid) -> bool {
         for _ in 0..40 {
             if test_kill_process(pid).is_err() {
                 return true;

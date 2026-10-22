@@ -1,14 +1,13 @@
 use std::{
     fs, io,
     path::{Path, PathBuf},
-    process::Stdio,
     sync::Arc,
 };
 
 use async_trait::async_trait;
 use tokio::process::Command;
 
-use super::{Origin, Running, Unit, UnitError, UnitKind};
+use super::{Origin, Running, Unit, UnitError, UnitKind, process::output_in_own_group};
 use crate::{
     config::LogFormat,
     logs::{LogSink, LogStore},
@@ -126,12 +125,9 @@ impl Unit for HookedUnit {
 }
 
 async fn run_hook(command: &str, root: &Path, sink: &LogSink) -> Result<(), UnitError> {
-    let output = Command::new("sh")
-        .arg("-c")
-        .arg(command)
-        .current_dir(root)
-        .stdin(Stdio::null())
-        .output()
+    let mut shell = Command::new("sh");
+    shell.arg("-c").arg(command).current_dir(root);
+    let output = output_in_own_group(shell)
         .await
         .map_err(|source| UnitError::Spawn {
             command: command.to_owned(),
@@ -155,7 +151,10 @@ async fn run_hook(command: &str, root: &Path, sink: &LogSink) -> Result<(), Unit
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::units::fake::{FakeUnit, Journal};
+    use crate::units::{
+        fake::{FakeUnit, Journal},
+        process::tests::{gone, pid_from},
+    };
 
     fn dev_services(dir: &Path) -> DevServicesFile {
         fs::write(
@@ -223,6 +222,23 @@ mod tests {
             Err(UnitError::Hook(_))
         ));
         assert!(journal.entries().is_empty());
+    }
+
+    #[tokio::test]
+    async fn dropping_a_running_hook_kills_it() {
+        let dir = tempfile::tempdir().unwrap();
+        let pid_file = dir.path().join("sleep.pid");
+        let command = format!("sleep 30 & echo $! > {}; wait", pid_file.display());
+        let sink = LogSink::new(LogStore::new(10), "proxy", LogFormat::Plain);
+        let mut hook = Box::pin(run_hook(&command, dir.path(), &sink));
+
+        let sleep = tokio::select! {
+            _ = &mut hook => panic!("the hook finished on its own"),
+            pid = pid_from(&pid_file) => pid,
+        };
+        drop(hook);
+
+        assert!(gone(sleep).await, "the hook's sleep survived the drop");
     }
 
     #[tokio::test]
