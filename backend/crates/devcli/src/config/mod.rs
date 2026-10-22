@@ -1,3 +1,4 @@
+mod profile;
 mod vars;
 
 use std::{
@@ -7,6 +8,7 @@ use std::{
 
 use serde::Deserialize;
 
+pub use profile::{ResolvedProfile, UnitOverride};
 #[cfg(test)]
 pub use vars::StaticVars;
 pub use vars::{JustVars, VarError, VarSource, render};
@@ -69,7 +71,12 @@ pub struct UnitConfig {
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ProfileConfig {
+    #[serde(default)]
     pub units: Vec<String>,
+    #[serde(default)]
+    pub extends: Option<String>,
+    #[serde(default, rename = "override")]
+    pub overrides: BTreeMap<String, UnitOverride>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
@@ -130,6 +137,8 @@ pub enum ConfigError {
     },
     #[error("unknown profile `{0}`")]
     UnknownProfile(String),
+    #[error("profile `{0}` extends itself through its parents")]
+    ProfileCycle(String),
 }
 
 impl GecoConfig {
@@ -182,6 +191,18 @@ impl GecoConfig {
                     ));
                 }
                 _ => {}
+            }
+        }
+        for (name, profile) in &self.profile {
+            self.chain(name)?;
+            for target in profile.overrides.keys() {
+                if self.unit.get(target).is_none_or(|unit| unit.kind.is_none()) {
+                    return Err(ConfigError::Invalid {
+                        path: path.to_path_buf(),
+                        unit: target.clone(),
+                        reason: "only local units can be overridden",
+                    });
+                }
             }
         }
         Ok(())
