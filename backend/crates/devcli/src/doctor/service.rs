@@ -138,6 +138,7 @@ impl Doctor {
                                 finding.unit.get_or_insert_with(|| unit.to_owned());
                             }
                         }
+                        inherit_units(&mut findings, state.findings.get(&id));
                         state.skipped.remove(&id);
                         if findings.is_empty() {
                             state.findings.remove(&id);
@@ -250,6 +251,19 @@ impl Doctor {
             })
             .cloned()
             .collect()
+    }
+}
+
+/// A run without a trigger must not drop the unit an earlier triggered run attributed.
+fn inherit_units(fresh: &mut [Finding], previous: Option<&Vec<Finding>>) {
+    let Some(previous) = previous else {
+        return;
+    };
+    for finding in fresh.iter_mut().filter(|finding| finding.unit.is_none()) {
+        finding.unit = previous
+            .iter()
+            .find(|old| old.id == finding.id)
+            .and_then(|old| old.unit.clone());
     }
 }
 
@@ -393,6 +407,31 @@ mod tests {
             doc.fix("failing", false).await,
             Err(DoctorError::FixFailed(reason)) if reason.contains("exit status: 3")
         ));
+    }
+
+    #[tokio::test]
+    async fn later_runs_keep_the_unit_a_trigger_attributed() {
+        let f = fixture();
+        let behind = Finding::new("dev-db-migrations", Severity::Error, "2 behind");
+        let migrations = FakeCheck::new("dev-db-migrations")
+            .finds(vec![behind.clone()])
+            .arc();
+        let check: Arc<dyn Check> = migrations.clone();
+        let doc = doctor(&f, vec![check.clone()]);
+
+        doc.run_checks(&[check], Some("migrations")).await;
+        doc.run(false).await;
+        assert_eq!(doc.findings()[0].unit.as_deref(), Some("migrations"));
+
+        migrations.set(Ok(Vec::new()));
+        doc.run(false).await;
+        migrations.set(Ok(vec![behind]));
+        doc.run(false).await;
+        assert_eq!(
+            doc.findings()[0].unit,
+            None,
+            "a reappearing finding starts unattributed"
+        );
     }
 
     #[tokio::test]
