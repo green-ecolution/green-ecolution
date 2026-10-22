@@ -1,5 +1,6 @@
 use std::{io, sync::Arc, time::Duration};
 
+use chrono::Utc;
 use tokio::{
     io::{AsyncBufReadExt, AsyncWriteExt, BufReader},
     net::{UnixListener, UnixStream, unix::OwnedWriteHalf},
@@ -8,7 +9,10 @@ use tokio::{
 use tokio_util::sync::CancellationToken;
 
 use super::{Call, PROTOCOL_VERSION, Reply, Request};
-use crate::supervisor::{Supervisor, SupervisorError};
+use crate::{
+    logs::Filter,
+    supervisor::{Supervisor, SupervisorError},
+};
 
 pub async fn serve(
     listener: UnixListener,
@@ -78,7 +82,19 @@ async fn handle(
             units,
             tail,
             follow,
-        } => stream_logs(&mut write, &supervisor, &units, tail, follow, &shutdown).await,
+            filter,
+        } => {
+            stream_logs(
+                &mut write,
+                &supervisor,
+                &units,
+                &filter,
+                tail,
+                follow,
+                &shutdown,
+            )
+            .await
+        }
         Call::SubscribeState => stream_state(&mut write, &supervisor, &shutdown).await,
     }
 }
@@ -100,14 +116,19 @@ async fn stream_logs(
     write: &mut OwnedWriteHalf,
     supervisor: &Supervisor,
     units: &[String],
+    filter: &str,
     tail: usize,
     follow: bool,
     shutdown: &CancellationToken,
 ) -> io::Result<()> {
+    let filter = match filter.parse::<Filter>() {
+        Ok(filter) => filter,
+        Err(err) => return send(write, &Reply::Error(format!("invalid filter: {err}"))).await,
+    };
     // Subscribing before taking the snapshot and skipping by sequence number closes the gap
     // between the two without sending a record twice.
     let mut live = supervisor.logs().subscribe();
-    let snapshot = supervisor.logs().snapshot(units, tail);
+    let snapshot = supervisor.logs().snapshot(units, &filter, tail, Utc::now());
     let mut last_sent = snapshot.last().map_or(0, |record| record.seq);
     for record in snapshot {
         send(write, &Reply::Log(record)).await?;
@@ -122,7 +143,9 @@ async fn stream_logs(
         };
         match received {
             Ok(record)
-                if record.seq > last_sent && (units.is_empty() || units.contains(&record.unit)) =>
+                if record.seq > last_sent
+                    && (units.is_empty() || units.contains(&record.unit))
+                    && filter.matches(&record, Utc::now()) =>
             {
                 last_sent = record.seq;
                 send(write, &Reply::Log(record)).await?;

@@ -151,9 +151,12 @@ async fn run_hook(command: &str, root: &Path, sink: &LogSink) -> Result<(), Unit
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::units::{
-        fake::{FakeUnit, Journal},
-        process::tests::{gone, pid_from},
+    use crate::{
+        logs::Filter,
+        units::{
+            fake::{FakeUnit, Journal},
+            process::tests::{gone, pid_from},
+        },
     };
 
     fn dev_services(dir: &Path) -> DevServicesFile {
@@ -199,7 +202,9 @@ mod tests {
             fs::read_to_string(&target).unwrap(),
             "rule: Host(`geco.test`)\nentryPoints: [websecure]\n"
         );
-        assert_eq!(store.snapshot(&["proxy".into()], 10)[0].message, "hook-ran");
+        let all = Filter::default();
+        let snapshot = store.snapshot(&["proxy".into()], &all, 10, chrono::Utc::now());
+        assert_eq!(snapshot[0].message, "hook-ran");
         assert_eq!(journal.entries(), ["start proxy"]);
 
         unit.stop().await.unwrap();

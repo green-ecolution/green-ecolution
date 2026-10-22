@@ -288,7 +288,7 @@ pub(crate) mod tests {
     use rustix::process::test_kill_process;
 
     use super::*;
-    use crate::units::probe::tests::closed_port;
+    use crate::{logs::Filter, units::probe::tests::closed_port};
 
     fn spec(kind: UnitKind, command: &str) -> ProcessSpec {
         ProcessSpec {
@@ -341,7 +341,7 @@ pub(crate) mod tests {
         unit(spec).start(Arc::clone(&store)).await.unwrap();
 
         let mut messages: Vec<String> = store
-            .snapshot(&[], 10)
+            .snapshot(&[], &Filter::default(), 10, chrono::Utc::now())
             .into_iter()
             .map(|r| r.message)
             .collect();

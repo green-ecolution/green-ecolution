@@ -3,9 +3,10 @@ use std::{
     sync::{Arc, Mutex},
 };
 
+use chrono::{DateTime, Utc};
 use tokio::sync::broadcast;
 
-use super::LogRecord;
+use super::{Filter, LogRecord};
 use crate::sync::lock;
 
 pub struct LogStore {
@@ -45,14 +46,28 @@ impl LogStore {
         seq
     }
 
-    /// The newest `tail` records of `units` (every unit when empty), oldest first.
-    pub fn snapshot(&self, units: &[String], tail: usize) -> Vec<LogRecord> {
+    /// The newest `tail` records of `units` (every unit when empty) that pass `filter`, oldest
+    /// first.
+    pub fn snapshot(
+        &self,
+        units: &[String],
+        filter: &Filter,
+        tail: usize,
+        now: DateTime<Utc>,
+    ) -> Vec<LogRecord> {
         let inner = lock(&self.inner);
         let mut merged: Vec<LogRecord> = inner
             .per_unit
             .iter()
             .filter(|(unit, _)| units.is_empty() || units.contains(unit))
-            .flat_map(|(_, queue)| queue.iter().rev().take(tail).cloned())
+            .flat_map(|(_, queue)| {
+                queue
+                    .iter()
+                    .rev()
+                    .filter(|record| filter.matches(record, now))
+                    .take(tail)
+                    .cloned()
+            })
             .collect();
         merged.sort_by_key(|record| record.seq);
         let skip = merged.len().saturating_sub(tail);
@@ -69,7 +84,10 @@ mod tests {
     use chrono::Utc;
 
     use super::*;
-    use crate::{config::LogFormat, logs::parse_line};
+    use crate::{
+        config::LogFormat,
+        logs::{Filter, parse_line},
+    };
 
     fn record(unit: &str, message: &str) -> LogRecord {
         parse_line(unit, LogFormat::Plain, message, Utc::now())
@@ -77,6 +95,10 @@ mod tests {
 
     fn messages(records: &[LogRecord]) -> Vec<&str> {
         records.iter().map(|r| r.message.as_str()).collect()
+    }
+
+    fn all() -> Filter {
+        Filter::default()
     }
 
     #[test]
@@ -87,8 +109,14 @@ mod tests {
         store.push(record("backend", "x"));
         store.push(record("db", "c"));
 
-        assert_eq!(messages(&store.snapshot(&["db".into()], 10)), ["b", "c"]);
-        assert_eq!(messages(&store.snapshot(&[], 10)), ["b", "x", "c"]);
+        assert_eq!(
+            messages(&store.snapshot(&["db".into()], &all(), 10, Utc::now())),
+            ["b", "c"]
+        );
+        assert_eq!(
+            messages(&store.snapshot(&[], &all(), 10, Utc::now())),
+            ["b", "x", "c"]
+        );
     }
 
     #[test]
@@ -100,7 +128,23 @@ mod tests {
                 message,
             ));
         }
-        assert_eq!(messages(&store.snapshot(&[], 3)), ["2", "3", "4"]);
+        assert_eq!(
+            messages(&store.snapshot(&[], &all(), 3, Utc::now())),
+            ["2", "3", "4"]
+        );
+    }
+
+    #[test]
+    fn the_tail_counts_only_records_that_pass_the_filter() {
+        let store = LogStore::new(10);
+        for message in ["ERROR a", "info", "ERROR b", "info", "info"] {
+            store.push(record("db", message));
+        }
+        let errors: Filter = "level:error".parse().unwrap();
+        assert_eq!(
+            messages(&store.snapshot(&[], &errors, 2, Utc::now())),
+            ["ERROR a", "ERROR b"]
+        );
     }
 
     #[tokio::test]

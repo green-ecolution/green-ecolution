@@ -9,7 +9,7 @@ use tokio::sync::mpsc;
 use super::output;
 use crate::{
     config::{GecoConfig, LogFormat},
-    logs::LineParser,
+    logs::{Filter, LineParser},
     paths::Paths,
     units::compose::{ComposeCli, find_container, service_overview},
 };
@@ -39,10 +39,12 @@ pub async fn status(paths: &Paths, json: bool) -> anyhow::Result<ExitCode> {
 pub async fn logs(
     paths: &Paths,
     units: &[String],
+    filter: &str,
     tail: usize,
     follow: bool,
     json: bool,
 ) -> anyhow::Result<ExitCode> {
+    let filter: Filter = filter.parse().context("invalid filter")?;
     let config = GecoConfig::load(&paths.config())?;
     let (docker, project) = docker_and_project(paths).await?;
     let services: Vec<String> = if units.is_empty() {
@@ -95,6 +97,9 @@ pub async fn logs(
                 .entry(service.clone())
                 .or_insert_with(|| LineParser::new(service.as_str(), LogFormat::Plain))
                 .parse(line, Utc::now());
+            if !filter.matches(&record, Utc::now()) {
+                continue;
+            }
             if json {
                 writeln!(out, "{}", serde_json::to_string(&record)?)?;
             } else {

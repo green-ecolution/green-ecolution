@@ -103,6 +103,7 @@ async fn event_loop(
             units: Vec::new(),
             tail: LOG_CAPACITY,
             follow: true,
+            filter: String::new(),
         })
         .await?;
     let mut keys = EventStream::new();

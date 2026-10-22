@@ -34,10 +34,11 @@ pub async fn run(cli: Cli) -> anyhow::Result<ExitCode> {
         Some(Command::Status { json }) => status(&paths, &client, json).await,
         Some(Command::Logs {
             units,
+            filter,
             follow,
             json,
             tail,
-        }) => logs(&paths, &client, &units, tail, follow, json).await,
+        }) => logs(&paths, &client, &units, &filter, tail, follow, json).await,
         Some(Command::Restart { unit, cascade }) => {
             simple(&client, Call::Restart { unit, cascade }).await
         }
@@ -65,6 +66,7 @@ async fn print_until_shutdown(host: &Host, client: &Client) -> anyhow::Result<()
             units: Vec::new(),
             tail: 0,
             follow: true,
+            filter: String::new(),
         })
         .await?;
     let mut states = client.open(Call::SubscribeState).await?;
@@ -188,6 +190,7 @@ async fn logs(
     paths: &Paths,
     client: &Client,
     units: &[String],
+    filter: &str,
     tail: usize,
     follow: bool,
     json: bool,
@@ -196,10 +199,13 @@ async fn logs(
         units: units.to_vec(),
         tail,
         follow,
+        filter: filter.to_owned(),
     };
     let mut stream = match client.open(call).await {
         Ok(stream) => stream,
-        Err(IpcError::NotRunning) => return fallback::logs(paths, units, tail, follow, json).await,
+        Err(IpcError::NotRunning) => {
+            return fallback::logs(paths, units, filter, tail, follow, json).await;
+        }
         Err(err) => return Err(err.into()),
     };
     let mut out = anstream::stdout();

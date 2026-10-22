@@ -7,7 +7,7 @@ pub use client::{Client, IpcError, ReplyStream};
 
 use crate::{logs::LogRecord, supervisor::UnitStatus};
 
-pub const PROTOCOL_VERSION: u32 = 1;
+pub const PROTOCOL_VERSION: u32 = 2;
 
 /// One call per connection; clients that need several streams open several connections.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -29,6 +29,9 @@ pub enum Call {
         units: Vec<String>,
         tail: usize,
         follow: bool,
+        /// Filter-language expression; empty matches everything.
+        #[serde(default)]
+        filter: String,
     },
     SubscribeState,
 }
@@ -158,6 +161,7 @@ mod tests {
                 units: Vec::new(),
                 tail: 10,
                 follow: true,
+                filter: String::new(),
             })
             .await
             .unwrap();
@@ -172,6 +176,56 @@ mod tests {
 
         assert_eq!(first.message, "old");
         assert_eq!(second.message, "new");
+    }
+
+    #[tokio::test]
+    async fn log_streams_apply_the_filter_to_tail_and_follow() {
+        let f = fixture().await;
+        f.supervisor.logs().push(log("ERROR old"));
+        f.supervisor.logs().push(log("old"));
+        let mut stream = f
+            .client
+            .open(Call::Logs {
+                units: Vec::new(),
+                tail: 10,
+                follow: true,
+                filter: "level:error".into(),
+            })
+            .await
+            .unwrap();
+        f.supervisor.logs().push(log("new"));
+        f.supervisor.logs().push(log("ERROR new"));
+
+        let mut seen = Vec::new();
+        for _ in 0..2 {
+            let Some(Reply::Log(record)) = stream.next().await.unwrap() else {
+                panic!("expected a record");
+            };
+            seen.push(record.message);
+        }
+        assert_eq!(seen, ["ERROR old", "ERROR new"]);
+    }
+
+    #[tokio::test]
+    async fn invalid_filters_are_reported() {
+        let f = fixture().await;
+        let mut stream = f
+            .client
+            .open(Call::Logs {
+                units: Vec::new(),
+                tail: 10,
+                follow: false,
+                filter: "level:loud".into(),
+            })
+            .await
+            .unwrap();
+        let Some(Reply::Error(message)) = stream.next().await.unwrap() else {
+            panic!("expected an error");
+        };
+        assert!(
+            message.starts_with("invalid filter: unknown level `loud`"),
+            "{message}"
+        );
     }
 
     #[tokio::test]
@@ -208,7 +262,10 @@ mod tests {
         let mut stream =
             std::os::unix::net::UnixStream::connect(f.dir.path().join("geco.sock")).unwrap();
         stream
-            .write_all(b"{\"v\":1,\"call\":{\"method\":\"shutdown\"}}\n")
+            .write_all(
+                format!("{{\"v\":{PROTOCOL_VERSION},\"call\":{{\"method\":\"shutdown\"}}}}\n")
+                    .as_bytes(),
+            )
             .unwrap();
         drop(stream);
 

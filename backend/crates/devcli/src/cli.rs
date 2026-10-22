@@ -32,6 +32,9 @@ pub enum Command {
     /// Print logs of the given units (all units when none are given)
     Logs {
         units: Vec<String>,
+        /// Filter expression, e.g. 'level>=warn target:sqlx "jwks"'
+        #[arg(short = 'F', long, default_value = "")]
+        filter: String,
         #[arg(short, long)]
         follow: bool,
         #[arg(long)]
@@ -52,4 +55,29 @@ pub enum Command {
     Stop { unit: String },
     #[command(name = "__supervise", hide = true)]
     Supervise,
+}
+
+#[cfg(test)]
+mod tests {
+    use clap::Parser;
+
+    use super::*;
+
+    #[test]
+    fn logs_take_units_and_a_filter() {
+        let cli =
+            Cli::try_parse_from(["geco", "logs", "backend", "-F", "level>=warn", "-f"]).unwrap();
+        let Some(Command::Logs {
+            units,
+            filter,
+            follow,
+            ..
+        }) = cli.command
+        else {
+            panic!("expected logs");
+        };
+        assert_eq!(units, ["backend"]);
+        assert_eq!(filter, "level>=warn");
+        assert!(follow);
+    }
 }
