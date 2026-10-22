@@ -41,18 +41,24 @@ impl Default for Requests {
 }
 
 impl Requests {
-    pub fn observe(&mut self, record: &LogRecord) {
+    /// Returns whether the record added a request to the list.
+    pub fn observe(&mut self, record: &LogRecord) -> bool {
         let Some(summary) = RequestSummary::from_record(record) else {
-            return;
+            return false;
         };
         if !self.ids.insert(summary.request_id.clone()) {
-            return;
+            return false;
         }
         if self.seen.len() == REQUEST_CAPACITY {
             let dropped = self.seen.remove(0);
             self.ids.remove(&dropped.request_id);
         }
         self.seen.push(summary);
+        true
+    }
+
+    pub fn is_pinned(&self) -> bool {
+        self.selected.is_some()
     }
 
     pub fn ordered(&self) -> Vec<&RequestSummary> {
@@ -159,6 +165,19 @@ mod tests {
             .collect()
     }
 
+    #[test]
+    fn observe_reports_whether_it_added_a_request() {
+        let mut state = Requests::default();
+        assert!(state.observe(&finished_request("a", "/api", 200, 1)));
+        assert!(!state.observe(&finished_request("a", "/api", 200, 1)));
+        let plain = crate::logs::parse_line(
+            "db",
+            crate::config::LogFormat::Plain,
+            "hello",
+            chrono::Utc::now(),
+        );
+        assert!(!state.observe(&plain));
+    }
     #[test]
     fn lists_each_request_once_newest_first() {
         let mut state = with(&[("a", 5), ("b", 30)]);

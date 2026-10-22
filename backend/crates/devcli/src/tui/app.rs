@@ -118,7 +118,7 @@ impl App {
                 None => self.units.push(status),
             },
             Msg::Log(record) => {
-                self.requests.observe(&record);
+                let added = self.requests.observe(&record);
                 if self.logs.len() == LOG_CAPACITY {
                     self.logs.pop_front();
                 }
@@ -129,6 +129,9 @@ impl App {
                 // max_scroll() walks the whole buffer; a following view needs no clamping.
                 if self.scroll > 0 {
                     self.scroll = self.scroll.min(self.max_scroll());
+                }
+                if added && self.mode == Mode::Requests && !self.requests.is_pinned() {
+                    return self.requests.pin_selection().map(Effect::FetchTrace);
                 }
             }
             Msg::Flash(text) => self.flash = Some(text),
@@ -695,6 +698,24 @@ pub(crate) mod tests {
 
         app.update(key(KeyCode::Esc));
         assert_eq!((app.mode, app.focus), (Mode::Logs, Pane::Units));
+    }
+
+    #[test]
+    fn the_first_request_arriving_in_an_empty_view_is_fetched_once() {
+        let mut app = app_with_two_units();
+        assert_eq!(app.update(key(KeyCode::Char('t'))), None);
+        assert_eq!(app.mode, Mode::Requests);
+
+        assert_eq!(
+            app.update(Msg::Log(finished_request("first", "/a", 200, 1))),
+            Some(Effect::FetchTrace("first".into()))
+        );
+        assert_eq!(app.logs.len(), 1);
+        assert_eq!(
+            app.update(Msg::Log(finished_request("second", "/b", 200, 1))),
+            None
+        );
+        assert_eq!(app.logs.len(), 2);
     }
 
     #[test]
