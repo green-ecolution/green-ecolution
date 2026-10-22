@@ -9,6 +9,7 @@ use std::{
 use async_trait::async_trait;
 use bollard::{
     Docker,
+    container::LogOutput,
     models::{ContainerState, ContainerStateStatusEnum, HealthStatusEnum},
     query_parameters::{InspectContainerOptions, ListContainersOptionsBuilder, LogsOptionsBuilder},
 };
@@ -201,13 +202,15 @@ impl Unit for ComposeUnit {
     }
 
     async fn start(&self, logs: Arc<LogStore>) -> Result<Running, UnitError> {
+        // One second of slack so lines emitted right at startup are not cut off by rounding.
+        let since = i32::try_from(chrono::Utc::now().timestamp() - 1).unwrap_or(0);
         // The supervisor already orders the graph, so compose must not start dependencies itself.
         self.cli
             .run(&["up", "--detach", "--no-deps", self.service.as_str()])
             .await?;
         let id = find_container(&self.docker, &self.project, &self.service).await?;
         let sink = LogSink::new(logs, &self.service, LogFormat::Plain);
-        let task = tokio::spawn(follow_logs(self.docker.clone(), id.clone(), sink));
+        let task = tokio::spawn(follow_logs(self.docker.clone(), id.clone(), sink, since));
         if let Some(previous) = lock(&self.log_task).replace(task) {
             previous.abort();
         }
@@ -316,21 +319,57 @@ async fn watch_exit(docker: Docker, id: String, poll: Duration) -> String {
     }
 }
 
-async fn follow_logs(docker: Docker, id: String, sink: LogSink) {
+/// Splits a byte stream into lines, decoding per complete line so a multibyte character split
+/// across frames survives.
+#[derive(Default)]
+struct LineBuffer {
+    pending: Vec<u8>,
+}
+
+impl LineBuffer {
+    fn push(&mut self, bytes: &[u8]) -> Vec<String> {
+        self.pending.extend_from_slice(bytes);
+        let mut lines = Vec::new();
+        while let Some(end) = self.pending.iter().position(|byte| *byte == b'\n') {
+            lines.push(String::from_utf8_lossy(&self.pending[..end]).into_owned());
+            self.pending.drain(..=end);
+        }
+        lines
+    }
+
+    fn finish(self) -> Option<String> {
+        (!self.pending.is_empty()).then(|| String::from_utf8_lossy(&self.pending).into_owned())
+    }
+}
+
+async fn follow_logs(docker: Docker, id: String, sink: LogSink, since: i32) {
     let options = LogsOptionsBuilder::new()
         .follow(true)
         .stdout(true)
         .stderr(true)
-        .tail("100")
+        .since(since)
         .build();
     let mut stream = docker.logs(&id, Some(options));
-    let mut pending = String::new();
-    while let Some(Ok(chunk)) = stream.next().await {
-        pending.push_str(&String::from_utf8_lossy(&chunk.into_bytes()));
-        while let Some(end) = pending.find('\n') {
-            sink.line(&pending[..end]);
-            pending.drain(..=end);
+    let mut stdout = LineBuffer::default();
+    let mut stderr = LineBuffer::default();
+    while let Some(frame) = stream.next().await {
+        let frame = match frame {
+            Ok(frame) => frame,
+            Err(err) => {
+                sink.line(&format!("log stream ended: {err}"));
+                break;
+            }
+        };
+        let buffer = match frame {
+            LogOutput::StdErr { .. } => &mut stderr,
+            _ => &mut stdout,
+        };
+        for line in buffer.push(&frame.into_bytes()) {
+            sink.line(&line);
         }
+    }
+    for line in [stdout.finish(), stderr.finish()].into_iter().flatten() {
+        sink.line(&line);
     }
 }
 
@@ -377,6 +416,32 @@ mod tests {
             }),
             ..Default::default()
         }
+    }
+
+    #[test]
+    fn line_buffer_decodes_multibyte_characters_split_across_pushes() {
+        let bytes = "grün\n".as_bytes();
+        let mut buffer = LineBuffer::default();
+
+        assert!(buffer.push(&bytes[..3]).is_empty());
+        assert_eq!(buffer.push(&bytes[3..]), ["grün"]);
+    }
+
+    #[test]
+    fn line_buffer_splits_several_lines_in_one_chunk() {
+        let mut buffer = LineBuffer::default();
+
+        assert_eq!(buffer.push(b"one\ntwo\nthr"), ["one", "two"]);
+        assert_eq!(buffer.push(b"ee\n"), ["three"]);
+        assert_eq!(buffer.finish(), None);
+    }
+
+    #[test]
+    fn line_buffer_returns_trailing_partial_line_on_finish() {
+        let mut buffer = LineBuffer::default();
+        buffer.push(b"done\npartial");
+
+        assert_eq!(buffer.finish().as_deref(), Some("partial"));
     }
 
     #[test]
