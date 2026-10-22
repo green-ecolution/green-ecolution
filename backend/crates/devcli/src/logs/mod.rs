@@ -1,4 +1,5 @@
 mod buffer;
+mod filter;
 mod formats;
 mod parse;
 
@@ -8,6 +9,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 pub use buffer::LogStore;
+pub use filter::{Filter, FilterError};
 #[cfg(test)]
 pub(crate) use parse::strip_ansi;
 pub use parse::{LineParser, parse_line};

@@ -1112,6 +1112,8 @@ dependencies = [
  "clap",
  "crossterm",
  "futures",
+ "quickcheck",
+ "quickcheck_macros",
  "ratatui",
  "reqwest",
  "rustix 1.1.4",

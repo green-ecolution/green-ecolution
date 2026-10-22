@@ -37,3 +37,5 @@ toml = "1.1"
 [dev-dependencies]
 tempfile = "3"
 tokio = { version = "1.52.3", features = ["full", "test-util"] }
+quickcheck = "1"
+quickcheck_macros = "1"
