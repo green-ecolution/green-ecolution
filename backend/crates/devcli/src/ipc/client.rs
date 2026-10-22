@@ -33,6 +33,13 @@ pub struct Client {
 impl Client {
     /// Every buffered record whose request id starts with `request_id`, oldest first.
     pub async fn request_logs(&self, request_id: &str) -> Result<Vec<LogRecord>, IpcError> {
+        if request_id.is_empty()
+            || request_id.contains(|c: char| c.is_whitespace() || c == ',' || c == '"')
+        {
+            return Err(IpcError::Remote(format!(
+                "request id `{request_id}` cannot be looked up: it is empty or contains whitespace, a comma or a quote"
+            )));
+        }
         let mut stream = self
             .open(Call::Logs {
                 units: Vec::new(),

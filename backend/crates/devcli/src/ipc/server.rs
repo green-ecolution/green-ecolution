@@ -48,9 +48,19 @@ async fn handle(
     };
     let request = match serde_json::from_str::<Request>(&line) {
         Ok(request) if request.v == PROTOCOL_VERSION => request,
+        // A newer client must still be able to stop an older supervisor.
+        Ok(Request {
+            call: Call::Shutdown,
+            ..
+        }) => {
+            let _ = send(&mut write, &Reply::Done).await;
+            shutdown.cancel();
+            return Ok(());
+        }
         Ok(request) => {
             let message = format!(
-                "protocol version {} is not supported; this supervisor speaks {PROTOCOL_VERSION}",
+                "protocol version {} is not supported; this supervisor speaks {PROTOCOL_VERSION}; \
+                 restart geco with matching versions (stop the running supervisor with `geco down`)",
                 request.v
             );
             return send(&mut write, &Reply::Error(message)).await;

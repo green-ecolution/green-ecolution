@@ -292,7 +292,45 @@ mod tests {
             .unwrap();
 
         let reply: Reply = serde_json::from_str(&line).unwrap();
-        assert!(matches!(reply, Reply::Error(message) if message.contains("protocol version 99")));
+        assert!(matches!(reply, Reply::Error(message) if message.contains("protocol version 99") && message.contains("geco down")));
+    }
+
+    #[tokio::test]
+    async fn shutdown_is_honoured_across_protocol_versions() {
+        let f = fixture().await;
+        let stream = UnixStream::connect(f.dir.path().join("geco.sock"))
+            .await
+            .unwrap();
+        let (read, mut write) = stream.into_split();
+        write
+            .write_all(b"{\"v\":99,\"call\":{\"method\":\"shutdown\"}}\n")
+            .await
+            .unwrap();
+        let line = BufReader::new(read)
+            .lines()
+            .next_line()
+            .await
+            .unwrap()
+            .unwrap();
+
+        let reply: Reply = serde_json::from_str(&line).unwrap();
+        assert!(matches!(reply, Reply::Done));
+        tokio::time::timeout(Duration::from_secs(5), f.shutdown.cancelled())
+            .await
+            .unwrap();
+    }
+
+    #[tokio::test]
+    async fn request_ids_the_filter_would_misread_are_rejected() {
+        let f = fixture().await;
+        let client = Client::new(f.dir.path().join("geco.sock"));
+        for id in ["a b", "a,b", "", "a\"b"] {
+            let result = client.request_logs(id).await;
+            assert!(
+                matches!(&result, Err(IpcError::Remote(m)) if m.contains("cannot be looked up")),
+                "{id:?}: {result:?}"
+            );
+        }
     }
 
     #[tokio::test]
