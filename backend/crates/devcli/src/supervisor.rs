@@ -2,7 +2,7 @@ use std::{
     collections::BTreeMap,
     fmt,
     sync::{
-        Arc, Mutex,
+        Arc, Mutex, RwLock,
         atomic::{AtomicBool, Ordering},
     },
 };
@@ -20,7 +20,7 @@ use tokio::{
 use crate::{
     graph::Graph,
     logs::LogStore,
-    sync::lock,
+    sync::{lock, read, write},
     units::{Origin, Unit, UnitKind},
 };
 
@@ -71,6 +71,15 @@ pub struct UnitStatus {
     pub since: DateTime<Utc>,
 }
 
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ProfileChange {
+    pub profile: String,
+    pub stopped: Vec<String>,
+    pub restarted: Vec<String>,
+    pub started: Vec<String>,
+    pub warnings: Vec<String>,
+}
+
 #[derive(Debug, thiserror::Error, PartialEq, Eq)]
 pub enum SupervisorError {
     #[error("unknown unit `{0}`")]
@@ -80,10 +89,14 @@ pub enum SupervisorError {
 }
 
 pub struct Supervisor {
-    entries: BTreeMap<String, Entry>,
-    graph: Graph,
+    entries: RwLock<BTreeMap<String, Arc<Entry>>>,
+    graph: RwLock<Arc<Graph>>,
     logs: Arc<LogStore>,
     events: broadcast::Sender<UnitStatus>,
+    profile: Mutex<String>,
+    profiles: broadcast::Sender<String>,
+    /// Serialises profile switches so two `apply` calls never interleave their diffs.
+    switching: AsyncMutex<()>,
     /// Set first thing in `stop_all`; no lifecycle is spawned afterwards.
     closing: AtomicBool,
 }
@@ -94,36 +107,47 @@ struct Entry {
     task: Mutex<Option<JoinHandle<()>>>,
     /// Held across a whole start/stop/restart so control operations on one unit never overlap.
     control: AsyncMutex<()>,
+    /// Set under `control` once a profile switch stopped and replaced this entry, so a
+    /// start that fetched it before the switch cannot revive a unit the profile dropped.
+    retired: AtomicBool,
+}
+
+impl Entry {
+    fn new(unit: Arc<dyn Unit>) -> Self {
+        let status = UnitStatus {
+            name: unit.name().to_owned(),
+            kind: unit.kind(),
+            origin: unit.origin(),
+            state: UnitState::Stopped,
+            since: Utc::now(),
+        };
+        Self {
+            unit,
+            status: Mutex::new(status),
+            task: Mutex::new(None),
+            control: AsyncMutex::new(()),
+            retired: AtomicBool::new(false),
+        }
+    }
 }
 
 impl Supervisor {
     /// `graph` must contain exactly the given units; `assemble` guarantees that.
     pub fn new(units: Vec<Arc<dyn Unit>>, graph: Graph, logs: Arc<LogStore>) -> Arc<Self> {
         let (events, _) = broadcast::channel(1024);
+        let (profiles, _) = broadcast::channel(16);
         let entries = units
             .into_iter()
-            .map(|unit| {
-                let status = UnitStatus {
-                    name: unit.name().to_owned(),
-                    kind: unit.kind(),
-                    origin: unit.origin(),
-                    state: UnitState::Stopped,
-                    since: Utc::now(),
-                };
-                let entry = Entry {
-                    unit,
-                    status: Mutex::new(status),
-                    task: Mutex::new(None),
-                    control: AsyncMutex::new(()),
-                };
-                (entry.unit.name().to_owned(), entry)
-            })
+            .map(|unit| (unit.name().to_owned(), Arc::new(Entry::new(unit))))
             .collect();
         Arc::new(Self {
-            entries,
-            graph,
+            entries: RwLock::new(entries),
+            graph: RwLock::new(Arc::new(graph)),
             logs,
             events,
+            profile: Mutex::new(String::new()),
+            profiles,
+            switching: AsyncMutex::new(()),
             closing: AtomicBool::new(false),
         })
     }
@@ -136,17 +160,33 @@ impl Supervisor {
         self.events.subscribe()
     }
 
+    pub fn profile(&self) -> String {
+        lock(&self.profile).clone()
+    }
+
+    pub fn set_profile(&self, name: &str) {
+        name.clone_into(&mut lock(&self.profile));
+        let _ = self.profiles.send(name.to_owned());
+    }
+
+    pub fn subscribe_profile(&self) -> broadcast::Receiver<String> {
+        self.profiles.subscribe()
+    }
+
     pub fn status(&self) -> Vec<UnitStatus> {
-        self.graph
+        let graph = self.graph();
+        let entries = read(&self.entries);
+        graph
             .start_order()
             .iter()
-            .filter_map(|name| self.entries.get(name))
+            .filter_map(|name| entries.get(name))
             .map(|entry| lock(&entry.status).clone())
             .collect()
     }
 
     pub async fn start_all(self: &Arc<Self>) {
-        for name in self.graph.start_order() {
+        let graph = self.graph();
+        for name in graph.start_order() {
             // Fails only once shutdown began, when nothing should start anyway.
             let _ = self.start(name).await;
         }
@@ -163,23 +203,31 @@ impl Supervisor {
         if running {
             return Ok(());
         }
-        self.spawn_lifecycle(name, entry).await
+        self.spawn_lifecycle(&entry).await
     }
 
     pub async fn stop(&self, name: &str) -> Result<(), SupervisorError> {
         let entry = self.entry(name)?;
         let _control = entry.control.lock().await;
-        self.stop_entry(entry).await;
+        self.stop_entry(&entry).await;
         Ok(())
     }
 
     pub async fn stop_all(&self) {
         self.closing.store(true, Ordering::SeqCst);
-        for name in self.graph.start_order().iter().rev() {
-            if let Some(entry) = self.entries.get(name) {
-                let _control = entry.control.lock().await;
-                self.stop_entry(entry).await;
-            }
+        let graph = self.graph();
+        let affected: Vec<Arc<Entry>> = {
+            let entries = read(&self.entries);
+            graph
+                .start_order()
+                .iter()
+                .rev()
+                .filter_map(|name| entries.get(name).map(Arc::clone))
+                .collect()
+        };
+        for entry in affected {
+            let _control = entry.control.lock().await;
+            self.stop_entry(&entry).await;
         }
     }
 
@@ -189,44 +237,121 @@ impl Supervisor {
         name: &str,
         cascade: bool,
     ) -> Result<(), SupervisorError> {
-        let entry = self.entry(name)?;
+        self.entry(name)?;
+        let graph = self.graph();
         let dependents = if cascade {
-            self.graph.transitive_dependents(name)
+            graph.transitive_dependents(name)
         } else {
             Vec::new()
         };
-        // Taking several control locks only ever in start order rules out deadlocks.
-        let mut guards = Vec::with_capacity(dependents.len() + 1);
-        let affected = self
-            .graph
-            .start_order()
+        let affected: Vec<(&String, Arc<Entry>)> = {
+            let entries = read(&self.entries);
+            graph
+                .start_order()
+                .iter()
+                .filter(|unit| *unit == name || dependents.contains(unit))
+                .filter_map(|unit| entries.get(unit).map(|entry| (unit, Arc::clone(entry))))
+                .collect()
+        };
+        let Some(entry) = affected
             .iter()
-            .filter(|unit| *unit == name || dependents.contains(unit))
-            .filter_map(|unit| self.entries.get(unit));
-        for entry in affected {
+            .find(|(unit, _)| *unit == name)
+            .map(|(_, entry)| Arc::clone(entry))
+        else {
+            return Err(SupervisorError::UnknownUnit(name.to_owned()));
+        };
+        let dependents: Vec<&Arc<Entry>> = affected
+            .iter()
+            .filter(|(unit, _)| *unit != name)
+            .map(|(_, entry)| entry)
+            .collect();
+        // Taking several control locks only ever in start order rules out deadlocks.
+        let mut guards = Vec::with_capacity(affected.len());
+        for (_, entry) in &affected {
             guards.push(entry.control.lock().await);
         }
         if self.is_closing() {
             return Err(SupervisorError::ShuttingDown);
         }
         for dependent in dependents.iter().rev() {
-            if let Some(dependent) = self.entries.get(dependent) {
-                self.stop_entry(dependent).await;
-            }
+            self.stop_entry(dependent).await;
         }
-        self.stop_entry(entry).await;
-        self.spawn_lifecycle(name, entry).await?;
-        for dependent in &dependents {
-            if let Some(entry) = self.entries.get(dependent) {
-                self.spawn_lifecycle(dependent, entry).await?;
-            }
+        self.stop_entry(&entry).await;
+        self.spawn_lifecycle(&entry).await?;
+        for dependent in dependents {
+            self.spawn_lifecycle(dependent).await?;
         }
         Ok(())
     }
 
-    fn entry(&self, name: &str) -> Result<&Entry, SupervisorError> {
-        self.entries
+    /// Stops units the new profile drops, restarts those whose definition changed, starts
+    /// new ones; everything else keeps running. Failed units are started again.
+    pub async fn apply(
+        self: &Arc<Self>,
+        profile: &str,
+        units: Vec<Arc<dyn Unit>>,
+        graph: Graph,
+    ) -> Result<ProfileChange, SupervisorError> {
+        let _switching = self.switching.lock().await;
+        if self.is_closing() {
+            return Err(SupervisorError::ShuttingDown);
+        }
+        let old_graph = self.graph();
+        let current = read(&self.entries).clone();
+        let incoming: BTreeMap<String, Arc<dyn Unit>> = units
+            .into_iter()
+            .map(|unit| (unit.name().to_owned(), unit))
+            .collect();
+        let mut change = ProfileChange {
+            profile: profile.to_owned(),
+            ..ProfileChange::default()
+        };
+        for name in old_graph.start_order().iter().rev() {
+            let Some(entry) = current.get(name) else {
+                continue;
+            };
+            let kept = incoming
+                .get(name)
+                .is_some_and(|unit| unit.definition() == entry.unit.definition());
+            if kept {
+                continue;
+            }
+            let _control = entry.control.lock().await;
+            self.stop_entry(entry).await;
+            entry.retired.store(true, Ordering::SeqCst);
+            if incoming.contains_key(name) {
+                change.restarted.push(name.clone());
+            } else {
+                change.stopped.push(name.clone());
+            }
+        }
+        let mut entries = BTreeMap::new();
+        for (name, unit) in incoming {
+            let entry = match current.get(&name) {
+                Some(entry) if entry.unit.definition() == unit.definition() => Arc::clone(entry),
+                Some(_) => Arc::new(Entry::new(unit)),
+                None => {
+                    change.started.push(name.clone());
+                    Arc::new(Entry::new(unit))
+                }
+            };
+            entries.insert(name, entry);
+        }
+        *write(&self.entries) = entries;
+        *write(&self.graph) = Arc::new(graph);
+        self.set_profile(profile);
+        self.start_all().await;
+        Ok(change)
+    }
+
+    fn graph(&self) -> Arc<Graph> {
+        Arc::clone(&read(&self.graph))
+    }
+
+    fn entry(&self, name: &str) -> Result<Arc<Entry>, SupervisorError> {
+        read(&self.entries)
             .get(name)
+            .map(Arc::clone)
             .ok_or_else(|| SupervisorError::UnknownUnit(name.to_owned()))
     }
 
@@ -236,11 +361,7 @@ impl Supervisor {
 
     /// The caller holds `entry.control`. Checking `closing` under that lock guarantees that
     /// `stop_all` either sees the new lifecycle or no lifecycle is spawned.
-    async fn spawn_lifecycle(
-        self: &Arc<Self>,
-        name: &str,
-        entry: &Entry,
-    ) -> Result<(), SupervisorError> {
+    async fn spawn_lifecycle(self: &Arc<Self>, entry: &Arc<Entry>) -> Result<(), SupervisorError> {
         if lock(&entry.task).is_some() {
             // A displaced lifecycle may still own a process; stop it instead of orphaning it.
             self.stop_entry(entry).await;
@@ -248,22 +369,24 @@ impl Supervisor {
         if self.is_closing() {
             return Err(SupervisorError::ShuttingDown);
         }
+        // The profile switch that retired the entry starts its successor, if there is one.
+        if entry.retired.load(Ordering::SeqCst) {
+            return Ok(());
+        }
         let this = Arc::clone(self);
-        let owned = name.to_owned();
+        let owned = Arc::clone(entry);
         let handle = tokio::spawn(async move { this.lifecycle(&owned).await });
         *lock(&entry.task) = Some(handle);
         Ok(())
     }
 
-    async fn lifecycle(&self, name: &str) {
-        let Some(entry) = self.entries.get(name) else {
-            return;
-        };
+    async fn lifecycle(&self, entry: &Entry) {
+        let name = entry.unit.name();
         // Subscribe before the first check so no dependency change slips through.
         let mut events = self.events.subscribe();
         loop {
-            let pending: Vec<String> = self
-                .graph
+            let graph = self.graph();
+            let pending: Vec<String> = graph
                 .dependencies(name)
                 .filter(|dep| !self.state_of(dep).is_some_and(|state| state.is_satisfied()))
                 .map(str::to_owned)
@@ -312,7 +435,7 @@ impl Supervisor {
     }
 
     fn state_of(&self, name: &str) -> Option<UnitState> {
-        self.entries
+        read(&self.entries)
             .get(name)
             .map(|entry| lock(&entry.status).state.clone())
     }
@@ -618,5 +741,126 @@ mod tests {
         settle(&sup, all_satisfied).await;
 
         assert_eq!(journal.entries(), ["start db", "stop db", "start db"]);
+    }
+
+    fn graph_of(edges: &[(&str, &[&str])]) -> Graph {
+        Graph::new(edges.iter().map(|(unit, deps)| {
+            (
+                (*unit).to_owned(),
+                deps.iter().map(|d| (*d).to_owned()).collect::<Vec<_>>(),
+            )
+        }))
+        .unwrap()
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn apply_stops_dropped_units_restarts_changed_ones_and_starts_new_ones() {
+        let journal = Journal::default();
+        let sup = setup(
+            vec![
+                Arc::new(FakeUnit::service("db", &journal)),
+                Arc::new(FakeUnit::service("backend", &journal)),
+                Arc::new(FakeUnit::service("pgadmin", &journal)),
+            ],
+            &[("db", &[]), ("backend", &["db"]), ("pgadmin", &["db"])],
+        );
+        sup.set_profile("full");
+        sup.start_all().await;
+        settle(&sup, all_satisfied).await;
+        let before = journal.entries().len();
+
+        let units: Vec<Arc<dyn Unit>> = vec![
+            Arc::new(FakeUnit::service("db", &journal)),
+            Arc::new(FakeUnit::service("backend", &journal).defined_as("release")),
+            Arc::new(FakeUnit::oneshot("build-release", &journal)),
+        ];
+        let change = sup
+            .apply(
+                "prod-like",
+                units,
+                graph_of(&[
+                    ("db", &[]),
+                    ("build-release", &[]),
+                    ("backend", &["db", "build-release"]),
+                ]),
+            )
+            .await
+            .unwrap();
+        settle(&sup, all_satisfied).await;
+
+        assert_eq!(change.profile, "prod-like");
+        assert_eq!(change.stopped, ["pgadmin"]);
+        assert_eq!(change.restarted, ["backend"]);
+        assert_eq!(change.started, ["build-release"]);
+        let after: Vec<String> = journal.entries()[before..].to_vec();
+        assert!(!after.contains(&"stop db".to_owned()), "{after:?}");
+        assert!(!after.contains(&"start db".to_owned()), "{after:?}");
+        let mut names: Vec<String> = sup.status().into_iter().map(|s| s.name).collect();
+        names.sort();
+        assert_eq!(names, ["backend", "build-release", "db"]);
+        assert_eq!(sup.profile(), "prod-like");
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn profile_changes_are_announced() {
+        let journal = Journal::default();
+        let sup = setup(
+            vec![Arc::new(FakeUnit::service("db", &journal))],
+            &[("db", &[])],
+        );
+        let mut profiles = sup.subscribe_profile();
+        sup.apply(
+            "minimal",
+            vec![Arc::new(FakeUnit::service("db", &journal)) as Arc<dyn Unit>],
+            graph_of(&[("db", &[])]),
+        )
+        .await
+        .unwrap();
+        assert_eq!(profiles.recv().await.unwrap(), "minimal");
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn a_start_racing_a_switch_that_drops_the_unit_starts_nothing() {
+        let journal = Journal::default();
+        let sup = setup(
+            vec![
+                Arc::new(FakeUnit::service("db", &journal)),
+                Arc::new(FakeUnit::service("pgadmin", &journal).stop_after(Duration::from_secs(5))),
+            ],
+            &[("db", &[]), ("pgadmin", &[])],
+        );
+        sup.start_all().await;
+        settle(&sup, all_satisfied).await;
+
+        let switch = tokio::spawn({
+            let sup = Arc::clone(&sup);
+            let journal = journal.clone();
+            async move {
+                let units: Vec<Arc<dyn Unit>> = vec![Arc::new(FakeUnit::service("db", &journal))];
+                sup.apply("minimal", units, graph_of(&[("db", &[])])).await
+            }
+        });
+        tokio::time::sleep(Duration::from_secs(1)).await;
+        sup.start("pgadmin").await.unwrap();
+        switch.await.unwrap().unwrap();
+        tokio::time::sleep(Duration::from_secs(60)).await;
+
+        assert_eq!(
+            &journal.entries()[2..],
+            ["stop pgadmin"],
+            "the dropped unit must not be revived"
+        );
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn apply_refuses_while_shutting_down() {
+        let journal = Journal::default();
+        let sup = setup(
+            vec![Arc::new(FakeUnit::service("db", &journal))],
+            &[("db", &[])],
+        );
+        sup.stop_all().await;
+        let result = sup.apply("x", Vec::new(), graph_of(&[])).await;
+        assert_eq!(result, Err(SupervisorError::ShuttingDown));
     }
 }
