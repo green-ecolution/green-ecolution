@@ -132,7 +132,8 @@ impl Check for KeycloakTheme {
     }
 
     async fn diagnose(&self, env: &Env) -> Result<Vec<Finding>, String> {
-        if env.root.join(THEME_DIR).is_dir() {
+        // Docker creates the bind-mounted directory empty when it is missing.
+        if env.root.join(THEME_DIR).join("login").is_dir() {
             return Ok(Vec::new());
         }
         Ok(vec![
@@ -156,7 +157,9 @@ impl Check for ValhallaTiles {
     }
 
     async fn diagnose(&self, env: &Env) -> Result<Vec<Finding>, String> {
-        if env.root.join(TILES).is_file() {
+        let valhalla_not_in_session =
+            !env.units.is_empty() && !env.units.iter().any(|unit| unit.name == "valhalla");
+        if valhalla_not_in_session || env.root.join(TILES).is_file() {
             return Ok(Vec::new());
         }
         Ok(vec![
@@ -215,8 +218,14 @@ mod tests {
         time::{Duration, SystemTime},
     };
 
+    use chrono::Utc;
+
     use super::*;
-    use crate::doctor::{Check, Severity, fake::test_env};
+    use crate::{
+        doctor::{Check, Severity, fake::test_env},
+        supervisor::{UnitState, UnitStatus},
+        units::{Origin, UnitKind},
+    };
 
     fn at(secs: u64) -> SystemTime {
         SystemTime::UNIX_EPOCH + Duration::from_secs(1_700_000_000 + secs)
@@ -311,9 +320,34 @@ mod tests {
         assert!(tiles[0].fix.as_ref().unwrap().destructive);
 
         fs::create_dir_all(root.join(THEME_DIR)).unwrap();
+        assert_eq!(
+            ids(&KeycloakTheme, root).await.len(),
+            1,
+            "an empty directory Docker created for the bind mount is no theme"
+        );
+        fs::create_dir_all(root.join(THEME_DIR).join("login")).unwrap();
         touch(root, TILES, 1);
         assert!(ids(&KeycloakTheme, root).await.is_empty());
         assert!(ids(&ValhallaTiles, root).await.is_empty());
+    }
+
+    #[tokio::test]
+    async fn missing_tiles_matter_only_when_valhalla_is_part_of_the_session() {
+        let dir = tempfile::tempdir().unwrap();
+        let status = |name: &str| UnitStatus {
+            name: name.into(),
+            kind: UnitKind::Service,
+            origin: Origin::Compose,
+            state: UnitState::Ready,
+            since: Utc::now(),
+        };
+        let mut env = test_env(dir.path());
+
+        env.units = vec![status("db"), status("backend")];
+        assert!(ValhallaTiles.diagnose(&env).await.unwrap().is_empty());
+
+        env.units.push(status("valhalla"));
+        assert_eq!(ValhallaTiles.diagnose(&env).await.unwrap().len(), 1);
     }
 
     #[tokio::test]
