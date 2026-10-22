@@ -2,6 +2,7 @@ pub mod assemble;
 pub mod cli;
 pub mod config;
 pub mod graph;
+pub mod ipc;
 pub mod logs;
 pub mod paths;
 pub mod state;
