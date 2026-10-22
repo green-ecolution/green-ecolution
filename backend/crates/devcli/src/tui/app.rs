@@ -119,15 +119,18 @@ impl App {
             },
             Msg::Log(record) => {
                 let added = self.requests.observe(&record);
-                if self.logs.len() == LOG_CAPACITY {
-                    self.logs.pop_front();
-                }
+                let evicted = if self.logs.len() == LOG_CAPACITY {
+                    self.logs.pop_front()
+                } else {
+                    None
+                };
                 if self.scroll > 0 && self.matches(&record) {
                     self.scroll += 1;
                 }
                 self.logs.push_back(record);
-                // max_scroll() walks the whole buffer; a following view needs no clamping.
-                if self.scroll > 0 {
+                // max_scroll() walks the whole buffer; the match count only shrinks when a
+                // matching record fell off the front.
+                if self.scroll > 0 && evicted.is_some_and(|old| self.matches(&old)) {
                     self.scroll = self.scroll.min(self.max_scroll());
                 }
                 if added && self.mode == Mode::Requests && !self.requests.is_pinned() {
@@ -591,6 +594,38 @@ pub(crate) mod tests {
         }
         assert_eq!(app.logs.len(), LOG_CAPACITY);
         assert_eq!(app.logs[0].message, "1");
+    }
+
+    #[test]
+    fn evicting_a_non_matching_record_leaves_a_scrolled_view_alone() {
+        let mut app = app_with_two_units();
+        app.update(Msg::Log(record("backend", "oldest")));
+        for i in 1..LOG_CAPACITY {
+            app.update(Msg::Log(record("db", &i.to_string())));
+        }
+        app.update(key(KeyCode::Char('/')));
+        type_text(&mut app, "unit:db");
+        app.update(key(KeyCode::Enter));
+        app.update(key(KeyCode::Char('l')));
+        app.update(key(KeyCode::Char('k')));
+        let scroll = app.scroll;
+        let before: Vec<String> = app
+            .visible_logs(5)
+            .iter()
+            .map(|r| r.message.clone())
+            .collect();
+        assert!(scroll > 0);
+
+        app.update(Msg::Log(record("db", "new")));
+
+        assert_eq!(app.logs.len(), LOG_CAPACITY);
+        assert_eq!(app.scroll, scroll + 1);
+        let after: Vec<String> = app
+            .visible_logs(5)
+            .iter()
+            .map(|r| r.message.clone())
+            .collect();
+        assert_eq!(before, after);
     }
 
     fn type_text(app: &mut App, text: &str) {
