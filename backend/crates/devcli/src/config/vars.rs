@@ -8,6 +8,8 @@ pub enum VarError {
     Unclosed(String),
     #[error("cannot evaluate just variable `{name}`: {reason}")]
     Evaluate { name: String, reason: String },
+    #[error("`{0}` is not a just variable name")]
+    InvalidName(String),
 }
 
 pub trait VarSource {
@@ -48,6 +50,11 @@ impl JustVars {
 
 impl VarSource for JustVars {
     fn get(&self, name: &str) -> Result<String, VarError> {
+        // The name becomes an argument of `just`; `{{--dump}}` must not turn into a flag.
+        let valid = !name.is_empty() && name.chars().all(|c| c.is_ascii_alphanumeric() || c == '_');
+        if !valid {
+            return Err(VarError::InvalidName(name.to_owned()));
+        }
         if let Some(value) = lock(&self.cache).get(name) {
             return Ok(value.clone());
         }
@@ -118,6 +125,24 @@ mod tests {
             render("{{app_host", &vars()),
             Err(VarError::Unclosed(_))
         ));
+    }
+
+    #[test]
+    fn just_vars_reject_names_that_are_no_identifiers() {
+        let dir = tempfile::tempdir().unwrap();
+        let vars = JustVars::new(dir.path().to_path_buf());
+
+        for name in ["--dump", "-l", "a b", "x;y", ""] {
+            assert_eq!(
+                vars.get(name),
+                Err(VarError::InvalidName(name.to_owned())),
+                "{name:?}"
+            );
+        }
+        assert_eq!(
+            render("{{--dump}}", &vars),
+            Err(VarError::InvalidName("--dump".to_owned()))
+        );
     }
 
     #[test]
