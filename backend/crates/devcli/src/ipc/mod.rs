@@ -124,6 +124,12 @@ mod tests {
     }
 
     async fn fixture() -> Fixture {
+        fixture_with(|tasks| tasks).await
+    }
+
+    async fn fixture_with(
+        customize: impl FnOnce(crate::tasks::Tasks) -> crate::tasks::Tasks,
+    ) -> Fixture {
         let dir = tempfile::tempdir().unwrap();
         let socket = dir.path().join("geco.sock");
         let units: Vec<Arc<dyn Unit>> =
@@ -132,7 +138,7 @@ mod tests {
         let supervisor = Supervisor::new(units, graph, LogStore::new(100));
         let shutdown = CancellationToken::new();
         let listener = UnixListener::bind(&socket).unwrap();
-        let tasks = Arc::new(
+        let tasks = Arc::new(customize(
             crate::tasks::Tasks::new(
                 dir.path().to_path_buf(),
                 crate::state::ProcessRegistry::in_memory(),
@@ -142,7 +148,7 @@ mod tests {
                 crate::tasks::catalog::tests::DUMP.to_owned(),
             )))
             .with_program("echo"),
-        );
+        ));
         let doctor = crate::doctor::service::Doctor::new(
             vec![
                 crate::doctor::fake::FakeCheck::new("ports")
@@ -532,15 +538,13 @@ mod tests {
             .await
             .unwrap();
     }
-    #[tokio::test]
-    async fn other_protocol_versions_are_rejected() {
-        let f = fixture().await;
+    async fn raw_request(f: &Fixture, request: &str) -> Reply {
         let stream = UnixStream::connect(f.dir.path().join("geco.sock"))
             .await
             .unwrap();
         let (read, mut write) = stream.into_split();
         write
-            .write_all(b"{\"v\":99,\"call\":{\"method\":\"status\"}}\n")
+            .write_all(format!("{request}\n").as_bytes())
             .await
             .unwrap();
         let line = BufReader::new(read)
@@ -549,32 +553,125 @@ mod tests {
             .await
             .unwrap()
             .unwrap();
+        serde_json::from_str(&line).unwrap()
+    }
 
-        let reply: Reply = serde_json::from_str(&line).unwrap();
+    #[tokio::test]
+    async fn other_protocol_versions_are_rejected() {
+        let f = fixture().await;
+        let reply = raw_request(&f, r#"{"v":99,"call":{"method":"status"}}"#).await;
         assert!(
             matches!(reply, Reply::Error(message) if message.contains("protocol version 99") && message.contains("geco down"))
         );
     }
 
     #[tokio::test]
+    async fn unknown_methods_are_judged_by_the_protocol_version_first() {
+        let f = fixture().await;
+        let reply = raw_request(&f, r#"{"v":99,"call":{"method":"frobnicate"}}"#).await;
+        assert!(
+            matches!(&reply, Reply::Error(message) if message.contains("protocol version 99")),
+            "{reply:?}"
+        );
+        let reply = raw_request(
+            &f,
+            &format!(r#"{{"v":{PROTOCOL_VERSION},"call":{{"method":"frobnicate"}}}}"#),
+        )
+        .await;
+        assert!(
+            matches!(&reply, Reply::Error(message) if message.starts_with("invalid request: ")),
+            "{reply:?}"
+        );
+    }
+
+    /// Blocks in `dump` until the test opens it, like a slow `just --dump`.
+    struct GatedRecipes {
+        entered: tokio::sync::mpsc::UnboundedSender<()>,
+        gate: std::sync::Mutex<std::sync::mpsc::Receiver<()>>,
+    }
+
+    impl crate::tasks::RecipeSource for GatedRecipes {
+        fn dump(&self) -> Result<String, crate::tasks::CatalogError> {
+            let _ = self.entered.send(());
+            self.gate
+                .lock()
+                .unwrap()
+                .recv_timeout(Duration::from_secs(5))
+                .map_err(|_| crate::tasks::CatalogError::Just("the gate stayed shut".into()))?;
+            Ok(crate::tasks::catalog::tests::DUMP.to_owned())
+        }
+    }
+
+    #[tokio::test]
+    async fn a_slow_recipe_listing_does_not_stall_other_calls() {
+        let (entered_tx, mut entered) = tokio::sync::mpsc::unbounded_channel();
+        let (open, gate) = std::sync::mpsc::channel();
+        let f = fixture_with(|tasks| {
+            tasks.with_recipes(Arc::new(GatedRecipes {
+                entered: entered_tx,
+                gate: std::sync::Mutex::new(gate),
+            }))
+        })
+        .await;
+        let recipes = tokio::spawn({
+            let client = f.client.clone();
+            async move { client.call(Call::Recipes).await }
+        });
+        entered.recv().await.unwrap();
+
+        let status =
+            tokio::time::timeout(Duration::from_secs(2), f.client.call(Call::Status)).await;
+        open.send(()).unwrap();
+
+        assert!(matches!(status, Ok(Ok(Reply::Status(_)))), "{status:?}");
+        let recipes = recipes.await.unwrap();
+        assert!(matches!(recipes, Ok(Reply::Recipes(_))), "{recipes:?}");
+    }
+
+    #[tokio::test]
+    async fn a_lagging_run_stream_says_how_many_lines_it_skipped() {
+        let f = fixture_with(|tasks| tasks.with_program("sleep 0.3; echo")).await;
+        let mut stream = f
+            .client
+            .open(Call::Run {
+                recipe: "migrate-up".into(),
+                args: Vec::new(),
+                confirmed: false,
+            })
+            .await
+            .unwrap();
+        let Some(Reply::Log(first)) = stream.next().await.unwrap() else {
+            panic!("expected the command line");
+        };
+        assert_eq!(first.message, "$ sleep 0.3; echo migrate-up");
+        for line in 0..5000 {
+            f.supervisor.logs().push(parse_line(
+                "migrate-up",
+                LogFormat::Plain,
+                &format!("line {line}"),
+                Utc::now(),
+            ));
+        }
+
+        let mut messages = Vec::new();
+        loop {
+            match stream.next().await.unwrap() {
+                Some(Reply::Log(record)) => messages.push(record.message),
+                Some(Reply::Done) => break,
+                other => panic!("unexpected reply {other:?}"),
+            }
+        }
+        let skipped = messages
+            .iter()
+            .find(|message| message.contains("lines skipped"))
+            .expect("the gap is reported");
+        assert!(skipped.ends_with("see `geco logs migrate-up`"), "{skipped}");
+    }
+
+    #[tokio::test]
     async fn shutdown_is_honoured_across_protocol_versions() {
         let f = fixture().await;
-        let stream = UnixStream::connect(f.dir.path().join("geco.sock"))
-            .await
-            .unwrap();
-        let (read, mut write) = stream.into_split();
-        write
-            .write_all(b"{\"v\":99,\"call\":{\"method\":\"shutdown\"}}\n")
-            .await
-            .unwrap();
-        let line = BufReader::new(read)
-            .lines()
-            .next_line()
-            .await
-            .unwrap()
-            .unwrap();
-
-        let reply: Reply = serde_json::from_str(&line).unwrap();
+        let reply = raw_request(&f, r#"{"v":99,"call":{"method":"shutdown"}}"#).await;
         assert!(matches!(reply, Reply::Done));
         tokio::time::timeout(Duration::from_secs(5), f.shutdown.cancelled())
             .await

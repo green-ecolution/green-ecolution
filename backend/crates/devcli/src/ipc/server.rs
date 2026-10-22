@@ -1,4 +1,4 @@
-use std::{io, time::Duration};
+use std::{io, sync::Arc, time::Duration};
 
 use chrono::Utc;
 use tokio::{
@@ -8,13 +8,24 @@ use tokio::{
 };
 use tokio_util::sync::CancellationToken;
 
-use super::{Call, PROTOCOL_VERSION, Reply, Request, Services};
+use serde::Deserialize;
+
+use super::{Call, PROTOCOL_VERSION, Reply, Services};
 use crate::{
+    config::LogFormat,
     doctor::service::Doctor,
-    logs::Filter,
+    logs::{Filter, parse_line},
     supervisor::{Supervisor, SupervisorError},
-    tasks::Tasks,
+    tasks::{TaskError, Tasks},
 };
+
+/// The call is parsed only once the version matches, so a client of another version always
+/// learns about the mismatch, whatever it called.
+#[derive(Deserialize)]
+struct Envelope {
+    v: u32,
+    call: serde_json::Value,
+}
 
 pub async fn serve(listener: UnixListener, services: Services, shutdown: CancellationToken) {
     loop {
@@ -44,28 +55,32 @@ async fn handle(
     let Some(line) = BufReader::new(read).lines().next_line().await? else {
         return Ok(());
     };
-    let request = match serde_json::from_str::<Request>(&line) {
-        Ok(request) if request.v == PROTOCOL_VERSION => request,
+    let envelope = match serde_json::from_str::<Envelope>(&line) {
+        Ok(envelope) => envelope,
+        Err(err) => return send(&mut write, &invalid(&err)).await,
+    };
+    if envelope.v != PROTOCOL_VERSION {
         // A newer client must still be able to stop an older supervisor.
-        Ok(Request {
-            call: Call::Shutdown,
-            ..
-        }) => {
+        if envelope
+            .call
+            .get("method")
+            .and_then(serde_json::Value::as_str)
+            == Some("shutdown")
+        {
             let _ = send(&mut write, &Reply::Done).await;
             shutdown.cancel();
             return Ok(());
         }
-        Ok(request) => {
-            let message = format!(
-                "protocol version {} is not supported; this supervisor speaks {PROTOCOL_VERSION}; \
-                 restart geco with matching versions (stop the running supervisor with `geco down`)",
-                request.v
-            );
-            return send(&mut write, &Reply::Error(message)).await;
-        }
-        Err(err) => {
-            return send(&mut write, &Reply::Error(format!("invalid request: {err}"))).await;
-        }
+        let message = format!(
+            "protocol version {} is not supported; this supervisor speaks {PROTOCOL_VERSION}; \
+             restart geco with matching versions (stop the running supervisor with `geco down`)",
+            envelope.v
+        );
+        return send(&mut write, &Reply::Error(message)).await;
+    }
+    let call = match serde_json::from_value::<Call>(envelope.call) {
+        Ok(call) => call,
+        Err(err) => return send(&mut write, &invalid(&err)).await,
     };
     let Services {
         supervisor,
@@ -73,7 +88,7 @@ async fn handle(
         profiles,
         tasks,
     } = services;
-    match request.call {
+    match call {
         Call::Status => send(&mut write, &Reply::Status(supervisor.status())).await,
         Call::Start { unit } => {
             let result = supervisor.start(&unit).await;
@@ -134,9 +149,9 @@ async fn handle(
             send(&mut write, &reply).await
         }
         Call::Recipes => {
-            let reply = match tasks.catalog() {
+            let reply = match blocking(&tasks, |tasks| tasks.catalog()).await {
                 Ok(catalog) => Reply::Recipes(catalog.recipes().cloned().collect()),
-                Err(err) => Reply::Error(err.to_string()),
+                Err(message) => Reply::Error(message),
             };
             send(&mut write, &reply).await
         }
@@ -148,18 +163,40 @@ async fn handle(
     }
 }
 
+fn invalid(err: &serde_json::Error) -> Reply {
+    Reply::Error(format!("invalid request: {err}"))
+}
+
+/// The catalog comes from `just --dump`, which must not hold up a runtime worker.
+async fn blocking<T: Send + 'static>(
+    tasks: &Arc<Tasks>,
+    read: impl FnOnce(&Tasks) -> Result<T, TaskError> + Send + 'static,
+) -> Result<T, String> {
+    let tasks = Arc::clone(tasks);
+    match tokio::task::spawn_blocking(move || read(&tasks)).await {
+        Ok(result) => result.map_err(|err| err.to_string()),
+        Err(err) => Err(format!("cannot read the recipes: {err}")),
+    }
+}
+
+fn skipped(unit: &str, lines: u64) -> Reply {
+    let message = format!("… {lines} lines skipped, see `geco logs {unit}`");
+    Reply::Log(parse_line(unit, LogFormat::Plain, &message, Utc::now()))
+}
+
 /// A client that hangs up only ends the stream; the task keeps running in the supervisor.
 async fn run_task(
     write: &mut OwnedWriteHalf,
-    tasks: &Tasks,
+    tasks: &Arc<Tasks>,
     supervisor: &Supervisor,
     recipe: &str,
     args: &[String],
     confirmed: bool,
 ) -> io::Result<()> {
-    let spec = match tasks.recipe(recipe, args) {
+    let (recipe, args) = (recipe.to_owned(), args.to_vec());
+    let spec = match blocking(tasks, move |tasks| tasks.recipe(&recipe, &args)).await {
         Ok(spec) => spec,
-        Err(err) => return send(write, &Reply::Error(err.to_string())).await,
+        Err(message) => return send(write, &Reply::Error(message)).await,
     };
     let unit = spec.name.clone();
     let mut live = supervisor.logs().subscribe();
@@ -170,7 +207,8 @@ async fn run_task(
             result = &mut run => break result,
             received = live.recv() => match received {
                 Ok(record) if record.unit == unit => send(write, &Reply::Log(record)).await?,
-                Ok(_) | Err(RecvError::Lagged(_)) => {}
+                Ok(_) => {}
+                Err(RecvError::Lagged(lines)) => send(write, &skipped(&unit, lines)).await?,
                 Err(RecvError::Closed) => break run.await,
             },
         }
@@ -179,7 +217,8 @@ async fn run_task(
     loop {
         match live.try_recv() {
             Ok(record) if record.unit == unit => send(write, &Reply::Log(record)).await?,
-            Ok(_) | Err(TryRecvError::Lagged(_)) => {}
+            Ok(_) => {}
+            Err(TryRecvError::Lagged(lines)) => send(write, &skipped(&unit, lines)).await?,
             Err(_) => break,
         }
     }
