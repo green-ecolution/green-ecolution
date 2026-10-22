@@ -7,6 +7,7 @@ use crossterm::event::{Event, EventStream, KeyEventKind};
 use futures::StreamExt;
 use ratatui::DefaultTerminal;
 use tokio::{sync::mpsc, time::MissedTickBehavior};
+use tokio_util::sync::CancellationToken;
 
 use self::app::{App, Effect, LOG_CAPACITY, Msg};
 use crate::{
@@ -29,8 +30,9 @@ pub async fn run(paths: &Paths, profile: Option<&str>) -> anyhow::Result<ExitCod
         .map(|h| h.warnings.clone())
         .unwrap_or_default();
     let registry = host.as_ref().map(|h| h.registry.clone());
+    let shutdown = host.as_ref().map(|h| h.shutdown.clone());
 
-    let result = run_terminal(&client, host.is_some(), registry, warnings).await;
+    let result = run_terminal(&client, shutdown, registry, warnings).await;
 
     if let Some(host) = host {
         // After a hangup stderr fails with EIO; eprintln! would panic and skip stop().
@@ -42,7 +44,7 @@ pub async fn run(paths: &Paths, profile: Option<&str>) -> anyhow::Result<ExitCod
 
 async fn run_terminal(
     client: &Client,
-    hosted: bool,
+    shutdown: Option<CancellationToken>,
     registry: Option<ProcessRegistry>,
     warnings: Vec<String>,
 ) -> anyhow::Result<()> {
@@ -56,18 +58,21 @@ async fn run_terminal(
             previous(info);
         }));
     }
-    let result = event_loop(&mut terminal, client, hosted, warnings).await;
+    let result = event_loop(&mut terminal, client, shutdown, warnings).await;
     // restore() reports its own failure with eprintln!, which panics once the terminal is gone.
     let _ = ratatui::try_restore();
     result
 }
 
+/// `shutdown` is the hosted supervisor's token, `None` when attached to another process.
 async fn event_loop(
     terminal: &mut DefaultTerminal,
     client: &Client,
-    hosted: bool,
+    shutdown: Option<CancellationToken>,
     warnings: Vec<String>,
 ) -> anyhow::Result<()> {
+    let hosted = shutdown.is_some();
+    let shutdown = shutdown.unwrap_or_default();
     let mut app = App::new(hosted);
     for warning in warnings {
         app.update(Msg::Flash(warning));
@@ -118,6 +123,8 @@ async fn event_loop(
                 continue;
             }
             () = &mut termination, if hosted => return Ok(()),
+            // `geco down` cancels the host; its units must stop without waiting for `q`.
+            () = shutdown.cancelled(), if hosted => Msg::HostStopped,
         };
         dirty = true;
         let key_pressed = matches!(msg, Msg::Key(_));

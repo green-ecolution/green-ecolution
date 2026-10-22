@@ -25,6 +25,8 @@ pub enum Msg {
     Flash(String),
     Tick,
     Disconnected,
+    /// The supervisor this TUI hosts was told to shut down.
+    HostStopped,
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -84,6 +86,7 @@ impl App {
                 self.disconnected = true;
                 self.flash = Some("the supervisor has stopped".to_owned());
             }
+            Msg::HostStopped => return Some(Effect::Quit),
         }
         None
     }
@@ -340,6 +343,15 @@ pub(crate) mod tests {
         app.update(key(KeyCode::PageUp));
         app.update(key(KeyCode::Char('G')));
         assert_eq!(app.visible_logs(1)[0].message, "3");
+    }
+
+    #[test]
+    fn a_stopped_host_quits_while_a_lost_connection_only_shows_it() {
+        let mut app = app_with_two_units();
+        assert_eq!(app.update(Msg::Disconnected), None);
+        assert!(app.disconnected);
+
+        assert_eq!(app.update(Msg::HostStopped), Some(Effect::Quit));
     }
 
     #[test]
