@@ -1,10 +1,13 @@
 use std::collections::VecDeque;
 
+use chrono::Utc;
+
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
+use super::input::{InputOutcome, LineInput};
 use crate::{
     ipc::Call,
-    logs::LogRecord,
+    logs::{Filter, LogRecord},
     supervisor::{UnitState, UnitStatus},
 };
 
@@ -54,6 +57,9 @@ pub struct App {
     pub selected: usize,
     pub focus: Pane,
     pub scope: LogScope,
+    pub filter: Filter,
+    pub filter_text: String,
+    pub input: Option<LineInput>,
     pub logs: VecDeque<LogRecord>,
     /// Lines between the bottom of the view and the newest matching line; 0 follows.
     pub scroll: usize,
@@ -70,6 +76,9 @@ impl App {
             selected: 0,
             focus: Pane::Units,
             scope: LogScope::All,
+            filter: Filter::default(),
+            filter_text: String::new(),
+            input: None,
             logs: VecDeque::new(),
             scroll: 0,
             hosted,
@@ -113,6 +122,14 @@ impl App {
     }
 
     fn on_key(&mut self, key: KeyEvent) -> Option<Effect> {
+        if let Some(input) = &mut self.input {
+            match input.handle(key) {
+                InputOutcome::Editing => {}
+                InputOutcome::Cancel => self.input = None,
+                InputOutcome::Submit(text) => self.apply_filter(&text),
+            }
+            return None;
+        }
         let ctrl = key.modifiers.contains(KeyModifiers::CONTROL);
         match key.code {
             KeyCode::Char('q') => return Some(Effect::Quit),
@@ -139,6 +156,7 @@ impl App {
             KeyCode::Home | KeyCode::Char('g') => self.scroll = self.max_scroll(),
             KeyCode::End | KeyCode::Char('G') => self.scroll = 0,
             KeyCode::Char('?') => self.show_help = !self.show_help,
+            KeyCode::Char('/') => self.input = Some(LineInput::new(&self.filter_text)),
             KeyCode::Char('r') => {
                 return self.call(|unit| Call::Restart {
                     unit,
@@ -205,13 +223,26 @@ impl App {
         self.units.get(self.selected)
     }
 
+    fn apply_filter(&mut self, text: &str) {
+        match text.parse::<Filter>() {
+            Ok(filter) => {
+                self.filter = filter;
+                self.filter_text = text.trim().to_owned();
+                self.input = None;
+                self.scroll = 0;
+            }
+            Err(err) => self.flash = Some(format!("invalid filter: {err}")),
+        }
+    }
+
     pub fn matches(&self, record: &LogRecord) -> bool {
-        match self.scope {
+        let in_scope = match self.scope {
             LogScope::All => true,
             LogScope::Selected => self
                 .selected_unit()
                 .is_some_and(|unit| unit.name == record.unit),
-        }
+        };
+        in_scope && self.filter.matches(record, Utc::now())
     }
 
     fn max_scroll(&self) -> usize {
@@ -483,5 +514,75 @@ pub(crate) mod tests {
         }
         assert_eq!(app.logs.len(), LOG_CAPACITY);
         assert_eq!(app.logs[0].message, "1");
+    }
+
+    fn type_text(app: &mut App, text: &str) {
+        for c in text.chars() {
+            app.update(key(KeyCode::Char(c)));
+        }
+    }
+
+    #[test]
+    fn slash_opens_a_filter_that_narrows_the_logs() {
+        let mut app = app_with_two_units();
+        app.update(Msg::Log(record("db", "ERROR broken")));
+        app.update(Msg::Log(record("db", "fine")));
+
+        app.update(key(KeyCode::Char('/')));
+        type_text(&mut app, "level:error q");
+        assert_eq!(
+            app.update(key(KeyCode::Char('q'))),
+            None,
+            "keys go to the input"
+        );
+        app.update(key(KeyCode::Backspace));
+        app.update(key(KeyCode::Backspace));
+        app.update(key(KeyCode::Backspace));
+        app.update(key(KeyCode::Enter));
+
+        assert!(app.input.is_none());
+        assert_eq!(app.filter_text, "level:error");
+        let visible: Vec<&str> = app
+            .visible_logs(10)
+            .iter()
+            .map(|r| r.message.as_str())
+            .collect();
+        assert_eq!(visible, ["ERROR broken"]);
+    }
+
+    #[test]
+    fn an_invalid_filter_keeps_the_input_open() {
+        let mut app = app_with_two_units();
+        app.update(key(KeyCode::Char('/')));
+        type_text(&mut app, "level:loud");
+        app.update(key(KeyCode::Enter));
+
+        assert!(app.input.is_some());
+        assert!(
+            app.flash
+                .as_deref()
+                .unwrap()
+                .contains("unknown level `loud`")
+        );
+        assert!(app.filter.is_empty());
+    }
+
+    #[test]
+    fn escape_leaves_the_filter_unchanged_and_an_empty_one_clears_it() {
+        let mut app = app_with_two_units();
+        app.update(key(KeyCode::Char('/')));
+        type_text(&mut app, "unit:db");
+        app.update(key(KeyCode::Enter));
+
+        app.update(key(KeyCode::Char('/')));
+        app.update(key(KeyCode::Backspace));
+        app.update(key(KeyCode::Esc));
+        assert_eq!(app.filter_text, "unit:db");
+
+        app.update(key(KeyCode::Char('/')));
+        app.update(ctrl(KeyCode::Char('u')));
+        app.update(key(KeyCode::Enter));
+        assert!(app.filter.is_empty());
+        assert_eq!(app.filter_text, "");
     }
 }

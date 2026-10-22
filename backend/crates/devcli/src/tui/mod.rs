@@ -1,4 +1,5 @@
 mod app;
+mod input;
 mod view;
 
 use std::{io::Write, process::ExitCode, time::Duration};

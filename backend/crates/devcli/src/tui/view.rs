@@ -155,9 +155,19 @@ fn log_line(record: &LogRecord, show_unit: bool) -> Line<'_> {
 }
 
 fn draw_status(frame: &mut Frame, area: Rect, app: &App, now: DateTime<Utc>) {
+    if let Some(input) = &app.input {
+        frame.render_widget(Paragraph::new(format!("/{}", input.text())), area);
+        frame.set_cursor_position(Position::new(
+            area.x
+                .saturating_add(1)
+                .saturating_add(input.cursor_column()),
+            area.y,
+        ));
+        return;
+    }
     let text = if app.show_help {
         "q quit · h/l pane · j/k select or scroll · ^u/^d half page · g/G oldest/follow · \
-         Enter unit logs · Tab all/selected · r restart · R restart with dependents · s start/stop"
+         Enter unit logs · Tab all/selected · / filter · r restart · R restart with dependents · s start/stop"
             .to_owned()
     } else {
         let ready = app.units.iter().filter(|u| u.state.is_satisfied()).count();
@@ -170,6 +180,9 @@ fn draw_status(frame: &mut Frame, area: Rect, app: &App, now: DateTime<Utc>) {
                 unit.state,
                 theme::ago(unit.since, now)
             ));
+        }
+        if !app.filter_text.is_empty() {
+            parts.push(format!("filter: {}", app.filter_text));
         }
         if let Some(flash) = &app.flash {
             parts.push(flash.clone());
@@ -278,5 +291,24 @@ mod tests {
         assert_eq!(pane_at(area, 31, 2), Some(Pane::Units));
         assert_eq!(pane_at(area, 32, 2), Some(Pane::Logs));
         assert_eq!(pane_at(area, 5, 9), None);
+    }
+
+    #[test]
+    fn the_status_line_shows_the_input_and_then_the_active_filter() {
+        let mut app = App::new(false);
+        app.update(Msg::Key(KeyEvent::new(
+            KeyCode::Char('/'),
+            KeyModifiers::NONE,
+        )));
+        for c in "unit:db".chars() {
+            app.update(Msg::Key(KeyEvent::new(
+                KeyCode::Char(c),
+                KeyModifiers::NONE,
+            )));
+        }
+        assert!(render(&app).lines().last().unwrap().starts_with("/unit:db"));
+
+        app.update(Msg::Key(KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE)));
+        assert!(render(&app).contains("filter: unit:db"));
     }
 }
