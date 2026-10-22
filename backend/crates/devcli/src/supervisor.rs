@@ -246,6 +246,30 @@ impl Supervisor {
         Ok(outcome.await.unwrap_or(TaskOutcome::Stopped))
     }
 
+    /// The caller holds `entry.control`. Spawns only while `entry` is still the one listed under
+    /// `name`, so a run is never started that stop, status and stop_all cannot see.
+    fn respawn_task(
+        self: &Arc<Self>,
+        name: &str,
+        entry: &Arc<Entry>,
+        only_if_idle: bool,
+    ) -> Result<(), SupervisorError> {
+        let tasks = lock(&self.tasks);
+        if self.is_closing() {
+            return Err(SupervisorError::ShuttingDown);
+        }
+        match tasks.get(name) {
+            Some(current) if Arc::ptr_eq(current, entry) => {
+                if !(only_if_idle && is_running(entry)) {
+                    self.spawn_task(entry, None);
+                }
+                Ok(())
+            }
+            Some(_) => Ok(()),
+            None => Err(SupervisorError::UnknownUnit(name.to_owned())),
+        }
+    }
+
     fn task(&self, name: &str) -> Option<Arc<Entry>> {
         lock(&self.tasks).get(name).map(Arc::clone)
     }
@@ -324,10 +348,7 @@ impl Supervisor {
             if self.is_closing() {
                 return Err(SupervisorError::ShuttingDown);
             }
-            if !is_running(&entry) {
-                self.spawn_task(&entry, None);
-            }
-            return Ok(());
+            return self.respawn_task(name, &entry, true);
         }
         let entry = self.entry(name)?;
         let _control = entry.control.lock().await;
@@ -390,8 +411,7 @@ impl Supervisor {
                 return Err(SupervisorError::ShuttingDown);
             }
             self.stop_entry(&entry).await;
-            self.spawn_task(&entry, None);
-            return Ok(());
+            return self.respawn_task(name, &entry, false);
         }
         for attempt in 1..=RESOLVE_ATTEMPTS {
             let topology = self.topology();
@@ -1222,6 +1242,14 @@ mod tests {
         let journal = Journal::default();
         let sup = db_only(&journal);
         let mut events = sup.subscribe();
+        let mut watcher = sup.subscribe();
+        let seen_at_done = tokio::spawn({
+            let sup = Arc::clone(&sup);
+            async move {
+                while watcher.recv().await.unwrap().state != UnitState::Done {}
+                names(&sup)
+            }
+        });
 
         let outcome = sup
             .run_task(Arc::new(
@@ -1239,6 +1267,7 @@ mod tests {
         );
         assert_eq!(starting.state, UnitState::Starting);
         assert_eq!(events.recv().await.unwrap().state, UnitState::Done);
+        assert_eq!(seen_at_done.await.unwrap(), ["db"]);
     }
 
     #[tokio::test(start_paused = true)]
@@ -1355,6 +1384,7 @@ mod tests {
         sup.stop_all().await;
 
         assert_eq!(run.await.unwrap(), Ok(TaskOutcome::Stopped));
+        assert!(journal.entries().contains(&"stop seed".to_owned()));
         assert_eq!(
             sup.run_task(Arc::new(FakeUnit::oneshot("x", &journal).as_task()))
                 .await,
@@ -1387,5 +1417,47 @@ mod tests {
 
         assert_eq!(run.await.unwrap(), Ok(TaskOutcome::Done));
         assert!(!journal.entries().contains(&"stop seed".to_owned()));
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn restarting_a_task_replaced_meanwhile_starts_no_untracked_run() {
+        let journal = Journal::default();
+        let sup = db_only(&journal);
+        let failing = FakeUnit::oneshot("lint", &journal)
+            .failing("exit 1")
+            .stop_after(Duration::from_secs(5))
+            .as_task();
+        sup.run_task(Arc::new(failing)).await.unwrap();
+
+        let restart = tokio::spawn({
+            let sup = Arc::clone(&sup);
+            async move { sup.restart("lint", false).await }
+        });
+        tokio::time::sleep(Duration::from_secs(1)).await;
+        let replacement = tokio::spawn({
+            let sup = Arc::clone(&sup);
+            let journal = journal.clone();
+            async move {
+                let slow = FakeUnit::oneshot("lint", &journal).ready_after(Duration::from_secs(60));
+                sup.run_task(Arc::new(slow.as_task())).await
+            }
+        });
+        tokio::time::sleep(Duration::from_secs(10)).await;
+        restart.await.unwrap().unwrap();
+
+        let lint_runs =
+            |entries: Vec<String>| entries.iter().filter(|e| *e == "start lint").count();
+        assert_eq!(lint_runs(journal.entries()), 2);
+        assert_eq!(names(&sup), ["db", "lint"]);
+
+        sup.stop_all().await;
+        assert_eq!(replacement.await.unwrap(), Ok(TaskOutcome::Stopped));
+        assert_eq!(lint_runs(journal.entries()), 2);
+        let stops = journal
+            .entries()
+            .iter()
+            .filter(|e| *e == "stop lint")
+            .count();
+        assert_eq!(stops, 2);
     }
 }
