@@ -9,7 +9,7 @@ use super::{
     requests::Requests,
 };
 use crate::{
-    doctor::Finding,
+    doctor::{Finding, Severity},
     ipc::Call,
     logs::{Filter, LogRecord, trace::Trace},
     supervisor::{UnitState, UnitStatus},
@@ -354,15 +354,27 @@ impl App {
             .collect()
     }
 
+    /// The finding a unit's status line shows and `f` acts on: a fixable error first,
+    /// then any fixable one, then the worst.
+    pub fn unit_finding(&self, unit: &str) -> Option<&Finding> {
+        let all = self.unit_findings(unit);
+        all.iter()
+            .copied()
+            .find(|f| f.fix.is_some() && f.severity == Severity::Error)
+            .or_else(|| all.iter().copied().find(|f| f.fix.is_some()))
+            .or_else(|| {
+                all.iter()
+                    .copied()
+                    .reduce(|best, f| if f.severity > best.severity { f } else { best })
+            })
+    }
+
     fn ask_fix(&mut self) {
         let finding = match self.mode {
             Mode::Doctor => self.findings.get(self.finding_selected).cloned(),
-            _ => self.selected_unit().and_then(|unit| {
-                self.unit_findings(&unit.name)
-                    .into_iter()
-                    .find(|finding| finding.fix.is_some())
-                    .cloned()
-            }),
+            _ => self
+                .selected_unit()
+                .and_then(|unit| self.unit_finding(&unit.name).cloned()),
         };
         match finding {
             Some(finding) if finding.fix.is_some() => self.pending_fix = Some(finding),
@@ -420,7 +432,7 @@ pub(crate) mod tests {
     use super::*;
     use crate::{
         config::LogFormat,
-        doctor::{Fix, Severity},
+        doctor::Fix,
         logs::{
             parse_line,
             trace::{Trace, tests::finished_request},
@@ -916,7 +928,7 @@ pub(crate) mod tests {
         app.update(key(KeyCode::Char('f')));
         assert_eq!(
             app.flash.as_deref(),
-            Some("nothing to fix here"),
+            Some("this finding has no automatic fix"),
             "db has no fixable finding"
         );
 
@@ -939,5 +951,25 @@ pub(crate) mod tests {
         app.update(key(KeyCode::Char('j')));
         app.update(Msg::Findings(findings()[..1].to_vec()));
         assert_eq!(app.finding_selected, 0);
+    }
+
+    #[test]
+    fn the_status_finding_and_f_agree_on_the_fixable_error() {
+        let mut app = app_with_two_units();
+        app.update(Msg::Findings(vec![
+            Finding::new("hint", Severity::Hint, "just a hint").unit("db"),
+            Finding::new("broken", Severity::Error, "broken thing")
+                .unit("db")
+                .fix(Fix::just("repair")),
+        ]));
+        assert_eq!(
+            app.unit_finding("db").map(|f| f.id.as_str()),
+            Some("broken")
+        );
+        app.update(key(KeyCode::Char('f')));
+        assert_eq!(
+            app.pending_fix.as_ref().map(|f| f.id.as_str()),
+            Some("broken")
+        );
     }
 }

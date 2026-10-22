@@ -115,26 +115,26 @@ fn draw_units(frame: &mut Frame, area: Rect, app: &App, now: DateTime<Utc>) {
         .map(|unit| {
             let tone = theme::tone(&unit.state);
             let color = Style::new().fg(tone_color(tone));
-            let mut spans = vec![
+            let marker = match app
+                .unit_findings(&unit.name)
+                .iter()
+                .map(|finding| finding.severity)
+                .max()
+            {
+                Some(severity) => Span::styled(" ⚑", Style::new().fg(severity_style(severity).1)),
+                None => Span::raw("  "),
+            };
+            let spans = vec![
                 Span::styled(theme::symbol(tone), color),
-                Span::raw(format!(" {:<16} ", unit.name)),
+                Span::raw(format!(" {:<16}", unit.name)),
+                marker,
+                Span::raw(" "),
                 Span::styled(unit.state.short(), color),
                 Span::styled(
                     format!(" {}", theme::ago(unit.since, now)),
                     Style::new().fg(Color::DarkGray),
                 ),
             ];
-            let worst = app
-                .unit_findings(&unit.name)
-                .iter()
-                .map(|finding| finding.severity)
-                .max();
-            if let Some(severity) = worst {
-                spans.push(Span::styled(
-                    " ⚑",
-                    Style::new().fg(severity_style(severity).1),
-                ));
-            }
             ListItem::new(Line::from(spans))
         })
         .collect();
@@ -438,7 +438,7 @@ fn draw_status(frame: &mut Frame, area: Rect, app: &App, now: DateTime<Utc>) {
             ));
         }
         if let Some(unit) = app.selected_unit()
-            && let Some(finding) = app.unit_findings(&unit.name).first()
+            && let Some(finding) = app.unit_finding(&unit.name)
         {
             let action = if finding.fix.is_some() {
                 " · [f] fix"
@@ -696,5 +696,19 @@ mod tests {
                 .unwrap()
                 .starts_with("run `just migrate-up`? [y/N]")
         );
+    }
+
+    #[test]
+    fn the_marker_stays_visible_on_a_long_lived_failed_unit() {
+        let mut app = App::new(false);
+        let mut unit = status("backend", UnitState::Failed { reason: "x".into() });
+        unit.since = chrono::Utc::now() - chrono::Duration::seconds(15);
+        app.update(Msg::State(unit));
+        app.update(Msg::Findings(vec![
+            Finding::new("ports", Severity::Error, "port taken").unit("backend"),
+        ]));
+        let screen = render(&app);
+        let row = screen.lines().find(|l| l.contains("backend")).unwrap();
+        assert!(row.contains("⚑"), "{screen}");
     }
 }
