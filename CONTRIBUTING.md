@@ -96,7 +96,7 @@ The filter language combines terms with AND: `level>=warn`, `level:warn,error`,
 text, matched case-insensitively against the message. In the TUI, `/` opens the same filter
 and `t` lists the backend's requests next to the selected request's trace.
 
-`geco doctor` checks for the pitfalls described in this file: a dev database behind the
+`geco doctor` checks for known local-setup pitfalls: a dev database behind the
 migrations, a stale `migrate` binary, an outdated `.sqlx` cache, workspace packages built from
 an old `dist`, a missing or stale `domain-wasm/pkg`, testcontainer leftovers, the missing
 Keycloak theme or Valhalla tiles, missing tools and occupied ports. In the TUI, `d` lists the

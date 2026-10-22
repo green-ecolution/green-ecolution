@@ -9,7 +9,8 @@ use async_trait::async_trait;
 
 use crate::doctor::{Check, Env, Finding, Severity, Trigger};
 
-/// The ports the spec names, with the unit that needs each of them.
+/// The fixed host ports of the local stack (Postgres, Traefik, backend, Vite), each with the
+/// unit that binds it.
 const PORTS: [(u16, &str); 4] = [
     (5432, "db"),
     (3000, "reverse-proxy"),
