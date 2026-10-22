@@ -67,6 +67,8 @@ pub enum Command {
         #[arg(long)]
         cascade: bool,
     },
+    /// List the profiles, or switch the running supervisor to NAME
+    Profile { name: Option<String> },
     /// Start a stopped unit
     Start { unit: String },
     /// Stop a unit
@@ -106,6 +108,14 @@ mod tests {
             cli.command,
             Some(Command::Trace { request_id, json: true }) if request_id == "1c40b9b5"
         ));
+    }
+
+    #[test]
+    fn profile_takes_an_optional_name() {
+        let cli = Cli::try_parse_from(["geco", "profile"]).unwrap();
+        assert!(matches!(cli.command, Some(Command::Profile { name: None })));
+        let cli = Cli::try_parse_from(["geco", "profile", "full"]).unwrap();
+        assert!(matches!(cli.command, Some(Command::Profile { name: Some(n) }) if n == "full"));
     }
 
     #[test]

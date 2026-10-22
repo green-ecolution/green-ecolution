@@ -1,6 +1,7 @@
 mod doctor;
 mod fallback;
 mod output;
+mod profile;
 
 use std::{
     collections::BTreeSet,
@@ -49,6 +50,7 @@ pub async fn run(cli: Cli) -> anyhow::Result<ExitCode> {
         Some(Command::Restart { unit, cascade }) => {
             simple(&client, Call::Restart { unit, cascade }).await
         }
+        Some(Command::Profile { name }) => profile::profile(&paths, &client, name).await,
         Some(Command::Start { unit }) => simple(&client, Call::Start { unit }).await,
         Some(Command::Stop { unit }) => simple(&client, Call::Stop { unit }).await,
     }

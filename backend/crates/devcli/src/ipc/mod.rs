@@ -5,13 +5,23 @@ use serde::{Deserialize, Serialize};
 
 pub use client::{Client, IpcError, ReplyStream};
 
+use std::sync::Arc;
+
 use crate::{
-    doctor::{Finding, Report},
+    doctor::{Finding, Report, service::Doctor},
     logs::LogRecord,
-    supervisor::UnitStatus,
+    profiles::{ProfileList, Profiles},
+    supervisor::{ProfileChange, Supervisor, UnitStatus},
 };
 
-pub const PROTOCOL_VERSION: u32 = 3;
+pub const PROTOCOL_VERSION: u32 = 4;
+
+#[derive(Clone)]
+pub struct Services {
+    pub supervisor: Arc<Supervisor>,
+    pub doctor: Arc<Doctor>,
+    pub profiles: Arc<Profiles>,
+}
 
 /// One call per connection; clients that need several streams open several connections.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -47,6 +57,10 @@ pub enum Call {
         confirmed: bool,
     },
     SubscribeFindings,
+    Profiles,
+    SwitchProfile {
+        profile: String,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -65,6 +79,9 @@ pub enum Reply {
     Error(String),
     Report(Report),
     Findings(Vec<Finding>),
+    Profiles(ProfileList),
+    Switched(ProfileChange),
+    Profile(String),
 }
 
 #[cfg(test)]
@@ -120,10 +137,24 @@ mod tests {
             Arc::clone(&supervisor),
             crate::state::ProcessRegistry::in_memory(),
         );
+        std::fs::write(
+            dir.path().join("geco.toml"),
+            "[profile.minimal]\nunits = []\n[profile.full]\nunits = []\n",
+        )
+        .unwrap();
+        supervisor.set_profile("minimal");
+        let profiles = Arc::new(crate::profiles::Profiles::new(
+            dir.path().to_path_buf(),
+            crate::state::ProcessRegistry::in_memory(),
+            Arc::clone(&supervisor),
+        ));
         tokio::spawn(server::serve(
             listener,
-            Arc::clone(&supervisor),
-            Arc::clone(&doctor),
+            Services {
+                supervisor: Arc::clone(&supervisor),
+                doctor: Arc::clone(&doctor),
+                profiles,
+            },
             shutdown.clone(),
         ));
         Fixture {
@@ -294,6 +325,9 @@ mod tests {
     async fn state_subscriptions_start_with_the_current_states() {
         let f = fixture().await;
         let mut stream = f.client.open(Call::SubscribeState).await.unwrap();
+        let Some(Reply::Profile(_)) = stream.next().await.unwrap() else {
+            panic!("expected the active profile first");
+        };
 
         let Some(Reply::State(initial)) = stream.next().await.unwrap() else {
             panic!("expected the current state");
@@ -305,6 +339,35 @@ mod tests {
 
         assert_eq!(initial.state, UnitState::Stopped);
         assert_eq!(next.state, UnitState::Starting);
+    }
+
+    #[tokio::test]
+    async fn profiles_are_listed_and_announced_on_the_state_stream() {
+        let f = fixture().await;
+        let Reply::Profiles(list) = f.client.call(Call::Profiles).await.unwrap() else {
+            panic!("expected profiles");
+        };
+        assert_eq!(list.active, "minimal");
+        assert_eq!(list.available, ["full", "minimal"]);
+
+        let mut stream = f.client.open(Call::SubscribeState).await.unwrap();
+        let Some(Reply::Profile(active)) = stream.next().await.unwrap() else {
+            panic!("expected the active profile first");
+        };
+        assert_eq!(active, "minimal");
+    }
+
+    #[tokio::test]
+    async fn unknown_profiles_are_refused() {
+        let f = fixture().await;
+        let err = f
+            .client
+            .call(Call::SwitchProfile {
+                profile: "nope".into(),
+            })
+            .await
+            .unwrap_err();
+        assert!(matches!(err, IpcError::Remote(message) if message == "unknown profile `nope`"));
     }
 
     #[tokio::test]

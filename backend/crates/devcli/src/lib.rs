@@ -8,6 +8,7 @@ pub mod host;
 pub mod ipc;
 pub mod logs;
 pub mod paths;
+pub mod profiles;
 pub mod state;
 pub mod supervisor;
 pub mod sync;

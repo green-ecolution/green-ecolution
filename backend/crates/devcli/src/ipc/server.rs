@@ -1,4 +1,4 @@
-use std::{io, sync::Arc, time::Duration};
+use std::{io, time::Duration};
 
 use chrono::Utc;
 use tokio::{
@@ -8,19 +8,14 @@ use tokio::{
 };
 use tokio_util::sync::CancellationToken;
 
-use super::{Call, PROTOCOL_VERSION, Reply, Request};
+use super::{Call, PROTOCOL_VERSION, Reply, Request, Services};
 use crate::{
     doctor::service::Doctor,
     logs::Filter,
     supervisor::{Supervisor, SupervisorError},
 };
 
-pub async fn serve(
-    listener: UnixListener,
-    supervisor: Arc<Supervisor>,
-    doctor: Arc<Doctor>,
-    shutdown: CancellationToken,
-) {
+pub async fn serve(listener: UnixListener, services: Services, shutdown: CancellationToken) {
     loop {
         let accepted = tokio::select! {
             () = shutdown.cancelled() => return,
@@ -31,19 +26,17 @@ pub async fn serve(
             tokio::time::sleep(Duration::from_millis(100)).await;
             continue;
         };
-        let supervisor = Arc::clone(&supervisor);
-        let doctor = Arc::clone(&doctor);
+        let services = services.clone();
         let shutdown = shutdown.clone();
         tokio::spawn(async move {
-            let _ = handle(stream, supervisor, doctor, shutdown).await;
+            let _ = handle(stream, services, shutdown).await;
         });
     }
 }
 
 async fn handle(
     stream: UnixStream,
-    supervisor: Arc<Supervisor>,
-    doctor: Arc<Doctor>,
+    services: Services,
     shutdown: CancellationToken,
 ) -> io::Result<()> {
     let (read, mut write) = stream.into_split();
@@ -73,6 +66,11 @@ async fn handle(
             return send(&mut write, &Reply::Error(format!("invalid request: {err}"))).await;
         }
     };
+    let Services {
+        supervisor,
+        doctor,
+        profiles,
+    } = services;
     match request.call {
         Call::Status => send(&mut write, &Reply::Status(supervisor.status())).await,
         Call::Start { unit } => {
@@ -119,6 +117,20 @@ async fn handle(
             send(&mut write, &reply).await
         }
         Call::SubscribeFindings => stream_findings(&mut write, &doctor, &shutdown).await,
+        Call::Profiles => {
+            let reply = match profiles.list() {
+                Ok(list) => Reply::Profiles(list),
+                Err(err) => Reply::Error(err.to_string()),
+            };
+            send(&mut write, &reply).await
+        }
+        Call::SwitchProfile { profile } => {
+            let reply = match profiles.switch(&profile).await {
+                Ok(change) => Reply::Switched(change),
+                Err(err) => Reply::Error(err.to_string()),
+            };
+            send(&mut write, &reply).await
+        }
     }
 }
 
@@ -205,22 +217,34 @@ async fn stream_state(
     shutdown: &CancellationToken,
 ) -> io::Result<()> {
     let mut live = supervisor.subscribe();
+    let mut profiles = supervisor.subscribe_profile();
+    send(write, &Reply::Profile(supervisor.profile())).await?;
     for status in supervisor.status() {
         send(write, &Reply::State(status)).await?;
     }
     loop {
-        let received = tokio::select! {
+        tokio::select! {
             () = shutdown.cancelled() => return Ok(()),
-            received = live.recv() => received,
-        };
-        match received {
-            Ok(status) => send(write, &Reply::State(status)).await?,
-            Err(RecvError::Lagged(_)) => {
-                for status in supervisor.status() {
-                    send(write, &Reply::State(status)).await?;
+            received = live.recv() => match received {
+                Ok(status) => send(write, &Reply::State(status)).await?,
+                Err(RecvError::Lagged(_)) => {
+                    for status in supervisor.status() {
+                        send(write, &Reply::State(status)).await?;
+                    }
                 }
-            }
-            Err(RecvError::Closed) => return Ok(()),
+                Err(RecvError::Closed) => return Ok(()),
+            },
+            received = profiles.recv() => match received {
+                Ok(profile) => {
+                    send(write, &Reply::Status(supervisor.status())).await?;
+                    send(write, &Reply::Profile(profile)).await?;
+                }
+                Err(RecvError::Lagged(_)) => {
+                    send(write, &Reply::Status(supervisor.status())).await?;
+                    send(write, &Reply::Profile(supervisor.profile())).await?;
+                }
+                Err(RecvError::Closed) => return Ok(()),
+            },
         }
     }
 }

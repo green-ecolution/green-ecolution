@@ -9,10 +9,36 @@ use crate::{
         Level, LogRecord,
         trace::{self, Trace, TraceLineKind},
     },
-    supervisor::UnitStatus,
+    profiles::ProfileList,
+    supervisor::{ProfileChange, UnitStatus},
     theme::{self, Tone},
     units::Origin,
 };
+
+pub fn write_profile_list(out: &mut impl Write, list: &ProfileList) -> io::Result<()> {
+    for profile in &list.available {
+        let marker = if *profile == list.active { "* " } else { "  " };
+        writeln!(out, "{marker}{profile}")?;
+    }
+    Ok(())
+}
+
+pub fn write_profile_change(out: &mut impl Write, change: &ProfileChange) -> io::Result<()> {
+    writeln!(out, "switched to {}", change.profile)?;
+    for (label, units) in [
+        ("stopped", &change.stopped),
+        ("restarted", &change.restarted),
+        ("started", &change.started),
+    ] {
+        if !units.is_empty() {
+            writeln!(out, "  {label}: {}", units.join(", "))?;
+        }
+    }
+    for warning in &change.warnings {
+        writeln!(out, "  warning: {warning}")?;
+    }
+    Ok(())
+}
 
 const UNIT_COLORS: [AnsiColor; theme::UNIT_SLOTS] = [
     AnsiColor::Cyan,
@@ -286,6 +312,32 @@ mod report_tests {
         let mut buf = Vec::new();
         write(&mut buf).unwrap();
         strip_ansi(&String::from_utf8(buf).unwrap())
+    }
+
+    #[test]
+    fn profiles_mark_the_active_one_and_changes_list_what_happened() {
+        use crate::{profiles::ProfileList, supervisor::ProfileChange};
+
+        let list = ProfileList {
+            active: "full".into(),
+            available: vec!["full".into(), "minimal".into()],
+        };
+        assert_eq!(
+            rendered(|out| write_profile_list(out, &list)),
+            "* full\n  minimal\n"
+        );
+
+        let change = ProfileChange {
+            profile: "prod-like".into(),
+            stopped: vec!["pgadmin".into()],
+            restarted: vec!["backend".into(), "frontend".into()],
+            started: vec!["build-release".into()],
+            warnings: vec!["Docker is not reachable".into()],
+        };
+        assert_eq!(
+            rendered(|out| write_profile_change(out, &change)),
+            "switched to prod-like\n  stopped: pgadmin\n  restarted: backend, frontend\n  started: build-release\n  warning: Docker is not reachable\n"
+        );
     }
 
     #[test]

@@ -17,9 +17,10 @@ use crate::{
     assemble::{AssembleError, assemble},
     config::{ConfigError, GecoConfig, JustVars},
     doctor::{Env, checks, service::Doctor},
-    ipc,
+    ipc::{self, Services},
     logs::LogStore,
     paths::Paths,
+    profiles::Profiles,
     state::{InstanceLock, ProcessRegistry, describe_groups, orphaned_groups, stop_orphans},
     supervisor::Supervisor,
     units::{
@@ -81,6 +82,12 @@ impl Host {
             assembly.graph,
             LogStore::new(config.logs.capacity),
         );
+        supervisor.set_profile(profile);
+        let profiles = Arc::new(Profiles::new(
+            paths.root.clone(),
+            registry.clone(),
+            Arc::clone(&supervisor),
+        ));
         let doctor = Doctor::new(
             checks::all(),
             Env {
@@ -106,8 +113,11 @@ impl Host {
         let watcher = doctor.watch(shutdown.clone());
         let server = tokio::spawn(ipc::server::serve(
             listener,
-            Arc::clone(&supervisor),
-            Arc::clone(&doctor),
+            Services {
+                supervisor: Arc::clone(&supervisor),
+                doctor: Arc::clone(&doctor),
+                profiles,
+            },
             shutdown.clone(),
         ));
         supervisor.start_all().await;
