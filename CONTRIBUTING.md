@@ -69,6 +69,26 @@ For a reproducible environment, use `nix develop`.
 | `just bench` | Run the domain micro-benchmarks (Criterion) |
 | `just bench-check` | Execute every benchmark once without measuring; this is what CI runs |
 
+### geco (optional developer console)
+
+`geco` starts the local stack as one dependency graph (compose services plus the backend via
+bacon and the Vite dev server), merges their logs and shows them in a terminal UI. `just`
+stays the documented default; geco is a convenience on top of it and reads its recipes and
+variables from the justfile.
+
+```bash
+cargo install --path backend/crates/devcli --locked   # installs the `geco` binary
+geco                      # TUI; starts the default profile if nothing runs yet
+geco up [--detach]        # start without the TUI (foreground log stream, or in the background)
+geco status [--json]      # unit states; exit code 1 while a unit is not ready
+geco logs backend -f      # follow one or more units
+geco restart backend      # --cascade also restarts dependent units
+geco down                 # stop everything geco started
+```
+
+Units and profiles (`minimal`, `full`) are defined in `geco.toml` at the repository root.
+Runtime state lives in `.geco/` and is git-ignored. geco needs Linux or macOS.
+
 ### Benchmarks
 
 There are two separate tools, because the two questions they answer need
@@ -452,6 +472,8 @@ backend/                  Cargo workspace (Rust API)
                              Keycloak, MQTT, composition root). Uses `domain`
                              with the `sqlx` feature enabled. Produces the
                              `green-ecolution` and `migrate` binaries.
+    devcli/                  `geco` developer console (TUI + CLI); not part of
+                             any deployed artifact.
   migrations/                sqlx-managed SQL migrations (workspace root)
   seeds/                     SQL seed data
   config/                    YAML config (base, local, staging, demo, production)
