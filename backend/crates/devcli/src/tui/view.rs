@@ -1,4 +1,4 @@
-use chrono::{Local, Utc};
+use chrono::{DateTime, Local, Utc};
 use ratatui::{
     Frame,
     layout::{Constraint, Layout, Rect},
@@ -27,9 +27,10 @@ pub fn draw(frame: &mut Frame, app: &App) {
         Layout::vertical([Constraint::Min(3), Constraint::Length(1)]).areas(frame.area());
     let [units, logs] =
         Layout::horizontal([Constraint::Length(32), Constraint::Min(20)]).areas(main);
-    draw_units(frame, units, app);
+    let now = Utc::now();
+    draw_units(frame, units, app, now);
     draw_logs(frame, logs, app);
-    draw_status(frame, status, app);
+    draw_status(frame, status, app, now);
 }
 
 fn tone_color(tone: Tone) -> Color {
@@ -51,7 +52,7 @@ fn level_style(level: Level) -> Style {
     }
 }
 
-fn draw_units(frame: &mut Frame, area: Rect, app: &App) {
+fn draw_units(frame: &mut Frame, area: Rect, app: &App, now: DateTime<Utc>) {
     let items: Vec<ListItem> = app
         .units
         .iter()
@@ -62,6 +63,10 @@ fn draw_units(frame: &mut Frame, area: Rect, app: &App) {
                 Span::styled(theme::symbol(tone), color),
                 Span::raw(format!(" {:<18} ", unit.name)),
                 Span::styled(unit.state.short(), color),
+                Span::styled(
+                    format!(" {}", theme::ago(unit.since, now)),
+                    Style::new().fg(Color::DarkGray),
+                ),
             ]))
         })
         .collect();
@@ -116,7 +121,7 @@ fn log_line(record: &LogRecord, show_unit: bool) -> Line<'_> {
     Line::from(spans)
 }
 
-fn draw_status(frame: &mut Frame, area: Rect, app: &App) {
+fn draw_status(frame: &mut Frame, area: Rect, app: &App, now: DateTime<Utc>) {
     let text = if app.show_help {
         "q quit · j/k select · Tab all/selected · r restart · R restart with dependents · \
          s start/stop · PgUp/PgDn scroll · G follow"
@@ -130,7 +135,7 @@ fn draw_status(frame: &mut Frame, area: Rect, app: &App) {
                 "{}: {} ({})",
                 unit.name,
                 unit.state,
-                theme::ago(unit.since, Utc::now())
+                theme::ago(unit.since, now)
             ));
         }
         if let Some(flash) = &app.flash {
@@ -187,6 +192,7 @@ mod tests {
         let screen = render(&app);
 
         assert!(screen.contains("● db"), "{screen}");
+        assert!(screen.contains("ready 0s"), "{screen}");
         assert!(screen.contains("◐ backend"), "{screen}");
         assert!(screen.contains("database system is ready"), "{screen}");
         assert!(

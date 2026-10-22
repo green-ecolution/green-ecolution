@@ -6,11 +6,11 @@ use std::{process::ExitCode, time::Duration};
 use crossterm::event::{Event, EventStream, KeyEventKind};
 use futures::StreamExt;
 use ratatui::DefaultTerminal;
-use tokio::sync::mpsc;
+use tokio::{sync::mpsc, time::MissedTickBehavior};
 
 use self::app::{App, Effect, LOG_CAPACITY, Msg};
 use crate::{
-    host::{Host, OrphanPolicy},
+    host::{Host, OrphanPolicy, termination},
     ipc::{Call, Client, IpcError, Reply},
     paths::Paths,
     state::ProcessRegistry,
@@ -47,7 +47,7 @@ async fn run_terminal(
 ) -> anyhow::Result<()> {
     // ratatui::init installs a hook that restores the terminal on panic; ours runs first so a
     // panic also stops the process groups this TUI is hosting.
-    let mut terminal = ratatui::init();
+    let mut terminal = ratatui::try_init()?;
     if let Some(registry) = registry {
         let previous = std::panic::take_hook();
         std::panic::set_hook(Box::new(move |info| {
@@ -82,8 +82,12 @@ async fn event_loop(
     let mut ticks = tokio::time::interval(Duration::from_secs(1));
     let (flash_tx, mut flash_rx) = mpsc::unbounded_channel::<String>();
 
+    let mut frames = tokio::time::interval(Duration::from_millis(33));
+    frames.set_missed_tick_behavior(MissedTickBehavior::Skip);
+    let mut termination = std::pin::pin!(termination());
+    let mut dirty = true;
+
     loop {
-        terminal.draw(|frame| view::draw(frame, &app))?;
         let connected = !app.disconnected;
         let msg = tokio::select! {
             reply = states.next(), if connected => match reply? {
@@ -104,8 +108,23 @@ async fn event_loop(
             },
             Some(text) = flash_rx.recv() => Msg::Flash(text),
             _ = ticks.tick() => Msg::Tick,
+            _ = frames.tick() => {
+                if dirty {
+                    terminal.draw(|frame| view::draw(frame, &app))?;
+                    dirty = false;
+                }
+                continue;
+            }
+            () = &mut termination, if hosted => return Ok(()),
         };
-        match app.update(msg) {
+        dirty = true;
+        let key_pressed = matches!(msg, Msg::Key(_));
+        let effect = app.update(msg);
+        if key_pressed {
+            terminal.draw(|frame| view::draw(frame, &app))?;
+            dirty = false;
+        }
+        match effect {
             Some(Effect::Quit) => return Ok(()),
             // Restarts can take the full stop grace period; keep the UI responsive meanwhile.
             Some(Effect::Call(call)) => {

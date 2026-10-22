@@ -76,6 +76,7 @@ impl App {
                     self.scroll += 1;
                 }
                 self.logs.push_back(record);
+                self.scroll = self.scroll.min(self.max_scroll());
             }
             Msg::Flash(text) => self.flash = Some(text),
             Msg::Tick => {}
@@ -101,7 +102,9 @@ impl App {
                 };
                 self.scroll = 0;
             }
-            KeyCode::PageUp => self.scroll = self.scroll.saturating_add(PAGE),
+            KeyCode::PageUp => {
+                self.scroll = self.scroll.saturating_add(PAGE).min(self.max_scroll())
+            }
             KeyCode::PageDown => self.scroll = self.scroll.saturating_sub(PAGE),
             KeyCode::End | KeyCode::Char('G') => self.scroll = 0,
             KeyCode::Char('?') => self.show_help = !self.show_help,
@@ -162,6 +165,14 @@ impl App {
                 .selected_unit()
                 .is_some_and(|unit| unit.name == record.unit),
         }
+    }
+
+    fn max_scroll(&self) -> usize {
+        self.logs
+            .iter()
+            .filter(|r| self.matches(r))
+            .count()
+            .saturating_sub(1)
     }
 
     pub fn visible_logs(&self, height: usize) -> Vec<&LogRecord> {
@@ -309,6 +320,26 @@ pub(crate) mod tests {
         assert_eq!(before, after);
         app.update(key(KeyCode::Char('G')));
         assert_eq!(app.visible_logs(1)[0].message, "new");
+    }
+
+    #[test]
+    fn scrolling_stops_at_the_oldest_line() {
+        let mut app = app_with_two_units();
+        for i in 0..3 {
+            app.update(Msg::Log(record("db", &i.to_string())));
+        }
+        for _ in 0..10 {
+            app.update(key(KeyCode::PageUp));
+        }
+        assert_eq!(app.visible_logs(1)[0].message, "0");
+        app.update(Msg::Log(record("db", "3")));
+        assert_eq!(app.visible_logs(1)[0].message, "0");
+
+        app.update(key(KeyCode::PageDown));
+        assert_eq!(app.scroll, 0);
+        app.update(key(KeyCode::PageUp));
+        app.update(key(KeyCode::Char('G')));
+        assert_eq!(app.visible_logs(1)[0].message, "3");
     }
 
     #[test]
