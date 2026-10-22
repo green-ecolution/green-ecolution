@@ -261,7 +261,7 @@ run-docker: _acme-init _ensure-valhalla build-domain-wasm
 
 # Run docker compose with the shared Traefik/Porkbun/version env
 _compose *ARGS:
-    APP_HOST="{{ app_host }}" \
+    @APP_HOST="{{ app_host }}" \
     BIND_ADDR="{{ bind_addr }}" \
     TRAEFIK_CONFIG="{{ traefik_config }}" \
     TRAEFIK_ENTRYPOINT="{{ traefik_entrypoint }}" \
