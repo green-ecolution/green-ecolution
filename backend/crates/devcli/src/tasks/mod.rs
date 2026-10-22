@@ -32,6 +32,9 @@ pub struct TaskSpec {
     pub destructive: bool,
 }
 
+/// Ends the message of [`TaskError::Stopped`]; `geco run` recognises a stopped run by it.
+pub const STOPPED: &str = "was stopped before it finished";
+
 #[derive(Debug, thiserror::Error)]
 pub enum TaskError {
     #[error("unknown recipe `{0}`")]
@@ -40,7 +43,7 @@ pub enum TaskError {
     NeedsConfirmation(String),
     #[error("`{command}` failed: {reason}")]
     Failed { command: String, reason: String },
-    #[error("`{0}` was stopped before it finished")]
+    #[error("`{0}` {STOPPED}")]
     Stopped(String),
     #[error(transparent)]
     Catalog(#[from] CatalogError),

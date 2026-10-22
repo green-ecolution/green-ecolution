@@ -1,15 +1,18 @@
 use std::process::ExitCode;
 
 use anyhow::Context;
+use tokio::sync::mpsc;
 
 use super::output;
 use crate::{
     config::GecoConfig,
     host::confirm,
-    ipc::{Call, Client, IpcError},
+    ipc::{Client, IpcError, RunEnd},
     paths::Paths,
     tasks::{Catalog, JustRecipes, RecipeSource},
 };
+
+const INTERRUPTED: u8 = 130;
 
 pub async fn run(
     paths: &Paths,
@@ -30,24 +33,46 @@ pub async fn run(
         .map_or(recipe, |recipe| recipe.name.as_str())
         .to_owned();
     let mut out = anstream::stdout();
-    let interrupted = tokio::signal::ctrl_c();
-    tokio::pin!(interrupted);
-    let result = tokio::select! {
-        result = client.run(recipe, args, destructive, |record| output::write_log(&mut out, &record)) => result,
-        _ = &mut interrupted => {
-            let _ = client.call(Call::Stop { unit: task }).await;
-            anstream::eprintln!("stopped");
-            return Ok(ExitCode::from(130));
-        }
-    };
+    let (interrupt, mut interrupts) = mpsc::unbounded_channel();
+    let signals = tokio::spawn(async move {
+        while tokio::signal::ctrl_c().await.is_ok() && interrupt.send(()).is_ok() {}
+    });
+    let result = client
+        .run_interruptible(
+            recipe,
+            args,
+            destructive,
+            &task,
+            &mut interrupts,
+            |record| output::write_log(&mut out, &record),
+        )
+        .await;
+    signals.abort();
     match result {
-        Ok(()) => Ok(ExitCode::SUCCESS),
+        Ok(RunEnd::Done) => Ok(ExitCode::SUCCESS),
+        Ok(end) => {
+            anstream::eprintln!("{}", interrupted(&task, &end));
+            Ok(ExitCode::from(INTERRUPTED))
+        }
         Err(IpcError::NotRunning) => in_foreground(paths, recipe, args),
         Err(IpcError::Remote(message)) => {
             anstream::eprintln!("error: {message}");
             Ok(ExitCode::FAILURE)
         }
         Err(err) => Err(err.into()),
+    }
+}
+
+fn interrupted(task: &str, end: &RunEnd) -> String {
+    match end {
+        RunEnd::Stopped => "stopped".to_owned(),
+        RunEnd::Done | RunEnd::Ended(Ok(())) => {
+            format!("`{task}` finished before it could be stopped")
+        }
+        RunEnd::Ended(Err(message)) => format!("error: {message}"),
+        RunEnd::Abandoned => {
+            format!("no longer waiting for `{task}` to stop; see `geco status`")
+        }
     }
 }
 
@@ -74,6 +99,20 @@ mod tests {
     use std::os::unix::process::ExitStatusExt;
 
     use super::*;
+
+    #[test]
+    fn an_interrupted_run_says_stopped_only_when_the_stop_took_effect() {
+        assert_eq!(interrupted("lint", &RunEnd::Stopped), "stopped");
+        assert_eq!(
+            interrupted("lint", &RunEnd::Ended(Ok(()))),
+            "`lint` finished before it could be stopped"
+        );
+        assert_eq!(
+            interrupted("lint", &RunEnd::Ended(Err("`just lint` failed".into()))),
+            "error: `just lint` failed"
+        );
+        assert!(interrupted("lint", &RunEnd::Abandoned).contains("geco status"));
+    }
 
     #[test]
     fn exit_codes_of_just_are_passed_through() {

@@ -3,7 +3,7 @@ pub mod server;
 
 use serde::{Deserialize, Serialize};
 
-pub use client::{Client, IpcError, ReplyStream};
+pub use client::{Client, IpcError, ReplyStream, RunEnd};
 
 use std::sync::Arc;
 
@@ -626,6 +626,75 @@ mod tests {
         assert!(matches!(status, Ok(Ok(Reply::Status(_)))), "{status:?}");
         let recipes = recipes.await.unwrap();
         assert!(matches!(recipes, Ok(Reply::Recipes(_))), "{recipes:?}");
+    }
+
+    #[tokio::test]
+    async fn an_interrupt_before_the_task_is_listed_still_stops_it() {
+        let (entered_tx, mut entered) = tokio::sync::mpsc::unbounded_channel();
+        let (open, gate) = std::sync::mpsc::channel();
+        let f = fixture_with(|tasks| {
+            tasks
+                .with_program("sleep 30; echo")
+                .with_recipes(Arc::new(GatedRecipes {
+                    entered: entered_tx,
+                    gate: std::sync::Mutex::new(gate),
+                }))
+        })
+        .await;
+        let (interrupt, mut interrupts) = tokio::sync::mpsc::unbounded_channel();
+        let run = tokio::spawn({
+            let client = f.client.clone();
+            async move {
+                client
+                    .run_interruptible(
+                        "migrate-up",
+                        &[],
+                        false,
+                        "migrate-up",
+                        &mut interrupts,
+                        |_| Ok(()),
+                    )
+                    .await
+            }
+        });
+        entered.recv().await.unwrap();
+        interrupt.send(()).unwrap();
+        // Lets the first stop find nothing before the task gets listed.
+        tokio::time::sleep(Duration::from_millis(100)).await;
+        open.send(()).unwrap();
+
+        let end = tokio::time::timeout(Duration::from_secs(10), run).await;
+        assert!(matches!(end, Ok(Ok(Ok(RunEnd::Stopped)))), "{end:?}");
+        assert!(
+            f.supervisor.status().iter().all(|s| s.name != "migrate-up"),
+            "{:?}",
+            f.supervisor.status()
+        );
+        f.supervisor.stop_all().await;
+    }
+
+    #[tokio::test]
+    async fn a_second_interrupt_stops_waiting_for_the_stop() {
+        let f = fixture_with(|tasks| tasks.with_program("sleep 30; echo")).await;
+        let (interrupt, mut interrupts) = tokio::sync::mpsc::unbounded_channel();
+        interrupt.send(()).unwrap();
+        interrupt.send(()).unwrap();
+
+        let end = tokio::time::timeout(
+            Duration::from_secs(5),
+            f.client.run_interruptible(
+                "migrate-up",
+                &[],
+                false,
+                "migrate-up",
+                &mut interrupts,
+                |_| Ok(()),
+            ),
+        )
+        .await;
+
+        assert!(matches!(end, Ok(Ok(RunEnd::Abandoned))), "{end:?}");
+        f.supervisor.stop_all().await;
     }
 
     #[tokio::test]
