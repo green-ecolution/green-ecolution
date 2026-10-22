@@ -2,6 +2,7 @@ pub mod assemble;
 pub mod cli;
 pub mod commands;
 pub mod config;
+pub mod doctor;
 pub mod graph;
 pub mod host;
 pub mod ipc;
