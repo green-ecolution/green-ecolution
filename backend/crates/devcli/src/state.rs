@@ -14,7 +14,10 @@ use rustix::{
 
 use serde::{Deserialize, Serialize};
 
-use crate::sync::lock;
+use crate::{
+    sync::lock,
+    units::process::{STOP_GRACE, terminate},
+};
 
 /// Process groups geco started, mirrored to `.geco/state.json` so the next run can find
 /// survivors of a crash.
@@ -174,9 +177,10 @@ pub fn describe_groups(groups: &[i32]) -> String {
         .join(", ")
 }
 
+/// Waits until the groups are gone, so the units about to start find their ports free.
 /// Removing the file keeps a recycled process-group id from being offered again later.
-pub fn stop_orphans(path: &Path, groups: &[i32]) {
-    terminate_groups(groups);
+pub async fn stop_orphans(path: &Path, groups: &[i32]) {
+    futures::future::join_all(groups.iter().map(|group| terminate(*group, STOP_GRACE))).await;
     let _ = fs::remove_file(path);
 }
 
@@ -283,6 +287,28 @@ mod tests {
         std::fs::write(&path, format!("[{}]", own_group())).unwrap();
 
         assert!(orphaned_groups(&path).is_empty());
+    }
+
+    #[tokio::test]
+    async fn stopping_orphans_waits_until_their_groups_are_gone() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("state.json");
+        // The leader exits right away; the backgrounded sleep keeps the group alive.
+        let mut leader = tokio::process::Command::new("sh")
+            .args(["-c", "sleep 30 >/dev/null 2>&1 &"])
+            .process_group(0)
+            .spawn()
+            .unwrap();
+        let group = i32::try_from(leader.id().unwrap()).unwrap();
+        leader.wait().await.unwrap();
+        write_state(&path, current_boot_id().as_deref(), &[group]);
+        assert_eq!(orphaned_groups(&path), [group]);
+
+        stop_orphans(&path, &[group]).await;
+
+        let pid = Pid::from_raw(group).unwrap();
+        assert!(test_kill_process_group(pid).is_err(), "the orphan survived");
+        assert!(!path.exists());
     }
 
     #[test]

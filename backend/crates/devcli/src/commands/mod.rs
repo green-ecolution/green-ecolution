@@ -101,7 +101,7 @@ async fn up_detached(
         if !confirm(&orphan_prompt(&orphans))? {
             return Ok(ExitCode::FAILURE);
         }
-        stop_orphans(&paths.process_state(), &orphans);
+        stop_orphans(&paths.process_state(), &orphans).await;
     }
     std::fs::create_dir_all(paths.state_dir())?;
     let log = std::fs::File::create(paths.supervisor_log())?;

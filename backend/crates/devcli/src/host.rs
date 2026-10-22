@@ -65,7 +65,7 @@ impl Host {
         orphans: OrphanPolicy,
     ) -> Result<Self, HostError> {
         let lock = InstanceLock::try_acquire(&paths.lock())?.ok_or(HostError::AlreadyRunning)?;
-        handle_orphans(paths, orphans)?;
+        handle_orphans(paths, orphans).await?;
         let config = GecoConfig::load(&paths.config())?;
         let profile = profile.unwrap_or(&config.default_profile);
         let registry = ProcessRegistry::persistent(paths.process_state());
@@ -140,7 +140,7 @@ async fn received(kind: SignalKind) {
     }
 }
 
-fn handle_orphans(paths: &Paths, policy: OrphanPolicy) -> Result<(), HostError> {
+async fn handle_orphans(paths: &Paths, policy: OrphanPolicy) -> Result<(), HostError> {
     let groups = orphaned_groups(&paths.process_state());
     if groups.is_empty() {
         return Ok(());
@@ -151,7 +151,7 @@ fn handle_orphans(paths: &Paths, policy: OrphanPolicy) -> Result<(), HostError> 
     if !confirm(&orphan_prompt(&groups))? {
         return Err(HostError::Aborted);
     }
-    stop_orphans(&paths.process_state(), &groups);
+    stop_orphans(&paths.process_state(), &groups).await;
     Ok(())
 }
 
