@@ -5,9 +5,13 @@ use serde::{Deserialize, Serialize};
 
 pub use client::{Client, IpcError, ReplyStream};
 
-use crate::{logs::LogRecord, supervisor::UnitStatus};
+use crate::{
+    doctor::{Finding, Report},
+    logs::LogRecord,
+    supervisor::UnitStatus,
+};
 
-pub const PROTOCOL_VERSION: u32 = 2;
+pub const PROTOCOL_VERSION: u32 = 3;
 
 /// One call per connection; clients that need several streams open several connections.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -34,6 +38,15 @@ pub enum Call {
         filter: String,
     },
     SubscribeState,
+    /// Runs the cheap checks, plus the deep ones when `deep` is set.
+    Doctor {
+        deep: bool,
+    },
+    Fix {
+        finding: String,
+        confirmed: bool,
+    },
+    SubscribeFindings,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -50,6 +63,8 @@ pub enum Reply {
     Log(LogRecord),
     State(UnitStatus),
     Error(String),
+    Report(Report),
+    Findings(Vec<Finding>),
 }
 
 #[cfg(test)]
@@ -91,9 +106,24 @@ mod tests {
         let supervisor = Supervisor::new(units, graph, LogStore::new(100));
         let shutdown = CancellationToken::new();
         let listener = UnixListener::bind(&socket).unwrap();
+        let doctor = crate::doctor::service::Doctor::new(
+            vec![
+                crate::doctor::fake::FakeCheck::new("ports")
+                    .finds(vec![crate::doctor::Finding::new(
+                        "ports",
+                        crate::doctor::Severity::Error,
+                        "port 5432 is taken",
+                    )])
+                    .arc(),
+            ],
+            crate::doctor::fake::test_env(dir.path()),
+            Arc::clone(&supervisor),
+            crate::state::ProcessRegistry::in_memory(),
+        );
         tokio::spawn(server::serve(
             listener,
             Arc::clone(&supervisor),
+            Arc::clone(&doctor),
             shutdown.clone(),
         ));
         Fixture {
@@ -106,6 +136,38 @@ mod tests {
 
     fn log(message: &str) -> LogRecord {
         parse_line("db", LogFormat::Plain, message, Utc::now())
+    }
+
+    #[tokio::test]
+    async fn doctor_calls_report_and_stream_findings() {
+        let f = fixture().await;
+        let mut stream = f.client.open(Call::SubscribeFindings).await.unwrap();
+        let Some(Reply::Findings(initial)) = stream.next().await.unwrap() else {
+            panic!("expected the current findings");
+        };
+        assert!(initial.is_empty());
+
+        let Reply::Report(report) = f.client.call(Call::Doctor { deep: false }).await.unwrap()
+        else {
+            panic!("expected a report");
+        };
+        assert_eq!(report.findings[0].id, "ports");
+        let Some(Reply::Findings(changed)) = stream.next().await.unwrap() else {
+            panic!("expected changed findings");
+        };
+        assert_eq!(changed.len(), 1);
+
+        let err = f
+            .client
+            .call(Call::Fix {
+                finding: "ports".into(),
+                confirmed: true,
+            })
+            .await
+            .unwrap_err();
+        assert!(
+            matches!(err, IpcError::Remote(message) if message == "finding `ports` has no automatic fix")
+        );
     }
 
     #[tokio::test]

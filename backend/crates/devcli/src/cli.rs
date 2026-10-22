@@ -49,6 +49,17 @@ pub enum Command {
         #[arg(long)]
         json: bool,
     },
+    /// Diagnose known pitfalls of the local setup; exits with 1 while an error is open
+    Doctor {
+        /// Run the fixes; destructive ones ask first
+        #[arg(long)]
+        fix: bool,
+        /// Also run the slow checks (cargo sqlx prepare --check)
+        #[arg(long)]
+        deep: bool,
+        #[arg(long, conflicts_with = "fix")]
+        json: bool,
+    },
     /// Restart a unit
     Restart {
         unit: String,
@@ -95,5 +106,19 @@ mod tests {
             cli.command,
             Some(Command::Trace { request_id, json: true }) if request_id == "1c40b9b5"
         ));
+    }
+
+    #[test]
+    fn doctor_takes_fix_and_deep_but_not_json_with_fix() {
+        let cli = Cli::try_parse_from(["geco", "doctor", "--fix", "--deep"]).unwrap();
+        assert!(matches!(
+            cli.command,
+            Some(Command::Doctor {
+                fix: true,
+                deep: true,
+                json: false
+            })
+        ));
+        assert!(Cli::try_parse_from(["geco", "doctor", "--fix", "--json"]).is_err());
     }
 }

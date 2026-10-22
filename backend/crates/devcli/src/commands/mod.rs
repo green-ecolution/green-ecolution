@@ -1,3 +1,4 @@
+mod doctor;
 mod fallback;
 mod output;
 
@@ -42,6 +43,9 @@ pub async fn run(cli: Cli) -> anyhow::Result<ExitCode> {
             tail,
         }) => logs(&paths, &client, &units, &filter, tail, follow, json).await,
         Some(Command::Trace { request_id, json }) => trace(&client, &request_id, json).await,
+        Some(Command::Doctor { fix, deep, json }) => {
+            doctor::doctor(&paths, &client, fix, deep, json).await
+        }
         Some(Command::Restart { unit, cascade }) => {
             simple(&client, Call::Restart { unit, cascade }).await
         }

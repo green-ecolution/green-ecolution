@@ -10,6 +10,7 @@ use tokio_util::sync::CancellationToken;
 
 use super::{Call, PROTOCOL_VERSION, Reply, Request};
 use crate::{
+    doctor::service::Doctor,
     logs::Filter,
     supervisor::{Supervisor, SupervisorError},
 };
@@ -17,6 +18,7 @@ use crate::{
 pub async fn serve(
     listener: UnixListener,
     supervisor: Arc<Supervisor>,
+    doctor: Arc<Doctor>,
     shutdown: CancellationToken,
 ) {
     loop {
@@ -30,9 +32,10 @@ pub async fn serve(
             continue;
         };
         let supervisor = Arc::clone(&supervisor);
+        let doctor = Arc::clone(&doctor);
         let shutdown = shutdown.clone();
         tokio::spawn(async move {
-            let _ = handle(stream, supervisor, shutdown).await;
+            let _ = handle(stream, supervisor, doctor, shutdown).await;
         });
     }
 }
@@ -40,6 +43,7 @@ pub async fn serve(
 async fn handle(
     stream: UnixStream,
     supervisor: Arc<Supervisor>,
+    doctor: Arc<Doctor>,
     shutdown: CancellationToken,
 ) -> io::Result<()> {
     let (read, mut write) = stream.into_split();
@@ -106,6 +110,15 @@ async fn handle(
             .await
         }
         Call::SubscribeState => stream_state(&mut write, &supervisor, &shutdown).await,
+        Call::Doctor { deep } => send(&mut write, &Reply::Report(doctor.run(deep).await)).await,
+        Call::Fix { finding, confirmed } => {
+            let reply = match doctor.fix(&finding, confirmed).await {
+                Ok(()) => Reply::Done,
+                Err(err) => Reply::Error(err.to_string()),
+            };
+            send(&mut write, &reply).await
+        }
+        Call::SubscribeFindings => stream_findings(&mut write, &doctor, &shutdown).await,
     }
 }
 
@@ -120,6 +133,26 @@ async fn send(write: &mut OwnedWriteHalf, reply: &Reply) -> io::Result<()> {
     let mut line = serde_json::to_vec(reply).map_err(io::Error::other)?;
     line.push(b'\n');
     write.write_all(&line).await
+}
+
+async fn stream_findings(
+    write: &mut OwnedWriteHalf,
+    doctor: &Doctor,
+    shutdown: &CancellationToken,
+) -> io::Result<()> {
+    let mut live = doctor.subscribe();
+    send(write, &Reply::Findings(doctor.findings())).await?;
+    loop {
+        let received = tokio::select! {
+            () = shutdown.cancelled() => return Ok(()),
+            received = live.recv() => received,
+        };
+        match received {
+            Ok(findings) => send(write, &Reply::Findings(findings)).await?,
+            Err(RecvError::Lagged(_)) => send(write, &Reply::Findings(doctor.findings())).await?,
+            Err(RecvError::Closed) => return Ok(()),
+        }
+    }
 }
 
 async fn stream_logs(

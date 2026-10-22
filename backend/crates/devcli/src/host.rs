@@ -107,6 +107,7 @@ impl Host {
         let server = tokio::spawn(ipc::server::serve(
             listener,
             Arc::clone(&supervisor),
+            Arc::clone(&doctor),
             shutdown.clone(),
         ));
         supervisor.start_all().await;

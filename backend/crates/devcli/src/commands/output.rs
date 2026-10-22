@@ -4,6 +4,7 @@ use anstyle::{AnsiColor, Style};
 use chrono::{DateTime, Local, Utc};
 
 use crate::{
+    doctor::{Report, Severity},
     logs::{
         Level, LogRecord,
         trace::{self, Trace, TraceLineKind},
@@ -156,6 +157,52 @@ pub fn write_status_table(
     Ok(())
 }
 
+pub fn write_report(out: &mut impl Write, report: &Report) -> io::Result<()> {
+    if report.findings.is_empty() && report.skipped.is_empty() {
+        let good = fg(AnsiColor::Green);
+        return writeln!(out, "{good}no findings{good:#}");
+    }
+    let width = report
+        .findings
+        .iter()
+        .map(|f| f.id.len())
+        .max()
+        .unwrap_or(0);
+    let indent = " ".repeat(width + 4);
+    for finding in &report.findings {
+        let (symbol, style) = match finding.severity {
+            Severity::Error => ("✖", fg(AnsiColor::Red).bold()),
+            Severity::Hint => ("●", fg(AnsiColor::Yellow)),
+        };
+        writeln!(
+            out,
+            "{style}{symbol}{style:#} {:<width$}  {}",
+            finding.id, finding.title
+        )?;
+        for line in finding.detail.lines() {
+            writeln!(out, "{indent}{dim}{line}{dim:#}", dim = dim())?;
+        }
+        if let Some(fix) = &finding.fix {
+            let destructive = if fix.destructive {
+                " (destructive)"
+            } else {
+                ""
+            };
+            writeln!(out, "{indent}fix: {}{destructive}", fix.command)?;
+        }
+    }
+    for skipped in &report.skipped {
+        writeln!(
+            out,
+            "{dim}skipped {}: {}{dim:#}",
+            skipped.check,
+            skipped.reason,
+            dim = dim()
+        )?;
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -226,6 +273,73 @@ mod tests {
         assert!(
             text.contains("◐ backend  local    42s     waiting for migrations"),
             "{text}"
+        );
+    }
+}
+
+#[cfg(test)]
+mod report_tests {
+    use super::*;
+    use crate::logs::strip_ansi;
+
+    fn rendered(write: impl FnOnce(&mut Vec<u8>) -> io::Result<()>) -> String {
+        let mut buf = Vec::new();
+        write(&mut buf).unwrap();
+        strip_ansi(&String::from_utf8(buf).unwrap())
+    }
+
+    #[test]
+    fn the_report_lists_findings_fixes_and_skipped_checks() {
+        use crate::doctor::{Finding, Fix, Report, Severity, Skipped};
+
+        let report = Report {
+            findings: vec![
+                Finding::new(
+                    "dev-db-migrations",
+                    Severity::Error,
+                    "dev database is 2 migration(s) behind",
+                )
+                .detail("Newest missing migration: 20260101.")
+                .fix(Fix::just("migrate-up")),
+                Finding::new(
+                    "testcontainers",
+                    Severity::Hint,
+                    "3 testcontainer(s) left over",
+                )
+                .fix(Fix::just("test-clean").destructive()),
+            ],
+            skipped: vec![Skipped {
+                check: "docker".into(),
+                reason: "Docker is not reachable".into(),
+            }],
+        };
+
+        let text = rendered(|out| write_report(out, &report));
+
+        assert!(
+            text.contains("✖ dev-db-migrations  dev database is 2 migration(s) behind"),
+            "{text}"
+        );
+        assert!(
+            text.contains("Newest missing migration: 20260101."),
+            "{text}"
+        );
+        assert!(text.contains("fix: just migrate-up"), "{text}");
+        assert!(
+            text.contains("● testcontainers     3 testcontainer(s) left over"),
+            "{text}"
+        );
+        assert!(
+            text.contains("fix: just test-clean (destructive)"),
+            "{text}"
+        );
+        assert!(
+            text.contains("skipped docker: Docker is not reachable"),
+            "{text}"
+        );
+        assert_eq!(
+            rendered(|out| write_report(out, &Report::default())),
+            "no findings\n"
         );
     }
 }
