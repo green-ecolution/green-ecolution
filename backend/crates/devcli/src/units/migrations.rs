@@ -99,8 +99,8 @@ impl Verify for MigrationsApplied {
             None => Ok(()),
             Some(newest) => Err(UnitError::Verify(format!(
                 "{} migration(s) not applied, newest {newest}. A stale target/debug/migrate \
-                 binary reports success without applying them; `geco doctor` explains the fix \
-                 and `geco doctor --fix` (or `f` in the TUI) runs it",
+                 binary reports success without applying them; `geco doctor --fix` (or `f` in \
+                 the TUI) rebuilds it and migrates again",
                 pending.len()
             ))),
         }

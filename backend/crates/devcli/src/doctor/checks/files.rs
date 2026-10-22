@@ -6,7 +6,7 @@ use std::{
 
 use async_trait::async_trait;
 
-use super::MANUAL_MIGRATION;
+use super::{MANUAL_MIGRATION, migrate_fix};
 use crate::doctor::{Check, Env, Finding, Fix, Severity};
 
 pub(super) const THEME_DIR: &str = "frontend/keycloak-theme/dist_keycloak/theme/green-ecolution";
@@ -202,7 +202,7 @@ impl Check for MigrateBinary {
                 "A stale migrate binary reports \"Migrations applied\" without applying the new \
                  migration.\n{MANUAL_MIGRATION}"
             ))
-            .fix(Fix::just("migrate-up")),
+            .fix(migrate_fix()),
         ])
     }
 }
@@ -329,7 +329,10 @@ mod tests {
         touch(root, "backend/target/debug/migrate", 10);
         let findings = MigrateBinary.diagnose(&test_env(root)).await.unwrap();
         assert_eq!(findings[0].id, "migrate-binary");
-        assert_eq!(findings[0].fix.as_ref().unwrap().command, "just migrate-up");
+        assert_eq!(
+            findings[0].fix.as_ref().unwrap().command,
+            "touch backend/crates/server/src/bin/migrate.rs && just migrate-up"
+        );
         assert!(findings[0].detail.contains("cargo sqlx migrate run"));
 
         touch(root, "backend/target/debug/migrate", 30);

@@ -3,11 +3,28 @@ use std::collections::HashMap;
 use async_trait::async_trait;
 use bollard::{Docker, query_parameters::ListContainersOptionsBuilder};
 
-use super::MANUAL_MIGRATION;
+use super::{MANUAL_MIGRATION, migrate_fix};
 use crate::{
     doctor::{Check, Env, Finding, Fix, Severity, Trigger},
     units::migrations::{applied, migration_versions, missing},
 };
+
+pub fn behind(pending: &[i64]) -> Vec<Finding> {
+    let Some(newest) = pending.last() else {
+        return Vec::new();
+    };
+    vec![
+        Finding::new(
+            "dev-db-migrations",
+            Severity::Error,
+            format!("dev database is {} migration(s) behind", pending.len()),
+        )
+        .detail(format!(
+            "Newest missing migration: {newest}.\n{MANUAL_MIGRATION}"
+        ))
+        .fix(migrate_fix()),
+    ]
+}
 
 pub struct DevDbMigrations;
 
@@ -28,21 +45,7 @@ impl Check for DevDbMigrations {
         let applied = applied(&env.compose, &user, &database)
             .await
             .map_err(|err| format!("cannot read the applied migrations: {err}"))?;
-        let pending = missing(&expected, &applied);
-        let Some(newest) = pending.last() else {
-            return Ok(Vec::new());
-        };
-        Ok(vec![
-            Finding::new(
-                self.id(),
-                Severity::Error,
-                format!("dev database is {} migration(s) behind", pending.len()),
-            )
-            .detail(format!(
-                "Newest missing migration: {newest}.\n{MANUAL_MIGRATION}"
-            ))
-            .fix(Fix::just("migrate-up")),
-        ])
+        Ok(behind(&missing(&expected, &applied)))
     }
 
     fn reacts_to(&self, trigger: &Trigger<'_>) -> bool {
@@ -124,6 +127,22 @@ mod tests {
         let fix = findings[0].fix.as_ref().unwrap();
         assert_eq!(fix.command, "just test-clean");
         assert!(fix.destructive);
+    }
+
+    #[test]
+    fn a_dev_database_behind_is_fixed_by_rebuilding_the_migrate_binary() {
+        assert!(behind(&[]).is_empty());
+        let findings = behind(&[20260101000000, 20260202000000]);
+        assert_eq!(findings[0].title, "dev database is 2 migration(s) behind");
+        assert_eq!(findings[0].severity, Severity::Error);
+        assert!(findings[0].detail.contains("20260202000000"));
+        let fix = findings[0].fix.as_ref().unwrap();
+        assert_eq!(
+            fix.command,
+            "touch backend/crates/server/src/bin/migrate.rs && just migrate-up"
+        );
+        assert_eq!(fix.cwd, "");
+        assert!(!fix.destructive);
     }
 
     #[test]
