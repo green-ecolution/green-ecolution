@@ -92,18 +92,36 @@ impl Doctor {
     }
 
     pub fn report(&self) -> Report {
-        let skipped = lock(&self.state)
+        self.report_for(true)
+    }
+
+    /// Without `deep`, stored results of deep checks stay out: a cheap run must not fail on
+    /// what an earlier deep run found.
+    fn report_for(&self, deep: bool) -> Report {
+        let included = |check: &str| {
+            deep || self
+                .checks
+                .iter()
+                .all(|c| c.id() != check || c.cost() == Cost::Cheap)
+        };
+        let state = lock(&self.state);
+        let mut findings: Vec<Finding> = state
+            .findings
+            .iter()
+            .filter(|(check, _)| included(check))
+            .flat_map(|(_, findings)| findings.iter().cloned())
+            .collect();
+        sort(&mut findings);
+        let skipped = state
             .skipped
             .iter()
+            .filter(|(check, _)| included(check))
             .map(|(check, reason)| Skipped {
                 check: check.clone(),
                 reason: reason.clone(),
             })
             .collect();
-        Report {
-            findings: self.findings(),
-            skipped,
-        }
+        Report { findings, skipped }
     }
 
     pub fn subscribe(&self) -> broadcast::Receiver<Vec<Finding>> {
@@ -118,7 +136,7 @@ impl Doctor {
             .cloned()
             .collect();
         self.run_checks(&checks, None).await;
-        self.report()
+        self.report_for(deep)
     }
 
     async fn run_checks(&self, checks: &[Arc<dyn Check>], unit: Option<&str>) {
@@ -353,6 +371,42 @@ mod tests {
             "a check that could not run keeps its findings"
         );
         assert_eq!(report.skipped[0].check, "docker");
+    }
+
+    #[tokio::test]
+    async fn cheap_runs_leave_out_the_stored_deep_results() {
+        let f = fixture();
+        let deep = FakeCheck::new("sqlx-cache-prepare")
+            .deep()
+            .finds(vec![with_fix("sqlx-cache-prepare", "true")])
+            .arc();
+        let doc = doctor(&f, vec![deep, FakeCheck::new("cheap").arc()]);
+
+        assert!(doc.run(true).await.has_errors());
+        let cheap = doc.run(false).await;
+
+        assert!(cheap.findings.is_empty());
+        assert!(!cheap.has_errors());
+        assert_eq!(
+            doc.findings().len(),
+            1,
+            "the TUI keeps the last deep result"
+        );
+        assert_eq!(doc.report().findings.len(), 1);
+    }
+
+    #[tokio::test]
+    async fn cheap_runs_leave_out_deep_checks_that_could_not_run() {
+        let f = fixture();
+        let deep = FakeCheck::new("sqlx-cache-prepare")
+            .deep()
+            .fails("cargo-sqlx is not installed")
+            .arc();
+        let doc = doctor(&f, vec![deep]);
+
+        assert_eq!(doc.run(true).await.skipped.len(), 1);
+        assert!(doc.run(false).await.skipped.is_empty());
+        assert_eq!(doc.report().skipped.len(), 1);
     }
 
     #[tokio::test]
