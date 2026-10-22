@@ -1,10 +1,13 @@
 use std::{
-    fs, io,
+    fs,
+    hash::{DefaultHasher, Hash, Hasher},
+    io,
     path::{Path, PathBuf},
     time::SystemTime,
 };
 
 use async_trait::async_trait;
+use serde::{Deserialize, Serialize};
 
 use super::{MANUAL_MIGRATION, migrate_fix};
 use crate::doctor::{Check, Env, Finding, Fix, Severity};
@@ -89,6 +92,66 @@ impl Check for PackageDist {
     }
 }
 
+const DOMAIN_SOURCES: [&str; 2] = [
+    "backend/crates/domain/src",
+    "backend/crates/domain-wasm/src",
+];
+
+fn collect_files(dir: &Path, out: &mut Vec<PathBuf>) -> io::Result<()> {
+    let entries = match fs::read_dir(dir) {
+        Ok(entries) => entries,
+        Err(err) if err.kind() == io::ErrorKind::NotFound => return Ok(()),
+        Err(err) => return Err(err),
+    };
+    for entry in entries {
+        let path = entry?.path();
+        if path.is_dir() {
+            collect_files(&path, out)?;
+        } else {
+            out.push(path);
+        }
+    }
+    Ok(())
+}
+
+fn sources_fingerprint(root: &Path) -> io::Result<u64> {
+    let mut hasher = DefaultHasher::new();
+    for source in DOMAIN_SOURCES {
+        let mut files = Vec::new();
+        collect_files(&root.join(source), &mut files)?;
+        files.sort();
+        for file in files {
+            file.strip_prefix(root).unwrap_or(&file).hash(&mut hasher);
+            fs::read(&file)?.hash(&mut hasher);
+        }
+    }
+    Ok(hasher.finish())
+}
+
+#[derive(Serialize, Deserialize)]
+struct SourcesStamp {
+    sources: u64,
+}
+
+fn stamp_path(root: &Path) -> PathBuf {
+    root.join(".geco/domain-wasm.json")
+}
+
+fn read_stamp(root: &Path) -> Option<u64> {
+    let raw = fs::read(stamp_path(root)).ok()?;
+    serde_json::from_slice::<SourcesStamp>(&raw)
+        .ok()
+        .map(|stamp| stamp.sources)
+}
+
+fn write_stamp(root: &Path, sources: u64) {
+    let path = stamp_path(root);
+    let _ = path.parent().map(fs::create_dir_all);
+    if let Ok(raw) = serde_json::to_vec(&SourcesStamp { sources }) {
+        let _ = fs::write(path, raw);
+    }
+}
+
 pub struct DomainWasm;
 
 #[async_trait]
@@ -98,19 +161,32 @@ impl Check for DomainWasm {
     }
 
     async fn diagnose(&self, env: &Env) -> Result<Vec<Finding>, String> {
-        let sources = newest_of(&[
-            env.root.join("backend/crates/domain/src"),
-            env.root.join("backend/crates/domain-wasm/src"),
-        ])?;
+        let sources = newest_of(&DOMAIN_SOURCES.map(|dir| env.root.join(dir)))?;
         let built = newest_of(&[env.root.join("frontend/packages/domain-wasm/pkg")])?;
+        let fingerprint = sources_fingerprint(&env.root).ok();
         let finding = match (sources, built) {
             (_, None) => Finding::new(self.id(), Severity::Error, "domain-wasm/pkg is missing"),
-            (Some(sources), Some(built)) if sources > built => Finding::new(
-                self.id(),
-                Severity::Hint,
-                "domain-wasm/pkg is older than the domain sources",
-            ),
-            _ => return Ok(Vec::new()),
+            // cargo sqlx prepare touches workspace sources without changing them, so a newer
+            // mtime only counts when the content differs from what the pkg was last current with.
+            (Some(sources), Some(built))
+                if sources > built
+                    && fingerprint.is_none_or(|now| read_stamp(&env.root) != Some(now)) =>
+            {
+                Finding::new(
+                    self.id(),
+                    Severity::Hint,
+                    "domain-wasm/pkg is older than the domain sources",
+                )
+            }
+            (Some(sources), Some(built)) => {
+                if sources <= built
+                    && let Some(fingerprint) = fingerprint
+                {
+                    write_stamp(&env.root, fingerprint);
+                }
+                return Ok(Vec::new());
+            }
+            (None, Some(_)) => return Ok(Vec::new()),
         };
         Ok(vec![
             finding
@@ -307,6 +383,58 @@ mod tests {
         assert!(ids(&DomainWasm, root).await.is_empty());
     }
 
+    fn write_at(root: &Path, path: &str, content: &str, secs: u64) {
+        let path = root.join(path);
+        fs::create_dir_all(path.parent().unwrap()).unwrap();
+        fs::write(&path, content).unwrap();
+        fs::File::options()
+            .write(true)
+            .open(&path)
+            .unwrap()
+            .set_modified(at(secs))
+            .unwrap();
+    }
+
+    #[tokio::test]
+    async fn domain_wasm_ignores_sources_that_were_only_touched() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        let lib = "backend/crates/domain/src/lib.rs";
+        let pkg = "frontend/packages/domain-wasm/pkg/domain_wasm.js";
+        write_at(root, lib, "a", 10);
+        write_at(root, pkg, "", 20);
+        assert!(ids(&DomainWasm, root).await.is_empty());
+        assert!(root.join(".geco/domain-wasm.json").is_file());
+
+        write_at(root, lib, "a", 30);
+        assert!(
+            ids(&DomainWasm, root).await.is_empty(),
+            "a touch without a change is no staleness"
+        );
+
+        write_at(root, lib, "b", 40);
+        assert_eq!(
+            ids(&DomainWasm, root).await,
+            [("domain-wasm".to_owned(), Severity::Hint)]
+        );
+    }
+
+    #[tokio::test]
+    async fn domain_wasm_without_a_stamp_trusts_the_mtimes() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        write_at(root, "backend/crates/domain/src/lib.rs", "a", 30);
+        write_at(
+            root,
+            "frontend/packages/domain-wasm/pkg/domain_wasm.js",
+            "",
+            20,
+        );
+        assert_eq!(
+            ids(&DomainWasm, root).await,
+            [("domain-wasm".to_owned(), Severity::Hint)]
+        );
+    }
     #[tokio::test]
     async fn the_keycloak_theme_and_valhalla_tiles_must_exist() {
         let dir = tempfile::tempdir().unwrap();
