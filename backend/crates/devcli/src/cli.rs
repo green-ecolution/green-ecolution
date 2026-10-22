@@ -32,7 +32,7 @@ pub enum Command {
     /// Print logs of the given units (all units when none are given)
     Logs {
         units: Vec<String>,
-        /// Filter expression, e.g. 'level>=warn target:sqlx "jwks"'
+        /// Filter expression, e.g. 'level>=warn target:sqlx "jwks"'. Without a running supervisor, -n counts lines before filtering.
         #[arg(short = 'F', long, default_value = "")]
         filter: String,
         #[arg(short, long)]
