@@ -1,3 +1,6 @@
+pub mod probe;
+pub mod process;
+
 #[cfg(test)]
 pub mod fake;
 

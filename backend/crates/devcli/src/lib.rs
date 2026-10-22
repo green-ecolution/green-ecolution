@@ -3,6 +3,7 @@ pub mod config;
 pub mod graph;
 pub mod logs;
 pub mod paths;
+pub mod state;
 pub mod supervisor;
 pub mod sync;
 pub mod units;
