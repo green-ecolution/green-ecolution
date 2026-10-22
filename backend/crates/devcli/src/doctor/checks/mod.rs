@@ -1,3 +1,5 @@
+pub mod files;
+
 use std::sync::Arc;
 
 use super::Check;
@@ -12,5 +14,11 @@ the sqlx offline cache lacks new queries, migrate by hand from backend/:
 then cargo sqlx prepare --workspace -- --all-targets";
 
 pub fn all() -> Vec<Arc<dyn Check>> {
-    Vec::new()
+    vec![
+        Arc::new(files::MigrateBinary),
+        Arc::new(files::PackageDist),
+        Arc::new(files::DomainWasm),
+        Arc::new(files::KeycloakTheme),
+        Arc::new(files::ValhallaTiles),
+    ]
 }
