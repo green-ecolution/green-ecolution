@@ -23,17 +23,81 @@ fn parse_tracing_json(unit: &str, line: &str) -> Option<LogRecord> {
         .with_timezone(&Utc);
     let level =
         take_string(&mut fields, "level").map_or(Level::Unknown, |value| level_from_str(&value));
+    let target = take_string(&mut fields, "target");
+    let request_id = take_string(&mut fields, "request_id");
+    let message = match take_string(&mut fields, "message") {
+        Some(message) => {
+            span_close_message(&message, target.as_deref(), &fields).unwrap_or(message)
+        }
+        None => message_from_fields(&fields),
+    };
     Some(LogRecord {
         seq: 0,
         unit: unit.to_owned(),
         timestamp,
         level,
-        target: take_string(&mut fields, "target"),
-        message: take_string(&mut fields, "message").unwrap_or_default(),
-        request_id: take_string(&mut fields, "request_id"),
+        target,
+        message,
+        request_id,
         fields,
         raw: line.to_owned(),
     })
+}
+
+/// `FmtSpan::CLOSE` events say only "close": the closing span is neither in `spans` nor named.
+fn span_close_message(
+    message: &str,
+    target: Option<&str>,
+    fields: &Map<String, Value>,
+) -> Option<String> {
+    let (Some(busy), Some(idle)) = (fields.get("time.busy"), fields.get("time.idle")) else {
+        return None;
+    };
+    if message != "close" {
+        return None;
+    }
+    let target = target
+        .map(|target| format!(" {target}"))
+        .unwrap_or_default();
+    Some(format!(
+        "close{target} busy={} idle={}",
+        field_value(busy),
+        field_value(idle)
+    ))
+}
+
+/// `summary` leads the message instead; on sqlx query events `db.statement` and `elapsed_secs`
+/// only repeat `summary` and `elapsed`.
+const REDUNDANT_FIELDS: [&str; 4] = ["spans", "summary", "db.statement", "elapsed_secs"];
+
+/// Some emitters (sqlx) log without a `message`; render their fields like tracing's pretty format.
+fn message_from_fields(fields: &Map<String, Value>) -> String {
+    let summary = fields.get("summary").map(single_line);
+    let pairs = fields
+        .iter()
+        .filter(|(key, _)| !REDUNDANT_FIELDS.contains(&key.as_str()))
+        .map(|(key, value)| format!("{key}={}", field_value(value)));
+    summary
+        .into_iter()
+        .chain(pairs)
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
+fn field_value(value: &Value) -> String {
+    let text = single_line(value);
+    if text.contains(' ') {
+        format!("{text:?}")
+    } else {
+        text
+    }
+}
+
+fn single_line(value: &Value) -> String {
+    match value {
+        Value::String(text) => text.split_whitespace().collect::<Vec<_>>().join(" "),
+        other => other.to_string(),
+    }
 }
 
 fn take_string(fields: &mut Map<String, Value>, key: &str) -> Option<String> {
@@ -148,6 +212,50 @@ mod tests {
         assert!(record.fields.contains_key("spans"));
         assert!(!record.fields.contains_key("message"));
         assert_eq!(record.raw, line);
+    }
+
+    #[test]
+    fn builds_message_from_fields_when_event_has_none() {
+        let line = r#"{"timestamp":"2026-10-22T11:52:58.096154Z","level":"DEBUG","summary":"SELECT id, parent_id FROM …","db.statement":"\n\nSELECT id, parent_id FROM organizations\n","rows_affected":4,"rows_returned":4,"elapsed":"202.957µs","elapsed_secs":0.000202957,"target":"sqlx::query","spans":[{"name":"expire_just_watered"}]}"#;
+
+        let record = parse_line("backend", LogFormat::TracingJson, line, now());
+
+        assert_eq!(
+            record.message,
+            "SELECT id, parent_id FROM … elapsed=202.957µs rows_affected=4 rows_returned=4"
+        );
+        assert_eq!(record.target.as_deref(), Some("sqlx::query"));
+        assert!(record.fields.contains_key("db.statement"));
+    }
+
+    #[test]
+    fn quotes_field_values_with_whitespace_and_collapses_newlines() {
+        let line = r#"{"timestamp":"2026-10-22T11:52:58Z","level":"DEBUG","reason":"pool\n  closed","tries":2}"#;
+
+        let record = parse_line("backend", LogFormat::TracingJson, line, now());
+
+        assert_eq!(record.message, r#"reason="pool closed" tries=2"#);
+    }
+
+    #[test]
+    fn names_target_and_timings_on_span_close() {
+        let line = r#"{"timestamp":"2026-10-22T11:52:58.109617Z","level":"DEBUG","message":"close","time.busy":"1.19ms","time.idle":"12.1ms","target":"server::service::cluster_service","spans":[]}"#;
+
+        let record = parse_line("backend", LogFormat::TracingJson, line, now());
+
+        assert_eq!(
+            record.message,
+            "close server::service::cluster_service busy=1.19ms idle=12.1ms"
+        );
+    }
+
+    #[test]
+    fn keeps_a_plain_close_message_without_span_timings() {
+        let line = r#"{"timestamp":"2026-10-22T11:52:58Z","level":"INFO","message":"close","target":"server::mqtt"}"#;
+
+        let record = parse_line("backend", LogFormat::TracingJson, line, now());
+
+        assert_eq!(record.message, "close");
     }
 
     #[test]
