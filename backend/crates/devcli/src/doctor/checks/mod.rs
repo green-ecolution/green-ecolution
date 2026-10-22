@@ -1,5 +1,7 @@
+pub mod db;
 pub mod files;
 pub mod ports;
+pub mod sqlx;
 pub mod tools;
 
 use std::sync::Arc;
@@ -17,9 +19,13 @@ then cargo sqlx prepare --workspace -- --all-targets";
 
 pub fn all() -> Vec<Arc<dyn Check>> {
     vec![
+        Arc::new(db::DevDbMigrations),
         Arc::new(files::MigrateBinary),
+        Arc::new(sqlx::SqlxCache),
+        Arc::new(sqlx::SqlxPrepare),
         Arc::new(files::PackageDist),
         Arc::new(files::DomainWasm),
+        Arc::new(db::Testcontainers),
         Arc::new(files::KeycloakTheme),
         Arc::new(files::ValhallaTiles),
         Arc::new(tools::Tools::default()),

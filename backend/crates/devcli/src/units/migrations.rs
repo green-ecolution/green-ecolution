@@ -42,6 +42,33 @@ pub fn missing(expected: &BTreeSet<i64>, applied: &BTreeSet<i64>) -> Vec<i64> {
     expected.difference(applied).copied().collect()
 }
 
+pub async fn applied(
+    cli: &ComposeCli,
+    user: &str,
+    database: &str,
+) -> Result<BTreeSet<i64>, UnitError> {
+    let output = cli
+        .run(&[
+            "exec",
+            "-T",
+            "db",
+            "psql",
+            "-U",
+            user,
+            "-d",
+            database,
+            "-tAc",
+            "SELECT version FROM _sqlx_migrations WHERE success",
+        ])
+        .await?;
+    parse_applied(&output).map_err(|line| {
+        let line: String = line.chars().take(80).collect();
+        UnitError::Verify(format!(
+            "unexpected output from the migration check: `{line}`"
+        ))
+    })
+}
+
 /// Catches the stale `migrate` binary that prints "Migrations applied" without applying the
 /// newest migration.
 pub struct MigrationsApplied {
@@ -66,34 +93,14 @@ impl MigrationsApplied {
 impl Verify for MigrationsApplied {
     async fn verify(&self) -> Result<(), UnitError> {
         let expected = migration_versions(&self.dir)?;
-        let output = self
-            .cli
-            .run(&[
-                "exec",
-                "-T",
-                "db",
-                "psql",
-                "-U",
-                self.user.as_str(),
-                "-d",
-                self.database.as_str(),
-                "-tAc",
-                "SELECT version FROM _sqlx_migrations WHERE success",
-            ])
-            .await?;
-        let applied = parse_applied(&output).map_err(|line| {
-            let line: String = line.chars().take(80).collect();
-            UnitError::Verify(format!(
-                "unexpected output from the migration check: `{line}`"
-            ))
-        })?;
+        let applied = applied(&self.cli, &self.user, &self.database).await?;
         let pending = missing(&expected, &applied);
         match pending.last() {
             None => Ok(()),
             Some(newest) => Err(UnitError::Verify(format!(
                 "{} migration(s) not applied, newest {newest}. A stale target/debug/migrate \
-                 binary reports success without applying them; rebuild it against the live \
-                 database (DATABASE_URL=... cargo build --bin migrate) and rerun `just migrate-up`",
+                 binary reports success without applying them; `geco doctor` explains the fix \
+                 and `geco doctor --fix` (or `f` in the TUI) runs it",
                 pending.len()
             ))),
         }
