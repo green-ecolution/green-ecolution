@@ -31,6 +31,7 @@ pub struct FakeUnit {
     fail_with: Option<String>,
     journal: Journal,
     exit: Mutex<Option<oneshot::Sender<String>>>,
+    origin: Origin,
 }
 
 impl FakeUnit {
@@ -52,7 +53,13 @@ impl FakeUnit {
             fail_with: None,
             journal: journal.clone(),
             exit: Mutex::new(None),
+            origin: Origin::Local,
         }
+    }
+
+    pub fn as_task(mut self) -> Self {
+        self.origin = Origin::Task;
+        self
     }
 
     pub fn defined_as(mut self, tag: &str) -> Self {
@@ -93,7 +100,7 @@ impl Unit for FakeUnit {
     }
 
     fn origin(&self) -> Origin {
-        Origin::Local
+        self.origin
     }
 
     fn definition(&self) -> u64 {

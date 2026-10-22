@@ -28,6 +28,7 @@ pub enum UnitKind {
 pub enum Origin {
     Local,
     Compose,
+    Task,
 }
 
 #[derive(Debug, thiserror::Error)]

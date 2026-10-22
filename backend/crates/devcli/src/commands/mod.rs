@@ -22,6 +22,7 @@ use crate::{
     paths::Paths,
     state::{InstanceLock, orphaned_groups, stop_orphans},
     tui,
+    units::Origin,
 };
 
 pub async fn run(cli: Cli) -> anyhow::Result<ExitCode> {
@@ -218,11 +219,17 @@ async fn status(paths: &Paths, client: &Client, json: bool) -> anyhow::Result<Ex
     } else {
         output::write_status_table(&mut out, &units, Utc::now())?;
     }
-    Ok(if units.iter().all(|unit| unit.state.is_satisfied()) {
-        ExitCode::SUCCESS
-    } else {
-        ExitCode::FAILURE
-    })
+    Ok(
+        if units
+            .iter()
+            .filter(|unit| unit.origin != Origin::Task)
+            .all(|unit| unit.state.is_satisfied())
+        {
+            ExitCode::SUCCESS
+        } else {
+            ExitCode::FAILURE
+        },
+    )
 }
 
 async fn logs(

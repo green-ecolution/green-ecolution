@@ -170,6 +170,7 @@ pub fn write_status_table(
         let origin = match unit.origin {
             Origin::Local => "local",
             Origin::Compose => "compose",
+            Origin::Task => "task",
         };
         writeln!(
             out,
@@ -300,6 +301,19 @@ mod tests {
             text.contains("◐ backend  local    42s     waiting for migrations"),
             "{text}"
         );
+    }
+
+    #[test]
+    fn the_status_table_names_tasks() {
+        let task = UnitStatus {
+            name: "migrate-up".into(),
+            kind: UnitKind::Oneshot,
+            origin: Origin::Task,
+            state: UnitState::Starting,
+            since: Utc::now(),
+        };
+        let text = rendered(|out| write_status_table(out, &[task], Utc::now()));
+        assert!(text.contains("task"), "{text}");
     }
 }
 

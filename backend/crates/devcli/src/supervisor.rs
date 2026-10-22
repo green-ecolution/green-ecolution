@@ -13,6 +13,7 @@ use tokio::{
     sync::{
         Mutex as AsyncMutex,
         broadcast::{self, error::RecvError},
+        oneshot,
     },
     task::JoinHandle,
 };
@@ -86,6 +87,17 @@ pub enum SupervisorError {
     UnknownUnit(String),
     #[error("the supervisor is shutting down")]
     ShuttingDown,
+    #[error("`{0}` is the name of a unit")]
+    NameTaken(String),
+    #[error("task `{0}` is still running")]
+    TaskRunning(String),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum TaskOutcome {
+    Done,
+    Failed(String),
+    Stopped,
 }
 
 /// How often `stop` and `restart` re-resolve an entry a concurrent profile switch retired.
@@ -95,6 +107,9 @@ pub struct Supervisor {
     /// Swapped as a whole by `apply`, so a reader never sees the graph of one profile with
     /// the entries of another.
     topology: RwLock<Arc<Topology>>,
+    /// Recipes and fixes outside the graph; `apply` never touches them. A task leaves this
+    /// map once it finished successfully or was stopped, a failed one stays.
+    tasks: Mutex<BTreeMap<String, Arc<Entry>>>,
     logs: Arc<LogStore>,
     events: broadcast::Sender<UnitStatus>,
     profile: Mutex<String>,
@@ -140,6 +155,12 @@ impl Entry {
     }
 }
 
+fn is_running(entry: &Entry) -> bool {
+    lock(&entry.task)
+        .as_ref()
+        .is_some_and(|task| !task.is_finished())
+}
+
 impl Supervisor {
     /// `graph` must contain exactly the given units; `assemble` guarantees that.
     pub fn new(units: Vec<Arc<dyn Unit>>, graph: Graph, logs: Arc<LogStore>) -> Arc<Self> {
@@ -151,6 +172,7 @@ impl Supervisor {
             .collect();
         Arc::new(Self {
             topology: RwLock::new(Arc::new(Topology { graph, entries })),
+            tasks: Mutex::new(BTreeMap::new()),
             logs,
             events,
             profile: Mutex::new(String::new()),
@@ -183,13 +205,107 @@ impl Supervisor {
 
     pub fn status(&self) -> Vec<UnitStatus> {
         let topology = self.topology();
-        topology
+        let mut statuses: Vec<UnitStatus> = topology
             .graph
             .start_order()
             .iter()
             .filter_map(|name| topology.entries.get(name))
             .map(|entry| lock(&entry.status).clone())
-            .collect()
+            .collect();
+        statuses.extend(
+            lock(&self.tasks)
+                .values()
+                .map(|entry| lock(&entry.status).clone()),
+        );
+        statuses
+    }
+
+    pub async fn run_task(
+        self: &Arc<Self>,
+        unit: Arc<dyn Unit>,
+    ) -> Result<TaskOutcome, SupervisorError> {
+        let name = unit.name().to_owned();
+        if self.topology().entries.contains_key(&name) {
+            return Err(SupervisorError::NameTaken(name));
+        }
+        let (done, outcome) = oneshot::channel();
+        {
+            let mut tasks = lock(&self.tasks);
+            // Under the lock: stop_all sets `closing` before it takes the tasks out.
+            if self.is_closing() {
+                return Err(SupervisorError::ShuttingDown);
+            }
+            if tasks.get(&name).is_some_and(|entry| is_running(entry)) {
+                return Err(SupervisorError::TaskRunning(name));
+            }
+            let entry = Arc::new(Entry::new(unit));
+            self.spawn_task(&entry, Some(done));
+            tasks.insert(name, entry);
+        }
+        // The sender is dropped when stop() aborts the task.
+        Ok(outcome.await.unwrap_or(TaskOutcome::Stopped))
+    }
+
+    fn task(&self, name: &str) -> Option<Arc<Entry>> {
+        lock(&self.tasks).get(name).map(Arc::clone)
+    }
+
+    fn spawn_task(
+        self: &Arc<Self>,
+        entry: &Arc<Entry>,
+        done: Option<oneshot::Sender<TaskOutcome>>,
+    ) {
+        let this = Arc::clone(self);
+        let owned = Arc::clone(entry);
+        let handle = tokio::spawn(async move {
+            let outcome = this.task_lifecycle(&owned).await;
+            if let Some(done) = done {
+                let _ = done.send(outcome);
+            }
+        });
+        *lock(&entry.task) = Some(handle);
+    }
+
+    async fn task_lifecycle(&self, entry: &Arc<Entry>) -> TaskOutcome {
+        self.set_state(entry, UnitState::Starting);
+        match entry.unit.start(Arc::clone(&self.logs)).await {
+            Ok(_) => {
+                // Removed before `Done` goes out, so no status snapshot lists it afterwards.
+                self.forget_task(entry);
+                self.set_state(entry, UnitState::Done);
+                TaskOutcome::Done
+            }
+            Err(err) => {
+                let reason = err.to_string();
+                self.set_state(
+                    entry,
+                    UnitState::Failed {
+                        reason: reason.clone(),
+                    },
+                );
+                TaskOutcome::Failed(reason)
+            }
+        }
+    }
+
+    /// Only this very entry: a newer run of the same task may have replaced it already.
+    fn forget_task(&self, entry: &Arc<Entry>) {
+        let mut tasks = lock(&self.tasks);
+        if tasks
+            .get(entry.unit.name())
+            .is_some_and(|current| Arc::ptr_eq(current, entry))
+        {
+            tasks.remove(entry.unit.name());
+        }
+    }
+
+    async fn stop_task(&self, name: &str) -> bool {
+        let Some(entry) = lock(&self.tasks).remove(name) else {
+            return false;
+        };
+        let _control = entry.control.lock().await;
+        self.stop_entry(&entry).await;
+        true
     }
 
     pub async fn start_all(self: &Arc<Self>) {
@@ -203,18 +319,28 @@ impl Supervisor {
     /// No-op while the unit's lifecycle is still running (including a finished oneshot).
     /// Fails with `ShuttingDown` once `stop_all` began.
     pub async fn start(self: &Arc<Self>, name: &str) -> Result<(), SupervisorError> {
+        if let Some(entry) = self.task(name) {
+            let _control = entry.control.lock().await;
+            if self.is_closing() {
+                return Err(SupervisorError::ShuttingDown);
+            }
+            if !is_running(&entry) {
+                self.spawn_task(&entry, None);
+            }
+            return Ok(());
+        }
         let entry = self.entry(name)?;
         let _control = entry.control.lock().await;
-        let running = lock(&entry.task)
-            .as_ref()
-            .is_some_and(|task| !task.is_finished());
-        if running {
+        if is_running(&entry) {
             return Ok(());
         }
         self.spawn_lifecycle(&entry).await
     }
 
     pub async fn stop(&self, name: &str) -> Result<(), SupervisorError> {
+        if self.stop_task(name).await {
+            return Ok(());
+        }
         for attempt in 1..=RESOLVE_ATTEMPTS {
             let entry = self.entry(name)?;
             let control = entry.control.lock().await;
@@ -231,6 +357,13 @@ impl Supervisor {
 
     pub async fn stop_all(&self) {
         self.closing.store(true, Ordering::SeqCst);
+        let tasks: Vec<Arc<Entry>> = std::mem::take(&mut *lock(&self.tasks))
+            .into_values()
+            .collect();
+        for entry in tasks {
+            let _control = entry.control.lock().await;
+            self.stop_entry(&entry).await;
+        }
         let topology = self.topology();
         let affected: Vec<Arc<Entry>> = topology
             .graph
@@ -251,6 +384,15 @@ impl Supervisor {
         name: &str,
         cascade: bool,
     ) -> Result<(), SupervisorError> {
+        if let Some(entry) = self.task(name) {
+            let _control = entry.control.lock().await;
+            if self.is_closing() {
+                return Err(SupervisorError::ShuttingDown);
+            }
+            self.stop_entry(&entry).await;
+            self.spawn_task(&entry, None);
+            return Ok(());
+        }
         for attempt in 1..=RESOLVE_ATTEMPTS {
             let topology = self.topology();
             let dependents = if cascade {
@@ -1062,5 +1204,188 @@ mod tests {
         sup.stop_all().await;
         let result = sup.apply("x", Vec::new(), graph_of(&[])).await;
         assert_eq!(result, Err(SupervisorError::ShuttingDown));
+    }
+
+    fn names(sup: &Supervisor) -> Vec<String> {
+        sup.status().into_iter().map(|status| status.name).collect()
+    }
+
+    fn db_only(journal: &Journal) -> Arc<Supervisor> {
+        setup(
+            vec![Arc::new(FakeUnit::service("db", journal))],
+            &[("db", &[])],
+        )
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn a_successful_task_reports_done_and_leaves_the_list() {
+        let journal = Journal::default();
+        let sup = db_only(&journal);
+        let mut events = sup.subscribe();
+
+        let outcome = sup
+            .run_task(Arc::new(
+                FakeUnit::oneshot("migrate-up", &journal).as_task(),
+            ))
+            .await
+            .unwrap();
+
+        assert_eq!(outcome, TaskOutcome::Done);
+        assert_eq!(names(&sup), ["db"]);
+        let starting = events.recv().await.unwrap();
+        assert_eq!(
+            (starting.name.as_str(), starting.origin),
+            ("migrate-up", Origin::Task)
+        );
+        assert_eq!(starting.state, UnitState::Starting);
+        assert_eq!(events.recv().await.unwrap().state, UnitState::Done);
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn a_failed_task_stays_listed_until_it_is_stopped() {
+        let journal = Journal::default();
+        let sup = db_only(&journal);
+
+        let outcome = sup
+            .run_task(Arc::new(
+                FakeUnit::oneshot("lint", &journal)
+                    .failing("exit 1")
+                    .as_task(),
+            ))
+            .await
+            .unwrap();
+
+        assert_eq!(outcome, TaskOutcome::Failed("exit 1".into()));
+        assert_eq!(names(&sup), ["db", "lint"]);
+        assert_eq!(
+            state(&sup, "lint"),
+            UnitState::Failed {
+                reason: "exit 1".into()
+            }
+        );
+        sup.stop("lint").await.unwrap();
+        assert_eq!(names(&sup), ["db"]);
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn a_task_cannot_take_a_unit_name_or_run_twice() {
+        let journal = Journal::default();
+        let sup = db_only(&journal);
+        assert_eq!(
+            sup.run_task(Arc::new(FakeUnit::oneshot("db", &journal).as_task()))
+                .await,
+            Err(SupervisorError::NameTaken("db".into()))
+        );
+
+        let first = tokio::spawn({
+            let sup = Arc::clone(&sup);
+            let journal = journal.clone();
+            async move {
+                let slow = FakeUnit::oneshot("seed", &journal).ready_after(Duration::from_secs(5));
+                sup.run_task(Arc::new(slow.as_task())).await
+            }
+        });
+        tokio::time::sleep(Duration::from_secs(1)).await;
+        assert_eq!(
+            sup.run_task(Arc::new(FakeUnit::oneshot("seed", &journal).as_task()))
+                .await,
+            Err(SupervisorError::TaskRunning("seed".into()))
+        );
+        assert_eq!(first.await.unwrap(), Ok(TaskOutcome::Done));
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn stopping_a_running_task_ends_it_as_stopped() {
+        let journal = Journal::default();
+        let sup = db_only(&journal);
+        let run = tokio::spawn({
+            let sup = Arc::clone(&sup);
+            let journal = journal.clone();
+            async move {
+                let slow = FakeUnit::oneshot("seed", &journal).ready_after(Duration::from_secs(60));
+                sup.run_task(Arc::new(slow.as_task())).await
+            }
+        });
+        tokio::time::sleep(Duration::from_secs(1)).await;
+
+        sup.stop("seed").await.unwrap();
+
+        assert_eq!(run.await.unwrap(), Ok(TaskOutcome::Stopped));
+        assert_eq!(journal.entries(), ["start seed", "stop seed"]);
+        assert_eq!(names(&sup), ["db"]);
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn restart_runs_a_failed_task_again() {
+        let journal = Journal::default();
+        let sup = db_only(&journal);
+        sup.run_task(Arc::new(
+            FakeUnit::oneshot("lint", &journal)
+                .failing("exit 1")
+                .as_task(),
+        ))
+        .await
+        .unwrap();
+
+        sup.restart("lint", true).await.unwrap();
+        settle(&sup, |s| {
+            s.iter()
+                .any(|u| u.name == "lint" && matches!(u.state, UnitState::Failed { .. }))
+        })
+        .await;
+        tokio::time::sleep(Duration::from_secs(1)).await;
+
+        assert_eq!(journal.entries(), ["start lint", "stop lint", "start lint"]);
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn stop_all_stops_running_tasks_and_refuses_new_ones() {
+        let journal = Journal::default();
+        let sup = db_only(&journal);
+        let run = tokio::spawn({
+            let sup = Arc::clone(&sup);
+            let journal = journal.clone();
+            async move {
+                let slow = FakeUnit::oneshot("seed", &journal).ready_after(Duration::from_secs(60));
+                sup.run_task(Arc::new(slow.as_task())).await
+            }
+        });
+        tokio::time::sleep(Duration::from_secs(1)).await;
+
+        sup.stop_all().await;
+
+        assert_eq!(run.await.unwrap(), Ok(TaskOutcome::Stopped));
+        assert_eq!(
+            sup.run_task(Arc::new(FakeUnit::oneshot("x", &journal).as_task()))
+                .await,
+            Err(SupervisorError::ShuttingDown)
+        );
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn a_profile_switch_leaves_running_tasks_alone() {
+        let journal = Journal::default();
+        let sup = db_only(&journal);
+        sup.start_all().await;
+        settle(&sup, all_satisfied).await;
+        let run = tokio::spawn({
+            let sup = Arc::clone(&sup);
+            let journal = journal.clone();
+            async move {
+                let slow = FakeUnit::oneshot("seed", &journal).ready_after(Duration::from_secs(10));
+                sup.run_task(Arc::new(slow.as_task())).await
+            }
+        });
+        tokio::time::sleep(Duration::from_secs(1)).await;
+
+        let units: Vec<Arc<dyn Unit>> =
+            vec![Arc::new(FakeUnit::service("db", &journal).defined_as("v2"))];
+        sup.apply("full", units, graph_of(&[("db", &[])]))
+            .await
+            .unwrap();
+        assert!(names(&sup).contains(&"seed".to_owned()));
+
+        assert_eq!(run.await.unwrap(), Ok(TaskOutcome::Done));
+        assert!(!journal.entries().contains(&"stop seed".to_owned()));
     }
 }
