@@ -1,5 +1,5 @@
 use std::{
-    collections::BTreeMap,
+    collections::{BTreeMap, BTreeSet},
     fmt,
     sync::{
         Arc, Mutex, RwLock,
@@ -87,6 +87,9 @@ pub enum SupervisorError {
     #[error("the supervisor is shutting down")]
     ShuttingDown,
 }
+
+/// How often `stop` and `restart` re-resolve an entry a concurrent profile switch retired.
+const RESOLVE_ATTEMPTS: usize = 3;
 
 pub struct Supervisor {
     entries: RwLock<BTreeMap<String, Arc<Entry>>>,
@@ -207,9 +210,17 @@ impl Supervisor {
     }
 
     pub async fn stop(&self, name: &str) -> Result<(), SupervisorError> {
-        let entry = self.entry(name)?;
-        let _control = entry.control.lock().await;
-        self.stop_entry(&entry).await;
+        for attempt in 1..=RESOLVE_ATTEMPTS {
+            let entry = self.entry(name)?;
+            let control = entry.control.lock().await;
+            if entry.retired.load(Ordering::SeqCst) && attempt < RESOLVE_ATTEMPTS {
+                drop(control);
+                self.await_switch().await;
+                continue;
+            }
+            self.stop_entry(&entry).await;
+            break;
+        }
         Ok(())
     }
 
@@ -237,49 +248,59 @@ impl Supervisor {
         name: &str,
         cascade: bool,
     ) -> Result<(), SupervisorError> {
-        self.entry(name)?;
-        let graph = self.graph();
-        let dependents = if cascade {
-            graph.transitive_dependents(name)
-        } else {
-            Vec::new()
-        };
-        let affected: Vec<(&String, Arc<Entry>)> = {
-            let entries = read(&self.entries);
-            graph
-                .start_order()
+        for attempt in 1..=RESOLVE_ATTEMPTS {
+            let graph = self.graph();
+            let dependents = if cascade {
+                graph.transitive_dependents(name)
+            } else {
+                Vec::new()
+            };
+            let affected: Vec<(&String, Arc<Entry>)> = {
+                let entries = read(&self.entries);
+                graph
+                    .start_order()
+                    .iter()
+                    .filter(|unit| *unit == name || dependents.contains(unit))
+                    .filter_map(|unit| entries.get(unit).map(|entry| (unit, Arc::clone(entry))))
+                    .collect()
+            };
+            let Some(entry) = affected
                 .iter()
-                .filter(|unit| *unit == name || dependents.contains(unit))
-                .filter_map(|unit| entries.get(unit).map(|entry| (unit, Arc::clone(entry))))
-                .collect()
-        };
-        let Some(entry) = affected
-            .iter()
-            .find(|(unit, _)| *unit == name)
-            .map(|(_, entry)| Arc::clone(entry))
-        else {
-            return Err(SupervisorError::UnknownUnit(name.to_owned()));
-        };
-        let dependents: Vec<&Arc<Entry>> = affected
-            .iter()
-            .filter(|(unit, _)| *unit != name)
-            .map(|(_, entry)| entry)
-            .collect();
-        // Taking several control locks only ever in start order rules out deadlocks.
-        let mut guards = Vec::with_capacity(affected.len());
-        for (_, entry) in &affected {
-            guards.push(entry.control.lock().await);
-        }
-        if self.is_closing() {
-            return Err(SupervisorError::ShuttingDown);
-        }
-        for dependent in dependents.iter().rev() {
-            self.stop_entry(dependent).await;
-        }
-        self.stop_entry(&entry).await;
-        self.spawn_lifecycle(&entry).await?;
-        for dependent in dependents {
-            self.spawn_lifecycle(dependent).await?;
+                .find(|(unit, _)| *unit == name)
+                .map(|(_, entry)| Arc::clone(entry))
+            else {
+                return Err(SupervisorError::UnknownUnit(name.to_owned()));
+            };
+            let dependents: Vec<&Arc<Entry>> = affected
+                .iter()
+                .filter(|(unit, _)| *unit != name)
+                .map(|(_, entry)| entry)
+                .collect();
+            // Taking several control locks only ever in start order rules out deadlocks.
+            let mut guards = Vec::with_capacity(affected.len());
+            for (_, entry) in &affected {
+                guards.push(entry.control.lock().await);
+            }
+            let stale = affected
+                .iter()
+                .any(|(_, entry)| entry.retired.load(Ordering::SeqCst));
+            if stale && attempt < RESOLVE_ATTEMPTS {
+                drop(guards);
+                self.await_switch().await;
+                continue;
+            }
+            if self.is_closing() {
+                return Err(SupervisorError::ShuttingDown);
+            }
+            for dependent in dependents.iter().rev() {
+                self.stop_entry(dependent).await;
+            }
+            self.stop_entry(&entry).await;
+            self.spawn_lifecycle(&entry).await?;
+            for dependent in dependents {
+                self.spawn_lifecycle(dependent).await?;
+            }
+            break;
         }
         Ok(())
     }
@@ -306,13 +327,21 @@ impl Supervisor {
             profile: profile.to_owned(),
             ..ProfileChange::default()
         };
+        // Fingerprints leave out dependencies, so a changed dependency set counts as a change too.
+        let unchanged = |name: &str, entry: &Entry, unit: &Arc<dyn Unit>| {
+            unit.definition() == entry.unit.definition()
+                && old_graph
+                    .dependencies(name)
+                    .collect::<BTreeSet<_>>()
+                    .eq(&graph.dependencies(name).collect::<BTreeSet<_>>())
+        };
         for name in old_graph.start_order().iter().rev() {
             let Some(entry) = current.get(name) else {
                 continue;
             };
             let kept = incoming
                 .get(name)
-                .is_some_and(|unit| unit.definition() == entry.unit.definition());
+                .is_some_and(|unit| unchanged(name, entry, unit));
             if kept {
                 continue;
             }
@@ -328,7 +357,7 @@ impl Supervisor {
         let mut entries = BTreeMap::new();
         for (name, unit) in incoming {
             let entry = match current.get(&name) {
-                Some(entry) if entry.unit.definition() == unit.definition() => Arc::clone(entry),
+                Some(entry) if unchanged(&name, entry, &unit) => Arc::clone(entry),
                 Some(_) => Arc::new(Entry::new(unit)),
                 None => {
                     change.started.push(name.clone());
@@ -353,6 +382,12 @@ impl Supervisor {
             .get(name)
             .map(Arc::clone)
             .ok_or_else(|| SupervisorError::UnknownUnit(name.to_owned()))
+    }
+
+    /// The switch that retired an entry installs its successor before releasing `switching`.
+    /// The caller must hold no control lock: `apply` takes them while holding `switching`.
+    async fn await_switch(&self) {
+        drop(self.switching.lock().await);
     }
 
     fn is_closing(&self) -> bool {
@@ -850,6 +885,94 @@ mod tests {
             ["stop pgadmin"],
             "the dropped unit must not be revived"
         );
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn apply_restarts_a_kept_unit_whose_dependencies_changed() {
+        let journal = Journal::default();
+        let sup = setup(
+            vec![
+                Arc::new(FakeUnit::service("db", &journal)),
+                Arc::new(FakeUnit::service("backend", &journal)),
+            ],
+            &[("db", &[]), ("backend", &["db"])],
+        );
+        sup.start_all().await;
+        settle(&sup, all_satisfied).await;
+        let before = journal.entries().len();
+
+        let units: Vec<Arc<dyn Unit>> = vec![
+            Arc::new(FakeUnit::service("db", &journal)),
+            Arc::new(FakeUnit::service("backend", &journal)),
+            Arc::new(
+                FakeUnit::oneshot("build-release", &journal).ready_after(Duration::from_secs(5)),
+            ),
+        ];
+        let change = sup
+            .apply(
+                "prod-like",
+                units,
+                graph_of(&[
+                    ("db", &[]),
+                    ("build-release", &[]),
+                    ("backend", &["db", "build-release"]),
+                ]),
+            )
+            .await
+            .unwrap();
+        tokio::time::sleep(Duration::from_secs(1)).await;
+        assert_eq!(
+            state(&sup, "backend"),
+            UnitState::Waiting {
+                on: vec!["build-release".into()]
+            }
+        );
+        settle(&sup, all_satisfied).await;
+
+        assert_eq!(change.restarted, ["backend"]);
+        assert_eq!(change.started, ["build-release"]);
+        assert!(change.stopped.is_empty());
+        assert_eq!(
+            &journal.entries()[before..],
+            ["stop backend", "start build-release", "start backend"]
+        );
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn a_stop_racing_a_switch_that_replaces_the_unit_stops_the_successor() {
+        let journal = Journal::default();
+        let sup = setup(
+            vec![Arc::new(
+                FakeUnit::service("backend", &journal).stop_after(Duration::from_secs(5)),
+            )],
+            &[("backend", &[])],
+        );
+        sup.start_all().await;
+        settle(&sup, all_satisfied).await;
+
+        let successor = Journal::default();
+        let switch = tokio::spawn({
+            let sup = Arc::clone(&sup);
+            let successor = successor.clone();
+            async move {
+                let units: Vec<Arc<dyn Unit>> = vec![Arc::new(
+                    FakeUnit::service("backend", &successor).defined_as("release"),
+                )];
+                sup.apply("prod-like", units, graph_of(&[("backend", &[])]))
+                    .await
+            }
+        });
+        tokio::time::sleep(Duration::from_secs(1)).await;
+        sup.stop("backend").await.unwrap();
+        switch.await.unwrap().unwrap();
+        tokio::time::sleep(Duration::from_secs(60)).await;
+
+        assert_eq!(journal.entries(), ["start backend", "stop backend"]);
+        assert_eq!(
+            successor.entries().last().map(String::as_str),
+            Some("stop backend")
+        );
+        assert_eq!(state(&sup, "backend"), UnitState::Stopped);
     }
 
     #[tokio::test(start_paused = true)]
