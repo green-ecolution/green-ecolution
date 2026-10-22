@@ -233,9 +233,19 @@ impl Doctor {
         tokio::spawn(async move {
             let mut logs = doctor.supervisor.logs().subscribe();
             let mut states = doctor.supervisor.subscribe();
+            let mut profiles = doctor.supervisor.subscribe_profile();
             loop {
                 let (checks, unit) = tokio::select! {
                     () = shutdown.cancelled() => return,
+                    // A switch changes which units run, so the start-up findings may no longer hold.
+                    received = profiles.recv() => match received {
+                        Ok(_) | Err(RecvError::Lagged(_)) => {
+                            let doctor = Arc::clone(&doctor);
+                            tokio::spawn(async move { doctor.run(false).await });
+                            continue;
+                        }
+                        Err(RecvError::Closed) => return,
+                    },
                     received = logs.recv() => match received {
                         Ok(record) if record.unit != FIX_UNIT => {
                             (doctor.triggered(&Trigger::Log(&record)), Some(record.unit))
@@ -589,6 +599,33 @@ mod tests {
         let mut changes = doc.subscribe();
         tokio::time::sleep(Duration::from_millis(50)).await;
         f.supervisor.start("migrations").await.unwrap();
+
+        let findings = tokio::time::timeout(Duration::from_secs(5), changes.recv())
+            .await
+            .unwrap()
+            .unwrap();
+        assert!(findings.is_empty());
+        assert!(doc.findings().is_empty());
+        shutdown.cancel();
+        watcher.await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn a_profile_switch_runs_the_cheap_checks_again() {
+        let f = fixture();
+        let ports = FakeCheck::new("ports")
+            .finds(vec![Finding::new("ports", Severity::Error, "taken")])
+            .arc();
+        let doc = doctor(&f, vec![ports.clone()]);
+        doc.run(false).await;
+        assert_eq!(doc.findings().len(), 1);
+        ports.set(Ok(vec![]));
+
+        let shutdown = CancellationToken::new();
+        let watcher = doc.watch(shutdown.clone());
+        let mut changes = doc.subscribe();
+        tokio::time::sleep(Duration::from_millis(50)).await;
+        f.supervisor.set_profile("x");
 
         let findings = tokio::time::timeout(Duration::from_secs(5), changes.recv())
             .await
