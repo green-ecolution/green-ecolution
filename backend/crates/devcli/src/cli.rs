@@ -81,10 +81,11 @@ pub enum Command {
     Run {
         #[arg(add = ArgValueCandidates::new(complete::recipes))]
         recipe: String,
-        /// Arguments for the recipe, passed on unchanged
+        /// Arguments for the recipe, passed on unchanged; flags after the first one included
         #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
         args: Vec<String>,
-        /// Run a destructive recipe without asking
+        /// Run a destructive recipe without asking. Put it before the recipe: a recipe's own
+        /// --yes goes after the recipe's arguments
         #[arg(long)]
         yes: bool,
     },
@@ -168,6 +169,21 @@ mod tests {
 
         let cli = Cli::try_parse_from(["geco", "run", "--yes", "migrate-reset"]).unwrap();
         assert!(matches!(cli.command, Some(Command::Run { yes: true, .. })));
+
+        let cli = Cli::try_parse_from([
+            "geco",
+            "run",
+            "--yes",
+            "import-staging",
+            "staging.sql",
+            "--yes",
+        ])
+        .unwrap();
+        let Some(Command::Run { args, yes, .. }) = cli.command else {
+            panic!("expected run");
+        };
+        assert!(yes);
+        assert_eq!(args, ["staging.sql", "--yes"]);
     }
 
     #[test]

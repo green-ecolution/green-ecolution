@@ -95,8 +95,18 @@ In the TUI, `:` or `Ctrl-K` opens a command palette that searches every action: 
 stopping and restarting units, switching profiles, running recipes, applying doctor fixes and
 setting the log filter. Recipes with parameters ask for them in the status line. Recipes listed
 under `[tasks] destructive` in `geco.toml` ask for confirmation first, and `geco run` does the
-same unless `--yes` is given. A running recipe shows up as a temporary unit and disappears once
-it succeeded.
+same unless `--yes` is given. That flag belongs to geco and goes before the recipe. The
+recipe's own flags follow its arguments, for example
+`geco run --yes import-staging staging.sql --yes`; directly after the recipe name, geco would
+still read `--yes` as its own. Tasks run without stdin, so a recipe that prompts needs its own
+flag to skip the question. A running recipe shows up as a temporary unit and disappears once it
+succeeded.
+
+In a terminal, `geco up --detach` shows the start-up live and returns once all units are ready.
+It exits with 1 when the start-up settled with failures; the supervisor keeps running in that
+case, so `geco logs` and `geco restart` still work. Ctrl-C only stops watching and leaves the
+start running in the background. Without a terminal, or with `NO_COLOR` set, it returns as soon
+as the supervisor answers.
 
 Units and profiles (`minimal`, `full`, `prod-like`) are defined in `geco.toml` at the
 repository root; a profile can extend another and override local units. Switching profiles at
