@@ -92,8 +92,9 @@ pub enum SupervisorError {
 const RESOLVE_ATTEMPTS: usize = 3;
 
 pub struct Supervisor {
-    entries: RwLock<BTreeMap<String, Arc<Entry>>>,
-    graph: RwLock<Arc<Graph>>,
+    /// Swapped as a whole by `apply`, so a reader never sees the graph of one profile with
+    /// the entries of another.
+    topology: RwLock<Arc<Topology>>,
     logs: Arc<LogStore>,
     events: broadcast::Sender<UnitStatus>,
     profile: Mutex<String>,
@@ -102,6 +103,11 @@ pub struct Supervisor {
     switching: AsyncMutex<()>,
     /// Set first thing in `stop_all`; no lifecycle is spawned afterwards.
     closing: AtomicBool,
+}
+
+struct Topology {
+    graph: Graph,
+    entries: BTreeMap<String, Arc<Entry>>,
 }
 
 struct Entry {
@@ -144,8 +150,7 @@ impl Supervisor {
             .map(|unit| (unit.name().to_owned(), Arc::new(Entry::new(unit))))
             .collect();
         Arc::new(Self {
-            entries: RwLock::new(entries),
-            graph: RwLock::new(Arc::new(graph)),
+            topology: RwLock::new(Arc::new(Topology { graph, entries })),
             logs,
             events,
             profile: Mutex::new(String::new()),
@@ -177,19 +182,19 @@ impl Supervisor {
     }
 
     pub fn status(&self) -> Vec<UnitStatus> {
-        let graph = self.graph();
-        let entries = read(&self.entries);
-        graph
+        let topology = self.topology();
+        topology
+            .graph
             .start_order()
             .iter()
-            .filter_map(|name| entries.get(name))
+            .filter_map(|name| topology.entries.get(name))
             .map(|entry| lock(&entry.status).clone())
             .collect()
     }
 
     pub async fn start_all(self: &Arc<Self>) {
-        let graph = self.graph();
-        for name in graph.start_order() {
+        let topology = self.topology();
+        for name in topology.graph.start_order() {
             // Fails only once shutdown began, when nothing should start anyway.
             let _ = self.start(name).await;
         }
@@ -226,16 +231,14 @@ impl Supervisor {
 
     pub async fn stop_all(&self) {
         self.closing.store(true, Ordering::SeqCst);
-        let graph = self.graph();
-        let affected: Vec<Arc<Entry>> = {
-            let entries = read(&self.entries);
-            graph
-                .start_order()
-                .iter()
-                .rev()
-                .filter_map(|name| entries.get(name).map(Arc::clone))
-                .collect()
-        };
+        let topology = self.topology();
+        let affected: Vec<Arc<Entry>> = topology
+            .graph
+            .start_order()
+            .iter()
+            .rev()
+            .filter_map(|name| topology.entries.get(name).map(Arc::clone))
+            .collect();
         for entry in affected {
             let _control = entry.control.lock().await;
             self.stop_entry(&entry).await;
@@ -249,21 +252,24 @@ impl Supervisor {
         cascade: bool,
     ) -> Result<(), SupervisorError> {
         for attempt in 1..=RESOLVE_ATTEMPTS {
-            let graph = self.graph();
+            let topology = self.topology();
             let dependents = if cascade {
-                graph.transitive_dependents(name)
+                topology.graph.transitive_dependents(name)
             } else {
                 Vec::new()
             };
-            let affected: Vec<(&String, Arc<Entry>)> = {
-                let entries = read(&self.entries);
-                graph
-                    .start_order()
-                    .iter()
-                    .filter(|unit| *unit == name || dependents.contains(unit))
-                    .filter_map(|unit| entries.get(unit).map(|entry| (unit, Arc::clone(entry))))
-                    .collect()
-            };
+            let affected: Vec<(&String, Arc<Entry>)> = topology
+                .graph
+                .start_order()
+                .iter()
+                .filter(|unit| *unit == name || dependents.contains(unit))
+                .filter_map(|unit| {
+                    topology
+                        .entries
+                        .get(unit)
+                        .map(|entry| (unit, Arc::clone(entry)))
+                })
+                .collect();
             let Some(entry) = affected
                 .iter()
                 .find(|(unit, _)| *unit == name)
@@ -320,8 +326,9 @@ impl Supervisor {
         if self.is_closing() {
             return Err(SupervisorError::ShuttingDown);
         }
-        let old_graph = self.graph();
-        let current = read(&self.entries).clone();
+        let old = self.topology();
+        let old_graph = &old.graph;
+        let current = &old.entries;
         let incoming: BTreeMap<String, Arc<dyn Unit>> = units
             .into_iter()
             .map(|unit| (unit.name().to_owned(), unit))
@@ -380,19 +387,19 @@ impl Supervisor {
             };
             entries.insert(name, entry);
         }
-        *write(&self.entries) = entries;
-        *write(&self.graph) = Arc::new(graph);
+        *write(&self.topology) = Arc::new(Topology { graph, entries });
         self.set_profile(profile);
         self.start_all().await;
         Ok(change)
     }
 
-    fn graph(&self) -> Arc<Graph> {
-        Arc::clone(&read(&self.graph))
+    fn topology(&self) -> Arc<Topology> {
+        Arc::clone(&read(&self.topology))
     }
 
     fn entry(&self, name: &str) -> Result<Arc<Entry>, SupervisorError> {
-        read(&self.entries)
+        self.topology()
+            .entries
             .get(name)
             .map(Arc::clone)
             .ok_or_else(|| SupervisorError::UnknownUnit(name.to_owned()))
@@ -434,12 +441,7 @@ impl Supervisor {
         // Subscribe before the first check so no dependency change slips through.
         let mut events = self.events.subscribe();
         loop {
-            let graph = self.graph();
-            let pending: Vec<String> = graph
-                .dependencies(name)
-                .filter(|dep| !self.state_of(dep).is_some_and(|state| state.is_satisfied()))
-                .map(str::to_owned)
-                .collect();
+            let pending = self.pending_dependencies(name);
             if pending.is_empty() {
                 break;
             }
@@ -468,6 +470,21 @@ impl Supervisor {
         }
     }
 
+    fn pending_dependencies(&self, name: &str) -> Vec<String> {
+        let topology = self.topology();
+        topology
+            .graph
+            .dependencies(name)
+            .filter(|dep| {
+                !topology
+                    .entries
+                    .get(*dep)
+                    .is_some_and(|entry| lock(&entry.status).state.is_satisfied())
+            })
+            .map(str::to_owned)
+            .collect()
+    }
+
     async fn stop_entry(&self, entry: &Entry) {
         let task = lock(&entry.task).take();
         if let Some(task) = task {
@@ -481,12 +498,6 @@ impl Supervisor {
             },
         };
         self.set_state(entry, state);
-    }
-
-    fn state_of(&self, name: &str) -> Option<UnitState> {
-        read(&self.entries)
-            .get(name)
-            .map(|entry| lock(&entry.status).state.clone())
     }
 
     fn set_state(&self, entry: &Entry, state: UnitState) {
