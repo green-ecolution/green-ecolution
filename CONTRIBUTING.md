@@ -89,7 +89,11 @@ geco restart backend      # --cascade also restarts dependent units
 geco down                 # stop everything geco started
 ```
 
-Units and profiles (`minimal`, `full`, `prod-like`) are defined in `geco.toml` at the repository root; a profile can extend another and override local units, and switching profiles at runtime only touches the units that differ.
+Units and profiles (`minimal`, `full`, `prod-like`) are defined in `geco.toml` at the
+repository root; a profile can extend another and override local units. Switching profiles at
+runtime restarts the units whose definition or dependencies changed, together with the units
+that depend on them, and also starts units that were stopped or failed; everything else keeps
+running. In the TUI, `p` switches the profile.
 Runtime state lives in `.geco/` and is git-ignored. geco needs Linux or macOS.
 
 The filter language combines terms with AND: `level>=warn`, `level:warn,error`,

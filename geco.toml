@@ -69,6 +69,7 @@ units = ["valhalla", "streamlet", "pgadmin"]
 extends = "minimal"
 units = ["build-release"]
 
+# The backend keeps the dev env: the request view needs its debug log level.
 [profile.prod-like.override.backend]
 run = "../bin/{{binary_name}}"
 after = ["build-release", "migrations", "keycloak"]
