@@ -7,7 +7,9 @@ use std::{
 use async_trait::async_trait;
 use tokio::process::Command;
 
-use super::{Origin, Running, Unit, UnitError, UnitKind, process::output_in_own_group};
+use super::{
+    Origin, Running, Unit, UnitError, UnitKind, fingerprint, process::output_in_own_group,
+};
 use crate::{
     config::LogFormat,
     logs::{LogSink, LogStore},
@@ -94,6 +96,15 @@ impl Unit for HookedUnit {
 
     fn origin(&self) -> Origin {
         self.inner.origin()
+    }
+
+    fn definition(&self) -> u64 {
+        fingerprint((
+            self.inner.definition(),
+            &self.pre_start,
+            self.dev_services.is_some(),
+            self.verify.is_some(),
+        ))
     }
 
     async fn start(&self, logs: Arc<LogStore>) -> Result<Running, UnitError> {
@@ -258,5 +269,14 @@ mod tests {
 
         let err = unit.start(LogStore::new(10)).await.unwrap_err();
         assert_eq!(err.to_string(), "2 migrations missing");
+    }
+
+    #[test]
+    fn hooks_are_part_of_the_definition() {
+        let inner =
+            || -> Arc<dyn Unit> { Arc::new(FakeUnit::service("proxy", &Journal::default())) };
+        let plain = HookedUnit::new(inner(), PathBuf::from("/tmp"));
+        let hooked = HookedUnit::new(inner(), PathBuf::from("/tmp")).pre_start(vec!["true".into()]);
+        assert_ne!(plain.definition(), hooked.definition());
     }
 }

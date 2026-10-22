@@ -69,11 +69,23 @@ impl fmt::Debug for Running {
     }
 }
 
+/// Identifies a unit's effective definition without keeping it around; definitions carry
+/// rendered secrets, so only their hash is ever compared.
+pub fn fingerprint(parts: impl std::hash::Hash) -> u64 {
+    use std::hash::{DefaultHasher, Hasher};
+    let mut hasher = DefaultHasher::new();
+    parts.hash(&mut hasher);
+    hasher.finish()
+}
+
 #[async_trait]
 pub trait Unit: Send + Sync {
     fn name(&self) -> &str;
     fn kind(&self) -> UnitKind;
     fn origin(&self) -> Origin;
+    /// Changes whenever the unit would behave differently; a profile switch restarts a unit
+    /// whose definition changed.
+    fn definition(&self) -> u64;
     /// Resolves once a service is ready or a oneshot has finished successfully.
     async fn start(&self, logs: Arc<LogStore>) -> Result<Running, UnitError>;
     /// Must also clean up after a `start` that was cancelled half-way.

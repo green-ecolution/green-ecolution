@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 
-use super::{Origin, Running, Unit, UnitError, UnitKind};
+use super::{Origin, Running, Unit, UnitError, UnitKind, fingerprint};
 use crate::logs::LogStore;
 
 /// Stands in for a compose service while Docker is unreachable, so local units still run and
@@ -30,6 +30,10 @@ impl Unit for UnavailableUnit {
 
     fn origin(&self) -> Origin {
         Origin::Compose
+    }
+
+    fn definition(&self) -> u64 {
+        fingerprint(("unavailable", &self.name, &self.reason))
     }
 
     async fn start(&self, _logs: Arc<LogStore>) -> Result<Running, UnitError> {

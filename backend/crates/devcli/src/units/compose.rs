@@ -16,7 +16,9 @@ use futures::StreamExt;
 use serde::Deserialize;
 use tokio::{process::Command, task::JoinHandle};
 
-use super::{Origin, Running, Unit, UnitError, UnitKind, process::output_in_own_group};
+use super::{
+    Origin, Running, Unit, UnitError, UnitKind, fingerprint, process::output_in_own_group,
+};
 use crate::{
     config::LogFormat,
     logs::{LogSink, LogStore},
@@ -200,6 +202,15 @@ impl Unit for ComposeUnit {
 
     fn origin(&self) -> Origin {
         Origin::Compose
+    }
+
+    fn definition(&self) -> u64 {
+        fingerprint((
+            "compose",
+            &self.service,
+            &self.project,
+            format!("{:?}", self.kind),
+        ))
     }
 
     async fn start(&self, logs: Arc<LogStore>) -> Result<Running, UnitError> {

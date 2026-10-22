@@ -6,7 +6,7 @@ use std::{
 use async_trait::async_trait;
 use tokio::sync::oneshot;
 
-use super::{Origin, Running, Unit, UnitError, UnitKind};
+use super::{Origin, Running, Unit, UnitError, UnitKind, fingerprint};
 use crate::logs::LogStore;
 
 #[derive(Clone, Default)]
@@ -25,6 +25,7 @@ impl Journal {
 pub struct FakeUnit {
     name: String,
     kind: UnitKind,
+    tag: String,
     ready_after: Duration,
     stop_after: Duration,
     fail_with: Option<String>,
@@ -45,12 +46,18 @@ impl FakeUnit {
         Self {
             name: name.to_owned(),
             kind,
+            tag: String::new(),
             ready_after: Duration::from_millis(10),
             stop_after: Duration::ZERO,
             fail_with: None,
             journal: journal.clone(),
             exit: Mutex::new(None),
         }
+    }
+
+    pub fn defined_as(mut self, tag: &str) -> Self {
+        self.tag = tag.to_owned();
+        self
     }
 
     pub fn ready_after(mut self, delay: Duration) -> Self {
@@ -89,6 +96,10 @@ impl Unit for FakeUnit {
         Origin::Local
     }
 
+    fn definition(&self) -> u64 {
+        fingerprint((&self.name, format!("{:?}", self.kind), &self.tag))
+    }
+
     async fn start(&self, _logs: Arc<LogStore>) -> Result<Running, UnitError> {
         self.journal.push(format!("start {}", self.name));
         tokio::time::sleep(self.ready_after).await;
@@ -110,5 +121,22 @@ impl Unit for FakeUnit {
         tokio::time::sleep(self.stop_after).await;
         self.exit.lock().unwrap().take();
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn fakes_differ_by_their_tag() {
+        let journal = Journal::default();
+        let a = FakeUnit::service("db", &journal);
+        let b = FakeUnit::service("db", &journal).defined_as("v2");
+        assert_ne!(a.definition(), b.definition());
+        assert_eq!(
+            a.definition(),
+            FakeUnit::service("db", &journal).definition()
+        );
     }
 }

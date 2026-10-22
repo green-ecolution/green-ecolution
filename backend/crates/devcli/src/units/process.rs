@@ -20,7 +20,7 @@ use tokio::{
     time::Instant,
 };
 
-use super::{Origin, Running, Unit, UnitError, UnitKind, probe};
+use super::{Origin, Running, Unit, UnitError, UnitKind, fingerprint, probe};
 use crate::{
     config::{LogFormat, ReadyProbe},
     logs::{LogSink, LogStore},
@@ -83,6 +83,10 @@ impl Unit for ProcessUnit {
 
     fn origin(&self) -> Origin {
         Origin::Local
+    }
+
+    fn definition(&self) -> u64 {
+        fingerprint(format!("{:?}", self.spec))
     }
 
     async fn start(&self, logs: Arc<LogStore>) -> Result<Running, UnitError> {
@@ -304,6 +308,19 @@ pub(crate) mod tests {
 
     fn unit(spec: ProcessSpec) -> ProcessUnit {
         ProcessUnit::new(spec, ProcessRegistry::in_memory()).with_grace(Duration::from_secs(1))
+    }
+
+    #[test]
+    fn the_definition_changes_with_command_and_env() {
+        let base = unit(spec(UnitKind::Service, "sleep 1"));
+        let same = unit(spec(UnitKind::Service, "sleep 1"));
+        let other_command = unit(spec(UnitKind::Service, "sleep 2"));
+        let mut with_env = spec(UnitKind::Service, "sleep 1");
+        with_env.env.insert("A".into(), "1".into());
+
+        assert_eq!(base.definition(), same.definition());
+        assert_ne!(base.definition(), other_command.definition());
+        assert_ne!(base.definition(), unit(with_env).definition());
     }
 
     pub(crate) async fn pid_from(path: &Path) -> Pid {
