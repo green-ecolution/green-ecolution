@@ -244,6 +244,9 @@ impl App {
             return None;
         }
         if let Some(prompt) = &mut self.prompt {
+            if key.code == KeyCode::Char('c') && key.modifiers.contains(KeyModifiers::CONTROL) {
+                return Some(Effect::Quit);
+            }
             return match prompt.handle(key) {
                 PromptOutcome::Editing => None,
                 PromptOutcome::Cancelled => {
@@ -816,6 +819,25 @@ pub(crate) mod tests {
             })
         );
         assert!(app.prompt.is_none());
+    }
+
+    #[test]
+    fn ctrl_c_quits_from_the_parameter_prompt() {
+        let mut app = app_with_two_units();
+        let mut new = recipe("migrate-new");
+        new.params = vec![Param {
+            name: "name".into(),
+            default: None,
+            optional: false,
+            kind: ParamKind::Singular,
+        }];
+        app.update(Msg::Recipes(vec![new]));
+        app.update(key(KeyCode::Char(':')));
+        type_text(&mut app, "migrate-new");
+        app.update(key(KeyCode::Enter));
+        assert!(app.prompt.is_some());
+
+        assert_eq!(app.update(ctrl(KeyCode::Char('c'))), Some(Effect::Quit));
     }
 
     #[test]
