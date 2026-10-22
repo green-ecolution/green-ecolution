@@ -290,6 +290,7 @@ backend/backend
 ## Frontend
 # Logs
 logs
+!backend/crates/devcli/src/logs/
 *.log
 npm-debug.log*
 yarn-debug.log*

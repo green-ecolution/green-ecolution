@@ -8,9 +8,6 @@ use serde::{Deserialize, Serialize};
 
 pub use buffer::LogStore;
 pub use parse::parse_line;
-#[cfg(test)]
-#[allow(unused_imports)] // reason: test-only helper for sibling test modules
-pub(crate) use parse::strip_ansi;
 
 use crate::config::LogFormat;
 
