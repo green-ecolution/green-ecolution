@@ -98,8 +98,7 @@ pub fn plan_units(
     Ok((sources, Graph::new(edges)?))
 }
 
-pub fn select(full: &Graph, config: &GecoConfig, profile: &str) -> Result<Graph, AssembleError> {
-    let roots = &config.profile(profile)?.units;
+pub fn select(full: &Graph, roots: &[String]) -> Result<Graph, AssembleError> {
     Ok(full.subgraph(&full.closure(roots)?))
 }
 
@@ -109,6 +108,12 @@ pub async fn assemble(
     profile: &str,
     registry: ProcessRegistry,
 ) -> Result<Assembly, AssembleError> {
+    let resolved = config.resolve(profile)?;
+    let roots = resolved.units;
+    let config = &GecoConfig {
+        unit: resolved.unit,
+        ..config.clone()
+    };
     let cli = ComposeCli::new(root.to_path_buf());
     let mut warnings = Vec::new();
     let docker = match Docker::connect_with_local_defaults() {
@@ -130,7 +135,7 @@ pub async fn assemble(
     };
     let unavailable_reason = warnings.last().cloned().unwrap_or_default();
     let (sources, full) = plan_units(config, project.as_ref())?;
-    let graph = select(&full, config, profile)?;
+    let graph = select(&full, &roots)?;
     let vars = JustVars::new(root.to_path_buf());
 
     let mut units = Vec::with_capacity(graph.start_order().len());
@@ -281,7 +286,7 @@ mod tests {
     fn the_repository_config_selects_a_valid_minimal_stack() {
         let config = repo_config();
         let (sources, full) = plan_units(&config, Some(&compose())).unwrap();
-        let graph = select(&full, &config, "minimal").unwrap();
+        let graph = select(&full, &config.resolve("minimal").unwrap().units).unwrap();
 
         assert_eq!(
             graph.start_order(),
@@ -301,7 +306,7 @@ mod tests {
             Source::Compose { oneshot: true }
         );
         assert!(
-            select(&full, &config, "full")
+            select(&full, &config.resolve("full").unwrap().units)
                 .unwrap()
                 .contains("streamlet")
         );
@@ -321,7 +326,7 @@ mod tests {
     fn without_compose_unknown_names_become_unavailable() {
         let config = repo_config();
         let (sources, full) = plan_units(&config, None).unwrap();
-        let graph = select(&full, &config, "minimal").unwrap();
+        let graph = select(&full, &config.resolve("minimal").unwrap().units).unwrap();
 
         assert_eq!(sources["db"], Source::Unavailable);
         assert_eq!(sources["keycloak"], Source::Unavailable);
@@ -366,6 +371,72 @@ mod tests {
         assert_eq!(
             spec.ready,
             Some(ReadyProbe::Http("http://localhost:3030/api/ready".into()))
+        );
+    }
+
+    #[test]
+    fn select_follows_the_resolved_profile_and_its_overrides() {
+        let config = GecoConfig::parse(
+            r#"
+[unit.migrations]
+kind = "oneshot"
+run = "true"
+[unit.build-release]
+kind = "oneshot"
+run = "true"
+[unit.backend]
+kind = "process"
+run = "bacon"
+after = ["migrations"]
+[profile.minimal]
+units = ["backend"]
+[profile.prod-like]
+extends = "minimal"
+[profile.prod-like.override.backend]
+after = ["build-release", "migrations"]
+"#,
+            Path::new("geco.toml"),
+        )
+        .unwrap();
+
+        let minimal = config.resolve("minimal").unwrap();
+        let effective = GecoConfig {
+            unit: minimal.unit.clone(),
+            ..config.clone()
+        };
+        let (_, full) = plan_units(&effective, None).unwrap();
+        let graph = select(&full, &minimal.units).unwrap();
+        assert_eq!(graph.start_order(), ["migrations", "backend"]);
+
+        let prod = config.resolve("prod-like").unwrap();
+        let effective = GecoConfig {
+            unit: prod.unit.clone(),
+            ..config.clone()
+        };
+        let (_, full) = plan_units(&effective, None).unwrap();
+        let graph = select(&full, &prod.units).unwrap();
+        assert!(graph.contains("build-release"));
+        assert_eq!(
+            graph.dependencies("backend").collect::<Vec<_>>(),
+            ["build-release", "migrations"]
+        );
+    }
+
+    #[test]
+    fn the_repository_config_resolves_every_profile() {
+        let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../..");
+        let config = GecoConfig::load(&root.join("geco.toml")).unwrap();
+        for profile in ["minimal", "full", "prod-like"] {
+            config.resolve(profile).unwrap();
+        }
+        let prod = config.resolve("prod-like").unwrap();
+        assert_eq!(
+            prod.unit["backend"].run.as_deref(),
+            Some("../bin/{{binary_name}}")
+        );
+        assert_eq!(
+            prod.unit["frontend"].run.as_deref(),
+            Some("pnpm run preview")
         );
     }
 }

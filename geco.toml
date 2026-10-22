@@ -53,8 +53,26 @@ builtin_hooks = ["traefik-dev-services"]
 [unit.valhalla]
 pre_start = ["just _ensure-valhalla"]
 
+[unit.build-release]
+kind = "oneshot"
+run = "just build-domain-wasm _compile-backend && cd frontend && pnpm install --frozen-lockfile && VITE_BACKEND_BASEURL=/api APP_VERSION={{app_version}} pnpm run build"
+
 [profile.minimal]
 units = ["db", "migrations", "keycloak", "backend", "frontend", "reverse-proxy"]
 
 [profile.full]
-units = ["db", "migrations", "keycloak", "backend", "frontend", "reverse-proxy", "valhalla", "streamlet", "pgadmin"]
+extends = "minimal"
+units = ["valhalla", "streamlet", "pgadmin"]
+
+# Release binary and production frontend build, as `just run-prod` does.
+[profile.prod-like]
+extends = "minimal"
+units = ["build-release"]
+
+[profile.prod-like.override.backend]
+run = "../bin/{{binary_name}}"
+after = ["build-release", "migrations", "keycloak"]
+
+[profile.prod-like.override.frontend]
+run = "pnpm run preview"
+after = ["build-release"]
