@@ -19,7 +19,7 @@ use crate::{
     ipc,
     logs::LogStore,
     paths::Paths,
-    state::{InstanceLock, ProcessRegistry, orphaned_groups, stop_orphans},
+    state::{InstanceLock, ProcessRegistry, describe_groups, orphaned_groups, stop_orphans},
     supervisor::Supervisor,
     units::process::{STOP_GRACE, terminate_registered},
 };
@@ -148,14 +148,18 @@ fn handle_orphans(paths: &Paths, policy: OrphanPolicy) -> Result<(), HostError> 
     if policy == OrphanPolicy::Abort {
         return Err(HostError::Orphans(groups));
     }
-    let prompt = format!(
-        "Process groups {groups:?} from an earlier geco run are still alive. Stop them? [y/N] "
-    );
-    if !confirm(&prompt)? {
+    if !confirm(&orphan_prompt(&groups))? {
         return Err(HostError::Aborted);
     }
     stop_orphans(&paths.process_state(), &groups);
     Ok(())
+}
+
+pub fn orphan_prompt(groups: &[i32]) -> String {
+    format!(
+        "Process groups {} from an earlier geco run are still alive. Stop them? [y/N] ",
+        describe_groups(groups)
+    )
 }
 
 pub fn confirm(prompt: &str) -> io::Result<bool> {
@@ -209,7 +213,11 @@ mod tests {
         let (_dir, paths) = paths();
         fs::create_dir_all(paths.state_dir()).unwrap();
         let own_group = rustix::process::getpgrp().as_raw_nonzero().get();
-        fs::write(paths.process_state(), format!("[{own_group}]")).unwrap();
+        let state = serde_json::json!({
+            "boot_id": crate::state::current_boot_id(),
+            "groups": [own_group],
+        });
+        fs::write(paths.process_state(), state.to_string()).unwrap();
 
         let result = Host::start(&paths, None, OrphanPolicy::Abort).await;
 

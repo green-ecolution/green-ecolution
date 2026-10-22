@@ -13,7 +13,7 @@ use chrono::Utc;
 
 use crate::{
     cli::{Cli, Command},
-    host::{Host, OrphanPolicy, confirm},
+    host::{Host, OrphanPolicy, confirm, orphan_prompt},
     ipc::{Call, Client, IpcError, Reply},
     paths::Paths,
     state::{InstanceLock, orphaned_groups, stop_orphans},
@@ -98,10 +98,7 @@ async fn up_detached(
     }
     let orphans = orphaned_groups(&paths.process_state());
     if !orphans.is_empty() {
-        let prompt = format!(
-            "Process groups {orphans:?} from an earlier geco run are still alive. Stop them? [y/N] "
-        );
-        if !confirm(&prompt)? {
+        if !confirm(&orphan_prompt(&orphans))? {
             return Ok(ExitCode::FAILURE);
         }
         stop_orphans(&paths.process_state(), &orphans);
