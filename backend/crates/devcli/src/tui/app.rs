@@ -147,10 +147,18 @@ impl App {
             },
             Msg::Units(units) => {
                 self.units_from_snapshot = true;
-                self.selected = self.selected.min(units.len().saturating_sub(1));
+                let previous = self.selected_unit().map(|unit| unit.name.as_str());
+                self.selected = previous
+                    .and_then(|name| units.iter().position(|unit| unit.name == name))
+                    .unwrap_or_else(|| self.selected.min(units.len().saturating_sub(1)));
                 self.units = units;
             }
-            Msg::Profile(profile) => self.profile = Some(profile),
+            Msg::Profile(profile) => {
+                if self.profile.as_ref().is_some_and(|known| *known != profile) {
+                    self.flash = Some(format!("switched to {profile}"));
+                }
+                self.profile = Some(profile);
+            }
             Msg::Profiles(profiles) => self.profiles = profiles,
             Msg::Log(record) => {
                 let added = self.requests.observe(&record);
@@ -558,6 +566,35 @@ pub(crate) mod tests {
         assert_eq!(app.update(key(KeyCode::Enter)), None);
         assert!(app.picker.is_none());
         assert_eq!(app.flash.as_deref(), Some("already on minimal"));
+    }
+
+    #[test]
+    fn a_new_profile_replaces_the_switching_flash() {
+        let mut app = app_with_two_units();
+        app.update(Msg::Profile("minimal".into()));
+        assert_eq!(app.flash, None, "the first profile is no switch");
+
+        app.update(Msg::Flash("switching to full…".into()));
+        app.update(Msg::Profile("full".into()));
+        assert_eq!(app.flash.as_deref(), Some("switched to full"));
+
+        app.update(Msg::Flash("something else".into()));
+        app.update(Msg::Profile("full".into()));
+        assert_eq!(app.flash.as_deref(), Some("something else"));
+    }
+
+    #[test]
+    fn a_unit_snapshot_keeps_the_selected_unit() {
+        let mut app = app_with_two_units();
+        app.update(key(KeyCode::Char('j')));
+        assert_eq!(app.selected_unit().unwrap().name, "backend");
+
+        app.update(Msg::Units(vec![
+            status("db", UnitState::Ready),
+            status("build-release", UnitState::Done),
+            status("backend", UnitState::Ready),
+        ]));
+        assert_eq!(app.selected_unit().unwrap().name, "backend");
     }
 
     #[test]

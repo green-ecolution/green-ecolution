@@ -132,6 +132,7 @@ async fn event_loop(
     let mut ticks = tokio::time::interval(Duration::from_secs(1));
     let (flash_tx, mut flash_rx) = mpsc::unbounded_channel::<String>();
     let (trace_tx, mut trace_rx) = mpsc::unbounded_channel::<Trace>();
+    let (profiles_tx, mut profiles_rx) = mpsc::unbounded_channel::<Vec<String>>();
 
     let mut frames = tokio::time::interval(Duration::from_millis(33));
     frames.set_missed_tick_behavior(MissedTickBehavior::Skip);
@@ -144,7 +145,17 @@ async fn event_loop(
             reply = states.next(), if connected => match reply? {
                 Some(Reply::State(status)) => Msg::State(status),
                 Some(Reply::Status(units)) => Msg::Units(units),
-                Some(Reply::Profile(name)) => Msg::Profile(name),
+                Some(Reply::Profile(name)) => {
+                    // geco.toml may have gained or lost profiles since the last switch.
+                    let client = client.clone();
+                    let profiles = profiles_tx.clone();
+                    tokio::spawn(async move {
+                        if let Ok(Reply::Profiles(list)) = client.call(Call::Profiles).await {
+                            let _ = profiles.send(list.available);
+                        }
+                    });
+                    Msg::Profile(name)
+                }
                 Some(_) => continue,
                 None => Msg::Disconnected,
             },
@@ -170,6 +181,7 @@ async fn event_loop(
             },
             Some(text) = flash_rx.recv() => Msg::Flash(text),
             Some(trace) = trace_rx.recv() => Msg::Trace(trace),
+            Some(profiles) = profiles_rx.recv() => Msg::Profiles(profiles),
             _ = ticks.tick() => Msg::Tick,
             _ = frames.tick() => {
                 if dirty {
@@ -196,8 +208,14 @@ async fn event_loop(
                 let client = client.clone();
                 let flash = flash_tx.clone();
                 tokio::spawn(async move {
-                    if let Err(err) = client.call(call).await {
-                        let _ = flash.send(err.to_string());
+                    match client.call(call).await {
+                        Ok(Reply::Switched(change)) if !change.warnings.is_empty() => {
+                            let _ = flash.send(change.warnings.join("; "));
+                        }
+                        Ok(_) => {}
+                        Err(err) => {
+                            let _ = flash.send(err.to_string());
+                        }
                     }
                 });
             }
