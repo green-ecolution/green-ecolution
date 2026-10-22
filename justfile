@@ -489,10 +489,10 @@ import-staging file="staging.sql" *ARGS:
 generate-sqlx: _migrate-build
     @echo "Refreshing sqlx offline cache against a clean migrated DB ({{ sqlx_prepare_db }})..."
     @command -v cargo-sqlx >/dev/null 2>&1 || { echo "sqlx-cli missing (cargo install sqlx-cli --no-default-features --features rustls,postgres)"; exit 1; }
-    -cd {{ backend_dir }} && DATABASE_URL="{{ sqlx_prepare_db_url }}" cargo sqlx database drop -y
-    cd {{ backend_dir }} && DATABASE_URL="{{ sqlx_prepare_db_url }}" cargo sqlx database create
-    cd {{ backend_dir }} && DATABASE_URL="{{ sqlx_prepare_db_url }}" ./target/debug/migrate up
-    cd {{ backend_dir }} && DATABASE_URL="{{ sqlx_prepare_db_url }}" cargo sqlx prepare --workspace -- --all-targets
+    @-cd {{ backend_dir }} && DATABASE_URL="{{ sqlx_prepare_db_url }}" cargo sqlx database drop -y
+    @cd {{ backend_dir }} && DATABASE_URL="{{ sqlx_prepare_db_url }}" cargo sqlx database create
+    @cd {{ backend_dir }} && DATABASE_URL="{{ sqlx_prepare_db_url }}" ./target/debug/migrate up
+    @cd {{ backend_dir }} && DATABASE_URL="{{ sqlx_prepare_db_url }}" cargo sqlx prepare --workspace -- --all-targets
 
 # Dump the OpenAPI spec from the Rust backend into the frontend client package
 [group('codegen')]
