@@ -156,7 +156,14 @@ fn log_line(record: &LogRecord, show_unit: bool) -> Line<'_> {
 
 fn draw_status(frame: &mut Frame, area: Rect, app: &App, now: DateTime<Utc>) {
     if let Some(input) = &app.input {
-        frame.render_widget(Paragraph::new(format!("/{}", input.text())), area);
+        let mut spans = vec![Span::raw(format!("/{}", input.text()))];
+        if let Some(error) = &app.filter_error {
+            spans.push(Span::styled(
+                format!("  {error}"),
+                Style::new().fg(Color::Red),
+            ));
+        }
+        frame.render_widget(Paragraph::new(Line::from(spans)), area);
         frame.set_cursor_position(Position::new(
             area.x
                 .saturating_add(1)
@@ -310,5 +317,27 @@ mod tests {
 
         app.update(Msg::Key(KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE)));
         assert!(render(&app).contains("filter: unit:db"));
+    }
+
+    #[test]
+    fn an_invalid_filter_is_shown_next_to_the_input_until_escape() {
+        let mut app = App::new(false);
+        for code in "/level:loud"
+            .chars()
+            .map(KeyCode::Char)
+            .chain([KeyCode::Enter])
+        {
+            app.update(Msg::Key(KeyEvent::new(code, KeyModifiers::NONE)));
+        }
+        let screen = render(&app);
+        let status = screen.lines().last().unwrap();
+        assert!(status.contains("/level:loud"), "{status}");
+        assert!(
+            status.contains("invalid filter: unknown level `loud`"),
+            "{status}"
+        );
+
+        app.update(Msg::Key(KeyEvent::new(KeyCode::Esc, KeyModifiers::NONE)));
+        assert!(!render(&app).contains("invalid filter"));
     }
 }

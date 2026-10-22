@@ -60,6 +60,7 @@ pub struct App {
     pub filter: Filter,
     pub filter_text: String,
     pub input: Option<LineInput>,
+    pub filter_error: Option<String>,
     pub logs: VecDeque<LogRecord>,
     /// Lines between the bottom of the view and the newest matching line; 0 follows.
     pub scroll: usize,
@@ -79,6 +80,7 @@ impl App {
             filter: Filter::default(),
             filter_text: String::new(),
             input: None,
+            filter_error: None,
             logs: VecDeque::new(),
             scroll: 0,
             hosted,
@@ -123,6 +125,7 @@ impl App {
 
     fn on_key(&mut self, key: KeyEvent) -> Option<Effect> {
         if let Some(input) = &mut self.input {
+            self.filter_error = None;
             match input.handle(key) {
                 InputOutcome::Editing => {}
                 InputOutcome::Cancel => self.input = None,
@@ -231,7 +234,7 @@ impl App {
                 self.input = None;
                 self.scroll = 0;
             }
-            Err(err) => self.flash = Some(format!("invalid filter: {err}")),
+            Err(err) => self.filter_error = Some(format!("invalid filter: {err}")),
         }
     }
 
@@ -559,11 +562,12 @@ pub(crate) mod tests {
 
         assert!(app.input.is_some());
         assert!(
-            app.flash
+            app.filter_error
                 .as_deref()
                 .unwrap()
                 .contains("unknown level `loud`")
         );
+        assert_eq!(app.flash, None);
         assert!(app.filter.is_empty());
     }
 
