@@ -15,13 +15,17 @@ use tokio_util::sync::CancellationToken;
 
 use crate::{
     assemble::{AssembleError, assemble},
-    config::{ConfigError, GecoConfig},
+    config::{ConfigError, GecoConfig, JustVars},
+    doctor::{Env, checks, service::Doctor},
     ipc,
     logs::LogStore,
     paths::Paths,
     state::{InstanceLock, ProcessRegistry, describe_groups, orphaned_groups, stop_orphans},
     supervisor::Supervisor,
-    units::process::{STOP_GRACE, terminate_registered},
+    units::{
+        compose::ComposeCli,
+        process::{STOP_GRACE, terminate_registered},
+    },
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -53,7 +57,9 @@ pub struct Host {
     pub shutdown: CancellationToken,
     pub registry: ProcessRegistry,
     pub warnings: Vec<String>,
+    pub doctor: Arc<Doctor>,
     server: JoinHandle<()>,
+    watcher: JoinHandle<()>,
     socket: PathBuf,
     _lock: InstanceLock,
 }
@@ -75,6 +81,17 @@ impl Host {
             assembly.graph,
             LogStore::new(config.logs.capacity),
         );
+        let doctor = Doctor::new(
+            checks::all(),
+            Env {
+                root: paths.root.clone(),
+                compose: ComposeCli::new(paths.root.clone()),
+                vars: Arc::new(JustVars::new(paths.root.clone())),
+                units: Vec::new(),
+            },
+            Arc::clone(&supervisor),
+            registry.clone(),
+        );
 
         let socket = paths.socket();
         // Holding the lock proves that a leftover socket file belongs to a dead supervisor.
@@ -86,18 +103,25 @@ impl Host {
         fs::set_permissions(&socket, fs::Permissions::from_mode(0o600))?;
 
         let shutdown = CancellationToken::new();
+        let watcher = doctor.watch(shutdown.clone());
         let server = tokio::spawn(ipc::server::serve(
             listener,
             Arc::clone(&supervisor),
             shutdown.clone(),
         ));
         supervisor.start_all().await;
+        let startup = Arc::clone(&doctor);
+        tokio::spawn(async move {
+            startup.run(false).await;
+        });
         Ok(Self {
             supervisor,
             shutdown,
             registry,
             warnings: assembly.warnings,
+            doctor,
             server,
+            watcher,
             socket,
             _lock: lock,
         })
@@ -116,6 +140,7 @@ impl Host {
         self.supervisor.stop_all().await;
         terminate_registered(&self.registry, STOP_GRACE).await;
         self.server.abort();
+        self.watcher.abort();
         let _ = fs::remove_file(&self.socket);
     }
 }

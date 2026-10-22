@@ -1,6 +1,7 @@
 pub mod checks;
 #[cfg(test)]
 pub(crate) mod fake;
+pub mod service;
 
 use std::{path::PathBuf, sync::Arc};
 

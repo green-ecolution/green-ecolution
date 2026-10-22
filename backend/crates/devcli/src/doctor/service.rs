@@ -1,0 +1,443 @@
+use std::{
+    collections::{BTreeMap, HashMap},
+    sync::{Arc, Mutex},
+    time::{Duration, Instant},
+};
+
+use futures::future::join_all;
+use tokio::{
+    sync::{Mutex as AsyncMutex, broadcast, broadcast::error::RecvError},
+    task::JoinHandle,
+};
+use tokio_util::sync::CancellationToken;
+
+use super::{Check, Cost, Env, Finding, Report, Skipped, Trigger, sort};
+use crate::{
+    config::LogFormat,
+    logs::LogSink,
+    state::ProcessRegistry,
+    supervisor::{Supervisor, UnitState},
+    sync::lock,
+    units::{
+        Unit, UnitKind,
+        process::{ProcessSpec, ProcessUnit},
+    },
+};
+
+/// The pseudo-unit a fix's output is logged under.
+pub const FIX_UNIT: &str = "fix";
+
+/// A crash loop would otherwise run the same check on every restart.
+const TRIGGER_COOLDOWN: Duration = Duration::from_secs(30);
+
+#[derive(Debug, PartialEq, Eq, thiserror::Error)]
+pub enum DoctorError {
+    #[error("unknown finding `{0}`")]
+    UnknownFinding(String),
+    #[error("finding `{0}` has no automatic fix")]
+    NoFix(String),
+    #[error("`{0}` is destructive and needs confirmation")]
+    NeedsConfirmation(String),
+    #[error("another fix is still running")]
+    FixRunning,
+    #[error("the fix failed: {0}")]
+    FixFailed(String),
+}
+
+pub struct Doctor {
+    checks: Vec<Arc<dyn Check>>,
+    env: Env,
+    supervisor: Arc<Supervisor>,
+    registry: ProcessRegistry,
+    state: Mutex<State>,
+    changes: broadcast::Sender<Vec<Finding>>,
+    fixing: AsyncMutex<()>,
+}
+
+#[derive(Default)]
+struct State {
+    findings: BTreeMap<String, Vec<Finding>>,
+    skipped: BTreeMap<String, String>,
+    last_triggered: HashMap<String, Instant>,
+}
+
+impl Doctor {
+    pub fn new(
+        checks: Vec<Arc<dyn Check>>,
+        env: Env,
+        supervisor: Arc<Supervisor>,
+        registry: ProcessRegistry,
+    ) -> Arc<Self> {
+        let (changes, _) = broadcast::channel(64);
+        Arc::new(Self {
+            checks,
+            env,
+            supervisor,
+            registry,
+            state: Mutex::default(),
+            changes,
+            fixing: AsyncMutex::new(()),
+        })
+    }
+
+    pub fn findings(&self) -> Vec<Finding> {
+        let mut all: Vec<Finding> = lock(&self.state)
+            .findings
+            .values()
+            .flatten()
+            .cloned()
+            .collect();
+        sort(&mut all);
+        all
+    }
+
+    pub fn report(&self) -> Report {
+        let skipped = lock(&self.state)
+            .skipped
+            .iter()
+            .map(|(check, reason)| Skipped {
+                check: check.clone(),
+                reason: reason.clone(),
+            })
+            .collect();
+        Report {
+            findings: self.findings(),
+            skipped,
+        }
+    }
+
+    pub fn subscribe(&self) -> broadcast::Receiver<Vec<Finding>> {
+        self.changes.subscribe()
+    }
+
+    pub async fn run(&self, deep: bool) -> Report {
+        let checks: Vec<Arc<dyn Check>> = self
+            .checks
+            .iter()
+            .filter(|check| deep || check.cost() == Cost::Cheap)
+            .cloned()
+            .collect();
+        self.run_checks(&checks, None).await;
+        self.report()
+    }
+
+    async fn run_checks(&self, checks: &[Arc<dyn Check>], unit: Option<&str>) {
+        let env = Env {
+            units: self.supervisor.status(),
+            ..self.env.clone()
+        };
+        let outcomes = join_all(checks.iter().map(|check| check.diagnose(&env))).await;
+        {
+            let mut state = lock(&self.state);
+            for (check, outcome) in checks.iter().zip(outcomes) {
+                let id = check.id().to_owned();
+                match outcome {
+                    Ok(mut findings) => {
+                        if let Some(unit) = unit {
+                            for finding in &mut findings {
+                                finding.unit.get_or_insert_with(|| unit.to_owned());
+                            }
+                        }
+                        state.skipped.remove(&id);
+                        if findings.is_empty() {
+                            state.findings.remove(&id);
+                        } else {
+                            state.findings.insert(id, findings);
+                        }
+                    }
+                    Err(reason) => {
+                        state.skipped.insert(id, reason);
+                    }
+                }
+            }
+        }
+        let _ = self.changes.send(self.findings());
+    }
+
+    pub async fn fix(&self, id: &str, confirmed: bool) -> Result<(), DoctorError> {
+        let finding = self
+            .findings()
+            .into_iter()
+            .find(|finding| finding.id == id)
+            .ok_or_else(|| DoctorError::UnknownFinding(id.to_owned()))?;
+        let fix = finding
+            .fix
+            .clone()
+            .ok_or_else(|| DoctorError::NoFix(id.to_owned()))?;
+        if fix.destructive && !confirmed {
+            return Err(DoctorError::NeedsConfirmation(fix.command));
+        }
+        let _running = self
+            .fixing
+            .try_lock()
+            .map_err(|_| DoctorError::FixRunning)?;
+        let logs = Arc::clone(self.supervisor.logs());
+        LogSink::new(Arc::clone(&logs), FIX_UNIT, LogFormat::Plain)
+            .line(&format!("$ {}", fix.command));
+        let unit = ProcessUnit::new(
+            ProcessSpec {
+                name: FIX_UNIT.to_owned(),
+                kind: UnitKind::Oneshot,
+                command: fix.command.clone(),
+                cwd: self.env.root.join(&fix.cwd),
+                env: BTreeMap::new(),
+                ready: None,
+                log_format: LogFormat::Plain,
+            },
+            self.registry.clone(),
+        );
+        unit.start(logs)
+            .await
+            .map_err(|err| DoctorError::FixFailed(err.to_string()))?;
+        let checks: Vec<Arc<dyn Check>> = self
+            .checks
+            .iter()
+            .filter(|check| check.id() == finding.check)
+            .cloned()
+            .collect();
+        self.run_checks(&checks, finding.unit.as_deref()).await;
+        Ok(())
+    }
+
+    pub fn watch(self: &Arc<Self>, shutdown: CancellationToken) -> JoinHandle<()> {
+        let doctor = Arc::clone(self);
+        tokio::spawn(async move {
+            let mut logs = doctor.supervisor.logs().subscribe();
+            let mut states = doctor.supervisor.subscribe();
+            loop {
+                let (checks, unit) = tokio::select! {
+                    () = shutdown.cancelled() => return,
+                    received = logs.recv() => match received {
+                        Ok(record) if record.unit != FIX_UNIT => {
+                            (doctor.triggered(&Trigger::Log(&record)), record.unit)
+                        }
+                        Ok(_) | Err(RecvError::Lagged(_)) => continue,
+                        Err(RecvError::Closed) => return,
+                    },
+                    received = states.recv() => match received {
+                        Ok(status) if matches!(status.state, UnitState::Failed { .. }) => {
+                            (doctor.triggered(&Trigger::Failed { unit: &status.name }), status.name)
+                        }
+                        Ok(_) | Err(RecvError::Lagged(_)) => continue,
+                        Err(RecvError::Closed) => return,
+                    },
+                };
+                if checks.is_empty() {
+                    continue;
+                }
+                let doctor = Arc::clone(&doctor);
+                tokio::spawn(async move { doctor.run_checks(&checks, Some(&unit)).await });
+            }
+        })
+    }
+
+    /// Checks reacting to `trigger` that have not run for a trigger within the cooldown.
+    fn triggered(&self, trigger: &Trigger<'_>) -> Vec<Arc<dyn Check>> {
+        let now = Instant::now();
+        let mut state = lock(&self.state);
+        self.checks
+            .iter()
+            .filter(|check| check.reacts_to(trigger))
+            .filter(|check| {
+                let recent = state
+                    .last_triggered
+                    .get(check.id())
+                    .is_some_and(|at| now.duration_since(*at) < TRIGGER_COOLDOWN);
+                if !recent {
+                    state.last_triggered.insert(check.id().to_owned(), now);
+                }
+                !recent
+            })
+            .cloned()
+            .collect()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::{sync::Arc, time::Duration};
+
+    use chrono::Utc;
+
+    use super::*;
+    use crate::{
+        config::LogFormat,
+        doctor::{
+            Fix, Severity,
+            fake::{FakeCheck, test_env},
+        },
+        graph::Graph,
+        logs::{Filter, LogStore, parse_line},
+        state::ProcessRegistry,
+        supervisor::Supervisor,
+        units::{
+            Unit,
+            fake::{FakeUnit, Journal},
+        },
+    };
+
+    struct Fixture {
+        _dir: tempfile::TempDir,
+        supervisor: Arc<Supervisor>,
+    }
+
+    fn fixture() -> Fixture {
+        let dir = tempfile::tempdir().unwrap();
+        let units: Vec<Arc<dyn Unit>> =
+            vec![Arc::new(FakeUnit::service("db", &Journal::default()))];
+        let graph = Graph::new([("db".to_owned(), Vec::<String>::new())]).unwrap();
+        Fixture {
+            supervisor: Supervisor::new(units, graph, LogStore::new(100)),
+            _dir: dir,
+        }
+    }
+
+    fn doctor(f: &Fixture, checks: Vec<Arc<dyn Check>>) -> Arc<Doctor> {
+        Doctor::new(
+            checks,
+            test_env(f._dir.path()),
+            Arc::clone(&f.supervisor),
+            ProcessRegistry::in_memory(),
+        )
+    }
+
+    fn with_fix(id: &str, command: &str) -> Finding {
+        Finding::new(id, Severity::Error, format!("{id} is off")).fix(Fix {
+            command: command.into(),
+            cwd: String::new(),
+            destructive: false,
+        })
+    }
+
+    fn fix_logs(f: &Fixture) -> Vec<String> {
+        f.supervisor
+            .logs()
+            .snapshot(&[FIX_UNIT.to_owned()], &Filter::default(), 100, Utc::now())
+            .into_iter()
+            .map(|r| r.message)
+            .collect()
+    }
+
+    #[tokio::test]
+    async fn runs_keep_findings_per_check_and_broadcast_changes() {
+        let f = fixture();
+        let flaky = FakeCheck::new("docker")
+            .finds(vec![with_fix("docker", "true")])
+            .arc();
+        let doc = doctor(&f, vec![flaky.clone(), FakeCheck::new("deep").deep().arc()]);
+        let mut changes = doc.subscribe();
+
+        let report = doc.run(false).await;
+        assert_eq!(report.findings.len(), 1);
+        assert_eq!(changes.recv().await.unwrap().len(), 1);
+
+        flaky.set(Err("Docker is not reachable".into()));
+        let report = doc.run(false).await;
+        assert_eq!(
+            report.findings.len(),
+            1,
+            "a check that could not run keeps its findings"
+        );
+        assert_eq!(report.skipped[0].check, "docker");
+    }
+
+    #[tokio::test]
+    async fn a_fix_runs_logs_under_fix_and_checks_again() {
+        let f = fixture();
+        let check = FakeCheck::new("migrations")
+            .finds(vec![with_fix("migrations", "echo fixed")])
+            .arc();
+        let doc = doctor(&f, vec![check.clone()]);
+        doc.run(false).await;
+
+        check.set(Ok(Vec::new()));
+        doc.fix("migrations", false).await.unwrap();
+
+        assert_eq!(fix_logs(&f), ["$ echo fixed", "fixed"]);
+        assert!(doc.findings().is_empty());
+        assert_eq!(check.runs(), 2);
+    }
+
+    #[tokio::test]
+    async fn fixes_are_refused_when_they_cannot_or_must_not_run() {
+        let f = fixture();
+        let destructive = Finding::new("testcontainers", Severity::Hint, "leftovers")
+            .fix(Fix::just("test-clean").destructive());
+        let no_fix = Finding::new("ports", Severity::Error, "taken");
+        let failing = with_fix("failing", "exit 3");
+        let doc = doctor(
+            &f,
+            vec![
+                FakeCheck::new("testcontainers")
+                    .finds(vec![destructive])
+                    .arc(),
+                FakeCheck::new("ports").finds(vec![no_fix]).arc(),
+                FakeCheck::new("failing").finds(vec![failing]).arc(),
+            ],
+        );
+        doc.run(false).await;
+
+        assert_eq!(
+            doc.fix("nope", true).await,
+            Err(DoctorError::UnknownFinding("nope".into()))
+        );
+        assert_eq!(
+            doc.fix("ports", true).await,
+            Err(DoctorError::NoFix("ports".into()))
+        );
+        assert_eq!(
+            doc.fix("testcontainers", false).await,
+            Err(DoctorError::NeedsConfirmation("just test-clean".into()))
+        );
+        assert!(matches!(
+            doc.fix("failing", false).await,
+            Err(DoctorError::FixFailed(reason)) if reason.contains("exit status: 3")
+        ));
+    }
+
+    #[tokio::test]
+    async fn log_lines_and_failures_trigger_checks_once_per_cooldown() {
+        let f = fixture();
+        let migrations = FakeCheck::new("dev-db-migrations")
+            .finds(vec![Finding::new(
+                "dev-db-migrations",
+                Severity::Error,
+                "2 behind",
+            )])
+            .on_log("does not exist")
+            .on_failure("migrations")
+            .arc();
+        let doc = doctor(&f, vec![migrations.clone()]);
+        let shutdown = CancellationToken::new();
+        let watcher = doc.watch(shutdown.clone());
+        let mut changes = doc.subscribe();
+        tokio::time::sleep(Duration::from_millis(50)).await;
+
+        let record = |message: &str| parse_line("backend", LogFormat::Plain, message, Utc::now());
+        f.supervisor
+            .logs()
+            .push(record(r#"column "x" does not exist"#));
+        let findings = tokio::time::timeout(Duration::from_secs(5), changes.recv())
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(findings[0].unit.as_deref(), Some("backend"));
+
+        f.supervisor
+            .logs()
+            .push(record(r#"column "y" does not exist"#));
+        tokio::time::sleep(Duration::from_millis(100)).await;
+        assert_eq!(
+            migrations.runs(),
+            1,
+            "the cooldown suppresses the second trigger"
+        );
+
+        assert!(
+            doc.triggered(&Trigger::Failed { unit: "migrations" })
+                .is_empty()
+        );
+        shutdown.cancel();
+        watcher.await.unwrap();
+    }
+}

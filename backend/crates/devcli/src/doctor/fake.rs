@@ -49,13 +49,11 @@ impl FakeCheck {
         self
     }
 
-    #[allow(dead_code)] // reason: used by the trigger-driven checks in later doctor tasks
     pub(crate) fn on_log(mut self, pattern: &'static str) -> Self {
         self.on_log = Some(pattern);
         self
     }
 
-    #[allow(dead_code)] // reason: used by the trigger-driven checks in later doctor tasks
     pub(crate) fn on_failure(mut self, unit: &'static str) -> Self {
         self.on_failure = Some(unit);
         self
