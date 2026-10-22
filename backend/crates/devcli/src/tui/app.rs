@@ -179,6 +179,7 @@ impl App {
                 }
                 None => {}
             },
+            Msg::Recipes(recipes) if recipes == self.recipes => {}
             Msg::Recipes(recipes) => {
                 self.recipes = recipes;
                 let entries = self.palette_entries();
@@ -876,10 +877,40 @@ pub(crate) mod tests {
     fn removing_a_task_keeps_the_selected_unit() {
         let mut app = app_with_two_units();
         app.update(Msg::State(task("lint", UnitState::Starting)));
-        app.update(key(KeyCode::Char('j')));
-        assert_eq!(app.selected_unit().unwrap().name, "backend");
+        app.update(Msg::State(task("fmt", UnitState::Starting)));
+        for _ in 0..3 {
+            app.update(key(KeyCode::Char('j')));
+        }
+        assert_eq!(app.selected_unit().unwrap().name, "fmt");
         app.update(Msg::State(task("lint", UnitState::Done)));
-        assert_eq!(app.selected_unit().unwrap().name, "backend");
+        assert_eq!(app.selected_unit().unwrap().name, "fmt");
+    }
+
+    #[test]
+    fn the_recipe_reply_keeps_the_palette_selection() {
+        let mut app = app_with_two_units();
+        app.update(Msg::Recipes(vec![recipe("alpha"), recipe("beta")]));
+        app.update(key(KeyCode::Char(':')));
+        type_text(&mut app, "run ");
+        app.update(key(KeyCode::Down));
+        let second = app.palette.as_ref().unwrap().matches()[1].label.clone();
+        app.update(Msg::Recipes(vec![recipe("alpha"), recipe("beta")]));
+        app.update(Msg::Recipes(vec![
+            recipe("alpha"),
+            recipe("beta"),
+            recipe("gamma"),
+        ]));
+        let palette = app.palette.as_ref().unwrap();
+        assert_eq!(palette.matches()[palette.selected()].label, second);
+        let effect = app.update(key(KeyCode::Enter));
+        assert_eq!(
+            effect,
+            Some(Effect::Run {
+                recipe: second.trim_start_matches("run ").into(),
+                args: Vec::new(),
+                confirmed: false
+            })
+        );
     }
 
     #[test]

@@ -180,8 +180,20 @@ impl Palette {
     }
 
     pub fn set_entries(&mut self, entries: Vec<Entry>) {
+        let kept = self
+            .matches
+            .get(self.selected)
+            .map(|&i| self.entries[i].label.clone());
         self.entries = entries;
         self.refresh();
+        if let Some(label) = kept
+            && let Some(position) = self
+                .matches
+                .iter()
+                .position(|&i| self.entries[i].label == label)
+        {
+            self.selected = position;
+        }
     }
 
     pub fn handle(&mut self, key: KeyEvent) -> PaletteOutcome {
@@ -449,6 +461,17 @@ mod tests {
         typed(&mut palette, "mig up");
         assert_eq!(labels(&palette.matches())[0], "run migrate-up");
         assert_eq!(palette.selected(), 0);
+    }
+
+    #[test]
+    fn replacing_the_entries_keeps_the_selected_one() {
+        let mut palette = Palette::new(sample(), "");
+        press(&mut palette, KeyCode::Down);
+        press(&mut palette, KeyCode::Down);
+        let chosen = labels(&palette.matches())[2].to_owned();
+        palette.set_entries(sample());
+        assert_eq!(palette.selected(), 2);
+        assert_eq!(labels(&palette.matches())[palette.selected()], chosen);
     }
 
     #[test]
