@@ -1,5 +1,5 @@
-//! Fuzzy matching for the command palette: every word of the query has to appear in order,
-//! not necessarily adjacent, in the candidate.
+//! Fuzzy matching for the command palette: the characters of each query word have to appear
+//! in the candidate in order, not necessarily adjacent. Words match independently of each other.
 
 const MATCH: u32 = 16;
 const WORD_START: u32 = 32;
