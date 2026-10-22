@@ -91,6 +91,7 @@ pub struct App {
     pub profile: Option<String>,
     pub profiles: Vec<String>,
     pub picker: Option<Picker>,
+    units_from_snapshot: bool,
     /// Lines between the bottom of the view and the newest matching line; 0 follows.
     pub scroll: usize,
     pub hosted: bool,
@@ -119,6 +120,7 @@ impl App {
             profile: None,
             profiles: Vec::new(),
             picker: None,
+            units_from_snapshot: false,
             scroll: 0,
             hosted,
             flash: None,
@@ -130,6 +132,7 @@ impl App {
     pub fn update(&mut self, msg: Msg) -> Option<Effect> {
         match msg {
             Msg::Key(key) => return self.on_key(key),
+            Msg::Scroll { .. } | Msg::Focus(_) if self.picker.is_some() => {}
             Msg::Scroll { pane, down } => return self.step(pane, down, WHEEL_STEP),
             Msg::Trace(trace) => self.requests.set_trace(trace),
             Msg::Focus(pane) => self.focus = pane,
@@ -139,9 +142,11 @@ impl App {
             }
             Msg::State(status) => match self.units.iter_mut().find(|u| u.name == status.name) {
                 Some(unit) => *unit = status,
-                None => self.units.push(status),
+                None if !self.units_from_snapshot => self.units.push(status),
+                None => {}
             },
             Msg::Units(units) => {
+                self.units_from_snapshot = true;
                 self.selected = self.selected.min(units.len().saturating_sub(1));
                 self.units = units;
             }
@@ -199,6 +204,9 @@ impl App {
             return None;
         }
         if let Some(picker) = &mut self.picker {
+            if key.code == KeyCode::Char('c') && key.modifiers.contains(KeyModifiers::CONTROL) {
+                return Some(Effect::Quit);
+            }
             match picker.handle(key) {
                 PickerOutcome::Open => {}
                 PickerOutcome::Cancelled => self.picker = None,
@@ -231,7 +239,7 @@ impl App {
             KeyCode::Esc if !logs_mode => return self.switch(Mode::Logs),
             KeyCode::Char('o') if self.mode == Mode::Requests => self.requests.toggle_order(),
             KeyCode::Char('f') => self.ask_fix(),
-            KeyCode::Char('p') => self.open_profile_picker(),
+            KeyCode::Char('p') if !ctrl => self.open_profile_picker(),
             KeyCode::Char('r') if self.mode == Mode::Doctor => {
                 return Some(Effect::Call(Call::Doctor { deep: false }));
             }
@@ -543,6 +551,33 @@ pub(crate) mod tests {
         app.update(Msg::Units(vec![status("db", UnitState::Ready)]));
         assert_eq!(app.units.len(), 1);
         assert_eq!(app.selected, 0);
+    }
+
+    #[test]
+    fn a_late_state_does_not_readd_a_unit_the_snapshot_dropped() {
+        let mut app = app_with_two_units();
+        app.update(Msg::Units(vec![status("db", UnitState::Ready)]));
+        app.update(Msg::State(status("backend", UnitState::Stopped)));
+        assert_eq!(app.units.len(), 1);
+        app.update(Msg::State(status("db", UnitState::Stopped)));
+        assert_eq!(app.units[0].state, UnitState::Stopped);
+    }
+
+    #[test]
+    fn the_picker_blocks_mouse_and_ctrl_p_but_not_ctrl_c() {
+        let mut app = app_with_two_units();
+        app.update(Msg::Profiles(vec!["full".into()]));
+        app.update(ctrl(KeyCode::Char('p')));
+        assert!(app.picker.is_none());
+        app.update(key(KeyCode::Char('p')));
+        app.update(Msg::Scroll {
+            pane: Pane::Units,
+            down: true,
+        });
+        app.update(Msg::Focus(Pane::Logs));
+        assert_eq!(app.selected, 0);
+        assert_eq!(app.focus, Pane::Units);
+        assert_eq!(app.update(ctrl(KeyCode::Char('c'))), Some(Effect::Quit));
     }
 
     #[test]
