@@ -275,7 +275,10 @@ impl ParamPrompt {
 
     pub fn handle(&mut self, key: KeyEvent) -> PromptOutcome {
         match self.input.handle(key) {
-            InputOutcome::Editing => PromptOutcome::Editing,
+            InputOutcome::Editing => {
+                self.error = None;
+                PromptOutcome::Editing
+            }
             InputOutcome::Cancel => PromptOutcome::Cancelled,
             InputOutcome::Submit(text) => self.submit(text.trim()),
         }
@@ -512,7 +515,9 @@ mod tests {
             PromptOutcome::Editing
         );
         assert_eq!(prompt.error(), Some("name is required"));
-        prompt_type(&mut prompt, "add foo");
+        prompt_type(&mut prompt, "a");
+        assert_eq!(prompt.error(), None, "typing clears the complaint");
+        prompt_type(&mut prompt, "dd foo");
         assert_eq!(
             prompt_press(&mut prompt, KeyCode::Enter),
             PromptOutcome::Done(vec!["add foo".into()])

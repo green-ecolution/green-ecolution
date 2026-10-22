@@ -1,8 +1,6 @@
 mod app;
 mod input;
-#[cfg_attr(not(test), allow(dead_code))] // reason: wired into the TUI in the next task
 mod palette;
-mod picker;
 mod requests;
 mod view;
 
@@ -24,6 +22,7 @@ use crate::{
     logs::trace::Trace,
     paths::Paths,
     state::ProcessRegistry,
+    tasks::Recipe,
 };
 
 /// Attaches to a running supervisor, or hosts one for the lifetime of the TUI.
@@ -135,6 +134,8 @@ async fn event_loop(
     let (flash_tx, mut flash_rx) = mpsc::unbounded_channel::<String>();
     let (trace_tx, mut trace_rx) = mpsc::unbounded_channel::<Trace>();
     let (profiles_tx, mut profiles_rx) = mpsc::unbounded_channel::<Vec<String>>();
+    let (recipes_tx, mut recipes_rx) = mpsc::unbounded_channel::<Vec<Recipe>>();
+    fetch_recipes(client, &recipes_tx, &flash_tx);
 
     let mut frames = tokio::time::interval(Duration::from_millis(33));
     frames.set_missed_tick_behavior(MissedTickBehavior::Skip);
@@ -184,6 +185,7 @@ async fn event_loop(
             Some(text) = flash_rx.recv() => Msg::Flash(text),
             Some(trace) = trace_rx.recv() => Msg::Trace(trace),
             Some(profiles) = profiles_rx.recv() => Msg::Profiles(profiles),
+            Some(recipes) = recipes_rx.recv() => Msg::Recipes(recipes),
             _ = ticks.tick() => Msg::Tick,
             _ = frames.tick() => {
                 if dirty {
@@ -236,7 +238,43 @@ async fn event_loop(
                     }
                 });
             }
+            Some(Effect::FetchRecipes) => fetch_recipes(client, &recipes_tx, &flash_tx),
+            Some(Effect::Run {
+                recipe,
+                args,
+                confirmed,
+            }) => {
+                let client = client.clone();
+                let flash = flash_tx.clone();
+                tokio::spawn(async move {
+                    // The log reaches the TUI through its own log stream.
+                    if let Err(err) = client.run(&recipe, &args, confirmed, |_| Ok(())).await {
+                        let _ = flash.send(err.to_string());
+                    }
+                });
+            }
             None => {}
         }
     }
+}
+
+fn fetch_recipes(
+    client: &Client,
+    recipes: &mpsc::UnboundedSender<Vec<Recipe>>,
+    flash: &mpsc::UnboundedSender<String>,
+) {
+    let client = client.clone();
+    let recipes = recipes.clone();
+    let flash = flash.clone();
+    tokio::spawn(async move {
+        match client.call(Call::Recipes).await {
+            Ok(Reply::Recipes(list)) => {
+                let _ = recipes.send(list);
+            }
+            Ok(_) => {}
+            Err(err) => {
+                let _ = flash.send(err.to_string());
+            }
+        }
+    });
 }

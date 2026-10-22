@@ -6,7 +6,7 @@ use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
 use super::{
     input::{InputOutcome, LineInput},
-    picker::{Picker, PickerOutcome},
+    palette::{self, Action, Palette, PaletteOutcome, ParamPrompt, PromptOutcome, Sources},
     requests::Requests,
 };
 use crate::{
@@ -14,6 +14,8 @@ use crate::{
     ipc::Call,
     logs::{Filter, LogRecord, trace::Trace},
     supervisor::{UnitState, UnitStatus},
+    tasks::Recipe,
+    units::Origin,
 };
 
 pub const LOG_CAPACITY: usize = 5_000;
@@ -59,6 +61,7 @@ pub enum Msg {
     Log(LogRecord),
     Trace(Trace),
     Findings(Vec<Finding>),
+    Recipes(Vec<Recipe>),
     Flash(String),
     Tick,
     Disconnected,
@@ -70,7 +73,20 @@ pub enum Msg {
 pub enum Effect {
     Call(Call),
     FetchTrace(String),
+    FetchRecipes,
+    Run {
+        recipe: String,
+        args: Vec<String>,
+        confirmed: bool,
+    },
     Quit,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PendingRun {
+    pub recipe: String,
+    pub args: Vec<String>,
+    pub command: String,
 }
 
 pub struct App {
@@ -90,7 +106,10 @@ pub struct App {
     pub pending_fix: Option<Finding>,
     pub profile: Option<String>,
     pub profiles: Vec<String>,
-    pub picker: Option<Picker>,
+    pub palette: Option<Palette>,
+    pub prompt: Option<ParamPrompt>,
+    pub pending_run: Option<PendingRun>,
+    pub recipes: Vec<Recipe>,
     units_from_snapshot: bool,
     /// Lines between the bottom of the view and the newest matching line; 0 follows.
     pub scroll: usize,
@@ -119,7 +138,10 @@ impl App {
             pending_fix: None,
             profile: None,
             profiles: Vec::new(),
-            picker: None,
+            palette: None,
+            prompt: None,
+            pending_run: None,
+            recipes: Vec::new(),
             units_from_snapshot: false,
             scroll: 0,
             hosted,
@@ -132,7 +154,7 @@ impl App {
     pub fn update(&mut self, msg: Msg) -> Option<Effect> {
         match msg {
             Msg::Key(key) => return self.on_key(key),
-            Msg::Scroll { .. } | Msg::Focus(_) if self.picker.is_some() => {}
+            Msg::Scroll { .. } | Msg::Focus(_) if self.palette.is_some() => {}
             Msg::Scroll { pane, down } => return self.step(pane, down, WHEEL_STEP),
             Msg::Trace(trace) => self.requests.set_trace(trace),
             Msg::Focus(pane) => self.focus = pane,
@@ -140,11 +162,30 @@ impl App {
                 self.finding_selected = self.finding_selected.min(findings.len().saturating_sub(1));
                 self.findings = findings;
             }
+            Msg::State(status)
+                if status.origin == Origin::Task
+                    && matches!(status.state, UnitState::Done | UnitState::Stopped) =>
+            {
+                self.remove_unit(&status.name);
+                if status.state == UnitState::Done {
+                    self.flash = Some(format!("{} done", status.name));
+                }
+            }
             Msg::State(status) => match self.units.iter_mut().find(|u| u.name == status.name) {
                 Some(unit) => *unit = status,
-                None if !self.units_from_snapshot => self.units.push(status),
+                // A snapshot is the complete list of profile units, but tasks come and go.
+                None if !self.units_from_snapshot || status.origin == Origin::Task => {
+                    self.units.push(status);
+                }
                 None => {}
             },
+            Msg::Recipes(recipes) => {
+                self.recipes = recipes;
+                let entries = self.palette_entries();
+                if let Some(palette) = &mut self.palette {
+                    palette.set_entries(entries);
+                }
+            }
             Msg::Units(units) => {
                 self.units_from_snapshot = true;
                 let previous = self.selected_unit().map(|unit| unit.name.as_str());
@@ -201,6 +242,20 @@ impl App {
             }
             return None;
         }
+        if let Some(prompt) = &mut self.prompt {
+            return match prompt.handle(key) {
+                PromptOutcome::Editing => None,
+                PromptOutcome::Cancelled => {
+                    self.prompt = None;
+                    None
+                }
+                PromptOutcome::Done(args) => {
+                    let recipe = prompt.recipe().clone();
+                    self.prompt = None;
+                    self.run_recipe(recipe, args)
+                }
+            };
+        }
         if let Some(finding) = self.pending_fix.take() {
             if key.code == KeyCode::Char('y') {
                 return Some(Effect::Call(Call::Fix {
@@ -211,24 +266,33 @@ impl App {
             self.flash = Some("fix cancelled".to_owned());
             return None;
         }
-        if let Some(picker) = &mut self.picker {
+        if let Some(run) = self.pending_run.take() {
+            if key.code == KeyCode::Char('y') {
+                self.flash = Some(format!("running {}…", run.recipe));
+                return Some(Effect::Run {
+                    recipe: run.recipe,
+                    args: run.args,
+                    confirmed: true,
+                });
+            }
+            self.flash = Some("run cancelled".to_owned());
+            return None;
+        }
+        if let Some(palette) = &mut self.palette {
             if key.code == KeyCode::Char('c') && key.modifiers.contains(KeyModifiers::CONTROL) {
                 return Some(Effect::Quit);
             }
-            match picker.handle(key) {
-                PickerOutcome::Open => {}
-                PickerOutcome::Cancelled => self.picker = None,
-                PickerOutcome::Chosen(profile) if self.profile.as_ref() == Some(&profile) => {
-                    self.picker = None;
-                    self.flash = Some(format!("already on {profile}"));
+            return match palette.handle(key) {
+                PaletteOutcome::Open => None,
+                PaletteOutcome::Cancelled => {
+                    self.palette = None;
+                    None
                 }
-                PickerOutcome::Chosen(profile) => {
-                    self.picker = None;
-                    self.flash = Some(format!("switching to {profile}…"));
-                    return Some(Effect::Call(Call::SwitchProfile { profile }));
+                PaletteOutcome::Chosen(action) => {
+                    self.palette = None;
+                    self.act(action)
                 }
-            }
-            return None;
+            };
         }
         let ctrl = key.modifiers.contains(KeyModifiers::CONTROL);
         let logs_mode = self.mode == Mode::Logs;
@@ -239,6 +303,8 @@ impl App {
             KeyCode::Char('u') if ctrl => self.page(false, HALF_PAGE),
             KeyCode::Left | KeyCode::Char('h' | '[') => self.focus = self.side_pane(false),
             KeyCode::Right | KeyCode::Char('l' | ']') => self.focus = self.side_pane(true),
+            KeyCode::Char('k') if ctrl => return self.open_palette(""),
+            KeyCode::Char(':') => return self.open_palette(""),
             KeyCode::Down | KeyCode::Char('j') => return self.step(self.focus, true, 1),
             KeyCode::Up | KeyCode::Char('k') => return self.step(self.focus, false, 1),
             KeyCode::PageUp => self.page(false, PAGE),
@@ -251,7 +317,7 @@ impl App {
             KeyCode::Esc if !logs_mode => return self.switch(Mode::Logs),
             KeyCode::Char('o') if self.mode == Mode::Requests => self.requests.toggle_order(),
             KeyCode::Char('f') => self.ask_fix(),
-            KeyCode::Char('p') if !ctrl => self.open_profile_picker(),
+            KeyCode::Char('p') if !ctrl => return self.open_palette("profile "),
             KeyCode::Char('r') if self.mode == Mode::Doctor => {
                 return Some(Effect::Call(Call::Doctor { deep: false }));
             }
@@ -418,16 +484,85 @@ impl App {
             })
     }
 
-    fn open_profile_picker(&mut self) {
-        if self.profiles.is_empty() {
-            self.flash = Some("no profiles known".to_owned());
-            return;
+    fn palette_entries(&self) -> Vec<palette::Entry> {
+        palette::entries(&Sources {
+            units: &self.units,
+            profiles: &self.profiles,
+            active: self.profile.as_deref(),
+            recipes: &self.recipes,
+            findings: &self.findings,
+            filtered: !self.filter_text.is_empty(),
+        })
+    }
+
+    /// Fetches the recipes again, so an edited justfile shows up without a restart.
+    fn open_palette(&mut self, query: &str) -> Option<Effect> {
+        self.palette = Some(Palette::new(self.palette_entries(), query));
+        Some(Effect::FetchRecipes)
+    }
+
+    fn act(&mut self, action: Action) -> Option<Effect> {
+        match action {
+            Action::Start(unit) => Some(Effect::Call(Call::Start { unit })),
+            Action::Stop(unit) => Some(Effect::Call(Call::Stop { unit })),
+            Action::Restart { unit, cascade } => {
+                Some(Effect::Call(Call::Restart { unit, cascade }))
+            }
+            Action::Profile(profile) if self.profile.as_ref() == Some(&profile) => {
+                self.flash = Some(format!("already on {profile}"));
+                None
+            }
+            Action::Profile(profile) => {
+                self.flash = Some(format!("switching to {profile}…"));
+                Some(Effect::Call(Call::SwitchProfile { profile }))
+            }
+            Action::Fix(finding) => {
+                self.pending_fix = Some(finding);
+                None
+            }
+            Action::Filter => {
+                self.mode = Mode::Logs;
+                self.focus = Pane::Units;
+                self.input = Some(LineInput::new(&self.filter_text));
+                None
+            }
+            Action::ClearFilter => {
+                self.apply_filter("");
+                None
+            }
+            Action::Run(recipe) => match ParamPrompt::new(recipe.clone()) {
+                Some(prompt) => {
+                    self.prompt = Some(prompt);
+                    None
+                }
+                None => self.run_recipe(recipe, Vec::new()),
+            },
         }
-        self.picker = Some(Picker::new(
-            "Profile",
-            self.profiles.clone(),
-            self.profile.as_deref(),
-        ));
+    }
+
+    fn run_recipe(&mut self, recipe: Recipe, args: Vec<String>) -> Option<Effect> {
+        if recipe.destructive {
+            self.pending_run = Some(PendingRun {
+                command: recipe.command("just", &args),
+                recipe: recipe.name,
+                args,
+            });
+            return None;
+        }
+        self.flash = Some(format!("running {}…", recipe.name));
+        Some(Effect::Run {
+            recipe: recipe.name,
+            args,
+            confirmed: false,
+        })
+    }
+
+    fn remove_unit(&mut self, name: &str) {
+        let selected = self.selected_unit().map(|unit| unit.name.clone());
+        self.units.retain(|unit| unit.name != name);
+        self.selected = selected
+            .and_then(|selected| self.units.iter().position(|unit| unit.name == selected))
+            .unwrap_or_else(|| self.selected.min(self.units.len().saturating_sub(1)));
     }
 
     fn ask_fix(&mut self) {
@@ -498,6 +633,7 @@ pub(crate) mod tests {
             parse_line,
             trace::{Trace, tests::finished_request},
         },
+        tasks::{Param, ParamKind, Recipe},
         units::{Origin, UnitKind},
     };
 
@@ -530,29 +666,54 @@ pub(crate) mod tests {
         app
     }
 
+    fn task(name: &str, state: UnitState) -> UnitStatus {
+        UnitStatus {
+            origin: Origin::Task,
+            ..status(name, state)
+        }
+    }
+
+    fn recipe(name: &str) -> Recipe {
+        Recipe {
+            name: name.into(),
+            doc: None,
+            group: None,
+            private: false,
+            destructive: false,
+            params: Vec::new(),
+        }
+    }
+
+    fn type_text(app: &mut App, text: &str) {
+        for c in text.chars() {
+            app.update(key(KeyCode::Char(c)));
+        }
+    }
+
     #[test]
-    fn p_switches_the_profile_through_the_picker() {
+    fn p_opens_the_palette_on_the_profiles() {
         let mut app = app_with_two_units();
         app.update(Msg::Profiles(vec!["full".into(), "minimal".into()]));
         app.update(Msg::Profile("minimal".into()));
 
-        app.update(key(KeyCode::Char('p')));
-        assert!(app.picker.is_some());
+        assert_eq!(
+            app.update(key(KeyCode::Char('p'))),
+            Some(Effect::FetchRecipes)
+        );
         assert_eq!(
             app.update(key(KeyCode::Char('q'))),
             None,
-            "keys go to the picker"
+            "keys go to the palette"
         );
-        assert!(app.picker.is_none());
-
-        app.update(key(KeyCode::Char('p')));
-        app.update(key(KeyCode::Char('k')));
+        assert!(app.palette.is_some());
+        app.update(key(KeyCode::Backspace));
         assert_eq!(
             app.update(key(KeyCode::Enter)),
             Some(Effect::Call(Call::SwitchProfile {
                 profile: "full".into()
             }))
         );
+        assert!(app.palette.is_none());
         assert_eq!(app.flash.as_deref(), Some("switching to full…"));
     }
 
@@ -561,11 +722,182 @@ pub(crate) mod tests {
         let mut app = app_with_two_units();
         app.update(Msg::Profiles(vec!["full".into(), "minimal".into()]));
         app.update(Msg::Profile("minimal".into()));
-
         app.update(key(KeyCode::Char('p')));
+        app.update(key(KeyCode::Down));
         assert_eq!(app.update(key(KeyCode::Enter)), None);
-        assert!(app.picker.is_none());
         assert_eq!(app.flash.as_deref(), Some("already on minimal"));
+    }
+
+    #[test]
+    fn colon_and_ctrl_k_open_the_palette() {
+        let mut app = app_with_two_units();
+        assert_eq!(
+            app.update(key(KeyCode::Char(':'))),
+            Some(Effect::FetchRecipes)
+        );
+        app.update(key(KeyCode::Esc));
+        assert!(app.palette.is_none());
+        assert_eq!(
+            app.update(ctrl(KeyCode::Char('k'))),
+            Some(Effect::FetchRecipes)
+        );
+        assert!(app.palette.is_some());
+        assert_eq!(app.selected, 0, "ctrl-k does not move the selection");
+    }
+
+    #[test]
+    fn the_palette_blocks_the_mouse_but_not_ctrl_c() {
+        let mut app = app_with_two_units();
+        app.update(key(KeyCode::Char(':')));
+        app.update(Msg::Scroll {
+            pane: Pane::Units,
+            down: true,
+        });
+        app.update(Msg::Focus(Pane::Logs));
+        assert_eq!(app.selected, 0);
+        assert_eq!(app.focus, Pane::Units);
+        assert_eq!(app.update(ctrl(KeyCode::Char('c'))), Some(Effect::Quit));
+    }
+
+    #[test]
+    fn the_palette_restarts_units() {
+        let mut app = app_with_two_units();
+        app.update(key(KeyCode::Char(':')));
+        type_text(&mut app, "restart db");
+        assert_eq!(
+            app.update(key(KeyCode::Enter)),
+            Some(Effect::Call(Call::Restart {
+                unit: "db".into(),
+                cascade: false
+            }))
+        );
+    }
+
+    #[test]
+    fn a_recipe_without_parameters_runs_right_away() {
+        let mut app = app_with_two_units();
+        app.update(Msg::Recipes(vec![recipe("migrate-up")]));
+        app.update(key(KeyCode::Char(':')));
+        type_text(&mut app, "run migrate-up");
+        assert_eq!(
+            app.update(key(KeyCode::Enter)),
+            Some(Effect::Run {
+                recipe: "migrate-up".into(),
+                args: Vec::new(),
+                confirmed: false
+            })
+        );
+    }
+
+    #[test]
+    fn a_recipe_with_parameters_asks_for_them_inline() {
+        let mut app = app_with_two_units();
+        let mut new = recipe("migrate-new");
+        new.params = vec![Param {
+            name: "name".into(),
+            default: None,
+            optional: false,
+            kind: ParamKind::Singular,
+        }];
+        app.update(Msg::Recipes(vec![new]));
+        app.update(key(KeyCode::Char(':')));
+        type_text(&mut app, "migrate-new");
+        assert_eq!(app.update(key(KeyCode::Enter)), None);
+        assert!(app.prompt.is_some());
+
+        type_text(&mut app, "add_foo");
+        assert_eq!(
+            app.update(key(KeyCode::Enter)),
+            Some(Effect::Run {
+                recipe: "migrate-new".into(),
+                args: vec!["add_foo".into()],
+                confirmed: false
+            })
+        );
+        assert!(app.prompt.is_none());
+    }
+
+    #[test]
+    fn destructive_recipes_ask_for_confirmation() {
+        let mut app = app_with_two_units();
+        let mut reset = recipe("migrate-reset");
+        reset.destructive = true;
+        app.update(Msg::Recipes(vec![reset]));
+
+        app.update(key(KeyCode::Char(':')));
+        type_text(&mut app, "migrate-reset");
+        assert_eq!(app.update(key(KeyCode::Enter)), None);
+        assert_eq!(
+            app.pending_run.as_ref().unwrap().command,
+            "just migrate-reset"
+        );
+        assert_eq!(
+            app.update(key(KeyCode::Char('y'))),
+            Some(Effect::Run {
+                recipe: "migrate-reset".into(),
+                args: Vec::new(),
+                confirmed: true
+            })
+        );
+
+        app.update(key(KeyCode::Char(':')));
+        type_text(&mut app, "migrate-reset");
+        app.update(key(KeyCode::Enter));
+        assert_eq!(app.update(key(KeyCode::Char('n'))), None);
+        assert_eq!(app.flash.as_deref(), Some("run cancelled"));
+    }
+
+    #[test]
+    fn finished_and_stopped_tasks_leave_the_list_failed_ones_stay() {
+        let mut app = app_with_two_units();
+        app.update(Msg::Units(vec![
+            status("db", UnitState::Ready),
+            status("backend", UnitState::Ready),
+        ]));
+        app.update(Msg::State(task("migrate-up", UnitState::Starting)));
+        assert_eq!(app.units.len(), 3, "tasks are listed after a snapshot too");
+
+        app.update(Msg::State(task("migrate-up", UnitState::Done)));
+        assert_eq!(app.units.len(), 2);
+        assert_eq!(app.flash.as_deref(), Some("migrate-up done"));
+
+        app.update(Msg::State(task(
+            "lint",
+            UnitState::Failed {
+                reason: "exit 1".into(),
+            },
+        )));
+        assert_eq!(app.units.len(), 3);
+        app.update(Msg::State(task("lint", UnitState::Stopped)));
+        assert_eq!(app.units.len(), 2);
+    }
+
+    #[test]
+    fn removing_a_task_keeps_the_selected_unit() {
+        let mut app = app_with_two_units();
+        app.update(Msg::State(task("lint", UnitState::Starting)));
+        app.update(key(KeyCode::Char('j')));
+        assert_eq!(app.selected_unit().unwrap().name, "backend");
+        app.update(Msg::State(task("lint", UnitState::Done)));
+        assert_eq!(app.selected_unit().unwrap().name, "backend");
+    }
+
+    #[test]
+    fn the_palette_offers_fixes_and_filters() {
+        let mut app = app_with_two_units();
+        app.update(Msg::Findings(vec![
+            Finding::new("dist", Severity::Error, "ui dist is stale").fix(Fix::just("build-ui")),
+        ]));
+        app.update(key(KeyCode::Char(':')));
+        type_text(&mut app, "fix ui");
+        assert_eq!(app.update(key(KeyCode::Enter)), None);
+        assert!(app.pending_fix.is_some(), "fixes keep their y/N question");
+        app.update(key(KeyCode::Char('n')));
+
+        app.update(key(KeyCode::Char(':')));
+        type_text(&mut app, "filter logs");
+        app.update(key(KeyCode::Enter));
+        assert!(app.input.is_some());
     }
 
     #[test]
@@ -614,31 +946,6 @@ pub(crate) mod tests {
         assert_eq!(app.units.len(), 1);
         app.update(Msg::State(status("db", UnitState::Stopped)));
         assert_eq!(app.units[0].state, UnitState::Stopped);
-    }
-
-    #[test]
-    fn the_picker_blocks_mouse_and_ctrl_p_but_not_ctrl_c() {
-        let mut app = app_with_two_units();
-        app.update(Msg::Profiles(vec!["full".into()]));
-        app.update(ctrl(KeyCode::Char('p')));
-        assert!(app.picker.is_none());
-        app.update(key(KeyCode::Char('p')));
-        app.update(Msg::Scroll {
-            pane: Pane::Units,
-            down: true,
-        });
-        app.update(Msg::Focus(Pane::Logs));
-        assert_eq!(app.selected, 0);
-        assert_eq!(app.focus, Pane::Units);
-        assert_eq!(app.update(ctrl(KeyCode::Char('c'))), Some(Effect::Quit));
-    }
-
-    #[test]
-    fn without_profiles_p_says_so() {
-        let mut app = app_with_two_units();
-        app.update(key(KeyCode::Char('p')));
-        assert!(app.picker.is_none());
-        assert_eq!(app.flash.as_deref(), Some("no profiles known"));
     }
 
     #[test]
@@ -886,12 +1193,6 @@ pub(crate) mod tests {
             .map(|r| r.message.clone())
             .collect();
         assert_eq!(before, after);
-    }
-
-    fn type_text(app: &mut App, text: &str) {
-        for c in text.chars() {
-            app.update(key(KeyCode::Char(c)));
-        }
     }
 
     #[test]

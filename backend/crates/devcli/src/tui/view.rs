@@ -9,7 +9,7 @@ use ratatui::{
 
 use super::{
     app::{App, LogScope, Mode, Pane},
-    picker::Picker,
+    palette::Palette,
     requests::RequestOrder,
 };
 use crate::{
@@ -76,45 +76,55 @@ pub fn draw(frame: &mut Frame, app: &App) {
             draw_finding_detail(frame, detail, app);
         }
     }
-    if let Some(picker) = &app.picker {
-        draw_picker(frame, frame.area(), picker);
-    }
     draw_status(frame, status, app, now);
+    if let Some(palette) = &app.palette {
+        draw_palette(frame, frame.area(), palette);
+    }
 }
 
-fn draw_picker(frame: &mut Frame, area: Rect, picker: &Picker) {
-    let height = u16::try_from(picker.items.len())
-        .unwrap_or(u16::MAX)
-        .saturating_add(2);
-    let width = picker
-        .items
-        .iter()
-        .map(|item| item.chars().count())
-        .max()
-        .unwrap_or(0)
-        .max(picker.title.chars().count() + 4);
-    let width = u16::try_from(width).unwrap_or(u16::MAX).saturating_add(6);
+fn draw_palette(frame: &mut Frame, area: Rect, palette: &Palette) {
+    let matches = palette.matches();
+    let rows = u16::try_from(matches.len()).unwrap_or(u16::MAX).min(12);
+    let width = area.width.saturating_sub(4).min(90);
+    let height = rows.saturating_add(3).min(area.height);
     let popup = Rect {
         x: area.x + area.width.saturating_sub(width) / 2,
-        y: area.y + area.height.saturating_sub(height) / 2,
-        width: width.min(area.width),
-        height: height.min(area.height),
+        y: area.y + area.height.saturating_sub(height) / 3,
+        width,
+        height,
     };
-    let items: Vec<ListItem> = picker
-        .items
-        .iter()
-        .map(|item| ListItem::new(item.as_str()))
-        .collect();
-    let list = List::new(items)
-        .block(
-            Block::bordered()
-                .title(format!(" {} ", picker.title))
-                .border_style(Style::new().fg(Color::Green)),
-        )
-        .highlight_style(Style::new().add_modifier(Modifier::REVERSED));
-    let mut state = ListState::default().with_selected(Some(picker.selected));
+    let block = Block::bordered()
+        .title(" Commands ")
+        .border_style(Style::new().fg(Color::Green));
+    let inner = block.inner(popup);
     frame.render_widget(Clear, popup);
-    frame.render_stateful_widget(list, popup, &mut state);
+    frame.render_widget(block, popup);
+    let [query, list] = Layout::vertical([Constraint::Length(1), Constraint::Min(0)]).areas(inner);
+    frame.render_widget(
+        Paragraph::new(format!("> {}", palette.input().text())),
+        query,
+    );
+    frame.set_cursor_position(Position::new(
+        query
+            .x
+            .saturating_add(2)
+            .saturating_add(palette.input().cursor_column()),
+        query.y,
+    ));
+    let dim = Style::new().fg(Color::DarkGray);
+    let items: Vec<ListItem> = matches
+        .iter()
+        .map(|entry| {
+            ListItem::new(Line::from(vec![
+                Span::raw(entry.label.clone()),
+                Span::styled(format!("  {}", entry.hint), dim),
+            ]))
+        })
+        .collect();
+    let list_widget =
+        List::new(items).highlight_style(Style::new().add_modifier(Modifier::REVERSED));
+    let mut state = ListState::default().with_selected(Some(palette.selected()));
+    frame.render_stateful_widget(list_widget, list, &mut state);
 }
 
 fn pane_block(app: &App, pane: Pane, title: String) -> Block<'static> {
@@ -426,6 +436,36 @@ fn draw_status(frame: &mut Frame, area: Rect, app: &App, now: DateTime<Utc>) {
         ));
         return;
     }
+    if let Some(prompt) = &app.prompt {
+        let head = format!("run {} · {}: ", prompt.recipe().name, prompt.param().name);
+        let mut spans = vec![
+            Span::raw(head.clone()),
+            Span::raw(prompt.input().text().to_owned()),
+        ];
+        if let Some(error) = prompt.error() {
+            spans.push(Span::styled(
+                format!("  {error}"),
+                Style::new().fg(Color::Red),
+            ));
+        }
+        frame.render_widget(Paragraph::new(Line::from(spans)), area);
+        let offset = u16::try_from(head.chars().count()).unwrap_or(u16::MAX);
+        frame.set_cursor_position(Position::new(
+            area.x
+                .saturating_add(offset)
+                .saturating_add(prompt.input().cursor_column()),
+            area.y,
+        ));
+        return;
+    }
+    if let Some(run) = &app.pending_run {
+        frame.render_widget(
+            Paragraph::new(format!("run `{}`? (destructive) [y/N]", run.command))
+                .style(Style::new().fg(Color::Red).add_modifier(Modifier::BOLD)),
+            area,
+        );
+        return;
+    }
     if let Some(finding) = &app.pending_fix
         && let Some(fix) = &finding.fix
     {
@@ -450,14 +490,15 @@ fn draw_status(frame: &mut Frame, area: Rect, app: &App, now: DateTime<Utc>) {
             Mode::Logs => {
                 "q quit · h/l pane · j/k select or scroll · ^u/^d half page · \
                  g/G oldest/follow · Enter unit logs · Tab all/selected · / filter · \
-                 t requests · d doctor · f fix · r restart · R restart with dependents · s start/stop · p profile"
+                 t requests · d doctor · f fix · r restart · R restart with dependents · s start/stop (dismisses a failed task) · \
+                 p profile · : or ^k commands"
             }
             Mode::Doctor => {
-                "d/Esc logs · j/k select · f fix · r check again · R deep check · p profile · q quit"
+                "d/Esc logs · j/k select · f fix · r check again · R deep check · p profile · : or ^k commands · q quit"
             }
             Mode::Requests => {
                 "t/Esc logs · h/l pane · j/k select or scroll · Enter open trace · \
-                 o newest/slowest · ^u/^d half page · g/G top/bottom · p profile · q quit"
+                 o newest/slowest · ^u/^d half page · g/G top/bottom · p profile · : or ^k commands · q quit"
             }
         }
         .to_owned()
@@ -519,6 +560,7 @@ mod tests {
         doctor::{Finding, Fix},
         logs::trace::{Trace, tests::finished_request},
         supervisor::UnitState,
+        tasks::{Param, ParamKind, Recipe},
         tui::app::{
             Msg,
             tests::{record, status},
@@ -532,7 +574,7 @@ mod tests {
     }
 
     #[test]
-    fn the_status_line_names_the_profile_and_the_picker_lists_them() {
+    fn the_status_line_names_the_profile_and_the_palette_lists_actions() {
         let mut app = App::new(true);
         app.update(Msg::Profiles(vec!["full".into(), "minimal".into()]));
         app.update(Msg::Profile("minimal".into()));
@@ -543,9 +585,60 @@ mod tests {
             KeyModifiers::NONE,
         )));
         let screen = render(&app);
-        assert!(screen.contains("Profile"), "{screen}");
-        assert!(screen.contains("full"), "{screen}");
-        assert!(screen.contains("minimal"), "{screen}");
+        assert!(screen.contains("profile full"), "{screen}");
+        assert!(screen.contains("profile minimal"), "{screen}");
+        assert!(screen.contains("> profile"), "{screen}");
+    }
+
+    #[test]
+    fn the_status_line_asks_for_parameters_and_destructive_runs() {
+        let mut app = App::new(true);
+        let new = Recipe {
+            name: "migrate-new".into(),
+            doc: None,
+            group: None,
+            private: false,
+            destructive: false,
+            params: vec![Param {
+                name: "name".into(),
+                default: None,
+                optional: false,
+                kind: ParamKind::Singular,
+            }],
+        };
+        let reset = Recipe {
+            name: "migrate-reset".into(),
+            destructive: true,
+            params: Vec::new(),
+            ..new.clone()
+        };
+        app.update(Msg::Recipes(vec![new, reset]));
+        for code in [KeyCode::Char(':')]
+            .into_iter()
+            .chain("migrate-new".chars().map(KeyCode::Char))
+            .chain([KeyCode::Enter])
+        {
+            app.update(Msg::Key(KeyEvent::new(code, KeyModifiers::NONE)));
+        }
+        assert!(
+            render(&app).contains("run migrate-new · name: "),
+            "{}",
+            render(&app)
+        );
+
+        app.update(Msg::Key(KeyEvent::new(KeyCode::Esc, KeyModifiers::NONE)));
+        for code in [KeyCode::Char(':')]
+            .into_iter()
+            .chain("migrate-reset".chars().map(KeyCode::Char))
+            .chain([KeyCode::Enter])
+        {
+            app.update(Msg::Key(KeyEvent::new(code, KeyModifiers::NONE)));
+        }
+        assert!(
+            render(&app).contains("run `just migrate-reset`? (destructive) [y/N]"),
+            "{}",
+            render(&app)
+        );
     }
 
     fn render(app: &App) -> String {
