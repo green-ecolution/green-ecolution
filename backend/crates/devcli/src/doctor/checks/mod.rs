@@ -1,4 +1,6 @@
 pub mod files;
+pub mod ports;
+pub mod tools;
 
 use std::sync::Arc;
 
@@ -20,5 +22,8 @@ pub fn all() -> Vec<Arc<dyn Check>> {
         Arc::new(files::DomainWasm),
         Arc::new(files::KeycloakTheme),
         Arc::new(files::ValhallaTiles),
+        Arc::new(tools::Tools::default()),
+        Arc::new(tools::DockerDaemon),
+        Arc::new(ports::Ports),
     ]
 }
