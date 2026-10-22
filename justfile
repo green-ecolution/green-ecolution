@@ -438,37 +438,37 @@ migrate-new name:
 [group('db')]
 migrate-up: _migrate-build
     @echo "Migrating up..."
-    cd {{ backend_dir }} && DATABASE_URL="{{ db_url }}" ./target/debug/migrate up
+    @cd {{ backend_dir }} && DATABASE_URL="{{ db_url }}" ./target/debug/migrate up
 
 # Drop and recreate the database, then migrate
 [group('db')]
 migrate-reset: _migrate-build
     @echo "Resetting database..."
-    cd {{ backend_dir }} && DATABASE_URL="{{ db_url }}" ./target/debug/migrate reset
+    @cd {{ backend_dir }} && DATABASE_URL="{{ db_url }}" ./target/debug/migrate reset
 
 # Show migration status
 [group('db')]
 migrate-status: _migrate-build
     @echo "Migration status..."
-    cd {{ backend_dir }} && DATABASE_URL="{{ db_url }}" ./target/debug/migrate info
+    @cd {{ backend_dir }} && DATABASE_URL="{{ db_url }}" ./target/debug/migrate info
 
 # Apply seeds on top of the current DB (assumes empty/migrated schema)
 [group('db')]
 seed-up: _migrate-build
     @echo "Applying seeds..."
-    cd {{ backend_dir }} && DATABASE_URL="{{ db_url }}" ./target/debug/migrate seed
+    @cd {{ backend_dir }} && DATABASE_URL="{{ db_url }}" ./target/debug/migrate seed
 
 # Remove all seed data (runs *.down.sql files in reverse order)
 [group('db')]
 seed-down: _migrate-build
     @echo "Removing seed data..."
-    cd {{ backend_dir }} && DATABASE_URL="{{ db_url }}" ./target/debug/migrate seed-down
+    @cd {{ backend_dir }} && DATABASE_URL="{{ db_url }}" ./target/debug/migrate seed-down
 
 # Reset DB, migrate, then apply seeds
 [group('db')]
 seed-reset: _migrate-build
     @echo "Resetting DB and applying seeds..."
-    cd {{ backend_dir }} && DATABASE_URL="{{ db_url }}" ./target/debug/migrate reset --with-seed
+    @cd {{ backend_dir }} && DATABASE_URL="{{ db_url }}" ./target/debug/migrate reset --with-seed
 
 # Import the Flensburg tree cadastre into Green Ecolution.
 # Requires KATASTER_SOURCE_URL. Pass flags via ARGS, e.g. `just import-kataster-fl --dry-run`.
