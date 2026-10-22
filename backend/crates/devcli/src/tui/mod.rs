@@ -1,5 +1,7 @@
 mod app;
 mod input;
+#[cfg_attr(not(test), allow(dead_code))] // reason: wired into the TUI in the next task
+mod palette;
 mod picker;
 mod requests;
 mod view;
