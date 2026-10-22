@@ -292,7 +292,9 @@ mod tests {
             .unwrap();
 
         let reply: Reply = serde_json::from_str(&line).unwrap();
-        assert!(matches!(reply, Reply::Error(message) if message.contains("protocol version 99") && message.contains("geco down")));
+        assert!(
+            matches!(reply, Reply::Error(message) if message.contains("protocol version 99") && message.contains("geco down"))
+        );
     }
 
     #[tokio::test]
