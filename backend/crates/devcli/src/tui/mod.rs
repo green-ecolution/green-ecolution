@@ -3,13 +3,16 @@ mod view;
 
 use std::{io::Write, process::ExitCode, time::Duration};
 
-use crossterm::event::{Event, EventStream, KeyEventKind};
+use crossterm::event::{
+    DisableMouseCapture, EnableMouseCapture, Event, EventStream, KeyEventKind, MouseButton,
+    MouseEvent, MouseEventKind,
+};
 use futures::StreamExt;
-use ratatui::DefaultTerminal;
+use ratatui::{DefaultTerminal, layout::Rect};
 use tokio::{sync::mpsc, time::MissedTickBehavior};
 use tokio_util::sync::CancellationToken;
 
-use self::app::{App, Effect, LOG_CAPACITY, Msg};
+use self::app::{App, Effect, LOG_CAPACITY, Msg, Pane};
 use crate::{
     host::{Host, OrphanPolicy, termination},
     ipc::{Call, Client, IpcError, Reply},
@@ -49,19 +52,36 @@ async fn run_terminal(
     warnings: Vec<String>,
 ) -> anyhow::Result<()> {
     // ratatui::init installs a hook that restores the terminal on panic; ours runs first so a
-    // panic also stops the process groups this TUI is hosting.
+    // panic also stops the process groups this TUI is hosting and releases the mouse, which
+    // ratatui's restore leaves captured.
     let mut terminal = ratatui::try_init()?;
-    if let Some(registry) = registry {
-        let previous = std::panic::take_hook();
-        std::panic::set_hook(Box::new(move |info| {
+    let previous = std::panic::take_hook();
+    std::panic::set_hook(Box::new(move |info| {
+        if let Some(registry) = &registry {
             registry.terminate_all_now();
-            previous(info);
-        }));
-    }
-    let result = event_loop(&mut terminal, client, shutdown, warnings).await;
+        }
+        let _ = crossterm::execute!(std::io::stdout(), DisableMouseCapture);
+        previous(info);
+    }));
+    let result = match crossterm::execute!(std::io::stdout(), EnableMouseCapture) {
+        Ok(()) => event_loop(&mut terminal, client, shutdown, warnings).await,
+        Err(err) => Err(err.into()),
+    };
+    let _ = crossterm::execute!(std::io::stdout(), DisableMouseCapture);
     // restore() reports its own failure with eprintln!, which panics once the terminal is gone.
     let _ = ratatui::try_restore();
     result
+}
+
+fn mouse_msg(terminal: &DefaultTerminal, mouse: MouseEvent) -> anyhow::Result<Option<Msg>> {
+    let msg: fn(Pane) -> Msg = match mouse.kind {
+        MouseEventKind::ScrollDown => |pane| Msg::Scroll { pane, down: true },
+        MouseEventKind::ScrollUp => |pane| Msg::Scroll { pane, down: false },
+        MouseEventKind::Down(MouseButton::Left) => Msg::Focus,
+        _ => return Ok(None),
+    };
+    let area = Rect::from(terminal.size()?);
+    Ok(view::pane_at(area, mouse.column, mouse.row).map(msg))
 }
 
 /// `shutdown` is the hosted supervisor's token, `None` when attached to another process.
@@ -109,6 +129,10 @@ async fn event_loop(
             },
             event = keys.next() => match event {
                 Some(Ok(Event::Key(key))) if key.kind == KeyEventKind::Press => Msg::Key(key),
+                Some(Ok(Event::Mouse(mouse))) => match mouse_msg(terminal, mouse)? {
+                    Some(msg) => msg,
+                    None => continue,
+                },
                 Some(Ok(_)) => continue,
                 Some(Err(err)) => return Err(err.into()),
                 None => return Ok(()),
@@ -127,9 +151,9 @@ async fn event_loop(
             () = shutdown.cancelled(), if hosted => Msg::HostStopped,
         };
         dirty = true;
-        let key_pressed = matches!(msg, Msg::Key(_));
+        let user_input = matches!(msg, Msg::Key(_) | Msg::Scroll { .. } | Msg::Focus(_));
         let effect = app.update(msg);
-        if key_pressed {
+        if user_input {
             terminal.draw(|frame| view::draw(frame, &app))?;
             dirty = false;
         }

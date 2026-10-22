@@ -10,6 +10,14 @@ use crate::{
 
 pub const LOG_CAPACITY: usize = 5_000;
 const PAGE: usize = 20;
+const HALF_PAGE: usize = PAGE / 2;
+const WHEEL_STEP: usize = 3;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Pane {
+    Units,
+    Logs,
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum LogScope {
@@ -20,6 +28,12 @@ pub enum LogScope {
 #[derive(Debug)]
 pub enum Msg {
     Key(KeyEvent),
+    /// A mouse wheel notch over `pane`; it scrolls that pane without focusing it.
+    Scroll {
+        pane: Pane,
+        down: bool,
+    },
+    Focus(Pane),
     State(UnitStatus),
     Log(LogRecord),
     Flash(String),
@@ -38,6 +52,7 @@ pub enum Effect {
 pub struct App {
     pub units: Vec<UnitStatus>,
     pub selected: usize,
+    pub focus: Pane,
     pub scope: LogScope,
     pub logs: VecDeque<LogRecord>,
     /// Lines between the bottom of the view and the newest matching line; 0 follows.
@@ -53,6 +68,7 @@ impl App {
         Self {
             units: Vec::new(),
             selected: 0,
+            focus: Pane::Units,
             scope: LogScope::All,
             logs: VecDeque::new(),
             scroll: 0,
@@ -66,6 +82,8 @@ impl App {
     pub fn update(&mut self, msg: Msg) -> Option<Effect> {
         match msg {
             Msg::Key(key) => return self.on_key(key),
+            Msg::Scroll { pane, down } => self.step(pane, down, WHEEL_STEP),
+            Msg::Focus(pane) => self.focus = pane,
             Msg::State(status) => match self.units.iter_mut().find(|u| u.name == status.name) {
                 Some(unit) => *unit = status,
                 None => self.units.push(status),
@@ -99,8 +117,12 @@ impl App {
         match key.code {
             KeyCode::Char('q') => return Some(Effect::Quit),
             KeyCode::Char('c') if ctrl => return Some(Effect::Quit),
-            KeyCode::Down | KeyCode::Char('j') => self.select(true),
-            KeyCode::Up | KeyCode::Char('k') => self.select(false),
+            KeyCode::Char('d') if ctrl => self.scroll_down(HALF_PAGE),
+            KeyCode::Char('u') if ctrl => self.scroll_up(HALF_PAGE),
+            KeyCode::Left | KeyCode::Char('h' | '[') => self.focus = Pane::Units,
+            KeyCode::Right | KeyCode::Char('l' | ']') => self.focus = Pane::Logs,
+            KeyCode::Down | KeyCode::Char('j') => self.step(self.focus, true, 1),
+            KeyCode::Up | KeyCode::Char('k') => self.step(self.focus, false, 1),
             KeyCode::Tab => {
                 self.scope = match self.scope {
                     LogScope::All => LogScope::Selected,
@@ -108,10 +130,9 @@ impl App {
                 };
                 self.scroll = 0;
             }
-            KeyCode::PageUp => {
-                self.scroll = self.scroll.saturating_add(PAGE).min(self.max_scroll())
-            }
-            KeyCode::PageDown => self.scroll = self.scroll.saturating_sub(PAGE),
+            KeyCode::PageUp => self.scroll_up(PAGE),
+            KeyCode::PageDown => self.scroll_down(PAGE),
+            KeyCode::Home | KeyCode::Char('g') => self.scroll = self.max_scroll(),
             KeyCode::End | KeyCode::Char('G') => self.scroll = 0,
             KeyCode::Char('?') => self.show_help = !self.show_help,
             KeyCode::Char('r') => {
@@ -144,6 +165,22 @@ impl App {
     fn call(&self, build: impl FnOnce(String) -> Call) -> Option<Effect> {
         self.selected_unit()
             .map(|unit| Effect::Call(build(unit.name.clone())))
+    }
+
+    fn step(&mut self, pane: Pane, down: bool, lines: usize) {
+        match pane {
+            Pane::Units => self.select(down),
+            Pane::Logs if down => self.scroll_down(lines),
+            Pane::Logs => self.scroll_up(lines),
+        }
+    }
+
+    fn scroll_up(&mut self, lines: usize) {
+        self.scroll = self.scroll.saturating_add(lines).min(self.max_scroll());
+    }
+
+    fn scroll_down(&mut self, lines: usize) {
+        self.scroll = self.scroll.saturating_sub(lines);
     }
 
     fn select(&mut self, down: bool) {
@@ -216,6 +253,10 @@ pub(crate) mod tests {
 
     fn key(code: KeyCode) -> Msg {
         Msg::Key(KeyEvent::new(code, KeyModifiers::NONE))
+    }
+
+    fn ctrl(code: KeyCode) -> Msg {
+        Msg::Key(KeyEvent::new(code, KeyModifiers::CONTROL))
     }
 
     fn app_with_two_units() -> App {
@@ -309,7 +350,8 @@ pub(crate) mod tests {
         for i in 0..30 {
             app.update(Msg::Log(record("db", &i.to_string())));
         }
-        app.update(key(KeyCode::PageUp));
+        app.update(key(KeyCode::Char('l')));
+        app.update(key(KeyCode::Char('k')));
         let before: Vec<String> = app
             .visible_logs(5)
             .iter()
@@ -334,18 +376,75 @@ pub(crate) mod tests {
         for i in 0..3 {
             app.update(Msg::Log(record("db", &i.to_string())));
         }
+        app.update(key(KeyCode::Char(']')));
         for _ in 0..10 {
-            app.update(key(KeyCode::PageUp));
+            app.update(key(KeyCode::Up));
         }
         assert_eq!(app.visible_logs(1)[0].message, "0");
         app.update(Msg::Log(record("db", "3")));
         assert_eq!(app.visible_logs(1)[0].message, "0");
 
-        app.update(key(KeyCode::PageDown));
+        app.update(ctrl(KeyCode::Char('d')));
         assert_eq!(app.scroll, 0);
-        app.update(key(KeyCode::PageUp));
+        app.update(key(KeyCode::Char('g')));
+        assert_eq!(app.visible_logs(1)[0].message, "0");
         app.update(key(KeyCode::Char('G')));
         assert_eq!(app.visible_logs(1)[0].message, "3");
+    }
+
+    #[test]
+    fn the_focused_pane_decides_what_j_and_k_move() {
+        let mut app = app_with_two_units();
+        for i in 0..5 {
+            app.update(Msg::Log(record("db", &i.to_string())));
+        }
+        assert_eq!(app.focus, Pane::Units);
+
+        app.update(key(KeyCode::Char('j')));
+        assert_eq!((app.selected, app.scroll), (1, 0));
+
+        app.update(key(KeyCode::Right));
+        assert_eq!(app.focus, Pane::Logs);
+        app.update(key(KeyCode::Char('k')));
+        app.update(key(KeyCode::Char('k')));
+        app.update(key(KeyCode::Char('j')));
+        assert_eq!((app.selected, app.scroll), (1, 1));
+
+        app.update(key(KeyCode::Char('h')));
+        assert_eq!(app.focus, Pane::Units);
+        app.update(key(KeyCode::Char('[')));
+        assert_eq!(app.focus, Pane::Units);
+        app.update(key(KeyCode::Char('k')));
+        assert_eq!((app.selected, app.scroll), (0, 1));
+    }
+
+    #[test]
+    fn the_wheel_scrolls_the_pane_under_the_cursor_without_focusing_it() {
+        let mut app = app_with_two_units();
+        for i in 0..10 {
+            app.update(Msg::Log(record("db", &i.to_string())));
+        }
+
+        app.update(Msg::Scroll {
+            pane: Pane::Logs,
+            down: false,
+        });
+        assert_eq!((app.focus, app.scroll), (Pane::Units, WHEEL_STEP));
+
+        app.update(Msg::Scroll {
+            pane: Pane::Units,
+            down: true,
+        });
+        assert_eq!(app.selected, 1);
+    }
+
+    #[test]
+    fn a_click_focuses_the_pane() {
+        let mut app = app_with_two_units();
+        app.update(Msg::Focus(Pane::Logs));
+        assert_eq!(app.focus, Pane::Logs);
+        app.update(Msg::Focus(Pane::Units));
+        assert_eq!(app.focus, Pane::Units);
     }
 
     #[test]
