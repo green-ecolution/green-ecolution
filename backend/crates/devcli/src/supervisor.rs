@@ -239,11 +239,19 @@ impl Supervisor {
                 return Err(SupervisorError::TaskRunning(name));
             }
             let entry = Arc::new(Entry::new(unit));
-            self.spawn_task(&entry, Some(done));
-            tasks.insert(name, entry);
+            let displaced = tasks.insert(name, Arc::clone(&entry));
+            self.spawn_task(&entry, Some(done), displaced);
         }
-        // The sender is dropped when stop() aborts the task.
+        // The sender is dropped when stop(), restart() or stop_all() aborts the task.
         Ok(outcome.await.unwrap_or(TaskOutcome::Stopped))
+    }
+
+    /// `Ok(false)` once a newer run replaced `entry`; a run that left the list is unknown.
+    fn still_listed(&self, name: &str, entry: &Arc<Entry>) -> Result<bool, SupervisorError> {
+        match lock(&self.tasks).get(name) {
+            Some(current) => Ok(Arc::ptr_eq(current, entry)),
+            None => Err(SupervisorError::UnknownUnit(name.to_owned())),
+        }
     }
 
     /// The caller holds `entry.control`. Spawns only while `entry` is still the one listed under
@@ -261,7 +269,7 @@ impl Supervisor {
         match tasks.get(name) {
             Some(current) if Arc::ptr_eq(current, entry) => {
                 if !(only_if_idle && is_running(entry)) {
-                    self.spawn_task(entry, None);
+                    self.spawn_task(entry, None, None);
                 }
                 Ok(())
             }
@@ -274,14 +282,30 @@ impl Supervisor {
         lock(&self.tasks).get(name).map(Arc::clone)
     }
 
+    /// Stops the remains of a `displaced` run before the new one starts, so its `Stopped` is
+    /// never announced after the new run's `Starting`.
     fn spawn_task(
         self: &Arc<Self>,
         entry: &Arc<Entry>,
         done: Option<oneshot::Sender<TaskOutcome>>,
+        displaced: Option<Arc<Entry>>,
     ) {
         let this = Arc::clone(self);
         let owned = Arc::clone(entry);
         let handle = tokio::spawn(async move {
+            if let Some(displaced) = displaced {
+                // Detached, so stopping the new run cannot abort the cleanup halfway.
+                let cleanup = tokio::spawn({
+                    let this = Arc::clone(&this);
+                    async move {
+                        let _control = displaced.control.lock().await;
+                        if lock(&displaced.task).is_some() {
+                            this.stop_entry(&displaced).await;
+                        }
+                    }
+                });
+                let _ = cleanup.await;
+            }
             let outcome = this.task_lifecycle(&owned).await;
             if let Some(done) = done {
                 let _ = done.send(outcome);
@@ -348,6 +372,16 @@ impl Supervisor {
             if self.is_closing() {
                 return Err(SupervisorError::ShuttingDown);
             }
+            if !self.still_listed(name, &entry)? {
+                return Ok(());
+            }
+            let finished = lock(&entry.task)
+                .as_ref()
+                .is_some_and(JoinHandle::is_finished);
+            if finished {
+                // A failed run may have left processes of its group behind.
+                self.stop_entry(&entry).await;
+            }
             return self.respawn_task(name, &entry, true);
         }
         let entry = self.entry(name)?;
@@ -409,6 +443,10 @@ impl Supervisor {
             let _control = entry.control.lock().await;
             if self.is_closing() {
                 return Err(SupervisorError::ShuttingDown);
+            }
+            // Stopping a replaced run would announce `Stopped` under the new run's name.
+            if !self.still_listed(name, &entry)? {
+                return Ok(());
             }
             self.stop_entry(&entry).await;
             return self.respawn_task(name, &entry, false);
@@ -1459,5 +1497,95 @@ mod tests {
             .filter(|e| *e == "stop lint")
             .count();
         assert_eq!(stops, 2);
+    }
+
+    fn failing_lint(journal: &Journal) -> Arc<dyn Unit> {
+        Arc::new(
+            FakeUnit::oneshot("lint", journal)
+                .failing("exit 1")
+                .stop_after(Duration::from_secs(5))
+                .as_task(),
+        )
+    }
+
+    fn drain_states(events: &mut broadcast::Receiver<UnitStatus>, name: &str) -> Vec<UnitState> {
+        std::iter::from_fn(|| events.try_recv().ok())
+            .filter(|status| status.name == name)
+            .map(|status| status.state)
+            .collect()
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn a_restart_waiting_on_a_replaced_task_leaves_the_replacement_alone() {
+        let journal = Journal::default();
+        let sup = db_only(&journal);
+        sup.run_task(failing_lint(&journal)).await.unwrap();
+        let mut events = sup.subscribe();
+
+        let restart = || {
+            let sup = Arc::clone(&sup);
+            tokio::spawn(async move { sup.restart("lint", false).await })
+        };
+        let first = restart();
+        tokio::time::sleep(Duration::from_secs(1)).await;
+        let second = restart();
+        tokio::time::sleep(Duration::from_secs(1)).await;
+        let replacement = tokio::spawn({
+            let sup = Arc::clone(&sup);
+            let journal = journal.clone();
+            async move {
+                let slow = FakeUnit::oneshot("lint", &journal).ready_after(Duration::from_secs(60));
+                sup.run_task(Arc::new(slow.as_task())).await
+            }
+        });
+        tokio::time::sleep(Duration::from_secs(15)).await;
+        first.await.unwrap().unwrap();
+        second.await.unwrap().unwrap();
+
+        let stops = |entries: Vec<String>| entries.iter().filter(|e| *e == "stop lint").count();
+        assert_eq!(stops(journal.entries()), 1, "{:?}", journal.entries());
+        let states = drain_states(&mut events, "lint");
+        let starting = states
+            .iter()
+            .rposition(|state| *state == UnitState::Starting)
+            .unwrap();
+        assert!(
+            !states[starting..].contains(&UnitState::Stopped),
+            "the replacement must not be reported stopped: {states:?}"
+        );
+        sup.stop_all().await;
+        assert_eq!(replacement.await.unwrap(), Ok(TaskOutcome::Stopped));
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn starting_a_failed_task_stops_its_remains_first() {
+        let journal = Journal::default();
+        let sup = db_only(&journal);
+        sup.run_task(failing_lint(&journal)).await.unwrap();
+
+        sup.start("lint").await.unwrap();
+        tokio::time::sleep(Duration::from_secs(1)).await;
+
+        assert_eq!(journal.entries(), ["start lint", "stop lint", "start lint"]);
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn running_a_failed_task_again_stops_its_remains_first() {
+        let journal = Journal::default();
+        let sup = db_only(&journal);
+        sup.run_task(failing_lint(&journal)).await.unwrap();
+        let mut events = sup.subscribe();
+
+        let outcome = sup
+            .run_task(Arc::new(FakeUnit::oneshot("lint", &journal).as_task()))
+            .await;
+
+        assert_eq!(outcome, Ok(TaskOutcome::Done));
+        assert_eq!(journal.entries(), ["start lint", "stop lint", "start lint"]);
+        assert_eq!(
+            drain_states(&mut events, "lint"),
+            [UnitState::Stopped, UnitState::Starting, UnitState::Done]
+        );
+        assert_eq!(names(&sup), ["db"]);
     }
 }
