@@ -236,7 +236,7 @@ run-prod: build-domain-wasm _compile-backend
         -e 's|${TRAEFIK_ENTRYPOINT}|{{ traefik_entrypoint }}|g' \
         .docker/infra/traefik/dynamic/dev-services.yaml.tmpl \
         > .docker/infra/traefik/dynamic/dev-services.yaml
-    trap 'rm -f .docker/infra/traefik/dynamic/dev-services.yaml; kill 0' EXIT; \
+    @trap 'rm -f .docker/infra/traefik/dynamic/dev-services.yaml; kill 0' EXIT; \
       ( cd {{ backend_dir }} && \
         APP_ENVIRONMENT=local \
         APP_APPLICATION__HOST=0.0.0.0 \
