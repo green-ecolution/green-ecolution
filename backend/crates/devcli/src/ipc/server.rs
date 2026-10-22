@@ -67,7 +67,7 @@ async fn handle(
             send(&mut write, &outcome(result)).await
         }
         Call::Shutdown => {
-            send(&mut write, &Reply::Done).await?;
+            let _ = send(&mut write, &Reply::Done).await;
             shutdown.cancel();
             Ok(())
         }

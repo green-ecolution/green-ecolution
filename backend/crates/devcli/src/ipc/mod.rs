@@ -199,6 +199,24 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn shutdown_still_cancels_when_the_client_is_already_gone() {
+        use std::io::Write;
+
+        let f = fixture().await;
+        // Blocking std socket on the current-thread runtime: the server cannot run before the
+        // client has hung up, so its reply write fails.
+        let mut stream =
+            std::os::unix::net::UnixStream::connect(f.dir.path().join("geco.sock")).unwrap();
+        stream
+            .write_all(b"{\"v\":1,\"call\":{\"method\":\"shutdown\"}}\n")
+            .unwrap();
+        drop(stream);
+
+        tokio::time::timeout(Duration::from_secs(5), f.shutdown.cancelled())
+            .await
+            .unwrap();
+    }
+    #[tokio::test]
     async fn other_protocol_versions_are_rejected() {
         let f = fixture().await;
         let stream = UnixStream::connect(f.dir.path().join("geco.sock"))
