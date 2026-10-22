@@ -27,6 +27,10 @@ use crate::{
 };
 
 pub async fn run(cli: Cli) -> anyhow::Result<ExitCode> {
+    if let Some(Command::Completions { shell }) = &cli.command {
+        crate::complete::write_registration(shell, &mut std::io::stdout())?;
+        return Ok(ExitCode::SUCCESS);
+    }
     let cwd = std::env::current_dir()?;
     let paths = Paths::discover(&cwd).context("no geco.toml in this directory or any parent")?;
     let client = Client::new(paths.socket());
@@ -57,6 +61,9 @@ pub async fn run(cli: Cli) -> anyhow::Result<ExitCode> {
         Some(Command::Stop { unit }) => simple(&client, Call::Stop { unit }).await,
         Some(Command::Run { recipe, args, yes }) => {
             run::run(&paths, &client, &recipe, &args, yes).await
+        }
+        Some(Command::Completions { .. }) => {
+            unreachable!("handled before the repository is discovered")
         }
     }
 }

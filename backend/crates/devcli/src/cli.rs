@@ -1,4 +1,7 @@
 use clap::{Parser, Subcommand};
+use clap_complete::ArgValueCandidates;
+
+use crate::complete;
 
 #[derive(Debug, Parser)]
 #[command(
@@ -11,7 +14,7 @@ pub struct Cli {
     pub command: Option<Command>,
 
     /// Profile to start when no supervisor is running (default from geco.toml)
-    #[arg(long, short, global = true)]
+    #[arg(long, short, global = true, add = ArgValueCandidates::new(complete::profiles))]
     pub profile: Option<String>,
 }
 
@@ -31,6 +34,7 @@ pub enum Command {
     },
     /// Print logs of the given units (all units when none are given)
     Logs {
+        #[arg(add = ArgValueCandidates::new(complete::units))]
         units: Vec<String>,
         /// Filter expression, e.g. 'level>=warn target:sqlx "jwks"'. Without a running supervisor, -n counts lines before filtering.
         #[arg(short = 'F', long, default_value = "")]
@@ -62,15 +66,20 @@ pub enum Command {
     },
     /// Restart a unit
     Restart {
+        #[arg(add = ArgValueCandidates::new(complete::units))]
         unit: String,
         /// Also restart every unit that depends on it
         #[arg(long)]
         cascade: bool,
     },
     /// List the profiles, or switch the running supervisor to NAME
-    Profile { name: Option<String> },
+    Profile {
+        #[arg(add = ArgValueCandidates::new(complete::profiles))]
+        name: Option<String>,
+    },
     /// Run a just recipe as a task of the supervisor (or in the foreground without one)
     Run {
+        #[arg(add = ArgValueCandidates::new(complete::recipes))]
         recipe: String,
         /// Arguments for the recipe, passed on unchanged
         #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
@@ -80,9 +89,20 @@ pub enum Command {
         yes: bool,
     },
     /// Start a stopped unit
-    Start { unit: String },
+    Start {
+        #[arg(add = ArgValueCandidates::new(complete::units))]
+        unit: String,
+    },
     /// Stop a unit
-    Stop { unit: String },
+    Stop {
+        #[arg(add = ArgValueCandidates::new(complete::units))]
+        unit: String,
+    },
+    /// Print the shell completion script (source it, e.g. `source <(geco completions zsh)`)
+    Completions {
+        #[arg(value_parser = ["bash", "elvish", "fish", "powershell", "zsh"])]
+        shell: String,
+    },
     #[command(name = "__supervise", hide = true)]
     Supervise,
 }
@@ -109,6 +129,13 @@ mod tests {
         assert_eq!(units, ["backend"]);
         assert_eq!(filter, "level>=warn");
         assert!(follow);
+    }
+
+    #[test]
+    fn completions_take_a_known_shell() {
+        let cli = Cli::try_parse_from(["geco", "completions", "zsh"]).unwrap();
+        assert!(matches!(cli.command, Some(Command::Completions { shell }) if shell == "zsh"));
+        assert!(Cli::try_parse_from(["geco", "completions", "cmd"]).is_err());
     }
 
     #[test]

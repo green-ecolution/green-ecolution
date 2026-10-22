@@ -1,6 +1,7 @@
 pub mod assemble;
 pub mod cli;
 pub mod commands;
+pub mod complete;
 pub mod config;
 pub mod doctor;
 pub mod fuzzy;
