@@ -43,7 +43,7 @@ pub struct ProcessUnit {
     registry: ProcessRegistry,
     grace: Duration,
     probe_interval: Duration,
-    group: Mutex<Option<i32>>,
+    group: Arc<Mutex<Option<i32>>>,
 }
 
 type ExitResult = Result<ExitStatus, String>;
@@ -55,7 +55,7 @@ impl ProcessUnit {
             registry,
             grace: Duration::from_secs(10),
             probe_interval: Duration::from_millis(500),
-            group: Mutex::new(None),
+            group: Arc::default(),
         }
     }
 
@@ -96,7 +96,8 @@ impl Unit for ProcessUnit {
                 command: self.spec.command.clone(),
                 source,
             })?;
-        if let Some(group) = child.id().and_then(|id| i32::try_from(id).ok()) {
+        let group_id = child.id().and_then(|id| i32::try_from(id).ok());
+        if let Some(group) = group_id {
             self.registry.insert(group);
             *lock(&self.group) = Some(group);
         }
@@ -105,8 +106,19 @@ impl Unit for ProcessUnit {
             forward_lines(child.stderr.take(), sink),
         ];
         let (exit_tx, mut exit_rx) = oneshot::channel::<ExitResult>();
+        let reaper_slot = Arc::clone(&self.group);
+        let reaper_registry = self.registry.clone();
         tokio::spawn(async move {
-            let _ = exit_tx.send(child.wait().await.map_err(|err| err.to_string()));
+            let result = child.wait().await.map_err(|err| err.to_string());
+            // Once the group is empty its number may be recycled, so geco must stop claiming it.
+            if let Some(group) = group_id.filter(|group| group_is_empty(*group)) {
+                reaper_registry.remove(group);
+                let mut slot = lock(&reaper_slot);
+                if *slot == Some(group) {
+                    *slot = None;
+                }
+            }
+            let _ = exit_tx.send(result);
         });
 
         match self.spec.kind {
@@ -147,6 +159,10 @@ impl Unit for ProcessUnit {
         self.registry.remove(group);
         result
     }
+}
+
+fn group_is_empty(group: i32) -> bool {
+    Pid::from_raw(group).is_none_or(|pid| test_kill_process_group(pid).is_err())
 }
 
 fn lost() -> String {
@@ -326,6 +342,41 @@ mod tests {
 
         unit.stop().await.unwrap();
         assert!(registry.groups().is_empty());
+    }
+
+    #[tokio::test]
+    async fn stop_escalates_to_kill_for_a_group_ignoring_term() {
+        let dir = tempfile::tempdir().unwrap();
+        let pid_file = dir.path().join("child.pid");
+        let registry = ProcessRegistry::in_memory();
+        let command = format!(
+            "trap '' TERM; sh -c 'trap \"\" TERM; echo $$ > {}; while :; do sleep 0.05; done' & wait",
+            pid_file.display()
+        );
+        let unit = ProcessUnit::new(spec(UnitKind::Service, &command), registry.clone())
+            .with_grace(Duration::from_millis(300));
+        let _running = unit.start(LogStore::new(10)).await.unwrap();
+        let stubborn = pid_from(&pid_file).await;
+
+        unit.stop().await.unwrap();
+
+        assert!(
+            gone(stubborn).await,
+            "a TERM-ignoring process survived stop()"
+        );
+        assert!(registry.groups().is_empty());
+    }
+
+    #[tokio::test]
+    async fn a_group_whose_leader_exited_is_released() {
+        let registry = ProcessRegistry::in_memory();
+        let unit = ProcessUnit::new(spec(UnitKind::Service, "sleep 0.1"), registry.clone());
+
+        let running = unit.start(LogStore::new(10)).await.unwrap();
+        running.exited.await;
+
+        assert!(registry.groups().is_empty());
+        assert!(lock(&unit.group).is_none());
     }
 
     #[tokio::test]
