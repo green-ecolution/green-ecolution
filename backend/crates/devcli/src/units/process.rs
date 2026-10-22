@@ -51,6 +51,8 @@ type ExitResult = Result<ExitStatus, String>;
 /// How long a process group gets between TERM and KILL.
 pub(crate) const STOP_GRACE: Duration = Duration::from_secs(10);
 
+const LINGER_POLL: Duration = Duration::from_secs(1);
+
 impl ProcessUnit {
     pub fn new(spec: ProcessSpec, registry: ProcessRegistry) -> Self {
         Self {
@@ -113,15 +115,19 @@ impl Unit for ProcessUnit {
         let reaper_registry = self.registry.clone();
         tokio::spawn(async move {
             let result = child.wait().await.map_err(|err| err.to_string());
-            // Once the group is empty its number may be recycled, so geco must stop claiming it.
-            if let Some(group) = group_id.filter(|group| group_is_empty(*group)) {
-                reaper_registry.remove(group);
-                let mut slot = lock(&reaper_slot);
-                if *slot == Some(group) {
-                    *slot = None;
+            let lingering =
+                group_id.filter(|group| !release_if_empty(*group, &reaper_slot, &reaper_registry));
+            let _ = exit_tx.send(result);
+            // Members outliving the leader keep the group alive; it stays claimed until they
+            // are gone or stop() takes it over.
+            if let Some(group) = lingering {
+                while slot_holds(&reaper_slot, group) {
+                    tokio::time::sleep(LINGER_POLL).await;
+                    if release_if_empty(group, &reaper_slot, &reaper_registry) {
+                        break;
+                    }
                 }
             }
-            let _ = exit_tx.send(result);
         });
 
         match self.spec.kind {
@@ -166,6 +172,23 @@ impl Unit for ProcessUnit {
 
 fn group_is_empty(group: i32) -> bool {
     Pid::from_raw(group).is_none_or(|pid| test_kill_process_group(pid).is_err())
+}
+
+/// Once the group is empty its number may be recycled, so geco must stop claiming it.
+fn release_if_empty(group: i32, slot: &Mutex<Option<i32>>, registry: &ProcessRegistry) -> bool {
+    if !group_is_empty(group) {
+        return false;
+    }
+    registry.remove(group);
+    let mut slot = lock(slot);
+    if *slot == Some(group) {
+        *slot = None;
+    }
+    true
+}
+
+fn slot_holds(slot: &Mutex<Option<i32>>, group: i32) -> bool {
+    *lock(slot) == Some(group)
 }
 
 fn lost() -> String {
@@ -388,6 +411,28 @@ mod tests {
         let running = unit.start(LogStore::new(10)).await.unwrap();
         running.exited.await;
 
+        assert!(registry.groups().is_empty());
+        assert!(lock(&unit.group).is_none());
+    }
+
+    #[tokio::test]
+    async fn a_group_is_released_once_its_last_member_exits() {
+        let registry = ProcessRegistry::in_memory();
+        let unit = ProcessUnit::new(
+            spec(UnitKind::Service, "sleep 1 >/dev/null 2>&1 &"),
+            registry.clone(),
+        );
+
+        let running = unit.start(LogStore::new(10)).await.unwrap();
+        running.exited.await;
+        assert_eq!(registry.groups().len(), 1, "released while a member ran");
+
+        for _ in 0..50 {
+            if registry.groups().is_empty() {
+                break;
+            }
+            tokio::time::sleep(Duration::from_millis(100)).await;
+        }
         assert!(registry.groups().is_empty());
         assert!(lock(&unit.group).is_none());
     }
