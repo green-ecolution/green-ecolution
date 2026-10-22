@@ -1,4 +1,4 @@
-use std::fs;
+use std::{fs, time::Duration};
 
 use async_trait::async_trait;
 use tokio::process::Command;
@@ -9,17 +9,13 @@ use crate::{
     units::process::output_in_own_group,
 };
 
-/// Paths `git status --porcelain` reports as changed; renames resolve to the new path,
-/// deletions are left out.
+/// Paths `git status --porcelain` reports as changed, deletions included (a refresh may only
+/// delete cache files); renames resolve to the new path.
 pub fn changed_paths(porcelain: &str) -> Vec<String> {
     porcelain
         .lines()
         .filter_map(|line| {
-            let status = line.get(..2)?;
             let path = line.get(3..)?;
-            if status.contains('D') {
-                return None;
-            }
             let path = path.rsplit_once(" -> ").map_or(path, |(_, new)| new);
             Some(path.trim_matches('"').to_owned())
         })
@@ -106,6 +102,9 @@ impl Check for SqlxCache {
     }
 }
 
+/// cargo can wait on the build-directory lock (bacon) or a stalled connection indefinitely.
+const PREPARE_TIMEOUT: Duration = Duration::from_secs(600);
+
 pub struct SqlxPrepare;
 
 #[async_trait]
@@ -140,8 +139,9 @@ impl Check for SqlxPrepare {
             ])
             .current_dir(env.root.join("backend"))
             .env("DATABASE_URL", &url);
-        let output = output_in_own_group(command)
+        let output = tokio::time::timeout(PREPARE_TIMEOUT, output_in_own_group(command))
             .await
+            .map_err(|_| "cargo sqlx prepare --check did not finish within 10 minutes".to_owned())?
             .map_err(|err| format!("cannot run cargo sqlx: {err}"))?;
         if output.status.success() {
             return Ok(Vec::new());
@@ -182,6 +182,7 @@ R  backend/crates/server/src/old.rs -> backend/crates/server/src/renamed.rs
                 "backend/crates/server/src/infra/pg_tree.rs",
                 "backend/crates/server/src/infra/pg_new.rs",
                 "backend/crates/server/src/renamed.rs",
+                "backend/crates/server/src/gone.rs",
                 "backend/crates/server/Cargo.toml",
             ]
         );
@@ -208,6 +209,14 @@ R  backend/crates/server/src/old.rs -> backend/crates/server/src/renamed.rs
         let mut touched = changed.clone();
         touched.push("backend/.sqlx/query-abc.json".into());
         assert!(stale_cache(&touched, with_macros).is_empty());
+    }
+
+    #[test]
+    fn a_deleted_cache_file_counts_as_a_refresh() {
+        let changed = changed_paths(
+            " M backend/crates/server/src/infra/pg_tree.rs\n D backend/.sqlx/query-abc.json\n",
+        );
+        assert!(stale_cache(&changed, |_| true).is_empty());
     }
 
     #[test]
