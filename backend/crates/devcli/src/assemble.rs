@@ -438,5 +438,10 @@ after = ["build-release", "migrations"]
             prod.unit["frontend"].run.as_deref(),
             Some("pnpm run preview")
         );
+        assert_eq!(prod.unit["frontend"].env["USE_TRAEFIK"], "1");
+        assert_eq!(
+            prod.unit["frontend"].ready,
+            Some(crate::config::ReadyProbe::Tcp("localhost:5173".into()))
+        );
     }
 }

@@ -358,6 +358,38 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn a_switch_replies_with_the_change_and_is_announced_on_the_state_stream() {
+        let f = fixture().await;
+        let mut stream = f.client.open(Call::SubscribeState).await.unwrap();
+        let Some(Reply::Profile(_)) = stream.next().await.unwrap() else {
+            panic!("expected the active profile first");
+        };
+        let Some(Reply::State(_)) = stream.next().await.unwrap() else {
+            panic!("expected the current state");
+        };
+
+        let Reply::Switched(change) = f
+            .client
+            .call(Call::SwitchProfile {
+                profile: "full".into(),
+            })
+            .await
+            .unwrap()
+        else {
+            panic!("expected the change");
+        };
+        assert_eq!(change.profile, "full");
+
+        let Some(Reply::Status(_)) = stream.next().await.unwrap() else {
+            panic!("expected the new unit list");
+        };
+        let Some(Reply::Profile(active)) = stream.next().await.unwrap() else {
+            panic!("expected the new profile");
+        };
+        assert_eq!(active, "full");
+    }
+
+    #[tokio::test]
     async fn unknown_profiles_are_refused() {
         let f = fixture().await;
         let err = f
