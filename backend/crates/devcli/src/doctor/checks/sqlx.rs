@@ -51,6 +51,37 @@ pub fn redact(text: &str, secret: &str) -> String {
     }
 }
 
+pub fn stale_cache_findings(stale: &[String]) -> Vec<Finding> {
+    if stale.is_empty() {
+        return Vec::new();
+    }
+    vec![
+        Finding::new(
+            "sqlx-cache",
+            Severity::Hint,
+            "query macros changed; .sqlx/ may be stale",
+        )
+        .detail(format!(
+            "Builds with SQLX_OFFLINE=true, CI included, fail until the cache is refreshed. \
+             Changed files:\n  {}\n`geco doctor --deep` checks it against the database.",
+            stale.join("\n  ")
+        ))
+        .fix(Fix::just("generate-sqlx")),
+    ]
+}
+
+pub fn prepare_failed(stderr_tail: &str) -> Finding {
+    Finding::new(
+        "sqlx-cache-prepare",
+        Severity::Error,
+        "`cargo sqlx prepare --check` failed",
+    )
+    .detail(format!(
+        "`cargo sqlx prepare --check` against the dev database failed:\n{stderr_tail}"
+    ))
+    .fix(Fix::just("generate-sqlx"))
+}
+
 pub struct SqlxCache;
 
 #[async_trait]
@@ -79,22 +110,7 @@ impl Check for SqlxCache {
         let stale = stale_cache(&changed, |path| {
             fs::read_to_string(env.root.join(path)).is_ok_and(|source| uses_query_macros(&source))
         });
-        if stale.is_empty() {
-            return Ok(Vec::new());
-        }
-        Ok(vec![
-            Finding::new(
-                self.id(),
-                Severity::Error,
-                "query macros changed but .sqlx/ did not",
-            )
-            .detail(format!(
-                "Builds with SQLX_OFFLINE=true, CI included, fail until the cache is refreshed. \
-                 Changed files:\n  {}",
-                stale.join("\n  ")
-            ))
-            .fix(Fix::just("generate-sqlx")),
-        ])
+        Ok(stale_cache_findings(&stale))
     }
 
     fn reacts_to(&self, trigger: &Trigger<'_>) -> bool {
@@ -149,17 +165,7 @@ impl Check for SqlxPrepare {
         let stderr = redact(&String::from_utf8_lossy(&output.stderr), &password);
         let lines: Vec<&str> = stderr.lines().collect();
         let tail = lines[lines.len().saturating_sub(5)..].join("\n");
-        Ok(vec![
-            Finding::new(
-                self.id(),
-                Severity::Error,
-                ".sqlx/ does not match the queries",
-            )
-            .detail(format!(
-                "`cargo sqlx prepare --check` against the dev database failed:\n{tail}"
-            ))
-            .fix(Fix::just("generate-sqlx")),
-        ])
+        Ok(vec![prepare_failed(&tail)])
     }
 }
 
@@ -238,5 +244,26 @@ R  backend/crates/server/src/old.rs -> backend/crates/server/src/renamed.rs
         );
         assert!(SqlxCache.reacts_to(&Trigger::Log(&record)));
         assert_eq!(SqlxPrepare.cost(), Cost::Deep);
+    }
+
+    #[test]
+    fn only_the_deep_check_reports_a_stale_cache_as_an_error() {
+        assert!(stale_cache_findings(&[]).is_empty());
+        let cheap = stale_cache_findings(&["backend/crates/server/src/infra/pg_tree.rs".into()]);
+        assert_eq!(cheap[0].id, "sqlx-cache");
+        assert_eq!(cheap[0].severity, Severity::Hint);
+        assert_eq!(cheap[0].title, "query macros changed; .sqlx/ may be stale");
+        assert!(cheap[0].detail.contains("pg_tree.rs"));
+        assert!(
+            cheap[0]
+                .detail
+                .ends_with("`geco doctor --deep` checks it against the database.")
+        );
+
+        let deep = prepare_failed("error: connection refused");
+        assert_eq!(deep.id, "sqlx-cache-prepare");
+        assert_eq!(deep.severity, Severity::Error);
+        assert_eq!(deep.title, "`cargo sqlx prepare --check` failed");
+        assert_eq!(deep.fix.unwrap().command, "just generate-sqlx");
     }
 }
