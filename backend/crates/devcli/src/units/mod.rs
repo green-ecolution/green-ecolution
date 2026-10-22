@@ -3,6 +3,7 @@ pub mod hooked;
 pub mod migrations;
 pub mod probe;
 pub mod process;
+pub mod unavailable;
 
 #[cfg(test)]
 pub mod fake;
