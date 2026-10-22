@@ -329,3 +329,6 @@ backend-rs/target/
 # Handbook build output
 frontend/handbook/generated/
 frontend/app/public/handbook/*.pdf
+
+# geco supervisor state (socket, lock, PIDs)
+.geco/
