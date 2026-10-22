@@ -174,15 +174,25 @@ impl Doctor {
     }
 
     pub async fn fix(&self, id: &str, confirmed: bool) -> Result<(), DoctorError> {
-        let finding = self
-            .findings()
-            .into_iter()
+        let findings = self.findings();
+        let finding = findings
+            .iter()
             .find(|finding| finding.id == id)
             .ok_or_else(|| DoctorError::UnknownFinding(id.to_owned()))?;
         let fix = finding
             .fix
             .clone()
             .ok_or_else(|| DoctorError::NoFix(id.to_owned()))?;
+        let affected: Vec<&str> = findings
+            .iter()
+            .filter(|other| {
+                other
+                    .fix
+                    .as_ref()
+                    .is_some_and(|other| other.command == fix.command)
+            })
+            .map(|other| other.check.as_str())
+            .collect();
         if fix.destructive && !confirmed {
             return Err(DoctorError::NeedsConfirmation(fix.command));
         }
@@ -211,7 +221,7 @@ impl Doctor {
         let checks: Vec<Arc<dyn Check>> = self
             .checks
             .iter()
-            .filter(|check| check.id() == finding.check)
+            .filter(|check| affected.contains(&check.id()))
             .cloned()
             .collect();
         self.run_checks(&checks, finding.unit.as_deref()).await;
@@ -425,6 +435,31 @@ mod tests {
             "the TUI keeps the last deep result"
         );
         assert_eq!(doc.report().findings.len(), 1);
+    }
+
+    #[tokio::test]
+    async fn a_fix_checks_again_every_check_that_shares_its_command() {
+        let f = fixture();
+        let behind = FakeCheck::new("dev-db-migrations")
+            .finds(vec![with_fix("dev-db-migrations", "echo migrated")])
+            .arc();
+        let binary = FakeCheck::new("migrate-binary")
+            .finds(vec![with_fix("migrate-binary", "echo migrated")])
+            .arc();
+        let other = FakeCheck::new("ports")
+            .finds(vec![with_fix("ports", "echo other")])
+            .arc();
+        let doc = doctor(&f, vec![behind.clone(), binary.clone(), other.clone()]);
+        doc.run(false).await;
+
+        behind.set(Ok(Vec::new()));
+        binary.set(Ok(Vec::new()));
+        doc.fix("dev-db-migrations", false).await.unwrap();
+
+        let ids: Vec<String> = doc.findings().into_iter().map(|f| f.id).collect();
+        assert_eq!(ids, ["ports"]);
+        assert_eq!(binary.runs(), 2);
+        assert_eq!(other.runs(), 1);
     }
 
     #[tokio::test]
