@@ -6,13 +6,14 @@ use std::{
 use chrono::{DateTime, Utc};
 use tokio::sync::broadcast;
 
-use super::{Filter, LogRecord};
+use super::{Filter, LogRecord, builds::Builds};
 use crate::sync::lock;
 
 pub struct LogStore {
     capacity: usize,
     inner: Mutex<Inner>,
     tx: broadcast::Sender<LogRecord>,
+    builds: Builds,
 }
 
 #[derive(Default)]
@@ -28,7 +29,13 @@ impl LogStore {
             capacity: capacity_per_unit.max(1),
             inner: Mutex::default(),
             tx,
+            builds: Builds::default(),
         })
+    }
+
+    /// Cargo progress the units printed; it never becomes a log record.
+    pub fn builds(&self) -> &Builds {
+        &self.builds
     }
 
     /// Broadcasting under the lock keeps subscribers in sequence order.

@@ -12,7 +12,7 @@ use super::{
 use crate::{
     doctor::{Finding, Severity},
     ipc::Call,
-    logs::{Filter, LogRecord, trace::Trace},
+    logs::{Filter, LogRecord, builds::Build, trace::Trace},
     supervisor::{UnitState, UnitStatus},
     tasks::Recipe,
     units::Origin,
@@ -61,6 +61,7 @@ pub enum Msg {
     Log(LogRecord),
     Trace(Trace),
     Findings(Vec<Finding>),
+    Builds(Vec<Build>),
     Recipes(Vec<Recipe>),
     Flash(String),
     Tick,
@@ -102,6 +103,7 @@ pub struct App {
     pub logs: VecDeque<LogRecord>,
     pub requests: Requests,
     pub findings: Vec<Finding>,
+    pub builds: Vec<Build>,
     pub finding_selected: usize,
     pub pending_fix: Option<Finding>,
     pub profile: Option<String>,
@@ -134,6 +136,7 @@ impl App {
             logs: VecDeque::new(),
             requests: Requests::default(),
             findings: Vec::new(),
+            builds: Vec::new(),
             finding_selected: 0,
             pending_fix: None,
             profile: None,
@@ -158,6 +161,7 @@ impl App {
             Msg::Scroll { pane, down } => return self.step(pane, down, WHEEL_STEP),
             Msg::Trace(trace) => self.requests.set_trace(trace),
             Msg::Focus(pane) => self.focus = pane,
+            Msg::Builds(builds) => self.builds = builds,
             Msg::Findings(findings) => {
                 self.finding_selected = self.finding_selected.min(findings.len().saturating_sub(1));
                 self.findings = findings;

@@ -16,7 +16,7 @@ use ratatui::{DefaultTerminal, layout::Rect};
 use tokio::{sync::mpsc, time::MissedTickBehavior};
 use tokio_util::sync::CancellationToken;
 
-use self::app::{App, Effect, LOG_CAPACITY, Mode, Msg, Pane};
+use self::app::{App, Effect, LOG_CAPACITY, Msg, Pane};
 use crate::{
     host::{Host, OrphanPolicy, termination},
     ipc::{Call, Client, IpcError, Reply},
@@ -91,7 +91,7 @@ async fn run_terminal(
 
 fn mouse_msg(
     terminal: &DefaultTerminal,
-    mode: Mode,
+    app: &App,
     mouse: MouseEvent,
 ) -> anyhow::Result<Option<Msg>> {
     let msg: fn(Pane) -> Msg = match mouse.kind {
@@ -101,7 +101,7 @@ fn mouse_msg(
         _ => return Ok(None),
     };
     let area = Rect::from(terminal.size()?);
-    Ok(view::pane_at(area, mode, mouse.column, mouse.row).map(msg))
+    Ok(view::pane_at(area, app.mode, &app.builds, mouse.column, mouse.row).map(msg))
 }
 
 /// `shutdown` is the hosted supervisor's token, `None` when attached to another process.
@@ -119,6 +119,7 @@ async fn event_loop(
     }
     let mut states = client.open(Call::SubscribeState).await?;
     let mut findings = client.open(Call::SubscribeFindings).await?;
+    let mut builds = client.open(Call::SubscribeBuilds).await?;
     let mut logs = client
         .open(Call::Logs {
             units: Vec::new(),
@@ -168,6 +169,11 @@ async fn event_loop(
                 Some(_) => continue,
                 None => Msg::Disconnected,
             },
+            reply = builds.next(), if connected => match reply? {
+                Some(Reply::Builds(list)) => Msg::Builds(list),
+                Some(_) => continue,
+                None => Msg::Disconnected,
+            },
             reply = logs.next(), if connected => match reply? {
                 Some(Reply::Log(record)) => Msg::Log(record),
                 Some(_) => continue,
@@ -175,7 +181,7 @@ async fn event_loop(
             },
             event = keys.next() => match event {
                 Some(Ok(Event::Key(key))) if key.kind == KeyEventKind::Press => Msg::Key(key),
-                Some(Ok(Event::Mouse(mouse))) => match mouse_msg(terminal, app.mode, mouse)? {
+                Some(Ok(Event::Mouse(mouse))) => match mouse_msg(terminal, &app, mouse)? {
                     Some(msg) => msg,
                     None => continue,
                 },

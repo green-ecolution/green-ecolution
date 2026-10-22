@@ -1,10 +1,11 @@
-use chrono::{DateTime, Local, Utc};
+use chrono::{DateTime, Local, TimeDelta, Utc};
 use ratatui::{
     Frame,
     layout::{Constraint, Layout, Position, Rect},
     style::{Color, Modifier, Style},
+    symbols,
     text::{Line, Span},
-    widgets::{Block, Clear, List, ListItem, ListState, Paragraph, Wrap},
+    widgets::{Block, Clear, LineGauge, List, ListItem, ListState, Paragraph, Wrap},
 };
 
 use super::{
@@ -17,6 +18,7 @@ use crate::{
     doctor::Severity,
     logs::{
         Level, LogRecord,
+        builds::{Build, BuildState},
         trace::{self, TraceLine, TraceLineKind},
     },
     theme,
@@ -31,20 +33,53 @@ const UNIT_COLORS: [Color; theme::UNIT_SLOTS] = [
     Color::LightCyan,
 ];
 
-/// Returns the list pane, the detail pane and the status line.
-fn areas(area: Rect, mode: Mode) -> [Rect; 3] {
-    let [main, status] = Layout::vertical([Constraint::Min(3), Constraint::Length(1)]).areas(area);
+/// How long a finished or failed build stays in the panel.
+const BUILD_LINGER: TimeDelta = TimeDelta::seconds(5);
+
+const BUILD_NAME_WIDTH: usize = 14;
+
+/// Returns the list pane, the detail pane, the build panel and the status line.
+fn areas(area: Rect, mode: Mode, builds: &[&Build]) -> [Rect; 4] {
+    let rows: usize = builds.iter().map(|build| build_rows(build)).sum();
+    let panel = if rows == 0 {
+        0
+    } else {
+        u16::try_from(rows + 2).unwrap_or(u16::MAX)
+    };
+    let [main, panel, status] = Layout::vertical([
+        Constraint::Min(3),
+        Constraint::Length(panel),
+        Constraint::Length(1),
+    ])
+    .areas(area);
     let list = match mode {
         Mode::Logs => Constraint::Length(32),
         Mode::Requests => Constraint::Percentage(40),
         Mode::Doctor => Constraint::Percentage(45),
     };
     let [list, detail] = Layout::horizontal([list, Constraint::Min(20)]).areas(main);
-    [list, detail, status]
+    [list, detail, panel, status]
 }
 
-pub fn pane_at(area: Rect, mode: Mode, column: u16, row: u16) -> Option<Pane> {
-    let [list, detail, _] = areas(area, mode);
+fn visible_builds(builds: &[Build], now: DateTime<Utc>) -> Vec<&Build> {
+    builds
+        .iter()
+        .filter(|build| match build.state {
+            BuildState::Running { .. } => true,
+            BuildState::Finished { at } | BuildState::Failed { at } => now - at < BUILD_LINGER,
+        })
+        .collect()
+}
+
+fn build_rows(build: &Build) -> usize {
+    match &build.state {
+        BuildState::Running { active, .. } if !active.is_empty() => 2,
+        _ => 1,
+    }
+}
+
+pub fn pane_at(area: Rect, mode: Mode, builds: &[Build], column: u16, row: u16) -> Option<Pane> {
+    let [list, detail, _, _] = areas(area, mode, &visible_builds(builds, Utc::now()));
     let (left, right) = match mode {
         Mode::Logs => (Pane::Units, Pane::Logs),
         Mode::Requests => (Pane::Requests, Pane::Trace),
@@ -61,8 +96,12 @@ pub fn pane_at(area: Rect, mode: Mode, column: u16, row: u16) -> Option<Pane> {
 }
 
 pub fn draw(frame: &mut Frame, app: &App) {
-    let [list, detail, status] = areas(frame.area(), app.mode);
     let now = Utc::now();
+    let builds = visible_builds(&app.builds, now);
+    let [list, detail, panel, status] = areas(frame.area(), app.mode, &builds);
+    if !builds.is_empty() {
+        draw_builds(frame, panel, &builds, now);
+    }
     match app.mode {
         Mode::Logs => {
             draw_units(frame, list, app, now);
@@ -80,6 +119,87 @@ pub fn draw(frame: &mut Frame, app: &App) {
     draw_status(frame, status, app, now);
     if let Some(palette) = &app.palette {
         draw_palette(frame, frame.area(), palette);
+    }
+}
+
+fn draw_builds(frame: &mut Frame, area: Rect, builds: &[&Build], now: DateTime<Utc>) {
+    let block = Block::bordered()
+        .title(" Build ")
+        .border_style(Style::new().fg(Color::DarkGray));
+    let inner = block.inner(area);
+    frame.render_widget(block, area);
+    let dim = Style::new().fg(Color::DarkGray);
+    let rows = inner.rows().collect::<Vec<_>>();
+    let mut rows = rows.into_iter();
+    for build in builds {
+        let Some(row) = rows.next() else {
+            break;
+        };
+        let name = Span::styled(
+            format!("{:<BUILD_NAME_WIDTH$}", build.unit),
+            Style::new().fg(UNIT_COLORS[theme::unit_slot(&build.unit)]),
+        );
+        match &build.state {
+            BuildState::Running {
+                done,
+                total,
+                active,
+            } => {
+                let counter = format!(" {done}/{total}  {}", duration(now - build.started));
+                let width = u16::try_from(counter.chars().count()).unwrap_or(u16::MAX);
+                let [gauge, counter_area] =
+                    Layout::horizontal([Constraint::Min(10), Constraint::Length(width)]).areas(row);
+                let ratio = if *total == 0 {
+                    0.0
+                } else {
+                    (f64::from(*done) / f64::from(*total)).min(1.0)
+                };
+                frame.render_widget(
+                    LineGauge::default()
+                        .label(name)
+                        .ratio(ratio)
+                        .filled_symbol(symbols::line::THICK_HORIZONTAL)
+                        .filled_style(Style::new().fg(Color::Yellow))
+                        .unfilled_style(dim),
+                    gauge,
+                );
+                frame.render_widget(Paragraph::new(counter), counter_area);
+                if !active.is_empty()
+                    && let Some(row) = rows.next()
+                {
+                    let indent = " ".repeat(BUILD_NAME_WIDTH + 1);
+                    frame.render_widget(
+                        Paragraph::new(format!("{indent}{}", active.join(", "))).style(dim),
+                        row,
+                    );
+                }
+            }
+            BuildState::Finished { at } => {
+                let outcome = Span::styled(
+                    format!("✓ finished in {}", duration(*at - build.started)),
+                    Style::new().fg(Color::Green),
+                );
+                frame.render_widget(Line::from(vec![name, Span::raw(" "), outcome]), row);
+            }
+            BuildState::Failed { at } => {
+                let outcome = Span::styled(
+                    format!("✗ failed after {}", duration(*at - build.started)),
+                    Style::new().fg(Color::Red),
+                );
+                frame.render_widget(Line::from(vec![name, Span::raw(" "), outcome]), row);
+            }
+        }
+    }
+}
+
+fn duration(delta: TimeDelta) -> String {
+    let millis = delta.num_milliseconds().max(0);
+    if millis < 60_000 {
+        let tenths = millis / 100;
+        format!("{}.{}s", tenths / 10, tenths % 10)
+    } else {
+        let seconds = millis / 1000;
+        format!("{}m {:02}s", seconds / 60, seconds % 60)
     }
 }
 
@@ -688,13 +808,88 @@ mod tests {
         assert_eq!(screen[logs_corner].fg, Color::Green);
     }
 
+    fn build(unit: &str, started: DateTime<Utc>, state: BuildState) -> Build {
+        Build {
+            unit: unit.into(),
+            started,
+            state,
+        }
+    }
+
+    #[test]
+    fn the_build_panel_appears_only_while_something_builds() {
+        let mut app = App::new(false);
+        assert!(!render(&app).contains("Build"));
+
+        app.update(Msg::Builds(vec![build(
+            "backend",
+            Utc::now() - TimeDelta::seconds(12),
+            BuildState::Running {
+                done: 491,
+                total: 562,
+                active: vec!["server".into(), "domain-wasm".into()],
+            },
+        )]));
+        let screen = render(&app);
+
+        assert!(screen.contains("┌ Build "), "{screen}");
+        assert!(screen.contains("backend"), "{screen}");
+        assert!(screen.contains("491/562  12."), "{screen}");
+        assert!(screen.contains("server, domain-wasm"), "{screen}");
+    }
+
+    #[test]
+    fn ended_builds_linger_briefly_with_their_outcome() {
+        let mut app = App::new(false);
+        let now = Utc::now();
+        let ago = |seconds| now - TimeDelta::seconds(seconds);
+        app.update(Msg::Builds(vec![
+            build("backend", ago(10), BuildState::Finished { at: ago(2) }),
+            build("migrations", ago(6), BuildState::Failed { at: ago(2) }),
+            build(
+                "build-release",
+                ago(60),
+                BuildState::Finished { at: ago(30) },
+            ),
+        ]));
+        let screen = render(&app);
+
+        assert!(screen.contains("✓ finished in 8.0s"), "{screen}");
+        assert!(screen.contains("✗ failed after 4.0s"), "{screen}");
+        assert!(!screen.contains("build-release"), "{screen}");
+    }
+
+    #[test]
+    fn the_build_panel_is_no_pane() {
+        let area = Rect::new(0, 0, 110, 10);
+        let running = build(
+            "backend",
+            Utc::now(),
+            BuildState::Running {
+                done: 1,
+                total: 2,
+                active: Vec::new(),
+            },
+        );
+        let builds = [running];
+        assert_eq!(pane_at(area, Mode::Logs, &builds, 5, 5), Some(Pane::Units));
+        assert_eq!(pane_at(area, Mode::Logs, &builds, 5, 7), None);
+    }
+
+    #[test]
+    fn durations_switch_to_minutes_after_a_minute() {
+        assert_eq!(duration(TimeDelta::milliseconds(8_249)), "8.2s");
+        assert_eq!(duration(TimeDelta::seconds(65)), "1m 05s");
+        assert_eq!(duration(TimeDelta::seconds(-1)), "0.0s");
+    }
+
     #[test]
     fn pane_at_maps_mouse_positions_to_panes() {
         let area = Rect::new(0, 0, 110, 10);
-        assert_eq!(pane_at(area, Mode::Logs, 5, 2), Some(Pane::Units));
-        assert_eq!(pane_at(area, Mode::Logs, 31, 2), Some(Pane::Units));
-        assert_eq!(pane_at(area, Mode::Logs, 32, 2), Some(Pane::Logs));
-        assert_eq!(pane_at(area, Mode::Logs, 5, 9), None);
+        assert_eq!(pane_at(area, Mode::Logs, &[], 5, 2), Some(Pane::Units));
+        assert_eq!(pane_at(area, Mode::Logs, &[], 31, 2), Some(Pane::Units));
+        assert_eq!(pane_at(area, Mode::Logs, &[], 32, 2), Some(Pane::Logs));
+        assert_eq!(pane_at(area, Mode::Logs, &[], 5, 9), None);
     }
 
     #[test]
@@ -774,8 +969,11 @@ mod tests {
     #[test]
     fn pane_at_follows_the_mode() {
         let area = Rect::new(0, 0, 110, 10);
-        assert_eq!(pane_at(area, Mode::Requests, 5, 2), Some(Pane::Requests));
-        assert_eq!(pane_at(area, Mode::Requests, 60, 2), Some(Pane::Trace));
+        assert_eq!(
+            pane_at(area, Mode::Requests, &[], 5, 2),
+            Some(Pane::Requests)
+        );
+        assert_eq!(pane_at(area, Mode::Requests, &[], 60, 2), Some(Pane::Trace));
     }
 
     #[test]

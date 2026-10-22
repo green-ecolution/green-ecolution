@@ -134,6 +134,7 @@ async fn handle(
             send(&mut write, &reply).await
         }
         Call::SubscribeFindings => stream_findings(&mut write, &doctor, &shutdown).await,
+        Call::SubscribeBuilds => stream_builds(&mut write, &supervisor, &shutdown).await,
         Call::Profiles => {
             let reply = match profiles.list() {
                 Ok(list) => Reply::Profiles(list),
@@ -258,6 +259,25 @@ async fn stream_findings(
             Ok(findings) => send(write, &Reply::Findings(findings)).await?,
             Err(RecvError::Lagged(_)) => send(write, &Reply::Findings(doctor.findings())).await?,
             Err(RecvError::Closed) => return Ok(()),
+        }
+    }
+}
+
+/// A watch channel keeps only the newest board, so a slow client skips intermediate counts.
+async fn stream_builds(
+    write: &mut OwnedWriteHalf,
+    supervisor: &Supervisor,
+    shutdown: &CancellationToken,
+) -> io::Result<()> {
+    let mut live = supervisor.logs().builds().subscribe();
+    loop {
+        let builds = live.borrow_and_update().clone();
+        send(write, &Reply::Builds(builds)).await?;
+        tokio::select! {
+            () = shutdown.cancelled() => return Ok(()),
+            changed = live.changed() => if changed.is_err() {
+                return Ok(());
+            },
         }
     }
 }

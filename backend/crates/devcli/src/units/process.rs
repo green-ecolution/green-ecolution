@@ -13,7 +13,7 @@ use rustix::{
     process::{Pid, Signal, kill_process_group, test_kill_process_group},
 };
 use tokio::{
-    io::{AsyncBufReadExt, AsyncRead, BufReader},
+    io::{AsyncBufRead, AsyncBufReadExt, AsyncRead, BufReader},
     process::Command,
     sync::oneshot,
     task::JoinHandle,
@@ -246,14 +246,51 @@ where
     Some(tokio::spawn(async move {
         let mut reader = BufReader::new(reader);
         let mut buf = Vec::new();
+        let mut after_cr = false;
         loop {
             buf.clear();
-            match reader.read_until(b'\n', &mut buf).await {
+            match read_segment(&mut reader, &mut buf).await {
                 Ok(0) | Err(_) => break,
-                Ok(_) => sink.line(&String::from_utf8_lossy(&buf)),
+                // The `\n` of a `\r\n`; the line already went out with its `\r`.
+                Ok(_) if after_cr && buf == b"\n" => after_cr = false,
+                Ok(_) => {
+                    after_cr = buf.ends_with(b"\r");
+                    sink.line(&String::from_utf8_lossy(&buf));
+                }
             }
         }
     }))
+}
+
+/// Like `read_until(b'\n')`, but a `\r` ends a segment too: cargo redraws its progress bar
+/// with `\r` and would otherwise hold it back until the build finished.
+async fn read_segment<R>(reader: &mut R, buf: &mut Vec<u8>) -> io::Result<usize>
+where
+    R: AsyncBufRead + Unpin,
+{
+    let mut read = 0;
+    loop {
+        let available = reader.fill_buf().await?;
+        if available.is_empty() {
+            return Ok(read);
+        }
+        match available
+            .iter()
+            .position(|byte| matches!(byte, b'\n' | b'\r'))
+        {
+            Some(end) => {
+                buf.extend_from_slice(&available[..=end]);
+                reader.consume(end + 1);
+                return Ok(read + end + 1);
+            }
+            None => {
+                let len = available.len();
+                buf.extend_from_slice(available);
+                reader.consume(len);
+                read += len;
+            }
+        }
+    }
 }
 
 /// Runs a short-lived command in its own process group and collects its output. Dropping the
@@ -292,7 +329,10 @@ pub(crate) mod tests {
     use rustix::process::test_kill_process;
 
     use super::*;
-    use crate::{logs::Filter, units::probe::tests::closed_port};
+    use crate::{
+        logs::{Filter, builds::BuildState},
+        units::probe::tests::closed_port,
+    };
 
     fn spec(kind: UnitKind, command: &str) -> ProcessSpec {
         ProcessSpec {
@@ -364,6 +404,30 @@ pub(crate) mod tests {
             .collect();
         messages.sort();
         assert_eq!(messages, ["hello", "oops"]);
+    }
+
+    #[tokio::test]
+    async fn cargo_progress_goes_to_the_build_board_instead_of_the_logs() {
+        let store = LogStore::new(100);
+        let command = r"printf '   Compiling a v1\n    Building [=>  ] 1/2: a\r    Building [==> ] 2/2: b\r\033[K    Finished dev profile\n\r\nplain\r\n'";
+
+        unit(spec(UnitKind::Oneshot, command))
+            .start(Arc::clone(&store))
+            .await
+            .unwrap();
+
+        let messages: Vec<String> = store
+            .snapshot(&[], &Filter::default(), 10, chrono::Utc::now())
+            .into_iter()
+            .map(|r| r.message)
+            .collect();
+        assert_eq!(
+            messages,
+            ["Compiling a v1", "Finished dev profile", "plain"]
+        );
+        let builds = store.builds().current();
+        assert_eq!(builds.len(), 1);
+        assert!(matches!(builds[0].state, BuildState::Finished { .. }));
     }
 
     #[tokio::test]

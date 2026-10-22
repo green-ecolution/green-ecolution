@@ -1,4 +1,5 @@
 mod buffer;
+pub mod builds;
 mod filter;
 mod formats;
 mod parse;
@@ -57,19 +58,35 @@ pub struct LogRecord {
 #[derive(Clone)]
 pub struct LogSink {
     store: Arc<LogStore>,
+    unit: Arc<str>,
     parser: Arc<Mutex<LineParser>>,
 }
 
 impl LogSink {
     pub fn new(store: Arc<LogStore>, unit: impl Into<String>, format: LogFormat) -> Self {
+        let unit: String = unit.into();
         Self {
             store,
+            unit: unit.as_str().into(),
             parser: Arc::new(Mutex::new(LineParser::new(unit, format))),
         }
     }
 
+    /// Takes one line or one `\r`-terminated segment of a redrawn terminal line.
     pub fn line(&self, line: &str) {
-        let record = lock(&self.parser).parse(line, Utc::now());
+        let now = Utc::now();
+        let plain = parse::strip_ansi(line);
+        match builds::classify(&plain) {
+            Some(signal @ builds::Signal::Progress { .. }) => {
+                self.store.builds().observe(&self.unit, signal, now);
+                return;
+            }
+            Some(signal) => self.store.builds().observe(&self.unit, signal, now),
+            // What is left of a line cargo cleared by overwriting it.
+            None if line.ends_with('\r') && plain.trim().is_empty() => return,
+            None => {}
+        }
+        let record = lock(&self.parser).parse(line, now);
         self.store.push(record);
     }
 }

@@ -102,6 +102,14 @@ still read `--yes` as its own. Tasks run without stdin, so a recipe that prompts
 flag to skip the question. A running recipe shows up as a temporary unit and disappears once it
 succeeded.
 
+While a local unit compiles Rust code, for example bacon after a file change or the `migrate`
+build in `migrations`, the TUI shows a build panel above the status line. It lists cargo's
+progress per unit with the crates done out of the total, the crates compiling right now and the
+elapsed time, and keeps a finished or failed build there for five seconds. For this geco sets
+`CARGO_TERM_PROGRESS_WHEN=always` and `CARGO_TERM_PROGRESS_WIDTH=200` for every local unit,
+since cargo draws no progress bar into a pipe otherwise; a unit that sets either variable in
+its `env` keeps its own value.
+
 In a terminal, `geco up --detach` shows the start-up live and returns once all units are ready.
 It exits with 1 when the start-up settled with failures; the supervisor keeps running in that
 case, so `geco logs` and `geco restart` still work. Ctrl-C only stops watching and leaves the

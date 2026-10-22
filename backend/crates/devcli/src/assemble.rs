@@ -181,11 +181,19 @@ fn process_spec(
     unit: &UnitConfig,
     vars: &dyn VarSource,
 ) -> Result<ProcessSpec, AssembleError> {
-    let env = unit
+    let mut env: BTreeMap<String, String> = unit
         .env
         .iter()
         .map(|(key, value)| Ok((key.clone(), render(value, vars)?)))
         .collect::<Result<_, VarError>>()?;
+    // Without a terminal cargo prints no progress bar, and the TUI's build panel reads it.
+    for (key, value) in [
+        ("CARGO_TERM_PROGRESS_WHEN", "always"),
+        ("CARGO_TERM_PROGRESS_WIDTH", "200"),
+    ] {
+        env.entry(key.to_owned())
+            .or_insert_with(|| value.to_owned());
+    }
     let ready = match &unit.ready {
         Some(ReadyProbe::Http(url)) => Some(ReadyProbe::Http(render(url, vars)?)),
         Some(ReadyProbe::Tcp(addr)) => Some(ReadyProbe::Tcp(render(addr, vars)?)),
@@ -371,6 +379,36 @@ mod tests {
         assert_eq!(
             spec.ready,
             Some(ReadyProbe::Http("http://localhost:3030/api/ready".into()))
+        );
+    }
+
+    #[test]
+    fn process_specs_ask_cargo_for_its_progress_unless_the_unit_decides() {
+        let config = GecoConfig::parse(
+            r#"
+[unit.backend]
+kind = "process"
+run = "bacon"
+[unit.quiet]
+kind = "oneshot"
+run = "cargo build"
+[unit.quiet.env]
+CARGO_TERM_PROGRESS_WHEN = "never"
+"#,
+            Path::new("geco.toml"),
+        )
+        .unwrap();
+        let vars = StaticVars(HashMap::new());
+        let spec = |name: &str, kind| {
+            process_spec(Path::new("/repo"), name, kind, &config.unit[name], &vars).unwrap()
+        };
+
+        let backend = spec("backend", LocalKind::Process);
+        assert_eq!(backend.env["CARGO_TERM_PROGRESS_WHEN"], "always");
+        assert_eq!(backend.env["CARGO_TERM_PROGRESS_WIDTH"], "200");
+        assert_eq!(
+            spec("quiet", LocalKind::Oneshot).env["CARGO_TERM_PROGRESS_WHEN"],
+            "never"
         );
     }
 

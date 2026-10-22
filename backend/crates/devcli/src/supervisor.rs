@@ -701,6 +701,9 @@ impl Supervisor {
     }
 
     fn set_state(&self, entry: &Entry, state: UnitState) {
+        if matches!(state, UnitState::Stopped | UnitState::Failed { .. }) {
+            self.logs.builds().abandon(entry.unit.name());
+        }
         let snapshot = {
             let mut status = lock(&entry.status);
             if status.state == state {
@@ -719,7 +722,10 @@ mod tests {
     use std::time::Duration;
 
     use super::*;
-    use crate::units::fake::{FakeUnit, Journal};
+    use crate::{
+        logs::builds::Signal,
+        units::fake::{FakeUnit, Journal},
+    };
 
     fn setup(units: Vec<Arc<FakeUnit>>, edges: &[(&str, &[&str])]) -> Arc<Supervisor> {
         let graph = Graph::new(edges.iter().map(|(unit, deps)| {
@@ -889,6 +895,27 @@ mod tests {
             &journal.entries()[2..],
             ["stop backend", "stop db", "start db", "start backend"]
         );
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn stopping_a_unit_drops_its_running_build() {
+        let journal = Journal::default();
+        let sup = setup(
+            vec![Arc::new(FakeUnit::service("backend", &journal))],
+            &[("backend", &[])],
+        );
+        sup.start_all().await;
+        settle(&sup, all_satisfied).await;
+        let progress = Signal::Progress {
+            done: 1,
+            total: 10,
+            active: Vec::new(),
+        };
+        sup.logs().builds().observe("backend", progress, Utc::now());
+
+        sup.stop("backend").await.unwrap();
+
+        assert!(sup.logs().builds().current().is_empty());
     }
 
     #[tokio::test(start_paused = true)]

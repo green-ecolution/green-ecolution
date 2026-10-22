@@ -9,13 +9,13 @@ use std::sync::Arc;
 
 use crate::{
     doctor::{Finding, Report, service::Doctor},
-    logs::LogRecord,
+    logs::{LogRecord, builds::Build},
     profiles::{ProfileList, Profiles},
     supervisor::{ProfileChange, Supervisor, UnitStatus},
     tasks::{Recipe, Tasks},
 };
 
-pub const PROTOCOL_VERSION: u32 = 5;
+pub const PROTOCOL_VERSION: u32 = 6;
 
 #[derive(Clone)]
 pub struct Services {
@@ -59,6 +59,8 @@ pub enum Call {
         confirmed: bool,
     },
     SubscribeFindings,
+    /// Streams the whole build board whenever it changes.
+    SubscribeBuilds,
     Profiles,
     Recipes,
     Run {
@@ -91,6 +93,7 @@ pub enum Reply {
     Switched(ProfileChange),
     Profile(String),
     Recipes(Vec<Recipe>),
+    Builds(Vec<Build>),
 }
 
 #[cfg(test)]
@@ -108,7 +111,11 @@ mod tests {
     use crate::{
         config::LogFormat,
         graph::Graph,
-        logs::{LogStore, parse_line},
+        logs::{
+            LogStore,
+            builds::{BuildState, Signal},
+            parse_line,
+        },
         supervisor::{Supervisor, UnitState},
         units::{
             Unit,
@@ -275,6 +282,43 @@ mod tests {
             panic!("expected the task to finish");
         };
         assert_eq!(done.state, UnitState::Done);
+    }
+
+    #[tokio::test]
+    async fn build_subscriptions_start_with_the_board_and_follow_it() {
+        let f = fixture().await;
+        let builds = f.supervisor.logs().builds();
+        builds.observe("db", progress(1, 4), Utc::now());
+
+        let mut stream = f.client.open(Call::SubscribeBuilds).await.unwrap();
+        let Some(Reply::Builds(initial)) = stream.next().await.unwrap() else {
+            panic!("expected the current builds");
+        };
+        assert!(matches!(
+            initial[0].state,
+            BuildState::Running {
+                done: 1,
+                total: 4,
+                ..
+            }
+        ));
+
+        builds.observe("db", progress(3, 4), Utc::now());
+        let Some(Reply::Builds(changed)) = stream.next().await.unwrap() else {
+            panic!("expected the changed builds");
+        };
+        assert!(matches!(
+            changed[0].state,
+            BuildState::Running { done: 3, .. }
+        ));
+    }
+
+    fn progress(done: u32, total: u32) -> Signal {
+        Signal::Progress {
+            done,
+            total,
+            active: Vec::new(),
+        }
     }
 
     #[tokio::test]
