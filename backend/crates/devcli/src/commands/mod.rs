@@ -2,6 +2,7 @@ mod fallback;
 mod output;
 
 use std::{
+    collections::BTreeSet,
     io::Write,
     os::unix::process::CommandExt,
     process::{ExitCode, Stdio},
@@ -15,6 +16,7 @@ use crate::{
     cli::{Cli, Command},
     host::{Host, OrphanPolicy, confirm, orphan_prompt},
     ipc::{Call, Client, IpcError, Reply},
+    logs::trace::Trace,
     paths::Paths,
     state::{InstanceLock, orphaned_groups, stop_orphans},
     tui,
@@ -39,12 +41,43 @@ pub async fn run(cli: Cli) -> anyhow::Result<ExitCode> {
             json,
             tail,
         }) => logs(&paths, &client, &units, &filter, tail, follow, json).await,
+        Some(Command::Trace { request_id, json }) => trace(&client, &request_id, json).await,
         Some(Command::Restart { unit, cascade }) => {
             simple(&client, Call::Restart { unit, cascade }).await
         }
         Some(Command::Start { unit }) => simple(&client, Call::Start { unit }).await,
         Some(Command::Stop { unit }) => simple(&client, Call::Stop { unit }).await,
     }
+}
+
+async fn trace(client: &Client, request_id: &str, json: bool) -> anyhow::Result<ExitCode> {
+    let records = match client.request_logs(request_id).await {
+        Ok(records) => records,
+        Err(IpcError::NotRunning) => {
+            bail!("no geco supervisor is running; backend logs only exist while one runs")
+        }
+        Err(err) => return Err(err.into()),
+    };
+    let ids: BTreeSet<&str> = records
+        .iter()
+        .filter_map(|record| record.request_id.as_deref())
+        .collect();
+    let full_id = match ids.into_iter().collect::<Vec<_>>().as_slice() {
+        [] => bail!("no log records for request `{request_id}`"),
+        [id] => (*id).to_owned(),
+        several => bail!(
+            "`{request_id}` matches several requests: {}",
+            several.join(", ")
+        ),
+    };
+    let trace = Trace::build(&full_id, &records);
+    let mut out = anstream::stdout();
+    if json {
+        writeln!(out, "{}", serde_json::to_string_pretty(&trace)?)?;
+    } else {
+        output::write_trace(&mut out, &trace)?;
+    }
+    Ok(ExitCode::SUCCESS)
 }
 
 async fn up(paths: &Paths, profile: Option<&str>) -> anyhow::Result<ExitCode> {

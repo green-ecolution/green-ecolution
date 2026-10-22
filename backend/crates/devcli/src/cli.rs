@@ -42,6 +42,13 @@ pub enum Command {
         #[arg(short = 'n', long, default_value_t = 200)]
         tail: usize,
     },
+    /// Show every log record of one request, indented by span
+    Trace {
+        /// Full request id or a unique prefix
+        request_id: String,
+        #[arg(long)]
+        json: bool,
+    },
     /// Restart a unit
     Restart {
         unit: String,
@@ -79,5 +86,14 @@ mod tests {
         assert_eq!(units, ["backend"]);
         assert_eq!(filter, "level>=warn");
         assert!(follow);
+    }
+
+    #[test]
+    fn trace_takes_a_request_id() {
+        let cli = Cli::try_parse_from(["geco", "trace", "1c40b9b5", "--json"]).unwrap();
+        assert!(matches!(
+            cli.command,
+            Some(Command::Trace { request_id, json: true }) if request_id == "1c40b9b5"
+        ));
     }
 }

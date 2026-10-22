@@ -9,6 +9,7 @@ use tokio::{
 };
 
 use super::{Call, PROTOCOL_VERSION, Reply, Request};
+use crate::logs::LogRecord;
 
 #[derive(Debug, thiserror::Error)]
 pub enum IpcError {
@@ -30,6 +31,27 @@ pub struct Client {
 }
 
 impl Client {
+    /// Every buffered record whose request id starts with `request_id`, oldest first.
+    pub async fn request_logs(&self, request_id: &str) -> Result<Vec<LogRecord>, IpcError> {
+        let mut stream = self
+            .open(Call::Logs {
+                units: Vec::new(),
+                tail: usize::MAX,
+                follow: false,
+                filter: format!("req:{request_id}"),
+            })
+            .await?;
+        let mut records = Vec::new();
+        while let Some(reply) = stream.next().await? {
+            match reply {
+                Reply::Log(record) => records.push(record),
+                Reply::Error(message) => return Err(IpcError::Remote(message)),
+                _ => {}
+            }
+        }
+        Ok(records)
+    }
+
     pub fn new(socket: PathBuf) -> Self {
         Self { socket }
     }

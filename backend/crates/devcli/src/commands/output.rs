@@ -4,7 +4,10 @@ use anstyle::{AnsiColor, Style};
 use chrono::{DateTime, Local, Utc};
 
 use crate::{
-    logs::{Level, LogRecord},
+    logs::{
+        Level, LogRecord,
+        trace::{self, Trace, TraceLineKind},
+    },
     supervisor::UnitStatus,
     theme::{self, Tone},
     units::Origin,
@@ -44,6 +47,51 @@ fn tone_style(tone: Tone) -> Style {
         Tone::Bad => fg(AnsiColor::Red).bold(),
         Tone::Idle => dim(),
     }
+}
+
+pub fn write_trace(out: &mut impl Write, trace: &Trace) -> io::Result<()> {
+    let bold = Style::new().bold();
+    match &trace.summary {
+        Some(summary) => writeln!(
+            out,
+            "{bold}{} {} → {}{bold:#} in {} ms {dim}({}){dim:#}",
+            summary.method,
+            summary.path,
+            summary.status,
+            summary.latency_ms,
+            trace.request_id,
+            dim = dim(),
+        )?,
+        None => writeln!(
+            out,
+            "{bold}request {}{bold:#} {dim}(no response logged yet){dim:#}",
+            trace.request_id,
+            dim = dim(),
+        )?,
+    }
+    for line in &trace.lines {
+        write!(
+            out,
+            "{dim}{:>11}{dim:#} {}",
+            trace::offset_label(line.offset_us),
+            "  ".repeat(line.depth),
+            dim = dim(),
+        )?;
+        match &line.kind {
+            TraceLineKind::Enter { span } => writeln!(out, "▸ {span}")?,
+            TraceLineKind::Event { level, message, .. } => {
+                let style = level_style(*level);
+                writeln!(out, "{style}{:<5}{style:#} {message}", level.label())?;
+            }
+            TraceLineKind::Close { target, busy, .. } => writeln!(
+                out,
+                "{dim}◂ {} busy {busy}{dim:#}",
+                target.as_deref().unwrap_or("span"),
+                dim = dim(),
+            )?,
+        }
+    }
+    Ok(())
 }
 
 pub fn write_log(out: &mut impl Write, record: &LogRecord) -> io::Result<()> {
@@ -113,7 +161,7 @@ mod tests {
     use super::*;
     use crate::{
         config::LogFormat,
-        logs::{parse_line, strip_ansi},
+        logs::{parse_line, strip_ansi, trace::Trace},
         supervisor::UnitState,
         units::UnitKind,
     };
@@ -122,6 +170,29 @@ mod tests {
         let mut buf = Vec::new();
         write(&mut buf).unwrap();
         strip_ansi(&String::from_utf8(buf).unwrap())
+    }
+
+    #[test]
+    fn traces_show_the_request_and_indent_by_span() {
+        let records: Vec<LogRecord> = [
+            r#"{"level":"DEBUG","message":"started processing request","request_id":"r1","spans":[{"name":"http_request","request_id":"r1"}],"target":"tower_http::trace::on_request","timestamp":"2026-10-22T12:26:16.372430Z"}"#,
+            r#"{"level":"INFO","message":"close","request_id":"r1","spans":[{"name":"http_request","request_id":"r1"}],"target":"server::http::v1::info","time.busy":"33.5µs","time.idle":"8.07µs","timestamp":"2026-10-22T12:26:16.372675Z"}"#,
+            r#"{"level":"DEBUG","message":"end of stream","request_id":"r1","spans":[{"http.request.method":"GET","http.response.status_code":200,"latency_ms":3,"name":"http_request","request_id":"r1","url.path":"/api/v1/info"}],"target":"tower_http::trace::on_eos","timestamp":"2026-10-22T12:26:16.372877Z"}"#,
+        ]
+        .iter()
+        .map(|line| parse_line("backend", LogFormat::TracingJson, line, Utc::now()))
+        .collect();
+
+        let text = rendered(|out| write_trace(out, &Trace::build("r1", &records)));
+
+        let lines: Vec<&str> = text.lines().collect();
+        assert_eq!(lines[0], "GET /api/v1/info → 200 in 3 ms (r1)");
+        assert_eq!(lines[1], "   +0.000ms ▸ http_request");
+        assert_eq!(lines[2], "   +0.000ms   DEBUG started processing request");
+        assert_eq!(
+            lines[3],
+            "   +0.245ms   ◂ server::http::v1::info busy 33.5µs"
+        );
     }
 
     #[test]
