@@ -168,12 +168,34 @@ env = { APP_LOG__LEVEL = "info" }
     #[test]
     fn broken_chains_are_reported_at_load_time() {
         let unknown = parse("[profile.a]\nextends = \"nope\"\n").unwrap_err();
-        assert!(matches!(unknown, ConfigError::UnknownProfile(name) if name == "nope"));
+        assert_eq!(
+            unknown.to_string(),
+            "geco.toml: profile `a`: extends unknown profile `nope`"
+        );
 
-        let cycle =
-            parse("[profile.a]\nextends = \"b\"\n[profile.b]\nextends = \"a\"\n").unwrap_err();
-        assert!(matches!(cycle, ConfigError::ProfileCycle(_)));
-        assert!(cycle.to_string().contains("profile"));
+        let cycle = parse(
+            "[profile.a-child]\nextends = \"b\"\n[profile.b]\nextends = \"c\"\n[profile.c]\nextends = \"b\"\n",
+        )
+        .unwrap_err();
+        assert_eq!(
+            cycle.to_string(),
+            "geco.toml: profile `b`: extends itself: b -> c -> b"
+        );
+
+        let own = parse("[profile.a]\nextends = \"a\"\n").unwrap_err();
+        assert_eq!(
+            own.to_string(),
+            "geco.toml: profile `a`: extends itself: a -> a"
+        );
+    }
+
+    #[test]
+    fn resolving_a_missing_profile_reports_it_by_name() {
+        let config = parse(CONFIG).unwrap();
+        assert!(matches!(
+            config.resolve("nope"),
+            Err(ConfigError::UnknownProfile(name)) if name == "nope"
+        ));
     }
 
     #[test]

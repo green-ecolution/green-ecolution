@@ -139,6 +139,12 @@ pub enum ConfigError {
     UnknownProfile(String),
     #[error("profile `{0}` extends itself through its parents")]
     ProfileCycle(String),
+    #[error("{}: profile `{profile}`: {reason}", path.display())]
+    Profile {
+        path: PathBuf,
+        profile: String,
+        reason: String,
+    },
 }
 
 impl GecoConfig {
@@ -163,6 +169,37 @@ impl GecoConfig {
         self.profile
             .get(name)
             .ok_or_else(|| ConfigError::UnknownProfile(name.to_owned()))
+    }
+
+    fn check_extends(&self, start: &str, path: &Path) -> Result<(), ConfigError> {
+        let broken = |profile: &str, reason: String| ConfigError::Profile {
+            path: path.to_path_buf(),
+            profile: profile.to_owned(),
+            reason,
+        };
+        let mut walked: Vec<&str> = Vec::new();
+        let mut current = start;
+        loop {
+            if let Some(at) = walked.iter().position(|seen| *seen == current) {
+                let mut members = walked[at..].to_vec();
+                members.push(current);
+                return Err(broken(
+                    walked[at],
+                    format!("extends itself: {}", members.join(" -> ")),
+                ));
+            }
+            walked.push(current);
+            let Some(parent) = self.profile[current].extends.as_deref() else {
+                return Ok(());
+            };
+            if !self.profile.contains_key(parent) {
+                return Err(broken(
+                    current,
+                    format!("extends unknown profile `{parent}`"),
+                ));
+            }
+            current = parent;
+        }
     }
 
     fn validate(&self, path: &Path) -> Result<(), ConfigError> {
@@ -194,7 +231,7 @@ impl GecoConfig {
             }
         }
         for (name, profile) in &self.profile {
-            self.chain(name)?;
+            self.check_extends(name, path)?;
             for target in profile.overrides.keys() {
                 if self.unit.get(target).is_none_or(|unit| unit.kind.is_none()) {
                     return Err(ConfigError::Invalid {
