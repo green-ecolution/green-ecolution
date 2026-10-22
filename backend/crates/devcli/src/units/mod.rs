@@ -1,4 +1,6 @@
 pub mod compose;
+pub mod hooked;
+pub mod migrations;
 pub mod probe;
 pub mod process;
 
