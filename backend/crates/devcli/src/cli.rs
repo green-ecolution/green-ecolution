@@ -69,6 +69,16 @@ pub enum Command {
     },
     /// List the profiles, or switch the running supervisor to NAME
     Profile { name: Option<String> },
+    /// Run a just recipe as a task of the supervisor (or in the foreground without one)
+    Run {
+        recipe: String,
+        /// Arguments for the recipe, passed on unchanged
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+        args: Vec<String>,
+        /// Run a destructive recipe without asking
+        #[arg(long)]
+        yes: bool,
+    },
     /// Start a stopped unit
     Start { unit: String },
     /// Stop a unit
@@ -116,6 +126,21 @@ mod tests {
         assert!(matches!(cli.command, Some(Command::Profile { name: None })));
         let cli = Cli::try_parse_from(["geco", "profile", "full"]).unwrap();
         assert!(matches!(cli.command, Some(Command::Profile { name: Some(n) }) if n == "full"));
+    }
+
+    #[test]
+    fn run_passes_everything_after_the_recipe_through() {
+        let cli =
+            Cli::try_parse_from(["geco", "run", "import-kataster-fl", "--dry-run", "x"]).unwrap();
+        let Some(Command::Run { recipe, args, yes }) = cli.command else {
+            panic!("expected run");
+        };
+        assert_eq!(recipe, "import-kataster-fl");
+        assert_eq!(args, ["--dry-run", "x"]);
+        assert!(!yes);
+
+        let cli = Cli::try_parse_from(["geco", "run", "--yes", "migrate-reset"]).unwrap();
+        assert!(matches!(cli.command, Some(Command::Run { yes: true, .. })));
     }
 
     #[test]
