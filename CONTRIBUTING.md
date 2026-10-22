@@ -84,11 +84,12 @@ geco status [--json]      # unit states; exit code 1 while a unit is not ready
 geco logs backend -f      # follow one or more units; -F 'level>=warn "jwks"' filters
 geco trace <request-id>   # one request's log lines, indented by span (a unique prefix is enough)
 geco doctor [--fix]       # known setup pitfalls with their fix; --deep adds the slow checks
+geco profile [NAME]       # list the profiles, or switch the running stack to NAME
 geco restart backend      # --cascade also restarts dependent units
 geco down                 # stop everything geco started
 ```
 
-Units and profiles (`minimal`, `full`) are defined in `geco.toml` at the repository root.
+Units and profiles (`minimal`, `full`, `prod-like`) are defined in `geco.toml` at the repository root; a profile can extend another and override local units, and switching profiles at runtime only touches the units that differ.
 Runtime state lives in `.geco/` and is git-ignored. geco needs Linux or macOS.
 
 The filter language combines terms with AND: `level>=warn`, `level:warn,error`,
