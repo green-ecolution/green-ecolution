@@ -1,0 +1,116 @@
+use std::{
+    collections::{HashMap, VecDeque},
+    sync::{Arc, Mutex},
+};
+
+use tokio::sync::broadcast;
+
+use super::LogRecord;
+use crate::sync::lock;
+
+pub struct LogStore {
+    capacity: usize,
+    inner: Mutex<Inner>,
+    tx: broadcast::Sender<LogRecord>,
+}
+
+#[derive(Default)]
+struct Inner {
+    next_seq: u64,
+    per_unit: HashMap<String, VecDeque<LogRecord>>,
+}
+
+impl LogStore {
+    pub fn new(capacity_per_unit: usize) -> Arc<Self> {
+        let (tx, _) = broadcast::channel(4096);
+        Arc::new(Self {
+            capacity: capacity_per_unit.max(1),
+            inner: Mutex::default(),
+            tx,
+        })
+    }
+
+    /// Broadcasting under the lock keeps subscribers in sequence order.
+    pub fn push(&self, mut record: LogRecord) -> u64 {
+        let mut inner = lock(&self.inner);
+        inner.next_seq += 1;
+        record.seq = inner.next_seq;
+        let queue = inner.per_unit.entry(record.unit.clone()).or_default();
+        if queue.len() == self.capacity {
+            queue.pop_front();
+        }
+        queue.push_back(record.clone());
+        let seq = record.seq;
+        let _ = self.tx.send(record);
+        seq
+    }
+
+    /// The newest `tail` records of `units` (every unit when empty), oldest first.
+    pub fn snapshot(&self, units: &[String], tail: usize) -> Vec<LogRecord> {
+        let inner = lock(&self.inner);
+        let mut merged: Vec<LogRecord> = inner
+            .per_unit
+            .iter()
+            .filter(|(unit, _)| units.is_empty() || units.contains(unit))
+            .flat_map(|(_, queue)| queue.iter().rev().take(tail).cloned())
+            .collect();
+        merged.sort_by_key(|record| record.seq);
+        let skip = merged.len().saturating_sub(tail);
+        merged.split_off(skip)
+    }
+
+    pub fn subscribe(&self) -> broadcast::Receiver<LogRecord> {
+        self.tx.subscribe()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use chrono::Utc;
+
+    use super::*;
+    use crate::{config::LogFormat, logs::parse_line};
+
+    fn record(unit: &str, message: &str) -> LogRecord {
+        parse_line(unit, LogFormat::Plain, message, Utc::now())
+    }
+
+    fn messages(records: &[LogRecord]) -> Vec<&str> {
+        records.iter().map(|r| r.message.as_str()).collect()
+    }
+
+    #[test]
+    fn drops_the_oldest_record_per_unit_at_capacity() {
+        let store = LogStore::new(2);
+        store.push(record("db", "a"));
+        store.push(record("db", "b"));
+        store.push(record("backend", "x"));
+        store.push(record("db", "c"));
+
+        assert_eq!(messages(&store.snapshot(&["db".into()], 10)), ["b", "c"]);
+        assert_eq!(messages(&store.snapshot(&[], 10)), ["b", "x", "c"]);
+    }
+
+    #[test]
+    fn snapshot_returns_the_newest_tail_in_sequence_order() {
+        let store = LogStore::new(10);
+        for message in ["1", "2", "3", "4"] {
+            store.push(record(
+                if message == "2" { "db" } else { "backend" },
+                message,
+            ));
+        }
+        assert_eq!(messages(&store.snapshot(&[], 3)), ["2", "3", "4"]);
+    }
+
+    #[tokio::test]
+    async fn subscribers_receive_records_with_sequence_numbers() {
+        let store = LogStore::new(10);
+        let mut rx = store.subscribe();
+        let seq = store.push(record("db", "ready"));
+
+        let received = rx.recv().await.unwrap();
+        assert_eq!(received.seq, seq);
+        assert_eq!(received.message, "ready");
+    }
+}
