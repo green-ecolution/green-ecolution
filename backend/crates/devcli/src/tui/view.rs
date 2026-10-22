@@ -157,7 +157,7 @@ fn log_line(record: &LogRecord, show_unit: bool) -> Line<'_> {
 fn draw_status(frame: &mut Frame, area: Rect, app: &App, now: DateTime<Utc>) {
     let text = if app.show_help {
         "q quit · h/l pane · j/k select or scroll · ^u/^d half page · g/G oldest/follow · \
-         Tab all/selected · r restart · R restart with dependents · s start/stop"
+         Enter unit logs · Tab all/selected · r restart · R restart with dependents · s start/stop"
             .to_owned()
     } else {
         let ready = app.units.iter().filter(|u| u.state.is_satisfied()).count();

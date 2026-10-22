@@ -130,6 +130,10 @@ impl App {
                 };
                 self.scroll = 0;
             }
+            KeyCode::Enter if self.focus == Pane::Units => {
+                self.scope = LogScope::Selected;
+                self.scroll = 0;
+            }
             KeyCode::PageUp => self.scroll_up(PAGE),
             KeyCode::PageDown => self.scroll_down(PAGE),
             KeyCode::Home | KeyCode::Char('g') => self.scroll = self.max_scroll(),
@@ -436,6 +440,21 @@ pub(crate) mod tests {
             down: true,
         });
         assert_eq!(app.selected, 1);
+    }
+
+    #[test]
+    fn enter_on_a_unit_shows_only_its_logs() {
+        let mut app = app_with_two_units();
+        app.update(key(KeyCode::Char('j')));
+        app.update(key(KeyCode::Enter));
+        assert_eq!(app.scope, LogScope::Selected);
+        app.update(key(KeyCode::Enter));
+        assert_eq!(app.scope, LogScope::Selected);
+
+        app.update(key(KeyCode::Tab));
+        app.update(key(KeyCode::Char('l')));
+        app.update(key(KeyCode::Enter));
+        assert_eq!(app.scope, LogScope::All);
     }
 
     #[test]
