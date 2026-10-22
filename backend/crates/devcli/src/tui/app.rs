@@ -78,7 +78,10 @@ impl App {
                     self.scroll += 1;
                 }
                 self.logs.push_back(record);
-                self.scroll = self.scroll.min(self.max_scroll());
+                // max_scroll() walks the whole buffer; a following view needs no clamping.
+                if self.scroll > 0 {
+                    self.scroll = self.scroll.min(self.max_scroll());
+                }
             }
             Msg::Flash(text) => self.flash = Some(text),
             Msg::Tick => {}
