@@ -122,8 +122,12 @@ pub enum ConfigError {
         #[source]
         source: toml::de::Error,
     },
-    #[error("unit `{unit}`: {reason}")]
-    Invalid { unit: String, reason: &'static str },
+    #[error("{}: unit `{unit}`: {reason}", path.display())]
+    Invalid {
+        path: PathBuf,
+        unit: String,
+        reason: &'static str,
+    },
     #[error("unknown profile `{0}`")]
     UnknownProfile(String),
 }
@@ -142,7 +146,7 @@ impl GecoConfig {
             path: path.to_path_buf(),
             source,
         })?;
-        config.validate()?;
+        config.validate(path)?;
         Ok(config)
     }
 
@@ -152,9 +156,10 @@ impl GecoConfig {
             .ok_or_else(|| ConfigError::UnknownProfile(name.to_owned()))
     }
 
-    fn validate(&self) -> Result<(), ConfigError> {
+    fn validate(&self, path: &Path) -> Result<(), ConfigError> {
         for (name, unit) in &self.unit {
             let invalid = |reason| ConfigError::Invalid {
+                path: path.to_path_buf(),
                 unit: name.clone(),
                 reason,
             };
@@ -251,6 +256,9 @@ units = ["backend"]
     fn local_units_require_run() {
         let err = parse("[unit.x]\nkind = \"process\"\n").unwrap_err();
         assert!(matches!(err, ConfigError::Invalid { ref unit, .. } if unit == "x"));
+        let text = err.to_string();
+        assert!(text.contains("geco.toml"), "{text}");
+        assert!(text.contains("unit `x`"), "{text}");
     }
 
     #[test]
