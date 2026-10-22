@@ -250,7 +250,7 @@ impl Doctor {
                                 Some(status.name),
                             ),
                             // The settled unit did not cause these findings.
-                            UnitState::Ready | UnitState::Done => (doctor.settled(), None),
+                            UnitState::Ready | UnitState::Done => (doctor.settled(&status.name), None),
                             _ => continue,
                         },
                         Err(RecvError::Lagged(_)) => continue,
@@ -288,8 +288,8 @@ impl Doctor {
     }
 
     /// Cheap checks holding findings, to run again once a unit is ready or done: the start-up
-    /// run may have raced the units. Cooled down apart from triggers, so neither starves the other.
-    fn settled(&self) -> Vec<Arc<dyn Check>> {
+    /// run may have raced the units. Cooled down per unit and apart from triggers, so none of them starves another.
+    fn settled(&self, unit: &str) -> Vec<Arc<dyn Check>> {
         let now = Instant::now();
         let mut state = lock(&self.state);
         self.checks
@@ -299,7 +299,7 @@ impl Doctor {
                 if !state.findings.contains_key(check.id()) {
                     return false;
                 }
-                let key = format!("{}@settled", check.id());
+                let key = format!("{}@settled:{unit}", check.id());
                 let recent = state
                     .last_triggered
                     .get(&key)
@@ -615,12 +615,34 @@ mod tests {
         );
         doc.run(true).await;
 
-        let ids: Vec<&str> = doc.settled().iter().map(|check| check.id()).collect();
+        let ids: Vec<&str> = doc.settled("db").iter().map(|check| check.id()).collect();
         assert_eq!(ids, ["ports"]);
         assert!(
-            doc.settled().is_empty(),
+            doc.settled("db").is_empty(),
             "the cooldown holds the second one"
         );
+    }
+
+    #[tokio::test]
+    async fn every_settling_unit_gets_its_own_recheck() {
+        let f = fixture();
+        let check = FakeCheck::new("dev-db-migrations")
+            .finds(vec![Finding::new(
+                "dev-db-migrations",
+                Severity::Error,
+                "2 behind",
+            )])
+            .arc();
+        let doc = doctor(&f, vec![check]);
+        doc.run(false).await;
+
+        assert_eq!(doc.settled("db").len(), 1);
+        assert_eq!(
+            doc.settled("migrations").len(),
+            1,
+            "another unit settling right after must not be held by the first"
+        );
+        assert!(doc.settled("migrations").is_empty());
     }
 
     #[tokio::test]
