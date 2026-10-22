@@ -27,10 +27,14 @@ pub fn migration_versions(dir: &Path) -> io::Result<BTreeSet<i64>> {
     Ok(versions)
 }
 
-pub fn parse_applied(output: &str) -> BTreeSet<i64> {
+/// Fails on the first line that is not a version, so a broken query never reads as "nothing
+/// applied".
+pub fn parse_applied(output: &str) -> Result<BTreeSet<i64>, String> {
     output
         .lines()
-        .filter_map(|line| line.trim().parse().ok())
+        .map(str::trim)
+        .filter(|line| !line.is_empty())
+        .map(|line| line.parse().map_err(|_| line.to_owned()))
         .collect()
 }
 
@@ -77,7 +81,13 @@ impl Verify for MigrationsApplied {
                 "SELECT version FROM _sqlx_migrations WHERE success",
             ])
             .await?;
-        let pending = missing(&expected, &parse_applied(&output));
+        let applied = parse_applied(&output).map_err(|line| {
+            let line: String = line.chars().take(80).collect();
+            UnitError::Verify(format!(
+                "unexpected output from the migration check: `{line}`"
+            ))
+        })?;
+        let pending = missing(&expected, &applied);
         match pending.last() {
             None => Ok(()),
             Some(newest) => Err(UnitError::Verify(format!(
@@ -115,10 +125,23 @@ mod tests {
 
     #[test]
     fn parses_psql_output_and_finds_gaps() {
-        let applied = parse_applied("20260101000000\n\n20260102000000\nnot a number\n");
+        let applied = parse_applied("20260101000000\n\n20260102000000\n").unwrap();
         let expected = BTreeSet::from([20260101000000, 20260102000000, 20260103000000]);
 
         assert_eq!(missing(&expected, &applied), [20260103000000]);
         assert!(missing(&applied, &applied).is_empty());
+    }
+
+    #[test]
+    fn rejects_output_that_is_not_a_version_list() {
+        assert_eq!(
+            parse_applied("20260101000000\n?column?\n"),
+            Err("?column?".to_owned())
+        );
+    }
+
+    #[test]
+    fn an_empty_result_means_nothing_applied() {
+        assert!(parse_applied("\n").unwrap().is_empty());
     }
 }
