@@ -94,6 +94,25 @@ impl Default for LogsConfig {
     }
 }
 
+#[derive(Debug, Clone, Default, PartialEq, Eq, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct TasksConfig {
+    #[serde(default)]
+    pub destructive: Vec<String>,
+}
+
+impl TasksConfig {
+    /// Only `just <recipe> …` can be matched against the list; any other command is as
+    /// destructive as its doctor check says.
+    pub fn is_destructive(&self, command: &str) -> bool {
+        let mut words = command.split_whitespace();
+        words.next() == Some("just")
+            && words
+                .next()
+                .is_some_and(|recipe| self.destructive.iter().any(|listed| listed == recipe))
+    }
+}
+
 fn default_capacity() -> usize {
     50_000
 }
@@ -113,6 +132,8 @@ pub struct GecoConfig {
     pub unit: BTreeMap<String, UnitConfig>,
     #[serde(default)]
     pub profile: BTreeMap<String, ProfileConfig>,
+    #[serde(default)]
+    pub tasks: TasksConfig,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -347,5 +368,34 @@ units = ["backend"]
             parse("").unwrap().profile("full"),
             Err(ConfigError::UnknownProfile(_))
         ));
+    }
+
+    #[test]
+    fn destructive_commands_are_the_listed_recipes_run_through_just() {
+        let tasks = TasksConfig {
+            destructive: vec!["migrate-reset".into()],
+        };
+        assert!(tasks.is_destructive("just migrate-reset"));
+        assert!(tasks.is_destructive("  just   migrate-reset --yes"));
+        assert!(!tasks.is_destructive("just migrate-up"));
+        assert!(!tasks.is_destructive("pnpm run migrate-reset"));
+        assert!(!tasks.is_destructive("just"));
+    }
+
+    #[test]
+    fn the_repository_config_lists_the_destructive_recipes() {
+        let config = parse(include_str!("../../../../../geco.toml")).unwrap();
+        for recipe in [
+            "migrate-reset",
+            "infra-down",
+            "import-staging",
+            "seed-reset",
+            "seed-down",
+        ] {
+            assert!(
+                config.tasks.destructive.iter().any(|d| d == recipe),
+                "{recipe} is missing"
+            );
+        }
     }
 }

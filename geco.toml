@@ -77,3 +77,18 @@ after = ["build-release", "migrations", "keycloak"]
 [profile.prod-like.override.frontend]
 run = "pnpm run preview"
 after = ["build-release"]
+
+# Recipes the palette and `geco run` only run after a confirmation; doctor fixes that run
+# one of them ask as well.
+[tasks]
+destructive = [
+  "migrate-reset",
+  "infra-down",
+  "import-staging",
+  "seed-reset",
+  "seed-down",
+  "clean",
+  "test-clean",
+  "valhalla-tiles",
+  "dns-cleanup",
+]

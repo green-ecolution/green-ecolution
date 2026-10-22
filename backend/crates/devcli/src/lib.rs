@@ -13,6 +13,7 @@ pub mod profiles;
 pub mod state;
 pub mod supervisor;
 pub mod sync;
+pub mod tasks;
 pub mod theme;
 pub mod tui;
 pub mod units;
