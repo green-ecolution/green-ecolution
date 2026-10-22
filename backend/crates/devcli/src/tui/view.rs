@@ -11,6 +11,7 @@ use super::{
     app::{App, LogScope, Mode, Pane},
     palette::Palette,
     requests::RequestOrder,
+    widgets,
 };
 use crate::{
     doctor::Severity,
@@ -18,7 +19,7 @@ use crate::{
         Level, LogRecord,
         trace::{self, TraceLine, TraceLineKind},
     },
-    theme::{self, Tone},
+    theme,
 };
 
 const UNIT_COLORS: [Color; theme::UNIT_SLOTS] = [
@@ -138,15 +139,6 @@ fn pane_block(app: &App, pane: Pane, title: String) -> Block<'static> {
     }
 }
 
-fn tone_color(tone: Tone) -> Color {
-    match tone {
-        Tone::Good => Color::Green,
-        Tone::Busy => Color::Yellow,
-        Tone::Bad => Color::Red,
-        Tone::Idle => Color::DarkGray,
-    }
-}
-
 fn level_style(level: Level) -> Style {
     match level {
         Level::Error => Style::new().fg(Color::Red).add_modifier(Modifier::BOLD),
@@ -162,8 +154,6 @@ fn draw_units(frame: &mut Frame, area: Rect, app: &App, now: DateTime<Utc>) {
         .units
         .iter()
         .map(|unit| {
-            let tone = theme::tone(&unit.state);
-            let color = Style::new().fg(tone_color(tone));
             let marker = match app
                 .unit_findings(&unit.name)
                 .iter()
@@ -173,18 +163,7 @@ fn draw_units(frame: &mut Frame, area: Rect, app: &App, now: DateTime<Utc>) {
                 Some(severity) => Span::styled(" ⚑", Style::new().fg(severity_style(severity).1)),
                 None => Span::raw("  "),
             };
-            let spans = vec![
-                Span::styled(theme::symbol(tone), color),
-                Span::raw(format!(" {:<16}", unit.name)),
-                marker,
-                Span::raw(" "),
-                Span::styled(unit.state.short(), color),
-                Span::styled(
-                    format!(" {}", theme::ago(unit.since, now)),
-                    Style::new().fg(Color::DarkGray),
-                ),
-            ];
-            ListItem::new(Line::from(spans))
+            ListItem::new(widgets::unit_line(unit, marker, now))
         })
         .collect();
     let list = List::new(items)

@@ -2,11 +2,12 @@ mod doctor;
 mod fallback;
 mod output;
 mod profile;
+mod progress;
 mod run;
 
 use std::{
     collections::BTreeSet,
-    io::Write,
+    io::{IsTerminal, Write},
     os::unix::process::CommandExt,
     process::{ExitCode, Stdio},
     time::Duration,
@@ -173,11 +174,37 @@ async fn up_detached(
         .spawn()?;
     for _ in 0..100 {
         if client.call(Call::Status).await.is_ok() {
-            anstream::println!(
-                "geco supervisor running (pid {}); `geco status` shows progress, `geco down` stops it",
-                child.id()
-            );
-            return Ok(ExitCode::SUCCESS);
+            let pid = child.id();
+            let live = std::io::stdout().is_terminal()
+                && std::env::var_os("NO_COLOR").is_none_or(|value| value.is_empty());
+            if !live {
+                anstream::println!(
+                    "geco supervisor running (pid {pid}); `geco status` shows progress, `geco down` stops it"
+                );
+                return Ok(ExitCode::SUCCESS);
+            }
+            return match progress::follow(client).await? {
+                progress::Progress::Ready => {
+                    anstream::println!(
+                        "all units ready (supervisor pid {pid}); `geco down` stops them"
+                    );
+                    Ok(ExitCode::SUCCESS)
+                }
+                progress::Progress::Failed(units) => {
+                    anstream::eprintln!(
+                        "start-up failed: {}; see `geco logs {}` (the supervisor keeps running)",
+                        units.join(", "),
+                        units.first().map_or("", String::as_str)
+                    );
+                    Ok(ExitCode::FAILURE)
+                }
+                progress::Progress::Starting => {
+                    anstream::println!(
+                        "still starting in the background (pid {pid}); `geco status` shows progress"
+                    );
+                    Ok(ExitCode::SUCCESS)
+                }
+            };
         }
         tokio::time::sleep(Duration::from_millis(100)).await;
     }

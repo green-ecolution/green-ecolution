@@ -3,6 +3,7 @@ mod input;
 mod palette;
 mod requests;
 mod view;
+pub(crate) mod widgets;
 
 use std::{io::Write, process::ExitCode, time::Duration};
 
