@@ -1,17 +1,18 @@
 mod buffer;
+mod formats;
 mod parse;
 
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 pub use buffer::LogStore;
-pub use parse::parse_line;
 #[cfg(test)]
 pub(crate) use parse::strip_ansi;
+pub use parse::{LineParser, parse_line};
 
-use crate::config::LogFormat;
+use crate::{config::LogFormat, sync::lock};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -53,21 +54,19 @@ pub struct LogRecord {
 #[derive(Clone)]
 pub struct LogSink {
     store: Arc<LogStore>,
-    unit: String,
-    format: LogFormat,
+    parser: Arc<Mutex<LineParser>>,
 }
 
 impl LogSink {
     pub fn new(store: Arc<LogStore>, unit: impl Into<String>, format: LogFormat) -> Self {
         Self {
             store,
-            unit: unit.into(),
-            format,
+            parser: Arc::new(Mutex::new(LineParser::new(unit, format))),
         }
     }
 
     pub fn line(&self, line: &str) {
-        self.store
-            .push(parse_line(&self.unit, self.format, line, Utc::now()));
+        let record = lock(&self.parser).parse(line, Utc::now());
+        self.store.push(record);
     }
 }

@@ -1,17 +1,48 @@
 use chrono::{DateTime, Utc};
 use serde_json::{Map, Value};
 
-use super::{Level, LogRecord};
+use super::{Level, LogRecord, formats};
 use crate::config::LogFormat;
 
 pub fn parse_line(unit: &str, format: LogFormat, line: &str, now: DateTime<Utc>) -> LogRecord {
-    let line = line.trim_end_matches(['\r', '\n']);
-    match format {
-        LogFormat::TracingJson => {
-            parse_tracing_json(unit, line).unwrap_or_else(|| parse_plain(unit, line, now))
+    classify(unit, format, line, now).0
+}
+
+/// Parses the lines of one source in order, so continuation lines inherit their header's level.
+pub struct LineParser {
+    unit: String,
+    format: LogFormat,
+    last_level: Level,
+}
+
+impl LineParser {
+    pub fn new(unit: impl Into<String>, format: LogFormat) -> Self {
+        Self {
+            unit: unit.into(),
+            format,
+            last_level: Level::Unknown,
         }
-        LogFormat::Plain => parse_plain(unit, line, now),
     }
+
+    pub fn parse(&mut self, line: &str, now: DateTime<Utc>) -> LogRecord {
+        let (mut record, continuation) = classify(&self.unit, self.format, line, now);
+        if !continuation {
+            self.last_level = record.level;
+        } else if record.level == Level::Unknown {
+            record.level = self.last_level;
+        }
+        record
+    }
+}
+
+fn classify(unit: &str, format: LogFormat, line: &str, now: DateTime<Utc>) -> (LogRecord, bool) {
+    let line = line.trim_end_matches(['\r', '\n']);
+    if format == LogFormat::TracingJson
+        && let Some(record) = parse_tracing_json(unit, line)
+    {
+        return (record, false);
+    }
+    parse_plain(unit, line, now)
 }
 
 fn parse_tracing_json(unit: &str, line: &str) -> Option<LogRecord> {
@@ -107,19 +138,30 @@ fn take_string(fields: &mut Map<String, Value>, key: &str) -> Option<String> {
     }
 }
 
-fn parse_plain(unit: &str, line: &str, now: DateTime<Utc>) -> LogRecord {
-    let message = strip_ansi(line);
-    LogRecord {
+fn parse_plain(unit: &str, line: &str, now: DateTime<Utc>) -> (LogRecord, bool) {
+    let stripped = strip_ansi(line);
+    let mut record = LogRecord {
         seq: 0,
         unit: unit.to_owned(),
         timestamp: now,
-        level: sniff_level(&message),
+        level: Level::Unknown,
         target: None,
-        message,
+        message: String::new(),
         request_id: None,
         fields: Map::new(),
         raw: line.to_owned(),
-    }
+    };
+    let Some(known) = formats::recognize(&stripped) else {
+        record.level = sniff_level(&stripped);
+        record.message = stripped;
+        return (record, false);
+    };
+    record.timestamp = known.timestamp.unwrap_or(now);
+    record.level = known.level;
+    record.target = known.target;
+    record.message = known.message;
+    record.fields = known.fields;
+    (record, known.continuation)
 }
 
 fn level_from_str(value: &str) -> Level {
@@ -278,7 +320,7 @@ mod tests {
             Level::Info
         );
         assert_eq!(
-            plain("2026-10-22 09:00:00,1 INFO  [io.quarkus] started").level,
+            plain("2026-10-22 12:17:38,888 INFO  [org.infinispan.CONTAINER] (main) ISPN000974: Virtual threads support: enabled").level,
             Level::Info
         );
         assert_eq!(

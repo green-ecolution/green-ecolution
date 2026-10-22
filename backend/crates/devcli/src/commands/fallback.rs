@@ -1,4 +1,4 @@
-use std::{io::Write, process::ExitCode};
+use std::{collections::HashMap, io::Write, process::ExitCode};
 
 use anyhow::Context;
 use bollard::{Docker, query_parameters::LogsOptionsBuilder};
@@ -9,7 +9,7 @@ use tokio::sync::mpsc;
 use super::output;
 use crate::{
     config::{GecoConfig, LogFormat},
-    logs::parse_line,
+    logs::LineParser,
     paths::Paths,
     units::compose::{ComposeCli, find_container, service_overview},
 };
@@ -87,10 +87,14 @@ pub async fn logs(
     drop(tx);
 
     let mut out = anstream::stdout();
+    let mut parsers: HashMap<String, LineParser> = HashMap::new();
     while let Some((service, chunk)) = rx.recv().await {
         let bytes = chunk?.into_bytes();
         for line in String::from_utf8_lossy(&bytes).lines() {
-            let record = parse_line(&service, LogFormat::Plain, line, Utc::now());
+            let record = parsers
+                .entry(service.clone())
+                .or_insert_with(|| LineParser::new(service.as_str(), LogFormat::Plain))
+                .parse(line, Utc::now());
             if json {
                 writeln!(out, "{}", serde_json::to_string(&record)?)?;
             } else {
