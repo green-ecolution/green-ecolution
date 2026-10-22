@@ -182,7 +182,7 @@ mod tests {
         let Some(Reply::State(initial)) = stream.next().await.unwrap() else {
             panic!("expected the current state");
         };
-        f.supervisor.start_all();
+        f.supervisor.start_all().await;
         let Some(Reply::State(next)) = stream.next().await.unwrap() else {
             panic!("expected a state change");
         };

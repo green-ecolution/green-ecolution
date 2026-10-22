@@ -21,6 +21,7 @@ use crate::{
     paths::Paths,
     state::{InstanceLock, ProcessRegistry, orphaned_groups, stop_orphans},
     supervisor::Supervisor,
+    units::process::{STOP_GRACE, terminate_registered},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -90,7 +91,7 @@ impl Host {
             Arc::clone(&supervisor),
             shutdown.clone(),
         ));
-        supervisor.start_all();
+        supervisor.start_all().await;
         Ok(Self {
             supervisor,
             shutdown,
@@ -113,6 +114,7 @@ impl Host {
     pub async fn stop(self) {
         self.shutdown.cancel();
         self.supervisor.stop_all().await;
+        terminate_registered(&self.registry, STOP_GRACE).await;
         self.server.abort();
         let _ = fs::remove_file(&self.socket);
     }

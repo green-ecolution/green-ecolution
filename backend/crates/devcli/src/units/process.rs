@@ -48,12 +48,15 @@ pub struct ProcessUnit {
 
 type ExitResult = Result<ExitStatus, String>;
 
+/// How long a process group gets between TERM and KILL.
+pub(crate) const STOP_GRACE: Duration = Duration::from_secs(10);
+
 impl ProcessUnit {
     pub fn new(spec: ProcessSpec, registry: ProcessRegistry) -> Self {
         Self {
             spec,
             registry,
-            grace: Duration::from_secs(10),
+            grace: STOP_GRACE,
             probe_interval: Duration::from_millis(500),
             group: Arc::default(),
         }
@@ -176,7 +179,17 @@ fn describe(result: ExitResult) -> String {
     }
 }
 
-async fn terminate(group: i32, grace: Duration) -> Result<(), UnitError> {
+/// Everything in the registry was started by geco, so a group still listed once every unit
+/// stopped is a leftover and must not outlive geco.
+pub(crate) async fn terminate_registered(registry: &ProcessRegistry, grace: Duration) {
+    let groups = registry.groups();
+    futures::future::join_all(groups.iter().map(|group| terminate(*group, grace))).await;
+    for group in groups {
+        registry.remove(group);
+    }
+}
+
+pub(crate) async fn terminate(group: i32, grace: Duration) -> Result<(), UnitError> {
     let Some(pid) = Pid::from_raw(group) else {
         return Ok(());
     };
@@ -377,6 +390,23 @@ mod tests {
 
         assert!(registry.groups().is_empty());
         assert!(lock(&unit.group).is_none());
+    }
+
+    #[tokio::test]
+    async fn terminate_registered_stops_every_listed_group() {
+        let registry = ProcessRegistry::in_memory();
+        let mut child = Command::new("sleep")
+            .arg("30")
+            .process_group(0)
+            .spawn()
+            .unwrap();
+        registry.insert(i32::try_from(child.id().unwrap()).unwrap());
+
+        terminate_registered(&registry, Duration::from_secs(1)).await;
+
+        let exited = tokio::time::timeout(Duration::from_secs(2), child.wait()).await;
+        assert!(exited.is_ok(), "the registered group survived");
+        assert!(registry.groups().is_empty());
     }
 
     #[tokio::test]

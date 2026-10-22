@@ -1,13 +1,19 @@
 use std::{
     collections::BTreeMap,
     fmt,
-    sync::{Arc, Mutex},
+    sync::{
+        Arc, Mutex,
+        atomic::{AtomicBool, Ordering},
+    },
 };
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use tokio::{
-    sync::broadcast::{self, error::RecvError},
+    sync::{
+        Mutex as AsyncMutex,
+        broadcast::{self, error::RecvError},
+    },
     task::JoinHandle,
 };
 
@@ -69,6 +75,8 @@ pub struct UnitStatus {
 pub enum SupervisorError {
     #[error("unknown unit `{0}`")]
     UnknownUnit(String),
+    #[error("the supervisor is shutting down")]
+    ShuttingDown,
 }
 
 pub struct Supervisor {
@@ -76,12 +84,16 @@ pub struct Supervisor {
     graph: Graph,
     logs: Arc<LogStore>,
     events: broadcast::Sender<UnitStatus>,
+    /// Set first thing in `stop_all`; no lifecycle is spawned afterwards.
+    closing: AtomicBool,
 }
 
 struct Entry {
     unit: Arc<dyn Unit>,
     status: Mutex<UnitStatus>,
     task: Mutex<Option<JoinHandle<()>>>,
+    /// Held across a whole start/stop/restart so control operations on one unit never overlap.
+    control: AsyncMutex<()>,
 }
 
 impl Supervisor {
@@ -102,6 +114,7 @@ impl Supervisor {
                     unit,
                     status: Mutex::new(status),
                     task: Mutex::new(None),
+                    control: AsyncMutex::new(()),
                 };
                 (entry.unit.name().to_owned(), entry)
             })
@@ -111,6 +124,7 @@ impl Supervisor {
             graph,
             logs,
             events,
+            closing: AtomicBool::new(false),
         })
     }
 
@@ -131,37 +145,45 @@ impl Supervisor {
             .collect()
     }
 
-    pub fn start_all(self: &Arc<Self>) {
+    pub async fn start_all(self: &Arc<Self>) {
         for name in self.graph.start_order() {
-            self.spawn_lifecycle(name);
+            // Fails only once shutdown began, when nothing should start anyway.
+            let _ = self.start(name).await;
         }
     }
 
     /// No-op while the unit's lifecycle is still running (including a finished oneshot).
-    pub fn start(self: &Arc<Self>, name: &str) -> Result<(), SupervisorError> {
+    /// Fails with `ShuttingDown` once `stop_all` began.
+    pub async fn start(self: &Arc<Self>, name: &str) -> Result<(), SupervisorError> {
         let entry = self.entry(name)?;
+        let _control = entry.control.lock().await;
         let running = lock(&entry.task)
             .as_ref()
             .is_some_and(|task| !task.is_finished());
-        if !running {
-            self.spawn_lifecycle(name);
+        if running {
+            return Ok(());
         }
-        Ok(())
+        self.spawn_lifecycle(name, entry).await
     }
 
     pub async fn stop(&self, name: &str) -> Result<(), SupervisorError> {
-        self.stop_entry(self.entry(name)?).await;
+        let entry = self.entry(name)?;
+        let _control = entry.control.lock().await;
+        self.stop_entry(entry).await;
         Ok(())
     }
 
     pub async fn stop_all(&self) {
+        self.closing.store(true, Ordering::SeqCst);
         for name in self.graph.start_order().iter().rev() {
             if let Some(entry) = self.entries.get(name) {
+                let _control = entry.control.lock().await;
                 self.stop_entry(entry).await;
             }
         }
     }
 
+    /// Fails with `ShuttingDown` once `stop_all` began; units it already stopped stay stopped.
     pub async fn restart(
         self: &Arc<Self>,
         name: &str,
@@ -173,15 +195,31 @@ impl Supervisor {
         } else {
             Vec::new()
         };
+        // Taking several control locks only ever in start order rules out deadlocks.
+        let mut guards = Vec::with_capacity(dependents.len() + 1);
+        let affected = self
+            .graph
+            .start_order()
+            .iter()
+            .filter(|unit| *unit == name || dependents.contains(unit))
+            .filter_map(|unit| self.entries.get(unit));
+        for entry in affected {
+            guards.push(entry.control.lock().await);
+        }
+        if self.is_closing() {
+            return Err(SupervisorError::ShuttingDown);
+        }
         for dependent in dependents.iter().rev() {
             if let Some(dependent) = self.entries.get(dependent) {
                 self.stop_entry(dependent).await;
             }
         }
         self.stop_entry(entry).await;
-        self.spawn_lifecycle(name);
+        self.spawn_lifecycle(name, entry).await?;
         for dependent in &dependents {
-            self.spawn_lifecycle(dependent);
+            if let Some(entry) = self.entries.get(dependent) {
+                self.spawn_lifecycle(dependent, entry).await?;
+            }
         }
         Ok(())
     }
@@ -192,16 +230,29 @@ impl Supervisor {
             .ok_or_else(|| SupervisorError::UnknownUnit(name.to_owned()))
     }
 
-    fn spawn_lifecycle(self: &Arc<Self>, name: &str) {
-        let Some(entry) = self.entries.get(name) else {
-            return;
-        };
+    fn is_closing(&self) -> bool {
+        self.closing.load(Ordering::SeqCst)
+    }
+
+    /// The caller holds `entry.control`. Checking `closing` under that lock guarantees that
+    /// `stop_all` either sees the new lifecycle or no lifecycle is spawned.
+    async fn spawn_lifecycle(
+        self: &Arc<Self>,
+        name: &str,
+        entry: &Entry,
+    ) -> Result<(), SupervisorError> {
+        if lock(&entry.task).is_some() {
+            // A displaced lifecycle may still own a process; stop it instead of orphaning it.
+            self.stop_entry(entry).await;
+        }
+        if self.is_closing() {
+            return Err(SupervisorError::ShuttingDown);
+        }
         let this = Arc::clone(self);
         let owned = name.to_owned();
         let handle = tokio::spawn(async move { this.lifecycle(&owned).await });
-        if let Some(previous) = lock(&entry.task).replace(handle) {
-            previous.abort();
-        }
+        *lock(&entry.task) = Some(handle);
+        Ok(())
     }
 
     async fn lifecycle(&self, name: &str) {
@@ -337,7 +388,7 @@ mod tests {
             ],
         );
 
-        sup.start_all();
+        sup.start_all().await;
         settle(&sup, all_satisfied).await;
 
         assert_eq!(
@@ -359,7 +410,7 @@ mod tests {
             &[("db", &[]), ("backend", &["db"])],
         );
 
-        sup.start_all();
+        sup.start_all().await;
         settle(&sup, |s| matches!(s[0].state, UnitState::Failed { .. })).await;
         tokio::time::sleep(Duration::from_secs(1)).await;
 
@@ -384,7 +435,7 @@ mod tests {
         let db = Arc::new(FakeUnit::service("db", &journal));
         let sup = setup(vec![db.clone()], &[("db", &[])]);
 
-        sup.start_all();
+        sup.start_all().await;
         settle(&sup, all_satisfied).await;
         db.crash("killed by OOM");
         settle(&sup, |s| !all_satisfied(s)).await;
@@ -408,7 +459,7 @@ mod tests {
             &[("db", &[]), ("backend", &["db"])],
         );
 
-        sup.start_all();
+        sup.start_all().await;
         settle(&sup, all_satisfied).await;
         sup.stop_all().await;
 
@@ -426,7 +477,7 @@ mod tests {
             ],
             &[("db", &[]), ("backend", &["db"])],
         );
-        sup.start_all();
+        sup.start_all().await;
         settle(&sup, all_satisfied).await;
 
         sup.restart("db", false).await.unwrap();
@@ -445,7 +496,7 @@ mod tests {
             ],
             &[("db", &[]), ("backend", &["db"])],
         );
-        sup.start_all();
+        sup.start_all().await;
         settle(&sup, all_satisfied).await;
 
         sup.restart("db", true).await.unwrap();
@@ -464,12 +515,12 @@ mod tests {
             vec![Arc::new(FakeUnit::service("db", &journal))],
             &[("db", &[])],
         );
-        sup.start_all();
+        sup.start_all().await;
         settle(&sup, all_satisfied).await;
 
         sup.stop("db").await.unwrap();
         assert_eq!(state(&sup, "db"), UnitState::Stopped);
-        sup.start("db").unwrap();
+        sup.start("db").await.unwrap();
         settle(&sup, all_satisfied).await;
 
         assert_eq!(journal.entries(), ["start db", "stop db", "start db"]);
@@ -482,5 +533,90 @@ mod tests {
             sup.restart("nope", false).await,
             Err(SupervisorError::UnknownUnit("nope".into()))
         );
+    }
+
+    fn slow_stopping_db(journal: &Journal) -> Arc<Supervisor> {
+        setup(
+            vec![Arc::new(
+                FakeUnit::service("db", journal).stop_after(Duration::from_secs(5)),
+            )],
+            &[("db", &[])],
+        )
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn a_restart_racing_stop_all_starts_nothing_afterwards() {
+        let journal = Journal::default();
+        let sup = slow_stopping_db(&journal);
+        sup.start_all().await;
+        settle(&sup, all_satisfied).await;
+
+        let restart = tokio::spawn({
+            let sup = Arc::clone(&sup);
+            async move { sup.restart("db", false).await }
+        });
+        tokio::time::sleep(Duration::from_secs(1)).await;
+        sup.stop_all().await;
+        let restarted = restart.await.unwrap();
+        tokio::time::sleep(Duration::from_secs(60)).await;
+
+        assert_eq!(restarted, Err(SupervisorError::ShuttingDown));
+        assert_eq!(sup.start("db").await, Err(SupervisorError::ShuttingDown));
+        assert_eq!(journal.entries(), ["start db", "stop db", "stop db"]);
+        assert_eq!(state(&sup, "db"), UnitState::Stopped);
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn concurrent_starts_start_the_unit_once() {
+        let journal = Journal::default();
+        let sup = setup(
+            vec![Arc::new(FakeUnit::service("db", &journal))],
+            &[("db", &[])],
+        );
+
+        let (first, second) = tokio::join!(sup.start("db"), sup.start("db"));
+        first.unwrap();
+        second.unwrap();
+        settle(&sup, all_satisfied).await;
+        tokio::time::sleep(Duration::from_secs(1)).await;
+
+        assert_eq!(journal.entries(), ["start db"]);
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn a_start_overlapping_a_restart_leaves_one_lifecycle() {
+        let journal = Journal::default();
+        let sup = slow_stopping_db(&journal);
+        sup.start_all().await;
+        settle(&sup, all_satisfied).await;
+
+        let restart = tokio::spawn({
+            let sup = Arc::clone(&sup);
+            async move { sup.restart("db", false).await }
+        });
+        tokio::time::sleep(Duration::from_secs(1)).await;
+        sup.start("db").await.unwrap();
+        restart.await.unwrap().unwrap();
+        settle(&sup, all_satisfied).await;
+        tokio::time::sleep(Duration::from_secs(1)).await;
+
+        // Every start but the last is followed by a stop: no lifecycle was left behind.
+        assert_eq!(journal.entries(), ["start db", "stop db", "start db"]);
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn starting_a_failed_unit_stops_its_remains_first() {
+        let journal = Journal::default();
+        let db = Arc::new(FakeUnit::service("db", &journal));
+        let sup = setup(vec![db.clone()], &[("db", &[])]);
+        sup.start_all().await;
+        settle(&sup, all_satisfied).await;
+        db.crash("killed by OOM");
+        settle(&sup, |s| !all_satisfied(s)).await;
+
+        sup.start("db").await.unwrap();
+        settle(&sup, all_satisfied).await;
+
+        assert_eq!(journal.entries(), ["start db", "stop db", "start db"]);
     }
 }

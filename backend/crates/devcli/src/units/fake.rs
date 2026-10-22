@@ -26,6 +26,7 @@ pub struct FakeUnit {
     name: String,
     kind: UnitKind,
     ready_after: Duration,
+    stop_after: Duration,
     fail_with: Option<String>,
     journal: Journal,
     exit: Mutex<Option<oneshot::Sender<String>>>,
@@ -45,6 +46,7 @@ impl FakeUnit {
             name: name.to_owned(),
             kind,
             ready_after: Duration::from_millis(10),
+            stop_after: Duration::ZERO,
             fail_with: None,
             journal: journal.clone(),
             exit: Mutex::new(None),
@@ -53,6 +55,11 @@ impl FakeUnit {
 
     pub fn ready_after(mut self, delay: Duration) -> Self {
         self.ready_after = delay;
+        self
+    }
+
+    pub fn stop_after(mut self, delay: Duration) -> Self {
+        self.stop_after = delay;
         self
     }
 
@@ -100,6 +107,7 @@ impl Unit for FakeUnit {
 
     async fn stop(&self) -> Result<(), UnitError> {
         self.journal.push(format!("stop {}", self.name));
+        tokio::time::sleep(self.stop_after).await;
         self.exit.lock().unwrap().take();
         Ok(())
     }

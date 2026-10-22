@@ -57,7 +57,10 @@ async fn handle(
     };
     match request.call {
         Call::Status => send(&mut write, &Reply::Status(supervisor.status())).await,
-        Call::Start { unit } => send(&mut write, &outcome(supervisor.start(&unit))).await,
+        Call::Start { unit } => {
+            let result = supervisor.start(&unit).await;
+            send(&mut write, &outcome(result)).await
+        }
         Call::Stop { unit } => {
             let result = supervisor.stop(&unit).await;
             send(&mut write, &outcome(result)).await
