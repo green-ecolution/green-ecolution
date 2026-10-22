@@ -123,6 +123,11 @@ mod tests {
         let supervisor = Supervisor::new(units, graph, LogStore::new(100));
         let shutdown = CancellationToken::new();
         let listener = UnixListener::bind(&socket).unwrap();
+        let tasks = Arc::new(crate::tasks::Tasks::new(
+            dir.path().to_path_buf(),
+            crate::state::ProcessRegistry::in_memory(),
+            Arc::clone(&supervisor),
+        ));
         let doctor = crate::doctor::service::Doctor::new(
             vec![
                 crate::doctor::fake::FakeCheck::new("ports")
@@ -135,7 +140,7 @@ mod tests {
             ],
             crate::doctor::fake::test_env(dir.path()),
             Arc::clone(&supervisor),
-            crate::state::ProcessRegistry::in_memory(),
+            Arc::clone(&tasks),
         );
         std::fs::write(
             dir.path().join("geco.toml"),

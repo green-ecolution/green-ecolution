@@ -4,7 +4,7 @@ use anyhow::{Context, bail};
 
 use super::output;
 use crate::{
-    config::JustVars,
+    config::{GecoConfig, JustVars},
     doctor::{self, Env, Report},
     host::confirm,
     ipc::{Call, Client, IpcError, Reply},
@@ -56,6 +56,7 @@ async fn diagnose(paths: &Paths, client: &Client, deep: bool) -> anyhow::Result<
 /// Runs in the foreground so the recipe's output and prompts reach this terminal; each
 /// command runs once even when several findings share it.
 fn apply_fixes(paths: &Paths, report: &Report) -> anyhow::Result<bool> {
+    let destructive_recipes = GecoConfig::load(&paths.config())?.tasks;
     let mut ran = BTreeSet::new();
     for finding in &report.findings {
         let Some(fix) = &finding.fix else {
@@ -65,9 +66,8 @@ fn apply_fixes(paths: &Paths, report: &Report) -> anyhow::Result<bool> {
             continue;
         }
         anstream::eprintln!("→ {} ({})", fix.command, finding.title);
-        if fix.destructive
-            && !confirm(&format!("`{}` is destructive. Run it? [y/N] ", fix.command))?
-        {
+        let destructive = fix.destructive || destructive_recipes.is_destructive(&fix.command);
+        if destructive && !confirm(&format!("`{}` is destructive. Run it? [y/N] ", fix.command))? {
             continue;
         }
         let status = std::process::Command::new("sh")

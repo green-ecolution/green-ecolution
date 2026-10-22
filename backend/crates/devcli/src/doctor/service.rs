@@ -1,5 +1,6 @@
 use std::{
     collections::{BTreeMap, HashMap},
+    path::Path,
     sync::{Arc, Mutex},
     time::{Duration, Instant},
 };
@@ -13,15 +14,9 @@ use tokio_util::sync::CancellationToken;
 
 use super::{Check, Cost, Env, Finding, Report, Skipped, Trigger, sort};
 use crate::{
-    config::LogFormat,
-    logs::LogSink,
-    state::ProcessRegistry,
-    supervisor::{Supervisor, UnitState},
+    supervisor::{Supervisor, SupervisorError, UnitState},
     sync::lock,
-    units::{
-        Unit, UnitKind,
-        process::{ProcessSpec, ProcessUnit},
-    },
+    tasks::{TaskError, Tasks},
 };
 
 /// The pseudo-unit a fix's output is logged under.
@@ -48,7 +43,7 @@ pub struct Doctor {
     checks: Vec<Arc<dyn Check>>,
     env: Env,
     supervisor: Arc<Supervisor>,
-    registry: ProcessRegistry,
+    tasks: Arc<Tasks>,
     state: Mutex<State>,
     changes: broadcast::Sender<Vec<Finding>>,
     fixing: AsyncMutex<()>,
@@ -66,14 +61,14 @@ impl Doctor {
         checks: Vec<Arc<dyn Check>>,
         env: Env,
         supervisor: Arc<Supervisor>,
-        registry: ProcessRegistry,
+        tasks: Arc<Tasks>,
     ) -> Arc<Self> {
         let (changes, _) = broadcast::channel(64);
         Arc::new(Self {
             checks,
             env,
             supervisor,
-            registry,
+            tasks,
             state: Mutex::default(),
             changes,
             fixing: AsyncMutex::new(()),
@@ -193,31 +188,22 @@ impl Doctor {
             })
             .map(|other| other.check.as_str())
             .collect();
-        if fix.destructive && !confirmed {
+        let spec = self
+            .tasks
+            .command(FIX_UNIT, &fix.command, Path::new(&fix.cwd), fix.destructive)
+            .map_err(|err| DoctorError::FixFailed(err.to_string()))?;
+        if spec.destructive && !confirmed {
             return Err(DoctorError::NeedsConfirmation(fix.command));
         }
         let _running = self
             .fixing
             .try_lock()
             .map_err(|_| DoctorError::FixRunning)?;
-        let logs = Arc::clone(self.supervisor.logs());
-        LogSink::new(Arc::clone(&logs), FIX_UNIT, LogFormat::Plain)
-            .line(&format!("$ {}", fix.command));
-        let unit = ProcessUnit::new(
-            ProcessSpec {
-                name: FIX_UNIT.to_owned(),
-                kind: UnitKind::Oneshot,
-                command: fix.command.clone(),
-                cwd: self.env.root.join(&fix.cwd),
-                env: BTreeMap::new(),
-                ready: None,
-                log_format: LogFormat::Plain,
-            },
-            self.registry.clone(),
-        );
-        unit.start(logs)
-            .await
-            .map_err(|err| DoctorError::FixFailed(err.to_string()))?;
+        self.tasks.run(spec, true).await.map_err(|err| match err {
+            TaskError::Supervisor(SupervisorError::TaskRunning(_)) => DoctorError::FixRunning,
+            TaskError::Failed { reason, .. } => DoctorError::FixFailed(reason),
+            other => DoctorError::FixFailed(other.to_string()),
+        })?;
         let checks: Vec<Arc<dyn Check>> = self
             .checks
             .iter()
@@ -355,7 +341,7 @@ mod tests {
         state::ProcessRegistry,
         supervisor::Supervisor,
         units::{
-            Unit,
+            Origin, Unit,
             fake::{FakeUnit, Journal},
         },
     };
@@ -367,6 +353,11 @@ mod tests {
 
     fn fixture() -> Fixture {
         let dir = tempfile::tempdir().unwrap();
+        std::fs::write(
+            dir.path().join("geco.toml"),
+            "[tasks]\ndestructive = [\"seed-reset\"]\n",
+        )
+        .unwrap();
         let units: Vec<Arc<dyn Unit>> =
             vec![Arc::new(FakeUnit::service("db", &Journal::default()))];
         let graph = Graph::new([("db".to_owned(), Vec::<String>::new())]).unwrap();
@@ -377,11 +368,16 @@ mod tests {
     }
 
     fn doctor(f: &Fixture, checks: Vec<Arc<dyn Check>>) -> Arc<Doctor> {
+        let tasks = Arc::new(Tasks::new(
+            f._dir.path().to_path_buf(),
+            ProcessRegistry::in_memory(),
+            Arc::clone(&f.supervisor),
+        ));
         Doctor::new(
             checks,
             test_env(f._dir.path()),
             Arc::clone(&f.supervisor),
-            ProcessRegistry::in_memory(),
+            tasks,
         )
     }
 
@@ -538,6 +534,46 @@ mod tests {
             doc.fix("failing", false).await,
             Err(DoctorError::FixFailed(reason)) if reason.contains("exit status: 3")
         ));
+    }
+
+    #[tokio::test]
+    async fn a_fix_running_a_listed_recipe_needs_confirmation() {
+        let f = fixture();
+        let check = FakeCheck::new("seed")
+            .finds(vec![
+                Finding::new("seed", Severity::Hint, "stale").fix(Fix::just("seed-reset")),
+            ])
+            .arc();
+        let doc = doctor(&f, vec![check]);
+        doc.run(false).await;
+
+        assert_eq!(
+            doc.fix("seed", false).await,
+            Err(DoctorError::NeedsConfirmation("just seed-reset".into()))
+        );
+    }
+
+    #[tokio::test]
+    async fn a_running_fix_is_listed_as_a_task() {
+        let f = fixture();
+        let check = FakeCheck::new("slow")
+            .finds(vec![with_fix("slow", "sleep 1")])
+            .arc();
+        let doc = doctor(&f, vec![check]);
+        doc.run(false).await;
+        let mut events = f.supervisor.subscribe();
+
+        let fix = tokio::spawn({
+            let doc = Arc::clone(&doc);
+            async move { doc.fix("slow", false).await }
+        });
+        let starting = events.recv().await.unwrap();
+        assert_eq!(
+            (starting.name.as_str(), starting.origin),
+            (FIX_UNIT, Origin::Task)
+        );
+        fix.await.unwrap().unwrap();
+        assert!(f.supervisor.status().iter().all(|s| s.name != FIX_UNIT));
     }
 
     #[tokio::test]

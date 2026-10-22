@@ -23,6 +23,7 @@ use crate::{
     profiles::Profiles,
     state::{InstanceLock, ProcessRegistry, describe_groups, orphaned_groups, stop_orphans},
     supervisor::Supervisor,
+    tasks::Tasks,
     units::{
         compose::ComposeCli,
         process::{STOP_GRACE, terminate_registered},
@@ -88,6 +89,11 @@ impl Host {
             registry.clone(),
             Arc::clone(&supervisor),
         ));
+        let tasks = Arc::new(Tasks::new(
+            paths.root.clone(),
+            registry.clone(),
+            Arc::clone(&supervisor),
+        ));
         let doctor = Doctor::new(
             checks::all(),
             Env {
@@ -97,7 +103,7 @@ impl Host {
                 units: Vec::new(),
             },
             Arc::clone(&supervisor),
-            registry.clone(),
+            Arc::clone(&tasks),
         );
 
         let socket = paths.socket();
