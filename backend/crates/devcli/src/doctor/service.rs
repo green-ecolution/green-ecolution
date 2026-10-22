@@ -228,16 +228,22 @@ impl Doctor {
                     () = shutdown.cancelled() => return,
                     received = logs.recv() => match received {
                         Ok(record) if record.unit != FIX_UNIT => {
-                            (doctor.triggered(&Trigger::Log(&record)), record.unit)
+                            (doctor.triggered(&Trigger::Log(&record)), Some(record.unit))
                         }
                         Ok(_) | Err(RecvError::Lagged(_)) => continue,
                         Err(RecvError::Closed) => return,
                     },
                     received = states.recv() => match received {
-                        Ok(status) if matches!(status.state, UnitState::Failed { .. }) => {
-                            (doctor.triggered(&Trigger::Failed { unit: &status.name }), status.name)
-                        }
-                        Ok(_) | Err(RecvError::Lagged(_)) => continue,
+                        Ok(status) => match status.state {
+                            UnitState::Failed { .. } => (
+                                doctor.triggered(&Trigger::Failed { unit: &status.name }),
+                                Some(status.name),
+                            ),
+                            // The settled unit did not cause these findings.
+                            UnitState::Ready | UnitState::Done => (doctor.settled(), None),
+                            _ => continue,
+                        },
+                        Err(RecvError::Lagged(_)) => continue,
                         Err(RecvError::Closed) => return,
                     },
                 };
@@ -245,7 +251,7 @@ impl Doctor {
                     continue;
                 }
                 let doctor = Arc::clone(&doctor);
-                tokio::spawn(async move { doctor.run_checks(&checks, Some(&unit)).await });
+                tokio::spawn(async move { doctor.run_checks(&checks, unit.as_deref()).await });
             }
         })
     }
@@ -264,6 +270,32 @@ impl Doctor {
                     .is_some_and(|at| now.duration_since(*at) < TRIGGER_COOLDOWN);
                 if !recent {
                     state.last_triggered.insert(check.id().to_owned(), now);
+                }
+                !recent
+            })
+            .cloned()
+            .collect()
+    }
+
+    /// Cheap checks holding findings, to run again once a unit is ready or done: the start-up
+    /// run may have raced the units. Cooled down apart from triggers, so neither starves the other.
+    fn settled(&self) -> Vec<Arc<dyn Check>> {
+        let now = Instant::now();
+        let mut state = lock(&self.state);
+        self.checks
+            .iter()
+            .filter(|check| check.cost() == Cost::Cheap)
+            .filter(|check| {
+                if !state.findings.contains_key(check.id()) {
+                    return false;
+                }
+                let key = format!("{}@settled", check.id());
+                let recent = state
+                    .last_triggered
+                    .get(&key)
+                    .is_some_and(|at| now.duration_since(*at) < TRIGGER_COOLDOWN);
+                if !recent {
+                    state.last_triggered.insert(key, now);
                 }
                 !recent
             })
@@ -485,6 +517,74 @@ mod tests {
             doc.findings()[0].unit,
             None,
             "a reappearing finding starts unattributed"
+        );
+    }
+
+    #[tokio::test]
+    async fn a_settled_unit_rechecks_the_checks_holding_findings() {
+        let dir = tempfile::tempdir().unwrap();
+        let units: Vec<Arc<dyn Unit>> = vec![Arc::new(FakeUnit::oneshot(
+            "migrations",
+            &Journal::default(),
+        ))];
+        let graph = Graph::new([("migrations".to_owned(), Vec::<String>::new())]).unwrap();
+        let f = Fixture {
+            supervisor: Supervisor::new(units, graph, LogStore::new(100)),
+            _dir: dir,
+        };
+        let migrations = FakeCheck::new("dev-db-migrations")
+            .finds(vec![Finding::new(
+                "dev-db-migrations",
+                Severity::Error,
+                "2 behind",
+            )])
+            .on_failure("migrations")
+            .arc();
+        let doc = doctor(&f, vec![migrations.clone()]);
+        doc.run(false).await;
+        assert!(
+            !doc.triggered(&Trigger::Failed { unit: "migrations" })
+                .is_empty(),
+            "a trigger shortly before must not suppress the settled re-check"
+        );
+        migrations.set(Ok(Vec::new()));
+
+        let shutdown = CancellationToken::new();
+        let watcher = doc.watch(shutdown.clone());
+        let mut changes = doc.subscribe();
+        tokio::time::sleep(Duration::from_millis(50)).await;
+        f.supervisor.start("migrations").await.unwrap();
+
+        let findings = tokio::time::timeout(Duration::from_secs(5), changes.recv())
+            .await
+            .unwrap()
+            .unwrap();
+        assert!(findings.is_empty());
+        assert!(doc.findings().is_empty());
+        shutdown.cancel();
+        watcher.await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn settling_rechecks_only_cheap_checks_with_findings_once_per_cooldown() {
+        let f = fixture();
+        let found = Finding::new("ports", Severity::Error, "taken");
+        let deep_found = Finding::new("deep", Severity::Error, "stale");
+        let doc = doctor(
+            &f,
+            vec![
+                FakeCheck::new("ports").finds(vec![found]).arc(),
+                FakeCheck::new("clean").arc(),
+                FakeCheck::new("deep").deep().finds(vec![deep_found]).arc(),
+            ],
+        );
+        doc.run(true).await;
+
+        let ids: Vec<&str> = doc.settled().iter().map(|check| check.id()).collect();
+        assert_eq!(ids, ["ports"]);
+        assert!(
+            doc.settled().is_empty(),
+            "the cooldown holds the second one"
         );
     }
 
