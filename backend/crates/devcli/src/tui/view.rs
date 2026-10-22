@@ -175,7 +175,7 @@ fn draw_request_list(frame: &mut Frame, area: Rect, app: &App) {
 
 fn draw_trace(frame: &mut Frame, area: Rect, app: &App) {
     let Some(trace) = &app.requests.trace else {
-        let hint = if app.requests.ordered().is_empty() {
+        let hint = if app.requests.is_empty() {
             "no finished requests yet; the backend logs them at debug level"
         } else {
             "loading…"
@@ -309,7 +309,7 @@ fn draw_status(frame: &mut Frame, area: Rect, app: &App, now: DateTime<Utc>) {
         let mode = if app.hosted { "hosting" } else { "attached" };
         let mut parts = vec![format!("{mode} · {ready}/{} ready", app.units.len())];
         if app.mode == Mode::Requests {
-            parts.push(format!("{} requests", app.requests.ordered().len()));
+            parts.push(format!("{} requests", app.requests.len()));
         }
         if let Some(unit) = app.selected_unit() {
             parts.push(format!(

@@ -61,6 +61,14 @@ impl Requests {
         self.selected.is_some()
     }
 
+    pub fn len(&self) -> usize {
+        self.seen.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.seen.is_empty()
+    }
+
     pub fn ordered(&self) -> Vec<&RequestSummary> {
         let mut list: Vec<&RequestSummary> = self.seen.iter().rev().collect();
         if self.order == RequestOrder::Slowest {
