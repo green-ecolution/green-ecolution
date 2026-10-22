@@ -305,8 +305,11 @@ impl Supervisor {
         Ok(())
     }
 
-    /// Stops units the new profile drops, restarts those whose definition changed, starts
-    /// new ones; everything else keeps running. Failed units are started again.
+    /// Stops units the new profile drops and starts new ones. A kept unit is restarted when
+    /// its definition or its dependencies changed, or when it transitively depends (in the
+    /// new graph) on a unit that is restarted or new, so nothing keeps running against a
+    /// dependency that was rebuilt underneath it. Everything else keeps running; stopped and
+    /// failed units are started again.
     pub async fn apply(
         self: &Arc<Self>,
         profile: &str,
@@ -335,14 +338,25 @@ impl Supervisor {
                     .collect::<BTreeSet<_>>()
                     .eq(&graph.dependencies(name).collect::<BTreeSet<_>>())
         };
+        let mut changed: BTreeSet<String> = incoming
+            .iter()
+            .filter(|(name, unit)| {
+                !current
+                    .get(*name)
+                    .is_some_and(|entry| unchanged(name, entry, unit))
+            })
+            .map(|(name, _)| name.clone())
+            .collect();
+        let dependents: Vec<String> = changed
+            .iter()
+            .flat_map(|name| graph.transitive_dependents(name))
+            .collect();
+        changed.extend(dependents);
         for name in old_graph.start_order().iter().rev() {
             let Some(entry) = current.get(name) else {
                 continue;
             };
-            let kept = incoming
-                .get(name)
-                .is_some_and(|unit| unchanged(name, entry, unit));
-            if kept {
+            if incoming.contains_key(name) && !changed.contains(name) {
                 continue;
             }
             let _control = entry.control.lock().await;
@@ -357,7 +371,7 @@ impl Supervisor {
         let mut entries = BTreeMap::new();
         for (name, unit) in incoming {
             let entry = match current.get(&name) {
-                Some(entry) if unchanged(&name, entry, &unit) => Arc::clone(entry),
+                Some(entry) if !changed.contains(&name) => Arc::clone(entry),
                 Some(_) => Arc::new(Entry::new(unit)),
                 None => {
                     change.started.push(name.clone());
@@ -935,6 +949,58 @@ mod tests {
         assert_eq!(
             &journal.entries()[before..],
             ["stop backend", "start build-release", "start backend"]
+        );
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn apply_restarts_the_dependents_of_a_restarted_unit() {
+        let journal = Journal::default();
+        let sup = setup(
+            vec![
+                Arc::new(FakeUnit::service("db", &journal)),
+                Arc::new(FakeUnit::oneshot("build", &journal)),
+                Arc::new(FakeUnit::service("backend", &journal)),
+            ],
+            &[("db", &[]), ("build", &[]), ("backend", &["build"])],
+        );
+        sup.start_all().await;
+        settle(&sup, all_satisfied).await;
+        let before = journal.entries().len();
+
+        let units: Vec<Arc<dyn Unit>> = vec![
+            Arc::new(FakeUnit::service("db", &journal)),
+            Arc::new(
+                FakeUnit::oneshot("build", &journal)
+                    .defined_as("v2")
+                    .ready_after(Duration::from_secs(5)),
+            ),
+            Arc::new(FakeUnit::service("backend", &journal)),
+        ];
+        let change = sup
+            .apply(
+                "prod-like",
+                units,
+                graph_of(&[("db", &[]), ("build", &[]), ("backend", &["build"])]),
+            )
+            .await
+            .unwrap();
+        tokio::time::sleep(Duration::from_secs(1)).await;
+        assert_eq!(
+            state(&sup, "backend"),
+            UnitState::Waiting {
+                on: vec!["build".into()]
+            }
+        );
+        settle(&sup, all_satisfied).await;
+
+        let mut restarted = change.restarted.clone();
+        restarted.sort();
+        assert_eq!(restarted, ["backend", "build"]);
+        assert!(change.started.is_empty());
+        assert!(change.stopped.is_empty());
+        assert_eq!(
+            &journal.entries()[before..],
+            ["stop backend", "stop build", "start build", "start backend"]
         );
     }
 

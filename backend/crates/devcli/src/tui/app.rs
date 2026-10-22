@@ -210,6 +210,10 @@ impl App {
             match picker.handle(key) {
                 PickerOutcome::Open => {}
                 PickerOutcome::Cancelled => self.picker = None,
+                PickerOutcome::Chosen(profile) if self.profile.as_ref() == Some(&profile) => {
+                    self.picker = None;
+                    self.flash = Some(format!("already on {profile}"));
+                }
                 PickerOutcome::Chosen(profile) => {
                     self.picker = None;
                     self.flash = Some(format!("switching to {profile}…"));
@@ -542,6 +546,18 @@ pub(crate) mod tests {
             }))
         );
         assert_eq!(app.flash.as_deref(), Some("switching to full…"));
+    }
+
+    #[test]
+    fn choosing_the_active_profile_sends_nothing() {
+        let mut app = app_with_two_units();
+        app.update(Msg::Profiles(vec!["full".into(), "minimal".into()]));
+        app.update(Msg::Profile("minimal".into()));
+
+        app.update(key(KeyCode::Char('p')));
+        assert_eq!(app.update(key(KeyCode::Enter)), None);
+        assert!(app.picker.is_none());
+        assert_eq!(app.flash.as_deref(), Some("already on minimal"));
     }
 
     #[test]

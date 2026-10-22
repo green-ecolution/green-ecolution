@@ -49,8 +49,16 @@ impl Profiles {
         })
     }
 
-    /// Reads geco.toml again, so an edited profile takes effect on the next switch.
+    /// Reads geco.toml again, so an edited profile takes effect on the next switch to it.
+    /// Choosing the active profile again changes nothing.
     pub async fn switch(&self, name: &str) -> Result<ProfileChange, ProfileError> {
+        if self.supervisor.profile() == name {
+            return Ok(ProfileChange {
+                profile: name.to_owned(),
+                warnings: vec![format!("already on profile {name}")],
+                ..ProfileChange::default()
+            });
+        }
         let config = GecoConfig::load(&self.paths.config())?;
         let assembly = assemble(&self.paths.root, &config, name, self.registry.clone()).await?;
         let mut change = self
@@ -59,5 +67,55 @@ impl Profiles {
             .await?;
         change.warnings = assembly.warnings;
         Ok(change)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{
+        graph::Graph,
+        logs::LogStore,
+        units::{
+            Unit,
+            fake::{FakeUnit, Journal},
+        },
+    };
+
+    #[tokio::test]
+    async fn switching_to_the_active_profile_changes_nothing() {
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::write(
+            dir.path().join("geco.toml"),
+            "[profile.minimal]\nunits = []\n",
+        )
+        .unwrap();
+        let journal = Journal::default();
+        let units: Vec<Arc<dyn Unit>> = vec![Arc::new(FakeUnit::service("db", &journal))];
+        let graph = Graph::new([("db".to_owned(), Vec::<String>::new())]).unwrap();
+        let supervisor = Supervisor::new(units, graph, LogStore::new(100));
+        supervisor.set_profile("minimal");
+        let profiles = Profiles::new(
+            dir.path().to_path_buf(),
+            ProcessRegistry::in_memory(),
+            Arc::clone(&supervisor),
+        );
+
+        let change = profiles.switch("minimal").await.unwrap();
+
+        assert_eq!(
+            change,
+            ProfileChange {
+                profile: "minimal".into(),
+                warnings: vec!["already on profile minimal".into()],
+                ..ProfileChange::default()
+            }
+        );
+        assert_eq!(
+            supervisor.status().len(),
+            1,
+            "the profile was applied again"
+        );
+        assert!(journal.entries().is_empty());
     }
 }
