@@ -86,8 +86,17 @@ geco trace <request-id>   # one request's log lines, indented by span (a unique 
 geco doctor [--fix]       # known setup pitfalls with their fix; --deep adds the slow checks
 geco profile [NAME]       # list the profiles, or switch the running stack to NAME
 geco restart backend      # --cascade also restarts dependent units
+geco run migrate-up       # run a just recipe as a task of the running stack (plain `just` without one)
+geco completions zsh      # completion script; e.g. `source <(geco completions zsh)` in ~/.zshrc
 geco down                 # stop everything geco started
 ```
+
+In the TUI, `:` or `Ctrl-K` opens a command palette that searches every action: starting,
+stopping and restarting units, switching profiles, running recipes, applying doctor fixes and
+setting the log filter. Recipes with parameters ask for them in the status line. Recipes listed
+under `[tasks] destructive` in `geco.toml` ask for confirmation first, and `geco run` does the
+same unless `--yes` is given. A running recipe shows up as a temporary unit and disappears once
+it succeeded.
 
 Units and profiles (`minimal`, `full`, `prod-like`) are defined in `geco.toml` at the
 repository root; a profile can extend another and override local units. Switching profiles at
