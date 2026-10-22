@@ -9,6 +9,7 @@ use super::{
     requests::Requests,
 };
 use crate::{
+    doctor::Finding,
     ipc::Call,
     logs::{Filter, LogRecord, trace::Trace},
     supervisor::{UnitState, UnitStatus},
@@ -23,6 +24,7 @@ const WHEEL_STEP: usize = 3;
 pub enum Mode {
     Logs,
     Requests,
+    Doctor,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -31,6 +33,7 @@ pub enum Pane {
     Logs,
     Requests,
     Trace,
+    Findings,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -51,6 +54,7 @@ pub enum Msg {
     State(UnitStatus),
     Log(LogRecord),
     Trace(Trace),
+    Findings(Vec<Finding>),
     Flash(String),
     Tick,
     Disconnected,
@@ -77,6 +81,9 @@ pub struct App {
     pub filter_error: Option<String>,
     pub logs: VecDeque<LogRecord>,
     pub requests: Requests,
+    pub findings: Vec<Finding>,
+    pub finding_selected: usize,
+    pub pending_fix: Option<Finding>,
     /// Lines between the bottom of the view and the newest matching line; 0 follows.
     pub scroll: usize,
     pub hosted: bool,
@@ -99,6 +106,9 @@ impl App {
             filter_error: None,
             logs: VecDeque::new(),
             requests: Requests::default(),
+            findings: Vec::new(),
+            finding_selected: 0,
+            pending_fix: None,
             scroll: 0,
             hosted,
             flash: None,
@@ -113,6 +123,10 @@ impl App {
             Msg::Scroll { pane, down } => return self.step(pane, down, WHEEL_STEP),
             Msg::Trace(trace) => self.requests.set_trace(trace),
             Msg::Focus(pane) => self.focus = pane,
+            Msg::Findings(findings) => {
+                self.finding_selected = self.finding_selected.min(findings.len().saturating_sub(1));
+                self.findings = findings;
+            }
             Msg::State(status) => match self.units.iter_mut().find(|u| u.name == status.name) {
                 Some(unit) => *unit = status,
                 None => self.units.push(status),
@@ -158,6 +172,16 @@ impl App {
             }
             return None;
         }
+        if let Some(finding) = self.pending_fix.take() {
+            if key.code == KeyCode::Char('y') {
+                return Some(Effect::Call(Call::Fix {
+                    finding: finding.id,
+                    confirmed: true,
+                }));
+            }
+            self.flash = Some("fix cancelled".to_owned());
+            return None;
+        }
         let ctrl = key.modifiers.contains(KeyModifiers::CONTROL);
         let logs_mode = self.mode == Mode::Logs;
         match key.code {
@@ -174,9 +198,17 @@ impl App {
             KeyCode::Home | KeyCode::Char('g') => self.jump(true),
             KeyCode::End | KeyCode::Char('G') => self.jump(false),
             KeyCode::Char('?') => self.show_help = !self.show_help,
-            KeyCode::Char('t') => return self.toggle_mode(),
-            KeyCode::Esc if !logs_mode => return self.toggle_mode(),
-            KeyCode::Char('o') if !logs_mode => self.requests.toggle_order(),
+            KeyCode::Char('t') => return self.switch(Mode::Requests),
+            KeyCode::Char('d') if !ctrl => return self.switch(Mode::Doctor),
+            KeyCode::Esc if !logs_mode => return self.switch(Mode::Logs),
+            KeyCode::Char('o') if self.mode == Mode::Requests => self.requests.toggle_order(),
+            KeyCode::Char('f') => self.ask_fix(),
+            KeyCode::Char('r') if self.mode == Mode::Doctor => {
+                return Some(Effect::Call(Call::Doctor { deep: false }));
+            }
+            KeyCode::Char('R') if self.mode == Mode::Doctor => {
+                return Some(Effect::Call(Call::Doctor { deep: true }));
+            }
             KeyCode::Enter if self.focus == Pane::Requests => self.focus = Pane::Trace,
             KeyCode::Enter if self.focus == Pane::Units => {
                 self.scope = LogScope::Selected;
@@ -231,6 +263,7 @@ impl App {
             Pane::Logs => self.scroll_up(lines),
             Pane::Requests => return self.requests.select(down).map(Effect::FetchTrace),
             Pane::Trace => self.requests.scroll_trace(down, lines),
+            Pane::Findings => self.select_finding(down),
         }
         None
     }
@@ -241,22 +274,23 @@ impl App {
             (Mode::Logs, true) => Pane::Logs,
             (Mode::Requests, false) => Pane::Requests,
             (Mode::Requests, true) => Pane::Trace,
+            (Mode::Doctor, _) => Pane::Findings,
         }
     }
 
-    fn toggle_mode(&mut self) -> Option<Effect> {
-        match self.mode {
-            Mode::Logs => {
-                self.mode = Mode::Requests;
-                self.focus = Pane::Requests;
-                self.requests.pin_selection().map(Effect::FetchTrace)
-            }
-            Mode::Requests => {
-                self.mode = Mode::Logs;
-                self.focus = Pane::Units;
-                None
-            }
+    /// Opens `mode`, or returns to the logs when it is already open.
+    fn switch(&mut self, mode: Mode) -> Option<Effect> {
+        let target = if self.mode == mode { Mode::Logs } else { mode };
+        self.mode = target;
+        self.focus = match target {
+            Mode::Logs => Pane::Units,
+            Mode::Requests => Pane::Requests,
+            Mode::Doctor => Pane::Findings,
+        };
+        if target == Mode::Requests {
+            return self.requests.pin_selection().map(Effect::FetchTrace);
         }
+        None
     }
 
     fn page(&mut self, down: bool, lines: usize) {
@@ -264,6 +298,7 @@ impl App {
             Mode::Logs if down => self.scroll_down(lines),
             Mode::Logs => self.scroll_up(lines),
             Mode::Requests => self.requests.scroll_trace(down, lines),
+            Mode::Doctor => {}
         }
     }
 
@@ -271,6 +306,13 @@ impl App {
         match self.mode {
             Mode::Logs => self.scroll = if top { self.max_scroll() } else { 0 },
             Mode::Requests => self.requests.jump_trace(top),
+            Mode::Doctor => {
+                self.finding_selected = if top {
+                    0
+                } else {
+                    self.findings.len().saturating_sub(1)
+                }
+            }
         }
     }
 
@@ -293,6 +335,39 @@ impl App {
         };
         if self.scope == LogScope::Selected {
             self.scroll = 0;
+        }
+    }
+
+    fn select_finding(&mut self, down: bool) {
+        let last = self.findings.len().saturating_sub(1);
+        self.finding_selected = if down {
+            (self.finding_selected + 1).min(last)
+        } else {
+            self.finding_selected.saturating_sub(1)
+        };
+    }
+
+    pub fn unit_findings(&self, unit: &str) -> Vec<&Finding> {
+        self.findings
+            .iter()
+            .filter(|finding| finding.unit.as_deref() == Some(unit))
+            .collect()
+    }
+
+    fn ask_fix(&mut self) {
+        let finding = match self.mode {
+            Mode::Doctor => self.findings.get(self.finding_selected).cloned(),
+            _ => self.selected_unit().and_then(|unit| {
+                self.unit_findings(&unit.name)
+                    .into_iter()
+                    .find(|finding| finding.fix.is_some())
+                    .cloned()
+            }),
+        };
+        match finding {
+            Some(finding) if finding.fix.is_some() => self.pending_fix = Some(finding),
+            Some(_) => self.flash = Some("this finding has no automatic fix".to_owned()),
+            None => self.flash = Some("nothing to fix here".to_owned()),
         }
     }
 
@@ -345,6 +420,7 @@ pub(crate) mod tests {
     use super::*;
     use crate::{
         config::LogFormat,
+        doctor::{Fix, Severity},
         logs::{
             parse_line,
             trace::{Trace, tests::finished_request},
@@ -767,5 +843,101 @@ pub(crate) mod tests {
             }),
             Some(Effect::FetchTrace("a".into()))
         );
+    }
+
+    fn findings() -> Vec<Finding> {
+        vec![
+            Finding::new(
+                "dev-db-migrations",
+                Severity::Error,
+                "dev database is 2 migration(s) behind",
+            )
+            .unit("backend")
+            .fix(Fix::just("migrate-up")),
+            Finding::new("ports", Severity::Error, "port 5432 is taken")
+                .subject("5432")
+                .unit("db"),
+            Finding::new("testcontainers", Severity::Hint, "3 leftovers")
+                .fix(Fix::just("test-clean").destructive()),
+        ]
+    }
+
+    #[test]
+    fn d_opens_the_doctor_and_f_fixes_after_confirmation() {
+        let mut app = app_with_two_units();
+        app.update(Msg::Findings(findings()));
+
+        app.update(key(KeyCode::Char('d')));
+        assert_eq!((app.mode, app.focus), (Mode::Doctor, Pane::Findings));
+
+        app.update(key(KeyCode::Char('f')));
+        assert_eq!(
+            app.pending_fix.as_ref().map(|f| f.id.as_str()),
+            Some("dev-db-migrations")
+        );
+        assert_eq!(
+            app.update(key(KeyCode::Char('y'))),
+            Some(Effect::Call(Call::Fix {
+                finding: "dev-db-migrations".into(),
+                confirmed: true
+            }))
+        );
+        assert!(app.pending_fix.is_none());
+
+        app.update(key(KeyCode::Char('j')));
+        app.update(key(KeyCode::Char('f')));
+        assert_eq!(
+            app.flash.as_deref(),
+            Some("this finding has no automatic fix")
+        );
+
+        app.update(key(KeyCode::Char('j')));
+        app.update(key(KeyCode::Char('f')));
+        assert_eq!(app.update(key(KeyCode::Char('n'))), None);
+        assert_eq!(app.flash.as_deref(), Some("fix cancelled"));
+
+        assert_eq!(
+            app.update(key(KeyCode::Char('R'))),
+            Some(Effect::Call(Call::Doctor { deep: true }))
+        );
+        app.update(key(KeyCode::Esc));
+        assert_eq!(app.mode, Mode::Logs);
+    }
+
+    #[test]
+    fn f_in_the_logs_fixes_the_selected_units_finding() {
+        let mut app = app_with_two_units();
+        app.update(Msg::State(status(
+            "backend",
+            UnitState::Failed { reason: "x".into() },
+        )));
+        app.update(Msg::Findings(findings()));
+
+        app.update(key(KeyCode::Char('f')));
+        assert_eq!(
+            app.flash.as_deref(),
+            Some("nothing to fix here"),
+            "db has no fixable finding"
+        );
+
+        app.update(key(KeyCode::Char('j')));
+        app.update(key(KeyCode::Char('f')));
+        assert_eq!(
+            app.pending_fix.as_ref().map(|f| f.id.as_str()),
+            Some("dev-db-migrations")
+        );
+        assert_eq!(app.unit_findings("db").len(), 1);
+    }
+
+    #[test]
+    fn the_selection_stays_in_range_when_findings_shrink() {
+        let mut app = app_with_two_units();
+        app.update(Msg::Findings(findings()));
+        app.update(key(KeyCode::Char('d')));
+        app.update(key(KeyCode::Char('G')));
+        app.update(key(KeyCode::Char('j')));
+        app.update(key(KeyCode::Char('j')));
+        app.update(Msg::Findings(findings()[..1].to_vec()));
+        assert_eq!(app.finding_selected, 0);
     }
 }

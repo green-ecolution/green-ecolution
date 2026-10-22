@@ -105,6 +105,7 @@ async fn event_loop(
         app.update(Msg::Flash(warning));
     }
     let mut states = client.open(Call::SubscribeState).await?;
+    let mut findings = client.open(Call::SubscribeFindings).await?;
     let mut logs = client
         .open(Call::Logs {
             units: Vec::new(),
@@ -128,6 +129,11 @@ async fn event_loop(
         let msg = tokio::select! {
             reply = states.next(), if connected => match reply? {
                 Some(Reply::State(status)) => Msg::State(status),
+                Some(_) => continue,
+                None => Msg::Disconnected,
+            },
+            reply = findings.next(), if connected => match reply? {
+                Some(Reply::Findings(list)) => Msg::Findings(list),
                 Some(_) => continue,
                 None => Msg::Disconnected,
             },

@@ -4,7 +4,7 @@ use ratatui::{
     layout::{Constraint, Layout, Position, Rect},
     style::{Color, Modifier, Style},
     text::{Line, Span},
-    widgets::{Block, List, ListItem, ListState, Paragraph},
+    widgets::{Block, List, ListItem, ListState, Paragraph, Wrap},
 };
 
 use super::{
@@ -12,6 +12,7 @@ use super::{
     requests::RequestOrder,
 };
 use crate::{
+    doctor::Severity,
     logs::{
         Level, LogRecord,
         trace::{self, TraceLine, TraceLineKind},
@@ -34,6 +35,7 @@ fn areas(area: Rect, mode: Mode) -> [Rect; 3] {
     let list = match mode {
         Mode::Logs => Constraint::Length(32),
         Mode::Requests => Constraint::Percentage(40),
+        Mode::Doctor => Constraint::Percentage(45),
     };
     let [list, detail] = Layout::horizontal([list, Constraint::Min(20)]).areas(main);
     [list, detail, status]
@@ -44,6 +46,7 @@ pub fn pane_at(area: Rect, mode: Mode, column: u16, row: u16) -> Option<Pane> {
     let (left, right) = match mode {
         Mode::Logs => (Pane::Units, Pane::Logs),
         Mode::Requests => (Pane::Requests, Pane::Trace),
+        Mode::Doctor => (Pane::Findings, Pane::Findings),
     };
     let position = Position::new(column, row);
     if list.contains(position) {
@@ -66,6 +69,10 @@ pub fn draw(frame: &mut Frame, app: &App) {
         Mode::Requests => {
             draw_request_list(frame, list, app);
             draw_trace(frame, detail, app);
+        }
+        Mode::Doctor => {
+            draw_findings(frame, list, app);
+            draw_finding_detail(frame, detail, app);
         }
     }
     draw_status(frame, status, app, now);
@@ -108,15 +115,27 @@ fn draw_units(frame: &mut Frame, area: Rect, app: &App, now: DateTime<Utc>) {
         .map(|unit| {
             let tone = theme::tone(&unit.state);
             let color = Style::new().fg(tone_color(tone));
-            ListItem::new(Line::from(vec![
+            let mut spans = vec![
                 Span::styled(theme::symbol(tone), color),
-                Span::raw(format!(" {:<18} ", unit.name)),
+                Span::raw(format!(" {:<16} ", unit.name)),
                 Span::styled(unit.state.short(), color),
                 Span::styled(
                     format!(" {}", theme::ago(unit.since, now)),
                     Style::new().fg(Color::DarkGray),
                 ),
-            ]))
+            ];
+            let worst = app
+                .unit_findings(&unit.name)
+                .iter()
+                .map(|finding| finding.severity)
+                .max();
+            if let Some(severity) = worst {
+                spans.push(Span::styled(
+                    " ⚑",
+                    Style::new().fg(severity_style(severity).1),
+                ));
+            }
+            ListItem::new(Line::from(spans))
         })
         .collect();
     let list = List::new(items)
@@ -124,6 +143,83 @@ fn draw_units(frame: &mut Frame, area: Rect, app: &App, now: DateTime<Utc>) {
         .highlight_style(highlight(app, Pane::Units));
     let mut state = ListState::default().with_selected(Some(app.selected));
     frame.render_stateful_widget(list, area, &mut state);
+}
+
+fn severity_style(severity: Severity) -> (&'static str, Color) {
+    match severity {
+        Severity::Error => ("✖", Color::Red),
+        Severity::Hint => ("●", Color::Yellow),
+    }
+}
+
+fn draw_findings(frame: &mut Frame, area: Rect, app: &App) {
+    let title = format!(" Doctor · {} finding(s) ", app.findings.len());
+    if app.findings.is_empty() {
+        let block = pane_block(app, Pane::Findings, title);
+        frame.render_widget(
+            Paragraph::new("no findings; r checks again, R includes the slow checks").block(block),
+            area,
+        );
+        return;
+    }
+    let items: Vec<ListItem> = app
+        .findings
+        .iter()
+        .map(|finding| {
+            let (symbol, color) = severity_style(finding.severity);
+            ListItem::new(Line::from(vec![
+                Span::styled(symbol, Style::new().fg(color)),
+                Span::raw(format!(" {}", finding.title)),
+            ]))
+        })
+        .collect();
+    let list = List::new(items)
+        .block(pane_block(app, Pane::Findings, title))
+        .highlight_style(highlight(app, Pane::Findings));
+    let mut state = ListState::default().with_selected(Some(app.finding_selected));
+    frame.render_stateful_widget(list, area, &mut state);
+}
+
+fn draw_finding_detail(frame: &mut Frame, area: Rect, app: &App) {
+    let block = Block::bordered()
+        .title(" Detail ")
+        .border_style(Style::new().fg(Color::DarkGray));
+    let Some(finding) = app.findings.get(app.finding_selected) else {
+        frame.render_widget(block, area);
+        return;
+    };
+    let dim = Style::new().fg(Color::DarkGray);
+    let bold = Style::new().add_modifier(Modifier::BOLD);
+    let origin = match &finding.unit {
+        Some(unit) => format!("{} · {unit}", finding.id),
+        None => finding.id.clone(),
+    };
+    let mut lines = vec![
+        Line::styled(finding.title.as_str(), bold),
+        Line::styled(origin, dim),
+        Line::default(),
+    ];
+    lines.extend(finding.detail.lines().map(Line::raw));
+    lines.push(Line::default());
+    lines.push(match &finding.fix {
+        Some(fix) => Line::from(vec![
+            Span::raw("fix: "),
+            Span::styled(fix.command.as_str(), bold),
+            Span::raw(if fix.destructive {
+                " (destructive)"
+            } else {
+                ""
+            }),
+            Span::styled("  [f] run", dim),
+        ]),
+        None => Line::styled("no automatic fix", dim),
+    });
+    frame.render_widget(
+        Paragraph::new(lines)
+            .wrap(Wrap { trim: false })
+            .block(block),
+        area,
+    );
 }
 
 fn highlight(app: &App, pane: Pane) -> Style {
@@ -291,12 +387,34 @@ fn draw_status(frame: &mut Frame, area: Rect, app: &App, now: DateTime<Utc>) {
         ));
         return;
     }
+    if let Some(finding) = &app.pending_fix
+        && let Some(fix) = &finding.fix
+    {
+        let style = if fix.destructive {
+            Style::new().fg(Color::Red).add_modifier(Modifier::BOLD)
+        } else {
+            Style::new().fg(Color::Yellow)
+        };
+        let warning = if fix.destructive {
+            "(destructive) "
+        } else {
+            ""
+        };
+        frame.render_widget(
+            Paragraph::new(format!("run `{}`? {warning}[y/N]", fix.command)).style(style),
+            area,
+        );
+        return;
+    }
     let text = if app.show_help {
         match app.mode {
             Mode::Logs => {
                 "q quit · h/l pane · j/k select or scroll · ^u/^d half page · \
                  g/G oldest/follow · Enter unit logs · Tab all/selected · / filter · \
-                 t requests · r restart · R restart with dependents · s start/stop"
+                 t requests · d doctor · f fix · r restart · R restart with dependents · s start/stop"
+            }
+            Mode::Doctor => {
+                "d/Esc logs · j/k select · f fix · r check again · R deep check · q quit"
             }
             Mode::Requests => {
                 "t/Esc logs · h/l pane · j/k select or scroll · Enter open trace · \
@@ -318,6 +436,19 @@ fn draw_status(frame: &mut Frame, area: Rect, app: &App, now: DateTime<Utc>) {
                 unit.state,
                 theme::ago(unit.since, now)
             ));
+        }
+        if let Some(unit) = app.selected_unit()
+            && let Some(finding) = app.unit_findings(&unit.name).first()
+        {
+            let action = if finding.fix.is_some() {
+                " · [f] fix"
+            } else {
+                ""
+            };
+            parts.push(format!("{}{action}", finding.title));
+        }
+        if !app.findings.is_empty() {
+            parts.push(format!("{} finding(s)", app.findings.len()));
         }
         if !app.filter_text.is_empty() {
             parts.push(format!("filter: {}", app.filter_text));
@@ -341,6 +472,7 @@ mod tests {
 
     use super::*;
     use crate::{
+        doctor::{Finding, Fix},
         logs::trace::{Trace, tests::finished_request},
         supervisor::UnitState,
         tui::app::{
@@ -511,5 +643,58 @@ mod tests {
         let area = Rect::new(0, 0, 110, 10);
         assert_eq!(pane_at(area, Mode::Requests, 5, 2), Some(Pane::Requests));
         assert_eq!(pane_at(area, Mode::Requests, 60, 2), Some(Pane::Trace));
+    }
+
+    #[test]
+    fn the_doctor_view_shows_findings_and_the_selected_detail() {
+        let mut app = App::new(false);
+        app.update(Msg::State(status("backend", UnitState::Ready)));
+        app.update(Msg::Findings(vec![
+            Finding::new(
+                "dev-db-migrations",
+                Severity::Error,
+                "dev database is 2 migration(s) behind",
+            )
+            .unit("backend")
+            .detail("Newest missing migration: 20260101.")
+            .fix(Fix::just("migrate-up")),
+        ]));
+        let screen = render(&app);
+        assert!(screen.contains("● backend"), "{screen}");
+        assert!(screen.contains("⚑"), "{screen}");
+        assert!(screen.contains("1 finding(s)"), "{screen}");
+        assert!(
+            screen.contains("dev database is 2 migration(s) behind · [f] fix"),
+            "{screen}"
+        );
+
+        app.update(Msg::Key(KeyEvent::new(
+            KeyCode::Char('d'),
+            KeyModifiers::NONE,
+        )));
+        let screen = render(&app);
+        assert!(screen.contains("Doctor · 1 finding(s)"), "{screen}");
+        assert!(
+            screen.contains("✖ dev database is 2 migration(s) behind"),
+            "{screen}"
+        );
+        assert!(screen.contains("dev-db-migrations · backend"), "{screen}");
+        assert!(
+            screen.contains("Newest missing migration: 20260101."),
+            "{screen}"
+        );
+        assert!(screen.contains("fix: just migrate-up"), "{screen}");
+
+        app.update(Msg::Key(KeyEvent::new(
+            KeyCode::Char('f'),
+            KeyModifiers::NONE,
+        )));
+        assert!(
+            render(&app)
+                .lines()
+                .last()
+                .unwrap()
+                .starts_with("run `just migrate-up`? [y/N]")
+        );
     }
 }
