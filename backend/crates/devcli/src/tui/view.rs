@@ -1,7 +1,7 @@
 use chrono::{DateTime, Local, TimeDelta, Utc};
 use ratatui::{
     Frame,
-    layout::{Constraint, Layout, Position, Rect},
+    layout::{Constraint, Layout, Margin, Position, Rect},
     style::{Color, Modifier, Style},
     symbols,
     text::{Line, Span},
@@ -10,6 +10,7 @@ use ratatui::{
 
 use super::{
     app::{App, LogScope, Mode, Pane},
+    help::{Help, HelpLine},
     palette::Palette,
     requests::RequestOrder,
     widgets,
@@ -119,6 +120,9 @@ pub fn draw(frame: &mut Frame, app: &App) {
     draw_status(frame, status, app, now);
     if let Some(palette) = &app.palette {
         draw_palette(frame, frame.area(), palette);
+    }
+    if let Some(help) = &app.help {
+        draw_help(frame, frame.area(), help);
     }
 }
 
@@ -584,69 +588,119 @@ fn draw_status(frame: &mut Frame, area: Rect, app: &App, now: DateTime<Utc>) {
         );
         return;
     }
-    let text = if app.show_help {
-        match app.mode {
-            Mode::Logs => {
-                "q quit · h/l pane · j/k select or scroll · ^u/^d half page · \
-                 g/G oldest/follow · Enter unit logs · Tab all/selected · / filter · \
-                 t requests · d doctor · f fix · r restart · R restart with dependents · s start/stop (dismisses a failed task) · \
-                 p profile · : or ^k commands"
-            }
-            Mode::Doctor => {
-                "d/Esc logs · j/k select · f fix · r check again · R deep check · p profile · : or ^k commands · q quit"
-            }
-            Mode::Requests => {
-                "t/Esc logs · h/l pane · j/k select or scroll · Enter open trace · \
-                 o newest/slowest · ^u/^d half page · g/G top/bottom · p profile · : or ^k commands · q quit"
-            }
-        }
-        .to_owned()
-    } else {
-        let ready = app.units.iter().filter(|u| u.state.is_satisfied()).count();
-        let mode = if app.hosted { "hosting" } else { "attached" };
-        let mut head = vec![mode.to_owned()];
-        if let Some(profile) = &app.profile {
-            head.push(profile.clone());
-        }
-        head.push(format!("{ready}/{} ready", app.units.len()));
-        let mut parts = vec![head.join(" · ")];
-        if app.mode == Mode::Requests {
-            parts.push(format!("{} requests", app.requests.len()));
-        }
-        if let Some(unit) = app.selected_unit() {
-            parts.push(format!(
-                "{}: {} ({})",
-                unit.name,
-                unit.state,
-                theme::ago(unit.since, now)
-            ));
-        }
-        if let Some(unit) = app.selected_unit()
-            && let Some(finding) = app.unit_finding(&unit.name)
-        {
-            let action = if finding.fix.is_some() {
-                " · [f] fix"
-            } else {
-                ""
-            };
-            parts.push(format!("{}{action}", finding.title));
-        }
-        if !app.findings.is_empty() {
-            parts.push(format!("{} finding(s)", app.findings.len()));
-        }
-        if !app.filter_text.is_empty() {
-            parts.push(format!("filter: {}", app.filter_text));
-        }
-        if let Some(flash) = &app.flash {
-            parts.push(flash.clone());
-        }
-        parts.push("? keys".to_owned());
-        parts.join(" · ")
-    };
+    let ready = app.units.iter().filter(|u| u.state.is_satisfied()).count();
+    let mode = if app.hosted { "hosting" } else { "attached" };
+    let mut head = vec![mode.to_owned()];
+    if let Some(profile) = &app.profile {
+        head.push(profile.clone());
+    }
+    head.push(format!("{ready}/{} ready", app.units.len()));
+    let mut parts = vec![head.join(" · ")];
+    if app.mode == Mode::Requests {
+        parts.push(format!("{} requests", app.requests.len()));
+    }
+    if let Some(unit) = app.selected_unit() {
+        parts.push(format!(
+            "{}: {} ({})",
+            unit.name,
+            unit.state,
+            theme::ago(unit.since, now)
+        ));
+    }
+    if let Some(unit) = app.selected_unit()
+        && let Some(finding) = app.unit_finding(&unit.name)
+    {
+        let action = if finding.fix.is_some() {
+            " · [f] fix"
+        } else {
+            ""
+        };
+        parts.push(format!("{}{action}", finding.title));
+    }
+    if !app.findings.is_empty() {
+        parts.push(format!("{} finding(s)", app.findings.len()));
+    }
+    if !app.filter_text.is_empty() {
+        parts.push(format!("filter: {}", app.filter_text));
+    }
+    if let Some(flash) = &app.flash {
+        parts.push(flash.clone());
+    }
+    parts.push("? keys".to_owned());
     frame.render_widget(
-        Paragraph::new(text).style(Style::new().add_modifier(Modifier::REVERSED)),
+        Paragraph::new(parts.join(" · ")).style(Style::new().add_modifier(Modifier::REVERSED)),
         area,
     );
+}
+
+fn draw_help(frame: &mut Frame, area: Rect, help: &Help) {
+    let lines = help.lines();
+    let key_width = lines
+        .iter()
+        .filter_map(|line| match line {
+            HelpLine::Key(key, _) => Some(key.chars().count()),
+            _ => None,
+        })
+        .max()
+        .unwrap_or(0)
+        + 2;
+    let text_width = lines
+        .iter()
+        .map(|line| match line {
+            HelpLine::Heading(title) => title.chars().count(),
+            HelpLine::Key(_, what) => key_width + what.chars().count(),
+            HelpLine::Blank => 0,
+        })
+        .max()
+        .unwrap_or(0);
+    // Borders plus one column of padding on each side.
+    let width = u16::try_from(text_width + 4)
+        .unwrap_or(u16::MAX)
+        .min(area.width);
+    let height = u16::try_from(lines.len() + 2)
+        .unwrap_or(u16::MAX)
+        .min(area.height);
+    let popup = Rect {
+        x: area.x + area.width.saturating_sub(width) / 2,
+        y: area.y + area.height.saturating_sub(height) / 3,
+        width,
+        height,
+    };
+    let visible = usize::from(height.saturating_sub(2));
+    let scroll = help.scroll().min(lines.len().saturating_sub(visible));
+    let title = if visible < lines.len() {
+        format!(
+            " Keys {}–{}/{} ",
+            scroll + 1,
+            (scroll + visible).min(lines.len()),
+            lines.len()
+        )
+    } else {
+        " Keys ".to_owned()
+    };
+    let block = Block::bordered()
+        .title(title)
+        .title_bottom(" ?/Esc close ")
+        .border_style(Style::new().fg(Color::Green));
+    let inner = block.inner(popup).inner(Margin::new(1, 0));
+    frame.render_widget(Clear, popup);
+    frame.render_widget(block, popup);
+    let key_style = Style::new().fg(Color::Green).add_modifier(Modifier::BOLD);
+    let text: Vec<Line> = lines
+        .iter()
+        .skip(scroll)
+        .map(|line| match line {
+            HelpLine::Heading(title) => {
+                Line::styled(*title, Style::new().add_modifier(Modifier::BOLD))
+            }
+            HelpLine::Key(key, what) => Line::from(vec![
+                Span::styled(format!("{key:<key_width$}"), key_style),
+                Span::raw(*what),
+            ]),
+            HelpLine::Blank => Line::default(),
+        })
+        .collect();
+    frame.render_widget(Paragraph::new(text), inner);
 }
 
 #[cfg(test)]
@@ -687,6 +741,31 @@ mod tests {
         assert!(screen.contains("profile full"), "{screen}");
         assert!(screen.contains("profile minimal"), "{screen}");
         assert!(screen.contains("> profile"), "{screen}");
+    }
+
+    #[test]
+    fn question_mark_shows_the_keys_of_the_mode_in_a_scrollable_box() {
+        let mut app = App::new(true);
+        let press = |app: &mut App, code| {
+            app.update(Msg::Key(KeyEvent::new(code, KeyModifiers::NONE)));
+        };
+        press(&mut app, KeyCode::Char('?'));
+        let screen = render(&app);
+        assert!(screen.contains("Keys 1–8/21"), "{screen}");
+        assert!(screen.contains("show the selected unit's logs"), "{screen}");
+        assert!(screen.contains("? keys"), "{screen}");
+
+        press(&mut app, KeyCode::Char('G'));
+        let screen = render(&app);
+        assert!(screen.contains("Keys 14–21/21"), "{screen}");
+        assert!(screen.contains("quit"), "{screen}");
+
+        press(&mut app, KeyCode::Esc);
+        press(&mut app, KeyCode::Char('d'));
+        press(&mut app, KeyCode::Char('?'));
+        let screen = render(&app);
+        assert!(screen.contains("Doctor"), "{screen}");
+        assert!(screen.contains("deep check"), "{screen}");
     }
 
     #[test]

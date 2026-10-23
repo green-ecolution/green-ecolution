@@ -91,7 +91,8 @@ geco completions zsh      # completion script; e.g. `source <(geco completions z
 geco down                 # stop everything geco started
 ```
 
-In the TUI, `:` or `Ctrl-K` opens a command palette that searches every action: starting,
+In the TUI, `?` lists the keys of the current view in a box that closes with `?` or `Esc`.
+`:` or `Ctrl-K` opens a command palette that searches every action: starting,
 stopping and restarting units, switching profiles, running recipes, applying doctor fixes and
 setting the log filter. Recipes with parameters ask for them in the status line. Recipes listed
 under `[tasks] destructive` in `geco.toml` ask for confirmation first, and `geco run` does the

@@ -1,4 +1,5 @@
 mod app;
+mod help;
 mod input;
 mod palette;
 mod requests;

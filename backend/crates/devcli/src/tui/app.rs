@@ -5,6 +5,7 @@ use chrono::Utc;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
 use super::{
+    help::{Help, HelpOutcome},
     input::{InputOutcome, LineInput},
     palette::{self, Action, Palette, PaletteOutcome, ParamPrompt, PromptOutcome, Sources},
     requests::Requests,
@@ -117,7 +118,7 @@ pub struct App {
     pub scroll: usize,
     pub hosted: bool,
     pub flash: Option<String>,
-    pub show_help: bool,
+    pub help: Option<Help>,
     pub disconnected: bool,
 }
 
@@ -149,7 +150,7 @@ impl App {
             scroll: 0,
             hosted,
             flash: None,
-            show_help: false,
+            help: None,
             disconnected: false,
         }
     }
@@ -157,7 +158,8 @@ impl App {
     pub fn update(&mut self, msg: Msg) -> Option<Effect> {
         match msg {
             Msg::Key(key) => return self.on_key(key),
-            Msg::Scroll { .. } | Msg::Focus(_) if self.palette.is_some() => {}
+            Msg::Scroll { .. } | Msg::Focus(_) if self.palette.is_some() || self.help.is_some() => {
+            }
             Msg::Scroll { pane, down } => return self.step(pane, down, WHEEL_STEP),
             Msg::Trace(trace) => self.requests.set_trace(trace),
             Msg::Focus(pane) => self.focus = pane,
@@ -286,6 +288,15 @@ impl App {
             self.flash = Some("run cancelled".to_owned());
             return None;
         }
+        if let Some(help) = &mut self.help {
+            if key.code == KeyCode::Char('c') && key.modifiers.contains(KeyModifiers::CONTROL) {
+                return Some(Effect::Quit);
+            }
+            if help.handle(key) == HelpOutcome::Closed {
+                self.help = None;
+            }
+            return None;
+        }
         if let Some(palette) = &mut self.palette {
             if key.code == KeyCode::Char('c') && key.modifiers.contains(KeyModifiers::CONTROL) {
                 return Some(Effect::Quit);
@@ -319,7 +330,7 @@ impl App {
             KeyCode::PageDown => self.page(true, PAGE),
             KeyCode::Home | KeyCode::Char('g') => self.jump(true),
             KeyCode::End | KeyCode::Char('G') => self.jump(false),
-            KeyCode::Char('?') => self.show_help = !self.show_help,
+            KeyCode::Char('?') => self.help = Some(Help::new(self.mode)),
             KeyCode::Char('t') => return self.switch(Mode::Requests),
             KeyCode::Char('d') if !ctrl => return self.switch(Mode::Doctor),
             KeyCode::Esc if !logs_mode => return self.switch(Mode::Logs),
@@ -764,6 +775,27 @@ pub(crate) mod tests {
         app.update(Msg::Focus(Pane::Logs));
         assert_eq!(app.selected, 0);
         assert_eq!(app.focus, Pane::Units);
+        assert_eq!(app.update(ctrl(KeyCode::Char('c'))), Some(Effect::Quit));
+    }
+
+    #[test]
+    fn the_help_swallows_keys_and_the_mouse_until_it_closes() {
+        let mut app = app_with_two_units();
+        app.update(key(KeyCode::Char('?')));
+        assert!(app.help.is_some());
+        assert_eq!(app.update(key(KeyCode::Char('r'))), None);
+        app.update(Msg::Scroll {
+            pane: Pane::Units,
+            down: true,
+        });
+        app.update(Msg::Focus(Pane::Logs));
+        assert_eq!(app.selected, 0);
+        assert_eq!(app.focus, Pane::Units);
+        app.update(key(KeyCode::Esc));
+        assert!(app.help.is_none());
+        assert_eq!(app.mode, Mode::Logs);
+
+        app.update(key(KeyCode::Char('?')));
         assert_eq!(app.update(ctrl(KeyCode::Char('c'))), Some(Effect::Quit));
     }
 
