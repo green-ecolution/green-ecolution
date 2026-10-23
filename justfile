@@ -200,7 +200,7 @@ run-dev: _handbook-pdf-if-missing
         -e 's|${TRAEFIK_ENTRYPOINT}|{{ traefik_entrypoint }}|g' \
         .docker/infra/traefik/dynamic/dev-services.yaml.tmpl \
         > .docker/infra/traefik/dynamic/dev-services.yaml
-    trap 'rm -f .docker/infra/traefik/dynamic/dev-services.yaml; kill 0' EXIT; \
+    @trap 'rm -f .docker/infra/traefik/dynamic/dev-services.yaml; kill 0' EXIT; \
       ( cd {{ backend_dir }} && \
         APP_ENVIRONMENT=local \
         SQLX_OFFLINE=true \
@@ -236,7 +236,7 @@ run-prod: build-domain-wasm _compile-backend
         -e 's|${TRAEFIK_ENTRYPOINT}|{{ traefik_entrypoint }}|g' \
         .docker/infra/traefik/dynamic/dev-services.yaml.tmpl \
         > .docker/infra/traefik/dynamic/dev-services.yaml
-    trap 'rm -f .docker/infra/traefik/dynamic/dev-services.yaml; kill 0' EXIT; \
+    @trap 'rm -f .docker/infra/traefik/dynamic/dev-services.yaml; kill 0' EXIT; \
       ( cd {{ backend_dir }} && \
         APP_ENVIRONMENT=local \
         APP_APPLICATION__HOST=0.0.0.0 \
@@ -260,8 +260,10 @@ run-docker: _acme-init _ensure-valhalla build-domain-wasm
     @just _compose --profile app up -d --build
 
 # Run docker compose with the shared Traefik/Porkbun/version env
+# Positional arguments keep args with spaces intact (e.g. a psql -c query).
+[positional-arguments]
 _compose *ARGS:
-    APP_HOST="{{ app_host }}" \
+    @APP_HOST="{{ app_host }}" \
     BIND_ADDR="{{ bind_addr }}" \
     TRAEFIK_CONFIG="{{ traefik_config }}" \
     TRAEFIK_ENTRYPOINT="{{ traefik_entrypoint }}" \
@@ -273,7 +275,7 @@ _compose *ARGS:
     APP_GIT_COMMIT="{{ app_git_commit }}" \
     APP_GIT_BRANCH="{{ app_git_branch }}" \
     APP_BUILD_TIME="{{ app_build_time }}" \
-    docker compose {{ ARGS }}
+    docker compose "$@"
 
 # Start infrastructure services
 [group('infra')]
@@ -438,37 +440,37 @@ migrate-new name:
 [group('db')]
 migrate-up: _migrate-build
     @echo "Migrating up..."
-    cd {{ backend_dir }} && DATABASE_URL="{{ db_url }}" ./target/debug/migrate up
+    @cd {{ backend_dir }} && DATABASE_URL="{{ db_url }}" ./target/debug/migrate up
 
 # Drop and recreate the database, then migrate
 [group('db')]
 migrate-reset: _migrate-build
     @echo "Resetting database..."
-    cd {{ backend_dir }} && DATABASE_URL="{{ db_url }}" ./target/debug/migrate reset
+    @cd {{ backend_dir }} && DATABASE_URL="{{ db_url }}" ./target/debug/migrate reset
 
 # Show migration status
 [group('db')]
 migrate-status: _migrate-build
     @echo "Migration status..."
-    cd {{ backend_dir }} && DATABASE_URL="{{ db_url }}" ./target/debug/migrate info
+    @cd {{ backend_dir }} && DATABASE_URL="{{ db_url }}" ./target/debug/migrate info
 
 # Apply seeds on top of the current DB (assumes empty/migrated schema)
 [group('db')]
 seed-up: _migrate-build
     @echo "Applying seeds..."
-    cd {{ backend_dir }} && DATABASE_URL="{{ db_url }}" ./target/debug/migrate seed
+    @cd {{ backend_dir }} && DATABASE_URL="{{ db_url }}" ./target/debug/migrate seed
 
 # Remove all seed data (runs *.down.sql files in reverse order)
 [group('db')]
 seed-down: _migrate-build
     @echo "Removing seed data..."
-    cd {{ backend_dir }} && DATABASE_URL="{{ db_url }}" ./target/debug/migrate seed-down
+    @cd {{ backend_dir }} && DATABASE_URL="{{ db_url }}" ./target/debug/migrate seed-down
 
 # Reset DB, migrate, then apply seeds
 [group('db')]
 seed-reset: _migrate-build
     @echo "Resetting DB and applying seeds..."
-    cd {{ backend_dir }} && DATABASE_URL="{{ db_url }}" ./target/debug/migrate reset --with-seed
+    @cd {{ backend_dir }} && DATABASE_URL="{{ db_url }}" ./target/debug/migrate reset --with-seed
 
 # Import the Flensburg tree cadastre into Green Ecolution.
 # Requires KATASTER_SOURCE_URL. Pass flags via ARGS, e.g. `just import-kataster-fl --dry-run`.
@@ -487,10 +489,10 @@ import-staging file="staging.sql" *ARGS:
 generate-sqlx: _migrate-build
     @echo "Refreshing sqlx offline cache against a clean migrated DB ({{ sqlx_prepare_db }})..."
     @command -v cargo-sqlx >/dev/null 2>&1 || { echo "sqlx-cli missing (cargo install sqlx-cli --no-default-features --features rustls,postgres)"; exit 1; }
-    -cd {{ backend_dir }} && DATABASE_URL="{{ sqlx_prepare_db_url }}" cargo sqlx database drop -y
-    cd {{ backend_dir }} && DATABASE_URL="{{ sqlx_prepare_db_url }}" cargo sqlx database create
-    cd {{ backend_dir }} && DATABASE_URL="{{ sqlx_prepare_db_url }}" ./target/debug/migrate up
-    cd {{ backend_dir }} && DATABASE_URL="{{ sqlx_prepare_db_url }}" cargo sqlx prepare --workspace -- --all-targets
+    @-cd {{ backend_dir }} && DATABASE_URL="{{ sqlx_prepare_db_url }}" cargo sqlx database drop -y
+    @cd {{ backend_dir }} && DATABASE_URL="{{ sqlx_prepare_db_url }}" cargo sqlx database create
+    @cd {{ backend_dir }} && DATABASE_URL="{{ sqlx_prepare_db_url }}" ./target/debug/migrate up
+    @cd {{ backend_dir }} && DATABASE_URL="{{ sqlx_prepare_db_url }}" cargo sqlx prepare --workspace -- --all-targets
 
 # Dump the OpenAPI spec from the Rust backend into the frontend client package
 [group('codegen')]

@@ -1,0 +1,503 @@
+use std::{
+    fs,
+    hash::{DefaultHasher, Hash, Hasher},
+    io,
+    path::{Path, PathBuf},
+    time::SystemTime,
+};
+
+use async_trait::async_trait;
+use serde::{Deserialize, Serialize};
+
+use super::{MANUAL_MIGRATION, migrate_fix};
+use crate::doctor::{Check, Env, Finding, Fix, Severity};
+
+pub(super) const THEME_DIR: &str = "frontend/keycloak-theme/dist_keycloak/theme/green-ecolution";
+pub(super) const TILES: &str = ".docker/infra/valhalla/custom_files/valhalla_tiles.tar";
+
+/// Newest modification time below `path`, ignoring `node_modules`; `None` when nothing is there.
+pub fn newest_mtime(path: &Path) -> io::Result<Option<SystemTime>> {
+    let metadata = match fs::metadata(path) {
+        Ok(metadata) => metadata,
+        Err(err) if err.kind() == io::ErrorKind::NotFound => return Ok(None),
+        Err(err) => return Err(err),
+    };
+    if !metadata.is_dir() {
+        return Ok(Some(metadata.modified()?));
+    }
+    let mut newest = None;
+    for entry in fs::read_dir(path)? {
+        let entry = entry?;
+        if entry.file_name() == "node_modules" {
+            continue;
+        }
+        newest = newest.max(newest_mtime(&entry.path())?);
+    }
+    Ok(newest)
+}
+
+fn newest_of(paths: &[PathBuf]) -> Result<Option<SystemTime>, String> {
+    paths.iter().try_fold(None, |newest, path| {
+        Ok(newest.max(newest_mtime(path).map_err(|err| err.to_string())?))
+    })
+}
+
+const PACKAGES: [(&str, &str); 3] = [
+    ("ui", "src"),
+    ("backend-client", "src"),
+    ("plugin-interface", "lib"),
+];
+
+pub struct PackageDist;
+
+#[async_trait]
+impl Check for PackageDist {
+    fn id(&self) -> &'static str {
+        "package-dist"
+    }
+
+    async fn diagnose(&self, env: &Env) -> Result<Vec<Finding>, String> {
+        let mut findings = Vec::new();
+        for (name, sources) in PACKAGES {
+            let dir = env.root.join("frontend/packages").join(name);
+            let package = format!("@green-ecolution/{name}");
+            let source = newest_of(&[dir.join(sources)])?;
+            let built = newest_of(&[dir.join("dist")])?;
+            let finding = match (source, built) {
+                (_, None) => {
+                    Finding::new(self.id(), Severity::Error, format!("{package} has no dist"))
+                }
+                (Some(source), Some(built)) if source > built => Finding::new(
+                    self.id(),
+                    Severity::Hint,
+                    format!("{package} dist is older than its sources"),
+                ),
+                _ => continue,
+            };
+            findings.push(
+                finding
+                    .subject(name)
+                    .detail(
+                        "Workspace packages are consumed from dist, so the app, its tests and \
+                         its build still see the old code.",
+                    )
+                    .fix(Fix {
+                        command: format!("pnpm --filter {package} run build"),
+                        cwd: "frontend".to_owned(),
+                        destructive: false,
+                    }),
+            );
+        }
+        Ok(findings)
+    }
+}
+
+const DOMAIN_SOURCES: [&str; 2] = [
+    "backend/crates/domain/src",
+    "backend/crates/domain-wasm/src",
+];
+
+fn collect_files(dir: &Path, out: &mut Vec<PathBuf>) -> io::Result<()> {
+    let entries = match fs::read_dir(dir) {
+        Ok(entries) => entries,
+        Err(err) if err.kind() == io::ErrorKind::NotFound => return Ok(()),
+        Err(err) => return Err(err),
+    };
+    for entry in entries {
+        let path = entry?.path();
+        if path.is_dir() {
+            collect_files(&path, out)?;
+        } else {
+            out.push(path);
+        }
+    }
+    Ok(())
+}
+
+fn sources_fingerprint(root: &Path) -> io::Result<u64> {
+    let mut hasher = DefaultHasher::new();
+    for source in DOMAIN_SOURCES {
+        let mut files = Vec::new();
+        collect_files(&root.join(source), &mut files)?;
+        files.sort();
+        for file in files {
+            file.strip_prefix(root).unwrap_or(&file).hash(&mut hasher);
+            fs::read(&file)?.hash(&mut hasher);
+        }
+    }
+    Ok(hasher.finish())
+}
+
+#[derive(Serialize, Deserialize)]
+struct SourcesStamp {
+    sources: u64,
+}
+
+fn stamp_path(root: &Path) -> PathBuf {
+    root.join(".geco/domain-wasm.json")
+}
+
+fn read_stamp(root: &Path) -> Option<u64> {
+    let raw = fs::read(stamp_path(root)).ok()?;
+    serde_json::from_slice::<SourcesStamp>(&raw)
+        .ok()
+        .map(|stamp| stamp.sources)
+}
+
+fn write_stamp(root: &Path, sources: u64) {
+    let path = stamp_path(root);
+    let _ = path.parent().map(fs::create_dir_all);
+    if let Ok(raw) = serde_json::to_vec(&SourcesStamp { sources }) {
+        let _ = fs::write(path, raw);
+    }
+}
+
+pub struct DomainWasm;
+
+#[async_trait]
+impl Check for DomainWasm {
+    fn id(&self) -> &'static str {
+        "domain-wasm"
+    }
+
+    async fn diagnose(&self, env: &Env) -> Result<Vec<Finding>, String> {
+        let sources = newest_of(&DOMAIN_SOURCES.map(|dir| env.root.join(dir)))?;
+        let built = newest_of(&[env.root.join("frontend/packages/domain-wasm/pkg")])?;
+        let fingerprint = sources_fingerprint(&env.root).ok();
+        let finding = match (sources, built) {
+            (_, None) => Finding::new(self.id(), Severity::Error, "domain-wasm/pkg is missing"),
+            // cargo sqlx prepare touches workspace sources without changing them, so a newer
+            // mtime only counts when the content differs from what the pkg was last current with.
+            (Some(sources), Some(built))
+                if sources > built
+                    && fingerprint.is_none_or(|now| read_stamp(&env.root) != Some(now)) =>
+            {
+                Finding::new(
+                    self.id(),
+                    Severity::Hint,
+                    "domain-wasm/pkg is older than the domain sources",
+                )
+            }
+            (Some(sources), Some(built)) => {
+                if sources <= built
+                    && let Some(fingerprint) = fingerprint
+                {
+                    write_stamp(&env.root, fingerprint);
+                }
+                return Ok(Vec::new());
+            }
+            (None, Some(_)) => return Ok(Vec::new()),
+        };
+        Ok(vec![
+            finding
+                .detail(
+                    "The frontend validates forms with the domain compiled to WebAssembly; \
+                     the dev server and the frontend build need an up-to-date pkg/.",
+                )
+                .fix(Fix::just("build-domain-wasm")),
+        ])
+    }
+}
+
+pub struct KeycloakTheme;
+
+#[async_trait]
+impl Check for KeycloakTheme {
+    fn id(&self) -> &'static str {
+        "keycloak-theme"
+    }
+
+    async fn diagnose(&self, env: &Env) -> Result<Vec<Finding>, String> {
+        // Docker creates the bind-mounted directory empty when it is missing.
+        if env.root.join(THEME_DIR).join("login").is_dir() {
+            return Ok(Vec::new());
+        }
+        Ok(vec![
+            Finding::new(
+                self.id(),
+                Severity::Error,
+                "the Keycloak login theme is not built",
+            )
+            .detail(format!("compose mounts {THEME_DIR} into Keycloak."))
+            .fix(Fix::just("build-keycloak-theme")),
+        ])
+    }
+}
+
+pub struct ValhallaTiles;
+
+#[async_trait]
+impl Check for ValhallaTiles {
+    fn id(&self) -> &'static str {
+        "valhalla-tiles"
+    }
+
+    async fn diagnose(&self, env: &Env) -> Result<Vec<Finding>, String> {
+        let valhalla_not_in_session =
+            !env.units.is_empty() && !env.units.iter().any(|unit| unit.name == "valhalla");
+        if valhalla_not_in_session || env.root.join(TILES).is_file() {
+            return Ok(Vec::new());
+        }
+        Ok(vec![
+            Finding::new(
+                self.id(),
+                Severity::Hint,
+                "the Valhalla routing tiles are missing",
+            )
+            .detail(
+                "Only the full profile runs Valhalla; building the tiles takes a while and \
+                     replaces the tiles directory.",
+            )
+            .fix(Fix::just("valhalla-tiles").destructive()),
+        ])
+    }
+}
+
+pub struct MigrateBinary;
+
+#[async_trait]
+impl Check for MigrateBinary {
+    fn id(&self) -> &'static str {
+        "migrate-binary"
+    }
+
+    async fn diagnose(&self, env: &Env) -> Result<Vec<Finding>, String> {
+        let Ok(built) = fs::metadata(env.root.join("backend/target/debug/migrate"))
+            .and_then(|metadata| metadata.modified())
+        else {
+            return Ok(Vec::new());
+        };
+        let newest = newest_of(&[env.root.join("backend/migrations")])?;
+        if !newest.is_some_and(|newest| newest > built) {
+            return Ok(Vec::new());
+        }
+        Ok(vec![
+            Finding::new(
+                self.id(),
+                Severity::Hint,
+                "target/debug/migrate is older than the newest migration",
+            )
+            .detail(format!(
+                "A stale migrate binary reports \"Migrations applied\" without applying the new \
+                 migration.\n{MANUAL_MIGRATION}"
+            ))
+            .fix(migrate_fix()),
+        ])
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::{
+        fs,
+        path::Path,
+        time::{Duration, SystemTime},
+    };
+
+    use chrono::Utc;
+
+    use super::*;
+    use crate::{
+        doctor::{Check, Severity, fake::test_env},
+        supervisor::{UnitState, UnitStatus},
+        units::{Origin, UnitKind},
+    };
+
+    fn at(secs: u64) -> SystemTime {
+        SystemTime::UNIX_EPOCH + Duration::from_secs(1_700_000_000 + secs)
+    }
+
+    fn touch(root: &Path, path: &str, secs: u64) {
+        let path = root.join(path);
+        fs::create_dir_all(path.parent().unwrap()).unwrap();
+        fs::write(&path, "").unwrap();
+        fs::File::options()
+            .write(true)
+            .open(&path)
+            .unwrap()
+            .set_modified(at(secs))
+            .unwrap();
+    }
+
+    async fn ids(check: &dyn Check, root: &Path) -> Vec<(String, Severity)> {
+        check
+            .diagnose(&test_env(root))
+            .await
+            .unwrap()
+            .into_iter()
+            .map(|f| (f.id, f.severity))
+            .collect()
+    }
+
+    #[test]
+    fn newest_mtime_walks_directories_but_skips_node_modules() {
+        let dir = tempfile::tempdir().unwrap();
+        touch(dir.path(), "a/one.ts", 10);
+        touch(dir.path(), "a/deep/two.ts", 20);
+        touch(dir.path(), "a/node_modules/x/three.js", 99);
+
+        assert_eq!(newest_mtime(&dir.path().join("a")).unwrap(), Some(at(20)));
+        assert_eq!(newest_mtime(&dir.path().join("missing")).unwrap(), None);
+    }
+
+    #[tokio::test]
+    async fn packages_with_a_missing_or_older_dist_are_reported() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        touch(root, "frontend/packages/ui/src/index.ts", 20);
+        touch(root, "frontend/packages/ui/dist/index.js", 10);
+        touch(root, "frontend/packages/backend-client/src/index.ts", 10);
+        touch(root, "frontend/packages/backend-client/dist/index.js", 20);
+        touch(root, "frontend/packages/plugin-interface/lib/index.ts", 10);
+
+        assert_eq!(
+            ids(&PackageDist, root).await,
+            [
+                ("package-dist:ui".to_owned(), Severity::Hint),
+                ("package-dist:plugin-interface".to_owned(), Severity::Error),
+            ]
+        );
+        let findings = PackageDist.diagnose(&test_env(root)).await.unwrap();
+        let fix = findings[0].fix.as_ref().unwrap();
+        assert_eq!(fix.command, "pnpm --filter @green-ecolution/ui run build");
+        assert_eq!(fix.cwd, "frontend");
+    }
+
+    #[tokio::test]
+    async fn domain_wasm_must_exist_and_be_newer_than_the_domain() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        touch(root, "backend/crates/domain/src/lib.rs", 20);
+        assert_eq!(
+            ids(&DomainWasm, root).await,
+            [("domain-wasm".to_owned(), Severity::Error)]
+        );
+
+        touch(root, "frontend/packages/domain-wasm/pkg/domain_wasm.js", 10);
+        assert_eq!(
+            ids(&DomainWasm, root).await,
+            [("domain-wasm".to_owned(), Severity::Hint)]
+        );
+
+        touch(root, "frontend/packages/domain-wasm/pkg/domain_wasm.js", 30);
+        assert!(ids(&DomainWasm, root).await.is_empty());
+    }
+
+    fn write_at(root: &Path, path: &str, content: &str, secs: u64) {
+        let path = root.join(path);
+        fs::create_dir_all(path.parent().unwrap()).unwrap();
+        fs::write(&path, content).unwrap();
+        fs::File::options()
+            .write(true)
+            .open(&path)
+            .unwrap()
+            .set_modified(at(secs))
+            .unwrap();
+    }
+
+    #[tokio::test]
+    async fn domain_wasm_ignores_sources_that_were_only_touched() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        let lib = "backend/crates/domain/src/lib.rs";
+        let pkg = "frontend/packages/domain-wasm/pkg/domain_wasm.js";
+        write_at(root, lib, "a", 10);
+        write_at(root, pkg, "", 20);
+        assert!(ids(&DomainWasm, root).await.is_empty());
+        assert!(root.join(".geco/domain-wasm.json").is_file());
+
+        write_at(root, lib, "a", 30);
+        assert!(
+            ids(&DomainWasm, root).await.is_empty(),
+            "a touch without a change is no staleness"
+        );
+
+        write_at(root, lib, "b", 40);
+        assert_eq!(
+            ids(&DomainWasm, root).await,
+            [("domain-wasm".to_owned(), Severity::Hint)]
+        );
+    }
+
+    #[tokio::test]
+    async fn domain_wasm_without_a_stamp_trusts_the_mtimes() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        write_at(root, "backend/crates/domain/src/lib.rs", "a", 30);
+        write_at(
+            root,
+            "frontend/packages/domain-wasm/pkg/domain_wasm.js",
+            "",
+            20,
+        );
+        assert_eq!(
+            ids(&DomainWasm, root).await,
+            [("domain-wasm".to_owned(), Severity::Hint)]
+        );
+    }
+    #[tokio::test]
+    async fn the_keycloak_theme_and_valhalla_tiles_must_exist() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        assert_eq!(
+            ids(&KeycloakTheme, root).await,
+            [("keycloak-theme".to_owned(), Severity::Error)]
+        );
+        let tiles = ValhallaTiles.diagnose(&test_env(root)).await.unwrap();
+        assert_eq!(tiles[0].severity, Severity::Hint);
+        assert!(tiles[0].fix.as_ref().unwrap().destructive);
+
+        fs::create_dir_all(root.join(THEME_DIR)).unwrap();
+        assert_eq!(
+            ids(&KeycloakTheme, root).await.len(),
+            1,
+            "an empty directory Docker created for the bind mount is no theme"
+        );
+        fs::create_dir_all(root.join(THEME_DIR).join("login")).unwrap();
+        touch(root, TILES, 1);
+        assert!(ids(&KeycloakTheme, root).await.is_empty());
+        assert!(ids(&ValhallaTiles, root).await.is_empty());
+    }
+
+    #[tokio::test]
+    async fn missing_tiles_matter_only_when_valhalla_is_part_of_the_session() {
+        let dir = tempfile::tempdir().unwrap();
+        let status = |name: &str| UnitStatus {
+            name: name.into(),
+            kind: UnitKind::Service,
+            origin: Origin::Compose,
+            state: UnitState::Ready,
+            since: Utc::now(),
+        };
+        let mut env = test_env(dir.path());
+
+        env.units = vec![status("db"), status("backend")];
+        assert!(ValhallaTiles.diagnose(&env).await.unwrap().is_empty());
+
+        env.units.push(status("valhalla"));
+        assert_eq!(ValhallaTiles.diagnose(&env).await.unwrap().len(), 1);
+    }
+
+    #[tokio::test]
+    async fn a_migrate_binary_older_than_the_newest_migration_is_stale() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        touch(root, "backend/migrations/20260101000000_init.sql", 20);
+        assert!(
+            ids(&MigrateBinary, root).await.is_empty(),
+            "no binary, nothing to say"
+        );
+
+        touch(root, "backend/target/debug/migrate", 10);
+        let findings = MigrateBinary.diagnose(&test_env(root)).await.unwrap();
+        assert_eq!(findings[0].id, "migrate-binary");
+        assert_eq!(
+            findings[0].fix.as_ref().unwrap().command,
+            "touch backend/crates/server/src/bin/migrate.rs && just migrate-up"
+        );
+        assert!(findings[0].detail.contains("cargo sqlx migrate run"));
+
+        touch(root, "backend/target/debug/migrate", 30);
+        assert!(ids(&MigrateBinary, root).await.is_empty());
+    }
+}

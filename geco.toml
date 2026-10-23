@@ -1,0 +1,94 @@
+# geco: units and profiles for the local stack. Compose services are read from compose.yaml;
+# a [unit.<service>] table without `kind` only adds dependencies or hooks to one of them.
+default_profile = "minimal"
+
+[logs]
+capacity = 50000
+
+[unit.migrations]
+kind = "oneshot"
+run = "just migrate-up"
+after = ["db"]
+verify = "migrations-applied"
+
+[unit.backend]
+kind = "process"
+cwd = "backend"
+run = "bacon --headless --job run -- --bin {{binary_name}}"
+after = ["migrations", "keycloak"]
+ready = { http = "http://localhost:3030/api/ready" }
+log_format = "tracing-json"
+
+[unit.backend.env]
+APP_ENVIRONMENT = "local"
+SQLX_OFFLINE = "true"
+APP_APPLICATION__HOST = "0.0.0.0"
+APP_APPLICATION__BASE_URL = "{{app_proto}}://{{app_host}}:{{app_port}}"
+APP_PLUGINS__PROXY__PUBLIC_URL = "{{app_proto}}://plugins.{{app_host}}:{{app_port}}"
+APP_AUTH__ISSUER_URL = "{{app_proto}}://auth.{{app_host}}:{{app_port}}/realms/green-ecolution"
+APP_AUTH__DEFAULT_REDIRECT_URL = "{{app_proto}}://{{app_host}}:{{app_port}}/auth/callback"
+APP_DATABASE__HOST = "{{postgres_host}}"
+APP_DATABASE__PORT = "{{postgres_port}}"
+APP_DATABASE__DATABASE_NAME = "{{postgres_db}}"
+APP_DATABASE__USERNAME = "{{postgres_user}}"
+APP_DATABASE__PASSWORD = "{{postgres_password}}"
+APP_LOG__LEVEL = "debug"
+APP_LOG__FORMAT = "json"
+
+[unit.frontend]
+kind = "process"
+cwd = "frontend"
+run = "pnpm run dev"
+ready = { tcp = "localhost:5173" }
+
+[unit.frontend.env]
+USE_TRAEFIK = "1"
+VITE_BACKEND_BASEURL = "/api"
+PUBLIC_DEV_URL = "{{app_proto}}://{{app_host}}:{{app_port}}"
+
+[unit.reverse-proxy]
+pre_start = ["just _acme-init"]
+builtin_hooks = ["traefik-dev-services"]
+
+[unit.valhalla]
+pre_start = ["just _ensure-valhalla"]
+
+[unit.build-release]
+kind = "oneshot"
+run = "just build-domain-wasm _compile-backend && cd frontend && pnpm install --frozen-lockfile && VITE_BACKEND_BASEURL=/api APP_VERSION={{app_version}} pnpm run build"
+
+[profile.minimal]
+units = ["db", "migrations", "keycloak", "backend", "frontend", "reverse-proxy"]
+
+[profile.full]
+extends = "minimal"
+units = ["valhalla", "streamlet", "pgadmin"]
+
+# Release binary and production frontend build, as `just run-prod` does.
+[profile.prod-like]
+extends = "minimal"
+units = ["build-release"]
+
+# The backend keeps the dev env: the request view needs its debug log level.
+[profile.prod-like.override.backend]
+run = "../bin/{{binary_name}}"
+after = ["build-release", "migrations", "keycloak"]
+
+[profile.prod-like.override.frontend]
+run = "pnpm run preview"
+after = ["build-release"]
+
+# Recipes the palette and `geco run` only run after a confirmation; doctor fixes that run
+# one of them ask as well.
+[tasks]
+destructive = [
+  "migrate-reset",
+  "infra-down",
+  "import-staging",
+  "seed-reset",
+  "seed-down",
+  "clean",
+  "test-clean",
+  "valhalla-tiles",
+  "dns-cleanup",
+]

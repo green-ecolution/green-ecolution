@@ -69,6 +69,79 @@ For a reproducible environment, use `nix develop`.
 | `just bench` | Run the domain micro-benchmarks (Criterion) |
 | `just bench-check` | Execute every benchmark once without measuring; this is what CI runs |
 
+### geco (optional developer console)
+
+`geco` starts the local stack as one dependency graph (compose services plus the backend via
+bacon and the Vite dev server), merges their logs and shows them in a terminal UI. `just`
+stays the documented default; geco is a convenience on top of it and reads its recipes and
+variables from the justfile.
+
+Inside `nix develop`, `geco` is already on the `PATH`. It is a small wrapper that builds geco
+from the working tree on first use and again after every change, so it always matches the
+checked-out branch; the build lands in `backend/target/geco`. `nix run .#geco` runs a geco
+built from the flake without entering the shell. Without Nix, install it with cargo:
+
+```bash
+cargo install --path backend/crates/devcli --locked   # installs the `geco` binary
+geco                      # TUI; starts the default profile if nothing runs yet
+geco up [--detach]        # start without the TUI (foreground log stream, or in the background)
+geco status [--json]      # unit states; exit code 1 while a unit is not ready
+geco logs backend -f      # follow one or more units; -F 'level>=warn "jwks"' filters
+geco trace <request-id>   # one request's log lines, indented by span (a unique prefix is enough)
+geco doctor [--fix]       # known setup pitfalls with their fix; --deep adds the slow checks
+geco profile [NAME]       # list the profiles, or switch the running stack to NAME
+geco restart backend      # --cascade also restarts dependent units
+geco run migrate-up       # run a just recipe as a task of the running stack (plain `just` without one)
+geco completions zsh      # completion script; e.g. `source <(geco completions zsh)` in ~/.zshrc
+geco down                 # stop everything geco started
+```
+
+In the TUI, `?` lists the keys of the current view in a box that closes with `?` or `Esc`.
+`:` or `Ctrl-K` opens a command palette that searches every action: starting,
+stopping and restarting units, switching profiles, running recipes, applying doctor fixes and
+setting the log filter. Recipes with parameters ask for them in the status line. Recipes listed
+under `[tasks] destructive` in `geco.toml` ask for confirmation first, and `geco run` does the
+same unless `--yes` is given. That flag belongs to geco and goes before the recipe. The
+recipe's own flags follow its arguments, for example
+`geco run --yes import-staging staging.sql --yes`; directly after the recipe name, geco would
+still read `--yes` as its own. Tasks run without stdin, so a recipe that prompts needs its own
+flag to skip the question. A running recipe shows up as a temporary unit and disappears once it
+succeeded.
+
+While a local unit compiles Rust code, for example bacon after a file change or the `migrate`
+build in `migrations`, the TUI shows a build panel above the status line. It lists cargo's
+progress per unit with the crates done out of the total, the crates compiling right now and the
+elapsed time, and keeps a finished or failed build there for five seconds. For this geco sets
+`CARGO_TERM_PROGRESS_WHEN=always` and `CARGO_TERM_PROGRESS_WIDTH=200` for every local unit,
+since cargo draws no progress bar into a pipe otherwise; a unit that sets either variable in
+its `env` keeps its own value.
+
+In a terminal, `geco up --detach` shows the start-up live and returns once all units are ready.
+It exits with 1 when the start-up settled with failures; the supervisor keeps running in that
+case, so `geco logs` and `geco restart` still work. Ctrl-C only stops watching and leaves the
+start running in the background. Without a terminal, or with `NO_COLOR` set, it returns as soon
+as the supervisor answers.
+
+Units and profiles (`minimal`, `full`, `prod-like`) are defined in `geco.toml` at the
+repository root; a profile can extend another and override local units. Switching profiles at
+runtime restarts the units whose definition or dependencies changed, together with the units
+that depend on them, and also starts units that were stopped or failed; everything else keeps
+running. In the TUI, `p` switches the profile.
+Runtime state lives in `.geco/` and is git-ignored. geco needs Linux or macOS.
+
+The filter language combines terms with AND: `level>=warn`, `level:warn,error`,
+`unit:backend,db`, `target:sqlx` (prefix), `req:<id prefix>`, `since:5m` and quoted or bare
+text, matched case-insensitively against the message. In the TUI, `/` opens the same filter
+and `t` lists the backend's requests next to the selected request's trace.
+
+`geco doctor` checks for known local-setup pitfalls: a dev database behind the
+migrations, a stale `migrate` binary, an outdated `.sqlx` cache, workspace packages built from
+an old `dist`, a missing or stale `domain-wasm/pkg`, testcontainer leftovers, the missing
+Keycloak theme or Valhalla tiles, missing tools and occupied ports. In the TUI, `d` lists the
+findings and `f` runs a fix after asking. `r` checks again and `R` adds the slow checks; while a
+check or fix runs, the doctor title and the status line show it with a spinner and the elapsed
+time, and the status line reports the result once it is done.
+
 ### Benchmarks
 
 There are two separate tools, because the two questions they answer need
@@ -452,6 +525,8 @@ backend/                  Cargo workspace (Rust API)
                              Keycloak, MQTT, composition root). Uses `domain`
                              with the `sqlx` feature enabled. Produces the
                              `green-ecolution` and `migrate` binaries.
+    devcli/                  `geco` developer console (TUI + CLI); not part of
+                             any deployed artifact.
   migrations/                sqlx-managed SQL migrations (workspace root)
   seeds/                     SQL seed data
   config/                    YAML config (base, local, staging, demo, production)
