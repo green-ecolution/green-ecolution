@@ -9,7 +9,7 @@ use ratatui::{
 };
 
 use super::{
-    app::{App, LogScope, Mode, Pane},
+    app::{Activity, App, LogScope, Mode, Pane},
     help::{Help, HelpLine},
     palette::Palette,
     requests::RequestOrder,
@@ -38,6 +38,18 @@ const UNIT_COLORS: [Color; theme::UNIT_SLOTS] = [
 const BUILD_LINGER: TimeDelta = TimeDelta::seconds(5);
 
 const BUILD_NAME_WIDTH: usize = 14;
+
+const SPINNER: [&str; 10] = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
+
+fn activity(activity: &Activity, now: DateTime<Utc>) -> String {
+    let elapsed = (now - activity.since).num_milliseconds().max(0) / 100;
+    let frame = SPINNER[usize::try_from(elapsed).unwrap_or(0) % SPINNER.len()];
+    format!(
+        "{frame} {} {}",
+        activity.label,
+        theme::ago(activity.since, now)
+    )
+}
 
 /// Returns the list pane, the detail pane, the build panel and the status line.
 fn areas(area: Rect, mode: Mode, builds: &[&Build]) -> [Rect; 4] {
@@ -113,7 +125,7 @@ pub fn draw(frame: &mut Frame, app: &App) {
             draw_trace(frame, detail, app);
         }
         Mode::Doctor => {
-            draw_findings(frame, list, app);
+            draw_findings(frame, list, app, now);
             draw_finding_detail(frame, detail, app);
         }
     }
@@ -304,14 +316,23 @@ fn severity_style(severity: Severity) -> (&'static str, Color) {
     }
 }
 
-fn draw_findings(frame: &mut Frame, area: Rect, app: &App) {
-    let title = format!(" Doctor · {} finding(s) ", app.findings.len());
+fn draw_findings(frame: &mut Frame, area: Rect, app: &App, now: DateTime<Utc>) {
+    let title = match &app.checking {
+        Some(check) => format!(
+            " Doctor · {} finding(s) · {} ",
+            app.findings.len(),
+            activity(check, now)
+        ),
+        None => format!(" Doctor · {} finding(s) ", app.findings.len()),
+    };
     if app.findings.is_empty() {
         let block = pane_block(app, Pane::Findings, title);
-        frame.render_widget(
-            Paragraph::new("no findings; r checks again, R includes the slow checks").block(block),
-            area,
-        );
+        let text = if app.checking.is_some() {
+            "checking…"
+        } else {
+            "no findings; r checks again, R includes the slow checks"
+        };
+        frame.render_widget(Paragraph::new(text).block(block), area);
         return;
     }
     let items: Vec<ListItem> = app
@@ -596,6 +617,12 @@ fn draw_status(frame: &mut Frame, area: Rect, app: &App, now: DateTime<Utc>) {
     }
     head.push(format!("{ready}/{} ready", app.units.len()));
     let mut parts = vec![head.join(" · ")];
+    parts.extend(
+        [&app.checking, &app.fixing]
+            .into_iter()
+            .flatten()
+            .map(|running| activity(running, now)),
+    );
     if app.mode == Mode::Requests {
         parts.push(format!("{} requests", app.requests.len()));
     }
@@ -741,6 +768,57 @@ mod tests {
         assert!(screen.contains("profile full"), "{screen}");
         assert!(screen.contains("profile minimal"), "{screen}");
         assert!(screen.contains("> profile"), "{screen}");
+    }
+
+    #[test]
+    fn a_running_check_and_fix_show_up_in_the_doctor_and_the_status_line() {
+        let mut app = App::new(true);
+        let press =
+            |app: &mut App, code| app.update(Msg::Key(KeyEvent::new(code, KeyModifiers::NONE)));
+        press(&mut app, KeyCode::Char('d'));
+        press(&mut app, KeyCode::Char('R'));
+        let screen = render(&app);
+        let doctor = screen.lines().next().unwrap();
+        assert!(doctor.contains("Doctor · 0 finding(s) · "), "{screen}");
+        assert!(doctor.contains(" deep check 0s"), "{screen}");
+        assert!(screen.contains("checking…"), "{screen}");
+        let status = screen.lines().last().unwrap();
+        assert!(status.contains(" deep check 0s"), "{screen}");
+
+        app.update(Msg::Findings(vec![
+            Finding::new("sqlx", Severity::Error, "stale query cache")
+                .fix(Fix::just("generate-sqlx")),
+        ]));
+        press(&mut app, KeyCode::Char('f'));
+        press(&mut app, KeyCode::Char('y'));
+        let screen = render(&app);
+        let status = screen.lines().last().unwrap();
+        assert!(status.contains(" fix sqlx 0s"), "{screen}");
+
+        app.update(Msg::Checked(Ok(crate::doctor::Report::default())));
+        app.update(Msg::Fixed(Ok(())));
+        let screen = render(&app);
+        assert!(!screen.contains("deep check 0s"), "{screen}");
+        assert!(!screen.contains("fix sqlx 0s"), "{screen}");
+        assert!(screen.contains("fix sqlx done"), "{screen}");
+    }
+
+    #[test]
+    fn the_spinner_turns_every_tenth_of_a_second() {
+        let since = Utc::now();
+        let running = Activity {
+            label: "deep check".into(),
+            since,
+        };
+        assert_eq!(activity(&running, since), "⠋ deep check 0s");
+        assert_eq!(
+            activity(&running, since + TimeDelta::milliseconds(250)),
+            "⠹ deep check 0s"
+        );
+        assert_eq!(
+            activity(&running, since + TimeDelta::seconds(12)),
+            "⠋ deep check 12s"
+        );
     }
 
     #[test]

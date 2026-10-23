@@ -138,6 +138,7 @@ async fn event_loop(
     let (trace_tx, mut trace_rx) = mpsc::unbounded_channel::<Trace>();
     let (profiles_tx, mut profiles_rx) = mpsc::unbounded_channel::<Vec<String>>();
     let (recipes_tx, mut recipes_rx) = mpsc::unbounded_channel::<Vec<Recipe>>();
+    let (done_tx, mut done_rx) = mpsc::unbounded_channel::<Msg>();
     fetch_recipes(client, &recipes_tx, &flash_tx);
 
     let mut frames = tokio::time::interval(Duration::from_millis(33));
@@ -194,9 +195,10 @@ async fn event_loop(
             Some(trace) = trace_rx.recv() => Msg::Trace(trace),
             Some(profiles) = profiles_rx.recv() => Msg::Profiles(profiles),
             Some(recipes) = recipes_rx.recv() => Msg::Recipes(recipes),
+            Some(done) = done_rx.recv() => done,
             _ = ticks.tick() => Msg::Tick,
             _ = frames.tick() => {
-                if dirty {
+                if dirty || app.busy() {
                     terminal.draw(|frame| view::draw(frame, &app))?;
                     dirty = false;
                 }
@@ -247,6 +249,36 @@ async fn event_loop(
                 });
             }
             Some(Effect::FetchRecipes) => fetch_recipes(client, &recipes_tx, &flash_tx),
+            Some(Effect::Doctor { deep }) => {
+                let client = client.clone();
+                let done = done_tx.clone();
+                tokio::spawn(async move {
+                    let outcome = match client.call(Call::Doctor { deep }).await {
+                        Ok(Reply::Report(report)) => Ok(report),
+                        Ok(other) => {
+                            Err(format!("unexpected reply from the supervisor: {other:?}"))
+                        }
+                        Err(err) => Err(err.to_string()),
+                    };
+                    let _ = done.send(Msg::Checked(outcome));
+                });
+            }
+            Some(Effect::Fix { finding }) => {
+                let client = client.clone();
+                let done = done_tx.clone();
+                tokio::spawn(async move {
+                    let call = Call::Fix {
+                        finding,
+                        confirmed: true,
+                    };
+                    let outcome = client
+                        .call(call)
+                        .await
+                        .map(drop)
+                        .map_err(|err| err.to_string());
+                    let _ = done.send(Msg::Fixed(outcome));
+                });
+            }
             Some(Effect::Run {
                 recipe,
                 args,

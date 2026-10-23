@@ -138,7 +138,9 @@ and `t` lists the backend's requests next to the selected request's trace.
 migrations, a stale `migrate` binary, an outdated `.sqlx` cache, workspace packages built from
 an old `dist`, a missing or stale `domain-wasm/pkg`, testcontainer leftovers, the missing
 Keycloak theme or Valhalla tiles, missing tools and occupied ports. In the TUI, `d` lists the
-findings and `f` runs a fix after asking.
+findings and `f` runs a fix after asking. `r` checks again and `R` adds the slow checks; while a
+check or fix runs, the doctor title and the status line show it with a spinner and the elapsed
+time, and the status line reports the result once it is done.
 
 ### Benchmarks
 

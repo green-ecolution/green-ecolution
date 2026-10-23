@@ -1,6 +1,6 @@
 use std::collections::VecDeque;
 
-use chrono::Utc;
+use chrono::{DateTime, Utc};
 
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
@@ -11,7 +11,7 @@ use super::{
     requests::Requests,
 };
 use crate::{
-    doctor::{Finding, Severity},
+    doctor::{Finding, Report, Severity},
     ipc::Call,
     logs::{Filter, LogRecord, builds::Build, trace::Trace},
     supervisor::{UnitState, UnitStatus},
@@ -69,6 +69,10 @@ pub enum Msg {
     Disconnected,
     /// The supervisor this TUI hosts was told to shut down.
     HostStopped,
+    /// The supervisor's answer to `Effect::Doctor`.
+    Checked(Result<Report, String>),
+    /// The supervisor's answer to `Effect::Fix`.
+    Fixed(Result<(), String>),
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -82,6 +86,28 @@ pub enum Effect {
         confirmed: bool,
     },
     Quit,
+    Doctor {
+        deep: bool,
+    },
+    Fix {
+        finding: String,
+    },
+}
+
+/// A doctor run or fix the supervisor is still working on.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Activity {
+    pub label: String,
+    pub since: DateTime<Utc>,
+}
+
+impl Activity {
+    fn new(label: impl Into<String>) -> Self {
+        Self {
+            label: label.into(),
+            since: Utc::now(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -120,6 +146,8 @@ pub struct App {
     pub flash: Option<String>,
     pub help: Option<Help>,
     pub disconnected: bool,
+    pub checking: Option<Activity>,
+    pub fixing: Option<Activity>,
 }
 
 impl App {
@@ -152,6 +180,8 @@ impl App {
             flash: None,
             help: None,
             disconnected: false,
+            checking: None,
+            fixing: None,
         }
     }
 
@@ -229,6 +259,33 @@ impl App {
                 }
             }
             Msg::Flash(text) => self.flash = Some(text),
+            Msg::Checked(outcome) => {
+                let label = self
+                    .checking
+                    .take()
+                    .map_or_else(|| "check".to_owned(), |activity| activity.label);
+                self.flash = Some(match outcome {
+                    Ok(report) if report.skipped.is_empty() => {
+                        format!("{label} done · {} finding(s)", report.findings.len())
+                    }
+                    Ok(report) => format!(
+                        "{label} done · {} finding(s) · {} skipped",
+                        report.findings.len(),
+                        report.skipped.len()
+                    ),
+                    Err(err) => format!("{label} failed: {err}"),
+                });
+            }
+            Msg::Fixed(outcome) => {
+                let label = self
+                    .fixing
+                    .take()
+                    .map_or_else(|| "fix".to_owned(), |activity| activity.label);
+                self.flash = Some(match outcome {
+                    Ok(()) => format!("{label} done"),
+                    Err(err) => err,
+                });
+            }
             Msg::Tick => {}
             Msg::Disconnected => {
                 self.disconnected = true;
@@ -268,10 +325,10 @@ impl App {
         }
         if let Some(finding) = self.pending_fix.take() {
             if key.code == KeyCode::Char('y') {
-                return Some(Effect::Call(Call::Fix {
+                self.fixing = Some(Activity::new(format!("fix {}", finding.check)));
+                return Some(Effect::Fix {
                     finding: finding.id,
-                    confirmed: true,
-                }));
+                });
             }
             self.flash = Some("fix cancelled".to_owned());
             return None;
@@ -337,12 +394,8 @@ impl App {
             KeyCode::Char('o') if self.mode == Mode::Requests => self.requests.toggle_order(),
             KeyCode::Char('f') => self.ask_fix(),
             KeyCode::Char('p') if !ctrl => return self.open_palette("profile "),
-            KeyCode::Char('r') if self.mode == Mode::Doctor => {
-                return Some(Effect::Call(Call::Doctor { deep: false }));
-            }
-            KeyCode::Char('R') if self.mode == Mode::Doctor => {
-                return Some(Effect::Call(Call::Doctor { deep: true }));
-            }
+            KeyCode::Char('r') if self.mode == Mode::Doctor => return self.check(false),
+            KeyCode::Char('R') if self.mode == Mode::Doctor => return self.check(true),
             KeyCode::Enter if self.focus == Pane::Requests => self.focus = Pane::Trace,
             KeyCode::Enter if self.focus == Pane::Units => {
                 self.scope = LogScope::Selected;
@@ -536,7 +589,7 @@ impl App {
                 Some(Effect::Call(Call::SwitchProfile { profile }))
             }
             Action::Fix(finding) => {
-                self.pending_fix = Some(finding);
+                self.offer_fix(finding);
                 None
             }
             Action::Filter => {
@@ -584,6 +637,29 @@ impl App {
             .unwrap_or_else(|| self.selected.min(self.units.len().saturating_sub(1)));
     }
 
+    fn check(&mut self, deep: bool) -> Option<Effect> {
+        if self.checking.is_some() {
+            self.flash = Some("a check is already running".to_owned());
+            return None;
+        }
+        self.checking = Some(Activity::new(if deep { "deep check" } else { "check" }));
+        Some(Effect::Doctor { deep })
+    }
+
+    /// Asks for confirmation unless another fix is still running; the supervisor runs one at a time.
+    fn offer_fix(&mut self, finding: Finding) {
+        if self.fixing.is_some() {
+            self.flash = Some("another fix is still running".to_owned());
+        } else {
+            self.pending_fix = Some(finding);
+        }
+    }
+
+    /// Whether a running check or fix needs the spinner redrawn.
+    pub fn busy(&self) -> bool {
+        self.checking.is_some() || self.fixing.is_some()
+    }
+
     fn ask_fix(&mut self) {
         let finding = match self.mode {
             Mode::Doctor => self.findings.get(self.finding_selected).cloned(),
@@ -592,7 +668,7 @@ impl App {
                 .and_then(|unit| self.unit_finding(&unit.name).cloned()),
         };
         match finding {
-            Some(finding) if finding.fix.is_some() => self.pending_fix = Some(finding),
+            Some(finding) if finding.fix.is_some() => self.offer_fix(finding),
             Some(_) => self.flash = Some("this finding has no automatic fix".to_owned()),
             None => self.flash = Some("nothing to fix here".to_owned()),
         }
@@ -647,7 +723,7 @@ pub(crate) mod tests {
     use super::*;
     use crate::{
         config::LogFormat,
-        doctor::Fix,
+        doctor::{Fix, Skipped},
         logs::{
             parse_line,
             trace::{Trace, tests::finished_request},
@@ -1451,12 +1527,13 @@ pub(crate) mod tests {
         );
         assert_eq!(
             app.update(key(KeyCode::Char('y'))),
-            Some(Effect::Call(Call::Fix {
+            Some(Effect::Fix {
                 finding: "dev-db-migrations".into(),
-                confirmed: true
-            }))
+            })
         );
         assert!(app.pending_fix.is_none());
+        app.update(Msg::Fixed(Ok(())));
+        assert_eq!(app.flash.as_deref(), Some("fix dev-db-migrations done"));
 
         app.update(key(KeyCode::Char('j')));
         app.update(key(KeyCode::Char('f')));
@@ -1472,10 +1549,66 @@ pub(crate) mod tests {
 
         assert_eq!(
             app.update(key(KeyCode::Char('R'))),
-            Some(Effect::Call(Call::Doctor { deep: true }))
+            Some(Effect::Doctor { deep: true })
         );
         app.update(key(KeyCode::Esc));
         assert_eq!(app.mode, Mode::Logs);
+    }
+
+    #[test]
+    fn a_running_check_is_tracked_until_its_report_arrives() {
+        let mut app = app_with_two_units();
+        app.update(key(KeyCode::Char('d')));
+        assert_eq!(
+            app.update(key(KeyCode::Char('R'))),
+            Some(Effect::Doctor { deep: true })
+        );
+        assert_eq!(
+            app.checking.as_ref().map(|a| a.label.as_str()),
+            Some("deep check")
+        );
+        assert!(app.busy());
+
+        assert_eq!(app.update(key(KeyCode::Char('r'))), None);
+        assert_eq!(app.flash.as_deref(), Some("a check is already running"));
+
+        app.update(Msg::Checked(Ok(Report {
+            findings: findings(),
+            skipped: vec![Skipped {
+                check: "ports".into(),
+                reason: "docker is down".into(),
+            }],
+        })));
+        assert!(!app.busy());
+        assert_eq!(
+            app.flash.as_deref(),
+            Some("deep check done · 3 finding(s) · 1 skipped")
+        );
+
+        app.update(key(KeyCode::Char('r')));
+        app.update(Msg::Checked(Err("connection closed".into())));
+        assert_eq!(
+            app.flash.as_deref(),
+            Some("check failed: connection closed")
+        );
+    }
+
+    #[test]
+    fn a_second_fix_waits_for_the_running_one() {
+        let mut app = app_with_two_units();
+        app.update(Msg::Findings(findings()));
+        app.update(key(KeyCode::Char('d')));
+        app.update(key(KeyCode::Char('f')));
+        app.update(key(KeyCode::Char('y')));
+        assert!(app.fixing.is_some());
+
+        app.update(key(KeyCode::Char('f')));
+        assert!(app.pending_fix.is_none());
+        assert_eq!(app.flash.as_deref(), Some("another fix is still running"));
+
+        app.update(Msg::Fixed(Err("the fix failed: exit 1".into())));
+        assert!(app.fixing.is_none());
+        assert_eq!(app.flash.as_deref(), Some("the fix failed: exit 1"));
     }
 
     #[test]
