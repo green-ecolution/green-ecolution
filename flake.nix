@@ -190,12 +190,60 @@
             };
           };
 
+          geco = pkgs.rustPlatform.buildRustPackage {
+            inherit version;
+            pname = "geco";
+            src = lib.cleanSource ./backend;
+
+            cargoLock = {
+              lockFile = ./backend/Cargo.lock;
+            };
+
+            nativeBuildInputs = with pkgs; [
+              clang
+              lld
+            ];
+
+            cargoBuildFlags = [
+              "-p"
+              "devcli"
+            ];
+
+            # Tests read geco.toml from the repository root, outside of src
+            doCheck = false;
+
+            meta = meta // {
+              description = "geco: developer console for the Green Ecolution stack";
+              mainProgram = "geco";
+            };
+          };
+
           default = backend;
         }
       );
 
       devShells = forEachSupportedSystem (
-        { pkgs }: {
+        { pkgs }:
+        let
+          # Builds from the working tree rather than the flake source, so geco
+          # always matches the checked-out branch. Own target dir: bacon holds the
+          # lock on backend/target while geco runs it. Thin LTO and one codegen
+          # unit from the release profile would make every rebuild a full one.
+          # The overrides apply to the build only; geco passes its environment on
+          # to bacon and the just recipes, which must keep the regular settings.
+          geco = pkgs.writeShellScriptBin "geco" ''
+            root=$(${pkgs.git}/bin/git rev-parse --show-toplevel) || exit 1
+            target="$root/backend/target/geco"
+            CARGO_TARGET_DIR="$target" \
+            CARGO_PROFILE_RELEASE_LTO=false \
+            CARGO_PROFILE_RELEASE_CODEGEN_UNITS=16 \
+            CARGO_PROFILE_RELEASE_INCREMENTAL=true \
+              cargo build --quiet --release --locked \
+                --manifest-path "$root/backend/Cargo.toml" -p devcli || exit 1
+            exec "$target/release/geco" "$@"
+          '';
+        in
+        {
           default = pkgs.mkShell {
             name = "dev-shell";
             packages = with pkgs; [
@@ -221,6 +269,7 @@
               lld
               bacon
               wasm-pack
+              geco
             ];
             shellHook = ''
               echo "Dev shell loaded 🧪"

@@ -76,6 +76,11 @@ bacon and the Vite dev server), merges their logs and shows them in a terminal U
 stays the documented default; geco is a convenience on top of it and reads its recipes and
 variables from the justfile.
 
+Inside `nix develop`, `geco` is already on the `PATH`. It is a small wrapper that builds geco
+from the working tree on first use and again after every change, so it always matches the
+checked-out branch; the build lands in `backend/target/geco`. `nix run .#geco` runs a geco
+built from the flake without entering the shell. Without Nix, install it with cargo:
+
 ```bash
 cargo install --path backend/crates/devcli --locked   # installs the `geco` binary
 geco                      # TUI; starts the default profile if nothing runs yet
