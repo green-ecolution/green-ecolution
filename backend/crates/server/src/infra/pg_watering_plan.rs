@@ -51,6 +51,7 @@ struct WateringPlanViewRow {
     additional_informations: Option<Value>,
     transporter_id: Option<RawId>,
     trailer_id: Option<RawId>,
+    transporter_tank_used: bool,
     cluster_ids: Vec<RawId>,
     user_ids: Vec<RawId>,
     organization_id: RawId,
@@ -77,6 +78,7 @@ impl From<WateringPlanViewRow> for WateringPlanView {
             user_ids: row.user_ids,
             transporter_id,
             trailer_id,
+            transporter_tank_used: row.transporter_tank_used,
             cancellation_note: Some(row.cancellation_note).filter(|s| !s.is_empty()),
             refill_count: row.refill_count,
             duration: std::time::Duration::from_secs_f64(row.duration),
@@ -90,7 +92,7 @@ impl From<WateringPlanViewRow> for WateringPlanView {
 const WATERING_PLAN_COLUMNS: &str = "wp.id, wp.updated_at, wp.date, wp.description, \
     wp.start_point_name, wp.status, wp.distance, wp.total_water_required, \
     wp.cancellation_note, wp.refill_count, wp.duration, wp.provider, \
-    wp.additional_informations, wp.organization_id, \
+    wp.additional_informations, wp.organization_id, wp.transporter_tank_used, \
     (ARRAY_AGG(vwp.vehicle_id) FILTER (WHERE vwp.role = 'transporter'))[1] AS transporter_id, \
     (ARRAY_AGG(vwp.vehicle_id) FILTER (WHERE vwp.role = 'trailer'))[1] AS trailer_id, \
     COALESCE(ARRAY_AGG(DISTINCT twp.tree_cluster_id) FILTER (WHERE twp.tree_cluster_id IS NOT NULL), ARRAY[]::uuid[]) AS cluster_ids, \
@@ -117,6 +119,7 @@ impl WateringPlanReader for PgWateringPlanRepository {
             additional_informations: Option<Value>,
             transporter_id: Option<RawId>,
             trailer_id: Option<RawId>,
+            transporter_tank_used: bool,
             cluster_ids: Vec<RawId>,
             user_ids: Vec<RawId>,
             route_geometry: Option<String>,
@@ -130,7 +133,7 @@ impl WateringPlanReader for PgWateringPlanRepository {
                       wp.distance, wp.total_water_required, wp.cancellation_note,
                       wp.refill_count, wp.duration,
                       wp.provider, wp.additional_informations,
-                      wp.organization_id,
+                      wp.organization_id, wp.transporter_tank_used,
                       ST_AsGeoJSON(wp.route_geometry) AS route_geometry,
                       (ARRAY_AGG(vwp.vehicle_id) FILTER (WHERE vwp.role = 'transporter'))[1] AS "transporter_id: RawId",
                       (ARRAY_AGG(vwp.vehicle_id) FILTER (WHERE vwp.role = 'trailer'))[1] AS "trailer_id: RawId",
@@ -187,6 +190,7 @@ impl WateringPlanReader for PgWateringPlanRepository {
             user_ids: row.user_ids,
             transporter_id,
             trailer_id,
+            transporter_tank_used: row.transporter_tank_used,
             cancellation_note: Some(row.cancellation_note).filter(|s| !s.is_empty()),
             refill_count: row.refill_count,
             duration: std::time::Duration::from_secs_f64(row.duration),
@@ -207,7 +211,7 @@ impl WateringPlanReader for PgWateringPlanRepository {
                       wp.distance, wp.total_water_required, wp.cancellation_note,
                       wp.refill_count, wp.duration,
                       wp.provider, wp.additional_informations,
-                      wp.organization_id,
+                      wp.organization_id, wp.transporter_tank_used,
                       (ARRAY_AGG(vwp.vehicle_id) FILTER (WHERE vwp.role = 'transporter'))[1] AS "transporter_id: RawId",
                       (ARRAY_AGG(vwp.vehicle_id) FILTER (WHERE vwp.role = 'trailer'))[1] AS "trailer_id: RawId",
                       COALESCE(ARRAY_AGG(DISTINCT twp.tree_cluster_id) FILTER (WHERE twp.tree_cluster_id IS NOT NULL), ARRAY[]::uuid[]) AS "cluster_ids!: Vec<RawId>",
@@ -348,7 +352,8 @@ async fn persist_plan(
             provider = $10,
             additional_informations = $11,
             route_geometry = ST_GeomFromGeoJSON($12::text),
-            start_point_name = $13
+            start_point_name = $13,
+            transporter_tank_used = $14
         WHERE id = $1"#,
         plan.id.value(),
         plan.date.date_naive(),
@@ -363,6 +368,7 @@ async fn persist_plan(
         plan.provenance().additional_info(),
         geometry_to_geojson(plan.route_geometry()) as Option<String>,
         plan.start_point_name.as_deref(),
+        plan.transporter_tank_used(),
     )
     .execute(&mut **tx)
     .await?;
@@ -502,8 +508,8 @@ impl WateringPlanWriter for PgWateringPlanRepository {
 
         let plan_id = Id::<WateringPlan>::new_v7();
         sqlx::query!(
-            r#"INSERT INTO watering_plans (id, date, description, status, provider, additional_informations, start_point_name, organization_id)
-            VALUES ($1, $2, $3, 'planned', $4, $5, $6, $7)"#,
+            r#"INSERT INTO watering_plans (id, date, description, status, provider, additional_informations, start_point_name, organization_id, transporter_tank_used)
+            VALUES ($1, $2, $3, 'planned', $4, $5, $6, $7, $8)"#,
             plan_id.value(),
             draft.date.date_naive(),
             draft.description.as_deref().unwrap_or(""),
@@ -511,6 +517,7 @@ impl WateringPlanWriter for PgWateringPlanRepository {
             draft.provenance.additional_info(),
             draft.start_point_name.as_deref(),
             draft.organization_id.value(),
+            draft.transporter_tank_used,
         )
         .execute(&mut *tx)
         .await?;

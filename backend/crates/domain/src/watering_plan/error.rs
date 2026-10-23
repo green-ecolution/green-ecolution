@@ -24,4 +24,6 @@ pub enum WateringPlanError {
     /// have exactly one evaluation entry.
     #[error("evaluation missing for cluster {0}")]
     EvaluationMissingForCluster(Id<TreeCluster>),
+    #[error("the transporter's tank can only be left out when a trailer is attached")]
+    TransporterTankRequired,
 }

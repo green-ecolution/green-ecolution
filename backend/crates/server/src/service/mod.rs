@@ -274,6 +274,7 @@ fn watering_plan_code(e: &WateringPlanError) -> &'static str {
         WateringPlanError::EvaluationMissingForCluster(_) => {
             "watering_plan.evaluation_missing_for_cluster"
         }
+        WateringPlanError::TransporterTankRequired => "watering_plan.transporter_tank_required",
         WateringPlanError::Validation(_) => "request.invalid_input",
     }
 }

@@ -1115,3 +1115,135 @@ async fn two_organizations_plan_with_their_own_water_demand() {
     assert_eq!(plan_a["total_water_required"], 150.0, "3 trees x 50 l");
     assert_eq!(plan_b["total_water_required"], 600.0, "3 trees x 200 l");
 }
+
+#[tokio::test]
+async fn watering_plan_uses_transporter_tank_by_default() {
+    let app = spawn_app().await;
+    let transporter = create_transporter(&app).await;
+    let tid = transporter["id"].as_str().unwrap();
+
+    let response = app
+        .post_json("/api/v1/watering-plans", &plan_body(tid, vec![]))
+        .await;
+
+    assert_eq!(response.status().as_u16(), 201);
+    let plan: serde_json::Value = response.json().await.unwrap();
+    assert_eq!(plan["transporter_tank_used"], true);
+}
+
+#[tokio::test]
+async fn watering_plan_with_trailer_may_skip_transporter_tank() {
+    let app = spawn_app().await;
+    let transporter = create_transporter(&app).await;
+    let tid = transporter["id"].as_str().unwrap();
+    let trailer = create_trailer(&app).await;
+
+    let mut body = plan_body(tid, vec![]);
+    body["trailer_id"] = trailer["id"].clone();
+    body["transporter_tank_used"] = serde_json::json!(false);
+    let response = app.post_json("/api/v1/watering-plans", &body).await;
+    assert_eq!(response.status().as_u16(), 201);
+    let created: serde_json::Value = response.json().await.unwrap();
+    let id = created["id"].as_str().unwrap();
+
+    let got: serde_json::Value = app
+        .get(&format!("/api/v1/watering-plans/{id}"))
+        .await
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(got["transporter_tank_used"], false);
+
+    let list: serde_json::Value = app
+        .get("/api/v1/watering-plans")
+        .await
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(list["data"][0]["transporter_tank_used"], false);
+}
+
+#[tokio::test]
+async fn watering_plan_without_trailer_must_use_transporter_tank() {
+    let app = spawn_app().await;
+    let transporter = create_transporter(&app).await;
+    let tid = transporter["id"].as_str().unwrap();
+
+    let mut body = plan_body(tid, vec![]);
+    body["transporter_tank_used"] = serde_json::json!(false);
+    let response = app.post_json("/api/v1/watering-plans", &body).await;
+
+    assert_eq!(response.status().as_u16(), 400);
+    let error: serde_json::Value = response.json().await.unwrap();
+    assert_eq!(error["code"], "watering_plan.transporter_tank_required");
+}
+
+#[tokio::test]
+async fn update_watering_plan_switches_transporter_tank_off_with_trailer_only() {
+    let app = spawn_app().await;
+    let transporter = create_transporter(&app).await;
+    let tid = transporter["id"].as_str().unwrap();
+    let trailer = create_trailer(&app).await;
+    let created: serde_json::Value = app
+        .post_json("/api/v1/watering-plans", &plan_body(tid, vec![]))
+        .await
+        .json()
+        .await
+        .unwrap();
+    let id = created["id"].as_str().unwrap();
+    let update = |trailer_id: serde_json::Value| {
+        serde_json::json!({
+            "date": "2026-05-01T08:00:00Z",
+            "description": "Nur Anhaenger",
+            "status": "planned",
+            "transporter_id": tid,
+            "trailer_id": trailer_id,
+            "transporter_tank_used": false,
+            "tree_cluster_ids": [],
+            "user_ids": [],
+            "cancellation_note": ""
+        })
+    };
+
+    let rejected = app
+        .put_json(
+            &format!("/api/v1/watering-plans/{id}"),
+            &update(serde_json::Value::Null),
+        )
+        .await;
+    assert_eq!(rejected.status().as_u16(), 400);
+
+    let accepted = app
+        .put_json(
+            &format!("/api/v1/watering-plans/{id}"),
+            &update(trailer["id"].clone()),
+        )
+        .await;
+    assert_eq!(accepted.status().as_u16(), 200);
+    let plan: serde_json::Value = accepted.json().await.unwrap();
+    assert_eq!(plan["transporter_tank_used"], false);
+}
+
+/// Transporter 5000 l + trailer 3000 l; with the transporter's tank left out
+/// the solver must only be offered the trailer's 3000 l.
+#[tokio::test]
+async fn route_capacity_leaves_out_unused_transporter_tank() {
+    let streamlet = mock_streamlet_ok().await;
+    let app = helpers::spawn_app_with_routing(&streamlet.uri()).await;
+    let root = uuid::Uuid::parse_str(ROOT_ORG_ID).unwrap();
+    let org = child_org(&app, "Bewaesserung Nord", root).await;
+    let cluster = create_cluster_with_trees_in_org(&app, org, 2, 54.79, 9.43).await;
+    let transporter = create_transporter(&app).await;
+    let tid = transporter["id"].as_str().unwrap();
+    let trailer = create_trailer(&app).await;
+
+    let mut body = demand_plan_body(tid, vec![&cluster], org);
+    body["trailer_id"] = trailer["id"].clone();
+    body["transporter_tank_used"] = serde_json::json!(false);
+    let response = app.post_json("/api/v1/watering-plans", &body).await;
+    assert_eq!(response.status().as_u16(), 201);
+
+    let requests = streamlet.received_requests().await.unwrap();
+    let solve: serde_json::Value = requests.last().unwrap().body_json().unwrap();
+    assert_eq!(solve["problem"]["vehicles"][0]["tank"]["capacity"], 3000.0);
+}

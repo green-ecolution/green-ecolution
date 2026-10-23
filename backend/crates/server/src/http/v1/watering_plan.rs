@@ -400,6 +400,7 @@ pub async fn update_watering_plan(
                 .collect(),
             transporter_id: Some(Id::new(entity.transporter_id)),
             trailer_id: entity.trailer_id.map(Id::new),
+            transporter_tank_used: entity.transporter_tank_used,
             provenance: Provenance::new(
                 entity.provider.clone().map(ProviderId::new).transpose()?,
                 entity.additional_information.clone(),
@@ -603,6 +604,7 @@ pub async fn preview_route(
             req.cluster_ids.into_iter().map(Id::new).collect(),
             Id::new(req.transporter_id),
             req.trailer_id.map(Id::new),
+            req.transporter_tank_used,
             req.start_point_name,
             org,
         )

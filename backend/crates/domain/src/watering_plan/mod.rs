@@ -112,6 +112,7 @@ pub struct WateringPlan {
     cluster_ids: Vec<Id<TreeCluster>>,
     transporter_id: Option<Id<Vehicle>>,
     trailer_id: Option<Id<Vehicle>>,
+    transporter_tank_used: bool,
     cancellation_note: Option<String>,
     provenance: Provenance,
     route_geometry: Option<Vec<Coordinate>>,
@@ -129,9 +130,28 @@ pub struct WateringPlanDraft {
     pub cluster_ids: Vec<Id<TreeCluster>>,
     pub transporter_id: Option<Id<Vehicle>>,
     pub trailer_id: Option<Id<Vehicle>>,
+    pub transporter_tank_used: bool,
     pub provenance: Provenance,
     pub user_ids: Vec<uuid::Uuid>,
     pub organization_id: Id<Organization>,
+}
+
+impl WateringPlanDraft {
+    pub fn validate(&self) -> Result<(), WateringPlanError> {
+        ensure_tank_available(self.trailer_id, self.transporter_tank_used)
+    }
+}
+
+/// Without a trailer the transporter's tank is the only one, so it cannot be
+/// left out.
+pub fn ensure_tank_available(
+    trailer_id: Option<Id<Vehicle>>,
+    transporter_tank_used: bool,
+) -> Result<(), WateringPlanError> {
+    if trailer_id.is_none() && !transporter_tank_used {
+        return Err(WateringPlanError::TransporterTankRequired);
+    }
+    Ok(())
 }
 
 #[derive(Debug, Default, Clone)]
@@ -153,6 +173,7 @@ pub struct WateringPlanUpdate {
     pub cluster_ids: Vec<Id<TreeCluster>>,
     pub transporter_id: Option<Id<Vehicle>>,
     pub trailer_id: Option<Id<Vehicle>>,
+    pub transporter_tank_used: bool,
     pub provenance: Provenance,
     pub user_ids: Vec<uuid::Uuid>,
 }
@@ -173,6 +194,7 @@ impl WateringPlan {
             cluster_ids: snap.cluster_ids.into_iter().map(Id::new).collect(),
             transporter_id: snap.transporter_id.map(Id::new),
             trailer_id: snap.trailer_id.map(Id::new),
+            transporter_tank_used: snap.transporter_tank_used,
             cancellation_note: snap.cancellation_note,
             provenance: Provenance::reconstitute(snap.provider, snap.additional_info),
             route_geometry: snap.route_geometry,
@@ -206,6 +228,12 @@ impl WateringPlan {
         self.trailer_id
     }
 
+    /// Whether the transporter's own tank counts towards the route capacity.
+    /// Only a plan with a trailer may leave it out.
+    pub fn transporter_tank_used(&self) -> bool {
+        self.transporter_tank_used
+    }
+
     pub fn cancellation_note(&self) -> Option<&str> {
         self.cancellation_note.as_deref()
     }
@@ -237,12 +265,14 @@ impl WateringPlan {
     /// edits to a planned plan have no cross-aggregate side effects.
     pub fn replace_details(&mut self, update: WateringPlanUpdate) -> Result<(), WateringPlanError> {
         self.ensure_planned()?;
+        ensure_tank_available(update.trailer_id, update.transporter_tank_used)?;
         self.date = update.date;
         self.description = update.description;
         self.start_point_name = update.start_point_name;
         self.cluster_ids = update.cluster_ids;
         self.transporter_id = update.transporter_id;
         self.trailer_id = update.trailer_id;
+        self.transporter_tank_used = update.transporter_tank_used;
         self.provenance = update.provenance;
         self.user_ids = update.user_ids;
         Ok(())
@@ -387,6 +417,7 @@ mod tests {
             cluster_ids: vec![c1, c2],
             transporter_id: Some(Id::new_v7()),
             trailer_id: None,
+            transporter_tank_used: true,
             cancellation_note: None,
             provenance: Provenance::default(),
             route_geometry: None,
@@ -592,6 +623,7 @@ mod tests {
             cluster_ids: vec![],
             transporter_id: None,
             trailer_id: None,
+            transporter_tank_used: true,
             provenance: Provenance::default(),
             user_ids: vec![],
         });
@@ -653,6 +685,7 @@ mod tests {
             cluster_ids: vec![c1, c2],
             transporter_id: p.transporter_id(),
             trailer_id: None,
+            transporter_tank_used: true,
             provenance: Provenance::default(),
             user_ids: vec![],
         })
@@ -675,6 +708,7 @@ mod tests {
             cluster_ids: vec![Id::new_v7()],
             transporter_id: Some(Id::new_v7()),
             trailer_id: None,
+            transporter_tank_used: true,
             provenance: Provenance::default(),
             user_ids: vec![],
         });
@@ -726,10 +760,85 @@ mod tests {
             cluster_ids: vec![c1, c2],
             transporter_id: p.transporter_id(),
             trailer_id: None,
+            transporter_tank_used: true,
             user_ids: vec![u1, u2],
             provenance: Provenance::default(),
         })
         .unwrap();
         assert_eq!(p.user_ids(), &[u1, u2]);
+    }
+
+    fn update_with_vehicles(
+        p: &WateringPlan,
+        trailer_id: Option<Id<Vehicle>>,
+        transporter_tank_used: bool,
+    ) -> WateringPlanUpdate {
+        WateringPlanUpdate {
+            date: p.date,
+            description: None,
+            start_point_name: None,
+            cluster_ids: p.cluster_ids().to_vec(),
+            transporter_id: p.transporter_id(),
+            trailer_id,
+            transporter_tank_used,
+            provenance: Provenance::default(),
+            user_ids: vec![],
+        }
+    }
+
+    #[test]
+    fn replace_details_without_trailer_requires_transporter_tank() {
+        let (mut p, _) = fixed_plan();
+        let update = update_with_vehicles(&p, None, false);
+        assert_eq!(
+            p.replace_details(update),
+            Err(WateringPlanError::TransporterTankRequired)
+        );
+        assert!(p.transporter_tank_used());
+    }
+
+    #[test]
+    fn replace_details_with_trailer_may_skip_transporter_tank() {
+        let (mut p, _) = fixed_plan();
+        let trailer = Id::new_v7();
+        p.replace_details(update_with_vehicles(&p, Some(trailer), false))
+            .unwrap();
+        assert_eq!(p.trailer_id(), Some(trailer));
+        assert!(!p.transporter_tank_used());
+    }
+
+    fn draft_with_vehicles(
+        trailer_id: Option<Id<Vehicle>>,
+        transporter_tank_used: bool,
+    ) -> WateringPlanDraft {
+        WateringPlanDraft {
+            date: Utc.with_ymd_and_hms(2026, 6, 1, 8, 0, 0).unwrap(),
+            description: None,
+            start_point_name: None,
+            cluster_ids: vec![],
+            transporter_id: Some(Id::new_v7()),
+            trailer_id,
+            transporter_tank_used,
+            provenance: Provenance::default(),
+            user_ids: vec![],
+            organization_id: Id::new_v7(),
+        }
+    }
+
+    #[test]
+    fn draft_without_trailer_requires_transporter_tank() {
+        assert_eq!(
+            draft_with_vehicles(None, false).validate(),
+            Err(WateringPlanError::TransporterTankRequired)
+        );
+        assert_eq!(draft_with_vehicles(None, true).validate(), Ok(()));
+    }
+
+    #[test]
+    fn draft_with_trailer_may_skip_transporter_tank() {
+        assert_eq!(
+            draft_with_vehicles(Some(Id::new_v7()), false).validate(),
+            Ok(())
+        );
     }
 }

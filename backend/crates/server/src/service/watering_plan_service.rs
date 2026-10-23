@@ -7,7 +7,7 @@ use domain::{
     comment::{CommentSubject, CommentWriter},
     events::DomainEvent,
     organization::{Organization, OrganizationReader},
-    routing::{OptimizedRoute, RouteOptimizer, RouteStop},
+    routing::{OptimizedRoute, RouteOptimizer, RouteStop, tank_capacity},
     settings::SettingsResolver,
     shared::pagination::{Page, Pagination},
     start_point::{StartPoint, StartPointReader},
@@ -15,7 +15,7 @@ use domain::{
     watering_plan::{
         RefillPoint, RouteMetrics, WateringPlan, WateringPlanDraft, WateringPlanError,
         WateringPlanEvaluation, WateringPlanReader, WateringPlanSearchQuery, WateringPlanUpdate,
-        WateringPlanView, WateringPlanWriter,
+        WateringPlanView, WateringPlanWriter, ensure_tank_available,
     },
 };
 
@@ -120,6 +120,7 @@ impl WateringPlanService {
 
     #[tracing::instrument(level = "debug", skip_all)]
     pub async fn create(&self, draft: WateringPlanDraft) -> Result<WateringPlan, ServiceError> {
+        draft.validate().map_err(map_plan_error)?;
         self.ensure_clusters_accessible(&draft.cluster_ids, draft.organization_id)
             .await?;
         let mut plan = self.writer.save_new(draft).await?;
@@ -185,15 +186,18 @@ impl WateringPlanService {
         cluster_ids: Vec<Id<TreeCluster>>,
         transporter_id: Id<Vehicle>,
         trailer_id: Option<Id<Vehicle>>,
+        transporter_tank_used: bool,
         start_point_name: Option<String>,
         org: Id<Organization>,
     ) -> Result<ComputedRoute, ServiceError> {
+        ensure_tank_available(trailer_id, transporter_tank_used).map_err(map_plan_error)?;
         self.ensure_clusters_accessible(&cluster_ids, org).await?;
         self.compute_route(
             org,
             &cluster_ids,
             transporter_id,
             trailer_id,
+            transporter_tank_used,
             start_point_name,
         )
         .await
@@ -211,6 +215,7 @@ impl WateringPlanService {
                 plan.cluster_ids(),
                 transporter_id,
                 plan.trailer_id(),
+                plan.transporter_tank_used(),
                 plan.start_point_name.clone(),
             )
             .await
@@ -240,6 +245,7 @@ impl WateringPlanService {
         cluster_ids: &[Id<TreeCluster>],
         transporter_id: Id<Vehicle>,
         trailer_id: Option<Id<Vehicle>>,
+        transporter_tank_used: bool,
         start_point_name: Option<String>,
     ) -> Result<ComputedRoute, ServiceError> {
         let optimizer = self
@@ -296,14 +302,9 @@ impl WateringPlanService {
         let refill_stations: Vec<domain::shared::coordinates::Coordinate> =
             refill_start_points.iter().map(|p| p.coordinate).collect();
 
+        let capacity = tank_capacity(&transporter, trailer.as_ref(), transporter_tank_used);
         let route = optimizer
-            .optimize(
-                &transporter,
-                trailer.as_ref(),
-                &stops,
-                depot,
-                &refill_stations,
-            )
+            .optimize(&transporter, capacity, &stops, depot, &refill_stations)
             .await?;
         if !route.unserved.is_empty() {
             tracing::warn!(
