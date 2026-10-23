@@ -40,6 +40,7 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
         description: data.description,
         transporterId: data.transporter.id,
         trailerId: data.trailer?.id,
+        transporterTankUsed: data.transporterTankUsed,
         clusterIds: data.treeclusters.map((cluster) => cluster.id),
         status: data.status,
         driverIds: data.userIds,

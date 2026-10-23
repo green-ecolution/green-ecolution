@@ -24,6 +24,7 @@ pub struct WateringPlanSnapshot {
     pub user_ids: Vec<Uuid>,
     pub transporter_id: Option<Uuid>,
     pub trailer_id: Option<Uuid>,
+    pub transporter_tank_used: bool,
     pub cancellation_note: Option<String>,
     pub refill_count: i32,
     pub duration: Duration,

@@ -61,6 +61,14 @@ die Personen aus, die den Einsatz durchführen; mit gedrückter Shift-Taste lass
 mehrere auf einen Griff markieren. Eine kurze Beschreibung ist optional. Welche
 Bewässerungsgruppen angefahren werden, legst du im nächsten Abschnitt fest.
 
+Sobald ein Anhänger gewählt ist, erscheint darunter die Option **Wassertank des Fahrzeugs
+mitnutzen**. Sie ist zunächst aktiv, sodass die Anwendung mit dem Fassungsvermögen von
+Fahrzeug und Anhänger zusammen plant. Führt bei diesem Einsatz nur der Anhänger Wasser
+mit, wählst du die Option ab; Routenberechnung und Gruppenauswahl rechnen dann allein mit
+dem Fassungsvermögen des Anhängers. Entfernst du den Anhänger wieder, gilt automatisch
+wieder der Wassertank des Fahrzeugs. Auf der Detailseite des Einsatzplans steht unter
+**Wassertank des Fahrzeugs**, welche Variante gewählt ist.
+
 Ein neu erstellter Einsatzplan wird automatisch als Geplant eingestuft.
 
 > [!IMPORTANT]
@@ -86,7 +94,9 @@ Welche Bewässerungsgruppen ein Einsatzplan anfährt, fügst du über
 im Auswahlmodus **Bewässerungsgruppen auswählen**. Dort klickst du die gewünschten
 Gruppen einzeln an, ein erneuter Klick wählt eine Gruppe wieder ab. Gruppen, deren Bäume
 zusammen mehr Wasser benötigen, als das gewählte Fahrzeug und ein eventueller Anhänger
-zusammen fassen, sind ausgegraut und lassen sich nicht auswählen; die Anwendung rechnet
+zusammen fassen (oder der Anhänger allein, wenn der
+[Wassertank des Fahrzeugs](./watering-plans.md#einsatz-anlegen) nicht mitgenutzt wird),
+sind ausgegraut und lassen sich nicht auswählen; die Anwendung rechnet
 dafür mit 80 Litern je Baum einer Gruppe. Diese 80 Liter sind ein anwendungsweiter
 Standardwert, kein fester Bedarf des einzelnen Baums; die tatsächlich ausgebrachte Menge
 trägst du beim

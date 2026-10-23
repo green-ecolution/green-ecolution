@@ -9712,6 +9712,7 @@
                 "total_water_required",
                 "cancellation_note",
                 "transporter",
+                "transporter_tank_used",
                 "treeclusters",
                 "user_ids"
               ],
@@ -9789,6 +9790,11 @@
                 "transporter": {
                   "$ref": "#/components/schemas/VehicleResponse",
                   "description": "The transporter vehicle assigned to this plan."
+                },
+                "transporter_tank_used": {
+                  "type": "boolean",
+                  "description": "Whether the transporter's own tank counts towards the route capacity.\n`false` only occurs with a trailer: the run carries water in the trailer alone.",
+                  "example": true
                 },
                 "treeclusters": {
                   "type": "array",
@@ -11157,6 +11163,12 @@
             "format": "uuid",
             "description": "Identifier of the transporter vehicle to use.",
             "example": "0190a8e9-7c4f-7000-8000-000000000000"
+          },
+          "transporter_tank_used": {
+            "type": "boolean",
+            "description": "Whether the transporter's own tank counts towards the route capacity.\nMay only be `false` together with a `trailer_id`.",
+            "default": true,
+            "example": true
           }
         }
       },
@@ -14101,6 +14113,12 @@
             "description": "Identifier of the transporter vehicle to use.",
             "example": "0190a8e9-7c4f-7000-8000-000000000000"
           },
+          "transporter_tank_used": {
+            "type": "boolean",
+            "description": "Whether the transporter's own tank counts towards the route capacity.\nMay only be `false` together with a `trailer_id`.",
+            "default": true,
+            "example": true
+          },
           "tree_cluster_ids": {
             "type": "array",
             "items": {
@@ -14138,6 +14156,7 @@
           "total_water_required",
           "cancellation_note",
           "transporter",
+          "transporter_tank_used",
           "treeclusters",
           "user_ids"
         ],
@@ -14216,6 +14235,11 @@
             "$ref": "#/components/schemas/VehicleResponse",
             "description": "The transporter vehicle assigned to this plan."
           },
+          "transporter_tank_used": {
+            "type": "boolean",
+            "description": "Whether the transporter's own tank counts towards the route capacity.\n`false` only occurs with a trailer: the run carries water in the trailer alone.",
+            "example": true
+          },
           "treeclusters": {
             "type": "array",
             "items": {
@@ -14257,6 +14281,7 @@
           "refill_count",
           "duration",
           "transporter",
+          "transporter_tank_used",
           "treeclusters",
           "user_ids",
           "evaluation",
@@ -14376,6 +14401,11 @@
             "$ref": "#/components/schemas/VehicleResponse",
             "description": "The transporter vehicle assigned to this plan."
           },
+          "transporter_tank_used": {
+            "type": "boolean",
+            "description": "Whether the transporter's own tank counts towards the route capacity.\n`false` only occurs with a trailer: the run carries water in the trailer alone.",
+            "example": true
+          },
           "treeclusters": {
             "type": "array",
             "items": {
@@ -14491,6 +14521,12 @@
             "format": "uuid",
             "description": "Identifier of the transporter vehicle to use.",
             "example": "0190a8e9-7c4f-7000-8000-000000000000"
+          },
+          "transporter_tank_used": {
+            "type": "boolean",
+            "description": "Whether the transporter's own tank counts towards the route capacity.\nMay only be `false` together with a `trailer_id`.",
+            "default": true,
+            "example": true
           },
           "tree_cluster_ids": {
             "type": "array",

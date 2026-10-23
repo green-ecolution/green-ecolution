@@ -90,6 +90,10 @@ pub struct WateringPlanResponse {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(nullable)]
     pub trailer: Option<VehicleResponse>,
+    /// Whether the transporter's own tank counts towards the route capacity.
+    /// `false` only occurs with a trailer: the run carries water in the trailer alone.
+    #[schema(example = true)]
+    pub transporter_tank_used: bool,
     /// Tree clusters included in this watering plan.
     pub treeclusters: Vec<TreeClusterInListResponse>,
     /// List of user identifiers assigned to execute this plan.
@@ -147,6 +151,7 @@ impl From<WateringPlanDetailView> for WateringPlanResponse {
             duration: v.duration.as_secs_f64(),
             transporter: d.transporter,
             trailer: d.trailer,
+            transporter_tank_used: v.transporter_tank_used,
             treeclusters: d.clusters,
             user_ids: d.user_ids,
             evaluation: d.evaluation,
@@ -195,6 +200,10 @@ pub struct WateringPlanInListResponse {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(nullable)]
     pub trailer: Option<VehicleResponse>,
+    /// Whether the transporter's own tank counts towards the route capacity.
+    /// `false` only occurs with a trailer: the run carries water in the trailer alone.
+    #[schema(example = true)]
+    pub transporter_tank_used: bool,
     /// Tree clusters included in this watering plan.
     pub treeclusters: Vec<TreeClusterInListResponse>,
     /// List of user identifiers assigned to execute this plan.
@@ -233,6 +242,7 @@ impl From<WateringPlanInListDetailView> for WateringPlanInListResponse {
             cancellation_note: v.cancellation_note.clone().unwrap_or_default(),
             transporter: d.transporter,
             trailer: d.trailer,
+            transporter_tank_used: v.transporter_tank_used,
             treeclusters: d.clusters,
             user_ids: d.user_ids,
             provider: v.provider.clone(),
@@ -265,6 +275,11 @@ pub struct WateringPlanCreateRequest {
     #[serde(default)]
     #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000", nullable)]
     pub trailer_id: Option<uuid::Uuid>,
+    /// Whether the transporter's own tank counts towards the route capacity.
+    /// May only be `false` together with a `trailer_id`.
+    #[serde(default = "default_true")]
+    #[schema(example = true, default = true)]
+    pub transporter_tank_used: bool,
     /// Name of the configured start point to depart from and return to. Unknown names fall back to the default depot.
     #[serde(default)]
     #[schema(example = "Betriebshof Schleswiger Straße", nullable)]
@@ -311,6 +326,11 @@ pub struct WateringPlanUpdateRequest {
     #[serde(default)]
     #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000", nullable)]
     pub trailer_id: Option<uuid::Uuid>,
+    /// Whether the transporter's own tank counts towards the route capacity.
+    /// May only be `false` together with a `trailer_id`.
+    #[serde(default = "default_true")]
+    #[schema(example = true, default = true)]
+    pub transporter_tank_used: bool,
     /// Name of the configured start point to depart from and return to. Unknown names fall back to the default depot.
     #[serde(default)]
     #[schema(example = "Betriebshof Schleswiger Straße", nullable)]
@@ -369,10 +389,19 @@ pub struct RouteRequest {
     #[serde(default)]
     #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000", nullable)]
     pub trailer_id: Option<uuid::Uuid>,
+    /// Whether the transporter's own tank counts towards the route capacity.
+    /// May only be `false` together with a `trailer_id`.
+    #[serde(default = "default_true")]
+    #[schema(example = true, default = true)]
+    pub transporter_tank_used: bool,
     /// Name of the configured start point to depart from and return to. Unknown names fall back to the default depot.
     #[serde(default)]
     #[schema(example = "Betriebshof Schleswiger Straße", nullable)]
     pub start_point_name: Option<String>,
+}
+
+fn default_true() -> bool {
+    true
 }
 
 /// GeoJSON LineString geometry of an optimized watering route.
@@ -486,6 +515,7 @@ impl WateringPlanCreateRequest {
             cluster_ids: self.tree_cluster_ids.into_iter().map(Id::new).collect(),
             transporter_id: Some(Id::new(self.transporter_id)),
             trailer_id: self.trailer_id.map(Id::new),
+            transporter_tank_used: self.transporter_tank_used,
             provenance,
             user_ids: parse_user_ids(&self.user_ids)?,
             organization_id,

@@ -375,13 +375,38 @@ export const wateringPlanQueries = {
         lastPage.pagination?.nextPage ? lastPage.pagination.currentPage + 1 : undefined,
     }),
 
-  routePreview: (clusterIds: string[], transporterId: string, startPointName?: string | null) =>
+  routePreview: ({
+    clusterIds,
+    transporterId,
+    trailerId,
+    transporterTankUsed = true,
+    startPointName,
+  }: {
+    clusterIds: string[]
+    transporterId: string
+    trailerId?: string
+    transporterTankUsed?: boolean
+    startPointName?: string | null
+  }) =>
     queryOptions<RouteResponse | null>({
-      queryKey: ['route-preview', clusterIds.slice().sort(), transporterId, startPointName ?? null],
+      queryKey: [
+        'route-preview',
+        clusterIds.slice().sort(),
+        transporterId,
+        trailerId ?? null,
+        transporterTankUsed,
+        startPointName ?? null,
+      ],
       queryFn: async () => {
         try {
           return await wateringPlanPreviewApi.previewRoute({
-            routeRequest: { clusterIds, transporterId, startPointName },
+            routeRequest: {
+              clusterIds,
+              transporterId,
+              trailerId,
+              transporterTankUsed,
+              startPointName,
+            },
           })
         } catch {
           return null

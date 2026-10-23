@@ -3,7 +3,7 @@ import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import FormForWateringPlan from './FormForWateringPlan'
 import { WateringPlanForm } from '@/schema/wateringPlanSchema'
-import { FormProvider, useForm } from 'react-hook-form'
+import { FormProvider, useForm, useWatch } from 'react-hook-form'
 import { wateringPlanDraftResolver } from '@green-ecolution/domain-wasm'
 import { ReactNode } from 'react'
 import { FORM_VALIDATION_MODE } from '@/hooks/form/useEntityForm'
@@ -26,6 +26,13 @@ vi.mock('@/api/backendApi', () => ({
 }))
 
 import { routingApi } from '@/api/backendApi'
+
+function TankUsedProbe() {
+  const tankUsed = useWatch<WateringPlanForm, 'transporterTankUsed'>({
+    name: 'transporterTankUsed',
+  })
+  return <span data-testid="tank-used">{String(tankUsed)}</span>
+}
 
 function TestWrapper({
   children,
@@ -50,6 +57,7 @@ function TestWrapper({
         {children}
         <span data-testid="is-dirty">{String(methods.formState.isDirty)}</span>
         <span data-testid="is-valid">{String(methods.formState.isValid)}</span>
+        <TankUsedProbe />
       </FormProvider>
       <Toaster />
     </QueryClientProvider>
@@ -64,6 +72,7 @@ const defaultFormValues: WateringPlanForm = {
   status: WateringPlanStatus.Planned,
   transporterId: '',
   trailerId: undefined,
+  transporterTankUsed: true,
   driverIds: [],
   clusterIds: [],
   description: '',
@@ -478,5 +487,52 @@ describe('FormForWateringPlan', () => {
 
     await waitFor(() => expect(screen.getByTestId('is-valid')).toHaveTextContent('true'))
     expect(screen.getByRole('button', { name: /speichern/i })).not.toBeDisabled()
+  })
+
+  const renderForm = (defaultValues: WateringPlanForm) =>
+    render(
+      <TestWrapper defaultValues={defaultValues}>
+        <FormForWateringPlan
+          displayError={false}
+          transporters={mockTransporters}
+          trailers={mockTrailers}
+          users={mockUsers}
+          onAddCluster={mockOnAddCluster}
+          onSubmit={mockOnSubmit}
+        />
+      </TestWrapper>,
+    )
+
+  const tankCheckbox = () =>
+    screen.queryByRole('checkbox', { name: /wassertank des fahrzeugs mitnutzen/i })
+
+  it('offers leaving out the transporter tank only once a trailer is selected', () => {
+    renderForm(defaultFormValues)
+
+    expect(tankCheckbox()).not.toBeInTheDocument()
+  })
+
+  it('lets the transporter tank be left out when a trailer is selected', async () => {
+    const user = userEvent.setup()
+    renderForm({ ...defaultFormValues, trailerId: 'vehicle-uuid-10' })
+
+    const checkbox = tankCheckbox()
+    expect(checkbox).toBeChecked()
+
+    await user.click(checkbox!)
+
+    expect(checkbox).not.toBeChecked()
+    expect(screen.getByTestId('tank-used')).toHaveTextContent('false')
+  })
+
+  it('uses the transporter tank again once the trailer is removed', async () => {
+    const user = userEvent.setup()
+    renderForm({ ...defaultFormValues, trailerId: 'vehicle-uuid-10', transporterTankUsed: false })
+
+    await user.click(screen.getByRole('combobox', { name: /verknüpfter anhänger/i }))
+    await user.click(within(await screen.findByRole('listbox')).getByText('Keinen Anhänger'))
+
+    expect(tankCheckbox()).not.toBeInTheDocument()
+    expect(screen.getByTestId('tank-used')).toHaveTextContent('true')
   })
 })

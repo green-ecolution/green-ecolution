@@ -8,7 +8,7 @@ use domain::{
     Id,
     cluster::TreeCluster,
     routing::{OptimizedRoute, RouteOptimizer, RouteStop, RoutingError},
-    shared::{coordinates::Coordinate, distance::Distance},
+    shared::{coordinates::Coordinate, distance::Distance, water_capacity::WaterCapacity},
     vehicle::Vehicle,
 };
 
@@ -149,7 +149,7 @@ impl StreamletRouteOptimizer {
     fn build_request(
         &self,
         transporter: &Vehicle,
-        trailer: Option<&Vehicle>,
+        capacity: WaterCapacity,
         stops: &[RouteStop],
         depot: Coordinate,
         refill_stations: &[Coordinate],
@@ -158,8 +158,7 @@ impl StreamletRouteOptimizer {
             lat: depot.latitude(),
             lon: depot.longitude(),
         };
-        let capacity = transporter.water_capacity.liters()
-            + trailer.map(|t| t.water_capacity.liters()).unwrap_or(0.0);
+        let capacity = capacity.liters();
         let dim = transporter.dimension;
         let vehicle = VehicleDto {
             id: 1,
@@ -249,12 +248,12 @@ impl RouteOptimizer for StreamletRouteOptimizer {
     async fn optimize(
         &self,
         transporter: &Vehicle,
-        trailer: Option<&Vehicle>,
+        capacity: WaterCapacity,
         stops: &[RouteStop],
         depot: Coordinate,
         refill_stations: &[Coordinate],
     ) -> Result<OptimizedRoute, RoutingError> {
-        let request = self.build_request(transporter, trailer, stops, depot, refill_stations);
+        let request = self.build_request(transporter, capacity, stops, depot, refill_stations);
         let response = self
             .client
             .post(&self.solve_url)
@@ -433,11 +432,11 @@ mod tests {
             .await;
 
         let transporter = vehicle(VehicleType::Transporter, 2000.0);
-        let trailer = vehicle(VehicleType::Trailer, 1000.0);
+        let capacity = WaterCapacity::new(1000.0).unwrap();
         let stops = stops();
         let refills = refills();
         let route = optimizer(&server.uri())
-            .optimize(&transporter, Some(&trailer), &stops, depot(), &refills)
+            .optimize(&transporter, capacity, &stops, depot(), &refills)
             .await
             .unwrap();
 
@@ -453,9 +452,9 @@ mod tests {
         // request assertions
         let requests = server.received_requests().await.unwrap();
         let body: serde_json::Value = requests[0].body_json().unwrap();
-        // tank = transporter + trailer capacity, full level
-        assert_eq!(body["problem"]["vehicles"][0]["tank"]["capacity"], 3000.0);
-        assert_eq!(body["problem"]["vehicles"][0]["tank"]["level"], 3000.0);
+        // tank = caller-supplied capacity, not the transporter's own, full level
+        assert_eq!(body["problem"]["vehicles"][0]["tank"]["capacity"], 1000.0);
+        assert_eq!(body["problem"]["vehicles"][0]["tank"]["level"], 1000.0);
         // truck kind carries transporter dimensions (weight in kg)
         assert_eq!(
             body["problem"]["vehicles"][0]["kind"]["Truck"]["weight"],
@@ -522,7 +521,13 @@ mod tests {
         let transporter = vehicle(VehicleType::Transporter, 2000.0);
         let override_coord = Coordinate::new(54.9, 9.5).unwrap();
         optimizer(&server.uri())
-            .optimize(&transporter, None, &stops(), override_coord, &[])
+            .optimize(
+                &transporter,
+                transporter.water_capacity,
+                &stops(),
+                override_coord,
+                &[],
+            )
             .await
             .unwrap();
 
@@ -576,7 +581,13 @@ mod tests {
         let transporter = vehicle(VehicleType::Transporter, 2000.0);
         let stops = stops();
         let route = optimizer(&server.uri())
-            .optimize(&transporter, None, &stops, depot(), &[])
+            .optimize(
+                &transporter,
+                transporter.water_capacity,
+                &stops,
+                depot(),
+                &[],
+            )
             .await
             .unwrap();
         assert_eq!(route.unserved, vec![stops[1].cluster_id]);
@@ -604,7 +615,13 @@ mod tests {
 
         let transporter = vehicle(VehicleType::Transporter, 2000.0);
         let route = optimizer(&server.uri())
-            .optimize(&transporter, None, &stops(), depot(), &refills())
+            .optimize(
+                &transporter,
+                transporter.water_capacity,
+                &stops(),
+                depot(),
+                &refills(),
+            )
             .await
             .unwrap();
 
@@ -629,7 +646,13 @@ mod tests {
                 .await;
             let transporter = vehicle(VehicleType::Transporter, 2000.0);
             let err = optimizer(&server.uri())
-                .optimize(&transporter, None, &stops(), depot(), &[])
+                .optimize(
+                    &transporter,
+                    transporter.water_capacity,
+                    &stops(),
+                    depot(),
+                    &[],
+                )
                 .await
                 .unwrap_err();
             match err {
@@ -647,7 +670,13 @@ mod tests {
         let transporter = vehicle(VehicleType::Transporter, 2000.0);
         // port 1 is never listening
         let err = optimizer("http://127.0.0.1:1")
-            .optimize(&transporter, None, &stops(), depot(), &[])
+            .optimize(
+                &transporter,
+                transporter.water_capacity,
+                &stops(),
+                depot(),
+                &[],
+            )
             .await
             .unwrap_err();
         assert!(matches!(err, RoutingError::Unavailable(_)));
@@ -666,7 +695,13 @@ mod tests {
 
         let transporter = vehicle(VehicleType::Transporter, 2000.0);
         let err = optimizer(&server.uri())
-            .optimize(&transporter, None, &stops(), depot(), &[])
+            .optimize(
+                &transporter,
+                transporter.water_capacity,
+                &stops(),
+                depot(),
+                &[],
+            )
             .await
             .unwrap_err();
         assert!(matches!(err, RoutingError::Failed(_)));
