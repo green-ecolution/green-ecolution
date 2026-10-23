@@ -46,4 +46,23 @@ describe('TabGeneralData', () => {
 
     expect(assignedValue()).toBe('Keine Angabe')
   })
+
+  it('says when only the trailer carries water', () => {
+    const trailerOnly = {
+      ...plan([]),
+      trailer: { numberPlate: 'FL-TR 1' },
+      transporterTankUsed: false,
+    } as unknown as WateringPlan
+    render(<TabGeneralData wateringPlan={trailerOnly} />)
+
+    expect(screen.getByText('Wassertank des Fahrzeugs').nextElementSibling?.textContent).toBe(
+      'Bleibt leer, nur der Anhänger führt Wasser',
+    )
+  })
+
+  it('leaves out the tank row for a plan without trailer', () => {
+    render(<TabGeneralData wateringPlan={plan([])} />)
+
+    expect(screen.queryByText('Wassertank des Fahrzeugs')).not.toBeInTheDocument()
+  })
 })

@@ -157,6 +157,13 @@ export interface WateringPlanResponse {
      */
     transporter: VehicleResponse;
     /**
+     * Whether the transporter's own tank counts towards the route capacity.
+     * `false` only occurs with a trailer: the run carries water in the trailer alone.
+     * @type {boolean}
+     * @memberof WateringPlanResponse
+     */
+    transporterTankUsed: boolean;
+    /**
      * Tree clusters included in this watering plan.
      * @type {Array<TreeClusterInListResponse>}
      * @memberof WateringPlanResponse
@@ -196,6 +203,7 @@ export function instanceOfWateringPlanResponse(value: object): value is Watering
     if (!('status' in value) || value['status'] === undefined) return false;
     if (!('totalWaterRequired' in value) || value['totalWaterRequired'] === undefined) return false;
     if (!('transporter' in value) || value['transporter'] === undefined) return false;
+    if (!('transporterTankUsed' in value) || value['transporterTankUsed'] === undefined) return false;
     if (!('treeclusters' in value) || value['treeclusters'] === undefined) return false;
     if (!('updatedAt' in value) || value['updatedAt'] === undefined) return false;
     if (!('userIds' in value) || value['userIds'] === undefined) return false;
@@ -230,6 +238,7 @@ export function WateringPlanResponseFromJSONTyped(json: any, ignoreDiscriminator
         'totalWaterRequired': json['total_water_required'],
         'trailer': json['trailer'] == null ? undefined : VehicleResponseFromJSON(json['trailer']),
         'transporter': VehicleResponseFromJSON(json['transporter']),
+        'transporterTankUsed': json['transporter_tank_used'],
         'treeclusters': ((json['treeclusters'] as Array<any>).map(TreeClusterInListResponseFromJSON)),
         'updatedAt': json['updated_at'],
         'userIds': json['user_ids'],
@@ -265,6 +274,7 @@ export function WateringPlanResponseToJSONTyped(value?: WateringPlanResponse | n
         'total_water_required': value['totalWaterRequired'],
         'trailer': VehicleResponseToJSON(value['trailer']),
         'transporter': VehicleResponseToJSON(value['transporter']),
+        'transporter_tank_used': value['transporterTankUsed'],
         'treeclusters': ((value['treeclusters'] as Array<any>).map(TreeClusterInListResponseToJSON)),
         'updated_at': value['updatedAt'],
         'user_ids': value['userIds'],

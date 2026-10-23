@@ -5,6 +5,7 @@ import {
   SelectField,
   Label,
   MultiSelect,
+  Checkbox,
 } from '@green-ecolution/ui'
 import { useTranslation } from 'react-i18next'
 import FormError from './FormError'
@@ -35,7 +36,7 @@ startOfToday.setHours(0, 0, 0, 0)
 
 const FormForWateringPlan = (props: FormForWateringPlanProps) => {
   const { t } = useTranslation(['wateringPlan', 'common'])
-  const { register, handleSubmit, control, resetField, getValues } =
+  const { register, handleSubmit, control, resetField, getValues, setValue } =
     useFormContext<WateringPlanForm>()
   const { errors } = useFormState({ control })
 
@@ -170,7 +171,12 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
               label={t('form.trailerLabel')}
               placeholder={t('form.trailerPlaceholder')}
               value={field.value ?? '-1'}
-              onValueChange={(val) => field.onChange(val === '-1' ? undefined : val)}
+              onValueChange={(val) => {
+                const withoutTrailer = val === '-1'
+                field.onChange(withoutTrailer ? undefined : val)
+                // Without a trailer the vehicle's tank is the only one; the backend rejects leaving it out.
+                if (withoutTrailer) setValue('transporterTankUsed', true, { shouldDirty: true })
+              }}
               error={errors.trailerId?.message}
               options={[
                 { value: '-1', label: t('form.noTrailerOption') },
@@ -182,6 +188,29 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
             />
           )}
         />
+        {watchedTrailerId && watchedTrailerId !== '-1' && (
+          <Controller
+            name="transporterTankUsed"
+            control={control}
+            render={({ field }) => (
+              <div className="flex items-start gap-x-3">
+                <Checkbox
+                  id="transporterTankUsed"
+                  className="mt-0.5"
+                  checked={field.value ?? true}
+                  onCheckedChange={(checked) => field.onChange(checked === true)}
+                  aria-describedby="transporterTankUsedHint"
+                />
+                <div className="flex flex-col gap-y-1">
+                  <Label htmlFor="transporterTankUsed">{t('form.transporterTankUsedLabel')}</Label>
+                  <p id="transporterTankUsedHint" className="text-sm text-muted-foreground">
+                    {t('form.transporterTankUsedHint')}
+                  </p>
+                </div>
+              </div>
+            )}
+          />
+        )}
         <Controller
           name="driverIds"
           control={control}

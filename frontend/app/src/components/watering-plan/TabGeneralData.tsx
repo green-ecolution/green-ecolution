@@ -63,6 +63,16 @@ const TabGeneralData: React.FC<TabGeneralDataProps> = ({ wateringPlan }) => {
           : wateringPlan.trailer.numberPlate
         : noData,
     },
+    ...(wateringPlan.trailer
+      ? [
+          {
+            label: t('detail.transporterTankLabel'),
+            value: wateringPlan.transporterTankUsed
+              ? t('detail.transporterTankUsedValue')
+              : t('detail.transporterTankUnusedValue'),
+          },
+        ]
+      : []),
     {
       label: t('detail.clusterCountLabel'),
       value: wateringPlan.treeclusters?.length

@@ -21,6 +21,7 @@ const defaultForm: DefaultValues<WateringPlanForm> = {
   description: '',
   transporterId: '',
   trailerId: undefined,
+  transporterTankUsed: true,
   clusterIds: [],
   status: WateringPlanStatus.Planned,
   driverIds: [],

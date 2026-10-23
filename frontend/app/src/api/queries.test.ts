@@ -372,7 +372,10 @@ describe('Query Functions', () => {
         // eslint-disable-next-line @typescript-eslint/unbound-method
         vi.mocked(wateringPlanPreviewApi.previewRoute).mockResolvedValueOnce(mockRoute)
 
-        const options = wateringPlanQueries.routePreview(['cluster-1'], 'vehicle-1')
+        const options = wateringPlanQueries.routePreview({
+          clusterIds: ['cluster-1'],
+          transporterId: 'vehicle-1',
+        })
         const result = await options.queryFn!({} as never)
 
         expect(result).toEqual(mockRoute)
@@ -382,7 +385,10 @@ describe('Query Functions', () => {
         // eslint-disable-next-line @typescript-eslint/unbound-method
         vi.mocked(wateringPlanPreviewApi.previewRoute).mockRejectedValueOnce(new Error('422'))
 
-        const options = wateringPlanQueries.routePreview(['cluster-1'], 'vehicle-1')
+        const options = wateringPlanQueries.routePreview({
+          clusterIds: ['cluster-1'],
+          transporterId: 'vehicle-1',
+        })
         const result = await options.queryFn!({} as never)
 
         expect(result).toBeNull()
@@ -392,13 +398,37 @@ describe('Query Functions', () => {
         // eslint-disable-next-line @typescript-eslint/unbound-method
         vi.mocked(wateringPlanPreviewApi.previewRoute).mockResolvedValueOnce({} as RouteResponse)
 
-        const options = wateringPlanQueries.routePreview(['cluster-1'], 'vehicle-1')
+        const options = wateringPlanQueries.routePreview({
+          clusterIds: ['cluster-1'],
+          transporterId: 'vehicle-1',
+        })
         await options.queryFn!({} as never)
 
         // eslint-disable-next-line @typescript-eslint/unbound-method
         expect(wateringPlanPreviewApi.previewRoute).toHaveBeenCalled()
         // eslint-disable-next-line @typescript-eslint/unbound-method
         expect(wateringPlanApi.listWateringPlans).not.toHaveBeenCalled()
+      })
+
+      it('routes with the trailer and without an unused transporter tank', async () => {
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        vi.mocked(wateringPlanPreviewApi.previewRoute).mockResolvedValueOnce({} as RouteResponse)
+
+        const options = wateringPlanQueries.routePreview({
+          clusterIds: ['cluster-1'],
+          transporterId: 'vehicle-1',
+          trailerId: 'trailer-1',
+          transporterTankUsed: false,
+        })
+        await options.queryFn!({} as never)
+
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        expect(wateringPlanPreviewApi.previewRoute).toHaveBeenCalledWith({
+          routeRequest: expect.objectContaining({
+            trailerId: 'trailer-1',
+            transporterTankUsed: false,
+          }) as unknown,
+        })
       })
     })
   })

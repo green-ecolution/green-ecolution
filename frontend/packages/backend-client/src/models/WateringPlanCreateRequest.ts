@@ -69,6 +69,13 @@ export interface WateringPlanCreateRequest {
      */
     transporterId: string;
     /**
+     * Whether the transporter's own tank counts towards the route capacity.
+     * May only be `false` together with a `trailer_id`.
+     * @type {boolean}
+     * @memberof WateringPlanCreateRequest
+     */
+    transporterTankUsed?: boolean;
+    /**
      * List of tree cluster identifiers to include in the plan.
      * @type {Array<string>}
      * @memberof WateringPlanCreateRequest
@@ -112,6 +119,7 @@ export function WateringPlanCreateRequestFromJSONTyped(json: any, ignoreDiscrimi
         'startPointName': json['start_point_name'] == null ? undefined : json['start_point_name'],
         'trailerId': json['trailer_id'] == null ? undefined : json['trailer_id'],
         'transporterId': json['transporter_id'],
+        'transporterTankUsed': json['transporter_tank_used'] == null ? undefined : json['transporter_tank_used'],
         'treeClusterIds': json['tree_cluster_ids'],
         'userIds': json['user_ids'],
     };
@@ -136,6 +144,7 @@ export function WateringPlanCreateRequestToJSONTyped(value?: WateringPlanCreateR
         'start_point_name': value['startPointName'],
         'trailer_id': value['trailerId'],
         'transporter_id': value['transporterId'],
+        'transporter_tank_used': value['transporterTankUsed'],
         'tree_cluster_ids': value['treeClusterIds'],
         'user_ids': value['userIds'],
     };

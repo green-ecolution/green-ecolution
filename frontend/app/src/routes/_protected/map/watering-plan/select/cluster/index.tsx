@@ -23,6 +23,7 @@ import RoutePointMarkers, {
   buildRoutePoints,
   type RoutePointMarkerData,
 } from '@/components/map-gl/RoutePointMarkers'
+import { tankCapacity } from '@/lib/tankCapacity'
 
 const mapSelectClusterSchema = z.object({
   transporterId: z.string().optional(),
@@ -70,13 +71,19 @@ function SelectCluster() {
     return () => clearTimeout(id)
   }, [clusterIds])
 
+  const hasTrailer = !!trailerId && trailerId !== '-1'
+  // Only a trailer can carry the water alone; the form resets the flag when the trailer goes.
+  const transporterTankUsed = !hasTrailer || (draft.data?.transporterTankUsed ?? true)
+
   const previewEnabled = debouncedClusterIds.length > 0 && !!transporterId && transporterId !== '-1'
   const { data: previewRoute } = useQuery({
-    ...wateringPlanQueries.routePreview(
-      debouncedClusterIds,
-      transporterId ?? '',
-      draft.data?.startPointName,
-    ),
+    ...wateringPlanQueries.routePreview({
+      clusterIds: debouncedClusterIds,
+      transporterId: transporterId ?? '',
+      trailerId: hasTrailer ? trailerId : undefined,
+      transporterTankUsed,
+      startPointName: draft.data?.startPointName,
+    }),
     enabled: previewEnabled,
   })
   const routeCoordinates = previewEnabled
@@ -114,9 +121,7 @@ function SelectCluster() {
   const disabledClusters = useMemo(() => {
     if (!transporter) return clusters.data.map((cluster) => cluster.id)
 
-    const totalCapacity = trailer
-      ? transporter.waterCapacity + trailer.waterCapacity
-      : transporter.waterCapacity
+    const totalCapacity = tankCapacity(transporter, trailer, transporterTankUsed)
 
     return clusters.data
       .filter((cluster) => {
@@ -124,7 +129,7 @@ function SelectCluster() {
         return neededWater > totalCapacity
       })
       .map((cluster) => cluster.id)
-  }, [transporter, trailer, clusters.data])
+  }, [transporter, trailer, transporterTankUsed, clusters.data])
 
   const handleToggle = useCallback((id: string) => {
     setShowError(false)

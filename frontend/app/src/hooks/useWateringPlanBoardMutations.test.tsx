@@ -5,7 +5,7 @@ import { WateringPlanStatus } from '@green-ecolution/backend-client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { QueryKey } from '@tanstack/react-query'
 import { clusterQueries, treeQueries, wateringPlanQueries } from '@/api/queries'
-import { useWateringPlanBoardMutations } from './useWateringPlanBoardMutations'
+import { toUpdateRequest, useWateringPlanBoardMutations } from './useWateringPlanBoardMutations'
 import type { WateringPlanInList } from '@/api/backendApi'
 
 const updateWateringPlan = vi.fn()
@@ -96,5 +96,17 @@ describe('useWateringPlanBoardMutations', () => {
     await waitFor(() => expect(isInvalidated(PLAN_DETAIL)).toBe(true))
     expect(isInvalidated(CLUSTER_DETAIL)).toBe(false)
     expect(isInvalidated(TREE_DETAIL)).toBe(false)
+  })
+
+  it('keeps a trailer-only plan trailer-only when moved on the board', () => {
+    const trailerOnly = {
+      ...plan,
+      trailer: { id: '0190a8e9-7c4f-7000-8000-000000000005' },
+      transporterTankUsed: false,
+    } as WateringPlanInList
+
+    const request = toUpdateRequest(trailerOnly, { status: WateringPlanStatus.Planned })
+
+    expect(request.transporterTankUsed).toBe(false)
   })
 })

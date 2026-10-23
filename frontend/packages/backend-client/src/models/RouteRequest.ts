@@ -43,6 +43,13 @@ export interface RouteRequest {
      * @memberof RouteRequest
      */
     transporterId: string;
+    /**
+     * Whether the transporter's own tank counts towards the route capacity.
+     * May only be `false` together with a `trailer_id`.
+     * @type {boolean}
+     * @memberof RouteRequest
+     */
+    transporterTankUsed?: boolean;
 }
 
 /**
@@ -68,6 +75,7 @@ export function RouteRequestFromJSONTyped(json: any, ignoreDiscriminator: boolea
         'startPointName': json['start_point_name'] == null ? undefined : json['start_point_name'],
         'trailerId': json['trailer_id'] == null ? undefined : json['trailer_id'],
         'transporterId': json['transporter_id'],
+        'transporterTankUsed': json['transporter_tank_used'] == null ? undefined : json['transporter_tank_used'],
     };
 }
 
@@ -86,6 +94,7 @@ export function RouteRequestToJSONTyped(value?: RouteRequest | null, ignoreDiscr
         'start_point_name': value['startPointName'],
         'trailer_id': value['trailerId'],
         'transporter_id': value['transporterId'],
+        'transporter_tank_used': value['transporterTankUsed'],
     };
 }
 
