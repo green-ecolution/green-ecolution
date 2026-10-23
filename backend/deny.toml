@@ -9,15 +9,14 @@ version = 2
 yanked = "deny"
 ignore = [
   # rustls-webpki 0.102.x pulled in by rumqttc (direct pin, no fixed 0.102
-  # release exists). All require certificate misissuance or CRL usage to
-  # exploit. Remove once rumqttc moves to webpki >= 0.103.
+  # release exists). All require certificate misissuance, a distrusted
+  # intermediate or CRL usage to exploit. Remove once rumqttc moves to
+  # webpki >= 0.103.
   "RUSTSEC-2026-0098",
   "RUSTSEC-2026-0099",
   "RUSTSEC-2026-0104",
   "RUSTSEC-2026-0049",
-  # paste is unmaintained but still pulled in by utoipa-axum; no safe
-  # upgrade available.
-  "RUSTSEC-2024-0436",
+  "RUSTSEC-2026-0382",
   # rsa Marvin attack: dev-only (generates JWT test keys in the integration
   # suite), timing side channel is irrelevant there. No fixed release yet.
   "RUSTSEC-2023-0071",
