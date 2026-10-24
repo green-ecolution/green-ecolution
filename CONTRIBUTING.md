@@ -548,25 +548,26 @@ setting is inherited down the organization tree the same way as the other organi
 settings. Module endpoints answer with `module.disabled` (403) for an organization that
 has not activated the module.
 
-A module plugs into the core through three ports. The reference implementation is the
+A module plugs into the core through three extension points. The reference implementation is the
 irrigation module in `backend/crates/server/src/irrigation/`; a minimal one for tests
 lives in `backend/crates/app/test/api/test_module/` (`ThingCatalog`, `ThingPlanning`).
 
-`Module::resources()` returns a `ResourceCatalog`: the resource kinds and actions the
-module adds to the permission model. The core asks for it when it builds the permission
-set. A permission stored for a resource that no registered module declares is ignored
+`Module::resources()` returns the `ResourceKey`s the module adds to the permission model;
+the core merges them into the `ResourceCatalog` it builds the permission set from and
+rejects duplicate keys. A permission stored for a resource that no registered module declares is ignored
 and logged once, so removing a module does not break existing roles.
 
 `TargetCatalog` (in `domain/src/target/`) lists the target kinds a module owns, as
 `TargetKindSpec` entries that say whether a kind accepts sensors, whether it can be
 commented on and which resource guards it. The core asks it to admit a target, locate
-it and label it. The catalogs are collected in the `TargetRegistry`, which sensor
+it and label it. The catalogs are collected in the `TargetRegistry`
+(`backend/crates/server/src/service/`), which sensor
 attachments and target comments use instead of knowing concrete kinds.
 
 `PlanningProvider` (in `domain/src/planning.rs`) lets a module plan with the generic
 operation plans: it names the capacity kind, the resource that guards its plans and
 resolves stops to the objects behind them. The providers are collected in the
-`PlanningRegistry`. A module that deletes an object which can be a stop must call
+`PlanningRegistry` (`backend/crates/server/src/service/`). A module that deletes an object which can be a stop must call
 `OperationPlanService::remove_stop`, so no plan keeps a dangling stop.
 
 ## Writing a Plugin
