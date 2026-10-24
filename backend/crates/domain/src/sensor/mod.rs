@@ -1,10 +1,11 @@
-//! Sensor aggregate — LoRaWAN (or similar) devices linked to trees.
+//! Sensor aggregate — LoRaWAN (or similar) devices attached to a module's
+//! target, such as a tree.
 //!
 //! The aggregate ([`Sensor`]) tracks the provisioning lifecycle (`activated_at`,
-//! `None` = prepared), sensor type, and model identity. Connectivity
-//! (online/offline) is **derived** from reading recency via
-//! [`derive_connectivity`], never stored. The physical position is no longer
-//! part of the aggregate itself: location is derived from the linked tree.
+//! `None` = prepared), sensor type, model identity and the target it measures
+//! for. Connectivity (online/offline) is **derived** from reading recency via
+//! [`derive_connectivity`], never stored. Location and label come from the
+//! target's module.
 //! Time-series readings live in the [`data`] sub-module as the `SensorReading`
 //! sub-aggregate. The view ([`SensorView`]) adds `created_at` / `updated_at`
 //! audit fields and embeds the latest reading for HTTP responses.
@@ -27,10 +28,12 @@ use chrono::{DateTime, Duration, Utc};
 use crate::{
     Id,
     authorization::Visibility,
-    cluster::TreeCluster,
+    events::DomainEvent,
+    module::ModuleKey,
     organization::Organization,
     sensor_model::SensorModel,
     shared::provenance::{Provenance, ProviderId},
+    target::TargetRef,
 };
 
 pub use error::SensorError;
@@ -126,6 +129,7 @@ pub struct Sensor {
     lorawan: Option<LorawanCredentials>,
     organization_id: Id<Organization>,
     quality_acknowledged: Option<DataQualityAcknowledgement>,
+    target: Option<TargetRef>,
 }
 
 /// Input for creating a new [`Sensor`].
@@ -151,7 +155,12 @@ impl Sensor {
             lorawan: snap.lorawan,
             organization_id: Id::new(snap.organization_id),
             quality_acknowledged: snap.quality_acknowledged,
+            target: snap.target,
         }
+    }
+
+    pub fn target(&self) -> Option<&TargetRef> {
+        self.target.as_ref()
     }
 
     pub fn quality_acknowledged(&self) -> Option<&DataQualityAcknowledgement> {
@@ -191,30 +200,88 @@ impl Sensor {
         self.activated_at.is_some()
     }
 
-    /// Prepared (never activated) -> activated at `at`, awaiting first reading.
+    /// Prepared -> activated at `at` and attached to `target`, awaiting the
+    /// first reading. A sensor already attached elsewhere is refused.
     pub fn activate(
         &mut self,
+        target: TargetRef,
         at: DateTime<Utc>,
-    ) -> Result<Vec<crate::events::DomainEvent>, SensorError> {
-        if self.is_activated() {
+    ) -> Result<Vec<DomainEvent>, SensorError> {
+        if self.activated_at.is_some() {
             return Err(SensorError::AlreadyActivated);
         }
+        if self.target.as_ref().is_some_and(|t| *t != target) {
+            return Err(SensorError::AlreadyAttached);
+        }
         self.activated_at = Some(at);
-        Ok(vec![crate::events::DomainEvent::SensorActivated {
+        let mut events = vec![DomainEvent::SensorActivated {
             sensor_id: self.id.clone(),
-        }])
+        }];
+        if self.target.is_none() {
+            self.target = Some(target.clone());
+            events.push(DomainEvent::SensorAttached {
+                sensor_id: self.id.clone(),
+                target,
+            });
+        }
+        Ok(events)
     }
 
-    /// Activated -> Prepared. Used when a sensor is taken out of service and
-    /// its tree link removed. Inverse of [`Sensor::activate`].
-    pub fn deactivate(&mut self) -> Result<Vec<crate::events::DomainEvent>, SensorError> {
-        if !self.is_activated() {
+    /// Attaches without activating, so a prepared sensor can be assigned
+    /// before it goes into service.
+    pub fn attach(&mut self, target: TargetRef) -> Result<Vec<DomainEvent>, SensorError> {
+        match &self.target {
+            Some(current) if *current == target => Ok(vec![]),
+            Some(_) => Err(SensorError::AlreadyAttached),
+            None => {
+                self.target = Some(target.clone());
+                Ok(vec![DomainEvent::SensorAttached {
+                    sensor_id: self.id.clone(),
+                    target,
+                }])
+            }
+        }
+    }
+
+    /// Moves an active sensor to `target`, releasing its current one.
+    pub fn retarget(&mut self, target: TargetRef) -> Result<Vec<DomainEvent>, SensorError> {
+        if self.activated_at.is_none() {
+            return Err(SensorError::NotActivated);
+        }
+        if self.target.as_ref() == Some(&target) {
+            return Ok(vec![]);
+        }
+        let mut events = self.detach();
+        self.target = Some(target.clone());
+        events.push(DomainEvent::SensorAttached {
+            sensor_id: self.id.clone(),
+            target,
+        });
+        Ok(events)
+    }
+
+    pub fn detach(&mut self) -> Vec<DomainEvent> {
+        match self.target.take() {
+            Some(target) => vec![DomainEvent::SensorDetached {
+                sensor_id: self.id.clone(),
+                target,
+            }],
+            None => vec![],
+        }
+    }
+
+    /// Activated -> Prepared, releasing the target. Inverse of
+    /// [`Sensor::activate`].
+    pub fn deactivate(&mut self) -> Result<Vec<DomainEvent>, SensorError> {
+        if self.activated_at.is_none() {
             return Err(SensorError::NotActivated);
         }
         self.activated_at = None;
-        Ok(vec![crate::events::DomainEvent::SensorDeactivated {
+        let mut events = vec![DomainEvent::SensorDeactivated {
             sensor_id: self.id.clone(),
-        }])
+        }];
+        events.extend(self.detach());
+        Ok(events)
     }
 
     pub fn sensor_type(&self) -> SensorType {
@@ -231,7 +298,7 @@ impl Sensor {
 
     /// Reassigns the sensor to `target`'s organization. No-op (and no event)
     /// if it already belongs there. Callers must ensure the sensor is not
-    /// bound to a tree in a different organization (see
+    /// attached to a target in a different organization (see
     /// `SensorService::transfer` and `TreeService::transfer`, which cascades
     /// the sensor of a transferred tree).
     pub fn transfer_to(&mut self, target: Id<Organization>) -> Vec<crate::events::DomainEvent> {
@@ -265,15 +332,14 @@ pub struct SensorSearchQuery {
     pub model_ids: Vec<Id<SensorModel>>,
     /// Data health, derived the same way from [`derive_data_health`].
     pub data_health: Vec<DataHealth>,
-    /// Whether the sensor is linked to a tree.
-    pub has_tree: Option<bool>,
-    /// Clusters of the linked tree. A sensor has no cluster of its own — the
-    /// relation runs through the tree it is attached to.
-    pub cluster_ids: Vec<Id<TreeCluster>>,
+    /// Whether the sensor is attached to a target.
+    pub attached: Option<bool>,
+    /// Only sensors attached to a target of this module.
+    pub target_module: Option<ModuleKey>,
+    pub ids: Vec<SensorId>,
 
     // Search and order
-    /// Case-insensitive text filter on sensor id, model name or the name of
-    /// the linked tree's cluster.
+    /// Case-insensitive text filter on sensor id or model name.
     pub q: Option<String>,
     pub sort: SensorSort,
 }
@@ -298,7 +364,116 @@ mod tests {
             lorawan: None,
             organization_id: Id::new_v7(),
             quality_acknowledged: None,
+            target: None,
         }
+    }
+
+    fn prepared_sensor() -> Sensor {
+        let mut s = fixed_sensor();
+        s.activated_at = None;
+        s
+    }
+
+    fn tree(id: u128) -> TargetRef {
+        TargetRef::new("irrigation", "tree", uuid::Uuid::from_u128(id)).unwrap()
+    }
+
+    #[test]
+    fn activate_attaches_and_emits_both_events() {
+        let mut s = prepared_sensor();
+        let events = s.activate(tree(1), Utc::now()).unwrap();
+        assert_eq!(s.target(), Some(&tree(1)));
+        assert!(matches!(events[0], DomainEvent::SensorActivated { .. }));
+        assert!(
+            matches!(&events[1], DomainEvent::SensorAttached { target, .. } if *target == tree(1))
+        );
+    }
+
+    #[test]
+    fn activate_twice_is_refused() {
+        let mut s = prepared_sensor();
+        s.activate(tree(1), Utc::now()).unwrap();
+        assert!(matches!(
+            s.activate(tree(1), Utc::now()),
+            Err(SensorError::AlreadyActivated)
+        ));
+    }
+
+    #[test]
+    fn activate_onto_another_target_than_the_attached_one_is_refused() {
+        let mut s = prepared_sensor();
+        s.attach(tree(1)).unwrap();
+        assert!(matches!(
+            s.activate(tree(2), Utc::now()),
+            Err(SensorError::AlreadyAttached)
+        ));
+    }
+
+    #[test]
+    fn activate_onto_the_attached_target_emits_no_second_attach() {
+        let mut s = prepared_sensor();
+        s.attach(tree(1)).unwrap();
+        let events = s.activate(tree(1), Utc::now()).unwrap();
+        assert_eq!(events.len(), 1);
+        assert!(matches!(events[0], DomainEvent::SensorActivated { .. }));
+    }
+
+    #[test]
+    fn attach_without_activation_keeps_the_sensor_prepared() {
+        let mut s = prepared_sensor();
+        let events = s.attach(tree(1)).unwrap();
+        assert!(s.activated_at().is_none());
+        assert_eq!(events.len(), 1);
+        assert!(s.attach(tree(1)).unwrap().is_empty());
+        assert!(matches!(
+            s.attach(tree(2)),
+            Err(SensorError::AlreadyAttached)
+        ));
+    }
+
+    #[test]
+    fn retarget_moves_an_active_sensor() {
+        let mut s = prepared_sensor();
+        s.activate(tree(1), Utc::now()).unwrap();
+        let events = s.retarget(tree(2)).unwrap();
+        assert!(
+            matches!(&events[0], DomainEvent::SensorDetached { target, .. } if *target == tree(1))
+        );
+        assert!(
+            matches!(&events[1], DomainEvent::SensorAttached { target, .. } if *target == tree(2))
+        );
+        assert!(s.retarget(tree(2)).unwrap().is_empty());
+    }
+
+    #[test]
+    fn retarget_needs_an_active_sensor() {
+        let mut s = prepared_sensor();
+        assert!(matches!(
+            s.retarget(tree(1)),
+            Err(SensorError::NotActivated)
+        ));
+    }
+
+    #[test]
+    fn detach_is_a_no_op_without_target() {
+        let mut s = prepared_sensor();
+        assert!(s.detach().is_empty());
+        s.attach(tree(1)).unwrap();
+        assert_eq!(s.detach().len(), 1);
+        assert_eq!(s.target(), None);
+    }
+
+    #[test]
+    fn deactivate_releases_the_target() {
+        let mut s = prepared_sensor();
+        s.activate(tree(1), Utc::now()).unwrap();
+        let events = s.deactivate().unwrap();
+        assert!(s.activated_at().is_none());
+        assert_eq!(s.target(), None);
+        assert!(matches!(events[0], DomainEvent::SensorDeactivated { .. }));
+        assert!(
+            matches!(&events[1], DomainEvent::SensorDetached { target, .. } if *target == tree(1))
+        );
     }
 
     #[test]
@@ -323,10 +498,10 @@ mod tests {
         let mut s = fixed_sensor();
         s.activated_at = None;
         let at = fixed_now();
-        let events = s.activate(at).unwrap();
+        let events = s.activate(tree(1), at).unwrap();
         assert!(s.is_activated());
         assert_eq!(s.activated_at(), Some(at));
-        assert_eq!(events.len(), 1);
+        assert_eq!(events.len(), 2);
         match &events[0] {
             DomainEvent::SensorActivated { sensor_id } => {
                 assert_eq!(sensor_id.as_str(), "eui-a81758fffe0c3b52")
@@ -340,7 +515,7 @@ mod tests {
         let mut s = fixed_sensor();
         let original = s.activated_at();
         assert!(matches!(
-            s.activate(fixed_now()),
+            s.activate(tree(1), fixed_now()),
             Err(SensorError::AlreadyActivated)
         ));
         assert_eq!(s.activated_at(), original);
@@ -374,7 +549,7 @@ mod tests {
     fn activate_after_deactivate_is_allowed() {
         let mut s = fixed_sensor();
         s.deactivate().unwrap();
-        assert_ok!(s.activate(fixed_now()));
+        assert_ok!(s.activate(tree(1), fixed_now()));
         assert!(s.is_activated());
     }
 

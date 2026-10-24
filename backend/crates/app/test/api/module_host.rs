@@ -17,7 +17,7 @@ async fn app_with_test_module() -> (crate::helpers::TestApp, Arc<Probe>) {
     (app, probe)
 }
 
-async fn switch(
+pub async fn switch(
     app: &crate::helpers::TestApp,
     org: Uuid,
     enabled: Option<bool>,

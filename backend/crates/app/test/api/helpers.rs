@@ -222,6 +222,32 @@ impl TestApp {
             .expect("test fixture updates watering status");
     }
 
+    /// Attaches the sensor to the tree directly, as rows the application
+    /// would have written; no events fire.
+    pub async fn attach_sensor_to_tree(&self, sensor_id: &str, tree_id: Uuid) {
+        sqlx::query(
+            "INSERT INTO sensor_attachments (sensor_id, module_key, target_kind, target_id)
+             VALUES ($1, 'irrigation', 'tree', $2)",
+        )
+        .bind(sensor_id)
+        .bind(tree_id)
+        .execute(&self.db_pool)
+        .await
+        .expect("test fixture attaches a sensor");
+    }
+
+    /// The sensor attached to the tree, read straight from the table.
+    pub async fn sensor_of_tree(&self, tree_id: Uuid) -> Option<String> {
+        sqlx::query_scalar(
+            "SELECT sensor_id FROM sensor_attachments
+             WHERE module_key = 'irrigation' AND target_kind = 'tree' AND target_id = $1",
+        )
+        .bind(tree_id)
+        .fetch_optional(&self.db_pool)
+        .await
+        .expect("test fixture reads an attachment")
+    }
+
     pub async fn set_last_watered(&self, tree_id: &str, watered_at: &str) {
         sqlx::query("UPDATE trees SET last_watered = $2::timestamptz WHERE id = $1::uuid")
             .bind(tree_id)

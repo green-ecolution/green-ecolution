@@ -19,7 +19,7 @@ use crate::{
                 sensor::{
                     AcknowledgeDataQualityRequest, ActivateSensorRequest, CreateSensorRequest,
                     SensorDataQualityResponse, SensorDataResponse, SensorListParams,
-                    SensorModelResponse, SensorResponse, SetSensorTreeRequest,
+                    SensorModelResponse, SensorResponse, SetSensorTargetRequest, TargetRefDto,
                 },
                 tree::{TransferRequest, TreeResponse},
                 user::display_name,
@@ -33,9 +33,11 @@ use crate::{
 use domain::{
     Id, RepositoryError,
     authorization::{Action, Permission, ResourceKey},
-    sensor::{AcknowledgementNote, SensorSearchQuery, SensorSort, SensorSortField},
+    module::ModuleKey,
+    sensor::{AcknowledgementNote, SensorId, SensorSearchQuery, SensorSort, SensorSortField},
     sensor_model::SensorModel,
     shared::{pagination::Pagination, sort::SortDirection},
+    target::{TargetPurpose, TargetRef},
 };
 
 pub fn routes() -> OpenApiRouter<Arc<AppState>> {
@@ -47,11 +49,8 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
         .routes(routes!(get_sensor_soil_moisture))
         .routes(routes!(get_sensor_data_quality))
         .routes(routes!(acknowledge_sensor_data_quality))
-        .routes(routes!(
-            get_tree_by_sensor,
-            set_sensor_tree,
-            remove_sensor_tree
-        ))
+        .routes(routes!(get_tree_by_sensor))
+        .routes(routes!(set_sensor_target, remove_sensor_target))
         .routes(routes!(list_sensor_models))
         .routes(routes!(get_sensor_model))
         .routes(routes!(transfer_sensor))
@@ -64,7 +63,7 @@ const SENSOR_LIST_Q_MAX_LEN: usize = 100;
     summary = "List all sensors",
     description = "Returns a paginated list of all LoRaWAN sensors. \
                    Optional `q` parameter case-insensitively filters by sensor EUI or model name. \
-                   Optional filter parameters (status, model_id, data_health, has_tree) narrow the result; array parameters are repeatable. \
+                   Optional filter parameters (status, model_id, data_health, attached, module, id) narrow the result; array parameters are repeatable. \
                    Optional `sort` (id, last_reading, created_at) and `order` (asc, desc) control the result order; the default is id ascending.",
     params(SensorListParams),
     responses(
@@ -118,8 +117,13 @@ pub async fn list_sensors(
             .into_iter()
             .map(domain::sensor::DataHealth::from)
             .collect(),
-        has_tree: params.has_tree,
-        cluster_ids: params.cluster_id.into_iter().map(Id::new).collect(),
+        attached: params.attached,
+        target_module: params.module.as_deref().map(ModuleKey::new).transpose()?,
+        ids: params
+            .id
+            .iter()
+            .map(SensorId::new)
+            .collect::<Result<_, _>>()?,
         sort: SensorSort {
             field: params.sort.map(SensorSortField::from).unwrap_or_default(),
             direction: params.order.map(SortDirection::from).unwrap_or_default(),
@@ -336,7 +340,7 @@ pub async fn get_tree_by_sensor(
     operation_id = "createSensor",
     summary = "Register a new (prepared) sensor unit",
     description = "Creates a sensor record in `Prepared` state. The sensor must later be \
-        bound to a tree via `POST /sensors/{sensor_id}/activate` before it starts \
+        attached to a target via `POST /sensors/{sensor_id}/activate` before it starts \
         receiving data.",
     request_body = CreateSensorRequest,
     responses(
@@ -367,19 +371,55 @@ pub async fn create_sensor(
     Ok((StatusCode::CREATED, Json(SensorResponse::from(&view))))
 }
 
+/// `sensor:update` on the sensor, plus `update` on the target's resource in the
+/// target's organization. Returns the target once both pass.
+async fn require_sensor_target_update(
+    state: &AppState,
+    user: uuid::Uuid,
+    sensor_id: &SensorId,
+    target: TargetRefDto,
+) -> Result<TargetRef, ServiceError> {
+    let target = TargetRef::try_from(target)?;
+    let sensor = state.sensor_service.view_by_id(sensor_id).await?;
+    let ctx = state.authorization_service.context_for(user).await?;
+    scope::ensure_visible(
+        &ctx,
+        Permission::new(ResourceKey::SENSOR, Action::Read),
+        sensor.organization_id,
+    )?;
+    state
+        .authorization_service
+        .require(
+            user,
+            Permission::new(ResourceKey::SENSOR, Action::Update),
+            Id::new(sensor.organization_id),
+        )
+        .await?;
+    let admitted = state.targets.admit(&target, TargetPurpose::Sensor).await?;
+    state
+        .authorization_service
+        .require(
+            user,
+            Permission::new(admitted.resource, Action::Update),
+            admitted.organization_id,
+        )
+        .await?;
+    Ok(target)
+}
+
 #[utoipa::path(post, path = "/sensors/{sensor_id}/activate", tag = "Sensors",
     operation_id = "activateSensor",
-    summary = "Activate a prepared sensor by binding it to a tree",
+    summary = "Activate a prepared sensor by attaching it to a target",
     description = "Transitions a sensor from `Prepared` to `Offline` and attaches it to \
-        the given tree. Idempotent if the sensor is already attached to the same tree.",
+        the given target, e.g. a tree. Idempotent if the sensor is already attached to the same target.",
     params(("sensor_id" = String, Path, description = "Sensor ID (EUI)")),
     request_body = ActivateSensorRequest,
     responses(
         (status = 200, description = "Sensor activated", body = SensorResponse),
-        (status = 403, description = "Missing sensor:update or tree:update in the owning organization", body = ErrorBody),
-        (status = 404, description = "Sensor or tree not found", body = ErrorBody),
-        (status = 409, description = "Sensor already activated, or the tree already carries another sensor (codes `conflict.sensor_already_activated`, `conflict.tree_already_has_sensor`)", body = ErrorBody),
-        (status = 422, description = "Sensor and tree belong to different organizations (code `organization_mismatch.sensor_vs_tree`)", body = ErrorBody),
+        (status = 403, description = "Missing sensor:update or update on the target in the owning organization, or the target's module is disabled (code `module.disabled`)", body = ErrorBody),
+        (status = 404, description = "Sensor or target not found", body = ErrorBody),
+        (status = 409, description = "Sensor already activated or attached elsewhere, or the target already carries another sensor (codes `conflict.sensor_already_activated`, `sensor.already_attached`, `conflict.target_already_has_sensor`)", body = ErrorBody),
+        (status = 422, description = "The target takes no sensors or refuses this one, or belongs to a different organization (codes `target.not_accepted`, `tree.not_yet_planted`, `organization_mismatch.sensor_vs_target`)", body = ErrorBody),
         (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
@@ -390,112 +430,56 @@ pub async fn activate_sensor(
     SensorIdPath(sensor_id): SensorIdPath,
     Json(body): Json<ActivateSensorRequest>,
 ) -> Result<Json<SensorResponse>, ServiceError> {
-    let sensor = state.sensor_service.view_by_id(&sensor_id).await?;
-    let ctx = state.authorization_service.context_for(user.id).await?;
-    scope::ensure_visible(
-        &ctx,
-        Permission::new(ResourceKey::SENSOR, Action::Read),
-        sensor.organization_id,
-    )?;
-    state
-        .authorization_service
-        .require(
-            user.id,
-            Permission::new(ResourceKey::SENSOR, Action::Update),
-            Id::new(sensor.organization_id),
-        )
-        .await?;
-
-    let tree = state.tree_service.view_by_id(Id::new(body.tree_id)).await?;
-    state
-        .authorization_service
-        .require(
-            user.id,
-            Permission::new(crate::irrigation::resources::TREE, Action::Update),
-            Id::new(tree.organization_id),
-        )
-        .await?;
-
-    let view = state
-        .sensor_service
-        .activate(&sensor_id, Id::new(body.tree_id))
-        .await?;
+    let target = require_sensor_target_update(&state, user.id, &sensor_id, body.target).await?;
+    let view = state.sensor_service.activate(&sensor_id, target).await?;
     Ok(Json(SensorResponse::from(&view)))
 }
 
-#[utoipa::path(put, path = "/sensors/{sensor_id}/tree", tag = "Sensors",
-    operation_id = "setSensorTree",
-    summary = "Move an activated sensor to a different tree",
-    description = "Re-links an already activated sensor to `tree_id`. Rejects a \
-        tree that already has a different sensor and a sensor that is not yet \
-        activated. Idempotent if the sensor is already linked to that tree.",
+#[utoipa::path(put, path = "/sensors/{sensor_id}/target", tag = "Sensors",
+    operation_id = "setSensorTarget",
+    summary = "Move an activated sensor to a different target",
+    description = "Attaches an already activated sensor to `target`, releasing its \
+        current one. Rejects a target that already has a different sensor and a sensor \
+        that is not yet activated. Idempotent if the sensor is already attached there.",
     params(("sensor_id" = String, Path, description = "Sensor ID (EUI)")),
-    request_body = SetSensorTreeRequest,
+    request_body = SetSensorTargetRequest,
     responses(
-        (status = 200, description = "Sensor re-linked", body = SensorResponse),
-        (status = 403, description = "Missing sensor:update or tree:update in the owning organization", body = ErrorBody),
-        (status = 404, description = "Sensor or tree not found", body = ErrorBody),
-        (status = 409, description = "Sensor not activated, or the tree already carries another sensor (codes `conflict.sensor_not_activated`, `conflict.tree_already_has_sensor`)", body = ErrorBody),
-        (status = 422, description = "Sensor and tree belong to different organizations (code `organization_mismatch.sensor_vs_tree`)", body = ErrorBody),
+        (status = 200, description = "Sensor moved", body = SensorResponse),
+        (status = 403, description = "Missing sensor:update or update on the target in the owning organization, or the target's module is disabled (code `module.disabled`)", body = ErrorBody),
+        (status = 404, description = "Sensor or target not found", body = ErrorBody),
+        (status = 409, description = "Sensor not activated, or the target already carries another sensor (codes `conflict.sensor_not_activated`, `conflict.target_already_has_sensor`)", body = ErrorBody),
+        (status = 422, description = "The target takes no sensors or refuses this one, or belongs to a different organization (codes `target.not_accepted`, `tree.not_yet_planted`, `organization_mismatch.sensor_vs_target`)", body = ErrorBody),
         (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all, fields(sensor.id = %sensor_id))]
-pub async fn set_sensor_tree(
+pub async fn set_sensor_target(
     State(state): State<Arc<AppState>>,
     user: AuthUserExtractor,
     SensorIdPath(sensor_id): SensorIdPath,
-    Json(body): Json<SetSensorTreeRequest>,
+    Json(body): Json<SetSensorTargetRequest>,
 ) -> Result<Json<SensorResponse>, ServiceError> {
-    let sensor = state.sensor_service.view_by_id(&sensor_id).await?;
-    let ctx = state.authorization_service.context_for(user.id).await?;
-    scope::ensure_visible(
-        &ctx,
-        Permission::new(ResourceKey::SENSOR, Action::Read),
-        sensor.organization_id,
-    )?;
-    state
-        .authorization_service
-        .require(
-            user.id,
-            Permission::new(ResourceKey::SENSOR, Action::Update),
-            Id::new(sensor.organization_id),
-        )
-        .await?;
-
-    let tree = state.tree_service.view_by_id(Id::new(body.tree_id)).await?;
-    state
-        .authorization_service
-        .require(
-            user.id,
-            Permission::new(crate::irrigation::resources::TREE, Action::Update),
-            Id::new(tree.organization_id),
-        )
-        .await?;
-
-    let view = state
-        .sensor_service
-        .reassign_tree(&sensor_id, Id::new(body.tree_id))
-        .await?;
+    let target = require_sensor_target_update(&state, user.id, &sensor_id, body.target).await?;
+    let view = state.sensor_service.retarget(&sensor_id, target).await?;
     Ok(Json(SensorResponse::from(&view)))
 }
 
-#[utoipa::path(delete, path = "/sensors/{sensor_id}/tree", tag = "Sensors",
-    operation_id = "removeSensorTree",
-    summary = "Remove a sensor's tree link and reset it to prepared",
-    description = "Detaches the sensor from its tree and deactivates it, \
+#[utoipa::path(delete, path = "/sensors/{sensor_id}/target", tag = "Sensors",
+    operation_id = "removeSensorTarget",
+    summary = "Release a sensor's target and reset it to prepared",
+    description = "Detaches the sensor from its target and deactivates it, \
         returning it to the `Prepared` state. Idempotent for an already \
         prepared sensor.",
     params(("sensor_id" = String, Path, description = "Sensor ID (EUI)")),
     responses(
         (status = 200, description = "Sensor reset to prepared", body = SensorResponse),
-        (status = 403, description = "Missing sensor:update or tree:update in the owning organization", body = ErrorBody),
+        (status = 403, description = "Missing sensor:update, or update on the target, in the owning organization", body = ErrorBody),
         (status = 404, description = "Sensor not found", body = ErrorBody),
         (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all, fields(sensor.id = %sensor_id))]
-pub async fn remove_sensor_tree(
+pub async fn remove_sensor_target(
     State(state): State<Arc<AppState>>,
     user: AuthUserExtractor,
     SensorIdPath(sensor_id): SensorIdPath,
@@ -515,14 +499,19 @@ pub async fn remove_sensor_tree(
             Id::new(sensor.organization_id),
         )
         .await?;
-
-    if let Some(tree) = state.tree_service.view_by_sensor_id(&sensor_id).await? {
+    // Sensor and target share one organization, so the sensor's stands in for
+    // a target that may no longer be admissible.
+    if let Some(resource) = sensor
+        .target
+        .as_ref()
+        .and_then(|t| state.targets.resource(t))
+    {
         state
             .authorization_service
             .require(
                 user.id,
-                Permission::new(crate::irrigation::resources::TREE, Action::Update),
-                Id::new(tree.organization_id),
+                Permission::new(resource, Action::Update),
+                Id::new(sensor.organization_id),
             )
             .await?;
     }

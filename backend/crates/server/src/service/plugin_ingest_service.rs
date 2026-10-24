@@ -203,7 +203,6 @@ impl PluginIngestService {
                     coordinate,
                     description: item.description,
                     cluster_id: None,
-                    sensor_id: None,
                     provenance,
                     organization_id: plugin.organization_id(),
                 };
@@ -245,7 +244,6 @@ impl PluginIngestService {
                     .publish(DomainEvent::TreeCreated {
                         tree_id: tree.id,
                         cluster_id: tree.cluster_id(),
-                        sensor_id: tree.sensor_id().cloned(),
                     })
                     .await;
                 Ok((IngestStatus::Created, tree.id))
@@ -455,6 +453,12 @@ mod tests {
         ) -> Result<Option<domain::tree::TreeView>, RepositoryError> {
             unimplemented!()
         }
+        async fn sensor_ids(
+            &self,
+            _trees: &[Id<Tree>],
+        ) -> Result<std::collections::HashMap<Id<Tree>, SensorId>, RepositoryError> {
+            unimplemented!()
+        }
         async fn view_search(
             &self,
             _query: domain::tree::TreeSearchQuery,
@@ -506,7 +510,6 @@ mod tests {
                 description: draft.description,
                 last_watered: None,
                 cluster_id: draft.cluster_id.map(|c| c.value()),
-                sensor_id: draft.sensor_id.map(|s| s.as_str().to_string()),
                 watering_status: WateringStatus::Unknown,
                 provider: draft.provenance.provider().map(|p| p.as_str().to_string()),
                 additional_info: draft.provenance.additional_info().cloned(),

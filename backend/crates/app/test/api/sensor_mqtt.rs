@@ -1,4 +1,7 @@
-use crate::helpers::{TestApp, spawn_app};
+use crate::{
+    helpers::{TestApp, spawn_app},
+    sensors::tree_target,
+};
 use domain::{
     Id,
     cluster::{ClusterAddress, SoilCondition, TreeClusterUpdate},
@@ -79,7 +82,7 @@ async fn ecodrizzler_ingest_writes_normalized_values_and_derives_online() {
     let r = app
         .post_json(
             "/api/v1/sensors/eui-mqtt-eco/activate",
-            &json!({ "tree_id": tree_id }),
+            &tree_target(tree_id),
         )
         .await;
     assert_eq!(r.status().as_u16(), 200);
@@ -107,7 +110,7 @@ async fn ecodrizzler_ingest_updates_linked_tree_watering_status() {
     let r = app
         .post_json(
             "/api/v1/sensors/eui-mqtt-eco-2/activate",
-            &json!({ "tree_id": tree_id }),
+            &tree_target(tree_id),
         )
         .await;
     assert_eq!(r.status().as_u16(), 200);
@@ -375,7 +378,7 @@ async fn volumetric_status_depends_on_soil_and_age() {
     let old_tree = insert_tree_in_cluster(&app, "T-SOIL-OLD", cluster, 5).await;
     app.post_json(
         "/api/v1/sensors/eui-soil-old/activate",
-        &json!({ "tree_id": old_tree }),
+        &tree_target(old_tree),
     )
     .await;
     ingest_moisture(&app, "eui-soil-old", model_id, 25.0, 15.0).await;
@@ -386,7 +389,7 @@ async fn volumetric_status_depends_on_soil_and_age() {
     let young_tree = insert_tree_in_cluster(&app, "T-SOIL-YOUNG", cluster, 0).await;
     app.post_json(
         "/api/v1/sensors/eui-soil-young/activate",
-        &json!({ "tree_id": young_tree }),
+        &tree_target(young_tree),
     )
     .await;
     ingest_moisture(&app, "eui-soil-young", model_id, 25.0, 15.0).await;
@@ -419,7 +422,7 @@ async fn soil_condition_change_retriggers_tree_and_cluster_status() {
     let tree_id = insert_tree_in_cluster(&app, "T-SOIL-CHG", cluster_id, 5).await;
     app.post_json(
         "/api/v1/sensors/eui-soil-change/activate",
-        &json!({ "tree_id": tree_id }),
+        &tree_target(tree_id),
     )
     .await;
 
@@ -461,7 +464,7 @@ async fn soil_condition_unknown_invalidates_tree_and_cluster_status() {
     let tree_id = insert_tree_in_cluster(&app, "T-SOIL-UNK", cluster_id, 5).await;
     app.post_json(
         "/api/v1/sensors/eui-soil-unknown/activate",
-        &json!({ "tree_id": tree_id }),
+        &tree_target(tree_id),
     )
     .await;
     ingest_moisture(&app, "eui-soil-unknown", model_id, 13.0, 13.0).await;
@@ -497,7 +500,7 @@ async fn soil_condition_unknown_keeps_status_derived_from_watermarks() {
     let tree_id = insert_tree_in_cluster(&app, "T-SOIL-ECO", cluster_id, 0).await;
     app.post_json(
         "/api/v1/sensors/eui-soil-eco/activate",
-        &json!({ "tree_id": tree_id }),
+        &tree_target(tree_id),
     )
     .await;
     // 5 centibar across all depths → Good under the year-0 watermark table.
@@ -527,7 +530,7 @@ async fn watermark_ingest_beyond_monitoring_drops_stale_status() {
     let tree_id = insert_tree_in_cluster(&app, "T-SOIL-OLD-ECO", cluster_id, 12).await;
     app.post_json(
         "/api/v1/sensors/eui-soil-old-eco/activate",
-        &json!({ "tree_id": tree_id }),
+        &tree_target(tree_id),
     )
     .await;
     sqlx::query("UPDATE trees SET watering_status = 'good' WHERE id = $1")
@@ -666,7 +669,7 @@ async fn ingest_flags_a_sentinel_and_leaves_the_tree_status_untouched() {
     let r = app
         .post_json(
             "/api/v1/sensors/eui-sentinel/activate",
-            &json!({ "tree_id": tree_id }),
+            &tree_target(tree_id),
         )
         .await;
     assert_eq!(r.status().as_u16(), 200);
@@ -815,7 +818,7 @@ async fn activating_a_sensor_on_a_tree_planted_in_the_future_returns_422() {
     let r = app
         .post_json(
             "/api/v1/sensors/eui-mqtt-future-1/activate",
-            &json!({ "tree_id": tree_id }),
+            &tree_target(tree_id),
         )
         .await;
 
@@ -832,16 +835,18 @@ async fn ingest_leaves_a_tree_planted_in_the_future_on_unknown() {
     let model_id = app.ecodrizzler_model_id().await;
     create_sensor(&app, "eui-mqtt-future-2", model_id).await;
 
+    let tree_id = Uuid::now_v7();
     sqlx::query!(
-        r#"INSERT INTO trees (id, planting_year, species, number, latitude, longitude, geometry, description, sensor_id, watering_status, organization_id)
-        VALUES ($1, $2, 'Eiche', 'T-MQ-FUT-2', 54.79, 9.45, ST_SetSRID(ST_MakePoint(9.45, 54.79), 4326), 'Test', $3, 'good'::watering_status, '01980000-0000-7000-8000-000000000001')"#,
-        Uuid::now_v7(),
+        r#"INSERT INTO trees (id, planting_year, species, number, latitude, longitude, geometry, description, watering_status, organization_id)
+        VALUES ($1, $2, 'Eiche', 'T-MQ-FUT-2', 54.79, 9.45, ST_SetSRID(ST_MakePoint(9.45, 54.79), 4326), 'Test', 'good'::watering_status, '01980000-0000-7000-8000-000000000001')"#,
+        tree_id,
         future_planting_year(),
-        "eui-mqtt-future-2",
     )
     .execute(&app.db_pool)
     .await
     .unwrap();
+    app.attach_sensor_to_tree("eui-mqtt-future-2", tree_id)
+        .await;
 
     app.ingest_ecodrizzler("eui-mqtt-future-2", 5)
         .await

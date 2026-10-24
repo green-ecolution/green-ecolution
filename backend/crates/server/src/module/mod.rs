@@ -22,6 +22,7 @@ use crate::{
         authorization::AuthorizationService,
         event_bus::{EventBus, EventHandler},
         module_access::ModuleAccess,
+        sensor_service::SensorService,
         user_service::UserService,
     },
 };
@@ -55,6 +56,7 @@ pub struct ModuleContext {
     pub access: ModuleAccess,
     pub users: Arc<UserService>,
     pub config: Arc<Settings>,
+    pub sensors: Arc<SensorService>,
 }
 
 /// Routes relative to `/api/v1`. `protected` runs behind the same

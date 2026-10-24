@@ -358,13 +358,12 @@ async fn seed_trees(pool: &PgPool, scale: Scale) -> Result<i64, sqlx::Error> {
             FROM tree_clusters
         )
         INSERT INTO trees
-            (id, tree_cluster_id, sensor_id, number, species, planting_year,
+            (id, tree_cluster_id, number, species, planting_year,
              latitude, longitude, geometry, watering_status, last_watered,
              description, provider, organization_id)
         SELECT
             bench_uuid_v7(),
             c.id,
-            NULL,
             CASE WHEN (n % 3) = 0 THEN '' ELSE chr(65 + (n % 26)::int) END || (1000 + n),
             (ARRAY['Acer platanoides','Tilia cordata','Quercus robur','Fagus sylvatica'])[1 + (n % 4)],
             1950 + (n % 70)::int,
@@ -432,25 +431,28 @@ async fn seed_sensors(pool: &PgPool, scale: Scale) -> Result<i64, sqlx::Error> {
     .execute(pool)
     .await?;
 
-    // The tree link is what production establishes on activation; the sensor
-    // aggregate itself carries no position.
+    // The tree attachment is what production establishes on activation; the
+    // sensor aggregate itself carries no position.
     sqlx::query(
         r#"
         WITH unlinked AS (
             SELECT s.id AS sensor_id, row_number() OVER (ORDER BY s.id) AS rn
             FROM sensors s
-            WHERE NOT EXISTS (SELECT 1 FROM trees t WHERE t.sensor_id = s.id)
+            WHERE NOT EXISTS (SELECT 1 FROM sensor_attachments sa WHERE sa.sensor_id = s.id)
         ),
         targets AS (
             SELECT t.id AS tree_id, row_number() OVER (ORDER BY t.id) AS rn
             FROM trees t
-            WHERE t.sensor_id IS NULL
+            WHERE NOT EXISTS (
+                SELECT 1 FROM sensor_attachments sa
+                WHERE sa.module_key = 'irrigation' AND sa.target_kind = 'tree'
+                  AND sa.target_id = t.id
+            )
         )
-        UPDATE trees t
-        SET sensor_id = unlinked.sensor_id
+        INSERT INTO sensor_attachments (sensor_id, module_key, target_kind, target_id)
+        SELECT unlinked.sensor_id, 'irrigation', 'tree', targets.tree_id
         FROM unlinked
         JOIN targets ON targets.rn = unlinked.rn
-        WHERE t.id = targets.tree_id
         "#,
     )
     .execute(pool)
@@ -462,8 +464,10 @@ async fn seed_sensors(pool: &PgPool, scale: Scale) -> Result<i64, sqlx::Error> {
         r#"
         UPDATE sensors s
         SET organization_id = t.organization_id
-        FROM trees t
-        WHERE t.sensor_id = s.id
+        FROM sensor_attachments sa
+        JOIN trees t ON t.id = sa.target_id
+        WHERE sa.sensor_id = s.id
+          AND sa.module_key = 'irrigation' AND sa.target_kind = 'tree'
           AND s.organization_id <> t.organization_id
         "#,
     )

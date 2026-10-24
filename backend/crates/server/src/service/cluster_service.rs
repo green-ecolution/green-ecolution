@@ -13,7 +13,7 @@ use domain::{
     comment::{CommentSubject, CommentWriter},
     events::DomainEvent,
     organization::Organization,
-    sensor::{SensorReader, SensorWriter},
+    sensor::{SensorId, SensorReader, SensorWriter},
     shared::{
         coordinates::Coordinate,
         pagination::{Pagination, SearchPage},
@@ -239,9 +239,10 @@ impl ClusterService {
             }
         }
 
+        let with_sensor = self.tree_reader.sensor_ids(&cluster.tree_ids).await?;
         let statuses: Vec<_> = trees
             .iter()
-            .filter(|t| t.sensor_id().is_some())
+            .filter(|t| with_sensor.contains_key(&t.id))
             .map(|t| t.watering_status())
             .collect();
         cluster.recalculate_watering_status(&statuses);
@@ -252,6 +253,26 @@ impl ClusterService {
     #[tracing::instrument(level = "debug", skip_all)]
     pub async fn statistics(&self, visible: Visibility) -> Result<ClusterStatistics, ServiceError> {
         Ok(self.reader.statistics(visible).await?)
+    }
+
+    /// Sensors attached to the trees of the cluster, ordered by id.
+    #[tracing::instrument(level = "debug", skip_all, fields(cluster.id = %id))]
+    pub async fn sensor_ids(&self, id: Id<TreeCluster>) -> Result<Vec<SensorId>, ServiceError> {
+        let tree_ids: Vec<Id<Tree>> = self
+            .tree_reader
+            .by_cluster_id(id)
+            .await?
+            .into_iter()
+            .map(|t| t.id)
+            .collect();
+        let mut ids: Vec<SensorId> = self
+            .tree_reader
+            .sensor_ids(&tree_ids)
+            .await?
+            .into_values()
+            .collect();
+        ids.sort_by(|a, b| a.as_str().cmp(b.as_str()));
+        Ok(ids)
     }
 
     #[tracing::instrument(level = "debug", skip_all, fields(cluster.id = %id))]
@@ -315,11 +336,12 @@ impl ClusterService {
         let mut cluster = self.reader.by_id(id).await?;
         let mut events = cluster.transfer_to(target);
         self.writer.save(&cluster).await?;
+        let mut sensors = self.tree_reader.sensor_ids(&cluster.tree_ids).await?;
         for tree_id in cluster.tree_ids.clone() {
             let mut tree = self.tree_reader.by_id(tree_id).await?;
             events.extend(tree.transfer_to(target));
             self.tree_writer.save(&tree).await?;
-            if let Some(sensor_id) = tree.sensor_id().cloned() {
+            if let Some(sensor_id) = sensors.remove(&tree_id) {
                 let mut sensor = self.sensor_reader.by_id(&sensor_id).await?;
                 events.extend(sensor.transfer_to(target));
                 self.sensor_writer.save(&sensor).await?;

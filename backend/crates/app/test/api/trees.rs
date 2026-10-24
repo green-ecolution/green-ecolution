@@ -900,19 +900,33 @@ async fn insert_tree_with_sensor(app: &TestApp, number: &str, sensor_id: &str) -
     let id = uuid::Uuid::now_v7();
     sqlx::query!(
         r#"INSERT INTO trees (id, planting_year, species, number, latitude, longitude,
-                              geometry, description, sensor_id, watering_status, organization_id)
+                              geometry, description, watering_status, organization_id)
         VALUES ($1, 2020, 'Eiche', $2, 53.55, 9.99,
-                ST_SetSRID(ST_MakePoint(9.99, 53.55), 4326), 'Test', $3,
-                $4::text::watering_status, '01980000-0000-7000-8000-000000000001')"#,
+                ST_SetSRID(ST_MakePoint(9.99, 53.55), 4326), 'Test',
+                $3::text::watering_status, '01980000-0000-7000-8000-000000000001')"#,
         id,
         number,
-        Some(sensor_id),
         "unknown",
     )
     .execute(&app.db_pool)
     .await
     .unwrap();
+    app.attach_sensor_to_tree(sensor_id, id).await;
     id
+}
+
+/// Creates a tree through the API with `sensor_id` attached.
+pub async fn create_tree_with_sensor(app: &TestApp, sensor_id: &str) -> reqwest::Response {
+    let body = serde_json::json!({
+        "species": "Eiche",
+        "number": format!("T-{sensor_id}"),
+        "planting_year": 2020,
+        "latitude": 53.56,
+        "longitude": 9.98,
+        "description": "Testbaum",
+        "sensor_id": sensor_id
+    });
+    app.post_json("/api/v1/trees", &body).await
 }
 
 #[tokio::test]
@@ -933,6 +947,11 @@ async fn create_tree_with_sensor_of_other_tree_returns_409() {
     let response = app.post_json("/api/v1/trees", &body).await;
 
     assert_eq!(response.status().as_u16(), 409);
+    let body: serde_json::Value = response.json().await.unwrap();
+    assert_eq!(body["code"], "sensor.already_attached");
+    // Refused before anything is written.
+    let trees: serde_json::Value = app.get("/api/v1/trees").await.json().await.unwrap();
+    assert_eq!(trees["pagination"]["total_records"], 1);
 }
 
 #[tokio::test]
@@ -971,6 +990,8 @@ async fn update_tree_with_sensor_of_other_tree_returns_409() {
         .await;
 
     assert_eq!(response.status().as_u16(), 409);
+    let body: serde_json::Value = response.json().await.unwrap();
+    assert_eq!(body["code"], "sensor.already_attached");
 
     // The sensor must still belong to the original tree
     let holder_after = app.get(&format!("/api/v1/trees/{holder}")).await;

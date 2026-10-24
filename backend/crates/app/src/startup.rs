@@ -220,9 +220,12 @@ impl Application {
                     &settings.routing,
                 )) as Arc<dyn domain::routing::RouteOptimizer>
             });
+        let targets = Arc::new(server::service::targets::TargetRegistry::new());
         let services = Services::build(
             &repos,
             event_bus.clone(),
+            targets.clone(),
+            module_activation_repo.clone(),
             route_optimizer,
             irrigation_settings.clone(),
             repos.start_point_reader.clone(),
@@ -239,7 +242,6 @@ impl Application {
             resource_catalog.clone(),
         );
 
-        let targets = Arc::new(server::service::targets::TargetRegistry::new());
         let mut handlers = core_event_handlers(&repos);
         let mut module_routes = Vec::new();
         let mut background_tasks = Vec::new();
@@ -258,6 +260,7 @@ impl Application {
                 ),
                 users: user_service.clone(),
                 config: config.clone(),
+                sensors: services.sensor.clone(),
             };
             let runtime = module
                 .build(ctx)
@@ -384,6 +387,7 @@ impl Application {
             settings_reader: settings_repo.clone(),
             settings_service,
             module_activation_service,
+            targets,
             app_origins,
         });
 
@@ -594,6 +598,8 @@ impl Services {
     fn build(
         repos: &Repositories,
         event_bus: Arc<dyn EventBus>,
+        targets: Arc<server::service::targets::TargetRegistry>,
+        module_activation: Arc<dyn domain::module::ModuleActivationReader>,
         route_optimizer: Option<Arc<dyn domain::routing::RouteOptimizer>>,
         settings_resolver: Arc<dyn server::irrigation::settings::IrrigationSettingsResolver>,
         start_point_reader: Arc<dyn domain::start_point::StartPointReader>,
@@ -644,8 +650,9 @@ impl Services {
             repos.sensor_reading_writer.clone(),
             repos.sensor_model_reader.clone(),
             repos.tree_reader.clone(),
-            repos.tree_writer.clone(),
             repos.cluster_reader.clone(),
+            targets,
+            module_activation,
             event_bus.clone(),
         ));
         let plugin_sensor_ingest = Arc::new(PluginSensorIngestService::new(

@@ -130,7 +130,7 @@ async fn activate_by_user_without_tree_update_yields_403() {
             app.address
         ))
         .bearer_auth(&token)
-        .json(&json!({ "tree_id": tree_id }))
+        .json(&crate::sensors::tree_target(&tree_id))
         .send()
         .await
         .unwrap();

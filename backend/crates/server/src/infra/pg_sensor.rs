@@ -22,11 +22,11 @@ use domain::{
     },
     sensor_model::SensorModelAbility,
     shared::{
-        coordinates::Coordinate,
         pagination::{Page, Pagination, SearchPage},
         provenance::ProviderId,
         string_value::NonEmptyString,
     },
+    target::TargetRef,
     uuid_v7_timestamp,
 };
 
@@ -179,10 +179,9 @@ impl PgSensorRepository {
             updated_at: row.updated_at.and_utc(),
             status,
             sensor_type: row.sensor_type,
-            coordinate: build_coord(row.tree_lat, row.tree_lng)?,
-            linked_tree_id: row.linked_tree_id,
-            linked_cluster_id: row.linked_cluster_id,
-            linked_cluster_name: row.linked_cluster_name,
+            target: build_target(row.target_module, row.target_kind, row.target_id)?,
+            target_label: None,
+            location: None,
             provider: row.provider.map(ProviderId::reconstitute),
             additional_info: row.additional_info,
             model: SensorModelSummary {
@@ -219,11 +218,9 @@ struct SensorViewRow {
     additional_info: Option<serde_json::Value>,
     model_id: Uuid,
     model_name: String,
-    linked_tree_id: Option<Uuid>,
-    linked_cluster_id: Option<Uuid>,
-    linked_cluster_name: Option<String>,
-    tree_lat: Option<f64>,
-    tree_lng: Option<f64>,
+    target_module: Option<String>,
+    target_kind: Option<String>,
+    target_id: Option<Uuid>,
     serial_number: Option<String>,
     dev_eui: Option<String>,
     app_eui: Option<String>,
@@ -242,8 +239,7 @@ const SENSOR_COLUMNS: &str = "s.id, s.created_at, s.updated_at, s.activated_at, 
     s.type AS sensor_type, s.provider, \
     s.additional_informations AS additional_info, \
     sm.id AS model_id, sm.name AS model_name, \
-    t.id AS linked_tree_id, t.latitude AS tree_lat, t.longitude AS tree_lng, \
-    tc.id AS linked_cluster_id, tc.name AS linked_cluster_name, \
+    sa.module_key AS target_module, sa.target_kind, sa.target_id, \
     sl.serial_number, sl.dev_eui, sl.app_eui, sl.at_pin, sl.ota_pin, sl.config, \
     lr.id AS last_reading_id, lr.updated_at AS last_reading_updated_at, \
     lr.data AS last_reading_data, s.organization_id, \
@@ -276,10 +272,14 @@ impl SensorReader for PgSensorRepository {
                       sl.config        AS "config: serde_json::Value",
                       qa.acknowledged_at AS "acknowledged_at?",
                       qa.acknowledged_by AS "acknowledged_by?",
-                      qa.note            AS "acknowledged_note?"
+                      qa.note            AS "acknowledged_note?",
+                      sa.module_key      AS "target_module?",
+                      sa.target_kind     AS "target_kind?",
+                      sa.target_id       AS "target_id?"
             FROM sensors s
             LEFT JOIN sensor_lorawan sl ON sl.id = s.id
             LEFT JOIN sensor_quality_acknowledgements qa ON qa.sensor_id = s.id
+            LEFT JOIN sensor_attachments sa ON sa.sensor_id = s.id
             WHERE s.id = $1"#,
             id.as_str()
         )
@@ -310,7 +310,25 @@ impl SensorReader for PgSensorRepository {
                 row.acknowledged_by,
                 row.acknowledged_note,
             )?,
+            target: build_target(row.target_module, row.target_kind, row.target_id)?,
         }))
+    }
+
+    #[tracing::instrument(level = "trace", skip_all)]
+    async fn by_target(&self, target: &TargetRef) -> Result<Option<Sensor>, RepositoryError> {
+        let id = sqlx::query_scalar!(
+            r#"SELECT sensor_id FROM sensor_attachments
+            WHERE module_key = $1 AND target_kind = $2 AND target_id = $3"#,
+            target.module.as_str(),
+            target.kind.as_str(),
+            target.id,
+        )
+        .fetch_optional(&self.pool)
+        .await?;
+        match id {
+            Some(id) => Ok(Some(self.by_id(&SensorId::new(id)?).await?)),
+            None => Ok(None),
+        }
     }
 
     #[tracing::instrument(level = "trace", skip_all)]
@@ -334,10 +352,14 @@ impl SensorReader for PgSensorRepository {
                       sl.config        AS "config: serde_json::Value",
                       qa.acknowledged_at AS "acknowledged_at?",
                       qa.acknowledged_by AS "acknowledged_by?",
-                      qa.note            AS "acknowledged_note?"
+                      qa.note            AS "acknowledged_note?",
+                      sa.module_key      AS "target_module?",
+                      sa.target_kind     AS "target_kind?",
+                      sa.target_id       AS "target_id?"
             FROM sensors s
             LEFT JOIN sensor_lorawan sl ON sl.id = s.id
             LEFT JOIN sensor_quality_acknowledgements qa ON qa.sensor_id = s.id
+            LEFT JOIN sensor_attachments sa ON sa.sensor_id = s.id
             WHERE s.id = ANY($1::text[])"#,
             &ids as &[&str]
         )
@@ -369,6 +391,7 @@ impl SensorReader for PgSensorRepository {
                         r.acknowledged_by,
                         r.acknowledged_note,
                     )?,
+                    target: build_target(r.target_module, r.target_kind, r.target_id)?,
                 }))
             })
             .collect()
@@ -385,11 +408,9 @@ impl SensorReader for PgSensorRepository {
                       s.organization_id,
                       sm.id           AS model_id,
                       sm.name         AS model_name,
-                      t.id            AS "linked_tree_id?",
-                      t.latitude      AS "tree_lat?",
-                      t.longitude     AS "tree_lng?",
-                      tc.id           AS "linked_cluster_id?",
-                      tc.name         AS "linked_cluster_name?",
+                      sa.module_key   AS "target_module?",
+                      sa.target_kind  AS "target_kind?",
+                      sa.target_id    AS "target_id?",
                       sl.serial_number AS "serial_number?",
                       sl.dev_eui       AS "dev_eui?",
                       sl.app_eui       AS "app_eui?",
@@ -399,8 +420,7 @@ impl SensorReader for PgSensorRepository {
             FROM sensors s
             INNER JOIN sensor_models sm ON sm.id = s.model_id
             LEFT JOIN sensor_lorawan sl ON sl.id = s.id
-            LEFT JOIN trees t          ON t.sensor_id = s.id
-            LEFT JOIN tree_clusters tc ON tc.id = t.tree_cluster_id
+            LEFT JOIN sensor_attachments sa ON sa.sensor_id = s.id
             WHERE s.id = $1"#,
             id.as_str()
         )
@@ -473,11 +493,9 @@ impl SensorReader for PgSensorRepository {
                 additional_info: row.additional_info,
                 model_id: row.model_id,
                 model_name: row.model_name,
-                linked_tree_id: row.linked_tree_id,
-                linked_cluster_id: row.linked_cluster_id,
-                linked_cluster_name: row.linked_cluster_name,
-                tree_lat: row.tree_lat,
-                tree_lng: row.tree_lng,
+                target_module: row.target_module,
+                target_kind: row.target_kind,
+                target_id: row.target_id,
                 serial_number: row.serial_number,
                 dev_eui: row.dev_eui,
                 app_eui: row.app_eui,
@@ -507,11 +525,9 @@ impl SensorReader for PgSensorRepository {
                       s.additional_informations AS "additional_info: serde_json::Value",
                       sm.id           AS model_id,
                       sm.name         AS model_name,
-                      t.id            AS "linked_tree_id?",
-                      t.latitude      AS "tree_lat?",
-                      t.longitude     AS "tree_lng?",
-                      tc.id           AS "linked_cluster_id?",
-                      tc.name         AS "linked_cluster_name?",
+                      sa.module_key   AS "target_module?",
+                      sa.target_kind  AS "target_kind?",
+                      sa.target_id    AS "target_id?",
                       sl.serial_number AS "serial_number?",
                       sl.dev_eui       AS "dev_eui?",
                       sl.app_eui       AS "app_eui?",
@@ -527,8 +543,7 @@ impl SensorReader for PgSensorRepository {
             FROM sensors s
             INNER JOIN sensor_models sm ON sm.id = s.model_id
             LEFT JOIN sensor_lorawan sl ON sl.id = s.id
-            LEFT JOIN trees t          ON t.sensor_id = s.id
-            LEFT JOIN tree_clusters tc ON tc.id = t.tree_cluster_id
+            LEFT JOIN sensor_attachments sa ON sa.sensor_id = s.id
             LEFT JOIN sensor_quality_acknowledgements qa ON qa.sensor_id = s.id
             LEFT JOIN LATERAL (
                 SELECT sd.id, sd.updated_at, sd.data
@@ -588,11 +603,9 @@ impl SensorReader for PgSensorRepository {
                         additional_info: r.additional_info,
                         model_id: r.model_id,
                         model_name: r.model_name,
-                        linked_tree_id: r.linked_tree_id,
-                        linked_cluster_id: r.linked_cluster_id,
-                        linked_cluster_name: r.linked_cluster_name,
-                        tree_lat: r.tree_lat,
-                        tree_lng: r.tree_lng,
+                        target_module: r.target_module,
+                        target_kind: r.target_kind,
+                        target_id: r.target_id,
                         serial_number: r.serial_number,
                         dev_eui: r.dev_eui,
                         app_eui: r.app_eui,
@@ -642,7 +655,7 @@ impl SensorReader for PgSensorRepository {
             })
             .collect();
         let model_ids: Vec<Uuid> = query.model_ids.iter().map(|id| id.value()).collect();
-        let cluster_ids: Vec<Uuid> = query.cluster_ids.iter().map(|id| id.value()).collect();
+        let ids: Vec<String> = query.ids.iter().map(|id| id.as_str().to_owned()).collect();
 
         // `qa` has to precede the two quality laterals, which read its
         // acknowledgement watermark; the builder emits filtering joins before
@@ -653,10 +666,7 @@ impl SensorReader for PgSensorRepository {
         let mut spec = ListSpec::new("sensors s", "s.id")
             .join("INNER JOIN sensor_models sm ON sm.id = s.model_id")
             .join(LATEST_READING_JOIN)
-            .join("LEFT JOIN trees t ON t.sensor_id = s.id")
-            // Filtering join, not projection-only: the text search reads
-            // `tc.name`, so the count queries need the table too.
-            .join("LEFT JOIN tree_clusters tc ON tc.id = t.tree_cluster_id");
+            .join("LEFT JOIN sensor_attachments sa ON sa.sensor_id = s.id");
         spec = if health_texts.is_empty() {
             spec.projection_join(QUALITY_ACK_JOIN)
                 .projection_join(&self.history_join)
@@ -675,10 +685,7 @@ impl SensorReader for PgSensorRepository {
                 "s.organization_id",
                 query.visible.into_raw_ids(),
             ))
-            .filter(Predicate::text_search(
-                &["s.id", "sm.name", "tc.name"],
-                query.q,
-            ))
+            .filter(Predicate::text_search(&["s.id", "sm.name"], query.q))
             .filter(Predicate::any_of_expr(
                 self.status_sql.clone(),
                 status_texts,
@@ -688,8 +695,12 @@ impl SensorReader for PgSensorRepository {
                 self.data_health_sql.clone(),
                 health_texts,
             ))
-            .filter(Predicate::is_present("t.id", query.has_tree))
-            .filter(Predicate::any_of("t.tree_cluster_id", cluster_ids))
+            .filter(Predicate::is_present("sa.sensor_id", query.attached))
+            .filter(Predicate::equals(
+                "sa.module_key",
+                query.target_module.map(|m| m.to_string()),
+            ))
+            .filter(Predicate::any_of("s.id", ids))
             .sort(
                 query.sort.field.as_sql_key(),
                 query.sort.direction.is_descending(),
@@ -799,6 +810,27 @@ impl SensorWriter for PgSensorRepository {
                 ack.at.naive_utc(),
                 ack.by,
                 ack.note.as_ref().map(|n| n.as_str()),
+            )
+            .execute(&mut *tx)
+            .await?;
+        }
+
+        sqlx::query!(
+            "DELETE FROM sensor_attachments WHERE sensor_id = $1",
+            sensor.id.as_str()
+        )
+        .execute(&mut *tx)
+        .await?;
+        if let Some(target) = sensor.target() {
+            // A target that already carries another sensor fails the unique
+            // constraint and surfaces as `AlreadyExists`.
+            sqlx::query!(
+                r#"INSERT INTO sensor_attachments (sensor_id, module_key, target_kind, target_id)
+                VALUES ($1, $2, $3, $4)"#,
+                sensor.id.as_str(),
+                target.module.as_str(),
+                target.kind.as_str(),
+                target.id,
             )
             .execute(&mut *tx)
             .await?;
@@ -1258,9 +1290,13 @@ fn build_latest_reading(
     })
 }
 
-fn build_coord(lat: Option<f64>, lng: Option<f64>) -> Result<Option<Coordinate>, RepositoryError> {
-    let (Some(lat), Some(lng)) = (lat, lng) else {
+fn build_target(
+    module: Option<String>,
+    kind: Option<String>,
+    id: Option<Uuid>,
+) -> Result<Option<TargetRef>, RepositoryError> {
+    let (Some(module), Some(kind), Some(id)) = (module, kind, id) else {
         return Ok(None);
     };
-    Ok(Some(Coordinate::new(lat, lng)?))
+    Ok(Some(TargetRef::new(&module, &kind, id)?))
 }

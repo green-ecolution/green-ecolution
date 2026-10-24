@@ -12,6 +12,7 @@ pub enum SensorAbilityUnit {
     Ohm,
     Celsius,
     Volt,
+    Centimeter,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -21,6 +22,7 @@ pub enum SensorAbilityName {
     Temperature,
     Humidity,
     Battery,
+    Distance,
 }
 
 impl SensorAbilityName {
@@ -31,6 +33,7 @@ impl SensorAbilityName {
             Self::Temperature => "temperature",
             Self::Humidity => "humidity",
             Self::Battery => "battery",
+            Self::Distance => "distance",
         }
     }
 }
@@ -45,6 +48,7 @@ impl FromStr for SensorAbilityName {
             "temperature" => Ok(Self::Temperature),
             "humidity" => Ok(Self::Humidity),
             "battery" => Ok(Self::Battery),
+            "distance" => Ok(Self::Distance),
             other => Err(UnknownAbility(other.to_owned())),
         }
     }
@@ -80,6 +84,7 @@ mod tests {
             SensorAbilityName::Temperature,
             SensorAbilityName::Humidity,
             SensorAbilityName::Battery,
+            SensorAbilityName::Distance,
         ] {
             assert_eq!(n.as_str().parse::<SensorAbilityName>().unwrap(), n);
         }

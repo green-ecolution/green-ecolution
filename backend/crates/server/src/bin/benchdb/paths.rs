@@ -184,7 +184,9 @@ async fn cluster_with_sensors(pool: &PgPool) -> Result<Option<Id<TreeCluster>>, 
     let id: Option<uuid::Uuid> = sqlx::query_scalar(
         r#"SELECT t.tree_cluster_id
            FROM trees t
-           WHERE t.sensor_id IS NOT NULL AND t.tree_cluster_id IS NOT NULL
+           JOIN sensor_attachments sa
+             ON sa.module_key = 'irrigation' AND sa.target_kind = 'tree' AND sa.target_id = t.id
+           WHERE t.tree_cluster_id IS NOT NULL
            LIMIT 1"#,
     )
     .fetch_optional(pool)

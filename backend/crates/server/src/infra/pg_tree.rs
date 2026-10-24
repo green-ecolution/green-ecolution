@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use chrono::{DateTime, NaiveDateTime, Utc};
 use domain::{IdSliceExt, RawId};
 use serde_json::Value;
@@ -154,12 +156,17 @@ impl TryFrom<TreeViewWithDistanceRow> for TreeViewWithDistance {
     }
 }
 
+/// The sensor attached to tree `t`. `query!` only takes literals, so every
+/// macro query spells this join out verbatim; keep them identical.
+const TREE_SENSOR_JOIN: &str = "LEFT JOIN sensor_attachments sa \
+    ON sa.module_key = 'irrigation' AND sa.target_kind = 'tree' AND sa.target_id = t.id";
+
 // `last_watered` is stored as a naive `timestamp`, but the row field is
 // `DateTime<Utc>`; `sqlx::FromRow` checks the column's Postgres type against
 // the Rust type (unlike `query_as!`'s unchecked override), so the column must
 // come back as `timestamptz` here.
 const TREE_COLUMNS: &str = "t.id, t.updated_at, t.tree_cluster_id, \
-    c.name AS cluster_name, t.sensor_id, t.planting_year, t.species, t.number, \
+    c.name AS cluster_name, sa.sensor_id AS sensor_id, t.planting_year, t.species, t.number, \
     t.latitude, t.longitude, t.watering_status, t.description, \
     t.last_watered AT TIME ZONE 'UTC' AS last_watered, \
     t.provider, t.additional_informations AS additional_info, t.organization_id";
@@ -199,7 +206,7 @@ impl TreeReader for PgTreeRepository {
     async fn by_id(&self, id: Id<Tree>) -> Result<Tree, RepositoryError> {
         let snap = sqlx::query_as!(
             TreeSnapshot,
-            r#"SELECT id, tree_cluster_id AS cluster_id, sensor_id,
+            r#"SELECT id, tree_cluster_id AS cluster_id,
                       planting_year, species, number AS tree_number,
                       latitude, longitude,
                       watering_status AS "watering_status: WateringStatus",
@@ -223,7 +230,7 @@ impl TreeReader for PgTreeRepository {
         let id_values: Vec<RawId> = ids.to_values();
         let snaps = sqlx::query_as!(
             TreeSnapshot,
-            r#"SELECT id, tree_cluster_id AS cluster_id, sensor_id,
+            r#"SELECT id, tree_cluster_id AS cluster_id,
                       planting_year, species, number AS tree_number,
                       latitude, longitude,
                       watering_status AS "watering_status: WateringStatus",
@@ -245,16 +252,19 @@ impl TreeReader for PgTreeRepository {
     async fn by_sensor_id(&self, sensor_id: &SensorId) -> Result<Option<Tree>, RepositoryError> {
         let snap = sqlx::query_as!(
             TreeSnapshot,
-            r#"SELECT id, tree_cluster_id AS cluster_id, sensor_id,
-                      planting_year, species, number AS tree_number,
-                      latitude, longitude,
-                      watering_status AS "watering_status: WateringStatus",
-                      description,
-                      last_watered AS "last_watered: DateTime<Utc>",
-                      provider,
-                      additional_informations AS additional_info,
-                      organization_id
-            FROM trees WHERE sensor_id = $1 LIMIT 1"#,
+            r#"SELECT t.id, t.tree_cluster_id AS cluster_id,
+                      t.planting_year, t.species, t.number AS tree_number,
+                      t.latitude, t.longitude,
+                      t.watering_status AS "watering_status: WateringStatus",
+                      t.description,
+                      t.last_watered AS "last_watered: DateTime<Utc>",
+                      t.provider,
+                      t.additional_informations AS additional_info,
+                      t.organization_id
+            FROM trees t
+            JOIN sensor_attachments sa
+              ON sa.module_key = 'irrigation' AND sa.target_kind = 'tree' AND sa.target_id = t.id
+            WHERE sa.sensor_id = $1"#,
             sensor_id.as_str()
         )
         .fetch_optional(&self.pool)
@@ -264,13 +274,34 @@ impl TreeReader for PgTreeRepository {
     }
 
     #[tracing::instrument(level = "trace", skip_all)]
+    async fn sensor_ids(
+        &self,
+        trees: &[Id<Tree>],
+    ) -> Result<HashMap<Id<Tree>, SensorId>, RepositoryError> {
+        let id_values: Vec<RawId> = trees.to_values();
+        let rows = sqlx::query!(
+            r#"SELECT target_id, sensor_id
+            FROM sensor_attachments
+            WHERE module_key = 'irrigation' AND target_kind = 'tree'
+              AND target_id = ANY($1::uuid[])"#,
+            &id_values
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        rows.into_iter()
+            .map(|r| Ok((Id::new(r.target_id), SensorId::new(r.sensor_id)?)))
+            .collect()
+    }
+
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn by_cluster_id(
         &self,
         cluster_id: Id<TreeCluster>,
     ) -> Result<Vec<Tree>, RepositoryError> {
         let snaps = sqlx::query_as!(
             TreeSnapshot,
-            r#"SELECT id, tree_cluster_id AS cluster_id, sensor_id,
+            r#"SELECT id, tree_cluster_id AS cluster_id,
                       planting_year, species, number AS tree_number,
                       latitude, longitude,
                       watering_status AS "watering_status: WateringStatus",
@@ -292,17 +323,20 @@ impl TreeReader for PgTreeRepository {
     async fn view_by_id(&self, id: Id<Tree>) -> Result<TreeView, RepositoryError> {
         let row = sqlx::query_as!(
             TreeViewRow,
-            r#"SELECT id, updated_at, tree_cluster_id,
+            r#"SELECT t.id, t.updated_at, t.tree_cluster_id,
                       NULL::text AS "cluster_name?",
-                      sensor_id,
-                      planting_year, species, number, latitude, longitude,
-                      watering_status AS "watering_status: WateringStatus",
-                      description,
-                      last_watered AS "last_watered: DateTime<Utc>",
-                      provider,
-                      additional_informations AS additional_info,
-                      organization_id
-            FROM trees WHERE id = $1"#,
+                      sa.sensor_id AS "sensor_id?",
+                      t.planting_year, t.species, t.number, t.latitude, t.longitude,
+                      t.watering_status AS "watering_status: WateringStatus",
+                      t.description,
+                      t.last_watered AS "last_watered: DateTime<Utc>",
+                      t.provider,
+                      t.additional_informations AS additional_info,
+                      t.organization_id
+            FROM trees t
+            LEFT JOIN sensor_attachments sa
+                   ON sa.module_key = 'irrigation' AND sa.target_kind = 'tree' AND sa.target_id = t.id
+            WHERE t.id = $1"#,
             id.value()
         )
         .fetch_optional(&self.pool)
@@ -319,17 +353,20 @@ impl TreeReader for PgTreeRepository {
     ) -> Result<Option<TreeView>, RepositoryError> {
         let row = sqlx::query_as!(
             TreeViewRow,
-            r#"SELECT id, updated_at, tree_cluster_id,
+            r#"SELECT t.id, t.updated_at, t.tree_cluster_id,
                       NULL::text AS "cluster_name?",
-                      sensor_id,
-                      planting_year, species, number, latitude, longitude,
-                      watering_status AS "watering_status: WateringStatus",
-                      description,
-                      last_watered AS "last_watered: DateTime<Utc>",
-                      provider,
-                      additional_informations AS additional_info,
-                      organization_id
-            FROM trees WHERE sensor_id = $1"#,
+                      sa.sensor_id AS "sensor_id?",
+                      t.planting_year, t.species, t.number, t.latitude, t.longitude,
+                      t.watering_status AS "watering_status: WateringStatus",
+                      t.description,
+                      t.last_watered AS "last_watered: DateTime<Utc>",
+                      t.provider,
+                      t.additional_informations AS additional_info,
+                      t.organization_id
+            FROM trees t
+            JOIN sensor_attachments sa
+              ON sa.module_key = 'irrigation' AND sa.target_kind = 'tree' AND sa.target_id = t.id
+            WHERE sa.sensor_id = $1"#,
             sensor_id.as_str()
         )
         .fetch_optional(&self.pool)
@@ -343,17 +380,20 @@ impl TreeReader for PgTreeRepository {
         let id_values: Vec<RawId> = ids.to_values();
         let rows = sqlx::query_as!(
             TreeViewRow,
-            r#"SELECT id, updated_at, tree_cluster_id,
+            r#"SELECT t.id, t.updated_at, t.tree_cluster_id,
                       NULL::text AS "cluster_name?",
-                      sensor_id,
-                      planting_year, species, number, latitude, longitude,
-                      watering_status AS "watering_status: WateringStatus",
-                      description,
-                      last_watered AS "last_watered: DateTime<Utc>",
-                      provider,
-                      additional_informations AS additional_info,
-                      organization_id
-            FROM trees WHERE id = ANY($1::uuid[])"#,
+                      sa.sensor_id AS "sensor_id?",
+                      t.planting_year, t.species, t.number, t.latitude, t.longitude,
+                      t.watering_status AS "watering_status: WateringStatus",
+                      t.description,
+                      t.last_watered AS "last_watered: DateTime<Utc>",
+                      t.provider,
+                      t.additional_informations AS additional_info,
+                      t.organization_id
+            FROM trees t
+            LEFT JOIN sensor_attachments sa
+                   ON sa.module_key = 'irrigation' AND sa.target_kind = 'tree' AND sa.target_id = t.id
+            WHERE t.id = ANY($1::uuid[])"#,
             &id_values
         )
         .fetch_all(&self.pool)
@@ -377,6 +417,7 @@ impl TreeReader for PgTreeRepository {
 
         // No filter reads `c`, only the projection and the cluster sort do.
         let page = ListSpec::new("trees t", "t.id")
+            .join(TREE_SENSOR_JOIN)
             .projection_join("LEFT JOIN tree_clusters c ON c.id = t.tree_cluster_id")
             .scope(Predicate::equals(
                 "t.provider",
@@ -397,7 +438,7 @@ impl TreeReader for PgTreeRepository {
                 "t.tree_cluster_id",
                 query.has_cluster,
             ))
-            .filter(Predicate::is_present("t.sensor_id", query.has_sensor))
+            .filter(Predicate::is_present("sa.sensor_id", query.has_sensor))
             .sort(
                 query.sort.field.as_sql_key(),
                 query.sort.direction.is_descending(),
@@ -432,23 +473,25 @@ impl TreeReader for PgTreeRepository {
         let scope_ids = org_scope_ids(query.visible, query.organization_id);
 
         let rows = sqlx::query!(
-            r#"SELECT id, latitude, longitude, number, organization_id,
-                      watering_status AS "watering_status: WateringStatus",
-                      (sensor_id IS NOT NULL) AS "has_sensor!: bool"
-            FROM trees
-            WHERE ($1::watering_status[] = '{}' OR watering_status = ANY($1))
-              AND ($2::int[] = '{}' OR planting_year = ANY($2))
-              AND ($3::text IS NULL OR provider = $3)
+            r#"SELECT t.id, t.latitude, t.longitude, t.number, t.organization_id,
+                      t.watering_status AS "watering_status: WateringStatus",
+                      (sa.sensor_id IS NOT NULL) AS "has_sensor!: bool"
+            FROM trees t
+            LEFT JOIN sensor_attachments sa
+                   ON sa.module_key = 'irrigation' AND sa.target_kind = 'tree' AND sa.target_id = t.id
+            WHERE ($1::watering_status[] = '{}' OR t.watering_status = ANY($1))
+              AND ($2::int[] = '{}' OR t.planting_year = ANY($2))
+              AND ($3::text IS NULL OR t.provider = $3)
               AND ($4::bool IS NULL
-                   OR ($4 = true AND tree_cluster_id IS NOT NULL)
-                   OR ($4 = false AND tree_cluster_id IS NULL))
+                   OR ($4 = true AND t.tree_cluster_id IS NOT NULL)
+                   OR ($4 = false AND t.tree_cluster_id IS NULL))
               AND ($5::bool IS FALSE
                    OR ST_Intersects(
-                       geometry,
+                       t.geometry,
                        ST_MakeEnvelope($6, $7, $8, $9, 4326)
                    ))
-              AND ($10::uuid[] IS NULL OR organization_id = ANY($10))
-            ORDER BY id"#,
+              AND ($10::uuid[] IS NULL OR t.organization_id = ANY($10))
+            ORDER BY t.id"#,
             &watering_statuses as &[WateringStatus],
             &planting_years,
             provider.as_deref(),
@@ -502,17 +545,20 @@ impl TreeReader for PgTreeRepository {
                 )
                 AND ($5::uuid[] IS NULL OR organization_id = ANY($5))
             )
-            SELECT id, updated_at, tree_cluster_id, sensor_id,
-                      planting_year, species, number, latitude, longitude,
-                      watering_status AS "watering_status: WateringStatus",
-                      description,
-                      last_watered AS "last_watered: DateTime<Utc>",
-                      provider,
-                      additional_informations AS additional_info,
-                      organization_id,
-                      dist AS "distance!: f64"
-            FROM distances
-            ORDER BY dist ASC
+            SELECT t.id, t.updated_at, t.tree_cluster_id,
+                      sa.sensor_id AS "sensor_id?",
+                      t.planting_year, t.species, t.number, t.latitude, t.longitude,
+                      t.watering_status AS "watering_status: WateringStatus",
+                      t.description,
+                      t.last_watered AS "last_watered: DateTime<Utc>",
+                      t.provider,
+                      t.additional_informations AS additional_info,
+                      t.organization_id,
+                      t.dist AS "distance!: f64"
+            FROM distances t
+            LEFT JOIN sensor_attachments sa
+                   ON sa.module_key = 'irrigation' AND sa.target_kind = 'tree' AND sa.target_id = t.id
+            ORDER BY t.dist ASC
             LIMIT $4"#,
             coord.latitude(),
             coord.longitude(),
@@ -534,7 +580,7 @@ impl TreeReader for PgTreeRepository {
     ) -> Result<Option<Tree>, RepositoryError> {
         let snap = sqlx::query_as!(
             TreeSnapshot,
-            r#"SELECT id, tree_cluster_id AS cluster_id, sensor_id,
+            r#"SELECT id, tree_cluster_id AS cluster_id,
                       planting_year, species, number AS tree_number,
                       latitude, longitude,
                       watering_status AS "watering_status: WateringStatus",
@@ -595,14 +641,13 @@ impl TreeWriter for PgTreeRepository {
         let id = Id::<Tree>::new_v7();
 
         sqlx::query!(
-            r#"INSERT INTO trees (id, tree_cluster_id, sensor_id, planting_year, species, number,
+            r#"INSERT INTO trees (id, tree_cluster_id, planting_year, species, number,
                                   description, watering_status, latitude, longitude,
                                   geometry, provider, additional_informations, organization_id)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, 'unknown', $8, $9,
-                    ST_SetSRID(ST_MakePoint($9, $8), 4326), $10, $11, $12)"#,
+            VALUES ($1, $2, $3, $4, $5, $6, 'unknown', $7, $8,
+                    ST_SetSRID(ST_MakePoint($8, $7), 4326), $9, $10, $11)"#,
             id.value(),
             draft.cluster_id.map(|id| id.value()),
-            draft.sensor_id.as_ref().map(|s| s.as_str().to_string()),
             draft.planting_year.year() as i32,
             draft.species.as_str(),
             draft.tree_number.as_str(),
@@ -629,23 +674,21 @@ impl TreeWriter for PgTreeRepository {
         let result = sqlx::query!(
             r#"UPDATE trees SET
                 tree_cluster_id = $2,
-                sensor_id = $3,
-                planting_year = $4,
-                species = $5,
-                number = $6,
-                description = $7,
-                watering_status = $8,
-                last_watered = $9,
-                latitude = $10,
-                longitude = $11,
-                geometry = ST_SetSRID(ST_MakePoint($11, $10), 4326),
-                provider = $12,
-                additional_informations = $13,
-                organization_id = $14
+                planting_year = $3,
+                species = $4,
+                number = $5,
+                description = $6,
+                watering_status = $7,
+                last_watered = $8,
+                latitude = $9,
+                longitude = $10,
+                geometry = ST_SetSRID(ST_MakePoint($10, $9), 4326),
+                provider = $11,
+                additional_informations = $12,
+                organization_id = $13
             WHERE id = $1"#,
             tree.id.value(),
             tree.cluster_id().map(|id| id.value()),
-            tree.sensor_id().map(|s| s.as_str().to_string()),
             tree.planting_year.year() as i32,
             tree.species.as_str(),
             tree.tree_number.as_str(),

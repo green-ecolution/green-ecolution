@@ -148,8 +148,8 @@ impl IntoResponse for ServiceError {
                 }
                 (status, message)
             }
-            ServiceError::TreeAlreadyHasSensor
-            | ServiceError::SensorAlreadyAssigned
+            ServiceError::TargetAlreadyHasSensor
+            | ServiceError::SensorAlreadyAttached
             | ServiceError::AlreadyActivated
             | ServiceError::NotActivated
             | ServiceError::Organization(_)
@@ -157,7 +157,7 @@ impl IntoResponse for ServiceError {
             | ServiceError::OrganizationNotEmpty
             | ServiceError::CannotChangeOwnAccess
             | ServiceError::CannotRevokeOwnAdministration
-            | ServiceError::SensorBoundToTree
+            | ServiceError::SensorBoundToTarget
             | ServiceError::TreeInCluster
             | ServiceError::SettingsEnforcedByAncestor { .. } => {
                 (StatusCode::CONFLICT, self.to_string())
@@ -289,7 +289,7 @@ mod tests {
         let kinds = [
             OrganizationMismatch::TreesVsCluster,
             OrganizationMismatch::ClusterVsTree,
-            OrganizationMismatch::SensorVsTree,
+            OrganizationMismatch::SensorVsTarget,
             OrganizationMismatch::ClustersVsPlan,
             OrganizationMismatch::RoleVsUser,
         ];

@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id, latitude, longitude, number, organization_id,\n                      watering_status AS \"watering_status: WateringStatus\",\n                      (sensor_id IS NOT NULL) AS \"has_sensor!: bool\"\n            FROM trees\n            WHERE ($1::watering_status[] = '{}' OR watering_status = ANY($1))\n              AND ($2::int[] = '{}' OR planting_year = ANY($2))\n              AND ($3::text IS NULL OR provider = $3)\n              AND ($4::bool IS NULL\n                   OR ($4 = true AND tree_cluster_id IS NOT NULL)\n                   OR ($4 = false AND tree_cluster_id IS NULL))\n              AND ($5::bool IS FALSE\n                   OR ST_Intersects(\n                       geometry,\n                       ST_MakeEnvelope($6, $7, $8, $9, 4326)\n                   ))\n              AND ($10::uuid[] IS NULL OR organization_id = ANY($10))\n            ORDER BY id",
+  "query": "SELECT t.id, t.latitude, t.longitude, t.number, t.organization_id,\n                      t.watering_status AS \"watering_status: WateringStatus\",\n                      (sa.sensor_id IS NOT NULL) AS \"has_sensor!: bool\"\n            FROM trees t\n            LEFT JOIN sensor_attachments sa\n                   ON sa.module_key = 'irrigation' AND sa.target_kind = 'tree' AND sa.target_id = t.id\n            WHERE ($1::watering_status[] = '{}' OR t.watering_status = ANY($1))\n              AND ($2::int[] = '{}' OR t.planting_year = ANY($2))\n              AND ($3::text IS NULL OR t.provider = $3)\n              AND ($4::bool IS NULL\n                   OR ($4 = true AND t.tree_cluster_id IS NOT NULL)\n                   OR ($4 = false AND t.tree_cluster_id IS NULL))\n              AND ($5::bool IS FALSE\n                   OR ST_Intersects(\n                       t.geometry,\n                       ST_MakeEnvelope($6, $7, $8, $9, 4326)\n                   ))\n              AND ($10::uuid[] IS NULL OR t.organization_id = ANY($10))\n            ORDER BY t.id",
   "describe": {
     "columns": [
       {
@@ -96,5 +96,5 @@
       null
     ]
   },
-  "hash": "5aab27fe7b78b6a97d3c65c428caf0e61ec1e9aa548c14c0c111a56126369675"
+  "hash": "6991657968e65b533fc4531fe2f76e5b693828bfbad37c7245434845a62974f3"
 }

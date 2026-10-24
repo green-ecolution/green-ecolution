@@ -111,7 +111,7 @@ async fn activate_sensor(app: &TestApp, sensor_id: &str, tree_id: &str) {
     let resp = app
         .post_json(
             &format!("/api/v1/sensors/{sensor_id}/activate"),
-            &json!({ "tree_id": tree_id }),
+            &crate::sensors::tree_target(tree_id),
         )
         .await;
     assert_eq!(resp.status(), 200);
@@ -178,6 +178,8 @@ async fn transfer_bound_sensor_directly_returns_409() {
         )
         .await;
     assert_eq!(resp.status(), 409);
+    let body: serde_json::Value = resp.json().await.unwrap();
+    assert_eq!(body["code"], "conflict.sensor_bound_to_target");
 }
 
 #[tokio::test]

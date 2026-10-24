@@ -1,32 +1,8 @@
-use crate::helpers::{TestApp, spawn_app};
-use serde_json::json;
+use crate::{
+    helpers::{TestApp, spawn_app},
+    sensors::{create_prepared_sensor, tree_target},
+};
 use uuid::Uuid;
-
-fn create_body(id: &str, model_id: Uuid) -> serde_json::Value {
-    json!({
-        "id": id,
-        "sensor_type": "lorawan",
-        "model_id": model_id,
-        "lorawan": {
-            "serial_number": "SN",
-            "dev_eui": "a81758fffe0c3b52",
-            "app_eui": "70b3d57ed00abcd1",
-            "app_key": "00112233445566778899aabbccddeeff"
-        }
-    })
-}
-
-async fn create_prepared_sensor(app: &TestApp, id: &str) {
-    let model_id = app.ecodrizzler_model_id().await;
-    let r = app
-        .post_json("/api/v1/sensors", &create_body(id, model_id))
-        .await;
-    assert_eq!(
-        r.status().as_u16(),
-        201,
-        "expected sensor create to succeed"
-    );
-}
 
 async fn insert_tree(app: &TestApp, number: &str) -> Uuid {
     let id = Uuid::now_v7();
@@ -48,7 +24,7 @@ async fn activate(app: &TestApp, sensor_id: &str, tree_id: Uuid) {
     let r = app
         .post_json(
             &format!("/api/v1/sensors/{sensor_id}/activate"),
-            &json!({ "tree_id": tree_id }),
+            &tree_target(tree_id),
         )
         .await;
     assert_eq!(r.status().as_u16(), 200, "expected activate to succeed");
@@ -63,14 +39,11 @@ async fn reassign_moves_sensor_to_new_tree() {
     activate(&app, "eui-rel-1", tree_a).await;
 
     let r = app
-        .put_json(
-            "/api/v1/sensors/eui-rel-1/tree",
-            &json!({ "tree_id": tree_b }),
-        )
+        .put_json("/api/v1/sensors/eui-rel-1/target", &tree_target(tree_b))
         .await;
     assert_eq!(r.status().as_u16(), 200);
     let body: serde_json::Value = r.json().await.unwrap();
-    assert_eq!(body["linked_tree_id"], tree_b.to_string());
+    assert_eq!(body["target"]["id"], tree_b.to_string());
 
     let tree = app.get("/api/v1/sensors/eui-rel-1/tree").await;
     assert_eq!(tree.status().as_u16(), 200);
@@ -89,12 +62,11 @@ async fn reassign_to_tree_with_other_sensor_conflicts() {
     activate(&app, "eui-rel-2b", tree_b).await;
 
     let r = app
-        .put_json(
-            "/api/v1/sensors/eui-rel-2a/tree",
-            &json!({ "tree_id": tree_b }),
-        )
+        .put_json("/api/v1/sensors/eui-rel-2a/target", &tree_target(tree_b))
         .await;
     assert_eq!(r.status().as_u16(), 409);
+    let body: serde_json::Value = r.json().await.unwrap();
+    assert_eq!(body["code"], "conflict.target_already_has_sensor");
 }
 
 #[tokio::test]
@@ -104,37 +76,34 @@ async fn reassign_on_prepared_sensor_conflicts() {
     let tree = insert_tree(&app, "T-REL-5").await;
 
     let r = app
-        .put_json(
-            "/api/v1/sensors/eui-rel-5/tree",
-            &json!({ "tree_id": tree }),
-        )
+        .put_json("/api/v1/sensors/eui-rel-5/target", &tree_target(tree))
         .await;
     assert_eq!(r.status().as_u16(), 409);
 }
 
 #[tokio::test]
-async fn remove_tree_resets_sensor_to_prepared() {
+async fn remove_target_resets_sensor_to_prepared() {
     let app = spawn_app().await;
     create_prepared_sensor(&app, "eui-rel-3").await;
     let tree = insert_tree(&app, "T-REL-3").await;
     activate(&app, "eui-rel-3", tree).await;
 
-    let r = app.delete("/api/v1/sensors/eui-rel-3/tree").await;
+    let r = app.delete("/api/v1/sensors/eui-rel-3/target").await;
     assert_eq!(r.status().as_u16(), 200);
     let body: serde_json::Value = r.json().await.unwrap();
     assert_eq!(body["status"], "prepared");
-    assert!(body["linked_tree_id"].is_null());
+    assert!(body["target"].is_null());
 
     let tree_after = app.get("/api/v1/sensors/eui-rel-3/tree").await;
     assert_eq!(tree_after.status().as_u16(), 404);
 }
 
 #[tokio::test]
-async fn remove_tree_on_prepared_sensor_is_idempotent() {
+async fn remove_target_on_prepared_sensor_is_idempotent() {
     let app = spawn_app().await;
     create_prepared_sensor(&app, "eui-rel-4").await;
 
-    let r = app.delete("/api/v1/sensors/eui-rel-4/tree").await;
+    let r = app.delete("/api/v1/sensors/eui-rel-4/target").await;
     assert_eq!(r.status().as_u16(), 200);
     let body: serde_json::Value = r.json().await.unwrap();
     assert_eq!(body["status"], "prepared");

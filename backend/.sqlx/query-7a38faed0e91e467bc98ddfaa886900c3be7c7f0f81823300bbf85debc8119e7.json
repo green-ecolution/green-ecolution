@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "WITH distances AS (\n                SELECT *,\n                    ST_Distance(\n                        geometry::geography,\n                        ST_SetSRID(ST_MakePoint($2, $1), 4326)::geography\n                    )::float8 AS dist\n                FROM trees\n                WHERE ST_DWithin(\n                    geometry::geography,\n                    ST_SetSRID(ST_MakePoint($2, $1), 4326)::geography,\n                    $3\n                )\n                AND ($5::uuid[] IS NULL OR organization_id = ANY($5))\n            )\n            SELECT id, updated_at, tree_cluster_id, sensor_id,\n                      planting_year, species, number, latitude, longitude,\n                      watering_status AS \"watering_status: WateringStatus\",\n                      description,\n                      last_watered AS \"last_watered: DateTime<Utc>\",\n                      provider,\n                      additional_informations AS additional_info,\n                      organization_id,\n                      dist AS \"distance!: f64\"\n            FROM distances\n            ORDER BY dist ASC\n            LIMIT $4",
+  "query": "WITH distances AS (\n                SELECT *,\n                    ST_Distance(\n                        geometry::geography,\n                        ST_SetSRID(ST_MakePoint($2, $1), 4326)::geography\n                    )::float8 AS dist\n                FROM trees\n                WHERE ST_DWithin(\n                    geometry::geography,\n                    ST_SetSRID(ST_MakePoint($2, $1), 4326)::geography,\n                    $3\n                )\n                AND ($5::uuid[] IS NULL OR organization_id = ANY($5))\n            )\n            SELECT t.id, t.updated_at, t.tree_cluster_id,\n                      sa.sensor_id AS \"sensor_id?\",\n                      t.planting_year, t.species, t.number, t.latitude, t.longitude,\n                      t.watering_status AS \"watering_status: WateringStatus\",\n                      t.description,\n                      t.last_watered AS \"last_watered: DateTime<Utc>\",\n                      t.provider,\n                      t.additional_informations AS additional_info,\n                      t.organization_id,\n                      t.dist AS \"distance!: f64\"\n            FROM distances t\n            LEFT JOIN sensor_attachments sa\n                   ON sa.module_key = 'irrigation' AND sa.target_kind = 'tree' AND sa.target_id = t.id\n            ORDER BY t.dist ASC\n            LIMIT $4",
   "describe": {
     "columns": [
       {
@@ -20,7 +20,7 @@
       },
       {
         "ordinal": 3,
-        "name": "sensor_id",
+        "name": "sensor_id?",
         "type_info": "Varchar"
       },
       {
@@ -110,7 +110,7 @@
       false,
       false,
       true,
-      true,
+      false,
       false,
       false,
       false,
@@ -125,5 +125,5 @@
       null
     ]
   },
-  "hash": "09b350712d5fd765d8e819936442b0b9f61eb4a4c354644b0a88b4498b67f8c0"
+  "hash": "7a38faed0e91e467bc98ddfaa886900c3be7c7f0f81823300bbf85debc8119e7"
 }

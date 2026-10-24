@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT target_id, sensor_id\n            FROM sensor_attachments\n            WHERE module_key = 'irrigation' AND target_kind = 'tree'\n              AND target_id = ANY($1::uuid[])",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "target_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "sensor_id",
+        "type_info": "Varchar"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "UuidArray"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "6001534389f33d101a5ff93d1eefd4b2dcfb3e79e69e90f106743540c91f8110"
+}

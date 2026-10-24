@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id, updated_at, tree_cluster_id,\n                      NULL::text AS \"cluster_name?\",\n                      sensor_id,\n                      planting_year, species, number, latitude, longitude,\n                      watering_status AS \"watering_status: WateringStatus\",\n                      description,\n                      last_watered AS \"last_watered: DateTime<Utc>\",\n                      provider,\n                      additional_informations AS additional_info,\n                      organization_id\n            FROM trees WHERE id = $1",
+  "query": "SELECT t.id, t.updated_at, t.tree_cluster_id,\n                      NULL::text AS \"cluster_name?\",\n                      sa.sensor_id AS \"sensor_id?\",\n                      t.planting_year, t.species, t.number, t.latitude, t.longitude,\n                      t.watering_status AS \"watering_status: WateringStatus\",\n                      t.description,\n                      t.last_watered AS \"last_watered: DateTime<Utc>\",\n                      t.provider,\n                      t.additional_informations AS additional_info,\n                      t.organization_id\n            FROM trees t\n            LEFT JOIN sensor_attachments sa\n                   ON sa.module_key = 'irrigation' AND sa.target_kind = 'tree' AND sa.target_id = t.id\n            WHERE t.id = ANY($1::uuid[])",
   "describe": {
     "columns": [
       {
@@ -25,7 +25,7 @@
       },
       {
         "ordinal": 4,
-        "name": "sensor_id",
+        "name": "sensor_id?",
         "type_info": "Varchar"
       },
       {
@@ -99,7 +99,7 @@
     ],
     "parameters": {
       "Left": [
-        "Uuid"
+        "UuidArray"
       ]
     },
     "nullable": [
@@ -121,5 +121,5 @@
       false
     ]
   },
-  "hash": "7eef9bef3ce594b04b0cae5e54e8892469c9509ef04ac94c178ba72f91771165"
+  "hash": "c09e7e48f663d7da2ec1fd1f50421d6662ea7b9536825f377fb35c94731ee04c"
 }

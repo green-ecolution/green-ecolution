@@ -37,19 +37,20 @@ async fn insert_sensor_tree(app: &TestApp, cluster_id: Uuid, sensor_id: &str) {
     .execute(&app.db_pool)
     .await
     .unwrap();
+    let tree_id = Uuid::now_v7();
     sqlx::query!(
-        r#"INSERT INTO trees (id, tree_cluster_id, sensor_id, planting_year, species, number,
+        r#"INSERT INTO trees (id, tree_cluster_id, planting_year, species, number,
                               latitude, longitude, geometry, organization_id)
-           VALUES ($1, $2, $3, 2020, 'Stieleiche', $4, 54.79, 9.43,
+           VALUES ($1, $2, 2020, 'Stieleiche', $3, 54.79, 9.43,
                    ST_SetSRID(ST_MakePoint(9.43, 54.79), 4326), '01980000-0000-7000-8000-000000000001')"#,
-        Uuid::now_v7(),
+        tree_id,
         cluster_id,
-        sensor_id,
         format!("T-{sensor_id}"),
     )
     .execute(&app.db_pool)
     .await
     .unwrap();
+    app.attach_sensor_to_tree(sensor_id, tree_id).await;
 }
 
 async fn soil_moisture_ability_id(app: &TestApp, depth_cm: i32) -> Uuid {

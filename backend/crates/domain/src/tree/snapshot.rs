@@ -10,7 +10,6 @@ use crate::shared::watering_status::WateringStatus;
 pub struct TreeSnapshot {
     pub id: Uuid,
     pub cluster_id: Option<Uuid>,
-    pub sensor_id: Option<String>,
     pub planting_year: i32,
     pub species: String,
     pub tree_number: String,

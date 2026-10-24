@@ -50,6 +50,7 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
         .routes(routes!(list_cluster_boundaries))
         .routes(routes!(get_cluster, update_cluster, delete_cluster))
         .routes(routes!(get_cluster_soil_moisture))
+        .routes(routes!(list_cluster_sensor_ids))
         .routes(routes!(transfer_cluster))
 }
 
@@ -464,6 +465,39 @@ pub async fn get_cluster_soil_moisture(
         .soil_moisture_overview(cluster_id, from, to, bucket)
         .await?;
     Ok(Json(SoilMoistureSeriesResponse::from(overview)))
+}
+
+#[utoipa::path(
+    get,
+    path = "/clusters/{cluster_id}/sensor-ids",
+    tag = "Tree Clusters",
+    operation_id = "listClusterSensorIds",
+    summary = "List the sensors of a cluster",
+    description = "Returns the ids of the sensors attached to the cluster's trees, ordered by id. \
+                   Feed them into `GET /sensors?id=…` to filter the sensor list by cluster.",
+    params(("cluster_id" = uuid::Uuid, Path, description = "Cluster ID")),
+    responses(
+        (status = 200, description = "Sensor ids", body = Vec<String>),
+        (status = 404, description = "Cluster not found", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
+    )
+)]
+#[tracing::instrument(level = "info", skip_all, fields(cluster.id = %id))]
+pub async fn list_cluster_sensor_ids(
+    State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
+    Path(id): Path<uuid::Uuid>,
+) -> Result<Json<Vec<String>>, ServiceError> {
+    let cluster_id = Id::new(id);
+    let view = state.cluster_service.view_by_id(cluster_id).await?;
+    let ctx = state.authorization_service.context_for(user.id).await?;
+    scope::ensure_visible(
+        &ctx,
+        Permission::new(crate::irrigation::resources::TREE_CLUSTER, Action::Read),
+        view.organization_id,
+    )?;
+    let ids = state.cluster_service.sensor_ids(cluster_id).await?;
+    Ok(Json(ids.iter().map(|id| id.as_str().to_owned()).collect()))
 }
 
 #[utoipa::path(

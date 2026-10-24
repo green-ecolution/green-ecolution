@@ -1,7 +1,10 @@
 use serde_json::json;
 use uuid::Uuid;
 
-use crate::helpers::{TestApp, spawn_app};
+use crate::{
+    helpers::{TestApp, spawn_app},
+    sensors::tree_target,
+};
 
 const ROOT_ORG: &str = "01980000-0000-7000-8000-000000000001";
 const TBZ_ORG: &str = "01980000-0000-7000-8000-000000000002";
@@ -89,12 +92,12 @@ async fn activate_sensor_on_tree_from_foreign_org_is_unprocessable() {
     let resp = app
         .post_json(
             "/api/v1/sensors/eui-scope-002/activate",
-            &json!({ "tree_id": tree_id }),
+            &tree_target(tree_id),
         )
         .await;
     assert_eq!(resp.status(), 422);
     let body: serde_json::Value = resp.json().await.unwrap();
-    assert_eq!(body["code"], "organization_mismatch.sensor_vs_tree");
+    assert_eq!(body["code"], "organization_mismatch.sensor_vs_target");
 }
 
 #[tokio::test]
@@ -116,7 +119,7 @@ async fn activate_sensor_on_tree_from_same_org_returns_200() {
     let resp = app
         .post_json(
             "/api/v1/sensors/eui-scope-003/activate",
-            &json!({ "tree_id": tree_id }),
+            &tree_target(tree_id),
         )
         .await;
     assert_eq!(resp.status(), 200);
@@ -167,6 +170,8 @@ async fn update_tree_with_sensor_from_foreign_org_is_unprocessable() {
         )
         .await;
     assert_eq!(resp.status(), 422);
+    let body: serde_json::Value = resp.json().await.unwrap();
+    assert_eq!(body["code"], "organization_mismatch.sensor_vs_target");
 }
 
 #[tokio::test]
@@ -191,6 +196,8 @@ async fn create_tree_with_sensor_from_foreign_org_is_unprocessable() {
         )
         .await;
     assert_eq!(resp.status(), 422);
+    let body: serde_json::Value = resp.json().await.unwrap();
+    assert_eq!(body["code"], "organization_mismatch.sensor_vs_target");
 }
 
 #[tokio::test]
@@ -236,7 +243,7 @@ async fn reassign_sensor_to_tree_from_foreign_org_is_unprocessable() {
     let activate_resp = app
         .post_json(
             "/api/v1/sensors/eui-scope-004/activate",
-            &json!({ "tree_id": own_tree_id }),
+            &tree_target(own_tree_id),
         )
         .await;
     assert_eq!(activate_resp.status(), 200);
@@ -244,9 +251,11 @@ async fn reassign_sensor_to_tree_from_foreign_org_is_unprocessable() {
     let foreign_tree_id = insert_tree(&app, "SCOPE-S-004B", ROOT_ORG).await;
     let resp = app
         .put_json(
-            "/api/v1/sensors/eui-scope-004/tree",
-            &json!({ "tree_id": foreign_tree_id }),
+            "/api/v1/sensors/eui-scope-004/target",
+            &tree_target(foreign_tree_id),
         )
         .await;
     assert_eq!(resp.status(), 422);
+    let body: serde_json::Value = resp.json().await.unwrap();
+    assert_eq!(body["code"], "organization_mismatch.sensor_vs_target");
 }

@@ -6,6 +6,7 @@ use crate::{
     sensor::{DataHealth, SensorStatus, SensorType, data::SensorReadingView},
     sensor_model::SensorModelAbility,
     shared::{coordinates::Coordinate, provenance::ProviderId},
+    target::TargetRef,
 };
 
 /// HTTP-side read model for a sensor.
@@ -20,12 +21,11 @@ pub struct SensorView {
     pub updated_at: DateTime<Utc>,
     pub status: SensorStatus,
     pub sensor_type: SensorType,
-    pub coordinate: Option<Coordinate>,
-    pub linked_tree_id: Option<Uuid>,
-    /// Cluster of the linked tree, resolved for display. `None` whenever the
-    /// sensor has no tree or that tree sits in no cluster.
-    pub linked_cluster_id: Option<Uuid>,
-    pub linked_cluster_name: Option<String>,
+    pub target: Option<TargetRef>,
+    /// Display name of the target, resolved by its module.
+    pub target_label: Option<String>,
+    /// Position of the target, resolved by its module.
+    pub location: Option<Coordinate>,
     pub provider: Option<ProviderId>,
     pub additional_info: Option<Value>,
     pub model: SensorModelSummary,

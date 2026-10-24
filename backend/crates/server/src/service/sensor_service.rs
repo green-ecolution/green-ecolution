@@ -5,9 +5,10 @@ use std::{
 
 use chrono::{DateTime, Utc};
 use domain::{
-    Id,
+    Id, RepositoryError,
     cluster::{SoilMoistureBucket, SoilMoistureOverview, TreeClusterReader, condition_series},
     events::{DomainEvent, SensorDataReceivedPayload, SensorReadings},
+    module::ModuleActivationReader,
     organization::Organization,
     sensor::{
         AcknowledgementNote, DataHealth, DataQualityAcknowledgement, ReadingQualityIssue, Sensor,
@@ -19,12 +20,17 @@ use domain::{
     },
     sensor_model::{SensorAbilityName, SensorModel, SensorModelReader},
     shared::pagination::{Page, Pagination, SearchPage},
-    tree::{Tree, TreeReader, TreeWriter, volumetric_thresholds},
+    target::{TargetPurpose, TargetRef},
+    tree::{TreeReader, volumetric_thresholds},
 };
 use rust_decimal::prelude::ToPrimitive;
 use uuid::Uuid;
 
-use super::{OrganizationMismatch, ServiceError, event_bus::EventBus};
+use super::{
+    OrganizationMismatch, ServiceError,
+    event_bus::EventBus,
+    targets::{TargetRegistry, ensure_module_active},
+};
 
 pub struct SensorService {
     reader: Arc<dyn SensorReader>,
@@ -33,8 +39,9 @@ pub struct SensorService {
     reading_writer: Arc<dyn SensorReadingWriter>,
     model_reader: Arc<dyn SensorModelReader>,
     tree_reader: Arc<dyn TreeReader>,
-    tree_writer: Arc<dyn TreeWriter>,
     cluster_reader: Arc<dyn TreeClusterReader>,
+    targets: Arc<TargetRegistry>,
+    activation: Arc<dyn ModuleActivationReader>,
     event_bus: Arc<dyn EventBus>,
 }
 
@@ -71,8 +78,9 @@ impl SensorService {
         reading_writer: Arc<dyn SensorReadingWriter>,
         model_reader: Arc<dyn SensorModelReader>,
         tree_reader: Arc<dyn TreeReader>,
-        tree_writer: Arc<dyn TreeWriter>,
         cluster_reader: Arc<dyn TreeClusterReader>,
+        targets: Arc<TargetRegistry>,
+        activation: Arc<dyn ModuleActivationReader>,
         event_bus: Arc<dyn EventBus>,
     ) -> Self {
         Self {
@@ -82,8 +90,9 @@ impl SensorService {
             reading_writer,
             model_reader,
             tree_reader,
-            tree_writer,
             cluster_reader,
+            targets,
+            activation,
             event_bus,
         }
     }
@@ -94,12 +103,16 @@ impl SensorService {
         query: SensorSearchQuery,
         pagination: Pagination,
     ) -> Result<SearchPage<SensorView>, ServiceError> {
-        Ok(self.reader.view_search(query, pagination).await?)
+        let mut page = self.reader.view_search(query, pagination).await?;
+        self.enrich(&mut page.page.items).await?;
+        Ok(page)
     }
 
     #[tracing::instrument(level = "debug", skip_all, fields(sensor.id = %id))]
     pub async fn view_by_id(&self, id: &SensorId) -> Result<SensorView, ServiceError> {
-        Ok(self.reader.view_by_id(id).await?)
+        let mut view = self.reader.view_by_id(id).await?;
+        self.enrich(std::slice::from_mut(&mut view)).await?;
+        Ok(view)
     }
 
     #[tracing::instrument(level = "debug", skip_all, fields(sensor.id = %id))]
@@ -114,7 +127,9 @@ impl SensorService {
 
     #[tracing::instrument(level = "debug", skip_all)]
     pub async fn view_by_ids(&self, ids: &[SensorId]) -> Result<Vec<SensorView>, ServiceError> {
-        Ok(self.reader.view_by_ids(ids).await?)
+        let mut views = self.reader.view_by_ids(ids).await?;
+        self.enrich(&mut views).await?;
+        Ok(views)
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
@@ -134,120 +149,138 @@ impl SensorService {
     pub async fn create(&self, draft: SensorDraft) -> Result<SensorView, ServiceError> {
         let _ = self.model_reader.by_id(draft.model_id).await?;
         let sensor = self.writer.save_new(draft).await?;
-        Ok(self.reader.view_by_id(&sensor.id).await?)
+        self.view_by_id(&sensor.id).await
     }
 
-    /// Activates a `Prepared` sensor and binds it to `tree_id`. Idempotent
-    /// when called with the same `(sensor, tree)` pair after the initial
-    /// transition; rejects rebinding to a different tree or activating an
-    /// already-active sensor.
-    #[tracing::instrument(level = "debug", skip_all, fields(sensor.id = %id, tree.id = %tree_id))]
+    /// The target must exist, take sensors, belong to a module active in its
+    /// organization and share the sensor's organization.
+    async fn admit_for(&self, sensor: &Sensor, target: &TargetRef) -> Result<(), ServiceError> {
+        let admitted = self.targets.admit(target, TargetPurpose::Sensor).await?;
+        ensure_module_active(
+            self.activation.as_ref(),
+            &target.module,
+            admitted.organization_id,
+        )
+        .await?;
+        if admitted.organization_id != sensor.organization_id() {
+            return Err(OrganizationMismatch::SensorVsTarget.into());
+        }
+        Ok(())
+    }
+
+    /// Activates a `Prepared` sensor and attaches it to `target`. Idempotent
+    /// for the same pair; rejects an already active sensor and a target that
+    /// carries another sensor.
+    #[tracing::instrument(level = "debug", skip_all, fields(sensor.id = %id))]
     pub async fn activate(
         &self,
         id: &SensorId,
-        tree_id: Id<Tree>,
+        target: TargetRef,
     ) -> Result<SensorView, ServiceError> {
         let mut sensor = self.reader.by_id(id).await?;
-        let mut tree = self.tree_reader.by_id(tree_id).await?;
-
-        if sensor.organization_id() != tree.organization_id() {
-            return Err(OrganizationMismatch::SensorVsTree.into());
+        if sensor.activated_at().is_some() && sensor.target() == Some(&target) {
+            return self.view_by_id(id).await;
         }
-
-        let already_bound_here = tree.sensor_id() == Some(id);
-        let activated = sensor.is_activated();
-
-        if already_bound_here && activated {
-            return Ok(self.reader.view_by_id(id).await?);
-        }
-        if let Some(other) = tree.sensor_id()
-            && other != id
-        {
-            return Err(ServiceError::TreeAlreadyHasSensor);
-        }
-        if activated {
-            return Err(ServiceError::AlreadyActivated);
-        }
-
-        let mut events = tree.attach_sensor(id.clone(), chrono::Utc::now())?;
-        events.extend(sensor.activate(chrono::Utc::now())?);
-
-        self.tree_writer.save(&tree).await?;
-        self.writer.save(&sensor).await?;
+        self.admit_for(&sensor, &target).await?;
+        let events = sensor.activate(target, Utc::now())?;
+        self.save_attachment(&sensor).await?;
         self.event_bus.publish_all(events).await;
-
-        Ok(self.reader.view_by_id(id).await?)
+        self.view_by_id(id).await
     }
 
+    /// Attaches without activating, as the tree form does with a prepared
+    /// sensor.
     #[tracing::instrument(level = "debug", skip_all, fields(sensor.id = %id))]
-    pub async fn delete(&self, id: &SensorId) -> Result<(), ServiceError> {
-        let mut events = Vec::new();
-        if let Some(mut tree) = self.tree_reader.by_sensor_id(id).await? {
-            events.extend(tree.detach_sensor());
-            self.tree_writer.save(&tree).await?;
+    pub async fn attach(&self, id: &SensorId, target: TargetRef) -> Result<(), ServiceError> {
+        let mut sensor = self.reader.by_id(id).await?;
+        if sensor.target() == Some(&target) {
+            return Ok(());
         }
-        self.writer.delete(id).await?;
+        self.admit_for(&sensor, &target).await?;
+        let events = sensor.attach(target)?;
+        self.save_attachment(&sensor).await?;
         self.event_bus.publish_all(events).await;
         Ok(())
     }
 
-    /// Moves an activated sensor's tree link to `new_tree_id`. Requires the
-    /// sensor to be activated; rejects a tree that already holds a different
-    /// sensor. Idempotent when the sensor is already linked to `new_tree_id`.
-    #[tracing::instrument(level = "debug", skip_all, fields(sensor.id = %id, tree.id = %new_tree_id))]
-    pub async fn reassign_tree(
+    /// Moves an activated sensor to `target`. Idempotent when it is already
+    /// there.
+    #[tracing::instrument(level = "debug", skip_all, fields(sensor.id = %id))]
+    pub async fn retarget(
         &self,
         id: &SensorId,
-        new_tree_id: Id<Tree>,
+        target: TargetRef,
     ) -> Result<SensorView, ServiceError> {
-        let sensor = self.reader.by_id(id).await?;
+        let mut sensor = self.reader.by_id(id).await?;
         if !sensor.is_activated() {
             return Err(ServiceError::NotActivated);
         }
-
-        let mut target = self.tree_reader.by_id(new_tree_id).await?;
-        if sensor.organization_id() != target.organization_id() {
-            return Err(OrganizationMismatch::SensorVsTree.into());
+        if sensor.target() == Some(&target) {
+            return self.view_by_id(id).await;
         }
-        if target.sensor_id() == Some(id) {
-            return Ok(self.reader.view_by_id(id).await?);
-        }
-        if let Some(other) = target.sensor_id()
-            && other != id
-        {
-            return Err(ServiceError::TreeAlreadyHasSensor);
-        }
-
-        let mut events = Vec::new();
-        if let Some(mut current) = self.tree_reader.by_sensor_id(id).await? {
-            events.extend(current.detach_sensor());
-            self.tree_writer.save(&current).await?;
-        }
-        events.extend(target.attach_sensor(id.clone(), chrono::Utc::now())?);
-        self.tree_writer.save(&target).await?;
+        self.admit_for(&sensor, &target).await?;
+        let events = sensor.retarget(target)?;
+        self.save_attachment(&sensor).await?;
         self.event_bus.publish_all(events).await;
-
-        Ok(self.reader.view_by_id(id).await?)
+        self.view_by_id(id).await
     }
 
-    /// Resets an activated sensor back to `Prepared` and removes its tree
-    /// link. Idempotent: an already prepared sensor is returned unchanged.
+    /// Resets an activated sensor back to `Prepared` and releases its target.
+    /// Idempotent: an already prepared sensor is returned unchanged.
     #[tracing::instrument(level = "debug", skip_all, fields(sensor.id = %id))]
     pub async fn deactivate(&self, id: &SensorId) -> Result<SensorView, ServiceError> {
         let mut sensor = self.reader.by_id(id).await?;
         if !sensor.is_activated() {
-            return Ok(self.reader.view_by_id(id).await?);
+            return self.view_by_id(id).await;
         }
+        let events = sensor.deactivate()?;
+        self.save_attachment(&sensor).await?;
+        self.event_bus.publish_all(events).await;
+        self.view_by_id(id).await
+    }
 
-        let mut events = sensor.deactivate()?;
-        if let Some(mut tree) = self.tree_reader.by_sensor_id(id).await? {
-            events.extend(tree.detach_sensor());
-            self.tree_writer.save(&tree).await?;
-        }
+    /// Frees the sensor of a target that is going away. The sensor stays active.
+    #[tracing::instrument(level = "debug", skip_all)]
+    pub async fn release_target(&self, target: &TargetRef) -> Result<(), ServiceError> {
+        let Some(mut sensor) = self.reader.by_target(target).await? else {
+            return Ok(());
+        };
+        let events = sensor.detach();
         self.writer.save(&sensor).await?;
         self.event_bus.publish_all(events).await;
+        Ok(())
+    }
 
-        Ok(self.reader.view_by_id(id).await?)
+    async fn save_attachment(&self, sensor: &Sensor) -> Result<(), ServiceError> {
+        self.writer.save(sensor).await.map_err(|e| match e {
+            RepositoryError::AlreadyExists(_) => ServiceError::TargetAlreadyHasSensor,
+            e => e.into(),
+        })
+    }
+
+    async fn enrich(&self, views: &mut [SensorView]) -> Result<(), ServiceError> {
+        let targets: Vec<TargetRef> = views.iter().filter_map(|v| v.target.clone()).collect();
+        if targets.is_empty() {
+            return Ok(());
+        }
+        let locations = self.targets.locate_all(&targets).await?;
+        let labels = self.targets.label_all(&targets).await?;
+        for view in views.iter_mut() {
+            if let Some(target) = &view.target {
+                view.location = locations.get(target).copied();
+                view.target_label = labels.get(target).cloned();
+            }
+        }
+        Ok(())
+    }
+
+    #[tracing::instrument(level = "debug", skip_all, fields(sensor.id = %id))]
+    pub async fn delete(&self, id: &SensorId) -> Result<(), ServiceError> {
+        let mut sensor = self.reader.by_id(id).await?;
+        let events = sensor.detach();
+        self.writer.delete(id).await?;
+        self.event_bus.publish_all(events).await;
+        Ok(())
     }
 
     #[tracing::instrument(level = "debug", skip_all, fields(sensor.id = %id))]
@@ -385,26 +418,26 @@ impl SensorService {
         self.event_bus
             .publish(DomainEvent::SensorDataReceived(SensorDataReceivedPayload {
                 sensor_id: ingest.sensor_id,
+                target: sensor.target().cloned(),
                 readings: ingest.typed,
             }))
             .await;
         Ok(())
     }
 
-    /// Transfers ownership of an unbound sensor to `target`. A sensor bound
-    /// to a tree must transfer via that tree instead (`TreeService::transfer`
-    /// cascades it), so this rejects with `SensorBoundToTree` when a tree
-    /// link exists.
+    /// Transfers ownership of an unattached sensor to `target`. An attached
+    /// sensor moves with its target instead (`TreeService::transfer` cascades
+    /// it), so this rejects with `SensorBoundToTarget`.
     #[tracing::instrument(level = "debug", skip_all, fields(sensor.id = %id))]
     pub async fn transfer(
         &self,
         id: &SensorId,
         target: Id<Organization>,
     ) -> Result<(), ServiceError> {
-        if self.tree_reader.by_sensor_id(id).await?.is_some() {
-            return Err(ServiceError::SensorBoundToTree);
-        }
         let mut sensor = self.reader.by_id(id).await?;
+        if sensor.target().is_some() {
+            return Err(ServiceError::SensorBoundToTarget);
+        }
         let events = sensor.transfer_to(target);
         self.writer.save(&sensor).await?;
         self.event_bus.publish_all(events).await;
@@ -464,6 +497,7 @@ impl From<SensorError> for ServiceError {
         match err {
             SensorError::AlreadyActivated => ServiceError::AlreadyActivated,
             SensorError::NotActivated => ServiceError::NotActivated,
+            SensorError::AlreadyAttached => ServiceError::SensorAlreadyAttached,
             SensorError::Validation(e) => ServiceError::Validation(e),
         }
     }

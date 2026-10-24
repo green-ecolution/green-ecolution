@@ -107,8 +107,10 @@ const CLUSTER_COLUMNS: &str = "tc.id, tc.updated_at, tc.name, tc.address, \
     tc.additional_informations AS additional_info, tc.organization_id, \
     (SELECT COALESCE(ARRAY_AGG(t.id ORDER BY t.number), ARRAY[]::uuid[]) \
         FROM trees t WHERE t.tree_cluster_id = tc.id) AS tree_ids, \
-    (SELECT COUNT(*) FROM trees t \
-        WHERE t.tree_cluster_id = tc.id AND t.sensor_id IS NOT NULL AND t.sensor_id <> '') \
+    (SELECT COUNT(sa.sensor_id) FROM trees t \
+        JOIN sensor_attachments sa \
+          ON sa.module_key = 'irrigation' AND sa.target_kind = 'tree' AND sa.target_id = t.id \
+        WHERE t.tree_cluster_id = tc.id) \
         AS sensor_count";
 
 // Children are aggregated by correlated subqueries rather than a join plus
@@ -195,9 +197,11 @@ impl TreeClusterReader for PgTreeClusterRepository {
                       tc.additional_informations AS additional_info,
                       tc.organization_id,
                       COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::uuid[]) AS "tree_ids!: Vec<RawId>",
-                      COUNT(t.id) FILTER (WHERE t.sensor_id IS NOT NULL AND t.sensor_id <> '') AS "sensor_count!: i64"
+                      COUNT(sa.sensor_id) AS "sensor_count!: i64"
             FROM tree_clusters tc
             LEFT JOIN trees t ON t.tree_cluster_id = tc.id
+            LEFT JOIN sensor_attachments sa
+                   ON sa.module_key = 'irrigation' AND sa.target_kind = 'tree' AND sa.target_id = t.id
             WHERE tc.id = $1
             GROUP BY tc.id"#,
             id.value()
@@ -227,9 +231,11 @@ impl TreeClusterReader for PgTreeClusterRepository {
                       tc.additional_informations AS additional_info,
                       tc.organization_id,
                       COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::uuid[]) AS "tree_ids!: Vec<RawId>",
-                      COUNT(t.id) FILTER (WHERE t.sensor_id IS NOT NULL AND t.sensor_id <> '') AS "sensor_count!: i64"
+                      COUNT(sa.sensor_id) AS "sensor_count!: i64"
             FROM tree_clusters tc
             LEFT JOIN trees t ON t.tree_cluster_id = tc.id
+            LEFT JOIN sensor_attachments sa
+                   ON sa.module_key = 'irrigation' AND sa.target_kind = 'tree' AND sa.target_id = t.id
             WHERE tc.id = ANY($1::uuid[])
             GROUP BY tc.id"#,
             &id_values
@@ -435,7 +441,9 @@ impl TreeClusterReader for PgTreeClusterRepository {
                       MAX(dav.value)::float8 AS "max!",
                       COUNT(*) AS "sample_count!"
                FROM trees t
-               JOIN sensor_data sd ON sd.sensor_id = t.sensor_id
+               JOIN sensor_attachments att
+                 ON att.module_key = 'irrigation' AND att.target_kind = 'tree' AND att.target_id = t.id
+               JOIN sensor_data sd ON sd.sensor_id = att.sensor_id
                JOIN sensor_data_ability_values dav ON dav.sensor_data_id = sd.id
                JOIN sensor_model_abilities sma ON sma.id = dav.sensor_model_ability_id
                JOIN sensor_abilities sa ON sa.id = sma.sensor_ability_id

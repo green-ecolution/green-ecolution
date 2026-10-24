@@ -110,10 +110,10 @@ pub enum ServiceError {
     InvalidInput(String),
     #[error(transparent)]
     Auth(#[from] AuthError),
-    #[error("tree already has a different sensor")]
-    TreeAlreadyHasSensor,
-    #[error("sensor is already assigned to another tree")]
-    SensorAlreadyAssigned,
+    #[error("target already has a different sensor")]
+    TargetAlreadyHasSensor,
+    #[error("sensor is already attached to another target")]
+    SensorAlreadyAttached,
     #[error("sensor is already activated")]
     AlreadyActivated,
     #[error("sensor is not activated")]
@@ -139,8 +139,8 @@ pub enum ServiceError {
     TreeInCluster,
     #[error("tree is not planted yet and cannot carry a sensor")]
     TreeNotYetPlanted,
-    #[error("sensor is bound to a tree and must be transferred with it")]
-    SensorBoundToTree,
+    #[error("sensor is attached to a target and must be transferred with it")]
+    SensorBoundToTarget,
     #[error("no organization given and the acting user has none")]
     MissingOrganization,
     #[error("a user cannot change their own roles or organization")]
@@ -189,14 +189,14 @@ impl ServiceError {
             Self::Role(e) => role_code(e),
             Self::WateringPlan(e) => watering_plan_code(e),
             Self::OrganizationMismatch(kind) => kind.code(),
-            Self::TreeAlreadyHasSensor => "conflict.tree_already_has_sensor",
-            Self::SensorAlreadyAssigned => "conflict.sensor_already_assigned",
+            Self::TargetAlreadyHasSensor => "conflict.target_already_has_sensor",
+            Self::SensorAlreadyAttached => "sensor.already_attached",
             Self::AlreadyActivated => "conflict.sensor_already_activated",
             Self::NotActivated => "conflict.sensor_not_activated",
             Self::OrganizationNotEmpty => "conflict.organization_not_empty",
             Self::TreeInCluster => "conflict.tree_in_cluster",
             Self::TreeNotYetPlanted => "tree.not_yet_planted",
-            Self::SensorBoundToTree => "conflict.sensor_bound_to_tree",
+            Self::SensorBoundToTarget => "conflict.sensor_bound_to_target",
             Self::CannotChangeOwnAccess => "conflict.cannot_change_own_access",
             Self::CannotRevokeOwnAdministration => "conflict.cannot_revoke_own_administration",
             Self::SettingsEnforcedByAncestor { .. } => "settings.enforced_by_ancestor",
@@ -309,8 +309,8 @@ pub enum OrganizationMismatch {
     TreesVsCluster,
     #[error("the selected cluster belongs to a different organization than the tree")]
     ClusterVsTree,
-    #[error("the sensor belongs to a different organization than the tree")]
-    SensorVsTree,
+    #[error("the sensor belongs to a different organization than its target")]
+    SensorVsTarget,
     #[error("the selected clusters are outside the watering plan's organization")]
     ClustersVsPlan,
     #[error("the role belongs to a different organization than the user")]
@@ -322,7 +322,7 @@ impl OrganizationMismatch {
         match self {
             Self::TreesVsCluster => "organization_mismatch.trees_vs_cluster",
             Self::ClusterVsTree => "organization_mismatch.cluster_vs_tree",
-            Self::SensorVsTree => "organization_mismatch.sensor_vs_tree",
+            Self::SensorVsTarget => "organization_mismatch.sensor_vs_target",
             Self::ClustersVsPlan => "organization_mismatch.clusters_vs_plan",
             Self::RoleVsUser => "organization_mismatch.role_vs_user",
         }
@@ -424,8 +424,8 @@ mod tests {
             ServiceError::Auth(AuthError::PluginKeyInvalid),
             ServiceError::Auth(AuthError::PluginDisabled),
             ServiceError::Auth(AuthError::PluginViewTicketInvalid),
-            ServiceError::TreeAlreadyHasSensor,
-            ServiceError::SensorAlreadyAssigned,
+            ServiceError::TargetAlreadyHasSensor,
+            ServiceError::SensorAlreadyAttached,
             ServiceError::AlreadyActivated,
             ServiceError::NotActivated,
             ServiceError::FeatureDisabled {
@@ -444,12 +444,12 @@ mod tests {
             ServiceError::OrganizationNotEmpty,
             ServiceError::OrganizationMismatch(OrganizationMismatch::TreesVsCluster),
             ServiceError::OrganizationMismatch(OrganizationMismatch::ClusterVsTree),
-            ServiceError::OrganizationMismatch(OrganizationMismatch::SensorVsTree),
+            ServiceError::OrganizationMismatch(OrganizationMismatch::SensorVsTarget),
             ServiceError::OrganizationMismatch(OrganizationMismatch::ClustersVsPlan),
             ServiceError::OrganizationMismatch(OrganizationMismatch::RoleVsUser),
             ServiceError::ContactPersonNotAMember,
             ServiceError::TreeInCluster,
-            ServiceError::SensorBoundToTree,
+            ServiceError::SensorBoundToTarget,
             ServiceError::MissingOrganization,
             ServiceError::CannotChangeOwnAccess,
             ServiceError::CannotRevokeOwnAdministration,

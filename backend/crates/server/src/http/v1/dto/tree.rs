@@ -225,10 +225,14 @@ pub struct TreeCreateRequest {
 }
 
 impl TreeCreateRequest {
-    pub fn into_draft(self, organization_id: Id<Organization>) -> Result<TreeDraft, ServiceError> {
-        Ok(TreeDraft {
+    /// The sensor is not part of the tree; it is attached once the tree exists.
+    pub fn into_draft(
+        self,
+        organization_id: Id<Organization>,
+    ) -> Result<(TreeDraft, Option<SensorId>), ServiceError> {
+        let sensor_id = self.sensor_id.map(SensorId::new).transpose()?;
+        let draft = TreeDraft {
             cluster_id: self.tree_cluster_id.map(Id::new),
-            sensor_id: self.sensor_id.map(SensorId::new).transpose()?,
             planting_year: PlantingYear::new(self.planting_year as u32)?,
             species: Species::new(self.species)?,
             tree_number: TreeNumber::new(self.number)?,
@@ -243,7 +247,8 @@ impl TreeCreateRequest {
                 self.additional_information,
             ),
             organization_id,
-        })
+        };
+        Ok((draft, sensor_id))
     }
 }
 

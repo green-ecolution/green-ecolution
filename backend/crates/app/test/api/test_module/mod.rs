@@ -1,15 +1,21 @@
-use std::sync::{
-    Arc,
-    atomic::{AtomicBool, AtomicUsize, Ordering},
+use std::{
+    collections::HashMap,
+    sync::{
+        Arc,
+        atomic::{AtomicBool, AtomicUsize, Ordering},
+    },
 };
 
 use axum::{extract::State, http::StatusCode};
 use domain::{
-    Id,
+    Id, RepositoryError,
     authorization::{Action, Permission, ResourceKey},
     event_bus::{EventHandler, EventHandlerError},
     events::DomainEvent,
     module::ModuleKey,
+    organization::Organization,
+    shared::coordinates::Coordinate,
+    target::{TargetCatalog, TargetError, TargetKindSpec, TargetPurpose, TargetRef},
 };
 use serde::{Deserialize, Serialize};
 use server::{
@@ -49,6 +55,12 @@ struct TestState {
 #[derive(Deserialize, utoipa::ToSchema)]
 struct CreateThing {
     organization_id: Uuid,
+    #[serde(default)]
+    label: Option<String>,
+    #[serde(default)]
+    latitude: Option<f64>,
+    #[serde(default)]
+    longitude: Option<f64>,
 }
 
 #[derive(Serialize, utoipa::ToSchema)]
@@ -74,12 +86,18 @@ async fn create_thing(
         .require_write(user.id, permission(), Id::new(req.organization_id))
         .await?;
     let id = Uuid::now_v7();
-    sqlx::query("INSERT INTO test_module_things (id, organization_id) VALUES ($1, $2)")
-        .bind(id)
-        .bind(req.organization_id)
-        .execute(&state.pool)
-        .await
-        .map_err(|e| ServiceError::from(domain::RepositoryError::from(e)))?;
+    sqlx::query(
+        "INSERT INTO test_module_things (id, organization_id, label, latitude, longitude)
+         VALUES ($1, $2, COALESCE($3, 'thing'), $4, $5)",
+    )
+    .bind(id)
+    .bind(req.organization_id)
+    .bind(req.label)
+    .bind(req.latitude)
+    .bind(req.longitude)
+    .execute(&state.pool)
+    .await
+    .map_err(|e| ServiceError::from(domain::RepositoryError::from(e)))?;
     Ok((
         StatusCode::CREATED,
         Json(Thing {
@@ -115,6 +133,89 @@ async fn list_things(
 
 fn routes() -> OpenApiRouter<Arc<TestState>> {
     OpenApiRouter::new().routes(routes!(create_thing, list_things))
+}
+
+pub const THING_KIND: &str = "thing";
+
+const THING_KINDS: [TargetKindSpec; 1] = [TargetKindSpec {
+    kind: THING_KIND,
+    accepts_sensors: true,
+    commentable: true,
+    resource: THING,
+}];
+
+/// Things as targets, so tests can attach core objects to another module's rows.
+struct ThingCatalog {
+    pool: PgPool,
+}
+
+impl ThingCatalog {
+    fn ids(targets: &[TargetRef]) -> Vec<Uuid> {
+        targets
+            .iter()
+            .filter(|t| t.module.as_str() == KEY && t.kind.as_str() == THING_KIND)
+            .map(|t| t.id)
+            .collect()
+    }
+
+    fn target(id: Uuid) -> TargetRef {
+        TargetRef::new(KEY, THING_KIND, id).expect("static keys are valid")
+    }
+}
+
+#[async_trait::async_trait]
+impl TargetCatalog for ThingCatalog {
+    fn kinds(&self) -> &'static [TargetKindSpec] {
+        &THING_KINDS
+    }
+
+    async fn admit(
+        &self,
+        target: &TargetRef,
+        _purpose: TargetPurpose,
+    ) -> Result<Id<Organization>, TargetError> {
+        if target.kind.as_str() != THING_KIND {
+            return Err(TargetError::NotFound);
+        }
+        let org: Option<Uuid> =
+            sqlx::query_scalar("SELECT organization_id FROM test_module_things WHERE id = $1")
+                .bind(target.id)
+                .fetch_optional(&self.pool)
+                .await
+                .map_err(|e| TargetError::Repository(e.into()))?;
+        org.map(Id::new).ok_or(TargetError::NotFound)
+    }
+
+    async fn locate(
+        &self,
+        targets: &[TargetRef],
+    ) -> Result<HashMap<TargetRef, Coordinate>, RepositoryError> {
+        let rows: Vec<(Uuid, f64, f64)> = sqlx::query_as(
+            "SELECT id, latitude, longitude FROM test_module_things
+             WHERE id = ANY($1) AND latitude IS NOT NULL AND longitude IS NOT NULL",
+        )
+        .bind(Self::ids(targets))
+        .fetch_all(&self.pool)
+        .await?;
+        rows.into_iter()
+            .map(|(id, lat, lng)| Ok((Self::target(id), Coordinate::new(lat, lng)?)))
+            .collect()
+    }
+
+    async fn label(
+        &self,
+        targets: &[TargetRef],
+    ) -> Result<HashMap<TargetRef, String>, RepositoryError> {
+        let rows: Vec<(Uuid, String)> =
+            sqlx::query_as("SELECT id, label FROM test_module_things WHERE id = ANY($1)")
+                .bind(Self::ids(targets))
+                .fetch_all(&self.pool)
+                .await?;
+        Ok(rows
+            .into_iter()
+            .map(|(id, label)| (Self::target(id), label))
+            .collect())
+    }
 }
 
 struct CountOrganizations(Arc<Probe>);
@@ -163,6 +264,9 @@ impl Module for TestModule {
             public: OpenApiRouter::new(),
             protected: routes().with_state::<Arc<AppState>>(state),
         });
+        runtime.targets = Some(Arc::new(ThingCatalog {
+            pool: ctx.pool.clone(),
+        }));
         runtime
             .event_handlers
             .push(Arc::new(CountOrganizations(self.probe.clone())));

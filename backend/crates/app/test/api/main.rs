@@ -59,6 +59,7 @@ pub mod settings_history;
 pub mod settings_lock;
 pub mod settings_repo;
 pub mod statistics;
+pub mod targets;
 pub mod test_module;
 pub mod transfer;
 pub mod trees;

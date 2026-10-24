@@ -6,7 +6,7 @@ use std::{
 use domain::{
     Id, RepositoryError,
     authorization::ResourceKey,
-    module::ModuleKey,
+    module::{ModuleActivationReader, ModuleKey},
     organization::Organization,
     shared::coordinates::Coordinate,
     target::{TargetCatalog, TargetError, TargetPurpose, TargetRef},
@@ -78,6 +78,16 @@ impl TargetRegistry {
         })
     }
 
+    /// The resource permissions on `target` are checked against, whatever the
+    /// target is used for. `None` for a module or kind no catalog knows.
+    pub fn resource(&self, target: &TargetRef) -> Option<ResourceKey> {
+        self.catalog(&target.module)?
+            .kinds()
+            .iter()
+            .find(|s| s.kind == target.kind.as_str())
+            .map(|s| s.resource)
+    }
+
     pub async fn locate_all(
         &self,
         targets: &[TargetRef],
@@ -102,6 +112,25 @@ impl TargetRegistry {
             }
         }
         Ok(out)
+    }
+}
+
+pub async fn ensure_module_active(
+    activation: &dyn ModuleActivationReader,
+    module: &ModuleKey,
+    org: Id<Organization>,
+) -> Result<(), ServiceError> {
+    let active = activation
+        .resolve(org)
+        .await?
+        .get(module)
+        .is_some_and(|r| r.enabled);
+    if active {
+        Ok(())
+    } else {
+        Err(ServiceError::ModuleDisabled {
+            module: module.to_string(),
+        })
     }
 }
 
@@ -226,6 +255,20 @@ mod tests {
             r,
             Err(ServiceError::Repository(RepositoryError::NotFound))
         ));
+    }
+
+    #[test]
+    fn resource_is_looked_up_by_kind() {
+        let reg = registry();
+        assert_eq!(
+            reg.resource(&target("fake", "thing", Uuid::now_v7())),
+            Some(ResourceKey::declare("thing"))
+        );
+        assert_eq!(reg.resource(&target("fake", "other", Uuid::now_v7())), None);
+        assert_eq!(
+            reg.resource(&target("ghost", "thing", Uuid::now_v7())),
+            None
+        );
     }
 
     #[tokio::test]

@@ -1,0 +1,39 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE trees SET\n                tree_cluster_id = $2,\n                planting_year = $3,\n                species = $4,\n                number = $5,\n                description = $6,\n                watering_status = $7,\n                last_watered = $8,\n                latitude = $9,\n                longitude = $10,\n                geometry = ST_SetSRID(ST_MakePoint($10, $9), 4326),\n                provider = $11,\n                additional_informations = $12,\n                organization_id = $13\n            WHERE id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Int4",
+        "Text",
+        "Text",
+        "Text",
+        {
+          "Custom": {
+            "name": "watering_status",
+            "kind": {
+              "Enum": [
+                "good",
+                "moderate",
+                "bad",
+                "unknown",
+                "just_watered"
+              ]
+            }
+          }
+        },
+        "Timestamp",
+        "Float8",
+        "Float8",
+        "Text",
+        "Jsonb",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "062a59dcce83f4d2a0b0d21a074cf79555c610270517de0b0526f632a3b60c82"
+}

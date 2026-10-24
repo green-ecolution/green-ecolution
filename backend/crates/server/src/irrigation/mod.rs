@@ -2,14 +2,20 @@
 //! trees, clusters and their services still live in the core and move into the
 //! module crate in stage 4.
 
+pub mod handlers;
 pub mod settings;
+pub mod targets;
 
 use std::sync::Arc;
 
 use domain::{authorization::ResourceKey, module::ModuleKey};
 use utoipa_axum::router::OpenApiRouter;
 
-use crate::module::{Module, ModuleBuildError, ModuleContext, ModuleRoutes, ModuleRuntime};
+use crate::{
+    infra::{pg_cluster::PgTreeClusterRepository, pg_tree::PgTreeRepository},
+    module::{Module, ModuleBuildError, ModuleContext, ModuleRoutes, ModuleRuntime},
+};
+use handlers::SensorLifecycle;
 use settings::{
     IrrigationDefaults, http::IrrigationHttpState, repository::PgIrrigationSettings,
     service::IrrigationSettingsService,
@@ -76,10 +82,22 @@ impl Module for IrrigationModule {
             organizations: ctx.organizations.clone(),
             users: ctx.users.clone(),
         });
-        Ok(ModuleRuntime::new(ModuleRoutes {
+        let trees = Arc::new(PgTreeRepository::new(ctx.pool.clone()));
+        let clusters = Arc::new(PgTreeClusterRepository::new(ctx.pool.clone()));
+        let mut runtime = ModuleRuntime::new(ModuleRoutes {
             public: OpenApiRouter::new(),
             protected: routes().with_state(state),
-        }))
+        });
+        runtime.targets = Some(Arc::new(targets::IrrigationTargets::new(
+            trees.clone(),
+            clusters,
+        )));
+        runtime.event_handlers.push(Arc::new(SensorLifecycle::new(
+            trees.clone(),
+            trees,
+            &ctx.sensors,
+        )));
+        Ok(runtime)
     }
 }
 

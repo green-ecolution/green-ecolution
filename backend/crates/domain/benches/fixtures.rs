@@ -185,7 +185,6 @@ pub fn tree_planted_in(year: i32) -> Tree {
     Tree::reconstitute(TreeSnapshot {
         id: Uuid::now_v7(),
         cluster_id: None,
-        sensor_id: None,
         planting_year: year,
         species: "Tilia cordata".to_string(),
         tree_number: "A1001".to_string(),

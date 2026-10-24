@@ -8,7 +8,9 @@ use domain::{
 };
 use uuid::Uuid;
 
-use crate::service::{ServiceError, authorization::AuthorizationService};
+use crate::service::{
+    ServiceError, authorization::AuthorizationService, targets::ensure_module_active,
+};
 
 /// The one place a module asks "may this user do this here". It adds the
 /// module's activation to the permission check so no module can forget it.
@@ -43,19 +45,7 @@ impl ModuleAccess {
         org: Id<Organization>,
     ) -> Result<(), ServiceError> {
         self.authorization.require(user, permission, org).await?;
-        let active = self
-            .activation
-            .resolve(org)
-            .await?
-            .get(&self.key)
-            .is_some_and(|r| r.enabled);
-        if active {
-            Ok(())
-        } else {
-            Err(ServiceError::ModuleDisabled {
-                module: self.key.to_string(),
-            })
-        }
+        ensure_module_active(self.activation.as_ref(), &self.key, org).await
     }
 
     /// Never `Unrestricted`: even the demo bypass only sees organizations in

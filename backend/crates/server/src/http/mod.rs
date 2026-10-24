@@ -143,6 +143,7 @@ pub struct AppState {
     pub settings_service: Arc<SettingsService>,
     pub module_activation_service:
         Arc<crate::service::module_activation_service::ModuleActivationService>,
+    pub targets: Arc<crate::service::targets::TargetRegistry>,
     pub app_origins: AppOrigins,
 }
 

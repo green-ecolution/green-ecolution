@@ -808,18 +808,20 @@ async fn insert_tree_with(
     let id = uuid::Uuid::now_v7();
     sqlx::query!(
         r#"INSERT INTO trees (id, planting_year, species, number, latitude, longitude,
-                              geometry, description, sensor_id, watering_status, organization_id)
+                              geometry, description, watering_status, organization_id)
         VALUES ($1, 2020, 'Eiche', $2, 53.55, 9.99,
-                ST_SetSRID(ST_MakePoint(9.99, 53.55), 4326), 'Test', $3,
-                $4::text::watering_status, '01980000-0000-7000-8000-000000000001')"#,
+                ST_SetSRID(ST_MakePoint(9.99, 53.55), 4326), 'Test',
+                $3::text::watering_status, '01980000-0000-7000-8000-000000000001')"#,
         id,
         number,
-        sensor_id,
         watering_status,
     )
     .execute(&app.db_pool)
     .await
     .unwrap();
+    if let Some(sensor_id) = sensor_id {
+        app.attach_sensor_to_tree(sensor_id, id).await;
+    }
     id
 }
 

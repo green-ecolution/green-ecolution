@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT s.id,\n                      s.activated_at,\n                      s.type          AS \"sensor_type: SensorType\",\n                      s.model_id,\n                      s.provider,\n                      s.additional_informations AS \"additional_info: serde_json::Value\",\n                      s.organization_id,\n                      sl.serial_number AS \"serial_number?\",\n                      sl.dev_eui       AS \"dev_eui?\",\n                      sl.app_eui       AS \"app_eui?\",\n                      sl.app_key       AS \"app_key?\",\n                      sl.at_pin,\n                      sl.ota_pin,\n                      sl.config        AS \"config: serde_json::Value\",\n                      qa.acknowledged_at AS \"acknowledged_at?\",\n                      qa.acknowledged_by AS \"acknowledged_by?\",\n                      qa.note            AS \"acknowledged_note?\"\n            FROM sensors s\n            LEFT JOIN sensor_lorawan sl ON sl.id = s.id\n            LEFT JOIN sensor_quality_acknowledgements qa ON qa.sensor_id = s.id\n            WHERE s.id = $1",
+  "query": "SELECT s.id,\n                      s.activated_at,\n                      s.type          AS \"sensor_type: SensorType\",\n                      s.model_id,\n                      s.provider,\n                      s.additional_informations AS \"additional_info: serde_json::Value\",\n                      s.organization_id,\n                      sl.serial_number AS \"serial_number?\",\n                      sl.dev_eui       AS \"dev_eui?\",\n                      sl.app_eui       AS \"app_eui?\",\n                      sl.app_key       AS \"app_key?\",\n                      sl.at_pin,\n                      sl.ota_pin,\n                      sl.config        AS \"config: serde_json::Value\",\n                      qa.acknowledged_at AS \"acknowledged_at?\",\n                      qa.acknowledged_by AS \"acknowledged_by?\",\n                      qa.note            AS \"acknowledged_note?\",\n                      sa.module_key      AS \"target_module?\",\n                      sa.target_kind     AS \"target_kind?\",\n                      sa.target_id       AS \"target_id?\"\n            FROM sensors s\n            LEFT JOIN sensor_lorawan sl ON sl.id = s.id\n            LEFT JOIN sensor_quality_acknowledgements qa ON qa.sensor_id = s.id\n            LEFT JOIN sensor_attachments sa ON sa.sensor_id = s.id\n            WHERE s.id = ANY($1::text[])",
   "describe": {
     "columns": [
       {
@@ -96,11 +96,26 @@
         "ordinal": 16,
         "name": "acknowledged_note?",
         "type_info": "Text"
+      },
+      {
+        "ordinal": 17,
+        "name": "target_module?",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 18,
+        "name": "target_kind?",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 19,
+        "name": "target_id?",
+        "type_info": "Uuid"
       }
     ],
     "parameters": {
       "Left": [
-        "Text"
+        "TextArray"
       ]
     },
     "nullable": [
@@ -111,17 +126,20 @@
       true,
       true,
       false,
-      false,
-      false,
-      false,
-      false,
       true,
       true,
       true,
-      false,
-      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
       true
     ]
   },
-  "hash": "570dcc1c36b98dd4cdea562930e0a85771199db7f899a323d5e16c4fe7b93b42"
+  "hash": "9f5545a4f7d6f7bee8238aa147ffb749a2ef9beac57568a4bb82a0da95eeecc4"
 }

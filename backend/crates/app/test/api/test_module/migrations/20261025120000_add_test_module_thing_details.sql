@@ -1,0 +1,4 @@
+ALTER TABLE test_module_things
+    ADD COLUMN label TEXT NOT NULL DEFAULT 'thing',
+    ADD COLUMN latitude DOUBLE PRECISION,
+    ADD COLUMN longitude DOUBLE PRECISION;
