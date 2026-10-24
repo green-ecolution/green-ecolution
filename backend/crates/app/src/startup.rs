@@ -136,6 +136,21 @@ impl Application {
             profile_repo.clone(),
             defaults,
         ));
+        let module_activation_repo = Arc::new(
+            server::infra::pg_module_activation::PgModuleActivationRepository::new(
+                pool.clone(),
+                repos.organization_reader.clone(),
+                std::collections::BTreeMap::new(),
+            ),
+        );
+        let module_activation_service = Arc::new(
+            server::service::module_activation_service::ModuleActivationService::new(
+                module_activation_repo.clone(),
+                module_activation_repo.clone(),
+                repos.organization_reader.clone(),
+                std::collections::BTreeSet::new(),
+            ),
+        );
         let user_service = Arc::new(UserService::new(
             user_repo.clone(),
             profile_repo.clone(),
@@ -274,6 +289,7 @@ impl Application {
             plugin_proxy,
             settings_reader: settings_repo.clone(),
             settings_service,
+            module_activation_service,
             app_origins,
         });
 

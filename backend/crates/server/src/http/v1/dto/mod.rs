@@ -2,6 +2,7 @@ pub mod cluster;
 pub mod comment;
 pub mod evaluation;
 pub mod info;
+pub mod module;
 pub mod organization;
 pub mod plugin;
 pub mod region;

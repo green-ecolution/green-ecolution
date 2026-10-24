@@ -169,7 +169,9 @@ impl IntoResponse for ServiceError {
             }
             // Not a conflict either: nothing about the stored tree is wrong,
             // the request just pairs a sensor with a tree that is not there yet.
-            ServiceError::MissingOrganization
+            ServiceError::ModuleDisabled { .. } => (StatusCode::FORBIDDEN, self.to_string()),
+            ServiceError::ModuleUnknown { .. }
+            | ServiceError::MissingOrganization
             | ServiceError::ContactPersonNotAMember
             | ServiceError::TreeNotYetPlanted => {
                 (StatusCode::UNPROCESSABLE_ENTITY, self.to_string())
