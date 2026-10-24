@@ -53,6 +53,12 @@ pub fn protected_router() -> OpenApiRouter<Arc<AppState>> {
         .merge(watering_plan::routes())
 }
 
+/// The core's own routes relative to `/api/v1`, for checking module routes
+/// against them before anything is mounted.
+pub fn core_openapi() -> utoipa::openapi::OpenApi {
+    public_router().merge(protected_router()).into_openapi()
+}
+
 pub fn router(auth_layer: AuthLayer) -> OpenApiRouter<Arc<AppState>> {
     public_router().merge(protected_router().layer(middleware::from_fn_with_state(
         auth_layer,
