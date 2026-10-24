@@ -322,7 +322,9 @@ async fn template_database() -> &'static str {
             ))
             .await
             .expect("failed to connect to template database");
-            sqlx::migrate!("../../migrations")
+            app::migrations::migrator(&template_modules())
+                .await
+                .expect("module migrations must merge")
                 .run(&mut conn)
                 .await
                 .expect("failed to migrate template database");
@@ -347,6 +349,12 @@ async fn template_database() -> &'static str {
             db_name
         })
         .await
+}
+
+/// Modules whose migrations every test database carries. Task 7 adds the
+/// test module; until then this is the production list.
+pub fn template_modules() -> Vec<Box<dyn server::module::Module>> {
+    app::modules::registered()
 }
 
 async fn create_test_database(host_port: u16) -> (String, PgPool) {

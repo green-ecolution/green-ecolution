@@ -429,12 +429,12 @@ dns-cleanup:
 _migrate-build:
     cd {{ backend_dir }} && SQLX_OFFLINE=true cargo build --bin migrate
 
-# Create a new migration file (requires sqlx-cli for scaffolding)
+# Create a new migration file; pass a module key to create it in that module's directory (requires sqlx-cli)
 [group('db')]
-migrate-new name:
+migrate-new name module="":
     @echo "Create new migration..."
     @command -v cargo-sqlx >/dev/null 2>&1 || { echo "sqlx-cli missing (cargo install sqlx-cli --no-default-features --features rustls,postgres)"; exit 1; }
-    cd {{ backend_dir }} && cargo sqlx migrate add {{ name }}
+    cd {{ backend_dir }} && cargo sqlx migrate add --source {{ if module == "" { "migrations" } else { "crates/modules/" + module + "/migrations" } }} {{ name }}
 
 # Apply all pending migrations
 [group('db')]

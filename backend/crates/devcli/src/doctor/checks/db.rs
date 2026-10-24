@@ -139,7 +139,7 @@ mod tests {
         let fix = findings[0].fix.as_ref().unwrap();
         assert_eq!(
             fix.command,
-            "touch backend/crates/app/src/bin/migrate.rs && just migrate-up"
+            "touch backend/crates/app/src/migrations.rs && just migrate-up"
         );
         assert_eq!(fix.cwd, "");
         assert!(!fix.destructive);
