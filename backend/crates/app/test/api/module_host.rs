@@ -117,19 +117,18 @@ async fn reads_only_show_organizations_with_the_module_active() {
     let root = Uuid::parse_str(ROOT_ORG_ID).unwrap();
     let on = child_org(&app, "An", root).await;
     let off = child_org(&app, "Aus", root).await;
-    switch(&app, on, Some(true)).await;
-    switch(&app, off, Some(true)).await;
-    app.post_json(
-        "/api/v1/test-module/things",
-        &json!({ "organization_id": on }),
-    )
-    .await;
-    app.post_json(
-        "/api/v1/test-module/things",
-        &json!({ "organization_id": off }),
-    )
-    .await;
-    switch(&app, off, Some(false)).await;
+    assert_eq!(switch(&app, on, Some(true)).await.status(), 200);
+    assert_eq!(switch(&app, off, Some(true)).await.status(), 200);
+    for org in [on, off] {
+        let created = app
+            .post_json(
+                "/api/v1/test-module/things",
+                &json!({ "organization_id": org }),
+            )
+            .await;
+        assert_eq!(created.status(), 201);
+    }
+    assert_eq!(switch(&app, off, Some(false)).await.status(), 200);
 
     let things: Vec<serde_json::Value> = app
         .get("/api/v1/test-module/things")

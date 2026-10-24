@@ -370,7 +370,23 @@ pub async fn spawn_app_with_modules(modules: Vec<Box<dyn server::module::Module>
 pub async fn try_spawn_app_with_modules(
     modules: Vec<Box<dyn server::module::Module>>,
 ) -> Result<TestApp, std::io::Error> {
-    let mut settings = Settings::for_test(disabled_auth_settings());
+    try_spawn_app_with_modules_and_auth(modules, disabled_auth_settings()).await
+}
+
+pub async fn spawn_app_with_modules_and_auth(
+    modules: Vec<Box<dyn server::module::Module>>,
+    auth: AuthSettings,
+) -> TestApp {
+    try_spawn_app_with_modules_and_auth(modules, auth)
+        .await
+        .expect("failed to build application")
+}
+
+pub async fn try_spawn_app_with_modules_and_auth(
+    modules: Vec<Box<dyn server::module::Module>>,
+    auth: AuthSettings,
+) -> Result<TestApp, std::io::Error> {
+    let mut settings = Settings::for_test(auth);
     settings.info.health_check_interval_secs = 1;
     settings.info.update_check_repo = None;
     let container = shared_container().await;
