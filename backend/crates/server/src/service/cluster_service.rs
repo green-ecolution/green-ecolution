@@ -196,6 +196,9 @@ impl ClusterService {
             events.extend(tree.move_to_cluster(None));
             self.tree_writer.save(&tree).await?;
         }
+        self.plans
+            .remove_stop(&irrigation::key(), StopRef::new(id.value()))
+            .await?;
         self.writer.delete(id).await?;
         // Comments have no cascading FK: the subject is polymorphic.
         let deleted_comments = self
@@ -205,9 +208,6 @@ impl ClusterService {
             ))
             .await?;
         tracing::debug!(deleted_comments, "removed comments for deleted cluster");
-        self.plans
-            .remove_stop(&irrigation::key(), StopRef::new(id.value()))
-            .await?;
         self.event_bus.publish_all(events).await;
         Ok(())
     }
