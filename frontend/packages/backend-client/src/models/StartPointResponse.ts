@@ -13,9 +13,17 @@
  */
 
 import { mapValues } from '../runtime';
+import type { CapacityKindDto } from './CapacityKindDto';
+import {
+    CapacityKindDtoFromJSON,
+    CapacityKindDtoFromJSONTyped,
+    CapacityKindDtoToJSON,
+    CapacityKindDtoToJSONTyped,
+} from './CapacityKindDto';
+
 /**
- * Named departure/return point for watering routes. `watering_point` marks it
- * as a water refill station.
+ * Named departure/return point for routes. `replenishes` lists the capacity
+ * kinds a vehicle restores here.
  * @export
  * @interface StartPointResponse
  */
@@ -58,10 +66,10 @@ export interface StartPointResponse {
     organizationId: string;
     /**
      * 
-     * @type {boolean}
+     * @type {Array<CapacityKindDto>}
      * @memberof StartPointResponse
      */
-    wateringPoint: boolean;
+    replenishes: Array<CapacityKindDto>;
 }
 
 /**
@@ -74,7 +82,7 @@ export function instanceOfStartPointResponse(value: object): value is StartPoint
     if (!('lon' in value) || value['lon'] === undefined) return false;
     if (!('name' in value) || value['name'] === undefined) return false;
     if (!('organizationId' in value) || value['organizationId'] === undefined) return false;
-    if (!('wateringPoint' in value) || value['wateringPoint'] === undefined) return false;
+    if (!('replenishes' in value) || value['replenishes'] === undefined) return false;
     return true;
 }
 
@@ -94,7 +102,7 @@ export function StartPointResponseFromJSONTyped(json: any, ignoreDiscriminator: 
         'lon': json['lon'],
         'name': json['name'],
         'organizationId': json['organization_id'],
-        'wateringPoint': json['watering_point'],
+        'replenishes': ((json['replenishes'] as Array<any>).map(CapacityKindDtoFromJSON)),
     };
 }
 
@@ -115,7 +123,7 @@ export function StartPointResponseToJSONTyped(value?: StartPointResponse | null,
         'lon': value['lon'],
         'name': value['name'],
         'organization_id': value['organizationId'],
-        'watering_point': value['wateringPoint'],
+        'replenishes': ((value['replenishes'] as Array<any>).map(CapacityKindDtoToJSON)),
     };
 }
 

@@ -32,13 +32,14 @@ const VehicleUpdate = ({ vehicleId }: VehicleUpdateProps) => {
       length: data.length,
       weight: data.weight,
       model: data.model,
-      waterCapacity: data.waterCapacity,
+      waterCapacity: data.capacities.water ?? 0,
       description: data.description,
     }),
   )
   const { mutate, isError, error, form, navigationBlocker } = useVehicleForm('update', {
     vehicleId,
     initForm,
+    capacities: loadedData.capacities,
   })
   const onSubmit: SubmitHandler<VehicleForm> = (data) => {
     mutate(data)

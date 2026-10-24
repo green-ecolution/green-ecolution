@@ -1,0 +1,19 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO depots (id, name, latitude, longitude, geometry, replenishes, is_default, organization_id)\n               VALUES ($1, $2, $3, $4, ST_SetSRID(ST_MakePoint($4, $3), 4326), $5, FALSE, $6)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Float8",
+        "Float8",
+        "TextArray",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "6015ffe2ac5730fcb01a90652932cb33648c38c0164b6b0532fb0ed060bca2ea"
+}

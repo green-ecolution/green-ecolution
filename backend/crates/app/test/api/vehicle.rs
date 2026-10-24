@@ -1,10 +1,13 @@
+use serde_json::json;
+use uuid::Uuid;
+
 use crate::helpers::{TestApp, spawn_app};
 
 fn vehicle_json(plate: &str) -> serde_json::Value {
     serde_json::json!({
         "number_plate": plate,
         "description": "Testfahrzeug",
-        "water_capacity": 5000.0,
+        "capacities": { "water": 5000.0 },
         "model": "MAN TGS",
         "availability": "available",
         "type": "transporter",
@@ -14,6 +17,93 @@ fn vehicle_json(plate: &str) -> serde_json::Value {
         "length": 8.0,
         "weight": 12000.0
     })
+}
+
+/// Creates a transporter in the root organization with the given capacities.
+pub async fn create_vehicle_with(app: &TestApp, capacities: serde_json::Value) -> Uuid {
+    let plate = format!("FL-{}", &Uuid::now_v7().simple().to_string()[..8]);
+    let res = app
+        .post_json(
+            "/api/v1/vehicles",
+            &json!({
+                "number_plate": plate,
+                "description": "",
+                "capacities": capacities,
+                "type": "transporter",
+                "model": "X",
+                "availability": "available",
+                "driving_license": "B",
+                "height": 2.0, "width": 2.0, "length": 5.0, "weight": 3.5
+            }),
+        )
+        .await;
+    assert_eq!(res.status(), 201, "{}", res.text().await.unwrap());
+    res.json::<serde_json::Value>().await.unwrap()["id"]
+        .as_str()
+        .unwrap()
+        .parse()
+        .unwrap()
+}
+
+#[tokio::test]
+async fn a_vehicle_keeps_several_capacity_kinds() {
+    let app = spawn_app().await;
+    let body = json!({
+        "number_plate": "FL-CAP 1",
+        "description": "",
+        "capacities": { "water": 1000.0, "cargo_volume": 6000.0 },
+        "availability": "available",
+        "type": "transporter",
+        "model": "X",
+        "driving_license": "B",
+        "height": 2.0, "width": 2.0, "length": 5.0, "weight": 3.5
+    });
+    let res = app.post_json("/api/v1/vehicles", &body).await;
+    assert_eq!(res.status(), 201);
+    let created: serde_json::Value = res.json().await.unwrap();
+    assert_eq!(created["capacities"]["water"], 1000.0);
+    assert_eq!(created["capacities"]["cargo_volume"], 6000.0);
+
+    let fetched: serde_json::Value = app
+        .get(&format!(
+            "/api/v1/vehicles/{}",
+            created["id"].as_str().unwrap()
+        ))
+        .await
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(fetched["capacities"]["water"], 1000.0);
+    assert_eq!(fetched["capacities"]["cargo_volume"], 6000.0);
+}
+
+#[tokio::test]
+async fn updating_a_vehicle_replaces_its_capacities() {
+    let app = spawn_app().await;
+    let id = create_vehicle_with(&app, json!({ "water": 1000.0, "cargo_volume": 6000.0 })).await;
+    let mut body = vehicle_json("FL-CAP 2");
+    body["capacities"] = json!({ "cargo_volume": 500.0 });
+
+    let res = app.put_json(&format!("/api/v1/vehicles/{id}"), &body).await;
+    assert_eq!(res.status(), 200);
+
+    let fetched: serde_json::Value = app
+        .get(&format!("/api/v1/vehicles/{id}"))
+        .await
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(fetched["capacities"], json!({ "cargo_volume": 500.0 }));
+}
+
+#[tokio::test]
+async fn an_unknown_capacity_kind_is_rejected() {
+    let app = spawn_app().await;
+    let mut body = vehicle_json("FL-CAP 3");
+    body["capacities"] = json!({ "sand": 10.0 });
+
+    let res = app.post_json("/api/v1/vehicles", &body).await;
+    assert!(res.status().is_client_error());
 }
 
 #[tokio::test]
@@ -60,7 +150,7 @@ async fn create_vehicle_returns_201() {
     let vehicle: serde_json::Value = response.json().await.unwrap();
     assert_eq!(vehicle["number_plate"], "FL-GE 123");
     assert_eq!(vehicle["model"], "MAN TGS");
-    assert_eq!(vehicle["water_capacity"], 5000.0);
+    assert_eq!(vehicle["capacities"]["water"], 5000.0);
     assert_eq!(vehicle["status"], "available");
     assert_eq!(vehicle["availability"], "available");
     assert_eq!(vehicle["type"], "transporter");
@@ -72,7 +162,7 @@ async fn create_vehicle_with_negative_capacity_returns_400() {
     let app = spawn_app().await;
 
     let mut body = vehicle_json("FL-GE 999");
-    body["water_capacity"] = serde_json::json!(-100.0);
+    body["capacities"] = serde_json::json!({ "water": -100.0 });
 
     let response = app.post_json("/api/v1/vehicles", &body).await;
 
@@ -441,7 +531,7 @@ async fn seed_vehicle_with_license(
 
 async fn seed_vehicle_with_capacity(app: &TestApp, plate: &str, capacity: f64) -> uuid::Uuid {
     let mut body = vehicle_json(plate);
-    body["water_capacity"] = serde_json::json!(capacity);
+    body["capacities"] = serde_json::json!({ "water": capacity });
     let created: serde_json::Value = app
         .post_json("/api/v1/vehicles", &body)
         .await

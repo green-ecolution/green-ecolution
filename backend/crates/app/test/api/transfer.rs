@@ -239,7 +239,7 @@ fn vehicle_payload(plate: &str, org: &str) -> serde_json::Value {
     json!({
         "number_plate": plate,
         "description": "Testfahrzeug",
-        "water_capacity": 5000.0,
+        "capacities": { "water": 5000.0 },
         "model": "MAN TGS",
         "availability": "available",
         "type": "transporter",
@@ -281,7 +281,7 @@ async fn transfer_vehicle_returns_204_and_changes_organization() {
 }
 
 fn start_point_payload(name: &str, lat: f64, lon: f64, org: &str) -> serde_json::Value {
-    json!({ "name": name, "lat": lat, "lon": lon, "watering_point": false, "organization_id": org })
+    json!({ "name": name, "lat": lat, "lon": lon, "replenishes": [], "organization_id": org })
 }
 
 #[tokio::test]

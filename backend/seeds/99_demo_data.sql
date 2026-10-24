@@ -1,16 +1,30 @@
-INSERT INTO vehicles (id, number_plate, description, water_capacity, type, availability, driving_license, model, width, height, length, weight, organization_id) VALUES
-  ('019e3fcb-2a51-7e7e-9392-c4e6dfb61845'::uuid, 'FL-GE-101', 'Kleintransporter für Stadtgebiete', 500.0, 'transporter', 'available', 'B', 'VW Transporter T6.1', 1.90, 1.99, 5.30, 2.0, '01980000-0000-7000-8000-000000000002'),
-  ('019e3fcb-2a51-75fd-818b-913a7cd9cec1'::uuid, 'FL-GE-201', 'Transporter für mittlere Einsätze', 800.0, 'transporter', 'available', 'B', 'Ford Transit Custom', 2.06, 2.52, 5.53, 2.3, '01980000-0000-7000-8000-000000000002'),
-  ('019e3fcb-2a51-73cf-b612-cd0ccdac6f0d'::uuid, 'FL-GE-301', 'Pritschenwagen für Anhängerbetrieb', 300.0, 'transporter', 'available', 'BE', 'MAN TGE 3.180 Pritsche', 2.04, 2.35, 5.99, 3.5, '01980000-0000-7000-8000-000000000002'),
-  ('019e3fcb-2a51-7b0b-9875-8c51aae80c31'::uuid, 'FL-GE-401', 'Mittlerer Tankwagen', 5000.0, 'transporter', 'available', 'C', 'Mercedes Atego 1218', 2.30, 3.20, 7.50, 12.0, '01980000-0000-7000-8000-000000000002'),
-  ('019e3fcb-2a51-728a-8d64-5f8b86cf81ad'::uuid, 'FL-GE-501', 'Großer Tankwagen für Außenbereiche', 10000.0, 'transporter', 'available', 'CE', 'MAN TGS 18.320', 2.55, 3.50, 9.50, 18.0, '01980000-0000-7000-8000-000000000002'),
-  ('019e3fcb-2a52-7c3c-8ef9-faf356e13d59'::uuid, 'FL-GE-A01', 'Kleiner Wassertankanhänger für Stadtgebiete', 1000.0, 'trailer', 'available', 'B', 'Humbaur HA 132513', 1.32, 1.50, 2.50, 0.75, '01980000-0000-7000-8000-000000000002'),
-  ('019e3fcb-2a52-705a-9000-ccd25776cfb9'::uuid, 'FL-GE-A02', 'Mittlerer Wassertankanhänger', 2000.0, 'trailer', 'available', 'BE', 'Unsinn WEB 30', 1.80, 1.80, 4.00, 1.2, '01980000-0000-7000-8000-000000000002'),
-  ('019e3fcb-2a52-773f-9ece-2cc22d45b937'::uuid, 'FL-GE-A03', 'Großer Wassertankanhänger für Außeneinsätze', 4000.0, 'trailer', 'available', 'BE', 'Humbaur HTK 3500', 2.10, 2.00, 5.50, 2.5, '01980000-0000-7000-8000-000000000002'),
-  ('019e3fcb-2a52-78ca-aba1-775ddd5ca945'::uuid, 'FL-TEST-01', '[TEST] Unrealistisch: Viel zu groß und schwer für Routing-Tests', 50000.0, 'transporter', 'available', 'CE', 'Test Mega Truck', 3.50, 5.00, 25.0, 80.0, '01980000-0000-7000-8000-000000000002'),
-  ('019e3fcb-2a52-7572-b3cd-5b59be3d19aa'::uuid, 'FL-TEST-02', '[TEST] Unrealistisch: Viel zu klein für Edge-Case-Tests', 100.0, 'transporter', 'available', 'B', 'Test Mini Van', 1.20, 1.00, 2.0, 0.3, '01980000-0000-7000-8000-000000000002'),
-  ('019e3fcb-2a52-7547-b44d-33e5c74e10cf'::uuid, 'FL-TEST-03', '[TEST] Unrealistisch: Extreme Werte für Grenzwert-Tests', 99999.0, 'transporter', 'not_available', 'CE', 'Test Heavy Loader', 4.00, 6.00, 30.0, 150.0, '01980000-0000-7000-8000-000000000002'),
-  ('019e3fcb-2a52-729c-9bb6-10669401291e'::uuid, 'FL-TEST-A01', '[TEST] Unrealistisch: Riesiger Testanhänger', 30000.0, 'trailer', 'available', 'CE', 'Test Giant Trailer', 3.00, 4.00, 15.0, 25.0, '01980000-0000-7000-8000-000000000002');
+INSERT INTO vehicles (id, number_plate, description, type, availability, driving_license, model, width, height, length, weight, organization_id) VALUES
+  ('019e3fcb-2a51-7e7e-9392-c4e6dfb61845'::uuid, 'FL-GE-101', 'Kleintransporter für Stadtgebiete', 'transporter', 'available', 'B', 'VW Transporter T6.1', 1.90, 1.99, 5.30, 2.0, '01980000-0000-7000-8000-000000000002'),
+  ('019e3fcb-2a51-75fd-818b-913a7cd9cec1'::uuid, 'FL-GE-201', 'Transporter für mittlere Einsätze', 'transporter', 'available', 'B', 'Ford Transit Custom', 2.06, 2.52, 5.53, 2.3, '01980000-0000-7000-8000-000000000002'),
+  ('019e3fcb-2a51-73cf-b612-cd0ccdac6f0d'::uuid, 'FL-GE-301', 'Pritschenwagen für Anhängerbetrieb', 'transporter', 'available', 'BE', 'MAN TGE 3.180 Pritsche', 2.04, 2.35, 5.99, 3.5, '01980000-0000-7000-8000-000000000002'),
+  ('019e3fcb-2a51-7b0b-9875-8c51aae80c31'::uuid, 'FL-GE-401', 'Mittlerer Tankwagen', 'transporter', 'available', 'C', 'Mercedes Atego 1218', 2.30, 3.20, 7.50, 12.0, '01980000-0000-7000-8000-000000000002'),
+  ('019e3fcb-2a51-728a-8d64-5f8b86cf81ad'::uuid, 'FL-GE-501', 'Großer Tankwagen für Außenbereiche', 'transporter', 'available', 'CE', 'MAN TGS 18.320', 2.55, 3.50, 9.50, 18.0, '01980000-0000-7000-8000-000000000002'),
+  ('019e3fcb-2a52-7c3c-8ef9-faf356e13d59'::uuid, 'FL-GE-A01', 'Kleiner Wassertankanhänger für Stadtgebiete', 'trailer', 'available', 'B', 'Humbaur HA 132513', 1.32, 1.50, 2.50, 0.75, '01980000-0000-7000-8000-000000000002'),
+  ('019e3fcb-2a52-705a-9000-ccd25776cfb9'::uuid, 'FL-GE-A02', 'Mittlerer Wassertankanhänger', 'trailer', 'available', 'BE', 'Unsinn WEB 30', 1.80, 1.80, 4.00, 1.2, '01980000-0000-7000-8000-000000000002'),
+  ('019e3fcb-2a52-773f-9ece-2cc22d45b937'::uuid, 'FL-GE-A03', 'Großer Wassertankanhänger für Außeneinsätze', 'trailer', 'available', 'BE', 'Humbaur HTK 3500', 2.10, 2.00, 5.50, 2.5, '01980000-0000-7000-8000-000000000002'),
+  ('019e3fcb-2a52-78ca-aba1-775ddd5ca945'::uuid, 'FL-TEST-01', '[TEST] Unrealistisch: Viel zu groß und schwer für Routing-Tests', 'transporter', 'available', 'CE', 'Test Mega Truck', 3.50, 5.00, 25.0, 80.0, '01980000-0000-7000-8000-000000000002'),
+  ('019e3fcb-2a52-7572-b3cd-5b59be3d19aa'::uuid, 'FL-TEST-02', '[TEST] Unrealistisch: Viel zu klein für Edge-Case-Tests', 'transporter', 'available', 'B', 'Test Mini Van', 1.20, 1.00, 2.0, 0.3, '01980000-0000-7000-8000-000000000002'),
+  ('019e3fcb-2a52-7547-b44d-33e5c74e10cf'::uuid, 'FL-TEST-03', '[TEST] Unrealistisch: Extreme Werte für Grenzwert-Tests', 'transporter', 'not_available', 'CE', 'Test Heavy Loader', 4.00, 6.00, 30.0, 150.0, '01980000-0000-7000-8000-000000000002'),
+  ('019e3fcb-2a52-729c-9bb6-10669401291e'::uuid, 'FL-TEST-A01', '[TEST] Unrealistisch: Riesiger Testanhänger', 'trailer', 'available', 'CE', 'Test Giant Trailer', 3.00, 4.00, 15.0, 25.0, '01980000-0000-7000-8000-000000000002');
+
+INSERT INTO vehicle_capacities (vehicle_id, kind, liters) VALUES
+  ('019e3fcb-2a51-7e7e-9392-c4e6dfb61845'::uuid, 'water', 500.0),
+  ('019e3fcb-2a51-75fd-818b-913a7cd9cec1'::uuid, 'water', 800.0),
+  ('019e3fcb-2a51-73cf-b612-cd0ccdac6f0d'::uuid, 'water', 300.0),
+  ('019e3fcb-2a51-7b0b-9875-8c51aae80c31'::uuid, 'water', 5000.0),
+  ('019e3fcb-2a51-728a-8d64-5f8b86cf81ad'::uuid, 'water', 10000.0),
+  ('019e3fcb-2a52-7c3c-8ef9-faf356e13d59'::uuid, 'water', 1000.0),
+  ('019e3fcb-2a52-705a-9000-ccd25776cfb9'::uuid, 'water', 2000.0),
+  ('019e3fcb-2a52-773f-9ece-2cc22d45b937'::uuid, 'water', 4000.0),
+  ('019e3fcb-2a52-78ca-aba1-775ddd5ca945'::uuid, 'water', 50000.0),
+  ('019e3fcb-2a52-7572-b3cd-5b59be3d19aa'::uuid, 'water', 100.0),
+  ('019e3fcb-2a52-7547-b44d-33e5c74e10cf'::uuid, 'water', 99999.0),
+  ('019e3fcb-2a52-729c-9bb6-10669401291e'::uuid, 'water', 30000.0);
 
 
 INSERT INTO tree_clusters (id, name, watering_status, moisture_level, region_id, address, description, soil_condition, latitude, longitude, geometry, organization_id) VALUES

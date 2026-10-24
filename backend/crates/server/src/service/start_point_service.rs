@@ -45,7 +45,7 @@ impl StartPointService {
         let mut sp = self.reader.by_id(id).await?;
         sp.rename(update.name);
         sp.relocate(update.coordinate);
-        sp.set_watering_point(update.watering_point);
+        sp.set_replenishes(update.replenishes);
         self.writer.save(&sp).await?;
         Ok(sp)
     }

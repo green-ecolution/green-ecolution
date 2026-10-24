@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id,\n                      archived_at AS \"archived_at: DateTime<chrono::Utc>\",\n                      number_plate,\n                      description,\n                      water_capacity,\n                      type AS \"vehicle_type: VehicleType\",\n                      availability AS \"availability: VehicleAvailability\",\n                      model,\n                      driving_license AS \"driving_license: DrivingLicense\",\n                      height, width, length, weight,\n                      provider,\n                      additional_informations AS additional_info,\n                      organization_id\n            FROM vehicles WHERE id = ANY($1::uuid[])",
+  "query": "SELECT id,\n                      archived_at AS \"archived_at: DateTime<chrono::Utc>\",\n                      number_plate,\n                      description,\n                      COALESCE((SELECT jsonb_object_agg(kind, liters)\n                                FROM vehicle_capacities WHERE vehicle_id = vehicles.id),\n                               '{}'::jsonb) AS \"capacities!: Value\",\n                      type AS \"vehicle_type: VehicleType\",\n                      availability AS \"availability: VehicleAvailability\",\n                      model,\n                      driving_license AS \"driving_license: DrivingLicense\",\n                      height, width, length, weight,\n                      provider,\n                      additional_informations AS \"additional_info: Value\",\n                      organization_id\n            FROM vehicles WHERE id = $1",
   "describe": {
     "columns": [
       {
@@ -25,8 +25,8 @@
       },
       {
         "ordinal": 4,
-        "name": "water_capacity",
-        "type_info": "Float8"
+        "name": "capacities!: Value",
+        "type_info": "Jsonb"
       },
       {
         "ordinal": 5,
@@ -107,7 +107,7 @@
       },
       {
         "ordinal": 14,
-        "name": "additional_info",
+        "name": "additional_info: Value",
         "type_info": "Jsonb"
       },
       {
@@ -118,7 +118,7 @@
     ],
     "parameters": {
       "Left": [
-        "UuidArray"
+        "Uuid"
       ]
     },
     "nullable": [
@@ -126,7 +126,7 @@
       true,
       false,
       false,
-      false,
+      null,
       false,
       false,
       false,
@@ -140,5 +140,5 @@
       false
     ]
   },
-  "hash": "f37cd8905caec37e69bc0d8f2e4ad23ec5cb3d7938ccb3470eb4e01571ee5649"
+  "hash": "31d775a14c72a930745e3128fd7641ba0ed08a2bda137c26ccbdb1b5357b9472"
 }

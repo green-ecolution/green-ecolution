@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id, updated_at,\n                      archived_at,\n                      number_plate,\n                      description,\n                      water_capacity,\n                      type AS \"vehicle_type: VehicleType\",\n                      availability AS \"availability: VehicleAvailability\",\n                      model,\n                      driving_license AS \"driving_license: DrivingLicense\",\n                      height, width, length, weight,\n                      provider,\n                      additional_informations AS \"additional_info: Value\",\n                      organization_id,\n                      EXISTS (SELECT 1 FROM vehicle_watering_plans vwp\n                              JOIN watering_plans wp ON wp.id = vwp.watering_plan_id\n                              WHERE vwp.vehicle_id = vehicles.id\n                                AND wp.status = 'active') AS \"on_active_plan!: bool\"\n            FROM vehicles WHERE id = $1",
+  "query": "SELECT id,\n                      archived_at AS \"archived_at: DateTime<chrono::Utc>\",\n                      number_plate,\n                      description,\n                      COALESCE((SELECT jsonb_object_agg(kind, liters)\n                                FROM vehicle_capacities WHERE vehicle_id = vehicles.id),\n                               '{}'::jsonb) AS \"capacities!: Value\",\n                      type AS \"vehicle_type: VehicleType\",\n                      availability AS \"availability: VehicleAvailability\",\n                      model,\n                      driving_license AS \"driving_license: DrivingLicense\",\n                      height, width, length, weight,\n                      provider,\n                      additional_informations AS \"additional_info: Value\",\n                      organization_id\n            FROM vehicles WHERE id = ANY($1::uuid[])",
   "describe": {
     "columns": [
       {
@@ -10,31 +10,26 @@
       },
       {
         "ordinal": 1,
-        "name": "updated_at",
+        "name": "archived_at: DateTime<chrono::Utc>",
         "type_info": "Timestamp"
       },
       {
         "ordinal": 2,
-        "name": "archived_at",
-        "type_info": "Timestamp"
-      },
-      {
-        "ordinal": 3,
         "name": "number_plate",
         "type_info": "Text"
       },
       {
-        "ordinal": 4,
+        "ordinal": 3,
         "name": "description",
         "type_info": "Text"
       },
       {
-        "ordinal": 5,
-        "name": "water_capacity",
-        "type_info": "Float8"
+        "ordinal": 4,
+        "name": "capacities!: Value",
+        "type_info": "Jsonb"
       },
       {
-        "ordinal": 6,
+        "ordinal": 5,
         "name": "vehicle_type: VehicleType",
         "type_info": {
           "Custom": {
@@ -49,7 +44,7 @@
         }
       },
       {
-        "ordinal": 7,
+        "ordinal": 6,
         "name": "availability: VehicleAvailability",
         "type_info": {
           "Custom": {
@@ -64,12 +59,12 @@
         }
       },
       {
-        "ordinal": 8,
+        "ordinal": 7,
         "name": "model",
         "type_info": "Text"
       },
       {
-        "ordinal": 9,
+        "ordinal": 8,
         "name": "driving_license: DrivingLicense",
         "type_info": {
           "Custom": {
@@ -86,58 +81,52 @@
         }
       },
       {
-        "ordinal": 10,
+        "ordinal": 9,
         "name": "height",
         "type_info": "Float8"
       },
       {
-        "ordinal": 11,
+        "ordinal": 10,
         "name": "width",
         "type_info": "Float8"
       },
       {
-        "ordinal": 12,
+        "ordinal": 11,
         "name": "length",
         "type_info": "Float8"
       },
       {
-        "ordinal": 13,
+        "ordinal": 12,
         "name": "weight",
         "type_info": "Float8"
       },
       {
-        "ordinal": 14,
+        "ordinal": 13,
         "name": "provider",
         "type_info": "Text"
       },
       {
-        "ordinal": 15,
+        "ordinal": 14,
         "name": "additional_info: Value",
         "type_info": "Jsonb"
       },
       {
-        "ordinal": 16,
+        "ordinal": 15,
         "name": "organization_id",
         "type_info": "Uuid"
-      },
-      {
-        "ordinal": 17,
-        "name": "on_active_plan!: bool",
-        "type_info": "Bool"
       }
     ],
     "parameters": {
       "Left": [
-        "Uuid"
+        "UuidArray"
       ]
     },
     "nullable": [
       false,
-      false,
       true,
       false,
       false,
-      false,
+      null,
       false,
       false,
       false,
@@ -148,9 +137,8 @@
       false,
       true,
       true,
-      false,
-      null
+      false
     ]
   },
-  "hash": "066a24caa2154a74e99a88cae6c68f53a3596837843192bdad22062365e39817"
+  "hash": "8b6a84d580513c72d7293afd972265ecc13cc4eda18136d268493657914bf62f"
 }

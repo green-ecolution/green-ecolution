@@ -16,7 +16,7 @@ fn vehicle_payload(plate: &str, org: Uuid) -> serde_json::Value {
     json!({
         "number_plate": plate,
         "description": "Testfahrzeug",
-        "water_capacity": 5000.0,
+        "capacities": { "water": 5000.0 },
         "model": "MAN TGS",
         "availability": "available",
         "type": "transporter",
@@ -162,7 +162,7 @@ async fn update_without_update_permission_yields_403() {
         .json(&json!({
             "number_plate": "ENF-VEH-002",
             "description": "Geaendert",
-            "water_capacity": 6000.0,
+            "capacities": { "water": 6000.0 },
             "model": "MAN TGS",
             "availability": "available",
             "type": "transporter",
@@ -217,7 +217,7 @@ async fn foreign_org_sees_no_start_points() {
             "name": "Depot A",
             "lat": 54.7,
             "lon": 9.4,
-            "watering_point": false,
+            "replenishes": [],
             "organization_id": org_a,
         }))
         .send()
@@ -286,7 +286,7 @@ async fn update_start_point_without_update_permission_yields_403() {
             "name": "Depot",
             "lat": 54.7,
             "lon": 9.4,
-            "watering_point": false,
+            "replenishes": [],
             "organization_id": org,
         }))
         .send()
@@ -309,7 +309,7 @@ async fn update_start_point_without_update_permission_yields_403() {
             "name": "Depot Neu",
             "lat": 54.7,
             "lon": 9.4,
-            "watering_point": false,
+            "replenishes": [],
         }))
         .send()
         .await

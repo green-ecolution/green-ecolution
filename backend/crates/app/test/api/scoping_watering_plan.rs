@@ -40,7 +40,7 @@ async fn create_transporter(app: &crate::helpers::TestApp) -> serde_json::Value 
     let body = json!({
         "number_plate": "FL-GE 300",
         "description": "Giesswagen",
-        "water_capacity": 5000.0,
+        "capacities": { "water": 5000.0 },
         "model": "MAN TGS",
         "availability": "available",
         "type": "transporter",

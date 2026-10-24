@@ -167,6 +167,8 @@ pub enum ServiceError {
     TargetNotAccepted { module: String, kind: String },
     #[error("{message}")]
     TargetRefused { code: &'static str, message: String },
+    #[error("vehicle {vehicle} has no {kind} capacity")]
+    VehicleCapacityMissing { vehicle: uuid::Uuid, kind: String },
     #[error(transparent)]
     WateringPlan(#[from] WateringPlanError),
 }
@@ -205,6 +207,7 @@ impl ServiceError {
             Self::ModuleUnknown { .. } => "module.unknown",
             Self::ModuleDisabled { .. } => "module.disabled",
             Self::TargetNotAccepted { .. } => "target.not_accepted",
+            Self::VehicleCapacityMissing { .. } => "vehicle.capacity_missing",
             Self::TargetRefused { code, .. } => code,
             Self::FeatureDisabled { feature } => match feature {
                 Feature::Routing => "feature.routing_disabled",
@@ -462,6 +465,10 @@ mod tests {
             ServiceError::TargetRefused {
                 code: "tree.not_yet_planted",
                 message: "x".into(),
+            },
+            ServiceError::VehicleCapacityMissing {
+                vehicle: uuid::Uuid::nil(),
+                kind: "water".into(),
             },
             ServiceError::SettingsEnforcedByAncestor {
                 organization_id: uuid::Uuid::nil(),

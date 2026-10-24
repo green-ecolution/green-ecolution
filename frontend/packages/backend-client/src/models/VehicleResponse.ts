@@ -67,6 +67,13 @@ export interface VehicleResponse {
      */
     availability: VehicleAvailability;
     /**
+     * Capacity in liters per kind. A kind that is absent means the vehicle
+     * does not offer it.
+     * @type {{ [key: string]: number; }}
+     * @memberof VehicleResponse
+     */
+    capacities: { [key: string]: number; };
+    /**
      * Timestamp when the vehicle was created (RFC 3339).
      * @type {string}
      * @memberof VehicleResponse
@@ -146,12 +153,6 @@ export interface VehicleResponse {
      */
     updatedAt: string;
     /**
-     * Water tank capacity in liters.
-     * @type {number}
-     * @memberof VehicleResponse
-     */
-    waterCapacity: number;
-    /**
      * Vehicle weight in kilograms.
      * @type {number}
      * @memberof VehicleResponse
@@ -172,6 +173,7 @@ export interface VehicleResponse {
  */
 export function instanceOfVehicleResponse(value: object): value is VehicleResponse {
     if (!('availability' in value) || value['availability'] === undefined) return false;
+    if (!('capacities' in value) || value['capacities'] === undefined) return false;
     if (!('createdAt' in value) || value['createdAt'] === undefined) return false;
     if (!('description' in value) || value['description'] === undefined) return false;
     if (!('drivingLicense' in value) || value['drivingLicense'] === undefined) return false;
@@ -184,7 +186,6 @@ export function instanceOfVehicleResponse(value: object): value is VehicleRespon
     if (!('status' in value) || value['status'] === undefined) return false;
     if (!('type' in value) || value['type'] === undefined) return false;
     if (!('updatedAt' in value) || value['updatedAt'] === undefined) return false;
-    if (!('waterCapacity' in value) || value['waterCapacity'] === undefined) return false;
     if (!('weight' in value) || value['weight'] === undefined) return false;
     if (!('width' in value) || value['width'] === undefined) return false;
     return true;
@@ -203,6 +204,7 @@ export function VehicleResponseFromJSONTyped(json: any, ignoreDiscriminator: boo
         'additionalInformation': json['additional_information'] == null ? undefined : json['additional_information'],
         'archivedAt': json['archived_at'] == null ? undefined : json['archived_at'],
         'availability': VehicleAvailabilityFromJSON(json['availability']),
+        'capacities': json['capacities'],
         'createdAt': json['created_at'],
         'description': json['description'],
         'drivingLicense': DrivingLicenseFromJSON(json['driving_license']),
@@ -216,7 +218,6 @@ export function VehicleResponseFromJSONTyped(json: any, ignoreDiscriminator: boo
         'status': VehicleStatusFromJSON(json['status']),
         'type': VehicleTypeFromJSON(json['type']),
         'updatedAt': json['updated_at'],
-        'waterCapacity': json['water_capacity'],
         'weight': json['weight'],
         'width': json['width'],
     };
@@ -236,6 +237,7 @@ export function VehicleResponseToJSONTyped(value?: VehicleResponse | null, ignor
         'additional_information': value['additionalInformation'],
         'archived_at': value['archivedAt'],
         'availability': VehicleAvailabilityToJSON(value['availability']),
+        'capacities': value['capacities'],
         'created_at': value['createdAt'],
         'description': value['description'],
         'driving_license': DrivingLicenseToJSON(value['drivingLicense']),
@@ -249,7 +251,6 @@ export function VehicleResponseToJSONTyped(value?: VehicleResponse | null, ignor
         'status': VehicleStatusToJSON(value['status']),
         'type': VehicleTypeToJSON(value['type']),
         'updated_at': value['updatedAt'],
-        'water_capacity': value['waterCapacity'],
         'weight': value['weight'],
         'width': value['width'],
     };

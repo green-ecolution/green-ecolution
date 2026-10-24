@@ -1,5 +1,5 @@
+use domain::capacity::Liters;
 use domain::shared::error::ValidationError;
-use domain::shared::water_capacity::WaterCapacity;
 use domain::vehicle::{
     DrivingLicense, NumberPlate, VehicleAvailability, VehicleDimension, VehicleModel, VehicleType,
 };
@@ -73,7 +73,7 @@ pub(crate) fn collect_vehicle_issues(input: &VehicleDraftInput) -> Vec<Validatio
             "waterCapacity",
         )),
         Some(n) => {
-            if let Err(err) = WaterCapacity::new(n) {
+            if let Err(err) = Liters::new(n) {
                 issues.push(ValidationIssue::from_error(&err, "waterCapacity"));
             }
         }
@@ -195,7 +195,7 @@ mod tests {
             .iter()
             .find(|i| i.path == "waterCapacity")
             .expect("water_capacity issue");
-        assert!(issue.key.contains("water_capacity"));
+        assert!(issue.key.contains("capacity"));
     }
 
     #[test]

@@ -400,8 +400,24 @@ describe('FormForWateringPlan', () => {
 
   it('preselects the default start point, not the first one', async () => {
     vi.mocked(routingApi).listRoutingStartPoints.mockResolvedValue([
-      { id: 'sp-a', name: 'A', isDefault: false, lat: 0, lon: 0, wateringPoint: false },
-      { id: 'sp-b', name: 'B', isDefault: true, lat: 0, lon: 0, wateringPoint: false },
+      {
+        id: 'sp-a',
+        name: 'A',
+        isDefault: false,
+        lat: 0,
+        lon: 0,
+        replenishes: [],
+        organizationId: 'org-1',
+      },
+      {
+        id: 'sp-b',
+        name: 'B',
+        isDefault: true,
+        lat: 0,
+        lon: 0,
+        replenishes: [],
+        organizationId: 'org-1',
+      },
     ] as StartPointResponse[])
 
     render(
@@ -428,7 +444,15 @@ describe('FormForWateringPlan', () => {
   it('does not count the preselected start point as a user change', async () => {
     const user = userEvent.setup()
     vi.mocked(routingApi).listRoutingStartPoints.mockResolvedValue([
-      { id: 'sp-b', name: 'Betriebshof', isDefault: true, lat: 0, lon: 0, wateringPoint: false },
+      {
+        id: 'sp-b',
+        name: 'Betriebshof',
+        isDefault: true,
+        lat: 0,
+        lon: 0,
+        replenishes: [],
+        organizationId: 'org-1',
+      },
     ] as StartPointResponse[])
 
     render(
@@ -461,7 +485,15 @@ describe('FormForWateringPlan', () => {
 
   it('revalidates the form once the start point is preselected', async () => {
     vi.mocked(routingApi).listRoutingStartPoints.mockResolvedValue([
-      { id: 'sp-b', name: 'Betriebshof', isDefault: true, lat: 0, lon: 0, wateringPoint: false },
+      {
+        id: 'sp-b',
+        name: 'Betriebshof',
+        isDefault: true,
+        lat: 0,
+        lon: 0,
+        replenishes: [],
+        organizationId: 'org-1',
+      },
     ] as StartPointResponse[])
 
     // Everything but the start point is filled in, so validity hinges on it alone.

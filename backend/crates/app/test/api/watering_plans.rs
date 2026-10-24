@@ -6,7 +6,7 @@ async fn create_transporter(app: &helpers::TestApp) -> serde_json::Value {
     let body = serde_json::json!({
         "number_plate": "FL-GE 100",
         "description": "Giesswagen",
-        "water_capacity": 5000.0,
+        "capacities": { "water": 5000.0 },
         "model": "MAN TGS",
         "availability": "available",
         "type": "transporter",
@@ -21,7 +21,7 @@ async fn create_trailer(app: &helpers::TestApp) -> serde_json::Value {
     let body = serde_json::json!({
         "number_plate": "FL-GE 200",
         "description": "Anhaenger",
-        "water_capacity": 3000.0,
+        "capacities": { "water": 3000.0 },
         "model": "Trailer X",
         "availability": "available",
         "type": "trailer",
@@ -30,6 +30,33 @@ async fn create_trailer(app: &helpers::TestApp) -> serde_json::Value {
     });
     let resp = app.post_json("/api/v1/vehicles", &body).await;
     resp.json().await.unwrap()
+}
+
+#[tokio::test]
+async fn a_transporter_without_water_capacity_is_refused() {
+    let app = spawn_app().await;
+    let cluster = crate::clusters::create_cluster(&app).await;
+    let transporter =
+        crate::vehicle::create_vehicle_with(&app, serde_json::json!({ "cargo_volume": 6000.0 }))
+            .await;
+    let res = app
+        .post_json(
+            "/api/v1/watering-plans",
+            &serde_json::json!({
+                "date": "2026-11-02T08:00:00Z",
+                "description": "",
+                "transporter_id": transporter,
+                "tree_cluster_ids": [cluster],
+                "user_ids": [],
+                "transporter_tank_used": true
+            }),
+        )
+        .await;
+    assert_eq!(res.status(), 422);
+    assert_eq!(
+        res.json::<serde_json::Value>().await.unwrap()["code"],
+        "vehicle.capacity_missing"
+    );
 }
 
 async fn create_cluster(app: &helpers::TestApp) -> serde_json::Value {

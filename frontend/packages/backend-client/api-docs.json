@@ -8615,6 +8615,14 @@
           "role_id": "01980000-0000-7000-8000-0000000000b2"
         }
       },
+      "CapacityKindDto": {
+        "type": "string",
+        "description": "Kind of capacity a vehicle carries or a start point restores.",
+        "enum": [
+          "water",
+          "cargo_volume"
+        ]
+      },
       "ClusterBoundaryListResponse": {
         "type": "object",
         "required": [
@@ -10061,7 +10069,7 @@
                 "updated_at",
                 "number_plate",
                 "description",
-                "water_capacity",
+                "capacities",
                 "model",
                 "status",
                 "availability",
@@ -10092,6 +10100,25 @@
                 "availability": {
                   "$ref": "#/components/schemas/VehicleAvailability",
                   "description": "Whether the vehicle may be assigned to a watering plan."
+                },
+                "capacities": {
+                  "type": "object",
+                  "description": "Capacity in liters per kind. A kind that is absent means the vehicle\ndoes not offer it.",
+                  "additionalProperties": {
+                    "type": "number",
+                    "format": "double"
+                  },
+                  "propertyNames": {
+                    "type": "string",
+                    "description": "Kind of capacity a vehicle carries or a start point restores.",
+                    "enum": [
+                      "water",
+                      "cargo_volume"
+                    ]
+                  },
+                  "example": {
+                    "water": 8000.0
+                  }
                 },
                 "created_at": {
                   "type": "string",
@@ -10162,13 +10189,6 @@
                   "type": "string",
                   "description": "Timestamp when the vehicle was last updated (RFC 3339).",
                   "example": "2025-03-20T14:12:00Z"
-                },
-                "water_capacity": {
-                  "type": "number",
-                  "format": "double",
-                  "description": "Water tank capacity in liters.",
-                  "example": 8000.0,
-                  "minimum": 0
                 },
                 "weight": {
                   "type": "number",
@@ -12912,21 +12932,27 @@
             "description": "Organization this start point belongs to. Defaults to the acting\nuser's own organization (or the root organization in the demo bypass).",
             "example": "0190a8e9-7c4f-7000-8000-000000000000"
           },
-          "watering_point": {
-            "type": "boolean"
+          "replenishes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CapacityKindDto"
+            },
+            "example": [
+              "water"
+            ]
           }
         }
       },
       "StartPointResponse": {
         "type": "object",
-        "description": "Named departure/return point for watering routes. `watering_point` marks it\nas a water refill station.",
+        "description": "Named departure/return point for routes. `replenishes` lists the capacity\nkinds a vehicle restores here.",
         "required": [
           "id",
           "name",
           "lat",
           "lon",
           "is_default",
-          "watering_point",
+          "replenishes",
           "organization_id"
         ],
         "properties": {
@@ -12953,8 +12979,11 @@
             "description": "Organization this start point belongs to.",
             "example": "0190a8e9-7c4f-7000-8000-000000000000"
           },
-          "watering_point": {
-            "type": "boolean"
+          "replenishes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CapacityKindDto"
+            }
           }
         }
       },
@@ -14198,7 +14227,7 @@
         "description": "Request body for creating a new watering vehicle.",
         "required": [
           "number_plate",
-          "water_capacity",
+          "capacities",
           "model",
           "availability",
           "type",
@@ -14219,6 +14248,25 @@
           "availability": {
             "$ref": "#/components/schemas/VehicleAvailability",
             "description": "Whether the vehicle may be assigned to a watering plan."
+          },
+          "capacities": {
+            "type": "object",
+            "description": "Capacity in liters per kind. A kind that is absent means the vehicle\ndoes not offer it.",
+            "additionalProperties": {
+              "type": "number",
+              "format": "double"
+            },
+            "propertyNames": {
+              "type": "string",
+              "description": "Kind of capacity a vehicle carries or a start point restores.",
+              "enum": [
+                "water",
+                "cargo_volume"
+              ]
+            },
+            "example": {
+              "water": 8000.0
+            }
           },
           "description": {
             "type": [
@@ -14277,13 +14325,6 @@
             "$ref": "#/components/schemas/VehicleType",
             "description": "Type/category of the vehicle."
           },
-          "water_capacity": {
-            "type": "number",
-            "format": "double",
-            "description": "Water tank capacity in liters.",
-            "example": 8000.0,
-            "minimum": 0
-          },
           "weight": {
             "type": "number",
             "format": "double",
@@ -14331,7 +14372,7 @@
           "updated_at",
           "number_plate",
           "description",
-          "water_capacity",
+          "capacities",
           "model",
           "status",
           "availability",
@@ -14362,6 +14403,25 @@
           "availability": {
             "$ref": "#/components/schemas/VehicleAvailability",
             "description": "Whether the vehicle may be assigned to a watering plan."
+          },
+          "capacities": {
+            "type": "object",
+            "description": "Capacity in liters per kind. A kind that is absent means the vehicle\ndoes not offer it.",
+            "additionalProperties": {
+              "type": "number",
+              "format": "double"
+            },
+            "propertyNames": {
+              "type": "string",
+              "description": "Kind of capacity a vehicle carries or a start point restores.",
+              "enum": [
+                "water",
+                "cargo_volume"
+              ]
+            },
+            "example": {
+              "water": 8000.0
+            }
           },
           "created_at": {
             "type": "string",
@@ -14433,13 +14493,6 @@
             "description": "Timestamp when the vehicle was last updated (RFC 3339).",
             "example": "2025-03-20T14:12:00Z"
           },
-          "water_capacity": {
-            "type": "number",
-            "format": "double",
-            "description": "Water tank capacity in liters.",
-            "example": 8000.0,
-            "minimum": 0
-          },
           "weight": {
             "type": "number",
             "format": "double",
@@ -14480,7 +14533,7 @@
         "description": "Request body for updating an existing watering vehicle.",
         "required": [
           "number_plate",
-          "water_capacity",
+          "capacities",
           "model",
           "availability",
           "type",
@@ -14501,6 +14554,25 @@
           "availability": {
             "$ref": "#/components/schemas/VehicleAvailability",
             "description": "Whether the vehicle may be assigned to a watering plan."
+          },
+          "capacities": {
+            "type": "object",
+            "description": "Capacity in liters per kind. A kind that is absent means the vehicle\ndoes not offer it.",
+            "additionalProperties": {
+              "type": "number",
+              "format": "double"
+            },
+            "propertyNames": {
+              "type": "string",
+              "description": "Kind of capacity a vehicle carries or a start point restores.",
+              "enum": [
+                "water",
+                "cargo_volume"
+              ]
+            },
+            "example": {
+              "water": 8000.0
+            }
           },
           "description": {
             "type": [
@@ -14549,13 +14621,6 @@
           "type": {
             "$ref": "#/components/schemas/VehicleType",
             "description": "Type/category of the vehicle."
-          },
-          "water_capacity": {
-            "type": "number",
-            "format": "double",
-            "description": "Water tank capacity in liters.",
-            "example": 8000.0,
-            "minimum": 0
           },
           "weight": {
             "type": "number",

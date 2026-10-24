@@ -144,7 +144,7 @@ async fn create_plan_with_cluster(
         .json(&json!({
             "number_plate": format!("FL-GE {}", &Uuid::new_v4().to_string()[..8]),
             "description": "Giesswagen",
-            "water_capacity": 5000.0,
+            "capacities": { "water": 5000.0 },
             "model": "MAN TGS",
             "availability": "available",
             "type": "transporter",

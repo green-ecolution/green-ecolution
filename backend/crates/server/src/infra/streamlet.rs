@@ -7,9 +7,8 @@ use serde::{Deserialize, Serialize};
 use domain::{
     Id,
     cluster::TreeCluster,
-    routing::{OptimizedRoute, RouteOptimizer, RouteStop, RoutingError},
-    shared::{coordinates::Coordinate, distance::Distance, water_capacity::WaterCapacity},
-    vehicle::Vehicle,
+    routing::{OptimizedRoute, RouteOptimizer, RouteRequest, RoutingError},
+    shared::{coordinates::Coordinate, distance::Distance},
 };
 
 use crate::configuration::RoutingSettings;
@@ -61,6 +60,10 @@ struct VehicleDto {
     kind: KindDto,
     shift: ShiftDto,
     max_trips: Option<u32>,
+    /// Streamlet's `return_full`; only sent when set (older Streamlet releases
+    /// do not know it).
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    return_full: bool,
 }
 
 #[derive(Serialize)]
@@ -146,20 +149,13 @@ impl StreamletRouteOptimizer {
         }
     }
 
-    fn build_request(
-        &self,
-        transporter: &Vehicle,
-        capacity: WaterCapacity,
-        stops: &[RouteStop],
-        depot: Coordinate,
-        refill_stations: &[Coordinate],
-    ) -> SolveRequestDto {
+    fn build_request(&self, request: &RouteRequest) -> SolveRequestDto {
         let effective_depot = LocationDto {
-            lat: depot.latitude(),
-            lon: depot.longitude(),
+            lat: request.depot.latitude(),
+            lon: request.depot.longitude(),
         };
-        let capacity = capacity.liters();
-        let dim = transporter.dimension;
+        let capacity = request.capacity.value();
+        let dim = request.transporter.dimension;
         let vehicle = VehicleDto {
             id: 1,
             start: effective_depot,
@@ -178,8 +174,10 @@ impl StreamletRouteOptimizer {
                 end: SHIFT_END_SECS,
             },
             max_trips: None,
+            return_full: request.return_replenished,
         };
-        let customers = stops
+        let customers = request
+            .stops
             .iter()
             .enumerate()
             .map(|(i, stop)| CustomerDto {
@@ -193,7 +191,8 @@ impl StreamletRouteOptimizer {
                 time_window: None,
             })
             .collect();
-        let refill_stations = refill_stations
+        let refill_stations = request
+            .stations
             .iter()
             .enumerate()
             .map(|(i, coord)| RefillStationDto {
@@ -244,16 +243,11 @@ fn decode_geometry(routes: &[RouteDto]) -> Result<Vec<Coordinate>, RoutingError>
 
 #[async_trait]
 impl RouteOptimizer for StreamletRouteOptimizer {
-    #[tracing::instrument(level = "debug", skip_all, fields(stops = stops.len()))]
-    async fn optimize(
-        &self,
-        transporter: &Vehicle,
-        capacity: WaterCapacity,
-        stops: &[RouteStop],
-        depot: Coordinate,
-        refill_stations: &[Coordinate],
-    ) -> Result<OptimizedRoute, RoutingError> {
-        let request = self.build_request(transporter, capacity, stops, depot, refill_stations);
+    #[tracing::instrument(level = "debug", skip_all, fields(stops = request.stops.len()))]
+    async fn optimize(&self, request: RouteRequest<'_>) -> Result<OptimizedRoute, RoutingError> {
+        let stops = request.stops;
+        let refill_stations = request.stations;
+        let request = self.build_request(&request);
         let response = self
             .client
             .post(&self.solve_url)
@@ -330,12 +324,15 @@ impl RouteOptimizer for StreamletRouteOptimizer {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use domain::routing::{RouteOptimizer, RouteStop};
+    use std::collections::BTreeMap;
+
+    use domain::capacity::{CapacityKind, Liters};
+    use domain::routing::{RouteOptimizer, RouteRequest, RouteStop};
     use domain::shared::coordinates::Coordinate;
     use domain::vehicle::{
         DrivingLicense, Vehicle, VehicleAvailability, VehicleSnapshot, VehicleType,
     };
-    use wiremock::matchers::{method, path};
+    use wiremock::matchers::{body_partial_json, method, path};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
     fn vehicle(vehicle_type: VehicleType, water_capacity: f64) -> Vehicle {
@@ -344,7 +341,7 @@ mod tests {
             archived_at: None,
             number_plate: "FL GE 1234".to_string(),
             description: None,
-            water_capacity,
+            capacities: BTreeMap::from([(CapacityKind::Water, water_capacity)]),
             availability: VehicleAvailability::Available,
             vehicle_type,
             model: "Unimog".to_string(),
@@ -357,6 +354,23 @@ mod tests {
             additional_info: None,
             organization_id: uuid::Uuid::now_v7(),
         })
+    }
+
+    fn request<'a>(
+        transporter: &'a Vehicle,
+        stops: &'a [RouteStop],
+        depot: Coordinate,
+        stations: &'a [Coordinate],
+    ) -> RouteRequest<'a> {
+        RouteRequest {
+            transporter,
+            kind: CapacityKind::Water,
+            capacity: transporter.capacity(CapacityKind::Water).unwrap(),
+            stops,
+            depot,
+            stations,
+            return_replenished: false,
+        }
     }
 
     fn optimizer(base_url: &str) -> StreamletRouteOptimizer {
@@ -432,11 +446,13 @@ mod tests {
             .await;
 
         let transporter = vehicle(VehicleType::Transporter, 2000.0);
-        let capacity = WaterCapacity::new(1000.0).unwrap();
         let stops = stops();
         let refills = refills();
         let route = optimizer(&server.uri())
-            .optimize(&transporter, capacity, &stops, depot(), &refills)
+            .optimize(RouteRequest {
+                capacity: Liters::new(1000.0).unwrap(),
+                ..request(&transporter, &stops, depot(), &refills)
+            })
             .await
             .unwrap();
 
@@ -521,13 +537,7 @@ mod tests {
         let transporter = vehicle(VehicleType::Transporter, 2000.0);
         let override_coord = Coordinate::new(54.9, 9.5).unwrap();
         optimizer(&server.uri())
-            .optimize(
-                &transporter,
-                transporter.water_capacity,
-                &stops(),
-                override_coord,
-                &[],
-            )
+            .optimize(request(&transporter, &stops(), override_coord, &[]))
             .await
             .unwrap();
 
@@ -581,13 +591,7 @@ mod tests {
         let transporter = vehicle(VehicleType::Transporter, 2000.0);
         let stops = stops();
         let route = optimizer(&server.uri())
-            .optimize(
-                &transporter,
-                transporter.water_capacity,
-                &stops,
-                depot(),
-                &[],
-            )
+            .optimize(request(&transporter, &stops, depot(), &[]))
             .await
             .unwrap();
         assert_eq!(route.unserved, vec![stops[1].cluster_id]);
@@ -615,13 +619,7 @@ mod tests {
 
         let transporter = vehicle(VehicleType::Transporter, 2000.0);
         let route = optimizer(&server.uri())
-            .optimize(
-                &transporter,
-                transporter.water_capacity,
-                &stops(),
-                depot(),
-                &refills(),
-            )
+            .optimize(request(&transporter, &stops(), depot(), &refills()))
             .await
             .unwrap();
 
@@ -646,13 +644,7 @@ mod tests {
                 .await;
             let transporter = vehicle(VehicleType::Transporter, 2000.0);
             let err = optimizer(&server.uri())
-                .optimize(
-                    &transporter,
-                    transporter.water_capacity,
-                    &stops(),
-                    depot(),
-                    &[],
-                )
+                .optimize(request(&transporter, &stops(), depot(), &[]))
                 .await
                 .unwrap_err();
             match err {
@@ -670,13 +662,7 @@ mod tests {
         let transporter = vehicle(VehicleType::Transporter, 2000.0);
         // port 1 is never listening
         let err = optimizer("http://127.0.0.1:1")
-            .optimize(
-                &transporter,
-                transporter.water_capacity,
-                &stops(),
-                depot(),
-                &[],
-            )
+            .optimize(request(&transporter, &stops(), depot(), &[]))
             .await
             .unwrap_err();
         assert!(matches!(err, RoutingError::Unavailable(_)));
@@ -695,15 +681,52 @@ mod tests {
 
         let transporter = vehicle(VehicleType::Transporter, 2000.0);
         let err = optimizer(&server.uri())
-            .optimize(
-                &transporter,
-                transporter.water_capacity,
-                &stops(),
-                depot(),
-                &[],
-            )
+            .optimize(request(&transporter, &stops(), depot(), &[]))
             .await
             .unwrap_err();
         assert!(matches!(err, RoutingError::Failed(_)));
+    }
+
+    #[tokio::test]
+    async fn return_full_is_omitted_unless_the_route_must_end_replenished() {
+        let server = MockServer::start().await;
+        Mock::given(method("POST"))
+            .and(path("/v1/solve"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(ok_body(&encoded_line())))
+            .mount(&server)
+            .await;
+
+        let transporter = vehicle(VehicleType::Transporter, 2000.0);
+        optimizer(&server.uri())
+            .optimize(request(&transporter, &stops(), depot(), &[]))
+            .await
+            .unwrap();
+
+        let requests = server.received_requests().await.unwrap();
+        let body: serde_json::Value = requests[0].body_json().unwrap();
+        assert!(body["problem"]["vehicles"][0].get("return_full").is_none());
+    }
+
+    #[tokio::test]
+    async fn return_full_is_sent_when_the_route_must_end_replenished() {
+        let server = MockServer::start().await;
+        Mock::given(method("POST"))
+            .and(path("/v1/solve"))
+            .and(body_partial_json(
+                serde_json::json!({"problem": {"vehicles": [{"return_full": true}]}}),
+            ))
+            .respond_with(ResponseTemplate::new(200).set_body_json(ok_body(&encoded_line())))
+            .expect(1)
+            .mount(&server)
+            .await;
+
+        let transporter = vehicle(VehicleType::Transporter, 2000.0);
+        optimizer(&server.uri())
+            .optimize(RouteRequest {
+                return_replenished: true,
+                ..request(&transporter, &stops(), depot(), &refills())
+            })
+            .await
+            .unwrap();
     }
 }

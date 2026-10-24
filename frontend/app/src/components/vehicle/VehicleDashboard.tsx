@@ -49,8 +49,8 @@ const VehicleDashboard = ({ vehicle }: VehicleDashboardProps) => {
     },
     {
       label: t('detail.waterCapacityLabel'),
-      value: vehicle?.waterCapacity
-        ? t('detail.waterCapacityValue', { value: vehicle.waterCapacity })
+      value: vehicle?.capacities.water
+        ? t('detail.waterCapacityValue', { value: vehicle.capacities.water })
         : noData,
     },
     {

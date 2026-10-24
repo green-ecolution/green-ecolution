@@ -1,8 +1,13 @@
+use std::collections::BTreeMap;
+
 use chrono::{DateTime, Utc};
 use serde_json::Value;
 use uuid::Uuid;
 
-use crate::vehicle::{DrivingLicense, VehicleAvailability, VehicleStatus, VehicleType};
+use crate::{
+    capacity::CapacityKind,
+    vehicle::{DrivingLicense, VehicleAvailability, VehicleStatus, VehicleType},
+};
 
 /// HTTP-side read model for a vehicle.
 ///
@@ -15,7 +20,7 @@ pub struct VehicleView {
     pub archived_at: Option<DateTime<Utc>>,
     pub number_plate: String,
     pub description: Option<String>,
-    pub water_capacity: f64,
+    pub capacities: BTreeMap<CapacityKind, f64>,
     pub availability: VehicleAvailability,
     /// Derived via `vehicle::derive_status`, never read from a column.
     pub status: VehicleStatus,

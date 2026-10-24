@@ -1,4 +1,4 @@
-import type { Vehicle, VehicleCreate, VehicleUpdate } from '@/api/backendApi'
+import type { Vehicle } from '@/api/backendApi'
 import { vehicleApi } from '@/api/backendApi'
 import { useIssueTranslator } from '@/lib/i18n/validation'
 import { VehicleForm } from '@/schema/vehicleSchema'
@@ -7,23 +7,34 @@ import { DefaultValues } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { EntityFormConfig, useEntityForm } from './useEntityForm'
 
+const toRequest = (
+  { waterCapacity, ...fields }: VehicleForm,
+  capacities: Record<string, number> = {},
+) => ({ ...fields, capacities: { ...capacities, water: waterCapacity } })
+
 export const useVehicleForm = (
   mutationType: 'create' | 'update',
   opts: {
     vehicleId?: string
     initForm?: DefaultValues<VehicleForm>
+    /** Capacities of the loaded vehicle; kinds the form does not edit are sent back unchanged. */
+    capacities?: Record<string, number>
     disableNavigationBlock?: boolean
   },
 ) => {
   const translate = useIssueTranslator()
   const { t } = useTranslation('vehicle')
 
-  const vehicleConfig: EntityFormConfig<VehicleForm, VehicleCreate, VehicleUpdate, Vehicle> = {
+  const vehicleConfig: EntityFormConfig<VehicleForm, VehicleForm, VehicleForm, Vehicle> = {
     formType: 'vehicle',
     resolver: vehicleDraftResolver<VehicleForm>(translate),
 
-    createFn: (body) => vehicleApi.createVehicle({ vehicleCreateRequest: body }),
-    updateFn: (id, body) => vehicleApi.updateVehicle({ vehicleId: id, vehicleUpdateRequest: body }),
+    createFn: (body) => vehicleApi.createVehicle({ vehicleCreateRequest: toRequest(body) }),
+    updateFn: (id, body) =>
+      vehicleApi.updateVehicle({
+        vehicleId: id,
+        vehicleUpdateRequest: toRequest(body, opts.capacities),
+      }),
 
     // Watering plans embed their transporter and trailer.
     invalidates: ['vehicle', 'wateringPlan'],
@@ -43,7 +54,7 @@ export const useVehicleForm = (
     },
   }
 
-  return useEntityForm<VehicleForm, VehicleCreate, VehicleUpdate, Vehicle>(
+  return useEntityForm<VehicleForm, VehicleForm, VehicleForm, Vehicle>(
     vehicleConfig,
     mutationType,
     {

@@ -39,7 +39,7 @@ async fn create_transporter(app: &crate::helpers::TestApp) -> serde_json::Value 
     let body = serde_json::json!({
         "number_plate": format!("FL RT {}", &uuid::Uuid::now_v7().simple().to_string()[..4]),
         "description": "Routing-Transporter",
-        "water_capacity": 2000.0,
+        "capacities": { "water": 2000.0 },
         "model": "Unimog",
         "availability": "available",
         "type": "transporter",
@@ -400,14 +400,14 @@ async fn create_and_list_start_point() {
     let resp = app
         .post_json(
             "/api/v1/routing/start-points",
-            &serde_json::json!({"name": "Depot Süd", "lat": 54.75, "lon": 9.43, "watering_point": true}),
+            &serde_json::json!({"name": "Depot Süd", "lat": 54.75, "lon": 9.43, "replenishes": ["water"]}),
         )
         .await;
     assert_eq!(resp.status().as_u16(), 201);
     let created: serde_json::Value = resp.json().await.unwrap();
     assert_eq!(created["name"], "Depot Süd");
     assert_eq!(created["is_default"], false);
-    assert_eq!(created["watering_point"], true);
+    assert_eq!(created["replenishes"], serde_json::json!(["water"]));
 
     let list = app.get("/api/v1/routing/start-points").await;
     let arr: serde_json::Value = list.json().await.unwrap();
@@ -590,7 +590,7 @@ async fn set_default_unknown_id_returns_404() {
 }
 
 #[tokio::test]
-async fn refill_stations_sent_to_streamlet_are_only_watering_points() {
+async fn refill_stations_sent_to_streamlet_are_only_stations_that_replenish_water() {
     let streamlet = mock_streamlet(ResponseTemplate::new(200).set_body_json(streamlet_ok())).await;
     let app = spawn_app_with_routing(&streamlet.uri()).await;
     let transporter = create_transporter(&app).await;
@@ -609,13 +609,13 @@ async fn refill_stations_sent_to_streamlet_are_only_watering_points() {
     assert_eq!(
         refills.len(),
         2,
-        "only the two watering_point depots are refill stations"
+        "only the two depots that replenish water are refill stations"
     );
     assert!(
         refills
             .iter()
             .all(|r| (r["location"]["lat"].as_f64().unwrap() - 54.81).abs() > 0.001),
-        "Depot Nord (watering_point=false) must not be a refill station"
+        "Depot Nord (replenishes nothing) must not be a refill station"
     );
 }
 

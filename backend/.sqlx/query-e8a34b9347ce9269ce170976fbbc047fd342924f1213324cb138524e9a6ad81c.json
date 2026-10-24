@@ -1,14 +1,24 @@
 {
   "db_name": "PostgreSQL",
-  "query": "UPDATE vehicles SET\n                number_plate = $2,\n                description = $3,\n                water_capacity = $4,\n                type = $5,\n                availability = $6,\n                model = $7,\n                driving_license = $8,\n                height = $9,\n                length = $10,\n                width = $11,\n                weight = $12,\n                provider = $13,\n                additional_informations = $14,\n                archived_at = $15,\n                organization_id = $16\n            WHERE id = $1",
+  "query": "INSERT INTO vehicles (id, number_plate, description, type, availability,\n                                     model, driving_license, height, length, width, weight,\n                                     provider, additional_informations, organization_id)\n            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)\n            RETURNING archived_at AS \"archived_at: DateTime<chrono::Utc>\",\n                      additional_informations AS \"additional_info: Value\"",
   "describe": {
-    "columns": [],
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "archived_at: DateTime<chrono::Utc>",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 1,
+        "name": "additional_info: Value",
+        "type_info": "Jsonb"
+      }
+    ],
     "parameters": {
       "Left": [
         "Uuid",
         "Text",
         "Text",
-        "Float8",
         {
           "Custom": {
             "name": "vehicle_type",
@@ -51,11 +61,13 @@
         "Float8",
         "Text",
         "Jsonb",
-        "Timestamp",
         "Uuid"
       ]
     },
-    "nullable": []
+    "nullable": [
+      true,
+      true
+    ]
   },
-  "hash": "38e17f9df170e5ff3334735cefdd73bb2581127a6136770c6dfc83ffbb20257b"
+  "hash": "e8a34b9347ce9269ce170976fbbc047fd342924f1213324cb138524e9a6ad81c"
 }

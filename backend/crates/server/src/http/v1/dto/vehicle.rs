@@ -1,12 +1,12 @@
+use std::collections::BTreeMap;
+
 use serde::{Deserialize, Serialize};
 
 use domain::{
     Id,
+    capacity::{CapacityKind, Liters},
     organization::Organization,
-    shared::{
-        provenance::{Provenance, ProviderId},
-        water_capacity::WaterCapacity,
-    },
+    shared::provenance::{Provenance, ProviderId},
     vehicle::{
         ArchiveFilterKind, NumberPlate, VehicleDimension, VehicleDraft, VehicleModel,
         VehicleSortField, VehicleView,
@@ -16,6 +16,53 @@ use domain::{
 use super::{
     DrivingLicense, VehicleAvailability, VehicleStatus, VehicleType, tree::SortOrderParam,
 };
+
+/// Kind of capacity a vehicle carries or a start point restores.
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    Serialize,
+    Deserialize,
+    utoipa::ToSchema,
+)]
+#[serde(rename_all = "snake_case")]
+pub enum CapacityKindDto {
+    Water,
+    CargoVolume,
+}
+
+impl From<CapacityKind> for CapacityKindDto {
+    fn from(value: CapacityKind) -> Self {
+        match value {
+            CapacityKind::Water => Self::Water,
+            CapacityKind::CargoVolume => Self::CargoVolume,
+        }
+    }
+}
+
+impl From<CapacityKindDto> for CapacityKind {
+    fn from(value: CapacityKindDto) -> Self {
+        match value {
+            CapacityKindDto::Water => Self::Water,
+            CapacityKindDto::CargoVolume => Self::CargoVolume,
+        }
+    }
+}
+
+fn into_liters(
+    capacities: BTreeMap<CapacityKindDto, f64>,
+) -> Result<BTreeMap<CapacityKind, Liters>, crate::service::ServiceError> {
+    capacities
+        .into_iter()
+        .map(|(kind, liters)| Ok((kind.into(), Liters::new(liters)?)))
+        .collect()
+}
 
 /// Represents a watering vehicle used for urban green-space irrigation.
 #[derive(Debug, Serialize, utoipa::ToSchema)]
@@ -35,9 +82,10 @@ pub struct VehicleResponse {
     /// Human-readable description of the vehicle.
     #[schema(example = "Großes Bewässerungsfahrzeug für den Innenstadtbereich")]
     pub description: String,
-    /// Water tank capacity in liters.
-    #[schema(example = 8000.0, minimum = 0.0)]
-    pub water_capacity: f64,
+    /// Capacity in liters per kind. A kind that is absent means the vehicle
+    /// does not offer it.
+    #[schema(example = json!({"water": 8000.0}))]
+    pub capacities: BTreeMap<CapacityKindDto, f64>,
     /// Manufacturer and model name.
     #[schema(example = "MAN TGE 3.180")]
     pub model: String,
@@ -88,7 +136,11 @@ impl From<&VehicleView> for VehicleResponse {
             updated_at: value.updated_at.to_rfc3339(),
             number_plate: value.number_plate.clone(),
             description: value.description.clone().unwrap_or_default(),
-            water_capacity: value.water_capacity,
+            capacities: value
+                .capacities
+                .iter()
+                .map(|(kind, liters)| ((*kind).into(), *liters))
+                .collect(),
             model: value.model.clone(),
             status: value.status.into(),
             availability: value.availability.into(),
@@ -115,9 +167,10 @@ pub struct VehicleCreateRequest {
     /// Human-readable description of the vehicle.
     #[schema(example = "Großes Bewässerungsfahrzeug für den Innenstadtbereich")]
     pub description: Option<String>,
-    /// Water tank capacity in liters.
-    #[schema(example = 8000.0, minimum = 0.0)]
-    pub water_capacity: f64,
+    /// Capacity in liters per kind. A kind that is absent means the vehicle
+    /// does not offer it.
+    #[schema(example = json!({"water": 8000.0}))]
+    pub capacities: BTreeMap<CapacityKindDto, f64>,
     /// Manufacturer and model name.
     #[schema(example = "MAN TGE 3.180")]
     pub model: String,
@@ -164,9 +217,10 @@ pub struct VehicleUpdateRequest {
     /// Human-readable description of the vehicle.
     #[schema(example = "Großes Bewässerungsfahrzeug für den Innenstadtbereich")]
     pub description: Option<String>,
-    /// Water tank capacity in liters.
-    #[schema(example = 8000.0, minimum = 0.0)]
-    pub water_capacity: f64,
+    /// Capacity in liters per kind. A kind that is absent means the vehicle
+    /// does not offer it.
+    #[schema(example = json!({"water": 8000.0}))]
+    pub capacities: BTreeMap<CapacityKindDto, f64>,
     /// Manufacturer and model name.
     #[schema(example = "MAN TGE 3.180")]
     pub model: String,
@@ -214,14 +268,14 @@ impl VehicleCreateRequest {
     ) -> Result<VehicleDraft, crate::service::ServiceError> {
         let number_plate = NumberPlate::new(self.number_plate)?;
         let model = VehicleModel::new(self.model)?;
-        let water_capacity = WaterCapacity::new(self.water_capacity)?;
+        let capacities = into_liters(self.capacities)?;
         let dimension = VehicleDimension::new(self.height, self.width, self.length, self.weight)?;
         let provenance = parse_provenance(self.provider, self.additional_information)?;
 
         Ok(VehicleDraft {
             number_plate,
             description: self.description,
-            water_capacity,
+            capacities,
             availability: self.availability.into(),
             vehicle_type: self.vehicle_type.into(),
             model,
@@ -239,14 +293,14 @@ impl VehicleUpdateRequest {
     ) -> Result<domain::vehicle::VehicleUpdate, crate::service::ServiceError> {
         let number_plate = NumberPlate::new(self.number_plate)?;
         let model = VehicleModel::new(self.model)?;
-        let water_capacity = WaterCapacity::new(self.water_capacity)?;
+        let capacities = into_liters(self.capacities)?;
         let dimension = VehicleDimension::new(self.height, self.width, self.length, self.weight)?;
         let provenance = parse_provenance(self.provider, self.additional_information)?;
 
         Ok(domain::vehicle::VehicleUpdate {
             number_plate,
             description: self.description,
-            water_capacity,
+            capacities,
             availability: self.availability.into(),
             vehicle_type: self.vehicle_type.into(),
             model,

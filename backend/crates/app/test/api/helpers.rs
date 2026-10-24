@@ -579,10 +579,10 @@ pub async fn install_plugin(app: &TestApp, slug: &str, permissions: &[&str]) -> 
 /// "Depot Nord" the routing tests select by name (lat≈54.81).
 async fn seed_routing_depots(pool: &sqlx::PgPool) {
     sqlx::query(
-        r#"INSERT INTO depots (id, name, latitude, longitude, geometry, watering_point, is_default, organization_id) VALUES
-           (gen_random_uuid(), 'Betriebshof Schleswiger Straße', 54.76879146396569, 9.434803531218018, ST_SetSRID(ST_MakePoint(9.434803531218018, 54.76879146396569), 4326), TRUE, TRUE, '01980000-0000-7000-8000-000000000001'),
-           (gen_random_uuid(), 'Klärwerk Kielseng', 54.80518123149477, 9.447145106541388, ST_SetSRID(ST_MakePoint(9.447145106541388, 54.80518123149477), 4326), TRUE, FALSE, '01980000-0000-7000-8000-000000000001'),
-           (gen_random_uuid(), 'Depot Nord', 54.81, 9.45, ST_SetSRID(ST_MakePoint(9.45, 54.81), 4326), FALSE, FALSE, '01980000-0000-7000-8000-000000000001')"#,
+        r#"INSERT INTO depots (id, name, latitude, longitude, geometry, replenishes, is_default, organization_id) VALUES
+           (gen_random_uuid(), 'Betriebshof Schleswiger Straße', 54.76879146396569, 9.434803531218018, ST_SetSRID(ST_MakePoint(9.434803531218018, 54.76879146396569), 4326), '{water}', TRUE, '01980000-0000-7000-8000-000000000001'),
+           (gen_random_uuid(), 'Klärwerk Kielseng', 54.80518123149477, 9.447145106541388, ST_SetSRID(ST_MakePoint(9.447145106541388, 54.80518123149477), 4326), '{water}', FALSE, '01980000-0000-7000-8000-000000000001'),
+           (gen_random_uuid(), 'Depot Nord', 54.81, 9.45, ST_SetSRID(ST_MakePoint(9.45, 54.81), 4326), '{}', FALSE, '01980000-0000-7000-8000-000000000001')"#,
     )
     .execute(pool)
     .await

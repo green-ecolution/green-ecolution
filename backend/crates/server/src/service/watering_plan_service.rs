@@ -3,12 +3,16 @@ use std::sync::Arc;
 use domain::{
     Id,
     authorization::Visibility,
+    capacity::{CapacityKind, route_capacity},
     cluster::{TreeCluster, TreeClusterReader},
     comment::{CommentSubject, CommentWriter},
     events::DomainEvent,
     organization::{Organization, OrganizationReader},
-    routing::{OptimizedRoute, RouteOptimizer, RouteStop, tank_capacity},
-    shared::pagination::{Page, Pagination},
+    routing::{OptimizedRoute, RouteOptimizer, RouteRequest, RouteStop},
+    shared::{
+        coordinates::Coordinate,
+        pagination::{Page, Pagination},
+    },
     start_point::{StartPoint, StartPointReader},
     vehicle::{Vehicle, VehicleReader},
     watering_plan::{
@@ -71,6 +75,26 @@ impl WateringPlanService {
         }
     }
 
+    /// Refuses a plan whose vehicles lack the water capacity the plan relies
+    /// on, whether or not routing is enabled.
+    async fn ensure_water_capacity(
+        &self,
+        transporter_id: Option<Id<Vehicle>>,
+        trailer_id: Option<Id<Vehicle>>,
+        transporter_tank_used: bool,
+    ) -> Result<(), ServiceError> {
+        let Some(transporter_id) = transporter_id else {
+            return Ok(());
+        };
+        let transporter = self.vehicle_reader.by_id(transporter_id).await?;
+        let trailer = match trailer_id {
+            Some(id) => Some(self.vehicle_reader.by_id(id).await?),
+            None => None,
+        };
+        water_capacity(&transporter, trailer.as_ref(), transporter_tank_used)?;
+        Ok(())
+    }
+
     /// Every referenced cluster must be owned inside the plan's org subtree.
     async fn ensure_clusters_accessible(
         &self,
@@ -122,6 +146,12 @@ impl WateringPlanService {
     #[tracing::instrument(level = "debug", skip_all)]
     pub async fn create(&self, draft: WateringPlanDraft) -> Result<WateringPlan, ServiceError> {
         draft.validate().map_err(map_plan_error)?;
+        self.ensure_water_capacity(
+            draft.transporter_id,
+            draft.trailer_id,
+            draft.transporter_tank_used,
+        )
+        .await?;
         self.ensure_clusters_accessible(&draft.cluster_ids, draft.organization_id)
             .await?;
         let mut plan = self.writer.save_new(draft).await?;
@@ -141,6 +171,12 @@ impl WateringPlanService {
         self.ensure_clusters_accessible(&update.cluster_ids, plan.organization_id())
             .await?;
         plan.replace_details(update).map_err(map_plan_error)?;
+        self.ensure_water_capacity(
+            plan.transporter_id(),
+            plan.trailer_id(),
+            plan.transporter_tank_used(),
+        )
+        .await?;
         if self.route_optimizer.is_some() {
             // Edited cluster/vehicle set invalidates the old route; a failed
             // recompute must leave the "no route" state, not a stale track.
@@ -298,14 +334,24 @@ impl WateringPlanService {
         .map(|p| p.coordinate)
         .ok_or_else(|| ServiceError::InvalidInput("no start point configured".into()))?;
 
-        let refill_start_points: Vec<&StartPoint> =
-            start_points.iter().filter(|p| p.watering_point()).collect();
-        let refill_stations: Vec<domain::shared::coordinates::Coordinate> =
+        let refill_start_points: Vec<&StartPoint> = start_points
+            .iter()
+            .filter(|p| p.replenishes().contains(&CapacityKind::Water))
+            .collect();
+        let refill_stations: Vec<Coordinate> =
             refill_start_points.iter().map(|p| p.coordinate).collect();
 
-        let capacity = tank_capacity(&transporter, trailer.as_ref(), transporter_tank_used);
+        let capacity = water_capacity(&transporter, trailer.as_ref(), transporter_tank_used)?;
         let route = optimizer
-            .optimize(&transporter, capacity, &stops, depot, &refill_stations)
+            .optimize(RouteRequest {
+                transporter: &transporter,
+                kind: CapacityKind::Water,
+                capacity,
+                stops: &stops,
+                depot,
+                stations: &refill_stations,
+                return_replenished: false,
+            })
             .await?;
         if !route.unserved.is_empty() {
             tracing::warn!(
@@ -366,6 +412,23 @@ impl WateringPlanService {
             .await;
         Ok(())
     }
+}
+
+fn water_capacity(
+    transporter: &Vehicle,
+    trailer: Option<&Vehicle>,
+    transporter_tank_used: bool,
+) -> Result<domain::capacity::Liters, ServiceError> {
+    route_capacity(
+        CapacityKind::Water,
+        transporter,
+        trailer,
+        transporter_tank_used,
+    )
+    .map_err(|e| ServiceError::VehicleCapacityMissing {
+        vehicle: e.vehicle.value(),
+        kind: e.kind.to_string(),
+    })
 }
 
 fn map_plan_error(e: WateringPlanError) -> ServiceError {

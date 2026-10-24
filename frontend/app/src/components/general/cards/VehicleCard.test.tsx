@@ -22,7 +22,7 @@ const vehicleFixture = (overrides: Partial<Vehicle> = {}): Vehicle => ({
   status: VehicleStatus.Available,
   availability: VehicleAvailability.Available,
   drivingLicense: DrivingLicense.B,
-  waterCapacity: 1000,
+  capacities: { water: 1000 },
   height: 2.5,
   width: 2,
   length: 5,

@@ -23,6 +23,7 @@ models/ActivateSensorRequest.ts
 models/AddressDto.ts
 models/AppInfoResponse.ts
 models/AssignRoleRequest.ts
+models/CapacityKindDto.ts
 models/ClusterBoundaryListResponse.ts
 models/ClusterBoundaryResponse.ts
 models/ClusterMarkerListResponse.ts

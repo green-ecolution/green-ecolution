@@ -590,10 +590,10 @@ async fn seed_plans(pool: &PgPool, scale: Scale) -> Result<i64, sqlx::Error> {
                    count(*) OVER ()                AS total
             FROM organizations
             WHERE parent_id IS NOT NULL
-        )
+        ), inserted AS (
         INSERT INTO vehicles
             (id, number_plate, model, description, type, availability,
-             driving_license, water_capacity, width, height, length, weight,
+             driving_license, width, height, length, weight,
              organization_id)
         SELECT
             bench_uuid_v7(),
@@ -603,11 +603,15 @@ async fn seed_plans(pool: &PgPool, scale: Scale) -> Result<i64, sqlx::Error> {
             'transporter'::vehicle_type,
             'available'::vehicle_availability,
             'B'::driving_license,
-            2000, 2.2, 2.5, 6.0, 3500,
+            2.2, 2.5, 6.0, 3500,
             t.id
         FROM generate_series(1, 20) AS i
         JOIN tenants t ON t.rn = 1 + (i % t.total)
         ON CONFLICT DO NOTHING
+        RETURNING id
+        )
+        INSERT INTO vehicle_capacities (vehicle_id, kind, liters)
+        SELECT id, 'water', 2000 FROM inserted
         "#,
     )
     .execute(pool)

@@ -1,5 +1,5 @@
 //! StartPoint aggregate — a named routing location a watering route starts and
-//! returns from; some are also water refill points (`watering_point`).
+//! returns from; each one also restores the capacity kinds it replenishes.
 //!
 //! Follows the `Region` pattern: aggregate + `StartPointDraft` for creation, a
 //! `pub(crate)` snapshot for DB rehydration, and a `StartPointReader` /
@@ -14,7 +14,12 @@ pub mod error;
 pub mod repository;
 pub mod snapshot;
 
-use crate::{Id, events::DomainEvent, organization::Organization, shared::coordinates::Coordinate};
+use std::collections::BTreeSet;
+
+use crate::{
+    Id, capacity::CapacityKind, events::DomainEvent, organization::Organization,
+    shared::coordinates::Coordinate,
+};
 
 pub use error::StartPointError;
 pub use repository::{StartPointReader, StartPointWriter};
@@ -32,7 +37,7 @@ pub struct StartPoint {
     pub name: StartPointName,
     pub coordinate: Coordinate,
     is_default: bool,
-    watering_point: bool,
+    replenishes: BTreeSet<CapacityKind>,
     organization_id: Id<Organization>,
 }
 
@@ -42,7 +47,7 @@ pub struct StartPoint {
 pub struct StartPointDraft {
     pub name: StartPointName,
     pub coordinate: Coordinate,
-    pub watering_point: bool,
+    pub replenishes: BTreeSet<CapacityKind>,
     pub organization_id: Id<Organization>,
 }
 
@@ -51,7 +56,7 @@ pub struct StartPointDraft {
 pub struct StartPointUpdate {
     pub name: StartPointName,
     pub coordinate: Coordinate,
-    pub watering_point: bool,
+    pub replenishes: BTreeSet<CapacityKind>,
 }
 
 impl StartPoint {
@@ -63,7 +68,7 @@ impl StartPoint {
             coordinate: Coordinate::new(snap.latitude, snap.longitude)
                 .expect("persisted start point coordinate must be valid"),
             is_default: snap.is_default,
-            watering_point: snap.watering_point,
+            replenishes: snap.replenishes,
             organization_id: Id::new(snap.organization_id),
         }
     }
@@ -72,8 +77,8 @@ impl StartPoint {
         self.is_default
     }
 
-    pub fn watering_point(&self) -> bool {
-        self.watering_point
+    pub fn replenishes(&self) -> &BTreeSet<CapacityKind> {
+        &self.replenishes
     }
 
     pub fn organization_id(&self) -> Id<Organization> {
@@ -91,8 +96,8 @@ impl StartPoint {
         self.coordinate = coordinate;
     }
 
-    pub fn set_watering_point(&mut self, value: bool) {
-        self.watering_point = value;
+    pub fn set_replenishes(&mut self, kinds: BTreeSet<CapacityKind>) {
+        self.replenishes = kinds;
     }
 
     /// Reassigns the start point to `target`'s organization. No-op if it
@@ -125,7 +130,7 @@ mod tests {
             name: StartPointName::new("Betriebshof").unwrap(),
             coordinate: Coordinate::new(54.768, 9.434).unwrap(),
             is_default: true,
-            watering_point: true,
+            replenishes: BTreeSet::from([CapacityKind::Water]),
             organization_id: Id::new_v7(),
         }
     }
@@ -162,10 +167,13 @@ mod tests {
     }
 
     #[test]
-    fn set_watering_point_toggles() {
+    fn set_replenishes_replaces_the_kinds() {
         let mut sp = fixed();
-        sp.set_watering_point(false);
-        assert!(!sp.watering_point());
+        sp.set_replenishes(BTreeSet::from([CapacityKind::CargoVolume]));
+        assert_eq!(
+            sp.replenishes(),
+            &BTreeSet::from([CapacityKind::CargoVolume])
+        );
     }
 
     #[test]

@@ -23,6 +23,7 @@ use uuid::Uuid;
 
 pub mod auth;
 pub mod authorization;
+pub mod capacity;
 pub mod cluster;
 pub mod comment;
 pub mod error;

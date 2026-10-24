@@ -70,7 +70,7 @@ async fn get_evaluation_counts_vehicles_and_sensors() {
         let body = serde_json::json!({
             "number_plate": format!("FL-GE {}", i),
             "description": "Test",
-            "water_capacity": 5000.0,
+            "capacities": { "water": 5000.0 },
             "model": "MAN",
             "availability": "available",
             "type": "transporter",
@@ -121,7 +121,7 @@ async fn get_evaluation_includes_vehicle_watering_plan_stats() {
             &serde_json::json!({
                 "number_plate": "FL-GE 100",
                 "description": "Test",
-                "water_capacity": 5000.0,
+                "capacities": { "water": 5000.0 },
                 "model": "MAN",
                 "availability": "available",
                 "type": "transporter",
@@ -216,7 +216,7 @@ async fn get_evaluation_includes_region_watering_plan_stats() {
             &serde_json::json!({
                 "number_plate": "FL-GE 200",
                 "description": "Test",
-                "water_capacity": 5000.0,
+                "capacities": { "water": 5000.0 },
                 "model": "MAN",
                 "availability": "available",
                 "type": "transporter",

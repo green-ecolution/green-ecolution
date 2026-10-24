@@ -1,16 +1,20 @@
+use std::collections::BTreeSet;
+
 use serde::{Deserialize, Serialize};
 
 use domain::{
     Id,
+    capacity::CapacityKind,
     organization::Organization,
     shared::coordinates::Coordinate,
     start_point::{StartPoint, StartPointDraft, StartPointName, StartPointUpdate},
 };
 
+use super::vehicle::CapacityKindDto;
 use crate::service::ServiceError;
 
-/// Named departure/return point for watering routes. `watering_point` marks it
-/// as a water refill station.
+/// Named departure/return point for routes. `replenishes` lists the capacity
+/// kinds a vehicle restores here.
 #[derive(Debug, Clone, Serialize, utoipa::ToSchema)]
 pub struct StartPointResponse {
     pub id: uuid::Uuid,
@@ -18,7 +22,7 @@ pub struct StartPointResponse {
     pub lat: f64,
     pub lon: f64,
     pub is_default: bool,
-    pub watering_point: bool,
+    pub replenishes: Vec<CapacityKindDto>,
     /// Organization this start point belongs to.
     #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000")]
     pub organization_id: String,
@@ -32,7 +36,7 @@ impl From<&StartPoint> for StartPointResponse {
             lat: value.coordinate.latitude(),
             lon: value.coordinate.longitude(),
             is_default: value.is_default(),
-            watering_point: value.watering_point(),
+            replenishes: value.replenishes().iter().map(|k| (*k).into()).collect(),
             organization_id: value.organization_id().to_string(),
         }
     }
@@ -48,7 +52,8 @@ pub struct StartPointRequest {
     #[schema(example = 9.434803531218018)]
     pub lon: f64,
     #[serde(default)]
-    pub watering_point: bool,
+    #[schema(example = json!(["water"]))]
+    pub replenishes: Vec<CapacityKindDto>,
     /// Organization this start point belongs to. Defaults to the acting
     /// user's own organization (or the root organization in the demo bypass).
     #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000", nullable)]
@@ -65,6 +70,10 @@ impl StartPointRequest {
         StartPointName::new(self.name.clone()).map_err(ServiceError::from)
     }
 
+    fn replenishes(&self) -> BTreeSet<CapacityKind> {
+        self.replenishes.iter().map(|k| (*k).into()).collect()
+    }
+
     pub fn into_draft(
         self,
         organization_id: Id<Organization>,
@@ -72,7 +81,7 @@ impl StartPointRequest {
         Ok(StartPointDraft {
             name: self.name()?,
             coordinate: self.coordinate()?,
-            watering_point: self.watering_point,
+            replenishes: self.replenishes(),
             organization_id,
         })
     }
@@ -81,7 +90,7 @@ impl StartPointRequest {
         Ok(StartPointUpdate {
             name: self.name()?,
             coordinate: self.coordinate()?,
-            watering_point: self.watering_point,
+            replenishes: self.replenishes(),
         })
     }
 }

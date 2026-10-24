@@ -1,0 +1,60 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE vehicles SET\n                number_plate = $2,\n                description = $3,\n                type = $4,\n                availability = $5,\n                model = $6,\n                driving_license = $7,\n                height = $8,\n                length = $9,\n                width = $10,\n                weight = $11,\n                provider = $12,\n                additional_informations = $13,\n                archived_at = $14,\n                organization_id = $15\n            WHERE id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Text",
+        {
+          "Custom": {
+            "name": "vehicle_type",
+            "kind": {
+              "Enum": [
+                "transporter",
+                "trailer"
+              ]
+            }
+          }
+        },
+        {
+          "Custom": {
+            "name": "vehicle_availability",
+            "kind": {
+              "Enum": [
+                "available",
+                "not_available"
+              ]
+            }
+          }
+        },
+        "Text",
+        {
+          "Custom": {
+            "name": "driving_license",
+            "kind": {
+              "Enum": [
+                "B",
+                "BE",
+                "C",
+                "CE"
+              ]
+            }
+          }
+        },
+        "Float8",
+        "Float8",
+        "Float8",
+        "Float8",
+        "Text",
+        "Jsonb",
+        "Timestamp",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "d3046777fe9370a71c98d3b6b2a3875b2f2580fce97cae3f5d71a8b385c1fcc2"
+}

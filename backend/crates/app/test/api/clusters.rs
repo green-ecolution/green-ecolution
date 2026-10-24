@@ -994,6 +994,14 @@ async fn list_cluster_markers_includes_cluster_with_trees() {
     assert_eq!(data[0]["tree_count"], 1);
 }
 
+/// Creates an empty cluster in the root organization.
+pub async fn create_cluster(app: &helpers::TestApp) -> uuid::Uuid {
+    create_cluster_named(app, "Testcluster")
+        .await
+        .parse()
+        .unwrap()
+}
+
 async fn create_cluster_named(app: &helpers::TestApp, name: &str) -> String {
     let body = serde_json::json!({
         "name": name,
