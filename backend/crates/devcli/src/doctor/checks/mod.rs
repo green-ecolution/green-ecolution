@@ -21,7 +21,7 @@ then cargo sqlx prepare --workspace -- --all-targets";
 /// for them, so only touching the binary's source makes cargo pick up a new migration.
 pub fn migrate_fix() -> Fix {
     Fix {
-        command: "touch backend/crates/server/src/bin/migrate.rs && just migrate-up".to_owned(),
+        command: "touch backend/crates/app/src/bin/migrate.rs && just migrate-up".to_owned(),
         cwd: String::new(),
         destructive: false,
     }

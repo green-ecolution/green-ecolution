@@ -1,0 +1,70 @@
+[package]
+name = "app"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description = "Green Ecolution backend: composition root and binaries"
+readme = "../../../README.md"
+publish.workspace = true
+default-run = "green-ecolution"
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+path = "src/main.rs"
+name = "green-ecolution"
+
+[[bin]]
+path = "src/bin/migrate.rs"
+name = "migrate"
+
+[[bin]]
+path = "src/bin/dump-openapi.rs"
+name = "dump-openapi"
+
+[[test]]
+name = "api"
+path = "test/api/main.rs"
+
+[dependencies]
+async-trait = { workspace = true }
+axum = { version = "0.8.9", features = ["json"] }
+chrono = { workspace = true }
+domain = { path = "../domain", features = ["sqlx"] }
+futures = "0.3"
+include_dir = "0.7"
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls", "stream"] }
+serde = { workspace = true }
+serde_json = { workspace = true }
+server = { path = "../server" }
+sqlx = { workspace = true, features = ["macros", "migrate", "runtime-tokio", "tls-rustls", "postgres", "chrono", "uuid", "json", "rust_decimal"] }
+thiserror = { workspace = true }
+tokio = { version = "1.52.3", features = ["full"] }
+tracing = "0.1"
+url = { workspace = true }
+utoipa = { version = "6", features = ["axum_extras", "uuid", "chrono"] }
+utoipa-axum = "0.3"
+uuid = { workspace = true }
+
+[dev-dependencies]
+base64 = "0.23"
+claims = "0.8"
+geo-types = "0.7.19"
+jsonwebtoken = { version = "11.0", default-features = false, features = ["use_pem", "aws_lc_rs"] }
+libc = "0.2"
+polyline = "0.11.0"
+quickcheck = "1"
+quickcheck_macros = "1"
+rand = { workspace = true }
+rsa = { version = "0.9", features = ["sha2"] }
+rust_decimal = { version = "1.42", default-features = false }
+secrecy = { workspace = true }
+testcontainers = { version = "0.27", features = ["watchdog"] }
+testcontainers-modules = { version = "0.15", features = ["postgres"] }
+urlencoding = "2"
+wiremock = "0.6.5"

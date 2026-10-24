@@ -4,7 +4,10 @@ use std::time::Duration;
 use sqlx::{PgPool, postgres::PgPoolOptions};
 use tokio::net::TcpListener;
 
-use crate::{
+use domain::info::{
+    HealthSnapshotReader, ReadinessReader, ServiceName, StatisticsReader, SystemInfoProvider,
+};
+use server::{
     configuration::{CorsSettings, DatabaseSettings, Settings},
     http::{
         AppOrigins, AppState, FeatureFlags, NearestTreeLimits, OidcSwaggerSettings,
@@ -66,9 +69,6 @@ use crate::{
         watering_plan_service::WateringPlanService,
     },
 };
-use domain::info::{
-    HealthSnapshotReader, ReadinessReader, ServiceName, StatisticsReader, SystemInfoProvider,
-};
 
 pub struct Application {
     port: u16,
@@ -129,7 +129,7 @@ impl Application {
         let profile_repo = Arc::new(infra::pg_user_profile::PgUserProfileRepository::new(
             pool.clone(),
         ));
-        let settings_service = Arc::new(crate::service::settings_service::SettingsService::new(
+        let settings_service = Arc::new(server::service::settings_service::SettingsService::new(
             settings_repo.clone(),
             settings_repo.clone(),
             settings_repo.clone(),
@@ -194,7 +194,7 @@ impl Application {
                     configured = proxy.session_ttl_minutes,
                     effective = proxy.effective_session_ttl_minutes(),
                     "plugins.proxy.session_ttl_minutes lies outside 1..={} and is clamped",
-                    crate::configuration::MAX_PLUGIN_SESSION_TTL_MINUTES
+                    server::configuration::MAX_PLUGIN_SESSION_TTL_MINUTES
                 );
             }
             Arc::new(PluginProxyService::new(
@@ -216,12 +216,12 @@ impl Application {
         let app_origins = AppOrigins::from_settings(&settings.cors, &settings.application.base_url);
         let plugin_proxy = match &settings.plugins.proxy {
             Some(proxy) => {
-                let hosts = crate::http::plugin_proxy::PluginHosts::for_app(
+                let hosts = server::http::plugin_proxy::PluginHosts::for_app(
                     &proxy.public_url,
                     &settings.application.base_url,
                 )
                 .map_err(|reason| std::io::Error::new(std::io::ErrorKind::InvalidInput, reason))?;
-                Some(Arc::new(crate::http::plugin_proxy::PluginProxy::new(
+                Some(Arc::new(server::http::plugin_proxy::PluginProxy::new(
                     hosts,
                     app_origins.frame_ancestors(),
                     proxy.effective_session_ttl_minutes(),
@@ -255,7 +255,7 @@ impl Application {
                 default_limit: settings.map.nearest_tree_default_limit,
                 max_limit: settings.map.nearest_tree_max_limit,
             },
-            frontend_config_js: crate::http::render_frontend_config_js(
+            frontend_config_js: server::http::render_frontend_config_js(
                 &settings.auth,
                 &settings.analytics,
             )
@@ -396,7 +396,7 @@ struct Repositories {
     start_point_writer: Arc<dyn domain::start_point::StartPointWriter>,
     plugin_reader: Arc<dyn domain::plugin::PluginReader>,
     plugin_writer: Arc<dyn domain::plugin::PluginWriter>,
-    plugin_view_tickets: Arc<dyn crate::service::plugin_view_ticket_service::ViewTicketStore>,
+    plugin_view_tickets: Arc<dyn server::service::plugin_view_ticket_service::ViewTicketStore>,
 }
 
 impl Repositories {
@@ -446,7 +446,7 @@ impl Repositories {
             plugin_reader: plugin_repo.clone(),
             plugin_writer: plugin_repo,
             plugin_view_tickets: Arc::new(
-                crate::infra::pg_plugin_view_ticket::PgViewTicketStore::new(pool.clone()),
+                server::infra::pg_plugin_view_ticket::PgViewTicketStore::new(pool.clone()),
             ),
         }
     }
@@ -495,7 +495,7 @@ impl Services {
             repos.plugin_reader.clone(),
             repos.plugin_writer.clone(),
             authorization.clone(),
-            Arc::new(crate::infra::plugin_key::RandomPluginKeyFactory),
+            Arc::new(server::infra::plugin_key::RandomPluginKeyFactory),
             proxy_policy,
         ));
         let tree = Arc::new(TreeService::new(
@@ -600,7 +600,7 @@ impl Services {
             plugin_sensor_ingest,
             plugin_view_tickets: Arc::new(PluginViewTicketService::new(
                 repos.plugin_view_tickets.clone(),
-                Arc::new(crate::infra::plugin_view_ticket::RandomViewTicketFactory),
+                Arc::new(server::infra::plugin_view_ticket::RandomViewTicketFactory),
             )),
         }
     }

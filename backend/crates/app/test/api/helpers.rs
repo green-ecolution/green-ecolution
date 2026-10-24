@@ -1,5 +1,6 @@
 use std::sync::{Arc, OnceLock};
 
+use app::startup::Application;
 use domain::{
     events::SensorReadings,
     sensor::{SensorId, data::Watermark, repository::NormalizedValue},
@@ -12,7 +13,6 @@ use server::{
     configuration::{AuthSettings, PluginProxySettings, Settings},
     http::AppState,
     service::{ServiceError, sensor_service::ReadingIngest},
-    startup::Application,
 };
 use sqlx::{Connection, Executor, PgConnection, PgPool, postgres::PgPoolOptions};
 use testcontainers::{ContainerAsync, GenericImage, ImageExt, runners::AsyncRunner};
