@@ -30,12 +30,18 @@ impl MigrationSource<'static> for Merged {
     }
 }
 
+/// `-r` migrations ship an up and a down file under one version, so the
+/// version alone is not unique. Sorting up before down is what sqlx expects.
+fn direction(migration: &Migration) -> u8 {
+    u8::from(migration.migration_type.is_down_migration())
+}
+
 /// The core keeps its history in `backend/migrations`, every module adds its
 /// own directory. Versions are timestamps, so one sorted list and one
 /// `_sqlx_migrations` table hold both; separate migrators would report each
 /// other's rows as missing.
 pub async fn migrator(modules: &[Box<dyn Module>]) -> Result<Migrator, MigrationSetupError> {
-    let mut by_version: BTreeMap<i64, (String, Migration)> = BTreeMap::new();
+    let mut by_version: BTreeMap<(i64, u8), (String, Migration)> = BTreeMap::new();
     let sources = std::iter::once(("core".to_string(), CORE.iter().cloned().collect::<Vec<_>>()))
         .chain(
             modules
@@ -44,14 +50,15 @@ pub async fn migrator(modules: &[Box<dyn Module>]) -> Result<Migrator, Migration
         );
     for (owner, migrations) in sources {
         for migration in migrations {
-            if let Some((first, _)) = by_version.get(&migration.version) {
+            let key = (migration.version, direction(&migration));
+            if let Some((first, _)) = by_version.get(&key) {
                 return Err(MigrationSetupError::DuplicateVersion {
                     version: migration.version,
                     first: first.clone(),
                     second: owner,
                 });
             }
-            by_version.insert(migration.version, (owner.clone(), migration));
+            by_version.insert(key, (owner.clone(), migration));
         }
     }
     let merged = by_version.into_values().map(|(_, m)| m).collect();
@@ -110,6 +117,30 @@ mod tests {
         let merged = migrator(&[module]).await.unwrap();
         assert_eq!(merged.iter().last().unwrap().version, latest + 1);
         assert_eq!(merged.iter().count(), CORE.iter().count() + 1);
+    }
+
+    #[tokio::test]
+    async fn a_reversible_pair_shares_one_version() {
+        use sqlx::migrate::MigrationType::{ReversibleDown, ReversibleUp};
+        let latest = CORE.iter().map(|m| m.version).max().unwrap() + 1;
+        let pair = |kind, sql| {
+            Migration::new(
+                latest,
+                Cow::Borrowed("fake"),
+                kind,
+                Cow::Borrowed(sql),
+                false,
+            )
+        };
+        let module: Box<dyn Module> = Box::new(WithMigrations(vec![
+            pair(ReversibleDown, "SELECT 2"),
+            pair(ReversibleUp, "SELECT 1"),
+        ]));
+        let merged = migrator(&[module]).await.unwrap();
+        let tail: Vec<_> = merged.iter().rev().take(2).collect();
+        assert!(tail[0].migration_type.is_down_migration());
+        assert!(tail[1].migration_type.is_up_migration());
+        assert_eq!(merged.iter().count(), CORE.iter().count() + 2);
     }
 
     #[tokio::test]
