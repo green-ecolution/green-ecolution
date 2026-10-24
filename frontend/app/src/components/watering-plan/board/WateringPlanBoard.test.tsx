@@ -21,6 +21,7 @@ const plan = {
   id: 'p1',
   date: new Date().toISOString(),
   treeclusters: [],
+  stopIds: [],
   status: 'planned',
   userIds: [],
   totalWaterRequired: 0,

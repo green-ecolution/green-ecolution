@@ -5,10 +5,12 @@ import type {
   TreeClusterInListResponse,
 } from '@green-ecolution/backend-client'
 import {
+  keepUnresolvedStops,
   toPlanCreateRequest,
   toPlanUpdateRequest,
   toWateringPlan,
   toWateringRoute,
+  type EvaluationValue,
 } from './irrigationPlans'
 
 const cluster = (id: string): TreeClusterInListResponse =>
@@ -36,6 +38,7 @@ describe('irrigation plan adapter', () => {
     ])
     const result = toWateringPlan(plan({ stops: ['c1', 'gone', 'c2'] }), clusters)
     expect(result.treeclusters.map((c) => c.id)).toEqual(['c1', 'c2'])
+    expect(result.stopIds).toEqual(['c1', 'gone', 'c2'])
   })
 
   it('maps outcomes to the evaluation the dashboard shows', () => {
@@ -82,6 +85,38 @@ describe('irrigation plan adapter', () => {
       evaluation: [{ treeClusterId: 'c1', wateringPlanId: 'p1', consumedWater: 50 }],
     } as Parameters<typeof toPlanUpdateRequest>[0])
     expect(request.outcomes).toEqual([{ stop: 'c1', completed: true, amount: 50 }])
+  })
+
+  it('finishes stops it could not resolve as completed without an amount', () => {
+    const request = toPlanUpdateRequest({
+      status: 'finished',
+      treeClusterIds: ['c1', 'hidden'],
+      evaluation: [{ treeClusterId: 'c1', wateringPlanId: 'p1', consumedWater: 50 }],
+    } as Parameters<typeof toPlanUpdateRequest>[0])
+    expect(request.outcomes).toEqual([
+      { stop: 'c1', completed: true, amount: 50 },
+      { stop: 'hidden', completed: true, amount: null },
+    ])
+  })
+
+  it('reports no outcomes for stops when the plan is not being finished', () => {
+    const request = toPlanUpdateRequest({
+      status: 'canceled',
+      treeClusterIds: ['c1', 'hidden'],
+      evaluation: [] as EvaluationValue[],
+    } as Parameters<typeof toPlanUpdateRequest>[0])
+    expect(request.outcomes).toEqual([])
+  })
+
+  it('keeps stops the user cannot see when the edit form is saved', () => {
+    const loaded = toWateringPlan(
+      plan({ stops: ['c1', 'hidden', 'c2'] }),
+      new Map([
+        ['c1', cluster('c1')],
+        ['c2', cluster('c2')],
+      ]),
+    )
+    expect(keepUnresolvedStops(['c2', 'c3'], loaded)).toEqual(['c2', 'c3', 'hidden'])
   })
 
   it('maps station visits to refill points', () => {

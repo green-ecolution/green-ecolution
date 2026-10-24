@@ -93,7 +93,7 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
           status: WateringPlanStatus.Finished,
           evaluation: data.evaluation,
           transporterId: loadedData.transporter.id,
-          treeClusterIds: loadedData.treeclusters.map((cluster) => cluster.id),
+          treeClusterIds: loadedData.stopIds,
         })
       }
 
@@ -103,7 +103,7 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
           status: WateringPlanStatus.Canceled,
           cancellationNote: data.cancellationNote,
           transporterId: loadedData.transporter.id,
-          treeClusterIds: loadedData.treeclusters.map((cluster) => cluster.id),
+          treeClusterIds: loadedData.stopIds,
         })
       }
 
@@ -113,7 +113,7 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
           status: WateringPlanStatus.NotCompleted,
           cancellationNote: data.cancellationNote,
           transporterId: loadedData.transporter.id,
-          treeClusterIds: loadedData.treeclusters.map((cluster) => cluster.id),
+          treeClusterIds: loadedData.stopIds,
         })
       }
 
@@ -122,7 +122,7 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
           ...loadedData,
           status,
           transporterId: loadedData.transporter.id,
-          treeClusterIds: loadedData.treeclusters.map((cluster) => cluster.id),
+          treeClusterIds: loadedData.stopIds,
         })
       }
       switch (status) {

@@ -25,6 +25,7 @@ vi.mock('@/hooks/createToast', () => ({ default: () => vi.fn() }))
 const CLUSTER_ID = '0190a8e9-7c4f-7000-8000-000000000001'
 const TREE_ID = '0190a8e9-7c4f-7000-8000-000000000002'
 const PLAN_ID = '0190a8e9-7c4f-7000-8000-000000000003'
+const HIDDEN_CLUSTER_ID = '0190a8e9-7c4f-7000-8000-000000000006'
 
 const CLUSTER_DETAIL: QueryKey = clusterQueries.detail(CLUSTER_ID).queryKey
 const CLUSTER_LIST: QueryKey = clusterQueries.list().queryKey
@@ -38,6 +39,7 @@ const plan = {
   status: WateringPlanStatus.Active,
   transporter: { id: '0190a8e9-7c4f-7000-8000-000000000004' },
   treeclusters: [{ id: CLUSTER_ID }],
+  stopIds: [CLUSTER_ID, HIDDEN_CLUSTER_ID],
   userIds: [],
 } as unknown as WateringPlanInList
 
@@ -90,8 +92,27 @@ describe('useWateringPlanBoardMutations', () => {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       planUpdateRequest: expect.objectContaining({
         status: WateringPlanStatus.Finished,
-        stops: [CLUSTER_ID],
-        outcomes: [{ stop: CLUSTER_ID, completed: true, amount: 100 }],
+        stops: [CLUSTER_ID, HIDDEN_CLUSTER_ID],
+        outcomes: [
+          { stop: CLUSTER_ID, completed: true, amount: 100 },
+          { stop: HIDDEN_CLUSTER_ID, completed: true, amount: null },
+        ],
+      }),
+    })
+  })
+
+  it('keeps stops the user cannot see when a plan is started from the board', async () => {
+    const { result } = renderBoardMutations()
+
+    result.current.startPlan.mutate({ ...plan, status: WateringPlanStatus.Planned })
+
+    await waitFor(() => expect(updatePlan).toHaveBeenCalledTimes(1))
+    expect(updatePlan).toHaveBeenCalledWith({
+      planId: PLAN_ID,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      planUpdateRequest: expect.objectContaining({
+        status: WateringPlanStatus.Active,
+        stops: [CLUSTER_ID, HIDDEN_CLUSTER_ID],
       }),
     })
   })

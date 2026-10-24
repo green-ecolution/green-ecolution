@@ -38,6 +38,7 @@ const plan: WateringPlanInList = {
   transporter: { id: 'v-1', numberPlate: 'FL-GE-A01' } as WateringPlanInList['transporter'],
   transporterTankUsed: true,
   treeclusters: [],
+  stopIds: [],
   userIds: [],
 }
 

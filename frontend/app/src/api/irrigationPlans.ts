@@ -8,7 +8,9 @@ import type {
   RouteResponse,
   StationVisitResponse,
   TreeClusterInListResponse,
+  StopOutcomeDto,
 } from '@green-ecolution/backend-client'
+import { PlanStatus } from '@green-ecolution/backend-client'
 import { IRRIGATION } from '@/lib/targets'
 import { clusterApi } from './backendApi'
 
@@ -23,7 +25,10 @@ export interface EvaluationValue {
 
 type Generic = 'module' | 'stops' | 'outcomes' | 'transporterCapacityUsed' | 'totalDemand'
 
+// `treeclusters` holds only the stops the reader may see; writes must use `stopIds`
+// so a save never drops a group outside the reader's visibility.
 export type WateringPlan = Omit<PlanResponse, Generic> & {
+  stopIds: string[]
   treeclusters: TreeClusterInListResponse[]
   evaluation: EvaluationValue[]
   transporterTankUsed: boolean
@@ -31,6 +36,7 @@ export type WateringPlan = Omit<PlanResponse, Generic> & {
 }
 
 export type WateringPlanInList = Omit<PlanInListResponse, Generic> & {
+  stopIds: string[]
   treeclusters: TreeClusterInListResponse[]
   transporterTankUsed: boolean
   totalWaterRequired: number
@@ -88,6 +94,7 @@ export const toWateringPlan = (
   const { module: _module, stops, outcomes, transporterCapacityUsed, totalDemand, ...rest } = plan
   return {
     ...rest,
+    stopIds: stops,
     treeclusters: clustersFor(stops, clusters),
     evaluation: outcomes
       .filter((o) => o.completed)
@@ -108,10 +115,20 @@ export const toWateringPlanInList = (
   const { module: _module, stops, transporterCapacityUsed, totalDemand, ...rest } = plan
   return {
     ...rest,
+    stopIds: stops,
     treeclusters: clustersFor(stops, clusters),
     transporterTankUsed: transporterCapacityUsed,
     totalWaterRequired: totalDemand,
   }
+}
+
+export const keepUnresolvedStops = (
+  selected: string[],
+  plan: Pick<WateringPlan, 'stopIds' | 'treeclusters'>,
+): string[] => {
+  const resolved = new Set(plan.treeclusters.map((cluster) => cluster.id))
+  const unresolved = plan.stopIds.filter((id) => !resolved.has(id) && !selected.includes(id))
+  return [...selected, ...unresolved]
 }
 
 export async function loadWateringPlanList(
@@ -134,17 +151,33 @@ export const toPlanCreateRequest = (form: WateringPlanCreate): PlanCreateRequest
   }
 }
 
+// A plan is finished as a whole: stops without an evaluation (groups the reader
+// cannot see) count as done with an unknown amount.
+const toOutcomes = (
+  status: PlanStatus,
+  stops: string[],
+  evaluation: EvaluationValue[] | undefined,
+): StopOutcomeDto[] | undefined => {
+  const evaluated: StopOutcomeDto[] | undefined = evaluation?.map((e) => ({
+    stop: e.treeClusterId,
+    completed: true,
+    amount: e.consumedWater,
+  }))
+  if (status !== PlanStatus.Finished) return evaluated
+  const covered = new Set(evaluated?.map((o) => o.stop))
+  const rest = stops
+    .filter((stop) => !covered.has(stop))
+    .map((stop) => ({ stop, completed: true, amount: null }))
+  return [...(evaluated ?? []), ...rest]
+}
+
 export const toPlanUpdateRequest = (form: WateringPlanUpdate): PlanUpdateRequest => {
   const { treeClusterIds, transporterTankUsed, evaluation, ...rest } = form
   return {
     ...rest,
     stops: treeClusterIds,
     transporterCapacityUsed: transporterTankUsed ?? true,
-    outcomes: evaluation?.map((e) => ({
-      stop: e.treeClusterId,
-      completed: true,
-      amount: e.consumedWater,
-    })),
+    outcomes: toOutcomes(form.status, treeClusterIds, evaluation),
   }
 }
 

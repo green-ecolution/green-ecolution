@@ -26,7 +26,7 @@ export const toUpdateRequest = (
   transporterId: plan.transporter.id,
   trailerId: plan.trailer?.id,
   transporterTankUsed: plan.transporterTankUsed,
-  treeClusterIds: plan.treeclusters.map((cluster) => cluster.id),
+  treeClusterIds: plan.stopIds,
   userIds: plan.userIds,
   cancellationNote: plan.cancellationNote,
   provider: plan.provider,

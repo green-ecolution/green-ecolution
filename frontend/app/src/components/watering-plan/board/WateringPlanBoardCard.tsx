@@ -67,7 +67,7 @@ const WateringPlanBoardCard = ({
           )}
           <Badge variant="muted" className="gap-1 tabular-nums">
             <FolderClosed className="size-3" />
-            {t('board.column.clusterCountBadge', { count: plan.treeclusters.length })}
+            {t('board.column.clusterCountBadge', { count: plan.stopIds.length })}
           </Badge>
           <Badge variant="muted" className="gap-1 tabular-nums">
             <Droplet className="size-3" />
