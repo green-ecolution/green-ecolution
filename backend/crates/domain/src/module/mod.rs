@@ -10,7 +10,10 @@ pub mod repository;
 
 use std::fmt;
 
-use crate::shared::error::ValidationError;
+use crate::shared::{
+    error::ValidationError,
+    key::{KEY_MAX_LEN, validate_key},
+};
 
 pub use activation::{ActivationLevel, ActivationResolution, resolve_activation};
 pub use repository::{ModuleActivationReader, ModuleActivationWriter};
@@ -21,29 +24,11 @@ pub use repository::{ModuleActivationReader, ModuleActivationWriter};
 pub struct ModuleKey(String);
 
 impl ModuleKey {
-    pub const MAX_LEN: usize = 32;
+    pub const MAX_LEN: usize = KEY_MAX_LEN;
     const FIELD: &'static str = "module.key";
 
     pub fn new(value: &str) -> Result<Self, ValidationError> {
-        if value.is_empty() {
-            return Err(ValidationError::EmptyString { field: Self::FIELD });
-        }
-        if value.len() > Self::MAX_LEN {
-            return Err(ValidationError::TooLong {
-                field: Self::FIELD,
-                max: Self::MAX_LEN,
-                got: value.len(),
-            });
-        }
-        let mut bytes = value.bytes();
-        let starts_with_letter = bytes.next().is_some_and(|b| b.is_ascii_lowercase());
-        let rest_valid = bytes.all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'_');
-        if !(starts_with_letter && rest_valid) {
-            return Err(ValidationError::InvalidFormat {
-                field: Self::FIELD,
-                reason: "expected [a-z][a-z0-9_]*".to_string(),
-            });
-        }
+        validate_key(Self::FIELD, value)?;
         Ok(Self(value.to_string()))
     }
 

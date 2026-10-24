@@ -1,7 +1,9 @@
 use crate::{
     Id,
     organization::Organization,
-    settings::{EffectiveSettings, InstanceDefaults, OrganizationSettings},
+    settings::{
+        EffectiveSettings, InheritLevel, Inherited, InstanceDefaults, OrganizationSettings, inherit,
+    },
 };
 
 /// Where a resolved value came from. `Inherited` names the organization that
@@ -35,81 +37,50 @@ pub fn resolve(
     chain: &[OrganizationSettings],
     target: Id<Organization>,
 ) -> Resolution {
-    let mut effective = EffectiveSettings {
-        water_demand: defaults.water_demand,
-        just_watered_ttl: defaults.just_watered_ttl,
-        sensor_offline_after: defaults.sensor_offline_after,
-        defect_streak: defaults.defect_streak,
-        map_view: defaults.map_view,
-        enforced_by: None,
-    };
-    let mut origins = SettingOrigins {
-        water_demand: SettingOrigin::Default,
-        just_watered_ttl: SettingOrigin::Default,
-        sensor_offline_after: SettingOrigin::Default,
-        defect_streak: SettingOrigin::Default,
-        map_view: SettingOrigin::Default,
-    };
-
-    for level in chain {
-        let origin = if level.organization_id == target {
-            SettingOrigin::Own
-        } else {
-            SettingOrigin::Inherited(level.organization_id)
-        };
-        apply(
-            &mut effective.water_demand,
-            &mut origins.water_demand,
-            level.water_demand,
-            origin,
-        );
-        apply(
-            &mut effective.just_watered_ttl,
-            &mut origins.just_watered_ttl,
-            level.just_watered_ttl,
-            origin,
-        );
-        apply(
-            &mut effective.sensor_offline_after,
-            &mut origins.sensor_offline_after,
-            level.sensor_offline_after,
-            origin,
-        );
-        apply(
-            &mut effective.defect_streak,
-            &mut origins.defect_streak,
-            level.defect_streak,
-            origin,
-        );
-        apply(
-            &mut effective.map_view,
-            &mut origins.map_view,
-            level.map_view,
-            origin,
-        );
-
-        // The switch speaks about an organization's descendants, not about
-        // itself, so it never stops the walk at the target. The topmost lock
-        // wins and reaches arbitrarily deep without inspecting lower ones.
-        if !level.descendants_may_override && level.organization_id != target {
-            effective.enforced_by = Some(level.organization_id);
-            break;
-        }
+    let water_demand = field(defaults.water_demand, chain, target, |l| l.water_demand);
+    let just_watered_ttl = field(defaults.just_watered_ttl, chain, target, |l| {
+        l.just_watered_ttl
+    });
+    let sensor_offline_after = field(defaults.sensor_offline_after, chain, target, |l| {
+        l.sensor_offline_after
+    });
+    let defect_streak = field(defaults.defect_streak, chain, target, |l| l.defect_streak);
+    let map_view = field(defaults.map_view, chain, target, |l| l.map_view);
+    Resolution {
+        effective: EffectiveSettings {
+            water_demand: water_demand.value,
+            just_watered_ttl: just_watered_ttl.value,
+            sensor_offline_after: sensor_offline_after.value,
+            defect_streak: defect_streak.value,
+            map_view: map_view.value,
+            // The lock does not depend on the field, so any of them carries it.
+            enforced_by: map_view.enforced_by,
+        },
+        origins: SettingOrigins {
+            water_demand: water_demand.origin,
+            just_watered_ttl: just_watered_ttl.origin,
+            sensor_offline_after: sensor_offline_after.origin,
+            defect_streak: defect_streak.origin,
+            map_view: map_view.origin,
+        },
     }
-
-    Resolution { effective, origins }
 }
 
-fn apply<T: Copy>(
-    slot: &mut T,
-    origin_slot: &mut SettingOrigin,
-    value: Option<T>,
-    origin: SettingOrigin,
-) {
-    if let Some(value) = value {
-        *slot = value;
-        *origin_slot = origin;
-    }
+fn field<T: Copy>(
+    default: T,
+    chain: &[OrganizationSettings],
+    target: Id<Organization>,
+    pick: impl Fn(&OrganizationSettings) -> Option<T>,
+) -> Inherited<T> {
+    let levels: Vec<InheritLevel<T>> = chain
+        .iter()
+        .map(|l| InheritLevel {
+            organization_id: l.organization_id,
+            value: pick(l),
+            descendants_may_override: l.descendants_may_override,
+        })
+        .collect();
+    inherit(default, &levels, target)
 }
 
 #[cfg(test)]

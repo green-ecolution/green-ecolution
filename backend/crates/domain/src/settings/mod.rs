@@ -10,6 +10,7 @@
 //! from above. Where no settings exist at all, it reads as "allowed".
 
 pub mod history;
+pub mod inherit;
 pub mod repository;
 pub mod resolve;
 pub mod snapshot;
@@ -20,6 +21,7 @@ use std::str::FromStr;
 use crate::{Id, organization::Organization, shared::error::ValidationError};
 
 pub use history::SettingChangeEntry;
+pub use inherit::{InheritLevel, Inherited, inherit};
 pub use repository::{SettingsReader, SettingsResolver, SettingsWriter};
 pub use resolve::{Resolution, SettingOrigin, SettingOrigins, resolve};
 #[doc(hidden)]

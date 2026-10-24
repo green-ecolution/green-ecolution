@@ -12,6 +12,7 @@ pub mod distance;
 pub mod email;
 pub mod error;
 pub mod geo;
+pub mod key;
 pub mod pagination;
 pub mod phone_number;
 pub mod provenance;
