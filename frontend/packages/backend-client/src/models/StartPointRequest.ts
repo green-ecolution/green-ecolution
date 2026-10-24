@@ -57,7 +57,7 @@ export interface StartPointRequest {
      * @type {Array<CapacityKindDto>}
      * @memberof StartPointRequest
      */
-    replenishes?: Array<CapacityKindDto>;
+    replenishes: Array<CapacityKindDto>;
 }
 
 /**
@@ -67,6 +67,7 @@ export function instanceOfStartPointRequest(value: object): value is StartPointR
     if (!('lat' in value) || value['lat'] === undefined) return false;
     if (!('lon' in value) || value['lon'] === undefined) return false;
     if (!('name' in value) || value['name'] === undefined) return false;
+    if (!('replenishes' in value) || value['replenishes'] === undefined) return false;
     return true;
 }
 
@@ -84,7 +85,7 @@ export function StartPointRequestFromJSONTyped(json: any, ignoreDiscriminator: b
         'lon': json['lon'],
         'name': json['name'],
         'organizationId': json['organization_id'] == null ? undefined : json['organization_id'],
-        'replenishes': json['replenishes'] == null ? undefined : ((json['replenishes'] as Array<any>).map(CapacityKindDtoFromJSON)),
+        'replenishes': ((json['replenishes'] as Array<any>).map(CapacityKindDtoFromJSON)),
     };
 }
 
@@ -103,7 +104,7 @@ export function StartPointRequestToJSONTyped(value?: StartPointRequest | null, i
         'lon': value['lon'],
         'name': value['name'],
         'organization_id': value['organizationId'],
-        'replenishes': value['replenishes'] == null ? undefined : ((value['replenishes'] as Array<any>).map(CapacityKindDtoToJSON)),
+        'replenishes': ((value['replenishes'] as Array<any>).map(CapacityKindDtoToJSON)),
     };
 }
 

@@ -13903,7 +13903,8 @@
         "required": [
           "name",
           "lat",
-          "lon"
+          "lon",
+          "replenishes"
         ],
         "properties": {
           "lat": {

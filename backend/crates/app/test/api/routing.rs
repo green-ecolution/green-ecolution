@@ -368,6 +368,21 @@ async fn preview_with_start_point_name_uses_that_depot() {
 }
 
 #[tokio::test]
+async fn start_point_without_replenishes_is_rejected() {
+    let streamlet = mock_streamlet(ResponseTemplate::new(200).set_body_json(streamlet_ok())).await;
+    let app = spawn_app_with_routing(&streamlet.uri()).await;
+
+    let resp = app
+        .post_json(
+            "/api/v1/routing/start-points",
+            &serde_json::json!({"name": "Depot Alt", "lat": 54.75, "lon": 9.43, "watering_point": true}),
+        )
+        .await;
+
+    assert_eq!(resp.status().as_u16(), 422);
+}
+
+#[tokio::test]
 async fn create_and_list_start_point() {
     let streamlet = mock_streamlet(ResponseTemplate::new(200).set_body_json(streamlet_ok())).await;
     let app = spawn_app_with_routing(&streamlet.uri()).await;

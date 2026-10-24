@@ -51,7 +51,6 @@ pub struct StartPointRequest {
     pub lat: f64,
     #[schema(example = 9.434803531218018)]
     pub lon: f64,
-    #[serde(default)]
     #[schema(example = json!(["water"]))]
     pub replenishes: Vec<CapacityKindDto>,
     /// Organization this start point belongs to. Defaults to the acting
