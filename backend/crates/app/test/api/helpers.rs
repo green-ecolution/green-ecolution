@@ -443,11 +443,18 @@ pub async fn try_spawn_app_with_modules_and_auth(
 
 async fn create_test_database(host_port: u16) -> (String, PgPool) {
     let template = template_database().await;
+    clone_database(host_port, Some(template)).await
+}
+
+async fn clone_database(host_port: u16, template: Option<&str>) -> (String, PgPool) {
     let db_name = format!("test_{}", Uuid::new_v4().simple());
+    let template_clause = template
+        .map(|t| format!(r#" TEMPLATE "{t}""#))
+        .unwrap_or_default();
 
     let mut admin = admin_connection(host_port).await;
     admin
-        .execute(format!(r#"CREATE DATABASE "{db_name}" TEMPLATE "{template}""#).as_str())
+        .execute(format!(r#"CREATE DATABASE "{db_name}"{template_clause}"#).as_str())
         .await
         .expect("failed to create test database");
 
@@ -460,6 +467,42 @@ async fn create_test_database(host_port: u16) -> (String, PgPool) {
         .expect("failed to connect to test database");
 
     (db_name, pool)
+}
+
+/// Version of the last migration before stage 3 of the module epic.
+pub const BEFORE_STAGE_3: i64 = 20261024100000;
+
+/// Builds a database that stops at `cutoff`, lets the test seed data in the
+/// old schema, then applies everything after it and starts the app.
+pub async fn spawn_app_on_migrated_until<F>(cutoff: i64, seed: F) -> TestApp
+where
+    F: AsyncFnOnce(&PgPool),
+{
+    let container = shared_container().await;
+    let (_db_name, pool) = clone_database(container.host_port, None).await;
+
+    let modules = template_modules();
+    app::migrations::migrator_until(&modules, cutoff)
+        .await
+        .expect("early migrator")
+        .run(&pool)
+        .await
+        .expect("early migrations");
+    seed(&pool).await;
+    app::migrations::migrator(&modules)
+        .await
+        .expect("migrator")
+        .run(&pool)
+        .await
+        .expect("remaining migrations");
+
+    let mut settings = Settings::for_test(disabled_auth_settings());
+    settings.info.health_check_interval_secs = 1;
+    settings.info.update_check_repo = None;
+    // The start point list answers 503 while routing is off; listing never calls the optimizer.
+    settings.routing.enabled = true;
+    settings.routing.streamlet_url = "http://127.0.0.1:1".to_string();
+    start_app_on_pool(pool, settings).await
 }
 
 // `issuer_url` must still match `/realms/<name>` even when `enabled = false`
@@ -656,7 +699,10 @@ pub async fn seed_user_with_permissions_and_id(
 async fn spawn_with_settings(settings: Settings) -> TestApp {
     let container = shared_container().await;
     let (_db_name, db_pool) = create_test_database(container.host_port).await;
+    start_app_on_pool(db_pool, settings).await
+}
 
+async fn start_app_on_pool(db_pool: PgPool, settings: Settings) -> TestApp {
     let app = Application::build_with_pool(db_pool.clone(), "127.0.0.1:0", settings)
         .await
         .expect("failed to build application");

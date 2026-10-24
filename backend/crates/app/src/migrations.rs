@@ -41,6 +41,15 @@ fn direction(migration: &Migration) -> u8 {
 /// `_sqlx_migrations` table hold both; separate migrators would report each
 /// other's rows as missing.
 pub async fn migrator(modules: &[Box<dyn Module>]) -> Result<Migrator, MigrationSetupError> {
+    migrator_until(modules, i64::MAX).await
+}
+
+/// The merged history cut off after `cutoff` (inclusive). Lets a test build a
+/// database as it looked at an earlier release before applying the rest.
+pub async fn migrator_until(
+    modules: &[Box<dyn Module>],
+    cutoff: i64,
+) -> Result<Migrator, MigrationSetupError> {
     let mut by_version: BTreeMap<(i64, u8), (String, Migration)> = BTreeMap::new();
     let sources = std::iter::once(("core".to_string(), CORE.iter().cloned().collect::<Vec<_>>()))
         .chain(
@@ -49,7 +58,7 @@ pub async fn migrator(modules: &[Box<dyn Module>]) -> Result<Migrator, Migration
                 .map(|m| (m.key().to_string(), m.migrations())),
         );
     for (owner, migrations) in sources {
-        for migration in migrations {
+        for migration in migrations.into_iter().filter(|m| m.version <= cutoff) {
             let key = (migration.version, direction(&migration));
             if let Some((first, _)) = by_version.get(&key) {
                 return Err(MigrationSetupError::DuplicateVersion {

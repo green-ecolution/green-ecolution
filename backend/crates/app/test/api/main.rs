@@ -60,6 +60,7 @@ pub mod settings;
 pub mod settings_history;
 pub mod settings_lock;
 pub mod settings_repo;
+pub mod stage3_migration;
 pub mod statistics;
 pub mod targets;
 pub mod test_module;
