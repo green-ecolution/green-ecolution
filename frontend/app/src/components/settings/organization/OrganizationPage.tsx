@@ -68,9 +68,25 @@ const contactPersonMessage = (error: unknown, t: TFunction<'settings'>): string 
 const settingsFingerprint = (
   orgId: string | null,
   settings: OrganizationSettingsResponse | undefined,
+): string | null =>
+  settings
+    ? JSON.stringify([
+        orgId,
+        settings.mapView.value,
+        settings.mapView.origin,
+        settings.mapView.ownValue ?? null,
+        settings.descendantsMayOverride,
+        settings.enforcedBy?.id ?? null,
+      ])
+    : null
+
+/** Each draft follows its own response only, so a save that moved one half
+ *  cannot wipe an edit that stayed behind in the other. */
+const irrigationFingerprint = (
+  orgId: string | null,
   irrigation: IrrigationSettingsResponse | undefined,
 ): string | null =>
-  settings && irrigation
+  irrigation
     ? JSON.stringify([
         orgId,
         irrigation.waterDemand.value,
@@ -79,11 +95,6 @@ const settingsFingerprint = (
         irrigation.justWateredTtlSecs.value,
         irrigation.justWateredTtlSecs.origin,
         irrigation.justWateredTtlSecs.ownValue ?? null,
-        settings.mapView.value,
-        settings.mapView.origin,
-        settings.mapView.ownValue ?? null,
-        settings.descendantsMayOverride,
-        settings.enforcedBy?.id ?? null,
       ])
     : null
 
@@ -119,6 +130,7 @@ const OrganizationPage = () => {
   const [expandedOverride, setExpandedOverride] = useState<ReadonlySet<string> | null>(null)
   const [loadedDetail, setLoadedDetail] = useState<OrganizationDetailResponse | null>(null)
   const [loadedSettingsKey, setLoadedSettingsKey] = useState<string | null>(null)
+  const [loadedIrrigationKey, setLoadedIrrigationKey] = useState<string | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
   const [pendingSelection, setPendingSelection] = useState<string | null | undefined>(undefined)
   const [pendingClose, setPendingClose] = useState(false)
@@ -152,7 +164,8 @@ const OrganizationPage = () => {
     ...settingsQueries.irrigation(selectedId ?? ''),
     enabled: canReadSettings && selectedId !== null,
   })
-  const settingsKey = settingsFingerprint(selectedId, settings, irrigation)
+  const settingsKey = settingsFingerprint(selectedId, settings)
+  const irrigationKey = irrigationFingerprint(selectedId, irrigation)
 
   // An invalid settings draft builds no request, so `settingsDraft.dirty` is
   // false for it. Typed input would then be dropped without a word on the way
@@ -192,12 +205,18 @@ const OrganizationPage = () => {
     // the whole `organizations` prefix and therefore refetches these settings —
     // an identity check would reset the draft while the settings request is
     // still in flight and lose the typed value if that request then fails.
-    if (!settings || !irrigation || settingsKey === loadedSettingsKey) return
+    if (!settings || settingsKey === loadedSettingsKey) return
     // eslint-disable-next-line react-hooks/set-state-in-effect, react-x/set-state-in-effect -- loads the freshly fetched settings into the draft
     setLoadedSettingsKey(settingsKey)
     loadSettings(settings)
+  }, [settings, settingsKey, loadedSettingsKey, loadSettings])
+
+  useEffect(() => {
+    if (!irrigation || irrigationKey === loadedIrrigationKey) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect, react-x/set-state-in-effect -- loads the freshly fetched irrigation settings into the draft
+    setLoadedIrrigationKey(irrigationKey)
     loadIrrigation(irrigation)
-  }, [settings, irrigation, settingsKey, loadedSettingsKey, loadSettings, loadIrrigation])
+  }, [irrigation, irrigationKey, loadedIrrigationKey, loadIrrigation])
 
   const members = memberPage?.data ?? []
   const memberInitials = members

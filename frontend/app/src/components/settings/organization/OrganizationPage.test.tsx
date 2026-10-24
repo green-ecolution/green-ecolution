@@ -686,6 +686,35 @@ describe('OrganizationPage', () => {
     })
   })
 
+  it('keeps an invalid irrigation edit when a valid core change is saved', async () => {
+    const { rerender } = render(<OrganizationPage />)
+    await selectNord()
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Eigenen Wert für Wasserbedarf je Baum setzen' }),
+    )
+    const demand = screen.getByRole('spinbutton', { name: /Wasserbedarf/ })
+    await userEvent.clear(demand)
+    await userEvent.type(demand, '5000')
+    await userEvent.click(
+      screen.getByRole('switch', { name: /Untereinheiten dürfen eigene Werte setzen/ }),
+    )
+    await userEvent.click(screen.getByRole('button', { name: 'Speichern' }))
+
+    await waitFor(() => expect(updateSettingsMutate).toHaveBeenCalled())
+    // The core half went through and comes back changed; the invalid irrigation
+    // half stayed behind and must keep what was typed.
+    settingsMap.nord = { ...settingsMap.nord, descendantsMayOverride: false }
+    rerender(<OrganizationPage />)
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole('switch', { name: /Untereinheiten dürfen eigene Werte setzen/ }),
+      ).not.toBeChecked(),
+    )
+    expect(screen.getByRole('spinbutton', { name: /Wasserbedarf/ })).toHaveValue(5000)
+  })
+
   it('does not call the settings endpoint when only the name changed', async () => {
     render(<OrganizationPage />)
     await selectNord()

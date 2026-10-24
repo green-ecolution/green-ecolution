@@ -14,7 +14,9 @@ use domain::{
     shared::{coordinates::Coordinate, error::ValidationError, geo::BoundingBox},
 };
 
-use crate::service::ServiceError;
+use crate::service::{ServiceError, user_service::UserService};
+
+use super::user::display_name;
 
 #[derive(Debug, Serialize, utoipa::ToSchema)]
 #[serde(rename_all = "snake_case")]
@@ -196,6 +198,28 @@ impl TryFrom<OrganizationSettingsUpdateRequest> for SettingsUpdate {
             descendants_may_override: req.descendants_may_override,
         })
     }
+}
+
+/// One lookup for every distinct author on the page. An IdP outage must not
+/// fail the read: the values are still valid, they just render without a name.
+pub(crate) async fn resolve_change_authors(
+    users: &UserService,
+    authors: impl IntoIterator<Item = Option<Uuid>>,
+) -> HashMap<Uuid, String> {
+    let mut ids: Vec<Uuid> = authors.into_iter().flatten().collect();
+    ids.sort_unstable();
+    ids.dedup();
+    if ids.is_empty() {
+        return HashMap::new();
+    }
+    users
+        .by_ids(&ids)
+        .await
+        .inspect_err(|error| tracing::warn!(%error, "failed to resolve settings change authors"))
+        .unwrap_or_default()
+        .iter()
+        .map(|user| (user.id, display_name(user)))
+        .collect()
 }
 
 pub(crate) fn field<T>(

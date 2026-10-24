@@ -20,11 +20,9 @@ use crate::{
         auth::extractor::AuthUserExtractor,
         extractors::{Json, Path},
         v1::{
-            dto::{
-                settings::{
-                    ChangeStamp, OrganizationRef, SettingField, double_option, field, patch,
-                },
-                user::display_name,
+            dto::settings::{
+                ChangeStamp, OrganizationRef, SettingField, double_option, field, patch,
+                resolve_change_authors,
             },
             error::ErrorBody,
         },
@@ -109,28 +107,6 @@ impl IrrigationSettingsResponse {
     }
 }
 
-/// An IdP outage must not fail the read; the values render without a name.
-async fn resolve_change_authors(
-    state: &IrrigationHttpState,
-    last: &HashMap<&'static str, ChangeStamp>,
-) -> HashMap<Uuid, String> {
-    let mut ids: Vec<Uuid> = last.values().filter_map(|e| e.changed_by).collect();
-    ids.sort_unstable();
-    ids.dedup();
-    if ids.is_empty() {
-        return HashMap::new();
-    }
-    state
-        .users
-        .by_ids(&ids)
-        .await
-        .inspect_err(|error| tracing::warn!(%error, "failed to resolve settings change authors"))
-        .unwrap_or_default()
-        .iter()
-        .map(|user| (user.id, display_name(user)))
-        .collect()
-}
-
 async fn respond(
     state: &IrrigationHttpState,
     org: Id<domain::organization::Organization>,
@@ -138,7 +114,7 @@ async fn respond(
     let resolution = state.settings.resolution(org).await?;
     let own = state.settings.own(org).await?;
     let last = state.settings.last_changes(org).await?;
-    let names = resolve_change_authors(state, &last).await;
+    let names = resolve_change_authors(&state.users, last.values().map(|e| e.changed_by)).await;
     Ok(Json(IrrigationSettingsResponse::build(
         &resolution,
         &own,
