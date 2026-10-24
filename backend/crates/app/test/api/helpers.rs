@@ -351,10 +351,41 @@ async fn template_database() -> &'static str {
         .await
 }
 
-/// Modules whose migrations every test database carries. Task 7 adds the
-/// test module; until then this is the production list.
+/// Modules whose migrations every test database carries. The test module is
+/// included so any test can mount it without migrating a database of its own.
 pub fn template_modules() -> Vec<Box<dyn server::module::Module>> {
-    app::modules::registered()
+    let mut modules = app::modules::registered();
+    modules.push(Box::new(crate::test_module::TestModule::new(
+        Default::default(),
+    )));
+    modules
+}
+
+pub async fn spawn_app_with_modules(modules: Vec<Box<dyn server::module::Module>>) -> TestApp {
+    try_spawn_app_with_modules(modules)
+        .await
+        .expect("failed to build application")
+}
+
+pub async fn try_spawn_app_with_modules(
+    modules: Vec<Box<dyn server::module::Module>>,
+) -> Result<TestApp, std::io::Error> {
+    let mut settings = Settings::for_test(disabled_auth_settings());
+    settings.info.health_check_interval_secs = 1;
+    settings.info.update_check_repo = None;
+    let container = shared_container().await;
+    let (_db_name, db_pool) = create_test_database(container.host_port).await;
+    let app =
+        Application::build_with_modules(db_pool.clone(), "127.0.0.1:0", settings, modules).await?;
+    let port = app.port();
+    let state = app.state();
+    tokio::spawn(app.run_until_stopped());
+    Ok(TestApp {
+        address: format!("http://127.0.0.1:{port}"),
+        port,
+        db_pool,
+        state,
+    })
 }
 
 async fn create_test_database(host_port: u16) -> (String, PgPool) {

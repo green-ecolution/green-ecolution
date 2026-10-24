@@ -40,6 +40,7 @@ use server::{
         system_info::DefaultSystemInfoProvider,
         update_checker::UpdateChecker,
     },
+    module::Module,
     service::{
         authorization::AuthorizationService,
         cluster_service::ClusterService,
@@ -82,6 +83,7 @@ pub struct Application {
     _jwks: Arc<JwksProvider>,
     shutdown_tx: tokio::sync::watch::Sender<bool>,
     mqtt_handle: Option<tokio::task::JoinHandle<()>>,
+    module_routes: Vec<server::module::ModuleRoutes>,
 }
 
 impl Application {
@@ -90,7 +92,7 @@ impl Application {
             .await
             .expect("failed to connect to database");
         let address = format!("{}:{}", config.application.host, config.application.port);
-        Self::build_with_pool(pool, &address, config).await
+        Self::build_with_modules(pool, &address, config, crate::modules::registered()).await
     }
 
     pub async fn build_with_pool(
@@ -98,6 +100,23 @@ impl Application {
         address: &str,
         settings: Settings,
     ) -> Result<Self, std::io::Error> {
+        Self::build_with_modules(pool, address, settings, crate::modules::registered()).await
+    }
+
+    pub async fn build_with_modules(
+        pool: PgPool,
+        address: &str,
+        settings: Settings,
+        modules: Vec<Box<dyn Module>>,
+    ) -> Result<Self, std::io::Error> {
+        server::module::check_modules(&server::http::v1::core_openapi(), &modules).map_err(
+            |err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err.to_string()),
+        )?;
+        for configured in settings.modules.keys() {
+            if !modules.iter().any(|m| m.key().as_str() == configured) {
+                tracing::warn!(module = %configured, "modules.{configured} is configured but no such module is registered");
+            }
+        }
         let AuthStack {
             user_repo,
             auth_layer,
@@ -136,11 +155,22 @@ impl Application {
             profile_repo.clone(),
             defaults,
         ));
+        let activation_defaults: std::collections::BTreeMap<_, _> = modules
+            .iter()
+            .map(|module| {
+                let key = module.key();
+                let default = settings
+                    .modules
+                    .get(key.as_str())
+                    .map_or(module.default_enabled(), |m| m.default_enabled);
+                (key, default)
+            })
+            .collect();
         let module_activation_repo = Arc::new(
             server::infra::pg_module_activation::PgModuleActivationRepository::new(
                 pool.clone(),
                 repos.organization_reader.clone(),
-                std::collections::BTreeMap::new(),
+                activation_defaults.clone(),
             ),
         );
         let module_activation_service = Arc::new(
@@ -148,7 +178,7 @@ impl Application {
                 module_activation_repo.clone(),
                 module_activation_repo.clone(),
                 repos.organization_reader.clone(),
-                std::collections::BTreeSet::new(),
+                activation_defaults.into_keys().collect(),
             ),
         );
         let user_service = Arc::new(UserService::new(
@@ -161,7 +191,7 @@ impl Application {
             repos.organization_writer.clone(),
             settings.auth.enabled,
         ));
-        let event_bus = build_event_bus(&repos);
+        let event_bus = Arc::new(server::service::event_bus::DeferredEventBus::new());
         let route_optimizer: Option<Arc<dyn domain::routing::RouteOptimizer>> =
             settings.routing.enabled.then(|| {
                 Arc::new(infra::streamlet::StreamletRouteOptimizer::new(
@@ -170,7 +200,7 @@ impl Application {
             });
         let services = Services::build(
             &repos,
-            event_bus,
+            event_bus.clone(),
             route_optimizer,
             settings_repo.clone(),
             repos.start_point_reader.clone(),
@@ -185,6 +215,36 @@ impl Application {
                 )
             }),
         );
+
+        let mut handlers = core_event_handlers(&repos);
+        let mut module_routes = Vec::new();
+        let mut background_tasks = Vec::new();
+        for module in &modules {
+            let ctx = server::module::ModuleContext {
+                pool: pool.clone(),
+                event_bus: event_bus.clone(),
+                authorization: services.authorization.clone(),
+                organizations: repos.organization_reader.clone(),
+                settings: settings_repo.clone(),
+                access: server::service::module_access::ModuleAccess::new(
+                    module.key(),
+                    services.authorization.clone(),
+                    module_activation_repo.clone(),
+                ),
+            };
+            let runtime = module
+                .build(ctx)
+                .map_err(|err| std::io::Error::other(err.to_string()))?;
+            handlers.extend(runtime.event_handlers);
+            module_routes.push(runtime.routes);
+            background_tasks.extend(runtime.background_tasks);
+        }
+        event_bus
+            .install(Arc::new(InMemoryEventBus::new(handlers)))
+            .expect("the event bus is installed exactly once, here");
+        for task in background_tasks {
+            tokio::spawn(task);
+        }
 
         let (shutdown_tx, shutdown_rx) = tokio::sync::watch::channel(false);
         let (mqtt_state, mqtt_handle) =
@@ -311,6 +371,7 @@ impl Application {
             _jwks: jwks,
             shutdown_tx,
             mqtt_handle,
+            module_routes,
         })
     }
 
@@ -336,6 +397,7 @@ impl Application {
             self.auth_layer,
             &self.oidc_swagger,
             self.request_timeout,
+            self.module_routes,
         );
         tracing::info!("listening on {}", self.listener.local_addr()?);
         axum::serve(self.listener, app)
@@ -681,8 +743,8 @@ fn build_http_client(timeout: Duration) -> reqwest::Client {
         .expect("reqwest client must build")
 }
 
-fn build_event_bus(repos: &Repositories) -> Arc<dyn EventBus> {
-    let handlers: Vec<Arc<dyn EventHandler>> = vec![
+fn core_event_handlers(repos: &Repositories) -> Vec<Arc<dyn EventHandler>> {
+    vec![
         Arc::new(ClusterRecalculationHandler::new(
             repos.cluster_reader.clone(),
             repos.cluster_writer.clone(),
@@ -712,8 +774,7 @@ fn build_event_bus(repos: &Repositories) -> Arc<dyn EventBus> {
             repos.cluster_reader.clone(),
             repos.sensor_reading_reader.clone(),
         )),
-    ];
-    Arc::new(InMemoryEventBus::new(handlers))
+    ]
 }
 
 fn spawn_mqtt_subscriber(

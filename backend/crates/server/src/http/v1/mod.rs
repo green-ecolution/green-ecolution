@@ -59,8 +59,20 @@ pub fn core_openapi() -> utoipa::openapi::OpenApi {
     public_router().merge(protected_router()).into_openapi()
 }
 
-pub fn router(auth_layer: AuthLayer) -> OpenApiRouter<Arc<AppState>> {
-    public_router().merge(protected_router().layer(middleware::from_fn_with_state(
+pub fn router(
+    auth_layer: AuthLayer,
+    module_routes: Vec<crate::module::ModuleRoutes>,
+) -> OpenApiRouter<Arc<AppState>> {
+    let (public, protected) = module_routes.into_iter().fold(
+        (public_router(), protected_router()),
+        |(public, protected), routes| {
+            (
+                public.merge(routes.public),
+                protected.merge(routes.protected),
+            )
+        },
+    );
+    public.merge(protected.layer(middleware::from_fn_with_state(
         auth_layer,
         crate::http::auth::auth_middleware,
     )))

@@ -10,7 +10,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .nth(1)
         .unwrap_or_else(|| "http://127.0.0.1:3030".to_string());
 
-    let openapi = openapi_doc(&base_url);
+    let module_docs = app::modules::registered()
+        .iter()
+        .map(|module| module.openapi())
+        .collect();
+    let openapi = openapi_doc(&base_url, module_docs);
     println!("{}", openapi.to_pretty_json()?);
     Ok(())
 }

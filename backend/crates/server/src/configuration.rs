@@ -31,6 +31,14 @@ pub struct Settings {
     pub plugins: PluginsSettings,
     #[serde(default)]
     pub analytics: AnalyticsSettings,
+    /// Overrides a module's own activation default, keyed by module key.
+    #[serde(default)]
+    pub modules: std::collections::BTreeMap<String, ModuleSettings>,
+}
+
+#[derive(serde::Deserialize, Clone, Debug)]
+pub struct ModuleSettings {
+    pub default_enabled: bool,
 }
 
 #[derive(serde::Deserialize, Clone)]
@@ -566,6 +574,7 @@ impl Settings {
             routing: RoutingSettings::default(),
             plugins: PluginsSettings::default(),
             analytics: AnalyticsSettings::default(),
+            modules: std::collections::BTreeMap::new(),
         }
     }
 }
