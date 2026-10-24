@@ -5,6 +5,7 @@ pub mod mqtt;
 pub mod pg_cluster;
 pub mod pg_comment;
 pub mod pg_evaluation;
+pub mod pg_module_activation;
 pub mod pg_organization;
 pub mod pg_plugin;
 pub mod pg_plugin_proxy_session;

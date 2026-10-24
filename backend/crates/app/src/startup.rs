@@ -4,7 +4,10 @@ use std::time::Duration;
 use sqlx::{PgPool, postgres::PgPoolOptions};
 use tokio::net::TcpListener;
 
-use crate::{
+use domain::info::{
+    HealthSnapshotReader, ReadinessReader, ServiceName, StatisticsReader, SystemInfoProvider,
+};
+use server::{
     configuration::{CorsSettings, DatabaseSettings, Settings},
     http::{
         AppOrigins, AppState, FeatureFlags, NearestTreeLimits, OidcSwaggerSettings,
@@ -37,6 +40,7 @@ use crate::{
         system_info::DefaultSystemInfoProvider,
         update_checker::UpdateChecker,
     },
+    module::Module,
     service::{
         authorization::AuthorizationService,
         cluster_service::ClusterService,
@@ -66,9 +70,6 @@ use crate::{
         watering_plan_service::WateringPlanService,
     },
 };
-use domain::info::{
-    HealthSnapshotReader, ReadinessReader, ServiceName, StatisticsReader, SystemInfoProvider,
-};
 
 pub struct Application {
     port: u16,
@@ -82,6 +83,7 @@ pub struct Application {
     _jwks: Arc<JwksProvider>,
     shutdown_tx: tokio::sync::watch::Sender<bool>,
     mqtt_handle: Option<tokio::task::JoinHandle<()>>,
+    module_routes: Vec<server::module::ModuleRoutes>,
 }
 
 impl Application {
@@ -90,7 +92,7 @@ impl Application {
             .await
             .expect("failed to connect to database");
         let address = format!("{}:{}", config.application.host, config.application.port);
-        Self::build_with_pool(pool, &address, config).await
+        Self::build_with_modules(pool, &address, config, crate::modules::registered()).await
     }
 
     pub async fn build_with_pool(
@@ -98,6 +100,23 @@ impl Application {
         address: &str,
         settings: Settings,
     ) -> Result<Self, std::io::Error> {
+        Self::build_with_modules(pool, address, settings, crate::modules::registered()).await
+    }
+
+    pub async fn build_with_modules(
+        pool: PgPool,
+        address: &str,
+        settings: Settings,
+        modules: Vec<Box<dyn Module>>,
+    ) -> Result<Self, std::io::Error> {
+        server::module::check_modules(&server::http::v1::core_openapi(), &modules).map_err(
+            |err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err.to_string()),
+        )?;
+        for configured in settings.modules.keys() {
+            if !modules.iter().any(|m| m.key().as_str() == configured) {
+                tracing::warn!(module = %configured, "modules.{configured} is configured but no such module is registered");
+            }
+        }
         let AuthStack {
             user_repo,
             auth_layer,
@@ -129,13 +148,39 @@ impl Application {
         let profile_repo = Arc::new(infra::pg_user_profile::PgUserProfileRepository::new(
             pool.clone(),
         ));
-        let settings_service = Arc::new(crate::service::settings_service::SettingsService::new(
+        let settings_service = Arc::new(server::service::settings_service::SettingsService::new(
             settings_repo.clone(),
             settings_repo.clone(),
             settings_repo.clone(),
             profile_repo.clone(),
             defaults,
         ));
+        let activation_defaults: std::collections::BTreeMap<_, _> = modules
+            .iter()
+            .map(|module| {
+                let key = module.key();
+                let default = settings
+                    .modules
+                    .get(key.as_str())
+                    .map_or(module.default_enabled(), |m| m.default_enabled);
+                (key, default)
+            })
+            .collect();
+        let module_activation_repo = Arc::new(
+            server::infra::pg_module_activation::PgModuleActivationRepository::new(
+                pool.clone(),
+                repos.organization_reader.clone(),
+                activation_defaults.clone(),
+            ),
+        );
+        let module_activation_service = Arc::new(
+            server::service::module_activation_service::ModuleActivationService::new(
+                module_activation_repo.clone(),
+                module_activation_repo.clone(),
+                repos.organization_reader.clone(),
+                activation_defaults.into_keys().collect(),
+            ),
+        );
         let user_service = Arc::new(UserService::new(
             user_repo.clone(),
             profile_repo.clone(),
@@ -146,7 +191,7 @@ impl Application {
             repos.organization_writer.clone(),
             settings.auth.enabled,
         ));
-        let event_bus = build_event_bus(&repos);
+        let event_bus = Arc::new(server::service::event_bus::DeferredEventBus::new());
         let route_optimizer: Option<Arc<dyn domain::routing::RouteOptimizer>> =
             settings.routing.enabled.then(|| {
                 Arc::new(infra::streamlet::StreamletRouteOptimizer::new(
@@ -155,7 +200,7 @@ impl Application {
             });
         let services = Services::build(
             &repos,
-            event_bus,
+            event_bus.clone(),
             route_optimizer,
             settings_repo.clone(),
             repos.start_point_reader.clone(),
@@ -170,6 +215,36 @@ impl Application {
                 )
             }),
         );
+
+        let mut handlers = core_event_handlers(&repos);
+        let mut module_routes = Vec::new();
+        let mut background_tasks = Vec::new();
+        for module in &modules {
+            let ctx = server::module::ModuleContext {
+                pool: pool.clone(),
+                event_bus: event_bus.clone(),
+                authorization: services.authorization.clone(),
+                organizations: repos.organization_reader.clone(),
+                settings: settings_repo.clone(),
+                access: server::service::module_access::ModuleAccess::new(
+                    module.key(),
+                    services.authorization.clone(),
+                    module_activation_repo.clone(),
+                ),
+            };
+            let runtime = module
+                .build(ctx)
+                .map_err(|err| std::io::Error::other(err.to_string()))?;
+            handlers.extend(runtime.event_handlers);
+            module_routes.push(runtime.routes);
+            background_tasks.extend(runtime.background_tasks);
+        }
+        event_bus
+            .install(Arc::new(InMemoryEventBus::new(handlers)))
+            .map_err(std::io::Error::other)?;
+        for task in background_tasks {
+            tokio::spawn(task);
+        }
 
         let (shutdown_tx, shutdown_rx) = tokio::sync::watch::channel(false);
         let (mqtt_state, mqtt_handle) =
@@ -194,7 +269,7 @@ impl Application {
                     configured = proxy.session_ttl_minutes,
                     effective = proxy.effective_session_ttl_minutes(),
                     "plugins.proxy.session_ttl_minutes lies outside 1..={} and is clamped",
-                    crate::configuration::MAX_PLUGIN_SESSION_TTL_MINUTES
+                    server::configuration::MAX_PLUGIN_SESSION_TTL_MINUTES
                 );
             }
             Arc::new(PluginProxyService::new(
@@ -216,12 +291,12 @@ impl Application {
         let app_origins = AppOrigins::from_settings(&settings.cors, &settings.application.base_url);
         let plugin_proxy = match &settings.plugins.proxy {
             Some(proxy) => {
-                let hosts = crate::http::plugin_proxy::PluginHosts::for_app(
+                let hosts = server::http::plugin_proxy::PluginHosts::for_app(
                     &proxy.public_url,
                     &settings.application.base_url,
                 )
                 .map_err(|reason| std::io::Error::new(std::io::ErrorKind::InvalidInput, reason))?;
-                Some(Arc::new(crate::http::plugin_proxy::PluginProxy::new(
+                Some(Arc::new(server::http::plugin_proxy::PluginProxy::new(
                     hosts,
                     app_origins.frame_ancestors(),
                     proxy.effective_session_ttl_minutes(),
@@ -255,7 +330,7 @@ impl Application {
                 default_limit: settings.map.nearest_tree_default_limit,
                 max_limit: settings.map.nearest_tree_max_limit,
             },
-            frontend_config_js: crate::http::render_frontend_config_js(
+            frontend_config_js: server::http::render_frontend_config_js(
                 &settings.auth,
                 &settings.analytics,
             )
@@ -274,6 +349,7 @@ impl Application {
             plugin_proxy,
             settings_reader: settings_repo.clone(),
             settings_service,
+            module_activation_service,
             app_origins,
         });
 
@@ -295,6 +371,7 @@ impl Application {
             _jwks: jwks,
             shutdown_tx,
             mqtt_handle,
+            module_routes,
         })
     }
 
@@ -320,6 +397,7 @@ impl Application {
             self.auth_layer,
             &self.oidc_swagger,
             self.request_timeout,
+            self.module_routes,
         );
         tracing::info!("listening on {}", self.listener.local_addr()?);
         axum::serve(self.listener, app)
@@ -396,7 +474,7 @@ struct Repositories {
     start_point_writer: Arc<dyn domain::start_point::StartPointWriter>,
     plugin_reader: Arc<dyn domain::plugin::PluginReader>,
     plugin_writer: Arc<dyn domain::plugin::PluginWriter>,
-    plugin_view_tickets: Arc<dyn crate::service::plugin_view_ticket_service::ViewTicketStore>,
+    plugin_view_tickets: Arc<dyn server::service::plugin_view_ticket_service::ViewTicketStore>,
 }
 
 impl Repositories {
@@ -446,7 +524,7 @@ impl Repositories {
             plugin_reader: plugin_repo.clone(),
             plugin_writer: plugin_repo,
             plugin_view_tickets: Arc::new(
-                crate::infra::pg_plugin_view_ticket::PgViewTicketStore::new(pool.clone()),
+                server::infra::pg_plugin_view_ticket::PgViewTicketStore::new(pool.clone()),
             ),
         }
     }
@@ -495,7 +573,7 @@ impl Services {
             repos.plugin_reader.clone(),
             repos.plugin_writer.clone(),
             authorization.clone(),
-            Arc::new(crate::infra::plugin_key::RandomPluginKeyFactory),
+            Arc::new(server::infra::plugin_key::RandomPluginKeyFactory),
             proxy_policy,
         ));
         let tree = Arc::new(TreeService::new(
@@ -600,7 +678,7 @@ impl Services {
             plugin_sensor_ingest,
             plugin_view_tickets: Arc::new(PluginViewTicketService::new(
                 repos.plugin_view_tickets.clone(),
-                Arc::new(crate::infra::plugin_view_ticket::RandomViewTicketFactory),
+                Arc::new(server::infra::plugin_view_ticket::RandomViewTicketFactory),
             )),
         }
     }
@@ -665,8 +743,8 @@ fn build_http_client(timeout: Duration) -> reqwest::Client {
         .expect("reqwest client must build")
 }
 
-fn build_event_bus(repos: &Repositories) -> Arc<dyn EventBus> {
-    let handlers: Vec<Arc<dyn EventHandler>> = vec![
+fn core_event_handlers(repos: &Repositories) -> Vec<Arc<dyn EventHandler>> {
+    vec![
         Arc::new(ClusterRecalculationHandler::new(
             repos.cluster_reader.clone(),
             repos.cluster_writer.clone(),
@@ -696,8 +774,7 @@ fn build_event_bus(repos: &Repositories) -> Arc<dyn EventBus> {
             repos.cluster_reader.clone(),
             repos.sensor_reading_reader.clone(),
         )),
-    ];
-    Arc::new(InMemoryEventBus::new(handlers))
+    ]
 }
 
 fn spawn_mqtt_subscriber(

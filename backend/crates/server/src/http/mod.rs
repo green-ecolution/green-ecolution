@@ -140,6 +140,8 @@ pub struct AppState {
     /// drive resolution directly instead of through the HTTP surface.
     pub settings_reader: Arc<dyn domain::settings::SettingsReader>,
     pub settings_service: Arc<SettingsService>,
+    pub module_activation_service:
+        Arc<crate::service::module_activation_service::ModuleActivationService>,
     pub app_origins: AppOrigins,
 }
 
@@ -170,6 +172,7 @@ pub struct AppState {
         (name = "Organizations", description = "Manage the organization tree used for RBAC scoping and multi-tenancy."),
         (name = "Roles", description = "Manage roles (named permission sets) and their assignment to users."),
         (name = "Comments", description = "Free-text comments on tree clusters and watering plans. Reading follows the parent resource's read permission, writing its update permission."),
+        (name = "Modules", description = "Feature modules and their activation per organization"),
         (name = "Settings", description = "Per-organization operational defaults — water demand, just-watered duration, sensor thresholds and the map viewport — resolved along the organization tree."),
     ),
 )]
@@ -203,11 +206,17 @@ async fn frontend_config_js(
     )
 }
 
-pub fn openapi_doc(base_url: &str) -> utoipa::openapi::OpenApi {
-    let (_, mut api) = OpenApiRouter::<Arc<AppState>>::with_openapi(ApiDoc::openapi())
+pub fn openapi_doc(
+    base_url: &str,
+    module_docs: Vec<utoipa::openapi::OpenApi>,
+) -> utoipa::openapi::OpenApi {
+    let (_, api) = OpenApiRouter::<Arc<AppState>>::with_openapi(ApiDoc::openapi())
         .nest("/api", health::routes())
         .nest("/api/v1", v1::public_router().merge(v1::protected_router()))
         .split_for_parts();
+    let mut api = module_docs
+        .into_iter()
+        .fold(api, |api, doc| api.nest("/api/v1", doc));
 
     rewrite_paths_for_client(&mut api, base_url);
     api
@@ -220,10 +229,11 @@ pub fn router(
     auth_layer: AuthLayer,
     oidc: &OidcSwaggerSettings,
     request_timeout: Duration,
+    module_routes: Vec<crate::module::ModuleRoutes>,
 ) -> Router {
     let (router, mut api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
         .nest("/api", health::routes())
-        .nest("/api/v1", v1::router(auth_layer))
+        .nest("/api/v1", v1::router(auth_layer, module_routes))
         .split_for_parts();
 
     rewrite_paths_for_client(&mut api, base_url);

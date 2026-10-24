@@ -207,6 +207,21 @@ impl AccessContext {
         }
         Visibility::Only(orgs)
     }
+
+    /// Organizations any of the user's grants reaches, whatever the permission.
+    /// Answers "where does this user work", not "what may they do there".
+    pub fn reachable_orgs(&self) -> Visibility {
+        if self.permissions.is_unrestricted() {
+            return Visibility::Unrestricted;
+        }
+        let mut orgs = BTreeSet::new();
+        for (granted, perms) in self.permissions.grants() {
+            if !perms.is_empty() {
+                orgs.extend(self.hierarchy.descendants_or_self(*granted));
+            }
+        }
+        Visibility::Only(orgs)
+    }
 }
 
 #[cfg(test)]
@@ -366,6 +381,44 @@ mod tests {
         let only = Visibility::Only(BTreeSet::from([tbz]));
         assert!(only.allows(tbz));
         assert!(!only.allows(root));
+    }
+
+    #[test]
+    fn reachable_orgs_covers_every_subtree_with_any_grant() {
+        let (root, tbz, sub) = ids();
+        let other = Id::new_v7();
+        let hierarchy = OrgHierarchy::from_pairs([
+            (root, None),
+            (tbz, Some(root)),
+            (sub, Some(tbz)),
+            (other, Some(root)),
+        ]);
+        let ctx = AccessContext {
+            permissions: EffectivePermissions::from_grants(vec![(
+                tbz,
+                BTreeSet::from([tree_read()]),
+            )]),
+            hierarchy,
+        };
+        assert_eq!(
+            ctx.reachable_orgs(),
+            Visibility::Only(BTreeSet::from([tbz, sub]))
+        );
+    }
+
+    #[test]
+    fn reachable_orgs_ignores_empty_grants_and_is_unrestricted_for_the_bypass() {
+        let (root, tbz, _) = ids();
+        let hierarchy = OrgHierarchy::from_pairs([(root, None), (tbz, Some(root))]);
+        let ctx = AccessContext {
+            permissions: EffectivePermissions::from_grants(vec![(tbz, BTreeSet::new())]),
+            hierarchy,
+        };
+        assert_eq!(ctx.reachable_orgs(), Visibility::Only(BTreeSet::new()));
+        assert_eq!(
+            AccessContext::unrestricted().reachable_orgs(),
+            Visibility::Unrestricted
+        );
     }
 
     #[test]

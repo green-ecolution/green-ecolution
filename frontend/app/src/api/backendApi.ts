@@ -6,6 +6,7 @@ import {
   FetchAPI,
   HTTPHeaders,
   InfoApi,
+  ModulesApi,
   OrganizationsApi,
   PluginsApi,
   RegionsApi,
@@ -94,6 +95,7 @@ export const roleApi = new RolesApi(config)
 export const organizationApi = new OrganizationsApi(config)
 export const commentApi = new CommentsApi(config)
 export const settingsApi = new SettingsApi(config)
+export const moduleApi = new ModulesApi(config)
 
 export * from '@green-ecolution/backend-client'
 

@@ -63,6 +63,7 @@ For a reproducible environment, use `nix develop`.
 | `just lint` | Lint Rust workspace + frontend |
 | `just generate` | Run code generation |
 | `just migrate-up` | Apply database migrations |
+| `just migrate-new <name> [module]` | Create a new migration in `backend/migrations`, or in `backend/crates/modules/<module>/migrations` when a module key is given |
 | `just generate-sqlx` | Refresh sqlx offline query cache (after changing any `query!` / `query_as!`) |
 | `just build-keycloak-theme` | Build the Keycloak login theme (jar + exploded theme dir under `frontend/keycloak-theme/dist_keycloak/theme/`) |
 | `just keycloak-theme-dev` | Run the theme's Vite dev server against a mocked Keycloak context |
@@ -388,7 +389,7 @@ Use the [Feature Request template](https://github.com/green-ecolution/green-ecol
 - Domain code (`backend/crates/domain/`) must not depend on `sqlx`, `axum`, `tokio`, `reqwest`, `rumqttc`, or `tracing-subscriber`. `cargo build -p domain --no-default-features --locked` must stay green so the crate remains portable to WASM / mobile targets.
 - Aggregate invariants live in private fields with intent-named methods that return `Vec<DomainEvent>`. HTTP handlers return `*View` types, never raw aggregates.
 - Errors are typed: repository traits return `RepositoryError`; the HTTP layer maps to `ApiError`. Avoid `unwrap()` / `expect()` / `panic!` outside `reconstitute` paths and tests.
-- Write tests next to the code (`#[cfg(test)] mod tests`) for unit tests; integration tests live in `backend/crates/server/test/api/`.
+- Write tests next to the code (`#[cfg(test)] mod tests`) for unit tests; integration tests live in `backend/crates/app/test/api/`. Run a single one with `cargo test -p app --test api -- <name> --nocapture`.
 
 ### Writing a new list query
 
@@ -423,7 +424,7 @@ copy); adding a sort option without extending that test leaves the contract unch
 update it in the same change.
 
 Finally, add an integration test per filter and per sort option in
-`backend/crates/server/test/api/`, following the existing naming
+`backend/crates/app/test/api/`, following the existing naming
 (`vehicle_list_searches_plate_model_and_description`,
 `vehicle_list_filters_by_derived_status`, `vehicle_list_sorts_by_water_capacity_descending`,
 `vehicle_list_can_include_and_isolate_archived_vehicles`). These are what actually catch a
@@ -521,10 +522,12 @@ backend/                  Cargo workspace (Rust API)
                              repository traits, domain events, EventBus port).
                              No dependency on sqlx, axum, tokio — reusable on
                              WASM / mobile targets.
-    server/                  server crate (axum router, Postgres adapters,
-                             Keycloak, MQTT, composition root). Uses `domain`
-                             with the `sqlx` feature enabled. Produces the
-                             `green-ecolution` and `migrate` binaries.
+    server/                  server library (axum router, Postgres adapters,
+                             Keycloak, MQTT, application services). Uses `domain`
+                             with the `sqlx` feature enabled.
+    app/                     composition root (`src/startup.rs`) and the
+                             `green-ecolution`, `migrate` and `dump-openapi`
+                             binaries. Integration tests live in `app/test/api/`.
     devcli/                  `geco` developer console (TUI + CLI); not part of
                              any deployed artifact.
   migrations/                sqlx-managed SQL migrations (workspace root)
@@ -538,6 +541,12 @@ frontend/
     backend-client/          Generated OpenAPI client
     plugin-interface/        Plugin system interface
 ```
+
+Features that can be switched on per organization are called modules. An organization
+enables or disables a module with `PUT /api/v1/organizations/{org_id}/modules`, and the
+setting is inherited down the organization tree the same way as the other organization
+settings. Module endpoints answer with `module.disabled` (403) for an organization that
+has not activated the module. A guide for adding a new module is still to come.
 
 ## Writing a Plugin
 

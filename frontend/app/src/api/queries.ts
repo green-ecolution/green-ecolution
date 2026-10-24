@@ -29,6 +29,8 @@ import {
   ListVehiclesRequest,
   ListWateringPlansRequest,
   MapInfoResponse,
+  moduleApi,
+  ModuleListResponse,
   NearestTreeListResponse,
   organizationApi,
   OrganizationDetailResponse,
@@ -589,4 +591,10 @@ export const routingStartPointsQuery = () =>
       }
     },
     staleTime: Infinity,
+  })
+
+export const modulesQuery = () =>
+  queryOptions<ModuleListResponse>({
+    queryKey: ['modules'],
+    queryFn: () => moduleApi.listModules(),
   })

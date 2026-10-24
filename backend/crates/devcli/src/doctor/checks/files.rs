@@ -493,7 +493,7 @@ mod tests {
         assert_eq!(findings[0].id, "migrate-binary");
         assert_eq!(
             findings[0].fix.as_ref().unwrap().command,
-            "touch backend/crates/server/src/bin/migrate.rs && just migrate-up"
+            "touch backend/crates/app/src/migrations.rs && just migrate-up"
         );
         assert!(findings[0].detail.contains("cargo sqlx migrate run"));
 

@@ -104,6 +104,46 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "330a5ed07fa54e4702c9d6c4174f74427fc0ef6e214bbd677ae50a5099946470"
 
 [[package]]
+name = "app"
+version = "0.8.0"
+dependencies = [
+ "async-trait",
+ "axum",
+ "base64 0.23.1",
+ "chrono",
+ "claims",
+ "domain",
+ "futures",
+ "geo-types",
+ "include_dir",
+ "jsonwebtoken",
+ "libc",
+ "polyline",
+ "quickcheck",
+ "quickcheck_macros",
+ "rand 0.10.3",
+ "reqwest",
+ "rsa",
+ "rust_decimal",
+ "secrecy",
+ "serde",
+ "serde_json",
+ "server",
+ "sqlx",
+ "testcontainers",
+ "testcontainers-modules",
+ "thiserror 2.0.21",
+ "tokio",
+ "tracing",
+ "url",
+ "urlencoding",
+ "utoipa",
+ "utoipa-axum",
+ "uuid",
+ "wiremock",
+]
+
+[[package]]
 name = "approx"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"

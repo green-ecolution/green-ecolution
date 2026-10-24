@@ -2,9 +2,9 @@ use std::env;
 use std::error::Error;
 use std::process::ExitCode;
 
+use app::startup::Application;
 use server::{
     configuration::{ConfigError, get_configuration},
-    startup::Application,
     telemetry,
 };
 

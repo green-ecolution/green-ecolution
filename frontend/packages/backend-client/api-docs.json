@@ -1259,6 +1259,48 @@
         }
       }
     },
+    "/v1/modules": {
+      "get": {
+        "tags": [
+          "Modules"
+        ],
+        "summary": "List modules and where they are active",
+        "description": "Every module the instance ships plus, for each organization the caller works in, the modules active there.",
+        "operationId": "listModules",
+        "responses": {
+          "200": {
+            "description": "Modules",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModuleListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/organizations": {
       "get": {
         "tags": [
@@ -1653,6 +1695,182 @@
           },
           "409": {
             "description": "Organization still has children or users, or is the root (codes `conflict.organization_not_empty`, `conflict.root_organization_immutable`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/organizations/{org_id}/modules": {
+      "get": {
+        "tags": [
+          "Modules"
+        ],
+        "summary": "Read an organization's module switches",
+        "description": "Each module carries the state in force, where it came from and this organization's own switch. Requires setting:read.",
+        "operationId": "getOrganizationModules",
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "description": "Organization id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The resolved switches",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationModulesResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Modules"
+        ],
+        "summary": "Switch modules for an organization",
+        "description": "An omitted module stays as it is, `null` returns it to inheritance. Requires setting:update.",
+        "operationId": "updateOrganizationModules",
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "description": "Organization id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrganizationModulesUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationModulesResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "An organization above froze this subtree (code `settings.enforced_by_ancestor`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unknown module (code `module.unknown`)",
             "content": {
               "application/json": {
                 "schema": {
@@ -10014,6 +10232,29 @@
           }
         }
       },
+      "ModuleListResponse": {
+        "type": "object",
+        "required": [
+          "modules",
+          "organizations"
+        ],
+        "properties": {
+          "modules": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Every module this instance ships, active or not."
+          },
+          "organizations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrganizationModulesEntry"
+            },
+            "description": "One entry per organization the caller works in."
+          }
+        }
+      },
       "NearestTreeListResponse": {
         "type": "object",
         "description": "Non-paginated list of nearest trees with distance information.",
@@ -10128,6 +10369,104 @@
           "member_count": 7,
           "name": "TBZ Flensburg",
           "parent_id": "01980000-0000-7000-8000-000000000001"
+        }
+      },
+      "OrganizationModuleResponse": {
+        "type": "object",
+        "required": [
+          "key",
+          "enabled",
+          "origin"
+        ],
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "key": {
+            "type": "string"
+          },
+          "origin": {
+            "$ref": "#/components/schemas/SettingOriginDto"
+          },
+          "own_value": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "This organization's own switch, reported even while a lock above makes it dormant."
+          },
+          "source": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/OrganizationRef",
+                "description": "Set only where `origin` is `inherited`."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "OrganizationModulesEntry": {
+        "type": "object",
+        "required": [
+          "organization_id",
+          "active"
+        ],
+        "properties": {
+          "active": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "organization_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "OrganizationModulesResponse": {
+        "type": "object",
+        "required": [
+          "modules"
+        ],
+        "properties": {
+          "enforced_by": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/OrganizationRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "modules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrganizationModuleResponse"
+            }
+          }
+        }
+      },
+      "OrganizationModulesUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "modules": {
+            "type": "object",
+            "description": "`true`/`false` sets the organization's own switch, `null` returns the\nmodule to inheritance, an absent key stays as it is.",
+            "additionalProperties": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "propertyNames": {
+              "type": "string"
+            }
+          }
         }
       },
       "OrganizationRef": {
@@ -14621,6 +14960,10 @@
     {
       "name": "Comments",
       "description": "Free-text comments on tree clusters and watering plans. Reading follows the parent resource's read permission, writing its update permission."
+    },
+    {
+      "name": "Modules",
+      "description": "Feature modules and their activation per organization"
     },
     {
       "name": "Settings",

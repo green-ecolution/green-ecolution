@@ -1,10 +1,9 @@
 use include_dir::{Dir, include_dir};
 use server::configuration::get_configuration;
 use sqlx::postgres::PgConnectOptions;
-use sqlx::{Executor, PgPool, migrate::Migrator};
+use sqlx::{Executor, PgPool};
 use std::env;
 
-static MIGRATOR: Migrator = sqlx::migrate!("../../migrations");
 static SEEDS: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../../seeds");
 
 // Reset wipes app-owned objects in-place instead of DROP/CREATE DATABASE:
@@ -83,12 +82,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .cloned();
 
     let (app_options, schema) = resolve_options(schema_override)?;
+    let migrator = app::migrations::migrator(&app::modules::registered()).await?;
 
     match cmd.as_str() {
         "up" | "run" => {
             let pool = PgPool::connect_with(app_options).await?;
             ensure_schema(&pool, &schema).await?;
-            MIGRATOR.run(&pool).await?;
+            migrator.run(&pool).await?;
             println!("Migrations applied");
             if with_seed {
                 run_seeds(&pool).await?;
@@ -103,7 +103,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     .unwrap_or_default();
             let applied: std::collections::HashSet<i64> =
                 applied.into_iter().map(|(v,)| v).collect();
-            for m in MIGRATOR.iter() {
+            for m in migrator.iter() {
                 let mark = if applied.contains(&m.version) {
                     "[x]"
                 } else {
@@ -116,7 +116,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             let pool = PgPool::connect_with(app_options).await?;
             ensure_schema(&pool, &schema).await?;
             pool.execute(reset_sql(&schema).as_str()).await?;
-            MIGRATOR.run(&pool).await?;
+            migrator.run(&pool).await?;
             println!("Schema '{schema}' wiped and migrated");
             if with_seed {
                 run_seeds(&pool).await?;

@@ -4,6 +4,8 @@ pub mod comment_service;
 pub mod evaluation_service;
 pub mod event_bus;
 pub mod handlers;
+pub mod module_access;
+pub mod module_activation_service;
 pub mod organization_service;
 pub mod plugin_ingest_service;
 pub mod plugin_proxy_policy;
@@ -154,6 +156,12 @@ pub enum ServiceError {
     PluginProxyTargetNotAllowed,
     #[error("plugin upstream unreachable")]
     PluginUpstreamUnreachable,
+    #[error("unknown module {key}")]
+    ModuleUnknown { key: String },
+    /// The module exists but is switched off for the organization the request
+    /// targets. Not a missing permission of the user, but still a refusal.
+    #[error("module {module} is not active in this organization")]
+    ModuleDisabled { module: String },
     #[error(transparent)]
     WateringPlan(#[from] WateringPlanError),
 }
@@ -189,6 +197,8 @@ impl ServiceError {
             Self::SettingsEnforcedByAncestor { .. } => "settings.enforced_by_ancestor",
             Self::ContactPersonNotAMember => "organization.contact_person_not_a_member",
             Self::MissingOrganization => "organization.missing",
+            Self::ModuleUnknown { .. } => "module.unknown",
+            Self::ModuleDisabled { .. } => "module.disabled",
             Self::FeatureDisabled { feature } => match feature {
                 Feature::Routing => "feature.routing_disabled",
                 Feature::Plugins => "feature.plugins_disabled",
@@ -436,6 +446,8 @@ mod tests {
             ServiceError::MissingOrganization,
             ServiceError::CannotChangeOwnAccess,
             ServiceError::CannotRevokeOwnAdministration,
+            ServiceError::ModuleUnknown { key: "x".into() },
+            ServiceError::ModuleDisabled { module: "x".into() },
             ServiceError::SettingsEnforcedByAncestor {
                 organization_id: uuid::Uuid::nil(),
             },

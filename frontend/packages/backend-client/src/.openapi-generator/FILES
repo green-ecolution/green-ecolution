@@ -2,6 +2,7 @@
 apis/CommentsApi.ts
 apis/EvaluationApi.ts
 apis/InfoApi.ts
+apis/ModulesApi.ts
 apis/OrganizationsApi.ts
 apis/PluginsApi.ts
 apis/RegionsApi.ts
@@ -66,9 +67,14 @@ models/LorawanCredentialsRequest.ts
 models/LorawanInfoResponse.ts
 models/MapInfoResponse.ts
 models/MapViewDto.ts
+models/ModuleListResponse.ts
 models/NearestTreeListResponse.ts
 models/OrganizationCreateRequest.ts
 models/OrganizationDetailResponse.ts
+models/OrganizationModuleResponse.ts
+models/OrganizationModulesEntry.ts
+models/OrganizationModulesResponse.ts
+models/OrganizationModulesUpdateRequest.ts
 models/OrganizationRef.ts
 models/OrganizationResponse.ts
 models/OrganizationSettingsResponse.ts

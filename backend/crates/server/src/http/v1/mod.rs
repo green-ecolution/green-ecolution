@@ -12,6 +12,7 @@ pub mod error;
 pub mod evaluation;
 pub mod gpx;
 pub mod info;
+pub mod module;
 pub mod organization;
 pub mod pagination;
 pub mod plugin;
@@ -39,6 +40,7 @@ pub fn protected_router() -> OpenApiRouter<Arc<AppState>> {
         .merge(comment::routes())
         .merge(evaluation::routes())
         .merge(info::protected_routes())
+        .merge(module::routes())
         .merge(organization::routes())
         .merge(plugin::routes())
         .merge(role::routes())
@@ -51,8 +53,26 @@ pub fn protected_router() -> OpenApiRouter<Arc<AppState>> {
         .merge(watering_plan::routes())
 }
 
-pub fn router(auth_layer: AuthLayer) -> OpenApiRouter<Arc<AppState>> {
-    public_router().merge(protected_router().layer(middleware::from_fn_with_state(
+/// The core's own routes relative to `/api/v1`, for checking module routes
+/// against them before anything is mounted.
+pub fn core_openapi() -> utoipa::openapi::OpenApi {
+    public_router().merge(protected_router()).into_openapi()
+}
+
+pub fn router(
+    auth_layer: AuthLayer,
+    module_routes: Vec<crate::module::ModuleRoutes>,
+) -> OpenApiRouter<Arc<AppState>> {
+    let (public, protected) = module_routes.into_iter().fold(
+        (public_router(), protected_router()),
+        |(public, protected), routes| {
+            (
+                public.merge(routes.public),
+                protected.merge(routes.protected),
+            )
+        },
+    );
+    public.merge(protected.layer(middleware::from_fn_with_state(
         auth_layer,
         crate::http::auth::auth_middleware,
     )))

@@ -1,5 +1,6 @@
 use std::sync::{Arc, OnceLock};
 
+use app::startup::Application;
 use domain::{
     events::SensorReadings,
     sensor::{SensorId, data::Watermark, repository::NormalizedValue},
@@ -12,7 +13,6 @@ use server::{
     configuration::{AuthSettings, PluginProxySettings, Settings},
     http::AppState,
     service::{ServiceError, sensor_service::ReadingIngest},
-    startup::Application,
 };
 use sqlx::{Connection, Executor, PgConnection, PgPool, postgres::PgPoolOptions};
 use testcontainers::{ContainerAsync, GenericImage, ImageExt, runners::AsyncRunner};
@@ -322,7 +322,9 @@ async fn template_database() -> &'static str {
             ))
             .await
             .expect("failed to connect to template database");
-            sqlx::migrate!("../../migrations")
+            app::migrations::migrator(&template_modules())
+                .await
+                .expect("module migrations must merge")
                 .run(&mut conn)
                 .await
                 .expect("failed to migrate template database");
@@ -347,6 +349,59 @@ async fn template_database() -> &'static str {
             db_name
         })
         .await
+}
+
+/// Modules whose migrations every test database carries. The test module is
+/// included so any test can mount it without migrating a database of its own.
+pub fn template_modules() -> Vec<Box<dyn server::module::Module>> {
+    let mut modules = app::modules::registered();
+    modules.push(Box::new(crate::test_module::TestModule::new(
+        Default::default(),
+    )));
+    modules
+}
+
+pub async fn spawn_app_with_modules(modules: Vec<Box<dyn server::module::Module>>) -> TestApp {
+    try_spawn_app_with_modules(modules)
+        .await
+        .expect("failed to build application")
+}
+
+pub async fn try_spawn_app_with_modules(
+    modules: Vec<Box<dyn server::module::Module>>,
+) -> Result<TestApp, std::io::Error> {
+    try_spawn_app_with_modules_and_auth(modules, disabled_auth_settings()).await
+}
+
+pub async fn spawn_app_with_modules_and_auth(
+    modules: Vec<Box<dyn server::module::Module>>,
+    auth: AuthSettings,
+) -> TestApp {
+    try_spawn_app_with_modules_and_auth(modules, auth)
+        .await
+        .expect("failed to build application")
+}
+
+pub async fn try_spawn_app_with_modules_and_auth(
+    modules: Vec<Box<dyn server::module::Module>>,
+    auth: AuthSettings,
+) -> Result<TestApp, std::io::Error> {
+    let mut settings = Settings::for_test(auth);
+    settings.info.health_check_interval_secs = 1;
+    settings.info.update_check_repo = None;
+    let container = shared_container().await;
+    let (_db_name, db_pool) = create_test_database(container.host_port).await;
+    let app =
+        Application::build_with_modules(db_pool.clone(), "127.0.0.1:0", settings, modules).await?;
+    let port = app.port();
+    let state = app.state();
+    tokio::spawn(app.run_until_stopped());
+    Ok(TestApp {
+        address: format!("http://127.0.0.1:{port}"),
+        port,
+        db_pool,
+        state,
+    })
 }
 
 async fn create_test_database(host_port: u16) -> (String, PgPool) {
