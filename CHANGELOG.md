@@ -11,6 +11,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > single repository. For legacy releases, see the
 > [GitHub Releases](https://github.com/green-ecolution/green-ecolution/releases) page.
 
+## [0.9.0](https://github.com/green-ecolution/green-ecolution/compare/v0.8.0...v0.9.0) (2026-10-24)
+
+
+### Features
+
+* **backend:** add module scaffold with per-organization activation ([#1105](https://github.com/green-ecolution/green-ecolution/issues/1105)) ([4389a8f](https://github.com/green-ecolution/green-ecolution/commit/4389a8f5886ca7e0668b96fb4fea25ff67390003))
+* **devcli:** add geco developer console for the local stack ([#1101](https://github.com/green-ecolution/green-ecolution/issues/1101)) ([2ac3efc](https://github.com/green-ecolution/green-ecolution/commit/2ac3efc8eca4b12fb40ab2f4c357a99578056c11))
+* **watering-plan:** allow leaving out the vehicle's water tank when a trailer is attached ([#1104](https://github.com/green-ecolution/green-ecolution/issues/1104)) ([1294879](https://github.com/green-ecolution/green-ecolution/commit/1294879ed9cec8010f578fcb7ad9e73a71c55f96)), closes [#116](https://github.com/green-ecolution/green-ecolution/issues/116)
+
 ## [0.8.0](https://github.com/green-ecolution/green-ecolution/compare/v0.7.0...v0.8.0) (2026-10-09)
 
 
