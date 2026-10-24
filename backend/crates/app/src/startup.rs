@@ -227,9 +227,11 @@ impl Application {
             resource_catalog.clone(),
         );
 
+        let targets = Arc::new(server::service::targets::TargetRegistry::new());
         let mut handlers = core_event_handlers(&repos);
         let mut module_routes = Vec::new();
         let mut background_tasks = Vec::new();
+        let mut catalogs = std::collections::BTreeMap::new();
         for module in &modules {
             let ctx = server::module::ModuleContext {
                 pool: pool.clone(),
@@ -249,7 +251,13 @@ impl Application {
             handlers.extend(runtime.event_handlers);
             module_routes.push(runtime.routes);
             background_tasks.extend(runtime.background_tasks);
+            if let Some(catalog) = runtime.targets {
+                catalogs.insert(module.key(), catalog);
+            }
         }
+        targets
+            .install(catalogs)
+            .map_err(|e| std::io::Error::other(e.to_string()))?;
         event_bus
             .install(Arc::new(InMemoryEventBus::new(handlers)))
             .map_err(std::io::Error::other)?;

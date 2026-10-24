@@ -18,6 +18,7 @@ pub mod role_service;
 pub mod sensor_service;
 pub mod settings_service;
 pub mod start_point_service;
+pub mod targets;
 pub mod tree_service;
 pub mod user_service;
 pub mod vehicle_service;
@@ -162,6 +163,10 @@ pub enum ServiceError {
     /// targets. Not a missing permission of the user, but still a refusal.
     #[error("module {module} is not active in this organization")]
     ModuleDisabled { module: String },
+    #[error("module {module} does not accept {kind} targets for this purpose")]
+    TargetNotAccepted { module: String, kind: String },
+    #[error("{message}")]
+    TargetRefused { code: &'static str, message: String },
     #[error(transparent)]
     WateringPlan(#[from] WateringPlanError),
 }
@@ -199,6 +204,8 @@ impl ServiceError {
             Self::MissingOrganization => "organization.missing",
             Self::ModuleUnknown { .. } => "module.unknown",
             Self::ModuleDisabled { .. } => "module.disabled",
+            Self::TargetNotAccepted { .. } => "target.not_accepted",
+            Self::TargetRefused { code, .. } => code,
             Self::FeatureDisabled { feature } => match feature {
                 Feature::Routing => "feature.routing_disabled",
                 Feature::Plugins => "feature.plugins_disabled",
@@ -448,6 +455,14 @@ mod tests {
             ServiceError::CannotRevokeOwnAdministration,
             ServiceError::ModuleUnknown { key: "x".into() },
             ServiceError::ModuleDisabled { module: "x".into() },
+            ServiceError::TargetNotAccepted {
+                module: "x".into(),
+                kind: "y".into(),
+            },
+            ServiceError::TargetRefused {
+                code: "tree.not_yet_planted",
+                message: "x".into(),
+            },
             ServiceError::SettingsEnforcedByAncestor {
                 organization_id: uuid::Uuid::nil(),
             },

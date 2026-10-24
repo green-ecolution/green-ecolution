@@ -10,7 +10,7 @@ use std::{
 
 use domain::{
     authorization::ResourceKey, module::ModuleKey, organization::OrganizationReader,
-    settings::SettingsResolver,
+    settings::SettingsResolver, target::TargetCatalog,
 };
 use sqlx::PgPool;
 use utoipa_axum::router::OpenApiRouter;
@@ -74,6 +74,7 @@ pub struct ModuleRuntime {
     pub event_handlers: Vec<Arc<dyn EventHandler>>,
     /// Spawned once at startup, like the core's sweeps.
     pub background_tasks: Vec<BackgroundTask>,
+    pub targets: Option<Arc<dyn TargetCatalog>>,
 }
 
 impl ModuleRuntime {
@@ -82,6 +83,7 @@ impl ModuleRuntime {
             routes,
             event_handlers: Vec::new(),
             background_tasks: Vec::new(),
+            targets: None,
         }
     }
 }

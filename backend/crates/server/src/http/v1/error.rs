@@ -168,6 +168,9 @@ impl IntoResponse for ServiceError {
                 (StatusCode::UNPROCESSABLE_ENTITY, kind.to_string())
             }
             ServiceError::ModuleDisabled { .. } => (StatusCode::FORBIDDEN, self.to_string()),
+            ServiceError::TargetNotAccepted { .. } | ServiceError::TargetRefused { .. } => {
+                (StatusCode::UNPROCESSABLE_ENTITY, self.to_string())
+            }
             ServiceError::ModuleUnknown { .. } => {
                 (StatusCode::UNPROCESSABLE_ENTITY, self.to_string())
             }
