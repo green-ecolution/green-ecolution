@@ -24,6 +24,8 @@ struct CommentRow {
     id: Uuid,
     subject_type: String,
     subject_id: Uuid,
+    target_module: Option<String>,
+    target_kind: Option<String>,
     author_id: Uuid,
     body: String,
     edited_at: Option<chrono::NaiveDateTime>,
@@ -35,7 +37,12 @@ impl TryFrom<CommentRow> for CommentSnapshot {
     fn try_from(row: CommentRow) -> Result<Self, Self::Error> {
         Ok(Self {
             id: row.id,
-            subject: CommentSubject::from_parts(&row.subject_type, row.subject_id)?,
+            subject: CommentSubject::from_parts(
+                &row.subject_type,
+                row.subject_id,
+                row.target_module.as_deref(),
+                row.target_kind.as_deref(),
+            )?,
             author_id: row.author_id,
             body: row.body,
             edited_at: row.edited_at.map(|d| d.and_utc()),
@@ -54,7 +61,7 @@ impl CommentReader for PgCommentRepository {
     async fn by_id(&self, id: Id<Comment>) -> Result<Comment, RepositoryError> {
         let row = sqlx::query_as!(
             CommentRow,
-            r#"SELECT id, subject_type, subject_id, author_id, body, edited_at
+            r#"SELECT id, subject_type, subject_id, target_module, target_kind, author_id, body, edited_at
                FROM comments WHERE id = $1"#,
             id.value()
         )
@@ -76,22 +83,30 @@ impl CommentReader for PgCommentRepository {
 
         let total = sqlx::query_scalar!(
             r#"SELECT COUNT(*) AS "count!: i64" FROM comments
-               WHERE subject_type = $1 AND subject_id = $2"#,
+               WHERE subject_type = $1 AND subject_id = $2
+                 AND target_module IS NOT DISTINCT FROM $3
+                 AND target_kind IS NOT DISTINCT FROM $4"#,
             subject.kind(),
             subject.raw_id(),
+            subject.target_module(),
+            subject.target_kind(),
         )
         .fetch_one(&self.pool)
         .await? as u64;
 
         let rows = sqlx::query_as!(
             CommentRow,
-            r#"SELECT id, subject_type, subject_id, author_id, body, edited_at
+            r#"SELECT id, subject_type, subject_id, target_module, target_kind, author_id, body, edited_at
                FROM comments
                WHERE subject_type = $1 AND subject_id = $2
+                 AND target_module IS NOT DISTINCT FROM $3
+                 AND target_kind IS NOT DISTINCT FROM $4
                ORDER BY id DESC
-               LIMIT $3 OFFSET $4"#,
+               LIMIT $5 OFFSET $6"#,
             subject.kind(),
             subject.raw_id(),
+            subject.target_module(),
+            subject.target_kind(),
             limit,
             offset,
         )
@@ -113,11 +128,13 @@ impl CommentWriter for PgCommentRepository {
     async fn save_new(&self, draft: CommentDraft) -> Result<Comment, RepositoryError> {
         let id = Id::<Comment>::new_v7();
         sqlx::query!(
-            r#"INSERT INTO comments (id, subject_type, subject_id, author_id, body)
-               VALUES ($1, $2, $3, $4, $5)"#,
+            r#"INSERT INTO comments (id, subject_type, subject_id, target_module, target_kind, author_id, body)
+               VALUES ($1, $2, $3, $4, $5, $6, $7)"#,
             id.value(),
             draft.subject.kind(),
             draft.subject.raw_id(),
+            draft.subject.target_module(),
+            draft.subject.target_kind(),
             draft.author_id,
             draft.body.as_str(),
         )
@@ -165,9 +182,14 @@ impl CommentWriter for PgCommentRepository {
     #[tracing::instrument(level = "trace", skip_all)]
     async fn delete_for_subject(&self, subject: CommentSubject) -> Result<u64, RepositoryError> {
         let result = sqlx::query!(
-            r#"DELETE FROM comments WHERE subject_type = $1 AND subject_id = $2"#,
+            r#"DELETE FROM comments
+               WHERE subject_type = $1 AND subject_id = $2
+                 AND target_module IS NOT DISTINCT FROM $3
+                 AND target_kind IS NOT DISTINCT FROM $4"#,
             subject.kind(),
             subject.raw_id(),
+            subject.target_module(),
+            subject.target_kind(),
         )
         .execute(&self.pool)
         .await?;

@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM comments\n               WHERE subject_type = $1 AND subject_id = $2\n                 AND target_module IS NOT DISTINCT FROM $3\n                 AND target_kind IS NOT DISTINCT FROM $4",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Uuid",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "2ebbdb4239e401b9c355a7c376aa1826ea102e0ddd333225d34953a205287e50"
+}

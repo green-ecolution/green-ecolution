@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id, subject_type, subject_id, author_id, body, edited_at\n               FROM comments\n               WHERE subject_type = $1 AND subject_id = $2\n               ORDER BY id DESC\n               LIMIT $3 OFFSET $4",
+  "query": "SELECT id, subject_type, subject_id, target_module, target_kind, author_id, body, edited_at\n               FROM comments\n               WHERE subject_type = $1 AND subject_id = $2\n                 AND target_module IS NOT DISTINCT FROM $3\n                 AND target_kind IS NOT DISTINCT FROM $4\n               ORDER BY id DESC\n               LIMIT $5 OFFSET $6",
   "describe": {
     "columns": [
       {
@@ -20,16 +20,26 @@
       },
       {
         "ordinal": 3,
-        "name": "author_id",
-        "type_info": "Uuid"
+        "name": "target_module",
+        "type_info": "Text"
       },
       {
         "ordinal": 4,
-        "name": "body",
+        "name": "target_kind",
         "type_info": "Text"
       },
       {
         "ordinal": 5,
+        "name": "author_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 6,
+        "name": "body",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 7,
         "name": "edited_at",
         "type_info": "Timestamp"
       }
@@ -38,6 +48,8 @@
       "Left": [
         "Text",
         "Uuid",
+        "Text",
+        "Text",
         "Int8",
         "Int8"
       ]
@@ -46,10 +58,12 @@
       false,
       false,
       false,
+      true,
+      true,
       false,
       false,
       true
     ]
   },
-  "hash": "8c55c977ac54ca95976ff314d28ebfa43153b4cee9d1af0213f5ed26a9aba2a2"
+  "hash": "e00855777c76e0f2e2a1adf54f5f8d4b3c95acc95a43401d4a9b0044715fbf7e"
 }

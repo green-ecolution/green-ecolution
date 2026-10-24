@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id, subject_type, subject_id, author_id, body, edited_at\n               FROM comments WHERE id = $1",
+  "query": "SELECT id, subject_type, subject_id, target_module, target_kind, author_id, body, edited_at\n               FROM comments WHERE id = $1",
   "describe": {
     "columns": [
       {
@@ -20,16 +20,26 @@
       },
       {
         "ordinal": 3,
-        "name": "author_id",
-        "type_info": "Uuid"
+        "name": "target_module",
+        "type_info": "Text"
       },
       {
         "ordinal": 4,
-        "name": "body",
+        "name": "target_kind",
         "type_info": "Text"
       },
       {
         "ordinal": 5,
+        "name": "author_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 6,
+        "name": "body",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 7,
         "name": "edited_at",
         "type_info": "Timestamp"
       }
@@ -43,10 +53,12 @@
       false,
       false,
       false,
+      true,
+      true,
       false,
       false,
       true
     ]
   },
-  "hash": "473140db33d9f4cbe6dd3b207a741b1d2888fff47f917a9647cfe8a1623d290d"
+  "hash": "8031cab4aec7e0fe14624c3c50795c3223ee8390590b5d1adbb5740e87f03d78"
 }

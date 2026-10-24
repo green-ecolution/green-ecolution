@@ -410,7 +410,7 @@ impl OperationPlanService {
         // Comments have no cascading FK: the subject is polymorphic.
         let deleted_comments = self
             .comment_writer
-            .delete_for_subject(CommentSubject::WateringPlan(id))
+            .delete_for_subject(CommentSubject::Plan(id))
             .await?;
         tracing::debug!(deleted_comments, "removed comments for deleted plan");
         self.event_bus

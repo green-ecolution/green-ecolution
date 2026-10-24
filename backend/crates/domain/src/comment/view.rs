@@ -22,7 +22,7 @@ impl From<&Comment> for CommentView {
     fn from(comment: &Comment) -> Self {
         Self {
             id: comment.id.value(),
-            subject: comment.subject,
+            subject: comment.subject.clone(),
             author_id: comment.author_id,
             body: comment.body.as_str().to_owned(),
             created_at: created_at_of(comment.id),
@@ -46,7 +46,7 @@ mod tests {
     fn view_derives_created_at_from_id() {
         let mut comment = Comment {
             id: Id::new_v7(),
-            subject: CommentSubject::TreeCluster(Id::new_v7()),
+            subject: CommentSubject::Plan(Id::new_v7()),
             author_id: Uuid::new_v4(),
             body: CommentBody::new("Notiz").unwrap(),
             edited_at: None,

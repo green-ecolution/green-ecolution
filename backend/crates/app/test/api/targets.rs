@@ -180,3 +180,57 @@ async fn releasing_a_tree_sensor_forgets_the_measured_status() {
         .unwrap();
     assert_eq!(tree["watering_status"], "unknown");
 }
+
+#[tokio::test]
+async fn a_comment_lands_on_another_modules_object() {
+    let app = app().await;
+    let thing = thing(&app, "Behälter 7").await;
+    let url = format!("/api/v1/targets/test_module/thing/{thing}/comments");
+    let res = app
+        .post_json(&url, &json!({ "body": "Deckel klemmt" }))
+        .await;
+    assert_eq!(res.status(), 201);
+    let list: serde_json::Value = app.get(&url).await.json().await.unwrap();
+    assert_eq!(list["data"][0]["body"], "Deckel klemmt");
+}
+
+#[tokio::test]
+async fn a_tree_is_not_commentable() {
+    let app = app().await;
+    let res = app
+        .post_json(
+            &format!(
+                "/api/v1/targets/irrigation/tree/{}/comments",
+                Uuid::now_v7()
+            ),
+            &json!({ "body": "x" }),
+        )
+        .await;
+    assert_eq!(res.status(), 422);
+    assert_eq!(
+        res.json::<serde_json::Value>().await.unwrap()["code"],
+        "target.not_accepted"
+    );
+}
+
+#[tokio::test]
+async fn cluster_comments_are_target_comments() {
+    let app = app().await;
+    let cluster = crate::clusters::create_cluster(&app).await;
+    let res = app
+        .post_json(
+            &format!("/api/v1/clusters/{cluster}/comments"),
+            &json!({ "body": "a" }),
+        )
+        .await;
+    assert_eq!(res.status(), 201);
+    let via_target: serde_json::Value = app
+        .get(&format!(
+            "/api/v1/targets/irrigation/cluster/{cluster}/comments"
+        ))
+        .await
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(via_target["data"][0]["body"], "a");
+}

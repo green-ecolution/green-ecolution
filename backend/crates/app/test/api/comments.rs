@@ -893,7 +893,7 @@ async fn deleting_a_cluster_removes_its_comments() {
 
     let remaining: i64 = sqlx::query_scalar!(
         r#"SELECT COUNT(*) AS "count!: i64" FROM comments
-           WHERE subject_type = 'tree_cluster' AND subject_id = $1"#,
+           WHERE subject_type = 'target' AND target_kind = 'cluster' AND subject_id = $1"#,
         Uuid::parse_str(&cluster_id).unwrap()
     )
     .fetch_one(&app.db_pool)
@@ -941,7 +941,7 @@ async fn deleting_a_plan_removes_its_comments() {
 
     let remaining: i64 = sqlx::query_scalar!(
         r#"SELECT COUNT(*) AS "count!: i64" FROM comments
-           WHERE subject_type = 'watering_plan' AND subject_id = $1"#,
+           WHERE subject_type = 'plan' AND subject_id = $1"#,
         Uuid::parse_str(&plan_id).unwrap()
     )
     .fetch_one(&app.db_pool)
@@ -1242,7 +1242,7 @@ async fn deleting_a_cluster_keeps_comments_of_other_clusters() {
 
     let remaining: i64 = sqlx::query_scalar!(
         r#"SELECT COUNT(*) AS "count!: i64" FROM comments
-           WHERE subject_type = 'tree_cluster' AND subject_id = $1"#,
+           WHERE subject_type = 'target' AND target_kind = 'cluster' AND subject_id = $1"#,
         Uuid::parse_str(&kept).unwrap()
     )
     .fetch_one(&app.db_pool)

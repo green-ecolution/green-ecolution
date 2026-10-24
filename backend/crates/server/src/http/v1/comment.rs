@@ -20,6 +20,7 @@ use crate::{
             scope,
         },
     },
+    irrigation::targets::cluster_target,
     service::{AuthError, ServiceError},
 };
 use domain::{
@@ -54,7 +55,7 @@ async fn cluster_scope(
         Permission::new(crate::irrigation::resources::TREE_CLUSTER, Action::Read),
         view.organization_id,
     )?;
-    Ok(CommentSubject::TreeCluster(Id::new(cluster_id)))
+    Ok(CommentSubject::Target(cluster_target(Id::new(cluster_id))))
 }
 
 async fn plan_scope(
@@ -73,14 +74,14 @@ async fn plan_scope(
         Permission::new(resource, Action::Read),
         view.organization_id,
     )?;
-    Ok(CommentSubject::WateringPlan(Id::new(plan_id)))
+    Ok(CommentSubject::Plan(Id::new(plan_id)))
 }
 
 /// Checks that `comment_id` belongs to `subject` and that the caller is its
 /// author. The same rule applies to editing and deleting: only the author
 /// may act on their own comment, with no fallback via any permission. A
 /// comment addressed through the wrong parent reads as 404, never 403.
-async fn authorize_own_comment(
+pub(super) async fn authorize_own_comment(
     state: &AppState,
     user_id: Uuid,
     subject: CommentSubject,
@@ -120,7 +121,7 @@ async fn resolve_author_names(state: &AppState, views: &[CommentView]) -> HashMa
         .collect()
 }
 
-async fn list_for(
+pub(super) async fn list_for(
     state: &AppState,
     subject: CommentSubject,
     params: &PaginationParams,
@@ -135,7 +136,7 @@ async fn list_for(
     ))
 }
 
-async fn create_for(
+pub(super) async fn create_for(
     state: &AppState,
     subject: CommentSubject,
     author_id: Uuid,
@@ -153,7 +154,7 @@ async fn create_for(
     ))
 }
 
-async fn update_for(
+pub(super) async fn update_for(
     state: &AppState,
     id: Id<Comment>,
     payload: UpdateCommentRequest,

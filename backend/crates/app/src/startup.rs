@@ -663,7 +663,7 @@ impl Services {
             repos.sensor_model_reader.clone(),
             repos.tree_reader.clone(),
             repos.cluster_reader.clone(),
-            targets,
+            targets.clone(),
             module_activation.clone(),
             event_bus.clone(),
         ));
@@ -676,7 +676,7 @@ impl Services {
             start_point_reader.clone(),
             repos.comment_writer.clone(),
             planning,
-            module_activation,
+            module_activation.clone(),
         ));
         let plugin_sensor_ingest = Arc::new(PluginSensorIngestService::new(
             sensor.clone(),
@@ -707,6 +707,8 @@ impl Services {
             comment: Arc::new(CommentService::new(
                 repos.comment_reader.clone(),
                 repos.comment_writer.clone(),
+                targets.clone(),
+                module_activation.clone(),
             )),
             operation_execution: Arc::new(OperationExecutionService::new(
                 repos.operation_plan_reader.clone(),

@@ -1,0 +1,25 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT COUNT(*) AS \"count!: i64\" FROM comments\n               WHERE subject_type = $1 AND subject_id = $2\n                 AND target_module IS NOT DISTINCT FROM $3\n                 AND target_kind IS NOT DISTINCT FROM $4",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "count!: i64",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Uuid",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "b3541c6725890124faa9fcb2b0162afa7d6b2b36a3ab25b3a25110d41aa9c013"
+}
