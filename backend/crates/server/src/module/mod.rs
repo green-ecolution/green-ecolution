@@ -57,7 +57,10 @@ pub struct ModuleContext {
     pub access: ModuleAccess,
     pub users: Arc<UserService>,
     pub config: Arc<Settings>,
+    /// An event handler must hold this as `Weak` (or not at all): the service owns the
+    /// event bus, so a strong reference keeps the whole graph alive.
     pub sensors: Arc<SensorService>,
+    /// Same rule as `sensors`: hold as `Weak` in event handlers.
     pub plans: Arc<OperationPlanService>,
 }
 
