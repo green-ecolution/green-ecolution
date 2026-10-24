@@ -1,4 +1,7 @@
-use crate::helpers::{TestApp, spawn_app};
+use crate::{
+    helpers::{TestApp, spawn_app},
+    organizations::ROOT_ORG_ID,
+};
 
 #[tokio::test]
 async fn list_trees_returns_200() {
@@ -1019,6 +1022,60 @@ async fn update_tree_keeping_its_own_sensor_returns_200() {
         .await;
 
     assert_eq!(response.status().as_u16(), 200);
+}
+
+async fn switch_irrigation_off(app: &TestApp) {
+    let res = app
+        .put_json(
+            &format!("/api/v1/organizations/{ROOT_ORG_ID}/modules"),
+            &serde_json::json!({ "modules": { "irrigation": false } }),
+        )
+        .await;
+    assert_eq!(res.status().as_u16(), 200);
+}
+
+#[tokio::test]
+async fn create_tree_with_sensor_is_refused_before_writing_when_irrigation_is_off() {
+    let app = spawn_app().await;
+    insert_sensor(&app, "eui-off-1").await;
+    switch_irrigation_off(&app).await;
+
+    let response = create_tree_with_sensor(&app, "eui-off-1").await;
+
+    assert_eq!(response.status().as_u16(), 403);
+    let body: serde_json::Value = response.json().await.unwrap();
+    assert_eq!(body["code"], "module.disabled");
+    let trees: serde_json::Value = app.get("/api/v1/trees").await.json().await.unwrap();
+    assert_eq!(trees["pagination"]["total_records"], 0);
+}
+
+#[tokio::test]
+async fn update_tree_with_new_sensor_keeps_the_old_one_when_irrigation_is_off() {
+    let app = spawn_app().await;
+    insert_sensor(&app, "eui-off-2").await;
+    insert_sensor(&app, "eui-off-3").await;
+    let tree_id = insert_tree_with_sensor(&app, "T-OFF-1", "eui-off-2").await;
+    switch_irrigation_off(&app).await;
+
+    let update = serde_json::json!({
+        "species": "Eiche",
+        "number": "T-OFF-1",
+        "planting_year": 2020,
+        "latitude": 53.56,
+        "longitude": 9.98,
+        "description": "Testbaum",
+        "sensor_id": "eui-off-3"
+    });
+    let response = app
+        .put_json(&format!("/api/v1/trees/{tree_id}"), &update)
+        .await;
+
+    assert_eq!(response.status().as_u16(), 403);
+    let body: serde_json::Value = response.json().await.unwrap();
+    assert_eq!(body["code"], "module.disabled");
+    let after = app.get(&format!("/api/v1/trees/{tree_id}")).await;
+    let after: serde_json::Value = after.json().await.unwrap();
+    assert_eq!(after["sensor"]["id"], "eui-off-2");
 }
 
 // -- Trees whose planting year has not arrived yet cannot carry a sensor --

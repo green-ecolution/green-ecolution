@@ -24,7 +24,7 @@ use crate::{
         },
     },
     irrigation::targets::tree_target,
-    service::{Malformed, OrganizationMismatch, ServiceError},
+    service::{Malformed, OrganizationMismatch, ServiceError, targets::ensure_module_active},
 };
 use chrono::Utc;
 use domain::{
@@ -227,7 +227,7 @@ pub async fn create_tree(
     }
     let (draft, sensor_id) = entity.into_draft(org)?;
     if let Some(sensor) = &sensor {
-        ensure_sensor_fits(sensor, None, org, draft.planting_year)?;
+        ensure_sensor_fits(&state, sensor, None, org, draft.planting_year).await?;
     }
     let tree = state.tree_service.create(draft).await?;
     if let Some(sensor_id) = sensor_id {
@@ -321,7 +321,7 @@ pub async fn update_tree(
     let (draft, sensor_id) = create.into_draft(org)?;
     if let Some(sensor_id) = &sensor_id {
         let sensor = state.sensor_service.view_by_id(sensor_id).await?;
-        ensure_sensor_fits(&sensor, Some(Id::new(id)), org, draft.planting_year)?;
+        ensure_sensor_fits(&state, &sensor, Some(Id::new(id)), org, draft.planting_year).await?;
     }
     let tree = state.tree_service.replace(Id::new(id), draft).await?;
     if sensor_id.as_ref().map(SensorId::as_str) != current.sensor_id.as_deref() {
@@ -344,12 +344,19 @@ pub async fn update_tree(
 
 /// Checked before the tree is written, so a refused sensor leaves the tree
 /// untouched; attaching afterwards repeats these rules.
-fn ensure_sensor_fits(
+async fn ensure_sensor_fits(
+    state: &AppState,
     sensor: &SensorView,
     tree: Option<Id<Tree>>,
     org: Id<Organization>,
     planting_year: PlantingYear,
 ) -> Result<(), ServiceError> {
+    ensure_module_active(
+        state.module_activation.as_ref(),
+        &crate::irrigation::key(),
+        org,
+    )
+    .await?;
     if planting_year.is_future(Utc::now()) {
         return Err(ServiceError::TreeNotYetPlanted);
     }
