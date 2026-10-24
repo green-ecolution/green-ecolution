@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM organization_modules\n                           WHERE organization_id = $1 AND module_key = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "f1d0347b7f7b4fc011290f0c0bfdd0f2038e94e2eada5b3036d8467bbcabed04"
+}

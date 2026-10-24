@@ -1,0 +1,20 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT organization_id FROM organization_settings\n               WHERE descendants_may_override = false",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "organization_id",
+        "type_info": "Uuid"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "9c4f270053120cda8c9d587aa97aa3738c2aa0626e6a866fc999f7008ed9777a"
+}
