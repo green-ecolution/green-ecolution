@@ -60,19 +60,20 @@ async fn cluster_scope(
 async fn plan_scope(
     state: &AppState,
     user_id: Uuid,
-    watering_plan_id: Uuid,
+    plan_id: Uuid,
 ) -> Result<CommentSubject, ServiceError> {
     let view = state
-        .watering_plan_service
-        .view_by_id(Id::new(watering_plan_id))
+        .operation_plan_service
+        .view_by_id(Id::new(plan_id))
         .await?;
+    let resource = state.planning.provider(&view.module)?.plan_resource();
     let ctx = state.authorization_service.context_for(user_id).await?;
     scope::ensure_visible(
         &ctx,
-        Permission::new(crate::irrigation::resources::WATERING_PLAN, Action::Read),
+        Permission::new(resource, Action::Read),
         view.organization_id,
     )?;
-    Ok(CommentSubject::WateringPlan(Id::new(watering_plan_id)))
+    Ok(CommentSubject::WateringPlan(Id::new(plan_id)))
 }
 
 /// Checks that `comment_id` belongs to `subject` and that the caller is its
@@ -286,82 +287,82 @@ pub async fn update_cluster_comment(
 
 #[utoipa::path(
     get,
-    path = "/watering-plans/{watering_plan_id}/comments",
+    path = "/plans/{plan_id}/comments",
     tag = "Comments",
-    operation_id = "listWateringPlanComments",
-    summary = "List comments on a watering plan",
-    description = "Returns the comments of a watering plan, newest first. Requires `watering_plan:read` in the plan's organization.",
-    params(("watering_plan_id" = uuid::Uuid, Path, description = "Watering plan ID"), PaginationParams),
+    operation_id = "listPlanComments",
+    summary = "List comments on a plan",
+    description = "Returns the comments of a plan, newest first. Requires read permission on the plan resource of the plan's module in the plan's organization.",
+    params(("plan_id" = uuid::Uuid, Path, description = "Plan ID"), PaginationParams),
     responses(
         (status = 200, description = "Paginated list of comments", body = ListResponse<CommentResponse>),
-        (status = 404, description = "Watering plan not found or not visible", body = ErrorBody),
+        (status = 404, description = "Plan not found or not visible", body = ErrorBody),
         (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
-#[tracing::instrument(level = "info", skip_all, fields(plan.id = %watering_plan_id))]
+#[tracing::instrument(level = "info", skip_all, fields(plan.id = %plan_id))]
 pub async fn list_plan_comments(
     State(state): State<Arc<AppState>>,
     user: AuthUserExtractor,
-    Path(watering_plan_id): Path<uuid::Uuid>,
+    Path(plan_id): Path<uuid::Uuid>,
     Query(params): Query<PaginationParams>,
 ) -> Result<Json<ListResponse<CommentResponse>>, ServiceError> {
-    let subject = plan_scope(&state, user.id, watering_plan_id).await?;
+    let subject = plan_scope(&state, user.id, plan_id).await?;
     Ok(Json(list_for(&state, subject, &params).await?))
 }
 
 #[utoipa::path(
     post,
-    path = "/watering-plans/{watering_plan_id}/comments",
+    path = "/plans/{plan_id}/comments",
     tag = "Comments",
-    operation_id = "createWateringPlanComment",
-    summary = "Comment on a watering plan",
-    description = "Adds a comment to a watering plan. Requires `watering_plan:read` in the plan's organization — anyone who may see the plan may annotate it.",
-    params(("watering_plan_id" = uuid::Uuid, Path, description = "Watering plan ID")),
+    operation_id = "createPlanComment",
+    summary = "Comment on a plan",
+    description = "Adds a comment to a plan. Requires read permission on the plan resource of the plan's module in the plan's organization — anyone who may see the plan may annotate it.",
+    params(("plan_id" = uuid::Uuid, Path, description = "Plan ID")),
     request_body = CreateCommentRequest,
     responses(
         (status = 201, description = "Comment created", body = CommentResponse),
-        (status = 404, description = "Watering plan not found or not visible", body = ErrorBody),
+        (status = 404, description = "Plan not found or not visible", body = ErrorBody),
         (status = 400, description = "Empty or overlong comment text", body = ErrorBody),
         (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
-#[tracing::instrument(level = "info", skip_all, fields(plan.id = %watering_plan_id))]
+#[tracing::instrument(level = "info", skip_all, fields(plan.id = %plan_id))]
 pub async fn create_plan_comment(
     State(state): State<Arc<AppState>>,
     user: AuthUserExtractor,
-    Path(watering_plan_id): Path<uuid::Uuid>,
+    Path(plan_id): Path<uuid::Uuid>,
     Json(payload): Json<CreateCommentRequest>,
 ) -> Result<(axum::http::StatusCode, Json<CommentResponse>), ServiceError> {
-    let subject = plan_scope(&state, user.id, watering_plan_id).await?;
+    let subject = plan_scope(&state, user.id, plan_id).await?;
     let response = create_for(&state, subject, user.id, payload).await?;
     Ok((axum::http::StatusCode::CREATED, Json(response)))
 }
 
 #[utoipa::path(
     delete,
-    path = "/watering-plans/{watering_plan_id}/comments/{comment_id}",
+    path = "/plans/{plan_id}/comments/{comment_id}",
     tag = "Comments",
-    operation_id = "deleteWateringPlanComment",
-    summary = "Delete a comment on a watering plan",
+    operation_id = "deletePlanComment",
+    summary = "Delete a comment on a plan",
     description = "Removes a comment. Only the comment's author may delete it.",
     params(
-        ("watering_plan_id" = uuid::Uuid, Path, description = "Watering plan ID"),
+        ("plan_id" = uuid::Uuid, Path, description = "Plan ID"),
         ("comment_id" = uuid::Uuid, Path, description = "Comment ID"),
     ),
     responses(
         (status = 204, description = "Comment deleted"),
         (status = 403, description = "Not the author", body = ErrorBody),
-        (status = 404, description = "Watering plan or comment not found, or the comment belongs to another plan", body = ErrorBody),
+        (status = 404, description = "Plan or comment not found, or the comment belongs to another plan", body = ErrorBody),
         (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
-#[tracing::instrument(level = "info", skip_all, fields(plan.id = %watering_plan_id, comment.id = %comment_id))]
+#[tracing::instrument(level = "info", skip_all, fields(plan.id = %plan_id, comment.id = %comment_id))]
 pub async fn delete_plan_comment(
     State(state): State<Arc<AppState>>,
     user: AuthUserExtractor,
-    Path((watering_plan_id, comment_id)): Path<(uuid::Uuid, uuid::Uuid)>,
+    Path((plan_id, comment_id)): Path<(uuid::Uuid, uuid::Uuid)>,
 ) -> Result<axum::http::StatusCode, ServiceError> {
-    let subject = plan_scope(&state, user.id, watering_plan_id).await?;
+    let subject = plan_scope(&state, user.id, plan_id).await?;
     let id = authorize_own_comment(&state, user.id, subject, comment_id).await?;
     state.comment_service.delete(id).await?;
     Ok(axum::http::StatusCode::NO_CONTENT)
@@ -369,32 +370,32 @@ pub async fn delete_plan_comment(
 
 #[utoipa::path(
     put,
-    path = "/watering-plans/{watering_plan_id}/comments/{comment_id}",
+    path = "/plans/{plan_id}/comments/{comment_id}",
     tag = "Comments",
-    operation_id = "updateWateringPlanComment",
-    summary = "Edit a comment on a watering plan",
+    operation_id = "updatePlanComment",
+    summary = "Edit a comment on a plan",
     description = "Replaces a comment's text. Only the comment's author may edit it.",
     params(
-        ("watering_plan_id" = uuid::Uuid, Path, description = "Watering plan ID"),
+        ("plan_id" = uuid::Uuid, Path, description = "Plan ID"),
         ("comment_id" = uuid::Uuid, Path, description = "Comment ID"),
     ),
     request_body = UpdateCommentRequest,
     responses(
         (status = 200, description = "Comment updated", body = CommentResponse),
         (status = 403, description = "Not the author", body = ErrorBody),
-        (status = 404, description = "Watering plan or comment not found, or the comment belongs to another plan", body = ErrorBody),
+        (status = 404, description = "Plan or comment not found, or the comment belongs to another plan", body = ErrorBody),
         (status = 400, description = "Empty or overlong comment text", body = ErrorBody),
         (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
-#[tracing::instrument(level = "info", skip_all, fields(plan.id = %watering_plan_id, comment.id = %comment_id))]
+#[tracing::instrument(level = "info", skip_all, fields(plan.id = %plan_id, comment.id = %comment_id))]
 pub async fn update_plan_comment(
     State(state): State<Arc<AppState>>,
     user: AuthUserExtractor,
-    Path((watering_plan_id, comment_id)): Path<(uuid::Uuid, uuid::Uuid)>,
+    Path((plan_id, comment_id)): Path<(uuid::Uuid, uuid::Uuid)>,
     Json(payload): Json<UpdateCommentRequest>,
 ) -> Result<Json<CommentResponse>, ServiceError> {
-    let subject = plan_scope(&state, user.id, watering_plan_id).await?;
+    let subject = plan_scope(&state, user.id, plan_id).await?;
     let id = authorize_own_comment(&state, user.id, subject, comment_id).await?;
     Ok(Json(update_for(&state, id, payload).await?))
 }

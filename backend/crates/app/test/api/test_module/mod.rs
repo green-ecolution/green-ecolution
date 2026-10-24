@@ -10,18 +10,26 @@ use axum::{extract::State, http::StatusCode};
 use domain::{
     Id, RepositoryError,
     authorization::{Action, Permission, ResourceKey},
+    capacity::CapacityKind,
     event_bus::{EventHandler, EventHandlerError},
     events::DomainEvent,
     module::ModuleKey,
-    organization::Organization,
+    organization::{Organization, OrganizationReader},
+    planning::{PlanningError, PlanningProvider, ResolvedStop, StopRef},
     shared::coordinates::Coordinate,
     target::{TargetCatalog, TargetError, TargetKindSpec, TargetPurpose, TargetRef},
 };
 use serde::{Deserialize, Serialize};
 use server::{
-    http::{AppState, auth::extractor::AuthUserExtractor, extractors::Json},
+    http::{
+        AppState,
+        auth::extractor::AuthUserExtractor,
+        extractors::{Json, Path},
+    },
     module::{Module, ModuleBuildError, ModuleContext, ModuleRoutes, ModuleRuntime},
-    service::{ServiceError, module_access::ModuleAccess},
+    service::{
+        ServiceError, module_access::ModuleAccess, operation_plan_service::OperationPlanService,
+    },
 };
 use sqlx::{PgPool, migrate::Migrator};
 use utoipa_axum::{router::OpenApiRouter, routes};
@@ -50,6 +58,7 @@ impl TestModule {
 struct TestState {
     pool: PgPool,
     access: ModuleAccess,
+    plans: Arc<OperationPlanService>,
 }
 
 #[derive(Deserialize, utoipa::ToSchema)]
@@ -70,6 +79,7 @@ struct Thing {
 }
 
 pub const THING: ResourceKey = ResourceKey::declare("test_module_thing");
+pub const PLAN: ResourceKey = ResourceKey::declare("test_module_plan");
 
 fn permission() -> Permission {
     Permission::new(ResourceKey::ORGANIZATION, Action::Read)
@@ -131,8 +141,97 @@ async fn list_things(
     ))
 }
 
+#[utoipa::path(delete, path = "/test-module/things/{id}", params(("id" = Uuid, Path)), responses((status = 204)))]
+async fn delete_thing(
+    State(state): State<Arc<TestState>>,
+    user: AuthUserExtractor,
+    Path(id): Path<Uuid>,
+) -> Result<StatusCode, ServiceError> {
+    let org: Uuid =
+        sqlx::query_scalar("SELECT organization_id FROM test_module_things WHERE id = $1")
+            .bind(id)
+            .fetch_optional(&state.pool)
+            .await
+            .map_err(|e| ServiceError::from(RepositoryError::from(e)))?
+            .ok_or(ServiceError::Repository(RepositoryError::NotFound))?;
+    state
+        .access
+        .require_write(user.id, Permission::new(PLAN, Action::Delete), Id::new(org))
+        .await?;
+    sqlx::query("DELETE FROM test_module_things WHERE id = $1")
+        .bind(id)
+        .execute(&state.pool)
+        .await
+        .map_err(|e| ServiceError::from(RepositoryError::from(e)))?;
+    state
+        .plans
+        .remove_stop(state.access.key(), StopRef::new(id))
+        .await?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
 fn routes() -> OpenApiRouter<Arc<TestState>> {
-    OpenApiRouter::new().routes(routes!(create_thing, list_things))
+    OpenApiRouter::new()
+        .routes(routes!(create_thing, list_things))
+        .routes(routes!(delete_thing))
+}
+
+/// Collection tours over things: every thing takes one unit of cargo volume.
+struct ThingPlanning {
+    pool: PgPool,
+    organizations: Arc<dyn OrganizationReader>,
+}
+
+#[async_trait::async_trait]
+impl PlanningProvider for ThingPlanning {
+    fn capacity_kind(&self) -> CapacityKind {
+        CapacityKind::CargoVolume
+    }
+
+    fn plan_resource(&self) -> ResourceKey {
+        PLAN
+    }
+
+    async fn resolve_stops(
+        &self,
+        stops: &[StopRef],
+        org: Id<Organization>,
+    ) -> Result<Vec<ResolvedStop>, PlanningError> {
+        let ids: Vec<Uuid> = stops.iter().map(StopRef::value).collect();
+        let rows: Vec<(Uuid, Uuid, Option<f64>, Option<f64>)> = sqlx::query_as(
+            "SELECT id, organization_id, latitude, longitude FROM test_module_things
+             WHERE id = ANY($1)",
+        )
+        .bind(&ids)
+        .fetch_all(&self.pool)
+        .await
+        .map_err(RepositoryError::from)?;
+        let hierarchy = self.organizations.hierarchy().await?;
+        stops
+            .iter()
+            .map(|stop| {
+                let (_, owner, lat, lng) = rows
+                    .iter()
+                    .find(|(id, ..)| *id == stop.value())
+                    .ok_or(PlanningError::UnknownStop(*stop))?;
+                if !hierarchy.is_descendant_or_self(Id::new(*owner), org) {
+                    return Err(PlanningError::OrganizationMismatch);
+                }
+                let location = match (lat, lng) {
+                    (Some(lat), Some(lng)) => Some(
+                        Coordinate::new(*lat, *lng)
+                            .map_err(|e| PlanningError::Repository(e.into()))?,
+                    ),
+                    _ => None,
+                };
+                Ok(ResolvedStop {
+                    stop: *stop,
+                    location,
+                    demand: 1.0,
+                })
+            })
+            .collect()
+    }
 }
 
 pub const THING_KIND: &str = "thing";
@@ -240,7 +339,7 @@ impl Module for TestModule {
     }
 
     fn resources(&self) -> &'static [ResourceKey] {
-        &[THING]
+        &[THING, PLAN]
     }
 
     fn default_enabled(&self) -> bool {
@@ -259,6 +358,7 @@ impl Module for TestModule {
         let state = Arc::new(TestState {
             pool: ctx.pool.clone(),
             access: ctx.access.clone(),
+            plans: ctx.plans.clone(),
         });
         let mut runtime = ModuleRuntime::new(ModuleRoutes {
             public: OpenApiRouter::new(),
@@ -266,6 +366,10 @@ impl Module for TestModule {
         });
         runtime.targets = Some(Arc::new(ThingCatalog {
             pool: ctx.pool.clone(),
+        }));
+        runtime.planning = Some(Arc::new(ThingPlanning {
+            pool: ctx.pool.clone(),
+            organizations: ctx.organizations.clone(),
         }));
         runtime
             .event_handlers

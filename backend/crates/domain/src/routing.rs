@@ -4,9 +4,8 @@
 //! portable value types; a server-side adapter implements it.
 
 use crate::{
-    Id,
     capacity::{CapacityKind, Liters},
-    cluster::TreeCluster,
+    planning::StopRef,
     shared::{coordinates::Coordinate, distance::Distance},
     vehicle::Vehicle,
 };
@@ -21,12 +20,12 @@ pub enum RoutingError {
     Failed(String),
 }
 
-/// One cluster to visit, with its demand in liters.
+/// One stop to visit, with its demand in liters of the route's capacity kind.
 #[derive(Debug, Clone)]
 pub struct RouteStop {
-    pub cluster_id: Id<TreeCluster>,
+    pub stop: StopRef,
     pub location: Coordinate,
-    pub demand_liters: f64,
+    pub demand: f64,
 }
 
 #[derive(Debug, Clone)]
@@ -38,8 +37,8 @@ pub struct OptimizedRoute {
     /// the route actually visits, deduplicated in first-visit order.
     pub refill_station_indices: Vec<usize>,
     pub geometry: Vec<Coordinate>,
-    /// Clusters the solver could not fit into the route (logged, not fatal).
-    pub unserved: Vec<Id<TreeCluster>>,
+    /// Stops the solver could not fit into the route (logged, not fatal).
+    pub unserved: Vec<StopRef>,
 }
 
 #[derive(Debug, Clone)]

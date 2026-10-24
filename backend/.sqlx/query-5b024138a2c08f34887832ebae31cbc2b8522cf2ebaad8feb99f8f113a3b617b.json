@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO operation_plan_users (user_id, plan_id) SELECT UNNEST($1::uuid[]), $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "UuidArray",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "5b024138a2c08f34887832ebae31cbc2b8522cf2ebaad8feb99f8f113a3b617b"
+}

@@ -153,18 +153,18 @@ const VEHICLE_COLUMNS: &str = "v.id, v.updated_at, v.archived_at, v.number_plate
             FROM vehicle_capacities vc WHERE vc.vehicle_id = v.id), '{}'::jsonb) AS capacities, v.type AS vehicle_type, v.availability, \
     v.model, v.driving_license, v.height, v.width, v.length, v.weight, \
     v.provider, v.additional_informations AS additional_info, v.organization_id, \
-    EXISTS (SELECT 1 FROM vehicle_watering_plans vwp \
-            JOIN watering_plans wp ON wp.id = vwp.watering_plan_id \
-            WHERE vwp.vehicle_id = v.id AND wp.status = 'active') AS on_active_plan";
+    EXISTS (SELECT 1 FROM operation_plan_vehicles opv \
+            JOIN operation_plans op ON op.id = opv.plan_id \
+            WHERE opv.vehicle_id = v.id AND op.status = 'active') AS on_active_plan";
 
 // Availability beats a running plan, the same precedence vehicle::derive_status
 // applies. Kept as one expression so WHERE, ORDER BY and the projection cannot
 // drift apart.
 const VEHICLE_STATUS_SQL: &str = "CASE \
     WHEN v.availability = 'not_available' THEN 'not_available' \
-    WHEN EXISTS (SELECT 1 FROM vehicle_watering_plans vwp \
-                 JOIN watering_plans wp ON wp.id = vwp.watering_plan_id \
-                 WHERE vwp.vehicle_id = v.id AND wp.status = 'active') THEN 'active' \
+    WHEN EXISTS (SELECT 1 FROM operation_plan_vehicles opv \
+                 JOIN operation_plans op ON op.id = opv.plan_id \
+                 WHERE opv.vehicle_id = v.id AND op.status = 'active') THEN 'active' \
     ELSE 'available' END";
 
 const VEHICLE_SORT_COLUMNS: SortColumns = &[
@@ -289,10 +289,10 @@ impl VehicleReader for PgVehicleRepository {
                       provider,
                       additional_informations AS "additional_info: Value",
                       organization_id,
-                      EXISTS (SELECT 1 FROM vehicle_watering_plans vwp
-                              JOIN watering_plans wp ON wp.id = vwp.watering_plan_id
-                              WHERE vwp.vehicle_id = vehicles.id
-                                AND wp.status = 'active') AS "on_active_plan!: bool"
+                      EXISTS (SELECT 1 FROM operation_plan_vehicles opv
+                              JOIN operation_plans op ON op.id = opv.plan_id
+                              WHERE opv.vehicle_id = vehicles.id
+                                AND op.status = 'active') AS "on_active_plan!: bool"
             FROM vehicles WHERE id = $1"#,
             id.value()
         )
@@ -323,10 +323,10 @@ impl VehicleReader for PgVehicleRepository {
                       provider,
                       additional_informations AS "additional_info: Value",
                       organization_id,
-                      EXISTS (SELECT 1 FROM vehicle_watering_plans vwp
-                              JOIN watering_plans wp ON wp.id = vwp.watering_plan_id
-                              WHERE vwp.vehicle_id = vehicles.id
-                                AND wp.status = 'active') AS "on_active_plan!: bool"
+                      EXISTS (SELECT 1 FROM operation_plan_vehicles opv
+                              JOIN operation_plans op ON op.id = opv.plan_id
+                              WHERE opv.vehicle_id = vehicles.id
+                                AND op.status = 'active') AS "on_active_plan!: bool"
             FROM vehicles WHERE id = ANY($1::uuid[])"#,
             &id_values
         )

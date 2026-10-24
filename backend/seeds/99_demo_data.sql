@@ -377,15 +377,15 @@ JOIN sensor_abilities a ON a.id = sma.sensor_ability_id
 WHERE sma.sensor_model_id = (SELECT id FROM sensor_models WHERE name = 'GES-1000');
 
 
-INSERT INTO watering_plans (id, date, description, status, distance, total_water_required, cancellation_note, organization_id) VALUES
-  ('019e3fcb-2a5c-70b8-b5c4-fb729bd9c877'::uuid, '2025-09-22', 'New watering plan for the west side of the city', 'planned', 63.0, 720.0, '', '01980000-0000-7000-8000-000000000002'),
-  ('019e3fcb-2a5d-7e82-afe5-626abd96274d'::uuid, '2025-08-03', 'New watering plan for the east side of the city', 'active', 63.0, 600.0, '', '01980000-0000-7000-8000-000000000002'),
-  ('019e3fcb-2a5d-7c0d-bbd9-7b3d84f5c5f3'::uuid, '2025-06-12', 'Very important watering plan due to no rainfall', 'finished', 63.0, 1320.0, '', '01980000-0000-7000-8000-000000000002'),
-  ('019e3fcb-2a5d-7e3b-a202-44acf2ffcb71'::uuid, '2025-06-10', 'New watering plan for the south side of the city', 'not_completed', 63.0, 600.0, '', '01980000-0000-7000-8000-000000000002'),
-  ('019e3fcb-2a5d-7e0d-840e-fe831360cfdb'::uuid, '2025-06-04', 'Canceled due to flood', 'canceled', 63.0, 600.0, 'The watering plan was cancelled due to various reasons.', '01980000-0000-7000-8000-000000000002');
+INSERT INTO operation_plans (id, module_key, date, description, status, distance, total_demand, cancellation_note, organization_id) VALUES
+  ('019e3fcb-2a5c-70b8-b5c4-fb729bd9c877'::uuid, 'irrigation', '2025-09-22', 'New watering plan for the west side of the city', 'planned', 63.0, 720.0, '', '01980000-0000-7000-8000-000000000002'),
+  ('019e3fcb-2a5d-7e82-afe5-626abd96274d'::uuid, 'irrigation', '2025-08-03', 'New watering plan for the east side of the city', 'active', 63.0, 600.0, '', '01980000-0000-7000-8000-000000000002'),
+  ('019e3fcb-2a5d-7c0d-bbd9-7b3d84f5c5f3'::uuid, 'irrigation', '2025-06-12', 'Very important watering plan due to no rainfall', 'finished', 63.0, 1320.0, '', '01980000-0000-7000-8000-000000000002'),
+  ('019e3fcb-2a5d-7e3b-a202-44acf2ffcb71'::uuid, 'irrigation', '2025-06-10', 'New watering plan for the south side of the city', 'not_completed', 63.0, 600.0, '', '01980000-0000-7000-8000-000000000002'),
+  ('019e3fcb-2a5d-7e0d-840e-fe831360cfdb'::uuid, 'irrigation', '2025-06-04', 'Canceled due to flood', 'canceled', 63.0, 600.0, 'The watering plan was cancelled due to various reasons.', '01980000-0000-7000-8000-000000000002');
 
 
-INSERT INTO vehicle_watering_plans (vehicle_id, watering_plan_id, role) VALUES
+INSERT INTO operation_plan_vehicles (vehicle_id, plan_id, role) VALUES
   ('019e3fcb-2a51-7e7e-9392-c4e6dfb61845'::uuid, '019e3fcb-2a5c-70b8-b5c4-fb729bd9c877'::uuid, 'transporter'),
   ('019e3fcb-2a52-7c3c-8ef9-faf356e13d59'::uuid, '019e3fcb-2a5c-70b8-b5c4-fb729bd9c877'::uuid, 'trailer'),
   ('019e3fcb-2a51-75fd-818b-913a7cd9cec1'::uuid, '019e3fcb-2a5d-7e82-afe5-626abd96274d'::uuid, 'transporter'),
@@ -457,7 +457,7 @@ INSERT INTO role_assignments (user_id, role_id) VALUES
 
 
 -- tbz.routen owns the TBZ watering plans.
-INSERT INTO user_watering_plans (user_id, watering_plan_id) VALUES
+INSERT INTO operation_plan_users (user_id, plan_id) VALUES
   ('01980000-0000-7000-8001-000000000014', '019e3fcb-2a5c-70b8-b5c4-fb729bd9c877'::uuid),
   ('01980000-0000-7000-8001-000000000014', '019e3fcb-2a5d-7e82-afe5-626abd96274d'::uuid),
   ('01980000-0000-7000-8001-000000000014', '019e3fcb-2a5d-7c0d-bbd9-7b3d84f5c5f3'::uuid),
@@ -465,15 +465,15 @@ INSERT INTO user_watering_plans (user_id, watering_plan_id) VALUES
   ('01980000-0000-7000-8001-000000000014', '019e3fcb-2a5d-7e0d-840e-fe831360cfdb'::uuid);
 
 
-INSERT INTO tree_cluster_watering_plans (tree_cluster_id, watering_plan_id, consumed_water) VALUES
-  ('019e3fcb-2a53-7fbf-948d-36836e4f42d1'::uuid, '019e3fcb-2a5c-70b8-b5c4-fb729bd9c877'::uuid, 0.0),
-  ('019e3fcb-2a53-7619-aa57-c9b2c9a4aa29'::uuid, '019e3fcb-2a5c-70b8-b5c4-fb729bd9c877'::uuid, 0.0),
-  ('019e3fcb-2a53-7bc9-bc1c-a51e04ef632e'::uuid, '019e3fcb-2a5d-7e82-afe5-626abd96274d'::uuid, 0.0),
-  ('019e3fcb-2a53-7fbf-948d-36836e4f42d1'::uuid, '019e3fcb-2a5d-7c0d-bbd9-7b3d84f5c5f3'::uuid, 100.0),
-  ('019e3fcb-2a53-7619-aa57-c9b2c9a4aa29'::uuid, '019e3fcb-2a5d-7c0d-bbd9-7b3d84f5c5f3'::uuid, 720.0),
-  ('019e3fcb-2a53-7bc9-bc1c-a51e04ef632e'::uuid, '019e3fcb-2a5d-7c0d-bbd9-7b3d84f5c5f3'::uuid, 40.0),
-  ('019e3fcb-2a53-7bc9-bc1c-a51e04ef632e'::uuid, '019e3fcb-2a5d-7e3b-a202-44acf2ffcb71'::uuid, 0.0),
-  ('019e3fcb-2a53-7bc9-bc1c-a51e04ef632e'::uuid, '019e3fcb-2a5d-7e0d-840e-fe831360cfdb'::uuid, 0.0);
+INSERT INTO operation_plan_stops (stop_id, plan_id, completed, amount) VALUES
+  ('019e3fcb-2a53-7fbf-948d-36836e4f42d1'::uuid, '019e3fcb-2a5c-70b8-b5c4-fb729bd9c877'::uuid, FALSE, NULL),
+  ('019e3fcb-2a53-7619-aa57-c9b2c9a4aa29'::uuid, '019e3fcb-2a5c-70b8-b5c4-fb729bd9c877'::uuid, FALSE, NULL),
+  ('019e3fcb-2a53-7bc9-bc1c-a51e04ef632e'::uuid, '019e3fcb-2a5d-7e82-afe5-626abd96274d'::uuid, FALSE, NULL),
+  ('019e3fcb-2a53-7fbf-948d-36836e4f42d1'::uuid, '019e3fcb-2a5d-7c0d-bbd9-7b3d84f5c5f3'::uuid, TRUE, 100.0),
+  ('019e3fcb-2a53-7619-aa57-c9b2c9a4aa29'::uuid, '019e3fcb-2a5d-7c0d-bbd9-7b3d84f5c5f3'::uuid, TRUE, 720.0),
+  ('019e3fcb-2a53-7bc9-bc1c-a51e04ef632e'::uuid, '019e3fcb-2a5d-7c0d-bbd9-7b3d84f5c5f3'::uuid, TRUE, 40.0),
+  ('019e3fcb-2a53-7bc9-bc1c-a51e04ef632e'::uuid, '019e3fcb-2a5d-7e3b-a202-44acf2ffcb71'::uuid, FALSE, NULL),
+  ('019e3fcb-2a53-7bc9-bc1c-a51e04ef632e'::uuid, '019e3fcb-2a5d-7e0d-840e-fe831360cfdb'::uuid, FALSE, NULL);
 
 
 -- Safety net: rebuild geometry from lat/lng columns in case a future row is added

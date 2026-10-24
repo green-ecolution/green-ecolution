@@ -74,7 +74,8 @@ fn plan_payload(transporter_id: &str, org: Uuid) -> serde_json::Value {
         "date": "2026-05-01T08:00:00Z",
         "description": "Enforcement Plan",
         "transporter_id": transporter_id,
-        "tree_cluster_ids": [],
+        "module": "irrigation",
+        "stops": [],
         "user_ids": [],
         "organization_id": org,
     })
@@ -107,7 +108,7 @@ async fn create_plan(
     let transporter_id = transporter["id"].as_str().unwrap();
 
     client
-        .post(format!("{}/api/v1/watering-plans", app.address))
+        .post(format!("{}/api/v1/plans", app.address))
         .bearer_auth(token)
         .json(&plan_payload(transporter_id, org))
         .send()
@@ -130,7 +131,7 @@ async fn foreign_org_sees_no_plans_and_gets_404_on_detail() {
     let plan_id = created["id"].as_str().unwrap().to_owned();
 
     let list_b: serde_json::Value = client
-        .get(format!("{}/api/v1/watering-plans", app.address))
+        .get(format!("{}/api/v1/plans?module=irrigation", app.address))
         .bearer_auth(&token_b)
         .send()
         .await
@@ -141,7 +142,7 @@ async fn foreign_org_sees_no_plans_and_gets_404_on_detail() {
     assert_eq!(list_b["data"].as_array().unwrap().len(), 0);
 
     let detail_b = client
-        .get(format!("{}/api/v1/watering-plans/{plan_id}", app.address))
+        .get(format!("{}/api/v1/plans/{plan_id}", app.address))
         .bearer_auth(&token_b)
         .send()
         .await
@@ -149,7 +150,7 @@ async fn foreign_org_sees_no_plans_and_gets_404_on_detail() {
     assert_eq!(detail_b.status(), 404);
 
     let list_a: serde_json::Value = client
-        .get(format!("{}/api/v1/watering-plans", app.address))
+        .get(format!("{}/api/v1/plans?module=irrigation", app.address))
         .bearer_auth(&token_a)
         .send()
         .await
@@ -176,10 +177,7 @@ async fn subtree_visibility_is_one_directional() {
 
     // TBZ's grant covers its own subtree, so it must see the sub-org's plan.
     let detail_tbz_sees_sub = client
-        .get(format!(
-            "{}/api/v1/watering-plans/{sub_plan_id}",
-            app.address
-        ))
+        .get(format!("{}/api/v1/plans/{sub_plan_id}", app.address))
         .bearer_auth(&token_tbz)
         .send()
         .await
@@ -192,10 +190,7 @@ async fn subtree_visibility_is_one_directional() {
 
     // The sub-org's grant never extends upwards to its parent.
     let detail_sub_sees_tbz = client
-        .get(format!(
-            "{}/api/v1/watering-plans/{tbz_plan_id}",
-            app.address
-        ))
+        .get(format!("{}/api/v1/plans/{tbz_plan_id}", app.address))
         .bearer_auth(&token_sub)
         .send()
         .await
@@ -207,7 +202,7 @@ async fn subtree_visibility_is_one_directional() {
     );
 
     let list_tbz: serde_json::Value = client
-        .get(format!("{}/api/v1/watering-plans", app.address))
+        .get(format!("{}/api/v1/plans?module=irrigation", app.address))
         .bearer_auth(&token_tbz)
         .send()
         .await
@@ -222,7 +217,7 @@ async fn subtree_visibility_is_one_directional() {
     );
 
     let list_sub: serde_json::Value = client
-        .get(format!("{}/api/v1/watering-plans", app.address))
+        .get(format!("{}/api/v1/plans?module=irrigation", app.address))
         .bearer_auth(&token_sub)
         .send()
         .await
@@ -278,14 +273,14 @@ async fn status_transition_without_update_permission_yields_403() {
     let token_reader_only = harness.sign_token(json!({ "sub": reader_user.to_string() }));
 
     let update_resp = client
-        .put(format!("{}/api/v1/watering-plans/{plan_id}", app.address))
+        .put(format!("{}/api/v1/plans/{plan_id}", app.address))
         .bearer_auth(&token_reader_only)
         .json(&json!({
             "date": "2026-05-01T08:00:00Z",
             "description": "Enforcement Plan",
             "status": "active",
             "transporter_id": transporter_id,
-            "tree_cluster_ids": [],
+            "stops": [],
             "user_ids": [],
             "cancellation_note": "",
         }))
@@ -317,10 +312,7 @@ async fn route_and_gpx_endpoints_are_404_for_foreign_org() {
     let plan_id = created["id"].as_str().unwrap().to_owned();
 
     let route_resp = client
-        .get(format!(
-            "{}/api/v1/watering-plans/{plan_id}/route",
-            app.address
-        ))
+        .get(format!("{}/api/v1/plans/{plan_id}/route", app.address))
         .bearer_auth(&token_b)
         .send()
         .await
@@ -328,10 +320,7 @@ async fn route_and_gpx_endpoints_are_404_for_foreign_org() {
     assert_eq!(route_resp.status(), 404);
 
     let gpx_resp = client
-        .get(format!(
-            "{}/api/v1/watering-plans/{plan_id}/route/gpx",
-            app.address
-        ))
+        .get(format!("{}/api/v1/plans/{plan_id}/route/gpx", app.address))
         .bearer_auth(&token_b)
         .send()
         .await

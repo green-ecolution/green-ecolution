@@ -10,7 +10,7 @@ use std::{
 
 use domain::{
     authorization::ResourceKey, module::ModuleKey, organization::OrganizationReader,
-    settings::SettingsResolver, target::TargetCatalog,
+    planning::PlanningProvider, settings::SettingsResolver, target::TargetCatalog,
 };
 use sqlx::PgPool;
 use utoipa_axum::router::OpenApiRouter;
@@ -22,6 +22,7 @@ use crate::{
         authorization::AuthorizationService,
         event_bus::{EventBus, EventHandler},
         module_access::ModuleAccess,
+        operation_plan_service::OperationPlanService,
         sensor_service::SensorService,
         user_service::UserService,
     },
@@ -57,6 +58,7 @@ pub struct ModuleContext {
     pub users: Arc<UserService>,
     pub config: Arc<Settings>,
     pub sensors: Arc<SensorService>,
+    pub plans: Arc<OperationPlanService>,
 }
 
 /// Routes relative to `/api/v1`. `protected` runs behind the same
@@ -81,6 +83,7 @@ pub struct ModuleRuntime {
     /// Spawned once at startup, like the core's sweeps.
     pub background_tasks: Vec<BackgroundTask>,
     pub targets: Option<Arc<dyn TargetCatalog>>,
+    pub planning: Option<Arc<dyn PlanningProvider>>,
 }
 
 impl ModuleRuntime {
@@ -90,6 +93,7 @@ impl ModuleRuntime {
             event_handlers: Vec::new(),
             background_tasks: Vec::new(),
             targets: None,
+            planning: None,
         }
     }
 }

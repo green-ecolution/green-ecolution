@@ -13,6 +13,7 @@ use domain::{
     comment::{CommentSubject, CommentWriter},
     events::DomainEvent,
     organization::Organization,
+    planning::StopRef,
     sensor::{SensorId, SensorReader, SensorWriter},
     shared::{
         coordinates::Coordinate,
@@ -21,7 +22,11 @@ use domain::{
     tree::{Tree, TreeReader, TreeWriter, volumetric_thresholds},
 };
 
-use super::{OrganizationMismatch, ServiceError, event_bus::EventBus};
+use super::{
+    OrganizationMismatch, ServiceError, event_bus::EventBus,
+    operation_plan_service::OperationPlanService,
+};
+use crate::irrigation;
 
 pub struct ClusterService {
     reader: Arc<dyn TreeClusterReader>,
@@ -32,6 +37,7 @@ pub struct ClusterService {
     sensor_writer: Arc<dyn SensorWriter>,
     event_bus: Arc<dyn EventBus>,
     comment_writer: Arc<dyn CommentWriter>,
+    plans: Arc<OperationPlanService>,
 }
 
 impl ClusterService {
@@ -45,6 +51,7 @@ impl ClusterService {
         sensor_writer: Arc<dyn SensorWriter>,
         event_bus: Arc<dyn EventBus>,
         comment_writer: Arc<dyn CommentWriter>,
+        plans: Arc<OperationPlanService>,
     ) -> Self {
         Self {
             reader,
@@ -55,6 +62,7 @@ impl ClusterService {
             sensor_writer,
             event_bus,
             comment_writer,
+            plans,
         }
     }
 
@@ -195,6 +203,9 @@ impl ClusterService {
             .delete_for_subject(CommentSubject::TreeCluster(id))
             .await?;
         tracing::debug!(deleted_comments, "removed comments for deleted cluster");
+        self.plans
+            .remove_stop(&irrigation::key(), StopRef::new(id.value()))
+            .await?;
         self.event_bus.publish_all(events).await;
         Ok(())
     }

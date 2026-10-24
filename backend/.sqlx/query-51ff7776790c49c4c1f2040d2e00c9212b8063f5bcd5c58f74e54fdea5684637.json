@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE operation_plan_stops SET completed = TRUE, amount = 250.0 WHERE plan_id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "51ff7776790c49c4c1f2040d2e00c9212b8063f5bcd5c58f74e54fdea5684637"
+}

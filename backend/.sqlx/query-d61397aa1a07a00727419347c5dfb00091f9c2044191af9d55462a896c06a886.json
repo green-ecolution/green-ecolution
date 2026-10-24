@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE operation_plan_stops\n               SET completed = u.completed, amount = u.amount\n               FROM UNNEST($2::uuid[], $3::bool[], $4::float8[]) AS u(stop_id, completed, amount)\n               WHERE plan_id = $1 AND operation_plan_stops.stop_id = u.stop_id",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "UuidArray",
+        "BoolArray",
+        "Float8Array"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "d61397aa1a07a00727419347c5dfb00091f9c2044191af9d55462a896c06a886"
+}

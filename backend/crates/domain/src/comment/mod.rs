@@ -15,7 +15,7 @@ use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
 use crate::{
-    Id, cluster::TreeCluster, shared::error::ValidationError, watering_plan::WateringPlan,
+    Id, cluster::TreeCluster, operation_plan::OperationPlan, shared::error::ValidationError,
 };
 
 pub use repository::{CommentReader, CommentWriter};
@@ -33,7 +33,7 @@ crate::newtype_nonempty! {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CommentSubject {
     TreeCluster(Id<TreeCluster>),
-    WateringPlan(Id<WateringPlan>),
+    WateringPlan(Id<OperationPlan>),
 }
 
 impl CommentSubject {
@@ -154,7 +154,7 @@ mod tests {
 
     #[test]
     fn plan_subject_roundtrips_through_parts() {
-        let id = Id::<WateringPlan>::new_v7();
+        let id = Id::<OperationPlan>::new_v7();
         let subject = CommentSubject::WateringPlan(id);
         assert_eq!(subject.kind(), "watering_plan");
         let back = CommentSubject::from_parts(subject.kind(), subject.raw_id()).unwrap();

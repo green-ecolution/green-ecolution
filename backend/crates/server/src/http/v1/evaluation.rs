@@ -18,10 +18,10 @@ use crate::{
 use domain::{
     authorization::{Action, Permission, ResourceKey},
     cluster::TreeClusterSearchQuery,
+    operation_plan::OperationPlanSearchQuery,
     sensor::SensorSearchQuery,
     shared::pagination::Pagination,
     tree::TreeSearchQuery,
-    watering_plan::WateringPlanSearchQuery,
 };
 
 pub fn routes() -> OpenApiRouter<Arc<AppState>> {
@@ -105,11 +105,13 @@ pub async fn get_evaluation(
         )
         .await?;
     let watering_plan_page = state
-        .watering_plan_service
+        .operation_plan_service
         .search_view(
-            WateringPlanSearchQuery {
+            OperationPlanSearchQuery {
+                module: crate::irrigation::key(),
+                provider: None,
+                statuses: Vec::new(),
                 visible: plan_visible.clone(),
-                ..Default::default()
             },
             count_pagination,
         )

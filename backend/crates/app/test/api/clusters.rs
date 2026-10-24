@@ -1728,3 +1728,124 @@ async fn list_clusters_reports_the_prefilter_total() {
     assert_eq!(body["pagination"]["total_records"], 1);
     assert_eq!(body["pagination"]["total_unfiltered"], 2);
 }
+
+#[tokio::test]
+async fn list_clusters_filters_by_repeated_id() {
+    let app = spawn_app().await;
+    let a = create_cluster(&app).await;
+    let b = create_cluster(&app).await;
+    create_cluster(&app).await;
+
+    let response = app.get(&format!("/api/v1/clusters?id={a}&id={b}")).await;
+    assert_eq!(response.status().as_u16(), 200);
+    let body: serde_json::Value = response.json().await.unwrap();
+
+    let mut ids: Vec<String> = body["data"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|c| c["id"].as_str().unwrap().to_string())
+        .collect();
+    ids.sort_unstable();
+    let mut expected = vec![a.to_string(), b.to_string()];
+    expected.sort_unstable();
+    assert_eq!(ids, expected);
+}
+
+async fn irrigation_plan(
+    app: &helpers::TestApp,
+    vehicle: uuid::Uuid,
+    stops: &[uuid::Uuid],
+) -> String {
+    let res = app
+        .post_json(
+            "/api/v1/plans",
+            &serde_json::json!({
+                "module": "irrigation",
+                "date": "2026-05-01T08:00:00Z",
+                "description": "Bewaesserung",
+                "transporter_id": vehicle,
+                "stops": stops,
+                "user_ids": []
+            }),
+        )
+        .await;
+    assert_eq!(res.status().as_u16(), 201);
+    let plan: serde_json::Value = res.json().await.unwrap();
+    plan["id"].as_str().unwrap().to_string()
+}
+
+async fn set_plan_status(
+    app: &helpers::TestApp,
+    plan_id: &str,
+    vehicle: uuid::Uuid,
+    stops: &[uuid::Uuid],
+    status: &str,
+    outcomes: serde_json::Value,
+) {
+    let res = app
+        .put_json(
+            &format!("/api/v1/plans/{plan_id}"),
+            &serde_json::json!({
+                "date": "2026-05-01T08:00:00Z",
+                "description": "Bewaesserung",
+                "status": status,
+                "transporter_id": vehicle,
+                "stops": stops,
+                "user_ids": [],
+                "cancellation_note": "",
+                "outcomes": outcomes
+            }),
+        )
+        .await;
+    assert_eq!(res.status().as_u16(), 200);
+}
+
+#[tokio::test]
+async fn a_deleted_cluster_disappears_from_planned_and_finished_plans() {
+    let app = spawn_app().await;
+    let vehicle =
+        crate::vehicle::create_vehicle_with(&app, serde_json::json!({ "water": 5000.0 })).await;
+    let (gone, kept) = (create_cluster(&app).await, create_cluster(&app).await);
+    let stops = [gone, kept];
+
+    let planned = irrigation_plan(&app, vehicle, &stops).await;
+    let finished = irrigation_plan(&app, vehicle, &stops).await;
+    set_plan_status(
+        &app,
+        &finished,
+        vehicle,
+        &stops,
+        "active",
+        serde_json::Value::Null,
+    )
+    .await;
+    set_plan_status(
+        &app,
+        &finished,
+        vehicle,
+        &stops,
+        "finished",
+        serde_json::json!([
+            { "stop": gone, "completed": true, "amount": 300.0 },
+            { "stop": kept, "completed": true, "amount": 200.0 }
+        ]),
+    )
+    .await;
+
+    let response = app.delete(&format!("/api/v1/clusters/{gone}")).await;
+    assert_eq!(response.status().as_u16(), 204);
+
+    for plan_id in [&planned, &finished] {
+        let plan: serde_json::Value = app
+            .get(&format!("/api/v1/plans/{plan_id}"))
+            .await
+            .json()
+            .await
+            .unwrap();
+        assert_eq!(plan["stops"], serde_json::json!([kept]));
+        let outcomes = plan["outcomes"].as_array().unwrap();
+        assert_eq!(outcomes.len(), 1);
+        assert_eq!(outcomes[0]["stop"], serde_json::json!(kept));
+    }
+}

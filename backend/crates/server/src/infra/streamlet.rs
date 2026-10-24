@@ -5,8 +5,7 @@ use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 
 use domain::{
-    Id,
-    cluster::TreeCluster,
+    planning::StopRef,
     routing::{OptimizedRoute, RouteOptimizer, RouteRequest, RoutingError},
     shared::{coordinates::Coordinate, distance::Distance},
 };
@@ -186,7 +185,7 @@ impl StreamletRouteOptimizer {
                     lat: stop.location.latitude(),
                     lon: stop.location.longitude(),
                 },
-                demand: stop.demand_liters,
+                demand: stop.demand,
                 service_time: SERVICE_TIME_SECS,
                 time_window: None,
             })
@@ -299,10 +298,10 @@ impl RouteOptimizer for StreamletRouteOptimizer {
             }
         }
 
-        let id_by_customer: HashMap<u32, Id<TreeCluster>> = stops
+        let id_by_customer: HashMap<u32, StopRef> = stops
             .iter()
             .enumerate()
-            .map(|(i, s)| ((i + 1) as u32, s.cluster_id))
+            .map(|(i, s)| ((i + 1) as u32, s.stop))
             .collect();
         let unserved = solve
             .unserved
@@ -395,14 +394,14 @@ mod tests {
     fn stops() -> Vec<RouteStop> {
         vec![
             RouteStop {
-                cluster_id: domain::Id::new_v7(),
+                stop: domain::planning::StopRef::new(uuid::Uuid::now_v7()),
                 location: Coordinate::new(54.79, 9.44).unwrap(),
-                demand_liters: 160.0,
+                demand: 160.0,
             },
             RouteStop {
-                cluster_id: domain::Id::new_v7(),
+                stop: domain::planning::StopRef::new(uuid::Uuid::now_v7()),
                 location: Coordinate::new(54.80, 9.45).unwrap(),
-                demand_liters: 240.0,
+                demand: 240.0,
             },
         ]
     }
@@ -578,7 +577,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn optimize_maps_unserved_ids_back_to_cluster_ids() {
+    async fn optimize_maps_unserved_ids_back_to_stops() {
         let server = MockServer::start().await;
         let mut body = ok_body(&encoded_line());
         body["unserved"] = serde_json::json!([2]);
@@ -594,7 +593,7 @@ mod tests {
             .optimize(request(&transporter, &stops, depot(), &[]))
             .await
             .unwrap();
-        assert_eq!(route.unserved, vec![stops[1].cluster_id]);
+        assert_eq!(route.unserved, vec![stops[1].stop]);
     }
 
     #[tokio::test]

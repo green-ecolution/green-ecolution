@@ -299,7 +299,7 @@ async fn seeded_reference_data_makes_the_dashboard_paths_non_empty() {
         ),
         (
             "vehicles linked to a plan",
-            "SELECT COUNT(*) FROM vehicle_watering_plans",
+            "SELECT COUNT(*) FROM operation_plan_vehicles",
         ),
         (
             "implausible ability values",

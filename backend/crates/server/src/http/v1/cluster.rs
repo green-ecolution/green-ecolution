@@ -97,7 +97,7 @@ const CLUSTER_LIST_QUERY_MAX_LEN: usize = 100;
     operation_id = "listClusters",
     summary = "List all tree clusters",
     description = "Returns a paginated list of all tree clusters with a compact representation including region info. \
-                   Optional filter parameters (watering_status, region) narrow the result; array parameters are repeatable. \
+                   Optional filter parameters (watering_status, region, id) narrow the result; array parameters are repeatable. \
                    Sortable by name, moisture, trees or last_watered.",
     params(ClusterListParams),
     responses(
@@ -139,6 +139,7 @@ pub async fn list_clusters(
             .map(domain::shared::watering_status::WateringStatus::from)
             .collect(),
         regions: params.region,
+        ids: params.id.into_iter().map(Id::new).collect(),
         soil_conditions: params
             .soil_condition
             .into_iter()

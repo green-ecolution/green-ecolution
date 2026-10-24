@@ -96,4 +96,10 @@ pub trait TreeClusterWriter: Send + Sync {
     /// is not tracked by the aggregate, so whoever changes a cluster's trees
     /// or moves one of them has to call this afterwards.
     async fn refresh_boundary(&self, id: Id<TreeCluster>) -> Result<(), RepositoryError>;
+    /// Sets `last_watered` on the given clusters and all their member trees.
+    async fn mark_last_watered(
+        &self,
+        ids: &[Id<TreeCluster>],
+        at: DateTime<Utc>,
+    ) -> Result<(), RepositoryError>;
 }

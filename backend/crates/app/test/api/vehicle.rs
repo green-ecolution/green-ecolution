@@ -351,12 +351,13 @@ async fn vehicle_status_follows_the_plan_it_is_assigned_to() {
 
     let plan: serde_json::Value = app
         .post_json(
-            "/api/v1/watering-plans",
+            "/api/v1/plans",
             &serde_json::json!({
                 "date": "2026-05-01T08:00:00Z",
                 "description": "Bewaesserung Innenstadt",
                 "transporter_id": vehicle_id,
-                "tree_cluster_ids": [],
+                "module": "irrigation",
+                "stops": [],
                 "user_ids": []
             }),
         )
@@ -383,16 +384,16 @@ async fn vehicle_status_follows_the_plan_it_is_assigned_to() {
             "description": "Bewaesserung Innenstadt",
             "status": status,
             "transporter_id": vehicle_id,
-            "tree_cluster_ids": [],
+            "stops": [],
             "user_ids": [],
             "cancellation_note": "",
-            "evaluation": [],
+            "outcomes": [],
         })
     };
 
     let start = app
         .put_json(
-            &format!("/api/v1/watering-plans/{}", plan_id),
+            &format!("/api/v1/plans/{}", plan_id),
             &plan_update("active"),
         )
         .await;
@@ -412,7 +413,7 @@ async fn vehicle_status_follows_the_plan_it_is_assigned_to() {
 
     let finish = app
         .put_json(
-            &format!("/api/v1/watering-plans/{}", plan_id),
+            &format!("/api/v1/plans/{}", plan_id),
             &plan_update("finished"),
         )
         .await;
@@ -441,12 +442,13 @@ async fn not_available_vehicle_stays_not_available_on_an_active_plan() {
 
     let plan: serde_json::Value = app
         .post_json(
-            "/api/v1/watering-plans",
+            "/api/v1/plans",
             &serde_json::json!({
                 "date": "2026-05-01T08:00:00Z",
                 "description": "Bewaesserung Innenstadt",
                 "transporter_id": vehicle_id,
-                "tree_cluster_ids": [],
+                "module": "irrigation",
+                "stops": [],
                 "user_ids": []
             }),
         )
@@ -458,16 +460,16 @@ async fn not_available_vehicle_stays_not_available_on_an_active_plan() {
 
     let start = app
         .put_json(
-            &format!("/api/v1/watering-plans/{}", plan_id),
+            &format!("/api/v1/plans/{}", plan_id),
             &serde_json::json!({
                 "date": "2026-05-01T08:00:00Z",
                 "description": "Bewaesserung Innenstadt",
                 "status": "active",
                 "transporter_id": vehicle_id,
-                "tree_cluster_ids": [],
+                "stops": [],
                 "user_ids": [],
                 "cancellation_note": "",
-                "evaluation": [],
+                "outcomes": [],
             }),
         )
         .await;
@@ -547,12 +549,13 @@ async fn seed_vehicle_with_capacity(app: &TestApp, plate: &str, capacity: f64) -
 async fn put_vehicle_on_active_plan(app: &TestApp, vehicle_id: uuid::Uuid) {
     let plan: serde_json::Value = app
         .post_json(
-            "/api/v1/watering-plans",
+            "/api/v1/plans",
             &serde_json::json!({
                 "date": "2026-05-01T08:00:00Z",
                 "description": "Bewaesserung Innenstadt",
                 "transporter_id": vehicle_id,
-                "tree_cluster_ids": [],
+                "module": "irrigation",
+                "stops": [],
                 "user_ids": []
             }),
         )
@@ -564,16 +567,16 @@ async fn put_vehicle_on_active_plan(app: &TestApp, vehicle_id: uuid::Uuid) {
 
     let start = app
         .put_json(
-            &format!("/api/v1/watering-plans/{}", plan_id),
+            &format!("/api/v1/plans/{}", plan_id),
             &serde_json::json!({
                 "date": "2026-05-01T08:00:00Z",
                 "description": "Bewaesserung Innenstadt",
                 "status": "active",
                 "transporter_id": vehicle_id,
-                "tree_cluster_ids": [],
+                "stops": [],
                 "user_ids": [],
                 "cancellation_note": "",
-                "evaluation": [],
+                "outcomes": [],
             }),
         )
         .await;
@@ -639,8 +642,8 @@ async fn vehicle_list_filters_by_derived_status() {
 async fn vehicle_list_status_filter_agrees_with_the_rust_derivation() {
     // The SQL CASE and vehicle::derive_status answer the same question in two
     // places; this pins them together so one cannot drift. `active` is the
-    // interesting branch: SQL evaluates an EXISTS over vehicle_watering_plans
-    // joined to watering_plans, while Rust receives a pre-computed bool, so a
+    // interesting branch: SQL evaluates an EXISTS over operation_plan_vehicles
+    // joined to operation_plans, while Rust receives a pre-computed bool, so a
     // fixture without a genuinely active vehicle would let this pass
     // vacuously.
     let app = spawn_app().await;

@@ -223,7 +223,7 @@ async fn cluster_without_sensor_data_returns_empty_series() {
 }
 
 #[tokio::test]
-async fn only_finished_watering_plans_appear_as_events() {
+async fn only_finished_plans_appear_as_events() {
     let app = spawn_app().await;
     let cluster_id = create_cluster(&app, "Uu").await;
     let finished_id = Uuid::now_v7();
@@ -233,8 +233,8 @@ async fn only_finished_watering_plans_appear_as_events() {
         (planned_id, "planned", "2026-07-15"),
     ] {
         sqlx::query(
-            "INSERT INTO watering_plans (id, date, status, description, organization_id)
-             VALUES ($1, $2::date, $3::watering_plan_status, '', '01980000-0000-7000-8000-000000000001')",
+            "INSERT INTO operation_plans (id, module_key, date, status, description, organization_id)
+             VALUES ($1, 'irrigation', $2::date, $3::operation_plan_status, '', '01980000-0000-7000-8000-000000000001')",
         )
         .bind(id)
         .bind(date.parse::<NaiveDate>().unwrap())
@@ -243,8 +243,8 @@ async fn only_finished_watering_plans_appear_as_events() {
         .await
         .unwrap();
         sqlx::query(
-            "INSERT INTO tree_cluster_watering_plans (tree_cluster_id, watering_plan_id, consumed_water)
-             VALUES ($1, $2, 1800.0)",
+            "INSERT INTO operation_plan_stops (stop_id, plan_id, completed, amount)
+             VALUES ($1, $2, TRUE, 1800.0)",
         )
         .bind(cluster_id)
         .bind(id)

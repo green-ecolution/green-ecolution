@@ -576,7 +576,7 @@ async fn seed_readings(pool: &PgPool, history_days: i64) -> Result<i64, sqlx::Er
 }
 
 async fn seed_plans(pool: &PgPool, scale: Scale) -> Result<i64, sqlx::Error> {
-    let existing = count(pool, "watering_plans").await?;
+    let existing = count(pool, "operation_plans").await?;
     let missing = scale.plans() - existing;
     if missing <= 0 {
         return Ok(existing);
@@ -626,13 +626,14 @@ async fn seed_plans(pool: &PgPool, scale: Scale) -> Result<i64, sqlx::Error> {
             FROM organizations
             WHERE parent_id IS NOT NULL
         )
-        INSERT INTO watering_plans
-            (id, date, status, description, distance, total_water_required,
+        INSERT INTO operation_plans
+            (id, module_key, date, status, description, distance, total_demand,
              duration, refill_count, organization_id)
         SELECT
             bench_uuid_v7(),
+            'irrigation',
             (current_date - ((($2 + i) % 730)::int))::date,
-            'finished'::watering_plan_status,
+            'finished'::operation_plan_status,
             'seeded',
             12000 + random() * 8000,
             600 + random() * 400,
@@ -650,15 +651,15 @@ async fn seed_plans(pool: &PgPool, scale: Scale) -> Result<i64, sqlx::Error> {
 
     sqlx::query(
         r#"
-        INSERT INTO tree_cluster_watering_plans (tree_cluster_id, watering_plan_id)
-        SELECT c.id, p.id
-        FROM watering_plans p
+        INSERT INTO operation_plan_stops (stop_id, plan_id, completed, amount)
+        SELECT c.id, p.id, TRUE, 0
+        FROM operation_plans p
         CROSS JOIN LATERAL (
             SELECT id FROM tree_clusters ORDER BY random() LIMIT 3
         ) AS c
         WHERE NOT EXISTS (
-            SELECT 1 FROM tree_cluster_watering_plans existing
-            WHERE existing.watering_plan_id = p.id
+            SELECT 1 FROM operation_plan_stops existing
+            WHERE existing.plan_id = p.id
         )
         ON CONFLICT DO NOTHING
         "#,
@@ -678,13 +679,13 @@ async fn seed_plans(pool: &PgPool, scale: Scale) -> Result<i64, sqlx::Error> {
         ),
         plans_ranked AS (
             SELECT id, row_number() OVER (ORDER BY id) AS rn
-            FROM watering_plans p
+            FROM operation_plans p
             WHERE NOT EXISTS (
-                SELECT 1 FROM vehicle_watering_plans existing
-                WHERE existing.watering_plan_id = p.id
+                SELECT 1 FROM operation_plan_vehicles existing
+                WHERE existing.plan_id = p.id
             )
         )
-        INSERT INTO vehicle_watering_plans (vehicle_id, watering_plan_id, role)
+        INSERT INTO operation_plan_vehicles (vehicle_id, plan_id, role)
         SELECT v.id, p.id, 'transporter'::vehicle_type
         FROM plans_ranked p
         JOIN vehicles_ranked v ON v.rn = 1 + (p.rn % v.total)
@@ -694,7 +695,7 @@ async fn seed_plans(pool: &PgPool, scale: Scale) -> Result<i64, sqlx::Error> {
     .execute(pool)
     .await?;
 
-    count(pool, "watering_plans").await
+    count(pool, "operation_plans").await
 }
 
 async fn count(pool: &PgPool, table: &str) -> Result<i64, sqlx::Error> {
@@ -709,7 +710,7 @@ async fn count(pool: &PgPool, table: &str) -> Result<i64, sqlx::Error> {
 /// previous table size, and the next measurement is an artefact of that.
 pub async fn analyze(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query(
-        "ANALYZE organizations, roles, role_assignments, user_profiles, tree_clusters, trees, sensors, sensor_data, sensor_data_ability_values, vehicles, watering_plans",
+        "ANALYZE organizations, roles, role_assignments, user_profiles, tree_clusters, trees, sensors, sensor_data, sensor_data_ability_values, vehicles, operation_plans",
     )
         .execute(pool)
         .await?;

@@ -3,6 +3,7 @@
 //! module crate in stage 4.
 
 pub mod handlers;
+pub mod planning;
 pub mod settings;
 pub mod targets;
 
@@ -76,7 +77,7 @@ impl Module for IrrigationModule {
             ctx.organizations.clone(),
         ));
         let state = Arc::new(IrrigationHttpState {
-            settings: Arc::new(IrrigationSettingsService::new(repo)),
+            settings: Arc::new(IrrigationSettingsService::new(repo.clone())),
             access: ctx.access.clone(),
             authorization: ctx.authorization.clone(),
             organizations: ctx.organizations.clone(),
@@ -90,7 +91,12 @@ impl Module for IrrigationModule {
         });
         runtime.targets = Some(Arc::new(targets::IrrigationTargets::new(
             trees.clone(),
+            clusters.clone(),
+        )));
+        runtime.planning = Some(Arc::new(planning::IrrigationPlanning::new(
             clusters,
+            ctx.organizations.clone(),
+            repo,
         )));
         runtime.event_handlers.push(Arc::new(SensorLifecycle::new(
             trees.clone(),

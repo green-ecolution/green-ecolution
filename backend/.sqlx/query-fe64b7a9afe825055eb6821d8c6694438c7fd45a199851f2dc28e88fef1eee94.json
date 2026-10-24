@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT COALESCE(SUM(ops.amount), 0)::float8 AS \"total!\"\n            FROM operation_plan_stops ops\n            INNER JOIN operation_plans op ON op.id = ops.plan_id\n            INNER JOIN tree_clusters tc ON tc.id = ops.stop_id\n            WHERE op.module_key = 'irrigation'\n              AND ($1::uuid[] IS NULL OR tc.organization_id = ANY($1))",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "total!",
+        "type_info": "Float8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "UuidArray"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "fe64b7a9afe825055eb6821d8c6694438c7fd45a199851f2dc28e88fef1eee94"
+}

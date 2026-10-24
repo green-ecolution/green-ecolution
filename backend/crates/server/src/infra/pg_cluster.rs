@@ -267,6 +267,7 @@ impl TreeClusterReader for PgTreeClusterRepository {
                 query.watering_statuses,
             ))
             .filter(Predicate::any_of("tc.region_id", query.regions))
+            .filter(Predicate::any_of("tc.id", query.ids.to_values()))
             .filter(Predicate::any_of(
                 "tc.soil_condition",
                 query.soil_conditions,
@@ -521,14 +522,15 @@ impl TreeClusterReader for PgTreeClusterRepository {
         id: Id<TreeCluster>,
     ) -> Result<Vec<ClusterWateringEvent>, RepositoryError> {
         let rows = sqlx::query!(
-            r#"SELECT wp.id AS "watering_plan_id!",
-                      wp.date AS "date!",
-                      tcwp.consumed_water AS "consumed_water!"
-               FROM tree_cluster_watering_plans tcwp
-               JOIN watering_plans wp ON wp.id = tcwp.watering_plan_id
-               WHERE tcwp.tree_cluster_id = $1
-                 AND wp.status = 'finished'
-               ORDER BY wp.date DESC"#,
+            r#"SELECT op.id AS "watering_plan_id!",
+                      op.date AS "date!",
+                      COALESCE(ops.amount, 0)::float8 AS "consumed_water!"
+               FROM operation_plan_stops ops
+               JOIN operation_plans op ON op.id = ops.plan_id
+               WHERE ops.stop_id = $1
+                 AND op.module_key = 'irrigation'
+                 AND op.status = 'finished'
+               ORDER BY op.date DESC"#,
             id.value(),
         )
         .fetch_all(&self.pool)
@@ -720,6 +722,35 @@ impl TreeClusterWriter for PgTreeClusterRepository {
             return Err(RepositoryError::NotFound);
         }
 
+        Ok(())
+    }
+
+    #[tracing::instrument(level = "trace", skip_all)]
+    async fn mark_last_watered(
+        &self,
+        ids: &[Id<TreeCluster>],
+        at: DateTime<Utc>,
+    ) -> Result<(), RepositoryError> {
+        let ids: Vec<RawId> = ids.to_values();
+        let mut tx = self.pool.begin().await?;
+
+        sqlx::query!(
+            "UPDATE tree_clusters SET last_watered = $2 WHERE id = ANY($1::uuid[])",
+            &ids,
+            at.naive_utc(),
+        )
+        .execute(&mut *tx)
+        .await?;
+
+        sqlx::query!(
+            "UPDATE trees SET last_watered = $2 WHERE tree_cluster_id = ANY($1::uuid[])",
+            &ids,
+            at.naive_utc(),
+        )
+        .execute(&mut *tx)
+        .await?;
+
+        tx.commit().await?;
         Ok(())
     }
 }

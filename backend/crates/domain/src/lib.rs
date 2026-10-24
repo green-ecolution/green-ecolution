@@ -48,7 +48,6 @@ pub mod target;
 pub mod tree;
 pub mod user;
 pub mod vehicle;
-pub mod watering_plan;
 
 /// Errors that repository implementations return to the domain.
 ///
