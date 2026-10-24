@@ -2,6 +2,7 @@
 apis/CommentsApi.ts
 apis/EvaluationApi.ts
 apis/InfoApi.ts
+apis/IrrigationApi.ts
 apis/ModulesApi.ts
 apis/OrganizationsApi.ts
 apis/PluginsApi.ts
@@ -45,6 +46,8 @@ models/IngestBatchResponse.ts
 models/IngestResultResponse.ts
 models/IngestStatusResponse.ts
 models/IngestSummaryResponse.ts
+models/IrrigationSettingsResponse.ts
+models/IrrigationSettingsUpdateRequest.ts
 models/ListResponseCommentResponse.ts
 models/ListResponseCommentResponseDataInner.ts
 models/ListResponseRegionResponse.ts

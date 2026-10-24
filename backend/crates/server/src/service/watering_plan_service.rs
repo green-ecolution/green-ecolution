@@ -8,7 +8,6 @@ use domain::{
     events::DomainEvent,
     organization::{Organization, OrganizationReader},
     routing::{OptimizedRoute, RouteOptimizer, RouteStop, tank_capacity},
-    settings::SettingsResolver,
     shared::pagination::{Page, Pagination},
     start_point::{StartPoint, StartPointReader},
     vehicle::{Vehicle, VehicleReader},
@@ -19,6 +18,8 @@ use domain::{
     },
 };
 
+use crate::irrigation::settings::IrrigationSettingsResolver;
+
 use super::{Feature, OrganizationMismatch, ServiceError, event_bus::EventBus};
 
 pub struct WateringPlanService {
@@ -28,7 +29,7 @@ pub struct WateringPlanService {
     vehicle_reader: Arc<dyn VehicleReader>,
     event_bus: Arc<dyn EventBus>,
     route_optimizer: Option<Arc<dyn RouteOptimizer>>,
-    settings: Arc<dyn SettingsResolver>,
+    settings: Arc<dyn IrrigationSettingsResolver>,
     start_point_reader: Arc<dyn StartPointReader>,
     org_reader: Arc<dyn OrganizationReader>,
     comment_writer: Arc<dyn CommentWriter>,
@@ -51,7 +52,7 @@ impl WateringPlanService {
         vehicle_reader: Arc<dyn VehicleReader>,
         event_bus: Arc<dyn EventBus>,
         route_optimizer: Option<Arc<dyn RouteOptimizer>>,
-        settings: Arc<dyn SettingsResolver>,
+        settings: Arc<dyn IrrigationSettingsResolver>,
         start_point_reader: Arc<dyn StartPointReader>,
         org_reader: Arc<dyn OrganizationReader>,
         comment_writer: Arc<dyn CommentWriter>,

@@ -19,6 +19,7 @@ pub mod health;
 pub mod health_probes;
 pub mod helpers;
 pub mod info;
+pub mod irrigation_settings;
 pub mod map_view;
 pub mod module_access;
 pub mod module_activation_repo;

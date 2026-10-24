@@ -1,7 +1,7 @@
 use domain::{
     Id,
     organization::Organization,
-    settings::{Patch, SettingsUpdate, WaterDemand},
+    settings::{Patch, SensorOfflineAfter, SettingsUpdate},
 };
 use server::service::ServiceError;
 use uuid::Uuid;
@@ -9,7 +9,7 @@ use uuid::Uuid;
 use crate::{
     helpers::spawn_app,
     organizations::ROOT_ORG_ID,
-    settings_repo::{child_org, set_water_demand},
+    settings_repo::{child_org, set_sensor_offline_after},
 };
 
 async fn lock(app: &crate::helpers::TestApp, org: Uuid) {
@@ -30,7 +30,7 @@ async fn lock(app: &crate::helpers::TestApp, org: Uuid) {
 async fn set_via_service(
     app: &crate::helpers::TestApp,
     org: Uuid,
-    liters: f64,
+    secs: i64,
 ) -> Result<(), ServiceError> {
     app.state
         .settings_service
@@ -38,7 +38,7 @@ async fn set_via_service(
             Uuid::nil(),
             Id::<Organization>::new(org),
             SettingsUpdate {
-                water_demand: Patch::Set(WaterDemand::new(liters).unwrap()),
+                sensor_offline_after: Patch::Set(SensorOfflineAfter::new(secs).unwrap()),
                 ..SettingsUpdate::default()
             },
         )
@@ -52,10 +52,10 @@ async fn a_write_below_a_lock_is_rejected_as_a_conflict() {
     let root = Uuid::parse_str(ROOT_ORG_ID).unwrap();
     let leaf = child_org(&app, "Blatt", root).await;
 
-    set_water_demand(&app, root, 100.0).await;
+    set_sensor_offline_after(&app, root, 100_000).await;
     lock(&app, root).await;
 
-    let err = set_via_service(&app, leaf, 70.0).await.unwrap_err();
+    let err = set_via_service(&app, leaf, 70_000).await.unwrap_err();
     assert_eq!(err.code(), "settings.enforced_by_ancestor");
 }
 
@@ -69,7 +69,10 @@ async fn the_lock_reaches_through_two_levels() {
     lock(&app, root).await;
 
     assert_eq!(
-        set_via_service(&app, leaf, 70.0).await.unwrap_err().code(),
+        set_via_service(&app, leaf, 70_000)
+            .await
+            .unwrap_err()
+            .code(),
         "settings.enforced_by_ancestor"
     );
 }
@@ -104,8 +107,8 @@ async fn a_dormant_value_comes_back_unchanged_when_the_lock_is_released() {
     let root = Uuid::parse_str(ROOT_ORG_ID).unwrap();
     let leaf = child_org(&app, "Blatt", root).await;
 
-    set_water_demand(&app, root, 100.0).await;
-    set_via_service(&app, leaf, 70.0).await.unwrap();
+    set_sensor_offline_after(&app, root, 100_000).await;
+    set_via_service(&app, leaf, 70_000).await.unwrap();
     lock(&app, root).await;
 
     let during = app
@@ -114,7 +117,7 @@ async fn a_dormant_value_comes_back_unchanged_when_the_lock_is_released() {
         .resolution(Id::<Organization>::new(leaf))
         .await
         .unwrap();
-    assert_eq!(during.effective.water_demand.liters(), 100.0);
+    assert_eq!(during.effective.sensor_offline_after.seconds(), 100_000);
     assert_eq!(during.effective.enforced_by, Some(Id::new(root)));
 
     app.state
@@ -136,6 +139,6 @@ async fn a_dormant_value_comes_back_unchanged_when_the_lock_is_released() {
         .resolution(Id::<Organization>::new(leaf))
         .await
         .unwrap();
-    assert_eq!(after.effective.water_demand.liters(), 70.0);
+    assert_eq!(after.effective.sensor_offline_after.seconds(), 70_000);
     assert_eq!(after.effective.enforced_by, None);
 }

@@ -2237,6 +2237,182 @@
         }
       }
     },
+    "/v1/organizations/{org_id}/settings/irrigation": {
+      "get": {
+        "tags": [
+          "Irrigation"
+        ],
+        "summary": "Read an organization's irrigation defaults",
+        "description": "Each field carries the value in force, where it came from, this organization's own value and when it was last changed. Requires setting:read.",
+        "operationId": "getIrrigationSettings",
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "description": "Organization id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The resolved settings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IrrigationSettingsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Irrigation"
+        ],
+        "summary": "Set an organization's irrigation defaults",
+        "description": "An omitted field stays as it is, `null` drops the organization's own value and returns it to inheritance. Requires setting:update.",
+        "operationId": "updateIrrigationSettings",
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "description": "Organization id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IrrigationSettingsUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IrrigationSettingsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Value outside its range",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "An organization above froze this subtree (code `settings.enforced_by_ancestor`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/permissions": {
       "get": {
         "tags": [
@@ -9043,6 +9219,52 @@
           }
         }
       },
+      "IrrigationSettingsResponse": {
+        "type": "object",
+        "required": [
+          "water_demand",
+          "just_watered_ttl_secs"
+        ],
+        "properties": {
+          "enforced_by": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/OrganizationRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "just_watered_ttl_secs": {
+            "$ref": "#/components/schemas/SettingField_i64"
+          },
+          "water_demand": {
+            "$ref": "#/components/schemas/SettingField_f64",
+            "description": "Liters per tree."
+          }
+        }
+      },
+      "IrrigationSettingsUpdateRequest": {
+        "type": "object",
+        "description": "Three states per field. Absent means unchanged, `null` means go back to\ninheriting, a number sets it.",
+        "properties": {
+          "just_watered_ttl_secs": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "water_demand": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          }
+        }
+      },
       "ListResponse_CommentResponse": {
         "type": "object",
         "required": [
@@ -10549,8 +10771,6 @@
       "OrganizationSettingsResponse": {
         "type": "object",
         "required": [
-          "water_demand",
-          "just_watered_ttl_secs",
           "sensor_offline_after_secs",
           "defect_streak",
           "map_view",
@@ -10575,17 +10795,11 @@
               }
             ]
           },
-          "just_watered_ttl_secs": {
-            "$ref": "#/components/schemas/SettingField_i64"
-          },
           "map_view": {
             "$ref": "#/components/schemas/SettingField_MapViewDto"
           },
           "sensor_offline_after_secs": {
             "$ref": "#/components/schemas/SettingField_i64"
-          },
-          "water_demand": {
-            "$ref": "#/components/schemas/SettingField_f64"
           }
         }
       },
@@ -10607,13 +10821,6 @@
             ],
             "description": "A plain toggle, not a three-state field: `null` is equivalent to\nomitting it and leaves the switch as it is."
           },
-          "just_watered_ttl_secs": {
-            "type": [
-              "integer",
-              "null"
-            ],
-            "format": "int64"
-          },
           "map_view": {
             "oneOf": [
               {
@@ -10630,13 +10837,6 @@
               "null"
             ],
             "format": "int64"
-          },
-          "water_demand": {
-            "type": [
-              "number",
-              "null"
-            ],
-            "format": "double"
           }
         }
       },
@@ -14967,7 +15167,11 @@
     },
     {
       "name": "Settings",
-      "description": "Per-organization operational defaults — water demand, just-watered duration, sensor thresholds and the map viewport — resolved along the organization tree."
+      "description": "Per-organization operational defaults — sensor thresholds and the map viewport — resolved along the organization tree."
+    },
+    {
+      "name": "Irrigation",
+      "description": "Per-organization irrigation defaults — water demand and just-watered duration — resolved along the organization tree."
     }
   ]
 }

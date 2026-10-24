@@ -174,7 +174,8 @@ pub struct AppState {
         (name = "Roles", description = "Manage roles (named permission sets) and their assignment to users."),
         (name = "Comments", description = "Free-text comments on tree clusters and watering plans. Reading follows the parent resource's read permission, writing its update permission."),
         (name = "Modules", description = "Feature modules and their activation per organization"),
-        (name = "Settings", description = "Per-organization operational defaults — water demand, just-watered duration, sensor thresholds and the map viewport — resolved along the organization tree."),
+        (name = "Settings", description = "Per-organization operational defaults — sensor thresholds and the map viewport — resolved along the organization tree."),
+        (name = "Irrigation", description = "Per-organization irrigation defaults — water demand and just-watered duration — resolved along the organization tree."),
     ),
 )]
 struct ApiDoc;

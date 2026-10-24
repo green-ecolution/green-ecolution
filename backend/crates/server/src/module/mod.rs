@@ -16,11 +16,13 @@ use sqlx::PgPool;
 use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
+    configuration::Settings,
     http::AppState,
     service::{
         authorization::AuthorizationService,
         event_bus::{EventBus, EventHandler},
         module_access::ModuleAccess,
+        user_service::UserService,
     },
 };
 
@@ -51,6 +53,8 @@ pub struct ModuleContext {
     pub organizations: Arc<dyn OrganizationReader>,
     pub settings: Arc<dyn SettingsResolver>,
     pub access: ModuleAccess,
+    pub users: Arc<UserService>,
+    pub config: Arc<Settings>,
 }
 
 /// Routes relative to `/api/v1`. `protected` runs behind the same

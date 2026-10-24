@@ -1,6 +1,6 @@
 use crate::helpers::{self, spawn_app};
 use crate::organizations::ROOT_ORG_ID;
-use crate::settings_repo::{child_org, set_water_demand};
+use crate::settings_repo::child_org;
 
 async fn create_transporter(app: &helpers::TestApp) -> serde_json::Value {
     let body = serde_json::json!({
@@ -1085,8 +1085,15 @@ async fn two_organizations_plan_with_their_own_water_demand() {
     let root = uuid::Uuid::parse_str(ROOT_ORG_ID).unwrap();
     let org_a = child_org(&app, "Bewaesserung Nord", root).await;
     let org_b = child_org(&app, "Bewaesserung Sued", root).await;
-    set_water_demand(&app, org_a, 50.0).await;
-    set_water_demand(&app, org_b, 200.0).await;
+    for (org, liters) in [(org_a, 50.0), (org_b, 200.0)] {
+        let resp = app
+            .put_json(
+                &format!("/api/v1/organizations/{org}/settings/irrigation"),
+                &serde_json::json!({ "water_demand": liters }),
+            )
+            .await;
+        assert_eq!(resp.status().as_u16(), 200);
+    }
 
     let cluster_a = create_cluster_with_trees_in_org(&app, org_a, 3, 54.79, 9.43).await;
     let cluster_b = create_cluster_with_trees_in_org(&app, org_b, 3, 54.80, 9.45).await;

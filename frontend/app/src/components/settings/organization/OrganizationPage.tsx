@@ -19,6 +19,7 @@ import {
 } from '@green-ecolution/ui'
 import type {
   AddressDto,
+  IrrigationSettingsResponse,
   OrganizationDetailResponse,
   OrganizationResponse,
   OrganizationSettingsResponse,
@@ -39,6 +40,7 @@ import OrganizationSettingsSection from './OrganizationSettingsSection'
 import OrganizationTree from './OrganizationTree'
 import { buildTree, nodeOf, pathTo } from './organizationTree'
 import { useOrganizationDraft } from './useOrganizationDraft'
+import { useIrrigationSettingsDraft } from './useIrrigationSettingsDraft'
 import { useOrganizationSettingsDraft } from './useOrganizationSettingsDraft'
 
 const MEMBERS_PER_PAGE = 100
@@ -66,16 +68,17 @@ const contactPersonMessage = (error: unknown, t: TFunction<'settings'>): string 
 const settingsFingerprint = (
   orgId: string | null,
   settings: OrganizationSettingsResponse | undefined,
+  irrigation: IrrigationSettingsResponse | undefined,
 ): string | null =>
-  settings
+  settings && irrigation
     ? JSON.stringify([
         orgId,
-        settings.waterDemand.value,
-        settings.waterDemand.origin,
-        settings.waterDemand.ownValue ?? null,
-        settings.justWateredTtlSecs.value,
-        settings.justWateredTtlSecs.origin,
-        settings.justWateredTtlSecs.ownValue ?? null,
+        irrigation.waterDemand.value,
+        irrigation.waterDemand.origin,
+        irrigation.waterDemand.ownValue ?? null,
+        irrigation.justWateredTtlSecs.value,
+        irrigation.justWateredTtlSecs.origin,
+        irrigation.justWateredTtlSecs.ownValue ?? null,
         settings.mapView.value,
         settings.mapView.origin,
         settings.mapView.ownValue ?? null,
@@ -109,6 +112,8 @@ const OrganizationPage = () => {
   const { draft, dirty, addressErrors, addressComplete, edit } = draftState
   const settingsDraft = useOrganizationSettingsDraft()
   const { load: loadSettings } = settingsDraft
+  const irrigationDraft = useIrrigationSettingsDraft()
+  const { load: loadIrrigation } = irrigationDraft
 
   const [selection, setSelection] = useState<string | null>(null)
   const [expandedOverride, setExpandedOverride] = useState<ReadonlySet<string> | null>(null)
@@ -143,18 +148,24 @@ const OrganizationPage = () => {
     ...settingsQueries.byOrganization(selectedId ?? ''),
     enabled: canReadSettings && selectedId !== null,
   })
-  const settingsKey = settingsFingerprint(selectedId, settings)
+  const { data: irrigation, error: irrigationError } = useQuery({
+    ...settingsQueries.irrigation(selectedId ?? ''),
+    enabled: canReadSettings && selectedId !== null,
+  })
+  const settingsKey = settingsFingerprint(selectedId, settings, irrigation)
 
   // An invalid settings draft builds no request, so `settingsDraft.dirty` is
   // false for it. Typed input would then be dropped without a word on the way
   // out, hence the `!valid` arm.
-  const unsaved = dirty || settingsDraft.dirty || !settingsDraft.valid
+  const settingsDirty = settingsDraft.dirty || irrigationDraft.dirty
+  const settingsValid = settingsDraft.valid && irrigationDraft.valid
+  const unsaved = dirty || settingsDirty || !settingsValid
 
   // Master data and settings travel to different endpoints, so each is judged
   // on its own. The button asks only whether either half has something valid to
   // send; the other half keeps its error in the form until it is fixed.
   const masterDataValid = draft !== null && draft.name.trim().length > 0 && addressComplete
-  const canSave = (dirty && masterDataValid) || settingsDraft.dirty
+  const canSave = (dirty && masterDataValid) || settingsDirty
 
   const blocker = useBlocker({
     shouldBlockFn: () => unsaved,
@@ -181,11 +192,12 @@ const OrganizationPage = () => {
     // the whole `organizations` prefix and therefore refetches these settings —
     // an identity check would reset the draft while the settings request is
     // still in flight and lose the typed value if that request then fails.
-    if (!settings || settingsKey === loadedSettingsKey) return
+    if (!settings || !irrigation || settingsKey === loadedSettingsKey) return
     // eslint-disable-next-line react-hooks/set-state-in-effect, react-x/set-state-in-effect -- loads the freshly fetched settings into the draft
     setLoadedSettingsKey(settingsKey)
     loadSettings(settings)
-  }, [settings, settingsKey, loadedSettingsKey, loadSettings])
+    loadIrrigation(irrigation)
+  }, [settings, irrigation, settingsKey, loadedSettingsKey, loadSettings, loadIrrigation])
 
   const members = memberPage?.data ?? []
   const memberInitials = members
@@ -262,6 +274,7 @@ const OrganizationPage = () => {
   const resetDraft = () => {
     if (detail) edit(detail)
     if (settings) loadSettings(settings)
+    if (irrigation) loadIrrigation(irrigation)
   }
 
   // null stands for "open the create dialog", mirroring how RolesPage encodes
@@ -331,8 +344,13 @@ const OrganizationPage = () => {
     }
 
     const settingsBody = settingsDraft.toRequest()
-    if (settingsBody) {
-      updateSettings.mutate({ orgId: detail.id, body: settingsBody })
+    const irrigationBody = irrigationDraft.toRequest()
+    if (settingsBody || irrigationBody) {
+      updateSettings.mutate({
+        orgId: detail.id,
+        body: settingsBody ?? undefined,
+        irrigationBody: irrigationBody ?? undefined,
+      })
     }
   }
 
@@ -388,24 +406,26 @@ const OrganizationPage = () => {
 
   // Without `setting:read` the section is absent by design; a failed request is
   // a different thing and must not look the same.
-  const settingsSection = !canReadSettings ? null : settingsError ? (
+  const loadError = settingsError ?? irrigationError
+  const settingsSection = !canReadSettings ? null : loadError ? (
     <p role="alert" className="text-sm text-dark-600">
-      {settingsLoadErrorMessage(settingsError, t)}
+      {settingsLoadErrorMessage(loadError, t)}
     </p>
-  ) : settings && settingsDraft.draft ? (
+  ) : settings && irrigation && settingsDraft.draft && irrigationDraft.draft ? (
     <OrganizationSettingsSection
       settings={settings}
-      draft={settingsDraft.draft}
-      errors={settingsDraft.errors}
+      irrigation={irrigation}
+      draft={{ ...settingsDraft.draft, ...irrigationDraft.draft }}
+      errors={{ ...settingsDraft.errors, ...irrigationDraft.errors }}
       canUpdate={canUpdateSettings}
       enforcedByName={nameOfOrg(settings.enforcedBy?.id)}
       sourceNames={{
-        waterDemand: nameOfOrg(settings.waterDemand.source?.id),
-        justWateredTtlHours: nameOfOrg(settings.justWateredTtlSecs.source?.id),
+        waterDemand: nameOfOrg(irrigation.waterDemand.source?.id),
+        justWateredTtlHours: nameOfOrg(irrigation.justWateredTtlSecs.source?.id),
         mapView: nameOfOrg(settings.mapView.source?.id),
       }}
-      onOwnChange={settingsDraft.setOwn}
-      onTextChange={settingsDraft.setText}
+      onOwnChange={irrigationDraft.setOwn}
+      onTextChange={irrigationDraft.setText}
       onMapViewOwnChange={settingsDraft.setMapViewOwn}
       onMapViewChange={settingsDraft.setMapView}
       onMapViewRestrictedChange={settingsDraft.setMapViewRestricted}

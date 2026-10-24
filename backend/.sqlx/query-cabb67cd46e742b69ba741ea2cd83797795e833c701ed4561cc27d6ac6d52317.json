@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT organization_id, water_demand_liters, just_watered_ttl_secs,\n                      sensor_offline_after_secs, defect_streak,\n                      map_center_lat, map_center_lng,\n                      map_bbox_sw_lat, map_bbox_sw_lng,\n                      map_bbox_ne_lat, map_bbox_ne_lng,\n                      map_min_zoom, map_max_zoom,\n                      descendants_may_override\n               FROM organization_settings WHERE organization_id = $1 FOR UPDATE",
+  "query": "SELECT organization_id, sensor_offline_after_secs, defect_streak,\n                      map_center_lat, map_center_lng,\n                      map_bbox_sw_lat, map_bbox_sw_lng,\n                      map_bbox_ne_lat, map_bbox_ne_lng,\n                      map_min_zoom, map_max_zoom,\n                      descendants_may_override\n               FROM organization_settings WHERE organization_id = $1 FOR UPDATE",
   "describe": {
     "columns": [
       {
@@ -10,66 +10,56 @@
       },
       {
         "ordinal": 1,
-        "name": "water_demand_liters",
-        "type_info": "Float8"
-      },
-      {
-        "ordinal": 2,
-        "name": "just_watered_ttl_secs",
-        "type_info": "Int8"
-      },
-      {
-        "ordinal": 3,
         "name": "sensor_offline_after_secs",
         "type_info": "Int8"
       },
       {
-        "ordinal": 4,
+        "ordinal": 2,
         "name": "defect_streak",
         "type_info": "Int4"
       },
       {
-        "ordinal": 5,
+        "ordinal": 3,
         "name": "map_center_lat",
         "type_info": "Float8"
       },
       {
-        "ordinal": 6,
+        "ordinal": 4,
         "name": "map_center_lng",
         "type_info": "Float8"
       },
       {
-        "ordinal": 7,
+        "ordinal": 5,
         "name": "map_bbox_sw_lat",
         "type_info": "Float8"
       },
       {
-        "ordinal": 8,
+        "ordinal": 6,
         "name": "map_bbox_sw_lng",
         "type_info": "Float8"
       },
       {
-        "ordinal": 9,
+        "ordinal": 7,
         "name": "map_bbox_ne_lat",
         "type_info": "Float8"
       },
       {
-        "ordinal": 10,
+        "ordinal": 8,
         "name": "map_bbox_ne_lng",
         "type_info": "Float8"
       },
       {
-        "ordinal": 11,
+        "ordinal": 9,
         "name": "map_min_zoom",
         "type_info": "Int2"
       },
       {
-        "ordinal": 12,
+        "ordinal": 10,
         "name": "map_max_zoom",
         "type_info": "Int2"
       },
       {
-        "ordinal": 13,
+        "ordinal": 11,
         "name": "descendants_may_override",
         "type_info": "Bool"
       }
@@ -91,10 +81,8 @@
       true,
       true,
       true,
-      true,
-      true,
       false
     ]
   },
-  "hash": "a61347f1839e745558565eb65c4fcc90f28101d61d5703265fc366bc2d105f04"
+  "hash": "cabb67cd46e742b69ba741ea2cd83797795e833c701ed4561cc27d6ac6d52317"
 }

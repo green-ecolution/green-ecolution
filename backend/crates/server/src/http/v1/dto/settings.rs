@@ -7,9 +7,9 @@ use domain::{
     Id,
     organization::Organization,
     settings::{
-        DefectStreak, JustWateredTtl, MapBounds, MapView, OrganizationSettings, Patch, Resolution,
+        DefectStreak, MapBounds, MapView, OrganizationSettings, Patch, Resolution,
         SensorOfflineAfter, SettingChangeEntry, SettingKey, SettingOrigin, SettingsUpdate,
-        WaterDemand, ZoomLevel,
+        ZoomLevel,
     },
     shared::{coordinates::Coordinate, error::ValidationError, geo::BoundingBox},
 };
@@ -35,6 +35,22 @@ pub struct SettingChangeRef {
     pub changed_by: Option<Uuid>,
     /// Resolved by the handler; absent when the account no longer resolves.
     pub changed_by_name: Option<String>,
+}
+
+/// When and by whom a value last changed, whichever module owns the key.
+#[derive(Debug, Clone, Copy)]
+pub struct ChangeStamp {
+    pub changed_at: chrono::DateTime<chrono::Utc>,
+    pub changed_by: Option<Uuid>,
+}
+
+impl From<&SettingChangeEntry> for ChangeStamp {
+    fn from(entry: &SettingChangeEntry) -> Self {
+        Self {
+            changed_at: entry.changed_at,
+            changed_by: entry.changed_by,
+        }
+    }
 }
 
 /// One value plus everything the interface needs to show where it comes from
@@ -115,8 +131,6 @@ impl TryFrom<MapViewDto> for MapView {
 
 #[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct OrganizationSettingsResponse {
-    pub water_demand: SettingField<f64>,
-    pub just_watered_ttl_secs: SettingField<i64>,
     pub sensor_offline_after_secs: SettingField<i64>,
     pub defect_streak: SettingField<i32>,
     pub map_view: SettingField<MapViewDto>,
@@ -132,12 +146,6 @@ pub struct OrganizationSettingsResponse {
 /// inheriting, a value means set it.
 #[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct OrganizationSettingsUpdateRequest {
-    #[serde(default, deserialize_with = "double_option")]
-    #[schema(value_type = Option<f64>)]
-    pub water_demand: Option<Option<f64>>,
-    #[serde(default, deserialize_with = "double_option")]
-    #[schema(value_type = Option<i64>)]
-    pub just_watered_ttl_secs: Option<Option<i64>>,
     #[serde(default, deserialize_with = "double_option")]
     #[schema(value_type = Option<i64>)]
     pub sensor_offline_after_secs: Option<Option<i64>>,
@@ -156,7 +164,7 @@ pub struct OrganizationSettingsUpdateRequest {
 /// `Option<Option<T>>` needs an explicit deserializer: serde's `default`
 /// collapses "absent" and "null" into `None` otherwise, and every partial save
 /// would reset the fields it did not send.
-fn double_option<'de, D, T>(deserializer: D) -> Result<Option<Option<T>>, D::Error>
+pub(crate) fn double_option<'de, D, T>(deserializer: D) -> Result<Option<Option<T>>, D::Error>
 where
     D: Deserializer<'de>,
     T: Deserialize<'de>,
@@ -164,7 +172,7 @@ where
     Option::deserialize(deserializer).map(Some)
 }
 
-fn patch<T, U, F>(raw: Option<Option<T>>, build: F) -> Result<Patch<U>, ServiceError>
+pub(crate) fn patch<T, U, F>(raw: Option<Option<T>>, build: F) -> Result<Patch<U>, ServiceError>
 where
     F: FnOnce(T) -> Result<U, ServiceError>,
 {
@@ -180,8 +188,6 @@ impl TryFrom<OrganizationSettingsUpdateRequest> for SettingsUpdate {
 
     fn try_from(req: OrganizationSettingsUpdateRequest) -> Result<Self, Self::Error> {
         Ok(SettingsUpdate {
-            water_demand: patch(req.water_demand, |v| Ok(WaterDemand::new(v)?))?,
-            just_watered_ttl: patch(req.just_watered_ttl_secs, |v| Ok(JustWateredTtl::new(v)?))?,
             sensor_offline_after: patch(req.sensor_offline_after_secs, |v| {
                 Ok(SensorOfflineAfter::new(v)?)
             })?,
@@ -192,11 +198,11 @@ impl TryFrom<OrganizationSettingsUpdateRequest> for SettingsUpdate {
     }
 }
 
-fn field<T>(
+pub(crate) fn field<T>(
     value: T,
     origin: SettingOrigin,
     own: Option<T>,
-    last: Option<&SettingChangeEntry>,
+    last: Option<ChangeStamp>,
     names: &HashMap<Uuid, String>,
 ) -> SettingField<T> {
     SettingField {
@@ -229,39 +235,26 @@ impl OrganizationSettingsResponse {
         let effective = resolution.effective;
         let origins = resolution.origins;
         Self {
-            water_demand: field(
-                effective.water_demand.liters(),
-                origins.water_demand,
-                own.water_demand.map(|v| v.liters()),
-                last.get(&SettingKey::WaterDemand),
-                names,
-            ),
-            just_watered_ttl_secs: field(
-                effective.just_watered_ttl.seconds(),
-                origins.just_watered_ttl,
-                own.just_watered_ttl.map(|v| v.seconds()),
-                last.get(&SettingKey::JustWateredTtl),
-                names,
-            ),
             sensor_offline_after_secs: field(
                 effective.sensor_offline_after.seconds(),
                 origins.sensor_offline_after,
                 own.sensor_offline_after.map(|v| v.seconds()),
-                last.get(&SettingKey::SensorOfflineAfter),
+                last.get(&SettingKey::SensorOfflineAfter)
+                    .map(ChangeStamp::from),
                 names,
             ),
             defect_streak: field(
                 effective.defect_streak.count(),
                 origins.defect_streak,
                 own.defect_streak.map(|v| v.count()),
-                last.get(&SettingKey::DefectStreak),
+                last.get(&SettingKey::DefectStreak).map(ChangeStamp::from),
                 names,
             ),
             map_view: field(
                 effective.map_view.into(),
                 origins.map_view,
                 own.map_view.map(MapViewDto::from),
-                last.get(&SettingKey::MapView),
+                last.get(&SettingKey::MapView).map(ChangeStamp::from),
                 names,
             ),
             descendants_may_override: own.descendants_may_override,

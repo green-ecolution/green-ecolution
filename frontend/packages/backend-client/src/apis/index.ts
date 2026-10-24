@@ -3,6 +3,7 @@
 export * from './CommentsApi';
 export * from './EvaluationApi';
 export * from './InfoApi';
+export * from './IrrigationApi';
 export * from './ModulesApi';
 export * from './OrganizationsApi';
 export * from './PluginsApi';

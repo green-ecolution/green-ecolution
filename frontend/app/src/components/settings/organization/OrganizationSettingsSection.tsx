@@ -28,6 +28,7 @@ import {
 } from '@green-ecolution/ui'
 import {
   SettingOriginDto,
+  type IrrigationSettingsResponse,
   type MapViewDto,
   type OrganizationSettingsResponse,
   type SettingChangeRef,
@@ -35,7 +36,8 @@ import {
 import { useDateLocale } from '@/lib/i18n/useFormatters'
 import { CARD, CARD_TITLE } from './OrganizationDetail'
 import MapViewSettingRow from './MapViewSettingRow'
-import { hoursOf, type NumericField, type SettingsDraft } from './useOrganizationSettingsDraft'
+import { hoursOf, type IrrigationDraft, type NumericField } from './useIrrigationSettingsDraft'
+import type { SettingsDraft } from './useOrganizationSettingsDraft'
 
 export interface SettingsFieldErrors {
   waterDemand: string | null
@@ -47,7 +49,8 @@ export type SettingsSourceNames = Record<NumericField | 'mapView', string | null
 
 interface OrganizationSettingsSectionProps {
   settings: OrganizationSettingsResponse
-  draft: SettingsDraft
+  irrigation: IrrigationSettingsResponse
+  draft: SettingsDraft & IrrigationDraft
   errors: SettingsFieldErrors
   canUpdate: boolean
   /** Name of the organization that froze this subtree, if any. */
@@ -238,6 +241,7 @@ const SettingRow = ({
 
 const OrganizationSettingsSection = ({
   settings,
+  irrigation,
   draft,
   errors,
   canUpdate,
@@ -260,8 +264,8 @@ const OrganizationSettingsSection = ({
   // so a sub-unit cannot unlock itself.
   const locked = enforced || !canUpdate
 
-  const waterDemandOwnValue = settings.waterDemand.ownValue
-  const ttlOwnValue = settings.justWateredTtlSecs.ownValue
+  const waterDemandOwnValue = irrigation.waterDemand.ownValue
+  const ttlOwnValue = irrigation.justWateredTtlSecs.ownValue
   const liters = (value: number) => t('organization.settings.liters', { count: value })
   const hours = (seconds: number) => t('organization.settings.hours', { count: hoursOf(seconds) })
   const descendantsMayOverride = draft.descendantsMayOverride
@@ -295,13 +299,13 @@ const OrganizationSettingsSection = ({
           label={t('organization.settings.waterDemandLabel')}
           description={t('organization.settings.waterDemandHint')}
           unit={t('organization.settings.waterDemandUnit')}
-          effective={liters(settings.waterDemand.value)}
-          origin={settings.waterDemand.origin}
+          effective={liters(irrigation.waterDemand.value)}
+          origin={irrigation.waterDemand.origin}
           sourceName={sourceNames.waterDemand}
           dormantValue={
             enforced && waterDemandOwnValue != null ? liters(waterDemandOwnValue) : null
           }
-          lastChange={settings.waterDemand.lastChange}
+          lastChange={irrigation.waterDemand.lastChange}
           text={draft.waterDemand.text}
           own={draft.waterDemand.own}
           error={errors.waterDemand}
@@ -316,11 +320,11 @@ const OrganizationSettingsSection = ({
           label={t('organization.settings.justWateredTtlLabel')}
           description={t('organization.settings.justWateredTtlHint')}
           unit={t('organization.settings.justWateredTtlUnit')}
-          effective={hours(settings.justWateredTtlSecs.value)}
-          origin={settings.justWateredTtlSecs.origin}
+          effective={hours(irrigation.justWateredTtlSecs.value)}
+          origin={irrigation.justWateredTtlSecs.origin}
           sourceName={sourceNames.justWateredTtlHours}
           dormantValue={enforced && ttlOwnValue != null ? hours(ttlOwnValue) : null}
-          lastChange={settings.justWateredTtlSecs.lastChange}
+          lastChange={irrigation.justWateredTtlSecs.lastChange}
           text={draft.justWateredTtlHours.text}
           own={draft.justWateredTtlHours.own}
           error={errors.justWateredTtlHours}

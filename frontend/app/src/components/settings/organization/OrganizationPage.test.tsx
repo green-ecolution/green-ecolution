@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, userEvent, waitFor, within } from '@/test/utils'
 import { UNRESTRICTED, type Permissions } from '@/lib/auth/permissions'
 import type {
+  IrrigationSettingsResponse,
   OrganizationDetailResponse,
   OrganizationResponse,
   OrganizationSettingsResponse,
@@ -59,7 +60,7 @@ const users: UserResponse[] = [
 
 // Water demand comes from the instance root above, the just-watered duration is
 // this organization's own — one field of each kind, as the section shows them.
-const settingsOf = (): OrganizationSettingsResponse =>
+const irrigationOf = (): IrrigationSettingsResponse =>
   ({
     waterDemand: { value: 80, origin: 'inherited', source: { id: 'root' }, lastChange: null },
     justWateredTtlSecs: {
@@ -70,6 +71,11 @@ const settingsOf = (): OrganizationSettingsResponse =>
       // response from ever being referentially stable across a refetch.
       lastChange: { changedAt: new Date('2026-03-12T09:00:00Z'), changedByName: 'ge.admin' },
     },
+    enforcedBy: null,
+  }) as unknown as IrrigationSettingsResponse
+
+const settingsOf = (): OrganizationSettingsResponse =>
+  ({
     mapView: {
       value: { center: [54.7923, 9.4358], bbox: [54.7148, 9.2858, 54.8601, 9.5838] },
       origin: 'default',
@@ -83,6 +89,7 @@ const settingsOf = (): OrganizationSettingsResponse =>
 let orgList: OrganizationResponse[] = []
 let detailMap: Record<string, OrganizationDetailResponse> = {}
 let settingsMap: Record<string, OrganizationSettingsResponse> = {}
+let irrigationMap: Record<string, IrrigationSettingsResponse> = {}
 
 const permissions = vi.fn((): Permissions => UNRESTRICTED)
 vi.mock('@/lib/auth/usePermissions', () => ({ usePermissions: () => permissions() }))
@@ -138,6 +145,7 @@ const ownOrgId = vi.fn((): string => 'amt')
 const listError = vi.fn((): unknown => null)
 const detailError = vi.fn((): unknown => null)
 const settingsError = vi.fn((): unknown => null)
+const irrigationError = vi.fn((): unknown => null)
 
 vi.mock('@tanstack/react-query', async () => {
   const actual =
@@ -145,7 +153,7 @@ vi.mock('@tanstack/react-query', async () => {
   return {
     ...actual,
     useQuery: (options: { queryKey: unknown[]; enabled?: boolean }) => {
-      const [scope, second, third] = options.queryKey
+      const [scope, second, third, fourth] = options.queryKey
       if (scope === 'users' && second === 'me') {
         return {
           data: {
@@ -167,6 +175,10 @@ vi.mock('@tanstack/react-query', async () => {
       }
       if (scope === 'organizations' && second === undefined) {
         return { data: orgList, isLoading: false, error: listError() }
+      }
+      if (scope === 'organizations' && third === 'settings' && fourth === 'irrigation') {
+        const data = options.enabled === false ? undefined : irrigationMap[second as string]
+        return { data, isLoading: false, error: irrigationError() }
       }
       if (scope === 'organizations' && third === 'settings') {
         // Honouring `enabled` is what makes the missing-permission case real.
@@ -211,6 +223,7 @@ describe('OrganizationPage', () => {
     orgList = [...BASE_ORGS]
     detailMap = { ...BASE_DETAILS }
     settingsMap = Object.fromEntries(BASE_ORGS.map((org) => [org.id, settingsOf()]))
+    irrigationMap = Object.fromEntries(BASE_ORGS.map((org) => [org.id, irrigationOf()]))
     permissions.mockReturnValue(UNRESTRICTED)
     isWide.mockReturnValue(true)
     ownOrgId.mockReturnValue('amt')
@@ -220,6 +233,7 @@ describe('OrganizationPage', () => {
     listError.mockReturnValue(null)
     detailError.mockReturnValue(null)
     settingsError.mockReturnValue(null)
+    irrigationError.mockReturnValue(null)
     updateMutate.mockReset()
     createMutate.mockImplementation(
       (
@@ -628,9 +642,48 @@ describe('OrganizationPage', () => {
     // Only the field that moved travels; the untouched water demand stays out.
     expect(updateSettingsMutate.mock.calls[0][0] as UpdateSettingsVariables).toEqual({
       orgId: 'nord',
-      body: { justWateredTtlSecs: 172800 },
+      irrigationBody: { justWateredTtlSecs: 172800 },
     })
     expect(updateMutate).toHaveBeenCalled()
+  })
+
+  it('sends only the irrigation part when only the water demand changed', async () => {
+    render(<OrganizationPage />)
+    await selectNord()
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Eigenen Wert für Wasserbedarf je Baum setzen' }),
+    )
+    const demand = screen.getByRole('spinbutton', { name: /Wasserbedarf/ })
+    await userEvent.clear(demand)
+    await userEvent.type(demand, '95')
+    await userEvent.click(screen.getByRole('button', { name: 'Speichern' }))
+
+    await waitFor(() => expect(updateSettingsMutate).toHaveBeenCalled())
+    expect(updateSettingsMutate.mock.calls[0][0] as UpdateSettingsVariables).toEqual({
+      orgId: 'nord',
+      irrigationBody: { waterDemand: 95 },
+    })
+  })
+
+  it('sends core and irrigation changes together in one save', async () => {
+    render(<OrganizationPage />)
+    await selectNord()
+
+    const ttl = screen.getByRole('spinbutton', { name: /Nachwirkzeit/ })
+    await userEvent.clear(ttl)
+    await userEvent.type(ttl, '48')
+    await userEvent.click(
+      screen.getByRole('switch', { name: /Untereinheiten dürfen eigene Werte setzen/ }),
+    )
+    await userEvent.click(screen.getByRole('button', { name: 'Speichern' }))
+
+    await waitFor(() => expect(updateSettingsMutate).toHaveBeenCalledTimes(1))
+    expect(updateSettingsMutate.mock.calls[0][0] as UpdateSettingsVariables).toEqual({
+      orgId: 'nord',
+      body: { descendantsMayOverride: false },
+      irrigationBody: { justWateredTtlSecs: 172800 },
+    })
   })
 
   it('does not call the settings endpoint when only the name changed', async () => {
@@ -680,7 +733,7 @@ describe('OrganizationPage', () => {
     // Saving the organization invalidates the whole `organizations` prefix, so
     // the settings come back — as a new object, because `changedAt` is a Date.
     updateMutate.mockImplementation(() => {
-      settingsMap.nord = { ...settingsMap.nord }
+      irrigationMap.nord = { ...irrigationMap.nord }
     })
     const { rerender } = render(<OrganizationPage />)
     await selectNord()
@@ -709,9 +762,9 @@ describe('OrganizationPage', () => {
 
     // Content, not identity, decides: a value that really moved must reach the
     // draft, the same way the master data picks up the server's truth.
-    settingsMap.nord = {
-      ...settingsMap.nord,
-      justWateredTtlSecs: { ...settingsMap.nord.justWateredTtlSecs, value: 259200 },
+    irrigationMap.nord = {
+      ...irrigationMap.nord,
+      justWateredTtlSecs: { ...irrigationMap.nord.justWateredTtlSecs, value: 259200 },
     }
     rerender(<OrganizationPage />)
 
@@ -775,6 +828,14 @@ describe('OrganizationPage', () => {
     expect(screen.getByRole('alert')).toHaveTextContent(/Vorgaben dieser Organisation nicht/)
     // The rest of the detail view is unaffected — only the settings failed.
     expect(screen.getByRole('textbox', { name: 'Name' })).toBeInTheDocument()
+  })
+
+  it('reports a failed irrigation load instead of hiding the section', () => {
+    irrigationError.mockReturnValue({ response: { status: 500 } })
+    render(<OrganizationPage />)
+
+    expect(screen.getByRole('alert')).toBeInTheDocument()
+    expect(screen.queryByRole('spinbutton', { name: /Nachwirkzeit/ })).not.toBeInTheDocument()
   })
 
   it('shows the settings read-only without setting:update', () => {

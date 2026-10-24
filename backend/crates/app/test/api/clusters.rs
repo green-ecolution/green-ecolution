@@ -1623,11 +1623,8 @@ async fn just_watered_before_is_scoped_to_one_organization() {
 /// at the same moment must fall due at different times.
 #[tokio::test]
 async fn the_sweep_expires_each_organization_on_its_own_ttl() {
-    use domain::settings::{
-        DefectStreak, InstanceDefaults, JustWateredTtl, MapBounds, MapView, SensorOfflineAfter,
-        WaterDemand, ZoomLevel,
-    };
-    use domain::shared::{coordinates::Coordinate, geo::BoundingBox};
+    use domain::settings::{JustWateredTtl, WaterDemand};
+    use server::irrigation::settings::{IrrigationDefaults, repository::PgIrrigationSettings};
     use std::sync::Arc;
 
     let app = spawn_app().await;
@@ -1641,34 +1638,15 @@ async fn the_sweep_expires_each_organization_on_its_own_ttl() {
     let due = create_just_watered_cluster(&app, short, watered_at).await;
     let not_due = create_just_watered_cluster(&app, long, watered_at).await;
 
-    // Only the org-specific values matter here; both organizations carry their
-    // own TTL, so the instance defaults are never consulted.
-    let defaults = InstanceDefaults {
+    // Both organizations carry their own TTL, so the defaults are never consulted.
+    let defaults = IrrigationDefaults {
         water_demand: WaterDemand::new(100.0).unwrap(),
         just_watered_ttl: JustWateredTtl::new(86_400).unwrap(),
-        sensor_offline_after: SensorOfflineAfter::new(86_400).unwrap(),
-        defect_streak: DefectStreak::new(3).unwrap(),
-        map_view: MapView::new(
-            Coordinate::new(54.78, 9.43).unwrap(),
-            Some(
-                MapBounds::new(
-                    BoundingBox::try_new(54.7, 9.3, 54.9, 9.6).unwrap(),
-                    ZoomLevel::new(13).unwrap(),
-                    ZoomLevel::new(18).unwrap(),
-                )
-                .unwrap(),
-            ),
-        )
-        .unwrap(),
     };
     let org_reader = Arc::new(
         server::infra::pg_organization::PgOrganizationRepository::new(app.db_pool.clone()),
     );
-    let settings = server::infra::pg_settings::PgSettingsRepository::new(
-        app.db_pool.clone(),
-        defaults,
-        org_reader.clone(),
-    );
+    let settings = PgIrrigationSettings::new(app.db_pool.clone(), defaults, org_reader.clone());
 
     let released = server::infra::watering_status_expiry::sweep_once(
         &app.state.cluster_service,

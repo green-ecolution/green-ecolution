@@ -3,11 +3,12 @@ use std::time::Duration;
 
 use chrono::{DateTime, Utc};
 use domain::organization::OrganizationReader;
-use domain::settings::SettingsResolver;
 use tokio::task::JoinHandle;
 use tokio::time::{MissedTickBehavior, interval};
 
-use crate::service::cluster_service::ClusterService;
+use crate::{
+    irrigation::settings::IrrigationSettingsResolver, service::cluster_service::ClusterService,
+};
 
 /// One pass over every organization, releasing the `JustWatered` status that
 /// has outlived that organization's own TTL. Returns how many clusters were
@@ -20,7 +21,7 @@ use crate::service::cluster_service::ClusterService;
 pub async fn sweep_once(
     cluster_service: &ClusterService,
     org_reader: &dyn OrganizationReader,
-    settings: &dyn SettingsResolver,
+    settings: &dyn IrrigationSettingsResolver,
     now: DateTime<Utc>,
 ) -> usize {
     let orgs = match org_reader.all().await {
@@ -56,7 +57,7 @@ pub async fn sweep_once(
 pub fn spawn(
     cluster_service: Arc<ClusterService>,
     org_reader: Arc<dyn OrganizationReader>,
-    settings: Arc<dyn SettingsResolver>,
+    settings: Arc<dyn IrrigationSettingsResolver>,
     sweep_interval: Duration,
 ) -> JoinHandle<()> {
     tokio::spawn(async move {

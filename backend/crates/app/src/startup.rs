@@ -41,6 +41,7 @@ use server::{
         system_info::DefaultSystemInfoProvider,
         update_checker::UpdateChecker,
     },
+    irrigation::settings::{IrrigationDefaults, repository::PgIrrigationSettings},
     module::Module,
     service::{
         authorization::AuthorizationService,
@@ -122,6 +123,7 @@ impl Application {
                 tracing::warn!(module = %configured, "modules.{configured} is configured but no such module is registered");
             }
         }
+        let config = Arc::new(settings.clone());
         let AuthStack {
             user_repo,
             auth_layer,
@@ -153,6 +155,16 @@ impl Application {
         let settings_repo = Arc::new(PgSettingsRepository::new(
             pool.clone(),
             defaults,
+            repos.organization_reader.clone(),
+        ));
+        let irrigation_settings = Arc::new(PgIrrigationSettings::new(
+            pool.clone(),
+            IrrigationDefaults::from_config(&settings).map_err(|err| {
+                std::io::Error::new(
+                    std::io::ErrorKind::InvalidInput,
+                    format!("invalid configuration: {err}"),
+                )
+            })?,
             repos.organization_reader.clone(),
         ));
         let profile_repo = Arc::new(infra::pg_user_profile::PgUserProfileRepository::new(
@@ -212,7 +224,7 @@ impl Application {
             &repos,
             event_bus.clone(),
             route_optimizer,
-            settings_repo.clone(),
+            irrigation_settings.clone(),
             repos.start_point_reader.clone(),
             repos.start_point_writer.clone(),
             profile_repo,
@@ -244,6 +256,8 @@ impl Application {
                     services.authorization.clone(),
                     module_activation_repo.clone(),
                 ),
+                users: user_service.clone(),
+                config: config.clone(),
             };
             let runtime = module
                 .build(ctx)
@@ -273,7 +287,7 @@ impl Application {
         let _expiry_handle = infra::watering_status_expiry::spawn(
             services.cluster.clone(),
             repos.organization_reader.clone(),
-            settings_repo.clone(),
+            irrigation_settings.clone(),
             Duration::from_secs(settings.watering.just_watered_sweep_interval_secs),
         );
         let _update_handle = infra::update_checker::spawn(
@@ -581,7 +595,7 @@ impl Services {
         repos: &Repositories,
         event_bus: Arc<dyn EventBus>,
         route_optimizer: Option<Arc<dyn domain::routing::RouteOptimizer>>,
-        settings_resolver: Arc<dyn domain::settings::SettingsResolver>,
+        settings_resolver: Arc<dyn server::irrigation::settings::IrrigationSettingsResolver>,
         start_point_reader: Arc<dyn domain::start_point::StartPointReader>,
         start_point_writer: Arc<dyn domain::start_point::StartPointWriter>,
         profile_reader: Arc<dyn domain::user::UserProfileReader>,
@@ -719,8 +733,7 @@ fn instance_defaults(
     settings: &Settings,
 ) -> Result<domain::settings::InstanceDefaults, std::io::Error> {
     use domain::settings::{
-        DefectStreak, InstanceDefaults, JustWateredTtl, MapBounds, MapView, SensorOfflineAfter,
-        WaterDemand, ZoomLevel,
+        DefectStreak, InstanceDefaults, MapBounds, MapView, SensorOfflineAfter, ZoomLevel,
     };
     use domain::shared::{coordinates::Coordinate, geo::BoundingBox};
 
@@ -735,11 +748,6 @@ fn instance_defaults(
     };
 
     Ok(InstanceDefaults {
-        water_demand: WaterDemand::new(settings.routing.tree_demand_liters).map_err(rejected)?,
-        just_watered_ttl: JustWateredTtl::new(
-            i64::try_from(settings.watering.just_watered_ttl_secs).unwrap_or(i64::MAX),
-        )
-        .map_err(rejected)?,
         sensor_offline_after: SensorOfflineAfter::new(
             i64::try_from(settings.sensor.offline_after_secs).unwrap_or(i64::MAX),
         )

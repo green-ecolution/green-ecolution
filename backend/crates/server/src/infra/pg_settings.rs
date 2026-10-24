@@ -15,10 +15,7 @@ use domain::{
         EffectiveSettings, InstanceDefaults, OrganizationSettings, OrganizationSettingsSnapshot,
         Resolution, SettingChangeEntry, SettingKey, SettingValue, SettingsReader, SettingsResolver,
         SettingsUpdate, SettingsWriter,
-        values::{
-            DefectStreak, JustWateredTtl, MapBounds, MapView, SensorOfflineAfter, WaterDemand,
-            ZoomLevel,
-        },
+        values::{DefectStreak, MapBounds, MapView, SensorOfflineAfter, ZoomLevel},
     },
     shared::{coordinates::Coordinate, geo::BoundingBox},
 };
@@ -47,8 +44,7 @@ impl PgSettingsRepository {
     async fn by_org(&self) -> Result<SettingsByOrg, RepositoryError> {
         let rows = sqlx::query_as!(
             OrganizationSettingsSnapshot,
-            r#"SELECT organization_id, water_demand_liters, just_watered_ttl_secs,
-                      sensor_offline_after_secs, defect_streak,
+            r#"SELECT organization_id, sensor_offline_after_secs, defect_streak,
                       map_center_lat, map_center_lng,
                       map_bbox_sw_lat, map_bbox_sw_lng,
                       map_bbox_ne_lat, map_bbox_ne_lng,
@@ -130,11 +126,6 @@ fn reconstitute(
 
     Ok(OrganizationSettings {
         organization_id: Id::new(snap.organization_id),
-        water_demand: snap.water_demand_liters.map(WaterDemand::new).transpose()?,
-        just_watered_ttl: snap
-            .just_watered_ttl_secs
-            .map(JustWateredTtl::new)
-            .transpose()?,
         sensor_offline_after: snap
             .sensor_offline_after_secs
             .map(SensorOfflineAfter::new)
@@ -149,7 +140,6 @@ fn reconstitute(
 /// see: a bare number for the scalar values, an object for the viewport.
 fn to_json(value: SettingValue) -> serde_json::Value {
     match value {
-        SettingValue::Liters(v) => serde_json::json!(v),
         SettingValue::Seconds(v) => serde_json::json!(v),
         SettingValue::Count(v) => serde_json::json!(v),
         SettingValue::Flag(v) => serde_json::json!(v),
@@ -238,8 +228,7 @@ impl SettingsWriter for PgSettingsRepository {
 
         let current = sqlx::query_as!(
             OrganizationSettingsSnapshot,
-            r#"SELECT organization_id, water_demand_liters, just_watered_ttl_secs,
-                      sensor_offline_after_secs, defect_streak,
+            r#"SELECT organization_id, sensor_offline_after_secs, defect_streak,
                       map_center_lat, map_center_lng,
                       map_bbox_sw_lat, map_bbox_sw_lng,
                       map_bbox_ne_lat, map_bbox_ne_lng,
@@ -259,16 +248,13 @@ impl SettingsWriter for PgSettingsRepository {
 
         sqlx::query!(
             r#"INSERT INTO organization_settings (
-                   organization_id, water_demand_liters, just_watered_ttl_secs,
-                   sensor_offline_after_secs, defect_streak,
+                   organization_id, sensor_offline_after_secs, defect_streak,
                    map_center_lat, map_center_lng,
                    map_bbox_sw_lat, map_bbox_sw_lng, map_bbox_ne_lat, map_bbox_ne_lng,
                    map_min_zoom, map_max_zoom,
                    descendants_may_override)
-               VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+               VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
                ON CONFLICT (organization_id) DO UPDATE SET
-                   water_demand_liters = EXCLUDED.water_demand_liters,
-                   just_watered_ttl_secs = EXCLUDED.just_watered_ttl_secs,
                    sensor_offline_after_secs = EXCLUDED.sensor_offline_after_secs,
                    defect_streak = EXCLUDED.defect_streak,
                    map_center_lat = EXCLUDED.map_center_lat,
@@ -281,8 +267,6 @@ impl SettingsWriter for PgSettingsRepository {
                    map_max_zoom = EXCLUDED.map_max_zoom,
                    descendants_may_override = EXCLUDED.descendants_may_override"#,
             org.value(),
-            next.water_demand.map(|v| v.liters()),
-            next.just_watered_ttl.map(|v| v.seconds()),
             next.sensor_offline_after.map(|v| v.seconds()),
             next.defect_streak.map(|v| v.count()),
             map.map(|m| m.center().latitude()),

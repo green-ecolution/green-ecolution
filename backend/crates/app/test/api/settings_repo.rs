@@ -16,14 +16,14 @@ pub(crate) async fn child_org(app: &crate::helpers::TestApp, name: &str, parent:
     Uuid::parse_str(created["id"].as_str().unwrap()).unwrap()
 }
 
-pub(crate) async fn set_water_demand(app: &crate::helpers::TestApp, org: Uuid, liters: f64) {
+pub(crate) async fn set_sensor_offline_after(app: &crate::helpers::TestApp, org: Uuid, secs: i64) {
     sqlx::query!(
-        r#"INSERT INTO organization_settings (organization_id, water_demand_liters)
+        r#"INSERT INTO organization_settings (organization_id, sensor_offline_after_secs)
            VALUES ($1, $2)
            ON CONFLICT (organization_id)
-           DO UPDATE SET water_demand_liters = EXCLUDED.water_demand_liters"#,
+           DO UPDATE SET sensor_offline_after_secs = EXCLUDED.sensor_offline_after_secs"#,
         org,
-        liters,
+        secs,
     )
     .execute(&app.db_pool)
     .await
@@ -37,8 +37,8 @@ async fn a_leaf_without_a_value_inherits_from_the_nearest_ancestor_that_has_one(
     let mid = child_org(&app, "Mitte", root).await;
     let leaf = child_org(&app, "Blatt", mid).await;
 
-    set_water_demand(&app, root, 100.0).await;
-    set_water_demand(&app, mid, 90.0).await;
+    set_sensor_offline_after(&app, root, 100_000).await;
+    set_sensor_offline_after(&app, mid, 90_000).await;
 
     let resolution = app
         .state
@@ -47,9 +47,9 @@ async fn a_leaf_without_a_value_inherits_from_the_nearest_ancestor_that_has_one(
         .await
         .unwrap();
 
-    assert_eq!(resolution.effective.water_demand.liters(), 90.0);
+    assert_eq!(resolution.effective.sensor_offline_after.seconds(), 90_000);
     assert_eq!(
-        resolution.origins.water_demand,
+        resolution.origins.sensor_offline_after,
         SettingOrigin::Inherited(Id::new(mid))
     );
 }
@@ -61,7 +61,7 @@ async fn a_leaf_without_a_value_inherits_from_the_nearest_ancestor_that_has_one(
 async fn an_organization_created_after_the_first_read_still_inherits() {
     let app = spawn_app().await;
     let root = Uuid::parse_str(ROOT_ORG_ID).unwrap();
-    set_water_demand(&app, root, 100.0).await;
+    set_sensor_offline_after(&app, root, 100_000).await;
 
     let warm = app
         .state
@@ -69,7 +69,7 @@ async fn an_organization_created_after_the_first_read_still_inherits() {
         .resolution(Id::<Organization>::new(root))
         .await
         .unwrap();
-    assert_eq!(warm.effective.water_demand.liters(), 100.0);
+    assert_eq!(warm.effective.sensor_offline_after.seconds(), 100_000);
 
     let fresh = child_org(&app, "Spaet gegruendet", root).await;
     let resolution = app
@@ -79,9 +79,9 @@ async fn an_organization_created_after_the_first_read_still_inherits() {
         .await
         .unwrap();
 
-    assert_eq!(resolution.effective.water_demand.liters(), 100.0);
+    assert_eq!(resolution.effective.sensor_offline_after.seconds(), 100_000);
     assert_eq!(
-        resolution.origins.water_demand,
+        resolution.origins.sensor_offline_after,
         SettingOrigin::Inherited(Id::new(root))
     );
 }
@@ -99,8 +99,11 @@ async fn an_organization_without_any_value_gets_the_instance_default() {
         .await
         .unwrap();
 
-    assert_eq!(resolution.effective.water_demand.liters(), 80.0);
-    assert_eq!(resolution.origins.water_demand, SettingOrigin::Default);
+    assert_eq!(resolution.effective.sensor_offline_after.seconds(), 86_400);
+    assert_eq!(
+        resolution.origins.sensor_offline_after,
+        SettingOrigin::Default
+    );
 }
 
 #[tokio::test]
@@ -109,8 +112,8 @@ async fn an_own_value_beats_the_inherited_one() {
     let root = Uuid::parse_str(ROOT_ORG_ID).unwrap();
     let leaf = child_org(&app, "Eigen", root).await;
 
-    set_water_demand(&app, root, 100.0).await;
-    set_water_demand(&app, leaf, 70.0).await;
+    set_sensor_offline_after(&app, root, 100_000).await;
+    set_sensor_offline_after(&app, leaf, 70_000).await;
 
     let resolution = app
         .state
@@ -119,13 +122,13 @@ async fn an_own_value_beats_the_inherited_one() {
         .await
         .unwrap();
 
-    assert_eq!(resolution.effective.water_demand.liters(), 70.0);
-    assert_eq!(resolution.origins.water_demand, SettingOrigin::Own);
+    assert_eq!(resolution.effective.sensor_offline_after.seconds(), 70_000);
+    assert_eq!(resolution.origins.sensor_offline_after, SettingOrigin::Own);
 }
 
 pub(crate) async fn set_just_watered_ttl(app: &crate::helpers::TestApp, org: Uuid, secs: i64) {
     sqlx::query!(
-        r#"INSERT INTO organization_settings (organization_id, just_watered_ttl_secs)
+        r#"INSERT INTO irrigation_settings (organization_id, just_watered_ttl_secs)
            VALUES ($1, $2)
            ON CONFLICT (organization_id)
            DO UPDATE SET just_watered_ttl_secs = EXCLUDED.just_watered_ttl_secs"#,

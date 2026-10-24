@@ -28,6 +28,8 @@ import {
   ListUsersRequest,
   ListVehiclesRequest,
   ListWateringPlansRequest,
+  IrrigationSettingsResponse,
+  irrigationApi,
   MapInfoResponse,
   moduleApi,
   ModuleListResponse,
@@ -512,6 +514,12 @@ export const settingsQueries = {
     queryOptions<OrganizationSettingsResponse>({
       queryKey: ['organizations', orgId, 'settings'],
       queryFn: () => settingsApi.getOrganizationSettings({ orgId }),
+    }),
+  // Below the core settings key, so invalidating those reaches this one too.
+  irrigation: (orgId: string) =>
+    queryOptions<IrrigationSettingsResponse>({
+      queryKey: ['organizations', orgId, 'settings', 'irrigation'],
+      queryFn: () => irrigationApi.getIrrigationSettings({ orgId }),
     }),
 }
 

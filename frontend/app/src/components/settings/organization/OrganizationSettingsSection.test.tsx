@@ -1,7 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, userEvent } from '@/test/utils'
-import type { OrganizationSettingsResponse } from '@/api/backendApi'
+import type { IrrigationSettingsResponse, OrganizationSettingsResponse } from '@/api/backendApi'
+import type { IrrigationDraft } from './useIrrigationSettingsDraft'
 import type { SettingsDraft } from './useOrganizationSettingsDraft'
+
+type FullDraft = SettingsDraft & IrrigationDraft
 
 // MapLibre needs a WebGL context, which jsdom does not provide.
 vi.mock('@/components/map-gl/MapPreview', () => ({
@@ -17,7 +20,7 @@ const MAP_VIEW = {
   maxZoom: 18,
 }
 
-const SETTINGS = {
+const IRRIGATION = {
   waterDemand: {
     value: 80,
     origin: 'inherited',
@@ -34,6 +37,10 @@ const SETTINGS = {
       changedByName: 'ge.admin',
     },
   },
+  enforcedBy: null,
+} as unknown as IrrigationSettingsResponse
+
+const SETTINGS = {
   mapView: {
     value: MAP_VIEW,
     origin: 'default',
@@ -43,7 +50,7 @@ const SETTINGS = {
   enforcedBy: null,
 } as unknown as OrganizationSettingsResponse
 
-const DRAFT: SettingsDraft = {
+const DRAFT: FullDraft = {
   waterDemand: { own: false, text: '80' },
   justWateredTtlHours: { own: true, text: '24' },
   mapView: { own: false, value: MAP_VIEW },
@@ -60,6 +67,7 @@ const onDescendantsMayOverrideChange = vi.fn()
 
 const props = (overrides: Partial<Record<string, unknown>> = {}) => ({
   settings: SETTINGS,
+  irrigation: IRRIGATION,
   draft: DRAFT,
   errors: { waterDemand: null, justWateredTtlHours: null, mapView: null },
   canUpdate: true,
@@ -81,6 +89,9 @@ const enforced = () => {
   const settings = {
     ...SETTINGS,
     enforcedBy: { id: 'root' },
+  } as unknown as OrganizationSettingsResponse
+  const irrigation = {
+    ...IRRIGATION,
     justWateredTtlSecs: {
       value: 86400,
       origin: 'inherited',
@@ -88,12 +99,12 @@ const enforced = () => {
       ownValue: 172800,
       lastChange: null,
     },
-  } as unknown as OrganizationSettingsResponse
-  const draft: SettingsDraft = {
+  } as unknown as IrrigationSettingsResponse
+  const draft: FullDraft = {
     ...DRAFT,
     justWateredTtlHours: { own: false, text: '24' },
   }
-  return props({ settings, draft, enforcedByName: 'Stadt Flensburg' })
+  return props({ settings, irrigation, draft, enforcedByName: 'Stadt Flensburg' })
 }
 
 describe('OrganizationSettingsSection', () => {
@@ -109,7 +120,7 @@ describe('OrganizationSettingsSection', () => {
   // The badge names where the stored value comes from, which an unsaved toggle
   // has not changed yet; colour and wording must not tell different stories.
   it('keeps the origin badge on the stored origin while a takeover is unsaved', () => {
-    const draft: SettingsDraft = { ...DRAFT, waterDemand: { own: true, text: '90' } }
+    const draft: FullDraft = { ...DRAFT, waterDemand: { own: true, text: '90' } }
     render(<OrganizationSettingsSection {...props({ draft })} />)
 
     const badge = screen.getByText(/Geerbt von Stadt Flensburg/i)
@@ -254,7 +265,7 @@ describe('OrganizationSettingsSection', () => {
     render(<OrganizationSettingsSection {...props()} />)
     expect(screen.getByRole('switch', { name: /Keine Einschränkung/ })).toBeDisabled()
 
-    const draft: SettingsDraft = { ...DRAFT, mapView: { own: true, value: MAP_VIEW } }
+    const draft: FullDraft = { ...DRAFT, mapView: { own: true, value: MAP_VIEW } }
     render(<OrganizationSettingsSection {...props({ draft })} />)
 
     const switches = screen.getAllByRole('switch', { name: /Keine Einschränkung/ })
@@ -270,7 +281,7 @@ describe('OrganizationSettingsSection', () => {
       ...SETTINGS,
       mapView: { value: { center: MAP_VIEW.center, bbox: null }, origin: 'own', lastChange: null },
     } as unknown as OrganizationSettingsResponse
-    const draft: SettingsDraft = {
+    const draft: FullDraft = {
       ...DRAFT,
       mapView: { own: true, value: { center: MAP_VIEW.center, bbox: null } },
     }

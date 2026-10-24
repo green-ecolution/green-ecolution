@@ -28,6 +28,8 @@ export * from './IngestBatchResponse';
 export * from './IngestResultResponse';
 export * from './IngestStatusResponse';
 export * from './IngestSummaryResponse';
+export * from './IrrigationSettingsResponse';
+export * from './IrrigationSettingsUpdateRequest';
 export * from './ListResponseCommentResponse';
 export * from './ListResponseCommentResponseDataInner';
 export * from './ListResponseRegionResponse';

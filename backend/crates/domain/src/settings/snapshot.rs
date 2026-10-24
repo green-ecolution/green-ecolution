@@ -5,8 +5,6 @@ use uuid::Uuid;
 #[derive(Debug, Clone)]
 pub struct OrganizationSettingsSnapshot {
     pub organization_id: Uuid,
-    pub water_demand_liters: Option<f64>,
-    pub just_watered_ttl_secs: Option<i64>,
     pub sensor_offline_after_secs: Option<i64>,
     pub defect_streak: Option<i32>,
     pub map_center_lat: Option<f64>,

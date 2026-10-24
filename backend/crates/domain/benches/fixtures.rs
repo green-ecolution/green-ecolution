@@ -7,10 +7,7 @@ use domain::{
     cluster::{SoilCondition, TreeCluster, TreeClusterSnapshot},
     organization::Organization,
     sensor::data::Watermark,
-    settings::{
-        DefectStreak, InstanceDefaults, JustWateredTtl, MapView, OrganizationSettings,
-        SensorOfflineAfter, WaterDemand,
-    },
+    settings::{DefectStreak, InstanceDefaults, MapView, OrganizationSettings, SensorOfflineAfter},
     shared::{coordinates::Coordinate, watering_status::WateringStatus},
     tree::{Tree, snapshot::TreeSnapshot},
 };
@@ -148,8 +145,6 @@ fn catalog_permissions() -> BTreeSet<Permission> {
 
 pub fn instance_defaults() -> InstanceDefaults {
     InstanceDefaults {
-        water_demand: WaterDemand::new(120.0).expect("120 l is inside 1..=1000"),
-        just_watered_ttl: JustWateredTtl::new(86_400).expect("1 day is inside 3600..=1209600"),
         sensor_offline_after: SensorOfflineAfter::new(86_400)
             .expect("1 day is inside 3600..=2592000"),
         defect_streak: DefectStreak::new(3).expect("3 is inside 1..=100"),
@@ -162,7 +157,7 @@ pub fn instance_defaults() -> InstanceDefaults {
 }
 
 /// Root first, target last, the order `resolve` contracts for. Every level sets
-/// `water_demand`, so the fold has to walk the whole chain.
+/// `sensor_offline_after`, so the fold has to walk the whole chain.
 pub fn settings_chain(depth: usize) -> (Vec<OrganizationSettings>, Id<Organization>) {
     let mut chain = Vec::with_capacity(depth);
     let mut target = Id::new_v7();
@@ -171,9 +166,7 @@ pub fn settings_chain(depth: usize) -> (Vec<OrganizationSettings>, Id<Organizati
         target = org;
         chain.push(OrganizationSettings {
             organization_id: org,
-            water_demand: WaterDemand::new(100.0 + (i % 100) as f64).ok(),
-            just_watered_ttl: None,
-            sensor_offline_after: None,
+            sensor_offline_after: SensorOfflineAfter::new(3_600 + (i % 100) as i64 * 60).ok(),
             defect_streak: None,
             map_view: None,
             descendants_may_override: true,
