@@ -241,7 +241,7 @@ impl Application {
         }
         event_bus
             .install(Arc::new(InMemoryEventBus::new(handlers)))
-            .expect("the event bus is installed exactly once, here");
+            .map_err(std::io::Error::other)?;
         for task in background_tasks {
             tokio::spawn(task);
         }

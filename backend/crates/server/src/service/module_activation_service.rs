@@ -52,8 +52,9 @@ impl ModuleActivationService {
         Ok(self.reader.own(org).await?)
     }
 
-    /// The lock check mirrors `SettingsService::update`: a write into a frozen
-    /// subtree fails even when it would change nothing.
+    /// The lock check mirrors `SettingsService::update` but runs per registered
+    /// module: a write into a frozen subtree fails even when it would change
+    /// nothing, except with no module registered, where there is nothing to write.
     #[tracing::instrument(level = "info", skip(self, changes))]
     pub async fn update(
         &self,
