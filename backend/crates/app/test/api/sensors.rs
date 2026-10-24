@@ -660,10 +660,10 @@ async fn sensor_list_labels_and_locates_the_target() {
     assert_eq!(in_cluster["target_label"], "Nord");
     assert_eq!(in_cluster["location"]["latitude"], 53.55);
 
-    // A tree without a cluster is labelled with its number.
+    // A tree without a cluster has no label.
     let clusterless = &sensors[1];
     assert_eq!(clusterless["id"], "eui-000000000000000b");
-    assert_eq!(clusterless["target_label"], "T-eui-000000000000000b");
+    assert!(clusterless["target_label"].is_null());
 }
 
 #[tokio::test]

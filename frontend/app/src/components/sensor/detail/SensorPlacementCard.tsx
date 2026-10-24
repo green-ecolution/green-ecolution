@@ -178,7 +178,7 @@ const SensorPlacementCard = ({ sensor }: SensorPlacementCardProps) => {
   // On touch screens a pannable preview swallows the swipe meant to scroll the page.
   const mapInteractive = useMediaQuery('(pointer: fine)')
   const treeId = isTreeTarget(sensor.target) ? sensor.target.id : null
-  const { data: linkedTree } = useQuery(treeQueries.detail(treeId ?? ''))
+  const { data: linkedTree, isLoading: treeLoading } = useQuery(treeQueries.detail(treeId ?? ''))
   const clusterId = treeId !== null ? (linkedTree?.treeClusterId ?? null) : null
 
   return (
@@ -262,6 +262,8 @@ const SensorPlacementCard = ({ sensor }: SensorPlacementCardProps) => {
             <div className="divide-y divide-dark-100 overflow-hidden rounded-xl border border-dark-100">
               {clusterId ? (
                 <ClusterRow clusterId={clusterId} fallbackName={sensor.targetLabel ?? ''} />
+              ) : treeLoading ? (
+                <div className="mx-3 my-2.5 h-11 rounded-lg bg-dark-50 animate-pulse" />
               ) : (
                 <PlacementRow
                   icon={<Trees />}

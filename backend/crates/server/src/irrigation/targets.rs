@@ -141,8 +141,8 @@ impl TargetCatalog for IrrigationTargets {
         Ok(out)
     }
 
-    /// A tree is labelled with its cluster's name, a tree without one with
-    /// its number, so the sensor list keeps showing what crews know.
+    /// A tree is labelled with its cluster's name; a tree without a cluster
+    /// has no label, so the sensor list shows no group line for it.
     async fn label(
         &self,
         targets: &[TargetRef],
@@ -161,11 +161,9 @@ impl TargetCatalog for IrrigationTargets {
 
         let mut out = HashMap::new();
         for tree in &trees {
-            let label = tree
-                .cluster_id()
-                .and_then(|id| clusters.get(&id).cloned())
-                .unwrap_or_else(|| tree.tree_number.as_str().to_owned());
-            out.insert(tree_target(tree.id), label);
+            if let Some(name) = tree.cluster_id().and_then(|id| clusters.get(&id)) {
+                out.insert(tree_target(tree.id), name.clone());
+            }
         }
         for target in targets.iter().filter(|t| is_cluster(t)) {
             if let Some(name) = clusters.get(&Id::new(target.id)) {

@@ -53,7 +53,12 @@ describe('SensorCard', () => {
   })
 
   it('omits the group line for a sensor whose tree is in no group', () => {
-    render(<SensorCard sensor={sensorFixture({ target: treeTarget('tree-1') })} query="" />)
+    render(
+      <SensorCard
+        sensor={sensorFixture({ target: treeTarget('tree-1'), targetLabel: null })}
+        query=""
+      />,
+    )
 
     expect(screen.queryByText(/Bewässerungsgruppe/)).not.toBeInTheDocument()
   })

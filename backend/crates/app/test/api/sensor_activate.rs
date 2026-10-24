@@ -33,7 +33,7 @@ async fn activate_happy_path_returns_200_with_location_and_target() {
     let body: serde_json::Value = r.json().await.unwrap();
     assert_eq!(body["status"], "offline");
     assert_eq!(body["target"]["id"], tree_id.to_string());
-    assert_eq!(body["target_label"], "T-ACT-1");
+    assert!(body["target_label"].is_null());
     assert!(body["location"]["latitude"].as_f64().is_some());
     assert!(body["location"]["longitude"].as_f64().is_some());
 }

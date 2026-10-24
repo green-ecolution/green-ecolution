@@ -90,6 +90,16 @@ describe('SensorPlacementCard', () => {
     expect(screen.getAllByRole('link')[0]).toHaveTextContent('Friesischer Berg')
   })
 
+  it('does not claim the tree has no group while the tree is still loading', () => {
+    useQueryMock.mockImplementation(() => ({ data: undefined, isLoading: true, isError: false }))
+
+    render(<SensorPlacementCard sensor={sensorWith({ targetLabel: null })} />)
+
+    expect(
+      screen.queryByText('Der Baum gehört zu keiner Bewässerungsgruppe.'),
+    ).not.toBeInTheDocument()
+  })
+
   it('says so when the tree belongs to no watering group', () => {
     respondWith({ treeData: { ...tree, treeClusterId: null } })
 
