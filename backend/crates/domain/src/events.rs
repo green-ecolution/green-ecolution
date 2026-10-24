@@ -10,7 +10,10 @@ use chrono::{DateTime, Utc};
 use crate::{
     Id,
     cluster::TreeCluster,
+    module::ModuleKey,
+    operation_plan::OperationPlan,
     organization::Organization,
+    planning::{StopOutcome, StopRef},
     role::Role,
     sensor::{
         SensorId,
@@ -141,6 +144,38 @@ pub enum DomainEvent {
     WateringPlanDeleted {
         plan_id: Id<WateringPlan>,
         cluster_ids: Vec<Id<TreeCluster>>,
+    },
+    OperationPlanStarted {
+        plan_id: Id<OperationPlan>,
+        module: ModuleKey,
+        stops: Vec<StopRef>,
+    },
+    OperationPlanStartReverted {
+        plan_id: Id<OperationPlan>,
+        module: ModuleKey,
+        stops: Vec<StopRef>,
+    },
+    OperationPlanCanceled {
+        plan_id: Id<OperationPlan>,
+        module: ModuleKey,
+        stops: Vec<StopRef>,
+    },
+    OperationPlanFailed {
+        plan_id: Id<OperationPlan>,
+        module: ModuleKey,
+        stops: Vec<StopRef>,
+    },
+    OperationPlanFinished {
+        plan_id: Id<OperationPlan>,
+        module: ModuleKey,
+        stops: Vec<StopRef>,
+        finished_at: DateTime<Utc>,
+        outcomes: Vec<StopOutcome>,
+    },
+    OperationPlanDeleted {
+        plan_id: Id<OperationPlan>,
+        module: ModuleKey,
+        stops: Vec<StopRef>,
     },
     OrganizationCreated {
         organization_id: Id<Organization>,
