@@ -120,7 +120,7 @@ models/ServerInfoResponse.ts
 models/ServiceStatusResponse.ts
 models/ServicesInfoResponse.ts
 models/SetOrganizationRequest.ts
-models/SetSensorTreeRequest.ts
+models/SetSensorTargetRequest.ts
 models/SettingChangeRef.ts
 models/SettingFieldF64.ts
 models/SettingFieldI32.ts
@@ -138,6 +138,7 @@ models/SoilMoistureSeriesResponse.ts
 models/SoilMoistureThresholdResponse.ts
 models/StartPointRequest.ts
 models/StartPointResponse.ts
+models/TargetRefDto.ts
 models/TransferRequest.ts
 models/TreeClusterCreateRequest.ts
 models/TreeClusterInListResponse.ts

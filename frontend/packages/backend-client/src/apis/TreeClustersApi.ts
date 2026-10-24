@@ -74,6 +74,10 @@ export interface GetClusterSoilMoistureRequest {
     bucket?: string | null;
 }
 
+export interface ListClusterSensorIdsRequest {
+    clusterId: string;
+}
+
 export interface ListClustersRequest {
     page?: number;
     perPage?: number;
@@ -359,6 +363,45 @@ export class TreeClustersApi extends runtime.BaseAPI {
      */
     async listClusterMarkers(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ClusterMarkerListResponse> {
         const response = await this.listClusterMarkersRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns the ids of the sensors attached to the cluster\'s trees, ordered by id. Feed them into `GET /sensors?id=…` to filter the sensor list by cluster.
+     * List the sensors of a cluster
+     */
+    async listClusterSensorIdsRaw(requestParameters: ListClusterSensorIdsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<string>>> {
+        if (requestParameters['clusterId'] == null) {
+            throw new runtime.RequiredError(
+                'clusterId',
+                'Required parameter "clusterId" was null or undefined when calling listClusterSensorIds().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/v1/clusters/{cluster_id}/sensor-ids`;
+        urlPath = urlPath.replace(`{${"cluster_id"}}`, encodeURIComponent(String(requestParameters['clusterId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse<any>(response);
+    }
+
+    /**
+     * Returns the ids of the sensors attached to the cluster\'s trees, ordered by id. Feed them into `GET /sensors?id=…` to filter the sensor list by cluster.
+     * List the sensors of a cluster
+     */
+    async listClusterSensorIds(requestParameters: ListClusterSensorIdsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<string>> {
+        const response = await this.listClusterSensorIdsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

@@ -108,7 +108,7 @@ vi.mock('@/api/queries', async () => {
             id,
             status: 'prepared' as const,
             latestData: null,
-            linkedTreeId: null,
+            target: null,
           }),
       }),
     },
@@ -184,7 +184,7 @@ describe('Sensor wizard', () => {
     await waitFor(() => {
       expect(activateMock).toHaveBeenCalledWith({
         sensorId: 'eui-a8404131af5e6451',
-        activateSensorRequest: { treeId: 'tree-1' },
+        activateSensorRequest: { target: { module: 'irrigation', kind: 'tree', id: 'tree-1' } },
       })
     })
 

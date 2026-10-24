@@ -1,6 +1,7 @@
 import { sensorApi } from '@/api/backendApi'
 import { useMutation } from '@tanstack/react-query'
 import { useInvalidateAggregates } from '@/lib/queryInvalidation'
+import { treeTarget } from '@/lib/targets'
 
 /**
  * Sensor/tree link changes. The sensor detail page stays mounted afterwards and
@@ -15,7 +16,7 @@ export const useActivateSensor = (sensorId: string) => {
   const invalidateLink = useInvalidateSensorTreeLink()
   return useMutation({
     mutationFn: (treeId: string) =>
-      sensorApi.activateSensor({ sensorId, activateSensorRequest: { treeId } }),
+      sensorApi.activateSensor({ sensorId, activateSensorRequest: { target: treeTarget(treeId) } }),
     onSuccess: invalidateLink,
   })
 }
@@ -24,7 +25,10 @@ export const useReassignSensorTree = (sensorId: string) => {
   const invalidateLink = useInvalidateSensorTreeLink()
   return useMutation({
     mutationFn: (treeId: string) =>
-      sensorApi.setSensorTree({ sensorId, setSensorTreeRequest: { treeId } }),
+      sensorApi.setSensorTarget({
+        sensorId,
+        setSensorTargetRequest: { target: treeTarget(treeId) },
+      }),
     onSuccess: invalidateLink,
   })
 }
@@ -32,7 +36,7 @@ export const useReassignSensorTree = (sensorId: string) => {
 export const useDeactivateSensor = (sensorId: string) => {
   const invalidateLink = useInvalidateSensorTreeLink()
   return useMutation({
-    mutationFn: () => sensorApi.removeSensorTree({ sensorId }),
+    mutationFn: () => sensorApi.removeSensorTarget({ sensorId }),
     onSuccess: invalidateLink,
   })
 }

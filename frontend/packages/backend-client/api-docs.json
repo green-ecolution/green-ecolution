@@ -934,6 +934,63 @@
         }
       }
     },
+    "/v1/clusters/{cluster_id}/sensor-ids": {
+      "get": {
+        "tags": [
+          "Tree Clusters"
+        ],
+        "summary": "List the sensors of a cluster",
+        "description": "Returns the ids of the sensors attached to the cluster's trees, ordered by id. Feed them into `GET /sensors?id=…` to filter the sensor list by cluster.",
+        "operationId": "listClusterSensorIds",
+        "parameters": [
+          {
+            "name": "cluster_id",
+            "in": "path",
+            "description": "Cluster ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sensor ids",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Cluster not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/clusters/{cluster_id}/soil-moisture": {
       "get": {
         "tags": [
@@ -4365,7 +4422,7 @@
           "Sensors"
         ],
         "summary": "List all sensors",
-        "description": "Returns a paginated list of all LoRaWAN sensors. Optional `q` parameter case-insensitively filters by sensor EUI or model name. Optional filter parameters (status, model_id, data_health, has_tree) narrow the result; array parameters are repeatable. Optional `sort` (id, last_reading, created_at) and `order` (asc, desc) control the result order; the default is id ascending.",
+        "description": "Returns a paginated list of all LoRaWAN sensors. Optional `q` parameter case-insensitively filters by sensor EUI or model name. Optional filter parameters (status, model_id, data_health, attached, module, id) narrow the result; array parameters are repeatable. Optional `sort` (id, last_reading, created_at) and `order` (asc, desc) control the result order; the default is id ascending.",
         "operationId": "listSensors",
         "parameters": [
           {
@@ -4396,7 +4453,7 @@
           {
             "name": "q",
             "in": "query",
-            "description": "Case-insensitive match on sensor id, model name or the name of the\nlinked tree's cluster.",
+            "description": "Case-insensitive match on sensor id or model name.",
             "required": false,
             "schema": {
               "type": "string"
@@ -4441,8 +4498,9 @@
             }
           },
           {
-            "name": "has_tree",
+            "name": "attached",
             "in": "query",
+            "description": "Whether the sensor is attached to a target.",
             "required": false,
             "schema": {
               "type": [
@@ -4452,15 +4510,27 @@
             }
           },
           {
-            "name": "cluster_id",
+            "name": "module",
             "in": "query",
-            "description": "Cluster of the linked tree. Repeatable: `?cluster_id=<uuid>&cluster_id=<uuid>`.",
+            "description": "Only sensors attached to a target of this module.",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "example": "irrigation"
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "description": "Sensor ids. Repeatable: `?id=<eui>&id=<eui>`.",
             "required": false,
             "schema": {
               "type": "array",
               "items": {
-                "type": "string",
-                "format": "uuid"
+                "type": "string"
               }
             }
           },
@@ -4542,7 +4612,7 @@
           "Sensors"
         ],
         "summary": "Register a new (prepared) sensor unit",
-        "description": "Creates a sensor record in `Prepared` state. The sensor must later be bound to a tree via `POST /sensors/{sensor_id}/activate` before it starts receiving data.",
+        "description": "Creates a sensor record in `Prepared` state. The sensor must later be attached to a target via `POST /sensors/{sensor_id}/activate` before it starts receiving data.",
         "operationId": "createSensor",
         "requestBody": {
           "content": {
@@ -4808,8 +4878,8 @@
         "tags": [
           "Sensors"
         ],
-        "summary": "Activate a prepared sensor by binding it to a tree",
-        "description": "Transitions a sensor from `Prepared` to `Offline` and attaches it to the given tree. Idempotent if the sensor is already attached to the same tree.",
+        "summary": "Activate a prepared sensor by attaching it to a target",
+        "description": "Transitions a sensor from `Prepared` to `Offline` and attaches it to the given target, e.g. a tree. Idempotent if the sensor is already attached to the same target.",
         "operationId": "activateSensor",
         "parameters": [
           {
@@ -4844,7 +4914,7 @@
             }
           },
           "403": {
-            "description": "Missing sensor:update or tree:update in the owning organization",
+            "description": "Missing sensor:update or update on the target in the owning organization, or the target's module is disabled (code `module.disabled`)",
             "content": {
               "application/json": {
                 "schema": {
@@ -4854,7 +4924,7 @@
             }
           },
           "404": {
-            "description": "Sensor or tree not found",
+            "description": "Sensor or target not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -4864,7 +4934,7 @@
             }
           },
           "409": {
-            "description": "Sensor already activated, or the tree already carries another sensor (codes `conflict.sensor_already_activated`, `conflict.tree_already_has_sensor`)",
+            "description": "Sensor already activated or attached elsewhere, or the target already carries another sensor (codes `conflict.sensor_already_activated`, `sensor.already_attached`, `conflict.target_already_has_sensor`)",
             "content": {
               "application/json": {
                 "schema": {
@@ -4874,7 +4944,7 @@
             }
           },
           "422": {
-            "description": "Sensor and tree belong to different organizations (code `organization_mismatch.sensor_vs_tree`)",
+            "description": "The target takes no sensors or refuses this one, or belongs to a different organization (codes `target.not_accepted`, `tree.not_yet_planted`, `organization_mismatch.sensor_vs_target`)",
             "content": {
               "application/json": {
                 "schema": {
@@ -5298,6 +5368,160 @@
         }
       }
     },
+    "/v1/sensors/{sensor_id}/target": {
+      "put": {
+        "tags": [
+          "Sensors"
+        ],
+        "summary": "Move an activated sensor to a different target",
+        "description": "Attaches an already activated sensor to `target`, releasing its current one. Rejects a target that already has a different sensor and a sensor that is not yet activated. Idempotent if the sensor is already attached there.",
+        "operationId": "setSensorTarget",
+        "parameters": [
+          {
+            "name": "sensor_id",
+            "in": "path",
+            "description": "Sensor ID (EUI)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetSensorTargetRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Sensor moved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SensorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing sensor:update or update on the target in the owning organization, or the target's module is disabled (code `module.disabled`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Sensor or target not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Sensor not activated, or the target already carries another sensor (codes `conflict.sensor_not_activated`, `conflict.target_already_has_sensor`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The target takes no sensors or refuses this one, or belongs to a different organization (codes `target.not_accepted`, `tree.not_yet_planted`, `organization_mismatch.sensor_vs_target`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Sensors"
+        ],
+        "summary": "Release a sensor's target and reset it to prepared",
+        "description": "Detaches the sensor from its target and deactivates it, returning it to the `Prepared` state. Idempotent for an already prepared sensor.",
+        "operationId": "removeSensorTarget",
+        "parameters": [
+          {
+            "name": "sensor_id",
+            "in": "path",
+            "description": "Sensor ID (EUI)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sensor reset to prepared",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SensorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing sensor:update, or update on the target, in the owning organization",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Sensor not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/sensors/{sensor_id}/tree": {
       "get": {
         "tags": [
@@ -5330,158 +5554,6 @@
           },
           "404": {
             "description": "Sensor or associated tree not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "Sensors"
-        ],
-        "summary": "Move an activated sensor to a different tree",
-        "description": "Re-links an already activated sensor to `tree_id`. Rejects a tree that already has a different sensor and a sensor that is not yet activated. Idempotent if the sensor is already linked to that tree.",
-        "operationId": "setSensorTree",
-        "parameters": [
-          {
-            "name": "sensor_id",
-            "in": "path",
-            "description": "Sensor ID (EUI)",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SetSensorTreeRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Sensor re-linked",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SensorResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Missing sensor:update or tree:update in the owning organization",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Sensor or tree not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Sensor not activated, or the tree already carries another sensor (codes `conflict.sensor_not_activated`, `conflict.tree_already_has_sensor`)",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Sensor and tree belong to different organizations (code `organization_mismatch.sensor_vs_tree`)",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Sensors"
-        ],
-        "summary": "Remove a sensor's tree link and reset it to prepared",
-        "description": "Detaches the sensor from its tree and deactivates it, returning it to the `Prepared` state. Idempotent for an already prepared sensor.",
-        "operationId": "removeSensorTree",
-        "parameters": [
-          {
-            "name": "sensor_id",
-            "in": "path",
-            "description": "Sensor ID (EUI)",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Sensor reset to prepared",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SensorResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Missing sensor:update or tree:update in the owning organization",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Sensor not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -5725,7 +5797,7 @@
             }
           },
           "409": {
-            "description": "The given sensor is already assigned to another tree (code `conflict.sensor_already_assigned`)",
+            "description": "The given sensor is already attached to another target (code `sensor.already_attached`)",
             "content": {
               "application/json": {
                 "schema": {
@@ -5735,7 +5807,7 @@
             }
           },
           "422": {
-            "description": "The given cluster or sensor belongs to a different organization (codes `organization_mismatch.cluster_vs_tree`, `organization_mismatch.sensor_vs_tree`)",
+            "description": "The given cluster or sensor belongs to a different organization, or a sensor is given for a tree not planted yet (codes `organization_mismatch.cluster_vs_tree`, `organization_mismatch.sensor_vs_target`, `tree.not_yet_planted`)",
             "content": {
               "application/json": {
                 "schema": {
@@ -6084,7 +6156,7 @@
             }
           },
           "409": {
-            "description": "The given sensor is already assigned to another tree (code `conflict.sensor_already_assigned`)",
+            "description": "The given sensor is already attached to another target (code `sensor.already_attached`)",
             "content": {
               "application/json": {
                 "schema": {
@@ -6094,7 +6166,7 @@
             }
           },
           "422": {
-            "description": "The given cluster or sensor belongs to a different organization (codes `organization_mismatch.cluster_vs_tree`, `organization_mismatch.sensor_vs_tree`)",
+            "description": "The given cluster or sensor belongs to a different organization, or a sensor is given for a tree not planted yet (codes `organization_mismatch.cluster_vs_tree`, `organization_mismatch.sensor_vs_target`, `tree.not_yet_planted`)",
             "content": {
               "application/json": {
                 "schema": {
@@ -8448,15 +8520,13 @@
       },
       "ActivateSensorRequest": {
         "type": "object",
-        "description": "Request body for `POST /sensors/{sensor_id}/activate` - binds a prepared\nsensor to a tree.",
+        "description": "Request body for `POST /sensors/{sensor_id}/activate` - activates a\nprepared sensor and attaches it to the target.",
         "required": [
-          "tree_id"
+          "target"
         ],
         "properties": {
-          "tree_id": {
-            "type": "string",
-            "format": "uuid",
-            "example": "0190a8e9-7c4f-7000-8000-000000000000"
+          "target": {
+            "$ref": "#/components/schemas/TargetRefDto"
           }
         }
       },
@@ -9453,17 +9523,6 @@
                   ],
                   "description": "Provider-specific metadata as a JSON object."
                 },
-                "coordinate": {
-                  "oneOf": [
-                    {
-                      "$ref": "#/components/schemas/SensorCoordinate",
-                      "description": "WGS-84 coordinate derived from the linked tree (if any)."
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ]
-                },
                 "created_at": {
                   "type": "string",
                   "description": "Timestamp when the sensor was registered (RFC 3339).",
@@ -9495,31 +9554,16 @@
                     }
                   ]
                 },
-                "linked_cluster_id": {
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "format": "uuid",
-                  "description": "Cluster of the linked tree. Absent when the sensor has no tree or that\ntree belongs to no cluster.",
-                  "example": "0190a8e9-7c4f-7000-8000-000000000000"
-                },
-                "linked_cluster_name": {
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "description": "Display name of [`Self::linked_cluster_id`].",
-                  "example": "Bahnhofstraße Nord"
-                },
-                "linked_tree_id": {
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "format": "uuid",
-                  "description": "Database id of the linked tree, if the sensor is currently attached.",
-                  "example": "0190a8e9-7c4f-7000-8000-000000000000"
+                "location": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/SensorCoordinate",
+                      "description": "WGS-84 position of the target, resolved by its module."
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
                 },
                 "lorawan": {
                   "oneOf": [
@@ -9555,6 +9599,25 @@
                 "status": {
                   "$ref": "#/components/schemas/SensorStatus",
                   "description": "Current connectivity status of the sensor."
+                },
+                "target": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/TargetRefDto",
+                      "description": "The object the sensor is attached to, if any."
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "target_label": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Display name of [`Self::target`], resolved by its module.",
+                  "example": "Bahnhofstraße Nord"
                 },
                 "updated_at": {
                   "type": "string",
@@ -11772,7 +11835,8 @@
           "centibar",
           "ohm",
           "celsius",
-          "volt"
+          "volt",
+          "centimeter"
         ],
         "example": "centibar"
       },
@@ -12024,17 +12088,6 @@
             ],
             "description": "Provider-specific metadata as a JSON object."
           },
-          "coordinate": {
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/SensorCoordinate",
-                "description": "WGS-84 coordinate derived from the linked tree (if any)."
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
           "created_at": {
             "type": "string",
             "description": "Timestamp when the sensor was registered (RFC 3339).",
@@ -12066,31 +12119,16 @@
               }
             ]
           },
-          "linked_cluster_id": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "uuid",
-            "description": "Cluster of the linked tree. Absent when the sensor has no tree or that\ntree belongs to no cluster.",
-            "example": "0190a8e9-7c4f-7000-8000-000000000000"
-          },
-          "linked_cluster_name": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "Display name of [`Self::linked_cluster_id`].",
-            "example": "Bahnhofstraße Nord"
-          },
-          "linked_tree_id": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "uuid",
-            "description": "Database id of the linked tree, if the sensor is currently attached.",
-            "example": "0190a8e9-7c4f-7000-8000-000000000000"
+          "location": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/SensorCoordinate",
+                "description": "WGS-84 position of the target, resolved by its module."
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "lorawan": {
             "oneOf": [
@@ -12126,6 +12164,25 @@
           "status": {
             "$ref": "#/components/schemas/SensorStatus",
             "description": "Current connectivity status of the sensor."
+          },
+          "target": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/TargetRefDto",
+                "description": "The object the sensor is attached to, if any."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "target_label": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Display name of [`Self::target`], resolved by its module.",
+            "example": "Bahnhofstraße Nord"
           },
           "updated_at": {
             "type": "string",
@@ -12265,17 +12322,15 @@
           "organization_id": "01980000-0000-7000-8000-000000000001"
         }
       },
-      "SetSensorTreeRequest": {
+      "SetSensorTargetRequest": {
         "type": "object",
-        "description": "Request body for `PUT /sensors/{sensor_id}/tree` - links an activated\nsensor to (or moves it to) the given tree.",
+        "description": "Request body for `PUT /sensors/{sensor_id}/target` - moves an activated\nsensor to the given target.",
         "required": [
-          "tree_id"
+          "target"
         ],
         "properties": {
-          "tree_id": {
-            "type": "string",
-            "format": "uuid",
-            "example": "0190a8e9-7c4f-7000-8000-000000000000"
+          "target": {
+            "$ref": "#/components/schemas/TargetRefDto"
           }
         }
       },
@@ -12900,6 +12955,30 @@
           },
           "watering_point": {
             "type": "boolean"
+          }
+        }
+      },
+      "TargetRefDto": {
+        "type": "object",
+        "description": "An object of a module a sensor can be attached to, e.g. a tree.",
+        "required": [
+          "module",
+          "kind",
+          "id"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
+          },
+          "kind": {
+            "type": "string",
+            "example": "tree"
+          },
+          "module": {
+            "type": "string",
+            "example": "irrigation"
           }
         }
       },

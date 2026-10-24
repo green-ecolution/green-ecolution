@@ -3,16 +3,15 @@
     "organization_mismatch": {
       "trees_vs_cluster": "The selected trees belong to a different organization than the watering group.",
       "cluster_vs_tree": "The selected watering group belongs to a different organization than the tree.",
-      "sensor_vs_tree": "The sensor belongs to a different organization than the tree.",
+      "sensor_vs_target": "The sensor and the object belong to different organizations.",
       "clusters_vs_plan": "The selected watering groups lie outside the watering plan's organization.",
       "role_vs_user": "The role belongs to a different organization than the selected person."
     },
     "conflict": {
-      "tree_already_has_sensor": "This tree already has another sensor attached.",
-      "sensor_already_assigned": "This sensor is already assigned to another tree.",
+      "target_already_has_sensor": "This object already has a sensor.",
       "sensor_already_activated": "This sensor is already activated.",
       "sensor_not_activated": "This sensor is not activated yet.",
-      "sensor_bound_to_tree": "The sensor is attached to a tree and can only be transferred together with it.",
+      "sensor_bound_to_target": "The sensor is still assigned to an object.",
       "tree_in_cluster": "The tree belongs to a watering group and must be removed from it first.",
       "organization_not_empty": "The organization still has suborganizations or members.",
       "root_organization_immutable": "The top-level organization cannot be changed or deleted.",
@@ -20,6 +19,12 @@
       "role_template_not_assignable": "Template roles cannot be assigned to a person.",
       "cannot_change_own_access": "You cannot change your own roles or your own organization.",
       "cannot_revoke_own_administration": "This change would take away your own right to manage roles and members."
+    },
+    "sensor": {
+      "already_attached": "The sensor is already attached to another object."
+    },
+    "target": {
+      "not_accepted": "This object cannot take a sensor."
     },
     "organization": {
       "missing": "No organization was specified and your account does not belong to one.",

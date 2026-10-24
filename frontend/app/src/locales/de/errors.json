@@ -3,16 +3,15 @@
     "organization_mismatch": {
       "trees_vs_cluster": "Die ausgewählten Bäume gehören zu einer anderen Organisation als die Bewässerungsgruppe.",
       "cluster_vs_tree": "Die ausgewählte Bewässerungsgruppe gehört zu einer anderen Organisation als der Baum.",
-      "sensor_vs_tree": "Der Sensor gehört zu einer anderen Organisation als der Baum.",
+      "sensor_vs_target": "Sensor und Objekt gehören zu verschiedenen Organisationen.",
       "clusters_vs_plan": "Die ausgewählten Bewässerungsgruppen liegen außerhalb der Organisation des Einsatzplans.",
       "role_vs_user": "Die Rolle gehört zu einer anderen Organisation als die ausgewählte Person."
     },
     "conflict": {
-      "tree_already_has_sensor": "An diesem Baum hängt bereits ein anderer Sensor.",
-      "sensor_already_assigned": "Dieser Sensor ist bereits einem anderen Baum zugeordnet.",
+      "target_already_has_sensor": "Dieses Objekt hat bereits einen Sensor.",
       "sensor_already_activated": "Dieser Sensor ist bereits aktiviert.",
       "sensor_not_activated": "Dieser Sensor ist noch nicht aktiviert.",
-      "sensor_bound_to_tree": "Der Sensor hängt an einem Baum und kann nur zusammen mit ihm übertragen werden.",
+      "sensor_bound_to_target": "Der Sensor ist noch einem Objekt zugeordnet.",
       "tree_in_cluster": "Der Baum gehört zu einer Bewässerungsgruppe und muss erst daraus entfernt werden.",
       "organization_not_empty": "Die Organisation hat noch Unterorganisationen oder Mitglieder.",
       "root_organization_immutable": "Die oberste Organisation kann nicht geändert oder gelöscht werden.",
@@ -20,6 +19,12 @@
       "role_template_not_assignable": "Vorlagen-Rollen können keiner Person zugewiesen werden.",
       "cannot_change_own_access": "Du kannst deine eigenen Rollen und deine eigene Organisation nicht ändern.",
       "cannot_revoke_own_administration": "Diese Änderung würde dir selbst das Recht nehmen, Rollen und Mitglieder zu verwalten."
+    },
+    "sensor": {
+      "already_attached": "Der Sensor hängt bereits an einem anderen Objekt."
+    },
+    "target": {
+      "not_accepted": "Dieses Objekt kann keinen Sensor aufnehmen."
     },
     "organization": {
       "missing": "Es wurde keine Organisation angegeben und dein Konto gehört zu keiner.",

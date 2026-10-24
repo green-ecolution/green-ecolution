@@ -13,26 +13,34 @@
  */
 
 import { mapValues } from '../runtime';
+import type { TargetRefDto } from './TargetRefDto';
+import {
+    TargetRefDtoFromJSON,
+    TargetRefDtoFromJSONTyped,
+    TargetRefDtoToJSON,
+    TargetRefDtoToJSONTyped,
+} from './TargetRefDto';
+
 /**
- * Request body for `POST /sensors/{sensor_id}/activate` - binds a prepared
- * sensor to a tree.
+ * Request body for `POST /sensors/{sensor_id}/activate` - activates a
+ * prepared sensor and attaches it to the target.
  * @export
  * @interface ActivateSensorRequest
  */
 export interface ActivateSensorRequest {
     /**
      * 
-     * @type {string}
+     * @type {TargetRefDto}
      * @memberof ActivateSensorRequest
      */
-    treeId: string;
+    target: TargetRefDto;
 }
 
 /**
  * Check if a given object implements the ActivateSensorRequest interface.
  */
 export function instanceOfActivateSensorRequest(value: object): value is ActivateSensorRequest {
-    if (!('treeId' in value) || value['treeId'] === undefined) return false;
+    if (!('target' in value) || value['target'] === undefined) return false;
     return true;
 }
 
@@ -46,7 +54,7 @@ export function ActivateSensorRequestFromJSONTyped(json: any, ignoreDiscriminato
     }
     return {
         
-        'treeId': json['tree_id'],
+        'target': TargetRefDtoFromJSON(json['target']),
     };
 }
 
@@ -61,7 +69,7 @@ export function ActivateSensorRequestToJSONTyped(value?: ActivateSensorRequest |
 
     return {
         
-        'tree_id': value['treeId'],
+        'target': TargetRefDtoToJSON(value['target']),
     };
 }
 

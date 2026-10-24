@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { DataHealth, SensorStatus } from '@green-ecolution/backend-client'
-import { legacyPreparedRedirect, statusesForView } from './sensorListView'
+import { legacyPreparedRedirect, sensorListParams, statusesForView } from './sensorListView'
 
 describe('statusesForView', () => {
   it('hides prepared sensors in the activated view when no status is picked', () => {
@@ -63,5 +63,19 @@ describe('legacyPreparedRedirect', () => {
     expect(
       legacyPreparedRedirect({ page: 3, statuses: [SensorStatus.Prepared, SensorStatus.Online] }),
     ).toEqual({ page: 3, statuses: [SensorStatus.Online] })
+  })
+})
+
+describe('sensorListParams', () => {
+  const base = { page: 1 }
+
+  it('maps hasTree to the attached filter', () => {
+    expect(sensorListParams({ ...base, hasTree: true }).attached).toBe(true)
+    expect(sensorListParams({ ...base, hasTree: false }).attached).toBe(false)
+    expect(sensorListParams(base).attached).toBeUndefined()
+  })
+
+  it('passes the resolved cluster sensor ids as id', () => {
+    expect(sensorListParams({ ...base, clusterIds: ['c1'] }, ['s1', 's2']).id).toEqual(['s1', 's2'])
   })
 })

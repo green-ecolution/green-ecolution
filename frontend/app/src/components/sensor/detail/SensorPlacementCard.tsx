@@ -28,6 +28,7 @@ import useClusterBoundaryLayer from '@/components/map-gl/layers/useClusterBounda
 import { useWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import type { Sensor } from '@/api/backendApi'
+import { isTreeTarget } from '@/lib/targets'
 import { useSensorActions } from './SensorActionsContext'
 import { compactCardContent, compactCardHeader, compactCardTitle } from './cardDensity'
 
@@ -172,12 +173,13 @@ const TreeRow = ({ treeId }: { treeId: string }) => {
 const SensorPlacementCard = ({ sensor }: SensorPlacementCardProps) => {
   const { t } = useTranslation('sensor')
   const actions = useSensorActions()
-  const coord = sensor.coordinate
+  const coord = sensor.location
   const [showCoordinates, setShowCoordinates] = useState(false)
   // On touch screens a pannable preview swallows the swipe meant to scroll the page.
   const mapInteractive = useMediaQuery('(pointer: fine)')
-  const treeId = sensor.linkedTreeId != null ? String(sensor.linkedTreeId) : null
-  const clusterId = sensor.linkedClusterId != null ? String(sensor.linkedClusterId) : null
+  const treeId = isTreeTarget(sensor.target) ? sensor.target.id : null
+  const { data: linkedTree } = useQuery(treeQueries.detail(treeId ?? ''))
+  const clusterId = treeId !== null ? (linkedTree?.treeClusterId ?? null) : null
 
   return (
     <Card variant="outlined" className="h-full">
@@ -259,7 +261,7 @@ const SensorPlacementCard = ({ sensor }: SensorPlacementCardProps) => {
 
             <div className="divide-y divide-dark-100 overflow-hidden rounded-xl border border-dark-100">
               {clusterId ? (
-                <ClusterRow clusterId={clusterId} fallbackName={sensor.linkedClusterName ?? ''} />
+                <ClusterRow clusterId={clusterId} fallbackName={sensor.targetLabel ?? ''} />
               ) : (
                 <PlacementRow
                   icon={<Trees />}

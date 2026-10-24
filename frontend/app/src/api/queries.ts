@@ -266,6 +266,19 @@ export const sensorQueries = {
       queryFn: () => sensorApi.listSensors(params),
     }),
 
+  clusterSensorIds: (clusterIds: string[]) => {
+    const sortedIds = clusterIds.slice().sort()
+    return queryOptions<string[]>({
+      queryKey: [...SENSORS_KEY, 'by-cluster', sortedIds],
+      queryFn: async () => {
+        const perCluster = await Promise.all(
+          sortedIds.map((clusterId) => clusterApi.listClusterSensorIds({ clusterId })),
+        )
+        return [...new Set(perCluster.flat())]
+      },
+    })
+  },
+
   // Sensor ids are LoRaWAN EUIs (e.g. "eui-a81758fffe0c3b52"), not UUIDs,
   // so these queries only guard against empty ids.
   data: (id: string, params?: { from?: Date; perPage?: number }) =>

@@ -26,7 +26,7 @@ import type {
   SensorModelResponse,
   SensorResponse,
   SensorStatus,
-  SetSensorTreeRequest,
+  SetSensorTargetRequest,
   SoilMoistureSeriesResponse,
   TransferRequest,
 } from '../models/index';
@@ -53,8 +53,8 @@ import {
     SensorResponseToJSON,
     SensorStatusFromJSON,
     SensorStatusToJSON,
-    SetSensorTreeRequestFromJSON,
-    SetSensorTreeRequestToJSON,
+    SetSensorTargetRequestFromJSON,
+    SetSensorTargetRequestToJSON,
     SoilMoistureSeriesResponseFromJSON,
     SoilMoistureSeriesResponseToJSON,
     TransferRequestFromJSON,
@@ -113,19 +113,20 @@ export interface ListSensorsRequest {
     status?: Array<SensorStatus>;
     modelId?: Array<string>;
     dataHealth?: Array<DataHealth>;
-    hasTree?: boolean | null;
-    clusterId?: Array<string>;
+    attached?: boolean | null;
+    module?: string | null;
+    id?: Array<string>;
     sort?: ListSensorsSortEnum;
     order?: ListSensorsOrderEnum;
 }
 
-export interface RemoveSensorTreeRequest {
+export interface RemoveSensorTargetRequest {
     sensorId: string;
 }
 
-export interface SetSensorTreeOperationRequest {
+export interface SetSensorTargetOperationRequest {
     sensorId: string;
-    setSensorTreeRequest: SetSensorTreeRequest;
+    setSensorTargetRequest: SetSensorTargetRequest;
 }
 
 export interface TransferSensorRequest {
@@ -188,8 +189,8 @@ export class SensorsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Transitions a sensor from `Prepared` to `Offline` and attaches it to the given tree. Idempotent if the sensor is already attached to the same tree.
-     * Activate a prepared sensor by binding it to a tree
+     * Transitions a sensor from `Prepared` to `Offline` and attaches it to the given target, e.g. a tree. Idempotent if the sensor is already attached to the same target.
+     * Activate a prepared sensor by attaching it to a target
      */
     async activateSensorRaw(requestParameters: ActivateSensorOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SensorResponse>> {
         if (requestParameters['sensorId'] == null) {
@@ -228,8 +229,8 @@ export class SensorsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Transitions a sensor from `Prepared` to `Offline` and attaches it to the given tree. Idempotent if the sensor is already attached to the same tree.
-     * Activate a prepared sensor by binding it to a tree
+     * Transitions a sensor from `Prepared` to `Offline` and attaches it to the given target, e.g. a tree. Idempotent if the sensor is already attached to the same target.
+     * Activate a prepared sensor by attaching it to a target
      */
     async activateSensor(requestParameters: ActivateSensorOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SensorResponse> {
         const response = await this.activateSensorRaw(requestParameters, initOverrides);
@@ -237,7 +238,7 @@ export class SensorsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates a sensor record in `Prepared` state. The sensor must later be bound to a tree via `POST /sensors/{sensor_id}/activate` before it starts receiving data.
+     * Creates a sensor record in `Prepared` state. The sensor must later be attached to a target via `POST /sensors/{sensor_id}/activate` before it starts receiving data.
      * Register a new (prepared) sensor unit
      */
     async createSensorRaw(requestParameters: CreateSensorOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SensorResponse>> {
@@ -269,7 +270,7 @@ export class SensorsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates a sensor record in `Prepared` state. The sensor must later be bound to a tree via `POST /sensors/{sensor_id}/activate` before it starts receiving data.
+     * Creates a sensor record in `Prepared` state. The sensor must later be attached to a target via `POST /sensors/{sensor_id}/activate` before it starts receiving data.
      * Register a new (prepared) sensor unit
      */
     async createSensor(requestParameters: CreateSensorOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SensorResponse> {
@@ -568,7 +569,7 @@ export class SensorsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a paginated list of all LoRaWAN sensors. Optional `q` parameter case-insensitively filters by sensor EUI or model name. Optional filter parameters (status, model_id, data_health, has_tree) narrow the result; array parameters are repeatable. Optional `sort` (id, last_reading, created_at) and `order` (asc, desc) control the result order; the default is id ascending.
+     * Returns a paginated list of all LoRaWAN sensors. Optional `q` parameter case-insensitively filters by sensor EUI or model name. Optional filter parameters (status, model_id, data_health, attached, module, id) narrow the result; array parameters are repeatable. Optional `sort` (id, last_reading, created_at) and `order` (asc, desc) control the result order; the default is id ascending.
      * List all sensors
      */
     async listSensorsRaw(requestParameters: ListSensorsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListResponseSensorResponse>> {
@@ -598,12 +599,16 @@ export class SensorsApi extends runtime.BaseAPI {
             queryParameters['data_health'] = requestParameters['dataHealth'];
         }
 
-        if (requestParameters['hasTree'] != null) {
-            queryParameters['has_tree'] = requestParameters['hasTree'];
+        if (requestParameters['attached'] != null) {
+            queryParameters['attached'] = requestParameters['attached'];
         }
 
-        if (requestParameters['clusterId'] != null) {
-            queryParameters['cluster_id'] = requestParameters['clusterId'];
+        if (requestParameters['module'] != null) {
+            queryParameters['module'] = requestParameters['module'];
+        }
+
+        if (requestParameters['id'] != null) {
+            queryParameters['id'] = requestParameters['id'];
         }
 
         if (requestParameters['sort'] != null) {
@@ -630,7 +635,7 @@ export class SensorsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a paginated list of all LoRaWAN sensors. Optional `q` parameter case-insensitively filters by sensor EUI or model name. Optional filter parameters (status, model_id, data_health, has_tree) narrow the result; array parameters are repeatable. Optional `sort` (id, last_reading, created_at) and `order` (asc, desc) control the result order; the default is id ascending.
+     * Returns a paginated list of all LoRaWAN sensors. Optional `q` parameter case-insensitively filters by sensor EUI or model name. Optional filter parameters (status, model_id, data_health, attached, module, id) narrow the result; array parameters are repeatable. Optional `sort` (id, last_reading, created_at) and `order` (asc, desc) control the result order; the default is id ascending.
      * List all sensors
      */
     async listSensors(requestParameters: ListSensorsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ListResponseSensorResponse> {
@@ -639,14 +644,14 @@ export class SensorsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Detaches the sensor from its tree and deactivates it, returning it to the `Prepared` state. Idempotent for an already prepared sensor.
-     * Remove a sensor\'s tree link and reset it to prepared
+     * Detaches the sensor from its target and deactivates it, returning it to the `Prepared` state. Idempotent for an already prepared sensor.
+     * Release a sensor\'s target and reset it to prepared
      */
-    async removeSensorTreeRaw(requestParameters: RemoveSensorTreeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SensorResponse>> {
+    async removeSensorTargetRaw(requestParameters: RemoveSensorTargetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SensorResponse>> {
         if (requestParameters['sensorId'] == null) {
             throw new runtime.RequiredError(
                 'sensorId',
-                'Required parameter "sensorId" was null or undefined when calling removeSensorTree().'
+                'Required parameter "sensorId" was null or undefined when calling removeSensorTarget().'
             );
         }
 
@@ -655,7 +660,7 @@ export class SensorsApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
 
-        let urlPath = `/v1/sensors/{sensor_id}/tree`;
+        let urlPath = `/v1/sensors/{sensor_id}/target`;
         urlPath = urlPath.replace(`{${"sensor_id"}}`, encodeURIComponent(String(requestParameters['sensorId'])));
 
         const response = await this.request({
@@ -669,30 +674,30 @@ export class SensorsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Detaches the sensor from its tree and deactivates it, returning it to the `Prepared` state. Idempotent for an already prepared sensor.
-     * Remove a sensor\'s tree link and reset it to prepared
+     * Detaches the sensor from its target and deactivates it, returning it to the `Prepared` state. Idempotent for an already prepared sensor.
+     * Release a sensor\'s target and reset it to prepared
      */
-    async removeSensorTree(requestParameters: RemoveSensorTreeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SensorResponse> {
-        const response = await this.removeSensorTreeRaw(requestParameters, initOverrides);
+    async removeSensorTarget(requestParameters: RemoveSensorTargetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SensorResponse> {
+        const response = await this.removeSensorTargetRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Re-links an already activated sensor to `tree_id`. Rejects a tree that already has a different sensor and a sensor that is not yet activated. Idempotent if the sensor is already linked to that tree.
-     * Move an activated sensor to a different tree
+     * Attaches an already activated sensor to `target`, releasing its current one. Rejects a target that already has a different sensor and a sensor that is not yet activated. Idempotent if the sensor is already attached there.
+     * Move an activated sensor to a different target
      */
-    async setSensorTreeRaw(requestParameters: SetSensorTreeOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SensorResponse>> {
+    async setSensorTargetRaw(requestParameters: SetSensorTargetOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SensorResponse>> {
         if (requestParameters['sensorId'] == null) {
             throw new runtime.RequiredError(
                 'sensorId',
-                'Required parameter "sensorId" was null or undefined when calling setSensorTree().'
+                'Required parameter "sensorId" was null or undefined when calling setSensorTarget().'
             );
         }
 
-        if (requestParameters['setSensorTreeRequest'] == null) {
+        if (requestParameters['setSensorTargetRequest'] == null) {
             throw new runtime.RequiredError(
-                'setSensorTreeRequest',
-                'Required parameter "setSensorTreeRequest" was null or undefined when calling setSensorTree().'
+                'setSensorTargetRequest',
+                'Required parameter "setSensorTargetRequest" was null or undefined when calling setSensorTarget().'
             );
         }
 
@@ -703,7 +708,7 @@ export class SensorsApi extends runtime.BaseAPI {
         headerParameters['Content-Type'] = 'application/json';
 
 
-        let urlPath = `/v1/sensors/{sensor_id}/tree`;
+        let urlPath = `/v1/sensors/{sensor_id}/target`;
         urlPath = urlPath.replace(`{${"sensor_id"}}`, encodeURIComponent(String(requestParameters['sensorId'])));
 
         const response = await this.request({
@@ -711,18 +716,18 @@ export class SensorsApi extends runtime.BaseAPI {
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
-            body: SetSensorTreeRequestToJSON(requestParameters['setSensorTreeRequest']),
+            body: SetSensorTargetRequestToJSON(requestParameters['setSensorTargetRequest']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => SensorResponseFromJSON(jsonValue));
     }
 
     /**
-     * Re-links an already activated sensor to `tree_id`. Rejects a tree that already has a different sensor and a sensor that is not yet activated. Idempotent if the sensor is already linked to that tree.
-     * Move an activated sensor to a different tree
+     * Attaches an already activated sensor to `target`, releasing its current one. Rejects a target that already has a different sensor and a sensor that is not yet activated. Idempotent if the sensor is already attached there.
+     * Move an activated sensor to a different target
      */
-    async setSensorTree(requestParameters: SetSensorTreeOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SensorResponse> {
-        const response = await this.setSensorTreeRaw(requestParameters, initOverrides);
+    async setSensorTarget(requestParameters: SetSensorTargetOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SensorResponse> {
+        const response = await this.setSensorTargetRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
