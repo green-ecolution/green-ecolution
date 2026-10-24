@@ -19,7 +19,7 @@ use crate::{
 };
 use domain::{
     Id,
-    authorization::{Action, Permission, Resource},
+    authorization::{Action, Permission, ResourceKey},
     settings::{SettingChangeEntry, SettingKey, SettingsUpdate},
 };
 
@@ -74,7 +74,7 @@ pub async fn get_settings(
         .authorization_service
         .require(
             user.id,
-            Permission::new(Resource::Setting, Action::Read),
+            Permission::new(ResourceKey::SETTING, Action::Read),
             org,
         )
         .await?;
@@ -119,7 +119,7 @@ pub async fn update_settings(
         .authorization_service
         .require(
             user.id,
-            Permission::new(Resource::Setting, Action::Update),
+            Permission::new(ResourceKey::SETTING, Action::Update),
             org,
         )
         .await?;

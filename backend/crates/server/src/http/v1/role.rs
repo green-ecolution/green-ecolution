@@ -18,7 +18,7 @@ use crate::{
 };
 use domain::{
     Id,
-    authorization::{Action, Permission, Resource, Visibility},
+    authorization::{Action, Permission, ResourceKey, Visibility},
     organization::Organization,
     role::{RoleDescription, RoleDraft, RoleName},
 };
@@ -51,7 +51,7 @@ pub async fn list_roles(
     State(state): State<Arc<AppState>>,
     user: AuthUserExtractor,
 ) -> Result<Json<Vec<RoleResponse>>, ServiceError> {
-    let read = Permission::new(Resource::Role, Action::Read);
+    let read = Permission::new(ResourceKey::ROLE, Action::Read);
     let scope = resolve_target_org(&state, user.id, None).await?;
     state
         .authorization_service
@@ -106,9 +106,14 @@ pub async fn list_templates(
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
-pub async fn list_permissions(_user: AuthUserExtractor) -> Json<Vec<String>> {
+pub async fn list_permissions(
+    State(state): State<Arc<AppState>>,
+    _user: AuthUserExtractor,
+) -> Json<Vec<String>> {
     Json(
-        Permission::catalog()
+        state
+            .resource_catalog
+            .permissions()
             .iter()
             .map(ToString::to_string)
             .collect(),
@@ -136,7 +141,11 @@ pub async fn list_org_roles(
     let id = Id::new(org_id);
     state
         .authorization_service
-        .require(user.id, Permission::new(Resource::Role, Action::Read), id)
+        .require(
+            user.id,
+            Permission::new(ResourceKey::ROLE, Action::Read),
+            id,
+        )
         .await?;
     let views = state.role_service.by_organization(id).await?;
     Ok(Json(views.iter().map(Into::into).collect()))
@@ -170,7 +179,7 @@ pub async fn create_role(
         .authorization_service
         .require(
             user.id,
-            Permission::new(Resource::Role, Action::Create),
+            Permission::new(ResourceKey::ROLE, Action::Create),
             org,
         )
         .await?;
@@ -206,7 +215,10 @@ pub async fn create_role(
                     "name is required unless copy_from_role_id is set".into(),
                 )
             })?;
-            let permissions = parse_permissions(&req.permissions.unwrap_or_default())?;
+            let permissions = parse_permissions(
+                &req.permissions.unwrap_or_default(),
+                &state.resource_catalog,
+            )?;
             state
                 .authorization_service
                 .require_superset(user.id, &permissions, org)
@@ -256,7 +268,7 @@ pub async fn get_role(
         let ctx = state.authorization_service.context_for(user.id).await?;
         ensure_visible(
             &ctx,
-            Permission::new(Resource::Role, Action::Read),
+            Permission::new(ResourceKey::ROLE, Action::Read),
             org.value(),
         )?;
     }
@@ -288,13 +300,13 @@ pub async fn update_role(
 ) -> Result<Json<RoleResponse>, ServiceError> {
     let id = Id::new(role_id);
     let current = state.role_service.by_id(id).await?;
-    let permissions = parse_permissions(&req.permissions)?;
+    let permissions = parse_permissions(&req.permissions, &state.resource_catalog)?;
     if let Some(org) = current.organization_id {
         state
             .authorization_service
             .require(
                 user.id,
-                Permission::new(Resource::Role, Action::Update),
+                Permission::new(ResourceKey::ROLE, Action::Update),
                 org,
             )
             .await?;
@@ -351,7 +363,7 @@ pub async fn delete_role(
             .authorization_service
             .require(
                 user.id,
-                Permission::new(Resource::Role, Action::Delete),
+                Permission::new(ResourceKey::ROLE, Action::Delete),
                 org,
             )
             .await?;

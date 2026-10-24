@@ -27,7 +27,7 @@ use crate::{
 };
 use domain::{
     Id,
-    authorization::{Action, Permission, Resource},
+    authorization::{Action, Permission, ResourceKey},
     sensor::SensorId,
     shared::{
         coordinates::Coordinate, distance::Distance, pagination::Pagination, sort::SortDirection,
@@ -103,7 +103,10 @@ pub async fn list_trees(
 
     let visible = state
         .authorization_service
-        .visible_orgs_for(user.id, Permission::new(Resource::Tree, Action::Read))
+        .visible_orgs_for(
+            user.id,
+            Permission::new(crate::irrigation::resources::TREE, Action::Read),
+        )
         .await?;
 
     let sort = TreeSort {
@@ -164,7 +167,7 @@ pub async fn get_tree(
     let ctx = state.authorization_service.context_for(user.id).await?;
     scope::ensure_visible(
         &ctx,
-        Permission::new(Resource::Tree, Action::Read),
+        Permission::new(crate::irrigation::resources::TREE, Action::Read),
         tree.organization_id,
     )?;
     let sensor = match &tree.sensor_id {
@@ -201,7 +204,7 @@ pub async fn create_tree(
         .authorization_service
         .require(
             user.id,
-            Permission::new(Resource::Tree, Action::Create),
+            Permission::new(crate::irrigation::resources::TREE, Action::Create),
             org,
         )
         .await?;
@@ -212,7 +215,7 @@ pub async fn create_tree(
             .authorization_service
             .require(
                 user.id,
-                Permission::new(Resource::Sensor, Action::Update),
+                Permission::new(ResourceKey::SENSOR, Action::Update),
                 Id::new(sensor_view.organization_id),
             )
             .await?;
@@ -259,14 +262,14 @@ pub async fn update_tree(
     let ctx = state.authorization_service.context_for(user.id).await?;
     scope::ensure_visible(
         &ctx,
-        Permission::new(Resource::Tree, Action::Read),
+        Permission::new(crate::irrigation::resources::TREE, Action::Read),
         current.organization_id,
     )?;
     state
         .authorization_service
         .require(
             user.id,
-            Permission::new(Resource::Tree, Action::Update),
+            Permission::new(crate::irrigation::resources::TREE, Action::Update),
             Id::new(current.organization_id),
         )
         .await?;
@@ -281,7 +284,7 @@ pub async fn update_tree(
                 .authorization_service
                 .require(
                     user.id,
-                    Permission::new(Resource::Sensor, Action::Update),
+                    Permission::new(ResourceKey::SENSOR, Action::Update),
                     Id::new(sensor_view.organization_id),
                 )
                 .await?;
@@ -335,14 +338,14 @@ pub async fn delete_tree(
     let ctx = state.authorization_service.context_for(user.id).await?;
     scope::ensure_visible(
         &ctx,
-        Permission::new(Resource::Tree, Action::Read),
+        Permission::new(crate::irrigation::resources::TREE, Action::Read),
         current.organization_id,
     )?;
     state
         .authorization_service
         .require(
             user.id,
-            Permission::new(Resource::Tree, Action::Delete),
+            Permission::new(crate::irrigation::resources::TREE, Action::Delete),
             Id::new(current.organization_id),
         )
         .await?;
@@ -366,7 +369,10 @@ pub async fn list_planting_years(
 ) -> Result<Json<Vec<i32>>, ServiceError> {
     let visible = state
         .authorization_service
-        .visible_orgs_for(user.id, Permission::new(Resource::Tree, Action::Read))
+        .visible_orgs_for(
+            user.id,
+            Permission::new(crate::irrigation::resources::TREE, Action::Read),
+        )
         .await?;
     let years = state.tree_service.distinct_planting_years(visible).await?;
     Ok(Json(years.into_iter().map(|y| y.year() as i32).collect()))
@@ -400,7 +406,10 @@ pub async fn get_nearest_trees(
 
     let visible = state
         .authorization_service
-        .visible_orgs_for(user.id, Permission::new(Resource::Tree, Action::Read))
+        .visible_orgs_for(
+            user.id,
+            Permission::new(crate::irrigation::resources::TREE, Action::Read),
+        )
         .await?;
 
     let results = state
@@ -473,7 +482,10 @@ pub async fn list_tree_markers(
 
     let visible = state
         .authorization_service
-        .visible_orgs_for(user.id, Permission::new(Resource::Tree, Action::Read))
+        .visible_orgs_for(
+            user.id,
+            Permission::new(crate::irrigation::resources::TREE, Action::Read),
+        )
         .await?;
 
     let query = TreeSearchQuery {
@@ -515,10 +527,10 @@ pub async fn transfer_tree(
     let ctx = state.authorization_service.context_for(user.id).await?;
     scope::ensure_visible(
         &ctx,
-        Permission::new(Resource::Tree, Action::Read),
+        Permission::new(crate::irrigation::resources::TREE, Action::Read),
         current.organization_id,
     )?;
-    let perm = Permission::new(Resource::Tree, Action::Update);
+    let perm = Permission::new(crate::irrigation::resources::TREE, Action::Update);
     state
         .authorization_service
         .require(user.id, perm, Id::new(current.organization_id))

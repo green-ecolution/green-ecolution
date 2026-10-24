@@ -185,7 +185,7 @@ mod tests {
 
     use domain::{
         RepositoryError,
-        authorization::{Action, Resource},
+        authorization::{Action, ResourceKey},
         role::RoleSnapshot,
         user::UserProfile,
     };
@@ -278,15 +278,19 @@ mod tests {
     impl RoleWriter for InMemoryRoles {
         async fn save_new(&self, draft: RoleDraft) -> Result<Role, RepositoryError> {
             self.saved_new.lock().unwrap().push(draft.clone());
-            let role = Role::reconstitute(RoleSnapshot {
-                id: Uuid::now_v7(),
-                organization_id: Some(draft.organization_id.value()),
-                name: draft.name.as_str().to_string(),
-                description: draft.description.as_ref().map(|d| d.as_str().to_string()),
-                permissions: draft.permissions.iter().map(|p| p.to_string()).collect(),
-                template_key: None,
-            })
-            .unwrap();
+            let role = Role::reconstitute(
+                RoleSnapshot {
+                    id: Uuid::now_v7(),
+                    organization_id: Some(draft.organization_id.value()),
+                    name: draft.name.as_str().to_string(),
+                    description: draft.description.as_ref().map(|d| d.as_str().to_string()),
+                    permissions: draft.permissions.iter().map(|p| p.to_string()).collect(),
+                    template_key: None,
+                },
+                &crate::irrigation::test_catalog(),
+            )
+            .unwrap()
+            .role;
             self.rows.lock().unwrap().push(role.clone());
             Ok(role)
         }
@@ -370,19 +374,26 @@ mod tests {
     }
 
     fn perms() -> BTreeSet<Permission> {
-        BTreeSet::from([Permission::new(Resource::Tree, Action::Read)])
+        BTreeSet::from([Permission::new(
+            crate::irrigation::resources::TREE,
+            Action::Read,
+        )])
     }
 
     fn role(id: Id<Role>, org: Option<Id<Organization>>) -> Role {
-        Role::reconstitute(RoleSnapshot {
-            id: id.value(),
-            organization_id: org.map(|o| o.value()),
-            name: "Baumpflege".into(),
-            description: None,
-            permissions: perms().iter().map(|p| p.to_string()).collect(),
-            template_key: None,
-        })
+        Role::reconstitute(
+            RoleSnapshot {
+                id: id.value(),
+                organization_id: org.map(|o| o.value()),
+                name: "Baumpflege".into(),
+                description: None,
+                permissions: perms().iter().map(|p| p.to_string()).collect(),
+                template_key: None,
+            },
+            &crate::irrigation::test_catalog(),
+        )
         .unwrap()
+        .role
     }
 
     fn service(
@@ -468,7 +479,8 @@ mod tests {
 
         let new_name = RoleName::new("Pflege Nord").unwrap();
         let new_description = Some(RoleDescription::new("Neue Beschreibung").unwrap());
-        let new_permissions = BTreeSet::from([Permission::new(Resource::Vehicle, Action::Update)]);
+        let new_permissions =
+            BTreeSet::from([Permission::new(ResourceKey::VEHICLE, Action::Update)]);
 
         let view = svc
             .update(

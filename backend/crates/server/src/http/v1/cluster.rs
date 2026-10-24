@@ -29,7 +29,7 @@ use crate::{
 };
 use domain::{
     Id,
-    authorization::{Action, Permission, Resource},
+    authorization::{Action, Permission},
     cluster::{
         ClusterAddress, ClusterName, ClusterSort, ClusterSortField, TreeClusterSearchQuery,
         TreeClusterUpdate, TreeClusterView,
@@ -124,7 +124,7 @@ pub async fn list_clusters(
         .authorization_service
         .visible_orgs_for(
             user.id,
-            Permission::new(Resource::TreeCluster, Action::Read),
+            Permission::new(crate::irrigation::resources::TREE_CLUSTER, Action::Read),
         )
         .await?;
     let sort = ClusterSort {
@@ -195,7 +195,7 @@ pub async fn get_cluster(
     let ctx = state.authorization_service.context_for(user.id).await?;
     scope::ensure_visible(
         &ctx,
-        Permission::new(Resource::TreeCluster, Action::Read),
+        Permission::new(crate::irrigation::resources::TREE_CLUSTER, Action::Read),
         view.organization_id,
     )?;
     let response = build_cluster_response(&state, &view).await?;
@@ -227,7 +227,7 @@ pub async fn create_cluster(
         .authorization_service
         .require(
             user.id,
-            Permission::new(Resource::TreeCluster, Action::Create),
+            Permission::new(crate::irrigation::resources::TREE_CLUSTER, Action::Create),
             org,
         )
         .await?;
@@ -267,14 +267,14 @@ pub async fn update_cluster(
     let ctx = state.authorization_service.context_for(user.id).await?;
     scope::ensure_visible(
         &ctx,
-        Permission::new(Resource::TreeCluster, Action::Read),
+        Permission::new(crate::irrigation::resources::TREE_CLUSTER, Action::Read),
         current.organization_id,
     )?;
     state
         .authorization_service
         .require(
             user.id,
-            Permission::new(Resource::TreeCluster, Action::Update),
+            Permission::new(crate::irrigation::resources::TREE_CLUSTER, Action::Update),
             Id::new(current.organization_id),
         )
         .await?;
@@ -320,14 +320,14 @@ pub async fn delete_cluster(
     let ctx = state.authorization_service.context_for(user.id).await?;
     scope::ensure_visible(
         &ctx,
-        Permission::new(Resource::TreeCluster, Action::Read),
+        Permission::new(crate::irrigation::resources::TREE_CLUSTER, Action::Read),
         current.organization_id,
     )?;
     state
         .authorization_service
         .require(
             user.id,
-            Permission::new(Resource::TreeCluster, Action::Delete),
+            Permission::new(crate::irrigation::resources::TREE_CLUSTER, Action::Delete),
             Id::new(current.organization_id),
         )
         .await?;
@@ -357,7 +357,7 @@ pub async fn list_cluster_markers(
         .authorization_service
         .visible_orgs_for(
             user.id,
-            Permission::new(Resource::TreeCluster, Action::Read),
+            Permission::new(crate::irrigation::resources::TREE_CLUSTER, Action::Read),
         )
         .await?;
     let markers = state.cluster_service.view_markers(visible).await?;
@@ -387,7 +387,7 @@ pub async fn list_cluster_boundaries(
         .authorization_service
         .visible_orgs_for(
             user.id,
-            Permission::new(Resource::TreeCluster, Action::Read),
+            Permission::new(crate::irrigation::resources::TREE_CLUSTER, Action::Read),
         )
         .await?;
     let boundaries = state.cluster_service.boundaries(visible).await?;
@@ -419,7 +419,7 @@ pub async fn cluster_statistics(
         .authorization_service
         .visible_orgs_for(
             user.id,
-            Permission::new(Resource::TreeCluster, Action::Read),
+            Permission::new(crate::irrigation::resources::TREE_CLUSTER, Action::Read),
         )
         .await?;
     let stats = state.cluster_service.statistics(visible).await?;
@@ -455,7 +455,7 @@ pub async fn get_cluster_soil_moisture(
     let ctx = state.authorization_service.context_for(user.id).await?;
     scope::ensure_visible(
         &ctx,
-        Permission::new(Resource::TreeCluster, Action::Read),
+        Permission::new(crate::irrigation::resources::TREE_CLUSTER, Action::Read),
         view.organization_id,
     )?;
     let (from, to, bucket) = params.resolve()?;
@@ -494,10 +494,10 @@ pub async fn transfer_cluster(
     let ctx = state.authorization_service.context_for(user.id).await?;
     scope::ensure_visible(
         &ctx,
-        Permission::new(Resource::TreeCluster, Action::Read),
+        Permission::new(crate::irrigation::resources::TREE_CLUSTER, Action::Read),
         current.organization_id,
     )?;
-    let perm = Permission::new(Resource::TreeCluster, Action::Update);
+    let perm = Permission::new(crate::irrigation::resources::TREE_CLUSTER, Action::Update);
     state
         .authorization_service
         .require(user.id, perm, Id::new(current.organization_id))

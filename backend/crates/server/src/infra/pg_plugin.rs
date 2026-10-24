@@ -1,18 +1,21 @@
+use std::sync::Arc;
+
 use sqlx::PgPool;
 
 use domain::plugin::{
     Plugin, PluginDraft, PluginFrontend, PluginKeyHash, PluginReader, PluginSlug, PluginSnapshot,
     PluginView, PluginWriter, TreeRef, TreeRefPage,
 };
-use domain::{Id, RepositoryError, tree::Tree};
+use domain::{Id, RepositoryError, authorization::ResourceCatalog, tree::Tree};
 
 pub struct PgPluginRepository {
     pool: PgPool,
+    catalog: Arc<ResourceCatalog>,
 }
 
 impl PgPluginRepository {
-    pub fn new(pool: PgPool) -> Self {
-        Self { pool }
+    pub fn new(pool: PgPool, catalog: Arc<ResourceCatalog>) -> Self {
+        Self { pool, catalog }
     }
 }
 
@@ -39,7 +42,7 @@ impl PluginReader for PgPluginRepository {
         .fetch_optional(&self.pool)
         .await?
         .ok_or(RepositoryError::NotFound)
-        .map(Plugin::reconstitute)
+        .map(|snap| Plugin::reconstitute(snap, &self.catalog))
     }
 
     #[tracing::instrument(level = "trace", skip_all)]
@@ -55,7 +58,7 @@ impl PluginReader for PgPluginRepository {
         .fetch_optional(&self.pool)
         .await?
         .ok_or(RepositoryError::NotFound)
-        .map(Plugin::reconstitute)
+        .map(|snap| Plugin::reconstitute(snap, &self.catalog))
     }
 
     #[tracing::instrument(level = "trace", skip_all)]
@@ -74,7 +77,7 @@ impl PluginReader for PgPluginRepository {
             .into_iter()
             .map(|snap| {
                 let last_seen_at = snap.last_seen_at;
-                let plugin = Plugin::reconstitute(snap);
+                let plugin = Plugin::reconstitute(snap, &self.catalog);
                 PluginView::from_aggregate(&plugin, last_seen_at)
             })
             .collect())
@@ -95,7 +98,7 @@ impl PluginReader for PgPluginRepository {
         .ok_or(RepositoryError::NotFound)?;
 
         let last_seen_at = snap.last_seen_at;
-        let plugin = Plugin::reconstitute(snap);
+        let plugin = Plugin::reconstitute(snap, &self.catalog);
         Ok(PluginView::from_aggregate(&plugin, last_seen_at))
     }
 
@@ -217,21 +220,24 @@ impl PluginWriter for PgPluginRepository {
         .execute(&self.pool)
         .await?;
 
-        Ok(Plugin::reconstitute(PluginSnapshot {
-            id: id.value(),
-            slug: draft.slug.as_str().to_string(),
-            name: draft.name.as_str().to_string(),
-            description: draft.description,
-            frontend_mode: frontend_mode.to_string(),
-            frontend_target,
-            organization_id: draft.organization_id.value(),
-            permissions,
-            required_permissions,
-            device_capabilities,
-            enabled: false,
-            key_hash: key_hash.map(|k| k.as_str().to_string()),
-            last_seen_at: None,
-        }))
+        Ok(Plugin::reconstitute(
+            PluginSnapshot {
+                id: id.value(),
+                slug: draft.slug.as_str().to_string(),
+                name: draft.name.as_str().to_string(),
+                description: draft.description,
+                frontend_mode: frontend_mode.to_string(),
+                frontend_target,
+                organization_id: draft.organization_id.value(),
+                permissions,
+                required_permissions,
+                device_capabilities,
+                enabled: false,
+                key_hash: key_hash.map(|k| k.as_str().to_string()),
+                last_seen_at: None,
+            },
+            &self.catalog,
+        ))
     }
 
     #[tracing::instrument(level = "trace", skip_all)]

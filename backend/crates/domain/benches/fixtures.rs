@@ -3,7 +3,7 @@ use std::collections::BTreeSet;
 use chrono::{DateTime, TimeZone, Utc};
 use domain::{
     Id,
-    authorization::{Action, OrgHierarchy, Permission, Resource},
+    authorization::{Action, OrgHierarchy, Permission, ResourceCatalog, ResourceKey},
     cluster::{SoilCondition, TreeCluster, TreeClusterSnapshot},
     organization::Organization,
     sensor::data::Watermark,
@@ -95,7 +95,7 @@ pub fn deep_hierarchy(depth: usize) -> (OrgHierarchy, Id<Organization>, Id<Organ
 }
 
 pub fn grants(count: usize) -> Vec<Grant> {
-    let permissions: BTreeSet<Permission> = Permission::catalog().into_iter().collect();
+    let permissions: BTreeSet<Permission> = catalog_permissions();
     (0..count)
         .map(|_| (Id::new_v7(), permissions.clone()))
         .collect()
@@ -119,7 +119,7 @@ pub fn hierarchy_with_grants(
         children.push(child);
     }
 
-    let permissions: BTreeSet<Permission> = Permission::catalog().into_iter().collect();
+    let permissions: BTreeSet<Permission> = catalog_permissions();
     let grants = children
         .iter()
         .take(grant_count)
@@ -131,7 +131,19 @@ pub fn hierarchy_with_grants(
 }
 
 pub fn single_permission() -> Permission {
-    Permission::new(Resource::Tree, Action::Read)
+    Permission::new(ResourceKey::declare("tree"), Action::Read)
+}
+
+fn catalog_permissions() -> BTreeSet<Permission> {
+    ResourceCatalog::new([
+        ResourceKey::declare("tree"),
+        ResourceKey::declare("tree_cluster"),
+        ResourceKey::declare("watering_plan"),
+    ])
+    .unwrap()
+    .permissions()
+    .into_iter()
+    .collect()
 }
 
 pub fn instance_defaults() -> InstanceDefaults {

@@ -26,7 +26,7 @@ use crate::{
 };
 use domain::{
     Id,
-    authorization::{Action, Permission, Resource},
+    authorization::{Action, Permission, ResourceKey},
     shared::{pagination::Pagination, sort::SortDirection},
     vehicle::{ArchiveFilterKind, VehicleSearchQuery, VehicleSort, VehicleSortField},
 };
@@ -86,7 +86,7 @@ pub async fn list_vehicles(
 
     let visible = state
         .authorization_service
-        .visible_orgs_for(user.id, Permission::new(Resource::Vehicle, Action::Read))
+        .visible_orgs_for(user.id, Permission::new(ResourceKey::VEHICLE, Action::Read))
         .await?;
 
     let sort = VehicleSort {
@@ -146,7 +146,7 @@ pub async fn get_vehicle(
     let ctx = state.authorization_service.context_for(user.id).await?;
     scope::ensure_visible(
         &ctx,
-        Permission::new(Resource::Vehicle, Action::Read),
+        Permission::new(ResourceKey::VEHICLE, Action::Read),
         view.organization_id,
     )?;
     Ok(Json(VehicleResponse::from(&view)))
@@ -175,7 +175,7 @@ pub async fn create_vehicle(
         .authorization_service
         .require(
             user.id,
-            Permission::new(Resource::Vehicle, Action::Create),
+            Permission::new(ResourceKey::VEHICLE, Action::Create),
             org,
         )
         .await?;
@@ -209,14 +209,14 @@ pub async fn update_vehicle(
     let ctx = state.authorization_service.context_for(user.id).await?;
     scope::ensure_visible(
         &ctx,
-        Permission::new(Resource::Vehicle, Action::Read),
+        Permission::new(ResourceKey::VEHICLE, Action::Read),
         current.organization_id,
     )?;
     state
         .authorization_service
         .require(
             user.id,
-            Permission::new(Resource::Vehicle, Action::Update),
+            Permission::new(ResourceKey::VEHICLE, Action::Update),
             Id::new(current.organization_id),
         )
         .await?;
@@ -248,14 +248,14 @@ pub async fn delete_vehicle(
     let ctx = state.authorization_service.context_for(user.id).await?;
     scope::ensure_visible(
         &ctx,
-        Permission::new(Resource::Vehicle, Action::Read),
+        Permission::new(ResourceKey::VEHICLE, Action::Read),
         current.organization_id,
     )?;
     state
         .authorization_service
         .require(
             user.id,
-            Permission::new(Resource::Vehicle, Action::Delete),
+            Permission::new(ResourceKey::VEHICLE, Action::Delete),
             Id::new(current.organization_id),
         )
         .await?;
@@ -282,7 +282,7 @@ pub async fn list_archived_vehicles(
     let pagination = Pagination::from(&params);
     let visible = state
         .authorization_service
-        .visible_orgs_for(user.id, Permission::new(Resource::Vehicle, Action::Read))
+        .visible_orgs_for(user.id, Permission::new(ResourceKey::VEHICLE, Action::Read))
         .await?;
     let query = VehicleSearchQuery {
         archive: ArchiveFilterKind::ArchivedOnly,
@@ -316,14 +316,14 @@ pub async fn archive_vehicle(
     let ctx = state.authorization_service.context_for(user.id).await?;
     scope::ensure_visible(
         &ctx,
-        Permission::new(Resource::Vehicle, Action::Read),
+        Permission::new(ResourceKey::VEHICLE, Action::Read),
         current.organization_id,
     )?;
     state
         .authorization_service
         .require(
             user.id,
-            Permission::new(Resource::Vehicle, Action::Update),
+            Permission::new(ResourceKey::VEHICLE, Action::Update),
             Id::new(current.organization_id),
         )
         .await?;
@@ -358,7 +358,7 @@ pub async fn get_vehicle_by_plate(
     let ctx = state.authorization_service.context_for(user.id).await?;
     scope::ensure_visible(
         &ctx,
-        Permission::new(Resource::Vehicle, Action::Read),
+        Permission::new(ResourceKey::VEHICLE, Action::Read),
         view.organization_id,
     )?;
     Ok(Json(VehicleResponse::from(&view)))
@@ -387,10 +387,10 @@ pub async fn transfer_vehicle(
     let ctx = state.authorization_service.context_for(user.id).await?;
     scope::ensure_visible(
         &ctx,
-        Permission::new(Resource::Vehicle, Action::Read),
+        Permission::new(ResourceKey::VEHICLE, Action::Read),
         current.organization_id,
     )?;
-    let perm = Permission::new(Resource::Vehicle, Action::Update);
+    let perm = Permission::new(ResourceKey::VEHICLE, Action::Update);
     state
         .authorization_service
         .require(user.id, perm, Id::new(current.organization_id))

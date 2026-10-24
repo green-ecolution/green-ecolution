@@ -8,7 +8,7 @@ use crate::http::v1::error::ErrorBody;
 use crate::http::{AppState, auth::extractor::AuthUserExtractor};
 use crate::service::{Feature, ServiceError, plugin_ingest_service::MAX_INGEST_ITEMS};
 use domain::{
-    authorization::{Action, Permission, Resource},
+    authorization::{Action, Permission, ResourceKey},
     plugin::{PluginSlug, PluginView},
 };
 
@@ -117,7 +117,7 @@ pub async fn install_plugin(
     Json(req): Json<PluginCreateRequest>,
 ) -> Result<(StatusCode, Json<PluginKeyResponse>), ServiceError> {
     guard(&state)?;
-    let draft = req.into_draft(&state.app_origins)?;
+    let draft = req.into_draft(&state.app_origins, &state.resource_catalog)?;
     let (_, key) = state.plugin_service.install(user.id, draft).await?;
     Ok((StatusCode::CREATED, Json(PluginKeyResponse { key })))
 }
@@ -154,7 +154,7 @@ pub async fn get_plugin(
         .authorization_service
         .require(
             user.id,
-            Permission::new(Resource::Plugin, Action::Read),
+            Permission::new(ResourceKey::PLUGIN, Action::Read),
             view.organization_id,
         )
         .await?;
@@ -221,7 +221,7 @@ pub async fn update_plugin(
 ) -> Result<Json<PluginResponse>, ServiceError> {
     guard(&state)?;
     let slug = PluginSlug::new(slug)?;
-    let change = req.into_change(&state.app_origins)?;
+    let change = req.into_change(&state.app_origins, &state.resource_catalog)?;
     let view = state.plugin_service.update(user.id, &slug, change).await?;
     Ok(Json((&view).into()))
 }

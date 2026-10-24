@@ -265,7 +265,7 @@ async fn get_plugin_is_forbidden_across_organizations() {
     .await
     .unwrap();
 
-    let repo = PgPluginRepository::new(app.db_pool.clone());
+    let repo = PgPluginRepository::new(app.db_pool.clone(), crate::helpers::irrigation_catalog());
     repo.save_new(
         domain::Id::new_v7(),
         PluginDraft {
@@ -300,7 +300,7 @@ async fn seed_plugin_with_view(
     org: Uuid,
     required_permissions: &[&str],
 ) {
-    let repo = PgPluginRepository::new(app.db_pool.clone());
+    let repo = PgPluginRepository::new(app.db_pool.clone(), crate::helpers::irrigation_catalog());
     repo.save_new(
         domain::Id::new_v7(),
         PluginDraft {
@@ -311,7 +311,11 @@ async fn seed_plugin_with_view(
             permissions: BTreeSet::new(),
             required_permissions: required_permissions
                 .iter()
-                .map(|p| p.parse().unwrap())
+                .map(|p| {
+                    crate::helpers::irrigation_catalog()
+                        .parse_permission(p)
+                        .unwrap()
+                })
                 .collect(),
             device_capabilities: BTreeSet::new(),
             frontend: PluginFrontend::External("https://plugin.example.org/view".parse().unwrap()),

@@ -10,13 +10,14 @@ pub mod repository;
 pub mod snapshot;
 pub mod view;
 
-use std::collections::BTreeSet;
-use std::str::FromStr;
-
 use crate::{
-    Id, authorization::Permission, events::DomainEvent, organization::Organization,
+    Id,
+    authorization::{Permission, PermissionParseError, ResourceCatalog},
+    events::DomainEvent,
+    organization::Organization,
     shared::error::ValidationError,
 };
+use std::collections::BTreeSet;
 
 pub use error::RoleError;
 pub use repository::{RoleReader, RoleWriter};
@@ -63,21 +64,42 @@ pub struct RoleDraft {
     pub template_key: Option<RoleTemplateKey>,
 }
 
+pub struct Reconstituted {
+    pub role: Role,
+    /// Stored permissions whose resource no registered module declares.
+    pub ignored_permissions: Vec<String>,
+}
+
 impl Role {
     #[doc(hidden)]
-    pub fn reconstitute(snap: RoleSnapshot) -> Result<Self, ValidationError> {
-        let permissions = snap
-            .permissions
-            .iter()
-            .map(|s| Permission::from_str(s))
-            .collect::<Result<BTreeSet<_>, _>>()?;
-        Ok(Self {
+    pub fn reconstitute(
+        snap: RoleSnapshot,
+        catalog: &ResourceCatalog,
+    ) -> Result<Reconstituted, ValidationError> {
+        let mut permissions = BTreeSet::new();
+        let mut ignored_permissions = Vec::new();
+        for raw in &snap.permissions {
+            match catalog.parse_permission(raw) {
+                Ok(p) => {
+                    permissions.insert(p);
+                }
+                Err(PermissionParseError::UnknownResource(_)) => {
+                    ignored_permissions.push(raw.clone());
+                }
+                Err(PermissionParseError::Malformed(e)) => return Err(e),
+            }
+        }
+        let role = Self {
             id: Id::new(snap.id),
             name: RoleName::reconstitute(snap.name),
             description: snap.description.map(RoleDescription::reconstitute),
             organization_id: snap.organization_id.map(Id::new),
             permissions,
             template_key: snap.template_key.map(RoleTemplateKey::reconstitute),
+        };
+        Ok(Reconstituted {
+            role,
+            ignored_permissions,
         })
     }
 
@@ -154,12 +176,12 @@ impl Role {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::authorization::{Action, Permission, Resource};
+    use crate::authorization::{Action, Permission, ResourceKey};
     use claims::assert_err;
     use std::collections::BTreeSet;
 
     fn perms() -> BTreeSet<Permission> {
-        BTreeSet::from([Permission::new(Resource::Tree, Action::Read)])
+        BTreeSet::from([Permission::new(ResourceKey::SENSOR, Action::Read)])
     }
 
     fn role(org: Option<Id<Organization>>) -> Role {
@@ -286,15 +308,23 @@ mod tests {
     }
 
     #[test]
-    fn reconstitute_rejects_unknown_permission_string() {
-        let snap = snapshot::RoleSnapshot {
+    fn reconstitute_ignores_permissions_of_unknown_resources() {
+        let mut snap = snapshot::RoleSnapshot {
             id: uuid::Uuid::now_v7(),
             organization_id: None,
             name: "Kaputt".into(),
             description: None,
-            permissions: vec!["tree:read".into(), "garden:fly".into()],
+            permissions: vec!["sensor:read".into(), "ghost:read".into()],
             template_key: None,
         };
-        assert_err!(Role::reconstitute(snap));
+        let r = Role::reconstitute(snap.clone(), &ResourceCatalog::core()).unwrap();
+        assert_eq!(r.ignored_permissions, vec!["ghost:read".to_string()]);
+        assert!(
+            r.role
+                .permissions()
+                .contains(&Permission::new(ResourceKey::SENSOR, Action::Read))
+        );
+        snap.permissions = vec!["sensor".into()];
+        assert!(Role::reconstitute(snap, &ResourceCatalog::core()).is_err());
     }
 }

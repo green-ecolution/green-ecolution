@@ -6,7 +6,7 @@ use std::sync::{
 use axum::{extract::State, http::StatusCode};
 use domain::{
     Id,
-    authorization::{Action, Permission, Resource},
+    authorization::{Action, Permission, ResourceKey},
     event_bus::{EventHandler, EventHandlerError},
     events::DomainEvent,
     module::ModuleKey,
@@ -57,8 +57,10 @@ struct Thing {
     organization_id: Uuid,
 }
 
+pub const THING: ResourceKey = ResourceKey::declare("test_module_thing");
+
 fn permission() -> Permission {
-    Permission::new(Resource::Organization, Action::Read)
+    Permission::new(ResourceKey::ORGANIZATION, Action::Read)
 }
 
 #[utoipa::path(post, path = "/test-module/things", request_body = CreateThing, responses((status = 201, body = Thing)))]
@@ -134,6 +136,10 @@ impl EventHandler for CountOrganizations {
 impl Module for TestModule {
     fn key(&self) -> ModuleKey {
         ModuleKey::new(KEY).expect("the test module key is valid")
+    }
+
+    fn resources(&self) -> &'static [ResourceKey] {
+        &[THING]
     }
 
     fn default_enabled(&self) -> bool {

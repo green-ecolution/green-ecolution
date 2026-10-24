@@ -34,7 +34,7 @@ use crate::{
 };
 use domain::{
     Id,
-    authorization::{Action, Permission, Resource},
+    authorization::{Action, Permission, ResourceKey},
     shared::{
         pagination::Pagination,
         provenance::{Provenance, ProviderId},
@@ -138,7 +138,7 @@ pub async fn list_watering_plans(
         .authorization_service
         .visible_orgs_for(
             user.id,
-            Permission::new(Resource::WateringPlan, Action::Read),
+            Permission::new(crate::irrigation::resources::WATERING_PLAN, Action::Read),
         )
         .await?;
     let query = WateringPlanSearchQuery {
@@ -237,7 +237,7 @@ pub async fn get_watering_plan(
     let ctx = state.authorization_service.context_for(user.id).await?;
     scope::ensure_visible(
         &ctx,
-        Permission::new(Resource::WateringPlan, Action::Read),
+        Permission::new(crate::irrigation::resources::WATERING_PLAN, Action::Read),
         view.organization_id,
     )?;
     let (transporter, trailer, clusters, evaluation) =
@@ -278,7 +278,7 @@ pub async fn create_watering_plan(
         .authorization_service
         .require(
             user.id,
-            Permission::new(Resource::WateringPlan, Action::Create),
+            Permission::new(crate::irrigation::resources::WATERING_PLAN, Action::Create),
             org,
         )
         .await?;
@@ -290,7 +290,7 @@ pub async fn create_watering_plan(
         .await?;
     scope::ensure_visible(
         &ctx,
-        Permission::new(Resource::Vehicle, Action::Read),
+        Permission::new(ResourceKey::VEHICLE, Action::Read),
         transporter.organization_id,
     )?;
     if let Some(trailer_id) = entity.trailer_id {
@@ -300,7 +300,7 @@ pub async fn create_watering_plan(
             .await?;
         scope::ensure_visible(
             &ctx,
-            Permission::new(Resource::Vehicle, Action::Read),
+            Permission::new(ResourceKey::VEHICLE, Action::Read),
             trailer.organization_id,
         )?;
     }
@@ -350,14 +350,14 @@ pub async fn update_watering_plan(
     let ctx = state.authorization_service.context_for(user.id).await?;
     scope::ensure_visible(
         &ctx,
-        Permission::new(Resource::WateringPlan, Action::Read),
+        Permission::new(crate::irrigation::resources::WATERING_PLAN, Action::Read),
         current.organization_id().value(),
     )?;
     state
         .authorization_service
         .require(
             user.id,
-            Permission::new(Resource::WateringPlan, Action::Update),
+            Permission::new(crate::irrigation::resources::WATERING_PLAN, Action::Update),
             current.organization_id(),
         )
         .await?;
@@ -369,7 +369,7 @@ pub async fn update_watering_plan(
             .await?;
         scope::ensure_visible(
             &ctx,
-            Permission::new(Resource::Vehicle, Action::Read),
+            Permission::new(ResourceKey::VEHICLE, Action::Read),
             transporter.organization_id,
         )?;
         if let Some(trailer_id) = entity.trailer_id {
@@ -379,7 +379,7 @@ pub async fn update_watering_plan(
                 .await?;
             scope::ensure_visible(
                 &ctx,
-                Permission::new(Resource::Vehicle, Action::Read),
+                Permission::new(ResourceKey::VEHICLE, Action::Read),
                 trailer.organization_id,
             )?;
         }
@@ -500,14 +500,14 @@ pub async fn delete_watering_plan(
     let ctx = state.authorization_service.context_for(user.id).await?;
     scope::ensure_visible(
         &ctx,
-        Permission::new(Resource::WateringPlan, Action::Read),
+        Permission::new(crate::irrigation::resources::WATERING_PLAN, Action::Read),
         current.organization_id().value(),
     )?;
     state
         .authorization_service
         .require(
             user.id,
-            Permission::new(Resource::WateringPlan, Action::Delete),
+            Permission::new(crate::irrigation::resources::WATERING_PLAN, Action::Delete),
             current.organization_id(),
         )
         .await?;
@@ -558,7 +558,7 @@ pub async fn get_watering_plan_route(
     let ctx = state.authorization_service.context_for(user.id).await?;
     scope::ensure_visible(
         &ctx,
-        Permission::new(Resource::WateringPlan, Action::Read),
+        Permission::new(crate::irrigation::resources::WATERING_PLAN, Action::Read),
         view.organization_id,
     )?;
     let plan = state.watering_plan_service.by_id(Id::new(id)).await?;
@@ -594,7 +594,7 @@ pub async fn preview_route(
         .authorization_service
         .require(
             user.id,
-            Permission::new(Resource::WateringPlan, Action::Create),
+            Permission::new(crate::irrigation::resources::WATERING_PLAN, Action::Create),
             org,
         )
         .await?;
@@ -646,7 +646,7 @@ pub async fn get_gpx_file(
     let ctx = state.authorization_service.context_for(user.id).await?;
     scope::ensure_visible(
         &ctx,
-        Permission::new(Resource::WateringPlan, Action::Read),
+        Permission::new(crate::irrigation::resources::WATERING_PLAN, Action::Read),
         view.organization_id,
     )?;
     let plan = state.watering_plan_service.by_id(Id::new(id)).await?;

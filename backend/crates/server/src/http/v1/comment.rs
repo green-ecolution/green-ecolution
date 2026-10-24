@@ -24,7 +24,7 @@ use crate::{
 };
 use domain::{
     Id, RepositoryError,
-    authorization::{Action, Permission, Resource},
+    authorization::{Action, Permission},
     comment::{Comment, CommentBody, CommentSubject, CommentView},
     shared::pagination::Pagination,
 };
@@ -51,7 +51,7 @@ async fn cluster_scope(
     let ctx = state.authorization_service.context_for(user_id).await?;
     scope::ensure_visible(
         &ctx,
-        Permission::new(Resource::TreeCluster, Action::Read),
+        Permission::new(crate::irrigation::resources::TREE_CLUSTER, Action::Read),
         view.organization_id,
     )?;
     Ok(CommentSubject::TreeCluster(Id::new(cluster_id)))
@@ -69,7 +69,7 @@ async fn plan_scope(
     let ctx = state.authorization_service.context_for(user_id).await?;
     scope::ensure_visible(
         &ctx,
-        Permission::new(Resource::WateringPlan, Action::Read),
+        Permission::new(crate::irrigation::resources::WATERING_PLAN, Action::Read),
         view.organization_id,
     )?;
     Ok(CommentSubject::WateringPlan(Id::new(watering_plan_id)))

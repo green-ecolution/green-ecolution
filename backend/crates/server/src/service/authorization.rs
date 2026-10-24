@@ -6,7 +6,8 @@ use uuid::Uuid;
 use domain::{
     Id,
     authorization::{
-        AccessContext, Action, EffectivePermissions, OrgHierarchy, Permission, Resource, Visibility,
+        AccessContext, Action, EffectivePermissions, OrgHierarchy, Permission, ResourceKey,
+        Visibility,
     },
     organization::{Organization, OrganizationReader},
     role::{Role, RoleReader},
@@ -29,7 +30,7 @@ pub fn may_open_plugin_view(
     } else {
         ctx.superset_of(required, org)
     };
-    holds_required || ctx.allows_in(Permission::new(Resource::Plugin, Action::Read), org)
+    holds_required || ctx.allows_in(Permission::new(ResourceKey::PLUGIN, Action::Read), org)
 }
 
 /// A pending change to a role definition, expressed as what the role would
@@ -47,11 +48,11 @@ pub enum RoleChange<'a> {
 /// holds.
 const SELF_ADMINISTRATION: [Permission; 2] = [
     Permission {
-        resource: Resource::Role,
+        resource: ResourceKey::ROLE,
         action: Action::Update,
     },
     Permission {
-        resource: Resource::User,
+        resource: ResourceKey::USER,
         action: Action::Update,
     },
 ];
@@ -232,7 +233,7 @@ mod tests {
     use super::*;
     use domain::{
         RepositoryError,
-        authorization::{Action, OrgHierarchy, Resource},
+        authorization::{Action, OrgHierarchy, ResourceKey},
         organization::Organization,
         role::{Role, RoleSnapshot},
     };
@@ -310,27 +311,31 @@ mod tests {
     }
 
     fn role_with_id(id: Id<Role>, org: Id<Organization>, perms: &[Permission]) -> Role {
-        Role::reconstitute(RoleSnapshot {
-            id: id.value(),
-            organization_id: Some(org.value()),
-            name: "Testrolle".into(),
-            description: None,
-            permissions: perms.iter().map(|p| p.to_string()).collect(),
-            template_key: None,
-        })
+        Role::reconstitute(
+            RoleSnapshot {
+                id: id.value(),
+                organization_id: Some(org.value()),
+                name: "Testrolle".into(),
+                description: None,
+                permissions: perms.iter().map(|p| p.to_string()).collect(),
+                template_key: None,
+            },
+            &crate::irrigation::test_catalog(),
+        )
         .unwrap()
+        .role
     }
 
     fn tree_read() -> Permission {
-        Permission::new(Resource::Tree, Action::Read)
+        Permission::new(crate::irrigation::resources::TREE, Action::Read)
     }
 
     fn role_update() -> Permission {
-        Permission::new(Resource::Role, Action::Update)
+        Permission::new(ResourceKey::ROLE, Action::Update)
     }
 
     fn user_update() -> Permission {
-        Permission::new(Resource::User, Action::Update)
+        Permission::new(ResourceKey::USER, Action::Update)
     }
 
     /// Two-level tree plus a service whose only user is `user`.
@@ -382,7 +387,10 @@ mod tests {
             }),
             true,
         );
-        let wider = BTreeSet::from([tree_read(), Permission::new(Resource::Tree, Action::Delete)]);
+        let wider = BTreeSet::from([
+            tree_read(),
+            Permission::new(crate::irrigation::resources::TREE, Action::Delete),
+        ]);
         assert!(
             svc.require_superset(user, &BTreeSet::from([tree_read()]), tbz)
                 .await
@@ -666,7 +674,10 @@ mod tests {
         let (root, own, sibling) = (Id::new_v7(), Id::new_v7(), Id::new_v7());
         let ctx = view_ctx(
             &[(root, None), (own, Some(root)), (sibling, Some(root))],
-            vec![(own, BTreeSet::from_iter(Permission::catalog()))],
+            vec![(
+                own,
+                BTreeSet::from_iter(crate::irrigation::test_catalog().permissions()),
+            )],
         );
 
         assert!(!may_open_plugin_view(&ctx, &BTreeSet::new(), sibling));
@@ -686,12 +697,15 @@ mod tests {
     #[test]
     fn plugin_read_opens_any_view_of_its_org() {
         let (root, org) = (Id::new_v7(), Id::new_v7());
-        let plugin_read = Permission::new(Resource::Plugin, Action::Read);
+        let plugin_read = Permission::new(ResourceKey::PLUGIN, Action::Read);
         let ctx = view_ctx(
             &[(root, None), (org, Some(root))],
             vec![(org, BTreeSet::from([plugin_read]))],
         );
-        let tree_delete = BTreeSet::from([Permission::new(Resource::Tree, Action::Delete)]);
+        let tree_delete = BTreeSet::from([Permission::new(
+            crate::irrigation::resources::TREE,
+            Action::Delete,
+        )]);
 
         assert!(may_open_plugin_view(&ctx, &BTreeSet::new(), org));
         assert!(may_open_plugin_view(&ctx, &tree_delete, org));
@@ -700,7 +714,7 @@ mod tests {
     #[test]
     fn view_with_required_permissions_needs_all_of_them() {
         let (root, org) = (Id::new_v7(), Id::new_v7());
-        let tree_update = Permission::new(Resource::Tree, Action::Update);
+        let tree_update = Permission::new(crate::irrigation::resources::TREE, Action::Update);
         let ctx = view_ctx(
             &[(root, None), (org, Some(root))],
             vec![(org, BTreeSet::from([tree_read()]))],

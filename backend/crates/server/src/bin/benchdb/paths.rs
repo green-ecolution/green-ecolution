@@ -8,6 +8,7 @@ use std::{sync::Arc, time::Instant};
 
 use domain::{
     Id,
+    authorization::ResourceCatalog,
     authorization::Visibility,
     cluster::{
         SoilMoistureBucket, TreeCluster, TreeClusterSearchQuery, repository::TreeClusterReader,
@@ -214,7 +215,10 @@ pub async fn measure_all(
     // and measures nothing.
     let authorization = AuthorizationService::new(
         Arc::new(PgOrganizationRepository::new(pool.clone())),
-        Arc::new(PgRoleRepository::new(pool.clone())),
+        Arc::new(PgRoleRepository::new(
+            pool.clone(),
+            Arc::new(ResourceCatalog::new(server::irrigation::resources::ALL)?),
+        )),
         true,
     );
 

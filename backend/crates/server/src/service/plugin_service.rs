@@ -15,7 +15,7 @@ use uuid::Uuid;
 
 use domain::{
     Id,
-    authorization::{Action, Permission, Resource},
+    authorization::{Action, Permission, ResourceCatalog, ResourceKey},
     plugin::{
         DeviceCapability, Plugin, PluginDraft, PluginFrontend, PluginKeyHash, PluginName,
         PluginReader, PluginSlug, PluginView, PluginWriter,
@@ -54,6 +54,7 @@ pub struct PluginService {
     authorization: Arc<AuthorizationService>,
     keys: Arc<dyn PluginKeyFactory>,
     proxy: Option<ProxyPolicy>,
+    catalog: Arc<ResourceCatalog>,
 }
 
 impl PluginService {
@@ -63,6 +64,7 @@ impl PluginService {
         authorization: Arc<AuthorizationService>,
         keys: Arc<dyn PluginKeyFactory>,
         proxy: Option<ProxyPolicy>,
+        catalog: Arc<ResourceCatalog>,
     ) -> Self {
         Self {
             reader,
@@ -70,6 +72,7 @@ impl PluginService {
             authorization,
             keys,
             proxy,
+            catalog,
         }
     }
 
@@ -90,7 +93,7 @@ impl PluginService {
     pub async fn list(&self, actor: Uuid) -> Result<Vec<PluginView>, ServiceError> {
         let visibility = self
             .authorization
-            .visible_orgs_for(actor, Permission::new(Resource::Plugin, Action::Read))
+            .visible_orgs_for(actor, Permission::new(ResourceKey::PLUGIN, Action::Read))
             .await?;
         Ok(self
             .reader
@@ -150,7 +153,7 @@ impl PluginService {
                 let required: BTreeSet<Permission> = view
                     .required_permissions
                     .iter()
-                    .filter_map(|p| p.parse().ok())
+                    .filter_map(|p| self.catalog.parse_permission(p).ok())
                     .collect();
                 may_open_plugin_view(&ctx, &required, view.organization_id)
             })
@@ -166,7 +169,7 @@ impl PluginService {
         self.authorization
             .require(
                 actor,
-                Permission::new(Resource::Plugin, Action::Create),
+                Permission::new(ResourceKey::PLUGIN, Action::Create),
                 draft.organization_id,
             )
             .await?;
@@ -193,7 +196,7 @@ impl PluginService {
         self.authorization
             .require(
                 actor,
-                Permission::new(Resource::Plugin, Action::Update),
+                Permission::new(ResourceKey::PLUGIN, Action::Update),
                 org,
             )
             .await?;
@@ -257,7 +260,7 @@ impl PluginService {
         self.authorization
             .require(
                 actor,
-                Permission::new(Resource::Plugin, Action::Update),
+                Permission::new(ResourceKey::PLUGIN, Action::Update),
                 org,
             )
             .await?;
@@ -282,7 +285,7 @@ impl PluginService {
         self.authorization
             .require(
                 actor,
-                Permission::new(Resource::Plugin, Action::Delete),
+                Permission::new(ResourceKey::PLUGIN, Action::Delete),
                 plugin.organization_id(),
             )
             .await?;
@@ -295,7 +298,7 @@ impl PluginService {
 mod tests {
     use super::*;
     use crate::infra::plugin_key::{self, RandomPluginKeyFactory};
-    use domain::authorization::{Action, Resource};
+    use domain::authorization::{Action, ResourceKey};
 
     #[tokio::test]
     async fn install_returns_a_plaintext_key_once() {
@@ -331,9 +334,13 @@ mod tests {
 
     #[tokio::test]
     async fn install_rejects_permissions_the_actor_lacks() {
-        let svc = service_with_auth_allowing(&[Permission::new(Resource::Plugin, Action::Create)]);
+        let svc =
+            service_with_auth_allowing(&[Permission::new(ResourceKey::PLUGIN, Action::Create)]);
         let mut d = draft("acme");
-        d.permissions = BTreeSet::from([Permission::new(Resource::Tree, Action::Delete)]);
+        d.permissions = BTreeSet::from([Permission::new(
+            crate::irrigation::resources::TREE,
+            Action::Delete,
+        )]);
 
         let err = svc.install(Uuid::new_v4(), d).await.unwrap_err();
         assert!(matches!(err, ServiceError::Auth(_)));
@@ -343,9 +350,13 @@ mod tests {
     async fn install_allows_required_permissions_the_actor_lacks() {
         // required_permissions restrict rather than grant, so require_superset
         // must not apply to them.
-        let svc = service_with_auth_allowing(&[Permission::new(Resource::Plugin, Action::Create)]);
+        let svc =
+            service_with_auth_allowing(&[Permission::new(ResourceKey::PLUGIN, Action::Create)]);
         let mut d = draft("acme");
-        d.required_permissions = BTreeSet::from([Permission::new(Resource::Tree, Action::Delete)]);
+        d.required_permissions = BTreeSet::from([Permission::new(
+            crate::irrigation::resources::TREE,
+            Action::Delete,
+        )]);
 
         assert!(svc.install(Uuid::new_v4(), d).await.is_ok());
     }
@@ -369,7 +380,7 @@ mod tests {
         let repo = repo_with_tree_deleting_plugin().await;
         let svc = service_over(
             repo,
-            Some(&[Permission::new(Resource::Plugin, Action::Update)]),
+            Some(&[Permission::new(ResourceKey::PLUGIN, Action::Update)]),
             None,
         );
 
@@ -385,7 +396,7 @@ mod tests {
         let repo = repo_with_tree_deleting_plugin().await;
         let svc = service_over(
             repo,
-            Some(&[Permission::new(Resource::Plugin, Action::Update)]),
+            Some(&[Permission::new(ResourceKey::PLUGIN, Action::Update)]),
             None,
         );
 
@@ -410,7 +421,7 @@ mod tests {
         let repo = repo_with_tree_deleting_plugin().await;
         let svc = service_over(
             repo,
-            Some(&[Permission::new(Resource::Plugin, Action::Update)]),
+            Some(&[Permission::new(ResourceKey::PLUGIN, Action::Update)]),
             None,
         );
 
@@ -434,7 +445,7 @@ mod tests {
         let repo = repo_with_tree_deleting_plugin().await;
         let svc = service_over(
             repo,
-            Some(&[Permission::new(Resource::Plugin, Action::Update)]),
+            Some(&[Permission::new(ResourceKey::PLUGIN, Action::Update)]),
             None,
         );
 
@@ -541,29 +552,32 @@ mod tests {
             draft: PluginDraft,
             key_hash: Option<PluginKeyHash>,
         ) -> Result<Plugin, RepositoryError> {
-            let mut plugin = Plugin::reconstitute(PluginSnapshot {
-                id: id.value(),
-                slug: draft.slug.as_str().to_string(),
-                name: draft.name.as_str().to_string(),
-                description: draft.description,
-                frontend_mode: "none".into(),
-                frontend_target: None,
-                organization_id: draft.organization_id.value(),
-                permissions: draft.permissions.iter().map(|p| p.to_string()).collect(),
-                required_permissions: draft
-                    .required_permissions
-                    .iter()
-                    .map(|p| p.to_string())
-                    .collect(),
-                device_capabilities: draft
-                    .device_capabilities
-                    .iter()
-                    .map(|c| c.as_str().to_string())
-                    .collect(),
-                enabled: false,
-                key_hash: key_hash.map(|h| h.as_str().to_string()),
-                last_seen_at: None,
-            });
+            let mut plugin = Plugin::reconstitute(
+                PluginSnapshot {
+                    id: id.value(),
+                    slug: draft.slug.as_str().to_string(),
+                    name: draft.name.as_str().to_string(),
+                    description: draft.description,
+                    frontend_mode: "none".into(),
+                    frontend_target: None,
+                    organization_id: draft.organization_id.value(),
+                    permissions: draft.permissions.iter().map(|p| p.to_string()).collect(),
+                    required_permissions: draft
+                        .required_permissions
+                        .iter()
+                        .map(|p| p.to_string())
+                        .collect(),
+                    device_capabilities: draft
+                        .device_capabilities
+                        .iter()
+                        .map(|c| c.as_str().to_string())
+                        .collect(),
+                    enabled: false,
+                    key_hash: key_hash.map(|h| h.as_str().to_string()),
+                    last_seen_at: None,
+                },
+                &crate::irrigation::test_catalog(),
+            );
             plugin.set_frontend(draft.frontend);
             self.rows.lock().unwrap().insert(id.value(), plugin.clone());
             Ok(plugin)
@@ -659,15 +673,19 @@ mod tests {
         }
         async fn roles_for_user(&self, _user_id: Uuid) -> Result<Vec<Role>, RepositoryError> {
             Ok(vec![
-                Role::reconstitute(RoleSnapshot {
-                    id: Uuid::now_v7(),
-                    organization_id: Some(self.org.value()),
-                    name: "Testrolle".into(),
-                    description: None,
-                    permissions: self.permissions.iter().map(|p| p.to_string()).collect(),
-                    template_key: None,
-                })
-                .unwrap(),
+                Role::reconstitute(
+                    RoleSnapshot {
+                        id: Uuid::now_v7(),
+                        organization_id: Some(self.org.value()),
+                        name: "Testrolle".into(),
+                        description: None,
+                        permissions: self.permissions.iter().map(|p| p.to_string()).collect(),
+                        template_key: None,
+                    },
+                    &crate::irrigation::test_catalog(),
+                )
+                .unwrap()
+                .role,
             ])
         }
         async fn roles_for_users(
@@ -712,6 +730,7 @@ mod tests {
             authorization,
             Arc::new(RandomPluginKeyFactory),
             proxy,
+            Arc::new(ResourceCatalog::new(crate::irrigation::resources::ALL).unwrap()),
         )
     }
 
@@ -819,7 +838,10 @@ mod tests {
     async fn repo_with_tree_deleting_plugin() -> Arc<FakePluginRepo> {
         let repo = Arc::new(FakePluginRepo::default());
         let mut d = draft("acme");
-        d.permissions = BTreeSet::from([Permission::new(Resource::Tree, Action::Delete)]);
+        d.permissions = BTreeSet::from([Permission::new(
+            crate::irrigation::resources::TREE,
+            Action::Delete,
+        )]);
         service_over(repo.clone(), None, None)
             .install(Uuid::nil(), d)
             .await

@@ -351,15 +351,19 @@ mod tests {
     impl RoleWriter for InMemoryRoles {
         async fn save_new(&self, draft: RoleDraft) -> Result<Role, RepositoryError> {
             self.saved.lock().unwrap().push(draft.clone());
-            Ok(Role::reconstitute(RoleSnapshot {
-                id: Uuid::now_v7(),
-                organization_id: Some(draft.organization_id.value()),
-                name: draft.name.as_str().to_string(),
-                description: draft.description.as_ref().map(|d| d.as_str().to_string()),
-                permissions: draft.permissions.iter().map(|p| p.to_string()).collect(),
-                template_key: None,
-            })
-            .unwrap())
+            Ok(Role::reconstitute(
+                RoleSnapshot {
+                    id: Uuid::now_v7(),
+                    organization_id: Some(draft.organization_id.value()),
+                    name: draft.name.as_str().to_string(),
+                    description: draft.description.as_ref().map(|d| d.as_str().to_string()),
+                    permissions: draft.permissions.iter().map(|p| p.to_string()).collect(),
+                    template_key: None,
+                },
+                &crate::irrigation::test_catalog(),
+            )
+            .unwrap()
+            .role)
         }
         async fn save(&self, _role: &Role) -> Result<(), RepositoryError> {
             Ok(())
@@ -515,15 +519,19 @@ mod tests {
     }
 
     fn template_role(name: &str) -> Role {
-        Role::reconstitute(RoleSnapshot {
-            id: Uuid::now_v7(),
-            organization_id: None,
-            name: name.into(),
-            description: None,
-            permissions: Vec::new(),
-            template_key: None,
-        })
+        Role::reconstitute(
+            RoleSnapshot {
+                id: Uuid::now_v7(),
+                organization_id: None,
+                name: name.into(),
+                description: None,
+                permissions: Vec::new(),
+                template_key: None,
+            },
+            &crate::irrigation::test_catalog(),
+        )
         .unwrap()
+        .role
     }
 
     fn service(

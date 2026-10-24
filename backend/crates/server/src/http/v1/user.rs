@@ -26,7 +26,7 @@ use crate::{
 };
 use domain::{
     Id,
-    authorization::{Action, Permission, Resource},
+    authorization::{Action, Permission, ResourceKey},
     shared::pagination::Pagination,
     user::UserCreate as DomainUserCreate,
 };
@@ -122,7 +122,7 @@ pub async fn list_users(
     user: AuthUserExtractor,
     Query(params): Query<UserListParams>,
 ) -> Result<Json<ListResponse<UserResponse>>, ServiceError> {
-    let read = Permission::new(Resource::User, Action::Read);
+    let read = Permission::new(ResourceKey::USER, Action::Read);
     let scope = resolve_target_org(&state, user.id, None).await?;
     state
         .authorization_service
@@ -176,7 +176,7 @@ pub async fn create_user(
         .authorization_service
         .require(
             user.id,
-            Permission::new(Resource::User, Action::Create),
+            Permission::new(ResourceKey::USER, Action::Create),
             entity.organization_id,
         )
         .await?;
@@ -219,7 +219,7 @@ pub async fn update_user(
     Path(user_id): Path<Uuid>,
     Json(req): Json<UserUpdateRequest>,
 ) -> Result<Json<UserResponse>, ServiceError> {
-    let permission = Permission::new(Resource::User, Action::Update);
+    let permission = Permission::new(ResourceKey::USER, Action::Update);
     match state.user_service.organization_of(user_id).await? {
         Some(org) => {
             state
@@ -261,7 +261,7 @@ pub async fn list_user_roles(
     user: AuthUserExtractor,
     Path(user_id): Path<Uuid>,
 ) -> Result<Json<Vec<RoleResponse>>, ServiceError> {
-    let permission = Permission::new(Resource::User, Action::Read);
+    let permission = Permission::new(ResourceKey::USER, Action::Read);
     match state.user_service.organization_of(user_id).await? {
         Some(org) => {
             state
@@ -315,7 +315,7 @@ pub async fn assign_user_role(
             .authorization_service
             .require(
                 user.id,
-                Permission::new(Resource::User, Action::Update),
+                Permission::new(ResourceKey::USER, Action::Update),
                 role_org,
             )
             .await?;
@@ -369,7 +369,7 @@ pub async fn revoke_user_role(
             .authorization_service
             .require(
                 user.id,
-                Permission::new(Resource::User, Action::Update),
+                Permission::new(ResourceKey::USER, Action::Update),
                 role_org,
             )
             .await?;
@@ -407,7 +407,7 @@ pub async fn set_user_organization(
         .authorization_service
         .require(
             user.id,
-            Permission::new(Resource::User, Action::Update),
+            Permission::new(ResourceKey::USER, Action::Update),
             org,
         )
         .await?;

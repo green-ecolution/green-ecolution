@@ -16,7 +16,7 @@ use crate::{
     service::ServiceError,
 };
 use domain::{
-    authorization::{Action, Permission, Resource},
+    authorization::{Action, Permission, ResourceKey},
     cluster::TreeClusterSearchQuery,
     sensor::SensorSearchQuery,
     shared::pagination::Pagination,
@@ -46,29 +46,32 @@ pub async fn get_evaluation(
 
     let tree_visible = state
         .authorization_service
-        .visible_orgs_for(user.id, Permission::new(Resource::Tree, Action::Read))
+        .visible_orgs_for(
+            user.id,
+            Permission::new(crate::irrigation::resources::TREE, Action::Read),
+        )
         .await?;
     let cluster_visible = state
         .authorization_service
         .visible_orgs_for(
             user.id,
-            Permission::new(Resource::TreeCluster, Action::Read),
+            Permission::new(crate::irrigation::resources::TREE_CLUSTER, Action::Read),
         )
         .await?;
     let sensor_visible = state
         .authorization_service
-        .visible_orgs_for(user.id, Permission::new(Resource::Sensor, Action::Read))
+        .visible_orgs_for(user.id, Permission::new(ResourceKey::SENSOR, Action::Read))
         .await?;
     let plan_visible = state
         .authorization_service
         .visible_orgs_for(
             user.id,
-            Permission::new(Resource::WateringPlan, Action::Read),
+            Permission::new(crate::irrigation::resources::WATERING_PLAN, Action::Read),
         )
         .await?;
     let vehicle_visible = state
         .authorization_service
-        .visible_orgs_for(user.id, Permission::new(Resource::Vehicle, Action::Read))
+        .visible_orgs_for(user.id, Permission::new(ResourceKey::VEHICLE, Action::Read))
         .await?;
 
     let tree_page = state

@@ -35,6 +35,7 @@ pub mod plugin_view_tickets;
 pub mod plugins;
 pub mod regions;
 pub mod request_id;
+pub mod role_catalog;
 pub mod roles;
 pub mod routing;
 pub mod scoping_cluster;

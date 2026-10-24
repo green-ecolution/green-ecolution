@@ -8,7 +8,10 @@ use std::{
     sync::Arc,
 };
 
-use domain::{module::ModuleKey, organization::OrganizationReader, settings::SettingsResolver};
+use domain::{
+    authorization::ResourceKey, module::ModuleKey, organization::OrganizationReader,
+    settings::SettingsResolver,
+};
 use sqlx::PgPool;
 use utoipa_axum::router::OpenApiRouter;
 
@@ -30,6 +33,10 @@ pub trait Module: Send + Sync {
     /// Built from the same routes as the runtime router but without state, so
     /// `dump-openapi` and the startup checks need no database.
     fn openapi(&self) -> utoipa::openapi::OpenApi;
+    /// Resources this module adds to the permission catalog.
+    fn resources(&self) -> &'static [ResourceKey] {
+        &[]
+    }
     fn migrations(&self) -> Vec<sqlx::migrate::Migration> {
         Vec::new()
     }

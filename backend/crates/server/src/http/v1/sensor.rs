@@ -32,7 +32,7 @@ use crate::{
 };
 use domain::{
     Id, RepositoryError,
-    authorization::{Action, Permission, Resource},
+    authorization::{Action, Permission, ResourceKey},
     sensor::{AcknowledgementNote, SensorSearchQuery, SensorSort, SensorSortField},
     sensor_model::SensorModel,
     shared::{pagination::Pagination, sort::SortDirection},
@@ -102,7 +102,7 @@ pub async fn list_sensors(
 
     let visible = state
         .authorization_service
-        .visible_orgs_for(user.id, Permission::new(Resource::Sensor, Action::Read))
+        .visible_orgs_for(user.id, Permission::new(ResourceKey::SENSOR, Action::Read))
         .await?;
 
     let query = SensorSearchQuery {
@@ -155,7 +155,7 @@ pub async fn get_sensor(
     let ctx = state.authorization_service.context_for(user.id).await?;
     scope::ensure_visible(
         &ctx,
-        Permission::new(Resource::Sensor, Action::Read),
+        Permission::new(ResourceKey::SENSOR, Action::Read),
         view.organization_id,
     )?;
     Ok(Json(SensorResponse::from(&view)))
@@ -183,14 +183,14 @@ pub async fn delete_sensor(
     let ctx = state.authorization_service.context_for(user.id).await?;
     scope::ensure_visible(
         &ctx,
-        Permission::new(Resource::Sensor, Action::Read),
+        Permission::new(ResourceKey::SENSOR, Action::Read),
         current.organization_id,
     )?;
     state
         .authorization_service
         .require(
             user.id,
-            Permission::new(Resource::Sensor, Action::Delete),
+            Permission::new(ResourceKey::SENSOR, Action::Delete),
             Id::new(current.organization_id),
         )
         .await?;
@@ -251,7 +251,7 @@ pub async fn list_sensor_data(
     let ctx = state.authorization_service.context_for(user.id).await?;
     scope::ensure_visible(
         &ctx,
-        Permission::new(Resource::Sensor, Action::Read),
+        Permission::new(ResourceKey::SENSOR, Action::Read),
         sensor.organization_id,
     )?;
     let pagination =
@@ -289,7 +289,7 @@ pub async fn get_sensor_soil_moisture(
     let ctx = state.authorization_service.context_for(user.id).await?;
     scope::ensure_visible(
         &ctx,
-        Permission::new(Resource::Sensor, Action::Read),
+        Permission::new(ResourceKey::SENSOR, Action::Read),
         sensor.organization_id,
     )?;
     let (from, to, bucket) = params.resolve()?;
@@ -321,7 +321,7 @@ pub async fn get_tree_by_sensor(
     let ctx = state.authorization_service.context_for(user.id).await?;
     scope::ensure_visible(
         &ctx,
-        Permission::new(Resource::Sensor, Action::Read),
+        Permission::new(ResourceKey::SENSOR, Action::Read),
         sensor.organization_id,
     )?;
     let tree = state
@@ -358,7 +358,7 @@ pub async fn create_sensor(
         .authorization_service
         .require(
             user.id,
-            Permission::new(Resource::Sensor, Action::Create),
+            Permission::new(ResourceKey::SENSOR, Action::Create),
             org,
         )
         .await?;
@@ -394,14 +394,14 @@ pub async fn activate_sensor(
     let ctx = state.authorization_service.context_for(user.id).await?;
     scope::ensure_visible(
         &ctx,
-        Permission::new(Resource::Sensor, Action::Read),
+        Permission::new(ResourceKey::SENSOR, Action::Read),
         sensor.organization_id,
     )?;
     state
         .authorization_service
         .require(
             user.id,
-            Permission::new(Resource::Sensor, Action::Update),
+            Permission::new(ResourceKey::SENSOR, Action::Update),
             Id::new(sensor.organization_id),
         )
         .await?;
@@ -411,7 +411,7 @@ pub async fn activate_sensor(
         .authorization_service
         .require(
             user.id,
-            Permission::new(Resource::Tree, Action::Update),
+            Permission::new(crate::irrigation::resources::TREE, Action::Update),
             Id::new(tree.organization_id),
         )
         .await?;
@@ -451,14 +451,14 @@ pub async fn set_sensor_tree(
     let ctx = state.authorization_service.context_for(user.id).await?;
     scope::ensure_visible(
         &ctx,
-        Permission::new(Resource::Sensor, Action::Read),
+        Permission::new(ResourceKey::SENSOR, Action::Read),
         sensor.organization_id,
     )?;
     state
         .authorization_service
         .require(
             user.id,
-            Permission::new(Resource::Sensor, Action::Update),
+            Permission::new(ResourceKey::SENSOR, Action::Update),
             Id::new(sensor.organization_id),
         )
         .await?;
@@ -468,7 +468,7 @@ pub async fn set_sensor_tree(
         .authorization_service
         .require(
             user.id,
-            Permission::new(Resource::Tree, Action::Update),
+            Permission::new(crate::irrigation::resources::TREE, Action::Update),
             Id::new(tree.organization_id),
         )
         .await?;
@@ -504,14 +504,14 @@ pub async fn remove_sensor_tree(
     let ctx = state.authorization_service.context_for(user.id).await?;
     scope::ensure_visible(
         &ctx,
-        Permission::new(Resource::Sensor, Action::Read),
+        Permission::new(ResourceKey::SENSOR, Action::Read),
         sensor.organization_id,
     )?;
     state
         .authorization_service
         .require(
             user.id,
-            Permission::new(Resource::Sensor, Action::Update),
+            Permission::new(ResourceKey::SENSOR, Action::Update),
             Id::new(sensor.organization_id),
         )
         .await?;
@@ -521,7 +521,7 @@ pub async fn remove_sensor_tree(
             .authorization_service
             .require(
                 user.id,
-                Permission::new(Resource::Tree, Action::Update),
+                Permission::new(crate::irrigation::resources::TREE, Action::Update),
                 Id::new(tree.organization_id),
             )
             .await?;
@@ -596,10 +596,10 @@ pub async fn transfer_sensor(
     let ctx = state.authorization_service.context_for(user.id).await?;
     scope::ensure_visible(
         &ctx,
-        Permission::new(Resource::Sensor, Action::Read),
+        Permission::new(ResourceKey::SENSOR, Action::Read),
         current.organization_id,
     )?;
-    let perm = Permission::new(Resource::Sensor, Action::Update);
+    let perm = Permission::new(ResourceKey::SENSOR, Action::Update);
     state
         .authorization_service
         .require(user.id, perm, Id::new(current.organization_id))
@@ -637,7 +637,7 @@ pub async fn get_sensor_data_quality(
     let ctx = state.authorization_service.context_for(user.id).await?;
     scope::ensure_visible(
         &ctx,
-        Permission::new(Resource::Sensor, Action::Read),
+        Permission::new(ResourceKey::SENSOR, Action::Read),
         sensor.organization_id,
     )?;
     let quality = state.sensor_service.data_quality(&sensor_id).await?;
@@ -682,7 +682,7 @@ pub async fn acknowledge_sensor_data_quality(
     let ctx = state.authorization_service.context_for(user.id).await?;
     scope::ensure_visible(
         &ctx,
-        Permission::new(Resource::Sensor, Action::Update),
+        Permission::new(ResourceKey::SENSOR, Action::Update),
         sensor.organization_id,
     )?;
 

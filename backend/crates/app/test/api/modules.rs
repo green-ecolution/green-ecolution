@@ -4,18 +4,18 @@ use uuid::Uuid;
 use crate::{helpers::spawn_app, organizations::ROOT_ORG_ID};
 
 #[tokio::test]
-async fn list_is_empty_without_registered_modules() {
+async fn list_holds_only_irrigation_without_other_modules() {
     let app = spawn_app().await;
     let resp = app.get("/api/v1/modules").await;
     assert_eq!(resp.status(), 200);
     let body: serde_json::Value = resp.json().await.unwrap();
-    assert_eq!(body["modules"], json!([]));
+    assert_eq!(body["modules"], json!(["irrigation"]));
     assert!(
         body["organizations"]
             .as_array()
             .unwrap()
             .iter()
-            .any(|o| o["organization_id"] == ROOT_ORG_ID && o["active"] == json!([]))
+            .any(|o| o["organization_id"] == ROOT_ORG_ID && o["active"] == json!(["irrigation"]))
     );
 }
 

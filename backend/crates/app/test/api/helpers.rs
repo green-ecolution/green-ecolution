@@ -353,6 +353,12 @@ async fn template_database() -> &'static str {
 
 /// Modules whose migrations every test database carries. The test module is
 /// included so any test can mount it without migrating a database of its own.
+pub fn irrigation_catalog() -> std::sync::Arc<domain::authorization::ResourceCatalog> {
+    std::sync::Arc::new(
+        domain::authorization::ResourceCatalog::new(server::irrigation::resources::ALL).unwrap(),
+    )
+}
+
 pub fn template_modules() -> Vec<Box<dyn server::module::Module>> {
     let mut modules = app::modules::registered();
     modules.push(Box::new(crate::test_module::TestModule::new(
@@ -391,8 +397,13 @@ pub async fn try_spawn_app_with_modules_and_auth(
     settings.info.update_check_repo = None;
     let container = shared_container().await;
     let (_db_name, db_pool) = create_test_database(container.host_port).await;
+    // Core features (plans, sensor targets) hang off irrigation, so every test
+    // application runs it.
+    let mut all_modules = app::modules::registered();
+    all_modules.extend(modules);
     let app =
-        Application::build_with_modules(db_pool.clone(), "127.0.0.1:0", settings, modules).await?;
+        Application::build_with_modules(db_pool.clone(), "127.0.0.1:0", settings, all_modules)
+            .await?;
     let port = app.port();
     let state = app.state();
     tokio::spawn(app.run_until_stopped());

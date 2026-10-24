@@ -126,6 +126,7 @@ pub struct AppState {
     pub start_point_service: Arc<StartPointService>,
     pub organization_service: Arc<OrganizationService>,
     pub role_service: Arc<RoleService>,
+    pub resource_catalog: Arc<domain::authorization::ResourceCatalog>,
     pub authorization_service: Arc<AuthorizationService>,
     pub plugin_reader: Arc<dyn domain::plugin::PluginReader>,
     pub plugin_writer: Arc<dyn domain::plugin::PluginWriter>,

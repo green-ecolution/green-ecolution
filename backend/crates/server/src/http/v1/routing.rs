@@ -12,7 +12,7 @@ use crate::{
 };
 use domain::{
     Id,
-    authorization::{Action, Permission, Resource},
+    authorization::{Action, Permission},
 };
 
 use super::{
@@ -59,7 +59,7 @@ pub async fn list_routing_start_points(
         .authorization_service
         .visible_orgs_for(
             user.id,
-            Permission::new(Resource::WateringPlan, Action::Read),
+            Permission::new(crate::irrigation::resources::WATERING_PLAN, Action::Read),
         )
         .await?;
     let points = state.start_point_service.list(visible).await?;
@@ -88,7 +88,7 @@ pub async fn create_start_point(
         .authorization_service
         .require(
             user.id,
-            Permission::new(Resource::WateringPlan, Action::Create),
+            Permission::new(crate::irrigation::resources::WATERING_PLAN, Action::Create),
             org,
         )
         .await?;
@@ -121,14 +121,14 @@ pub async fn update_start_point(
     let ctx = state.authorization_service.context_for(user.id).await?;
     scope::ensure_visible(
         &ctx,
-        Permission::new(Resource::WateringPlan, Action::Read),
+        Permission::new(crate::irrigation::resources::WATERING_PLAN, Action::Read),
         current.organization_id().value(),
     )?;
     state
         .authorization_service
         .require(
             user.id,
-            Permission::new(Resource::WateringPlan, Action::Update),
+            Permission::new(crate::irrigation::resources::WATERING_PLAN, Action::Update),
             current.organization_id(),
         )
         .await?;
@@ -163,14 +163,14 @@ pub async fn delete_start_point(
     let ctx = state.authorization_service.context_for(user.id).await?;
     scope::ensure_visible(
         &ctx,
-        Permission::new(Resource::WateringPlan, Action::Read),
+        Permission::new(crate::irrigation::resources::WATERING_PLAN, Action::Read),
         current.organization_id().value(),
     )?;
     state
         .authorization_service
         .require(
             user.id,
-            Permission::new(Resource::WateringPlan, Action::Delete),
+            Permission::new(crate::irrigation::resources::WATERING_PLAN, Action::Delete),
             current.organization_id(),
         )
         .await?;
@@ -200,14 +200,14 @@ pub async fn set_default_start_point(
     let ctx = state.authorization_service.context_for(user.id).await?;
     scope::ensure_visible(
         &ctx,
-        Permission::new(Resource::WateringPlan, Action::Read),
+        Permission::new(crate::irrigation::resources::WATERING_PLAN, Action::Read),
         current.organization_id().value(),
     )?;
     state
         .authorization_service
         .require(
             user.id,
-            Permission::new(Resource::WateringPlan, Action::Update),
+            Permission::new(crate::irrigation::resources::WATERING_PLAN, Action::Update),
             current.organization_id(),
         )
         .await?;
@@ -243,10 +243,10 @@ pub async fn transfer_start_point(
     let ctx = state.authorization_service.context_for(user.id).await?;
     scope::ensure_visible(
         &ctx,
-        Permission::new(Resource::WateringPlan, Action::Read),
+        Permission::new(crate::irrigation::resources::WATERING_PLAN, Action::Read),
         current.organization_id().value(),
     )?;
-    let perm = Permission::new(Resource::WateringPlan, Action::Update);
+    let perm = Permission::new(crate::irrigation::resources::WATERING_PLAN, Action::Update);
     state
         .authorization_service
         .require(user.id, perm, current.organization_id())

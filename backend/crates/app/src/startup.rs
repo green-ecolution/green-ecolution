@@ -4,6 +4,7 @@ use std::time::Duration;
 use sqlx::{PgPool, postgres::PgPoolOptions};
 use tokio::net::TcpListener;
 
+use domain::authorization::ResourceCatalog;
 use domain::info::{
     HealthSnapshotReader, ReadinessReader, ServiceName, StatisticsReader, SystemInfoProvider,
 };
@@ -112,6 +113,10 @@ impl Application {
         server::module::check_modules(&server::http::v1::core_openapi(), &modules).map_err(
             |err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err.to_string()),
         )?;
+        let resource_catalog = Arc::new(
+            ResourceCatalog::new(modules.iter().flat_map(|m| m.resources().iter().copied()))
+                .map_err(|e| std::io::Error::other(format!("invalid resource catalog: {e}")))?,
+        );
         for configured in settings.modules.keys() {
             if !modules.iter().any(|m| m.key().as_str() == configured) {
                 tracing::warn!(module = %configured, "modules.{configured} is configured but no such module is registered");
@@ -138,7 +143,12 @@ impl Application {
         let sensor_offline_after = chrono::Duration::seconds(
             i64::try_from(settings.sensor.offline_after_secs).unwrap_or(i64::MAX),
         );
-        let repos = Repositories::build(&pool, sensor_offline_after, settings.sensor.defect_streak);
+        let repos = Repositories::build(
+            &pool,
+            sensor_offline_after,
+            settings.sensor.defect_streak,
+            &resource_catalog,
+        );
         let defaults = instance_defaults(&settings)?;
         let settings_repo = Arc::new(PgSettingsRepository::new(
             pool.clone(),
@@ -214,6 +224,7 @@ impl Application {
                     proxy.allowed_ports.clone(),
                 )
             }),
+            resource_catalog.clone(),
         );
 
         let mut handlers = core_event_handlers(&repos);
@@ -338,6 +349,7 @@ impl Application {
             start_point_service: services.start_point,
             organization_service: services.organization,
             role_service: services.role,
+            resource_catalog: resource_catalog.clone(),
             authorization_service: services.authorization,
             plugin_reader: repos.plugin_reader,
             plugin_writer: repos.plugin_writer,
@@ -478,9 +490,14 @@ struct Repositories {
 }
 
 impl Repositories {
-    fn build(pool: &PgPool, sensor_offline_after: chrono::Duration, defect_streak: usize) -> Self {
+    fn build(
+        pool: &PgPool,
+        sensor_offline_after: chrono::Duration,
+        defect_streak: usize,
+        catalog: &Arc<ResourceCatalog>,
+    ) -> Self {
         let organization_repo = Arc::new(PgOrganizationRepository::new(pool.clone()));
-        let role_repo = Arc::new(PgRoleRepository::new(pool.clone()));
+        let role_repo = Arc::new(PgRoleRepository::new(pool.clone(), catalog.clone()));
         let region_repo = Arc::new(PgRegionRepository::new(pool.clone()));
         let tree_repo = Arc::new(PgTreeRepository::new(pool.clone()));
         let sensor_repo = Arc::new(PgSensorRepository::new(
@@ -493,7 +510,7 @@ impl Repositories {
         let comment_repo = Arc::new(PgCommentRepository::new(pool.clone()));
         let watering_plan_repo = Arc::new(PgWateringPlanRepository::new(pool.clone()));
         let start_point_repo = Arc::new(PgStartPointRepository::new(pool.clone()));
-        let plugin_repo = Arc::new(PgPluginRepository::new(pool.clone()));
+        let plugin_repo = Arc::new(PgPluginRepository::new(pool.clone(), catalog.clone()));
 
         Self {
             organization_reader: organization_repo.clone(),
@@ -563,6 +580,7 @@ impl Services {
         user_repo: Arc<dyn domain::user::UserRepository>,
         auth_enabled: bool,
         proxy_policy: Option<ProxyPolicy>,
+        resource_catalog: Arc<ResourceCatalog>,
     ) -> Self {
         let authorization = Arc::new(AuthorizationService::new(
             repos.organization_reader.clone(),
@@ -575,6 +593,7 @@ impl Services {
             authorization.clone(),
             Arc::new(server::infra::plugin_key::RandomPluginKeyFactory),
             proxy_policy,
+            resource_catalog.clone(),
         ));
         let tree = Arc::new(TreeService::new(
             repos.tree_reader.clone(),

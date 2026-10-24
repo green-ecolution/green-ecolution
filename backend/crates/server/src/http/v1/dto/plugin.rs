@@ -7,6 +7,7 @@ use uuid::Uuid;
 
 use domain::{
     Id,
+    authorization::ResourceCatalog,
     plugin::{
         DeviceCapability, Plugin, PluginDraft, PluginFrontend, PluginName, PluginSlug, PluginView,
         ServiceEndpoint, TreeRef, TreeRefPage,
@@ -234,14 +235,18 @@ pub struct PluginCreateRequest {
 }
 
 impl PluginCreateRequest {
-    pub fn into_draft(self, app_origins: &AppOrigins) -> Result<PluginDraft, ServiceError> {
+    pub fn into_draft(
+        self,
+        app_origins: &AppOrigins,
+        catalog: &ResourceCatalog,
+    ) -> Result<PluginDraft, ServiceError> {
         Ok(PluginDraft {
             slug: PluginSlug::new(self.slug)?,
             name: PluginName::new(self.name)?,
             description: self.description,
             organization_id: Id::new(self.organization_id),
-            permissions: parse_permissions(&self.permissions)?,
-            required_permissions: parse_permissions(&self.required_permissions)?,
+            permissions: parse_permissions(&self.permissions, catalog)?,
+            required_permissions: parse_permissions(&self.required_permissions, catalog)?,
             device_capabilities: parse_device_capabilities(&self.device_capabilities)?,
             frontend: self.frontend.into_domain(app_origins)?,
         })
@@ -267,7 +272,11 @@ pub struct PluginUpdateRequest {
 }
 
 impl PluginUpdateRequest {
-    pub fn into_change(self, app_origins: &AppOrigins) -> Result<PluginChange, ServiceError> {
+    pub fn into_change(
+        self,
+        app_origins: &AppOrigins,
+        catalog: &ResourceCatalog,
+    ) -> Result<PluginChange, ServiceError> {
         Ok(PluginChange {
             name: self.name.map(PluginName::new).transpose()?,
             description: self.description,
@@ -277,11 +286,11 @@ impl PluginUpdateRequest {
                 .transpose()?,
             permissions: self
                 .permissions
-                .map(|p| parse_permissions(&p))
+                .map(|p| parse_permissions(&p, catalog))
                 .transpose()?,
             required_permissions: self
                 .required_permissions
-                .map(|p| parse_permissions(&p))
+                .map(|p| parse_permissions(&p, catalog))
                 .transpose()?,
             device_capabilities: self
                 .device_capabilities

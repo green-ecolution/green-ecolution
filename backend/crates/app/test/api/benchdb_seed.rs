@@ -251,6 +251,10 @@ async fn seeding_creates_a_user_with_role_grants() {
         ),
         std::sync::Arc::new(server::infra::pg_role::PgRoleRepository::new(
             app.db_pool.clone(),
+            std::sync::Arc::new(
+                domain::authorization::ResourceCatalog::new(server::irrigation::resources::ALL)
+                    .unwrap(),
+            ),
         )),
         true,
     );
