@@ -34,11 +34,15 @@
       "invalid_state_transition": "This status change is not possible in the watering plan's current state.",
       "cannot_mutate_after_start": "The watering plan can only be edited while it has not started yet.",
       "cancellation_note_required": "Canceling requires a reason.",
-      "outcome_missing": "The consumed water is still missing for some watering groups.",
+      "outcome_missing": "Consumed water is still missing for at least one watering group.",
       "outcome_duplicate": "The water amount was entered more than once for a watering group.",
       "outcome_unknown_stop": "The evaluation names a watering group that is not part of the watering plan.",
       "transporter_capacity_required": "Without a trailer the transporter's own tank must be used.",
       "unknown_stop": "A selected watering group no longer exists."
+    },
+    "module": {
+      "disabled": "This module is not enabled for the organization.",
+      "unknown": "This module is unknown."
     },
     "vehicle": {
       "capacity_missing": "The vehicle has no matching capacity for this plan."

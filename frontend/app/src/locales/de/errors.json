@@ -34,11 +34,15 @@
       "invalid_state_transition": "Dieser Statuswechsel ist im aktuellen Zustand des Einsatzplans nicht möglich.",
       "cannot_mutate_after_start": "Der Einsatzplan lässt sich nur bearbeiten, solange er noch nicht gestartet ist.",
       "cancellation_note_required": "Für den Abbruch wird eine Begründung benötigt.",
-      "outcome_missing": "Für jeden Cluster fehlt noch die verbrauchte Wassermenge.",
+      "outcome_missing": "Für mindestens eine Bewässerungsgruppe fehlt noch die verbrauchte Wassermenge.",
       "outcome_duplicate": "Für eine Bewässerungsgruppe wurde die Wassermenge mehrfach angegeben.",
       "outcome_unknown_stop": "Die Auswertung nennt eine Bewässerungsgruppe, die nicht zum Einsatzplan gehört.",
       "transporter_capacity_required": "Ohne Anhänger muss der Tank des Transporters genutzt werden.",
       "unknown_stop": "Eine ausgewählte Bewässerungsgruppe existiert nicht mehr."
+    },
+    "module": {
+      "disabled": "Dieses Modul ist für die Organisation nicht aktiviert.",
+      "unknown": "Dieses Modul ist nicht bekannt."
     },
     "vehicle": {
       "capacity_missing": "Das Fahrzeug hat keine passende Kapazität für diesen Plan."
