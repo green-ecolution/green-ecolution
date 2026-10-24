@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import { Avatar, AvatarFallback, AvatarImage, Badge, KanbanCard } from '@green-ecolution/ui'
-import { WateringPlanStatus } from '@green-ecolution/backend-client'
+import { PlanStatus as WateringPlanStatus } from '@green-ecolution/backend-client'
 import type { User, WateringPlanInList } from '@/api/backendApi'
 import { useWateringPlanStatusDetails } from '@/hooks/details/useDetailsForWateringPlanStatus'
 import { columnForStatus } from '@/lib/wateringPlanBoard'

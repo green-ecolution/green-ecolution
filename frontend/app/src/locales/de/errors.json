@@ -4,7 +4,7 @@
       "trees_vs_cluster": "Die ausgewählten Bäume gehören zu einer anderen Organisation als die Bewässerungsgruppe.",
       "cluster_vs_tree": "Die ausgewählte Bewässerungsgruppe gehört zu einer anderen Organisation als der Baum.",
       "sensor_vs_target": "Sensor und Objekt gehören zu verschiedenen Organisationen.",
-      "clusters_vs_plan": "Die ausgewählten Bewässerungsgruppen liegen außerhalb der Organisation des Einsatzplans.",
+      "stops_vs_plan": "Die ausgewählten Bewässerungsgruppen liegen außerhalb der Organisation des Einsatzplans.",
       "role_vs_user": "Die Rolle gehört zu einer anderen Organisation als die ausgewählte Person."
     },
     "conflict": {
@@ -30,11 +30,18 @@
       "missing": "Es wurde keine Organisation angegeben und dein Konto gehört zu keiner.",
       "contact_person_not_a_member": "Die ausgewählte Ansprechperson gehört nicht zu dieser Organisation."
     },
-    "watering_plan": {
+    "plan": {
       "invalid_state_transition": "Dieser Statuswechsel ist im aktuellen Zustand des Einsatzplans nicht möglich.",
       "cannot_mutate_after_start": "Der Einsatzplan lässt sich nur bearbeiten, solange er noch nicht gestartet ist.",
       "cancellation_note_required": "Für den Abbruch wird eine Begründung benötigt.",
-      "evaluation_missing_for_cluster": "Für jede zugewiesene Bewässerungsgruppe wird eine Auswertung benötigt."
+      "outcome_missing": "Für jeden Cluster fehlt noch die verbrauchte Wassermenge.",
+      "outcome_duplicate": "Für eine Bewässerungsgruppe wurde die Wassermenge mehrfach angegeben.",
+      "outcome_unknown_stop": "Die Auswertung nennt eine Bewässerungsgruppe, die nicht zum Einsatzplan gehört.",
+      "transporter_capacity_required": "Ohne Anhänger muss der Tank des Transporters genutzt werden.",
+      "unknown_stop": "Eine ausgewählte Bewässerungsgruppe existiert nicht mehr."
+    },
+    "vehicle": {
+      "capacity_missing": "Das Fahrzeug hat keine passende Kapazität für diesen Plan."
     },
     "feature": {
       "routing_disabled": "Die Routenplanung ist in dieser Umgebung nicht aktiviert.",

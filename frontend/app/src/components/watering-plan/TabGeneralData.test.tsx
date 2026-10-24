@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import { WateringPlanStatus } from '@green-ecolution/backend-client'
+import { PlanStatus as WateringPlanStatus } from '@green-ecolution/backend-client'
 import type { WateringPlan } from '@/api/backendApi'
 
 const users = [

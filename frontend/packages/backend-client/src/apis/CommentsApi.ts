@@ -39,8 +39,15 @@ export interface CreateClusterCommentRequest {
     createCommentRequest: CreateCommentRequest;
 }
 
-export interface CreateWateringPlanCommentRequest {
-    wateringPlanId: string;
+export interface CreatePlanCommentRequest {
+    planId: string;
+    createCommentRequest: CreateCommentRequest;
+}
+
+export interface CreateTargetCommentRequest {
+    module: string;
+    kind: string;
+    targetId: string;
     createCommentRequest: CreateCommentRequest;
 }
 
@@ -49,8 +56,15 @@ export interface DeleteClusterCommentRequest {
     commentId: string;
 }
 
-export interface DeleteWateringPlanCommentRequest {
-    wateringPlanId: string;
+export interface DeletePlanCommentRequest {
+    planId: string;
+    commentId: string;
+}
+
+export interface DeleteTargetCommentRequest {
+    module: string;
+    kind: string;
+    targetId: string;
     commentId: string;
 }
 
@@ -60,8 +74,16 @@ export interface ListClusterCommentsRequest {
     perPage?: number;
 }
 
-export interface ListWateringPlanCommentsRequest {
-    wateringPlanId: string;
+export interface ListPlanCommentsRequest {
+    planId: string;
+    page?: number;
+    perPage?: number;
+}
+
+export interface ListTargetCommentsRequest {
+    module: string;
+    kind: string;
+    targetId: string;
     page?: number;
     perPage?: number;
 }
@@ -72,8 +94,16 @@ export interface UpdateClusterCommentRequest {
     updateCommentRequest: UpdateCommentRequest;
 }
 
-export interface UpdateWateringPlanCommentRequest {
-    wateringPlanId: string;
+export interface UpdatePlanCommentRequest {
+    planId: string;
+    commentId: string;
+    updateCommentRequest: UpdateCommentRequest;
+}
+
+export interface UpdateTargetCommentRequest {
+    module: string;
+    kind: string;
+    targetId: string;
     commentId: string;
     updateCommentRequest: UpdateCommentRequest;
 }
@@ -133,21 +163,21 @@ export class CommentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Adds a comment to a watering plan. Requires `watering_plan:read` in the plan\'s organization — anyone who may see the plan may annotate it.
-     * Comment on a watering plan
+     * Adds a comment to a plan. Requires read permission on the plan resource of the plan\'s module in the plan\'s organization — anyone who may see the plan may annotate it.
+     * Comment on a plan
      */
-    async createWateringPlanCommentRaw(requestParameters: CreateWateringPlanCommentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CommentResponse>> {
-        if (requestParameters['wateringPlanId'] == null) {
+    async createPlanCommentRaw(requestParameters: CreatePlanCommentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CommentResponse>> {
+        if (requestParameters['planId'] == null) {
             throw new runtime.RequiredError(
-                'wateringPlanId',
-                'Required parameter "wateringPlanId" was null or undefined when calling createWateringPlanComment().'
+                'planId',
+                'Required parameter "planId" was null or undefined when calling createPlanComment().'
             );
         }
 
         if (requestParameters['createCommentRequest'] == null) {
             throw new runtime.RequiredError(
                 'createCommentRequest',
-                'Required parameter "createCommentRequest" was null or undefined when calling createWateringPlanComment().'
+                'Required parameter "createCommentRequest" was null or undefined when calling createPlanComment().'
             );
         }
 
@@ -158,8 +188,8 @@ export class CommentsApi extends runtime.BaseAPI {
         headerParameters['Content-Type'] = 'application/json';
 
 
-        let urlPath = `/v1/watering-plans/{watering_plan_id}/comments`;
-        urlPath = urlPath.replace(`{${"watering_plan_id"}}`, encodeURIComponent(String(requestParameters['wateringPlanId'])));
+        let urlPath = `/v1/plans/{plan_id}/comments`;
+        urlPath = urlPath.replace(`{${"plan_id"}}`, encodeURIComponent(String(requestParameters['planId'])));
 
         const response = await this.request({
             path: urlPath,
@@ -173,11 +203,76 @@ export class CommentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Adds a comment to a watering plan. Requires `watering_plan:read` in the plan\'s organization — anyone who may see the plan may annotate it.
-     * Comment on a watering plan
+     * Adds a comment to a plan. Requires read permission on the plan resource of the plan\'s module in the plan\'s organization — anyone who may see the plan may annotate it.
+     * Comment on a plan
      */
-    async createWateringPlanComment(requestParameters: CreateWateringPlanCommentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CommentResponse> {
-        const response = await this.createWateringPlanCommentRaw(requestParameters, initOverrides);
+    async createPlanComment(requestParameters: CreatePlanCommentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CommentResponse> {
+        const response = await this.createPlanCommentRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Adds a comment to a commentable target of any module. Requires read permission on the target\'s resource in the target\'s organization: anyone who may see the target may annotate it.
+     * Comment on a target
+     */
+    async createTargetCommentRaw(requestParameters: CreateTargetCommentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CommentResponse>> {
+        if (requestParameters['module'] == null) {
+            throw new runtime.RequiredError(
+                'module',
+                'Required parameter "module" was null or undefined when calling createTargetComment().'
+            );
+        }
+
+        if (requestParameters['kind'] == null) {
+            throw new runtime.RequiredError(
+                'kind',
+                'Required parameter "kind" was null or undefined when calling createTargetComment().'
+            );
+        }
+
+        if (requestParameters['targetId'] == null) {
+            throw new runtime.RequiredError(
+                'targetId',
+                'Required parameter "targetId" was null or undefined when calling createTargetComment().'
+            );
+        }
+
+        if (requestParameters['createCommentRequest'] == null) {
+            throw new runtime.RequiredError(
+                'createCommentRequest',
+                'Required parameter "createCommentRequest" was null or undefined when calling createTargetComment().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+
+        let urlPath = `/v1/targets/{module}/{kind}/{target_id}/comments`;
+        urlPath = urlPath.replace(`{${"module"}}`, encodeURIComponent(String(requestParameters['module'])));
+        urlPath = urlPath.replace(`{${"kind"}}`, encodeURIComponent(String(requestParameters['kind'])));
+        urlPath = urlPath.replace(`{${"target_id"}}`, encodeURIComponent(String(requestParameters['targetId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: CreateCommentRequestToJSON(requestParameters['createCommentRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => CommentResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Adds a comment to a commentable target of any module. Requires read permission on the target\'s resource in the target\'s organization: anyone who may see the target may annotate it.
+     * Comment on a target
+     */
+    async createTargetComment(requestParameters: CreateTargetCommentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CommentResponse> {
+        const response = await this.createTargetCommentRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -229,20 +324,20 @@ export class CommentsApi extends runtime.BaseAPI {
 
     /**
      * Removes a comment. Only the comment\'s author may delete it.
-     * Delete a comment on a watering plan
+     * Delete a comment on a plan
      */
-    async deleteWateringPlanCommentRaw(requestParameters: DeleteWateringPlanCommentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters['wateringPlanId'] == null) {
+    async deletePlanCommentRaw(requestParameters: DeletePlanCommentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['planId'] == null) {
             throw new runtime.RequiredError(
-                'wateringPlanId',
-                'Required parameter "wateringPlanId" was null or undefined when calling deleteWateringPlanComment().'
+                'planId',
+                'Required parameter "planId" was null or undefined when calling deletePlanComment().'
             );
         }
 
         if (requestParameters['commentId'] == null) {
             throw new runtime.RequiredError(
                 'commentId',
-                'Required parameter "commentId" was null or undefined when calling deleteWateringPlanComment().'
+                'Required parameter "commentId" was null or undefined when calling deletePlanComment().'
             );
         }
 
@@ -251,8 +346,8 @@ export class CommentsApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
 
-        let urlPath = `/v1/watering-plans/{watering_plan_id}/comments/{comment_id}`;
-        urlPath = urlPath.replace(`{${"watering_plan_id"}}`, encodeURIComponent(String(requestParameters['wateringPlanId'])));
+        let urlPath = `/v1/plans/{plan_id}/comments/{comment_id}`;
+        urlPath = urlPath.replace(`{${"plan_id"}}`, encodeURIComponent(String(requestParameters['planId'])));
         urlPath = urlPath.replace(`{${"comment_id"}}`, encodeURIComponent(String(requestParameters['commentId'])));
 
         const response = await this.request({
@@ -267,10 +362,72 @@ export class CommentsApi extends runtime.BaseAPI {
 
     /**
      * Removes a comment. Only the comment\'s author may delete it.
-     * Delete a comment on a watering plan
+     * Delete a comment on a plan
      */
-    async deleteWateringPlanComment(requestParameters: DeleteWateringPlanCommentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.deleteWateringPlanCommentRaw(requestParameters, initOverrides);
+    async deletePlanComment(requestParameters: DeletePlanCommentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.deletePlanCommentRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * Removes a comment. Only the comment\'s author may delete it.
+     * Delete a comment on a target
+     */
+    async deleteTargetCommentRaw(requestParameters: DeleteTargetCommentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['module'] == null) {
+            throw new runtime.RequiredError(
+                'module',
+                'Required parameter "module" was null or undefined when calling deleteTargetComment().'
+            );
+        }
+
+        if (requestParameters['kind'] == null) {
+            throw new runtime.RequiredError(
+                'kind',
+                'Required parameter "kind" was null or undefined when calling deleteTargetComment().'
+            );
+        }
+
+        if (requestParameters['targetId'] == null) {
+            throw new runtime.RequiredError(
+                'targetId',
+                'Required parameter "targetId" was null or undefined when calling deleteTargetComment().'
+            );
+        }
+
+        if (requestParameters['commentId'] == null) {
+            throw new runtime.RequiredError(
+                'commentId',
+                'Required parameter "commentId" was null or undefined when calling deleteTargetComment().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/v1/targets/{module}/{kind}/{target_id}/comments/{comment_id}`;
+        urlPath = urlPath.replace(`{${"module"}}`, encodeURIComponent(String(requestParameters['module'])));
+        urlPath = urlPath.replace(`{${"kind"}}`, encodeURIComponent(String(requestParameters['kind'])));
+        urlPath = urlPath.replace(`{${"target_id"}}`, encodeURIComponent(String(requestParameters['targetId'])));
+        urlPath = urlPath.replace(`{${"comment_id"}}`, encodeURIComponent(String(requestParameters['commentId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Removes a comment. Only the comment\'s author may delete it.
+     * Delete a comment on a target
+     */
+    async deleteTargetComment(requestParameters: DeleteTargetCommentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.deleteTargetCommentRaw(requestParameters, initOverrides);
     }
 
     /**
@@ -321,14 +478,14 @@ export class CommentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the comments of a watering plan, newest first. Requires `watering_plan:read` in the plan\'s organization.
-     * List comments on a watering plan
+     * Returns the comments of a plan, newest first. Requires read permission on the plan resource of the plan\'s module in the plan\'s organization.
+     * List comments on a plan
      */
-    async listWateringPlanCommentsRaw(requestParameters: ListWateringPlanCommentsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListResponseCommentResponse>> {
-        if (requestParameters['wateringPlanId'] == null) {
+    async listPlanCommentsRaw(requestParameters: ListPlanCommentsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListResponseCommentResponse>> {
+        if (requestParameters['planId'] == null) {
             throw new runtime.RequiredError(
-                'wateringPlanId',
-                'Required parameter "wateringPlanId" was null or undefined when calling listWateringPlanComments().'
+                'planId',
+                'Required parameter "planId" was null or undefined when calling listPlanComments().'
             );
         }
 
@@ -345,8 +502,8 @@ export class CommentsApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
 
-        let urlPath = `/v1/watering-plans/{watering_plan_id}/comments`;
-        urlPath = urlPath.replace(`{${"watering_plan_id"}}`, encodeURIComponent(String(requestParameters['wateringPlanId'])));
+        let urlPath = `/v1/plans/{plan_id}/comments`;
+        urlPath = urlPath.replace(`{${"plan_id"}}`, encodeURIComponent(String(requestParameters['planId'])));
 
         const response = await this.request({
             path: urlPath,
@@ -359,11 +516,74 @@ export class CommentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the comments of a watering plan, newest first. Requires `watering_plan:read` in the plan\'s organization.
-     * List comments on a watering plan
+     * Returns the comments of a plan, newest first. Requires read permission on the plan resource of the plan\'s module in the plan\'s organization.
+     * List comments on a plan
      */
-    async listWateringPlanComments(requestParameters: ListWateringPlanCommentsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ListResponseCommentResponse> {
-        const response = await this.listWateringPlanCommentsRaw(requestParameters, initOverrides);
+    async listPlanComments(requestParameters: ListPlanCommentsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ListResponseCommentResponse> {
+        const response = await this.listPlanCommentsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns the comments of a commentable target of any module, newest first. Requires read permission on the target\'s resource in the target\'s organization.
+     * List comments on a target
+     */
+    async listTargetCommentsRaw(requestParameters: ListTargetCommentsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListResponseCommentResponse>> {
+        if (requestParameters['module'] == null) {
+            throw new runtime.RequiredError(
+                'module',
+                'Required parameter "module" was null or undefined when calling listTargetComments().'
+            );
+        }
+
+        if (requestParameters['kind'] == null) {
+            throw new runtime.RequiredError(
+                'kind',
+                'Required parameter "kind" was null or undefined when calling listTargetComments().'
+            );
+        }
+
+        if (requestParameters['targetId'] == null) {
+            throw new runtime.RequiredError(
+                'targetId',
+                'Required parameter "targetId" was null or undefined when calling listTargetComments().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['perPage'] != null) {
+            queryParameters['per_page'] = requestParameters['perPage'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/v1/targets/{module}/{kind}/{target_id}/comments`;
+        urlPath = urlPath.replace(`{${"module"}}`, encodeURIComponent(String(requestParameters['module'])));
+        urlPath = urlPath.replace(`{${"kind"}}`, encodeURIComponent(String(requestParameters['kind'])));
+        urlPath = urlPath.replace(`{${"target_id"}}`, encodeURIComponent(String(requestParameters['targetId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ListResponseCommentResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns the comments of a commentable target of any module, newest first. Requires read permission on the target\'s resource in the target\'s organization.
+     * List comments on a target
+     */
+    async listTargetComments(requestParameters: ListTargetCommentsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ListResponseCommentResponse> {
+        const response = await this.listTargetCommentsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -426,27 +646,27 @@ export class CommentsApi extends runtime.BaseAPI {
 
     /**
      * Replaces a comment\'s text. Only the comment\'s author may edit it.
-     * Edit a comment on a watering plan
+     * Edit a comment on a plan
      */
-    async updateWateringPlanCommentRaw(requestParameters: UpdateWateringPlanCommentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CommentResponse>> {
-        if (requestParameters['wateringPlanId'] == null) {
+    async updatePlanCommentRaw(requestParameters: UpdatePlanCommentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CommentResponse>> {
+        if (requestParameters['planId'] == null) {
             throw new runtime.RequiredError(
-                'wateringPlanId',
-                'Required parameter "wateringPlanId" was null or undefined when calling updateWateringPlanComment().'
+                'planId',
+                'Required parameter "planId" was null or undefined when calling updatePlanComment().'
             );
         }
 
         if (requestParameters['commentId'] == null) {
             throw new runtime.RequiredError(
                 'commentId',
-                'Required parameter "commentId" was null or undefined when calling updateWateringPlanComment().'
+                'Required parameter "commentId" was null or undefined when calling updatePlanComment().'
             );
         }
 
         if (requestParameters['updateCommentRequest'] == null) {
             throw new runtime.RequiredError(
                 'updateCommentRequest',
-                'Required parameter "updateCommentRequest" was null or undefined when calling updateWateringPlanComment().'
+                'Required parameter "updateCommentRequest" was null or undefined when calling updatePlanComment().'
             );
         }
 
@@ -457,8 +677,8 @@ export class CommentsApi extends runtime.BaseAPI {
         headerParameters['Content-Type'] = 'application/json';
 
 
-        let urlPath = `/v1/watering-plans/{watering_plan_id}/comments/{comment_id}`;
-        urlPath = urlPath.replace(`{${"watering_plan_id"}}`, encodeURIComponent(String(requestParameters['wateringPlanId'])));
+        let urlPath = `/v1/plans/{plan_id}/comments/{comment_id}`;
+        urlPath = urlPath.replace(`{${"plan_id"}}`, encodeURIComponent(String(requestParameters['planId'])));
         urlPath = urlPath.replace(`{${"comment_id"}}`, encodeURIComponent(String(requestParameters['commentId'])));
 
         const response = await this.request({
@@ -474,10 +694,83 @@ export class CommentsApi extends runtime.BaseAPI {
 
     /**
      * Replaces a comment\'s text. Only the comment\'s author may edit it.
-     * Edit a comment on a watering plan
+     * Edit a comment on a plan
      */
-    async updateWateringPlanComment(requestParameters: UpdateWateringPlanCommentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CommentResponse> {
-        const response = await this.updateWateringPlanCommentRaw(requestParameters, initOverrides);
+    async updatePlanComment(requestParameters: UpdatePlanCommentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CommentResponse> {
+        const response = await this.updatePlanCommentRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Replaces a comment\'s text. Only the comment\'s author may edit it.
+     * Edit a comment on a target
+     */
+    async updateTargetCommentRaw(requestParameters: UpdateTargetCommentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CommentResponse>> {
+        if (requestParameters['module'] == null) {
+            throw new runtime.RequiredError(
+                'module',
+                'Required parameter "module" was null or undefined when calling updateTargetComment().'
+            );
+        }
+
+        if (requestParameters['kind'] == null) {
+            throw new runtime.RequiredError(
+                'kind',
+                'Required parameter "kind" was null or undefined when calling updateTargetComment().'
+            );
+        }
+
+        if (requestParameters['targetId'] == null) {
+            throw new runtime.RequiredError(
+                'targetId',
+                'Required parameter "targetId" was null or undefined when calling updateTargetComment().'
+            );
+        }
+
+        if (requestParameters['commentId'] == null) {
+            throw new runtime.RequiredError(
+                'commentId',
+                'Required parameter "commentId" was null or undefined when calling updateTargetComment().'
+            );
+        }
+
+        if (requestParameters['updateCommentRequest'] == null) {
+            throw new runtime.RequiredError(
+                'updateCommentRequest',
+                'Required parameter "updateCommentRequest" was null or undefined when calling updateTargetComment().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+
+        let urlPath = `/v1/targets/{module}/{kind}/{target_id}/comments/{comment_id}`;
+        urlPath = urlPath.replace(`{${"module"}}`, encodeURIComponent(String(requestParameters['module'])));
+        urlPath = urlPath.replace(`{${"kind"}}`, encodeURIComponent(String(requestParameters['kind'])));
+        urlPath = urlPath.replace(`{${"target_id"}}`, encodeURIComponent(String(requestParameters['targetId'])));
+        urlPath = urlPath.replace(`{${"comment_id"}}`, encodeURIComponent(String(requestParameters['commentId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: UpdateCommentRequestToJSON(requestParameters['updateCommentRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => CommentResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Replaces a comment\'s text. Only the comment\'s author may edit it.
+     * Edit a comment on a target
+     */
+    async updateTargetComment(requestParameters: UpdateTargetCommentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CommentResponse> {
+        const response = await this.updateTargetCommentRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

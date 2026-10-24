@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { describe, it, expect } from 'vitest'
 import { renderHook } from '@testing-library/react'
 import { I18nextProvider } from 'react-i18next'
-import { WateringPlanStatus } from '@green-ecolution/backend-client'
+import { PlanStatus as WateringPlanStatus } from '@green-ecolution/backend-client'
 import { getI18n } from '@/lib/i18n'
 import { useWateringPlanStatusTransitionOptions } from './useDetailsForWateringPlanStatus'
 

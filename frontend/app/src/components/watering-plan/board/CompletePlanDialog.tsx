@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from '@green-ecolution/ui'
 import { useTranslation } from 'react-i18next'
-import { WateringPlanStatus } from '@green-ecolution/backend-client'
+import { PlanStatus as WateringPlanStatus } from '@green-ecolution/backend-client'
 import type { WateringPlanInList } from '@/api/backendApi'
 import { CancelWateringPlan, FinishedWateringPlan } from '../WateringPlanStatusUpdate'
 import { useWateringPlanBoardMutations } from '@/hooks/useWateringPlanBoardMutations'

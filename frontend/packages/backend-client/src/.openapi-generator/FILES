@@ -5,6 +5,7 @@ apis/InfoApi.ts
 apis/IrrigationApi.ts
 apis/ModulesApi.ts
 apis/OrganizationsApi.ts
+apis/PlansApi.ts
 apis/PluginsApi.ts
 apis/RegionsApi.ts
 apis/RolesApi.ts
@@ -15,7 +16,6 @@ apis/TreeClustersApi.ts
 apis/TreesApi.ts
 apis/UsersApi.ts
 apis/VehiclesApi.ts
-apis/WateringPlansApi.ts
 apis/index.ts
 index.ts
 models/AcknowledgeDataQualityRequest.ts
@@ -40,8 +40,6 @@ models/DataStatisticsResponse.ts
 models/DrivingLicense.ts
 models/ErrorBody.ts
 models/EvaluationResponse.ts
-models/EvaluationValueRequest.ts
-models/EvaluationValueResponse.ts
 models/GitInfoResponse.ts
 models/IngestBatchResponse.ts
 models/IngestResultResponse.ts
@@ -51,6 +49,8 @@ models/IrrigationSettingsResponse.ts
 models/IrrigationSettingsUpdateRequest.ts
 models/ListResponseCommentResponse.ts
 models/ListResponseCommentResponseDataInner.ts
+models/ListResponsePlanInListResponse.ts
+models/ListResponsePlanInListResponseDataInner.ts
 models/ListResponseRegionResponse.ts
 models/ListResponseRegionResponseDataInner.ts
 models/ListResponseSensorDataResponse.ts
@@ -65,8 +65,6 @@ models/ListResponseUserResponse.ts
 models/ListResponseUserResponseDataInner.ts
 models/ListResponseVehicleResponse.ts
 models/ListResponseVehicleResponseDataInner.ts
-models/ListResponseWateringPlanInListResponse.ts
-models/ListResponseWateringPlanInListResponseDataInner.ts
 models/LorawanCredentialsRequest.ts
 models/LorawanInfoResponse.ts
 models/MapInfoResponse.ts
@@ -85,6 +83,12 @@ models/OrganizationSettingsResponse.ts
 models/OrganizationSettingsUpdateRequest.ts
 models/OrganizationUpdateRequest.ts
 models/PaginationResponse.ts
+models/PlanCreateRequest.ts
+models/PlanInListResponse.ts
+models/PlanResponse.ts
+models/PlanRouteRequest.ts
+models/PlanStatus.ts
+models/PlanUpdateRequest.ts
 models/PluginCreateRequest.ts
 models/PluginFrontendDto.ts
 models/PluginFrontendDtoOneOf.ts
@@ -97,14 +101,12 @@ models/PluginSensorCreateRequest.ts
 models/PluginUpdateRequest.ts
 models/PluginViewResponse.ts
 models/ReadinessResponse.ts
-models/RefillPointResponse.ts
 models/RegionEvaluationResponse.ts
 models/RegionResponse.ts
 models/RoleCreateRequest.ts
 models/RoleResponse.ts
 models/RoleUpdateRequest.ts
 models/RouteGeometry.ts
-models/RouteRequest.ts
 models/RouteResponse.ts
 models/SensorAbilityUnitDto.ts
 models/SensorCoordinate.ts
@@ -139,6 +141,8 @@ models/SoilMoistureSeriesResponse.ts
 models/SoilMoistureThresholdResponse.ts
 models/StartPointRequest.ts
 models/StartPointResponse.ts
+models/StationVisitResponse.ts
+models/StopOutcomeDto.ts
 models/TargetRefDto.ts
 models/TransferRequest.ts
 models/TreeClusterCreateRequest.ts
@@ -172,11 +176,6 @@ models/VersionInfoResponse.ts
 models/ViewTicketRedeemRequest.ts
 models/ViewTicketRedeemResponse.ts
 models/ViewTicketUserResponse.ts
-models/WateringPlanCreateRequest.ts
-models/WateringPlanInListResponse.ts
-models/WateringPlanResponse.ts
-models/WateringPlanStatus.ts
-models/WateringPlanUpdateRequest.ts
 models/WateringStatus.ts
 models/index.ts
 runtime.ts

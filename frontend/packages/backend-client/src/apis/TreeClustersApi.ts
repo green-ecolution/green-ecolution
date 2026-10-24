@@ -83,6 +83,7 @@ export interface ListClustersRequest {
     perPage?: number;
     wateringStatus?: Array<WateringStatus>;
     region?: Array<string>;
+    id?: Array<string>;
     soilCondition?: Array<SoilCondition>;
     query?: string | null;
     sort?: ListClustersSortEnum;
@@ -406,7 +407,7 @@ export class TreeClustersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a paginated list of all tree clusters with a compact representation including region info. Optional filter parameters (watering_status, region) narrow the result; array parameters are repeatable. Sortable by name, moisture, trees or last_watered.
+     * Returns a paginated list of all tree clusters with a compact representation including region info. Optional filter parameters (watering_status, region, id) narrow the result; array parameters are repeatable. Sortable by name, moisture, trees or last_watered.
      * List all tree clusters
      */
     async listClustersRaw(requestParameters: ListClustersRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListResponseTreeClusterInListResponse>> {
@@ -426,6 +427,10 @@ export class TreeClustersApi extends runtime.BaseAPI {
 
         if (requestParameters['region'] != null) {
             queryParameters['region'] = requestParameters['region'];
+        }
+
+        if (requestParameters['id'] != null) {
+            queryParameters['id'] = requestParameters['id'];
         }
 
         if (requestParameters['soilCondition'] != null) {
@@ -460,7 +465,7 @@ export class TreeClustersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a paginated list of all tree clusters with a compact representation including region info. Optional filter parameters (watering_status, region) narrow the result; array parameters are repeatable. Sortable by name, moisture, trees or last_watered.
+     * Returns a paginated list of all tree clusters with a compact representation including region info. Optional filter parameters (watering_status, region, id) narrow the result; array parameters are repeatable. Sortable by name, moisture, trees or last_watered.
      * List all tree clusters
      */
     async listClusters(requestParameters: ListClustersRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ListResponseTreeClusterInListResponse> {

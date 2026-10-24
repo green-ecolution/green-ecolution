@@ -15,7 +15,7 @@ import { useTranslation } from 'react-i18next'
 import DeleteSection from '../treecluster/DeleteSection'
 import { Can } from '@/lib/auth/Can'
 import { useHasPermission } from '@/lib/auth/useHasPermission'
-import { wateringPlanApi } from '@/api/backendApi'
+import { planApi } from '@/api/backendApi'
 import { useWateringPlanForm } from '@/hooks/form/useWateringPlanForm'
 import { WateringPlanForm } from '@/schema/wateringPlanSchema'
 import { FormProvider, SubmitHandler } from 'react-hook-form'
@@ -98,9 +98,7 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
   }
 
   const handleDeleteWateringPlan = () => {
-    return wateringPlanApi.deleteWateringPlan({
-      wateringPlanId,
-    })
+    return planApi.deletePlan({ planId: wateringPlanId })
   }
 
   return (

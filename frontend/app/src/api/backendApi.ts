@@ -9,6 +9,7 @@ import {
   IrrigationApi,
   ModulesApi,
   OrganizationsApi,
+  PlansApi,
   PluginsApi,
   RegionsApi,
   RolesApi,
@@ -19,7 +20,6 @@ import {
   TreeClustersApi,
   UsersApi,
   VehiclesApi,
-  WateringPlansApi,
 } from '@green-ecolution/backend-client'
 import { getAuthSession } from '@/lib/auth/session'
 
@@ -89,8 +89,8 @@ export const regionApi = new RegionsApi(config)
 export const sensorApi = new SensorsApi(config)
 export const vehicleApi = new VehiclesApi(config)
 export const pluginApi = new PluginsApi(config)
-export const wateringPlanApi = new WateringPlansApi(config)
-export const wateringPlanPreviewApi = new WateringPlansApi(silentConfig)
+export const planApi = new PlansApi(config)
+export const planPreviewApi = new PlansApi(silentConfig)
 export const routingApi = new RoutingApi(config)
 export const roleApi = new RolesApi(config)
 export const organizationApi = new OrganizationsApi(config)
@@ -114,10 +114,16 @@ export type { SensorDataResponse as SensorData } from '@green-ecolution/backend-
 export type { VehicleResponse as Vehicle } from '@green-ecolution/backend-client'
 export type { VehicleCreateRequest as VehicleCreate } from '@green-ecolution/backend-client'
 export type { VehicleUpdateRequest as VehicleUpdate } from '@green-ecolution/backend-client'
-export type { WateringPlanResponse as WateringPlan } from '@green-ecolution/backend-client'
-export type { WateringPlanInListResponse as WateringPlanInList } from '@green-ecolution/backend-client'
-export type { WateringPlanCreateRequest as WateringPlanCreate } from '@green-ecolution/backend-client'
-export type { WateringPlanUpdateRequest as WateringPlanUpdate } from '@green-ecolution/backend-client'
+export type {
+  EvaluationValue,
+  WateringPlan,
+  WateringPlanCreate,
+  WateringPlanInList,
+  WateringPlanList,
+  WateringPlanUpdate,
+  WateringRoute,
+} from './irrigationPlans'
+export { PlanStatus as WateringPlanStatus } from '@green-ecolution/backend-client'
 export type { UserResponse as User } from '@green-ecolution/backend-client'
 export type { RegionResponse as Region } from '@green-ecolution/backend-client'
 export type { EvaluationResponse as Evaluation } from '@green-ecolution/backend-client'
@@ -128,7 +134,6 @@ export type { ServicesInfoResponse as ServicesInfo } from '@green-ecolution/back
 export type { DataStatisticsResponse as DataStatistics } from '@green-ecolution/backend-client'
 export type { NearestTreeListResponse as NearestTreeList } from '@green-ecolution/backend-client'
 export type { TreeWithDistanceResponse as TreeWithDistance } from '@green-ecolution/backend-client'
-export type { EvaluationValueResponse as EvaluationValue } from '@green-ecolution/backend-client'
 export type { PaginationResponse as Pagination } from '@green-ecolution/backend-client'
 export type { RoleResponse as Role } from '@green-ecolution/backend-client'
 export type { RoleCreateRequest as RoleCreate } from '@green-ecolution/backend-client'

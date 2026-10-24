@@ -13,13 +13,6 @@
  */
 
 import { mapValues } from '../runtime';
-import type { RefillPointResponse } from './RefillPointResponse';
-import {
-    RefillPointResponseFromJSON,
-    RefillPointResponseFromJSONTyped,
-    RefillPointResponseToJSON,
-    RefillPointResponseToJSONTyped,
-} from './RefillPointResponse';
 import type { RouteGeometry } from './RouteGeometry';
 import {
     RouteGeometryFromJSON,
@@ -27,9 +20,16 @@ import {
     RouteGeometryToJSON,
     RouteGeometryToJSONTyped,
 } from './RouteGeometry';
+import type { StationVisitResponse } from './StationVisitResponse';
+import {
+    StationVisitResponseFromJSON,
+    StationVisitResponseFromJSONTyped,
+    StationVisitResponseToJSON,
+    StationVisitResponseToJSONTyped,
+} from './StationVisitResponse';
 
 /**
- * Optimized watering route (persisted for a plan, or a preview).
+ * Optimized route (persisted for a plan, or a preview).
  * @export
  * @interface RouteResponse
  */
@@ -53,23 +53,23 @@ export interface RouteResponse {
      */
     geometry: RouteGeometry;
     /**
-     * Number of water refill stops on the route.
+     * Number of station stops on the route.
      * @type {number}
      * @memberof RouteResponse
      */
     refillCount: number;
     /**
-     * Water refill stations the route actually visits, in visit order.
-     * @type {Array<RefillPointResponse>}
+     * Stations the route actually visits, in visit order.
+     * @type {Array<StationVisitResponse>}
      * @memberof RouteResponse
      */
-    refillPoints: Array<RefillPointResponse>;
+    stationVisits: Array<StationVisitResponse>;
     /**
-     * Total water demand of all routed clusters in liters.
+     * Summed demand of all routed stops, in the unit of the module's capacity kind.
      * @type {number}
      * @memberof RouteResponse
      */
-    totalWaterRequired: number;
+    totalDemand: number;
 }
 
 /**
@@ -80,8 +80,8 @@ export function instanceOfRouteResponse(value: object): value is RouteResponse {
     if (!('duration' in value) || value['duration'] === undefined) return false;
     if (!('geometry' in value) || value['geometry'] === undefined) return false;
     if (!('refillCount' in value) || value['refillCount'] === undefined) return false;
-    if (!('refillPoints' in value) || value['refillPoints'] === undefined) return false;
-    if (!('totalWaterRequired' in value) || value['totalWaterRequired'] === undefined) return false;
+    if (!('stationVisits' in value) || value['stationVisits'] === undefined) return false;
+    if (!('totalDemand' in value) || value['totalDemand'] === undefined) return false;
     return true;
 }
 
@@ -99,8 +99,8 @@ export function RouteResponseFromJSONTyped(json: any, ignoreDiscriminator: boole
         'duration': json['duration'],
         'geometry': RouteGeometryFromJSON(json['geometry']),
         'refillCount': json['refill_count'],
-        'refillPoints': ((json['refill_points'] as Array<any>).map(RefillPointResponseFromJSON)),
-        'totalWaterRequired': json['total_water_required'],
+        'stationVisits': ((json['station_visits'] as Array<any>).map(StationVisitResponseFromJSON)),
+        'totalDemand': json['total_demand'],
     };
 }
 
@@ -119,8 +119,8 @@ export function RouteResponseToJSONTyped(value?: RouteResponse | null, ignoreDis
         'duration': value['duration'],
         'geometry': RouteGeometryToJSON(value['geometry']),
         'refill_count': value['refillCount'],
-        'refill_points': ((value['refillPoints'] as Array<any>).map(RefillPointResponseToJSON)),
-        'total_water_required': value['totalWaterRequired'],
+        'station_visits': ((value['stationVisits'] as Array<any>).map(StationVisitResponseToJSON)),
+        'total_demand': value['totalDemand'],
     };
 }
 

@@ -14,46 +14,46 @@
 
 import { mapValues } from '../runtime';
 /**
- * Water refill station an optimized route visits.
+ * Station an optimized route visits to restore its capacity.
  * @export
- * @interface RefillPointResponse
+ * @interface StationVisitResponse
  */
-export interface RefillPointResponse {
+export interface StationVisitResponse {
     /**
      * Latitude of the station (WGS84).
      * @type {number}
-     * @memberof RefillPointResponse
+     * @memberof StationVisitResponse
      */
     lat: number;
     /**
      * Longitude of the station (WGS84).
      * @type {number}
-     * @memberof RefillPointResponse
+     * @memberof StationVisitResponse
      */
     lon: number;
     /**
-     * Name of the refill station at route computation time.
+     * Name of the station at route computation time.
      * @type {string}
-     * @memberof RefillPointResponse
+     * @memberof StationVisitResponse
      */
     name: string;
 }
 
 /**
- * Check if a given object implements the RefillPointResponse interface.
+ * Check if a given object implements the StationVisitResponse interface.
  */
-export function instanceOfRefillPointResponse(value: object): value is RefillPointResponse {
+export function instanceOfStationVisitResponse(value: object): value is StationVisitResponse {
     if (!('lat' in value) || value['lat'] === undefined) return false;
     if (!('lon' in value) || value['lon'] === undefined) return false;
     if (!('name' in value) || value['name'] === undefined) return false;
     return true;
 }
 
-export function RefillPointResponseFromJSON(json: any): RefillPointResponse {
-    return RefillPointResponseFromJSONTyped(json, false);
+export function StationVisitResponseFromJSON(json: any): StationVisitResponse {
+    return StationVisitResponseFromJSONTyped(json, false);
 }
 
-export function RefillPointResponseFromJSONTyped(json: any, ignoreDiscriminator: boolean): RefillPointResponse {
+export function StationVisitResponseFromJSONTyped(json: any, ignoreDiscriminator: boolean): StationVisitResponse {
     if (json == null) {
         return json;
     }
@@ -65,11 +65,11 @@ export function RefillPointResponseFromJSONTyped(json: any, ignoreDiscriminator:
     };
 }
 
-export function RefillPointResponseToJSON(json: any): RefillPointResponse {
-    return RefillPointResponseToJSONTyped(json, false);
+export function StationVisitResponseToJSON(json: any): StationVisitResponse {
+    return StationVisitResponseToJSONTyped(json, false);
 }
 
-export function RefillPointResponseToJSONTyped(value?: RefillPointResponse | null, ignoreDiscriminator: boolean = false): any {
+export function StationVisitResponseToJSONTyped(value?: StationVisitResponse | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }

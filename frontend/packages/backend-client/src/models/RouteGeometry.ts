@@ -14,7 +14,7 @@
 
 import { mapValues } from '../runtime';
 /**
- * GeoJSON LineString geometry of an optimized watering route.
+ * GeoJSON LineString geometry of an optimized route.
  * @export
  * @interface RouteGeometry
  */

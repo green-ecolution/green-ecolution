@@ -72,7 +72,7 @@
           "Tree Clusters"
         ],
         "summary": "List all tree clusters",
-        "description": "Returns a paginated list of all tree clusters with a compact representation including region info. Optional filter parameters (watering_status, region) narrow the result; array parameters are repeatable. Sortable by name, moisture, trees or last_watered.",
+        "description": "Returns a paginated list of all tree clusters with a compact representation including region info. Optional filter parameters (watering_status, region, id) narrow the result; array parameters are repeatable. Sortable by name, moisture, trees or last_watered.",
         "operationId": "listClusters",
         "parameters": [
           {
@@ -116,6 +116,19 @@
             "name": "region",
             "in": "query",
             "description": "Repeatable: `?region=<uuid>&region=<uuid>`.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "uuid"
+              }
+            }
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "description": "Repeatable: `?id=<uuid>&id=<uuid>`.",
             "required": false,
             "schema": {
               "type": "array",
@@ -2494,6 +2507,898 @@
           },
           "401": {
             "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/plans": {
+      "get": {
+        "tags": [
+          "Plans"
+        ],
+        "summary": "List the plans of a module",
+        "description": "Returns a paginated list of one module's plans with embedded vehicles. Plans of organizations in which the module is switched off are left out. Optional filter parameter (status) narrows the result; the array parameter is repeatable.",
+        "operationId": "listPlans",
+        "parameters": [
+          {
+            "name": "module",
+            "in": "query",
+            "description": "Required: plans always belong to exactly one module.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "irrigation"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number to retrieve (1-based).",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "default": 1,
+              "minimum": 1
+            },
+            "example": 1
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "description": "Number of items per page.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1
+            },
+            "example": 25
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Repeatable: `?status=planned&status=active`.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/PlanStatus"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of plans",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListResponse_PlanInListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing or malformed module",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "No module with this key plans tours (code `module.unknown`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Plans"
+        ],
+        "summary": "Create a plan",
+        "description": "Creates a new plan of a module with its stops, vehicles, and user assignments.",
+        "operationId": "createPlan",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlanCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Plan created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing permission, or the module is switched off in the organization (code `module.disabled`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A stop is unknown (code `plan.unknown_stop`) or outside the plan's organization (code `organization_mismatch.stops_vs_plan`), a vehicle lacks the module's capacity kind (code `vehicle.capacity_missing`), or the module is unknown (code `module.unknown`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/plans/route/preview": {
+      "post": {
+        "tags": [
+          "Plans"
+        ],
+        "summary": "Preview a route",
+        "description": "Calculates and previews an optimized route over a module's stops without creating a plan.",
+        "operationId": "previewPlanRoute",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlanRouteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Route preview",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RouteResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing permission, or the module is switched off in the organization (code `module.disabled`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Route problem rejected by the optimizer, or a stop or vehicle does not fit the plan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Routing engine unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Routing feature is disabled (code `feature.routing_disabled`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/plans/{plan_id}": {
+      "get": {
+        "tags": [
+          "Plans"
+        ],
+        "summary": "Get a plan",
+        "description": "Returns full plan detail including the per-stop outcomes.",
+        "operationId": "getPlan",
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "description": "Plan ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Plan found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Plan not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Plans"
+        ],
+        "summary": "Update a plan",
+        "description": "Updates the details or status of an existing plan. Details only change while the plan is planned; repeating the current status changes nothing.",
+        "operationId": "updatePlan",
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "description": "Plan ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlanUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Plan updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input or status transition (codes `plan.*`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing permission, or the module is switched off in the organization (code `module.disabled`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Plan not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A stop is unknown (code `plan.unknown_stop`) or outside the plan's organization (code `organization_mismatch.stops_vs_plan`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Plans"
+        ],
+        "summary": "Delete a plan",
+        "description": "Permanently deletes a plan.",
+        "operationId": "deletePlan",
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "description": "Plan ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Plan deleted"
+          },
+          "403": {
+            "description": "Missing permission, or the module is switched off in the organization (code `module.disabled`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Plan not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/plans/{plan_id}/comments": {
+      "get": {
+        "tags": [
+          "Comments"
+        ],
+        "summary": "List comments on a plan",
+        "description": "Returns the comments of a plan, newest first. Requires read permission on the plan resource of the plan's module in the plan's organization.",
+        "operationId": "listPlanComments",
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "description": "Plan ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number to retrieve (1-based).",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "default": 1,
+              "minimum": 1
+            },
+            "example": 1
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "description": "Number of items per page.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1
+            },
+            "example": 25
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of comments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListResponse_CommentResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Plan not found or not visible",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Comments"
+        ],
+        "summary": "Comment on a plan",
+        "description": "Adds a comment to a plan. Requires read permission on the plan resource of the plan's module in the plan's organization — anyone who may see the plan may annotate it.",
+        "operationId": "createPlanComment",
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "description": "Plan ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCommentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Comment created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Empty or overlong comment text",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Plan not found or not visible",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/plans/{plan_id}/comments/{comment_id}": {
+      "put": {
+        "tags": [
+          "Comments"
+        ],
+        "summary": "Edit a comment on a plan",
+        "description": "Replaces a comment's text. Only the comment's author may edit it.",
+        "operationId": "updatePlanComment",
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "description": "Plan ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "comment_id",
+            "in": "path",
+            "description": "Comment ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCommentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Comment updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Empty or overlong comment text",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not the author",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Plan or comment not found, or the comment belongs to another plan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Comments"
+        ],
+        "summary": "Delete a comment on a plan",
+        "description": "Removes a comment. Only the comment's author may delete it.",
+        "operationId": "deletePlanComment",
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "description": "Plan ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "comment_id",
+            "in": "path",
+            "description": "Comment ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Comment deleted"
+          },
+          "403": {
+            "description": "Not the author",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Plan or comment not found, or the comment belongs to another plan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/plans/{plan_id}/route": {
+      "get": {
+        "tags": [
+          "Plans"
+        ],
+        "summary": "Get the optimized route of a plan",
+        "description": "Returns the persisted optimized route as GeoJSON LineString geometry with metrics.",
+        "operationId": "getPlanRoute",
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "description": "Plan ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Optimized route",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RouteResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Plan not found or has no route",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Routing feature is disabled (code `feature.routing_disabled`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/plans/{plan_id}/route/gpx": {
+      "get": {
+        "tags": [
+          "Plans"
+        ],
+        "summary": "Download GPX file",
+        "description": "Renders the optimized route of a plan as a GPX track.",
+        "operationId": "getPlanGpx",
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "description": "Plan ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "GPX file",
+            "content": {
+              "application/gpx+xml": {}
+            }
+          },
+          "404": {
+            "description": "Plan not found or has no route",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Routing feature is disabled (code `feature.routing_disabled`)",
             "content": {
               "application/json": {
                 "schema": {
@@ -5575,6 +6480,450 @@
         }
       }
     },
+    "/v1/targets/{module}/{kind}/{target_id}/comments": {
+      "get": {
+        "tags": [
+          "Comments"
+        ],
+        "summary": "List comments on a target",
+        "description": "Returns the comments of a commentable target of any module, newest first. Requires read permission on the target's resource in the target's organization.",
+        "operationId": "listTargetComments",
+        "parameters": [
+          {
+            "name": "module",
+            "in": "path",
+            "description": "Module key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "kind",
+            "in": "path",
+            "description": "Target kind",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "target_id",
+            "in": "path",
+            "description": "Target ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number to retrieve (1-based).",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "default": 1,
+              "minimum": 1
+            },
+            "example": 1
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "description": "Number of items per page.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1
+            },
+            "example": 25
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of comments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListResponse_CommentResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The target's module is disabled (code `module.disabled`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Target not found or not visible",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The target kind takes no comments (code `target.not_accepted`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Comments"
+        ],
+        "summary": "Comment on a target",
+        "description": "Adds a comment to a commentable target of any module. Requires read permission on the target's resource in the target's organization: anyone who may see the target may annotate it.",
+        "operationId": "createTargetComment",
+        "parameters": [
+          {
+            "name": "module",
+            "in": "path",
+            "description": "Module key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "kind",
+            "in": "path",
+            "description": "Target kind",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "target_id",
+            "in": "path",
+            "description": "Target ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCommentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Comment created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Empty or overlong comment text",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The target's module is disabled (code `module.disabled`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Target not found or not visible",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The target kind takes no comments (code `target.not_accepted`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/targets/{module}/{kind}/{target_id}/comments/{comment_id}": {
+      "put": {
+        "tags": [
+          "Comments"
+        ],
+        "summary": "Edit a comment on a target",
+        "description": "Replaces a comment's text. Only the comment's author may edit it.",
+        "operationId": "updateTargetComment",
+        "parameters": [
+          {
+            "name": "module",
+            "in": "path",
+            "description": "Module key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "kind",
+            "in": "path",
+            "description": "Target kind",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "target_id",
+            "in": "path",
+            "description": "Target ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "comment_id",
+            "in": "path",
+            "description": "Comment ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCommentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Comment updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Empty or overlong comment text",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not the author, or the target's module is disabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Target or comment not found, or the comment belongs to another target",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The target kind takes no comments (code `target.not_accepted`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Comments"
+        ],
+        "summary": "Delete a comment on a target",
+        "description": "Removes a comment. Only the comment's author may delete it.",
+        "operationId": "deleteTargetComment",
+        "parameters": [
+          {
+            "name": "module",
+            "in": "path",
+            "description": "Module key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "kind",
+            "in": "path",
+            "description": "Target kind",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "target_id",
+            "in": "path",
+            "description": "Target ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "comment_id",
+            "in": "path",
+            "description": "Comment ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Comment deleted"
+          },
+          "403": {
+            "description": "Not the author, or the target's module is disabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Target or comment not found, or the comment belongs to another target",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The target kind takes no comments (code `target.not_accepted`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/trees": {
       "get": {
         "tags": [
@@ -7689,818 +9038,6 @@
           }
         }
       }
-    },
-    "/v1/watering-plans": {
-      "get": {
-        "tags": [
-          "Watering Plans"
-        ],
-        "summary": "List all watering plans",
-        "description": "Returns a paginated list of watering plans with embedded vehicles and clusters. Optional filter parameter (status) narrows the result; the array parameter is repeatable.",
-        "operationId": "listWateringPlans",
-        "parameters": [
-          {
-            "name": "page",
-            "in": "query",
-            "description": "Page number to retrieve (1-based).",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int64",
-              "default": 1,
-              "minimum": 1
-            },
-            "example": 1
-          },
-          {
-            "name": "per_page",
-            "in": "query",
-            "description": "Number of items per page.",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int64",
-              "default": 25,
-              "maximum": 100,
-              "minimum": 1
-            },
-            "example": 25
-          },
-          {
-            "name": "status",
-            "in": "query",
-            "description": "Repeatable: `?status=planned&status=active`.",
-            "required": false,
-            "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/components/schemas/WateringPlanStatus"
-              }
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Paginated list of watering plans",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ListResponse_WateringPlanInListResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "Watering Plans"
-        ],
-        "summary": "Create a watering plan",
-        "description": "Creates a new watering plan with clusters, vehicles, and user assignments.",
-        "operationId": "createWateringPlan",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/WateringPlanCreateRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "description": "Watering plan created",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WateringPlanResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid input",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "A selected cluster is outside the plan's organization (code `organization_mismatch.clusters_vs_plan`)",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/v1/watering-plans/route/preview": {
-      "post": {
-        "tags": [
-          "Watering Plans"
-        ],
-        "summary": "Preview route",
-        "description": "Calculates and previews an optimized watering route without creating a plan.",
-        "operationId": "previewRoute",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RouteRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Route preview",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/RouteResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Route problem rejected by the optimizer",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          },
-          "502": {
-            "description": "Routing engine unavailable",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Routing feature is disabled (code `feature.routing_disabled`)",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/v1/watering-plans/{watering_plan_id}": {
-      "get": {
-        "tags": [
-          "Watering Plans"
-        ],
-        "summary": "Get a watering plan",
-        "description": "Returns full watering plan detail including evaluation values.",
-        "operationId": "getWateringPlan",
-        "parameters": [
-          {
-            "name": "watering_plan_id",
-            "in": "path",
-            "description": "Watering plan ID",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Watering plan found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WateringPlanResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Watering plan not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "Watering Plans"
-        ],
-        "summary": "Update a watering plan",
-        "description": "Updates the details or status of an existing watering plan.",
-        "operationId": "updateWateringPlan",
-        "parameters": [
-          {
-            "name": "watering_plan_id",
-            "in": "path",
-            "description": "Watering plan ID",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/WateringPlanUpdateRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Watering plan updated",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WateringPlanResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Watering plan not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "A selected cluster is outside the plan's organization (code `organization_mismatch.clusters_vs_plan`)",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Watering Plans"
-        ],
-        "summary": "Delete a watering plan",
-        "description": "Permanently deletes a watering plan.",
-        "operationId": "deleteWateringPlan",
-        "parameters": [
-          {
-            "name": "watering_plan_id",
-            "in": "path",
-            "description": "Watering plan ID",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Watering plan deleted"
-          },
-          "404": {
-            "description": "Watering plan not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/v1/watering-plans/{watering_plan_id}/comments": {
-      "get": {
-        "tags": [
-          "Comments"
-        ],
-        "summary": "List comments on a watering plan",
-        "description": "Returns the comments of a watering plan, newest first. Requires `watering_plan:read` in the plan's organization.",
-        "operationId": "listWateringPlanComments",
-        "parameters": [
-          {
-            "name": "watering_plan_id",
-            "in": "path",
-            "description": "Watering plan ID",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "description": "Page number to retrieve (1-based).",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int64",
-              "default": 1,
-              "minimum": 1
-            },
-            "example": 1
-          },
-          {
-            "name": "per_page",
-            "in": "query",
-            "description": "Number of items per page.",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int64",
-              "default": 25,
-              "maximum": 100,
-              "minimum": 1
-            },
-            "example": 25
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Paginated list of comments",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ListResponse_CommentResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Watering plan not found or not visible",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "Comments"
-        ],
-        "summary": "Comment on a watering plan",
-        "description": "Adds a comment to a watering plan. Requires `watering_plan:read` in the plan's organization — anyone who may see the plan may annotate it.",
-        "operationId": "createWateringPlanComment",
-        "parameters": [
-          {
-            "name": "watering_plan_id",
-            "in": "path",
-            "description": "Watering plan ID",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateCommentRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "description": "Comment created",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CommentResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Empty or overlong comment text",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Watering plan not found or not visible",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/v1/watering-plans/{watering_plan_id}/comments/{comment_id}": {
-      "put": {
-        "tags": [
-          "Comments"
-        ],
-        "summary": "Edit a comment on a watering plan",
-        "description": "Replaces a comment's text. Only the comment's author may edit it.",
-        "operationId": "updateWateringPlanComment",
-        "parameters": [
-          {
-            "name": "watering_plan_id",
-            "in": "path",
-            "description": "Watering plan ID",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
-            "name": "comment_id",
-            "in": "path",
-            "description": "Comment ID",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateCommentRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Comment updated",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CommentResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Empty or overlong comment text",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Not the author",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Watering plan or comment not found, or the comment belongs to another plan",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Comments"
-        ],
-        "summary": "Delete a comment on a watering plan",
-        "description": "Removes a comment. Only the comment's author may delete it.",
-        "operationId": "deleteWateringPlanComment",
-        "parameters": [
-          {
-            "name": "watering_plan_id",
-            "in": "path",
-            "description": "Watering plan ID",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
-            "name": "comment_id",
-            "in": "path",
-            "description": "Comment ID",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Comment deleted"
-          },
-          "403": {
-            "description": "Not the author",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Watering plan or comment not found, or the comment belongs to another plan",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/v1/watering-plans/{watering_plan_id}/route": {
-      "get": {
-        "tags": [
-          "Watering Plans"
-        ],
-        "summary": "Get the optimized route of a watering plan",
-        "description": "Returns the persisted optimized route as GeoJSON LineString geometry with metrics.",
-        "operationId": "getWateringPlanRoute",
-        "parameters": [
-          {
-            "name": "watering_plan_id",
-            "in": "path",
-            "description": "Watering plan ID",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Optimized route",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/RouteResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Plan not found or has no route",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Routing feature is disabled (code `feature.routing_disabled`)",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/v1/watering-plans/{watering_plan_id}/route/gpx": {
-      "get": {
-        "tags": [
-          "Watering Plans"
-        ],
-        "summary": "Download GPX file",
-        "description": "Renders the optimized watering route of a plan as a GPX track.",
-        "operationId": "getGpxFile",
-        "parameters": [
-          {
-            "name": "watering_plan_id",
-            "in": "path",
-            "description": "Watering plan ID",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "GPX file",
-            "content": {
-              "application/gpx+xml": {}
-            }
-          },
-          "404": {
-            "description": "Plan not found or has no route",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Routing feature is disabled (code `feature.routing_disabled`)",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          }
-        }
-      }
     }
   },
   "components": {
@@ -9126,66 +9663,6 @@
           }
         }
       },
-      "EvaluationValueRequest": {
-        "type": "object",
-        "description": "Evaluation input for a single tree cluster within a watering plan.",
-        "required": [
-          "watering_plan_id",
-          "tree_cluster_id",
-          "consumed_water"
-        ],
-        "properties": {
-          "consumed_water": {
-            "type": "number",
-            "format": "double",
-            "description": "Amount of water consumed for this cluster in liters.",
-            "example": 5000.0,
-            "minimum": 0
-          },
-          "tree_cluster_id": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Identifier of the tree cluster that was evaluated.",
-            "example": "0190a8e9-7c4f-7000-8000-000000000000"
-          },
-          "watering_plan_id": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Identifier of the watering plan this evaluation belongs to.",
-            "example": "0190a8e9-7c4f-7000-8000-000000000000"
-          }
-        }
-      },
-      "EvaluationValueResponse": {
-        "type": "object",
-        "description": "Evaluation result for a single tree cluster within a watering plan.",
-        "required": [
-          "watering_plan_id",
-          "tree_cluster_id",
-          "consumed_water"
-        ],
-        "properties": {
-          "consumed_water": {
-            "type": "number",
-            "format": "double",
-            "description": "Amount of water consumed for this cluster in liters.",
-            "example": 5000.0,
-            "minimum": 0
-          },
-          "tree_cluster_id": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Identifier of the tree cluster that was evaluated.",
-            "example": "0190a8e9-7c4f-7000-8000-000000000000"
-          },
-          "watering_plan_id": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Identifier of the watering plan this evaluation belongs to.",
-            "example": "0190a8e9-7c4f-7000-8000-000000000000"
-          }
-        }
-      },
       "GitInfoResponse": {
         "type": "object",
         "required": [
@@ -9393,6 +9870,153 @@
                 "id": {
                   "type": "string",
                   "example": "0199a8e9-7c4f-7000-8000-000000000000"
+                }
+              }
+            }
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationResponse"
+          }
+        }
+      },
+      "ListResponse_PlanInListResponse": {
+        "type": "object",
+        "required": [
+          "data",
+          "pagination"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "description": "Compact representation of a plan used in list endpoints.",
+              "required": [
+                "id",
+                "module",
+                "created_at",
+                "updated_at",
+                "date",
+                "description",
+                "status",
+                "distance",
+                "total_demand",
+                "cancellation_note",
+                "transporter",
+                "transporter_capacity_used",
+                "stops",
+                "user_ids"
+              ],
+              "properties": {
+                "additional_information": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "description": "Arbitrary additional metadata from the provider."
+                },
+                "cancellation_note": {
+                  "type": "string",
+                  "description": "Reason for cancellation, empty if not cancelled.",
+                  "example": "Regen vorhergesagt"
+                },
+                "created_at": {
+                  "type": "string",
+                  "description": "Timestamp when the plan was created (RFC 3339).",
+                  "example": "2024-08-10T09:00:00+00:00"
+                },
+                "date": {
+                  "type": "string",
+                  "description": "Scheduled date and time of the run (RFC 3339).",
+                  "example": "2024-08-15T06:00:00+00:00"
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Human-readable description of the plan.",
+                  "example": "Bewässerungsplan Stadtpark Nord"
+                },
+                "distance": {
+                  "type": "number",
+                  "format": "double",
+                  "description": "Total route distance in meters.",
+                  "example": 12500.0,
+                  "minimum": 0
+                },
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "Unique identifier of the plan.",
+                  "example": "0190a8e9-7c4f-7000-8000-000000000000"
+                },
+                "module": {
+                  "type": "string",
+                  "description": "Module the plan belongs to.",
+                  "example": "irrigation"
+                },
+                "provider": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Name of the external data provider that supplied this record.",
+                  "example": "green_ecolution"
+                },
+                "status": {
+                  "$ref": "#/components/schemas/PlanStatus",
+                  "description": "Current status of the plan."
+                },
+                "stops": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "description": "Stops of the plan, as the plan's module identifies them.",
+                  "example": [
+                    "0190a8e9-7c4f-7000-8000-000000000000"
+                  ]
+                },
+                "total_demand": {
+                  "type": "number",
+                  "format": "double",
+                  "description": "Summed demand of all stops, in the unit of the module's capacity kind.",
+                  "example": 24000.0,
+                  "minimum": 0
+                },
+                "trailer": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/VehicleResponse",
+                      "description": "The trailer vehicle assigned to this plan, if any."
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "transporter": {
+                  "$ref": "#/components/schemas/VehicleResponse",
+                  "description": "The transporter vehicle assigned to this plan."
+                },
+                "transporter_capacity_used": {
+                  "type": "boolean",
+                  "description": "Whether the transporter's own capacity counts towards the route capacity.\n`false` only occurs with a trailer.",
+                  "example": true
+                },
+                "updated_at": {
+                  "type": "string",
+                  "description": "Timestamp when the plan was last updated (RFC 3339).",
+                  "example": "2024-08-14T16:30:00+00:00"
+                },
+                "user_ids": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "List of user identifiers assigned to execute this plan.",
+                  "example": [
+                    "user-uuid-1"
+                  ]
                 }
               }
             }
@@ -10212,143 +10836,6 @@
           }
         }
       },
-      "ListResponse_WateringPlanInListResponse": {
-        "type": "object",
-        "required": [
-          "data",
-          "pagination"
-        ],
-        "properties": {
-          "data": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "description": "Compact representation of a watering plan used in list endpoints.",
-              "required": [
-                "id",
-                "created_at",
-                "updated_at",
-                "date",
-                "description",
-                "status",
-                "distance",
-                "total_water_required",
-                "cancellation_note",
-                "transporter",
-                "transporter_tank_used",
-                "treeclusters",
-                "user_ids"
-              ],
-              "properties": {
-                "additional_information": {
-                  "type": [
-                    "object",
-                    "null"
-                  ],
-                  "description": "Arbitrary additional metadata from the provider."
-                },
-                "cancellation_note": {
-                  "type": "string",
-                  "description": "Reason for cancellation, empty if not cancelled.",
-                  "example": "Regen vorhergesagt"
-                },
-                "created_at": {
-                  "type": "string",
-                  "description": "Timestamp when the watering plan was created (RFC 3339).",
-                  "example": "2024-08-10T09:00:00+00:00"
-                },
-                "date": {
-                  "type": "string",
-                  "description": "Scheduled date and time of the watering run (RFC 3339).",
-                  "example": "2024-08-15T06:00:00+00:00"
-                },
-                "description": {
-                  "type": "string",
-                  "description": "Human-readable description of the watering plan.",
-                  "example": "Bewässerungsplan Stadtpark Nord"
-                },
-                "distance": {
-                  "type": "number",
-                  "format": "double",
-                  "description": "Total route distance in meters.",
-                  "example": 12500.0,
-                  "minimum": 0
-                },
-                "id": {
-                  "type": "string",
-                  "format": "uuid",
-                  "description": "Unique identifier of the watering plan.",
-                  "example": "0190a8e9-7c4f-7000-8000-000000000000"
-                },
-                "provider": {
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "description": "Name of the external data provider that supplied this record.",
-                  "example": "green_ecolution"
-                },
-                "status": {
-                  "$ref": "#/components/schemas/WateringPlanStatus",
-                  "description": "Current status of the watering plan."
-                },
-                "total_water_required": {
-                  "type": "number",
-                  "format": "double",
-                  "description": "Total amount of water required for all clusters in liters.",
-                  "example": 24000.0,
-                  "minimum": 0
-                },
-                "trailer": {
-                  "oneOf": [
-                    {
-                      "$ref": "#/components/schemas/VehicleResponse",
-                      "description": "The trailer vehicle assigned to this plan, if any."
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ]
-                },
-                "transporter": {
-                  "$ref": "#/components/schemas/VehicleResponse",
-                  "description": "The transporter vehicle assigned to this plan."
-                },
-                "transporter_tank_used": {
-                  "type": "boolean",
-                  "description": "Whether the transporter's own tank counts towards the route capacity.\n`false` only occurs with a trailer: the run carries water in the trailer alone.",
-                  "example": true
-                },
-                "treeclusters": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/TreeClusterInListResponse"
-                  },
-                  "description": "Tree clusters included in this watering plan."
-                },
-                "updated_at": {
-                  "type": "string",
-                  "description": "Timestamp when the watering plan was last updated (RFC 3339).",
-                  "example": "2024-08-14T16:30:00+00:00"
-                },
-                "user_ids": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  },
-                  "description": "List of user identifiers assigned to execute this plan.",
-                  "example": [
-                    "user-uuid-1"
-                  ]
-                }
-              }
-            }
-          },
-          "pagination": {
-            "$ref": "#/components/schemas/PaginationResponse"
-          }
-        }
-      },
       "LorawanCredentialsRequest": {
         "type": "object",
         "description": "LoRaWAN credentials supplied when registering a new sensor. `app_key` is\nwrite-only and never echoed back in responses.",
@@ -11039,6 +11526,594 @@
           "total_records": 42
         }
       },
+      "PlanCreateRequest": {
+        "type": "object",
+        "description": "Request body for creating a new plan.",
+        "required": [
+          "module",
+          "date",
+          "description",
+          "transporter_id",
+          "stops",
+          "user_ids"
+        ],
+        "properties": {
+          "additional_information": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "Arbitrary additional metadata from the provider."
+          },
+          "date": {
+            "type": "string",
+            "description": "Scheduled date and time of the run (RFC 3339).",
+            "example": "2024-08-15T06:00:00+00:00"
+          },
+          "description": {
+            "type": "string",
+            "description": "Human-readable description of the plan.",
+            "example": "Bewässerungsplan Stadtpark Nord"
+          },
+          "module": {
+            "type": "string",
+            "description": "Module the plan belongs to.",
+            "example": "irrigation"
+          },
+          "organization_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Organization this plan belongs to. Defaults to the acting user's own\norganization when omitted.",
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
+          },
+          "provider": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Name of the external data provider that supplied this record.",
+            "example": "green_ecolution"
+          },
+          "start_point_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Name of the configured start point to depart from and return to. Unknown names fall back to the default depot.",
+            "example": "Betriebshof Schleswiger Straße"
+          },
+          "stops": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Stops to include in the plan, as the module identifies them.",
+            "example": [
+              "0190a8e9-7c4f-7000-8000-000000000000"
+            ]
+          },
+          "trailer_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Identifier of the trailer vehicle to use, if any.",
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
+          },
+          "transporter_capacity_used": {
+            "type": "boolean",
+            "description": "Whether the transporter's own capacity counts towards the route capacity.\nMay only be `false` together with a `trailer_id`.",
+            "default": true,
+            "example": true
+          },
+          "transporter_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Identifier of the transporter vehicle to use.",
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
+          },
+          "user_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of user identifiers assigned to execute this plan.",
+            "example": [
+              "user-uuid-1"
+            ]
+          }
+        }
+      },
+      "PlanInListResponse": {
+        "type": "object",
+        "description": "Compact representation of a plan used in list endpoints.",
+        "required": [
+          "id",
+          "module",
+          "created_at",
+          "updated_at",
+          "date",
+          "description",
+          "status",
+          "distance",
+          "total_demand",
+          "cancellation_note",
+          "transporter",
+          "transporter_capacity_used",
+          "stops",
+          "user_ids"
+        ],
+        "properties": {
+          "additional_information": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "Arbitrary additional metadata from the provider."
+          },
+          "cancellation_note": {
+            "type": "string",
+            "description": "Reason for cancellation, empty if not cancelled.",
+            "example": "Regen vorhergesagt"
+          },
+          "created_at": {
+            "type": "string",
+            "description": "Timestamp when the plan was created (RFC 3339).",
+            "example": "2024-08-10T09:00:00+00:00"
+          },
+          "date": {
+            "type": "string",
+            "description": "Scheduled date and time of the run (RFC 3339).",
+            "example": "2024-08-15T06:00:00+00:00"
+          },
+          "description": {
+            "type": "string",
+            "description": "Human-readable description of the plan.",
+            "example": "Bewässerungsplan Stadtpark Nord"
+          },
+          "distance": {
+            "type": "number",
+            "format": "double",
+            "description": "Total route distance in meters.",
+            "example": 12500.0,
+            "minimum": 0
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier of the plan.",
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
+          },
+          "module": {
+            "type": "string",
+            "description": "Module the plan belongs to.",
+            "example": "irrigation"
+          },
+          "provider": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Name of the external data provider that supplied this record.",
+            "example": "green_ecolution"
+          },
+          "status": {
+            "$ref": "#/components/schemas/PlanStatus",
+            "description": "Current status of the plan."
+          },
+          "stops": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Stops of the plan, as the plan's module identifies them.",
+            "example": [
+              "0190a8e9-7c4f-7000-8000-000000000000"
+            ]
+          },
+          "total_demand": {
+            "type": "number",
+            "format": "double",
+            "description": "Summed demand of all stops, in the unit of the module's capacity kind.",
+            "example": 24000.0,
+            "minimum": 0
+          },
+          "trailer": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/VehicleResponse",
+                "description": "The trailer vehicle assigned to this plan, if any."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "transporter": {
+            "$ref": "#/components/schemas/VehicleResponse",
+            "description": "The transporter vehicle assigned to this plan."
+          },
+          "transporter_capacity_used": {
+            "type": "boolean",
+            "description": "Whether the transporter's own capacity counts towards the route capacity.\n`false` only occurs with a trailer.",
+            "example": true
+          },
+          "updated_at": {
+            "type": "string",
+            "description": "Timestamp when the plan was last updated (RFC 3339).",
+            "example": "2024-08-14T16:30:00+00:00"
+          },
+          "user_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of user identifiers assigned to execute this plan.",
+            "example": [
+              "user-uuid-1"
+            ]
+          }
+        }
+      },
+      "PlanResponse": {
+        "type": "object",
+        "description": "Full detail representation of a plan including its vehicles and outcomes.",
+        "required": [
+          "id",
+          "module",
+          "created_at",
+          "updated_at",
+          "date",
+          "description",
+          "status",
+          "distance",
+          "total_demand",
+          "cancellation_note",
+          "gpx_url",
+          "refill_count",
+          "duration",
+          "transporter",
+          "transporter_capacity_used",
+          "stops",
+          "user_ids",
+          "outcomes",
+          "organization_id"
+        ],
+        "properties": {
+          "additional_information": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "Arbitrary additional metadata from the provider."
+          },
+          "cancellation_note": {
+            "type": "string",
+            "description": "Reason for cancellation, empty if not cancelled.",
+            "example": "Regen vorhergesagt"
+          },
+          "created_at": {
+            "type": "string",
+            "description": "Timestamp when the plan was created (RFC 3339).",
+            "example": "2024-08-10T09:00:00+00:00"
+          },
+          "date": {
+            "type": "string",
+            "description": "Scheduled date and time of the run (RFC 3339).",
+            "example": "2024-08-15T06:00:00+00:00"
+          },
+          "description": {
+            "type": "string",
+            "description": "Human-readable description of the plan.",
+            "example": "Bewässerungsplan Stadtpark Nord"
+          },
+          "distance": {
+            "type": "number",
+            "format": "double",
+            "description": "Total route distance in meters.",
+            "example": 12500.0,
+            "minimum": 0
+          },
+          "duration": {
+            "type": "number",
+            "format": "double",
+            "description": "Estimated total duration of the run in seconds.",
+            "example": 3600.0,
+            "minimum": 0
+          },
+          "gpx_url": {
+            "type": "string",
+            "description": "URL to the downloadable GPX route file.",
+            "example": "/v1/plans/0190a8e9-7c4f-7000-8000-000000000000/route/gpx"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier of the plan.",
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
+          },
+          "module": {
+            "type": "string",
+            "description": "Module the plan belongs to.",
+            "example": "irrigation"
+          },
+          "organization_id": {
+            "type": "string",
+            "description": "Identifier of the organization this plan belongs to.",
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
+          },
+          "outcomes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StopOutcomeDto"
+            },
+            "description": "Per-stop results; not completed and without amount until the plan is finished."
+          },
+          "provider": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Name of the external data provider that supplied this record.",
+            "example": "green_ecolution"
+          },
+          "refill_count": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Number of station stops required during the run.",
+            "example": 2,
+            "minimum": 0
+          },
+          "start_point_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Named start/return point for the route.",
+            "example": "Betriebshof Schleswiger Straße"
+          },
+          "status": {
+            "$ref": "#/components/schemas/PlanStatus",
+            "description": "Current status of the plan."
+          },
+          "stops": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Stops of the plan, as the plan's module identifies them.",
+            "example": [
+              "0190a8e9-7c4f-7000-8000-000000000000"
+            ]
+          },
+          "total_demand": {
+            "type": "number",
+            "format": "double",
+            "description": "Summed demand of all stops, in the unit of the module's capacity kind.",
+            "example": 24000.0,
+            "minimum": 0
+          },
+          "trailer": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/VehicleResponse",
+                "description": "The trailer vehicle assigned to this plan, if any."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "transporter": {
+            "$ref": "#/components/schemas/VehicleResponse",
+            "description": "The transporter vehicle assigned to this plan."
+          },
+          "transporter_capacity_used": {
+            "type": "boolean",
+            "description": "Whether the transporter's own capacity counts towards the route capacity.\n`false` only occurs with a trailer.",
+            "example": true
+          },
+          "updated_at": {
+            "type": "string",
+            "description": "Timestamp when the plan was last updated (RFC 3339).",
+            "example": "2024-08-14T16:30:00+00:00"
+          },
+          "user_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of user identifiers assigned to execute this plan.",
+            "example": [
+              "user-uuid-1"
+            ]
+          }
+        }
+      },
+      "PlanRouteRequest": {
+        "type": "object",
+        "description": "Request body for calculating a route without creating a plan.",
+        "required": [
+          "module",
+          "stops",
+          "transporter_id"
+        ],
+        "properties": {
+          "module": {
+            "type": "string",
+            "description": "Module whose stops are routed.",
+            "example": "irrigation"
+          },
+          "start_point_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Name of the configured start point to depart from and return to. Unknown names fall back to the default depot.",
+            "example": "Betriebshof Schleswiger Straße"
+          },
+          "stops": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Stops to include in the route, as the module identifies them.",
+            "example": [
+              "0190a8e9-7c4f-7000-8000-000000000000"
+            ]
+          },
+          "trailer_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Identifier of the trailer vehicle to use, if any.",
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
+          },
+          "transporter_capacity_used": {
+            "type": "boolean",
+            "description": "Whether the transporter's own capacity counts towards the route capacity.\nMay only be `false` together with a `trailer_id`.",
+            "default": true,
+            "example": true
+          },
+          "transporter_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Identifier of the transporter vehicle to use.",
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
+          }
+        }
+      },
+      "PlanStatus": {
+        "type": "string",
+        "description": "Lifecycle status of a plan.",
+        "enum": [
+          "planned",
+          "active",
+          "canceled",
+          "finished",
+          "not_completed"
+        ],
+        "example": "planned"
+      },
+      "PlanUpdateRequest": {
+        "type": "object",
+        "description": "Request body for updating an existing plan.",
+        "required": [
+          "date",
+          "description",
+          "status",
+          "transporter_id",
+          "stops",
+          "user_ids",
+          "cancellation_note"
+        ],
+        "properties": {
+          "additional_information": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "Arbitrary additional metadata from the provider."
+          },
+          "cancellation_note": {
+            "type": "string",
+            "description": "Reason for cancellation, if applicable.",
+            "example": "Regen vorhergesagt"
+          },
+          "date": {
+            "type": "string",
+            "description": "Scheduled date and time of the run (RFC 3339).",
+            "example": "2024-08-15T06:00:00+00:00"
+          },
+          "description": {
+            "type": "string",
+            "description": "Human-readable description of the plan.",
+            "example": "Bewässerungsplan Stadtpark Nord"
+          },
+          "outcomes": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/StopOutcomeDto"
+            },
+            "description": "One result per stop; required when the status moves to `finished`."
+          },
+          "provider": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Name of the external data provider that supplied this record.",
+            "example": "green_ecolution"
+          },
+          "start_point_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Name of the configured start point to depart from and return to. Unknown names fall back to the default depot.",
+            "example": "Betriebshof Schleswiger Straße"
+          },
+          "status": {
+            "$ref": "#/components/schemas/PlanStatus",
+            "description": "Updated status of the plan."
+          },
+          "stops": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Stops to include in the plan, as the module identifies them.",
+            "example": [
+              "0190a8e9-7c4f-7000-8000-000000000000"
+            ]
+          },
+          "trailer_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Identifier of the trailer vehicle to use, if any.",
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
+          },
+          "transporter_capacity_used": {
+            "type": "boolean",
+            "description": "Whether the transporter's own capacity counts towards the route capacity.\nMay only be `false` together with a `trailer_id`.",
+            "default": true,
+            "example": true
+          },
+          "transporter_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Identifier of the transporter vehicle to use.",
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
+          },
+          "user_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of user identifiers assigned to execute this plan.",
+            "example": [
+              "user-uuid-1"
+            ]
+          }
+        }
+      },
       "PluginCreateRequest": {
         "type": "object",
         "description": "Request body for installing a new plugin.",
@@ -11485,34 +12560,6 @@
           }
         }
       },
-      "RefillPointResponse": {
-        "type": "object",
-        "description": "Water refill station an optimized route visits.",
-        "required": [
-          "name",
-          "lat",
-          "lon"
-        ],
-        "properties": {
-          "lat": {
-            "type": "number",
-            "format": "double",
-            "description": "Latitude of the station (WGS84).",
-            "example": 54.8052
-          },
-          "lon": {
-            "type": "number",
-            "format": "double",
-            "description": "Longitude of the station (WGS84).",
-            "example": 9.4471
-          },
-          "name": {
-            "type": "string",
-            "description": "Name of the refill station at route computation time.",
-            "example": "Klärwerk Kielseng"
-          }
-        }
-      },
       "RegionEvaluationResponse": {
         "type": "object",
         "description": "Evaluation metrics for a single region.",
@@ -11710,7 +12757,7 @@
       },
       "RouteGeometry": {
         "type": "object",
-        "description": "GeoJSON LineString geometry of an optimized watering route.",
+        "description": "GeoJSON LineString geometry of an optimized route.",
         "required": [
           "type",
           "coordinates"
@@ -11744,65 +12791,15 @@
           }
         }
       },
-      "RouteRequest": {
-        "type": "object",
-        "description": "Request body for calculating a watering route.",
-        "required": [
-          "cluster_ids",
-          "transporter_id"
-        ],
-        "properties": {
-          "cluster_ids": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "description": "List of tree cluster identifiers to include in the route.",
-            "example": [
-              "0190a8e9-7c4f-7000-8000-000000000000"
-            ]
-          },
-          "start_point_name": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "Name of the configured start point to depart from and return to. Unknown names fall back to the default depot.",
-            "example": "Betriebshof Schleswiger Straße"
-          },
-          "trailer_id": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "uuid",
-            "description": "Identifier of the trailer vehicle to use, if any.",
-            "example": "0190a8e9-7c4f-7000-8000-000000000000"
-          },
-          "transporter_id": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Identifier of the transporter vehicle to use.",
-            "example": "0190a8e9-7c4f-7000-8000-000000000000"
-          },
-          "transporter_tank_used": {
-            "type": "boolean",
-            "description": "Whether the transporter's own tank counts towards the route capacity.\nMay only be `false` together with a `trailer_id`.",
-            "default": true,
-            "example": true
-          }
-        }
-      },
       "RouteResponse": {
         "type": "object",
-        "description": "Optimized watering route (persisted for a plan, or a preview).",
+        "description": "Optimized route (persisted for a plan, or a preview).",
         "required": [
           "distance",
           "duration",
           "refill_count",
-          "refill_points",
-          "total_water_required",
+          "station_visits",
+          "total_demand",
           "geometry"
         ],
         "properties": {
@@ -11827,21 +12824,21 @@
           "refill_count": {
             "type": "integer",
             "format": "int32",
-            "description": "Number of water refill stops on the route.",
+            "description": "Number of station stops on the route.",
             "example": 2,
             "minimum": 0
           },
-          "refill_points": {
+          "station_visits": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/RefillPointResponse"
+              "$ref": "#/components/schemas/StationVisitResponse"
             },
-            "description": "Water refill stations the route actually visits, in visit order."
+            "description": "Stations the route actually visits, in visit order."
           },
-          "total_water_required": {
+          "total_demand": {
             "type": "number",
             "format": "double",
-            "description": "Total water demand of all routed clusters in liters.",
+            "description": "Summed demand of all routed stops, in the unit of the module's capacity kind.",
             "example": 24000.0,
             "minimum": 0
           }
@@ -12984,6 +13981,64 @@
             "items": {
               "$ref": "#/components/schemas/CapacityKindDto"
             }
+          }
+        }
+      },
+      "StationVisitResponse": {
+        "type": "object",
+        "description": "Station an optimized route visits to restore its capacity.",
+        "required": [
+          "name",
+          "lat",
+          "lon"
+        ],
+        "properties": {
+          "lat": {
+            "type": "number",
+            "format": "double",
+            "description": "Latitude of the station (WGS84).",
+            "example": 54.8052
+          },
+          "lon": {
+            "type": "number",
+            "format": "double",
+            "description": "Longitude of the station (WGS84).",
+            "example": 9.4471
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the station at route computation time.",
+            "example": "Klärwerk Kielseng"
+          }
+        }
+      },
+      "StopOutcomeDto": {
+        "type": "object",
+        "description": "Result recorded for one stop when a plan is finished.",
+        "required": [
+          "stop",
+          "completed"
+        ],
+        "properties": {
+          "amount": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double",
+            "description": "Amount the stop took, in the unit of the module's capacity kind.",
+            "example": 120.0
+          },
+          "completed": {
+            "type": "boolean",
+            "description": "Whether the stop was served.",
+            "example": true
+          },
+          "stop": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The stop, as the plan's module identifies it.",
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
           }
         }
       },
@@ -14728,512 +15783,6 @@
           }
         }
       },
-      "WateringPlanCreateRequest": {
-        "type": "object",
-        "description": "Request body for creating a new watering plan.",
-        "required": [
-          "date",
-          "description",
-          "transporter_id",
-          "tree_cluster_ids",
-          "user_ids"
-        ],
-        "properties": {
-          "additional_information": {
-            "type": [
-              "object",
-              "null"
-            ],
-            "description": "Arbitrary additional metadata from the provider."
-          },
-          "date": {
-            "type": "string",
-            "description": "Scheduled date and time of the watering run (RFC 3339).",
-            "example": "2024-08-15T06:00:00+00:00"
-          },
-          "description": {
-            "type": "string",
-            "description": "Human-readable description of the watering plan.",
-            "example": "Bewässerungsplan Stadtpark Nord"
-          },
-          "organization_id": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "uuid",
-            "description": "Organization this watering plan belongs to. Defaults to the acting\nuser's own organization when omitted.",
-            "example": "0190a8e9-7c4f-7000-8000-000000000000"
-          },
-          "provider": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "Name of the external data provider that supplied this record.",
-            "example": "green_ecolution"
-          },
-          "start_point_name": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "Name of the configured start point to depart from and return to. Unknown names fall back to the default depot.",
-            "example": "Betriebshof Schleswiger Straße"
-          },
-          "trailer_id": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "uuid",
-            "description": "Identifier of the trailer vehicle to use, if any.",
-            "example": "0190a8e9-7c4f-7000-8000-000000000000"
-          },
-          "transporter_id": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Identifier of the transporter vehicle to use.",
-            "example": "0190a8e9-7c4f-7000-8000-000000000000"
-          },
-          "transporter_tank_used": {
-            "type": "boolean",
-            "description": "Whether the transporter's own tank counts towards the route capacity.\nMay only be `false` together with a `trailer_id`.",
-            "default": true,
-            "example": true
-          },
-          "tree_cluster_ids": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "description": "List of tree cluster identifiers to include in the plan.",
-            "example": [
-              "0190a8e9-7c4f-7000-8000-000000000000"
-            ]
-          },
-          "user_ids": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "List of user identifiers assigned to execute this plan.",
-            "example": [
-              "user-uuid-1"
-            ]
-          }
-        }
-      },
-      "WateringPlanInListResponse": {
-        "type": "object",
-        "description": "Compact representation of a watering plan used in list endpoints.",
-        "required": [
-          "id",
-          "created_at",
-          "updated_at",
-          "date",
-          "description",
-          "status",
-          "distance",
-          "total_water_required",
-          "cancellation_note",
-          "transporter",
-          "transporter_tank_used",
-          "treeclusters",
-          "user_ids"
-        ],
-        "properties": {
-          "additional_information": {
-            "type": [
-              "object",
-              "null"
-            ],
-            "description": "Arbitrary additional metadata from the provider."
-          },
-          "cancellation_note": {
-            "type": "string",
-            "description": "Reason for cancellation, empty if not cancelled.",
-            "example": "Regen vorhergesagt"
-          },
-          "created_at": {
-            "type": "string",
-            "description": "Timestamp when the watering plan was created (RFC 3339).",
-            "example": "2024-08-10T09:00:00+00:00"
-          },
-          "date": {
-            "type": "string",
-            "description": "Scheduled date and time of the watering run (RFC 3339).",
-            "example": "2024-08-15T06:00:00+00:00"
-          },
-          "description": {
-            "type": "string",
-            "description": "Human-readable description of the watering plan.",
-            "example": "Bewässerungsplan Stadtpark Nord"
-          },
-          "distance": {
-            "type": "number",
-            "format": "double",
-            "description": "Total route distance in meters.",
-            "example": 12500.0,
-            "minimum": 0
-          },
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Unique identifier of the watering plan.",
-            "example": "0190a8e9-7c4f-7000-8000-000000000000"
-          },
-          "provider": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "Name of the external data provider that supplied this record.",
-            "example": "green_ecolution"
-          },
-          "status": {
-            "$ref": "#/components/schemas/WateringPlanStatus",
-            "description": "Current status of the watering plan."
-          },
-          "total_water_required": {
-            "type": "number",
-            "format": "double",
-            "description": "Total amount of water required for all clusters in liters.",
-            "example": 24000.0,
-            "minimum": 0
-          },
-          "trailer": {
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/VehicleResponse",
-                "description": "The trailer vehicle assigned to this plan, if any."
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "transporter": {
-            "$ref": "#/components/schemas/VehicleResponse",
-            "description": "The transporter vehicle assigned to this plan."
-          },
-          "transporter_tank_used": {
-            "type": "boolean",
-            "description": "Whether the transporter's own tank counts towards the route capacity.\n`false` only occurs with a trailer: the run carries water in the trailer alone.",
-            "example": true
-          },
-          "treeclusters": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/TreeClusterInListResponse"
-            },
-            "description": "Tree clusters included in this watering plan."
-          },
-          "updated_at": {
-            "type": "string",
-            "description": "Timestamp when the watering plan was last updated (RFC 3339).",
-            "example": "2024-08-14T16:30:00+00:00"
-          },
-          "user_ids": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "List of user identifiers assigned to execute this plan.",
-            "example": [
-              "user-uuid-1"
-            ]
-          }
-        }
-      },
-      "WateringPlanResponse": {
-        "type": "object",
-        "description": "Full detail representation of a watering plan including all related entities.",
-        "required": [
-          "id",
-          "created_at",
-          "updated_at",
-          "date",
-          "description",
-          "status",
-          "distance",
-          "total_water_required",
-          "cancellation_note",
-          "gpx_url",
-          "refill_count",
-          "duration",
-          "transporter",
-          "transporter_tank_used",
-          "treeclusters",
-          "user_ids",
-          "evaluation",
-          "organization_id"
-        ],
-        "properties": {
-          "additional_information": {
-            "type": [
-              "object",
-              "null"
-            ],
-            "description": "Arbitrary additional metadata from the provider."
-          },
-          "cancellation_note": {
-            "type": "string",
-            "description": "Reason for cancellation, empty if not cancelled.",
-            "example": "Regen vorhergesagt"
-          },
-          "created_at": {
-            "type": "string",
-            "description": "Timestamp when the watering plan was created (RFC 3339).",
-            "example": "2024-08-10T09:00:00+00:00"
-          },
-          "date": {
-            "type": "string",
-            "description": "Scheduled date and time of the watering run (RFC 3339).",
-            "example": "2024-08-15T06:00:00+00:00"
-          },
-          "description": {
-            "type": "string",
-            "description": "Human-readable description of the watering plan.",
-            "example": "Bewässerungsplan Stadtpark Nord"
-          },
-          "distance": {
-            "type": "number",
-            "format": "double",
-            "description": "Total route distance in meters.",
-            "example": 12500.0,
-            "minimum": 0
-          },
-          "duration": {
-            "type": "number",
-            "format": "double",
-            "description": "Estimated total duration of the watering run in seconds.",
-            "example": 3600.0,
-            "minimum": 0
-          },
-          "evaluation": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/EvaluationValueResponse"
-            },
-            "description": "Per-cluster evaluation results after the watering run."
-          },
-          "gpx_url": {
-            "type": "string",
-            "description": "URL to the downloadable GPX route file.",
-            "example": "/v1/watering-plans/0190a8e9-7c4f-7000-8000-000000000000/route/gpx"
-          },
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Unique identifier of the watering plan.",
-            "example": "0190a8e9-7c4f-7000-8000-000000000000"
-          },
-          "organization_id": {
-            "type": "string",
-            "description": "Identifier of the organization this watering plan belongs to.",
-            "example": "0190a8e9-7c4f-7000-8000-000000000000"
-          },
-          "provider": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "Name of the external data provider that supplied this record.",
-            "example": "green_ecolution"
-          },
-          "refill_count": {
-            "type": "integer",
-            "format": "int32",
-            "description": "Number of water refill stops required during the run.",
-            "example": 2,
-            "minimum": 0
-          },
-          "start_point_name": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "Named start/return point for the route.",
-            "example": "Betriebshof Schleswiger Straße"
-          },
-          "status": {
-            "$ref": "#/components/schemas/WateringPlanStatus",
-            "description": "Current status of the watering plan."
-          },
-          "total_water_required": {
-            "type": "number",
-            "format": "double",
-            "description": "Total amount of water required for all clusters in liters.",
-            "example": 24000.0,
-            "minimum": 0
-          },
-          "trailer": {
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/VehicleResponse",
-                "description": "The trailer vehicle assigned to this plan, if any."
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "transporter": {
-            "$ref": "#/components/schemas/VehicleResponse",
-            "description": "The transporter vehicle assigned to this plan."
-          },
-          "transporter_tank_used": {
-            "type": "boolean",
-            "description": "Whether the transporter's own tank counts towards the route capacity.\n`false` only occurs with a trailer: the run carries water in the trailer alone.",
-            "example": true
-          },
-          "treeclusters": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/TreeClusterInListResponse"
-            },
-            "description": "Tree clusters included in this watering plan."
-          },
-          "updated_at": {
-            "type": "string",
-            "description": "Timestamp when the watering plan was last updated (RFC 3339).",
-            "example": "2024-08-14T16:30:00+00:00"
-          },
-          "user_ids": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "List of user identifiers assigned to execute this plan.",
-            "example": [
-              "user-uuid-1"
-            ]
-          }
-        }
-      },
-      "WateringPlanStatus": {
-        "type": "string",
-        "description": "Lifecycle status of a watering plan.",
-        "enum": [
-          "planned",
-          "active",
-          "canceled",
-          "finished",
-          "not_completed"
-        ],
-        "example": "planned"
-      },
-      "WateringPlanUpdateRequest": {
-        "type": "object",
-        "description": "Request body for updating an existing watering plan.",
-        "required": [
-          "date",
-          "description",
-          "status",
-          "transporter_id",
-          "tree_cluster_ids",
-          "user_ids",
-          "cancellation_note"
-        ],
-        "properties": {
-          "additional_information": {
-            "type": [
-              "object",
-              "null"
-            ],
-            "description": "Arbitrary additional metadata from the provider."
-          },
-          "cancellation_note": {
-            "type": "string",
-            "description": "Reason for cancellation, if applicable.",
-            "example": "Regen vorhergesagt"
-          },
-          "date": {
-            "type": "string",
-            "description": "Scheduled date and time of the watering run (RFC 3339).",
-            "example": "2024-08-15T06:00:00+00:00"
-          },
-          "description": {
-            "type": "string",
-            "description": "Human-readable description of the watering plan.",
-            "example": "Bewässerungsplan Stadtpark Nord"
-          },
-          "evaluation": {
-            "type": [
-              "array",
-              "null"
-            ],
-            "items": {
-              "$ref": "#/components/schemas/EvaluationValueRequest"
-            },
-            "description": "Per-cluster evaluation results for the watering run."
-          },
-          "provider": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "Name of the external data provider that supplied this record.",
-            "example": "green_ecolution"
-          },
-          "start_point_name": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "Name of the configured start point to depart from and return to. Unknown names fall back to the default depot.",
-            "example": "Betriebshof Schleswiger Straße"
-          },
-          "status": {
-            "$ref": "#/components/schemas/WateringPlanStatus",
-            "description": "Updated status of the watering plan."
-          },
-          "trailer_id": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "uuid",
-            "description": "Identifier of the trailer vehicle to use, if any.",
-            "example": "0190a8e9-7c4f-7000-8000-000000000000"
-          },
-          "transporter_id": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Identifier of the transporter vehicle to use.",
-            "example": "0190a8e9-7c4f-7000-8000-000000000000"
-          },
-          "transporter_tank_used": {
-            "type": "boolean",
-            "description": "Whether the transporter's own tank counts towards the route capacity.\nMay only be `false` together with a `trailer_id`.",
-            "default": true,
-            "example": true
-          },
-          "tree_cluster_ids": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "description": "List of tree cluster identifiers to include in the plan.",
-            "example": [
-              "0190a8e9-7c4f-7000-8000-000000000000"
-            ]
-          },
-          "user_ids": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "List of user identifiers assigned to execute this plan.",
-            "example": [
-              "user-uuid-1"
-            ]
-          }
-        }
-      },
       "WateringStatus": {
         "type": "string",
         "description": "Current watering status of a tree or tree cluster.",
@@ -15270,8 +15819,8 @@
       "description": "Access LoRaWAN sensor data for soil moisture monitoring. Sensors are linked to individual trees and provide real-time environmental readings."
     },
     {
-      "name": "Watering Plans",
-      "description": "Create and manage watering plans that combine tree clusters, vehicles, and optimized routes. Plans track status from planning through execution."
+      "name": "Plans",
+      "description": "Create and manage a module's operation plans that combine stops, vehicles, and optimized routes. Plans track status from planning through execution."
     },
     {
       "name": "Evaluation",
@@ -15303,7 +15852,7 @@
     },
     {
       "name": "Comments",
-      "description": "Free-text comments on tree clusters and watering plans. Reading follows the parent resource's read permission, writing its update permission."
+      "description": "Free-text comments on tree clusters and plans. Reading follows the parent resource's read permission, writing its update permission."
     },
     {
       "name": "Modules",

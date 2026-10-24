@@ -1,17 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import type { ReactNode } from 'react'
 import { renderHook, waitFor } from '@testing-library/react'
-import { WateringPlanStatus } from '@green-ecolution/backend-client'
+import { PlanStatus as WateringPlanStatus } from '@green-ecolution/backend-client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { QueryKey } from '@tanstack/react-query'
 import { clusterQueries, treeQueries, wateringPlanQueries } from '@/api/queries'
 import { toUpdateRequest, useWateringPlanBoardMutations } from './useWateringPlanBoardMutations'
 import type { WateringPlanInList } from '@/api/backendApi'
 
-const updateWateringPlan = vi.fn()
+const updatePlan = vi.fn()
 vi.mock('@/api/backendApi', () => ({
-  wateringPlanApi: {
-    updateWateringPlan: (...args: unknown[]) => updateWateringPlan(...args) as unknown,
+  planApi: {
+    updatePlan: (...args: unknown[]) => updatePlan(...args) as unknown,
   },
 }))
 
@@ -64,7 +64,7 @@ function renderBoardMutations() {
 describe('useWateringPlanBoardMutations', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    updateWateringPlan.mockResolvedValue({ id: PLAN_ID })
+    updatePlan.mockResolvedValue({ id: PLAN_ID })
   })
 
   it('invalidates clusters and trees after finishing a plan', async () => {
@@ -77,6 +77,23 @@ describe('useWateringPlanBoardMutations', () => {
     expect(isInvalidated(CLUSTER_LIST)).toBe(true)
     expect(isInvalidated(TREE_DETAIL)).toBe(true)
     expect(isInvalidated(PLAN_DETAIL)).toBe(true)
+  })
+
+  it('finishes a plan with every evaluated cluster as a completed outcome', async () => {
+    const { result } = renderBoardMutations()
+
+    result.current.finishPlan.mutate({ plan, evaluation })
+
+    await waitFor(() => expect(updatePlan).toHaveBeenCalledTimes(1))
+    expect(updatePlan).toHaveBeenCalledWith({
+      planId: PLAN_ID,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      planUpdateRequest: expect.objectContaining({
+        status: WateringPlanStatus.Finished,
+        stops: [CLUSTER_ID],
+        outcomes: [{ stop: CLUSTER_ID, completed: true, amount: 100 }],
+      }),
+    })
   })
 
   it('re-runs the route loaders that loader-based detail pages read from', async () => {

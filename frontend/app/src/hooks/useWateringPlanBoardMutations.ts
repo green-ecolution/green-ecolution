@@ -1,24 +1,25 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { WateringPlanStatus } from '@green-ecolution/backend-client'
-import type {
-  ListResponseWateringPlanInListResponse,
-  WateringPlanUpdateRequest,
-} from '@green-ecolution/backend-client'
 import { useTranslation } from 'react-i18next'
-
-export type PlanEvaluation = NonNullable<WateringPlanUpdateRequest['evaluation']>
-
-import { wateringPlanApi } from '@/api/backendApi'
-import type { WateringPlanInList } from '@/api/backendApi'
+import { PlanStatus as WateringPlanStatus } from '@green-ecolution/backend-client'
+import { planApi } from '@/api/backendApi'
+import type {
+  EvaluationValue,
+  WateringPlanInList,
+  WateringPlanList,
+  WateringPlanUpdate,
+} from '@/api/backendApi'
+import { toPlanUpdateRequest } from '@/api/irrigationPlans'
 import { wateringPlanQueries, type Aggregate } from '@/api/queries'
 import { PLAN_STATUS_AGGREGATES, useInvalidateAggregates } from '@/lib/queryInvalidation'
 import createToast from '@/hooks/createToast'
 import { resolveApiError } from '@/lib/apiError'
 
+export type PlanEvaluation = EvaluationValue[]
+
 export const toUpdateRequest = (
   plan: WateringPlanInList,
-  overrides: Partial<WateringPlanUpdateRequest>,
-): WateringPlanUpdateRequest => ({
+  overrides: Partial<WateringPlanUpdate>,
+): WateringPlanUpdate => ({
   date: plan.date,
   description: plan.description,
   status: plan.status,
@@ -55,20 +56,18 @@ export const useWateringPlanBoardMutations = () => {
   const invalidateAfterStatusChange = () => void runInvalidation(PLAN_STATUS_AGGREGATES)
   const invalidatePlans = () => void runInvalidation(['wateringPlan'])
 
-  const update = (plan: WateringPlanInList, overrides: Partial<WateringPlanUpdateRequest>) =>
-    wateringPlanApi.updateWateringPlan({
-      wateringPlanId: plan.id.toString(),
-      wateringPlanUpdateRequest: toUpdateRequest(plan, overrides),
+  const update = (plan: WateringPlanInList, overrides: Partial<WateringPlanUpdate>) =>
+    planApi.updatePlan({
+      planId: plan.id,
+      planUpdateRequest: toPlanUpdateRequest(toUpdateRequest(plan, overrides)),
     })
 
   const revertStart = useMutation({
     mutationFn: (plan: WateringPlanInList) => update(plan, { status: WateringPlanStatus.Planned }),
     onMutate: async (plan) => {
       await queryClient.cancelQueries({ queryKey: ['watering-plans', 'board'] })
-      const previousPlanned =
-        queryClient.getQueryData<ListResponseWateringPlanInListResponse>(plannedKey)
-      const previousActive =
-        queryClient.getQueryData<ListResponseWateringPlanInListResponse>(activeKey)
+      const previousPlanned = queryClient.getQueryData<WateringPlanList>(plannedKey)
+      const previousActive = queryClient.getQueryData<WateringPlanList>(activeKey)
       if (previousActive) {
         queryClient.setQueryData(activeKey, {
           ...previousActive,
@@ -98,10 +97,8 @@ export const useWateringPlanBoardMutations = () => {
     mutationFn: (plan: WateringPlanInList) => update(plan, { status: WateringPlanStatus.Active }),
     onMutate: async (plan) => {
       await queryClient.cancelQueries({ queryKey: ['watering-plans', 'board'] })
-      const previousPlanned =
-        queryClient.getQueryData<ListResponseWateringPlanInListResponse>(plannedKey)
-      const previousActive =
-        queryClient.getQueryData<ListResponseWateringPlanInListResponse>(activeKey)
+      const previousPlanned = queryClient.getQueryData<WateringPlanList>(plannedKey)
+      const previousActive = queryClient.getQueryData<WateringPlanList>(activeKey)
       if (previousPlanned) {
         queryClient.setQueryData(plannedKey, {
           ...previousPlanned,

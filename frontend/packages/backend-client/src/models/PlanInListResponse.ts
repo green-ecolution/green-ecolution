@@ -13,13 +13,6 @@
  */
 
 import { mapValues } from '../runtime';
-import type { TreeClusterInListResponse } from './TreeClusterInListResponse';
-import {
-    TreeClusterInListResponseFromJSON,
-    TreeClusterInListResponseFromJSONTyped,
-    TreeClusterInListResponseToJSON,
-    TreeClusterInListResponseToJSONTyped,
-} from './TreeClusterInListResponse';
 import type { VehicleResponse } from './VehicleResponse';
 import {
     VehicleResponseFromJSON,
@@ -27,115 +20,121 @@ import {
     VehicleResponseToJSON,
     VehicleResponseToJSONTyped,
 } from './VehicleResponse';
-import type { WateringPlanStatus } from './WateringPlanStatus';
+import type { PlanStatus } from './PlanStatus';
 import {
-    WateringPlanStatusFromJSON,
-    WateringPlanStatusFromJSONTyped,
-    WateringPlanStatusToJSON,
-    WateringPlanStatusToJSONTyped,
-} from './WateringPlanStatus';
+    PlanStatusFromJSON,
+    PlanStatusFromJSONTyped,
+    PlanStatusToJSON,
+    PlanStatusToJSONTyped,
+} from './PlanStatus';
 
 /**
- * Compact representation of a watering plan used in list endpoints.
+ * Compact representation of a plan used in list endpoints.
  * @export
- * @interface WateringPlanInListResponse
+ * @interface PlanInListResponse
  */
-export interface WateringPlanInListResponse {
+export interface PlanInListResponse {
     /**
      * Arbitrary additional metadata from the provider.
      * @type {object}
-     * @memberof WateringPlanInListResponse
+     * @memberof PlanInListResponse
      */
     additionalInformation?: object | null;
     /**
      * Reason for cancellation, empty if not cancelled.
      * @type {string}
-     * @memberof WateringPlanInListResponse
+     * @memberof PlanInListResponse
      */
     cancellationNote: string;
     /**
-     * Timestamp when the watering plan was created (RFC 3339).
+     * Timestamp when the plan was created (RFC 3339).
      * @type {string}
-     * @memberof WateringPlanInListResponse
+     * @memberof PlanInListResponse
      */
     createdAt: string;
     /**
-     * Scheduled date and time of the watering run (RFC 3339).
+     * Scheduled date and time of the run (RFC 3339).
      * @type {string}
-     * @memberof WateringPlanInListResponse
+     * @memberof PlanInListResponse
      */
     date: string;
     /**
-     * Human-readable description of the watering plan.
+     * Human-readable description of the plan.
      * @type {string}
-     * @memberof WateringPlanInListResponse
+     * @memberof PlanInListResponse
      */
     description: string;
     /**
      * Total route distance in meters.
      * @type {number}
-     * @memberof WateringPlanInListResponse
+     * @memberof PlanInListResponse
      */
     distance: number;
     /**
-     * Unique identifier of the watering plan.
+     * Unique identifier of the plan.
      * @type {string}
-     * @memberof WateringPlanInListResponse
+     * @memberof PlanInListResponse
      */
     id: string;
     /**
+     * Module the plan belongs to.
+     * @type {string}
+     * @memberof PlanInListResponse
+     */
+    module: string;
+    /**
      * Name of the external data provider that supplied this record.
      * @type {string}
-     * @memberof WateringPlanInListResponse
+     * @memberof PlanInListResponse
      */
     provider?: string | null;
     /**
-     * Current status of the watering plan.
-     * @type {WateringPlanStatus}
-     * @memberof WateringPlanInListResponse
+     * Current status of the plan.
+     * @type {PlanStatus}
+     * @memberof PlanInListResponse
      */
-    status: WateringPlanStatus;
+    status: PlanStatus;
     /**
-     * Total amount of water required for all clusters in liters.
-     * @type {number}
-     * @memberof WateringPlanInListResponse
+     * Stops of the plan, as the plan's module identifies them.
+     * @type {Array<string>}
+     * @memberof PlanInListResponse
      */
-    totalWaterRequired: number;
+    stops: Array<string>;
+    /**
+     * Summed demand of all stops, in the unit of the module's capacity kind.
+     * @type {number}
+     * @memberof PlanInListResponse
+     */
+    totalDemand: number;
     /**
      * The trailer vehicle assigned to this plan, if any.
      * @type {VehicleResponse}
-     * @memberof WateringPlanInListResponse
+     * @memberof PlanInListResponse
      */
     trailer?: VehicleResponse | null;
     /**
      * The transporter vehicle assigned to this plan.
      * @type {VehicleResponse}
-     * @memberof WateringPlanInListResponse
+     * @memberof PlanInListResponse
      */
     transporter: VehicleResponse;
     /**
-     * Whether the transporter's own tank counts towards the route capacity.
-     * `false` only occurs with a trailer: the run carries water in the trailer alone.
+     * Whether the transporter's own capacity counts towards the route capacity.
+     * `false` only occurs with a trailer.
      * @type {boolean}
-     * @memberof WateringPlanInListResponse
+     * @memberof PlanInListResponse
      */
-    transporterTankUsed: boolean;
+    transporterCapacityUsed: boolean;
     /**
-     * Tree clusters included in this watering plan.
-     * @type {Array<TreeClusterInListResponse>}
-     * @memberof WateringPlanInListResponse
-     */
-    treeclusters: Array<TreeClusterInListResponse>;
-    /**
-     * Timestamp when the watering plan was last updated (RFC 3339).
+     * Timestamp when the plan was last updated (RFC 3339).
      * @type {string}
-     * @memberof WateringPlanInListResponse
+     * @memberof PlanInListResponse
      */
     updatedAt: string;
     /**
      * List of user identifiers assigned to execute this plan.
      * @type {Array<string>}
-     * @memberof WateringPlanInListResponse
+     * @memberof PlanInListResponse
      */
     userIds: Array<string>;
 }
@@ -143,30 +142,31 @@ export interface WateringPlanInListResponse {
 
 
 /**
- * Check if a given object implements the WateringPlanInListResponse interface.
+ * Check if a given object implements the PlanInListResponse interface.
  */
-export function instanceOfWateringPlanInListResponse(value: object): value is WateringPlanInListResponse {
+export function instanceOfPlanInListResponse(value: object): value is PlanInListResponse {
     if (!('cancellationNote' in value) || value['cancellationNote'] === undefined) return false;
     if (!('createdAt' in value) || value['createdAt'] === undefined) return false;
     if (!('date' in value) || value['date'] === undefined) return false;
     if (!('description' in value) || value['description'] === undefined) return false;
     if (!('distance' in value) || value['distance'] === undefined) return false;
     if (!('id' in value) || value['id'] === undefined) return false;
+    if (!('module' in value) || value['module'] === undefined) return false;
     if (!('status' in value) || value['status'] === undefined) return false;
-    if (!('totalWaterRequired' in value) || value['totalWaterRequired'] === undefined) return false;
+    if (!('stops' in value) || value['stops'] === undefined) return false;
+    if (!('totalDemand' in value) || value['totalDemand'] === undefined) return false;
     if (!('transporter' in value) || value['transporter'] === undefined) return false;
-    if (!('transporterTankUsed' in value) || value['transporterTankUsed'] === undefined) return false;
-    if (!('treeclusters' in value) || value['treeclusters'] === undefined) return false;
+    if (!('transporterCapacityUsed' in value) || value['transporterCapacityUsed'] === undefined) return false;
     if (!('updatedAt' in value) || value['updatedAt'] === undefined) return false;
     if (!('userIds' in value) || value['userIds'] === undefined) return false;
     return true;
 }
 
-export function WateringPlanInListResponseFromJSON(json: any): WateringPlanInListResponse {
-    return WateringPlanInListResponseFromJSONTyped(json, false);
+export function PlanInListResponseFromJSON(json: any): PlanInListResponse {
+    return PlanInListResponseFromJSONTyped(json, false);
 }
 
-export function WateringPlanInListResponseFromJSONTyped(json: any, ignoreDiscriminator: boolean): WateringPlanInListResponse {
+export function PlanInListResponseFromJSONTyped(json: any, ignoreDiscriminator: boolean): PlanInListResponse {
     if (json == null) {
         return json;
     }
@@ -179,23 +179,24 @@ export function WateringPlanInListResponseFromJSONTyped(json: any, ignoreDiscrim
         'description': json['description'],
         'distance': json['distance'],
         'id': json['id'],
+        'module': json['module'],
         'provider': json['provider'] == null ? undefined : json['provider'],
-        'status': WateringPlanStatusFromJSON(json['status']),
-        'totalWaterRequired': json['total_water_required'],
+        'status': PlanStatusFromJSON(json['status']),
+        'stops': json['stops'],
+        'totalDemand': json['total_demand'],
         'trailer': json['trailer'] == null ? undefined : VehicleResponseFromJSON(json['trailer']),
         'transporter': VehicleResponseFromJSON(json['transporter']),
-        'transporterTankUsed': json['transporter_tank_used'],
-        'treeclusters': ((json['treeclusters'] as Array<any>).map(TreeClusterInListResponseFromJSON)),
+        'transporterCapacityUsed': json['transporter_capacity_used'],
         'updatedAt': json['updated_at'],
         'userIds': json['user_ids'],
     };
 }
 
-export function WateringPlanInListResponseToJSON(json: any): WateringPlanInListResponse {
-    return WateringPlanInListResponseToJSONTyped(json, false);
+export function PlanInListResponseToJSON(json: any): PlanInListResponse {
+    return PlanInListResponseToJSONTyped(json, false);
 }
 
-export function WateringPlanInListResponseToJSONTyped(value?: WateringPlanInListResponse | null, ignoreDiscriminator: boolean = false): any {
+export function PlanInListResponseToJSONTyped(value?: PlanInListResponse | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
@@ -209,13 +210,14 @@ export function WateringPlanInListResponseToJSONTyped(value?: WateringPlanInList
         'description': value['description'],
         'distance': value['distance'],
         'id': value['id'],
+        'module': value['module'],
         'provider': value['provider'],
-        'status': WateringPlanStatusToJSON(value['status']),
-        'total_water_required': value['totalWaterRequired'],
+        'status': PlanStatusToJSON(value['status']),
+        'stops': value['stops'],
+        'total_demand': value['totalDemand'],
         'trailer': VehicleResponseToJSON(value['trailer']),
         'transporter': VehicleResponseToJSON(value['transporter']),
-        'transporter_tank_used': value['transporterTankUsed'],
-        'treeclusters': ((value['treeclusters'] as Array<any>).map(TreeClusterInListResponseToJSON)),
+        'transporter_capacity_used': value['transporterCapacityUsed'],
         'updated_at': value['updatedAt'],
         'user_ids': value['userIds'],
     };

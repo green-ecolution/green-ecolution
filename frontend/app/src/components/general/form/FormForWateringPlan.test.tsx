@@ -11,7 +11,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from '@green-ecolution/ui'
 import type { Vehicle, User } from '@/api/backendApi'
 import {
-  WateringPlanStatus,
+  PlanStatus as WateringPlanStatus,
   VehicleType,
   DrivingLicense,
   VehicleAvailability,

@@ -14,98 +14,105 @@
 
 import { mapValues } from '../runtime';
 /**
- * Request body for creating a new watering plan.
+ * Request body for creating a new plan.
  * @export
- * @interface WateringPlanCreateRequest
+ * @interface PlanCreateRequest
  */
-export interface WateringPlanCreateRequest {
+export interface PlanCreateRequest {
     /**
      * Arbitrary additional metadata from the provider.
      * @type {object}
-     * @memberof WateringPlanCreateRequest
+     * @memberof PlanCreateRequest
      */
     additionalInformation?: object | null;
     /**
-     * Scheduled date and time of the watering run (RFC 3339).
+     * Scheduled date and time of the run (RFC 3339).
      * @type {string}
-     * @memberof WateringPlanCreateRequest
+     * @memberof PlanCreateRequest
      */
     date: string;
     /**
-     * Human-readable description of the watering plan.
+     * Human-readable description of the plan.
      * @type {string}
-     * @memberof WateringPlanCreateRequest
+     * @memberof PlanCreateRequest
      */
     description: string;
     /**
-     * Organization this watering plan belongs to. Defaults to the acting
-     * user's own organization when omitted.
+     * Module the plan belongs to.
      * @type {string}
-     * @memberof WateringPlanCreateRequest
+     * @memberof PlanCreateRequest
+     */
+    module: string;
+    /**
+     * Organization this plan belongs to. Defaults to the acting user's own
+     * organization when omitted.
+     * @type {string}
+     * @memberof PlanCreateRequest
      */
     organizationId?: string | null;
     /**
      * Name of the external data provider that supplied this record.
      * @type {string}
-     * @memberof WateringPlanCreateRequest
+     * @memberof PlanCreateRequest
      */
     provider?: string | null;
     /**
      * Name of the configured start point to depart from and return to. Unknown names fall back to the default depot.
      * @type {string}
-     * @memberof WateringPlanCreateRequest
+     * @memberof PlanCreateRequest
      */
     startPointName?: string | null;
     /**
+     * Stops to include in the plan, as the module identifies them.
+     * @type {Array<string>}
+     * @memberof PlanCreateRequest
+     */
+    stops: Array<string>;
+    /**
      * Identifier of the trailer vehicle to use, if any.
      * @type {string}
-     * @memberof WateringPlanCreateRequest
+     * @memberof PlanCreateRequest
      */
     trailerId?: string | null;
     /**
+     * Whether the transporter's own capacity counts towards the route capacity.
+     * May only be `false` together with a `trailer_id`.
+     * @type {boolean}
+     * @memberof PlanCreateRequest
+     */
+    transporterCapacityUsed?: boolean;
+    /**
      * Identifier of the transporter vehicle to use.
      * @type {string}
-     * @memberof WateringPlanCreateRequest
+     * @memberof PlanCreateRequest
      */
     transporterId: string;
     /**
-     * Whether the transporter's own tank counts towards the route capacity.
-     * May only be `false` together with a `trailer_id`.
-     * @type {boolean}
-     * @memberof WateringPlanCreateRequest
-     */
-    transporterTankUsed?: boolean;
-    /**
-     * List of tree cluster identifiers to include in the plan.
-     * @type {Array<string>}
-     * @memberof WateringPlanCreateRequest
-     */
-    treeClusterIds: Array<string>;
-    /**
      * List of user identifiers assigned to execute this plan.
      * @type {Array<string>}
-     * @memberof WateringPlanCreateRequest
+     * @memberof PlanCreateRequest
      */
     userIds: Array<string>;
 }
 
 /**
- * Check if a given object implements the WateringPlanCreateRequest interface.
+ * Check if a given object implements the PlanCreateRequest interface.
  */
-export function instanceOfWateringPlanCreateRequest(value: object): value is WateringPlanCreateRequest {
+export function instanceOfPlanCreateRequest(value: object): value is PlanCreateRequest {
     if (!('date' in value) || value['date'] === undefined) return false;
     if (!('description' in value) || value['description'] === undefined) return false;
+    if (!('module' in value) || value['module'] === undefined) return false;
+    if (!('stops' in value) || value['stops'] === undefined) return false;
     if (!('transporterId' in value) || value['transporterId'] === undefined) return false;
-    if (!('treeClusterIds' in value) || value['treeClusterIds'] === undefined) return false;
     if (!('userIds' in value) || value['userIds'] === undefined) return false;
     return true;
 }
 
-export function WateringPlanCreateRequestFromJSON(json: any): WateringPlanCreateRequest {
-    return WateringPlanCreateRequestFromJSONTyped(json, false);
+export function PlanCreateRequestFromJSON(json: any): PlanCreateRequest {
+    return PlanCreateRequestFromJSONTyped(json, false);
 }
 
-export function WateringPlanCreateRequestFromJSONTyped(json: any, ignoreDiscriminator: boolean): WateringPlanCreateRequest {
+export function PlanCreateRequestFromJSONTyped(json: any, ignoreDiscriminator: boolean): PlanCreateRequest {
     if (json == null) {
         return json;
     }
@@ -114,22 +121,23 @@ export function WateringPlanCreateRequestFromJSONTyped(json: any, ignoreDiscrimi
         'additionalInformation': json['additional_information'] == null ? undefined : json['additional_information'],
         'date': json['date'],
         'description': json['description'],
+        'module': json['module'],
         'organizationId': json['organization_id'] == null ? undefined : json['organization_id'],
         'provider': json['provider'] == null ? undefined : json['provider'],
         'startPointName': json['start_point_name'] == null ? undefined : json['start_point_name'],
+        'stops': json['stops'],
         'trailerId': json['trailer_id'] == null ? undefined : json['trailer_id'],
+        'transporterCapacityUsed': json['transporter_capacity_used'] == null ? undefined : json['transporter_capacity_used'],
         'transporterId': json['transporter_id'],
-        'transporterTankUsed': json['transporter_tank_used'] == null ? undefined : json['transporter_tank_used'],
-        'treeClusterIds': json['tree_cluster_ids'],
         'userIds': json['user_ids'],
     };
 }
 
-export function WateringPlanCreateRequestToJSON(json: any): WateringPlanCreateRequest {
-    return WateringPlanCreateRequestToJSONTyped(json, false);
+export function PlanCreateRequestToJSON(json: any): PlanCreateRequest {
+    return PlanCreateRequestToJSONTyped(json, false);
 }
 
-export function WateringPlanCreateRequestToJSONTyped(value?: WateringPlanCreateRequest | null, ignoreDiscriminator: boolean = false): any {
+export function PlanCreateRequestToJSONTyped(value?: PlanCreateRequest | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
@@ -139,13 +147,14 @@ export function WateringPlanCreateRequestToJSONTyped(value?: WateringPlanCreateR
         'additional_information': value['additionalInformation'],
         'date': value['date'],
         'description': value['description'],
+        'module': value['module'],
         'organization_id': value['organizationId'],
         'provider': value['provider'],
         'start_point_name': value['startPointName'],
+        'stops': value['stops'],
         'trailer_id': value['trailerId'],
+        'transporter_capacity_used': value['transporterCapacityUsed'],
         'transporter_id': value['transporterId'],
-        'transporter_tank_used': value['transporterTankUsed'],
-        'tree_cluster_ids': value['treeClusterIds'],
         'user_ids': value['userIds'],
     };
 }
