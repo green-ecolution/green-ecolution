@@ -426,10 +426,29 @@ impl SensorService {
         id: &SensorId,
         target: Id<Organization>,
     ) -> Result<(), ServiceError> {
-        let mut sensor = self.reader.by_id(id).await?;
+        let sensor = self.reader.by_id(id).await?;
         if sensor.target().is_some() {
             return Err(ServiceError::SensorBoundToTarget);
         }
+        self.save_transfer(sensor, target).await
+    }
+
+    /// Skips the bound check of [`Self::transfer`]: the module calls it while moving the target itself.
+    #[tracing::instrument(level = "debug", skip_all, fields(sensor.id = %id))]
+    pub async fn transfer_with_target(
+        &self,
+        id: &SensorId,
+        target: Id<Organization>,
+    ) -> Result<(), ServiceError> {
+        let sensor = self.reader.by_id(id).await?;
+        self.save_transfer(sensor, target).await
+    }
+
+    async fn save_transfer(
+        &self,
+        mut sensor: Sensor,
+        target: Id<Organization>,
+    ) -> Result<(), ServiceError> {
         let events = sensor.transfer_to(target);
         self.writer.save(&sensor).await?;
         self.event_bus.publish_all(events).await;

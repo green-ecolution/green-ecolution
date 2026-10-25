@@ -4,7 +4,7 @@ use domain::{
     Id,
     authorization::Visibility,
     organization::Organization,
-    sensor::{SensorId, SensorReader, SensorWriter},
+    sensor::SensorId,
     shared::{coordinates::Coordinate, distance::Distance, pagination::Pagination},
 };
 use irrigation_domain::{
@@ -18,7 +18,7 @@ use irrigation_domain::{
 };
 
 use crate::irrigation::error::IrrigationError;
-use crate::service::{ServiceError, event_bus::EventBus};
+use crate::service::{ServiceError, event_bus::EventBus, sensor_service::SensorService};
 
 /// The single tree operation another service needs from this one.
 ///
@@ -44,8 +44,7 @@ pub struct TreeService {
     reader: Arc<dyn TreeReader>,
     writer: Arc<dyn TreeWriter>,
     cluster_reader: Arc<dyn TreeClusterReader>,
-    sensor_reader: Arc<dyn SensorReader>,
-    sensor_writer: Arc<dyn SensorWriter>,
+    sensors: Arc<SensorService>,
     event_bus: Arc<dyn EventBus>,
 }
 
@@ -54,16 +53,14 @@ impl TreeService {
         reader: Arc<dyn TreeReader>,
         writer: Arc<dyn TreeWriter>,
         cluster_reader: Arc<dyn TreeClusterReader>,
-        sensor_reader: Arc<dyn SensorReader>,
-        sensor_writer: Arc<dyn SensorWriter>,
+        sensors: Arc<SensorService>,
         event_bus: Arc<dyn EventBus>,
     ) -> Self {
         Self {
             reader,
             writer,
             cluster_reader,
-            sensor_reader,
-            sensor_writer,
+            sensors,
             event_bus,
         }
     }
@@ -248,12 +245,12 @@ impl TreeService {
         if tree.cluster_id().is_some() {
             return Err(IrrigationError::TreeInCluster);
         }
-        let mut events = tree.transfer_to(target);
+        let events = tree.transfer_to(target);
         self.writer.save(&tree).await?;
         if let Some(sensor_id) = self.reader.sensor_ids(&[tree.id]).await?.remove(&tree.id) {
-            let mut sensor = self.sensor_reader.by_id(&sensor_id).await?;
-            events.extend(sensor.transfer_to(target));
-            self.sensor_writer.save(&sensor).await?;
+            self.sensors
+                .transfer_with_target(&sensor_id, target)
+                .await?;
         }
         self.event_bus.publish_all(events).await;
         Ok(())

@@ -114,6 +114,30 @@ mod tests {
         ));
     }
 
+    fn too_long_name() -> ValidationError {
+        ValidationError::TooLong {
+            field: "cluster.name",
+            max: 255,
+            got: 300,
+        }
+    }
+
+    #[test]
+    fn a_validation_error_reaches_the_core_validation_code() {
+        let err = ServiceError::from(IrrigationError::from(too_long_name()));
+        assert!(matches!(err, ServiceError::Validation(_)));
+        assert_eq!(err.code(), "request.validation_failed");
+    }
+
+    #[test]
+    fn a_cluster_error_reaches_the_core_validation_code() {
+        let err = ServiceError::from(IrrigationError::from(ClusterError::Validation(
+            too_long_name(),
+        )));
+        assert!(matches!(err, ServiceError::Validation(_)));
+        assert_eq!(err.code(), "request.validation_failed");
+    }
+
     #[test]
     fn a_tree_that_is_not_planted_yet_maps_to_its_own_variant() {
         assert!(matches!(

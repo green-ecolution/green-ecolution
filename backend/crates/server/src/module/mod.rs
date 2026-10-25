@@ -10,12 +10,11 @@ use std::{
 
 use domain::{
     authorization::ResourceKey,
-    comment::CommentWriter,
     module::{ModuleKey, ModuleStatistics},
     organization::OrganizationReader,
     planning::PlanningProvider,
     region::RegionReader,
-    sensor::{SensorReader, SensorReadingReader, SensorWriter},
+    sensor::SensorReadingReader,
     settings::SettingsResolver,
     target::TargetCatalog,
 };
@@ -70,16 +69,10 @@ pub struct ModuleContext {
     pub sensors: Arc<SensorService>,
     /// Same rule as `sensors`: hold as `Weak` in event handlers.
     pub plans: Arc<OperationPlanService>,
-    /// The ports behind `sensors`, for a module that moves a sensor along
-    /// with its own target or reads the readings an event points at.
-    pub sensor_reader: Arc<dyn SensorReader>,
-    pub sensor_writer: Arc<dyn SensorWriter>,
+    /// For handlers that read the readings an event points at.
     pub sensor_readings: Arc<dyn SensorReadingReader>,
     pub regions: Arc<dyn RegionReader>,
     pub comments: Arc<CommentService>,
-    /// Comments hang on a target without a cascading key, so a module that
-    /// deletes a target removes its comments itself.
-    pub comment_writer: Arc<dyn CommentWriter>,
     pub plugin_auth: PluginAuthenticator,
 }
 

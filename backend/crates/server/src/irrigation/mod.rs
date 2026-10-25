@@ -124,8 +124,7 @@ impl Module for IrrigationModule {
             trees.clone(),
             trees.clone(),
             clusters.clone(),
-            ctx.sensor_reader.clone(),
-            ctx.sensor_writer.clone(),
+            ctx.sensors.clone(),
             ctx.event_bus.clone(),
         ));
         let cluster_service = Arc::new(ClusterService::new(
@@ -133,10 +132,9 @@ impl Module for IrrigationModule {
             clusters.clone(),
             trees.clone(),
             trees.clone(),
-            ctx.sensor_reader.clone(),
-            ctx.sensor_writer.clone(),
+            ctx.sensors.clone(),
             ctx.event_bus.clone(),
-            ctx.comment_writer.clone(),
+            ctx.comments.clone(),
             ctx.plans.clone(),
         ));
         // Reuses `TreeService::delete` for its own delete flow so `TreeDeleted`

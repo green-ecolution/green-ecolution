@@ -4,11 +4,10 @@ use chrono::{DateTime, Utc};
 use domain::{
     Id,
     authorization::Visibility,
-    comment::{CommentSubject, CommentWriter},
     events::DomainEvent,
     organization::Organization,
     planning::StopRef,
-    sensor::{SensorId, SensorReader, SensorWriter, data::SoilMoistureBucket},
+    sensor::{SensorId, data::SoilMoistureBucket},
     shared::{
         coordinates::Coordinate,
         pagination::{Pagination, SearchPage},
@@ -25,17 +24,19 @@ use irrigation_domain::{
 };
 
 use crate::irrigation::{self, error::IrrigationError};
-use crate::service::{event_bus::EventBus, operation_plan_service::OperationPlanService};
+use crate::service::{
+    comment_service::CommentService, event_bus::EventBus,
+    operation_plan_service::OperationPlanService, sensor_service::SensorService,
+};
 
 pub struct ClusterService {
     reader: Arc<dyn TreeClusterReader>,
     writer: Arc<dyn TreeClusterWriter>,
     tree_reader: Arc<dyn TreeReader>,
     tree_writer: Arc<dyn TreeWriter>,
-    sensor_reader: Arc<dyn SensorReader>,
-    sensor_writer: Arc<dyn SensorWriter>,
+    sensors: Arc<SensorService>,
     event_bus: Arc<dyn EventBus>,
-    comment_writer: Arc<dyn CommentWriter>,
+    comments: Arc<CommentService>,
     plans: Arc<OperationPlanService>,
 }
 
@@ -46,10 +47,9 @@ impl ClusterService {
         writer: Arc<dyn TreeClusterWriter>,
         tree_reader: Arc<dyn TreeReader>,
         tree_writer: Arc<dyn TreeWriter>,
-        sensor_reader: Arc<dyn SensorReader>,
-        sensor_writer: Arc<dyn SensorWriter>,
+        sensors: Arc<SensorService>,
         event_bus: Arc<dyn EventBus>,
-        comment_writer: Arc<dyn CommentWriter>,
+        comments: Arc<CommentService>,
         plans: Arc<OperationPlanService>,
     ) -> Self {
         Self {
@@ -57,10 +57,9 @@ impl ClusterService {
             writer,
             tree_reader,
             tree_writer,
-            sensor_reader,
-            sensor_writer,
+            sensors,
             event_bus,
-            comment_writer,
+            comments,
             plans,
         }
     }
@@ -210,10 +209,8 @@ impl ClusterService {
         self.writer.delete(id).await?;
         // Comments have no cascading FK: the subject is polymorphic.
         let deleted_comments = self
-            .comment_writer
-            .delete_for_subject(CommentSubject::Target(
-                crate::irrigation::targets::cluster_target(id),
-            ))
+            .comments
+            .delete_for_target(&crate::irrigation::targets::cluster_target(id))
             .await?;
         tracing::debug!(deleted_comments, "removed comments for deleted cluster");
         self.event_bus.publish_all(events).await;
@@ -366,9 +363,9 @@ impl ClusterService {
             events.extend(tree.transfer_to(target));
             self.tree_writer.save(&tree).await?;
             if let Some(sensor_id) = sensors.remove(&tree_id) {
-                let mut sensor = self.sensor_reader.by_id(&sensor_id).await?;
-                events.extend(sensor.transfer_to(target));
-                self.sensor_writer.save(&sensor).await?;
+                self.sensors
+                    .transfer_with_target(&sensor_id, target)
+                    .await?;
             }
         }
         self.event_bus.publish_all(events).await;

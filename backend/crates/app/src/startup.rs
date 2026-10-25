@@ -250,12 +250,9 @@ impl Application {
                 config: config.clone(),
                 sensors: services.sensor.clone(),
                 plans: services.operation_plan.clone(),
-                sensor_reader: repos.sensor_reader.clone(),
-                sensor_writer: repos.sensor_writer.clone(),
                 sensor_readings: repos.sensor_reading_reader.clone(),
                 regions: repos.region_reader.clone(),
                 comments: services.comment.clone(),
-                comment_writer: repos.comment_writer.clone(),
                 plugin_auth: plugin_auth.clone(),
             };
             let runtime = module
