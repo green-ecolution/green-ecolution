@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT COUNT(*) AS \"count!: i64\"\n            FROM operation_plan_users opu\n            INNER JOIN operation_plans op ON op.id = opu.plan_id\n            WHERE op.module_key = 'irrigation'\n              AND ($1::uuid[] IS NULL OR op.organization_id = ANY($1))",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "count!: i64",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "UuidArray"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "0a97e1fa2b6772c3879fff7c95857a1752331aba27f0bcbba46fe219999dea06"
+}

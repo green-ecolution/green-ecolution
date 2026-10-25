@@ -43,12 +43,6 @@ export interface OrganizationSettingsUpdateRequest {
     descendantsMayOverride?: boolean | null;
     /**
      * 
-     * @type {number}
-     * @memberof OrganizationSettingsUpdateRequest
-     */
-    justWateredTtlSecs?: number | null;
-    /**
-     * 
      * @type {MapViewDto}
      * @memberof OrganizationSettingsUpdateRequest
      */
@@ -59,12 +53,6 @@ export interface OrganizationSettingsUpdateRequest {
      * @memberof OrganizationSettingsUpdateRequest
      */
     sensorOfflineAfterSecs?: number | null;
-    /**
-     * 
-     * @type {number}
-     * @memberof OrganizationSettingsUpdateRequest
-     */
-    waterDemand?: number | null;
 }
 
 /**
@@ -86,10 +74,8 @@ export function OrganizationSettingsUpdateRequestFromJSONTyped(json: any, ignore
         
         'defectStreak': json['defect_streak'] == null ? undefined : json['defect_streak'],
         'descendantsMayOverride': json['descendants_may_override'] == null ? undefined : json['descendants_may_override'],
-        'justWateredTtlSecs': json['just_watered_ttl_secs'] == null ? undefined : json['just_watered_ttl_secs'],
         'mapView': json['map_view'] == null ? undefined : MapViewDtoFromJSON(json['map_view']),
         'sensorOfflineAfterSecs': json['sensor_offline_after_secs'] == null ? undefined : json['sensor_offline_after_secs'],
-        'waterDemand': json['water_demand'] == null ? undefined : json['water_demand'],
     };
 }
 
@@ -106,10 +92,8 @@ export function OrganizationSettingsUpdateRequestToJSONTyped(value?: Organizatio
         
         'defect_streak': value['defectStreak'],
         'descendants_may_override': value['descendantsMayOverride'],
-        'just_watered_ttl_secs': value['justWateredTtlSecs'],
         'map_view': MapViewDtoToJSON(value['mapView']),
         'sensor_offline_after_secs': value['sensorOfflineAfterSecs'],
-        'water_demand': value['waterDemand'],
     };
 }
 

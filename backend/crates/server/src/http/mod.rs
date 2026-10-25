@@ -25,14 +25,14 @@ use crate::{
     service::{
         authorization::AuthorizationService, cluster_service::ClusterService,
         comment_service::CommentService, evaluation_service::EvaluationService,
-        organization_service::OrganizationService, plugin_ingest_service::PluginIngestService,
+        operation_execution_service::OperationExecutionService,
+        operation_plan_service::OperationPlanService, organization_service::OrganizationService,
+        planning::PlanningRegistry, plugin_ingest_service::PluginIngestService,
         plugin_sensor_ingest_service::PluginSensorIngestService, plugin_service::PluginService,
         plugin_view_ticket_service::PluginViewTicketService, region_service::RegionService,
         role_service::RoleService, sensor_service::SensorService,
         settings_service::SettingsService, start_point_service::StartPointService,
         tree_service::TreeService, user_service::UserService, vehicle_service::VehicleService,
-        watering_execution_service::WateringExecutionService,
-        watering_plan_service::WateringPlanService,
     },
 };
 use domain::info::{HealthSnapshotReader, ReadinessReader, StatisticsReader, SystemInfoProvider};
@@ -111,8 +111,8 @@ pub struct AppState {
     pub vehicle_service: Arc<VehicleService>,
     pub cluster_service: Arc<ClusterService>,
     pub comment_service: Arc<CommentService>,
-    pub watering_plan_service: Arc<WateringPlanService>,
-    pub watering_execution_service: Arc<WateringExecutionService>,
+    pub operation_plan_service: Arc<OperationPlanService>,
+    pub operation_execution_service: Arc<OperationExecutionService>,
     pub evaluation_service: Arc<EvaluationService>,
     pub user_service: Arc<UserService>,
     pub info_provider: Arc<dyn SystemInfoProvider>,
@@ -126,6 +126,7 @@ pub struct AppState {
     pub start_point_service: Arc<StartPointService>,
     pub organization_service: Arc<OrganizationService>,
     pub role_service: Arc<RoleService>,
+    pub resource_catalog: Arc<domain::authorization::ResourceCatalog>,
     pub authorization_service: Arc<AuthorizationService>,
     pub plugin_reader: Arc<dyn domain::plugin::PluginReader>,
     pub plugin_writer: Arc<dyn domain::plugin::PluginWriter>,
@@ -142,6 +143,9 @@ pub struct AppState {
     pub settings_service: Arc<SettingsService>,
     pub module_activation_service:
         Arc<crate::service::module_activation_service::ModuleActivationService>,
+    pub module_activation: Arc<dyn domain::module::ModuleActivationReader>,
+    pub targets: Arc<crate::service::targets::TargetRegistry>,
+    pub planning: Arc<PlanningRegistry>,
     pub app_origins: AppOrigins,
 }
 
@@ -163,7 +167,7 @@ pub struct AppState {
         (name = "Trees", description = "Manage individual trees including their species, location, planting year, and associated sensors. Trees can be assigned to clusters for grouped watering management."),
         (name = "Vehicles", description = "Manage watering vehicles (transporters and trailers) including their water capacity, dimensions, and availability status. Vehicles can be archived when decommissioned."),
         (name = "Sensors", description = "Access LoRaWAN sensor data for soil moisture monitoring. Sensors are linked to individual trees and provide real-time environmental readings."),
-        (name = "Watering Plans", description = "Create and manage watering plans that combine tree clusters, vehicles, and optimized routes. Plans track status from planning through execution."),
+        (name = "Plans", description = "Create and manage a module's operation plans that combine stops, vehicles, and optimized routes. Plans track status from planning through execution."),
         (name = "Evaluation", description = "Aggregated statistics and evaluation data across all managed resources. Provides insights on watering plan coverage by region and vehicle usage."),
         (name = "Info", description = "Application metadata including version information, server status, map configuration, service health, and data statistics."),
         (name = "Users", description = "User registration and role management. Authentication is handled directly against Keycloak."),
@@ -171,9 +175,10 @@ pub struct AppState {
         (name = "Routing", description = "Routing configuration and start point management. Exposes the named depot locations available for watering route optimization."),
         (name = "Organizations", description = "Manage the organization tree used for RBAC scoping and multi-tenancy."),
         (name = "Roles", description = "Manage roles (named permission sets) and their assignment to users."),
-        (name = "Comments", description = "Free-text comments on tree clusters and watering plans. Reading follows the parent resource's read permission, writing its update permission."),
+        (name = "Comments", description = "Free-text comments on tree clusters and plans. Reading follows the parent resource's read permission, writing its update permission."),
         (name = "Modules", description = "Feature modules and their activation per organization"),
-        (name = "Settings", description = "Per-organization operational defaults — water demand, just-watered duration, sensor thresholds and the map viewport — resolved along the organization tree."),
+        (name = "Settings", description = "Per-organization operational defaults — sensor thresholds and the map viewport — resolved along the organization tree."),
+        (name = "Irrigation", description = "Per-organization irrigation defaults — water demand and just-watered duration — resolved along the organization tree."),
     ),
 )]
 struct ApiDoc;

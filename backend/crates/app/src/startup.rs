@@ -4,6 +4,7 @@ use std::time::Duration;
 use sqlx::{PgPool, postgres::PgPoolOptions};
 use tokio::net::TcpListener;
 
+use domain::authorization::ResourceCatalog;
 use domain::info::{
     HealthSnapshotReader, ReadinessReader, ServiceName, StatisticsReader, SystemInfoProvider,
 };
@@ -25,6 +26,7 @@ use server::{
         pg_cluster::PgTreeClusterRepository,
         pg_comment::PgCommentRepository,
         pg_evaluation::PgEvaluationRepository,
+        pg_operation_plan::PgOperationPlanRepository,
         pg_organization::PgOrganizationRepository,
         pg_plugin::PgPluginRepository,
         pg_region::PgRegionRepository,
@@ -35,11 +37,11 @@ use server::{
         pg_start_point::PgStartPointRepository,
         pg_tree::PgTreeRepository,
         pg_vehicle::PgVehicleRepository,
-        pg_watering_plan::PgWateringPlanRepository,
         statistics_repo::PgStatisticsRepo,
         system_info::DefaultSystemInfoProvider,
         update_checker::UpdateChecker,
     },
+    irrigation::settings::{IrrigationDefaults, repository::PgIrrigationSettings},
     module::Module,
     service::{
         authorization::AuthorizationService,
@@ -52,7 +54,10 @@ use server::{
         handlers::cluster_soil_recalc::ClusterSoilRecalcHandler,
         handlers::cluster_status::ClusterStatusAggregatorHandler,
         handlers::tree_watering::TreeWateringFromSensorHandler,
+        operation_execution_service::OperationExecutionService,
+        operation_plan_service::OperationPlanService,
         organization_service::OrganizationService,
+        planning::PlanningRegistry,
         plugin_ingest_service::PluginIngestService,
         plugin_proxy_policy::ProxyPolicy,
         plugin_proxy_service::PluginProxyService,
@@ -66,8 +71,6 @@ use server::{
         tree_service::TreeService,
         user_service::UserService,
         vehicle_service::VehicleService,
-        watering_execution_service::WateringExecutionService,
-        watering_plan_service::WateringPlanService,
     },
 };
 
@@ -112,11 +115,16 @@ impl Application {
         server::module::check_modules(&server::http::v1::core_openapi(), &modules).map_err(
             |err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err.to_string()),
         )?;
+        let resource_catalog = Arc::new(
+            ResourceCatalog::new(modules.iter().flat_map(|m| m.resources().iter().copied()))
+                .map_err(|e| std::io::Error::other(format!("invalid resource catalog: {e}")))?,
+        );
         for configured in settings.modules.keys() {
             if !modules.iter().any(|m| m.key().as_str() == configured) {
                 tracing::warn!(module = %configured, "modules.{configured} is configured but no such module is registered");
             }
         }
+        let config = Arc::new(settings.clone());
         let AuthStack {
             user_repo,
             auth_layer,
@@ -138,11 +146,26 @@ impl Application {
         let sensor_offline_after = chrono::Duration::seconds(
             i64::try_from(settings.sensor.offline_after_secs).unwrap_or(i64::MAX),
         );
-        let repos = Repositories::build(&pool, sensor_offline_after, settings.sensor.defect_streak);
+        let repos = Repositories::build(
+            &pool,
+            sensor_offline_after,
+            settings.sensor.defect_streak,
+            &resource_catalog,
+        );
         let defaults = instance_defaults(&settings)?;
         let settings_repo = Arc::new(PgSettingsRepository::new(
             pool.clone(),
             defaults,
+            repos.organization_reader.clone(),
+        ));
+        let irrigation_settings = Arc::new(PgIrrigationSettings::new(
+            pool.clone(),
+            IrrigationDefaults::from_config(&settings).map_err(|err| {
+                std::io::Error::new(
+                    std::io::ErrorKind::InvalidInput,
+                    format!("invalid configuration: {err}"),
+                )
+            })?,
             repos.organization_reader.clone(),
         ));
         let profile_repo = Arc::new(infra::pg_user_profile::PgUserProfileRepository::new(
@@ -198,11 +221,15 @@ impl Application {
                     &settings.routing,
                 )) as Arc<dyn domain::routing::RouteOptimizer>
             });
+        let targets = Arc::new(server::service::targets::TargetRegistry::new());
+        let planning = Arc::new(PlanningRegistry::new());
         let services = Services::build(
             &repos,
             event_bus.clone(),
+            targets.clone(),
+            planning.clone(),
+            module_activation_repo.clone(),
             route_optimizer,
-            settings_repo.clone(),
             repos.start_point_reader.clone(),
             repos.start_point_writer.clone(),
             profile_repo,
@@ -214,11 +241,14 @@ impl Application {
                     proxy.allowed_ports.clone(),
                 )
             }),
+            resource_catalog.clone(),
         );
 
         let mut handlers = core_event_handlers(&repos);
         let mut module_routes = Vec::new();
         let mut background_tasks = Vec::new();
+        let mut catalogs = std::collections::BTreeMap::new();
+        let mut providers = std::collections::BTreeMap::new();
         for module in &modules {
             let ctx = server::module::ModuleContext {
                 pool: pool.clone(),
@@ -231,6 +261,10 @@ impl Application {
                     services.authorization.clone(),
                     module_activation_repo.clone(),
                 ),
+                users: user_service.clone(),
+                config: config.clone(),
+                sensors: services.sensor.clone(),
+                plans: services.operation_plan.clone(),
             };
             let runtime = module
                 .build(ctx)
@@ -238,7 +272,19 @@ impl Application {
             handlers.extend(runtime.event_handlers);
             module_routes.push(runtime.routes);
             background_tasks.extend(runtime.background_tasks);
+            if let Some(catalog) = runtime.targets {
+                catalogs.insert(module.key(), catalog);
+            }
+            if let Some(provider) = runtime.planning {
+                providers.insert(module.key(), provider);
+            }
         }
+        targets
+            .install(catalogs)
+            .map_err(|e| std::io::Error::other(e.to_string()))?;
+        planning
+            .install(providers)
+            .map_err(|e| std::io::Error::other(e.to_string()))?;
         event_bus
             .install(Arc::new(InMemoryEventBus::new(handlers)))
             .map_err(std::io::Error::other)?;
@@ -254,7 +300,7 @@ impl Application {
         let _expiry_handle = infra::watering_status_expiry::spawn(
             services.cluster.clone(),
             repos.organization_reader.clone(),
-            settings_repo.clone(),
+            irrigation_settings.clone(),
             Duration::from_secs(settings.watering.just_watered_sweep_interval_secs),
         );
         let _update_handle = infra::update_checker::spawn(
@@ -312,8 +358,8 @@ impl Application {
             vehicle_service: services.vehicle,
             cluster_service: services.cluster,
             comment_service: services.comment,
-            watering_plan_service: services.watering_plan,
-            watering_execution_service: services.watering_execution,
+            operation_plan_service: services.operation_plan,
+            operation_execution_service: services.operation_execution,
             evaluation_service: services.evaluation,
             user_service,
             info_provider,
@@ -338,6 +384,7 @@ impl Application {
             start_point_service: services.start_point,
             organization_service: services.organization,
             role_service: services.role,
+            resource_catalog: resource_catalog.clone(),
             authorization_service: services.authorization,
             plugin_reader: repos.plugin_reader,
             plugin_writer: repos.plugin_writer,
@@ -350,6 +397,9 @@ impl Application {
             settings_reader: settings_repo.clone(),
             settings_service,
             module_activation_service,
+            module_activation: module_activation_repo,
+            targets,
+            planning,
             app_origins,
         });
 
@@ -466,8 +516,8 @@ struct Repositories {
     cluster_writer: Arc<dyn domain::cluster::TreeClusterWriter>,
     comment_reader: Arc<dyn domain::comment::CommentReader>,
     comment_writer: Arc<dyn domain::comment::CommentWriter>,
-    watering_plan_reader: Arc<dyn domain::watering_plan::WateringPlanReader>,
-    watering_plan_writer: Arc<dyn domain::watering_plan::WateringPlanWriter>,
+    operation_plan_reader: Arc<dyn domain::operation_plan::OperationPlanReader>,
+    operation_plan_writer: Arc<dyn domain::operation_plan::OperationPlanWriter>,
     evaluation: Arc<dyn domain::evaluation::EvaluationRepository>,
     statistics: Arc<dyn StatisticsReader>,
     start_point_reader: Arc<dyn domain::start_point::StartPointReader>,
@@ -478,9 +528,14 @@ struct Repositories {
 }
 
 impl Repositories {
-    fn build(pool: &PgPool, sensor_offline_after: chrono::Duration, defect_streak: usize) -> Self {
+    fn build(
+        pool: &PgPool,
+        sensor_offline_after: chrono::Duration,
+        defect_streak: usize,
+        catalog: &Arc<ResourceCatalog>,
+    ) -> Self {
         let organization_repo = Arc::new(PgOrganizationRepository::new(pool.clone()));
-        let role_repo = Arc::new(PgRoleRepository::new(pool.clone()));
+        let role_repo = Arc::new(PgRoleRepository::new(pool.clone(), catalog.clone()));
         let region_repo = Arc::new(PgRegionRepository::new(pool.clone()));
         let tree_repo = Arc::new(PgTreeRepository::new(pool.clone()));
         let sensor_repo = Arc::new(PgSensorRepository::new(
@@ -491,9 +546,9 @@ impl Repositories {
         let vehicle_repo = Arc::new(PgVehicleRepository::new(pool.clone()));
         let cluster_repo = Arc::new(PgTreeClusterRepository::new(pool.clone()));
         let comment_repo = Arc::new(PgCommentRepository::new(pool.clone()));
-        let watering_plan_repo = Arc::new(PgWateringPlanRepository::new(pool.clone()));
+        let operation_plan_repo = Arc::new(PgOperationPlanRepository::new(pool.clone()));
         let start_point_repo = Arc::new(PgStartPointRepository::new(pool.clone()));
-        let plugin_repo = Arc::new(PgPluginRepository::new(pool.clone()));
+        let plugin_repo = Arc::new(PgPluginRepository::new(pool.clone(), catalog.clone()));
 
         Self {
             organization_reader: organization_repo.clone(),
@@ -515,8 +570,8 @@ impl Repositories {
             cluster_writer: cluster_repo,
             comment_reader: comment_repo.clone(),
             comment_writer: comment_repo,
-            watering_plan_reader: watering_plan_repo.clone(),
-            watering_plan_writer: watering_plan_repo,
+            operation_plan_reader: operation_plan_repo.clone(),
+            operation_plan_writer: operation_plan_repo,
             evaluation: Arc::new(PgEvaluationRepository::new(pool.clone())),
             statistics: Arc::new(PgStatisticsRepo::new(pool.clone())),
             start_point_reader: start_point_repo.clone(),
@@ -537,8 +592,8 @@ struct Services {
     vehicle: Arc<VehicleService>,
     cluster: Arc<ClusterService>,
     comment: Arc<CommentService>,
-    watering_plan: Arc<WateringPlanService>,
-    watering_execution: Arc<WateringExecutionService>,
+    operation_plan: Arc<OperationPlanService>,
+    operation_execution: Arc<OperationExecutionService>,
     evaluation: Arc<EvaluationService>,
     start_point: Arc<StartPointService>,
     organization: Arc<OrganizationService>,
@@ -555,14 +610,17 @@ impl Services {
     fn build(
         repos: &Repositories,
         event_bus: Arc<dyn EventBus>,
+        targets: Arc<server::service::targets::TargetRegistry>,
+        planning: Arc<PlanningRegistry>,
+        module_activation: Arc<dyn domain::module::ModuleActivationReader>,
         route_optimizer: Option<Arc<dyn domain::routing::RouteOptimizer>>,
-        settings_resolver: Arc<dyn domain::settings::SettingsResolver>,
         start_point_reader: Arc<dyn domain::start_point::StartPointReader>,
         start_point_writer: Arc<dyn domain::start_point::StartPointWriter>,
         profile_reader: Arc<dyn domain::user::UserProfileReader>,
         user_repo: Arc<dyn domain::user::UserRepository>,
         auth_enabled: bool,
         proxy_policy: Option<ProxyPolicy>,
+        resource_catalog: Arc<ResourceCatalog>,
     ) -> Self {
         let authorization = Arc::new(AuthorizationService::new(
             repos.organization_reader.clone(),
@@ -575,6 +633,7 @@ impl Services {
             authorization.clone(),
             Arc::new(server::infra::plugin_key::RandomPluginKeyFactory),
             proxy_policy,
+            resource_catalog.clone(),
         ));
         let tree = Arc::new(TreeService::new(
             repos.tree_reader.clone(),
@@ -603,9 +662,21 @@ impl Services {
             repos.sensor_reading_writer.clone(),
             repos.sensor_model_reader.clone(),
             repos.tree_reader.clone(),
-            repos.tree_writer.clone(),
             repos.cluster_reader.clone(),
+            targets.clone(),
+            module_activation.clone(),
             event_bus.clone(),
+        ));
+        let operation_plan = Arc::new(OperationPlanService::new(
+            repos.operation_plan_reader.clone(),
+            repos.operation_plan_writer.clone(),
+            repos.vehicle_reader.clone(),
+            event_bus.clone(),
+            route_optimizer,
+            start_point_reader.clone(),
+            repos.comment_writer.clone(),
+            planning,
+            module_activation.clone(),
         ));
         let plugin_sensor_ingest = Arc::new(PluginSensorIngestService::new(
             sensor.clone(),
@@ -631,28 +702,20 @@ impl Services {
                 repos.sensor_writer.clone(),
                 event_bus.clone(),
                 repos.comment_writer.clone(),
+                operation_plan.clone(),
             )),
             comment: Arc::new(CommentService::new(
                 repos.comment_reader.clone(),
                 repos.comment_writer.clone(),
+                targets.clone(),
+                module_activation.clone(),
             )),
-            watering_plan: Arc::new(WateringPlanService::new(
-                repos.watering_plan_reader.clone(),
-                repos.watering_plan_writer.clone(),
-                repos.cluster_reader.clone(),
-                repos.vehicle_reader.clone(),
-                event_bus.clone(),
-                route_optimizer,
-                settings_resolver,
-                start_point_reader.clone(),
-                repos.organization_reader.clone(),
-                repos.comment_writer.clone(),
-            )),
-            watering_execution: Arc::new(WateringExecutionService::new(
-                repos.watering_plan_reader.clone(),
-                repos.watering_plan_writer.clone(),
+            operation_execution: Arc::new(OperationExecutionService::new(
+                repos.operation_plan_reader.clone(),
+                repos.operation_plan_writer.clone(),
                 event_bus.clone(),
             )),
+            operation_plan,
             evaluation: Arc::new(EvaluationService::new(repos.evaluation.clone())),
             start_point: Arc::new(StartPointService::new(
                 start_point_reader.clone(),
@@ -692,8 +755,7 @@ fn instance_defaults(
     settings: &Settings,
 ) -> Result<domain::settings::InstanceDefaults, std::io::Error> {
     use domain::settings::{
-        DefectStreak, InstanceDefaults, JustWateredTtl, MapBounds, MapView, SensorOfflineAfter,
-        WaterDemand, ZoomLevel,
+        DefectStreak, InstanceDefaults, MapBounds, MapView, SensorOfflineAfter, ZoomLevel,
     };
     use domain::shared::{coordinates::Coordinate, geo::BoundingBox};
 
@@ -708,11 +770,6 @@ fn instance_defaults(
     };
 
     Ok(InstanceDefaults {
-        water_demand: WaterDemand::new(settings.routing.tree_demand_liters).map_err(rejected)?,
-        just_watered_ttl: JustWateredTtl::new(
-            i64::try_from(settings.watering.just_watered_ttl_secs).unwrap_or(i64::MAX),
-        )
-        .map_err(rejected)?,
         sensor_offline_after: SensorOfflineAfter::new(
             i64::try_from(settings.sensor.offline_after_secs).unwrap_or(i64::MAX),
         )

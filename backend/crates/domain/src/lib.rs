@@ -23,6 +23,7 @@ use uuid::Uuid;
 
 pub mod auth;
 pub mod authorization;
+pub mod capacity;
 pub mod cluster;
 pub mod comment;
 pub mod error;
@@ -31,7 +32,9 @@ pub mod event_bus;
 pub mod events;
 pub mod info;
 pub mod module;
+pub mod operation_plan;
 pub mod organization;
+pub mod planning;
 pub mod plugin;
 pub mod region;
 pub mod role;
@@ -41,10 +44,10 @@ pub mod sensor_model;
 pub mod settings;
 pub mod shared;
 pub mod start_point;
+pub mod target;
 pub mod tree;
 pub mod user;
 pub mod vehicle;
-pub mod watering_plan;
 
 /// Errors that repository implementations return to the domain.
 ///

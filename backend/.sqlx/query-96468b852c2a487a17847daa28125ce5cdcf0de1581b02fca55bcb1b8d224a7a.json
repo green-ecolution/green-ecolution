@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM operation_plan_stops s\n               USING operation_plans p\n               WHERE s.plan_id = p.id AND p.module_key = $1 AND s.stop_id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "96468b852c2a487a17847daa28125ce5cdcf0de1581b02fca55bcb1b8d224a7a"
+}

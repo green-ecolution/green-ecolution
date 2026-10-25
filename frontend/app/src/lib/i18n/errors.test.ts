@@ -46,6 +46,8 @@ it('keeps the code and status key space intact', () => {
   const keys = flatten(de)
   expect(keys).toContain('code.conflict.tree_in_cluster')
   expect(keys).toContain('code.organization_mismatch.trees_vs_cluster')
+  expect(keys).toContain('code.module.disabled')
+  expect(keys).toContain('code.module.unknown')
   expect(keys).toContain('status.409')
   expect(keys).toContain('offline')
   expect(keys).toContain('unknown')

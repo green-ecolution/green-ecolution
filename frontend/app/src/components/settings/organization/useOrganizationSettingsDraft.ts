@@ -1,11 +1,5 @@
 import { useCallback, useState } from 'react'
-import {
-  translateIssue,
-  validateJustWateredTtlHours,
-  validateMapView,
-  validateWaterDemand,
-  type ValidationIssue,
-} from '@green-ecolution/domain-wasm'
+import { translateIssue, validateMapView, type ValidationIssue } from '@green-ecolution/domain-wasm'
 import {
   SettingOriginDto,
   type MapViewDto,
@@ -14,13 +8,6 @@ import {
 } from '@/api/backendApi'
 import { useIssueTranslator } from '@/lib/i18n/validation'
 
-export interface SettingsFieldDraft {
-  /** false = inherit, true = this organization sets its own value */
-  own: boolean
-  /** raw input text, so a half-typed number does not get coerced */
-  text: string
-}
-
 export interface MapViewFieldDraft {
   own: boolean
   /** Always a whole viewport: centre and box only mean anything together. */
@@ -28,20 +15,12 @@ export interface MapViewFieldDraft {
 }
 
 export interface SettingsDraft {
-  waterDemand: SettingsFieldDraft
-  justWateredTtlHours: SettingsFieldDraft
   mapView: MapViewFieldDraft
   descendantsMayOverride: boolean
 }
 
-export type NumericField = 'waterDemand' | 'justWateredTtlHours'
-
 // wasm-bindgen emits `(input: number) => any`; tighten the return type at the boundary,
 // same pattern as the draft resolvers in @green-ecolution/domain-wasm.
-const waterDemandValidator = validateWaterDemand as (liters: number) => ValidationIssue | null
-const justWateredTtlValidator = validateJustWateredTtlHours as (
-  hours: number,
-) => ValidationIssue | null
 const mapViewValidator = validateMapView as (
   centerLat: number,
   centerLng: number,
@@ -89,19 +68,7 @@ const limitsAround = ([lat, lng]: number[]): Pick<MapViewDto, 'bbox' | 'minZoom'
   maxZoom: 18,
 })
 
-/** The API speaks seconds, the field asks for hours. */
-export const hoursOf = (seconds: number): number => seconds / 3600
-const secondsOf = (hours: string): number => Math.round(Number(hours) * 3600)
-
 const draftOf = (response: OrganizationSettingsResponse): SettingsDraft => ({
-  waterDemand: {
-    own: response.waterDemand.origin === SettingOriginDto.Own,
-    text: String(response.waterDemand.value),
-  },
-  justWateredTtlHours: {
-    own: response.justWateredTtlSecs.origin === SettingOriginDto.Own,
-    text: String(hoursOf(response.justWateredTtlSecs.value)),
-  },
   mapView: {
     own: response.mapView.origin === SettingOriginDto.Own,
     value: response.mapView.value,
@@ -119,26 +86,6 @@ export const useOrganizationSettingsDraft = () => {
     setServer(response)
     setDraft(draftOf(response))
   }, [])
-
-  const setOwn = (field: NumericField, own: boolean) => {
-    setDraft((current) => {
-      if (!current || !server) return current
-      if (!own) return { ...current, [field]: { ...current[field], own: false } }
-      // The starting point is the currently effective (inherited) value, not
-      // whatever text was left over from an earlier, possibly discarded, own edit.
-      const text =
-        field === 'waterDemand'
-          ? String(server.waterDemand.value)
-          : String(hoursOf(server.justWateredTtlSecs.value))
-      return { ...current, [field]: { own: true, text } }
-    })
-  }
-
-  const setText = (field: NumericField, text: string) => {
-    setDraft((current) =>
-      current ? { ...current, [field]: { ...current[field], text } } : current,
-    )
-  }
 
   const setMapViewOwn = (own: boolean) => {
     setDraft((current) => {
@@ -195,25 +142,13 @@ export const useOrganizationSettingsDraft = () => {
     setDraft((current) => (current ? { ...current, descendantsMayOverride: value } : current))
   }
 
-  const waterDemandIssue = draft?.waterDemand.own
-    ? waterDemandValidator(Number(draft.waterDemand.text))
-    : null
-  const justWateredTtlIssue = draft?.justWateredTtlHours.own
-    ? justWateredTtlValidator(Number(draft.justWateredTtlHours.text))
-    : null
-
   const mapViewIssue = draft?.mapView.own ? checkMapView(draft.mapView.value) : null
 
   const errors = {
-    waterDemand: waterDemandIssue ? translateIssue(waterDemandIssue, translate) : null,
-    justWateredTtlHours: justWateredTtlIssue
-      ? translateIssue(justWateredTtlIssue, translate)
-      : null,
     mapView: mapViewIssue ? translateIssue(mapViewIssue, translate) : null,
   }
 
-  const valid =
-    errors.waterDemand === null && errors.justWateredTtlHours === null && errors.mapView === null
+  const valid = errors.mapView === null
 
   const toRequest = (): OrganizationSettingsUpdateRequest | null => {
     // A non-numeric own value would otherwise serialize to `null` over JSON
@@ -222,24 +157,6 @@ export const useOrganizationSettingsDraft = () => {
     // via `errors`, so nothing is lost by withholding the request.
     if (!draft || !server || !valid) return null
     const body: OrganizationSettingsUpdateRequest = {}
-
-    const waterDemandWasOwn = server.waterDemand.origin === SettingOriginDto.Own
-    if (!draft.waterDemand.own) {
-      if (waterDemandWasOwn) body.waterDemand = null
-    } else {
-      const parsed = Number(draft.waterDemand.text)
-      if (!waterDemandWasOwn || parsed !== server.waterDemand.value) body.waterDemand = parsed
-    }
-
-    const ttlWasOwn = server.justWateredTtlSecs.origin === SettingOriginDto.Own
-    if (!draft.justWateredTtlHours.own) {
-      if (ttlWasOwn) body.justWateredTtlSecs = null
-    } else {
-      const parsed = secondsOf(draft.justWateredTtlHours.text)
-      if (!ttlWasOwn || parsed !== server.justWateredTtlSecs.value) {
-        body.justWateredTtlSecs = parsed
-      }
-    }
 
     const mapViewWasOwn = server.mapView.origin === SettingOriginDto.Own
     if (!draft.mapView.own) {
@@ -263,8 +180,6 @@ export const useOrganizationSettingsDraft = () => {
     errors,
     valid,
     load,
-    setOwn,
-    setText,
     setMapViewOwn,
     setMapViewRestricted,
     setMapViewZoom,

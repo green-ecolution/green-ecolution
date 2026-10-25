@@ -1,5 +1,5 @@
 import type { WateringPlanForm as WateringPlanFormBase } from '@green-ecolution/domain-wasm'
-import { WateringPlanStatus } from '@green-ecolution/backend-client'
+import { PlanStatus as WateringPlanStatus } from '@green-ecolution/backend-client'
 import { z } from 'zod'
 
 export type WateringPlanForm = Omit<WateringPlanFormBase, 'status'> & {

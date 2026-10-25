@@ -19,10 +19,7 @@ export const useCommentMutations = (subject: CommentSubject, parentId: string) =
     mutationFn: (body: string) =>
       subject === 'cluster'
         ? commentApi.createClusterComment({ clusterId: parentId, createCommentRequest: { body } })
-        : commentApi.createWateringPlanComment({
-            wateringPlanId: parentId,
-            createCommentRequest: { body },
-          }),
+        : commentApi.createPlanComment({ planId: parentId, createCommentRequest: { body } }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey })
       showToast(t('toasts.createSuccess'))
@@ -40,8 +37,8 @@ export const useCommentMutations = (subject: CommentSubject, parentId: string) =
             commentId,
             updateCommentRequest: { body },
           })
-        : commentApi.updateWateringPlanComment({
-            wateringPlanId: parentId,
+        : commentApi.updatePlanComment({
+            planId: parentId,
             commentId,
             updateCommentRequest: { body },
           }),
@@ -58,7 +55,7 @@ export const useCommentMutations = (subject: CommentSubject, parentId: string) =
     mutationFn: (commentId: string) =>
       subject === 'cluster'
         ? commentApi.deleteClusterComment({ clusterId: parentId, commentId })
-        : commentApi.deleteWateringPlanComment({ wateringPlanId: parentId, commentId }),
+        : commentApi.deletePlanComment({ planId: parentId, commentId }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey })
       showToast(t('toasts.deleteSuccess'))

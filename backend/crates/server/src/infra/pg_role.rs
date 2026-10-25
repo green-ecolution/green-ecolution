@@ -1,20 +1,49 @@
+use std::{
+    collections::BTreeSet,
+    sync::{Arc, LazyLock, Mutex},
+};
+
 use sqlx::PgPool;
 use uuid::Uuid;
 
 use domain::role::RoleSnapshot;
 use domain::{
     Id, RepositoryError,
+    authorization::ResourceCatalog,
     organization::Organization,
     role::{Role, RoleDraft, RoleReader, RoleWriter},
 };
 
 pub struct PgRoleRepository {
     pool: PgPool,
+    catalog: Arc<ResourceCatalog>,
 }
 
 impl PgRoleRepository {
-    pub fn new(pool: PgPool) -> Self {
-        Self { pool }
+    pub fn new(pool: PgPool, catalog: Arc<ResourceCatalog>) -> Self {
+        Self { pool, catalog }
+    }
+
+    fn reconstitute(&self, snap: RoleSnapshot) -> Result<Role, RepositoryError> {
+        let reconstituted = Role::reconstitute(snap, &self.catalog)?;
+        warn_ignored(&reconstituted.ignored_permissions);
+        Ok(reconstituted.role)
+    }
+}
+
+static WARNED: LazyLock<Mutex<BTreeSet<String>>> = LazyLock::new(Default::default);
+
+fn warn_ignored(ignored: &[String]) {
+    let Ok(mut warned) = WARNED.lock() else {
+        return;
+    };
+    for permission in ignored {
+        if warned.insert(permission.clone()) {
+            tracing::warn!(
+                permission = %permission,
+                "stored permission names a resource no registered module declares; ignored"
+            );
+        }
     }
 }
 
@@ -39,7 +68,7 @@ impl RoleReader for PgRoleRepository {
         .fetch_optional(&self.pool)
         .await?
         .ok_or(RepositoryError::NotFound)?;
-        Ok(Role::reconstitute(snap)?)
+        self.reconstitute(snap)
     }
 
     #[tracing::instrument(level = "trace", skip_all)]
@@ -53,7 +82,7 @@ impl RoleReader for PgRoleRepository {
         .fetch_all(&self.pool)
         .await?
         .into_iter()
-        .map(|s| Role::reconstitute(s).map_err(Into::into))
+        .map(|s| self.reconstitute(s))
         .collect()
     }
 
@@ -72,7 +101,7 @@ impl RoleReader for PgRoleRepository {
         .fetch_all(&self.pool)
         .await?
         .into_iter()
-        .map(|s| Role::reconstitute(s).map_err(Into::into))
+        .map(|s| self.reconstitute(s))
         .collect()
     }
 
@@ -86,7 +115,7 @@ impl RoleReader for PgRoleRepository {
         .fetch_all(&self.pool)
         .await?
         .into_iter()
-        .map(|s| Role::reconstitute(s).map_err(Into::into))
+        .map(|s| self.reconstitute(s))
         .collect()
     }
 
@@ -102,7 +131,7 @@ impl RoleReader for PgRoleRepository {
         .fetch_all(&self.pool)
         .await?
         .into_iter()
-        .map(|s| Role::reconstitute(s).map_err(Into::into))
+        .map(|s| self.reconstitute(s))
         .collect()
     }
 
@@ -118,7 +147,7 @@ impl RoleReader for PgRoleRepository {
         .await?;
         rows.into_iter()
             .map(|row| {
-                let role = Role::reconstitute(RoleSnapshot {
+                let role = self.reconstitute(RoleSnapshot {
                     id: row.id,
                     organization_id: row.organization_id,
                     name: row.name,
@@ -161,14 +190,14 @@ impl RoleWriter for PgRoleRepository {
         )
         .execute(&self.pool)
         .await?;
-        Ok(Role::reconstitute(RoleSnapshot {
+        self.reconstitute(RoleSnapshot {
             id: id.value(),
             organization_id: Some(draft.organization_id.value()),
             name: draft.name.as_str().to_string(),
             description: draft.description.as_ref().map(|d| d.as_str().to_string()),
             permissions,
             template_key: draft.template_key.as_ref().map(|k| k.as_str().to_string()),
-        })?)
+        })
     }
 
     #[tracing::instrument(level = "trace", skip_all)]

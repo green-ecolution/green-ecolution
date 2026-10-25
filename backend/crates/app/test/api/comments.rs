@@ -37,7 +37,7 @@ fn transporter_payload() -> serde_json::Value {
     json!({
         "number_plate": format!("FL-GE {}", &Uuid::new_v4().to_string()[..8]),
         "description": "Giesswagen",
-        "water_capacity": 5000.0,
+        "capacities": { "water": 5000.0 },
         "model": "MAN TGS",
         "availability": "available",
         "type": "transporter",
@@ -47,7 +47,7 @@ fn transporter_payload() -> serde_json::Value {
 }
 
 /// Creates a transporter and a plan owned by `org`, and returns the plan id.
-/// `tree_cluster_ids` stays empty — the comment tests do not need a cluster.
+/// `stops` stays empty — the comment tests do not need a cluster.
 async fn create_plan(app: &TestApp, token: &str, org: Uuid) -> String {
     let client = reqwest::Client::new();
     let transporter: serde_json::Value = client
@@ -63,13 +63,14 @@ async fn create_plan(app: &TestApp, token: &str, org: Uuid) -> String {
     let transporter_id = transporter["id"].as_str().unwrap();
 
     let created: serde_json::Value = client
-        .post(format!("{}/api/v1/watering-plans", app.address))
+        .post(format!("{}/api/v1/plans", app.address))
         .bearer_auth(token)
         .json(&json!({
             "date": "2026-09-15T08:00:00Z",
             "description": "Kommentar-Plan",
             "transporter_id": transporter_id,
-            "tree_cluster_ids": [],
+            "module": "irrigation",
+            "stops": [],
             "user_ids": [],
             "organization_id": org,
         }))
@@ -183,17 +184,14 @@ async fn created_comment_carries_the_authors_display_name() {
 }
 
 #[tokio::test]
-async fn creates_and_lists_a_watering_plan_comment() {
+async fn creates_and_lists_a_plan_comment() {
     let (harness, app) = spawn_with_auth().await;
     let (org, token) = seed_user_with_permissions(&harness, &app, "Plan Org", PLAN_PERMS).await;
     let plan_id = create_plan(&app, &token, org).await;
     let client = reqwest::Client::new();
 
     let created = client
-        .post(format!(
-            "{}/api/v1/watering-plans/{plan_id}/comments",
-            app.address
-        ))
+        .post(format!("{}/api/v1/plans/{plan_id}/comments", app.address))
         .bearer_auth(&token)
         .json(&json!({ "body": "Tank war nur halb voll" }))
         .send()
@@ -202,10 +200,7 @@ async fn creates_and_lists_a_watering_plan_comment() {
     assert_eq!(created.status(), 201);
 
     let list: serde_json::Value = client
-        .get(format!(
-            "{}/api/v1/watering-plans/{plan_id}/comments",
-            app.address
-        ))
+        .get(format!("{}/api/v1/plans/{plan_id}/comments", app.address))
         .bearer_auth(&token)
         .send()
         .await
@@ -529,10 +524,7 @@ async fn post_comment(app: &TestApp, token: &str, cluster_id: &str, body: &str) 
 
 async fn post_plan_comment(app: &TestApp, token: &str, plan_id: &str, body: &str) -> String {
     let created: serde_json::Value = reqwest::Client::new()
-        .post(format!(
-            "{}/api/v1/watering-plans/{plan_id}/comments",
-            app.address
-        ))
+        .post(format!("{}/api/v1/plans/{plan_id}/comments", app.address))
         .bearer_auth(token)
         .json(&json!({ "body": body }))
         .send()
@@ -751,10 +743,7 @@ async fn plan_comment_can_be_deleted_by_its_author() {
     let client = reqwest::Client::new();
 
     let created: serde_json::Value = client
-        .post(format!(
-            "{}/api/v1/watering-plans/{plan_id}/comments",
-            app.address
-        ))
+        .post(format!("{}/api/v1/plans/{plan_id}/comments", app.address))
         .bearer_auth(&token)
         .json(&json!({ "body": "Plan-Notiz" }))
         .send()
@@ -767,7 +756,7 @@ async fn plan_comment_can_be_deleted_by_its_author() {
 
     let response = client
         .delete(format!(
-            "{}/api/v1/watering-plans/{plan_id}/comments/{comment_id}",
+            "{}/api/v1/plans/{plan_id}/comments/{comment_id}",
             app.address
         ))
         .bearer_auth(&token)
@@ -795,10 +784,7 @@ async fn create_plan_comment_only_requires_read_permission_on_the_parent() {
     let plan_id = create_plan(&app, &token, org).await;
 
     let response = reqwest::Client::new()
-        .post(format!(
-            "{}/api/v1/watering-plans/{plan_id}/comments",
-            app.address
-        ))
+        .post(format!("{}/api/v1/plans/{plan_id}/comments", app.address))
         .bearer_auth(&token)
         .json(&json!({ "body": "darf ich jetzt" }))
         .send()
@@ -809,10 +795,7 @@ async fn create_plan_comment_only_requires_read_permission_on_the_parent() {
     let created: serde_json::Value = response.json().await.unwrap();
 
     let list: serde_json::Value = reqwest::Client::new()
-        .get(format!(
-            "{}/api/v1/watering-plans/{plan_id}/comments",
-            app.address
-        ))
+        .get(format!("{}/api/v1/plans/{plan_id}/comments", app.address))
         .bearer_auth(&token)
         .send()
         .await
@@ -833,7 +816,7 @@ async fn only_the_author_may_delete_a_plan_comment() {
     let comment_id = post_plan_comment(&app, &author_token, &plan_id, "nicht deiner").await;
     let client = reqwest::Client::new();
     let url = format!(
-        "{}/api/v1/watering-plans/{plan_id}/comments/{comment_id}",
+        "{}/api/v1/plans/{plan_id}/comments/{comment_id}",
         app.address
     );
 
@@ -870,10 +853,7 @@ async fn only_the_author_may_delete_a_plan_comment() {
     );
 
     let list: serde_json::Value = client
-        .get(format!(
-            "{}/api/v1/watering-plans/{plan_id}/comments",
-            app.address
-        ))
+        .get(format!("{}/api/v1/plans/{plan_id}/comments", app.address))
         .bearer_auth(&author_token)
         .send()
         .await
@@ -913,7 +893,7 @@ async fn deleting_a_cluster_removes_its_comments() {
 
     let remaining: i64 = sqlx::query_scalar!(
         r#"SELECT COUNT(*) AS "count!: i64" FROM comments
-           WHERE subject_type = 'tree_cluster' AND subject_id = $1"#,
+           WHERE subject_type = 'target' AND target_kind = 'cluster' AND subject_id = $1"#,
         Uuid::parse_str(&cluster_id).unwrap()
     )
     .fetch_one(&app.db_pool)
@@ -923,7 +903,7 @@ async fn deleting_a_cluster_removes_its_comments() {
 }
 
 #[tokio::test]
-async fn deleting_a_watering_plan_removes_its_comments() {
+async fn deleting_a_plan_removes_its_comments() {
     let (harness, app) = spawn_with_auth().await;
     let (org, token) = seed_user_with_permissions(
         &harness,
@@ -943,10 +923,7 @@ async fn deleting_a_watering_plan_removes_its_comments() {
     let client = reqwest::Client::new();
 
     let commented = client
-        .post(format!(
-            "{}/api/v1/watering-plans/{plan_id}/comments",
-            app.address
-        ))
+        .post(format!("{}/api/v1/plans/{plan_id}/comments", app.address))
         .bearer_auth(&token)
         .json(&json!({ "body": "verschwindet mit dem plan" }))
         .send()
@@ -955,7 +932,7 @@ async fn deleting_a_watering_plan_removes_its_comments() {
     assert_eq!(commented.status(), 201);
 
     let deleted = client
-        .delete(format!("{}/api/v1/watering-plans/{plan_id}", app.address))
+        .delete(format!("{}/api/v1/plans/{plan_id}", app.address))
         .bearer_auth(&token)
         .send()
         .await
@@ -964,7 +941,7 @@ async fn deleting_a_watering_plan_removes_its_comments() {
 
     let remaining: i64 = sqlx::query_scalar!(
         r#"SELECT COUNT(*) AS "count!: i64" FROM comments
-           WHERE subject_type = 'watering_plan' AND subject_id = $1"#,
+           WHERE subject_type = 'plan' AND subject_id = $1"#,
         Uuid::parse_str(&plan_id).unwrap()
     )
     .fetch_one(&app.db_pool)
@@ -1033,7 +1010,7 @@ async fn author_edits_own_plan_comment() {
 
     let response = client
         .put(format!(
-            "{}/api/v1/watering-plans/{plan_id}/comments/{comment_id}",
+            "{}/api/v1/plans/{plan_id}/comments/{comment_id}",
             app.address
         ))
         .bearer_auth(&token)
@@ -1047,10 +1024,7 @@ async fn author_edits_own_plan_comment() {
     assert!(updated["edited_at"].as_str().is_some());
 
     let list: serde_json::Value = client
-        .get(format!(
-            "{}/api/v1/watering-plans/{plan_id}/comments",
-            app.address
-        ))
+        .get(format!("{}/api/v1/plans/{plan_id}/comments", app.address))
         .bearer_auth(&token)
         .send()
         .await
@@ -1120,7 +1094,7 @@ async fn non_author_with_delete_permission_cannot_edit_a_plan_comment() {
 
     let response = reqwest::Client::new()
         .put(format!(
-            "{}/api/v1/watering-plans/{plan_id}/comments/{comment_id}",
+            "{}/api/v1/plans/{plan_id}/comments/{comment_id}",
             app.address
         ))
         .bearer_auth(&moderator_token)
@@ -1268,7 +1242,7 @@ async fn deleting_a_cluster_keeps_comments_of_other_clusters() {
 
     let remaining: i64 = sqlx::query_scalar!(
         r#"SELECT COUNT(*) AS "count!: i64" FROM comments
-           WHERE subject_type = 'tree_cluster' AND subject_id = $1"#,
+           WHERE subject_type = 'target' AND target_kind = 'cluster' AND subject_id = $1"#,
         Uuid::parse_str(&kept).unwrap()
     )
     .fetch_one(&app.db_pool)

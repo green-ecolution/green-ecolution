@@ -71,9 +71,17 @@ impl EventHandler for ClusterSoilRecalcHandler {
             }
         };
 
+        let sensors = match self.tree_reader.sensor_ids(&cluster.tree_ids).await {
+            Ok(s) => s,
+            Err(e) => {
+                tracing::warn!(error = %e, cluster.id = %cluster_id, "skipping soil recalc; sensor load failed");
+                return Ok(vec![]);
+            }
+        };
+
         let mut follow_ups = Vec::new();
         for mut tree in trees {
-            let Some(sensor_id) = tree.sensor_id() else {
+            let Some(sensor_id) = sensors.get(&tree.id) else {
                 continue;
             };
             let readings = match self

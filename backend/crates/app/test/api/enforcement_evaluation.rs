@@ -144,7 +144,7 @@ async fn create_plan_with_cluster(
         .json(&json!({
             "number_plate": format!("FL-GE {}", &Uuid::new_v4().to_string()[..8]),
             "description": "Giesswagen",
-            "water_capacity": 5000.0,
+            "capacities": { "water": 5000.0 },
             "model": "MAN TGS",
             "availability": "available",
             "type": "transporter",
@@ -160,13 +160,14 @@ async fn create_plan_with_cluster(
     let transporter_id = transporter["id"].as_str().unwrap();
 
     client
-        .post(format!("{}/api/v1/watering-plans", app.address))
+        .post(format!("{}/api/v1/plans", app.address))
         .bearer_auth(token)
         .json(&json!({
             "date": "2026-05-01T08:00:00Z",
             "description": "Eval Plan",
             "transporter_id": transporter_id,
-            "tree_cluster_ids": [cluster_id],
+            "module": "irrigation",
+            "stops": [cluster_id],
             "user_ids": [Uuid::new_v4().to_string()],
             "organization_id": org,
         }))
@@ -193,7 +194,7 @@ async fn foreign_org_sees_no_water_consumption_or_user_plan_count() {
     let plan_id = plan["id"].as_str().unwrap();
 
     sqlx::query!(
-        "UPDATE tree_cluster_watering_plans SET consumed_water = 250.0 WHERE watering_plan_id = $1",
+        "UPDATE operation_plan_stops SET completed = TRUE, amount = 250.0 WHERE plan_id = $1",
         Uuid::parse_str(plan_id).unwrap(),
     )
     .execute(&app.db_pool)

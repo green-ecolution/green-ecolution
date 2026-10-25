@@ -1,0 +1,40 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT o.id AS organization_id,\n                      i.water_demand_liters AS \"water_demand_liters?\",\n                      i.just_watered_ttl_secs AS \"just_watered_ttl_secs?\",\n                      COALESCE(s.descendants_may_override, TRUE) AS \"descendants_may_override!\"\n               FROM organizations o\n               LEFT JOIN irrigation_settings i ON i.organization_id = o.id\n               LEFT JOIN organization_settings s ON s.organization_id = o.id\n               WHERE o.id = ANY($1)",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "organization_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "water_demand_liters?",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 2,
+        "name": "just_watered_ttl_secs?",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 3,
+        "name": "descendants_may_override!",
+        "type_info": "Bool"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "UuidArray"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      true,
+      null
+    ]
+  },
+  "hash": "998886b0f70b849c620705b699f3f9602fc8f9404f903fab4ac12804f7837de3"
+}

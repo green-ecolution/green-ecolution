@@ -1,11 +1,11 @@
-//! Comment aggregate — free-text note someone leaves on a tree cluster or a
-//! watering plan.
+//! Comment aggregate — free-text note someone leaves on a plan or on an
+//! object of any module.
 //!
 //! The only mutation is the author replacing the text via [`Comment::edit`];
 //! there are no other transitions and no subscribers, so the aggregate emits
 //! no domain events. Deletion is a repository operation. The subject is typed
 //! rather than a raw pair of columns so that adding a further commentable
-//! aggregate is a new enum variant.
+//! subject is a new enum variant.
 
 pub mod repository;
 pub mod snapshot;
@@ -14,9 +14,7 @@ pub mod view;
 use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
-use crate::{
-    Id, cluster::TreeCluster, shared::error::ValidationError, watering_plan::WateringPlan,
-};
+use crate::{Id, operation_plan::OperationPlan, shared::error::ValidationError, target::TargetRef};
 
 pub use repository::{CommentReader, CommentWriter};
 #[doc(hidden)]
@@ -28,36 +26,55 @@ crate::newtype_nonempty! {
     CommentBody, "comment.body", 1, 2000
 }
 
-/// The entity a comment is attached to. Carries the typed id so a cluster id
-/// can never be mistaken for a plan id, and a wire value for the DB column.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// The entity a comment is attached to: a plan, or an object of any module
+/// that declares its kind commentable.
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CommentSubject {
-    TreeCluster(Id<TreeCluster>),
-    WateringPlan(Id<WateringPlan>),
+    Plan(Id<OperationPlan>),
+    Target(TargetRef),
 }
 
 impl CommentSubject {
     pub fn kind(&self) -> &'static str {
         match self {
-            Self::TreeCluster(_) => "tree_cluster",
-            Self::WateringPlan(_) => "watering_plan",
+            Self::Plan(_) => "plan",
+            Self::Target(_) => "target",
         }
     }
 
     pub fn raw_id(&self) -> Uuid {
         match self {
-            Self::TreeCluster(id) => id.value(),
-            Self::WateringPlan(id) => id.value(),
+            Self::Plan(id) => id.value(),
+            Self::Target(t) => t.id,
         }
     }
 
-    pub fn from_parts(kind: &str, id: Uuid) -> Result<Self, ValidationError> {
-        match kind {
-            "tree_cluster" => Ok(Self::TreeCluster(Id::new(id))),
-            "watering_plan" => Ok(Self::WateringPlan(Id::new(id))),
-            other => Err(ValidationError::InvalidFormat {
+    pub fn target_module(&self) -> Option<&str> {
+        match self {
+            Self::Plan(_) => None,
+            Self::Target(t) => Some(t.module.as_str()),
+        }
+    }
+
+    pub fn target_kind(&self) -> Option<&str> {
+        match self {
+            Self::Plan(_) => None,
+            Self::Target(t) => Some(t.kind.as_str()),
+        }
+    }
+
+    pub fn from_parts(
+        kind: &str,
+        id: Uuid,
+        module: Option<&str>,
+        target_kind: Option<&str>,
+    ) -> Result<Self, ValidationError> {
+        match (kind, module, target_kind) {
+            ("plan", None, None) => Ok(Self::Plan(Id::new(id))),
+            ("target", Some(m), Some(k)) => Ok(Self::Target(TargetRef::new(m, k, id)?)),
+            _ => Err(ValidationError::InvalidFormat {
                 field: "comment.subject_type",
-                reason: format!("unknown subject type '{other}'"),
+                reason: format!("unknown comment subject '{kind}'"),
             }),
         }
     }
@@ -143,45 +160,80 @@ mod tests {
         assert_err!(CommentBody::new("a".repeat(2001)));
     }
 
+    fn target_subject() -> CommentSubject {
+        CommentSubject::Target(TargetRef::new("irrigation", "cluster", Uuid::now_v7()).unwrap())
+    }
+
+    fn roundtrip(subject: &CommentSubject) -> CommentSubject {
+        CommentSubject::from_parts(
+            subject.kind(),
+            subject.raw_id(),
+            subject.target_module(),
+            subject.target_kind(),
+        )
+        .unwrap()
+    }
+
     #[test]
-    fn cluster_subject_roundtrips_through_parts() {
-        let id = Id::<TreeCluster>::new_v7();
-        let subject = CommentSubject::TreeCluster(id);
-        assert_eq!(subject.kind(), "tree_cluster");
-        let back = CommentSubject::from_parts(subject.kind(), subject.raw_id()).unwrap();
-        assert_eq!(back, subject);
+    fn target_subject_roundtrips_through_parts() {
+        let subject = target_subject();
+        assert_eq!(subject.kind(), "target");
+        assert_eq!(roundtrip(&subject), subject);
     }
 
     #[test]
     fn plan_subject_roundtrips_through_parts() {
-        let id = Id::<WateringPlan>::new_v7();
-        let subject = CommentSubject::WateringPlan(id);
-        assert_eq!(subject.kind(), "watering_plan");
-        let back = CommentSubject::from_parts(subject.kind(), subject.raw_id()).unwrap();
-        assert_eq!(back, subject);
+        let subject = CommentSubject::Plan(Id::<OperationPlan>::new_v7());
+        assert_eq!(subject.kind(), "plan");
+        assert_eq!(roundtrip(&subject), subject);
     }
 
     #[test]
-    fn subject_from_parts_rejects_unknown_kind() {
-        assert_err!(CommentSubject::from_parts("tree", Uuid::now_v7()));
+    fn target_without_module_and_kind_is_rejected() {
+        assert_err!(CommentSubject::from_parts(
+            "target",
+            Uuid::now_v7(),
+            None,
+            None
+        ));
+    }
+
+    #[test]
+    fn plan_with_target_columns_is_rejected() {
+        assert_err!(CommentSubject::from_parts(
+            "plan",
+            Uuid::now_v7(),
+            Some("irrigation"),
+            Some("cluster")
+        ));
+    }
+
+    #[test]
+    fn legacy_subject_kinds_are_rejected() {
+        assert_err!(CommentSubject::from_parts(
+            "tree_cluster",
+            Uuid::now_v7(),
+            None,
+            None
+        ));
     }
 
     #[test]
     fn subjects_of_different_kinds_with_same_uuid_are_not_equal() {
         let raw = Uuid::now_v7();
-        let cluster = CommentSubject::TreeCluster(Id::new(raw));
-        let plan = CommentSubject::WateringPlan(Id::new(raw));
-        assert_ne!(cluster, plan);
+        let target = CommentSubject::Target(TargetRef::new("irrigation", "cluster", raw).unwrap());
+        let plan = CommentSubject::Plan(Id::new(raw));
+        assert_ne!(target, plan);
     }
 
     #[test]
     fn reconstitute_restores_every_field() {
         let id = Uuid::now_v7();
-        let subject = CommentSubject::TreeCluster(Id::new_v7());
+        let subject = target_subject();
         let author_id = Uuid::new_v4();
         let comment = Comment::reconstitute(CommentSnapshot {
             id,
-            subject,
+            subject: subject.clone(),
             author_id,
             body: "Bereits gewässert".to_owned(),
             edited_at: None,
@@ -198,7 +250,7 @@ mod tests {
         let at = Utc::now();
         let comment = Comment::reconstitute(CommentSnapshot {
             id: Uuid::now_v7(),
-            subject: CommentSubject::TreeCluster(Id::new_v7()),
+            subject: target_subject(),
             author_id: Uuid::new_v4(),
             body: "Bereits gewässert".to_owned(),
             edited_at: Some(at),
@@ -210,7 +262,7 @@ mod tests {
     fn edit_with_different_body_changes_text_and_sets_edited_at() {
         let mut comment = Comment::reconstitute(CommentSnapshot {
             id: Uuid::now_v7(),
-            subject: CommentSubject::TreeCluster(Id::new_v7()),
+            subject: target_subject(),
             author_id: Uuid::new_v4(),
             body: "alter Text".to_owned(),
             edited_at: None,
@@ -227,7 +279,7 @@ mod tests {
         let original_edited_at = Utc::now();
         let mut comment = Comment::reconstitute(CommentSnapshot {
             id: Uuid::now_v7(),
-            subject: CommentSubject::TreeCluster(Id::new_v7()),
+            subject: target_subject(),
             author_id: Uuid::new_v4(),
             body: "unveraendert".to_owned(),
             edited_at: Some(original_edited_at),

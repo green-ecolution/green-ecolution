@@ -3,16 +3,15 @@
     "organization_mismatch": {
       "trees_vs_cluster": "The selected trees belong to a different organization than the watering group.",
       "cluster_vs_tree": "The selected watering group belongs to a different organization than the tree.",
-      "sensor_vs_tree": "The sensor belongs to a different organization than the tree.",
-      "clusters_vs_plan": "The selected watering groups lie outside the watering plan's organization.",
+      "sensor_vs_target": "The sensor and the object belong to different organizations.",
+      "stops_vs_plan": "The selected watering groups lie outside the watering plan's organization.",
       "role_vs_user": "The role belongs to a different organization than the selected person."
     },
     "conflict": {
-      "tree_already_has_sensor": "This tree already has another sensor attached.",
-      "sensor_already_assigned": "This sensor is already assigned to another tree.",
+      "target_already_has_sensor": "This object already has a sensor.",
       "sensor_already_activated": "This sensor is already activated.",
       "sensor_not_activated": "This sensor is not activated yet.",
-      "sensor_bound_to_tree": "The sensor is attached to a tree and can only be transferred together with it.",
+      "sensor_bound_to_target": "The sensor is still assigned to an object.",
       "tree_in_cluster": "The tree belongs to a watering group and must be removed from it first.",
       "organization_not_empty": "The organization still has suborganizations or members.",
       "root_organization_immutable": "The top-level organization cannot be changed or deleted.",
@@ -21,15 +20,32 @@
       "cannot_change_own_access": "You cannot change your own roles or your own organization.",
       "cannot_revoke_own_administration": "This change would take away your own right to manage roles and members."
     },
+    "sensor": {
+      "already_attached": "The sensor is already attached to another object."
+    },
+    "target": {
+      "not_accepted": "This object cannot take a sensor."
+    },
     "organization": {
       "missing": "No organization was specified and your account does not belong to one.",
       "contact_person_not_a_member": "The selected contact person does not belong to this organization."
     },
-    "watering_plan": {
+    "plan": {
       "invalid_state_transition": "This status change is not possible in the watering plan's current state.",
       "cannot_mutate_after_start": "The watering plan can only be edited while it has not started yet.",
       "cancellation_note_required": "Canceling requires a reason.",
-      "evaluation_missing_for_cluster": "Every assigned watering group needs an evaluation."
+      "outcome_missing": "Consumed water is still missing for at least one watering group.",
+      "outcome_duplicate": "The water amount was entered more than once for a watering group.",
+      "outcome_unknown_stop": "The evaluation names a watering group that is not part of the watering plan.",
+      "transporter_capacity_required": "Without a trailer the transporter's own tank must be used.",
+      "unknown_stop": "A selected watering group no longer exists."
+    },
+    "module": {
+      "disabled": "This module is not enabled for the organization.",
+      "unknown": "This module is unknown."
+    },
+    "vehicle": {
+      "capacity_missing": "The vehicle has no matching capacity for this plan."
     },
     "feature": {
       "routing_disabled": "Route planning is not enabled in this environment.",

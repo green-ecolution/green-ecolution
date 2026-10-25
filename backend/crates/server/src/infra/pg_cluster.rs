@@ -107,8 +107,10 @@ const CLUSTER_COLUMNS: &str = "tc.id, tc.updated_at, tc.name, tc.address, \
     tc.additional_informations AS additional_info, tc.organization_id, \
     (SELECT COALESCE(ARRAY_AGG(t.id ORDER BY t.number), ARRAY[]::uuid[]) \
         FROM trees t WHERE t.tree_cluster_id = tc.id) AS tree_ids, \
-    (SELECT COUNT(*) FROM trees t \
-        WHERE t.tree_cluster_id = tc.id AND t.sensor_id IS NOT NULL AND t.sensor_id <> '') \
+    (SELECT COUNT(sa.sensor_id) FROM trees t \
+        JOIN sensor_attachments sa \
+          ON sa.module_key = 'irrigation' AND sa.target_kind = 'tree' AND sa.target_id = t.id \
+        WHERE t.tree_cluster_id = tc.id) \
         AS sensor_count";
 
 // Children are aggregated by correlated subqueries rather than a join plus
@@ -195,9 +197,11 @@ impl TreeClusterReader for PgTreeClusterRepository {
                       tc.additional_informations AS additional_info,
                       tc.organization_id,
                       COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::uuid[]) AS "tree_ids!: Vec<RawId>",
-                      COUNT(t.id) FILTER (WHERE t.sensor_id IS NOT NULL AND t.sensor_id <> '') AS "sensor_count!: i64"
+                      COUNT(sa.sensor_id) AS "sensor_count!: i64"
             FROM tree_clusters tc
             LEFT JOIN trees t ON t.tree_cluster_id = tc.id
+            LEFT JOIN sensor_attachments sa
+                   ON sa.module_key = 'irrigation' AND sa.target_kind = 'tree' AND sa.target_id = t.id
             WHERE tc.id = $1
             GROUP BY tc.id"#,
             id.value()
@@ -227,9 +231,11 @@ impl TreeClusterReader for PgTreeClusterRepository {
                       tc.additional_informations AS additional_info,
                       tc.organization_id,
                       COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::uuid[]) AS "tree_ids!: Vec<RawId>",
-                      COUNT(t.id) FILTER (WHERE t.sensor_id IS NOT NULL AND t.sensor_id <> '') AS "sensor_count!: i64"
+                      COUNT(sa.sensor_id) AS "sensor_count!: i64"
             FROM tree_clusters tc
             LEFT JOIN trees t ON t.tree_cluster_id = tc.id
+            LEFT JOIN sensor_attachments sa
+                   ON sa.module_key = 'irrigation' AND sa.target_kind = 'tree' AND sa.target_id = t.id
             WHERE tc.id = ANY($1::uuid[])
             GROUP BY tc.id"#,
             &id_values
@@ -261,6 +267,7 @@ impl TreeClusterReader for PgTreeClusterRepository {
                 query.watering_statuses,
             ))
             .filter(Predicate::any_of("tc.region_id", query.regions))
+            .filter(Predicate::any_of("tc.id", query.ids.to_values()))
             .filter(Predicate::any_of(
                 "tc.soil_condition",
                 query.soil_conditions,
@@ -435,7 +442,9 @@ impl TreeClusterReader for PgTreeClusterRepository {
                       MAX(dav.value)::float8 AS "max!",
                       COUNT(*) AS "sample_count!"
                FROM trees t
-               JOIN sensor_data sd ON sd.sensor_id = t.sensor_id
+               JOIN sensor_attachments att
+                 ON att.module_key = 'irrigation' AND att.target_kind = 'tree' AND att.target_id = t.id
+               JOIN sensor_data sd ON sd.sensor_id = att.sensor_id
                JOIN sensor_data_ability_values dav ON dav.sensor_data_id = sd.id
                JOIN sensor_model_abilities sma ON sma.id = dav.sensor_model_ability_id
                JOIN sensor_abilities sa ON sa.id = sma.sensor_ability_id
@@ -513,14 +522,15 @@ impl TreeClusterReader for PgTreeClusterRepository {
         id: Id<TreeCluster>,
     ) -> Result<Vec<ClusterWateringEvent>, RepositoryError> {
         let rows = sqlx::query!(
-            r#"SELECT wp.id AS "watering_plan_id!",
-                      wp.date AS "date!",
-                      tcwp.consumed_water AS "consumed_water!"
-               FROM tree_cluster_watering_plans tcwp
-               JOIN watering_plans wp ON wp.id = tcwp.watering_plan_id
-               WHERE tcwp.tree_cluster_id = $1
-                 AND wp.status = 'finished'
-               ORDER BY wp.date DESC"#,
+            r#"SELECT op.id AS "watering_plan_id!",
+                      op.date AS "date!",
+                      COALESCE(ops.amount, 0)::float8 AS "consumed_water!"
+               FROM operation_plan_stops ops
+               JOIN operation_plans op ON op.id = ops.plan_id
+               WHERE ops.stop_id = $1
+                 AND op.module_key = 'irrigation'
+                 AND op.status = 'finished'
+               ORDER BY op.date DESC"#,
             id.value(),
         )
         .fetch_all(&self.pool)
@@ -712,6 +722,35 @@ impl TreeClusterWriter for PgTreeClusterRepository {
             return Err(RepositoryError::NotFound);
         }
 
+        Ok(())
+    }
+
+    #[tracing::instrument(level = "trace", skip_all)]
+    async fn mark_last_watered(
+        &self,
+        ids: &[Id<TreeCluster>],
+        at: DateTime<Utc>,
+    ) -> Result<(), RepositoryError> {
+        let ids: Vec<RawId> = ids.to_values();
+        let mut tx = self.pool.begin().await?;
+
+        sqlx::query!(
+            "UPDATE tree_clusters SET last_watered = $2 WHERE id = ANY($1::uuid[])",
+            &ids,
+            at.naive_utc(),
+        )
+        .execute(&mut *tx)
+        .await?;
+
+        sqlx::query!(
+            "UPDATE trees SET last_watered = $2 WHERE tree_cluster_id = ANY($1::uuid[])",
+            &ids,
+            at.naive_utc(),
+        )
+        .execute(&mut *tx)
+        .await?;
+
+        tx.commit().await?;
         Ok(())
     }
 }

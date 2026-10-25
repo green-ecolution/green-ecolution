@@ -6,7 +6,10 @@ pub mod event_bus;
 pub mod handlers;
 pub mod module_access;
 pub mod module_activation_service;
+pub mod operation_execution_service;
+pub mod operation_plan_service;
 pub mod organization_service;
+pub mod planning;
 pub mod plugin_ingest_service;
 pub mod plugin_proxy_policy;
 pub mod plugin_proxy_service;
@@ -18,17 +21,16 @@ pub mod role_service;
 pub mod sensor_service;
 pub mod settings_service;
 pub mod start_point_service;
+pub mod targets;
 pub mod tree_service;
 pub mod user_service;
 pub mod vehicle_service;
-pub mod watering_execution_service;
-pub mod watering_plan_service;
 
 use domain::{
     RepositoryError,
+    operation_plan::OperationPlanError,
     routing::RoutingError,
     shared::error::{ValidationError, ValidationIssue},
-    watering_plan::WateringPlanError,
 };
 
 /// Optional subsystem a request can hit while it is switched off.
@@ -109,10 +111,10 @@ pub enum ServiceError {
     InvalidInput(String),
     #[error(transparent)]
     Auth(#[from] AuthError),
-    #[error("tree already has a different sensor")]
-    TreeAlreadyHasSensor,
-    #[error("sensor is already assigned to another tree")]
-    SensorAlreadyAssigned,
+    #[error("target already has a different sensor")]
+    TargetAlreadyHasSensor,
+    #[error("sensor is already attached to another target")]
+    SensorAlreadyAttached,
     #[error("sensor is already activated")]
     AlreadyActivated,
     #[error("sensor is not activated")]
@@ -138,8 +140,8 @@ pub enum ServiceError {
     TreeInCluster,
     #[error("tree is not planted yet and cannot carry a sensor")]
     TreeNotYetPlanted,
-    #[error("sensor is bound to a tree and must be transferred with it")]
-    SensorBoundToTree,
+    #[error("sensor is attached to a target and must be transferred with it")]
+    SensorBoundToTarget,
     #[error("no organization given and the acting user has none")]
     MissingOrganization,
     #[error("a user cannot change their own roles or organization")]
@@ -162,8 +164,16 @@ pub enum ServiceError {
     /// targets. Not a missing permission of the user, but still a refusal.
     #[error("module {module} is not active in this organization")]
     ModuleDisabled { module: String },
+    #[error("module {module} does not accept {kind} targets for this purpose")]
+    TargetNotAccepted { module: String, kind: String },
+    #[error("{message}")]
+    TargetRefused { code: &'static str, message: String },
+    #[error("vehicle {vehicle} has no {kind} capacity")]
+    VehicleCapacityMissing { vehicle: uuid::Uuid, kind: String },
     #[error(transparent)]
-    WateringPlan(#[from] WateringPlanError),
+    OperationPlan(#[from] OperationPlanError),
+    #[error("unknown stop {stop}")]
+    UnknownStop { stop: uuid::Uuid },
 }
 
 impl ServiceError {
@@ -182,16 +192,16 @@ impl ServiceError {
             Self::Routing(e) => routing_code(e),
             Self::Organization(e) => organization_code(e),
             Self::Role(e) => role_code(e),
-            Self::WateringPlan(e) => watering_plan_code(e),
+            Self::OperationPlan(e) => operation_plan_code(e),
             Self::OrganizationMismatch(kind) => kind.code(),
-            Self::TreeAlreadyHasSensor => "conflict.tree_already_has_sensor",
-            Self::SensorAlreadyAssigned => "conflict.sensor_already_assigned",
+            Self::TargetAlreadyHasSensor => "conflict.target_already_has_sensor",
+            Self::SensorAlreadyAttached => "sensor.already_attached",
             Self::AlreadyActivated => "conflict.sensor_already_activated",
             Self::NotActivated => "conflict.sensor_not_activated",
             Self::OrganizationNotEmpty => "conflict.organization_not_empty",
             Self::TreeInCluster => "conflict.tree_in_cluster",
             Self::TreeNotYetPlanted => "tree.not_yet_planted",
-            Self::SensorBoundToTree => "conflict.sensor_bound_to_tree",
+            Self::SensorBoundToTarget => "conflict.sensor_bound_to_target",
             Self::CannotChangeOwnAccess => "conflict.cannot_change_own_access",
             Self::CannotRevokeOwnAdministration => "conflict.cannot_revoke_own_administration",
             Self::SettingsEnforcedByAncestor { .. } => "settings.enforced_by_ancestor",
@@ -199,6 +209,10 @@ impl ServiceError {
             Self::MissingOrganization => "organization.missing",
             Self::ModuleUnknown { .. } => "module.unknown",
             Self::ModuleDisabled { .. } => "module.disabled",
+            Self::TargetNotAccepted { .. } => "target.not_accepted",
+            Self::VehicleCapacityMissing { .. } => "vehicle.capacity_missing",
+            Self::UnknownStop { .. } => "plan.unknown_stop",
+            Self::TargetRefused { code, .. } => code,
             Self::FeatureDisabled { feature } => match feature {
                 Feature::Routing => "feature.routing_disabled",
                 Feature::Plugins => "feature.plugins_disabled",
@@ -220,7 +234,7 @@ impl ServiceError {
             Self::Validation(e) => e,
             Self::Organization(domain::organization::OrganizationError::Validation(e)) => e,
             Self::Role(domain::role::RoleError::Validation(e)) => e,
-            Self::WateringPlan(WateringPlanError::Validation(e)) => e,
+            Self::OperationPlan(OperationPlanError::Validation(e)) => e,
             _ => return None,
         };
         Some(ValidationIssue::from(error))
@@ -274,18 +288,17 @@ fn role_code(e: &domain::role::RoleError) -> &'static str {
     }
 }
 
-fn watering_plan_code(e: &WateringPlanError) -> &'static str {
+fn operation_plan_code(e: &OperationPlanError) -> &'static str {
+    use OperationPlanError as E;
     match e {
-        WateringPlanError::InvalidStateTransition { .. } => {
-            "watering_plan.invalid_state_transition"
-        }
-        WateringPlanError::CannotMutateAfterStart => "watering_plan.cannot_mutate_after_start",
-        WateringPlanError::CancellationNoteRequired => "watering_plan.cancellation_note_required",
-        WateringPlanError::EvaluationMissingForCluster(_) => {
-            "watering_plan.evaluation_missing_for_cluster"
-        }
-        WateringPlanError::TransporterTankRequired => "watering_plan.transporter_tank_required",
-        WateringPlanError::Validation(_) => "request.invalid_input",
+        E::InvalidStateTransition { .. } => "plan.invalid_state_transition",
+        E::CannotMutateAfterStart => "plan.cannot_mutate_after_start",
+        E::CancellationNoteRequired => "plan.cancellation_note_required",
+        E::OutcomeMissing(_) => "plan.outcome_missing",
+        E::OutcomeDuplicate(_) => "plan.outcome_duplicate",
+        E::OutcomeUnknownStop(_) => "plan.outcome_unknown_stop",
+        E::TransporterCapacityRequired => "plan.transporter_capacity_required",
+        E::Validation(_) => "request.invalid_input",
     }
 }
 
@@ -302,10 +315,10 @@ pub enum OrganizationMismatch {
     TreesVsCluster,
     #[error("the selected cluster belongs to a different organization than the tree")]
     ClusterVsTree,
-    #[error("the sensor belongs to a different organization than the tree")]
-    SensorVsTree,
-    #[error("the selected clusters are outside the watering plan's organization")]
-    ClustersVsPlan,
+    #[error("the sensor belongs to a different organization than its target")]
+    SensorVsTarget,
+    #[error("the selected stops are outside the plan's organization")]
+    StopsVsPlan,
     #[error("the role belongs to a different organization than the user")]
     RoleVsUser,
 }
@@ -315,8 +328,8 @@ impl OrganizationMismatch {
         match self {
             Self::TreesVsCluster => "organization_mismatch.trees_vs_cluster",
             Self::ClusterVsTree => "organization_mismatch.cluster_vs_tree",
-            Self::SensorVsTree => "organization_mismatch.sensor_vs_tree",
-            Self::ClustersVsPlan => "organization_mismatch.clusters_vs_plan",
+            Self::SensorVsTarget => "organization_mismatch.sensor_vs_target",
+            Self::StopsVsPlan => "organization_mismatch.stops_vs_plan",
             Self::RoleVsUser => "organization_mismatch.role_vs_user",
         }
     }
@@ -366,8 +379,8 @@ impl AuthError {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use domain::Id;
-    use domain::watering_plan::WateringPlanStatus;
+    use domain::operation_plan::OperationPlanStatus;
+    use domain::planning::StopRef;
     use std::collections::HashSet;
 
     /// One instance per `ServiceError` variant. `code()` matches exhaustively,
@@ -417,8 +430,8 @@ mod tests {
             ServiceError::Auth(AuthError::PluginKeyInvalid),
             ServiceError::Auth(AuthError::PluginDisabled),
             ServiceError::Auth(AuthError::PluginViewTicketInvalid),
-            ServiceError::TreeAlreadyHasSensor,
-            ServiceError::SensorAlreadyAssigned,
+            ServiceError::TargetAlreadyHasSensor,
+            ServiceError::SensorAlreadyAttached,
             ServiceError::AlreadyActivated,
             ServiceError::NotActivated,
             ServiceError::FeatureDisabled {
@@ -437,29 +450,51 @@ mod tests {
             ServiceError::OrganizationNotEmpty,
             ServiceError::OrganizationMismatch(OrganizationMismatch::TreesVsCluster),
             ServiceError::OrganizationMismatch(OrganizationMismatch::ClusterVsTree),
-            ServiceError::OrganizationMismatch(OrganizationMismatch::SensorVsTree),
-            ServiceError::OrganizationMismatch(OrganizationMismatch::ClustersVsPlan),
+            ServiceError::OrganizationMismatch(OrganizationMismatch::SensorVsTarget),
+            ServiceError::OrganizationMismatch(OrganizationMismatch::StopsVsPlan),
             ServiceError::OrganizationMismatch(OrganizationMismatch::RoleVsUser),
             ServiceError::ContactPersonNotAMember,
             ServiceError::TreeInCluster,
-            ServiceError::SensorBoundToTree,
+            ServiceError::SensorBoundToTarget,
             ServiceError::MissingOrganization,
             ServiceError::CannotChangeOwnAccess,
             ServiceError::CannotRevokeOwnAdministration,
             ServiceError::ModuleUnknown { key: "x".into() },
             ServiceError::ModuleDisabled { module: "x".into() },
+            ServiceError::TargetNotAccepted {
+                module: "x".into(),
+                kind: "y".into(),
+            },
+            ServiceError::TargetRefused {
+                code: "tree.not_yet_planted",
+                message: "x".into(),
+            },
+            ServiceError::VehicleCapacityMissing {
+                vehicle: uuid::Uuid::nil(),
+                kind: "water".into(),
+            },
             ServiceError::SettingsEnforcedByAncestor {
                 organization_id: uuid::Uuid::nil(),
             },
-            ServiceError::WateringPlan(WateringPlanError::InvalidStateTransition {
-                from: WateringPlanStatus::Planned,
-                to: WateringPlanStatus::Finished,
+            ServiceError::OperationPlan(OperationPlanError::InvalidStateTransition {
+                from: OperationPlanStatus::Planned,
+                to: OperationPlanStatus::Finished,
             }),
-            ServiceError::WateringPlan(WateringPlanError::CannotMutateAfterStart),
-            ServiceError::WateringPlan(WateringPlanError::CancellationNoteRequired),
-            ServiceError::WateringPlan(
-                WateringPlanError::EvaluationMissingForCluster(Id::new_v7()),
-            ),
+            ServiceError::OperationPlan(OperationPlanError::CannotMutateAfterStart),
+            ServiceError::OperationPlan(OperationPlanError::CancellationNoteRequired),
+            ServiceError::OperationPlan(OperationPlanError::OutcomeMissing(StopRef::new(
+                uuid::Uuid::nil(),
+            ))),
+            ServiceError::OperationPlan(OperationPlanError::OutcomeDuplicate(StopRef::new(
+                uuid::Uuid::nil(),
+            ))),
+            ServiceError::OperationPlan(OperationPlanError::OutcomeUnknownStop(StopRef::new(
+                uuid::Uuid::nil(),
+            ))),
+            ServiceError::OperationPlan(OperationPlanError::TransporterCapacityRequired),
+            ServiceError::UnknownStop {
+                stop: uuid::Uuid::nil(),
+            },
         ]
     }
 

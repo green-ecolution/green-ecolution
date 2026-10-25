@@ -114,6 +114,8 @@ pub fn jump_limit_per_hour(ability: SensorAbilityName) -> Option<f64> {
         SensorAbilityName::Humidity => Some(60.0),
         // A battery swap resets the voltage; any limit would be noise.
         SensorAbilityName::Battery => None,
+        // Emptying a container drops the level at once.
+        SensorAbilityName::Distance => None,
     }
 }
 
@@ -209,6 +211,11 @@ mod tests {
             previous: Some((value, now() - ago)),
             recorded_at: now(),
         }
+    }
+
+    #[test]
+    fn distance_has_no_physical_range_yet() {
+        assert_eq!(physical_range(N::Distance, U::Centimeter), None);
     }
 
     #[test]

@@ -178,21 +178,24 @@ mod tests {
     }
 
     fn plugin() -> Plugin {
-        Plugin::reconstitute(PluginSnapshot {
-            id: Uuid::now_v7(),
-            slug: "sensor-setup".into(),
-            name: "Sensor Setup".into(),
-            description: None,
-            frontend_mode: "none".into(),
-            frontend_target: None,
-            organization_id: Uuid::now_v7(),
-            permissions: Vec::new(),
-            required_permissions: Vec::new(),
-            device_capabilities: Vec::new(),
-            enabled: true,
-            key_hash: None,
-            last_seen_at: None,
-        })
+        Plugin::reconstitute(
+            PluginSnapshot {
+                id: Uuid::now_v7(),
+                slug: "sensor-setup".into(),
+                name: "Sensor Setup".into(),
+                description: None,
+                frontend_mode: "none".into(),
+                frontend_target: None,
+                organization_id: Uuid::now_v7(),
+                permissions: Vec::new(),
+                required_permissions: Vec::new(),
+                device_capabilities: Vec::new(),
+                enabled: true,
+                key_hash: None,
+                last_seen_at: None,
+            },
+            &domain::authorization::ResourceCatalog::core(),
+        )
     }
 
     fn user(name: Option<&str>) -> AuthUser {

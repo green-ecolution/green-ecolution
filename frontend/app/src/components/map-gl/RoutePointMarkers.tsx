@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import { Marker } from 'maplibre-gl'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
-import type { RefillPointResponse, StartPointResponse } from '@green-ecolution/backend-client'
+import type { StartPointResponse, StationVisitResponse } from '@green-ecolution/backend-client'
 import { useMaplibreMap } from './MapContext'
 
 export interface RoutePointMarkerData {
@@ -26,7 +26,7 @@ const DROPLET_ICON_SVG = `<svg width="14" height="14" viewBox="0 0 24 24" fill="
 export const buildRoutePoints = (
   startPoints: StartPointResponse[] | null | undefined,
   startPointName: string | null | undefined,
-  refillPoints: RefillPointResponse[] | undefined,
+  refillPoints: StationVisitResponse[] | undefined,
 ): RoutePointMarkerData[] => {
   const startPoint =
     startPoints?.find((sp) => sp.name === startPointName) ?? startPoints?.find((sp) => sp.isDefault)

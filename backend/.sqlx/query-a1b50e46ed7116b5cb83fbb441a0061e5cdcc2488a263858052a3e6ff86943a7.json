@@ -1,0 +1,20 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE depots\n               SET name = $2, latitude = $3, longitude = $4,\n                   geometry = ST_SetSRID(ST_MakePoint($4, $3), 4326), replenishes = $5,\n                   organization_id = $6, is_default = $7\n               WHERE id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Float8",
+        "Float8",
+        "TextArray",
+        "Uuid",
+        "Bool"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "a1b50e46ed7116b5cb83fbb441a0061e5cdcc2488a263858052a3e6ff86943a7"
+}

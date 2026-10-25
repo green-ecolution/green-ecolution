@@ -2,7 +2,10 @@ use chrono::{DateTime, Utc};
 use serde_json::Value;
 use uuid::Uuid;
 
-use crate::sensor::{DataQualityAcknowledgement, LorawanCredentials, SensorType};
+use crate::{
+    sensor::{DataQualityAcknowledgement, LorawanCredentials, SensorType},
+    target::TargetRef,
+};
 
 /// Raw DB-row mapping used exclusively for aggregate rehydration.
 #[doc(hidden)]
@@ -17,4 +20,5 @@ pub struct SensorSnapshot {
     pub lorawan: Option<LorawanCredentials>,
     pub organization_id: Uuid,
     pub quality_acknowledged: Option<DataQualityAcknowledgement>,
+    pub target: Option<TargetRef>,
 }

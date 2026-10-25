@@ -1,7 +1,5 @@
 use std::sync::Arc;
 
-use chrono::Utc;
-
 use domain::{
     Id,
     authorization::Visibility,
@@ -86,20 +84,6 @@ impl TreeService {
         Ok(())
     }
 
-    /// Rejects attaching a sensor owned by a different organization than the
-    /// tree it would be bound to.
-    async fn ensure_sensor_matches_org(
-        &self,
-        sensor_id: &SensorId,
-        org: Id<Organization>,
-    ) -> Result<(), ServiceError> {
-        let sensor = self.sensor_reader.by_id(sensor_id).await?;
-        if sensor.organization_id() != org {
-            return Err(OrganizationMismatch::SensorVsTree.into());
-        }
-        Ok(())
-    }
-
     #[tracing::instrument(level = "debug", skip_all)]
     pub async fn search_view(
         &self,
@@ -145,34 +129,8 @@ impl TreeService {
         Ok(self.reader.view_by_sensor_id(sensor_id).await?)
     }
 
-    /// Rejects a sensor that is already linked to a different tree. Moving a
-    /// sensor between trees is an explicit flow (`SensorService::reassign_tree`),
-    /// not a side effect of tree edits.
-    async fn ensure_sensor_unassigned(
-        &self,
-        sensor_id: &SensorId,
-        tree_id: Option<Id<Tree>>,
-    ) -> Result<(), ServiceError> {
-        if let Some(holder) = self.reader.by_sensor_id(sensor_id).await?
-            && Some(holder.id) != tree_id
-        {
-            return Err(ServiceError::SensorAlreadyAssigned);
-        }
-        Ok(())
-    }
-
     #[tracing::instrument(level = "debug", skip_all)]
     pub async fn create(&self, draft: TreeDraft) -> Result<Tree, ServiceError> {
-        // `save_new` writes the draft's sensor straight to the row, so the
-        // aggregate rule in `attach_sensor` never runs on this path.
-        if let Some(ref sid) = draft.sensor_id {
-            if draft.planting_year.is_future(Utc::now()) {
-                return Err(ServiceError::TreeNotYetPlanted);
-            }
-            self.ensure_sensor_unassigned(sid, None).await?;
-            self.ensure_sensor_matches_org(sid, draft.organization_id)
-                .await?;
-        }
         self.ensure_cluster_matches_org(draft.cluster_id, draft.organization_id)
             .await?;
         let tree = self.writer.save_new(draft).await?;
@@ -180,7 +138,6 @@ impl TreeService {
             .publish(DomainEvent::TreeCreated {
                 tree_id: tree.id,
                 cluster_id: tree.cluster_id(),
-                sensor_id: tree.sensor_id().cloned(),
             })
             .await;
         Ok(tree)
@@ -188,14 +145,7 @@ impl TreeService {
 
     #[tracing::instrument(level = "debug", skip_all, fields(tree.id = %id))]
     pub async fn replace(&self, id: Id<Tree>, draft: TreeDraft) -> Result<Tree, ServiceError> {
-        if let Some(ref sid) = draft.sensor_id {
-            self.ensure_sensor_unassigned(sid, Some(id)).await?;
-        }
         let mut tree = self.reader.by_id(id).await?;
-        if let Some(ref sid) = draft.sensor_id {
-            self.ensure_sensor_matches_org(sid, tree.organization_id())
-                .await?;
-        }
         self.ensure_cluster_matches_org(draft.cluster_id, tree.organization_id())
             .await?;
         let mut events = Vec::new();
@@ -208,13 +158,6 @@ impl TreeService {
             draft.provenance,
         ));
         events.extend(tree.move_to_cluster(draft.cluster_id));
-        // Runs after replace_details, so the rule sees the planting year the
-        // request is setting: keeping a sensor on a tree moved into the future
-        // is rejected, dropping it in the same edit stays allowed.
-        events.extend(match draft.sensor_id {
-            Some(sid) => tree.attach_sensor(sid, Utc::now())?,
-            None => tree.detach_sensor(),
-        });
         self.writer.save(&tree).await?;
         self.event_bus.publish_all(events).await;
         Ok(tree)
@@ -230,31 +173,6 @@ impl TreeService {
         self.ensure_cluster_matches_org(target, tree.organization_id())
             .await?;
         let events = tree.move_to_cluster(target);
-        self.writer.save(&tree).await?;
-        self.event_bus.publish_all(events).await;
-        Ok(tree)
-    }
-
-    #[tracing::instrument(level = "debug", skip_all, fields(tree.id = %id))]
-    pub async fn attach_sensor(
-        &self,
-        id: Id<Tree>,
-        sensor_id: SensorId,
-    ) -> Result<Tree, ServiceError> {
-        self.ensure_sensor_unassigned(&sensor_id, Some(id)).await?;
-        let mut tree = self.reader.by_id(id).await?;
-        self.ensure_sensor_matches_org(&sensor_id, tree.organization_id())
-            .await?;
-        let events = tree.attach_sensor(sensor_id, Utc::now())?;
-        self.writer.save(&tree).await?;
-        self.event_bus.publish_all(events).await;
-        Ok(tree)
-    }
-
-    #[tracing::instrument(level = "debug", skip_all, fields(tree.id = %id))]
-    pub async fn detach_sensor(&self, id: Id<Tree>) -> Result<Tree, ServiceError> {
-        let mut tree = self.reader.by_id(id).await?;
-        let events = tree.detach_sensor();
         self.writer.save(&tree).await?;
         self.event_bus.publish_all(events).await;
         Ok(tree)
@@ -277,13 +195,11 @@ impl TreeService {
     pub async fn delete(&self, id: Id<Tree>) -> Result<(), ServiceError> {
         let tree = self.reader.by_id(id).await?;
         let cluster_id = tree.cluster_id();
-        let had_sensor = tree.had_sensor();
         self.writer.delete(id).await?;
         self.event_bus
             .publish(DomainEvent::TreeDeleted {
                 tree_id: id,
                 cluster_id,
-                had_sensor,
             })
             .await;
         Ok(())
@@ -327,7 +243,7 @@ impl TreeService {
         }
         let mut events = tree.transfer_to(target);
         self.writer.save(&tree).await?;
-        if let Some(sensor_id) = tree.sensor_id().cloned() {
+        if let Some(sensor_id) = self.reader.sensor_ids(&[tree.id]).await?.remove(&tree.id) {
             let mut sensor = self.sensor_reader.by_id(&sensor_id).await?;
             events.extend(sensor.transfer_to(target));
             self.sensor_writer.save(&sensor).await?;

@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT water_demand_liters, just_watered_ttl_secs\n               FROM irrigation_settings WHERE organization_id = $1 FOR UPDATE",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "water_demand_liters",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 1,
+        "name": "just_watered_ttl_secs",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      true,
+      true
+    ]
+  },
+  "hash": "d96f99e17c22537d873a2f2f547aa4633fc09df1330bee8a3b7ebcad7e3216e7"
+}

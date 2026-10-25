@@ -30,8 +30,8 @@ async fn create_sensor_returns_201_with_prepared_status() {
     assert_eq!(body["sensor_type"], "lorawan");
     assert_eq!(body["model"]["id"], model_id.to_string());
     assert_eq!(body["model"]["name"], "EcoDrizzler");
-    assert!(body.get("coordinate").is_none_or(|c| c.is_null()));
-    assert!(body.get("linked_tree_id").is_none_or(|c| c.is_null()));
+    assert!(body.get("location").is_none_or(|c| c.is_null()));
+    assert!(body.get("target").is_none_or(|c| c.is_null()));
 }
 
 #[tokio::test]

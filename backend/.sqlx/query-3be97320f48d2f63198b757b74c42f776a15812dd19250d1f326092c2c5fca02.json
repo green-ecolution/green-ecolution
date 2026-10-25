@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO vehicle_capacities (vehicle_id, kind, liters)\n         SELECT $1, kind, liters FROM UNNEST($2::text[], $3::float8[]) AS c(kind, liters)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "TextArray",
+        "Float8Array"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "3be97320f48d2f63198b757b74c42f776a15812dd19250d1f326092c2c5fca02"
+}

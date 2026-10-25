@@ -220,7 +220,38 @@ describe('useVehicleForm', () => {
             width: 2.5,
             length: 7.0,
             weight: 4.0,
-            waterCapacity: 2000,
+            capacities: { water: 2000 },
+          }) as unknown,
+        }),
+      )
+    })
+  })
+
+  it('sends the kinds the form does not edit back unchanged', async () => {
+    const mockResponse = { id: 'vehicle-uuid-5', numberPlate: 'HH-AB-1234' } as unknown as Vehicle
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    const updateMock = vi.mocked(vehicleApi.updateVehicle)
+    updateMock.mockResolvedValueOnce(mockResponse)
+
+    const { result } = renderHook(
+      () =>
+        useVehicleForm('update', {
+          vehicleId: '5',
+          initForm: defaultInitForm,
+          capacities: { water: 1000, cargo_volume: 500 },
+        }),
+      { wrapper: createWrapper() },
+    )
+
+    act(() => {
+      result.current.mutate({ ...defaultInitForm, waterCapacity: 1500 })
+    })
+
+    await waitFor(() => {
+      expect(updateMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          vehicleUpdateRequest: expect.objectContaining({
+            capacities: { water: 1500, cargo_volume: 500 },
           }) as unknown,
         }),
       )

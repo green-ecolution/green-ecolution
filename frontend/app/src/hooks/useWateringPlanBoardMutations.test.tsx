@@ -1,17 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import type { ReactNode } from 'react'
 import { renderHook, waitFor } from '@testing-library/react'
-import { WateringPlanStatus } from '@green-ecolution/backend-client'
+import { PlanStatus as WateringPlanStatus } from '@green-ecolution/backend-client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { QueryKey } from '@tanstack/react-query'
 import { clusterQueries, treeQueries, wateringPlanQueries } from '@/api/queries'
 import { toUpdateRequest, useWateringPlanBoardMutations } from './useWateringPlanBoardMutations'
 import type { WateringPlanInList } from '@/api/backendApi'
 
-const updateWateringPlan = vi.fn()
+const updatePlan = vi.fn()
 vi.mock('@/api/backendApi', () => ({
-  wateringPlanApi: {
-    updateWateringPlan: (...args: unknown[]) => updateWateringPlan(...args) as unknown,
+  planApi: {
+    updatePlan: (...args: unknown[]) => updatePlan(...args) as unknown,
   },
 }))
 
@@ -25,6 +25,7 @@ vi.mock('@/hooks/createToast', () => ({ default: () => vi.fn() }))
 const CLUSTER_ID = '0190a8e9-7c4f-7000-8000-000000000001'
 const TREE_ID = '0190a8e9-7c4f-7000-8000-000000000002'
 const PLAN_ID = '0190a8e9-7c4f-7000-8000-000000000003'
+const HIDDEN_CLUSTER_ID = '0190a8e9-7c4f-7000-8000-000000000006'
 
 const CLUSTER_DETAIL: QueryKey = clusterQueries.detail(CLUSTER_ID).queryKey
 const CLUSTER_LIST: QueryKey = clusterQueries.list().queryKey
@@ -38,6 +39,7 @@ const plan = {
   status: WateringPlanStatus.Active,
   transporter: { id: '0190a8e9-7c4f-7000-8000-000000000004' },
   treeclusters: [{ id: CLUSTER_ID }],
+  stopIds: [CLUSTER_ID, HIDDEN_CLUSTER_ID],
   userIds: [],
 } as unknown as WateringPlanInList
 
@@ -64,7 +66,7 @@ function renderBoardMutations() {
 describe('useWateringPlanBoardMutations', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    updateWateringPlan.mockResolvedValue({ id: PLAN_ID })
+    updatePlan.mockResolvedValue({ id: PLAN_ID })
   })
 
   it('invalidates clusters and trees after finishing a plan', async () => {
@@ -77,6 +79,42 @@ describe('useWateringPlanBoardMutations', () => {
     expect(isInvalidated(CLUSTER_LIST)).toBe(true)
     expect(isInvalidated(TREE_DETAIL)).toBe(true)
     expect(isInvalidated(PLAN_DETAIL)).toBe(true)
+  })
+
+  it('finishes a plan with every evaluated cluster as a completed outcome', async () => {
+    const { result } = renderBoardMutations()
+
+    result.current.finishPlan.mutate({ plan, evaluation })
+
+    await waitFor(() => expect(updatePlan).toHaveBeenCalledTimes(1))
+    expect(updatePlan).toHaveBeenCalledWith({
+      planId: PLAN_ID,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      planUpdateRequest: expect.objectContaining({
+        status: WateringPlanStatus.Finished,
+        stops: [CLUSTER_ID, HIDDEN_CLUSTER_ID],
+        outcomes: [
+          { stop: CLUSTER_ID, completed: true, amount: 100 },
+          { stop: HIDDEN_CLUSTER_ID, completed: true, amount: null },
+        ],
+      }),
+    })
+  })
+
+  it('keeps stops the user cannot see when a plan is started from the board', async () => {
+    const { result } = renderBoardMutations()
+
+    result.current.startPlan.mutate({ ...plan, status: WateringPlanStatus.Planned })
+
+    await waitFor(() => expect(updatePlan).toHaveBeenCalledTimes(1))
+    expect(updatePlan).toHaveBeenCalledWith({
+      planId: PLAN_ID,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      planUpdateRequest: expect.objectContaining({
+        status: WateringPlanStatus.Active,
+        stops: [CLUSTER_ID, HIDDEN_CLUSTER_ID],
+      }),
+    })
   })
 
   it('re-runs the route loaders that loader-based detail pages read from', async () => {

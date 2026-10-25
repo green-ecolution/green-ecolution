@@ -1,13 +1,19 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import type { OrganizationSettingsUpdateRequest } from '@green-ecolution/backend-client'
-import { settingsApi } from '@/api/backendApi'
+import type {
+  IrrigationSettingsUpdateRequest,
+  OrganizationSettingsUpdateRequest,
+} from '@green-ecolution/backend-client'
+import { irrigationApi, settingsApi } from '@/api/backendApi'
 import createToast from '@/hooks/createToast'
 import { statusOf } from '@/lib/httpError'
 
 export interface UpdateSettingsVariables {
   orgId: string
-  body: OrganizationSettingsUpdateRequest
+  /** Core settings; left out when only irrigation values changed. */
+  body?: OrganizationSettingsUpdateRequest
+  /** Irrigation settings travel to their own endpoint. */
+  irrigationBody?: IrrigationSettingsUpdateRequest
 }
 
 export const useSettingsMutations = () => {
@@ -16,13 +22,30 @@ export const useSettingsMutations = () => {
   const { t } = useTranslation('settings')
 
   const updateSettings = useMutation({
-    mutationFn: ({ orgId, body }: UpdateSettingsVariables) =>
-      settingsApi.updateOrganizationSettings({
-        orgId,
-        organizationSettingsUpdateRequest: body,
-      }),
-    onSuccess: (_data, { orgId }) => {
+    // Both requests go out together and the person hears about one outcome.
+    mutationFn: async ({ orgId, body, irrigationBody }: UpdateSettingsVariables) => {
+      const results = await Promise.allSettled([
+        body
+          ? settingsApi.updateOrganizationSettings({
+              orgId,
+              organizationSettingsUpdateRequest: body,
+            })
+          : undefined,
+        irrigationBody
+          ? irrigationApi.updateIrrigationSettings({
+              orgId,
+              irrigationSettingsUpdateRequest: irrigationBody,
+            })
+          : undefined,
+      ])
+      const failed = results.find((result) => result.status === 'rejected')
+      if (failed) throw failed.reason
+    },
+    // Also after a failure: one of the two requests may have gone through.
+    onSettled: (_data, _error, { orgId }) => {
       void queryClient.invalidateQueries({ queryKey: ['organizations', orgId, 'settings'] })
+    },
+    onSuccess: () => {
       // Saving any organization in the caller's own chain moves the viewport
       // their map opens at, and the answer is cached until told otherwise.
       void queryClient.invalidateQueries({ queryKey: ['users', 'me', 'map-view'] })

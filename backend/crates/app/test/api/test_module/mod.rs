@@ -1,21 +1,35 @@
-use std::sync::{
-    Arc,
-    atomic::{AtomicBool, AtomicUsize, Ordering},
+use std::{
+    collections::HashMap,
+    sync::{
+        Arc,
+        atomic::{AtomicBool, AtomicUsize, Ordering},
+    },
 };
 
 use axum::{extract::State, http::StatusCode};
 use domain::{
-    Id,
-    authorization::{Action, Permission, Resource},
+    Id, RepositoryError,
+    authorization::{Action, Permission, ResourceKey},
+    capacity::CapacityKind,
     event_bus::{EventHandler, EventHandlerError},
     events::DomainEvent,
     module::ModuleKey,
+    organization::{Organization, OrganizationReader},
+    planning::{PlanningError, PlanningProvider, ResolvedStop, StopRef},
+    shared::coordinates::Coordinate,
+    target::{TargetCatalog, TargetError, TargetKindSpec, TargetPurpose, TargetRef},
 };
 use serde::{Deserialize, Serialize};
 use server::{
-    http::{AppState, auth::extractor::AuthUserExtractor, extractors::Json},
+    http::{
+        AppState,
+        auth::extractor::AuthUserExtractor,
+        extractors::{Json, Path},
+    },
     module::{Module, ModuleBuildError, ModuleContext, ModuleRoutes, ModuleRuntime},
-    service::{ServiceError, module_access::ModuleAccess},
+    service::{
+        ServiceError, module_access::ModuleAccess, operation_plan_service::OperationPlanService,
+    },
 };
 use sqlx::{PgPool, migrate::Migrator};
 use utoipa_axum::{router::OpenApiRouter, routes};
@@ -44,11 +58,18 @@ impl TestModule {
 struct TestState {
     pool: PgPool,
     access: ModuleAccess,
+    plans: Arc<OperationPlanService>,
 }
 
 #[derive(Deserialize, utoipa::ToSchema)]
 struct CreateThing {
     organization_id: Uuid,
+    #[serde(default)]
+    label: Option<String>,
+    #[serde(default)]
+    latitude: Option<f64>,
+    #[serde(default)]
+    longitude: Option<f64>,
 }
 
 #[derive(Serialize, utoipa::ToSchema)]
@@ -57,8 +78,11 @@ struct Thing {
     organization_id: Uuid,
 }
 
+pub const THING: ResourceKey = ResourceKey::declare("test_module_thing");
+pub const PLAN: ResourceKey = ResourceKey::declare("test_module_plan");
+
 fn permission() -> Permission {
-    Permission::new(Resource::Organization, Action::Read)
+    Permission::new(ResourceKey::ORGANIZATION, Action::Read)
 }
 
 #[utoipa::path(post, path = "/test-module/things", request_body = CreateThing, responses((status = 201, body = Thing)))]
@@ -72,12 +96,18 @@ async fn create_thing(
         .require_write(user.id, permission(), Id::new(req.organization_id))
         .await?;
     let id = Uuid::now_v7();
-    sqlx::query("INSERT INTO test_module_things (id, organization_id) VALUES ($1, $2)")
-        .bind(id)
-        .bind(req.organization_id)
-        .execute(&state.pool)
-        .await
-        .map_err(|e| ServiceError::from(domain::RepositoryError::from(e)))?;
+    sqlx::query(
+        "INSERT INTO test_module_things (id, organization_id, label, latitude, longitude)
+         VALUES ($1, $2, COALESCE($3, 'thing'), $4, $5)",
+    )
+    .bind(id)
+    .bind(req.organization_id)
+    .bind(req.label)
+    .bind(req.latitude)
+    .bind(req.longitude)
+    .execute(&state.pool)
+    .await
+    .map_err(|e| ServiceError::from(domain::RepositoryError::from(e)))?;
     Ok((
         StatusCode::CREATED,
         Json(Thing {
@@ -111,8 +141,180 @@ async fn list_things(
     ))
 }
 
+#[utoipa::path(delete, path = "/test-module/things/{id}", params(("id" = Uuid, Path)), responses((status = 204)))]
+async fn delete_thing(
+    State(state): State<Arc<TestState>>,
+    user: AuthUserExtractor,
+    Path(id): Path<Uuid>,
+) -> Result<StatusCode, ServiceError> {
+    let org: Uuid =
+        sqlx::query_scalar("SELECT organization_id FROM test_module_things WHERE id = $1")
+            .bind(id)
+            .fetch_optional(&state.pool)
+            .await
+            .map_err(|e| ServiceError::from(RepositoryError::from(e)))?
+            .ok_or(ServiceError::Repository(RepositoryError::NotFound))?;
+    state
+        .access
+        .require_write(user.id, Permission::new(PLAN, Action::Delete), Id::new(org))
+        .await?;
+    sqlx::query("DELETE FROM test_module_things WHERE id = $1")
+        .bind(id)
+        .execute(&state.pool)
+        .await
+        .map_err(|e| ServiceError::from(RepositoryError::from(e)))?;
+    state
+        .plans
+        .remove_stop(state.access.key(), StopRef::new(id))
+        .await?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
 fn routes() -> OpenApiRouter<Arc<TestState>> {
-    OpenApiRouter::new().routes(routes!(create_thing, list_things))
+    OpenApiRouter::new()
+        .routes(routes!(create_thing, list_things))
+        .routes(routes!(delete_thing))
+}
+
+/// Collection tours over things: every thing takes one unit of cargo volume.
+struct ThingPlanning {
+    pool: PgPool,
+    organizations: Arc<dyn OrganizationReader>,
+}
+
+#[async_trait::async_trait]
+impl PlanningProvider for ThingPlanning {
+    fn capacity_kind(&self) -> CapacityKind {
+        CapacityKind::CargoVolume
+    }
+
+    fn plan_resource(&self) -> ResourceKey {
+        PLAN
+    }
+
+    async fn resolve_stops(
+        &self,
+        stops: &[StopRef],
+        org: Id<Organization>,
+    ) -> Result<Vec<ResolvedStop>, PlanningError> {
+        let ids: Vec<Uuid> = stops.iter().map(StopRef::value).collect();
+        let rows: Vec<(Uuid, Uuid, Option<f64>, Option<f64>)> = sqlx::query_as(
+            "SELECT id, organization_id, latitude, longitude FROM test_module_things
+             WHERE id = ANY($1)",
+        )
+        .bind(&ids)
+        .fetch_all(&self.pool)
+        .await
+        .map_err(RepositoryError::from)?;
+        let hierarchy = self.organizations.hierarchy().await?;
+        stops
+            .iter()
+            .map(|stop| {
+                let (_, owner, lat, lng) = rows
+                    .iter()
+                    .find(|(id, ..)| *id == stop.value())
+                    .ok_or(PlanningError::UnknownStop(*stop))?;
+                if !hierarchy.is_descendant_or_self(Id::new(*owner), org) {
+                    return Err(PlanningError::OrganizationMismatch);
+                }
+                let location = match (lat, lng) {
+                    (Some(lat), Some(lng)) => Some(
+                        Coordinate::new(*lat, *lng)
+                            .map_err(|e| PlanningError::Repository(e.into()))?,
+                    ),
+                    _ => None,
+                };
+                Ok(ResolvedStop {
+                    stop: *stop,
+                    location,
+                    demand: 1.0,
+                })
+            })
+            .collect()
+    }
+}
+
+pub const THING_KIND: &str = "thing";
+
+const THING_KINDS: [TargetKindSpec; 1] = [TargetKindSpec {
+    kind: THING_KIND,
+    accepts_sensors: true,
+    commentable: true,
+    resource: THING,
+}];
+
+/// Things as targets, so tests can attach core objects to another module's rows.
+struct ThingCatalog {
+    pool: PgPool,
+}
+
+impl ThingCatalog {
+    fn ids(targets: &[TargetRef]) -> Vec<Uuid> {
+        targets
+            .iter()
+            .filter(|t| t.module.as_str() == KEY && t.kind.as_str() == THING_KIND)
+            .map(|t| t.id)
+            .collect()
+    }
+
+    fn target(id: Uuid) -> TargetRef {
+        TargetRef::new(KEY, THING_KIND, id).expect("static keys are valid")
+    }
+}
+
+#[async_trait::async_trait]
+impl TargetCatalog for ThingCatalog {
+    fn kinds(&self) -> &'static [TargetKindSpec] {
+        &THING_KINDS
+    }
+
+    async fn admit(
+        &self,
+        target: &TargetRef,
+        _purpose: TargetPurpose,
+    ) -> Result<Id<Organization>, TargetError> {
+        if target.kind.as_str() != THING_KIND {
+            return Err(TargetError::NotFound);
+        }
+        let org: Option<Uuid> =
+            sqlx::query_scalar("SELECT organization_id FROM test_module_things WHERE id = $1")
+                .bind(target.id)
+                .fetch_optional(&self.pool)
+                .await
+                .map_err(|e| TargetError::Repository(e.into()))?;
+        org.map(Id::new).ok_or(TargetError::NotFound)
+    }
+
+    async fn locate(
+        &self,
+        targets: &[TargetRef],
+    ) -> Result<HashMap<TargetRef, Coordinate>, RepositoryError> {
+        let rows: Vec<(Uuid, f64, f64)> = sqlx::query_as(
+            "SELECT id, latitude, longitude FROM test_module_things
+             WHERE id = ANY($1) AND latitude IS NOT NULL AND longitude IS NOT NULL",
+        )
+        .bind(Self::ids(targets))
+        .fetch_all(&self.pool)
+        .await?;
+        rows.into_iter()
+            .map(|(id, lat, lng)| Ok((Self::target(id), Coordinate::new(lat, lng)?)))
+            .collect()
+    }
+
+    async fn label(
+        &self,
+        targets: &[TargetRef],
+    ) -> Result<HashMap<TargetRef, String>, RepositoryError> {
+        let rows: Vec<(Uuid, String)> =
+            sqlx::query_as("SELECT id, label FROM test_module_things WHERE id = ANY($1)")
+                .bind(Self::ids(targets))
+                .fetch_all(&self.pool)
+                .await?;
+        Ok(rows
+            .into_iter()
+            .map(|(id, label)| (Self::target(id), label))
+            .collect())
+    }
 }
 
 struct CountOrganizations(Arc<Probe>);
@@ -136,6 +338,10 @@ impl Module for TestModule {
         ModuleKey::new(KEY).expect("the test module key is valid")
     }
 
+    fn resources(&self) -> &'static [ResourceKey] {
+        &[THING, PLAN]
+    }
+
     fn default_enabled(&self) -> bool {
         false
     }
@@ -152,11 +358,19 @@ impl Module for TestModule {
         let state = Arc::new(TestState {
             pool: ctx.pool.clone(),
             access: ctx.access.clone(),
+            plans: ctx.plans.clone(),
         });
         let mut runtime = ModuleRuntime::new(ModuleRoutes {
             public: OpenApiRouter::new(),
             protected: routes().with_state::<Arc<AppState>>(state),
         });
+        runtime.targets = Some(Arc::new(ThingCatalog {
+            pool: ctx.pool.clone(),
+        }));
+        runtime.planning = Some(Arc::new(ThingPlanning {
+            pool: ctx.pool.clone(),
+            organizations: ctx.organizations.clone(),
+        }));
         runtime
             .event_handlers
             .push(Arc::new(CountOrganizations(self.probe.clone())));

@@ -2,7 +2,7 @@
 //! aggregate.
 //!
 //! Provides: `ValidationError`, `NonEmptyString`, `Address`, `Email`,
-//! `PhoneNumber`, `Coordinate`, `BoundingBox`, `Distance`, `WaterCapacity`,
+//! `PhoneNumber`, `Coordinate`, `BoundingBox`, `Distance`,
 //! `Provenance`, `Pagination`, `SortDirection`, `WateringStatus`, and the
 //! helper types in `string_value`.
 
@@ -12,11 +12,11 @@ pub mod distance;
 pub mod email;
 pub mod error;
 pub mod geo;
+pub mod key;
 pub mod pagination;
 pub mod phone_number;
 pub mod provenance;
 pub mod provider_info;
 pub mod sort;
 pub mod string_value;
-pub mod water_capacity;
 pub mod watering_status;

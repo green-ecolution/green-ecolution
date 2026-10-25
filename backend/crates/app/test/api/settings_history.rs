@@ -1,7 +1,7 @@
 use domain::{
     Id,
     organization::Organization,
-    settings::{Patch, SettingKey, SettingsUpdate, WaterDemand},
+    settings::{Patch, SensorOfflineAfter, SettingKey, SettingsUpdate},
 };
 use uuid::Uuid;
 
@@ -26,14 +26,14 @@ async fn history_rows(
     .collect()
 }
 
-async fn set_demand(app: &crate::helpers::TestApp, org: Uuid, liters: f64) {
+async fn set_offline_after(app: &crate::helpers::TestApp, org: Uuid, secs: i64) {
     app.state
         .settings_service
         .update(
             Uuid::nil(),
             Id::<Organization>::new(org),
             SettingsUpdate {
-                water_demand: Patch::Set(WaterDemand::new(liters).unwrap()),
+                sensor_offline_after: Patch::Set(SensorOfflineAfter::new(secs).unwrap()),
                 ..SettingsUpdate::default()
             },
         )
@@ -46,15 +46,15 @@ async fn each_change_writes_exactly_one_entry() {
     let app = spawn_app().await;
     let org = child_org(&app, "Historie", Uuid::parse_str(ROOT_ORG_ID).unwrap()).await;
 
-    set_demand(&app, org, 90.0).await;
-    set_demand(&app, org, 120.0).await;
+    set_offline_after(&app, org, 90_000).await;
+    set_offline_after(&app, org, 120_000).await;
 
     let rows = history_rows(&app, org).await;
     assert_eq!(rows.len(), 2);
-    assert_eq!(rows[0].0, SettingKey::WaterDemand.as_str());
+    assert_eq!(rows[0].0, SettingKey::SensorOfflineAfter.as_str());
     assert_eq!(rows[0].1, None);
-    assert_eq!(rows[1].1, Some(serde_json::json!(90.0)));
-    assert_eq!(rows[1].2, Some(serde_json::json!(120.0)));
+    assert_eq!(rows[1].1, Some(serde_json::json!(90_000)));
+    assert_eq!(rows[1].2, Some(serde_json::json!(120_000)));
 }
 
 #[tokio::test]
@@ -62,8 +62,8 @@ async fn saving_the_same_value_again_writes_nothing() {
     let app = spawn_app().await;
     let org = child_org(&app, "Unveraendert", Uuid::parse_str(ROOT_ORG_ID).unwrap()).await;
 
-    set_demand(&app, org, 90.0).await;
-    set_demand(&app, org, 90.0).await;
+    set_offline_after(&app, org, 90_000).await;
+    set_offline_after(&app, org, 90_000).await;
 
     assert_eq!(history_rows(&app, org).await.len(), 1);
 }
@@ -73,14 +73,14 @@ async fn returning_to_inheritance_is_visible_in_the_history() {
     let app = spawn_app().await;
     let org = child_org(&app, "Zurueck", Uuid::parse_str(ROOT_ORG_ID).unwrap()).await;
 
-    set_demand(&app, org, 90.0).await;
+    set_offline_after(&app, org, 90_000).await;
     app.state
         .settings_service
         .update(
             Uuid::nil(),
             Id::<Organization>::new(org),
             SettingsUpdate {
-                water_demand: Patch::Clear,
+                sensor_offline_after: Patch::Clear,
                 ..SettingsUpdate::default()
             },
         )
@@ -89,7 +89,7 @@ async fn returning_to_inheritance_is_visible_in_the_history() {
 
     let rows = history_rows(&app, org).await;
     assert_eq!(rows.len(), 2);
-    assert_eq!(rows[1].1, Some(serde_json::json!(90.0)));
+    assert_eq!(rows[1].1, Some(serde_json::json!(90_000)));
     assert_eq!(rows[1].2, None);
 }
 
@@ -119,7 +119,7 @@ async fn a_rejected_change_leaves_no_entry() {
                 Uuid::nil(),
                 Id::<Organization>::new(leaf),
                 SettingsUpdate {
-                    water_demand: Patch::Set(WaterDemand::new(70.0).unwrap()),
+                    sensor_offline_after: Patch::Set(SensorOfflineAfter::new(70_000).unwrap()),
                     ..SettingsUpdate::default()
                 },
             )
@@ -146,7 +146,7 @@ async fn a_write_that_fails_on_the_history_keeps_the_old_value() {
             unknown_actor,
             Id::<Organization>::new(org),
             SettingsUpdate {
-                water_demand: Patch::Set(WaterDemand::new(90.0).unwrap()),
+                sensor_offline_after: Patch::Set(SensorOfflineAfter::new(90_000).unwrap()),
                 ..SettingsUpdate::default()
             },
         )
@@ -157,7 +157,7 @@ async fn a_write_that_fails_on_the_history_keeps_the_old_value() {
 
     // The rollback must leave no row at all, not a row with a NULL value.
     let stored = sqlx::query_scalar!(
-        r#"SELECT water_demand_liters FROM organization_settings WHERE organization_id = $1"#,
+        r#"SELECT sensor_offline_after_secs FROM organization_settings WHERE organization_id = $1"#,
         org
     )
     .fetch_optional(&app.db_pool)
@@ -178,15 +178,15 @@ async fn entries_sharing_a_timestamp_are_separated_by_their_id() {
     let newer = Uuid::now_v7();
     let changed_at = chrono::Utc::now();
 
-    for (id, liters) in [(older, 90.0), (newer, 120.0)] {
+    for (id, secs) in [(older, 90_000), (newer, 120_000)] {
         sqlx::query!(
             r#"INSERT INTO organization_settings_history
                    (id, organization_id, setting_key, previous_value, new_value, changed_at)
                VALUES ($1, $2, $3, NULL, $4, $5)"#,
             id,
             org,
-            SettingKey::WaterDemand.as_str(),
-            serde_json::json!(liters),
+            SettingKey::SensorOfflineAfter.as_str(),
+            serde_json::json!(secs),
             changed_at,
         )
         .execute(&app.db_pool)
@@ -202,9 +202,9 @@ async fn entries_sharing_a_timestamp_are_separated_by_their_id() {
         .unwrap();
 
     let entry = last
-        .get(&SettingKey::WaterDemand)
+        .get(&SettingKey::SensorOfflineAfter)
         .expect("entry for the changed key");
-    assert_eq!(entry.next, Some(serde_json::json!(120.0)));
+    assert_eq!(entry.next, Some(serde_json::json!(120_000)));
 }
 
 #[tokio::test]
@@ -212,8 +212,8 @@ async fn the_last_change_per_key_is_readable() {
     let app = spawn_app().await;
     let org = child_org(&app, "Letzte", Uuid::parse_str(ROOT_ORG_ID).unwrap()).await;
 
-    set_demand(&app, org, 90.0).await;
-    set_demand(&app, org, 120.0).await;
+    set_offline_after(&app, org, 90_000).await;
+    set_offline_after(&app, org, 120_000).await;
 
     let last = app
         .state
@@ -223,8 +223,8 @@ async fn the_last_change_per_key_is_readable() {
         .unwrap();
 
     let entry = last
-        .get(&SettingKey::WaterDemand)
+        .get(&SettingKey::SensorOfflineAfter)
         .expect("entry for the changed key");
-    assert_eq!(entry.next, Some(serde_json::json!(120.0)));
-    assert_eq!(entry.previous, Some(serde_json::json!(90.0)));
+    assert_eq!(entry.next, Some(serde_json::json!(120_000)));
+    assert_eq!(entry.previous, Some(serde_json::json!(90_000)));
 }

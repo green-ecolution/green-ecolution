@@ -1,8 +1,11 @@
 use std::sync::Arc;
 
-use crate::service::event_bus::{EventHandler, EventHandlerError};
+use crate::{
+    irrigation::targets::is_tree,
+    service::event_bus::{EventHandler, EventHandlerError},
+};
 use domain::{
-    Id,
+    Id, RepositoryError,
     cluster::{TreeCluster, TreeClusterReader, TreeClusterWriter},
     events::DomainEvent,
     tree::TreeReader,
@@ -27,31 +30,34 @@ impl ClusterStatusAggregatorHandler {
         }
     }
 
-    fn affected_cluster_ids(&self, event: &DomainEvent) -> Vec<Id<TreeCluster>> {
-        match event {
-            DomainEvent::TreeCreated {
-                cluster_id,
-                sensor_id: Some(_),
-                ..
-            } => cluster_id.iter().copied().collect(),
-            DomainEvent::TreeDeleted {
-                cluster_id,
-                had_sensor: true,
-                ..
-            } => cluster_id.iter().copied().collect(),
+    async fn affected_cluster_ids(
+        &self,
+        event: &DomainEvent,
+    ) -> Result<Vec<Id<TreeCluster>>, EventHandlerError> {
+        Ok(match event {
+            DomainEvent::TreeCreated { cluster_id, .. }
+            | DomainEvent::TreeDeleted { cluster_id, .. }
+            | DomainEvent::TreeWateringStatusChanged { cluster_id, .. } => {
+                cluster_id.iter().copied().collect()
+            }
             DomainEvent::TreeMovedBetweenClusters { from, to, .. } => {
                 let mut ids: Vec<_> = [*from, *to].into_iter().flatten().collect();
                 ids.dedup();
                 ids
             }
-            DomainEvent::TreeSensorAttached { cluster_id, .. }
-            | DomainEvent::TreeSensorDetached { cluster_id, .. }
-            | DomainEvent::TreeWateringStatusChanged { cluster_id, .. } => {
-                cluster_id.iter().copied().collect()
+            DomainEvent::SensorAttached { target, .. }
+            | DomainEvent::SensorDetached { target, .. }
+                if is_tree(target) =>
+            {
+                match self.tree_reader.by_id(Id::new(target.id)).await {
+                    Ok(tree) => tree.cluster_id().into_iter().collect(),
+                    Err(RepositoryError::NotFound) => vec![],
+                    Err(e) => return Err(e.into()),
+                }
             }
             DomainEvent::ClusterTreesChanged { cluster_id } => vec![*cluster_id],
             _ => vec![],
-        }
+        })
     }
 }
 
@@ -62,7 +68,7 @@ impl EventHandler for ClusterStatusAggregatorHandler {
     }
 
     async fn handle(&self, event: &DomainEvent) -> Result<Vec<DomainEvent>, EventHandlerError> {
-        for cluster_id in self.affected_cluster_ids(event) {
+        for cluster_id in self.affected_cluster_ids(event).await? {
             let mut cluster = match self.cluster_reader.by_id(cluster_id).await {
                 Ok(c) => c,
                 Err(e) => {
@@ -78,9 +84,16 @@ impl EventHandler for ClusterStatusAggregatorHandler {
                     continue;
                 }
             };
+            let with_sensor = match self.tree_reader.sensor_ids(&cluster.tree_ids).await {
+                Ok(s) => s,
+                Err(e) => {
+                    tracing::warn!(error = %e, cluster.id = %cluster_id, "skipping cluster status update; sensor load failed");
+                    continue;
+                }
+            };
             let statuses: Vec<_> = trees
                 .iter()
-                .filter(|t| t.sensor_id().is_some())
+                .filter(|t| with_sensor.contains_key(&t.id))
                 .map(|t| t.watering_status())
                 .collect();
 

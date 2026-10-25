@@ -1,0 +1,125 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT t.id, t.updated_at, t.tree_cluster_id,\n                      NULL::text AS \"cluster_name?\",\n                      sa.sensor_id AS \"sensor_id?\",\n                      t.planting_year, t.species, t.number, t.latitude, t.longitude,\n                      t.watering_status AS \"watering_status: WateringStatus\",\n                      t.description,\n                      t.last_watered AS \"last_watered: DateTime<Utc>\",\n                      t.provider,\n                      t.additional_informations AS additional_info,\n                      t.organization_id\n            FROM trees t\n            LEFT JOIN sensor_attachments sa\n                   ON sa.module_key = 'irrigation' AND sa.target_kind = 'tree' AND sa.target_id = t.id\n            WHERE t.id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "updated_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 2,
+        "name": "tree_cluster_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 3,
+        "name": "cluster_name?",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "sensor_id?",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 5,
+        "name": "planting_year",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 6,
+        "name": "species",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 7,
+        "name": "number",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 8,
+        "name": "latitude",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 9,
+        "name": "longitude",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 10,
+        "name": "watering_status: WateringStatus",
+        "type_info": {
+          "Custom": {
+            "name": "watering_status",
+            "kind": {
+              "Enum": [
+                "good",
+                "moderate",
+                "bad",
+                "unknown",
+                "just_watered"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "description",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 12,
+        "name": "last_watered: DateTime<Utc>",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 13,
+        "name": "provider",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 14,
+        "name": "additional_info",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 15,
+        "name": "organization_id",
+        "type_info": "Uuid"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      null,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      false
+    ]
+  },
+  "hash": "057764f9496277b640b0519db85f7671c8e1cf07b43da9799af3248e574699a7"
+}

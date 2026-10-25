@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use async_trait::async_trait;
 
 use crate::{
@@ -24,9 +26,14 @@ pub trait TreeReader: Send + Sync {
     async fn by_id(&self, id: Id<Tree>) -> Result<Tree, RepositoryError>;
     async fn by_ids(&self, ids: &[Id<Tree>]) -> Result<Vec<Tree>, RepositoryError>;
 
-    /// Loads the [`Tree`] (aggregate) bound to `sensor_id`, if any.
-    /// Returns `Ok(None)` if no tree is currently linked to that sensor.
+    /// Loads the [`Tree`] (aggregate) the sensor is attached to, if any.
     async fn by_sensor_id(&self, sensor_id: &SensorId) -> Result<Option<Tree>, RepositoryError>;
+
+    /// Sensor attached to each of the given trees, for trees that have one.
+    async fn sensor_ids(
+        &self,
+        trees: &[Id<Tree>],
+    ) -> Result<HashMap<Id<Tree>, SensorId>, RepositoryError>;
 
     /// Loads all trees that belong to `cluster_id`. Empty vec if the cluster
     /// has no trees.
@@ -58,8 +65,7 @@ pub trait TreeReader: Send + Sync {
     ) -> Result<Vec<TreeViewWithDistance>, RepositoryError>;
 
     /// Returns the [`Tree`] aggregate closest to `coord` within `radius`, or
-    /// `Ok(None)` if no tree is within range. Used by the sensor ingest path
-    /// to auto-link a freshly-arrived sensor to the nearest tree.
+    /// `Ok(None)` if no tree is within range.
     async fn find_nearest(
         &self,
         coord: Coordinate,

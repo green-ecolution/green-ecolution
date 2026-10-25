@@ -10,4 +10,6 @@ pub enum SensorError {
     AlreadyActivated,
     #[error("sensor is not activated")]
     NotActivated,
+    #[error("sensor is attached to another target")]
+    AlreadyAttached,
 }

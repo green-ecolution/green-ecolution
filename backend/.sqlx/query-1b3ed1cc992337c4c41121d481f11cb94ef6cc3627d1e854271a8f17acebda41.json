@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO operation_plan_stops (stop_id, plan_id)\n               SELECT UNNEST($1::uuid[]), $2\n               ON CONFLICT (stop_id, plan_id) DO NOTHING",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "UuidArray",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "1b3ed1cc992337c4c41121d481f11cb94ef6cc3627d1e854271a8f17acebda41"
+}

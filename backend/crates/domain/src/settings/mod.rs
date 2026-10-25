@@ -10,6 +10,7 @@
 //! from above. Where no settings exist at all, it reads as "allowed".
 
 pub mod history;
+pub mod inherit;
 pub mod repository;
 pub mod resolve;
 pub mod snapshot;
@@ -20,6 +21,7 @@ use std::str::FromStr;
 use crate::{Id, organization::Organization, shared::error::ValidationError};
 
 pub use history::SettingChangeEntry;
+pub use inherit::{InheritLevel, Inherited, inherit};
 pub use repository::{SettingsReader, SettingsResolver, SettingsWriter};
 pub use resolve::{Resolution, SettingOrigin, SettingOrigins, resolve};
 #[doc(hidden)]
@@ -32,8 +34,6 @@ pub use values::{
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct OrganizationSettings {
     pub organization_id: Id<Organization>,
-    pub water_demand: Option<WaterDemand>,
-    pub just_watered_ttl: Option<JustWateredTtl>,
     pub sensor_offline_after: Option<SensorOfflineAfter>,
     pub defect_streak: Option<DefectStreak>,
     pub map_view: Option<MapView>,
@@ -46,8 +46,6 @@ impl OrganizationSettings {
     pub fn empty(organization_id: Id<Organization>) -> Self {
         Self {
             organization_id,
-            water_demand: None,
-            just_watered_ttl: None,
             sensor_offline_after: None,
             defect_streak: None,
             map_view: None,
@@ -85,8 +83,6 @@ impl<T: Copy> Patch<T> {
 /// One submitted change to an organization's own values.
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub struct SettingsUpdate {
-    pub water_demand: Patch<WaterDemand>,
-    pub just_watered_ttl: Patch<JustWateredTtl>,
     pub sensor_offline_after: Patch<SensorOfflineAfter>,
     pub defect_streak: Patch<DefectStreak>,
     pub map_view: Patch<MapView>,
@@ -95,9 +91,7 @@ pub struct SettingsUpdate {
 
 impl SettingsUpdate {
     pub fn is_empty(&self) -> bool {
-        !self.water_demand.touches()
-            && !self.just_watered_ttl.touches()
-            && !self.sensor_offline_after.touches()
+        !self.sensor_offline_after.touches()
             && !self.defect_streak.touches()
             && !self.map_view.touches()
             && self.descendants_may_override.is_none()
@@ -107,8 +101,6 @@ impl SettingsUpdate {
     pub fn apply_to(&self, current: &OrganizationSettings) -> OrganizationSettings {
         OrganizationSettings {
             organization_id: current.organization_id,
-            water_demand: self.water_demand.resolve(current.water_demand),
-            just_watered_ttl: self.just_watered_ttl.resolve(current.just_watered_ttl),
             sensor_offline_after: self
                 .sensor_offline_after
                 .resolve(current.sensor_offline_after),
@@ -127,23 +119,6 @@ impl SettingsUpdate {
         let next = self.apply_to(current);
         let mut changes = Vec::new();
 
-        push_change(
-            &mut changes,
-            SettingKey::WaterDemand,
-            current
-                .water_demand
-                .map(|v| SettingValue::Liters(v.liters())),
-            next.water_demand.map(|v| SettingValue::Liters(v.liters())),
-        );
-        push_change(
-            &mut changes,
-            SettingKey::JustWateredTtl,
-            current
-                .just_watered_ttl
-                .map(|v| SettingValue::Seconds(v.seconds())),
-            next.just_watered_ttl
-                .map(|v| SettingValue::Seconds(v.seconds())),
-        );
         push_change(
             &mut changes,
             SettingKey::SensorOfflineAfter,
@@ -183,7 +158,6 @@ impl SettingsUpdate {
 /// setting.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum SettingValue {
-    Liters(f64),
     Seconds(i64),
     Count(i32),
     Viewport(MapView),
@@ -218,8 +192,6 @@ fn push_change(
 /// configuration at startup.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct InstanceDefaults {
-    pub water_demand: WaterDemand,
-    pub just_watered_ttl: JustWateredTtl,
     pub sensor_offline_after: SensorOfflineAfter,
     pub defect_streak: DefectStreak,
     pub map_view: MapView,
@@ -228,8 +200,6 @@ pub struct InstanceDefaults {
 /// The resolved values a request works with.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct EffectiveSettings {
-    pub water_demand: WaterDemand,
-    pub just_watered_ttl: JustWateredTtl,
     pub sensor_offline_after: SensorOfflineAfter,
     pub defect_streak: DefectStreak,
     pub map_view: MapView,
@@ -241,8 +211,6 @@ pub struct EffectiveSettings {
 /// string literals across three layers.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum SettingKey {
-    WaterDemand,
-    JustWateredTtl,
     SensorOfflineAfter,
     DefectStreak,
     MapView,
@@ -250,9 +218,7 @@ pub enum SettingKey {
 }
 
 impl SettingKey {
-    pub const ALL: [SettingKey; 6] = [
-        SettingKey::WaterDemand,
-        SettingKey::JustWateredTtl,
+    pub const ALL: [SettingKey; 4] = [
         SettingKey::SensorOfflineAfter,
         SettingKey::DefectStreak,
         SettingKey::MapView,
@@ -261,8 +227,6 @@ impl SettingKey {
 
     pub fn as_str(&self) -> &'static str {
         match self {
-            SettingKey::WaterDemand => "water_demand",
-            SettingKey::JustWateredTtl => "just_watered_ttl",
             SettingKey::SensorOfflineAfter => "sensor_offline_after",
             SettingKey::DefectStreak => "defect_streak",
             SettingKey::MapView => "map_view",
@@ -316,7 +280,7 @@ mod tests {
 
     fn stored() -> OrganizationSettings {
         OrganizationSettings {
-            water_demand: Some(WaterDemand::new(70.0).unwrap()),
+            sensor_offline_after: Some(SensorOfflineAfter::new(7_200).unwrap()),
             ..OrganizationSettings::empty(Id::new_v7())
         }
     }
@@ -324,27 +288,30 @@ mod tests {
     #[test]
     fn an_unchanged_patch_leaves_the_stored_value_alone() {
         let next = SettingsUpdate::default().apply_to(&stored());
-        assert_eq!(next.water_demand, Some(WaterDemand::new(70.0).unwrap()));
+        assert_eq!(
+            next.sensor_offline_after,
+            Some(SensorOfflineAfter::new(7_200).unwrap())
+        );
     }
 
     #[test]
     fn clearing_a_field_returns_it_to_inheritance() {
         let update = SettingsUpdate {
-            water_demand: Patch::Clear,
+            sensor_offline_after: Patch::Clear,
             ..SettingsUpdate::default()
         };
-        assert_eq!(update.apply_to(&stored()).water_demand, None);
+        assert_eq!(update.apply_to(&stored()).sensor_offline_after, None);
     }
 
     #[test]
     fn setting_a_field_replaces_the_stored_value() {
         let update = SettingsUpdate {
-            water_demand: Patch::Set(WaterDemand::new(120.0).unwrap()),
+            sensor_offline_after: Patch::Set(SensorOfflineAfter::new(14_400).unwrap()),
             ..SettingsUpdate::default()
         };
         assert_eq!(
-            update.apply_to(&stored()).water_demand,
-            Some(WaterDemand::new(120.0).unwrap())
+            update.apply_to(&stored()).sensor_offline_after,
+            Some(SensorOfflineAfter::new(14_400).unwrap())
         );
     }
 
@@ -353,7 +320,7 @@ mod tests {
         assert!(SettingsUpdate::default().is_empty());
         assert!(
             !SettingsUpdate {
-                water_demand: Patch::Clear,
+                sensor_offline_after: Patch::Clear,
                 ..SettingsUpdate::default()
             }
             .is_empty()
@@ -364,25 +331,25 @@ mod tests {
     fn only_touched_fields_produce_a_change() {
         let current = stored();
         let update = SettingsUpdate {
-            water_demand: Patch::Set(WaterDemand::new(120.0).unwrap()),
+            sensor_offline_after: Patch::Set(SensorOfflineAfter::new(14_400).unwrap()),
             ..SettingsUpdate::default()
         };
         let changes = update.changes(&current);
         assert_eq!(changes.len(), 1);
-        assert_eq!(changes[0].key, SettingKey::WaterDemand);
-        assert_eq!(changes[0].previous, Some(SettingValue::Liters(70.0)));
-        assert_eq!(changes[0].next, Some(SettingValue::Liters(120.0)));
+        assert_eq!(changes[0].key, SettingKey::SensorOfflineAfter);
+        assert_eq!(changes[0].previous, Some(SettingValue::Seconds(7_200)));
+        assert_eq!(changes[0].next, Some(SettingValue::Seconds(14_400)));
     }
 
     #[test]
     fn returning_to_inheritance_is_a_change_with_no_next_value() {
         let update = SettingsUpdate {
-            water_demand: Patch::Clear,
+            sensor_offline_after: Patch::Clear,
             ..SettingsUpdate::default()
         };
         let changes = update.changes(&stored());
         assert_eq!(changes.len(), 1);
-        assert_eq!(changes[0].previous, Some(SettingValue::Liters(70.0)));
+        assert_eq!(changes[0].previous, Some(SettingValue::Seconds(7_200)));
         assert_eq!(changes[0].next, None);
     }
 
@@ -402,7 +369,7 @@ mod tests {
     #[test]
     fn writing_the_same_value_again_produces_no_change() {
         let update = SettingsUpdate {
-            water_demand: Patch::Set(WaterDemand::new(70.0).unwrap()),
+            sensor_offline_after: Patch::Set(SensorOfflineAfter::new(7_200).unwrap()),
             ..SettingsUpdate::default()
         };
         assert!(update.changes(&stored()).is_empty());
@@ -417,8 +384,6 @@ mod tests {
         use std::collections::BTreeSet;
 
         let update = SettingsUpdate {
-            water_demand: Patch::Set(WaterDemand::new(120.0).unwrap()),
-            just_watered_ttl: Patch::Set(JustWateredTtl::new(7_200).unwrap()),
             sensor_offline_after: Patch::Set(SensorOfflineAfter::new(7_200).unwrap()),
             defect_streak: Patch::Set(DefectStreak::new(5).unwrap()),
             map_view: Patch::Set(

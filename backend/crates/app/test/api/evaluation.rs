@@ -70,7 +70,7 @@ async fn get_evaluation_counts_vehicles_and_sensors() {
         let body = serde_json::json!({
             "number_plate": format!("FL-GE {}", i),
             "description": "Test",
-            "water_capacity": 5000.0,
+            "capacities": { "water": 5000.0 },
             "model": "MAN",
             "availability": "available",
             "type": "transporter",
@@ -121,7 +121,7 @@ async fn get_evaluation_includes_vehicle_watering_plan_stats() {
             &serde_json::json!({
                 "number_plate": "FL-GE 100",
                 "description": "Test",
-                "water_capacity": 5000.0,
+                "capacities": { "water": 5000.0 },
                 "model": "MAN",
                 "availability": "available",
                 "type": "transporter",
@@ -136,12 +136,13 @@ async fn get_evaluation_includes_vehicle_watering_plan_stats() {
     // Create watering plans with this vehicle
     for _ in 0..3 {
         app.post_json(
-            "/api/v1/watering-plans",
+            "/api/v1/plans",
             &serde_json::json!({
                 "date": "2026-05-01T08:00:00Z",
                 "description": "Test",
                 "transporter_id": vid,
-                "tree_cluster_ids": [],
+                "module": "irrigation",
+                "stops": [],
                 "user_ids": []
             }),
         )
@@ -216,7 +217,7 @@ async fn get_evaluation_includes_region_watering_plan_stats() {
             &serde_json::json!({
                 "number_plate": "FL-GE 200",
                 "description": "Test",
-                "water_capacity": 5000.0,
+                "capacities": { "water": 5000.0 },
                 "model": "MAN",
                 "availability": "available",
                 "type": "transporter",
@@ -229,12 +230,13 @@ async fn get_evaluation_includes_region_watering_plan_stats() {
     let vid = vehicle["id"].as_str().unwrap();
 
     app.post_json(
-        "/api/v1/watering-plans",
+        "/api/v1/plans",
         &serde_json::json!({
             "date": "2026-06-01T08:00:00Z",
             "description": "Test",
             "transporter_id": vid,
-            "tree_cluster_ids": [cid],
+            "module": "irrigation",
+            "stops": [cid],
             "user_ids": []
         }),
     )

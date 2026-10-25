@@ -148,8 +148,8 @@ impl IntoResponse for ServiceError {
                 }
                 (status, message)
             }
-            ServiceError::TreeAlreadyHasSensor
-            | ServiceError::SensorAlreadyAssigned
+            ServiceError::TargetAlreadyHasSensor
+            | ServiceError::SensorAlreadyAttached
             | ServiceError::AlreadyActivated
             | ServiceError::NotActivated
             | ServiceError::Organization(_)
@@ -157,7 +157,7 @@ impl IntoResponse for ServiceError {
             | ServiceError::OrganizationNotEmpty
             | ServiceError::CannotChangeOwnAccess
             | ServiceError::CannotRevokeOwnAdministration
-            | ServiceError::SensorBoundToTree
+            | ServiceError::SensorBoundToTarget
             | ServiceError::TreeInCluster
             | ServiceError::SettingsEnforcedByAncestor { .. } => {
                 (StatusCode::CONFLICT, self.to_string())
@@ -168,6 +168,12 @@ impl IntoResponse for ServiceError {
                 (StatusCode::UNPROCESSABLE_ENTITY, kind.to_string())
             }
             ServiceError::ModuleDisabled { .. } => (StatusCode::FORBIDDEN, self.to_string()),
+            ServiceError::TargetNotAccepted { .. }
+            | ServiceError::TargetRefused { .. }
+            | ServiceError::VehicleCapacityMissing { .. }
+            | ServiceError::UnknownStop { .. } => {
+                (StatusCode::UNPROCESSABLE_ENTITY, self.to_string())
+            }
             ServiceError::ModuleUnknown { .. } => {
                 (StatusCode::UNPROCESSABLE_ENTITY, self.to_string())
             }
@@ -180,7 +186,7 @@ impl IntoResponse for ServiceError {
             }
             // Status kept at 400 as before; the transition is now only
             // distinguishable by its code, not by a new status.
-            ServiceError::WateringPlan(e) => (StatusCode::BAD_REQUEST, e.to_string()),
+            ServiceError::OperationPlan(e) => (StatusCode::BAD_REQUEST, e.to_string()),
             ServiceError::Routing(e) => {
                 let (status, message) = match e {
                     RoutingError::Unavailable(_) => (
@@ -286,8 +292,8 @@ mod tests {
         let kinds = [
             OrganizationMismatch::TreesVsCluster,
             OrganizationMismatch::ClusterVsTree,
-            OrganizationMismatch::SensorVsTree,
-            OrganizationMismatch::ClustersVsPlan,
+            OrganizationMismatch::SensorVsTarget,
+            OrganizationMismatch::StopsVsPlan,
             OrganizationMismatch::RoleVsUser,
         ];
         let codes: std::collections::HashSet<&str> = kinds.iter().map(|k| k.code()).collect();
@@ -314,16 +320,16 @@ mod tests {
 
     #[tokio::test]
     async fn a_plan_state_transition_is_distinguishable_from_other_bad_input() {
-        use domain::watering_plan::{WateringPlanError, WateringPlanStatus};
+        use domain::operation_plan::{OperationPlanError, OperationPlanStatus};
 
-        let err = ServiceError::WateringPlan(WateringPlanError::InvalidStateTransition {
-            from: WateringPlanStatus::Finished,
-            to: WateringPlanStatus::Active,
+        let err = ServiceError::OperationPlan(OperationPlanError::InvalidStateTransition {
+            from: OperationPlanStatus::Finished,
+            to: OperationPlanStatus::Active,
         });
         let response = err.into_response();
         assert_eq!(response.status(), StatusCode::BAD_REQUEST);
         let body: serde_json::Value = serde_json::from_str(&body_of(response).await).unwrap();
-        assert_eq!(body["code"], "watering_plan.invalid_state_transition");
+        assert_eq!(body["code"], "plan.invalid_state_transition");
     }
 
     #[tokio::test]

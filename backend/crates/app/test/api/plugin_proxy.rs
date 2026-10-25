@@ -125,7 +125,7 @@ pub async fn seed_proxied_plugin(
     port: u16,
     required: &[&str],
 ) {
-    PgPluginRepository::new(app.db_pool.clone())
+    PgPluginRepository::new(app.db_pool.clone(), crate::helpers::irrigation_catalog())
         .save_new(
             domain::Id::new_v7(),
             PluginDraft {
@@ -134,7 +134,14 @@ pub async fn seed_proxied_plugin(
                 description: None,
                 organization_id: domain::Id::new(org),
                 permissions: BTreeSet::new(),
-                required_permissions: required.iter().map(|p| p.parse().unwrap()).collect(),
+                required_permissions: required
+                    .iter()
+                    .map(|p| {
+                        crate::helpers::irrigation_catalog()
+                            .parse_permission(p)
+                            .unwrap()
+                    })
+                    .collect(),
                 device_capabilities: BTreeSet::new(),
                 frontend: PluginFrontend::Proxied(ServiceEndpoint::new("127.0.0.1", port).unwrap()),
             },

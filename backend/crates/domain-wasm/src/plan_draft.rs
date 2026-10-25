@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
+use domain::operation_plan::OperationPlanStatus;
 use domain::shared::error::ValidationError;
-use domain::watering_plan::WateringPlanStatus;
 use serde::Deserialize;
 use serde_wasm_bindgen::from_value;
 
@@ -94,7 +94,7 @@ pub(crate) fn collect_plan_issues(input: &WateringPlanDraftInput) -> Vec<Validat
 
     if let Some(status) = input.status.as_deref()
         && let Some(issue) =
-            validate_enum::<WateringPlanStatus>(status, "watering_plan.status", "status")
+            validate_enum::<OperationPlanStatus>(status, "watering_plan.status", "status")
     {
         issues.push(issue);
     }

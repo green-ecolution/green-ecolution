@@ -245,6 +245,9 @@ pub struct ClusterListParams {
     /// Repeatable: `?region=<uuid>&region=<uuid>`.
     #[serde(default)]
     pub region: Vec<uuid::Uuid>,
+    /// Repeatable: `?id=<uuid>&id=<uuid>`.
+    #[serde(default)]
+    pub id: Vec<uuid::Uuid>,
     /// Repeatable: `?soil_condition=Ss&soil_condition=Sl2`.
     #[serde(default)]
     pub soil_condition: Vec<SoilCondition>,

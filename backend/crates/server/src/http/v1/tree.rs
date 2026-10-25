@@ -23,16 +23,19 @@ use crate::{
             scope,
         },
     },
-    service::{Malformed, ServiceError},
+    irrigation::targets::tree_target,
+    service::{Malformed, OrganizationMismatch, ServiceError, targets::ensure_module_active},
 };
+use chrono::Utc;
 use domain::{
     Id,
-    authorization::{Action, Permission, Resource},
-    sensor::SensorId,
+    authorization::{Action, Permission, ResourceKey},
+    organization::Organization,
+    sensor::{SensorId, SensorView},
     shared::{
         coordinates::Coordinate, distance::Distance, pagination::Pagination, sort::SortDirection,
     },
-    tree::{PlantingYear, TreeMarker, TreeSearchQuery, TreeSort, TreeSortField, TreeView},
+    tree::{PlantingYear, Tree, TreeMarker, TreeSearchQuery, TreeSort, TreeSortField, TreeView},
 };
 
 pub fn routes() -> OpenApiRouter<Arc<AppState>> {
@@ -103,7 +106,10 @@ pub async fn list_trees(
 
     let visible = state
         .authorization_service
-        .visible_orgs_for(user.id, Permission::new(Resource::Tree, Action::Read))
+        .visible_orgs_for(
+            user.id,
+            Permission::new(crate::irrigation::resources::TREE, Action::Read),
+        )
         .await?;
 
     let sort = TreeSort {
@@ -164,7 +170,7 @@ pub async fn get_tree(
     let ctx = state.authorization_service.context_for(user.id).await?;
     scope::ensure_visible(
         &ctx,
-        Permission::new(Resource::Tree, Action::Read),
+        Permission::new(crate::irrigation::resources::TREE, Action::Read),
         tree.organization_id,
     )?;
     let sensor = match &tree.sensor_id {
@@ -185,8 +191,8 @@ pub async fn get_tree(
     responses(
         (status = 201, description = "Tree created", body = TreeResponse),
         (status = 400, description = "Invalid input", body = ErrorBody),
-        (status = 409, description = "The given sensor is already assigned to another tree (code `conflict.sensor_already_assigned`)", body = ErrorBody),
-        (status = 422, description = "The given cluster or sensor belongs to a different organization (codes `organization_mismatch.cluster_vs_tree`, `organization_mismatch.sensor_vs_tree`)", body = ErrorBody),
+        (status = 409, description = "The given sensor is already attached to another target (code `sensor.already_attached`)", body = ErrorBody),
+        (status = 422, description = "The given cluster or sensor belongs to a different organization, or a sensor is given for a tree not planted yet (codes `organization_mismatch.cluster_vs_tree`, `organization_mismatch.sensor_vs_target`, `tree.not_yet_planted`)", body = ErrorBody),
         (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
@@ -201,10 +207,11 @@ pub async fn create_tree(
         .authorization_service
         .require(
             user.id,
-            Permission::new(Resource::Tree, Action::Create),
+            Permission::new(crate::irrigation::resources::TREE, Action::Create),
             org,
         )
         .await?;
+    let mut sensor = None;
     if let Some(sid) = entity.sensor_id.as_deref() {
         let sensor_id = SensorId::new(sid)?;
         let sensor_view = state.sensor_service.view_by_id(&sensor_id).await?;
@@ -212,13 +219,23 @@ pub async fn create_tree(
             .authorization_service
             .require(
                 user.id,
-                Permission::new(Resource::Sensor, Action::Update),
+                Permission::new(ResourceKey::SENSOR, Action::Update),
                 Id::new(sensor_view.organization_id),
             )
             .await?;
+        sensor = Some(sensor_view);
     }
-    let draft = entity.into_draft(org)?;
+    let (draft, sensor_id) = entity.into_draft(org)?;
+    if let Some(sensor) = &sensor {
+        ensure_sensor_fits(&state, sensor, None, org, draft.planting_year).await?;
+    }
     let tree = state.tree_service.create(draft).await?;
+    if let Some(sensor_id) = sensor_id {
+        state
+            .sensor_service
+            .attach(&sensor_id, tree_target(tree.id))
+            .await?;
+    }
     let view = state.tree_service.view_by_id(tree.id).await?;
     let sensor = match view.sensor_id.as_deref() {
         Some(sid) => {
@@ -242,9 +259,9 @@ pub async fn create_tree(
     responses(
         (status = 200, description = "Tree updated", body = TreeResponse),
         (status = 403, description = "Missing tree:update in the owning organization", body = ErrorBody),
-        (status = 409, description = "The given sensor is already assigned to another tree (code `conflict.sensor_already_assigned`)", body = ErrorBody),
+        (status = 409, description = "The given sensor is already attached to another target (code `sensor.already_attached`)", body = ErrorBody),
         (status = 404, description = "Tree not found", body = ErrorBody),
-        (status = 422, description = "The given cluster or sensor belongs to a different organization (codes `organization_mismatch.cluster_vs_tree`, `organization_mismatch.sensor_vs_tree`)", body = ErrorBody),
+        (status = 422, description = "The given cluster or sensor belongs to a different organization, or a sensor is given for a tree not planted yet (codes `organization_mismatch.cluster_vs_tree`, `organization_mismatch.sensor_vs_target`, `tree.not_yet_planted`)", body = ErrorBody),
         (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
@@ -259,14 +276,14 @@ pub async fn update_tree(
     let ctx = state.authorization_service.context_for(user.id).await?;
     scope::ensure_visible(
         &ctx,
-        Permission::new(Resource::Tree, Action::Read),
+        Permission::new(crate::irrigation::resources::TREE, Action::Read),
         current.organization_id,
     )?;
     state
         .authorization_service
         .require(
             user.id,
-            Permission::new(Resource::Tree, Action::Update),
+            Permission::new(crate::irrigation::resources::TREE, Action::Update),
             Id::new(current.organization_id),
         )
         .await?;
@@ -281,7 +298,7 @@ pub async fn update_tree(
                 .authorization_service
                 .require(
                     user.id,
-                    Permission::new(Resource::Sensor, Action::Update),
+                    Permission::new(ResourceKey::SENSOR, Action::Update),
                     Id::new(sensor_view.organization_id),
                 )
                 .await?;
@@ -300,8 +317,20 @@ pub async fn update_tree(
         additional_information: entity.additional_information,
         organization_id: None,
     };
-    let draft = create.into_draft(Id::new(current.organization_id))?;
+    let org = Id::new(current.organization_id);
+    let (draft, sensor_id) = create.into_draft(org)?;
+    if let Some(sensor_id) = &sensor_id {
+        let sensor = state.sensor_service.view_by_id(sensor_id).await?;
+        ensure_sensor_fits(&state, &sensor, Some(Id::new(id)), org, draft.planting_year).await?;
+    }
     let tree = state.tree_service.replace(Id::new(id), draft).await?;
+    if sensor_id.as_ref().map(SensorId::as_str) != current.sensor_id.as_deref() {
+        let target = tree_target(tree.id);
+        state.sensor_service.release_target(&target).await?;
+        if let Some(sensor_id) = sensor_id {
+            state.sensor_service.attach(&sensor_id, target).await?;
+        }
+    }
     let view = state.tree_service.view_by_id(tree.id).await?;
     let sensor = match view.sensor_id.as_deref() {
         Some(sid) => {
@@ -311,6 +340,34 @@ pub async fn update_tree(
         None => None,
     };
     Ok(Json(TreeResponse::from((&view, sensor.as_ref()))))
+}
+
+/// Checked before the tree is written, so a refused sensor leaves the tree
+/// untouched; attaching afterwards repeats these rules.
+async fn ensure_sensor_fits(
+    state: &AppState,
+    sensor: &SensorView,
+    tree: Option<Id<Tree>>,
+    org: Id<Organization>,
+    planting_year: PlantingYear,
+) -> Result<(), ServiceError> {
+    ensure_module_active(
+        state.module_activation.as_ref(),
+        &crate::irrigation::key(),
+        org,
+    )
+    .await?;
+    if planting_year.is_future(Utc::now()) {
+        return Err(ServiceError::TreeNotYetPlanted);
+    }
+    let here = tree.map(tree_target);
+    if sensor.target.is_some() && sensor.target != here {
+        return Err(ServiceError::SensorAlreadyAttached);
+    }
+    if Id::new(sensor.organization_id) != org {
+        return Err(OrganizationMismatch::SensorVsTarget.into());
+    }
+    Ok(())
 }
 
 #[utoipa::path(delete, path = "/trees/{tree_id}", tag = "Trees",
@@ -335,14 +392,14 @@ pub async fn delete_tree(
     let ctx = state.authorization_service.context_for(user.id).await?;
     scope::ensure_visible(
         &ctx,
-        Permission::new(Resource::Tree, Action::Read),
+        Permission::new(crate::irrigation::resources::TREE, Action::Read),
         current.organization_id,
     )?;
     state
         .authorization_service
         .require(
             user.id,
-            Permission::new(Resource::Tree, Action::Delete),
+            Permission::new(crate::irrigation::resources::TREE, Action::Delete),
             Id::new(current.organization_id),
         )
         .await?;
@@ -366,7 +423,10 @@ pub async fn list_planting_years(
 ) -> Result<Json<Vec<i32>>, ServiceError> {
     let visible = state
         .authorization_service
-        .visible_orgs_for(user.id, Permission::new(Resource::Tree, Action::Read))
+        .visible_orgs_for(
+            user.id,
+            Permission::new(crate::irrigation::resources::TREE, Action::Read),
+        )
         .await?;
     let years = state.tree_service.distinct_planting_years(visible).await?;
     Ok(Json(years.into_iter().map(|y| y.year() as i32).collect()))
@@ -400,7 +460,10 @@ pub async fn get_nearest_trees(
 
     let visible = state
         .authorization_service
-        .visible_orgs_for(user.id, Permission::new(Resource::Tree, Action::Read))
+        .visible_orgs_for(
+            user.id,
+            Permission::new(crate::irrigation::resources::TREE, Action::Read),
+        )
         .await?;
 
     let results = state
@@ -473,7 +536,10 @@ pub async fn list_tree_markers(
 
     let visible = state
         .authorization_service
-        .visible_orgs_for(user.id, Permission::new(Resource::Tree, Action::Read))
+        .visible_orgs_for(
+            user.id,
+            Permission::new(crate::irrigation::resources::TREE, Action::Read),
+        )
         .await?;
 
     let query = TreeSearchQuery {
@@ -515,10 +581,10 @@ pub async fn transfer_tree(
     let ctx = state.authorization_service.context_for(user.id).await?;
     scope::ensure_visible(
         &ctx,
-        Permission::new(Resource::Tree, Action::Read),
+        Permission::new(crate::irrigation::resources::TREE, Action::Read),
         current.organization_id,
     )?;
-    let perm = Permission::new(Resource::Tree, Action::Update);
+    let perm = Permission::new(crate::irrigation::resources::TREE, Action::Update);
     state
         .authorization_service
         .require(user.id, perm, Id::new(current.organization_id))

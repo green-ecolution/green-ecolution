@@ -80,9 +80,10 @@ pub struct RoleUpdateRequest {
 
 pub fn parse_permissions(
     raw: &[String],
+    catalog: &domain::authorization::ResourceCatalog,
 ) -> Result<BTreeSet<domain::authorization::Permission>, ServiceError> {
     raw.iter()
-        .map(|s| s.parse::<domain::authorization::Permission>())
+        .map(|s| catalog.parse_permission(s))
         .collect::<Result<_, _>>()
         .map_err(|e| ServiceError::Malformed {
             kind: Malformed::Permission,

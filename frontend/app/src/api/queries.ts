@@ -21,13 +21,14 @@ import {
   ListResponseTreeResponse,
   ListResponseUserResponse,
   ListResponseVehicleResponse,
-  ListResponseWateringPlanInListResponse,
   ListSensorsRequest,
   ListTreeMarkersRequest,
   ListTreesRequest,
   ListUsersRequest,
   ListVehiclesRequest,
-  ListWateringPlansRequest,
+  ListPlansRequest,
+  IrrigationSettingsResponse,
+  irrigationApi,
   MapInfoResponse,
   moduleApi,
   ModuleListResponse,
@@ -44,7 +45,8 @@ import {
   ResponseError,
   RoleResponse,
   roleApi,
-  RouteResponse,
+  planApi,
+  planPreviewApi,
   routingApi,
   SensorDataQualityResponse,
   SensorModelResponse,
@@ -63,14 +65,21 @@ import {
   UserResponse,
   vehicleApi,
   VehicleResponse,
-  WateringPlanResponse,
+  WateringPlan,
+  WateringPlanList,
   WateringPlanStatus,
+  WateringRoute,
   WateringStatus,
-  wateringPlanApi,
-  wateringPlanPreviewApi,
   evaluationApi,
 } from './backendApi'
 import { DONE_STATUSES } from '@/lib/wateringPlanBoard'
+import { IRRIGATION } from '@/lib/targets'
+import {
+  loadClusters,
+  loadWateringPlanList,
+  toWateringPlan,
+  toWateringRoute,
+} from './irrigationPlans'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -264,6 +273,19 @@ export const sensorQueries = {
       queryFn: () => sensorApi.listSensors(params),
     }),
 
+  clusterSensorIds: (clusterIds: string[]) => {
+    const sortedIds = clusterIds.slice().sort()
+    return queryOptions<string[]>({
+      queryKey: [...SENSORS_KEY, 'by-cluster', sortedIds],
+      queryFn: async () => {
+        const perCluster = await Promise.all(
+          sortedIds.map((clusterId) => clusterApi.listClusterSensorIds({ clusterId })),
+        )
+        return [...new Set(perCluster.flat())]
+      },
+    })
+  },
+
   // Sensor ids are LoRaWAN EUIs (e.g. "eui-a81758fffe0c3b52"), not UUIDs,
   // so these queries only guard against empty ids.
   data: (id: string, params?: { from?: Date; perPage?: number }) =>
@@ -332,25 +354,29 @@ export const sensorQueries = {
 }
 
 export const wateringPlanQueries = {
-  list: (params?: ListWateringPlansRequest) =>
-    queryOptions<ListResponseWateringPlanInListResponse>({
+  list: (params?: Omit<ListPlansRequest, 'module'>) =>
+    queryOptions<WateringPlanList>({
       queryKey: ['watering-plans', params?.page ?? '1'],
-      queryFn: () => wateringPlanApi.listWateringPlans(params),
+      queryFn: async () =>
+        loadWateringPlanList(await planApi.listPlans({ ...params, module: IRRIGATION })),
     }),
 
   detail: (id: string) =>
-    queryOptions<WateringPlanResponse>({
+    queryOptions<WateringPlan>({
       queryKey: ['watering-plan', id],
-      queryFn: () => wateringPlanApi.getWateringPlan({ wateringPlanId: id }),
+      queryFn: async () => {
+        const plan = await planApi.getPlan({ planId: id })
+        return toWateringPlan(plan, await loadClusters(plan.stops))
+      },
       enabled: isValidUuid(id),
     }),
 
   route: (id: string) =>
-    queryOptions<RouteResponse | null>({
+    queryOptions<WateringRoute | null>({
       queryKey: ['watering-plan-route', id],
       queryFn: async () => {
         try {
-          return await wateringPlanApi.getWateringPlanRoute({ wateringPlanId: id })
+          return toWateringRoute(await planApi.getPlanRoute({ planId: id }))
         } catch (error) {
           // 404: plan has no computed route; 503: routing feature disabled.
           if (error instanceof ResponseError && [404, 503].includes(error.response.status))
@@ -362,16 +388,26 @@ export const wateringPlanQueries = {
     }),
 
   boardColumn: (statuses: WateringPlanStatus[]) =>
-    queryOptions<ListResponseWateringPlanInListResponse>({
+    queryOptions<WateringPlanList>({
       queryKey: ['watering-plans', 'board', statuses],
-      queryFn: () => wateringPlanApi.listWateringPlans({ status: statuses, page: 1, perPage: 100 }),
+      queryFn: async () =>
+        loadWateringPlanList(
+          await planApi.listPlans({ module: IRRIGATION, status: statuses, page: 1, perPage: 100 }),
+        ),
     }),
 
   boardDone: () =>
     infiniteQueryOptions({
       queryKey: ['watering-plans', 'board', 'done'],
-      queryFn: ({ pageParam }) =>
-        wateringPlanApi.listWateringPlans({ status: DONE_STATUSES, page: pageParam, perPage: 20 }),
+      queryFn: async ({ pageParam }) =>
+        loadWateringPlanList(
+          await planApi.listPlans({
+            module: IRRIGATION,
+            status: DONE_STATUSES,
+            page: pageParam,
+            perPage: 20,
+          }),
+        ),
       initialPageParam: 1,
       getNextPageParam: (lastPage) =>
         lastPage.pagination?.nextPage ? lastPage.pagination.currentPage + 1 : undefined,
@@ -390,7 +426,7 @@ export const wateringPlanQueries = {
     transporterTankUsed?: boolean
     startPointName?: string | null
   }) =>
-    queryOptions<RouteResponse | null>({
+    queryOptions<WateringRoute | null>({
       queryKey: [
         'route-preview',
         clusterIds.slice().sort(),
@@ -401,15 +437,17 @@ export const wateringPlanQueries = {
       ],
       queryFn: async () => {
         try {
-          return await wateringPlanPreviewApi.previewRoute({
-            routeRequest: {
-              clusterIds,
+          const route = await planPreviewApi.previewPlanRoute({
+            planRouteRequest: {
+              module: IRRIGATION,
+              stops: clusterIds,
               transporterId,
               trailerId,
-              transporterTankUsed,
+              transporterCapacityUsed: transporterTankUsed,
               startPointName,
             },
           })
+          return toWateringRoute(route)
         } catch {
           return null
         }
@@ -513,6 +551,12 @@ export const settingsQueries = {
       queryKey: ['organizations', orgId, 'settings'],
       queryFn: () => settingsApi.getOrganizationSettings({ orgId }),
     }),
+  // Below the core settings key, so invalidating those reaches this one too.
+  irrigation: (orgId: string) =>
+    queryOptions<IrrigationSettingsResponse>({
+      queryKey: ['organizations', orgId, 'settings', 'irrigation'],
+      queryFn: () => irrigationApi.getIrrigationSettings({ orgId }),
+    }),
 }
 
 export type CommentSubject = 'cluster' | 'watering-plan'
@@ -524,8 +568,8 @@ export const commentQueries = {
       queryFn: ({ pageParam }) =>
         subject === 'cluster'
           ? commentApi.listClusterComments({ clusterId: parentId, page: pageParam, perPage: 20 })
-          : commentApi.listWateringPlanComments({
-              wateringPlanId: parentId,
+          : commentApi.listPlanComments({
+              planId: parentId,
               page: pageParam,
               perPage: 20,
             }),

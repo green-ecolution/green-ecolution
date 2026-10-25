@@ -1,4 +1,8 @@
-use crate::{Id, organization::Organization, settings::SettingOrigin};
+use crate::{
+    Id,
+    organization::Organization,
+    settings::{InheritLevel, SettingOrigin, inherit},
+};
 
 /// One organization's contribution to a module's activation, root first.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -16,34 +20,26 @@ pub struct ActivationResolution {
     pub enforced_by: Option<Id<Organization>>,
 }
 
-/// Same fold as `settings::resolve`: `chain` runs from the root to `target`,
-/// a set value overrides what came before, and the topmost lock above the
-/// target ends the walk so nothing below it can override.
+/// Inherits like every setting, see `settings::inherit`.
 pub fn resolve_activation(
     default_enabled: bool,
     chain: &[ActivationLevel],
     target: Id<Organization>,
 ) -> ActivationResolution {
-    let mut resolution = ActivationResolution {
-        enabled: default_enabled,
-        origin: SettingOrigin::Default,
-        enforced_by: None,
-    };
-    for level in chain {
-        if let Some(enabled) = level.enabled {
-            resolution.enabled = enabled;
-            resolution.origin = if level.organization_id == target {
-                SettingOrigin::Own
-            } else {
-                SettingOrigin::Inherited(level.organization_id)
-            };
-        }
-        if !level.descendants_may_override && level.organization_id != target {
-            resolution.enforced_by = Some(level.organization_id);
-            break;
-        }
+    let levels: Vec<InheritLevel<bool>> = chain
+        .iter()
+        .map(|l| InheritLevel {
+            organization_id: l.organization_id,
+            value: l.enabled,
+            descendants_may_override: l.descendants_may_override,
+        })
+        .collect();
+    let r = inherit(default_enabled, &levels, target);
+    ActivationResolution {
+        enabled: r.value,
+        origin: r.origin,
+        enforced_by: r.enforced_by,
     }
-    resolution
 }
 
 #[cfg(test)]

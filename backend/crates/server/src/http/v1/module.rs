@@ -3,7 +3,7 @@ use std::sync::Arc;
 use axum::extract::State;
 use domain::{
     Id,
-    authorization::{Action, Permission, Resource},
+    authorization::{Action, Permission, ResourceKey},
 };
 use utoipa_axum::{router::OpenApiRouter, routes};
 use uuid::Uuid;
@@ -96,7 +96,7 @@ pub async fn get_organization_modules(
         .authorization_service
         .require(
             user.id,
-            Permission::new(Resource::Setting, Action::Read),
+            Permission::new(ResourceKey::SETTING, Action::Read),
             org,
         )
         .await?;
@@ -133,7 +133,7 @@ pub async fn update_organization_modules(
         .authorization_service
         .require(
             user.id,
-            Permission::new(Resource::Setting, Action::Update),
+            Permission::new(ResourceKey::SETTING, Action::Update),
             org,
         )
         .await?;

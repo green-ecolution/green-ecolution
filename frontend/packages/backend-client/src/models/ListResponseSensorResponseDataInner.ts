@@ -62,6 +62,13 @@ import {
     DataHealthToJSON,
     DataHealthToJSONTyped,
 } from './DataHealth';
+import type { TargetRefDto } from './TargetRefDto';
+import {
+    TargetRefDtoFromJSON,
+    TargetRefDtoFromJSONTyped,
+    TargetRefDtoToJSON,
+    TargetRefDtoToJSONTyped,
+} from './TargetRefDto';
 
 /**
  * A LoRaWAN sensor used for soil moisture monitoring.
@@ -75,12 +82,6 @@ export interface ListResponseSensorResponseDataInner {
      * @memberof ListResponseSensorResponseDataInner
      */
     additionalInformation?: object | null;
-    /**
-     * WGS-84 coordinate derived from the linked tree (if any).
-     * @type {SensorCoordinate}
-     * @memberof ListResponseSensorResponseDataInner
-     */
-    coordinate?: SensorCoordinate | null;
     /**
      * Timestamp when the sensor was registered (RFC 3339).
      * @type {string}
@@ -112,24 +113,11 @@ export interface ListResponseSensorResponseDataInner {
      */
     latestData?: SensorDataResponse | null;
     /**
-     * Cluster of the linked tree. Absent when the sensor has no tree or that
-     * tree belongs to no cluster.
-     * @type {string}
+     * WGS-84 position of the target, resolved by its module.
+     * @type {SensorCoordinate}
      * @memberof ListResponseSensorResponseDataInner
      */
-    linkedClusterId?: string | null;
-    /**
-     * Display name of [`Self::linked_cluster_id`].
-     * @type {string}
-     * @memberof ListResponseSensorResponseDataInner
-     */
-    linkedClusterName?: string | null;
-    /**
-     * Database id of the linked tree, if the sensor is currently attached.
-     * @type {string}
-     * @memberof ListResponseSensorResponseDataInner
-     */
-    linkedTreeId?: string | null;
+    location?: SensorCoordinate | null;
     /**
      * LoRaWAN credentials (omits `app_key`).
      * @type {LorawanInfoResponse}
@@ -167,6 +155,18 @@ export interface ListResponseSensorResponseDataInner {
      */
     status: SensorStatus;
     /**
+     * The object the sensor is attached to, if any.
+     * @type {TargetRefDto}
+     * @memberof ListResponseSensorResponseDataInner
+     */
+    target?: TargetRefDto | null;
+    /**
+     * Display name of [`Self::target`], resolved by its module.
+     * @type {string}
+     * @memberof ListResponseSensorResponseDataInner
+     */
+    targetLabel?: string | null;
+    /**
      * Timestamp when the sensor record was last updated (RFC 3339).
      * @type {string}
      * @memberof ListResponseSensorResponseDataInner
@@ -203,21 +203,20 @@ export function ListResponseSensorResponseDataInnerFromJSONTyped(json: any, igno
     return {
         
         'additionalInformation': json['additional_information'] == null ? undefined : json['additional_information'],
-        'coordinate': json['coordinate'] == null ? undefined : SensorCoordinateFromJSON(json['coordinate']),
         'createdAt': json['created_at'],
         'dataHealth': DataHealthFromJSON(json['data_health']),
         'id': json['id'],
         'implausibleRecent': json['implausible_recent'],
         'latestData': json['latest_data'] == null ? undefined : SensorDataResponseFromJSON(json['latest_data']),
-        'linkedClusterId': json['linked_cluster_id'] == null ? undefined : json['linked_cluster_id'],
-        'linkedClusterName': json['linked_cluster_name'] == null ? undefined : json['linked_cluster_name'],
-        'linkedTreeId': json['linked_tree_id'] == null ? undefined : json['linked_tree_id'],
+        'location': json['location'] == null ? undefined : SensorCoordinateFromJSON(json['location']),
         'lorawan': json['lorawan'] == null ? undefined : LorawanInfoResponseFromJSON(json['lorawan']),
         'model': SensorModelSummaryResponseFromJSON(json['model']),
         'organizationId': json['organization_id'],
         'provider': json['provider'] == null ? undefined : json['provider'],
         'sensorType': SensorTypeResponseFromJSON(json['sensor_type']),
         'status': SensorStatusFromJSON(json['status']),
+        'target': json['target'] == null ? undefined : TargetRefDtoFromJSON(json['target']),
+        'targetLabel': json['target_label'] == null ? undefined : json['target_label'],
         'updatedAt': json['updated_at'],
     };
 }
@@ -234,21 +233,20 @@ export function ListResponseSensorResponseDataInnerToJSONTyped(value?: ListRespo
     return {
         
         'additional_information': value['additionalInformation'],
-        'coordinate': SensorCoordinateToJSON(value['coordinate']),
         'created_at': value['createdAt'],
         'data_health': DataHealthToJSON(value['dataHealth']),
         'id': value['id'],
         'implausible_recent': value['implausibleRecent'],
         'latest_data': SensorDataResponseToJSON(value['latestData']),
-        'linked_cluster_id': value['linkedClusterId'],
-        'linked_cluster_name': value['linkedClusterName'],
-        'linked_tree_id': value['linkedTreeId'],
+        'location': SensorCoordinateToJSON(value['location']),
         'lorawan': LorawanInfoResponseToJSON(value['lorawan']),
         'model': SensorModelSummaryResponseToJSON(value['model']),
         'organization_id': value['organizationId'],
         'provider': value['provider'],
         'sensor_type': SensorTypeResponseToJSON(value['sensorType']),
         'status': SensorStatusToJSON(value['status']),
+        'target': TargetRefDtoToJSON(value['target']),
+        'target_label': value['targetLabel'],
         'updated_at': value['updatedAt'],
     };
 }

@@ -3,22 +3,25 @@
 //! Events are emitted by the service layer after aggregate mutations are
 //! persisted and consumed by subscriber workers (e.g. recalculate cluster
 //! centroid when a tree moves, recalculate cluster watering status when a
-//! tree's sensor link or status changes).
+//! sensor is attached to or detached from a tree, or a tree's status changes).
 
 use chrono::{DateTime, Utc};
 
 use crate::{
     Id,
     cluster::TreeCluster,
+    module::ModuleKey,
+    operation_plan::OperationPlan,
     organization::Organization,
+    planning::{StopOutcome, StopRef},
     role::Role,
     sensor::{
         SensorId,
         data::{VolumetricReading, Watermark},
     },
     shared::watering_status::WateringStatus,
+    target::TargetRef,
     tree::Tree,
-    watering_plan::{WateringPlan, WateringPlanEvaluation},
 };
 
 #[derive(Debug, Clone)]
@@ -30,6 +33,8 @@ pub enum SensorReadings {
 #[derive(Debug, Clone)]
 pub struct SensorDataReceivedPayload {
     pub sensor_id: SensorId,
+    /// Where the sensor was attached when the reading arrived.
+    pub target: Option<TargetRef>,
     pub readings: SensorReadings,
 }
 
@@ -39,12 +44,10 @@ pub enum DomainEvent {
     TreeCreated {
         tree_id: Id<Tree>,
         cluster_id: Option<Id<TreeCluster>>,
-        sensor_id: Option<SensorId>,
     },
     TreeDeleted {
         tree_id: Id<Tree>,
         cluster_id: Option<Id<TreeCluster>>,
-        had_sensor: bool,
     },
     TreeCoordinateChanged {
         tree_id: Id<Tree>,
@@ -54,16 +57,6 @@ pub enum DomainEvent {
         tree_id: Id<Tree>,
         from: Option<Id<TreeCluster>>,
         to: Option<Id<TreeCluster>>,
-    },
-    TreeSensorAttached {
-        tree_id: Id<Tree>,
-        cluster_id: Option<Id<TreeCluster>>,
-        sensor_id: SensorId,
-    },
-    TreeSensorDetached {
-        tree_id: Id<Tree>,
-        cluster_id: Option<Id<TreeCluster>>,
-        sensor_id: SensorId,
     },
     TreeWateringStatusChanged {
         tree_id: Id<Tree>,
@@ -102,10 +95,20 @@ pub enum DomainEvent {
     SensorActivated {
         sensor_id: SensorId,
     },
-    /// Emitted when an activated sensor is reset back to `Prepared`,
-    /// dropping its tree link. Inverse of `SensorActivated`.
+    /// Emitted when an activated sensor is reset back to `Prepared`. Inverse of
+    /// `SensorActivated`; a released target follows as `SensorDetached`.
     SensorDeactivated {
         sensor_id: SensorId,
+    },
+    /// A sensor now measures for `target`.
+    SensorAttached {
+        sensor_id: SensorId,
+        target: TargetRef,
+    },
+    /// A sensor stopped measuring for `target`.
+    SensorDetached {
+        sensor_id: SensorId,
+        target: TargetRef,
     },
     /// Emitted when someone reviews a sensor's flagged readings. No subscriber
     /// today; recorded so the review is auditable alongside the other sensor
@@ -115,31 +118,37 @@ pub enum DomainEvent {
         at: DateTime<Utc>,
         by: uuid::Uuid,
     },
-    WateringPlanStarted {
-        plan_id: Id<WateringPlan>,
-        cluster_ids: Vec<Id<TreeCluster>>,
+    OperationPlanStarted {
+        plan_id: Id<OperationPlan>,
+        module: ModuleKey,
+        stops: Vec<StopRef>,
     },
-    WateringPlanStartReverted {
-        plan_id: Id<WateringPlan>,
-        cluster_ids: Vec<Id<TreeCluster>>,
+    OperationPlanStartReverted {
+        plan_id: Id<OperationPlan>,
+        module: ModuleKey,
+        stops: Vec<StopRef>,
     },
-    WateringPlanCanceled {
-        plan_id: Id<WateringPlan>,
-        cluster_ids: Vec<Id<TreeCluster>>,
+    OperationPlanCanceled {
+        plan_id: Id<OperationPlan>,
+        module: ModuleKey,
+        stops: Vec<StopRef>,
     },
-    WateringPlanFailed {
-        plan_id: Id<WateringPlan>,
-        cluster_ids: Vec<Id<TreeCluster>>,
+    OperationPlanFailed {
+        plan_id: Id<OperationPlan>,
+        module: ModuleKey,
+        stops: Vec<StopRef>,
     },
-    WateringPlanFinished {
-        plan_id: Id<WateringPlan>,
-        cluster_ids: Vec<Id<TreeCluster>>,
+    OperationPlanFinished {
+        plan_id: Id<OperationPlan>,
+        module: ModuleKey,
+        stops: Vec<StopRef>,
         finished_at: DateTime<Utc>,
-        evaluations: Vec<WateringPlanEvaluation>,
+        outcomes: Vec<StopOutcome>,
     },
-    WateringPlanDeleted {
-        plan_id: Id<WateringPlan>,
-        cluster_ids: Vec<Id<TreeCluster>>,
+    OperationPlanDeleted {
+        plan_id: Id<OperationPlan>,
+        module: ModuleKey,
+        stops: Vec<StopRef>,
     },
     OrganizationCreated {
         organization_id: Id<Organization>,

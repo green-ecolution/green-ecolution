@@ -15,17 +15,19 @@ pub mod snapshot;
 pub mod sort;
 pub mod view;
 
+use std::collections::BTreeMap;
+
 use chrono::{DateTime, Utc};
 
 use crate::{
     Id,
     authorization::Visibility,
+    capacity::{CapacityKind, Liters},
     events::DomainEvent,
     organization::Organization,
     shared::{
         error::ValidationError,
         provenance::{Provenance, ProviderId},
-        water_capacity::WaterCapacity,
     },
 };
 
@@ -153,7 +155,7 @@ pub struct Vehicle {
     pub id: Id<Vehicle>,
     pub number_plate: NumberPlate,
     pub description: Option<String>,
-    pub water_capacity: WaterCapacity,
+    pub capacities: BTreeMap<CapacityKind, Liters>,
     pub availability: VehicleAvailability,
     pub vehicle_type: VehicleType,
     pub model: VehicleModel,
@@ -170,7 +172,7 @@ pub struct Vehicle {
 pub struct VehicleDraft {
     pub number_plate: NumberPlate,
     pub description: Option<String>,
-    pub water_capacity: WaterCapacity,
+    pub capacities: BTreeMap<CapacityKind, Liters>,
     pub availability: VehicleAvailability,
     pub vehicle_type: VehicleType,
     pub model: VehicleModel,
@@ -215,7 +217,7 @@ pub struct VehicleSearchQuery {
 pub struct VehicleUpdate {
     pub number_plate: NumberPlate,
     pub description: Option<String>,
-    pub water_capacity: WaterCapacity,
+    pub capacities: BTreeMap<CapacityKind, Liters>,
     pub availability: VehicleAvailability,
     pub vehicle_type: VehicleType,
     pub model: VehicleModel,
@@ -231,8 +233,16 @@ impl Vehicle {
             id: Id::new(snap.id),
             number_plate: NumberPlate::reconstitute(snap.number_plate),
             description: snap.description,
-            water_capacity: WaterCapacity::new(snap.water_capacity)
-                .expect("DB water_capacity must be valid"),
+            capacities: snap
+                .capacities
+                .into_iter()
+                .map(|(kind, liters)| {
+                    (
+                        kind,
+                        Liters::new(liters).expect("persisted capacity must be valid"),
+                    )
+                })
+                .collect(),
             availability: snap.availability,
             vehicle_type: snap.vehicle_type,
             model: VehicleModel::reconstitute(snap.model),
@@ -247,6 +257,10 @@ impl Vehicle {
             provenance: Provenance::reconstitute(snap.provider, snap.additional_info),
             organization_id: Id::new(snap.organization_id),
         }
+    }
+
+    pub fn capacity(&self, kind: CapacityKind) -> Option<Liters> {
+        self.capacities.get(&kind).copied()
     }
 
     pub fn archived_at(&self) -> Option<DateTime<Utc>> {
@@ -272,7 +286,7 @@ impl Vehicle {
     pub fn replace_details(&mut self, update: VehicleUpdate) {
         self.number_plate = update.number_plate;
         self.description = update.description;
-        self.water_capacity = update.water_capacity;
+        self.capacities = update.capacities;
         self.availability = update.availability;
         self.vehicle_type = update.vehicle_type;
         self.model = update.model;
@@ -319,7 +333,7 @@ mod tests {
             id: Id::new_v7(),
             number_plate: NumberPlate::new("FL-AB-123").unwrap(),
             description: None,
-            water_capacity: WaterCapacity::new(1000.0).unwrap(),
+            capacities: BTreeMap::from([(CapacityKind::Water, Liters::new(1000.0).unwrap())]),
             availability: VehicleAvailability::Available,
             vehicle_type: VehicleType::Transporter,
             model: VehicleModel::new("Mercedes Sprinter").unwrap(),
@@ -397,7 +411,7 @@ mod tests {
         v.replace_details(VehicleUpdate {
             number_plate: NumberPlate::new("FL-XY-789").unwrap(),
             description: Some("neu".into()),
-            water_capacity: WaterCapacity::new(2000.0).unwrap(),
+            capacities: BTreeMap::from([(CapacityKind::Water, Liters::new(2000.0).unwrap())]),
             availability: VehicleAvailability::NotAvailable,
             vehicle_type: VehicleType::Trailer,
             model: VehicleModel::new("Schmitz Cargobull").unwrap(),
@@ -407,7 +421,8 @@ mod tests {
         });
         assert_eq!(v.number_plate.as_str(), "FL-XY-789");
         assert_eq!(v.description.as_deref(), Some("neu"));
-        assert_eq!(v.water_capacity.liters(), 2000.0);
+        assert_eq!(v.capacity(CapacityKind::Water).unwrap().value(), 2000.0);
+        assert_eq!(v.capacity(CapacityKind::CargoVolume), None);
         assert_eq!(v.availability, VehicleAvailability::NotAvailable);
         assert_eq!(v.vehicle_type, VehicleType::Trailer);
         assert_eq!(v.model.as_str(), "Schmitz Cargobull");

@@ -13,6 +13,14 @@
  */
 
 import { mapValues } from '../runtime';
+import type { CapacityKindDto } from './CapacityKindDto';
+import {
+    CapacityKindDtoFromJSON,
+    CapacityKindDtoFromJSONTyped,
+    CapacityKindDtoToJSON,
+    CapacityKindDtoToJSONTyped,
+} from './CapacityKindDto';
+
 /**
  * Create/replace payload for a start point.
  * @export
@@ -46,10 +54,10 @@ export interface StartPointRequest {
     organizationId?: string | null;
     /**
      * 
-     * @type {boolean}
+     * @type {Array<CapacityKindDto>}
      * @memberof StartPointRequest
      */
-    wateringPoint?: boolean;
+    replenishes: Array<CapacityKindDto>;
 }
 
 /**
@@ -59,6 +67,7 @@ export function instanceOfStartPointRequest(value: object): value is StartPointR
     if (!('lat' in value) || value['lat'] === undefined) return false;
     if (!('lon' in value) || value['lon'] === undefined) return false;
     if (!('name' in value) || value['name'] === undefined) return false;
+    if (!('replenishes' in value) || value['replenishes'] === undefined) return false;
     return true;
 }
 
@@ -76,7 +85,7 @@ export function StartPointRequestFromJSONTyped(json: any, ignoreDiscriminator: b
         'lon': json['lon'],
         'name': json['name'],
         'organizationId': json['organization_id'] == null ? undefined : json['organization_id'],
-        'wateringPoint': json['watering_point'] == null ? undefined : json['watering_point'],
+        'replenishes': ((json['replenishes'] as Array<any>).map(CapacityKindDtoFromJSON)),
     };
 }
 
@@ -95,7 +104,7 @@ export function StartPointRequestToJSONTyped(value?: StartPointRequest | null, i
         'lon': value['lon'],
         'name': value['name'],
         'organization_id': value['organizationId'],
-        'watering_point': value['wateringPoint'],
+        'replenishes': ((value['replenishes'] as Array<any>).map(CapacityKindDtoToJSON)),
     };
 }
 

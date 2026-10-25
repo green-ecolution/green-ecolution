@@ -74,11 +74,16 @@ export interface GetClusterSoilMoistureRequest {
     bucket?: string | null;
 }
 
+export interface ListClusterSensorIdsRequest {
+    clusterId: string;
+}
+
 export interface ListClustersRequest {
     page?: number;
     perPage?: number;
     wateringStatus?: Array<WateringStatus>;
     region?: Array<string>;
+    id?: Array<string>;
     soilCondition?: Array<SoilCondition>;
     query?: string | null;
     sort?: ListClustersSortEnum;
@@ -363,7 +368,46 @@ export class TreeClustersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a paginated list of all tree clusters with a compact representation including region info. Optional filter parameters (watering_status, region) narrow the result; array parameters are repeatable. Sortable by name, moisture, trees or last_watered.
+     * Returns the ids of the sensors attached to the cluster\'s trees, ordered by id. Feed them into `GET /sensors?id=…` to filter the sensor list by cluster.
+     * List the sensors of a cluster
+     */
+    async listClusterSensorIdsRaw(requestParameters: ListClusterSensorIdsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<string>>> {
+        if (requestParameters['clusterId'] == null) {
+            throw new runtime.RequiredError(
+                'clusterId',
+                'Required parameter "clusterId" was null or undefined when calling listClusterSensorIds().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/v1/clusters/{cluster_id}/sensor-ids`;
+        urlPath = urlPath.replace(`{${"cluster_id"}}`, encodeURIComponent(String(requestParameters['clusterId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse<any>(response);
+    }
+
+    /**
+     * Returns the ids of the sensors attached to the cluster\'s trees, ordered by id. Feed them into `GET /sensors?id=…` to filter the sensor list by cluster.
+     * List the sensors of a cluster
+     */
+    async listClusterSensorIds(requestParameters: ListClusterSensorIdsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<string>> {
+        const response = await this.listClusterSensorIdsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns a paginated list of all tree clusters with a compact representation including region info. Optional filter parameters (watering_status, region, id) narrow the result; array parameters are repeatable. Sortable by name, moisture, trees or last_watered.
      * List all tree clusters
      */
     async listClustersRaw(requestParameters: ListClustersRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListResponseTreeClusterInListResponse>> {
@@ -383,6 +427,10 @@ export class TreeClustersApi extends runtime.BaseAPI {
 
         if (requestParameters['region'] != null) {
             queryParameters['region'] = requestParameters['region'];
+        }
+
+        if (requestParameters['id'] != null) {
+            queryParameters['id'] = requestParameters['id'];
         }
 
         if (requestParameters['soilCondition'] != null) {
@@ -417,7 +465,7 @@ export class TreeClustersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a paginated list of all tree clusters with a compact representation including region info. Optional filter parameters (watering_status, region) narrow the result; array parameters are repeatable. Sortable by name, moisture, trees or last_watered.
+     * Returns a paginated list of all tree clusters with a compact representation including region info. Optional filter parameters (watering_status, region, id) narrow the result; array parameters are repeatable. Sortable by name, moisture, trees or last_watered.
      * List all tree clusters
      */
     async listClusters(requestParameters: ListClustersRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ListResponseTreeClusterInListResponse> {

@@ -16,12 +16,12 @@ use crate::{
     service::ServiceError,
 };
 use domain::{
-    authorization::{Action, Permission, Resource},
+    authorization::{Action, Permission, ResourceKey},
     cluster::TreeClusterSearchQuery,
+    operation_plan::OperationPlanSearchQuery,
     sensor::SensorSearchQuery,
     shared::pagination::Pagination,
     tree::TreeSearchQuery,
-    watering_plan::WateringPlanSearchQuery,
 };
 
 pub fn routes() -> OpenApiRouter<Arc<AppState>> {
@@ -46,29 +46,32 @@ pub async fn get_evaluation(
 
     let tree_visible = state
         .authorization_service
-        .visible_orgs_for(user.id, Permission::new(Resource::Tree, Action::Read))
+        .visible_orgs_for(
+            user.id,
+            Permission::new(crate::irrigation::resources::TREE, Action::Read),
+        )
         .await?;
     let cluster_visible = state
         .authorization_service
         .visible_orgs_for(
             user.id,
-            Permission::new(Resource::TreeCluster, Action::Read),
+            Permission::new(crate::irrigation::resources::TREE_CLUSTER, Action::Read),
         )
         .await?;
     let sensor_visible = state
         .authorization_service
-        .visible_orgs_for(user.id, Permission::new(Resource::Sensor, Action::Read))
+        .visible_orgs_for(user.id, Permission::new(ResourceKey::SENSOR, Action::Read))
         .await?;
     let plan_visible = state
         .authorization_service
         .visible_orgs_for(
             user.id,
-            Permission::new(Resource::WateringPlan, Action::Read),
+            Permission::new(crate::irrigation::resources::WATERING_PLAN, Action::Read),
         )
         .await?;
     let vehicle_visible = state
         .authorization_service
-        .visible_orgs_for(user.id, Permission::new(Resource::Vehicle, Action::Read))
+        .visible_orgs_for(user.id, Permission::new(ResourceKey::VEHICLE, Action::Read))
         .await?;
 
     let tree_page = state
@@ -102,11 +105,13 @@ pub async fn get_evaluation(
         )
         .await?;
     let watering_plan_page = state
-        .watering_plan_service
+        .operation_plan_service
         .search_view(
-            WateringPlanSearchQuery {
+            OperationPlanSearchQuery {
+                module: crate::irrigation::key(),
+                provider: None,
+                statuses: Vec::new(),
                 visible: plan_visible.clone(),
-                ..Default::default()
             },
             count_pagination,
         )

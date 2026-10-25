@@ -3,11 +3,16 @@ use domain::{
     Id, RepositoryError,
     comment::{CommentBody, CommentDraft, CommentReader, CommentSubject, CommentWriter},
     shared::pagination::Pagination,
+    target::TargetRef,
 };
 use server::infra::pg_comment::PgCommentRepository;
 use uuid::Uuid;
 
 use crate::helpers::spawn_app;
+
+fn cluster_subject() -> CommentSubject {
+    CommentSubject::Target(TargetRef::new("irrigation", "cluster", Uuid::now_v7()).unwrap())
+}
 
 fn draft(subject: CommentSubject, author: Uuid, body: &str) -> CommentDraft {
     CommentDraft {
@@ -21,18 +26,18 @@ fn draft(subject: CommentSubject, author: Uuid, body: &str) -> CommentDraft {
 async fn saves_and_lists_newest_first() {
     let app = spawn_app().await;
     let repo = PgCommentRepository::new(app.db_pool.clone());
-    let subject = CommentSubject::TreeCluster(Id::new_v7());
+    let subject = cluster_subject();
     let author = Uuid::new_v4();
 
-    repo.save_new(draft(subject, author, "erster"))
+    repo.save_new(draft(subject.clone(), author, "erster"))
         .await
         .unwrap();
-    repo.save_new(draft(subject, author, "zweiter"))
+    repo.save_new(draft(subject.clone(), author, "zweiter"))
         .await
         .unwrap();
 
     let page = repo
-        .list_for_subject(subject, Pagination::new(1, 25))
+        .list_for_subject(subject.clone(), Pagination::new(1, 25))
         .await
         .unwrap();
 
@@ -48,25 +53,25 @@ async fn saves_and_lists_newest_first() {
 async fn list_is_scoped_to_the_subject() {
     let app = spawn_app().await;
     let repo = PgCommentRepository::new(app.db_pool.clone());
-    let cluster = CommentSubject::TreeCluster(Id::new_v7());
-    let plan = CommentSubject::WateringPlan(Id::new_v7());
+    let cluster = cluster_subject();
+    let plan = CommentSubject::Plan(Id::new_v7());
 
-    repo.save_new(draft(cluster, Uuid::new_v4(), "an der gruppe"))
+    repo.save_new(draft(cluster.clone(), Uuid::new_v4(), "an der gruppe"))
         .await
         .unwrap();
-    repo.save_new(draft(plan, Uuid::new_v4(), "am plan"))
+    repo.save_new(draft(plan.clone(), Uuid::new_v4(), "am plan"))
         .await
         .unwrap();
 
     let cluster_page = repo
-        .list_for_subject(cluster, Pagination::new(1, 25))
+        .list_for_subject(cluster.clone(), Pagination::new(1, 25))
         .await
         .unwrap();
     assert_eq!(cluster_page.total, 1);
     assert_eq!(cluster_page.items[0].body, "an der gruppe");
 
     let plan_page = repo
-        .list_for_subject(plan, Pagination::new(1, 25))
+        .list_for_subject(plan.clone(), Pagination::new(1, 25))
         .await
         .unwrap();
     assert_eq!(plan_page.total, 1);
@@ -77,15 +82,15 @@ async fn list_is_scoped_to_the_subject() {
 async fn list_paginates() {
     let app = spawn_app().await;
     let repo = PgCommentRepository::new(app.db_pool.clone());
-    let subject = CommentSubject::WateringPlan(Id::new_v7());
+    let subject = CommentSubject::Plan(Id::new_v7());
     for i in 0..3 {
-        repo.save_new(draft(subject, Uuid::new_v4(), &format!("nr {i}")))
+        repo.save_new(draft(subject.clone(), Uuid::new_v4(), &format!("nr {i}")))
             .await
             .unwrap();
     }
 
     let page = repo
-        .list_for_subject(subject, Pagination::new(2, 2))
+        .list_for_subject(subject.clone(), Pagination::new(2, 2))
         .await
         .unwrap();
 
@@ -98,11 +103,11 @@ async fn list_paginates() {
 async fn by_id_returns_the_aggregate_and_not_found_after_delete() {
     let app = spawn_app().await;
     let repo = PgCommentRepository::new(app.db_pool.clone());
-    let subject = CommentSubject::TreeCluster(Id::new_v7());
+    let subject = cluster_subject();
     let author = Uuid::new_v4();
 
     let created = repo
-        .save_new(draft(subject, author, "zu löschen"))
+        .save_new(draft(subject.clone(), author, "zu löschen"))
         .await
         .unwrap();
 
@@ -120,10 +125,10 @@ async fn by_id_returns_the_aggregate_and_not_found_after_delete() {
 async fn freshly_created_comment_has_no_edited_at() {
     let app = spawn_app().await;
     let repo = PgCommentRepository::new(app.db_pool.clone());
-    let subject = CommentSubject::TreeCluster(Id::new_v7());
+    let subject = cluster_subject();
 
     let created = repo
-        .save_new(draft(subject, Uuid::new_v4(), "frisch"))
+        .save_new(draft(subject.clone(), Uuid::new_v4(), "frisch"))
         .await
         .unwrap();
 
@@ -136,10 +141,10 @@ async fn freshly_created_comment_has_no_edited_at() {
 async fn save_persists_body_and_timestamp_and_by_id_reads_both_back() {
     let app = spawn_app().await;
     let repo = PgCommentRepository::new(app.db_pool.clone());
-    let subject = CommentSubject::TreeCluster(Id::new_v7());
+    let subject = cluster_subject();
 
     let mut comment = repo
-        .save_new(draft(subject, Uuid::new_v4(), "alter Text"))
+        .save_new(draft(subject.clone(), Uuid::new_v4(), "alter Text"))
         .await
         .unwrap();
 
@@ -160,10 +165,10 @@ async fn save_persists_body_and_timestamp_and_by_id_reads_both_back() {
 async fn save_on_unknown_id_is_an_error() {
     let app = spawn_app().await;
     let repo = PgCommentRepository::new(app.db_pool.clone());
-    let subject = CommentSubject::TreeCluster(Id::new_v7());
+    let subject = cluster_subject();
 
     let mut comment = repo
-        .save_new(draft(subject, Uuid::new_v4(), "wird geloescht"))
+        .save_new(draft(subject.clone(), Uuid::new_v4(), "wird geloescht"))
         .await
         .unwrap();
     repo.delete(comment.id).await.unwrap();
@@ -177,34 +182,64 @@ async fn save_on_unknown_id_is_an_error() {
 async fn delete_for_subject_removes_only_that_subject() {
     let app = spawn_app().await;
     let repo = PgCommentRepository::new(app.db_pool.clone());
-    let cluster = CommentSubject::TreeCluster(Id::new_v7());
-    let plan = CommentSubject::WateringPlan(Id::new_v7());
+    let cluster = cluster_subject();
+    let plan = CommentSubject::Plan(Id::new_v7());
 
-    repo.save_new(draft(cluster, Uuid::new_v4(), "a"))
+    repo.save_new(draft(cluster.clone(), Uuid::new_v4(), "a"))
         .await
         .unwrap();
-    repo.save_new(draft(cluster, Uuid::new_v4(), "b"))
+    repo.save_new(draft(cluster.clone(), Uuid::new_v4(), "b"))
         .await
         .unwrap();
-    repo.save_new(draft(plan, Uuid::new_v4(), "c"))
+    repo.save_new(draft(plan.clone(), Uuid::new_v4(), "c"))
         .await
         .unwrap();
 
-    let removed = repo.delete_for_subject(cluster).await.unwrap();
+    let removed = repo.delete_for_subject(cluster.clone()).await.unwrap();
     assert_eq!(removed, 2);
 
     assert_eq!(
-        repo.list_for_subject(cluster, Pagination::new(1, 25))
+        repo.list_for_subject(cluster.clone(), Pagination::new(1, 25))
             .await
             .unwrap()
             .total,
         0
     );
     assert_eq!(
-        repo.list_for_subject(plan, Pagination::new(1, 25))
+        repo.list_for_subject(plan.clone(), Pagination::new(1, 25))
             .await
             .unwrap()
             .total,
         1
     );
+}
+
+#[tokio::test]
+async fn targets_with_the_same_id_in_different_kinds_do_not_share_comments() {
+    let app = spawn_app().await;
+    let repo = PgCommentRepository::new(app.db_pool.clone());
+    let raw = Uuid::now_v7();
+    let cluster = CommentSubject::Target(TargetRef::new("irrigation", "cluster", raw).unwrap());
+    let thing = CommentSubject::Target(TargetRef::new("test_module", "thing", raw).unwrap());
+
+    repo.save_new(draft(cluster.clone(), Uuid::new_v4(), "a"))
+        .await
+        .unwrap();
+    repo.save_new(draft(thing.clone(), Uuid::new_v4(), "b"))
+        .await
+        .unwrap();
+
+    let page = repo
+        .list_for_subject(thing.clone(), Pagination::new(1, 25))
+        .await
+        .unwrap();
+    assert_eq!(page.total, 1);
+    assert_eq!(page.items[0].subject, thing);
+
+    assert_eq!(repo.delete_for_subject(thing).await.unwrap(), 1);
+    let remaining = repo
+        .list_for_subject(cluster, Pagination::new(1, 25))
+        .await
+        .unwrap();
+    assert_eq!(remaining.total, 1);
 }

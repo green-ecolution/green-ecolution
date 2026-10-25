@@ -2,6 +2,7 @@ import { z } from 'zod'
 import {
   DataHealth,
   ListSensorsOrderEnum,
+  type ListSensorsRequest,
   ListSensorsSortEnum,
   SensorStatus,
 } from '@green-ecolution/backend-client'
@@ -34,6 +35,24 @@ export const ACTIVATED_ONLY_FILTERS = {
   hasTree: undefined,
   clusterIds: undefined,
 } as const
+
+export const SENSOR_LIST_PER_PAGE = 25
+
+export const sensorListParams = (
+  search: SensorListSearch,
+  clusterSensorIds?: string[],
+): ListSensorsRequest => ({
+  page: search.page,
+  perPage: SENSOR_LIST_PER_PAGE,
+  q: search.q,
+  status: statusesForView(search.view ?? 'activated', search.statuses),
+  modelId: search.modelIds,
+  dataHealth: search.dataHealth,
+  attached: search.hasTree,
+  id: clusterSensorIds,
+  sort: search.sort,
+  order: search.order,
+})
 
 export const statusesForView = (
   view: SensorListView,

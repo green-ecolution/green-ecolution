@@ -4,13 +4,13 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactNode } from 'react'
 import { useWateringPlanForm } from './useWateringPlanForm'
 import { Toaster } from '@green-ecolution/ui'
-import { WateringPlanStatus } from '@green-ecolution/backend-client'
+import { PlanStatus as WateringPlanStatus } from '@green-ecolution/backend-client'
 import useStore from '@/store/store'
 
 vi.mock('@/api/backendApi', () => ({
-  wateringPlanApi: {
-    createWateringPlan: vi.fn(),
-    updateWateringPlan: vi.fn(),
+  planApi: {
+    createPlan: vi.fn(),
+    updatePlan: vi.fn(),
   },
 }))
 
@@ -27,8 +27,8 @@ vi.mock('@tanstack/react-router', () => ({
   useBlocker: (...args: unknown[]) => mockUseBlocker(...args),
 }))
 
-import { wateringPlanApi } from '@/api/backendApi'
-import type { WateringPlan } from '@/api/backendApi'
+import { planApi } from '@/api/backendApi'
+import type { PlanResponse } from '@/api/backendApi'
 
 function createWrapper() {
   const queryClient = new QueryClient({
@@ -59,7 +59,7 @@ const defaultInitForm = {
   description: '',
 }
 
-function createMockWateringPlan(overrides: Partial<WateringPlan> = {}): WateringPlan {
+function createMockPlan(overrides: Partial<PlanResponse> = {}): PlanResponse {
   return {
     id: 'plan-uuid-1',
     date: futureDate.toISOString(),
@@ -72,12 +72,14 @@ function createMockWateringPlan(overrides: Partial<WateringPlan> = {}): Watering
       status: 'available',
       drivingLicense: 'B',
     },
-    treeclusters: [],
+    module: 'irrigation',
+    stops: [],
+    outcomes: [],
     userIds: [],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     ...overrides,
-  } as unknown as WateringPlan
+  } as unknown as PlanResponse
 }
 
 describe('useWateringPlanForm', () => {
@@ -121,10 +123,10 @@ describe('useWateringPlanForm', () => {
     expect(result.current.error).toBeNull()
   })
 
-  it('calls createWateringPlan API when mutationType is create', async () => {
-    const mockResponse = createMockWateringPlan()
+  it('creates an irrigation plan when mutationType is create', async () => {
+    const mockResponse = createMockPlan()
     // eslint-disable-next-line @typescript-eslint/unbound-method
-    const createMock = vi.mocked(wateringPlanApi.createWateringPlan)
+    const createMock = vi.mocked(planApi.createPlan)
     createMock.mockResolvedValueOnce(mockResponse)
 
     const { result } = renderHook(
@@ -145,24 +147,26 @@ describe('useWateringPlanForm', () => {
     await waitFor(() => {
       expect(createMock).toHaveBeenCalledTimes(1)
       expect(createMock).toHaveBeenCalledWith({
-        wateringPlanCreateRequest: {
+        planCreateRequest: {
+          module: 'irrigation',
           date: futureDate.toISOString(),
           transporterId: 'transporter-uuid-1',
           userIds: ['550e8400-e29b-41d4-a716-446655440000'],
-          treeClusterIds: ['cluster-uuid-1', 'cluster-uuid-2'],
+          stops: ['cluster-uuid-1', 'cluster-uuid-2'],
+          transporterCapacityUsed: true,
           description: '',
         },
       })
     })
   })
 
-  it('calls updateWateringPlan API when mutationType is update', async () => {
-    const mockResponse = createMockWateringPlan({
+  it('updates the plan when mutationType is update', async () => {
+    const mockResponse = createMockPlan({
       id: 'plan-uuid-5',
       status: WateringPlanStatus.Active,
     })
     // eslint-disable-next-line @typescript-eslint/unbound-method
-    const updateMock = vi.mocked(wateringPlanApi.updateWateringPlan)
+    const updateMock = vi.mocked(planApi.updatePlan)
     updateMock.mockResolvedValueOnce(mockResponse)
 
     const updateInitForm = {
@@ -190,11 +194,12 @@ describe('useWateringPlanForm', () => {
     await waitFor(() => {
       expect(updateMock).toHaveBeenCalledTimes(1)
       expect(updateMock).toHaveBeenCalledWith({
-        wateringPlanId: '5',
+        planId: '5',
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        wateringPlanUpdateRequest: expect.objectContaining({
+        planUpdateRequest: expect.objectContaining({
           status: WateringPlanStatus.Active,
           transporterId: 'transporter-uuid-1',
+          stops: ['cluster-uuid-1', 'cluster-uuid-2'],
         }),
       })
     })
@@ -202,9 +207,9 @@ describe('useWateringPlanForm', () => {
 
   describe('draft management', () => {
     it('clears draft on successful mutation', async () => {
-      const mockResponse = createMockWateringPlan()
+      const mockResponse = createMockPlan()
       // eslint-disable-next-line @typescript-eslint/unbound-method
-      const createMock = vi.mocked(wateringPlanApi.createWateringPlan)
+      const createMock = vi.mocked(planApi.createPlan)
       createMock.mockResolvedValueOnce(mockResponse)
 
       // Pre-populate draft

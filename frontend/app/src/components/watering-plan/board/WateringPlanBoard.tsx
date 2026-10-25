@@ -22,7 +22,7 @@ import {
   KanbanDropHint,
 } from '@green-ecolution/ui'
 import { useTranslation } from 'react-i18next'
-import { WateringPlanStatus } from '@green-ecolution/backend-client'
+import { PlanStatus as WateringPlanStatus } from '@green-ecolution/backend-client'
 import type { User, WateringPlanInList } from '@/api/backendApi'
 import { userQueries, wateringPlanQueries } from '@/api/queries'
 import {

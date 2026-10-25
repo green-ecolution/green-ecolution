@@ -1,8 +1,13 @@
+use std::collections::BTreeMap;
+
 use chrono::{DateTime, Utc};
 use serde_json::Value;
 use uuid::Uuid;
 
-use crate::vehicle::{DrivingLicense, VehicleAvailability, VehicleType};
+use crate::{
+    capacity::CapacityKind,
+    vehicle::{DrivingLicense, VehicleAvailability, VehicleType},
+};
 
 /// Raw DB-row mapping used exclusively for aggregate rehydration.
 #[doc(hidden)]
@@ -12,7 +17,7 @@ pub struct VehicleSnapshot {
     pub archived_at: Option<DateTime<Utc>>,
     pub number_plate: String,
     pub description: Option<String>,
-    pub water_capacity: f64,
+    pub capacities: BTreeMap<CapacityKind, f64>,
     pub availability: VehicleAvailability,
     pub vehicle_type: VehicleType,
     pub model: String,

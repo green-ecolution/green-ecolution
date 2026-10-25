@@ -15,6 +15,7 @@ pub mod info;
 pub mod module;
 pub mod organization;
 pub mod pagination;
+pub mod plan;
 pub mod plugin;
 pub mod region;
 pub mod role;
@@ -22,10 +23,10 @@ pub mod routing;
 pub mod scope;
 pub mod sensor;
 pub mod settings;
+pub mod target_comment;
 pub mod tree;
 pub mod user;
 pub mod vehicle;
-pub mod watering_plan;
 
 pub fn public_router() -> OpenApiRouter<Arc<AppState>> {
     OpenApiRouter::new()
@@ -42,15 +43,16 @@ pub fn protected_router() -> OpenApiRouter<Arc<AppState>> {
         .merge(info::protected_routes())
         .merge(module::routes())
         .merge(organization::routes())
+        .merge(plan::routes())
         .merge(plugin::routes())
         .merge(role::routes())
         .merge(routing::routes())
         .merge(sensor::routes())
         .merge(settings::routes())
+        .merge(target_comment::routes())
         .merge(tree::routes())
         .merge(user::protected_routes())
         .merge(vehicle::routes())
-        .merge(watering_plan::routes())
 }
 
 /// The core's own routes relative to `/api/v1`, for checking module routes

@@ -10,7 +10,7 @@ use std::sync::Arc;
 
 use domain::{
     Id, RepositoryError,
-    authorization::{AccessContext, Action, EffectivePermissions, Permission, Resource},
+    authorization::{AccessContext, Action, EffectivePermissions, Permission},
     events::DomainEvent,
     plugin::{Plugin, PluginReader, PluginWriter, TreeRefPage},
     shared::{
@@ -127,8 +127,14 @@ impl PluginIngestService {
     ) -> Result<Vec<IngestResult>, ServiceError> {
         let ctx = self.context_for(plugin).await?;
         let org = plugin.organization_id();
-        let can_create = ctx.allows_in(Permission::new(Resource::Tree, Action::Create), org);
-        let can_update = ctx.allows_in(Permission::new(Resource::Tree, Action::Update), org);
+        let can_create = ctx.allows_in(
+            Permission::new(crate::irrigation::resources::TREE, Action::Create),
+            org,
+        );
+        let can_update = ctx.allows_in(
+            Permission::new(crate::irrigation::resources::TREE, Action::Update),
+            org,
+        );
         if !can_create || !can_update {
             return Err(AuthError::Forbidden.into());
         }
@@ -197,7 +203,6 @@ impl PluginIngestService {
                     coordinate,
                     description: item.description,
                     cluster_id: None,
-                    sensor_id: None,
                     provenance,
                     organization_id: plugin.organization_id(),
                 };
@@ -239,7 +244,6 @@ impl PluginIngestService {
                     .publish(DomainEvent::TreeCreated {
                         tree_id: tree.id,
                         cluster_id: tree.cluster_id(),
-                        sensor_id: tree.sensor_id().cloned(),
                     })
                     .await;
                 Ok((IngestStatus::Created, tree.id))
@@ -252,7 +256,7 @@ impl PluginIngestService {
                 // via `POST /trees/{id}/organization`), and the reference in
                 // `plugin_tree_refs` survives that move untouched.
                 if !ctx.allows_in(
-                    Permission::new(Resource::Tree, Action::Update),
+                    Permission::new(crate::irrigation::resources::TREE, Action::Update),
                     tree.organization_id(),
                 ) {
                     return Err(AuthError::Forbidden.into());
@@ -304,7 +308,7 @@ impl PluginIngestService {
         // can be transferred after the plugin created it.
         let tree = self.tree_reader.by_id(tree_ref.tree_id).await?;
         if !ctx.allows_in(
-            Permission::new(Resource::Tree, Action::Delete),
+            Permission::new(crate::irrigation::resources::TREE, Action::Delete),
             tree.organization_id(),
         ) {
             return Err(AuthError::Forbidden.into());
@@ -449,6 +453,12 @@ mod tests {
         ) -> Result<Option<domain::tree::TreeView>, RepositoryError> {
             unimplemented!()
         }
+        async fn sensor_ids(
+            &self,
+            _trees: &[Id<Tree>],
+        ) -> Result<std::collections::HashMap<Id<Tree>, SensorId>, RepositoryError> {
+            unimplemented!()
+        }
         async fn view_search(
             &self,
             _query: domain::tree::TreeSearchQuery,
@@ -500,7 +510,6 @@ mod tests {
                 description: draft.description,
                 last_watered: None,
                 cluster_id: draft.cluster_id.map(|c| c.value()),
-                sensor_id: draft.sensor_id.map(|s| s.as_str().to_string()),
                 watering_status: WateringStatus::Unknown,
                 provider: draft.provenance.provider().map(|p| p.as_str().to_string()),
                 additional_info: draft.provenance.additional_info().cloned(),
@@ -780,28 +789,31 @@ mod tests {
     }
 
     fn plugin_fixture(permissions: BTreeSet<Permission>) -> Plugin {
-        Plugin::reconstitute(PluginSnapshot {
-            id: Uuid::now_v7(),
-            slug: "kataster".into(),
-            name: "Kataster".into(),
-            description: None,
-            frontend_mode: "none".into(),
-            frontend_target: None,
-            organization_id: Uuid::now_v7(),
-            permissions: permissions.iter().map(|p| p.to_string()).collect(),
-            required_permissions: Vec::new(),
-            device_capabilities: Vec::new(),
-            enabled: true,
-            key_hash: None,
-            last_seen_at: None,
-        })
+        Plugin::reconstitute(
+            PluginSnapshot {
+                id: Uuid::now_v7(),
+                slug: "kataster".into(),
+                name: "Kataster".into(),
+                description: None,
+                frontend_mode: "none".into(),
+                frontend_target: None,
+                organization_id: Uuid::now_v7(),
+                permissions: permissions.iter().map(|p| p.to_string()).collect(),
+                required_permissions: Vec::new(),
+                device_capabilities: Vec::new(),
+                enabled: true,
+                key_hash: None,
+                last_seen_at: None,
+            },
+            &crate::irrigation::test_catalog(),
+        )
     }
 
     fn full_permissions() -> BTreeSet<Permission> {
         BTreeSet::from([
-            Permission::new(Resource::Tree, Action::Create),
-            Permission::new(Resource::Tree, Action::Update),
-            Permission::new(Resource::Tree, Action::Delete),
+            Permission::new(crate::irrigation::resources::TREE, Action::Create),
+            Permission::new(crate::irrigation::resources::TREE, Action::Update),
+            Permission::new(crate::irrigation::resources::TREE, Action::Delete),
         ])
     }
 
@@ -860,7 +872,7 @@ mod tests {
     async fn missing_permission_is_forbidden() {
         let (svc, _tree_repo) = service_with(FakePluginRepo::new());
         let plugin = plugin_fixture(BTreeSet::from([Permission::new(
-            Resource::Tree,
+            crate::irrigation::resources::TREE,
             Action::Read,
         )]));
 

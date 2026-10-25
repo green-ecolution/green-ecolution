@@ -29,7 +29,7 @@ async fn insert_tbz_org(app: &crate::helpers::TestApp) {
 }
 
 fn start_point_payload(name: &str, lat: f64, lon: f64, org: Option<&str>) -> serde_json::Value {
-    let mut p = json!({ "name": name, "lat": lat, "lon": lon, "watering_point": false });
+    let mut p = json!({ "name": name, "lat": lat, "lon": lon, "replenishes": [] });
     if let Some(org) = org {
         p["organization_id"] = json!(org);
     }

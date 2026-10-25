@@ -54,6 +54,13 @@ export interface VehicleCreateRequest {
      */
     availability: VehicleAvailability;
     /**
+     * Capacity in liters per kind. A kind that is absent means the vehicle
+     * does not offer it.
+     * @type {{ [key: string]: number; }}
+     * @memberof VehicleCreateRequest
+     */
+    capacities: { [key: string]: number; };
+    /**
      * Human-readable description of the vehicle.
      * @type {string}
      * @memberof VehicleCreateRequest
@@ -109,12 +116,6 @@ export interface VehicleCreateRequest {
      */
     type: VehicleType;
     /**
-     * Water tank capacity in liters.
-     * @type {number}
-     * @memberof VehicleCreateRequest
-     */
-    waterCapacity: number;
-    /**
      * Vehicle weight in kilograms.
      * @type {number}
      * @memberof VehicleCreateRequest
@@ -135,13 +136,13 @@ export interface VehicleCreateRequest {
  */
 export function instanceOfVehicleCreateRequest(value: object): value is VehicleCreateRequest {
     if (!('availability' in value) || value['availability'] === undefined) return false;
+    if (!('capacities' in value) || value['capacities'] === undefined) return false;
     if (!('drivingLicense' in value) || value['drivingLicense'] === undefined) return false;
     if (!('height' in value) || value['height'] === undefined) return false;
     if (!('length' in value) || value['length'] === undefined) return false;
     if (!('model' in value) || value['model'] === undefined) return false;
     if (!('numberPlate' in value) || value['numberPlate'] === undefined) return false;
     if (!('type' in value) || value['type'] === undefined) return false;
-    if (!('waterCapacity' in value) || value['waterCapacity'] === undefined) return false;
     if (!('weight' in value) || value['weight'] === undefined) return false;
     if (!('width' in value) || value['width'] === undefined) return false;
     return true;
@@ -159,6 +160,7 @@ export function VehicleCreateRequestFromJSONTyped(json: any, ignoreDiscriminator
         
         'additionalInformation': json['additional_information'] == null ? undefined : json['additional_information'],
         'availability': VehicleAvailabilityFromJSON(json['availability']),
+        'capacities': json['capacities'],
         'description': json['description'] == null ? undefined : json['description'],
         'drivingLicense': DrivingLicenseFromJSON(json['driving_license']),
         'height': json['height'],
@@ -168,7 +170,6 @@ export function VehicleCreateRequestFromJSONTyped(json: any, ignoreDiscriminator
         'organizationId': json['organization_id'] == null ? undefined : json['organization_id'],
         'provider': json['provider'] == null ? undefined : json['provider'],
         'type': VehicleTypeFromJSON(json['type']),
-        'waterCapacity': json['water_capacity'],
         'weight': json['weight'],
         'width': json['width'],
     };
@@ -187,6 +188,7 @@ export function VehicleCreateRequestToJSONTyped(value?: VehicleCreateRequest | n
         
         'additional_information': value['additionalInformation'],
         'availability': VehicleAvailabilityToJSON(value['availability']),
+        'capacities': value['capacities'],
         'description': value['description'],
         'driving_license': DrivingLicenseToJSON(value['drivingLicense']),
         'height': value['height'],
@@ -196,7 +198,6 @@ export function VehicleCreateRequestToJSONTyped(value?: VehicleCreateRequest | n
         'organization_id': value['organizationId'],
         'provider': value['provider'],
         'type': VehicleTypeToJSON(value['type']),
-        'water_capacity': value['waterCapacity'],
         'weight': value['weight'],
         'width': value['width'],
     };

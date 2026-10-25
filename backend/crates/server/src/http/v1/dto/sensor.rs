@@ -13,6 +13,7 @@ use domain::{
         view::{LorawanInfo, SensorModelSummary},
     },
     shared::provenance::{Provenance, ProviderId},
+    target::TargetRef,
 };
 
 use crate::service::{
@@ -244,26 +245,20 @@ pub struct SensorResponse {
     /// Sensor model summary (id + display name).
     pub model: SensorModelSummaryResponse,
 
-    /// WGS-84 coordinate derived from the linked tree (if any).
+    /// WGS-84 position of the target, resolved by its module.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(nullable)]
-    pub coordinate: Option<SensorCoordinate>,
+    pub location: Option<SensorCoordinate>,
 
-    /// Database id of the linked tree, if the sensor is currently attached.
+    /// The object the sensor is attached to, if any.
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000", nullable)]
-    pub linked_tree_id: Option<uuid::Uuid>,
+    #[schema(nullable)]
+    pub target: Option<TargetRefDto>,
 
-    /// Cluster of the linked tree. Absent when the sensor has no tree or that
-    /// tree belongs to no cluster.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000", nullable)]
-    pub linked_cluster_id: Option<uuid::Uuid>,
-
-    /// Display name of [`Self::linked_cluster_id`].
+    /// Display name of [`Self::target`], resolved by its module.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(example = "Bahnhofstraße Nord", nullable)]
-    pub linked_cluster_name: Option<String>,
+    pub target_label: Option<String>,
 
     /// LoRaWAN credentials (omits `app_key`).
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -300,13 +295,12 @@ impl From<&SensorView> for SensorResponse {
             implausible_recent: value.implausible_recent,
             sensor_type: value.sensor_type.into(),
             model: SensorModelSummaryResponse::from(&value.model),
-            coordinate: value.coordinate.map(|c| SensorCoordinate {
+            location: value.location.map(|c| SensorCoordinate {
                 latitude: c.latitude(),
                 longitude: c.longitude(),
             }),
-            linked_tree_id: value.linked_tree_id,
-            linked_cluster_id: value.linked_cluster_id,
-            linked_cluster_name: value.linked_cluster_name.clone(),
+            target: value.target.as_ref().map(TargetRefDto::from),
+            target_label: value.target_label.clone(),
             lorawan: value.lorawan.as_ref().map(LorawanInfoResponse::from),
             latest_data: value.latest_reading.as_ref().map(SensorDataResponse::from),
             provider: value.provider.as_ref().map(|p| p.as_str().to_owned()),
@@ -422,20 +416,47 @@ fn hex_field(label: &'static str, s: &str, len: usize) -> Result<(), ServiceErro
     Ok(())
 }
 
-/// Request body for `POST /sensors/{sensor_id}/activate` - binds a prepared
-/// sensor to a tree.
-#[derive(Debug, Deserialize, utoipa::ToSchema)]
-pub struct ActivateSensorRequest {
+/// An object of a module a sensor can be attached to, e.g. a tree.
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
+pub struct TargetRefDto {
+    #[schema(example = "irrigation")]
+    pub module: String,
+    #[schema(example = "tree")]
+    pub kind: String,
     #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000")]
-    pub tree_id: uuid::Uuid,
+    pub id: uuid::Uuid,
 }
 
-/// Request body for `PUT /sensors/{sensor_id}/tree` - links an activated
-/// sensor to (or moves it to) the given tree.
+impl TryFrom<TargetRefDto> for TargetRef {
+    type Error = ServiceError;
+
+    fn try_from(dto: TargetRefDto) -> Result<Self, Self::Error> {
+        Ok(TargetRef::new(&dto.module, &dto.kind, dto.id)?)
+    }
+}
+
+impl From<&TargetRef> for TargetRefDto {
+    fn from(target: &TargetRef) -> Self {
+        Self {
+            module: target.module.to_string(),
+            kind: target.kind.to_string(),
+            id: target.id,
+        }
+    }
+}
+
+/// Request body for `POST /sensors/{sensor_id}/activate` - activates a
+/// prepared sensor and attaches it to the target.
 #[derive(Debug, Deserialize, utoipa::ToSchema)]
-pub struct SetSensorTreeRequest {
-    #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000")]
-    pub tree_id: uuid::Uuid,
+pub struct ActivateSensorRequest {
+    pub target: TargetRefDto,
+}
+
+/// Request body for `PUT /sensors/{sensor_id}/target` - moves an activated
+/// sensor to the given target.
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
+pub struct SetSensorTargetRequest {
+    pub target: TargetRefDto,
 }
 
 /// Physical quantity reported by a sensor ability.
@@ -448,6 +469,7 @@ pub enum SensorAbilityUnitDto {
     Ohm,
     Celsius,
     Volt,
+    Centimeter,
 }
 
 impl From<SensorAbilityUnit> for SensorAbilityUnitDto {
@@ -458,6 +480,7 @@ impl From<SensorAbilityUnit> for SensorAbilityUnitDto {
             SensorAbilityUnit::Ohm => Self::Ohm,
             SensorAbilityUnit::Celsius => Self::Celsius,
             SensorAbilityUnit::Volt => Self::Volt,
+            SensorAbilityUnit::Centimeter => Self::Centimeter,
         }
     }
 }
@@ -701,8 +724,7 @@ pub struct SensorListParams {
     #[param(default = 25, minimum = 1, maximum = 100, example = 25)]
     #[serde(default = "crate::http::v1::pagination::default_per_page")]
     pub per_page: u64,
-    /// Case-insensitive match on sensor id, model name or the name of the
-    /// linked tree's cluster.
+    /// Case-insensitive match on sensor id or model name.
     #[param(example = "eui-a81758")]
     pub q: Option<String>,
     /// Repeatable: `?status=online&status=offline`.
@@ -714,12 +736,16 @@ pub struct SensorListParams {
     /// Repeatable: `?data_health=suspect`.
     #[serde(default)]
     pub data_health: Vec<DataHealth>,
+    /// Whether the sensor is attached to a target.
     #[param(nullable)]
     #[serde(default)]
-    pub has_tree: Option<bool>,
-    /// Cluster of the linked tree. Repeatable: `?cluster_id=<uuid>&cluster_id=<uuid>`.
+    pub attached: Option<bool>,
+    /// Only sensors attached to a target of this module.
+    #[param(nullable, example = "irrigation")]
+    pub module: Option<String>,
+    /// Sensor ids. Repeatable: `?id=<eui>&id=<eui>`.
     #[serde(default)]
-    pub cluster_id: Vec<uuid::Uuid>,
+    pub id: Vec<String>,
     #[param(nullable, inline)]
     pub sort: Option<SensorSortParam>,
     #[param(nullable, inline)]

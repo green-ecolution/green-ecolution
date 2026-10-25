@@ -4,18 +4,18 @@ import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 import { Toaster } from '@green-ecolution/ui'
-import { WateringPlanStatus } from '@green-ecolution/backend-client'
+import { PlanStatus as WateringPlanStatus } from '@green-ecolution/backend-client'
 import CancelPlanDialog from './CancelPlanDialog'
 import type { WateringPlanInList } from '@/api/backendApi'
 
-const updateWateringPlan = vi.fn<(...args: unknown[]) => Promise<unknown>>()
+const updatePlan = vi.fn<(...args: unknown[]) => Promise<unknown>>()
 vi.mock('@/api/backendApi', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/api/backendApi')>()
   return {
     ...actual,
-    wateringPlanApi: {
-      ...actual.wateringPlanApi,
-      updateWateringPlan: (...args: unknown[]) => updateWateringPlan(...args),
+    planApi: {
+      ...actual.planApi,
+      updatePlan: (...args: unknown[]) => updatePlan(...args),
     },
   }
 })
@@ -38,6 +38,7 @@ const plan: WateringPlanInList = {
   transporter: { id: 'v-1', numberPlate: 'FL-GE-A01' } as WateringPlanInList['transporter'],
   transporterTankUsed: true,
   treeclusters: [],
+  stopIds: [],
   userIds: [],
 }
 
@@ -58,7 +59,7 @@ describe('CancelPlanDialog', () => {
 
   it('requires a note and submits the cancellation', async () => {
     const user = userEvent.setup()
-    updateWateringPlan.mockResolvedValueOnce({})
+    updatePlan.mockResolvedValueOnce({})
     const onClose = vi.fn()
     render(<CancelPlanDialog plan={plan} onClose={onClose} />, { wrapper: createWrapper() })
 
@@ -66,12 +67,12 @@ describe('CancelPlanDialog', () => {
     await user.type(screen.getByLabelText(/grund des abbruchs/i), 'Regen vorhergesagt')
     await user.click(screen.getByRole('button', { name: /einsatzplan abbrechen/i }))
 
-    await waitFor(() => expect(updateWateringPlan).toHaveBeenCalledTimes(1))
-    const request = updateWateringPlan.mock.calls[0][0] as {
-      wateringPlanUpdateRequest: { status: string; cancellationNote: string }
+    await waitFor(() => expect(updatePlan).toHaveBeenCalledTimes(1))
+    const request = updatePlan.mock.calls[0][0] as {
+      planUpdateRequest: { status: string; cancellationNote: string }
     }
-    expect(request.wateringPlanUpdateRequest.status).toBe(WateringPlanStatus.Canceled)
-    expect(request.wateringPlanUpdateRequest.cancellationNote).toBe('Regen vorhergesagt')
+    expect(request.planUpdateRequest.status).toBe(WateringPlanStatus.Canceled)
+    expect(request.planUpdateRequest.cancellationNote).toBe('Regen vorhergesagt')
     await waitFor(() => expect(onClose).toHaveBeenCalled())
   })
 

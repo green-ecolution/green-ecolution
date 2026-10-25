@@ -1,7 +1,8 @@
 import { useCallback, useState } from 'react'
 import FormPageHeader from '../general/FormPageHeader'
-import { WateringPlanStatus } from '@green-ecolution/backend-client'
-import type { WateringPlan, WateringPlanUpdate } from '@/api/backendApi'
+import { PlanStatus as WateringPlanStatus } from '@green-ecolution/backend-client'
+import type { PlanResponse, WateringPlan, WateringPlanUpdate } from '@/api/backendApi'
+import { toPlanUpdateRequest } from '@/api/irrigationPlans'
 import { wateringPlanQueries } from '@/api/queries'
 import { format } from 'date-fns'
 import { Droplet, MoveRight } from 'lucide-react'
@@ -21,7 +22,7 @@ import { zodResolver } from '@/lib/zodResolver'
 import { SubmitHandler, useFieldArray, useForm } from 'react-hook-form'
 import { useMutation, useSuspenseQuery } from '@tanstack/react-query'
 import { PLAN_STATUS_AGGREGATES, useInvalidateAggregates } from '@/lib/queryInvalidation'
-import { wateringPlanApi } from '@/api/backendApi'
+import { planApi } from '@/api/backendApi'
 import { useNavigate } from '@tanstack/react-router'
 import createToast from '@/hooks/createToast'
 import { useTranslation } from 'react-i18next'
@@ -47,16 +48,16 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
   const { mutate, isError, error } = useMutation({
     mutationFn: async (wateringPlan: WateringPlanUpdate) => {
       try {
-        return await wateringPlanApi.updateWateringPlan({
-          wateringPlanId: wateringPlanId,
-          wateringPlanUpdateRequest: wateringPlan,
+        return await planApi.updatePlan({
+          planId: wateringPlanId,
+          planUpdateRequest: toPlanUpdateRequest(wateringPlan),
         })
       } catch (error) {
         throw await toApiError(error)
       }
     },
 
-    onSuccess: (data: WateringPlan) => {
+    onSuccess: (data: PlanResponse) => {
       invalidate(PLAN_STATUS_AGGREGATES).catch((error) =>
         console.error('Invalidation after watering plan status update failed:', error),
       )
@@ -92,7 +93,7 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
           status: WateringPlanStatus.Finished,
           evaluation: data.evaluation,
           transporterId: loadedData.transporter.id,
-          treeClusterIds: loadedData.treeclusters.map((cluster) => cluster.id),
+          treeClusterIds: loadedData.stopIds,
         })
       }
 
@@ -102,7 +103,7 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
           status: WateringPlanStatus.Canceled,
           cancellationNote: data.cancellationNote,
           transporterId: loadedData.transporter.id,
-          treeClusterIds: loadedData.treeclusters.map((cluster) => cluster.id),
+          treeClusterIds: loadedData.stopIds,
         })
       }
 
@@ -112,7 +113,7 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
           status: WateringPlanStatus.NotCompleted,
           cancellationNote: data.cancellationNote,
           transporterId: loadedData.transporter.id,
-          treeClusterIds: loadedData.treeclusters.map((cluster) => cluster.id),
+          treeClusterIds: loadedData.stopIds,
         })
       }
 
@@ -121,7 +122,7 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
           ...loadedData,
           status,
           transporterId: loadedData.transporter.id,
-          treeClusterIds: loadedData.treeclusters.map((cluster) => cluster.id),
+          treeClusterIds: loadedData.stopIds,
         })
       }
       switch (status) {

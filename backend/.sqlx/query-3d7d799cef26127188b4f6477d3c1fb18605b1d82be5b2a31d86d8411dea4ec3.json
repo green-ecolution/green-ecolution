@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT r.name AS \"name!\", COUNT(DISTINCT ops.plan_id)::int AS \"watering_plan_count!: i32\"\n            FROM regions r\n            INNER JOIN tree_clusters tc ON r.id = tc.region_id\n            INNER JOIN operation_plan_stops ops ON tc.id = ops.stop_id\n            INNER JOIN operation_plans op ON op.id = ops.plan_id\n            WHERE op.module_key = 'irrigation'\n              AND ($1::uuid[] IS NULL OR tc.organization_id = ANY($1))\n            GROUP BY r.name\n            ORDER BY COUNT(DISTINCT ops.plan_id) DESC",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "name!",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 1,
+        "name": "watering_plan_count!: i32",
+        "type_info": "Int4"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "UuidArray"
+      ]
+    },
+    "nullable": [
+      false,
+      null
+    ]
+  },
+  "hash": "3d7d799cef26127188b4f6477d3c1fb18605b1d82be5b2a31d86d8411dea4ec3"
+}

@@ -1,3 +1,4 @@
+use domain::capacity::Liters;
 use domain::cluster::{ClusterAddress, ClusterName};
 use domain::region::RegionName;
 use domain::sensor::SensorId;
@@ -8,7 +9,6 @@ use domain::shared::email::Email;
 use domain::shared::error::ValidationError;
 use domain::shared::geo::BoundingBox;
 use domain::shared::phone_number::PhoneNumber;
-use domain::shared::water_capacity::WaterCapacity;
 use domain::tree::{MAX_PLANTING_YEAR, MIN_PLANTING_YEAR, PlantingYear, Species, TreeNumber};
 use domain::user::Username;
 use domain::vehicle::{NumberPlate, VehicleDimension, VehicleModel};
@@ -137,7 +137,7 @@ pub fn validate_vehicle_dimension(
 
 #[wasm_bindgen(js_name = validateWaterCapacity)]
 pub fn validate_water_capacity(liters: f64) -> Result<JsValue, JsError> {
-    finish(WaterCapacity::new(liters), "waterCapacity")
+    finish(Liters::new(liters), "waterCapacity")
 }
 
 #[wasm_bindgen(js_name = validateDistance)]

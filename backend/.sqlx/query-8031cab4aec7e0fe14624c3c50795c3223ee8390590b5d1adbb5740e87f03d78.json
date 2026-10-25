@@ -1,0 +1,64 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT id, subject_type, subject_id, target_module, target_kind, author_id, body, edited_at\n               FROM comments WHERE id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "subject_type",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "subject_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 3,
+        "name": "target_module",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "target_kind",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "author_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 6,
+        "name": "body",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 7,
+        "name": "edited_at",
+        "type_info": "Timestamp"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      true,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "8031cab4aec7e0fe14624c3c50795c3223ee8390590b5d1adbb5740e87f03d78"
+}

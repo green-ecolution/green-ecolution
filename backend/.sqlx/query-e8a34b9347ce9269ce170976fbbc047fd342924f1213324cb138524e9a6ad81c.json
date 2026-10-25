@@ -1,0 +1,73 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO vehicles (id, number_plate, description, type, availability,\n                                     model, driving_license, height, length, width, weight,\n                                     provider, additional_informations, organization_id)\n            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)\n            RETURNING archived_at AS \"archived_at: DateTime<chrono::Utc>\",\n                      additional_informations AS \"additional_info: Value\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "archived_at: DateTime<chrono::Utc>",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 1,
+        "name": "additional_info: Value",
+        "type_info": "Jsonb"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Text",
+        {
+          "Custom": {
+            "name": "vehicle_type",
+            "kind": {
+              "Enum": [
+                "transporter",
+                "trailer"
+              ]
+            }
+          }
+        },
+        {
+          "Custom": {
+            "name": "vehicle_availability",
+            "kind": {
+              "Enum": [
+                "available",
+                "not_available"
+              ]
+            }
+          }
+        },
+        "Text",
+        {
+          "Custom": {
+            "name": "driving_license",
+            "kind": {
+              "Enum": [
+                "B",
+                "BE",
+                "C",
+                "CE"
+              ]
+            }
+          }
+        },
+        "Float8",
+        "Float8",
+        "Float8",
+        "Float8",
+        "Text",
+        "Jsonb",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      true,
+      true
+    ]
+  },
+  "hash": "e8a34b9347ce9269ce170976fbbc047fd342924f1213324cb138524e9a6ad81c"
+}

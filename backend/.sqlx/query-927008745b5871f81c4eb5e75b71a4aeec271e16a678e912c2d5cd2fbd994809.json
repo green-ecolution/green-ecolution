@@ -1,0 +1,149 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT op.id, op.module_key, op.updated_at, op.date, op.description, op.start_point_name,\n                      op.status AS \"status: OperationPlanStatus\",\n                      op.distance, op.total_demand, op.cancellation_note,\n                      op.refill_count, op.duration,\n                      op.provider, op.additional_informations,\n                      op.organization_id, op.transporter_capacity_used,\n                      (ARRAY_AGG(opv.vehicle_id) FILTER (WHERE opv.role = 'transporter'))[1] AS \"transporter_id: RawId\",\n                      (ARRAY_AGG(opv.vehicle_id) FILTER (WHERE opv.role = 'trailer'))[1] AS \"trailer_id: RawId\",\n                      COALESCE(ARRAY_AGG(DISTINCT ops.stop_id) FILTER (WHERE ops.stop_id IS NOT NULL), ARRAY[]::uuid[]) AS \"stops!: Vec<RawId>\",\n                      COALESCE(ARRAY_AGG(DISTINCT opu.user_id) FILTER (WHERE opu.user_id IS NOT NULL), ARRAY[]::uuid[]) AS \"user_ids!: Vec<RawId>\"\n            FROM operation_plans op\n            LEFT JOIN operation_plan_vehicles opv ON opv.plan_id = op.id\n            LEFT JOIN operation_plan_stops ops ON ops.plan_id = op.id\n            LEFT JOIN operation_plan_users opu ON opu.plan_id = op.id\n            WHERE op.id = $1\n            GROUP BY op.id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "module_key",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "updated_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 3,
+        "name": "date",
+        "type_info": "Date"
+      },
+      {
+        "ordinal": 4,
+        "name": "description",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "start_point_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "status: OperationPlanStatus",
+        "type_info": {
+          "Custom": {
+            "name": "operation_plan_status",
+            "kind": {
+              "Enum": [
+                "planned",
+                "active",
+                "canceled",
+                "finished",
+                "not_completed"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "distance",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 8,
+        "name": "total_demand",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 9,
+        "name": "cancellation_note",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 10,
+        "name": "refill_count",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 11,
+        "name": "duration",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 12,
+        "name": "provider",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 13,
+        "name": "additional_informations",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 14,
+        "name": "organization_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 15,
+        "name": "transporter_capacity_used",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 16,
+        "name": "transporter_id: RawId",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 17,
+        "name": "trailer_id: RawId",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 18,
+        "name": "stops!: Vec<RawId>",
+        "type_info": "UuidArray"
+      },
+      {
+        "ordinal": 19,
+        "name": "user_ids!: Vec<RawId>",
+        "type_info": "UuidArray"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      true,
+      true,
+      false,
+      false,
+      false,
+      true,
+      true,
+      false,
+      false,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "927008745b5871f81c4eb5e75b71a4aeec271e16a678e912c2d5cd2fbd994809"
+}

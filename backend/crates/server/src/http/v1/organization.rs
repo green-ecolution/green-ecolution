@@ -21,7 +21,7 @@ use crate::{
 };
 use domain::{
     Id,
-    authorization::{Action, Permission, Resource},
+    authorization::{Action, Permission, ResourceKey},
     organization::{OrganizationDraft, OrganizationName},
     shared::address::Address,
 };
@@ -53,7 +53,7 @@ pub async fn list_organizations(
     State(state): State<Arc<AppState>>,
     user: AuthUserExtractor,
 ) -> Result<Json<Vec<OrganizationResponse>>, ServiceError> {
-    let read = Permission::new(Resource::Organization, Action::Read);
+    let read = Permission::new(ResourceKey::ORGANIZATION, Action::Read);
     let scope = resolve_target_org(&state, user.id, None).await?;
     state
         .authorization_service
@@ -99,7 +99,7 @@ pub async fn get_organization(
         .authorization_service
         .require(
             user.id,
-            Permission::new(Resource::Organization, Action::Read),
+            Permission::new(ResourceKey::ORGANIZATION, Action::Read),
             id,
         )
         .await?;
@@ -133,7 +133,7 @@ pub async fn create_organization(
         .authorization_service
         .require(
             user.id,
-            Permission::new(Resource::Organization, Action::Create),
+            Permission::new(ResourceKey::ORGANIZATION, Action::Create),
             parent,
         )
         .await?;
@@ -174,7 +174,7 @@ pub async fn update_organization(
         .authorization_service
         .require(
             user.id,
-            Permission::new(Resource::Organization, Action::Update),
+            Permission::new(ResourceKey::ORGANIZATION, Action::Update),
             id,
         )
         .await?;
@@ -215,7 +215,7 @@ pub async fn delete_organization(
         .authorization_service
         .require(
             user.id,
-            Permission::new(Resource::Organization, Action::Delete),
+            Permission::new(ResourceKey::ORGANIZATION, Action::Delete),
             id,
         )
         .await?;

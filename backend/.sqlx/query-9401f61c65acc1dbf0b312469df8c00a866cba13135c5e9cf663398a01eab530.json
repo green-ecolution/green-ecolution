@@ -1,0 +1,34 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT setting_key AS \"key!\", previous_value, new_value\n           FROM organization_settings_history\n           WHERE organization_id = $1\n           ORDER BY changed_at ASC, id ASC",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "key!",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "previous_value",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 2,
+        "name": "new_value",
+        "type_info": "Jsonb"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "9401f61c65acc1dbf0b312469df8c00a866cba13135c5e9cf663398a01eab530"
+}

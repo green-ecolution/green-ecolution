@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { tankCapacity } from './tankCapacity'
 
-const transporter = { waterCapacity: 1000 }
-const trailer = { waterCapacity: 500 }
+const transporter = { capacities: { water: 1000 } }
+const trailer = { capacities: { water: 500 } }
 
 describe('tankCapacity', () => {
   it('adds the trailer to the transporter tank', () => {
@@ -11,6 +11,10 @@ describe('tankCapacity', () => {
 
   it('leaves out an unused transporter tank', () => {
     expect(tankCapacity(transporter, trailer, false)).toBe(500)
+  })
+
+  it('counts a vehicle without a water tank as empty', () => {
+    expect(tankCapacity({ capacities: { cargo_volume: 6000 } }, trailer, true)).toBe(500)
   })
 
   it('is the transporter tank without a trailer', () => {

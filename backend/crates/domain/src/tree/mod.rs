@@ -1,11 +1,10 @@
 //! Tree aggregate — individual street / park trees managed by the platform.
 //!
-//! The aggregate ([`Tree`]) keeps `cluster_id`, `sensor_id`, and
-//! `watering_status` private because they must only change through the
-//! dedicated methods `move_to_cluster`, `attach_sensor` / `detach_sensor`, and
-//! `record_watering_status`. Direct field mutation would silently bypass
-//! invariants (notably: detaching a sensor resets `watering_status` to
-//! `Unknown`).
+//! The aggregate ([`Tree`]) keeps `cluster_id` and `watering_status` private
+//! because they must only change through the dedicated methods
+//! `move_to_cluster` and `record_watering_status`, which emit the events the
+//! cluster handlers rely on. The sensor measuring a tree is not part of the
+//! aggregate: the sensor knows its target.
 //!
 //! [`TreeView`] adds audit fields for HTTP responses. [`TreeViewWithDistance`]
 //! is returned by proximity searches.
@@ -28,7 +27,7 @@ use crate::{
     cluster::TreeCluster,
     events::DomainEvent,
     organization::Organization,
-    sensor::{SensorId, data::Watermark},
+    sensor::data::Watermark,
     shared::{
         coordinates::Coordinate,
         geo::BoundingBox,
@@ -70,7 +69,6 @@ pub struct Tree {
     pub last_watered: Option<DateTime<Utc>>,
 
     cluster_id: Option<Id<TreeCluster>>,
-    sensor_id: Option<SensorId>,
     watering_status: WateringStatus,
     provenance: Provenance,
     organization_id: Id<Organization>,
@@ -85,7 +83,6 @@ pub struct TreeDraft {
     pub coordinate: Coordinate,
     pub description: Option<String>,
     pub cluster_id: Option<Id<TreeCluster>>,
-    pub sensor_id: Option<SensorId>,
     pub provenance: Provenance,
     pub organization_id: Id<Organization>,
 }
@@ -102,7 +99,6 @@ pub struct TreeSearchQuery {
     /// which single-cluster callers use.
     pub cluster_ids: Vec<Id<TreeCluster>>,
     pub has_sensor: Option<bool>,
-    pub sensor_id: Option<SensorId>,
     pub provider: Option<ProviderId>,
     pub bbox: Option<BoundingBox>,
     /// Case-insensitive text filter on tree number or species.
@@ -132,7 +128,6 @@ impl Tree {
             description: snap.description,
             last_watered: snap.last_watered,
             cluster_id: snap.cluster_id.map(Id::new),
-            sensor_id: snap.sensor_id.map(SensorId::reconstitute),
             watering_status: snap.watering_status,
             provenance: Provenance::reconstitute(snap.provider, snap.additional_info),
             organization_id: Id::new(snap.organization_id),
@@ -147,16 +142,9 @@ impl Tree {
         self.organization_id
     }
 
-    pub fn sensor_id(&self) -> Option<&SensorId> {
-        self.sensor_id.as_ref()
-    }
-
-    /// True if a sensor is currently attached to the tree. Used by
-    /// `TreeService::delete` to populate `TreeDeleted { had_sensor }` so the
-    /// cluster status aggregator can skip recalculation when the deleted tree
-    /// did not contribute to it.
-    pub fn had_sensor(&self) -> bool {
-        self.sensor_id.is_some()
+    /// The tree is not in the ground yet, so nothing can measure it.
+    pub fn planting_year_in_future(&self, today: DateTime<Utc>) -> bool {
+        self.planting_year.is_future(today)
     }
 
     pub fn watering_status(&self) -> WateringStatus {
@@ -167,10 +155,9 @@ impl Tree {
         &self.provenance
     }
 
-    /// Replaces all freely editable fields. `cluster_id` and `sensor_id` are
-    /// not part of this update because they have their own
-    /// transition-emitting methods (`move_to_cluster`, `attach_sensor`,
-    /// `detach_sensor`). Only a `coordinate` change emits an event:
+    /// Replaces all freely editable fields. `cluster_id` is not part of this
+    /// update because it has its own transition-emitting method
+    /// (`move_to_cluster`). Only a `coordinate` change emits an event:
     /// `TreeCoordinateChanged` is consumed by the cluster recalc handler to
     /// update centroid and region. The other fields (species, tree_number,
     /// planting_year, description, provenance) have no subscribers, so they
@@ -213,53 +200,9 @@ impl Tree {
         }]
     }
 
-    pub fn attach_sensor(
-        &mut self,
-        sensor: SensorId,
-        today: DateTime<Utc>,
-    ) -> Result<Vec<DomainEvent>, TreeError> {
-        if self.planting_year.is_future(today) {
-            return Err(TreeError::NotYetPlanted);
-        }
-        if self.sensor_id.as_ref() == Some(&sensor) {
-            return Ok(vec![]);
-        }
-        let mut events = Vec::new();
-        if let Some(old) = self.sensor_id.take() {
-            events.push(DomainEvent::TreeSensorDetached {
-                tree_id: self.id,
-                cluster_id: self.cluster_id,
-                sensor_id: old,
-            });
-        }
-        self.sensor_id = Some(sensor.clone());
-        events.push(DomainEvent::TreeSensorAttached {
-            tree_id: self.id,
-            cluster_id: self.cluster_id,
-            sensor_id: sensor,
-        });
-        Ok(events)
-    }
-
-    /// Detaches the sensor and resets `watering_status` to
-    /// [`WateringStatus::Unknown`].
-    ///
-    /// Once the sensor link is gone there is no data source to derive a status
-    /// from, so the previous value is no longer meaningful. No
-    /// `TreeWateringStatusChanged` event is emitted: the cluster aggregator
-    /// already excludes sensorless trees from its average, so the state reset
-    /// has no externally visible effect that `TreeSensorDetached` does not
-    /// already cover.
-    pub fn detach_sensor(&mut self) -> Vec<DomainEvent> {
-        let Some(sensor_id) = self.sensor_id.take() else {
-            return vec![];
-        };
-        self.watering_status = WateringStatus::Unknown;
-        vec![DomainEvent::TreeSensorDetached {
-            tree_id: self.id,
-            cluster_id: self.cluster_id,
-            sensor_id,
-        }]
+    /// Without a sensor nothing measures this tree any more.
+    pub fn forget_watering_status(&mut self) -> Vec<DomainEvent> {
+        self.record_watering_status(WateringStatus::Unknown)
     }
 
     pub fn record_watering_status(&mut self, status: WateringStatus) -> Vec<DomainEvent> {
@@ -382,7 +325,6 @@ mod tests {
             description: None,
             last_watered: None,
             cluster_id: None,
-            sensor_id: None,
             watering_status: WateringStatus::Unknown,
             provenance: Provenance::default(),
             organization_id: Id::new_v7(),
@@ -504,56 +446,19 @@ mod tests {
     }
 
     #[test]
-    fn detach_sensor_emits_detached_event_and_resets_status() {
+    fn forget_watering_status_resets_to_unknown() {
         let mut t = fixed_tree();
-        let sensor = SensorId::new("eui-deadbeef").unwrap();
-        let _ = t.attach_sensor(sensor.clone(), jan_first(2026));
         let _ = t.record_watering_status(WateringStatus::Good);
-        let events = t.detach_sensor();
-        assert!(t.sensor_id().is_none());
+        let events = t.forget_watering_status();
         assert_eq!(t.watering_status(), WateringStatus::Unknown);
-        assert_eq!(events.len(), 1);
-        assert!(matches!(events[0], DomainEvent::TreeSensorDetached { .. }));
-    }
-
-    #[test]
-    fn detach_sensor_when_none_is_noop() {
-        let mut t = fixed_tree();
-        let events = t.detach_sensor();
-        assert!(t.sensor_id().is_none());
-        assert!(events.is_empty());
-    }
-
-    #[test]
-    fn attach_sensor_replaces_existing_emits_detach_then_attach() {
-        let mut t = fixed_tree();
-        let s1 = SensorId::new("eui-aaaa").unwrap();
-        let s2 = SensorId::new("eui-bbbb").unwrap();
-        let _ = t.attach_sensor(s1.clone(), jan_first(2026));
-        let events = t.attach_sensor(s2.clone(), jan_first(2026)).unwrap();
-        assert_eq!(t.sensor_id(), Some(&s2));
-        assert_eq!(events.len(), 2);
-        assert!(matches!(events[0], DomainEvent::TreeSensorDetached { .. }));
-        assert!(matches!(events[1], DomainEvent::TreeSensorAttached { .. }));
-    }
-
-    #[test]
-    fn attach_sensor_first_time_emits_only_attach() {
-        let mut t = fixed_tree();
-        let s = SensorId::new("eui-deadbeef").unwrap();
-        let events = t.attach_sensor(s.clone(), jan_first(2026)).unwrap();
-        assert_eq!(t.sensor_id(), Some(&s));
-        assert_eq!(events.len(), 1);
-        assert!(matches!(events[0], DomainEvent::TreeSensorAttached { .. }));
-    }
-
-    #[test]
-    fn attach_sensor_same_id_is_noop() {
-        let mut t = fixed_tree();
-        let s = SensorId::new("eui-deadbeef").unwrap();
-        let _ = t.attach_sensor(s.clone(), jan_first(2026));
-        let events = t.attach_sensor(s, jan_first(2026)).unwrap();
-        assert!(events.is_empty());
+        assert!(matches!(
+            events[0],
+            DomainEvent::TreeWateringStatusChanged {
+                new_status: WateringStatus::Unknown,
+                ..
+            }
+        ));
+        assert!(t.forget_watering_status().is_empty());
     }
 
     #[test]
@@ -577,16 +482,6 @@ mod tests {
         let _ = t.record_watering_status(WateringStatus::Good);
         let events = t.record_watering_status(WateringStatus::Good);
         assert!(events.is_empty());
-    }
-
-    #[test]
-    fn had_sensor_reflects_current_state() {
-        let mut t = fixed_tree();
-        assert!(!t.had_sensor());
-        let _ = t.attach_sensor(SensorId::new("eui-deadbeef").unwrap(), jan_first(2026));
-        assert!(t.had_sensor());
-        let _ = t.detach_sensor();
-        assert!(!t.had_sensor());
     }
 
     #[test]
@@ -838,27 +733,12 @@ mod tests {
     }
 
     #[test]
-    fn attach_sensor_rejects_a_tree_planted_in_the_future() {
-        let mut t = tree_planted_in(2030);
-        let s = SensorId::new("eui-deadbeef").unwrap();
-        assert!(matches!(
-            t.attach_sensor(s, jan_first(2026)),
-            Err(TreeError::NotYetPlanted)
-        ));
-        assert!(t.sensor_id().is_none());
+    fn a_tree_planted_in_the_future_is_not_planted_yet() {
+        assert!(tree_planted_in(2030).planting_year_in_future(jan_first(2026)));
     }
 
     #[test]
-    fn attach_sensor_allows_a_tree_planted_this_year() {
-        let mut t = tree_planted_in(2026);
-        let s = SensorId::new("eui-deadbeef").unwrap();
-        assert_ok!(t.attach_sensor(s, jan_first(2026)));
-    }
-
-    #[test]
-    fn detaching_stays_possible_on_a_tree_planted_in_the_future() {
-        let mut t = tree_planted_in(2030);
-        t.sensor_id = Some(SensorId::new("eui-deadbeef").unwrap());
-        assert!(!t.detach_sensor().is_empty());
+    fn a_tree_planted_this_year_is_planted() {
+        assert!(!tree_planted_in(2026).planting_year_in_future(jan_first(2026)));
     }
 }

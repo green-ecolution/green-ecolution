@@ -17,6 +17,7 @@ import type { ExpressionSpecification, LngLatBoundsLike } from 'maplibre-gl'
 import { WateringStatus } from '@/api/backendApi'
 import type { Sensor, TreeResponse } from '@/api/backendApi'
 import { treeQueries } from '@/api/queries'
+import { isTreeTarget } from '@/lib/targets'
 import { useTreeSearch } from '@/hooks/useTreeSearch'
 import { useMaplibreMap } from '@/components/map-gl/MapContext'
 import MapPreview from '@/components/map-gl/MapPreview'
@@ -124,9 +125,9 @@ const DialogBody = ({
   onSelect: (treeId: string) => void
 }) => {
   const { t } = useTranslation('sensor')
-  const linkedTreeId = sensor.linkedTreeId
+  const linkedTreeId = isTreeTarget(sensor.target) ? sensor.target.id : null
   const { data: currentTree } = useQuery({
-    ...treeQueries.detail(linkedTreeId != null ? String(linkedTreeId) : ''),
+    ...treeQueries.detail(linkedTreeId ?? ''),
     enabled: mode === 'reassign' && linkedTreeId != null,
   })
 
@@ -150,10 +151,10 @@ const DialogBody = ({
   // Camera target: the selected tree, else (reassign) the sensor's current tree.
   const focus = useMemo<[number, number] | null>(() => {
     if (selectedTree) return [selectedTree.longitude, selectedTree.latitude]
-    if (mode === 'reassign' && sensor.coordinate)
-      return [sensor.coordinate.longitude, sensor.coordinate.latitude]
+    if (mode === 'reassign' && sensor.location)
+      return [sensor.location.longitude, sensor.location.latitude]
     return null
-  }, [selectedTree, mode, sensor.coordinate])
+  }, [selectedTree, mode, sensor.location])
 
   const bounds = useMemo<LngLatBoundsLike | undefined>(() => {
     if (focus || visibleItems.length === 0) return undefined
@@ -175,8 +176,8 @@ const DialogBody = ({
     ]
   }, [focus, visibleItems])
 
-  const center: [number, number] = sensor.coordinate
-    ? [sensor.coordinate.longitude, sensor.coordinate.latitude]
+  const center: [number, number] = sensor.location
+    ? [sensor.location.longitude, sensor.location.latitude]
     : [mapCenter[1], mapCenter[0]]
 
   return (

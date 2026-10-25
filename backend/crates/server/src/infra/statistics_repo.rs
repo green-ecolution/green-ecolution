@@ -24,7 +24,8 @@ impl StatisticsReader for PgStatisticsRepo {
                 (SELECT COUNT(*) FROM sensors)                              AS "sensor_count!: i64",
                 (SELECT COUNT(*) FROM vehicles WHERE archived_at IS NULL)   AS "vehicle_count!: i64",
                 (SELECT COUNT(*) FROM tree_clusters WHERE archived = false) AS "cluster_count!: i64",
-                (SELECT COUNT(*) FROM watering_plans)                       AS "watering_plan_count!: i64"
+                (SELECT COUNT(*) FROM operation_plans
+                  WHERE module_key = 'irrigation')                          AS "watering_plan_count!: i64"
             "#
         )
         .fetch_one(&self.pool)

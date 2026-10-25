@@ -20,13 +20,6 @@ import {
     OrganizationRefToJSON,
     OrganizationRefToJSONTyped,
 } from './OrganizationRef';
-import type { SettingFieldF64 } from './SettingFieldF64';
-import {
-    SettingFieldF64FromJSON,
-    SettingFieldF64FromJSONTyped,
-    SettingFieldF64ToJSON,
-    SettingFieldF64ToJSONTyped,
-} from './SettingFieldF64';
 import type { SettingFieldI64 } from './SettingFieldI64';
 import {
     SettingFieldI64FromJSON,
@@ -77,12 +70,6 @@ export interface OrganizationSettingsResponse {
     enforcedBy?: OrganizationRef | null;
     /**
      * 
-     * @type {SettingFieldI64}
-     * @memberof OrganizationSettingsResponse
-     */
-    justWateredTtlSecs: SettingFieldI64;
-    /**
-     * 
      * @type {SettingFieldMapViewDto}
      * @memberof OrganizationSettingsResponse
      */
@@ -93,12 +80,6 @@ export interface OrganizationSettingsResponse {
      * @memberof OrganizationSettingsResponse
      */
     sensorOfflineAfterSecs: SettingFieldI64;
-    /**
-     * 
-     * @type {SettingFieldF64}
-     * @memberof OrganizationSettingsResponse
-     */
-    waterDemand: SettingFieldF64;
 }
 
 /**
@@ -107,10 +88,8 @@ export interface OrganizationSettingsResponse {
 export function instanceOfOrganizationSettingsResponse(value: object): value is OrganizationSettingsResponse {
     if (!('defectStreak' in value) || value['defectStreak'] === undefined) return false;
     if (!('descendantsMayOverride' in value) || value['descendantsMayOverride'] === undefined) return false;
-    if (!('justWateredTtlSecs' in value) || value['justWateredTtlSecs'] === undefined) return false;
     if (!('mapView' in value) || value['mapView'] === undefined) return false;
     if (!('sensorOfflineAfterSecs' in value) || value['sensorOfflineAfterSecs'] === undefined) return false;
-    if (!('waterDemand' in value) || value['waterDemand'] === undefined) return false;
     return true;
 }
 
@@ -127,10 +106,8 @@ export function OrganizationSettingsResponseFromJSONTyped(json: any, ignoreDiscr
         'defectStreak': SettingFieldI32FromJSON(json['defect_streak']),
         'descendantsMayOverride': json['descendants_may_override'],
         'enforcedBy': json['enforced_by'] == null ? undefined : OrganizationRefFromJSON(json['enforced_by']),
-        'justWateredTtlSecs': SettingFieldI64FromJSON(json['just_watered_ttl_secs']),
         'mapView': SettingFieldMapViewDtoFromJSON(json['map_view']),
         'sensorOfflineAfterSecs': SettingFieldI64FromJSON(json['sensor_offline_after_secs']),
-        'waterDemand': SettingFieldF64FromJSON(json['water_demand']),
     };
 }
 
@@ -148,10 +125,8 @@ export function OrganizationSettingsResponseToJSONTyped(value?: OrganizationSett
         'defect_streak': SettingFieldI32ToJSON(value['defectStreak']),
         'descendants_may_override': value['descendantsMayOverride'],
         'enforced_by': OrganizationRefToJSON(value['enforcedBy']),
-        'just_watered_ttl_secs': SettingFieldI64ToJSON(value['justWateredTtlSecs']),
         'map_view': SettingFieldMapViewDtoToJSON(value['mapView']),
         'sensor_offline_after_secs': SettingFieldI64ToJSON(value['sensorOfflineAfterSecs']),
-        'water_demand': SettingFieldF64ToJSON(value['waterDemand']),
     };
 }
 

@@ -2,8 +2,12 @@ use std::sync::Arc;
 
 use chrono::Utc;
 
-use crate::service::event_bus::{EventHandler, EventHandlerError};
+use crate::{
+    irrigation::targets::is_tree,
+    service::event_bus::{EventHandler, EventHandlerError},
+};
 use domain::{
+    Id, RepositoryError,
     cluster::{SoilCondition, TreeClusterReader},
     events::{DomainEvent, SensorDataReceivedPayload, SensorReadings},
     sensor::SensorReadingReader,
@@ -12,7 +16,7 @@ use domain::{
 };
 
 /// Turns each `SensorDataReceived` event into a fresh watering-status decision
-/// on the linked tree.
+/// on the tree the sensor is attached to.
 pub struct TreeWateringFromSensorHandler {
     tree_reader: Arc<dyn TreeReader>,
     tree_writer: Arc<dyn TreeWriter>,
@@ -39,8 +43,13 @@ impl TreeWateringFromSensorHandler {
         &self,
         payload: &SensorDataReceivedPayload,
     ) -> Result<Vec<DomainEvent>, EventHandlerError> {
-        let Some(mut tree) = self.tree_reader.by_sensor_id(&payload.sensor_id).await? else {
+        let Some(target) = payload.target.as_ref().filter(|t| is_tree(t)) else {
             return Ok(vec![]);
+        };
+        let mut tree = match self.tree_reader.by_id(Id::new(target.id)).await {
+            Ok(tree) => tree,
+            Err(RepositoryError::NotFound) => return Ok(vec![]),
+            Err(e) => return Err(e.into()),
         };
 
         let outcome = match &payload.readings {

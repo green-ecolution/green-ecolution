@@ -9,7 +9,7 @@ fn vehicle_payload(plate: &str, org: Option<&str>) -> serde_json::Value {
     let mut p = json!({
         "number_plate": plate,
         "description": "Testfahrzeug",
-        "water_capacity": 5000.0,
+        "capacities": { "water": 5000.0 },
         "model": "MAN TGS",
         "availability": "available",
         "type": "transporter",

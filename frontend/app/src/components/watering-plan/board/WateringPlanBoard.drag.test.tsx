@@ -17,6 +17,7 @@ const activePlan = {
   id: 'p1',
   date: new Date().toISOString(),
   treeclusters: [],
+  stopIds: [],
   status: 'active',
   userIds: [],
   totalWaterRequired: 0,

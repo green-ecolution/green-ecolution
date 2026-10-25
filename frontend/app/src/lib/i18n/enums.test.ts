@@ -7,7 +7,7 @@ import {
   UserStatus,
   VehicleStatus,
   VehicleType,
-  WateringPlanStatus,
+  PlanStatus as WateringPlanStatus,
   WateringStatus,
 } from '@green-ecolution/backend-client'
 import de from '@/locales/de/enums.json'

@@ -4,6 +4,7 @@ pub mod evaluation;
 pub mod info;
 pub mod module;
 pub mod organization;
+pub mod plan;
 pub mod plugin;
 pub mod region;
 pub mod role;
@@ -13,7 +14,6 @@ pub mod settings;
 pub mod tree;
 pub mod user;
 pub mod vehicle;
-pub mod watering_plan;
 
 use serde::Serialize;
 
@@ -29,7 +29,6 @@ use domain::{
         DrivingLicense as DomainDrivingLicense, VehicleAvailability as DomainVehicleAvailability,
         VehicleStatus as DomainVehicleStatus, VehicleType as DomainVehicleType,
     },
-    watering_plan::WateringPlanStatus as DomainWateringPlanStatus,
 };
 
 #[derive(Debug, Serialize, utoipa::ToSchema)]
@@ -244,24 +243,6 @@ pub enum VehicleType {
     Trailer,
 }
 
-/// Lifecycle status of a watering plan.
-#[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
-#[serde(rename_all = "snake_case")]
-#[schema(example = "planned")]
-pub enum WateringPlanStatus {
-    /// Plan has been created but not yet started.
-    Planned,
-    /// Plan is currently being executed.
-    Active,
-    /// Plan was canceled before completion.
-    Canceled,
-    /// Plan was completed successfully.
-    Finished,
-    /// Plan was started but could not be completed.
-    #[serde(rename = "not_completed", alias = "not competed")]
-    NotCompleted,
-}
-
 /// Availability status of a user.
 #[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "snake_case")]
@@ -352,18 +333,6 @@ impl From<VehicleStatus> for DomainVehicleStatus {
             VehicleStatus::Active => Self::Active,
             VehicleStatus::Available => Self::Available,
             VehicleStatus::NotAvailable => Self::NotAvailable,
-        }
-    }
-}
-
-impl From<WateringPlanStatus> for DomainWateringPlanStatus {
-    fn from(value: WateringPlanStatus) -> Self {
-        match value {
-            WateringPlanStatus::Planned => Self::Planned,
-            WateringPlanStatus::Active => Self::Active,
-            WateringPlanStatus::Canceled => Self::Canceled,
-            WateringPlanStatus::Finished => Self::Finished,
-            WateringPlanStatus::NotCompleted => Self::NotCompleted,
         }
     }
 }
@@ -495,18 +464,6 @@ impl From<DomainVehicleType> for VehicleType {
     }
 }
 
-impl From<DomainWateringPlanStatus> for WateringPlanStatus {
-    fn from(value: DomainWateringPlanStatus) -> Self {
-        match value {
-            DomainWateringPlanStatus::Planned => Self::Planned,
-            DomainWateringPlanStatus::Active => Self::Active,
-            DomainWateringPlanStatus::Canceled => Self::Canceled,
-            DomainWateringPlanStatus::Finished => Self::Finished,
-            DomainWateringPlanStatus::NotCompleted => Self::NotCompleted,
-        }
-    }
-}
-
 #[cfg(test)]
 mod wire_format_tests {
     use super::*;
@@ -518,7 +475,7 @@ mod wire_format_tests {
         let values = [
             serde_json::to_string(&WateringStatus::JustWatered).unwrap(),
             serde_json::to_string(&VehicleStatus::NotAvailable).unwrap(),
-            serde_json::to_string(&WateringPlanStatus::NotCompleted).unwrap(),
+            serde_json::to_string(&plan::PlanStatus::NotCompleted).unwrap(),
         ];
         for value in &values {
             assert!(
@@ -539,7 +496,7 @@ mod wire_format_tests {
             "\"not_available\""
         );
         assert_eq!(
-            serde_json::to_string(&WateringPlanStatus::NotCompleted).unwrap(),
+            serde_json::to_string(&plan::PlanStatus::NotCompleted).unwrap(),
             "\"not_completed\""
         );
     }
@@ -557,8 +514,8 @@ mod wire_format_tests {
             VehicleStatus::NotAvailable
         );
         assert_eq!(
-            serde_json::from_str::<WateringPlanStatus>("\"not competed\"").unwrap(),
-            WateringPlanStatus::NotCompleted
+            serde_json::from_str::<plan::PlanStatus>("\"not competed\"").unwrap(),
+            plan::PlanStatus::NotCompleted
         );
     }
 
@@ -573,8 +530,8 @@ mod wire_format_tests {
             VehicleStatus::NotAvailable
         );
         assert_eq!(
-            serde_json::from_str::<WateringPlanStatus>("\"not_completed\"").unwrap(),
-            WateringPlanStatus::NotCompleted
+            serde_json::from_str::<plan::PlanStatus>("\"not_completed\"").unwrap(),
+            plan::PlanStatus::NotCompleted
         );
     }
 }

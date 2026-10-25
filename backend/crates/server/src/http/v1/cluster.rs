@@ -29,7 +29,7 @@ use crate::{
 };
 use domain::{
     Id,
-    authorization::{Action, Permission, Resource},
+    authorization::{Action, Permission},
     cluster::{
         ClusterAddress, ClusterName, ClusterSort, ClusterSortField, TreeClusterSearchQuery,
         TreeClusterUpdate, TreeClusterView,
@@ -50,6 +50,7 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
         .routes(routes!(list_cluster_boundaries))
         .routes(routes!(get_cluster, update_cluster, delete_cluster))
         .routes(routes!(get_cluster_soil_moisture))
+        .routes(routes!(list_cluster_sensor_ids))
         .routes(routes!(transfer_cluster))
 }
 
@@ -96,7 +97,7 @@ const CLUSTER_LIST_QUERY_MAX_LEN: usize = 100;
     operation_id = "listClusters",
     summary = "List all tree clusters",
     description = "Returns a paginated list of all tree clusters with a compact representation including region info. \
-                   Optional filter parameters (watering_status, region) narrow the result; array parameters are repeatable. \
+                   Optional filter parameters (watering_status, region, id) narrow the result; array parameters are repeatable. \
                    Sortable by name, moisture, trees or last_watered.",
     params(ClusterListParams),
     responses(
@@ -124,7 +125,7 @@ pub async fn list_clusters(
         .authorization_service
         .visible_orgs_for(
             user.id,
-            Permission::new(Resource::TreeCluster, Action::Read),
+            Permission::new(crate::irrigation::resources::TREE_CLUSTER, Action::Read),
         )
         .await?;
     let sort = ClusterSort {
@@ -138,6 +139,7 @@ pub async fn list_clusters(
             .map(domain::shared::watering_status::WateringStatus::from)
             .collect(),
         regions: params.region,
+        ids: params.id.into_iter().map(Id::new).collect(),
         soil_conditions: params
             .soil_condition
             .into_iter()
@@ -195,7 +197,7 @@ pub async fn get_cluster(
     let ctx = state.authorization_service.context_for(user.id).await?;
     scope::ensure_visible(
         &ctx,
-        Permission::new(Resource::TreeCluster, Action::Read),
+        Permission::new(crate::irrigation::resources::TREE_CLUSTER, Action::Read),
         view.organization_id,
     )?;
     let response = build_cluster_response(&state, &view).await?;
@@ -227,7 +229,7 @@ pub async fn create_cluster(
         .authorization_service
         .require(
             user.id,
-            Permission::new(Resource::TreeCluster, Action::Create),
+            Permission::new(crate::irrigation::resources::TREE_CLUSTER, Action::Create),
             org,
         )
         .await?;
@@ -267,14 +269,14 @@ pub async fn update_cluster(
     let ctx = state.authorization_service.context_for(user.id).await?;
     scope::ensure_visible(
         &ctx,
-        Permission::new(Resource::TreeCluster, Action::Read),
+        Permission::new(crate::irrigation::resources::TREE_CLUSTER, Action::Read),
         current.organization_id,
     )?;
     state
         .authorization_service
         .require(
             user.id,
-            Permission::new(Resource::TreeCluster, Action::Update),
+            Permission::new(crate::irrigation::resources::TREE_CLUSTER, Action::Update),
             Id::new(current.organization_id),
         )
         .await?;
@@ -320,14 +322,14 @@ pub async fn delete_cluster(
     let ctx = state.authorization_service.context_for(user.id).await?;
     scope::ensure_visible(
         &ctx,
-        Permission::new(Resource::TreeCluster, Action::Read),
+        Permission::new(crate::irrigation::resources::TREE_CLUSTER, Action::Read),
         current.organization_id,
     )?;
     state
         .authorization_service
         .require(
             user.id,
-            Permission::new(Resource::TreeCluster, Action::Delete),
+            Permission::new(crate::irrigation::resources::TREE_CLUSTER, Action::Delete),
             Id::new(current.organization_id),
         )
         .await?;
@@ -357,7 +359,7 @@ pub async fn list_cluster_markers(
         .authorization_service
         .visible_orgs_for(
             user.id,
-            Permission::new(Resource::TreeCluster, Action::Read),
+            Permission::new(crate::irrigation::resources::TREE_CLUSTER, Action::Read),
         )
         .await?;
     let markers = state.cluster_service.view_markers(visible).await?;
@@ -387,7 +389,7 @@ pub async fn list_cluster_boundaries(
         .authorization_service
         .visible_orgs_for(
             user.id,
-            Permission::new(Resource::TreeCluster, Action::Read),
+            Permission::new(crate::irrigation::resources::TREE_CLUSTER, Action::Read),
         )
         .await?;
     let boundaries = state.cluster_service.boundaries(visible).await?;
@@ -419,7 +421,7 @@ pub async fn cluster_statistics(
         .authorization_service
         .visible_orgs_for(
             user.id,
-            Permission::new(Resource::TreeCluster, Action::Read),
+            Permission::new(crate::irrigation::resources::TREE_CLUSTER, Action::Read),
         )
         .await?;
     let stats = state.cluster_service.statistics(visible).await?;
@@ -455,7 +457,7 @@ pub async fn get_cluster_soil_moisture(
     let ctx = state.authorization_service.context_for(user.id).await?;
     scope::ensure_visible(
         &ctx,
-        Permission::new(Resource::TreeCluster, Action::Read),
+        Permission::new(crate::irrigation::resources::TREE_CLUSTER, Action::Read),
         view.organization_id,
     )?;
     let (from, to, bucket) = params.resolve()?;
@@ -464,6 +466,39 @@ pub async fn get_cluster_soil_moisture(
         .soil_moisture_overview(cluster_id, from, to, bucket)
         .await?;
     Ok(Json(SoilMoistureSeriesResponse::from(overview)))
+}
+
+#[utoipa::path(
+    get,
+    path = "/clusters/{cluster_id}/sensor-ids",
+    tag = "Tree Clusters",
+    operation_id = "listClusterSensorIds",
+    summary = "List the sensors of a cluster",
+    description = "Returns the ids of the sensors attached to the cluster's trees, ordered by id. \
+                   Feed them into `GET /sensors?id=…` to filter the sensor list by cluster.",
+    params(("cluster_id" = uuid::Uuid, Path, description = "Cluster ID")),
+    responses(
+        (status = 200, description = "Sensor ids", body = Vec<String>),
+        (status = 404, description = "Cluster not found", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
+    )
+)]
+#[tracing::instrument(level = "info", skip_all, fields(cluster.id = %id))]
+pub async fn list_cluster_sensor_ids(
+    State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
+    Path(id): Path<uuid::Uuid>,
+) -> Result<Json<Vec<String>>, ServiceError> {
+    let cluster_id = Id::new(id);
+    let view = state.cluster_service.view_by_id(cluster_id).await?;
+    let ctx = state.authorization_service.context_for(user.id).await?;
+    scope::ensure_visible(
+        &ctx,
+        Permission::new(crate::irrigation::resources::TREE_CLUSTER, Action::Read),
+        view.organization_id,
+    )?;
+    let ids = state.cluster_service.sensor_ids(cluster_id).await?;
+    Ok(Json(ids.iter().map(|id| id.as_str().to_owned()).collect()))
 }
 
 #[utoipa::path(
@@ -494,10 +529,10 @@ pub async fn transfer_cluster(
     let ctx = state.authorization_service.context_for(user.id).await?;
     scope::ensure_visible(
         &ctx,
-        Permission::new(Resource::TreeCluster, Action::Read),
+        Permission::new(crate::irrigation::resources::TREE_CLUSTER, Action::Read),
         current.organization_id,
     )?;
-    let perm = Permission::new(Resource::TreeCluster, Action::Update);
+    let perm = Permission::new(crate::irrigation::resources::TREE_CLUSTER, Action::Update);
     state
         .authorization_service
         .require(user.id, perm, Id::new(current.organization_id))

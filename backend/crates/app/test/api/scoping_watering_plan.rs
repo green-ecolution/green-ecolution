@@ -40,7 +40,7 @@ async fn create_transporter(app: &crate::helpers::TestApp) -> serde_json::Value 
     let body = json!({
         "number_plate": "FL-GE 300",
         "description": "Giesswagen",
-        "water_capacity": 5000.0,
+        "capacities": { "water": 5000.0 },
         "model": "MAN TGS",
         "availability": "available",
         "type": "transporter",
@@ -57,14 +57,15 @@ fn plan_payload(transporter_id: &str, cluster_ids: &[&str], org: &str) -> serde_
         "date": "2026-05-01T08:00:00Z",
         "description": "Scope Plan",
         "transporter_id": transporter_id,
-        "tree_cluster_ids": cluster_ids,
+        "module": "irrigation",
+        "stops": cluster_ids,
         "user_ids": [],
         "organization_id": org,
     })
 }
 
 #[tokio::test]
-async fn create_watering_plan_over_cluster_in_org_subtree_returns_201() {
+async fn create_plan_over_cluster_in_org_subtree_returns_201() {
     let app = spawn_app().await;
     insert_tbz_and_sub_org(&app).await;
 
@@ -82,7 +83,7 @@ async fn create_watering_plan_over_cluster_in_org_subtree_returns_201() {
 
     let resp = app
         .post_json(
-            "/api/v1/watering-plans",
+            "/api/v1/plans",
             &plan_payload(transporter_id, &[cluster_id], TBZ_ORG),
         )
         .await;
@@ -93,7 +94,7 @@ async fn create_watering_plan_over_cluster_in_org_subtree_returns_201() {
 }
 
 #[tokio::test]
-async fn create_watering_plan_over_cluster_outside_org_subtree_is_unprocessable() {
+async fn create_plan_over_cluster_outside_org_subtree_is_unprocessable() {
     let app = spawn_app().await;
     insert_tbz_and_sub_org(&app).await;
 
@@ -111,12 +112,12 @@ async fn create_watering_plan_over_cluster_outside_org_subtree_is_unprocessable(
 
     let resp = app
         .post_json(
-            "/api/v1/watering-plans",
+            "/api/v1/plans",
             &plan_payload(transporter_id, &[cluster_id], SUB_ORG),
         )
         .await;
 
     assert_eq!(resp.status(), 422);
     let body: serde_json::Value = resp.json().await.unwrap();
-    assert_eq!(body["code"], "organization_mismatch.clusters_vs_plan");
+    assert_eq!(body["code"], "organization_mismatch.stops_vs_plan");
 }

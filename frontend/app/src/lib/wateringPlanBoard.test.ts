@@ -1,6 +1,6 @@
 import { describe, expect, it, beforeAll } from 'vitest'
 import type { TFunction } from 'i18next'
-import { WateringPlanStatus } from '@green-ecolution/backend-client'
+import { PlanStatus as WateringPlanStatus } from '@green-ecolution/backend-client'
 import { getI18n } from '@/lib/i18n'
 import { columnForStatus, dropActionFor, dropHintFor } from './wateringPlanBoard'
 

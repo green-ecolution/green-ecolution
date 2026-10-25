@@ -251,6 +251,10 @@ async fn seeding_creates_a_user_with_role_grants() {
         ),
         std::sync::Arc::new(server::infra::pg_role::PgRoleRepository::new(
             app.db_pool.clone(),
+            std::sync::Arc::new(
+                domain::authorization::ResourceCatalog::new(server::irrigation::resources::ALL)
+                    .unwrap(),
+            ),
         )),
         true,
     );
@@ -295,7 +299,7 @@ async fn seeded_reference_data_makes_the_dashboard_paths_non_empty() {
         ),
         (
             "vehicles linked to a plan",
-            "SELECT COUNT(*) FROM vehicle_watering_plans",
+            "SELECT COUNT(*) FROM operation_plan_vehicles",
         ),
         (
             "implausible ability values",

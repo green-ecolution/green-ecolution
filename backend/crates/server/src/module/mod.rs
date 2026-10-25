@@ -8,16 +8,23 @@ use std::{
     sync::Arc,
 };
 
-use domain::{module::ModuleKey, organization::OrganizationReader, settings::SettingsResolver};
+use domain::{
+    authorization::ResourceKey, module::ModuleKey, organization::OrganizationReader,
+    planning::PlanningProvider, settings::SettingsResolver, target::TargetCatalog,
+};
 use sqlx::PgPool;
 use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
+    configuration::Settings,
     http::AppState,
     service::{
         authorization::AuthorizationService,
         event_bus::{EventBus, EventHandler},
         module_access::ModuleAccess,
+        operation_plan_service::OperationPlanService,
+        sensor_service::SensorService,
+        user_service::UserService,
     },
 };
 
@@ -30,6 +37,10 @@ pub trait Module: Send + Sync {
     /// Built from the same routes as the runtime router but without state, so
     /// `dump-openapi` and the startup checks need no database.
     fn openapi(&self) -> utoipa::openapi::OpenApi;
+    /// Resources this module adds to the permission catalog.
+    fn resources(&self) -> &'static [ResourceKey] {
+        &[]
+    }
     fn migrations(&self) -> Vec<sqlx::migrate::Migration> {
         Vec::new()
     }
@@ -44,6 +55,13 @@ pub struct ModuleContext {
     pub organizations: Arc<dyn OrganizationReader>,
     pub settings: Arc<dyn SettingsResolver>,
     pub access: ModuleAccess,
+    pub users: Arc<UserService>,
+    pub config: Arc<Settings>,
+    /// An event handler must hold this as `Weak` (or not at all): the service owns the
+    /// event bus, so a strong reference keeps the whole graph alive.
+    pub sensors: Arc<SensorService>,
+    /// Same rule as `sensors`: hold as `Weak` in event handlers.
+    pub plans: Arc<OperationPlanService>,
 }
 
 /// Routes relative to `/api/v1`. `protected` runs behind the same
@@ -67,6 +85,8 @@ pub struct ModuleRuntime {
     pub event_handlers: Vec<Arc<dyn EventHandler>>,
     /// Spawned once at startup, like the core's sweeps.
     pub background_tasks: Vec<BackgroundTask>,
+    pub targets: Option<Arc<dyn TargetCatalog>>,
+    pub planning: Option<Arc<dyn PlanningProvider>>,
 }
 
 impl ModuleRuntime {
@@ -75,6 +95,8 @@ impl ModuleRuntime {
             routes,
             event_handlers: Vec::new(),
             background_tasks: Vec::new(),
+            targets: None,
+            planning: None,
         }
     }
 }

@@ -1,16 +1,30 @@
-INSERT INTO vehicles (id, number_plate, description, water_capacity, type, availability, driving_license, model, width, height, length, weight, organization_id) VALUES
-  ('019e3fcb-2a51-7e7e-9392-c4e6dfb61845'::uuid, 'FL-GE-101', 'Kleintransporter für Stadtgebiete', 500.0, 'transporter', 'available', 'B', 'VW Transporter T6.1', 1.90, 1.99, 5.30, 2.0, '01980000-0000-7000-8000-000000000002'),
-  ('019e3fcb-2a51-75fd-818b-913a7cd9cec1'::uuid, 'FL-GE-201', 'Transporter für mittlere Einsätze', 800.0, 'transporter', 'available', 'B', 'Ford Transit Custom', 2.06, 2.52, 5.53, 2.3, '01980000-0000-7000-8000-000000000002'),
-  ('019e3fcb-2a51-73cf-b612-cd0ccdac6f0d'::uuid, 'FL-GE-301', 'Pritschenwagen für Anhängerbetrieb', 300.0, 'transporter', 'available', 'BE', 'MAN TGE 3.180 Pritsche', 2.04, 2.35, 5.99, 3.5, '01980000-0000-7000-8000-000000000002'),
-  ('019e3fcb-2a51-7b0b-9875-8c51aae80c31'::uuid, 'FL-GE-401', 'Mittlerer Tankwagen', 5000.0, 'transporter', 'available', 'C', 'Mercedes Atego 1218', 2.30, 3.20, 7.50, 12.0, '01980000-0000-7000-8000-000000000002'),
-  ('019e3fcb-2a51-728a-8d64-5f8b86cf81ad'::uuid, 'FL-GE-501', 'Großer Tankwagen für Außenbereiche', 10000.0, 'transporter', 'available', 'CE', 'MAN TGS 18.320', 2.55, 3.50, 9.50, 18.0, '01980000-0000-7000-8000-000000000002'),
-  ('019e3fcb-2a52-7c3c-8ef9-faf356e13d59'::uuid, 'FL-GE-A01', 'Kleiner Wassertankanhänger für Stadtgebiete', 1000.0, 'trailer', 'available', 'B', 'Humbaur HA 132513', 1.32, 1.50, 2.50, 0.75, '01980000-0000-7000-8000-000000000002'),
-  ('019e3fcb-2a52-705a-9000-ccd25776cfb9'::uuid, 'FL-GE-A02', 'Mittlerer Wassertankanhänger', 2000.0, 'trailer', 'available', 'BE', 'Unsinn WEB 30', 1.80, 1.80, 4.00, 1.2, '01980000-0000-7000-8000-000000000002'),
-  ('019e3fcb-2a52-773f-9ece-2cc22d45b937'::uuid, 'FL-GE-A03', 'Großer Wassertankanhänger für Außeneinsätze', 4000.0, 'trailer', 'available', 'BE', 'Humbaur HTK 3500', 2.10, 2.00, 5.50, 2.5, '01980000-0000-7000-8000-000000000002'),
-  ('019e3fcb-2a52-78ca-aba1-775ddd5ca945'::uuid, 'FL-TEST-01', '[TEST] Unrealistisch: Viel zu groß und schwer für Routing-Tests', 50000.0, 'transporter', 'available', 'CE', 'Test Mega Truck', 3.50, 5.00, 25.0, 80.0, '01980000-0000-7000-8000-000000000002'),
-  ('019e3fcb-2a52-7572-b3cd-5b59be3d19aa'::uuid, 'FL-TEST-02', '[TEST] Unrealistisch: Viel zu klein für Edge-Case-Tests', 100.0, 'transporter', 'available', 'B', 'Test Mini Van', 1.20, 1.00, 2.0, 0.3, '01980000-0000-7000-8000-000000000002'),
-  ('019e3fcb-2a52-7547-b44d-33e5c74e10cf'::uuid, 'FL-TEST-03', '[TEST] Unrealistisch: Extreme Werte für Grenzwert-Tests', 99999.0, 'transporter', 'not_available', 'CE', 'Test Heavy Loader', 4.00, 6.00, 30.0, 150.0, '01980000-0000-7000-8000-000000000002'),
-  ('019e3fcb-2a52-729c-9bb6-10669401291e'::uuid, 'FL-TEST-A01', '[TEST] Unrealistisch: Riesiger Testanhänger', 30000.0, 'trailer', 'available', 'CE', 'Test Giant Trailer', 3.00, 4.00, 15.0, 25.0, '01980000-0000-7000-8000-000000000002');
+INSERT INTO vehicles (id, number_plate, description, type, availability, driving_license, model, width, height, length, weight, organization_id) VALUES
+  ('019e3fcb-2a51-7e7e-9392-c4e6dfb61845'::uuid, 'FL-GE-101', 'Kleintransporter für Stadtgebiete', 'transporter', 'available', 'B', 'VW Transporter T6.1', 1.90, 1.99, 5.30, 2.0, '01980000-0000-7000-8000-000000000002'),
+  ('019e3fcb-2a51-75fd-818b-913a7cd9cec1'::uuid, 'FL-GE-201', 'Transporter für mittlere Einsätze', 'transporter', 'available', 'B', 'Ford Transit Custom', 2.06, 2.52, 5.53, 2.3, '01980000-0000-7000-8000-000000000002'),
+  ('019e3fcb-2a51-73cf-b612-cd0ccdac6f0d'::uuid, 'FL-GE-301', 'Pritschenwagen für Anhängerbetrieb', 'transporter', 'available', 'BE', 'MAN TGE 3.180 Pritsche', 2.04, 2.35, 5.99, 3.5, '01980000-0000-7000-8000-000000000002'),
+  ('019e3fcb-2a51-7b0b-9875-8c51aae80c31'::uuid, 'FL-GE-401', 'Mittlerer Tankwagen', 'transporter', 'available', 'C', 'Mercedes Atego 1218', 2.30, 3.20, 7.50, 12.0, '01980000-0000-7000-8000-000000000002'),
+  ('019e3fcb-2a51-728a-8d64-5f8b86cf81ad'::uuid, 'FL-GE-501', 'Großer Tankwagen für Außenbereiche', 'transporter', 'available', 'CE', 'MAN TGS 18.320', 2.55, 3.50, 9.50, 18.0, '01980000-0000-7000-8000-000000000002'),
+  ('019e3fcb-2a52-7c3c-8ef9-faf356e13d59'::uuid, 'FL-GE-A01', 'Kleiner Wassertankanhänger für Stadtgebiete', 'trailer', 'available', 'B', 'Humbaur HA 132513', 1.32, 1.50, 2.50, 0.75, '01980000-0000-7000-8000-000000000002'),
+  ('019e3fcb-2a52-705a-9000-ccd25776cfb9'::uuid, 'FL-GE-A02', 'Mittlerer Wassertankanhänger', 'trailer', 'available', 'BE', 'Unsinn WEB 30', 1.80, 1.80, 4.00, 1.2, '01980000-0000-7000-8000-000000000002'),
+  ('019e3fcb-2a52-773f-9ece-2cc22d45b937'::uuid, 'FL-GE-A03', 'Großer Wassertankanhänger für Außeneinsätze', 'trailer', 'available', 'BE', 'Humbaur HTK 3500', 2.10, 2.00, 5.50, 2.5, '01980000-0000-7000-8000-000000000002'),
+  ('019e3fcb-2a52-78ca-aba1-775ddd5ca945'::uuid, 'FL-TEST-01', '[TEST] Unrealistisch: Viel zu groß und schwer für Routing-Tests', 'transporter', 'available', 'CE', 'Test Mega Truck', 3.50, 5.00, 25.0, 80.0, '01980000-0000-7000-8000-000000000002'),
+  ('019e3fcb-2a52-7572-b3cd-5b59be3d19aa'::uuid, 'FL-TEST-02', '[TEST] Unrealistisch: Viel zu klein für Edge-Case-Tests', 'transporter', 'available', 'B', 'Test Mini Van', 1.20, 1.00, 2.0, 0.3, '01980000-0000-7000-8000-000000000002'),
+  ('019e3fcb-2a52-7547-b44d-33e5c74e10cf'::uuid, 'FL-TEST-03', '[TEST] Unrealistisch: Extreme Werte für Grenzwert-Tests', 'transporter', 'not_available', 'CE', 'Test Heavy Loader', 4.00, 6.00, 30.0, 150.0, '01980000-0000-7000-8000-000000000002'),
+  ('019e3fcb-2a52-729c-9bb6-10669401291e'::uuid, 'FL-TEST-A01', '[TEST] Unrealistisch: Riesiger Testanhänger', 'trailer', 'available', 'CE', 'Test Giant Trailer', 3.00, 4.00, 15.0, 25.0, '01980000-0000-7000-8000-000000000002');
+
+INSERT INTO vehicle_capacities (vehicle_id, kind, liters) VALUES
+  ('019e3fcb-2a51-7e7e-9392-c4e6dfb61845'::uuid, 'water', 500.0),
+  ('019e3fcb-2a51-75fd-818b-913a7cd9cec1'::uuid, 'water', 800.0),
+  ('019e3fcb-2a51-73cf-b612-cd0ccdac6f0d'::uuid, 'water', 300.0),
+  ('019e3fcb-2a51-7b0b-9875-8c51aae80c31'::uuid, 'water', 5000.0),
+  ('019e3fcb-2a51-728a-8d64-5f8b86cf81ad'::uuid, 'water', 10000.0),
+  ('019e3fcb-2a52-7c3c-8ef9-faf356e13d59'::uuid, 'water', 1000.0),
+  ('019e3fcb-2a52-705a-9000-ccd25776cfb9'::uuid, 'water', 2000.0),
+  ('019e3fcb-2a52-773f-9ece-2cc22d45b937'::uuid, 'water', 4000.0),
+  ('019e3fcb-2a52-78ca-aba1-775ddd5ca945'::uuid, 'water', 50000.0),
+  ('019e3fcb-2a52-7572-b3cd-5b59be3d19aa'::uuid, 'water', 100.0),
+  ('019e3fcb-2a52-7547-b44d-33e5c74e10cf'::uuid, 'water', 99999.0),
+  ('019e3fcb-2a52-729c-9bb6-10669401291e'::uuid, 'water', 30000.0);
 
 
 INSERT INTO tree_clusters (id, name, watering_status, moisture_level, region_id, address, description, soil_condition, latitude, longitude, geometry, organization_id) VALUES
@@ -53,77 +67,92 @@ VALUES
     ('sensor-7', 'GES-2024-0007', '0004A30B00AA0007', '0004A30B00AA0000', '9F8E7D6C5B4A39281706050403020100'),
     ('sensor-8', 'GES-2024-0008', '0004A30B00AA0008', '0004A30B00AA0000', '00112233445566778899AABBCCDDEEFF');
 
-INSERT INTO trees (id, tree_cluster_id, sensor_id, planting_year, species, number, latitude, longitude, geometry, watering_status, description, organization_id) VALUES
-  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7fbf-948d-36836e4f42d1'::uuid, 'sensor-1', 2023, 'Quercus robur', 1005, 54.82124518093376, 9.485702120628517, ST_SetSRID(ST_MakePoint(9.485702120628517, 54.82124518093376), 4326), 'good', 'Dieser Baum wurde im August das letzte mal gestuzt', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7fbf-948d-36836e4f42d1'::uuid, 'sensor-2', 2023, 'Quercus robur', 1006, 54.8215076622281, 9.487153277881877, ST_SetSRID(ST_MakePoint(9.487153277881877, 54.8215076622281), 4326), 'good', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7fbf-948d-36836e4f42d1'::uuid, NULL, 2023, 'Quercus robur', 1007, 54.82078826498143, 9.489684366114483, ST_SetSRID(ST_MakePoint(9.489684366114483, 54.82078826498143), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7fbf-948d-36836e4f42d1'::uuid, NULL, 2023, 'Quercus robur', 1001, 54.820834078576304, 9.486398528109389, ST_SetSRID(ST_MakePoint(9.486398528109389, 54.820834078576304), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7fbf-948d-36836e4f42d1'::uuid, NULL, 2023, 'Quercus robur', 1002, 54.82008971976509, 9.488979617332221, ST_SetSRID(ST_MakePoint(9.488979617332221, 54.82008971976509), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7fbf-948d-36836e4f42d1'::uuid, NULL, 2023, 'Quercus robur', 1003, 54.82061210171266, 9.486168703385617, ST_SetSRID(ST_MakePoint(9.486168703385617, 54.82061210171266), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7fbf-948d-36836e4f42d1'::uuid, NULL, 2023, 'Quercus robur', 1004, 54.8199067243877, 9.487106513347264, ST_SetSRID(ST_MakePoint(9.487106513347264, 54.8199067243877), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7fbf-948d-36836e4f42d1'::uuid, NULL, 2023, 'Quercus robur', 2001, 54.821248829192285, 9.48996664076417, ST_SetSRID(ST_MakePoint(9.48996664076417, 54.821248829192285), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7619-aa57-c9b2c9a4aa29'::uuid, 'sensor-3', 2022, 'Quercus robur', 1008, 54.78780993841013, 9.444052105200551, ST_SetSRID(ST_MakePoint(9.444052105200551, 54.78780993841013), 4326), 'moderate', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7619-aa57-c9b2c9a4aa29'::uuid, NULL, 2022, 'Quercus robur', 1009, 54.78836553796373, 9.444075995492044, ST_SetSRID(ST_MakePoint(9.444075995492044, 54.78836553796373), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7619-aa57-c9b2c9a4aa29'::uuid, NULL, 2022, 'Quercus robur', 1010, 54.787768612518455, 9.443996361187065, ST_SetSRID(ST_MakePoint(9.443996361187065, 54.787768612518455), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7619-aa57-c9b2c9a4aa29'::uuid, NULL, 2022, 'Quercus robur', 1010, 54.78826721846835, 9.443595915277797, ST_SetSRID(ST_MakePoint(9.443595915277797, 54.78826721846835), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7619-aa57-c9b2c9a4aa29'::uuid, NULL, 2022, 'Quercus robur', 1010, 54.78810634901004, 9.44443262510434, ST_SetSRID(ST_MakePoint(9.44443262510434, 54.78810634901004), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7619-aa57-c9b2c9a4aa29'::uuid, NULL, 2022, 'Quercus robur', 1010, 54.78815894101875, 9.443955271421238, ST_SetSRID(ST_MakePoint(9.443955271421238, 54.78815894101875), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7bc9-bc1c-a51e04ef632e'::uuid, NULL, 2023, 'Betula pendula', 1034, 54.801718, 9.444797, ST_SetSRID(ST_MakePoint(9.444797, 54.801718), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7bc9-bc1c-a51e04ef632e'::uuid, NULL, 2023, 'Betula pendula', 1035, 54.800797, 9.444271, ST_SetSRID(ST_MakePoint(9.444271, 54.800797), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7bc9-bc1c-a51e04ef632e'::uuid, NULL, 2023, 'Betula pendula', 1036, 54.801539, 9.446741, ST_SetSRID(ST_MakePoint(9.446741, 54.801539), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7bc9-bc1c-a51e04ef632e'::uuid, NULL, 2023, 'Betula pendula', 1037, 54.799796, 9.443927, ST_SetSRID(ST_MakePoint(9.443927, 54.799796), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7bc9-bc1c-a51e04ef632e'::uuid, NULL, 2023, 'Betula pendula', 1038, 54.804052, 9.447900, ST_SetSRID(ST_MakePoint(9.447900, 54.804052), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7493-a7a1-b194faa409d7'::uuid, 'sensor-4', 2022, 'Tilia intermedia', 1029, 54.775679885633636, 9.451171073968197, ST_SetSRID(ST_MakePoint(9.451171073968197, 54.775679885633636), 4326), 'bad', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7493-a7a1-b194faa409d7'::uuid, NULL, 2022, 'Tilia intermedia', 1027, 54.776120, 9.450891, ST_SetSRID(ST_MakePoint(9.450891, 54.776120), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7493-a7a1-b194faa409d7'::uuid, NULL, 2022, 'Tilia intermedia', 1028, 54.776058, 9.450311, ST_SetSRID(ST_MakePoint(9.450311, 54.776058), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7493-a7a1-b194faa409d7'::uuid, NULL, 2022, 'Tilia intermedia', 1029, 54.775709, 9.447762, ST_SetSRID(ST_MakePoint(9.447762, 54.775709), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7493-a7a1-b194faa409d7'::uuid, NULL, 2022, 'Tilia intermedia', 1026, 54.776145, 9.449785, ST_SetSRID(ST_MakePoint(9.449785, 54.776145), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7493-a7a1-b194faa409d7'::uuid, NULL, 2022, 'Tilia intermedia', 1026, 54.774986825456224, 9.451846963834953, ST_SetSRID(ST_MakePoint(9.451846963834953, 54.774986825456224), 4326), 'unknown', 'UNSER TEST BAUM', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-713d-8cae-4a52d3fd2967'::uuid, 'sensor-5', 2021, 'Fraxinus ornus Obelisk', 1021, 54.782630, 9.423792, ST_SetSRID(ST_MakePoint(9.423792, 54.782630), 4326), 'bad', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-713d-8cae-4a52d3fd2967'::uuid, NULL, 2021, 'Fraxinus ornus Obelisk', 1022, 54.782463, 9.423727, ST_SetSRID(ST_MakePoint(9.423727, 54.782463), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-713d-8cae-4a52d3fd2967'::uuid, NULL, 2021, 'Fraxinus ornus Obelisk', 1023, 54.782296, 9.424178, ST_SetSRID(ST_MakePoint(9.424178, 54.782296), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-713d-8cae-4a52d3fd2967'::uuid, NULL, 2022, 'Fraxinus ornus Obelisk', 1024, 54.782043, 9.424188, ST_SetSRID(ST_MakePoint(9.424188, 54.782043), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-713d-8cae-4a52d3fd2967'::uuid, NULL, 2022, 'Fraxinus ornus Obelisk', 1025, 54.781753, 9.424936, ST_SetSRID(ST_MakePoint(9.424936, 54.781753), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7706-a04c-50d6c926c7f8'::uuid, NULL, 2023, 'Acer platanoides Schwedleri', 1039, 54.806287, 9.423469, ST_SetSRID(ST_MakePoint(9.423469, 54.806287), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7706-a04c-50d6c926c7f8'::uuid, NULL, 2023, 'Acer platanoides Schwedleri', 1040, 54.807212, 9.422752, ST_SetSRID(ST_MakePoint(9.422752, 54.807212), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7706-a04c-50d6c926c7f8'::uuid, NULL, 2023, 'Acer platanoides Schwedleri', 1041, 54.806606, 9.422773, ST_SetSRID(ST_MakePoint(9.422773, 54.806606), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7706-a04c-50d6c926c7f8'::uuid, NULL, 2023, 'Acer platanoides Schwedleri', 1042, 54.807787, 9.422354, ST_SetSRID(ST_MakePoint(9.422354, 54.807787), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7963-8228-705689f884b9'::uuid, 'sensor-6', 2022, 'Acer platanoides Schwedleri', 1043, 54.796916, 9.421332, ST_SetSRID(ST_MakePoint(9.421332, 54.796916), 4326), 'good', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7963-8228-705689f884b9'::uuid, NULL, 2022, 'Acer platanoides Schwedleri', 1044, 54.797330, 9.419002, ST_SetSRID(ST_MakePoint(9.419002, 54.797330), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7963-8228-705689f884b9'::uuid, NULL, 2022, 'Acer platanoides Schwedleri', 1045, 54.797114, 9.417843, ST_SetSRID(ST_MakePoint(9.417843, 54.797114), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7be5-9a56-e2260bb1c9fb'::uuid, 'sensor-7', 2023, 'Populus cf. suaveolens', 1052, 54.7697451282801, 9.439562555553788, ST_SetSRID(ST_MakePoint(9.439562555553788, 54.7697451282801), 4326), 'bad', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7be5-9a56-e2260bb1c9fb'::uuid, NULL, 2023, 'Populus cf. suaveolens', 5555, 54.76932352301634, 9.441299419876234, ST_SetSRID(ST_MakePoint(9.441299419876234, 54.76932352301634), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7be5-9a56-e2260bb1c9fb'::uuid, NULL, 2023, 'Populus cf. suaveolens', 4444, 54.76915329290317, 9.441851862902759, ST_SetSRID(ST_MakePoint(9.441851862902759, 54.76915329290317), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7be5-9a56-e2260bb1c9fb'::uuid, NULL, 2023, 'Populus cf. suaveolens', 3333, 54.770304653528044, 9.44233994363491, ST_SetSRID(ST_MakePoint(9.44233994363491, 54.770304653528044), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7be5-9a56-e2260bb1c9fb'::uuid, NULL, 2023, 'Populus cf. suaveolens', 2222, 54.771043653535294, 9.440740347234932, ST_SetSRID(ST_MakePoint(9.440740347234932, 54.771043653535294), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7433-8d57-6258f9688c82'::uuid, NULL, 2024, 'Tilia x vulgaris', 1015, 54.76752937879732, 9.457372632491829, ST_SetSRID(ST_MakePoint(9.457372632491829, 54.76752937879732), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7433-8d57-6258f9688c82'::uuid, NULL, 2024, 'Tilia x vulgaris', 1015, 54.767564688002714, 9.453443844886783, ST_SetSRID(ST_MakePoint(9.453443844886783, 54.767564688002714), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7433-8d57-6258f9688c82'::uuid, NULL, 2024, 'Tilia x vulgaris', 1015, 54.765620842535895, 9.4575523046762, ST_SetSRID(ST_MakePoint(9.4575523046762, 54.765620842535895), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7433-8d57-6258f9688c82'::uuid, NULL, 2024, 'Tilia x vulgaris', 1015, 54.76725516472003, 9.456833592389275, ST_SetSRID(ST_MakePoint(9.456833592389275, 54.76725516472003), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7fc1-bc32-9c8885df5027'::uuid, 'sensor-8', 2023, 'Alnus glutinosa', 1030, 54.792472, 9.452773, ST_SetSRID(ST_MakePoint(9.452773, 54.792472), 4326), 'moderate', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7fc1-bc32-9c8885df5027'::uuid, NULL, 2023, 'Alnus glutinosa', 1031, 54.792782, 9.453795, ST_SetSRID(ST_MakePoint(9.453795, 54.792782), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7fc1-bc32-9c8885df5027'::uuid, NULL, 2023, 'Alnus glutinosa', 1032, 54.792837, 9.454880, ST_SetSRID(ST_MakePoint(9.454880, 54.792837), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7fc1-bc32-9c8885df5027'::uuid, NULL, 2023, 'Alnus glutinosa', 1033, 54.792435, 9.455545, ST_SetSRID(ST_MakePoint(9.455545, 54.792435), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), NULL, NULL, 2024, 'Carpinus betulus', 1015, 54.783739, 9.426823, ST_SetSRID(ST_MakePoint(9.426823, 54.783739), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), NULL, NULL, 2022, 'Carpinus betulus', 1017, 54.785981, 9.430668, ST_SetSRID(ST_MakePoint(9.430668, 54.785981), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), NULL, NULL, 2022, 'Carpinus betulus', 1018, 54.786269, 9.431758, ST_SetSRID(ST_MakePoint(9.431758, 54.786269), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), NULL, NULL, 2022, 'Carpinus betulus', 1019, 54.787339, 9.431701, ST_SetSRID(ST_MakePoint(9.431701, 54.787339), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), NULL, NULL, 2021, 'Carpinus betulus', 1020, 54.786656, 9.432243, ST_SetSRID(ST_MakePoint(9.432243, 54.786656), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), NULL, NULL, 2022, 'Populus cf. suaveolens', 1051, 54.769030, 9.429936, ST_SetSRID(ST_MakePoint(9.429936, 54.769030), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), NULL, NULL, 2021, 'Populus cf. suaveolens', 1053, 54.775237, 9.441981, ST_SetSRID(ST_MakePoint(9.441981, 54.775237), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), NULL, NULL, 2022, 'Populus cf. suaveolens', 1054, 54.780192, 9.459607, ST_SetSRID(ST_MakePoint(9.459607, 54.780192), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), NULL, NULL, 2021, 'Populus cf. suaveolens', 1055, 54.785043, 9.418210, ST_SetSRID(ST_MakePoint(9.418210, 54.785043), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), NULL, NULL, 2022, 'Fraxinus excelsior', 1056, 54.779697, 9.440026, ST_SetSRID(ST_MakePoint(9.440026, 54.779697), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), NULL, NULL, 2020, 'Fraxinus excelsior', 1057, 54.785147, 9.438903, ST_SetSRID(ST_MakePoint(9.438903, 54.785147), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), NULL, NULL, 2020, 'Fraxinus excelsior', 1058, 54.788205, 9.454699, ST_SetSRID(ST_MakePoint(9.454699, 54.788205), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), NULL, NULL, 2020, 'Fraxinus excelsior', 1059, 54.804054, 9.469544, ST_SetSRID(ST_MakePoint(9.469544, 54.804054), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), NULL, NULL, 2024, 'Acer pseudoplatanus', 1060, 54.813655, 9.477633, ST_SetSRID(ST_MakePoint(9.477633, 54.813655), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), NULL, NULL, 2024, 'Acer pseudoplatanus', 1061, 54.811001, 9.484132, ST_SetSRID(ST_MakePoint(9.484132, 54.811001), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), NULL, NULL, 2024, 'Acer pseudoplatanus', 1062, 54.790366, 9.472744, ST_SetSRID(ST_MakePoint(9.472744, 54.790366), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002');
+INSERT INTO trees (id, tree_cluster_id, planting_year, species, number, latitude, longitude, geometry, watering_status, description, organization_id) VALUES
+  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7fbf-948d-36836e4f42d1'::uuid, 2023, 'Quercus robur', 1005, 54.82124518093376, 9.485702120628517, ST_SetSRID(ST_MakePoint(9.485702120628517, 54.82124518093376), 4326), 'good', 'Dieser Baum wurde im August das letzte mal gestuzt', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7fbf-948d-36836e4f42d1'::uuid, 2023, 'Quercus robur', 1006, 54.8215076622281, 9.487153277881877, ST_SetSRID(ST_MakePoint(9.487153277881877, 54.8215076622281), 4326), 'good', '', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7fbf-948d-36836e4f42d1'::uuid, 2023, 'Quercus robur', 1007, 54.82078826498143, 9.489684366114483, ST_SetSRID(ST_MakePoint(9.489684366114483, 54.82078826498143), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7fbf-948d-36836e4f42d1'::uuid, 2023, 'Quercus robur', 1001, 54.820834078576304, 9.486398528109389, ST_SetSRID(ST_MakePoint(9.486398528109389, 54.820834078576304), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7fbf-948d-36836e4f42d1'::uuid, 2023, 'Quercus robur', 1002, 54.82008971976509, 9.488979617332221, ST_SetSRID(ST_MakePoint(9.488979617332221, 54.82008971976509), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7fbf-948d-36836e4f42d1'::uuid, 2023, 'Quercus robur', 1003, 54.82061210171266, 9.486168703385617, ST_SetSRID(ST_MakePoint(9.486168703385617, 54.82061210171266), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7fbf-948d-36836e4f42d1'::uuid, 2023, 'Quercus robur', 1004, 54.8199067243877, 9.487106513347264, ST_SetSRID(ST_MakePoint(9.487106513347264, 54.8199067243877), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7fbf-948d-36836e4f42d1'::uuid, 2023, 'Quercus robur', 2001, 54.821248829192285, 9.48996664076417, ST_SetSRID(ST_MakePoint(9.48996664076417, 54.821248829192285), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7619-aa57-c9b2c9a4aa29'::uuid, 2022, 'Quercus robur', 1008, 54.78780993841013, 9.444052105200551, ST_SetSRID(ST_MakePoint(9.444052105200551, 54.78780993841013), 4326), 'moderate', '', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7619-aa57-c9b2c9a4aa29'::uuid, 2022, 'Quercus robur', 1009, 54.78836553796373, 9.444075995492044, ST_SetSRID(ST_MakePoint(9.444075995492044, 54.78836553796373), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7619-aa57-c9b2c9a4aa29'::uuid, 2022, 'Quercus robur', 1010, 54.787768612518455, 9.443996361187065, ST_SetSRID(ST_MakePoint(9.443996361187065, 54.787768612518455), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7619-aa57-c9b2c9a4aa29'::uuid, 2022, 'Quercus robur', 1010, 54.78826721846835, 9.443595915277797, ST_SetSRID(ST_MakePoint(9.443595915277797, 54.78826721846835), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7619-aa57-c9b2c9a4aa29'::uuid, 2022, 'Quercus robur', 1010, 54.78810634901004, 9.44443262510434, ST_SetSRID(ST_MakePoint(9.44443262510434, 54.78810634901004), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7619-aa57-c9b2c9a4aa29'::uuid, 2022, 'Quercus robur', 1010, 54.78815894101875, 9.443955271421238, ST_SetSRID(ST_MakePoint(9.443955271421238, 54.78815894101875), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7bc9-bc1c-a51e04ef632e'::uuid, 2023, 'Betula pendula', 1034, 54.801718, 9.444797, ST_SetSRID(ST_MakePoint(9.444797, 54.801718), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7bc9-bc1c-a51e04ef632e'::uuid, 2023, 'Betula pendula', 1035, 54.800797, 9.444271, ST_SetSRID(ST_MakePoint(9.444271, 54.800797), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7bc9-bc1c-a51e04ef632e'::uuid, 2023, 'Betula pendula', 1036, 54.801539, 9.446741, ST_SetSRID(ST_MakePoint(9.446741, 54.801539), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7bc9-bc1c-a51e04ef632e'::uuid, 2023, 'Betula pendula', 1037, 54.799796, 9.443927, ST_SetSRID(ST_MakePoint(9.443927, 54.799796), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7bc9-bc1c-a51e04ef632e'::uuid, 2023, 'Betula pendula', 1038, 54.804052, 9.447900, ST_SetSRID(ST_MakePoint(9.447900, 54.804052), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7493-a7a1-b194faa409d7'::uuid, 2022, 'Tilia intermedia', 1029, 54.775679885633636, 9.451171073968197, ST_SetSRID(ST_MakePoint(9.451171073968197, 54.775679885633636), 4326), 'bad', '', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7493-a7a1-b194faa409d7'::uuid, 2022, 'Tilia intermedia', 1027, 54.776120, 9.450891, ST_SetSRID(ST_MakePoint(9.450891, 54.776120), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7493-a7a1-b194faa409d7'::uuid, 2022, 'Tilia intermedia', 1028, 54.776058, 9.450311, ST_SetSRID(ST_MakePoint(9.450311, 54.776058), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7493-a7a1-b194faa409d7'::uuid, 2022, 'Tilia intermedia', 1029, 54.775709, 9.447762, ST_SetSRID(ST_MakePoint(9.447762, 54.775709), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7493-a7a1-b194faa409d7'::uuid, 2022, 'Tilia intermedia', 1026, 54.776145, 9.449785, ST_SetSRID(ST_MakePoint(9.449785, 54.776145), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7493-a7a1-b194faa409d7'::uuid, 2022, 'Tilia intermedia', 1026, 54.774986825456224, 9.451846963834953, ST_SetSRID(ST_MakePoint(9.451846963834953, 54.774986825456224), 4326), 'unknown', 'UNSER TEST BAUM', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-713d-8cae-4a52d3fd2967'::uuid, 2021, 'Fraxinus ornus Obelisk', 1021, 54.782630, 9.423792, ST_SetSRID(ST_MakePoint(9.423792, 54.782630), 4326), 'bad', '', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-713d-8cae-4a52d3fd2967'::uuid, 2021, 'Fraxinus ornus Obelisk', 1022, 54.782463, 9.423727, ST_SetSRID(ST_MakePoint(9.423727, 54.782463), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-713d-8cae-4a52d3fd2967'::uuid, 2021, 'Fraxinus ornus Obelisk', 1023, 54.782296, 9.424178, ST_SetSRID(ST_MakePoint(9.424178, 54.782296), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-713d-8cae-4a52d3fd2967'::uuid, 2022, 'Fraxinus ornus Obelisk', 1024, 54.782043, 9.424188, ST_SetSRID(ST_MakePoint(9.424188, 54.782043), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-713d-8cae-4a52d3fd2967'::uuid, 2022, 'Fraxinus ornus Obelisk', 1025, 54.781753, 9.424936, ST_SetSRID(ST_MakePoint(9.424936, 54.781753), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7706-a04c-50d6c926c7f8'::uuid, 2023, 'Acer platanoides Schwedleri', 1039, 54.806287, 9.423469, ST_SetSRID(ST_MakePoint(9.423469, 54.806287), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7706-a04c-50d6c926c7f8'::uuid, 2023, 'Acer platanoides Schwedleri', 1040, 54.807212, 9.422752, ST_SetSRID(ST_MakePoint(9.422752, 54.807212), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7706-a04c-50d6c926c7f8'::uuid, 2023, 'Acer platanoides Schwedleri', 1041, 54.806606, 9.422773, ST_SetSRID(ST_MakePoint(9.422773, 54.806606), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7706-a04c-50d6c926c7f8'::uuid, 2023, 'Acer platanoides Schwedleri', 1042, 54.807787, 9.422354, ST_SetSRID(ST_MakePoint(9.422354, 54.807787), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7963-8228-705689f884b9'::uuid, 2022, 'Acer platanoides Schwedleri', 1043, 54.796916, 9.421332, ST_SetSRID(ST_MakePoint(9.421332, 54.796916), 4326), 'good', '', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7963-8228-705689f884b9'::uuid, 2022, 'Acer platanoides Schwedleri', 1044, 54.797330, 9.419002, ST_SetSRID(ST_MakePoint(9.419002, 54.797330), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7963-8228-705689f884b9'::uuid, 2022, 'Acer platanoides Schwedleri', 1045, 54.797114, 9.417843, ST_SetSRID(ST_MakePoint(9.417843, 54.797114), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7be5-9a56-e2260bb1c9fb'::uuid, 2023, 'Populus cf. suaveolens', 1052, 54.7697451282801, 9.439562555553788, ST_SetSRID(ST_MakePoint(9.439562555553788, 54.7697451282801), 4326), 'bad', '', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7be5-9a56-e2260bb1c9fb'::uuid, 2023, 'Populus cf. suaveolens', 5555, 54.76932352301634, 9.441299419876234, ST_SetSRID(ST_MakePoint(9.441299419876234, 54.76932352301634), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7be5-9a56-e2260bb1c9fb'::uuid, 2023, 'Populus cf. suaveolens', 4444, 54.76915329290317, 9.441851862902759, ST_SetSRID(ST_MakePoint(9.441851862902759, 54.76915329290317), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7be5-9a56-e2260bb1c9fb'::uuid, 2023, 'Populus cf. suaveolens', 3333, 54.770304653528044, 9.44233994363491, ST_SetSRID(ST_MakePoint(9.44233994363491, 54.770304653528044), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7be5-9a56-e2260bb1c9fb'::uuid, 2023, 'Populus cf. suaveolens', 2222, 54.771043653535294, 9.440740347234932, ST_SetSRID(ST_MakePoint(9.440740347234932, 54.771043653535294), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7433-8d57-6258f9688c82'::uuid, 2024, 'Tilia x vulgaris', 1015, 54.76752937879732, 9.457372632491829, ST_SetSRID(ST_MakePoint(9.457372632491829, 54.76752937879732), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7433-8d57-6258f9688c82'::uuid, 2024, 'Tilia x vulgaris', 1015, 54.767564688002714, 9.453443844886783, ST_SetSRID(ST_MakePoint(9.453443844886783, 54.767564688002714), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7433-8d57-6258f9688c82'::uuid, 2024, 'Tilia x vulgaris', 1015, 54.765620842535895, 9.4575523046762, ST_SetSRID(ST_MakePoint(9.4575523046762, 54.765620842535895), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7433-8d57-6258f9688c82'::uuid, 2024, 'Tilia x vulgaris', 1015, 54.76725516472003, 9.456833592389275, ST_SetSRID(ST_MakePoint(9.456833592389275, 54.76725516472003), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7fc1-bc32-9c8885df5027'::uuid, 2023, 'Alnus glutinosa', 1030, 54.792472, 9.452773, ST_SetSRID(ST_MakePoint(9.452773, 54.792472), 4326), 'moderate', '', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7fc1-bc32-9c8885df5027'::uuid, 2023, 'Alnus glutinosa', 1031, 54.792782, 9.453795, ST_SetSRID(ST_MakePoint(9.453795, 54.792782), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7fc1-bc32-9c8885df5027'::uuid, 2023, 'Alnus glutinosa', 1032, 54.792837, 9.454880, ST_SetSRID(ST_MakePoint(9.454880, 54.792837), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7fc1-bc32-9c8885df5027'::uuid, 2023, 'Alnus glutinosa', 1033, 54.792435, 9.455545, ST_SetSRID(ST_MakePoint(9.455545, 54.792435), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), NULL, 2024, 'Carpinus betulus', 1015, 54.783739, 9.426823, ST_SetSRID(ST_MakePoint(9.426823, 54.783739), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), NULL, 2022, 'Carpinus betulus', 1017, 54.785981, 9.430668, ST_SetSRID(ST_MakePoint(9.430668, 54.785981), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), NULL, 2022, 'Carpinus betulus', 1018, 54.786269, 9.431758, ST_SetSRID(ST_MakePoint(9.431758, 54.786269), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), NULL, 2022, 'Carpinus betulus', 1019, 54.787339, 9.431701, ST_SetSRID(ST_MakePoint(9.431701, 54.787339), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), NULL, 2021, 'Carpinus betulus', 1020, 54.786656, 9.432243, ST_SetSRID(ST_MakePoint(9.432243, 54.786656), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), NULL, 2022, 'Populus cf. suaveolens', 1051, 54.769030, 9.429936, ST_SetSRID(ST_MakePoint(9.429936, 54.769030), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), NULL, 2021, 'Populus cf. suaveolens', 1053, 54.775237, 9.441981, ST_SetSRID(ST_MakePoint(9.441981, 54.775237), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), NULL, 2022, 'Populus cf. suaveolens', 1054, 54.780192, 9.459607, ST_SetSRID(ST_MakePoint(9.459607, 54.780192), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), NULL, 2021, 'Populus cf. suaveolens', 1055, 54.785043, 9.418210, ST_SetSRID(ST_MakePoint(9.418210, 54.785043), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), NULL, 2022, 'Fraxinus excelsior', 1056, 54.779697, 9.440026, ST_SetSRID(ST_MakePoint(9.440026, 54.779697), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), NULL, 2020, 'Fraxinus excelsior', 1057, 54.785147, 9.438903, ST_SetSRID(ST_MakePoint(9.438903, 54.785147), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), NULL, 2020, 'Fraxinus excelsior', 1058, 54.788205, 9.454699, ST_SetSRID(ST_MakePoint(9.454699, 54.788205), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), NULL, 2020, 'Fraxinus excelsior', 1059, 54.804054, 9.469544, ST_SetSRID(ST_MakePoint(9.469544, 54.804054), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), NULL, 2024, 'Acer pseudoplatanus', 1060, 54.813655, 9.477633, ST_SetSRID(ST_MakePoint(9.477633, 54.813655), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), NULL, 2024, 'Acer pseudoplatanus', 1061, 54.811001, 9.484132, ST_SetSRID(ST_MakePoint(9.484132, 54.811001), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt', '01980000-0000-7000-8000-000000000002'),
+  (uuidv7_from_timestamp(now()::timestamp), NULL, 2024, 'Acer pseudoplatanus', 1062, 54.790366, 9.472744, ST_SetSRID(ST_MakePoint(9.472744, 54.790366), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002');
 
 
-INSERT INTO trees (id, tree_cluster_id, sensor_id, planting_year, species, number, latitude, longitude, geometry, watering_status, description, last_watered, organization_id) VALUES
-  (uuidv7_from_timestamp(now()::timestamp), NULL, NULL, 2023, 'Quercus robur', 1065, 54.780394213230196, 9.417514801025392, ST_SetSRID(ST_MakePoint(9.417514801025392, 54.780394213230196), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt', '2025-02-14 12:34:56', '01980000-0000-7000-8000-000000000002');
+INSERT INTO trees (id, tree_cluster_id, planting_year, species, number, latitude, longitude, geometry, watering_status, description, last_watered, organization_id) VALUES
+  (uuidv7_from_timestamp(now()::timestamp), NULL, 2023, 'Quercus robur', 1065, 54.780394213230196, 9.417514801025392, ST_SetSRID(ST_MakePoint(9.417514801025392, 54.780394213230196), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt', '2025-02-14 12:34:56', '01980000-0000-7000-8000-000000000002');
+
+-- Tree ids are generated above, so the sensors find their tree by position.
+INSERT INTO sensor_attachments (sensor_id, module_key, target_kind, target_id)
+SELECT s.sensor_id, 'irrigation', 'tree', t.id
+FROM (VALUES
+  ('sensor-1', 54.82124518093376, 9.485702120628517),
+  ('sensor-2', 54.8215076622281, 9.487153277881877),
+  ('sensor-3', 54.78780993841013, 9.444052105200551),
+  ('sensor-4', 54.775679885633636, 9.451171073968197),
+  ('sensor-5', 54.782630, 9.423792),
+  ('sensor-6', 54.796916, 9.421332),
+  ('sensor-7', 54.7697451282801, 9.439562555553788),
+  ('sensor-8', 54.792472, 9.452773)
+) AS s (sensor_id, latitude, longitude)
+JOIN trees t ON t.latitude = s.latitude AND t.longitude = s.longitude;
 
 
 INSERT INTO sensor_data (id, sensor_id, data) VALUES
@@ -348,15 +377,15 @@ JOIN sensor_abilities a ON a.id = sma.sensor_ability_id
 WHERE sma.sensor_model_id = (SELECT id FROM sensor_models WHERE name = 'GES-1000');
 
 
-INSERT INTO watering_plans (id, date, description, status, distance, total_water_required, cancellation_note, organization_id) VALUES
-  ('019e3fcb-2a5c-70b8-b5c4-fb729bd9c877'::uuid, '2025-09-22', 'New watering plan for the west side of the city', 'planned', 63.0, 720.0, '', '01980000-0000-7000-8000-000000000002'),
-  ('019e3fcb-2a5d-7e82-afe5-626abd96274d'::uuid, '2025-08-03', 'New watering plan for the east side of the city', 'active', 63.0, 600.0, '', '01980000-0000-7000-8000-000000000002'),
-  ('019e3fcb-2a5d-7c0d-bbd9-7b3d84f5c5f3'::uuid, '2025-06-12', 'Very important watering plan due to no rainfall', 'finished', 63.0, 1320.0, '', '01980000-0000-7000-8000-000000000002'),
-  ('019e3fcb-2a5d-7e3b-a202-44acf2ffcb71'::uuid, '2025-06-10', 'New watering plan for the south side of the city', 'not_completed', 63.0, 600.0, '', '01980000-0000-7000-8000-000000000002'),
-  ('019e3fcb-2a5d-7e0d-840e-fe831360cfdb'::uuid, '2025-06-04', 'Canceled due to flood', 'canceled', 63.0, 600.0, 'The watering plan was cancelled due to various reasons.', '01980000-0000-7000-8000-000000000002');
+INSERT INTO operation_plans (id, module_key, date, description, status, distance, total_demand, cancellation_note, organization_id) VALUES
+  ('019e3fcb-2a5c-70b8-b5c4-fb729bd9c877'::uuid, 'irrigation', '2025-09-22', 'New watering plan for the west side of the city', 'planned', 63.0, 720.0, '', '01980000-0000-7000-8000-000000000002'),
+  ('019e3fcb-2a5d-7e82-afe5-626abd96274d'::uuid, 'irrigation', '2025-08-03', 'New watering plan for the east side of the city', 'active', 63.0, 600.0, '', '01980000-0000-7000-8000-000000000002'),
+  ('019e3fcb-2a5d-7c0d-bbd9-7b3d84f5c5f3'::uuid, 'irrigation', '2025-06-12', 'Very important watering plan due to no rainfall', 'finished', 63.0, 1320.0, '', '01980000-0000-7000-8000-000000000002'),
+  ('019e3fcb-2a5d-7e3b-a202-44acf2ffcb71'::uuid, 'irrigation', '2025-06-10', 'New watering plan for the south side of the city', 'not_completed', 63.0, 600.0, '', '01980000-0000-7000-8000-000000000002'),
+  ('019e3fcb-2a5d-7e0d-840e-fe831360cfdb'::uuid, 'irrigation', '2025-06-04', 'Canceled due to flood', 'canceled', 63.0, 600.0, 'The watering plan was cancelled due to various reasons.', '01980000-0000-7000-8000-000000000002');
 
 
-INSERT INTO vehicle_watering_plans (vehicle_id, watering_plan_id, role) VALUES
+INSERT INTO operation_plan_vehicles (vehicle_id, plan_id, role) VALUES
   ('019e3fcb-2a51-7e7e-9392-c4e6dfb61845'::uuid, '019e3fcb-2a5c-70b8-b5c4-fb729bd9c877'::uuid, 'transporter'),
   ('019e3fcb-2a52-7c3c-8ef9-faf356e13d59'::uuid, '019e3fcb-2a5c-70b8-b5c4-fb729bd9c877'::uuid, 'trailer'),
   ('019e3fcb-2a51-75fd-818b-913a7cd9cec1'::uuid, '019e3fcb-2a5d-7e82-afe5-626abd96274d'::uuid, 'transporter'),
@@ -428,7 +457,7 @@ INSERT INTO role_assignments (user_id, role_id) VALUES
 
 
 -- tbz.routen owns the TBZ watering plans.
-INSERT INTO user_watering_plans (user_id, watering_plan_id) VALUES
+INSERT INTO operation_plan_users (user_id, plan_id) VALUES
   ('01980000-0000-7000-8001-000000000014', '019e3fcb-2a5c-70b8-b5c4-fb729bd9c877'::uuid),
   ('01980000-0000-7000-8001-000000000014', '019e3fcb-2a5d-7e82-afe5-626abd96274d'::uuid),
   ('01980000-0000-7000-8001-000000000014', '019e3fcb-2a5d-7c0d-bbd9-7b3d84f5c5f3'::uuid),
@@ -436,15 +465,15 @@ INSERT INTO user_watering_plans (user_id, watering_plan_id) VALUES
   ('01980000-0000-7000-8001-000000000014', '019e3fcb-2a5d-7e0d-840e-fe831360cfdb'::uuid);
 
 
-INSERT INTO tree_cluster_watering_plans (tree_cluster_id, watering_plan_id, consumed_water) VALUES
-  ('019e3fcb-2a53-7fbf-948d-36836e4f42d1'::uuid, '019e3fcb-2a5c-70b8-b5c4-fb729bd9c877'::uuid, 0.0),
-  ('019e3fcb-2a53-7619-aa57-c9b2c9a4aa29'::uuid, '019e3fcb-2a5c-70b8-b5c4-fb729bd9c877'::uuid, 0.0),
-  ('019e3fcb-2a53-7bc9-bc1c-a51e04ef632e'::uuid, '019e3fcb-2a5d-7e82-afe5-626abd96274d'::uuid, 0.0),
-  ('019e3fcb-2a53-7fbf-948d-36836e4f42d1'::uuid, '019e3fcb-2a5d-7c0d-bbd9-7b3d84f5c5f3'::uuid, 100.0),
-  ('019e3fcb-2a53-7619-aa57-c9b2c9a4aa29'::uuid, '019e3fcb-2a5d-7c0d-bbd9-7b3d84f5c5f3'::uuid, 720.0),
-  ('019e3fcb-2a53-7bc9-bc1c-a51e04ef632e'::uuid, '019e3fcb-2a5d-7c0d-bbd9-7b3d84f5c5f3'::uuid, 40.0),
-  ('019e3fcb-2a53-7bc9-bc1c-a51e04ef632e'::uuid, '019e3fcb-2a5d-7e3b-a202-44acf2ffcb71'::uuid, 0.0),
-  ('019e3fcb-2a53-7bc9-bc1c-a51e04ef632e'::uuid, '019e3fcb-2a5d-7e0d-840e-fe831360cfdb'::uuid, 0.0);
+INSERT INTO operation_plan_stops (stop_id, plan_id, completed, amount) VALUES
+  ('019e3fcb-2a53-7fbf-948d-36836e4f42d1'::uuid, '019e3fcb-2a5c-70b8-b5c4-fb729bd9c877'::uuid, FALSE, NULL),
+  ('019e3fcb-2a53-7619-aa57-c9b2c9a4aa29'::uuid, '019e3fcb-2a5c-70b8-b5c4-fb729bd9c877'::uuid, FALSE, NULL),
+  ('019e3fcb-2a53-7bc9-bc1c-a51e04ef632e'::uuid, '019e3fcb-2a5d-7e82-afe5-626abd96274d'::uuid, FALSE, NULL),
+  ('019e3fcb-2a53-7fbf-948d-36836e4f42d1'::uuid, '019e3fcb-2a5d-7c0d-bbd9-7b3d84f5c5f3'::uuid, TRUE, 100.0),
+  ('019e3fcb-2a53-7619-aa57-c9b2c9a4aa29'::uuid, '019e3fcb-2a5d-7c0d-bbd9-7b3d84f5c5f3'::uuid, TRUE, 720.0),
+  ('019e3fcb-2a53-7bc9-bc1c-a51e04ef632e'::uuid, '019e3fcb-2a5d-7c0d-bbd9-7b3d84f5c5f3'::uuid, TRUE, 40.0),
+  ('019e3fcb-2a53-7bc9-bc1c-a51e04ef632e'::uuid, '019e3fcb-2a5d-7e3b-a202-44acf2ffcb71'::uuid, FALSE, NULL),
+  ('019e3fcb-2a53-7bc9-bc1c-a51e04ef632e'::uuid, '019e3fcb-2a5d-7e0d-840e-fe831360cfdb'::uuid, FALSE, NULL);
 
 
 -- Safety net: rebuild geometry from lat/lng columns in case a future row is added

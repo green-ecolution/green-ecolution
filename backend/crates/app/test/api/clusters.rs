@@ -808,18 +808,20 @@ async fn insert_tree_with(
     let id = uuid::Uuid::now_v7();
     sqlx::query!(
         r#"INSERT INTO trees (id, planting_year, species, number, latitude, longitude,
-                              geometry, description, sensor_id, watering_status, organization_id)
+                              geometry, description, watering_status, organization_id)
         VALUES ($1, 2020, 'Eiche', $2, 53.55, 9.99,
-                ST_SetSRID(ST_MakePoint(9.99, 53.55), 4326), 'Test', $3,
-                $4::text::watering_status, '01980000-0000-7000-8000-000000000001')"#,
+                ST_SetSRID(ST_MakePoint(9.99, 53.55), 4326), 'Test',
+                $3::text::watering_status, '01980000-0000-7000-8000-000000000001')"#,
         id,
         number,
-        sensor_id,
         watering_status,
     )
     .execute(&app.db_pool)
     .await
     .unwrap();
+    if let Some(sensor_id) = sensor_id {
+        app.attach_sensor_to_tree(sensor_id, id).await;
+    }
     id
 }
 
@@ -990,6 +992,14 @@ async fn list_cluster_markers_includes_cluster_with_trees() {
     assert_eq!(data.len(), 1);
     assert_eq!(data[0]["name"], "Stadtpark");
     assert_eq!(data[0]["tree_count"], 1);
+}
+
+/// Creates an empty cluster in the root organization.
+pub async fn create_cluster(app: &helpers::TestApp) -> uuid::Uuid {
+    create_cluster_named(app, "Testcluster")
+        .await
+        .parse()
+        .unwrap()
 }
 
 async fn create_cluster_named(app: &helpers::TestApp, name: &str) -> String {
@@ -1623,11 +1633,8 @@ async fn just_watered_before_is_scoped_to_one_organization() {
 /// at the same moment must fall due at different times.
 #[tokio::test]
 async fn the_sweep_expires_each_organization_on_its_own_ttl() {
-    use domain::settings::{
-        DefectStreak, InstanceDefaults, JustWateredTtl, MapBounds, MapView, SensorOfflineAfter,
-        WaterDemand, ZoomLevel,
-    };
-    use domain::shared::{coordinates::Coordinate, geo::BoundingBox};
+    use domain::settings::{JustWateredTtl, WaterDemand};
+    use server::irrigation::settings::{IrrigationDefaults, repository::PgIrrigationSettings};
     use std::sync::Arc;
 
     let app = spawn_app().await;
@@ -1641,34 +1648,15 @@ async fn the_sweep_expires_each_organization_on_its_own_ttl() {
     let due = create_just_watered_cluster(&app, short, watered_at).await;
     let not_due = create_just_watered_cluster(&app, long, watered_at).await;
 
-    // Only the org-specific values matter here; both organizations carry their
-    // own TTL, so the instance defaults are never consulted.
-    let defaults = InstanceDefaults {
+    // Both organizations carry their own TTL, so the defaults are never consulted.
+    let defaults = IrrigationDefaults {
         water_demand: WaterDemand::new(100.0).unwrap(),
         just_watered_ttl: JustWateredTtl::new(86_400).unwrap(),
-        sensor_offline_after: SensorOfflineAfter::new(86_400).unwrap(),
-        defect_streak: DefectStreak::new(3).unwrap(),
-        map_view: MapView::new(
-            Coordinate::new(54.78, 9.43).unwrap(),
-            Some(
-                MapBounds::new(
-                    BoundingBox::try_new(54.7, 9.3, 54.9, 9.6).unwrap(),
-                    ZoomLevel::new(13).unwrap(),
-                    ZoomLevel::new(18).unwrap(),
-                )
-                .unwrap(),
-            ),
-        )
-        .unwrap(),
     };
     let org_reader = Arc::new(
         server::infra::pg_organization::PgOrganizationRepository::new(app.db_pool.clone()),
     );
-    let settings = server::infra::pg_settings::PgSettingsRepository::new(
-        app.db_pool.clone(),
-        defaults,
-        org_reader.clone(),
-    );
+    let settings = PgIrrigationSettings::new(app.db_pool.clone(), defaults, org_reader.clone());
 
     let released = server::infra::watering_status_expiry::sweep_once(
         &app.state.cluster_service,
@@ -1739,4 +1727,125 @@ async fn list_clusters_reports_the_prefilter_total() {
 
     assert_eq!(body["pagination"]["total_records"], 1);
     assert_eq!(body["pagination"]["total_unfiltered"], 2);
+}
+
+#[tokio::test]
+async fn list_clusters_filters_by_repeated_id() {
+    let app = spawn_app().await;
+    let a = create_cluster(&app).await;
+    let b = create_cluster(&app).await;
+    create_cluster(&app).await;
+
+    let response = app.get(&format!("/api/v1/clusters?id={a}&id={b}")).await;
+    assert_eq!(response.status().as_u16(), 200);
+    let body: serde_json::Value = response.json().await.unwrap();
+
+    let mut ids: Vec<String> = body["data"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|c| c["id"].as_str().unwrap().to_string())
+        .collect();
+    ids.sort_unstable();
+    let mut expected = vec![a.to_string(), b.to_string()];
+    expected.sort_unstable();
+    assert_eq!(ids, expected);
+}
+
+async fn irrigation_plan(
+    app: &helpers::TestApp,
+    vehicle: uuid::Uuid,
+    stops: &[uuid::Uuid],
+) -> String {
+    let res = app
+        .post_json(
+            "/api/v1/plans",
+            &serde_json::json!({
+                "module": "irrigation",
+                "date": "2026-05-01T08:00:00Z",
+                "description": "Bewaesserung",
+                "transporter_id": vehicle,
+                "stops": stops,
+                "user_ids": []
+            }),
+        )
+        .await;
+    assert_eq!(res.status().as_u16(), 201);
+    let plan: serde_json::Value = res.json().await.unwrap();
+    plan["id"].as_str().unwrap().to_string()
+}
+
+async fn set_plan_status(
+    app: &helpers::TestApp,
+    plan_id: &str,
+    vehicle: uuid::Uuid,
+    stops: &[uuid::Uuid],
+    status: &str,
+    outcomes: serde_json::Value,
+) {
+    let res = app
+        .put_json(
+            &format!("/api/v1/plans/{plan_id}"),
+            &serde_json::json!({
+                "date": "2026-05-01T08:00:00Z",
+                "description": "Bewaesserung",
+                "status": status,
+                "transporter_id": vehicle,
+                "stops": stops,
+                "user_ids": [],
+                "cancellation_note": "",
+                "outcomes": outcomes
+            }),
+        )
+        .await;
+    assert_eq!(res.status().as_u16(), 200);
+}
+
+#[tokio::test]
+async fn a_deleted_cluster_disappears_from_planned_and_finished_plans() {
+    let app = spawn_app().await;
+    let vehicle =
+        crate::vehicle::create_vehicle_with(&app, serde_json::json!({ "water": 5000.0 })).await;
+    let (gone, kept) = (create_cluster(&app).await, create_cluster(&app).await);
+    let stops = [gone, kept];
+
+    let planned = irrigation_plan(&app, vehicle, &stops).await;
+    let finished = irrigation_plan(&app, vehicle, &stops).await;
+    set_plan_status(
+        &app,
+        &finished,
+        vehicle,
+        &stops,
+        "active",
+        serde_json::Value::Null,
+    )
+    .await;
+    set_plan_status(
+        &app,
+        &finished,
+        vehicle,
+        &stops,
+        "finished",
+        serde_json::json!([
+            { "stop": gone, "completed": true, "amount": 300.0 },
+            { "stop": kept, "completed": true, "amount": 200.0 }
+        ]),
+    )
+    .await;
+
+    let response = app.delete(&format!("/api/v1/clusters/{gone}")).await;
+    assert_eq!(response.status().as_u16(), 204);
+
+    for plan_id in [&planned, &finished] {
+        let plan: serde_json::Value = app
+            .get(&format!("/api/v1/plans/{plan_id}"))
+            .await
+            .json()
+            .await
+            .unwrap();
+        assert_eq!(plan["stops"], serde_json::json!([kept]));
+        let outcomes = plan["outcomes"].as_array().unwrap();
+        assert_eq!(outcomes.len(), 1);
+        assert_eq!(outcomes[0]["stop"], serde_json::json!(kept));
+    }
 }

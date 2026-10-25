@@ -62,13 +62,13 @@ const SensorCard: React.FC<SensorCardProps> = ({ sensor, query = '' }) => {
           <span className="flex items-center gap-2">
             <TreeDeciduous aria-hidden className="size-4" />
             <span className="sr-only">{t('card.treeSrLabel')}</span>
-            {sensor.linkedTreeId ? t('card.treeLinked') : t('card.treeUnlinked')}
+            {sensor.target ? t('card.treeLinked') : t('card.treeUnlinked')}
           </span>
-          {sensor.linkedClusterName && (
+          {sensor.targetLabel && (
             <span className="flex items-center gap-2">
               <FolderClosed aria-hidden className="size-4" />
               <span className="sr-only">{t('card.clusterSrLabel')}</span>
-              {highlightMatch(sensor.linkedClusterName, query)}
+              {highlightMatch(sensor.targetLabel, query)}
             </span>
           )}
           <span className="flex items-center gap-2">

@@ -1,4 +1,8 @@
+use std::collections::BTreeSet;
+
 use uuid::Uuid;
+
+use crate::capacity::CapacityKind;
 
 /// Raw DB-row mapping used exclusively for aggregate rehydration.
 #[doc(hidden)]
@@ -8,7 +12,7 @@ pub struct StartPointSnapshot {
     pub name: String,
     pub latitude: f64,
     pub longitude: f64,
-    pub watering_point: bool,
+    pub replenishes: BTreeSet<CapacityKind>,
     pub is_default: bool,
     pub organization_id: Uuid,
 }

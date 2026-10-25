@@ -4,7 +4,7 @@ import { getI18n } from '@/lib/i18n'
 // await the response body. Activate and re-link answer 422 only for a sensor
 // and tree in different organizations, so the status is unambiguous there.
 // Read lazily: the i18n instance isn't ready yet at module-import time.
-const orgMismatch = (): string => getI18n().t('errors:code.organization_mismatch.sensor_vs_tree')
+const orgMismatch = (): string => getI18n().t('errors:code.organization_mismatch.sensor_vs_target')
 
 export const resolveResponseStatus = (err: unknown): number | null => {
   if (err instanceof Response) return err.status

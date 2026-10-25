@@ -26,13 +26,15 @@ impl EvaluationRepository for PgEvaluationRepository {
         let visible_ids = visible.into_raw_ids();
         let rows = sqlx::query_as!(
             RegionEvaluation,
-            r#"SELECT r.name AS "name!", COUNT(DISTINCT twp.watering_plan_id)::int AS "watering_plan_count!: i32"
+            r#"SELECT r.name AS "name!", COUNT(DISTINCT ops.plan_id)::int AS "watering_plan_count!: i32"
             FROM regions r
             INNER JOIN tree_clusters tc ON r.id = tc.region_id
-            INNER JOIN tree_cluster_watering_plans twp ON tc.id = twp.tree_cluster_id
-            WHERE ($1::uuid[] IS NULL OR tc.organization_id = ANY($1))
+            INNER JOIN operation_plan_stops ops ON tc.id = ops.stop_id
+            INNER JOIN operation_plans op ON op.id = ops.plan_id
+            WHERE op.module_key = 'irrigation'
+              AND ($1::uuid[] IS NULL OR tc.organization_id = ANY($1))
             GROUP BY r.name
-            ORDER BY COUNT(DISTINCT twp.watering_plan_id) DESC"#,
+            ORDER BY COUNT(DISTINCT ops.plan_id) DESC"#,
             visible_ids.as_deref(),
         )
         .fetch_all(&self.pool)
@@ -51,14 +53,15 @@ impl EvaluationRepository for PgEvaluationRepository {
         let visible_plan_ids = visible_plan.into_raw_ids();
         let rows = sqlx::query_as!(
             VehicleEvaluation,
-            r#"SELECT v.number_plate AS "number_plate!", COUNT(vwp.watering_plan_id)::int AS "watering_plan_count!: i32"
+            r#"SELECT v.number_plate AS "number_plate!", COUNT(opv.plan_id)::int AS "watering_plan_count!: i32"
             FROM vehicles v
-            INNER JOIN vehicle_watering_plans vwp ON v.id = vwp.vehicle_id
-            INNER JOIN watering_plans wp ON wp.id = vwp.watering_plan_id
-            WHERE ($1::uuid[] IS NULL OR v.organization_id = ANY($1))
-              AND ($2::uuid[] IS NULL OR wp.organization_id = ANY($2))
+            INNER JOIN operation_plan_vehicles opv ON v.id = opv.vehicle_id
+            INNER JOIN operation_plans op ON op.id = opv.plan_id
+            WHERE op.module_key = 'irrigation'
+              AND ($1::uuid[] IS NULL OR v.organization_id = ANY($1))
+              AND ($2::uuid[] IS NULL OR op.organization_id = ANY($2))
             GROUP BY v.number_plate
-            ORDER BY COUNT(vwp.watering_plan_id) DESC"#,
+            ORDER BY COUNT(opv.plan_id) DESC"#,
             visible_vehicle_ids.as_deref(),
             visible_plan_ids.as_deref(),
         )
@@ -72,10 +75,12 @@ impl EvaluationRepository for PgEvaluationRepository {
     async fn total_consumed_water(&self, visible: Visibility) -> Result<f64, RepositoryError> {
         let visible_ids = visible.into_raw_ids();
         let total = sqlx::query_scalar!(
-            r#"SELECT COALESCE(SUM(tcwp.consumed_water), 0)::float8 AS "total!"
-            FROM tree_cluster_watering_plans tcwp
-            INNER JOIN tree_clusters tc ON tc.id = tcwp.tree_cluster_id
-            WHERE ($1::uuid[] IS NULL OR tc.organization_id = ANY($1))"#,
+            r#"SELECT COALESCE(SUM(ops.amount), 0)::float8 AS "total!"
+            FROM operation_plan_stops ops
+            INNER JOIN operation_plans op ON op.id = ops.plan_id
+            INNER JOIN tree_clusters tc ON tc.id = ops.stop_id
+            WHERE op.module_key = 'irrigation'
+              AND ($1::uuid[] IS NULL OR tc.organization_id = ANY($1))"#,
             visible_ids.as_deref(),
         )
         .fetch_one(&self.pool)
@@ -89,9 +94,10 @@ impl EvaluationRepository for PgEvaluationRepository {
         let visible_ids = visible.into_raw_ids();
         let count = sqlx::query_scalar!(
             r#"SELECT COUNT(*) AS "count!: i64"
-            FROM user_watering_plans uwp
-            INNER JOIN watering_plans wp ON wp.id = uwp.watering_plan_id
-            WHERE ($1::uuid[] IS NULL OR wp.organization_id = ANY($1))"#,
+            FROM operation_plan_users opu
+            INNER JOIN operation_plans op ON op.id = opu.plan_id
+            WHERE op.module_key = 'irrigation'
+              AND ($1::uuid[] IS NULL OR op.organization_id = ANY($1))"#,
             visible_ids.as_deref(),
         )
         .fetch_one(&self.pool)

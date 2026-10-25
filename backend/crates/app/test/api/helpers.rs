@@ -222,6 +222,32 @@ impl TestApp {
             .expect("test fixture updates watering status");
     }
 
+    /// Attaches the sensor to the tree directly, as rows the application
+    /// would have written; no events fire.
+    pub async fn attach_sensor_to_tree(&self, sensor_id: &str, tree_id: Uuid) {
+        sqlx::query(
+            "INSERT INTO sensor_attachments (sensor_id, module_key, target_kind, target_id)
+             VALUES ($1, 'irrigation', 'tree', $2)",
+        )
+        .bind(sensor_id)
+        .bind(tree_id)
+        .execute(&self.db_pool)
+        .await
+        .expect("test fixture attaches a sensor");
+    }
+
+    /// The sensor attached to the tree, read straight from the table.
+    pub async fn sensor_of_tree(&self, tree_id: Uuid) -> Option<String> {
+        sqlx::query_scalar(
+            "SELECT sensor_id FROM sensor_attachments
+             WHERE module_key = 'irrigation' AND target_kind = 'tree' AND target_id = $1",
+        )
+        .bind(tree_id)
+        .fetch_optional(&self.db_pool)
+        .await
+        .expect("test fixture reads an attachment")
+    }
+
     pub async fn set_last_watered(&self, tree_id: &str, watered_at: &str) {
         sqlx::query("UPDATE trees SET last_watered = $2::timestamptz WHERE id = $1::uuid")
             .bind(tree_id)
@@ -353,6 +379,12 @@ async fn template_database() -> &'static str {
 
 /// Modules whose migrations every test database carries. The test module is
 /// included so any test can mount it without migrating a database of its own.
+pub fn irrigation_catalog() -> std::sync::Arc<domain::authorization::ResourceCatalog> {
+    std::sync::Arc::new(
+        domain::authorization::ResourceCatalog::new(server::irrigation::resources::ALL).unwrap(),
+    )
+}
+
 pub fn template_modules() -> Vec<Box<dyn server::module::Module>> {
     let mut modules = app::modules::registered();
     modules.push(Box::new(crate::test_module::TestModule::new(
@@ -391,8 +423,13 @@ pub async fn try_spawn_app_with_modules_and_auth(
     settings.info.update_check_repo = None;
     let container = shared_container().await;
     let (_db_name, db_pool) = create_test_database(container.host_port).await;
+    // Core features (plans, sensor targets) hang off irrigation, so every test
+    // application runs it.
+    let mut all_modules = app::modules::registered();
+    all_modules.extend(modules);
     let app =
-        Application::build_with_modules(db_pool.clone(), "127.0.0.1:0", settings, modules).await?;
+        Application::build_with_modules(db_pool.clone(), "127.0.0.1:0", settings, all_modules)
+            .await?;
     let port = app.port();
     let state = app.state();
     tokio::spawn(app.run_until_stopped());
@@ -406,11 +443,18 @@ pub async fn try_spawn_app_with_modules_and_auth(
 
 async fn create_test_database(host_port: u16) -> (String, PgPool) {
     let template = template_database().await;
+    clone_database(host_port, Some(template)).await
+}
+
+async fn clone_database(host_port: u16, template: Option<&str>) -> (String, PgPool) {
     let db_name = format!("test_{}", Uuid::new_v4().simple());
+    let template_clause = template
+        .map(|t| format!(r#" TEMPLATE "{t}""#))
+        .unwrap_or_default();
 
     let mut admin = admin_connection(host_port).await;
     admin
-        .execute(format!(r#"CREATE DATABASE "{db_name}" TEMPLATE "{template}""#).as_str())
+        .execute(format!(r#"CREATE DATABASE "{db_name}"{template_clause}"#).as_str())
         .await
         .expect("failed to create test database");
 
@@ -423,6 +467,42 @@ async fn create_test_database(host_port: u16) -> (String, PgPool) {
         .expect("failed to connect to test database");
 
     (db_name, pool)
+}
+
+/// Version of the last migration before stage 3 of the module epic.
+pub const BEFORE_STAGE_3: i64 = 20261024100000;
+
+/// Builds a database that stops at `cutoff`, lets the test seed data in the
+/// old schema, then applies everything after it and starts the app.
+pub async fn spawn_app_on_migrated_until<F>(cutoff: i64, seed: F) -> TestApp
+where
+    F: AsyncFnOnce(&PgPool),
+{
+    let container = shared_container().await;
+    let (_db_name, pool) = clone_database(container.host_port, None).await;
+
+    let modules = template_modules();
+    app::migrations::migrator_until(&modules, cutoff)
+        .await
+        .expect("early migrator")
+        .run(&pool)
+        .await
+        .expect("early migrations");
+    seed(&pool).await;
+    app::migrations::migrator(&modules)
+        .await
+        .expect("migrator")
+        .run(&pool)
+        .await
+        .expect("remaining migrations");
+
+    let mut settings = Settings::for_test(disabled_auth_settings());
+    settings.info.health_check_interval_secs = 1;
+    settings.info.update_check_repo = None;
+    // The start point list answers 503 while routing is off; listing never calls the optimizer.
+    settings.routing.enabled = true;
+    settings.routing.streamlet_url = "http://127.0.0.1:1".to_string();
+    start_app_on_pool(pool, settings).await
 }
 
 // `issuer_url` must still match `/realms/<name>` even when `enabled = false`
@@ -542,10 +622,10 @@ pub async fn install_plugin(app: &TestApp, slug: &str, permissions: &[&str]) -> 
 /// "Depot Nord" the routing tests select by name (lat≈54.81).
 async fn seed_routing_depots(pool: &sqlx::PgPool) {
     sqlx::query(
-        r#"INSERT INTO depots (id, name, latitude, longitude, geometry, watering_point, is_default, organization_id) VALUES
-           (gen_random_uuid(), 'Betriebshof Schleswiger Straße', 54.76879146396569, 9.434803531218018, ST_SetSRID(ST_MakePoint(9.434803531218018, 54.76879146396569), 4326), TRUE, TRUE, '01980000-0000-7000-8000-000000000001'),
-           (gen_random_uuid(), 'Klärwerk Kielseng', 54.80518123149477, 9.447145106541388, ST_SetSRID(ST_MakePoint(9.447145106541388, 54.80518123149477), 4326), TRUE, FALSE, '01980000-0000-7000-8000-000000000001'),
-           (gen_random_uuid(), 'Depot Nord', 54.81, 9.45, ST_SetSRID(ST_MakePoint(9.45, 54.81), 4326), FALSE, FALSE, '01980000-0000-7000-8000-000000000001')"#,
+        r#"INSERT INTO depots (id, name, latitude, longitude, geometry, replenishes, is_default, organization_id) VALUES
+           (gen_random_uuid(), 'Betriebshof Schleswiger Straße', 54.76879146396569, 9.434803531218018, ST_SetSRID(ST_MakePoint(9.434803531218018, 54.76879146396569), 4326), '{water}', TRUE, '01980000-0000-7000-8000-000000000001'),
+           (gen_random_uuid(), 'Klärwerk Kielseng', 54.80518123149477, 9.447145106541388, ST_SetSRID(ST_MakePoint(9.447145106541388, 54.80518123149477), 4326), '{water}', FALSE, '01980000-0000-7000-8000-000000000001'),
+           (gen_random_uuid(), 'Depot Nord', 54.81, 9.45, ST_SetSRID(ST_MakePoint(9.45, 54.81), 4326), '{}', FALSE, '01980000-0000-7000-8000-000000000001')"#,
     )
     .execute(pool)
     .await
@@ -619,7 +699,10 @@ pub async fn seed_user_with_permissions_and_id(
 async fn spawn_with_settings(settings: Settings) -> TestApp {
     let container = shared_container().await;
     let (_db_name, db_pool) = create_test_database(container.host_port).await;
+    start_app_on_pool(db_pool, settings).await
+}
 
+async fn start_app_on_pool(db_pool: PgPool, settings: Settings) -> TestApp {
     let app = Application::build_with_pool(db_pool.clone(), "127.0.0.1:0", settings)
         .await
         .expect("failed to build application");

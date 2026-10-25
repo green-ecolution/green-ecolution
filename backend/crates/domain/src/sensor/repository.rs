@@ -9,6 +9,7 @@ use crate::{
         data::{SensorReading, SensorReadingDraft, SensorReadingView},
     },
     shared::pagination::{Page, Pagination, SearchPage},
+    target::TargetRef,
 };
 
 #[derive(Debug, Clone)]
@@ -34,6 +35,8 @@ pub struct LastPlausibleValue {
 pub trait SensorReader: Send + Sync {
     async fn by_id(&self, id: &SensorId) -> Result<Sensor, RepositoryError>;
     async fn by_ids(&self, ids: &[SensorId]) -> Result<Vec<Sensor>, RepositoryError>;
+    /// The sensor attached to `target`, if any.
+    async fn by_target(&self, target: &TargetRef) -> Result<Option<Sensor>, RepositoryError>;
 
     /// Returns [`SensorView`] — includes audit timestamps and latest reading.
     async fn view_by_id(&self, id: &SensorId) -> Result<SensorView, RepositoryError>;

@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM sensor_attachments WHERE sensor_id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "3744463823e33bb89e91eb29d29a66ad1534b5df6ff730ff3d39e2b555155a20"
+}

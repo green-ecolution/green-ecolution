@@ -17,6 +17,7 @@ import useGeolocation from '@/hooks/useGeolocation'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useCallback, useEffect, useReducer } from 'react'
+import { treeTarget } from '@/lib/targets'
 
 export const Route = createFileRoute('/_protected/sensors/new/')({
   component: NewSensor,
@@ -61,7 +62,7 @@ function NewSensor() {
     mutationFn: () =>
       sensorApi.activateSensor({
         sensorId: state.sensorId!,
-        activateSensorRequest: { treeId: state.selectedTreeId! },
+        activateSensorRequest: { target: treeTarget(state.selectedTreeId!) },
       }),
     onMutate: () => dispatch({ type: 'submissionStart' }),
     onSuccess: async () => {

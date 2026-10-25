@@ -1,0 +1,29 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT v.number_plate AS \"number_plate!\", COUNT(opv.plan_id)::int AS \"watering_plan_count!: i32\"\n            FROM vehicles v\n            INNER JOIN operation_plan_vehicles opv ON v.id = opv.vehicle_id\n            INNER JOIN operation_plans op ON op.id = opv.plan_id\n            WHERE op.module_key = 'irrigation'\n              AND ($1::uuid[] IS NULL OR v.organization_id = ANY($1))\n              AND ($2::uuid[] IS NULL OR op.organization_id = ANY($2))\n            GROUP BY v.number_plate\n            ORDER BY COUNT(opv.plan_id) DESC",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "number_plate!",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "watering_plan_count!: i32",
+        "type_info": "Int4"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "UuidArray",
+        "UuidArray"
+      ]
+    },
+    "nullable": [
+      false,
+      null
+    ]
+  },
+  "hash": "dbfe9f27148ae1de015fba8268427764bebd97d62214c8c7e5fe7091f4316d94"
+}

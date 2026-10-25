@@ -17,7 +17,7 @@ async fn app_with_test_module() -> (crate::helpers::TestApp, Arc<Probe>) {
     (app, probe)
 }
 
-async fn switch(
+pub async fn switch(
     app: &crate::helpers::TestApp,
     org: Uuid,
     enabled: Option<bool>,
@@ -33,7 +33,7 @@ async fn switch(
 async fn a_registered_module_is_listed_and_off_by_default() {
     let (app, _) = app_with_test_module().await;
     let body: serde_json::Value = app.get("/api/v1/modules").await.json().await.unwrap();
-    assert_eq!(body["modules"], json!([KEY]));
+    assert_eq!(body["modules"], json!(["irrigation", KEY]));
 
     let org: serde_json::Value = app
         .get(&format!("/api/v1/organizations/{ROOT_ORG_ID}/modules"))
@@ -41,9 +41,14 @@ async fn a_registered_module_is_listed_and_off_by_default() {
         .json()
         .await
         .unwrap();
-    assert_eq!(org["modules"][0]["key"], KEY);
-    assert_eq!(org["modules"][0]["enabled"], false);
-    assert_eq!(org["modules"][0]["origin"], "default");
+    let entry = org["modules"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|m| m["key"] == KEY)
+        .unwrap();
+    assert_eq!(entry["enabled"], false);
+    assert_eq!(entry["origin"], "default");
 }
 
 #[tokio::test]
@@ -86,9 +91,15 @@ async fn activation_at_the_root_reaches_three_levels_down() {
         .json()
         .await
         .unwrap();
-    assert_eq!(body["modules"][0]["enabled"], true);
-    assert_eq!(body["modules"][0]["origin"], "inherited");
-    assert_eq!(body["modules"][0]["source"]["id"], ROOT_ORG_ID);
+    let entry = body["modules"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|m| m["key"] == KEY)
+        .unwrap();
+    assert_eq!(entry["enabled"], true);
+    assert_eq!(entry["origin"], "inherited");
+    assert_eq!(entry["source"]["id"], ROOT_ORG_ID);
 }
 
 #[tokio::test]

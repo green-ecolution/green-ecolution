@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM vehicle_capacities WHERE vehicle_id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "01a79b30f23bdf90e3126f18e3565c7d37afd26191191ead759ae15b90cb2bca"
+}

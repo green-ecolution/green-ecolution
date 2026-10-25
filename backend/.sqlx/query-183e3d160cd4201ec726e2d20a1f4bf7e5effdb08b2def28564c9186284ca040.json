@@ -1,0 +1,34 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT DISTINCT ON (setting_key)\n                      setting_key AS \"setting_key!\", changed_at, changed_by\n               FROM organization_settings_history\n               WHERE organization_id = $1\n                 AND setting_key IN ('water_demand', 'just_watered_ttl')\n               ORDER BY setting_key, changed_at DESC, id DESC",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "setting_key!",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "changed_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 2,
+        "name": "changed_by",
+        "type_info": "Uuid"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "183e3d160cd4201ec726e2d20a1f4bf7e5effdb08b2def28564c9186284ca040"
+}

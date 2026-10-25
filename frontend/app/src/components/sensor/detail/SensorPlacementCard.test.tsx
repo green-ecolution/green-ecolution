@@ -32,6 +32,7 @@ const tree = {
   number: '312',
   species: 'Acer platanoides',
   plantingYear: 2018,
+  treeClusterId: 'cluster-1' as string | null,
 }
 
 const cluster = {
@@ -44,10 +45,9 @@ const cluster = {
 const sensorWith = (overrides: Partial<Sensor>) =>
   ({
     id: 'eui-test',
-    coordinate: { latitude: 54.78, longitude: 9.43 },
-    linkedTreeId: 'tree-1',
-    linkedClusterId: 'cluster-1',
-    linkedClusterName: 'Friesischer Berg',
+    location: { latitude: 54.78, longitude: 9.43 },
+    target: { module: 'irrigation', kind: 'tree', id: 'tree-1' },
+    targetLabel: 'Friesischer Berg',
     ...overrides,
   }) as Sensor
 
@@ -90,14 +90,20 @@ describe('SensorPlacementCard', () => {
     expect(screen.getAllByRole('link')[0]).toHaveTextContent('Friesischer Berg')
   })
 
-  it('says so when the tree belongs to no watering group', () => {
-    respondWith()
+  it('does not claim the tree has no group while the tree is still loading', () => {
+    useQueryMock.mockImplementation(() => ({ data: undefined, isLoading: true, isError: false }))
 
-    render(
-      <SensorPlacementCard
-        sensor={sensorWith({ linkedClusterId: null, linkedClusterName: null })}
-      />,
-    )
+    render(<SensorPlacementCard sensor={sensorWith({ targetLabel: null })} />)
+
+    expect(
+      screen.queryByText('Der Baum gehört zu keiner Bewässerungsgruppe.'),
+    ).not.toBeInTheDocument()
+  })
+
+  it('says so when the tree belongs to no watering group', () => {
+    respondWith({ treeData: { ...tree, treeClusterId: null } })
+
+    render(<SensorPlacementCard sensor={sensorWith({ targetLabel: '312' })} />)
 
     expect(screen.getByText('Der Baum gehört zu keiner Bewässerungsgruppe.')).toBeInTheDocument()
     expect(screen.getAllByRole('link')).toHaveLength(1)
@@ -108,7 +114,7 @@ describe('SensorPlacementCard', () => {
 
     render(
       <SensorPlacementCard
-        sensor={sensorWith({ linkedTreeId: null, linkedClusterId: null, coordinate: null })}
+        sensor={sensorWith({ target: null, targetLabel: null, location: null })}
       />,
     )
 

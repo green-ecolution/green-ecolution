@@ -39,7 +39,7 @@ async fn create_transporter(app: &crate::helpers::TestApp) -> serde_json::Value 
     let body = serde_json::json!({
         "number_plate": format!("FL RT {}", &uuid::Uuid::now_v7().simple().to_string()[..4]),
         "description": "Routing-Transporter",
-        "water_capacity": 2000.0,
+        "capacities": { "water": 2000.0 },
         "model": "Unimog",
         "availability": "available",
         "type": "transporter",
@@ -80,7 +80,8 @@ fn plan_body(transporter_id: &str, cluster_id: &str) -> serde_json::Value {
         "date": "2026-08-15T06:00:00+00:00",
         "description": "Routing-Plan",
         "transporter_id": transporter_id,
-        "tree_cluster_ids": [cluster_id],
+        "module": "irrigation",
+        "stops": [cluster_id],
         "user_ids": []
     })
 }
@@ -93,24 +94,17 @@ async fn create_plan_computes_route_metrics_and_geometry() {
     let tid = transporter["id"].as_str().unwrap();
     let cid = create_cluster_with_tree(&app).await;
 
-    let resp = app
-        .post_json("/api/v1/watering-plans", &plan_body(tid, &cid))
-        .await;
+    let resp = app.post_json("/api/v1/plans", &plan_body(tid, &cid)).await;
     assert_eq!(resp.status().as_u16(), 201);
     let plan: serde_json::Value = resp.json().await.unwrap();
     assert_eq!(plan["distance"], 12500.0);
     assert_eq!(plan["duration"], 3600.0);
     assert_eq!(plan["refill_count"], 1);
-    assert_eq!(plan["total_water_required"], 80.0); // 1 tree × 80 l
+    assert_eq!(plan["total_demand"], 80.0); // 1 tree × 80 l
     let plan_id = plan["id"].as_str().unwrap();
-    assert_eq!(
-        plan["gpx_url"],
-        format!("/v1/watering-plans/{plan_id}/route/gpx")
-    );
+    assert_eq!(plan["gpx_url"], format!("/v1/plans/{plan_id}/route/gpx"));
 
-    let route_resp = app
-        .get(&format!("/api/v1/watering-plans/{plan_id}/route"))
-        .await;
+    let route_resp = app.get(&format!("/api/v1/plans/{plan_id}/route")).await;
     assert_eq!(route_resp.status().as_u16(), 200);
     let route: serde_json::Value = route_resp.json().await.unwrap();
     assert_eq!(route["geometry"]["type"], "LineString");
@@ -120,11 +114,11 @@ async fn create_plan_computes_route_metrics_and_geometry() {
     assert!((coords[0][0].as_f64().unwrap() - 9.4347).abs() < 1e-4);
     assert!((coords[0][1].as_f64().unwrap() - 54.7687).abs() < 1e-4);
 
-    let refill_points = route["refill_points"].as_array().unwrap();
-    assert_eq!(refill_points.len(), 1);
-    assert_eq!(refill_points[0]["name"], "Betriebshof Schleswiger Straße");
-    assert!((refill_points[0]["lat"].as_f64().unwrap() - 54.76879146396569).abs() < 1e-9);
-    assert!((refill_points[0]["lon"].as_f64().unwrap() - 9.434803531218018).abs() < 1e-9);
+    let station_visits = route["station_visits"].as_array().unwrap();
+    assert_eq!(station_visits.len(), 1);
+    assert_eq!(station_visits[0]["name"], "Betriebshof Schleswiger Straße");
+    assert!((station_visits[0]["lat"].as_f64().unwrap() - 54.76879146396569).abs() < 1e-9);
+    assert!((station_visits[0]["lon"].as_f64().unwrap() - 9.434803531218018).abs() < 1e-9);
 }
 
 #[tokio::test]
@@ -135,9 +129,7 @@ async fn streamlet_failure_does_not_block_plan_creation() {
     let tid = transporter["id"].as_str().unwrap();
     let cid = create_cluster_with_tree(&app).await;
 
-    let resp = app
-        .post_json("/api/v1/watering-plans", &plan_body(tid, &cid))
-        .await;
+    let resp = app.post_json("/api/v1/plans", &plan_body(tid, &cid)).await;
     assert_eq!(resp.status().as_u16(), 201);
     let plan: serde_json::Value = resp.json().await.unwrap();
     assert_eq!(plan["distance"], 0.0);
@@ -152,16 +144,12 @@ async fn route_endpoint_returns_404_without_route() {
     let tid = transporter["id"].as_str().unwrap();
     let cid = create_cluster_with_tree(&app).await;
 
-    let resp = app
-        .post_json("/api/v1/watering-plans", &plan_body(tid, &cid))
-        .await;
+    let resp = app.post_json("/api/v1/plans", &plan_body(tid, &cid)).await;
     assert_eq!(resp.status().as_u16(), 201);
     let plan: serde_json::Value = resp.json().await.unwrap();
     let plan_id = plan["id"].as_str().unwrap();
 
-    let route_resp = app
-        .get(&format!("/api/v1/watering-plans/{plan_id}/route"))
-        .await;
+    let route_resp = app.get(&format!("/api/v1/plans/{plan_id}/route")).await;
     assert_eq!(route_resp.status().as_u16(), 404);
 }
 
@@ -175,8 +163,8 @@ async fn preview_route_returns_route_response() {
 
     let resp = app
         .post_json(
-            "/api/v1/watering-plans/route/preview",
-            &serde_json::json!({ "cluster_ids": [cid], "transporter_id": tid }),
+            "/api/v1/plans/route/preview",
+            &serde_json::json!({ "module": "irrigation", "stops": [cid], "transporter_id": tid }),
         )
         .await;
     assert_eq!(resp.status().as_u16(), 200);
@@ -184,13 +172,13 @@ async fn preview_route_returns_route_response() {
     assert_eq!(route["distance"], 12500.0);
     assert_eq!(route["geometry"]["type"], "LineString");
 
-    let refill_points = route["refill_points"].as_array().unwrap();
-    assert_eq!(refill_points.len(), 1);
-    assert_eq!(refill_points[0]["name"], "Betriebshof Schleswiger Straße");
+    let station_visits = route["station_visits"].as_array().unwrap();
+    assert_eq!(station_visits.len(), 1);
+    assert_eq!(station_visits[0]["name"], "Betriebshof Schleswiger Straße");
 }
 
 #[tokio::test]
-async fn route_without_refill_stops_has_empty_refill_points() {
+async fn route_without_refill_stops_has_empty_station_visits() {
     let mut body = streamlet_ok();
     body["routes"][0]["stops"] = serde_json::json!([
         {"VehicleStart": 1}, {"Customer": 1}, {"Depot": 1}
@@ -201,19 +189,15 @@ async fn route_without_refill_stops_has_empty_refill_points() {
     let tid = transporter["id"].as_str().unwrap();
     let cid = create_cluster_with_tree(&app).await;
 
-    let resp = app
-        .post_json("/api/v1/watering-plans", &plan_body(tid, &cid))
-        .await;
+    let resp = app.post_json("/api/v1/plans", &plan_body(tid, &cid)).await;
     assert_eq!(resp.status().as_u16(), 201);
     let plan: serde_json::Value = resp.json().await.unwrap();
     let plan_id = plan["id"].as_str().unwrap();
 
-    let route_resp = app
-        .get(&format!("/api/v1/watering-plans/{plan_id}/route"))
-        .await;
+    let route_resp = app.get(&format!("/api/v1/plans/{plan_id}/route")).await;
     assert_eq!(route_resp.status().as_u16(), 200);
     let route: serde_json::Value = route_resp.json().await.unwrap();
-    assert_eq!(route["refill_points"].as_array().unwrap().len(), 0);
+    assert_eq!(route["station_visits"].as_array().unwrap().len(), 0);
 }
 
 #[tokio::test]
@@ -224,15 +208,11 @@ async fn gpx_download_renders_track_from_geometry() {
     let tid = transporter["id"].as_str().unwrap();
     let cid = create_cluster_with_tree(&app).await;
 
-    let resp = app
-        .post_json("/api/v1/watering-plans", &plan_body(tid, &cid))
-        .await;
+    let resp = app.post_json("/api/v1/plans", &plan_body(tid, &cid)).await;
     let plan: serde_json::Value = resp.json().await.unwrap();
     let plan_id = plan["id"].as_str().unwrap();
 
-    let gpx_resp = app
-        .get(&format!("/api/v1/watering-plans/{plan_id}/route/gpx"))
-        .await;
+    let gpx_resp = app.get(&format!("/api/v1/plans/{plan_id}/route/gpx")).await;
     assert_eq!(gpx_resp.status().as_u16(), 200);
     assert_eq!(
         gpx_resp.headers()["content-type"].to_str().unwrap(),
@@ -252,16 +232,12 @@ async fn editing_plan_clears_stale_route_when_recompute_fails() {
     let cid = create_cluster_with_tree(&app).await;
 
     // Create plan — first solve succeeds, plan gets route metrics.
-    let resp = app
-        .post_json("/api/v1/watering-plans", &plan_body(tid, &cid))
-        .await;
+    let resp = app.post_json("/api/v1/plans", &plan_body(tid, &cid)).await;
     assert_eq!(resp.status().as_u16(), 201);
     let plan: serde_json::Value = resp.json().await.unwrap();
     assert_eq!(plan["distance"], 12500.0);
     let plan_id = plan["id"].as_str().unwrap();
-    let route_resp = app
-        .get(&format!("/api/v1/watering-plans/{plan_id}/route"))
-        .await;
+    let route_resp = app.get(&format!("/api/v1/plans/{plan_id}/route")).await;
     assert_eq!(route_resp.status().as_u16(), 200);
 
     // Make the next solve call fail.
@@ -278,21 +254,19 @@ async fn editing_plan_clears_stale_route_when_recompute_fails() {
         "description": "Edited",
         "status": "planned",
         "transporter_id": tid,
-        "tree_cluster_ids": [cid],
+        "stops": [cid],
         "user_ids": [],
         "cancellation_note": ""
     });
     let update_resp = app
-        .put_json(&format!("/api/v1/watering-plans/{plan_id}"), &update_body)
+        .put_json(&format!("/api/v1/plans/{plan_id}"), &update_body)
         .await;
     assert_eq!(update_resp.status().as_u16(), 200);
     let updated: serde_json::Value = update_resp.json().await.unwrap();
     assert_eq!(updated["distance"], 0.0, "stale distance must be cleared");
 
     // Route endpoint must return 404 — no geometry stored.
-    let route_after = app
-        .get(&format!("/api/v1/watering-plans/{plan_id}/route"))
-        .await;
+    let route_after = app.get(&format!("/api/v1/plans/{plan_id}/route")).await;
     assert_eq!(route_after.status().as_u16(), 404);
 }
 
@@ -301,7 +275,7 @@ async fn route_endpoint_returns_503_when_routing_disabled() {
     let app = spawn_app().await;
 
     let response = app
-        .get("/api/v1/watering-plans/0190a8e9-7c4f-7000-8000-000000000000/route")
+        .get("/api/v1/plans/0190a8e9-7c4f-7000-8000-000000000000/route")
         .await;
 
     assert_eq!(response.status().as_u16(), 503);
@@ -342,7 +316,7 @@ async fn plan_with_start_point_name_routes_from_that_depot() {
 
     let mut body = plan_body(tid, &cid);
     body["start_point_name"] = serde_json::Value::String("Depot Nord".to_string());
-    let resp = app.post_json("/api/v1/watering-plans", &body).await;
+    let resp = app.post_json("/api/v1/plans", &body).await;
     assert_eq!(resp.status().as_u16(), 201);
     let plan: serde_json::Value = resp.json().await.unwrap();
     assert_eq!(plan["start_point_name"], "Depot Nord");
@@ -370,9 +344,10 @@ async fn preview_with_start_point_name_uses_that_depot() {
 
     let resp = app
         .post_json(
-            "/api/v1/watering-plans/route/preview",
+            "/api/v1/plans/route/preview",
             &serde_json::json!({
-                "cluster_ids": [cid],
+                "module": "irrigation",
+                "stops": [cid],
                 "transporter_id": tid,
                 "start_point_name": "Depot Nord"
             }),
@@ -393,6 +368,21 @@ async fn preview_with_start_point_name_uses_that_depot() {
 }
 
 #[tokio::test]
+async fn start_point_without_replenishes_is_rejected() {
+    let streamlet = mock_streamlet(ResponseTemplate::new(200).set_body_json(streamlet_ok())).await;
+    let app = spawn_app_with_routing(&streamlet.uri()).await;
+
+    let resp = app
+        .post_json(
+            "/api/v1/routing/start-points",
+            &serde_json::json!({"name": "Depot Alt", "lat": 54.75, "lon": 9.43, "watering_point": true}),
+        )
+        .await;
+
+    assert_eq!(resp.status().as_u16(), 422);
+}
+
+#[tokio::test]
 async fn create_and_list_start_point() {
     let streamlet = mock_streamlet(ResponseTemplate::new(200).set_body_json(streamlet_ok())).await;
     let app = spawn_app_with_routing(&streamlet.uri()).await;
@@ -400,14 +390,14 @@ async fn create_and_list_start_point() {
     let resp = app
         .post_json(
             "/api/v1/routing/start-points",
-            &serde_json::json!({"name": "Depot Süd", "lat": 54.75, "lon": 9.43, "watering_point": true}),
+            &serde_json::json!({"name": "Depot Süd", "lat": 54.75, "lon": 9.43, "replenishes": ["water"]}),
         )
         .await;
     assert_eq!(resp.status().as_u16(), 201);
     let created: serde_json::Value = resp.json().await.unwrap();
     assert_eq!(created["name"], "Depot Süd");
     assert_eq!(created["is_default"], false);
-    assert_eq!(created["watering_point"], true);
+    assert_eq!(created["replenishes"], serde_json::json!(["water"]));
 
     let list = app.get("/api/v1/routing/start-points").await;
     let arr: serde_json::Value = list.json().await.unwrap();
@@ -590,16 +580,14 @@ async fn set_default_unknown_id_returns_404() {
 }
 
 #[tokio::test]
-async fn refill_stations_sent_to_streamlet_are_only_watering_points() {
+async fn refill_stations_sent_to_streamlet_are_only_stations_that_replenish_water() {
     let streamlet = mock_streamlet(ResponseTemplate::new(200).set_body_json(streamlet_ok())).await;
     let app = spawn_app_with_routing(&streamlet.uri()).await;
     let transporter = create_transporter(&app).await;
     let tid = transporter["id"].as_str().unwrap();
     let cid = create_cluster_with_tree(&app).await;
 
-    let resp = app
-        .post_json("/api/v1/watering-plans", &plan_body(tid, &cid))
-        .await;
+    let resp = app.post_json("/api/v1/plans", &plan_body(tid, &cid)).await;
     assert_eq!(resp.status().as_u16(), 201);
 
     let requests = streamlet.received_requests().await.unwrap();
@@ -609,13 +597,13 @@ async fn refill_stations_sent_to_streamlet_are_only_watering_points() {
     assert_eq!(
         refills.len(),
         2,
-        "only the two watering_point depots are refill stations"
+        "only the two depots that replenish water are refill stations"
     );
     assert!(
         refills
             .iter()
             .all(|r| (r["location"]["lat"].as_f64().unwrap() - 54.81).abs() > 0.001),
-        "Depot Nord (watering_point=false) must not be a refill station"
+        "Depot Nord (replenishes nothing) must not be a refill station"
     );
 }
 
@@ -629,9 +617,10 @@ async fn preview_with_unknown_start_point_name_falls_back_to_default() {
 
     let resp = app
         .post_json(
-            "/api/v1/watering-plans/route/preview",
+            "/api/v1/plans/route/preview",
             &serde_json::json!({
-                "cluster_ids": [cid],
+                "module": "irrigation",
+                "stops": [cid],
                 "transporter_id": tid,
                 "start_point_name": "Kein solcher Punkt"
             }),

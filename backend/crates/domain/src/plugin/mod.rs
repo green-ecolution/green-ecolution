@@ -19,7 +19,10 @@ use std::collections::BTreeSet;
 use url::Url;
 
 use crate::{
-    Id, authorization::Permission, organization::Organization, shared::error::ValidationError,
+    Id,
+    authorization::{Permission, ResourceCatalog},
+    organization::Organization,
+    shared::error::ValidationError,
 };
 
 pub use capability::DeviceCapability;
@@ -169,7 +172,7 @@ pub struct PluginDraft {
 
 impl Plugin {
     #[doc(hidden)]
-    pub fn reconstitute(snap: PluginSnapshot) -> Self {
+    pub fn reconstitute(snap: PluginSnapshot, catalog: &ResourceCatalog) -> Self {
         let frontend = match snap.frontend_mode.as_str() {
             "external" => PluginFrontend::External(
                 snap.frontend_target
@@ -199,8 +202,8 @@ impl Plugin {
             description: snap.description,
             slug: PluginSlug::reconstitute(snap.slug),
             organization_id: Id::new(snap.organization_id),
-            permissions: parse_persisted(&snap.permissions),
-            required_permissions: parse_persisted(&snap.required_permissions),
+            permissions: parse_persisted(&snap.permissions, catalog),
+            required_permissions: parse_persisted(&snap.required_permissions, catalog),
             device_capabilities: snap
                 .device_capabilities
                 .iter()
@@ -287,15 +290,20 @@ impl Plugin {
 /// Permissions come out of a `TEXT[]` column the schema does not constrain.
 /// An unparsable entry is dropped rather than panicking: it can only mean the
 /// catalog shrank, and losing a grant is safer than refusing to load the row.
-fn parse_persisted(raw: &[String]) -> BTreeSet<Permission> {
-    raw.iter().filter_map(|p| p.parse().ok()).collect()
+fn parse_persisted(raw: &[String], catalog: &ResourceCatalog) -> BTreeSet<Permission> {
+    raw.iter()
+        .filter_map(|p| catalog.parse_permission(p).ok())
+        .collect()
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::authorization::{Action, Resource};
+    use crate::authorization::{Action, ResourceKey};
     use claims::{assert_err, assert_ok};
+
+    // Irrigation's key; moves out with the plugin tree ingest in stage 4.
+    const TREE: ResourceKey = ResourceKey::declare("tree");
 
     fn fixed() -> Plugin {
         Plugin {
@@ -304,7 +312,7 @@ mod tests {
             description: None,
             slug: PluginSlug::new("tbz-baumkataster").unwrap(),
             organization_id: Id::new_v7(),
-            permissions: BTreeSet::from([Permission::new(Resource::Tree, Action::Create)]),
+            permissions: BTreeSet::from([Permission::new(TREE, Action::Create)]),
             required_permissions: BTreeSet::new(),
             device_capabilities: BTreeSet::new(),
             frontend: PluginFrontend::None,
@@ -396,7 +404,7 @@ mod tests {
     #[test]
     fn replace_permissions_swaps_the_set() {
         let mut p = fixed();
-        let target = BTreeSet::from([Permission::new(Resource::Tree, Action::Delete)]);
+        let target = BTreeSet::from([Permission::new(TREE, Action::Delete)]);
         p.replace_permissions(target.clone());
         assert_eq!(p.permissions(), &target);
     }
@@ -404,17 +412,14 @@ mod tests {
     #[test]
     fn required_permissions_are_independent_of_permissions() {
         let mut p = fixed();
-        p.replace_required_permissions(BTreeSet::from([Permission::new(
-            Resource::Tree,
-            Action::Read,
-        )]));
+        p.replace_required_permissions(BTreeSet::from([Permission::new(TREE, Action::Read)]));
         assert!(
             p.permissions()
-                .contains(&Permission::new(Resource::Tree, Action::Create))
+                .contains(&Permission::new(TREE, Action::Create))
         );
         assert!(
             !p.required_permissions()
-                .contains(&Permission::new(Resource::Tree, Action::Create))
+                .contains(&Permission::new(TREE, Action::Create))
         );
     }
 
@@ -422,7 +427,7 @@ mod tests {
     fn reconstitute_drops_unknown_permission_strings() {
         let mut snap = snapshot_of(&fixed());
         snap.permissions = vec!["tree:read".into(), "does_not_exist:read".into()];
-        let p = Plugin::reconstitute(snap);
+        let p = Plugin::reconstitute(snap, &ResourceCatalog::new([TREE]).unwrap());
         assert_eq!(p.permissions().len(), 1);
     }
 

@@ -111,7 +111,7 @@ async fn activate_sensor(app: &TestApp, sensor_id: &str, tree_id: &str) {
     let resp = app
         .post_json(
             &format!("/api/v1/sensors/{sensor_id}/activate"),
-            &json!({ "tree_id": tree_id }),
+            &crate::sensors::tree_target(tree_id),
         )
         .await;
     assert_eq!(resp.status(), 200);
@@ -178,6 +178,8 @@ async fn transfer_bound_sensor_directly_returns_409() {
         )
         .await;
     assert_eq!(resp.status(), 409);
+    let body: serde_json::Value = resp.json().await.unwrap();
+    assert_eq!(body["code"], "conflict.sensor_bound_to_target");
 }
 
 #[tokio::test]
@@ -237,7 +239,7 @@ fn vehicle_payload(plate: &str, org: &str) -> serde_json::Value {
     json!({
         "number_plate": plate,
         "description": "Testfahrzeug",
-        "water_capacity": 5000.0,
+        "capacities": { "water": 5000.0 },
         "model": "MAN TGS",
         "availability": "available",
         "type": "transporter",
@@ -279,7 +281,7 @@ async fn transfer_vehicle_returns_204_and_changes_organization() {
 }
 
 fn start_point_payload(name: &str, lat: f64, lon: f64, org: &str) -> serde_json::Value {
-    json!({ "name": name, "lat": lat, "lon": lon, "watering_point": false, "organization_id": org })
+    json!({ "name": name, "lat": lat, "lon": lon, "replenishes": [], "organization_id": org })
 }
 
 #[tokio::test]

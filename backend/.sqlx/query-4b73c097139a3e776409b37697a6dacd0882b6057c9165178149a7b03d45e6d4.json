@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM operation_plan_stops WHERE plan_id = $1 AND stop_id <> ALL($2::uuid[])",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "UuidArray"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "4b73c097139a3e776409b37697a6dacd0882b6057c9165178149a7b03d45e6d4"
+}

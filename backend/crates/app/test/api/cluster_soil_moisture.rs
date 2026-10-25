@@ -37,19 +37,20 @@ async fn insert_sensor_tree(app: &TestApp, cluster_id: Uuid, sensor_id: &str) {
     .execute(&app.db_pool)
     .await
     .unwrap();
+    let tree_id = Uuid::now_v7();
     sqlx::query!(
-        r#"INSERT INTO trees (id, tree_cluster_id, sensor_id, planting_year, species, number,
+        r#"INSERT INTO trees (id, tree_cluster_id, planting_year, species, number,
                               latitude, longitude, geometry, organization_id)
-           VALUES ($1, $2, $3, 2020, 'Stieleiche', $4, 54.79, 9.43,
+           VALUES ($1, $2, 2020, 'Stieleiche', $3, 54.79, 9.43,
                    ST_SetSRID(ST_MakePoint(9.43, 54.79), 4326), '01980000-0000-7000-8000-000000000001')"#,
-        Uuid::now_v7(),
+        tree_id,
         cluster_id,
-        sensor_id,
         format!("T-{sensor_id}"),
     )
     .execute(&app.db_pool)
     .await
     .unwrap();
+    app.attach_sensor_to_tree(sensor_id, tree_id).await;
 }
 
 async fn soil_moisture_ability_id(app: &TestApp, depth_cm: i32) -> Uuid {
@@ -222,7 +223,7 @@ async fn cluster_without_sensor_data_returns_empty_series() {
 }
 
 #[tokio::test]
-async fn only_finished_watering_plans_appear_as_events() {
+async fn only_finished_plans_appear_as_events() {
     let app = spawn_app().await;
     let cluster_id = create_cluster(&app, "Uu").await;
     let finished_id = Uuid::now_v7();
@@ -232,8 +233,8 @@ async fn only_finished_watering_plans_appear_as_events() {
         (planned_id, "planned", "2026-07-15"),
     ] {
         sqlx::query(
-            "INSERT INTO watering_plans (id, date, status, description, organization_id)
-             VALUES ($1, $2::date, $3::watering_plan_status, '', '01980000-0000-7000-8000-000000000001')",
+            "INSERT INTO operation_plans (id, module_key, date, status, description, organization_id)
+             VALUES ($1, 'irrigation', $2::date, $3::operation_plan_status, '', '01980000-0000-7000-8000-000000000001')",
         )
         .bind(id)
         .bind(date.parse::<NaiveDate>().unwrap())
@@ -242,8 +243,8 @@ async fn only_finished_watering_plans_appear_as_events() {
         .await
         .unwrap();
         sqlx::query(
-            "INSERT INTO tree_cluster_watering_plans (tree_cluster_id, watering_plan_id, consumed_water)
-             VALUES ($1, $2, 1800.0)",
+            "INSERT INTO operation_plan_stops (stop_id, plan_id, completed, amount)
+             VALUES ($1, $2, TRUE, 1800.0)",
         )
         .bind(cluster_id)
         .bind(id)

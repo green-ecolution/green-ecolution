@@ -54,7 +54,7 @@ const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, query = '' }) => {
           <span className="flex items-center gap-2">
             <Droplets aria-hidden className="size-4" />
             <span className="sr-only">{t('card.waterCapacitySrLabel')}</span>
-            {t('card.waterCapacityValue', { value: vehicle.waterCapacity })}
+            {t('card.waterCapacityValue', { value: vehicle.capacities.water ?? 0 })}
           </span>
           {/* Secondary fact, dropped as the card narrows so the row never wraps. */}
           <span className="hidden items-center gap-2 @min-[30rem]:flex">

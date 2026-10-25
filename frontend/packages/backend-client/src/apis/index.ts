@@ -3,8 +3,10 @@
 export * from './CommentsApi';
 export * from './EvaluationApi';
 export * from './InfoApi';
+export * from './IrrigationApi';
 export * from './ModulesApi';
 export * from './OrganizationsApi';
+export * from './PlansApi';
 export * from './PluginsApi';
 export * from './RegionsApi';
 export * from './RolesApi';
@@ -15,4 +17,3 @@ export * from './TreeClustersApi';
 export * from './TreesApi';
 export * from './UsersApi';
 export * from './VehiclesApi';
-export * from './WateringPlansApi';

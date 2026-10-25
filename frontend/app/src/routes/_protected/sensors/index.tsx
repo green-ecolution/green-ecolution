@@ -5,36 +5,21 @@ import EntityList from '@/components/general/EntityList'
 import SensorCard from '@/components/general/cards/SensorCard'
 import SensorListToolbar from '@/components/sensor/list/SensorListToolbar'
 import { useSensorListSearch } from '@/components/sensor/list/useSensorListSearch'
+import { useSensorList } from '@/components/sensor/list/useSensorList'
 import {
   ACTIVATED_STATUSES,
   legacyPreparedRedirect,
   sensorFilterSchema,
-  statusesForView,
-  type SensorListSearch,
+  sensorListParams,
   type SensorListView,
 } from '@/components/sensor/list/sensorListView'
-import { useQuery, keepPreviousData } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { createFileRoute, Link, redirect } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { Zap } from 'lucide-react'
 import { SensorStatus } from '@green-ecolution/backend-client'
 import { pendingLoading, prefetch } from '@/lib/router'
 import { Can } from '@/lib/auth/Can'
-
-export const PER_PAGE = 25
-
-const listParams = (search: SensorListSearch) => ({
-  page: search.page,
-  perPage: PER_PAGE,
-  q: search.q,
-  status: statusesForView(search.view ?? 'activated', search.statuses),
-  modelId: search.modelIds,
-  dataHealth: search.dataHealth,
-  hasTree: search.hasTree,
-  clusterId: search.clusterIds,
-  sort: search.sort,
-  order: search.order,
-})
 
 const viewTotalParams = (statuses: SensorStatus[]) => ({ page: 1, perPage: 1, status: statuses })
 
@@ -48,14 +33,7 @@ function Sensors() {
   const search = Route.useSearch()
   const view = search.view ?? 'activated'
   const { resetFilters, setView } = useSensorListSearch()
-  const {
-    data: sensorsRes,
-    isPlaceholderData,
-    error,
-  } = useQuery({
-    ...sensorQueries.list(listParams(search)),
-    placeholderData: keepPreviousData,
-  })
+  const { result: sensorsRes, isPlaceholderData, error } = useSensorList(search)
   if (error) throw error
 
   const activatedTotal = useViewTotal(ACTIVATED_STATUSES)
@@ -174,6 +152,14 @@ export const Route = createFileRoute('/_protected/sensors/')({
     order: search.order,
   }),
   loader: ({ deps, context: { queryClient } }) => {
-    prefetch(queryClient, sensorQueries.list(listParams(deps)), 'sensorQueries.list')
+    if (deps.clusterIds?.length) {
+      prefetch(
+        queryClient,
+        sensorQueries.clusterSensorIds(deps.clusterIds),
+        'sensorQueries.clusterSensorIds',
+      )
+      return
+    }
+    prefetch(queryClient, sensorQueries.list(sensorListParams(deps)), 'sensorQueries.list')
   },
 })

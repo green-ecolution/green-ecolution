@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use domain::{
-    authorization::{Action, Permission, Resource},
+    authorization::{Action, Permission, ResourceKey},
     plugin::Plugin,
     sensor::{SensorDraft, SensorView},
     sensor_model::SensorModel,
@@ -28,7 +28,7 @@ impl PluginSensorIngestService {
     async fn require(&self, plugin: &Plugin, action: Action) -> Result<(), ServiceError> {
         let ctx = plugin_access_context(plugin, &self.authorization).await?;
         if ctx.allows_in(
-            Permission::new(Resource::Sensor, action),
+            Permission::new(ResourceKey::SENSOR, action),
             plugin.organization_id(),
         ) {
             Ok(())

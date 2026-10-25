@@ -2,7 +2,10 @@ use std::sync::Arc;
 
 use chrono::{DateTime, Utc};
 
-use crate::service::event_bus::{EventHandler, EventHandlerError};
+use crate::{
+    irrigation,
+    service::event_bus::{EventHandler, EventHandlerError},
+};
 use domain::{
     Id,
     cluster::{TreeCluster, TreeClusterReader, TreeClusterWriter},
@@ -10,10 +13,10 @@ use domain::{
     tree::{TreeReader, TreeWriter},
 };
 
-/// Flags a finished watering plan's clusters and their trees as
+/// Flags the clusters a finished irrigation plan completed, and their trees, as
 /// [`domain::shared::watering_status::WateringStatus::JustWatered`].
 ///
-/// Only `WateringPlanFinished` triggers this; starting, canceling or failing a
+/// Only `OperationPlanFinished` triggers this; starting, canceling or failing a
 /// plan leaves the status alone. The status is released again by
 /// `ClusterService::expire_just_watered` once the grace period passes.
 pub struct ClusterJustWateredHandler {
@@ -64,16 +67,28 @@ impl EventHandler for ClusterJustWateredHandler {
     }
 
     async fn handle(&self, event: &DomainEvent) -> Result<Vec<DomainEvent>, EventHandlerError> {
-        let DomainEvent::WateringPlanFinished {
-            cluster_ids,
+        let DomainEvent::OperationPlanFinished {
+            module,
             finished_at,
+            outcomes,
             ..
         } = event
         else {
             return Ok(vec![]);
         };
+        if module.as_str() != irrigation::KEY {
+            return Ok(vec![]);
+        }
 
-        for cluster_id in cluster_ids {
+        let cluster_ids: Vec<Id<TreeCluster>> = outcomes
+            .iter()
+            .filter(|o| o.completed)
+            .map(|o| Id::new(o.stop.value()))
+            .collect();
+        self.cluster_writer
+            .mark_last_watered(&cluster_ids, *finished_at)
+            .await?;
+        for cluster_id in &cluster_ids {
             if let Err(error) = self.mark_cluster(*cluster_id, *finished_at).await {
                 tracing::warn!(%error, cluster.id = %cluster_id, "skipping just-watered update");
             }

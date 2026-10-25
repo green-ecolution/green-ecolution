@@ -4,6 +4,7 @@ import type { ReactNode } from 'react'
 import { DataHealth, SensorStatus, SensorTypeResponse } from '@green-ecolution/backend-client'
 import SensorCard from './SensorCard'
 import type { Sensor } from '@/api/backendApi'
+import { treeTarget } from '@/lib/targets'
 
 vi.mock('@tanstack/react-router', () => ({
   Link: ({ children }: { children: ReactNode }) => <a href="/">{children}</a>,
@@ -32,7 +33,7 @@ describe('SensorCard', () => {
   it('names the watering group of the linked tree', () => {
     render(
       <SensorCard
-        sensor={sensorFixture({ linkedTreeId: 'tree-1', linkedClusterName: 'Hafenspitze' })}
+        sensor={sensorFixture({ target: treeTarget('tree-1'), targetLabel: 'Hafenspitze' })}
         query=""
       />,
     )
@@ -43,7 +44,7 @@ describe('SensorCard', () => {
   it('marks the search match in the group name', () => {
     render(
       <SensorCard
-        sensor={sensorFixture({ linkedTreeId: 'tree-1', linkedClusterName: 'Hafenspitze' })}
+        sensor={sensorFixture({ target: treeTarget('tree-1'), targetLabel: 'Hafenspitze' })}
         query="hafen"
       />,
     )
@@ -52,7 +53,12 @@ describe('SensorCard', () => {
   })
 
   it('omits the group line for a sensor whose tree is in no group', () => {
-    render(<SensorCard sensor={sensorFixture({ linkedTreeId: 'tree-1' })} query="" />)
+    render(
+      <SensorCard
+        sensor={sensorFixture({ target: treeTarget('tree-1'), targetLabel: null })}
+        query=""
+      />,
+    )
 
     expect(screen.queryByText(/Bewässerungsgruppe/)).not.toBeInTheDocument()
   })

@@ -1,0 +1,69 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT id, subject_type, subject_id, target_module, target_kind, author_id, body, edited_at\n               FROM comments\n               WHERE subject_type = $1 AND subject_id = $2\n                 AND target_module IS NOT DISTINCT FROM $3\n                 AND target_kind IS NOT DISTINCT FROM $4\n               ORDER BY id DESC\n               LIMIT $5 OFFSET $6",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "subject_type",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "subject_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 3,
+        "name": "target_module",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "target_kind",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "author_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 6,
+        "name": "body",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 7,
+        "name": "edited_at",
+        "type_info": "Timestamp"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Uuid",
+        "Text",
+        "Text",
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      true,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "e00855777c76e0f2e2a1adf54f5f8d4b3c95acc95a43401d4a9b0044715fbf7e"
+}

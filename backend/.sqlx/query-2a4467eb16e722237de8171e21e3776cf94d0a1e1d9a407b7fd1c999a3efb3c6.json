@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO operation_plan_vehicles (vehicle_id, plan_id, role) VALUES ($1, $2, 'trailer')",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "2a4467eb16e722237de8171e21e3776cf94d0a1e1d9a407b7fd1c999a3efb3c6"
+}
