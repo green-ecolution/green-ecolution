@@ -14,7 +14,7 @@
 
 import { mapValues } from '../runtime';
 /**
- * WGS-84 coordinate exposed in sensor responses (derived from the linked tree).
+ * WGS-84 coordinate exposed in sensor responses (derived from the target it is attached to).
  * @export
  * @interface SensorCoordinate
  */

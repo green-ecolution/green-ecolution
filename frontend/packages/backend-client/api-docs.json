@@ -4517,7 +4517,7 @@
           "Regions"
         ],
         "summary": "List all regions",
-        "description": "Returns a paginated list of all geographic regions used to organize tree clusters.",
+        "description": "Returns a paginated list of all geographic regions used to group the objects modules place on the map.",
         "operationId": "listRegions",
         "parameters": [
           {
@@ -6111,7 +6111,7 @@
           "Sensors"
         ],
         "summary": "Transfer a sensor's ownership to another organization",
-        "description": "Moves an unbound sensor to a different owning organization. Requires `sensor:update` in both the source and target organization. A sensor bound to a tree must be transferred via its tree instead.",
+        "description": "Moves an unbound sensor to a different owning organization. Requires `sensor:update` in both the source and target organization. A sensor bound to a target moves with that target instead.",
         "operationId": "transferSensor",
         "parameters": [
           {
@@ -6159,7 +6159,7 @@
             }
           },
           "409": {
-            "description": "Sensor is bound to a tree (code `conflict.sensor_bound_to_tree`)",
+            "description": "Sensor is bound to a target (code `conflict.sensor_bound_to_target`)",
             "content": {
               "application/json": {
                 "schema": {
@@ -9328,7 +9328,7 @@
       },
       "CommentResponse": {
         "type": "object",
-        "description": "A single comment on a tree cluster or a watering plan.",
+        "description": "A single comment on a module object or a plan.",
         "required": [
           "id",
           "author_id",
@@ -9826,7 +9826,7 @@
             "type": "array",
             "items": {
               "type": "object",
-              "description": "A single comment on a tree cluster or a watering plan.",
+              "description": "A single comment on a module object or a plan.",
               "required": [
                 "id",
                 "author_id",
@@ -10032,7 +10032,7 @@
             "type": "array",
             "items": {
               "type": "object",
-              "description": "A geographic region used to group tree clusters.",
+              "description": "A geographic region used to group the objects modules place on the map.",
               "required": [
                 "id",
                 "name"
@@ -12602,7 +12602,7 @@
       },
       "RegionResponse": {
         "type": "object",
-        "description": "A geographic region used to group tree clusters.",
+        "description": "A geographic region used to group the objects modules place on the map.",
         "required": [
           "id",
           "name"
@@ -12877,7 +12877,7 @@
       },
       "SensorCoordinate": {
         "type": "object",
-        "description": "WGS-84 coordinate exposed in sensor responses (derived from the linked tree).",
+        "description": "WGS-84 coordinate exposed in sensor responses (derived from the target it is attached to).",
         "required": [
           "latitude",
           "longitude"
@@ -15819,7 +15819,7 @@
   "tags": [
     {
       "name": "Regions",
-      "description": "Manage geographic regions used to group tree clusters. Regions define administrative boundaries for organizing green spaces."
+      "description": "Manage geographic regions used to group the objects modules place on the map. Regions define administrative boundaries for organizing green spaces."
     },
     {
       "name": "Vehicles",
@@ -15827,7 +15827,7 @@
     },
     {
       "name": "Sensors",
-      "description": "Access LoRaWAN sensor data for soil moisture monitoring. Sensors are linked to individual trees and provide real-time environmental readings."
+      "description": "Access LoRaWAN sensor data for soil moisture monitoring. Sensors are attached to module objects and provide real-time environmental readings."
     },
     {
       "name": "Plans",
@@ -15859,7 +15859,7 @@
     },
     {
       "name": "Comments",
-      "description": "Free-text comments on tree clusters and plans. Reading follows the parent resource's read permission, writing its update permission."
+      "description": "Free-text comments on module objects and plans. Reading follows the parent resource's read permission, writing its update permission."
     },
     {
       "name": "Modules",

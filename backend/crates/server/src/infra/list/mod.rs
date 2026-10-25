@@ -104,8 +104,8 @@ impl<'a> ListSpec<'a> {
     /// order a reader expects among ties — a name, say — that is not the
     /// primary key. Without it, ties on the sort column fall back straight to
     /// the primary key's own order, which for a UUIDv7 key is creation order
-    /// — rarely what a reader expects among, say, several clusters tied at
-    /// the same moisture level.
+    /// — rarely what a reader expects among, say, several rows tied at the
+    /// same status.
     pub fn tiebreak(mut self, expr: &'a str) -> Self {
         self.tiebreak = Some(expr);
         self

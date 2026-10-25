@@ -107,7 +107,7 @@ impl From<&SensorReadingView> for SensorDataResponse {
     }
 }
 
-/// WGS-84 coordinate exposed in sensor responses (derived from the linked tree).
+/// WGS-84 coordinate exposed in sensor responses (derived from the target it is attached to).
 #[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct SensorCoordinate {
     #[schema(example = 54.7937, minimum = -90.0, maximum = 90.0)]

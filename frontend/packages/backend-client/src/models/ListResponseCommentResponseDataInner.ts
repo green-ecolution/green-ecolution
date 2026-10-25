@@ -14,7 +14,7 @@
 
 import { mapValues } from '../runtime';
 /**
- * A single comment on a tree cluster or a watering plan.
+ * A single comment on a module object or a plan.
  * @export
  * @interface ListResponseCommentResponseDataInner
  */

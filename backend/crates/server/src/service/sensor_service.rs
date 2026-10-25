@@ -180,8 +180,8 @@ impl SensorService {
         self.view_by_id(id).await
     }
 
-    /// Attaches without activating, as the tree form does with a prepared
-    /// sensor.
+    /// Attaches without activating, as a module's edit form does with a
+    /// prepared sensor.
     #[tracing::instrument(level = "debug", skip_all, fields(sensor.id = %id))]
     pub async fn attach(&self, id: &SensorId, target: TargetRef) -> Result<(), ServiceError> {
         let mut sensor = self.reader.by_id(id).await?;

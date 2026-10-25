@@ -82,7 +82,7 @@ export class RegionsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a paginated list of all geographic regions used to organize tree clusters.
+     * Returns a paginated list of all geographic regions used to group the objects modules place on the map.
      * List all regions
      */
     async listRegionsRaw(requestParameters: ListRegionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListResponseRegionResponse>> {
@@ -112,7 +112,7 @@ export class RegionsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a paginated list of all geographic regions used to organize tree clusters.
+     * Returns a paginated list of all geographic regions used to group the objects modules place on the map.
      * List all regions
      */
     async listRegions(requestParameters: ListRegionsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ListResponseRegionResponse> {

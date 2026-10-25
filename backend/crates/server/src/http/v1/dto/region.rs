@@ -1,6 +1,6 @@
 use domain::region::Region;
 
-/// A geographic region used to group tree clusters.
+/// A geographic region used to group the objects modules place on the map.
 #[derive(Debug, serde::Serialize, utoipa::ToSchema)]
 #[schema(example = json!({"id": "0190a8e9-7c4f-7000-8000-000000000000", "name": "Stadtpark Flensburg"}))]
 pub struct RegionResponse {

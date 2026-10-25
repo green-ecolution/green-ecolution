@@ -30,7 +30,7 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
     tag = "Regions",
     operation_id = "listRegions",
     summary = "List all regions",
-    description = "Returns a paginated list of all geographic regions used to organize tree clusters.",
+    description = "Returns a paginated list of all geographic regions used to group the objects modules place on the map.",
     params(PaginationParams),
     responses(
         (status = 200, description = "Paginated list of regions", body = ListResponse<RegionResponse>),

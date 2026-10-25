@@ -732,7 +732,7 @@ export class SensorsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Moves an unbound sensor to a different owning organization. Requires `sensor:update` in both the source and target organization. A sensor bound to a tree must be transferred via its tree instead.
+     * Moves an unbound sensor to a different owning organization. Requires `sensor:update` in both the source and target organization. A sensor bound to a target moves with that target instead.
      * Transfer a sensor\'s ownership to another organization
      */
     async transferSensorRaw(requestParameters: TransferSensorRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
@@ -772,7 +772,7 @@ export class SensorsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Moves an unbound sensor to a different owning organization. Requires `sensor:update` in both the source and target organization. A sensor bound to a tree must be transferred via its tree instead.
+     * Moves an unbound sensor to a different owning organization. Requires `sensor:update` in both the source and target organization. A sensor bound to a target moves with that target instead.
      * Transfer a sensor\'s ownership to another organization
      */
     async transferSensor(requestParameters: TransferSensorRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {

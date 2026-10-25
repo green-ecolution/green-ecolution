@@ -497,14 +497,14 @@ pub async fn get_sensor_model(
     operation_id = "transferSensor", summary = "Transfer a sensor's ownership to another organization",
     description = "Moves an unbound sensor to a different owning organization. Requires \
                    `sensor:update` in both the source and target organization. A sensor bound \
-                   to a tree must be transferred via its tree instead.",
+                   to a target moves with that target instead.",
     params(("sensor_id" = String, Path, description = "Sensor ID (EUI)")),
     request_body = TransferRequest,
     responses(
         (status = 204, description = "Sensor transferred"),
         (status = 403, description = "Missing sensor:update in source or target organization", body = ErrorBody),
         (status = 404, description = "Sensor or organization not found", body = ErrorBody),
-        (status = 409, description = "Sensor is bound to a tree (code `conflict.sensor_bound_to_tree`)", body = ErrorBody),
+        (status = 409, description = "Sensor is bound to a target (code `conflict.sensor_bound_to_target`)", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all, fields(sensor.id = %sensor_id))]
