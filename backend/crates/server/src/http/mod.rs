@@ -119,6 +119,7 @@ pub struct AppState {
     pub health_reader: Arc<dyn HealthSnapshotReader>,
     pub readiness_reader: Arc<dyn ReadinessReader>,
     pub statistics_reader: Arc<dyn StatisticsReader>,
+    pub statistics: Arc<crate::service::statistics_registry::StatisticsRegistry>,
     pub token_validator: Arc<TokenValidator>,
     pub feature_flags: FeatureFlags,
     pub nearest_tree_limits: NearestTreeLimits,

@@ -418,15 +418,30 @@ pub async fn try_spawn_app_with_modules_and_auth(
     modules: Vec<Box<dyn server::module::Module>>,
     auth: AuthSettings,
 ) -> Result<TestApp, std::io::Error> {
+    // Core features (plans, sensor targets) hang off irrigation, so every test
+    // application runs it.
+    let mut all_modules = app::modules::registered();
+    all_modules.extend(modules);
+    try_spawn_app_with_exact_modules(all_modules, auth).await
+}
+
+pub async fn spawn_app_with_exact_modules(
+    modules: Vec<Box<dyn server::module::Module>>,
+) -> TestApp {
+    try_spawn_app_with_exact_modules(modules, disabled_auth_settings())
+        .await
+        .expect("failed to build application")
+}
+
+async fn try_spawn_app_with_exact_modules(
+    all_modules: Vec<Box<dyn server::module::Module>>,
+    auth: AuthSettings,
+) -> Result<TestApp, std::io::Error> {
     let mut settings = Settings::for_test(auth);
     settings.info.health_check_interval_secs = 1;
     settings.info.update_check_repo = None;
     let container = shared_container().await;
     let (_db_name, db_pool) = create_test_database(container.host_port).await;
-    // Core features (plans, sensor targets) hang off irrigation, so every test
-    // application runs it.
-    let mut all_modules = app::modules::registered();
-    all_modules.extend(modules);
     let app =
         Application::build_with_modules(db_pool.clone(), "127.0.0.1:0", settings, all_modules)
             .await?;

@@ -223,6 +223,7 @@ impl Application {
             });
         let targets = Arc::new(server::service::targets::TargetRegistry::new());
         let planning = Arc::new(PlanningRegistry::new());
+        let statistics = Arc::new(server::service::statistics_registry::StatisticsRegistry::new());
         let services = Services::build(
             &repos,
             event_bus.clone(),
@@ -249,6 +250,7 @@ impl Application {
         let mut background_tasks = Vec::new();
         let mut catalogs = std::collections::BTreeMap::new();
         let mut providers = std::collections::BTreeMap::new();
+        let mut statistics_providers = std::collections::BTreeMap::new();
         for module in &modules {
             let ctx = server::module::ModuleContext {
                 pool: pool.clone(),
@@ -278,12 +280,18 @@ impl Application {
             if let Some(provider) = runtime.planning {
                 providers.insert(module.key(), provider);
             }
+            if let Some(provider) = runtime.statistics {
+                statistics_providers.insert(module.key(), provider);
+            }
         }
         targets
             .install(catalogs)
             .map_err(|e| std::io::Error::other(e.to_string()))?;
         planning
             .install(providers)
+            .map_err(|e| std::io::Error::other(e.to_string()))?;
+        statistics
+            .install(statistics_providers)
             .map_err(|e| std::io::Error::other(e.to_string()))?;
         event_bus
             .install(Arc::new(InMemoryEventBus::new(handlers)))
@@ -366,6 +374,7 @@ impl Application {
             health_reader,
             readiness_reader,
             statistics_reader: repos.statistics,
+            statistics,
             token_validator,
             feature_flags: FeatureFlags {
                 routing_enabled: settings.routing.enabled,

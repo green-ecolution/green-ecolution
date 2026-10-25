@@ -8,6 +8,7 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from '@green-ecolution/ui'
+import type { DataStatisticsResponse } from '@green-ecolution/backend-client'
 import { Link } from '@tanstack/react-router'
 import { ArrowRight, Database, Droplets, Radio, TreeDeciduous, Trees, Truck } from 'lucide-react'
 import { Bar, BarChart, XAxis, YAxis, Cell } from 'recharts'
@@ -16,20 +17,17 @@ import { useNumberFormatter } from '@/lib/i18n/useFormatters'
 import HeroStatCard from './HeroStatCard'
 
 interface DataTabContentProps {
-  statsData:
-    | {
-        treeCount?: number
-        treeClusterCount?: number
-        sensorCount?: number
-        vehicleCount?: number
-        wateringPlanCount?: number
-      }
-    | undefined
+  statsData: DataStatisticsResponse | undefined
 }
 
 const DataTabContent = ({ statsData }: DataTabContentProps) => {
   const { t } = useTranslation('info')
   const numberFormatter = useNumberFormatter()
+
+  const moduleCount = (kind: string) =>
+    statsData?.modules.find((m) => m.module === 'irrigation' && m.kind === kind)?.count
+  const treeCount = moduleCount('tree')
+  const treeClusterCount = moduleCount('cluster')
 
   const dataChartConfig: ChartConfig = {
     value: {
@@ -41,12 +39,12 @@ const DataTabContent = ({ statsData }: DataTabContentProps) => {
   const chartData = [
     {
       name: t('data.chart.treeName'),
-      value: statsData?.treeCount ?? 0,
+      value: treeCount ?? 0,
       fill: 'hsl(142, 76%, 36%)',
     },
     {
       name: t('data.chart.groupName'),
-      value: statsData?.treeClusterCount ?? 0,
+      value: treeClusterCount ?? 0,
       fill: 'hsl(142, 60%, 45%)',
     },
     {
@@ -61,17 +59,17 @@ const DataTabContent = ({ statsData }: DataTabContentProps) => {
     },
     {
       name: t('data.chart.planName'),
-      value: statsData?.wateringPlanCount ?? 0,
+      value: statsData?.planCount ?? 0,
       fill: 'hsl(210, 60%, 55%)',
     },
   ]
 
   const totalEntities =
-    (statsData?.treeCount ?? 0) +
-    (statsData?.treeClusterCount ?? 0) +
+    (treeCount ?? 0) +
+    (treeClusterCount ?? 0) +
     (statsData?.sensorCount ?? 0) +
     (statsData?.vehicleCount ?? 0) +
-    (statsData?.wateringPlanCount ?? 0)
+    (statsData?.planCount ?? 0)
 
   return (
     <div className="space-y-6">
@@ -99,14 +97,11 @@ const DataTabContent = ({ statsData }: DataTabContentProps) => {
               {t('data.hero.totalTreesLabel')}
             </p>
             <p className="text-5xl font-bold font-lato text-green-dark tracking-tight">
-              {statsData?.treeCount != null ? numberFormatter.format(statsData.treeCount) : '-'}
+              {treeCount != null ? numberFormatter.format(treeCount) : '-'}
             </p>
             <p className="text-sm text-dark-500 mt-2">
               {t('data.hero.managedInGroups', {
-                count:
-                  statsData?.treeClusterCount != null
-                    ? numberFormatter.format(statsData.treeClusterCount)
-                    : '-',
+                count: treeClusterCount != null ? numberFormatter.format(treeClusterCount) : '-',
               })}
             </p>
           </div>
@@ -149,7 +144,7 @@ const DataTabContent = ({ statsData }: DataTabContentProps) => {
         <DataStatCard
           icon={<Trees className="size-5" />}
           label={t('data.stat.groupsLabel')}
-          value={statsData?.treeClusterCount ?? 0}
+          value={treeClusterCount ?? 0}
           subtitle={t('data.stat.groupsSubtitle')}
           color="green"
           href="/treecluster"
@@ -173,7 +168,7 @@ const DataTabContent = ({ statsData }: DataTabContentProps) => {
         <DataStatCard
           icon={<Droplets className="size-5" />}
           label={t('data.stat.plansLabel')}
-          value={statsData?.wateringPlanCount ?? 0}
+          value={statsData?.planCount ?? 0}
           subtitle={t('data.stat.plansSubtitle')}
           color="cyan"
           href="/watering-plans"

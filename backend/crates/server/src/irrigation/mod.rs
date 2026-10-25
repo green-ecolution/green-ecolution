@@ -5,6 +5,7 @@
 pub mod handlers;
 pub mod planning;
 pub mod settings;
+pub mod statistics;
 pub mod targets;
 
 use std::sync::Arc;
@@ -97,6 +98,9 @@ impl Module for IrrigationModule {
             clusters,
             ctx.organizations.clone(),
             repo,
+        )));
+        runtime.statistics = Some(Arc::new(statistics::IrrigationStatistics::new(
+            ctx.pool.clone(),
         )));
         runtime.event_handlers.push(Arc::new(SensorLifecycle::new(
             trees.clone(),

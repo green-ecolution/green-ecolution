@@ -1,10 +1,19 @@
 //! Aggregate counts of domain entities.
 
-#[derive(Debug, Clone)]
-pub struct DataStatistics {
-    pub tree_count: i64,
+use crate::module::{ModuleCount, ModuleKey};
+
+/// What the core counts itself; module objects come from `ModuleStatistics`.
+#[derive(Debug, Clone, Copy)]
+pub struct CoreCounts {
     pub sensor_count: i64,
     pub vehicle_count: i64,
-    pub cluster_count: i64,
-    pub watering_plan_count: i64,
+    pub plan_count: i64,
+}
+
+#[derive(Debug, Clone)]
+pub struct DataStatistics {
+    pub sensor_count: i64,
+    pub vehicle_count: i64,
+    pub plan_count: i64,
+    pub modules: Vec<(ModuleKey, ModuleCount)>,
 }

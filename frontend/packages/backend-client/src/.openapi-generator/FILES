@@ -69,6 +69,7 @@ models/LorawanCredentialsRequest.ts
 models/LorawanInfoResponse.ts
 models/MapInfoResponse.ts
 models/MapViewDto.ts
+models/ModuleCountResponse.ts
 models/ModuleListResponse.ts
 models/NearestTreeListResponse.ts
 models/OrganizationCreateRequest.ts

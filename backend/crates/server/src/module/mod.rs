@@ -9,8 +9,9 @@ use std::{
 };
 
 use domain::{
-    authorization::ResourceKey, module::ModuleKey, organization::OrganizationReader,
-    planning::PlanningProvider, settings::SettingsResolver, target::TargetCatalog,
+    authorization::ResourceKey, module::ModuleKey, module::ModuleStatistics,
+    organization::OrganizationReader, planning::PlanningProvider, settings::SettingsResolver,
+    target::TargetCatalog,
 };
 use sqlx::PgPool;
 use utoipa_axum::router::OpenApiRouter;
@@ -87,6 +88,7 @@ pub struct ModuleRuntime {
     pub background_tasks: Vec<BackgroundTask>,
     pub targets: Option<Arc<dyn TargetCatalog>>,
     pub planning: Option<Arc<dyn PlanningProvider>>,
+    pub statistics: Option<Arc<dyn ModuleStatistics>>,
 }
 
 impl ModuleRuntime {
@@ -97,6 +99,7 @@ impl ModuleRuntime {
             background_tasks: Vec::new(),
             targets: None,
             planning: None,
+            statistics: None,
         }
     }
 }

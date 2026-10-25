@@ -51,6 +51,7 @@ export * from './LorawanCredentialsRequest';
 export * from './LorawanInfoResponse';
 export * from './MapInfoResponse';
 export * from './MapViewDto';
+export * from './ModuleCountResponse';
 export * from './ModuleListResponse';
 export * from './NearestTreeListResponse';
 export * from './OrganizationCreateRequest';

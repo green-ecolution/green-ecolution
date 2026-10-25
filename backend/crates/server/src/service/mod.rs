@@ -21,6 +21,7 @@ pub mod role_service;
 pub mod sensor_service;
 pub mod settings_service;
 pub mod start_point_service;
+pub mod statistics_registry;
 pub mod targets;
 pub mod tree_service;
 pub mod user_service;

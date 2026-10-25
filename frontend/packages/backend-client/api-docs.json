@@ -9511,37 +9511,32 @@
       "DataStatisticsResponse": {
         "type": "object",
         "required": [
-          "treeCount",
           "sensorCount",
           "vehicleCount",
-          "treeClusterCount",
-          "wateringPlanCount"
+          "planCount",
+          "modules"
         ],
         "properties": {
+          "modules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ModuleCountResponse"
+            }
+          },
+          "planCount": {
+            "type": "integer",
+            "format": "int64",
+            "example": 15
+          },
           "sensorCount": {
             "type": "integer",
             "format": "int64",
             "example": 85
           },
-          "treeClusterCount": {
-            "type": "integer",
-            "format": "int64",
-            "example": 28
-          },
-          "treeCount": {
-            "type": "integer",
-            "format": "int64",
-            "example": 342
-          },
           "vehicleCount": {
             "type": "integer",
             "format": "int64",
             "example": 12
-          },
-          "wateringPlanCount": {
-            "type": "integer",
-            "format": "int64",
-            "example": 15
           }
         }
       },
@@ -11021,6 +11016,29 @@
             "format": "int32",
             "description": "Set together with `bbox`, never on their own: the limits are one\ndecision, and half of them would restrict a map for no stated reason.",
             "minimum": 0
+          }
+        }
+      },
+      "ModuleCountResponse": {
+        "type": "object",
+        "required": [
+          "module",
+          "kind",
+          "count"
+        ],
+        "properties": {
+          "count": {
+            "type": "integer",
+            "format": "int64",
+            "example": 342
+          },
+          "kind": {
+            "type": "string",
+            "example": "tree"
+          },
+          "module": {
+            "type": "string",
+            "example": "irrigation"
           }
         }
       },
