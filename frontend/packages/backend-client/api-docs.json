@@ -15822,14 +15822,6 @@
       "description": "Manage geographic regions used to group tree clusters. Regions define administrative boundaries for organizing green spaces."
     },
     {
-      "name": "Tree Clusters",
-      "description": "Manage tree clusters — logical groupings of trees that share soil conditions and watering schedules. Clusters are the primary unit for watering plan assignments."
-    },
-    {
-      "name": "Trees",
-      "description": "Manage individual trees including their species, location, planting year, and associated sensors. Trees can be assigned to clusters for grouped watering management."
-    },
-    {
       "name": "Vehicles",
       "description": "Manage watering vehicles (transporters and trailers) including their water capacity, dimensions, and availability status. Vehicles can be archived when decommissioned."
     },
@@ -15840,10 +15832,6 @@
     {
       "name": "Plans",
       "description": "Create and manage a module's operation plans that combine stops, vehicles, and optimized routes. Plans track status from planning through execution."
-    },
-    {
-      "name": "Evaluation",
-      "description": "Aggregated statistics and evaluation data across all managed resources. Provides insights on watering plan coverage by region and vehicle usage."
     },
     {
       "name": "Info",
@@ -15880,6 +15868,18 @@
     {
       "name": "Settings",
       "description": "Per-organization operational defaults — sensor thresholds and the map viewport — resolved along the organization tree."
+    },
+    {
+      "name": "Tree Clusters",
+      "description": "Manage tree clusters — logical groupings of trees that share soil conditions and watering schedules. Clusters are the primary unit for watering plan assignments."
+    },
+    {
+      "name": "Trees",
+      "description": "Manage individual trees including their species, location, planting year, and associated sensors. Trees can be assigned to clusters for grouped watering management."
+    },
+    {
+      "name": "Evaluation",
+      "description": "Aggregated statistics and evaluation data across all managed resources. Provides insights on watering plan coverage by region and vehicle usage."
     },
     {
       "name": "Irrigation",
