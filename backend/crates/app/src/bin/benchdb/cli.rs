@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use server::bench::scale::Scale;
+use app::bench::scale::Scale;
 
 #[derive(Debug)]
 // reason: the Run and Campaign payloads are consumed once the measuring and

@@ -27,6 +27,10 @@ name = "migrate"
 path = "src/bin/dump-openapi.rs"
 name = "dump-openapi"
 
+[[bin]]
+path = "src/bin/benchdb/main.rs"
+name = "benchdb"
+
 [[test]]
 name = "api"
 path = "test/api/main.rs"

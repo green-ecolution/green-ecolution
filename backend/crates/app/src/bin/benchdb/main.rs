@@ -10,7 +10,7 @@ mod explain;
 mod measure;
 mod paths;
 
-use server::bench::{scale::Scale, seed};
+use app::bench::{scale::Scale, seed};
 use server::configuration::SESSION_OPTIONS;
 use sqlx::{
     PgPool,
