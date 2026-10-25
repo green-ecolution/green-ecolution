@@ -50,7 +50,7 @@ jobs:
       # real gate only once the numbers have proven stable over several weeks.
       - name: Run benchmarks
         working-directory: ./backend
-        run: cargo bench -p domain --locked -- --save-baseline scheduled
+        run: cargo bench -p domain -p irrigation-domain --locked -- --save-baseline scheduled
 
       - name: Store baseline
         uses: actions/cache/save@v6

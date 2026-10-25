@@ -231,14 +231,14 @@ mod tests {
     use crate::{Id, organization::Organization};
     use std::collections::BTreeSet;
 
-    const TREE: ResourceKey = ResourceKey::declare("tree");
+    const WIDGET: ResourceKey = ResourceKey::declare("widget");
 
     fn ids() -> (Id<Organization>, Id<Organization>, Id<Organization>) {
         (Id::new_v7(), Id::new_v7(), Id::new_v7())
     }
 
     fn tree_read() -> Permission {
-        Permission::new(TREE, Action::Read)
+        Permission::new(WIDGET, Action::Read)
     }
 
     #[test]
@@ -274,21 +274,21 @@ mod tests {
     #[test]
     fn allows_merges_multiple_grants() {
         let (_, tbz, sub) = ids();
-        let write = Permission::new(TREE, Action::Update);
+        let write = Permission::new(WIDGET, Action::Update);
         let eff = EffectivePermissions::from_grants(vec![
             (tbz, BTreeSet::from([tree_read()])),
             (sub, BTreeSet::from([write])),
         ]);
         assert!(eff.allows(tree_read()));
         assert!(eff.allows(write));
-        assert!(!eff.allows(Permission::new(TREE, Action::Delete)));
+        assert!(!eff.allows(Permission::new(WIDGET, Action::Delete)));
     }
 
     #[test]
     fn superset_of_requires_every_permission_in_scope() {
         let (root, tbz, _) = ids();
         let h = OrgHierarchy::from_pairs([(root, None), (tbz, Some(root))]);
-        let write = Permission::new(TREE, Action::Update);
+        let write = Permission::new(WIDGET, Action::Update);
         let eff = EffectivePermissions::from_grants(vec![(tbz, BTreeSet::from([tree_read()]))]);
         assert!(eff.superset_of(&BTreeSet::from([tree_read()]), tbz, &h));
         assert!(!eff.superset_of(&BTreeSet::from([tree_read(), write]), tbz, &h));
@@ -323,7 +323,7 @@ mod tests {
         assert!(
             ctx.superset_of(
                 &BTreeSet::from_iter(
-                    crate::authorization::ResourceCatalog::new([TREE])
+                    crate::authorization::ResourceCatalog::new([WIDGET])
                         .unwrap()
                         .permissions()
                 ),
@@ -381,7 +381,7 @@ mod tests {
             Visibility::Unrestricted => panic!("expected Only"),
         }
         // permission not granted anywhere -> empty set, not unrestricted
-        let del = Permission::new(TREE, Action::Delete);
+        let del = Permission::new(WIDGET, Action::Delete);
         assert_eq!(ctx.visible_orgs(del), Visibility::Only(BTreeSet::new()));
     }
 

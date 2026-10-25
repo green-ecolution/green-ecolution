@@ -1,19 +1,20 @@
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 
-use crate::{
+use domain::{
     Id, RepositoryError,
     authorization::Visibility,
-    cluster::{
-        ClusterBoundaryView, ClusterMarker, ClusterStatistics, ClusterWateringEvent,
-        SoilMoistureBucket, SoilMoistureDepthSeries, TreeCluster, TreeClusterDraft,
-        TreeClusterSearchQuery, TreeClusterView,
-    },
     organization::Organization,
+    sensor::data::{SoilMoistureBucket, SoilMoistureDepthSeries},
     shared::{
         coordinates::Coordinate,
         pagination::{Pagination, SearchPage},
     },
+};
+
+use crate::cluster::{
+    ClusterBoundaryView, ClusterMarker, ClusterStatistics, ClusterWateringEvent, TreeCluster,
+    TreeClusterDraft, TreeClusterSearchQuery, TreeClusterView,
 };
 
 /// Read-side access to tree clusters, including aggregate hydration and the
@@ -70,7 +71,7 @@ pub trait TreeClusterReader: Send + Sync {
     ) -> Result<Vec<SoilMoistureDepthSeries>, RepositoryError>;
 
     /// Clusters of this organization still flagged
-    /// [`crate::shared::watering_status::WateringStatus::JustWatered`] whose
+    /// [`crate::watering_status::WateringStatus::JustWatered`] whose
     /// `last_watered` is older than `cutoff` (or missing entirely).
     async fn just_watered_before(
         &self,

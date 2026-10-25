@@ -2,16 +2,19 @@ use std::collections::HashMap;
 
 use async_trait::async_trait;
 
-use crate::{
+use domain::{
     Id, RepositoryError,
     authorization::Visibility,
-    cluster::TreeCluster,
     sensor::SensorId,
     shared::{
         coordinates::Coordinate,
         distance::Distance,
         pagination::{Pagination, SearchPage},
     },
+};
+
+use crate::{
+    cluster::TreeCluster,
     tree::{
         PlantingYear, Tree, TreeDraft, TreeMarker, TreeSearchQuery, TreeView, TreeViewWithDistance,
     },

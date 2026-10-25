@@ -10,7 +10,9 @@ use domain::{
         provenance::{Provenance, ProviderId},
         sort::SortDirection,
     },
-    tree::{PlantingYear, Species, TreeDraft, TreeMarker, TreeNumber, TreeSortField, TreeView},
+};
+use irrigation_domain::tree::{
+    PlantingYear, Species, TreeDraft, TreeMarker, TreeNumber, TreeSortField, TreeView,
 };
 
 use crate::service::ServiceError;

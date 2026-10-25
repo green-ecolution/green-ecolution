@@ -1,6 +1,6 @@
 //! Sort options for the tree list.
 
-use crate::shared::sort::SortDirection;
+use domain::shared::sort::SortDirection;
 
 /// The sortable columns of the tree list.
 ///

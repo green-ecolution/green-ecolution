@@ -1,6 +1,6 @@
 use chrono::{DateTime, Datelike, Utc};
 
-use crate::shared::error::ValidationError;
+use domain::shared::error::ValidationError;
 
 /// Oldest plausible planting year. Anything below is a typo (a bare `25` meant
 /// as 2025) rather than a record, and the OpenAPI schema already advertises it.

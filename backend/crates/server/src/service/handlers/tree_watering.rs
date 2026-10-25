@@ -8,11 +8,13 @@ use crate::{
 };
 use domain::{
     Id, RepositoryError,
-    cluster::{SoilCondition, TreeClusterReader},
     events::{DomainEvent, SensorDataReceivedPayload, SensorReadings},
     sensor::SensorReadingReader,
-    shared::watering_status::WateringStatus,
+};
+use irrigation_domain::{
+    cluster::{SoilCondition, TreeClusterReader},
     tree::{TreeError, TreeReader, TreeWriter},
+    watering_status::WateringStatus,
 };
 
 /// Turns each `SensorDataReceived` event into a fresh watering-status decision

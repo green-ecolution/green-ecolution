@@ -4,11 +4,11 @@ use crate::{
 };
 use domain::{
     Id,
-    cluster::{ClusterAddress, SoilCondition, TreeClusterUpdate},
     events::SensorReadings,
     sensor::{SensorId, data::VolumetricReading, repository::NormalizedValue},
     shared::provenance::Provenance,
 };
+use irrigation_domain::cluster::{ClusterAddress, SoilCondition, TreeClusterUpdate};
 use rust_decimal::Decimal;
 use serde_json::json;
 use server::service::sensor_service::ReadingIngest;

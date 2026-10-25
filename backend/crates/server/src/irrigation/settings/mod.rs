@@ -8,9 +8,10 @@ pub mod service;
 use domain::{
     Id, RepositoryError,
     organization::Organization,
-    settings::{InheritLevel, JustWateredTtl, Patch, SettingOrigin, WaterDemand, inherit},
+    settings::{InheritLevel, Patch, SettingOrigin, inherit},
     shared::error::ValidationError,
 };
+use irrigation_domain::settings::{JustWateredTtl, WaterDemand};
 
 use super::IrrigationConfig;
 

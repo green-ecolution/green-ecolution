@@ -1,11 +1,10 @@
 use std::sync::Arc;
 
 use crate::service::event_bus::{EventHandler, EventHandlerError};
-use domain::{
-    Id,
+use domain::{Id, events::DomainEvent, region::RegionReader};
+use irrigation_domain::{
     cluster::{TreeCluster, TreeClusterReader, TreeClusterWriter},
-    events::DomainEvent,
-    region::RegionReader,
+    events::IrrigationEvent,
     tree::TreeReader,
 };
 
@@ -32,18 +31,22 @@ impl ClusterRecalculationHandler {
     }
 
     fn affected_cluster_ids(&self, event: &DomainEvent) -> Vec<Id<TreeCluster>> {
-        match event {
-            DomainEvent::TreeCreated { cluster_id, .. } => cluster_id.iter().copied().collect(),
-            DomainEvent::TreeDeleted { cluster_id, .. } => cluster_id.iter().copied().collect(),
-            DomainEvent::TreeCoordinateChanged { cluster_id, .. } => {
+        match IrrigationEvent::from_domain(event) {
+            Some(IrrigationEvent::TreeCreated { cluster_id, .. }) => {
                 cluster_id.iter().copied().collect()
             }
-            DomainEvent::TreeMovedBetweenClusters { from, to, .. } => {
+            Some(IrrigationEvent::TreeDeleted { cluster_id, .. }) => {
+                cluster_id.iter().copied().collect()
+            }
+            Some(IrrigationEvent::TreeCoordinateChanged { cluster_id, .. }) => {
+                cluster_id.iter().copied().collect()
+            }
+            Some(IrrigationEvent::TreeMovedBetweenClusters { from, to, .. }) => {
                 let mut ids: Vec<_> = [*from, *to].into_iter().flatten().collect();
                 ids.dedup();
                 ids
             }
-            DomainEvent::ClusterTreesChanged { cluster_id } => vec![*cluster_id],
+            Some(IrrigationEvent::ClusterTreesChanged { cluster_id }) => vec![*cluster_id],
             _ => vec![],
         }
     }

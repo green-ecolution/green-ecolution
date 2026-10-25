@@ -9,13 +9,15 @@ use crate::infra::list::{ListSpec, Predicate, SortColumns};
 use crate::infra::pg_sensor_model::load_abilities_by_model;
 use domain::{
     RepositoryError,
-    cluster::{SoilMoistureBucket, SoilMoistureDepthSeries, SoilMoisturePoint},
     sensor::{
         AcknowledgementNote, DataHealth, DataQualityAcknowledgement, LastPlausibleValue,
         LorawanCredentials, ReadingQualityIssue, Sensor, SensorDraft, SensorId, SensorReader,
         SensorReadingReader, SensorReadingWriter, SensorSearchQuery, SensorSnapshot, SensorStatus,
         SensorType, SensorView, SensorWriter,
-        data::{SensorReading, SensorReadingDraft, SensorReadingSnapshot, SensorReadingView},
+        data::{
+            SensorReading, SensorReadingDraft, SensorReadingSnapshot, SensorReadingView,
+            SoilMoistureBucket, SoilMoistureDepthSeries, SoilMoisturePoint,
+        },
         derive_connectivity, derive_data_health,
         repository::NormalizedValue,
         view::{LorawanInfo, SensorModelSummary},

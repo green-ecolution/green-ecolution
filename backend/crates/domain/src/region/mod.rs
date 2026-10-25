@@ -1,4 +1,5 @@
-//! Region aggregate — a named geographic boundary used to group tree clusters.
+//! Region aggregate — a named geographic boundary used to group a module's
+//! objects by area.
 //!
 //! Follows the standard pattern: [`Region`] aggregate, [`RegionDraft`] for
 //! creation, a `pub(crate)` snapshot for DB rehydration, and a

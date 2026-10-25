@@ -1,5 +1,6 @@
 use chrono::{Duration, Utc};
-use domain::{Id, cluster::TreeClusterReader, organization::Organization};
+use domain::{Id, organization::Organization};
+use irrigation_domain::cluster::TreeClusterReader;
 use server::infra::pg_cluster::PgTreeClusterRepository;
 
 use crate::helpers::{self, spawn_app};
@@ -1585,7 +1586,7 @@ async fn create_just_watered_cluster(
     app: &helpers::TestApp,
     org: Id<Organization>,
     last_watered: chrono::DateTime<Utc>,
-) -> Id<domain::cluster::TreeCluster> {
+) -> Id<irrigation_domain::cluster::TreeCluster> {
     let body = serde_json::json!({
         "name": "Just Watered",
         "address": "Gartenweg 1",
@@ -1633,7 +1634,7 @@ async fn just_watered_before_is_scoped_to_one_organization() {
 /// at the same moment must fall due at different times.
 #[tokio::test]
 async fn the_sweep_expires_each_organization_on_its_own_ttl() {
-    use domain::settings::{JustWateredTtl, WaterDemand};
+    use irrigation_domain::settings::{JustWateredTtl, WaterDemand};
     use server::irrigation::settings::{IrrigationDefaults, repository::PgIrrigationSettings};
     use std::sync::Arc;
 
@@ -1671,11 +1672,11 @@ async fn the_sweep_expires_each_organization_on_its_own_ttl() {
     let repo = PgTreeClusterRepository::new(app.db_pool.clone());
     assert_eq!(
         repo.by_id(due).await.unwrap().watering_status(),
-        domain::shared::watering_status::WateringStatus::Unknown,
+        irrigation_domain::watering_status::WateringStatus::Unknown,
     );
     assert_eq!(
         repo.by_id(not_due).await.unwrap().watering_status(),
-        domain::shared::watering_status::WateringStatus::JustWatered,
+        irrigation_domain::watering_status::WateringStatus::JustWatered,
     );
 }
 

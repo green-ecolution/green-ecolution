@@ -259,11 +259,11 @@ impl ServiceError {
 
 /// Only `NotYetPlanted` actually travels this way: the calibration variants
 /// are consumed by the reading handler and never reach a service.
-impl From<domain::tree::TreeError> for ServiceError {
-    fn from(e: domain::tree::TreeError) -> Self {
+impl From<irrigation_domain::tree::TreeError> for ServiceError {
+    fn from(e: irrigation_domain::tree::TreeError) -> Self {
         match e {
-            domain::tree::TreeError::NotYetPlanted => Self::TreeNotYetPlanted,
-            domain::tree::TreeError::Validation(v) => Self::Validation(v),
+            irrigation_domain::tree::TreeError::NotYetPlanted => Self::TreeNotYetPlanted,
+            irrigation_domain::tree::TreeError::Validation(v) => Self::Validation(v),
             other => Self::InvalidInput(other.to_string()),
         }
     }

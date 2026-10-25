@@ -1,9 +1,8 @@
 //! Published-event vocabulary for cross-aggregate side effects.
 //!
 //! Events are emitted by the service layer after aggregate mutations are
-//! persisted and consumed by subscriber workers (e.g. recalculate cluster
-//! centroid when a tree moves, recalculate cluster watering status when a
-//! sensor is attached to or detached from a tree, or a tree's status changes).
+//! persisted and consumed by subscriber workers (e.g. recompute derived state
+//! when a sensor reading arrives).
 
 use std::{any::Any, fmt, sync::Arc};
 
@@ -11,7 +10,6 @@ use chrono::{DateTime, Utc};
 
 use crate::{
     Id,
-    cluster::TreeCluster,
     module::ModuleKey,
     operation_plan::OperationPlan,
     organization::Organization,
@@ -21,9 +19,7 @@ use crate::{
         SensorId,
         data::{VolumetricReading, Watermark},
     },
-    shared::watering_status::WateringStatus,
     target::TargetRef,
-    tree::Tree,
 };
 
 /// Payload of an event a module defines for itself. The core never looks
@@ -72,48 +68,6 @@ pub struct SensorDataReceivedPayload {
 /// Domain events published after successful aggregate mutations.
 #[derive(Debug, Clone)]
 pub enum DomainEvent {
-    TreeCreated {
-        tree_id: Id<Tree>,
-        cluster_id: Option<Id<TreeCluster>>,
-    },
-    TreeDeleted {
-        tree_id: Id<Tree>,
-        cluster_id: Option<Id<TreeCluster>>,
-    },
-    TreeCoordinateChanged {
-        tree_id: Id<Tree>,
-        cluster_id: Option<Id<TreeCluster>>,
-    },
-    TreeMovedBetweenClusters {
-        tree_id: Id<Tree>,
-        from: Option<Id<TreeCluster>>,
-        to: Option<Id<TreeCluster>>,
-    },
-    TreeWateringStatusChanged {
-        tree_id: Id<Tree>,
-        cluster_id: Option<Id<TreeCluster>>,
-        new_status: WateringStatus,
-    },
-    /// Emitted when a cluster's tree list changes so that centroid,
-    /// watering status, and region can be recalculated.
-    ClusterTreesChanged {
-        cluster_id: Id<TreeCluster>,
-    },
-    /// Emitted when a cluster's `soil_condition` changes so that the
-    /// volumetric watering status of member trees can be recomputed.
-    ClusterSoilConditionChanged {
-        cluster_id: Id<TreeCluster>,
-    },
-    TreeResponsibilityTransferred {
-        tree_id: Id<Tree>,
-        from: Id<Organization>,
-        to: Id<Organization>,
-    },
-    ClusterResponsibilityTransferred {
-        cluster_id: Id<TreeCluster>,
-        from: Id<Organization>,
-        to: Id<Organization>,
-    },
     SensorResponsibilityTransferred {
         sensor_id: SensorId,
         from: Id<Organization>,
@@ -203,8 +157,8 @@ pub enum DomainEvent {
     RoleDeleted {
         role_id: Id<Role>,
     },
-    /// An event a module defined for its own objects, e.g. a tree moving
-    /// between clusters. Travels the same bus so follow-ups keep their order.
+    /// An event a module defined for its own objects. Travels the same bus
+    /// so follow-ups keep their order.
     Module(ModuleEvent),
 }
 

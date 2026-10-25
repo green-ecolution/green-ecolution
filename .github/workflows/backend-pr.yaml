@@ -75,7 +75,7 @@ jobs:
 
       - name: Benchmark smoke run
         working-directory: ./backend
-        run: cargo bench -p domain --locked -- --test
+        run: cargo bench -p domain -p irrigation-domain --locked -- --test
 
   msrv:
     needs: changes

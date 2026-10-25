@@ -1,8 +1,8 @@
 use std::sync::{Arc, Weak};
 
-use domain::{
-    Id, RepositoryError,
-    events::DomainEvent,
+use domain::{Id, RepositoryError, events::DomainEvent};
+use irrigation_domain::{
+    events::IrrigationEvent,
     tree::{TreeReader, TreeWriter},
 };
 
@@ -56,21 +56,24 @@ impl EventHandler for SensorLifecycle {
                 self.tree_writer.save(&tree).await?;
                 Ok(events)
             }
-            DomainEvent::TreeDeleted { tree_id, .. } => {
-                // Nothing else frees the sensor of a deleted tree, so a lost
-                // service must surface instead of passing silently.
-                let Some(sensors) = self.sensors.upgrade() else {
-                    return Err(EventHandlerError::Failed(
-                        "sensor service is gone; sensor of the deleted tree stays attached".into(),
-                    ));
-                };
-                sensors
-                    .release_target(&tree_target(*tree_id))
-                    .await
-                    .map_err(|e| EventHandlerError::Failed(e.to_string()))?;
-                Ok(vec![])
-            }
-            _ => Ok(vec![]),
+            _ => match IrrigationEvent::from_domain(event) {
+                Some(IrrigationEvent::TreeDeleted { tree_id, .. }) => {
+                    // Nothing else frees the sensor of a deleted tree, so a lost
+                    // service must surface instead of passing silently.
+                    let Some(sensors) = self.sensors.upgrade() else {
+                        return Err(EventHandlerError::Failed(
+                            "sensor service is gone; sensor of the deleted tree stays attached"
+                                .into(),
+                        ));
+                    };
+                    sensors
+                        .release_target(&tree_target(*tree_id))
+                        .await
+                        .map_err(|e| EventHandlerError::Failed(e.to_string()))?;
+                    Ok(vec![])
+                }
+                _ => Ok(vec![]),
+            },
         }
     }
 }
@@ -124,10 +127,13 @@ mod tests {
         drop(service);
 
         let result = handler
-            .handle(&DomainEvent::TreeDeleted {
-                tree_id: Id::new_v7(),
-                cluster_id: None,
-            })
+            .handle(
+                &IrrigationEvent::TreeDeleted {
+                    tree_id: Id::new_v7(),
+                    cluster_id: None,
+                }
+                .into_domain(),
+            )
             .await;
 
         assert!(matches!(result, Err(EventHandlerError::Failed(_))));

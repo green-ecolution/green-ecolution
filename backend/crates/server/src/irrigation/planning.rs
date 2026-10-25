@@ -4,10 +4,10 @@ use domain::{
     Id,
     authorization::ResourceKey,
     capacity::CapacityKind,
-    cluster::{TreeCluster, TreeClusterReader},
     organization::{Organization, OrganizationReader},
     planning::{PlanningError, PlanningProvider, ResolvedStop, StopRef},
 };
+use irrigation_domain::cluster::{TreeCluster, TreeClusterReader};
 
 use super::{resources, settings::IrrigationSettingsResolver};
 
@@ -88,17 +88,19 @@ mod tests {
     use domain::{
         RepositoryError,
         authorization::{OrgHierarchy, Visibility},
-        cluster::{
-            ClusterBoundaryView, ClusterMarker, ClusterStatistics, ClusterWateringEvent,
-            SoilMoistureBucket, SoilMoistureDepthSeries, TreeClusterSearchQuery, TreeClusterView,
-            snapshot::TreeClusterSnapshot,
-        },
-        settings::{JustWateredTtl, WaterDemand},
+        sensor::data::{SoilMoistureBucket, SoilMoistureDepthSeries},
         shared::{
             coordinates::Coordinate,
             pagination::{Pagination, SearchPage},
-            watering_status::WateringStatus,
         },
+    };
+    use irrigation_domain::{
+        cluster::{
+            ClusterBoundaryView, ClusterMarker, ClusterStatistics, ClusterWateringEvent,
+            TreeClusterSearchQuery, TreeClusterView, snapshot::TreeClusterSnapshot,
+        },
+        settings::{JustWateredTtl, WaterDemand},
+        watering_status::WateringStatus,
     };
     use uuid::Uuid;
 

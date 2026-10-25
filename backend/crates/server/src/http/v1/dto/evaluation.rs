@@ -1,6 +1,6 @@
 use serde::Serialize;
 
-use domain::evaluation::{RegionEvaluation, VehicleEvaluation};
+use irrigation_domain::evaluation::{RegionEvaluation, VehicleEvaluation};
 
 /// Evaluation metrics for a single region.
 #[derive(Debug, Serialize, utoipa::ToSchema)]

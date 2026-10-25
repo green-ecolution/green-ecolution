@@ -5,10 +5,12 @@ use std::{collections::HashMap, sync::Arc};
 use chrono::Utc;
 use domain::{
     Id, RepositoryError,
-    cluster::{TreeCluster, TreeClusterReader},
     organization::Organization,
     shared::coordinates::Coordinate,
     target::{TargetCatalog, TargetError, TargetKindSpec, TargetPurpose, TargetRef},
+};
+use irrigation_domain::{
+    cluster::{TreeCluster, TreeClusterReader},
     tree::{Tree, TreeReader},
 };
 

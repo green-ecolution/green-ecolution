@@ -17,12 +17,11 @@ use crate::{
 };
 use domain::{
     authorization::{Action, Permission, ResourceKey},
-    cluster::TreeClusterSearchQuery,
     operation_plan::OperationPlanSearchQuery,
     sensor::SensorSearchQuery,
     shared::pagination::Pagination,
-    tree::TreeSearchQuery,
 };
+use irrigation_domain::{cluster::TreeClusterSearchQuery, tree::TreeSearchQuery};
 
 pub fn routes() -> OpenApiRouter<Arc<AppState>> {
     OpenApiRouter::new().routes(routes!(get_evaluation))

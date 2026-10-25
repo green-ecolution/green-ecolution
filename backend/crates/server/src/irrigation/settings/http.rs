@@ -5,8 +5,8 @@ use domain::{
     Id,
     authorization::{Action, Permission, ResourceKey},
     organization::OrganizationReader,
-    settings::{JustWateredTtl, WaterDemand},
 };
+use irrigation_domain::settings::{JustWateredTtl, WaterDemand};
 use serde::{Deserialize, Serialize};
 use utoipa_axum::{router::OpenApiRouter, routes};
 use uuid::Uuid;

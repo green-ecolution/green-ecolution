@@ -3,8 +3,8 @@
 //!
 //! Provides: `ValidationError`, `NonEmptyString`, `Address`, `Email`,
 //! `PhoneNumber`, `Coordinate`, `BoundingBox`, `Distance`,
-//! `Provenance`, `Pagination`, `SortDirection`, `WateringStatus`, and the
-//! helper types in `string_value`.
+//! `Provenance`, `Pagination`, `SortDirection`, and the helper types in
+//! `string_value`.
 
 pub mod address;
 pub mod coordinates;
@@ -19,4 +19,3 @@ pub mod provenance;
 pub mod provider_info;
 pub mod sort;
 pub mod string_value;
-pub mod watering_status;

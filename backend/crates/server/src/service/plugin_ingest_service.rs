@@ -11,13 +11,16 @@ use std::sync::Arc;
 use domain::{
     Id, RepositoryError,
     authorization::{AccessContext, Action, EffectivePermissions, Permission},
-    events::DomainEvent,
-    plugin::{Plugin, PluginReader, PluginWriter, TreeRefPage},
+    plugin::Plugin,
     shared::{
         coordinates::Coordinate,
         error::ValidationError,
         provenance::{Provenance, ProviderId},
     },
+};
+use irrigation_domain::{
+    events::IrrigationEvent,
+    plugin_refs::{PluginTreeRefs, TreeRefPage},
     tree::{PlantingYear, Species, Tree, TreeDraft, TreeNumber, TreeReader, TreeWriter},
 };
 
@@ -83,8 +86,7 @@ pub(crate) async fn plugin_access_context(
 pub struct PluginIngestService {
     tree_reader: Arc<dyn TreeReader>,
     tree_writer: Arc<dyn TreeWriter>,
-    plugin_reader: Arc<dyn PluginReader>,
-    plugin_writer: Arc<dyn PluginWriter>,
+    tree_refs: Arc<dyn PluginTreeRefs>,
     /// Owns the delete flow so it runs through the exact same path as the
     /// regular tree API (`TreeDeleted` published, cluster centroid and
     /// status recalculated) instead of a second, drifting copy of it.
@@ -98,8 +100,7 @@ impl PluginIngestService {
     pub fn new(
         tree_reader: Arc<dyn TreeReader>,
         tree_writer: Arc<dyn TreeWriter>,
-        plugin_reader: Arc<dyn PluginReader>,
-        plugin_writer: Arc<dyn PluginWriter>,
+        tree_refs: Arc<dyn PluginTreeRefs>,
         tree_deletion: Arc<dyn TreeDeletion>,
         event_bus: Arc<dyn EventBus>,
         authorization: Arc<AuthorizationService>,
@@ -107,8 +108,7 @@ impl PluginIngestService {
         Self {
             tree_reader,
             tree_writer,
-            plugin_reader,
-            plugin_writer,
+            tree_refs,
             tree_deletion,
             event_bus,
             authorization,
@@ -191,7 +191,7 @@ impl PluginIngestService {
         let provenance = Provenance::new(Some(provider), item.additional_info);
 
         match self
-            .plugin_reader
+            .tree_refs
             .tree_ref(plugin.id, &item.external_id)
             .await?
         {
@@ -208,7 +208,7 @@ impl PluginIngestService {
                 };
                 let tree = self.tree_writer.save_new(draft).await?;
                 if let Err(link_err) = self
-                    .plugin_writer
+                    .tree_refs
                     .link_tree(plugin.id, &item.external_id, tree.id)
                     .await
                 {
@@ -241,10 +241,13 @@ impl PluginIngestService {
                     });
                 }
                 self.event_bus
-                    .publish(DomainEvent::TreeCreated {
-                        tree_id: tree.id,
-                        cluster_id: tree.cluster_id(),
-                    })
+                    .publish(
+                        IrrigationEvent::TreeCreated {
+                            tree_id: tree.id,
+                            cluster_id: tree.cluster_id(),
+                        }
+                        .into_domain(),
+                    )
                     .await;
                 Ok((IngestStatus::Created, tree.id))
             }
@@ -299,7 +302,7 @@ impl PluginIngestService {
     ) -> Result<(), ServiceError> {
         let ctx = self.context_for(plugin).await?;
         let tree_ref = self
-            .plugin_reader
+            .tree_refs
             .tree_ref(plugin.id, external_id)
             .await?
             .ok_or(RepositoryError::NotFound)?;
@@ -324,10 +327,7 @@ impl PluginIngestService {
         after: Option<&str>,
         limit: u32,
     ) -> Result<TreeRefPage, ServiceError> {
-        Ok(self
-            .plugin_reader
-            .tree_refs(plugin.id, after, limit)
-            .await?)
+        Ok(self.tree_refs.tree_refs(plugin.id, after, limit).await?)
     }
 }
 
@@ -395,11 +395,12 @@ mod tests {
 
     use domain::authorization::{OrgHierarchy, Permission};
     use domain::organization::{Organization, OrganizationReader};
-    use domain::plugin::{PluginDraft, PluginKeyHash, PluginSlug, PluginSnapshot, TreeRef};
+    use domain::plugin::PluginSnapshot;
     use domain::role::{Role, RoleReader};
     use domain::sensor::SensorId;
-    use domain::shared::watering_status::WateringStatus;
-    use domain::tree::TreeSnapshot;
+    use irrigation_domain::plugin_refs::TreeRef;
+    use irrigation_domain::tree::TreeSnapshot;
+    use irrigation_domain::watering_status::WateringStatus;
     use serde_json::json;
     use uuid::Uuid;
 
@@ -431,26 +432,26 @@ mod tests {
         }
         async fn by_cluster_id(
             &self,
-            _cluster_id: Id<domain::cluster::TreeCluster>,
+            _cluster_id: Id<irrigation_domain::cluster::TreeCluster>,
         ) -> Result<Vec<Tree>, RepositoryError> {
             unimplemented!()
         }
         async fn view_by_id(
             &self,
             _id: Id<Tree>,
-        ) -> Result<domain::tree::TreeView, RepositoryError> {
+        ) -> Result<irrigation_domain::tree::TreeView, RepositoryError> {
             unimplemented!()
         }
         async fn view_by_ids(
             &self,
             _ids: &[Id<Tree>],
-        ) -> Result<Vec<domain::tree::TreeView>, RepositoryError> {
+        ) -> Result<Vec<irrigation_domain::tree::TreeView>, RepositoryError> {
             unimplemented!()
         }
         async fn view_by_sensor_id(
             &self,
             _sensor_id: &SensorId,
-        ) -> Result<Option<domain::tree::TreeView>, RepositoryError> {
+        ) -> Result<Option<irrigation_domain::tree::TreeView>, RepositoryError> {
             unimplemented!()
         }
         async fn sensor_ids(
@@ -461,9 +462,9 @@ mod tests {
         }
         async fn view_search(
             &self,
-            _query: domain::tree::TreeSearchQuery,
+            _query: irrigation_domain::tree::TreeSearchQuery,
             _pagination: domain::shared::pagination::Pagination,
-        ) -> Result<domain::tree::TreeSearchPage, RepositoryError> {
+        ) -> Result<irrigation_domain::tree::TreeSearchPage, RepositoryError> {
             unimplemented!()
         }
         async fn view_nearest(
@@ -472,7 +473,7 @@ mod tests {
             _radius: domain::shared::distance::Distance,
             _limit: u32,
             _visible: domain::authorization::Visibility,
-        ) -> Result<Vec<domain::tree::TreeViewWithDistance>, RepositoryError> {
+        ) -> Result<Vec<irrigation_domain::tree::TreeViewWithDistance>, RepositoryError> {
             unimplemented!()
         }
         async fn find_nearest(
@@ -484,8 +485,8 @@ mod tests {
         }
         async fn view_markers(
             &self,
-            _query: domain::tree::TreeSearchQuery,
-        ) -> Result<Vec<domain::tree::TreeMarker>, RepositoryError> {
+            _query: irrigation_domain::tree::TreeSearchQuery,
+        ) -> Result<Vec<irrigation_domain::tree::TreeMarker>, RepositoryError> {
             unimplemented!()
         }
         async fn distinct_planting_years(
@@ -578,8 +579,7 @@ mod tests {
         Internal,
     }
 
-    /// Only implements the methods `PluginIngestService` actually calls;
-    /// anything else panics loudly so a new call site cannot pass unnoticed.
+    /// In-memory stand-in for the plugin's tree refs.
     struct FakePluginRepo {
         refs: Mutex<HashMap<(Uuid, String), TreeRef>>,
         /// `link_tree` returns the matching error for this exact external_id
@@ -611,28 +611,7 @@ mod tests {
     }
 
     #[async_trait::async_trait]
-    impl PluginReader for FakePluginRepo {
-        async fn by_id(&self, _id: Id<Plugin>) -> Result<Plugin, RepositoryError> {
-            unimplemented!()
-        }
-        async fn by_slug(&self, _slug: &PluginSlug) -> Result<Plugin, RepositoryError> {
-            unimplemented!()
-        }
-        async fn all(&self) -> Result<Vec<domain::plugin::PluginView>, RepositoryError> {
-            unimplemented!()
-        }
-        async fn view_by_slug(
-            &self,
-            _slug: &PluginSlug,
-        ) -> Result<domain::plugin::PluginView, RepositoryError> {
-            unimplemented!()
-        }
-        async fn last_seen_at(
-            &self,
-            _id: Id<Plugin>,
-        ) -> Result<Option<chrono::DateTime<chrono::Utc>>, RepositoryError> {
-            unimplemented!()
-        }
+    impl PluginTreeRefs for FakePluginRepo {
         async fn tree_ref(
             &self,
             plugin: Id<Plugin>,
@@ -668,27 +647,6 @@ mod tests {
                 items,
                 next_cursor: None,
             })
-        }
-    }
-
-    #[async_trait::async_trait]
-    impl PluginWriter for FakePluginRepo {
-        async fn save_new(
-            &self,
-            _id: Id<Plugin>,
-            _draft: PluginDraft,
-            _key_hash: Option<PluginKeyHash>,
-        ) -> Result<Plugin, RepositoryError> {
-            unimplemented!()
-        }
-        async fn save(&self, _plugin: &Plugin) -> Result<(), RepositoryError> {
-            unimplemented!()
-        }
-        async fn delete(&self, _id: Id<Plugin>) -> Result<(), RepositoryError> {
-            unimplemented!()
-        }
-        async fn touch_last_seen(&self, _id: Id<Plugin>) -> Result<(), RepositoryError> {
-            unimplemented!()
         }
         async fn link_tree(
             &self,
@@ -821,7 +779,7 @@ mod tests {
     /// written (e.g. that a failed link left no orphaned tree behind).
     fn service_with(plugin_repo: FakePluginRepo) -> (PluginIngestService, Arc<FakeTreeRepo>) {
         let tree_repo = Arc::new(FakeTreeRepo::default());
-        let plugin_repo = Arc::new(plugin_repo);
+        let plugin_repo: Arc<dyn PluginTreeRefs> = Arc::new(plugin_repo);
         let event_bus = Arc::new(NoopEventBus);
         let authorization = Arc::new(AuthorizationService::new(
             Arc::new(UnrestrictedOrgs),
@@ -831,7 +789,6 @@ mod tests {
         let svc = PluginIngestService::new(
             tree_repo.clone(),
             tree_repo.clone(),
-            plugin_repo.clone(),
             plugin_repo,
             tree_repo.clone(),
             event_bus,

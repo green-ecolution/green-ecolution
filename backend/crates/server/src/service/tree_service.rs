@@ -3,18 +3,18 @@ use std::sync::Arc;
 use domain::{
     Id,
     authorization::Visibility,
-    cluster::{TreeCluster, TreeClusterReader},
-    events::DomainEvent,
     organization::Organization,
     sensor::{SensorId, SensorReader, SensorWriter},
-    shared::{
-        coordinates::Coordinate, distance::Distance, pagination::Pagination,
-        watering_status::WateringStatus,
-    },
+    shared::{coordinates::Coordinate, distance::Distance, pagination::Pagination},
+};
+use irrigation_domain::{
+    cluster::{TreeCluster, TreeClusterReader},
+    events::IrrigationEvent,
     tree::{
         PlantingYear, Tree, TreeDraft, TreeMarker, TreeReader, TreeSearchPage, TreeSearchQuery,
         TreeView, TreeViewWithDistance, TreeWriter,
     },
+    watering_status::WateringStatus,
 };
 
 use super::{OrganizationMismatch, ServiceError, event_bus::EventBus};
@@ -135,10 +135,13 @@ impl TreeService {
             .await?;
         let tree = self.writer.save_new(draft).await?;
         self.event_bus
-            .publish(DomainEvent::TreeCreated {
-                tree_id: tree.id,
-                cluster_id: tree.cluster_id(),
-            })
+            .publish(
+                IrrigationEvent::TreeCreated {
+                    tree_id: tree.id,
+                    cluster_id: tree.cluster_id(),
+                }
+                .into_domain(),
+            )
             .await;
         Ok(tree)
     }
@@ -197,10 +200,13 @@ impl TreeService {
         let cluster_id = tree.cluster_id();
         self.writer.delete(id).await?;
         self.event_bus
-            .publish(DomainEvent::TreeDeleted {
-                tree_id: id,
-                cluster_id,
-            })
+            .publish(
+                IrrigationEvent::TreeDeleted {
+                    tree_id: id,
+                    cluster_id,
+                }
+                .into_domain(),
+            )
             .await;
         Ok(())
     }

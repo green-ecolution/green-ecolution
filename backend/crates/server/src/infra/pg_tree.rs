@@ -6,23 +6,25 @@ use serde_json::Value;
 use sqlx::PgPool;
 
 use crate::infra::list::{ListSpec, Predicate, SortColumns};
-use domain::tree::snapshot::TreeSnapshot;
 use domain::{
     Id, RepositoryError,
     authorization::Visibility,
-    cluster::TreeCluster,
     organization::Organization,
     sensor::SensorId,
     shared::{
         coordinates::Coordinate,
         distance::Distance,
         pagination::{Page, Pagination, SearchPage},
-        watering_status::WateringStatus,
     },
+};
+use irrigation_domain::tree::snapshot::TreeSnapshot;
+use irrigation_domain::{
+    cluster::TreeCluster,
     tree::{
         PlantingYear, Tree, TreeDraft, TreeMarker, TreeReader, TreeSearchPage, TreeSearchQuery,
         TreeView, TreeViewWithDistance, TreeWriter,
     },
+    watering_status::WateringStatus,
 };
 
 /// Organization scope of a tree query: the orgs the caller may see, narrowed

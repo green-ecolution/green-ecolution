@@ -1,5 +1,5 @@
 use domain::shared::coordinates::Coordinate;
-use domain::tree::{PlantingYear, Species, TreeNumber};
+use irrigation_domain::tree::{PlantingYear, Species, TreeNumber};
 use serde::Deserialize;
 use serde_wasm_bindgen::from_value;
 

@@ -161,7 +161,7 @@ mod tests {
     }
 
     fn target_subject() -> CommentSubject {
-        CommentSubject::Target(TargetRef::new("irrigation", "cluster", Uuid::now_v7()).unwrap())
+        CommentSubject::Target(TargetRef::new("probe", "widget", Uuid::now_v7()).unwrap())
     }
 
     fn roundtrip(subject: &CommentSubject) -> CommentSubject {
@@ -203,8 +203,8 @@ mod tests {
         assert_err!(CommentSubject::from_parts(
             "plan",
             Uuid::now_v7(),
-            Some("irrigation"),
-            Some("cluster")
+            Some("probe"),
+            Some("widget")
         ));
     }
 
@@ -221,7 +221,7 @@ mod tests {
     #[test]
     fn subjects_of_different_kinds_with_same_uuid_are_not_equal() {
         let raw = Uuid::now_v7();
-        let target = CommentSubject::Target(TargetRef::new("irrigation", "cluster", raw).unwrap());
+        let target = CommentSubject::Target(TargetRef::new("probe", "widget", raw).unwrap());
         let plan = CommentSubject::Plan(Id::new(raw));
         assert_ne!(target, plan);
     }

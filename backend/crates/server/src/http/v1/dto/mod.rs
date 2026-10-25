@@ -19,16 +19,16 @@ use serde::Serialize;
 
 use crate::http::v1::pagination::PaginationResponse;
 use domain::{
-    cluster::SoilCondition as DomainSoilCondition,
     sensor::SensorStatus as DomainSensorStatus,
-    shared::{
-        pagination::{Page, Pagination},
-        watering_status::WateringStatus as DomainWateringStatus,
-    },
+    shared::pagination::{Page, Pagination},
     vehicle::{
         DrivingLicense as DomainDrivingLicense, VehicleAvailability as DomainVehicleAvailability,
         VehicleStatus as DomainVehicleStatus, VehicleType as DomainVehicleType,
     },
+};
+use irrigation_domain::{
+    cluster::SoilCondition as DomainSoilCondition,
+    watering_status::WateringStatus as DomainWateringStatus,
 };
 
 #[derive(Debug, Serialize, utoipa::ToSchema)]

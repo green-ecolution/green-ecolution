@@ -552,14 +552,14 @@ test-clean:
 # Run the domain micro-benchmarks and record measurements
 [group('check')]
 bench:
-    @echo "Criterion benchmarks (domain)..."
-    cd {{ backend_dir }} && cargo bench -p domain --locked
+    @echo "Criterion benchmarks (domain, irrigation-domain)..."
+    cd {{ backend_dir }} && cargo bench -p domain -p irrigation-domain --locked
 
 # Execute every benchmark once without measuring; this is what CI runs
 [group('check')]
 bench-check:
     @echo "Benchmark smoke run..."
-    cd {{ backend_dir }} && cargo bench -p domain --locked -- --test
+    cd {{ backend_dir }} && cargo bench -p domain -p irrigation-domain --locked -- --test
 
 # Seed a dedicated benchmark database to one scale (xs|s|m|l)
 [group('check')]

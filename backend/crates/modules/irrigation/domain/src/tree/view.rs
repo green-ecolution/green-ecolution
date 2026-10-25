@@ -2,7 +2,9 @@ use chrono::{DateTime, Utc};
 use serde_json::Value;
 use uuid::Uuid;
 
-use crate::shared::{distance::Distance, watering_status::WateringStatus};
+use domain::shared::distance::Distance;
+
+use crate::watering_status::WateringStatus;
 
 /// HTTP-side read model for a tree.
 ///

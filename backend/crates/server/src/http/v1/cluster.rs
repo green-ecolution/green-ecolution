@@ -30,16 +30,16 @@ use crate::{
 use domain::{
     Id,
     authorization::{Action, Permission},
-    cluster::{
-        ClusterAddress, ClusterName, ClusterSort, ClusterSortField, TreeClusterSearchQuery,
-        TreeClusterUpdate, TreeClusterView,
-    },
     region::Region,
     shared::{
         pagination::Pagination,
         provenance::{Provenance, ProviderId},
         sort::SortDirection,
     },
+};
+use irrigation_domain::cluster::{
+    ClusterAddress, ClusterName, ClusterSort, ClusterSortField, TreeClusterSearchQuery,
+    TreeClusterUpdate, TreeClusterView,
 };
 
 pub fn routes() -> OpenApiRouter<Arc<AppState>> {
@@ -63,7 +63,7 @@ async fn build_cluster_response(
         None => None,
     };
 
-    let tree_ids: Vec<Id<domain::tree::Tree>> =
+    let tree_ids: Vec<Id<irrigation_domain::tree::Tree>> =
         cluster.tree_ids.iter().map(|&id| Id::new(id)).collect();
     let trees = state.tree_service.view_by_ids(&tree_ids).await?;
 
@@ -136,14 +136,14 @@ pub async fn list_clusters(
         watering_statuses: params
             .watering_status
             .into_iter()
-            .map(domain::shared::watering_status::WateringStatus::from)
+            .map(irrigation_domain::watering_status::WateringStatus::from)
             .collect(),
         regions: params.region,
         ids: params.id.into_iter().map(Id::new).collect(),
         soil_conditions: params
             .soil_condition
             .into_iter()
-            .map(domain::cluster::SoilCondition::from)
+            .map(irrigation_domain::cluster::SoilCondition::from)
             .collect(),
         query: search,
         sort,

@@ -21,10 +21,9 @@ mod watermark_calibration;
 
 use chrono::{DateTime, Datelike, Utc};
 
-use crate::{
+use domain::{
     Id,
     authorization::Visibility,
-    cluster::TreeCluster,
     events::DomainEvent,
     organization::Organization,
     sensor::data::Watermark,
@@ -32,9 +31,10 @@ use crate::{
         coordinates::Coordinate,
         geo::BoundingBox,
         provenance::{Provenance, ProviderId},
-        watering_status::WateringStatus,
     },
 };
+
+use crate::{cluster::TreeCluster, events::IrrigationEvent, watering_status::WateringStatus};
 
 pub use error::TreeError;
 pub use marker::TreeMarker;
@@ -48,12 +48,12 @@ pub use volumetric_calibration::{
     REW_CRIT, REW_MIN, VolumetricThresholds, rew_fraction, volumetric_thresholds,
 };
 
-crate::newtype_nonempty! {
+domain::newtype_nonempty! {
     /// Botanical or common species name, 1–255 characters after trimming.
     Species, "tree.species", 1, 255
 }
 
-crate::newtype_nonempty! {
+domain::newtype_nonempty! {
     /// Municipality-assigned tree identifier (e.g. `"FL-001"`), 1–64 characters.
     TreeNumber, "tree.number", 1, 64
 }
@@ -173,10 +173,13 @@ impl Tree {
     ) -> Vec<DomainEvent> {
         let mut events = Vec::new();
         if self.coordinate != coordinate {
-            events.push(DomainEvent::TreeCoordinateChanged {
-                tree_id: self.id,
-                cluster_id: self.cluster_id,
-            });
+            events.push(
+                IrrigationEvent::TreeCoordinateChanged {
+                    tree_id: self.id,
+                    cluster_id: self.cluster_id,
+                }
+                .into_domain(),
+            );
         }
         self.species = species;
         self.tree_number = tree_number;
@@ -193,11 +196,14 @@ impl Tree {
         }
         let from = self.cluster_id;
         self.cluster_id = target;
-        vec![DomainEvent::TreeMovedBetweenClusters {
-            tree_id: self.id,
-            from,
-            to: target,
-        }]
+        vec![
+            IrrigationEvent::TreeMovedBetweenClusters {
+                tree_id: self.id,
+                from,
+                to: target,
+            }
+            .into_domain(),
+        ]
     }
 
     /// Without a sensor nothing measures this tree any more.
@@ -210,11 +216,14 @@ impl Tree {
             return vec![];
         }
         self.watering_status = status;
-        vec![DomainEvent::TreeWateringStatusChanged {
-            tree_id: self.id,
-            cluster_id: self.cluster_id,
-            new_status: status,
-        }]
+        vec![
+            IrrigationEvent::TreeWateringStatusChanged {
+                tree_id: self.id,
+                cluster_id: self.cluster_id,
+                new_status: status,
+            }
+            .into_domain(),
+        ]
     }
 
     pub fn mark_watered_at(&mut self, ts: DateTime<Utc>) {
@@ -287,18 +296,21 @@ impl Tree {
         }
         let from = self.organization_id;
         self.organization_id = target;
-        vec![DomainEvent::TreeResponsibilityTransferred {
-            tree_id: self.id,
-            from,
-            to: target,
-        }]
+        vec![
+            IrrigationEvent::TreeResponsibilityTransferred {
+                tree_id: self.id,
+                from,
+                to: target,
+            }
+            .into_domain(),
+        ]
     }
 
     /// Derives a [`WateringStatus`] from volumetric soil-moisture readings,
     /// the cluster's KA5 `soil` type, and the tree's age.
     pub fn calculate_watering_status_from_volumetric(
         &self,
-        readings: &[crate::sensor::data::VolumetricReading],
+        readings: &[domain::sensor::data::VolumetricReading],
         soil: crate::cluster::SoilCondition,
         today: DateTime<Utc>,
     ) -> Result<WateringStatus, TreeError> {
@@ -366,8 +378,8 @@ mod tests {
         let events = t.move_to_cluster(Some(target));
         assert_eq!(t.cluster_id(), Some(target));
         assert_eq!(events.len(), 1);
-        match &events[0] {
-            DomainEvent::TreeMovedBetweenClusters { tree_id, from, to } => {
+        match IrrigationEvent::from_domain(&events[0]) {
+            Some(IrrigationEvent::TreeMovedBetweenClusters { tree_id, from, to }) => {
                 assert_eq!(*tree_id, t.id);
                 assert_eq!(*from, None);
                 assert_eq!(*to, Some(target));
@@ -384,8 +396,8 @@ mod tests {
         t.move_to_cluster(Some(a));
         let events = t.move_to_cluster(Some(b));
         assert_eq!(t.cluster_id(), Some(b));
-        match &events[0] {
-            DomainEvent::TreeMovedBetweenClusters { from, to, .. } => {
+        match IrrigationEvent::from_domain(&events[0]) {
+            Some(IrrigationEvent::TreeMovedBetweenClusters { from, to, .. }) => {
                 assert_eq!(*from, Some(a));
                 assert_eq!(*to, Some(b));
             }
@@ -400,8 +412,8 @@ mod tests {
         t.move_to_cluster(Some(a));
         let events = t.move_to_cluster(None);
         assert!(t.cluster_id().is_none());
-        match &events[0] {
-            DomainEvent::TreeMovedBetweenClusters { from, to, .. } => {
+        match IrrigationEvent::from_domain(&events[0]) {
+            Some(IrrigationEvent::TreeMovedBetweenClusters { from, to, .. }) => {
                 assert_eq!(*from, Some(a));
                 assert_eq!(*to, None);
             }
@@ -424,8 +436,8 @@ mod tests {
         assert_eq!(t.coordinate, new_coord);
         assert_eq!(events.len(), 1);
         assert!(matches!(
-            events[0],
-            DomainEvent::TreeCoordinateChanged { .. }
+            IrrigationEvent::from_domain(&events[0]),
+            Some(IrrigationEvent::TreeCoordinateChanged { .. })
         ));
     }
 
@@ -452,11 +464,11 @@ mod tests {
         let events = t.forget_watering_status();
         assert_eq!(t.watering_status(), WateringStatus::Unknown);
         assert!(matches!(
-            events[0],
-            DomainEvent::TreeWateringStatusChanged {
+            IrrigationEvent::from_domain(&events[0]),
+            Some(IrrigationEvent::TreeWateringStatusChanged {
                 new_status: WateringStatus::Unknown,
                 ..
-            }
+            })
         ));
         assert!(t.forget_watering_status().is_empty());
     }
@@ -468,11 +480,11 @@ mod tests {
         assert_eq!(t.watering_status(), WateringStatus::Good);
         assert_eq!(events.len(), 1);
         assert!(matches!(
-            events[0],
-            DomainEvent::TreeWateringStatusChanged {
+            IrrigationEvent::from_domain(&events[0]),
+            Some(IrrigationEvent::TreeWateringStatusChanged {
                 new_status: WateringStatus::Good,
                 ..
-            }
+            })
         ));
     }
 
@@ -539,12 +551,12 @@ mod tests {
         let events = t.transfer_to(target);
         assert_eq!(t.organization_id(), target);
         assert_eq!(events.len(), 1);
-        match &events[0] {
-            DomainEvent::TreeResponsibilityTransferred {
+        match IrrigationEvent::from_domain(&events[0]) {
+            Some(IrrigationEvent::TreeResponsibilityTransferred {
                 tree_id,
                 from: ev_from,
                 to,
-            } => {
+            }) => {
                 assert_eq!(*tree_id, t.id);
                 assert_eq!(*ev_from, from);
                 assert_eq!(*to, target);
@@ -684,11 +696,11 @@ mod tests {
         let t = fixed_tree(); // planting_year 2020
         let today = "2025-06-01T00:00:00Z".parse::<DateTime<Utc>>().unwrap();
         let readings = [
-            crate::sensor::data::VolumetricReading {
+            domain::sensor::data::VolumetricReading {
                 depth_cm: 40,
                 moisture_percent: 25.0,
             },
-            crate::sensor::data::VolumetricReading {
+            domain::sensor::data::VolumetricReading {
                 depth_cm: 80,
                 moisture_percent: 15.0,
             },
@@ -718,7 +730,7 @@ mod tests {
     fn volumetric_status_rejects_a_tree_planted_in_the_future() {
         use crate::cluster::SoilCondition;
         let t = tree_planted_in(2030);
-        let readings = [crate::sensor::data::VolumetricReading {
+        let readings = [domain::sensor::data::VolumetricReading {
             depth_cm: 40,
             moisture_percent: 25.0,
         }];

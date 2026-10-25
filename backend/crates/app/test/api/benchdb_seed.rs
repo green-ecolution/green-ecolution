@@ -1,8 +1,5 @@
-use domain::{
-    sensor::repository::SensorReadingReader,
-    shared::pagination::Pagination,
-    tree::{TreeSearchQuery, repository::TreeReader},
-};
+use domain::{sensor::repository::SensorReadingReader, shared::pagination::Pagination};
+use irrigation_domain::tree::{TreeSearchQuery, repository::TreeReader};
 use server::{
     bench::{
         scale::Scale,

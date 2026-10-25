@@ -10,10 +10,11 @@ use domain::{
     authorization::ResourceCatalog,
     plugin::{
         DeviceCapability, Plugin, PluginDraft, PluginFrontend, PluginName, PluginSlug, PluginView,
-        ServiceEndpoint, TreeRef, TreeRefPage,
+        ServiceEndpoint,
     },
     sensor::SensorDraft,
 };
+use irrigation_domain::plugin_refs::{TreeRef, TreeRefPage};
 
 use crate::http::AppOrigins;
 use crate::service::{

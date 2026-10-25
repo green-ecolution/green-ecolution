@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 use serde_json::Value;
 use uuid::Uuid;
 
-use crate::shared::watering_status::WateringStatus;
+use crate::watering_status::WateringStatus;
 
 /// Raw DB-row mapping used exclusively for aggregate rehydration.
 #[doc(hidden)]

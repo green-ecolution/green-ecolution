@@ -1,5 +1,5 @@
-use domain::cluster::SoilCondition;
-use domain::cluster::{ClusterAddress, ClusterName};
+use irrigation_domain::cluster::SoilCondition;
+use irrigation_domain::cluster::{ClusterAddress, ClusterName};
 use serde::Deserialize;
 use serde_wasm_bindgen::from_value;
 

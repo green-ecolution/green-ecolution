@@ -85,6 +85,30 @@ pub struct SignalQuality {
     pub gateway_count: u8,
 }
 
+/// Aggregation bucket for the soil-moisture time series.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SoilMoistureBucket {
+    Hour,
+    Day,
+}
+
+/// One aggregated bucket: mean/min/max over every in-range reading of every
+/// sensor in the series at one depth.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct SoilMoisturePoint {
+    pub bucket_start: DateTime<Utc>,
+    pub mean: f64,
+    pub min: f64,
+    pub max: f64,
+    pub sample_count: i64,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct SoilMoistureDepthSeries {
+    pub depth_cm: i32,
+    pub points: Vec<SoilMoisturePoint>,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -3,16 +3,16 @@ use serde::{Deserialize, Serialize};
 
 use domain::{
     Id,
-    cluster::{
-        ClusterAddress, ClusterBoundaryView, ClusterMarker, ClusterName, ClusterSortField,
-        ClusterStatistics, TreeCluster, TreeClusterDraft, TreeClusterView,
-    },
     organization::Organization,
     region::Region,
     shared::{
         provenance::{Provenance, ProviderId},
         sort::SortDirection,
     },
+};
+use irrigation_domain::cluster::{
+    ClusterAddress, ClusterBoundaryView, ClusterMarker, ClusterName, ClusterSortField,
+    ClusterStatistics, TreeCluster, TreeClusterDraft, TreeClusterView,
 };
 
 use crate::service::ServiceError;
@@ -435,7 +435,7 @@ impl SoilMoistureParams {
         (
             DateTime<Utc>,
             DateTime<Utc>,
-            domain::cluster::SoilMoistureBucket,
+            domain::sensor::data::SoilMoistureBucket,
         ),
         ServiceError,
     > {
@@ -447,8 +447,8 @@ impl SoilMoistureParams {
             ));
         }
         let bucket = match self.bucket.as_deref() {
-            None | Some("day") => domain::cluster::SoilMoistureBucket::Day,
-            Some("hour") => domain::cluster::SoilMoistureBucket::Hour,
+            None | Some("day") => domain::sensor::data::SoilMoistureBucket::Day,
+            Some("hour") => domain::sensor::data::SoilMoistureBucket::Hour,
             Some(other) => {
                 return Err(ServiceError::InvalidInput(format!(
                     "unknown bucket '{other}' (use hour or day)"
@@ -543,12 +543,12 @@ pub struct SoilMoistureSeriesResponse {
     pub watering_events: Vec<ClusterWateringEventResponse>,
 }
 
-impl From<domain::cluster::SoilMoistureOverview> for SoilMoistureSeriesResponse {
-    fn from(v: domain::cluster::SoilMoistureOverview) -> Self {
+impl From<irrigation_domain::cluster::SoilMoistureOverview> for SoilMoistureSeriesResponse {
+    fn from(v: irrigation_domain::cluster::SoilMoistureOverview) -> Self {
         Self {
             bucket: match v.bucket {
-                domain::cluster::SoilMoistureBucket::Hour => "hour".into(),
-                domain::cluster::SoilMoistureBucket::Day => "day".into(),
+                domain::sensor::data::SoilMoistureBucket::Hour => "hour".into(),
+                domain::sensor::data::SoilMoistureBucket::Day => "day".into(),
             },
             series: v
                 .series
@@ -589,8 +589,8 @@ impl From<domain::cluster::SoilMoistureOverview> for SoilMoistureSeriesResponse 
                 })
                 .collect(),
             condition_thresholds: SoilMoistureConditionThresholdsResponse {
-                moderate: domain::tree::REW_MIN * 100.0,
-                critical: domain::tree::REW_CRIT * 100.0,
+                moderate: irrigation_domain::tree::REW_MIN * 100.0,
+                critical: irrigation_domain::tree::REW_CRIT * 100.0,
             },
             watering_events: v
                 .watering_events

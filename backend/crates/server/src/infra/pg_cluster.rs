@@ -4,22 +4,24 @@ use serde_json::Value;
 use sqlx::PgPool;
 
 use crate::infra::list::{ListSpec, Predicate, SortColumns};
-use domain::cluster::snapshot::TreeClusterSnapshot;
 use domain::{
     Id, RepositoryError,
     authorization::Visibility,
-    cluster::{
-        ClusterBoundaryView, ClusterMarker, ClusterStatistics, ClusterWateringEvent, SoilCondition,
-        SoilMoistureBucket, SoilMoistureDepthSeries, SoilMoisturePoint, TreeCluster,
-        TreeClusterDraft, TreeClusterReader, TreeClusterSearchQuery, TreeClusterView,
-        TreeClusterWriter,
-    },
     organization::Organization,
+    sensor::data::{SoilMoistureBucket, SoilMoistureDepthSeries, SoilMoisturePoint},
     shared::{
         coordinates::Coordinate,
         pagination::{Page, Pagination, SearchPage},
-        watering_status::WateringStatus,
     },
+};
+use irrigation_domain::cluster::snapshot::TreeClusterSnapshot;
+use irrigation_domain::{
+    cluster::{
+        ClusterBoundaryView, ClusterMarker, ClusterStatistics, ClusterWateringEvent, SoilCondition,
+        TreeCluster, TreeClusterDraft, TreeClusterReader, TreeClusterSearchQuery, TreeClusterView,
+        TreeClusterWriter,
+    },
+    watering_status::WateringStatus,
 };
 
 /// Boundary buffer applied to a cluster's convex hull, in meters. Keeps the

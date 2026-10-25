@@ -1,6 +1,6 @@
-//! Irrigation as a module. In this stage it only implements the core's ports;
-//! trees, clusters and their services still live in the core and move into the
-//! module crate in stage 4.
+//! Irrigation as a module. Its domain types live in `irrigation-domain`; the
+//! services and adapters below still sit in the server crate until they move
+//! into `irrigation-server`.
 
 pub mod handlers;
 pub mod planning;
@@ -24,7 +24,7 @@ use settings::{
     service::IrrigationSettingsService,
 };
 
-pub const KEY: &str = "irrigation";
+pub use irrigation_domain::{KEY, key};
 
 /// The `modules.irrigation` section of the YAML.
 #[derive(serde::Deserialize, Clone, Debug)]
@@ -79,10 +79,6 @@ pub mod resources {
     pub const TREE_CLUSTER: ResourceKey = ResourceKey::declare("tree_cluster");
     pub const WATERING_PLAN: ResourceKey = ResourceKey::declare("watering_plan");
     pub const ALL: [ResourceKey; 3] = [TREE, TREE_CLUSTER, WATERING_PLAN];
-}
-
-pub fn key() -> ModuleKey {
-    ModuleKey::new(KEY).expect("static key is valid")
 }
 
 #[cfg(test)]

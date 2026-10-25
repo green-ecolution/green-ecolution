@@ -32,10 +32,11 @@
 //! per-soil-type numbers themselves arrived with PR #828 (GECO-151) without a
 //! cited source; which KA5 table and edition they come from is unverified.
 
+use domain::sensor::data::VolumetricReading;
+
 use crate::cluster::SoilCondition;
-use crate::sensor::data::VolumetricReading;
-use crate::shared::watering_status::WateringStatus;
 use crate::tree::TreeError;
+use crate::watering_status::WateringStatus;
 
 /// REW coefficient for the onset of moderate stress. Below REW 0.4 stomata
 /// close and transpiration is throttled; the threshold comes from Granier et

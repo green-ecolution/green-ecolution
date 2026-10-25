@@ -3,12 +3,12 @@ use std::sync::Arc;
 use chrono::Utc;
 
 use crate::service::event_bus::{EventHandler, EventHandlerError};
-use domain::{
+use domain::{events::DomainEvent, sensor::SensorReadingReader};
+use irrigation_domain::{
     cluster::{SoilCondition, TreeClusterReader},
-    events::DomainEvent,
-    sensor::SensorReadingReader,
-    shared::watering_status::WateringStatus,
+    events::IrrigationEvent,
     tree::{TreeError, TreeReader, TreeWriter},
+    watering_status::WateringStatus,
 };
 
 /// Recomputes the volumetric watering status of every tree in a cluster
@@ -50,7 +50,9 @@ impl EventHandler for ClusterSoilRecalcHandler {
     }
 
     async fn handle(&self, event: &DomainEvent) -> Result<Vec<DomainEvent>, EventHandlerError> {
-        let DomainEvent::ClusterSoilConditionChanged { cluster_id } = event else {
+        let Some(IrrigationEvent::ClusterSoilConditionChanged { cluster_id }) =
+            IrrigationEvent::from_domain(event)
+        else {
             return Ok(vec![]);
         };
 

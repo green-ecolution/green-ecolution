@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 use serde_json::Value;
 use uuid::Uuid;
 
-use crate::{cluster::SoilCondition, shared::watering_status::WateringStatus};
+use crate::{cluster::SoilCondition, watering_status::WateringStatus};
 
 /// HTTP-side read model for a tree cluster.
 ///

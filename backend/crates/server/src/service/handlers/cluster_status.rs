@@ -4,10 +4,10 @@ use crate::{
     irrigation::targets::is_tree,
     service::event_bus::{EventHandler, EventHandlerError},
 };
-use domain::{
-    Id, RepositoryError,
+use domain::{Id, RepositoryError, events::DomainEvent};
+use irrigation_domain::{
     cluster::{TreeCluster, TreeClusterReader, TreeClusterWriter},
-    events::DomainEvent,
+    events::IrrigationEvent,
     tree::TreeReader,
 };
 
@@ -35,16 +35,6 @@ impl ClusterStatusAggregatorHandler {
         event: &DomainEvent,
     ) -> Result<Vec<Id<TreeCluster>>, EventHandlerError> {
         Ok(match event {
-            DomainEvent::TreeCreated { cluster_id, .. }
-            | DomainEvent::TreeDeleted { cluster_id, .. }
-            | DomainEvent::TreeWateringStatusChanged { cluster_id, .. } => {
-                cluster_id.iter().copied().collect()
-            }
-            DomainEvent::TreeMovedBetweenClusters { from, to, .. } => {
-                let mut ids: Vec<_> = [*from, *to].into_iter().flatten().collect();
-                ids.dedup();
-                ids
-            }
             DomainEvent::SensorAttached { target, .. }
             | DomainEvent::SensorDetached { target, .. }
                 if is_tree(target) =>
@@ -55,8 +45,20 @@ impl ClusterStatusAggregatorHandler {
                     Err(e) => return Err(e.into()),
                 }
             }
-            DomainEvent::ClusterTreesChanged { cluster_id } => vec![*cluster_id],
-            _ => vec![],
+            _ => match IrrigationEvent::from_domain(event) {
+                Some(
+                    IrrigationEvent::TreeCreated { cluster_id, .. }
+                    | IrrigationEvent::TreeDeleted { cluster_id, .. }
+                    | IrrigationEvent::TreeWateringStatusChanged { cluster_id, .. },
+                ) => cluster_id.iter().copied().collect(),
+                Some(IrrigationEvent::TreeMovedBetweenClusters { from, to, .. }) => {
+                    let mut ids: Vec<_> = [*from, *to].into_iter().flatten().collect();
+                    ids.dedup();
+                    ids
+                }
+                Some(IrrigationEvent::ClusterTreesChanged { cluster_id }) => vec![*cluster_id],
+                _ => vec![],
+            },
         })
     }
 }

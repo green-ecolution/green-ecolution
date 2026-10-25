@@ -4,21 +4,23 @@ use chrono::{DateTime, Utc};
 use domain::{
     Id,
     authorization::Visibility,
-    cluster::{
-        ClusterBoundaryView, ClusterMarker, ClusterStatistics, SoilMoistureBucket,
-        SoilMoistureOverview, TreeCluster, TreeClusterDraft, TreeClusterReader,
-        TreeClusterSearchQuery, TreeClusterUpdate, TreeClusterView, TreeClusterWriter,
-        condition_series,
-    },
     comment::{CommentSubject, CommentWriter},
     events::DomainEvent,
     organization::Organization,
     planning::StopRef,
-    sensor::{SensorId, SensorReader, SensorWriter},
+    sensor::{SensorId, SensorReader, SensorWriter, data::SoilMoistureBucket},
     shared::{
         coordinates::Coordinate,
         pagination::{Pagination, SearchPage},
     },
+};
+use irrigation_domain::{
+    cluster::{
+        ClusterBoundaryView, ClusterMarker, ClusterStatistics, SoilMoistureOverview, TreeCluster,
+        TreeClusterDraft, TreeClusterReader, TreeClusterSearchQuery, TreeClusterUpdate,
+        TreeClusterView, TreeClusterWriter, condition_series,
+    },
+    events::IrrigationEvent,
     tree::{Tree, TreeReader, TreeWriter, volumetric_thresholds},
 };
 
@@ -130,9 +132,12 @@ impl ClusterService {
             .await?;
         let source_events = self.source_cluster_events(&draft.tree_ids, None).await?;
         let cluster = self.writer.save_new(draft).await?;
-        let mut events = vec![DomainEvent::ClusterTreesChanged {
-            cluster_id: cluster.id,
-        }];
+        let mut events = vec![
+            IrrigationEvent::ClusterTreesChanged {
+                cluster_id: cluster.id,
+            }
+            .into_domain(),
+        ];
         events.extend(source_events);
         self.event_bus.publish_all(events).await;
         Ok(cluster)
@@ -184,7 +189,7 @@ impl ClusterService {
             .collect();
         Ok(sources
             .into_iter()
-            .map(|cluster_id| DomainEvent::ClusterTreesChanged { cluster_id })
+            .map(|cluster_id| IrrigationEvent::ClusterTreesChanged { cluster_id }.into_domain())
             .collect())
     }
 

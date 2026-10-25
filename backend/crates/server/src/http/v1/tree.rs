@@ -35,7 +35,9 @@ use domain::{
     shared::{
         coordinates::Coordinate, distance::Distance, pagination::Pagination, sort::SortDirection,
     },
-    tree::{PlantingYear, Tree, TreeMarker, TreeSearchQuery, TreeSort, TreeSortField, TreeView},
+};
+use irrigation_domain::tree::{
+    PlantingYear, Tree, TreeMarker, TreeSearchQuery, TreeSort, TreeSortField, TreeView,
 };
 
 pub fn routes() -> OpenApiRouter<Arc<AppState>> {
@@ -94,7 +96,7 @@ pub async fn list_trees(
     let watering_statuses = params
         .watering_status
         .into_iter()
-        .map(domain::shared::watering_status::WateringStatus::from)
+        .map(irrigation_domain::watering_status::WateringStatus::from)
         .collect();
 
     // A lookup, not a write: rows predating the lower bound must stay filterable.
@@ -531,7 +533,7 @@ pub async fn list_tree_markers(
     let watering_statuses = params
         .watering_status
         .into_iter()
-        .map(domain::shared::watering_status::WateringStatus::from)
+        .map(irrigation_domain::watering_status::WateringStatus::from)
         .collect();
 
     let visible = state

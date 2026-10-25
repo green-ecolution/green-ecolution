@@ -1,10 +1,7 @@
 use sqlx::PgPool;
 
-use domain::{
-    RepositoryError,
-    authorization::Visibility,
-    evaluation::{EvaluationRepository, RegionEvaluation, VehicleEvaluation},
-};
+use domain::{RepositoryError, authorization::Visibility};
+use irrigation_domain::evaluation::{EvaluationRepository, RegionEvaluation, VehicleEvaluation};
 
 pub struct PgEvaluationRepository {
     pool: PgPool,

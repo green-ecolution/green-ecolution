@@ -6,8 +6,8 @@ use std::{collections::HashMap, sync::Arc};
 use domain::{
     Id, RepositoryError,
     organization::{Organization, OrganizationReader},
-    settings::{JustWateredTtl, WaterDemand},
 };
+use irrigation_domain::settings::{JustWateredTtl, WaterDemand};
 use sqlx::PgPool;
 use uuid::Uuid;
 

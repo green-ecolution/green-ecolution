@@ -27,7 +27,7 @@ use crate::{
 
 pub use capability::DeviceCapability;
 pub use error::PluginError;
-pub use repository::{PluginReader, PluginWriter, TreeRef, TreeRefPage};
+pub use repository::{PluginReader, PluginWriter};
 #[doc(hidden)]
 pub use snapshot::PluginSnapshot;
 pub use view::PluginView;
@@ -48,7 +48,7 @@ crate::newtype_nonempty! {
 /// `/plugins/{plugin_slug}` — the row could then only be removed with direct
 /// database access, while still pinning its organization against deletion.
 /// Only single-segment collisions belong here: `ingest` is safe because the
-/// route below it is `/plugins/ingest/trees`, one level deeper than any
+/// routes below it (`/plugins/ingest/<kind>`) sit one level deeper than any
 /// admin endpoint. `view-tickets` is safe for the same reason.
 pub const RESERVED_PLUGIN_SLUGS: &[&str] = &["me", "views"];
 
@@ -302,8 +302,8 @@ mod tests {
     use crate::authorization::{Action, ResourceKey};
     use claims::{assert_err, assert_ok};
 
-    // Irrigation's key; moves out with the plugin tree ingest in stage 4.
-    const TREE: ResourceKey = ResourceKey::declare("tree");
+    // Stands in for a resource some module declares.
+    const WIDGET: ResourceKey = ResourceKey::declare("widget");
 
     fn fixed() -> Plugin {
         Plugin {
@@ -312,7 +312,7 @@ mod tests {
             description: None,
             slug: PluginSlug::new("tbz-baumkataster").unwrap(),
             organization_id: Id::new_v7(),
-            permissions: BTreeSet::from([Permission::new(TREE, Action::Create)]),
+            permissions: BTreeSet::from([Permission::new(WIDGET, Action::Create)]),
             required_permissions: BTreeSet::new(),
             device_capabilities: BTreeSet::new(),
             frontend: PluginFrontend::None,
@@ -404,7 +404,7 @@ mod tests {
     #[test]
     fn replace_permissions_swaps_the_set() {
         let mut p = fixed();
-        let target = BTreeSet::from([Permission::new(TREE, Action::Delete)]);
+        let target = BTreeSet::from([Permission::new(WIDGET, Action::Delete)]);
         p.replace_permissions(target.clone());
         assert_eq!(p.permissions(), &target);
     }
@@ -412,22 +412,22 @@ mod tests {
     #[test]
     fn required_permissions_are_independent_of_permissions() {
         let mut p = fixed();
-        p.replace_required_permissions(BTreeSet::from([Permission::new(TREE, Action::Read)]));
+        p.replace_required_permissions(BTreeSet::from([Permission::new(WIDGET, Action::Read)]));
         assert!(
             p.permissions()
-                .contains(&Permission::new(TREE, Action::Create))
+                .contains(&Permission::new(WIDGET, Action::Create))
         );
         assert!(
             !p.required_permissions()
-                .contains(&Permission::new(TREE, Action::Create))
+                .contains(&Permission::new(WIDGET, Action::Create))
         );
     }
 
     #[test]
     fn reconstitute_drops_unknown_permission_strings() {
         let mut snap = snapshot_of(&fixed());
-        snap.permissions = vec!["tree:read".into(), "does_not_exist:read".into()];
-        let p = Plugin::reconstitute(snap, &ResourceCatalog::new([TREE]).unwrap());
+        snap.permissions = vec!["widget:read".into(), "does_not_exist:read".into()];
+        let p = Plugin::reconstitute(snap, &ResourceCatalog::new([WIDGET]).unwrap());
         assert_eq!(p.permissions().len(), 1);
     }
 

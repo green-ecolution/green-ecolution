@@ -22,7 +22,7 @@ pub mod view;
 
 use chrono::{DateTime, Utc};
 
-use crate::{
+use domain::{
     Id,
     authorization::Visibility,
     events::DomainEvent,
@@ -31,10 +31,10 @@ use crate::{
     shared::{
         coordinates::Coordinate,
         provenance::{Provenance, ProviderId},
-        watering_status::WateringStatus,
     },
-    tree::Tree,
 };
+
+use crate::{events::IrrigationEvent, tree::Tree, watering_status::WateringStatus};
 
 pub use error::ClusterError;
 pub use marker::ClusterMarker;
@@ -43,8 +43,7 @@ pub use repository::{TreeClusterReader, TreeClusterWriter};
 pub use snapshot::TreeClusterSnapshot;
 pub use soil_condition::SoilCondition;
 pub use soil_moisture::{
-    ClusterWateringEvent, SoilMoistureBucket, SoilMoistureConditionPoint, SoilMoistureDepthSeries,
-    SoilMoistureOverview, SoilMoisturePoint, condition_series,
+    ClusterWateringEvent, SoilMoistureConditionPoint, SoilMoistureOverview, condition_series,
 };
 pub use sort::{ClusterSort, ClusterSortField};
 pub use view::{ClusterBoundaryView, TreeClusterView};
@@ -60,12 +59,12 @@ pub struct ClusterStatistics {
     pub unknown: i64,
 }
 
-crate::newtype_nonempty! {
+domain::newtype_nonempty! {
     /// Human-readable cluster name, 1–255 characters after trimming.
     ClusterName, "cluster.name", 1, 255
 }
 
-crate::newtype_nonempty! {
+domain::newtype_nonempty! {
     /// Street address or location description for a cluster, 1–512 characters.
     ClusterAddress, "cluster.address", 1, 512
 }
@@ -196,9 +195,12 @@ impl TreeCluster {
     ) -> Vec<DomainEvent> {
         let mut events = Vec::new();
         if self.soil_condition != soil_condition {
-            events.push(DomainEvent::ClusterSoilConditionChanged {
-                cluster_id: self.id,
-            });
+            events.push(
+                IrrigationEvent::ClusterSoilConditionChanged {
+                    cluster_id: self.id,
+                }
+                .into_domain(),
+            );
         }
         self.name = name;
         self.address = address;
@@ -218,9 +220,12 @@ impl TreeCluster {
         if old == new {
             return Vec::new();
         }
-        vec![DomainEvent::ClusterTreesChanged {
-            cluster_id: self.id,
-        }]
+        vec![
+            IrrigationEvent::ClusterTreesChanged {
+                cluster_id: self.id,
+            }
+            .into_domain(),
+        ]
     }
 
     /// Recalculates the geographic centroid from the given coordinates.
@@ -292,11 +297,14 @@ impl TreeCluster {
         }
         let from = self.organization_id;
         self.organization_id = target;
-        vec![DomainEvent::ClusterResponsibilityTransferred {
-            cluster_id: self.id,
-            from,
-            to: target,
-        }]
+        vec![
+            IrrigationEvent::ClusterResponsibilityTransferred {
+                cluster_id: self.id,
+                from,
+                to: target,
+            }
+            .into_domain(),
+        ]
     }
 }
 
@@ -415,7 +423,7 @@ mod tests {
     #[test]
     fn assign_region_sets_id() {
         let mut c = fixed_cluster();
-        let region: Id<crate::region::Region> = Id::new_v7();
+        let region: Id<Region> = Id::new_v7();
         c.assign_region(Some(region));
         assert_eq!(c.region_id(), Some(region));
     }
@@ -429,8 +437,8 @@ mod tests {
         assert_eq!(c.tree_ids, vec![t1, t2]);
         assert_eq!(events.len(), 1);
         assert!(matches!(
-            events[0],
-            DomainEvent::ClusterTreesChanged { cluster_id } if cluster_id == c.id
+            IrrigationEvent::from_domain(&events[0]),
+            Some(IrrigationEvent::ClusterTreesChanged { cluster_id }) if *cluster_id == c.id
         ));
     }
 
@@ -460,10 +468,7 @@ mod tests {
     #[test]
     fn replace_details_overwrites_user_facing_fields() {
         let mut c = fixed_cluster();
-        let new_provenance = Provenance::new(
-            Some(crate::shared::provenance::ProviderId::new("tbz").unwrap()),
-            None,
-        );
+        let new_provenance = Provenance::new(Some(ProviderId::new("tbz").unwrap()), None);
         // Lu → Ss: soil changed, expect one event.
         let events = c.replace_details(
             ClusterName::new("Neuer Name").unwrap(),
@@ -483,9 +488,9 @@ mod tests {
             "soil changed: expected ClusterSoilConditionChanged"
         );
         assert!(matches!(
-            events[0],
-            crate::events::DomainEvent::ClusterSoilConditionChanged { cluster_id }
-                if cluster_id == c.id
+            IrrigationEvent::from_domain(&events[0]),
+            Some(IrrigationEvent::ClusterSoilConditionChanged { cluster_id })
+                if *cluster_id == c.id
         ));
     }
 
@@ -550,12 +555,12 @@ mod tests {
         let events = c.transfer_to(target);
         assert_eq!(c.organization_id(), target);
         assert_eq!(events.len(), 1);
-        match &events[0] {
-            DomainEvent::ClusterResponsibilityTransferred {
+        match IrrigationEvent::from_domain(&events[0]) {
+            Some(IrrigationEvent::ClusterResponsibilityTransferred {
                 cluster_id,
                 from: ev_from,
                 to,
-            } => {
+            }) => {
                 assert_eq!(*cluster_id, c.id);
                 assert_eq!(*ev_from, from);
                 assert_eq!(*to, target);

@@ -1,6 +1,6 @@
 use thiserror::Error;
 
-use crate::shared::error::ValidationError;
+use domain::shared::error::ValidationError;
 
 #[derive(Debug, Error, PartialEq)]
 pub enum ClusterError {

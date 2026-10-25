@@ -471,7 +471,7 @@ mod tests {
     use domain::RepositoryError;
     use domain::authorization::OrgHierarchy;
     use domain::organization::{Organization, OrganizationReader};
-    use domain::plugin::{PluginKeyHash, PluginSnapshot, TreeRef, TreeRefPage};
+    use domain::plugin::{PluginKeyHash, PluginSnapshot};
     use domain::role::{Role, RoleReader, RoleSnapshot};
 
     /// In-memory stand-in for both repository traits. Only the methods the
@@ -524,23 +524,6 @@ mod tests {
             _: Id<Plugin>,
         ) -> Result<Option<DateTime<Utc>>, RepositoryError> {
             Ok(None)
-        }
-
-        async fn tree_ref(
-            &self,
-            _: Id<Plugin>,
-            _: &str,
-        ) -> Result<Option<TreeRef>, RepositoryError> {
-            unimplemented!("PluginService does not touch tree refs")
-        }
-
-        async fn tree_refs(
-            &self,
-            _: Id<Plugin>,
-            _: Option<&str>,
-            _: u32,
-        ) -> Result<TreeRefPage, RepositoryError> {
-            unimplemented!("PluginService does not touch tree refs")
         }
     }
 
@@ -598,19 +581,6 @@ mod tests {
 
         async fn touch_last_seen(&self, _: Id<Plugin>) -> Result<(), RepositoryError> {
             Ok(())
-        }
-
-        async fn link_tree(
-            &self,
-            _: Id<Plugin>,
-            _: &str,
-            _: Id<domain::tree::Tree>,
-        ) -> Result<(), RepositoryError> {
-            unimplemented!("PluginService does not touch tree refs")
-        }
-
-        async fn unlink_tree(&self, _: Id<Plugin>, _: &str) -> Result<(), RepositoryError> {
-            unimplemented!("PluginService does not touch tree refs")
         }
     }
 

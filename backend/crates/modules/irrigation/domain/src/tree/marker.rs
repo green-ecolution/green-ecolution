@@ -1,6 +1,6 @@
 use uuid::Uuid;
 
-use crate::shared::watering_status::WateringStatus;
+use crate::watering_status::WateringStatus;
 
 /// Lightweight projection of a tree intended for map markers.
 ///

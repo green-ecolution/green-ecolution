@@ -11,7 +11,8 @@
 //! scored 0 (Good) / 1 (Moderate) / 2 (Bad) per depth; the worst score
 //! across the three depths wins.
 
-use crate::sensor::data::Watermark;
+use domain::sensor::data::Watermark;
+
 use crate::tree::TreeError;
 
 /// Per-depth tension thresholds for one tree-lifecycle phase. The tuple is

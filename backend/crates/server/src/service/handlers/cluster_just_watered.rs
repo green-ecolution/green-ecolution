@@ -6,15 +6,14 @@ use crate::{
     irrigation,
     service::event_bus::{EventHandler, EventHandlerError},
 };
-use domain::{
-    Id,
+use domain::{Id, events::DomainEvent};
+use irrigation_domain::{
     cluster::{TreeCluster, TreeClusterReader, TreeClusterWriter},
-    events::DomainEvent,
     tree::{TreeReader, TreeWriter},
 };
 
 /// Flags the clusters a finished irrigation plan completed, and their trees, as
-/// [`domain::shared::watering_status::WateringStatus::JustWatered`].
+/// [`irrigation_domain::watering_status::WateringStatus::JustWatered`].
 ///
 /// Only `OperationPlanFinished` triggers this; starting, canceling or failing a
 /// plan leaves the status alone. The status is released again by

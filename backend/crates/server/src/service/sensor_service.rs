@@ -6,7 +6,6 @@ use std::{
 use chrono::{DateTime, Utc};
 use domain::{
     Id, RepositoryError,
-    cluster::{SoilMoistureBucket, SoilMoistureOverview, TreeClusterReader, condition_series},
     events::{DomainEvent, SensorDataReceivedPayload, SensorReadings},
     module::ModuleActivationReader,
     organization::Organization,
@@ -14,13 +13,16 @@ use domain::{
         AcknowledgementNote, DataHealth, DataQualityAcknowledgement, ReadingQualityIssue, Sensor,
         SensorDraft, SensorError, SensorId, SensorReader, SensorReadingReader, SensorReadingWriter,
         SensorSearchQuery, SensorView, SensorWriter,
-        data::SensorReadingView,
+        data::{SensorReadingView, SoilMoistureBucket},
         plausibility::{self, ReadingContext},
         repository::NormalizedValue,
     },
     sensor_model::{SensorAbilityName, SensorModel, SensorModelReader},
     shared::pagination::{Page, Pagination, SearchPage},
     target::{TargetPurpose, TargetRef},
+};
+use irrigation_domain::{
+    cluster::{SoilMoistureOverview, TreeClusterReader, condition_series},
     tree::{TreeReader, volumetric_thresholds},
 };
 use rust_decimal::prelude::ToPrimitive;

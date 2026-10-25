@@ -10,24 +10,22 @@ use domain::{
     Id,
     authorization::ResourceCatalog,
     authorization::Visibility,
-    cluster::{
-        SoilMoistureBucket, TreeCluster, TreeClusterSearchQuery, repository::TreeClusterReader,
-    },
-    evaluation::EvaluationRepository,
     sensor::{
         SensorId, SensorSearchQuery,
-        data::SensorReadingDraft,
+        data::{SensorReadingDraft, SoilMoistureBucket},
         repository::{SensorReader, SensorReadingReader, SensorReadingWriter},
     },
-    shared::{
-        coordinates::Coordinate, distance::Distance, pagination::Pagination,
-        watering_status::WateringStatus,
-    },
+    shared::{coordinates::Coordinate, distance::Distance, pagination::Pagination},
+};
+use irrigation_domain::{
+    cluster::{TreeCluster, TreeClusterSearchQuery, repository::TreeClusterReader},
+    evaluation::EvaluationRepository,
     tree::{
         Tree, TreeSearchQuery,
         repository::TreeReader,
         sort::{TreeSort, TreeSortField},
     },
+    watering_status::WateringStatus,
 };
 use server::{
     bench::{scale::Scale, seed::BENCH_USER_ID},
