@@ -84,11 +84,23 @@ async fn holders_of_watering_plan_rights_receive_the_matching_start_point_rights
 
     let templates_with_plan: i64 = sqlx::query_scalar(
         "SELECT count(*) FROM roles WHERE organization_id IS NULL
+         AND permissions::text LIKE '%watering_plan:read%'",
+    )
+    .fetch_one(&app.db_pool)
+    .await
+    .unwrap();
+    assert!(
+        templates_with_plan > 0,
+        "no template holds watering_plan:read"
+    );
+
+    let templates_missing_start_point: i64 = sqlx::query_scalar(
+        "SELECT count(*) FROM roles WHERE organization_id IS NULL
          AND permissions::text LIKE '%watering_plan:read%'
          AND NOT permissions @> ARRAY['start_point:read']",
     )
     .fetch_one(&app.db_pool)
     .await
     .unwrap();
-    assert_eq!(templates_with_plan, 0);
+    assert_eq!(templates_missing_start_point, 0);
 }

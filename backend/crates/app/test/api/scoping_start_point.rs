@@ -249,6 +249,21 @@ async fn start_point_writes_need_the_start_point_resource() {
         "without start_point:read the depot is invisible"
     );
 
+    let reader_only_for_write = user_token_with_permissions(
+        &harness,
+        &app,
+        &["start_point:read", "watering_plan:update"],
+    )
+    .await;
+    let response = reqwest::Client::new()
+        .put(&url)
+        .bearer_auth(&reader_only_for_write)
+        .json(&body)
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(response.status(), 403);
+
     let keeper =
         user_token_with_permissions(&harness, &app, &["start_point:read", "start_point:update"])
             .await;

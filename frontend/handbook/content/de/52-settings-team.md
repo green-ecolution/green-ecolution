@@ -84,15 +84,16 @@ sich dabei nicht aktivieren.
 ## Der Berechtigungskatalog
 
 Jedes Recht in Green Ecolution ist die Kombination aus einer Ressource und einer der
-vier Aktionen Ansehen, Anlegen, Bearbeiten und Löschen, insgesamt 36 mögliche Rechte
-über neun Ressourcen; die Zugriffsstufen aus dem vorigen Abschnitt setzen jeweils eine
+vier Aktionen Ansehen, Anlegen, Bearbeiten und Löschen, insgesamt 48 mögliche Rechte
+über zwölf Ressourcen; die Zugriffsstufen aus dem vorigen Abschnitt setzen jeweils eine
 feste Auswahl davon. In der Oberfläche sind diese Ressourcen zu drei Bereichen
 gruppiert: **Grünflächen** (Bäume, Bewässerungsgruppen, Sensoren, Gebiete), **Planung**
-(Einsatzpläne, Startpunkte, Fahrzeuge) und **Verwaltung** (Mitarbeitende, Organisation, Rollen &
-Rechte). Die folgende Tabelle listet den vollständigen Katalog, mit der technischen
-Bezeichnung, die auch in Fehlermeldungen der Anwendung auftaucht. Startpunkte (Depots
-und Nachfüllstellen) haben eigene Rechte; wer bisher Einsatzpläne bearbeiten durfte,
-darf auch Startpunkte bearbeiten.
+(Einsatzpläne, Startpunkte, Fahrzeuge) und **Verwaltung** (Mitarbeitende, Organisation,
+Rollen & Rechte, Plugins, Einstellungen). Die folgende Tabelle listet den vollständigen
+Katalog, mit der technischen Bezeichnung, die auch in Fehlermeldungen der Anwendung
+auftaucht. Startpunkte (Depots und Nachfüllstellen) haben eigene Rechte; wer bisher
+Einsatzpläne bearbeiten durfte, darf auch Startpunkte bearbeiten. Für Einstellungen
+werden nur Ansehen und Bearbeiten verwendet.
 
 | Berechtigung           | Bedeutung                     |
 | ---------------------- | ----------------------------- |
@@ -136,6 +137,14 @@ darf auch Startpunkte bearbeiten.
 | `role:create`          | Rolle anlegen                 |
 | `role:update`          | Rolle bearbeiten              |
 | `role:delete`          | Rolle löschen                 |
+| `plugin:read`          | Plugins ansehen               |
+| `plugin:create`        | Plugin installieren           |
+| `plugin:update`        | Plugin bearbeiten             |
+| `plugin:delete`        | Plugin deinstallieren         |
+| `setting:read`         | Einstellungen ansehen         |
+| `setting:create`       | Nicht verwendet               |
+| `setting:update`       | Einstellungen bearbeiten      |
+| `setting:delete`       | Nicht verwendet               |
 
 ## Wie weit eine Rolle reicht
 
