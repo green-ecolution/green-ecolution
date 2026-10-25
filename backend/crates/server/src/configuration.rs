@@ -24,21 +24,33 @@ pub struct Settings {
     #[serde(default)]
     pub sensor: SensorSettings,
     #[serde(default)]
-    pub watering: WateringSettings,
-    #[serde(default)]
     pub routing: RoutingSettings,
     #[serde(default)]
     pub plugins: PluginsSettings,
     #[serde(default)]
     pub analytics: AnalyticsSettings,
-    /// Overrides a module's own activation default, keyed by module key.
+    /// One section per module key: activation default plus the module's own keys.
     #[serde(default)]
     pub modules: std::collections::BTreeMap<String, ModuleSettings>,
 }
 
 #[derive(serde::Deserialize, Clone, Debug)]
 pub struct ModuleSettings {
-    pub default_enabled: bool,
+    /// Overrides the module's own activation default.
+    #[serde(default)]
+    pub default_enabled: Option<bool>,
+    /// Kept as `config::Value`: env overrides arrive as strings and only the
+    /// config crate's deserializer coerces them into the module's number fields.
+    #[serde(flatten)]
+    pub extra: config::Map<String, config::Value>,
+}
+
+impl ModuleSettings {
+    pub fn deserialize_extra<T: serde::de::DeserializeOwned>(
+        &self,
+    ) -> Result<T, config::ConfigError> {
+        config::Value::new(None, config::ValueKind::Table(self.extra.clone())).try_deserialize()
+    }
 }
 
 #[derive(serde::Deserialize, Clone)]
@@ -183,8 +195,6 @@ pub struct RoutingSettings {
     pub enabled: bool,
     #[serde(default = "default_streamlet_url")]
     pub streamlet_url: String,
-    #[serde(default = "default_tree_demand_liters")]
-    pub tree_demand_liters: f64,
 }
 
 impl Default for RoutingSettings {
@@ -192,17 +202,12 @@ impl Default for RoutingSettings {
         Self {
             enabled: false,
             streamlet_url: default_streamlet_url(),
-            tree_demand_liters: default_tree_demand_liters(),
         }
     }
 }
 
 fn default_streamlet_url() -> String {
     "http://localhost:2510".to_string()
-}
-
-fn default_tree_demand_liters() -> f64 {
-    80.0
 }
 
 #[derive(serde::Deserialize, Clone, Default)]
@@ -275,12 +280,6 @@ pub struct MapSettings {
     pub min_zoom: u8,
     #[serde(default = "default_map_max_zoom")]
     pub max_zoom: u8,
-    #[serde(default = "default_nearest_tree_max_radius")]
-    pub nearest_tree_max_radius: f64,
-    #[serde(default = "default_nearest_tree_default_limit")]
-    pub nearest_tree_default_limit: u32,
-    #[serde(default = "default_nearest_tree_max_limit")]
-    pub nearest_tree_max_limit: u32,
 }
 
 fn default_map_min_zoom() -> u8 {
@@ -288,15 +287,6 @@ fn default_map_min_zoom() -> u8 {
 }
 fn default_map_max_zoom() -> u8 {
     18
-}
-fn default_nearest_tree_max_radius() -> f64 {
-    500.0
-}
-fn default_nearest_tree_default_limit() -> u32 {
-    10
-}
-fn default_nearest_tree_max_limit() -> u32 {
-    50
 }
 
 impl Default for MapSettings {
@@ -306,9 +296,6 @@ impl Default for MapSettings {
             bbox: [54.714822, 9.285796, 54.860127, 9.583800],
             min_zoom: default_map_min_zoom(),
             max_zoom: default_map_max_zoom(),
-            nearest_tree_max_radius: default_nearest_tree_max_radius(),
-            nearest_tree_default_limit: default_nearest_tree_default_limit(),
-            nearest_tree_max_limit: default_nearest_tree_max_limit(),
         }
     }
 }
@@ -381,33 +368,6 @@ fn default_sensor_offline_after_secs() -> u64 {
 
 fn default_sensor_defect_streak() -> usize {
     3
-}
-
-#[derive(serde::Deserialize, Clone)]
-pub struct WateringSettings {
-    /// How long a finished watering plan keeps its clusters and trees on
-    /// "just watered" before they fall back to the sensor-derived status.
-    #[serde(default = "default_just_watered_ttl_secs")]
-    pub just_watered_ttl_secs: u64,
-    /// How often the expiry sweep runs.
-    #[serde(default = "default_just_watered_sweep_interval_secs")]
-    pub just_watered_sweep_interval_secs: u64,
-}
-
-impl Default for WateringSettings {
-    fn default() -> Self {
-        Self {
-            just_watered_ttl_secs: default_just_watered_ttl_secs(),
-            just_watered_sweep_interval_secs: default_just_watered_sweep_interval_secs(),
-        }
-    }
-}
-
-fn default_just_watered_ttl_secs() -> u64 {
-    86_400
-}
-fn default_just_watered_sweep_interval_secs() -> u64 {
-    3_600
 }
 
 #[derive(serde::Deserialize, Clone)]
@@ -570,7 +530,6 @@ impl Settings {
             map: MapSettings::default(),
             info: InfoSettings::default(),
             sensor: SensorSettings::default(),
-            watering: WateringSettings::default(),
             routing: RoutingSettings::default(),
             plugins: PluginsSettings::default(),
             analytics: AnalyticsSettings::default(),
@@ -599,7 +558,7 @@ pub fn get_configuration() -> Result<Settings, ConfigError> {
 
     let env_filename = format!("{}.yaml", environment.as_str());
 
-    let settings = config::Config::builder()
+    let raw = config::Config::builder()
         .add_source(config::File::from(configuration_dir.join("base.yaml")))
         .add_source(config::File::from(configuration_dir.join(env_filename)))
         .add_source(
@@ -609,12 +568,53 @@ pub fn get_configuration() -> Result<Settings, ConfigError> {
         )
         .build()?;
 
-    let mut settings: Settings = settings.try_deserialize()?;
+    refuse_legacy_keys(&raw)?;
+    let mut settings: Settings = raw.try_deserialize()?;
     // `APP_ENVIRONMENT` selects the yaml file — keep `application.environment`
     // in sync so consumers (e.g. version suffix logic) don't have to read the
     // env var directly.
     settings.application.environment = environment;
     Ok(settings)
+}
+
+const MOVED_KEYS: &[(&str, &str)] = &[
+    (
+        "routing.tree_demand_liters",
+        "modules.irrigation.tree_demand_liters",
+    ),
+    (
+        "watering.just_watered_ttl_secs",
+        "modules.irrigation.just_watered_ttl_secs",
+    ),
+    (
+        "watering.just_watered_sweep_interval_secs",
+        "modules.irrigation.just_watered_sweep_interval_secs",
+    ),
+    (
+        "map.nearest_tree_max_radius",
+        "modules.irrigation.nearest_tree_max_radius",
+    ),
+    (
+        "map.nearest_tree_default_limit",
+        "modules.irrigation.nearest_tree_default_limit",
+    ),
+    (
+        "map.nearest_tree_max_limit",
+        "modules.irrigation.nearest_tree_max_limit",
+    ),
+];
+
+/// A silently ignored legacy key would put the old value out of effect without
+/// any symptom, so the boot is refused and the message names the new home.
+fn refuse_legacy_keys(raw: &config::Config) -> Result<(), config::ConfigError> {
+    for (old, new) in MOVED_KEYS {
+        if raw.get::<config::Value>(old).is_ok() {
+            return Err(config::ConfigError::Message(format!(
+                "{old} moved to {new}"
+            )));
+        }
+    }
+    Ok(())
 }
 
 #[derive(Debug, Clone, serde::Deserialize, Default)]
@@ -676,6 +676,42 @@ impl TryFrom<String> for Environment {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn legacy_irrigation_keys_are_refused_with_their_new_home() {
+        let raw = config::Config::builder()
+            .set_override("watering.just_watered_ttl_secs", 3600)
+            .unwrap()
+            .build()
+            .unwrap();
+        let err = refuse_legacy_keys(&raw).unwrap_err();
+        assert!(
+            err.to_string()
+                .contains("modules.irrigation.just_watered_ttl_secs")
+        );
+    }
+
+    #[test]
+    fn module_sections_keep_unknown_fields_for_the_module() {
+        let raw = config::Config::builder()
+            .add_source(config::File::from_str(
+                "modules:\n  irrigation:\n    tree_demand_liters: 80.0\n",
+                config::FileFormat::Yaml,
+            ))
+            .build()
+            .unwrap();
+        let modules: std::collections::BTreeMap<String, ModuleSettings> =
+            raw.get("modules").unwrap();
+        let irrigation = &modules["irrigation"];
+        assert_eq!(irrigation.default_enabled, None);
+        assert_eq!(
+            irrigation.extra["tree_demand_liters"]
+                .clone()
+                .into_float()
+                .unwrap(),
+            80.0
+        );
+    }
 
     fn auth(enabled: bool, expected_audience: Option<&str>) -> AuthSettings {
         AuthSettings {
@@ -837,7 +873,6 @@ mod tests {
         let settings = RoutingSettings::default();
         assert!(!settings.enabled);
         assert_eq!(settings.streamlet_url, "http://localhost:2510");
-        assert_eq!(settings.tree_demand_liters, 80.0);
     }
 
     fn parse_plugins(yaml: &str) -> PluginsSettings {

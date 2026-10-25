@@ -41,7 +41,10 @@ use server::{
         system_info::DefaultSystemInfoProvider,
         update_checker::UpdateChecker,
     },
-    irrigation::settings::{IrrigationDefaults, repository::PgIrrigationSettings},
+    irrigation::{
+        IrrigationConfig,
+        settings::{IrrigationDefaults, repository::PgIrrigationSettings},
+    },
     module::Module,
     service::{
         authorization::AuthorizationService,
@@ -158,9 +161,15 @@ impl Application {
             defaults,
             repos.organization_reader.clone(),
         ));
+        let irrigation_config = IrrigationConfig::from_settings(&settings).map_err(|err| {
+            std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                format!("invalid configuration: {err}"),
+            )
+        })?;
         let irrigation_settings = Arc::new(PgIrrigationSettings::new(
             pool.clone(),
-            IrrigationDefaults::from_config(&settings).map_err(|err| {
+            IrrigationDefaults::from_config(&irrigation_config).map_err(|err| {
                 std::io::Error::new(
                     std::io::ErrorKind::InvalidInput,
                     format!("invalid configuration: {err}"),
@@ -185,7 +194,8 @@ impl Application {
                 let default = settings
                     .modules
                     .get(key.as_str())
-                    .map_or(module.default_enabled(), |m| m.default_enabled);
+                    .and_then(|m| m.default_enabled)
+                    .unwrap_or(module.default_enabled());
                 (key, default)
             })
             .collect();
@@ -309,7 +319,7 @@ impl Application {
             services.cluster.clone(),
             repos.organization_reader.clone(),
             irrigation_settings.clone(),
-            Duration::from_secs(settings.watering.just_watered_sweep_interval_secs),
+            Duration::from_secs(irrigation_config.just_watered_sweep_interval_secs),
         );
         let _update_handle = infra::update_checker::spawn(
             update_checker,
@@ -381,9 +391,9 @@ impl Application {
                 plugins_enabled: settings.plugins.enabled,
             },
             nearest_tree_limits: NearestTreeLimits {
-                max_radius_meters: settings.map.nearest_tree_max_radius,
-                default_limit: settings.map.nearest_tree_default_limit,
-                max_limit: settings.map.nearest_tree_max_limit,
+                max_radius_meters: irrigation_config.nearest_tree_max_radius,
+                default_limit: irrigation_config.nearest_tree_default_limit,
+                max_limit: irrigation_config.nearest_tree_max_limit,
             },
             frontend_config_js: server::http::render_frontend_config_js(
                 &settings.auth,

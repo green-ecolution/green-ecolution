@@ -65,6 +65,25 @@ pub struct ModuleContext {
     pub plans: Arc<OperationPlanService>,
 }
 
+impl ModuleContext {
+    /// The module's own `modules.<key>` section, minus `default_enabled`.
+    pub fn module_config<T: serde::de::DeserializeOwned>(
+        &self,
+        key: &ModuleKey,
+    ) -> Result<T, ModuleBuildError> {
+        let section = self.config.modules.get(key.as_str());
+        let result = match section {
+            Some(section) => section.deserialize_extra(),
+            None => config::Value::new(None, config::ValueKind::Table(config::Map::new()))
+                .try_deserialize(),
+        };
+        result.map_err(|e| ModuleBuildError {
+            module: key.clone(),
+            reason: format!("invalid modules.{key} section: {e}"),
+        })
+    }
+}
+
 /// Routes relative to `/api/v1`. `protected` runs behind the same
 /// authentication layer as the core's protected routes.
 pub struct ModuleRoutes {

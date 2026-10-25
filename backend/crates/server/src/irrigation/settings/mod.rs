@@ -12,7 +12,7 @@ use domain::{
     shared::error::ValidationError,
 };
 
-use crate::configuration::Settings;
+use super::IrrigationConfig;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct IrrigationSettings {
@@ -38,11 +38,11 @@ pub struct IrrigationDefaults {
 }
 
 impl IrrigationDefaults {
-    pub fn from_config(config: &Settings) -> Result<Self, ValidationError> {
+    pub fn from_config(config: &IrrigationConfig) -> Result<Self, ValidationError> {
         Ok(Self {
-            water_demand: WaterDemand::new(config.routing.tree_demand_liters)?,
+            water_demand: WaterDemand::new(config.tree_demand_liters)?,
             just_watered_ttl: JustWateredTtl::new(
-                i64::try_from(config.watering.just_watered_ttl_secs).unwrap_or(i64::MAX),
+                i64::try_from(config.just_watered_ttl_secs).unwrap_or(i64::MAX),
             )?,
         })
     }
