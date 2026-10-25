@@ -119,7 +119,7 @@ mod tests {
     // The exports returning `JsValue` need a JS runtime and cannot run on the
     // host target; what is testable here is the pure-Rust logic around them.
     // The ranges themselves are covered by the value-object tests in `irrigation-domain`
-    // and by the issue-mapping tests. Aggregate validators (next module) cover the
+    // and by the issue-mapping tests. Aggregate validators cover the
     // serialisation round-trip via serde_json, which exercises the same
     // serde::Serialize impl as serde-wasm-bindgen.
     use super::*;

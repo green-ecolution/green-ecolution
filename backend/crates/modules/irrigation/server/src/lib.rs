@@ -9,7 +9,6 @@ pub mod infra;
 pub mod planning;
 pub mod service;
 pub mod settings;
-pub mod statistics;
 pub mod targets;
 
 use std::{sync::Arc, time::Duration};
@@ -34,7 +33,8 @@ use settings::{
 pub use irrigation_domain::{KEY, key};
 
 /// The `modules.irrigation` section of the YAML.
-#[derive(serde::Deserialize, Clone, Debug)]
+#[derive(serde::Deserialize, Clone, Debug, PartialEq)]
+#[serde(deny_unknown_fields)]
 pub struct IrrigationConfig {
     #[serde(default = "default_tree_demand_liters")]
     pub tree_demand_liters: f64,
@@ -207,7 +207,7 @@ impl Module for IrrigationModule {
             ctx.organizations.clone(),
             settings,
         )));
-        runtime.statistics = Some(Arc::new(statistics::IrrigationStatistics::new(
+        runtime.statistics = Some(Arc::new(infra::statistics::IrrigationStatistics::new(
             ctx.pool.clone(),
         )));
         Ok(runtime)
@@ -260,6 +260,38 @@ mod tests {
         let config: IrrigationConfig = settings_with(&[]).module_config(KEY).unwrap();
         assert_eq!(config.tree_demand_liters, 80.0);
         assert_eq!(config.just_watered_sweep_interval_secs, 3_600);
+    }
+
+    #[test]
+    fn a_misspelled_key_is_rejected_at_load() {
+        let err = settings_with(&[("modules.irrigation.tree_demand_litres", "90")])
+            .module_config::<IrrigationConfig>(KEY)
+            .unwrap_err()
+            .to_string();
+        assert!(err.contains("unknown field"), "{err}");
+        assert!(err.contains("tree_demand_litres"), "{err}");
+    }
+
+    #[test]
+    fn default_enabled_does_not_reach_the_module_config() {
+        let config: IrrigationConfig =
+            settings_with(&[("modules.irrigation.default_enabled", "true")])
+                .module_config(KEY)
+                .unwrap();
+        assert_eq!(config, settings_with(&[]).module_config(KEY).unwrap());
+    }
+
+    #[test]
+    fn base_yaml_matches_the_code_defaults() {
+        let path = concat!(env!("CARGO_MANIFEST_DIR"), "/../../../../config/base.yaml");
+        let file = config::Config::builder()
+            .add_source(config::File::new(path, config::FileFormat::Yaml))
+            .build()
+            .unwrap();
+        let section: config::Value = file.get("modules.irrigation").unwrap();
+        let from_yaml: IrrigationConfig = section.try_deserialize().unwrap();
+        let defaults: IrrigationConfig = settings_with(&[]).module_config(KEY).unwrap();
+        assert_eq!(from_yaml, defaults);
     }
 
     #[test]

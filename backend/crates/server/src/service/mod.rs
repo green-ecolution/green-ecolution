@@ -100,6 +100,8 @@ impl std::fmt::Display for Malformed {
     }
 }
 
+/// Maps to 409 (`Conflict`) or 422 (`Unprocessable`); the stable error code
+/// stays module-defined.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ModuleErrorKind {
     Conflict,

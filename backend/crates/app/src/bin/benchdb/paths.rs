@@ -81,7 +81,7 @@ pub const NAMES: &[&str] = &[
 ];
 
 /// Plan probes: shapes copied from `view_search` in
-/// `crates/server/src/irrigation/infra/pg_tree.rs` so `EXPLAIN` has something to plan.
+/// `crates/modules/irrigation/server/src/infra/pg_tree.rs` so `EXPLAIN` has something to plan.
 /// Measurements always go through the repository; these copies are never the
 /// source of truth and have to be refreshed when that query changes.
 ///

@@ -374,7 +374,6 @@ impl Application {
             authorization_service: services.authorization,
             plugin_auth,
             plugin_reader: repos.plugin_reader,
-            plugin_writer: repos.plugin_writer,
             plugin_service: services.plugin,
             plugin_sensor_ingest_service: services.plugin_sensor_ingest,
             plugin_view_ticket_service: services.plugin_view_tickets,

@@ -120,7 +120,6 @@ pub struct AppState {
     pub resource_catalog: Arc<domain::authorization::ResourceCatalog>,
     pub authorization_service: Arc<AuthorizationService>,
     pub plugin_reader: Arc<dyn domain::plugin::PluginReader>,
-    pub plugin_writer: Arc<dyn domain::plugin::PluginWriter>,
     pub plugin_auth: extractors::PluginAuthenticator,
     pub plugin_service: Arc<PluginService>,
     pub plugin_sensor_ingest_service: Arc<PluginSensorIngestService>,

@@ -28,6 +28,8 @@ pub trait ModuleEventPayload: Any + fmt::Debug + Send + Sync {}
 
 impl<T: Any + fmt::Debug + Send + Sync> ModuleEventPayload for T {}
 
+/// The owning module is identified by `module()`; a handler ignores any
+/// payload it cannot downcast, so unrelated modules never trip over each other.
 #[derive(Debug, Clone)]
 pub struct ModuleEvent {
     module: ModuleKey,
