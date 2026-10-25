@@ -67,7 +67,7 @@ For a reproducible environment, use `nix develop`.
 | `just generate-sqlx` | Refresh sqlx offline query cache (after changing any `query!` / `query_as!`) |
 | `just build-keycloak-theme` | Build the Keycloak login theme (jar + exploded theme dir under `frontend/keycloak-theme/dist_keycloak/theme/`) |
 | `just keycloak-theme-dev` | Run the theme's Vite dev server against a mocked Keycloak context |
-| `just bench` | Run the domain micro-benchmarks (Criterion) |
+| `just bench` | Run the micro-benchmarks of `domain` and `irrigation-domain` (Criterion) |
 | `just bench-check` | Execute every benchmark once without measuring; this is what CI runs |
 
 ### geco (optional developer console)
@@ -149,12 +149,14 @@ There are two separate tools, because the two questions they answer need
 different instruments.
 
 `just bench` runs Criterion micro-benchmarks over the pure, database-free
-domain functions in `backend/crates/domain/benches/`, parametrized over growing
-input sizes. They are fast and deterministic, and `just bench-check` executes
-each of them once without measuring, which is what backend PRs run to make sure
-they still compile.
+domain functions in `backend/crates/domain/benches/` (authorization, settings
+resolution) and `backend/crates/modules/irrigation/domain/benches/` (cluster
+recalculation, watering status), parametrized over growing input sizes. They are
+fast and deterministic, and `just bench-check` executes each of them once without
+measuring, which is what backend PRs run to make sure they still compile.
 
-The large-data harness is a separate binary, `benchdb`, which seeds a dedicated
+The large-data harness is a separate binary, `benchdb` in the `app` crate (it
+fills core and irrigation tables together), which seeds a dedicated
 Postgres database in steps and measures the real repository implementations
 against it. It never runs automatically and it never runs against your
 development database: the recipes require `BENCH_DATABASE_URL` and refuse to
@@ -386,7 +388,8 @@ Use the [Feature Request template](https://github.com/green-ecolution/green-ecol
 
 - Format with `cargo fmt --all` and lint with `cargo clippy --workspace --all-targets --all-features -- -D warnings` before pushing.
 - Build with `--locked` and rely on `SQLX_OFFLINE=true` for CI; refresh the cache with `just generate-sqlx` whenever a `query!` / `query_as!` invocation changes.
-- Domain code (`backend/crates/domain/`) must not depend on `sqlx`, `axum`, `tokio`, `reqwest`, `rumqttc`, or `tracing-subscriber`. `cargo build -p domain --no-default-features --locked` must stay green so the crate remains portable to WASM / mobile targets.
+- Domain code (`backend/crates/domain/` and every module domain crate such as `backend/crates/modules/irrigation/domain/`) must not depend on `sqlx` (except behind the optional `sqlx` feature), `axum`, `tokio`, `reqwest`, `rumqttc`, or `tracing-subscriber`. `cargo build -p domain --no-default-features --locked` and `cargo build -p irrigation-domain --no-default-features --locked` must stay green so the crates remain portable to WASM / mobile targets.
+- `domain` and `server` never depend on a module crate, and module crates depend only on the core, never on each other. Only `app` (and `domain-wasm` for the domain crates) knows the modules.
 - Aggregate invariants live in private fields with intent-named methods that return `Vec<DomainEvent>`. HTTP handlers return `*View` types, never raw aggregates.
 - Errors are typed: repository traits return `RepositoryError`; the HTTP layer maps to `ApiError`. Avoid `unwrap()` / `expect()` / `panic!` outside `reconstitute` paths and tests.
 - Write tests next to the code (`#[cfg(test)] mod tests`) for unit tests; integration tests live in `backend/crates/app/test/api/`. Run a single one with `cargo test -p app --test api -- <name> --nocapture`.
@@ -525,9 +528,19 @@ backend/                  Cargo workspace (Rust API)
     server/                  server library (axum router, Postgres adapters,
                              Keycloak, MQTT, application services). Uses `domain`
                              with the `sqlx` feature enabled.
-    app/                     composition root (`src/startup.rs`) and the
-                             `green-ecolution`, `migrate` and `dump-openapi`
-                             binaries. Integration tests live in `app/test/api/`.
+    app/                     composition root (`src/startup.rs`, registered
+                             modules in `src/modules.rs`) and the
+                             `green-ecolution`, `migrate`, `dump-openapi` and
+                             `benchdb` binaries. Integration tests live in
+                             `app/test/api/`.
+    domain-wasm/             wasm-bindgen wrapper over the core and module
+                             domain drafts, used by the frontend for validation.
+    modules/
+      irrigation/domain/     `irrigation-domain`: trees, clusters, soil physics;
+                             portable like `domain`.
+      irrigation/server/     `irrigation-server`: the irrigation module's
+                             services, Postgres adapters, routes, event handlers
+                             and the `import-kataster-fl` binary.
     devcli/                  `geco` developer console (TUI + CLI); not part of
                              any deployed artifact.
   migrations/                sqlx-managed SQL migrations (workspace root)
@@ -548,10 +561,22 @@ setting is inherited down the organization tree the same way as the other organi
 settings. Module endpoints answer with `module.disabled` (403) for an organization that
 has not activated the module.
 
-A module plugs into the core through three extension points. The reference
-implementation is the irrigation module in `backend/crates/server/src/irrigation/`; a
+A module is a pair of crates under `backend/crates/modules/<name>/`: `<name>-domain`
+for its aggregates and value objects (same portability rules as `domain`) and
+`<name>-server` for services, Postgres adapters, routes and event handlers. The
+server crate exports a type implementing `server::module::Module`, and
+`backend/crates/app/src/modules.rs` lists it in `registered()`. The reference
+implementation is the irrigation module (`irrigation-domain`, `irrigation-server`); a
 minimal one for tests lives in `backend/crates/app/test/api/test_module/`
-(`ThingCatalog`, `ThingPlanning`).
+(`ThingCatalog`, `ThingPlanning`). Because the core does not depend on any module, the
+compiler rejects a module that reaches into core internals; everything a module may use
+is handed to `Module::build` in the `ModuleContext` (pool, event bus, authorization,
+`ModuleAccess`, core readers and the narrow core services). The routers a module returns
+already carry their own state, so a module handler cannot extract the core's
+`AppState`.
+
+A module plugs into the core through three extension points for permissions, targets
+and planning, plus a few smaller hooks described after them.
 
 `Module::resources()` returns the `ResourceKey`s the module adds to the permission
 model; the core merges them into the `ResourceCatalog` it builds the permission set from
@@ -572,6 +597,29 @@ resolves stops to the objects behind them. The providers are collected in the
 `PlanningRegistry` (`backend/crates/server/src/service/`). A module that deletes an
 object which can be a stop must call `OperationPlanService::remove_stop`, so no plan
 keeps a dangling stop.
+
+`ModuleStatistics` (in `domain/src/module/statistics.rs`) returns the module's object
+counts as `kind`/`count` pairs; `GET /api/v1/info/statistics` adds the module key and
+lists them under `modules` next to the core counts. The labels come from the frontend,
+not from the backend.
+
+A module's own domain events travel the core event bus wrapped in
+`DomainEvent::Module(ModuleEvent)`; its handlers recover them with `downcast_ref`
+(irrigation wraps this in `IrrigationEvent::into_domain` / `from_domain`). Errors with a
+module-specific code reach the HTTP layer as `ServiceError::Module { kind, code,
+message }`, where `kind` selects 409 or 422 and `code` is the stable error code.
+Long-running work such as a periodic sweep is returned as a `BackgroundTask`, which the
+composition root spawns at startup.
+
+A module reads its instance configuration from its own `modules.<key>` section of the
+YAML config through `ModuleContext::module_config`; `modules.<key>.default_enabled` is
+reserved for the activation default. The irrigation defaults live under
+`modules.irrigation` (`tree_demand_liters`, `just_watered_ttl_secs`,
+`just_watered_sweep_interval_secs`, `nearest_tree_max_radius`,
+`nearest_tree_default_limit`, `nearest_tree_max_limit`). The server refuses to start
+while one of the old locations of these keys (`routing.tree_demand_liters`,
+`watering.just_watered_*`, `map.nearest_tree_*`) is still set, in a file or as an `APP_…`
+environment variable, and the error names the new key.
 
 ## Writing a Plugin
 
