@@ -1,0 +1,24 @@
+[package]
+name = "irrigation-domain"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description = "Green Ecolution irrigation module: trees, clusters and soil physics"
+publish.workspace = true
+
+[features]
+default = []
+sqlx = ["dep:sqlx", "domain/sqlx"]
+
+[dependencies]
+async-trait = { workspace = true }
+chrono = { workspace = true }
+domain = { path = "../../../domain" }
+serde = { workspace = true }
+sqlx = { workspace = true, optional = true }
+thiserror = { workspace = true }
+uuid = { workspace = true }

@@ -1,6 +1,14 @@
 [workspace]
 resolver = "3"
-members = ["crates/server", "crates/app", "crates/domain", "crates/domain-wasm", "crates/devcli"]
+members = [
+    "crates/server",
+    "crates/app",
+    "crates/domain",
+    "crates/domain-wasm",
+    "crates/devcli",
+    "crates/modules/irrigation/domain",
+    "crates/modules/irrigation/server",
+]
 
 [workspace.package]
 version = "0.8.0" # x-release-please-version

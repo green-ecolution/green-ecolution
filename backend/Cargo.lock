@@ -2192,6 +2192,28 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d98f6fed1fde3f8c21bc40a1abb88dd75e67924f9cffc3ef95607bad8017f8e2"
 
 [[package]]
+name = "irrigation-domain"
+version = "0.8.0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "domain",
+ "serde",
+ "sqlx",
+ "thiserror 2.0.21",
+ "uuid",
+]
+
+[[package]]
+name = "irrigation-server"
+version = "0.8.0"
+dependencies = [
+ "domain",
+ "irrigation-domain",
+ "server",
+]
+
+[[package]]
 name = "is_executable"
 version = "1.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"

@@ -1,0 +1,16 @@
+[package]
+name = "irrigation-server"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description = "Green Ecolution irrigation module: services, adapters and routes"
+publish.workspace = true
+
+[dependencies]
+domain = { path = "../../../domain", features = ["sqlx"] }
+irrigation-domain = { path = "../domain", features = ["sqlx"] }
+server = { path = "../../../server" }
