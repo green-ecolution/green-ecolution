@@ -153,6 +153,11 @@ grundsätzlich keine Route berechnen, unabhängig von der Auswahl im Einsatzplan
 beiden Fällen bleibt der Einsatzplan selbst erhalten, nur ohne Route; ein erneutes
 Speichern nach Behebung der Ursache löst die Berechnung neu aus.
 
+Lässt sich ein Einsatzplan gar nicht erst anlegen, weil das Feld für den Startpunkt leer
+bleibt und keine Auswahl anbietet, fehlt deiner Rolle das Recht `start_point:read`. Das
+betrifft vor allem eigens angelegte Rollen; die Verwaltung ergänzt es unter
+[Wie weit eine Rolle reicht](./settings-team.md#wie-weit-eine-rolle-reicht).
+
 ## Die Karte bleibt leer
 
 Die Kartenseite öffnet sich, zeigt aber weder Bäume noch Bewässerungsgruppen, oder der

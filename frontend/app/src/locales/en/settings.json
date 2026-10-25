@@ -513,7 +513,7 @@
         "description": "Planning & routes",
         "hint": {
           "read": "View planned and completed watering plans",
-          "create": "Create a new watering plan",
+          "create": "Create a new watering plan (start points must be readable)",
           "update": "Change route, time, scope and status",
           "delete": "Remove a watering plan permanently"
         }

@@ -93,7 +93,10 @@ Rollen & Rechte, Plugins, Einstellungen). Die folgende Tabelle listet den vollst
 Katalog, mit der technischen Bezeichnung, die auch in Fehlermeldungen der Anwendung
 auftaucht. Startpunkte (Depots und Nachfüllstellen) haben eigene Rechte; wer bisher
 Einsatzpläne bearbeiten durfte, darf auch Startpunkte bearbeiten. Für Einstellungen
-werden nur Ansehen und Bearbeiten verwendet.
+werden nur Ansehen und Bearbeiten verwendet. Wer Einsatzpläne anlegen soll, braucht
+zusätzlich `start_point:read`, weil das Formular einen Startpunkt verlangt und die
+Auswahl nur Startpunkte anbietet, die die Rolle ansehen darf. Neu angelegte eigene
+Rollen enthalten dieses Recht nicht von selbst.
 
 | Berechtigung           | Bedeutung                     |
 | ---------------------- | ----------------------------- |
