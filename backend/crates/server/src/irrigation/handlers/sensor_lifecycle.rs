@@ -6,7 +6,7 @@ use irrigation_domain::{
     tree::{TreeReader, TreeWriter},
 };
 
-use super::targets::{is_tree, tree_target};
+use crate::irrigation::targets::{is_tree, tree_target};
 use crate::service::{
     event_bus::{EventHandler, EventHandlerError},
     sensor_service::SensorService,
@@ -87,11 +87,11 @@ mod tests {
     use super::*;
     use crate::{
         infra::{
-            pg_cluster::PgTreeClusterRepository,
             pg_module_activation::PgModuleActivationRepository,
             pg_organization::PgOrganizationRepository, pg_sensor::PgSensorRepository,
-            pg_sensor_model::PgSensorModelRepository, pg_tree::PgTreeRepository,
+            pg_sensor_model::PgSensorModelRepository,
         },
+        irrigation::infra::pg_tree::PgTreeRepository,
         service::{event_bus::DeferredEventBus, targets::TargetRegistry},
     };
 
@@ -113,8 +113,6 @@ mod tests {
             sensors.clone(),
             sensors,
             Arc::new(PgSensorModelRepository::new(pool.clone())),
-            trees.clone(),
-            Arc::new(PgTreeClusterRepository::new(pool.clone())),
             Arc::new(TargetRegistry::new()),
             Arc::new(PgModuleActivationRepository::new(
                 pool.clone(),

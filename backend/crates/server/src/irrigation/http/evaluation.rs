@@ -5,16 +5,11 @@ use crate::http::v1::error::ErrorBody;
 use axum::{Json, extract::State};
 use utoipa_axum::{router::OpenApiRouter, routes};
 
-use crate::{
-    http::{
-        AppState,
-        auth::extractor::AuthUserExtractor,
-        v1::dto::evaluation::{
-            EvaluationResponse, RegionEvaluationResponse, VehicleEvaluationResponse,
-        },
-    },
-    service::ServiceError,
+use super::{
+    dto::evaluation::{EvaluationResponse, RegionEvaluationResponse, VehicleEvaluationResponse},
+    state::IrrigationHttpState,
 };
+use crate::{http::auth::extractor::AuthUserExtractor, service::ServiceError};
 use domain::{
     authorization::{Action, Permission, ResourceKey},
     operation_plan::OperationPlanSearchQuery,
@@ -23,7 +18,7 @@ use domain::{
 };
 use irrigation_domain::{cluster::TreeClusterSearchQuery, tree::TreeSearchQuery};
 
-pub fn routes() -> OpenApiRouter<Arc<AppState>> {
+pub fn routes() -> OpenApiRouter<Arc<IrrigationHttpState>> {
     OpenApiRouter::new().routes(routes!(get_evaluation))
 }
 
@@ -38,43 +33,43 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
 )]
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn get_evaluation(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<IrrigationHttpState>>,
     user: AuthUserExtractor,
 ) -> Result<Json<EvaluationResponse>, ServiceError> {
     let count_pagination = Pagination::new(1, 1);
 
     let tree_visible = state
-        .authorization_service
+        .authorization
         .visible_orgs_for(
             user.id,
             Permission::new(crate::irrigation::resources::TREE, Action::Read),
         )
         .await?;
     let cluster_visible = state
-        .authorization_service
+        .authorization
         .visible_orgs_for(
             user.id,
             Permission::new(crate::irrigation::resources::TREE_CLUSTER, Action::Read),
         )
         .await?;
     let sensor_visible = state
-        .authorization_service
+        .authorization
         .visible_orgs_for(user.id, Permission::new(ResourceKey::SENSOR, Action::Read))
         .await?;
     let plan_visible = state
-        .authorization_service
+        .authorization
         .visible_orgs_for(
             user.id,
             Permission::new(crate::irrigation::resources::WATERING_PLAN, Action::Read),
         )
         .await?;
     let vehicle_visible = state
-        .authorization_service
+        .authorization
         .visible_orgs_for(user.id, Permission::new(ResourceKey::VEHICLE, Action::Read))
         .await?;
 
     let tree_page = state
-        .tree_service
+        .trees
         .search_view(
             TreeSearchQuery {
                 visible: tree_visible,
@@ -84,7 +79,7 @@ pub async fn get_evaluation(
         )
         .await?;
     let cluster_page = state
-        .cluster_service
+        .clusters
         .search_view(
             TreeClusterSearchQuery {
                 visible: cluster_visible.clone(),
@@ -94,7 +89,7 @@ pub async fn get_evaluation(
         )
         .await?;
     let sensor_page = state
-        .sensor_service
+        .sensors
         .search_view(
             SensorSearchQuery {
                 visible: sensor_visible,
@@ -104,7 +99,7 @@ pub async fn get_evaluation(
         )
         .await?;
     let watering_plan_page = state
-        .operation_plan_service
+        .plans
         .search_view(
             OperationPlanSearchQuery {
                 module: crate::irrigation::key(),
@@ -117,21 +112,18 @@ pub async fn get_evaluation(
         .await?;
 
     let region_eval = state
-        .evaluation_service
+        .evaluation
         .regions_with_watering_plan(cluster_visible.clone())
         .await?;
     let vehicle_eval = state
-        .evaluation_service
+        .evaluation
         .vehicle_with_watering_plan(vehicle_visible, plan_visible.clone())
         .await?;
     let total_water = state
-        .evaluation_service
+        .evaluation
         .total_consumed_water(cluster_visible)
         .await?;
-    let user_count = state
-        .evaluation_service
-        .watering_plan_user(plan_visible)
-        .await?;
+    let user_count = state.evaluation.watering_plan_user(plan_visible).await?;
 
     let response = EvaluationResponse {
         tree_count: tree_page.page.total as u32,

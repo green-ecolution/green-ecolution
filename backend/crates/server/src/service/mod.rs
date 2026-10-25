@@ -1,16 +1,12 @@
 pub mod authorization;
-pub mod cluster_service;
 pub mod comment_service;
-pub mod evaluation_service;
 pub mod event_bus;
-pub mod handlers;
 pub mod module_access;
 pub mod module_activation_service;
 pub mod operation_execution_service;
 pub mod operation_plan_service;
 pub mod organization_service;
 pub mod planning;
-pub mod plugin_ingest_service;
 pub mod plugin_proxy_policy;
 pub mod plugin_proxy_service;
 pub mod plugin_sensor_ingest_service;
@@ -23,7 +19,6 @@ pub mod settings_service;
 pub mod start_point_service;
 pub mod statistics_registry;
 pub mod targets;
-pub mod tree_service;
 pub mod user_service;
 pub mod vehicle_service;
 
@@ -128,7 +123,7 @@ pub enum ServiceError {
     NotActivated,
     #[error("{feature} feature is disabled")]
     FeatureDisabled { feature: Feature },
-    /// A plugin ingest batch exceeded `plugin_ingest_service::MAX_INGEST_ITEMS`.
+    /// A plugin ingest batch exceeded the endpoint's item limit.
     #[error("batch exceeds the limit of {limit} items")]
     PayloadTooLarge { limit: usize },
     #[error(transparent)]

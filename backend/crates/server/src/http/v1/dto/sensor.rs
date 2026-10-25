@@ -21,9 +21,9 @@ use crate::service::{
     sensor_service::{SensorDataQuality, SensorService},
 };
 
-use super::{DataHealth, SensorStatus, tree::SortOrderParam};
+use super::{DataHealth, SensorStatus, SortOrderParam};
 
-/// Resolves a batch of raw sensor-id strings (e.g. from `TreeView::sensor_id`)
+/// Resolves a batch of raw sensor-id strings (e.g. from a module's read model)
 /// into a lookup map keyed by id. Strings that fail [`SensorId`] validation
 /// are skipped silently - the caller already produced them, so an invalid
 /// value indicates dirty data, not a 400-worthy request error.

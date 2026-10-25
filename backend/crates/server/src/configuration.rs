@@ -458,6 +458,19 @@ pub enum InsecureConfiguration {
 }
 
 impl Settings {
+    /// The `modules.<key>` section minus `default_enabled`. An absent section
+    /// deserializes like an empty one, so every field falls back to its default.
+    pub fn module_config<T: serde::de::DeserializeOwned>(
+        &self,
+        key: &str,
+    ) -> Result<T, config::ConfigError> {
+        match self.modules.get(key) {
+            Some(section) => section.deserialize_extra(),
+            None => config::Value::new(None, config::ValueKind::Table(config::Map::new()))
+                .try_deserialize(),
+        }
+    }
+
     /// Startup gate: refuses configurations an environment must not run with.
     /// Softer findings are reported by [`Self::security_advisories`].
     pub fn ensure_secure(&self) -> Result<(), InsecureConfiguration> {

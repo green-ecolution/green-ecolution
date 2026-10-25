@@ -15,7 +15,9 @@ use uuid::Uuid;
 
 use domain::{
     Id,
-    authorization::{Action, Permission, ResourceCatalog, ResourceKey},
+    authorization::{
+        AccessContext, Action, EffectivePermissions, Permission, ResourceCatalog, ResourceKey,
+    },
     plugin::{
         DeviceCapability, Plugin, PluginDraft, PluginFrontend, PluginKeyHash, PluginName,
         PluginReader, PluginSlug, PluginView, PluginWriter,
@@ -27,6 +29,22 @@ use super::{
     authorization::{AuthorizationService, may_open_plugin_view},
     plugin_proxy_policy::ProxyPolicy,
 };
+
+/// The plugin's own access context: exactly the grants it was installed with,
+/// scoped to its organization subtree. A plugin key carries no user identity,
+/// so this does not go through `AuthorizationService::context_for`.
+pub async fn plugin_access_context(
+    plugin: &Plugin,
+    authorization: &AuthorizationService,
+) -> Result<AccessContext, ServiceError> {
+    Ok(AccessContext {
+        permissions: EffectivePermissions::from_grants(vec![(
+            plugin.organization_id(),
+            plugin.permissions().clone(),
+        )]),
+        hierarchy: authorization.hierarchy().await?,
+    })
+}
 
 /// Mints the plaintext key shown once to the operator plus the hash to
 /// persist. A CSPRNG and a digest are adapter concerns, so the service takes

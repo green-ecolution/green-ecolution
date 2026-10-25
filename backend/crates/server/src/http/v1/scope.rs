@@ -1,6 +1,8 @@
 use uuid::Uuid;
 
-use crate::{http::AppState, service::ServiceError};
+use crate::service::{
+    ServiceError, authorization::AuthorizationService, user_service::UserService,
+};
 use domain::{
     Id, RepositoryError,
     authorization::{AccessContext, Permission},
@@ -10,17 +12,18 @@ use domain::{
 /// Target org for a create: explicit payload wins, then the acting user's
 /// own organization; the demo bypass falls back to the root org.
 pub async fn resolve_target_org(
-    state: &AppState,
+    users: &UserService,
+    authorization: &AuthorizationService,
     user_id: Uuid,
     payload_org: Option<Uuid>,
 ) -> Result<Id<Organization>, ServiceError> {
     if let Some(org) = payload_org {
         return Ok(Id::new(org));
     }
-    if let Some(org) = state.user_service.organization_of(user_id).await? {
+    if let Some(org) = users.organization_of(user_id).await? {
         return Ok(org);
     }
-    if !state.authorization_service.enforced() {
+    if !authorization.enforced() {
         return Ok(root_organization_id());
     }
     Err(ServiceError::MissingOrganization)

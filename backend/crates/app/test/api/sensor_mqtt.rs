@@ -6,9 +6,8 @@ use domain::{
     Id,
     events::SensorReadings,
     sensor::{SensorId, data::VolumetricReading, repository::NormalizedValue},
-    shared::provenance::Provenance,
 };
-use irrigation_domain::cluster::{ClusterAddress, SoilCondition, TreeClusterUpdate};
+use irrigation_domain::cluster::SoilCondition;
 use rust_decimal::Decimal;
 use serde_json::json;
 use server::service::sensor_service::ReadingIngest;
@@ -335,27 +334,27 @@ async fn ingest_moisture_at(app: &TestApp, sensor: &str, model_id: Uuid, reading
 
 /// Replaces the cluster's soil condition, leaving every other field as-is.
 async fn set_soil(app: &TestApp, cluster_id: Uuid, soil: SoilCondition) {
-    let cluster = app
-        .state
-        .cluster_service
-        .by_id(Id::new(cluster_id))
-        .await
-        .unwrap();
-    app.state
-        .cluster_service
-        .replace(
-            Id::new(cluster_id),
-            TreeClusterUpdate {
-                name: cluster.name.clone(),
-                address: ClusterAddress::new(cluster.address.as_str()).unwrap(),
-                description: cluster.description.clone(),
-                soil_condition: Some(soil),
-                tree_ids: cluster.tree_ids.clone(),
-                provenance: Provenance::default(),
-            },
+    let path = format!("/api/v1/clusters/{cluster_id}");
+    let cluster: serde_json::Value = app.get(&path).await.json().await.unwrap();
+    let tree_ids: Vec<&serde_json::Value> = cluster["trees"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|tree| &tree["id"])
+        .collect();
+    let response = app
+        .put_json(
+            &path,
+            &json!({
+                "name": cluster["name"],
+                "address": cluster["address"],
+                "description": cluster["description"],
+                "soil_condition": server::irrigation::http::dto::SoilCondition::from(soil),
+                "tree_ids": tree_ids,
+            }),
         )
-        .await
-        .unwrap();
+        .await;
+    assert_eq!(response.status(), 200, "{}", response.text().await.unwrap());
 }
 
 async fn watering_status(app: &TestApp, number: &str) -> String {

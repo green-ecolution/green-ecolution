@@ -17,8 +17,8 @@ use domain::{
 
 use super::{
     dto::{
+        TransferRequest,
         routing::{StartPointRequest, StartPointResponse},
-        tree::TransferRequest,
     },
     scope,
 };
@@ -83,7 +83,13 @@ pub async fn create_start_point(
     Json(req): Json<StartPointRequest>,
 ) -> Result<(StatusCode, Json<StartPointResponse>), ServiceError> {
     ensure_routing(&state)?;
-    let org = scope::resolve_target_org(&state, user.id, req.organization_id).await?;
+    let org = scope::resolve_target_org(
+        &state.user_service,
+        &state.authorization_service,
+        user.id,
+        req.organization_id,
+    )
+    .await?;
     state
         .authorization_service
         .require(

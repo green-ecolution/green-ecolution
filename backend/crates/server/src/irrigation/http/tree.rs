@@ -6,25 +6,24 @@ use crate::http::extractors::{Json, Path, Query};
 use axum::{extract::State, http::StatusCode};
 use utoipa_axum::{router::OpenApiRouter, routes};
 
+use super::{
+    dto::tree::{
+        NearestTreeListResponse, NearestTreeParams, TreeCreateRequest, TreeListParams,
+        TreeMarkerListResponse, TreeMarkerQueryParams, TreeMarkerResponse, TreeResponse,
+        TreeUpdateRequest, TreeWithDistanceResponse,
+    },
+    state::IrrigationHttpState,
+};
 use crate::{
     http::{
-        AppState,
         auth::extractor::AuthUserExtractor,
         v1::{
-            dto::{
-                ListResponse,
-                sensor::resolve_sensors_by_str_ids,
-                tree::{
-                    NearestTreeListResponse, NearestTreeParams, TransferRequest, TreeCreateRequest,
-                    TreeListParams, TreeMarkerListResponse, TreeMarkerQueryParams,
-                    TreeMarkerResponse, TreeResponse, TreeUpdateRequest, TreeWithDistanceResponse,
-                },
-            },
+            dto::{ListResponse, TransferRequest, sensor::resolve_sensors_by_str_ids},
             scope,
         },
     },
-    irrigation::targets::tree_target,
-    service::{Malformed, OrganizationMismatch, ServiceError, targets::ensure_module_active},
+    irrigation::{error::IrrigationError, targets::tree_target},
+    service::{Malformed, OrganizationMismatch, ServiceError},
 };
 use chrono::Utc;
 use domain::{
@@ -40,7 +39,7 @@ use irrigation_domain::tree::{
     PlantingYear, Tree, TreeMarker, TreeSearchQuery, TreeSort, TreeSortField, TreeView,
 };
 
-pub fn routes() -> OpenApiRouter<Arc<AppState>> {
+pub fn routes() -> OpenApiRouter<Arc<IrrigationHttpState>> {
     OpenApiRouter::new()
         .routes(routes!(list_trees, create_tree))
         .routes(routes!(list_planting_years))
@@ -68,7 +67,7 @@ const TREE_LIST_Q_MAX_LEN: usize = 100;
 )]
 #[tracing::instrument(level = "info", skip_all, fields(query.len = tracing::field::Empty))]
 pub async fn list_trees(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<IrrigationHttpState>>,
     user: AuthUserExtractor,
     Query(params): Query<TreeListParams>,
 ) -> Result<Json<ListResponse<TreeResponse>>, ServiceError> {
@@ -107,7 +106,7 @@ pub async fn list_trees(
         .collect::<Vec<_>>();
 
     let visible = state
-        .authorization_service
+        .authorization
         .visible_orgs_for(
             user.id,
             Permission::new(crate::irrigation::resources::TREE, Action::Read),
@@ -131,10 +130,10 @@ pub async fn list_trees(
         ..TreeSearchQuery::default()
     };
 
-    let result = state.tree_service.search_view(query, pagination).await?;
+    let result = state.trees.search_view(query, pagination).await?;
 
     let sensor_map = resolve_sensors_by_str_ids(
-        &state.sensor_service,
+        &state.sensors,
         result
             .page
             .items
@@ -164,12 +163,12 @@ pub async fn list_trees(
 )]
 #[tracing::instrument(level = "info", skip_all, fields(tree.id = %id))]
 pub async fn get_tree(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<IrrigationHttpState>>,
     user: AuthUserExtractor,
     Path(id): Path<uuid::Uuid>,
 ) -> Result<Json<TreeResponse>, ServiceError> {
-    let tree = state.tree_service.view_by_id(Id::new(id)).await?;
-    let ctx = state.authorization_service.context_for(user.id).await?;
+    let tree = state.trees.view_by_id(Id::new(id)).await?;
+    let ctx = state.authorization.context_for(user.id).await?;
     scope::ensure_visible(
         &ctx,
         Permission::new(crate::irrigation::resources::TREE, Action::Read),
@@ -178,7 +177,7 @@ pub async fn get_tree(
     let sensor = match &tree.sensor_id {
         Some(sid) => {
             let sensor_id = SensorId::new(sid)?;
-            Some(state.sensor_service.view_by_id(&sensor_id).await?)
+            Some(state.sensors.view_by_id(&sensor_id).await?)
         }
         None => None,
     };
@@ -200,13 +199,19 @@ pub async fn get_tree(
 )]
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn create_tree(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<IrrigationHttpState>>,
     user: AuthUserExtractor,
     Json(entity): Json<TreeCreateRequest>,
 ) -> Result<(StatusCode, Json<TreeResponse>), ServiceError> {
-    let org = scope::resolve_target_org(&state, user.id, entity.organization_id).await?;
+    let org = scope::resolve_target_org(
+        &state.users,
+        &state.authorization,
+        user.id,
+        entity.organization_id,
+    )
+    .await?;
     state
-        .authorization_service
+        .authorization
         .require(
             user.id,
             Permission::new(crate::irrigation::resources::TREE, Action::Create),
@@ -216,9 +221,9 @@ pub async fn create_tree(
     let mut sensor = None;
     if let Some(sid) = entity.sensor_id.as_deref() {
         let sensor_id = SensorId::new(sid)?;
-        let sensor_view = state.sensor_service.view_by_id(&sensor_id).await?;
+        let sensor_view = state.sensors.view_by_id(&sensor_id).await?;
         state
-            .authorization_service
+            .authorization
             .require(
                 user.id,
                 Permission::new(ResourceKey::SENSOR, Action::Update),
@@ -231,18 +236,18 @@ pub async fn create_tree(
     if let Some(sensor) = &sensor {
         ensure_sensor_fits(&state, sensor, None, org, draft.planting_year).await?;
     }
-    let tree = state.tree_service.create(draft).await?;
+    let tree = state.trees.create(draft).await?;
     if let Some(sensor_id) = sensor_id {
         state
-            .sensor_service
+            .sensors
             .attach(&sensor_id, tree_target(tree.id))
             .await?;
     }
-    let view = state.tree_service.view_by_id(tree.id).await?;
+    let view = state.trees.view_by_id(tree.id).await?;
     let sensor = match view.sensor_id.as_deref() {
         Some(sid) => {
             let sensor_id = SensorId::new(sid)?;
-            Some(state.sensor_service.view_by_id(&sensor_id).await?)
+            Some(state.sensors.view_by_id(&sensor_id).await?)
         }
         None => None,
     };
@@ -269,20 +274,20 @@ pub async fn create_tree(
 )]
 #[tracing::instrument(level = "info", skip_all, fields(tree.id = %id))]
 pub async fn update_tree(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<IrrigationHttpState>>,
     user: AuthUserExtractor,
     Path(id): Path<uuid::Uuid>,
     Json(entity): Json<TreeUpdateRequest>,
 ) -> Result<Json<TreeResponse>, ServiceError> {
-    let current = state.tree_service.view_by_id(Id::new(id)).await?;
-    let ctx = state.authorization_service.context_for(user.id).await?;
+    let current = state.trees.view_by_id(Id::new(id)).await?;
+    let ctx = state.authorization.context_for(user.id).await?;
     scope::ensure_visible(
         &ctx,
         Permission::new(crate::irrigation::resources::TREE, Action::Read),
         current.organization_id,
     )?;
     state
-        .authorization_service
+        .authorization
         .require(
             user.id,
             Permission::new(crate::irrigation::resources::TREE, Action::Update),
@@ -295,9 +300,9 @@ pub async fn update_tree(
             .flatten()
         {
             let sensor_id = SensorId::new(sid)?;
-            let sensor_view = state.sensor_service.view_by_id(&sensor_id).await?;
+            let sensor_view = state.sensors.view_by_id(&sensor_id).await?;
             state
-                .authorization_service
+                .authorization
                 .require(
                     user.id,
                     Permission::new(ResourceKey::SENSOR, Action::Update),
@@ -322,22 +327,22 @@ pub async fn update_tree(
     let org = Id::new(current.organization_id);
     let (draft, sensor_id) = create.into_draft(org)?;
     if let Some(sensor_id) = &sensor_id {
-        let sensor = state.sensor_service.view_by_id(sensor_id).await?;
+        let sensor = state.sensors.view_by_id(sensor_id).await?;
         ensure_sensor_fits(&state, &sensor, Some(Id::new(id)), org, draft.planting_year).await?;
     }
-    let tree = state.tree_service.replace(Id::new(id), draft).await?;
+    let tree = state.trees.replace(Id::new(id), draft).await?;
     if sensor_id.as_ref().map(SensorId::as_str) != current.sensor_id.as_deref() {
         let target = tree_target(tree.id);
-        state.sensor_service.release_target(&target).await?;
+        state.sensors.release_target(&target).await?;
         if let Some(sensor_id) = sensor_id {
-            state.sensor_service.attach(&sensor_id, target).await?;
+            state.sensors.attach(&sensor_id, target).await?;
         }
     }
-    let view = state.tree_service.view_by_id(tree.id).await?;
+    let view = state.trees.view_by_id(tree.id).await?;
     let sensor = match view.sensor_id.as_deref() {
         Some(sid) => {
             let sensor_id = SensorId::new(sid)?;
-            Some(state.sensor_service.view_by_id(&sensor_id).await?)
+            Some(state.sensors.view_by_id(&sensor_id).await?)
         }
         None => None,
     };
@@ -347,20 +352,15 @@ pub async fn update_tree(
 /// Checked before the tree is written, so a refused sensor leaves the tree
 /// untouched; attaching afterwards repeats these rules.
 async fn ensure_sensor_fits(
-    state: &AppState,
+    state: &IrrigationHttpState,
     sensor: &SensorView,
     tree: Option<Id<Tree>>,
     org: Id<Organization>,
     planting_year: PlantingYear,
 ) -> Result<(), ServiceError> {
-    ensure_module_active(
-        state.module_activation.as_ref(),
-        &crate::irrigation::key(),
-        org,
-    )
-    .await?;
+    state.access.ensure_active(org).await?;
     if planting_year.is_future(Utc::now()) {
-        return Err(crate::irrigation::error::IrrigationError::TreeNotYetPlanted.into());
+        return Err(IrrigationError::TreeNotYetPlanted.into());
     }
     let here = tree.map(tree_target);
     if sensor.target.is_some() && sensor.target != here {
@@ -386,26 +386,26 @@ async fn ensure_sensor_fits(
 )]
 #[tracing::instrument(level = "info", skip_all, fields(tree.id = %id))]
 pub async fn delete_tree(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<IrrigationHttpState>>,
     user: AuthUserExtractor,
     Path(id): Path<uuid::Uuid>,
 ) -> Result<StatusCode, ServiceError> {
-    let current = state.tree_service.view_by_id(Id::new(id)).await?;
-    let ctx = state.authorization_service.context_for(user.id).await?;
+    let current = state.trees.view_by_id(Id::new(id)).await?;
+    let ctx = state.authorization.context_for(user.id).await?;
     scope::ensure_visible(
         &ctx,
         Permission::new(crate::irrigation::resources::TREE, Action::Read),
         current.organization_id,
     )?;
     state
-        .authorization_service
+        .authorization
         .require(
             user.id,
             Permission::new(crate::irrigation::resources::TREE, Action::Delete),
             Id::new(current.organization_id),
         )
         .await?;
-    state.tree_service.delete(Id::new(id)).await?;
+    state.trees.delete(Id::new(id)).await?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -420,17 +420,17 @@ pub async fn delete_tree(
 )]
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn list_planting_years(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<IrrigationHttpState>>,
     user: AuthUserExtractor,
 ) -> Result<Json<Vec<i32>>, ServiceError> {
     let visible = state
-        .authorization_service
+        .authorization
         .visible_orgs_for(
             user.id,
             Permission::new(crate::irrigation::resources::TREE, Action::Read),
         )
         .await?;
-    let years = state.tree_service.distinct_planting_years(visible).await?;
+    let years = state.trees.distinct_planting_years(visible).await?;
     Ok(Json(years.into_iter().map(|y| y.year() as i32).collect()))
 }
 
@@ -446,7 +446,7 @@ pub async fn list_planting_years(
 )]
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn get_nearest_trees(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<IrrigationHttpState>>,
     user: AuthUserExtractor,
     Query(params): Query<NearestTreeParams>,
 ) -> Result<Json<NearestTreeListResponse>, ServiceError> {
@@ -461,7 +461,7 @@ pub async fn get_nearest_trees(
         .min(limits.max_limit);
 
     let visible = state
-        .authorization_service
+        .authorization
         .visible_orgs_for(
             user.id,
             Permission::new(crate::irrigation::resources::TREE, Action::Read),
@@ -469,12 +469,12 @@ pub async fn get_nearest_trees(
         .await?;
 
     let results = state
-        .tree_service
+        .trees
         .view_nearest(coord, radius, limit, visible)
         .await?;
 
     let sensor_map = resolve_sensors_by_str_ids(
-        &state.sensor_service,
+        &state.sensors,
         results.iter().filter_map(|t| t.tree.sensor_id.as_deref()),
     )
     .await?;
@@ -512,7 +512,7 @@ pub async fn get_nearest_trees(
 )]
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn list_tree_markers(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<IrrigationHttpState>>,
     user: AuthUserExtractor,
     Query(params): Query<TreeMarkerQueryParams>,
 ) -> Result<Json<TreeMarkerListResponse>, ServiceError> {
@@ -537,7 +537,7 @@ pub async fn list_tree_markers(
         .collect();
 
     let visible = state
-        .authorization_service
+        .authorization
         .visible_orgs_for(
             user.id,
             Permission::new(crate::irrigation::resources::TREE, Action::Read),
@@ -554,7 +554,7 @@ pub async fn list_tree_markers(
         ..Default::default()
     };
 
-    let markers: Vec<TreeMarker> = state.tree_service.view_markers(query).await?;
+    let markers: Vec<TreeMarker> = state.trees.view_markers(query).await?;
     let data = markers.iter().map(TreeMarkerResponse::from).collect();
     Ok(Json(TreeMarkerListResponse { data }))
 }
@@ -574,13 +574,13 @@ pub async fn list_tree_markers(
 )]
 #[tracing::instrument(level = "info", skip_all, fields(tree.id = %id))]
 pub async fn transfer_tree(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<IrrigationHttpState>>,
     user: AuthUserExtractor,
     Path(id): Path<uuid::Uuid>,
     Json(req): Json<TransferRequest>,
 ) -> Result<StatusCode, ServiceError> {
-    let current = state.tree_service.view_by_id(Id::new(id)).await?;
-    let ctx = state.authorization_service.context_for(user.id).await?;
+    let current = state.trees.view_by_id(Id::new(id)).await?;
+    let ctx = state.authorization.context_for(user.id).await?;
     scope::ensure_visible(
         &ctx,
         Permission::new(crate::irrigation::resources::TREE, Action::Read),
@@ -588,15 +588,15 @@ pub async fn transfer_tree(
     )?;
     let perm = Permission::new(crate::irrigation::resources::TREE, Action::Update);
     state
-        .authorization_service
+        .authorization
         .require(user.id, perm, Id::new(current.organization_id))
         .await?;
     state
-        .authorization_service
+        .authorization
         .require(user.id, perm, Id::new(req.organization_id))
         .await?;
     state
-        .tree_service
+        .trees
         .transfer(Id::new(id), Id::new(req.organization_id))
         .await?;
     Ok(StatusCode::NO_CONTENT)

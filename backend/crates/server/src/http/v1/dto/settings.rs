@@ -166,7 +166,7 @@ pub struct OrganizationSettingsUpdateRequest {
 /// `Option<Option<T>>` needs an explicit deserializer: serde's `default`
 /// collapses "absent" and "null" into `None` otherwise, and every partial save
 /// would reset the fields it did not send.
-pub(crate) fn double_option<'de, D, T>(deserializer: D) -> Result<Option<Option<T>>, D::Error>
+pub fn double_option<'de, D, T>(deserializer: D) -> Result<Option<Option<T>>, D::Error>
 where
     D: Deserializer<'de>,
     T: Deserialize<'de>,
@@ -174,7 +174,7 @@ where
     Option::deserialize(deserializer).map(Some)
 }
 
-pub(crate) fn patch<T, U, F>(raw: Option<Option<T>>, build: F) -> Result<Patch<U>, ServiceError>
+pub fn patch<T, U, F>(raw: Option<Option<T>>, build: F) -> Result<Patch<U>, ServiceError>
 where
     F: FnOnce(T) -> Result<U, ServiceError>,
 {
@@ -202,7 +202,7 @@ impl TryFrom<OrganizationSettingsUpdateRequest> for SettingsUpdate {
 
 /// One lookup for every distinct author on the page. An IdP outage must not
 /// fail the read: the values are still valid, they just render without a name.
-pub(crate) async fn resolve_change_authors(
+pub async fn resolve_change_authors(
     users: &UserService,
     authors: impl IntoIterator<Item = Option<Uuid>>,
 ) -> HashMap<Uuid, String> {
@@ -222,7 +222,7 @@ pub(crate) async fn resolve_change_authors(
         .collect()
 }
 
-pub(crate) fn field<T>(
+pub fn field<T>(
     value: T,
     origin: SettingOrigin,
     own: Option<T>,

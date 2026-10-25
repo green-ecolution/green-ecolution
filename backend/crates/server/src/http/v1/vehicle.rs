@@ -12,8 +12,7 @@ use crate::{
         auth::extractor::AuthUserExtractor,
         v1::{
             dto::{
-                ListResponse,
-                tree::TransferRequest,
+                ListResponse, TransferRequest,
                 vehicle::{
                     VehicleCreateRequest, VehicleListParams, VehicleResponse, VehicleUpdateRequest,
                 },
@@ -170,7 +169,13 @@ pub async fn create_vehicle(
     user: AuthUserExtractor,
     Json(entity): Json<VehicleCreateRequest>,
 ) -> Result<(StatusCode, Json<VehicleResponse>), ServiceError> {
-    let org = scope::resolve_target_org(&state, user.id, entity.organization_id).await?;
+    let org = scope::resolve_target_org(
+        &state.user_service,
+        &state.authorization_service,
+        user.id,
+        entity.organization_id,
+    )
+    .await?;
     state
         .authorization_service
         .require(

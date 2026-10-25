@@ -30,9 +30,12 @@ use irrigation_domain::{
 use server::{
     bench::{scale::Scale, seed::BENCH_USER_ID},
     infra::{
-        pg_cluster::PgTreeClusterRepository, pg_evaluation::PgEvaluationRepository,
         pg_organization::PgOrganizationRepository, pg_role::PgRoleRepository,
-        pg_sensor::PgSensorRepository, pg_tree::PgTreeRepository,
+        pg_sensor::PgSensorRepository,
+    },
+    irrigation::infra::{
+        pg_cluster::PgTreeClusterRepository, pg_evaluation::PgEvaluationRepository,
+        pg_tree::PgTreeRepository,
     },
     service::authorization::AuthorizationService,
 };

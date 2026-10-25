@@ -385,6 +385,39 @@ pub fn irrigation_catalog() -> std::sync::Arc<domain::authorization::ResourceCat
     )
 }
 
+/// Built like `IrrigationModule::build` builds it, on the server's own bus,
+/// so follow-up events run as they would behind the HTTP surface.
+pub fn irrigation_cluster_service(
+    app: &TestApp,
+) -> Arc<server::irrigation::service::cluster_service::ClusterService> {
+    use server::{
+        infra::{pg_comment::PgCommentRepository, pg_sensor::PgSensorRepository},
+        irrigation::infra::{pg_cluster::PgTreeClusterRepository, pg_tree::PgTreeRepository},
+    };
+
+    let pool = app.db_pool.clone();
+    let clusters = Arc::new(PgTreeClusterRepository::new(pool.clone()));
+    let trees = Arc::new(PgTreeRepository::new(pool.clone()));
+    let sensors = Arc::new(PgSensorRepository::new(
+        pool.clone(),
+        chrono::Duration::hours(24),
+        3,
+    ));
+    Arc::new(
+        server::irrigation::service::cluster_service::ClusterService::new(
+            clusters.clone(),
+            clusters,
+            trees.clone(),
+            trees,
+            sensors.clone(),
+            sensors,
+            app.state.event_bus.clone(),
+            Arc::new(PgCommentRepository::new(pool)),
+            app.state.operation_plan_service.clone(),
+        ),
+    )
+}
+
 pub fn template_modules() -> Vec<Box<dyn server::module::Module>> {
     let mut modules = app::modules::registered();
     modules.push(Box::new(crate::test_module::TestModule::new(

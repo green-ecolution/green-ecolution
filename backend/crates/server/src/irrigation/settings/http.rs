@@ -4,17 +4,13 @@ use axum::extract::State;
 use domain::{
     Id,
     authorization::{Action, Permission, ResourceKey},
-    organization::OrganizationReader,
 };
 use irrigation_domain::settings::{JustWateredTtl, WaterDemand};
 use serde::{Deserialize, Serialize};
 use utoipa_axum::{router::OpenApiRouter, routes};
 use uuid::Uuid;
 
-use super::{
-    IrrigationResolution, IrrigationSettings, IrrigationSettingsUpdate,
-    service::IrrigationSettingsService,
-};
+use super::{IrrigationResolution, IrrigationSettings, IrrigationSettingsUpdate};
 use crate::{
     http::{
         auth::extractor::AuthUserExtractor,
@@ -27,19 +23,9 @@ use crate::{
             error::ErrorBody,
         },
     },
-    service::{
-        ServiceError, authorization::AuthorizationService, module_access::ModuleAccess,
-        user_service::UserService,
-    },
+    irrigation::http::state::IrrigationHttpState,
+    service::ServiceError,
 };
-
-pub struct IrrigationHttpState {
-    pub settings: Arc<IrrigationSettingsService>,
-    pub access: ModuleAccess,
-    pub authorization: Arc<AuthorizationService>,
-    pub organizations: Arc<dyn OrganizationReader>,
-    pub users: Arc<UserService>,
-}
 
 pub fn routes() -> OpenApiRouter<Arc<IrrigationHttpState>> {
     OpenApiRouter::new().routes(routes!(get_irrigation_settings, update_irrigation_settings))

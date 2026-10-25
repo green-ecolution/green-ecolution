@@ -17,8 +17,8 @@ use irrigation_domain::{
     watering_status::WateringStatus,
 };
 
-use super::{ServiceError, event_bus::EventBus};
 use crate::irrigation::error::IrrigationError;
+use crate::service::{ServiceError, event_bus::EventBus};
 
 /// The single tree operation another service needs from this one.
 ///

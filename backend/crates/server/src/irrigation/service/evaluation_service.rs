@@ -3,7 +3,7 @@ use std::sync::Arc;
 use domain::authorization::Visibility;
 use irrigation_domain::evaluation::{EvaluationRepository, RegionEvaluation, VehicleEvaluation};
 
-use super::ServiceError;
+use crate::service::ServiceError;
 
 pub struct EvaluationService {
     evaluation_repo: Arc<dyn EvaluationRepository>,

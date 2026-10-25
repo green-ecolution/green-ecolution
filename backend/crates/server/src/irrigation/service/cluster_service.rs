@@ -24,8 +24,8 @@ use irrigation_domain::{
     tree::{Tree, TreeReader, TreeWriter, volumetric_thresholds},
 };
 
-use super::{event_bus::EventBus, operation_plan_service::OperationPlanService};
 use crate::irrigation::{self, error::IrrigationError};
+use crate::service::{event_bus::EventBus, operation_plan_service::OperationPlanService};
 
 pub struct ClusterService {
     reader: Arc<dyn TreeClusterReader>,

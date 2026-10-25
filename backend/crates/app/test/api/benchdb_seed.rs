@@ -5,7 +5,7 @@ use server::{
         scale::Scale,
         seed::{SeedPlan, seed_core},
     },
-    infra::pg_tree::PgTreeRepository,
+    irrigation::infra::pg_tree::PgTreeRepository,
 };
 
 use crate::helpers::spawn_app;

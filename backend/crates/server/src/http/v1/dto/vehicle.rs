@@ -13,9 +13,7 @@ use domain::{
     },
 };
 
-use super::{
-    DrivingLicense, VehicleAvailability, VehicleStatus, VehicleType, tree::SortOrderParam,
-};
+use super::{DrivingLicense, SortOrderParam, VehicleAvailability, VehicleStatus, VehicleType};
 
 /// Kind of capacity a vehicle carries or a start point restores.
 #[derive(

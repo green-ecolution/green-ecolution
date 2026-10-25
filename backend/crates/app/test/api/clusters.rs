@@ -1,7 +1,7 @@
 use chrono::{Duration, Utc};
 use domain::{Id, organization::Organization};
 use irrigation_domain::cluster::TreeClusterReader;
-use server::infra::pg_cluster::PgTreeClusterRepository;
+use server::irrigation::infra::pg_cluster::PgTreeClusterRepository;
 
 use crate::helpers::{self, spawn_app};
 
@@ -1659,8 +1659,9 @@ async fn the_sweep_expires_each_organization_on_its_own_ttl() {
     );
     let settings = PgIrrigationSettings::new(app.db_pool.clone(), defaults, org_reader.clone());
 
-    let released = server::infra::watering_status_expiry::sweep_once(
-        &app.state.cluster_service,
+    let clusters = crate::helpers::irrigation_cluster_service(&app);
+    let released = server::irrigation::infra::watering_status_expiry::sweep_once(
+        &clusters,
         org_reader.as_ref(),
         &settings,
         Utc::now(),

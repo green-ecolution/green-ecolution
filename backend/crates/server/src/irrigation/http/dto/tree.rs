@@ -8,7 +8,6 @@ use domain::{
         coordinates::Coordinate,
         geo::BoundingBox,
         provenance::{Provenance, ProviderId},
-        sort::SortDirection,
     },
 };
 use irrigation_domain::tree::{
@@ -17,7 +16,8 @@ use irrigation_domain::tree::{
 
 use crate::service::ServiceError;
 
-use super::{WateringStatus, sensor::SensorResponse};
+use super::WateringStatus;
+use crate::http::v1::dto::{SortOrderParam, sensor::SensorResponse};
 
 /// An individual tree managed by the system.
 #[derive(Debug, Serialize, utoipa::ToSchema)]
@@ -87,14 +87,6 @@ impl From<(&TreeView, Option<&SensorView>)> for TreeResponse {
     }
 }
 
-/// Request body for transferring a resource's ownership to another
-/// organization.
-#[derive(Debug, Deserialize, utoipa::ToSchema)]
-pub struct TransferRequest {
-    #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000")]
-    pub organization_id: uuid::Uuid,
-}
-
 /// A tree with its distance from a reference point.
 #[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct TreeWithDistanceResponse {
@@ -124,22 +116,6 @@ impl From<TreeSortParam> for TreeSortField {
             TreeSortParam::PlantingYear => Self::PlantingYear,
             TreeSortParam::LastWatered => Self::LastWatered,
             TreeSortParam::Cluster => Self::Cluster,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy, Deserialize, utoipa::ToSchema)]
-#[serde(rename_all = "snake_case")]
-pub enum SortOrderParam {
-    Asc,
-    Desc,
-}
-
-impl From<SortOrderParam> for SortDirection {
-    fn from(value: SortOrderParam) -> Self {
-        match value {
-            SortOrderParam::Asc => Self::Ascending,
-            SortOrderParam::Desc => Self::Descending,
         }
     }
 }

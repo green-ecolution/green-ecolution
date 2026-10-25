@@ -11,8 +11,8 @@ use domain::info::{
 use server::{
     configuration::{CorsSettings, DatabaseSettings, Settings},
     http::{
-        AppOrigins, AppState, FeatureFlags, NearestTreeLimits, OidcSwaggerSettings,
-        auth::AuthLayer, router,
+        AppOrigins, AppState, FeatureFlags, OidcSwaggerSettings, auth::AuthLayer,
+        extractors::PluginAuthenticator, router,
     },
     infra::{
         self,
@@ -23,9 +23,7 @@ use server::{
         },
         keycloak::{AuthStack, JwksProvider},
         mqtt::MqttHealthState,
-        pg_cluster::PgTreeClusterRepository,
         pg_comment::PgCommentRepository,
-        pg_evaluation::PgEvaluationRepository,
         pg_operation_plan::PgOperationPlanRepository,
         pg_organization::PgOrganizationRepository,
         pg_plugin::PgPluginRepository,
@@ -35,33 +33,20 @@ use server::{
         pg_sensor_model::PgSensorModelRepository,
         pg_settings::PgSettingsRepository,
         pg_start_point::PgStartPointRepository,
-        pg_tree::PgTreeRepository,
         pg_vehicle::PgVehicleRepository,
         statistics_repo::PgStatisticsRepo,
         system_info::DefaultSystemInfoProvider,
         update_checker::UpdateChecker,
     },
-    irrigation::{
-        IrrigationConfig,
-        settings::{IrrigationDefaults, repository::PgIrrigationSettings},
-    },
     module::Module,
     service::{
         authorization::AuthorizationService,
-        cluster_service::ClusterService,
         comment_service::CommentService,
-        evaluation_service::EvaluationService,
         event_bus::{EventBus, EventHandler, InMemoryEventBus},
-        handlers::cluster_just_watered::ClusterJustWateredHandler,
-        handlers::cluster_recalc::ClusterRecalculationHandler,
-        handlers::cluster_soil_recalc::ClusterSoilRecalcHandler,
-        handlers::cluster_status::ClusterStatusAggregatorHandler,
-        handlers::tree_watering::TreeWateringFromSensorHandler,
         operation_execution_service::OperationExecutionService,
         operation_plan_service::OperationPlanService,
         organization_service::OrganizationService,
         planning::PlanningRegistry,
-        plugin_ingest_service::PluginIngestService,
         plugin_proxy_policy::ProxyPolicy,
         plugin_proxy_service::PluginProxyService,
         plugin_sensor_ingest_service::PluginSensorIngestService,
@@ -71,7 +56,6 @@ use server::{
         role_service::RoleService,
         sensor_service::SensorService,
         start_point_service::StartPointService,
-        tree_service::TreeService,
         user_service::UserService,
         vehicle_service::VehicleService,
     },
@@ -161,22 +145,6 @@ impl Application {
             defaults,
             repos.organization_reader.clone(),
         ));
-        let irrigation_config = IrrigationConfig::from_settings(&settings).map_err(|err| {
-            std::io::Error::new(
-                std::io::ErrorKind::InvalidInput,
-                format!("invalid configuration: {err}"),
-            )
-        })?;
-        let irrigation_settings = Arc::new(PgIrrigationSettings::new(
-            pool.clone(),
-            IrrigationDefaults::from_config(&irrigation_config).map_err(|err| {
-                std::io::Error::new(
-                    std::io::ErrorKind::InvalidInput,
-                    format!("invalid configuration: {err}"),
-                )
-            })?,
-            repos.organization_reader.clone(),
-        ));
         let profile_repo = Arc::new(infra::pg_user_profile::PgUserProfileRepository::new(
             pool.clone(),
         ));
@@ -255,7 +223,12 @@ impl Application {
             resource_catalog.clone(),
         );
 
-        let mut handlers = core_event_handlers(&repos);
+        let plugin_auth = PluginAuthenticator::new(
+            repos.plugin_reader.clone(),
+            repos.plugin_writer.clone(),
+            settings.plugins.enabled,
+        );
+        let mut handlers: Vec<Arc<dyn EventHandler>> = Vec::new();
         let mut module_routes = Vec::new();
         let mut background_tasks = Vec::new();
         let mut catalogs = std::collections::BTreeMap::new();
@@ -277,6 +250,13 @@ impl Application {
                 config: config.clone(),
                 sensors: services.sensor.clone(),
                 plans: services.operation_plan.clone(),
+                sensor_reader: repos.sensor_reader.clone(),
+                sensor_writer: repos.sensor_writer.clone(),
+                sensor_readings: repos.sensor_reading_reader.clone(),
+                regions: repos.region_reader.clone(),
+                comments: services.comment.clone(),
+                comment_writer: repos.comment_writer.clone(),
+                plugin_auth: plugin_auth.clone(),
             };
             let runtime = module
                 .build(ctx)
@@ -315,12 +295,6 @@ impl Application {
             spawn_mqtt_subscriber(&settings, services.sensor.clone(), shutdown_rx);
         let (health_reader, readiness_reader) =
             spawn_health_probes(&pool, &settings, probe_http_client.clone(), mqtt_state).await;
-        let _expiry_handle = infra::watering_status_expiry::spawn(
-            services.cluster.clone(),
-            repos.organization_reader.clone(),
-            irrigation_settings.clone(),
-            Duration::from_secs(irrigation_config.just_watered_sweep_interval_secs),
-        );
         let _update_handle = infra::update_checker::spawn(
             update_checker,
             probe_http_client,
@@ -371,15 +345,13 @@ impl Application {
 
         let state = Arc::new(AppState {
             region_service: services.region,
-            tree_service: services.tree,
             sensor_service: services.sensor,
             vehicle_service: services.vehicle,
-            cluster_service: services.cluster,
             comment_service: services.comment,
             operation_plan_service: services.operation_plan,
             operation_execution_service: services.operation_execution,
-            evaluation_service: services.evaluation,
             user_service,
+            event_bus: event_bus.clone(),
             info_provider,
             health_reader,
             readiness_reader,
@@ -389,11 +361,6 @@ impl Application {
             feature_flags: FeatureFlags {
                 routing_enabled: settings.routing.enabled,
                 plugins_enabled: settings.plugins.enabled,
-            },
-            nearest_tree_limits: NearestTreeLimits {
-                max_radius_meters: irrigation_config.nearest_tree_max_radius,
-                default_limit: irrigation_config.nearest_tree_default_limit,
-                max_limit: irrigation_config.nearest_tree_max_limit,
             },
             frontend_config_js: server::http::render_frontend_config_js(
                 &settings.auth,
@@ -405,15 +372,10 @@ impl Application {
             role_service: services.role,
             resource_catalog: resource_catalog.clone(),
             authorization_service: services.authorization,
-            plugin_auth: server::http::extractors::PluginAuthenticator::new(
-                repos.plugin_reader.clone(),
-                repos.plugin_writer.clone(),
-                settings.plugins.enabled,
-            ),
+            plugin_auth,
             plugin_reader: repos.plugin_reader,
             plugin_writer: repos.plugin_writer,
             plugin_service: services.plugin,
-            plugin_ingest_service: services.plugin_ingest,
             plugin_sensor_ingest_service: services.plugin_sensor_ingest,
             plugin_view_ticket_service: services.plugin_view_tickets,
             plugin_proxy_service,
@@ -527,8 +489,6 @@ struct Repositories {
     role_writer: Arc<dyn domain::role::RoleWriter>,
     region_reader: Arc<dyn domain::region::RegionReader>,
     region_writer: Arc<dyn domain::region::RegionWriter>,
-    tree_reader: Arc<dyn irrigation_domain::tree::TreeReader>,
-    tree_writer: Arc<dyn irrigation_domain::tree::TreeWriter>,
     sensor_reader: Arc<dyn domain::sensor::SensorReader>,
     sensor_writer: Arc<dyn domain::sensor::SensorWriter>,
     sensor_reading_reader: Arc<dyn domain::sensor::SensorReadingReader>,
@@ -536,19 +496,15 @@ struct Repositories {
     sensor_model_reader: Arc<dyn domain::sensor_model::SensorModelReader>,
     vehicle_reader: Arc<dyn domain::vehicle::VehicleReader>,
     vehicle_writer: Arc<dyn domain::vehicle::VehicleWriter>,
-    cluster_reader: Arc<dyn irrigation_domain::cluster::TreeClusterReader>,
-    cluster_writer: Arc<dyn irrigation_domain::cluster::TreeClusterWriter>,
     comment_reader: Arc<dyn domain::comment::CommentReader>,
     comment_writer: Arc<dyn domain::comment::CommentWriter>,
     operation_plan_reader: Arc<dyn domain::operation_plan::OperationPlanReader>,
     operation_plan_writer: Arc<dyn domain::operation_plan::OperationPlanWriter>,
-    evaluation: Arc<dyn irrigation_domain::evaluation::EvaluationRepository>,
     statistics: Arc<dyn StatisticsReader>,
     start_point_reader: Arc<dyn domain::start_point::StartPointReader>,
     start_point_writer: Arc<dyn domain::start_point::StartPointWriter>,
     plugin_reader: Arc<dyn domain::plugin::PluginReader>,
     plugin_writer: Arc<dyn domain::plugin::PluginWriter>,
-    plugin_tree_refs: Arc<dyn irrigation_domain::plugin_refs::PluginTreeRefs>,
     plugin_view_tickets: Arc<dyn server::service::plugin_view_ticket_service::ViewTicketStore>,
 }
 
@@ -562,14 +518,12 @@ impl Repositories {
         let organization_repo = Arc::new(PgOrganizationRepository::new(pool.clone()));
         let role_repo = Arc::new(PgRoleRepository::new(pool.clone(), catalog.clone()));
         let region_repo = Arc::new(PgRegionRepository::new(pool.clone()));
-        let tree_repo = Arc::new(PgTreeRepository::new(pool.clone()));
         let sensor_repo = Arc::new(PgSensorRepository::new(
             pool.clone(),
             sensor_offline_after,
             defect_streak,
         ));
         let vehicle_repo = Arc::new(PgVehicleRepository::new(pool.clone()));
-        let cluster_repo = Arc::new(PgTreeClusterRepository::new(pool.clone()));
         let comment_repo = Arc::new(PgCommentRepository::new(pool.clone()));
         let operation_plan_repo = Arc::new(PgOperationPlanRepository::new(pool.clone()));
         let start_point_repo = Arc::new(PgStartPointRepository::new(pool.clone()));
@@ -582,8 +536,6 @@ impl Repositories {
             role_writer: role_repo,
             region_reader: region_repo.clone(),
             region_writer: region_repo,
-            tree_reader: tree_repo.clone(),
-            tree_writer: tree_repo,
             sensor_reader: sensor_repo.clone(),
             sensor_writer: sensor_repo.clone(),
             sensor_reading_reader: sensor_repo.clone(),
@@ -591,19 +543,15 @@ impl Repositories {
             sensor_model_reader: Arc::new(PgSensorModelRepository::new(pool.clone())),
             vehicle_reader: vehicle_repo.clone(),
             vehicle_writer: vehicle_repo,
-            cluster_reader: cluster_repo.clone(),
-            cluster_writer: cluster_repo,
             comment_reader: comment_repo.clone(),
             comment_writer: comment_repo,
             operation_plan_reader: operation_plan_repo.clone(),
             operation_plan_writer: operation_plan_repo,
-            evaluation: Arc::new(PgEvaluationRepository::new(pool.clone())),
             statistics: Arc::new(PgStatisticsRepo::new(pool.clone())),
             start_point_reader: start_point_repo.clone(),
             start_point_writer: start_point_repo,
             plugin_reader: plugin_repo.clone(),
-            plugin_writer: plugin_repo.clone(),
-            plugin_tree_refs: plugin_repo,
+            plugin_writer: plugin_repo,
             plugin_view_tickets: Arc::new(
                 server::infra::pg_plugin_view_ticket::PgViewTicketStore::new(pool.clone()),
             ),
@@ -613,20 +561,16 @@ impl Repositories {
 
 struct Services {
     region: Arc<RegionService>,
-    tree: Arc<TreeService>,
     sensor: Arc<SensorService>,
     vehicle: Arc<VehicleService>,
-    cluster: Arc<ClusterService>,
     comment: Arc<CommentService>,
     operation_plan: Arc<OperationPlanService>,
     operation_execution: Arc<OperationExecutionService>,
-    evaluation: Arc<EvaluationService>,
     start_point: Arc<StartPointService>,
     organization: Arc<OrganizationService>,
     role: Arc<RoleService>,
     authorization: Arc<AuthorizationService>,
     plugin: Arc<PluginService>,
-    plugin_ingest: Arc<PluginIngestService>,
     plugin_sensor_ingest: Arc<PluginSensorIngestService>,
     plugin_view_tickets: Arc<PluginViewTicketService>,
 }
@@ -661,33 +605,12 @@ impl Services {
             proxy_policy,
             resource_catalog.clone(),
         ));
-        let tree = Arc::new(TreeService::new(
-            repos.tree_reader.clone(),
-            repos.tree_writer.clone(),
-            repos.cluster_reader.clone(),
-            repos.sensor_reader.clone(),
-            repos.sensor_writer.clone(),
-            event_bus.clone(),
-        ));
-        // Reuses `TreeService::delete` for its own delete flow so `TreeDeleted`
-        // fires and cluster centroid/status stay in sync, instead of a second
-        // copy of that logic.
-        let plugin_ingest = Arc::new(PluginIngestService::new(
-            repos.tree_reader.clone(),
-            repos.tree_writer.clone(),
-            repos.plugin_tree_refs.clone(),
-            tree.clone(),
-            event_bus.clone(),
-            authorization.clone(),
-        ));
         let sensor = Arc::new(SensorService::new(
             repos.sensor_reader.clone(),
             repos.sensor_writer.clone(),
             repos.sensor_reading_reader.clone(),
             repos.sensor_reading_writer.clone(),
             repos.sensor_model_reader.clone(),
-            repos.tree_reader.clone(),
-            repos.cluster_reader.clone(),
             targets.clone(),
             module_activation.clone(),
             event_bus.clone(),
@@ -712,22 +635,10 @@ impl Services {
                 repos.region_reader.clone(),
                 repos.region_writer.clone(),
             )),
-            tree,
             sensor,
             vehicle: Arc::new(VehicleService::new(
                 repos.vehicle_reader.clone(),
                 repos.vehicle_writer.clone(),
-            )),
-            cluster: Arc::new(ClusterService::new(
-                repos.cluster_reader.clone(),
-                repos.cluster_writer.clone(),
-                repos.tree_reader.clone(),
-                repos.tree_writer.clone(),
-                repos.sensor_reader.clone(),
-                repos.sensor_writer.clone(),
-                event_bus.clone(),
-                repos.comment_writer.clone(),
-                operation_plan.clone(),
             )),
             comment: Arc::new(CommentService::new(
                 repos.comment_reader.clone(),
@@ -741,7 +652,6 @@ impl Services {
                 event_bus.clone(),
             )),
             operation_plan,
-            evaluation: Arc::new(EvaluationService::new(repos.evaluation.clone())),
             start_point: Arc::new(StartPointService::new(
                 start_point_reader.clone(),
                 start_point_writer,
@@ -762,7 +672,6 @@ impl Services {
             )),
             authorization,
             plugin,
-            plugin_ingest,
             plugin_sensor_ingest,
             plugin_view_tickets: Arc::new(PluginViewTicketService::new(
                 repos.plugin_view_tickets.clone(),
@@ -823,40 +732,6 @@ fn build_http_client(timeout: Duration) -> reqwest::Client {
         .timeout(timeout)
         .build()
         .expect("reqwest client must build")
-}
-
-fn core_event_handlers(repos: &Repositories) -> Vec<Arc<dyn EventHandler>> {
-    vec![
-        Arc::new(ClusterRecalculationHandler::new(
-            repos.cluster_reader.clone(),
-            repos.cluster_writer.clone(),
-            repos.tree_reader.clone(),
-            repos.region_reader.clone(),
-        )),
-        Arc::new(ClusterSoilRecalcHandler::new(
-            repos.tree_reader.clone(),
-            repos.tree_writer.clone(),
-            repos.cluster_reader.clone(),
-            repos.sensor_reading_reader.clone(),
-        )),
-        Arc::new(ClusterJustWateredHandler::new(
-            repos.cluster_reader.clone(),
-            repos.cluster_writer.clone(),
-            repos.tree_reader.clone(),
-            repos.tree_writer.clone(),
-        )),
-        Arc::new(ClusterStatusAggregatorHandler::new(
-            repos.cluster_reader.clone(),
-            repos.cluster_writer.clone(),
-            repos.tree_reader.clone(),
-        )),
-        Arc::new(TreeWateringFromSensorHandler::new(
-            repos.tree_reader.clone(),
-            repos.tree_writer.clone(),
-            repos.cluster_reader.clone(),
-            repos.sensor_reading_reader.clone(),
-        )),
-    ]
 }
 
 fn spawn_mqtt_subscriber(

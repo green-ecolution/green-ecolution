@@ -456,17 +456,14 @@ async fn just_watered_expires_back_to_sensor_derived_status() {
 
     let root_org = domain::Id::new(uuid::Uuid::parse_str(ROOT_ORG_ID).unwrap());
 
-    let fresh = app
-        .state
-        .cluster_service
+    let clusters = crate::helpers::irrigation_cluster_service(&app);
+    let fresh = clusters
         .expire_just_watered(root_org, chrono::Utc::now() - chrono::Duration::hours(24))
         .await
         .expect("expiry sweep must succeed");
     assert_eq!(fresh, 0, "a cluster watered just now must not expire yet");
 
-    let expired = app
-        .state
-        .cluster_service
+    let expired = clusters
         .expire_just_watered(root_org, chrono::Utc::now() + chrono::Duration::hours(1))
         .await
         .expect("expiry sweep must succeed");

@@ -3,11 +3,10 @@ use std::time::Duration;
 
 use chrono::{DateTime, Utc};
 use domain::organization::OrganizationReader;
-use tokio::task::JoinHandle;
 use tokio::time::{MissedTickBehavior, interval};
 
-use crate::{
-    irrigation::settings::IrrigationSettingsResolver, service::cluster_service::ClusterService,
+use crate::irrigation::{
+    service::cluster_service::ClusterService, settings::IrrigationSettingsResolver,
 };
 
 /// One pass over every organization, releasing the `JustWatered` status that
@@ -54,27 +53,26 @@ pub async fn sweep_once(
 /// Periodically releases the `JustWatered` status once its grace period has
 /// passed, per organization's own TTL. The first sweep runs immediately so
 /// statuses that expired while the server was down are cleaned up on boot.
-pub fn spawn(
+/// Never returns; the host spawns it as a background task.
+pub async fn run(
     cluster_service: Arc<ClusterService>,
     org_reader: Arc<dyn OrganizationReader>,
     settings: Arc<dyn IrrigationSettingsResolver>,
     sweep_interval: Duration,
-) -> JoinHandle<()> {
-    tokio::spawn(async move {
-        let mut ticker = interval(sweep_interval.max(Duration::from_secs(1)));
-        ticker.set_missed_tick_behavior(MissedTickBehavior::Skip);
-        loop {
-            ticker.tick().await;
-            let released = sweep_once(
-                &cluster_service,
-                org_reader.as_ref(),
-                settings.as_ref(),
-                Utc::now(),
-            )
-            .await;
-            if released > 0 {
-                tracing::info!(clusters = released, "released just-watered status");
-            }
+) {
+    let mut ticker = interval(sweep_interval.max(Duration::from_secs(1)));
+    ticker.set_missed_tick_behavior(MissedTickBehavior::Skip);
+    loop {
+        ticker.tick().await;
+        let released = sweep_once(
+            &cluster_service,
+            org_reader.as_ref(),
+            settings.as_ref(),
+            Utc::now(),
+        )
+        .await;
+        if released > 0 {
+            tracing::info!(clusters = released, "released just-watered status");
         }
-    })
+    }
 }

@@ -17,7 +17,8 @@ use irrigation_domain::cluster::{
 
 use crate::service::ServiceError;
 
-use super::{SoilCondition, WateringStatus, region::RegionResponse, tree::TreeResponse};
+use super::{SoilCondition, WateringStatus, tree::TreeResponse};
+use crate::http::v1::dto::region::RegionResponse;
 
 /// Full representation of a tree cluster including its resolved tree relations.
 #[derive(Debug, Serialize, utoipa::ToSchema)]

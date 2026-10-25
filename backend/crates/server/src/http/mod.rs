@@ -23,16 +23,14 @@ use crate::{
         tracing::{MakeRequestUuid, REQUEST_ID_HEADER, make_span, on_response},
     },
     service::{
-        authorization::AuthorizationService, cluster_service::ClusterService,
-        comment_service::CommentService, evaluation_service::EvaluationService,
+        authorization::AuthorizationService, comment_service::CommentService, event_bus::EventBus,
         operation_execution_service::OperationExecutionService,
         operation_plan_service::OperationPlanService, organization_service::OrganizationService,
-        planning::PlanningRegistry, plugin_ingest_service::PluginIngestService,
-        plugin_sensor_ingest_service::PluginSensorIngestService, plugin_service::PluginService,
-        plugin_view_ticket_service::PluginViewTicketService, region_service::RegionService,
-        role_service::RoleService, sensor_service::SensorService,
+        planning::PlanningRegistry, plugin_sensor_ingest_service::PluginSensorIngestService,
+        plugin_service::PluginService, plugin_view_ticket_service::PluginViewTicketService,
+        region_service::RegionService, role_service::RoleService, sensor_service::SensorService,
         settings_service::SettingsService, start_point_service::StartPointService,
-        tree_service::TreeService, user_service::UserService, vehicle_service::VehicleService,
+        user_service::UserService, vehicle_service::VehicleService,
     },
 };
 use domain::info::{HealthSnapshotReader, ReadinessReader, StatisticsReader, SystemInfoProvider};
@@ -57,13 +55,6 @@ pub struct OidcSwaggerSettings {
     pub enabled: bool,
     pub issuer_url: String,
     pub client_id: String,
-}
-
-#[derive(Debug, Clone, Copy)]
-pub struct NearestTreeLimits {
-    pub max_radius_meters: f64,
-    pub default_limit: u32,
-    pub max_limit: u32,
 }
 
 /// Origins the app's own frontend (and API) are served from, so an
@@ -106,15 +97,15 @@ impl AppOrigins {
 
 pub struct AppState {
     pub region_service: Arc<RegionService>,
-    pub tree_service: Arc<TreeService>,
     pub sensor_service: Arc<SensorService>,
     pub vehicle_service: Arc<VehicleService>,
-    pub cluster_service: Arc<ClusterService>,
     pub comment_service: Arc<CommentService>,
     pub operation_plan_service: Arc<OperationPlanService>,
     pub operation_execution_service: Arc<OperationExecutionService>,
-    pub evaluation_service: Arc<EvaluationService>,
     pub user_service: Arc<UserService>,
+    /// No handler reads this: it lets the integration tests build a module
+    /// service on the same bus the server publishes to.
+    pub event_bus: Arc<dyn EventBus>,
     pub info_provider: Arc<dyn SystemInfoProvider>,
     pub health_reader: Arc<dyn HealthSnapshotReader>,
     pub readiness_reader: Arc<dyn ReadinessReader>,
@@ -122,7 +113,6 @@ pub struct AppState {
     pub statistics: Arc<crate::service::statistics_registry::StatisticsRegistry>,
     pub token_validator: Arc<TokenValidator>,
     pub feature_flags: FeatureFlags,
-    pub nearest_tree_limits: NearestTreeLimits,
     pub frontend_config_js: std::sync::Arc<str>,
     pub start_point_service: Arc<StartPointService>,
     pub organization_service: Arc<OrganizationService>,
@@ -133,7 +123,6 @@ pub struct AppState {
     pub plugin_writer: Arc<dyn domain::plugin::PluginWriter>,
     pub plugin_auth: extractors::PluginAuthenticator,
     pub plugin_service: Arc<PluginService>,
-    pub plugin_ingest_service: Arc<PluginIngestService>,
     pub plugin_sensor_ingest_service: Arc<PluginSensorIngestService>,
     pub plugin_view_ticket_service: Arc<PluginViewTicketService>,
     /// `None` when `plugins.proxy` is not configured.
@@ -171,12 +160,9 @@ impl axum::extract::FromRef<Arc<AppState>> for extractors::PluginAuthenticator {
     ),
     tags(
         (name = "Regions", description = "Manage geographic regions used to group tree clusters. Regions define administrative boundaries for organizing green spaces."),
-        (name = "Tree Clusters", description = "Manage tree clusters — logical groupings of trees that share soil conditions and watering schedules. Clusters are the primary unit for watering plan assignments."),
-        (name = "Trees", description = "Manage individual trees including their species, location, planting year, and associated sensors. Trees can be assigned to clusters for grouped watering management."),
         (name = "Vehicles", description = "Manage watering vehicles (transporters and trailers) including their water capacity, dimensions, and availability status. Vehicles can be archived when decommissioned."),
         (name = "Sensors", description = "Access LoRaWAN sensor data for soil moisture monitoring. Sensors are linked to individual trees and provide real-time environmental readings."),
         (name = "Plans", description = "Create and manage a module's operation plans that combine stops, vehicles, and optimized routes. Plans track status from planning through execution."),
-        (name = "Evaluation", description = "Aggregated statistics and evaluation data across all managed resources. Provides insights on watering plan coverage by region and vehicle usage."),
         (name = "Info", description = "Application metadata including version information, server status, map configuration, service health, and data statistics."),
         (name = "Users", description = "User registration and role management. Authentication is handled directly against Keycloak."),
         (name = "Plugins", description = "Plugin installation and lifecycle management, plus the ingest surface external plugins authenticate against with their API key to push data."),
@@ -186,7 +172,6 @@ impl axum::extract::FromRef<Arc<AppState>> for extractors::PluginAuthenticator {
         (name = "Comments", description = "Free-text comments on tree clusters and plans. Reading follows the parent resource's read permission, writing its update permission."),
         (name = "Modules", description = "Feature modules and their activation per organization"),
         (name = "Settings", description = "Per-organization operational defaults — sensor thresholds and the map viewport — resolved along the organization tree."),
-        (name = "Irrigation", description = "Per-organization irrigation defaults — water demand and just-watered duration — resolved along the organization tree."),
     ),
 )]
 struct ApiDoc;

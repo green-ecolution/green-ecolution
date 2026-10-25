@@ -9,8 +9,14 @@ use std::{
 };
 
 use domain::{
-    authorization::ResourceKey, module::ModuleKey, module::ModuleStatistics,
-    organization::OrganizationReader, planning::PlanningProvider, settings::SettingsResolver,
+    authorization::ResourceKey,
+    comment::CommentWriter,
+    module::{ModuleKey, ModuleStatistics},
+    organization::OrganizationReader,
+    planning::PlanningProvider,
+    region::RegionReader,
+    sensor::{SensorReader, SensorReadingReader, SensorWriter},
+    settings::SettingsResolver,
     target::TargetCatalog,
 };
 use sqlx::PgPool;
@@ -18,9 +24,10 @@ use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
     configuration::Settings,
-    http::AppState,
+    http::{AppState, extractors::PluginAuthenticator},
     service::{
         authorization::AuthorizationService,
+        comment_service::CommentService,
         event_bus::{EventBus, EventHandler},
         module_access::ModuleAccess,
         operation_plan_service::OperationPlanService,
@@ -63,6 +70,17 @@ pub struct ModuleContext {
     pub sensors: Arc<SensorService>,
     /// Same rule as `sensors`: hold as `Weak` in event handlers.
     pub plans: Arc<OperationPlanService>,
+    /// The ports behind `sensors`, for a module that moves a sensor along
+    /// with its own target or reads the readings an event points at.
+    pub sensor_reader: Arc<dyn SensorReader>,
+    pub sensor_writer: Arc<dyn SensorWriter>,
+    pub sensor_readings: Arc<dyn SensorReadingReader>,
+    pub regions: Arc<dyn RegionReader>,
+    pub comments: Arc<CommentService>,
+    /// Comments hang on a target without a cascading key, so a module that
+    /// deletes a target removes its comments itself.
+    pub comment_writer: Arc<dyn CommentWriter>,
+    pub plugin_auth: PluginAuthenticator,
 }
 
 impl ModuleContext {
@@ -71,16 +89,12 @@ impl ModuleContext {
         &self,
         key: &ModuleKey,
     ) -> Result<T, ModuleBuildError> {
-        let section = self.config.modules.get(key.as_str());
-        let result = match section {
-            Some(section) => section.deserialize_extra(),
-            None => config::Value::new(None, config::ValueKind::Table(config::Map::new()))
-                .try_deserialize(),
-        };
-        result.map_err(|e| ModuleBuildError {
-            module: key.clone(),
-            reason: format!("invalid modules.{key} section: {e}"),
-        })
+        self.config
+            .module_config(key.as_str())
+            .map_err(|e| ModuleBuildError {
+                module: key.clone(),
+                reason: format!("invalid modules.{key} section: {e}"),
+            })
     }
 }
 

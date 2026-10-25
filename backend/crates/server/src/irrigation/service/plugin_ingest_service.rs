@@ -10,7 +10,7 @@ use std::sync::Arc;
 
 use domain::{
     Id, RepositoryError,
-    authorization::{AccessContext, Action, EffectivePermissions, Permission},
+    authorization::{AccessContext, Action, Permission},
     plugin::Plugin,
     shared::{
         coordinates::Coordinate,
@@ -24,9 +24,10 @@ use irrigation_domain::{
     tree::{PlantingYear, Species, Tree, TreeDraft, TreeNumber, TreeReader, TreeWriter},
 };
 
-use super::{
+use super::tree_service::TreeDeletion;
+use crate::service::{
     AuthError, ServiceError, authorization::AuthorizationService, event_bus::EventBus,
-    tree_service::TreeDeletion,
+    plugin_service::plugin_access_context,
 };
 
 /// Batch size cap for [`PluginIngestService::upsert_trees`]. Enforced by the
@@ -67,22 +68,6 @@ pub struct IngestResult {
     pub error: Option<String>,
 }
 
-/// The plugin's own access context: exactly the grants it was installed with,
-/// scoped to its organization subtree. A plugin key carries no user identity,
-/// so this does not go through `AuthorizationService::context_for`.
-pub(crate) async fn plugin_access_context(
-    plugin: &Plugin,
-    authorization: &AuthorizationService,
-) -> Result<AccessContext, ServiceError> {
-    Ok(AccessContext {
-        permissions: EffectivePermissions::from_grants(vec![(
-            plugin.organization_id(),
-            plugin.permissions().clone(),
-        )]),
-        hierarchy: authorization.hierarchy().await?,
-    })
-}
-
 pub struct PluginIngestService {
     tree_reader: Arc<dyn TreeReader>,
     tree_writer: Arc<dyn TreeWriter>,
@@ -96,7 +81,6 @@ pub struct PluginIngestService {
 }
 
 impl PluginIngestService {
-    #[allow(clippy::too_many_arguments)]
     pub fn new(
         tree_reader: Arc<dyn TreeReader>,
         tree_writer: Arc<dyn TreeWriter>,
@@ -580,14 +564,14 @@ mod tests {
     }
 
     /// In-memory stand-in for the plugin's tree refs.
-    struct FakePluginRepo {
+    struct FakeTreeRefs {
         refs: Mutex<HashMap<(Uuid, String), TreeRef>>,
         /// `link_tree` returns the matching error for this exact external_id
         /// once, then falls back to succeeding.
         deny_link: Option<(String, LinkDenial)>,
     }
 
-    impl FakePluginRepo {
+    impl FakeTreeRefs {
         fn new() -> Self {
             Self {
                 refs: Mutex::new(HashMap::new()),
@@ -611,7 +595,7 @@ mod tests {
     }
 
     #[async_trait::async_trait]
-    impl PluginTreeRefs for FakePluginRepo {
+    impl PluginTreeRefs for FakeTreeRefs {
         async fn tree_ref(
             &self,
             plugin: Id<Plugin>,
@@ -777,7 +761,7 @@ mod tests {
 
     /// Also returns the tree repo so tests can inspect what actually got
     /// written (e.g. that a failed link left no orphaned tree behind).
-    fn service_with(plugin_repo: FakePluginRepo) -> (PluginIngestService, Arc<FakeTreeRepo>) {
+    fn service_with(plugin_repo: FakeTreeRefs) -> (PluginIngestService, Arc<FakeTreeRepo>) {
         let tree_repo = Arc::new(FakeTreeRepo::default());
         let plugin_repo: Arc<dyn PluginTreeRefs> = Arc::new(plugin_repo);
         let event_bus = Arc::new(NoopEventBus);
@@ -812,7 +796,7 @@ mod tests {
 
     #[tokio::test]
     async fn first_run_creates() {
-        let (svc, _tree_repo) = service_with(FakePluginRepo::new());
+        let (svc, _tree_repo) = service_with(FakeTreeRefs::new());
         let plugin = plugin_fixture(full_permissions());
 
         let results = svc
@@ -827,7 +811,7 @@ mod tests {
 
     #[tokio::test]
     async fn missing_permission_is_forbidden() {
-        let (svc, _tree_repo) = service_with(FakePluginRepo::new());
+        let (svc, _tree_repo) = service_with(FakeTreeRefs::new());
         let plugin = plugin_fixture(BTreeSet::from([Permission::new(
             crate::irrigation::resources::TREE,
             Action::Read,
@@ -842,7 +826,7 @@ mod tests {
 
     #[tokio::test]
     async fn a_bad_entry_fails_alone() {
-        let (svc, _tree_repo) = service_with(FakePluginRepo::new());
+        let (svc, _tree_repo) = service_with(FakeTreeRefs::new());
         let plugin = plugin_fixture(full_permissions());
 
         let results = svc
@@ -860,7 +844,7 @@ mod tests {
     /// otherwise overflow.
     #[tokio::test]
     async fn an_oversized_external_id_fails_before_touching_the_database() {
-        let (svc, tree_repo) = service_with(FakePluginRepo::new());
+        let (svc, tree_repo) = service_with(FakeTreeRefs::new());
         let plugin = plugin_fixture(full_permissions());
         let mut too_long = item("x", "Quercus robur");
         too_long.external_id = "x".repeat(256);
@@ -886,7 +870,7 @@ mod tests {
     /// The batch keeps going; only this entry reports `Failed`.
     #[tokio::test]
     async fn a_tree_id_conflict_on_link_fails_only_that_entry() {
-        let (svc, _tree_repo) = service_with(FakePluginRepo::denying_link_for("2"));
+        let (svc, _tree_repo) = service_with(FakeTreeRefs::denying_link_for("2"));
         let plugin = plugin_fixture(full_permissions());
 
         let results = svc
@@ -912,7 +896,7 @@ mod tests {
 
     #[tokio::test]
     async fn second_run_updates_and_third_is_unchanged() {
-        let (svc, _tree_repo) = service_with(FakePluginRepo::new());
+        let (svc, _tree_repo) = service_with(FakeTreeRefs::new());
         let plugin = plugin_fixture(full_permissions());
 
         svc.upsert_trees(&plugin, vec![item("1", "Quercus robur")])
@@ -933,7 +917,7 @@ mod tests {
 
     #[tokio::test]
     async fn delete_missing_ref_is_not_found() {
-        let (svc, _tree_repo) = service_with(FakePluginRepo::new());
+        let (svc, _tree_repo) = service_with(FakeTreeRefs::new());
         let plugin = plugin_fixture(full_permissions());
 
         let err = svc.delete_tree(&plugin, "unknown").await.unwrap_err();
@@ -945,7 +929,7 @@ mod tests {
 
     #[tokio::test]
     async fn delete_removes_the_tree() {
-        let (svc, tree_repo) = service_with(FakePluginRepo::new());
+        let (svc, tree_repo) = service_with(FakeTreeRefs::new());
         let plugin = plugin_fixture(full_permissions());
 
         let created = svc
@@ -964,7 +948,7 @@ mod tests {
     /// link behind, and the reported error must not carry the driver detail.
     #[tokio::test]
     async fn a_non_conflict_link_failure_deletes_the_orphan_and_hides_the_detail() {
-        let (svc, tree_repo) = service_with(FakePluginRepo::denying_link_internally_for("1"));
+        let (svc, tree_repo) = service_with(FakeTreeRefs::denying_link_internally_for("1"));
         let plugin = plugin_fixture(full_permissions());
 
         let results = svc
@@ -995,7 +979,7 @@ mod tests {
     /// rather than trusting the plugin's own.
     #[tokio::test]
     async fn transferring_the_tree_forbids_further_update_and_delete() {
-        let (svc, tree_repo) = service_with(FakePluginRepo::new());
+        let (svc, tree_repo) = service_with(FakeTreeRefs::new());
         let plugin = plugin_fixture(full_permissions());
 
         let created = svc

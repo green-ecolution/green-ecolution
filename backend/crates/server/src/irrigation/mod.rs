@@ -1,28 +1,34 @@
 //! Irrigation as a module. Its domain types live in `irrigation-domain`; the
-//! services and adapters below still sit in the server crate until they move
-//! into `irrigation-server`.
+//! services, adapters and routes below reach the core only through its public
+//! types and the `ModuleContext`.
 
 pub mod error;
 pub mod handlers;
+pub mod http;
+pub mod infra;
 pub mod planning;
+pub mod service;
 pub mod settings;
 pub mod statistics;
 pub mod targets;
 
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 
 use domain::{authorization::ResourceKey, module::ModuleKey};
-use utoipa_axum::router::OpenApiRouter;
 
-use crate::{
-    configuration::Settings,
-    infra::{pg_cluster::PgTreeClusterRepository, pg_tree::PgTreeRepository},
-    module::{Module, ModuleBuildError, ModuleContext, ModuleRoutes, ModuleRuntime},
+use crate::module::{Module, ModuleBuildError, ModuleContext, ModuleRoutes, ModuleRuntime};
+use http::state::{IrrigationHttpState, NearestTreeLimits};
+use infra::{
+    pg_cluster::PgTreeClusterRepository, pg_evaluation::PgEvaluationRepository,
+    pg_plugin_tree_refs::PgPluginTreeRefs, pg_tree::PgTreeRepository,
 };
-use handlers::SensorLifecycle;
+use service::{
+    cluster_service::ClusterService, evaluation_service::EvaluationService,
+    plugin_ingest_service::PluginIngestService, sensor_overview::IrrigationSensorService,
+    tree_service::TreeService,
+};
 use settings::{
-    IrrigationDefaults, http::IrrigationHttpState, repository::PgIrrigationSettings,
-    service::IrrigationSettingsService,
+    IrrigationDefaults, repository::PgIrrigationSettings, service::IrrigationSettingsService,
 };
 
 pub use irrigation_domain::{KEY, key};
@@ -63,16 +69,6 @@ fn default_nearest_tree_max_limit() -> u32 {
     50
 }
 
-impl IrrigationConfig {
-    pub fn from_settings(settings: &Settings) -> Result<Self, config::ConfigError> {
-        match settings.modules.get(KEY) {
-            Some(section) => section.deserialize_extra(),
-            None => config::Value::new(None, config::ValueKind::Table(config::Map::new()))
-                .try_deserialize(),
-        }
-    }
-}
-
 pub mod resources {
     use domain::authorization::ResourceKey;
 
@@ -89,10 +85,6 @@ pub(crate) fn test_catalog() -> domain::authorization::ResourceCatalog {
 
 pub struct IrrigationModule;
 
-fn routes() -> OpenApiRouter<Arc<IrrigationHttpState>> {
-    settings::http::routes()
-}
-
 impl Module for IrrigationModule {
     fn key(&self) -> ModuleKey {
         key()
@@ -103,7 +95,11 @@ impl Module for IrrigationModule {
     }
 
     fn openapi(&self) -> utoipa::openapi::OpenApi {
-        routes().into_openapi()
+        let mut api = http::public_routes()
+            .merge(http::protected_routes())
+            .into_openapi();
+        api.tags = Some(http::tags());
+        api
     }
 
     fn resources(&self) -> &'static [ResourceKey] {
@@ -116,40 +112,105 @@ impl Module for IrrigationModule {
             module: key(),
             reason: e.to_string(),
         })?;
-        let repo = Arc::new(PgIrrigationSettings::new(
+        let settings = Arc::new(PgIrrigationSettings::new(
             ctx.pool.clone(),
             defaults,
             ctx.organizations.clone(),
         ));
+        let trees = Arc::new(PgTreeRepository::new(ctx.pool.clone()));
+        let clusters = Arc::new(PgTreeClusterRepository::new(ctx.pool.clone()));
+
+        let tree_service = Arc::new(TreeService::new(
+            trees.clone(),
+            trees.clone(),
+            clusters.clone(),
+            ctx.sensor_reader.clone(),
+            ctx.sensor_writer.clone(),
+            ctx.event_bus.clone(),
+        ));
+        let cluster_service = Arc::new(ClusterService::new(
+            clusters.clone(),
+            clusters.clone(),
+            trees.clone(),
+            trees.clone(),
+            ctx.sensor_reader.clone(),
+            ctx.sensor_writer.clone(),
+            ctx.event_bus.clone(),
+            ctx.comment_writer.clone(),
+            ctx.plans.clone(),
+        ));
+        // Reuses `TreeService::delete` for its own delete flow so `TreeDeleted`
+        // fires and cluster centroid/status stay in sync, instead of a second
+        // copy of that logic.
+        let plugin_ingest = Arc::new(PluginIngestService::new(
+            trees.clone(),
+            trees.clone(),
+            Arc::new(PgPluginTreeRefs::new(ctx.pool.clone())),
+            tree_service.clone(),
+            ctx.event_bus.clone(),
+            ctx.authorization.clone(),
+        ));
+
         let state = Arc::new(IrrigationHttpState {
-            settings: Arc::new(IrrigationSettingsService::new(repo.clone())),
+            trees: tree_service,
+            clusters: cluster_service.clone(),
+            evaluation: Arc::new(EvaluationService::new(Arc::new(
+                PgEvaluationRepository::new(ctx.pool.clone()),
+            ))),
+            plugin_ingest,
+            sensor_overview: Arc::new(IrrigationSensorService::new(
+                ctx.sensors.clone(),
+                trees.clone(),
+                clusters.clone(),
+            )),
+            settings: Arc::new(IrrigationSettingsService::new(settings.clone())),
+            sensors: ctx.sensors.clone(),
+            plans: ctx.plans.clone(),
+            regions: ctx.regions.clone(),
+            comments: ctx.comments.clone(),
             access: ctx.access.clone(),
             authorization: ctx.authorization.clone(),
             organizations: ctx.organizations.clone(),
             users: ctx.users.clone(),
+            plugin_auth: ctx.plugin_auth.clone(),
+            nearest_tree_limits: NearestTreeLimits {
+                max_radius_meters: config.nearest_tree_max_radius,
+                default_limit: config.nearest_tree_default_limit,
+                max_limit: config.nearest_tree_max_limit,
+            },
         });
-        let trees = Arc::new(PgTreeRepository::new(ctx.pool.clone()));
-        let clusters = Arc::new(PgTreeClusterRepository::new(ctx.pool.clone()));
         let mut runtime = ModuleRuntime::new(ModuleRoutes {
-            public: OpenApiRouter::new(),
-            protected: routes().with_state(state),
+            public: http::public_routes().with_state(state.clone()),
+            protected: http::protected_routes().with_state(state),
         });
-        runtime.targets = Some(Arc::new(targets::IrrigationTargets::new(
+        runtime.event_handlers = handlers::all(
             trees.clone(),
+            trees.clone(),
+            clusters.clone(),
+            clusters.clone(),
+            ctx.regions.clone(),
+            ctx.sensor_readings.clone(),
+            &ctx.sensors,
+        );
+        runtime
+            .background_tasks
+            .push(Box::pin(infra::watering_status_expiry::run(
+                cluster_service,
+                ctx.organizations.clone(),
+                settings.clone(),
+                Duration::from_secs(config.just_watered_sweep_interval_secs),
+            )));
+        runtime.targets = Some(Arc::new(targets::IrrigationTargets::new(
+            trees,
             clusters.clone(),
         )));
         runtime.planning = Some(Arc::new(planning::IrrigationPlanning::new(
             clusters,
             ctx.organizations.clone(),
-            repo,
+            settings,
         )));
         runtime.statistics = Some(Arc::new(statistics::IrrigationStatistics::new(
             ctx.pool.clone(),
-        )));
-        runtime.event_handlers.push(Arc::new(SensorLifecycle::new(
-            trees.clone(),
-            trees,
-            &ctx.sensors,
         )));
         Ok(runtime)
     }
@@ -158,6 +219,7 @@ impl Module for IrrigationModule {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::configuration::Settings;
 
     fn settings_with(overrides: &[(&str, &str)]) -> Settings {
         let mut builder = config::Config::builder();
@@ -188,7 +250,7 @@ mod tests {
             ("modules.irrigation.just_watered_ttl_secs", "7200"),
             ("modules.irrigation.nearest_tree_default_limit", "7"),
         ]);
-        let config = IrrigationConfig::from_settings(&settings).unwrap();
+        let config: IrrigationConfig = settings.module_config(KEY).unwrap();
         assert_eq!(config.tree_demand_liters, 90.0);
         assert_eq!(config.just_watered_ttl_secs, 7200);
         assert_eq!(config.nearest_tree_default_limit, 7);
@@ -197,7 +259,7 @@ mod tests {
 
     #[test]
     fn an_absent_section_yields_the_defaults() {
-        let config = IrrigationConfig::from_settings(&settings_with(&[])).unwrap();
+        let config: IrrigationConfig = settings_with(&[]).module_config(KEY).unwrap();
         assert_eq!(config.tree_demand_liters, 80.0);
         assert_eq!(config.just_watered_sweep_interval_secs, 3_600);
     }
