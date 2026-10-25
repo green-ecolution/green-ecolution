@@ -5,6 +5,8 @@
 //! centroid when a tree moves, recalculate cluster watering status when a
 //! sensor is attached to or detached from a tree, or a tree's status changes).
 
+use std::{any::Any, fmt, sync::Arc};
+
 use chrono::{DateTime, Utc};
 
 use crate::{
@@ -23,6 +25,35 @@ use crate::{
     target::TargetRef,
     tree::Tree,
 };
+
+/// Payload of an event a module defines for itself. The core never looks
+/// inside; the module's own handlers recover it with `downcast_ref`.
+pub trait ModuleEventPayload: Any + fmt::Debug + Send + Sync {}
+
+impl<T: Any + fmt::Debug + Send + Sync> ModuleEventPayload for T {}
+
+#[derive(Debug, Clone)]
+pub struct ModuleEvent {
+    module: ModuleKey,
+    payload: Arc<dyn ModuleEventPayload>,
+}
+
+impl ModuleEvent {
+    pub fn new<P: ModuleEventPayload>(module: ModuleKey, payload: P) -> Self {
+        Self {
+            module,
+            payload: Arc::new(payload),
+        }
+    }
+
+    pub fn module(&self) -> &ModuleKey {
+        &self.module
+    }
+
+    pub fn downcast_ref<P: ModuleEventPayload>(&self) -> Option<&P> {
+        (self.payload.as_ref() as &dyn Any).downcast_ref()
+    }
+}
 
 #[derive(Debug, Clone)]
 pub enum SensorReadings {
@@ -172,4 +203,42 @@ pub enum DomainEvent {
     RoleDeleted {
         role_id: Id<Role>,
     },
+    /// An event a module defined for its own objects, e.g. a tree moving
+    /// between clusters. Travels the same bus so follow-ups keep their order.
+    Module(ModuleEvent),
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[derive(Debug, PartialEq)]
+    enum Probe {
+        Ping(u8),
+    }
+
+    #[derive(Debug)]
+    struct Other;
+
+    fn key() -> ModuleKey {
+        ModuleKey::new("probe").unwrap()
+    }
+
+    #[test]
+    fn downcasts_to_its_own_payload_only() {
+        let event = ModuleEvent::new(key(), Probe::Ping(7));
+        assert_eq!(event.module().as_str(), "probe");
+        assert_eq!(event.downcast_ref::<Probe>(), Some(&Probe::Ping(7)));
+        assert!(event.downcast_ref::<Other>().is_none());
+    }
+
+    #[test]
+    fn clones_share_the_payload() {
+        let event = DomainEvent::Module(ModuleEvent::new(key(), Probe::Ping(1)));
+        let copy = event.clone();
+        let DomainEvent::Module(inner) = copy else {
+            panic!("expected a module event")
+        };
+        assert_eq!(inner.downcast_ref::<Probe>(), Some(&Probe::Ping(1)));
+    }
 }

@@ -92,6 +92,12 @@ impl std::fmt::Display for Malformed {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ModuleErrorKind {
+    Conflict,
+    Unprocessable,
+}
+
 #[derive(Debug, thiserror::Error)]
 pub enum ServiceError {
     #[error(transparent)]
@@ -174,6 +180,14 @@ pub enum ServiceError {
     OperationPlan(#[from] OperationPlanError),
     #[error("unknown stop {stop}")]
     UnknownStop { stop: uuid::Uuid },
+    /// An error a module raises with its own stable code, e.g.
+    /// `conflict.tree_in_cluster`.
+    #[error("{message}")]
+    Module {
+        kind: ModuleErrorKind,
+        code: &'static str,
+        message: String,
+    },
 }
 
 impl ServiceError {
@@ -213,6 +227,7 @@ impl ServiceError {
             Self::VehicleCapacityMissing { .. } => "vehicle.capacity_missing",
             Self::UnknownStop { .. } => "plan.unknown_stop",
             Self::TargetRefused { code, .. } => code,
+            Self::Module { code, .. } => code,
             Self::FeatureDisabled { feature } => match feature {
                 Feature::Routing => "feature.routing_disabled",
                 Feature::Plugins => "feature.plugins_disabled",
@@ -461,6 +476,11 @@ mod tests {
             ServiceError::CannotRevokeOwnAdministration,
             ServiceError::ModuleUnknown { key: "x".into() },
             ServiceError::ModuleDisabled { module: "x".into() },
+            ServiceError::Module {
+                kind: ModuleErrorKind::Conflict,
+                code: "conflict.x",
+                message: "x".into(),
+            },
             ServiceError::TargetNotAccepted {
                 module: "x".into(),
                 kind: "y".into(),

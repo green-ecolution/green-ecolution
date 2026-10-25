@@ -1,7 +1,7 @@
 use axum::{http::StatusCode, response::IntoResponse};
 use serde::Serialize;
 
-use crate::service::{AuthError, ServiceError};
+use crate::service::{AuthError, ModuleErrorKind, ServiceError};
 use domain::{RepositoryError, routing::RoutingError, shared::error::ValidationIssue};
 
 /// OpenAPI shape of [`ValidationIssue`].
@@ -168,6 +168,12 @@ impl IntoResponse for ServiceError {
                 (StatusCode::UNPROCESSABLE_ENTITY, kind.to_string())
             }
             ServiceError::ModuleDisabled { .. } => (StatusCode::FORBIDDEN, self.to_string()),
+            ServiceError::Module { kind, .. } => match kind {
+                ModuleErrorKind::Conflict => (StatusCode::CONFLICT, self.to_string()),
+                ModuleErrorKind::Unprocessable => {
+                    (StatusCode::UNPROCESSABLE_ENTITY, self.to_string())
+                }
+            },
             ServiceError::TargetNotAccepted { .. }
             | ServiceError::TargetRefused { .. }
             | ServiceError::VehicleCapacityMissing { .. }
@@ -230,6 +236,29 @@ mod tests {
             .await
             .unwrap();
         String::from_utf8(bytes.to_vec()).unwrap()
+    }
+
+    #[tokio::test]
+    async fn module_errors_keep_their_code_and_status() {
+        let conflict = ServiceError::Module {
+            kind: ModuleErrorKind::Conflict,
+            code: "conflict.tree_in_cluster",
+            message: "tree is part of a cluster".into(),
+        };
+        let response = conflict.into_response();
+        assert_eq!(response.status(), StatusCode::CONFLICT);
+        let body = body_of(response).await;
+        assert!(body.contains("conflict.tree_in_cluster"));
+
+        let unprocessable = ServiceError::Module {
+            kind: ModuleErrorKind::Unprocessable,
+            code: "tree.not_yet_planted",
+            message: "x".into(),
+        };
+        assert_eq!(
+            unprocessable.into_response().status(),
+            StatusCode::UNPROCESSABLE_ENTITY
+        );
     }
 
     #[tokio::test]
