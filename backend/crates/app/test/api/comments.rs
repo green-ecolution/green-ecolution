@@ -1283,7 +1283,7 @@ async fn delete_for_target_removes_only_that_targets_comments() {
     post_comment(&app, &token, &doomed, "zweiter").await;
     post_comment(&app, &token, &kept, "bleibt").await;
 
-    let target = server::irrigation::targets::cluster_target(domain::Id::new(
+    let target = irrigation_server::targets::cluster_target(domain::Id::new(
         Uuid::parse_str(&doomed).unwrap(),
     ));
     let deleted = app

@@ -28,14 +28,14 @@ use irrigation_domain::{
     },
     watering_status::WateringStatus,
 };
+use irrigation_server::infra::{
+    pg_cluster::PgTreeClusterRepository, pg_evaluation::PgEvaluationRepository,
+    pg_tree::PgTreeRepository,
+};
 use server::{
     infra::{
         pg_organization::PgOrganizationRepository, pg_role::PgRoleRepository,
         pg_sensor::PgSensorRepository,
-    },
-    irrigation::infra::{
-        pg_cluster::PgTreeClusterRepository, pg_evaluation::PgEvaluationRepository,
-        pg_tree::PgTreeRepository,
     },
     service::authorization::AuthorizationService,
 };
@@ -220,7 +220,7 @@ pub async fn measure_all(
         Arc::new(PgOrganizationRepository::new(pool.clone())),
         Arc::new(PgRoleRepository::new(
             pool.clone(),
-            Arc::new(ResourceCatalog::new(server::irrigation::resources::ALL)?),
+            Arc::new(ResourceCatalog::new(irrigation_server::resources::ALL)?),
         )),
         true,
     );

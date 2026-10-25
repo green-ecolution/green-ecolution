@@ -349,7 +349,7 @@ async fn set_soil(app: &TestApp, cluster_id: Uuid, soil: SoilCondition) {
                 "name": cluster["name"],
                 "address": cluster["address"],
                 "description": cluster["description"],
-                "soil_condition": server::irrigation::http::dto::SoilCondition::from(soil),
+                "soil_condition": irrigation_server::http::dto::SoilCondition::from(soil),
                 "tree_ids": tree_ids,
             }),
         )

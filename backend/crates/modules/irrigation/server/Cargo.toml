@@ -10,7 +10,31 @@ homepage.workspace = true
 description = "Green Ecolution irrigation module: services, adapters and routes"
 publish.workspace = true
 
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+path = "src/bin/import_kataster_fl.rs"
+name = "import-kataster-fl"
+
 [dependencies]
+anyhow = "1.0.102"
+async-trait = { workspace = true }
+axum = { version = "0.8.9", features = ["json"] }
+chrono = { workspace = true }
 domain = { path = "../../../domain", features = ["sqlx"] }
 irrigation-domain = { path = "../domain", features = ["sqlx"] }
+serde = { workspace = true }
+serde_json = { workspace = true }
 server = { path = "../../../server" }
+sqlx = { workspace = true, features = ["macros", "migrate", "runtime-tokio", "tls-rustls", "postgres", "chrono", "uuid", "json", "rust_decimal"] }
+thiserror = { workspace = true }
+tokio = { version = "1.52.3", features = ["full"] }
+tracing = "0.1"
+utoipa = { version = "6", features = ["axum_extras", "uuid", "chrono"] }
+utoipa-axum = "0.3"
+uuid = { workspace = true }
+
+[dev-dependencies]
+config = "0.15.23"
+secrecy = { workspace = true }

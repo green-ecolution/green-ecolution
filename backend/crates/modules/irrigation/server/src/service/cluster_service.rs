@@ -1,0 +1,374 @@
+use std::sync::Arc;
+
+use chrono::{DateTime, Utc};
+use domain::{
+    Id,
+    authorization::Visibility,
+    events::DomainEvent,
+    organization::Organization,
+    planning::StopRef,
+    sensor::{SensorId, data::SoilMoistureBucket},
+    shared::{
+        coordinates::Coordinate,
+        pagination::{Pagination, SearchPage},
+    },
+};
+use irrigation_domain::{
+    cluster::{
+        ClusterBoundaryView, ClusterMarker, ClusterStatistics, SoilMoistureOverview, TreeCluster,
+        TreeClusterDraft, TreeClusterReader, TreeClusterSearchQuery, TreeClusterUpdate,
+        TreeClusterView, TreeClusterWriter, condition_series,
+    },
+    events::IrrigationEvent,
+    tree::{Tree, TreeReader, TreeWriter, volumetric_thresholds},
+};
+
+use crate::error::IrrigationError;
+use server::service::{
+    comment_service::CommentService, event_bus::EventBus,
+    operation_plan_service::OperationPlanService, sensor_service::SensorService,
+};
+
+pub struct ClusterService {
+    reader: Arc<dyn TreeClusterReader>,
+    writer: Arc<dyn TreeClusterWriter>,
+    tree_reader: Arc<dyn TreeReader>,
+    tree_writer: Arc<dyn TreeWriter>,
+    sensors: Arc<SensorService>,
+    event_bus: Arc<dyn EventBus>,
+    comments: Arc<CommentService>,
+    plans: Arc<OperationPlanService>,
+}
+
+impl ClusterService {
+    #[allow(clippy::too_many_arguments)]
+    pub fn new(
+        reader: Arc<dyn TreeClusterReader>,
+        writer: Arc<dyn TreeClusterWriter>,
+        tree_reader: Arc<dyn TreeReader>,
+        tree_writer: Arc<dyn TreeWriter>,
+        sensors: Arc<SensorService>,
+        event_bus: Arc<dyn EventBus>,
+        comments: Arc<CommentService>,
+        plans: Arc<OperationPlanService>,
+    ) -> Self {
+        Self {
+            reader,
+            writer,
+            tree_reader,
+            tree_writer,
+            sensors,
+            event_bus,
+            comments,
+            plans,
+        }
+    }
+
+    #[tracing::instrument(level = "debug", skip_all)]
+    pub async fn search_view(
+        &self,
+        query: TreeClusterSearchQuery,
+        pagination: Pagination,
+    ) -> Result<SearchPage<TreeClusterView>, IrrigationError> {
+        Ok(self.reader.view_search(query, pagination).await?)
+    }
+
+    #[tracing::instrument(level = "debug", skip_all)]
+    pub async fn view_markers(
+        &self,
+        visible: Visibility,
+    ) -> Result<Vec<ClusterMarker>, IrrigationError> {
+        Ok(self.reader.view_markers(visible).await?)
+    }
+
+    #[tracing::instrument(level = "debug", skip_all)]
+    pub async fn boundaries(
+        &self,
+        visible: Visibility,
+    ) -> Result<Vec<ClusterBoundaryView>, IrrigationError> {
+        Ok(self.reader.boundaries(visible).await?)
+    }
+
+    #[tracing::instrument(level = "debug", skip_all, fields(cluster.id = %id))]
+    pub async fn by_id(&self, id: Id<TreeCluster>) -> Result<TreeCluster, IrrigationError> {
+        Ok(self.reader.by_id(id).await?)
+    }
+
+    #[tracing::instrument(level = "debug", skip_all)]
+    pub async fn by_ids(
+        &self,
+        ids: &[Id<TreeCluster>],
+    ) -> Result<Vec<TreeCluster>, IrrigationError> {
+        Ok(self.reader.by_ids(ids).await?)
+    }
+
+    #[tracing::instrument(level = "debug", skip_all, fields(cluster.id = %id))]
+    pub async fn view_by_id(
+        &self,
+        id: Id<TreeCluster>,
+    ) -> Result<TreeClusterView, IrrigationError> {
+        Ok(self.reader.view_by_id(id).await?)
+    }
+
+    /// Rejects a cluster whose tree membership crosses an organization
+    /// boundary — every member tree must belong to the same org as the
+    /// cluster itself.
+    async fn ensure_trees_match_org(
+        &self,
+        tree_ids: &[Id<Tree>],
+        org: Id<Organization>,
+    ) -> Result<(), IrrigationError> {
+        if tree_ids.is_empty() {
+            return Ok(());
+        }
+        let trees = self.tree_reader.by_ids(tree_ids).await?;
+        if trees.iter().any(|t| t.organization_id() != org) {
+            return Err(IrrigationError::TreesVsCluster);
+        }
+        Ok(())
+    }
+
+    #[tracing::instrument(level = "debug", skip_all)]
+    pub async fn create(&self, draft: TreeClusterDraft) -> Result<TreeCluster, IrrigationError> {
+        self.ensure_trees_match_org(&draft.tree_ids, draft.organization_id)
+            .await?;
+        let source_events = self.source_cluster_events(&draft.tree_ids, None).await?;
+        let cluster = self.writer.save_new(draft).await?;
+        let mut events = vec![
+            IrrigationEvent::ClusterTreesChanged {
+                cluster_id: cluster.id,
+            }
+            .into_domain(),
+        ];
+        events.extend(source_events);
+        self.event_bus.publish_all(events).await;
+        Ok(cluster)
+    }
+
+    #[tracing::instrument(level = "debug", skip_all, fields(cluster.id = %id))]
+    pub async fn replace(
+        &self,
+        id: Id<TreeCluster>,
+        update: TreeClusterUpdate,
+    ) -> Result<TreeCluster, IrrigationError> {
+        let mut cluster = self.reader.by_id(id).await?;
+        self.ensure_trees_match_org(&update.tree_ids, cluster.organization_id())
+            .await?;
+        let source_events = self
+            .source_cluster_events(&update.tree_ids, Some(id))
+            .await?;
+        let mut events = cluster.replace_details(
+            update.name,
+            update.address,
+            update.description,
+            update.soil_condition,
+            update.provenance,
+        );
+        events.extend(cluster.replace_trees(update.tree_ids));
+        self.writer.save(&cluster).await?;
+        events.extend(source_events);
+        self.event_bus.publish_all(events).await;
+        Ok(cluster)
+    }
+
+    /// Assigning trees to a cluster implicitly pulls them out of the cluster
+    /// they currently belong to (the repo save rewrites `tree_cluster_id`).
+    /// Those source clusters need a `ClusterTreesChanged` too, or their
+    /// centroid, region, and watering status stay stale.
+    async fn source_cluster_events(
+        &self,
+        tree_ids: &[Id<Tree>],
+        target: Option<Id<TreeCluster>>,
+    ) -> Result<Vec<DomainEvent>, IrrigationError> {
+        if tree_ids.is_empty() {
+            return Ok(Vec::new());
+        }
+        let trees = self.tree_reader.by_ids(tree_ids).await?;
+        let sources: std::collections::HashSet<Id<TreeCluster>> = trees
+            .iter()
+            .filter_map(|t| t.cluster_id())
+            .filter(|cid| Some(*cid) != target)
+            .collect();
+        Ok(sources
+            .into_iter()
+            .map(|cluster_id| IrrigationEvent::ClusterTreesChanged { cluster_id }.into_domain())
+            .collect())
+    }
+
+    #[tracing::instrument(level = "debug", skip_all, fields(cluster.id = %id))]
+    pub async fn delete(&self, id: Id<TreeCluster>) -> Result<(), IrrigationError> {
+        let trees = self.tree_reader.by_cluster_id(id).await?;
+        let mut events = Vec::new();
+        for mut tree in trees {
+            events.extend(tree.move_to_cluster(None));
+            self.tree_writer.save(&tree).await?;
+        }
+        self.plans
+            .remove_stop(&crate::key(), StopRef::new(id.value()))
+            .await?;
+        self.writer.delete(id).await?;
+        // Comments have no cascading FK: the subject is polymorphic.
+        let deleted_comments = self
+            .comments
+            .delete_for_target(&crate::targets::cluster_target(id))
+            .await?;
+        tracing::debug!(deleted_comments, "removed comments for deleted cluster");
+        self.event_bus.publish_all(events).await;
+        Ok(())
+    }
+
+    #[tracing::instrument(level = "debug", skip_all, fields(cluster.id = %id))]
+    pub async fn archive(&self, id: Id<TreeCluster>) -> Result<(), IrrigationError> {
+        Ok(self.writer.archive(id).await?)
+    }
+
+    /// Releases `JustWatered` on every cluster of `org` last watered before
+    /// `cutoff` and returns how many were reset. Clusters keep advertising a
+    /// fresh watering until this runs, so a cluster without sensor-backed
+    /// trees would stay on `JustWatered` forever without it.
+    ///
+    /// A cluster that fails is logged and skipped — the sweep runs
+    /// periodically, so the next pass retries it.
+    #[tracing::instrument(level = "debug", skip_all, fields(%org, %cutoff))]
+    pub async fn expire_just_watered(
+        &self,
+        org: Id<Organization>,
+        cutoff: DateTime<Utc>,
+    ) -> Result<usize, IrrigationError> {
+        let clusters = self.reader.just_watered_before(org, cutoff).await?;
+        let mut expired = 0;
+
+        for mut cluster in clusters {
+            match self.release_just_watered(&mut cluster).await {
+                Ok(()) => expired += 1,
+                Err(error) => {
+                    tracing::warn!(%error, cluster.id = %cluster.id, "skipping just-watered expiry")
+                }
+            }
+        }
+        Ok(expired)
+    }
+
+    async fn release_just_watered(&self, cluster: &mut TreeCluster) -> Result<(), IrrigationError> {
+        let mut trees = self.tree_reader.by_ids(&cluster.tree_ids).await?;
+        for tree in trees.iter_mut() {
+            if tree.expire_just_watered() {
+                self.tree_writer.save(tree).await?;
+            }
+        }
+
+        let with_sensor = self.tree_reader.sensor_ids(&cluster.tree_ids).await?;
+        let statuses: Vec<_> = trees
+            .iter()
+            .filter(|t| with_sensor.contains_key(&t.id))
+            .map(|t| t.watering_status())
+            .collect();
+        cluster.recalculate_watering_status(&statuses);
+        self.writer.save(cluster).await?;
+        Ok(())
+    }
+
+    #[tracing::instrument(level = "debug", skip_all)]
+    pub async fn statistics(
+        &self,
+        visible: Visibility,
+    ) -> Result<ClusterStatistics, IrrigationError> {
+        Ok(self.reader.statistics(visible).await?)
+    }
+
+    /// Sensors attached to the trees of the cluster, ordered by id.
+    #[tracing::instrument(level = "debug", skip_all, fields(cluster.id = %id))]
+    pub async fn sensor_ids(&self, id: Id<TreeCluster>) -> Result<Vec<SensorId>, IrrigationError> {
+        let tree_ids: Vec<Id<Tree>> = self
+            .tree_reader
+            .by_cluster_id(id)
+            .await?
+            .into_iter()
+            .map(|t| t.id)
+            .collect();
+        let mut ids: Vec<SensorId> = self
+            .tree_reader
+            .sensor_ids(&tree_ids)
+            .await?
+            .into_values()
+            .collect();
+        ids.sort_by(|a, b| a.as_str().cmp(b.as_str()));
+        Ok(ids)
+    }
+
+    #[tracing::instrument(level = "debug", skip_all, fields(cluster.id = %id))]
+    pub async fn center_point(
+        &self,
+        id: Id<TreeCluster>,
+    ) -> Result<Option<Coordinate>, IrrigationError> {
+        Ok(self.reader.center_point(id).await?)
+    }
+
+    /// Thresholds are derived from the cluster's KA5 soil type; an unknown or
+    /// unset soil yields an empty threshold list, not an error.
+    #[tracing::instrument(level = "debug", skip_all)]
+    pub async fn soil_moisture_overview(
+        &self,
+        id: Id<TreeCluster>,
+        from: DateTime<Utc>,
+        to: DateTime<Utc>,
+        bucket: SoilMoistureBucket,
+    ) -> Result<SoilMoistureOverview, IrrigationError> {
+        let view = self.reader.view_by_id(id).await?;
+        let series = self
+            .reader
+            .soil_moisture_series(id, from, to, bucket)
+            .await?;
+        let thresholds = view
+            .soil_condition
+            .map(|soil| {
+                series
+                    .iter()
+                    .filter_map(|s| volumetric_thresholds(soil, s.depth_cm))
+                    .collect()
+            })
+            .unwrap_or_default();
+        let condition = view
+            .soil_condition
+            .map(|soil| condition_series(&series, soil))
+            .unwrap_or_default();
+        let watering_events = self.reader.watering_events(id).await?;
+        Ok(SoilMoistureOverview {
+            bucket,
+            series,
+            thresholds,
+            condition,
+            watering_events,
+        })
+    }
+
+    /// Transfers ownership of the cluster, its member trees, and their
+    /// attached sensors to `target` in one operation.
+    ///
+    /// No distributed rollback: saves happen sequentially, so an error midway
+    /// through the tree loop leaves a partially transferred cluster. Accepted
+    /// for v1 — transfer is an admin operation and idempotent to retry.
+    #[tracing::instrument(level = "debug", skip_all, fields(cluster.id = %id))]
+    pub async fn transfer(
+        &self,
+        id: Id<TreeCluster>,
+        target: Id<Organization>,
+    ) -> Result<(), IrrigationError> {
+        let mut cluster = self.reader.by_id(id).await?;
+        let mut events = cluster.transfer_to(target);
+        self.writer.save(&cluster).await?;
+        let mut sensors = self.tree_reader.sensor_ids(&cluster.tree_ids).await?;
+        for tree_id in cluster.tree_ids.clone() {
+            let mut tree = self.tree_reader.by_id(tree_id).await?;
+            events.extend(tree.transfer_to(target));
+            self.tree_writer.save(&tree).await?;
+            if let Some(sensor_id) = sensors.remove(&tree_id) {
+                self.sensors
+                    .transfer_with_target(&sensor_id, target)
+                    .await?;
+            }
+        }
+        self.event_bus.publish_all(events).await;
+        Ok(())
+    }
+}

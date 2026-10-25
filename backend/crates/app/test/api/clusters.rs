@@ -1,7 +1,7 @@
 use chrono::{Duration, Utc};
 use domain::{Id, organization::Organization};
 use irrigation_domain::cluster::TreeClusterReader;
-use server::irrigation::infra::pg_cluster::PgTreeClusterRepository;
+use irrigation_server::infra::pg_cluster::PgTreeClusterRepository;
 
 use crate::helpers::{self, spawn_app};
 
@@ -1635,7 +1635,7 @@ async fn just_watered_before_is_scoped_to_one_organization() {
 #[tokio::test]
 async fn the_sweep_expires_each_organization_on_its_own_ttl() {
     use irrigation_domain::settings::{JustWateredTtl, WaterDemand};
-    use server::irrigation::settings::{IrrigationDefaults, repository::PgIrrigationSettings};
+    use irrigation_server::settings::{IrrigationDefaults, repository::PgIrrigationSettings};
     use std::sync::Arc;
 
     let app = spawn_app().await;
@@ -1660,7 +1660,7 @@ async fn the_sweep_expires_each_organization_on_its_own_ttl() {
     let settings = PgIrrigationSettings::new(app.db_pool.clone(), defaults, org_reader.clone());
 
     let clusters = crate::helpers::irrigation_cluster_service(&app);
-    let released = server::irrigation::infra::watering_status_expiry::sweep_once(
+    let released = irrigation_server::infra::watering_status_expiry::sweep_once(
         &clusters,
         org_reader.as_ref(),
         &settings,

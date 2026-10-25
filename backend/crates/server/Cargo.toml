@@ -15,12 +15,7 @@ build = "build.rs"
 [lib]
 path = "src/lib.rs"
 
-[[bin]]
-path = "src/bin/import_kataster_fl.rs"
-name = "import-kataster-fl"
-
 [dependencies]
-anyhow = "1.0.102"
 async-trait = { workspace = true }
 axum = { version = "0.8.9", features = ["json"] }
 axum-extra = { version = "0.12", features = ["query"] }
@@ -31,7 +26,6 @@ domain = { path = "../domain", features = ["sqlx"] }
 futures = "0.3"
 hostname = "0.4"
 include_dir = "0.7"
-irrigation-domain = { path = "../modules/irrigation/domain", features = ["sqlx"] }
 jsonwebtoken = { version = "11.0", default-features = false, features = ["use_pem", "aws_lc_rs"] }
 log = "0.4"
 percent-encoding = "2"

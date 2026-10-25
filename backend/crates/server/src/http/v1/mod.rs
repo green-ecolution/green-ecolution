@@ -55,12 +55,18 @@ pub fn core_openapi() -> utoipa::openapi::OpenApi {
     public_router().merge(protected_router()).into_openapi()
 }
 
+/// The core's routers get their state before the module routers join them,
+/// which arrive with their own state already applied.
 pub fn router(
+    state: Arc<AppState>,
     auth_layer: AuthLayer,
     module_routes: Vec<crate::module::ModuleRoutes>,
-) -> OpenApiRouter<Arc<AppState>> {
+) -> OpenApiRouter {
     let (public, protected) = module_routes.into_iter().fold(
-        (public_router(), protected_router()),
+        (
+            public_router().with_state(state.clone()),
+            protected_router().with_state(state),
+        ),
         |(public, protected), routes| {
             (
                 public.merge(routes.public),

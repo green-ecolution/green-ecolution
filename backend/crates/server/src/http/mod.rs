@@ -140,9 +140,9 @@ pub struct AppState {
     pub app_origins: AppOrigins,
 }
 
-impl axum::extract::FromRef<Arc<AppState>> for extractors::PluginAuthenticator {
-    fn from_ref(state: &Arc<AppState>) -> Self {
-        state.plugin_auth.clone()
+impl AsRef<extractors::PluginAuthenticator> for AppState {
+    fn as_ref(&self) -> &extractors::PluginAuthenticator {
+        &self.plugin_auth
     }
 }
 
@@ -231,7 +231,12 @@ pub fn router(
 ) -> Router {
     let (router, mut api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
         .nest("/api", health::routes())
-        .nest("/api/v1", v1::router(auth_layer, module_routes))
+        // v1 already carries its state; `with_state(())` only adapts the
+        // router type to the outer one.
+        .nest(
+            "/api/v1",
+            v1::router(state.clone(), auth_layer, module_routes).with_state(()),
+        )
         .split_for_parts();
 
     rewrite_paths_for_client(&mut api, base_url);

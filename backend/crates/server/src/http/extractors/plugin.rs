@@ -46,6 +46,15 @@ impl PluginAuthenticator {
     }
 }
 
+/// A module crate cannot implement `FromRef<Arc<ItsState>>` for this type
+/// (orphan rule), so any `Arc` state that exposes an authenticator via
+/// `AsRef` gets it here.
+impl<T: AsRef<PluginAuthenticator>> FromRef<Arc<T>> for PluginAuthenticator {
+    fn from_ref(state: &Arc<T>) -> Self {
+        AsRef::<PluginAuthenticator>::as_ref(&**state).clone()
+    }
+}
+
 impl<S: Send + Sync> FromRequestParts<S> for PluginPrincipal
 where
     PluginAuthenticator: FromRef<S>,

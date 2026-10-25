@@ -24,7 +24,7 @@ async fn a_stored_permission_of_an_unknown_resource_is_ignored() {
 
     let repo = PgRoleRepository::new(
         app.db_pool.clone(),
-        Arc::new(ResourceCatalog::new(server::irrigation::resources::ALL).unwrap()),
+        Arc::new(ResourceCatalog::new(irrigation_server::resources::ALL).unwrap()),
     );
     let role = repo.by_id(domain::Id::new(role_id)).await.unwrap();
 

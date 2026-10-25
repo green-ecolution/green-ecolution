@@ -22,6 +22,18 @@ pub mod targets;
 pub mod user_service;
 pub mod vehicle_service;
 
+/// A stand-in module resource: the core's unit tests run without any module crate.
+#[cfg(test)]
+pub(crate) mod test_resources {
+    use domain::authorization::{ResourceCatalog, ResourceKey};
+
+    pub const WIDGET: ResourceKey = ResourceKey::declare("widget");
+
+    pub fn catalog() -> ResourceCatalog {
+        ResourceCatalog::new([WIDGET]).unwrap()
+    }
+}
+
 use domain::{
     RepositoryError,
     operation_plan::OperationPlanError,

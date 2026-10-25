@@ -4,7 +4,7 @@ use app::bench::{
 };
 use domain::{sensor::repository::SensorReadingReader, shared::pagination::Pagination};
 use irrigation_domain::tree::{TreeSearchQuery, repository::TreeReader};
-use server::irrigation::infra::pg_tree::PgTreeRepository;
+use irrigation_server::infra::pg_tree::PgTreeRepository;
 
 use crate::helpers::spawn_app;
 
@@ -247,7 +247,7 @@ async fn seeding_creates_a_user_with_role_grants() {
         std::sync::Arc::new(server::infra::pg_role::PgRoleRepository::new(
             app.db_pool.clone(),
             std::sync::Arc::new(
-                domain::authorization::ResourceCatalog::new(server::irrigation::resources::ALL)
+                domain::authorization::ResourceCatalog::new(irrigation_server::resources::ALL)
                     .unwrap(),
             ),
         )),

@@ -1,8 +1,7 @@
 use domain::plugin::{PluginDraft, PluginName, PluginReader, PluginSlug, PluginWriter};
 use irrigation_domain::plugin_refs::PluginTreeRefs;
-use server::{
-    infra::pg_plugin::PgPluginRepository, irrigation::infra::pg_plugin_tree_refs::PgPluginTreeRefs,
-};
+use irrigation_server::infra::pg_plugin_tree_refs::PgPluginTreeRefs;
+use server::infra::pg_plugin::PgPluginRepository;
 use std::collections::BTreeSet;
 use uuid::Uuid;
 

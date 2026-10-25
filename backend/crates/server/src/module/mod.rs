@@ -23,7 +23,7 @@ use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
     configuration::Settings,
-    http::{AppState, extractors::PluginAuthenticator},
+    http::extractors::PluginAuthenticator,
     service::{
         authorization::AuthorizationService,
         comment_service::CommentService,
@@ -92,10 +92,12 @@ impl ModuleContext {
 }
 
 /// Routes relative to `/api/v1`. `protected` runs behind the same
-/// authentication layer as the core's protected routes.
+/// authentication layer as the core's protected routes. Both carry their
+/// state already (`.with_state(..)`), so module handlers cannot extract the
+/// core's `AppState`.
 pub struct ModuleRoutes {
-    pub public: OpenApiRouter<Arc<AppState>>,
-    pub protected: OpenApiRouter<Arc<AppState>>,
+    pub public: OpenApiRouter,
+    pub protected: OpenApiRouter,
 }
 
 impl ModuleRoutes {

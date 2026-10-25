@@ -320,14 +320,14 @@ mod tests {
                 permissions: perms.iter().map(|p| p.to_string()).collect(),
                 template_key: None,
             },
-            &crate::irrigation::test_catalog(),
+            &crate::service::test_resources::catalog(),
         )
         .unwrap()
         .role
     }
 
-    fn tree_read() -> Permission {
-        Permission::new(crate::irrigation::resources::TREE, Action::Read)
+    fn widget_read() -> Permission {
+        Permission::new(crate::service::test_resources::WIDGET, Action::Read)
     }
 
     fn role_update() -> Permission {
@@ -363,13 +363,13 @@ mod tests {
                 pairs: vec![(root, None), (tbz, Some(root)), (sub, Some(tbz))],
             }),
             Arc::new(StubRoles {
-                by_user: vec![(user, role_in(tbz, &[tree_read()]))],
+                by_user: vec![(user, role_in(tbz, &[widget_read()]))],
             }),
             true,
         );
-        assert!(svc.require(user, tree_read(), sub).await.is_ok());
+        assert!(svc.require(user, widget_read(), sub).await.is_ok());
         assert!(matches!(
-            svc.require(user, tree_read(), root).await,
+            svc.require(user, widget_read(), root).await,
             Err(ServiceError::Auth(AuthError::Forbidden))
         ));
     }
@@ -383,16 +383,16 @@ mod tests {
                 pairs: vec![(root, None), (tbz, Some(root))],
             }),
             Arc::new(StubRoles {
-                by_user: vec![(user, role_in(tbz, &[tree_read()]))],
+                by_user: vec![(user, role_in(tbz, &[widget_read()]))],
             }),
             true,
         );
         let wider = BTreeSet::from([
-            tree_read(),
-            Permission::new(crate::irrigation::resources::TREE, Action::Delete),
+            widget_read(),
+            Permission::new(crate::service::test_resources::WIDGET, Action::Delete),
         ]);
         assert!(
-            svc.require_superset(user, &BTreeSet::from([tree_read()]), tbz)
+            svc.require_superset(user, &BTreeSet::from([widget_read()]), tbz)
                 .await
                 .is_ok()
         );
@@ -407,7 +407,7 @@ mod tests {
             false,
         );
         assert!(
-            svc.require(Uuid::nil(), tree_read(), Id::new_v7())
+            svc.require(Uuid::nil(), widget_read(), Id::new_v7())
                 .await
                 .is_ok()
         );
@@ -422,11 +422,11 @@ mod tests {
                 pairs: vec![(root, None), (tbz, Some(root))],
             }),
             Arc::new(StubRoles {
-                by_user: vec![(user, role_in(tbz, &[tree_read()]))],
+                by_user: vec![(user, role_in(tbz, &[widget_read()]))],
             }),
             true,
         );
-        match svc.visible_orgs_for(user, tree_read()).await.unwrap() {
+        match svc.visible_orgs_for(user, widget_read()).await.unwrap() {
             domain::authorization::Visibility::Only(orgs) => {
                 assert!(orgs.contains(&tbz) && !orgs.contains(&root))
             }
@@ -438,7 +438,7 @@ mod tests {
             false,
         );
         assert_eq!(
-            demo.visible_orgs_for(Uuid::nil(), tree_read())
+            demo.visible_orgs_for(Uuid::nil(), widget_read())
                 .await
                 .unwrap(),
             domain::authorization::Visibility::Unrestricted
@@ -458,7 +458,7 @@ mod tests {
             true,
         );
 
-        let emptied = BTreeSet::from([tree_read()]);
+        let emptied = BTreeSet::from([widget_read()]);
         let result = svc
             .ensure_administration_survives(
                 user,
@@ -534,7 +534,7 @@ mod tests {
             root,
             vec![(
                 user,
-                role_with_id(role_id, org, &[role_update(), user_update(), tree_read()]),
+                role_with_id(role_id, org, &[role_update(), user_update(), widget_read()]),
             )],
             true,
         );
@@ -663,7 +663,7 @@ mod tests {
         let (root, org) = (Id::new_v7(), Id::new_v7());
         let ctx = view_ctx(
             &[(root, None), (org, Some(root))],
-            vec![(org, BTreeSet::from([tree_read()]))],
+            vec![(org, BTreeSet::from([widget_read()]))],
         );
 
         assert!(may_open_plugin_view(&ctx, &BTreeSet::new(), org));
@@ -676,7 +676,7 @@ mod tests {
             &[(root, None), (own, Some(root)), (sibling, Some(root))],
             vec![(
                 own,
-                BTreeSet::from_iter(crate::irrigation::test_catalog().permissions()),
+                BTreeSet::from_iter(crate::service::test_resources::catalog().permissions()),
             )],
         );
 
@@ -702,32 +702,32 @@ mod tests {
             &[(root, None), (org, Some(root))],
             vec![(org, BTreeSet::from([plugin_read]))],
         );
-        let tree_delete = BTreeSet::from([Permission::new(
-            crate::irrigation::resources::TREE,
+        let widget_delete = BTreeSet::from([Permission::new(
+            crate::service::test_resources::WIDGET,
             Action::Delete,
         )]);
 
         assert!(may_open_plugin_view(&ctx, &BTreeSet::new(), org));
-        assert!(may_open_plugin_view(&ctx, &tree_delete, org));
+        assert!(may_open_plugin_view(&ctx, &widget_delete, org));
     }
 
     #[test]
     fn view_with_required_permissions_needs_all_of_them() {
         let (root, org) = (Id::new_v7(), Id::new_v7());
-        let tree_update = Permission::new(crate::irrigation::resources::TREE, Action::Update);
+        let widget_update = Permission::new(crate::service::test_resources::WIDGET, Action::Update);
         let ctx = view_ctx(
             &[(root, None), (org, Some(root))],
-            vec![(org, BTreeSet::from([tree_read()]))],
+            vec![(org, BTreeSet::from([widget_read()]))],
         );
 
         assert!(may_open_plugin_view(
             &ctx,
-            &BTreeSet::from([tree_read()]),
+            &BTreeSet::from([widget_read()]),
             org
         ));
         assert!(!may_open_plugin_view(
             &ctx,
-            &BTreeSet::from([tree_read(), tree_update]),
+            &BTreeSet::from([widget_read(), widget_update]),
             org
         ));
     }

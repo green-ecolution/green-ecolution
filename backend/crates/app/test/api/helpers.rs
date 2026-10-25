@@ -381,7 +381,7 @@ async fn template_database() -> &'static str {
 /// included so any test can mount it without migrating a database of its own.
 pub fn irrigation_catalog() -> std::sync::Arc<domain::authorization::ResourceCatalog> {
     std::sync::Arc::new(
-        domain::authorization::ResourceCatalog::new(server::irrigation::resources::ALL).unwrap(),
+        domain::authorization::ResourceCatalog::new(irrigation_server::resources::ALL).unwrap(),
     )
 }
 
@@ -389,15 +389,15 @@ pub fn irrigation_catalog() -> std::sync::Arc<domain::authorization::ResourceCat
 /// so follow-up events run as they would behind the HTTP surface.
 pub fn irrigation_cluster_service(
     app: &TestApp,
-) -> Arc<server::irrigation::service::cluster_service::ClusterService> {
-    use server::irrigation::infra::{
+) -> Arc<irrigation_server::service::cluster_service::ClusterService> {
+    use irrigation_server::infra::{
         pg_cluster::PgTreeClusterRepository, pg_tree::PgTreeRepository,
     };
 
     let clusters = Arc::new(PgTreeClusterRepository::new(app.db_pool.clone()));
     let trees = Arc::new(PgTreeRepository::new(app.db_pool.clone()));
     Arc::new(
-        server::irrigation::service::cluster_service::ClusterService::new(
+        irrigation_server::service::cluster_service::ClusterService::new(
             clusters.clone(),
             clusters,
             trees.clone(),

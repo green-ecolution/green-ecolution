@@ -117,6 +117,7 @@ dependencies = [
  "geo-types",
  "include_dir",
  "irrigation-domain",
+ "irrigation-server",
  "jsonwebtoken",
  "libc",
  "polyline",
@@ -2213,9 +2214,24 @@ dependencies = [
 name = "irrigation-server"
 version = "0.8.0"
 dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum",
+ "chrono",
+ "config",
  "domain",
  "irrigation-domain",
+ "secrecy",
+ "serde",
+ "serde_json",
  "server",
+ "sqlx",
+ "thiserror 2.0.21",
+ "tokio",
+ "tracing",
+ "utoipa",
+ "utoipa-axum",
+ "uuid",
 ]
 
 [[package]]
@@ -4071,7 +4087,6 @@ dependencies = [
 name = "server"
 version = "0.8.0"
 dependencies = [
- "anyhow",
  "async-trait",
  "axum",
  "axum-extra",
@@ -4084,7 +4099,6 @@ dependencies = [
  "geo-types",
  "hostname",
  "include_dir",
- "irrigation-domain",
  "jsonwebtoken",
  "libc",
  "log",

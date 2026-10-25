@@ -221,7 +221,7 @@ impl PluginService {
         // Two changes put the plugin's rights into use: widening the set, and
         // arming a plugin that was installed disabled. Both demand that the
         // actor holds those rights themselves; a rename must not, or an admin
-        // without `tree:delete` could no longer correct a typo.
+        // lacking one of the plugin's rights could no longer correct a typo.
         if change.permissions.is_some() || change.enabled == Some(true) {
             let effective = change
                 .permissions
@@ -356,7 +356,7 @@ mod tests {
             service_with_auth_allowing(&[Permission::new(ResourceKey::PLUGIN, Action::Create)]);
         let mut d = draft("acme");
         d.permissions = BTreeSet::from([Permission::new(
-            crate::irrigation::resources::TREE,
+            crate::service::test_resources::WIDGET,
             Action::Delete,
         )]);
 
@@ -372,7 +372,7 @@ mod tests {
             service_with_auth_allowing(&[Permission::new(ResourceKey::PLUGIN, Action::Create)]);
         let mut d = draft("acme");
         d.required_permissions = BTreeSet::from([Permission::new(
-            crate::irrigation::resources::TREE,
+            crate::service::test_resources::WIDGET,
             Action::Delete,
         )]);
 
@@ -394,8 +394,8 @@ mod tests {
     async fn rotate_key_rejects_an_actor_lacking_the_plugins_own_permissions() {
         // Rotating returns a working credential, so it grants everything the
         // plugin may do. Without this check `plugin:update` alone would be a
-        // path to deleting trees.
-        let repo = repo_with_tree_deleting_plugin().await;
+        // path to deleting widgets.
+        let repo = repo_with_widget_deleting_plugin().await;
         let svc = service_over(
             repo,
             Some(&[Permission::new(ResourceKey::PLUGIN, Action::Update)]),
@@ -411,7 +411,7 @@ mod tests {
 
     #[tokio::test]
     async fn enabling_rejects_an_actor_lacking_the_plugins_own_permissions() {
-        let repo = repo_with_tree_deleting_plugin().await;
+        let repo = repo_with_widget_deleting_plugin().await;
         let svc = service_over(
             repo,
             Some(&[Permission::new(ResourceKey::PLUGIN, Action::Update)]),
@@ -436,7 +436,7 @@ mod tests {
     async fn renaming_does_not_require_the_plugins_own_permissions() {
         // The counterpart to the two tests above: tightening the gate must not
         // lock an administrator out of edits that grant the plugin nothing.
-        let repo = repo_with_tree_deleting_plugin().await;
+        let repo = repo_with_widget_deleting_plugin().await;
         let svc = service_over(
             repo,
             Some(&[Permission::new(ResourceKey::PLUGIN, Action::Update)]),
@@ -460,7 +460,7 @@ mod tests {
     #[tokio::test]
     async fn disabling_does_not_require_the_plugins_own_permissions() {
         // Pulling the plug must never be harder than leaving it in.
-        let repo = repo_with_tree_deleting_plugin().await;
+        let repo = repo_with_widget_deleting_plugin().await;
         let svc = service_over(
             repo,
             Some(&[Permission::new(ResourceKey::PLUGIN, Action::Update)]),
@@ -577,7 +577,7 @@ mod tests {
                     key_hash: key_hash.map(|h| h.as_str().to_string()),
                     last_seen_at: None,
                 },
-                &crate::irrigation::test_catalog(),
+                &crate::service::test_resources::catalog(),
             );
             plugin.set_frontend(draft.frontend);
             self.rows.lock().unwrap().insert(id.value(), plugin.clone());
@@ -670,7 +670,7 @@ mod tests {
                         permissions: self.permissions.iter().map(|p| p.to_string()).collect(),
                         template_key: None,
                     },
-                    &crate::irrigation::test_catalog(),
+                    &crate::service::test_resources::catalog(),
                 )
                 .unwrap()
                 .role,
@@ -718,7 +718,7 @@ mod tests {
             authorization,
             Arc::new(RandomPluginKeyFactory),
             proxy,
-            Arc::new(ResourceCatalog::new(crate::irrigation::resources::ALL).unwrap()),
+            Arc::new(crate::service::test_resources::catalog()),
         )
     }
 
@@ -822,12 +822,12 @@ mod tests {
         service_over(Arc::new(FakePluginRepo::default()), Some(permissions), None)
     }
 
-    /// A plugin that may delete trees, installed by an unrestricted actor.
-    async fn repo_with_tree_deleting_plugin() -> Arc<FakePluginRepo> {
+    /// A plugin that may delete widgets, installed by an unrestricted actor.
+    async fn repo_with_widget_deleting_plugin() -> Arc<FakePluginRepo> {
         let repo = Arc::new(FakePluginRepo::default());
         let mut d = draft("acme");
         d.permissions = BTreeSet::from([Permission::new(
-            crate::irrigation::resources::TREE,
+            crate::service::test_resources::WIDGET,
             Action::Delete,
         )]);
         service_over(repo.clone(), None, None)
