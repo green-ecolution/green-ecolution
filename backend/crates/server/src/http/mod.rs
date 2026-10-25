@@ -131,6 +131,7 @@ pub struct AppState {
     pub authorization_service: Arc<AuthorizationService>,
     pub plugin_reader: Arc<dyn domain::plugin::PluginReader>,
     pub plugin_writer: Arc<dyn domain::plugin::PluginWriter>,
+    pub plugin_auth: extractors::PluginAuthenticator,
     pub plugin_service: Arc<PluginService>,
     pub plugin_ingest_service: Arc<PluginIngestService>,
     pub plugin_sensor_ingest_service: Arc<PluginSensorIngestService>,
@@ -148,6 +149,12 @@ pub struct AppState {
     pub targets: Arc<crate::service::targets::TargetRegistry>,
     pub planning: Arc<PlanningRegistry>,
     pub app_origins: AppOrigins,
+}
+
+impl axum::extract::FromRef<Arc<AppState>> for extractors::PluginAuthenticator {
+    fn from_ref(state: &Arc<AppState>) -> Self {
+        state.plugin_auth.clone()
+    }
 }
 
 #[derive(OpenApi)]

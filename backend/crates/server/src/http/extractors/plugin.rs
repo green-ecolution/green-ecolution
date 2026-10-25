@@ -1,14 +1,16 @@
 use std::sync::Arc;
 
 use axum::{
-    extract::FromRequestParts,
+    extract::{FromRef, FromRequestParts},
     http::{header, request::Parts},
 };
 
-use domain::{RepositoryError, plugin::Plugin};
+use domain::{
+    RepositoryError,
+    plugin::{Plugin, PluginReader, PluginWriter},
+};
 
 use crate::{
-    http::AppState,
     infra::plugin_key,
     service::{AuthError, Feature, ServiceError},
 };
@@ -17,14 +19,42 @@ use crate::{
 /// because a plugin is not a person and carries no Keycloak identity.
 pub struct PluginPrincipal(pub Plugin);
 
-impl FromRequestParts<Arc<AppState>> for PluginPrincipal {
+/// What [`PluginPrincipal`] needs from a router's state, so any state that
+/// can hand one out may authenticate plugins.
+#[derive(Clone)]
+pub struct PluginAuthenticator {
+    reader: Arc<dyn PluginReader>,
+    writer: Arc<dyn PluginWriter>,
+    enabled: bool,
+}
+
+impl PluginAuthenticator {
+    pub fn new(
+        reader: Arc<dyn PluginReader>,
+        writer: Arc<dyn PluginWriter>,
+        enabled: bool,
+    ) -> Self {
+        Self {
+            reader,
+            writer,
+            enabled,
+        }
+    }
+
+    pub fn enabled(&self) -> bool {
+        self.enabled
+    }
+}
+
+impl<S: Send + Sync> FromRequestParts<S> for PluginPrincipal
+where
+    PluginAuthenticator: FromRef<S>,
+{
     type Rejection = ServiceError;
 
-    async fn from_request_parts(
-        parts: &mut Parts,
-        state: &Arc<AppState>,
-    ) -> Result<Self, Self::Rejection> {
-        if !state.feature_flags.plugins_enabled {
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        let auth = PluginAuthenticator::from_ref(state);
+        if !auth.enabled {
             return Err(ServiceError::FeatureDisabled {
                 feature: Feature::Plugins,
             });
@@ -42,7 +72,7 @@ impl FromRequestParts<Arc<AppState>> for PluginPrincipal {
         // repository failure (a dead pool, `Internal`, `DataIntegrity`, ...) is
         // a real infrastructure problem and must surface as its own 5xx and get
         // logged, not disappear behind an unauthenticated-looking 401.
-        let plugin = match state.plugin_reader.by_id(domain::Id::new(id)).await {
+        let plugin = match auth.reader.by_id(domain::Id::new(id)).await {
             Ok(plugin) => plugin,
             Err(RepositoryError::NotFound) => return Err(AuthError::PluginKeyInvalid.into()),
             Err(e) => return Err(e.into()),
@@ -59,7 +89,7 @@ impl FromRequestParts<Arc<AppState>> for PluginPrincipal {
         // Every authenticated request is a sign of life, which is why there is
         // no separate heartbeat endpoint. A failed write must not fail the
         // request itself.
-        let _ = state.plugin_writer.touch_last_seen(plugin.id).await;
+        let _ = auth.writer.touch_last_seen(plugin.id).await;
 
         Ok(Self(plugin))
     }

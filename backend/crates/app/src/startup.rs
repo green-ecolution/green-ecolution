@@ -405,6 +405,11 @@ impl Application {
             role_service: services.role,
             resource_catalog: resource_catalog.clone(),
             authorization_service: services.authorization,
+            plugin_auth: server::http::extractors::PluginAuthenticator::new(
+                repos.plugin_reader.clone(),
+                repos.plugin_writer.clone(),
+                settings.plugins.enabled,
+            ),
             plugin_reader: repos.plugin_reader,
             plugin_writer: repos.plugin_writer,
             plugin_service: services.plugin,
