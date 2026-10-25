@@ -26,6 +26,7 @@ pub mod module_activation_repo;
 pub mod module_host;
 pub mod module_plans;
 pub mod modules;
+pub mod openapi;
 pub mod organizations;
 pub mod plans;
 pub mod plugin_auth;

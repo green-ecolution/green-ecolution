@@ -109,6 +109,13 @@ impl ModuleRoutes {
     }
 }
 
+/// What the HTTP layer mounts for one module. The routers carry the module's
+/// paths but not its tag descriptions, which only `Module::openapi` has.
+pub struct ModuleMount {
+    pub routes: ModuleRoutes,
+    pub openapi: utoipa::openapi::OpenApi,
+}
+
 pub struct ModuleRuntime {
     pub routes: ModuleRoutes,
     pub event_handlers: Vec<Arc<dyn EventHandler>>,

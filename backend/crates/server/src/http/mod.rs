@@ -220,6 +220,20 @@ pub fn openapi_doc(
     api
 }
 
+/// Appends the module tags in the order `OpenApi::nest` does in
+/// [`openapi_doc`], so the served spec and the dumped one agree.
+fn append_module_tags(
+    api: &mut utoipa::openapi::OpenApi,
+    module_docs: Vec<utoipa::openapi::OpenApi>,
+) {
+    let tags = api.tags.get_or_insert_with(Vec::new);
+    for tag in module_docs.into_iter().filter_map(|doc| doc.tags).flatten() {
+        if !tags.contains(&tag) {
+            tags.push(tag);
+        }
+    }
+}
+
 pub fn router(
     state: Arc<AppState>,
     base_url: &str,
@@ -227,8 +241,12 @@ pub fn router(
     auth_layer: AuthLayer,
     oidc: &OidcSwaggerSettings,
     request_timeout: Duration,
-    module_routes: Vec<crate::module::ModuleRoutes>,
+    modules: Vec<crate::module::ModuleMount>,
 ) -> Router {
+    let (module_routes, module_docs): (Vec<_>, Vec<_>) = modules
+        .into_iter()
+        .map(|module| (module.routes, module.openapi))
+        .unzip();
     let (router, mut api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
         .nest("/api", health::routes())
         // v1 already carries its state; `with_state(())` only adapts the
@@ -239,6 +257,7 @@ pub fn router(
         )
         .split_for_parts();
 
+    append_module_tags(&mut api, module_docs);
     rewrite_paths_for_client(&mut api, base_url);
 
     let router = router

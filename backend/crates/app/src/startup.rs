@@ -73,7 +73,7 @@ pub struct Application {
     _jwks: Arc<JwksProvider>,
     shutdown_tx: tokio::sync::watch::Sender<bool>,
     mqtt_handle: Option<tokio::task::JoinHandle<()>>,
-    module_routes: Vec<server::module::ModuleRoutes>,
+    module_mounts: Vec<server::module::ModuleMount>,
 }
 
 impl Application {
@@ -229,7 +229,7 @@ impl Application {
             settings.plugins.enabled,
         );
         let mut handlers: Vec<Arc<dyn EventHandler>> = Vec::new();
-        let mut module_routes = Vec::new();
+        let mut module_mounts = Vec::new();
         let mut background_tasks = Vec::new();
         let mut catalogs = std::collections::BTreeMap::new();
         let mut providers = std::collections::BTreeMap::new();
@@ -259,7 +259,10 @@ impl Application {
                 .build(ctx)
                 .map_err(|err| std::io::Error::other(err.to_string()))?;
             handlers.extend(runtime.event_handlers);
-            module_routes.push(runtime.routes);
+            module_mounts.push(server::module::ModuleMount {
+                routes: runtime.routes,
+                openapi: module.openapi(),
+            });
             background_tasks.extend(runtime.background_tasks);
             if let Some(catalog) = runtime.targets {
                 catalogs.insert(module.key(), catalog);
@@ -404,7 +407,7 @@ impl Application {
             _jwks: jwks,
             shutdown_tx,
             mqtt_handle,
-            module_routes,
+            module_mounts,
         })
     }
 
@@ -430,7 +433,7 @@ impl Application {
             self.auth_layer,
             &self.oidc_swagger,
             self.request_timeout,
-            self.module_routes,
+            self.module_mounts,
         );
         tracing::info!("listening on {}", self.listener.local_addr()?);
         axum::serve(self.listener, app)
