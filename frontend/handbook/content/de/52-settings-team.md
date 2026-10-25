@@ -88,9 +88,11 @@ vier Aktionen Ansehen, Anlegen, Bearbeiten und Löschen, insgesamt 36 mögliche 
 über neun Ressourcen; die Zugriffsstufen aus dem vorigen Abschnitt setzen jeweils eine
 feste Auswahl davon. In der Oberfläche sind diese Ressourcen zu drei Bereichen
 gruppiert: **Grünflächen** (Bäume, Bewässerungsgruppen, Sensoren, Gebiete), **Planung**
-(Einsatzpläne, Fahrzeuge) und **Verwaltung** (Mitarbeitende, Organisation, Rollen &
+(Einsatzpläne, Startpunkte, Fahrzeuge) und **Verwaltung** (Mitarbeitende, Organisation, Rollen &
 Rechte). Die folgende Tabelle listet den vollständigen Katalog, mit der technischen
-Bezeichnung, die auch in Fehlermeldungen der Anwendung auftaucht.
+Bezeichnung, die auch in Fehlermeldungen der Anwendung auftaucht. Startpunkte (Depots
+und Nachfüllstellen) haben eigene Rechte; wer bisher Einsatzpläne bearbeiten durfte,
+darf auch Startpunkte bearbeiten.
 
 | Berechtigung           | Bedeutung                     |
 | ---------------------- | ----------------------------- |
@@ -110,6 +112,10 @@ Bezeichnung, die auch in Fehlermeldungen der Anwendung auftaucht.
 | `watering_plan:create` | Einsatzplan anlegen           |
 | `watering_plan:update` | Einsatzplan bearbeiten        |
 | `watering_plan:delete` | Einsatzplan löschen           |
+| `start_point:read`     | Startpunkte ansehen           |
+| `start_point:create`   | Startpunkt anlegen            |
+| `start_point:update`   | Startpunkt bearbeiten         |
+| `start_point:delete`   | Startpunkt entfernen          |
 | `vehicle:read`         | Fahrzeuge ansehen             |
 | `vehicle:create`       | Fahrzeug anlegen              |
 | `vehicle:update`       | Fahrzeug bearbeiten           |

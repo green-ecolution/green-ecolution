@@ -6,10 +6,10 @@ use crate::auth_helpers::AuthHarness;
 use crate::helpers::{TestApp, seed_user_with_permissions, spawn_app_with_routing_and_auth};
 
 const VEHICLE_PERMS: &[&str] = &["vehicle:read", "vehicle:create", "vehicle:update"];
-const PLAN_PERMS: &[&str] = &[
-    "watering_plan:read",
-    "watering_plan:create",
-    "watering_plan:update",
+const START_POINT_PERMS: &[&str] = &[
+    "start_point:read",
+    "start_point:create",
+    "start_point:update",
 ];
 
 fn vehicle_payload(plate: &str, org: Uuid) -> serde_json::Value {
@@ -205,9 +205,10 @@ async fn archive_by_foreign_org_yields_404() {
 #[tokio::test]
 async fn foreign_org_sees_no_start_points() {
     let (harness, app) = spawn().await;
-    let (org_a, token_a) = seed_user_with_permissions(&harness, &app, "Org A", PLAN_PERMS).await;
+    let (org_a, token_a) =
+        seed_user_with_permissions(&harness, &app, "Org A", START_POINT_PERMS).await;
     let (_org_b, token_b) =
-        seed_user_with_permissions(&harness, &app, "Org B", &["watering_plan:read"]).await;
+        seed_user_with_permissions(&harness, &app, "Org B", &["start_point:read"]).await;
     let client = reqwest::Client::new();
 
     let created: serde_json::Value = client
@@ -276,7 +277,8 @@ async fn foreign_org_sees_no_start_points() {
 #[tokio::test]
 async fn update_start_point_without_update_permission_yields_403() {
     let (harness, app) = spawn().await;
-    let (org, token_admin) = seed_user_with_permissions(&harness, &app, "Org", PLAN_PERMS).await;
+    let (org, token_admin) =
+        seed_user_with_permissions(&harness, &app, "Org", START_POINT_PERMS).await;
     let client = reqwest::Client::new();
 
     let created: serde_json::Value = client
@@ -297,7 +299,7 @@ async fn update_start_point_without_update_permission_yields_403() {
         .unwrap();
     let sp_id = created["id"].as_str().unwrap().to_owned();
 
-    let token_reader = seed_reader_in_org(&harness, &app, org, "watering_plan:read").await;
+    let token_reader = seed_reader_in_org(&harness, &app, org, "start_point:read").await;
 
     let update_resp = client
         .put(format!(
@@ -317,6 +319,6 @@ async fn update_start_point_without_update_permission_yields_403() {
     assert_eq!(
         update_resp.status(),
         403,
-        "watering_plan:read alone must not allow a start point update"
+        "start_point:read alone must not allow a start point update"
     );
 }

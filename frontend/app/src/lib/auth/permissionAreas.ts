@@ -57,6 +57,7 @@ const AREA_DEFINITIONS: readonly AreaDefinition[] = [
   { resource: 'sensor', group: 'greenspaces' },
   { resource: 'region', group: 'greenspaces' },
   { resource: 'watering_plan', group: 'operations' },
+  { resource: 'start_point', group: 'operations' },
   { resource: 'vehicle', group: 'operations' },
   { resource: 'user', group: 'administration' },
   { resource: 'organization', group: 'administration' },

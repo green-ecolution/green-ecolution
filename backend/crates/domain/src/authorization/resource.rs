@@ -20,7 +20,8 @@ impl ResourceKey {
     pub const ROLE: Self = Self("role");
     pub const PLUGIN: Self = Self("plugin");
     pub const SETTING: Self = Self("setting");
-    pub const CORE: [Self; 8] = [
+    pub const START_POINT: Self = Self("start_point");
+    pub const CORE: [Self; 9] = [
         Self::SENSOR,
         Self::VEHICLE,
         Self::REGION,
@@ -29,6 +30,7 @@ impl ResourceKey {
         Self::ROLE,
         Self::PLUGIN,
         Self::SETTING,
+        Self::START_POINT,
     ];
 
     /// Unchecked so modules can declare keys as constants.
@@ -125,21 +127,21 @@ mod tests {
     const TREE: ResourceKey = ResourceKey::declare("tree");
 
     #[test]
-    fn core_catalog_has_eight_resources() {
-        assert_eq!(ResourceCatalog::core().resources().len(), 8);
+    fn core_catalog_has_nine_resources() {
+        assert_eq!(ResourceCatalog::core().resources().len(), 9);
     }
 
     #[test]
     fn module_resources_follow_the_core() {
         let catalog = ResourceCatalog::new([TREE]).unwrap();
-        assert_eq!(catalog.resources().len(), 9);
-        assert_eq!(catalog.resources()[8], TREE);
+        assert_eq!(catalog.resources().len(), 10);
+        assert_eq!(catalog.resources()[9], TREE);
     }
 
     #[test]
     fn permissions_are_resources_times_actions() {
         let catalog = ResourceCatalog::new([TREE]).unwrap();
-        assert_eq!(catalog.permissions().len(), 9 * 4);
+        assert_eq!(catalog.permissions().len(), 10 * 4);
     }
 
     #[test]

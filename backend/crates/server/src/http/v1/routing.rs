@@ -12,7 +12,7 @@ use crate::{
 };
 use domain::{
     Id,
-    authorization::{Action, Permission},
+    authorization::{Action, Permission, ResourceKey},
 };
 
 use super::{
@@ -59,7 +59,7 @@ pub async fn list_routing_start_points(
         .authorization_service
         .visible_orgs_for(
             user.id,
-            Permission::new(crate::irrigation::resources::WATERING_PLAN, Action::Read),
+            Permission::new(ResourceKey::START_POINT, Action::Read),
         )
         .await?;
     let points = state.start_point_service.list(visible).await?;
@@ -88,7 +88,7 @@ pub async fn create_start_point(
         .authorization_service
         .require(
             user.id,
-            Permission::new(crate::irrigation::resources::WATERING_PLAN, Action::Create),
+            Permission::new(ResourceKey::START_POINT, Action::Create),
             org,
         )
         .await?;
@@ -104,7 +104,7 @@ pub async fn create_start_point(
     request_body = StartPointRequest,
     responses(
         (status = 200, description = "Start point updated", body = StartPointResponse),
-        (status = 403, description = "Missing watering_plan:update in the owning organization", body = ErrorBody),
+        (status = 403, description = "Missing start_point:update in the owning organization", body = ErrorBody),
         (status = 404, description = "Start point not found", body = ErrorBody),
         (status = 503, description = "Routing feature is disabled (code `feature.routing_disabled`)", body = ErrorBody),
     )
@@ -121,14 +121,14 @@ pub async fn update_start_point(
     let ctx = state.authorization_service.context_for(user.id).await?;
     scope::ensure_visible(
         &ctx,
-        Permission::new(crate::irrigation::resources::WATERING_PLAN, Action::Read),
+        Permission::new(ResourceKey::START_POINT, Action::Read),
         current.organization_id().value(),
     )?;
     state
         .authorization_service
         .require(
             user.id,
-            Permission::new(crate::irrigation::resources::WATERING_PLAN, Action::Update),
+            Permission::new(ResourceKey::START_POINT, Action::Update),
             current.organization_id(),
         )
         .await?;
@@ -147,7 +147,7 @@ pub async fn update_start_point(
     responses(
         (status = 204, description = "Start point deleted"),
         (status = 400, description = "Cannot delete the default start point", body = ErrorBody),
-        (status = 403, description = "Missing watering_plan:delete in the owning organization", body = ErrorBody),
+        (status = 403, description = "Missing start_point:delete in the owning organization", body = ErrorBody),
         (status = 404, description = "Start point not found", body = ErrorBody),
         (status = 503, description = "Routing feature is disabled (code `feature.routing_disabled`)", body = ErrorBody),
     )
@@ -163,14 +163,14 @@ pub async fn delete_start_point(
     let ctx = state.authorization_service.context_for(user.id).await?;
     scope::ensure_visible(
         &ctx,
-        Permission::new(crate::irrigation::resources::WATERING_PLAN, Action::Read),
+        Permission::new(ResourceKey::START_POINT, Action::Read),
         current.organization_id().value(),
     )?;
     state
         .authorization_service
         .require(
             user.id,
-            Permission::new(crate::irrigation::resources::WATERING_PLAN, Action::Delete),
+            Permission::new(ResourceKey::START_POINT, Action::Delete),
             current.organization_id(),
         )
         .await?;
@@ -184,7 +184,7 @@ pub async fn delete_start_point(
     params(("start_point_id" = uuid::Uuid, Path, description = "Start point ID")),
     responses(
         (status = 204, description = "Default set"),
-        (status = 403, description = "Missing watering_plan:update in the owning organization", body = ErrorBody),
+        (status = 403, description = "Missing start_point:update in the owning organization", body = ErrorBody),
         (status = 404, description = "Start point not found", body = ErrorBody),
         (status = 503, description = "Routing feature is disabled (code `feature.routing_disabled`)", body = ErrorBody),
     )
@@ -200,14 +200,14 @@ pub async fn set_default_start_point(
     let ctx = state.authorization_service.context_for(user.id).await?;
     scope::ensure_visible(
         &ctx,
-        Permission::new(crate::irrigation::resources::WATERING_PLAN, Action::Read),
+        Permission::new(ResourceKey::START_POINT, Action::Read),
         current.organization_id().value(),
     )?;
     state
         .authorization_service
         .require(
             user.id,
-            Permission::new(crate::irrigation::resources::WATERING_PLAN, Action::Update),
+            Permission::new(ResourceKey::START_POINT, Action::Update),
             current.organization_id(),
         )
         .await?;
@@ -221,12 +221,12 @@ pub async fn set_default_start_point(
     description = "Moves a start point to a different owning organization. If it was the \
                    default for its organization, it loses that status (the target \
                    organization's own default, if any, is left untouched). Requires \
-                   `watering_plan:update` in both the source and target organization.",
+                   `start_point:update` in both the source and target organization.",
     params(("start_point_id" = uuid::Uuid, Path, description = "Start point ID")),
     request_body = TransferRequest,
     responses(
         (status = 204, description = "Start point transferred"),
-        (status = 403, description = "Missing watering_plan:update in source or target organization", body = ErrorBody),
+        (status = 403, description = "Missing start_point:update in source or target organization", body = ErrorBody),
         (status = 404, description = "Start point or organization not found", body = ErrorBody),
         (status = 503, description = "Routing feature is disabled (code `feature.routing_disabled`)", body = ErrorBody),
     )
@@ -243,10 +243,10 @@ pub async fn transfer_start_point(
     let ctx = state.authorization_service.context_for(user.id).await?;
     scope::ensure_visible(
         &ctx,
-        Permission::new(crate::irrigation::resources::WATERING_PLAN, Action::Read),
+        Permission::new(ResourceKey::START_POINT, Action::Read),
         current.organization_id().value(),
     )?;
-    let perm = Permission::new(crate::irrigation::resources::WATERING_PLAN, Action::Update);
+    let perm = Permission::new(ResourceKey::START_POINT, Action::Update);
     state
         .authorization_service
         .require(user.id, perm, current.organization_id())

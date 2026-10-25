@@ -518,6 +518,18 @@
           "delete": "Einsatzplan dauerhaft entfernen"
         }
       },
+      "start_point": {
+        "label": "Startpunkte",
+        "pluralNoun": "Startpunkte",
+        "singular": "Startpunkt",
+        "description": "Depots & Nachfüllstellen",
+        "hint": {
+          "read": "Startpunkte und Nachfüllstellen einsehen",
+          "create": "Neuen Startpunkt anlegen",
+          "update": "Name, Lage und Nachfüllfunktion ändern",
+          "delete": "Startpunkt entfernen"
+        }
+      },
       "vehicle": {
         "label": "Fahrzeuge",
         "pluralNoun": "Fahrzeuge",

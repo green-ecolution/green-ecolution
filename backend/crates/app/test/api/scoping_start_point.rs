@@ -183,3 +183,81 @@ async fn create_start_point_requires_create_permission_in_target_org() {
         .unwrap();
     assert_eq!(resp.status(), 403);
 }
+
+async fn user_token_with_permissions(
+    harness: &AuthHarness,
+    app: &crate::helpers::TestApp,
+    permissions: &[&str],
+) -> String {
+    let org = uuid::Uuid::parse_str(ROOT_ORG).unwrap();
+    let role_id = uuid::Uuid::now_v7();
+    let permissions: Vec<String> = permissions.iter().map(|p| p.to_string()).collect();
+    sqlx::query(
+        "INSERT INTO roles (id, organization_id, name, permissions) VALUES ($1, $2, $4, $3)",
+    )
+    .bind(role_id)
+    .bind(org)
+    .bind(permissions)
+    .bind(format!("role-{role_id}"))
+    .execute(&app.db_pool)
+    .await
+    .unwrap();
+    let user_id = uuid::Uuid::new_v4();
+    sqlx::query("INSERT INTO user_profiles (id, organization_id) VALUES ($1, $2)")
+        .bind(user_id)
+        .bind(org)
+        .execute(&app.db_pool)
+        .await
+        .unwrap();
+    sqlx::query("INSERT INTO role_assignments (user_id, role_id) VALUES ($1, $2)")
+        .bind(user_id)
+        .bind(role_id)
+        .execute(&app.db_pool)
+        .await
+        .unwrap();
+    harness.sign_token(json!({ "sub": user_id.to_string() }))
+}
+
+#[tokio::test]
+async fn start_point_writes_need_the_start_point_resource() {
+    let streamlet = mock_streamlet().await;
+    let harness = AuthHarness::start().await;
+    let app = spawn_app_with_routing_and_auth(&streamlet.uri(), harness.auth_settings(true)).await;
+    let depot: uuid::Uuid = sqlx::query_scalar("SELECT id FROM depots LIMIT 1")
+        .fetch_one(&app.db_pool)
+        .await
+        .unwrap();
+    let url = format!("{}/api/v1/routing/start-points/{depot}", app.address);
+    let body = start_point_payload("Depot Nord", 54.7, 9.4, None);
+
+    let planner = user_token_with_permissions(
+        &harness,
+        &app,
+        &["watering_plan:read", "watering_plan:update"],
+    )
+    .await;
+    let response = reqwest::Client::new()
+        .put(&url)
+        .bearer_auth(&planner)
+        .json(&body)
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(
+        response.status(),
+        404,
+        "without start_point:read the depot is invisible"
+    );
+
+    let keeper =
+        user_token_with_permissions(&harness, &app, &["start_point:read", "start_point:update"])
+            .await;
+    let response = reqwest::Client::new()
+        .put(&url)
+        .bearer_auth(&keeper)
+        .json(&body)
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(response.status(), 200);
+}

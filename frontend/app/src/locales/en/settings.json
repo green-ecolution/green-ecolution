@@ -518,6 +518,18 @@
           "delete": "Remove a watering plan permanently"
         }
       },
+      "start_point": {
+        "label": "Start points",
+        "pluralNoun": "start points",
+        "singular": "start point",
+        "description": "Depots & refill stations",
+        "hint": {
+          "read": "View start points and refill stations",
+          "create": "Add a start point",
+          "update": "Change name, location and refill role",
+          "delete": "Remove a start point"
+        }
+      },
       "vehicle": {
         "label": "Vehicles",
         "pluralNoun": "vehicles",
