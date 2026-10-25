@@ -24,11 +24,8 @@ use irrigation_domain::{
     tree::{Tree, TreeReader, TreeWriter, volumetric_thresholds},
 };
 
-use super::{
-    OrganizationMismatch, ServiceError, event_bus::EventBus,
-    operation_plan_service::OperationPlanService,
-};
-use crate::irrigation;
+use super::{event_bus::EventBus, operation_plan_service::OperationPlanService};
+use crate::irrigation::{self, error::IrrigationError};
 
 pub struct ClusterService {
     reader: Arc<dyn TreeClusterReader>,
@@ -73,7 +70,7 @@ impl ClusterService {
         &self,
         query: TreeClusterSearchQuery,
         pagination: Pagination,
-    ) -> Result<SearchPage<TreeClusterView>, ServiceError> {
+    ) -> Result<SearchPage<TreeClusterView>, IrrigationError> {
         Ok(self.reader.view_search(query, pagination).await?)
     }
 
@@ -81,7 +78,7 @@ impl ClusterService {
     pub async fn view_markers(
         &self,
         visible: Visibility,
-    ) -> Result<Vec<ClusterMarker>, ServiceError> {
+    ) -> Result<Vec<ClusterMarker>, IrrigationError> {
         Ok(self.reader.view_markers(visible).await?)
     }
 
@@ -89,22 +86,28 @@ impl ClusterService {
     pub async fn boundaries(
         &self,
         visible: Visibility,
-    ) -> Result<Vec<ClusterBoundaryView>, ServiceError> {
+    ) -> Result<Vec<ClusterBoundaryView>, IrrigationError> {
         Ok(self.reader.boundaries(visible).await?)
     }
 
     #[tracing::instrument(level = "debug", skip_all, fields(cluster.id = %id))]
-    pub async fn by_id(&self, id: Id<TreeCluster>) -> Result<TreeCluster, ServiceError> {
+    pub async fn by_id(&self, id: Id<TreeCluster>) -> Result<TreeCluster, IrrigationError> {
         Ok(self.reader.by_id(id).await?)
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    pub async fn by_ids(&self, ids: &[Id<TreeCluster>]) -> Result<Vec<TreeCluster>, ServiceError> {
+    pub async fn by_ids(
+        &self,
+        ids: &[Id<TreeCluster>],
+    ) -> Result<Vec<TreeCluster>, IrrigationError> {
         Ok(self.reader.by_ids(ids).await?)
     }
 
     #[tracing::instrument(level = "debug", skip_all, fields(cluster.id = %id))]
-    pub async fn view_by_id(&self, id: Id<TreeCluster>) -> Result<TreeClusterView, ServiceError> {
+    pub async fn view_by_id(
+        &self,
+        id: Id<TreeCluster>,
+    ) -> Result<TreeClusterView, IrrigationError> {
         Ok(self.reader.view_by_id(id).await?)
     }
 
@@ -115,19 +118,19 @@ impl ClusterService {
         &self,
         tree_ids: &[Id<Tree>],
         org: Id<Organization>,
-    ) -> Result<(), ServiceError> {
+    ) -> Result<(), IrrigationError> {
         if tree_ids.is_empty() {
             return Ok(());
         }
         let trees = self.tree_reader.by_ids(tree_ids).await?;
         if trees.iter().any(|t| t.organization_id() != org) {
-            return Err(OrganizationMismatch::TreesVsCluster.into());
+            return Err(IrrigationError::TreesVsCluster);
         }
         Ok(())
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    pub async fn create(&self, draft: TreeClusterDraft) -> Result<TreeCluster, ServiceError> {
+    pub async fn create(&self, draft: TreeClusterDraft) -> Result<TreeCluster, IrrigationError> {
         self.ensure_trees_match_org(&draft.tree_ids, draft.organization_id)
             .await?;
         let source_events = self.source_cluster_events(&draft.tree_ids, None).await?;
@@ -148,7 +151,7 @@ impl ClusterService {
         &self,
         id: Id<TreeCluster>,
         update: TreeClusterUpdate,
-    ) -> Result<TreeCluster, ServiceError> {
+    ) -> Result<TreeCluster, IrrigationError> {
         let mut cluster = self.reader.by_id(id).await?;
         self.ensure_trees_match_org(&update.tree_ids, cluster.organization_id())
             .await?;
@@ -177,7 +180,7 @@ impl ClusterService {
         &self,
         tree_ids: &[Id<Tree>],
         target: Option<Id<TreeCluster>>,
-    ) -> Result<Vec<DomainEvent>, ServiceError> {
+    ) -> Result<Vec<DomainEvent>, IrrigationError> {
         if tree_ids.is_empty() {
             return Ok(Vec::new());
         }
@@ -194,7 +197,7 @@ impl ClusterService {
     }
 
     #[tracing::instrument(level = "debug", skip_all, fields(cluster.id = %id))]
-    pub async fn delete(&self, id: Id<TreeCluster>) -> Result<(), ServiceError> {
+    pub async fn delete(&self, id: Id<TreeCluster>) -> Result<(), IrrigationError> {
         let trees = self.tree_reader.by_cluster_id(id).await?;
         let mut events = Vec::new();
         for mut tree in trees {
@@ -218,7 +221,7 @@ impl ClusterService {
     }
 
     #[tracing::instrument(level = "debug", skip_all, fields(cluster.id = %id))]
-    pub async fn archive(&self, id: Id<TreeCluster>) -> Result<(), ServiceError> {
+    pub async fn archive(&self, id: Id<TreeCluster>) -> Result<(), IrrigationError> {
         Ok(self.writer.archive(id).await?)
     }
 
@@ -234,7 +237,7 @@ impl ClusterService {
         &self,
         org: Id<Organization>,
         cutoff: DateTime<Utc>,
-    ) -> Result<usize, ServiceError> {
+    ) -> Result<usize, IrrigationError> {
         let clusters = self.reader.just_watered_before(org, cutoff).await?;
         let mut expired = 0;
 
@@ -249,7 +252,7 @@ impl ClusterService {
         Ok(expired)
     }
 
-    async fn release_just_watered(&self, cluster: &mut TreeCluster) -> Result<(), ServiceError> {
+    async fn release_just_watered(&self, cluster: &mut TreeCluster) -> Result<(), IrrigationError> {
         let mut trees = self.tree_reader.by_ids(&cluster.tree_ids).await?;
         for tree in trees.iter_mut() {
             if tree.expire_just_watered() {
@@ -269,13 +272,16 @@ impl ClusterService {
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    pub async fn statistics(&self, visible: Visibility) -> Result<ClusterStatistics, ServiceError> {
+    pub async fn statistics(
+        &self,
+        visible: Visibility,
+    ) -> Result<ClusterStatistics, IrrigationError> {
         Ok(self.reader.statistics(visible).await?)
     }
 
     /// Sensors attached to the trees of the cluster, ordered by id.
     #[tracing::instrument(level = "debug", skip_all, fields(cluster.id = %id))]
-    pub async fn sensor_ids(&self, id: Id<TreeCluster>) -> Result<Vec<SensorId>, ServiceError> {
+    pub async fn sensor_ids(&self, id: Id<TreeCluster>) -> Result<Vec<SensorId>, IrrigationError> {
         let tree_ids: Vec<Id<Tree>> = self
             .tree_reader
             .by_cluster_id(id)
@@ -297,7 +303,7 @@ impl ClusterService {
     pub async fn center_point(
         &self,
         id: Id<TreeCluster>,
-    ) -> Result<Option<Coordinate>, ServiceError> {
+    ) -> Result<Option<Coordinate>, IrrigationError> {
         Ok(self.reader.center_point(id).await?)
     }
 
@@ -310,7 +316,7 @@ impl ClusterService {
         from: DateTime<Utc>,
         to: DateTime<Utc>,
         bucket: SoilMoistureBucket,
-    ) -> Result<SoilMoistureOverview, ServiceError> {
+    ) -> Result<SoilMoistureOverview, IrrigationError> {
         let view = self.reader.view_by_id(id).await?;
         let series = self
             .reader
@@ -350,7 +356,7 @@ impl ClusterService {
         &self,
         id: Id<TreeCluster>,
         target: Id<Organization>,
-    ) -> Result<(), ServiceError> {
+    ) -> Result<(), IrrigationError> {
         let mut cluster = self.reader.by_id(id).await?;
         let mut events = cluster.transfer_to(target);
         self.writer.save(&cluster).await?;

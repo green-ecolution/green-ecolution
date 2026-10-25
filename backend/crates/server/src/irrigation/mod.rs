@@ -2,6 +2,7 @@
 //! services and adapters below still sit in the server crate until they move
 //! into `irrigation-server`.
 
+pub mod error;
 pub mod handlers;
 pub mod planning;
 pub mod settings;

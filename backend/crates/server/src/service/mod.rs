@@ -143,10 +143,6 @@ pub enum ServiceError {
     OrganizationMismatch(#[from] OrganizationMismatch),
     #[error("contact person is not a member of this organization")]
     ContactPersonNotAMember,
-    #[error("tree is part of a cluster")]
-    TreeInCluster,
-    #[error("tree is not planted yet and cannot carry a sensor")]
-    TreeNotYetPlanted,
     #[error("sensor is attached to a target and must be transferred with it")]
     SensorBoundToTarget,
     #[error("no organization given and the acting user has none")]
@@ -214,8 +210,6 @@ impl ServiceError {
             Self::AlreadyActivated => "conflict.sensor_already_activated",
             Self::NotActivated => "conflict.sensor_not_activated",
             Self::OrganizationNotEmpty => "conflict.organization_not_empty",
-            Self::TreeInCluster => "conflict.tree_in_cluster",
-            Self::TreeNotYetPlanted => "tree.not_yet_planted",
             Self::SensorBoundToTarget => "conflict.sensor_bound_to_target",
             Self::CannotChangeOwnAccess => "conflict.cannot_change_own_access",
             Self::CannotRevokeOwnAdministration => "conflict.cannot_revoke_own_administration",
@@ -254,18 +248,6 @@ impl ServiceError {
             _ => return None,
         };
         Some(ValidationIssue::from(error))
-    }
-}
-
-/// Only `NotYetPlanted` actually travels this way: the calibration variants
-/// are consumed by the reading handler and never reach a service.
-impl From<irrigation_domain::tree::TreeError> for ServiceError {
-    fn from(e: irrigation_domain::tree::TreeError) -> Self {
-        match e {
-            irrigation_domain::tree::TreeError::NotYetPlanted => Self::TreeNotYetPlanted,
-            irrigation_domain::tree::TreeError::Validation(v) => Self::Validation(v),
-            other => Self::InvalidInput(other.to_string()),
-        }
     }
 }
 
@@ -327,10 +309,6 @@ fn operation_plan_code(e: &OperationPlanError) -> &'static str {
 /// `Display` text is a fallback for clients without their own wording.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, thiserror::Error)]
 pub enum OrganizationMismatch {
-    #[error("the selected trees belong to a different organization than the cluster")]
-    TreesVsCluster,
-    #[error("the selected cluster belongs to a different organization than the tree")]
-    ClusterVsTree,
     #[error("the sensor belongs to a different organization than its target")]
     SensorVsTarget,
     #[error("the selected stops are outside the plan's organization")]
@@ -342,8 +320,6 @@ pub enum OrganizationMismatch {
 impl OrganizationMismatch {
     pub fn code(self) -> &'static str {
         match self {
-            Self::TreesVsCluster => "organization_mismatch.trees_vs_cluster",
-            Self::ClusterVsTree => "organization_mismatch.cluster_vs_tree",
             Self::SensorVsTarget => "organization_mismatch.sensor_vs_target",
             Self::StopsVsPlan => "organization_mismatch.stops_vs_plan",
             Self::RoleVsUser => "organization_mismatch.role_vs_user",
@@ -464,13 +440,10 @@ mod tests {
             ServiceError::Role(domain::role::RoleError::TemplateImmutable),
             ServiceError::Role(domain::role::RoleError::CannotAssignTemplate),
             ServiceError::OrganizationNotEmpty,
-            ServiceError::OrganizationMismatch(OrganizationMismatch::TreesVsCluster),
-            ServiceError::OrganizationMismatch(OrganizationMismatch::ClusterVsTree),
             ServiceError::OrganizationMismatch(OrganizationMismatch::SensorVsTarget),
             ServiceError::OrganizationMismatch(OrganizationMismatch::StopsVsPlan),
             ServiceError::OrganizationMismatch(OrganizationMismatch::RoleVsUser),
             ServiceError::ContactPersonNotAMember,
-            ServiceError::TreeInCluster,
             ServiceError::SensorBoundToTarget,
             ServiceError::MissingOrganization,
             ServiceError::CannotChangeOwnAccess,

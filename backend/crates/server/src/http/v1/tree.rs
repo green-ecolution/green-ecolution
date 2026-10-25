@@ -360,7 +360,7 @@ async fn ensure_sensor_fits(
     )
     .await?;
     if planting_year.is_future(Utc::now()) {
-        return Err(ServiceError::TreeNotYetPlanted);
+        return Err(crate::irrigation::error::IrrigationError::TreeNotYetPlanted.into());
     }
     let here = tree.map(tree_target);
     if sensor.target.is_some() && sensor.target != here {
