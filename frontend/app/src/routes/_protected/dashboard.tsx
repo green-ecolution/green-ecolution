@@ -3,7 +3,7 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { useCurrentUser } from '@/lib/auth/useCurrentUser'
 import { LinkCard, LinkCardTitle, LinkCardDescription, LinkCardFooter } from '@green-ecolution/ui'
-import { cardDescriptionKeys } from '@/modules/dashboard'
+import { cardDescriptionKeys, coreCardsShown } from '@/modules/dashboard'
 import { useActiveModules } from '@/modules/useActiveModules'
 
 export const Route = createFileRoute('/_protected/dashboard')({
@@ -17,39 +17,40 @@ function Dashboard() {
   const tiles = manifests.flatMap((manifest) => manifest.dashboardTiles ?? [])
   const descriptionKeys = cardDescriptionKeys(manifests)
 
-  const cards = [
+  const shown = coreCardsShown(manifests)
+
+  const mapCard = {
+    url: '/map',
+    description: descriptionKeys.map ? i18n.t(descriptionKeys.map) : t('cards.map.description'),
+    headline: t('cards.map.headline'),
+    linkLabel: t('cards.map.linkLabel'),
+  }
+  const otherCards = [
     {
-      id: 1,
-      url: '/map',
-      description: descriptionKeys.map ? i18n.t(descriptionKeys.map) : t('cards.map.description'),
-      headline: t('cards.map.headline'),
-      linkLabel: t('cards.map.linkLabel'),
-    },
-    {
-      id: 2,
       url: '/sensors',
       description: t('cards.sensors.description'),
       headline: t('cards.sensors.headline'),
       linkLabel: t('cards.sensors.linkLabel'),
     },
+    ...(shown.plans
+      ? [
+          {
+            url: '/watering-plans',
+            description: descriptionKeys.plans
+              ? i18n.t(descriptionKeys.plans)
+              : t('cards.wateringPlans.description'),
+            headline: t('cards.wateringPlans.headline'),
+            linkLabel: t('cards.wateringPlans.linkLabel'),
+          },
+        ]
+      : []),
     {
-      id: 3,
-      url: '/watering-plans',
-      description: descriptionKeys.plans
-        ? i18n.t(descriptionKeys.plans)
-        : t('cards.wateringPlans.description'),
-      headline: t('cards.wateringPlans.headline'),
-      linkLabel: t('cards.wateringPlans.linkLabel'),
-    },
-    {
-      id: 4,
       url: '/settings',
       description: t('cards.settings.description'),
       headline: t('cards.settings.headline'),
       linkLabel: t('cards.settings.linkLabel'),
     },
     {
-      id: 5,
       url: '/settings/profile',
       description: t('cards.profile.description'),
       headline: t('cards.profile.headline'),
@@ -57,16 +58,15 @@ function Dashboard() {
     },
   ]
 
-  // Module tiles slot in after the map card, where the irrigation card sat before.
-  const [mapCard, ...otherCards] = cards
   const cardEntry = (card: DashboardCardProps['card']) => ({
     id: card.url,
     render: (variant: DashboardCardProps['variant']) => (
       <DashboardCard card={card} variant={variant} />
     ),
   })
+  // Module tiles slot in after the map card, where the irrigation card sat before.
   const entries = [
-    cardEntry(mapCard),
+    ...(shown.map ? [cardEntry(mapCard)] : []),
     ...tiles.map((Tile, index) => ({
       id: `tile-${index}`,
       render: (variant: DashboardCardProps['variant']) => <Tile variant={variant} />,
