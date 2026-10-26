@@ -1,3 +1,4 @@
+import { CLUSTER_FORM } from './formTypes'
 import { irrigationRoots } from '../../api/queries'
 import type { TreeCluster, TreeClusterCreate, TreeClusterUpdate } from '../../api/client'
 import { clusterApi } from '../../api/client'
@@ -25,7 +26,7 @@ export const useTreeClusterForm = (
     TreeClusterUpdate,
     TreeCluster
   > = {
-    formType: 'cluster',
+    formType: CLUSTER_FORM,
     resolver: clusterDraftResolver<TreeclusterForm>(translate),
 
     createFn: (body) => clusterApi.createCluster({ treeClusterCreateRequest: body }),

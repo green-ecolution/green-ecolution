@@ -1,3 +1,4 @@
+import { WATERING_PLAN_FORM } from '@/store/form/formDraftSlice'
 import { queryRoots } from '@/api/queries'
 import type { PlanResponse, WateringPlanCreate, WateringPlanUpdate } from '@/api/backendApi'
 import { planApi } from '@/api/backendApi'
@@ -22,7 +23,7 @@ export const useWateringPlanForm = (
     WateringPlanUpdate,
     PlanResponse
   > = {
-    formType: 'wateringplan',
+    formType: WATERING_PLAN_FORM,
     resolver: wateringPlanDraftResolver<WateringPlanForm>(translate),
 
     createFn: (body) => planApi.createPlan({ planCreateRequest: toPlanCreateRequest(body) }),

@@ -1,3 +1,4 @@
+import { VEHICLE_FORM } from '@/store/form/formDraftSlice'
 import { queryRoots } from '@/api/queries'
 import type { Vehicle } from '@/api/backendApi'
 import { vehicleApi } from '@/api/backendApi'
@@ -27,7 +28,7 @@ export const useVehicleForm = (
   const { t } = useTranslation('vehicle')
 
   const vehicleConfig: EntityFormConfig<VehicleForm, VehicleForm, VehicleForm, Vehicle> = {
-    formType: 'vehicle',
+    formType: VEHICLE_FORM,
     resolver: vehicleDraftResolver<VehicleForm>(translate),
 
     createFn: (body) => vehicleApi.createVehicle({ vehicleCreateRequest: toRequest(body) }),

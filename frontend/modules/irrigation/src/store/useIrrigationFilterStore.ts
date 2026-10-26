@@ -74,6 +74,7 @@ const useIrrigationFilterStore = create<FilterDraftSlice>()(
           state.filterDraft = emptyFilters()
         }),
     })),
+    { name: 'irrigation-filter' },
   ),
 )
 

@@ -1,3 +1,4 @@
+import { TREE_FORM } from './formTypes'
 import { irrigationRoots } from '../../api/queries'
 import type { Tree, TreeCreate, TreeUpdate } from '../../api/client'
 import { treeApi } from '../../api/client'
@@ -16,7 +17,7 @@ export const useTreeForm = (
   const { t } = useTranslation('tree')
 
   const treeConfig: EntityFormConfig<TreeForm, TreeCreate, TreeUpdate, Tree> = {
-    formType: 'tree',
+    formType: TREE_FORM,
     resolver: treeDraftResolver<TreeForm>(translate),
 
     createFn: (body) => treeApi.createTree({ treeCreateRequest: body }),
