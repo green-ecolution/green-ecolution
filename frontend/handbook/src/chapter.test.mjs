@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { parseChapter } from './chapter.mjs'
 
-const chapter = (body) =>
+const chapter = (body, extra = []) =>
   [
     '---',
     'slug: demo',
@@ -9,6 +9,7 @@ const chapter = (body) =>
     'part: intro',
     'summary: Kurzbeschreibung.',
     "routes: ['/demo']",
+    ...extra,
     '---',
     '',
     body,
@@ -25,6 +26,37 @@ describe('parseChapter', () => {
       summary: 'Kurzbeschreibung.',
       routes: ['/demo'],
     })
+  })
+
+  it('reads the optional module key into meta', () => {
+    const { meta } = parseChapter(chapter('## A\n\nText.', ['module: irrigation']), {
+      file: '10-demo.md',
+    })
+
+    expect(meta.module).toBe('irrigation')
+  })
+
+  it('leaves module out of meta for a core chapter', () => {
+    const { meta } = parseChapter(chapter('## A\n\nText.'), { file: '10-demo.md' })
+
+    expect(meta).not.toHaveProperty('module')
+  })
+
+  it.each(['Irrigation', '1waste', 'waste-bin', '', 'a b'])(
+    'rejects the malformed module key %j',
+    (key) => {
+      const source = chapter('## A\n\nText.', [`module: ${JSON.stringify(key)}`])
+
+      expect(() => parseChapter(source, { file: '10-demo.md' })).toThrow(
+        /frontmatter module must match \^\[a-z\]\[a-z0-9_\]\*\$/,
+      )
+    },
+  )
+
+  it('rejects a module key that is not a string', () => {
+    const source = chapter('## A\n\nText.', ['module: 7'])
+
+    expect(() => parseChapter(source, { file: '10-demo.md' })).toThrow(/frontmatter module/)
   })
 
   it('collects sections with github-style anchors', () => {

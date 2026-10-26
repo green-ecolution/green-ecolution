@@ -69,6 +69,20 @@ describe('chapterNeighbours', () => {
     expect(next).toBeNull()
   })
 
+  it('steps over chapters the filter hides', () => {
+    const { previous, next } = chapterNeighbours('trees', (slug) => slug !== 'treecluster')
+
+    expect(previous?.slug).toBe('map')
+    expect(next?.slug).toBe('watering-plans')
+  })
+
+  it('keeps a hidden chapter itself in the order', () => {
+    const { previous, next } = chapterNeighbours('trees', (slug) => slug !== 'trees')
+
+    expect(previous?.slug).toBe('map')
+    expect(next?.slug).toBe('treecluster')
+  })
+
   it('rejects an unknown chapter', () => {
     expect(() => chapterNeighbours('nope')).toThrow(/unknown chapter/)
   })
@@ -81,5 +95,11 @@ describe('firstChapter', () => {
       title: 'Über Green Ecolution',
       partTitle: 'Einstieg',
     })
+  })
+})
+
+describe('firstChapter with a filter', () => {
+  it('opens with the first visible chapter', () => {
+    expect(firstChapter((slug) => slug !== 'introduction').slug).toBe('getting-started')
   })
 })

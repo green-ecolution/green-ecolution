@@ -32,6 +32,8 @@ export interface ChapterMeta {
   part: string
   summary: string
   routes: string[]
+  /** Set on chapters that describe a module's feature; hidden from users who have that module off. */
+  module?: string
   sections: ChapterSection[]
 }
 

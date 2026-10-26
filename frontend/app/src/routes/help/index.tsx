@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { Download, MoveRight } from 'lucide-react'
 import { Button } from '@green-ecolution/ui'
 import { firstChapter, handbookIndex } from '@/lib/handbook'
+import { useChapterVisibility } from '@/lib/handbook/useChapterVisibility'
+import { visibleParts } from '@/lib/handbook/visibility'
 import HandbookSearch from '@/components/handbook/HandbookSearch'
 import LanguageFallbackNotice from '@/components/handbook/LanguageFallbackNotice'
 import type { ChapterMeta } from '@/lib/handbook/types'
@@ -10,8 +12,6 @@ import type { ChapterMeta } from '@/lib/handbook/types'
 export const Route = createFileRoute('/help/')({
   component: HandbookOverview,
 })
-
-const chapterCount = Object.keys(handbookIndex.chapters).length
 
 function topics(chapter: ChapterMeta): string {
   return chapter.sections
@@ -22,7 +22,10 @@ function topics(chapter: ChapterMeta): string {
 
 function HandbookOverview() {
   const { t } = useTranslation('help')
-  const opening = firstChapter()
+  const isVisible = useChapterVisibility()
+  const opening = firstChapter(isVisible)
+  const parts = visibleParts(handbookIndex.parts, isVisible)
+  const chapterCount = parts.reduce((sum, part) => sum + part.chapters.length, 0)
 
   return (
     <div className="container mt-6 mb-16">
@@ -36,7 +39,7 @@ function HandbookOverview() {
             </h1>
             <p>{t('page.description')}</p>
             <p className="mt-2 text-sm text-dark-500">
-              {t('page.scale', { chapters: chapterCount, parts: handbookIndex.parts.length })}
+              {t('page.scale', { chapters: chapterCount, parts: parts.length })}
             </p>
           </div>
           <Button asChild variant="outline" className="shrink-0">
@@ -69,7 +72,7 @@ function HandbookOverview() {
       </Link>
 
       <div className="mt-10 space-y-10">
-        {handbookIndex.parts.map((part) => (
+        {parts.map((part) => (
           <section key={part.id}>
             <h2 className="font-lato font-bold text-xl border-b border-dark-100 pb-2 mb-4">
               {part.title}

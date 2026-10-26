@@ -9,6 +9,10 @@ import {
 import type { ChapterSection } from '@/lib/handbook/types'
 import ChapterAside from './ChapterAside'
 
+vi.mock('@/lib/handbook/useChapterVisibility', () => ({
+  useChapterVisibility: () => () => true,
+}))
+
 const SECTIONS: ChapterSection[] = [
   { anchor: 'board', title: 'Board', level: 2 },
   { anchor: 'route', title: 'Route', level: 2 },
