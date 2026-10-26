@@ -4,6 +4,7 @@ import Tree from '@/components/icons/Tree'
 import { ANY_READ } from '@/lib/auth/permissions'
 import type { ModuleManifest } from '@/modules/types'
 import ClustersTile from './components/dashboard/ClustersTile'
+import { irrigationSettingsSection } from './components/settings/settingsSection'
 import { IRRIGATION } from './lib/targets'
 import { irrigationMap } from './map'
 import { irrigationPlanning } from './planning'
@@ -79,6 +80,7 @@ export const irrigationManifest: ModuleManifest = {
   map: irrigationMap,
   planning: irrigationPlanning,
   targets: [treeSensorTarget],
+  settingsSection: irrigationSettingsSection,
   // Lazy like the other slots; the series exists for any soil-moisture sensor,
   // the tree only adds thresholds and watering events.
   sensorInsights: lazy(() => import('./components/sensor/SensorSoilMoistureChart')),

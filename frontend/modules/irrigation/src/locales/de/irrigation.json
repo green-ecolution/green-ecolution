@@ -232,5 +232,17 @@
         "selectedTreeLabel": "Ausgewählter Baum"
       }
     }
+  },
+  "settings": {
+    "waterDemandLabel": "Wasserbedarf je Baum",
+    "waterDemandHint": "Geht in die Bedarfsrechnung jeder Bewässerungsgruppe ein und bestimmt damit, wie viele Gruppen eine Tourenplanung in eine Fahrt legt. Bereits geplante Einsätze bleiben unverändert.",
+    "waterDemandUnit": "Liter",
+    "justWateredTtlLabel": "Nachwirkzeit frisch gegossen",
+    "justWateredTtlHint": "So lange gilt ein Baum nach einem abgeschlossenen Einsatzplan als soeben bewässert, bevor er auf Unbekannt zurückfällt.",
+    "justWateredTtlUnit": "Stunden",
+    "liters_one": "{count} Liter",
+    "liters_other": "{count} Liter",
+    "hours_one": "{count} Stunde",
+    "hours_other": "{count} Stunden"
   }
 }

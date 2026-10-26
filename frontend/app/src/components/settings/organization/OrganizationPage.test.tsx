@@ -1,10 +1,10 @@
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, userEvent, waitFor, within } from '@/test/utils'
 import { UNRESTRICTED, type Permissions } from '@/lib/auth/permissions'
 import type {
-  IrrigationSettingsResponse,
   OrganizationDetailResponse,
+  OrganizationModulesResponse,
   OrganizationResponse,
   OrganizationSettingsResponse,
   UserResponse,
@@ -14,7 +14,12 @@ import type {
   DeleteOrganizationVariables,
   UpdateOrganizationVariables,
 } from '@/hooks/useOrganizationMutations'
-import type { UpdateSettingsVariables } from '@/hooks/useSettingsMutations'
+import type {
+  UpdateOrganizationModulesVariables,
+  UpdateSettingsVariables,
+} from '@/hooks/useSettingsMutations'
+import { defineSettingsSection } from '@/modules/settings'
+import type { ModuleManifest, ModuleSettingsDraft } from '@/modules/types'
 
 // The instance root ('root') sits above the user's own organization ('amt') and
 // must stay out of the tree. parentId is left off entirely rather than set to
@@ -58,21 +63,11 @@ const users: UserResponse[] = [
   member('u-bo', 'Bo', 'Boysen', 'nord'),
 ]
 
-// Water demand comes from the instance root above, the just-watered duration is
-// this organization's own — one field of each kind, as the section shows them.
-const irrigationOf = (): IrrigationSettingsResponse =>
+const modulesOf = (): OrganizationModulesResponse =>
   ({
-    waterDemand: { value: 80, origin: 'inherited', source: { id: 'root' }, lastChange: null },
-    justWateredTtlSecs: {
-      value: 86400,
-      origin: 'own',
-      ownValue: 86400,
-      // A Date, as the generated client parses it — this is what keeps the
-      // response from ever being referentially stable across a refetch.
-      lastChange: { changedAt: new Date('2026-03-12T09:00:00Z'), changedByName: 'ge.admin' },
-    },
     enforcedBy: null,
-  }) as unknown as IrrigationSettingsResponse
+    modules: [{ key: 'probe', enabled: true, origin: 'inherited', source: { id: 'root' } }],
+  }) as unknown as OrganizationModulesResponse
 
 const settingsOf = (): OrganizationSettingsResponse =>
   ({
@@ -89,7 +84,58 @@ const settingsOf = (): OrganizationSettingsResponse =>
 let orgList: OrganizationResponse[] = []
 let detailMap: Record<string, OrganizationDetailResponse> = {}
 let settingsMap: Record<string, OrganizationSettingsResponse> = {}
-let irrigationMap: Record<string, IrrigationSettingsResponse> = {}
+let modulesMap: Record<string, OrganizationModulesResponse> = {}
+
+// A module whose section is one text field; 'invalid' stands for a value its
+// validator refuses, so the page's dirty/valid bookkeeping can be watched.
+interface ProbeDraft extends ModuleSettingsDraft {
+  value: string
+  setValue: (value: string) => void
+}
+
+const probeSave = vi.fn((_orgId: string, _value: string) => Promise.resolve())
+const probeLoadError = vi.fn((): unknown => null)
+
+// Like a real module draft, it starts over for another organization.
+const useProbeDraft = (organizationId: string, { enabled }: { enabled: boolean }): ProbeDraft => {
+  const [edit, setEdit] = useState({ organizationId, value: '' })
+  const value = edit.organizationId === organizationId ? edit.value : ''
+  const valid = value !== 'invalid'
+  return {
+    loading: !enabled,
+    loadError: probeLoadError(),
+    dirty: valid && value !== '',
+    valid,
+    reset: () => setEdit({ organizationId, value: '' }),
+    save: () => probeSave(organizationId, value),
+    value,
+    setValue: (next) => setEdit({ organizationId, value: next }),
+  }
+}
+
+const probeManifest: ModuleManifest = {
+  key: 'probe',
+  labelKey: 'common:modules.irrigation',
+  i18n: { namespaces: [], load: () => Promise.resolve({}) },
+  settingsSection: defineSettingsSection<ProbeDraft>({
+    useDraft: useProbeDraft,
+    Section: ({ draft, locked, organizationName }) => (
+      <div>
+        <p>{`Probe-Vorgabe von ${organizationName('root') ?? '?'}`}</p>
+        <label>
+          Probewert
+          <input
+            value={draft.value}
+            disabled={locked}
+            onChange={(event) => draft.setValue(event.target.value)}
+          />
+        </label>
+      </div>
+    ),
+  }),
+}
+
+vi.mock('@/modules/registry', () => ({ moduleManifests: [probeManifest] }))
 
 const permissions = vi.fn((): Permissions => UNRESTRICTED)
 vi.mock('@/lib/auth/usePermissions', () => ({ usePermissions: () => permissions() }))
@@ -126,12 +172,20 @@ vi.mock('@/hooks/useOrganizationMutations', () => ({
   }),
 }))
 
-const updateSettingsMutate = vi.fn()
-vi.mock('@/hooks/useSettingsMutations', () => ({
+const updateSettingsMutate = vi.fn((_vars: UpdateSettingsVariables) => Promise.resolve())
+const updateModulesMutate = vi.fn((_vars: UpdateOrganizationModulesVariables) => Promise.resolve())
+vi.mock('@/hooks/useSettingsMutations', async () => ({
+  ...(await vi.importActual<typeof import('@/hooks/useSettingsMutations')>(
+    '@/hooks/useSettingsMutations',
+  )),
   useSettingsMutations: () => ({
-    updateSettings: { mutate: updateSettingsMutate, isPending: false, error: null, reset: vi.fn() },
+    updateSettings: { mutateAsync: updateSettingsMutate, isPending: false },
   }),
+  useUpdateOrganizationModules: () => ({ mutateAsync: updateModulesMutate, isPending: false }),
 }))
+
+const showToast = vi.fn()
+vi.mock('@/hooks/createToast', () => ({ default: () => showToast }))
 
 const blockerStatus = vi.fn((): string => 'idle')
 const blockerProceed = vi.fn()
@@ -145,7 +199,7 @@ const ownOrgId = vi.fn((): string => 'amt')
 const listError = vi.fn((): unknown => null)
 const detailError = vi.fn((): unknown => null)
 const settingsError = vi.fn((): unknown => null)
-const irrigationError = vi.fn((): unknown => null)
+const modulesError = vi.fn((): unknown => null)
 
 vi.mock('@tanstack/react-query', async () => {
   const actual =
@@ -153,7 +207,7 @@ vi.mock('@tanstack/react-query', async () => {
   return {
     ...actual,
     useQuery: (options: { queryKey: unknown[]; enabled?: boolean }) => {
-      const [scope, second, third, fourth] = options.queryKey
+      const [scope, second, third] = options.queryKey
       if (scope === 'users' && second === 'me') {
         return {
           data: {
@@ -176,9 +230,9 @@ vi.mock('@tanstack/react-query', async () => {
       if (scope === 'organizations' && second === undefined) {
         return { data: orgList, isLoading: false, error: listError() }
       }
-      if (scope === 'organizations' && third === 'settings' && fourth === 'irrigation') {
-        const data = options.enabled === false ? undefined : irrigationMap[second as string]
-        return { data, isLoading: false, error: irrigationError() }
+      if (scope === 'organizations' && third === 'modules') {
+        const data = options.enabled === false ? undefined : modulesMap[second as string]
+        return { data, isLoading: false, error: modulesError() }
       }
       if (scope === 'organizations' && third === 'settings') {
         // Honouring `enabled` is what makes the missing-permission case real.
@@ -223,7 +277,7 @@ describe('OrganizationPage', () => {
     orgList = [...BASE_ORGS]
     detailMap = { ...BASE_DETAILS }
     settingsMap = Object.fromEntries(BASE_ORGS.map((org) => [org.id, settingsOf()]))
-    irrigationMap = Object.fromEntries(BASE_ORGS.map((org) => [org.id, irrigationOf()]))
+    modulesMap = Object.fromEntries(BASE_ORGS.map((org) => [org.id, modulesOf()]))
     permissions.mockReturnValue(UNRESTRICTED)
     isWide.mockReturnValue(true)
     ownOrgId.mockReturnValue('amt')
@@ -233,7 +287,11 @@ describe('OrganizationPage', () => {
     listError.mockReturnValue(null)
     detailError.mockReturnValue(null)
     settingsError.mockReturnValue(null)
-    irrigationError.mockReturnValue(null)
+    modulesError.mockReturnValue(null)
+    probeLoadError.mockReturnValue(null)
+    probeSave.mockImplementation(() => Promise.resolve())
+    updateSettingsMutate.mockImplementation(() => Promise.resolve())
+    updateModulesMutate.mockImplementation(() => Promise.resolve())
     updateMutate.mockReset()
     createMutate.mockImplementation(
       (
@@ -630,80 +688,120 @@ describe('OrganizationPage', () => {
     await selectNord()
 
     // The section resolves the source organization from the already loaded list.
-    expect(cardOf('Fachliche Vorgaben').getByText(/Geerbt von Stadt Flensburg/)).toBeInTheDocument()
+    expect(
+      cardOf('Fachliche Vorgaben').getByText('Probe-Vorgabe von Stadt Flensburg'),
+    ).toBeInTheDocument()
 
     await userEvent.type(screen.getByRole('textbox', { name: 'Name' }), ' Ost')
-    const ttl = screen.getByRole('spinbutton', { name: /Nachwirkzeit/ })
-    await userEvent.clear(ttl)
-    await userEvent.type(ttl, '48')
+    await userEvent.type(screen.getByRole('textbox', { name: 'Probewert' }), '48')
     await userEvent.click(screen.getByRole('button', { name: 'Speichern' }))
 
-    await waitFor(() => expect(updateSettingsMutate).toHaveBeenCalled())
-    // Only the field that moved travels; the untouched water demand stays out.
-    expect(updateSettingsMutate.mock.calls[0][0] as UpdateSettingsVariables).toEqual({
-      orgId: 'nord',
-      irrigationBody: { justWateredTtlSecs: 172800 },
-    })
+    await waitFor(() => expect(probeSave).toHaveBeenCalledWith('nord', '48'))
     expect(updateMutate).toHaveBeenCalled()
+    // Nothing moved in the core settings or the module switches, so neither travels.
+    expect(updateSettingsMutate).not.toHaveBeenCalled()
+    expect(updateModulesMutate).not.toHaveBeenCalled()
   })
 
-  it('sends only the irrigation part when only the water demand changed', async () => {
+  it('saves core settings, module switches and a module section with one button', async () => {
     render(<OrganizationPage />)
     await selectNord()
 
-    await userEvent.click(
-      screen.getByRole('button', { name: 'Eigenen Wert für Wasserbedarf je Baum setzen' }),
-    )
-    const demand = screen.getByRole('spinbutton', { name: /Wasserbedarf/ })
-    await userEvent.clear(demand)
-    await userEvent.type(demand, '95')
-    await userEvent.click(screen.getByRole('button', { name: 'Speichern' }))
-
-    await waitFor(() => expect(updateSettingsMutate).toHaveBeenCalled())
-    expect(updateSettingsMutate.mock.calls[0][0] as UpdateSettingsVariables).toEqual({
-      orgId: 'nord',
-      irrigationBody: { waterDemand: 95 },
-    })
-  })
-
-  it('sends core and irrigation changes together in one save', async () => {
-    render(<OrganizationPage />)
-    await selectNord()
-
-    const ttl = screen.getByRole('spinbutton', { name: /Nachwirkzeit/ })
-    await userEvent.clear(ttl)
-    await userEvent.type(ttl, '48')
+    await userEvent.type(screen.getByRole('textbox', { name: 'Probewert' }), '48')
     await userEvent.click(
       screen.getByRole('switch', { name: /Untereinheiten dürfen eigene Werte setzen/ }),
     )
+    await userEvent.click(cardOf('Module').getByRole('switch', { name: 'Bewässerung' }))
     await userEvent.click(screen.getByRole('button', { name: 'Speichern' }))
 
-    await waitFor(() => expect(updateSettingsMutate).toHaveBeenCalledTimes(1))
-    expect(updateSettingsMutate.mock.calls[0][0] as UpdateSettingsVariables).toEqual({
+    await waitFor(() => expect(updateModulesMutate).toHaveBeenCalledTimes(1))
+    expect(updateSettingsMutate).toHaveBeenCalledWith({
       orgId: 'nord',
       body: { descendantsMayOverride: false },
-      irrigationBody: { justWateredTtlSecs: 172800 },
     })
+    expect(probeSave).toHaveBeenCalledWith('nord', '48')
+    expect(updateModulesMutate).toHaveBeenCalledWith({ orgId: 'nord', modules: { probe: false } })
+    // One outcome for everything the button sent.
+    await waitFor(() => expect(showToast).toHaveBeenCalledTimes(1))
+    expect(showToast).toHaveBeenCalledWith('Einstellungen gespeichert')
   })
 
-  it('keeps an invalid irrigation edit when a valid core change is saved', async () => {
+  it('saves only the switches when only a module switch changed', async () => {
+    render(<OrganizationPage />)
+    await selectNord()
+
+    expect(screen.queryByRole('button', { name: 'Speichern' })).not.toBeInTheDocument()
+    await userEvent.click(cardOf('Module').getByRole('switch', { name: 'Bewässerung' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Speichern' }))
+
+    await waitFor(() => expect(updateModulesMutate).toHaveBeenCalled())
+    expect(updateModulesMutate.mock.calls[0][0]).toEqual({
+      orgId: 'nord',
+      modules: { probe: false },
+    })
+    expect(updateSettingsMutate).not.toHaveBeenCalled()
+    expect(probeSave).not.toHaveBeenCalled()
+    expect(updateMutate).not.toHaveBeenCalled()
+  })
+
+  it('shows a module section only where the module is active', () => {
+    modulesMap.amt = {
+      ...modulesOf(),
+      modules: [{ key: 'probe', enabled: false, origin: 'own', ownValue: false }],
+    } as unknown as OrganizationModulesResponse
+    render(<OrganizationPage />)
+
+    expect(screen.queryByRole('textbox', { name: 'Probewert' })).not.toBeInTheDocument()
+    // The switch that turns it back on stays.
+    expect(cardOf('Module').getByRole('switch', { name: 'Bewässerung' })).not.toBeChecked()
+    expect(cardOf('Fachliche Vorgaben').getByText('Kartenausschnitt')).toBeInTheDocument()
+  })
+
+  it('reports a failed part with the error toast and keeps its draft', async () => {
+    probeSave.mockImplementation(() => Promise.reject(new Error('boom')))
+    // The core half goes through and comes back changed.
+    updateSettingsMutate.mockImplementation(() => {
+      settingsMap.nord = { ...settingsMap.nord, descendantsMayOverride: false }
+      return Promise.resolve()
+    })
     const { rerender } = render(<OrganizationPage />)
     await selectNord()
 
+    await userEvent.type(screen.getByRole('textbox', { name: 'Probewert' }), '48')
     await userEvent.click(
-      screen.getByRole('button', { name: 'Eigenen Wert für Wasserbedarf je Baum setzen' }),
+      screen.getByRole('switch', { name: /Untereinheiten dürfen eigene Werte setzen/ }),
     )
-    const demand = screen.getByRole('spinbutton', { name: /Wasserbedarf/ })
-    await userEvent.clear(demand)
-    await userEvent.type(demand, '5000')
+    await userEvent.click(screen.getByRole('button', { name: 'Speichern' }))
+
+    await waitFor(() =>
+      expect(showToast).toHaveBeenCalledWith(
+        'Die Einstellungen konnten nicht gespeichert werden.',
+        'error',
+      ),
+    )
+    expect(updateSettingsMutate).toHaveBeenCalled()
+    rerender(<OrganizationPage />)
+
+    expect(screen.getByRole('textbox', { name: 'Probewert' })).toHaveValue('48')
+    expect(
+      screen.getByRole('switch', { name: /Untereinheiten dürfen eigene Werte setzen/ }),
+    ).not.toBeChecked()
+    expect(screen.getByRole('button', { name: 'Speichern' })).toBeInTheDocument()
+  })
+
+  it('keeps an invalid module edit when a valid core change is saved', async () => {
+    const { rerender } = render(<OrganizationPage />)
+    await selectNord()
+
+    await userEvent.type(screen.getByRole('textbox', { name: 'Probewert' }), 'invalid')
     await userEvent.click(
       screen.getByRole('switch', { name: /Untereinheiten dürfen eigene Werte setzen/ }),
     )
     await userEvent.click(screen.getByRole('button', { name: 'Speichern' }))
 
     await waitFor(() => expect(updateSettingsMutate).toHaveBeenCalled())
-    // The core half went through and comes back changed; the invalid irrigation
-    // half stayed behind and must keep what was typed.
+    // An invalid draft sends nothing.
+    expect(probeSave).not.toHaveBeenCalled()
     settingsMap.nord = { ...settingsMap.nord, descendantsMayOverride: false }
     rerender(<OrganizationPage />)
 
@@ -712,10 +810,10 @@ describe('OrganizationPage', () => {
         screen.getByRole('switch', { name: /Untereinheiten dürfen eigene Werte setzen/ }),
       ).not.toBeChecked(),
     )
-    expect(screen.getByRole('spinbutton', { name: /Wasserbedarf/ })).toHaveValue(5000)
+    expect(screen.getByRole('textbox', { name: 'Probewert' })).toHaveValue('invalid')
   })
 
-  it('does not call the settings endpoint when only the name changed', async () => {
+  it('does not call the settings endpoints when only the name changed', async () => {
     render(<OrganizationPage />)
     await selectNord()
 
@@ -724,15 +822,17 @@ describe('OrganizationPage', () => {
 
     await waitFor(() => expect(updateMutate).toHaveBeenCalled())
     expect(updateSettingsMutate).not.toHaveBeenCalled()
+    expect(updateModulesMutate).not.toHaveBeenCalled()
+    expect(probeSave).not.toHaveBeenCalled()
   })
 
   it('leaves the organization alone when only a setting changed', async () => {
     render(<OrganizationPage />)
     await selectNord()
 
-    const ttl = screen.getByRole('spinbutton', { name: /Nachwirkzeit/ })
-    await userEvent.clear(ttl)
-    await userEvent.type(ttl, '48')
+    await userEvent.click(
+      screen.getByRole('switch', { name: /Untereinheiten dürfen eigene Werte setzen/ }),
+    )
     await userEvent.click(screen.getByRole('button', { name: 'Speichern' }))
 
     await waitFor(() => expect(updateSettingsMutate).toHaveBeenCalled())
@@ -744,62 +844,40 @@ describe('OrganizationPage', () => {
     await selectNord()
 
     // Half an address is not enough for the organization endpoint, but the
-    // settings endpoint is a separate request and must not wait for it.
+    // settings endpoints are separate requests and must not wait for it.
     await userEvent.type(
       screen.getByRole('textbox', { name: 'Straße und Hausnummer' }),
       'Gartenweg 1',
     )
-    const ttl = screen.getByRole('spinbutton', { name: /Nachwirkzeit/ })
-    await userEvent.clear(ttl)
-    await userEvent.type(ttl, '48')
+    await userEvent.type(screen.getByRole('textbox', { name: 'Probewert' }), '48')
     await userEvent.click(screen.getByRole('button', { name: 'Speichern' }))
 
-    await waitFor(() => expect(updateSettingsMutate).toHaveBeenCalled())
+    await waitFor(() => expect(probeSave).toHaveBeenCalled())
     expect(updateMutate).not.toHaveBeenCalled()
   })
 
-  it('keeps a typed setting when the organization save succeeds and the settings save fails', async () => {
+  it('keeps a changed setting when the organization save refetches unchanged settings', async () => {
     // Saving the organization invalidates the whole `organizations` prefix, so
-    // the settings come back — as a new object, because `changedAt` is a Date.
+    // the settings come back as a new object with the same content.
     updateMutate.mockImplementation(() => {
-      irrigationMap.nord = { ...irrigationMap.nord }
+      settingsMap.nord = { ...settingsMap.nord }
     })
+    // The settings request is still in flight and may yet be refused.
+    updateSettingsMutate.mockImplementation(() => new Promise(() => undefined))
     const { rerender } = render(<OrganizationPage />)
     await selectNord()
 
-    const ttl = screen.getByRole('spinbutton', { name: /Nachwirkzeit/ })
-    await userEvent.clear(ttl)
-    await userEvent.type(ttl, '48')
+    await userEvent.click(
+      screen.getByRole('switch', { name: /Untereinheiten dürfen eigene Werte setzen/ }),
+    )
     await userEvent.type(screen.getByRole('textbox', { name: 'Name' }), ' Ost')
     await userEvent.click(screen.getByRole('button', { name: 'Speichern' }))
 
     await waitFor(() => expect(updateSettingsMutate).toHaveBeenCalled())
-    // The settings request is still in flight and may yet be refused; nothing
-    // has come back for it, so the typed value must survive the next render.
     rerender(<OrganizationPage />)
-    expect(screen.getByRole('spinbutton', { name: /Nachwirkzeit/ })).toHaveValue(48)
-    expect(screen.getByRole('button', { name: 'Speichern' })).toBeInTheDocument()
-  })
-
-  it('takes over a settings value that changed on the server', async () => {
-    const { rerender } = render(<OrganizationPage />)
-    await selectNord()
-
-    const ttl = screen.getByRole('spinbutton', { name: /Nachwirkzeit/ })
-    await userEvent.clear(ttl)
-    await userEvent.type(ttl, '48')
-
-    // Content, not identity, decides: a value that really moved must reach the
-    // draft, the same way the master data picks up the server's truth.
-    irrigationMap.nord = {
-      ...irrigationMap.nord,
-      justWateredTtlSecs: { ...irrigationMap.nord.justWateredTtlSecs, value: 259200 },
-    }
-    rerender(<OrganizationPage />)
-
-    await waitFor(() =>
-      expect(screen.getByRole('spinbutton', { name: /Nachwirkzeit/ })).toHaveValue(72),
-    )
+    expect(
+      screen.getByRole('switch', { name: /Untereinheiten dürfen eigene Werte setzen/ }),
+    ).not.toBeChecked()
   })
 
   // The instance root refuses its master data but still owns the defaults every
@@ -810,42 +888,45 @@ describe('OrganizationPage', () => {
 
     expect(screen.queryByRole('button', { name: 'Speichern' })).not.toBeInTheDocument()
 
-    const ttl = screen.getByRole('spinbutton', { name: /Nachwirkzeit/ })
-    await userEvent.clear(ttl)
-    await userEvent.type(ttl, '48')
+    await userEvent.type(screen.getByRole('textbox', { name: 'Probewert' }), '48')
     await userEvent.click(screen.getByRole('button', { name: 'Speichern' }))
 
-    await waitFor(() => expect(updateSettingsMutate).toHaveBeenCalled())
+    await waitFor(() => expect(probeSave).toHaveBeenCalledWith('root', '48'))
     expect(updateMutate).not.toHaveBeenCalled()
   })
 
   // An invalid draft builds no request, so `dirty` alone would let the typed
   // value disappear on the way out.
-  it('still asks before leaving with an out-of-range value typed', async () => {
+  it('still asks before leaving with an invalid module value typed', async () => {
     render(<OrganizationPage />)
     await selectNord()
 
-    const ttl = screen.getByRole('spinbutton', { name: /Nachwirkzeit/ })
-    await userEvent.clear(ttl)
-    await userEvent.type(ttl, '9999')
-    expect(
-      await screen.findByText(/Nachwirkzeit muss zwischen 1 und 336 liegen/),
-    ).toBeInTheDocument()
+    await userEvent.type(screen.getByRole('textbox', { name: 'Probewert' }), 'invalid')
 
     await userEvent.click(tree().getByRole('button', { name: /Grünflächenamt/ }))
     expect(await screen.findByText('Änderungen verwerfen?')).toBeInTheDocument()
 
     await userEvent.click(screen.getByRole('button', { name: 'Verwerfen' }))
-    await waitFor(() =>
-      expect(screen.getByRole('spinbutton', { name: /Nachwirkzeit/ })).toHaveValue(24),
-    )
+    await waitFor(() => expect(screen.getByRole('textbox', { name: 'Probewert' })).toHaveValue(''))
   })
 
-  it('hides the settings section without setting:read', () => {
+  it('discards a flipped module switch on cancel', async () => {
+    render(<OrganizationPage />)
+    await selectNord()
+
+    await userEvent.click(cardOf('Module').getByRole('switch', { name: 'Bewässerung' }))
+    expect(cardOf('Module').getByRole('switch', { name: 'Bewässerung' })).not.toBeChecked()
+    await userEvent.click(screen.getByRole('button', { name: 'Abbrechen' }))
+
+    expect(cardOf('Module').getByRole('switch', { name: 'Bewässerung' })).toBeChecked()
+  })
+
+  it('hides the settings and module sections without setting:read', () => {
     permissions.mockReturnValue(new Set(['organization:read', 'organization:update', 'user:read']))
     render(<OrganizationPage />)
 
     expect(screen.queryByText('Fachliche Vorgaben')).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Module' })).not.toBeInTheDocument()
   })
 
   // Silently dropping the section would look exactly like the case above, so a
@@ -859,12 +940,19 @@ describe('OrganizationPage', () => {
     expect(screen.getByRole('textbox', { name: 'Name' })).toBeInTheDocument()
   })
 
-  it('reports a failed irrigation load instead of hiding the section', () => {
-    irrigationError.mockReturnValue({ response: { status: 500 } })
+  it('reports a failed module section load instead of hiding the section', () => {
+    probeLoadError.mockReturnValue({ response: { status: 500 } })
     render(<OrganizationPage />)
 
     expect(screen.getByRole('alert')).toBeInTheDocument()
-    expect(screen.queryByRole('spinbutton', { name: /Nachwirkzeit/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('textbox', { name: 'Probewert' })).not.toBeInTheDocument()
+  })
+
+  it('reports a failed module switch load instead of hiding the section', () => {
+    modulesError.mockReturnValue({ response: { status: 500 } })
+    render(<OrganizationPage />)
+
+    expect(screen.getByRole('alert')).toHaveTextContent(/konnten nicht geladen werden/)
   })
 
   it('shows the settings read-only without setting:update', () => {
@@ -874,11 +962,11 @@ describe('OrganizationPage', () => {
     render(<OrganizationPage />)
 
     expect(screen.getByText('Fachliche Vorgaben')).toBeInTheDocument()
-    expect(screen.queryByRole('spinbutton', { name: /Nachwirkzeit/ })).not.toBeInTheDocument()
-    expect(cardOf('Fachliche Vorgaben').getByText('24 Stunden')).toBeInTheDocument()
+    expect(screen.getByRole('textbox', { name: 'Probewert' })).toBeDisabled()
     expect(
       screen.getByRole('switch', { name: /Untereinheiten dürfen eigene Werte setzen/ }),
     ).toBeDisabled()
+    expect(cardOf('Module').getByRole('switch', { name: 'Bewässerung' })).toBeDisabled()
   })
 
   it('renders the detail in a drawer on mobile', async () => {

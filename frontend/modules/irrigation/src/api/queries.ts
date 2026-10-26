@@ -4,7 +4,6 @@ import {
   ClusterMarkerListResponse,
   ClusterStatisticsResponse,
   EvaluationResponse,
-  IrrigationSettingsResponse,
   ListClustersRequest,
   ListResponseTreeClusterInListResponse,
   ListResponseTreeResponse,
@@ -20,7 +19,7 @@ import {
 } from '@green-ecolution/backend-client'
 import { sensorApi } from '@/api/backendApi'
 import { isValidUuid, type BoundingBox } from '@/api/queries'
-import { clusterApi, evaluationApi, irrigationApi, treeApi } from './client'
+import { clusterApi, evaluationApi, treeApi } from './client'
 import { loadStopClusters } from './plans'
 
 const formatBBox = (b: BoundingBox): string =>
@@ -194,12 +193,3 @@ export const evaluationQuery = () =>
     queryKey: ['evaluation'],
     queryFn: () => evaluationApi.getEvaluation(),
   })
-
-// Below the core settings key, so invalidating those reaches this one too.
-export const irrigationSettingsQueries = {
-  byOrganization: (orgId: string) =>
-    queryOptions<IrrigationSettingsResponse>({
-      queryKey: ['organizations', orgId, 'settings', 'irrigation'],
-      queryFn: () => irrigationApi.getIrrigationSettings({ orgId }),
-    }),
-}

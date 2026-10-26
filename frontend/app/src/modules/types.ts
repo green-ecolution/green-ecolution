@@ -172,15 +172,34 @@ export interface ModuleSensorListFilter {
 
 export interface ModuleSettingsDraft {
   loading: boolean
+  /** The page reports it like a failed load of the core settings. */
+  loadError: unknown
+  /** Only something valid to send counts; an invalid edit shows through `valid`. */
   dirty: boolean
   valid: boolean
   reset: () => void
+  /** Rejects on failure; the page reports one outcome for everything it saved. */
   save: () => Promise<void>
 }
 
-export interface ModuleSettingsSection {
-  useDraft: (organizationId: string) => ModuleSettingsDraft
-  Section: ComponentType<{ organizationId: string; locked: boolean; editing: boolean }>
+export interface ModuleSettingsSectionProps<D extends ModuleSettingsDraft = ModuleSettingsDraft> {
+  draft: D
+  /** Nothing to edit: an ancestor froze the subtree or the viewer lacks `setting:update`. */
+  locked: boolean
+  /** An ancestor froze the subtree, so an own value lies dormant. */
+  enforced: boolean
+  /** Resolves source organizations from the list the page already loaded. */
+  organizationName: (organizationId: string | null | undefined) => string | null
+}
+
+/** Build it with `defineSettingsSection`, which ties `Section` to the draft `useDraft` returns. */
+export interface ModuleSettingsSection<D extends ModuleSettingsDraft = ModuleSettingsDraft> {
+  /**
+   * Called on every render of the organization page, also where the module is
+   * off (`enabled: false`), so it must not fetch then.
+   */
+  useDraft: (organizationId: string, options: { enabled: boolean }) => D
+  Section: ComponentType<ModuleSettingsSectionProps<D>>
 }
 
 export interface ModuleManifest {

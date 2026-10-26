@@ -232,5 +232,17 @@
         "selectedTreeLabel": "Selected tree"
       }
     }
+  },
+  "settings": {
+    "waterDemandLabel": "Water demand per tree",
+    "waterDemandHint": "Feeds the demand calculation of every watering group and decides how many groups a route plan puts into one trip. Watering plans that already exist stay as they are.",
+    "waterDemandUnit": "liters",
+    "justWateredTtlLabel": "Just-watered duration",
+    "justWateredTtlHint": "How long a tree counts as just watered after a finished watering plan before it falls back to unknown.",
+    "justWateredTtlUnit": "hours",
+    "liters_one": "{count} liter",
+    "liters_other": "{count} liters",
+    "hours_one": "{count} hour",
+    "hours_other": "{count} hours"
   }
 }

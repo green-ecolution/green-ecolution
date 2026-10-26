@@ -17,6 +17,7 @@ import {
   ModuleListResponse,
   organizationApi,
   OrganizationDetailResponse,
+  OrganizationModulesResponse,
   OrganizationResponse,
   OrganizationSettingsResponse,
   pluginApi,
@@ -432,4 +433,10 @@ export const modulesQuery = () =>
   queryOptions<ModuleListResponse>({
     queryKey: ['modules'],
     queryFn: () => moduleApi.listModules(),
+  })
+
+export const organizationModulesQuery = (orgId: string) =>
+  queryOptions<OrganizationModulesResponse>({
+    queryKey: ['organizations', orgId, 'modules'],
+    queryFn: () => moduleApi.getOrganizationModules({ orgId }),
   })
