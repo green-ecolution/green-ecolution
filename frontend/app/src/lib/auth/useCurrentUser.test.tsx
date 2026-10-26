@@ -1,15 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderHook } from '@testing-library/react'
+import { UNKNOWN_USER_STATUS } from '@/hooks/details/useDetailsForUserStatus'
+import { AuthSessionProvider } from './AuthSessionProvider'
+import { AuthSessionContext } from './authSessionContext'
+import { DemoAuthSession } from './session'
+import { useCurrentUser } from './useCurrentUser'
 
 beforeEach(() => {
   vi.stubEnv('VITE_AUTH_BYPASS', 'true')
-  vi.resetModules()
 })
 
 describe('useCurrentUser (bypass)', () => {
-  it('returns the demo profile fields', async () => {
-    const { AuthSessionProvider } = await import('./AuthSessionProvider')
-    const { useCurrentUser } = await import('./useCurrentUser')
+  it('returns the demo profile fields', () => {
     const { result } = renderHook(() => useCurrentUser(), {
       wrapper: ({ children }) => <AuthSessionProvider>{children}</AuthSessionProvider>,
     })
@@ -20,7 +22,7 @@ describe('useCurrentUser (bypass)', () => {
 })
 
 describe('useCurrentUser (token without profile attributes)', () => {
-  it('falls back to unknown status when the JWT carries no status claim', async () => {
+  it('falls back to unknown status when the JWT carries no status claim', () => {
     const payload = {
       preferred_username: 'tbz1',
       email: 'tbz1@example.com',
@@ -28,16 +30,23 @@ describe('useCurrentUser (token without profile attributes)', () => {
       family_name: 'BZ',
     }
     const token = `x.${btoa(JSON.stringify(payload))}.y`
-    vi.doMock('./authSessionContext', () => ({
-      // eslint-disable-next-line react-x/no-unnecessary-use-prefix -- mock must keep the real hook's exported name
-      useAuthSession: () => ({ accessToken: token }),
-    }))
-    const { useCurrentUser } = await import('./useCurrentUser')
-    const { UNKNOWN_USER_STATUS } = await import('@/hooks/details/useDetailsForUserStatus')
-    const { result } = renderHook(() => useCurrentUser())
+    const { result } = renderHook(() => useCurrentUser(), {
+      wrapper: ({ children }) => (
+        <AuthSessionContext
+          value={{
+            isAuthenticated: true,
+            accessToken: token,
+            refreshToken: null,
+            expiresAt: null,
+            session: new DemoAuthSession(),
+          }}
+        >
+          {children}
+        </AuthSessionContext>
+      ),
+    })
     expect(result.current.username).toBe('tbz1')
     expect(result.current.userStatus).toBe(UNKNOWN_USER_STATUS)
     expect(result.current.drivingLicenses).toEqual([])
-    vi.doUnmock('./authSessionContext')
   })
 })
