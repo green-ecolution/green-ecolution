@@ -20,7 +20,7 @@ import {
   routePermissionsFor,
   visibleNavSections,
 } from '@/lib/auth/routePermissions'
-import { useActiveModules } from '@/modules/useActiveModules'
+import { useActiveModulesOptional } from '@/modules/useActiveModules'
 import type { I18nKey, ModuleManifest, NavSectionKey } from '@/modules/types'
 import { usePermissions } from '@/lib/auth/usePermissions'
 import { pluginViewsQuery } from '@/api/queries'
@@ -223,7 +223,7 @@ const ProtectedNavSections: React.FC<Omit<NavSectionsProps, 'sections'>> = (prop
   const { i18n } = useTranslation()
   const { data: pluginViews = [] } = useQuery(pluginViewsQuery())
   const perms = usePermissions()
-  const { manifests } = useActiveModules()
+  const { manifests } = useActiveModulesOptional()
   const sections = visibleNavSections(
     [...protectedNavData(t, (key) => i18n.t(key), manifests), pluginNavSection(t, pluginViews)],
     perms,
