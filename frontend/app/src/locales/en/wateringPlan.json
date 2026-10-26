@@ -59,6 +59,7 @@
     "currentStatusLabel": "Current status:",
     "description": "A watering plan's status describes whether it is currently being carried out, has been completed, or was canceled, for example. This information helps categorize the watering plans that have been created and build an evaluation. Once a watering plan is completed, you can also specify how each stop was handled.",
     "finishedNotice": "This watering plan is completed. Its status can no longer be changed.",
+    "finishModuleInactive": "The module of this watering plan is not active for your organization. It can only be finished once the module is switched on again.",
     "statusFieldLabel": "Watering plan status",
     "statusFieldPlaceholder": "Choose a status",
     "cancelReasonLabel": "Reason for cancellation",

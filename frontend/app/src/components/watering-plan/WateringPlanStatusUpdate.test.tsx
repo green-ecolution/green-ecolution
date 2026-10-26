@@ -31,10 +31,11 @@ const OutcomeInput = ({ onChange }: OutcomeInputProps) => (
     Menge melden
   </button>
 )
+let planModuleActive = true
 vi.mock('@/modules/useActiveModules', () => ({
   useActiveModules: () => ({
-    manifests: [probeManifest('irrigation', { OutcomeInput })],
-    isActive: () => true,
+    manifests: planModuleActive ? [probeManifest('irrigation', { OutcomeInput })] : [],
+    isActive: () => planModuleActive,
   }),
 }))
 vi.mock('@tanstack/react-router', () => ({
@@ -155,7 +156,22 @@ describe('WateringPlanStatusUpdate — Nicht angetreten', () => {
 describe('WateringPlanStatusUpdate — Beendet', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    planModuleActive = true
     getPlan.mockResolvedValue(mockPlanResponse)
+  })
+
+  it('explains why a plan of an inactive module cannot be finished', async () => {
+    planModuleActive = false
+    const user = userEvent.setup()
+    render(<WateringPlanStatusUpdate wateringPlanId={PLAN_ID} />, { wrapper: createWrapper() })
+
+    await user.click(await screen.findByRole('combobox', { name: /status des einsatzplans/i }))
+    await user.click(await screen.findByRole('option', { name: /beendet/i }))
+
+    expect(
+      screen.getByText(/modul dieses einsatzplans ist für deine organisation nicht aktiv/i),
+    ).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /speichern/i })).not.toBeInTheDocument()
   })
 
   it('finishes with the outcomes of the plan module and completes the hidden stops', async () => {

@@ -59,6 +59,7 @@
     "currentStatusLabel": "Aktueller Status:",
     "description": "Der Status eines Einsatzplans beschreibt, ob er beispielsweise aktiv ausgeführt wird, beendet ist oder abgebrochen wurde. Diese Angabe hilft dabei, die erstellten Einsatzpläne zu kategorisieren und eine Auswertung anzulegen. Sobald ein Einsatzplan beendet wird, kann zudem angegeben werden, wie die einzelnen Stopps erledigt wurden.",
     "finishedNotice": "Dieser Einsatzplan ist abgeschlossen. Sein Status kann nicht mehr geändert werden.",
+    "finishModuleInactive": "Das Modul dieses Einsatzplans ist für deine Organisation nicht aktiv. Beenden lässt er sich erst, wenn das Modul wieder eingeschaltet ist.",
     "statusFieldLabel": "Status des Einsatzplans",
     "statusFieldPlaceholder": "Wähle einen Status aus",
     "cancelReasonLabel": "Grund des Abbruchs",

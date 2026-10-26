@@ -15,7 +15,14 @@ import {
   useWateringPlanStatusDetails,
   useWateringPlanStatusTransitionOptions,
 } from '@/hooks/details/useDetailsForWateringPlanStatus'
-import { Badge, TextareaField, SelectField, Button, Loading } from '@green-ecolution/ui'
+import {
+  Badge,
+  TextareaField,
+  SelectField,
+  Button,
+  InlineAlert,
+  Loading,
+} from '@green-ecolution/ui'
 import { WateringPlanCancelForm, wateringPlanCancelSchema } from '@/schema/wateringPlanSchema'
 import { zodResolver } from '@/lib/zodResolver'
 import { SubmitHandler, useForm } from 'react-hook-form'
@@ -123,14 +130,14 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
             />
           )
         case 'finished':
-          return (
-            planning && (
-              <FinishWateringPlan
-                plan={loadedData}
-                planning={planning}
-                onSubmit={onSubmitFinished}
-              />
-            )
+          return planning ? (
+            <FinishWateringPlan plan={loadedData} planning={planning} onSubmit={onSubmitFinished} />
+          ) : (
+            <InlineAlert
+              variant="info"
+              className="mt-6 md:w-1/2"
+              description={t('statusUpdate.finishModuleInactive')}
+            />
           )
         default:
           return (
