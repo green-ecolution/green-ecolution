@@ -642,7 +642,7 @@ A module package consists of:
 - `src/routes/`: the module's route files, mirroring the app's paths, for example
   `src/routes/_protected/trees/...` with `createFileRoute('/_protected/trees')`. The
   TanStack Router plugin picks them up through a `virtualRouteConfig`, so the URLs stay
-  what they are. Wrap a module's top-level route in `moduleRoute(key, …)` so an inactive
+  what they are. Wrap a module's top-level route in `moduleRoute(key, …)` (from `@/modules/moduleRoute`) so an inactive
   module renders a "module not active" page without sending any module request.
 
 A module may import from the app with `@/…`, but the app must never import a module. The
@@ -651,7 +651,7 @@ only places in `frontend/app/src` that may reference a module package are
 catalogs) and the generated `routeTree.gen.ts`. `frontend/app/src/modules/boundary.test.ts`
 enforces this and fails with the offending files; do not add exceptions, hand the data
 over through a manifest slot instead. Core text must stay neutral and module-specific
-wording belongs into the module's catalogs.
+wording belongs in the module's catalogs.
 
 A module package keeps the same devDependencies as the app, including the peer variants
 (`typescript` as alias for `@typescript/typescript6`, `@types/node`, `jsdom`,
