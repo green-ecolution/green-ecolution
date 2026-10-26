@@ -2,7 +2,7 @@ import { format } from 'date-fns'
 import { useTranslation } from 'react-i18next'
 import { StatusCard } from '@green-ecolution/ui'
 import StatusCardGrid from '@/components/general/StatusCardGrid'
-import { useWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
+import { useWateringStatusDetails } from '../../hooks/details/useDetailsForWateringStatus'
 import { useDateLocale } from '@/lib/i18n/useFormatters'
 import type { Tree } from '../../api/client'
 

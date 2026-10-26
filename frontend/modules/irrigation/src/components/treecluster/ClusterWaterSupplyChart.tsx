@@ -19,10 +19,7 @@ import {
   windowStart,
   type TimeWindowKey,
 } from '@/components/general/charts/timeWindows'
-import {
-  toConditionRows,
-  wateringEventMarkers,
-} from '@/components/general/charts/soilMoistureChart'
+import { toConditionRows, wateringEventMarkers } from '../../lib/soilMoistureChart'
 import { useDateLocale } from '@/lib/i18n/useFormatters'
 
 const RANGE_KEYS = ['24h', '7d', '30d'] satisfies TimeWindowKey[]

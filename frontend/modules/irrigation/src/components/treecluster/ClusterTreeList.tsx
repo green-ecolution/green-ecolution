@@ -12,7 +12,7 @@ import {
 import { Link } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import type { Tree } from '../../api/client'
-import { useWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
+import { useWateringStatusDetails } from '../../hooks/details/useDetailsForWateringStatus'
 
 interface ClusterTreeListProps {
   trees: Tree[]

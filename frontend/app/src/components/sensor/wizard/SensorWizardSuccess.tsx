@@ -4,14 +4,14 @@ import { CheckCircle2, RotateCw, ListChecks } from 'lucide-react'
 
 interface SensorWizardSuccessProps {
   sensorId: string
-  treeNumber: string
+  targetLabel: string
   onNext: () => void
   onBackToOverview: () => void
 }
 
 const SensorWizardSuccess = ({
   sensorId,
-  treeNumber,
+  targetLabel,
   onNext,
   onBackToOverview,
 }: SensorWizardSuccessProps) => {
@@ -24,7 +24,7 @@ const SensorWizardSuccess = ({
         </div>
         <h2 className="text-2xl font-semibold">{t('wizard.success.title')}</h2>
         <p className="text-sm text-muted-foreground max-w-prose">
-          {t('wizard.success.summary', { sensorId, treeNumber })}
+          {t('wizard.success.summary', { sensorId, target: targetLabel })}
         </p>
 
         <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 mt-2">

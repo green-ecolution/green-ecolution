@@ -39,7 +39,6 @@ import {
   ServerInfoResponse,
   ServicesInfoResponse,
   settingsApi,
-  SoilMoistureSeriesResponse,
   StartPointResponse,
   userApi,
   UserResponse,
@@ -162,23 +161,6 @@ export const sensorQueries = {
       queryKey: ['sensor', id, 'data-quality'],
       queryFn: () => sensorApi.getSensorDataQuality({ sensorId: id }),
       enabled: id !== '',
-    }),
-
-  soilMoisture: (id: string, params: { from?: Date; bucket: 'hour' | 'day' }) =>
-    queryOptions<SoilMoistureSeriesResponse>({
-      queryKey: [
-        'sensor',
-        id,
-        'soil-moisture',
-        params.bucket,
-        params.from?.toISOString() ?? 'default',
-      ],
-      queryFn: () =>
-        sensorApi.getSensorSoilMoisture({
-          sensorId: id,
-          from: params.from,
-          bucket: params.bucket,
-        }),
     }),
 }
 

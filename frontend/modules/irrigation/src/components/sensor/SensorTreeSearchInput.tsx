@@ -12,8 +12,8 @@ interface SensorTreeSearchInputProps {
 const DEBOUNCE_MS = 300
 
 const SensorTreeSearchInput = ({ value, onChange, placeholder }: SensorTreeSearchInputProps) => {
-  const { t } = useTranslation('sensor')
-  const resolvedPlaceholder = placeholder ?? t('treeSearch.inputPlaceholder')
+  const { t } = useTranslation('irrigation')
+  const resolvedPlaceholder = placeholder ?? t('sensor.treeSearch.inputPlaceholder')
   const [local, setLocal] = useState(value)
   const [syncedValue, setSyncedValue] = useState(value)
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -55,7 +55,7 @@ const SensorTreeSearchInput = ({ value, onChange, placeholder }: SensorTreeSearc
           type="button"
           variant="ghost"
           size="icon"
-          aria-label={t('treeSearch.clearAriaLabel')}
+          aria-label={t('sensor.treeSearch.clearAriaLabel')}
           onClick={() => schedule('')}
           className="absolute right-1 size-7"
         >

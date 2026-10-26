@@ -21,7 +21,7 @@ import RoutePointMarkers, {
 } from '@/components/map-gl/RoutePointMarkers'
 import { tankCapacity } from '../../../../../../lib/tankCapacity'
 import { useShownStops } from '../../../../../../hooks/useShownStops'
-import { IRRIGATION } from '@/lib/targets'
+import { IRRIGATION } from '../../../../../../lib/targets'
 
 const mapSelectClusterSchema = z.object({
   transporterId: z.string().optional(),

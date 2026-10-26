@@ -3,7 +3,7 @@ import { Search, SlidersHorizontal } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { WateringStatus } from '@green-ecolution/backend-client'
 import { Input } from '@green-ecolution/ui'
-import { useWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
+import { useWateringStatusDetails } from '../../hooks/details/useDetailsForWateringStatus'
 
 interface MapFilterToolbarProps {
   searchTerm: string

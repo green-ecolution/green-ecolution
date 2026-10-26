@@ -2,7 +2,7 @@ import { useCallback } from 'react'
 import { getRouteApi } from '@tanstack/react-router'
 import type { ListSensorsSortEnum } from '@green-ecolution/backend-client'
 import type { SortDirection } from '@/components/general/list/ListSortMenu'
-import { ACTIVATED_ONLY_FILTERS, type SensorListView } from './sensorListView'
+import { ACTIVATED_ONLY_FILTERS, MODULE_FILTER_PARAMS, type SensorListView } from './sensorListView'
 
 // getRouteApi instead of importing Route: the route module imports this hook,
 // so a direct import would close a cycle.
@@ -37,13 +37,17 @@ export const useSensorListSearch = () => {
     [patch],
   )
 
+  /** Also writes a module filter's param, which the core schema keeps untyped. */
   const setFilter = useCallback(
-    (key: 'statuses' | 'modelIds' | 'dataHealth' | 'clusterIds', values: string[]) =>
+    (key: 'statuses' | 'modelIds' | 'dataHealth' | (string & {}), values: string[]) =>
       patch({ [key]: values.length > 0 ? values : undefined }),
     [patch],
   )
 
-  const setHasTree = useCallback((value: boolean | undefined) => patch({ hasTree: value }), [patch])
+  const setAttached = useCallback(
+    (value: boolean | undefined) => patch({ attached: value }),
+    [patch],
+  )
 
   const setView = useCallback(
     (view: SensorListView) =>
@@ -58,11 +62,11 @@ export const useSensorListSearch = () => {
         statuses: undefined,
         modelIds: undefined,
         dataHealth: undefined,
-        hasTree: undefined,
-        clusterIds: undefined,
+        attached: undefined,
+        ...Object.fromEntries(MODULE_FILTER_PARAMS.map((param) => [param, undefined])),
       }),
     [patch],
   )
 
-  return { search, setQuery, setSort, setFilter, setHasTree, setView, resetFilters }
+  return { search, setQuery, setSort, setFilter, setAttached, setView, resetFilters }
 }

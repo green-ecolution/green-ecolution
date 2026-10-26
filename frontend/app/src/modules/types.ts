@@ -1,5 +1,5 @@
 import type { ComponentType } from 'react'
-import type { QueryClient, QueryKey } from '@tanstack/react-query'
+import type { QueryClient, QueryKey, UseQueryOptions } from '@tanstack/react-query'
 import type { z } from 'zod'
 import type {
   CapacityKindDto,
@@ -9,6 +9,7 @@ import type {
   StopOutcomeDto,
   TargetRefDto,
 } from '@green-ecolution/backend-client'
+import type { GeolocationFix, GeolocationStatus } from '@/hooks/useGeolocation'
 import type { PermissionRequirement, Resource } from '@/lib/auth/permissions'
 import type { AreaGroup } from '@/lib/auth/permissionAreas'
 import type { ParseKeys } from 'i18next'
@@ -121,23 +122,52 @@ export interface TargetPickerProps {
   onSelect: (selected: SelectedTarget) => void
 }
 
+/** The wizard freezes the position at the scan, so a picker can suggest targets near it. */
+export interface TargetWizardStepProps extends TargetPickerProps {
+  position: GeolocationFix | null
+  geolocationStatus: GeolocationStatus
+  geolocationError: string | null
+  onRelocate: () => void
+}
+
+export type TargetAssignMode = 'activate' | 'reassign'
+
+/** The dialog only picks; the core sends the request and reports back through `pending` and `error`. */
+export interface TargetAssignDialogProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  mode: TargetAssignMode
+  sensor: SensorResponse
+  pending: boolean
+  error: string | null
+  onConfirm: (selected: SelectedTarget) => void
+}
+
 export interface ModuleTarget {
   kind: string
   labelKey: I18nKey
+  /** Key prefixes a link change touches besides the sensor's own. */
   invalidate: readonly QueryKey[]
-  AssignDialog: ComponentType<
-    TargetPickerProps & { open: boolean; onOpenChange: (open: boolean) => void }
-  >
-  WizardStep: ComponentType<TargetPickerProps>
+  AssignDialog: ComponentType<TargetAssignDialogProps>
+  WizardStep: ComponentType<TargetWizardStepProps>
   Placement: ComponentType<{ sensor: SensorResponse }>
   SensorInsights?: ComponentType<{ sensor: SensorResponse }>
   listFilter?: ModuleSensorListFilter
 }
 
+export interface SensorListFilterProps {
+  value: string[]
+  onChange: (value: string[]) => void
+}
+
 export interface ModuleSensorListFilter {
+  /** Search param of the sensor list; shared links carry it, so it must stay stable. */
   param: string
-  Control: ComponentType<{ value: string[]; onChange: (value: string[]) => void }>
-  useSensorIds: (value: string[]) => string[] | undefined
+  Control: ComponentType<SensorListFilterProps>
+  /** Renders a `FilterChip` per selected value into the list's active-filter row. */
+  Chips: ComponentType<SensorListFilterProps>
+  /** The sensors the selection narrows the list to; a query so the route loader can prefetch it. */
+  sensorIds: (value: string[]) => UseQueryOptions<string[], Error, string[], QueryKey>
 }
 
 export interface ModuleSettingsDraft {

@@ -11,7 +11,7 @@ import {
 import { Link } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import type { Tree, TreeCluster } from '../../api/client'
-import { useWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
+import { useWateringStatusDetails } from '../../hooks/details/useDetailsForWateringStatus'
 
 interface TreeClusterCardProps {
   tree: Tree

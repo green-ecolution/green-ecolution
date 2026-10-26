@@ -14,20 +14,22 @@ import {
   type ChartConfig,
 } from '@green-ecolution/ui'
 import { sensorQueries } from '@/api/queries'
+import {
+  compactCardContent,
+  compactCardHeader,
+  compactCardTitle,
+} from '@/components/sensor/detail/cardDensity'
 import TimeSeriesFrame from '@/components/general/charts/TimeSeriesFrame'
 import {
   timeWindowOptions,
   windowStart,
   type TimeWindowKey,
 } from '@/components/general/charts/timeWindows'
-import {
-  depthColor,
-  toChartRows,
-  wateringEventMarkers,
-} from '@/components/general/charts/soilMoistureChart'
+import { depthColor, toChartRows } from '@/components/general/charts/soilMoistureChart'
 import { useDateLocale } from '@/lib/i18n/useFormatters'
-import type { Sensor } from '@/api/backendApi'
-import { compactCardContent, compactCardHeader, compactCardTitle } from './cardDensity'
+import type { SensorResponse } from '@green-ecolution/backend-client'
+import { sensorSoilMoistureQuery } from '../../api/queries'
+import { wateringEventMarkers } from '../../lib/soilMoistureChart'
 
 const RANGE_KEYS = ['24h', '7d', '30d'] satisfies TimeWindowKey[]
 type RangeKey = (typeof RANGE_KEYS)[number]
@@ -39,11 +41,11 @@ const BUCKET_BY_RANGE: Record<RangeKey, 'hour' | 'day'> = {
 }
 
 interface SensorSoilMoistureChartProps {
-  sensor: Sensor
+  sensor: SensorResponse
 }
 
 const SensorSoilMoistureChart = ({ sensor }: SensorSoilMoistureChartProps) => {
-  const { t } = useTranslation('sensor')
+  const { t } = useTranslation('irrigation')
   // Separate from `t` above: timeWindowOptions expects a TFunction<'common'>,
   // and a multi-namespace `t` would default-resolve its unprefixed keys
   // against 'sensor' instead (namespace order picks the default).
@@ -52,15 +54,15 @@ const SensorSoilMoistureChart = ({ sensor }: SensorSoilMoistureChartProps) => {
   const [rangeKey, setRangeKey] = useState<RangeKey>('7d')
   const bucket = BUCKET_BY_RANGE[rangeKey]
   const bucketSubtitle: Record<'hour' | 'day', string> = {
-    hour: t('soilMoistureChart.subtitleHour'),
-    day: t('soilMoistureChart.subtitleDay'),
+    hour: t('sensor.soilMoistureChart.subtitleHour'),
+    day: t('sensor.soilMoistureChart.subtitleDay'),
   }
   // eslint-disable-next-line react-hooks/purity, react-x/purity -- windowStart truncates to the hour, keeping the query key stable
   const from = windowStart(rangeKey, Date.now())
   const { data: model } = useQuery(sensorQueries.model(sensor.model.id))
   const hasSoilMoisture = (model?.abilities ?? []).some((a) => a.ability === 'soil_moisture')
   const { data, isPlaceholderData, error } = useQuery({
-    ...sensorQueries.soilMoisture(sensor.id, { from, bucket }),
+    ...sensorSoilMoistureQuery(sensor.id, { from, bucket }),
     placeholderData: keepPreviousData,
     enabled: hasSoilMoisture,
   })
@@ -74,7 +76,7 @@ const SensorSoilMoistureChart = ({ sensor }: SensorSoilMoistureChartProps) => {
     depths.map((depth, index) => [
       `mean_${depth}`,
       {
-        label: t('soilMoistureChart.depthSeriesLabel', { depth }),
+        label: t('sensor.soilMoistureChart.depthSeriesLabel', { depth }),
         color: depthColor(depth, index),
       },
     ]),
@@ -100,7 +102,7 @@ const SensorSoilMoistureChart = ({ sensor }: SensorSoilMoistureChartProps) => {
         className={cn(compactCardHeader, 'flex-row flex-wrap items-start justify-between gap-2')}
       >
         <div>
-          <CardTitle className={compactCardTitle}>{t('soilMoistureChart.title')}</CardTitle>
+          <CardTitle className={compactCardTitle}>{t('sensor.soilMoistureChart.title')}</CardTitle>
           <p className="text-xs text-muted-foreground">{bucketSubtitle[bucket]}</p>
         </div>
         <TimeRangeToggle
@@ -113,11 +115,11 @@ const SensorSoilMoistureChart = ({ sensor }: SensorSoilMoistureChartProps) => {
         {!data ? (
           <Loading
             className="h-[260px] justify-center"
-            label={t('soilMoistureChart.loadingLabel')}
+            label={t('sensor.soilMoistureChart.loadingLabel')}
           />
         ) : rows.length <= 1 ? (
           <p className="rounded-xl bg-dark-50 px-4 py-6 text-center text-sm text-muted-foreground">
-            {t('soilMoistureChart.tooFewDataPoints')}
+            {t('sensor.soilMoistureChart.tooFewDataPoints')}
           </p>
         ) : (
           <div
@@ -176,7 +178,7 @@ const SensorSoilMoistureChart = ({ sensor }: SensorSoilMoistureChartProps) => {
                   stroke="#747474"
                   strokeDasharray="4 4"
                   label={{
-                    value: t('soilMoistureChart.wateredOnLabel', {
+                    value: t('sensor.soilMoistureChart.wateredOnLabel', {
                       date: format(event.date, 'dd.MM.', { locale: dateLocale }),
                     }),
                     angle: -90,
@@ -192,7 +194,7 @@ const SensorSoilMoistureChart = ({ sensor }: SensorSoilMoistureChartProps) => {
                   stroke="#D55E00"
                   strokeDasharray="2 3"
                   label={{
-                    value: t('soilMoistureChart.discardedLabel'),
+                    value: t('sensor.soilMoistureChart.discardedLabel'),
                     angle: -90,
                     position: 'insideBottomRight',
                     fontSize: 11,

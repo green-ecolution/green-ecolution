@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import { useTranslation } from 'react-i18next'
 import BackLink from '@/components/general/links/BackLink'
 import SensorActionsProvider from './detail/SensorActionsContext'
@@ -9,11 +10,23 @@ import SensorLorawanConfigSection from './detail/SensorLorawanConfigSection'
 import SensorMeasurementProfile from './detail/SensorMeasurementProfile'
 import SensorPlacementCard from './detail/SensorPlacementCard'
 import SensorSignalCard from './detail/SensorSignalCard'
-import SensorSoilMoistureChart from './detail/SensorSoilMoistureChart'
 import type { Sensor } from '@/api/backendApi'
+import { targetDescriptor } from '@/lib/targets'
+import { useActiveModules } from '@/modules/useActiveModules'
 
 interface SensorDashboardProps {
   sensor: Sensor
+}
+
+const SensorInsights = ({ sensor }: SensorDashboardProps) => {
+  const { manifests } = useActiveModules()
+  const Insights = targetDescriptor(manifests, sensor.target)?.SensorInsights
+  if (!Insights) return null
+  return (
+    <Suspense fallback={null}>
+      <Insights sensor={sensor} />
+    </Suspense>
+  )
 }
 
 const SensorDashboard = ({ sensor }: SensorDashboardProps) => {
@@ -32,7 +45,7 @@ const SensorDashboard = ({ sensor }: SensorDashboardProps) => {
         <div className="flex flex-col gap-4 md:gap-6 xl:grid xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] xl:items-start">
           <div className="contents xl:flex xl:min-w-0 xl:flex-col xl:gap-6">
             <div className="order-1 min-w-0 empty:hidden xl:order-none">
-              <SensorSoilMoistureChart sensor={sensor} />
+              <SensorInsights sensor={sensor} />
             </div>
             <div className="order-3 min-w-0 empty:hidden xl:order-none">
               <SensorSignalCard sensor={sensor} />

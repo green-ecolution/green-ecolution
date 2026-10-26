@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import { Marker } from 'maplibre-gl'
 import { WateringStatus } from '@green-ecolution/backend-client'
 import type { SensorResponse } from '@green-ecolution/backend-client'
-import { useWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
+import { useWateringStatusDetails } from '../../hooks/details/useDetailsForWateringStatus'
 import { useMaplibreMap } from '@/components/map-gl/MapContext'
 
 export interface SelectableTree {

@@ -2,12 +2,12 @@ import { useMemo } from 'react'
 import { type LngLatBoundsLike } from 'maplibre-gl'
 import { cn } from '@green-ecolution/ui'
 import { useTranslation } from 'react-i18next'
-import type { TreeWithDistance } from '../../../../modules/irrigation/src/api/client'
+import type { TreeWithDistance } from '../../api/client'
 import { useMaplibreMap } from '@/components/map-gl/MapContext'
 import MapPreview from '@/components/map-gl/MapPreview'
 import SensorMarker from '@/components/map-gl/SensorMarker'
 import { useAccuracyRing } from '@/components/map-gl/hooks/useAccuracyRing'
-import SelectableTreeMarkers from '@/components/map-gl/SelectableTreeMarkers'
+import SelectableTreeMarkers from '../map-gl/SelectableTreeMarkers'
 
 interface NearestTreeMapPreviewProps {
   sensorLat: number
@@ -47,7 +47,7 @@ const NearestTreeMapPreview = ({
   onSelectTree,
   className,
 }: NearestTreeMapPreviewProps) => {
-  const { t } = useTranslation('common')
+  const { t } = useTranslation('irrigation')
   const bounds = useMemo<LngLatBoundsLike>(() => {
     const lngs = [sensorLng, ...trees.map((t) => t.tree.longitude)]
     const lats = [sensorLat, ...trees.map((t) => t.tree.latitude)]
@@ -71,7 +71,7 @@ const NearestTreeMapPreview = ({
     <MapPreview
       bounds={bounds}
       interactive
-      ariaLabel={t('geo.map.nearestTreeAriaLabel')}
+      ariaLabel={t('sensor.nearestTreeMap.ariaLabel')}
       className={cn('aspect-[4/3] sm:aspect-[16/10]', className)}
     >
       <SensorMarker lng={sensorLng} lat={sensorLat} />

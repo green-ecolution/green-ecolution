@@ -12,7 +12,7 @@ import ActiveFilterChips, {
 } from '@/components/general/list/ActiveFilterChips'
 import SensorIcon from '@/components/icons/Sensor'
 import { clusterQueries, treeQueries } from '../../../api/queries'
-import { useWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
+import { useWateringStatusDetails } from '../../../hooks/details/useDetailsForWateringStatus'
 import { useTreeListSearch } from './useTreeListSearch'
 
 interface TreeListToolbarProps {

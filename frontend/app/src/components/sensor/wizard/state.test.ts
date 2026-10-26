@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { INITIAL_WIZARD_STATE, normalizeSensorId, wizardReducer, type WizardState } from './state'
 
+const picked = {
+  target: { module: 'probe', kind: 'probe', id: 'p-1' },
+  label: 'Probe 1',
+  detail: 'Nord',
+}
+
 describe('normalizeSensorId', () => {
   it('prepends eui- and lowercases a raw hex EUI', () => {
     expect(normalizeSensorId('A8404131AF5E6451')).toBe('eui-a8404131af5e6451')
@@ -32,7 +38,7 @@ describe('wizardReducer', () => {
     expect(INITIAL_WIZARD_STATE.step).toBe(1)
     expect(INITIAL_WIZARD_STATE.sensorId).toBeNull()
     expect(INITIAL_WIZARD_STATE.frozenFix).toBeNull()
-    expect(INITIAL_WIZARD_STATE.selectedTreeId).toBeNull()
+    expect(INITIAL_WIZARD_STATE.selectedTarget).toBeUndefined()
     expect(INITIAL_WIZARD_STATE.submission).toBe('idle')
   })
 
@@ -42,16 +48,12 @@ describe('wizardReducer', () => {
       step: 3,
       sensorId: 'OLD',
       frozenFix: fix,
-      selectedTreeId: 'tree-a',
-      selectedTreeNumber: '42',
-      selectedTreeSpecies: 'Quercus',
+      selectedTarget: picked,
     }
     const next = wizardReducer(seeded, { type: 'qrScanned', sensorId: 'NEW' })
     expect(next.sensorId).toBe('NEW')
     expect(next.frozenFix).toBeNull()
-    expect(next.selectedTreeId).toBeNull()
-    expect(next.selectedTreeNumber).toBeNull()
-    expect(next.selectedTreeSpecies).toBeNull()
+    expect(next.selectedTarget).toBeUndefined()
   })
 
   it('scanCleared nullifies sensorId but keeps the rest of the state', () => {
@@ -59,44 +61,42 @@ describe('wizardReducer', () => {
       ...INITIAL_WIZARD_STATE,
       sensorId: 'EUI-1',
       frozenFix: fix,
-      selectedTreeId: 'tree-a',
-      selectedTreeNumber: '1',
-      selectedTreeSpecies: 'Acer',
+      selectedTarget: picked,
     }
     const next = wizardReducer(seeded, { type: 'scanCleared' })
     expect(next.sensorId).toBeNull()
     expect(next.frozenFix).toEqual(fix)
-    expect(next.selectedTreeId).toBe('tree-a')
+    expect(next.selectedTarget).toEqual(picked)
   })
 
-  it('gpsFrozen invalidates the selected tree (different position)', () => {
+  it('gpsFrozen invalidates the selected target (different position)', () => {
     const seeded: WizardState = {
       ...INITIAL_WIZARD_STATE,
       sensorId: 'S',
       frozenFix: fix,
-      selectedTreeId: 'tree-a',
-      selectedTreeNumber: '1',
-      selectedTreeSpecies: 'Acer',
+      selectedTarget: picked,
     }
     const next = wizardReducer(seeded, {
       type: 'gpsFrozen',
       fix: { ...fix, latitude: 54.8 },
     })
     expect(next.frozenFix?.latitude).toBe(54.8)
-    expect(next.selectedTreeId).toBeNull()
-    expect(next.selectedTreeNumber).toBeNull()
+    expect(next.selectedTarget).toBeUndefined()
   })
 
-  it('treeSelected stores id + display fields', () => {
-    const next = wizardReducer(INITIAL_WIZARD_STATE, {
-      type: 'treeSelected',
-      treeId: 'tree-1',
-      number: '0815',
-      species: 'Tilia cordata',
+  it('targetSelected stores the target with its display fields', () => {
+    const next = wizardReducer(INITIAL_WIZARD_STATE, { type: 'targetSelected', selected: picked })
+    expect(next.selectedTarget).toEqual(picked)
+  })
+
+  it('targetKindChosen switches the kind and drops a target of the previous kind', () => {
+    const seeded: WizardState = { ...INITIAL_WIZARD_STATE, selectedTarget: picked }
+    const next = wizardReducer(seeded, {
+      type: 'targetKindChosen',
+      kind: { module: 'waste', kind: 'bin' },
     })
-    expect(next.selectedTreeId).toBe('tree-1')
-    expect(next.selectedTreeNumber).toBe('0815')
-    expect(next.selectedTreeSpecies).toBe('Tilia cordata')
+    expect(next.targetKind).toEqual({ module: 'waste', kind: 'bin' })
+    expect(next.selectedTarget).toBeUndefined()
   })
 
   it('goToStep allows jumping back to any step', () => {
@@ -154,9 +154,8 @@ describe('wizardReducer', () => {
       step: 3,
       sensorId: 'S',
       frozenFix: fix,
-      selectedTreeId: 'T',
-      selectedTreeNumber: '1',
-      selectedTreeSpecies: 'X',
+      selectedTarget: picked,
+      targetKind: { module: 'probe', kind: 'probe' },
       submission: 'success',
       errorMessage: null,
     }

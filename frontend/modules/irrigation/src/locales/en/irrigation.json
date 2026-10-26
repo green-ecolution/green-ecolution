@@ -138,5 +138,99 @@
       "treeCount_one": "{count} tree",
       "treeCount_other": "{count} trees"
     }
+  },
+  "sensor": {
+    "target": {
+      "tree": "Tree"
+    },
+    "list": {
+      "filterCluster": "Group",
+      "clusterUnknown": "Unknown group"
+    },
+    "placement": {
+      "clusterLabel": "Watering group",
+      "treeLabel": "Mounted on tree",
+      "treeCount_one": "{count} tree",
+      "treeCount_other": "{count} trees",
+      "noClusterDescription": "The tree is not part of any watering group.",
+      "mapAriaLabel": "Map with the sensor position, nearby trees and watering groups"
+    },
+    "linkedTree": {
+      "loadFailedTitle": "Tree not loaded",
+      "loadFailedDescription": "The linked tree (#{id}) could not be retrieved.",
+      "treeNumberLabel": "Tree no. {number}",
+      "unknownSpecies": "Unknown species",
+      "plantedLabel": "Planted {year}"
+    },
+    "treeAssignDialog": {
+      "activate": {
+        "title": "Activate sensor and assign tree",
+        "description": "Search for the tree by number or species and activate the sensor on this tree.",
+        "confirm": "Activate"
+      },
+      "reassign": {
+        "description": "Choose the new tree this sensor should be assigned to.",
+        "confirm": "Assign tree"
+      },
+      "showAllTreesLabel": "Show all trees",
+      "mapAriaLabel": "Map for tree selection",
+      "savingButton": "Saving …"
+    },
+    "treeSearch": {
+      "inputPlaceholder": "Search tree number or species…",
+      "clearAriaLabel": "Clear",
+      "idleHint": "Type a tree number or species.",
+      "loadingLabel": "Searching trees…",
+      "failedTitle": "Search failed",
+      "failedDescription": "The tree search failed.",
+      "noResultsForQuery": "No trees found for \"{query}\".",
+      "noResultsHint": "Check the spelling or tree number.",
+      "noTreesAvailable": "There are no trees available.",
+      "resultCountMatches": "{shown} of {total} matches",
+      "resultCountTrees": "{shown} of {total} trees",
+      "selectResultAriaLabel": "Select tree from search results",
+      "loadingMoreLabel": "Loading more trees…",
+      "sensorAssignedBadge": "Sensor assigned"
+    },
+    "nearestTreeList": {
+      "title": "Nearby trees",
+      "selectAriaLabel": "Select tree",
+      "unassignedGroup": "Not assigned"
+    },
+    "treePickerSheet": {
+      "title": "Choose a different tree",
+      "description": "Search by tree number or species if the right tree is not in the suggestion list."
+    },
+    "nearestTreeMap": {
+      "ariaLabel": "Map with sensor position and nearby trees"
+    },
+    "soilMoistureChart": {
+      "title": "Soil moisture history",
+      "subtitleHour": "Hourly average · band = min–max · dashed = critical threshold per depth",
+      "subtitleDay": "Daily average · band = min–max · dashed = critical threshold per depth",
+      "depthSeriesLabel": "{depth} cm depth",
+      "loadingLabel": "Readings are loading",
+      "tooFewDataPoints": "Not enough data points in the selected period.",
+      "wateredOnLabel": "Watered on {date}",
+      "discardedLabel": "Reading discarded"
+    },
+    "wizard": {
+      "treeLabel": "Tree {number}",
+      "tree": {
+        "header": {
+          "title": "Assign tree",
+          "description": "Choose the tree the sensor will be mounted on. The suggestion is based on your current location. Only the tree assignment is saved on the sensor, not your coordinates."
+        },
+        "relocateButton": "Update location",
+        "locatingNotice": "Determining location …",
+        "loadingNearby": "Searching for nearby trees…",
+        "searchFailed": {
+          "title": "Tree search failed",
+          "description": "The search for nearby trees failed."
+        },
+        "noNearbyTrees": "No nearby trees were found. Choose the tree manually.",
+        "selectedTreeLabel": "Selected tree"
+      }
+    }
   }
 }

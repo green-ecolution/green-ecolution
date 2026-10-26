@@ -43,7 +43,7 @@ const SensorTreePickerSheet = ({
   selectedTreeId,
   onSelect,
 }: SensorTreePickerSheetProps) => {
-  const { t } = useTranslation('sensor')
+  const { t } = useTranslation('irrigation')
   const handleSelect = (treeId: string) => {
     onSelect(treeId)
     onOpenChange(false)
@@ -53,8 +53,8 @@ const SensorTreePickerSheet = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md sm:max-w-lg h-[85vh] sm:h-[70vh] flex flex-col gap-0 p-0">
         <DialogHeader className="px-6 pt-6 pb-3">
-          <DialogTitle>{t('treePickerSheet.title')}</DialogTitle>
-          <DialogDescription>{t('treePickerSheet.description')}</DialogDescription>
+          <DialogTitle>{t('sensor.treePickerSheet.title')}</DialogTitle>
+          <DialogDescription>{t('sensor.treePickerSheet.description')}</DialogDescription>
         </DialogHeader>
         <PickerBody
           key={open ? 'open' : 'closed'}

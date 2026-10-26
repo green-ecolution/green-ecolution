@@ -120,8 +120,7 @@
       "capturedAt": "Erfasst um"
     },
     "map": {
-      "currentPositionAriaLabel": "Karte mit aktueller GPS-Position",
-      "nearestTreeAriaLabel": "Karte mit Sensor-Position und nahegelegenen Bäumen"
+      "currentPositionAriaLabel": "Karte mit aktueller GPS-Position"
     }
   },
   "scanner": {

@@ -6,7 +6,7 @@ import TreeLocationCard from './TreeLocationCard'
 import TreeClusterCard from './TreeClusterCard'
 import TreeSensorCard from './TreeSensorCard'
 import TreeMasterDataCard from './TreeMasterDataCard'
-import { useWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
+import { useWateringStatusDetails } from '../../hooks/details/useDetailsForWateringStatus'
 import type { Tree, TreeCluster } from '../../api/client'
 import { useHasPermission } from '@/lib/auth/useHasPermission'
 

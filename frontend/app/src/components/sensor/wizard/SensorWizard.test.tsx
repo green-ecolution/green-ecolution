@@ -14,18 +14,6 @@ vi.mock('@/components/geolocation/LocationMapPreview', () => ({
   default: () => <div data-testid="location-map-preview" />,
 }))
 
-vi.mock('@/components/geolocation/NearestTreeMapPreview', () => ({
-  default: () => <div data-testid="nearest-tree-map-preview" />,
-}))
-
-vi.mock('@/components/geolocation/GeolocationPermissionNotice', () => ({
-  default: () => <div data-testid="geolocation-permission-notice" />,
-}))
-
-vi.mock('@/components/sensor/SensorTreePickerSheet', () => ({
-  default: () => null,
-}))
-
 vi.mock('@/hooks/useGeolocation', () => ({
   default: () => ({
     status: 'watching' as const,
@@ -76,53 +64,13 @@ vi.mock('@/api/queries', async () => {
   }
 })
 
-vi.mock('../../../../../modules/irrigation/src/api/queries', async () => {
-  const actual = await vi.importActual<
-    typeof import('../../../../../modules/irrigation/src/api/queries')
-  >('../../../../../modules/irrigation/src/api/queries')
-  return {
-    ...actual,
-    treeQueries: {
-      ...actual.treeQueries,
-      nearest: () => ({
-        queryKey: ['nearest-test'],
-        queryFn: () =>
-          Promise.resolve({
-            data: [
-              {
-                distanceMeters: 4,
-                tree: {
-                  id: 'tree-1',
-                  number: '0815',
-                  species: 'Tilia cordata',
-                  latitude: 54.79,
-                  longitude: 9.43,
-                  sensor: null,
-                  treeClusterId: null,
-                },
-              },
-            ],
-          }),
-      }),
-      detail: () => ({
-        queryKey: ['tree-test'],
-        queryFn: () =>
-          Promise.resolve({
-            id: 'tree-1',
-            number: '0815',
-            species: 'Tilia cordata',
-          }),
-      }),
-    },
-    clusterQueries: {
-      ...actual.clusterQueries,
-      detail: () => ({
-        queryKey: ['cluster-test'],
-        queryFn: () => Promise.resolve({ id: 'cluster-1', name: 'Test Cluster' }),
-      }),
-    },
-  }
-})
+const { activeManifests } = vi.hoisted(() => ({
+  activeManifests: { current: [] as import('@/modules/types').ModuleManifest[] },
+}))
+
+vi.mock('@/modules/useActiveModules', () => ({
+  useActiveModules: () => ({ manifests: activeManifests.current, isActive: () => true }),
+}))
 
 const activateMock = vi.fn().mockResolvedValue({ id: 'eui-a8404131af5e6451' })
 vi.mock('@/api/backendApi', () => ({
@@ -148,6 +96,7 @@ vi.mock('@tanstack/react-router', async () => {
 })
 
 import { Route as NewSensorRoute } from '@/routes/_protected/sensors/new'
+import { probeTarget, probeTargetManifest } from '@/test/targetManifest'
 
 const renderRoute = () => {
   const queryClient = new QueryClient({
@@ -166,52 +115,93 @@ const renderRoute = () => {
 beforeEach(() => {
   activateMock.mockClear()
   navigateMock.mockClear()
+  activeManifests.current = [probeTargetManifest('probe', [probeTarget('probe', 'probe')])]
 })
 
+const scanAndContinue = async (user: ReturnType<typeof userEvent.setup>) => {
+  await user.click(screen.getByText('__scan_now__'))
+  await screen.findByText('Sensor erkannt')
+  await user.click(screen.getByRole('button', { name: /^weiter/i }))
+}
+
+const pickProbeAndReview = async (user: ReturnType<typeof userEvent.setup>) => {
+  await scanAndContinue(user)
+  await user.click(await screen.findByRole('button', { name: 'pick-probe' }))
+  await user.click(screen.getByRole('button', { name: /^weiter/i }))
+  await screen.findByText('Zuordnung prüfen')
+}
+
 describe('Sensor wizard', () => {
-  it('walks through scan → tree → review → success', async () => {
+  it('walks through scan → target → review → success with the module step', async () => {
     const user = userEvent.setup()
     renderRoute()
 
     expect(screen.getByText('Sensor-QR scannen')).toBeInTheDocument()
-    await user.click(screen.getByText('__scan_now__'))
+    await scanAndContinue(user)
 
-    await screen.findByText('Sensor erkannt')
-    await user.click(screen.getByRole('button', { name: /^weiter/i }))
-
-    await screen.findByText('Baum zuordnen')
-    const treeItem = await screen.findByText('Tilia cordata')
-    await user.click(treeItem)
+    expect(await screen.findByTestId('wizard-step-probe')).toHaveTextContent('none')
+    await user.click(screen.getByRole('button', { name: 'pick-probe' }))
+    expect(screen.getByTestId('wizard-step-probe')).toHaveTextContent('probe-1')
     await user.click(screen.getByRole('button', { name: /^weiter/i }))
 
     await screen.findByText('Zuordnung prüfen')
     expect(screen.getByText('eui-a8404131af5e6451')).toBeInTheDocument()
-    expect(screen.getByText('Tilia cordata')).toBeInTheDocument()
-    expect(screen.getByText('0815')).toBeInTheDocument()
+    expect(screen.getByText('probe 1')).toBeInTheDocument()
+    expect(screen.getByText('probe detail')).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: /sensor aktivieren/i }))
 
     await waitFor(() => {
       expect(activateMock).toHaveBeenCalledWith({
         sensorId: 'eui-a8404131af5e6451',
-        activateSensorRequest: { target: { module: 'irrigation', kind: 'tree', id: 'tree-1' } },
+        activateSensorRequest: { target: { module: 'probe', kind: 'probe', id: 'probe-1' } },
       })
     })
 
     await screen.findByText('Sensor aktiviert')
+    expect(screen.getByText(/wurde probe 1 zugeordnet/)).toBeInTheDocument()
+  })
+
+  it('names the target step after the only target kind', () => {
+    renderRoute()
+
+    const stepper = screen.getByRole('navigation', { name: /fortschritt/i })
+    expect(within(stepper).getByText('Bewässerung')).toBeInTheDocument()
+  })
+
+  it('asks for the target kind first when several modules offer one', async () => {
+    activeManifests.current = [
+      probeTargetManifest('probe', [probeTarget('probe', 'probe')]),
+      probeTargetManifest('other', [
+        probeTarget('other', 'bin', { labelKey: 'sensor:entity.name' }),
+      ]),
+    ]
+    const user = userEvent.setup()
+    renderRoute()
+
+    await scanAndContinue(user)
+    expect(screen.queryByTestId('wizard-step-probe')).not.toBeInTheDocument()
+    await user.click(await screen.findByRole('button', { name: /^Sensor/ }))
+
+    expect(await screen.findByTestId('wizard-step-bin')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'pick-bin' }))
+    await user.click(screen.getByRole('button', { name: /^weiter/i }))
+    await user.click(await screen.findByRole('button', { name: /sensor aktivieren/i }))
+
+    await waitFor(() => {
+      expect(activateMock).toHaveBeenCalledWith({
+        sensorId: 'eui-a8404131af5e6451',
+        activateSensorRequest: { target: { module: 'other', kind: 'bin', id: 'bin-1' } },
+      })
+    })
   })
 
   it('returns to step 1 with cleared state on "Nächsten Sensor scannen"', async () => {
     const user = userEvent.setup()
     renderRoute()
 
-    await user.click(screen.getByText('__scan_now__'))
-    await screen.findByText('Sensor erkannt')
-    await user.click(screen.getByRole('button', { name: /^weiter/i }))
-    await screen.findByText('Baum zuordnen')
-    await user.click(await screen.findByText('Tilia cordata'))
-    await user.click(screen.getByRole('button', { name: /^weiter/i }))
-    await user.click(await screen.findByRole('button', { name: /sensor aktivieren/i }))
+    await pickProbeAndReview(user)
+    await user.click(screen.getByRole('button', { name: /sensor aktivieren/i }))
     await screen.findByText('Sensor aktiviert')
 
     await user.click(screen.getByRole('button', { name: /nächsten sensor/i }))
@@ -222,11 +212,8 @@ describe('Sensor wizard', () => {
     const user = userEvent.setup()
     renderRoute()
 
-    await user.click(screen.getByText('__scan_now__'))
-    await screen.findByText('Sensor erkannt')
-    await user.click(screen.getByRole('button', { name: /^weiter/i }))
-    await screen.findByText('Baum zuordnen')
-    await user.click(await screen.findByText('Tilia cordata'))
+    await scanAndContinue(user)
+    await user.click(await screen.findByRole('button', { name: 'pick-probe' }))
 
     const stepper = screen.getByRole('navigation', { name: /fortschritt/i })
     await user.click(within(stepper).getByRole('button', { name: /qr-scan/i }))
@@ -235,7 +222,7 @@ describe('Sensor wizard', () => {
     await user.click(screen.getByRole('button', { name: /anderen sensor scannen/i }))
     await screen.findByText('Sensor-QR scannen')
 
-    expect(within(stepper).queryByRole('button', { name: /^baum/i })).not.toBeInTheDocument()
+    expect(within(stepper).queryByRole('button', { name: /^bewässerung/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /^weiter/i })).not.toBeInTheDocument()
   })
 
@@ -244,13 +231,8 @@ describe('Sensor wizard', () => {
     const user = userEvent.setup()
     renderRoute()
 
-    await user.click(screen.getByText('__scan_now__'))
-    await screen.findByText('Sensor erkannt')
-    await user.click(screen.getByRole('button', { name: /^weiter/i }))
-    await screen.findByText('Baum zuordnen')
-    await user.click(await screen.findByText('Tilia cordata'))
-    await user.click(screen.getByRole('button', { name: /^weiter/i }))
-    await user.click(await screen.findByRole('button', { name: /sensor aktivieren/i }))
+    await pickProbeAndReview(user)
+    await user.click(screen.getByRole('button', { name: /sensor aktivieren/i }))
 
     await screen.findByText(/bereits einem Baum/i)
     expect(screen.getByText('Zuordnung prüfen')).toBeInTheDocument()

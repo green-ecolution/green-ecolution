@@ -120,8 +120,7 @@
       "capturedAt": "Captured at"
     },
     "map": {
-      "currentPositionAriaLabel": "Map with current GPS position",
-      "nearestTreeAriaLabel": "Map with sensor position and nearby trees"
+      "currentPositionAriaLabel": "Map with current GPS position"
     }
   },
   "scanner": {

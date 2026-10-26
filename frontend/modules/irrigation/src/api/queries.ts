@@ -18,7 +18,8 @@ import {
   TreeResponse,
   WateringStatus,
 } from '@green-ecolution/backend-client'
-import { isValidUuid, sensorQueries, type BoundingBox } from '@/api/queries'
+import { sensorApi } from '@/api/backendApi'
+import { isValidUuid, type BoundingBox } from '@/api/queries'
 import { clusterApi, evaluationApi, irrigationApi, treeApi } from './client'
 import { loadStopClusters } from './plans'
 
@@ -104,20 +105,14 @@ export const clusterQueries = {
       queryFn: () =>
         clusterApi.listClusters({ wateringStatus: [WateringStatus.Bad], page: 1, perPage: 50 }),
     }),
+}
 
-  /** Sensors of the given clusters; lives under the sensor key so sensor invalidation reaches it. */
-  sensorIds: (clusterIds: string[]) => {
-    const sortedIds = clusterIds.slice().sort()
-    return queryOptions<string[]>({
-      queryKey: [...sensorQueries.key, 'by-cluster', sortedIds],
-      queryFn: async () => {
-        const perCluster = await Promise.all(
-          sortedIds.map((clusterId) => clusterApi.listClusterSensorIds({ clusterId })),
-        )
-        return [...new Set(perCluster.flat())]
-      },
-    })
-  },
+/** Feeds the sensor list's cluster filter, see `sensorTargets.ts`. */
+export const fetchSensorIdsOfClusters = async (clusterIds: string[]): Promise<string[]> => {
+  const perCluster = await Promise.all(
+    clusterIds.map((clusterId) => clusterApi.listClusterSensorIds({ clusterId })),
+  )
+  return [...new Set(perCluster.flat())]
 }
 
 export const treeQueries = {
@@ -172,6 +167,27 @@ export const treeQueries = {
         treeApi.getNearestTrees({ lat: params.lat, lng: params.lng, limit: params.limit }),
     }),
 }
+
+/** A module route, read against the soil of the tree's cluster; keyed below the sensor so its invalidation reaches it. */
+export const sensorSoilMoistureQuery = (
+  id: string,
+  params: { from?: Date; bucket: 'hour' | 'day' },
+) =>
+  queryOptions<SoilMoistureSeriesResponse>({
+    queryKey: [
+      'sensor',
+      id,
+      'soil-moisture',
+      params.bucket,
+      params.from?.toISOString() ?? 'default',
+    ],
+    queryFn: () =>
+      sensorApi.getSensorSoilMoisture({
+        sensorId: id,
+        from: params.from,
+        bucket: params.bucket,
+      }),
+  })
 
 export const evaluationQuery = () =>
   queryOptions<EvaluationResponse>({

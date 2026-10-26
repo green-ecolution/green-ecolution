@@ -1,5 +1,4 @@
 import { queryRoots } from '@/api/queries'
-import { irrigationRoots } from '../../../../../modules/irrigation/src/api/queries'
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useMutation } from '@tanstack/react-query'
@@ -48,9 +47,9 @@ const SensorActionsMenu = ({ sensor }: SensorActionsMenuProps) => {
     onSuccess: async () => {
       toast.success(t('actions.deleteSuccessToast'))
       await navigate({ to: '/sensors', search: { page: 1 } })
-      // After leaving: this page holds a live query on the sensor. Trees too,
-      // because deleting a sensor detaches it from the tree it was on.
-      await invalidate([...queryRoots.sensor, ...irrigationRoots.tree])
+      // After leaving: this page holds a live query on the sensor. The target's
+      // module too, because deleting a sensor detaches it from its target.
+      await invalidate([...queryRoots.sensor, ...(actions.currentTarget?.invalidate ?? [])])
     },
     onError: () => {
       toast.error(t('actions.deleteFailedToast'))
@@ -69,33 +68,24 @@ const SensorActionsMenu = ({ sensor }: SensorActionsMenuProps) => {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="min-w-56">
-          {canUpdate &&
-            (isPrepared ? (
-              <DropdownMenuItem
-                className="cursor-pointer"
-                onSelect={() => actions.requestActivate()}
-              >
-                <Link2 className="mr-2 size-4" />
-                {t('actions.activateAssignTree')}
-              </DropdownMenuItem>
-            ) : (
-              <>
-                <DropdownMenuItem
-                  className="cursor-pointer"
-                  onSelect={() => actions.requestReassign()}
-                >
-                  <Replace className="mr-2 size-4" />
-                  {t('actions.reassignTree')}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="cursor-pointer"
-                  onSelect={() => actions.requestRemove()}
-                >
-                  <Link2Off className="mr-2 size-4" />
-                  {t('actions.removeLink')}
-                </DropdownMenuItem>
-              </>
-            ))}
+          {canUpdate && actions.canAssign && isPrepared && (
+            <DropdownMenuItem className="cursor-pointer" onSelect={() => actions.requestActivate()}>
+              <Link2 className="mr-2 size-4" />
+              {t('actions.activateAssignTree')}
+            </DropdownMenuItem>
+          )}
+          {canUpdate && actions.canAssign && !isPrepared && (
+            <DropdownMenuItem className="cursor-pointer" onSelect={() => actions.requestReassign()}>
+              <Replace className="mr-2 size-4" />
+              {t('actions.reassignTree')}
+            </DropdownMenuItem>
+          )}
+          {canUpdate && !isPrepared && (
+            <DropdownMenuItem className="cursor-pointer" onSelect={() => actions.requestRemove()}>
+              <Link2Off className="mr-2 size-4" />
+              {t('actions.removeLink')}
+            </DropdownMenuItem>
+          )}
           {canDelete && (
             <DropdownMenuItem
               className="text-destructive focus:text-destructive cursor-pointer"

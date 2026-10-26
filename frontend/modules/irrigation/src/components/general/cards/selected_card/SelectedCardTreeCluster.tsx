@@ -2,7 +2,7 @@ import { clusterQueries } from '../../../../api/queries'
 import { SelectedCardProps } from '../SelectedCard'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { useWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
+import { useWateringStatusDetails } from '../../../../hooks/details/useDetailsForWateringStatus'
 import { Trash2 } from 'lucide-react'
 import {
   ListCard,

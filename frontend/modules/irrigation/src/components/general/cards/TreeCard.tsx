@@ -7,7 +7,7 @@ import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { ListCard } from '@green-ecolution/ui'
 import SensorIcon from '@/components/icons/Sensor'
-import { useWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
+import { useWateringStatusDetails } from '../../../hooks/details/useDetailsForWateringStatus'
 import { useDateLocale } from '@/lib/i18n/useFormatters'
 import { highlightMatch } from '@/lib/highlightMatch'
 

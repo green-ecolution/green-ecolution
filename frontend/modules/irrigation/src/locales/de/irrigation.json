@@ -138,5 +138,99 @@
       "treeCount_one": "{count} Baum",
       "treeCount_other": "{count} Bäume"
     }
+  },
+  "sensor": {
+    "target": {
+      "tree": "Baum"
+    },
+    "list": {
+      "filterCluster": "Gruppe",
+      "clusterUnknown": "Unbekannte Gruppe"
+    },
+    "placement": {
+      "clusterLabel": "Bewässerungsgruppe",
+      "treeLabel": "Sitzt am Baum",
+      "treeCount_one": "{count} Baum",
+      "treeCount_other": "{count} Bäume",
+      "noClusterDescription": "Der Baum gehört zu keiner Bewässerungsgruppe.",
+      "mapAriaLabel": "Karte mit der Sensor-Position, nahegelegenen Bäumen und Bewässerungsgruppen"
+    },
+    "linkedTree": {
+      "loadFailedTitle": "Baum nicht geladen",
+      "loadFailedDescription": "Der verknüpfte Baum (#{id}) konnte nicht abgerufen werden.",
+      "treeNumberLabel": "Baum-Nr. {number}",
+      "unknownSpecies": "Unbekannte Art",
+      "plantedLabel": "Gepflanzt {year}"
+    },
+    "treeAssignDialog": {
+      "activate": {
+        "title": "Sensor aktivieren und Baum zuweisen",
+        "description": "Suche den Baum nach Nummer oder Art und aktiviere den Sensor an diesem Baum.",
+        "confirm": "Aktivieren"
+      },
+      "reassign": {
+        "description": "Wähle den neuen Baum, dem dieser Sensor zugeordnet werden soll.",
+        "confirm": "Baum zuweisen"
+      },
+      "showAllTreesLabel": "Alle Bäume anzeigen",
+      "mapAriaLabel": "Karte zur Baumauswahl",
+      "savingButton": "Wird gespeichert …"
+    },
+    "treeSearch": {
+      "inputPlaceholder": "Baumnummer oder Baumart suchen…",
+      "clearAriaLabel": "Leeren",
+      "idleHint": "Tippe Baumnummer oder Baumart ein.",
+      "loadingLabel": "Bäume werden gesucht…",
+      "failedTitle": "Suche fehlgeschlagen",
+      "failedDescription": "Die Baumsuche ist fehlgeschlagen.",
+      "noResultsForQuery": "Keine Bäume gefunden für „{query}“.",
+      "noResultsHint": "Prüfe Schreibweise oder Baumnummer.",
+      "noTreesAvailable": "Es sind keine Bäume vorhanden.",
+      "resultCountMatches": "{shown} von {total} Treffern",
+      "resultCountTrees": "{shown} von {total} Bäumen",
+      "selectResultAriaLabel": "Baum aus Suchergebnis wählen",
+      "loadingMoreLabel": "Weitere Bäume werden geladen…",
+      "sensorAssignedBadge": "Sensor zugeordnet"
+    },
+    "nearestTreeList": {
+      "title": "Bäume in der Nähe",
+      "selectAriaLabel": "Baum auswählen",
+      "unassignedGroup": "Nicht zugeordnet"
+    },
+    "treePickerSheet": {
+      "title": "Anderen Baum auswählen",
+      "description": "Suche nach Baumnummer oder Baumart, wenn der richtige Baum nicht in der Vorschlagsliste ist."
+    },
+    "nearestTreeMap": {
+      "ariaLabel": "Karte mit Sensor-Position und nahegelegenen Bäumen"
+    },
+    "soilMoistureChart": {
+      "title": "Bodenfeuchte-Verlauf",
+      "subtitleHour": "Stundenmittel · Band = Min–Max · Gestrichelt = kritische Schwelle je Tiefe",
+      "subtitleDay": "Tagesmittel · Band = Min–Max · Gestrichelt = kritische Schwelle je Tiefe",
+      "depthSeriesLabel": "{depth} cm Tiefe",
+      "loadingLabel": "Messwerte werden geladen",
+      "tooFewDataPoints": "Zu wenige Datenpunkte im gewählten Zeitraum.",
+      "wateredOnLabel": "Bewässert am {date}",
+      "discardedLabel": "Messwert verworfen"
+    },
+    "wizard": {
+      "treeLabel": "Baum {number}",
+      "tree": {
+        "header": {
+          "title": "Baum zuordnen",
+          "description": "Wähle den Baum aus, an dem der Sensor angebracht wird. Der Vorschlag basiert auf deinem aktuellen Standort. Gespeichert wird am Sensor nur die Baum-Zuordnung, nicht deine Koordinaten."
+        },
+        "relocateButton": "Standort aktualisieren",
+        "locatingNotice": "Standort wird ermittelt …",
+        "loadingNearby": "Bäume in der Nähe werden gesucht…",
+        "searchFailed": {
+          "title": "Baumsuche fehlgeschlagen",
+          "description": "Die Suche nach Bäumen in der Nähe ist fehlgeschlagen."
+        },
+        "noNearbyTrees": "Es wurden keine Bäume in der Nähe gefunden. Wähle den Baum manuell aus.",
+        "selectedTreeLabel": "Ausgewählter Baum"
+      }
+    }
   }
 }

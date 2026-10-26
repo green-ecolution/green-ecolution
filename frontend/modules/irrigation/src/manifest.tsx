@@ -3,11 +3,13 @@ import Tree from '@/components/icons/Tree'
 import { ANY_READ } from '@/lib/auth/permissions'
 import type { ModuleManifest } from '@/modules/types'
 import ClustersTile from './components/dashboard/ClustersTile'
+import { IRRIGATION } from './lib/targets'
 import { irrigationMap } from './map'
 import { irrigationPlanning } from './planning'
+import { treeSensorTarget } from './sensorTargets'
 
 export const irrigationManifest: ModuleManifest = {
-  key: 'irrigation',
+  key: IRRIGATION,
   labelKey: 'common:modules.irrigation',
   i18n: {
     namespaces: ['tree', 'treecluster', 'evaluation', 'irrigation'],
@@ -75,4 +77,5 @@ export const irrigationManifest: ModuleManifest = {
   },
   map: irrigationMap,
   planning: irrigationPlanning,
+  targets: [treeSensorTarget],
 }

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { WateringStatus } from '@green-ecolution/backend-client'
-import { useWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
+import { useWateringStatusDetails } from '../../hooks/details/useDetailsForWateringStatus'
 
 const AMPEL_STATUSES = [WateringStatus.Bad, WateringStatus.Moderate, WateringStatus.Good]
 const NEUTRAL_STATUSES = [WateringStatus.JustWatered, WateringStatus.Unknown]

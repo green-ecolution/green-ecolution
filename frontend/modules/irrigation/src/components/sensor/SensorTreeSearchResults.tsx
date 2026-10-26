@@ -12,7 +12,7 @@ import type { TreeResponse } from '@green-ecolution/backend-client'
 import { Check, Search, TreeDeciduous } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useTreeSearch } from '@/hooks/useTreeSearch'
+import { useTreeSearch } from '../../hooks/useTreeSearch'
 
 // The list scrolls inside a modal's overflow container, not the viewport, so the
 // infinite-scroll observer must use that container as its root.
@@ -39,7 +39,7 @@ const SensorTreeSearchResults = ({
   onSelect,
   showAll = false,
 }: SensorTreeSearchResultsProps) => {
-  const { t } = useTranslation(['sensor', 'common'])
+  const { t } = useTranslation(['irrigation', 'common'])
   const sentinelRef = useRef<HTMLDivElement | null>(null)
   const {
     enabled,
@@ -74,21 +74,21 @@ const SensorTreeSearchResults = ({
     return (
       <div className="flex flex-col items-center justify-center gap-2 py-10 text-dark-600">
         <Search className="size-6 text-dark-400" aria-hidden />
-        <p className="text-sm">{t('treeSearch.idleHint')}</p>
+        <p className="text-sm">{t('sensor.treeSearch.idleHint')}</p>
       </div>
     )
   }
 
   if (isLoading) {
-    return <Loading className="py-10 justify-center" label={t('treeSearch.loadingLabel')} />
+    return <Loading className="py-10 justify-center" label={t('sensor.treeSearch.loadingLabel')} />
   }
 
   if (isError) {
     return (
       <Alert variant="destructive">
         <AlertContent>
-          <AlertTitle>{t('treeSearch.failedTitle')}</AlertTitle>
-          <AlertDescription>{t('treeSearch.failedDescription')}</AlertDescription>
+          <AlertTitle>{t('sensor.treeSearch.failedTitle')}</AlertTitle>
+          <AlertDescription>{t('sensor.treeSearch.failedDescription')}</AlertDescription>
         </AlertContent>
         <Button variant="outline" size="sm" onClick={() => void refetch()}>
           {t('common:actions.retry')}
@@ -103,11 +103,13 @@ const SensorTreeSearchResults = ({
         <Search className="size-6 text-dark-400" aria-hidden />
         {trimmed ? (
           <>
-            <p className="text-sm">{t('treeSearch.noResultsForQuery', { query: trimmed })}</p>
-            <p className="text-xs text-dark-500">{t('treeSearch.noResultsHint')}</p>
+            <p className="text-sm">
+              {t('sensor.treeSearch.noResultsForQuery', { query: trimmed })}
+            </p>
+            <p className="text-xs text-dark-500">{t('sensor.treeSearch.noResultsHint')}</p>
           </>
         ) : (
-          <p className="text-sm">{t('treeSearch.noTreesAvailable')}</p>
+          <p className="text-sm">{t('sensor.treeSearch.noTreesAvailable')}</p>
         )}
       </div>
     )
@@ -117,10 +119,10 @@ const SensorTreeSearchResults = ({
     <div className="flex flex-col gap-2">
       <p className="text-xs text-dark-600">
         {trimmed
-          ? t('treeSearch.resultCountMatches', { shown: items.length, total })
-          : t('treeSearch.resultCountTrees', { shown: items.length, total })}
+          ? t('sensor.treeSearch.resultCountMatches', { shown: items.length, total })
+          : t('sensor.treeSearch.resultCountTrees', { shown: items.length, total })}
       </p>
-      <ul className="flex flex-col gap-2" aria-label={t('treeSearch.selectResultAriaLabel')}>
+      <ul className="flex flex-col gap-2" aria-label={t('sensor.treeSearch.selectResultAriaLabel')}>
         {items.map((tree) => (
           <li key={tree.id}>
             <ResultRow
@@ -133,7 +135,7 @@ const SensorTreeSearchResults = ({
       </ul>
       <div ref={sentinelRef} aria-hidden className="h-1" />
       {isFetchingNextPage && (
-        <Loading className="py-3 justify-center" label={t('treeSearch.loadingMoreLabel')} />
+        <Loading className="py-3 justify-center" label={t('sensor.treeSearch.loadingMoreLabel')} />
       )}
     </div>
   )
@@ -148,7 +150,7 @@ function ResultRow({
   selected: boolean
   onSelect: () => void
 }) {
-  const { t } = useTranslation('sensor')
+  const { t } = useTranslation('irrigation')
   const isAssigned = tree.sensor != null
   return (
     <button
@@ -189,9 +191,9 @@ function ResultRow({
               <Badge
                 variant="muted"
                 size="default"
-                aria-label={t('treeSearch.sensorAssignedBadge')}
+                aria-label={t('sensor.treeSearch.sensorAssignedBadge')}
               >
-                {t('treeSearch.sensorAssignedBadge')}
+                {t('sensor.treeSearch.sensorAssignedBadge')}
               </Badge>
             )}
           </div>

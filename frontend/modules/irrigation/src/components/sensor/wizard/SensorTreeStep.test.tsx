@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { describe, expect, it, vi } from 'vitest'
 import type React from 'react'
@@ -7,16 +7,15 @@ import type { GeolocationFix } from '@/hooks/useGeolocation'
 vi.mock('@/components/geolocation/LocationMapPreview', () => ({
   default: () => <div data-testid="location-map-preview" />,
 }))
-vi.mock('@/components/geolocation/NearestTreeMapPreview', () => ({
+vi.mock('../../geolocation/NearestTreeMapPreview', () => ({
   default: () => <div data-testid="nearest-tree-map-preview" />,
 }))
-vi.mock('@/components/sensor/SensorTreePickerSheet', () => ({
+vi.mock('../SensorTreePickerSheet', () => ({
   default: () => null,
 }))
-vi.mock('../../../../../modules/irrigation/src/api/queries', async () => {
-  const actual = await vi.importActual<
-    typeof import('../../../../../modules/irrigation/src/api/queries')
-  >('../../../../../modules/irrigation/src/api/queries')
+vi.mock('../../../api/queries', async () => {
+  const actual =
+    await vi.importActual<typeof import('../../../api/queries')>('../../../api/queries')
   return {
     ...actual,
     treeQueries: {
@@ -72,9 +71,9 @@ const renderStep = (props: Partial<React.ComponentProps<typeof SensorTreeStep>> 
     <QueryClientProvider client={queryClient}>
       <SensorTreeStep
         position={fix}
-        status="watching"
-        errorMessage={null}
-        selectedTreeId={null}
+        geolocationStatus="watching"
+        geolocationError={null}
+        current={undefined}
         onSelect={vi.fn()}
         onRelocate={vi.fn()}
         {...props}
@@ -85,20 +84,33 @@ const renderStep = (props: Partial<React.ComponentProps<typeof SensorTreeStep>> 
 
 describe('SensorTreeStep GPS states', () => {
   it('shows a loading hint while GPS is still requesting (no fix yet)', () => {
-    renderStep({ position: null, status: 'requesting' })
+    renderStep({ position: null, geolocationStatus: 'requesting' })
     expect(screen.getByText(/Standort wird ermittelt/i)).toBeInTheDocument()
     expect(screen.queryByTestId('nearest-tree-map-preview')).not.toBeInTheDocument()
   })
 
   it('shows the permission notice and keeps manual search reachable when GPS is denied', () => {
-    renderStep({ position: null, status: 'denied' })
+    renderStep({ position: null, geolocationStatus: 'denied' })
     expect(screen.getByText(/Standortzugriff verweigert/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /anderen baum auswählen/i })).toBeInTheDocument()
   })
 
   it('shows accuracy badge, relocate link and nearby trees once a fix exists', async () => {
-    renderStep({ position: fix, status: 'watching' })
+    renderStep({ position: fix, geolocationStatus: 'watching' })
     expect(screen.getByRole('button', { name: /standort aktualisieren/i })).toBeInTheDocument()
     expect(await screen.findByText('Tilia cordata')).toBeInTheDocument()
+  })
+
+  it('hands the picked nearby tree to the core as a selected target', async () => {
+    const onSelect = vi.fn()
+    renderStep({ onSelect })
+
+    fireEvent.click(await screen.findByText('Tilia cordata'))
+
+    expect(onSelect).toHaveBeenCalledWith({
+      target: { module: 'irrigation', kind: 'tree', id: 'tree-1' },
+      label: 'Baum 0815',
+      detail: 'Tilia cordata',
+    })
   })
 })

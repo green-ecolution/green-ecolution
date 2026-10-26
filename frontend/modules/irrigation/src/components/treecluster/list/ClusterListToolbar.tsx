@@ -14,7 +14,7 @@ import ActiveFilterChips, {
   type FilterChipDescriptor,
 } from '@/components/general/list/ActiveFilterChips'
 import { regionsQuery } from '@/api/queries'
-import { useWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
+import { useWateringStatusDetails } from '../../../hooks/details/useDetailsForWateringStatus'
 import {
   useSoilConditionLabel,
   useSoilConditionOptions,

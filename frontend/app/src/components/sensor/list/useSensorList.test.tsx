@@ -2,10 +2,13 @@ import { renderHook, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { ModuleManifest } from '@/modules/types'
+import { probeTarget, probeTargetManifest } from '@/test/targetManifest'
 
-const { listSensors, listClusterSensorIds } = vi.hoisted(() => ({
+const { listSensors, probeSensorIds, activeManifests } = vi.hoisted(() => ({
   listSensors: vi.fn(),
-  listClusterSensorIds: vi.fn(),
+  probeSensorIds: vi.fn(),
+  activeManifests: { current: [] as ModuleManifest[] },
 }))
 
 vi.mock('@/api/backendApi', async (importOriginal) => ({
@@ -13,12 +16,27 @@ vi.mock('@/api/backendApi', async (importOriginal) => ({
   sensorApi: { listSensors },
 }))
 
-vi.mock('../../../../../modules/irrigation/src/api/client', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../../../../modules/irrigation/src/api/client')>()),
-  clusterApi: { listClusterSensorIds },
+vi.mock('@/modules/useActiveModules', () => ({
+  useActiveModules: () => ({ manifests: activeManifests.current, isActive: () => true }),
 }))
 
 import { useSensorList } from './useSensorList'
+
+const Nothing = () => null
+
+const probeManifest = probeTargetManifest('probe', [
+  probeTarget('probe', 'probe', {
+    listFilter: {
+      param: 'probeIds',
+      Control: Nothing,
+      Chips: Nothing,
+      sensorIds: (value) => ({
+        queryKey: ['probe-sensor-ids', value],
+        queryFn: () => probeSensorIds(value) as Promise<string[]>,
+      }),
+    },
+  }),
+])
 
 const wrapper = ({ children }: { children: ReactNode }) => (
   <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
@@ -29,25 +47,25 @@ const wrapper = ({ children }: { children: ReactNode }) => (
 describe('useSensorList', () => {
   beforeEach(() => {
     listSensors.mockReset()
-    listClusterSensorIds.mockReset()
+    probeSensorIds.mockReset()
+    activeManifests.current = [probeManifest]
   })
 
-  it('resolves the cluster filter to sensor ids and passes them to the list', async () => {
-    listClusterSensorIds.mockImplementation(({ clusterId }: { clusterId: string }) =>
-      Promise.resolve(clusterId === 'c1' ? ['s1', 's2'] : ['s2', 's3']),
-    )
+  it('narrows the list to the sensor ids an active target filter resolves', async () => {
+    probeSensorIds.mockResolvedValue(['s1', 's2'])
     listSensors.mockResolvedValue({ data: [], pagination: { totalRecords: 0 } })
 
-    renderHook(() => useSensorList({ page: 1, clusterIds: ['c2', 'c1'] }), { wrapper })
+    renderHook(() => useSensorList({ page: 1, probeIds: ['p-1'] }), { wrapper })
 
     await waitFor(() => expect(listSensors).toHaveBeenCalled())
-    expect(listSensors).toHaveBeenCalledWith(expect.objectContaining({ id: ['s1', 's2', 's3'] }))
+    expect(probeSensorIds).toHaveBeenCalledWith(['p-1'])
+    expect(listSensors).toHaveBeenCalledWith(expect.objectContaining({ id: ['s1', 's2'] }))
   })
 
-  it('shows an empty list without calling the list endpoint when the clusters have no sensors', async () => {
-    listClusterSensorIds.mockResolvedValue([])
+  it('shows an empty list without calling the list endpoint when the filter matches no sensor', async () => {
+    probeSensorIds.mockResolvedValue([])
 
-    const { result } = renderHook(() => useSensorList({ page: 1, clusterIds: ['c1'] }), {
+    const { result } = renderHook(() => useSensorList({ page: 1, probeIds: ['p-1'] }), {
       wrapper,
     })
 
@@ -55,12 +73,23 @@ describe('useSensorList', () => {
     expect(listSensors).not.toHaveBeenCalled()
   })
 
-  it('does not resolve cluster ids without a cluster filter', async () => {
+  it('does not resolve sensor ids without a filter value', async () => {
     listSensors.mockResolvedValue({ data: [], pagination: { totalRecords: 0 } })
 
     renderHook(() => useSensorList({ page: 1 }), { wrapper })
 
     await waitFor(() => expect(listSensors).toHaveBeenCalled())
-    expect(listClusterSensorIds).not.toHaveBeenCalled()
+    expect(probeSensorIds).not.toHaveBeenCalled()
+  })
+
+  it('ignores the filter of a module that is not active', async () => {
+    activeManifests.current = []
+    listSensors.mockResolvedValue({ data: [], pagination: { totalRecords: 0 } })
+
+    renderHook(() => useSensorList({ page: 1, probeIds: ['p-1'] }), { wrapper })
+
+    await waitFor(() => expect(listSensors).toHaveBeenCalled())
+    expect(probeSensorIds).not.toHaveBeenCalled()
+    expect(listSensors).toHaveBeenCalledWith(expect.objectContaining({ id: undefined }))
   })
 })

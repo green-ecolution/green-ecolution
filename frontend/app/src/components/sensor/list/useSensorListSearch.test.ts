@@ -8,7 +8,7 @@ const search = {
   statuses: undefined,
   modelIds: undefined,
   dataHealth: undefined,
-  hasTree: true,
+  attached: true,
 }
 
 vi.mock('@tanstack/react-router', () => ({
@@ -41,7 +41,7 @@ describe('useSensorListSearch', () => {
     result.current.setSort('last_reading', 'desc')
     expect(appliedSearch().page).toBe(1)
 
-    result.current.setHasTree(false)
+    result.current.setAttached(false)
     expect(appliedSearch().page).toBe(1)
 
     result.current.resetFilters()
@@ -73,8 +73,8 @@ describe('useSensorListSearch', () => {
     expect(appliedSearch().sort).toBe('last_reading')
     expect(appliedSearch().order).toBe('desc')
 
-    result.current.setHasTree(false)
-    expect(appliedSearch().hasTree).toBe(false)
+    result.current.setAttached(false)
+    expect(appliedSearch().attached).toBe(false)
 
     result.current.resetFilters()
     const reset = appliedSearch()
@@ -82,7 +82,7 @@ describe('useSensorListSearch', () => {
     expect(reset.statuses).toBeUndefined()
     expect(reset.modelIds).toBeUndefined()
     expect(reset.dataHealth).toBeUndefined()
-    expect(reset.hasTree).toBeUndefined()
+    expect(reset.attached).toBeUndefined()
     expect(reset.clusterIds).toBeUndefined()
   })
 
@@ -94,12 +94,12 @@ describe('useSensorListSearch', () => {
     expect(appliedSearch().statuses).toBeUndefined()
   })
 
-  it('removes the tree filter from the url when cleared', () => {
+  it('removes the link filter from the url when cleared', () => {
     const { result } = renderHook(() => useSensorListSearch())
 
-    result.current.setHasTree(undefined)
+    result.current.setAttached(undefined)
 
-    expect(appliedSearch().hasTree).toBeUndefined()
+    expect(appliedSearch().attached).toBeUndefined()
   })
 
   it('switching to the prepared view drops the filters only activated sensors can match', () => {
@@ -111,7 +111,7 @@ describe('useSensorListSearch', () => {
     expect(applied.view).toBe('prepared')
     expect(applied.page).toBe(1)
     expect(applied.q).toBe('eui')
-    expect(applied.hasTree).toBeUndefined()
+    expect(applied.attached).toBeUndefined()
     expect(applied.statuses).toBeUndefined()
     expect(applied.dataHealth).toBeUndefined()
     expect(applied.clusterIds).toBeUndefined()

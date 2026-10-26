@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import { DataHealth, SensorStatus } from '@green-ecolution/backend-client'
-import { legacyPreparedRedirect, sensorListParams, statusesForView } from './sensorListView'
+import { probeTarget, probeTargetManifest } from '@/test/targetManifest'
+import {
+  legacyHasTreeRedirect,
+  legacyPreparedRedirect,
+  sensorListParams,
+  sensorSearchParserFor,
+  statusesForView,
+} from './sensorListView'
 
 describe('statusesForView', () => {
   it('hides prepared sensors in the activated view when no status is picked', () => {
@@ -44,7 +51,7 @@ describe('legacyPreparedRedirect', () => {
         page: 2,
         q: 'eui',
         statuses: [SensorStatus.Prepared],
-        hasTree: false,
+        attached: false,
         dataHealth: [DataHealth.Ok],
         clusterIds: ['cluster-1'],
       }),
@@ -53,7 +60,7 @@ describe('legacyPreparedRedirect', () => {
       q: 'eui',
       view: 'prepared',
       statuses: undefined,
-      hasTree: undefined,
+      attached: undefined,
       dataHealth: undefined,
       clusterIds: undefined,
     })
@@ -69,13 +76,51 @@ describe('legacyPreparedRedirect', () => {
 describe('sensorListParams', () => {
   const base = { page: 1 }
 
-  it('maps hasTree to the attached filter', () => {
-    expect(sensorListParams({ ...base, hasTree: true }).attached).toBe(true)
-    expect(sensorListParams({ ...base, hasTree: false }).attached).toBe(false)
+  it('passes the link filter through as attached', () => {
+    expect(sensorListParams({ ...base, attached: true }).attached).toBe(true)
+    expect(sensorListParams({ ...base, attached: false }).attached).toBe(false)
     expect(sensorListParams(base).attached).toBeUndefined()
   })
 
-  it('passes the resolved cluster sensor ids as id', () => {
-    expect(sensorListParams({ ...base, clusterIds: ['c1'] }, ['s1', 's2']).id).toEqual(['s1', 's2'])
+  it('passes the sensor ids the target filters resolved as id', () => {
+    expect(sensorListParams(base, ['s1', 's2']).id).toEqual(['s1', 's2'])
+  })
+})
+
+describe('legacyHasTreeRedirect', () => {
+  it('moves a tree filter from an old link to the link filter', () => {
+    expect(legacyHasTreeRedirect({ page: 1, hasTree: false })).toEqual({
+      page: 1,
+      hasTree: undefined,
+      attached: false,
+    })
+  })
+
+  it('leaves current links alone', () => {
+    expect(legacyHasTreeRedirect({ page: 1, attached: true })).toBeUndefined()
+  })
+})
+
+describe('sensorSearchParserFor', () => {
+  it('keeps the search params of every module target filter', () => {
+    const Nothing = () => null
+    const parse = sensorSearchParserFor([
+      probeTargetManifest('probe', [
+        probeTarget('probe', 'probe', {
+          listFilter: {
+            param: 'probeIds',
+            Control: Nothing,
+            Chips: Nothing,
+            sensorIds: (value) => ({ queryKey: ['probe', value] }),
+          },
+        }),
+      ]),
+    ])
+
+    expect(parse({ page: 1, probeIds: ['p-1'], other: 'x' })).toEqual({
+      page: 1,
+      probeIds: ['p-1'],
+    })
+    expect(parse({ page: 1, probeIds: 'broken' })).toEqual({ page: 1 })
   })
 })

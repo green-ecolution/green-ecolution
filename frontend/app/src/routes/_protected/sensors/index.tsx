@@ -1,5 +1,4 @@
-import { sensorQueries } from '@/api/queries'
-import { clusterQueries } from '../../../../../modules/irrigation/src/api/queries'
+import { modulesQuery, sensorQueries } from '@/api/queries'
 import { Badge, Button, Loading, Tabs, TabsList, TabsTrigger } from '@green-ecolution/ui'
 import Pagination from '@/components/general/Pagination'
 import EntityList from '@/components/general/EntityList'
@@ -9,9 +8,12 @@ import { useSensorListSearch } from '@/components/sensor/list/useSensorListSearc
 import { useSensorList } from '@/components/sensor/list/useSensorList'
 import {
   ACTIVATED_STATUSES,
+  legacyHasTreeRedirect,
   legacyPreparedRedirect,
-  sensorFilterSchema,
+  MODULE_FILTER_PARAMS,
   sensorListParams,
+  sensorSearchParserFor,
+  type SensorListSearch,
   type SensorListView,
 } from '@/components/sensor/list/sensorListView'
 import { useQuery } from '@tanstack/react-query'
@@ -21,6 +23,14 @@ import { Zap } from 'lucide-react'
 import { SensorStatus } from '@green-ecolution/backend-client'
 import { pendingLoading, prefetch } from '@/lib/router'
 import { Can } from '@/lib/auth/Can'
+import { listFilterValue, sensorListFiltersOf } from '@/lib/targets'
+import { activeManifestsFrom } from '@/modules/activeModules'
+import { moduleManifests } from '@/modules/registry'
+import { useActiveModules } from '@/modules/useActiveModules'
+
+// Every registered module's filter params, active or not: a shared link keeps
+// them even before the active modules are known.
+const parseSensorSearch = sensorSearchParserFor(moduleManifests)
 
 const viewTotalParams = (statuses: SensorStatus[]) => ({ page: 1, perPage: 1, status: statuses })
 
@@ -33,6 +43,7 @@ function Sensors() {
   const { t } = useTranslation('sensor')
   const search = Route.useSearch()
   const view = search.view ?? 'activated'
+  const { manifests } = useActiveModules()
   const { resetFilters, setView } = useSensorListSearch()
   const { result: sensorsRes, isPlaceholderData, error } = useSensorList(search)
   if (error) throw error
@@ -45,8 +56,10 @@ function Sensors() {
     (search.statuses?.length ?? 0) > 0 ||
     (search.modelIds?.length ?? 0) > 0 ||
     (search.dataHealth?.length ?? 0) > 0 ||
-    (search.clusterIds?.length ?? 0) > 0 ||
-    search.hasTree !== undefined
+    sensorListFiltersOf(manifests).some(
+      ({ filter }) => listFilterValue(search, filter.param).length > 0,
+    ) ||
+    search.attached !== undefined
 
   const viewTabs: { value: SensorListView; label: string; total: number | undefined }[] = [
     { value: 'activated', label: t('list.viewActivated'), total: activatedTotal },
@@ -134,27 +147,35 @@ function Sensors() {
 
 export const Route = createFileRoute('/_protected/sensors/')({
   component: Sensors,
-  validateSearch: sensorFilterSchema,
+  validateSearch: parseSensorSearch,
   beforeLoad: ({ search }) => {
-    const legacy = legacyPreparedRedirect(search)
+    const withoutHasTree = legacyHasTreeRedirect(search)
+    const legacy = legacyPreparedRedirect(withoutHasTree ?? search) ?? withoutHasTree
     if (legacy) throw redirect({ to: '/sensors', search: legacy, replace: true })
   },
   pendingComponent: pendingLoading({ key: 'sensor:list.loadingLabel' }),
-  loaderDeps: ({ search }) => ({
+  loaderDeps: ({ search }): SensorListSearch => ({
     page: search.page,
     view: search.view,
     q: search.q,
     statuses: search.statuses,
     modelIds: search.modelIds,
     dataHealth: search.dataHealth,
-    hasTree: search.hasTree,
-    clusterIds: search.clusterIds,
+    attached: search.attached,
     sort: search.sort,
     order: search.order,
+    ...Object.fromEntries(MODULE_FILTER_PARAMS.map((param) => [param, search[param]])),
   }),
-  loader: ({ deps, context: { queryClient } }) => {
-    if (deps.clusterIds?.length) {
-      prefetch(queryClient, clusterQueries.sensorIds(deps.clusterIds), 'clusterQueries.sensorIds')
+  loader: async ({ deps, context: { queryClient } }) => {
+    const modules = await queryClient.ensureQueryData(modulesQuery())
+    const setFilters = sensorListFiltersOf(activeManifestsFrom(moduleManifests, modules))
+      .map(({ filter }) => ({ filter, value: listFilterValue(deps, filter.param) }))
+      .filter(({ value }) => value.length > 0)
+    // The list waits for the sensor ids the target filters resolve to.
+    if (setFilters.length > 0) {
+      for (const { filter, value } of setFilters) {
+        prefetch(queryClient, filter.sensorIds(value), `${filter.param} sensor ids`)
+      }
       return
     }
     prefetch(queryClient, sensorQueries.list(sensorListParams(deps)), 'sensorQueries.list')

@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import useStore from '../../../../store/useIrrigationFilterStore'
-import { useWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
+import { useWateringStatusDetails } from '../../../../hooks/details/useDetailsForWateringStatus'
 import { WateringStatus } from '@green-ecolution/backend-client'
 import { MultiSelectCombobox } from '@green-ecolution/ui'
 import SelectedTagList from '../SelectedTagList'

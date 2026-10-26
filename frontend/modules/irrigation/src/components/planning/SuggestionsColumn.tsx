@@ -8,7 +8,7 @@ import { PlanStatus as WateringPlanStatus } from '@green-ecolution/backend-clien
 import { useWateringPlanDraft } from '@/store/form/useFormDraft'
 import type { WateringPlanForm } from '@/schema/wateringPlanSchema'
 import { useHasPermission } from '@/lib/auth/useHasPermission'
-import { IRRIGATION } from '@/lib/targets'
+import { IRRIGATION } from '../../lib/targets'
 import { clusterQueries } from '../../api/queries'
 import ClusterSuggestionCard from './ClusterSuggestionCard'
 

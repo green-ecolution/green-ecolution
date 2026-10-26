@@ -2,7 +2,7 @@ import { Checkbox, KanbanCard } from '@green-ecolution/ui'
 import { Link } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import type { TreeClusterInListResponse } from '@green-ecolution/backend-client'
-import { useWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
+import { useWateringStatusDetails } from '../../hooks/details/useDetailsForWateringStatus'
 
 interface ClusterSuggestionCardProps {
   cluster: TreeClusterInListResponse

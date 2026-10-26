@@ -21,6 +21,8 @@ vi.mock('@/lib/auth/usePermissions', () => ({
 
 vi.mock('./SensorActionsContext', () => ({
   useSensorActions: () => ({
+    canAssign: true,
+    currentTarget: undefined,
     requestActivate: vi.fn(),
     requestReassign: vi.fn(),
     requestRemove: vi.fn(),

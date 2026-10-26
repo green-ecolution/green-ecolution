@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { WateringStatus } from '@green-ecolution/backend-client'
-import { EnumsTranslate, StatusColor } from './types'
+import { EnumsTranslate, StatusColor } from '@/hooks/details/types'
 
 const WateringStatusColors: Record<WateringStatus, { color: StatusColor; colorHex: string }> = {
   [WateringStatus.Unknown]: { color: 'outline-dark', colorHex: '#A2A2A2' },

@@ -1,5 +1,5 @@
-import { clusterQueries } from '../../../../modules/irrigation/src/api/queries'
-import type { TreeWithDistance } from '../../../../modules/irrigation/src/api/client'
+import { clusterQueries } from '../../api/queries'
+import type { TreeWithDistance } from '../../api/client'
 import { Badge, cn } from '@green-ecolution/ui'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
@@ -22,7 +22,7 @@ const NearestTreeListItem = ({
   isSelected: boolean
   onSelect: () => void
 }) => {
-  const { t } = useTranslation('sensor')
+  const { t } = useTranslation('irrigation')
   const oneDecimal = useNumberFormatter({ maximumFractionDigits: 1 })
   const wholeNumber = useNumberFormatter({ maximumFractionDigits: 0 })
   const { tree, distanceMeters } = entry
@@ -90,7 +90,7 @@ const NearestTreeListItem = ({
             <span className="text-dark-600 text-xs">
               {tree.treeClusterId
                 ? (clusterRes?.name ?? '…')
-                : t('nearestTreeList.unassignedGroup')}
+                : t('sensor.nearestTreeList.unassignedGroup')}
             </span>
             {isAssigned && (
               <>
@@ -100,9 +100,9 @@ const NearestTreeListItem = ({
                 <Badge
                   variant="muted"
                   size="default"
-                  aria-label={t('treeSearch.sensorAssignedBadge')}
+                  aria-label={t('sensor.treeSearch.sensorAssignedBadge')}
                 >
-                  {t('treeSearch.sensorAssignedBadge')}
+                  {t('sensor.treeSearch.sensorAssignedBadge')}
                 </Badge>
               </>
             )}
@@ -114,7 +114,7 @@ const NearestTreeListItem = ({
 }
 
 const NearestTreeList = ({ trees, selectedTreeId, onSelect }: NearestTreeListProps) => {
-  const { t } = useTranslation('sensor')
+  const { t } = useTranslation('irrigation')
   useEffect(() => {
     if (selectedTreeId !== null) return
     const firstSelectable = trees.find((entry) => entry.tree.sensor == null)
@@ -124,10 +124,10 @@ const NearestTreeList = ({ trees, selectedTreeId, onSelect }: NearestTreeListPro
   }, [trees, selectedTreeId, onSelect])
 
   return (
-    <section aria-label={t('nearestTreeList.title')}>
+    <section aria-label={t('sensor.nearestTreeList.title')}>
       <div className="flex items-center gap-2 mb-3">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-dark-600">
-          {t('nearestTreeList.title')}
+          {t('sensor.nearestTreeList.title')}
         </h2>
         <Badge variant="muted" size="default">
           {trees.length}
@@ -137,7 +137,7 @@ const NearestTreeList = ({ trees, selectedTreeId, onSelect }: NearestTreeListPro
       <div
         className="flex flex-col gap-2"
         role="radiogroup"
-        aria-label={t('nearestTreeList.selectAriaLabel')}
+        aria-label={t('sensor.nearestTreeList.selectAriaLabel')}
       >
         {trees.map((entry) => (
           <NearestTreeListItem
