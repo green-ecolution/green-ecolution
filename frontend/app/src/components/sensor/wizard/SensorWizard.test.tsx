@@ -146,7 +146,7 @@ describe('Sensor wizard', () => {
 
     await screen.findByText('Zuordnung prüfen')
     expect(screen.getByText('eui-a8404131af5e6451')).toBeInTheDocument()
-    expect(screen.getByText('probe 1')).toBeInTheDocument()
+    expect(screen.getByText('Probe 1')).toBeInTheDocument()
     expect(screen.getByText('probe detail')).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: /sensor aktivieren/i }))
