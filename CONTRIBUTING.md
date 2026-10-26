@@ -553,6 +553,8 @@ frontend/
     ui/                      Shared UI components
     backend-client/          Generated OpenAPI client
     plugin-interface/        Plugin system interface
+  modules/
+    irrigation/              Frontend module package of the irrigation module
 ```
 
 Features that can be switched on per organization are called modules. An organization
@@ -620,6 +622,49 @@ reserved for the activation default. The irrigation defaults live under
 while one of the old locations of these keys (`routing.tree_demand_liters`,
 `watering.just_watered_*`, `map.nearest_tree_*`) is still set, in a file or as an `APP_…`
 environment variable, and the error names the new key.
+
+### Frontend Module Packages
+
+The frontend side of a module is a pnpm package under `frontend/modules/<name>/` (for
+irrigation: `@green-ecolution/module-irrigation`). It holds the module's pages, components,
+API wrappers, store, validation schemas and translation catalogs, and describes itself to
+the app through a manifest. Whether a module is shown is decided at runtime by the
+organization's module switches, so the app only renders the manifests of active modules.
+
+A module package consists of:
+
+- `module.config.ts`: `{ key, routesDirectory }`, read by Vite, Vitest and the manifest.
+  It is a separate file because the manifest imports React components and cannot be
+  loaded from `vite.config.ts`. The app lists every config in `frontend/app/modules.config.ts`.
+- `src/manifest.tsx`: the `ModuleManifest` (type in `frontend/app/src/modules/types.ts`)
+  with navigation, route permissions, resources, statistics, map, planning, sensor target
+  and settings slots, and the module's i18n namespaces.
+- `src/routes/`: the module's route files, mirroring the app's paths, for example
+  `src/routes/_protected/trees/...` with `createFileRoute('/_protected/trees')`. The
+  TanStack Router plugin picks them up through a `virtualRouteConfig`, so the URLs stay
+  what they are. Wrap a module's top-level route in `moduleRoute(key, …)` so an inactive
+  module renders a "module not active" page without sending any module request.
+
+A module may import from the app with `@/…`, but the app must never import a module. The
+only places in `frontend/app/src` that may reference a module package are
+`modules/registry.ts` (the list of manifests), `lib/i18n/i18next.d.ts` (types of the module
+catalogs) and the generated `routeTree.gen.ts`. `frontend/app/src/modules/boundary.test.ts`
+enforces this and fails with the offending files; do not add exceptions, hand the data
+over through a manifest slot instead. Core text must stay neutral and module-specific
+wording belongs into the module's catalogs.
+
+A module package keeps the same devDependencies as the app, including the peer variants
+(`typescript` as alias for `@typescript/typescript6`, `@types/node`, `jsdom`,
+`@vitest/*`). If they drift, pnpm installs a second copy of `react-i18next` or `vitest`
+and translations come back empty in tests. `src/instances.test.ts` in the module checks
+that the packages resolve to the same instance. After adding or moving route files,
+regenerate `routeTree.gen.ts` by starting the dev server briefly
+(`timeout 30 pnpm exec vite --port 5199` in `frontend/app`) and check the diff.
+
+Handbook chapters that only make sense with a module carry `module: <key>` in their
+frontmatter; they are hidden from logged-in users for organizations where the module is
+off. Validation of a module's drafts comes from `domain-wasm`, whose exports carry the
+module key as prefix (`irrigationValidateTreeDraft`).
 
 ## Writing a Plugin
 
