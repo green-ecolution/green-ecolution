@@ -5,6 +5,7 @@ import { LAYERS as CORE_LAYERS } from '@/components/map-gl/mapStyle'
 import useClusterBoundaryLayer from '../map-gl/layers/useClusterBoundaryLayer'
 import useClusterMarkerLayer from '../map-gl/layers/useClusterMarkerLayer'
 import ClusterPanel from '../map/cluster-panel/ClusterPanel'
+import useFitStopsWithoutRoute from './useFitStopsWithoutRoute'
 
 const ClusterRouteOverlay = ({ plan }: { plan: PlanResponse }) => {
   const [selectedClusterId, setSelectedClusterId] = useState<string | null>(null)
@@ -23,6 +24,7 @@ const ClusterRouteOverlay = ({ plan }: { plan: PlanResponse }) => {
     clusterIds: plan.stops,
     flyToOnClick: false,
   })
+  useFitStopsWithoutRoute(plan.id, plan.stops)
 
   if (!selectedClusterId) return null
 
