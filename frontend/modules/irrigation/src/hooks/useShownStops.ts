@@ -11,7 +11,8 @@ export function useShownStops(stops: string[]) {
   const { data } = useQuery({ ...clusterQueries.stops(stops), placeholderData: keepPreviousData })
   const resolved = new Set(data?.clusters.map(({ id }) => id))
   const hidden = new Set(data?.stops.filter((id) => !resolved.has(id)))
-  const shown = stops.filter((id) => !hidden.has(id))
+  // Before the first answer any stop may be hidden, so none is listed yet.
+  const shown = data ? stops.filter((id) => !hidden.has(id)) : []
 
   return { shown, keepUnshown: (next: string[]) => keepUnresolvedStops(next, stops, shown) }
 }

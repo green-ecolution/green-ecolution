@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import userEvent from '@testing-library/user-event'
 import type { TreeClusterInListResponse } from '@green-ecolution/backend-client'
-import { render, screen, waitFor } from '@/test/utils'
+import { render, screen } from '@/test/utils'
 import type { StopPickerProps } from '@/modules/types'
 import ClusterStopPicker from './ClusterStopPicker'
 
@@ -54,10 +54,17 @@ describe('ClusterStopPicker', () => {
     const pickerProps = props()
     render(<ClusterStopPicker {...pickerProps} />)
 
-    await waitFor(() => expect(screen.queryByText('Entfernen hidden')).not.toBeInTheDocument())
-    await user.click(screen.getByRole('button', { name: 'Entfernen c1' }))
+    await user.click(await screen.findByRole('button', { name: 'Entfernen c1' }))
+    expect(screen.queryByText('Entfernen hidden')).not.toBeInTheDocument()
 
     expect(pickerProps.onChange).toHaveBeenCalledWith(['c2', 'hidden'])
+  })
+
+  it('lists no stop before it knows which ones the reader can see', () => {
+    loadStopClusters.mockReturnValue(new Promise(() => undefined))
+    render(<ClusterStopPicker {...props()} />)
+
+    expect(screen.queryByRole('button', { name: /^Entfernen/ })).not.toBeInTheDocument()
   })
 
   it('saves the draft and opens the map selection with the plan context', async () => {

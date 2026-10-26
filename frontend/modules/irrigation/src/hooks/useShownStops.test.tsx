@@ -22,6 +22,14 @@ describe('useShownStops', () => {
     await waitFor(() => expect(result.current.shown).toEqual(['c1', 'c2']))
   })
 
+  it('lists no stop before the first answer, but keeps them all on a change', () => {
+    loadStopClusters.mockReturnValueOnce(new Promise(() => undefined))
+    const { result } = renderHookWithClient(() => useShownStops(['c1', 'hidden']))
+
+    expect(result.current.shown).toEqual([])
+    expect(result.current.keepUnshown(['c3'])).toEqual(['c3', 'c1', 'hidden'])
+  })
+
   it('shows a newly added stop while its cluster still loads', async () => {
     let stops = ['c1', 'hidden']
     const { result, rerender } = renderHookWithClient(() => useShownStops(stops))
