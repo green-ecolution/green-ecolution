@@ -20,6 +20,10 @@ interface SensorReviewStepProps {
 
 const formatCoordinate = (n: number) => n.toFixed(5)
 
+// Target labels are worded for mid-sentence use (en "assigned to tree 0815"), so as a
+// standalone card title they need a leading capital.
+const asTitle = (label: string) => `${label.charAt(0).toUpperCase()}${label.slice(1)}`
+
 const SensorReviewStep = ({
   sensorId,
   target,
@@ -56,7 +60,7 @@ const SensorReviewStep = ({
             {t('wizard.review.assignedTargetLabel')}
           </p>
           <div className="space-y-1">
-            <p className="font-semibold">{target.label}</p>
+            <p className="font-semibold">{asTitle(target.label)}</p>
             {target.detail && <p className="text-xs text-dark-600">{target.detail}</p>}
           </div>
         </div>

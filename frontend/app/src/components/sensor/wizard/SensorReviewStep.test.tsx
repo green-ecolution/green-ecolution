@@ -35,6 +35,20 @@ describe('SensorReviewStep', () => {
     expect(screen.getByText(/9\.43/)).toBeInTheDocument()
   })
 
+  it('capitalises a target label worded for mid-sentence use', () => {
+    render(
+      <SensorReviewStep
+        sensorId="EUI-001"
+        target={{ ...target, label: 'tree 0815' }}
+        position={null}
+        status="idle"
+        errorMessage={null}
+        onActivate={vi.fn()}
+      />,
+    )
+    expect(screen.getByText('Tree 0815')).toBeInTheDocument()
+  })
+
   it('fires onActivate when the primary button is clicked', async () => {
     const user = userEvent.setup()
     const onActivate = vi.fn()
