@@ -3,6 +3,7 @@ import Tree from '@/components/icons/Tree'
 import { ANY_READ } from '@/lib/auth/permissions'
 import type { ModuleManifest } from '@/modules/types'
 import ClustersTile from './components/dashboard/ClustersTile'
+import { irrigationMap } from './map'
 
 export const irrigationManifest: ModuleManifest = {
   key: 'irrigation',
@@ -71,4 +72,5 @@ export const irrigationManifest: ModuleManifest = {
       to: '/treecluster',
     },
   },
+  map: irrigationMap,
 }

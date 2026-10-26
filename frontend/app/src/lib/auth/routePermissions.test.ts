@@ -1,13 +1,15 @@
 import { describe, it, expect } from 'vitest'
+import { z } from 'zod'
 import { ANY_READ, NO_PERMISSIONS, UNRESTRICTED, type Permissions } from './permissions'
 import {
   CORE_ROUTE_PERMISSIONS,
   canAccessRoute as canAccessRouteIn,
+  mapPermissionsFor,
   routePermissionsFor,
   visibleNavSections as visibleNavSectionsIn,
 } from './routePermissions'
 import { irrigationManifest } from '@green-ecolution/module-irrigation'
-import type { ModuleManifest } from '@/modules/types'
+import type { ModuleManifest, ModuleMap } from '@/modules/types'
 
 const perms = (...granted: string[]): Permissions => new Set(granted)
 
@@ -22,7 +24,6 @@ const visibleNavSections = <S extends { links: readonly { to?: unknown }[] }>(
 describe('CORE_ROUTE_PERMISSIONS', () => {
   it('carries no irrigation route', () => {
     expect(Object.keys(CORE_ROUTE_PERMISSIONS).sort()).toEqual([
-      '/map',
       '/sensors',
       '/settings/team/members',
       '/settings/team/roles',
@@ -67,6 +68,43 @@ describe('routePermissionsFor', () => {
     expect(canAccessRouteIn('/probe', perms('vehicle:read'), routePermissionsFor([probe]))).toBe(
       false,
     )
+  })
+})
+
+describe('mapPermissionsFor', () => {
+  const withMap = (key: string, permissions: ModuleMap['permissions']): ModuleManifest => ({
+    key,
+    labelKey: 'common:modules.irrigation',
+    i18n: { namespaces: [], load: () => Promise.resolve({}) },
+    map: {
+      permissions,
+      searchSchema: z.object({}),
+      interactiveLayerIds: [],
+      Overview: () => null,
+    },
+  })
+
+  it('unites the map requirements of the given manifests without duplicates', () => {
+    expect(
+      mapPermissionsFor([
+        withMap('alpha', ['sensor:read', 'vehicle:read']),
+        withMap('beta', ['vehicle:read', 'region:read']),
+      ]),
+    ).toEqual(['sensor:read', 'vehicle:read', 'region:read'])
+  })
+
+  it('asks the same as before for the map with irrigation active', () => {
+    expect(irrigationTable['/map']).toEqual(['tree:read', 'tree_cluster:read'])
+  })
+
+  it('takes the map requirement from the active manifests only', () => {
+    const table = routePermissionsFor([withMap('alpha', ['sensor:read'])])
+    expect(table['/map']).toEqual(['sensor:read'])
+  })
+
+  it('leaves the map open when no active manifest contributes to it', () => {
+    expect(routePermissionsFor([])['/map']).toBeUndefined()
+    expect(canAccessRouteIn('/map', NO_PERMISSIONS, routePermissionsFor([]))).toBe(true)
   })
 })
 

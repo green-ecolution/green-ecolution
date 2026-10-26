@@ -24,8 +24,8 @@ import MapPreview from '@/components/map-gl/MapPreview'
 import { useMapCenter, useMapZoom } from '@/components/map-gl/useMapView'
 import useTreeMarkerLayer, {
   type TreeMarkerPoint,
-} from '@/components/map-gl/layers/useTreeMarkerLayer'
-import useClusterBoundaryLayer from '@/components/map-gl/layers/useClusterBoundaryLayer'
+} from '../../../../modules/irrigation/src/components/map-gl/layers/useTreeMarkerLayer'
+import useClusterBoundaryLayer from '../../../../modules/irrigation/src/components/map-gl/layers/useClusterBoundaryLayer'
 import SensorTreeSearchInput from './SensorTreeSearchInput'
 import SensorTreeSearchResults from './SensorTreeSearchResults'
 

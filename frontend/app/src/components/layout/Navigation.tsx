@@ -103,15 +103,18 @@ const protectedNavData = (
     {
       key: 'greenspaces',
       headline: t('sidebar.headlineGreenSpaces'),
-      before: [
-        {
-          key: 'nav-green-spaces-map',
-          label: t('sidebar.map'),
-          icon: <Map className="w-5 h-5" />,
-          to: '/map',
-          preload: false,
-        },
-      ],
+      // Without a module drawing on it the map is an empty basemap.
+      before: manifests.some(({ map }) => map)
+        ? [
+            {
+              key: 'nav-green-spaces-map',
+              label: t('sidebar.map'),
+              icon: <Map className="w-5 h-5" />,
+              to: '/map',
+              preload: false,
+            },
+          ]
+        : [],
       after: [],
     },
     {

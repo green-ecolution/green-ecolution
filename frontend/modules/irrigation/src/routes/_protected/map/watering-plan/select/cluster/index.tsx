@@ -1,0 +1,213 @@
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Button, InlineAlert } from '@green-ecolution/ui'
+import { MoveRight } from 'lucide-react'
+import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
+import { z } from 'zod'
+import { WateringPlanForm } from '@/schema/wateringPlanSchema'
+import { routingStartPointsQuery, vehicleQueries, wateringPlanQueries } from '@/api/queries'
+import { clusterQueries } from '../../../../../../api/queries'
+import { useWateringPlanDraft } from '@/store/form/useFormDraft'
+import { useFormNavigationBlocker } from '@/hooks/form/useFormNavigationBlocker'
+import SelectEntities from '../../../../../../components/general/form/types/SelectEntities'
+import UnsavedChangesDialog from '@/components/general/form/UnsavedChangesDialog'
+import MapPanel from '@/components/map-gl/MapPanel'
+import useSelectableClusterLayer from '../../../../../../components/map-gl/layers/useSelectableClusterLayer'
+import useRouteLayer from '@/components/map-gl/layers/useRouteLayer'
+import RoutePointMarkers, {
+  buildRoutePoints,
+  type RoutePointMarkerData,
+} from '@/components/map-gl/RoutePointMarkers'
+import { tankCapacity } from '../../../../../../lib/tankCapacity'
+
+const mapSelectClusterSchema = z.object({
+  transporterId: z.string().optional(),
+  trailerId: z.string().optional(),
+  formType: z.enum(['create', 'update']),
+  clusterIds: z.array(z.string()),
+  wateringPlanId: z.string().optional(),
+})
+
+export const Route = createFileRoute('/_protected/map/watering-plan/select/cluster/')({
+  component: SelectCluster,
+  validateSearch: mapSelectClusterSchema,
+  loader: ({ context: { queryClient } }) => queryClient.prefetchQuery(clusterQueries.list()),
+})
+
+function SelectCluster() {
+  const { t } = useTranslation('irrigation', { keyPrefix: 'map' })
+  const { trailerId, transporterId, formType, clusterIds: searchClusterIds } = Route.useSearch()
+  const [clusterIds, setClusterIds] = useState<string[]>(searchClusterIds)
+  const [showError, setShowError] = useState(false)
+  const navigate = useNavigate({ from: Route.fullPath })
+  const { wateringPlanId } = Route.useSearch()
+  const draft = useWateringPlanDraft<WateringPlanForm>(formType)
+
+  const navigationBlocker = useFormNavigationBlocker({
+    isDirty: true,
+    allowedPaths: ['/watering-plans/', '/map/watering-plan/select/cluster'],
+    onLeave: () => draft.clear(),
+    message: t('selectCluster.leaveConfirmMessage'),
+  })
+
+  const { data: clusters } = useSuspenseQuery(clusterQueries.list())
+  const { data: transporter } = useQuery({
+    ...vehicleQueries.detail(transporterId?.toString() ?? '-1'),
+    enabled: !!transporterId && transporterId !== '-1',
+  })
+  const { data: trailer } = useQuery({
+    ...vehicleQueries.detail(trailerId?.toString() ?? '-1'),
+    enabled: !!trailerId && trailerId !== '-1',
+  })
+
+  const [debouncedClusterIds, setDebouncedClusterIds] = useState<string[]>(clusterIds)
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedClusterIds(clusterIds), 600)
+    return () => clearTimeout(id)
+  }, [clusterIds])
+
+  const hasTrailer = !!trailerId && trailerId !== '-1'
+  // Only a trailer can carry the water alone; the form resets the flag when the trailer goes.
+  const transporterTankUsed = !hasTrailer || (draft.data?.transporterTankUsed ?? true)
+
+  const previewEnabled = debouncedClusterIds.length > 0 && !!transporterId && transporterId !== '-1'
+  const { data: previewRoute } = useQuery({
+    ...wateringPlanQueries.routePreview({
+      clusterIds: debouncedClusterIds,
+      transporterId: transporterId ?? '',
+      trailerId: hasTrailer ? trailerId : undefined,
+      transporterTankUsed,
+      startPointName: draft.data?.startPointName,
+    }),
+    enabled: previewEnabled,
+  })
+  const routeCoordinates = previewEnabled
+    ? (previewRoute?.geometry?.coordinates as [number, number][] | undefined)
+    : undefined
+  useRouteLayer({ coordinates: routeCoordinates })
+
+  const { data: startPoints } = useQuery(routingStartPointsQuery())
+  const startPointName = draft.data?.startPointName
+  const routePoints = useMemo<RoutePointMarkerData[]>(
+    () =>
+      buildRoutePoints(
+        startPoints,
+        startPointName,
+        previewEnabled ? (previewRoute?.refillPoints ?? undefined) : undefined,
+      ),
+    [startPoints, startPointName, previewRoute, previewEnabled],
+  )
+
+  const { allowNavigation } = navigationBlocker
+
+  const handleNavigateBack = useCallback(() => {
+    allowNavigation()
+    switch (formType) {
+      case 'update':
+        return navigate({
+          to: `/watering-plans/$wateringPlanId/edit`,
+          params: { wateringPlanId: String(wateringPlanId) },
+        })
+      case 'create':
+        return navigate({ to: '/watering-plans/new' })
+    }
+  }, [navigate, formType, wateringPlanId, allowNavigation])
+
+  const disabledClusters = useMemo(() => {
+    if (!transporter) return clusters.data.map((cluster) => cluster.id)
+
+    const totalCapacity = tankCapacity(transporter, trailer, transporterTankUsed)
+
+    return clusters.data
+      .filter((cluster) => {
+        const neededWater = (cluster.treeIds?.length ?? 0) * 80
+        return neededWater > totalCapacity
+      })
+      .map((cluster) => cluster.id)
+  }, [transporter, trailer, transporterTankUsed, clusters.data])
+
+  const handleToggle = useCallback((id: string) => {
+    setShowError(false)
+    setClusterIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
+  }, [])
+
+  useSelectableClusterLayer({
+    selectedIds: clusterIds,
+    disabledIds: disabledClusters,
+    onToggle: handleToggle,
+  })
+
+  const handleSave = () => {
+    if (clusterIds.length === 0) {
+      setShowError(true)
+      return
+    }
+
+    const originalClusterIds = draft.data?.clusterIds ?? searchClusterIds
+    const clustersChanged =
+      clusterIds.length !== originalClusterIds.length ||
+      clusterIds.some((id) => !originalClusterIds.includes(id))
+
+    draft.updateData((prev) => ({
+      ...(prev ?? ({} as WateringPlanForm)),
+      clusterIds,
+    }))
+
+    if (clustersChanged) {
+      draft.markChanged()
+    }
+
+    handleNavigateBack()?.catch((error) => console.error('Navigation failed:', error))
+  }
+
+  const { showNotice, notice } = useMemo(() => {
+    const errors = []
+
+    if (!transporterId || transporterId === '-1') {
+      errors.push(t('selectCluster.noVehicleWarning'))
+    }
+
+    if (disabledClusters.length > 0) {
+      errors.push(t('selectCluster.insufficientCapacityWarning'))
+    }
+
+    return { showNotice: errors.length > 0, notice: errors }
+  }, [transporterId, disabledClusters, t])
+
+  return (
+    <>
+      <RoutePointMarkers points={routePoints} />
+      <MapPanel title={t('selectCluster.title')} onClose={() => void handleNavigateBack()}>
+        <p className="mb-5 shrink-0 text-sm text-dark-600">{t('selectCluster.hint')}</p>
+        {showNotice && <InlineAlert className="mb-4 shrink-0" description={notice.join(' ')} />}
+
+        <SelectEntities
+          onChange={setClusterIds}
+          entityIds={clusterIds}
+          type="cluster"
+          label={t('selectCluster.entitiesLabel')}
+          fill
+          emptyHint={t('selectCluster.emptyHint')}
+        />
+        {showError && clusterIds.length === 0 && (
+          <p className="mt-2 shrink-0 text-sm font-semibold text-destructive">
+            {t('selectCluster.requiredError')}
+          </p>
+        )}
+
+        <Button
+          type="button"
+          onClick={handleSave}
+          disabled={clusterIds.length === 0}
+          className="mt-4 w-full shrink-0"
+        >
+          {t('selectCluster.applyButton')}
+          <MoveRight className="icon-arrow-animate" />
+        </Button>
+      </MapPanel>
+
+      <UnsavedChangesDialog blocker={navigationBlocker} />
+    </>
+  )
+}

@@ -23,8 +23,8 @@ import SensorMarker from '@/components/map-gl/SensorMarker'
 import useViewportBBox from '@/components/map-gl/hooks/useViewportBBox'
 import useTreeMarkerLayer, {
   type TreeMarkerPoint,
-} from '@/components/map-gl/layers/useTreeMarkerLayer'
-import useClusterBoundaryLayer from '@/components/map-gl/layers/useClusterBoundaryLayer'
+} from '../../../../../modules/irrigation/src/components/map-gl/layers/useTreeMarkerLayer'
+import useClusterBoundaryLayer from '../../../../../modules/irrigation/src/components/map-gl/layers/useClusterBoundaryLayer'
 import { useWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import type { Sensor } from '@/api/backendApi'

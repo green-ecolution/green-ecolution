@@ -19,7 +19,11 @@ export const CORE_ROUTE_PERMISSIONS: RoutePermissions = {
   '/vehicles': ['vehicle:read'],
   '/settings/team/members': ['user:read'],
   '/settings/team/roles': ['role:read'],
-  '/map': ['tree:read', 'tree_cluster:read'],
+}
+
+/** Any one module's map right opens the map, since each module draws only its own layers. */
+export function mapPermissionsFor(manifests: readonly ModuleManifest[]): PermissionRequirement {
+  return [...new Set(manifests.flatMap(({ map }) => map?.permissions ?? []))]
 }
 
 /** The area `operations` holds the resources that guard operation plans. */
@@ -33,8 +37,10 @@ export function routePermissionsFor(manifests: readonly ModuleManifest[]): Route
   const planPermissions = planResourcesOf(manifests).map(
     (resource): Permission => `${resource}:read`,
   )
+  const mapPermissions = mapPermissionsFor(manifests)
   return {
     ...CORE_ROUTE_PERMISSIONS,
+    ...(mapPermissions.length > 0 ? { '/map': mapPermissions } : {}),
     ...(planPermissions.length > 0 ? { '/watering-plans': planPermissions } : {}),
     ...Object.fromEntries(
       manifests.flatMap((manifest) => Object.entries(manifest.routePermissions ?? {})),

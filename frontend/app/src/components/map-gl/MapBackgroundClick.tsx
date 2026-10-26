@@ -1,22 +1,25 @@
 import { useEffect } from 'react'
 import type { MapMouseEvent } from 'maplibre-gl'
+import { interactiveLayerIdsFor } from '@/modules/map'
+import { useActiveModules } from '@/modules/useActiveModules'
 import { useMaplibreMap } from './MapContext'
-import { LAYERS } from './mapStyle'
 import { isMapAlive } from './mapReady'
 
 interface MapBackgroundClickProps {
   onBackground: () => void
 }
 
-const INTERACTIVE_LAYERS = [LAYERS.treePoints, LAYERS.clusterMarkers, LAYERS.boundaryFill]
-
+// A click counts as background only if it misses the interactive layers of
+// every active module, not just those of the module listening.
 const MapBackgroundClick = ({ onBackground }: MapBackgroundClickProps) => {
   const map = useMaplibreMap()
+  const { manifests } = useActiveModules()
+  const interactiveLayers = interactiveLayerIdsFor(manifests)
 
   useEffect(() => {
     const handler = (e: MapMouseEvent) => {
       if (!isMapAlive(map)) return
-      const present = INTERACTIVE_LAYERS.filter((id) => map.getLayer(id))
+      const present = interactiveLayers.filter((id) => map.getLayer(id))
       const hits = present.length ? map.queryRenderedFeatures(e.point, { layers: present }) : []
       if (hits.length === 0) onBackground()
     }
@@ -24,7 +27,7 @@ const MapBackgroundClick = ({ onBackground }: MapBackgroundClickProps) => {
     return () => {
       map.off('click', handler)
     }
-  }, [map, onBackground])
+  }, [map, onBackground, interactiveLayers])
 
   return null
 }

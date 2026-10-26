@@ -1,0 +1,49 @@
+import { useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import type { TreeMarkerResponse, WateringStatus } from '@green-ecolution/backend-client'
+import useViewportBBox from '@/components/map-gl/hooks/useViewportBBox'
+import { useMapZoom } from '@/components/map-gl/useMapView'
+import { treeQueries } from '../../../api/queries'
+import { LAYERS, SOURCES, TREE_ZOOM_THRESHOLD } from '../../../lib/mapStyle'
+import useTreeMarkerLayer, { type TreeMarkerPoint } from './useTreeMarkerLayer'
+
+export interface UseTreeLayersOptions {
+  onTreeClick?: (treeId: string) => void
+  wateringStatuses?: WateringStatus[]
+  interactive?: boolean
+}
+
+const toPoints = (trees: TreeMarkerResponse[]): TreeMarkerPoint[] =>
+  trees.map((t) => ({
+    id: t.id,
+    longitude: t.longitude,
+    latitude: t.latitude,
+    status: t.wateringStatus,
+  }))
+
+const useTreeLayers = ({
+  onTreeClick,
+  wateringStatuses,
+  interactive = true,
+}: UseTreeLayersOptions = {}) => {
+  const bbox = useViewportBBox()
+  const zoom = useMapZoom()
+  // Only the detailed zoom levels show individual trees, so skip the fetch below it.
+  const { data } = useQuery({
+    ...treeQueries.markers({ bbox, wateringStatuses }),
+    enabled: zoom >= TREE_ZOOM_THRESHOLD,
+  })
+  const trees = useMemo(() => toPoints(data?.data ?? []), [data])
+
+  useTreeMarkerLayer({
+    trees,
+    sourceId: SOURCES.treePoints,
+    circleLayerId: LAYERS.treePoints,
+    iconLayerId: LAYERS.treeIcon,
+    minZoom: TREE_ZOOM_THRESHOLD,
+    onTreeClick,
+    interactive,
+  })
+}
+
+export default useTreeLayers

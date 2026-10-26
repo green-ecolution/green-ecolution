@@ -1,57 +1,39 @@
 import useStore from '@/store/store'
-import { MAP_ZOOM_SCALE_MAX, MAP_ZOOM_SCALE_MIN } from '@/lib/mapConfig'
-import {
-  createFileRoute,
-  Outlet,
-  useLocation,
-  useNavigate,
-  useSearch,
-} from '@tanstack/react-router'
-import { z } from 'zod'
+import { createFileRoute, Outlet, useLocation } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import MapCanvas from '@/components/map-gl/MapCanvas'
 import MapControls from '@/components/map-gl/MapControls'
-import MapBackgroundClick from '@/components/map-gl/MapBackgroundClick'
-import MapToolbarBar from '@/components/map/MapToolbarBar'
-import ClusterPanel from '@/components/map/cluster-panel/ClusterPanel'
-import { clusterQueries } from '../../../../../modules/irrigation/src/api/queries'
-import { forbiddenErrorComponent, pendingLoading, prefetch, requirePermission } from '@/lib/router'
+import { MapOverlays, MapToolbars } from '@/components/map/MapModuleSlots'
+import { modulesQuery } from '@/api/queries'
+import { mapPermissionsFor } from '@/lib/auth/routePermissions'
+import { forbiddenErrorComponent, pendingLoading, requirePermission } from '@/lib/router'
+import { activeManifestsFrom } from '@/modules/activeModules'
+import { mapSearchSchemaFor, type MapSearch } from '@/modules/map'
+import { moduleManifests } from '@/modules/registry'
 import { Loading } from '@green-ecolution/ui'
-import { Suspense, useCallback, useState } from 'react'
+import { Suspense } from 'react'
 
-const mapSearchParamsSchema = z.object({
-  selected: z.string().optional(),
-  // No default: the absence of a deep link is what lets the organization's own
-  // centre decide where the map opens. A hardcoded fallback here would win over
-  // it on every plain /map visit.
-  lat: z.number().optional().catch(undefined),
-  lng: z.number().optional().catch(undefined),
-  clusterId: z.string().optional(),
-  sensorId: z.string().optional(),
-  // Checked against the scale, not against a working range: how far this
-  // organization lets its map zoom is a setting, and MapLibre clamps to it.
-  zoom: z
-    .number()
-    .int()
-    .min(MAP_ZOOM_SCALE_MIN)
-    .max(MAP_ZOOM_SCALE_MAX)
-    .optional()
-    .catch(undefined),
-})
+// Every registered module's keys, active or not: a shared link keeps its
+// parameters even before the active modules are known.
+const mapSearchSchema = mapSearchSchemaFor(moduleManifests)
 
 export const Route = createFileRoute('/_protected/map')({
   component: MapRoot,
-  validateSearch: mapSearchParamsSchema,
-  beforeLoad: requirePermission(['tree:read', 'tree_cluster:read']),
+  validateSearch: (search: Record<string, unknown>): MapSearch => mapSearchSchema.parse(search),
+  beforeLoad: async ({ context }) => {
+    const modules = await context.queryClient.ensureQueryData(modulesQuery())
+    const mapManifests = activeManifestsFrom(moduleManifests, modules).filter(({ map }) => map)
+    await requirePermission(mapPermissionsFor(mapManifests))({ context })
+    return { mapManifests }
+  },
   errorComponent: forbiddenErrorComponent(),
   loaderDeps: ({ search: { lat, lng, zoom } }) => ({
     lat,
     lng,
     zoom,
   }),
-  loader: ({ context: { queryClient }, deps: { lat, lng, zoom } }) => {
-    prefetch(queryClient, clusterQueries.markers(), 'clusterQueries.markers')
-    prefetch(queryClient, clusterQueries.boundaries(), 'clusterQueries.boundaries')
+  loader: ({ context: { queryClient, mapManifests }, deps: { lat, lng, zoom } }) => {
+    for (const { map } of mapManifests) map?.prefetch?.(queryClient)
 
     if (lat != null && lng != null) useStore.setState({ mapCenter: [lat, lng] })
     if (zoom != null) useStore.setState({ mapZoom: zoom })
@@ -66,43 +48,14 @@ export const Route = createFileRoute('/_protected/map')({
 function MapRoot() {
   const { t } = useTranslation('map')
   const { pathname } = useLocation()
-  const navigate = useNavigate()
-  const search = useSearch({ strict: false })
   // Reactive exact-match: matchRoute() didn't reliably re-render MapRoot on
   // pathname-only changes, leaving isIndex stale across /map ↔ sub-route nav.
   const isIndex = pathname === '/map' || pathname === '/map/'
-  const panelClusterId = isIndex ? search.cluster : undefined
-
-  const [snapPoint, setSnapPoint] = useState<number | string | null>('260px')
-
-  const handleClosePanel = useCallback(() => {
-    setSnapPoint('260px')
-    navigate({ to: '/map', search: (prev) => ({ ...prev, cluster: undefined }) }).catch((error) =>
-      console.error('Navigation failed:', error),
-    )
-  }, [navigate])
-
-  const handleEditCluster = useCallback(() => {
-    if (!panelClusterId) return
-    navigate({
-      to: '/map/treecluster/edit/$treeclusterId',
-      params: { treeclusterId: panelClusterId },
-      search: (prev) => prev,
-    }).catch((error) => console.error('Navigation failed:', error))
-  }, [navigate, panelClusterId])
-
-  const handleOpenDashboard = useCallback(() => {
-    if (!panelClusterId) return
-    navigate({
-      to: '/treecluster/$treeclusterId',
-      params: { treeclusterId: panelClusterId },
-    }).catch((error) => console.error('Navigation failed:', error))
-  }, [navigate, panelClusterId])
 
   return (
     // data-fullscreen-map sizes the page to the viewport, see site.css.
     <div data-fullscreen-map className="relative flex min-h-0 flex-1 flex-col">
-      {isIndex && <MapToolbarBar />}
+      {isIndex && <MapToolbars />}
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <div className="relative flex-1">
           <Suspense
@@ -110,7 +63,6 @@ function MapRoot() {
           >
             <MapCanvas>
               <MapControls />
-              {isIndex && <MapBackgroundClick onBackground={handleClosePanel} />}
               <Suspense
                 fallback={
                   <Loading className="mt-20 justify-center" label={t('root.loadingLabel')} />
@@ -120,17 +72,7 @@ function MapRoot() {
               </Suspense>
             </MapCanvas>
           </Suspense>
-          {panelClusterId && (
-            <ClusterPanel
-              key={panelClusterId}
-              clusterId={panelClusterId}
-              onClose={handleClosePanel}
-              onOpenDashboard={handleOpenDashboard}
-              onEdit={handleEditCluster}
-              activeSnapPoint={snapPoint}
-              setActiveSnapPoint={setSnapPoint}
-            />
-          )}
+          <MapOverlays />
         </div>
       </div>
     </div>

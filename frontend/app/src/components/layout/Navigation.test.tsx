@@ -166,14 +166,14 @@ describe('Navigation', () => {
     expect(screen.queryByText('Bewässerung')).not.toBeInTheDocument()
   })
 
-  it('shows neither trees, clusters, evaluations nor plans without an active module', async () => {
+  it('shows neither map, trees, clusters, evaluations nor plans without an active module', async () => {
     permissions.mockReturnValue(UNRESTRICTED)
     respondWithActive([])
     const { queryClient } = renderNavigation()
 
     await screen.findByText('Fahrzeuge')
     await waitFor(() => expect(queryClient.getQueryState(['modules'])?.status).toBe('success'))
-    expect(screen.getByText('Karte')).toBeInTheDocument()
+    expect(screen.queryByText('Karte')).not.toBeInTheDocument()
     expect(screen.getByText('Sensoren')).toBeInTheDocument()
     expect(screen.queryByText('Bäume')).not.toBeInTheDocument()
     expect(screen.queryByText('Bewässerungsgruppen')).not.toBeInTheDocument()
@@ -187,6 +187,7 @@ describe('Navigation', () => {
     renderNavigation()
 
     expect(await screen.findByText('Fahrzeuge')).toBeInTheDocument()
+    expect(screen.queryByText('Karte')).not.toBeInTheDocument()
     expect(screen.queryByText('Bäume')).not.toBeInTheDocument()
     expect(screen.queryByText('Einsatzpläne')).not.toBeInTheDocument()
   })

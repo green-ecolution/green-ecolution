@@ -13,11 +13,11 @@ import RoutePointMarkers, {
 import { useMapCenter } from '@/components/map-gl/useMapView'
 import MapPreview from '@/components/map-gl/MapPreview'
 import { useMaplibreMap } from '@/components/map-gl/MapContext'
-import useClusterBoundaryLayer from '@/components/map-gl/layers/useClusterBoundaryLayer'
-import useClusterMarkerLayer from '@/components/map-gl/layers/useClusterMarkerLayer'
+import useClusterBoundaryLayer from '../../../../modules/irrigation/src/components/map-gl/layers/useClusterBoundaryLayer'
+import useClusterMarkerLayer from '../../../../modules/irrigation/src/components/map-gl/layers/useClusterMarkerLayer'
 import useRouteLayer from '@/components/map-gl/layers/useRouteLayer'
 import { isMapAlive } from '@/components/map-gl/mapReady'
-import ClusterPanel from '@/components/map/cluster-panel/ClusterPanel'
+import ClusterPanel from '../../../../modules/irrigation/src/components/map/cluster-panel/ClusterPanel'
 
 interface WateringPlanPreviewRouteProps {
   wateringPlan: WateringPlan
