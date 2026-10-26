@@ -10,7 +10,7 @@ import { routingStartPointsQuery, vehicleQueries, wateringPlanQueries } from '@/
 import { clusterQueries } from '../../../../../../../../modules/irrigation/src/api/queries'
 import { useWateringPlanDraft } from '@/store/form/useFormDraft'
 import { useFormNavigationBlocker } from '@/hooks/form/useFormNavigationBlocker'
-import SelectEntities from '@/components/general/form/types/SelectEntities'
+import SelectEntities from '../../../../../../../../modules/irrigation/src/components/general/form/types/SelectEntities'
 import UnsavedChangesDialog from '@/components/general/form/UnsavedChangesDialog'
 import MapPanel from '@/components/map-gl/MapPanel'
 import useSelectableClusterLayer from '@/components/map-gl/layers/useSelectableClusterLayer'
@@ -19,7 +19,7 @@ import RoutePointMarkers, {
   buildRoutePoints,
   type RoutePointMarkerData,
 } from '@/components/map-gl/RoutePointMarkers'
-import { tankCapacity } from '@/lib/tankCapacity'
+import { tankCapacity } from '../../../../../../../../modules/irrigation/src/lib/tankCapacity'
 
 const mapSelectClusterSchema = z.object({
   transporterId: z.string().optional(),

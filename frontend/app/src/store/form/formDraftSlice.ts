@@ -1,4 +1,5 @@
-export type FormType = 'tree' | 'cluster' | 'wateringplan' | 'vehicle'
+// Core uses 'wateringplan' and 'vehicle'; modules bring their own keys.
+export type FormType = string
 export type MutationType = 'create' | 'update'
 
 export type FormDraftKey = `${FormType}-${MutationType}`

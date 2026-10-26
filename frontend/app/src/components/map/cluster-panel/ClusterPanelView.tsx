@@ -7,7 +7,7 @@ import { useDateLocale } from '@/lib/i18n/useFormatters'
 import { roundTo } from '@/lib/utils'
 import Tree from '@/components/icons/Tree'
 import type { TreeClusterResponse } from '@/api/backendApi'
-import { latestClusterReading } from '@/components/treecluster/clusterLatestReading'
+import { latestClusterReading } from '../../../../../modules/irrigation/src/components/treecluster/clusterLatestReading'
 import { sortTreesSensorFirst, summarizeTopSpecies } from './clusterPanelUtils'
 
 interface ClusterPanelViewProps {

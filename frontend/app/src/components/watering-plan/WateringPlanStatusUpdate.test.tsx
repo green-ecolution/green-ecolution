@@ -11,7 +11,7 @@ import WateringPlanStatusUpdate, {
   CancelWateringPlan,
 } from './WateringPlanStatusUpdate'
 
-vi.mock('../general/cards/SelectedCard', () => ({
+vi.mock('../../../../modules/irrigation/src/components/general/cards/SelectedCard', () => ({
   default: ({ id }: { id: string }) => <div data-testid={`selected-card-${id}`}>Cluster {id}</div>,
 }))
 

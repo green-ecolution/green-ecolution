@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useCallback } from 'react'
 import { z } from 'zod'
-import { filterSearchSchema } from '@/lib/filterSearchSchema'
+import { filterSearchSchema } from '../../../../../modules/irrigation/src/lib/filterSearchSchema'
 import useClusterBoundaryLayer from '@/components/map-gl/layers/useClusterBoundaryLayer'
 import useClusterMarkerLayer from '@/components/map-gl/layers/useClusterMarkerLayer'
 import useTreeLayers from '@/components/map-gl/layers/useTreeLayers'

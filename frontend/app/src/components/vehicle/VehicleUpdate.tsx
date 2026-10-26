@@ -1,5 +1,5 @@
 import FormPageHeader from '../general/FormPageHeader'
-import DeleteSection from '../treecluster/DeleteSection'
+import DeleteSection from '../general/DeleteSection'
 import { Can } from '@/lib/auth/Can'
 import type { Vehicle } from '@/api/backendApi'
 import { useInitFormQuery } from '@/hooks/form/useInitForm'

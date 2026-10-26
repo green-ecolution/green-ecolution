@@ -24,10 +24,10 @@ vi.mock('@tanstack/react-router', async () => {
   }
 })
 
-vi.mock('@/components/tree/list/useTreeListSearch', async () => {
-  const actual = await vi.importActual<typeof import('@/components/tree/list/useTreeListSearch')>(
-    '@/components/tree/list/useTreeListSearch',
-  )
+vi.mock('../../../components/tree/list/useTreeListSearch', async () => {
+  const actual = await vi.importActual<
+    typeof import('../../../components/tree/list/useTreeListSearch')
+  >('../../../components/tree/list/useTreeListSearch')
   return {
     ...actual,
     useTreeListSearch: () => ({

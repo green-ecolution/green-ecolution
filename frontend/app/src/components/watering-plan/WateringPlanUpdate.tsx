@@ -13,7 +13,7 @@ import { showWateringPlanStatusButton } from '@/hooks/details/useDetailsForWater
 import { Loading } from '@green-ecolution/ui'
 import { Suspense } from 'react'
 import { useTranslation } from 'react-i18next'
-import DeleteSection from '../treecluster/DeleteSection'
+import DeleteSection from '../general/DeleteSection'
 import { Can } from '@/lib/auth/Can'
 import { useHasPermission } from '@/lib/auth/useHasPermission'
 import { planApi } from '@/api/backendApi'

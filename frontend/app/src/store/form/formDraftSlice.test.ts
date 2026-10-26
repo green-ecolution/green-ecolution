@@ -50,6 +50,18 @@ describe('formDraftSlice', () => {
     })
   })
 
+  describe('module-owned form types', () => {
+    it('stores drafts under a key the core does not know', () => {
+      useStore.getState().setFormDraft('waste-bin-create', { label: 'Bin' })
+      useStore.getState().markFormDraftChanged('waste-bin-create')
+
+      expect(getDraft<{ label: string }>('waste-bin-create')).toEqual({
+        data: { label: 'Bin' },
+        hasChanges: true,
+      })
+    })
+  })
+
   describe('updateFormDraft', () => {
     it('should update data and leave hasChanges to markFormDraftChanged', () => {
       useStore.getState().setFormDraft('cluster-create', { name: 'Test', treeIds: [] })

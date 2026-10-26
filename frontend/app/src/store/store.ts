@@ -2,7 +2,6 @@ import { create, StateCreator } from 'zustand'
 import { devtools, persist } from 'zustand/middleware'
 import { immer } from 'zustand/middleware/immer'
 import { FormDraftSlice } from './form/formDraftSlice'
-import { emptyFilters, FilterDraftSlice } from './filter/filterDraftSlice'
 
 // Live map viewport, mirrored from MapLibre on every move/zoom end. On /map the
 // URL search params are the deep-link source of truth (synced debounced in
@@ -28,7 +27,7 @@ interface PwaSlice {
   dismissPwaHint: () => void
 }
 
-type Store = MapSlice & SidebarSlice & PwaSlice & FormDraftSlice & FilterDraftSlice
+type Store = MapSlice & SidebarSlice & PwaSlice & FormDraftSlice
 type Mutators = [
   ['zustand/devtools', never],
   ['zustand/persist', unknown],
@@ -101,47 +100,6 @@ const createFormDraftSlice: StateCreator<Store, Mutators, [], FormDraftSlice> = 
     }),
 })
 
-const createFilterDraftSlice: StateCreator<Store, Mutators, [], FilterDraftSlice> = (set) => ({
-  filterDraft: emptyFilters(),
-
-  setFilterStatusTags: (value) =>
-    set((state) => {
-      state.filterDraft.statusTags = value
-    }),
-
-  setFilterRegionTags: (value) =>
-    set((state) => {
-      state.filterDraft.regionTags = value
-    }),
-
-  setFilterSoilTags: (value) =>
-    set((state) => {
-      state.filterDraft.soilTags = value
-    }),
-
-  setFilterHasCluster: (value) =>
-    set((state) => {
-      state.filterDraft.hasCluster = value
-    }),
-
-  setFilterPlantingYearRange: (range) =>
-    set((state) => {
-      if (range.length !== 2) return
-      const [min, max] = range
-      state.filterDraft.plantingYears = Array.from({ length: max - min + 1 }, (_, i) => min + i)
-    }),
-
-  seedFilterDraft: (filters) =>
-    set((state) => {
-      state.filterDraft = filters
-    }),
-
-  resetFilterDraft: () =>
-    set((state) => {
-      state.filterDraft = emptyFilters()
-    }),
-})
-
 export const STORE_PERSIST_KEY = 'green-ecolution-preferences'
 
 const useStore = create<Store>()(
@@ -152,7 +110,6 @@ const useStore = create<Store>()(
         ...createSidebarSlice(...a),
         ...createPwaSlice(...a),
         ...createFormDraftSlice(...a),
-        ...createFilterDraftSlice(...a),
       })),
       {
         name: STORE_PERSIST_KEY,

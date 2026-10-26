@@ -1,5 +1,5 @@
 import { clusterQueries, treeQueries } from '../../../../api/queries'
-import TreeDashboard from '@/components/tree/TreeDashboard'
+import TreeDashboard from '../../../../components/tree/TreeDashboard'
 import { pendingLoading } from '@/lib/router'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, getRouteApi } from '@tanstack/react-router'
