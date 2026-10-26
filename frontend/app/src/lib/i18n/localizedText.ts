@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import type { ParseKeys } from 'i18next'
-import { NAMESPACES } from './languages'
+import type { AllNamespaces } from './languages'
 
 /**
  * Mirrors `Breadcrumb`'s `{ titleKey } | { title }` union (Task 11): route
@@ -11,8 +11,8 @@ import { NAMESPACES } from './languages'
  * changes (e.g. via `?lng=`) while the owning component stays mounted.
  * `options` carries i18next interpolation values for labels that need them.
  *
- * `ParseKeys<typeof NAMESPACES>` is the same cross-namespace key union
- * `i18n.t` itself accepts (`NAMESPACES[0]` is `'common'`, the default
+ * `ParseKeys<AllNamespaces>` is the same cross-namespace key union
+ * `i18n.t` itself accepts (`'common'` leads, the default
  * namespace, exactly like `i18n.t`'s own `[...DefaultNS, ...OtherNS]` typing),
  * so `{ key: 'tree:...' }` type-checks the same way `getI18n().t('tree:...')`
  * already does elsewhere — passing a plain `FlatNamespace` union here instead
@@ -20,7 +20,7 @@ import { NAMESPACES } from './languages'
  * why this imports the tuple rather than deriving one ad hoc.
  */
 export type LocalizedText =
-  string | { key: ParseKeys<typeof NAMESPACES>; options?: Record<string, unknown> }
+  string | { key: ParseKeys<AllNamespaces>; options?: Record<string, unknown> }
 
 /**
  * Resolves a `LocalizedText` reactively. `i18n` here is react-i18next's own

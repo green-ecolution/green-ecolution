@@ -17,7 +17,7 @@ import { createI18n } from '@/lib/i18n'
 import { UiTextBridge } from '@/lib/i18n/UiTextBridge'
 import type { NavigationCrumbKey } from '@/lib/i18n/navigation'
 import type { ParseKeys } from 'i18next'
-import type { NAMESPACES } from '@/lib/i18n/languages'
+import type { AllNamespaces } from '@/lib/i18n/languages'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -65,7 +65,7 @@ declare module '@tanstack/react-router' {
    */
   type Breadcrumb =
     | { titleKey: NavigationCrumbKey }
-    | { titleKey: ParseKeys<typeof NAMESPACES>; params: Record<string, unknown> }
+    | { titleKey: ParseKeys<AllNamespaces>; params: Record<string, unknown> }
     | { title: string }
 
   interface StaticDataRouteOption {

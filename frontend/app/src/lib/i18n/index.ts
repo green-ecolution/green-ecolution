@@ -1,6 +1,7 @@
 import i18next, { type i18n as I18n } from 'i18next'
 import LanguageDetector from 'i18next-browser-languagedetector'
 import { initReactI18next } from 'react-i18next'
+import { moduleManifests } from '@/modules/registry'
 import { ensureLanguage } from './load'
 import {
   DEFAULT_NAMESPACE,
@@ -10,6 +11,11 @@ import {
   languageOf,
   type Language,
 } from './languages'
+
+export const ALL_NAMESPACES: readonly string[] = [
+  ...NAMESPACES,
+  ...moduleManifests.flatMap((manifest) => manifest.i18n.namespaces),
+]
 
 let current: I18n | undefined
 
@@ -23,7 +29,7 @@ export async function createI18n(): Promise<I18n> {
       fallbackLng: FALLBACK_LANGUAGE,
       supportedLngs: SUPPORTED_LANGUAGES,
       nonExplicitSupportedLngs: true,
-      ns: NAMESPACES,
+      ns: ALL_NAMESPACES,
       defaultNS: DEFAULT_NAMESPACE,
       resources: {},
       detection: {

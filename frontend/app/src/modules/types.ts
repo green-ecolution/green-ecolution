@@ -9,9 +9,10 @@ import type {
   TargetRefDto,
 } from '@green-ecolution/backend-client'
 import type { PermissionRequirement } from '@/lib/auth/permissions'
-import type { Language } from '@/lib/i18n/languages'
+import type { ParseKeys } from 'i18next'
+import type { AllNamespaces, Language } from '@/lib/i18n/languages'
 
-export type I18nKey = string
+export type I18nKey = ParseKeys<AllNamespaces>
 
 export interface ModuleI18n {
   namespaces: readonly string[]

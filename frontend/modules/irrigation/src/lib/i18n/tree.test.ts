@@ -1,6 +1,6 @@
 import { expect, it } from 'vitest'
-import de from '@/locales/de/treecluster.json'
-import en from '@/locales/en/treecluster.json'
+import de from '../../locales/de/tree.json'
+import en from '../../locales/en/tree.json'
 
 function flatten(value: unknown, prefix = ''): string[] {
   if (typeof value === 'string') return [prefix]

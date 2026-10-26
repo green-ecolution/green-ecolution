@@ -8,7 +8,8 @@
     "lint": "tsc -p tsconfig.json --noEmit && eslint ."
   },
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./locales/de": "./src/locales/de/index.ts"
   },
   "dependencies": {
     "@green-ecolution/backend-client": "workspace:*",
