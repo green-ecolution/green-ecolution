@@ -1,13 +1,9 @@
 import { useSuspenseQuery } from '@tanstack/react-query'
 import FormPageHeader from '../general/FormPageHeader'
 import { useInitFormQuery } from '@/hooks/form/useInitForm'
-import { queryRoots, userQueries, vehicleQueries, wateringPlanQueries } from '@/api/queries'
-import { irrigationRoots } from '../../../../modules/irrigation/src/api/queries'
+import { userQueries, vehicleQueries, wateringPlanQueries } from '@/api/queries'
 import { format } from 'date-fns'
 import FormForWateringPlan from '../general/form/FormForWateringPlan'
-import { useNavigate } from '@tanstack/react-router'
-import { Route } from '@/routes'
-import { useMapCenter, useMapZoom } from '@/components/map-gl/useMapView'
 import GeneralLink from '../general/links/GeneralLink'
 import { showWateringPlanStatusButton } from '@/hooks/details/useDetailsForWateringPlanStatus'
 import { Loading } from '@green-ecolution/ui'
@@ -17,7 +13,9 @@ import DeleteSection from '../general/DeleteSection'
 import { Can } from '@/lib/auth/Can'
 import { useHasPermission } from '@/lib/auth/useHasPermission'
 import { planApi } from '@/api/backendApi'
-import { keepUnresolvedStops } from '@/api/irrigationPlans'
+import { planStatusQueryRoots } from '@/lib/queryInvalidation'
+import { planningFor } from '@/modules/planning'
+import { useActiveModules } from '@/modules/useActiveModules'
 import { useWateringPlanForm } from '@/hooks/form/useWateringPlanForm'
 import { WateringPlanForm } from '@/schema/wateringPlanSchema'
 import { FormProvider, SubmitHandler } from 'react-hook-form'
@@ -42,8 +40,11 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
         description: data.description,
         transporterId: data.transporter.id,
         trailerId: data.trailer?.id,
-        transporterTankUsed: data.transporterTankUsed,
-        stopIds: data.treeclusters.map((cluster) => cluster.id),
+        transporterTankUsed: data.transporterCapacityUsed,
+        // Every stop, also those the reader cannot see: the stop picker only
+        // removes what the user removes, so a save keeps the hidden ones.
+        stopIds: data.stops,
+        module: data.module,
         status: data.status,
         driverIds: data.userIds,
         startPointName: data.startPointName ?? '',
@@ -57,7 +58,8 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
     },
   )
 
-  const navigate = useNavigate({ from: Route.fullPath })
+  const { manifests } = useActiveModules()
+  const planning = planningFor(manifests, loadedData.module)
   const date = loadedData?.date
     ? format(new Date(loadedData?.date), 'dd.MM.yyyy', { locale: dateLocale })
     : t('common:state.noData')
@@ -66,38 +68,7 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
   const { data: trailers } = useSuspenseQuery(vehicleQueries.list())
   const { data: transporters } = useSuspenseQuery(vehicleQueries.list())
 
-  const onSubmit: SubmitHandler<WateringPlanForm> = (data) => {
-    mutate({
-      ...data,
-      date: data.date.toISOString(),
-      trailerId: data.trailerId && data.trailerId !== '-1' ? data.trailerId : undefined,
-      treeClusterIds: loadedData ? keepUnresolvedStops(data.stopIds, loadedData) : data.stopIds,
-      userIds: data.driverIds,
-      startPointName: data.startPointName,
-      cancellationNote: '', // TODO: why cancel note in update ???
-    })
-  }
-
-  const mapCenter = useMapCenter()
-  const mapZoom = useMapZoom()
-  const mapPosition = { lat: mapCenter[0], lng: mapCenter[1], zoom: mapZoom }
-
-  const navigateToClusterSelect = () => {
-    saveDraft()
-    navigate({
-      to: '/map/watering-plan/select/cluster',
-      search: {
-        lat: mapPosition.lat,
-        lng: mapPosition.lng,
-        zoom: mapPosition.zoom,
-        wateringPlanId,
-        trailerId: form.getValues('trailerId'),
-        transporterId: form.getValues('transporterId'),
-        clusterIds: form.getValues('stopIds'),
-        formType: 'update',
-      },
-    }).catch((error) => console.error('Navigation failed:', error))
-  }
+  const onSubmit: SubmitHandler<WateringPlanForm> = (data) => mutate(data)
 
   const handleDeleteWateringPlan = () => {
     return planApi.deletePlan({ planId: wateringPlanId })
@@ -138,7 +109,10 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
             users={users.data}
             trailers={trailers.data}
             transporters={transporters.data}
-            onAddCluster={navigateToClusterSelect}
+            formType="update"
+            planId={wateringPlanId}
+            organizationId={loadedData.organizationId}
+            saveDraft={saveDraft}
             errorMessage={error?.message}
             onBlur={saveDraft}
           />
@@ -153,7 +127,7 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
             mutationFn={handleDeleteWateringPlan}
             entityName={{ key: 'wateringPlan:entity.nameWithArticle' }}
             redirectUrl={{ to: '/watering-plans' }}
-            invalidates={[...queryRoots.wateringPlan, ...irrigationRoots.evaluation]}
+            invalidates={planStatusQueryRoots(planning)}
           />
         </Suspense>
       </Can>

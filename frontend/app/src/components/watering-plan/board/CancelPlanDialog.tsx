@@ -8,19 +8,21 @@ import {
   DialogTitle,
 } from '@green-ecolution/ui'
 import { useTranslation } from 'react-i18next'
-import type { WateringPlanInList } from '@/api/backendApi'
+import type { PlanInListResponse } from '@green-ecolution/backend-client'
+import type { ModulePlanning } from '@/modules/types'
 import { CancelWateringPlan } from '../WateringPlanStatusUpdate'
 import { useWateringPlanBoardMutations } from '@/hooks/useWateringPlanBoardMutations'
 import { useDateLocale } from '@/lib/i18n/useFormatters'
 import { formatBoardDate } from './format'
 
 interface CancelPlanDialogProps {
-  plan: WateringPlanInList | null
+  plan: PlanInListResponse | null
+  planning: ModulePlanning
   onClose: () => void
 }
 
-const CancelPlanDialog = ({ plan, onClose }: CancelPlanDialogProps) => {
-  const { cancelPlan } = useWateringPlanBoardMutations()
+const CancelPlanDialog = ({ plan, planning, onClose }: CancelPlanDialogProps) => {
+  const { cancelPlan } = useWateringPlanBoardMutations(planning)
   const { t } = useTranslation('wateringPlan')
   const dateLocale = useDateLocale()
 

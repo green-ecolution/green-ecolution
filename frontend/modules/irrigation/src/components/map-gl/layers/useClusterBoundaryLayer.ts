@@ -17,6 +17,8 @@ export interface UseClusterBoundaryLayerOptions {
   nameFilter?: string
   interactive?: boolean
   clusterIds?: string[]
+  /** Draw the boundaries below this layer, e.g. below a route they would otherwise cover. */
+  beforeLayerId?: string
 }
 
 const useClusterBoundaryLayer = ({
@@ -26,11 +28,13 @@ const useClusterBoundaryLayer = ({
   nameFilter,
   interactive = true,
   clusterIds,
+  beforeLayerId,
 }: UseClusterBoundaryLayerOptions = {}) => {
   const map = useMaplibreMap()
   const { data } = useSuspenseQuery(clusterQueries.boundaries())
 
   useEffect(() => {
+    const beforeId = beforeLayerId && map.getLayer(beforeLayerId) ? beforeLayerId : undefined
     if (!map.getSource(SOURCES.clusterBoundaries)) {
       map.addSource(SOURCES.clusterBoundaries, {
         type: 'geojson',
@@ -38,21 +42,27 @@ const useClusterBoundaryLayer = ({
       })
     }
     if (!map.getLayer(LAYERS.boundaryFill)) {
-      map.addLayer({
-        id: LAYERS.boundaryFill,
-        type: 'fill',
-        source: SOURCES.clusterBoundaries,
-        paint: { 'fill-color': STATUS_COLOR_EXPRESSION, 'fill-opacity': 0.15 },
-      })
+      map.addLayer(
+        {
+          id: LAYERS.boundaryFill,
+          type: 'fill',
+          source: SOURCES.clusterBoundaries,
+          paint: { 'fill-color': STATUS_COLOR_EXPRESSION, 'fill-opacity': 0.15 },
+        },
+        beforeId,
+      )
     }
     if (!map.getLayer(LAYERS.boundaryLine)) {
-      map.addLayer({
-        id: LAYERS.boundaryLine,
-        type: 'line',
-        source: SOURCES.clusterBoundaries,
-        paint: { 'line-color': STATUS_COLOR_EXPRESSION, 'line-width': 2 },
-        layout: { 'line-join': 'round', 'line-cap': 'round' },
-      })
+      map.addLayer(
+        {
+          id: LAYERS.boundaryLine,
+          type: 'line',
+          source: SOURCES.clusterBoundaries,
+          paint: { 'line-color': STATUS_COLOR_EXPRESSION, 'line-width': 2 },
+          layout: { 'line-join': 'round', 'line-cap': 'round' },
+        },
+        beforeId,
+      )
     }
     return () => {
       if (!isMapAlive(map)) return
@@ -61,7 +71,7 @@ const useClusterBoundaryLayer = ({
       }
       if (map.getSource(SOURCES.clusterBoundaries)) map.removeSource(SOURCES.clusterBoundaries)
     }
-  }, [map])
+  }, [map, beforeLayerId])
 
   useEffect(() => {
     if (!isMapAlive(map)) return

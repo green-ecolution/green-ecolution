@@ -1,33 +1,36 @@
-import { useCallback, useState } from 'react'
+import { Suspense, useCallback, useState } from 'react'
 import FormPageHeader from '../general/FormPageHeader'
 import { PlanStatus as WateringPlanStatus } from '@green-ecolution/backend-client'
-import type { PlanResponse, WateringPlan, WateringPlanUpdate } from '@/api/backendApi'
-import { toPlanUpdateRequest } from '@/api/irrigationPlans'
+import type {
+  PlanInListResponse,
+  PlanResponse,
+  PlanUpdateRequest,
+  StopOutcomeDto,
+} from '@green-ecolution/backend-client'
 import { wateringPlanQueries } from '@/api/queries'
 import { format } from 'date-fns'
-import { Droplet, MoveRight } from 'lucide-react'
+import { MoveRight } from 'lucide-react'
 import FormError from '../general/form/FormError'
 import {
   useWateringPlanStatusDetails,
   useWateringPlanStatusTransitionOptions,
 } from '@/hooks/details/useDetailsForWateringPlanStatus'
-import { Badge, TextareaField, FormField, SelectField, Button } from '@green-ecolution/ui'
-import {
-  WateringPlanFinishedForm,
-  wateringPlanFinishedSchema,
-  WateringPlanCancelForm,
-  wateringPlanCancelSchema,
-} from '@/schema/wateringPlanSchema'
+import { Badge, TextareaField, SelectField, Button, Loading } from '@green-ecolution/ui'
+import { WateringPlanCancelForm, wateringPlanCancelSchema } from '@/schema/wateringPlanSchema'
 import { zodResolver } from '@/lib/zodResolver'
-import { SubmitHandler, useFieldArray, useForm } from 'react-hook-form'
+import { SubmitHandler, useForm } from 'react-hook-form'
 import { useMutation, useSuspenseQuery } from '@tanstack/react-query'
-import { PLAN_STATUS_AGGREGATES, useInvalidateAggregates } from '@/lib/queryInvalidation'
+import { planStatusQueryRoots, useInvalidateQueryRoots } from '@/lib/queryInvalidation'
 import { planApi } from '@/api/backendApi'
 import { useNavigate } from '@tanstack/react-router'
 import createToast from '@/hooks/createToast'
 import { useTranslation } from 'react-i18next'
 import { useDateLocale } from '@/lib/i18n/useFormatters'
 import { toApiError } from '@/lib/apiError'
+import { toUpdateRequest } from '@/lib/plans'
+import { completeOutcomes, planningFor } from '@/modules/planning'
+import type { ModulePlanning } from '@/modules/types'
+import { useActiveModules } from '@/modules/useActiveModules'
 
 interface WateringPlanStatusUpdateProps {
   wateringPlanId: string
@@ -35,8 +38,10 @@ interface WateringPlanStatusUpdateProps {
 
 const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdateProps) => {
   const { data: loadedData } = useSuspenseQuery(wateringPlanQueries.detail(wateringPlanId))
+  const { manifests } = useActiveModules()
+  const planning = planningFor(manifests, loadedData.module)
   const navigate = useNavigate()
-  const invalidate = useInvalidateAggregates()
+  const invalidate = useInvalidateQueryRoots()
   const showToast = createToast()
   const { t } = useTranslation(['wateringPlan', 'errors', 'common'])
   const dateLocale = useDateLocale()
@@ -46,11 +51,11 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
   const [selectedStatus, setSelectedStatus] = useState(statusDetails)
 
   const { mutate, isError, error } = useMutation({
-    mutationFn: async (wateringPlan: WateringPlanUpdate) => {
+    mutationFn: async (overrides: Partial<PlanUpdateRequest>) => {
       try {
         return await planApi.updatePlan({
           planId: wateringPlanId,
-          planUpdateRequest: toPlanUpdateRequest(wateringPlan),
+          planUpdateRequest: toUpdateRequest(loadedData, overrides),
         })
       } catch (error) {
         throw await toApiError(error)
@@ -58,7 +63,7 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
     },
 
     onSuccess: (data: PlanResponse) => {
-      invalidate(PLAN_STATUS_AGGREGATES).catch((error) =>
+      invalidate(planStatusQueryRoots(planning)).catch((error) =>
         console.error('Invalidation after watering plan status update failed:', error),
       )
 
@@ -87,43 +92,23 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
 
   const formByStatus = useCallback(
     (status: WateringPlanStatus) => {
-      const onSubmitFinished: SubmitHandler<WateringPlanFinishedForm> = (data) => {
+      const onSubmitFinished = (outcomes: StopOutcomeDto[]) => {
         mutate({
-          ...loadedData,
           status: WateringPlanStatus.Finished,
-          evaluation: data.evaluation,
-          transporterId: loadedData.transporter.id,
-          treeClusterIds: loadedData.stopIds,
+          outcomes: completeOutcomes(loadedData.stops, outcomes),
         })
       }
 
       const onSubmitCancel: SubmitHandler<WateringPlanCancelForm> = (data) => {
-        mutate({
-          ...loadedData,
-          status: WateringPlanStatus.Canceled,
-          cancellationNote: data.cancellationNote,
-          transporterId: loadedData.transporter.id,
-          treeClusterIds: loadedData.stopIds,
-        })
+        mutate({ status: WateringPlanStatus.Canceled, cancellationNote: data.cancellationNote })
       }
 
       const onSubmitNotCompleted: SubmitHandler<WateringPlanCancelForm> = (data) => {
-        mutate({
-          ...loadedData,
-          status: WateringPlanStatus.NotCompleted,
-          cancellationNote: data.cancellationNote,
-          transporterId: loadedData.transporter.id,
-          treeClusterIds: loadedData.stopIds,
-        })
+        mutate({ status: WateringPlanStatus.NotCompleted, cancellationNote: data.cancellationNote })
       }
 
       const onSubmitOtherStatus = (status: WateringPlanStatus) => {
-        mutate({
-          ...loadedData,
-          status,
-          transporterId: loadedData.transporter.id,
-          treeClusterIds: loadedData.stopIds,
-        })
+        mutate({ status })
       }
       switch (status) {
         case 'canceled':
@@ -139,11 +124,13 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
           )
         case 'finished':
           return (
-            <FinishedWateringPlan
-              onSubmit={onSubmitFinished}
-              wateringPlanId={wateringPlanId}
-              loadedData={loadedData}
-            />
+            planning && (
+              <FinishWateringPlan
+                plan={loadedData}
+                planning={planning}
+                onSubmit={onSubmitFinished}
+              />
+            )
           )
         default:
           return (
@@ -154,7 +141,7 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
           )
       }
     },
-    [loadedData, wateringPlanId, mutate, t],
+    [loadedData, planning, mutate, t],
   )
 
   return (
@@ -251,97 +238,41 @@ export const CancelWateringPlan = ({
   )
 }
 
-interface FinishedPlanProps {
-  onSubmit: SubmitHandler<WateringPlanFinishedForm>
-  wateringPlanId: string
-  loadedData: Pick<WateringPlan, 'treeclusters'>
+interface FinishPlanProps {
+  plan: PlanInListResponse
+  planning: ModulePlanning
+  onSubmit: (outcomes: StopOutcomeDto[]) => void
   submitLabel?: string
 }
 
-export const FinishedWateringPlan = ({
-  wateringPlanId,
-  onSubmit,
-  loadedData,
-  submitLabel,
-}: FinishedPlanProps) => {
-  const { t } = useTranslation(['wateringPlan', 'common'])
-  const {
-    register,
-    handleSubmit,
-    formState: { isValid },
-    control,
-  } = useForm({
-    mode: 'onChange',
-    resolver: zodResolver(wateringPlanFinishedSchema),
-    defaultValues: {
-      evaluation: loadedData.treeclusters.map((cluster: { treeIds?: string[]; id: string }) => ({
-        consumedWater: (cluster.treeIds?.length ?? 1) * 80,
-        treeClusterId: cluster.id,
-        wateringPlanId: wateringPlanId,
-      })),
-    },
+/** The amounts per stop come from the plan module; the core only gates the submit on them. */
+export const FinishWateringPlan = ({ plan, planning, onSubmit, submitLabel }: FinishPlanProps) => {
+  const { t } = useTranslation('common')
+  const [result, setResult] = useState<{ outcomes: StopOutcomeDto[]; valid: boolean }>({
+    outcomes: [],
+    valid: false,
   })
-
-  const { fields } = useFieldArray({
-    control,
-    name: 'evaluation',
-  })
+  // Stable, so an input that reports from an effect does not re-run it on every render.
+  const handleChange = useCallback(
+    (outcomes: StopOutcomeDto[], valid: boolean) => setResult({ outcomes, valid }),
+    [],
+  )
+  const { OutcomeInput } = planning
 
   return (
-    <form className="flex flex-col gap-y-6" onSubmit={handleSubmit(onSubmit)}>
-      <fieldset className="mt-6">
-        <legend className="block font-semibold text-dark-800 mb-2.5">
-          {t('statusUpdate.finished.waterPerClusterLegend')}
-        </legend>
-        <p className="-mt-2 text-sm text-dark-600 mb-2.5">
-          {t('statusUpdate.finished.defaultsHint')}
-        </p>
-        <ul className="flex flex-col">
-          {fields.map((field, index) => {
-            const cluster = loadedData.treeclusters[index]
-            const treeCount = cluster.treeIds.length
-            return (
-              <li
-                key={field.treeClusterId}
-                className="flex items-center justify-between gap-4 border-b border-dark-100 py-3 last:border-0"
-              >
-                <div className="flex min-w-0 items-center gap-2.5">
-                  <span
-                    aria-hidden
-                    className="flex size-8 shrink-0 items-center justify-center rounded-full bg-green-light-100"
-                  >
-                    <Droplet className="size-4 text-green-dark" />
-                  </span>
-                  <div className="min-w-0">
-                    <p className="truncate font-medium text-dark">{cluster.name}</p>
-                    {treeCount > 0 && (
-                      <p className="text-xs tabular-nums text-dark-600">
-                        {t('statusUpdate.finished.treeCount', { count: treeCount })}
-                      </p>
-                    )}
-                  </div>
-                </div>
-                <div className="flex shrink-0 items-center gap-2">
-                  <FormField
-                    type="number"
-                    label={t('statusUpdate.finished.litersForClusterLabel', { name: cluster.name })}
-                    defaultValue={field.consumedWater}
-                    className="max-w-28"
-                    hideLabel
-                    {...register(`evaluation.${index}.consumedWater`)}
-                  />
-                  <span className="text-sm text-dark-600">
-                    {t('statusUpdate.finished.litersUnitLabel')}
-                  </span>
-                </div>
-              </li>
-            )
-          })}
-        </ul>
-      </fieldset>
+    <form
+      className="flex flex-col gap-y-6"
+      onSubmit={(event) => {
+        event.preventDefault()
+        if (result.valid) onSubmit(result.outcomes)
+      }}
+    >
+      <Suspense fallback={<Loading className="mt-6" label={t('state.loadingInline')} />}>
+        <OutcomeInput plan={plan} onChange={handleChange} />
+      </Suspense>
 
-      <Button type="submit" disabled={!isValid} className="mt-10">
-        {submitLabel ?? t('common:actions.save')}
+      <Button type="submit" disabled={!result.valid} className="mt-10">
+        {submitLabel ?? t('actions.save')}
         <MoveRight className="icon-arrow-animate" />
       </Button>
     </form>

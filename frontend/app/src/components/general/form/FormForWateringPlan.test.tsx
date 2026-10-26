@@ -20,13 +20,24 @@ import {
 } from '@green-ecolution/backend-client'
 
 vi.mock('@/api/backendApi', () => ({
-  configuration: {},
   routingApi: {
     listRoutingStartPoints: vi.fn().mockResolvedValue([]),
   },
 }))
 
 import { routingApi } from '@/api/backendApi'
+import { probeManifest } from '@/test/planningManifest'
+import type { ModuleManifest, StopPickerProps } from '@/modules/types'
+
+const activeManifests = vi.fn((): ModuleManifest[] => [probeManifest('irrigation')])
+vi.mock('@/modules/useActiveModules', () => ({
+  useActiveModules: () => ({ manifests: activeManifests(), isActive: () => true }),
+}))
+
+function ModuleProbe() {
+  const module = useWatch<WateringPlanForm, 'module'>({ name: 'module' })
+  return <span data-testid="module">{module}</span>
+}
 
 function TankUsedProbe() {
   const tankUsed = useWatch<WateringPlanForm, 'transporterTankUsed'>({
@@ -59,6 +70,7 @@ function TestWrapper({
         <span data-testid="is-dirty">{String(methods.formState.isDirty)}</span>
         <span data-testid="is-valid">{String(methods.formState.isValid)}</span>
         <TankUsedProbe />
+        <ModuleProbe />
       </FormProvider>
       <Toaster />
     </QueryClientProvider>
@@ -78,6 +90,7 @@ const defaultFormValues: WateringPlanForm = {
   stopIds: [],
   description: '',
   startPointName: '',
+  module: 'irrigation',
 }
 
 const mockTransporters = [
@@ -136,10 +149,11 @@ const mockUsers = [
 
 describe('FormForWateringPlan', () => {
   const mockOnSubmit = vi.fn()
-  const mockOnAddCluster = vi.fn()
+  const mockSaveDraft = vi.fn()
 
   beforeEach(() => {
     vi.clearAllMocks()
+    activeManifests.mockReturnValue([probeManifest('irrigation')])
   })
 
   it('renders all form fields', () => {
@@ -150,7 +164,8 @@ describe('FormForWateringPlan', () => {
           transporters={mockTransporters}
           trailers={mockTrailers}
           users={mockUsers}
-          onAddCluster={mockOnAddCluster}
+          formType="create"
+          saveDraft={mockSaveDraft}
           onSubmit={mockOnSubmit}
         />
       </TestWrapper>,
@@ -173,7 +188,8 @@ describe('FormForWateringPlan', () => {
           transporters={mockTransporters}
           trailers={mockTrailers}
           users={mockUsers}
-          onAddCluster={mockOnAddCluster}
+          formType="create"
+          saveDraft={mockSaveDraft}
           onSubmit={mockOnSubmit}
         />
       </TestWrapper>,
@@ -198,7 +214,8 @@ describe('FormForWateringPlan', () => {
           transporters={mockTransporters}
           trailers={mockTrailers}
           users={mockUsers}
-          onAddCluster={mockOnAddCluster}
+          formType="create"
+          saveDraft={mockSaveDraft}
           onSubmit={mockOnSubmit}
         />
       </TestWrapper>,
@@ -220,7 +237,8 @@ describe('FormForWateringPlan', () => {
           transporters={mockTransporters}
           trailers={mockTrailers}
           users={mockUsers}
-          onAddCluster={mockOnAddCluster}
+          formType="create"
+          saveDraft={mockSaveDraft}
           onSubmit={mockOnSubmit}
         />
       </TestWrapper>,
@@ -241,7 +259,8 @@ describe('FormForWateringPlan', () => {
           transporters={mockTransporters}
           trailers={mockTrailers}
           users={mockUsers}
-          onAddCluster={mockOnAddCluster}
+          formType="create"
+          saveDraft={mockSaveDraft}
           onSubmit={mockOnSubmit}
         />
       </TestWrapper>,
@@ -269,7 +288,8 @@ describe('FormForWateringPlan', () => {
           transporters={mockTransporters}
           trailers={mockTrailers}
           users={mockUsers}
-          onAddCluster={mockOnAddCluster}
+          formType="create"
+          saveDraft={mockSaveDraft}
           onSubmit={mockOnSubmit}
         />
       </TestWrapper>,
@@ -284,45 +304,69 @@ describe('FormForWateringPlan', () => {
     ).not.toBeInTheDocument()
   })
 
-  it('renders add cluster button', () => {
-    render(
-      <TestWrapper defaultValues={defaultFormValues}>
-        <FormForWateringPlan
-          displayError={false}
-          transporters={mockTransporters}
-          trailers={mockTrailers}
-          users={mockUsers}
-          onAddCluster={mockOnAddCluster}
-          onSubmit={mockOnSubmit}
-        />
-      </TestWrapper>,
-    )
+  it('renders the stop picker of the plan module without asking for a module', () => {
+    renderForm(defaultFormValues)
 
-    expect(
-      screen.getByRole('button', { name: /bewässerungsgruppen hinzufügen/i }),
-    ).toBeInTheDocument()
+    expect(screen.getByTestId('stop-picker-irrigation')).toBeInTheDocument()
+    expect(screen.queryByRole('combobox', { name: /modul/i })).not.toBeInTheDocument()
   })
 
-  it('calls onAddCluster when add cluster button is clicked', async () => {
+  it('asks for the module before the other fields when several can plan', async () => {
     const user = userEvent.setup()
+    activeManifests.mockReturnValue([
+      probeManifest('irrigation'),
+      probeManifest('waste', { labelKey: 'wateringPlan:entity.name' }),
+    ])
+    renderForm(defaultFormValues)
 
+    const moduleSelect = screen.getByRole('combobox', { name: /modul/i })
+    const dateLabel = screen.getByText(/datum des einsatzplans/i)
+    expect(
+      moduleSelect.compareDocumentPosition(dateLabel) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
+
+    await user.click(moduleSelect)
+    await user.click(within(await screen.findByRole('listbox')).getByText('Einsatzplan'))
+
+    await waitFor(() => expect(screen.getByTestId('module')).toHaveTextContent('waste'))
+    expect(screen.getByTestId('stop-picker-waste')).toBeInTheDocument()
+    expect(screen.queryByTestId('stop-picker-irrigation')).not.toBeInTheDocument()
+  })
+
+  it('hands the stop validation error to the stop picker', async () => {
+    const user = userEvent.setup()
+    const StopPicker = ({ error }: StopPickerProps) => <p data-testid="picker-error">{error}</p>
+    activeManifests.mockReturnValue([probeManifest('irrigation', { StopPicker })])
+    renderForm(defaultFormValues)
+
+    await user.click(screen.getByRole('button', { name: /speichern/i }))
+
+    await waitFor(() =>
+      expect(screen.getByTestId('picker-error')).toHaveTextContent('watering_plan.stop_ids.empty'),
+    )
+  })
+
+  it('keeps the module of an existing plan fixed', () => {
+    activeManifests.mockReturnValue([
+      probeManifest('irrigation'),
+      probeManifest('waste', { labelKey: 'wateringPlan:entity.name' }),
+    ])
     render(
-      <TestWrapper defaultValues={defaultFormValues}>
+      <TestWrapper defaultValues={{ ...defaultFormValues, module: 'waste' }}>
         <FormForWateringPlan
           displayError={false}
           transporters={mockTransporters}
           trailers={mockTrailers}
           users={mockUsers}
-          onAddCluster={mockOnAddCluster}
           onSubmit={mockOnSubmit}
+          formType="update"
+          saveDraft={mockSaveDraft}
         />
       </TestWrapper>,
     )
 
-    const addButton = screen.getByRole('button', { name: /bewässerungsgruppen hinzufügen/i })
-    await user.click(addButton)
-
-    expect(mockOnAddCluster).toHaveBeenCalled()
+    expect(screen.queryByRole('combobox', { name: /modul/i })).not.toBeInTheDocument()
+    expect(screen.getByTestId('stop-picker-waste')).toBeInTheDocument()
   })
 
   it('shows error message when displayError is true', () => {
@@ -334,7 +378,8 @@ describe('FormForWateringPlan', () => {
           transporters={mockTransporters}
           trailers={mockTrailers}
           users={mockUsers}
-          onAddCluster={mockOnAddCluster}
+          formType="create"
+          saveDraft={mockSaveDraft}
           onSubmit={mockOnSubmit}
         />
       </TestWrapper>,
@@ -355,7 +400,8 @@ describe('FormForWateringPlan', () => {
           transporters={mockTransporters}
           trailers={mockTrailers}
           users={mockUsers}
-          onAddCluster={mockOnAddCluster}
+          formType="create"
+          saveDraft={mockSaveDraft}
           onSubmit={mockOnSubmit}
         />
       </TestWrapper>,
@@ -380,7 +426,8 @@ describe('FormForWateringPlan', () => {
           transporters={mockTransporters}
           trailers={mockTrailers}
           users={mockUsers}
-          onAddCluster={mockOnAddCluster}
+          formType="create"
+          saveDraft={mockSaveDraft}
           onSubmit={mockOnSubmit}
         />
       </TestWrapper>,
@@ -428,7 +475,8 @@ describe('FormForWateringPlan', () => {
           transporters={mockTransporters}
           trailers={mockTrailers}
           users={mockUsers}
-          onAddCluster={mockOnAddCluster}
+          formType="create"
+          saveDraft={mockSaveDraft}
           onSubmit={mockOnSubmit}
         />
       </TestWrapper>,
@@ -463,7 +511,8 @@ describe('FormForWateringPlan', () => {
           transporters={mockTransporters}
           trailers={mockTrailers}
           users={mockUsers}
-          onAddCluster={mockOnAddCluster}
+          formType="create"
+          saveDraft={mockSaveDraft}
           onSubmit={mockOnSubmit}
         />
       </TestWrapper>,
@@ -512,7 +561,8 @@ describe('FormForWateringPlan', () => {
           transporters={mockTransporters}
           trailers={mockTrailers}
           users={mockUsers}
-          onAddCluster={mockOnAddCluster}
+          formType="create"
+          saveDraft={mockSaveDraft}
           onSubmit={mockOnSubmit}
         />
       </TestWrapper>,
@@ -522,19 +572,21 @@ describe('FormForWateringPlan', () => {
     expect(screen.getByRole('button', { name: /speichern/i })).not.toBeDisabled()
   })
 
-  const renderForm = (defaultValues: WateringPlanForm) =>
-    render(
+  function renderForm(defaultValues: WateringPlanForm) {
+    return render(
       <TestWrapper defaultValues={defaultValues}>
         <FormForWateringPlan
           displayError={false}
           transporters={mockTransporters}
           trailers={mockTrailers}
           users={mockUsers}
-          onAddCluster={mockOnAddCluster}
+          formType="create"
+          saveDraft={mockSaveDraft}
           onSubmit={mockOnSubmit}
         />
       </TestWrapper>,
     )
+  }
 
   const tankCheckbox = () =>
     screen.queryByRole('checkbox', { name: /wassertank des fahrzeugs mitnutzen/i })

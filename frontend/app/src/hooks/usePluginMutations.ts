@@ -5,7 +5,7 @@ import type { PluginCreateRequest, PluginUpdateRequest } from '@/api/backendApi'
 import { pluginApi } from '@/api/backendApi'
 import createToast from '@/hooks/createToast'
 import { resolveApiError } from '@/lib/apiError'
-import { useInvalidateAggregates } from '@/lib/queryInvalidation'
+import { useInvalidateQueryRoots } from '@/lib/queryInvalidation'
 
 export interface UpdatePluginVariables {
   slug: string
@@ -13,7 +13,7 @@ export interface UpdatePluginVariables {
 }
 
 export const usePluginMutations = () => {
-  const invalidate = useInvalidateAggregates()
+  const invalidate = useInvalidateQueryRoots()
   const showToast = createToast()
   const { t } = useTranslation('settings')
 

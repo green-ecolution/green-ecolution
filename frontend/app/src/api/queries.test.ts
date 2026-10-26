@@ -8,20 +8,11 @@ import {
 } from './queries'
 import type { Vehicle } from '@/api/backendApi'
 import type {
-  ListResponsePlanInListResponse,
   ListResponseVehicleResponse,
-  ListResponseTreeClusterInListResponse,
   PlanResponse,
   RouteResponse,
-  TreeClusterInListResponse,
 } from '@green-ecolution/backend-client'
-import { SensorStatus } from '@green-ecolution/backend-client'
-
-vi.mock('../../../modules/irrigation/src/api/client', () => ({
-  clusterApi: {
-    listClusters: vi.fn(),
-  },
-}))
+import { PlanStatus, SensorStatus } from '@green-ecolution/backend-client'
 
 vi.mock('./backendApi', () => ({
   vehicleApi: {
@@ -42,7 +33,6 @@ vi.mock('./backendApi', () => ({
 }))
 
 import { commentApi, vehicleApi, planApi, planPreviewApi } from './backendApi'
-import { clusterApi } from '../../../modules/irrigation/src/api/client'
 
 describe('Query Functions', () => {
   beforeEach(() => {
@@ -152,58 +142,19 @@ describe('Query Functions', () => {
   })
 
   describe('WateringPlan Queries', () => {
-    const clusterPage = (...ids: string[]) =>
-      ({
-        data: ids.map((id) => ({ id, name: `Cluster ${id}` })),
-      }) as unknown as ListResponseTreeClusterInListResponse
+    describe('wateringPlanQueries.boardColumn', () => {
+      it('lists the plans of one module in the given statuses', async () => {
+        const options = wateringPlanQueries.boardColumn('irrigation', [PlanStatus.Planned])
+        await options.queryFn!({} as never)
 
-    describe('wateringPlanQueries.list', () => {
-      it('returns correct query options for fetching all watering plans', () => {
-        const options = wateringPlanQueries.list()
-
-        expect(options.queryKey).toContain('watering-plans')
-        expect(options.queryFn).toBeDefined()
-      })
-
-      it('includes default page in query key', () => {
-        const options = wateringPlanQueries.list()
-
-        expect(options.queryKey).toContain('1')
-      })
-
-      it('includes custom page in query key', () => {
-        const options = wateringPlanQueries.list({ page: 3 })
-
-        expect(options.queryKey).toContain(3)
-      })
-
-      it('lists irrigation plans and resolves their clusters in one call', async () => {
-        const mockResponse = {
-          data: [
-            { id: 'p1', module: 'irrigation', stops: ['c1', 'c2'], totalDemand: 10 },
-            { id: 'p2', module: 'irrigation', stops: ['c2'], totalDemand: 5 },
-          ],
-          pagination: { currentPage: 1 },
-        } as unknown as ListResponsePlanInListResponse
+        expect(options.queryKey).toEqual(['watering-plans', 'board', 'irrigation', ['planned']])
         // eslint-disable-next-line @typescript-eslint/unbound-method
-        vi.mocked(planApi.listPlans).mockResolvedValueOnce(mockResponse)
-        // eslint-disable-next-line @typescript-eslint/unbound-method
-        vi.mocked(clusterApi.listClusters).mockResolvedValueOnce(clusterPage('c1', 'c2'))
-
-        const options = wateringPlanQueries.list()
-        const result = await options.queryFn!({} as never)
-
-        // eslint-disable-next-line @typescript-eslint/unbound-method
-        expect(planApi.listPlans).toHaveBeenCalledWith({ module: 'irrigation' })
-        // eslint-disable-next-line @typescript-eslint/unbound-method
-        expect(clusterApi.listClusters).toHaveBeenCalledTimes(1)
-        // eslint-disable-next-line @typescript-eslint/unbound-method
-        expect(clusterApi.listClusters).toHaveBeenCalledWith({ id: ['c1', 'c2'], perPage: 100 })
-        expect(result.data.map((plan) => plan.treeclusters.map((c) => c.id))).toEqual([
-          ['c1', 'c2'],
-          ['c2'],
-        ])
-        expect(result.data[0].totalWaterRequired).toBe(10)
+        expect(planApi.listPlans).toHaveBeenCalledWith({
+          module: 'irrigation',
+          status: ['planned'],
+          page: 1,
+          perPage: 100,
+        })
       })
     })
 
@@ -215,79 +166,48 @@ describe('Query Functions', () => {
         expect(options.queryFn).toBeDefined()
       })
 
-      it('loads the clusters of the stops and keeps the stop order', async () => {
-        const mockPlan = {
-          id: 'plan-uuid-1',
-          module: 'irrigation',
-          date: '2025-01-15',
-          stops: ['c2', 'c1'],
-          outcomes: [],
-          transporterCapacityUsed: true,
-          totalDemand: 0,
-        } as unknown as PlanResponse
+      it('returns the plan as the backend sends it', async () => {
+        const mockPlan = { id: 'plan-uuid-1', module: 'irrigation', stops: ['c2'] } as PlanResponse
         // eslint-disable-next-line @typescript-eslint/unbound-method
         vi.mocked(planApi.getPlan).mockResolvedValueOnce(mockPlan)
-        // eslint-disable-next-line @typescript-eslint/unbound-method
-        vi.mocked(clusterApi.listClusters).mockResolvedValueOnce(clusterPage('c1', 'c2'))
 
-        const options = wateringPlanQueries.detail('plan-uuid-1')
-        const result = await options.queryFn!({} as never)
+        const result = await wateringPlanQueries.detail('plan-uuid-1').queryFn!({} as never)
 
         // eslint-disable-next-line @typescript-eslint/unbound-method
         expect(planApi.getPlan).toHaveBeenCalledWith({ planId: 'plan-uuid-1' })
-        // eslint-disable-next-line @typescript-eslint/unbound-method
-        expect(clusterApi.listClusters).toHaveBeenCalledWith({ id: ['c2', 'c1'], perPage: 100 })
-        expect(result.id).toBe('plan-uuid-1')
-        expect(result.treeclusters.map((c: TreeClusterInListResponse) => c.id)).toEqual([
-          'c2',
-          'c1',
-        ])
+        expect(result).toBe(mockPlan)
       })
     })
 
     describe('wateringPlanQueries.routePreview', () => {
-      it('returns the route in irrigation terms on success', async () => {
-        const mockRoute = {
-          stationVisits: [{ name: 'Hof', lat: 1, lon: 2 }],
-          totalDemand: 40,
-        } as unknown as RouteResponse
+      const preview = (overrides = {}) =>
+        wateringPlanQueries.routePreview({
+          module: 'irrigation',
+          stops: ['cluster-1'],
+          transporterId: 'vehicle-1',
+          ...overrides,
+        })
+
+      it('returns the route on success', async () => {
+        const mockRoute = { stationVisits: [{ name: 'Hof', lat: 1, lon: 2 }] } as RouteResponse
         // eslint-disable-next-line @typescript-eslint/unbound-method
         vi.mocked(planPreviewApi.previewPlanRoute).mockResolvedValueOnce(mockRoute)
 
-        const options = wateringPlanQueries.routePreview({
-          clusterIds: ['cluster-1'],
-          transporterId: 'vehicle-1',
-        })
-        const result = await options.queryFn!({} as never)
-
-        expect(result).toEqual({
-          refillPoints: [{ name: 'Hof', lat: 1, lon: 2 }],
-          totalWaterRequired: 40,
-        })
+        expect(await preview().queryFn!({} as never)).toBe(mockRoute)
       })
 
       it('returns null on any error instead of propagating', async () => {
         // eslint-disable-next-line @typescript-eslint/unbound-method
         vi.mocked(planPreviewApi.previewPlanRoute).mockRejectedValueOnce(new Error('422'))
 
-        const options = wateringPlanQueries.routePreview({
-          clusterIds: ['cluster-1'],
-          transporterId: 'vehicle-1',
-        })
-        const result = await options.queryFn!({} as never)
-
-        expect(result).toBeNull()
+        expect(await preview().queryFn!({} as never)).toBeNull()
       })
 
       it('uses planPreviewApi, not planApi', async () => {
         // eslint-disable-next-line @typescript-eslint/unbound-method
         vi.mocked(planPreviewApi.previewPlanRoute).mockResolvedValueOnce({} as RouteResponse)
 
-        const options = wateringPlanQueries.routePreview({
-          clusterIds: ['cluster-1'],
-          transporterId: 'vehicle-1',
-        })
-        await options.queryFn!({} as never)
+        await preview().queryFn!({} as never)
 
         // eslint-disable-next-line @typescript-eslint/unbound-method
         expect(planPreviewApi.previewPlanRoute).toHaveBeenCalled()
@@ -295,17 +215,13 @@ describe('Query Functions', () => {
         expect(planApi.listPlans).not.toHaveBeenCalled()
       })
 
-      it('routes with the trailer and without an unused transporter tank', async () => {
+      it('routes the module stops with the trailer and without an unused transporter tank', async () => {
         // eslint-disable-next-line @typescript-eslint/unbound-method
         vi.mocked(planPreviewApi.previewPlanRoute).mockResolvedValueOnce({} as RouteResponse)
 
-        const options = wateringPlanQueries.routePreview({
-          clusterIds: ['cluster-1'],
-          transporterId: 'vehicle-1',
-          trailerId: 'trailer-1',
-          transporterTankUsed: false,
-        })
-        await options.queryFn!({} as never)
+        await preview({ trailerId: 'trailer-1', transporterCapacityUsed: false }).queryFn!(
+          {} as never,
+        )
 
         // eslint-disable-next-line @typescript-eslint/unbound-method
         expect(planPreviewApi.previewPlanRoute).toHaveBeenCalledWith({

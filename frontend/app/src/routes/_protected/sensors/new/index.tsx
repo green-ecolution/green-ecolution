@@ -2,7 +2,7 @@ import { queryRoots } from '@/api/queries'
 import { irrigationRoots } from '../../../../../../modules/irrigation/src/api/queries'
 import { sensorApi } from '@/api/backendApi'
 import { sensorQueries } from '@/api/queries'
-import { useInvalidateAggregates } from '@/lib/queryInvalidation'
+import { useInvalidateQueryRoots } from '@/lib/queryInvalidation'
 import { mapActivateError, resolveResponseStatus } from '@/api/sensorErrors'
 import SensorReviewStep from '@/components/sensor/wizard/SensorReviewStep'
 import SensorScanStep from '@/components/sensor/wizard/SensorScanStep'
@@ -27,7 +27,7 @@ export const Route = createFileRoute('/_protected/sensors/new/')({
 
 function NewSensor() {
   const navigate = useNavigate()
-  const invalidate = useInvalidateAggregates()
+  const invalidate = useInvalidateQueryRoots()
   const [state, dispatch] = useReducer(wizardReducer, INITIAL_WIZARD_STATE)
   const {
     status: gpsStatus,

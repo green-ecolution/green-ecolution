@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import {
   DndContext,
   DragOverlay,
@@ -12,6 +12,7 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core'
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
+import { useNavigate } from '@tanstack/react-router'
 import { CalendarClock, CheckCircle2, Truck } from 'lucide-react'
 import {
   Button,
@@ -20,10 +21,14 @@ import {
   KanbanColumnEmpty,
   KanbanColumnHeader,
   KanbanDropHint,
+  Tabs,
+  TabsList,
+  TabsTrigger,
 } from '@green-ecolution/ui'
 import { useTranslation } from 'react-i18next'
 import { PlanStatus as WateringPlanStatus } from '@green-ecolution/backend-client'
-import type { User, WateringPlanInList } from '@/api/backendApi'
+import type { PlanInListResponse } from '@green-ecolution/backend-client'
+import type { User } from '@/api/backendApi'
 import { userQueries, wateringPlanQueries } from '@/api/queries'
 import {
   dropActionFor,
@@ -33,24 +38,27 @@ import {
 } from '@/lib/wateringPlanBoard'
 import { useWateringPlanBoardMutations } from '@/hooks/useWateringPlanBoardMutations'
 import { useHasPermission } from '@/lib/auth/useHasPermission'
+import { useActiveModules } from '@/modules/useActiveModules'
+import { planModule, planningManifests, type PlanningManifest } from '@/modules/planning'
+import type { ModulePlanning } from '@/modules/types'
 import WateringPlanBoardCard from './WateringPlanBoardCard'
 import AssignUsersPopover from './AssignUsersPopover'
 import CancelPlanDialog from './CancelPlanDialog'
 import CompletePlanDialog from './CompletePlanDialog'
-import SuggestionsColumn from './SuggestionsColumn'
 
 interface DragData {
-  plan: WateringPlanInList
+  plan: PlanInListResponse
   column: BoardColumnId
 }
 
 interface PlanCardProps {
-  plan: WateringPlanInList
+  plan: PlanInListResponse
+  planning: ModulePlanning
   column: BoardColumnId
   users: User[]
 }
 
-const DraggablePlanCard = ({ plan, column, users }: PlanCardProps) => {
+const DraggablePlanCard = ({ plan, planning, column, users }: PlanCardProps) => {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: plan.id,
     data: { plan, column } satisfies DragData,
@@ -60,6 +68,7 @@ const DraggablePlanCard = ({ plan, column, users }: PlanCardProps) => {
     <div ref={setNodeRef} {...listeners} {...attributes} className="touch-none">
       <WateringPlanBoardCard
         plan={plan}
+        planning={planning}
         users={users}
         cardState={isDragging ? 'ghost' : 'idle'}
         assignSlot={
@@ -74,7 +83,7 @@ const PlanCard = ({ canModify, ...props }: PlanCardProps & { canModify: boolean 
   canModify ? (
     <DraggablePlanCard {...props} />
   ) : (
-    <WateringPlanBoardCard plan={props.plan} users={props.users} />
+    <WateringPlanBoardCard plan={props.plan} planning={props.planning} users={props.users} />
   )
 
 const DroppableColumn = ({
@@ -125,21 +134,75 @@ const ColumnError = ({ onRetry }: { onRetry: () => void }) => {
   )
 }
 
-const WateringPlanBoard = () => {
-  const plannedQuery = useQuery(wateringPlanQueries.boardColumn([WateringPlanStatus.Planned]))
-  const activeQuery = useQuery(wateringPlanQueries.boardColumn([WateringPlanStatus.Active]))
-  const doneQuery = useInfiniteQuery(wateringPlanQueries.boardDone())
+const ModuleSwitcher = ({
+  current,
+  manifests,
+}: {
+  current: string
+  manifests: PlanningManifest[]
+}) => {
+  const navigate = useNavigate()
+  const { t, i18n } = useTranslation('wateringPlan')
+
+  return (
+    <Tabs
+      value={current}
+      onValueChange={(module) => {
+        navigate({ to: '/watering-plans', search: { module } }).catch((error) =>
+          console.error('Navigation failed:', error),
+        )
+      }}
+      className="mb-4"
+    >
+      <TabsList aria-label={t('board.moduleSwitcherAriaLabel')}>
+        {manifests.map(({ key, planning }) => (
+          <TabsTrigger key={key} value={key}>
+            {i18n.t(planning.labelKey)}
+          </TabsTrigger>
+        ))}
+      </TabsList>
+    </Tabs>
+  )
+}
+
+const WateringPlanBoard = ({ module }: { module?: string }) => {
+  const { manifests } = useActiveModules()
+  const planManifest = planModule({ module }, manifests)
+  if (!planManifest) return null
+  const planningModules = planningManifests(manifests)
+
+  return (
+    <>
+      {planningModules.length > 1 && (
+        <ModuleSwitcher current={planManifest.key} manifests={planningModules} />
+      )}
+      <ModuleBoard
+        key={planManifest.key}
+        module={planManifest.key}
+        planning={planManifest.planning}
+      />
+    </>
+  )
+}
+
+const ModuleBoard = ({ module, planning }: { module: string; planning: ModulePlanning }) => {
+  const plannedQuery = useQuery(
+    wateringPlanQueries.boardColumn(module, [WateringPlanStatus.Planned]),
+  )
+  const activeQuery = useQuery(wateringPlanQueries.boardColumn(module, [WateringPlanStatus.Active]))
+  const doneQuery = useInfiniteQuery(wateringPlanQueries.boardDone(module))
   const { data: usersRes } = useQuery(userQueries.list({ page: 1, perPage: 100 }))
   const { data: plannedRes } = plannedQuery
   const { data: activeRes } = activeQuery
 
-  const { startPlan, revertStart } = useWateringPlanBoardMutations()
+  const { startPlan, revertStart } = useWateringPlanBoardMutations(planning)
+  const { SuggestionsColumn } = planning
   const canModify = useHasPermission(['watering_plan:update'])
   const canCreate = useHasPermission(['watering_plan:create'])
   const { t } = useTranslation('wateringPlan')
   const [activeDrag, setActiveDrag] = useState<DragData | null>(null)
-  const [planToCancel, setPlanToCancel] = useState<WateringPlanInList | null>(null)
-  const [planToComplete, setPlanToComplete] = useState<WateringPlanInList | null>(null)
+  const [planToCancel, setPlanToCancel] = useState<PlanInListResponse | null>(null)
+  const [planToComplete, setPlanToComplete] = useState<PlanInListResponse | null>(null)
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -187,7 +250,9 @@ const WateringPlanBoard = () => {
       onDragCancel={() => setActiveDrag(null)}
     >
       <KanbanBoard className="justify-center-safe pt-0.5">
-        <SuggestionsColumn />
+        <Suspense fallback={null}>
+          <SuggestionsColumn />
+        </Suspense>
         <DroppableColumn
           id="planned"
           icon={<CalendarClock />}
@@ -205,6 +270,7 @@ const WateringPlanBoard = () => {
             <PlanCard
               key={plan.id}
               plan={plan}
+              planning={planning}
               column="planned"
               users={users}
               canModify={canModify}
@@ -229,6 +295,7 @@ const WateringPlanBoard = () => {
             <PlanCard
               key={plan.id}
               plan={plan}
+              planning={planning}
               column="active"
               users={users}
               canModify={canModify}
@@ -247,7 +314,7 @@ const WateringPlanBoard = () => {
             <KanbanColumnEmpty>{t('board.column.doneEmpty')}</KanbanColumnEmpty>
           )}
           {done.map((plan) => (
-            <WateringPlanBoardCard key={plan.id} plan={plan} users={users} />
+            <WateringPlanBoardCard key={plan.id} plan={plan} planning={planning} users={users} />
           ))}
           {doneQuery.hasNextPage && (
             <Button
@@ -266,12 +333,25 @@ const WateringPlanBoard = () => {
 
       <DragOverlay dropAnimation={null}>
         {activeDrag && (
-          <WateringPlanBoardCard plan={activeDrag.plan} users={users} cardState="dragging" />
+          <WateringPlanBoardCard
+            plan={activeDrag.plan}
+            planning={planning}
+            users={users}
+            cardState="dragging"
+          />
         )}
       </DragOverlay>
 
-      <CancelPlanDialog plan={planToCancel} onClose={() => setPlanToCancel(null)} />
-      <CompletePlanDialog plan={planToComplete} onClose={() => setPlanToComplete(null)} />
+      <CancelPlanDialog
+        plan={planToCancel}
+        planning={planning}
+        onClose={() => setPlanToCancel(null)}
+      />
+      <CompletePlanDialog
+        plan={planToComplete}
+        planning={planning}
+        onClose={() => setPlanToComplete(null)}
+      />
     </DndContext>
   )
 }

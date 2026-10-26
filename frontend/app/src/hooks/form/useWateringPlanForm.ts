@@ -1,8 +1,8 @@
 import { WATERING_PLAN_FORM } from '@/store/form/formDraftSlice'
 import { queryRoots } from '@/api/queries'
-import type { PlanResponse, WateringPlanCreate, WateringPlanUpdate } from '@/api/backendApi'
+import type { PlanResponse } from '@/api/backendApi'
 import { planApi } from '@/api/backendApi'
-import { toPlanCreateRequest, toPlanUpdateRequest } from '@/api/irrigationPlans'
+import { toPlanCreateRequest, toPlanFormUpdateRequest } from '@/lib/plans'
 import { useIssueTranslator } from '@/lib/i18n/validation'
 import { WateringPlanForm } from '@/schema/wateringPlanSchema'
 import { wateringPlanDraftResolver } from '@green-ecolution/domain-wasm'
@@ -19,8 +19,8 @@ export const useWateringPlanForm = (
 
   const wateringPlanConfig: EntityFormConfig<
     WateringPlanForm,
-    WateringPlanCreate,
-    WateringPlanUpdate,
+    WateringPlanForm,
+    WateringPlanForm,
     PlanResponse
   > = {
     formType: WATERING_PLAN_FORM,
@@ -28,7 +28,7 @@ export const useWateringPlanForm = (
 
     createFn: (body) => planApi.createPlan({ planCreateRequest: toPlanCreateRequest(body) }),
     updateFn: (id, body) =>
-      planApi.updatePlan({ planId: id, planUpdateRequest: toPlanUpdateRequest(body) }),
+      planApi.updatePlan({ planId: id, planUpdateRequest: toPlanFormUpdateRequest(body) }),
 
     invalidates: queryRoots.wateringPlan,
 
@@ -47,7 +47,7 @@ export const useWateringPlanForm = (
     },
   }
 
-  return useEntityForm<WateringPlanForm, WateringPlanCreate, WateringPlanUpdate, PlanResponse>(
+  return useEntityForm<WateringPlanForm, WateringPlanForm, WateringPlanForm, PlanResponse>(
     wateringPlanConfig,
     mutationType,
     {

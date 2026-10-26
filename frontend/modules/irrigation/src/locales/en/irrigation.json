@@ -99,5 +99,44 @@
       "noVehicleWarning": "A vehicle must be selected to be able to generate a route.",
       "insufficientCapacityWarning": "Greyed-out watering groups are excluded because the vehicle does not have enough water capacity."
     }
+  },
+  "planning": {
+    "stopsLabel": "Watering groups",
+    "stopCountLabel": "Number of watering groups",
+    "stopCount_one": "{count} group",
+    "stopCount_other": "{count} groups",
+    "stopList": {
+      "emptyMessage": "Unfortunately no watering groups were found."
+    },
+    "summary": {
+      "consumedWaterLabel": "Water consumed",
+      "consumedWaterValue": "{value} liters",
+      "consumedWaterDescription_one": "for {count} watering group",
+      "consumedWaterDescription_other": "for {count} watering groups"
+    },
+    "outcome": {
+      "waterPerClusterLegend": "Water given per watering group:",
+      "defaultsHint": "The default values are based on 80 liters per tree in a watering group.",
+      "treeCount_one": "{count} tree",
+      "treeCount_other": "{count} trees",
+      "litersForClusterLabel": "Liters for {name}",
+      "litersUnitLabel": "Liters"
+    },
+    "stopPicker": {
+      "label": "Watering groups",
+      "requiredError": "Select at least one watering group."
+    },
+    "suggestions": {
+      "ariaLabel": "Suggestions",
+      "title": "Suggestions",
+      "loadError": "The suggestions could not be loaded.",
+      "emptyMessage": "No watering groups are currently very dry.",
+      "bundleButtonLabel": "Bundle into watering plan"
+    },
+    "suggestionCard": {
+      "selectAriaLabel": "Select {name} for a watering plan",
+      "treeCount_one": "{count} tree",
+      "treeCount_other": "{count} trees"
+    }
   }
 }

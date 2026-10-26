@@ -1,7 +1,8 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { PlanStatus as WateringPlanStatus } from '@green-ecolution/backend-client'
-import type { WateringPlan } from '@/api/backendApi'
+import { probePlanning } from '@/test/planningManifest'
+import { planResponse } from '@/test/plans'
 
 const users = [
   { id: 'u1', firstName: 'Max', lastName: 'Mustermann' },
@@ -20,40 +21,31 @@ vi.mock('@tanstack/react-query', async (importOriginal) => {
 const { default: TabGeneralData } = await import('./TabGeneralData')
 
 const plan = (userIds: string[]) =>
-  ({
-    id: 'p1',
-    date: '2026-03-01T00:00:00Z',
-    updatedAt: '2026-03-01T00:00:00Z',
-    status: WateringPlanStatus.Planned,
-    treeclusters: [],
-    evaluation: [],
-    distance: 1000,
-    userIds,
-  }) as unknown as WateringPlan
+  planResponse({ status: WateringPlanStatus.Planned, distance: 1000, userIds })
+const planning = probePlanning()
 
 const assignedValue = () =>
   screen.getByText('Eingeteilte Mitarbeitende').nextElementSibling?.textContent
 
 describe('TabGeneralData', () => {
   it('lists only the users assigned to the plan', () => {
-    render(<TabGeneralData wateringPlan={plan(['u1'])} />)
+    render(<TabGeneralData wateringPlan={plan(['u1'])} planning={planning} />)
 
     expect(assignedValue()).toBe('Max Mustermann')
   })
 
   it('shows a placeholder when nobody is assigned', () => {
-    render(<TabGeneralData wateringPlan={plan([])} />)
+    render(<TabGeneralData wateringPlan={plan([])} planning={planning} />)
 
     expect(assignedValue()).toBe('Keine Angabe')
   })
 
   it('says when only the trailer carries water', () => {
-    const trailerOnly = {
-      ...plan([]),
-      trailer: { numberPlate: 'FL-TR 1' },
-      transporterTankUsed: false,
-    } as unknown as WateringPlan
-    render(<TabGeneralData wateringPlan={trailerOnly} />)
+    const trailerOnly = planResponse({
+      trailer: { numberPlate: 'FL-TR 1' } as never,
+      transporterCapacityUsed: false,
+    })
+    render(<TabGeneralData wateringPlan={trailerOnly} planning={planning} />)
 
     expect(screen.getByText('Wassertank des Fahrzeugs').nextElementSibling?.textContent).toBe(
       'Bleibt leer, nur der Anhänger führt Wasser',
@@ -61,8 +53,23 @@ describe('TabGeneralData', () => {
   })
 
   it('leaves out the tank row for a plan without trailer', () => {
-    render(<TabGeneralData wateringPlan={plan([])} />)
+    render(<TabGeneralData wateringPlan={plan([])} planning={planning} />)
 
     expect(screen.queryByText('Wassertank des Fahrzeugs')).not.toBeInTheDocument()
+  })
+
+  it('renders the summary of the plan module and counts its stops in its words', async () => {
+    render(
+      <TabGeneralData
+        wateringPlan={planResponse({ stops: ['c1', 'c2'], totalDemand: 160 })}
+        planning={planning}
+      />,
+    )
+
+    expect(await screen.findByTestId('plan-summary')).toBeInTheDocument()
+    expect(screen.getByText('Anzahl der Bewässerungsgruppen').nextElementSibling?.textContent).toBe(
+      '2 Gruppen',
+    )
+    expect(screen.getByText('Benötigtes Wasser').nextElementSibling?.textContent).toBe('160 Liter')
   })
 })

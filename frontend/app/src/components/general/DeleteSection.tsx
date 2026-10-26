@@ -15,7 +15,7 @@ import {
 import createToast from '@/hooks/createToast'
 import { LinkProps, useNavigate } from '@tanstack/react-router'
 import type { QueryKey } from '@tanstack/react-query'
-import { useInvalidateAggregates } from '@/lib/queryInvalidation'
+import { useInvalidateQueryRoots } from '@/lib/queryInvalidation'
 import { useTranslation } from 'react-i18next'
 import { resolveApiError } from '@/lib/apiError'
 import { useLocalizedText, type LocalizedText } from '@/lib/i18n/localizedText'
@@ -38,7 +38,7 @@ const DeleteSection: React.FC<DeleteSectionProps> = ({
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const navigate = useNavigate()
-  const invalidate = useInvalidateAggregates()
+  const invalidate = useInvalidateQueryRoots()
   const showToast = createToast()
   const { t } = useTranslation(['errors', 'common'])
   const resolve = useLocalizedText()

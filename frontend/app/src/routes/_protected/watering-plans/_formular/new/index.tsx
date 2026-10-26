@@ -1,22 +1,25 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 import { WateringPlanStatus } from '@/api/backendApi'
-import { DefaultValues, FormProvider, SubmitHandler } from 'react-hook-form'
+import { DefaultValues, FormProvider } from 'react-hook-form'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import BackLink from '@/components/general/links/BackLink'
 import { userQueries, vehicleQueries } from '@/api/queries'
 import { WateringPlanForm } from '@/schema/wateringPlanSchema'
 import FormForWateringPlan from '@/components/general/form/FormForWateringPlan'
-import { useMapCenter, useMapZoom } from '@/components/map-gl/useMapView'
 import { useWateringPlanForm } from '@/hooks/form/useWateringPlanForm'
 import { useWateringPlanDraft } from '@/store/form/useFormDraft'
 import UnsavedChangesDialog from '@/components/general/form/UnsavedChangesDialog'
+import ModuleInactive from '@/modules/ModuleInactive'
+import { planModule } from '@/modules/planning'
+import { useActiveModules } from '@/modules/useActiveModules'
 
 export const Route = createFileRoute('/_protected/watering-plans/_formular/new/')({
   component: NewWateringPlan,
 })
 
-const defaultForm: DefaultValues<WateringPlanForm> = {
+const defaultForm = (module: string): DefaultValues<WateringPlanForm> => ({
+  module,
   date: new Date(),
   description: '',
   transporterId: '',
@@ -26,15 +29,20 @@ const defaultForm: DefaultValues<WateringPlanForm> = {
   status: WateringPlanStatus.Planned,
   driverIds: [],
   startPointName: '',
-}
+})
 
 function NewWateringPlan() {
+  const { manifests } = useActiveModules()
+  const planManifest = planModule({}, manifests)
+  return planManifest ? <NewWateringPlanForm module={planManifest.key} /> : <ModuleInactive />
+}
+
+function NewWateringPlanForm({ module }: { module: string }) {
   const { t } = useTranslation('wateringPlan')
   const draft = useWateringPlanDraft<WateringPlanForm>('create')
-  const initForm = draft.data ?? defaultForm
+  const initForm = draft.data ?? defaultForm(module)
   const formKey = draft.data?.stopIds?.join(',') ?? 'initial'
 
-  const navigate = useNavigate({ from: Route.fullPath })
   const { data: users } = useSuspenseQuery(userQueries.list({ page: 1, perPage: 100 }))
   const { data: trailers } = useSuspenseQuery(vehicleQueries.list())
   const { data: transporters } = useSuspenseQuery(vehicleQueries.list())
@@ -44,38 +52,6 @@ function NewWateringPlan() {
       initForm,
     },
   )
-  const { getValues } = form
-
-  const mapCenter = useMapCenter()
-  const mapZoom = useMapZoom()
-  const mapPosition = { lat: mapCenter[0], lng: mapCenter[1], zoom: mapZoom }
-
-  const onSubmit: SubmitHandler<WateringPlanForm> = (data) => {
-    mutate({
-      ...data,
-      date: data.date.toISOString(),
-      trailerId: data.trailerId && data.trailerId !== '-1' ? data.trailerId : undefined,
-      userIds: data.driverIds,
-      treeClusterIds: data.stopIds,
-      startPointName: data.startPointName,
-    })
-  }
-
-  const navigateToClusterSelect = () => {
-    saveDraft()
-    navigate({
-      to: '/map/watering-plan/select/cluster',
-      search: {
-        lat: mapPosition.lat,
-        lng: mapPosition.lng,
-        zoom: mapPosition.zoom,
-        transporterId: getValues('transporterId'),
-        trailerId: getValues('trailerId'),
-        formType: 'create',
-        clusterIds: form.getValues('stopIds'),
-      },
-    }).catch((error) => console.error('Navigation failed:', error))
-  }
 
   return (
     <div className="container mt-6">
@@ -91,11 +67,12 @@ function NewWateringPlan() {
         <FormProvider key={formKey} {...form}>
           <FormForWateringPlan
             displayError={isError}
-            onSubmit={onSubmit}
+            onSubmit={(data) => mutate(data)}
             trailers={trailers.data}
             transporters={transporters.data}
             users={users.data}
-            onAddCluster={navigateToClusterSelect}
+            formType="create"
+            saveDraft={saveDraft}
             errorMessage={error?.message}
             onBlur={saveDraft}
           />

@@ -4,6 +4,7 @@ import { ANY_READ } from '@/lib/auth/permissions'
 import type { ModuleManifest } from '@/modules/types'
 import ClustersTile from './components/dashboard/ClustersTile'
 import { irrigationMap } from './map'
+import { irrigationPlanning } from './planning'
 
 export const irrigationManifest: ModuleManifest = {
   key: 'irrigation',
@@ -73,4 +74,5 @@ export const irrigationManifest: ModuleManifest = {
     },
   },
   map: irrigationMap,
+  planning: irrigationPlanning,
 }

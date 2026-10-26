@@ -3,6 +3,7 @@ import type { QueryClient, QueryKey } from '@tanstack/react-query'
 import type { z } from 'zod'
 import type {
   CapacityKindDto,
+  PlanInListResponse,
   PlanResponse,
   SensorResponse,
   StopOutcomeDto,
@@ -63,24 +64,46 @@ export interface ModuleMap {
 }
 
 export interface OutcomeInputProps {
-  plan: PlanResponse
+  plan: PlanInListResponse
+  /** Outcomes of the stops the input can show; the core completes the rest. */
   onChange: (outcomes: StopOutcomeDto[], valid: boolean) => void
 }
 
+/** Where the plan form stands, so a picker that leaves the page can bring the user back. */
+export interface PlanFormContext {
+  type: 'create' | 'update'
+  planId: string | undefined
+  transporterId: string | undefined
+  trailerId: string | undefined
+  saveDraft: () => void
+}
+
 export interface StopPickerProps {
+  /**
+   * Every stop of the plan, including ones the picker cannot resolve. A picker
+   * that shows fewer reports through `keepUnresolvedStops`, so those survive.
+   */
   value: string[]
   onChange: (stops: string[]) => void
   organizationId: string | undefined
   error: string | undefined
+  form: PlanFormContext
 }
 
 export interface ModulePlanning {
+  planResource: Resource
   capacityKind: CapacityKindDto
   labelKey: I18nKey
+  stopsLabelKey: I18nKey
+  stopCountLabelKey: I18nKey
   stopCountKey: I18nKey
+  stopIcon: ComponentType<{ className?: string }>
   invalidateOnStatusChange: readonly QueryKey[]
+  /** Warms the board's module parts while its loader runs. */
+  prefetch?: (queryClient: QueryClient) => void
   SuggestionsColumn: ComponentType
   StopList: ComponentType<{ plan: PlanResponse }>
+  /** Renders `<li>` items into the status card grid of the plan's general tab. */
   PlanSummary: ComponentType<{ plan: PlanResponse }>
   StopPicker: ComponentType<StopPickerProps>
   RouteOverlay: ComponentType<{ plan: PlanResponse }>

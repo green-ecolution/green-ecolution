@@ -24,7 +24,7 @@ import {
 } from '@green-ecolution/ui'
 import type { Sensor } from '@/api/backendApi'
 import { sensorApi } from '@/api/backendApi'
-import { useInvalidateAggregates } from '@/lib/queryInvalidation'
+import { useInvalidateQueryRoots } from '@/lib/queryInvalidation'
 import { useHasPermission } from '@/lib/auth/useHasPermission'
 import { useSensorActions } from './SensorActionsContext'
 
@@ -39,7 +39,7 @@ const SensorActionsMenu = ({ sensor }: SensorActionsMenuProps) => {
   const isPrepared = sensor.status === 'prepared'
   const [dialogOpen, setDialogOpen] = useState(false)
   const navigate = useNavigate()
-  const invalidate = useInvalidateAggregates()
+  const invalidate = useInvalidateQueryRoots()
   const canUpdate = useHasPermission(['sensor:update'])
   const canDelete = useHasPermission(['sensor:delete'])
 

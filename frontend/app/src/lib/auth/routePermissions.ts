@@ -26,11 +26,9 @@ export function mapPermissionsFor(manifests: readonly ModuleManifest[]): Permiss
   return [...new Set(manifests.flatMap(({ map }) => map?.permissions ?? []))]
 }
 
-/** The area `operations` holds the resources that guard operation plans. */
+/** The resources guarding the plans of every module that can plan. */
 export function planResourcesOf(manifests: readonly ModuleManifest[]): Resource[] {
-  return manifests.flatMap((manifest) =>
-    (manifest.resources ?? []).filter((r) => r.area === 'operations').map((r) => r.key),
-  )
+  return manifests.flatMap(({ planning }) => (planning ? [planning.planResource] : []))
 }
 
 export function routePermissionsFor(manifests: readonly ModuleManifest[]): RoutePermissions {

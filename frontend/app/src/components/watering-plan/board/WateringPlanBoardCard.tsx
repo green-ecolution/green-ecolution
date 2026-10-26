@@ -1,15 +1,18 @@
 import { Link } from '@tanstack/react-router'
 import { Avatar, AvatarFallback, AvatarImage, Badge, KanbanCard } from '@green-ecolution/ui'
 import { PlanStatus as WateringPlanStatus } from '@green-ecolution/backend-client'
-import type { User, WateringPlanInList } from '@/api/backendApi'
+import type { PlanInListResponse } from '@green-ecolution/backend-client'
+import type { User } from '@/api/backendApi'
 import { useWateringPlanStatusDetails } from '@/hooks/details/useDetailsForWateringPlanStatus'
 import { columnForStatus } from '@/lib/wateringPlanBoard'
 import { formatLiters } from '@/lib/utils'
+import { capacityDisplay } from '@/lib/capacity'
+import type { ModulePlanning } from '@/modules/types'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useDateLocale } from '@/lib/i18n/useFormatters'
 import { userInitials, formatBoardDate } from './format'
-import { Droplet, FolderClosed, Truck, UserRound } from 'lucide-react'
+import { Truck, UserRound } from 'lucide-react'
 
 const statusDot: Record<WateringPlanStatus, string> = {
   [WateringPlanStatus.Planned]: 'bg-dark-300',
@@ -20,7 +23,8 @@ const statusDot: Record<WateringPlanStatus, string> = {
 }
 
 interface WateringPlanBoardCardProps {
-  plan: WateringPlanInList
+  plan: PlanInListResponse
+  planning: ModulePlanning
   users: User[]
   assignSlot?: ReactNode
   cardState?: 'idle' | 'dragging' | 'ghost'
@@ -28,6 +32,7 @@ interface WateringPlanBoardCardProps {
 
 const WateringPlanBoardCard = ({
   plan,
+  planning,
   users,
   assignSlot,
   cardState,
@@ -36,8 +41,10 @@ const WateringPlanBoardCard = ({
   const getWateringPlanStatusDetails = useWateringPlanStatusDetails()
   const statusDetails = getWateringPlanStatusDetails(plan.status)
   const assigned = users.filter((u) => plan.userIds.includes(u.id))
-  const { t } = useTranslation('wateringPlan')
+  const { t, i18n } = useTranslation('wateringPlan')
   const dateLocale = useDateLocale()
+  const { stopIcon: StopIcon } = planning
+  const { icon: DemandIcon, demandLabelKey } = capacityDisplay[planning.capacityKind]
 
   return (
     <KanbanCard state={cardState}>
@@ -66,12 +73,12 @@ const WateringPlanBoardCard = ({
             </Badge>
           )}
           <Badge variant="muted" className="gap-1 tabular-nums">
-            <FolderClosed className="size-3" />
-            {t('board.column.clusterCountBadge', { count: plan.stopIds.length })}
+            <StopIcon className="size-3" />
+            {i18n.t(planning.stopCountKey, { count: plan.stops.length })}
           </Badge>
-          <Badge variant="muted" className="gap-1 tabular-nums">
-            <Droplet className="size-3" />
-            {formatLiters(plan.totalWaterRequired)}
+          <Badge variant="muted" className="gap-1 tabular-nums" title={t(demandLabelKey)}>
+            <DemandIcon className="size-3" />
+            {formatLiters(plan.totalDemand)}
           </Badge>
           <Badge variant="muted" className="gap-1">
             <Truck className="size-3" />

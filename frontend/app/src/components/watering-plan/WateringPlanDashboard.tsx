@@ -1,5 +1,4 @@
 import EntityDetailHeader from '../general/EntityDetailHeader'
-import EntityList from '../general/EntityList'
 import {
   Badge,
   Button,
@@ -17,28 +16,32 @@ import {
   showWateringPlanStatusButton,
 } from '@/hooks/details/useDetailsForWateringPlanStatus'
 import { format } from 'date-fns'
-import { File, FolderClosed, MoveRight, Route } from 'lucide-react'
+import { File, MoveRight, Route } from 'lucide-react'
+import { Suspense } from 'react'
 import { useTranslation } from 'react-i18next'
 import TabGeneralData from './TabGeneralData'
 import CommentsSection from '@/components/comments/CommentsSection'
-import TreeclusterCard from '../../../../modules/irrigation/src/components/general/cards/TreeclusterCard'
 import ButtonLink from '../general/links/ButtonLink'
-import { WateringPlan } from '@/api/backendApi'
+import type { PlanResponse } from '@green-ecolution/backend-client'
 import { useDownloadGpx } from '@/hooks/useDownloadGpx'
 import { useDateLocale } from '@/lib/i18n/useFormatters'
 import WateringPlanPreviewRoute from './WateringPlanRoutePreview'
 import { useHasPermission } from '@/lib/auth/useHasPermission'
+import { planningFor } from '@/modules/planning'
+import { useActiveModules } from '@/modules/useActiveModules'
 
 interface WateringPlanDashboardProps {
-  wateringPlan: WateringPlan
+  wateringPlan: PlanResponse
 }
 
 const WateringPlanDashboard = ({ wateringPlan }: WateringPlanDashboardProps) => {
   const getWateringPlanStatusDetails = useWateringPlanStatusDetails()
   const statusDetails = getWateringPlanStatusDetails(wateringPlan.status)
   const canEdit = useHasPermission(['watering_plan:update'])
-  const { t } = useTranslation(['wateringPlan', 'common'])
+  const { t, i18n } = useTranslation(['wateringPlan', 'common'])
   const dateLocale = useDateLocale()
+  const { manifests } = useActiveModules()
+  const planning = planningFor(manifests, wateringPlan.module)
 
   const date = wateringPlan?.date
     ? format(new Date(wateringPlan?.date), 'dd.MM.yyyy', { locale: dateLocale })
@@ -104,12 +107,14 @@ const WateringPlanDashboard = ({ wateringPlan }: WateringPlanDashboardProps) => 
               {t('detail.tabGeneral')}
             </span>
           </TabsTrigger>
-          <TabsTrigger value="clusters">
-            <FolderClosed className="w-5 h-5" />
-            <span className="hidden group-data-[state=active]:block lg:block">
-              {t('detail.tabClusters')}
-            </span>
-          </TabsTrigger>
+          {planning && (
+            <TabsTrigger value="stops">
+              <planning.stopIcon className="w-5 h-5" />
+              <span className="hidden group-data-[state=active]:block lg:block">
+                {i18n.t(planning.stopsLabelKey)}
+              </span>
+            </TabsTrigger>
+          )}
           {wateringPlan.distance > 0 && (
             <TabsTrigger value="route">
               <Route className="w-5 h-5" />
@@ -120,19 +125,18 @@ const WateringPlanDashboard = ({ wateringPlan }: WateringPlanDashboardProps) => 
           )}
         </TabsList>
         <TabsContent value="general">
-          <TabGeneralData wateringPlan={wateringPlan} />
+          <TabGeneralData wateringPlan={wateringPlan} planning={planning} />
         </TabsContent>
-        <TabsContent value="clusters">
-          <EntityList
-            items={wateringPlan.treeclusters}
-            getKey={(cluster) => cluster.id}
-            emptyMessage={t('detail.clustersEmptyMessage')}
-            renderItem={(cluster) => <TreeclusterCard treecluster={cluster} />}
-          />
-        </TabsContent>
+        {planning && (
+          <TabsContent value="stops">
+            <Suspense fallback={null}>
+              <planning.StopList plan={wateringPlan} />
+            </Suspense>
+          </TabsContent>
+        )}
         {wateringPlan.distance > 0 && (
           <TabsContent value="route">
-            <WateringPlanPreviewRoute wateringPlan={wateringPlan} />
+            <WateringPlanPreviewRoute wateringPlan={wateringPlan} planning={planning} />
           </TabsContent>
         )}
       </Tabs>

@@ -12,7 +12,7 @@ const api = vi.hoisted(() => ({
   deleteTargetComment: vi.fn(),
 }))
 
-vi.mock('@/api/backendApi', () => ({ configuration: {}, commentApi: api }))
+vi.mock('@/api/backendApi', () => ({ commentApi: api }))
 vi.mock('@/hooks/createToast', () => ({ default: () => vi.fn() }))
 
 import { commentQueryKey, type CommentSubject } from '@/api/queries'

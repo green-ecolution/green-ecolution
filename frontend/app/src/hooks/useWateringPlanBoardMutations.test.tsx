@@ -5,13 +5,11 @@ import { PlanStatus as WateringPlanStatus } from '@green-ecolution/backend-clien
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { QueryKey } from '@tanstack/react-query'
 import { wateringPlanQueries } from '@/api/queries'
-import { clusterQueries, treeQueries } from '../../../modules/irrigation/src/api/queries'
-import { toUpdateRequest, useWateringPlanBoardMutations } from './useWateringPlanBoardMutations'
-import type { WateringPlanInList } from '@/api/backendApi'
+import { useWateringPlanBoardMutations } from './useWateringPlanBoardMutations'
+import { planInList } from '@/test/plans'
 
 const updatePlan = vi.fn()
 vi.mock('@/api/backendApi', () => ({
-  configuration: {},
   planApi: {
     updatePlan: (...args: unknown[]) => updatePlan(...args) as unknown,
   },
@@ -29,23 +27,20 @@ const TREE_ID = '0190a8e9-7c4f-7000-8000-000000000002'
 const PLAN_ID = '0190a8e9-7c4f-7000-8000-000000000003'
 const HIDDEN_CLUSTER_ID = '0190a8e9-7c4f-7000-8000-000000000006'
 
-const CLUSTER_DETAIL: QueryKey = clusterQueries.detail(CLUSTER_ID).queryKey
-const CLUSTER_LIST: QueryKey = clusterQueries.list().queryKey
-const TREE_DETAIL: QueryKey = treeQueries.detail(TREE_ID).queryKey
+// Module query keys stand in for whatever a plan module derives from its plans.
+const CLUSTER_DETAIL: QueryKey = ['treecluster', CLUSTER_ID]
+const TREE_DETAIL: QueryKey = ['tree', TREE_ID]
 const PLAN_DETAIL: QueryKey = wateringPlanQueries.detail(PLAN_ID).queryKey
+const planning = { invalidateOnStatusChange: [['treecluster'], ['tree']] }
 
-const plan = {
+const plan = planInList({
   id: PLAN_ID,
-  date: '2026-08-19T00:00:00Z',
-  description: '',
   status: WateringPlanStatus.Active,
-  transporter: { id: '0190a8e9-7c4f-7000-8000-000000000004' },
-  treeclusters: [{ id: CLUSTER_ID }],
-  stopIds: [CLUSTER_ID, HIDDEN_CLUSTER_ID],
-  userIds: [],
-} as unknown as WateringPlanInList
+  transporter: { id: '0190a8e9-7c4f-7000-8000-000000000004' } as never,
+  stops: [CLUSTER_ID, HIDDEN_CLUSTER_ID],
+})
 
-const evaluation = [{ wateringPlanId: PLAN_ID, treeClusterId: CLUSTER_ID, consumedWater: 100 }]
+const outcomes = [{ stop: CLUSTER_ID, completed: true, amount: 100 }]
 
 /** Mirrors main.tsx: a 60s staleTime is what makes a missed invalidation visible. */
 function renderBoardMutations() {
@@ -55,10 +50,10 @@ function renderBoardMutations() {
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   )
-  const view = renderHook(() => useWateringPlanBoardMutations(), { wrapper })
+  const view = renderHook(() => useWateringPlanBoardMutations(planning), { wrapper })
 
   // Cached views a user visited before the mutation.
-  ;[CLUSTER_DETAIL, CLUSTER_LIST, TREE_DETAIL, PLAN_DETAIL].forEach((key) =>
+  ;[CLUSTER_DETAIL, TREE_DETAIL, PLAN_DETAIL].forEach((key) =>
     queryClient.setQueryData(key, { seeded: true }),
   )
 
@@ -71,22 +66,21 @@ describe('useWateringPlanBoardMutations', () => {
     updatePlan.mockResolvedValue({ id: PLAN_ID })
   })
 
-  it('invalidates clusters and trees after finishing a plan', async () => {
+  it('invalidates what the plan module names after finishing a plan', async () => {
     const { result, queryClient } = renderBoardMutations()
     const isInvalidated = (key: QueryKey) => queryClient.getQueryState(key)?.isInvalidated === true
 
-    result.current.finishPlan.mutate({ plan, evaluation })
+    result.current.finishPlan.mutate({ plan, outcomes })
 
     await waitFor(() => expect(isInvalidated(CLUSTER_DETAIL)).toBe(true))
-    expect(isInvalidated(CLUSTER_LIST)).toBe(true)
     expect(isInvalidated(TREE_DETAIL)).toBe(true)
     expect(isInvalidated(PLAN_DETAIL)).toBe(true)
   })
 
-  it('finishes a plan with every evaluated cluster as a completed outcome', async () => {
+  it('finishes a plan with the reported outcomes and the hidden stops as done', async () => {
     const { result } = renderBoardMutations()
 
-    result.current.finishPlan.mutate({ plan, evaluation })
+    result.current.finishPlan.mutate({ plan, outcomes })
 
     await waitFor(() => expect(updatePlan).toHaveBeenCalledTimes(1))
     expect(updatePlan).toHaveBeenCalledWith({
@@ -122,7 +116,7 @@ describe('useWateringPlanBoardMutations', () => {
   it('re-runs the route loaders that loader-based detail pages read from', async () => {
     const { result } = renderBoardMutations()
 
-    result.current.finishPlan.mutate({ plan, evaluation })
+    result.current.finishPlan.mutate({ plan, outcomes })
 
     await waitFor(() => expect(routerInvalidate).toHaveBeenCalled())
   })
@@ -136,17 +130,5 @@ describe('useWateringPlanBoardMutations', () => {
     await waitFor(() => expect(isInvalidated(PLAN_DETAIL)).toBe(true))
     expect(isInvalidated(CLUSTER_DETAIL)).toBe(false)
     expect(isInvalidated(TREE_DETAIL)).toBe(false)
-  })
-
-  it('keeps a trailer-only plan trailer-only when moved on the board', () => {
-    const trailerOnly = {
-      ...plan,
-      trailer: { id: '0190a8e9-7c4f-7000-8000-000000000005' },
-      transporterTankUsed: false,
-    } as WateringPlanInList
-
-    const request = toUpdateRequest(trailerOnly, { status: WateringPlanStatus.Planned })
-
-    expect(request.transporterTankUsed).toBe(false)
   })
 })

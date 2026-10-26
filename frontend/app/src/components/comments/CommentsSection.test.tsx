@@ -15,7 +15,6 @@ const deleteTargetComment = vi.fn()
 const getMe = vi.fn()
 
 vi.mock('@/api/backendApi', () => ({
-  configuration: {},
   commentApi: {
     listTargetComments: (...args: unknown[]) => listTargetComments(...args) as unknown,
     createTargetComment: (...args: unknown[]) => createTargetComment(...args) as unknown,

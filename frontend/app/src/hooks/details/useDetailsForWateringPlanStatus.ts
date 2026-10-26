@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PlanStatus as WateringPlanStatus } from '@green-ecolution/backend-client'
-import type { WateringPlan } from '@/api/backendApi'
+import type { PlanInListResponse } from '@green-ecolution/backend-client'
 import type { EnumsTranslate, StatusColor } from './types'
 
 const wateringPlanStatusColors: Record<WateringPlanStatus, StatusColor> = {
@@ -69,7 +69,9 @@ export const useWateringPlanStatusTransitionOptions = (
   }, [current, getDetails])
 }
 
-export const showWateringPlanStatusButton = (wateringPlan: WateringPlan): boolean => {
+export const showWateringPlanStatusButton = (
+  wateringPlan: Pick<PlanInListResponse, 'status'>,
+): boolean => {
   return (
     wateringPlan.status !== WateringPlanStatus.NotCompleted &&
     wateringPlan.status !== WateringPlanStatus.Finished &&

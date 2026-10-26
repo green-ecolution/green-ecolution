@@ -5,19 +5,13 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Suspense, type ReactNode } from 'react'
 import { Toaster } from '@green-ecolution/ui'
 import { PlanStatus as WateringPlanStatus } from '@green-ecolution/backend-client'
-import type { PlanResponse, WateringPlan } from '@/api/backendApi'
-import WateringPlanStatusUpdate, {
-  FinishedWateringPlan,
-  CancelWateringPlan,
-} from './WateringPlanStatusUpdate'
-
-vi.mock('../../../../modules/irrigation/src/components/general/cards/SelectedCard', () => ({
-  default: ({ id }: { id: string }) => <div data-testid={`selected-card-${id}`}>Cluster {id}</div>,
-}))
+import type { PlanResponse } from '@/api/backendApi'
+import type { OutcomeInputProps } from '@/modules/types'
+import { probeManifest } from '@/test/planningManifest'
+import WateringPlanStatusUpdate, { CancelWateringPlan } from './WateringPlanStatusUpdate'
 
 const getPlan = vi.fn<(...args: unknown[]) => Promise<unknown>>()
 const updatePlan = vi.fn<(...args: unknown[]) => Promise<unknown>>()
-const listClusters = vi.fn<(...args: unknown[]) => Promise<unknown>>()
 vi.mock('@/api/backendApi', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/api/backendApi')>()
   return {
@@ -29,17 +23,20 @@ vi.mock('@/api/backendApi', async (importOriginal) => {
     },
   }
 })
-vi.mock('../../../../modules/irrigation/src/api/client', async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import('../../../../modules/irrigation/src/api/client')>()
-  return {
-    ...actual,
-    clusterApi: {
-      ...actual.clusterApi,
-      listClusters: (...args: unknown[]) => listClusters(...args),
-    },
-  }
-})
+const OutcomeInput = ({ onChange }: OutcomeInputProps) => (
+  <button
+    type="button"
+    onClick={() => onChange([{ stop: CLUSTER_ID, completed: true, amount: 300 }], true)}
+  >
+    Menge melden
+  </button>
+)
+vi.mock('@/modules/useActiveModules', () => ({
+  useActiveModules: () => ({
+    manifests: [probeManifest('irrigation', { OutcomeInput })],
+    isActive: () => true,
+  }),
+}))
 vi.mock('@tanstack/react-router', () => ({
   useNavigate: () => vi.fn().mockResolvedValue(undefined),
   useRouter: () => ({ invalidate: vi.fn().mockResolvedValue(undefined) }),
@@ -50,90 +47,19 @@ const PLAN_ID = '0190a8e9-7c4f-7000-8000-000000000001'
 const CLUSTER_ID = '0190a8e9-7c4f-7000-8000-000000000010'
 const VEHICLE_ID = '0190a8e9-7c4f-7000-8000-000000000020'
 
-const mockLoadedData = {
-  id: PLAN_ID,
-  date: '2026-03-01T00:00:00Z',
-  status: WateringPlanStatus.Active,
-  treeclusters: [{ id: CLUSTER_ID, name: 'Cluster A', treeIds: [1, 2, 3, 4, 5] }],
-  transporter: { id: VEHICLE_ID },
-} as unknown as WateringPlan
+const HIDDEN_ID = '0190a8e9-7c4f-7000-8000-000000000011'
 
 const mockPlanResponse = {
   id: PLAN_ID,
   module: 'irrigation',
   date: '2026-03-01T00:00:00Z',
   status: WateringPlanStatus.Active,
-  stops: [CLUSTER_ID],
+  stops: [CLUSTER_ID, HIDDEN_ID],
   outcomes: [{ stop: CLUSTER_ID, completed: false, amount: null }],
   transporterCapacityUsed: true,
   totalDemand: 0,
   transporter: { id: VEHICLE_ID },
 } as unknown as PlanResponse
-
-describe('FinishedWateringPlan', () => {
-  const mockOnSubmit = vi.fn()
-
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
-
-  it('save button is enabled with valid default values', async () => {
-    render(
-      <FinishedWateringPlan
-        onSubmit={mockOnSubmit}
-        wateringPlanId={PLAN_ID}
-        loadedData={mockLoadedData}
-      />,
-    )
-
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /speichern/i })).toBeEnabled()
-    })
-  })
-
-  it('save button stays enabled after editing liters', async () => {
-    const user = userEvent.setup()
-
-    render(
-      <FinishedWateringPlan
-        onSubmit={mockOnSubmit}
-        wateringPlanId={PLAN_ID}
-        loadedData={mockLoadedData}
-      />,
-    )
-
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /speichern/i })).toBeEnabled()
-    })
-
-    const input = screen.getByRole('spinbutton')
-    await user.clear(input)
-    await user.type(input, '500')
-
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /speichern/i })).toBeEnabled()
-    })
-  })
-
-  it('save button is disabled when liters is empty', async () => {
-    const user = userEvent.setup()
-
-    render(
-      <FinishedWateringPlan
-        onSubmit={mockOnSubmit}
-        wateringPlanId={PLAN_ID}
-        loadedData={mockLoadedData}
-      />,
-    )
-
-    const input = screen.getByRole('spinbutton')
-    await user.clear(input)
-
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /speichern/i })).toBeDisabled()
-    })
-  })
-})
 
 describe('CancelWateringPlan', () => {
   const mockOnSubmit = vi.fn()
@@ -180,7 +106,6 @@ describe('WateringPlanStatusUpdate — Nicht angetreten', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     getPlan.mockResolvedValue(mockPlanResponse)
-    listClusters.mockResolvedValue({ data: mockLoadedData.treeclusters })
   })
 
   const selectNotCompleted = async (user: ReturnType<typeof userEvent.setup>) => {
@@ -223,6 +148,36 @@ describe('WateringPlanStatusUpdate — Nicht angetreten', () => {
     expect(payload.planId).toBe(PLAN_ID)
     expect(payload.planUpdateRequest.status).toBe(WateringPlanStatus.NotCompleted)
     expect(payload.planUpdateRequest.cancellationNote).toBe('Fahrzeug defekt')
-    expect(payload.planUpdateRequest.stops).toEqual([CLUSTER_ID])
+    expect(payload.planUpdateRequest.stops).toEqual([CLUSTER_ID, HIDDEN_ID])
+  })
+})
+
+describe('WateringPlanStatusUpdate — Beendet', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    getPlan.mockResolvedValue(mockPlanResponse)
+  })
+
+  it('finishes with the outcomes of the plan module and completes the hidden stops', async () => {
+    const user = userEvent.setup()
+    updatePlan.mockResolvedValueOnce({ ...mockPlanResponse })
+    render(<WateringPlanStatusUpdate wateringPlanId={PLAN_ID} />, { wrapper: createWrapper() })
+
+    await user.click(await screen.findByRole('combobox', { name: /status des einsatzplans/i }))
+    await user.click(await screen.findByRole('option', { name: /beendet/i }))
+    expect(screen.getByRole('button', { name: /speichern/i })).toBeDisabled()
+
+    await user.click(await screen.findByRole('button', { name: 'Menge melden' }))
+    await user.click(screen.getByRole('button', { name: /speichern/i }))
+
+    await waitFor(() => expect(updatePlan).toHaveBeenCalledTimes(1))
+    const [payload] = updatePlan.mock.calls[0] as [
+      { planUpdateRequest: { status: string; outcomes: unknown[] } },
+    ]
+    expect(payload.planUpdateRequest.status).toBe(WateringPlanStatus.Finished)
+    expect(payload.planUpdateRequest.outcomes).toEqual([
+      { stop: CLUSTER_ID, completed: true, amount: 300 },
+      { stop: HIDDEN_ID, completed: true, amount: null },
+    ])
   })
 })

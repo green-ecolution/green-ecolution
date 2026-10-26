@@ -4,6 +4,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { type Permissions } from '@/lib/auth/permissions'
+import { probeManifest } from '@/test/planningManifest'
 
 const permissions = vi.fn((): Permissions => new Set<string>())
 
@@ -11,20 +12,26 @@ vi.mock('@/lib/auth/usePermissions', () => ({
   usePermissions: () => permissions(),
 }))
 
+const navigate = vi.fn().mockResolvedValue(undefined)
 vi.mock('@tanstack/react-router', () => ({
-  useNavigate: () => vi.fn().mockResolvedValue(undefined),
+  useNavigate: () => navigate,
   Link: ({ children }: { children: ReactNode }) => <a>{children}</a>,
+}))
+
+const activeManifests = vi.fn(() => [probeManifest('irrigation')])
+vi.mock('@/modules/useActiveModules', () => ({
+  useActiveModules: () => ({ manifests: activeManifests(), isActive: () => true }),
 }))
 
 // Board data hooks — return one planned plan, empty elsewhere.
 const plan = {
   id: 'p1',
   date: new Date().toISOString(),
-  treeclusters: [],
-  stopIds: [],
+  module: 'irrigation',
+  stops: [],
   status: 'planned',
   userIds: [],
-  totalWaterRequired: 0,
+  totalDemand: 0,
   transporter: { numberPlate: 'TEST-1' },
 }
 vi.mock('@tanstack/react-query', async (importOriginal) => {
@@ -64,6 +71,7 @@ describe('WateringPlanBoard modify gating', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     permissions.mockReturnValue(new Set<string>())
+    activeManifests.mockReturnValue([probeManifest('irrigation')])
   })
 
   it('hides the assign-users control without watering_plan:update', () => {
@@ -95,5 +103,40 @@ describe('WateringPlanBoard modify gating', () => {
     permissions.mockReturnValue(new Set(['watering_plan:update']))
     const { container } = render(<WateringPlanBoard />)
     expect(container.querySelector('[aria-roledescription="draggable"]')).not.toBeNull()
+  })
+})
+
+describe('WateringPlanBoard planning module', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    permissions.mockReturnValue(new Set(['watering_plan:read']))
+  })
+
+  it('renders the suggestions of the plan module and none of an inactive one', async () => {
+    activeManifests.mockReturnValue([probeManifest('irrigation')])
+    render(<WateringPlanBoard module="waste" />)
+
+    expect(await screen.findByTestId('suggestions-irrigation')).toBeInTheDocument()
+    expect(screen.queryByTestId('suggestions-waste')).not.toBeInTheDocument()
+  })
+
+  it('switches between several planning modules above the columns', async () => {
+    activeManifests.mockReturnValue([
+      probeManifest('irrigation'),
+      probeManifest('waste', { labelKey: 'wateringPlan:entity.name' }),
+    ])
+    render(<WateringPlanBoard module="waste" />)
+
+    expect(await screen.findByTestId('suggestions-waste')).toBeInTheDocument()
+    expect(screen.queryByTestId('suggestions-irrigation')).not.toBeInTheDocument()
+    expect(screen.getByRole('tab', { selected: true })).toHaveTextContent('Einsatzplan')
+    expect(screen.getAllByRole('tab')).toHaveLength(2)
+  })
+
+  it('shows no module switcher with a single planning module', () => {
+    activeManifests.mockReturnValue([probeManifest('irrigation')])
+    render(<WateringPlanBoard />)
+
+    expect(screen.queryByRole('tab')).not.toBeInTheDocument()
   })
 })

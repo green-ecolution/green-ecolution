@@ -18,7 +18,7 @@ const ClusterSuggestionCard = ({
 }: ClusterSuggestionCardProps) => {
   const getWateringStatusDetails = useWateringStatusDetails()
   const statusDetails = getWateringStatusDetails(cluster.wateringStatus)
-  const { t } = useTranslation('wateringPlan')
+  const { t } = useTranslation('irrigation')
 
   const toggleOnCardClick = (event: React.MouseEvent) => {
     // Link keeps navigating, checkbox already toggles itself — don't double-toggle.
@@ -35,7 +35,7 @@ const ClusterSuggestionCard = ({
         <Checkbox
           checked={selected}
           onCheckedChange={(checked) => onSelectedChange(checked === true)}
-          aria-label={t('board.suggestionCard.selectAriaLabel', { name: cluster.name })}
+          aria-label={t('planning.suggestionCard.selectAriaLabel', { name: cluster.name })}
           className="mt-0.5"
         />
       )}
@@ -54,7 +54,7 @@ const ClusterSuggestionCard = ({
             style={{ backgroundColor: statusDetails.colorHex }}
           />
           <span className="tabular-nums">
-            {t('board.suggestionCard.treeCount', { count: cluster.treeIds.length })}
+            {t('planning.suggestionCard.treeCount', { count: cluster.treeIds.length })}
           </span>
           <span>·</span>
           <span>{statusDetails.label}</span>

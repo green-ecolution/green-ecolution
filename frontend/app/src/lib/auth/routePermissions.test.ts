@@ -10,6 +10,7 @@ import {
 } from './routePermissions'
 import { irrigationManifest } from '@green-ecolution/module-irrigation'
 import type { ModuleManifest, ModuleMap } from '@/modules/types'
+import { probeManifest } from '@/test/planningManifest'
 
 const perms = (...granted: string[]): Permissions => new Set(granted)
 
@@ -61,6 +62,17 @@ describe('routePermissionsFor', () => {
 
   it('guards the plans with the plan resource of the active modules', () => {
     expect(irrigationTable['/watering-plans']).toEqual(['watering_plan:read'])
+  })
+
+  it('opens the plans only for a module that can plan', () => {
+    const operationsOnly: ModuleManifest = {
+      ...probe,
+      resources: [{ key: 'vehicle', area: 'operations' }],
+    }
+    expect(routePermissionsFor([operationsOnly])['/watering-plans']).toBeUndefined()
+    expect(
+      routePermissionsFor([probeManifest('waste', { planResource: 'sensor' })])['/watering-plans'],
+    ).toEqual(['sensor:read'])
   })
 
   it('does not apply a route requirement of an inactive module', () => {

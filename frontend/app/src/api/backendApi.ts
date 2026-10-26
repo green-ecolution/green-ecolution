@@ -99,15 +99,6 @@ export type { SensorDataResponse as SensorData } from '@green-ecolution/backend-
 export type { VehicleResponse as Vehicle } from '@green-ecolution/backend-client'
 export type { VehicleCreateRequest as VehicleCreate } from '@green-ecolution/backend-client'
 export type { VehicleUpdateRequest as VehicleUpdate } from '@green-ecolution/backend-client'
-export type {
-  EvaluationValue,
-  WateringPlan,
-  WateringPlanCreate,
-  WateringPlanInList,
-  WateringPlanList,
-  WateringPlanUpdate,
-  WateringRoute,
-} from './irrigationPlans'
 export { PlanStatus as WateringPlanStatus } from '@green-ecolution/backend-client'
 export type { UserResponse as User } from '@green-ecolution/backend-client'
 export type { RegionResponse as Region } from '@green-ecolution/backend-client'

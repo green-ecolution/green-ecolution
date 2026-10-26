@@ -11,7 +11,7 @@ import { treeApi } from '../../../../../../api/client'
 import { TreeForm } from '../../../../../../schema/treeSchema'
 import { useTreeForm } from '../../../../../../hooks/form/useTreeForm'
 import createToast from '@/hooks/createToast'
-import { useInvalidateAggregates } from '@/lib/queryInvalidation'
+import { useInvalidateQueryRoots } from '@/lib/queryInvalidation'
 import { entityNotFound, forbiddenErrorComponent, prefetch, requirePermission } from '@/lib/router'
 import { useHasPermission } from '@/lib/auth/useHasPermission'
 import { moduleRoute } from '@/modules/moduleRoute'
@@ -49,7 +49,7 @@ function EditTreeOnMap() {
   const { t } = useTranslation('irrigation', { keyPrefix: 'map' })
   const { treeId } = Route.useParams()
   const navigate = useNavigate({ from: Route.fullPath })
-  const invalidate = useInvalidateAggregates()
+  const invalidate = useInvalidateQueryRoots()
   const showToast = createToast()
   const map = useMaplibreMap()
   const { data: tree } = useSuspenseQuery(treeQueries.detail(treeId))

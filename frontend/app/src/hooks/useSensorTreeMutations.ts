@@ -2,7 +2,7 @@ import { queryRoots } from '@/api/queries'
 import { irrigationRoots } from '../../../modules/irrigation/src/api/queries'
 import { sensorApi } from '@/api/backendApi'
 import { useMutation } from '@tanstack/react-query'
-import { useInvalidateAggregates } from '@/lib/queryInvalidation'
+import { useInvalidateQueryRoots } from '@/lib/queryInvalidation'
 import { treeTarget } from '@/lib/targets'
 
 /**
@@ -10,7 +10,7 @@ import { treeTarget } from '@/lib/targets'
  * its breadcrumb comes from loader data, so the route loaders re-run too.
  */
 const useInvalidateSensorTreeLink = () => {
-  const invalidate = useInvalidateAggregates()
+  const invalidate = useInvalidateQueryRoots()
   return () => invalidate([...queryRoots.sensor, ...irrigationRoots.tree], { reloadRoutes: true })
 }
 

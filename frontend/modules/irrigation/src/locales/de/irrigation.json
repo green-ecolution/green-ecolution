@@ -99,5 +99,44 @@
       "noVehicleWarning": "Um eine Route generieren zu können, muss ein Fahrzeug ausgewählt werden.",
       "insufficientCapacityWarning": "Ausgegraute Bewässerungsgruppen sind ausgeschlossen, da das Fahrzeug nicht genügend Wasserkapazität hat."
     }
+  },
+  "planning": {
+    "stopsLabel": "Bewässerungsgruppen",
+    "stopCountLabel": "Anzahl der Bewässerungsgruppen",
+    "stopCount_one": "{count} Gruppe",
+    "stopCount_other": "{count} Gruppen",
+    "stopList": {
+      "emptyMessage": "Es wurden leider keine Bewässerungsgruppen gefunden."
+    },
+    "summary": {
+      "consumedWaterLabel": "Verbrauchtes Wasser",
+      "consumedWaterValue": "{value} Liter",
+      "consumedWaterDescription_one": "bei {count} Bewässerungsgruppe",
+      "consumedWaterDescription_other": "bei {count} Bewässerungsgruppen"
+    },
+    "outcome": {
+      "waterPerClusterLegend": "Wasservergabe pro Bewässerungsgruppe:",
+      "defaultsHint": "Die Standardwerte ergeben sich aus 80 Litern pro Baum einer Bewässerungsgruppe.",
+      "treeCount_one": "{count} Baum",
+      "treeCount_other": "{count} Bäume",
+      "litersForClusterLabel": "Liter für {name}",
+      "litersUnitLabel": "Liter"
+    },
+    "stopPicker": {
+      "label": "Bewässerungsgruppen",
+      "requiredError": "Wähle mindestens eine Bewässerungsgruppe aus."
+    },
+    "suggestions": {
+      "ariaLabel": "Vorschläge",
+      "title": "Vorschläge",
+      "loadError": "Die Vorschläge konnten nicht geladen werden.",
+      "emptyMessage": "Aktuell sind keine Bewässerungsgruppen sehr trocken.",
+      "bundleButtonLabel": "Zu Einsatzplan bündeln"
+    },
+    "suggestionCard": {
+      "selectAriaLabel": "{name} für Einsatzplan auswählen",
+      "treeCount_one": "{count} Baum",
+      "treeCount_other": "{count} Bäume"
+    }
   }
 }

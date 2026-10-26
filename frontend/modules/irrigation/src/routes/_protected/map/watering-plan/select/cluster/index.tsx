@@ -20,6 +20,8 @@ import RoutePointMarkers, {
   type RoutePointMarkerData,
 } from '@/components/map-gl/RoutePointMarkers'
 import { tankCapacity } from '../../../../../../lib/tankCapacity'
+import { useShownStops } from '../../../../../../hooks/useShownStops'
+import { IRRIGATION } from '@/lib/targets'
 
 const mapSelectClusterSchema = z.object({
   transporterId: z.string().optional(),
@@ -74,10 +76,11 @@ function SelectCluster() {
   const previewEnabled = debouncedClusterIds.length > 0 && !!transporterId && transporterId !== '-1'
   const { data: previewRoute } = useQuery({
     ...wateringPlanQueries.routePreview({
-      clusterIds: debouncedClusterIds,
+      module: IRRIGATION,
+      stops: debouncedClusterIds,
       transporterId: transporterId ?? '',
       trailerId: hasTrailer ? trailerId : undefined,
-      transporterTankUsed,
+      transporterCapacityUsed: transporterTankUsed,
       startPointName: draft.data?.startPointName,
     }),
     enabled: previewEnabled,
@@ -94,7 +97,7 @@ function SelectCluster() {
       buildRoutePoints(
         startPoints,
         startPointName,
-        previewEnabled ? (previewRoute?.refillPoints ?? undefined) : undefined,
+        previewEnabled ? (previewRoute?.stationVisits ?? undefined) : undefined,
       ),
     [startPoints, startPointName, previewRoute, previewEnabled],
   )
@@ -137,6 +140,8 @@ function SelectCluster() {
     disabledIds: disabledClusters,
     onToggle: handleToggle,
   })
+
+  const { shown: shownClusterIds, keepUnshown } = useShownStops(clusterIds)
 
   const handleSave = () => {
     if (clusterIds.length === 0) {
@@ -183,8 +188,8 @@ function SelectCluster() {
         {showNotice && <InlineAlert className="mb-4 shrink-0" description={notice.join(' ')} />}
 
         <SelectEntities
-          onChange={setClusterIds}
-          entityIds={clusterIds}
+          onChange={(next) => setClusterIds(keepUnshown(next))}
+          entityIds={shownClusterIds}
           type="cluster"
           label={t('selectCluster.entitiesLabel')}
           fill

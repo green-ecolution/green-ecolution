@@ -34,7 +34,7 @@ import {
   DropdownMenuTrigger,
 } from '@green-ecolution/ui'
 import { clusterApi, type TreeCluster } from '../../api/client'
-import { useInvalidateAggregates } from '@/lib/queryInvalidation'
+import { useInvalidateQueryRoots } from '@/lib/queryInvalidation'
 
 interface TreeClusterDashboardProps {
   treecluster: TreeCluster
@@ -43,7 +43,7 @@ interface TreeClusterDashboardProps {
 const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
   const { t } = useTranslation('treecluster')
   const navigate = useNavigate()
-  const invalidate = useInvalidateAggregates()
+  const invalidate = useInvalidateQueryRoots()
   const showToast = createToast()
   const [confirmDelete, setConfirmDelete] = useState(false)
   const canEdit = useHasPermission(['tree_cluster:update'])

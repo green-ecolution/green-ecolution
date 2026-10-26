@@ -13,7 +13,6 @@ import {
 import useStore from '@/store/store'
 
 vi.mock('@/api/backendApi', () => ({
-  configuration: {},
   vehicleApi: {
     createVehicle: vi.fn(),
     updateVehicle: vi.fn(),

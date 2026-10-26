@@ -2,7 +2,7 @@ import { useMutation } from '@tanstack/react-query'
 import createToast from '@/hooks/createToast'
 import { useNavigate } from '@tanstack/react-router'
 import type { QueryKey } from '@tanstack/react-query'
-import { useInvalidateAggregates } from '@/lib/queryInvalidation'
+import { useInvalidateQueryRoots } from '@/lib/queryInvalidation'
 import { DefaultValues, FieldValues, Resolver, useForm } from 'react-hook-form'
 import { useFormNavigationBlocker } from './useFormNavigationBlocker'
 import { useFormDraft } from '@/store/form/useFormDraft'
@@ -57,7 +57,7 @@ export function useEntityForm<
   opts: EntityFormOptions<TForm>,
 ) {
   const showToast = createToast()
-  const invalidate = useInvalidateAggregates()
+  const invalidate = useInvalidateQueryRoots()
   const navigate = useNavigate()
   const { t } = useTranslation('errors')
   const draft = useFormDraft<TForm>(config.formType, mutationType)

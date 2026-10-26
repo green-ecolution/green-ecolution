@@ -2,7 +2,7 @@ import { useCallback } from 'react'
 import { useQueryClient, type QueryClient, type QueryKey } from '@tanstack/react-query'
 import { useRouter, type RegisteredRouter } from '@tanstack/react-router'
 import { queryRoots } from '@/api/queries'
-import { irrigationRoots } from '../../../modules/irrigation/src/api/queries'
+import type { ModulePlanning } from '@/modules/types'
 
 /** The only router capability this module needs. */
 type RouteReloader = Pick<RegisteredRouter, 'invalidate'>
@@ -37,18 +37,15 @@ export const invalidateRoots = async (
 }
 
 /**
- * Query roots touched by a watering plan status change: finishing a plan flags
- * its clusters and their trees as just watered, and the evaluation dashboard
- * aggregates finished plans.
+ * Query roots a plan status change touches: the plans themselves and whatever
+ * the plan module derives from them (irrigation flags the watered clusters and
+ * trees and aggregates finished plans in its evaluation).
  */
-export const PLAN_STATUS_AGGREGATES: readonly QueryKey[] = [
-  ...queryRoots.wateringPlan,
-  ...irrigationRoots.cluster,
-  ...irrigationRoots.tree,
-  ...irrigationRoots.evaluation,
-]
+export const planStatusQueryRoots = (
+  planning: Pick<ModulePlanning, 'invalidateOnStatusChange'> | undefined,
+): QueryKey[] => [...queryRoots.wateringPlan, ...(planning?.invalidateOnStatusChange ?? [])]
 
-export const useInvalidateAggregates = () => {
+export const useInvalidateQueryRoots = () => {
   const queryClient = useQueryClient()
   const router = useRouter()
 

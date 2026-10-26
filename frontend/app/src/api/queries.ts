@@ -11,7 +11,7 @@ import {
   ListSensorsRequest,
   ListUsersRequest,
   ListVehiclesRequest,
-  ListPlansRequest,
+  ListResponsePlanInListResponse,
   MapInfoResponse,
   moduleApi,
   ModuleListResponse,
@@ -29,6 +29,8 @@ import {
   roleApi,
   planApi,
   planPreviewApi,
+  PlanResponse,
+  PlanStatus,
   routingApi,
   SensorDataQualityResponse,
   SensorModelResponse,
@@ -43,20 +45,10 @@ import {
   UserResponse,
   vehicleApi,
   VehicleResponse,
-  WateringPlan,
-  WateringPlanList,
-  WateringPlanStatus,
-  WateringRoute,
+  RouteResponse,
 } from './backendApi'
 import type { TargetRefDto } from '@green-ecolution/backend-client'
 import { DONE_STATUSES } from '@/lib/wateringPlanBoard'
-import { IRRIGATION } from '@/lib/targets'
-import {
-  loadClusters,
-  loadWateringPlanList,
-  toWateringPlan,
-  toWateringRoute,
-} from './irrigationPlans'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -191,29 +183,19 @@ export const sensorQueries = {
 }
 
 export const wateringPlanQueries = {
-  list: (params?: Omit<ListPlansRequest, 'module'>) =>
-    queryOptions<WateringPlanList>({
-      queryKey: ['watering-plans', params?.page ?? '1'],
-      queryFn: async () =>
-        loadWateringPlanList(await planApi.listPlans({ ...params, module: IRRIGATION })),
-    }),
-
   detail: (id: string) =>
-    queryOptions<WateringPlan>({
+    queryOptions<PlanResponse>({
       queryKey: ['watering-plan', id],
-      queryFn: async () => {
-        const plan = await planApi.getPlan({ planId: id })
-        return toWateringPlan(plan, await loadClusters(plan.stops))
-      },
+      queryFn: () => planApi.getPlan({ planId: id }),
       enabled: isValidUuid(id),
     }),
 
   route: (id: string) =>
-    queryOptions<WateringRoute | null>({
+    queryOptions<RouteResponse | null>({
       queryKey: ['watering-plan-route', id],
       queryFn: async () => {
         try {
-          return toWateringRoute(await planApi.getPlanRoute({ planId: id }))
+          return await planApi.getPlanRoute({ planId: id })
         } catch (error) {
           // 404: plan has no computed route; 503: routing feature disabled.
           if (error instanceof ResponseError && [404, 503].includes(error.response.status))
@@ -224,67 +206,59 @@ export const wateringPlanQueries = {
       enabled: isValidUuid(id),
     }),
 
-  boardColumn: (statuses: WateringPlanStatus[]) =>
-    queryOptions<WateringPlanList>({
-      queryKey: ['watering-plans', 'board', statuses],
-      queryFn: async () =>
-        loadWateringPlanList(
-          await planApi.listPlans({ module: IRRIGATION, status: statuses, page: 1, perPage: 100 }),
-        ),
+  boardColumn: (module: string, statuses: PlanStatus[]) =>
+    queryOptions<ListResponsePlanInListResponse>({
+      queryKey: ['watering-plans', 'board', module, statuses],
+      queryFn: () => planApi.listPlans({ module, status: statuses, page: 1, perPage: 100 }),
     }),
 
-  boardDone: () =>
+  boardDone: (module: string) =>
     infiniteQueryOptions({
-      queryKey: ['watering-plans', 'board', 'done'],
-      queryFn: async ({ pageParam }) =>
-        loadWateringPlanList(
-          await planApi.listPlans({
-            module: IRRIGATION,
-            status: DONE_STATUSES,
-            page: pageParam,
-            perPage: 20,
-          }),
-        ),
+      queryKey: ['watering-plans', 'board', module, 'done'],
+      queryFn: ({ pageParam }) =>
+        planApi.listPlans({ module, status: DONE_STATUSES, page: pageParam, perPage: 20 }),
       initialPageParam: 1,
       getNextPageParam: (lastPage) =>
         lastPage.pagination?.nextPage ? lastPage.pagination.currentPage + 1 : undefined,
     }),
 
   routePreview: ({
-    clusterIds,
+    module,
+    stops,
     transporterId,
     trailerId,
-    transporterTankUsed = true,
+    transporterCapacityUsed = true,
     startPointName,
   }: {
-    clusterIds: string[]
+    module: string
+    stops: string[]
     transporterId: string
     trailerId?: string
-    transporterTankUsed?: boolean
+    transporterCapacityUsed?: boolean
     startPointName?: string | null
   }) =>
-    queryOptions<WateringRoute | null>({
+    queryOptions<RouteResponse | null>({
       queryKey: [
         'route-preview',
-        clusterIds.slice().sort(),
+        module,
+        stops.slice().sort(),
         transporterId,
         trailerId ?? null,
-        transporterTankUsed,
+        transporterCapacityUsed,
         startPointName ?? null,
       ],
       queryFn: async () => {
         try {
-          const route = await planPreviewApi.previewPlanRoute({
+          return await planPreviewApi.previewPlanRoute({
             planRouteRequest: {
-              module: IRRIGATION,
-              stops: clusterIds,
+              module,
+              stops,
               transporterId,
               trailerId,
-              transporterCapacityUsed: transporterTankUsed,
+              transporterCapacityUsed,
               startPointName,
             },
           })
-          return toWateringRoute(route)
         } catch {
           return null
         }

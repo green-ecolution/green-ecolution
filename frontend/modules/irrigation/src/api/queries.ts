@@ -1,4 +1,4 @@
-import { queryOptions, keepPreviousData, type QueryKey } from '@tanstack/react-query'
+import { queryOptions, keepPreviousData } from '@tanstack/react-query'
 import {
   ClusterBoundaryListResponse,
   ClusterMarkerListResponse,
@@ -12,6 +12,7 @@ import {
   ListTreesRequest,
   NearestTreeListResponse,
   SoilMoistureSeriesResponse,
+  TreeClusterInListResponse,
   TreeClusterResponse,
   TreeMarkerListResponse,
   TreeResponse,
@@ -19,20 +20,12 @@ import {
 } from '@green-ecolution/backend-client'
 import { isValidUuid, sensorQueries, type BoundingBox } from '@/api/queries'
 import { clusterApi, evaluationApi, irrigationApi, treeApi } from './client'
+import { loadStopClusters } from './plans'
 
 const formatBBox = (b: BoundingBox): string =>
   `${b.swLat.toFixed(5)},${b.swLng.toFixed(5)},${b.neLat.toFixed(5)},${b.neLng.toFixed(5)}`
 
-/**
- * Every key prefix the irrigation aggregates own. The roots grew inconsistent
- * ('treecluster' vs 'treeclusters' vs 'clusters'), so invalidate through this
- * table instead of guessing a prefix.
- */
-export const irrigationRoots = {
-  cluster: [['treecluster'], ['treeclusters'], ['clusters']],
-  tree: [['tree'], ['trees'], ['planting-years']],
-  evaluation: [['evaluation']],
-} as const satisfies Record<string, readonly QueryKey[]>
+export { irrigationRoots } from './roots'
 
 export interface TreeMarkersFilters {
   hasCluster?: boolean
@@ -92,6 +85,17 @@ export const clusterQueries = {
           bucket: params.bucket,
         }),
       enabled: isValidUuid(id),
+    }),
+
+  /**
+   * The clusters behind a plan's stops, in stop order, without those the reader
+   * cannot see. Carries the stops it answers for, so a kept previous answer
+   * still tells which of them stayed unresolved.
+   */
+  stops: (stops: string[]) =>
+    queryOptions<{ stops: string[]; clusters: TreeClusterInListResponse[] }>({
+      queryKey: ['treeclusters', 'stops', stops],
+      queryFn: async () => ({ stops, clusters: await loadStopClusters(stops) }),
     }),
 
   suggested: () =>
