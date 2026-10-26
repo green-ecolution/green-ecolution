@@ -72,20 +72,22 @@ Im Abschnitt **Module** der Organisationsseite steht für jedes Modul, das diese
 kennt, eine Zeile mit einem Schalter. Ein eingeschaltetes Modul steht der ausgewählten
 Organisation und allen Organisationen darunter zur Verfügung. Wie bei den Fachlichen
 Vorgaben zeigt ein Abzeichen neben dem Schalter, woher der Zustand kommt: **Eigener
-Wert**, wenn diese Organisation ihn selbst gesetzt hat, oder **Geerbt von …** mit dem
-Namen der Organisation, die ihn vorgibt. Ohne eigenen Wert folgt eine Organisation also
-ihrer übergeordneten. Erst über **Eigenen Wert setzen** wird der Schalter bedienbar, und
-**Wieder erben** gibt den eigenen Wert wieder auf. Hat eine übergeordnete Organisation
-über **Untereinheiten dürfen eigene Werte setzen** festgelegt, dass darunter nichts
-mehr abweichen darf, steht der Schalter fest, und ein Hinweis nennt die sperrende
-Organisation.
+Wert**, wenn diese Organisation ihn selbst gesetzt hat, **Geerbt von …** mit dem Namen
+der Organisation, die ihn vorgibt, oder **Vorgabe der Instanz**, solange noch keine
+Organisation im Baum einen Wert gesetzt hat. Ohne eigenen Wert folgt eine Organisation
+also ihrer übergeordneten. Den Schalter bedienst du direkt: Sobald du ihn umlegst,
+setzt die Organisation einen eigenen Wert, und neben dem Schalter erscheint **Wieder
+erben**, womit du den eigenen Wert wieder aufgibst und der Zustand erneut von oben
+kommt. Hat eine übergeordnete Organisation über **Untereinheiten dürfen eigene Werte
+setzen** festgelegt, dass darunter nichts mehr abweichen darf, steht der Schalter fest,
+und ein Hinweis nennt die sperrende Organisation.
 
 Zum Ändern brauchst du zusätzlich zu `setting:read` die Berechtigung `setting:update`;
 ohne sie siehst du die Schalter nur. Gespeichert wird wie bei den übrigen Werten dieser
 Seite mit dem einen Knopf **Speichern**, der Modulschalter und Fachliche Vorgaben
 gemeinsam übernimmt.
 
-![Der Abschnitt Module mit einer geerbten und einer eigenen Zeile](../images/settings-organization-modules.png)
+![Der Abschnitt Module mit dem Schalter für Bewässerung und seinem Herkunftsabzeichen](../images/settings-organization-modules.png)
 
 Schaltest du ein Modul ab, verschwinden seine Bereiche für alle Mitarbeitenden der
 Organisation und ihrer Unterorganisationen aus der Navigation, von der Karte, vom
