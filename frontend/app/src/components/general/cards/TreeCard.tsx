@@ -1,7 +1,7 @@
 import { Droplets, FolderClosed, Sprout } from 'lucide-react'
 import { format } from 'date-fns'
 import { WateringStatus } from '@green-ecolution/backend-client'
-import type { Tree } from '@/api/backendApi'
+import type { Tree } from '../../../../../modules/irrigation/src/api/client'
 import { Link } from '@tanstack/react-router'
 import React from 'react'
 import { useTranslation } from 'react-i18next'

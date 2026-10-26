@@ -6,7 +6,8 @@ import {
   plantingYearMin,
 } from '@green-ecolution/domain-wasm'
 import { FormField, TextareaField, SelectField, Button } from '@green-ecolution/ui'
-import { Sensor, TreeClusterInList } from '@/api/backendApi'
+import { Sensor } from '@/api/backendApi'
+import { TreeClusterInList } from '../../../../../modules/irrigation/src/api/client'
 import { MapPin } from 'lucide-react'
 import type { FocusEvent } from 'react'
 import { useTranslation } from 'react-i18next'

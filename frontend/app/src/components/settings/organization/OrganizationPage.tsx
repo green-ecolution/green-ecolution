@@ -1,4 +1,5 @@
 import { useEffect, useState, type CSSProperties } from 'react'
+import { irrigationSettingsQueries } from '../../../../../modules/irrigation/src/api/queries'
 import { useQuery } from '@tanstack/react-query'
 import { useBlocker } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
@@ -161,7 +162,7 @@ const OrganizationPage = () => {
     enabled: canReadSettings && selectedId !== null,
   })
   const { data: irrigation, error: irrigationError } = useQuery({
-    ...settingsQueries.irrigation(selectedId ?? ''),
+    ...irrigationSettingsQueries.byOrganization(selectedId ?? ''),
     enabled: canReadSettings && selectedId !== null,
   })
   const settingsKey = settingsFingerprint(selectedId, settings)

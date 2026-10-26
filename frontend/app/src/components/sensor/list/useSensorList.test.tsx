@@ -11,6 +11,10 @@ const { listSensors, listClusterSensorIds } = vi.hoisted(() => ({
 vi.mock('@/api/backendApi', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/api/backendApi')>()),
   sensorApi: { listSensors },
+}))
+
+vi.mock('../../../../../modules/irrigation/src/api/client', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../../../../modules/irrigation/src/api/client')>()),
   clusterApi: { listClusterSensorIds },
 }))
 

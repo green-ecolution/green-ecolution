@@ -1,3 +1,4 @@
+import { irrigationRoots } from '../../../../../../../../modules/irrigation/src/api/queries'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { FormProvider, type DefaultValues } from 'react-hook-form'
@@ -5,8 +6,12 @@ import { useSuspenseQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@green-ecolution/ui'
 import { Trash2 } from 'lucide-react'
-import { clusterQueries, sensorQueries, treeQueries } from '@/api/queries'
-import { treeApi } from '@/api/backendApi'
+import { sensorQueries } from '@/api/queries'
+import {
+  clusterQueries,
+  treeQueries,
+} from '../../../../../../../../modules/irrigation/src/api/queries'
+import { treeApi } from '../../../../../../../../modules/irrigation/src/api/client'
 import { TreeForm } from '@/schema/treeSchema'
 import { useTreeForm } from '@/hooks/form/useTreeForm'
 import createToast from '@/hooks/createToast'
@@ -117,7 +122,7 @@ function EditTreeOnMap() {
       // tree, which would refetch into a 404 while still mounted. Cluster too,
       // because removing a tree shifts its cluster's centroid and status.
       .then(() => navigate({ to: '/map', search: (prev) => prev }))
-      .then(() => invalidate(['tree', 'cluster']))
+      .then(() => invalidate([...irrigationRoots.tree, ...irrigationRoots.cluster]))
       .then(() => showToast(t('tree.deleteSuccess')))
       .catch((error) => {
         console.error('Delete failed:', error)

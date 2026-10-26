@@ -1,7 +1,8 @@
 import { useSuspenseQuery } from '@tanstack/react-query'
 import FormPageHeader from '../general/FormPageHeader'
 import { useInitFormQuery } from '@/hooks/form/useInitForm'
-import { userQueries, vehicleQueries, wateringPlanQueries } from '@/api/queries'
+import { queryRoots, userQueries, vehicleQueries, wateringPlanQueries } from '@/api/queries'
+import { irrigationRoots } from '../../../../modules/irrigation/src/api/queries'
 import { format } from 'date-fns'
 import FormForWateringPlan from '../general/form/FormForWateringPlan'
 import { useNavigate } from '@tanstack/react-router'
@@ -154,7 +155,7 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
             mutationFn={handleDeleteWateringPlan}
             entityName={{ key: 'wateringPlan:entity.nameWithArticle' }}
             redirectUrl={{ to: '/watering-plans' }}
-            invalidates={['wateringPlan', 'evaluation']}
+            invalidates={[...queryRoots.wateringPlan, ...irrigationRoots.evaluation]}
           />
         </Suspense>
       </Can>

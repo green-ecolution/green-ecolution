@@ -1,7 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { commentApi } from '@/api/backendApi'
-import type { CommentSubject } from '@/api/queries'
+import { commentQueryKey, type CommentSubject } from '@/api/queries'
 import createToast from '@/hooks/createToast'
+import type { TargetRefDto } from '@green-ecolution/backend-client'
 import { useTranslation } from 'react-i18next'
 
 export interface UpdateCommentVariables {
@@ -9,17 +10,22 @@ export interface UpdateCommentVariables {
   body: string
 }
 
-export const useCommentMutations = (subject: CommentSubject, parentId: string) => {
+const targetParams = ({ module, kind, id }: TargetRefDto) => ({ module, kind, targetId: id })
+
+export const useCommentMutations = (subject: CommentSubject) => {
   const queryClient = useQueryClient()
   const showToast = createToast()
   const { t } = useTranslation('comments')
-  const queryKey = ['comments', subject, parentId]
+  const queryKey = commentQueryKey(subject)
 
   const create = useMutation({
     mutationFn: (body: string) =>
-      subject === 'cluster'
-        ? commentApi.createClusterComment({ clusterId: parentId, createCommentRequest: { body } })
-        : commentApi.createPlanComment({ planId: parentId, createCommentRequest: { body } }),
+      subject.kind === 'plan'
+        ? commentApi.createPlanComment({ planId: subject.id, createCommentRequest: { body } })
+        : commentApi.createTargetComment({
+            ...targetParams(subject.target),
+            createCommentRequest: { body },
+          }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey })
       showToast(t('toasts.createSuccess'))
@@ -31,14 +37,14 @@ export const useCommentMutations = (subject: CommentSubject, parentId: string) =
 
   const update = useMutation({
     mutationFn: ({ commentId, body }: UpdateCommentVariables) =>
-      subject === 'cluster'
-        ? commentApi.updateClusterComment({
-            clusterId: parentId,
+      subject.kind === 'plan'
+        ? commentApi.updatePlanComment({
+            planId: subject.id,
             commentId,
             updateCommentRequest: { body },
           })
-        : commentApi.updatePlanComment({
-            planId: parentId,
+        : commentApi.updateTargetComment({
+            ...targetParams(subject.target),
             commentId,
             updateCommentRequest: { body },
           }),
@@ -53,9 +59,9 @@ export const useCommentMutations = (subject: CommentSubject, parentId: string) =
 
   const remove = useMutation({
     mutationFn: (commentId: string) =>
-      subject === 'cluster'
-        ? commentApi.deleteClusterComment({ clusterId: parentId, commentId })
-        : commentApi.deletePlanComment({ planId: parentId, commentId }),
+      subject.kind === 'plan'
+        ? commentApi.deletePlanComment({ planId: subject.id, commentId })
+        : commentApi.deleteTargetComment({ ...targetParams(subject.target), commentId }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey })
       showToast(t('toasts.deleteSuccess'))

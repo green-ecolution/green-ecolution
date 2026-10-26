@@ -6,7 +6,7 @@ import { useTreeForm } from './useTreeForm'
 import { Toaster } from '@green-ecolution/ui'
 import useStore from '@/store/store'
 
-vi.mock('@/api/backendApi', () => ({
+vi.mock('../../../../modules/irrigation/src/api/client', () => ({
   treeApi: {
     createTree: vi.fn(),
     updateTree: vi.fn(),
@@ -26,8 +26,8 @@ vi.mock('@tanstack/react-router', () => ({
   useBlocker: (...args: unknown[]) => mockUseBlocker(...args),
 }))
 
-import { treeApi } from '@/api/backendApi'
-import type { Tree } from '@/api/backendApi'
+import { treeApi } from '../../../../modules/irrigation/src/api/client'
+import type { Tree } from '../../../../modules/irrigation/src/api/client'
 
 function createWrapper() {
   const queryClient = new QueryClient({

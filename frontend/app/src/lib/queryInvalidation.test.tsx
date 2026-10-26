@@ -1,8 +1,13 @@
 import { describe, it, expect, vi } from 'vitest'
 import { QueryClient } from '@tanstack/react-query'
 import type { QueryKey } from '@tanstack/react-query'
-import { clusterQueries, treeQueries, wateringPlanQueries } from '@/api/queries'
-import { invalidateAggregates } from './queryInvalidation'
+import { queryRoots, wateringPlanQueries } from '@/api/queries'
+import {
+  clusterQueries,
+  irrigationRoots,
+  treeQueries,
+} from '../../../modules/irrigation/src/api/queries'
+import { invalidateRoots } from './queryInvalidation'
 
 const CLUSTER_ID = '0190a8e9-7c4f-7000-8000-000000000001'
 const TREE_ID = '0190a8e9-7c4f-7000-8000-000000000002'
@@ -18,7 +23,7 @@ const isInvalidated = (queryClient: QueryClient, key: QueryKey) =>
 
 const routerStub = () => ({ invalidate: vi.fn().mockResolvedValue(undefined) })
 
-describe('invalidateAggregates', () => {
+describe('invalidateRoots', () => {
   it('reaches every key root a cluster query can live under', async () => {
     const queryClient = makeClient()
     const keys: QueryKey[] = [
@@ -31,7 +36,7 @@ describe('invalidateAggregates', () => {
     ]
     seed(queryClient, keys)
 
-    await invalidateAggregates(queryClient, routerStub(), ['cluster'])
+    await invalidateRoots(queryClient, routerStub(), irrigationRoots.cluster)
 
     keys.forEach((key) => expect(isInvalidated(queryClient, key)).toBe(true))
   })
@@ -47,7 +52,7 @@ describe('invalidateAggregates', () => {
     ]
     seed(queryClient, keys)
 
-    await invalidateAggregates(queryClient, routerStub(), ['tree'])
+    await invalidateRoots(queryClient, routerStub(), irrigationRoots.tree)
 
     keys.forEach((key) => expect(isInvalidated(queryClient, key)).toBe(true))
   })
@@ -59,7 +64,7 @@ describe('invalidateAggregates', () => {
       treeQueries.detail(TREE_ID).queryKey,
     ])
 
-    await invalidateAggregates(queryClient, routerStub(), ['wateringPlan'])
+    await invalidateRoots(queryClient, routerStub(), queryRoots.wateringPlan)
 
     expect(isInvalidated(queryClient, clusterQueries.detail(CLUSTER_ID).queryKey)).toBe(false)
     expect(isInvalidated(queryClient, treeQueries.detail(TREE_ID).queryKey)).toBe(false)
@@ -74,7 +79,11 @@ describe('invalidateAggregates', () => {
       treeQueries.detail(TREE_ID).queryKey,
     ])
 
-    await invalidateAggregates(queryClient, routerStub(), ['wateringPlan', 'cluster', 'tree'])
+    await invalidateRoots(queryClient, routerStub(), [
+      ...queryRoots.wateringPlan,
+      ...irrigationRoots.cluster,
+      ...irrigationRoots.tree,
+    ])
 
     expect(isInvalidated(queryClient, planKey)).toBe(true)
     expect(isInvalidated(queryClient, clusterQueries.list().queryKey)).toBe(true)
@@ -85,11 +94,11 @@ describe('invalidateAggregates', () => {
     const queryClient = makeClient()
 
     const quiet = routerStub()
-    await invalidateAggregates(queryClient, quiet, ['cluster'])
+    await invalidateRoots(queryClient, quiet, irrigationRoots.cluster)
     expect(quiet.invalidate).not.toHaveBeenCalled()
 
     const reloading = routerStub()
-    await invalidateAggregates(queryClient, reloading, ['cluster'], { reloadRoutes: true })
+    await invalidateRoots(queryClient, reloading, irrigationRoots.cluster, { reloadRoutes: true })
     expect(reloading.invalidate).toHaveBeenCalledTimes(1)
   })
 })

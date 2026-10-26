@@ -1,4 +1,4 @@
-import { evaluationQuery } from '@/api/queries'
+import { evaluationQuery } from '../../../api/queries'
 import StatusCardGrid from '@/components/general/StatusCardGrid'
 import { StatusCard } from '@green-ecolution/ui'
 import { useSuspenseQuery } from '@tanstack/react-query'

@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { Card, CardContent, CardHeader, CardTitle, DetailedList } from '@green-ecolution/ui'
 import { useSoilConditionLabel } from '@/hooks/details/useDetailsForSoilCondition'
-import type { TreeCluster } from '@/api/backendApi'
+import type { TreeCluster } from '../../../../modules/irrigation/src/api/client'
 
 interface ClusterMasterDataCardProps {
   treecluster: TreeCluster

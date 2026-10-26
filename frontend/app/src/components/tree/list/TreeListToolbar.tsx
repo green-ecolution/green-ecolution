@@ -11,7 +11,7 @@ import ActiveFilterChips, {
   type FilterChipDescriptor,
 } from '@/components/general/list/ActiveFilterChips'
 import SensorIcon from '@/components/icons/Sensor'
-import { clusterQueries, treeQueries } from '@/api/queries'
+import { clusterQueries, treeQueries } from '../../../../../modules/irrigation/src/api/queries'
 import { useWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
 import { useTreeListSearch } from './useTreeListSearch'
 

@@ -1,3 +1,5 @@
+import { queryRoots } from '@/api/queries'
+import { irrigationRoots } from '../../../../../../modules/irrigation/src/api/queries'
 import { sensorApi } from '@/api/backendApi'
 import { sensorQueries } from '@/api/queries'
 import { useInvalidateAggregates } from '@/lib/queryInvalidation'
@@ -67,7 +69,7 @@ function NewSensor() {
     onMutate: () => dispatch({ type: 'submissionStart' }),
     onSuccess: async () => {
       dispatch({ type: 'submissionSuccess' })
-      await invalidate(['sensor', 'tree'])
+      await invalidate([...queryRoots.sensor, ...irrigationRoots.tree])
     },
     onError: (err) => dispatch({ type: 'submissionError', message: mapActivateError(err) }),
   })

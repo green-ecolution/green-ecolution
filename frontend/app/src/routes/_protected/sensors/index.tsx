@@ -1,4 +1,5 @@
 import { sensorQueries } from '@/api/queries'
+import { clusterQueries } from '../../../../../modules/irrigation/src/api/queries'
 import { Badge, Button, Loading, Tabs, TabsList, TabsTrigger } from '@green-ecolution/ui'
 import Pagination from '@/components/general/Pagination'
 import EntityList from '@/components/general/EntityList'
@@ -153,11 +154,7 @@ export const Route = createFileRoute('/_protected/sensors/')({
   }),
   loader: ({ deps, context: { queryClient } }) => {
     if (deps.clusterIds?.length) {
-      prefetch(
-        queryClient,
-        sensorQueries.clusterSensorIds(deps.clusterIds),
-        'sensorQueries.clusterSensorIds',
-      )
+      prefetch(queryClient, clusterQueries.sensorIds(deps.clusterIds), 'clusterQueries.sensorIds')
       return
     }
     prefetch(queryClient, sensorQueries.list(sensorListParams(deps)), 'sensorQueries.list')

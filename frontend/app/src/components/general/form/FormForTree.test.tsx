@@ -10,7 +10,8 @@ import { FORM_VALIDATION_MODE } from '@/hooks/form/useEntityForm'
 import { useIssueTranslator } from '@/lib/i18n/validation'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from '@green-ecolution/ui'
-import { TreeClusterInList, Sensor } from '@/api/backendApi'
+import { Sensor } from '@/api/backendApi'
+import { TreeClusterInList } from '../../../../../modules/irrigation/src/api/client'
 
 function TestWrapper({
   children,

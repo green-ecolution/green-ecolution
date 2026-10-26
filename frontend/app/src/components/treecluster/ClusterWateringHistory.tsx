@@ -3,7 +3,7 @@ import { Link } from '@tanstack/react-router'
 import { format } from 'date-fns'
 import { useTranslation } from 'react-i18next'
 import { Card, CardContent, CardHeader, CardTitle, Loading } from '@green-ecolution/ui'
-import { clusterQueries } from '@/api/queries'
+import { clusterQueries } from '../../../../modules/irrigation/src/api/queries'
 import { windowStart } from '@/components/general/charts/timeWindows'
 import { useDateLocale, useNumberFormatter } from '@/lib/i18n/useFormatters'
 

@@ -4,7 +4,8 @@ import type {
   IrrigationSettingsUpdateRequest,
   OrganizationSettingsUpdateRequest,
 } from '@green-ecolution/backend-client'
-import { irrigationApi, settingsApi } from '@/api/backendApi'
+import { settingsApi } from '@/api/backendApi'
+import { irrigationApi } from '../../../modules/irrigation/src/api/client'
 import createToast from '@/hooks/createToast'
 import { statusOf } from '@/lib/httpError'
 

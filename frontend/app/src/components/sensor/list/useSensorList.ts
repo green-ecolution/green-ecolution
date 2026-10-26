@@ -1,4 +1,5 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { clusterQueries } from '../../../../../modules/irrigation/src/api/queries'
 import type { ListResponseSensorResponse } from '@green-ecolution/backend-client'
 import { sensorQueries } from '@/api/queries'
 import { sensorListParams, type SensorListSearch } from './sensorListView'
@@ -11,7 +12,7 @@ export const useSensorList = (search: SensorListSearch) => {
   const filtersByCluster = clusterIds.length > 0
 
   const idsQuery = useQuery({
-    ...sensorQueries.clusterSensorIds(clusterIds),
+    ...clusterQueries.sensorIds(clusterIds),
     enabled: filtersByCluster,
   })
   const clusterSensorIds = idsQuery.data

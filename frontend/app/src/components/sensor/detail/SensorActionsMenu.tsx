@@ -1,3 +1,5 @@
+import { queryRoots } from '@/api/queries'
+import { irrigationRoots } from '../../../../../modules/irrigation/src/api/queries'
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useMutation } from '@tanstack/react-query'
@@ -48,7 +50,7 @@ const SensorActionsMenu = ({ sensor }: SensorActionsMenuProps) => {
       await navigate({ to: '/sensors', search: { page: 1 } })
       // After leaving: this page holds a live query on the sensor. Trees too,
       // because deleting a sensor detaches it from the tree it was on.
-      await invalidate(['sensor', 'tree'])
+      await invalidate([...queryRoots.sensor, ...irrigationRoots.tree])
     },
     onError: () => {
       toast.error(t('actions.deleteFailedToast'))

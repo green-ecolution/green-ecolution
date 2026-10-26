@@ -1,3 +1,5 @@
+import { irrigationRoots } from '../../../../modules/irrigation/src/api/queries'
+import { clusterTarget } from '@/lib/targets'
 import { useState } from 'react'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { ChevronDown, Pencil, Trash2 } from 'lucide-react'
@@ -31,7 +33,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@green-ecolution/ui'
-import { clusterApi, type TreeCluster } from '@/api/backendApi'
+import { clusterApi, type TreeCluster } from '../../../../modules/irrigation/src/api/client'
 import { useInvalidateAggregates } from '@/lib/queryInvalidation'
 
 interface TreeClusterDashboardProps {
@@ -61,7 +63,7 @@ const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
       // cluster, which would refetch into a 404 while still mounted. Trees too,
       // because deleting a cluster walks its trees out of it.
       .then(() => navigate({ to: '/treecluster', search: { page: 1 } }))
-      .then(() => invalidate(['cluster', 'tree']))
+      .then(() => invalidate([...irrigationRoots.cluster, ...irrigationRoots.tree]))
       .then(() => showToast(t('dashboard.deleteSuccessToast')))
       .catch((error) => {
         console.error('Delete failed:', error)
@@ -163,7 +165,9 @@ const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
           <ClusterKpiRow treecluster={treecluster} />
           <ClusterWaterSupplyChart clusterId={treecluster.id} hasSensors={hasSensors} />
           <ClusterWateringHistory clusterId={treecluster.id} />
-          <CommentsSection subject="cluster" parentId={treecluster.id.toString()} />
+          <CommentsSection
+            subject={{ kind: 'target', target: clusterTarget(treecluster.id.toString()) }}
+          />
         </div>
         <div className="flex min-w-0 flex-col gap-6">
           <ClusterLocationCard treecluster={treecluster} />

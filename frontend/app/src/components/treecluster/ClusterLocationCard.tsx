@@ -6,7 +6,7 @@ import MapPreview from '@/components/map-gl/MapPreview'
 import useClusterBoundaryLayer from '@/components/map-gl/layers/useClusterBoundaryLayer'
 import useTreeMarkerLayer from '@/components/map-gl/layers/useTreeMarkerLayer'
 import GeneralLink from '@/components/general/links/GeneralLink'
-import type { Tree, TreeCluster } from '@/api/backendApi'
+import type { Tree, TreeCluster } from '../../../../modules/irrigation/src/api/client'
 
 interface ClusterLocationCardProps {
   treecluster: TreeCluster

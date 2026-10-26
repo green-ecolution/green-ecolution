@@ -39,7 +39,7 @@ const tree = {
   sensor: null,
   wateringStatus: 'bad',
   updatedAt: '2026-01-02T10:00:00Z',
-} as unknown as import('@/api/backendApi').Tree
+} as unknown as import('../../../../modules/irrigation/src/api/client').Tree
 
 const cluster = {
   id: '22222222-2222-2222-2222-222222222222',
@@ -48,7 +48,7 @@ const cluster = {
   wateringStatus: 'good',
   region: { id: '3', name: 'Nord' },
   trees: [tree],
-} as unknown as import('@/api/backendApi').TreeCluster
+} as unknown as import('../../../../modules/irrigation/src/api/client').TreeCluster
 
 const renderDashboard = (props = { tree }) => {
   const rootRoute = createRootRoute({ component: () => <Outlet /> })
@@ -111,7 +111,7 @@ describe('TreeDashboard content', () => {
     const withSensor = {
       ...tree,
       sensor: { id: 'EUI-1', status: 'online', model: { id: 'model-1' }, latestData: null },
-    } as unknown as import('@/api/backendApi').Tree
+    } as unknown as import('../../../../modules/irrigation/src/api/client').Tree
     renderDashboard({ tree: withSensor })
     expect(await screen.findByText('EUI-1')).toBeInTheDocument()
     expect(screen.getByText('Online')).toBeInTheDocument()

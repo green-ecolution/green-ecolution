@@ -6,7 +6,7 @@ import { useWateringStatusDetails } from '@/hooks/details/useDetailsForWateringS
 import { roundTo } from '@/lib/utils'
 import { useDateLocale } from '@/lib/i18n/useFormatters'
 import { latestClusterReading } from './clusterLatestReading'
-import type { TreeCluster } from '@/api/backendApi'
+import type { TreeCluster } from '../../../../modules/irrigation/src/api/client'
 
 interface ClusterKpiRowProps {
   treecluster: TreeCluster

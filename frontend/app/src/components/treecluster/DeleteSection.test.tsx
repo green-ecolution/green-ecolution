@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import DeleteSection from './DeleteSection'
+import { queryRoots } from '@/api/queries'
+import { irrigationRoots } from '../../../../modules/irrigation/src/api/queries'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from '@green-ecolution/ui'
 import { ReactNode } from 'react'
@@ -42,7 +44,7 @@ describe('DeleteSection', () => {
       render(
         <DeleteSection
           mutationFn={mockMutationFn}
-          invalidates={['tree']}
+          invalidates={irrigationRoots.tree}
           entityName="der Baum"
           redirectUrl={{ to: '/map' }}
         />,
@@ -56,7 +58,7 @@ describe('DeleteSection', () => {
       render(
         <DeleteSection
           mutationFn={mockMutationFn}
-          invalidates={['tree']}
+          invalidates={irrigationRoots.tree}
           entityName={{ key: 'vehicle:entity.nameWithArticle' }}
           type="archive"
           redirectUrl={{ to: '/vehicles' }}
@@ -75,7 +77,7 @@ describe('DeleteSection', () => {
       render(
         <DeleteSection
           mutationFn={mockMutationFn}
-          invalidates={['tree']}
+          invalidates={irrigationRoots.tree}
           entityName="der Baum"
           redirectUrl={{ to: '/map' }}
         />,
@@ -93,7 +95,7 @@ describe('DeleteSection', () => {
       render(
         <DeleteSection
           mutationFn={mockMutationFn}
-          invalidates={['tree']}
+          invalidates={irrigationRoots.tree}
           entityName={{ key: 'vehicle:entity.nameWithArticle' }}
           type="archive"
           redirectUrl={{ to: '/vehicles' }}
@@ -112,7 +114,7 @@ describe('DeleteSection', () => {
       render(
         <DeleteSection
           mutationFn={mockMutationFn}
-          invalidates={['tree']}
+          invalidates={irrigationRoots.tree}
           entityName="der Baum"
           redirectUrl={{ to: '/map' }}
         />,
@@ -130,7 +132,7 @@ describe('DeleteSection', () => {
       render(
         <DeleteSection
           mutationFn={mockMutationFn}
-          invalidates={['tree']}
+          invalidates={irrigationRoots.tree}
           entityName="der Baum"
           redirectUrl={{ to: '/map' }}
         />,
@@ -157,7 +159,7 @@ describe('DeleteSection', () => {
       render(
         <DeleteSection
           mutationFn={mockMutationFn}
-          invalidates={['tree']}
+          invalidates={irrigationRoots.tree}
           entityName="der Baum"
           redirectUrl={{ to: '/map' }}
         />,
@@ -178,7 +180,7 @@ describe('DeleteSection', () => {
       render(
         <DeleteSection
           mutationFn={mockMutationFn}
-          invalidates={['tree']}
+          invalidates={irrigationRoots.tree}
           entityName="der Baum"
           redirectUrl={{ to: '/map' }}
         />,
@@ -198,7 +200,7 @@ describe('DeleteSection', () => {
       render(
         <DeleteSection
           mutationFn={mockMutationFn}
-          invalidates={['vehicle']}
+          invalidates={queryRoots.vehicle}
           entityName={{ key: 'vehicle:entity.nameWithArticle' }}
           type="archive"
           redirectUrl={{ to: '/vehicles' }}
@@ -226,7 +228,7 @@ describe('DeleteSection', () => {
       render(
         <DeleteSection
           mutationFn={deleteTreeFn}
-          invalidates={['tree']}
+          invalidates={irrigationRoots.tree}
           entityName="der Baum"
           redirectUrl={{ to: '/map' }}
         />,
@@ -244,7 +246,7 @@ describe('DeleteSection', () => {
       render(
         <DeleteSection
           mutationFn={archiveVehicleFn}
-          invalidates={['tree']}
+          invalidates={irrigationRoots.tree}
           entityName={{ key: 'vehicle:entity.nameWithArticle' }}
           type="archive"
           redirectUrl={{ to: '/vehicles' }}
@@ -263,7 +265,7 @@ describe('DeleteSection', () => {
       render(
         <DeleteSection
           mutationFn={deleteClusterFn}
-          invalidates={['tree']}
+          invalidates={irrigationRoots.tree}
           entityName="die Bewässerungsgruppe"
           redirectUrl={{ to: '/treecluster' }}
         />,
@@ -283,7 +285,7 @@ describe('DeleteSection', () => {
       render(
         <DeleteSection
           mutationFn={deletePlanFn}
-          invalidates={['tree']}
+          invalidates={irrigationRoots.tree}
           entityName="der Einsatzplan"
           redirectUrl={{ to: '/watering-plans' }}
         />,
@@ -307,7 +309,7 @@ describe('DeleteSection', () => {
       render(
         <DeleteSection
           mutationFn={mockMutationFn}
-          invalidates={['tree']}
+          invalidates={irrigationRoots.tree}
           entityName="der Baum"
           redirectUrl={{ to: '/map' }}
         />,

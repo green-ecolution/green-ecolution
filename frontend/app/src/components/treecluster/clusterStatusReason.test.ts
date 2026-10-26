@@ -2,7 +2,8 @@ import { describe, it, expect, beforeAll } from 'vitest'
 import type { TFunction } from 'i18next'
 import { getI18n } from '@/lib/i18n'
 import { unknownStatusReasons } from './clusterStatusReason'
-import type { SensorModelAbilityResponse, TreeCluster } from '@/api/backendApi'
+import type { SensorModelAbilityResponse } from '@/api/backendApi'
+import type { TreeCluster } from '../../../../modules/irrigation/src/api/client'
 
 const CURRENT_YEAR = 2026
 

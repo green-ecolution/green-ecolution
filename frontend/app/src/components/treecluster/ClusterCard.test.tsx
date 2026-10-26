@@ -12,7 +12,7 @@ import {
 } from '@tanstack/react-router'
 import ClusterCard from './ClusterCard'
 import { SoilCondition, WateringStatus } from '@/api/backendApi'
-import type { TreeClusterInList } from '@/api/backendApi'
+import type { TreeClusterInList } from '../../../../modules/irrigation/src/api/client'
 
 function makeCluster(overrides: Partial<TreeClusterInList> = {}): TreeClusterInList {
   return {

@@ -10,7 +10,8 @@ import ListSortMenu from '@/components/general/list/ListSortMenu'
 import ActiveFilterChips, {
   type FilterChipDescriptor,
 } from '@/components/general/list/ActiveFilterChips'
-import { clusterQueries, sensorQueries } from '@/api/queries'
+import { sensorQueries } from '@/api/queries'
+import { clusterQueries } from '../../../../../modules/irrigation/src/api/queries'
 import { useSensorStatusDetails } from '@/hooks/details/useDetailsForSensorStatus'
 import { useDataQualityDetails } from '@/hooks/details/useDetailsForDataHealth'
 import { useSensorListSearch } from './useSensorListSearch'

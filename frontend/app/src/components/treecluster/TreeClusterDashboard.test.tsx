@@ -49,7 +49,7 @@ const treecluster = {
   wateringStatus: 'good',
   region: { id: 1, name: 'Nord' },
   trees: [],
-} as unknown as import('@/api/backendApi').TreeCluster
+} as unknown as import('../../../../modules/irrigation/src/api/client').TreeCluster
 
 const renderDashboard = (cluster = treecluster) => {
   const rootRoute = createRootRoute({ component: () => <Outlet /> })
@@ -112,7 +112,7 @@ describe('TreeClusterDashboard unknown-status notice', () => {
       ...treecluster,
       ...overrides,
       trees,
-    }) as unknown as import('@/api/backendApi').TreeCluster
+    }) as unknown as import('../../../../modules/irrigation/src/api/client').TreeCluster
 
   const sensorlessTree = (id: string) => ({
     id,

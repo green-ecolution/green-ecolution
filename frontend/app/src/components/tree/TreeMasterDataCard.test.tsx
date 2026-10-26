@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import TreeMasterDataCard from './TreeMasterDataCard'
-import type { Tree } from '@/api/backendApi'
+import type { Tree } from '../../../../modules/irrigation/src/api/client'
 
 const baseTree = {
   id: 'tree-1',

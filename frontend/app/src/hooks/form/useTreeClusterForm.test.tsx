@@ -7,7 +7,7 @@ import { Toaster } from '@green-ecolution/ui'
 import { SoilCondition, WateringStatus } from '@green-ecolution/backend-client'
 import useStore from '@/store/store'
 
-vi.mock('@/api/backendApi', () => ({
+vi.mock('../../../../modules/irrigation/src/api/client', () => ({
   clusterApi: {
     createCluster: vi.fn(),
     updateCluster: vi.fn(),
@@ -27,8 +27,8 @@ vi.mock('@tanstack/react-router', () => ({
   useBlocker: (...args: unknown[]) => mockUseBlocker(...args),
 }))
 
-import { clusterApi } from '@/api/backendApi'
-import type { TreeCluster } from '@/api/backendApi'
+import { clusterApi } from '../../../../modules/irrigation/src/api/client'
+import type { TreeCluster } from '../../../../modules/irrigation/src/api/client'
 
 function createWrapper() {
   const queryClient = new QueryClient({

@@ -12,7 +12,7 @@ import type {
 } from '@green-ecolution/backend-client'
 import { PlanStatus } from '@green-ecolution/backend-client'
 import { IRRIGATION } from '@/lib/targets'
-import { clusterApi } from './backendApi'
+import { clusterApi } from '../../../modules/irrigation/src/api/client'
 
 // The plan API is module-neutral while the irrigation screens still speak in
 // clusters and water; this adapter bridges both until the module package replaces it.

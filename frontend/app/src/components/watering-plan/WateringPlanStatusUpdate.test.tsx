@@ -27,6 +27,13 @@ vi.mock('@/api/backendApi', async (importOriginal) => {
       getPlan: (...args: unknown[]) => getPlan(...args),
       updatePlan: (...args: unknown[]) => updatePlan(...args),
     },
+  }
+})
+vi.mock('../../../../modules/irrigation/src/api/client', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('../../../../modules/irrigation/src/api/client')>()
+  return {
+    ...actual,
     clusterApi: {
       ...actual.clusterApi,
       listClusters: (...args: unknown[]) => listClusters(...args),

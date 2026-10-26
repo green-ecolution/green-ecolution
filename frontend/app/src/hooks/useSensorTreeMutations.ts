@@ -1,3 +1,5 @@
+import { queryRoots } from '@/api/queries'
+import { irrigationRoots } from '../../../modules/irrigation/src/api/queries'
 import { sensorApi } from '@/api/backendApi'
 import { useMutation } from '@tanstack/react-query'
 import { useInvalidateAggregates } from '@/lib/queryInvalidation'
@@ -9,7 +11,7 @@ import { treeTarget } from '@/lib/targets'
  */
 const useInvalidateSensorTreeLink = () => {
   const invalidate = useInvalidateAggregates()
-  return () => invalidate(['sensor', 'tree'], { reloadRoutes: true })
+  return () => invalidate([...queryRoots.sensor, ...irrigationRoots.tree], { reloadRoutes: true })
 }
 
 export const useActivateSensor = (sensorId: string) => {

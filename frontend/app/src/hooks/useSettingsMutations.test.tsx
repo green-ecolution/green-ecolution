@@ -7,10 +7,14 @@ const updateOrganizationSettings = vi.fn()
 const updateIrrigationSettings = vi.fn()
 
 vi.mock('@/api/backendApi', () => ({
+  configuration: {},
   settingsApi: {
     updateOrganizationSettings: (...args: unknown[]) =>
       updateOrganizationSettings(...args) as unknown,
   },
+}))
+
+vi.mock('../../../modules/irrigation/src/api/client', () => ({
   irrigationApi: {
     updateIrrigationSettings: (...args: unknown[]) => updateIrrigationSettings(...args) as unknown,
   },

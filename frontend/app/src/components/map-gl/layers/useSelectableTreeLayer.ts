@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import type { ExpressionSpecification, GeoJSONSource, MapLayerMouseEvent } from 'maplibre-gl'
 import type { FeatureCollection, Point } from 'geojson'
 import type { TreeMarkerResponse } from '@green-ecolution/backend-client'
-import { treeQueries } from '@/api/queries'
+import { treeQueries } from '../../../../../modules/irrigation/src/api/queries'
 import { useMaplibreMap } from '../MapContext'
 import {
   CHECK_ICON_IMAGE,

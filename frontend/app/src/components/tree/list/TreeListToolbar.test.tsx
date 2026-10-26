@@ -43,10 +43,19 @@ vi.mock('./useTreeListSearch', async () => {
   }
 })
 
-vi.mock('@/api/queries', async () => {
-  const actual = await vi.importActual<typeof import('@/api/queries')>('@/api/queries')
+vi.mock('../../../../../modules/irrigation/src/api/queries', async () => {
+  const actual = await vi.importActual<
+    typeof import('../../../../../modules/irrigation/src/api/queries')
+  >('../../../../../modules/irrigation/src/api/queries')
   return {
     ...actual,
+    treeQueries: {
+      ...actual.treeQueries,
+      plantingYears: () => ({
+        queryKey: ['planting-years-toolbar-test'],
+        queryFn: () => Promise.resolve([]),
+      }),
+    },
     clusterQueries: {
       ...actual.clusterQueries,
       list: () => ({
@@ -73,13 +82,6 @@ vi.mock('@/api/queries', async () => {
             ],
             pagination: { currentPage: 1, perPage: 100, totalPages: 1, totalRecords: 1 },
           }),
-      }),
-    },
-    treeQueries: {
-      ...actual.treeQueries,
-      plantingYears: () => ({
-        queryKey: ['planting-years-toolbar-test'],
-        queryFn: () => Promise.resolve([]),
       }),
     },
   }

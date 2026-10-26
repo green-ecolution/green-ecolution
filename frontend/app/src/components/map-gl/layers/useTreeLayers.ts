@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import type { TreeMarkerResponse, WateringStatus } from '@green-ecolution/backend-client'
-import { treeQueries } from '@/api/queries'
+import { treeQueries } from '../../../../../modules/irrigation/src/api/queries'
 import { useMapZoom } from '../useMapView'
 import { LAYERS, SOURCES, TREE_ZOOM_THRESHOLD } from '../mapStyle'
 import useViewportBBox from '../hooks/useViewportBBox'

@@ -1,3 +1,4 @@
+import { queryRoots } from '@/api/queries'
 import { useMutation } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import type { PluginCreateRequest, PluginUpdateRequest } from '@/api/backendApi'
@@ -20,7 +21,7 @@ export const usePluginMutations = () => {
   // query subscription reaches — without reloadRoutes an edit only shows after
   // a full page reload. Uninstall is the exception: it navigates away, and
   // re-running the loader of the deleted plugin renders EntityNotFound first.
-  const refresh = (reloadRoutes = true) => invalidate(['plugin'], { reloadRoutes })
+  const refresh = (reloadRoutes = true) => invalidate(queryRoots.plugin, { reloadRoutes })
 
   // A named cause such as an unconfigured proxy or a target off the allowlist
   // tells the admin what to fix; anything else keeps the generic text.

@@ -13,8 +13,10 @@ vi.mock('@/components/geolocation/NearestTreeMapPreview', () => ({
 vi.mock('@/components/sensor/SensorTreePickerSheet', () => ({
   default: () => null,
 }))
-vi.mock('@/api/queries', async () => {
-  const actual = await vi.importActual<typeof import('@/api/queries')>('@/api/queries')
+vi.mock('../../../../../modules/irrigation/src/api/queries', async () => {
+  const actual = await vi.importActual<
+    typeof import('../../../../../modules/irrigation/src/api/queries')
+  >('../../../../../modules/irrigation/src/api/queries')
   return {
     ...actual,
     treeQueries: {

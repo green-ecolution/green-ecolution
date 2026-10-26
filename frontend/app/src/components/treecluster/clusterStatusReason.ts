@@ -1,6 +1,6 @@
 import type { TFunction } from 'i18next'
 import { SensorStatus, SoilCondition, WateringStatus } from '@/api/backendApi'
-import type { Tree, TreeCluster } from '@/api/backendApi'
+import type { Tree, TreeCluster } from '../../../../modules/irrigation/src/api/client'
 
 export type UnknownStatusReasonKey =
   'soil-unknown' | 'no-sensor' | 'sensor-silent' | 'beyond-monitoring' | 'unscorable'

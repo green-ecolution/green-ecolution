@@ -1,4 +1,4 @@
-import { treeQueries } from '@/api/queries'
+import { treeQueries } from '../../../../api/queries'
 import { entityRoute } from '@/lib/router'
 import { createFileRoute } from '@tanstack/react-router'
 

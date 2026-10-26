@@ -1,3 +1,4 @@
+import { queryRoots } from '@/api/queries'
 import type { PlanResponse, WateringPlanCreate, WateringPlanUpdate } from '@/api/backendApi'
 import { planApi } from '@/api/backendApi'
 import { toPlanCreateRequest, toPlanUpdateRequest } from '@/api/irrigationPlans'
@@ -28,7 +29,7 @@ export const useWateringPlanForm = (
     updateFn: (id, body) =>
       planApi.updatePlan({ planId: id, planUpdateRequest: toPlanUpdateRequest(body) }),
 
-    invalidates: ['wateringPlan'],
+    invalidates: queryRoots.wateringPlan,
 
     successRoute: (id) => ({
       to: '/watering-plans/$wateringPlanId',

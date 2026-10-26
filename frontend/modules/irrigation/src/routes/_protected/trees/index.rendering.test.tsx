@@ -43,21 +43,11 @@ vi.mock('@/components/tree/list/useTreeListSearch', async () => {
   }
 })
 
-vi.mock('@/api/queries', async () => {
-  const actual = await vi.importActual<typeof import('@/api/queries')>('@/api/queries')
+vi.mock('../../../api/queries', async () => {
+  const actual =
+    await vi.importActual<typeof import('../../../api/queries')>('../../../api/queries')
   return {
     ...actual,
-    clusterQueries: {
-      ...actual.clusterQueries,
-      list: () => ({
-        queryKey: ['cluster-rendering-test'],
-        queryFn: () =>
-          Promise.resolve({
-            data: [],
-            pagination: { currentPage: 1, perPage: 100, totalPages: 1, totalRecords: 0 },
-          }),
-      }),
-    },
     treeQueries: {
       ...actual.treeQueries,
       plantingYears: () => ({
@@ -70,6 +60,17 @@ vi.mock('@/api/queries', async () => {
           Promise.resolve({
             data: [],
             pagination: { currentPage: 1, perPage: 25, totalPages: 1, totalRecords: 0 },
+          }),
+      }),
+    },
+    clusterQueries: {
+      ...actual.clusterQueries,
+      list: () => ({
+        queryKey: ['cluster-rendering-test'],
+        queryFn: () =>
+          Promise.resolve({
+            data: [],
+            pagination: { currentPage: 1, perPage: 100, totalPages: 1, totalRecords: 0 },
           }),
       }),
     },

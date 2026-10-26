@@ -1,5 +1,5 @@
-import { clusterQueries } from '@/api/queries'
-import type { TreeWithDistance } from '@/api/backendApi'
+import { clusterQueries } from '../../../../modules/irrigation/src/api/queries'
+import type { TreeWithDistance } from '../../../../modules/irrigation/src/api/client'
 import { Badge, cn } from '@green-ecolution/ui'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'

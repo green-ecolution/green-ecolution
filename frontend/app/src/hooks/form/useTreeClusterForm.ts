@@ -1,5 +1,10 @@
-import type { TreeCluster, TreeClusterCreate, TreeClusterUpdate } from '@/api/backendApi'
-import { clusterApi } from '@/api/backendApi'
+import { irrigationRoots } from '../../../../modules/irrigation/src/api/queries'
+import type {
+  TreeCluster,
+  TreeClusterCreate,
+  TreeClusterUpdate,
+} from '../../../../modules/irrigation/src/api/client'
+import { clusterApi } from '../../../../modules/irrigation/src/api/client'
 import { useIssueTranslator } from '@/lib/i18n/validation'
 import { TreeclusterForm } from '@/schema/treeclusterSchema'
 import { clusterDraftResolver } from '@green-ecolution/domain-wasm'
@@ -32,7 +37,7 @@ export const useTreeClusterForm = (
       clusterApi.updateCluster({ clusterId: id, treeClusterUpdateRequest: body }),
 
     // Tree too: replacing the cluster's trees changes their cluster membership.
-    invalidates: ['cluster', 'tree'],
+    invalidates: [...irrigationRoots.cluster, ...irrigationRoots.tree],
 
     successRoute: (id) => ({
       to: '/treecluster/$treeclusterId',

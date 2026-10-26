@@ -7,7 +7,7 @@ import TreeClusterCard from './TreeClusterCard'
 import TreeSensorCard from './TreeSensorCard'
 import TreeMasterDataCard from './TreeMasterDataCard'
 import { useWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
-import type { Tree, TreeCluster } from '@/api/backendApi'
+import type { Tree, TreeCluster } from '../../../../modules/irrigation/src/api/client'
 import { useHasPermission } from '@/lib/auth/useHasPermission'
 
 interface TreeDashboardProps {

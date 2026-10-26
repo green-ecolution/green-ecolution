@@ -14,7 +14,7 @@ import {
 } from '@green-ecolution/ui'
 import createToast from '@/hooks/createToast'
 import { LinkProps, useNavigate } from '@tanstack/react-router'
-import type { Aggregate } from '@/api/queries'
+import type { QueryKey } from '@tanstack/react-query'
 import { useInvalidateAggregates } from '@/lib/queryInvalidation'
 import { useTranslation } from 'react-i18next'
 import { resolveApiError } from '@/lib/apiError'
@@ -25,8 +25,8 @@ interface DeleteSectionProps {
   entityName: LocalizedText
   type?: 'archive' | 'delete'
   redirectUrl: LinkProps
-  /** Aggregates whose lists and details still contain the removed entity. */
-  invalidates: readonly Aggregate[]
+  /** Query roots whose lists and details still contain the removed entity. */
+  invalidates: readonly QueryKey[]
 }
 
 const DeleteSection: React.FC<DeleteSectionProps> = ({

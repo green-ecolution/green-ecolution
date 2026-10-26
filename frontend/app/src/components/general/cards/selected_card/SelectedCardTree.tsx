@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { SelectedCardProps } from '../SelectedCard'
-import { treeQueries } from '@/api/queries'
+import { treeQueries } from '../../../../../../modules/irrigation/src/api/queries'
 import { useWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
 import { Trash2 } from 'lucide-react'
 import {

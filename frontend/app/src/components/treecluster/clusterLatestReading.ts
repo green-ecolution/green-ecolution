@@ -1,4 +1,5 @@
-import type { SensorData, Tree } from '@/api/backendApi'
+import type { SensorData } from '@/api/backendApi'
+import type { Tree } from '../../../../modules/irrigation/src/api/client'
 
 export interface ClusterLatestReading {
   temperature: number | null

@@ -60,6 +60,28 @@ vi.mock('@/api/queries', async () => {
   const actual = await vi.importActual<typeof import('@/api/queries')>('@/api/queries')
   return {
     ...actual,
+    sensorQueries: {
+      ...actual.sensorQueries,
+      detail: (id: string) => ({
+        queryKey: ['sensor', id],
+        queryFn: () =>
+          Promise.resolve({
+            id,
+            status: 'prepared' as const,
+            latestData: null,
+            target: null,
+          }),
+      }),
+    },
+  }
+})
+
+vi.mock('../../../../../modules/irrigation/src/api/queries', async () => {
+  const actual = await vi.importActual<
+    typeof import('../../../../../modules/irrigation/src/api/queries')
+  >('../../../../../modules/irrigation/src/api/queries')
+  return {
+    ...actual,
     treeQueries: {
       ...actual.treeQueries,
       nearest: () => ({
@@ -99,24 +121,12 @@ vi.mock('@/api/queries', async () => {
         queryFn: () => Promise.resolve({ id: 'cluster-1', name: 'Test Cluster' }),
       }),
     },
-    sensorQueries: {
-      ...actual.sensorQueries,
-      detail: (id: string) => ({
-        queryKey: ['sensor', id],
-        queryFn: () =>
-          Promise.resolve({
-            id,
-            status: 'prepared' as const,
-            latestData: null,
-            target: null,
-          }),
-      }),
-    },
   }
 })
 
 const activateMock = vi.fn().mockResolvedValue({ id: 'eui-a8404131af5e6451' })
 vi.mock('@/api/backendApi', () => ({
+  configuration: {},
   sensorApi: { activateSensor: (...args: unknown[]) => activateMock(...args) as unknown },
 }))
 

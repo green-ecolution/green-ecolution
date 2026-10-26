@@ -3,11 +3,13 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 import SensorTreeSearchResults from './SensorTreeSearchResults'
-import { treeApi } from '@/api/backendApi'
+import { treeApi } from '../../../../modules/irrigation/src/api/client'
 import type { TreeResponse, ListResponseTreeResponse } from '@green-ecolution/backend-client'
 
-vi.mock('@/api/backendApi', async () => {
-  const actual = await vi.importActual<typeof import('@/api/backendApi')>('@/api/backendApi')
+vi.mock('../../../../modules/irrigation/src/api/client', async () => {
+  const actual = await vi.importActual<
+    typeof import('../../../../modules/irrigation/src/api/client')
+  >('../../../../modules/irrigation/src/api/client')
   return { ...actual, treeApi: { listTrees: vi.fn() } }
 })
 

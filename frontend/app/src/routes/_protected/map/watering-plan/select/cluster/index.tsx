@@ -6,12 +6,8 @@ import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
 import { WateringPlanForm } from '@/schema/wateringPlanSchema'
-import {
-  clusterQueries,
-  routingStartPointsQuery,
-  vehicleQueries,
-  wateringPlanQueries,
-} from '@/api/queries'
+import { routingStartPointsQuery, vehicleQueries, wateringPlanQueries } from '@/api/queries'
+import { clusterQueries } from '../../../../../../../../modules/irrigation/src/api/queries'
 import { useWateringPlanDraft } from '@/store/form/useFormDraft'
 import { useFormNavigationBlocker } from '@/hooks/form/useFormNavigationBlocker'
 import SelectEntities from '@/components/general/form/types/SelectEntities'

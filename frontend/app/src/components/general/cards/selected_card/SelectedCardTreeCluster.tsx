@@ -1,4 +1,4 @@
-import { clusterQueries } from '@/api/queries'
+import { clusterQueries } from '../../../../../../modules/irrigation/src/api/queries'
 import { SelectedCardProps } from '../SelectedCard'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'

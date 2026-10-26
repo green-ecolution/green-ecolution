@@ -11,7 +11,7 @@ import {
 } from '@green-ecolution/ui'
 import { Link } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
-import type { Tree } from '@/api/backendApi'
+import type { Tree } from '../../../../modules/irrigation/src/api/client'
 import { useWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
 
 interface ClusterTreeListProps {

@@ -1,6 +1,6 @@
 import TreeIcon from '@/components/icons/Tree'
 import { useWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
-import type { TreeClusterInList } from '@/api/backendApi'
+import type { TreeClusterInList } from '../../../../../modules/irrigation/src/api/client'
 import { Link } from '@tanstack/react-router'
 import { MapPin } from 'lucide-react'
 import React from 'react'

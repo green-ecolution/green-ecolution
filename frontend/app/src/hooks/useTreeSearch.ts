@@ -1,4 +1,4 @@
-import { treeApi } from '@/api/backendApi'
+import { treeApi } from '../../../modules/irrigation/src/api/client'
 import type { TreeResponse } from '@green-ecolution/backend-client'
 import { keepPreviousData, useInfiniteQuery } from '@tanstack/react-query'
 

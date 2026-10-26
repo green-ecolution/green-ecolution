@@ -8,6 +8,7 @@ const installPlugin = vi.fn()
 const updatePlugin = vi.fn()
 
 vi.mock('@/api/backendApi', () => ({
+  configuration: {},
   pluginApi: {
     installPlugin: (...args: unknown[]) => installPlugin(...args) as unknown,
     updatePlugin: (...args: unknown[]) => updatePlugin(...args) as unknown,

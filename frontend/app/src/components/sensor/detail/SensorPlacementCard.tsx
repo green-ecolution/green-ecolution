@@ -17,7 +17,7 @@ import {
   cn,
 } from '@green-ecolution/ui'
 import { ChevronDown, ChevronRight, Link2, TreeDeciduous, Trees } from 'lucide-react'
-import { clusterQueries, treeQueries } from '@/api/queries'
+import { clusterQueries, treeQueries } from '../../../../../modules/irrigation/src/api/queries'
 import MapPreview from '@/components/map-gl/MapPreview'
 import SensorMarker from '@/components/map-gl/SensorMarker'
 import useViewportBBox from '@/components/map-gl/hooks/useViewportBBox'

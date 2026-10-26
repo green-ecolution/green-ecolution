@@ -10,7 +10,7 @@ import {
 } from '@green-ecolution/ui'
 import { Link } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
-import type { Tree, TreeCluster } from '@/api/backendApi'
+import type { Tree, TreeCluster } from '../../../../modules/irrigation/src/api/client'
 import { useWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
 
 interface TreeClusterCardProps {

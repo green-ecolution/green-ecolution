@@ -9,7 +9,7 @@ import ClusterTreeDots from '@/components/treecluster/ClusterTreeDots'
 import { useWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
 import { useSoilConditionLabel } from '@/hooks/details/useDetailsForSoilCondition'
 import { SoilCondition } from '@/api/backendApi'
-import type { TreeClusterInList } from '@/api/backendApi'
+import type { TreeClusterInList } from '../../../../modules/irrigation/src/api/client'
 
 interface ClusterCardProps {
   treecluster: TreeClusterInList

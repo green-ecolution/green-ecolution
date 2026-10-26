@@ -12,7 +12,7 @@ import { plantingYearIsFuture } from '@green-ecolution/domain-wasm'
 import { format } from 'date-fns'
 import { useTranslation } from 'react-i18next'
 import { useDateLocale } from '@/lib/i18n/useFormatters'
-import type { Tree } from '@/api/backendApi'
+import type { Tree } from '../../../../modules/irrigation/src/api/client'
 
 interface TreeMasterDataCardProps {
   tree: Tree

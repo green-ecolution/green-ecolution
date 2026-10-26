@@ -10,7 +10,7 @@ import {
 import { Link } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
-import type { Tree } from '@/api/backendApi'
+import type { Tree } from '../../../../modules/irrigation/src/api/client'
 import {
   parseSignal,
   signalBarsFromRssi,

@@ -20,6 +20,7 @@ import {
 } from '@green-ecolution/backend-client'
 
 vi.mock('@/api/backendApi', () => ({
+  configuration: {},
   routingApi: {
     listRoutingStartPoints: vi.fn().mockResolvedValue([]),
   },

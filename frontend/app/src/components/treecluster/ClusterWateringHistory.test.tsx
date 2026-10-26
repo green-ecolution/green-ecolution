@@ -11,8 +11,9 @@ import {
 } from '@tanstack/react-router'
 
 const getClusterSoilMoisture = vi.fn()
-vi.mock('@/api/backendApi', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/api/backendApi')>()
+vi.mock('../../../../modules/irrigation/src/api/client', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('../../../../modules/irrigation/src/api/client')>()
   return {
     ...actual,
     clusterApi: {

@@ -138,7 +138,7 @@ const WateringPlanDashboard = ({ wateringPlan }: WateringPlanDashboardProps) => 
       </Tabs>
 
       <div className="mt-10">
-        <CommentsSection subject="watering-plan" parentId={wateringPlan.id.toString()} />
+        <CommentsSection subject={{ kind: 'plan', id: wateringPlan.id.toString() }} />
       </div>
     </>
   )

@@ -4,7 +4,7 @@ import { StatusCard } from '@green-ecolution/ui'
 import StatusCardGrid from '@/components/general/StatusCardGrid'
 import { useWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
 import { useDateLocale } from '@/lib/i18n/useFormatters'
-import type { Tree } from '@/api/backendApi'
+import type { Tree } from '../../../../modules/irrigation/src/api/client'
 
 interface TreeKpiRowProps {
   tree: Tree

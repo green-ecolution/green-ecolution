@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { latestClusterReading } from './clusterLatestReading'
-import type { Tree } from '@/api/backendApi'
+import type { Tree } from '../../../../modules/irrigation/src/api/client'
 
 interface TreeOverrides {
   id?: string

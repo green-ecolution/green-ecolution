@@ -1,7 +1,8 @@
 import { useCallback } from 'react'
-import { useQueryClient, type QueryClient } from '@tanstack/react-query'
+import { useQueryClient, type QueryClient, type QueryKey } from '@tanstack/react-query'
 import { useRouter, type RegisteredRouter } from '@tanstack/react-router'
-import { queryRoots, type Aggregate } from '@/api/queries'
+import { queryRoots } from '@/api/queries'
+import { irrigationRoots } from '../../../modules/irrigation/src/api/queries'
 
 /** The only router capability this module needs. */
 type RouteReloader = Pick<RegisteredRouter, 'invalidate'>
@@ -19,36 +20,32 @@ export interface InvalidateOptions {
 }
 
 /**
- * Invalidate every query root of the given aggregates.
+ * Invalidate every given query root (`queryRoots.x`, or a module's own roots).
  *
  * Callers that navigate right after do not need to await this:
  * `invalidateQueries` marks the entries stale synchronously, so a route loader
  * running in the same tick already refetches.
  */
-export const invalidateAggregates = async (
+export const invalidateRoots = async (
   queryClient: QueryClient,
   router: RouteReloader,
-  aggregates: readonly Aggregate[],
+  roots: readonly QueryKey[],
   { reloadRoutes = false }: InvalidateOptions = {},
 ): Promise<void> => {
-  await Promise.all(
-    aggregates.flatMap((aggregate) =>
-      queryRoots[aggregate].map((queryKey) => queryClient.invalidateQueries({ queryKey })),
-    ),
-  )
+  await Promise.all(roots.map((queryKey) => queryClient.invalidateQueries({ queryKey })))
   if (reloadRoutes) await router.invalidate()
 }
 
 /**
- * Aggregates touched by a watering plan status change: finishing a plan flags
+ * Query roots touched by a watering plan status change: finishing a plan flags
  * its clusters and their trees as just watered, and the evaluation dashboard
  * aggregates finished plans.
  */
-export const PLAN_STATUS_AGGREGATES: readonly Aggregate[] = [
-  'wateringPlan',
-  'cluster',
-  'tree',
-  'evaluation',
+export const PLAN_STATUS_AGGREGATES: readonly QueryKey[] = [
+  ...queryRoots.wateringPlan,
+  ...irrigationRoots.cluster,
+  ...irrigationRoots.tree,
+  ...irrigationRoots.evaluation,
 ]
 
 export const useInvalidateAggregates = () => {
@@ -56,8 +53,8 @@ export const useInvalidateAggregates = () => {
   const router = useRouter()
 
   return useCallback(
-    (aggregates: readonly Aggregate[], options?: InvalidateOptions) =>
-      invalidateAggregates(queryClient, router, aggregates, options),
+    (roots: readonly QueryKey[], options?: InvalidateOptions) =>
+      invalidateRoots(queryClient, router, roots, options),
     [queryClient, router],
   )
 }

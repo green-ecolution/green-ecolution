@@ -3,7 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 import NearestTreeList from './NearestTreeList'
-import type { TreeWithDistance } from '@/api/backendApi'
+import type { TreeWithDistance } from '../../../../modules/irrigation/src/api/client'
 
 function makeEntry(
   overrides: {

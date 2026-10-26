@@ -8,6 +8,7 @@ import { PlanStatus as WateringPlanStatus } from '@green-ecolution/backend-clien
 import useStore from '@/store/store'
 
 vi.mock('@/api/backendApi', () => ({
+  configuration: {},
   planApi: {
     createPlan: vi.fn(),
     updatePlan: vi.fn(),

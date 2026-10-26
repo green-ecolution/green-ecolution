@@ -12,7 +12,7 @@ import {
 } from '@tanstack/react-router'
 import ClusterTreeList from './ClusterTreeList'
 import { WateringStatus } from '@/api/backendApi'
-import type { Tree } from '@/api/backendApi'
+import type { Tree } from '../../../../modules/irrigation/src/api/client'
 
 function makeTree(overrides: Partial<Tree> = {}): Tree {
   return {

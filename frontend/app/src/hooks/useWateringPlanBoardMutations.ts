@@ -1,4 +1,5 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { queryRoots } from '@/api/queries'
+import { useMutation, useQueryClient, type QueryKey } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { PlanStatus as WateringPlanStatus } from '@green-ecolution/backend-client'
 import { planApi } from '@/api/backendApi'
@@ -9,7 +10,7 @@ import type {
   WateringPlanUpdate,
 } from '@/api/backendApi'
 import { toPlanUpdateRequest } from '@/api/irrigationPlans'
-import { wateringPlanQueries, type Aggregate } from '@/api/queries'
+import { wateringPlanQueries } from '@/api/queries'
 import { PLAN_STATUS_AGGREGATES, useInvalidateAggregates } from '@/lib/queryInvalidation'
 import createToast from '@/hooks/createToast'
 import { resolveApiError } from '@/lib/apiError'
@@ -48,13 +49,13 @@ export const useWateringPlanBoardMutations = () => {
   // The board stays mounted after a mutation, so the route loaders have to
   // re-run as well; cancelQueries elsewhere is scoped to the board to avoid
   // aborting unrelated watering-plan queries.
-  const runInvalidation = (aggregates: readonly Aggregate[]) =>
-    invalidate(aggregates, { reloadRoutes: true }).catch((error) =>
+  const runInvalidation = (roots: readonly QueryKey[]) =>
+    invalidate(roots, { reloadRoutes: true }).catch((error) =>
       console.error('Invalidation after watering plan mutation failed:', error),
     )
 
   const invalidateAfterStatusChange = () => void runInvalidation(PLAN_STATUS_AGGREGATES)
-  const invalidatePlans = () => void runInvalidation(['wateringPlan'])
+  const invalidatePlans = () => void runInvalidation(queryRoots.wateringPlan)
 
   const update = (plan: WateringPlanInList, overrides: Partial<WateringPlanUpdate>) =>
     planApi.updatePlan({

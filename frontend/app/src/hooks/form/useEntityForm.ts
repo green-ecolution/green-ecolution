@@ -1,7 +1,7 @@
 import { useMutation } from '@tanstack/react-query'
 import createToast from '@/hooks/createToast'
 import { useNavigate } from '@tanstack/react-router'
-import type { Aggregate } from '@/api/queries'
+import type { QueryKey } from '@tanstack/react-query'
 import { useInvalidateAggregates } from '@/lib/queryInvalidation'
 import { DefaultValues, FieldValues, Resolver, useForm } from 'react-hook-form'
 import { useFormNavigationBlocker } from './useFormNavigationBlocker'
@@ -25,8 +25,8 @@ export interface EntityFormConfig<TForm extends FieldValues, TCreate, TUpdate, T
   createFn: (body: TCreate) => Promise<TEntity>
   updateFn: (id: string, body: TUpdate) => Promise<TEntity>
 
-  /** Every aggregate a save touches, including neighbours it changes indirectly. */
-  invalidates: readonly Aggregate[]
+  /** Every query root a save touches, including neighbours it changes indirectly. */
+  invalidates: readonly QueryKey[]
 
   successRoute: (id: string) => { to: string; params: Record<string, string> }
   replaceOnSuccess?: boolean

@@ -1,3 +1,4 @@
+import { queryRoots } from '@/api/queries'
 import type { Vehicle } from '@/api/backendApi'
 import { vehicleApi } from '@/api/backendApi'
 import { useIssueTranslator } from '@/lib/i18n/validation'
@@ -37,7 +38,7 @@ export const useVehicleForm = (
       }),
 
     // Watering plans embed their transporter and trailer.
-    invalidates: ['vehicle', 'wateringPlan'],
+    invalidates: [...queryRoots.vehicle, ...queryRoots.wateringPlan],
 
     successRoute: (id) => ({
       to: '/vehicles/$vehicleId',

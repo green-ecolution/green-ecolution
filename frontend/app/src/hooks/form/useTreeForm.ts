@@ -1,5 +1,6 @@
-import type { Tree, TreeCreate, TreeUpdate } from '@/api/backendApi'
-import { treeApi } from '@/api/backendApi'
+import { irrigationRoots } from '../../../../modules/irrigation/src/api/queries'
+import type { Tree, TreeCreate, TreeUpdate } from '../../../../modules/irrigation/src/api/client'
+import { treeApi } from '../../../../modules/irrigation/src/api/client'
 import { useIssueTranslator } from '@/lib/i18n/validation'
 import { TreeForm } from '@/schema/treeSchema'
 import { treeDraftResolver } from '@green-ecolution/domain-wasm'
@@ -22,7 +23,7 @@ export const useTreeForm = (
     updateFn: (id, body) => treeApi.updateTree({ treeId: id, treeUpdateRequest: body }),
 
     // Cluster too: assigning a tree shifts the cluster's centroid and status.
-    invalidates: ['tree', 'cluster'],
+    invalidates: [...irrigationRoots.tree, ...irrigationRoots.cluster],
 
     successRoute: (id) => ({
       to: '/trees/$treeId',

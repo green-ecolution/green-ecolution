@@ -4,7 +4,8 @@ import { useSuspenseQuery } from '@tanstack/react-query'
 import { Loading } from '@green-ecolution/ui'
 import { useTranslation } from 'react-i18next'
 import type { WateringPlan } from '@/api/backendApi'
-import { clusterQueries, routingStartPointsQuery, wateringPlanQueries } from '@/api/queries'
+import { routingStartPointsQuery, wateringPlanQueries } from '@/api/queries'
+import { clusterQueries } from '../../../../modules/irrigation/src/api/queries'
 import RoutePointMarkers, {
   buildRoutePoints,
   type RoutePointMarkerData,

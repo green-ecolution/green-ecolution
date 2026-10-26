@@ -1,4 +1,4 @@
-import { treeQueries } from '@/api/queries'
+import { treeQueries } from '../../../../../modules/irrigation/src/api/queries'
 import GeolocationPermissionNotice from '@/components/geolocation/GeolocationPermissionNotice'
 import LocationMapPreview from '@/components/geolocation/LocationMapPreview'
 import NearestTreeMapPreview from '@/components/geolocation/NearestTreeMapPreview'

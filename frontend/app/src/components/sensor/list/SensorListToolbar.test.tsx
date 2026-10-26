@@ -46,6 +46,15 @@ vi.mock('@/api/queries', async () => {
           ]),
       }),
     },
+  }
+})
+
+vi.mock('../../../../../modules/irrigation/src/api/queries', async () => {
+  const actual = await vi.importActual<
+    typeof import('../../../../../modules/irrigation/src/api/queries')
+  >('../../../../../modules/irrigation/src/api/queries')
+  return {
+    ...actual,
     clusterQueries: {
       ...actual.clusterQueries,
       list: () => ({

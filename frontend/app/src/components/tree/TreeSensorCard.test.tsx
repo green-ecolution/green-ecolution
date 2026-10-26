@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { DataHealth } from '@green-ecolution/backend-client'
 import TreeSensorCard from './TreeSensorCard'
-import type { Tree } from '@/api/backendApi'
+import type { Tree } from '../../../../modules/irrigation/src/api/client'
 
 vi.mock('@tanstack/react-router', () => ({
   Link: ({ children }: { children: ReactNode }) => <a href="/">{children}</a>,

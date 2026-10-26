@@ -12,7 +12,7 @@ import {
   TimeRangeToggle,
   type ChartConfig,
 } from '@green-ecolution/ui'
-import { clusterQueries } from '@/api/queries'
+import { clusterQueries } from '../../../../modules/irrigation/src/api/queries'
 import TimeSeriesFrame from '@/components/general/charts/TimeSeriesFrame'
 import {
   timeWindowOptions,

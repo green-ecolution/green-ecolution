@@ -4,12 +4,14 @@ import { renderHook, waitFor } from '@testing-library/react'
 import { PlanStatus as WateringPlanStatus } from '@green-ecolution/backend-client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { QueryKey } from '@tanstack/react-query'
-import { clusterQueries, treeQueries, wateringPlanQueries } from '@/api/queries'
+import { wateringPlanQueries } from '@/api/queries'
+import { clusterQueries, treeQueries } from '../../../modules/irrigation/src/api/queries'
 import { toUpdateRequest, useWateringPlanBoardMutations } from './useWateringPlanBoardMutations'
 import type { WateringPlanInList } from '@/api/backendApi'
 
 const updatePlan = vi.fn()
 vi.mock('@/api/backendApi', () => ({
+  configuration: {},
   planApi: {
     updatePlan: (...args: unknown[]) => updatePlan(...args) as unknown,
   },
