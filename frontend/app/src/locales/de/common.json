@@ -171,5 +171,13 @@
       "idCopied": "Sensor-ID kopiert",
       "idCopyFailed": "Sensor-ID konnte nicht kopiert werden"
     }
+  },
+  "modules": {
+    "irrigation": "Bewässerung"
+  },
+  "moduleInactive": {
+    "title": "Modul nicht aktiv",
+    "description": "Dieser Bereich gehört zu einem Modul, das in deiner Organisation nicht eingeschaltet ist.",
+    "back": "Zum Dashboard"
   }
 }

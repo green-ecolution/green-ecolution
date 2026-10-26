@@ -1,1 +1,1 @@
-export {}
+export { irrigationManifest } from './manifest'

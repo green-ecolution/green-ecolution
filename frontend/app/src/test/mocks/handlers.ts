@@ -3,6 +3,13 @@ import { http, HttpResponse } from 'msw'
 const baseUrl = '/api-local'
 
 export const handlers = [
+  http.get(`${baseUrl}/v1/modules`, () =>
+    HttpResponse.json({
+      modules: ['irrigation'],
+      organizations: [{ organizationId: 'org-1', active: ['irrigation'] }],
+    }),
+  ),
+
   http.get(`${baseUrl}/v1/plugins/views`, () => HttpResponse.json([])),
 
   // Tree API handlers

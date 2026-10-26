@@ -5,9 +5,11 @@ export function activeModuleKeys(response: ModuleListResponse): Set<string> {
   return new Set(response.organizations.flatMap((entry) => entry.active))
 }
 
-export function activeManifests(
+export function activeManifestsFrom(
   manifests: readonly ModuleManifest[],
-  active: ReadonlySet<string>,
+  response: ModuleListResponse,
 ): ModuleManifest[] {
-  return manifests.filter((manifest) => active.has(manifest.key))
+  const registered = new Set(response.modules)
+  const active = activeModuleKeys(response)
+  return manifests.filter(({ key }) => registered.has(key) && active.has(key))
 }
