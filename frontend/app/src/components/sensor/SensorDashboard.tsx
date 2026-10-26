@@ -1,32 +1,19 @@
-import { Suspense } from 'react'
 import { useTranslation } from 'react-i18next'
 import BackLink from '@/components/general/links/BackLink'
 import SensorActionsProvider from './detail/SensorActionsContext'
 import SensorDataQualitySection from './detail/SensorDataQualitySection'
 import SensorHero from './detail/SensorHero'
 import SensorIdentitySection from './detail/SensorIdentitySection'
+import SensorInsights from './detail/SensorInsights'
 import SensorKpiRow from './detail/SensorKpiRow'
 import SensorLorawanConfigSection from './detail/SensorLorawanConfigSection'
 import SensorMeasurementProfile from './detail/SensorMeasurementProfile'
 import SensorPlacementCard from './detail/SensorPlacementCard'
 import SensorSignalCard from './detail/SensorSignalCard'
 import type { Sensor } from '@/api/backendApi'
-import { targetDescriptor } from '@/lib/targets'
-import { useActiveModules } from '@/modules/useActiveModules'
 
 interface SensorDashboardProps {
   sensor: Sensor
-}
-
-const SensorInsights = ({ sensor }: SensorDashboardProps) => {
-  const { manifests } = useActiveModules()
-  const Insights = targetDescriptor(manifests, sensor.target)?.SensorInsights
-  if (!Insights) return null
-  return (
-    <Suspense fallback={null}>
-      <Insights sensor={sensor} />
-    </Suspense>
-  )
 }
 
 const SensorDashboard = ({ sensor }: SensorDashboardProps) => {

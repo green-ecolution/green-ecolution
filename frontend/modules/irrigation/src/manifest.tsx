@@ -1,3 +1,4 @@
+import { lazy } from 'react'
 import { FolderClosed, PieChart, TreeDeciduous, Trees } from 'lucide-react'
 import Tree from '@/components/icons/Tree'
 import { ANY_READ } from '@/lib/auth/permissions'
@@ -78,4 +79,7 @@ export const irrigationManifest: ModuleManifest = {
   map: irrigationMap,
   planning: irrigationPlanning,
   targets: [treeSensorTarget],
+  // Lazy like the other slots; the series exists for any soil-moisture sensor,
+  // the tree only adds thresholds and watering events.
+  sensorInsights: lazy(() => import('./components/sensor/SensorSoilMoistureChart')),
 }

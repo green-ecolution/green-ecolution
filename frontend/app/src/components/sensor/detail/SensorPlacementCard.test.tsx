@@ -54,6 +54,15 @@ describe('SensorPlacementCard', () => {
     expect(await screen.findByTestId('placement-probe')).toHaveTextContent('eui-test')
   })
 
+  it('hands the coordinates panel to the placement, so it sits between map and rows', async () => {
+    render(<SensorPlacementCard sensor={sensorWith({})} />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Koordinaten' }))
+
+    const placement = await screen.findByTestId('placement-probe')
+    expect(placement).toHaveTextContent('54.780000°')
+  })
+
   it('shows the core label without a link for a target of an inactive module', () => {
     activeManifests.current = []
 

@@ -1,4 +1,4 @@
-import type { ComponentType } from 'react'
+import type { ComponentType, ReactNode } from 'react'
 import type { QueryClient, QueryKey, UseQueryOptions } from '@tanstack/react-query'
 import type { z } from 'zod'
 import type {
@@ -150,8 +150,8 @@ export interface ModuleTarget {
   invalidate: readonly QueryKey[]
   AssignDialog: ComponentType<TargetAssignDialogProps>
   WizardStep: ComponentType<TargetWizardStepProps>
-  Placement: ComponentType<{ sensor: SensorResponse }>
-  SensorInsights?: ComponentType<{ sensor: SensorResponse }>
+  /** `children` is the core's coordinates panel; it belongs between the map and the rows. */
+  Placement: ComponentType<{ sensor: SensorResponse; children?: ReactNode }>
   listFilter?: ModuleSensorListFilter
 }
 
@@ -196,4 +196,6 @@ export interface ModuleManifest {
   planning?: ModulePlanning
   targets?: readonly ModuleTarget[]
   settingsSection?: ModuleSettingsSection
+  /** Rendered on every sensor's detail page; the module decides itself whether it has something to show. */
+  sensorInsights?: ComponentType<{ sensor: SensorResponse }>
 }

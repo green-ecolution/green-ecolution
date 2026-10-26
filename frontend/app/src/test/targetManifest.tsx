@@ -30,7 +30,12 @@ export function probeTarget(
         </button>
       </div>
     ),
-    Placement: ({ sensor }) => <div data-testid={`placement-${kind}`}>{sensor.id}</div>,
+    Placement: ({ sensor, children }) => (
+      <div data-testid={`placement-${kind}`}>
+        {sensor.id}
+        {children}
+      </div>
+    ),
     ...overrides,
   }
 }

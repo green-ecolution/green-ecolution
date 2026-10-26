@@ -1,4 +1,4 @@
-import { Suspense, useState } from 'react'
+import { Suspense, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   Alert,
@@ -29,7 +29,10 @@ interface SensorPlacementCardProps {
 }
 
 /** A target whose module is off or unknown: the core knows only its label. */
-const UnknownTargetPlacement = ({ sensor }: SensorPlacementCardProps) => {
+const UnknownTargetPlacement = ({
+  sensor,
+  children,
+}: SensorPlacementCardProps & { children?: ReactNode }) => {
   const { t } = useTranslation('sensor')
   const coord = sensor.location
   const mapInteractive = useMediaQuery('(pointer: fine)')
@@ -47,6 +50,7 @@ const UnknownTargetPlacement = ({ sensor }: SensorPlacementCardProps) => {
           <SensorMarker lng={coord.longitude} lat={coord.latitude} />
         </MapPreview>
       )}
+      {children}
       <div className="overflow-hidden rounded-xl border border-dark-100">
         <PlacementRow
           icon={<MapPin />}
@@ -66,6 +70,21 @@ const SensorPlacementCard = ({ sensor }: SensorPlacementCardProps) => {
   const [showCoordinates, setShowCoordinates] = useState(false)
   const descriptor = targetDescriptor(manifests, sensor.target)
   const Placement = descriptor?.Placement
+  const coordinates = coord && showCoordinates && (
+    <div className="rounded-xl bg-dark-50 px-4 py-3 text-sm">
+      <dl className="grid grid-cols-2 gap-x-6">
+        <div>
+          <dt className="text-muted-foreground">{t('location.latitudeLabel')}</dt>
+          <dd className="font-mono font-semibold">{coord.latitude.toFixed(6)}°</dd>
+        </div>
+        <div>
+          <dt className="text-muted-foreground">{t('location.longitudeLabel')}</dt>
+          <dd className="font-mono font-semibold">{coord.longitude.toFixed(6)}°</dd>
+        </div>
+      </dl>
+      <p className="mt-2 text-xs text-muted-foreground">{t('location.derivedFromTargetNotice')}</p>
+    </div>
+  )
 
   return (
     <Card variant="outlined" className="h-full">
@@ -113,34 +132,16 @@ const SensorPlacementCard = ({ sensor }: SensorPlacementCardProps) => {
           </Alert>
         ) : (
           <>
-            {coord && showCoordinates && (
-              <div className="rounded-xl bg-dark-50 px-4 py-3 text-sm">
-                <dl className="grid grid-cols-2 gap-x-6">
-                  <div>
-                    <dt className="text-muted-foreground">{t('location.latitudeLabel')}</dt>
-                    <dd className="font-mono font-semibold">{coord.latitude.toFixed(6)}°</dd>
-                  </div>
-                  <div>
-                    <dt className="text-muted-foreground">{t('location.longitudeLabel')}</dt>
-                    <dd className="font-mono font-semibold">{coord.longitude.toFixed(6)}°</dd>
-                  </div>
-                </dl>
-                <p className="mt-2 text-xs text-muted-foreground">
-                  {t('location.derivedFromTargetNotice')}
-                </p>
-              </div>
-            )}
-
             {Placement ? (
               <Suspense
                 fallback={
                   <div className="h-48 rounded-xl bg-dark-50 animate-pulse sm:h-56 xl:h-52" />
                 }
               >
-                <Placement sensor={sensor} />
+                <Placement sensor={sensor}>{coordinates}</Placement>
               </Suspense>
             ) : (
-              <UnknownTargetPlacement sensor={sensor} />
+              <UnknownTargetPlacement sensor={sensor}>{coordinates}</UnknownTargetPlacement>
             )}
           </>
         )}

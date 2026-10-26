@@ -23,6 +23,10 @@ describe('treeSensorTarget', () => {
     expect(treeSensorTarget.invalidate).toEqual(irrigationRoots.tree)
   })
 
+  it('offers its sensor insights for every sensor, not only through the tree target', () => {
+    expect(irrigationManifest.sensorInsights).toBeDefined()
+  })
+
   it('keeps the cluster filter on the search param existing links use', () => {
     expect(treeSensorTarget.listFilter?.param).toBe('clusterIds')
   })

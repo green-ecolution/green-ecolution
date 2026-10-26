@@ -1,4 +1,4 @@
-import { Suspense, useMemo } from 'react'
+import { Suspense, useMemo, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { Badge } from '@green-ecolution/ui'
@@ -101,7 +101,7 @@ const TreeRow = ({ treeId }: { treeId: string }) => {
   )
 }
 
-const TreePlacement = ({ sensor }: { sensor: SensorResponse }) => {
+const TreePlacement = ({ sensor, children }: { sensor: SensorResponse; children?: ReactNode }) => {
   const { t } = useTranslation('irrigation')
   const coord = sensor.location
   // On touch screens a pannable preview swallows the swipe meant to scroll the page.
@@ -127,6 +127,8 @@ const TreePlacement = ({ sensor }: { sensor: SensorResponse }) => {
           <SensorMarker lng={coord.longitude} lat={coord.latitude} />
         </MapPreview>
       )}
+
+      {children}
 
       <div className="divide-y divide-dark-100 overflow-hidden rounded-xl border border-dark-100">
         {clusterId ? (

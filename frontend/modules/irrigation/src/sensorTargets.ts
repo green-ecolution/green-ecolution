@@ -29,7 +29,6 @@ export const treeSensorTarget: ModuleTarget = {
   AssignDialog: lazy(() => import('./components/sensor/SensorTreeAssignDialog')),
   WizardStep: lazy(() => import('./components/sensor/wizard/SensorTreeStep')),
   Placement: lazy(() => import('./components/sensor/TreePlacement')),
-  SensorInsights: lazy(() => import('./components/sensor/SensorSoilMoistureChart')),
   listFilter: {
     // The sensor list linked clusters as `clusterIds` before the filter moved here.
     param: 'clusterIds',

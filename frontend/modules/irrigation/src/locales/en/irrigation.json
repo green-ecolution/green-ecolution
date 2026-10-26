@@ -215,7 +215,7 @@
       "discardedLabel": "Reading discarded"
     },
     "wizard": {
-      "treeLabel": "Tree {number}",
+      "treeLabel": "tree {number}",
       "tree": {
         "header": {
           "title": "Assign tree",
