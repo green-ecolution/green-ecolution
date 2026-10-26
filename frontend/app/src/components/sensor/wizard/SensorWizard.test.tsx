@@ -74,7 +74,6 @@ vi.mock('@/modules/useActiveModules', () => ({
 
 const activateMock = vi.fn().mockResolvedValue({ id: 'eui-a8404131af5e6451' })
 vi.mock('@/api/backendApi', () => ({
-  configuration: {},
   sensorApi: { activateSensor: (...args: unknown[]) => activateMock(...args) as unknown },
 }))
 
