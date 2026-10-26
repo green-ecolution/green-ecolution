@@ -1,6 +1,7 @@
 packages:
   - 'app'
   - 'packages/*'
+  - 'modules/*'
   - 'keycloak-theme'
   - 'demo-plugin'
 

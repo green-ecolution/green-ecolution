@@ -4,12 +4,15 @@ import babel from '@rolldown/plugin-babel'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
 import tanstackRouter from '@tanstack/router-plugin/vite'
+import { rootRoute } from '@tanstack/virtual-file-routes'
 import basicSsl from '@vitejs/plugin-basic-ssl'
 import { VitePWA } from 'vite-plugin-pwa'
 import wasm from 'vite-plugin-wasm'
 import topLevelAwait from 'vite-plugin-top-level-await'
 import { handbook } from '../handbook/src/vite-plugin.mjs'
 import { navigateFallbackDenylist } from './src/lib/pwaNavigateFallback'
+import { moduleRouteNodes } from './src/modules/buildConfig'
+import { MODULE_BUILDS } from './modules.config'
 
 const useTraefik = !!process.env.USE_TRAEFIK
 
@@ -44,6 +47,10 @@ export default defineConfig({
       quoteStyle: 'single',
       // Tests sit next to the routes they cover and export no Route.
       routeFileIgnorePattern: '\\.(test|spec)\\.[jt]sx?$',
+      virtualRouteConfig: rootRoute(
+        '__root.tsx',
+        moduleRouteNodes(path.resolve(import.meta.dirname, 'src/routes'), MODULE_BUILDS),
+      ),
     }),
     tailwindcss(),
     react(),
