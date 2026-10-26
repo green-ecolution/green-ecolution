@@ -4,6 +4,7 @@ title: Bäume
 part: greenspaces
 summary: Die Baumliste mit Suche, Filtern und Sortierung, die Detailseite eines Baums und die Besonderheit von Bäumen aus dem Baumkataster.
 routes: ['/trees', '/trees/$treeId']
+module: irrigation
 ---
 
 ## Die Baumliste und ihre Filter

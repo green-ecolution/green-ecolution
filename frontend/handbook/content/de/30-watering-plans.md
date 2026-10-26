@@ -102,7 +102,9 @@ Standardwert, kein fester Bedarf des einzelnen Baums; die tatsächlich ausgebrac
 trägst du beim
 [Beenden des Einsatzes](./watering-plans.md#einsatz-mit-auswertung-beenden) je Gruppe
 einzeln ein. Ist noch kein Fahrzeug gewählt, weist ein
-Hinweis darauf hin, dass ohne Fahrzeug keine Route berechnet werden kann. Sobald
+Hinweis darauf hin, dass ohne Fahrzeug keine Route berechnet werden kann. Ist keine
+Gruppe ausgewählt, steht unter der Auswahl der Hinweis **Wähle mindestens eine
+Bewässerungsgruppe aus.** Sobald
 mindestens eine Gruppe und ein Fahrzeug feststehen, zeichnet die Karte zur Orientierung
 bereits eine vorläufige Route ein. **Übernehmen** speichert die Auswahl im Formular und
 führt zurück zum Einsatzplan.

@@ -79,6 +79,13 @@ setzen; passt die daraus entstehende Kombination zu keiner der vier Stufen, zeig
 Anwendung stattdessen **Individuell**. Ein Recht, das du selbst nicht besitzt, lässt
 sich dabei nicht aktivieren.
 
+Die Rollenmatrix zeigt nur die Bereiche der Module, die für dich aktiv sind. Schaltet
+deine Organisation das Modul Bewässerung ab (siehe
+[Organisation](./settings-organization.md#module)), fehlen in der Matrix die Bereiche
+Bäume, Bewässerungsgruppen und Einsatzpläne. Die bereits gespeicherten Rechte dafür
+gehen dabei nicht verloren: Sie bleiben an der Rolle hängen und stehen nach dem
+erneuten Einschalten des Moduls wieder zur Auswahl.
+
 ![Eine Rolle mit ihrer Rechteauswahl aus Kein, Ansehen, Bearbeiten und Verwalten je Bereich](../images/settings-team-roles.png)
 
 ## Der Berechtigungskatalog
