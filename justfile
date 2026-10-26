@@ -476,7 +476,7 @@ seed-reset: _migrate-build
 # Requires KATASTER_SOURCE_URL. Pass flags via ARGS, e.g. `just import-kataster-fl --dry-run`.
 [group('db')]
 import-kataster-fl *ARGS:
-    cd {{ backend_dir }} && SQLX_OFFLINE=true cargo run --bin import-kataster-fl -- {{ ARGS }}
+    cd {{ backend_dir }} && SQLX_OFFLINE=true cargo run -p irrigation-server --bin import-kataster-fl -- {{ ARGS }}
 
 # Restore a staging pg_dump into the local DB and adapt it to the dev setup.
 # Destructive: drops schema public. Pass --yes to skip the prompt.
@@ -552,14 +552,14 @@ test-clean:
 # Run the domain micro-benchmarks and record measurements
 [group('check')]
 bench:
-    @echo "Criterion benchmarks (domain)..."
-    cd {{ backend_dir }} && cargo bench -p domain --locked
+    @echo "Criterion benchmarks (domain, irrigation-domain)..."
+    cd {{ backend_dir }} && cargo bench -p domain -p irrigation-domain --locked
 
 # Execute every benchmark once without measuring; this is what CI runs
 [group('check')]
 bench-check:
     @echo "Benchmark smoke run..."
-    cd {{ backend_dir }} && cargo bench -p domain --locked -- --test
+    cd {{ backend_dir }} && cargo bench -p domain -p irrigation-domain --locked -- --test
 
 # Seed a dedicated benchmark database to one scale (xs|s|m|l)
 [group('check')]

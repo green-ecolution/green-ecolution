@@ -1,0 +1,756 @@
+//! Tree aggregate — individual street / park trees managed by the platform.
+//!
+//! The aggregate ([`Tree`]) keeps `cluster_id` and `watering_status` private
+//! because they must only change through the dedicated methods
+//! `move_to_cluster` and `record_watering_status`, which emit the events the
+//! cluster handlers rely on. The sensor measuring a tree is not part of the
+//! aggregate: the sensor knows its target.
+//!
+//! [`TreeView`] adds audit fields for HTTP responses. [`TreeViewWithDistance`]
+//! is returned by proximity searches.
+
+pub mod error;
+pub mod marker;
+pub mod planting_year;
+pub mod repository;
+pub mod snapshot;
+pub mod sort;
+pub mod view;
+mod volumetric_calibration;
+mod watermark_calibration;
+
+use chrono::{DateTime, Datelike, Utc};
+
+use domain::{
+    Id,
+    authorization::Visibility,
+    events::DomainEvent,
+    organization::Organization,
+    sensor::data::Watermark,
+    shared::{
+        coordinates::Coordinate,
+        geo::BoundingBox,
+        provenance::{Provenance, ProviderId},
+    },
+};
+
+use crate::{cluster::TreeCluster, events::IrrigationEvent, watering_status::WateringStatus};
+
+pub use error::TreeError;
+pub use marker::TreeMarker;
+pub use planting_year::{MAX_PLANTING_YEAR, MIN_PLANTING_YEAR, PlantingYear};
+pub use repository::{TreeReader, TreeSearchPage, TreeWriter};
+#[doc(hidden)]
+pub use snapshot::TreeSnapshot;
+pub use sort::{TreeSort, TreeSortField};
+pub use view::{TreeView, TreeViewWithDistance};
+pub use volumetric_calibration::{
+    REW_CRIT, REW_MIN, VolumetricThresholds, rew_fraction, volumetric_thresholds,
+};
+
+domain::newtype_nonempty! {
+    /// Botanical or common species name, 1–255 characters after trimming.
+    Species, "tree.species", 1, 255
+}
+
+domain::newtype_nonempty! {
+    /// Municipality-assigned tree identifier (e.g. `"FL-001"`), 1–64 characters.
+    TreeNumber, "tree.number", 1, 64
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Tree {
+    pub id: Id<Tree>,
+    pub planting_year: PlantingYear,
+    pub species: Species,
+    pub tree_number: TreeNumber,
+    pub coordinate: Coordinate,
+    pub description: Option<String>,
+    pub last_watered: Option<DateTime<Utc>>,
+
+    cluster_id: Option<Id<TreeCluster>>,
+    watering_status: WateringStatus,
+    provenance: Provenance,
+    organization_id: Id<Organization>,
+}
+
+/// Input for creating a new [`Tree`].
+#[derive(Debug, Clone)]
+pub struct TreeDraft {
+    pub planting_year: PlantingYear,
+    pub species: Species,
+    pub tree_number: TreeNumber,
+    pub coordinate: Coordinate,
+    pub description: Option<String>,
+    pub cluster_id: Option<Id<TreeCluster>>,
+    pub provenance: Provenance,
+    pub organization_id: Id<Organization>,
+}
+
+/// Filter inputs for tree list queries.
+#[derive(Debug, Default, Clone)]
+pub struct TreeSearchQuery {
+    pub watering_statuses: Vec<WateringStatus>,
+    pub has_cluster: Option<bool>,
+    pub planting_years: Vec<PlantingYear>,
+    pub ids: Vec<Id<Tree>>,
+    pub cluster_id: Option<Id<TreeCluster>>,
+    /// List filter for one or more clusters. Independent of `cluster_id`,
+    /// which single-cluster callers use.
+    pub cluster_ids: Vec<Id<TreeCluster>>,
+    pub has_sensor: Option<bool>,
+    pub provider: Option<ProviderId>,
+    pub bbox: Option<BoundingBox>,
+    /// Case-insensitive text filter on tree number or species.
+    pub q: Option<String>,
+    /// Result order. Defaults to tree number ascending.
+    pub sort: TreeSort,
+    /// Narrows the result to one owning organization. Independent of
+    /// `visible`: the caller asks for a single org, `visible` decides whether
+    /// they are allowed to see it at all.
+    pub organization_id: Option<Id<Organization>>,
+    /// Which organizations may see the result. Callers must set this per
+    /// request; defaults to unrestricted for internal consumers (e.g. event
+    /// handlers).
+    pub visible: Visibility,
+}
+
+impl Tree {
+    #[doc(hidden)]
+    pub fn reconstitute(snap: TreeSnapshot) -> Self {
+        Self {
+            id: Id::new(snap.id),
+            planting_year: PlantingYear::reconstitute(snap.planting_year as u32),
+            species: Species::reconstitute(snap.species),
+            tree_number: TreeNumber::reconstitute(snap.tree_number),
+            coordinate: Coordinate::new(snap.latitude, snap.longitude)
+                .expect("DB coordinate values must be valid"),
+            description: snap.description,
+            last_watered: snap.last_watered,
+            cluster_id: snap.cluster_id.map(Id::new),
+            watering_status: snap.watering_status,
+            provenance: Provenance::reconstitute(snap.provider, snap.additional_info),
+            organization_id: Id::new(snap.organization_id),
+        }
+    }
+
+    pub fn cluster_id(&self) -> Option<Id<TreeCluster>> {
+        self.cluster_id
+    }
+
+    pub fn organization_id(&self) -> Id<Organization> {
+        self.organization_id
+    }
+
+    /// The tree is not in the ground yet, so nothing can measure it.
+    pub fn planting_year_in_future(&self, today: DateTime<Utc>) -> bool {
+        self.planting_year.is_future(today)
+    }
+
+    pub fn watering_status(&self) -> WateringStatus {
+        self.watering_status
+    }
+
+    pub fn provenance(&self) -> &Provenance {
+        &self.provenance
+    }
+
+    /// Replaces all freely editable fields. `cluster_id` is not part of this
+    /// update because it has its own transition-emitting method
+    /// (`move_to_cluster`). Only a `coordinate` change emits an event:
+    /// `TreeCoordinateChanged` is consumed by the cluster recalc handler to
+    /// update centroid and region. The other fields (species, tree_number,
+    /// planting_year, description, provenance) have no subscribers, so they
+    /// change silently.
+    pub fn replace_details(
+        &mut self,
+        species: Species,
+        tree_number: TreeNumber,
+        planting_year: PlantingYear,
+        coordinate: Coordinate,
+        description: Option<String>,
+        provenance: Provenance,
+    ) -> Vec<DomainEvent> {
+        let mut events = Vec::new();
+        if self.coordinate != coordinate {
+            events.push(
+                IrrigationEvent::TreeCoordinateChanged {
+                    tree_id: self.id,
+                    cluster_id: self.cluster_id,
+                }
+                .into_domain(),
+            );
+        }
+        self.species = species;
+        self.tree_number = tree_number;
+        self.planting_year = planting_year;
+        self.coordinate = coordinate;
+        self.description = description;
+        self.provenance = provenance;
+        events
+    }
+
+    pub fn move_to_cluster(&mut self, target: Option<Id<TreeCluster>>) -> Vec<DomainEvent> {
+        if self.cluster_id == target {
+            return vec![];
+        }
+        let from = self.cluster_id;
+        self.cluster_id = target;
+        vec![
+            IrrigationEvent::TreeMovedBetweenClusters {
+                tree_id: self.id,
+                from,
+                to: target,
+            }
+            .into_domain(),
+        ]
+    }
+
+    /// Without a sensor nothing measures this tree any more.
+    pub fn forget_watering_status(&mut self) -> Vec<DomainEvent> {
+        self.record_watering_status(WateringStatus::Unknown)
+    }
+
+    pub fn record_watering_status(&mut self, status: WateringStatus) -> Vec<DomainEvent> {
+        if self.watering_status == status {
+            return vec![];
+        }
+        self.watering_status = status;
+        vec![
+            IrrigationEvent::TreeWateringStatusChanged {
+                tree_id: self.id,
+                cluster_id: self.cluster_id,
+                new_status: status,
+            }
+            .into_domain(),
+        ]
+    }
+
+    pub fn mark_watered_at(&mut self, ts: DateTime<Utc>) {
+        self.last_watered = Some(ts);
+    }
+
+    /// Records a completed manual watering: timestamp plus
+    /// [`WateringStatus::JustWatered`].
+    ///
+    /// Deliberately emits no `TreeWateringStatusChanged`. The cluster status is
+    /// set explicitly by the same flow, and re-running the majority vote here
+    /// would reset a cluster without sensor-backed trees to `Unknown`.
+    pub fn mark_just_watered(&mut self, ts: DateTime<Utc>) {
+        self.mark_watered_at(ts);
+        self.watering_status = WateringStatus::JustWatered;
+    }
+
+    /// Drops [`WateringStatus::JustWatered`] once its grace period has passed.
+    /// Returns whether the status changed, so callers can skip the write.
+    ///
+    /// The tree falls back to `Unknown` rather than to a sensor-derived value:
+    /// deriving one needs readings this aggregate does not have, and the next
+    /// reading overwrites it anyway. Emits no event for the same reason as
+    /// [`Tree::mark_just_watered`].
+    pub fn expire_just_watered(&mut self) -> bool {
+        if self.watering_status != WateringStatus::JustWatered {
+            return false;
+        }
+        self.watering_status = WateringStatus::Unknown;
+        true
+    }
+
+    /// Derives a [`WateringStatus`] from three Watermark sensor readings
+    /// (tension at depths 30/60/90 cm) and the tree's age. Mirrors the
+    /// calibration the Go backend used — see
+    /// [`watermark_calibration`] for the threshold tables and lifecycle
+    /// rules. The worst per-depth score wins (Good < Moderate < Bad).
+    ///
+    /// This method is **Watermark-specific**. When other sensor families
+    /// land, they will get sibling methods (e.g. `calculate_watering_status_from_volumetric`)
+    /// rather than overloading this one.
+    pub fn calculate_watering_status_from_watermarks(
+        &self,
+        watermarks: &[Watermark],
+        today: DateTime<Utc>,
+    ) -> Result<WateringStatus, TreeError> {
+        if self.planting_year.is_future(today) {
+            return Err(TreeError::NotYetPlanted);
+        }
+        let (w30, w60, w90) = watermark_calibration::sort_watermarks(watermarks)?;
+        let lifetime = (today.year() as i64) - (self.planting_year.year() as i64);
+        let tuning = watermark_calibration::PhaseTuning::for_year(lifetime)?;
+        let scores = tuning.score(w30.centibar, w60.centibar, w90.centibar);
+
+        let worst = scores.iter().copied().max().expect("scores has 3 elements");
+        Ok(match worst {
+            0 => WateringStatus::Good,
+            1 => WateringStatus::Moderate,
+            _ => WateringStatus::Bad,
+        })
+    }
+
+    /// Reassigns the tree to `target`'s organization. No-op (and no event)
+    /// if it already belongs there. Callers must ensure the tree is
+    /// clusterless and that any attached sensor is transferred alongside it
+    /// (see `TreeService::transfer`).
+    pub fn transfer_to(&mut self, target: Id<Organization>) -> Vec<DomainEvent> {
+        if self.organization_id == target {
+            return vec![];
+        }
+        let from = self.organization_id;
+        self.organization_id = target;
+        vec![
+            IrrigationEvent::TreeResponsibilityTransferred {
+                tree_id: self.id,
+                from,
+                to: target,
+            }
+            .into_domain(),
+        ]
+    }
+
+    /// Derives a [`WateringStatus`] from volumetric soil-moisture readings,
+    /// the cluster's KA5 `soil` type, and the tree's age.
+    pub fn calculate_watering_status_from_volumetric(
+        &self,
+        readings: &[domain::sensor::data::VolumetricReading],
+        soil: crate::cluster::SoilCondition,
+        today: DateTime<Utc>,
+    ) -> Result<WateringStatus, TreeError> {
+        if self.planting_year.is_future(today) {
+            return Err(TreeError::NotYetPlanted);
+        }
+        let lifetime = (today.year() as i64) - (self.planting_year.year() as i64);
+        volumetric_calibration::classify(readings, soil, lifetime)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use claims::{assert_err, assert_ok};
+
+    fn fixed_tree() -> Tree {
+        Tree {
+            id: Id::new_v7(),
+            planting_year: PlantingYear::new(2020).unwrap(),
+            species: Species::new("Quercus robur").unwrap(),
+            tree_number: TreeNumber::new("FL-001").unwrap(),
+            coordinate: Coordinate::new(54.7937, 9.4469).unwrap(),
+            description: None,
+            last_watered: None,
+            cluster_id: None,
+            watering_status: WateringStatus::Unknown,
+            provenance: Provenance::default(),
+            organization_id: Id::new_v7(),
+        }
+    }
+
+    #[test]
+    fn species_rejects_empty() {
+        assert_err!(Species::new(""));
+    }
+
+    #[test]
+    fn species_accepts_valid() {
+        assert_ok!(Species::new("Tilia cordata"));
+    }
+
+    #[test]
+    fn tree_number_rejects_empty() {
+        assert_err!(TreeNumber::new(""));
+    }
+
+    #[test]
+    fn tree_number_accepts_valid() {
+        assert_ok!(TreeNumber::new("FL-A-12"));
+    }
+
+    #[test]
+    fn move_to_same_cluster_is_noop() {
+        let mut t = fixed_tree();
+        let events = t.move_to_cluster(None);
+        assert!(t.cluster_id().is_none());
+        assert!(events.is_empty());
+    }
+
+    #[test]
+    fn move_to_new_cluster_emits_event_and_updates() {
+        let mut t = fixed_tree();
+        let target: Id<TreeCluster> = Id::new_v7();
+        let events = t.move_to_cluster(Some(target));
+        assert_eq!(t.cluster_id(), Some(target));
+        assert_eq!(events.len(), 1);
+        match IrrigationEvent::from_domain(&events[0]) {
+            Some(IrrigationEvent::TreeMovedBetweenClusters { tree_id, from, to }) => {
+                assert_eq!(*tree_id, t.id);
+                assert_eq!(*from, None);
+                assert_eq!(*to, Some(target));
+            }
+            other => panic!("expected TreeMovedBetweenClusters, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn move_to_other_cluster_emits_event_with_from_and_to() {
+        let mut t = fixed_tree();
+        let a: Id<TreeCluster> = Id::new_v7();
+        let b: Id<TreeCluster> = Id::new_v7();
+        t.move_to_cluster(Some(a));
+        let events = t.move_to_cluster(Some(b));
+        assert_eq!(t.cluster_id(), Some(b));
+        match IrrigationEvent::from_domain(&events[0]) {
+            Some(IrrigationEvent::TreeMovedBetweenClusters { from, to, .. }) => {
+                assert_eq!(*from, Some(a));
+                assert_eq!(*to, Some(b));
+            }
+            other => panic!("expected TreeMovedBetweenClusters, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn move_out_of_cluster_emits_event_with_to_none() {
+        let mut t = fixed_tree();
+        let a: Id<TreeCluster> = Id::new_v7();
+        t.move_to_cluster(Some(a));
+        let events = t.move_to_cluster(None);
+        assert!(t.cluster_id().is_none());
+        match IrrigationEvent::from_domain(&events[0]) {
+            Some(IrrigationEvent::TreeMovedBetweenClusters { from, to, .. }) => {
+                assert_eq!(*from, Some(a));
+                assert_eq!(*to, None);
+            }
+            other => panic!("expected TreeMovedBetweenClusters, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn replace_details_with_new_coordinate_emits_event() {
+        let mut t = fixed_tree();
+        let new_coord = Coordinate::new(54.5, 9.5).unwrap();
+        let events = t.replace_details(
+            t.species.clone(),
+            t.tree_number.clone(),
+            t.planting_year,
+            new_coord,
+            None,
+            Provenance::default(),
+        );
+        assert_eq!(t.coordinate, new_coord);
+        assert_eq!(events.len(), 1);
+        assert!(matches!(
+            IrrigationEvent::from_domain(&events[0]),
+            Some(IrrigationEvent::TreeCoordinateChanged { .. })
+        ));
+    }
+
+    #[test]
+    fn replace_details_with_same_coordinate_emits_no_event() {
+        let mut t = fixed_tree();
+        let same_coord = t.coordinate;
+        let events = t.replace_details(
+            Species::new("Different species").unwrap(),
+            t.tree_number.clone(),
+            t.planting_year,
+            same_coord,
+            Some("new desc".into()),
+            Provenance::default(),
+        );
+        assert_eq!(t.coordinate, same_coord);
+        assert!(events.is_empty(), "non-coordinate fields don't emit events");
+    }
+
+    #[test]
+    fn forget_watering_status_resets_to_unknown() {
+        let mut t = fixed_tree();
+        let _ = t.record_watering_status(WateringStatus::Good);
+        let events = t.forget_watering_status();
+        assert_eq!(t.watering_status(), WateringStatus::Unknown);
+        assert!(matches!(
+            IrrigationEvent::from_domain(&events[0]),
+            Some(IrrigationEvent::TreeWateringStatusChanged {
+                new_status: WateringStatus::Unknown,
+                ..
+            })
+        ));
+        assert!(t.forget_watering_status().is_empty());
+    }
+
+    #[test]
+    fn record_watering_status_change_emits_event() {
+        let mut t = fixed_tree();
+        let events = t.record_watering_status(WateringStatus::Good);
+        assert_eq!(t.watering_status(), WateringStatus::Good);
+        assert_eq!(events.len(), 1);
+        assert!(matches!(
+            IrrigationEvent::from_domain(&events[0]),
+            Some(IrrigationEvent::TreeWateringStatusChanged {
+                new_status: WateringStatus::Good,
+                ..
+            })
+        ));
+    }
+
+    #[test]
+    fn record_watering_status_same_value_is_noop() {
+        let mut t = fixed_tree();
+        let _ = t.record_watering_status(WateringStatus::Good);
+        let events = t.record_watering_status(WateringStatus::Good);
+        assert!(events.is_empty());
+    }
+
+    #[test]
+    fn mark_watered_at_sets_timestamp() {
+        let mut t = fixed_tree();
+        let ts = Utc::now();
+        t.mark_watered_at(ts);
+        assert_eq!(t.last_watered, Some(ts));
+    }
+
+    #[test]
+    fn mark_just_watered_sets_status_and_timestamp_without_event() {
+        let mut t = fixed_tree();
+        let _ = t.record_watering_status(WateringStatus::Bad);
+        let ts = Utc::now();
+
+        t.mark_just_watered(ts);
+
+        assert_eq!(t.watering_status(), WateringStatus::JustWatered);
+        assert_eq!(t.last_watered, Some(ts));
+    }
+
+    #[test]
+    fn expire_just_watered_falls_back_to_unknown() {
+        let mut t = fixed_tree();
+        t.mark_just_watered(Utc::now());
+
+        assert!(t.expire_just_watered());
+        assert_eq!(t.watering_status(), WateringStatus::Unknown);
+    }
+
+    #[test]
+    fn expire_just_watered_leaves_other_statuses_untouched() {
+        let mut t = fixed_tree();
+        let _ = t.record_watering_status(WateringStatus::Moderate);
+
+        assert!(!t.expire_just_watered());
+        assert_eq!(t.watering_status(), WateringStatus::Moderate);
+    }
+
+    #[test]
+    fn transfer_to_same_org_is_noop() {
+        let mut t = fixed_tree();
+        let same = t.organization_id();
+        let events = t.transfer_to(same);
+        assert_eq!(t.organization_id(), same);
+        assert!(events.is_empty());
+    }
+
+    #[test]
+    fn transfer_to_new_org_emits_event_and_updates_field() {
+        let mut t = fixed_tree();
+        let from = t.organization_id();
+        let target: Id<Organization> = Id::new_v7();
+        let events = t.transfer_to(target);
+        assert_eq!(t.organization_id(), target);
+        assert_eq!(events.len(), 1);
+        match IrrigationEvent::from_domain(&events[0]) {
+            Some(IrrigationEvent::TreeResponsibilityTransferred {
+                tree_id,
+                from: ev_from,
+                to,
+            }) => {
+                assert_eq!(*tree_id, t.id);
+                assert_eq!(*ev_from, from);
+                assert_eq!(*to, target);
+            }
+            other => panic!("expected TreeResponsibilityTransferred, got {other:?}"),
+        }
+    }
+
+    fn wm(depth: i32, centibar: i32) -> Watermark {
+        Watermark {
+            depth,
+            resistance: 0,
+            centibar,
+        }
+    }
+
+    fn tree_planted_in(year: u32) -> Tree {
+        let mut t = fixed_tree();
+        t.planting_year = PlantingYear::reconstitute(year);
+        t
+    }
+
+    fn jan_first(year: i32) -> DateTime<Utc> {
+        use chrono::TimeZone;
+        Utc.with_ymd_and_hms(year, 1, 1, 0, 0, 0).unwrap()
+    }
+
+    #[test]
+    fn watering_status_year0_and_1_share_default_thresholds() {
+        let t = tree_planted_in(2024);
+        let today = jan_first(2024);
+        let dry = vec![wm(30, 50), wm(60, 50), wm(90, 50)];
+        assert_eq!(
+            t.calculate_watering_status_from_watermarks(&dry, today)
+                .unwrap(),
+            WateringStatus::Bad
+        );
+        let wet = vec![wm(30, 5), wm(60, 5), wm(90, 5)];
+        assert_eq!(
+            t.calculate_watering_status_from_watermarks(&wet, today)
+                .unwrap(),
+            WateringStatus::Good
+        );
+        let mod_ = vec![wm(30, 28), wm(60, 5), wm(90, 5)];
+        assert_eq!(
+            t.calculate_watering_status_from_watermarks(&mod_, today)
+                .unwrap(),
+            WateringStatus::Moderate
+        );
+    }
+
+    #[test]
+    fn watering_status_year2_uses_wider_depth30_band() {
+        let t = tree_planted_in(2022);
+        let today = jan_first(2024);
+        let just_under_y2_d30_lower = vec![wm(30, 60), wm(60, 5), wm(90, 5)];
+        assert_eq!(
+            t.calculate_watering_status_from_watermarks(&just_under_y2_d30_lower, today)
+                .unwrap(),
+            WateringStatus::Good,
+            "centibar=60 is below 62 lower bound for year-2 depth 30"
+        );
+        let in_y2_moderate = vec![wm(30, 70), wm(60, 5), wm(90, 5)];
+        assert_eq!(
+            t.calculate_watering_status_from_watermarks(&in_y2_moderate, today)
+                .unwrap(),
+            WateringStatus::Moderate
+        );
+    }
+
+    #[test]
+    fn watering_status_year3_has_no_moderate() {
+        let t = tree_planted_in(2021);
+        let today = jan_first(2024);
+        let high_d30 = vec![wm(30, 200), wm(60, 5), wm(90, 5)];
+        assert_eq!(
+            t.calculate_watering_status_from_watermarks(&high_d30, today)
+                .unwrap(),
+            WateringStatus::Good,
+            "year-3 depth-30 lower bound is 1585; 200 < 1585 is Good"
+        );
+        let bad_d60 = vec![wm(30, 100), wm(60, 100), wm(90, 5)];
+        assert_eq!(
+            t.calculate_watering_status_from_watermarks(&bad_d60, today)
+                .unwrap(),
+            WateringStatus::Bad,
+            "year-3 depth-60 lower bound is 80; 100 >= 80 with no moderate band → Bad"
+        );
+    }
+
+    #[test]
+    fn watering_status_beyond_year3_rejects() {
+        let t = tree_planted_in(2020);
+        let today = jan_first(2025);
+        let any = vec![wm(30, 5), wm(60, 5), wm(90, 5)];
+        assert_eq!(
+            t.calculate_watering_status_from_watermarks(&any, today)
+                .unwrap_err(),
+            TreeError::BeyondMonitoring
+        );
+    }
+
+    #[test]
+    fn watering_status_rejects_malformed_watermark_set() {
+        let t = tree_planted_in(2024);
+        let today = jan_first(2024);
+        let only_two = vec![wm(30, 5), wm(60, 5)];
+        assert_eq!(
+            t.calculate_watering_status_from_watermarks(&only_two, today)
+                .unwrap_err(),
+            TreeError::MalformedWatermarks
+        );
+        let wrong_depth = vec![wm(30, 5), wm(45, 5), wm(90, 5)];
+        assert_eq!(
+            t.calculate_watering_status_from_watermarks(&wrong_depth, today)
+                .unwrap_err(),
+            TreeError::MalformedWatermarks
+        );
+    }
+
+    #[test]
+    fn watering_status_takes_worst_among_depths() {
+        let t = tree_planted_in(2024);
+        let today = jan_first(2024);
+        let mixed = vec![wm(30, 5), wm(60, 28), wm(90, 50)];
+        assert_eq!(
+            t.calculate_watering_status_from_watermarks(&mixed, today)
+                .unwrap(),
+            WateringStatus::Bad,
+            "any depth in Bad band makes the whole reading Bad"
+        );
+    }
+
+    #[test]
+    fn volumetric_status_uses_soil_and_age() {
+        use crate::cluster::SoilCondition;
+        let t = fixed_tree(); // planting_year 2020
+        let today = "2025-06-01T00:00:00Z".parse::<DateTime<Utc>>().unwrap();
+        let readings = [
+            domain::sensor::data::VolumetricReading {
+                depth_cm: 40,
+                moisture_percent: 25.0,
+            },
+            domain::sensor::data::VolumetricReading {
+                depth_cm: 80,
+                moisture_percent: 15.0,
+            },
+        ];
+        // Established (2025-2020=5): worst-case over both depths on Uu → Bad.
+        assert_eq!(
+            t.calculate_watering_status_from_volumetric(&readings, SoilCondition::Uu, today)
+                .unwrap(),
+            WateringStatus::Bad
+        );
+    }
+
+    // A tree that has not been planted yet cannot have soil around its roots.
+    // Watermarks used to report this as BeyondMonitoring, which reads as the
+    // opposite; volumetrics scored it as a very young tree and invented a status.
+    #[test]
+    fn watermark_status_rejects_a_tree_planted_in_the_future() {
+        let t = tree_planted_in(2030);
+        let readings = vec![wm(30, 5), wm(60, 5), wm(90, 5)];
+        assert_eq!(
+            t.calculate_watering_status_from_watermarks(&readings, jan_first(2026)),
+            Err(TreeError::NotYetPlanted)
+        );
+    }
+
+    #[test]
+    fn volumetric_status_rejects_a_tree_planted_in_the_future() {
+        use crate::cluster::SoilCondition;
+        let t = tree_planted_in(2030);
+        let readings = [domain::sensor::data::VolumetricReading {
+            depth_cm: 40,
+            moisture_percent: 25.0,
+        }];
+        assert_eq!(
+            t.calculate_watering_status_from_volumetric(
+                &readings,
+                SoilCondition::Uu,
+                jan_first(2026)
+            ),
+            Err(TreeError::NotYetPlanted)
+        );
+    }
+
+    #[test]
+    fn a_tree_planted_in_the_future_is_not_planted_yet() {
+        assert!(tree_planted_in(2030).planting_year_in_future(jan_first(2026)));
+    }
+
+    #[test]
+    fn a_tree_planted_this_year_is_planted() {
+        assert!(!tree_planted_in(2026).planting_year_in_future(jan_first(2026)));
+    }
+}

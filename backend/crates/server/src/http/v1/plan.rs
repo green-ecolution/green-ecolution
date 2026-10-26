@@ -255,7 +255,13 @@ pub async fn create_plan(
 ) -> Result<(StatusCode, Json<PlanResponse>), ServiceError> {
     let module = ModuleKey::new(&entity.module)?;
     let (access, resource) = plan_access(&state, &module)?;
-    let org = scope::resolve_target_org(&state, user.id, entity.organization_id).await?;
+    let org = scope::resolve_target_org(
+        &state.user_service,
+        &state.authorization_service,
+        user.id,
+        entity.organization_id,
+    )
+    .await?;
     access
         .require_write(user.id, Permission::new(resource, Action::Create), org)
         .await?;
@@ -514,7 +520,13 @@ pub async fn preview_plan_route(
     }
     let module = ModuleKey::new(&req.module)?;
     let (access, resource) = plan_access(&state, &module)?;
-    let org = scope::resolve_target_org(&state, user.id, None).await?;
+    let org = scope::resolve_target_org(
+        &state.user_service,
+        &state.authorization_service,
+        user.id,
+        None,
+    )
+    .await?;
     access
         .require_write(user.id, Permission::new(resource, Action::Create), org)
         .await?;

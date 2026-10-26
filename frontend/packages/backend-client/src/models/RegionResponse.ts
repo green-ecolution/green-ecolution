@@ -14,7 +14,7 @@
 
 import { mapValues } from '../runtime';
 /**
- * A geographic region used to group tree clusters.
+ * A geographic region used to group the objects modules place on the map.
  * @export
  * @interface RegionResponse
  */

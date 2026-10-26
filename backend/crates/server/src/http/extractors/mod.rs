@@ -6,6 +6,6 @@ pub mod sensor_id;
 
 pub use json::Json;
 pub use path::Path;
-pub use plugin::PluginPrincipal;
+pub use plugin::{PluginAuthenticator, PluginPrincipal};
 pub use query::Query;
 pub use sensor_id::SensorIdPath;

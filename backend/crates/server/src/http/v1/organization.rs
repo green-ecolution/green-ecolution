@@ -54,7 +54,13 @@ pub async fn list_organizations(
     user: AuthUserExtractor,
 ) -> Result<Json<Vec<OrganizationResponse>>, ServiceError> {
     let read = Permission::new(ResourceKey::ORGANIZATION, Action::Read);
-    let scope = resolve_target_org(&state, user.id, None).await?;
+    let scope = resolve_target_org(
+        &state.user_service,
+        &state.authorization_service,
+        user.id,
+        None,
+    )
+    .await?;
     state
         .authorization_service
         .require(user.id, read, scope)

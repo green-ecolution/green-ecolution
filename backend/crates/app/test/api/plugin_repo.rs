@@ -1,4 +1,6 @@
 use domain::plugin::{PluginDraft, PluginName, PluginReader, PluginSlug, PluginWriter};
+use irrigation_domain::plugin_refs::PluginTreeRefs;
+use irrigation_server::infra::pg_plugin_tree_refs::PgPluginTreeRefs;
 use server::infra::pg_plugin::PgPluginRepository;
 use std::collections::BTreeSet;
 use uuid::Uuid;
@@ -45,19 +47,20 @@ async fn tree_refs_pages_over_the_keyset() {
         .save_new(domain::Id::new_v7(), draft("pager"), None)
         .await
         .unwrap();
+    let refs = PgPluginTreeRefs::new(app.db_pool.clone());
 
     for i in 0..5 {
         let tree_id = insert_tree(&app.db_pool).await;
-        repo.link_tree(plugin.id, &format!("ext-{i}"), domain::Id::new(tree_id))
+        refs.link_tree(plugin.id, &format!("ext-{i}"), domain::Id::new(tree_id))
             .await
             .unwrap();
     }
 
-    let first = repo.tree_refs(plugin.id, None, 2).await.unwrap();
+    let first = refs.tree_refs(plugin.id, None, 2).await.unwrap();
     assert_eq!(first.items.len(), 2);
     assert_eq!(first.items[0].external_id, "ext-0");
 
-    let second = repo
+    let second = refs
         .tree_refs(plugin.id, Some(&first.items[1].external_id), 2)
         .await
         .unwrap();
@@ -72,8 +75,9 @@ async fn deleting_a_tree_removes_its_ref() {
         .save_new(domain::Id::new_v7(), draft("cascade"), None)
         .await
         .unwrap();
+    let refs = PgPluginTreeRefs::new(app.db_pool.clone());
     let tree_id = insert_tree(&app.db_pool).await;
-    repo.link_tree(plugin.id, "ext-1", domain::Id::new(tree_id))
+    refs.link_tree(plugin.id, "ext-1", domain::Id::new(tree_id))
         .await
         .unwrap();
 
@@ -83,7 +87,7 @@ async fn deleting_a_tree_removes_its_ref() {
         .unwrap();
 
     assert!(
-        repo.tree_ref(plugin.id, "ext-1").await.unwrap().is_none(),
+        refs.tree_ref(plugin.id, "ext-1").await.unwrap().is_none(),
         "the FK must cascade so no ref outlives its tree"
     );
 }

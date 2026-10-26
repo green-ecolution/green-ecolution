@@ -1,5 +1,5 @@
-//! Sensor aggregate — LoRaWAN (or similar) devices attached to a module's
-//! target, such as a tree.
+//! Sensor aggregate — LoRaWAN (or similar) devices attached to a target a
+//! module owns.
 //!
 //! The aggregate ([`Sensor`]) tracks the provisioning lifecycle (`activated_at`,
 //! `None` = prepared), sensor type, model identity and the target it measures
@@ -299,8 +299,8 @@ impl Sensor {
     /// Reassigns the sensor to `target`'s organization. No-op (and no event)
     /// if it already belongs there. Callers must ensure the sensor is not
     /// attached to a target in a different organization (see
-    /// `SensorService::transfer` and `TreeService::transfer`, which cascades
-    /// the sensor of a transferred tree).
+    /// `SensorService::transfer` and the owning module's transfer, which
+    /// cascades the sensor of a transferred target).
     pub fn transfer_to(&mut self, target: Id<Organization>) -> Vec<crate::events::DomainEvent> {
         if self.organization_id == target {
             return vec![];
@@ -374,27 +374,27 @@ mod tests {
         s
     }
 
-    fn tree(id: u128) -> TargetRef {
-        TargetRef::new("irrigation", "tree", uuid::Uuid::from_u128(id)).unwrap()
+    fn widget(id: u128) -> TargetRef {
+        TargetRef::new("probe", "widget", uuid::Uuid::from_u128(id)).unwrap()
     }
 
     #[test]
     fn activate_attaches_and_emits_both_events() {
         let mut s = prepared_sensor();
-        let events = s.activate(tree(1), Utc::now()).unwrap();
-        assert_eq!(s.target(), Some(&tree(1)));
+        let events = s.activate(widget(1), Utc::now()).unwrap();
+        assert_eq!(s.target(), Some(&widget(1)));
         assert!(matches!(events[0], DomainEvent::SensorActivated { .. }));
         assert!(
-            matches!(&events[1], DomainEvent::SensorAttached { target, .. } if *target == tree(1))
+            matches!(&events[1], DomainEvent::SensorAttached { target, .. } if *target == widget(1))
         );
     }
 
     #[test]
     fn activate_twice_is_refused() {
         let mut s = prepared_sensor();
-        s.activate(tree(1), Utc::now()).unwrap();
+        s.activate(widget(1), Utc::now()).unwrap();
         assert!(matches!(
-            s.activate(tree(1), Utc::now()),
+            s.activate(widget(1), Utc::now()),
             Err(SensorError::AlreadyActivated)
         ));
     }
@@ -402,9 +402,9 @@ mod tests {
     #[test]
     fn activate_onto_another_target_than_the_attached_one_is_refused() {
         let mut s = prepared_sensor();
-        s.attach(tree(1)).unwrap();
+        s.attach(widget(1)).unwrap();
         assert!(matches!(
-            s.activate(tree(2), Utc::now()),
+            s.activate(widget(2), Utc::now()),
             Err(SensorError::AlreadyAttached)
         ));
     }
@@ -412,8 +412,8 @@ mod tests {
     #[test]
     fn activate_onto_the_attached_target_emits_no_second_attach() {
         let mut s = prepared_sensor();
-        s.attach(tree(1)).unwrap();
-        let events = s.activate(tree(1), Utc::now()).unwrap();
+        s.attach(widget(1)).unwrap();
+        let events = s.activate(widget(1), Utc::now()).unwrap();
         assert_eq!(events.len(), 1);
         assert!(matches!(events[0], DomainEvent::SensorActivated { .. }));
     }
@@ -421,12 +421,12 @@ mod tests {
     #[test]
     fn attach_without_activation_keeps_the_sensor_prepared() {
         let mut s = prepared_sensor();
-        let events = s.attach(tree(1)).unwrap();
+        let events = s.attach(widget(1)).unwrap();
         assert!(s.activated_at().is_none());
         assert_eq!(events.len(), 1);
-        assert!(s.attach(tree(1)).unwrap().is_empty());
+        assert!(s.attach(widget(1)).unwrap().is_empty());
         assert!(matches!(
-            s.attach(tree(2)),
+            s.attach(widget(2)),
             Err(SensorError::AlreadyAttached)
         ));
     }
@@ -434,22 +434,22 @@ mod tests {
     #[test]
     fn retarget_moves_an_active_sensor() {
         let mut s = prepared_sensor();
-        s.activate(tree(1), Utc::now()).unwrap();
-        let events = s.retarget(tree(2)).unwrap();
+        s.activate(widget(1), Utc::now()).unwrap();
+        let events = s.retarget(widget(2)).unwrap();
         assert!(
-            matches!(&events[0], DomainEvent::SensorDetached { target, .. } if *target == tree(1))
+            matches!(&events[0], DomainEvent::SensorDetached { target, .. } if *target == widget(1))
         );
         assert!(
-            matches!(&events[1], DomainEvent::SensorAttached { target, .. } if *target == tree(2))
+            matches!(&events[1], DomainEvent::SensorAttached { target, .. } if *target == widget(2))
         );
-        assert!(s.retarget(tree(2)).unwrap().is_empty());
+        assert!(s.retarget(widget(2)).unwrap().is_empty());
     }
 
     #[test]
     fn retarget_needs_an_active_sensor() {
         let mut s = prepared_sensor();
         assert!(matches!(
-            s.retarget(tree(1)),
+            s.retarget(widget(1)),
             Err(SensorError::NotActivated)
         ));
     }
@@ -458,7 +458,7 @@ mod tests {
     fn detach_is_a_no_op_without_target() {
         let mut s = prepared_sensor();
         assert!(s.detach().is_empty());
-        s.attach(tree(1)).unwrap();
+        s.attach(widget(1)).unwrap();
         assert_eq!(s.detach().len(), 1);
         assert_eq!(s.target(), None);
     }
@@ -466,13 +466,13 @@ mod tests {
     #[test]
     fn deactivate_releases_the_target() {
         let mut s = prepared_sensor();
-        s.activate(tree(1), Utc::now()).unwrap();
+        s.activate(widget(1), Utc::now()).unwrap();
         let events = s.deactivate().unwrap();
         assert!(s.activated_at().is_none());
         assert_eq!(s.target(), None);
         assert!(matches!(events[0], DomainEvent::SensorDeactivated { .. }));
         assert!(
-            matches!(&events[1], DomainEvent::SensorDetached { target, .. } if *target == tree(1))
+            matches!(&events[1], DomainEvent::SensorDetached { target, .. } if *target == widget(1))
         );
     }
 
@@ -498,7 +498,7 @@ mod tests {
         let mut s = fixed_sensor();
         s.activated_at = None;
         let at = fixed_now();
-        let events = s.activate(tree(1), at).unwrap();
+        let events = s.activate(widget(1), at).unwrap();
         assert!(s.is_activated());
         assert_eq!(s.activated_at(), Some(at));
         assert_eq!(events.len(), 2);
@@ -515,7 +515,7 @@ mod tests {
         let mut s = fixed_sensor();
         let original = s.activated_at();
         assert!(matches!(
-            s.activate(tree(1), fixed_now()),
+            s.activate(widget(1), fixed_now()),
             Err(SensorError::AlreadyActivated)
         ));
         assert_eq!(s.activated_at(), original);
@@ -549,7 +549,7 @@ mod tests {
     fn activate_after_deactivate_is_allowed() {
         let mut s = fixed_sensor();
         s.deactivate().unwrap();
-        assert_ok!(s.activate(tree(1), fixed_now()));
+        assert_ok!(s.activate(widget(1), fixed_now()));
         assert!(s.is_activated());
     }
 

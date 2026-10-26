@@ -123,7 +123,13 @@ pub async fn list_users(
     Query(params): Query<UserListParams>,
 ) -> Result<Json<ListResponse<UserResponse>>, ServiceError> {
     let read = Permission::new(ResourceKey::USER, Action::Read);
-    let scope = resolve_target_org(&state, user.id, None).await?;
+    let scope = resolve_target_org(
+        &state.user_service,
+        &state.authorization_service,
+        user.id,
+        None,
+    )
+    .await?;
     state
         .authorization_service
         .require(user.id, read, scope)

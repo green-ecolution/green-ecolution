@@ -15,16 +15,7 @@ build = "build.rs"
 [lib]
 path = "src/lib.rs"
 
-[[bin]]
-path = "src/bin/import_kataster_fl.rs"
-name = "import-kataster-fl"
-
-[[bin]]
-path = "src/bin/benchdb/main.rs"
-name = "benchdb"
-
 [dependencies]
-anyhow = "1.0.102"
 async-trait = { workspace = true }
 axum = { version = "0.8.9", features = ["json"] }
 axum-extra = { version = "0.12", features = ["query"] }

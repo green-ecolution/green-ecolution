@@ -139,18 +139,13 @@ async fn get_statistics_returns_counts() {
     let response = app.get("/api/v1/info/statistics").await;
     let body: serde_json::Value = response.json().await.unwrap();
 
-    for key in [
-        "treeCount",
-        "sensorCount",
-        "vehicleCount",
-        "treeClusterCount",
-        "wateringPlanCount",
-    ] {
+    for key in ["sensorCount", "vehicleCount", "planCount"] {
         assert!(
             body[key].as_i64().is_some(),
             "{key} missing or not a number"
         );
     }
+    assert!(body["modules"].is_array());
 }
 
 #[tokio::test]

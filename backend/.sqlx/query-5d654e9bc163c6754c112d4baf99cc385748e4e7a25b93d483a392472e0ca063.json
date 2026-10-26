@@ -1,0 +1,32 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT\n                (SELECT COUNT(*) FROM sensors)                              AS \"sensor_count!: i64\",\n                (SELECT COUNT(*) FROM vehicles WHERE archived_at IS NULL)   AS \"vehicle_count!: i64\",\n                (SELECT COUNT(*) FROM operation_plans)                      AS \"plan_count!: i64\"\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "sensor_count!: i64",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "vehicle_count!: i64",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 2,
+        "name": "plan_count!: i64",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "5d654e9bc163c6754c112d4baf99cc385748e4e7a25b93d483a392472e0ca063"
+}

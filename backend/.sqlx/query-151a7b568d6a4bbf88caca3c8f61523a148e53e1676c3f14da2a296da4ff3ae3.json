@@ -1,0 +1,26 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT\n                (SELECT COUNT(*) FROM trees)                                AS \"trees!: i64\",\n                (SELECT COUNT(*) FROM tree_clusters WHERE archived = false) AS \"clusters!: i64\"\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "trees!: i64",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "clusters!: i64",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      null,
+      null
+    ]
+  },
+  "hash": "151a7b568d6a4bbf88caca3c8f61523a148e53e1676c3f14da2a296da4ff3ae3"
+}

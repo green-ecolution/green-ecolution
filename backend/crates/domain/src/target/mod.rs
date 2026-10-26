@@ -1,5 +1,4 @@
-//! References from the core to objects a module owns, such as a tree or a
-//! waste bin. The core never interprets the id; it asks the owning module's
+//! References from the core to objects a module owns, such as a waste bin. The core never interprets the id; it asks the owning module's
 //! catalog.
 
 use std::{collections::HashMap, fmt};
@@ -120,18 +119,18 @@ mod tests {
 
     #[test]
     fn target_ref_validates_both_keys() {
-        assert!(TargetRef::new("irrigation", "tree", Uuid::nil()).is_ok());
-        assert!(TargetRef::new("irrigation", "Tree", Uuid::nil()).is_err());
-        assert!(TargetRef::new("", "tree", Uuid::nil()).is_err());
+        assert!(TargetRef::new("probe", "widget", Uuid::nil()).is_ok());
+        assert!(TargetRef::new("probe", "Widget", Uuid::nil()).is_err());
+        assert!(TargetRef::new("", "widget", Uuid::nil()).is_err());
     }
 
     #[test]
     fn spec_allows_by_purpose() {
         let spec = TargetKindSpec {
-            kind: "tree",
+            kind: "widget",
             accepts_sensors: true,
             commentable: false,
-            resource: ResourceKey::declare("tree"),
+            resource: ResourceKey::declare("widget"),
         };
         assert!(spec.allows(TargetPurpose::Sensor));
         assert!(!spec.allows(TargetPurpose::Comment));

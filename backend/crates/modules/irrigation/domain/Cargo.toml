@@ -1,0 +1,42 @@
+[package]
+name = "irrigation-domain"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description = "Green Ecolution irrigation module: trees, clusters and soil physics"
+publish.workspace = true
+# benches/fixtures.rs is a module of the `scaling` bench, not a bench of its own.
+autobenches = false
+
+[lib]
+path = "src/lib.rs"
+# No #[bench] fns here; otherwise `cargo bench` also runs the libtest harness,
+# which rejects criterion flags like --save-baseline.
+bench = false
+
+[features]
+default = []
+sqlx = ["dep:sqlx", "domain/sqlx"]
+
+[dependencies]
+async-trait = { workspace = true }
+chrono = { workspace = true }
+domain = { path = "../../../domain" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+uuid = { workspace = true }
+
+sqlx = { workspace = true, features = ["derive", "postgres"], optional = true }
+
+[dev-dependencies]
+claims = "0.8"
+criterion = { version = "0.8", features = ["html_reports"] }
+
+[[bench]]
+name = "scaling"
+harness = false

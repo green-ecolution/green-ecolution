@@ -7,6 +7,7 @@
 
 pub mod activation;
 pub mod repository;
+pub mod statistics;
 
 use std::fmt;
 
@@ -17,6 +18,7 @@ use crate::shared::{
 
 pub use activation::{ActivationLevel, ActivationResolution, resolve_activation};
 pub use repository::{ModuleActivationReader, ModuleActivationWriter};
+pub use statistics::{ModuleCount, ModuleStatistics};
 
 /// Stable identifier of a module. Once shipped it never changes: stored
 /// activations and later plan and sensor references carry it.

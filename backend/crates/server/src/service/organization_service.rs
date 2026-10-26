@@ -167,7 +167,7 @@ impl OrganizationService {
             return Err(ServiceError::OrganizationNotEmpty);
         }
         match self.org_writer.delete(id).await {
-            // Resources still reference this org (trees, sensors, ...): the
+            // Resources still reference this org (sensors, vehicles, ...): the
             // pre-checks above only cover children and users.
             Err(domain::RepositoryError::ForeignKeyViolation(_)) => {
                 return Err(ServiceError::OrganizationNotEmpty);
@@ -360,7 +360,7 @@ mod tests {
                     permissions: draft.permissions.iter().map(|p| p.to_string()).collect(),
                     template_key: None,
                 },
-                &crate::irrigation::test_catalog(),
+                &crate::service::test_resources::catalog(),
             )
             .unwrap()
             .role)
@@ -528,7 +528,7 @@ mod tests {
                 permissions: Vec::new(),
                 template_key: None,
             },
-            &crate::irrigation::test_catalog(),
+            &crate::service::test_resources::catalog(),
         )
         .unwrap()
         .role

@@ -168,31 +168,43 @@ pub struct ServicesInfoResponse {
 
 #[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct DataStatisticsResponse {
-    #[serde(rename = "treeCount")]
-    #[schema(example = 342)]
-    pub tree_count: i64,
     #[serde(rename = "sensorCount")]
     #[schema(example = 85)]
     pub sensor_count: i64,
     #[serde(rename = "vehicleCount")]
     #[schema(example = 12)]
     pub vehicle_count: i64,
-    #[serde(rename = "treeClusterCount")]
-    #[schema(example = 28)]
-    pub cluster_count: i64,
-    #[serde(rename = "wateringPlanCount")]
+    #[serde(rename = "planCount")]
     #[schema(example = 15)]
-    pub watering_plan_count: i64,
+    pub plan_count: i64,
+    pub modules: Vec<ModuleCountResponse>,
+}
+
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+pub struct ModuleCountResponse {
+    #[schema(example = "irrigation")]
+    pub module: String,
+    #[schema(example = "tree")]
+    pub kind: String,
+    #[schema(example = 342)]
+    pub count: i64,
 }
 
 impl From<&DataStatistics> for DataStatisticsResponse {
     fn from(value: &DataStatistics) -> Self {
         Self {
-            tree_count: value.tree_count,
             sensor_count: value.sensor_count,
             vehicle_count: value.vehicle_count,
-            cluster_count: value.cluster_count,
-            watering_plan_count: value.watering_plan_count,
+            plan_count: value.plan_count,
+            modules: value
+                .modules
+                .iter()
+                .map(|(module, count)| ModuleCountResponse {
+                    module: module.to_string(),
+                    kind: count.kind.to_string(),
+                    count: count.count,
+                })
+                .collect(),
         }
     }
 }

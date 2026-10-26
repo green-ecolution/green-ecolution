@@ -22,7 +22,6 @@ use domain::{
 use serde::{Deserialize, Serialize};
 use server::{
     http::{
-        AppState,
         auth::extractor::AuthUserExtractor,
         extractors::{Json, Path},
     },
@@ -362,7 +361,7 @@ impl Module for TestModule {
         });
         let mut runtime = ModuleRuntime::new(ModuleRoutes {
             public: OpenApiRouter::new(),
-            protected: routes().with_state::<Arc<AppState>>(state),
+            protected: routes().with_state(state),
         });
         runtime.targets = Some(Arc::new(ThingCatalog {
             pool: ctx.pool.clone(),

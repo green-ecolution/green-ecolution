@@ -38,6 +38,10 @@ impl ModuleAccess {
         &self.key
     }
 
+    pub async fn ensure_active(&self, org: Id<Organization>) -> Result<(), ServiceError> {
+        ensure_module_active(self.activation.as_ref(), &self.key, org).await
+    }
+
     pub async fn require_write(
         &self,
         user: Uuid,

@@ -4517,7 +4517,7 @@
           "Regions"
         ],
         "summary": "List all regions",
-        "description": "Returns a paginated list of all geographic regions used to organize tree clusters.",
+        "description": "Returns a paginated list of all geographic regions used to group the objects modules place on the map.",
         "operationId": "listRegions",
         "parameters": [
           {
@@ -5102,7 +5102,7 @@
             }
           },
           "403": {
-            "description": "Missing watering_plan:update in the owning organization",
+            "description": "Missing start_point:update in the owning organization",
             "content": {
               "application/json": {
                 "schema": {
@@ -5166,7 +5166,7 @@
             }
           },
           "403": {
-            "description": "Missing watering_plan:delete in the owning organization",
+            "description": "Missing start_point:delete in the owning organization",
             "content": {
               "application/json": {
                 "schema": {
@@ -5222,7 +5222,7 @@
             "description": "Default set"
           },
           "403": {
-            "description": "Missing watering_plan:update in the owning organization",
+            "description": "Missing start_point:update in the owning organization",
             "content": {
               "application/json": {
                 "schema": {
@@ -5260,7 +5260,7 @@
           "Routing"
         ],
         "summary": "Transfer a start point's ownership to another organization",
-        "description": "Moves a start point to a different owning organization. If it was the default for its organization, it loses that status (the target organization's own default, if any, is left untouched). Requires `watering_plan:update` in both the source and target organization.",
+        "description": "Moves a start point to a different owning organization. If it was the default for its organization, it loses that status (the target organization's own default, if any, is left untouched). Requires `start_point:update` in both the source and target organization.",
         "operationId": "transferStartPoint",
         "parameters": [
           {
@@ -5289,7 +5289,7 @@
             "description": "Start point transferred"
           },
           "403": {
-            "description": "Missing watering_plan:update in source or target organization",
+            "description": "Missing start_point:update in source or target organization",
             "content": {
               "application/json": {
                 "schema": {
@@ -6111,7 +6111,7 @@
           "Sensors"
         ],
         "summary": "Transfer a sensor's ownership to another organization",
-        "description": "Moves an unbound sensor to a different owning organization. Requires `sensor:update` in both the source and target organization. A sensor bound to a tree must be transferred via its tree instead.",
+        "description": "Moves an unbound sensor to a different owning organization. Requires `sensor:update` in both the source and target organization. A sensor bound to a target moves with that target instead.",
         "operationId": "transferSensor",
         "parameters": [
           {
@@ -6159,7 +6159,7 @@
             }
           },
           "409": {
-            "description": "Sensor is bound to a tree (code `conflict.sensor_bound_to_tree`)",
+            "description": "Sensor is bound to a target (code `conflict.sensor_bound_to_target`)",
             "content": {
               "application/json": {
                 "schema": {
@@ -9328,7 +9328,7 @@
       },
       "CommentResponse": {
         "type": "object",
-        "description": "A single comment on a tree cluster or a watering plan.",
+        "description": "A single comment on a module object or a plan.",
         "required": [
           "id",
           "author_id",
@@ -9511,37 +9511,32 @@
       "DataStatisticsResponse": {
         "type": "object",
         "required": [
-          "treeCount",
           "sensorCount",
           "vehicleCount",
-          "treeClusterCount",
-          "wateringPlanCount"
+          "planCount",
+          "modules"
         ],
         "properties": {
+          "modules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ModuleCountResponse"
+            }
+          },
+          "planCount": {
+            "type": "integer",
+            "format": "int64",
+            "example": 15
+          },
           "sensorCount": {
             "type": "integer",
             "format": "int64",
             "example": 85
           },
-          "treeClusterCount": {
-            "type": "integer",
-            "format": "int64",
-            "example": 28
-          },
-          "treeCount": {
-            "type": "integer",
-            "format": "int64",
-            "example": 342
-          },
           "vehicleCount": {
             "type": "integer",
             "format": "int64",
             "example": 12
-          },
-          "wateringPlanCount": {
-            "type": "integer",
-            "format": "int64",
-            "example": 15
           }
         }
       },
@@ -9831,7 +9826,7 @@
             "type": "array",
             "items": {
               "type": "object",
-              "description": "A single comment on a tree cluster or a watering plan.",
+              "description": "A single comment on a module object or a plan.",
               "required": [
                 "id",
                 "author_id",
@@ -10037,7 +10032,7 @@
             "type": "array",
             "items": {
               "type": "object",
-              "description": "A geographic region used to group tree clusters.",
+              "description": "A geographic region used to group the objects modules place on the map.",
               "required": [
                 "id",
                 "name"
@@ -11021,6 +11016,29 @@
             "format": "int32",
             "description": "Set together with `bbox`, never on their own: the limits are one\ndecision, and half of them would restrict a map for no stated reason.",
             "minimum": 0
+          }
+        }
+      },
+      "ModuleCountResponse": {
+        "type": "object",
+        "required": [
+          "module",
+          "kind",
+          "count"
+        ],
+        "properties": {
+          "count": {
+            "type": "integer",
+            "format": "int64",
+            "example": 342
+          },
+          "kind": {
+            "type": "string",
+            "example": "tree"
+          },
+          "module": {
+            "type": "string",
+            "example": "irrigation"
           }
         }
       },
@@ -12584,7 +12602,7 @@
       },
       "RegionResponse": {
         "type": "object",
-        "description": "A geographic region used to group tree clusters.",
+        "description": "A geographic region used to group the objects modules place on the map.",
         "required": [
           "id",
           "name"
@@ -12859,7 +12877,7 @@
       },
       "SensorCoordinate": {
         "type": "object",
-        "description": "WGS-84 coordinate exposed in sensor responses (derived from the linked tree).",
+        "description": "WGS-84 coordinate exposed in sensor responses (derived from the target it is attached to).",
         "required": [
           "latitude",
           "longitude"
@@ -15801,15 +15819,7 @@
   "tags": [
     {
       "name": "Regions",
-      "description": "Manage geographic regions used to group tree clusters. Regions define administrative boundaries for organizing green spaces."
-    },
-    {
-      "name": "Tree Clusters",
-      "description": "Manage tree clusters — logical groupings of trees that share soil conditions and watering schedules. Clusters are the primary unit for watering plan assignments."
-    },
-    {
-      "name": "Trees",
-      "description": "Manage individual trees including their species, location, planting year, and associated sensors. Trees can be assigned to clusters for grouped watering management."
+      "description": "Manage geographic regions used to group the objects modules place on the map. Regions define administrative boundaries for organizing green spaces."
     },
     {
       "name": "Vehicles",
@@ -15817,15 +15827,11 @@
     },
     {
       "name": "Sensors",
-      "description": "Access LoRaWAN sensor data for soil moisture monitoring. Sensors are linked to individual trees and provide real-time environmental readings."
+      "description": "Access LoRaWAN sensor data for soil moisture monitoring. Sensors are attached to module objects and provide real-time environmental readings."
     },
     {
       "name": "Plans",
       "description": "Create and manage a module's operation plans that combine stops, vehicles, and optimized routes. Plans track status from planning through execution."
-    },
-    {
-      "name": "Evaluation",
-      "description": "Aggregated statistics and evaluation data across all managed resources. Provides insights on watering plan coverage by region and vehicle usage."
     },
     {
       "name": "Info",
@@ -15853,7 +15859,7 @@
     },
     {
       "name": "Comments",
-      "description": "Free-text comments on tree clusters and plans. Reading follows the parent resource's read permission, writing its update permission."
+      "description": "Free-text comments on module objects and plans. Reading follows the parent resource's read permission, writing its update permission."
     },
     {
       "name": "Modules",
@@ -15862,6 +15868,18 @@
     {
       "name": "Settings",
       "description": "Per-organization operational defaults — sensor thresholds and the map viewport — resolved along the organization tree."
+    },
+    {
+      "name": "Tree Clusters",
+      "description": "Manage tree clusters — logical groupings of trees that share soil conditions and watering schedules. Clusters are the primary unit for watering plan assignments."
+    },
+    {
+      "name": "Trees",
+      "description": "Manage individual trees including their species, location, planting year, and associated sensors. Trees can be assigned to clusters for grouped watering management."
+    },
+    {
+      "name": "Evaluation",
+      "description": "Aggregated statistics and evaluation data across all managed resources. Provides insights on watering plan coverage by region and vehicle usage."
     },
     {
       "name": "Irrigation",

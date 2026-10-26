@@ -6,7 +6,6 @@ use std::{
 use chrono::{DateTime, Utc};
 use domain::{
     Id, RepositoryError,
-    cluster::{SoilMoistureBucket, SoilMoistureOverview, TreeClusterReader, condition_series},
     events::{DomainEvent, SensorDataReceivedPayload, SensorReadings},
     module::ModuleActivationReader,
     organization::Organization,
@@ -14,14 +13,13 @@ use domain::{
         AcknowledgementNote, DataHealth, DataQualityAcknowledgement, ReadingQualityIssue, Sensor,
         SensorDraft, SensorError, SensorId, SensorReader, SensorReadingReader, SensorReadingWriter,
         SensorSearchQuery, SensorView, SensorWriter,
-        data::SensorReadingView,
+        data::{SensorReadingView, SoilMoistureBucket, SoilMoistureDepthSeries},
         plausibility::{self, ReadingContext},
         repository::NormalizedValue,
     },
     sensor_model::{SensorAbilityName, SensorModel, SensorModelReader},
     shared::pagination::{Page, Pagination, SearchPage},
     target::{TargetPurpose, TargetRef},
-    tree::{TreeReader, volumetric_thresholds},
 };
 use rust_decimal::prelude::ToPrimitive;
 use uuid::Uuid;
@@ -38,8 +36,6 @@ pub struct SensorService {
     reading_reader: Arc<dyn SensorReadingReader>,
     reading_writer: Arc<dyn SensorReadingWriter>,
     model_reader: Arc<dyn SensorModelReader>,
-    tree_reader: Arc<dyn TreeReader>,
-    cluster_reader: Arc<dyn TreeClusterReader>,
     targets: Arc<TargetRegistry>,
     activation: Arc<dyn ModuleActivationReader>,
     event_bus: Arc<dyn EventBus>,
@@ -77,8 +73,6 @@ impl SensorService {
         reading_reader: Arc<dyn SensorReadingReader>,
         reading_writer: Arc<dyn SensorReadingWriter>,
         model_reader: Arc<dyn SensorModelReader>,
-        tree_reader: Arc<dyn TreeReader>,
-        cluster_reader: Arc<dyn TreeClusterReader>,
         targets: Arc<TargetRegistry>,
         activation: Arc<dyn ModuleActivationReader>,
         event_bus: Arc<dyn EventBus>,
@@ -89,8 +83,6 @@ impl SensorService {
             reading_reader,
             reading_writer,
             model_reader,
-            tree_reader,
-            cluster_reader,
             targets,
             activation,
             event_bus,
@@ -188,8 +180,8 @@ impl SensorService {
         self.view_by_id(id).await
     }
 
-    /// Attaches without activating, as the tree form does with a prepared
-    /// sensor.
+    /// Attaches without activating, as a module's edit form does with a
+    /// prepared sensor.
     #[tracing::instrument(level = "debug", skip_all, fields(sensor.id = %id))]
     pub async fn attach(&self, id: &SensorId, target: TargetRef) -> Result<(), ServiceError> {
         let mut sensor = self.reader.by_id(id).await?;
@@ -426,69 +418,58 @@ impl SensorService {
     }
 
     /// Transfers ownership of an unattached sensor to `target`. An attached
-    /// sensor moves with its target instead (`TreeService::transfer` cascades
-    /// it), so this rejects with `SensorBoundToTarget`.
+    /// sensor moves with its target instead (the module that owns the target
+    /// cascades the transfer), so this rejects with `SensorBoundToTarget`.
     #[tracing::instrument(level = "debug", skip_all, fields(sensor.id = %id))]
     pub async fn transfer(
         &self,
         id: &SensorId,
         target: Id<Organization>,
     ) -> Result<(), ServiceError> {
-        let mut sensor = self.reader.by_id(id).await?;
+        let sensor = self.reader.by_id(id).await?;
         if sensor.target().is_some() {
             return Err(ServiceError::SensorBoundToTarget);
         }
+        self.save_transfer(sensor, target).await
+    }
+
+    /// Skips the bound check of [`Self::transfer`]: the module calls it while moving the target itself.
+    #[tracing::instrument(level = "debug", skip_all, fields(sensor.id = %id))]
+    pub async fn transfer_with_target(
+        &self,
+        id: &SensorId,
+        target: Id<Organization>,
+    ) -> Result<(), ServiceError> {
+        let sensor = self.reader.by_id(id).await?;
+        self.save_transfer(sensor, target).await
+    }
+
+    async fn save_transfer(
+        &self,
+        mut sensor: Sensor,
+        target: Id<Organization>,
+    ) -> Result<(), ServiceError> {
         let events = sensor.transfer_to(target);
         self.writer.save(&sensor).await?;
         self.event_bus.publish_all(events).await;
         Ok(())
     }
 
+    /// Bucketed volumetric readings per probe depth. An unknown sensor is a
+    /// 404, a known one without readings an empty list.
     #[tracing::instrument(level = "debug", skip_all, fields(sensor.id = %id))]
-    pub async fn soil_moisture_overview(
+    pub async fn soil_moisture_series(
         &self,
         id: &SensorId,
         from: DateTime<Utc>,
         to: DateTime<Utc>,
         bucket: SoilMoistureBucket,
-    ) -> Result<SoilMoistureOverview, ServiceError> {
-        // Distinguish "unknown sensor" (404) from "sensor without readings".
+    ) -> Result<Vec<SoilMoistureDepthSeries>, ServiceError> {
         self.reader.by_id(id).await?;
-        let series = self
+        Ok(self
             .reading_reader
             .soil_moisture_series(id, from, to, bucket)
-            .await?;
-        let cluster_id = self
-            .tree_reader
-            .by_sensor_id(id)
-            .await?
-            .and_then(|tree| tree.cluster_id());
-        let (soil, watering_events) = match cluster_id {
-            Some(cluster_id) => {
-                let view = self.cluster_reader.view_by_id(cluster_id).await?;
-                let events = self.cluster_reader.watering_events(cluster_id).await?;
-                (view.soil_condition, events)
-            }
-            None => (None, Vec::new()),
-        };
-        let thresholds = soil
-            .map(|s| {
-                series
-                    .iter()
-                    .filter_map(|d| volumetric_thresholds(s, d.depth_cm))
-                    .collect()
-            })
-            .unwrap_or_default();
-        let condition = soil
-            .map(|s| condition_series(&series, s))
-            .unwrap_or_default();
-        Ok(SoilMoistureOverview {
-            bucket,
-            series,
-            thresholds,
-            condition,
-            watering_events,
-        })
+            .await?)
     }
 }
 

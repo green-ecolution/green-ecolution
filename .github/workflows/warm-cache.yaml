@@ -74,10 +74,11 @@ jobs:
         working-directory: ./backend
         run: |
           cargo build -p domain --no-default-features --locked
+          cargo build -p irrigation-domain --no-default-features --locked
           cargo build --locked --bin migrate
           cargo test --workspace --locked --no-run
           cargo clippy --workspace --all-targets --all-features --locked
-          cargo bench -p domain --locked --no-run
+          cargo bench -p domain -p irrigation-domain --locked --no-run
 
   backend-msrv:
     needs: changes

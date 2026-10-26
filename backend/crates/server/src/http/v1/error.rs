@@ -1,7 +1,7 @@
 use axum::{http::StatusCode, response::IntoResponse};
 use serde::Serialize;
 
-use crate::service::{AuthError, ServiceError};
+use crate::service::{AuthError, ModuleErrorKind, ServiceError};
 use domain::{RepositoryError, routing::RoutingError, shared::error::ValidationIssue};
 
 /// OpenAPI shape of [`ValidationIssue`].
@@ -158,7 +158,6 @@ impl IntoResponse for ServiceError {
             | ServiceError::CannotChangeOwnAccess
             | ServiceError::CannotRevokeOwnAdministration
             | ServiceError::SensorBoundToTarget
-            | ServiceError::TreeInCluster
             | ServiceError::SettingsEnforcedByAncestor { .. } => {
                 (StatusCode::CONFLICT, self.to_string())
             }
@@ -168,6 +167,12 @@ impl IntoResponse for ServiceError {
                 (StatusCode::UNPROCESSABLE_ENTITY, kind.to_string())
             }
             ServiceError::ModuleDisabled { .. } => (StatusCode::FORBIDDEN, self.to_string()),
+            ServiceError::Module { kind, .. } => match kind {
+                ModuleErrorKind::Conflict => (StatusCode::CONFLICT, self.to_string()),
+                ModuleErrorKind::Unprocessable => {
+                    (StatusCode::UNPROCESSABLE_ENTITY, self.to_string())
+                }
+            },
             ServiceError::TargetNotAccepted { .. }
             | ServiceError::TargetRefused { .. }
             | ServiceError::VehicleCapacityMissing { .. }
@@ -177,11 +182,7 @@ impl IntoResponse for ServiceError {
             ServiceError::ModuleUnknown { .. } => {
                 (StatusCode::UNPROCESSABLE_ENTITY, self.to_string())
             }
-            // Not a conflict either: nothing about the stored tree is wrong,
-            // the request just pairs a sensor with a tree that is not there yet.
-            ServiceError::MissingOrganization
-            | ServiceError::ContactPersonNotAMember
-            | ServiceError::TreeNotYetPlanted => {
+            ServiceError::MissingOrganization | ServiceError::ContactPersonNotAMember => {
                 (StatusCode::UNPROCESSABLE_ENTITY, self.to_string())
             }
             // Status kept at 400 as before; the transition is now only
@@ -233,6 +234,29 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn module_errors_keep_their_code_and_status() {
+        let conflict = ServiceError::Module {
+            kind: ModuleErrorKind::Conflict,
+            code: "conflict.tree_in_cluster",
+            message: "tree is part of a cluster".into(),
+        };
+        let response = conflict.into_response();
+        assert_eq!(response.status(), StatusCode::CONFLICT);
+        let body = body_of(response).await;
+        assert!(body.contains("conflict.tree_in_cluster"));
+
+        let unprocessable = ServiceError::Module {
+            kind: ModuleErrorKind::Unprocessable,
+            code: "tree.not_yet_planted",
+            message: "x".into(),
+        };
+        assert_eq!(
+            unprocessable.into_response().status(),
+            StatusCode::UNPROCESSABLE_ENTITY
+        );
+    }
+
+    #[tokio::test]
     async fn repository_conflict_body_hides_database_details() {
         let detail = "duplicate key value violates unique constraint \"trees_pkey\"";
         let err = ServiceError::Repository(RepositoryError::AlreadyExists(detail.into()));
@@ -273,16 +297,16 @@ mod tests {
 
     #[tokio::test]
     async fn organization_mismatch_is_unprocessable_and_carries_its_code() {
-        let err = ServiceError::OrganizationMismatch(OrganizationMismatch::TreesVsCluster);
+        let err = ServiceError::OrganizationMismatch(OrganizationMismatch::SensorVsTarget);
         let response = err.into_response();
         assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
         let body = body_of(response).await;
         assert!(
-            body.contains("organization_mismatch.trees_vs_cluster"),
+            body.contains("organization_mismatch.sensor_vs_target"),
             "clients pick their wording by code, got: {body}"
         );
         assert!(
-            body.contains("cluster"),
+            body.contains("target"),
             "message must name the violated relation, got: {body}"
         );
     }
@@ -290,8 +314,6 @@ mod tests {
     #[test]
     fn every_mismatch_kind_has_a_distinct_code() {
         let kinds = [
-            OrganizationMismatch::TreesVsCluster,
-            OrganizationMismatch::ClusterVsTree,
             OrganizationMismatch::SensorVsTarget,
             OrganizationMismatch::StopsVsPlan,
             OrganizationMismatch::RoleVsUser,
@@ -308,12 +330,12 @@ mod tests {
 
     #[tokio::test]
     async fn a_conflict_names_its_cause_so_the_client_can_word_it() {
-        let err = ServiceError::TreeInCluster;
+        let err = ServiceError::SensorBoundToTarget;
         let response = err.into_response();
         assert_eq!(response.status(), StatusCode::CONFLICT);
         let body: serde_json::Value = serde_json::from_str(&body_of(response).await).unwrap();
         assert_eq!(
-            body["code"], "conflict.tree_in_cluster",
+            body["code"], "conflict.sensor_bound_to_target",
             "a bare 409 cannot tell twelve causes apart"
         );
     }
@@ -486,7 +508,7 @@ mod validation_tests {
 
     #[tokio::test]
     async fn an_error_without_a_field_omits_the_validation_block() {
-        let body = body_of(ServiceError::TreeInCluster.into_response()).await;
+        let body = body_of(ServiceError::SensorBoundToTarget.into_response()).await;
         assert!(
             body.get("validation").is_none(),
             "only field violations carry a validation block, got: {body}"

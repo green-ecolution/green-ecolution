@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use domain::comment::CommentView;
 
-/// A single comment on a tree cluster or a watering plan.
+/// A single comment on a module object or a plan.
 #[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct CommentResponse {
     #[schema(example = "0199a8e9-7c4f-7000-8000-000000000000")]

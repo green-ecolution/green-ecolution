@@ -2,9 +2,9 @@
 //!
 //! Each aggregate lives in its own sub-module and follows a consistent pattern:
 //!
-//! - **Aggregate** (`Tree`, `Vehicle`, …) — enforces invariants; key fields
+//! - **Aggregate** (`Vehicle`, `Sensor`, …) — enforces invariants; key fields
 //!   that must not be set directly are private with accessor methods.
-//! - **View** (`TreeView`, …) — flat, audit-enriched read model (`created_at` /
+//! - **View** (`VehicleView`, …) — flat, audit-enriched read model (`created_at` /
 //!   `updated_at`) used by HTTP handlers; avoids exposing aggregate internals.
 //! - **Snapshot** (`pub(crate)`) — raw DB-row struct used exclusively for
 //!   rehydration via `reconstitute`; never crosses the domain boundary.
@@ -24,10 +24,8 @@ use uuid::Uuid;
 pub mod auth;
 pub mod authorization;
 pub mod capacity;
-pub mod cluster;
 pub mod comment;
 pub mod error;
-pub mod evaluation;
 pub mod event_bus;
 pub mod events;
 pub mod info;
@@ -45,7 +43,6 @@ pub mod settings;
 pub mod shared;
 pub mod start_point;
 pub mod target;
-pub mod tree;
 pub mod user;
 pub mod vehicle;
 
@@ -91,7 +88,7 @@ pub type RawId = Uuid;
 /// Typed UUID v7 identity.
 ///
 /// The phantom type parameter prevents accidental cross-aggregate comparisons
-/// (e.g. `Id<Tree>` cannot be compared with `Id<Vehicle>` at compile time).
+/// (e.g. `Id<Vehicle>` cannot be compared with `Id<Region>` at compile time).
 /// New identifiers are generated as UUID v7 via [`Id::new_v7`]; the embedded
 /// 48-bit timestamp is recoverable via [`Id::created_at`].
 #[derive(Debug)]

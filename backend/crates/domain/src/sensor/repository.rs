@@ -3,10 +3,12 @@ use chrono::{DateTime, Utc};
 
 use crate::{
     RepositoryError,
-    cluster::{SoilMoistureBucket, SoilMoistureDepthSeries},
     sensor::{
         Sensor, SensorDraft, SensorId, SensorSearchQuery, SensorView,
-        data::{SensorReading, SensorReadingDraft, SensorReadingView},
+        data::{
+            SensorReading, SensorReadingDraft, SensorReadingView, SoilMoistureBucket,
+            SoilMoistureDepthSeries,
+        },
     },
     shared::pagination::{Page, Pagination, SearchPage},
     target::TargetRef,

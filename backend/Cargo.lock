@@ -116,6 +116,8 @@ dependencies = [
  "futures",
  "geo-types",
  "include_dir",
+ "irrigation-domain",
+ "irrigation-server",
  "jsonwebtoken",
  "libc",
  "polyline",
@@ -1268,6 +1270,7 @@ version = "0.8.0"
 dependencies = [
  "chrono",
  "domain",
+ "irrigation-domain",
  "serde",
  "serde-wasm-bindgen",
  "serde_json",
@@ -2190,6 +2193,46 @@ name = "ipnet"
 version = "2.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d98f6fed1fde3f8c21bc40a1abb88dd75e67924f9cffc3ef95607bad8017f8e2"
+
+[[package]]
+name = "irrigation-domain"
+version = "0.8.0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "claims",
+ "criterion",
+ "domain",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "thiserror 2.0.21",
+ "uuid",
+]
+
+[[package]]
+name = "irrigation-server"
+version = "0.8.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum",
+ "chrono",
+ "config",
+ "domain",
+ "irrigation-domain",
+ "secrecy",
+ "serde",
+ "serde_json",
+ "server",
+ "sqlx",
+ "thiserror 2.0.21",
+ "tokio",
+ "tracing",
+ "utoipa",
+ "utoipa-axum",
+ "uuid",
+]
 
 [[package]]
 name = "is_executable"
@@ -4044,7 +4087,6 @@ dependencies = [
 name = "server"
 version = "0.8.0"
 dependencies = [
- "anyhow",
  "async-trait",
  "axum",
  "axum-extra",

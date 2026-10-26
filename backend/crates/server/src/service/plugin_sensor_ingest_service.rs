@@ -9,7 +9,7 @@ use domain::{
 
 use super::{
     AuthError, ServiceError, authorization::AuthorizationService,
-    plugin_ingest_service::plugin_access_context, sensor_service::SensorService,
+    plugin_service::plugin_access_context, sensor_service::SensorService,
 };
 
 pub struct PluginSensorIngestService {

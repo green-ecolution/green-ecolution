@@ -37,7 +37,7 @@ impl FromStr for Action {
     }
 }
 
-/// A single grantable capability, e.g. `tree:read`.
+/// A single grantable capability, e.g. `vehicle:read`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Permission {
     pub resource: ResourceKey,
@@ -61,12 +61,12 @@ mod tests {
     use super::*;
     use claims::assert_err;
 
-    const TREE_CLUSTER: ResourceKey = ResourceKey::declare("tree_cluster");
+    const WIDGET_PART: ResourceKey = ResourceKey::declare("widget_part");
 
     #[test]
     fn display_uses_snake_case_resource_and_colon() {
-        let p = Permission::new(TREE_CLUSTER, Action::Read);
-        assert_eq!(p.to_string(), "tree_cluster:read");
+        let p = Permission::new(WIDGET_PART, Action::Read);
+        assert_eq!(p.to_string(), "widget_part:read");
     }
 
     #[test]

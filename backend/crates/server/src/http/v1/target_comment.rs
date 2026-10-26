@@ -83,7 +83,15 @@ pub async fn list_target_comments(
     Query(params): Query<PaginationParams>,
 ) -> Result<Json<ListResponse<CommentResponse>>, ServiceError> {
     let subject = target_scope(&state, user.id, &module, &kind, target_id).await?;
-    Ok(Json(list_for(&state, subject, &params).await?))
+    Ok(Json(
+        list_for(
+            &state.comment_service,
+            &state.user_service,
+            subject,
+            &params,
+        )
+        .await?,
+    ))
 }
 
 #[utoipa::path(
@@ -116,7 +124,14 @@ pub async fn create_target_comment(
     Json(payload): Json<CreateCommentRequest>,
 ) -> Result<(axum::http::StatusCode, Json<CommentResponse>), ServiceError> {
     let subject = target_scope(&state, user.id, &module, &kind, target_id).await?;
-    let response = create_for(&state, subject, user.id, payload).await?;
+    let response = create_for(
+        &state.comment_service,
+        &state.user_service,
+        subject,
+        user.id,
+        payload,
+    )
+    .await?;
     Ok((axum::http::StatusCode::CREATED, Json(response)))
 }
 
@@ -148,7 +163,7 @@ pub async fn delete_target_comment(
     Path((module, kind, target_id, comment_id)): Path<(String, String, uuid::Uuid, uuid::Uuid)>,
 ) -> Result<axum::http::StatusCode, ServiceError> {
     let subject = target_scope(&state, user.id, &module, &kind, target_id).await?;
-    let id = authorize_own_comment(&state, user.id, subject, comment_id).await?;
+    let id = authorize_own_comment(&state.comment_service, user.id, subject, comment_id).await?;
     state.comment_service.delete(id).await?;
     Ok(axum::http::StatusCode::NO_CONTENT)
 }
@@ -184,6 +199,8 @@ pub async fn update_target_comment(
     Json(payload): Json<UpdateCommentRequest>,
 ) -> Result<Json<CommentResponse>, ServiceError> {
     let subject = target_scope(&state, user.id, &module, &kind, target_id).await?;
-    let id = authorize_own_comment(&state, user.id, subject, comment_id).await?;
-    Ok(Json(update_for(&state, id, payload).await?))
+    let id = authorize_own_comment(&state.comment_service, user.id, subject, comment_id).await?;
+    Ok(Json(
+        update_for(&state.comment_service, &state.user_service, id, payload).await?,
+    ))
 }

@@ -87,7 +87,7 @@ pub fn physical_range(ability: SensorAbilityName, unit: SensorAbilityUnit) -> Op
     use SensorAbilityUnit as U;
 
     let (min, max) = match (ability, unit) {
-        // Porosity bounds water content: no tree-pit soil, however organic,
+        // Porosity bounds water content: no planting-pit soil, however organic,
         // holds 70 Vol.-%. Set far above the highest value ever measured on
         // site (45.5, from 28.7k readings across 9 sensors, May–Aug 2026) so
         // that a wetter season cannot reach it. See OpenProject #3464.

@@ -8,7 +8,7 @@ pub mod statistics;
 pub use app::{App, Git, Map, Server, VersionInfo};
 pub use readiness::{Readiness, ReadinessReader};
 pub use service::{ServiceMessage, ServiceName, ServiceStatus};
-pub use statistics::DataStatistics;
+pub use statistics::{CoreCounts, DataStatistics};
 
 use crate::RepositoryError;
 
@@ -26,5 +26,5 @@ pub trait HealthSnapshotReader: Send + Sync {
 
 #[async_trait::async_trait]
 pub trait StatisticsReader: Send + Sync {
-    async fn statistics(&self) -> Result<DataStatistics, RepositoryError>;
+    async fn core_counts(&self) -> Result<CoreCounts, RepositoryError>;
 }

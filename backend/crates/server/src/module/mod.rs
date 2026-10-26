@@ -9,17 +9,24 @@ use std::{
 };
 
 use domain::{
-    authorization::ResourceKey, module::ModuleKey, organization::OrganizationReader,
-    planning::PlanningProvider, settings::SettingsResolver, target::TargetCatalog,
+    authorization::ResourceKey,
+    module::{ModuleKey, ModuleStatistics},
+    organization::OrganizationReader,
+    planning::PlanningProvider,
+    region::RegionReader,
+    sensor::SensorReadingReader,
+    settings::SettingsResolver,
+    target::TargetCatalog,
 };
 use sqlx::PgPool;
 use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
     configuration::Settings,
-    http::AppState,
+    http::extractors::PluginAuthenticator,
     service::{
         authorization::AuthorizationService,
+        comment_service::CommentService,
         event_bus::{EventBus, EventHandler},
         module_access::ModuleAccess,
         operation_plan_service::OperationPlanService,
@@ -62,13 +69,35 @@ pub struct ModuleContext {
     pub sensors: Arc<SensorService>,
     /// Same rule as `sensors`: hold as `Weak` in event handlers.
     pub plans: Arc<OperationPlanService>,
+    /// For handlers that read the readings an event points at.
+    pub sensor_readings: Arc<dyn SensorReadingReader>,
+    pub regions: Arc<dyn RegionReader>,
+    pub comments: Arc<CommentService>,
+    pub plugin_auth: PluginAuthenticator,
+}
+
+impl ModuleContext {
+    /// The module's own `modules.<key>` section, minus `default_enabled`.
+    pub fn module_config<T: serde::de::DeserializeOwned>(
+        &self,
+        key: &ModuleKey,
+    ) -> Result<T, ModuleBuildError> {
+        self.config
+            .module_config(key.as_str())
+            .map_err(|e| ModuleBuildError {
+                module: key.clone(),
+                reason: format!("invalid modules.{key} section: {e}"),
+            })
+    }
 }
 
 /// Routes relative to `/api/v1`. `protected` runs behind the same
-/// authentication layer as the core's protected routes.
+/// authentication layer as the core's protected routes. Both carry their
+/// state already (`.with_state(..)`), so module handlers cannot extract the
+/// core's `AppState`.
 pub struct ModuleRoutes {
-    pub public: OpenApiRouter<Arc<AppState>>,
-    pub protected: OpenApiRouter<Arc<AppState>>,
+    pub public: OpenApiRouter,
+    pub protected: OpenApiRouter,
 }
 
 impl ModuleRoutes {
@@ -80,6 +109,13 @@ impl ModuleRoutes {
     }
 }
 
+/// What the HTTP layer mounts for one module. The routers carry the module's
+/// paths but not its tag descriptions, which only `Module::openapi` has.
+pub struct ModuleMount {
+    pub routes: ModuleRoutes,
+    pub openapi: utoipa::openapi::OpenApi,
+}
+
 pub struct ModuleRuntime {
     pub routes: ModuleRoutes,
     pub event_handlers: Vec<Arc<dyn EventHandler>>,
@@ -87,6 +123,7 @@ pub struct ModuleRuntime {
     pub background_tasks: Vec<BackgroundTask>,
     pub targets: Option<Arc<dyn TargetCatalog>>,
     pub planning: Option<Arc<dyn PlanningProvider>>,
+    pub statistics: Option<Arc<dyn ModuleStatistics>>,
 }
 
 impl ModuleRuntime {
@@ -97,6 +134,7 @@ impl ModuleRuntime {
             background_tasks: Vec::new(),
             targets: None,
             planning: None,
+            statistics: None,
         }
     }
 }

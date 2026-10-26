@@ -1250,3 +1250,50 @@ async fn deleting_a_cluster_keeps_comments_of_other_clusters() {
     .unwrap();
     assert_eq!(remaining, 1);
 }
+
+async fn cluster_comment_total(app: &TestApp, token: &str, cluster_id: &str) -> u64 {
+    let list: serde_json::Value = reqwest::Client::new()
+        .get(format!(
+            "{}/api/v1/clusters/{cluster_id}/comments",
+            app.address
+        ))
+        .bearer_auth(token)
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    list["pagination"]["total_records"].as_u64().unwrap()
+}
+
+#[tokio::test]
+async fn delete_for_target_removes_only_that_targets_comments() {
+    let (harness, app) = spawn_with_auth().await;
+    let (org, token) = seed_user_with_permissions(
+        &harness,
+        &app,
+        "Kommentar Aufräumen Org",
+        &["tree_cluster:read", "tree_cluster:create"],
+    )
+    .await;
+    let doomed = create_cluster(&app, &token, org).await;
+    let kept = create_cluster(&app, &token, org).await;
+    post_comment(&app, &token, &doomed, "erster").await;
+    post_comment(&app, &token, &doomed, "zweiter").await;
+    post_comment(&app, &token, &kept, "bleibt").await;
+
+    let target = irrigation_server::targets::cluster_target(domain::Id::new(
+        Uuid::parse_str(&doomed).unwrap(),
+    ));
+    let deleted = app
+        .state
+        .comment_service
+        .delete_for_target(&target)
+        .await
+        .unwrap();
+
+    assert_eq!(deleted, 2);
+    assert_eq!(cluster_comment_total(&app, &token, &doomed).await, 0);
+    assert_eq!(cluster_comment_total(&app, &token, &kept).await, 1);
+}

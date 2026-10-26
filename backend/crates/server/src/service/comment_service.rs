@@ -94,6 +94,16 @@ impl CommentService {
         Ok(self.writer.delete(id).await?)
     }
 
+    /// Comments hang on a target without a cascading key, so whoever deletes
+    /// the target removes its comments through this. Returns how many went.
+    #[tracing::instrument(level = "debug", skip_all)]
+    pub async fn delete_for_target(&self, target: &TargetRef) -> Result<u64, ServiceError> {
+        Ok(self
+            .writer
+            .delete_for_subject(CommentSubject::Target(target.clone()))
+            .await?)
+    }
+
     #[tracing::instrument(level = "debug", skip_all)]
     pub async fn update(
         &self,

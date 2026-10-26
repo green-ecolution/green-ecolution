@@ -5,11 +5,9 @@ use utoipa_axum::router::OpenApiRouter;
 
 use crate::http::{AppState, auth::AuthLayer};
 
-pub mod cluster;
 pub mod comment;
 pub mod dto;
 pub mod error;
-pub mod evaluation;
 pub mod gpx;
 pub mod info;
 pub mod module;
@@ -24,7 +22,6 @@ pub mod scope;
 pub mod sensor;
 pub mod settings;
 pub mod target_comment;
-pub mod tree;
 pub mod user;
 pub mod vehicle;
 
@@ -37,9 +34,7 @@ pub fn public_router() -> OpenApiRouter<Arc<AppState>> {
 pub fn protected_router() -> OpenApiRouter<Arc<AppState>> {
     OpenApiRouter::new()
         .merge(region::routes())
-        .merge(cluster::routes())
         .merge(comment::routes())
-        .merge(evaluation::routes())
         .merge(info::protected_routes())
         .merge(module::routes())
         .merge(organization::routes())
@@ -50,7 +45,6 @@ pub fn protected_router() -> OpenApiRouter<Arc<AppState>> {
         .merge(sensor::routes())
         .merge(settings::routes())
         .merge(target_comment::routes())
-        .merge(tree::routes())
         .merge(user::protected_routes())
         .merge(vehicle::routes())
 }
@@ -61,12 +55,18 @@ pub fn core_openapi() -> utoipa::openapi::OpenApi {
     public_router().merge(protected_router()).into_openapi()
 }
 
+/// The core's routers get their state before the module routers join them,
+/// which arrive with their own state already applied.
 pub fn router(
+    state: Arc<AppState>,
     auth_layer: AuthLayer,
     module_routes: Vec<crate::module::ModuleRoutes>,
-) -> OpenApiRouter<Arc<AppState>> {
+) -> OpenApiRouter {
     let (public, protected) = module_routes.into_iter().fold(
-        (public_router(), protected_router()),
+        (
+            public_router().with_state(state.clone()),
+            protected_router().with_state(state),
+        ),
         |(public, protected), routes| {
             (
                 public.merge(routes.public),

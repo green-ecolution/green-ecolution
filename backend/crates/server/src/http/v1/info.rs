@@ -3,6 +3,7 @@ use std::sync::Arc;
 use crate::http::v1::error::ErrorBody;
 
 use axum::{Json, extract::State};
+use domain::info::DataStatistics;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
@@ -131,6 +132,12 @@ pub async fn get_services_info(
 pub async fn get_statistics(
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<DataStatisticsResponse>, ServiceError> {
-    let stats = state.statistics_reader.statistics().await?;
-    Ok(Json(DataStatisticsResponse::from(&stats)))
+    let core = state.statistics_reader.core_counts().await?;
+    let modules = state.statistics.module_counts().await?;
+    Ok(Json(DataStatisticsResponse::from(&DataStatistics {
+        sensor_count: core.sensor_count,
+        vehicle_count: core.vehicle_count,
+        plan_count: core.plan_count,
+        modules,
+    })))
 }

@@ -36,24 +36,25 @@ map:
   # Zoom range the map is held to; also the instance default for organizations.
   min_zoom: 13
   max_zoom: 18
-  nearest_tree_max_radius: 500.0
-  nearest_tree_default_limit: 10
-  nearest_tree_max_limit: 50
 info:
   update_check_repo: "green-ecolution/green-ecolution"
   repository_url: "https://github.com/green-ecolution/"
 sensor:
   offline_after_secs: 86400 # 3600-2592000
   defect_streak: 3 # 1-100
-watering:
-  just_watered_ttl_secs: 86400 # 3600-1209600
-  just_watered_sweep_interval_secs: 3600
 routing:
   enabled: false
   streamlet_url: "http://localhost:2510"
-  tree_demand_liters: 80.0 # 1.0-1000.0
 plugins:
   enabled: false
 analytics:
   enabled: false
   script_url: "https://analytics.progeek.de/a.js"
+modules:
+  irrigation:
+    tree_demand_liters: 80.0 # 1.0-1000.0
+    just_watered_ttl_secs: 86400 # 3600-1209600
+    just_watered_sweep_interval_secs: 3600
+    nearest_tree_max_radius: 500.0
+    nearest_tree_default_limit: 10
+    nearest_tree_max_limit: 50

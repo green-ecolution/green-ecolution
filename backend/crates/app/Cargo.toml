@@ -27,6 +27,10 @@ name = "migrate"
 path = "src/bin/dump-openapi.rs"
 name = "dump-openapi"
 
+[[bin]]
+path = "src/bin/benchdb/main.rs"
+name = "benchdb"
+
 [[test]]
 name = "api"
 path = "test/api/main.rs"
@@ -38,6 +42,8 @@ chrono = { workspace = true }
 domain = { path = "../domain", features = ["sqlx"] }
 futures = "0.3"
 include_dir = "0.7"
+irrigation-domain = { path = "../modules/irrigation/domain", features = ["sqlx"] }
+irrigation-server = { path = "../modules/irrigation/server" }
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls", "stream"] }
 serde = { workspace = true }
 serde_json = { workspace = true }

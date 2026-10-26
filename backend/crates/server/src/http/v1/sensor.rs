@@ -14,14 +14,12 @@ use crate::{
         extractors::SensorIdPath,
         v1::{
             dto::{
-                ListResponse,
-                cluster::{SoilMoistureParams, SoilMoistureSeriesResponse},
+                ListResponse, TransferRequest,
                 sensor::{
                     AcknowledgeDataQualityRequest, ActivateSensorRequest, CreateSensorRequest,
                     SensorDataQualityResponse, SensorDataResponse, SensorListParams,
                     SensorModelResponse, SensorResponse, SetSensorTargetRequest, TargetRefDto,
                 },
-                tree::{TransferRequest, TreeResponse},
                 user::display_name,
             },
             pagination::default_page,
@@ -31,7 +29,7 @@ use crate::{
     service::ServiceError,
 };
 use domain::{
-    Id, RepositoryError,
+    Id,
     authorization::{Action, Permission, ResourceKey},
     module::ModuleKey,
     sensor::{AcknowledgementNote, SensorId, SensorSearchQuery, SensorSort, SensorSortField},
@@ -46,10 +44,8 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
         .routes(routes!(get_sensor, delete_sensor))
         .routes(routes!(activate_sensor))
         .routes(routes!(list_sensor_data))
-        .routes(routes!(get_sensor_soil_moisture))
         .routes(routes!(get_sensor_data_quality))
         .routes(routes!(acknowledge_sensor_data_quality))
-        .routes(routes!(get_tree_by_sensor))
         .routes(routes!(set_sensor_target, remove_sensor_target))
         .routes(routes!(list_sensor_models))
         .routes(routes!(get_sensor_model))
@@ -267,75 +263,6 @@ pub async fn list_sensor_data(
     Ok(Json(ListResponse::from_page(page, &pagination)))
 }
 
-#[utoipa::path(get, path = "/sensors/{sensor_id}/soil-moisture", tag = "Sensors",
-    operation_id = "getSensorSoilMoisture",
-    summary = "Bucketed soil-moisture series for a sensor",
-    description = "Aggregates the sensor's volumetric soil-moisture readings (mean/min/max per probe \
-        depth and time bucket). Stress thresholds and the REW condition series are derived from the \
-        soil condition of the linked tree's cluster and are empty when the sensor is not linked or \
-        the soil is unknown.",
-    params(("sensor_id" = String, Path, description = "Sensor ID"), SoilMoistureParams),
-    responses(
-        (status = 200, description = "Aggregated soil-moisture series", body = SoilMoistureSeriesResponse),
-        (status = 400, description = "Invalid query parameter", body = ErrorBody),
-        (status = 404, description = "Sensor not found", body = ErrorBody),
-        (status = 500, description = "Internal server error", body = ErrorBody),
-    )
-)]
-#[tracing::instrument(level = "info", skip_all, fields(sensor.id = %sensor_id))]
-pub async fn get_sensor_soil_moisture(
-    State(state): State<Arc<AppState>>,
-    user: AuthUserExtractor,
-    SensorIdPath(sensor_id): SensorIdPath,
-    Query(params): Query<SoilMoistureParams>,
-) -> Result<Json<SoilMoistureSeriesResponse>, ServiceError> {
-    let sensor = state.sensor_service.view_by_id(&sensor_id).await?;
-    let ctx = state.authorization_service.context_for(user.id).await?;
-    scope::ensure_visible(
-        &ctx,
-        Permission::new(ResourceKey::SENSOR, Action::Read),
-        sensor.organization_id,
-    )?;
-    let (from, to, bucket) = params.resolve()?;
-    let overview = state
-        .sensor_service
-        .soil_moisture_overview(&sensor_id, from, to, bucket)
-        .await?;
-    Ok(Json(SoilMoistureSeriesResponse::from(overview)))
-}
-
-#[utoipa::path(get, path = "/sensors/{sensor_id}/tree", tag = "Trees",
-    operation_id = "getTreeBySensor",
-    summary = "Get the tree associated with a sensor",
-    description = "Retrieves the tree linked to the given sensor. Returns 404 if the sensor or its associated tree does not exist.",
-    params(("sensor_id" = String, Path, description = "Sensor ID")),
-    responses(
-        (status = 200, description = "Tree found", body = TreeResponse),
-        (status = 404, description = "Sensor or associated tree not found", body = ErrorBody),
-        (status = 500, description = "Internal server error", body = ErrorBody),
-    )
-)]
-#[tracing::instrument(level = "info", skip_all, fields(sensor.id = %sensor_id))]
-pub async fn get_tree_by_sensor(
-    State(state): State<Arc<AppState>>,
-    user: AuthUserExtractor,
-    SensorIdPath(sensor_id): SensorIdPath,
-) -> Result<Json<TreeResponse>, ServiceError> {
-    let sensor = state.sensor_service.view_by_id(&sensor_id).await?;
-    let ctx = state.authorization_service.context_for(user.id).await?;
-    scope::ensure_visible(
-        &ctx,
-        Permission::new(ResourceKey::SENSOR, Action::Read),
-        sensor.organization_id,
-    )?;
-    let tree = state
-        .tree_service
-        .view_by_sensor_id(&sensor_id)
-        .await?
-        .ok_or(ServiceError::Repository(RepositoryError::NotFound))?;
-    Ok(Json(TreeResponse::from((&tree, Some(&sensor)))))
-}
-
 #[utoipa::path(post, path = "/sensors", tag = "Sensors",
     operation_id = "createSensor",
     summary = "Register a new (prepared) sensor unit",
@@ -357,7 +284,13 @@ pub async fn create_sensor(
     user: AuthUserExtractor,
     Json(body): Json<CreateSensorRequest>,
 ) -> Result<(StatusCode, Json<SensorResponse>), ServiceError> {
-    let org = scope::resolve_target_org(&state, user.id, body.organization_id).await?;
+    let org = scope::resolve_target_org(
+        &state.user_service,
+        &state.authorization_service,
+        user.id,
+        body.organization_id,
+    )
+    .await?;
     state
         .authorization_service
         .require(
@@ -564,14 +497,14 @@ pub async fn get_sensor_model(
     operation_id = "transferSensor", summary = "Transfer a sensor's ownership to another organization",
     description = "Moves an unbound sensor to a different owning organization. Requires \
                    `sensor:update` in both the source and target organization. A sensor bound \
-                   to a tree must be transferred via its tree instead.",
+                   to a target moves with that target instead.",
     params(("sensor_id" = String, Path, description = "Sensor ID (EUI)")),
     request_body = TransferRequest,
     responses(
         (status = 204, description = "Sensor transferred"),
         (status = 403, description = "Missing sensor:update in source or target organization", body = ErrorBody),
         (status = 404, description = "Sensor or organization not found", body = ErrorBody),
-        (status = 409, description = "Sensor is bound to a tree (code `conflict.sensor_bound_to_tree`)", body = ErrorBody),
+        (status = 409, description = "Sensor is bound to a target (code `conflict.sensor_bound_to_target`)", body = ErrorBody),
     )
 )]
 #[tracing::instrument(level = "info", skip_all, fields(sensor.id = %sensor_id))]

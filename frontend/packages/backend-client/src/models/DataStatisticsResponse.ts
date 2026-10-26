@@ -13,12 +13,32 @@
  */
 
 import { mapValues } from '../runtime';
+import type { ModuleCountResponse } from './ModuleCountResponse';
+import {
+    ModuleCountResponseFromJSON,
+    ModuleCountResponseFromJSONTyped,
+    ModuleCountResponseToJSON,
+    ModuleCountResponseToJSONTyped,
+} from './ModuleCountResponse';
+
 /**
  * 
  * @export
  * @interface DataStatisticsResponse
  */
 export interface DataStatisticsResponse {
+    /**
+     * 
+     * @type {Array<ModuleCountResponse>}
+     * @memberof DataStatisticsResponse
+     */
+    modules: Array<ModuleCountResponse>;
+    /**
+     * 
+     * @type {number}
+     * @memberof DataStatisticsResponse
+     */
+    planCount: number;
     /**
      * 
      * @type {number}
@@ -30,36 +50,17 @@ export interface DataStatisticsResponse {
      * @type {number}
      * @memberof DataStatisticsResponse
      */
-    treeClusterCount: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof DataStatisticsResponse
-     */
-    treeCount: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof DataStatisticsResponse
-     */
     vehicleCount: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof DataStatisticsResponse
-     */
-    wateringPlanCount: number;
 }
 
 /**
  * Check if a given object implements the DataStatisticsResponse interface.
  */
 export function instanceOfDataStatisticsResponse(value: object): value is DataStatisticsResponse {
+    if (!('modules' in value) || value['modules'] === undefined) return false;
+    if (!('planCount' in value) || value['planCount'] === undefined) return false;
     if (!('sensorCount' in value) || value['sensorCount'] === undefined) return false;
-    if (!('treeClusterCount' in value) || value['treeClusterCount'] === undefined) return false;
-    if (!('treeCount' in value) || value['treeCount'] === undefined) return false;
     if (!('vehicleCount' in value) || value['vehicleCount'] === undefined) return false;
-    if (!('wateringPlanCount' in value) || value['wateringPlanCount'] === undefined) return false;
     return true;
 }
 
@@ -73,11 +74,10 @@ export function DataStatisticsResponseFromJSONTyped(json: any, ignoreDiscriminat
     }
     return {
         
+        'modules': ((json['modules'] as Array<any>).map(ModuleCountResponseFromJSON)),
+        'planCount': json['planCount'],
         'sensorCount': json['sensorCount'],
-        'treeClusterCount': json['treeClusterCount'],
-        'treeCount': json['treeCount'],
         'vehicleCount': json['vehicleCount'],
-        'wateringPlanCount': json['wateringPlanCount'],
     };
 }
 
@@ -92,11 +92,10 @@ export function DataStatisticsResponseToJSONTyped(value?: DataStatisticsResponse
 
     return {
         
+        'modules': ((value['modules'] as Array<any>).map(ModuleCountResponseToJSON)),
+        'planCount': value['planCount'],
         'sensorCount': value['sensorCount'],
-        'treeClusterCount': value['treeClusterCount'],
-        'treeCount': value['treeCount'],
         'vehicleCount': value['vehicleCount'],
-        'wateringPlanCount': value['wateringPlanCount'],
     };
 }
 

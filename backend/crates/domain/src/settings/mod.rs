@@ -1,9 +1,10 @@
 //! Operational defaults an organization sets for itself.
 //!
 //! Three levels resolve onto one another: the instance default at the bottom,
-//! the organizations along the tree above it, each overriding what it sets
-//! itself, and (later) the user level for preferences only. A field that is
-//! not set means "inherit"; that is why every value field is an `Option`.
+//! the organizations along the organization tree above it, each overriding
+//! what it sets itself, and (later) the user level for preferences only. A
+//! field that is not set means "inherit"; that is why every value field is an
+//! `Option`.
 //!
 //! `descendants_may_override` is deliberately not an `Option`: it does not
 //! inherit. It is a statement about one's own descendants, not a value taken
@@ -26,9 +27,7 @@ pub use repository::{SettingsReader, SettingsResolver, SettingsWriter};
 pub use resolve::{Resolution, SettingOrigin, SettingOrigins, resolve};
 #[doc(hidden)]
 pub use snapshot::OrganizationSettingsSnapshot;
-pub use values::{
-    DefectStreak, JustWateredTtl, MapBounds, MapView, SensorOfflineAfter, WaterDemand, ZoomLevel,
-};
+pub use values::{DefectStreak, MapBounds, MapView, SensorOfflineAfter, ZoomLevel};
 
 /// What one organization set for itself. `None` means inherit.
 #[derive(Debug, Clone, Copy, PartialEq)]

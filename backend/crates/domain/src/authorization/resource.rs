@@ -20,7 +20,8 @@ impl ResourceKey {
     pub const ROLE: Self = Self("role");
     pub const PLUGIN: Self = Self("plugin");
     pub const SETTING: Self = Self("setting");
-    pub const CORE: [Self; 8] = [
+    pub const START_POINT: Self = Self("start_point");
+    pub const CORE: [Self; 9] = [
         Self::SENSOR,
         Self::VEHICLE,
         Self::REGION,
@@ -29,6 +30,7 @@ impl ResourceKey {
         Self::ROLE,
         Self::PLUGIN,
         Self::SETTING,
+        Self::START_POINT,
     ];
 
     /// Unchecked so modules can declare keys as constants.
@@ -122,43 +124,43 @@ impl ResourceCatalog {
 mod tests {
     use super::*;
 
-    const TREE: ResourceKey = ResourceKey::declare("tree");
+    const WIDGET: ResourceKey = ResourceKey::declare("widget");
 
     #[test]
-    fn core_catalog_has_eight_resources() {
-        assert_eq!(ResourceCatalog::core().resources().len(), 8);
+    fn core_catalog_has_nine_resources() {
+        assert_eq!(ResourceCatalog::core().resources().len(), 9);
     }
 
     #[test]
     fn module_resources_follow_the_core() {
-        let catalog = ResourceCatalog::new([TREE]).unwrap();
-        assert_eq!(catalog.resources().len(), 9);
-        assert_eq!(catalog.resources()[8], TREE);
+        let catalog = ResourceCatalog::new([WIDGET]).unwrap();
+        assert_eq!(catalog.resources().len(), 10);
+        assert_eq!(catalog.resources()[9], WIDGET);
     }
 
     #[test]
     fn permissions_are_resources_times_actions() {
-        let catalog = ResourceCatalog::new([TREE]).unwrap();
-        assert_eq!(catalog.permissions().len(), 9 * 4);
+        let catalog = ResourceCatalog::new([WIDGET]).unwrap();
+        assert_eq!(catalog.permissions().len(), 10 * 4);
     }
 
     #[test]
     fn rejects_an_invalid_module_key() {
-        assert!(ResourceCatalog::new([ResourceKey::declare("Tree")]).is_err());
+        assert!(ResourceCatalog::new([ResourceKey::declare("Widget")]).is_err());
     }
 
     #[test]
     fn rejects_a_key_declared_twice() {
-        assert!(ResourceCatalog::new([TREE, TREE]).is_err());
+        assert!(ResourceCatalog::new([WIDGET, WIDGET]).is_err());
         assert!(ResourceCatalog::new([ResourceKey::SENSOR]).is_err());
     }
 
     #[test]
     fn parses_known_permissions() {
-        let catalog = ResourceCatalog::new([TREE]).unwrap();
+        let catalog = ResourceCatalog::new([WIDGET]).unwrap();
         assert_eq!(
-            catalog.parse_permission("tree:update").unwrap(),
-            Permission::new(TREE, Action::Update)
+            catalog.parse_permission("widget:update").unwrap(),
+            Permission::new(WIDGET, Action::Update)
         );
     }
 
@@ -166,8 +168,8 @@ mod tests {
     fn unknown_resource_is_its_own_error() {
         let catalog = ResourceCatalog::core();
         assert_eq!(
-            catalog.parse_permission("tree:read"),
-            Err(PermissionParseError::UnknownResource("tree".into()))
+            catalog.parse_permission("widget:read"),
+            Err(PermissionParseError::UnknownResource("widget".into()))
         );
     }
 

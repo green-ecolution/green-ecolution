@@ -42,7 +42,7 @@ pub enum ValidationError {
 /// entries on one side.
 #[derive(Debug, Clone, PartialEq, serde::Serialize)]
 pub struct ValidationIssue {
-    /// Namespaced domain field label, e.g. `cluster.name`.
+    /// Namespaced domain field label, e.g. `vehicle.model`.
     pub field: &'static str,
     /// Translation key, `{field}.{violated rule}`.
     pub key: String,
@@ -125,21 +125,21 @@ mod issue_tests {
     #[test]
     fn key_is_the_field_label_plus_the_violated_rule() {
         let issue = ValidationIssue::from(&ValidationError::TooLong {
-            field: "cluster.name",
+            field: "vehicle.model",
             max: 255,
             got: 300,
         });
-        assert_eq!(issue.field, "cluster.name");
-        assert_eq!(issue.key, "cluster.name.tooLong");
+        assert_eq!(issue.field, "vehicle.model");
+        assert_eq!(issue.key, "vehicle.model.tooLong");
         assert_eq!(issue.params, json!({ "max": 255, "got": 300 }));
     }
 
     #[test]
     fn an_empty_field_carries_no_parameters() {
         let issue = ValidationIssue::from(&ValidationError::EmptyString {
-            field: "tree.species",
+            field: "vehicle.number_plate",
         });
-        assert_eq!(issue.key, "tree.species.empty");
+        assert_eq!(issue.key, "vehicle.number_plate.empty");
         assert_eq!(issue.params, json!({}));
     }
 

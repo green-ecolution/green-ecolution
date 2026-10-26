@@ -563,3 +563,54 @@ async fn tbz_admin_manages_and_transfers_child_org_trees_via_subtree_grant() {
         .unwrap();
     assert_eq!(after_transfer["organization_id"], TBZ_ORG);
 }
+
+#[tokio::test]
+async fn transfer_with_target_moves_a_bound_sensor_and_keeps_it_attached() {
+    let app = spawn_app().await;
+    insert_org_tree(&app).await;
+
+    let sensor_id = "eui-transfer-with-target";
+    create_sensor(&app, sensor_id, TBZ_ORG).await;
+    let tree_id = create_tree(&app, "TRANSFER-WT-001", TBZ_ORG).await;
+    activate_sensor(&app, sensor_id, &tree_id).await;
+
+    app.state
+        .sensor_service
+        .transfer_with_target(
+            &domain::sensor::SensorId::new(sensor_id).unwrap(),
+            domain::Id::new(Uuid::parse_str(SUB_ORG).unwrap()),
+        )
+        .await
+        .expect("a bound sensor moves along with its target");
+
+    let sensor: serde_json::Value = app
+        .get(&format!("/api/v1/sensors/{sensor_id}"))
+        .await
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(sensor["organization_id"], SUB_ORG);
+    assert_eq!(sensor["target"]["id"], tree_id.as_str());
+}
+
+#[tokio::test]
+async fn transfer_with_target_of_an_unknown_sensor_is_not_found() {
+    let app = spawn_app().await;
+    insert_org_tree(&app).await;
+
+    let result = app
+        .state
+        .sensor_service
+        .transfer_with_target(
+            &domain::sensor::SensorId::new("eui-transfer-missing").unwrap(),
+            domain::Id::new(Uuid::parse_str(SUB_ORG).unwrap()),
+        )
+        .await;
+
+    assert!(matches!(
+        result,
+        Err(server::service::ServiceError::Repository(
+            domain::RepositoryError::NotFound
+        ))
+    ));
+}

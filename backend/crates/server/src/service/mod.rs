@@ -1,16 +1,12 @@
 pub mod authorization;
-pub mod cluster_service;
 pub mod comment_service;
-pub mod evaluation_service;
 pub mod event_bus;
-pub mod handlers;
 pub mod module_access;
 pub mod module_activation_service;
 pub mod operation_execution_service;
 pub mod operation_plan_service;
 pub mod organization_service;
 pub mod planning;
-pub mod plugin_ingest_service;
 pub mod plugin_proxy_policy;
 pub mod plugin_proxy_service;
 pub mod plugin_sensor_ingest_service;
@@ -21,10 +17,22 @@ pub mod role_service;
 pub mod sensor_service;
 pub mod settings_service;
 pub mod start_point_service;
+pub mod statistics_registry;
 pub mod targets;
-pub mod tree_service;
 pub mod user_service;
 pub mod vehicle_service;
+
+/// A stand-in module resource: the core's unit tests run without any module crate.
+#[cfg(test)]
+pub(crate) mod test_resources {
+    use domain::authorization::{ResourceCatalog, ResourceKey};
+
+    pub const WIDGET: ResourceKey = ResourceKey::declare("widget");
+
+    pub fn catalog() -> ResourceCatalog {
+        ResourceCatalog::new([WIDGET]).unwrap()
+    }
+}
 
 use domain::{
     RepositoryError,
@@ -92,6 +100,14 @@ impl std::fmt::Display for Malformed {
     }
 }
 
+/// Maps to 409 (`Conflict`) or 422 (`Unprocessable`); the stable error code
+/// stays module-defined.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ModuleErrorKind {
+    Conflict,
+    Unprocessable,
+}
+
 #[derive(Debug, thiserror::Error)]
 pub enum ServiceError {
     #[error(transparent)]
@@ -121,7 +137,7 @@ pub enum ServiceError {
     NotActivated,
     #[error("{feature} feature is disabled")]
     FeatureDisabled { feature: Feature },
-    /// A plugin ingest batch exceeded `plugin_ingest_service::MAX_INGEST_ITEMS`.
+    /// A plugin ingest batch exceeded the endpoint's item limit.
     #[error("batch exceeds the limit of {limit} items")]
     PayloadTooLarge { limit: usize },
     #[error(transparent)]
@@ -136,10 +152,6 @@ pub enum ServiceError {
     OrganizationMismatch(#[from] OrganizationMismatch),
     #[error("contact person is not a member of this organization")]
     ContactPersonNotAMember,
-    #[error("tree is part of a cluster")]
-    TreeInCluster,
-    #[error("tree is not planted yet and cannot carry a sensor")]
-    TreeNotYetPlanted,
     #[error("sensor is attached to a target and must be transferred with it")]
     SensorBoundToTarget,
     #[error("no organization given and the acting user has none")]
@@ -174,6 +186,14 @@ pub enum ServiceError {
     OperationPlan(#[from] OperationPlanError),
     #[error("unknown stop {stop}")]
     UnknownStop { stop: uuid::Uuid },
+    /// An error a module raises with its own stable code, e.g.
+    /// `conflict.tree_in_cluster`.
+    #[error("{message}")]
+    Module {
+        kind: ModuleErrorKind,
+        code: &'static str,
+        message: String,
+    },
 }
 
 impl ServiceError {
@@ -199,8 +219,6 @@ impl ServiceError {
             Self::AlreadyActivated => "conflict.sensor_already_activated",
             Self::NotActivated => "conflict.sensor_not_activated",
             Self::OrganizationNotEmpty => "conflict.organization_not_empty",
-            Self::TreeInCluster => "conflict.tree_in_cluster",
-            Self::TreeNotYetPlanted => "tree.not_yet_planted",
             Self::SensorBoundToTarget => "conflict.sensor_bound_to_target",
             Self::CannotChangeOwnAccess => "conflict.cannot_change_own_access",
             Self::CannotRevokeOwnAdministration => "conflict.cannot_revoke_own_administration",
@@ -213,6 +231,7 @@ impl ServiceError {
             Self::VehicleCapacityMissing { .. } => "vehicle.capacity_missing",
             Self::UnknownStop { .. } => "plan.unknown_stop",
             Self::TargetRefused { code, .. } => code,
+            Self::Module { code, .. } => code,
             Self::FeatureDisabled { feature } => match feature {
                 Feature::Routing => "feature.routing_disabled",
                 Feature::Plugins => "feature.plugins_disabled",
@@ -238,18 +257,6 @@ impl ServiceError {
             _ => return None,
         };
         Some(ValidationIssue::from(error))
-    }
-}
-
-/// Only `NotYetPlanted` actually travels this way: the calibration variants
-/// are consumed by the reading handler and never reach a service.
-impl From<domain::tree::TreeError> for ServiceError {
-    fn from(e: domain::tree::TreeError) -> Self {
-        match e {
-            domain::tree::TreeError::NotYetPlanted => Self::TreeNotYetPlanted,
-            domain::tree::TreeError::Validation(v) => Self::Validation(v),
-            other => Self::InvalidInput(other.to_string()),
-        }
     }
 }
 
@@ -311,10 +318,6 @@ fn operation_plan_code(e: &OperationPlanError) -> &'static str {
 /// `Display` text is a fallback for clients without their own wording.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, thiserror::Error)]
 pub enum OrganizationMismatch {
-    #[error("the selected trees belong to a different organization than the cluster")]
-    TreesVsCluster,
-    #[error("the selected cluster belongs to a different organization than the tree")]
-    ClusterVsTree,
     #[error("the sensor belongs to a different organization than its target")]
     SensorVsTarget,
     #[error("the selected stops are outside the plan's organization")]
@@ -326,8 +329,6 @@ pub enum OrganizationMismatch {
 impl OrganizationMismatch {
     pub fn code(self) -> &'static str {
         match self {
-            Self::TreesVsCluster => "organization_mismatch.trees_vs_cluster",
-            Self::ClusterVsTree => "organization_mismatch.cluster_vs_tree",
             Self::SensorVsTarget => "organization_mismatch.sensor_vs_target",
             Self::StopsVsPlan => "organization_mismatch.stops_vs_plan",
             Self::RoleVsUser => "organization_mismatch.role_vs_user",
@@ -448,19 +449,21 @@ mod tests {
             ServiceError::Role(domain::role::RoleError::TemplateImmutable),
             ServiceError::Role(domain::role::RoleError::CannotAssignTemplate),
             ServiceError::OrganizationNotEmpty,
-            ServiceError::OrganizationMismatch(OrganizationMismatch::TreesVsCluster),
-            ServiceError::OrganizationMismatch(OrganizationMismatch::ClusterVsTree),
             ServiceError::OrganizationMismatch(OrganizationMismatch::SensorVsTarget),
             ServiceError::OrganizationMismatch(OrganizationMismatch::StopsVsPlan),
             ServiceError::OrganizationMismatch(OrganizationMismatch::RoleVsUser),
             ServiceError::ContactPersonNotAMember,
-            ServiceError::TreeInCluster,
             ServiceError::SensorBoundToTarget,
             ServiceError::MissingOrganization,
             ServiceError::CannotChangeOwnAccess,
             ServiceError::CannotRevokeOwnAdministration,
             ServiceError::ModuleUnknown { key: "x".into() },
             ServiceError::ModuleDisabled { module: "x".into() },
+            ServiceError::Module {
+                kind: ModuleErrorKind::Conflict,
+                code: "conflict.x",
+                message: "x".into(),
+            },
             ServiceError::TargetNotAccepted {
                 module: "x".into(),
                 kind: "y".into(),

@@ -5,6 +5,7 @@ export const RESOURCES = [
   'tree_cluster',
   'sensor',
   'watering_plan',
+  'start_point',
   'vehicle',
   'region',
   'user',

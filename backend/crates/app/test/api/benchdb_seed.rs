@@ -1,15 +1,10 @@
-use domain::{
-    sensor::repository::SensorReadingReader,
-    shared::pagination::Pagination,
-    tree::{TreeSearchQuery, repository::TreeReader},
+use app::bench::{
+    scale::Scale,
+    seed::{SeedPlan, seed_core},
 };
-use server::{
-    bench::{
-        scale::Scale,
-        seed::{SeedPlan, seed_core},
-    },
-    infra::pg_tree::PgTreeRepository,
-};
+use domain::{sensor::repository::SensorReadingReader, shared::pagination::Pagination};
+use irrigation_domain::tree::{TreeSearchQuery, repository::TreeReader};
+use irrigation_server::infra::pg_tree::PgTreeRepository;
 
 use crate::helpers::spawn_app;
 
@@ -252,13 +247,13 @@ async fn seeding_creates_a_user_with_role_grants() {
         std::sync::Arc::new(server::infra::pg_role::PgRoleRepository::new(
             app.db_pool.clone(),
             std::sync::Arc::new(
-                domain::authorization::ResourceCatalog::new(server::irrigation::resources::ALL)
+                domain::authorization::ResourceCatalog::new(irrigation_server::resources::ALL)
                     .unwrap(),
             ),
         )),
         true,
     );
-    let user_id: uuid::Uuid = server::bench::seed::BENCH_USER_ID
+    let user_id: uuid::Uuid = app::bench::seed::BENCH_USER_ID
         .parse()
         .expect("the constant is a valid uuid");
 

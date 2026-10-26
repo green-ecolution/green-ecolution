@@ -62,8 +62,8 @@ impl std::fmt::Display for NonEmptyString {
 ///
 /// ```ignore
 /// newtype_nonempty! {
-///     /// Botanical or common species name, 1–255 characters after trimming.
-///     Species, "tree.species", 1, 255
+///     /// Vehicle registration plate, 1–32 characters after trimming.
+///     NumberPlate, "vehicle.number_plate", 1, 32
 /// }
 /// ```
 #[macro_export]

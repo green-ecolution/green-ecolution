@@ -287,7 +287,7 @@ mod tests {
                     permissions: draft.permissions.iter().map(|p| p.to_string()).collect(),
                     template_key: None,
                 },
-                &crate::irrigation::test_catalog(),
+                &crate::service::test_resources::catalog(),
             )
             .unwrap()
             .role;
@@ -375,7 +375,7 @@ mod tests {
 
     fn perms() -> BTreeSet<Permission> {
         BTreeSet::from([Permission::new(
-            crate::irrigation::resources::TREE,
+            crate::service::test_resources::WIDGET,
             Action::Read,
         )])
     }
@@ -390,7 +390,7 @@ mod tests {
                 permissions: perms().iter().map(|p| p.to_string()).collect(),
                 template_key: None,
             },
-            &crate::irrigation::test_catalog(),
+            &crate::service::test_resources::catalog(),
         )
         .unwrap()
         .role

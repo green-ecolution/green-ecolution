@@ -13,15 +13,15 @@
 //!   contract below). Inline events must not set it again.
 //! - `error` always carries the error's `Display` string; `kind` carries a stable,
 //!   low-cardinality category (`"auth"`, `"repository"`, ...).
-//! - Domain identifiers are `<entity>.id` (`tree.id`, `cluster.id`, ...); other attributes
-//!   are `<entity>.<attr>` (e.g. `vehicle.plate`).
+//! - Domain identifiers are `<entity>.id` (`sensor.id`, `plan.id`, ...), modules' entities
+//!   included; other attributes are `<entity>.<attr>` (e.g. `vehicle.plate`).
 //! - This is a convention, not machine-enforced. New fields follow the taxonomy below.
 //!
 //! | Namespace | Fields |
 //! |---|---|
 //! | cross-cutting | `request_id`, `error`, `kind` |
 //! | `http.*` / `url.*` / `network.*` | `http.request.method`, `http.response.status_code`, `url.path`, `url.query`, `network.protocol.version`, `latency_ms` |
-//! | `<entity>.*` | `tree.id`, `cluster.id`, `sensor.id`, `region.id`, `vehicle.id`, `vehicle.plate`, `plan.id`, `model.id` |
+//! | `<entity>.*` | `sensor.id`, `region.id`, `vehicle.id`, `vehicle.plate`, `plan.id`, `model.id` |
 //! | `sensor.*` | `sensor.ability`, `sensor.depth_cm`, `sensor.probe`, `sensor.probe_id` |
 //! | `mqtt.*` | `mqtt.topic` |
 //! | `keycloak.*` | `keycloak.role`, `keycloak.status`, `keycloak.jwk.kid`, `keycloak.jwks.count` |
@@ -35,7 +35,7 @@
 //! standard Loki/Promtail `| json` pipeline:
 //!
 //! - Top level: `timestamp` (RFC3339 UTC), `level` (`INFO`/`WARN`/…), `message`, `target`, and
-//!   every event field flattened to the top level (e.g. `tree.id`) — there is no `fields` wrapper.
+//!   every event field flattened to the top level (e.g. `sensor.id`) — there is no `fields` wrapper.
 //! - Span context lives in the `spans` array (root→leaf). `spans[0]` is the request root; for an
 //!   HTTP request it carries `request_id`, `http.request.method`, `url.path`,
 //!   `http.response.status_code`, `latency_ms`.
@@ -210,7 +210,7 @@ mod tests {
         tracing::subscriber::with_default(subscriber, || {
             let span = tracing::info_span!("http_request", request_id = "req-1");
             let _guard = span.enter();
-            tracing::info!(tree.id = 5, "tree watered");
+            tracing::info!(vehicle.id = 5, "vehicle refilled");
         });
 
         let json = first_line_json(&buf);
@@ -224,8 +224,8 @@ mod tests {
             json.get("span").is_none(),
             "current-span object must be disabled: {json}"
         );
-        assert_eq!(json["message"], "tree watered");
-        assert_eq!(json["tree.id"], 5);
+        assert_eq!(json["message"], "vehicle refilled");
+        assert_eq!(json["vehicle.id"], 5);
         assert_eq!(json["level"], "INFO");
         assert!(json["timestamp"].is_string());
 
@@ -270,7 +270,7 @@ mod tests {
         tracing::subscriber::with_default(subscriber, || {
             let span = tracing::info_span!("http_request", request_id = "req-1");
             let _guard = span.enter();
-            tracing::info!("tree watered");
+            tracing::info!("vehicle refilled");
         });
 
         let raw = String::from_utf8(buf.lock().expect("log buffer not poisoned").clone())

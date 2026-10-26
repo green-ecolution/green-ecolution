@@ -2,7 +2,7 @@ use sqlx::{Postgres, QueryBuilder};
 
 /// Maps a sort field's SQL key to the expressions that order by it. A key can
 /// carry several expressions when one column needs more than one comparison,
-/// as tree numbers do: letter prefix first, digits numerically second.
+/// as numbers like `B12` do: letter prefix first, digits numerically second.
 pub type SortColumns = &'static [(&'static str, &'static [&'static str])];
 
 /// Appends `ORDER BY` for `key`, always `NULLS LAST`, optionally followed by

@@ -201,7 +201,7 @@ export class RoutingApi extends runtime.BaseAPI {
     }
 
     /**
-     * Moves a start point to a different owning organization. If it was the default for its organization, it loses that status (the target organization\'s own default, if any, is left untouched). Requires `watering_plan:update` in both the source and target organization.
+     * Moves a start point to a different owning organization. If it was the default for its organization, it loses that status (the target organization\'s own default, if any, is left untouched). Requires `start_point:update` in both the source and target organization.
      * Transfer a start point\'s ownership to another organization
      */
     async transferStartPointRaw(requestParameters: TransferStartPointRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
@@ -241,7 +241,7 @@ export class RoutingApi extends runtime.BaseAPI {
     }
 
     /**
-     * Moves a start point to a different owning organization. If it was the default for its organization, it loses that status (the target organization\'s own default, if any, is left untouched). Requires `watering_plan:update` in both the source and target organization.
+     * Moves a start point to a different owning organization. If it was the default for its organization, it loses that status (the target organization\'s own default, if any, is left untouched). Requires `start_point:update` in both the source and target organization.
      * Transfer a start point\'s ownership to another organization
      */
     async transferStartPoint(requestParameters: TransferStartPointRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {

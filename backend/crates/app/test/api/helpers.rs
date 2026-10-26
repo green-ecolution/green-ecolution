@@ -381,7 +381,32 @@ async fn template_database() -> &'static str {
 /// included so any test can mount it without migrating a database of its own.
 pub fn irrigation_catalog() -> std::sync::Arc<domain::authorization::ResourceCatalog> {
     std::sync::Arc::new(
-        domain::authorization::ResourceCatalog::new(server::irrigation::resources::ALL).unwrap(),
+        domain::authorization::ResourceCatalog::new(irrigation_server::resources::ALL).unwrap(),
+    )
+}
+
+/// Built like `IrrigationModule::build` builds it, on the server's own bus,
+/// so follow-up events run as they would behind the HTTP surface.
+pub fn irrigation_cluster_service(
+    app: &TestApp,
+) -> Arc<irrigation_server::service::cluster_service::ClusterService> {
+    use irrigation_server::infra::{
+        pg_cluster::PgTreeClusterRepository, pg_tree::PgTreeRepository,
+    };
+
+    let clusters = Arc::new(PgTreeClusterRepository::new(app.db_pool.clone()));
+    let trees = Arc::new(PgTreeRepository::new(app.db_pool.clone()));
+    Arc::new(
+        irrigation_server::service::cluster_service::ClusterService::new(
+            clusters.clone(),
+            clusters,
+            trees.clone(),
+            trees,
+            app.state.sensor_service.clone(),
+            app.state.event_bus.clone(),
+            app.state.comment_service.clone(),
+            app.state.operation_plan_service.clone(),
+        ),
     )
 }
 
@@ -418,15 +443,30 @@ pub async fn try_spawn_app_with_modules_and_auth(
     modules: Vec<Box<dyn server::module::Module>>,
     auth: AuthSettings,
 ) -> Result<TestApp, std::io::Error> {
+    // Core features (plans, sensor targets) hang off irrigation, so every test
+    // application runs it.
+    let mut all_modules = app::modules::registered();
+    all_modules.extend(modules);
+    try_spawn_app_with_exact_modules(all_modules, auth).await
+}
+
+pub async fn spawn_app_with_exact_modules(
+    modules: Vec<Box<dyn server::module::Module>>,
+) -> TestApp {
+    try_spawn_app_with_exact_modules(modules, disabled_auth_settings())
+        .await
+        .expect("failed to build application")
+}
+
+async fn try_spawn_app_with_exact_modules(
+    all_modules: Vec<Box<dyn server::module::Module>>,
+    auth: AuthSettings,
+) -> Result<TestApp, std::io::Error> {
     let mut settings = Settings::for_test(auth);
     settings.info.health_check_interval_secs = 1;
     settings.info.update_check_repo = None;
     let container = shared_container().await;
     let (_db_name, db_pool) = create_test_database(container.host_port).await;
-    // Core features (plans, sensor targets) hang off irrigation, so every test
-    // application runs it.
-    let mut all_modules = app::modules::registered();
-    all_modules.extend(modules);
     let app =
         Application::build_with_modules(db_pool.clone(), "127.0.0.1:0", settings, all_modules)
             .await?;
@@ -471,6 +511,7 @@ async fn clone_database(host_port: u16, template: Option<&str>) -> (String, PgPo
 
 /// Version of the last migration before stage 3 of the module epic.
 pub const BEFORE_STAGE_3: i64 = 20261024100000;
+pub const BEFORE_START_POINT_RESOURCE: i64 = 20261025100600;
 
 /// Builds a database that stops at `cutoff`, lets the test seed data in the
 /// old schema, then applies everything after it and starts the app.
