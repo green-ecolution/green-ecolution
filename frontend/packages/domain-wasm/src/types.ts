@@ -57,7 +57,7 @@ export interface WateringPlanForm {
   trailerId?: string
   transporterTankUsed: boolean
   driverIds: string[]
-  clusterIds: string[]
+  stopIds: string[]
   description: string
   startPointName: string
 }

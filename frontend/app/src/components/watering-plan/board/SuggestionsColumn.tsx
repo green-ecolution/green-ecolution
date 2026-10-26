@@ -35,7 +35,7 @@ const SuggestionsColumn = () => {
       transporterId: '',
       trailerId: undefined,
       transporterTankUsed: true,
-      clusterIds: selected,
+      stopIds: selected,
       status: WateringPlanStatus.Planned,
       driverIds: [],
       startPointName: '',

@@ -1,9 +1,9 @@
 import { TreeForm } from '../../../schema/treeSchema'
 import { expandShortYear } from '../../../lib/plantingYear'
 import {
-  plantingYearIsFuture,
-  plantingYearMax,
-  plantingYearMin,
+  irrigationPlantingYearIsFuture,
+  irrigationPlantingYearMax,
+  irrigationPlantingYearMin,
 } from '@green-ecolution/domain-wasm'
 import { FormField, TextareaField, SelectField, Button } from '@green-ecolution/ui'
 import { Sensor } from '@/api/backendApi'
@@ -42,7 +42,7 @@ const FormForTree = (props: FormForTreeProps) => {
     name: 'plantingYear',
   })
   const isPlannedPlanting =
-    Number.isInteger(watchedPlantingYear) && plantingYearIsFuture(watchedPlantingYear)
+    Number.isInteger(watchedPlantingYear) && irrigationPlantingYearIsFuture(watchedPlantingYear)
 
   const handlePlantingYearBlur = (event: FocusEvent<HTMLInputElement>) => {
     void plantingYearField.onBlur(event)
@@ -92,8 +92,8 @@ const FormForTree = (props: FormForTreeProps) => {
             placeholder={t('form.plantingYearLabel')}
             label={t('form.plantingYearLabel')}
             type="number"
-            min={plantingYearMin()}
-            max={plantingYearMax()}
+            min={irrigationPlantingYearMin()}
+            max={irrigationPlantingYearMax()}
             error={errors.plantingYear?.message}
             description={isPlannedPlanting ? t('form.plantingYearFutureHint') : undefined}
             required

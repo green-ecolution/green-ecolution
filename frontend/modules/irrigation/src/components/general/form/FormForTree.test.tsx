@@ -4,7 +4,11 @@ import userEvent from '@testing-library/user-event'
 import FormForTree from './FormForTree'
 import { TreeForm } from '../../../schema/treeSchema'
 import { FormProvider, useForm } from 'react-hook-form'
-import { plantingYearMax, plantingYearMin, treeDraftResolver } from '@green-ecolution/domain-wasm'
+import {
+  irrigationPlantingYearMax,
+  irrigationPlantingYearMin,
+  treeDraftResolver,
+} from '@green-ecolution/domain-wasm'
 import { ReactNode } from 'react'
 import { FORM_VALIDATION_MODE } from '@/hooks/form/useEntityForm'
 import { useIssueTranslator } from '@/lib/i18n/validation'
@@ -339,8 +343,8 @@ describe('FormForTree', () => {
     )
 
     const plantingYear = screen.getByLabelText(/pflanzjahr/i)
-    expect(plantingYear).toHaveAttribute('min', String(plantingYearMin()))
-    expect(plantingYear).toHaveAttribute('max', String(plantingYearMax()))
+    expect(plantingYear).toHaveAttribute('min', String(irrigationPlantingYearMin()))
+    expect(plantingYear).toHaveAttribute('max', String(irrigationPlantingYearMax()))
   })
 
   // A future year is valid input (a planned planting), so this is a hint and
@@ -440,8 +444,8 @@ describe('FormForTree', () => {
     await user.tab()
 
     const alert = await screen.findByRole('alert')
-    expect(alert).toHaveTextContent(String(plantingYearMin()))
-    expect(alert).toHaveTextContent(String(plantingYearMax()))
+    expect(alert).toHaveTextContent(String(irrigationPlantingYearMin()))
+    expect(alert).toHaveTextContent(String(irrigationPlantingYearMax()))
     expect(alert.textContent).not.toContain('{')
   })
 

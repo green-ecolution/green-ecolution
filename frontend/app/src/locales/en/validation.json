@@ -86,8 +86,8 @@
     "outOfRange": "Water capacity must be between {min} and {max} liters."
   },
   "watering_plan": {
-    "cluster_ids": {
-      "empty": "At least one watering group must be selected."
+    "stop_ids": {
+      "empty": "Select at least one stop."
     },
     "driver_ids": {
       "empty": "At least one employee must be selected.",

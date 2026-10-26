@@ -22,7 +22,7 @@ const defaultForm: DefaultValues<WateringPlanForm> = {
   transporterId: '',
   trailerId: undefined,
   transporterTankUsed: true,
-  clusterIds: [],
+  stopIds: [],
   status: WateringPlanStatus.Planned,
   driverIds: [],
   startPointName: '',
@@ -32,7 +32,7 @@ function NewWateringPlan() {
   const { t } = useTranslation('wateringPlan')
   const draft = useWateringPlanDraft<WateringPlanForm>('create')
   const initForm = draft.data ?? defaultForm
-  const formKey = draft.data?.clusterIds?.join(',') ?? 'initial'
+  const formKey = draft.data?.stopIds?.join(',') ?? 'initial'
 
   const navigate = useNavigate({ from: Route.fullPath })
   const { data: users } = useSuspenseQuery(userQueries.list({ page: 1, perPage: 100 }))
@@ -56,7 +56,7 @@ function NewWateringPlan() {
       date: data.date.toISOString(),
       trailerId: data.trailerId && data.trailerId !== '-1' ? data.trailerId : undefined,
       userIds: data.driverIds,
-      treeClusterIds: data.clusterIds,
+      treeClusterIds: data.stopIds,
       startPointName: data.startPointName,
     })
   }
@@ -72,7 +72,7 @@ function NewWateringPlan() {
         transporterId: getValues('transporterId'),
         trailerId: getValues('trailerId'),
         formType: 'create',
-        clusterIds: form.getValues('clusterIds'),
+        clusterIds: form.getValues('stopIds'),
       },
     }).catch((error) => console.error('Navigation failed:', error))
   }

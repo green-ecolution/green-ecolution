@@ -9,63 +9,63 @@ use wasm_bindgen::prelude::*;
 use crate::field_validators::finish;
 use crate::issue::{ValidationIssue, to_js};
 
-#[wasm_bindgen(js_name = validateSpecies)]
+#[wasm_bindgen(js_name = irrigationValidateSpecies)]
 pub fn validate_species(value: &str) -> Result<JsValue, JsError> {
     finish(Species::new(value), "species")
 }
 
-#[wasm_bindgen(js_name = validateTreeNumber)]
+#[wasm_bindgen(js_name = irrigationValidateTreeNumber)]
 pub fn validate_tree_number(value: &str) -> Result<JsValue, JsError> {
     finish(TreeNumber::new(value), "number")
 }
 
-#[wasm_bindgen(js_name = validatePlantingYear)]
+#[wasm_bindgen(js_name = irrigationValidatePlantingYear)]
 pub fn validate_planting_year(year: u32) -> Result<JsValue, JsError> {
     finish(PlantingYear::new(year), "plantingYear")
 }
 
 /// Exposed so input controls can constrain their steppers to the same range the
 /// domain enforces, instead of restating the bounds in TypeScript.
-#[wasm_bindgen(js_name = plantingYearMin)]
+#[wasm_bindgen(js_name = irrigationPlantingYearMin)]
 pub fn planting_year_min() -> u32 {
     MIN_PLANTING_YEAR
 }
 
-#[wasm_bindgen(js_name = plantingYearMax)]
+#[wasm_bindgen(js_name = irrigationPlantingYearMax)]
 pub fn planting_year_max() -> u32 {
     MAX_PLANTING_YEAR
 }
 
 /// Whether the planting still lies ahead, by the same rule the backend uses to
 /// refuse a sensor and to withhold a watering status.
-#[wasm_bindgen(js_name = plantingYearIsFuture)]
+#[wasm_bindgen(js_name = irrigationPlantingYearIsFuture)]
 pub fn planting_year_is_future(year: u32) -> bool {
     PlantingYear::reconstitute(year).is_future(chrono::Utc::now())
 }
 
-#[wasm_bindgen(js_name = validateClusterName)]
+#[wasm_bindgen(js_name = irrigationValidateClusterName)]
 pub fn validate_cluster_name(value: &str) -> Result<JsValue, JsError> {
     finish(ClusterName::new(value), "name")
 }
 
-#[wasm_bindgen(js_name = validateClusterAddress)]
+#[wasm_bindgen(js_name = irrigationValidateClusterAddress)]
 pub fn validate_cluster_address(value: &str) -> Result<JsValue, JsError> {
     finish(ClusterAddress::new(value), "address")
 }
 
-#[wasm_bindgen(js_name = validateWaterDemand)]
+#[wasm_bindgen(js_name = irrigationValidateWaterDemand)]
 pub fn validate_water_demand(liters: f64) -> Result<JsValue, JsError> {
     finish(WaterDemand::new(liters), "waterDemand")
 }
 
 /// Exposed so the settings form can constrain its input to the same range the
 /// domain enforces, instead of restating the bounds in TypeScript.
-#[wasm_bindgen(js_name = waterDemandMin)]
+#[wasm_bindgen(js_name = irrigationWaterDemandMin)]
 pub fn water_demand_min() -> f64 {
     WaterDemand::MIN
 }
 
-#[wasm_bindgen(js_name = waterDemandMax)]
+#[wasm_bindgen(js_name = irrigationWaterDemandMax)]
 pub fn water_demand_max() -> f64 {
     WaterDemand::MAX
 }
@@ -74,7 +74,7 @@ const SECONDS_PER_HOUR: f64 = 3600.0;
 
 /// Hours, not seconds: the form asks in hours, and a range check that speaks
 /// a different unit than the field is how off-by-3600 bugs get in.
-#[wasm_bindgen(js_name = validateJustWateredTtlHours)]
+#[wasm_bindgen(js_name = irrigationValidateJustWateredTtlHours)]
 pub fn validate_just_watered_ttl_hours(hours: f64) -> Result<JsValue, JsError> {
     match JustWateredTtl::new((hours * SECONDS_PER_HOUR).round() as i64) {
         Ok(_) => Ok(JsValue::NULL),
@@ -104,12 +104,12 @@ fn ttl_hours_issue(err: &ValidationError) -> ValidationIssue {
     ValidationIssue::from_error(&in_hours, "justWateredTtlHours")
 }
 
-#[wasm_bindgen(js_name = justWateredTtlMinHours)]
+#[wasm_bindgen(js_name = irrigationJustWateredTtlMinHours)]
 pub fn just_watered_ttl_min_hours() -> f64 {
     JustWateredTtl::MIN as f64 / SECONDS_PER_HOUR
 }
 
-#[wasm_bindgen(js_name = justWateredTtlMaxHours)]
+#[wasm_bindgen(js_name = irrigationJustWateredTtlMaxHours)]
 pub fn just_watered_ttl_max_hours() -> f64 {
     JustWateredTtl::MAX as f64 / SECONDS_PER_HOUR
 }

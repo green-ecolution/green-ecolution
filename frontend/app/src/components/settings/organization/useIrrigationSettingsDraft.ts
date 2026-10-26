@@ -1,8 +1,8 @@
 import { useCallback, useState } from 'react'
 import {
   translateIssue,
-  validateJustWateredTtlHours,
-  validateWaterDemand,
+  irrigationValidateJustWateredTtlHours,
+  irrigationValidateWaterDemand,
   type ValidationIssue,
 } from '@green-ecolution/domain-wasm'
 import {
@@ -28,8 +28,10 @@ export type NumericField = keyof IrrigationDraft
 
 // wasm-bindgen emits `(input: number) => any`; tighten the return type at the boundary,
 // same pattern as the draft resolvers in @green-ecolution/domain-wasm.
-const waterDemandValidator = validateWaterDemand as (liters: number) => ValidationIssue | null
-const justWateredTtlValidator = validateJustWateredTtlHours as (
+const waterDemandValidator = irrigationValidateWaterDemand as (
+  liters: number,
+) => ValidationIssue | null
+const justWateredTtlValidator = irrigationValidateJustWateredTtlHours as (
   hours: number,
 ) => ValidationIssue | null
 

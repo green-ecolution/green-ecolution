@@ -43,7 +43,7 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
         transporterId: data.transporter.id,
         trailerId: data.trailer?.id,
         transporterTankUsed: data.transporterTankUsed,
-        clusterIds: data.treeclusters.map((cluster) => cluster.id),
+        stopIds: data.treeclusters.map((cluster) => cluster.id),
         status: data.status,
         driverIds: data.userIds,
         startPointName: data.startPointName ?? '',
@@ -71,9 +71,7 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
       ...data,
       date: data.date.toISOString(),
       trailerId: data.trailerId && data.trailerId !== '-1' ? data.trailerId : undefined,
-      treeClusterIds: loadedData
-        ? keepUnresolvedStops(data.clusterIds, loadedData)
-        : data.clusterIds,
+      treeClusterIds: loadedData ? keepUnresolvedStops(data.stopIds, loadedData) : data.stopIds,
       userIds: data.driverIds,
       startPointName: data.startPointName,
       cancellationNote: '', // TODO: why cancel note in update ???
@@ -95,7 +93,7 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
         wateringPlanId,
         trailerId: form.getValues('trailerId'),
         transporterId: form.getValues('transporterId'),
-        clusterIds: form.getValues('clusterIds'),
+        clusterIds: form.getValues('stopIds'),
         formType: 'update',
       },
     }).catch((error) => console.error('Navigation failed:', error))

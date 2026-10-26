@@ -8,7 +8,7 @@ import {
   CardTitle,
   DetailedList,
 } from '@green-ecolution/ui'
-import { plantingYearIsFuture } from '@green-ecolution/domain-wasm'
+import { irrigationPlantingYearIsFuture } from '@green-ecolution/domain-wasm'
 import { format } from 'date-fns'
 import { useTranslation } from 'react-i18next'
 import { useDateLocale } from '@/lib/i18n/useFormatters'
@@ -41,7 +41,7 @@ const TreeMasterDataCard = ({ tree }: TreeMasterDataCardProps) => {
     },
   ]
 
-  const notPlantedYet = plantingYearIsFuture(tree.plantingYear)
+  const notPlantedYet = irrigationPlantingYearIsFuture(tree.plantingYear)
 
   return (
     <Card variant="outlined">

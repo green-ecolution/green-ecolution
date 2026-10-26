@@ -75,7 +75,7 @@ const defaultFormValues: WateringPlanForm = {
   trailerId: undefined,
   transporterTankUsed: true,
   driverIds: [],
-  clusterIds: [],
+  stopIds: [],
   description: '',
   startPointName: '',
 }
@@ -502,7 +502,7 @@ describe('FormForWateringPlan', () => {
       ...defaultFormValues,
       transporterId: 'vehicle-uuid-1',
       driverIds: ['550e8400-e29b-41d4-a716-446655440000'],
-      clusterIds: ['cluster-uuid-1'],
+      stopIds: ['cluster-uuid-1'],
     }
 
     render(

@@ -253,7 +253,7 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
 
       <Controller
         control={control}
-        name="clusterIds"
+        name="stopIds"
         render={({ field: { value, onChange } }) => (
           <SelectEntities
             onChange={onChange}

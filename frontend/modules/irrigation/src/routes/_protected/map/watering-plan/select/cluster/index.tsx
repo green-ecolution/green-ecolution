@@ -144,14 +144,14 @@ function SelectCluster() {
       return
     }
 
-    const originalClusterIds = draft.data?.clusterIds ?? searchClusterIds
+    const originalClusterIds = draft.data?.stopIds ?? searchClusterIds
     const clustersChanged =
       clusterIds.length !== originalClusterIds.length ||
       clusterIds.some((id) => !originalClusterIds.includes(id))
 
     draft.updateData((prev) => ({
       ...(prev ?? ({} as WateringPlanForm)),
-      clusterIds,
+      stopIds: clusterIds,
     }))
 
     if (clustersChanged) {

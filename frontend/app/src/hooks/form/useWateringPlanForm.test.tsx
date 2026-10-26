@@ -56,7 +56,7 @@ const defaultInitForm = {
   transporterId: 'transporter-uuid-1',
   trailerId: 'trailer-uuid-2',
   driverIds: ['550e8400-e29b-41d4-a716-446655440000'],
-  clusterIds: ['cluster-uuid-1', 'cluster-uuid-2'],
+  stopIds: ['cluster-uuid-1', 'cluster-uuid-2'],
   description: '',
 }
 
@@ -104,10 +104,7 @@ describe('useWateringPlanForm', () => {
     expect(result.current.form.getValues('driverIds')).toEqual([
       '550e8400-e29b-41d4-a716-446655440000',
     ])
-    expect(result.current.form.getValues('clusterIds')).toEqual([
-      'cluster-uuid-1',
-      'cluster-uuid-2',
-    ])
+    expect(result.current.form.getValues('stopIds')).toEqual(['cluster-uuid-1', 'cluster-uuid-2'])
   })
 
   it('returns form methods and mutation state', () => {

@@ -5,10 +5,10 @@ import { Lock, LockOpen } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
 import {
-  justWateredTtlMaxHours,
-  justWateredTtlMinHours,
-  waterDemandMax,
-  waterDemandMin,
+  irrigationJustWateredTtlMaxHours,
+  irrigationJustWateredTtlMinHours,
+  irrigationWaterDemandMax,
+  irrigationWaterDemandMin,
 } from '@green-ecolution/domain-wasm'
 import {
   Alert,
@@ -310,8 +310,8 @@ const OrganizationSettingsSection = ({
           own={draft.waterDemand.own}
           error={errors.waterDemand}
           locked={locked}
-          min={waterDemandMin()}
-          max={waterDemandMax()}
+          min={irrigationWaterDemandMin()}
+          max={irrigationWaterDemandMax()}
           step={1}
           onOwn={(own) => onOwnChange('waterDemand', own)}
           onText={(value) => onTextChange('waterDemand', value)}
@@ -329,8 +329,8 @@ const OrganizationSettingsSection = ({
           own={draft.justWateredTtlHours.own}
           error={errors.justWateredTtlHours}
           locked={locked}
-          min={justWateredTtlMinHours()}
-          max={justWateredTtlMaxHours()}
+          min={irrigationJustWateredTtlMinHours()}
+          max={irrigationJustWateredTtlMaxHours()}
           step={1}
           onOwn={(own) => onOwnChange('justWateredTtlHours', own)}
           onText={(value) => onTextChange('justWateredTtlHours', value)}
