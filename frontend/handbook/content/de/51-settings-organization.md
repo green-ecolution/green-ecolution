@@ -70,17 +70,17 @@ Kartenebenen und Kacheln auf dem Dashboard.
 
 Im Abschnitt **Module** der Organisationsseite steht für jedes Modul, das diese Instanz
 kennt, eine Zeile mit einem Schalter. Ein eingeschaltetes Modul steht der ausgewählten
-Organisation und allen Organisationen darunter zur Verfügung. Wie bei den Fachlichen
-Vorgaben zeigt ein Abzeichen neben dem Schalter, woher der Zustand kommt: **Eigener
-Wert**, wenn diese Organisation ihn selbst gesetzt hat, **Geerbt von …** mit dem Namen
-der Organisation, die ihn vorgibt, oder **Vorgabe der Instanz**, solange noch keine
-Organisation im Baum einen Wert gesetzt hat. Ohne eigenen Wert folgt eine Organisation
-also ihrer übergeordneten. Den Schalter bedienst du direkt: Sobald du ihn umlegst,
-setzt die Organisation einen eigenen Wert, und neben dem Schalter erscheint **Wieder
-erben**, womit du den eigenen Wert wieder aufgibst und der Zustand erneut von oben
-kommt. Hat eine übergeordnete Organisation über **Untereinheiten dürfen eigene Werte
-setzen** festgelegt, dass darunter nichts mehr abweichen darf, steht der Schalter fest,
-und ein Hinweis nennt die sperrende Organisation.
+Organisation und allen Organisationen darunter zur Verfügung. Wie bei den
+[Fachlichen Vorgaben](./settings-organization.md#fachliche-vorgaben) zeigt ein Abzeichen neben dem Schalter, woher
+der Zustand kommt: ein eigener Wert dieser Organisation, ein von einer übergeordneten
+Organisation geerbter Wert oder die Vorgabe der Instanz, solange noch keine Organisation
+im Baum einen Wert gesetzt hat. Ohne eigenen Wert folgt eine Organisation also ihrer
+übergeordneten. Den Schalter bedienst du direkt: Sobald du ihn umlegst, setzt die
+Organisation einen eigenen Wert, und neben dem Schalter erscheint **Wieder erben**, womit
+du den eigenen Wert wieder aufgibst und der Zustand erneut von oben kommt. Hat eine
+übergeordnete Organisation festgelegt, dass ihre Untereinheiten keine eigenen Werte
+setzen dürfen, steht der Schalter fest, und ein Hinweis nennt die sperrende
+Organisation.
 
 Zum Ändern brauchst du zusätzlich zu `setting:read` die Berechtigung `setting:update`;
 ohne sie siehst du die Schalter nur. Gespeichert wird wie bei den übrigen Werten dieser
