@@ -1,1 +1,29 @@
-{}
+{
+  "nav": {
+    "clusters": "Bewässerungsgruppen",
+    "trees": "Bäume",
+    "evaluations": "Auswertung"
+  },
+  "dashboard": {
+    "clusters": {
+      "headline": "Auflistung der Bewässerungsgruppen",
+      "description": "Listenansicht aller gruppierten Bäume, die mit Sensoren ausgestattet sind.",
+      "linkLabel": "Zu den Bewässerungsgruppen"
+    }
+  },
+  "statistics": {
+    "tree": {
+      "label": "Bäume gesamt",
+      "chartLabel": "Bäume"
+    },
+    "cluster": {
+      "label": "Bewässerungsgruppen",
+      "chartLabel": "Gruppen",
+      "subtitle": "Verwaltete Bewässerungsgruppen"
+    },
+    "hero": {
+      "viewAllGroupsLink": "Alle Bewässerungsgruppen ansehen",
+      "managedInGroups": "in {count} Bewässerungsgruppen verwaltet"
+    }
+  }
+}

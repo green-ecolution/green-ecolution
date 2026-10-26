@@ -1,8 +1,9 @@
 import type { TFunction } from 'i18next'
+import type { ModuleManifest } from '@/modules/types'
 import {
   ACTIONS,
-  RESOURCES,
   UNRESTRICTED,
+  resourcesFor,
   type Action,
   type Permission,
   type Permissions,
@@ -51,12 +52,9 @@ interface AreaDefinition {
   group: AreaGroup
 }
 
-const AREA_DEFINITIONS: readonly AreaDefinition[] = [
-  { resource: 'tree', group: 'greenspaces' },
-  { resource: 'tree_cluster', group: 'greenspaces' },
+const CORE_AREA_DEFINITIONS: readonly AreaDefinition[] = [
   { resource: 'sensor', group: 'greenspaces' },
   { resource: 'region', group: 'greenspaces' },
-  { resource: 'watering_plan', group: 'operations' },
   { resource: 'start_point', group: 'operations' },
   { resource: 'vehicle', group: 'operations' },
   { resource: 'user', group: 'administration' },
@@ -65,6 +63,17 @@ const AREA_DEFINITIONS: readonly AreaDefinition[] = [
   { resource: 'plugin', group: 'administration' },
   { resource: 'setting', group: 'administration' },
 ]
+
+/** Module resources lead their group, which is where the irrigation rows sat before they moved out. */
+export const areaDefinitionsFor = (manifests: readonly ModuleManifest[]): AreaDefinition[] =>
+  AREA_GROUP_ORDER.flatMap((group) => [
+    ...manifests.flatMap((manifest) =>
+      (manifest.resources ?? [])
+        .filter((resource) => resource.area === group)
+        .map((resource) => ({ resource: resource.key, group })),
+    ),
+    ...CORE_AREA_DEFINITIONS.filter((definition) => definition.group === group),
+  ])
 
 const permissionFor = (resource: Resource, action: Action): Permission => `${resource}:${action}`
 
@@ -107,7 +116,7 @@ export const areaGroupLabels = (t: TFunction<'settings'>): Record<AreaGroup, str
 })
 
 /**
- * Composes the eleven areas and their 44 actions from settings:permission.resource.*
+ * Composes the areas and their actions from settings:permission.resource.*
  * (label, singular noun, description, and the per-action hint, which genuinely
  * differs per permission) and settings:permission.action.* (the four verb
  * templates, "read" filled with the plural label, the rest with the singular
@@ -115,8 +124,11 @@ export const areaGroupLabels = (t: TFunction<'settings'>): Record<AreaGroup, str
  * the cells the generic verbs flatten. Not a component: the caller passes its
  * own scoped `t`, mirroring clusterStatusReason.ts.
  */
-export const permissionAreasFor = (t: TFunction<'settings'>): PermissionArea[] =>
-  AREA_DEFINITIONS.map((definition) => {
+export const permissionAreasFor = (
+  t: TFunction<'settings'>,
+  manifests: readonly ModuleManifest[],
+): PermissionArea[] =>
+  areaDefinitionsFor(manifests).map((definition) => {
     const resourceKey = `permission.resource.${definition.resource}` as const
     const singular = t(`${resourceKey}.singular`)
     const pluralNoun = t(`${resourceKey}.pluralNoun`)
@@ -193,16 +205,23 @@ export const toggleAction = (perms: ReadonlySet<string>, permission: Permission)
   return next
 }
 
-const KNOWN_PERMISSIONS: ReadonlySet<string> = new Set(
-  RESOURCES.flatMap((resource) => ACTIONS.map((action) => permissionFor(resource, action))),
-)
-
 /**
  * PATCH replaces the whole permission set, so anything the backend adds later
- * must survive an edit untouched instead of being silently dropped.
+ * must survive an edit untouched instead of being silently dropped. Pass every
+ * registered manifest, not only the active ones: a right of an inactive module
+ * is hidden, not unknown.
  */
-export const unknownPermissions = (perms: ReadonlySet<string>): string[] =>
-  [...perms].filter((permission) => !KNOWN_PERMISSIONS.has(permission)).sort()
+export const unknownPermissions = (
+  perms: ReadonlySet<string>,
+  manifests: readonly ModuleManifest[],
+): string[] => {
+  const known = new Set<string>(
+    resourcesFor(manifests).flatMap((resource) =>
+      ACTIONS.map((action) => permissionFor(resource, action)),
+    ),
+  )
+  return [...perms].filter((permission) => !known.has(permission)).sort()
+}
 
 export const isGrantable = (permission: string, grantable: Permissions): boolean =>
   grantable === UNRESTRICTED || grantable.has(permission)

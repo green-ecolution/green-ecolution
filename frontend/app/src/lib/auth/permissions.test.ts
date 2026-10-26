@@ -6,8 +6,10 @@ import {
   UNRESTRICTED,
   permissionsOf,
   satisfies,
-  RESOURCES,
+  CORE_RESOURCES,
+  resourcesFor,
 } from './permissions'
+import { irrigationManifest } from '@green-ecolution/module-irrigation'
 
 // Fixture: permissionsOf only reads `roles`, so the rest of UserResponse is irrelevant.
 const userWithRoles = (...permissionSets: string[][]): UserResponse =>
@@ -79,8 +81,23 @@ describe('satisfies', () => {
   })
 
   it('ANY_READ covers every resource and matches any single read grant', () => {
-    expect(ANY_READ).toHaveLength(RESOURCES.length)
+    expect(ANY_READ).toHaveLength(resourcesFor([irrigationManifest]).length)
     expect(satisfies(permissionsOf(userWithRoles(['vehicle:read'])), ANY_READ)).toBe(true)
     expect(satisfies(permissionsOf(userWithRoles(['vehicle:update'])), ANY_READ)).toBe(false)
+  })
+})
+
+describe('resourcesFor', () => {
+  it('keeps the module resources out of the core list', () => {
+    expect(CORE_RESOURCES).not.toContain('tree')
+    expect(CORE_RESOURCES).not.toContain('tree_cluster')
+    expect(CORE_RESOURCES).not.toContain('watering_plan')
+    expect(resourcesFor([])).toEqual([...CORE_RESOURCES])
+  })
+
+  it('adds the resources of the given manifests', () => {
+    expect([...resourcesFor([irrigationManifest])].sort()).toEqual(
+      [...CORE_RESOURCES, 'tree', 'tree_cluster', 'watering_plan'].sort(),
+    )
   })
 })

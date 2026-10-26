@@ -35,7 +35,38 @@ vi.mock('@/lib/auth/useCurrentUserAvatar', () => ({
   useCurrentUserAvatar: () => undefined,
 }))
 
+vi.mock('@/modules/registry', async () => {
+  const actual = await vi.importActual<typeof import('@/modules/registry')>('@/modules/registry')
+  const probe = {
+    key: 'probe',
+    labelKey: 'common:modules.irrigation',
+    i18n: { namespaces: [], load: () => Promise.resolve({}) },
+    nav: {
+      links: [
+        {
+          key: 'nav-probe',
+          to: '/probe',
+          labelKey: 'common:modules.irrigation',
+          icon: () => null,
+          section: 'planning',
+        },
+      ],
+    },
+  }
+  return { moduleManifests: [...actual.moduleManifests, probe] }
+})
+
 const { default: Navigation } = await import('./Navigation')
+
+const respondWithActive = (active: string[]) =>
+  server.use(
+    http.get('*/v1/modules', () =>
+      HttpResponse.json({
+        modules: ['irrigation', 'probe'],
+        organizations: [{ organizationId: 'a', active }],
+      }),
+    ),
+  )
 
 const settledPluginViews = (queryClient: QueryClient) =>
   waitFor(() => {
@@ -115,6 +146,50 @@ describe('Navigation', () => {
     expect(screen.getByText('Einsatzpläne')).toBeInTheDocument()
     // Mitarbeitende lives under settings now, not the global nav.
     expect(screen.queryByText('Mitarbeitende')).not.toBeInTheDocument()
+  })
+
+  it('lists the link of a module only while the module is active', async () => {
+    permissions.mockReturnValue(UNRESTRICTED)
+    respondWithActive(['probe'])
+    renderNavigation()
+
+    expect(await screen.findByText('Bewässerung')).toBeInTheDocument()
+  })
+
+  it('omits the link of a module that is not active', async () => {
+    permissions.mockReturnValue(UNRESTRICTED)
+    respondWithActive(['irrigation'])
+    renderNavigation()
+
+    await screen.findByText('Fahrzeuge')
+    expect(screen.queryByText('Bewässerung')).not.toBeInTheDocument()
+  })
+
+  it('shows neither trees, clusters, evaluations nor plans without an active module', async () => {
+    permissions.mockReturnValue(UNRESTRICTED)
+    respondWithActive([])
+    renderNavigation()
+
+    await screen.findByText('Fahrzeuge')
+    expect(screen.getByText('Karte')).toBeInTheDocument()
+    expect(screen.getByText('Sensoren')).toBeInTheDocument()
+    expect(screen.queryByText('Bäume')).not.toBeInTheDocument()
+    expect(screen.queryByText('Bewässerungsgruppen')).not.toBeInTheDocument()
+    expect(screen.queryByText('Auswertung')).not.toBeInTheDocument()
+    expect(screen.queryByText('Einsatzpläne')).not.toBeInTheDocument()
+  })
+
+  it('keeps the module links in their old order inside the sections', async () => {
+    permissions.mockReturnValue(UNRESTRICTED)
+    renderNavigation()
+
+    await screen.findByText('Fahrzeuge')
+    const labels = screen.getAllByRole('link').map((link) => link.textContent)
+    const position = (label: string) => labels.indexOf(label)
+    expect(position('Karte')).toBeLessThan(position('Bewässerungsgruppen'))
+    expect(position('Bewässerungsgruppen')).toBeLessThan(position('Bäume'))
+    expect(position('Bäume')).toBeLessThan(position('Einsatzpläne'))
+    expect(position('Sensoren')).toBeLessThan(position('Auswertung'))
   })
 
   it('keeps the always-open settings entry for a user without any grant', async () => {

@@ -2,11 +2,13 @@ import { describe, it, expect, beforeAll } from 'vitest'
 import type { TFunction } from 'i18next'
 import { getI18n } from '@/lib/i18n'
 import { ensureLanguage } from '@/lib/i18n/load'
+import { irrigationManifest } from '@green-ecolution/module-irrigation'
 import { UNRESTRICTED } from './permissions'
 import {
   activeActionCount,
   applyLevel,
   applyLevelWithinGrantable,
+  areaDefinitionsFor,
   clampToGrantable,
   isGrantable,
   levelOf,
@@ -25,9 +27,52 @@ beforeAll(async () => {
   tEn = getI18n().getFixedT('en', 'settings')
 })
 
+describe('areaDefinitionsFor', () => {
+  const order = (manifests: Parameters<typeof areaDefinitionsFor>[0]) =>
+    areaDefinitionsFor(manifests).map((definition) => definition.resource)
+
+  it('lists the core resources only when no module is active', () => {
+    expect(order([])).toEqual([
+      'sensor',
+      'region',
+      'start_point',
+      'vehicle',
+      'user',
+      'organization',
+      'role',
+      'plugin',
+      'setting',
+    ])
+  })
+
+  it('puts the irrigation resources back in their old places', () => {
+    expect(order([irrigationManifest])).toEqual([
+      'tree',
+      'tree_cluster',
+      'sensor',
+      'region',
+      'watering_plan',
+      'start_point',
+      'vehicle',
+      'user',
+      'organization',
+      'role',
+      'plugin',
+      'setting',
+    ])
+  })
+})
+
 describe('permissionAreasFor', () => {
+  it('hides the rows of modules that are not active', () => {
+    const resources = permissionAreasFor(t, []).map((area) => area.resource)
+    expect(resources).toHaveLength(9)
+    expect(resources).not.toContain('tree')
+    expect(resources).not.toContain('watering_plan')
+  })
+
   it('covers all twelve resources with four actions each', () => {
-    const areas = permissionAreasFor(t)
+    const areas = permissionAreasFor(t, [irrigationManifest])
     expect(areas).toHaveLength(12)
     for (const area of areas) {
       expect(area.actions).toHaveLength(4)
@@ -35,7 +80,9 @@ describe('permissionAreasFor', () => {
   })
 
   it('labels the organization actions without the word Untereinheit', () => {
-    const area = permissionAreasFor(t).find((candidate) => candidate.resource === 'organization')
+    const area = permissionAreasFor(t, [irrigationManifest]).find(
+      (candidate) => candidate.resource === 'organization',
+    )
     const text = area!.actions.map((action) => `${action.label} ${action.hint}`).join(' ')
     expect(text).not.toMatch(/Untereinheit/)
     expect(area!.actions.map((action) => action.label)).toEqual([
@@ -47,7 +94,9 @@ describe('permissionAreasFor', () => {
   })
 
   it('builds the permission string from resource and action', () => {
-    const area = permissionAreasFor(t).find((candidate) => candidate.resource === 'tree')
+    const area = permissionAreasFor(t, [irrigationManifest]).find(
+      (candidate) => candidate.resource === 'tree',
+    )
     expect(area!.actions.map((action) => action.permission)).toEqual([
       'tree:read',
       'tree:create',
@@ -63,7 +112,7 @@ describe('permissionAreasFor', () => {
   // overridden — see the next test.
   it('overrides the two cells the generic verbs would flatten', () => {
     const labelOf = (t: TFunction<'settings'>, resource: string, action: string) =>
-      permissionAreasFor(t)
+      permissionAreasFor(t, [irrigationManifest])
         .find((area) => area.resource === resource)!
         .actions.find((candidate) => candidate.action === action)!.label
 
@@ -79,7 +128,7 @@ describe('permissionAreasFor', () => {
   // here said nothing "anlegen" didn't already say.
   it('composes watering_plan:create like the other cells instead of overriding it', () => {
     const labelOf = (t: TFunction<'settings'>, resource: string, action: string) =>
-      permissionAreasFor(t)
+      permissionAreasFor(t, [irrigationManifest])
         .find((area) => area.resource === resource)!
         .actions.find((candidate) => candidate.action === action)!.label
 
@@ -89,7 +138,7 @@ describe('permissionAreasFor', () => {
 
   it('still composes the other user and watering_plan actions', () => {
     const labelOf = (resource: string, action: string) =>
-      permissionAreasFor(t)
+      permissionAreasFor(t, [irrigationManifest])
         .find((area) => area.resource === resource)!
         .actions.find((candidate) => candidate.action === action)!.label
 
@@ -183,10 +232,19 @@ describe('toggleAction', () => {
 
 describe('unknownPermissions', () => {
   it('lists entries outside the known catalog', () => {
-    expect(unknownPermissions(new Set(['tree:read', 'report:export', 'x:y']))).toEqual([
-      'report:export',
-      'x:y',
+    expect(
+      unknownPermissions(new Set(['tree:read', 'report:export', 'x:y']), [irrigationManifest]),
+    ).toEqual(['report:export', 'x:y'])
+  })
+
+  it('does not report the resources of a registered module as unknown', () => {
+    expect(unknownPermissions(new Set(['tree:read', 'watering_plan:update']), [])).toEqual([
+      'tree:read',
+      'watering_plan:update',
     ])
+    expect(
+      unknownPermissions(new Set(['tree:read', 'watering_plan:update']), [irrigationManifest]),
+    ).toEqual([])
   })
 
   it('survives a round trip through applyLevel', () => {

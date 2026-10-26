@@ -8,11 +8,6 @@
       "description": "Alle Bäume in Flensburg im Zuständigkeitsbereich des TBZ.",
       "linkLabel": "Zur Karte"
     },
-    "clusters": {
-      "headline": "Auflistung der Bewässerungsgruppen",
-      "description": "Listenansicht aller gruppierten Bäume, die mit Sensoren ausgestattet sind.",
-      "linkLabel": "Zu den Bewässerungsgruppen"
-    },
     "sensors": {
       "headline": "Liste aller verbauten Sensoren",
       "description": "Zeigt alle verbauten Sensoren in Flensburg inkl. Akkustand, Standort,…",

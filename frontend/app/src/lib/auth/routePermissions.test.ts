@@ -1,22 +1,72 @@
 import { describe, it, expect } from 'vitest'
-import { NO_PERMISSIONS, UNRESTRICTED, type Permissions } from './permissions'
-import { ROUTE_PERMISSIONS, canAccessRoute, visibleNavSections } from './routePermissions'
+import { ANY_READ, NO_PERMISSIONS, UNRESTRICTED, type Permissions } from './permissions'
+import {
+  CORE_ROUTE_PERMISSIONS,
+  canAccessRoute as canAccessRouteIn,
+  routePermissionsFor,
+  visibleNavSections as visibleNavSectionsIn,
+} from './routePermissions'
+import { irrigationManifest } from '@green-ecolution/module-irrigation'
+import type { ModuleManifest } from '@/modules/types'
 
 const perms = (...granted: string[]): Permissions => new Set(granted)
 
-describe('ROUTE_PERMISSIONS', () => {
-  it('maps every gated section route', () => {
-    expect(Object.keys(ROUTE_PERMISSIONS).sort()).toEqual([
-      '/evaluations',
+const irrigationTable = routePermissionsFor([irrigationManifest])
+const canAccessRoute = (path: unknown, granted: Permissions) =>
+  canAccessRouteIn(path, granted, irrigationTable)
+const visibleNavSections = <S extends { links: readonly { to?: unknown }[] }>(
+  sections: readonly S[],
+  granted: Permissions,
+) => visibleNavSectionsIn(sections, granted, irrigationTable)
+
+describe('CORE_ROUTE_PERMISSIONS', () => {
+  it('carries no irrigation route', () => {
+    expect(Object.keys(CORE_ROUTE_PERMISSIONS).sort()).toEqual([
       '/map',
       '/sensors',
       '/settings/team/members',
       '/settings/team/roles',
-      '/treecluster',
-      '/trees',
       '/vehicles',
-      '/watering-plans',
     ])
+  })
+})
+
+describe('routePermissionsFor', () => {
+  const probe: ModuleManifest = {
+    key: 'probe',
+    labelKey: 'common:modules.irrigation',
+    i18n: { namespaces: [], load: () => Promise.resolve({}) },
+    routePermissions: { '/probe': ['sensor:read'] },
+  }
+
+  it('adds the routes of the given manifests to the core table', () => {
+    const table = routePermissionsFor([probe])
+    expect(table['/probe']).toEqual(['sensor:read'])
+    expect(table['/vehicles']).toEqual(['vehicle:read'])
+  })
+
+  it('leaves module routes out when no manifest is active', () => {
+    const table = routePermissionsFor([])
+    expect(Object.keys(table).sort()).toEqual(Object.keys(CORE_ROUTE_PERMISSIONS).sort())
+    expect(table['/trees']).toBeUndefined()
+    expect(table['/watering-plans']).toBeUndefined()
+  })
+
+  it('takes the irrigation routes from its manifest', () => {
+    expect(irrigationTable['/trees']).toEqual(['tree:read'])
+    expect(irrigationTable['/treecluster']).toEqual(['tree_cluster:read'])
+    expect(irrigationTable['/evaluations']).toEqual(ANY_READ)
+  })
+
+  it('guards the plans with the plan resource of the active modules', () => {
+    expect(irrigationTable['/watering-plans']).toEqual(['watering_plan:read'])
+  })
+
+  it('does not apply a route requirement of an inactive module', () => {
+    expect(canAccessRouteIn('/probe', perms('vehicle:read'), routePermissionsFor([]))).toBe(true)
+    expect(canAccessRouteIn('/probe', perms('vehicle:read'), routePermissionsFor([probe]))).toBe(
+      false,
+    )
   })
 })
 

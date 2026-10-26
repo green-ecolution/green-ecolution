@@ -1,15 +1,4 @@
-import {
-  ArrowLeftRight,
-  BookOpen,
-  Bug,
-  Car,
-  FolderClosed,
-  LogIn,
-  Map,
-  PieChart,
-  Puzzle,
-  Settings,
-} from 'lucide-react'
+import { ArrowLeftRight, BookOpen, Bug, Car, LogIn, Map, Puzzle, Settings } from 'lucide-react'
 import * as React from 'react'
 import { useCallback } from 'react'
 import { LinkProps } from '@tanstack/react-router'
@@ -23,11 +12,16 @@ import NavUser from '../navigation/NavUser'
 import { useAuthSession } from '@/lib/auth/authSessionContext'
 import { useCurrentUser } from '@/lib/auth/useCurrentUser'
 import { useCurrentUserAvatar } from '@/lib/auth/useCurrentUserAvatar'
-import Tree from '../icons/Tree'
 import SensorIcon from '../icons/Sensor'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { useSidebarCollapsed } from '@/hooks/useSidebarCollapsed'
-import { visibleNavSections } from '@/lib/auth/routePermissions'
+import {
+  planResourcesOf,
+  routePermissionsFor,
+  visibleNavSections,
+} from '@/lib/auth/routePermissions'
+import { useActiveModules } from '@/modules/useActiveModules'
+import type { I18nKey, ModuleManifest, NavSectionKey } from '@/modules/types'
 import { usePermissions } from '@/lib/auth/usePermissions'
 import { pluginViewsQuery } from '@/api/queries'
 import type { PluginNavEntryResponse } from '@/api/backendApi'
@@ -44,14 +38,14 @@ interface NavLinkData extends LinkProps {
 }
 
 interface NavSectionData {
-  id: number
+  key: NavSectionKey | 'public' | 'plugins'
   headline: string
   links: NavLinkData[]
 }
 
 const publicNavData = (t: TFunction<'navigation'>): NavSectionData[] => [
   {
-    id: 1,
+    key: 'public',
     headline: '',
     links: [
       {
@@ -76,92 +70,118 @@ const footerNavData = (t: TFunction<'navigation'>): NavLinkData[] => [
   },
 ]
 
-const protectedNavData = (t: TFunction<'navigation'>): NavSectionData[] => [
-  {
-    id: 1,
-    headline: t('sidebar.headlineGreenSpaces'),
-    links: [
-      {
-        key: 'nav-green-spaces-map',
-        label: t('sidebar.map'),
-        icon: <Map className="w-5 h-5" />,
-        to: '/map',
-        preload: false,
-      },
-      {
-        key: 'nav-green-spaces-clusters',
-        label: t('sidebar.clusters'),
-        icon: <FolderClosed className="w-5 h-5" />,
-        to: '/treecluster',
-      },
-      {
-        key: 'nav-green-spaces-trees',
-        label: t('sidebar.trees'),
-        icon: <Tree className="w-5 h-5" />,
-        to: '/trees',
-      },
-    ],
-  },
-  {
-    id: 2,
-    headline: t('sidebar.headlinePlanning'),
-    links: [
-      {
-        key: 'nav-watering-plans',
-        label: t('sidebar.wateringPlans'),
-        icon: <ArrowLeftRight className="w-5 h-5" />,
-        to: '/watering-plans',
-      },
-      {
-        key: 'nav-watering-plan-vehicle',
-        label: t('sidebar.vehicles'),
-        icon: <Car className="w-5 h-5" />,
-        to: '/vehicles',
-      },
-    ],
-  },
-  {
-    id: 3,
-    headline: t('sidebar.headlineMore'),
-    links: [
-      {
-        key: 'nav-more-help',
-        label: t('sidebar.help'),
-        icon: <BookOpen className="w-5 h-5" />,
-        to: '/help',
-      },
-      {
-        key: 'nav-more-sensor',
-        label: t('sidebar.sensors'),
-        icon: <SensorIcon className="w-5 h-5" />,
-        to: '/sensors',
-      },
-      {
-        key: 'nav-more-evaluation',
-        label: t('sidebar.evaluations'),
-        icon: <PieChart className="w-5 h-5" />,
-        to: '/evaluations',
-      },
-      // Hide the debug navigation entry in the production build
-      ...(import.meta.env.DEV
-        ? [
-            {
-              key: 'nav-more-debug',
-              label: t('sidebar.debug'),
-              icon: <Bug className="w-5 h-5" />,
-              to: '/debug',
-            } as NavLinkData,
-          ]
-        : []),
-    ],
-  },
-]
+interface CoreSection {
+  key: NavSectionKey
+  headline: string
+  before: NavLinkData[]
+  after: NavLinkData[]
+}
+
+const moduleLinksFor = (
+  section: NavSectionKey,
+  manifests: readonly ModuleManifest[],
+  translate: (key: I18nKey) => string,
+): NavLinkData[] =>
+  manifests.flatMap((manifest) =>
+    (manifest.nav?.links ?? [])
+      .filter((link) => link.section === section)
+      .map((link) => ({
+        key: link.key,
+        label: translate(link.labelKey),
+        icon: <link.icon className="w-5 h-5" />,
+        to: link.to as NavLinkData['to'],
+      })),
+  )
+
+// Module links sit between `before` and `after`, where the irrigation entries used to be.
+const protectedNavData = (
+  t: TFunction<'navigation'>,
+  translate: (key: I18nKey) => string,
+  manifests: readonly ModuleManifest[],
+): NavSectionData[] => {
+  const sections: CoreSection[] = [
+    {
+      key: 'greenspaces',
+      headline: t('sidebar.headlineGreenSpaces'),
+      before: [
+        {
+          key: 'nav-green-spaces-map',
+          label: t('sidebar.map'),
+          icon: <Map className="w-5 h-5" />,
+          to: '/map',
+          preload: false,
+        },
+      ],
+      after: [],
+    },
+    {
+      key: 'planning',
+      headline: t('sidebar.headlinePlanning'),
+      before:
+        planResourcesOf(manifests).length > 0
+          ? [
+              {
+                key: 'nav-watering-plans',
+                label: t('sidebar.wateringPlans'),
+                icon: <ArrowLeftRight className="w-5 h-5" />,
+                to: '/watering-plans',
+              },
+            ]
+          : [],
+      after: [
+        {
+          key: 'nav-watering-plan-vehicle',
+          label: t('sidebar.vehicles'),
+          icon: <Car className="w-5 h-5" />,
+          to: '/vehicles',
+        },
+      ],
+    },
+    {
+      key: 'analysis',
+      headline: t('sidebar.headlineMore'),
+      before: [
+        {
+          key: 'nav-more-help',
+          label: t('sidebar.help'),
+          icon: <BookOpen className="w-5 h-5" />,
+          to: '/help',
+        },
+        {
+          key: 'nav-more-sensor',
+          label: t('sidebar.sensors'),
+          icon: <SensorIcon className="w-5 h-5" />,
+          to: '/sensors',
+        },
+      ],
+      after: [
+        // Hide the debug navigation entry in the production build
+        ...(import.meta.env.DEV
+          ? [
+              {
+                key: 'nav-more-debug',
+                label: t('sidebar.debug'),
+                icon: <Bug className="w-5 h-5" />,
+                to: '/debug',
+              } as NavLinkData,
+            ]
+          : []),
+      ],
+    },
+  ]
+
+  return sections.map(({ key, headline, before, after }) => ({
+    key,
+    headline,
+    links: [...before, ...moduleLinksFor(key, manifests, translate), ...after],
+  }))
+}
 
 const pluginNavSection = (
   t: TFunction<'navigation'>,
   views: PluginNavEntryResponse[],
 ): NavSectionData => ({
-  id: 4,
+  key: 'plugins',
   headline: t('sidebar.headlinePlugins'),
   links: views.map((view) => ({
     key: `nav-plugin-${view.slug}`,
@@ -171,6 +191,47 @@ const pluginNavSection = (
     params: { slug: view.slug },
   })),
 })
+
+interface NavSectionsProps {
+  sections: NavSectionData[]
+  collapsed: boolean
+  onLinkClick: () => void
+}
+
+const NavSections: React.FC<NavSectionsProps> = ({ sections, collapsed, onLinkClick }) =>
+  sections.map((section) => (
+    <React.Fragment key={section.key}>
+      <NavHeadline label={section.headline} collapsed={collapsed} />
+      <ul className="mb-6 space-y-1">
+        {section.links.map(({ key, label, icon, ...linkProps }) => (
+          <NavLink
+            key={key}
+            label={label}
+            icon={icon}
+            collapsed={collapsed}
+            closeSidebar={onLinkClick}
+            {...linkProps}
+          />
+        ))}
+      </ul>
+    </React.Fragment>
+  ))
+
+// Split out so the active-modules query only runs for a logged-in user.
+const ProtectedNavSections: React.FC<Omit<NavSectionsProps, 'sections'>> = (props) => {
+  const { t } = useTranslation('navigation')
+  const { i18n } = useTranslation()
+  const { data: pluginViews = [] } = useQuery(pluginViewsQuery())
+  const perms = usePermissions()
+  const { manifests } = useActiveModules()
+  const sections = visibleNavSections(
+    [...protectedNavData(t, (key) => i18n.t(key), manifests), pluginNavSection(t, pluginViews)],
+    perms,
+    routePermissionsFor(manifests),
+  )
+
+  return <NavSections sections={sections} {...props} />
+}
 
 const Navigation: React.FC<NavigationProps> = ({ isOpen, closeSidebar }) => {
   const isLargeScreen = useMediaQuery('(min-width: 1024px)')
@@ -184,12 +245,6 @@ const Navigation: React.FC<NavigationProps> = ({ isOpen, closeSidebar }) => {
   const handleNavLinkClick = useCallback(() => {
     if (!isLargeScreen) closeSidebar()
   }, [isLargeScreen, closeSidebar])
-
-  const { data: pluginViews = [] } = useQuery({ ...pluginViewsQuery(), enabled: isLoggedIn })
-  const perms = usePermissions()
-  const navigationData = isLoggedIn
-    ? visibleNavSections([...protectedNavData(t), pluginNavSection(t, pluginViews)], perms)
-    : publicNavData(t)
 
   return (
     <nav
@@ -206,23 +261,15 @@ const Navigation: React.FC<NavigationProps> = ({ isOpen, closeSidebar }) => {
       <div
         className={`flex min-h-0 flex-1 flex-col overflow-y-auto no-scrollbar px-4 ${collapsed ? 'lg:px-2' : ''}`}
       >
-        {navigationData.map((section) => (
-          <React.Fragment key={section.id}>
-            <NavHeadline label={section.headline} collapsed={collapsed} />
-            <ul className="mb-6 space-y-1">
-              {section.links.map(({ key, label, icon, ...linkProps }) => (
-                <NavLink
-                  key={key}
-                  label={label}
-                  icon={icon}
-                  collapsed={collapsed}
-                  closeSidebar={handleNavLinkClick}
-                  {...linkProps}
-                />
-              ))}
-            </ul>
-          </React.Fragment>
-        ))}
+        {isLoggedIn ? (
+          <ProtectedNavSections collapsed={collapsed} onLinkClick={handleNavLinkClick} />
+        ) : (
+          <NavSections
+            sections={publicNavData(t)}
+            collapsed={collapsed}
+            onLinkClick={handleNavLinkClick}
+          />
+        )}
       </div>
 
       {/* Collapse toggle, settings and user entry are pinned below the

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Checkbox } from '@green-ecolution/ui'
 import { ACTIONS, type Permission } from '@/lib/auth/permissions'
 import { permissionAreasFor } from '@/lib/auth/permissionAreas'
+import { moduleManifests } from '@/modules/registry'
 
 interface PluginPermissionMatrixProps {
   heading: string
@@ -41,7 +42,7 @@ const PluginPermissionMatrix = ({
   const { t } = useTranslation('settings')
   const hintId = useId()
   const fieldId = useId()
-  const areas = permissionAreasFor(t)
+  const areas = permissionAreasFor(t, moduleManifests)
   const actionShort: Record<(typeof ACTIONS)[number], string> = {
     read: t('plugin.permissionMatrix.actionShort.read'),
     create: t('plugin.permissionMatrix.actionShort.create'),

@@ -10,11 +10,21 @@ import {
 } from '@green-ecolution/ui'
 import type { DataStatisticsResponse } from '@green-ecolution/backend-client'
 import { Link } from '@tanstack/react-router'
-import { ArrowRight, Database, Droplets, Radio, TreeDeciduous, Trees, Truck } from 'lucide-react'
+import { ArrowRight, Database, Droplets, Radio, Truck } from 'lucide-react'
 import { Bar, BarChart, XAxis, YAxis, Cell } from 'recharts'
 import { useTranslation } from 'react-i18next'
 import { useNumberFormatter } from '@/lib/i18n/useFormatters'
+import { useActiveModules } from '@/modules/useActiveModules'
+import type { I18nKey } from '@/modules/types'
 import HeroStatCard from './HeroStatCard'
+
+// Bar colors for module statistics in manifest order; the first two are the former tree and group bars.
+const MODULE_FILLS = [
+  'hsl(142, 76%, 36%)',
+  'hsl(142, 60%, 45%)',
+  'hsl(170, 55%, 40%)',
+  'hsl(100, 45%, 45%)',
+]
 
 interface DataTabContentProps {
   statsData: DataStatisticsResponse | undefined
@@ -22,12 +32,26 @@ interface DataTabContentProps {
 
 const DataTabContent = ({ statsData }: DataTabContentProps) => {
   const { t } = useTranslation('info')
+  const { i18n } = useTranslation()
   const numberFormatter = useNumberFormatter()
+  const { manifests } = useActiveModules()
 
-  const moduleCount = (kind: string) =>
-    statsData?.modules.find((m) => m.module === 'irrigation' && m.kind === kind)?.count
-  const treeCount = moduleCount('tree')
-  const treeClusterCount = moduleCount('cluster')
+  const translate = (key: I18nKey, options?: { count: string }) => i18n.t(key, options)
+  const moduleCount = (module: string, kind: string) =>
+    statsData?.modules.find((m) => m.module === module && m.kind === kind)?.count
+  const moduleStatistics = manifests.flatMap((manifest) =>
+    Object.entries(manifest.statistics ?? {}).map(([kind, statistic]) => ({
+      id: `${manifest.key}.${kind}`,
+      module: manifest.key,
+      kind,
+      statistic,
+      count: moduleCount(manifest.key, kind),
+    })),
+  )
+  const hero = moduleStatistics.find((entry) => entry.statistic.hero)
+  const heroCompanion = hero?.statistic.hero
+  const heroCompanionCount =
+    hero && heroCompanion ? moduleCount(hero.module, heroCompanion.companionKind) : undefined
 
   const dataChartConfig: ChartConfig = {
     value: {
@@ -37,16 +61,11 @@ const DataTabContent = ({ statsData }: DataTabContentProps) => {
   }
 
   const chartData = [
-    {
-      name: t('data.chart.treeName'),
-      value: treeCount ?? 0,
-      fill: 'hsl(142, 76%, 36%)',
-    },
-    {
-      name: t('data.chart.groupName'),
-      value: treeClusterCount ?? 0,
-      fill: 'hsl(142, 60%, 45%)',
-    },
+    ...moduleStatistics.map((entry, index) => ({
+      name: translate(entry.statistic.chartLabelKey ?? entry.statistic.labelKey),
+      value: entry.count ?? 0,
+      fill: MODULE_FILLS[index % MODULE_FILLS.length],
+    })),
     {
       name: t('data.chart.sensorName'),
       value: statsData?.sensorCount ?? 0,
@@ -65,8 +84,7 @@ const DataTabContent = ({ statsData }: DataTabContentProps) => {
   ]
 
   const totalEntities =
-    (treeCount ?? 0) +
-    (treeClusterCount ?? 0) +
+    moduleStatistics.reduce((sum, entry) => sum + (entry.count ?? 0), 0) +
     (statsData?.sensorCount ?? 0) +
     (statsData?.vehicleCount ?? 0) +
     (statsData?.planCount ?? 0)
@@ -75,40 +93,44 @@ const DataTabContent = ({ statsData }: DataTabContentProps) => {
     <div className="space-y-6">
       {/* Hero stat with chart */}
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Main tree count - featured */}
-        <HeroStatCard
-          className="lg:col-span-1"
-          gradient="bg-gradient-to-br from-green-dark/5 to-transparent"
-          icon={<TreeDeciduous className="size-8 text-green-dark" />}
-          iconBoxClassName="p-3 bg-green-dark/10"
-          footer={
-            <Link
-              to="/treecluster"
-              search={{ page: 1 }}
-              className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-green-dark hover:underline"
-            >
-              {t('data.hero.viewAllGroupsLink')}
-              <ArrowRight className="size-4" />
-            </Link>
-          }
-        >
-          <div>
-            <p className="text-sm font-medium text-dark-600 mb-1">
-              {t('data.hero.totalTreesLabel')}
-            </p>
-            <p className="text-5xl font-bold font-lato text-green-dark tracking-tight">
-              {treeCount != null ? numberFormatter.format(treeCount) : '-'}
-            </p>
-            <p className="text-sm text-dark-500 mt-2">
-              {t('data.hero.managedInGroups', {
-                count: treeClusterCount != null ? numberFormatter.format(treeClusterCount) : '-',
-              })}
-            </p>
-          </div>
-        </HeroStatCard>
+        {hero && heroCompanion && (
+          <HeroStatCard
+            className="lg:col-span-1"
+            gradient="bg-gradient-to-br from-green-dark/5 to-transparent"
+            icon={<hero.statistic.icon className="size-8 text-green-dark" />}
+            iconBoxClassName="p-3 bg-green-dark/10"
+            footer={
+              hero.statistic.to && (
+                <Link
+                  to={hero.statistic.to}
+                  search={{ page: 1 }}
+                  className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-green-dark hover:underline"
+                >
+                  {translate(heroCompanion.linkLabelKey)}
+                  <ArrowRight className="size-4" />
+                </Link>
+              )
+            }
+          >
+            <div>
+              <p className="text-sm font-medium text-dark-600 mb-1">
+                {translate(hero.statistic.labelKey)}
+              </p>
+              <p className="text-5xl font-bold font-lato text-green-dark tracking-tight">
+                {hero.count != null ? numberFormatter.format(hero.count) : '-'}
+              </p>
+              <p className="text-sm text-dark-500 mt-2">
+                {translate(heroCompanion.companionKey, {
+                  count:
+                    heroCompanionCount != null ? numberFormatter.format(heroCompanionCount) : '-',
+                })}
+              </p>
+            </div>
+          </HeroStatCard>
+        )}
 
         {/* Chart overview */}
-        <Card className="lg:col-span-2">
+        <Card className={hero ? 'lg:col-span-2' : 'lg:col-span-3'}>
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-medium">{t('data.chart.title')}</CardTitle>
           </CardHeader>
@@ -141,14 +163,21 @@ const DataTabContent = ({ statsData }: DataTabContentProps) => {
 
       {/* Secondary stats grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <DataStatCard
-          icon={<Trees className="size-5" />}
-          label={t('data.stat.groupsLabel')}
-          value={treeClusterCount ?? 0}
-          subtitle={t('data.stat.groupsSubtitle')}
-          color="green"
-          href="/treecluster"
-        />
+        {moduleStatistics.map(
+          ({ id, statistic, count }) =>
+            statistic.subtitleKey &&
+            statistic.to && (
+              <DataStatCard
+                key={id}
+                icon={<statistic.icon className="size-5" />}
+                label={translate(statistic.labelKey)}
+                value={count ?? 0}
+                subtitle={translate(statistic.subtitleKey)}
+                color="green"
+                href={statistic.to}
+              />
+            ),
+        )}
         <DataStatCard
           icon={<Radio className="size-5" />}
           label={t('data.stat.sensorsLabel')}

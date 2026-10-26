@@ -1,10 +1,8 @@
 import type { UserResponse } from '@green-ecolution/backend-client'
+import type { ModuleManifest } from '@/modules/types'
 
-export const RESOURCES = [
-  'tree',
-  'tree_cluster',
+export const CORE_RESOURCES = [
   'sensor',
-  'watering_plan',
   'start_point',
   'vehicle',
   'region',
@@ -15,9 +13,13 @@ export const RESOURCES = [
   'setting',
 ] as const
 
+// Keys of resources a module declares through its manifest; kept as a type so
+// permission strings stay checked at compile time.
+type ModuleResource = 'tree' | 'tree_cluster' | 'watering_plan'
+
 export const ACTIONS = ['read', 'create', 'update', 'delete'] as const
 
-export type Resource = (typeof RESOURCES)[number]
+export type Resource = (typeof CORE_RESOURCES)[number] | ModuleResource
 export type Action = (typeof ACTIONS)[number]
 export type Permission = `${Resource}:${Action}`
 
@@ -31,7 +33,19 @@ export type Permissions = ReadonlySet<string> | typeof UNRESTRICTED
 
 export const NO_PERMISSIONS: Permissions = new Set<string>()
 
-export const ANY_READ: PermissionRequirement = RESOURCES.map(
+export function resourcesFor(manifests: readonly ModuleManifest[]): Resource[] {
+  return [...CORE_RESOURCES, ...manifests.flatMap((m) => (m.resources ?? []).map((r) => r.key))]
+}
+
+const ALL_RESOURCES: readonly Resource[] = [
+  ...CORE_RESOURCES,
+  'tree',
+  'tree_cluster',
+  'watering_plan',
+]
+
+/** Every read right any module could grant, regardless of which modules are active. */
+export const ANY_READ: PermissionRequirement = ALL_RESOURCES.map(
   (resource) => `${resource}:read` as Permission,
 )
 

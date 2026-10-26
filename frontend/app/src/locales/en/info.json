@@ -18,21 +18,12 @@
     "chart": {
       "countLabel": "Count",
       "title": "Data overview",
-      "treeName": "Trees",
-      "groupName": "Groups",
       "sensorName": "Sensors",
       "vehicleName": "Vehicles",
       "planName": "Plans"
     },
-    "hero": {
-      "viewAllGroupsLink": "View all watering groups",
-      "totalTreesLabel": "Trees total",
-      "managedInGroups": "managed in {count} watering groups"
-    },
     "stat": {
       "viewLink": "View",
-      "groupsLabel": "Watering groups",
-      "groupsSubtitle": "Managed watering groups",
       "sensorsLabel": "Sensors",
       "sensorsSubtitle": "Active measuring devices",
       "vehiclesLabel": "Vehicles",

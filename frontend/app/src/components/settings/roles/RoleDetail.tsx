@@ -19,6 +19,8 @@ import {
   unknownPermissions,
   type AccessLevel,
 } from '@/lib/auth/permissionAreas'
+import { moduleManifests } from '@/modules/registry'
+import type { ModuleManifest } from '@/modules/types'
 import RoleActionButtons from './RoleActionButtons'
 import RoleAreaCard from './RoleAreaCard'
 import RoleIcon from './roleIcon'
@@ -30,6 +32,8 @@ interface RoleDetailProps {
   draft: RoleDraft
   dirty: boolean
   grantable: Permissions
+  /** Rows of modules outside this list are hidden; their stored rights stay in the draft. */
+  activeManifests: readonly ModuleManifest[]
   canUpdate: boolean
   canDelete: boolean
   canCreate: boolean
@@ -55,6 +59,7 @@ const RoleDetail = ({
   draft,
   dirty,
   grantable,
+  activeManifests,
   canUpdate,
   canDelete,
   canCreate,
@@ -75,7 +80,7 @@ const RoleDetail = ({
   const isSystemRole = role?.isTemplate === true
   const isNew = draft.kind === 'new'
   const readOnly = isSystemRole || (!isNew && !canUpdate)
-  const unknown = unknownPermissions(draft.permissions)
+  const unknown = unknownPermissions(draft.permissions, moduleManifests)
   const nameEmpty = draft.name.trim().length === 0
 
   return (
@@ -188,7 +193,7 @@ const RoleDetail = ({
       {AREA_GROUP_ORDER.map((group) => (
         <section key={group} className="flex flex-col gap-3">
           <p className={SECTION_LABEL}>{areaGroupLabels(t)[group]}</p>
-          {permissionAreasFor(t)
+          {permissionAreasFor(t, activeManifests)
             .filter((area) => area.group === group)
             .map((area) => (
               <RoleAreaCard

@@ -8,7 +8,8 @@ import type {
   StopOutcomeDto,
   TargetRefDto,
 } from '@green-ecolution/backend-client'
-import type { PermissionRequirement } from '@/lib/auth/permissions'
+import type { PermissionRequirement, Resource } from '@/lib/auth/permissions'
+import type { AreaGroup } from '@/lib/auth/permissionAreas'
 import type { ParseKeys } from 'i18next'
 import type { AllNamespaces, Language } from '@/lib/i18n/languages'
 
@@ -33,13 +34,22 @@ export interface ModuleNav {
 }
 
 export interface ModuleResource {
-  key: string
-  area: string
+  key: Resource
+  area: AreaGroup
 }
 
 export interface ModuleStatistic {
+  icon: ComponentType<{ className?: string }>
   labelKey: I18nKey
+  chartLabelKey?: I18nKey
+  subtitleKey?: I18nKey
   to?: string
+  /** Features the statistic as the large card; `companionKind` names the count shown below it. */
+  hero?: { companionKind: string; companionKey: I18nKey; linkLabelKey: I18nKey }
+}
+
+export interface DashboardTileProps {
+  variant: 'light' | 'dark'
 }
 
 export interface ModuleMap {
@@ -127,7 +137,7 @@ export interface ModuleManifest {
   nav?: ModuleNav
   routePermissions?: Readonly<Record<string, PermissionRequirement>>
   resources?: readonly ModuleResource[]
-  dashboardTiles?: readonly ComponentType[]
+  dashboardTiles?: readonly ComponentType<DashboardTileProps>[]
   statistics?: Readonly<Record<string, ModuleStatistic>>
   map?: ModuleMap
   planning?: ModulePlanning

@@ -8,11 +8,6 @@
       "description": "All trees in Flensburg within the TBZ's area of responsibility.",
       "linkLabel": "To the map"
     },
-    "clusters": {
-      "headline": "List of watering groups",
-      "description": "List view of all grouped trees fitted with sensors.",
-      "linkLabel": "To the watering groups"
-    },
     "sensors": {
       "headline": "List of all installed sensors",
       "description": "Shows all installed sensors in Flensburg incl. battery level, location,…",
