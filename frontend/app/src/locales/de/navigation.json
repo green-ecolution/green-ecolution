@@ -33,8 +33,6 @@
     "root": "Dashboard"
   },
   "crumb": {
-    "trees": "Bäume",
-    "clusters": "Bewässerungsgruppen",
     "sensors": "Sensoren",
     "sensorActivate": "Sensor aktivieren",
     "vehicles": "Fahrzeuge",
@@ -45,9 +43,6 @@
     "wateringPlanEdit": "Einsatzplan editieren",
     "wateringPlanStatusEdit": "Status des Einsatzplans ändern",
     "map": "Karte",
-    "treeLocationNew": "Baum Standort erfassen",
-    "routeSelect": "Route festlegen",
-    "evaluations": "Auswertungen",
     "settings": "Einstellungen",
     "team": "Team & Rollen",
     "plugins": "Plugins",

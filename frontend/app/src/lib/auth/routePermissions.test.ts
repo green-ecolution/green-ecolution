@@ -1,6 +1,12 @@
 import { describe, it, expect } from 'vitest'
 import { z } from 'zod'
-import { ANY_READ, NO_PERMISSIONS, UNRESTRICTED, type Permissions } from './permissions'
+import {
+  NO_PERMISSIONS,
+  UNRESTRICTED,
+  readPermissionsOf,
+  resourcesFor,
+  type Permissions,
+} from './permissions'
 import {
   CORE_ROUTE_PERMISSIONS,
   canAccessRoute as canAccessRouteIn,
@@ -36,7 +42,7 @@ describe('CORE_ROUTE_PERMISSIONS', () => {
 describe('routePermissionsFor', () => {
   const probe: ModuleManifest = {
     key: 'probe',
-    labelKey: 'common:modules.irrigation',
+    labelKey: 'irrigation:label',
     i18n: { namespaces: [], load: () => Promise.resolve({}) },
     routePermissions: { '/probe': ['sensor:read'] },
   }
@@ -57,7 +63,9 @@ describe('routePermissionsFor', () => {
   it('takes the irrigation routes from its manifest', () => {
     expect(irrigationTable['/trees']).toEqual(['tree:read'])
     expect(irrigationTable['/treecluster']).toEqual(['tree_cluster:read'])
-    expect(irrigationTable['/evaluations']).toEqual(ANY_READ)
+    expect(irrigationTable['/evaluations']).toEqual(
+      readPermissionsOf(resourcesFor([irrigationManifest])),
+    )
   })
 
   it('guards the plans with the plan resource of the active modules', () => {
@@ -67,7 +75,9 @@ describe('routePermissionsFor', () => {
   it('opens the plans only for a module that can plan', () => {
     const operationsOnly: ModuleManifest = {
       ...probe,
-      resources: [{ key: 'vehicle', area: 'operations' }],
+      resources: [
+        { key: 'vehicle', area: 'operations', textsKey: 'settings:permission.resource.vehicle' },
+      ],
     }
     expect(routePermissionsFor([operationsOnly])['/watering-plans']).toBeUndefined()
     expect(
@@ -86,7 +96,7 @@ describe('routePermissionsFor', () => {
 describe('mapPermissionsFor', () => {
   const withMap = (key: string, permissions: ModuleMap['permissions']): ModuleManifest => ({
     key,
-    labelKey: 'common:modules.irrigation',
+    labelKey: 'irrigation:label',
     i18n: { namespaces: [], load: () => Promise.resolve({}) },
     map: {
       permissions,

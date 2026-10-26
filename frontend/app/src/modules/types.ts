@@ -38,6 +38,8 @@ export interface ModuleNav {
 export interface ModuleResource {
   key: Resource
   area: AreaGroup
+  /** Prefix of the resource's `label`, `pluralNoun`, `singular`, `description` and `hint.<action>` keys. */
+  textsKey: string
 }
 
 export interface ModuleStatistic {
@@ -56,6 +58,8 @@ export interface DashboardTileProps {
 
 export interface ModuleMap {
   permissions: PermissionRequirement
+  /** Replaces the core description of the dashboard's map card while the module is active. */
+  cardDescriptionKey?: I18nKey
   searchSchema: z.ZodObject
   interactiveLayerIds: readonly string[]
   prefetch?: (queryClient: QueryClient) => void
@@ -91,8 +95,24 @@ export interface StopPickerProps {
   form: PlanFormContext
 }
 
+/** Plan page texts a module words for its own stops; a missing one keeps the core text. */
+export interface ModulePlanTexts {
+  listDescription?: I18nKey
+  listDescriptionCanModify?: I18nKey
+  createDescription?: I18nKey
+  updateDescription?: I18nKey
+  statusUpdateDescription?: I18nKey
+  routeErrorAlert?: I18nKey
+  routePreviewAriaLabel?: I18nKey
+}
+
 export interface ModulePlanning {
   planResource: Resource
+  /** Replaces the core description of the dashboard's plans card while the module is active. */
+  cardDescriptionKey?: I18nKey
+  /** Names every plan on the system info page while it is the only active planning module. */
+  plansLabelKey?: I18nKey
+  texts?: ModulePlanTexts
   capacityKind: CapacityKindDto
   labelKey: I18nKey
   stopsLabelKey: I18nKey
@@ -100,6 +120,8 @@ export interface ModulePlanning {
   stopCountKey: I18nKey
   stopIcon: ComponentType<{ className?: string }>
   invalidateOnStatusChange: readonly QueryKey[]
+  /** Pages the `StopPicker` may send the user to; the dirty plan form lets them go there. */
+  stopPickerPaths: readonly string[]
   /** Warms the board's module parts while its loader runs. */
   prefetch?: (queryClient: QueryClient) => void
   SuggestionsColumn: ComponentType
@@ -143,9 +165,29 @@ export interface TargetAssignDialogProps {
   onConfirm: (selected: SelectedTarget) => void
 }
 
+/** Sensor texts a module words for its target kind; a missing one keeps the neutral core text. */
+export interface ModuleTargetTexts {
+  activateAction?: I18nKey
+  reassignAction?: I18nKey
+  removeLinkAction?: I18nKey
+  removeConfirmTitle?: I18nKey
+  /** Receives `{status}`, the state the sensor falls back to. */
+  removeConfirmDescription?: I18nKey
+  activateSuccess?: I18nKey
+  reassignSuccess?: I18nKey
+  activateConflict?: I18nKey
+  reassignNotFound?: I18nKey
+  reassignConflict?: I18nKey
+  reassignFailed?: I18nKey
+  scanDescription?: I18nKey
+  alreadyLinkedDescription?: I18nKey
+  listSearchPlaceholder?: I18nKey
+}
+
 export interface ModuleTarget {
   kind: string
   labelKey: I18nKey
+  texts?: ModuleTargetTexts
   /** Key prefixes a link change touches besides the sensor's own. */
   invalidate: readonly QueryKey[]
   AssignDialog: ComponentType<TargetAssignDialogProps>

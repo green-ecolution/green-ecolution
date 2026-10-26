@@ -2,7 +2,7 @@ import { handbookIndex } from './index'
 
 /**
  * A TanStack match carries the route's untrimmed `fullPath`, so the deepest
- * match on `/trees` is the index route's `/trees/`. Chapters declare the bare
+ * match on `/vehicles` is the index route's `/vehicles/`. Chapters declare the bare
  * form, so both sides are trimmed before they meet — except the root, which
  * would otherwise trim to an empty string.
  */

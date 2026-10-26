@@ -3,12 +3,10 @@ import {
   DataHealth,
   DrivingLicense,
   SensorStatus,
-  SoilCondition,
   UserStatus,
   VehicleStatus,
   VehicleType,
   PlanStatus as WateringPlanStatus,
-  WateringStatus,
 } from '@green-ecolution/backend-client'
 import de from '@/locales/de/enums.json'
 import en from '@/locales/en/enums.json'
@@ -53,7 +51,6 @@ it('has the same key set in German and English', () => {
 // sentinel outside the backend's own values) is intentionally not asserted
 // here beyond the enum values it does share with the backend.
 const ENUM_GROUPS: { group: string; values: readonly string[]; hasDescription: boolean }[] = [
-  { group: 'wateringStatus', values: Object.values(WateringStatus), hasDescription: true },
   { group: 'sensorStatus', values: Object.values(SensorStatus), hasDescription: true },
   { group: 'userStatus', values: Object.values(UserStatus), hasDescription: false },
   { group: 'vehicleStatus', values: Object.values(VehicleStatus), hasDescription: true },
@@ -61,7 +58,6 @@ const ENUM_GROUPS: { group: string; values: readonly string[]; hasDescription: b
   { group: 'wateringPlanStatus', values: Object.values(WateringPlanStatus), hasDescription: true },
   { group: 'dataHealth', values: Object.values(DataHealth), hasDescription: true },
   { group: 'drivingLicense', values: Object.values(DrivingLicense), hasDescription: false },
-  { group: 'soilCondition', values: Object.values(SoilCondition), hasDescription: false },
 ]
 
 it('has a German label (and description, where the group carries one) for every backend enum value', () => {

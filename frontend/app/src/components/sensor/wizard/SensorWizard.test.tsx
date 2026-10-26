@@ -234,7 +234,7 @@ describe('Sensor wizard', () => {
     await pickProbeAndReview(user)
     await user.click(screen.getByRole('button', { name: /sensor aktivieren/i }))
 
-    await screen.findByText(/bereits einem Baum/i)
+    await screen.findByText('Sensor ist bereits verknüpft.')
     expect(screen.getByText('Zuordnung prüfen')).toBeInTheDocument()
   })
 })

@@ -81,7 +81,11 @@ function NewSensor() {
       const moduleRoots = targetDescriptor(manifests, selected.target)?.invalidate ?? []
       await invalidate([...queryRoots.sensor, ...moduleRoots])
     },
-    onError: (err) => dispatch({ type: 'submissionError', message: mapActivateError(err) }),
+    onError: (err, { selected }) =>
+      dispatch({
+        type: 'submissionError',
+        message: mapActivateError(err, targetDescriptor(manifests, selected.target)),
+      }),
   })
 
   const handleRelocate = useCallback(async () => {

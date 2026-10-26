@@ -13,7 +13,7 @@
     "viewActivated": "Aktiviert",
     "viewPrepared": "Vorbereitet",
     "searchLabel": "Sensoren durchsuchen",
-    "searchPlaceholder": "EUI, Modell oder Gruppe suchen",
+    "searchPlaceholder": "EUI, Modell oder Einsatzort suchen",
     "filterStatus": "Status",
     "filterModel": "Modell",
     "filterDataHealth": "Datenqualität",
@@ -170,9 +170,9 @@
   },
   "actions": {
     "menuButton": "Aktionen",
-    "activateAssignTree": "Aktivieren & Baum zuweisen",
-    "reassignTree": "Anderen Baum zuweisen",
-    "removeLink": "Baumverknüpfung aufheben",
+    "activateAssign": "Aktivieren & verknüpfen",
+    "reassign": "Verknüpfung ändern",
+    "removeLink": "Verknüpfung aufheben",
     "deleteSensor": "Sensor löschen",
     "deleteConfirmTitle": "Sensor wirklich löschen?",
     "deleteConfirmDescription": "Diese Aktion kann nicht rückgängig gemacht werden. Der Sensor {id} wird inklusive seiner LoRaWAN-Konfiguration und aller Messdaten dauerhaft entfernt.",
@@ -180,13 +180,13 @@
     "deleteFinal": "Endgültig löschen",
     "deleteSuccessToast": "Sensor wurde gelöscht.",
     "deleteFailedToast": "Der Sensor konnte nicht gelöscht werden.",
-    "removeConfirmTitle": "Baumverknüpfung aufheben und Sensor zurücksetzen?",
-    "removeConfirmDescription": "Die Verknüpfung zum Baum wird aufgehoben und der Sensor auf den Zustand „{status}“ zurückgesetzt. Anschließend kann er wie ein neuer Sensor an einem anderen Baum aktiviert werden.",
+    "removeConfirmTitle": "Verknüpfung aufheben und Sensor zurücksetzen?",
+    "removeConfirmDescription": "Die Verknüpfung wird aufgehoben und der Sensor auf den Zustand „{status}“ zurückgesetzt. Anschließend kann er wie ein neuer Sensor erneut aktiviert werden.",
     "removeConfirmSubmitPending": "Wird aufgehoben …",
     "removeConfirmSubmit": "Verknüpfung aufheben",
     "removeSuccessToast": "Sensor wurde zurückgesetzt.",
-    "activateSuccessToast": "Sensor aktiviert und Baum zugewiesen.",
-    "reassignSuccessToast": "Baum gewechselt."
+    "activateSuccessToast": "Sensor aktiviert und verknüpft.",
+    "reassignSuccessToast": "Verknüpfung geändert."
   },
   "wizard": {
     "layout": {
@@ -199,7 +199,7 @@
     "scan": {
       "header": {
         "title": "Sensor-QR scannen",
-        "description": "Halte den QR-Code auf der Sensoreinheit ruhig in den Scan-Rahmen. Wir identifizieren damit den Sensor eindeutig, bevor du ihn im nächsten Schritt einem Baum zuordnest. Bei schlechter Beleuchtung hilft es, den Code etwas näher heranzuhalten."
+        "description": "Halte den QR-Code auf der Sensoreinheit ruhig in den Scan-Rahmen. Wir identifizieren damit den Sensor eindeutig, bevor du ihn im nächsten Schritt zuordnest. Bei schlechter Beleuchtung hilft es, den Code etwas näher heranzuhalten."
       },
       "continueLabel": "Sensor übernehmen",
       "checking": {
@@ -229,7 +229,7 @@
       "rescanButton": "Anderen Sensor scannen",
       "notActivatable": {
         "title": "Sensor nicht aktivierbar",
-        "onlineDescription": "Dieser Sensor ist bereits aktiviert und einem Baum zugeordnet.",
+        "onlineDescription": "Dieser Sensor ist bereits aktiviert und verknüpft.",
         "offlineDescription": "Dieser Sensor wurde bereits aktiviert und ist derzeit offline.",
         "statusLabel": "Status: {status}",
         "lastSeenLabel": "Zuletzt gesehen: {date}"

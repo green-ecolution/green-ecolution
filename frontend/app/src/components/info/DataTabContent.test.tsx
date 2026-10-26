@@ -48,6 +48,7 @@ describe('DataTabContent', () => {
       '/treecluster',
     )
     expect(screen.getByText('1.239')).toBeInTheDocument()
+    expect(screen.getByText('Bewässerungspläne')).toBeInTheDocument()
   })
 
   it('shows no irrigation figures when the module is not active', () => {
@@ -57,17 +58,18 @@ describe('DataTabContent', () => {
     expect(screen.queryByText('Bäume gesamt')).not.toBeInTheDocument()
     expect(screen.queryByText('Verwaltete Bewässerungsgruppen')).not.toBeInTheDocument()
     expect(screen.getByText('Aktive Messgeräte')).toBeInTheDocument()
+    expect(screen.getByText('Einsatzpläne')).toBeInTheDocument()
   })
 
   it('renders a statistic of another module from its own manifest', () => {
     const waste: ModuleManifest = {
       key: 'waste',
-      labelKey: 'common:modules.irrigation',
+      labelKey: 'irrigation:label',
       i18n: { namespaces: [], load: () => Promise.resolve({}) },
       statistics: {
         bin: {
           icon: () => null,
-          labelKey: 'common:modules.irrigation',
+          labelKey: 'irrigation:label',
           subtitleKey: 'info:data.stat.sensorsSubtitle',
           to: '/bins',
         },

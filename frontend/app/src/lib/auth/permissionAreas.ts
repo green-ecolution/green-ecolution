@@ -50,18 +50,25 @@ export interface PermissionArea {
 interface AreaDefinition {
   resource: Resource
   group: AreaGroup
+  textsKey: string
 }
 
+const coreArea = (resource: Resource, group: AreaGroup): AreaDefinition => ({
+  resource,
+  group,
+  textsKey: `settings:permission.resource.${resource}`,
+})
+
 const CORE_AREA_DEFINITIONS: readonly AreaDefinition[] = [
-  { resource: 'sensor', group: 'greenspaces' },
-  { resource: 'region', group: 'greenspaces' },
-  { resource: 'start_point', group: 'operations' },
-  { resource: 'vehicle', group: 'operations' },
-  { resource: 'user', group: 'administration' },
-  { resource: 'organization', group: 'administration' },
-  { resource: 'role', group: 'administration' },
-  { resource: 'plugin', group: 'administration' },
-  { resource: 'setting', group: 'administration' },
+  coreArea('sensor', 'greenspaces'),
+  coreArea('region', 'greenspaces'),
+  coreArea('start_point', 'operations'),
+  coreArea('vehicle', 'operations'),
+  coreArea('user', 'administration'),
+  coreArea('organization', 'administration'),
+  coreArea('role', 'administration'),
+  coreArea('plugin', 'administration'),
+  coreArea('setting', 'administration'),
 ]
 
 /** Module resources lead their group, which is where the irrigation rows sat before they moved out. */
@@ -70,7 +77,7 @@ export const areaDefinitionsFor = (manifests: readonly ModuleManifest[]): AreaDe
     ...manifests.flatMap((manifest) =>
       (manifest.resources ?? [])
         .filter((resource) => resource.area === group)
-        .map((resource) => ({ resource: resource.key, group })),
+        .map(({ key, textsKey }) => ({ resource: key, group, textsKey })),
     ),
     ...CORE_AREA_DEFINITIONS.filter((definition) => definition.group === group),
   ])
@@ -83,7 +90,7 @@ const permissionFor = (resource: Resource, action: Action): Permission => `${res
  * can't carry: inviting a person is not creating one, and removing their
  * access is not deleting them. These two literal overrides take priority
  * over the composed form; everything else still composes — including
- * watering_plan:create, where the composed "Einsatzplan anlegen" already says
+ * a plan resource's create, where the composed "Einsatzplan anlegen" already says
  * everything "planen" would have: the specificity in the old "Einsatz planen"
  * lived in the noun ("Einsatz" denoted the activity itself), and once the
  * entity is correctly named "Einsatzplan" the extra verb adds nothing.
@@ -115,10 +122,15 @@ export const areaGroupLabels = (t: TFunction<'settings'>): Record<AreaGroup, str
   administration: t('permission.group.administration'),
 })
 
+// Resource texts live in the core or a module namespace, so their keys are only
+// known at runtime.
+type LooseTranslate = (key: string, params?: Record<string, string>) => string
+
 /**
- * Composes the areas and their actions from settings:permission.resource.*
- * (label, singular noun, description, and the per-action hint, which genuinely
- * differs per permission) and settings:permission.action.* (the four verb
+ * Composes the areas and their actions from each resource's texts (label,
+ * singular noun, description, and the per-action hint, which genuinely differs
+ * per permission; core resources under settings:permission.resource.*, module
+ * resources where their manifest points) and settings:permission.action.* (the four verb
  * templates, "read" filled with the plural label, the rest with the singular
  * noun) — with two explicit label overrides (see actionLabelOverride) for
  * the cells the generic verbs flatten. Not a component: the caller passes its
@@ -129,14 +141,14 @@ export const permissionAreasFor = (
   manifests: readonly ModuleManifest[],
 ): PermissionArea[] =>
   areaDefinitionsFor(manifests).map((definition) => {
-    const resourceKey = `permission.resource.${definition.resource}` as const
-    const singular = t(`${resourceKey}.singular`)
-    const pluralNoun = t(`${resourceKey}.pluralNoun`)
+    const text = (key: string) => (t as LooseTranslate)(`${definition.textsKey}.${key}`)
+    const singular = text('singular')
+    const pluralNoun = text('pluralNoun')
     return {
       resource: definition.resource,
       group: definition.group,
-      label: t(`${resourceKey}.label`),
-      description: t(`${resourceKey}.description`),
+      label: text('label'),
+      description: text('description'),
       actions: ACTIONS.map((action) => ({
         action,
         permission: permissionFor(definition.resource, action),
@@ -145,7 +157,7 @@ export const permissionAreasFor = (
           t(`permission.action.${action}`, {
             resource: action === 'read' ? pluralNoun : singular,
           }),
-        hint: t(`${resourceKey}.hint.${action}`),
+        hint: text(`hint.${action}`),
       })),
     }
   })

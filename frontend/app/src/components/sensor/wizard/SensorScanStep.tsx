@@ -4,6 +4,8 @@ import type { SensorResponse } from '@green-ecolution/backend-client'
 import { Button, CopyableText, Loading } from '@green-ecolution/ui'
 import { useSensorStatusDetails } from '@/hooks/details/useDetailsForSensorStatus'
 import { intlLocale } from '@/lib/i18n/format'
+import { soleTargetKind, targetDescriptor, targetTextKey } from '@/lib/targets'
+import { useActiveModules } from '@/modules/useActiveModules'
 import {
   AlertTriangle,
   Barcode,
@@ -33,12 +35,19 @@ const formatLatestData = (iso: string, locale: string): string => {
 }
 
 const ScannerHeader = () => {
-  const { t } = useTranslation('sensor')
+  const { t, i18n } = useTranslation('sensor')
+  const { manifests } = useActiveModules()
   return (
     <header className="space-y-2">
       <h1 className="font-lato font-bold text-3xl lg:text-4xl">{t('wizard.scan.header.title')}</h1>
       <p className="text-sm text-muted-foreground max-w-prose">
-        {t('wizard.scan.header.description')}
+        {i18n.t(
+          targetTextKey(
+            soleTargetKind(manifests),
+            'scanDescription',
+            'sensor:wizard.scan.header.description',
+          ),
+        )}
       </p>
     </header>
   )
@@ -57,6 +66,7 @@ const SensorScanStep = ({
 }: SensorScanStepProps) => {
   const { t, i18n } = useTranslation(['sensor', 'common'])
   const getSensorStatusDetails = useSensorStatusDetails()
+  const { manifests } = useActiveModules()
 
   if (!scannedSensorId) {
     return (
@@ -184,7 +194,13 @@ const SensorScanStep = ({
               </h2>
               <p className="text-sm text-muted-foreground max-w-prose">
                 {isOnline
-                  ? t('wizard.scan.notActivatable.onlineDescription')
+                  ? i18n.t(
+                      targetTextKey(
+                        targetDescriptor(manifests, sensor.target),
+                        'alreadyLinkedDescription',
+                        'sensor:wizard.scan.notActivatable.onlineDescription',
+                      ),
+                    )
                   : t('wizard.scan.notActivatable.offlineDescription')}
               </p>
             </div>

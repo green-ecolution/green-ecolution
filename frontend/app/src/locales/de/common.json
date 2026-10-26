@@ -50,10 +50,6 @@
       "apply": "Anwenden",
       "reset": "Zurücksetzen"
     },
-    "status": {
-      "legend": "Zustand der Bewässerung:",
-      "placeholder": "Alle Zustände"
-    },
     "tag": {
       "removeAriaLabel": "{label} entfernen"
     }
@@ -170,9 +166,6 @@
       "idCopied": "Sensor-ID kopiert",
       "idCopyFailed": "Sensor-ID konnte nicht kopiert werden"
     }
-  },
-  "modules": {
-    "irrigation": "Bewässerung"
   },
   "moduleInactive": {
     "title": "Modul nicht aktiv",

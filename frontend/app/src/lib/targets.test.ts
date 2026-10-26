@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { probeTarget, probeTargetManifest } from '@/test/targetManifest'
-import { sensorTargetKinds, targetDescriptor } from './targets'
+import { sensorTargetKinds, soleTargetKind, targetDescriptor, targetTextKey } from './targets'
 
 const probe = probeTarget('probe', 'probe')
 const bin = probeTarget('waste', 'bin')
@@ -28,5 +28,34 @@ describe('sensorTargetKinds', () => {
       { module: 'probe', target: probe },
       { module: 'waste', target: bin },
     ])
+  })
+})
+
+describe('soleTargetKind', () => {
+  it('names the kind when only one is on offer', () => {
+    expect(soleTargetKind([manifests[0]])).toBe(probe)
+  })
+
+  it('names none when the user has to choose', () => {
+    expect(soleTargetKind(manifests)).toBeUndefined()
+    expect(soleTargetKind([])).toBeUndefined()
+  })
+})
+
+describe('targetTextKey', () => {
+  it('takes the wording the target module gives', () => {
+    const worded = probeTarget('probe', 'probe', { texts: { reassignAction: 'irrigation:label' } })
+    expect(targetTextKey(worded, 'reassignAction', 'sensor:actions.reassign')).toBe(
+      'irrigation:label',
+    )
+  })
+
+  it('keeps the core text otherwise', () => {
+    expect(targetTextKey(probe, 'reassignAction', 'sensor:actions.reassign')).toBe(
+      'sensor:actions.reassign',
+    )
+    expect(targetTextKey(undefined, 'reassignAction', 'sensor:actions.reassign')).toBe(
+      'sensor:actions.reassign',
+    )
   })
 })

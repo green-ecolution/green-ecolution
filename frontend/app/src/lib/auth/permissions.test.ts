@@ -1,12 +1,12 @@
 import { describe, it, expect } from 'vitest'
 import type { UserResponse } from '@green-ecolution/backend-client'
 import {
-  ANY_READ,
   NO_PERMISSIONS,
   UNRESTRICTED,
   permissionsOf,
   satisfies,
   CORE_RESOURCES,
+  readPermissionsOf,
   resourcesFor,
 } from './permissions'
 import { irrigationManifest } from '@green-ecolution/module-irrigation'
@@ -80,10 +80,11 @@ describe('satisfies', () => {
     expect(satisfies(NO_PERMISSIONS, [])).toBe(true)
   })
 
-  it('ANY_READ covers every resource and matches any single read grant', () => {
-    expect(ANY_READ).toHaveLength(resourcesFor([irrigationManifest]).length)
-    expect(satisfies(permissionsOf(userWithRoles(['vehicle:read'])), ANY_READ)).toBe(true)
-    expect(satisfies(permissionsOf(userWithRoles(['vehicle:update'])), ANY_READ)).toBe(false)
+  it('a read requirement over several resources matches any single read grant', () => {
+    const anyRead = readPermissionsOf(resourcesFor([irrigationManifest]))
+    expect(anyRead).toHaveLength(resourcesFor([irrigationManifest]).length)
+    expect(satisfies(permissionsOf(userWithRoles(['vehicle:read'])), anyRead)).toBe(true)
+    expect(satisfies(permissionsOf(userWithRoles(['vehicle:update'])), anyRead)).toBe(false)
   })
 })
 

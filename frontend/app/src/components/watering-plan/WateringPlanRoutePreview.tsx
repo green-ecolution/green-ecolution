@@ -13,6 +13,7 @@ import MapPreview from '@/components/map-gl/MapPreview'
 import { useMaplibreMap } from '@/components/map-gl/MapContext'
 import useRouteLayer from '@/components/map-gl/layers/useRouteLayer'
 import { isMapAlive } from '@/components/map-gl/mapReady'
+import { planTextKey } from '@/modules/planning'
 import type { ModulePlanning } from '@/modules/types'
 
 interface WateringPlanPreviewRouteProps {
@@ -63,7 +64,7 @@ const RoutePreviewLayers = ({
 
 /** The core draws the route and its stations; the plan module draws its stops on top. */
 const WateringPlanPreviewRoute = ({ wateringPlan, planning }: WateringPlanPreviewRouteProps) => {
-  const { t } = useTranslation('wateringPlan')
+  const { t, i18n } = useTranslation('wateringPlan')
   const [centerLat, centerLng] = useMapCenter()
 
   return (
@@ -72,7 +73,9 @@ const WateringPlanPreviewRoute = ({ wateringPlan, planning }: WateringPlanPrevie
       zoom={13}
       interactive
       className="h-[40rem]"
-      ariaLabel={t('detail.routePreviewAriaLabel')}
+      ariaLabel={i18n.t(
+        planTextKey(planning, 'routePreviewAriaLabel', 'wateringPlan:detail.routePreviewAriaLabel'),
+      )}
     >
       <Suspense
         fallback={

@@ -31,6 +31,8 @@ export interface EntityFormConfig<TForm extends FieldValues, TCreate, TUpdate, T
   successRoute: (id: string) => { to: string; params: Record<string, string> }
   replaceOnSuccess?: boolean
   allowedPaths: string[]
+  /** Module the entity belongs to, so its own wording of an error code wins. */
+  errorModule?: string
 
   messages: {
     createLeave: string
@@ -92,7 +94,7 @@ export function useEntityForm<
         }
         throw new Error(`Invalid mutation type or missing entityId for update`)
       } catch (error) {
-        throw await toApiError(error)
+        throw await toApiError(error, { module: config.errorModule })
       }
     },
 

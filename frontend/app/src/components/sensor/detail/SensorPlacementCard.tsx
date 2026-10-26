@@ -18,7 +18,7 @@ import MapPreview from '@/components/map-gl/MapPreview'
 import SensorMarker from '@/components/map-gl/SensorMarker'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import type { Sensor } from '@/api/backendApi'
-import { targetDescriptor } from '@/lib/targets'
+import { targetDescriptor, targetTextKey } from '@/lib/targets'
 import { useActiveModules } from '@/modules/useActiveModules'
 import PlacementRow from './PlacementRow'
 import { useSensorActions } from './SensorActionsContext'
@@ -63,7 +63,7 @@ const UnknownTargetPlacement = ({
 }
 
 const SensorPlacementCard = ({ sensor }: SensorPlacementCardProps) => {
-  const { t } = useTranslation('sensor')
+  const { t, i18n } = useTranslation('sensor')
   const actions = useSensorActions()
   const { manifests } = useActiveModules()
   const coord = sensor.location
@@ -124,7 +124,13 @@ const SensorPlacementCard = ({ sensor }: SensorPlacementCardProps) => {
                     onClick={() => actions.requestActivate()}
                   >
                     <Link2 />
-                    {t('actions.activateAssignTree')}
+                    {i18n.t(
+                      targetTextKey(
+                        actions.textTarget,
+                        'activateAction',
+                        'sensor:actions.activateAssign',
+                      ),
+                    )}
                   </Button>
                 )}
               </AlertContent>

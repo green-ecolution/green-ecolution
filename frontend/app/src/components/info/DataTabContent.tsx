@@ -14,6 +14,7 @@ import { ArrowRight, Database, Droplets, Radio, Truck } from 'lucide-react'
 import { Bar, BarChart, XAxis, YAxis, Cell } from 'recharts'
 import { useTranslation } from 'react-i18next'
 import { useNumberFormatter } from '@/lib/i18n/useFormatters'
+import { planningManifests } from '@/modules/planning'
 import { useActiveModules } from '@/modules/useActiveModules'
 import type { I18nKey } from '@/modules/types'
 import HeroStatCard from './HeroStatCard'
@@ -48,6 +49,8 @@ const DataTabContent = ({ statsData }: DataTabContentProps) => {
       count: moduleCount(manifest.key, kind),
     })),
   )
+  const planning = planningManifests(manifests)
+  const plansLabelKey = planning.length === 1 ? planning[0].planning.plansLabelKey : undefined
   const hero = moduleStatistics.find((entry) => entry.statistic.hero)
   const heroCompanion = hero?.statistic.hero
   const heroCompanionCount =
@@ -196,7 +199,7 @@ const DataTabContent = ({ statsData }: DataTabContentProps) => {
         />
         <DataStatCard
           icon={<Droplets className="size-5" />}
-          label={t('data.stat.plansLabel')}
+          label={plansLabelKey ? translate(plansLabelKey) : t('data.stat.plansLabel')}
           value={statsData?.planCount ?? 0}
           subtitle={t('data.stat.plansSubtitle')}
           color="cyan"

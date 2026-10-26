@@ -3,6 +3,7 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { useCurrentUser } from '@/lib/auth/useCurrentUser'
 import { LinkCard, LinkCardTitle, LinkCardDescription, LinkCardFooter } from '@green-ecolution/ui'
+import { cardDescriptionKeys } from '@/modules/dashboard'
 import { useActiveModules } from '@/modules/useActiveModules'
 
 export const Route = createFileRoute('/_protected/dashboard')({
@@ -11,15 +12,16 @@ export const Route = createFileRoute('/_protected/dashboard')({
 
 function Dashboard() {
   const user = useCurrentUser()
-  const { t } = useTranslation('dashboard')
+  const { t, i18n } = useTranslation('dashboard')
   const { manifests } = useActiveModules()
   const tiles = manifests.flatMap((manifest) => manifest.dashboardTiles ?? [])
+  const descriptionKeys = cardDescriptionKeys(manifests)
 
   const cards = [
     {
       id: 1,
       url: '/map',
-      description: t('cards.map.description'),
+      description: descriptionKeys.map ? i18n.t(descriptionKeys.map) : t('cards.map.description'),
       headline: t('cards.map.headline'),
       linkLabel: t('cards.map.linkLabel'),
     },
@@ -33,7 +35,9 @@ function Dashboard() {
     {
       id: 3,
       url: '/watering-plans',
-      description: t('cards.wateringPlans.description'),
+      description: descriptionKeys.plans
+        ? i18n.t(descriptionKeys.plans)
+        : t('cards.wateringPlans.description'),
       headline: t('cards.wateringPlans.headline'),
       linkLabel: t('cards.wateringPlans.linkLabel'),
     },

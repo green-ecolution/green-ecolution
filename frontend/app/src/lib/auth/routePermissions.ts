@@ -1,5 +1,6 @@
 import {
   satisfies,
+  type Action,
   type Permission,
   type PermissionRequirement,
   type Permissions,
@@ -31,10 +32,16 @@ export function planResourcesOf(manifests: readonly ModuleManifest[]): Resource[
   return manifests.flatMap(({ planning }) => (planning ? [planning.planResource] : []))
 }
 
+/** Holding the action on any one module's plans is enough; the backend checks the plan's own module. */
+export function planPermissionsFor(
+  manifests: readonly ModuleManifest[],
+  action: Action,
+): Permission[] {
+  return planResourcesOf(manifests).map((resource): Permission => `${resource}:${action}`)
+}
+
 export function routePermissionsFor(manifests: readonly ModuleManifest[]): RoutePermissions {
-  const planPermissions = planResourcesOf(manifests).map(
-    (resource): Permission => `${resource}:read`,
-  )
+  const planPermissions = planPermissionsFor(manifests, 'read')
   const mapPermissions = mapPermissionsFor(manifests)
   return {
     ...CORE_ROUTE_PERMISSIONS,

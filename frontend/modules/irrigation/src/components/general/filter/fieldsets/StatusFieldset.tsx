@@ -7,7 +7,7 @@ import { MultiSelectCombobox } from '@green-ecolution/ui'
 import SelectedTagList from '../SelectedTagList'
 
 const StatusFieldset = () => {
-  const { t } = useTranslation('common')
+  const { t } = useTranslation('irrigation')
   const statusTags = useStore((s) => s.filterDraft.statusTags)
   const setStatusTags = useStore((s) => s.setFilterStatusTags)
   const getWateringStatusDetails = useWateringStatusDetails()

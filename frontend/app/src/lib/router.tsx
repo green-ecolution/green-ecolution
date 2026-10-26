@@ -26,6 +26,12 @@ export const crumbRoute = (titleKey: NavigationCrumbKey) => ({
   loader: () => ({ crumb: { titleKey } }),
 })
 
+/** Like `crumbRoute`, for a title outside `navigation:crumb.*`, such as a module's own catalog. */
+export const qualifiedCrumbRoute = (titleKey: ParseKeys<AllNamespaces>) => ({
+  component: Outlet,
+  loader: () => ({ crumb: { titleKey, params: {} } }),
+})
+
 /**
  * Route modules are imported eagerly (see `routeTree.gen.ts`), well before
  * `createI18n()` resolves, so `label` is a key resolved by `useLocalizedText()`

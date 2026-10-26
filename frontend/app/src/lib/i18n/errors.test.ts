@@ -2,6 +2,8 @@ import { beforeEach, expect, it } from 'vitest'
 import { createI18n } from './index'
 import de from '@/locales/de/errors.json'
 import en from '@/locales/en/errors.json'
+import irrigationDe from '@green-ecolution/module-irrigation/locales/de'
+import { errorCatalogKeys } from './errors'
 
 beforeEach(() => {
   localStorage.clear()
@@ -44,13 +46,36 @@ it('has the same key set in German and English', () => {
 
 it('keeps the code and status key space intact', () => {
   const keys = flatten(de)
-  expect(keys).toContain('code.conflict.tree_in_cluster')
-  expect(keys).toContain('code.organization_mismatch.trees_vs_cluster')
+  expect(keys).toContain('code.organization_mismatch.stops_vs_plan')
   expect(keys).toContain('code.module.disabled')
   expect(keys).toContain('code.module.unknown')
   expect(keys).toContain('status.409')
   expect(keys).toContain('offline')
   expect(keys).toContain('unknown')
+})
+
+it('leaves the codes only irrigation raises to its catalog', () => {
+  const core = flatten(de)
+  const irrigation = flatten(irrigationDe.irrigation.errors)
+  for (const key of [
+    'code.conflict.tree_in_cluster',
+    'code.organization_mismatch.trees_vs_cluster',
+  ]) {
+    expect(core).not.toContain(key)
+    expect(irrigation).toContain(key)
+  }
+})
+
+it('looks a code up in the module of the request, the core, then the other modules', () => {
+  expect(errorCatalogKeys('code.plan.unknown_stop', 'irrigation')).toEqual([
+    'tree:errors.code.plan.unknown_stop',
+    'treecluster:errors.code.plan.unknown_stop',
+    'evaluation:errors.code.plan.unknown_stop',
+    'irrigation:errors.code.plan.unknown_stop',
+    'errors:code.plan.unknown_stop',
+  ])
+  expect(errorCatalogKeys('code.plan.unknown_stop')[0]).toBe('errors:code.plan.unknown_stop')
+  expect(errorCatalogKeys('status.409', 'irrigation')).toEqual(['errors:status.409'])
 })
 
 it('interpolates the unknown-status placeholder', async () => {

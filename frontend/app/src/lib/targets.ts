@@ -1,5 +1,11 @@
 import type { TargetRefDto } from '@green-ecolution/backend-client'
-import type { ModuleManifest, ModuleSensorListFilter, ModuleTarget } from '@/modules/types'
+import type {
+  I18nKey,
+  ModuleManifest,
+  ModuleSensorListFilter,
+  ModuleTarget,
+  ModuleTargetTexts,
+} from '@/modules/types'
 
 export interface SensorTargetKind {
   module: string
@@ -16,6 +22,20 @@ export function sensorTargetKinds(manifests: readonly ModuleManifest[]): SensorT
   return manifests.flatMap(({ key, targets }) =>
     (targets ?? []).map((target) => ({ module: key, target })),
   )
+}
+
+/** The kind a new link goes to when only one is on offer; with several the user picks one later. */
+export function soleTargetKind(manifests: readonly ModuleManifest[]): ModuleTarget | undefined {
+  const kinds = sensorTargetKinds(manifests)
+  return kinds.length === 1 ? kinds[0].target : undefined
+}
+
+export function targetTextKey(
+  target: ModuleTarget | undefined,
+  text: keyof ModuleTargetTexts,
+  coreKey: I18nKey,
+): I18nKey {
+  return target?.texts?.[text] ?? coreKey
 }
 
 /** Undefined for a target whose module is unknown or not among the given manifests. */

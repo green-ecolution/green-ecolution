@@ -1,5 +1,5 @@
 import type { StopOutcomeDto } from '@green-ecolution/backend-client'
-import type { ModuleManifest, ModulePlanning } from './types'
+import type { I18nKey, ModuleManifest, ModulePlanning, ModulePlanTexts } from './types'
 
 export type PlanningManifest = ModuleManifest & { planning: ModulePlanning }
 
@@ -21,6 +21,14 @@ export function planningFor(
   moduleKey: string,
 ): ModulePlanning | undefined {
   return planningManifests(manifests).find(({ key }) => key === moduleKey)?.planning
+}
+
+export function planTextKey(
+  planning: ModulePlanning | undefined,
+  text: keyof ModulePlanTexts,
+  coreKey: I18nKey,
+): I18nKey {
+  return planning?.texts?.[text] ?? coreKey
 }
 
 /**

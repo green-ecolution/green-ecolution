@@ -14,7 +14,7 @@ export function probeTarget(
 ): ModuleTarget {
   return {
     kind,
-    labelKey: 'common:modules.irrigation',
+    labelKey: 'irrigation:label',
     invalidate: [[`${kind}-root`]],
     AssignDialog: ({ open, mode, onConfirm }) =>
       open ? (
@@ -43,7 +43,7 @@ export function probeTarget(
 export function probeTargetManifest(key: string, targets: ModuleTarget[]): ModuleManifest {
   return {
     key,
-    labelKey: 'common:modules.irrigation',
+    labelKey: 'irrigation:label',
     i18n: { namespaces: [], load: () => Promise.resolve({}) },
     targets,
   }

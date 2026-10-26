@@ -25,6 +25,7 @@ import type { Sensor } from '@/api/backendApi'
 import { sensorApi } from '@/api/backendApi'
 import { useInvalidateQueryRoots } from '@/lib/queryInvalidation'
 import { useHasPermission } from '@/lib/auth/useHasPermission'
+import { targetTextKey } from '@/lib/targets'
 import { useSensorActions } from './SensorActionsContext'
 
 interface SensorActionsMenuProps {
@@ -32,7 +33,7 @@ interface SensorActionsMenuProps {
 }
 
 const SensorActionsMenu = ({ sensor }: SensorActionsMenuProps) => {
-  const { t } = useTranslation(['sensor', 'common'])
+  const { t, i18n } = useTranslation(['sensor', 'common'])
   const sensorId = sensor.id
   const actions = useSensorActions()
   const isPrepared = sensor.status === 'prepared'
@@ -71,19 +72,29 @@ const SensorActionsMenu = ({ sensor }: SensorActionsMenuProps) => {
           {canUpdate && actions.canAssign && isPrepared && (
             <DropdownMenuItem className="cursor-pointer" onSelect={() => actions.requestActivate()}>
               <Link2 className="mr-2 size-4" />
-              {t('actions.activateAssignTree')}
+              {i18n.t(
+                targetTextKey(
+                  actions.textTarget,
+                  'activateAction',
+                  'sensor:actions.activateAssign',
+                ),
+              )}
             </DropdownMenuItem>
           )}
           {canUpdate && actions.canAssign && !isPrepared && (
             <DropdownMenuItem className="cursor-pointer" onSelect={() => actions.requestReassign()}>
               <Replace className="mr-2 size-4" />
-              {t('actions.reassignTree')}
+              {i18n.t(
+                targetTextKey(actions.textTarget, 'reassignAction', 'sensor:actions.reassign'),
+              )}
             </DropdownMenuItem>
           )}
           {canUpdate && !isPrepared && (
             <DropdownMenuItem className="cursor-pointer" onSelect={() => actions.requestRemove()}>
               <Link2Off className="mr-2 size-4" />
-              {t('actions.removeLink')}
+              {i18n.t(
+                targetTextKey(actions.textTarget, 'removeLinkAction', 'sensor:actions.removeLink'),
+              )}
             </DropdownMenuItem>
           )}
           {canDelete && (

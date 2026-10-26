@@ -17,7 +17,7 @@ vi.mock('@/lib/auth/session', () => ({
 vi.mock('@/modules/registry', () => {
   const probe = (key: string, interactiveLayerIds: string[]): ModuleManifest => ({
     key,
-    labelKey: 'common:modules.irrigation',
+    labelKey: 'irrigation:label',
     i18n: { namespaces: [], load: () => Promise.resolve({}) },
     map: {
       permissions: [],

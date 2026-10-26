@@ -25,7 +25,13 @@ import {
   useDeactivateSensor,
   useReassignSensor,
 } from '@/hooks/useSensorTargetMutations'
-import { sensorTargetKinds, targetDescriptor, type SensorTargetKind } from '@/lib/targets'
+import {
+  sensorTargetKinds,
+  soleTargetKind,
+  targetDescriptor,
+  targetTextKey,
+  type SensorTargetKind,
+} from '@/lib/targets'
 import type { ModuleTarget, SelectedTarget, TargetAssignMode } from '@/modules/types'
 import { useActiveModules } from '@/modules/useActiveModules'
 import TargetKindChoice from '../TargetKindChoice'
@@ -35,6 +41,8 @@ interface SensorActionsApi {
   canAssign: boolean
   /** The descriptor of the sensor's current target, if its module is active. */
   currentTarget: ModuleTarget | undefined
+  /** Words the sensor actions: the current target, else the only kind a new link can go to. */
+  textTarget: ModuleTarget | undefined
   requestActivate: () => void
   requestReassign: () => void
   requestRemove: () => void
@@ -54,10 +62,11 @@ export const useSensorActions = (): SensorActionsApi => {
 }
 
 const SensorActionsProvider = ({ sensor, children }: PropsWithChildren<{ sensor: Sensor }>) => {
-  const { t } = useTranslation(['sensor', 'enums', 'common'])
+  const { t, i18n } = useTranslation(['sensor', 'enums', 'common'])
   const { manifests } = useActiveModules()
   const kinds = sensorTargetKinds(manifests)
   const currentTarget = targetDescriptor(manifests, sensor.target)
+  const textTarget = currentTarget ?? soleTargetKind(manifests)
   const [assign, setAssign] = useState<AssignState | null>(null)
   const [removeOpen, setRemoveOpen] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -87,18 +96,22 @@ const SensorActionsProvider = ({ sensor, children }: PropsWithChildren<{ sensor:
     if (mode === 'activate') {
       activate.mutate(variables, {
         onSuccess: () => {
-          toast.success(t('actions.activateSuccessToast'))
+          toast.success(
+            i18n.t(targetTextKey(kind, 'activateSuccess', 'sensor:actions.activateSuccessToast')),
+          )
           closeAssign()
         },
-        onError: (err) => setErrorMessage(mapActivateError(err)),
+        onError: (err) => setErrorMessage(mapActivateError(err, kind)),
       })
     } else {
       reassign.mutate(variables, {
         onSuccess: () => {
-          toast.success(t('actions.reassignSuccessToast'))
+          toast.success(
+            i18n.t(targetTextKey(kind, 'reassignSuccess', 'sensor:actions.reassignSuccessToast')),
+          )
           closeAssign()
         },
-        onError: (err) => setErrorMessage(mapReassignError(err)),
+        onError: (err) => setErrorMessage(mapReassignError(err, kind)),
       })
     }
   }
@@ -106,6 +119,7 @@ const SensorActionsProvider = ({ sensor, children }: PropsWithChildren<{ sensor:
   const api: SensorActionsApi = {
     canAssign: kinds.length > 0,
     currentTarget,
+    textTarget,
     requestActivate: () => open('activate', undefined),
     requestReassign: () => open('reassign', currentTarget),
     requestRemove: () => setRemoveOpen(true),
@@ -163,11 +177,24 @@ const SensorActionsProvider = ({ sensor, children }: PropsWithChildren<{ sensor:
             <AlertDialogIcon variant="destructive">
               <Link2Off />
             </AlertDialogIcon>
-            <AlertDialogTitle>{t('actions.removeConfirmTitle')}</AlertDialogTitle>
+            <AlertDialogTitle>
+              {i18n.t(
+                targetTextKey(
+                  textTarget,
+                  'removeConfirmTitle',
+                  'sensor:actions.removeConfirmTitle',
+                ),
+              )}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              {t('actions.removeConfirmDescription', {
-                status: t('enums:sensorStatus.prepared.label'),
-              })}
+              {i18n.t(
+                targetTextKey(
+                  textTarget,
+                  'removeConfirmDescription',
+                  'sensor:actions.removeConfirmDescription',
+                ),
+                { status: t('enums:sensorStatus.prepared.label') },
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

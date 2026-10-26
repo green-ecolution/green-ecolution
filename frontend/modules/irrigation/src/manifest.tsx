@@ -1,18 +1,18 @@
 import { lazy } from 'react'
 import { FolderClosed, PieChart, TreeDeciduous, Trees } from 'lucide-react'
 import Tree from '@/components/icons/Tree'
-import { ANY_READ } from '@/lib/auth/permissions'
 import type { ModuleManifest } from '@/modules/types'
 import ClustersTile from './components/dashboard/ClustersTile'
 import { irrigationSettingsSection } from './components/settings/settingsSection'
 import { IRRIGATION } from './lib/targets'
 import { irrigationMap } from './map'
 import { irrigationPlanning } from './planning'
+import { EVALUATION_READ, irrigationResources } from './resources'
 import { treeSensorTarget } from './sensorTargets'
 
 export const irrigationManifest: ModuleManifest = {
   key: IRRIGATION,
-  labelKey: 'common:modules.irrigation',
+  labelKey: 'irrigation:label',
   i18n: {
     namespaces: ['tree', 'treecluster', 'evaluation', 'irrigation'],
     // One `import()` per language literal, so each language gets its own chunk.
@@ -49,13 +49,9 @@ export const irrigationManifest: ModuleManifest = {
   routePermissions: {
     '/trees': ['tree:read'],
     '/treecluster': ['tree_cluster:read'],
-    '/evaluations': ANY_READ,
+    '/evaluations': EVALUATION_READ,
   },
-  resources: [
-    { key: 'tree', area: 'greenspaces' },
-    { key: 'tree_cluster', area: 'greenspaces' },
-    { key: 'watering_plan', area: 'operations' },
-  ],
+  resources: irrigationResources,
   dashboardTiles: [ClustersTile],
   statistics: {
     tree: {

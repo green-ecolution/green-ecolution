@@ -4,6 +4,7 @@ import type { PlanResponse } from '@/api/backendApi'
 import { planApi } from '@/api/backendApi'
 import { toPlanCreateRequest, toPlanFormUpdateRequest } from '@/lib/plans'
 import { useIssueTranslator } from '@/lib/i18n/validation'
+import type { PlanningManifest } from '@/modules/planning'
 import { WateringPlanForm } from '@/schema/wateringPlanSchema'
 import { wateringPlanDraftResolver } from '@green-ecolution/domain-wasm'
 import { DefaultValues } from 'react-hook-form'
@@ -12,7 +13,11 @@ import { EntityFormConfig, useEntityForm } from './useEntityForm'
 
 export const useWateringPlanForm = (
   mutationType: 'create' | 'update',
-  opts: { wateringPlanId?: string; initForm?: DefaultValues<WateringPlanForm> },
+  opts: {
+    wateringPlanId?: string
+    initForm?: DefaultValues<WateringPlanForm>
+    planManifest?: PlanningManifest
+  },
 ) => {
   const translate = useIssueTranslator()
   const { t } = useTranslation('wateringPlan')
@@ -37,7 +42,8 @@ export const useWateringPlanForm = (
       params: { wateringPlanId: id.toString() },
     }),
     replaceOnSuccess: true,
-    allowedPaths: ['/map/watering-plan/select/cluster'],
+    allowedPaths: [...(opts.planManifest?.planning.stopPickerPaths ?? [])],
+    errorModule: opts.planManifest?.key,
 
     messages: {
       createLeave: t('form.createLeaveMessage'),

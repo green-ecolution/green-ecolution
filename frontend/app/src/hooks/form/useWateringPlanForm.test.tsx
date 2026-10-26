@@ -7,6 +7,7 @@ import { Toaster } from '@green-ecolution/ui'
 import { PlanStatus as WateringPlanStatus } from '@green-ecolution/backend-client'
 import useStore from '@/store/store'
 import type { WateringPlanForm } from '@/schema/wateringPlanSchema'
+import { probeManifest } from '@/test/planningManifest'
 
 vi.mock('@/api/backendApi', () => ({
   planApi: {
@@ -229,6 +230,34 @@ describe('useWateringPlanForm', () => {
 
       expect(result.current.navigationBlocker).toBeDefined()
       expect(result.current.navigationBlocker.message).toContain('Einsatzplan')
+    })
+
+    it('lets the dirty form open the stop picker pages of the plan module', () => {
+      const { result, rerender } = renderHook(
+        () =>
+          useWateringPlanForm('create', {
+            initForm: defaultInitForm,
+            planManifest: probeManifest('probe', { stopPickerPaths: ['/probe/pick'] }),
+          }),
+        { wrapper: createWrapper() },
+      )
+      act(() => {
+        result.current.form.setValue('description', 'Neu', { shouldDirty: true })
+      })
+      rerender()
+
+      const [{ shouldBlockFn }] = mockUseBlocker.mock.lastCall as [
+        {
+          shouldBlockFn: (args: {
+            current: { pathname: string }
+            next: { pathname: string }
+          }) => boolean
+        },
+      ]
+      const leave = (pathname: string) =>
+        shouldBlockFn({ current: { pathname: '/watering-plans/new' }, next: { pathname } })
+      expect(leave('/probe/pick')).toBe(false)
+      expect(leave('/vehicles')).toBe(true)
     })
   })
 })

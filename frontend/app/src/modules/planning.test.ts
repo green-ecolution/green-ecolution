@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { completeOutcomes, keepUnresolvedStops, planModule, planningFor } from './planning'
+import {
+  completeOutcomes,
+  keepUnresolvedStops,
+  planModule,
+  planningFor,
+  planTextKey,
+} from './planning'
 import { probeManifest, probePlanning } from '@/test/planningManifest'
 
 const irrigation = probeManifest('irrigation')
@@ -66,6 +72,24 @@ describe('keepUnresolvedStops', () => {
 
   it('drops a shown stop the user removed', () => {
     expect(keepUnresolvedStops([], ['c1'], ['c1'])).toEqual([])
+  })
+})
+
+describe('planTextKey', () => {
+  it('takes the wording the plan module gives', () => {
+    const planning = probePlanning({ texts: { listDescription: 'irrigation:label' } })
+    expect(planTextKey(planning, 'listDescription', 'wateringPlan:list.description')).toBe(
+      'irrigation:label',
+    )
+  })
+
+  it('keeps the core text the module leaves out, and without a module', () => {
+    expect(
+      planTextKey(probePlanning(), 'createDescription', 'wateringPlan:create.description'),
+    ).toBe('wateringPlan:create.description')
+    expect(planTextKey(undefined, 'createDescription', 'wateringPlan:create.description')).toBe(
+      'wateringPlan:create.description',
+    )
   })
 })
 

@@ -8,13 +8,12 @@ import ButtonLink from '@/components/general/links/ButtonLink'
 import ListPageHeader from '@/components/general/ListPageHeader'
 import WateringPlanBoard from '@/components/watering-plan/board/WateringPlanBoard'
 import { pendingLoading, prefetch } from '@/lib/router'
-import { Can } from '@/lib/auth/Can'
-import { useHasPermission } from '@/lib/auth/useHasPermission'
 import { activeManifestsFrom } from '@/modules/activeModules'
 import ModuleInactive from '@/modules/ModuleInactive'
-import { planModule } from '@/modules/planning'
+import { planModule, planTextKey } from '@/modules/planning'
 import { moduleManifests } from '@/modules/registry'
 import { useActiveModules } from '@/modules/useActiveModules'
+import { usePlanPermission } from '@/modules/usePlanPermission'
 
 const boardSearchSchema = z.object({
   module: z.string().optional().catch(undefined),
@@ -45,27 +44,41 @@ export const Route = createFileRoute('/_protected/watering-plans/')({
 })
 
 function WateringPlans() {
-  const { t } = useTranslation('wateringPlan')
-  const canModify = useHasPermission(['watering_plan:update'])
+  const { t, i18n } = useTranslation('wateringPlan')
   const { module } = Route.useSearch()
   const { manifests } = useActiveModules()
+  const planManifest = planModule({ module }, manifests)
+  const canModify = usePlanPermission(planManifest?.planning, 'update')
+  const canCreate = usePlanPermission(planManifest?.planning, 'create')
 
-  if (!planModule({ module }, manifests)) return <ModuleInactive />
+  if (!planManifest) return <ModuleInactive />
 
   return (
     <div className="mt-6">
       <div className="container">
         <ListPageHeader
           title={t('list.title')}
-          description={canModify ? t('list.descriptionCanModify') : t('list.description')}
+          description={i18n.t(
+            canModify
+              ? planTextKey(
+                  planManifest.planning,
+                  'listDescriptionCanModify',
+                  'wateringPlan:list.descriptionCanModify',
+                )
+              : planTextKey(
+                  planManifest.planning,
+                  'listDescription',
+                  'wateringPlan:list.description',
+                ),
+          )}
           action={
-            <Can permission={['watering_plan:create']}>
+            canCreate && (
               <ButtonLink
                 icon={Plus}
                 label={t('list.createButton')}
                 link={{ to: '/watering-plans/new' }}
               />
-            </Can>
+            )
           }
         />
       </div>

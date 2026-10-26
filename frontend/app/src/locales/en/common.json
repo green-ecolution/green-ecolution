@@ -50,10 +50,6 @@
       "apply": "Apply",
       "reset": "Reset"
     },
-    "status": {
-      "legend": "Watering status:",
-      "placeholder": "All statuses"
-    },
     "tag": {
       "removeAriaLabel": "Remove {label}"
     }
@@ -170,9 +166,6 @@
       "idCopied": "Sensor ID copied",
       "idCopyFailed": "Sensor ID could not be copied"
     }
-  },
-  "modules": {
-    "irrigation": "Irrigation"
   },
   "moduleInactive": {
     "title": "Module not active",

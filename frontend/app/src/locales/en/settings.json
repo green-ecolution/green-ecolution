@@ -452,30 +452,6 @@
       "delete": "Delete {resource}"
     },
     "resource": {
-      "tree": {
-        "label": "Trees",
-        "pluralNoun": "trees",
-        "singular": "tree",
-        "description": "Trees & locations",
-        "hint": {
-          "read": "View tree list and details",
-          "create": "Record new trees",
-          "update": "Change master data and location",
-          "delete": "Remove trees permanently"
-        }
-      },
-      "tree_cluster": {
-        "label": "Watering groups",
-        "pluralNoun": "watering groups",
-        "singular": "watering group",
-        "description": "Groups & thresholds",
-        "hint": {
-          "read": "View groups and watering status",
-          "create": "Create new watering groups",
-          "update": "Change assignment, name and thresholds",
-          "delete": "Dissolve groups"
-        }
-      },
       "sensor": {
         "label": "Sensors",
         "pluralNoun": "sensors",
@@ -498,18 +474,6 @@
           "create": "Create a new area",
           "update": "Rename or adjust an area",
           "delete": "Remove an area"
-        }
-      },
-      "watering_plan": {
-        "label": "Watering plans",
-        "pluralNoun": "watering plans",
-        "singular": "watering plan",
-        "description": "Planning & routes",
-        "hint": {
-          "read": "View planned and completed watering plans",
-          "create": "Create a new watering plan (start points must be readable)",
-          "update": "Change route, time, scope and status",
-          "delete": "Remove a watering plan permanently"
         }
       },
       "start_point": {

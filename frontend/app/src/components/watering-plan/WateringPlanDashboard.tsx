@@ -26,8 +26,8 @@ import type { PlanResponse } from '@green-ecolution/backend-client'
 import { useDownloadGpx } from '@/hooks/useDownloadGpx'
 import { useDateLocale } from '@/lib/i18n/useFormatters'
 import WateringPlanPreviewRoute from './WateringPlanRoutePreview'
-import { useHasPermission } from '@/lib/auth/useHasPermission'
-import { planningFor } from '@/modules/planning'
+import { usePlanPermission } from '@/modules/usePlanPermission'
+import { planningFor, planTextKey } from '@/modules/planning'
 import { useActiveModules } from '@/modules/useActiveModules'
 
 interface WateringPlanDashboardProps {
@@ -37,11 +37,11 @@ interface WateringPlanDashboardProps {
 const WateringPlanDashboard = ({ wateringPlan }: WateringPlanDashboardProps) => {
   const getWateringPlanStatusDetails = useWateringPlanStatusDetails()
   const statusDetails = getWateringPlanStatusDetails(wateringPlan.status)
-  const canEdit = useHasPermission(['watering_plan:update'])
   const { t, i18n } = useTranslation(['wateringPlan', 'common'])
   const dateLocale = useDateLocale()
   const { manifests } = useActiveModules()
   const planning = planningFor(manifests, wateringPlan.module)
+  const canEdit = usePlanPermission(planning, 'update')
 
   const date = wateringPlan?.date
     ? format(new Date(wateringPlan?.date), 'dd.MM.yyyy', { locale: dateLocale })
@@ -93,7 +93,11 @@ const WateringPlanDashboard = ({ wateringPlan }: WateringPlanDashboardProps) => 
           <Alert variant="destructive" className="mt-6 flex items-center gap-3">
             <AlertIcon variant="destructive" />
             <AlertContent>
-              <AlertDescription>{t('detail.routeErrorAlert')}</AlertDescription>
+              <AlertDescription>
+                {i18n.t(
+                  planTextKey(planning, 'routeErrorAlert', 'wateringPlan:detail.routeErrorAlert'),
+                )}
+              </AlertDescription>
             </AlertContent>
           </Alert>
         )}

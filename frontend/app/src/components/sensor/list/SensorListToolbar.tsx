@@ -11,7 +11,7 @@ import ActiveFilterChips, {
   type FilterChipDescriptor,
 } from '@/components/general/list/ActiveFilterChips'
 import { sensorQueries } from '@/api/queries'
-import { listFilterValue, sensorListFiltersOf } from '@/lib/targets'
+import { listFilterValue, sensorListFiltersOf, soleTargetKind, targetTextKey } from '@/lib/targets'
 import { useActiveModules } from '@/modules/useActiveModules'
 import { useSensorStatusDetails } from '@/hooks/details/useDetailsForSensorStatus'
 import { useDataQualityDetails } from '@/hooks/details/useDetailsForDataHealth'
@@ -26,7 +26,7 @@ interface SensorListToolbarProps {
 }
 
 const SensorListToolbar = ({ filteredRecords, totalRecords, action }: SensorListToolbarProps) => {
-  const { t } = useTranslation('sensor')
+  const { t, i18n } = useTranslation('sensor')
   const { search, setQuery, setSort, setFilter, setAttached, resetFilters } = useSensorListSearch()
   const getSensorStatusDetails = useSensorStatusDetails()
   const getDataQualityDetails = useDataQualityDetails()
@@ -124,7 +124,13 @@ const SensorListToolbar = ({ filteredRecords, totalRecords, action }: SensorList
             value={search.q ?? ''}
             onChange={setQuery}
             label={t('list.searchLabel')}
-            placeholder={t('list.searchPlaceholder')}
+            placeholder={i18n.t(
+              targetTextKey(
+                soleTargetKind(manifests),
+                'listSearchPlaceholder',
+                'sensor:list.searchPlaceholder',
+              ),
+            )}
           />
         }
         filters={

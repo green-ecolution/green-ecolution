@@ -56,12 +56,12 @@ const SoilConditionEntries: { value: SoilCondition; groupKey: SoilGroupKey }[] =
  * absent soil condition), matching the pre-catalog lookup's `?? value`.
  */
 export const useSoilConditionLabel = (): ((value: SoilCondition) => string) => {
-  const { t } = useTranslation('enums')
+  const { t } = useTranslation('irrigation')
   const translate = t as EnumsTranslate
   return useCallback(
     (value: SoilCondition) =>
       SoilConditionEntries.some((entry) => entry.value === value)
-        ? translate(`soilCondition.${value}.label`)
+        ? translate(`enums.soilCondition.${value}.label`)
         : value,
     [translate],
   )
@@ -69,14 +69,14 @@ export const useSoilConditionLabel = (): ((value: SoilCondition) => string) => {
 
 /** The full KA5 option list with translated labels and group headings, in display order. */
 export const useSoilConditionOptions = (): SoilConditionOption[] => {
-  const { t } = useTranslation('enums')
+  const { t } = useTranslation('irrigation')
   const translate = t as EnumsTranslate
   return useMemo(
     () =>
       SoilConditionEntries.map(({ value, groupKey }) => ({
         value,
-        label: translate(`soilCondition.${value}.label`),
-        group: translate(`soilCondition.groups.${groupKey}`),
+        label: translate(`enums.soilCondition.${value}.label`),
+        group: translate(`enums.soilCondition.groups.${groupKey}`),
       })),
     [translate],
   )

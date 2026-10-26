@@ -72,7 +72,7 @@ export const useWateringPlanBoardMutations = (
       const { plannedKey, activeKey } = columnKeys(plan)
       if (context?.previousPlanned) queryClient.setQueryData(plannedKey, context.previousPlanned)
       if (context?.previousActive) queryClient.setQueryData(activeKey, context.previousActive)
-      void resolveApiError(error).then((info) =>
+      void resolveApiError(error, { module: plan.module }).then((info) =>
         showToast(t('frame.wateringPlanStartRevertFailed', { reason: info.message }), 'error'),
       )
     },
@@ -105,7 +105,7 @@ export const useWateringPlanBoardMutations = (
       const { plannedKey, activeKey } = columnKeys(plan)
       if (context?.previousPlanned) queryClient.setQueryData(plannedKey, context.previousPlanned)
       if (context?.previousActive) queryClient.setQueryData(activeKey, context.previousActive)
-      void resolveApiError(error).then((info) =>
+      void resolveApiError(error, { module: plan.module }).then((info) =>
         showToast(t('frame.wateringPlanStartFailed', { reason: info.message }), 'error'),
       )
     },
@@ -122,8 +122,8 @@ export const useWateringPlanBoardMutations = (
   const cancelPlan = useMutation({
     mutationFn: ({ plan, note }: { plan: PlanInListResponse; note: string }) =>
       update(plan, { status: WateringPlanStatus.Canceled, cancellationNote: note }),
-    onError: (error) => {
-      void resolveApiError(error).then((info) =>
+    onError: (error, { plan }) => {
+      void resolveApiError(error, { module: plan.module }).then((info) =>
         showToast(t('frame.wateringPlanCancelFailed', { reason: info.message }), 'error'),
       )
     },
@@ -139,8 +139,8 @@ export const useWateringPlanBoardMutations = (
         status: WateringPlanStatus.Finished,
         outcomes: completeOutcomes(plan.stops, outcomes),
       }),
-    onError: (error) => {
-      void resolveApiError(error).then((info) =>
+    onError: (error, { plan }) => {
+      void resolveApiError(error, { module: plan.module }).then((info) =>
         showToast(t('frame.wateringPlanFinishFailed', { reason: info.message }), 'error'),
       )
     },
@@ -153,8 +153,8 @@ export const useWateringPlanBoardMutations = (
   const assignUsers = useMutation({
     mutationFn: ({ plan, userIds }: { plan: PlanInListResponse; userIds: string[] }) =>
       update(plan, { userIds }),
-    onError: (error) => {
-      void resolveApiError(error).then((info) =>
+    onError: (error, { plan }) => {
+      void resolveApiError(error, { module: plan.module }).then((info) =>
         showToast(t('frame.wateringPlanAssignFailed', { reason: info.message }), 'error'),
       )
     },

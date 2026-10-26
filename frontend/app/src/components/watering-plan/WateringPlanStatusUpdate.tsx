@@ -28,7 +28,7 @@ import { useTranslation } from 'react-i18next'
 import { useDateLocale } from '@/lib/i18n/useFormatters'
 import { toApiError } from '@/lib/apiError'
 import { toUpdateRequest } from '@/lib/plans'
-import { completeOutcomes, planningFor } from '@/modules/planning'
+import { completeOutcomes, planningFor, planTextKey } from '@/modules/planning'
 import type { ModulePlanning } from '@/modules/types'
 import { useActiveModules } from '@/modules/useActiveModules'
 
@@ -43,7 +43,7 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
   const navigate = useNavigate()
   const invalidate = useInvalidateQueryRoots()
   const showToast = createToast()
-  const { t } = useTranslation(['wateringPlan', 'errors', 'common'])
+  const { t, i18n } = useTranslation(['wateringPlan', 'errors', 'common'])
   const dateLocale = useDateLocale()
   const getWateringPlanStatusDetails = useWateringPlanStatusDetails()
   const statusDetails = getWateringPlanStatusDetails(loadedData.status)
@@ -58,7 +58,7 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
           planUpdateRequest: toUpdateRequest(loadedData, overrides),
         })
       } catch (error) {
-        throw await toApiError(error)
+        throw await toApiError(error, { module: loadedData.module })
       }
     },
 
@@ -162,7 +162,15 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
             {statusDetails.label}
           </Badge>
         </p>
-        <p>{t('statusUpdate.description')}</p>
+        <p>
+          {i18n.t(
+            planTextKey(
+              planning,
+              'statusUpdateDescription',
+              'wateringPlan:statusUpdate.description',
+            ),
+          )}
+        </p>
       </FormPageHeader>
 
       <section className="mt-10">

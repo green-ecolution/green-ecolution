@@ -6,7 +6,7 @@ import type { ModuleManifest, ModuleMap } from './types'
 
 const probe = (key: string, map: Partial<ModuleMap> = {}): ModuleManifest => ({
   key,
-  labelKey: 'common:modules.irrigation',
+  labelKey: 'irrigation:label',
   i18n: { namespaces: [], load: () => Promise.resolve({}) },
   map: {
     permissions: [],

@@ -27,6 +27,7 @@ const prefetch: NonNullable<ModuleMap['prefetch']> = (queryClient) => {
 
 export const irrigationMap: ModuleMap = {
   permissions: ['tree:read', 'tree_cluster:read'],
+  cardDescriptionKey: 'irrigation:dashboard.mapCardDescription',
   searchSchema: irrigationMapSearchSchema,
   interactiveLayerIds: INTERACTIVE_LAYERS,
   prefetch,

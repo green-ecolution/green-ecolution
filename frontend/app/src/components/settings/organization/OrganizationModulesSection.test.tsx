@@ -6,7 +6,7 @@ vi.mock('@/modules/registry', () => ({
   moduleManifests: [
     {
       key: 'probe',
-      labelKey: 'common:modules.irrigation',
+      labelKey: 'irrigation:label',
       i18n: { namespaces: [], load: () => Promise.resolve({}) },
     },
   ],

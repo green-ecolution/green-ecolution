@@ -5,8 +5,8 @@
   },
   "list": {
     "title": "Einsatzpläne",
-    "descriptionCanModify": "Plane, starte und dokumentiere Bewässerungsfahrten. Ziehe einen Einsatzplan in die nächste Spalte, um seinen Status zu ändern.",
-    "description": "Verfolge geplante, laufende und abgeschlossene Bewässerungsfahrten.",
+    "descriptionCanModify": "Plane, starte und dokumentiere Einsätze. Ziehe einen Einsatzplan in die nächste Spalte, um seinen Status zu ändern.",
+    "description": "Verfolge geplante, laufende und abgeschlossene Einsätze.",
     "createButton": "Neuen Einsatzplan erstellen",
     "loadingLabel": "Daten werden geladen"
   },
@@ -15,7 +15,7 @@
     "title": "Einsatzplan für den {date}",
     "editLabel": "Einsatzplan bearbeiten",
     "downloadRouteLabel": "Route herunterladen",
-    "routeErrorAlert": "Die Route für diesen Einsatzplan konnte nicht berechnet werden. Bitte überprüfe, ob das ausgewählte Fahrzeug über ausreichend Wasserkapazität für die gewählten Bewässerungsgruppen verfügt.",
+    "routeErrorAlert": "Die Route für diesen Einsatzplan konnte nicht berechnet werden. Bitte überprüfe, ob das ausgewählte Fahrzeug über ausreichend Kapazität für die gewählten Stopps verfügt.",
     "updateStatusLabel": "Status aktualisieren",
     "tabGeneral": "Allgemeine Daten",
     "tabRoute": "Route",
@@ -43,13 +43,13 @@
     "routeStartDescription": "Einsatzplan startet: {startPoint}",
     "entityTitle": "Einsatzplan: {value}",
     "notFoundBackLabel": "Zur Einsatzplanliste",
-    "routePreviewAriaLabel": "Karte mit der Route und den Bewässerungsgruppen des Plans",
+    "routePreviewAriaLabel": "Karte mit der Route und den Stopps des Plans",
     "routePreviewLoadingLabel": "Lade Karte …"
   },
   "update": {
     "backLabel": "Zurück zum Einsatzplan",
     "title": "Einsatzplan für den {date} bearbeiten",
-    "description": "Der Einsatzplan kann in dieser Ansicht editiert werden, falls bestimmte Daten nicht mehr stimmen oder z. B. bestimmte Informationen zusätzlich hinterlegt werden müssen. Ein Einsatzplan erfordert immer mindestens eine Bewässerungsgruppe, die angefahren werden soll und mindestens eine:n Mitarbeiter:in, die den Einsatzplan durchführen soll. Zudem muss ein Fahrzeug hinterlegt werden.",
+    "description": "Der Einsatzplan kann in dieser Ansicht editiert werden, falls bestimmte Daten nicht mehr stimmen oder z. B. bestimmte Informationen zusätzlich hinterlegt werden müssen. Ein Einsatzplan erfordert immer mindestens einen Stopp, der angefahren werden soll, und mindestens eine:n Mitarbeiter:in, die den Einsatzplan durchführen soll. Zudem muss ein Fahrzeug hinterlegt werden.",
     "statusEditNotice": "Der Status eines Einsatzplans kann separat editiert werden.",
     "deletingLabel": "Der Einsatzplan wird gelöscht"
   },
@@ -57,7 +57,7 @@
     "backLabel": "Zurück zum Einsatzplan",
     "title": "Status vom Einsatzplan {date} bearbeiten",
     "currentStatusLabel": "Aktueller Status:",
-    "description": "Der Status eines Einsatzplans beschreibt, ob er beispielsweise aktiv ausgeführt wird, beendet ist oder abgebrochen wurde. Diese Angabe hilft dabei, die erstellten Einsatzpläne zu kategorisieren und eine Auswertung anzulegen. Sobald ein Einsatzplan beendet wird, kann zudem angegeben werden, mit wie viel Wasser die zugehörigen Bewässerungsgruppen bewässert wurden.",
+    "description": "Der Status eines Einsatzplans beschreibt, ob er beispielsweise aktiv ausgeführt wird, beendet ist oder abgebrochen wurde. Diese Angabe hilft dabei, die erstellten Einsatzpläne zu kategorisieren und eine Auswertung anzulegen. Sobald ein Einsatzplan beendet wird, kann zudem angegeben werden, wie die einzelnen Stopps erledigt wurden.",
     "finishedNotice": "Dieser Einsatzplan ist abgeschlossen. Sein Status kann nicht mehr geändert werden.",
     "statusFieldLabel": "Status des Einsatzplans",
     "statusFieldPlaceholder": "Wähle einen Status aus",
@@ -93,7 +93,7 @@
   "create": {
     "backLabel": "Zu allen Einsatzplänen",
     "title": "Neuen Einsatzplan erstellen",
-    "description": "Ein Einsatzplan bildet eine Bewässerungsroute ab, indem ihr ein Fahrzeug, einen Anhänger, Mitarbeitende und anzufahrende Bewässerungsgruppen zugewiesen werden können. Ein neu erstellter Einsatzplan wird automatisch als »geplant« eingestuft. Anhand der Bewässerungsgruppen und der Anzahl der Bäume wird berechnet, wie viel Wasser zum Bewässern benötigt wird. Der Startpunkt des Einsatzplans kann aus den konfigurierten Depotstandorten ausgewählt werden."
+    "description": "Ein Einsatzplan bildet eine Route ab, indem ihr ein Fahrzeug, einen Anhänger, Mitarbeitende und anzufahrende Stopps zugewiesen werden können. Ein neu erstellter Einsatzplan wird automatisch als »geplant« eingestuft. Der Startpunkt des Einsatzplans kann aus den konfigurierten Depotstandorten ausgewählt werden."
   },
   "board": {
     "moduleSwitcherAriaLabel": "Planungsmodul",

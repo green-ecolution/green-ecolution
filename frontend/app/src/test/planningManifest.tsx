@@ -12,12 +12,13 @@ export function probePlanning(overrides: Partial<ModulePlanning> = {}): ModulePl
   return {
     planResource: 'watering_plan',
     capacityKind: 'water',
-    labelKey: 'common:modules.irrigation',
+    labelKey: 'irrigation:label',
     stopsLabelKey: 'irrigation:planning.stopsLabel',
     stopCountLabelKey: 'irrigation:planning.stopCountLabel',
     stopCountKey: 'irrigation:planning.stopCount',
     stopIcon: MapPin,
     invalidateOnStatusChange: [],
+    stopPickerPaths: [],
     SuggestionsColumn: slot('suggestions'),
     StopList: slot('stop-list'),
     PlanSummary: slot('plan-summary'),
@@ -34,7 +35,7 @@ export function probeManifest(
 ): ModuleManifest & { planning: ModulePlanning } {
   return {
     key,
-    labelKey: 'common:modules.irrigation',
+    labelKey: 'irrigation:label',
     i18n: { namespaces: [], load: () => Promise.resolve({}) },
     planning: probePlanning({
       SuggestionsColumn: slot(`suggestions-${key}`),

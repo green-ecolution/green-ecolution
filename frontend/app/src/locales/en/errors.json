@@ -1,10 +1,8 @@
 {
   "code": {
     "organization_mismatch": {
-      "trees_vs_cluster": "The selected trees belong to a different organization than the watering group.",
-      "cluster_vs_tree": "The selected watering group belongs to a different organization than the tree.",
       "sensor_vs_target": "The sensor and the object belong to different organizations.",
-      "stops_vs_plan": "The selected watering groups lie outside the watering plan's organization.",
+      "stops_vs_plan": "The selected stops lie outside the watering plan's organization.",
       "role_vs_user": "The role belongs to a different organization than the selected person."
     },
     "conflict": {
@@ -12,7 +10,6 @@
       "sensor_already_activated": "This sensor is already activated.",
       "sensor_not_activated": "This sensor is not activated yet.",
       "sensor_bound_to_target": "The sensor is still assigned to an object.",
-      "tree_in_cluster": "The tree belongs to a watering group and must be removed from it first.",
       "organization_not_empty": "The organization still has suborganizations or members.",
       "root_organization_immutable": "The top-level organization cannot be changed or deleted.",
       "role_template_immutable": "Template roles cannot be changed. Create a copy in your organization instead.",
@@ -34,11 +31,11 @@
       "invalid_state_transition": "This status change is not possible in the watering plan's current state.",
       "cannot_mutate_after_start": "The watering plan can only be edited while it has not started yet.",
       "cancellation_note_required": "Canceling requires a reason.",
-      "outcome_missing": "Consumed water is still missing for at least one watering group.",
-      "outcome_duplicate": "The water amount was entered more than once for a watering group.",
-      "outcome_unknown_stop": "The evaluation names a watering group that is not part of the watering plan.",
+      "outcome_missing": "The outcome is still missing for at least one stop.",
+      "outcome_duplicate": "The outcome was entered more than once for a stop.",
+      "outcome_unknown_stop": "The evaluation names a stop that is not part of the watering plan.",
       "transporter_capacity_required": "Without a trailer the transporter's own tank must be used.",
-      "unknown_stop": "A selected watering group no longer exists."
+      "unknown_stop": "A selected stop no longer exists."
     },
     "module": {
       "disabled": "This module is not enabled for the organization.",
@@ -59,7 +56,7 @@
     },
     "routing": {
       "unavailable": "The routing service is currently unreachable.",
-      "invalid_problem": "No route can be calculated from the selected data. Check the vehicle, start point and groups.",
+      "invalid_problem": "No route can be calculated from the selected data. Check the vehicle, start point and stops.",
       "failed": "Route calculation failed."
     },
     "request": {
@@ -115,13 +112,13 @@
   "sensorFlow": {
     "activate": {
       "notFound": "Sensor no longer exists. Please try again.",
-      "conflict": "Sensor is already assigned to a tree.",
+      "conflict": "Sensor is already linked.",
       "failed": "Activation failed. Please try again."
     },
     "reassign": {
-      "notFound": "Sensor or tree no longer exists.",
-      "conflict": "The tree is already assigned to a different sensor.",
-      "failed": "Changing the tree failed. Please try again."
+      "notFound": "Sensor or linked object no longer exists.",
+      "conflict": "The object is already assigned to a different sensor.",
+      "failed": "Changing the link failed. Please try again."
     },
     "deactivate": {
       "notFound": "Sensor no longer exists.",

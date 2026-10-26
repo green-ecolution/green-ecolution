@@ -5,7 +5,7 @@
   "cards": {
     "map": {
       "headline": "Map",
-      "description": "All trees in Flensburg within the TBZ's area of responsibility.",
+      "description": "All recorded objects of your organization on one map.",
       "linkLabel": "To the map"
     },
     "sensors": {
@@ -15,7 +15,7 @@
     },
     "wateringPlans": {
       "headline": "Watering plans",
-      "description": "Plan a new watering plan for watering groups",
+      "description": "Plan new watering plans and keep track of running ones.",
       "linkLabel": "To the watering plans"
     },
     "settings": {

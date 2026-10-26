@@ -238,7 +238,7 @@ const SensorTreeAssignDialog = ({
           confirm: t('sensor.treeAssignDialog.activate.confirm'),
         }
       : {
-          title: t('sensor:actions.reassignTree'),
+          title: t('sensor.treeTexts.reassignAction'),
           description: t('sensor.treeAssignDialog.reassign.description'),
           confirm: t('sensor.treeAssignDialog.reassign.confirm'),
         }

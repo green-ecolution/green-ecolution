@@ -11,7 +11,7 @@ import { useWateringPlanForm } from '@/hooks/form/useWateringPlanForm'
 import { useWateringPlanDraft } from '@/store/form/useFormDraft'
 import UnsavedChangesDialog from '@/components/general/form/UnsavedChangesDialog'
 import ModuleInactive from '@/modules/ModuleInactive'
-import { planModule } from '@/modules/planning'
+import { planModule, planTextKey, type PlanningManifest } from '@/modules/planning'
 import { useActiveModules } from '@/modules/useActiveModules'
 
 export const Route = createFileRoute('/_protected/watering-plans/_formular/new/')({
@@ -34,11 +34,12 @@ const defaultForm = (module: string): DefaultValues<WateringPlanForm> => ({
 function NewWateringPlan() {
   const { manifests } = useActiveModules()
   const planManifest = planModule({}, manifests)
-  return planManifest ? <NewWateringPlanForm module={planManifest.key} /> : <ModuleInactive />
+  return planManifest ? <NewWateringPlanForm planManifest={planManifest} /> : <ModuleInactive />
 }
 
-function NewWateringPlanForm({ module }: { module: string }) {
-  const { t } = useTranslation('wateringPlan')
+function NewWateringPlanForm({ planManifest }: { planManifest: PlanningManifest }) {
+  const { key: module, planning } = planManifest
+  const { t, i18n } = useTranslation('wateringPlan')
   const draft = useWateringPlanDraft<WateringPlanForm>('create')
   const initForm = draft.data ?? defaultForm(module)
   const formKey = draft.data?.stopIds?.join(',') ?? 'initial'
@@ -50,6 +51,7 @@ function NewWateringPlanForm({ module }: { module: string }) {
     'create',
     {
       initForm,
+      planManifest,
     },
   )
 
@@ -60,7 +62,9 @@ function NewWateringPlanForm({ module }: { module: string }) {
         <h1 className="font-lato font-bold text-3xl mb-4 lg:text-4xl xl:text-5xl">
           {t('create.title')}
         </h1>
-        <p className="mb-5">{t('create.description')}</p>
+        <p className="mb-5">
+          {i18n.t(planTextKey(planning, 'createDescription', 'wateringPlan:create.description'))}
+        </p>
       </article>
 
       <section className="mt-10">

@@ -13,7 +13,7 @@
     "viewActivated": "Activated",
     "viewPrepared": "Prepared",
     "searchLabel": "Search sensors",
-    "searchPlaceholder": "Search by EUI, model or group",
+    "searchPlaceholder": "Search by EUI, model or location",
     "filterStatus": "Status",
     "filterModel": "Model",
     "filterDataHealth": "Data quality",
@@ -170,9 +170,9 @@
   },
   "actions": {
     "menuButton": "Actions",
-    "activateAssignTree": "Activate & assign tree",
-    "reassignTree": "Assign different tree",
-    "removeLink": "Remove tree link",
+    "activateAssign": "Activate & link",
+    "reassign": "Change link",
+    "removeLink": "Remove link",
     "deleteSensor": "Delete sensor",
     "deleteConfirmTitle": "Really delete this sensor?",
     "deleteConfirmDescription": "This action cannot be undone. Sensor {id} will be permanently removed, including its LoRaWAN configuration and all readings.",
@@ -180,13 +180,13 @@
     "deleteFinal": "Delete permanently",
     "deleteSuccessToast": "Sensor was deleted.",
     "deleteFailedToast": "The sensor could not be deleted.",
-    "removeConfirmTitle": "Remove tree link and reset sensor?",
-    "removeConfirmDescription": "The tree link will be removed and the sensor reset to the \"{status}\" state. It can then be activated on another tree like a new sensor.",
+    "removeConfirmTitle": "Remove link and reset sensor?",
+    "removeConfirmDescription": "The link will be removed and the sensor reset to the \"{status}\" state. It can then be activated again like a new sensor.",
     "removeConfirmSubmitPending": "Removing …",
     "removeConfirmSubmit": "Remove link",
     "removeSuccessToast": "Sensor was reset.",
-    "activateSuccessToast": "Sensor activated and tree assigned.",
-    "reassignSuccessToast": "Tree changed."
+    "activateSuccessToast": "Sensor activated and linked.",
+    "reassignSuccessToast": "Link changed."
   },
   "wizard": {
     "layout": {
@@ -199,7 +199,7 @@
     "scan": {
       "header": {
         "title": "Scan sensor QR code",
-        "description": "Hold the QR code on the sensor unit steady inside the scan frame. This uniquely identifies the sensor before you assign it to a tree in the next step. In poor lighting, it helps to hold the code a little closer."
+        "description": "Hold the QR code on the sensor unit steady inside the scan frame. This uniquely identifies the sensor before you assign it in the next step. In poor lighting, it helps to hold the code a little closer."
       },
       "continueLabel": "Accept sensor",
       "checking": {
@@ -229,7 +229,7 @@
       "rescanButton": "Scan a different sensor",
       "notActivatable": {
         "title": "Sensor cannot be activated",
-        "onlineDescription": "This sensor is already activated and assigned to a tree.",
+        "onlineDescription": "This sensor is already activated and linked.",
         "offlineDescription": "This sensor has already been activated and is currently offline.",
         "statusLabel": "Status: {status}",
         "lastSeenLabel": "Last seen: {date}"

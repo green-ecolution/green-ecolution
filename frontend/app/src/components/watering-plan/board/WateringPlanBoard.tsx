@@ -37,7 +37,7 @@ import {
   type DropAction,
 } from '@/lib/wateringPlanBoard'
 import { useWateringPlanBoardMutations } from '@/hooks/useWateringPlanBoardMutations'
-import { useHasPermission } from '@/lib/auth/useHasPermission'
+import { usePlanPermission } from '@/modules/usePlanPermission'
 import { useActiveModules } from '@/modules/useActiveModules'
 import { planModule, planningManifests, type PlanningManifest } from '@/modules/planning'
 import type { ModulePlanning } from '@/modules/types'
@@ -197,8 +197,8 @@ const ModuleBoard = ({ module, planning }: { module: string; planning: ModulePla
 
   const { startPlan, revertStart } = useWateringPlanBoardMutations(planning)
   const { SuggestionsColumn } = planning
-  const canModify = useHasPermission(['watering_plan:update'])
-  const canCreate = useHasPermission(['watering_plan:create'])
+  const canModify = usePlanPermission(planning, 'update')
+  const canCreate = usePlanPermission(planning, 'create')
   const { t } = useTranslation('wateringPlan')
   const [activeDrag, setActiveDrag] = useState<DragData | null>(null)
   const [planToCancel, setPlanToCancel] = useState<PlanInListResponse | null>(null)

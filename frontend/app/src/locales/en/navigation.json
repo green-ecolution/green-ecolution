@@ -33,8 +33,6 @@
     "root": "Dashboard"
   },
   "crumb": {
-    "trees": "Trees",
-    "clusters": "Watering groups",
     "sensors": "Sensors",
     "sensorActivate": "Activate sensor",
     "vehicles": "Vehicles",
@@ -45,9 +43,6 @@
     "wateringPlanEdit": "Edit watering plan",
     "wateringPlanStatusEdit": "Change watering plan status",
     "map": "Map",
-    "treeLocationNew": "Record tree location",
-    "routeSelect": "Set route",
-    "evaluations": "Evaluations",
     "settings": "Settings",
     "team": "Team & roles",
     "plugins": "Plugins",

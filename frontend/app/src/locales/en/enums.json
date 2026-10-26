@@ -1,26 +1,4 @@
 {
-  "wateringStatus": {
-    "good": {
-      "label": "Good",
-      "description": "Watering is sufficient, no action required."
-    },
-    "moderate": {
-      "label": "Slightly dry",
-      "description": "The trees are slightly dry and need some water."
-    },
-    "bad": {
-      "label": "Very dry",
-      "description": "The trees urgently need water."
-    },
-    "just_watered": {
-      "label": "Just watered",
-      "description": "The trees were watered recently."
-    },
-    "unknown": {
-      "label": "Unknown",
-      "description": "The watering status is unknown."
-    }
-  },
   "sensorStatus": {
     "prepared": {
       "label": "Prepared",
@@ -117,50 +95,5 @@
     "BE": { "label": "BE" },
     "C": { "label": "C" },
     "CE": { "label": "CE" }
-  },
-  "soilCondition": {
-    "groups": {
-      "sands": "Sands",
-      "silts": "Silts",
-      "loams": "Loams",
-      "clays": "Clays",
-      "pureSands": "Pure sands",
-      "other": "Other"
-    },
-    "Ss": { "label": "Ss – Pure sand" },
-    "Su2": { "label": "Su2 – slightly silty sand" },
-    "Su3": { "label": "Su3 – silty sand" },
-    "Su4": { "label": "Su4 – strongly silty sand" },
-    "Sl2": { "label": "Sl2 – slightly loamy sand" },
-    "Sl3": { "label": "Sl3 – loamy sand" },
-    "Sl4": { "label": "Sl4 – strongly loamy sand" },
-    "Slu": { "label": "Slu – silty-loamy sand" },
-    "St2": { "label": "St2 – slightly clayey sand" },
-    "St3": { "label": "St3 – clayey sand" },
-    "Uu": { "label": "Uu – pure silt" },
-    "Us": { "label": "Us – sandy silt" },
-    "Uls": { "label": "Uls – sandy-loamy silt" },
-    "Ut2": { "label": "Ut2 – slightly clayey silt" },
-    "Ut3": { "label": "Ut3 – clayey silt" },
-    "Ut4": { "label": "Ut4 – strongly clayey silt" },
-    "Ls2": { "label": "Ls2 – slightly sandy loam" },
-    "Ls3": { "label": "Ls3 – sandy loam" },
-    "Ls4": { "label": "Ls4 – strongly sandy loam" },
-    "Lt2": { "label": "Lt2 – slightly clayey loam" },
-    "Lt3": { "label": "Lt3 – clayey loam" },
-    "Lts": { "label": "Lts – sandy-clayey loam" },
-    "Lu": { "label": "Lu – silty loam" },
-    "Tt": { "label": "Tt – pure clay" },
-    "Tu2": { "label": "Tu2 – slightly silty clay" },
-    "Tu3": { "label": "Tu3 – silty clay" },
-    "Tu4": { "label": "Tu4 – strongly silty clay" },
-    "Ts2": { "label": "Ts2 – slightly sandy clay" },
-    "Ts3": { "label": "Ts3 – sandy clay" },
-    "Ts4": { "label": "Ts4 – strongly sandy clay" },
-    "Tl": { "label": "Tl – loamy clay" },
-    "fS": { "label": "fS – fine sand" },
-    "mS": { "label": "mS – medium sand" },
-    "gS": { "label": "gS – coarse sand" },
-    "unknown": { "label": "Unknown" }
   }
 }

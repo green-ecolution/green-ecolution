@@ -20,13 +20,13 @@ export interface WateringStatusDetails {
 
 /** Reactive to language change: re-renders whichever component calls it. */
 export const useWateringStatusDetails = (): ((status: WateringStatus) => WateringStatusDetails) => {
-  const { t } = useTranslation('enums')
+  const { t } = useTranslation('irrigation')
   const translate = t as EnumsTranslate
   return useCallback(
     (status: WateringStatus): WateringStatusDetails => ({
       ...WateringStatusColors[status],
-      label: translate(`wateringStatus.${status}.label`),
-      description: translate(`wateringStatus.${status}.description`),
+      label: translate(`enums.wateringStatus.${status}.label`),
+      description: translate(`enums.wateringStatus.${status}.description`),
     }),
     [translate],
   )

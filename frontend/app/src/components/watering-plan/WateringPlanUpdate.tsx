@@ -10,12 +10,11 @@ import { Loading } from '@green-ecolution/ui'
 import { Suspense } from 'react'
 import { useTranslation } from 'react-i18next'
 import DeleteSection from '../general/DeleteSection'
-import { Can } from '@/lib/auth/Can'
-import { useHasPermission } from '@/lib/auth/useHasPermission'
 import { planApi } from '@/api/backendApi'
 import { planStatusQueryRoots } from '@/lib/queryInvalidation'
-import { planningFor } from '@/modules/planning'
+import { planningManifests, planTextKey } from '@/modules/planning'
 import { useActiveModules } from '@/modules/useActiveModules'
+import { usePlanPermission } from '@/modules/usePlanPermission'
 import { useWateringPlanForm } from '@/hooks/form/useWateringPlanForm'
 import { WateringPlanForm } from '@/schema/wateringPlanSchema'
 import { FormProvider, SubmitHandler } from 'react-hook-form'
@@ -28,9 +27,8 @@ interface WateringPlanUpdateProps {
 }
 
 const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
-  const { t } = useTranslation(['wateringPlan', 'common'])
+  const { t, i18n } = useTranslation(['wateringPlan', 'common'])
   const dateLocale = useDateLocale()
-  const canUpdateStatus = useHasPermission(['watering_plan:update'])
   const draft = useWateringPlanDraft<WateringPlanForm>('update')
   const { initForm, loadedData } = useInitFormQuery(
     wateringPlanQueries.detail(wateringPlanId),
@@ -50,16 +48,20 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
         startPointName: data.startPointName ?? '',
       },
   )
+  const { manifests } = useActiveModules()
+  const planManifest = planningManifests(manifests).find(({ key }) => key === loadedData.module)
+  const planning = planManifest?.planning
+  const canUpdateStatus = usePlanPermission(planning, 'update')
+  const canDelete = usePlanPermission(planning, 'delete')
   const { mutate, isError, error, form, navigationBlocker, saveDraft } = useWateringPlanForm(
     'update',
     {
       wateringPlanId,
       initForm,
+      planManifest,
     },
   )
 
-  const { manifests } = useActiveModules()
-  const planning = planningFor(manifests, loadedData.module)
   const date = loadedData?.date
     ? format(new Date(loadedData?.date), 'dd.MM.yyyy', { locale: dateLocale })
     : t('common:state.noData')
@@ -86,7 +88,9 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
         }}
         title={<>{t('update.title', { date })}</>}
       >
-        <p>{t('update.description')}</p>
+        <p>
+          {i18n.t(planTextKey(planning, 'updateDescription', 'wateringPlan:update.description'))}
+        </p>
         {canUpdateStatus && showWateringPlanStatusButton(loadedData) && (
           <p className="mt-5 flex flex-wrap gap-x-4">
             {t('update.statusEditNotice')}
@@ -119,7 +123,7 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
         </FormProvider>
       </section>
 
-      <Can permission={['watering_plan:delete']}>
+      {canDelete && (
         <Suspense
           fallback={<Loading className="mt-20 justify-center" label={t('update.deletingLabel')} />}
         >
@@ -130,7 +134,7 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
             invalidates={planStatusQueryRoots(planning)}
           />
         </Suspense>
-      </Can>
+      )}
 
       <UnsavedChangesDialog blocker={navigationBlocker} />
     </>

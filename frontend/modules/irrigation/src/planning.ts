@@ -20,8 +20,19 @@ const prefetch: NonNullable<ModulePlanning['prefetch']> = (queryClient) => {
 
 export const irrigationPlanning: ModulePlanning = {
   planResource: 'watering_plan',
+  cardDescriptionKey: 'irrigation:dashboard.plansCardDescription',
+  plansLabelKey: 'irrigation:planning.plansLabel',
+  texts: {
+    listDescription: 'irrigation:planning.texts.listDescription',
+    listDescriptionCanModify: 'irrigation:planning.texts.listDescriptionCanModify',
+    createDescription: 'irrigation:planning.texts.createDescription',
+    updateDescription: 'irrigation:planning.texts.updateDescription',
+    statusUpdateDescription: 'irrigation:planning.texts.statusUpdateDescription',
+    routeErrorAlert: 'irrigation:planning.texts.routeErrorAlert',
+    routePreviewAriaLabel: 'irrigation:planning.texts.routePreviewAriaLabel',
+  },
   capacityKind: 'water',
-  labelKey: 'common:modules.irrigation',
+  labelKey: 'irrigation:label',
   stopsLabelKey: 'irrigation:planning.stopsLabel',
   stopCountLabelKey: 'irrigation:planning.stopCountLabel',
   stopCountKey: 'irrigation:planning.stopCount',
@@ -33,6 +44,7 @@ export const irrigationPlanning: ModulePlanning = {
     ...irrigationRoots.tree,
     ...irrigationRoots.evaluation,
   ],
+  stopPickerPaths: ['/map/watering-plan/select/cluster'],
   prefetch,
   SuggestionsColumn: lazy(loadSuggestionsColumn),
   StopList: lazy(() => import('./components/planning/ClusterStopList')),

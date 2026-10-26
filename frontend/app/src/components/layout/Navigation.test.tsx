@@ -39,14 +39,14 @@ vi.mock('@/modules/registry', async () => {
   const actual = await vi.importActual<typeof import('@/modules/registry')>('@/modules/registry')
   const probe = {
     key: 'probe',
-    labelKey: 'common:modules.irrigation',
+    labelKey: 'irrigation:label',
     i18n: { namespaces: [], load: () => Promise.resolve({}) },
     nav: {
       links: [
         {
           key: 'nav-probe',
           to: '/probe',
-          labelKey: 'common:modules.irrigation',
+          labelKey: 'irrigation:label',
           icon: () => null,
           section: 'planning',
         },
