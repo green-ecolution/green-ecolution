@@ -657,7 +657,10 @@ A module package keeps the same devDependencies as the app, including the peer v
 (`typescript` as alias for `@typescript/typescript6`, `@types/node`, `jsdom`,
 `@vitest/*`). If they drift, pnpm installs a second copy of `react-i18next` or `vitest`
 and translations come back empty in tests. `src/instances.test.ts` in the module checks
-that the packages resolve to the same instance. After adding or moving route files,
+that the packages resolve to the same instance. Tailwind only finds a module's classes
+through the `@source "../../../modules/*/src/**/*.{ts,tsx}"` line in
+`frontend/app/src/css/site.css`, which `src/modules/tailwindSource.test.ts` guards; a
+module outside `frontend/modules/` needs its own `@source` line. After adding or moving route files,
 regenerate `routeTree.gen.ts` by starting the dev server briefly
 (`timeout 30 pnpm exec vite --port 5199` in `frontend/app`) and check the diff.
 

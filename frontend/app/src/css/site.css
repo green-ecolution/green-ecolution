@@ -8,8 +8,9 @@
 @import '../../../packages/ui/src/styles/globals.css';
 @import './frontend.css';
 
-/* Scan UI package for Tailwind classes */
+/* Tailwind's auto-detection starts at frontend/app, so packages outside it must be listed */
 @source "../../../packages/ui/src/**/*.{ts,tsx}";
+@source "../../../modules/*/src/**/*.{ts,tsx}";
 
 @utility container {
   margin-inline: auto;
