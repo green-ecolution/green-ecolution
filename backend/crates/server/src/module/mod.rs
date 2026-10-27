@@ -150,10 +150,11 @@ pub struct ModuleBuildError {
 pub enum ModuleSetupError {
     #[error("module {0} is registered twice")]
     DuplicateKey(ModuleKey),
-    #[error("route {path} of module {module} is already served by {owner}")]
+    #[error("route {path} of module {module} collides with {existing}, served by {owner}")]
     RouteCollision {
         path: String,
         module: ModuleKey,
+        existing: String,
         owner: String,
     },
 }
@@ -164,11 +165,11 @@ pub fn check_modules(
     core: &utoipa::openapi::OpenApi,
     modules: &[Box<dyn Module>],
 ) -> Result<(), ModuleSetupError> {
-    let mut owners: BTreeMap<String, String> = core
+    let mut owners: BTreeMap<String, (String, String)> = core
         .paths
         .paths
         .keys()
-        .map(|path| (path.clone(), "the core".to_string()))
+        .map(|path| (route_shape(path), (path.clone(), "the core".to_string())))
         .collect();
     let mut keys = BTreeSet::new();
     for module in modules {
@@ -177,17 +178,35 @@ pub fn check_modules(
             return Err(ModuleSetupError::DuplicateKey(key));
         }
         for path in module.openapi().paths.paths.keys() {
-            if let Some(owner) = owners.get(path) {
+            let shape = route_shape(path);
+            if let Some((existing, owner)) = owners.get(&shape) {
                 return Err(ModuleSetupError::RouteCollision {
                     path: path.clone(),
                     module: key,
+                    existing: existing.clone(),
                     owner: owner.clone(),
                 });
             }
-            owners.insert(path.clone(), format!("module {key}"));
+            owners.insert(shape, (path.clone(), format!("module {key}")));
         }
     }
     Ok(())
+}
+
+/// The router treats `/x/{id}` and `/x/{other}` as the same route and panics
+/// when both are mounted, so parameter names must not decide a collision.
+fn route_shape(path: &str) -> String {
+    let mut shape = String::with_capacity(path.len());
+    let mut chars = path.chars();
+    while let Some(c) = chars.next() {
+        if c != '{' {
+            shape.push(c);
+            continue;
+        }
+        let name: String = chars.by_ref().take_while(|&c| c != '}').collect();
+        shape.push_str(if name.starts_with('*') { "{*}" } else { "{}" });
+    }
+    shape
 }
 
 #[cfg(test)]
@@ -198,8 +217,17 @@ mod tests {
     #[utoipa::path(get, path = "/organizations")]
     async fn shadows_core() {}
 
+    #[utoipa::path(get, path = "/organizations/{id}/modules")]
+    async fn shadows_core_under_another_name() {}
+
     #[utoipa::path(get, path = "/fake-things")]
     async fn fake_things() {}
+
+    #[utoipa::path(get, path = "/fake-things/{id}")]
+    async fn fake_thing() {}
+
+    #[utoipa::path(get, path = "/fake-things/{thing_id}/parts")]
+    async fn fake_thing_parts() {}
 
     struct Fake {
         key: &'static str,
@@ -233,8 +261,63 @@ mod tests {
             .into_openapi()
     }
 
+    fn renamed_shadow() -> utoipa::openapi::OpenApi {
+        OpenApiRouter::<()>::new()
+            .routes(routes!(shadows_core_under_another_name))
+            .into_openapi()
+    }
+
+    fn thing() -> utoipa::openapi::OpenApi {
+        OpenApiRouter::<()>::new()
+            .routes(routes!(fake_thing))
+            .into_openapi()
+    }
+
+    fn thing_parts() -> utoipa::openapi::OpenApi {
+        OpenApiRouter::<()>::new()
+            .routes(routes!(fake_thing_parts))
+            .into_openapi()
+    }
+
     fn core() -> utoipa::openapi::OpenApi {
         crate::http::v1::core_openapi()
+    }
+
+    #[test]
+    fn a_core_route_under_another_parameter_name_is_rejected() {
+        let modules: Vec<Box<dyn Module>> = vec![Box::new(Fake {
+            key: "alpha",
+            api: renamed_shadow,
+        })];
+        let err = check_modules(&core(), &modules).unwrap_err();
+        assert!(matches!(
+            err,
+            ModuleSetupError::RouteCollision { ref path, ref existing, ref owner, .. }
+                if path == "/organizations/{id}/modules"
+                    && existing == "/organizations/{org_id}/modules"
+                    && owner == "the core"
+        ));
+    }
+
+    #[test]
+    fn differently_named_parameters_on_distinct_routes_pass() {
+        let modules: Vec<Box<dyn Module>> = vec![
+            Box::new(Fake {
+                key: "alpha",
+                api: thing,
+            }),
+            Box::new(Fake {
+                key: "beta",
+                api: thing_parts,
+            }),
+        ];
+        assert!(check_modules(&core(), &modules).is_ok());
+    }
+
+    #[test]
+    fn route_shape_ignores_parameter_names() {
+        assert_eq!(route_shape("/a/{id}/b/{*rest}"), "/a/{}/b/{*}");
+        assert_eq!(route_shape("/a/b"), "/a/b");
     }
 
     #[test]

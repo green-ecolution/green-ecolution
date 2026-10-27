@@ -39,7 +39,10 @@ fn direction(migration: &Migration) -> u8 {
 /// The core keeps its history in `backend/migrations`, every module adds its
 /// own directory. Versions are timestamps, so one sorted list and one
 /// `_sqlx_migrations` table hold both; separate migrators would report each
-/// other's rows as missing.
+/// other's rows as missing. For the same reason a deployed module's
+/// migrations must stay in this list even after its code is removed:
+/// sqlx checks for missing versions before it applies anything, so not even
+/// a cleanup migration would run.
 pub async fn migrator(modules: &[Box<dyn Module>]) -> Result<Migrator, MigrationSetupError> {
     migrator_until(modules, i64::MAX).await
 }

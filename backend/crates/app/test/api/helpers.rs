@@ -26,6 +26,7 @@ pub struct TestApp {
     pub port: u16,
     pub db_pool: PgPool,
     pub state: Arc<AppState>,
+    pub event_bus: Arc<dyn server::service::event_bus::EventBus>,
 }
 
 impl TestApp {
@@ -403,7 +404,7 @@ pub fn irrigation_cluster_service(
             trees.clone(),
             trees,
             app.state.sensor_service.clone(),
-            app.state.event_bus.clone(),
+            app.event_bus.clone(),
             app.state.comment_service.clone(),
             app.state.operation_plan_service.clone(),
         ),
@@ -472,12 +473,14 @@ async fn try_spawn_app_with_exact_modules(
             .await?;
     let port = app.port();
     let state = app.state();
+    let event_bus = app.event_bus();
     tokio::spawn(app.run_until_stopped());
     Ok(TestApp {
         address: format!("http://127.0.0.1:{port}"),
         port,
         db_pool,
         state,
+        event_bus,
     })
 }
 
@@ -749,6 +752,7 @@ async fn start_app_on_pool(db_pool: PgPool, settings: Settings) -> TestApp {
         .expect("failed to build application");
     let port = app.port();
     let state = app.state();
+    let event_bus = app.event_bus();
     tokio::spawn(app.run_until_stopped());
 
     TestApp {
@@ -756,5 +760,6 @@ async fn start_app_on_pool(db_pool: PgPool, settings: Settings) -> TestApp {
         port,
         db_pool,
         state,
+        event_bus,
     }
 }
