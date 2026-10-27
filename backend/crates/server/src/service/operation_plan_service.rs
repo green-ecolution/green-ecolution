@@ -340,9 +340,6 @@ impl OperationPlanService {
             station_points.iter().map(|p| p.coordinate).collect();
         // A collection tour must unload before it returns to the depot.
         let return_replenished = kind == CapacityKind::CargoVolume;
-        if return_replenished && station_points.is_empty() {
-            return Err(RoutingError::NoStation { kind }.into());
-        }
 
         let capacity = capacity(
             kind,
@@ -350,6 +347,9 @@ impl OperationPlanService {
             trailer.as_ref(),
             req.transporter_capacity_used,
         )?;
+        if return_replenished && station_points.is_empty() {
+            return Err(RoutingError::NoStation { kind }.into());
+        }
         let route = optimizer
             .optimize(RouteRequest {
                 transporter: &transporter,

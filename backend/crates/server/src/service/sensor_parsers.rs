@@ -11,6 +11,8 @@ pub trait SensorPayloadParser: Send + Sync {
     /// Exact `sensor_models.name` this parser decodes.
     fn model_name(&self) -> &'static str;
 
+    /// `normalized` must carry the model's ability values (the plausibility filter flags
+    /// those); typed readings must use the model ability's depth.
     fn parse(
         &self,
         model: &SensorModel,

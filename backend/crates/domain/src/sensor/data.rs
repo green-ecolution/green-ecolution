@@ -76,6 +76,7 @@ pub struct VolumetricReading {
     pub moisture_percent: f64,
 }
 
+/// `depth_cm` is the depth of the model's ability (0 for level sensors).
 #[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct DistanceReading {
     pub depth_cm: i32,

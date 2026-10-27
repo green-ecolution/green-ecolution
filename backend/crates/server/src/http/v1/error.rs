@@ -188,26 +188,25 @@ impl IntoResponse for ServiceError {
             // Status kept at 400 as before; the transition is now only
             // distinguishable by its code, not by a new status.
             ServiceError::OperationPlan(e) => (StatusCode::BAD_REQUEST, e.to_string()),
-            ServiceError::Routing(e @ RoutingError::NoStation { .. }) => {
-                tracing::warn!(error = %e, kind = "routing", "request refused");
-                (StatusCode::UNPROCESSABLE_ENTITY, e.to_string())
-            }
             ServiceError::Routing(e) => {
                 let (status, message) = match e {
                     RoutingError::Unavailable(_) => (
                         StatusCode::BAD_GATEWAY,
                         "routing engine unavailable".to_string(),
                     ),
-                    RoutingError::InvalidProblem(_) => {
+                    RoutingError::InvalidProblem(_) | RoutingError::NoStation { .. } => {
                         (StatusCode::UNPROCESSABLE_ENTITY, e.to_string())
                     }
                     RoutingError::Failed(_) => (
                         StatusCode::INTERNAL_SERVER_ERROR,
                         "route optimization failed".to_string(),
                     ),
-                    RoutingError::NoStation { .. } => unreachable!("handled above"),
                 };
-                tracing::error!(error = %e, kind = "routing", "request failed");
+                if status.is_server_error() {
+                    tracing::error!(error = %e, kind = "routing", "request failed");
+                } else {
+                    tracing::warn!(error = %e, kind = "routing", "request refused");
+                }
                 (status, message)
             }
             ServiceError::PluginProxyUnavailable | ServiceError::PluginProxyTargetNotAllowed => {
