@@ -23,7 +23,7 @@ use crate::{
         tracing::{MakeRequestUuid, REQUEST_ID_HEADER, make_span, on_response},
     },
     service::{
-        authorization::AuthorizationService, comment_service::CommentService, event_bus::EventBus,
+        authorization::AuthorizationService, comment_service::CommentService,
         operation_execution_service::OperationExecutionService,
         operation_plan_service::OperationPlanService, organization_service::OrganizationService,
         planning::PlanningRegistry, plugin_sensor_ingest_service::PluginSensorIngestService,
@@ -103,9 +103,6 @@ pub struct AppState {
     pub operation_plan_service: Arc<OperationPlanService>,
     pub operation_execution_service: Arc<OperationExecutionService>,
     pub user_service: Arc<UserService>,
-    /// No handler reads this: it lets the integration tests build a module
-    /// service on the same bus the server publishes to.
-    pub event_bus: Arc<dyn EventBus>,
     pub info_provider: Arc<dyn SystemInfoProvider>,
     pub health_reader: Arc<dyn HealthSnapshotReader>,
     pub readiness_reader: Arc<dyn ReadinessReader>,

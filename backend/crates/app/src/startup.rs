@@ -74,6 +74,7 @@ pub struct Application {
     shutdown_tx: tokio::sync::watch::Sender<bool>,
     mqtt_handle: Option<tokio::task::JoinHandle<()>>,
     module_mounts: Vec<server::module::ModuleMount>,
+    event_bus: Arc<dyn EventBus>,
 }
 
 impl Application {
@@ -340,7 +341,6 @@ impl Application {
             operation_plan_service: services.operation_plan,
             operation_execution_service: services.operation_execution,
             user_service,
-            event_bus: event_bus.clone(),
             info_provider,
             health_reader,
             readiness_reader,
@@ -396,6 +396,7 @@ impl Application {
             shutdown_tx,
             mqtt_handle,
             module_mounts,
+            event_bus,
         })
     }
 
@@ -408,6 +409,12 @@ impl Application {
     /// directly without going through HTTP.
     pub fn state(&self) -> Arc<AppState> {
         self.state.clone()
+    }
+
+    /// The bus the services and modules publish to, so integration tests can
+    /// build a module service whose follow-up events run as in production.
+    pub fn event_bus(&self) -> Arc<dyn EventBus> {
+        self.event_bus.clone()
     }
 
     /// Serves HTTP until SIGTERM / ctrl-c, then drains in-flight requests,
