@@ -1,3 +1,4 @@
+import { capacityDisplay } from '@/lib/capacity'
 import { Suspense, useEffect } from 'react'
 import {
   DatePickerField,
@@ -68,7 +69,9 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
   const watchedTrailerId = useWatch<WateringPlanForm, 'trailerId'>({ name: 'trailerId' })
   const watchedDriverIds = useWatch<WateringPlanForm, 'driverIds'>({ name: 'driverIds' })
   const watchedModule = useWatch<WateringPlanForm, 'module'>({ name: 'module' })
-  const StopPicker = planningModules.find(({ key }) => key === watchedModule)?.planning.StopPicker
+  const planManifest = planningModules.find(({ key }) => key === watchedModule)
+  const StopPicker = planManifest?.planning.StopPicker
+  const capacity = capacityDisplay[planManifest?.planning.capacityKind ?? 'water']
   // An existing plan never changes its module, and with one planning module there is nothing to pick.
   const choosesModule = props.formType === 'create' && planningModules.length > 1
 
@@ -240,9 +243,11 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
                   aria-describedby="transporterTankUsedHint"
                 />
                 <div className="flex flex-col gap-y-1">
-                  <Label htmlFor="transporterTankUsed">{t('form.transporterTankUsedLabel')}</Label>
+                  <Label htmlFor="transporterTankUsed">
+                    {t(capacity.transporterUsedFormLabelKey)}
+                  </Label>
                   <p id="transporterTankUsedHint" className="text-sm text-muted-foreground">
-                    {t('form.transporterTankUsedHint')}
+                    {t(capacity.transporterUsedHintKey)}
                   </p>
                 </div>
               </div>

@@ -29,6 +29,7 @@ const TabGeneralData: React.FC<TabGeneralDataProps> = ({ wateringPlan, planning 
 
   const assignedUsers = userRes.data?.filter((user) => wateringPlan.userIds.includes(user.id)) ?? []
   const noData = t('common:state.noData')
+  const capacity = capacityDisplay[planning?.capacityKind ?? 'water']
 
   const updatedDate = wateringPlan?.updatedAt
     ? format(new Date(wateringPlan.updatedAt), 'dd.MM.yyyy', { locale: dateLocale })
@@ -75,10 +76,10 @@ const TabGeneralData: React.FC<TabGeneralDataProps> = ({ wateringPlan, planning 
     ...(wateringPlan.trailer
       ? [
           {
-            label: t('detail.transporterTankLabel'),
+            label: t(capacity.transporterLabelKey),
             value: wateringPlan.transporterCapacityUsed
-              ? t('detail.transporterTankUsedValue')
-              : t('detail.transporterTankUnusedValue'),
+              ? t(capacity.transporterUsedValueKey)
+              : t(capacity.transporterUnusedValueKey),
           },
         ]
       : []),
