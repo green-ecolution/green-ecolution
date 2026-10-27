@@ -59,6 +59,7 @@ import { Route as ProtectedSettingsOrganizationIndexRouteImport } from './routes
 import { Route as ProtectedSettingsPluginIndexRouteImport } from './routes/_protected/settings/plugin/index'
 import { Route as ProtectedSettingsPluginSlugRouteRouteImport } from './routes/_protected/settings/plugin/$slug/route'
 import { Route as ProtectedSettingsProfileIndexRouteImport } from './routes/_protected/settings/profile/index'
+import { Route as ProtectedSettingsStationsIndexRouteImport } from './routes/_protected/settings/stations/index'
 import { Route as ProtectedSettingsTeamIndexRouteImport } from './routes/_protected/settings/team/index'
 import { Route as ProtectedTreeclusterTreeclusterIdIndexRouteImport } from './../../modules/irrigation/src/routes/_protected/treecluster/$treeclusterId/index'
 import { Route as ProtectedTreesTreeIdIndexRouteImport } from './../../modules/irrigation/src/routes/_protected/trees/$treeId/index'
@@ -358,6 +359,12 @@ const ProtectedSettingsProfileIndexRoute =
     path: '/profile/',
     getParentRoute: () => ProtectedSettingsRouteRoute,
   } as any)
+const ProtectedSettingsStationsIndexRoute =
+  ProtectedSettingsStationsIndexRouteImport.update({
+    id: '/stations/',
+    path: '/stations/',
+    getParentRoute: () => ProtectedSettingsRouteRoute,
+  } as any)
 const ProtectedSettingsTeamIndexRoute =
   ProtectedSettingsTeamIndexRouteImport.update({
     id: '/',
@@ -548,6 +555,7 @@ export interface FileRoutesByFullPath {
   '/settings/organization/': typeof ProtectedSettingsOrganizationIndexRoute
   '/settings/plugin/': typeof ProtectedSettingsPluginIndexRoute
   '/settings/profile/': typeof ProtectedSettingsProfileIndexRoute
+  '/settings/stations/': typeof ProtectedSettingsStationsIndexRoute
   '/settings/team/': typeof ProtectedSettingsTeamIndexRoute
   '/treecluster/$treeclusterId/': typeof ProtectedTreeclusterTreeclusterIdIndexRoute
   '/trees/$treeId/': typeof ProtectedTreesTreeIdIndexRoute
@@ -599,6 +607,7 @@ export interface FileRoutesByTo {
   '/settings/organization': typeof ProtectedSettingsOrganizationIndexRoute
   '/settings/plugin': typeof ProtectedSettingsPluginIndexRoute
   '/settings/profile': typeof ProtectedSettingsProfileIndexRoute
+  '/settings/stations': typeof ProtectedSettingsStationsIndexRoute
   '/settings/team': typeof ProtectedSettingsTeamIndexRoute
   '/treecluster/$treeclusterId': typeof ProtectedTreeclusterTreeclusterIdIndexRoute
   '/trees/$treeId': typeof ProtectedTreesTreeIdIndexRoute
@@ -670,6 +679,7 @@ export interface FileRoutesById {
   '/_protected/settings/organization/': typeof ProtectedSettingsOrganizationIndexRoute
   '/_protected/settings/plugin/': typeof ProtectedSettingsPluginIndexRoute
   '/_protected/settings/profile/': typeof ProtectedSettingsProfileIndexRoute
+  '/_protected/settings/stations/': typeof ProtectedSettingsStationsIndexRoute
   '/_protected/settings/team/': typeof ProtectedSettingsTeamIndexRoute
   '/_protected/treecluster/$treeclusterId/': typeof ProtectedTreeclusterTreeclusterIdIndexRoute
   '/_protected/trees/$treeId/': typeof ProtectedTreesTreeIdIndexRoute
@@ -744,6 +754,7 @@ export interface FileRouteTypes {
     | '/settings/organization/'
     | '/settings/plugin/'
     | '/settings/profile/'
+    | '/settings/stations/'
     | '/settings/team/'
     | '/treecluster/$treeclusterId/'
     | '/trees/$treeId/'
@@ -795,6 +806,7 @@ export interface FileRouteTypes {
     | '/settings/organization'
     | '/settings/plugin'
     | '/settings/profile'
+    | '/settings/stations'
     | '/settings/team'
     | '/treecluster/$treeclusterId'
     | '/trees/$treeId'
@@ -865,6 +877,7 @@ export interface FileRouteTypes {
     | '/_protected/settings/organization/'
     | '/_protected/settings/plugin/'
     | '/_protected/settings/profile/'
+    | '/_protected/settings/stations/'
     | '/_protected/settings/team/'
     | '/_protected/treecluster/$treeclusterId/'
     | '/_protected/trees/$treeId/'
@@ -1247,6 +1260,13 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/settings/profile/'
       preLoaderRoute: typeof ProtectedSettingsProfileIndexRouteImport
+      parentRoute: typeof ProtectedSettingsRouteRoute
+    }
+    '/_protected/settings/stations/': {
+      id: '/_protected/settings/stations/'
+      path: '/stations'
+      fullPath: '/settings/stations/'
+      preLoaderRoute: typeof ProtectedSettingsStationsIndexRouteImport
       parentRoute: typeof ProtectedSettingsRouteRoute
     }
     '/_protected/settings/team/': {
@@ -1709,6 +1729,7 @@ interface ProtectedSettingsRouteRouteChildren {
   ProtectedSettingsNotificationsIndexRoute: typeof ProtectedSettingsNotificationsIndexRoute
   ProtectedSettingsOrganizationIndexRoute: typeof ProtectedSettingsOrganizationIndexRoute
   ProtectedSettingsProfileIndexRoute: typeof ProtectedSettingsProfileIndexRoute
+  ProtectedSettingsStationsIndexRoute: typeof ProtectedSettingsStationsIndexRoute
 }
 
 const ProtectedSettingsRouteRouteChildren: ProtectedSettingsRouteRouteChildren =
@@ -1723,6 +1744,7 @@ const ProtectedSettingsRouteRouteChildren: ProtectedSettingsRouteRouteChildren =
     ProtectedSettingsOrganizationIndexRoute:
       ProtectedSettingsOrganizationIndexRoute,
     ProtectedSettingsProfileIndexRoute: ProtectedSettingsProfileIndexRoute,
+    ProtectedSettingsStationsIndexRoute: ProtectedSettingsStationsIndexRoute,
   }
 
 const ProtectedSettingsRouteRouteWithChildren =
