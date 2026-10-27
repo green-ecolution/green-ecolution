@@ -1,8 +1,8 @@
 import { useMutation } from '@tanstack/react-query'
 import createToast from '@/hooks/createToast'
 import { useNavigate } from '@tanstack/react-router'
-import type { Aggregate } from '@/api/queries'
-import { useInvalidateAggregates } from '@/lib/queryInvalidation'
+import type { QueryKey } from '@tanstack/react-query'
+import { useInvalidateQueryRoots } from '@/lib/queryInvalidation'
 import { DefaultValues, FieldValues, Resolver, useForm } from 'react-hook-form'
 import { useFormNavigationBlocker } from './useFormNavigationBlocker'
 import { useFormDraft } from '@/store/form/useFormDraft'
@@ -25,12 +25,14 @@ export interface EntityFormConfig<TForm extends FieldValues, TCreate, TUpdate, T
   createFn: (body: TCreate) => Promise<TEntity>
   updateFn: (id: string, body: TUpdate) => Promise<TEntity>
 
-  /** Every aggregate a save touches, including neighbours it changes indirectly. */
-  invalidates: readonly Aggregate[]
+  /** Every query root a save touches, including neighbours it changes indirectly. */
+  invalidates: readonly QueryKey[]
 
   successRoute: (id: string) => { to: string; params: Record<string, string> }
   replaceOnSuccess?: boolean
   allowedPaths: string[]
+  /** Module the entity belongs to, so its own wording of an error code wins. */
+  errorModule?: string
 
   messages: {
     createLeave: string
@@ -57,7 +59,7 @@ export function useEntityForm<
   opts: EntityFormOptions<TForm>,
 ) {
   const showToast = createToast()
-  const invalidate = useInvalidateAggregates()
+  const invalidate = useInvalidateQueryRoots()
   const navigate = useNavigate()
   const { t } = useTranslation('errors')
   const draft = useFormDraft<TForm>(config.formType, mutationType)
@@ -92,7 +94,7 @@ export function useEntityForm<
         }
         throw new Error(`Invalid mutation type or missing entityId for update`)
       } catch (error) {
-        throw await toApiError(error)
+        throw await toApiError(error, { module: config.errorModule })
       }
     },
 

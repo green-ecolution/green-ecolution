@@ -11,8 +11,9 @@ import {
 } from '@green-ecolution/ui'
 import { useTranslation } from 'react-i18next'
 import { PlanStatus as WateringPlanStatus } from '@green-ecolution/backend-client'
-import type { WateringPlanInList } from '@/api/backendApi'
-import { CancelWateringPlan, FinishedWateringPlan } from '../WateringPlanStatusUpdate'
+import type { PlanInListResponse } from '@green-ecolution/backend-client'
+import type { ModulePlanning } from '@/modules/types'
+import { CancelWateringPlan, FinishWateringPlan } from '../WateringPlanStatusUpdate'
 import { useWateringPlanBoardMutations } from '@/hooks/useWateringPlanBoardMutations'
 import { useDateLocale } from '@/lib/i18n/useFormatters'
 import { useWateringPlanStatusDetails } from '@/hooks/details/useDetailsForWateringPlanStatus'
@@ -21,13 +22,14 @@ import { formatBoardDate } from './format'
 type CompleteMode = 'finished' | 'canceled'
 
 interface CompletePlanDialogProps {
-  plan: WateringPlanInList | null
+  plan: PlanInListResponse | null
+  planning: ModulePlanning
   onClose: () => void
 }
 
-const CompletePlanDialog = ({ plan, onClose }: CompletePlanDialogProps) => {
+const CompletePlanDialog = ({ plan, planning, onClose }: CompletePlanDialogProps) => {
   const [mode, setMode] = useState<CompleteMode>('finished')
-  const { finishPlan, cancelPlan } = useWateringPlanBoardMutations()
+  const { finishPlan, cancelPlan } = useWateringPlanBoardMutations(planning)
   const { t } = useTranslation('wateringPlan')
   const dateLocale = useDateLocale()
   const getStatusDetails = useWateringPlanStatusDetails()
@@ -84,13 +86,11 @@ const CompletePlanDialog = ({ plan, onClose }: CompletePlanDialogProps) => {
           </Button>
         </div>
         {plan && mode === 'finished' && (
-          <FinishedWateringPlan
-            wateringPlanId={plan.id.toString()}
-            loadedData={{ treeclusters: plan.treeclusters }}
+          <FinishWateringPlan
+            plan={plan}
+            planning={planning}
             submitLabel={t('board.completeDialog.title')}
-            onSubmit={(data) =>
-              finishPlan.mutate({ plan, evaluation: data.evaluation }, { onSuccess: onClose })
-            }
+            onSubmit={(outcomes) => finishPlan.mutate({ plan, outcomes }, { onSuccess: onClose })}
           />
         )}
         {plan && mode === 'canceled' && (

@@ -13,15 +13,13 @@
     "viewActivated": "Activated",
     "viewPrepared": "Prepared",
     "searchLabel": "Search sensors",
-    "searchPlaceholder": "Search by EUI, model or group",
+    "searchPlaceholder": "Search by EUI, model or location",
     "filterStatus": "Status",
     "filterModel": "Model",
     "filterDataHealth": "Data quality",
-    "filterTree": "Tree",
-    "treeOptionWith": "With tree",
-    "treeOptionWithout": "Without tree",
-    "filterCluster": "Group",
-    "clusterUnknown": "Unknown group",
+    "filterAttached": "Link",
+    "attachedOptionWith": "Linked",
+    "attachedOptionWithout": "Not linked",
     "filterNoOptions": "No options available.",
     "sortId": "ID",
     "sortLastReading": "Last reading",
@@ -42,10 +40,10 @@
     "statusSrLabel": "Status: ",
     "idSrLabel": "Sensor ID: ",
     "modelUnknown": "Unknown model",
-    "treeSrLabel": "Linked tree: ",
-    "treeLinked": "Tree linked",
-    "treeUnlinked": "No tree linked",
-    "clusterSrLabel": "Watering group: ",
+    "attachedSrLabel": "Link: ",
+    "attached": "Linked",
+    "unattached": "Not linked",
+    "targetLabelSrLabel": "Placement: ",
     "createdAtLabel": "Created on: ",
     "lastUpdateLabel": "Last update: "
   },
@@ -128,16 +126,6 @@
     "loadingLabel": "Signal data is loading",
     "tooFewDataPoints": "Not enough data points in the selected period."
   },
-  "soilMoistureChart": {
-    "title": "Soil moisture history",
-    "subtitleHour": "Hourly average · band = min–max · dashed = critical threshold per depth",
-    "subtitleDay": "Daily average · band = min–max · dashed = critical threshold per depth",
-    "depthSeriesLabel": "{depth} cm depth",
-    "loadingLabel": "Readings are loading",
-    "tooFewDataPoints": "Not enough data points in the selected period.",
-    "wateredOnLabel": "Watered on {date}",
-    "discardedLabel": "Reading discarded"
-  },
   "profile": {
     "title": "Measurement profile",
     "surfaceLabel": "Ground surface",
@@ -151,27 +139,17 @@
   },
   "placement": {
     "title": "Placement",
-    "clusterLabel": "Watering group",
-    "treeLabel": "Mounted on tree",
-    "treeCount_one": "{count} tree",
-    "treeCount_other": "{count} trees",
-    "noClusterDescription": "The tree is not part of any watering group."
-  },
-  "linkedTree": {
-    "noLinkTitle": "Not linked yet",
-    "noLinkDescription": "This sensor is not linked to any tree. Without a link, its readings cannot be attributed to any vegetation.",
-    "loadFailedTitle": "Tree not loaded",
-    "loadFailedDescription": "The linked tree (#{id}) could not be retrieved.",
-    "treeNumberLabel": "Tree no. {number}",
-    "unknownSpecies": "Unknown species",
-    "plantedLabel": "Planted {year}"
+    "noTargetTitle": "Not linked yet",
+    "noTargetDescription": "This sensor is not linked yet. Without a link, its readings cannot be attributed.",
+    "targetCaption": "Linked to",
+    "unnamedTarget": "Unnamed"
   },
   "location": {
     "coordinatesToggle": "Coordinates",
-    "mapAriaLabel": "Map with the sensor position, nearby trees and watering groups",
+    "sensorMapAriaLabel": "Map with the sensor position",
     "latitudeLabel": "Latitude",
     "longitudeLabel": "Longitude",
-    "derivedFromTreeNotice": "The position is taken from the linked tree."
+    "derivedFromTargetNotice": "The position is taken from the linked object."
   },
   "lorawanConfig": {
     "emptyValue": "empty",
@@ -192,9 +170,9 @@
   },
   "actions": {
     "menuButton": "Actions",
-    "activateAssignTree": "Activate & assign tree",
-    "reassignTree": "Assign different tree",
-    "removeLink": "Remove tree link",
+    "activateAssign": "Activate & link",
+    "reassign": "Change link",
+    "removeLink": "Remove link",
     "deleteSensor": "Delete sensor",
     "deleteConfirmTitle": "Really delete this sensor?",
     "deleteConfirmDescription": "This action cannot be undone. Sensor {id} will be permanently removed, including its LoRaWAN configuration and all readings.",
@@ -202,65 +180,26 @@
     "deleteFinal": "Delete permanently",
     "deleteSuccessToast": "Sensor was deleted.",
     "deleteFailedToast": "The sensor could not be deleted.",
-    "removeConfirmTitle": "Remove tree link and reset sensor?",
-    "removeConfirmDescription": "The tree link will be removed and the sensor reset to the \"{status}\" state. It can then be activated on another tree like a new sensor.",
+    "removeConfirmTitle": "Remove link and reset sensor?",
+    "removeConfirmDescription": "The link will be removed and the sensor reset to the \"{status}\" state. It can then be activated again like a new sensor.",
     "removeConfirmSubmitPending": "Removing …",
     "removeConfirmSubmit": "Remove link",
     "removeSuccessToast": "Sensor was reset.",
-    "activateSuccessToast": "Sensor activated and tree assigned.",
-    "reassignSuccessToast": "Tree changed."
-  },
-  "treeAssignDialog": {
-    "activate": {
-      "title": "Activate sensor and assign tree",
-      "description": "Search for the tree by number or species and activate the sensor on this tree.",
-      "confirm": "Activate"
-    },
-    "reassign": {
-      "description": "Choose the new tree this sensor should be assigned to.",
-      "confirm": "Assign tree"
-    },
-    "showAllTreesLabel": "Show all trees",
-    "mapAriaLabel": "Map for tree selection",
-    "savingButton": "Saving …"
-  },
-  "treeSearch": {
-    "inputPlaceholder": "Search tree number or species…",
-    "clearAriaLabel": "Clear",
-    "idleHint": "Type a tree number or species.",
-    "loadingLabel": "Searching trees…",
-    "failedTitle": "Search failed",
-    "failedDescription": "The tree search failed.",
-    "noResultsForQuery": "No trees found for \"{query}\".",
-    "noResultsHint": "Check the spelling or tree number.",
-    "noTreesAvailable": "There are no trees available.",
-    "resultCountMatches": "{shown} of {total} matches",
-    "resultCountTrees": "{shown} of {total} trees",
-    "selectResultAriaLabel": "Select tree from search results",
-    "loadingMoreLabel": "Loading more trees…",
-    "sensorAssignedBadge": "Sensor assigned"
-  },
-  "nearestTreeList": {
-    "title": "Nearby trees",
-    "selectAriaLabel": "Select tree",
-    "unassignedGroup": "Not assigned"
-  },
-  "treePickerSheet": {
-    "title": "Choose a different tree",
-    "description": "Search by tree number or species if the right tree is not in the suggestion list."
+    "activateSuccessToast": "Sensor activated and linked.",
+    "reassignSuccessToast": "Link changed."
   },
   "wizard": {
     "layout": {
       "backToList": "Back to sensor overview",
       "steps": {
         "scan": "QR scan",
-        "tree": "Tree"
+        "target": "Assignment"
       }
     },
     "scan": {
       "header": {
         "title": "Scan sensor QR code",
-        "description": "Hold the QR code on the sensor unit steady inside the scan frame. This uniquely identifies the sensor before you assign it to a tree in the next step. In poor lighting, it helps to hold the code a little closer."
+        "description": "Hold the QR code on the sensor unit steady inside the scan frame. This uniquely identifies the sensor before you assign it in the next step. In poor lighting, it helps to hold the code a little closer."
       },
       "continueLabel": "Accept sensor",
       "checking": {
@@ -290,7 +229,7 @@
       "rescanButton": "Scan a different sensor",
       "notActivatable": {
         "title": "Sensor cannot be activated",
-        "onlineDescription": "This sensor is already activated and assigned to a tree.",
+        "onlineDescription": "This sensor is already activated and linked.",
         "offlineDescription": "This sensor has already been activated and is currently offline.",
         "statusLabel": "Status: {status}",
         "lastSeenLabel": "Last seen: {date}"
@@ -301,36 +240,29 @@
         "statusLabel": "Sensor ID · Status: Ready"
       }
     },
-    "tree": {
-      "header": {
-        "title": "Assign tree",
-        "description": "Choose the tree the sensor will be mounted on. The suggestion is based on your current location. Only the tree assignment is saved on the sensor, not your coordinates."
-      },
-      "relocateButton": "Update location",
-      "locatingNotice": "Determining location …",
-      "loadingNearby": "Searching for nearby trees…",
-      "searchFailed": {
-        "title": "Tree search failed",
-        "description": "The search for nearby trees failed."
-      },
-      "noNearbyTrees": "No nearby trees were found. Choose the tree manually.",
-      "selectedTreeLabel": "Selected tree"
-    },
     "review": {
       "header": {
         "title": "Review assignment",
-        "description": "Confirm sensor, tree and location. The link is saved once you select \"Activate sensor\"."
+        "description": "Confirm sensor, assignment and location. The link is saved once you select \"Activate sensor\"."
       },
-      "assignedTreeLabel": "Assigned tree",
+      "assignedTargetLabel": "Assigned to",
       "locationLabel": "Location",
       "activatingLabel": "Activating …",
       "activateButton": "Activate sensor"
     },
     "success": {
       "title": "Sensor activated",
-      "summary": "Sensor {sensorId} was assigned to tree {treeNumber}.",
+      "summary": "Sensor {sensorId} was assigned to {target}.",
       "nextButton": "Scan next sensor",
       "backToOverviewButton": "Back to overview"
+    },
+    "target": {
+      "chooseKind": {
+        "title": "Choose assignment",
+        "description": "Choose what you are mounting the sensor on."
+      },
+      "noKinds": "No active module offers targets for sensors.",
+      "changeKind": "Choose a different assignment"
     }
   }
 }

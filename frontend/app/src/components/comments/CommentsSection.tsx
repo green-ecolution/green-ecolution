@@ -34,10 +34,9 @@ import { useDateLocale } from '@/lib/i18n/useFormatters'
 
 interface CommentsSectionProps {
   subject: CommentSubject
-  parentId: string
 }
 
-const CommentsSection = ({ subject, parentId }: CommentsSectionProps) => {
+const CommentsSection = ({ subject }: CommentsSectionProps) => {
   const { t } = useTranslation('comments')
   const headingId = useId()
   const dateLocale = useDateLocale()
@@ -49,14 +48,14 @@ const CommentsSection = ({ subject, parentId }: CommentsSectionProps) => {
   const displayName = fullName || currentUser.username
   const composerAuthor: CommentAuthor = { name: displayName, avatarUrl }
 
-  const commentsQuery = useInfiniteQuery(commentQueries.list(subject, parentId))
+  const commentsQuery = useInfiniteQuery(commentQueries.list(subject))
   const comments = commentsQuery.data?.pages.flatMap((page) => page.data) ?? []
 
   // No comments means no list at all, not an empty-state hint. A failed
   // page-two fetch still shows what page one delivered, alongside the alert.
   const showList = comments.length > 0 || commentsQuery.isLoading
 
-  const { create, update, remove } = useCommentMutations(subject, parentId)
+  const { create, update, remove } = useCommentMutations(subject)
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
 
   const handleCreate = async (body: string) => {

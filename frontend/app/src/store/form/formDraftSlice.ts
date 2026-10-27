@@ -1,4 +1,8 @@
-export type FormType = 'tree' | 'cluster' | 'wateringplan' | 'vehicle'
+export const WATERING_PLAN_FORM = 'wateringplan'
+export const VEHICLE_FORM = 'vehicle'
+
+// Core uses the constants above; modules bring their own keys.
+export type FormType = string
 export type MutationType = 'create' | 'update'
 
 export type FormDraftKey = `${FormType}-${MutationType}`

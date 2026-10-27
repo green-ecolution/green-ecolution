@@ -1,10 +1,11 @@
+import { queryRoots } from '@/api/queries'
 import { sensorApi } from '@/api/backendApi'
 import { sensorQueries } from '@/api/queries'
-import { useInvalidateAggregates } from '@/lib/queryInvalidation'
+import { useInvalidateQueryRoots } from '@/lib/queryInvalidation'
 import { mapActivateError, resolveResponseStatus } from '@/api/sensorErrors'
 import SensorReviewStep from '@/components/sensor/wizard/SensorReviewStep'
 import SensorScanStep from '@/components/sensor/wizard/SensorScanStep'
-import SensorTreeStep from '@/components/sensor/wizard/SensorTreeStep'
+import SensorTargetStep from '@/components/sensor/wizard/SensorTargetStep'
 import SensorWizardLayout from '@/components/sensor/wizard/SensorWizardLayout'
 import SensorWizardSuccess from '@/components/sensor/wizard/SensorWizardSuccess'
 import {
@@ -17,7 +18,10 @@ import useGeolocation from '@/hooks/useGeolocation'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useCallback, useEffect, useReducer } from 'react'
-import { treeTarget } from '@/lib/targets'
+import { useTranslation } from 'react-i18next'
+import { sensorTargetKinds, targetDescriptor, type SensorTargetKind } from '@/lib/targets'
+import type { SelectedTarget } from '@/modules/types'
+import { useActiveModules } from '@/modules/useActiveModules'
 
 export const Route = createFileRoute('/_protected/sensors/new/')({
   component: NewSensor,
@@ -25,8 +29,18 @@ export const Route = createFileRoute('/_protected/sensors/new/')({
 
 function NewSensor() {
   const navigate = useNavigate()
-  const invalidate = useInvalidateAggregates()
+  const { i18n } = useTranslation()
+  const invalidate = useInvalidateQueryRoots()
+  const { manifests } = useActiveModules()
   const [state, dispatch] = useReducer(wizardReducer, INITIAL_WIZARD_STATE)
+  const kinds = sensorTargetKinds(manifests)
+  const kind =
+    kinds.length === 1
+      ? kinds[0]
+      : kinds.find(
+          ({ module, target }) =>
+            module === state.targetKind?.module && target.kind === state.targetKind.kind,
+        )
   const {
     status: gpsStatus,
     position,
@@ -55,21 +69,23 @@ function NewSensor() {
 
   const completedSteps = getCompletedSteps({
     sensorVerified: Boolean(verifiedSensor),
-    selectedTreeId: state.selectedTreeId,
+    targetSelected: Boolean(state.selectedTarget),
   })
 
   const activateMutation = useMutation({
-    mutationFn: () =>
-      sensorApi.activateSensor({
-        sensorId: state.sensorId!,
-        activateSensorRequest: { target: treeTarget(state.selectedTreeId!) },
-      }),
+    mutationFn: ({ sensorId, selected }: { sensorId: string; selected: SelectedTarget }) =>
+      sensorApi.activateSensor({ sensorId, activateSensorRequest: { target: selected.target } }),
     onMutate: () => dispatch({ type: 'submissionStart' }),
-    onSuccess: async () => {
+    onSuccess: async (_, { selected }) => {
       dispatch({ type: 'submissionSuccess' })
-      await invalidate(['sensor', 'tree'])
+      const moduleRoots = targetDescriptor(manifests, selected.target)?.invalidate ?? []
+      await invalidate([...queryRoots.sensor, ...moduleRoots])
     },
-    onError: (err) => dispatch({ type: 'submissionError', message: mapActivateError(err) }),
+    onError: (err, { selected }) =>
+      dispatch({
+        type: 'submissionError',
+        message: mapActivateError(err, targetDescriptor(manifests, selected.target)),
+      }),
   })
 
   const handleRelocate = useCallback(async () => {
@@ -80,6 +96,22 @@ function NewSensor() {
       stop()
     }
   }, [relocate, stop])
+
+  const handleSelectTarget = useCallback(
+    (selected: SelectedTarget) => dispatch({ type: 'targetSelected', selected }),
+    [],
+  )
+
+  const handleChooseKind = useCallback(
+    (chosen: SensorTargetKind | undefined) =>
+      dispatch({
+        type: 'targetKindChosen',
+        kind: chosen && { module: chosen.module, kind: chosen.target.kind },
+      }),
+    [],
+  )
+
+  const targetStepLabel = kinds.length === 1 ? i18n.t(kinds[0].target.labelKey) : undefined
 
   const handleStepClick = useCallback(
     (target: WizardStep) => dispatch({ type: 'goToStep', step: target }),
@@ -111,6 +143,7 @@ function NewSensor() {
     return (
       <SensorWizardLayout
         step={3}
+        targetStepLabel={targetStepLabel}
         completedSteps={[1, 2, 3]}
         onStepClick={handleStepClick}
         canGoNext={false}
@@ -118,7 +151,7 @@ function NewSensor() {
       >
         <SensorWizardSuccess
           sensorId={state.sensorId ?? ''}
-          treeNumber={state.selectedTreeNumber ?? ''}
+          targetLabel={state.selectedTarget?.label ?? ''}
           onNext={handleResetForNext}
           onBackToOverview={handleBackToOverview}
         />
@@ -126,13 +159,15 @@ function NewSensor() {
     )
   }
 
+  const { sensorId, selectedTarget } = state
   const canGoNext =
     (state.step === 1 && Boolean(verifiedSensor)) ||
-    (state.step === 2 && Boolean(state.selectedTreeId))
+    (state.step === 2 && Boolean(state.selectedTarget))
 
   return (
     <SensorWizardLayout
       step={state.step}
+      targetStepLabel={targetStepLabel}
       completedSteps={completedSteps}
       onStepClick={handleStepClick}
       onBack={state.step === 1 ? undefined : handleBack}
@@ -159,37 +194,37 @@ function NewSensor() {
         />
       )}
       {state.step === 2 && (
-        <SensorTreeStep
+        <SensorTargetStep
+          kinds={kinds}
+          kind={kind}
+          onChooseKind={handleChooseKind}
+          current={state.selectedTarget?.target}
+          onSelect={handleSelectTarget}
           position={state.frozenFix}
-          status={gpsStatus}
-          errorMessage={gpsError}
-          selectedTreeId={state.selectedTreeId}
-          onSelect={(treeId, number, species) =>
-            dispatch({ type: 'treeSelected', treeId, number, species })
-          }
+          geolocationStatus={gpsStatus}
+          geolocationError={gpsError}
           onRelocate={() => void handleRelocate()}
         />
       )}
-      {state.step === 3 && state.sensorId && state.selectedTreeId && (
+      {state.step === 3 && sensorId && selectedTarget && (
         <SensorReviewStep
-          sensorId={state.sensorId}
-          treeNumber={state.selectedTreeNumber ?? ''}
-          treeSpecies={state.selectedTreeSpecies ?? ''}
+          sensorId={sensorId}
+          target={selectedTarget}
           position={state.frozenFix}
           status={state.submission}
           errorMessage={state.errorMessage}
-          onActivate={() => activateMutation.mutate()}
+          onActivate={() => activateMutation.mutate({ sensorId, selected: selectedTarget })}
         />
       )}
     </SensorWizardLayout>
   )
 }
 
-function getCompletedSteps(args: { sensorVerified: boolean; selectedTreeId: string | null }) {
+function getCompletedSteps(args: { sensorVerified: boolean; targetSelected: boolean }) {
   const done: number[] = []
   if (!args.sensorVerified) return done
   done.push(1)
-  if (!args.selectedTreeId) return done
+  if (!args.targetSelected) return done
   done.push(2)
   return done
 }

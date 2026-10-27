@@ -2,6 +2,8 @@
 // @ts-nocheck - ad-hoc routes are not part of the generated route tree
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { irrigationManifest } from '@green-ecolution/module-irrigation'
 import {
   createRootRoute,
   createRoute,
@@ -14,6 +16,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { type Permissions } from '@/lib/auth/permissions'
 
 const permissions = vi.fn((): Permissions => new Set<string>())
+const textTarget = vi.fn(() => undefined as unknown)
 
 vi.mock('@/lib/auth/usePermissions', () => ({
   usePermissions: () => permissions(),
@@ -21,6 +24,9 @@ vi.mock('@/lib/auth/usePermissions', () => ({
 
 vi.mock('./SensorActionsContext', () => ({
   useSensorActions: () => ({
+    canAssign: true,
+    currentTarget: undefined,
+    textTarget: textTarget(),
     requestActivate: vi.fn(),
     requestReassign: vi.fn(),
     requestRemove: vi.fn(),
@@ -56,6 +62,7 @@ describe('SensorActionsMenu', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     permissions.mockReturnValue(new Set<string>())
+    textTarget.mockReturnValue(undefined)
   })
 
   it('hides the trigger without sensor:update or sensor:delete', async () => {
@@ -74,5 +81,24 @@ describe('SensorActionsMenu', () => {
     permissions.mockReturnValue(new Set(['sensor:delete']))
     await renderMenu()
     expect(await screen.findByRole('button', { name: 'Aktionen' })).toBeInTheDocument()
+  })
+
+  it('words the link actions neutrally without a target to name', async () => {
+    permissions.mockReturnValue(new Set(['sensor:update']))
+    await renderMenu()
+    await userEvent.click(await screen.findByRole('button', { name: 'Aktionen' }))
+    expect(await screen.findByRole('menuitem', { name: 'Verknüpfung ändern' })).toBeInTheDocument()
+    expect(screen.getByRole('menuitem', { name: 'Verknüpfung aufheben' })).toBeInTheDocument()
+  })
+
+  it('takes the wording of the tree target', async () => {
+    permissions.mockReturnValue(new Set(['sensor:update']))
+    textTarget.mockReturnValue(irrigationManifest.targets?.[0])
+    await renderMenu()
+    await userEvent.click(await screen.findByRole('button', { name: 'Aktionen' }))
+    expect(
+      await screen.findByRole('menuitem', { name: 'Anderen Baum zuweisen' }),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('menuitem', { name: 'Baumverknüpfung aufheben' })).toBeInTheDocument()
   })
 })

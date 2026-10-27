@@ -3,6 +3,12 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import SensorReviewStep from './SensorReviewStep'
 
+const target = {
+  target: { module: 'probe', kind: 'probe', id: 'p-1' },
+  label: 'Messpunkt 0815',
+  detail: 'Nordufer',
+}
+
 const fix = {
   latitude: 54.79123,
   longitude: 9.43456,
@@ -11,12 +17,11 @@ const fix = {
 }
 
 describe('SensorReviewStep', () => {
-  it('renders sensor id, tree info and coordinates', () => {
+  it('renders sensor id, the picked target and coordinates', () => {
     render(
       <SensorReviewStep
         sensorId="EUI-001"
-        treeNumber="0815"
-        treeSpecies="Tilia cordata"
+        target={target}
         position={fix}
         status="idle"
         errorMessage={null}
@@ -24,10 +29,24 @@ describe('SensorReviewStep', () => {
       />,
     )
     expect(screen.getByText('EUI-001')).toBeInTheDocument()
-    expect(screen.getByText('0815')).toBeInTheDocument()
-    expect(screen.getByText('Tilia cordata')).toBeInTheDocument()
+    expect(screen.getByText('Messpunkt 0815')).toBeInTheDocument()
+    expect(screen.getByText('Nordufer')).toBeInTheDocument()
     expect(screen.getByText(/54\.79/)).toBeInTheDocument()
     expect(screen.getByText(/9\.43/)).toBeInTheDocument()
+  })
+
+  it('capitalises a target label worded for mid-sentence use', () => {
+    render(
+      <SensorReviewStep
+        sensorId="EUI-001"
+        target={{ ...target, label: 'tree 0815' }}
+        position={null}
+        status="idle"
+        errorMessage={null}
+        onActivate={vi.fn()}
+      />,
+    )
+    expect(screen.getByText('Tree 0815')).toBeInTheDocument()
   })
 
   it('fires onActivate when the primary button is clicked', async () => {
@@ -36,8 +55,7 @@ describe('SensorReviewStep', () => {
     render(
       <SensorReviewStep
         sensorId="EUI-001"
-        treeNumber="0815"
-        treeSpecies="Tilia cordata"
+        target={target}
         position={fix}
         status="idle"
         errorMessage={null}
@@ -52,8 +70,7 @@ describe('SensorReviewStep', () => {
     render(
       <SensorReviewStep
         sensorId="EUI-001"
-        treeNumber="0815"
-        treeSpecies="Tilia cordata"
+        target={target}
         position={fix}
         status="pending"
         errorMessage={null}
@@ -67,8 +84,7 @@ describe('SensorReviewStep', () => {
     render(
       <SensorReviewStep
         sensorId="EUI-001"
-        treeNumber="0815"
-        treeSpecies="Tilia cordata"
+        target={target}
         position={fix}
         status="error"
         errorMessage="Aktivierung fehlgeschlagen"

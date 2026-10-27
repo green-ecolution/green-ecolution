@@ -1,9 +1,9 @@
 import FormPageHeader from '../general/FormPageHeader'
-import DeleteSection from '../treecluster/DeleteSection'
+import DeleteSection from '../general/DeleteSection'
 import { Can } from '@/lib/auth/Can'
 import type { Vehicle } from '@/api/backendApi'
 import { useInitFormQuery } from '@/hooks/form/useInitForm'
-import { vehicleQueries } from '@/api/queries'
+import { queryRoots, vehicleQueries } from '@/api/queries'
 import { vehicleApi } from '@/api/backendApi'
 import { FormProvider, SubmitHandler } from 'react-hook-form'
 import { Suspense } from 'react'
@@ -85,7 +85,7 @@ const VehicleUpdate = ({ vehicleId }: VehicleUpdateProps) => {
             type="archive"
             entityName={{ key: 'vehicle:entity.nameWithArticle' }}
             redirectUrl={{ to: '/vehicles' }}
-            invalidates={['vehicle', 'wateringPlan']}
+            invalidates={[...queryRoots.vehicle, ...queryRoots.wateringPlan]}
           />
         </Suspense>
       </Can>

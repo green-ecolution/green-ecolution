@@ -26,7 +26,7 @@ für aktivierte Sensoren sinnvoll sind, werden dagegen zurückgesetzt.
 
 Jeder Reiter listet seine Sensoren mit ihrem Verbindungszustand, ihrer ID und ihrem
 Modellnamen. Ein farbiger Punkt vor der ID steht für den Verbindungszustand; verweilst du mit dem Zeiger darauf, nennt die Anwendung ihn
-beim Namen. Darunter stehen, ob der Sensor mit einem Baum verknüpft ist und der Zeitpunkt
+beim Namen. Darunter stehen, ob der Sensor verknüpft ist, und der Zeitpunkt
 seiner letzten Messung, und ist das Fenster breit genug, ergänzt dieselbe Zeile das
 Erstelldatum; auf schmalen Bildschirmen entfällt es wieder, damit die Zeile nicht
 umbricht. Gehört der verknüpfte Baum zu einer Bewässerungsgruppe, nennt dieselbe Zeile
@@ -40,8 +40,8 @@ Namen der Bewässerungsgruppe, zu der der verknüpfte Baum gehört, ohne Rücksi
 und Kleinschreibung; der gefundene Teil des Textes erscheint in den Ergebnissen
 hervorgehoben. Im Reiter **Aktiviert** stehen darunter fünf Filter, die jeweils sofort
 wirken, ohne dass eine Bestätigung nötig wäre: nach dem Verbindungszustand (online oder
-offline), nach dem Modell, nach der Datenqualität, danach, ob ein Baum verknüpft ist, mit
-den Optionen **Mit Baum** und **Ohne Baum**, und schließlich nach der Bewässerungsgruppe. Der Gruppenfilter listet die
+offline), nach dem Modell, nach der Datenqualität, unter **Verknüpfung** danach, ob der
+Sensor verknüpft ist, mit den Optionen **Verknüpft** und **Nicht verknüpft**, und schließlich nach der Bewässerungsgruppe. Der Gruppenfilter listet die
 angelegten Gruppen zur Auswahl und lässt sich auf mehrere gleichzeitig setzen; er greift
 auf die Gruppe des verknüpften Baums zurück, denn ein Sensor gehört nie selbst zu einer
 Gruppe. Im Reiter **Vorbereitet** bleibt nur der Modellfilter, denn ein noch nicht

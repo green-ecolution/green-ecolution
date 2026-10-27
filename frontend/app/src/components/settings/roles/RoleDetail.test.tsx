@@ -3,6 +3,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { render, screen, userEvent } from '@/test/utils'
 import { UNRESTRICTED } from '@/lib/auth/permissions'
 import type { Role } from '@/api/backendApi'
+import { irrigationManifest } from '@green-ecolution/module-irrigation'
 import RoleDetail from './RoleDetail'
 
 const template: Role = {
@@ -23,6 +24,7 @@ const ownRole: Role = {
 
 const baseProps: Omit<ComponentProps<typeof RoleDetail>, 'role' | 'draft' | 'dirty'> = {
   grantable: UNRESTRICTED,
+  activeManifests: [irrigationManifest],
   canUpdate: true,
   canDelete: true,
   canCreate: true,

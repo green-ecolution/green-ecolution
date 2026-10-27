@@ -6,6 +6,8 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 interface SensorWizardLayoutProps {
   step: WizardStep
+  /** Names the kind being assigned when there is only one. */
+  targetStepLabel?: string
   completedSteps: number[]
   onStepClick: (step: WizardStep) => void
   onBack?: () => void
@@ -18,6 +20,7 @@ interface SensorWizardLayoutProps {
 
 const SensorWizardLayout = ({
   step,
+  targetStepLabel,
   completedSteps,
   onStepClick,
   onBack,
@@ -30,7 +33,7 @@ const SensorWizardLayout = ({
   const { t } = useTranslation(['sensor', 'common'])
   const steps: StepDefinition[] = [
     { id: 'scan', label: t('wizard.layout.steps.scan') },
-    { id: 'tree', label: t('wizard.layout.steps.tree') },
+    { id: 'target', label: targetStepLabel ?? t('wizard.layout.steps.target') },
     { id: 'confirm', label: t('common:actions.confirm') },
   ]
 

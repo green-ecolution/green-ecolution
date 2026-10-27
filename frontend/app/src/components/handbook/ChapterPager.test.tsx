@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { I18nextProvider } from 'react-i18next'
 import {
@@ -11,6 +11,14 @@ import {
 } from '@tanstack/react-router'
 import { getI18n } from '@/lib/i18n'
 import ChapterPager from './ChapterPager'
+
+const visible = vi.hoisted(() => ({
+  filter: (_slug: string): boolean => true,
+}))
+
+vi.mock('@/lib/handbook/useChapterVisibility', () => ({
+  useChapterVisibility: () => visible.filter,
+}))
 
 function renderPager(slug: string) {
   const rootRoute = createRootRoute({ component: () => <Outlet /> })
@@ -34,6 +42,26 @@ function renderPager(slug: string) {
 const pagerHrefs = () => screen.getAllByRole('link').map((link) => link.getAttribute('href'))
 
 describe('ChapterPager', () => {
+  beforeEach(() => {
+    visible.filter = () => true
+  })
+
+  it('skips chapters hidden by an inactive module', async () => {
+    visible.filter = (slug) => slug !== 'treecluster'
+    renderPager('trees')
+
+    expect(await screen.findByRole('navigation')).toBeInTheDocument()
+    expect(pagerHrefs()).toEqual(['/help/map', '/help/watering-plans'])
+  })
+
+  it('still pages on from a hidden chapter reached by a shared link', async () => {
+    visible.filter = (slug) => slug !== 'trees'
+    renderPager('trees')
+
+    expect(await screen.findByRole('navigation')).toBeInTheDocument()
+    expect(pagerHrefs()).toEqual(['/help/map', '/help/treecluster'])
+  })
+
   it('links to both neighbours of a chapter inside a part', async () => {
     renderPager('trees')
 

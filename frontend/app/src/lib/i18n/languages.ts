@@ -1,3 +1,5 @@
+import type { FlatNamespace } from 'i18next'
+
 export const SUPPORTED_LANGUAGES = ['de', 'en'] as const
 
 export type Language = (typeof SUPPORTED_LANGUAGES)[number]
@@ -14,21 +16,21 @@ export const NAMESPACES = [
   'errors',
   'ui',
   'navigation',
-  'tree',
-  'treecluster',
   'enums',
   'sensor',
   'vehicle',
   'wateringPlan',
   'map',
   'dashboard',
-  'evaluation',
   'settings',
   'startpage',
   'info',
   'comments',
   'help',
 ] as const
+
+/** Every registered namespace (core and modules), ordered with the default first, as `i18n.t` types it. */
+export type AllNamespaces = [typeof DEFAULT_NAMESPACE, ...Exclude<FlatNamespace, 'common'>[]]
 
 export const DEFAULT_NAMESPACE = 'common'
 

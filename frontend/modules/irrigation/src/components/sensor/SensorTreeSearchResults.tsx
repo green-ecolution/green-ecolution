@@ -1,0 +1,207 @@
+import {
+  Alert,
+  AlertContent,
+  AlertDescription,
+  AlertTitle,
+  Badge,
+  Button,
+  Loading,
+  cn,
+} from '@green-ecolution/ui'
+import type { TreeResponse } from '@green-ecolution/backend-client'
+import { Check, Search, TreeDeciduous } from 'lucide-react'
+import { useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
+import { useTreeSearch } from '../../hooks/useTreeSearch'
+
+// The list scrolls inside a modal's overflow container, not the viewport, so the
+// infinite-scroll observer must use that container as its root.
+const nearestScrollParent = (el: HTMLElement): HTMLElement | null => {
+  let node = el.parentElement
+  while (node) {
+    const overflowY = getComputedStyle(node).overflowY
+    if (overflowY === 'auto' || overflowY === 'scroll') return node
+    node = node.parentElement
+  }
+  return null
+}
+
+interface SensorTreeSearchResultsProps {
+  q: string
+  selectedTreeId: string | null
+  onSelect: (treeId: string) => void
+  showAll?: boolean
+}
+
+const SensorTreeSearchResults = ({
+  q,
+  selectedTreeId,
+  onSelect,
+  showAll = false,
+}: SensorTreeSearchResultsProps) => {
+  const { t } = useTranslation(['irrigation', 'common'])
+  const sentinelRef = useRef<HTMLDivElement | null>(null)
+  const {
+    enabled,
+    trimmed,
+    items,
+    total,
+    isLoading,
+    isError,
+    refetch,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+  } = useTreeSearch(q, showAll)
+
+  // `enabled` is a dependency because the sentinel only exists once the list is
+  // shown; without it the observer never attaches when re-enabling over cached
+  // results (item count and hasNextPage stay unchanged).
+  useEffect(() => {
+    const el = sentinelRef.current
+    if (!el || !hasNextPage || isFetchingNextPage) return
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) void fetchNextPage()
+      },
+      { root: nearestScrollParent(el), rootMargin: '0px 0px 200px 0px' },
+    )
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [enabled, hasNextPage, isFetchingNextPage, fetchNextPage, items.length])
+
+  if (!enabled) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-2 py-10 text-dark-600">
+        <Search className="size-6 text-dark-400" aria-hidden />
+        <p className="text-sm">{t('sensor.treeSearch.idleHint')}</p>
+      </div>
+    )
+  }
+
+  if (isLoading) {
+    return <Loading className="py-10 justify-center" label={t('sensor.treeSearch.loadingLabel')} />
+  }
+
+  if (isError) {
+    return (
+      <Alert variant="destructive">
+        <AlertContent>
+          <AlertTitle>{t('sensor.treeSearch.failedTitle')}</AlertTitle>
+          <AlertDescription>{t('sensor.treeSearch.failedDescription')}</AlertDescription>
+        </AlertContent>
+        <Button variant="outline" size="sm" onClick={() => void refetch()}>
+          {t('common:actions.retry')}
+        </Button>
+      </Alert>
+    )
+  }
+
+  if (items.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-2 py-10 text-dark-600">
+        <Search className="size-6 text-dark-400" aria-hidden />
+        {trimmed ? (
+          <>
+            <p className="text-sm">
+              {t('sensor.treeSearch.noResultsForQuery', { query: trimmed })}
+            </p>
+            <p className="text-xs text-dark-500">{t('sensor.treeSearch.noResultsHint')}</p>
+          </>
+        ) : (
+          <p className="text-sm">{t('sensor.treeSearch.noTreesAvailable')}</p>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      <p className="text-xs text-dark-600">
+        {trimmed
+          ? t('sensor.treeSearch.resultCountMatches', { shown: items.length, total })
+          : t('sensor.treeSearch.resultCountTrees', { shown: items.length, total })}
+      </p>
+      <ul className="flex flex-col gap-2" aria-label={t('sensor.treeSearch.selectResultAriaLabel')}>
+        {items.map((tree) => (
+          <li key={tree.id}>
+            <ResultRow
+              tree={tree}
+              selected={tree.id === selectedTreeId}
+              onSelect={() => onSelect(tree.id)}
+            />
+          </li>
+        ))}
+      </ul>
+      <div ref={sentinelRef} aria-hidden className="h-1" />
+      {isFetchingNextPage && (
+        <Loading className="py-3 justify-center" label={t('sensor.treeSearch.loadingMoreLabel')} />
+      )}
+    </div>
+  )
+}
+
+function ResultRow({
+  tree,
+  selected,
+  onSelect,
+}: {
+  tree: TreeResponse
+  selected: boolean
+  onSelect: () => void
+}) {
+  const { t } = useTranslation('irrigation')
+  const isAssigned = tree.sensor != null
+  return (
+    <button
+      type="button"
+      onClick={isAssigned ? undefined : onSelect}
+      disabled={isAssigned}
+      aria-disabled={isAssigned || undefined}
+      aria-pressed={!isAssigned && selected}
+      className={cn(
+        'relative w-full text-left rounded-xl border bg-white p-4 shadow-cards transition',
+        !isAssigned && 'hover:bg-green-dark-50/50',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-dark focus-visible:ring-offset-2',
+        isAssigned && 'opacity-70 cursor-not-allowed',
+        !isAssigned && selected
+          ? 'border-green-dark ring-2 ring-green-dark/20 bg-green-dark-50/30'
+          : 'border-dark-100',
+      )}
+    >
+      <div className="flex items-start gap-3">
+        <div
+          className={cn(
+            'mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border-2',
+            !isAssigned && selected
+              ? 'border-green-dark bg-green-dark text-white'
+              : 'border-dark-200 bg-white',
+          )}
+        >
+          {!isAssigned && selected && <Check className="size-3" strokeWidth={3} />}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 min-w-0">
+            <TreeDeciduous className="size-4 shrink-0 text-green-dark" aria-hidden />
+            <span className="font-semibold text-sm truncate">{tree.species}</span>
+          </div>
+          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-dark-800">
+            <span className="font-mono text-xs text-dark-600">{tree.number}</span>
+            {isAssigned && (
+              <Badge
+                variant="muted"
+                size="default"
+                aria-label={t('sensor.treeSearch.sensorAssignedBadge')}
+              >
+                {t('sensor.treeSearch.sensorAssignedBadge')}
+              </Badge>
+            )}
+          </div>
+        </div>
+      </div>
+    </button>
+  )
+}
+
+export default SensorTreeSearchResults
+export type { SensorTreeSearchResultsProps }

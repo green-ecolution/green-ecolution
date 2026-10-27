@@ -1,6 +1,12 @@
 import { useCallback, useMemo } from 'react'
 import useStore from '@/store/store'
-import { FormDraftKey, FormDraftState, FormType, MutationType } from './formDraftSlice'
+import {
+  FormDraftKey,
+  FormDraftState,
+  FormType,
+  MutationType,
+  WATERING_PLAN_FORM,
+} from './formDraftSlice'
 
 export function useFormDraft<T>(formType: FormType, mutationType: MutationType) {
   const key: FormDraftKey = `${formType}-${mutationType}`
@@ -33,4 +39,4 @@ export function useFormDraft<T>(formType: FormType, mutationType: MutationType) 
 }
 
 export const useWateringPlanDraft = <T>(mutationType: MutationType) =>
-  useFormDraft<T>('wateringplan', mutationType)
+  useFormDraft<T>(WATERING_PLAN_FORM, mutationType)

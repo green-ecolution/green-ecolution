@@ -15,7 +15,7 @@ function EditWateringPlan() {
   const { wateringPlan } = wateringPlanFormRoute.useLoaderData()
   const draft = useWateringPlanDraft<WateringPlanForm>('update')
 
-  const formKey = draft.data?.clusterIds?.join(',') ?? 'initial'
+  const formKey = draft.data?.stopIds?.join(',') ?? 'initial'
 
   return (
     <div className="container mt-6">

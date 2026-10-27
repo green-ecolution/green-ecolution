@@ -8,8 +8,8 @@ import type {
 import { translateIssue } from './messages'
 import type { IssueTranslator, ValidationIssue } from './types'
 import {
-  validateTreeClusterDraft,
-  validateTreeDraft,
+  irrigationValidateTreeClusterDraft,
+  irrigationValidateTreeDraft,
   validateVehicleDraft,
   validateWateringPlanDraft,
 } from '../pkg/domain_wasm.js'
@@ -57,8 +57,8 @@ function makeResolver<TForm extends FieldValues>(
 
 // wasm-bindgen emits `(input: any) => any` for these exports; tighten the
 // return type at the boundary so the rest of the module is fully typed.
-const treeValidator = validateTreeDraft as RawValidator
-const clusterValidator = validateTreeClusterDraft as RawValidator
+const treeValidator = irrigationValidateTreeDraft as RawValidator
+const clusterValidator = irrigationValidateTreeClusterDraft as RawValidator
 const vehicleValidator = validateVehicleDraft as RawValidator
 const wateringPlanValidator = validateWateringPlanDraft as RawValidator
 

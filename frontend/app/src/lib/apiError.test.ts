@@ -2,6 +2,9 @@ import { describe, it, expect } from 'vitest'
 import { FetchError, ResponseError } from '@green-ecolution/backend-client'
 import { resolveApiError } from './apiError'
 import errors from '@/locales/de/errors.json'
+import irrigationDe from '@green-ecolution/module-irrigation/locales/de'
+
+const { irrigation } = irrigationDe
 
 const respond = (status: number, body?: unknown, contentType = 'application/json') =>
   new ResponseError(
@@ -15,15 +18,42 @@ describe('resolveApiError', () => {
   it('prefers the named cause over the status text', async () => {
     const info = await resolveApiError(
       respond(422, {
+        error: 'the role belongs to a different organization than the user',
+        code: 'organization_mismatch.role_vs_user',
+      }),
+    )
+
+    expect(info.status).toBe(422)
+    expect(info.code).toBe('organization_mismatch.role_vs_user')
+    expect(info.messageKey).toBe('code.organization_mismatch.role_vs_user')
+    expect(info.message).toBe(errors.code.organization_mismatch.role_vs_user)
+  })
+
+  it('finds a code only a module raises in that module catalog', async () => {
+    const info = await resolveApiError(
+      respond(422, {
         error: 'the selected trees belong to a different organization than the cluster',
         code: 'organization_mismatch.trees_vs_cluster',
       }),
     )
 
-    expect(info.status).toBe(422)
-    expect(info.code).toBe('organization_mismatch.trees_vs_cluster')
     expect(info.messageKey).toBe('code.organization_mismatch.trees_vs_cluster')
-    expect(info.message).toBe(errors.code.organization_mismatch.trees_vs_cluster)
+    expect(info.message).toBe(irrigation.errors.code.organization_mismatch.trees_vs_cluster)
+  })
+
+  it('words a core code neutrally without the module of the request', async () => {
+    const info = await resolveApiError(respond(422, { error: 'x', code: 'plan.unknown_stop' }))
+
+    expect(info.message).toBe(errors.code.plan.unknown_stop)
+  })
+
+  it('takes the wording of the module the request belonged to', async () => {
+    const info = await resolveApiError(respond(422, { error: 'x', code: 'plan.unknown_stop' }), {
+      module: 'irrigation',
+    })
+
+    expect(info.message).toBe(irrigation.errors.code.plan.unknown_stop)
+    expect(info.message).toBe('Eine ausgewählte Bewässerungsgruppe existiert nicht mehr.')
   })
 
   it('falls back to the status text for an unknown code', async () => {

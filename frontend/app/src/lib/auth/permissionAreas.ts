@@ -1,8 +1,9 @@
 import type { TFunction } from 'i18next'
+import type { ModuleManifest } from '@/modules/types'
 import {
   ACTIONS,
-  RESOURCES,
   UNRESTRICTED,
+  resourcesFor,
   type Action,
   type Permission,
   type Permissions,
@@ -49,22 +50,37 @@ export interface PermissionArea {
 interface AreaDefinition {
   resource: Resource
   group: AreaGroup
+  textsKey: string
 }
 
-const AREA_DEFINITIONS: readonly AreaDefinition[] = [
-  { resource: 'tree', group: 'greenspaces' },
-  { resource: 'tree_cluster', group: 'greenspaces' },
-  { resource: 'sensor', group: 'greenspaces' },
-  { resource: 'region', group: 'greenspaces' },
-  { resource: 'watering_plan', group: 'operations' },
-  { resource: 'start_point', group: 'operations' },
-  { resource: 'vehicle', group: 'operations' },
-  { resource: 'user', group: 'administration' },
-  { resource: 'organization', group: 'administration' },
-  { resource: 'role', group: 'administration' },
-  { resource: 'plugin', group: 'administration' },
-  { resource: 'setting', group: 'administration' },
+const coreArea = (resource: Resource, group: AreaGroup): AreaDefinition => ({
+  resource,
+  group,
+  textsKey: `settings:permission.resource.${resource}`,
+})
+
+const CORE_AREA_DEFINITIONS: readonly AreaDefinition[] = [
+  coreArea('sensor', 'greenspaces'),
+  coreArea('region', 'greenspaces'),
+  coreArea('start_point', 'operations'),
+  coreArea('vehicle', 'operations'),
+  coreArea('user', 'administration'),
+  coreArea('organization', 'administration'),
+  coreArea('role', 'administration'),
+  coreArea('plugin', 'administration'),
+  coreArea('setting', 'administration'),
 ]
+
+/** Module resources lead their group, which is where the irrigation rows sat before they moved out. */
+export const areaDefinitionsFor = (manifests: readonly ModuleManifest[]): AreaDefinition[] =>
+  AREA_GROUP_ORDER.flatMap((group) => [
+    ...manifests.flatMap((manifest) =>
+      (manifest.resources ?? [])
+        .filter((resource) => resource.area === group)
+        .map(({ key, textsKey }) => ({ resource: key, group, textsKey })),
+    ),
+    ...CORE_AREA_DEFINITIONS.filter((definition) => definition.group === group),
+  ])
 
 const permissionFor = (resource: Resource, action: Action): Permission => `${resource}:${action}`
 
@@ -74,7 +90,7 @@ const permissionFor = (resource: Resource, action: Action): Permission => `${res
  * can't carry: inviting a person is not creating one, and removing their
  * access is not deleting them. These two literal overrides take priority
  * over the composed form; everything else still composes — including
- * watering_plan:create, where the composed "Einsatzplan anlegen" already says
+ * a plan resource's create, where the composed "Einsatzplan anlegen" already says
  * everything "planen" would have: the specificity in the old "Einsatz planen"
  * lived in the noun ("Einsatz" denoted the activity itself), and once the
  * entity is correctly named "Einsatzplan" the extra verb adds nothing.
@@ -106,25 +122,33 @@ export const areaGroupLabels = (t: TFunction<'settings'>): Record<AreaGroup, str
   administration: t('permission.group.administration'),
 })
 
+// Resource texts live in the core or a module namespace, so their keys are only
+// known at runtime.
+type LooseTranslate = (key: string, params?: Record<string, string>) => string
+
 /**
- * Composes the eleven areas and their 44 actions from settings:permission.resource.*
- * (label, singular noun, description, and the per-action hint, which genuinely
- * differs per permission) and settings:permission.action.* (the four verb
+ * Composes the areas and their actions from each resource's texts (label,
+ * singular noun, description, and the per-action hint, which genuinely differs
+ * per permission; core resources under settings:permission.resource.*, module
+ * resources where their manifest points) and settings:permission.action.* (the four verb
  * templates, "read" filled with the plural label, the rest with the singular
  * noun) — with two explicit label overrides (see actionLabelOverride) for
  * the cells the generic verbs flatten. Not a component: the caller passes its
  * own scoped `t`, mirroring clusterStatusReason.ts.
  */
-export const permissionAreasFor = (t: TFunction<'settings'>): PermissionArea[] =>
-  AREA_DEFINITIONS.map((definition) => {
-    const resourceKey = `permission.resource.${definition.resource}` as const
-    const singular = t(`${resourceKey}.singular`)
-    const pluralNoun = t(`${resourceKey}.pluralNoun`)
+export const permissionAreasFor = (
+  t: TFunction<'settings'>,
+  manifests: readonly ModuleManifest[],
+): PermissionArea[] =>
+  areaDefinitionsFor(manifests).map((definition) => {
+    const text = (key: string) => (t as LooseTranslate)(`${definition.textsKey}.${key}`)
+    const singular = text('singular')
+    const pluralNoun = text('pluralNoun')
     return {
       resource: definition.resource,
       group: definition.group,
-      label: t(`${resourceKey}.label`),
-      description: t(`${resourceKey}.description`),
+      label: text('label'),
+      description: text('description'),
       actions: ACTIONS.map((action) => ({
         action,
         permission: permissionFor(definition.resource, action),
@@ -133,7 +157,7 @@ export const permissionAreasFor = (t: TFunction<'settings'>): PermissionArea[] =
           t(`permission.action.${action}`, {
             resource: action === 'read' ? pluralNoun : singular,
           }),
-        hint: t(`${resourceKey}.hint.${action}`),
+        hint: text(`hint.${action}`),
       })),
     }
   })
@@ -193,16 +217,23 @@ export const toggleAction = (perms: ReadonlySet<string>, permission: Permission)
   return next
 }
 
-const KNOWN_PERMISSIONS: ReadonlySet<string> = new Set(
-  RESOURCES.flatMap((resource) => ACTIONS.map((action) => permissionFor(resource, action))),
-)
-
 /**
  * PATCH replaces the whole permission set, so anything the backend adds later
- * must survive an edit untouched instead of being silently dropped.
+ * must survive an edit untouched instead of being silently dropped. Pass every
+ * registered manifest, not only the active ones: a right of an inactive module
+ * is hidden, not unknown.
  */
-export const unknownPermissions = (perms: ReadonlySet<string>): string[] =>
-  [...perms].filter((permission) => !KNOWN_PERMISSIONS.has(permission)).sort()
+export const unknownPermissions = (
+  perms: ReadonlySet<string>,
+  manifests: readonly ModuleManifest[],
+): string[] => {
+  const known = new Set<string>(
+    resourcesFor(manifests).flatMap((resource) =>
+      ACTIONS.map((action) => permissionFor(resource, action)),
+    ),
+  )
+  return [...perms].filter((permission) => !known.has(permission)).sort()
+}
 
 export const isGrantable = (permission: string, grantable: Permissions): boolean =>
   grantable === UNRESTRICTED || grantable.has(permission)

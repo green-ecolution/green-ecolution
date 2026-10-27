@@ -3,17 +3,23 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { SensorStatus } from '@green-ecolution/backend-client'
 
-const { searchMock, setQuery, setSort, setFilter, setHasTree, resetFilters } = vi.hoisted(() => {
-  const searchMock: { current: Record<string, unknown> } = { current: {} }
-  return {
-    searchMock,
-    setQuery: vi.fn(),
-    setSort: vi.fn(),
-    setFilter: vi.fn(),
-    setHasTree: vi.fn(),
-    resetFilters: vi.fn(),
-  }
-})
+const { searchMock, setQuery, setSort, setFilter, setAttached, resetFilters, activeManifests } =
+  vi.hoisted(() => {
+    const searchMock: { current: Record<string, unknown> } = { current: {} }
+    return {
+      searchMock,
+      setQuery: vi.fn(),
+      setSort: vi.fn(),
+      setFilter: vi.fn(),
+      setAttached: vi.fn(),
+      resetFilters: vi.fn(),
+      activeManifests: { current: [] as import('@/modules/types').ModuleManifest[] },
+    }
+  })
+
+vi.mock('@/modules/useActiveModules', () => ({
+  useActiveModules: () => ({ manifests: activeManifests.current, isActive: () => true }),
+}))
 
 vi.mock('./useSensorListSearch', async () => {
   const actual =
@@ -25,7 +31,7 @@ vi.mock('./useSensorListSearch', async () => {
       setQuery,
       setSort,
       setFilter,
-      setHasTree,
+      setAttached,
       resetFilters,
     }),
   }
@@ -46,27 +52,36 @@ vi.mock('@/api/queries', async () => {
           ]),
       }),
     },
-    clusterQueries: {
-      ...actual.clusterQueries,
-      list: () => ({
-        queryKey: ['clusters-toolbar-test'],
-        queryFn: () =>
-          Promise.resolve({
-            data: [
-              { id: 'cluster-1', name: 'Bahnhofstraße Nord' },
-              { id: 'cluster-2', name: 'Hafenspitze' },
-            ],
-          }),
-      }),
-      detail: (id: string) => ({
-        queryKey: ['cluster-toolbar-test', id],
-        queryFn: () => Promise.resolve({ id, name: `Gruppe ${id}` }),
-      }),
-    },
   }
 })
 
 const { default: SensorListToolbar } = await import('./SensorListToolbar')
+const { probeTarget, probeTargetManifest } = await import('@/test/targetManifest')
+
+const probeFilter = {
+  param: 'probeIds',
+  Control: ({ value, onChange }: { value: string[]; onChange: (value: string[]) => void }) => (
+    <button type="button" onClick={() => onChange([...value, 'p-1'])}>
+      probe-filter
+    </button>
+  ),
+  Chips: ({ value, onChange }: { value: string[]; onChange: (value: string[]) => void }) =>
+    value.map((id) => (
+      <button type="button" key={id} onClick={() => onChange([])}>
+        {`chip-${id}`}
+      </button>
+    )),
+  sensorIds: (value: string[]) => ({
+    queryKey: ['probe-sensor-ids', value],
+    queryFn: () => Promise.resolve(['s-1']),
+  }),
+}
+
+const withProbeFilter = () => {
+  activeManifests.current = [
+    probeTargetManifest('probe', [probeTarget('probe', 'probe', { listFilter: probeFilter })]),
+  ]
+}
 
 const renderToolbar = () => {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -81,6 +96,7 @@ describe('SensorListToolbar', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     searchMock.current = {}
+    activeManifests.current = []
   })
 
   it('picking a status option calls setFilter with the selected statuses', () => {
@@ -101,43 +117,49 @@ describe('SensorListToolbar', () => {
     expect(setFilter).toHaveBeenCalledExactlyOnceWith('statuses', [])
   })
 
-  it('picking "Mit Baum" calls setHasTree with true', () => {
+  it('picking "Verknüpft" calls setAttached with true', () => {
     renderToolbar()
 
-    fireEvent.click(screen.getByRole('button', { name: /^Baum/ }))
-    fireEvent.click(screen.getByRole('option', { name: 'Mit Baum' }))
+    fireEvent.click(screen.getByRole('button', { name: /^Verknüpfung/ }))
+    fireEvent.click(screen.getByRole('option', { name: 'Verknüpft' }))
 
-    expect(setHasTree).toHaveBeenCalledExactlyOnceWith(true)
+    expect(setAttached).toHaveBeenCalledExactlyOnceWith(true)
   })
 
-  it('picking a group option calls setFilter with the selected cluster', async () => {
+  it('picking the already-selected link option again clears it', () => {
+    searchMock.current = { attached: false }
     renderToolbar()
 
-    fireEvent.click(screen.getByRole('button', { name: /^Gruppe/ }))
-    fireEvent.click(await screen.findByRole('option', { name: 'Bahnhofstraße Nord' }))
+    fireEvent.click(screen.getByRole('button', { name: /^Verknüpfung/ }))
+    fireEvent.click(screen.getByRole('option', { name: 'Nicht verknüpft' }))
 
-    expect(setFilter).toHaveBeenCalledExactlyOnceWith('clusterIds', ['cluster-1'])
+    expect(setAttached).toHaveBeenCalledExactlyOnceWith(undefined)
   })
 
-  it('removing an active group chip calls setFilter without that cluster', async () => {
-    searchMock.current = { clusterIds: ['cluster-1'] }
+  it('offers no target filter without an active module that brings one', () => {
     renderToolbar()
 
-    fireEvent.click(
-      await screen.findByRole('button', { name: 'Filter Bahnhofstraße Nord entfernen' }),
-    )
-
-    expect(setFilter).toHaveBeenCalledExactlyOnceWith('clusterIds', [])
+    expect(screen.queryByRole('button', { name: 'probe-filter' })).not.toBeInTheDocument()
   })
 
-  it('picking the already-selected tree option again clears it', () => {
-    searchMock.current = { hasTree: true }
+  it('renders the target filter of an active module and writes its search param', async () => {
+    withProbeFilter()
     renderToolbar()
 
-    fireEvent.click(screen.getByRole('button', { name: /^Baum/ }))
-    fireEvent.click(screen.getByRole('option', { name: 'Mit Baum' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'probe-filter' }))
 
-    expect(setHasTree).toHaveBeenCalledExactlyOnceWith(undefined)
+    expect(setFilter).toHaveBeenCalledExactlyOnceWith('probeIds', ['p-1'])
+  })
+
+  it('shows the chips of an active target filter and offers the reset', async () => {
+    withProbeFilter()
+    searchMock.current = { probeIds: ['p-1'] }
+    renderToolbar()
+
+    fireEvent.click(await screen.findByRole('button', { name: 'chip-p-1' }))
+
+    expect(setFilter).toHaveBeenCalledExactlyOnceWith('probeIds', [])
+    expect(screen.getByRole('button', { name: /Filter zurücksetzen/ })).toBeInTheDocument()
   })
 
   it('offers no prepared status in the activated view', () => {
@@ -150,13 +172,14 @@ describe('SensorListToolbar', () => {
   })
 
   it('shows only the filters a prepared sensor can match in the prepared view', () => {
+    withProbeFilter()
     searchMock.current = { view: 'prepared' }
     renderToolbar()
 
     expect(screen.getByRole('button', { name: /^Modell/ })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /^Status/ })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /^Datenqualität/ })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /^Baum/ })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /^Gruppe/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Verknüpfung/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'probe-filter' })).not.toBeInTheDocument()
   })
 })

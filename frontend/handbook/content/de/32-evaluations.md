@@ -4,6 +4,7 @@ title: Auswertung
 part: planning
 summary: Welche Zahlen die Auswertung zeigt, worauf sie sich beziehen und welche Schlüsse sich daraus ziehen lassen.
 routes: ['/evaluations']
+module: irrigation
 ---
 
 ## Welche Zahlen die Auswertung zeigt

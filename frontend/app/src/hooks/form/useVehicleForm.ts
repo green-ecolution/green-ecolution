@@ -1,3 +1,5 @@
+import { VEHICLE_FORM } from '@/store/form/formDraftSlice'
+import { queryRoots } from '@/api/queries'
 import type { Vehicle } from '@/api/backendApi'
 import { vehicleApi } from '@/api/backendApi'
 import { useIssueTranslator } from '@/lib/i18n/validation'
@@ -26,7 +28,7 @@ export const useVehicleForm = (
   const { t } = useTranslation('vehicle')
 
   const vehicleConfig: EntityFormConfig<VehicleForm, VehicleForm, VehicleForm, Vehicle> = {
-    formType: 'vehicle',
+    formType: VEHICLE_FORM,
     resolver: vehicleDraftResolver<VehicleForm>(translate),
 
     createFn: (body) => vehicleApi.createVehicle({ vehicleCreateRequest: toRequest(body) }),
@@ -37,7 +39,7 @@ export const useVehicleForm = (
       }),
 
     // Watering plans embed their transporter and trailer.
-    invalidates: ['vehicle', 'wateringPlan'],
+    invalidates: [...queryRoots.vehicle, ...queryRoots.wateringPlan],
 
     successRoute: (id) => ({
       to: '/vehicles/$vehicleId',

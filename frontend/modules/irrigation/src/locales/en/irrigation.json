@@ -1,0 +1,490 @@
+{
+  "label": "Irrigation",
+  "nav": {
+    "clusters": "Watering groups",
+    "trees": "Trees",
+    "evaluations": "Evaluation"
+  },
+  "dashboard": {
+    "clusters": {
+      "headline": "List of watering groups",
+      "description": "List view of all grouped trees fitted with sensors.",
+      "linkLabel": "To the watering groups"
+    },
+    "mapCardDescription": "All trees in Flensburg within the TBZ's area of responsibility.",
+    "plansCardDescription": "Plan a new watering plan for watering groups"
+  },
+  "statistics": {
+    "tree": {
+      "label": "Trees total",
+      "chartLabel": "Trees"
+    },
+    "cluster": {
+      "label": "Watering groups",
+      "chartLabel": "Groups",
+      "subtitle": "Managed watering groups"
+    },
+    "hero": {
+      "viewAllGroupsLink": "View all watering groups",
+      "managedInGroups": "managed in {count} watering groups"
+    }
+  },
+  "map": {
+    "toolbar": {
+      "searchPlaceholder": "Watering group…",
+      "filterAndActionsAriaLabel": "Filters and actions",
+      "filterDialogHeadline": "Filter watering groups",
+      "createGroup": "Add group",
+      "katasterSettingsAriaLabel": "Register settings",
+      "katasterSettingsTitle": "More register settings",
+      "katasterSettingsDescription": "This view offers further settings, for example adding trees to the register manually.",
+      "addTreeManually": "Add a new tree manually"
+    },
+    "statusLegend": {
+      "regionAriaLabel": "Watering status legend",
+      "heading": "Watering status",
+      "show": "Show legend",
+      "hide": "Hide legend"
+    },
+    "cluster": {
+      "editAriaLabel": "Edit group",
+      "fallbackTitle": "Watering group",
+      "closePanelAriaLabel": "Close side view",
+      "loadError": "The watering group could not be loaded.",
+      "loadingLabel": "Loading watering group...",
+      "openDashboard": "To the dashboard",
+      "wateringStatusLabel": "Watering status",
+      "soilTemperatureLabel": "Soil temperature",
+      "lastMeasurementLabel": "Last measurement",
+      "lastWateredLabel": "Last watered",
+      "noData": "No data",
+      "treeCount_one": "{count} tree",
+      "treeCount_other": "{count} trees",
+      "treesInGroupHeading": "Trees in this group · {count}",
+      "sensorTreeBadge": "Sensor tree",
+      "noSensor": "no sensor",
+      "treeIdLabel": "· ID {number}",
+      "remainingTrees_one": "+ {count} more tree · show all",
+      "remainingTrees_other": "+ {count} more trees · show all"
+    },
+    "tree": {
+      "newTitle": "Record a new tree",
+      "locationSelected": "Location selected",
+      "clickToSetLocationHint": "Click on the map to set the new tree's location. You can still move the marker afterwards.",
+      "editTitle": "Edit tree",
+      "dragMarkerHint": "Drag the marker on the map to adjust the tree's location.",
+      "deleteButton": "Delete tree",
+      "deleteConfirmTitle": "Delete tree?",
+      "deleteConfirmDescription": "Do you really want to delete this tree? This action cannot be undone.",
+      "deleteSuccess": "The tree was deleted.",
+      "deleteError": "The tree could not be deleted.",
+      "entityName": "Tree",
+      "backToList": "To the tree list"
+    },
+    "clusterForm": {
+      "newTitle": "New watering group",
+      "editTitle": "Edit watering group",
+      "clickTreesHint": "Click trees on the map to add or remove them from the group. Trees shown pale belong to another organization.",
+      "emptyHint": "Click a tree on the map to add it to the list.",
+      "blockedReasonCreate": "You may not create a group in this organization.",
+      "blockedReasonEdit": "An existing group's organization cannot be changed here.",
+      "entityName": "Watering group",
+      "backToList": "To the group list"
+    },
+    "selectCluster": {
+      "title": "Select watering groups",
+      "hint": "Click the groups on the map that should be included in this watering plan.",
+      "entitiesLabel": "Watering groups",
+      "emptyHint": "Click a group on the map to add it.",
+      "requiredError": "Please select at least one watering group.",
+      "applyButton": "Apply",
+      "leaveConfirmMessage": "Do you really want to leave this page? Your input will be lost if you leave now.",
+      "noVehicleWarning": "A vehicle must be selected to be able to generate a route.",
+      "insufficientCapacityWarning": "Greyed-out watering groups are excluded because the vehicle does not have enough water capacity."
+    }
+  },
+  "planning": {
+    "stopsLabel": "Watering groups",
+    "stopCountLabel": "Number of watering groups",
+    "stopCount_one": "{count} group",
+    "stopCount_other": "{count} groups",
+    "stopList": {
+      "emptyMessage": "Unfortunately no watering groups were found."
+    },
+    "summary": {
+      "consumedWaterLabel": "Water consumed",
+      "consumedWaterValue": "{value} liters",
+      "consumedWaterDescription_one": "for {count} watering group",
+      "consumedWaterDescription_other": "for {count} watering groups"
+    },
+    "outcome": {
+      "waterPerClusterLegend": "Water given per watering group:",
+      "defaultsHint": "The default values are based on 80 liters per tree in a watering group.",
+      "treeCount_one": "{count} tree",
+      "treeCount_other": "{count} trees",
+      "litersForClusterLabel": "Liters for {name}",
+      "litersUnitLabel": "Liters"
+    },
+    "stopPicker": {
+      "label": "Watering groups",
+      "requiredError": "Select at least one watering group."
+    },
+    "suggestions": {
+      "ariaLabel": "Suggestions",
+      "title": "Suggestions",
+      "loadError": "The suggestions could not be loaded.",
+      "emptyMessage": "No watering groups are currently very dry.",
+      "bundleButtonLabel": "Bundle into watering plan"
+    },
+    "suggestionCard": {
+      "selectAriaLabel": "Select {name} for a watering plan",
+      "treeCount_one": "{count} tree",
+      "treeCount_other": "{count} trees"
+    },
+    "plansLabel": "Watering plans",
+    "texts": {
+      "listDescription": "Track planned, ongoing, and completed watering trips.",
+      "listDescriptionCanModify": "Plan, start, and document watering trips. Drag a watering plan into the next column to change its status.",
+      "createDescription": "A watering plan maps out a watering route: it can be assigned a vehicle, a trailer, staff, and the watering groups to visit. A newly created watering plan is automatically classified as \"planned\". Based on the watering groups and the number of trees, the amount of water needed for watering is calculated. The watering plan's start point can be chosen from the configured depot locations.",
+      "updateDescription": "The watering plan can be edited in this view if certain data is no longer accurate or additional information needs to be recorded, for example. A watering plan always requires at least one watering group to be visited and at least one staff member to carry out the watering plan. A vehicle must also be assigned.",
+      "statusUpdateDescription": "A watering plan's status describes whether it is currently being carried out, has been completed, or was canceled, for example. This information helps categorize the watering plans that have been created and build an evaluation. Once a watering plan is completed, you can also specify how much water was used for the associated watering groups.",
+      "routeErrorAlert": "The route for this watering plan could not be calculated. Please check whether the selected vehicle has enough water capacity for the chosen watering groups.",
+      "routePreviewAriaLabel": "Map with the route and watering groups for this plan"
+    }
+  },
+  "sensor": {
+    "target": {
+      "tree": "Tree"
+    },
+    "list": {
+      "filterCluster": "Group",
+      "clusterUnknown": "Unknown group"
+    },
+    "placement": {
+      "clusterLabel": "Watering group",
+      "treeLabel": "Mounted on tree",
+      "treeCount_one": "{count} tree",
+      "treeCount_other": "{count} trees",
+      "noClusterDescription": "The tree is not part of any watering group.",
+      "mapAriaLabel": "Map with the sensor position, nearby trees and watering groups"
+    },
+    "linkedTree": {
+      "loadFailedTitle": "Tree not loaded",
+      "loadFailedDescription": "The linked tree (#{id}) could not be retrieved.",
+      "treeNumberLabel": "Tree no. {number}",
+      "unknownSpecies": "Unknown species",
+      "plantedLabel": "Planted {year}"
+    },
+    "treeAssignDialog": {
+      "activate": {
+        "title": "Activate sensor and assign tree",
+        "description": "Search for the tree by number or species and activate the sensor on this tree.",
+        "confirm": "Activate"
+      },
+      "reassign": {
+        "description": "Choose the new tree this sensor should be assigned to.",
+        "confirm": "Assign tree"
+      },
+      "showAllTreesLabel": "Show all trees",
+      "mapAriaLabel": "Map for tree selection",
+      "savingButton": "Saving …"
+    },
+    "treeSearch": {
+      "inputPlaceholder": "Search tree number or species…",
+      "clearAriaLabel": "Clear",
+      "idleHint": "Type a tree number or species.",
+      "loadingLabel": "Searching trees…",
+      "failedTitle": "Search failed",
+      "failedDescription": "The tree search failed.",
+      "noResultsForQuery": "No trees found for \"{query}\".",
+      "noResultsHint": "Check the spelling or tree number.",
+      "noTreesAvailable": "There are no trees available.",
+      "resultCountMatches": "{shown} of {total} matches",
+      "resultCountTrees": "{shown} of {total} trees",
+      "selectResultAriaLabel": "Select tree from search results",
+      "loadingMoreLabel": "Loading more trees…",
+      "sensorAssignedBadge": "Sensor assigned"
+    },
+    "nearestTreeList": {
+      "title": "Nearby trees",
+      "selectAriaLabel": "Select tree",
+      "unassignedGroup": "Not assigned"
+    },
+    "treePickerSheet": {
+      "title": "Choose a different tree",
+      "description": "Search by tree number or species if the right tree is not in the suggestion list."
+    },
+    "nearestTreeMap": {
+      "ariaLabel": "Map with sensor position and nearby trees"
+    },
+    "soilMoistureChart": {
+      "title": "Soil moisture history",
+      "subtitleHour": "Hourly average · band = min–max · dashed = critical threshold per depth",
+      "subtitleDay": "Daily average · band = min–max · dashed = critical threshold per depth",
+      "depthSeriesLabel": "{depth} cm depth",
+      "loadingLabel": "Readings are loading",
+      "tooFewDataPoints": "Not enough data points in the selected period.",
+      "wateredOnLabel": "Watered on {date}",
+      "discardedLabel": "Reading discarded"
+    },
+    "wizard": {
+      "treeLabel": "tree {number}",
+      "tree": {
+        "header": {
+          "title": "Assign tree",
+          "description": "Choose the tree the sensor will be mounted on. The suggestion is based on your current location. Only the tree assignment is saved on the sensor, not your coordinates."
+        },
+        "relocateButton": "Update location",
+        "locatingNotice": "Determining location …",
+        "loadingNearby": "Searching for nearby trees…",
+        "searchFailed": {
+          "title": "Tree search failed",
+          "description": "The search for nearby trees failed."
+        },
+        "noNearbyTrees": "No nearby trees were found. Choose the tree manually.",
+        "selectedTreeLabel": "Selected tree"
+      }
+    },
+    "treeTexts": {
+      "activateAction": "Activate & assign tree",
+      "reassignAction": "Assign different tree",
+      "removeLinkAction": "Remove tree link",
+      "removeConfirmTitle": "Remove tree link and reset sensor?",
+      "removeConfirmDescription": "The tree link will be removed and the sensor reset to the \"{status}\" state. It can then be activated on another tree like a new sensor.",
+      "activateSuccess": "Sensor activated and tree assigned.",
+      "reassignSuccess": "Tree changed.",
+      "scanDescription": "Hold the QR code on the sensor unit steady inside the scan frame. This uniquely identifies the sensor before you assign it to a tree in the next step. In poor lighting, it helps to hold the code a little closer.",
+      "alreadyLinkedDescription": "This sensor is already activated and assigned to a tree.",
+      "listSearchPlaceholder": "Search by EUI, model or group",
+      "activateConflict": "Sensor is already assigned to a tree.",
+      "reassignNotFound": "Sensor or tree no longer exists.",
+      "reassignConflict": "The tree is already assigned to a different sensor.",
+      "reassignFailed": "Changing the tree failed. Please try again."
+    }
+  },
+  "settings": {
+    "waterDemandLabel": "Water demand per tree",
+    "waterDemandHint": "Feeds the demand calculation of every watering group and decides how many groups a route plan puts into one trip. Watering plans that already exist stay as they are.",
+    "waterDemandUnit": "liters",
+    "justWateredTtlLabel": "Just-watered duration",
+    "justWateredTtlHint": "How long a tree counts as just watered after a finished watering plan before it falls back to unknown.",
+    "justWateredTtlUnit": "hours",
+    "liters_one": "{count} liter",
+    "liters_other": "{count} liters",
+    "hours_one": "{count} hour",
+    "hours_other": "{count} hours",
+    "permission": {
+      "resource": {
+        "tree": {
+          "label": "Trees",
+          "pluralNoun": "trees",
+          "singular": "tree",
+          "description": "Trees & locations",
+          "hint": {
+            "read": "View tree list and details",
+            "create": "Record new trees",
+            "update": "Change master data and location",
+            "delete": "Remove trees permanently"
+          }
+        },
+        "tree_cluster": {
+          "label": "Watering groups",
+          "pluralNoun": "watering groups",
+          "singular": "watering group",
+          "description": "Groups & thresholds",
+          "hint": {
+            "read": "View groups and watering status",
+            "create": "Create new watering groups",
+            "update": "Change assignment, name and thresholds",
+            "delete": "Dissolve groups"
+          }
+        },
+        "watering_plan": {
+          "label": "Watering plans",
+          "pluralNoun": "watering plans",
+          "singular": "watering plan",
+          "description": "Planning & routes",
+          "hint": {
+            "read": "View planned and completed watering plans",
+            "create": "Create a new watering plan (start points must be readable)",
+            "update": "Change route, time, scope and status",
+            "delete": "Remove a watering plan permanently"
+          }
+        }
+      }
+    }
+  },
+  "enums": {
+    "wateringStatus": {
+      "good": {
+        "label": "Good",
+        "description": "Watering is sufficient, no action required."
+      },
+      "moderate": {
+        "label": "Slightly dry",
+        "description": "The trees are slightly dry and need some water."
+      },
+      "bad": {
+        "label": "Very dry",
+        "description": "The trees urgently need water."
+      },
+      "just_watered": {
+        "label": "Just watered",
+        "description": "The trees were watered recently."
+      },
+      "unknown": {
+        "label": "Unknown",
+        "description": "The watering status is unknown."
+      }
+    },
+    "soilCondition": {
+      "groups": {
+        "sands": "Sands",
+        "silts": "Silts",
+        "loams": "Loams",
+        "clays": "Clays",
+        "pureSands": "Pure sands",
+        "other": "Other"
+      },
+      "Ss": {
+        "label": "Ss – Pure sand"
+      },
+      "Su2": {
+        "label": "Su2 – slightly silty sand"
+      },
+      "Su3": {
+        "label": "Su3 – silty sand"
+      },
+      "Su4": {
+        "label": "Su4 – strongly silty sand"
+      },
+      "Sl2": {
+        "label": "Sl2 – slightly loamy sand"
+      },
+      "Sl3": {
+        "label": "Sl3 – loamy sand"
+      },
+      "Sl4": {
+        "label": "Sl4 – strongly loamy sand"
+      },
+      "Slu": {
+        "label": "Slu – silty-loamy sand"
+      },
+      "St2": {
+        "label": "St2 – slightly clayey sand"
+      },
+      "St3": {
+        "label": "St3 – clayey sand"
+      },
+      "Uu": {
+        "label": "Uu – pure silt"
+      },
+      "Us": {
+        "label": "Us – sandy silt"
+      },
+      "Uls": {
+        "label": "Uls – sandy-loamy silt"
+      },
+      "Ut2": {
+        "label": "Ut2 – slightly clayey silt"
+      },
+      "Ut3": {
+        "label": "Ut3 – clayey silt"
+      },
+      "Ut4": {
+        "label": "Ut4 – strongly clayey silt"
+      },
+      "Ls2": {
+        "label": "Ls2 – slightly sandy loam"
+      },
+      "Ls3": {
+        "label": "Ls3 – sandy loam"
+      },
+      "Ls4": {
+        "label": "Ls4 – strongly sandy loam"
+      },
+      "Lt2": {
+        "label": "Lt2 – slightly clayey loam"
+      },
+      "Lt3": {
+        "label": "Lt3 – clayey loam"
+      },
+      "Lts": {
+        "label": "Lts – sandy-clayey loam"
+      },
+      "Lu": {
+        "label": "Lu – silty loam"
+      },
+      "Tt": {
+        "label": "Tt – pure clay"
+      },
+      "Tu2": {
+        "label": "Tu2 – slightly silty clay"
+      },
+      "Tu3": {
+        "label": "Tu3 – silty clay"
+      },
+      "Tu4": {
+        "label": "Tu4 – strongly silty clay"
+      },
+      "Ts2": {
+        "label": "Ts2 – slightly sandy clay"
+      },
+      "Ts3": {
+        "label": "Ts3 – sandy clay"
+      },
+      "Ts4": {
+        "label": "Ts4 – strongly sandy clay"
+      },
+      "Tl": {
+        "label": "Tl – loamy clay"
+      },
+      "fS": {
+        "label": "fS – fine sand"
+      },
+      "mS": {
+        "label": "mS – medium sand"
+      },
+      "gS": {
+        "label": "gS – coarse sand"
+      },
+      "unknown": {
+        "label": "Unknown"
+      }
+    }
+  },
+  "filter": {
+    "status": {
+      "legend": "Watering status:",
+      "placeholder": "All statuses"
+    }
+  },
+  "crumb": {
+    "trees": "Trees",
+    "clusters": "Watering groups",
+    "treeLocationNew": "Record tree location",
+    "routeSelect": "Set route",
+    "evaluations": "Evaluations"
+  },
+  "errors": {
+    "code": {
+      "organization_mismatch": {
+        "trees_vs_cluster": "The selected trees belong to a different organization than the watering group.",
+        "cluster_vs_tree": "The selected watering group belongs to a different organization than the tree.",
+        "stops_vs_plan": "The selected watering groups lie outside the watering plan's organization."
+      },
+      "conflict": {
+        "tree_in_cluster": "The tree belongs to a watering group and must be removed from it first."
+      },
+      "plan": {
+        "outcome_missing": "Consumed water is still missing for at least one watering group.",
+        "outcome_duplicate": "The water amount was entered more than once for a watering group.",
+        "outcome_unknown_stop": "The evaluation names a watering group that is not part of the watering plan.",
+        "unknown_stop": "A selected watering group no longer exists."
+      },
+      "routing": {
+        "invalid_problem": "No route can be calculated from the selected data. Check the vehicle, start point and groups."
+      }
+    }
+  }
+}

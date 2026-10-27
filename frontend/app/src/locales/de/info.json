@@ -18,26 +18,17 @@
     "chart": {
       "countLabel": "Anzahl",
       "title": "Datenübersicht",
-      "treeName": "Bäume",
-      "groupName": "Gruppen",
       "sensorName": "Sensoren",
       "vehicleName": "Fahrzeuge",
       "planName": "Pläne"
     },
-    "hero": {
-      "viewAllGroupsLink": "Alle Bewässerungsgruppen ansehen",
-      "totalTreesLabel": "Bäume gesamt",
-      "managedInGroups": "in {count} Bewässerungsgruppen verwaltet"
-    },
     "stat": {
       "viewLink": "Ansehen",
-      "groupsLabel": "Bewässerungsgruppen",
-      "groupsSubtitle": "Verwaltete Bewässerungsgruppen",
       "sensorsLabel": "Sensoren",
       "sensorsSubtitle": "Aktive Messgeräte",
       "vehiclesLabel": "Fahrzeuge",
       "vehiclesSubtitle": "Registrierte Flotte",
-      "plansLabel": "Bewässerungspläne",
+      "plansLabel": "Einsatzpläne",
       "plansSubtitle": "Geplante Routen"
     },
     "summary": {

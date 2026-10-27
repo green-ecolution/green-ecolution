@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { Suspense, useEffect } from 'react'
 import {
   DatePickerField,
   TextareaField,
@@ -13,12 +13,14 @@ import FormSubmitButton from './FormSubmitButton'
 import { WateringPlanForm } from '@/schema/wateringPlanSchema'
 import type { User, Vehicle } from '@/api/backendApi'
 import type { DrivingLicense } from '@green-ecolution/backend-client'
-import SelectEntities from './types/SelectEntities'
 import { useDrivingLicenseDetails } from '@/hooks/details/useDetailsForDrivingLicense'
 import { validateDriverLicenses } from '@/lib/licenseValidation'
 import { Controller, SubmitHandler, useFormContext, useFormState, useWatch } from 'react-hook-form'
 import { useQuery } from '@tanstack/react-query'
 import { routingStartPointsQuery } from '@/api/queries'
+import { planningManifests } from '@/modules/planning'
+import type { PlanFormContext } from '@/modules/types'
+import { useActiveModules } from '@/modules/useActiveModules'
 
 interface FormForWateringPlanProps {
   displayError: boolean
@@ -26,7 +28,10 @@ interface FormForWateringPlanProps {
   transporters: Vehicle[]
   trailers: Vehicle[]
   users: User[]
-  onAddCluster: () => void
+  formType: PlanFormContext['type']
+  planId?: string
+  organizationId?: string
+  saveDraft: () => void
   onSubmit: SubmitHandler<WateringPlanForm>
   onBlur?: () => void
 }
@@ -35,10 +40,12 @@ const startOfToday = new Date()
 startOfToday.setHours(0, 0, 0, 0)
 
 const FormForWateringPlan = (props: FormForWateringPlanProps) => {
-  const { t } = useTranslation(['wateringPlan', 'common'])
+  const { t, i18n } = useTranslation(['wateringPlan', 'common'])
   const { register, handleSubmit, control, resetField, getValues, setValue } =
     useFormContext<WateringPlanForm>()
   const { errors } = useFormState({ control })
+  const { manifests } = useActiveModules()
+  const planningModules = planningManifests(manifests)
 
   const { data: startPoints, isPending } = useQuery(routingStartPointsQuery())
   const getDrivingLicenseDetails = useDrivingLicenseDetails()
@@ -60,6 +67,10 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
   })
   const watchedTrailerId = useWatch<WateringPlanForm, 'trailerId'>({ name: 'trailerId' })
   const watchedDriverIds = useWatch<WateringPlanForm, 'driverIds'>({ name: 'driverIds' })
+  const watchedModule = useWatch<WateringPlanForm, 'module'>({ name: 'module' })
+  const StopPicker = planningModules.find(({ key }) => key === watchedModule)?.planning.StopPicker
+  // An existing plan never changes its module, and with one planning module there is nothing to pick.
+  const choosesModule = props.formType === 'create' && planningModules.length > 1
 
   // Must resolve already-assigned drivers even if no longer selectable, or a
   // stored assignment would wrongly report a missing licence.
@@ -94,6 +105,33 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
       onBlur={props.onBlur}
     >
       <div className="flex flex-col gap-y-6">
+        {choosesModule && (
+          <Controller
+            name="module"
+            control={control}
+            render={({ field }) => (
+              <SelectField
+                id="module"
+                label={t('form.moduleLabel')}
+                placeholder={t('form.modulePlaceholder')}
+                required
+                value={field.value}
+                // Radix echoes a spurious onValueChange('') when the value is set
+                // programmatically; '' is never a real module.
+                onValueChange={(module) => {
+                  if (!module || module === field.value) return
+                  field.onChange(module)
+                  // Stops belong to one module; a plan cannot keep another one's.
+                  setValue('stopIds', [], { shouldDirty: true })
+                }}
+                options={planningModules.map(({ key, planning }) => ({
+                  value: key,
+                  label: i18n.t(planning.labelKey),
+                }))}
+              />
+            )}
+          />
+        )}
         <Controller
           control={control}
           name="date"
@@ -251,19 +289,29 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
         />
       </div>
 
-      <Controller
-        control={control}
-        name="clusterIds"
-        render={({ field: { value, onChange } }) => (
-          <SelectEntities
-            onChange={onChange}
-            entityIds={value}
-            onAdd={props.onAddCluster}
-            type="cluster"
-            label={t('form.clustersLabel')}
-          />
-        )}
-      />
+      {StopPicker && (
+        <Controller
+          control={control}
+          name="stopIds"
+          render={({ field: { value, onChange } }) => (
+            <Suspense fallback={null}>
+              <StopPicker
+                value={value}
+                onChange={onChange}
+                organizationId={props.organizationId}
+                error={errors.stopIds?.message}
+                form={{
+                  type: props.formType,
+                  planId: props.planId,
+                  transporterId: watchedTransporterId,
+                  trailerId: watchedTrailerId,
+                  saveDraft: props.saveDraft,
+                }}
+              />
+            </Suspense>
+          )}
+        />
+      )}
 
       <FormError show={props.displayError} error={props.errorMessage} />
 

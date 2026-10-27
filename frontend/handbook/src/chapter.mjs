@@ -8,6 +8,8 @@ import { fail, plainText } from './inline.mjs'
 
 const REQUIRED = ['slug', 'title', 'part', 'summary', 'routes']
 
+const MODULE_KEY = /^[a-z][a-z0-9_]*$/
+
 const processor = unified().use(remarkParse).use(remarkGfm).use(remarkFrontmatter, ['yaml'])
 
 function readFrontmatter(tree, ctx) {
@@ -18,6 +20,15 @@ function readFrontmatter(tree, ctx) {
   const missing = REQUIRED.filter((key) => data[key] === undefined)
   if (missing.length > 0) fail(ctx, `frontmatter is missing ${missing.join(', ')}`)
   if (!Array.isArray(data.routes)) fail(ctx, 'frontmatter routes must be a list')
+  if (
+    data.module !== undefined &&
+    !(typeof data.module === 'string' && MODULE_KEY.test(data.module))
+  ) {
+    fail(
+      ctx,
+      `frontmatter module must match ${MODULE_KEY.source}, got ${JSON.stringify(data.module)}`,
+    )
+  }
 
   return data
 }
@@ -79,6 +90,7 @@ export function parseChapter(source, { file }) {
       part: data.part,
       summary: data.summary,
       routes: data.routes,
+      ...(data.module !== undefined && { module: data.module }),
       sections,
     },
     blocks,

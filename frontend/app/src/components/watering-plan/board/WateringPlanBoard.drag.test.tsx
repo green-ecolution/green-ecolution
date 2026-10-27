@@ -13,14 +13,21 @@ vi.mock('@tanstack/react-router', () => ({
   Link: ({ children }: { children: ReactNode }) => <a>{children}</a>,
 }))
 
+vi.mock('@/modules/useActiveModules', async () => {
+  const { probeManifest } = await import('@/test/planningManifest')
+  return {
+    useActiveModules: () => ({ manifests: [probeManifest('irrigation')], isActive: () => true }),
+  }
+})
+
 const activePlan = {
   id: 'p1',
   date: new Date().toISOString(),
-  treeclusters: [],
-  stopIds: [],
+  module: 'irrigation',
+  stops: [],
   status: 'active',
   userIds: [],
-  totalWaterRequired: 0,
+  totalDemand: 0,
   transporter: { numberPlate: 'TEST-1' },
 }
 

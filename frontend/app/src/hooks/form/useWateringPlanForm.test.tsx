@@ -6,6 +6,8 @@ import { useWateringPlanForm } from './useWateringPlanForm'
 import { Toaster } from '@green-ecolution/ui'
 import { PlanStatus as WateringPlanStatus } from '@green-ecolution/backend-client'
 import useStore from '@/store/store'
+import type { WateringPlanForm } from '@/schema/wateringPlanSchema'
+import { probeManifest } from '@/test/planningManifest'
 
 vi.mock('@/api/backendApi', () => ({
   planApi: {
@@ -49,14 +51,17 @@ function createWrapper() {
 const futureDate = new Date()
 futureDate.setDate(futureDate.getDate() + 7)
 
-const defaultInitForm = {
+const defaultInitForm: WateringPlanForm = {
+  module: 'irrigation',
   date: futureDate,
   status: WateringPlanStatus.Planned,
   transporterId: 'transporter-uuid-1',
   trailerId: 'trailer-uuid-2',
   driverIds: ['550e8400-e29b-41d4-a716-446655440000'],
-  clusterIds: ['cluster-uuid-1', 'cluster-uuid-2'],
+  stopIds: ['cluster-uuid-1', 'cluster-uuid-2'],
   description: '',
+  transporterTankUsed: true,
+  startPointName: 'Hof',
 }
 
 function createMockPlan(overrides: Partial<PlanResponse> = {}): PlanResponse {
@@ -103,10 +108,7 @@ describe('useWateringPlanForm', () => {
     expect(result.current.form.getValues('driverIds')).toEqual([
       '550e8400-e29b-41d4-a716-446655440000',
     ])
-    expect(result.current.form.getValues('clusterIds')).toEqual([
-      'cluster-uuid-1',
-      'cluster-uuid-2',
-    ])
+    expect(result.current.form.getValues('stopIds')).toEqual(['cluster-uuid-1', 'cluster-uuid-2'])
   })
 
   it('returns form methods and mutation state', () => {
@@ -123,7 +125,7 @@ describe('useWateringPlanForm', () => {
     expect(result.current.error).toBeNull()
   })
 
-  it('creates an irrigation plan when mutationType is create', async () => {
+  it('creates the plan in the form module when mutationType is create', async () => {
     const mockResponse = createMockPlan()
     // eslint-disable-next-line @typescript-eslint/unbound-method
     const createMock = vi.mocked(planApi.createPlan)
@@ -135,13 +137,7 @@ describe('useWateringPlanForm', () => {
     )
 
     act(() => {
-      result.current.mutate({
-        date: futureDate.toISOString(),
-        transporterId: 'transporter-uuid-1',
-        userIds: ['550e8400-e29b-41d4-a716-446655440000'],
-        treeClusterIds: ['cluster-uuid-1', 'cluster-uuid-2'],
-        description: '',
-      })
+      result.current.mutate(defaultInitForm)
     })
 
     await waitFor(() => {
@@ -151,10 +147,12 @@ describe('useWateringPlanForm', () => {
           module: 'irrigation',
           date: futureDate.toISOString(),
           transporterId: 'transporter-uuid-1',
+          trailerId: 'trailer-uuid-2',
           userIds: ['550e8400-e29b-41d4-a716-446655440000'],
           stops: ['cluster-uuid-1', 'cluster-uuid-2'],
           transporterCapacityUsed: true,
           description: '',
+          startPointName: 'Hof',
         },
       })
     })
@@ -180,15 +178,7 @@ describe('useWateringPlanForm', () => {
     )
 
     act(() => {
-      result.current.mutate({
-        date: futureDate.toISOString(),
-        status: WateringPlanStatus.Active,
-        transporterId: 'transporter-uuid-1',
-        userIds: ['550e8400-e29b-41d4-a716-446655440000'],
-        treeClusterIds: ['cluster-uuid-1', 'cluster-uuid-2'],
-        description: '',
-        cancellationNote: '',
-      })
+      result.current.mutate(updateInitForm)
     })
 
     await waitFor(() => {
@@ -224,13 +214,7 @@ describe('useWateringPlanForm', () => {
       expect(useStore.getState().formDrafts['wateringplan-create']).toBeDefined()
 
       act(() => {
-        result.current.mutate({
-          date: futureDate.toISOString(),
-          transporterId: 'transporter-uuid-1',
-          userIds: ['550e8400-e29b-41d4-a716-446655440000'],
-          treeClusterIds: ['cluster-uuid-1', 'cluster-uuid-2'],
-          description: '',
-        })
+        result.current.mutate(defaultInitForm)
       })
 
       await waitFor(() => {
@@ -246,6 +230,34 @@ describe('useWateringPlanForm', () => {
 
       expect(result.current.navigationBlocker).toBeDefined()
       expect(result.current.navigationBlocker.message).toContain('Einsatzplan')
+    })
+
+    it('lets the dirty form open the stop picker pages of the plan module', () => {
+      const { result, rerender } = renderHook(
+        () =>
+          useWateringPlanForm('create', {
+            initForm: defaultInitForm,
+            planManifest: probeManifest('probe', { stopPickerPaths: ['/probe/pick'] }),
+          }),
+        { wrapper: createWrapper() },
+      )
+      act(() => {
+        result.current.form.setValue('description', 'Neu', { shouldDirty: true })
+      })
+      rerender()
+
+      const [{ shouldBlockFn }] = mockUseBlocker.mock.lastCall as [
+        {
+          shouldBlockFn: (args: {
+            current: { pathname: string }
+            next: { pathname: string }
+          }) => boolean
+        },
+      ]
+      const leave = (pathname: string) =>
+        shouldBlockFn({ current: { pathname: '/watering-plans/new' }, next: { pathname } })
+      expect(leave('/probe/pick')).toBe(false)
+      expect(leave('/vehicles')).toBe(true)
     })
   })
 })

@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties } from 'react'
+import { Suspense, useEffect, useState, type CSSProperties } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useBlocker } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
@@ -19,14 +19,13 @@ import {
 } from '@green-ecolution/ui'
 import type {
   AddressDto,
-  IrrigationSettingsResponse,
   OrganizationDetailResponse,
   OrganizationResponse,
   OrganizationSettingsResponse,
 } from '@/api/backendApi'
 import { organizationQueries, settingsQueries, userQueries } from '@/api/queries'
 import { useOrganizationMutations } from '@/hooks/useOrganizationMutations'
-import { useSettingsMutations } from '@/hooks/useSettingsMutations'
+import { useSettingsMutations, useSettingsSave } from '@/hooks/useSettingsMutations'
 import { useContainerWiderThan } from '@/hooks/useContainerWiderThan'
 import { TWO_PANE_MIN_WIDTH } from '../twoPaneWidth'
 import { useHasPermission } from '@/lib/auth/useHasPermission'
@@ -36,11 +35,13 @@ import ContactPersonPicker from './ContactPersonPicker'
 import CreateOrganizationDialog from './CreateOrganizationDialog'
 import OrganizationActionButtons from './OrganizationActionButtons'
 import OrganizationDetail from './OrganizationDetail'
+import OrganizationModulesSection from './OrganizationModulesSection'
 import OrganizationSettingsSection from './OrganizationSettingsSection'
 import OrganizationTree from './OrganizationTree'
 import { buildTree, nodeOf, pathTo } from './organizationTree'
 import { useOrganizationDraft } from './useOrganizationDraft'
-import { useIrrigationSettingsDraft } from './useIrrigationSettingsDraft'
+import { useModuleActivationDraft } from './useModuleActivationDraft'
+import { useModuleSettingsDrafts } from './useModuleSettingsDrafts'
 import { useOrganizationSettingsDraft } from './useOrganizationSettingsDraft'
 
 const MEMBERS_PER_PAGE = 100
@@ -80,24 +81,6 @@ const settingsFingerprint = (
       ])
     : null
 
-/** Each draft follows its own response only, so a save that moved one half
- *  cannot wipe an edit that stayed behind in the other. */
-const irrigationFingerprint = (
-  orgId: string | null,
-  irrigation: IrrigationSettingsResponse | undefined,
-): string | null =>
-  irrigation
-    ? JSON.stringify([
-        orgId,
-        irrigation.waterDemand.value,
-        irrigation.waterDemand.origin,
-        irrigation.waterDemand.ownValue ?? null,
-        irrigation.justWateredTtlSecs.value,
-        irrigation.justWateredTtlSecs.origin,
-        irrigation.justWateredTtlSecs.ownValue ?? null,
-      ])
-    : null
-
 const OrganizationPage = () => {
   const { t } = useTranslation(['settings', 'common'])
   const canCreate = useHasPermission(['organization:create'])
@@ -119,18 +102,16 @@ const OrganizationPage = () => {
 
   const { createOrganization, updateOrganization, deleteOrganization } = useOrganizationMutations()
   const { updateSettings } = useSettingsMutations()
+  const settingsSave = useSettingsSave()
   const draftState = useOrganizationDraft()
   const { draft, dirty, addressErrors, addressComplete, edit } = draftState
   const settingsDraft = useOrganizationSettingsDraft()
   const { load: loadSettings } = settingsDraft
-  const irrigationDraft = useIrrigationSettingsDraft()
-  const { load: loadIrrigation } = irrigationDraft
 
   const [selection, setSelection] = useState<string | null>(null)
   const [expandedOverride, setExpandedOverride] = useState<ReadonlySet<string> | null>(null)
   const [loadedDetail, setLoadedDetail] = useState<OrganizationDetailResponse | null>(null)
   const [loadedSettingsKey, setLoadedSettingsKey] = useState<string | null>(null)
-  const [loadedIrrigationKey, setLoadedIrrigationKey] = useState<string | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
   const [pendingSelection, setPendingSelection] = useState<string | null | undefined>(undefined)
   const [pendingClose, setPendingClose] = useState(false)
@@ -160,18 +141,27 @@ const OrganizationPage = () => {
     ...settingsQueries.byOrganization(selectedId ?? ''),
     enabled: canReadSettings && selectedId !== null,
   })
-  const { data: irrigation, error: irrigationError } = useQuery({
-    ...settingsQueries.irrigation(selectedId ?? ''),
+  const settingsKey = settingsFingerprint(selectedId, settings)
+
+  // Each module draft follows its own response only, so a save that moved one
+  // part cannot wipe an edit that stayed behind in another.
+  const moduleDraft = useModuleActivationDraft(selectedId ?? '', {
     enabled: canReadSettings && selectedId !== null,
   })
-  const settingsKey = settingsFingerprint(selectedId, settings)
-  const irrigationKey = irrigationFingerprint(selectedId, irrigation)
+  const moduleSections = useModuleSettingsDrafts(selectedId ?? '', moduleDraft.isActive)
+  const activeSections = moduleSections.filter((section) => section.active)
 
-  // An invalid settings draft builds no request, so `settingsDraft.dirty` is
-  // false for it. Typed input would then be dropped without a word on the way
-  // out, hence the `!valid` arm.
-  const settingsDirty = settingsDraft.dirty || irrigationDraft.dirty
-  const settingsValid = settingsDraft.valid && irrigationDraft.valid
+  // An invalid settings draft builds no request, so its `dirty` is false.
+  // Typed input would then be dropped without a word on the way out, hence the
+  // `!valid` arm.
+  const settingsDirty =
+    settingsDraft.dirty ||
+    moduleDraft.dirty ||
+    activeSections.some((section) => section.draft.dirty)
+  const settingsValid =
+    settingsDraft.valid &&
+    moduleDraft.valid &&
+    activeSections.every((section) => section.draft.valid)
   const unsaved = dirty || settingsDirty || !settingsValid
 
   // Master data and settings travel to different endpoints, so each is judged
@@ -210,13 +200,6 @@ const OrganizationPage = () => {
     setLoadedSettingsKey(settingsKey)
     loadSettings(settings)
   }, [settings, settingsKey, loadedSettingsKey, loadSettings])
-
-  useEffect(() => {
-    if (!irrigation || irrigationKey === loadedIrrigationKey) return
-    // eslint-disable-next-line react-hooks/set-state-in-effect, react-x/set-state-in-effect -- loads the freshly fetched irrigation settings into the draft
-    setLoadedIrrigationKey(irrigationKey)
-    loadIrrigation(irrigation)
-  }, [irrigation, irrigationKey, loadedIrrigationKey, loadIrrigation])
 
   const members = memberPage?.data ?? []
   const memberInitials = members
@@ -293,7 +276,8 @@ const OrganizationPage = () => {
   const resetDraft = () => {
     if (detail) edit(detail)
     if (settings) loadSettings(settings)
-    if (irrigation) loadIrrigation(irrigation)
+    moduleDraft.reset()
+    for (const section of moduleSections) section.draft.reset()
   }
 
   // null stands for "open the create dialog", mirroring how RolesPage encodes
@@ -348,11 +332,12 @@ const OrganizationPage = () => {
     const filled = [street, postalCode, city].filter((value) => value.length > 0)
     const address: AddressDto | null = filled.length === 3 ? { street, postalCode, city } : null
 
-    // One button, two endpoints: each part goes out only if it actually changed
-    // AND is valid on its own. Neither invalid half may hold the other back —
+    // One button, several endpoints: each part goes out only if it actually
+    // changed AND is valid on its own. No invalid part may hold another back:
     // an invalid settings draft withholds its own request (`toRequest` returns
-    // null), and incomplete master data withholds only the organization PUT.
-    // What stays behind stays in the form with its error, so nothing is lost.
+    // null, a module draft is not dirty), and incomplete master data withholds
+    // only the organization PUT. What stays behind stays in the form with its
+    // error, so nothing is lost.
     if (dirty && masterDataValid) {
       updateOrganization.mutate({
         orgId: detail.id,
@@ -363,14 +348,17 @@ const OrganizationPage = () => {
     }
 
     const settingsBody = settingsDraft.toRequest()
-    const irrigationBody = irrigationDraft.toRequest()
-    if (settingsBody || irrigationBody) {
-      updateSettings.mutate({
-        orgId: detail.id,
-        body: settingsBody ?? undefined,
-        irrigationBody: irrigationBody ?? undefined,
-      })
-    }
+    void settingsSave.save([
+      [
+        ...(settingsBody
+          ? [() => updateSettings.mutateAsync({ orgId: detail.id, body: settingsBody })]
+          : []),
+        ...activeSections.filter(({ draft }) => draft.dirty).map(({ draft }) => draft.save),
+      ],
+      // After the sections: a module switched off in the same save refuses
+      // writes to its settings once the switch is through.
+      moduleDraft.dirty ? [moduleDraft.save] : [],
+    ])
   }
 
   const create = (name: string) => {
@@ -425,32 +413,52 @@ const OrganizationPage = () => {
 
   // Without `setting:read` the section is absent by design; a failed request is
   // a different thing and must not look the same.
-  const loadError = settingsError ?? irrigationError
+  const loadError =
+    settingsError ??
+    moduleDraft.loadError ??
+    activeSections.map(({ draft }) => draft.loadError).find((error) => error != null)
+  const settingsReady =
+    settings !== undefined &&
+    settingsDraft.draft !== null &&
+    !moduleDraft.loading &&
+    activeSections.every(({ draft }) => !draft.loading)
+  const enforced = settings?.enforcedBy != null
   const settingsSection = !canReadSettings ? null : loadError ? (
     <p role="alert" className="text-sm text-dark-600">
       {settingsLoadErrorMessage(loadError, t)}
     </p>
-  ) : settings && irrigation && settingsDraft.draft && irrigationDraft.draft ? (
-    <OrganizationSettingsSection
-      settings={settings}
-      irrigation={irrigation}
-      draft={{ ...settingsDraft.draft, ...irrigationDraft.draft }}
-      errors={{ ...settingsDraft.errors, ...irrigationDraft.errors }}
-      canUpdate={canUpdateSettings}
-      enforcedByName={nameOfOrg(settings.enforcedBy?.id)}
-      sourceNames={{
-        waterDemand: nameOfOrg(irrigation.waterDemand.source?.id),
-        justWateredTtlHours: nameOfOrg(irrigation.justWateredTtlSecs.source?.id),
-        mapView: nameOfOrg(settings.mapView.source?.id),
-      }}
-      onOwnChange={irrigationDraft.setOwn}
-      onTextChange={irrigationDraft.setText}
-      onMapViewOwnChange={settingsDraft.setMapViewOwn}
-      onMapViewChange={settingsDraft.setMapView}
-      onMapViewRestrictedChange={settingsDraft.setMapViewRestricted}
-      onMapViewZoomChange={settingsDraft.setMapViewZoom}
-      onDescendantsMayOverrideChange={settingsDraft.setDescendantsMayOverride}
-    />
+  ) : settings && settingsDraft.draft && settingsReady ? (
+    <>
+      <OrganizationSettingsSection
+        settings={settings}
+        draft={settingsDraft.draft}
+        errors={settingsDraft.errors}
+        canUpdate={canUpdateSettings}
+        enforcedByName={nameOfOrg(settings.enforcedBy?.id)}
+        sourceNames={{ mapView: nameOfOrg(settings.mapView.source?.id) }}
+        moduleSections={activeSections.map(({ key, draft, Section }) => (
+          // Module sections load lazily; the core rows must not wait for them.
+          <Suspense key={key} fallback={null}>
+            <Section
+              draft={draft}
+              locked={enforced || !canUpdateSettings}
+              enforced={enforced}
+              organizationName={nameOfOrg}
+            />
+          </Suspense>
+        ))}
+        onMapViewOwnChange={settingsDraft.setMapViewOwn}
+        onMapViewChange={settingsDraft.setMapView}
+        onMapViewRestrictedChange={settingsDraft.setMapViewRestricted}
+        onMapViewZoomChange={settingsDraft.setMapViewZoom}
+        onDescendantsMayOverrideChange={settingsDraft.setDescendantsMayOverride}
+      />
+      <OrganizationModulesSection
+        draft={moduleDraft}
+        canUpdate={canUpdateSettings}
+        organizationName={nameOfOrg}
+      />
+    </>
   ) : null
 
   const renderDetail = (renderActionBar: boolean) => {
@@ -480,7 +488,7 @@ const OrganizationPage = () => {
           canReadUsers={canReadUsers}
           memberInitials={memberInitials}
           settingsSection={settingsSection}
-          saving={updateOrganization.isPending || updateSettings.isPending}
+          saving={updateOrganization.isPending || settingsSave.pending}
           nameError={nameConflictMessage(updateOrganization.error, t)}
           contactPersonError={contactPersonMessage(updateOrganization.error, t)}
           onNameChange={draftState.setName}
@@ -526,7 +534,7 @@ const OrganizationPage = () => {
                 {draft && unsaved && (
                   <DrawerFooter className="flex-col-reverse gap-2 border-t border-dark-200 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
                     <OrganizationActionButtons
-                      saving={updateOrganization.isPending || updateSettings.isPending}
+                      saving={updateOrganization.isPending || settingsSave.pending}
                       canSave={canSave}
                       onSave={save}
                       onCancel={resetDraft}

@@ -18,7 +18,7 @@ interface TestTreeForm {
 interface TestWateringPlanForm {
   date?: string
   transporterId?: number
-  clusterIds?: number[]
+  stopIds?: number[]
 }
 
 const getDraft = <T>(key: FormDraftKey): FormDraftState<T> | undefined => {
@@ -47,6 +47,18 @@ describe('formDraftSlice', () => {
       const draft = useStore.getState().formDrafts['cluster-create']
       expect(draft?.data).toEqual({ name: 'Second' })
       expect(draft?.hasChanges).toBe(false)
+    })
+  })
+
+  describe('module-owned form types', () => {
+    it('stores drafts under a key the core does not know', () => {
+      useStore.getState().setFormDraft('waste-bin-create', { label: 'Bin' })
+      useStore.getState().markFormDraftChanged('waste-bin-create')
+
+      expect(getDraft<{ label: string }>('waste-bin-create')).toEqual({
+        data: { label: 'Bin' },
+        hasChanges: true,
+      })
     })
   })
 
@@ -204,16 +216,16 @@ describe('Form → Map → Form roundtrip (Bug Prevention)', () => {
       expect(draft?.hasChanges).toBe(true)
     })
 
-    it('should save clusterIds when no prior draft exists', () => {
+    it('should save stopIds when no prior draft exists', () => {
       expect(useStore.getState().formDrafts['wateringplan-update']).toBeUndefined()
 
       useStore.getState().updateFormDraft<TestWateringPlanForm>('wateringplan-update', (prev) => ({
         ...(prev ?? {}),
-        clusterIds: [10, 20, 30],
+        stopIds: [10, 20, 30],
       }))
 
       const draft = getDraft<TestWateringPlanForm>('wateringplan-update')
-      expect(draft?.data?.clusterIds).toEqual([10, 20, 30])
+      expect(draft?.data?.stopIds).toEqual([10, 20, 30])
     })
 
     it('should save coordinates when no prior draft exists', () => {
@@ -290,21 +302,21 @@ describe('Form → Map → Form roundtrip (Bug Prevention)', () => {
     expect(draft?.hasChanges).toBe(true)
   })
 
-  it('WateringPlan: clusterIds should be preserved after map selection', () => {
+  it('WateringPlan: stopIds should be preserved after map selection', () => {
     useStore.getState().setFormDraft('wateringplan-create', {
       date: new Date().toISOString(),
       transporterId: 1,
-      clusterIds: [],
+      stopIds: [],
     })
 
     useStore.getState().updateFormDraft<TestWateringPlanForm>('wateringplan-create', (prev) => ({
       ...prev,
-      clusterIds: [10, 20, 30],
+      stopIds: [10, 20, 30],
     }))
     useStore.getState().markFormDraftChanged('wateringplan-create')
 
     const draft = getDraft<TestWateringPlanForm>('wateringplan-create')
-    expect(draft?.data?.clusterIds).toEqual([10, 20, 30])
+    expect(draft?.data?.stopIds).toEqual([10, 20, 30])
     expect(draft?.data?.transporterId).toBe(1)
     expect(draft?.hasChanges).toBe(true)
   })

@@ -3,6 +3,8 @@ import { render, screen, userEvent, waitFor } from '@/test/utils'
 import { UNRESTRICTED, type Permissions } from '@/lib/auth/permissions'
 import type { Role } from '@/api/backendApi'
 import type { CreateRoleVariables } from '@/hooks/useRoleMutations'
+import type { ModuleManifest } from '@/modules/types'
+import { irrigationManifest } from '@green-ecolution/module-irrigation'
 
 const templates: Role[] = [
   {
@@ -32,6 +34,11 @@ const orgRoles: Role[] = [
     permissions: ['watering_plan:read'],
   },
 ]
+
+const activeManifests = vi.fn((): ModuleManifest[] => [irrigationManifest])
+vi.mock('@/modules/useActiveModules', () => ({
+  useActiveModules: () => ({ manifests: activeManifests(), isActive: () => true }),
+}))
 
 const permissions = vi.fn((): Permissions => UNRESTRICTED)
 vi.mock('@/lib/auth/usePermissions', () => ({ usePermissions: () => permissions() }))
@@ -83,7 +90,10 @@ vi.mock('@tanstack/react-query', async () => {
 const { default: RolesPage } = await import('./RolesPage')
 
 describe('RolesPage', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => {
+    vi.clearAllMocks()
+    activeManifests.mockReturnValue([irrigationManifest])
+  })
 
   it('lists the system role and hides the untouched copy of it', () => {
     render(<RolesPage />)
@@ -127,6 +137,23 @@ describe('RolesPage', () => {
 
     await waitFor(() => expect(updateMutate).toHaveBeenCalled())
     expect(updateMutate.mock.calls[0][0]).toMatchObject({ roleId: 'r1' })
+  })
+
+  it('hides the rows of an inactive module and still saves its stored permissions', async () => {
+    activeManifests.mockReturnValue([])
+    render(<RolesPage />)
+    await userEvent.click(screen.getByRole('button', { name: /Bezirksleiter Nord/ }))
+
+    expect(screen.getByText('Fahrzeuge')).toBeInTheDocument()
+    expect(screen.queryByText('Einsatzpläne')).not.toBeInTheDocument()
+    expect(screen.queryByText('Bäume')).not.toBeInTheDocument()
+
+    await userEvent.type(screen.getByRole('textbox', { name: 'Name der Rolle' }), ' Ost')
+    await userEvent.click(screen.getByRole('button', { name: 'Speichern' }))
+
+    await waitFor(() => expect(updateMutate).toHaveBeenCalled())
+    const vars = updateMutate.mock.calls[0][0] as { permissions: string[] }
+    expect([...vars.permissions]).toEqual(['watering_plan:read'])
   })
 
   it('hides the create button without role:create', () => {

@@ -1,0 +1,139 @@
+import { Ref, Suspense, useEffect, useMemo, useState } from 'react'
+import FilterButton from '@/components/general/buttons/FilterButton'
+import {
+  Button,
+  Dialog as DialogRoot,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  Loading,
+} from '@green-ecolution/ui'
+import { MoveRight, X } from 'lucide-react'
+import { useNavigate, useSearch } from '@tanstack/react-router'
+import { useTranslation } from 'react-i18next'
+import useStore from '../../../store/useIrrigationFilterStore'
+import { filtersFromSearch, searchFromFilters } from '../../../lib/filterSearchSchema'
+
+interface DialogProps {
+  headline: string
+  fullUrlPath: string
+  children?: React.ReactNode
+  isOnMap?: boolean
+  onToggleOpen?: (isOpen: boolean) => void
+  ref?: Ref<HTMLDivElement>
+}
+
+const Dialog = ({
+  headline,
+  fullUrlPath,
+  children,
+  isOnMap = false,
+  onToggleOpen,
+}: DialogProps) => {
+  const { t } = useTranslation('common')
+  const [isOpen, setIsOpen] = useState(false)
+  const navigate = useNavigate()
+  const search = useSearch({ strict: false })
+  const seedFilterDraft = useStore((s) => s.seedFilterDraft)
+  const resetFilterDraft = useStore((s) => s.resetFilterDraft)
+
+  const appliedFilters = useMemo(() => filtersFromSearch(search), [search])
+
+  const handleSubmit = () => {
+    setIsOpen(false)
+    navigate({
+      to: fullUrlPath,
+      search: (prev: Record<string, unknown>) => ({
+        ...prev,
+        ...searchFromFilters(useStore.getState().filterDraft),
+        page: undefined,
+      }),
+    }).catch((error) => console.error('Navigation failed:', error))
+  }
+
+  const handleReset = () => {
+    resetFilterDraft()
+    setIsOpen(false)
+    navigate({
+      to: fullUrlPath,
+      search: (prev: Record<string, unknown>) => ({
+        ...prev,
+        wateringStatuses: undefined,
+        regions: undefined,
+        soil: undefined,
+        hasCluster: undefined,
+        plantingYears: undefined,
+        page: undefined,
+      }),
+    }).catch((error) => console.error('Navigation failed:', error))
+  }
+
+  const handleClose = () => {
+    setIsOpen(false)
+  }
+
+  const handleOpen = () => {
+    seedFilterDraft(appliedFilters)
+    setIsOpen(true)
+  }
+
+  const count = useMemo(
+    () =>
+      appliedFilters.statusTags.length +
+      appliedFilters.regionTags.length +
+      appliedFilters.soilTags.length +
+      (appliedFilters.hasCluster !== undefined ? 1 : 0) +
+      appliedFilters.plantingYears.length,
+    [appliedFilters],
+  )
+
+  useEffect(() => {
+    if (!onToggleOpen) return
+    onToggleOpen(isOpen)
+  }, [isOpen, onToggleOpen])
+
+  return (
+    <div className="font-nunito-sans text-base">
+      <FilterButton
+        activeCount={count}
+        ariaLabel={headline}
+        isOnMap={isOnMap}
+        onClick={() => {
+          if (isOpen) {
+            handleClose()
+          } else {
+            handleOpen()
+          }
+        }}
+      />
+
+      <DialogRoot open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+        <DialogContent className="max-h-[80dvh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{headline}</DialogTitle>
+          </DialogHeader>
+          <Suspense
+            fallback={
+              <Loading className="py-8 justify-center" label={t('filter.dialog.loading')} />
+            }
+          >
+            {children}
+          </Suspense>
+
+          <div className="flex flex-wrap gap-5 mt-6">
+            <Button type="button" onClick={handleSubmit}>
+              {t('filter.dialog.apply')}
+              <MoveRight className="icon-arrow-animate" />
+            </Button>
+            <Button variant="outline" onClick={handleReset}>
+              {t('filter.dialog.reset')}
+              <X />
+            </Button>
+          </div>
+        </DialogContent>
+      </DialogRoot>
+    </div>
+  )
+}
+
+export default Dialog

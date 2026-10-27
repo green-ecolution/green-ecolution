@@ -1,0 +1,490 @@
+{
+  "label": "Bewässerung",
+  "nav": {
+    "clusters": "Bewässerungsgruppen",
+    "trees": "Bäume",
+    "evaluations": "Auswertung"
+  },
+  "dashboard": {
+    "clusters": {
+      "headline": "Auflistung der Bewässerungsgruppen",
+      "description": "Listenansicht aller gruppierten Bäume, die mit Sensoren ausgestattet sind.",
+      "linkLabel": "Zu den Bewässerungsgruppen"
+    },
+    "mapCardDescription": "Alle Bäume in Flensburg im Zuständigkeitsbereich des TBZ.",
+    "plansCardDescription": "Planung eines neuen Einsatzplans zur Bewässerung von Bewässerungsgruppen"
+  },
+  "statistics": {
+    "tree": {
+      "label": "Bäume gesamt",
+      "chartLabel": "Bäume"
+    },
+    "cluster": {
+      "label": "Bewässerungsgruppen",
+      "chartLabel": "Gruppen",
+      "subtitle": "Verwaltete Bewässerungsgruppen"
+    },
+    "hero": {
+      "viewAllGroupsLink": "Alle Bewässerungsgruppen ansehen",
+      "managedInGroups": "in {count} Bewässerungsgruppen verwaltet"
+    }
+  },
+  "map": {
+    "toolbar": {
+      "searchPlaceholder": "Bewässerungsgruppe…",
+      "filterAndActionsAriaLabel": "Filter und Aktionen",
+      "filterDialogHeadline": "Bewässerungsgruppen filtern",
+      "createGroup": "Gruppe anlegen",
+      "katasterSettingsAriaLabel": "Kataster-Einstellungen",
+      "katasterSettingsTitle": "Weitere Kataster-Einstellungen",
+      "katasterSettingsDescription": "In dieser Ansicht können weitere Einstellungen vorgenommen werden. Es können zum Beispiel manuell Bäume zum Kataster hinzugefügt werden.",
+      "addTreeManually": "Neuen Baum manuell hinzufügen"
+    },
+    "statusLegend": {
+      "regionAriaLabel": "Legende Bewässerungsstatus",
+      "heading": "Bewässerungsstatus",
+      "show": "Legende anzeigen",
+      "hide": "Legende ausblenden"
+    },
+    "cluster": {
+      "editAriaLabel": "Gruppe bearbeiten",
+      "fallbackTitle": "Bewässerungsgruppe",
+      "closePanelAriaLabel": "Seitenansicht schließen",
+      "loadError": "Die Bewässerungsgruppe konnte nicht geladen werden.",
+      "loadingLabel": "Lade Bewässerungsgruppe...",
+      "openDashboard": "Zum Dashboard",
+      "wateringStatusLabel": "Bewässerungszustand",
+      "soilTemperatureLabel": "Bodentemperatur",
+      "lastMeasurementLabel": "Letzte Messung",
+      "lastWateredLabel": "Letzte Bewässerung",
+      "noData": "Keine Daten",
+      "treeCount_one": "{count} Baum",
+      "treeCount_other": "{count} Bäume",
+      "treesInGroupHeading": "Bäume in dieser Gruppe · {count}",
+      "sensorTreeBadge": "Sensor-Baum",
+      "noSensor": "kein Sensor",
+      "treeIdLabel": "· ID {number}",
+      "remainingTrees_one": "+ {count} weiterer Baum · alle anzeigen",
+      "remainingTrees_other": "+ {count} weitere Bäume · alle anzeigen"
+    },
+    "tree": {
+      "newTitle": "Neuen Baum erfassen",
+      "locationSelected": "Standort gewählt",
+      "clickToSetLocationHint": "Klicke auf die Karte, um den Standort des neuen Baums zu setzen. Den Marker kannst du danach noch verschieben.",
+      "editTitle": "Baum bearbeiten",
+      "dragMarkerHint": "Ziehe den Marker auf der Karte, um den Standort des Baums anzupassen.",
+      "deleteButton": "Baum löschen",
+      "deleteConfirmTitle": "Baum löschen?",
+      "deleteConfirmDescription": "Möchtest du diesen Baum wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
+      "deleteSuccess": "Der Baum wurde gelöscht.",
+      "deleteError": "Der Baum konnte nicht gelöscht werden.",
+      "entityName": "Baum",
+      "backToList": "Zur Baumliste"
+    },
+    "clusterForm": {
+      "newTitle": "Neue Bewässerungsgruppe",
+      "editTitle": "Bewässerungsgruppe bearbeiten",
+      "clickTreesHint": "Klicke Bäume auf der Karte an, um sie der Gruppe hinzuzufügen oder zu entfernen. Blass dargestellte Bäume gehören einer anderen Organisation.",
+      "emptyHint": "Klicke einen Baum auf der Karte an, um ihn zur Liste hinzuzufügen.",
+      "blockedReasonCreate": "In dieser Organisation darfst du keine Gruppe anlegen.",
+      "blockedReasonEdit": "Die Organisation einer bestehenden Gruppe lässt sich hier nicht wechseln.",
+      "entityName": "Bewässerungsgruppe",
+      "backToList": "Zur Gruppenliste"
+    },
+    "selectCluster": {
+      "title": "Bewässerungsgruppen auswählen",
+      "hint": "Klicke die Gruppen auf der Karte an, die in diesen Bewässerungsplan aufgenommen werden sollen.",
+      "entitiesLabel": "Bewässerungsgruppen",
+      "emptyHint": "Klicke eine Gruppe auf der Karte an, um sie hinzuzufügen.",
+      "requiredError": "Bitte wähle mindestens eine Bewässerungsgruppe aus.",
+      "applyButton": "Übernehmen",
+      "leaveConfirmMessage": "Möchtest du die Seite wirklich verlassen? Deine Eingaben gehen verloren, wenn du jetzt gehst.",
+      "noVehicleWarning": "Um eine Route generieren zu können, muss ein Fahrzeug ausgewählt werden.",
+      "insufficientCapacityWarning": "Ausgegraute Bewässerungsgruppen sind ausgeschlossen, da das Fahrzeug nicht genügend Wasserkapazität hat."
+    }
+  },
+  "planning": {
+    "stopsLabel": "Bewässerungsgruppen",
+    "stopCountLabel": "Anzahl der Bewässerungsgruppen",
+    "stopCount_one": "{count} Gruppe",
+    "stopCount_other": "{count} Gruppen",
+    "stopList": {
+      "emptyMessage": "Es wurden leider keine Bewässerungsgruppen gefunden."
+    },
+    "summary": {
+      "consumedWaterLabel": "Verbrauchtes Wasser",
+      "consumedWaterValue": "{value} Liter",
+      "consumedWaterDescription_one": "bei {count} Bewässerungsgruppe",
+      "consumedWaterDescription_other": "bei {count} Bewässerungsgruppen"
+    },
+    "outcome": {
+      "waterPerClusterLegend": "Wasservergabe pro Bewässerungsgruppe:",
+      "defaultsHint": "Die Standardwerte ergeben sich aus 80 Litern pro Baum einer Bewässerungsgruppe.",
+      "treeCount_one": "{count} Baum",
+      "treeCount_other": "{count} Bäume",
+      "litersForClusterLabel": "Liter für {name}",
+      "litersUnitLabel": "Liter"
+    },
+    "stopPicker": {
+      "label": "Bewässerungsgruppen",
+      "requiredError": "Wähle mindestens eine Bewässerungsgruppe aus."
+    },
+    "suggestions": {
+      "ariaLabel": "Vorschläge",
+      "title": "Vorschläge",
+      "loadError": "Die Vorschläge konnten nicht geladen werden.",
+      "emptyMessage": "Aktuell sind keine Bewässerungsgruppen sehr trocken.",
+      "bundleButtonLabel": "Zu Einsatzplan bündeln"
+    },
+    "suggestionCard": {
+      "selectAriaLabel": "{name} für Einsatzplan auswählen",
+      "treeCount_one": "{count} Baum",
+      "treeCount_other": "{count} Bäume"
+    },
+    "plansLabel": "Bewässerungspläne",
+    "texts": {
+      "listDescription": "Verfolge geplante, laufende und abgeschlossene Bewässerungsfahrten.",
+      "listDescriptionCanModify": "Plane, starte und dokumentiere Bewässerungsfahrten. Ziehe einen Einsatzplan in die nächste Spalte, um seinen Status zu ändern.",
+      "createDescription": "Ein Einsatzplan bildet eine Bewässerungsroute ab, indem ihr ein Fahrzeug, einen Anhänger, Mitarbeitende und anzufahrende Bewässerungsgruppen zugewiesen werden können. Ein neu erstellter Einsatzplan wird automatisch als »geplant« eingestuft. Anhand der Bewässerungsgruppen und der Anzahl der Bäume wird berechnet, wie viel Wasser zum Bewässern benötigt wird. Der Startpunkt des Einsatzplans kann aus den konfigurierten Depotstandorten ausgewählt werden.",
+      "updateDescription": "Der Einsatzplan kann in dieser Ansicht editiert werden, falls bestimmte Daten nicht mehr stimmen oder z. B. bestimmte Informationen zusätzlich hinterlegt werden müssen. Ein Einsatzplan erfordert immer mindestens eine Bewässerungsgruppe, die angefahren werden soll und mindestens eine:n Mitarbeiter:in, die den Einsatzplan durchführen soll. Zudem muss ein Fahrzeug hinterlegt werden.",
+      "statusUpdateDescription": "Der Status eines Einsatzplans beschreibt, ob er beispielsweise aktiv ausgeführt wird, beendet ist oder abgebrochen wurde. Diese Angabe hilft dabei, die erstellten Einsatzpläne zu kategorisieren und eine Auswertung anzulegen. Sobald ein Einsatzplan beendet wird, kann zudem angegeben werden, mit wie viel Wasser die zugehörigen Bewässerungsgruppen bewässert wurden.",
+      "routeErrorAlert": "Die Route für diesen Einsatzplan konnte nicht berechnet werden. Bitte überprüfe, ob das ausgewählte Fahrzeug über ausreichend Wasserkapazität für die gewählten Bewässerungsgruppen verfügt.",
+      "routePreviewAriaLabel": "Karte mit der Route und den Bewässerungsgruppen des Plans"
+    }
+  },
+  "sensor": {
+    "target": {
+      "tree": "Baum"
+    },
+    "list": {
+      "filterCluster": "Gruppe",
+      "clusterUnknown": "Unbekannte Gruppe"
+    },
+    "placement": {
+      "clusterLabel": "Bewässerungsgruppe",
+      "treeLabel": "Sitzt am Baum",
+      "treeCount_one": "{count} Baum",
+      "treeCount_other": "{count} Bäume",
+      "noClusterDescription": "Der Baum gehört zu keiner Bewässerungsgruppe.",
+      "mapAriaLabel": "Karte mit der Sensor-Position, nahegelegenen Bäumen und Bewässerungsgruppen"
+    },
+    "linkedTree": {
+      "loadFailedTitle": "Baum nicht geladen",
+      "loadFailedDescription": "Der verknüpfte Baum (#{id}) konnte nicht abgerufen werden.",
+      "treeNumberLabel": "Baum-Nr. {number}",
+      "unknownSpecies": "Unbekannte Art",
+      "plantedLabel": "Gepflanzt {year}"
+    },
+    "treeAssignDialog": {
+      "activate": {
+        "title": "Sensor aktivieren und Baum zuweisen",
+        "description": "Suche den Baum nach Nummer oder Art und aktiviere den Sensor an diesem Baum.",
+        "confirm": "Aktivieren"
+      },
+      "reassign": {
+        "description": "Wähle den neuen Baum, dem dieser Sensor zugeordnet werden soll.",
+        "confirm": "Baum zuweisen"
+      },
+      "showAllTreesLabel": "Alle Bäume anzeigen",
+      "mapAriaLabel": "Karte zur Baumauswahl",
+      "savingButton": "Wird gespeichert …"
+    },
+    "treeSearch": {
+      "inputPlaceholder": "Baumnummer oder Baumart suchen…",
+      "clearAriaLabel": "Leeren",
+      "idleHint": "Tippe Baumnummer oder Baumart ein.",
+      "loadingLabel": "Bäume werden gesucht…",
+      "failedTitle": "Suche fehlgeschlagen",
+      "failedDescription": "Die Baumsuche ist fehlgeschlagen.",
+      "noResultsForQuery": "Keine Bäume gefunden für „{query}“.",
+      "noResultsHint": "Prüfe Schreibweise oder Baumnummer.",
+      "noTreesAvailable": "Es sind keine Bäume vorhanden.",
+      "resultCountMatches": "{shown} von {total} Treffern",
+      "resultCountTrees": "{shown} von {total} Bäumen",
+      "selectResultAriaLabel": "Baum aus Suchergebnis wählen",
+      "loadingMoreLabel": "Weitere Bäume werden geladen…",
+      "sensorAssignedBadge": "Sensor zugeordnet"
+    },
+    "nearestTreeList": {
+      "title": "Bäume in der Nähe",
+      "selectAriaLabel": "Baum auswählen",
+      "unassignedGroup": "Nicht zugeordnet"
+    },
+    "treePickerSheet": {
+      "title": "Anderen Baum auswählen",
+      "description": "Suche nach Baumnummer oder Baumart, wenn der richtige Baum nicht in der Vorschlagsliste ist."
+    },
+    "nearestTreeMap": {
+      "ariaLabel": "Karte mit Sensor-Position und nahegelegenen Bäumen"
+    },
+    "soilMoistureChart": {
+      "title": "Bodenfeuchte-Verlauf",
+      "subtitleHour": "Stundenmittel · Band = Min–Max · Gestrichelt = kritische Schwelle je Tiefe",
+      "subtitleDay": "Tagesmittel · Band = Min–Max · Gestrichelt = kritische Schwelle je Tiefe",
+      "depthSeriesLabel": "{depth} cm Tiefe",
+      "loadingLabel": "Messwerte werden geladen",
+      "tooFewDataPoints": "Zu wenige Datenpunkte im gewählten Zeitraum.",
+      "wateredOnLabel": "Bewässert am {date}",
+      "discardedLabel": "Messwert verworfen"
+    },
+    "wizard": {
+      "treeLabel": "Baum {number}",
+      "tree": {
+        "header": {
+          "title": "Baum zuordnen",
+          "description": "Wähle den Baum aus, an dem der Sensor angebracht wird. Der Vorschlag basiert auf deinem aktuellen Standort. Gespeichert wird am Sensor nur die Baum-Zuordnung, nicht deine Koordinaten."
+        },
+        "relocateButton": "Standort aktualisieren",
+        "locatingNotice": "Standort wird ermittelt …",
+        "loadingNearby": "Bäume in der Nähe werden gesucht…",
+        "searchFailed": {
+          "title": "Baumsuche fehlgeschlagen",
+          "description": "Die Suche nach Bäumen in der Nähe ist fehlgeschlagen."
+        },
+        "noNearbyTrees": "Es wurden keine Bäume in der Nähe gefunden. Wähle den Baum manuell aus.",
+        "selectedTreeLabel": "Ausgewählter Baum"
+      }
+    },
+    "treeTexts": {
+      "activateAction": "Aktivieren & Baum zuweisen",
+      "reassignAction": "Anderen Baum zuweisen",
+      "removeLinkAction": "Baumverknüpfung aufheben",
+      "removeConfirmTitle": "Baumverknüpfung aufheben und Sensor zurücksetzen?",
+      "removeConfirmDescription": "Die Verknüpfung zum Baum wird aufgehoben und der Sensor auf den Zustand „{status}“ zurückgesetzt. Anschließend kann er wie ein neuer Sensor an einem anderen Baum aktiviert werden.",
+      "activateSuccess": "Sensor aktiviert und Baum zugewiesen.",
+      "reassignSuccess": "Baum gewechselt.",
+      "scanDescription": "Halte den QR-Code auf der Sensoreinheit ruhig in den Scan-Rahmen. Wir identifizieren damit den Sensor eindeutig, bevor du ihn im nächsten Schritt einem Baum zuordnest. Bei schlechter Beleuchtung hilft es, den Code etwas näher heranzuhalten.",
+      "alreadyLinkedDescription": "Dieser Sensor ist bereits aktiviert und einem Baum zugeordnet.",
+      "listSearchPlaceholder": "EUI, Modell oder Gruppe suchen",
+      "activateConflict": "Sensor ist bereits einem Baum zugeordnet.",
+      "reassignNotFound": "Sensor oder Baum existiert nicht (mehr).",
+      "reassignConflict": "Der Baum ist bereits einem anderen Sensor zugeordnet.",
+      "reassignFailed": "Baumwechsel fehlgeschlagen. Bitte erneut versuchen."
+    }
+  },
+  "settings": {
+    "waterDemandLabel": "Wasserbedarf je Baum",
+    "waterDemandHint": "Geht in die Bedarfsrechnung jeder Bewässerungsgruppe ein und bestimmt damit, wie viele Gruppen eine Tourenplanung in eine Fahrt legt. Bereits geplante Einsätze bleiben unverändert.",
+    "waterDemandUnit": "Liter",
+    "justWateredTtlLabel": "Nachwirkzeit frisch gegossen",
+    "justWateredTtlHint": "So lange gilt ein Baum nach einem abgeschlossenen Einsatzplan als soeben bewässert, bevor er auf Unbekannt zurückfällt.",
+    "justWateredTtlUnit": "Stunden",
+    "liters_one": "{count} Liter",
+    "liters_other": "{count} Liter",
+    "hours_one": "{count} Stunde",
+    "hours_other": "{count} Stunden",
+    "permission": {
+      "resource": {
+        "tree": {
+          "label": "Bäume",
+          "pluralNoun": "Bäume",
+          "singular": "Baum",
+          "description": "Bäume & Standorte",
+          "hint": {
+            "read": "Baumliste und Details einsehen",
+            "create": "Neue Bäume erfassen",
+            "update": "Stammdaten und Standort ändern",
+            "delete": "Bäume dauerhaft entfernen"
+          }
+        },
+        "tree_cluster": {
+          "label": "Bewässerungsgruppen",
+          "pluralNoun": "Bewässerungsgruppen",
+          "singular": "Bewässerungsgruppe",
+          "description": "Gruppen & Schwellen",
+          "hint": {
+            "read": "Gruppen und Bewässerungsstatus einsehen",
+            "create": "Neue Bewässerungsgruppen anlegen",
+            "update": "Zuordnung, Name und Schwellen ändern",
+            "delete": "Gruppen auflösen"
+          }
+        },
+        "watering_plan": {
+          "label": "Einsatzpläne",
+          "pluralNoun": "Einsatzpläne",
+          "singular": "Einsatzplan",
+          "description": "Planung & Touren",
+          "hint": {
+            "read": "Geplante und abgeschlossene Einsatzpläne einsehen",
+            "create": "Neuen Einsatzplan anlegen (setzt das Recht Startpunkte ansehen voraus)",
+            "update": "Route, Zeit, Umfang und Status ändern",
+            "delete": "Einsatzplan dauerhaft entfernen"
+          }
+        }
+      }
+    }
+  },
+  "enums": {
+    "wateringStatus": {
+      "good": {
+        "label": "In Ordnung",
+        "description": "Die Bewässerung ist ausreichend, keine Maßnahmen erforderlich."
+      },
+      "moderate": {
+        "label": "Leicht trocken",
+        "description": "Die Bäume sind leicht trocken und benötigen etwas Wasser."
+      },
+      "bad": {
+        "label": "Sehr trocken",
+        "description": "Die Bäume benötigen dringend Wasser."
+      },
+      "just_watered": {
+        "label": "Soeben bewässert",
+        "description": "Die Bäume wurden vor kurzem bewässert."
+      },
+      "unknown": {
+        "label": "Unbekannt",
+        "description": "Der Bewässerungsstatus ist unbekannt."
+      }
+    },
+    "soilCondition": {
+      "groups": {
+        "sands": "Sande",
+        "silts": "Schluffe",
+        "loams": "Lehme",
+        "clays": "Tone",
+        "pureSands": "Reinsande",
+        "other": "Sonstige"
+      },
+      "Ss": {
+        "label": "Ss – Reinsand"
+      },
+      "Su2": {
+        "label": "Su2 – schwach schluffiger Sand"
+      },
+      "Su3": {
+        "label": "Su3 – schluffiger Sand"
+      },
+      "Su4": {
+        "label": "Su4 – stark schluffiger Sand"
+      },
+      "Sl2": {
+        "label": "Sl2 – schwach lehmiger Sand"
+      },
+      "Sl3": {
+        "label": "Sl3 – lehmiger Sand"
+      },
+      "Sl4": {
+        "label": "Sl4 – stark lehmiger Sand"
+      },
+      "Slu": {
+        "label": "Slu – schluffig-lehmiger Sand"
+      },
+      "St2": {
+        "label": "St2 – schwach toniger Sand"
+      },
+      "St3": {
+        "label": "St3 – toniger Sand"
+      },
+      "Uu": {
+        "label": "Uu – reiner Schluff"
+      },
+      "Us": {
+        "label": "Us – sandiger Schluff"
+      },
+      "Uls": {
+        "label": "Uls – sandig-lehmiger Schluff"
+      },
+      "Ut2": {
+        "label": "Ut2 – schwach toniger Schluff"
+      },
+      "Ut3": {
+        "label": "Ut3 – toniger Schluff"
+      },
+      "Ut4": {
+        "label": "Ut4 – stark toniger Schluff"
+      },
+      "Ls2": {
+        "label": "Ls2 – schwach sandiger Lehm"
+      },
+      "Ls3": {
+        "label": "Ls3 – sandiger Lehm"
+      },
+      "Ls4": {
+        "label": "Ls4 – stark sandiger Lehm"
+      },
+      "Lt2": {
+        "label": "Lt2 – schwach toniger Lehm"
+      },
+      "Lt3": {
+        "label": "Lt3 – toniger Lehm"
+      },
+      "Lts": {
+        "label": "Lts – sandig-toniger Lehm"
+      },
+      "Lu": {
+        "label": "Lu – schluffiger Lehm"
+      },
+      "Tt": {
+        "label": "Tt – reiner Ton"
+      },
+      "Tu2": {
+        "label": "Tu2 – schwach schluffiger Ton"
+      },
+      "Tu3": {
+        "label": "Tu3 – schluffiger Ton"
+      },
+      "Tu4": {
+        "label": "Tu4 – stark schluffiger Ton"
+      },
+      "Ts2": {
+        "label": "Ts2 – schwach sandiger Ton"
+      },
+      "Ts3": {
+        "label": "Ts3 – sandiger Ton"
+      },
+      "Ts4": {
+        "label": "Ts4 – stark sandiger Ton"
+      },
+      "Tl": {
+        "label": "Tl – lehmiger Ton"
+      },
+      "fS": {
+        "label": "fS – Feinsand"
+      },
+      "mS": {
+        "label": "mS – Mittelsand"
+      },
+      "gS": {
+        "label": "gS – Grobsand"
+      },
+      "unknown": {
+        "label": "Unbekannt"
+      }
+    }
+  },
+  "filter": {
+    "status": {
+      "legend": "Zustand der Bewässerung:",
+      "placeholder": "Alle Zustände"
+    }
+  },
+  "crumb": {
+    "trees": "Bäume",
+    "clusters": "Bewässerungsgruppen",
+    "treeLocationNew": "Baum Standort erfassen",
+    "routeSelect": "Route festlegen",
+    "evaluations": "Auswertungen"
+  },
+  "errors": {
+    "code": {
+      "organization_mismatch": {
+        "trees_vs_cluster": "Die ausgewählten Bäume gehören zu einer anderen Organisation als die Bewässerungsgruppe.",
+        "cluster_vs_tree": "Die ausgewählte Bewässerungsgruppe gehört zu einer anderen Organisation als der Baum.",
+        "stops_vs_plan": "Die ausgewählten Bewässerungsgruppen liegen außerhalb der Organisation des Einsatzplans."
+      },
+      "conflict": {
+        "tree_in_cluster": "Der Baum gehört zu einer Bewässerungsgruppe und muss erst daraus entfernt werden."
+      },
+      "plan": {
+        "outcome_missing": "Für mindestens eine Bewässerungsgruppe fehlt noch die verbrauchte Wassermenge.",
+        "outcome_duplicate": "Für eine Bewässerungsgruppe wurde die Wassermenge mehrfach angegeben.",
+        "outcome_unknown_stop": "Die Auswertung nennt eine Bewässerungsgruppe, die nicht zum Einsatzplan gehört.",
+        "unknown_stop": "Eine ausgewählte Bewässerungsgruppe existiert nicht mehr."
+      },
+      "routing": {
+        "invalid_problem": "Aus den gewählten Angaben lässt sich keine Route berechnen. Prüfe Fahrzeug, Startpunkt und Gruppen."
+      }
+    }
+  }
+}

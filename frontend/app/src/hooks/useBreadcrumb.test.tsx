@@ -28,7 +28,7 @@ const renderBreadcrumbs = () => {
   const treesRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: 'trees',
-    loader: () => ({ crumb: { titleKey: 'trees' } }),
+    loader: () => ({ crumb: { titleKey: 'vehicles' } }),
     component: () => <Outlet />,
   })
   const treeDetailRoute = createRoute({
@@ -50,7 +50,7 @@ const renderEntityBreadcrumb = () => {
   const treesRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: 'trees',
-    loader: () => ({ crumb: { titleKey: 'trees' } }),
+    loader: () => ({ crumb: { titleKey: 'vehicles' } }),
     component: () => <Outlet />,
   })
   const treeDetailRoute = createRoute({
@@ -74,7 +74,7 @@ describe('useBreadcrumbs', () => {
     renderBreadcrumbs()
 
     await waitFor(() => {
-      expect(screen.getByText('Bäume')).toBeInTheDocument()
+      expect(screen.getByText('Fahrzeuge')).toBeInTheDocument()
     })
   })
 

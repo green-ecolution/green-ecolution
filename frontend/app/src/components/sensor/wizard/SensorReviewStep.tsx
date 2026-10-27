@@ -1,12 +1,12 @@
 import { useTranslation } from 'react-i18next'
 import type { SubmissionState } from './state'
 import { AccuracyBadge, Button, CopyableText, InlineAlert } from '@green-ecolution/ui'
-import { Loader2, ShieldCheck, TreeDeciduous } from 'lucide-react'
+import { Link2, Loader2, ShieldCheck } from 'lucide-react'
+import type { SelectedTarget } from '@/modules/types'
 
 interface SensorReviewStepProps {
   sensorId: string
-  treeNumber: string
-  treeSpecies: string
+  target: SelectedTarget
   position: {
     latitude: number
     longitude: number
@@ -20,10 +20,13 @@ interface SensorReviewStepProps {
 
 const formatCoordinate = (n: number) => n.toFixed(5)
 
+// Target labels are worded for mid-sentence use (en "assigned to tree 0815"), so as a
+// standalone card title they need a leading capital.
+const asTitle = (label: string) => `${label.charAt(0).toUpperCase()}${label.slice(1)}`
+
 const SensorReviewStep = ({
   sensorId,
-  treeNumber,
-  treeSpecies,
+  target,
   position,
   status,
   errorMessage,
@@ -53,12 +56,12 @@ const SensorReviewStep = ({
 
         <div className="rounded-xl border border-dark-100 p-4">
           <p className="text-xs uppercase tracking-wide font-semibold text-muted-foreground mb-2 flex items-center gap-1.5">
-            <TreeDeciduous className="size-3.5" aria-hidden />
-            {t('wizard.review.assignedTreeLabel')}
+            <Link2 className="size-3.5" aria-hidden />
+            {t('wizard.review.assignedTargetLabel')}
           </p>
           <div className="space-y-1">
-            <p className="font-semibold">{treeSpecies}</p>
-            <p className="font-mono text-xs text-dark-600">{treeNumber}</p>
+            <p className="font-semibold">{asTitle(target.label)}</p>
+            {target.detail && <p className="text-xs text-dark-600">{target.detail}</p>}
           </div>
         </div>
 

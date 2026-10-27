@@ -8,18 +8,18 @@ const CLUSTER_ID = '11111111-1111-4111-8111-111111111111'
 const ME_ID = 'user-me'
 const OTHER_ID = 'user-other'
 
-const listClusterComments = vi.fn()
-const createClusterComment = vi.fn()
-const updateClusterComment = vi.fn()
-const deleteClusterComment = vi.fn()
+const listTargetComments = vi.fn()
+const createTargetComment = vi.fn()
+const updateTargetComment = vi.fn()
+const deleteTargetComment = vi.fn()
 const getMe = vi.fn()
 
 vi.mock('@/api/backendApi', () => ({
   commentApi: {
-    listClusterComments: (...args: unknown[]) => listClusterComments(...args) as unknown,
-    createClusterComment: (...args: unknown[]) => createClusterComment(...args) as unknown,
-    updateClusterComment: (...args: unknown[]) => updateClusterComment(...args) as unknown,
-    deleteClusterComment: (...args: unknown[]) => deleteClusterComment(...args) as unknown,
+    listTargetComments: (...args: unknown[]) => listTargetComments(...args) as unknown,
+    createTargetComment: (...args: unknown[]) => createTargetComment(...args) as unknown,
+    updateTargetComment: (...args: unknown[]) => updateTargetComment(...args) as unknown,
+    deleteTargetComment: (...args: unknown[]) => deleteTargetComment(...args) as unknown,
   },
   userApi: {
     getMe: (...args: unknown[]) => getMe(...args) as unknown,
@@ -76,7 +76,12 @@ const renderSection = () => {
   })
   return render(
     <QueryClientProvider client={queryClient}>
-      <CommentsSection subject="cluster" parentId={CLUSTER_ID} />
+      <CommentsSection
+        subject={{
+          kind: 'target',
+          target: { module: 'irrigation', kind: 'cluster', id: CLUSTER_ID },
+        }}
+      />
     </QueryClientProvider>,
   )
 }
@@ -89,7 +94,7 @@ beforeEach(() => {
 
 describe('CommentsSection', () => {
   it('renders the fetched comments', async () => {
-    listClusterComments.mockResolvedValue(
+    listTargetComments.mockResolvedValue(
       pageOf([
         comment({ id: 'c1', body: 'Erster Kommentar' }),
         comment({ id: 'c2', body: 'Zweiter Kommentar' }),
@@ -103,8 +108,8 @@ describe('CommentsSection', () => {
   })
 
   it('submits a new comment through the API and clears the field', async () => {
-    listClusterComments.mockResolvedValue(pageOf([]))
-    createClusterComment.mockResolvedValue(
+    listTargetComments.mockResolvedValue(pageOf([]))
+    createTargetComment.mockResolvedValue(
       comment({ id: 'new-1', authorId: ME_ID, body: 'Neuer Kommentar' }),
     )
     const user = userEvent.setup()
@@ -112,15 +117,17 @@ describe('CommentsSection', () => {
     renderSection()
     // Wait for the list request to settle before typing, so the submit is not
     // racing the initial fetch.
-    await waitFor(() => expect(listClusterComments).toHaveBeenCalled())
+    await waitFor(() => expect(listTargetComments).toHaveBeenCalled())
 
     const textbox = screen.getByRole('textbox', { name: 'Kommentar hinzufügen' })
     await user.type(textbox, 'Neuer Kommentar')
     await user.click(screen.getByRole('button', { name: 'Kommentieren' }))
 
     await waitFor(() =>
-      expect(createClusterComment).toHaveBeenCalledWith({
-        clusterId: CLUSTER_ID,
+      expect(createTargetComment).toHaveBeenCalledWith({
+        module: 'irrigation',
+        kind: 'cluster',
+        targetId: CLUSTER_ID,
         createCommentRequest: { body: 'Neuer Kommentar' },
       }),
     )
@@ -128,7 +135,7 @@ describe('CommentsSection', () => {
   })
 
   it("shows the edit action only on the signed-in user's own comment", async () => {
-    listClusterComments.mockResolvedValue(
+    listTargetComments.mockResolvedValue(
       pageOf([
         comment({ id: 'own', authorId: ME_ID, body: 'Mein Kommentar' }),
         comment({ id: 'foreign', authorId: OTHER_ID, body: 'Fremder Kommentar' }),
@@ -142,7 +149,7 @@ describe('CommentsSection', () => {
   })
 
   it('shows delete only for the comment author without moderator rights', async () => {
-    listClusterComments.mockResolvedValue(
+    listTargetComments.mockResolvedValue(
       pageOf([
         comment({ id: 'own', authorId: ME_ID, body: 'Mein Kommentar' }),
         comment({ id: 'foreign', authorId: OTHER_ID, body: 'Fremder Kommentar' }),
@@ -157,7 +164,7 @@ describe('CommentsSection', () => {
 
   it('does not show delete on a foreign comment for a moderator with delete rights', async () => {
     permissions.mockReturnValue(new Set(['tree_cluster:delete']))
-    listClusterComments.mockResolvedValue(
+    listTargetComments.mockResolvedValue(
       pageOf([
         comment({ id: 'own', authorId: ME_ID, body: 'Mein Kommentar' }),
         comment({ id: 'foreign', authorId: OTHER_ID, body: 'Fremder Kommentar' }),
@@ -171,17 +178,17 @@ describe('CommentsSection', () => {
   })
 
   it('only deletes a comment once the confirmation dialog is accepted', async () => {
-    listClusterComments.mockResolvedValue(
+    listTargetComments.mockResolvedValue(
       pageOf([comment({ id: 'own', authorId: ME_ID, body: 'Mein Kommentar' })]),
     )
-    deleteClusterComment.mockResolvedValue(undefined)
+    deleteTargetComment.mockResolvedValue(undefined)
     const user = userEvent.setup()
 
     renderSection()
     await screen.findByText('Mein Kommentar')
 
     await user.click(screen.getByRole('button', { name: 'Löschen' }))
-    expect(deleteClusterComment).not.toHaveBeenCalled()
+    expect(deleteTargetComment).not.toHaveBeenCalled()
 
     const dialog = await screen.findByRole('alertdialog')
     expect(within(dialog).getByText('Kommentar löschen?')).toBeInTheDocument()
@@ -189,15 +196,17 @@ describe('CommentsSection', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Löschen' }))
 
     await waitFor(() =>
-      expect(deleteClusterComment).toHaveBeenCalledWith({
-        clusterId: CLUSTER_ID,
+      expect(deleteTargetComment).toHaveBeenCalledWith({
+        module: 'irrigation',
+        kind: 'cluster',
+        targetId: CLUSTER_ID,
         commentId: 'own',
       }),
     )
   })
 
   it('fetches the second page when "load more" is clicked', async () => {
-    listClusterComments.mockImplementation(({ page }: { page: number }) =>
+    listTargetComments.mockImplementation(({ page }: { page: number }) =>
       Promise.resolve(
         page === 1
           ? pageOf([comment({ id: 'p1', body: 'Seite eins' })], { nextPage: 2, totalPages: 2 })
@@ -212,8 +221,10 @@ describe('CommentsSection', () => {
     await user.click(screen.getByRole('button', { name: 'Weitere Kommentare laden' }))
 
     await waitFor(() => expect(screen.getByText('Seite zwei')).toBeInTheDocument())
-    expect(listClusterComments).toHaveBeenCalledWith({
-      clusterId: CLUSTER_ID,
+    expect(listTargetComments).toHaveBeenCalledWith({
+      module: 'irrigation',
+      kind: 'cluster',
+      targetId: CLUSTER_ID,
       page: 2,
       perPage: 20,
     })
@@ -223,7 +234,7 @@ describe('CommentsSection', () => {
   // only appear if the list gets rendered with nothing in it, so asserting its
   // absence is what guards the "show nothing when empty" rule.
   it('shows nothing but the composer when there are no comments', async () => {
-    listClusterComments.mockResolvedValue(pageOf([]))
+    listTargetComments.mockResolvedValue(pageOf([]))
 
     renderSection()
 
@@ -234,7 +245,7 @@ describe('CommentsSection', () => {
   })
 
   it('explains a failed load instead of showing an empty list', async () => {
-    listClusterComments.mockRejectedValue(new Error('boom'))
+    listTargetComments.mockRejectedValue(new Error('boom'))
 
     renderSection()
 
@@ -243,7 +254,7 @@ describe('CommentsSection', () => {
   })
 
   it('keeps already loaded comments visible when a later page fails', async () => {
-    listClusterComments
+    listTargetComments
       .mockResolvedValueOnce(
         pageOf([comment({ id: 'p1', body: 'Seite eins' })], { nextPage: 2, totalPages: 2 }),
       )

@@ -7,11 +7,12 @@ import {
   PopoverTrigger,
 } from '@green-ecolution/ui'
 import { useTranslation } from 'react-i18next'
-import type { User, WateringPlanInList } from '@/api/backendApi'
+import type { PlanInListResponse } from '@green-ecolution/backend-client'
+import type { User } from '@/api/backendApi'
 import { useWateringPlanBoardMutations } from '@/hooks/useWateringPlanBoardMutations'
 
 interface AssignUsersPopoverProps {
-  plan: WateringPlanInList
+  plan: PlanInListResponse
   users: User[]
 }
 

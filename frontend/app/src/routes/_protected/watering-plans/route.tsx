@@ -1,6 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { planPermissionsFor } from '@/lib/auth/routePermissions'
 import { crumbRoute, guardedRoute } from '@/lib/router'
+import { moduleManifests } from '@/modules/registry'
 
 export const Route = createFileRoute('/_protected/watering-plans')(
-  guardedRoute(['watering_plan:read'], crumbRoute('wateringPlans')),
+  guardedRoute(planPermissionsFor(moduleManifests, 'read'), crumbRoute('wateringPlans')),
 )

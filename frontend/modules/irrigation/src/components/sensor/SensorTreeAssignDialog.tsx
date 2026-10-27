@@ -1,0 +1,282 @@
+import {
+  Button,
+  Checkbox,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  InlineAlert,
+  cn,
+} from '@green-ecolution/ui'
+import { Suspense, useEffect, useMemo, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
+import type { ExpressionSpecification, LngLatBoundsLike } from 'maplibre-gl'
+import { WateringStatus } from '@green-ecolution/backend-client'
+import type { SensorResponse, TreeResponse } from '@green-ecolution/backend-client'
+import { useMaplibreMap } from '@/components/map-gl/MapContext'
+import MapPreview from '@/components/map-gl/MapPreview'
+import { useMapCenter, useMapZoom } from '@/components/map-gl/useMapView'
+import type { SelectedTarget, TargetAssignDialogProps, TargetAssignMode } from '@/modules/types'
+import { treeQueries } from '../../api/queries'
+import { useTreeSearch } from '../../hooks/useTreeSearch'
+import { isTreeTarget } from '../../lib/targets'
+import useTreeMarkerLayer, { type TreeMarkerPoint } from '../map-gl/layers/useTreeMarkerLayer'
+import useClusterBoundaryLayer from '../map-gl/layers/useClusterBoundaryLayer'
+import SensorTreeSearchInput from './SensorTreeSearchInput'
+import SensorTreeSearchResults from './SensorTreeSearchResults'
+import { useTreeSelection } from './useTreeSelection'
+
+const FOCUS_ZOOM = 18
+
+const FocusTree = ({ lng, lat }: { lng: number; lat: number }) => {
+  const map = useMaplibreMap()
+  useEffect(() => {
+    map.flyTo({ center: [lng, lat], zoom: FOCUS_ZOOM })
+  }, [map, lng, lat])
+  return null
+}
+
+const DIALOG_CIRCLE_RADIUS: ExpressionSpecification = [
+  'interpolate',
+  ['linear'],
+  ['zoom'],
+  13,
+  8,
+  17,
+  11,
+  22,
+  14,
+]
+
+const DIALOG_ICON_SIZE: ExpressionSpecification = [
+  'interpolate',
+  ['linear'],
+  ['zoom'],
+  13,
+  0.38,
+  17,
+  0.52,
+  22,
+  0.7,
+]
+
+const DialogClusterBoundaries = () => {
+  useClusterBoundaryLayer({ interactive: false })
+  return null
+}
+
+const DialogTreeMarkers = ({
+  trees,
+  selectedTreeId,
+  onSelect,
+}: {
+  trees: TreeResponse[]
+  selectedTreeId: string | null
+  onSelect: (treeId: string) => void
+}) => {
+  const points = useMemo<TreeMarkerPoint[]>(
+    () =>
+      trees.map((t) => ({
+        id: t.id,
+        longitude: t.longitude,
+        latitude: t.latitude,
+        status: t.wateringStatus ?? WateringStatus.Unknown,
+        disabled: t.sensor != null,
+        selected: t.id === selectedTreeId,
+      })),
+    [trees, selectedTreeId],
+  )
+  useTreeMarkerLayer({
+    trees: points,
+    sourceId: 'gec-dialog-trees',
+    circleLayerId: 'gec-dialog-tree-circle',
+    iconLayerId: 'gec-dialog-tree-icon',
+    circleRadius: DIALOG_CIRCLE_RADIUS,
+    iconSize: DIALOG_ICON_SIZE,
+    onTreeClick: onSelect,
+  })
+  return null
+}
+
+const DialogBody = ({
+  mode,
+  sensor,
+  selectedTreeId,
+  onSelect,
+}: {
+  mode: TargetAssignMode
+  sensor: SensorResponse
+  selectedTreeId: string | null
+  onSelect: (selected: SelectedTarget) => void
+}) => {
+  const { t } = useTranslation('irrigation')
+  const treeSelection = useTreeSelection()
+  const linkedTreeId = isTreeTarget(sensor.target) ? sensor.target.id : null
+  const { data: currentTree } = useQuery({
+    ...treeQueries.detail(linkedTreeId ?? ''),
+    enabled: mode === 'reassign' && linkedTreeId != null,
+  })
+
+  // Reassign opens seeded with the current tree (cached from the detail page) so
+  // it appears in the list; the user can clear it to pick another.
+  const [q, setQ] = useState(() =>
+    mode === 'reassign' && currentTree?.number ? currentTree.number : '',
+  )
+  const [showAll, setShowAll] = useState(false)
+  const { items, enabled } = useTreeSearch(q, showAll)
+  const mapCenter = useMapCenter()
+  const mapZoom = useMapZoom()
+
+  const visibleItems = useMemo(() => (enabled ? items : []), [enabled, items])
+
+  const selectedTree = useMemo(
+    () => visibleItems.find((t) => t.id === selectedTreeId) ?? null,
+    [visibleItems, selectedTreeId],
+  )
+
+  const selectTree = (treeId: string) => {
+    const tree = visibleItems.find((item) => item.id === treeId)
+    if (tree) onSelect(treeSelection(tree))
+  }
+
+  // Camera target: the selected tree, else (reassign) the sensor's current tree.
+  const focus = useMemo<[number, number] | null>(() => {
+    if (selectedTree) return [selectedTree.longitude, selectedTree.latitude]
+    if (mode === 'reassign' && sensor.location)
+      return [sensor.location.longitude, sensor.location.latitude]
+    return null
+  }, [selectedTree, mode, sensor.location])
+
+  const bounds = useMemo<LngLatBoundsLike | undefined>(() => {
+    if (focus || visibleItems.length === 0) return undefined
+    const lngs = visibleItems.map((t) => t.longitude)
+    const lats = visibleItems.map((t) => t.latitude)
+    let w = Math.min(...lngs)
+    let e = Math.max(...lngs)
+    let s = Math.min(...lats)
+    let n = Math.max(...lats)
+    const padX = (e - w) * 0.3 || 0.001
+    const padY = (n - s) * 0.3 || 0.001
+    w -= padX
+    e += padX
+    s -= padY
+    n += padY
+    return [
+      [w, s],
+      [e, n],
+    ]
+  }, [focus, visibleItems])
+
+  const center: [number, number] = sensor.location
+    ? [sensor.location.longitude, sensor.location.latitude]
+    : [mapCenter[1], mapCenter[0]]
+
+  return (
+    <div className="flex min-h-0 flex-1 flex-col gap-4 px-6 pb-2 sm:flex-row">
+      <div className="flex min-h-0 flex-1 flex-col gap-3">
+        <SensorTreeSearchInput value={q} onChange={setQ} />
+        <label className="flex cursor-pointer select-none items-center gap-2 text-sm text-dark-700">
+          <Checkbox
+            checked={showAll}
+            onCheckedChange={(value) => setShowAll(value === true)}
+            aria-label={t('sensor.treeAssignDialog.showAllTreesLabel')}
+          />
+          {t('sensor.treeAssignDialog.showAllTreesLabel')}
+        </label>
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <SensorTreeSearchResults
+            q={q}
+            selectedTreeId={selectedTreeId}
+            onSelect={selectTree}
+            showAll={showAll}
+          />
+        </div>
+      </div>
+      <div className="sm:w-1/2">
+        <MapPreview
+          bounds={bounds}
+          center={center}
+          zoom={mapZoom}
+          interactive
+          ariaLabel={t('sensor.treeAssignDialog.mapAriaLabel')}
+          className={cn('aspect-[4/3] sm:aspect-auto sm:h-full')}
+        >
+          <Suspense fallback={null}>
+            <DialogClusterBoundaries />
+          </Suspense>
+          <DialogTreeMarkers
+            trees={visibleItems}
+            selectedTreeId={selectedTreeId}
+            onSelect={selectTree}
+          />
+          {focus && <FocusTree lng={focus[0]} lat={focus[1]} />}
+        </MapPreview>
+      </div>
+    </div>
+  )
+}
+
+const SensorTreeAssignDialog = ({
+  open,
+  onOpenChange,
+  mode,
+  sensor,
+  pending,
+  error,
+  onConfirm,
+}: TargetAssignDialogProps) => {
+  const { t } = useTranslation(['irrigation', 'sensor', 'common'])
+  const [selected, setSelected] = useState<SelectedTarget | null>(null)
+  const copy =
+    mode === 'activate'
+      ? {
+          title: t('sensor.treeAssignDialog.activate.title'),
+          description: t('sensor.treeAssignDialog.activate.description'),
+          confirm: t('sensor.treeAssignDialog.activate.confirm'),
+        }
+      : {
+          title: t('sensor.treeTexts.reassignAction'),
+          description: t('sensor.treeAssignDialog.reassign.description'),
+          confirm: t('sensor.treeAssignDialog.reassign.confirm'),
+        }
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (!next) setSelected(null)
+        onOpenChange(next)
+      }}
+    >
+      <DialogContent className="max-w-md sm:max-w-3xl h-[88vh] sm:h-[78vh] flex flex-col gap-0 p-0">
+        <DialogHeader className="px-6 pt-6 pb-3">
+          <DialogTitle>{copy.title}</DialogTitle>
+          <DialogDescription>{copy.description}</DialogDescription>
+        </DialogHeader>
+
+        <DialogBody
+          key={open ? 'open' : 'closed'}
+          mode={mode}
+          sensor={sensor}
+          selectedTreeId={selected?.target.id ?? null}
+          onSelect={setSelected}
+        />
+
+        <DialogFooter className="flex-col gap-3 px-6 py-4 sm:flex-row sm:items-center sm:justify-end">
+          {error && <InlineAlert variant="destructive" description={error} />}
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={pending}>
+            {t('common:actions.cancel')}
+          </Button>
+          <Button disabled={!selected || pending} onClick={() => selected && onConfirm(selected)}>
+            {pending ? t('sensor.treeAssignDialog.savingButton') : copy.confirm}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+export default SensorTreeAssignDialog

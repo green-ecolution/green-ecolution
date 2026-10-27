@@ -4,7 +4,8 @@ import type { ReactNode } from 'react'
 import { DataHealth, SensorStatus, SensorTypeResponse } from '@green-ecolution/backend-client'
 import SensorCard from './SensorCard'
 import type { Sensor } from '@/api/backendApi'
-import { treeTarget } from '@/lib/targets'
+
+const target = { module: 'probe', kind: 'probe', id: 'p-1' }
 
 vi.mock('@tanstack/react-router', () => ({
   Link: ({ children }: { children: ReactNode }) => <a href="/">{children}</a>,
@@ -30,37 +31,32 @@ describe('SensorCard', () => {
     expect(screen.getByText('a81758').tagName).toBe('MARK')
   })
 
-  it('names the watering group of the linked tree', () => {
-    render(
-      <SensorCard
-        sensor={sensorFixture({ target: treeTarget('tree-1'), targetLabel: 'Hafenspitze' })}
-        query=""
-      />,
-    )
+  it('names the placement the module reports for the target', () => {
+    render(<SensorCard sensor={sensorFixture({ target, targetLabel: 'Hafenspitze' })} query="" />)
 
     expect(screen.getByText('Hafenspitze')).toBeInTheDocument()
   })
 
-  it('marks the search match in the group name', () => {
+  it('marks the search match in the placement name', () => {
     render(
-      <SensorCard
-        sensor={sensorFixture({ target: treeTarget('tree-1'), targetLabel: 'Hafenspitze' })}
-        query="hafen"
-      />,
+      <SensorCard sensor={sensorFixture({ target, targetLabel: 'Hafenspitze' })} query="hafen" />,
     )
 
     expect(screen.getByText('Hafen').tagName).toBe('MARK')
   })
 
-  it('omits the group line for a sensor whose tree is in no group', () => {
-    render(
-      <SensorCard
-        sensor={sensorFixture({ target: treeTarget('tree-1'), targetLabel: null })}
-        query=""
-      />,
-    )
+  it('omits the placement line when the module reports no label', () => {
+    render(<SensorCard sensor={sensorFixture({ target, targetLabel: null })} query="" />)
 
-    expect(screen.queryByText(/Bewässerungsgruppe/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Einsatzort/)).not.toBeInTheDocument()
+  })
+
+  it('says whether the sensor is linked', () => {
+    const { rerender } = render(<SensorCard sensor={sensorFixture({ target })} query="" />)
+    expect(screen.getByText('Verknüpft')).toBeInTheDocument()
+
+    rerender(<SensorCard sensor={sensorFixture({ target: null })} query="" />)
+    expect(screen.getByText('Nicht verknüpft')).toBeInTheDocument()
   })
 
   it('shows a quality warning badge for a sensor under data-quality suspicion', () => {

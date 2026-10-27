@@ -50,10 +50,6 @@
       "apply": "Anwenden",
       "reset": "Zurücksetzen"
     },
-    "status": {
-      "legend": "Zustand der Bewässerung:",
-      "placeholder": "Alle Zustände"
-    },
     "tag": {
       "removeAriaLabel": "{label} entfernen"
     }
@@ -120,8 +116,7 @@
       "capturedAt": "Erfasst um"
     },
     "map": {
-      "currentPositionAriaLabel": "Karte mit aktueller GPS-Position",
-      "nearestTreeAriaLabel": "Karte mit Sensor-Position und nahegelegenen Bäumen"
+      "currentPositionAriaLabel": "Karte mit aktueller GPS-Position"
     }
   },
   "scanner": {
@@ -171,5 +166,10 @@
       "idCopied": "Sensor-ID kopiert",
       "idCopyFailed": "Sensor-ID konnte nicht kopiert werden"
     }
+  },
+  "moduleInactive": {
+    "title": "Modul nicht aktiv",
+    "description": "Dieser Bereich gehört zu einem Modul, das in deiner Organisation nicht eingeschaltet ist.",
+    "back": "Zum Dashboard"
   }
 }

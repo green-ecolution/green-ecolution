@@ -5,8 +5,8 @@
   },
   "list": {
     "title": "Watering plans",
-    "descriptionCanModify": "Plan, start, and document watering trips. Drag a watering plan into the next column to change its status.",
-    "description": "Track planned, ongoing, and completed watering trips.",
+    "descriptionCanModify": "Plan, start, and document trips. Drag a watering plan into the next column to change its status.",
+    "description": "Track planned, ongoing, and completed trips.",
     "createButton": "Create new watering plan",
     "loadingLabel": "Loading data"
   },
@@ -15,25 +15,24 @@
     "title": "Watering plan for {date}",
     "editLabel": "Edit watering plan",
     "downloadRouteLabel": "Download route",
-    "routeErrorAlert": "The route for this watering plan could not be calculated. Please check whether the selected vehicle has enough water capacity for the chosen watering groups.",
+    "routeErrorAlert": "The route for this watering plan could not be calculated. Please check whether the selected vehicle has enough capacity for the chosen stops.",
     "updateStatusLabel": "Update status",
     "tabGeneral": "General data",
-    "tabClusters": "Watering groups",
     "tabRoute": "Route",
-    "clustersEmptyMessage": "Unfortunately no watering groups were found.",
     "loadingLabel": "Loading watering plan …",
     "routeLengthLabel": "Route length",
     "startPointLabel": "Start point",
-    "requiredWaterLabel": "Water required",
-    "requiredWaterValue": "{value} liters",
+    "demandLabel": {
+      "water": "Water required",
+      "cargo_volume": "Cargo volume required"
+    },
+    "demandValue": "{value} liters",
     "transporterLabel": "Transporter",
     "archivedVehicleValue": "{numberPlate} (Archived)",
     "trailerLabel": "Additional trailer",
     "transporterTankLabel": "Vehicle water tank",
     "transporterTankUsedValue": "In use",
     "transporterTankUnusedValue": "Stays empty, only the trailer carries water",
-    "clusterCountLabel": "Number of watering groups",
-    "clusterCountValue": "{count} group(s)",
     "assignedUsersLabel": "Assigned staff",
     "refillCountLabel": "Refills required",
     "durationLabel": "Time required (driving time)",
@@ -41,20 +40,16 @@
     "dataHeadline": "Watering plan data",
     "currentStatusLabel": "Current status of the watering plan",
     "cancellationNoteLabel": "Cancellation note",
-    "consumedWaterLabel": "Water consumed",
-    "consumedWaterValue": "{value} liters",
-    "consumedWaterDescription_one": "for {count} watering group",
-    "consumedWaterDescription_other": "for {count} watering groups",
     "routeStartDescription": "Watering plan starts: {startPoint}",
     "entityTitle": "Watering plan: {value}",
     "notFoundBackLabel": "To the watering plan list",
-    "routePreviewAriaLabel": "Map with the route and watering groups for this plan",
+    "routePreviewAriaLabel": "Map with the route and stops for this plan",
     "routePreviewLoadingLabel": "Loading map …"
   },
   "update": {
     "backLabel": "Back to the watering plan",
     "title": "Edit watering plan for {date}",
-    "description": "The watering plan can be edited in this view if certain data is no longer accurate or additional information needs to be recorded, for example. A watering plan always requires at least one watering group to be visited and at least one staff member to carry out the watering plan. A vehicle must also be assigned.",
+    "description": "The watering plan can be edited in this view if certain data is no longer accurate or additional information needs to be recorded, for example. A watering plan always requires at least one stop to be visited and at least one staff member to carry out the watering plan. A vehicle must also be assigned.",
     "statusEditNotice": "A watering plan's status can be edited separately.",
     "deletingLabel": "The watering plan is being deleted"
   },
@@ -62,25 +57,20 @@
     "backLabel": "Back to the watering plan",
     "title": "Edit status of watering plan {date}",
     "currentStatusLabel": "Current status:",
-    "description": "A watering plan's status describes whether it is currently being carried out, has been completed, or was canceled, for example. This information helps categorize the watering plans that have been created and build an evaluation. Once a watering plan is completed, you can also specify how much water was used for the associated watering groups.",
+    "description": "A watering plan's status describes whether it is currently being carried out, has been completed, or was canceled, for example. This information helps categorize the watering plans that have been created and build an evaluation. Once a watering plan is completed, you can also specify how each stop was handled.",
     "finishedNotice": "This watering plan is completed. Its status can no longer be changed.",
+    "finishModuleInactive": "The module of this watering plan is not active for your organization. It can only be finished once the module is switched on again.",
     "statusFieldLabel": "Watering plan status",
     "statusFieldPlaceholder": "Choose a status",
     "cancelReasonLabel": "Reason for cancellation",
     "cancelReasonPlaceholder": "Why was the watering plan canceled?",
     "notCompletedReasonLabel": "Reason it wasn't carried out",
     "notCompletedReasonPlaceholder": "Why wasn't the watering plan carried out?",
-    "toastSuccess": "The watering plan's status was updated successfully.",
-    "finished": {
-      "waterPerClusterLegend": "Water given per watering group:",
-      "defaultsHint": "The default values are based on 80 liters per tree in a watering group.",
-      "treeCount_one": "{count} tree",
-      "treeCount_other": "{count} trees",
-      "litersForClusterLabel": "Liters for {name}",
-      "litersUnitLabel": "Liters"
-    }
+    "toastSuccess": "The watering plan's status was updated successfully."
   },
   "form": {
+    "moduleLabel": "Module",
+    "modulePlaceholder": "Choose a module",
     "noDrivingLicenseLabel": "No driving licence",
     "dateLabel": "Watering plan date",
     "transporterLabel": "Linked vehicle",
@@ -95,7 +85,6 @@
     "transporterTankUsedHint": "Clear this if only the trailer carries water. The route then plans with the trailer's capacity alone.",
     "driversLabel": "Linked staff",
     "driversMultiSelectHint": "Hold down the »Shift« key to make a multiple selection.",
-    "clustersLabel": "Watering groups",
     "noQualifiedDriverError": "No selected staff member has all the required driving licences for the selected vehicles.",
     "createLeaveMessage": "Do you really want to leave this page? Your entries for creating the watering plan will be lost if you leave now.",
     "updateLeaveMessage": "Do you really want to leave this page? Your changes to the watering plan will be lost if you leave now.",
@@ -105,9 +94,10 @@
   "create": {
     "backLabel": "To all watering plans",
     "title": "Create new watering plan",
-    "description": "A watering plan maps out a watering route: it can be assigned a vehicle, a trailer, staff, and the watering groups to visit. A newly created watering plan is automatically classified as \"planned\". Based on the watering groups and the number of trees, the amount of water needed for watering is calculated. The watering plan's start point can be chosen from the configured depot locations."
+    "description": "A watering plan maps out a route: it can be assigned a vehicle, a trailer, staff, and the stops to visit. A newly created watering plan is automatically classified as \"planned\". The watering plan's start point can be chosen from the configured depot locations."
   },
   "board": {
+    "moduleSwitcherAriaLabel": "Planning module",
     "columnError": {
       "message": "The watering plans could not be loaded."
     },
@@ -120,9 +110,7 @@
       "activeEmptyCanModify": "Drag a planned watering plan here to start it.",
       "activeEmpty": "No watering plan is currently underway.",
       "doneEmpty": "No completed watering plans yet.",
-      "loadMore": "Load more",
-      "clusterCountBadge_one": "{count} group",
-      "clusterCountBadge_other": "{count} groups"
+      "loadMore": "Load more"
     },
     "assignDriverLabel": "Assign driver",
     "assignUsersPopover": {
@@ -140,18 +128,6 @@
       "title": "Complete watering plan",
       "description": "How did the watering plan for {date} turn out?",
       "outcomeAriaLabel": "Outcome of the watering plan"
-    },
-    "suggestionCard": {
-      "selectAriaLabel": "Select {name} for a watering plan",
-      "treeCount_one": "{count} tree",
-      "treeCount_other": "{count} trees"
-    },
-    "suggestions": {
-      "ariaLabel": "Suggestions",
-      "title": "Suggestions",
-      "loadError": "The suggestions could not be loaded.",
-      "emptyMessage": "No watering groups are currently very dry.",
-      "bundleButtonLabel": "Bundle into watering plan"
     },
     "dropHint": {
       "start": "Start watering plan",

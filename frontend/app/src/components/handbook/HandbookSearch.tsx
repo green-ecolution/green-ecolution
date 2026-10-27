@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { Search } from 'lucide-react'
 import { Input } from '@green-ecolution/ui'
 import { loadSearchEntries } from '@/lib/handbook'
+import { useChapterVisibility } from '@/lib/handbook/useChapterVisibility'
 import {
   isSearchableQuery,
   searchHandbook,
@@ -27,6 +28,7 @@ function Marked({ text, query }: { text: string; query: string }) {
 
 function HandbookSearch({ variant = 'page' }: { variant?: 'page' | 'sidebar' }) {
   const { t } = useTranslation('help')
+  const isVisible = useChapterVisibility()
   const [query, setQuery] = useState('')
   const [entries, setEntries] = useState<SearchEntry[] | null>(null)
   const [loadError, setLoadError] = useState(false)
@@ -57,7 +59,12 @@ function HandbookSearch({ variant = 'page' }: { variant?: 'page' | 'sidebar' }) 
       })
   }, [query])
 
-  const hits: SearchHit[] = entries ? searchHandbook(entries, query) : []
+  const hits: SearchHit[] = entries
+    ? searchHandbook(
+        entries.filter((entry) => isVisible(entry.slug)),
+        query,
+      )
+    : []
   const searching = isSearchableQuery(query)
   const inSidebar = variant === 'sidebar'
 

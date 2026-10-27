@@ -29,6 +29,10 @@ Beschreibung und einer Schaltfläche, die zum jeweiligen Bereich führt:
 - **Einstellungen** führt in den Einstellungsbereich.
 - **Eigenes Profil** führt zu den eigenen persönlichen Daten.
 
+Ist das Modul Bewässerung für deine Organisation abgeschaltet (siehe
+[Organisation](./settings-organization.md#module)), fehlen die Kacheln Karte,
+Bewässerungsgruppen und Einsatzpläne, weil sie ohne das Modul ins Leere führen würden.
+
 **Einstellungen** und **Eigenes Profil** stehen jeder und jedem offen. Für die übrigen
 vier Kacheln entscheiden deine Rollen, ob du sie öffnen darfst. Fehlt die Berechtigung,
 meldet dir die Anwendung beim Öffnen der Kachel, dass der Zugriff fehlt, statt den

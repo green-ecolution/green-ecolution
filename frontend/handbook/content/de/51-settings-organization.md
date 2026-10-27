@@ -60,6 +60,49 @@ Organisationen hinweg zuständig sein soll, sinnvollerweise weiter oben im Baum.
 Rollen im Einzelnen zugeschnitten werden und welche Rechte sich darin kombinieren
 lassen, steht in [Team und Rollen](./settings-team.md).
 
+## Module
+
+Green Ecolution besteht aus einem gemeinsamen Kern und Fachmodulen. Der Kern umfasst
+die Organisationen, Rollen, Sensoren, Fahrzeuge und Startpunkte; ein Fachmodul bringt die
+Bereiche mit, die zu einer bestimmten Aufgabe gehören. Das Modul **Bewässerung** liefert
+Bäume, Bewässerungsgruppen, Einsatzpläne und die Auswertung samt der zugehörigen
+Kartenebenen und Kacheln auf dem Dashboard.
+
+Im Abschnitt **Module** der Organisationsseite steht für jedes Modul, das diese Instanz
+kennt, eine Zeile mit einem Schalter. Ein eingeschaltetes Modul steht der ausgewählten
+Organisation und allen Organisationen darunter zur Verfügung. Wie bei den
+[Fachlichen Vorgaben](./settings-organization.md#fachliche-vorgaben) zeigt ein Abzeichen neben dem Schalter, woher
+der Zustand kommt: ein eigener Wert dieser Organisation, ein von einer übergeordneten
+Organisation geerbter Wert oder die Vorgabe der Instanz, solange noch keine Organisation
+im Baum einen Wert gesetzt hat. Ohne eigenen Wert folgt eine Organisation also ihrer
+übergeordneten. Den Schalter bedienst du direkt: Sobald du ihn umlegst, setzt die
+Organisation einen eigenen Wert, und neben dem Schalter erscheint **Wieder erben**, womit
+du den eigenen Wert wieder aufgibst und der Zustand erneut von oben kommt. Hat eine
+übergeordnete Organisation festgelegt, dass ihre Untereinheiten keine eigenen Werte
+setzen dürfen, steht der Schalter fest, und ein Hinweis nennt die sperrende
+Organisation.
+
+Zum Ändern brauchst du zusätzlich zu `setting:read` die Berechtigung `setting:update`;
+ohne sie siehst du die Schalter nur. Gespeichert wird wie bei den übrigen Werten dieser
+Seite mit dem einen Knopf **Speichern**, der Modulschalter und Fachliche Vorgaben
+gemeinsam übernimmt.
+
+![Der Abschnitt Module mit dem Schalter für Bewässerung und seinem Herkunftsabzeichen](../images/settings-organization-modules.png)
+
+Schaltest du ein Modul ab, verschwinden seine Bereiche für alle Mitarbeitenden der
+Organisation und ihrer Unterorganisationen aus der Navigation, von der Karte, vom
+Dashboard und aus der Einsatzplanung. Wer einen Link auf eine solche Seite öffnet,
+sieht stattdessen den Hinweis **Modul nicht aktiv**. Die Daten selbst bleiben unberührt:
+Bäume, Bewässerungsgruppen und Einsatzpläne werden weder gelöscht noch verändert, und
+sie stehen wieder zur Verfügung, sobald das Modul erneut eingeschaltet wird. Auch die
+Rechte, die Rollen für das Modul enthalten, bleiben gespeichert, wirken aber nur,
+solange das Modul aktiv ist, siehe
+[Team und Rollen](./settings-team.md#der-berechtigungskatalog).
+
+Auch diese Hilfe richtet sich danach: Wer angemeldet ist, sieht darin nur die Kapitel
+zu Modulen, die für ihn aktiv sind. Ein direkt geöffneter Link auf ein ausgeblendetes
+Kapitel funktioniert trotzdem.
+
 ## Fachliche Vorgaben
 
 Mit der Berechtigung `setting:read` zeigt die Detailansicht einer Organisation

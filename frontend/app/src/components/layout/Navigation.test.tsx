@@ -35,7 +35,38 @@ vi.mock('@/lib/auth/useCurrentUserAvatar', () => ({
   useCurrentUserAvatar: () => undefined,
 }))
 
+vi.mock('@/modules/registry', async () => {
+  const actual = await vi.importActual<typeof import('@/modules/registry')>('@/modules/registry')
+  const probe = {
+    key: 'probe',
+    labelKey: 'irrigation:label',
+    i18n: { namespaces: [], load: () => Promise.resolve({}) },
+    nav: {
+      links: [
+        {
+          key: 'nav-probe',
+          to: '/probe',
+          labelKey: 'irrigation:label',
+          icon: () => null,
+          section: 'planning',
+        },
+      ],
+    },
+  }
+  return { moduleManifests: [...actual.moduleManifests, probe] }
+})
+
 const { default: Navigation } = await import('./Navigation')
+
+const respondWithActive = (active: string[]) =>
+  server.use(
+    http.get('*/v1/modules', () =>
+      HttpResponse.json({
+        modules: ['irrigation', 'probe'],
+        organizations: [{ organizationId: 'a', active }],
+      }),
+    ),
+  )
 
 const settledPluginViews = (queryClient: QueryClient) =>
   waitFor(() => {
@@ -108,13 +139,81 @@ describe('Navigation', () => {
     renderNavigation()
 
     await waitFor(() => {
-      expect(screen.getByText('Fahrzeuge')).toBeInTheDocument()
+      expect(screen.getByText('Bewässerungsgruppen')).toBeInTheDocument()
     })
+    expect(screen.getByText('Fahrzeuge')).toBeInTheDocument()
     expect(screen.getByText('Bewässerungsgruppen')).toBeInTheDocument()
     expect(screen.getByText('Sensoren')).toBeInTheDocument()
     expect(screen.getByText('Einsatzpläne')).toBeInTheDocument()
     // Mitarbeitende lives under settings now, not the global nav.
     expect(screen.queryByText('Mitarbeitende')).not.toBeInTheDocument()
+  })
+
+  it('lists the link of a module only while the module is active', async () => {
+    permissions.mockReturnValue(UNRESTRICTED)
+    respondWithActive(['probe'])
+    renderNavigation()
+
+    expect(await screen.findByText('Bewässerung')).toBeInTheDocument()
+  })
+
+  it('omits the link of a module that is not active', async () => {
+    permissions.mockReturnValue(UNRESTRICTED)
+    respondWithActive(['irrigation'])
+    renderNavigation()
+
+    await screen.findByText('Bäume')
+    expect(screen.queryByText('Bewässerung')).not.toBeInTheDocument()
+  })
+
+  it('shows neither map, trees, clusters, evaluations nor plans without an active module', async () => {
+    permissions.mockReturnValue(UNRESTRICTED)
+    respondWithActive([])
+    const { queryClient } = renderNavigation()
+
+    await screen.findByText('Fahrzeuge')
+    await waitFor(() => expect(queryClient.getQueryState(['modules'])?.status).toBe('success'))
+    expect(screen.queryByText('Karte')).not.toBeInTheDocument()
+    expect(screen.getByText('Sensoren')).toBeInTheDocument()
+    expect(screen.queryByText('Bäume')).not.toBeInTheDocument()
+    expect(screen.queryByText('Bewässerungsgruppen')).not.toBeInTheDocument()
+    expect(screen.queryByText('Auswertung')).not.toBeInTheDocument()
+    expect(screen.queryByText('Einsatzpläne')).not.toBeInTheDocument()
+  })
+
+  it('renders the core sections without module links while the modules request is pending', async () => {
+    permissions.mockReturnValue(UNRESTRICTED)
+    server.use(http.get('*/v1/modules', () => new Promise<never>(() => undefined)))
+    renderNavigation()
+
+    expect(await screen.findByText('Fahrzeuge')).toBeInTheDocument()
+    expect(screen.queryByText('Karte')).not.toBeInTheDocument()
+    expect(screen.queryByText('Bäume')).not.toBeInTheDocument()
+    expect(screen.queryByText('Einsatzpläne')).not.toBeInTheDocument()
+  })
+
+  it('renders the core sections when the modules request fails', async () => {
+    permissions.mockReturnValue(UNRESTRICTED)
+    server.use(http.get('*/v1/modules', () => HttpResponse.json({ error: 'x' }, { status: 500 })))
+    const { queryClient } = renderNavigation()
+
+    expect(await screen.findByText('Fahrzeuge')).toBeInTheDocument()
+    await waitFor(() => expect(queryClient.getQueryState(['modules'])?.status).toBe('error'))
+    expect(screen.getByText('Sensoren')).toBeInTheDocument()
+    expect(screen.queryByText('Bäume')).not.toBeInTheDocument()
+  })
+
+  it('keeps the module links in their old order inside the sections', async () => {
+    permissions.mockReturnValue(UNRESTRICTED)
+    renderNavigation()
+
+    await screen.findByText('Bäume')
+    const labels = screen.getAllByRole('link').map((link) => link.textContent)
+    const position = (label: string) => labels.indexOf(label)
+    expect(position('Karte')).toBeLessThan(position('Bewässerungsgruppen'))
+    expect(position('Bewässerungsgruppen')).toBeLessThan(position('Bäume'))
+    expect(position('Bäume')).toBeLessThan(position('Einsatzpläne'))
+    expect(position('Sensoren')).toBeLessThan(position('Auswertung'))
   })
 
   it('keeps the always-open settings entry for a user without any grant', async () => {

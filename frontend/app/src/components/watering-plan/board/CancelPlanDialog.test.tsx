@@ -6,7 +6,8 @@ import type { ReactNode } from 'react'
 import { Toaster } from '@green-ecolution/ui'
 import { PlanStatus as WateringPlanStatus } from '@green-ecolution/backend-client'
 import CancelPlanDialog from './CancelPlanDialog'
-import type { WateringPlanInList } from '@/api/backendApi'
+import { probePlanning } from '@/test/planningManifest'
+import { planInList } from '@/test/plans'
 
 const updatePlan = vi.fn<(...args: unknown[]) => Promise<unknown>>()
 vi.mock('@/api/backendApi', async (importOriginal) => {
@@ -25,22 +26,8 @@ vi.mock('@tanstack/react-router', () => ({
   Link: ({ children }: { children: ReactNode }) => <a>{children}</a>,
 }))
 
-const plan: WateringPlanInList = {
-  id: '0190a8e9-7c4f-7000-8000-000000000000',
-  createdAt: '2026-07-01T00:00:00Z',
-  updatedAt: '2026-07-01T00:00:00Z',
-  date: '2026-07-08T00:00:00Z',
-  description: 'Innenstadt',
-  status: WateringPlanStatus.Planned,
-  distance: 1000,
-  totalWaterRequired: 4200,
-  cancellationNote: '',
-  transporter: { id: 'v-1', numberPlate: 'FL-GE-A01' } as WateringPlanInList['transporter'],
-  transporterTankUsed: true,
-  treeclusters: [],
-  stopIds: [],
-  userIds: [],
-}
+const plan = planInList({ status: WateringPlanStatus.Planned })
+const planning = probePlanning()
 
 function createWrapper() {
   const queryClient = new QueryClient({
@@ -61,7 +48,9 @@ describe('CancelPlanDialog', () => {
     const user = userEvent.setup()
     updatePlan.mockResolvedValueOnce({})
     const onClose = vi.fn()
-    render(<CancelPlanDialog plan={plan} onClose={onClose} />, { wrapper: createWrapper() })
+    render(<CancelPlanDialog plan={plan} planning={planning} onClose={onClose} />, {
+      wrapper: createWrapper(),
+    })
 
     expect(screen.getByRole('button', { name: /einsatzplan abbrechen/i })).toBeDisabled()
     await user.type(screen.getByLabelText(/grund des abbruchs/i), 'Regen vorhergesagt')
@@ -77,7 +66,9 @@ describe('CancelPlanDialog', () => {
   })
 
   it('renders nothing while closed', () => {
-    render(<CancelPlanDialog plan={null} onClose={vi.fn()} />, { wrapper: createWrapper() })
+    render(<CancelPlanDialog plan={null} planning={planning} onClose={vi.fn()} />, {
+      wrapper: createWrapper(),
+    })
     expect(screen.queryByText(/einsatzplan abbrechen/i)).not.toBeInTheDocument()
     expect(screen.queryByLabelText(/grund des abbruchs/i)).not.toBeInTheDocument()
   })

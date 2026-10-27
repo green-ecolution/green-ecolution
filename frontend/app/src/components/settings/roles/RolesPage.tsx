@@ -27,6 +27,7 @@ import { TWO_PANE_MIN_WIDTH } from '../twoPaneWidth'
 import { statusOf } from '@/lib/httpError'
 import { initialsOf } from '@/lib/initials'
 import RoleActionButtons from './RoleActionButtons'
+import { useActiveModules } from '@/modules/useActiveModules'
 import RoleDetail from './RoleDetail'
 import RoleList from './RoleList'
 import { ownRolesOf } from './roleList'
@@ -40,6 +41,7 @@ const nameConflictMessage = (error: unknown, t: TFunction<'settings'>): string |
 const RolesPage = () => {
   const { t } = useTranslation(['settings', 'common'])
   const grantable = usePermissions()
+  const { manifests } = useActiveModules()
   const canCreate = useHasPermission(['role:create'])
   const canUpdate = useHasPermission(['role:update'])
   const canDelete = useHasPermission(['role:delete'])
@@ -224,6 +226,7 @@ const RolesPage = () => {
         draft={draft}
         dirty={dirty}
         grantable={grantable}
+        activeManifests={manifests}
         canUpdate={canUpdate}
         canDelete={canDelete}
         canCreate={canCreate}

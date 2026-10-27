@@ -11,7 +11,7 @@ import Forbidden from '@/components/layout/Forbidden'
 import { userQueries } from '@/api/queries'
 import { readAuthBypass } from '@/lib/auth/runtimeConfig'
 import type { NavigationCrumbKey } from '@/lib/i18n/navigation'
-import type { NAMESPACES } from '@/lib/i18n/languages'
+import type { AllNamespaces } from '@/lib/i18n/languages'
 import { useLocalizedText, type LocalizedText } from '@/lib/i18n/localizedText'
 import {
   permissionsOf,
@@ -24,6 +24,12 @@ import {
 export const crumbRoute = (titleKey: NavigationCrumbKey) => ({
   component: Outlet,
   loader: () => ({ crumb: { titleKey } }),
+})
+
+/** Like `crumbRoute`, for a title outside `navigation:crumb.*`, such as a module's own catalog. */
+export const qualifiedCrumbRoute = (titleKey: ParseKeys<AllNamespaces>) => ({
+  component: Outlet,
+  loader: () => ({ crumb: { titleKey, params: {} } }),
 })
 
 /**
@@ -68,7 +74,7 @@ export const prefetch = <TQueryFnData, TError, TData, TQueryKey extends QueryKey
 }
 
 interface EntityCrumbKey {
-  titleKey: ParseKeys<typeof NAMESPACES>
+  titleKey: ParseKeys<AllNamespaces>
   params: Record<string, unknown>
 }
 

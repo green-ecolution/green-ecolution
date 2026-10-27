@@ -1,18 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen } from '@testing-library/react'
 import type { ReactNode } from 'react'
-import { WateringStatus } from '@green-ecolution/backend-client'
 import SensorPlacementCard from './SensorPlacementCard'
 import type { Sensor } from '@/api/backendApi'
+import type { ModuleManifest } from '@/modules/types'
+import { probeTarget, probeTargetManifest } from '@/test/targetManifest'
 
-const { useQueryMock, requestActivateMock } = vi.hoisted(() => ({
-  useQueryMock: vi.fn(),
+const { activeManifests, requestActivateMock } = vi.hoisted(() => ({
+  activeManifests: { current: [] as ModuleManifest[] },
   requestActivateMock: vi.fn(),
 }))
 
-vi.mock('@tanstack/react-query', () => ({
-  useQuery: useQueryMock,
-  queryOptions: (options: unknown) => options,
+vi.mock('@/modules/useActiveModules', () => ({
+  useActiveModules: () => ({ manifests: activeManifests.current, isActive: () => true }),
 }))
 
 vi.mock('@tanstack/react-router', () => ({
@@ -20,98 +20,72 @@ vi.mock('@tanstack/react-router', () => ({
 }))
 
 vi.mock('@/components/map-gl/MapPreview', () => ({
-  default: () => <div data-testid="map-preview" />,
+  default: ({ children }: { children?: ReactNode }) => (
+    <div data-testid="map-preview">{children}</div>
+  ),
+}))
+
+vi.mock('@/components/map-gl/SensorMarker', () => ({
+  default: () => <div data-testid="sensor-marker" />,
 }))
 
 vi.mock('./SensorActionsContext', () => ({
-  useSensorActions: () => ({ requestActivate: requestActivateMock }),
+  useSensorActions: () => ({ requestActivate: requestActivateMock, canAssign: true }),
 }))
-
-const tree = {
-  id: 'tree-1',
-  number: '312',
-  species: 'Acer platanoides',
-  plantingYear: 2018,
-  treeClusterId: 'cluster-1' as string | null,
-}
-
-const cluster = {
-  id: 'cluster-1',
-  name: 'Friesischer Berg',
-  wateringStatus: WateringStatus.Good,
-  trees: [{}, {}, {}],
-}
 
 const sensorWith = (overrides: Partial<Sensor>) =>
   ({
     id: 'eui-test',
     location: { latitude: 54.78, longitude: 9.43 },
-    target: { module: 'irrigation', kind: 'tree', id: 'tree-1' },
-    targetLabel: 'Friesischer Berg',
+    target: { module: 'probe', kind: 'probe', id: 'probe-1' },
+    targetLabel: 'Messpunkt Nord',
     ...overrides,
   }) as Sensor
 
-const respondWith = ({ treeData = tree, clusterData = cluster } = {}) => {
-  useQueryMock.mockImplementation(({ queryKey }: { queryKey: unknown[] }) => {
-    if (queryKey[0] === 'treecluster') return { data: clusterData }
-    return { data: treeData, isLoading: false, isError: false }
-  })
-}
-
 describe('SensorPlacementCard', () => {
   beforeEach(() => {
-    useQueryMock.mockReset()
     requestActivateMock.mockReset()
+    activeManifests.current = [probeTargetManifest('probe', [probeTarget('probe', 'probe')])]
   })
 
-  it('leads with the watering group and names the tree the sensor sits on', () => {
-    respondWith()
+  it('renders the placement of the module that owns the target', async () => {
+    render(<SensorPlacementCard sensor={sensorWith({})} />)
+
+    expect(await screen.findByTestId('placement-probe')).toHaveTextContent('eui-test')
+  })
+
+  it('hands the coordinates panel to the placement, so it sits between map and rows', async () => {
+    render(<SensorPlacementCard sensor={sensorWith({})} />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Koordinaten' }))
+
+    const placement = await screen.findByTestId('placement-probe')
+    expect(placement).toHaveTextContent('54.780000°')
+  })
+
+  it('shows the core label without a link for a target of an inactive module', () => {
+    activeManifests.current = []
 
     render(<SensorPlacementCard sensor={sensorWith({})} />)
 
-    const links = screen.getAllByRole('link')
-    expect(links[0]).toHaveTextContent('Friesischer Berg')
-    expect(links[0]).toHaveTextContent('3 Bäume')
-    expect(links[0]).toHaveAttribute('href', '/treecluster/$treeclusterId')
-    expect(links[1]).toHaveTextContent('Baum-Nr. 312')
-    expect(links[1]).toHaveTextContent('Acer platanoides')
-    expect(screen.getByTestId('map-preview')).toBeInTheDocument()
+    expect(screen.getByText('Messpunkt Nord')).toBeInTheDocument()
+    expect(screen.queryByRole('link')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('placement-probe')).not.toBeInTheDocument()
   })
 
-  it('shows the group name from the sensor before the group has loaded', () => {
-    useQueryMock.mockImplementation(({ queryKey }: { queryKey: unknown[] }) =>
-      queryKey[0] === 'treecluster'
-        ? { data: undefined }
-        : { data: tree, isLoading: false, isError: false },
+  it('shows the core label without a link for a target of an unknown module', () => {
+    render(
+      <SensorPlacementCard
+        sensor={sensorWith({ target: { module: 'waste', kind: 'bin', id: 'b-1' } })}
+      />,
     )
 
-    render(<SensorPlacementCard sensor={sensorWith({})} />)
-
-    expect(screen.getAllByRole('link')[0]).toHaveTextContent('Friesischer Berg')
+    expect(screen.getByText('Messpunkt Nord')).toBeInTheDocument()
+    expect(screen.queryByRole('link')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('placement-probe')).not.toBeInTheDocument()
   })
 
-  it('does not claim the tree has no group while the tree is still loading', () => {
-    useQueryMock.mockImplementation(() => ({ data: undefined, isLoading: true, isError: false }))
-
-    render(<SensorPlacementCard sensor={sensorWith({ targetLabel: null })} />)
-
-    expect(
-      screen.queryByText('Der Baum gehört zu keiner Bewässerungsgruppe.'),
-    ).not.toBeInTheDocument()
-  })
-
-  it('says so when the tree belongs to no watering group', () => {
-    respondWith({ treeData: { ...tree, treeClusterId: null } })
-
-    render(<SensorPlacementCard sensor={sensorWith({ targetLabel: '312' })} />)
-
-    expect(screen.getByText('Der Baum gehört zu keiner Bewässerungsgruppe.')).toBeInTheDocument()
-    expect(screen.getAllByRole('link')).toHaveLength(1)
-  })
-
-  it('offers to assign a tree when the sensor is not linked', () => {
-    respondWith()
-
+  it('offers to assign a target when the sensor is not linked', () => {
     render(
       <SensorPlacementCard
         sensor={sensorWith({ target: null, targetLabel: null, location: null })}
@@ -120,7 +94,7 @@ describe('SensorPlacementCard', () => {
 
     expect(screen.getByText('Noch keine Verknüpfung')).toBeInTheDocument()
     expect(screen.queryByTestId('map-preview')).not.toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: /Baum zuweisen/ }))
+    fireEvent.click(screen.getByRole('button', { name: /Aktivieren/ }))
     expect(requestActivateMock).toHaveBeenCalledOnce()
   })
 })

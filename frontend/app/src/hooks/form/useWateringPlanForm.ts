@@ -1,7 +1,10 @@
-import type { PlanResponse, WateringPlanCreate, WateringPlanUpdate } from '@/api/backendApi'
+import { WATERING_PLAN_FORM } from '@/store/form/formDraftSlice'
+import { queryRoots } from '@/api/queries'
+import type { PlanResponse } from '@/api/backendApi'
 import { planApi } from '@/api/backendApi'
-import { toPlanCreateRequest, toPlanUpdateRequest } from '@/api/irrigationPlans'
+import { toPlanCreateRequest, toPlanFormUpdateRequest } from '@/lib/plans'
 import { useIssueTranslator } from '@/lib/i18n/validation'
+import type { PlanningManifest } from '@/modules/planning'
 import { WateringPlanForm } from '@/schema/wateringPlanSchema'
 import { wateringPlanDraftResolver } from '@green-ecolution/domain-wasm'
 import { DefaultValues } from 'react-hook-form'
@@ -10,32 +13,37 @@ import { EntityFormConfig, useEntityForm } from './useEntityForm'
 
 export const useWateringPlanForm = (
   mutationType: 'create' | 'update',
-  opts: { wateringPlanId?: string; initForm?: DefaultValues<WateringPlanForm> },
+  opts: {
+    wateringPlanId?: string
+    initForm?: DefaultValues<WateringPlanForm>
+    planManifest?: PlanningManifest
+  },
 ) => {
   const translate = useIssueTranslator()
   const { t } = useTranslation('wateringPlan')
 
   const wateringPlanConfig: EntityFormConfig<
     WateringPlanForm,
-    WateringPlanCreate,
-    WateringPlanUpdate,
+    WateringPlanForm,
+    WateringPlanForm,
     PlanResponse
   > = {
-    formType: 'wateringplan',
+    formType: WATERING_PLAN_FORM,
     resolver: wateringPlanDraftResolver<WateringPlanForm>(translate),
 
     createFn: (body) => planApi.createPlan({ planCreateRequest: toPlanCreateRequest(body) }),
     updateFn: (id, body) =>
-      planApi.updatePlan({ planId: id, planUpdateRequest: toPlanUpdateRequest(body) }),
+      planApi.updatePlan({ planId: id, planUpdateRequest: toPlanFormUpdateRequest(body) }),
 
-    invalidates: ['wateringPlan'],
+    invalidates: queryRoots.wateringPlan,
 
     successRoute: (id) => ({
       to: '/watering-plans/$wateringPlanId',
       params: { wateringPlanId: id.toString() },
     }),
     replaceOnSuccess: true,
-    allowedPaths: ['/map/watering-plan/select/cluster'],
+    allowedPaths: [...(opts.planManifest?.planning.stopPickerPaths ?? [])],
+    errorModule: opts.planManifest?.key,
 
     messages: {
       createLeave: t('form.createLeaveMessage'),
@@ -45,7 +53,7 @@ export const useWateringPlanForm = (
     },
   }
 
-  return useEntityForm<WateringPlanForm, WateringPlanCreate, WateringPlanUpdate, PlanResponse>(
+  return useEntityForm<WateringPlanForm, WateringPlanForm, WateringPlanForm, PlanResponse>(
     wateringPlanConfig,
     mutationType,
     {

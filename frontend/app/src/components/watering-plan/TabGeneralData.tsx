@@ -1,5 +1,8 @@
 import { PlanStatus as WateringPlanStatus } from '@green-ecolution/backend-client'
-import type { WateringPlan } from '@/api/backendApi'
+import type { PlanResponse } from '@green-ecolution/backend-client'
+import type { ModulePlanning } from '@/modules/types'
+import { capacityDisplay } from '@/lib/capacity'
+import { Suspense } from 'react'
 import { DetailedList, StatusCard } from '@green-ecolution/ui'
 import StatusCardGrid from '../general/StatusCardGrid'
 import { format, formatDuration, intervalToDuration } from 'date-fns'
@@ -11,11 +14,13 @@ import { useDateLocale } from '@/lib/i18n/useFormatters'
 import { formatKm } from '@/lib/utils'
 
 interface TabGeneralDataProps {
-  wateringPlan: WateringPlan
+  wateringPlan: PlanResponse
+  /** Absent when the plan's module is not active; its rows and summary are left out then. */
+  planning: ModulePlanning | undefined
 }
 
-const TabGeneralData: React.FC<TabGeneralDataProps> = ({ wateringPlan }) => {
-  const { t } = useTranslation(['wateringPlan', 'common'])
+const TabGeneralData: React.FC<TabGeneralDataProps> = ({ wateringPlan, planning }) => {
+  const { t, i18n } = useTranslation(['wateringPlan', 'common'])
   const dateLocale = useDateLocale()
   const getWateringPlanStatusDetails = useWateringPlanStatusDetails()
   const { data: userRes } = useSuspenseQuery(userQueries.list({ page: 1, perPage: 100 }))
@@ -41,12 +46,16 @@ const TabGeneralData: React.FC<TabGeneralDataProps> = ({ wateringPlan }) => {
       label: t('detail.startPointLabel'),
       value: wateringPlan.startPointName ?? defaultStartPointName ?? noData,
     },
-    {
-      label: t('detail.requiredWaterLabel'),
-      value: wateringPlan.totalWaterRequired
-        ? t('detail.requiredWaterValue', { value: wateringPlan.totalWaterRequired })
-        : noData,
-    },
+    ...(planning
+      ? [
+          {
+            label: t(capacityDisplay[planning.capacityKind].demandLabelKey),
+            value: wateringPlan.totalDemand
+              ? t('detail.demandValue', { value: wateringPlan.totalDemand })
+              : noData,
+          },
+        ]
+      : []),
     {
       label: t('detail.transporterLabel'),
       value: wateringPlan.transporter
@@ -67,18 +76,22 @@ const TabGeneralData: React.FC<TabGeneralDataProps> = ({ wateringPlan }) => {
       ? [
           {
             label: t('detail.transporterTankLabel'),
-            value: wateringPlan.transporterTankUsed
+            value: wateringPlan.transporterCapacityUsed
               ? t('detail.transporterTankUsedValue')
               : t('detail.transporterTankUnusedValue'),
           },
         ]
       : []),
-    {
-      label: t('detail.clusterCountLabel'),
-      value: wateringPlan.treeclusters?.length
-        ? t('detail.clusterCountValue', { count: wateringPlan.treeclusters.length })
-        : noData,
-    },
+    ...(planning
+      ? [
+          {
+            label: i18n.t(planning.stopCountLabelKey),
+            value: wateringPlan.stops.length
+              ? i18n.t(planning.stopCountKey, { count: wateringPlan.stops.length })
+              : noData,
+          },
+        ]
+      : []),
     {
       label: t('detail.assignedUsersLabel'),
       value: assignedUsers.length
@@ -124,22 +137,10 @@ const TabGeneralData: React.FC<TabGeneralDataProps> = ({ wateringPlan }) => {
             />
           </li>
         )}
-        {wateringPlan?.status === WateringPlanStatus.Finished && (
-          <li>
-            <StatusCard
-              label={t('detail.consumedWaterLabel')}
-              value={t('detail.consumedWaterValue', {
-                value: wateringPlan.evaluation.reduce(
-                  (sum: number, item: { consumedWater: number }) => sum + item.consumedWater,
-                  0,
-                ),
-              })}
-              isLarge
-              description={t('detail.consumedWaterDescription', {
-                count: wateringPlan.treeclusters.length,
-              })}
-            />
-          </li>
+        {planning && (
+          <Suspense fallback={null}>
+            <planning.PlanSummary plan={wateringPlan} />
+          </Suspense>
         )}
         <li>
           <StatusCard

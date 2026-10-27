@@ -1,5 +1,6 @@
 import { uiDe, uiEn } from '@green-ecolution/ui'
 import type { i18n as I18n } from 'i18next'
+import { moduleManifests } from '@/modules/registry'
 import type { Language } from './languages'
 
 // One `import()` per language literal, so Vite emits exactly one chunk per
@@ -33,6 +34,11 @@ export async function ensureLanguage(instance: I18n, lng: Language): Promise<voi
   const bundles = await bundlesFor(lng)
   for (const [namespace, resources] of Object.entries(bundles)) {
     instance.addResourceBundle(lng, namespace, resources, true, true)
+  }
+  for (const manifest of moduleManifests) {
+    for (const [namespace, resources] of Object.entries(await manifest.i18n.load(lng))) {
+      instance.addResourceBundle(lng, namespace, resources, true, true)
+    }
   }
   seen.add(lng)
 }

@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { RotateCcw } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { FilterChip } from '@green-ecolution/ui'
@@ -12,9 +13,19 @@ interface ActiveFilterChipsProps {
   chips: FilterChipDescriptor[]
   onReset: () => void
   resultLabel: string
+  /** Chips a module renders itself, after the descriptor chips. */
+  children?: ReactNode
+  /** Whether `children` holds a chip, which decides about the reset link. */
+  active?: boolean
 }
 
-const ActiveFilterChips = ({ chips, onReset, resultLabel }: ActiveFilterChipsProps) => {
+const ActiveFilterChips = ({
+  chips,
+  onReset,
+  resultLabel,
+  children,
+  active = false,
+}: ActiveFilterChipsProps) => {
   const { t } = useTranslation('common')
 
   return (
@@ -22,7 +33,8 @@ const ActiveFilterChips = ({ chips, onReset, resultLabel }: ActiveFilterChipsPro
       {chips.map((chip) => (
         <FilterChip key={chip.id} label={chip.label} onRemove={chip.onRemove} />
       ))}
-      {chips.length > 0 && (
+      {children}
+      {(chips.length > 0 || active) && (
         <button
           type="button"
           onClick={onReset}

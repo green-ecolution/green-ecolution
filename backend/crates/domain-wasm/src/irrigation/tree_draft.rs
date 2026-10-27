@@ -73,7 +73,7 @@ pub(crate) fn collect_tree_issues(input: &TreeDraftInput) -> Vec<ValidationIssue
     issues
 }
 
-#[wasm_bindgen(js_name = validateTreeDraft)]
+#[wasm_bindgen(js_name = irrigationValidateTreeDraft)]
 pub fn validate_tree_draft(input: JsValue) -> Result<JsValue, JsError> {
     let draft: TreeDraftInput = from_value(input).map_err(|e| JsError::new(&e.to_string()))?;
     let issues = collect_tree_issues(&draft);

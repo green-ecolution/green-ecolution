@@ -2,13 +2,13 @@ import { describe, expect, it, vi } from 'vitest'
 import type { TreeForm, ValidationIssue } from './types'
 
 vi.mock('../pkg/domain_wasm.js', () => ({
-  validateTreeDraft: vi.fn<(_: unknown) => ValidationIssue[]>(),
-  validateTreeClusterDraft: vi.fn<(_: unknown) => ValidationIssue[]>(),
+  irrigationValidateTreeDraft: vi.fn<(_: unknown) => ValidationIssue[]>(),
+  irrigationValidateTreeClusterDraft: vi.fn<(_: unknown) => ValidationIssue[]>(),
   validateVehicleDraft: vi.fn<(_: unknown) => ValidationIssue[]>(),
   validateWateringPlanDraft: vi.fn<(_: unknown) => ValidationIssue[]>(),
 }))
 
-import { validateTreeDraft } from '../pkg/domain_wasm.js'
+import { irrigationValidateTreeDraft } from '../pkg/domain_wasm.js'
 import { treeDraftResolver } from './resolver'
 
 const validTreeForm: TreeForm = {
@@ -28,7 +28,7 @@ const resolver = treeDraftResolver<TreeForm>(translate)
 
 describe('treeDraftResolver', () => {
   it('returns values when validation passes', async () => {
-    vi.mocked(validateTreeDraft).mockReturnValueOnce([])
+    vi.mocked(irrigationValidateTreeDraft).mockReturnValueOnce([])
     const result = await resolver(validTreeForm, undefined, {
       fields: {},
       shouldUseNativeValidation: false,
@@ -38,7 +38,7 @@ describe('treeDraftResolver', () => {
   })
 
   it('maps issues to RHF FieldErrors keyed by path', async () => {
-    vi.mocked(validateTreeDraft).mockReturnValueOnce([
+    vi.mocked(irrigationValidateTreeDraft).mockReturnValueOnce([
       {
         path: 'species',
         field: 'tree.species',
@@ -58,7 +58,7 @@ describe('treeDraftResolver', () => {
   })
 
   it('uses i18n key as message fallback when no translation exists', async () => {
-    vi.mocked(validateTreeDraft).mockReturnValueOnce([
+    vi.mocked(irrigationValidateTreeDraft).mockReturnValueOnce([
       {
         path: 'plantingYear',
         field: 'tree.planting_year',

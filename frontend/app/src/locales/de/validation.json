@@ -86,8 +86,8 @@
     "outOfRange": "Wasserkapazität muss zwischen {min} und {max} Liter liegen."
   },
   "watering_plan": {
-    "cluster_ids": {
-      "empty": "Es muss mindestens eine Bewässerungsgruppe ausgewählt werden."
+    "stop_ids": {
+      "empty": "Wähle mindestens einen Stopp aus."
     },
     "driver_ids": {
       "empty": "Es muss mindestens ein Mitarbeiter ausgewählt werden.",

@@ -19,7 +19,7 @@ pub(crate) struct WateringPlanDraftInput {
     #[allow(dead_code)] // free-text DTO field, not validated
     pub description: Option<String>,
     #[serde(default)]
-    pub cluster_ids: Vec<String>,
+    pub stop_ids: Vec<String>,
     #[serde(default)]
     pub transporter_id: Option<String>,
     #[serde(default)]
@@ -42,12 +42,12 @@ fn non_empty(value: Option<&str>) -> Option<&str> {
 pub(crate) fn collect_plan_issues(input: &WateringPlanDraftInput) -> Vec<ValidationIssue> {
     let mut issues = Vec::new();
 
-    if input.cluster_ids.iter().all(|s| s.is_empty()) {
+    if input.stop_ids.iter().all(|s| s.is_empty()) {
         issues.push(ValidationIssue::from_error(
             &ValidationError::EmptyString {
-                field: "watering_plan.cluster_ids",
+                field: "watering_plan.stop_ids",
             },
-            "clusterIds",
+            "stopIds",
         ));
     }
 
@@ -140,7 +140,7 @@ mod tests {
         WateringPlanDraftInput {
             date: future_date(),
             description: None,
-            cluster_ids: vec!["cluster-a".into(), "cluster-b".into()],
+            stop_ids: vec!["stop-a".into(), "stop-b".into()],
             transporter_id: Some("vehicle-1".into()),
             trailer_id: None,
             driver_ids: vec!["00000000-0000-0000-0000-000000000001".into()],
@@ -156,19 +156,23 @@ mod tests {
     }
 
     #[test]
-    fn empty_cluster_ids_yields_issue() {
+    fn empty_stop_ids_yields_issue() {
         let mut input = valid();
-        input.cluster_ids.clear();
+        input.stop_ids.clear();
         let issues = collect_plan_issues(&input);
-        assert!(issues.iter().any(|i| i.path == "clusterIds"));
+        let issue = issues
+            .iter()
+            .find(|i| i.path == "stopIds")
+            .expect("stopIds issue");
+        assert_eq!(issue.key, "watering_plan.stop_ids.empty");
     }
 
     #[test]
-    fn cluster_ids_of_only_empty_strings_yields_issue() {
+    fn stop_ids_of_only_empty_strings_yields_issue() {
         let mut input = valid();
-        input.cluster_ids = vec!["".into(), "".into()];
+        input.stop_ids = vec!["".into(), "".into()];
         let issues = collect_plan_issues(&input);
-        assert!(issues.iter().any(|i| i.path == "clusterIds"));
+        assert!(issues.iter().any(|i| i.path == "stopIds"));
     }
 
     #[test]

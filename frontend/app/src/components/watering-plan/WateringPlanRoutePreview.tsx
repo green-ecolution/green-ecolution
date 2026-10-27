@@ -1,10 +1,9 @@
-import { useCallback, useEffect, useMemo, useState, Suspense } from 'react'
-import { useNavigate } from '@tanstack/react-router'
+import { useEffect, useMemo, Suspense } from 'react'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { Loading } from '@green-ecolution/ui'
 import { useTranslation } from 'react-i18next'
-import type { WateringPlan } from '@/api/backendApi'
-import { clusterQueries, routingStartPointsQuery, wateringPlanQueries } from '@/api/queries'
+import type { PlanResponse } from '@green-ecolution/backend-client'
+import { routingStartPointsQuery, wateringPlanQueries } from '@/api/queries'
 import RoutePointMarkers, {
   buildRoutePoints,
   type RoutePointMarkerData,
@@ -12,59 +11,40 @@ import RoutePointMarkers, {
 import { useMapCenter } from '@/components/map-gl/useMapView'
 import MapPreview from '@/components/map-gl/MapPreview'
 import { useMaplibreMap } from '@/components/map-gl/MapContext'
-import useClusterBoundaryLayer from '@/components/map-gl/layers/useClusterBoundaryLayer'
-import useClusterMarkerLayer from '@/components/map-gl/layers/useClusterMarkerLayer'
 import useRouteLayer from '@/components/map-gl/layers/useRouteLayer'
 import { isMapAlive } from '@/components/map-gl/mapReady'
-import ClusterPanel from '@/components/map/cluster-panel/ClusterPanel'
+import { planTextKey } from '@/modules/planning'
+import type { ModulePlanning } from '@/modules/types'
 
 interface WateringPlanPreviewRouteProps {
-  wateringPlan: WateringPlan
+  wateringPlan: PlanResponse
+  planning: ModulePlanning | undefined
 }
 
 const RoutePreviewLayers = ({
   planId,
-  clusterIds,
   startPointName,
-  onSelectCluster,
 }: {
   planId: string
-  clusterIds: string[]
   startPointName?: string | null
-  onSelectCluster: (id: string) => void
 }) => {
   const map = useMaplibreMap()
-  const { data: markers } = useSuspenseQuery(clusterQueries.markers())
   const { data: route } = useSuspenseQuery(wateringPlanQueries.route(planId))
   const { data: startPoints } = useSuspenseQuery(routingStartPointsQuery())
   const routePoints = useMemo<RoutePointMarkerData[]>(
-    () => buildRoutePoints(startPoints, startPointName, route?.refillPoints),
+    () => buildRoutePoints(startPoints, startPointName, route?.stationVisits),
     [startPoints, startPointName, route],
   )
 
   const routeCoordinates = route?.geometry.coordinates as [number, number][] | undefined
 
-  useClusterBoundaryLayer({ onBoundaryClick: onSelectCluster, clusterIds })
   useRouteLayer({ coordinates: routeCoordinates })
-  useClusterMarkerLayer({ onClusterClick: onSelectCluster, clusterIds, flyToOnClick: false })
 
   useEffect(() => {
-    if (!isMapAlive(map)) return
-    let points: [number, number][]
-    if (routeCoordinates?.length) {
-      points = routeCoordinates
-    } else {
-      const ids = new Set(clusterIds)
-      points = markers.data
-        .filter((c) => ids.has(c.id))
-        .map((c) => [c.longitude, c.latitude] as [number, number])
-    }
-    if (points.length === 0) return
-    let minLng = points[0][0]
-    let maxLng = points[0][0]
-    let minLat = points[0][1]
-    let maxLat = points[0][1]
-    for (const [lng, lat] of points) {
+    if (!isMapAlive(map) || !routeCoordinates?.length) return
+    let [minLng, minLat] = routeCoordinates[0]
+    let [maxLng, maxLat] = routeCoordinates[0]
+    for (const [lng, lat] of routeCoordinates) {
       if (lng < minLng) minLng = lng
       if (lng > maxLng) maxLng = lng
       if (lat < minLat) minLat = lat
@@ -77,41 +57,15 @@ const RoutePreviewLayers = ({
       ],
       { padding: 64, maxZoom: 16 },
     )
-  }, [map, markers, clusterIds, routeCoordinates])
+  }, [map, routeCoordinates])
 
   return <RoutePointMarkers points={routePoints} />
 }
 
-const WateringPlanPreviewRoute = ({ wateringPlan }: WateringPlanPreviewRouteProps) => {
-  const { t } = useTranslation('wateringPlan')
+/** The core draws the route and its stations; the plan module draws its stops on top. */
+const WateringPlanPreviewRoute = ({ wateringPlan, planning }: WateringPlanPreviewRouteProps) => {
+  const { t, i18n } = useTranslation('wateringPlan')
   const [centerLat, centerLng] = useMapCenter()
-  const clusterIds = wateringPlan.treeclusters.map((tc) => tc.id)
-  const [selectedClusterId, setSelectedClusterId] = useState<string | null>(null)
-  const navigate = useNavigate()
-
-  const handleSelectCluster = useCallback((id: string) => {
-    setSelectedClusterId(id)
-  }, [])
-
-  const handleClosePanel = useCallback(() => {
-    setSelectedClusterId(null)
-  }, [])
-
-  const handleOpenDashboard = useCallback(() => {
-    if (!selectedClusterId) return
-    navigate({
-      to: '/treecluster/$treeclusterId',
-      params: { treeclusterId: selectedClusterId },
-    }).catch((error) => console.error('Navigation failed:', error))
-  }, [navigate, selectedClusterId])
-
-  const handleEditCluster = useCallback(() => {
-    if (!selectedClusterId) return
-    navigate({
-      to: '/map/treecluster/edit/$treeclusterId',
-      params: { treeclusterId: selectedClusterId },
-    }).catch((error) => console.error('Navigation failed:', error))
-  }, [navigate, selectedClusterId])
 
   return (
     <MapPreview
@@ -119,31 +73,18 @@ const WateringPlanPreviewRoute = ({ wateringPlan }: WateringPlanPreviewRouteProp
       zoom={13}
       interactive
       className="h-[40rem]"
-      ariaLabel={t('detail.routePreviewAriaLabel')}
+      ariaLabel={i18n.t(
+        planTextKey(planning, 'routePreviewAriaLabel', 'wateringPlan:detail.routePreviewAriaLabel'),
+      )}
     >
       <Suspense
         fallback={
           <Loading className="justify-center" label={t('detail.routePreviewLoadingLabel')} />
         }
       >
-        <RoutePreviewLayers
-          planId={wateringPlan.id}
-          clusterIds={clusterIds}
-          startPointName={wateringPlan.startPointName}
-          onSelectCluster={handleSelectCluster}
-        />
+        <RoutePreviewLayers planId={wateringPlan.id} startPointName={wateringPlan.startPointName} />
+        {planning && <planning.RouteOverlay plan={wateringPlan} />}
       </Suspense>
-      {selectedClusterId && (
-        <Suspense fallback={null}>
-          <ClusterPanel
-            key={selectedClusterId}
-            clusterId={selectedClusterId}
-            onClose={handleClosePanel}
-            onOpenDashboard={handleOpenDashboard}
-            onEdit={handleEditCluster}
-          />
-        </Suspense>
-      )}
     </MapPreview>
   )
 }

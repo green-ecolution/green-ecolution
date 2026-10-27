@@ -55,7 +55,7 @@ export const VALIDATION_KEYS = [
   'vehicle.status.invalidFormat',
 
   // Watering plan
-  'watering_plan.cluster_ids.empty',
+  'watering_plan.stop_ids.empty',
   'watering_plan.driver_ids.empty',
   'watering_plan.transporter_id.empty',
   'watering_plan.transporter_id.outOfRange',

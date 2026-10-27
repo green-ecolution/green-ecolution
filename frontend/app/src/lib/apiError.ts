@@ -6,6 +6,7 @@ import {
   type ValidationIssue,
 } from '@green-ecolution/backend-client'
 import { getI18n } from '@/lib/i18n'
+import { errorCatalogKeys } from '@/lib/i18n/errors'
 import { translateIssueNow } from '@/lib/i18n/validation'
 
 /**
@@ -31,15 +32,20 @@ export type ApiErrorMessageKey =
 // statically (same issue as `lib/i18n/validation.ts`'s `LooseTranslate`).
 type LooseTranslate = (key: string, params?: Record<string, string | number>) => string
 
-/** Catalog lookup in the `errors` namespace; undefined when the key is unknown. */
+export interface ApiErrorContext {
+  /** Module the failed request belonged to, so its own wording of a code wins. */
+  module?: string
+}
+
+/** Catalog lookup in the core and module `errors` catalogs; undefined when the key is unknown. */
 function messageFor(
   key: ApiErrorMessageKey,
   params?: Record<string, string | number>,
+  { module }: ApiErrorContext = {},
 ): string | undefined {
   const { t, exists } = getI18n()
-  const namespaced = `errors:${key}`
-  if (!exists(namespaced)) return undefined
-  return (t as LooseTranslate)(namespaced, params)
+  const found = errorCatalogKeys(key, module).find((candidate) => exists(candidate))
+  return found === undefined ? undefined : (t as LooseTranslate)(found, params)
 }
 
 export interface ApiErrorInfo {
@@ -106,6 +112,7 @@ async function readPayload(response: Response): Promise<ErrorPayload> {
 function resolveMessage(
   status: number,
   { detail, code, validation }: ErrorPayload,
+  context: ApiErrorContext,
 ): Pick<ApiErrorInfo, 'message' | 'messageKey'> {
   // A named field beats a generic code: "Name darf maximal 255 Zeichen lang
   // sein" is more use than "Die eingegebenen Daten sind ungültig."
@@ -119,7 +126,7 @@ function resolveMessage(
     ? [`code.${code}`, `status.${status}`]
     : [`status.${status}`]
   for (const key of keys) {
-    const message = messageFor(key)
+    const message = messageFor(key, undefined, context)
     if (message) return { message, messageKey: key }
   }
   if (detail) return { message: detail, messageKey: 'detail' }
@@ -129,14 +136,21 @@ function resolveMessage(
   }
 }
 
-export async function resolveApiError(error: unknown): Promise<ApiErrorInfo> {
+export async function resolveApiError(
+  error: unknown,
+  context: ApiErrorContext = {},
+): Promise<ApiErrorInfo> {
   if (error instanceof ResponseError) {
     const status = error.response.status
     const payload = await readPayload(error.response)
     // No automatic net exists for `code.*`: the backend does not publish its
     // code list, `ServiceError::code()` is only exhaustive in Rust. A missing
     // entry degrades to the status text, so make it visible in development.
-    if (import.meta.env.DEV && payload.code && !getI18n().exists(`errors:code.${payload.code}`)) {
+    if (
+      import.meta.env.DEV &&
+      payload.code &&
+      !errorCatalogKeys(`code.${payload.code}`).some((key) => getI18n().exists(key))
+    ) {
       console.warn(`apiError: no catalog entry for code ${payload.code}`)
     }
     return {
@@ -144,7 +158,7 @@ export async function resolveApiError(error: unknown): Promise<ApiErrorInfo> {
       code: payload.code,
       validation: payload.validation,
       detail: payload.detail,
-      ...resolveMessage(status, payload),
+      ...resolveMessage(status, payload, context),
     }
   }
 
@@ -167,6 +181,6 @@ export class ApiError extends Error {
   }
 }
 
-export async function toApiError(error: unknown): Promise<ApiError> {
-  return new ApiError(await resolveApiError(error))
+export async function toApiError(error: unknown, context?: ApiErrorContext): Promise<ApiError> {
+  return new ApiError(await resolveApiError(error, context))
 }

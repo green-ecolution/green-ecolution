@@ -71,9 +71,14 @@ function chapterLink(slug: string): ChapterLink {
   }
 }
 
-export function chapterNeighbours(slug: string): ChapterNeighbours {
-  const position = readingOrder.indexOf(slug)
-  if (position === -1) throw new Error(`handbook: unknown chapter "${slug}"`)
+/** The chapter at hand stays in the order even when hidden, so a shared link still pages on. */
+export function chapterNeighbours(
+  slug: string,
+  isVisible: (slug: string) => boolean = () => true,
+): ChapterNeighbours {
+  if (!readingOrder.includes(slug)) throw new Error(`handbook: unknown chapter "${slug}"`)
+  const order = readingOrder.filter((candidate) => candidate === slug || isVisible(candidate))
+  const position = order.indexOf(slug)
 
   const herePart = handbookIndex.chapters[slug].part
   const step = (neighbour: string | undefined): ChapterStep | null => {
@@ -85,12 +90,12 @@ export function chapterNeighbours(slug: string): ChapterNeighbours {
   }
 
   return {
-    previous: step(readingOrder[position - 1]),
-    next: step(readingOrder[position + 1]),
+    previous: step(order[position - 1]),
+    next: step(order[position + 1]),
   }
 }
 
 /** The chapter the handbook opens with, for the "read from the start" entry point. */
-export function firstChapter(): ChapterLink {
-  return chapterLink(readingOrder[0])
+export function firstChapter(isVisible: (slug: string) => boolean = () => true): ChapterLink {
+  return chapterLink(readingOrder.find(isVisible) ?? readingOrder[0])
 }

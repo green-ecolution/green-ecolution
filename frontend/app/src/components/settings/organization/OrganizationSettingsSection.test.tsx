@@ -1,10 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, userEvent } from '@/test/utils'
-import type { IrrigationSettingsResponse, OrganizationSettingsResponse } from '@/api/backendApi'
-import type { IrrigationDraft } from './useIrrigationSettingsDraft'
+import type { OrganizationSettingsResponse } from '@/api/backendApi'
 import type { SettingsDraft } from './useOrganizationSettingsDraft'
-
-type FullDraft = SettingsDraft & IrrigationDraft
 
 // MapLibre needs a WebGL context, which jsdom does not provide.
 vi.mock('@/components/map-gl/MapPreview', () => ({
@@ -20,26 +17,6 @@ const MAP_VIEW = {
   maxZoom: 18,
 }
 
-const IRRIGATION = {
-  waterDemand: {
-    value: 80,
-    origin: 'inherited',
-    source: { id: 'root' },
-    lastChange: null,
-  },
-  justWateredTtlSecs: {
-    value: 86400,
-    origin: 'own',
-    ownValue: 86400,
-    lastChange: {
-      changedAt: new Date('2026-03-12T09:00:00Z'),
-      changedBy: 'u-admin',
-      changedByName: 'ge.admin',
-    },
-  },
-  enforcedBy: null,
-} as unknown as IrrigationSettingsResponse
-
 const SETTINGS = {
   mapView: {
     value: MAP_VIEW,
@@ -50,15 +27,11 @@ const SETTINGS = {
   enforcedBy: null,
 } as unknown as OrganizationSettingsResponse
 
-const DRAFT: FullDraft = {
-  waterDemand: { own: false, text: '80' },
-  justWateredTtlHours: { own: true, text: '24' },
+const DRAFT: SettingsDraft = {
   mapView: { own: false, value: MAP_VIEW },
   descendantsMayOverride: true,
 }
 
-const onOwnChange = vi.fn()
-const onTextChange = vi.fn()
 const onMapViewOwnChange = vi.fn()
 const onMapViewChange = vi.fn()
 const onMapViewRestrictedChange = vi.fn()
@@ -67,14 +40,11 @@ const onDescendantsMayOverrideChange = vi.fn()
 
 const props = (overrides: Partial<Record<string, unknown>> = {}) => ({
   settings: SETTINGS,
-  irrigation: IRRIGATION,
   draft: DRAFT,
-  errors: { waterDemand: null, justWateredTtlHours: null, mapView: null },
+  errors: { mapView: null },
   canUpdate: true,
   enforcedByName: null,
-  sourceNames: { waterDemand: 'Stadt Flensburg', justWateredTtlHours: null, mapView: null },
-  onOwnChange,
-  onTextChange,
+  sourceNames: { mapView: null },
   onMapViewOwnChange,
   onMapViewChange,
   onMapViewRestrictedChange,
@@ -83,95 +53,21 @@ const props = (overrides: Partial<Record<string, unknown>> = {}) => ({
   ...overrides,
 })
 
-// An ancestor froze the subtree: the effective values come from there and this
-// organization's own value lies dormant.
+// An ancestor froze the subtree: the effective values come from there.
 const enforced = () => {
   const settings = {
     ...SETTINGS,
     enforcedBy: { id: 'root' },
   } as unknown as OrganizationSettingsResponse
-  const irrigation = {
-    ...IRRIGATION,
-    justWateredTtlSecs: {
-      value: 86400,
-      origin: 'inherited',
-      source: { id: 'root' },
-      ownValue: 172800,
-      lastChange: null,
-    },
-  } as unknown as IrrigationSettingsResponse
-  const draft: FullDraft = {
-    ...DRAFT,
-    justWateredTtlHours: { own: false, text: '24' },
-  }
-  return props({ settings, irrigation, draft, enforcedByName: 'Stadt Flensburg' })
+  return props({ settings, enforcedByName: 'Stadt Flensburg' })
 }
 
 describe('OrganizationSettingsSection', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  it('names the organization an inherited value comes from', () => {
-    render(<OrganizationSettingsSection {...props()} />)
-
-    expect(screen.getByText(/Geerbt von Stadt Flensburg/i)).toBeInTheDocument()
-    expect(screen.getByText('Eigener Wert')).toBeInTheDocument()
-  })
-
-  // The badge names where the stored value comes from, which an unsaved toggle
-  // has not changed yet; colour and wording must not tell different stories.
-  it('keeps the origin badge on the stored origin while a takeover is unsaved', () => {
-    const draft: FullDraft = { ...DRAFT, waterDemand: { own: true, text: '90' } }
-    render(<OrganizationSettingsSection {...props({ draft })} />)
-
-    const badge = screen.getByText(/Geerbt von Stadt Flensburg/i)
-    expect(badge.className).not.toMatch(/green/)
-  })
-
-  // An inherited value is a statement of where it comes from, not a greyed-out
-  // input: there is nothing to type into until the organization takes it over.
-  it('states an inherited value instead of offering a field for it', async () => {
-    render(<OrganizationSettingsSection {...props()} />)
-
-    expect(screen.queryByRole('spinbutton', { name: /Wasserbedarf/i })).not.toBeInTheDocument()
-    expect(screen.getByText('80 Liter')).toBeInTheDocument()
-    expect(screen.getByRole('spinbutton', { name: /Nachwirkzeit/i })).toBeEnabled()
-
-    // The accessible name carries the field, so the two rows stay tellable apart.
-    await userEvent.click(
-      screen.getByRole('button', { name: 'Eigenen Wert für Wasserbedarf je Baum setzen' }),
-    )
-    expect(onOwnChange).toHaveBeenCalledWith('waterDemand', true)
-  })
-
-  it('says what each value actually controls', () => {
-    render(<OrganizationSettingsSection {...props()} />)
-
-    expect(screen.getByText(/Bedarfsrechnung jeder Bewässerungsgruppe/)).toBeInTheDocument()
-    expect(screen.getByText(/als soeben bewässert/)).toBeInTheDocument()
-  })
-
-  it('gives an own value back to inheritance', async () => {
-    render(<OrganizationSettingsSection {...props()} />)
-
-    await userEvent.click(
-      screen.getByRole('button', { name: 'Nachwirkzeit frisch gegossen wieder erben' }),
-    )
-    expect(onOwnChange).toHaveBeenCalledWith('justWateredTtlHours', false)
-  })
-
-  it('hands every keystroke to the draft instead of coercing it', async () => {
-    render(<OrganizationSettingsSection {...props()} />)
-
-    await userEvent.type(screen.getByRole('spinbutton', { name: /Nachwirkzeit/i }), '8')
-    expect(onTextChange).toHaveBeenCalledWith('justWateredTtlHours', '248')
-  })
-
   it('reads as a plain overview without setting:update', () => {
     render(<OrganizationSettingsSection {...props({ canUpdate: false })} />)
 
-    expect(screen.queryByRole('spinbutton')).not.toBeInTheDocument()
-    expect(screen.getByText('80 Liter')).toBeInTheDocument()
-    expect(screen.getByText('24 Stunden')).toBeInTheDocument()
     expect(
       screen.getByRole('switch', { name: /Untereinheiten dürfen eigene Werte setzen/ }),
     ).toBeDisabled()
@@ -180,42 +76,31 @@ describe('OrganizationSettingsSection', () => {
     expect(screen.getByText(/ansehen, aber nicht ändern/)).toBeInTheDocument()
   })
 
-  it('shows the locking organization and keeps the dormant own value visible', () => {
+  it('shows the locking organization', () => {
     render(<OrganizationSettingsSection {...enforced()} />)
 
     expect(screen.getByRole('alert')).toHaveTextContent(/Stadt Flensburg/)
-    expect(screen.queryByRole('spinbutton', { name: /Nachwirkzeit/i })).not.toBeInTheDocument()
-    expect(screen.getByText('24 Stunden')).toBeInTheDocument()
-    expect(screen.getByText(/48 Stunden.*ruht/i)).toBeInTheDocument()
     // The lock covers the switch too — the backend refuses it as well.
     expect(
       screen.getByRole('switch', { name: /Untereinheiten dürfen eigene Werte setzen/ }),
     ).toBeDisabled()
   })
 
-  it('shows when and by whom a value was last changed', () => {
-    render(<OrganizationSettingsSection {...props()} />)
-
-    expect(screen.getByText(/12\.03\.2026.*ge\.admin/)).toBeInTheDocument()
-  })
-
-  it('reports a range error at the field itself', () => {
+  it('places the module sections inside the card, ahead of the map viewport', () => {
     render(
       <OrganizationSettingsSection
-        {...props({
-          errors: {
-            waterDemand: null,
-            justWateredTtlHours: 'Nachwirkzeit muss zwischen 1 und 336 liegen.',
-          },
-        })}
+        {...props({ moduleSections: <p data-testid="module-section">Modul</p> })}
       />,
     )
 
-    // The description also carries what the value does and its unit; the error
-    // comes first, so it is the first thing announced.
-    expect(screen.getByRole('spinbutton', { name: /Nachwirkzeit/i })).toHaveAccessibleDescription(
-      /^Nachwirkzeit muss zwischen 1 und 336 liegen\./,
+    const section = screen.getByTestId('module-section')
+    expect(section.closest('section')).toBe(
+      screen.getByRole('heading', { name: 'Fachliche Vorgaben' }).closest('section'),
     )
+    expect(
+      section.compareDocumentPosition(screen.getByText('Kartenausschnitt')) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
   })
 
   it('toggles the lock for sub-units', async () => {
@@ -244,8 +129,6 @@ describe('OrganizationSettingsSection', () => {
       <OrganizationSettingsSection
         {...props({
           errors: {
-            waterDemand: null,
-            justWateredTtlHours: null,
             mapView: 'Der Mittelpunkt muss innerhalb des gewählten Ausschnitts liegen.',
           },
         })}
@@ -265,7 +148,7 @@ describe('OrganizationSettingsSection', () => {
     render(<OrganizationSettingsSection {...props()} />)
     expect(screen.getByRole('switch', { name: /Keine Einschränkung/ })).toBeDisabled()
 
-    const draft: FullDraft = { ...DRAFT, mapView: { own: true, value: MAP_VIEW } }
+    const draft: SettingsDraft = { ...DRAFT, mapView: { own: true, value: MAP_VIEW } }
     render(<OrganizationSettingsSection {...props({ draft })} />)
 
     const switches = screen.getAllByRole('switch', { name: /Keine Einschränkung/ })
@@ -281,7 +164,7 @@ describe('OrganizationSettingsSection', () => {
       ...SETTINGS,
       mapView: { value: { center: MAP_VIEW.center, bbox: null }, origin: 'own', lastChange: null },
     } as unknown as OrganizationSettingsResponse
-    const draft: FullDraft = {
+    const draft: SettingsDraft = {
       ...DRAFT,
       mapView: { own: true, value: { center: MAP_VIEW.center, bbox: null } },
     }

@@ -42,7 +42,7 @@ pub(crate) fn collect_cluster_issues(input: &ClusterDraftInput) -> Vec<Validatio
     issues
 }
 
-#[wasm_bindgen(js_name = validateTreeClusterDraft)]
+#[wasm_bindgen(js_name = irrigationValidateTreeClusterDraft)]
 pub fn validate_tree_cluster_draft(input: JsValue) -> Result<JsValue, JsError> {
     let draft: ClusterDraftInput = from_value(input).map_err(|e| JsError::new(&e.to_string()))?;
     let issues = collect_cluster_issues(&draft);

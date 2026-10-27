@@ -4,6 +4,7 @@ title: Bewässerungsgruppen
 part: greenspaces
 summary: Die Übersicht und ihre Gruppenkarten lesen, eine Gruppe anlegen, ihr Bäume zuordnen, das Gruppendashboard lesen und verstehen, wie der Bewässerungsstatus zustande kommt.
 routes: ['/treecluster', '/treecluster/$treeclusterId']
+module: irrigation
 ---
 
 ## Die Übersicht lesen

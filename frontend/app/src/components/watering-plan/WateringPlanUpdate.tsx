@@ -4,19 +4,17 @@ import { useInitFormQuery } from '@/hooks/form/useInitForm'
 import { userQueries, vehicleQueries, wateringPlanQueries } from '@/api/queries'
 import { format } from 'date-fns'
 import FormForWateringPlan from '../general/form/FormForWateringPlan'
-import { useNavigate } from '@tanstack/react-router'
-import { Route } from '@/routes'
-import { useMapCenter, useMapZoom } from '@/components/map-gl/useMapView'
 import GeneralLink from '../general/links/GeneralLink'
 import { showWateringPlanStatusButton } from '@/hooks/details/useDetailsForWateringPlanStatus'
 import { Loading } from '@green-ecolution/ui'
 import { Suspense } from 'react'
 import { useTranslation } from 'react-i18next'
-import DeleteSection from '../treecluster/DeleteSection'
-import { Can } from '@/lib/auth/Can'
-import { useHasPermission } from '@/lib/auth/useHasPermission'
+import DeleteSection from '../general/DeleteSection'
 import { planApi } from '@/api/backendApi'
-import { keepUnresolvedStops } from '@/api/irrigationPlans'
+import { planStatusQueryRoots } from '@/lib/queryInvalidation'
+import { planningManifests, planTextKey } from '@/modules/planning'
+import { useActiveModules } from '@/modules/useActiveModules'
+import { usePlanPermission } from '@/modules/usePlanPermission'
 import { useWateringPlanForm } from '@/hooks/form/useWateringPlanForm'
 import { WateringPlanForm } from '@/schema/wateringPlanSchema'
 import { FormProvider, SubmitHandler } from 'react-hook-form'
@@ -29,9 +27,8 @@ interface WateringPlanUpdateProps {
 }
 
 const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
-  const { t } = useTranslation(['wateringPlan', 'common'])
+  const { t, i18n } = useTranslation(['wateringPlan', 'common'])
   const dateLocale = useDateLocale()
-  const canUpdateStatus = useHasPermission(['watering_plan:update'])
   const draft = useWateringPlanDraft<WateringPlanForm>('update')
   const { initForm, loadedData } = useInitFormQuery(
     wateringPlanQueries.detail(wateringPlanId),
@@ -41,22 +38,30 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
         description: data.description,
         transporterId: data.transporter.id,
         trailerId: data.trailer?.id,
-        transporterTankUsed: data.transporterTankUsed,
-        clusterIds: data.treeclusters.map((cluster) => cluster.id),
+        transporterTankUsed: data.transporterCapacityUsed,
+        // Every stop, also those the reader cannot see: the stop picker only
+        // removes what the user removes, so a save keeps the hidden ones.
+        stopIds: data.stops,
+        module: data.module,
         status: data.status,
         driverIds: data.userIds,
         startPointName: data.startPointName ?? '',
       },
   )
+  const { manifests } = useActiveModules()
+  const planManifest = planningManifests(manifests).find(({ key }) => key === loadedData.module)
+  const planning = planManifest?.planning
+  const canUpdateStatus = usePlanPermission(planning, 'update')
+  const canDelete = usePlanPermission(planning, 'delete')
   const { mutate, isError, error, form, navigationBlocker, saveDraft } = useWateringPlanForm(
     'update',
     {
       wateringPlanId,
       initForm,
+      planManifest,
     },
   )
 
-  const navigate = useNavigate({ from: Route.fullPath })
   const date = loadedData?.date
     ? format(new Date(loadedData?.date), 'dd.MM.yyyy', { locale: dateLocale })
     : t('common:state.noData')
@@ -65,40 +70,7 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
   const { data: trailers } = useSuspenseQuery(vehicleQueries.list())
   const { data: transporters } = useSuspenseQuery(vehicleQueries.list())
 
-  const onSubmit: SubmitHandler<WateringPlanForm> = (data) => {
-    mutate({
-      ...data,
-      date: data.date.toISOString(),
-      trailerId: data.trailerId && data.trailerId !== '-1' ? data.trailerId : undefined,
-      treeClusterIds: loadedData
-        ? keepUnresolvedStops(data.clusterIds, loadedData)
-        : data.clusterIds,
-      userIds: data.driverIds,
-      startPointName: data.startPointName,
-      cancellationNote: '', // TODO: why cancel note in update ???
-    })
-  }
-
-  const mapCenter = useMapCenter()
-  const mapZoom = useMapZoom()
-  const mapPosition = { lat: mapCenter[0], lng: mapCenter[1], zoom: mapZoom }
-
-  const navigateToClusterSelect = () => {
-    saveDraft()
-    navigate({
-      to: '/map/watering-plan/select/cluster',
-      search: {
-        lat: mapPosition.lat,
-        lng: mapPosition.lng,
-        zoom: mapPosition.zoom,
-        wateringPlanId,
-        trailerId: form.getValues('trailerId'),
-        transporterId: form.getValues('transporterId'),
-        clusterIds: form.getValues('clusterIds'),
-        formType: 'update',
-      },
-    }).catch((error) => console.error('Navigation failed:', error))
-  }
+  const onSubmit: SubmitHandler<WateringPlanForm> = (data) => mutate(data)
 
   const handleDeleteWateringPlan = () => {
     return planApi.deletePlan({ planId: wateringPlanId })
@@ -116,7 +88,9 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
         }}
         title={<>{t('update.title', { date })}</>}
       >
-        <p>{t('update.description')}</p>
+        <p>
+          {i18n.t(planTextKey(planning, 'updateDescription', 'wateringPlan:update.description'))}
+        </p>
         {canUpdateStatus && showWateringPlanStatusButton(loadedData) && (
           <p className="mt-5 flex flex-wrap gap-x-4">
             {t('update.statusEditNotice')}
@@ -139,14 +113,17 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
             users={users.data}
             trailers={trailers.data}
             transporters={transporters.data}
-            onAddCluster={navigateToClusterSelect}
+            formType="update"
+            planId={wateringPlanId}
+            organizationId={loadedData.organizationId}
+            saveDraft={saveDraft}
             errorMessage={error?.message}
             onBlur={saveDraft}
           />
         </FormProvider>
       </section>
 
-      <Can permission={['watering_plan:delete']}>
+      {canDelete && (
         <Suspense
           fallback={<Loading className="mt-20 justify-center" label={t('update.deletingLabel')} />}
         >
@@ -154,10 +131,10 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
             mutationFn={handleDeleteWateringPlan}
             entityName={{ key: 'wateringPlan:entity.nameWithArticle' }}
             redirectUrl={{ to: '/watering-plans' }}
-            invalidates={['wateringPlan', 'evaluation']}
+            invalidates={planStatusQueryRoots(planning)}
           />
         </Suspense>
-      </Can>
+      )}
 
       <UnsavedChangesDialog blocker={navigationBlocker} />
     </>

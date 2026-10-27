@@ -386,12 +386,6 @@
       "title": "Fachliche Vorgaben",
       "hint": "Diese Werte gelten für diese Organisation und für alle Untereinheiten, die nichts Eigenes gesetzt haben. Ohne eigenen Wert folgt eine Untereinheit ihrer übergeordneten Organisation, bis hinauf zur Vorgabe der Instanz.",
       "readOnlyNotice": "Du kannst diese Vorgaben ansehen, aber nicht ändern.",
-      "waterDemandLabel": "Wasserbedarf je Baum",
-      "waterDemandHint": "Geht in die Bedarfsrechnung jeder Bewässerungsgruppe ein und bestimmt damit, wie viele Gruppen eine Tourenplanung in eine Fahrt legt. Bereits geplante Einsätze bleiben unverändert.",
-      "waterDemandUnit": "Liter",
-      "justWateredTtlLabel": "Nachwirkzeit frisch gegossen",
-      "justWateredTtlHint": "So lange gilt ein Baum nach einem abgeschlossenen Einsatzplan als soeben bewässert, bevor er auf Unbekannt zurückfällt.",
-      "justWateredTtlUnit": "Stunden",
       "mapView": {
         "label": "Kartenausschnitt",
         "hint": "Wo die Karte aufgeht und welchen Bereich sie freigibt. Mitarbeitende dieser Organisation starten in diesem Ausschnitt und können nicht darüber hinaus schwenken.",
@@ -419,10 +413,6 @@
       "inheritAgain": "Wieder erben",
       "inheritAgainFor": "{field} wieder erben",
       "dormantOwnValue": "Der eigene Wert von {value} ruht, solange die Sperre gilt.",
-      "liters_one": "{count} Liter",
-      "liters_other": "{count} Liter",
-      "hours_one": "{count} Stunde",
-      "hours_other": "{count} Stunden",
       "lastChange": "Zuletzt geändert am {date}",
       "lastChangeBy": "Zuletzt geändert am {date} von {name}",
       "enforcedNotice": "{name} hat die Vorgaben für diese Organisation gesperrt. Es gelten die Werte von dort, eigene Eingaben sind hier nicht möglich.",
@@ -437,6 +427,10 @@
         "saveFailed": "Die Einstellungen konnten nicht gespeichert werden.",
         "lockedByAncestor": "Eine übergeordnete Organisation hat diese Einstellungen gesperrt."
       }
+    },
+    "modules": {
+      "title": "Module",
+      "hint": "Lege fest, welche Fachmodule in dieser Organisation und darunter zur Verfügung stehen."
     }
   },
   "permission": {
@@ -458,30 +452,6 @@
       "delete": "{resource} löschen"
     },
     "resource": {
-      "tree": {
-        "label": "Bäume",
-        "pluralNoun": "Bäume",
-        "singular": "Baum",
-        "description": "Bäume & Standorte",
-        "hint": {
-          "read": "Baumliste und Details einsehen",
-          "create": "Neue Bäume erfassen",
-          "update": "Stammdaten und Standort ändern",
-          "delete": "Bäume dauerhaft entfernen"
-        }
-      },
-      "tree_cluster": {
-        "label": "Bewässerungsgruppen",
-        "pluralNoun": "Bewässerungsgruppen",
-        "singular": "Bewässerungsgruppe",
-        "description": "Gruppen & Schwellen",
-        "hint": {
-          "read": "Gruppen und Bewässerungsstatus einsehen",
-          "create": "Neue Bewässerungsgruppen anlegen",
-          "update": "Zuordnung, Name und Schwellen ändern",
-          "delete": "Gruppen auflösen"
-        }
-      },
       "sensor": {
         "label": "Sensoren",
         "pluralNoun": "Sensoren",
@@ -504,18 +474,6 @@
           "create": "Neues Gebiet anlegen",
           "update": "Gebiet umbenennen oder anpassen",
           "delete": "Gebiet entfernen"
-        }
-      },
-      "watering_plan": {
-        "label": "Einsatzpläne",
-        "pluralNoun": "Einsatzpläne",
-        "singular": "Einsatzplan",
-        "description": "Planung & Touren",
-        "hint": {
-          "read": "Geplante und abgeschlossene Einsatzpläne einsehen",
-          "create": "Neuen Einsatzplan anlegen (setzt das Recht Startpunkte ansehen voraus)",
-          "update": "Route, Zeit, Umfang und Status ändern",
-          "delete": "Einsatzplan dauerhaft entfernen"
         }
       },
       "start_point": {

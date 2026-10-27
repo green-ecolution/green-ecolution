@@ -3,6 +3,7 @@ import type { TFunction } from 'i18next'
 import { render, screen, userEvent } from '@/test/utils'
 import { getI18n } from '@/lib/i18n'
 import { UNRESTRICTED } from '@/lib/auth/permissions'
+import { irrigationManifest } from '@green-ecolution/module-irrigation'
 import { permissionAreasFor } from '@/lib/auth/permissionAreas'
 import RoleAreaCard from './RoleAreaCard'
 
@@ -11,7 +12,8 @@ beforeAll(() => {
   t = getI18n().getFixedT('de', 'settings')
 })
 
-const treeArea = () => permissionAreasFor(t).find((area) => area.resource === 'tree')!
+const treeArea = () =>
+  permissionAreasFor(t, [irrigationManifest]).find((area) => area.resource === 'tree')!
 
 const renderCard = (overrides: Partial<React.ComponentProps<typeof RoleAreaCard>> = {}) => {
   const props: React.ComponentProps<typeof RoleAreaCard> = {

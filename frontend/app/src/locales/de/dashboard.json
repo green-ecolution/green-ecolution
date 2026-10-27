@@ -5,13 +5,8 @@
   "cards": {
     "map": {
       "headline": "Karte",
-      "description": "Alle Bäume in Flensburg im Zuständigkeitsbereich des TBZ.",
+      "description": "Alle erfassten Objekte deiner Organisation auf einer Karte.",
       "linkLabel": "Zur Karte"
-    },
-    "clusters": {
-      "headline": "Auflistung der Bewässerungsgruppen",
-      "description": "Listenansicht aller gruppierten Bäume, die mit Sensoren ausgestattet sind.",
-      "linkLabel": "Zu den Bewässerungsgruppen"
     },
     "sensors": {
       "headline": "Liste aller verbauten Sensoren",
@@ -20,7 +15,7 @@
     },
     "wateringPlans": {
       "headline": "Einsatzpläne",
-      "description": "Planung eines neuen Einsatzplans zur Bewässerung von Bewässerungsgruppen",
+      "description": "Planung neuer Einsatzpläne und Überblick über laufende Einsätze.",
       "linkLabel": "Zu den Einsatzplänen"
     },
     "settings": {

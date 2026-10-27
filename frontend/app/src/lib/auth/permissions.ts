@@ -1,10 +1,8 @@
 import type { UserResponse } from '@green-ecolution/backend-client'
+import type { ModuleManifest } from '@/modules/types'
 
-export const RESOURCES = [
-  'tree',
-  'tree_cluster',
+export const CORE_RESOURCES = [
   'sensor',
-  'watering_plan',
   'start_point',
   'vehicle',
   'region',
@@ -15,9 +13,17 @@ export const RESOURCES = [
   'setting',
 ] as const
 
+/**
+ * Modules add the keys of the resources they declare by augmenting this
+ * interface, so their permission strings stay checked at compile time without
+ * the core naming them.
+ */
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface ModuleResourceKeys {}
+
 export const ACTIONS = ['read', 'create', 'update', 'delete'] as const
 
-export type Resource = (typeof RESOURCES)[number]
+export type Resource = (typeof CORE_RESOURCES)[number] | keyof ModuleResourceKeys
 export type Action = (typeof ACTIONS)[number]
 export type Permission = `${Resource}:${Action}`
 
@@ -31,9 +37,12 @@ export type Permissions = ReadonlySet<string> | typeof UNRESTRICTED
 
 export const NO_PERMISSIONS: Permissions = new Set<string>()
 
-export const ANY_READ: PermissionRequirement = RESOURCES.map(
-  (resource) => `${resource}:read` as Permission,
-)
+export function resourcesFor(manifests: readonly ModuleManifest[]): Resource[] {
+  return [...CORE_RESOURCES, ...manifests.flatMap((m) => (m.resources ?? []).map((r) => r.key))]
+}
+
+export const readPermissionsOf = (resources: readonly Resource[]): Permission[] =>
+  resources.map((resource): Permission => `${resource}:read`)
 
 /**
  * Union of every grant the user holds. Org scoping is deliberately dropped:

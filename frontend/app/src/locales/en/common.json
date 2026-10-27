@@ -50,10 +50,6 @@
       "apply": "Apply",
       "reset": "Reset"
     },
-    "status": {
-      "legend": "Watering status:",
-      "placeholder": "All statuses"
-    },
     "tag": {
       "removeAriaLabel": "Remove {label}"
     }
@@ -120,8 +116,7 @@
       "capturedAt": "Captured at"
     },
     "map": {
-      "currentPositionAriaLabel": "Map with current GPS position",
-      "nearestTreeAriaLabel": "Map with sensor position and nearby trees"
+      "currentPositionAriaLabel": "Map with current GPS position"
     }
   },
   "scanner": {
@@ -171,5 +166,10 @@
       "idCopied": "Sensor ID copied",
       "idCopyFailed": "Sensor ID could not be copied"
     }
+  },
+  "moduleInactive": {
+    "title": "Module not active",
+    "description": "This area belongs to a module that is not enabled in your organization.",
+    "back": "Go to dashboard"
   }
 }

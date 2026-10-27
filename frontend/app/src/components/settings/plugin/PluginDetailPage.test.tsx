@@ -171,7 +171,8 @@ describe('PluginDetailPage', () => {
     render(<PluginDetailPage plugin={proxiedPlugin} />)
 
     await user.clear(screen.getByLabelText(/^adresse/i))
-    await user.type(screen.getByLabelText(/^adresse/i), 'kataster.plugins.svc.cluster.local:80')
+    // Pasting renders once; typing the 37 characters re-rendered the page per key and timed out under load.
+    await user.paste('kataster.plugins.svc.cluster.local:80')
     await save()
 
     const { change } = updateMutate.mock.calls[0][0] as { change: Record<string, unknown> }

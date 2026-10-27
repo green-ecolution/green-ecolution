@@ -386,12 +386,6 @@
       "title": "Operational defaults",
       "hint": "These values apply to this organization and to every sub-unit that has not set its own. Without an own value a sub-unit follows its parent organization, all the way up to the instance default.",
       "readOnlyNotice": "You can view these defaults but not change them.",
-      "waterDemandLabel": "Water demand per tree",
-      "waterDemandHint": "Feeds the demand calculation of every watering group and decides how many groups a route plan puts into one trip. Watering plans that already exist stay as they are.",
-      "waterDemandUnit": "liters",
-      "justWateredTtlLabel": "Just-watered duration",
-      "justWateredTtlHint": "How long a tree counts as just watered after a finished watering plan before it falls back to unknown.",
-      "justWateredTtlUnit": "hours",
       "mapView": {
         "label": "Map viewport",
         "hint": "Where the map opens and how far it may be panned. Members of this organization start in this extent and cannot move beyond it.",
@@ -419,10 +413,6 @@
       "inheritAgain": "Inherit again",
       "inheritAgainFor": "Inherit {field} again",
       "dormantOwnValue": "The own value of {value} lies dormant while the lock applies.",
-      "liters_one": "{count} liter",
-      "liters_other": "{count} liters",
-      "hours_one": "{count} hour",
-      "hours_other": "{count} hours",
       "lastChange": "Last changed on {date}",
       "lastChangeBy": "Last changed on {date} by {name}",
       "enforcedNotice": "{name} has locked the defaults for this organization. The values from there apply and cannot be overridden here.",
@@ -437,6 +427,10 @@
         "saveFailed": "The settings could not be saved.",
         "lockedByAncestor": "A parent organization has locked these settings."
       }
+    },
+    "modules": {
+      "title": "Modules",
+      "hint": "Choose which modules are available in this organization and everything below it."
     }
   },
   "permission": {
@@ -458,30 +452,6 @@
       "delete": "Delete {resource}"
     },
     "resource": {
-      "tree": {
-        "label": "Trees",
-        "pluralNoun": "trees",
-        "singular": "tree",
-        "description": "Trees & locations",
-        "hint": {
-          "read": "View tree list and details",
-          "create": "Record new trees",
-          "update": "Change master data and location",
-          "delete": "Remove trees permanently"
-        }
-      },
-      "tree_cluster": {
-        "label": "Watering groups",
-        "pluralNoun": "watering groups",
-        "singular": "watering group",
-        "description": "Groups & thresholds",
-        "hint": {
-          "read": "View groups and watering status",
-          "create": "Create new watering groups",
-          "update": "Change assignment, name and thresholds",
-          "delete": "Dissolve groups"
-        }
-      },
       "sensor": {
         "label": "Sensors",
         "pluralNoun": "sensors",
@@ -504,18 +474,6 @@
           "create": "Create a new area",
           "update": "Rename or adjust an area",
           "delete": "Remove an area"
-        }
-      },
-      "watering_plan": {
-        "label": "Watering plans",
-        "pluralNoun": "watering plans",
-        "singular": "watering plan",
-        "description": "Planning & routes",
-        "hint": {
-          "read": "View planned and completed watering plans",
-          "create": "Create a new watering plan (start points must be readable)",
-          "update": "Change route, time, scope and status",
-          "delete": "Remove a watering plan permanently"
         }
       },
       "start_point": {

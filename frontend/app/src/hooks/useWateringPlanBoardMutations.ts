@@ -1,45 +1,33 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { queryRoots } from '@/api/queries'
+import { useMutation, useQueryClient, type QueryKey } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { PlanStatus as WateringPlanStatus } from '@green-ecolution/backend-client'
-import { planApi } from '@/api/backendApi'
 import type {
-  EvaluationValue,
-  WateringPlanInList,
-  WateringPlanList,
-  WateringPlanUpdate,
-} from '@/api/backendApi'
-import { toPlanUpdateRequest } from '@/api/irrigationPlans'
-import { wateringPlanQueries, type Aggregate } from '@/api/queries'
-import { PLAN_STATUS_AGGREGATES, useInvalidateAggregates } from '@/lib/queryInvalidation'
+  ListResponsePlanInListResponse,
+  PlanInListResponse,
+  PlanUpdateRequest,
+  StopOutcomeDto,
+} from '@green-ecolution/backend-client'
+import { planApi } from '@/api/backendApi'
+import { wateringPlanQueries } from '@/api/queries'
+import { planStatusQueryRoots, useInvalidateQueryRoots } from '@/lib/queryInvalidation'
+import { toUpdateRequest } from '@/lib/plans'
+import { completeOutcomes } from '@/modules/planning'
+import type { ModulePlanning } from '@/modules/types'
 import createToast from '@/hooks/createToast'
 import { resolveApiError } from '@/lib/apiError'
 
-export type PlanEvaluation = EvaluationValue[]
-
-export const toUpdateRequest = (
-  plan: WateringPlanInList,
-  overrides: Partial<WateringPlanUpdate>,
-): WateringPlanUpdate => ({
-  date: plan.date,
-  description: plan.description,
-  status: plan.status,
-  transporterId: plan.transporter.id,
-  trailerId: plan.trailer?.id,
-  transporterTankUsed: plan.transporterTankUsed,
-  treeClusterIds: plan.stopIds,
-  userIds: plan.userIds,
-  cancellationNote: plan.cancellationNote,
-  provider: plan.provider,
-  additionalInformation: plan.additionalInformation,
-  ...overrides,
+const columnKeys = (plan: PlanInListResponse) => ({
+  plannedKey: wateringPlanQueries.boardColumn(plan.module, [WateringPlanStatus.Planned]).queryKey,
+  activeKey: wateringPlanQueries.boardColumn(plan.module, [WateringPlanStatus.Active]).queryKey,
 })
 
-const plannedKey = wateringPlanQueries.boardColumn([WateringPlanStatus.Planned]).queryKey
-const activeKey = wateringPlanQueries.boardColumn([WateringPlanStatus.Active]).queryKey
-
-export const useWateringPlanBoardMutations = () => {
+/** `planning` names what a status change invalidates beyond the plans; assignments need none. */
+export const useWateringPlanBoardMutations = (
+  planning?: Pick<ModulePlanning, 'invalidateOnStatusChange'>,
+) => {
   const queryClient = useQueryClient()
-  const invalidate = useInvalidateAggregates()
+  const invalidate = useInvalidateQueryRoots()
   const showToast = createToast()
   // Default namespace stays 'errors' so every existing `t('frame.*')` call below
   // is untouched; new wateringPlan strings are reached with an explicit prefix.
@@ -48,26 +36,24 @@ export const useWateringPlanBoardMutations = () => {
   // The board stays mounted after a mutation, so the route loaders have to
   // re-run as well; cancelQueries elsewhere is scoped to the board to avoid
   // aborting unrelated watering-plan queries.
-  const runInvalidation = (aggregates: readonly Aggregate[]) =>
-    invalidate(aggregates, { reloadRoutes: true }).catch((error) =>
+  const runInvalidation = (roots: readonly QueryKey[]) =>
+    invalidate(roots, { reloadRoutes: true }).catch((error) =>
       console.error('Invalidation after watering plan mutation failed:', error),
     )
 
-  const invalidateAfterStatusChange = () => void runInvalidation(PLAN_STATUS_AGGREGATES)
-  const invalidatePlans = () => void runInvalidation(['wateringPlan'])
+  const invalidateAfterStatusChange = () => void runInvalidation(planStatusQueryRoots(planning))
+  const invalidatePlans = () => void runInvalidation(queryRoots.wateringPlan)
 
-  const update = (plan: WateringPlanInList, overrides: Partial<WateringPlanUpdate>) =>
-    planApi.updatePlan({
-      planId: plan.id,
-      planUpdateRequest: toPlanUpdateRequest(toUpdateRequest(plan, overrides)),
-    })
+  const update = (plan: PlanInListResponse, overrides: Partial<PlanUpdateRequest>) =>
+    planApi.updatePlan({ planId: plan.id, planUpdateRequest: toUpdateRequest(plan, overrides) })
 
   const revertStart = useMutation({
-    mutationFn: (plan: WateringPlanInList) => update(plan, { status: WateringPlanStatus.Planned }),
+    mutationFn: (plan: PlanInListResponse) => update(plan, { status: WateringPlanStatus.Planned }),
     onMutate: async (plan) => {
       await queryClient.cancelQueries({ queryKey: ['watering-plans', 'board'] })
-      const previousPlanned = queryClient.getQueryData<WateringPlanList>(plannedKey)
-      const previousActive = queryClient.getQueryData<WateringPlanList>(activeKey)
+      const { plannedKey, activeKey } = columnKeys(plan)
+      const previousPlanned = queryClient.getQueryData<ListResponsePlanInListResponse>(plannedKey)
+      const previousActive = queryClient.getQueryData<ListResponsePlanInListResponse>(activeKey)
       if (previousActive) {
         queryClient.setQueryData(activeKey, {
           ...previousActive,
@@ -82,10 +68,11 @@ export const useWateringPlanBoardMutations = () => {
       }
       return { previousPlanned, previousActive }
     },
-    onError: (error, _plan, context) => {
+    onError: (error, plan, context) => {
+      const { plannedKey, activeKey } = columnKeys(plan)
       if (context?.previousPlanned) queryClient.setQueryData(plannedKey, context.previousPlanned)
       if (context?.previousActive) queryClient.setQueryData(activeKey, context.previousActive)
-      void resolveApiError(error).then((info) =>
+      void resolveApiError(error, { module: plan.module }).then((info) =>
         showToast(t('frame.wateringPlanStartRevertFailed', { reason: info.message }), 'error'),
       )
     },
@@ -94,11 +81,12 @@ export const useWateringPlanBoardMutations = () => {
   })
 
   const startPlan = useMutation({
-    mutationFn: (plan: WateringPlanInList) => update(plan, { status: WateringPlanStatus.Active }),
+    mutationFn: (plan: PlanInListResponse) => update(plan, { status: WateringPlanStatus.Active }),
     onMutate: async (plan) => {
       await queryClient.cancelQueries({ queryKey: ['watering-plans', 'board'] })
-      const previousPlanned = queryClient.getQueryData<WateringPlanList>(plannedKey)
-      const previousActive = queryClient.getQueryData<WateringPlanList>(activeKey)
+      const { plannedKey, activeKey } = columnKeys(plan)
+      const previousPlanned = queryClient.getQueryData<ListResponsePlanInListResponse>(plannedKey)
+      const previousActive = queryClient.getQueryData<ListResponsePlanInListResponse>(activeKey)
       if (previousPlanned) {
         queryClient.setQueryData(plannedKey, {
           ...previousPlanned,
@@ -113,10 +101,11 @@ export const useWateringPlanBoardMutations = () => {
       }
       return { previousPlanned, previousActive }
     },
-    onError: (error, _plan, context) => {
+    onError: (error, plan, context) => {
+      const { plannedKey, activeKey } = columnKeys(plan)
       if (context?.previousPlanned) queryClient.setQueryData(plannedKey, context.previousPlanned)
       if (context?.previousActive) queryClient.setQueryData(activeKey, context.previousActive)
-      void resolveApiError(error).then((info) =>
+      void resolveApiError(error, { module: plan.module }).then((info) =>
         showToast(t('frame.wateringPlanStartFailed', { reason: info.message }), 'error'),
       )
     },
@@ -131,10 +120,10 @@ export const useWateringPlanBoardMutations = () => {
   })
 
   const cancelPlan = useMutation({
-    mutationFn: ({ plan, note }: { plan: WateringPlanInList; note: string }) =>
+    mutationFn: ({ plan, note }: { plan: PlanInListResponse; note: string }) =>
       update(plan, { status: WateringPlanStatus.Canceled, cancellationNote: note }),
-    onError: (error) => {
-      void resolveApiError(error).then((info) =>
+    onError: (error, { plan }) => {
+      void resolveApiError(error, { module: plan.module }).then((info) =>
         showToast(t('frame.wateringPlanCancelFailed', { reason: info.message }), 'error'),
       )
     },
@@ -145,10 +134,13 @@ export const useWateringPlanBoardMutations = () => {
   })
 
   const finishPlan = useMutation({
-    mutationFn: ({ plan, evaluation }: { plan: WateringPlanInList; evaluation: PlanEvaluation }) =>
-      update(plan, { status: WateringPlanStatus.Finished, evaluation }),
-    onError: (error) => {
-      void resolveApiError(error).then((info) =>
+    mutationFn: ({ plan, outcomes }: { plan: PlanInListResponse; outcomes: StopOutcomeDto[] }) =>
+      update(plan, {
+        status: WateringPlanStatus.Finished,
+        outcomes: completeOutcomes(plan.stops, outcomes),
+      }),
+    onError: (error, { plan }) => {
+      void resolveApiError(error, { module: plan.module }).then((info) =>
         showToast(t('frame.wateringPlanFinishFailed', { reason: info.message }), 'error'),
       )
     },
@@ -159,10 +151,10 @@ export const useWateringPlanBoardMutations = () => {
   })
 
   const assignUsers = useMutation({
-    mutationFn: ({ plan, userIds }: { plan: WateringPlanInList; userIds: string[] }) =>
+    mutationFn: ({ plan, userIds }: { plan: PlanInListResponse; userIds: string[] }) =>
       update(plan, { userIds }),
-    onError: (error) => {
-      void resolveApiError(error).then((info) =>
+    onError: (error, { plan }) => {
+      void resolveApiError(error, { module: plan.module }).then((info) =>
         showToast(t('frame.wateringPlanAssignFailed', { reason: info.message }), 'error'),
       )
     },

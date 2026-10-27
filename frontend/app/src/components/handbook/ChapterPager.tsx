@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { MoveLeft, MoveRight } from 'lucide-react'
 import { chapterNeighbours } from '@/lib/handbook'
+import { useChapterVisibility } from '@/lib/handbook/useChapterVisibility'
 import type { ChapterStep } from '@/lib/handbook/types'
 
 interface StepProps {
@@ -40,7 +41,8 @@ function Step({ step, label, direction, className = '' }: StepProps) {
 
 function ChapterPager({ slug }: { slug: string }) {
   const { t } = useTranslation('help')
-  const { previous, next } = chapterNeighbours(slug)
+  const isVisible = useChapterVisibility()
+  const { previous, next } = chapterNeighbours(slug, isVisible)
 
   if (!previous && !next) return null
 

@@ -1,0 +1,177 @@
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { FormProvider, type DefaultValues } from 'react-hook-form'
+import { useSuspenseQuery } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
+import { Button } from '@green-ecolution/ui'
+import { Trash2 } from 'lucide-react'
+import { sensorQueries } from '@/api/queries'
+import { clusterQueries, irrigationRoots, treeQueries } from '../../../../../../api/queries'
+import { treeApi } from '../../../../../../api/client'
+import { TreeForm } from '../../../../../../schema/treeSchema'
+import { useTreeForm } from '../../../../../../hooks/form/useTreeForm'
+import createToast from '@/hooks/createToast'
+import { useInvalidateQueryRoots } from '@/lib/queryInvalidation'
+import { entityNotFound, forbiddenErrorComponent, prefetch, requirePermission } from '@/lib/router'
+import { useHasPermission } from '@/lib/auth/useHasPermission'
+import { moduleRoute } from '@/modules/moduleRoute'
+import FormForTree from '../../../../../../components/general/form/FormForTree'
+import DeleteConfirmDialog from '@/components/general/DeleteConfirmDialog'
+import UnsavedChangesDialog from '@/components/general/form/UnsavedChangesDialog'
+import DraggableMarker, { type DraggableMarkerLngLat } from '@/components/map-gl/DraggableMarker'
+import MapPanel from '@/components/map-gl/MapPanel'
+import { useMaplibreMap } from '@/components/map-gl/MapContext'
+import { isMapAlive } from '@/components/map-gl/mapReady'
+import useClusterBoundaryLayer from '../../../../../../components/map-gl/layers/useClusterBoundaryLayer'
+import useClusterMarkerLayer from '../../../../../../components/map-gl/layers/useClusterMarkerLayer'
+import useTreeLayers from '../../../../../../components/map-gl/layers/useTreeLayers'
+
+export const Route = createFileRoute('/_protected/map/tree/edit/$treeId/')({
+  ...moduleRoute('irrigation', {
+    beforeLoad: requirePermission(['tree:update']),
+    errorComponent: forbiddenErrorComponent(
+      entityNotFound({
+        entityName: { key: 'irrigation:map.tree.entityName' },
+        backTo: '/trees',
+        backLabel: { key: 'irrigation:map.tree.backToList' },
+      }),
+    ),
+  }),
+  component: EditTreeOnMap,
+  loader: ({ context: { queryClient }, params: { treeId } }) => {
+    prefetch(queryClient, treeQueries.detail(treeId), 'treeQueries.detail')
+    prefetch(queryClient, sensorQueries.list(), 'sensorQueries.list')
+    prefetch(queryClient, clusterQueries.list(), 'clusterQueries.list')
+  },
+})
+
+function EditTreeOnMap() {
+  const { t } = useTranslation('irrigation', { keyPrefix: 'map' })
+  const { treeId } = Route.useParams()
+  const navigate = useNavigate({ from: Route.fullPath })
+  const invalidate = useInvalidateQueryRoots()
+  const showToast = createToast()
+  const map = useMaplibreMap()
+  const { data: tree } = useSuspenseQuery(treeQueries.detail(treeId))
+  const { data: sensors } = useSuspenseQuery(sensorQueries.list())
+  const { data: treeClusters } = useSuspenseQuery(clusterQueries.list())
+  const [pos, setPos] = useState<DraggableMarkerLngLat>({ lng: tree.longitude, lat: tree.latitude })
+  const [confirmDelete, setConfirmDelete] = useState(false)
+
+  const isProvider = !!tree.provider
+  const canDelete = useHasPermission(['tree:delete'])
+
+  const initForm: DefaultValues<TreeForm> = {
+    latitude: tree.latitude,
+    longitude: tree.longitude,
+    number: tree.number,
+    species: tree.species,
+    plantingYear: tree.plantingYear,
+    treeClusterId: tree.treeClusterId ?? null,
+    sensorId: tree.sensor?.id ?? null,
+    description: tree.description,
+    provider: tree.provider ?? undefined,
+  }
+
+  const { mutate, isError, error, form, navigationBlocker, saveDraft } = useTreeForm('update', {
+    treeId,
+    initForm,
+  })
+
+  useClusterBoundaryLayer({ interactive: false })
+  useClusterMarkerLayer({ interactive: false })
+  useTreeLayers({ interactive: false })
+
+  // Frame the tree once when the panel opens; later coordinate edits are driven
+  // by the draggable marker, not this fly-to.
+  const initialCoord = useRef({ lng: tree.longitude, lat: tree.latitude })
+  useEffect(() => {
+    if (!isMapAlive(map)) return
+    map.flyTo({ center: [initialCoord.current.lng, initialCoord.current.lat], zoom: 18 })
+  }, [map])
+
+  const handleDragEnd = useCallback(
+    (p: DraggableMarkerLngLat) => {
+      setPos(p)
+      form.setValue('latitude', p.lat, { shouldValidate: true, shouldDirty: true })
+      form.setValue('longitude', p.lng, { shouldValidate: true, shouldDirty: true })
+    },
+    [form],
+  )
+
+  const onSubmit = (data: TreeForm) => {
+    mutate({
+      ...data,
+      sensorId: data.sensorId ?? undefined,
+      treeClusterId: data.treeClusterId ?? undefined,
+    })
+  }
+
+  const handleCancel = () => {
+    navigate({ to: '/map', search: (prev) => prev }).catch((error) =>
+      console.error('Navigation failed:', error),
+    )
+  }
+
+  const handleDelete = () => {
+    navigationBlocker.allowNavigation()
+    treeApi
+      .deleteTree({ treeId })
+      // Invalidate only after leaving: this panel holds a live query on the
+      // tree, which would refetch into a 404 while still mounted. Cluster too,
+      // because removing a tree shifts its cluster's centroid and status.
+      .then(() => navigate({ to: '/map', search: (prev) => prev }))
+      .then(() => invalidate([...irrigationRoots.tree, ...irrigationRoots.cluster]))
+      .then(() => showToast(t('tree.deleteSuccess')))
+      .catch((error) => {
+        console.error('Delete failed:', error)
+        showToast(t('tree.deleteError'), 'error')
+      })
+  }
+
+  return (
+    <>
+      {!isProvider && <DraggableMarker lng={pos.lng} lat={pos.lat} onDragEnd={handleDragEnd} />}
+
+      <MapPanel title={t('tree.editTitle')} onClose={handleCancel}>
+        {!isProvider && (
+          <p className="mb-5 shrink-0 text-sm text-dark-600">{t('tree.dragMarkerHint')}</p>
+        )}
+        <FormProvider {...form}>
+          <FormForTree
+            isReadonly={isProvider}
+            treeClusters={treeClusters.data}
+            sensors={sensors.data}
+            displayError={isError}
+            errorMessage={error?.message}
+            onSubmit={onSubmit}
+            onBlur={saveDraft}
+            hideLocation
+            fullWidth
+          />
+        </FormProvider>
+        {!isProvider && canDelete && (
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => setConfirmDelete(true)}
+            className="mt-3 shrink-0 self-start text-destructive hover:text-destructive"
+          >
+            <Trash2 className="size-4" />
+            {t('tree.deleteButton')}
+          </Button>
+        )}
+      </MapPanel>
+
+      <DeleteConfirmDialog
+        open={confirmDelete}
+        onOpenChange={setConfirmDelete}
+        title={t('tree.deleteConfirmTitle')}
+        description={t('tree.deleteConfirmDescription')}
+        onConfirm={handleDelete}
+      />
+
+      <UnsavedChangesDialog blocker={navigationBlocker} />
+    </>
+  )
+}

@@ -14,6 +14,14 @@ import HandbookSearch from './HandbookSearch'
 import { loadSearchEntries } from '@/lib/handbook'
 import type { SearchEntry } from '@/lib/handbook/types'
 
+const visible = vi.hoisted(() => ({
+  filter: (_slug: string): boolean => true,
+}))
+
+vi.mock('@/lib/handbook/useChapterVisibility', () => ({
+  useChapterVisibility: () => visible.filter,
+}))
+
 vi.mock('@/lib/handbook', () => ({
   handbookIndex: {
     parts: [],
@@ -69,6 +77,7 @@ function renderHandbookSearchInStrictMode() {
 describe('HandbookSearch', () => {
   beforeEach(() => {
     mockedLoadSearchEntries.mockReset()
+    visible.filter = () => true
   })
 
   const twoHits: SearchEntry[] = [
@@ -85,6 +94,17 @@ describe('HandbookSearch', () => {
       text: 'Die Route eines Sensors spielt hier keine Rolle.',
     },
   ]
+
+  it('leaves out hits from chapters hidden by an inactive module', async () => {
+    mockedLoadSearchEntries.mockResolvedValue(twoHits)
+    visible.filter = (slug) => slug !== 'watering-plans'
+    const user = userEvent.setup()
+    renderHandbookSearch()
+
+    await user.type(await screen.findByLabelText(/suchen/i), 'route')
+
+    expect(await screen.findByRole('status')).toHaveTextContent('1 Treffer')
+  })
 
   it('marks the searched term inside the excerpt', async () => {
     mockedLoadSearchEntries.mockResolvedValue(twoHits)

@@ -111,7 +111,7 @@ const PluginDetailPage = ({ plugin }: PluginDetailPageProps) => {
     // PluginService::update only runs require_superset when the request
     // actually carries a permission set, so that a rename does not demand
     // every right the plugin holds. Echoing both sets back unconditionally
-    // defeats that: an admin with plugin:update but without, say, tree:delete
+    // defeats that: an admin with plugin:update but without, say, vehicle:delete
     // could not change the plugin's name. An untouched set is therefore left
     // out of the request entirely.
     updatePlugin.mutate({

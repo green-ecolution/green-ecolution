@@ -4,12 +4,12 @@ import SensorActionsProvider from './detail/SensorActionsContext'
 import SensorDataQualitySection from './detail/SensorDataQualitySection'
 import SensorHero from './detail/SensorHero'
 import SensorIdentitySection from './detail/SensorIdentitySection'
+import SensorInsights from './detail/SensorInsights'
 import SensorKpiRow from './detail/SensorKpiRow'
 import SensorLorawanConfigSection from './detail/SensorLorawanConfigSection'
 import SensorMeasurementProfile from './detail/SensorMeasurementProfile'
 import SensorPlacementCard from './detail/SensorPlacementCard'
 import SensorSignalCard from './detail/SensorSignalCard'
-import SensorSoilMoistureChart from './detail/SensorSoilMoistureChart'
 import type { Sensor } from '@/api/backendApi'
 
 interface SensorDashboardProps {
@@ -32,7 +32,7 @@ const SensorDashboard = ({ sensor }: SensorDashboardProps) => {
         <div className="flex flex-col gap-4 md:gap-6 xl:grid xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] xl:items-start">
           <div className="contents xl:flex xl:min-w-0 xl:flex-col xl:gap-6">
             <div className="order-1 min-w-0 empty:hidden xl:order-none">
-              <SensorSoilMoistureChart sensor={sensor} />
+              <SensorInsights sensor={sensor} />
             </div>
             <div className="order-3 min-w-0 empty:hidden xl:order-none">
               <SensorSignalCard sensor={sensor} />
