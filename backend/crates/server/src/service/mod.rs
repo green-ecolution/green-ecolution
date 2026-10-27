@@ -276,6 +276,7 @@ fn routing_code(e: &RoutingError) -> &'static str {
         RoutingError::Unavailable(_) => "routing.unavailable",
         RoutingError::InvalidProblem(_) => "routing.invalid_problem",
         RoutingError::Failed(_) => "routing.failed",
+        RoutingError::NoStation { .. } => "routing.no_station_for_capacity",
     }
 }
 
@@ -446,6 +447,9 @@ mod tests {
             ServiceError::Routing(RoutingError::Unavailable("x".into())),
             ServiceError::Routing(RoutingError::InvalidProblem("x".into())),
             ServiceError::Routing(RoutingError::Failed("x".into())),
+            ServiceError::Routing(RoutingError::NoStation {
+                kind: domain::capacity::CapacityKind::CargoVolume,
+            }),
             ServiceError::Organization(domain::organization::OrganizationError::RootImmutable),
             ServiceError::Role(domain::role::RoleError::TemplateImmutable),
             ServiceError::Role(domain::role::RoleError::CannotAssignTemplate),

@@ -2,7 +2,7 @@ use serde_json::{Value, json};
 use uuid::Uuid;
 
 use crate::{
-    helpers::{TestApp, spawn_app_with_modules},
+    helpers::{TestApp, spawn_app_with_modules, spawn_app_with_modules_and_routing},
     module_host::switch,
     settings_repo::child_org,
     test_module::TestModule,
@@ -290,4 +290,60 @@ async fn a_vehicle_without_cargo_volume_does_not_fit_a_collection_plan() {
         res.json::<Value>().await.unwrap()["code"],
         "vehicle.capacity_missing"
     );
+}
+
+#[tokio::test]
+async fn a_collection_route_without_an_unloading_station_is_refused() {
+    let streamlet = wiremock::MockServer::start().await;
+    let app = spawn_app_with_modules_and_routing(
+        vec![Box::new(TestModule::new(Default::default()))],
+        &streamlet.uri(),
+    )
+    .await;
+    switch(&app, ROOT.parse().unwrap(), Some(true)).await;
+    let stop = thing(&app).await;
+    let vehicle = cargo_vehicle(&app).await;
+
+    let res = app
+        .post_json(
+            "/api/v1/plans/route/preview",
+            &json!({ "module": "test_module", "stops": [stop], "transporter_id": vehicle }),
+        )
+        .await;
+
+    assert_eq!(res.status(), 422);
+    let body: Value = res.json().await.unwrap();
+    assert_eq!(body["code"], "routing.no_station_for_capacity");
+    assert!(streamlet.received_requests().await.unwrap().is_empty());
+}
+
+#[tokio::test]
+async fn a_collection_route_with_an_unloading_station_asks_the_optimizer_to_return_full() {
+    let streamlet = wiremock::MockServer::start().await;
+    let app = spawn_app_with_modules_and_routing(
+        vec![Box::new(TestModule::new(Default::default()))],
+        &streamlet.uri(),
+    )
+    .await;
+    switch(&app, ROOT.parse().unwrap(), Some(true)).await;
+    let station = app
+        .post_json(
+            "/api/v1/routing/start-points",
+            &json!({ "name": "Deponie", "lat": 54.8, "lon": 9.4, "replenishes": ["cargo_volume"] }),
+        )
+        .await;
+    assert_eq!(station.status(), 201, "{}", station.text().await.unwrap());
+    let stop = thing(&app).await;
+    let vehicle = cargo_vehicle(&app).await;
+
+    app.post_json(
+        "/api/v1/plans/route/preview",
+        &json!({ "module": "test_module", "stops": [stop], "transporter_id": vehicle }),
+    )
+    .await;
+
+    let requests = streamlet.received_requests().await.unwrap();
+    assert_eq!(requests.len(), 1);
+    let body: Value = serde_json::from_slice(&requests[0].body).unwrap();
+    assert_eq!(body["problem"]["vehicles"][0]["return_full"], true);
 }

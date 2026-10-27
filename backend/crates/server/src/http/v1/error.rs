@@ -188,6 +188,10 @@ impl IntoResponse for ServiceError {
             // Status kept at 400 as before; the transition is now only
             // distinguishable by its code, not by a new status.
             ServiceError::OperationPlan(e) => (StatusCode::BAD_REQUEST, e.to_string()),
+            ServiceError::Routing(e @ RoutingError::NoStation { .. }) => {
+                tracing::warn!(error = %e, kind = "routing", "request refused");
+                (StatusCode::UNPROCESSABLE_ENTITY, e.to_string())
+            }
             ServiceError::Routing(e) => {
                 let (status, message) = match e {
                     RoutingError::Unavailable(_) => (
@@ -201,6 +205,7 @@ impl IntoResponse for ServiceError {
                         StatusCode::INTERNAL_SERVER_ERROR,
                         "route optimization failed".to_string(),
                     ),
+                    RoutingError::NoStation { .. } => unreachable!("handled above"),
                 };
                 tracing::error!(error = %e, kind = "routing", "request failed");
                 (status, message)

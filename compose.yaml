@@ -161,7 +161,7 @@ services:
   #     - app-network
 
   streamlet:
-    image: ghcr.io/green-ecolution/streamlet/server:0.2.0
+    image: ghcr.io/green-ecolution/streamlet/server:0.3.0
     environment:
       STREAMLET_ADDR: "0.0.0.0:3000"
       STREAMLET_VALHALLA_URL: "http://valhalla:8002"

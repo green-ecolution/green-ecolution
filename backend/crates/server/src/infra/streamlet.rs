@@ -652,6 +652,7 @@ mod tests {
                 RoutingError::Failed(_) => {
                     assert!(!is_invalid && !is_unavailable, "status {status}")
                 }
+                RoutingError::NoStation { .. } => panic!("adapter never reports a missing station"),
             }
         }
     }

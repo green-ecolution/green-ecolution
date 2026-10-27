@@ -2731,7 +2731,7 @@
             }
           },
           "422": {
-            "description": "Route problem rejected by the optimizer, or a stop or vehicle does not fit the plan",
+            "description": "Route problem rejected by the optimizer, a stop or vehicle does not fit the plan, or no station restores the plan's capacity kind (code `routing.no_station_for_capacity`)",
             "content": {
               "application/json": {
                 "schema": {
