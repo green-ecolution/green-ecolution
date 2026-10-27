@@ -2,7 +2,7 @@
 slug: vehicles
 title: Fahrzeuge
 part: planning
-summary: Die Fahrzeugliste mit Suche, Filtern und Sortierung, ein Fahrzeug anlegen, Führerscheinklassen und Wasserkapazität für die Einsatzplanung sowie ein Fahrzeug archivieren.
+summary: Die Fahrzeugliste mit Suche, Filtern und Sortierung, ein Fahrzeug anlegen, Führerscheinklassen und Kapazitäten (Wasser und Laderaum) für die Einsatzplanung sowie ein Fahrzeug archivieren.
 routes: ['/vehicles', '/vehicles/$vehicleId', '/vehicles/new']
 ---
 
