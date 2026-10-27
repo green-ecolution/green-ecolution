@@ -1,5 +1,6 @@
 use include_dir::{Dir, include_dir};
 use server::configuration::get_configuration;
+use sqlx::migrate::{MigrateError, Migrator};
 use sqlx::postgres::PgConnectOptions;
 use sqlx::{Executor, PgPool};
 use std::env;
@@ -63,6 +64,22 @@ fn validate_schema(schema: &str) -> Result<(), Box<dyn std::error::Error>> {
     }
 }
 
+/// A version applied earlier but shipped by no registered module is what
+/// removing a module from `app::modules::registered()` leaves behind; sqlx
+/// alone only reports the bare version.
+async fn run(migrator: &Migrator, pool: &PgPool) -> Result<(), Box<dyn std::error::Error>> {
+    migrator.run(pool).await.map_err(|err| match err {
+        MigrateError::VersionMissing(version) => format!(
+            "migration {version} is applied but neither the core nor a registered module \
+             ships it. Was a module removed from app::modules::registered()? Its code may \
+             go, its migrations may not: keep them in the history app::migrations \
+             assembles and drop its tables with a new migration."
+        )
+        .into(),
+        other => other.into(),
+    })
+}
+
 async fn ensure_schema(pool: &PgPool, schema: &str) -> Result<(), Box<dyn std::error::Error>> {
     pool.execute(format!(r#"CREATE SCHEMA IF NOT EXISTS "{schema}""#).as_str())
         .await?;
@@ -88,7 +105,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         "up" | "run" => {
             let pool = PgPool::connect_with(app_options).await?;
             ensure_schema(&pool, &schema).await?;
-            migrator.run(&pool).await?;
+            run(&migrator, &pool).await?;
             println!("Migrations applied");
             if with_seed {
                 run_seeds(&pool).await?;
@@ -116,7 +133,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             let pool = PgPool::connect_with(app_options).await?;
             ensure_schema(&pool, &schema).await?;
             pool.execute(reset_sql(&schema).as_str()).await?;
-            migrator.run(&pool).await?;
+            run(&migrator, &pool).await?;
             println!("Schema '{schema}' wiped and migrated");
             if with_seed {
                 run_seeds(&pool).await?;

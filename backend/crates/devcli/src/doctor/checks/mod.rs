@@ -12,7 +12,8 @@ use super::{Check, Fix};
 /// `query!` call sites, the migrate binary cannot be rebuilt with the offline cache.
 pub const MANUAL_MIGRATION: &str = "If `just migrate-up` cannot build the migrate binary because \
 the sqlx offline cache lacks new queries, migrate by hand from backend/:
-  1. cargo sqlx migrate run --source \"$(pwd)/migrations\" --database-url \"$(just --evaluate db_url)\"
+  1. for dir in \"$(pwd)/migrations\" \"$(pwd)\"/crates/modules/*/migrations; do [ -d \"$dir\" ] && \
+cargo sqlx migrate run --ignore-missing --source \"$dir\" --database-url \"$(just --evaluate db_url)\"; done
   2. DATABASE_URL=\"$(just --evaluate db_url)\" cargo build --bin migrate
   3. refresh .sqlx/: recreate the sqlx_prepare database, run ./target/debug/migrate up against it, \
 then cargo sqlx prepare --workspace -- --all-targets";

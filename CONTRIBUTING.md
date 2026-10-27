@@ -623,6 +623,16 @@ while one of the old locations of these keys (`routing.tree_demand_liters`,
 `watering.just_watered_*`, `map.nearest_tree_*`) is still set, in a file or as an `APP_…`
 environment variable, and the error names the new key.
 
+A module's migrations live in `backend/crates/modules/<name>/migrations` and are merged
+with the core's into one history and one `_sqlx_migrations` table. To take a module out
+of use, switch it off for the organizations. Removing a deployed module from the code
+is possible, but its migration files have to stay in the history that
+`backend/crates/app/src/migrations.rs` assembles: sqlx checks for applied versions
+missing from the sources before it applies anything, so `migrate` would refuse to run.
+The module's tables, and core rows that still point at it (plans with its `module_key`,
+sensor attachments and comments on its targets, its rows in `organization_modules`),
+are then removed by a new migration.
+
 ### Frontend Module Packages
 
 The frontend side of a module is a pnpm package under `frontend/modules/<name>/` (for
