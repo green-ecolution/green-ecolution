@@ -155,18 +155,7 @@ impl Application {
             profile_repo.clone(),
             defaults,
         ));
-        let activation_defaults: std::collections::BTreeMap<_, _> = modules
-            .iter()
-            .map(|module| {
-                let key = module.key();
-                let default = settings
-                    .modules
-                    .get(key.as_str())
-                    .and_then(|m| m.default_enabled)
-                    .unwrap_or(module.default_enabled());
-                (key, default)
-            })
-            .collect();
+        let activation_defaults = crate::modules::activation_defaults(&modules, &settings.modules);
         let module_activation_repo = Arc::new(
             server::infra::pg_module_activation::PgModuleActivationRepository::new(
                 pool.clone(),
