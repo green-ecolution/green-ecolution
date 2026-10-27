@@ -5631,6 +5631,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "waste-domain"
+version = "0.8.0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "claims",
+ "domain",
+ "serde",
+ "sqlx",
+ "thiserror 2.0.21",
+ "uuid",
+]
+
+[[package]]
 name = "web-sys"
 version = "0.3.104"
 source = "registry+https://github.com/rust-lang/crates.io-index"

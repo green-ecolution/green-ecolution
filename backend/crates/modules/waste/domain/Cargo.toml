@@ -1,0 +1,31 @@
+[package]
+name = "waste-domain"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description = "Green Ecolution waste module: waste bins, fill level and collection rules"
+publish.workspace = true
+
+[lib]
+path = "src/lib.rs"
+
+[features]
+default = []
+sqlx = ["dep:sqlx", "domain/sqlx"]
+
+[dependencies]
+async-trait = { workspace = true }
+chrono = { workspace = true }
+domain = { path = "../../../domain" }
+serde = { workspace = true }
+thiserror = { workspace = true }
+uuid = { workspace = true }
+
+sqlx = { workspace = true, features = ["derive", "postgres"], optional = true }
+
+[dev-dependencies]
+claims = "0.8"

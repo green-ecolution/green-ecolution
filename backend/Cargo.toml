@@ -8,6 +8,7 @@ members = [
     "crates/devcli",
     "crates/modules/irrigation/domain",
     "crates/modules/irrigation/server",
+    "crates/modules/waste/domain",
 ]
 
 [workspace.package]
