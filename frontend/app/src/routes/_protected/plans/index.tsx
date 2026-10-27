@@ -6,6 +6,7 @@ import { PlanStatus as WateringPlanStatus } from '@green-ecolution/backend-clien
 import { modulesQuery, userQueries, wateringPlanQueries } from '@/api/queries'
 import ButtonLink from '@/components/general/links/ButtonLink'
 import ListPageHeader from '@/components/general/ListPageHeader'
+import PlanModuleTabs from '@/components/watering-plan/PlanModuleTabs'
 import WateringPlanBoard from '@/components/watering-plan/board/WateringPlanBoard'
 import { pendingLoading, prefetch } from '@/lib/router'
 import { activeManifestsFrom } from '@/modules/activeModules'
@@ -73,12 +74,17 @@ function WateringPlans() {
           )}
           action={
             canCreate && (
-              <ButtonLink icon={Plus} label={t('list.createButton')} link={{ to: '/plans/new' }} />
+              <ButtonLink
+                icon={Plus}
+                label={t('list.createButton')}
+                link={{ to: '/plans/new', search: { module: planManifest.key } }}
+              />
             )
           }
         />
       </div>
       <section className="px-4 lg:px-10">
+        <PlanModuleTabs current={planManifest.key} />
         <WateringPlanBoard module={module} />
       </section>
     </div>

@@ -8,6 +8,7 @@
     "descriptionCanModify": "Plan, start, and document trips. Drag a watering plan into the next column to change its status.",
     "description": "Track planned, ongoing, and completed trips.",
     "createButton": "Create new watering plan",
+    "moduleTabsLabel": "Kind of operation",
     "loadingLabel": "Loading data"
   },
   "detail": {

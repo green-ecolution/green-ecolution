@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { WateringPlanStatus } from '@/api/backendApi'
 import { DefaultValues, FormProvider } from 'react-hook-form'
 import { useSuspenseQuery } from '@tanstack/react-query'
+import { z } from 'zod'
 import { useTranslation } from 'react-i18next'
 import BackLink from '@/components/general/links/BackLink'
 import { userQueries, vehicleQueries } from '@/api/queries'
@@ -16,6 +17,7 @@ import { useActiveModules } from '@/modules/useActiveModules'
 
 export const Route = createFileRoute('/_protected/plans/_formular/new/')({
   component: NewWateringPlan,
+  validateSearch: z.object({ module: z.string().optional().catch(undefined) }),
 })
 
 const defaultForm = (module: string): DefaultValues<WateringPlanForm> => ({
@@ -33,7 +35,7 @@ const defaultForm = (module: string): DefaultValues<WateringPlanForm> => ({
 
 function NewWateringPlan() {
   const { manifests } = useActiveModules()
-  const planManifest = planModule({}, manifests)
+  const planManifest = planModule(Route.useSearch(), manifests)
   return planManifest ? <NewWateringPlanForm planManifest={planManifest} /> : <ModuleInactive />
 }
 
