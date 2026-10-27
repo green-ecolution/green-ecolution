@@ -54,6 +54,12 @@
     "water_capacity": {
       "invalidFormat": "Water capacity must be a number."
     },
+    "cargo_volume_capacity": {
+      "invalidFormat": "Cargo volume must be a number."
+    },
+    "capacities": {
+      "empty": "Enter at least one capacity."
+    },
     "dimension": {
       "height": {
         "outOfRange": "Height is required.",

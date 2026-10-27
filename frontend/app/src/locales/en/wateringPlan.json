@@ -30,9 +30,6 @@
     "transporterLabel": "Transporter",
     "archivedVehicleValue": "{numberPlate} (Archived)",
     "trailerLabel": "Additional trailer",
-    "transporterTankLabel": "Vehicle water tank",
-    "transporterTankUsedValue": "In use",
-    "transporterTankUnusedValue": "Stays empty, only the trailer carries water",
     "assignedUsersLabel": "Assigned staff",
     "refillCountLabel": "Refills required",
     "durationLabel": "Time required (driving time)",
@@ -44,7 +41,19 @@
     "entityTitle": "Watering plan: {value}",
     "notFoundBackLabel": "To the watering plan list",
     "routePreviewAriaLabel": "Map with the route and stops for this plan",
-    "routePreviewLoadingLabel": "Loading map …"
+    "routePreviewLoadingLabel": "Loading map …",
+    "transporterCapacity": {
+      "water": {
+        "label": "Vehicle water tank",
+        "used": "In use",
+        "unused": "Stays empty, only the trailer carries water"
+      },
+      "cargo_volume": {
+        "label": "Vehicle cargo space",
+        "used": "In use",
+        "unused": "Stays empty, only the trailer is loaded"
+      }
+    }
   },
   "update": {
     "backLabel": "Back to the watering plan",
@@ -81,15 +90,23 @@
     "trailerLabel": "Linked trailer",
     "trailerPlaceholder": "Choose a trailer, if any",
     "noTrailerOption": "No trailer",
-    "transporterTankUsedLabel": "Use the vehicle's water tank",
-    "transporterTankUsedHint": "Clear this if only the trailer carries water. The route then plans with the trailer's capacity alone.",
     "driversLabel": "Linked staff",
     "driversMultiSelectHint": "Hold down the »Shift« key to make a multiple selection.",
     "noQualifiedDriverError": "No selected staff member has all the required driving licences for the selected vehicles.",
     "createLeaveMessage": "Do you really want to leave this page? Your entries for creating the watering plan will be lost if you leave now.",
     "updateLeaveMessage": "Do you really want to leave this page? Your changes to the watering plan will be lost if you leave now.",
     "createSuccessMessage": "The watering plan was created successfully.",
-    "updateSuccessMessage": "The watering plan was updated successfully."
+    "updateSuccessMessage": "The watering plan was updated successfully.",
+    "transporterCapacityUsed": {
+      "water": {
+        "label": "Use the vehicle's water tank",
+        "hint": "Clear this if only the trailer carries water. The route then plans with the trailer's capacity alone."
+      },
+      "cargo_volume": {
+        "label": "Use the vehicle's cargo space",
+        "hint": "Clear this if only the trailer is loaded. The route then plans with the trailer's capacity alone."
+      }
+    }
   },
   "create": {
     "backLabel": "To all watering plans",

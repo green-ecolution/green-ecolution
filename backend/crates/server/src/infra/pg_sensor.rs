@@ -94,7 +94,7 @@ impl PgSensorRepository {
                     WHERE sdh.sensor_id = s.id \
                       AND s.activated_at IS NOT NULL \
                       AND sdh.updated_at > COALESCE(qa.acknowledged_at, '-infinity'::timestamp) \
-                      AND sah.ability IN ('soil_moisture', 'soil_tension') \
+                      AND sah.ability IN ('soil_moisture', 'soil_tension', 'distance') \
                     GROUP BY sdh.id \
                     ORDER BY sdh.id DESC \
                     LIMIT {defect_streak} \
@@ -469,7 +469,7 @@ impl SensorReader for PgSensorRepository {
                        WHERE sdh.sensor_id = $1
                          AND (SELECT activated FROM scope)
                          AND sdh.updated_at > (SELECT cutoff FROM scope)
-                         AND sah.ability IN ('soil_moisture', 'soil_tension')
+                         AND sah.ability IN ('soil_moisture', 'soil_tension', 'distance')
                        GROUP BY sdh.id
                        ORDER BY sdh.id DESC
                        LIMIT $3
@@ -575,7 +575,7 @@ impl SensorReader for PgSensorRepository {
                     WHERE sdh.sensor_id = s.id
                       AND s.activated_at IS NOT NULL
                       AND sdh.updated_at > COALESCE(qa.acknowledged_at, '-infinity'::timestamp)
-                      AND sah.ability IN ('soil_moisture', 'soil_tension')
+                      AND sah.ability IN ('soil_moisture', 'soil_tension', 'distance')
                     GROUP BY sdh.id
                     ORDER BY sdh.id DESC
                     LIMIT $3
@@ -1301,4 +1301,23 @@ fn build_target(
         return Ok(None);
     };
     Ok(Some(TargetRef::new(&module, &kind, id)?))
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn defect_streak_sql_lists_exactly_the_primary_abilities() {
+        let expected = domain::sensor::plausibility::PRIMARY_ABILITIES
+            .iter()
+            .map(|a| format!("'{}'", a.as_str()))
+            .collect::<Vec<_>>()
+            .join(", ");
+        let source = include_str!("pg_sensor.rs");
+        let needle = format!("sah.ability IN ({expected})");
+        assert_eq!(
+            source.matches(&needle).count(),
+            3,
+            "every defect-streak query must use {needle}"
+        );
+    }
 }

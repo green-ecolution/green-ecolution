@@ -9,7 +9,8 @@
     "organization": "Organization",
     "notifications": "Notifications",
     "team": "Team & roles",
-    "plugin": "Plugins"
+    "plugin": "Plugins",
+    "stations": "Stations"
   },
   "comingSoon": {
     "inProgress": "In progress",
@@ -34,6 +35,62 @@
     "navAriaLabel": "Team and roles",
     "tabMembers": "Members",
     "tabRoles": "Roles"
+  },
+  "stations": {
+    "title": "Stations",
+    "intro": "Start points and stations where vehicles refill water or unload cargo volume.",
+    "createButton": "Add station",
+    "loading": "Loading stations...",
+    "empty": "No stations have been created yet.",
+    "routingDisabled": "Routing is switched off in this installation.",
+    "defaultBadge": "Default",
+    "kind": {
+      "water": "Water",
+      "cargo_volume": "Cargo volume"
+    },
+    "noReplenishes": "Start and end only",
+    "action": {
+      "edit": "Edit station {name}",
+      "setDefault": "Set station {name} as default",
+      "delete": "Delete station {name}"
+    },
+    "actionLabel": {
+      "edit": "Edit",
+      "setDefault": "Set as default",
+      "delete": "Delete"
+    },
+    "dialog": {
+      "createTitle": "Add station",
+      "editTitle": "Edit station",
+      "description": "Define where the station is and what vehicles refill or unload there.",
+      "nameLabel": "Name",
+      "nameRequired": "Please enter a name.",
+      "nameTooLong": "The name may be at most 255 characters long.",
+      "organizationLabel": "Organization",
+      "organizationPlaceholder": "Select organization",
+      "organizationRequired": "Please select an organization.",
+      "replenishesLegend": "At this station vehicles can",
+      "replenishes": {
+        "water": "Refill water",
+        "cargo_volume": "Unload cargo"
+      },
+      "replenishesHint": "Without a selection the station only serves as the start and end of a tour.",
+      "positionLabel": "Position",
+      "positionHint": "Move the marker on the map to the location of the station.",
+      "positionRequired": "Please set a position on the map.",
+      "mapAriaLabel": "Map for choosing the position"
+    },
+    "deleteConfirm": {
+      "title": "Delete station?",
+      "description": "The station {name} will be removed permanently."
+    },
+    "toast": {
+      "created": "The station was created.",
+      "updated": "The station was saved.",
+      "deleted": "The station was deleted.",
+      "defaultSet": "The station is now the default.",
+      "failed": "The action failed."
+    }
   },
   "plugin": {
     "overviewTitle": "Plugin overview",

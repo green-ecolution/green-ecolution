@@ -9,10 +9,24 @@ import { DefaultValues } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { EntityFormConfig, useEntityForm } from './useEntityForm'
 
+const FORM_CAPACITY_KINDS = ['water', 'cargo_volume']
+
 const toRequest = (
-  { waterCapacity, ...fields }: VehicleForm,
+  { waterCapacity, cargoVolumeCapacity, ...fields }: VehicleForm,
   capacities: Record<string, number> = {},
-) => ({ ...fields, capacities: { ...capacities, water: waterCapacity } })
+) => {
+  const untouched = Object.fromEntries(
+    Object.entries(capacities).filter(([kind]) => !FORM_CAPACITY_KINDS.includes(kind)),
+  )
+  return {
+    ...fields,
+    capacities: {
+      ...untouched,
+      ...(waterCapacity !== undefined ? { water: waterCapacity } : {}),
+      ...(cargoVolumeCapacity !== undefined ? { cargo_volume: cargoVolumeCapacity } : {}),
+    },
+  }
+}
 
 export const useVehicleForm = (
   mutationType: 'create' | 'update',

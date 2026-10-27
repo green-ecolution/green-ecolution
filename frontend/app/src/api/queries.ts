@@ -86,6 +86,7 @@ export const queryRoots = {
   organization: [['organizations']],
   comment: [['comments']],
   plugin: [['plugins']],
+  startPoint: [['routing-start-points']],
 } as const satisfies Record<string, readonly QueryKey[]>
 
 export type Aggregate = keyof typeof queryRoots

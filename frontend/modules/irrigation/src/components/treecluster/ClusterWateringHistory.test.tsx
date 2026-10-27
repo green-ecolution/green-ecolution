@@ -42,7 +42,7 @@ function renderWithProviders() {
   })
   const detailRoute = createRoute({
     getParentRoute: () => rootRoute,
-    path: '/watering-plans/$wateringPlanId',
+    path: '/plans/$wateringPlanId',
     component: () => <div data-testid="detail-page">Detail</div>,
   })
   const routeTree = rootRoute.addChildren([indexRoute, detailRoute])
@@ -93,8 +93,8 @@ describe('ClusterWateringHistory', () => {
 
     const links = screen.getAllByRole('link', { name: 'Einsatzplan ansehen' })
     expect(links).toHaveLength(2)
-    expect(links[0]).toHaveAttribute('href', '/watering-plans/plan-1')
-    expect(links[1]).toHaveAttribute('href', '/watering-plans/plan-2')
+    expect(links[0]).toHaveAttribute('href', '/plans/plan-1')
+    expect(links[1]).toHaveAttribute('href', '/plans/plan-2')
   })
 
   it('caps the list at the 6 newest events', async () => {

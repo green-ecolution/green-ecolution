@@ -35,6 +35,8 @@
     "typeSrLabel": "Vehicle type: ",
     "drivingLicenseSrLabel": "Required driving licence class: ",
     "waterCapacityValue": "{value} liters",
+    "cargoVolumeSrLabel": "Cargo volume: ",
+    "cargoVolumeValue": "{value} liters",
     "archivedBadge": "Archived"
   },
   "detail": {
@@ -53,6 +55,8 @@
     "numberPlateLabel": "Number plate",
     "waterCapacityLabel": "Water capacity",
     "waterCapacityValue": "{value} liters",
+    "cargoVolumeLabel": "Cargo volume",
+    "cargoVolumeValue": "{value} liters",
     "lengthLabel": "Vehicle length",
     "lengthValue": "{value} meters",
     "weightLabel": "Vehicle weight",
@@ -82,6 +86,9 @@
     "typePlaceholder": "Vehicle type",
     "waterCapacityPlaceholder": "Water capacity",
     "waterCapacityLabel": "Water capacity",
+    "cargoVolumePlaceholder": "Cargo volume in liters",
+    "cargoVolumeLabel": "Cargo volume",
+    "capacitiesHint": "Enter at least one capacity. Water for watering runs, cargo volume for emptying runs.",
     "availabilityLabel": "Availability",
     "availabilityPlaceholder": "Is the vehicle available for use?",
     "drivingLicenseLabel": "Driving licence class",

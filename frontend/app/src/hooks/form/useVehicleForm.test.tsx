@@ -238,7 +238,7 @@ describe('useVehicleForm', () => {
         useVehicleForm('update', {
           vehicleId: '5',
           initForm: defaultInitForm,
-          capacities: { water: 1000, cargo_volume: 500 },
+          capacities: { water: 1000, other_kind: 500 },
         }),
       { wrapper: createWrapper() },
     )
@@ -251,10 +251,36 @@ describe('useVehicleForm', () => {
       expect(updateMock).toHaveBeenCalledWith(
         expect.objectContaining({
           vehicleUpdateRequest: expect.objectContaining({
-            capacities: { water: 1500, cargo_volume: 500 },
+            capacities: { water: 1500, other_kind: 500 },
           }) as unknown,
         }),
       )
+    })
+  })
+
+  it('sends only the capacities that are set', async () => {
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    const createMock = vi.mocked(vehicleApi.createVehicle)
+    createMock.mockResolvedValueOnce({ id: 'vehicle-uuid-6' } as unknown as Vehicle)
+
+    const { result } = renderHook(() => useVehicleForm('create', { initForm: defaultInitForm }), {
+      wrapper: createWrapper(),
+    })
+
+    act(() => {
+      result.current.mutate({
+        ...defaultInitForm,
+        waterCapacity: undefined,
+        cargoVolumeCapacity: 6000,
+      })
+    })
+
+    await waitFor(() => {
+      expect(createMock).toHaveBeenCalledWith({
+        vehicleCreateRequest: expect.objectContaining({
+          capacities: { cargo_volume: 6000 },
+        }) as unknown,
+      })
     })
   })
 

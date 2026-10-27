@@ -5,13 +5,14 @@ import { SETTINGS_NAV, visibleSettingsNav } from './settingsNav'
 const keysOf = (items: { key: string }[]) => items.map((item) => item.key)
 
 describe('SETTINGS_NAV', () => {
-  it('lists the five settings pages in order', () => {
+  it('lists the settings pages in order', () => {
     expect(keysOf(SETTINGS_NAV)).toEqual([
       'profile',
       'organization',
       'notifications',
       'team',
       'plugin',
+      'stations',
     ])
   })
 
@@ -58,5 +59,16 @@ describe('visibleSettingsNav', () => {
   it('always keeps profile', () => {
     const visible = visibleSettingsNav(SETTINGS_NAV, new Set(), new Set())
     expect(keysOf(visible)).toContain('profile')
+  })
+
+  it('shows stations only with start point read and routing enabled', () => {
+    const perms = new Set(['start_point:read'])
+    expect(keysOf(visibleSettingsNav(SETTINGS_NAV, perms, new Set(['routing'])))).toContain(
+      'stations',
+    )
+    expect(keysOf(visibleSettingsNav(SETTINGS_NAV, perms, new Set()))).not.toContain('stations')
+    expect(
+      keysOf(visibleSettingsNav(SETTINGS_NAV, new Set(['tree:read']), new Set(['routing']))),
+    ).not.toContain('stations')
   })
 })

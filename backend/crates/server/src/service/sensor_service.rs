@@ -384,6 +384,11 @@ impl SensorService {
                     .filter(|m| !flagged.contains(&(SensorAbilityName::SoilMoisture, m.depth_cm)))
                     .collect(),
             ),
+            SensorReadings::Distances(d) => SensorReadings::Distances(
+                d.into_iter()
+                    .filter(|m| !flagged.contains(&(SensorAbilityName::Distance, m.depth_cm)))
+                    .collect(),
+            ),
         };
         let after = typed_len(&ingest.typed);
 
@@ -488,5 +493,6 @@ fn typed_len(readings: &SensorReadings) -> usize {
     match readings {
         SensorReadings::Watermarks(w) => w.len(),
         SensorReadings::Volumetrics(v) => v.len(),
+        SensorReadings::Distances(d) => d.len(),
     }
 }

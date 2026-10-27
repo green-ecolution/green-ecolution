@@ -203,7 +203,7 @@ const DataTabContent = ({ statsData }: DataTabContentProps) => {
           value={statsData?.planCount ?? 0}
           subtitle={t('data.stat.plansSubtitle')}
           color="cyan"
-          href="/watering-plans"
+          href="/plans"
         />
       </div>
 

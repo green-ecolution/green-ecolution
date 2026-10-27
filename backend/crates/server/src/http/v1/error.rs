@@ -194,7 +194,7 @@ impl IntoResponse for ServiceError {
                         StatusCode::BAD_GATEWAY,
                         "routing engine unavailable".to_string(),
                     ),
-                    RoutingError::InvalidProblem(_) => {
+                    RoutingError::InvalidProblem(_) | RoutingError::NoStation { .. } => {
                         (StatusCode::UNPROCESSABLE_ENTITY, e.to_string())
                     }
                     RoutingError::Failed(_) => (
@@ -202,7 +202,11 @@ impl IntoResponse for ServiceError {
                         "route optimization failed".to_string(),
                     ),
                 };
-                tracing::error!(error = %e, kind = "routing", "request failed");
+                if status.is_server_error() {
+                    tracing::error!(error = %e, kind = "routing", "request failed");
+                } else {
+                    tracing::warn!(error = %e, kind = "routing", "request refused");
+                }
                 (status, message)
             }
             ServiceError::PluginProxyUnavailable | ServiceError::PluginProxyTargetNotAllowed => {

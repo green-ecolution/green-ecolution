@@ -9,7 +9,8 @@
     "organization": "Organisation",
     "notifications": "Benachrichtigungen",
     "team": "Team & Rollen",
-    "plugin": "Plugins"
+    "plugin": "Plugins",
+    "stations": "Stationen"
   },
   "comingSoon": {
     "inProgress": "In Arbeit",
@@ -34,6 +35,62 @@
     "navAriaLabel": "Team und Rollen",
     "tabMembers": "Mitarbeitende",
     "tabRoles": "Rollen"
+  },
+  "stations": {
+    "title": "Stationen",
+    "intro": "Startpunkte und Stationen, an denen Fahrzeuge Wasser auffüllen oder Laderaum entladen.",
+    "createButton": "Station anlegen",
+    "loading": "Stationen werden geladen …",
+    "empty": "Zur Zeit sind keine Stationen angelegt.",
+    "routingDisabled": "Routing ist in dieser Installation ausgeschaltet.",
+    "defaultBadge": "Standard",
+    "kind": {
+      "water": "Wasser",
+      "cargo_volume": "Laderaum"
+    },
+    "noReplenishes": "Nur Start und Ziel",
+    "action": {
+      "edit": "Station {name} bearbeiten",
+      "setDefault": "Station {name} als Standard setzen",
+      "delete": "Station {name} löschen"
+    },
+    "actionLabel": {
+      "edit": "Bearbeiten",
+      "setDefault": "Als Standard setzen",
+      "delete": "Löschen"
+    },
+    "dialog": {
+      "createTitle": "Station anlegen",
+      "editTitle": "Station bearbeiten",
+      "description": "Lege fest, wo die Station liegt und was Fahrzeuge dort auffüllen oder entladen.",
+      "nameLabel": "Name",
+      "nameRequired": "Bitte einen Namen angeben.",
+      "nameTooLong": "Der Name darf höchstens 255 Zeichen lang sein.",
+      "organizationLabel": "Organisation",
+      "organizationPlaceholder": "Organisation wählen",
+      "organizationRequired": "Bitte eine Organisation wählen.",
+      "replenishesLegend": "Fahrzeuge können hier",
+      "replenishes": {
+        "water": "Wasser auffüllen",
+        "cargo_volume": "Laderaum entladen"
+      },
+      "replenishesHint": "Ohne Auswahl dient die Station nur als Start und Ziel einer Tour.",
+      "positionLabel": "Position",
+      "positionHint": "Verschiebe die Markierung auf der Karte an den Standort der Station.",
+      "positionRequired": "Bitte eine Position auf der Karte festlegen.",
+      "mapAriaLabel": "Karte zur Wahl der Position"
+    },
+    "deleteConfirm": {
+      "title": "Station löschen?",
+      "description": "Die Station {name} wird dauerhaft entfernt."
+    },
+    "toast": {
+      "created": "Die Station wurde angelegt.",
+      "updated": "Die Station wurde gespeichert.",
+      "deleted": "Die Station wurde gelöscht.",
+      "defaultSet": "Die Station ist jetzt der Standard.",
+      "failed": "Die Aktion ist fehlgeschlagen."
+    }
   },
   "plugin": {
     "overviewTitle": "Übersicht der Plugins",

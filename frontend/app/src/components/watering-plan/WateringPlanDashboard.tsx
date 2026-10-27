@@ -53,7 +53,7 @@ const WateringPlanDashboard = ({ wateringPlan }: WateringPlanDashboardProps) => 
     <>
       <EntityDetailHeader
         breakpoint="xl"
-        backLink={{ link: { to: '/watering-plans' }, label: t('detail.backLabel') }}
+        backLink={{ link: { to: '/plans' }, label: t('detail.backLabel') }}
         title={<>{t('detail.title', { date })}</>}
         badge={
           <Badge variant={statusDetails?.color ?? 'outline-dark'} size="lg">
@@ -65,7 +65,7 @@ const WateringPlanDashboard = ({ wateringPlan }: WateringPlanDashboardProps) => 
             ? {
                 label: t('detail.editLabel'),
                 link: {
-                  to: `/watering-plans/$wateringPlanId/edit`,
+                  to: `/plans/$wateringPlanId/edit`,
                   params: { wateringPlanId: String(wateringPlan.id) },
                 },
               }
@@ -77,7 +77,7 @@ const WateringPlanDashboard = ({ wateringPlan }: WateringPlanDashboardProps) => 
           {canEdit && showWateringPlanStatusButton(wateringPlan) && (
             <ButtonLink
               link={{
-                to: '/watering-plans/$wateringPlanId/status/edit',
+                to: '/plans/$wateringPlanId/status/edit',
                 params: { wateringPlanId: wateringPlan.id.toString() },
               }}
               label={t('detail.updateStatusLabel')}

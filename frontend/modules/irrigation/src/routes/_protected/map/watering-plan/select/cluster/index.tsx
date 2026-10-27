@@ -48,7 +48,7 @@ function SelectCluster() {
 
   const navigationBlocker = useFormNavigationBlocker({
     isDirty: true,
-    allowedPaths: ['/watering-plans/', '/map/watering-plan/select/cluster'],
+    allowedPaths: ['/plans/', '/map/watering-plan/select/cluster'],
     onLeave: () => draft.clear(),
     message: t('selectCluster.leaveConfirmMessage'),
   })
@@ -109,11 +109,11 @@ function SelectCluster() {
     switch (formType) {
       case 'update':
         return navigate({
-          to: `/watering-plans/$wateringPlanId/edit`,
+          to: `/plans/$wateringPlanId/edit`,
           params: { wateringPlanId: String(wateringPlanId) },
         })
       case 'create':
-        return navigate({ to: '/watering-plans/new' })
+        return navigate({ to: '/plans/new' })
     }
   }, [navigate, formType, wateringPlanId, allowNavigation])
 

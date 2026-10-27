@@ -224,6 +224,7 @@ impl Application {
         let mut catalogs = std::collections::BTreeMap::new();
         let mut providers = std::collections::BTreeMap::new();
         let mut statistics_providers = std::collections::BTreeMap::new();
+        let mut sensor_parsers = Vec::new();
         for module in &modules {
             let ctx = server::module::ModuleContext {
                 pool: pool.clone(),
@@ -254,6 +255,7 @@ impl Application {
                 openapi: module.openapi(),
             });
             background_tasks.extend(runtime.background_tasks);
+            sensor_parsers.extend(runtime.sensor_parsers);
             if let Some(catalog) = runtime.targets {
                 catalogs.insert(module.key(), catalog);
             }
@@ -273,6 +275,10 @@ impl Application {
         statistics
             .install(statistics_providers)
             .map_err(|e| std::io::Error::other(e.to_string()))?;
+        let sensor_parsers = Arc::new(
+            server::service::sensor_parsers::SensorParserRegistry::new(sensor_parsers)
+                .map_err(std::io::Error::other)?,
+        );
         event_bus
             .install(Arc::new(InMemoryEventBus::new(handlers)))
             .map_err(std::io::Error::other)?;
@@ -281,8 +287,12 @@ impl Application {
         }
 
         let (shutdown_tx, shutdown_rx) = tokio::sync::watch::channel(false);
-        let (mqtt_state, mqtt_handle) =
-            spawn_mqtt_subscriber(&settings, services.sensor.clone(), shutdown_rx);
+        let (mqtt_state, mqtt_handle) = spawn_mqtt_subscriber(
+            &settings,
+            services.sensor.clone(),
+            sensor_parsers,
+            shutdown_rx,
+        );
         let (health_reader, readiness_reader) =
             spawn_health_probes(&pool, &settings, probe_http_client.clone(), mqtt_state).await;
         let _update_handle = infra::update_checker::spawn(
@@ -732,9 +742,10 @@ fn build_http_client(timeout: Duration) -> reqwest::Client {
 fn spawn_mqtt_subscriber(
     settings: &Settings,
     sensor_service: Arc<SensorService>,
+    parsers: Arc<server::service::sensor_parsers::SensorParserRegistry>,
     shutdown: tokio::sync::watch::Receiver<bool>,
 ) -> (Arc<MqttHealthState>, Option<tokio::task::JoinHandle<()>>) {
-    match infra::mqtt::spawn(settings.mqtt.clone(), sensor_service, shutdown) {
+    match infra::mqtt::spawn(settings.mqtt.clone(), sensor_service, parsers, shutdown) {
         Ok((state, handle)) => (state, handle),
         Err(e) => {
             tracing::error!(error = %e, "mqtt subscriber not started");

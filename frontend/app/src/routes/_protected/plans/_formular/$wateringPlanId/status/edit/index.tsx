@@ -3,11 +3,9 @@ import { getAuthSession } from '@/lib/auth/session'
 import { pendingLoading } from '@/lib/router'
 import { createFileRoute, getRouteApi } from '@tanstack/react-router'
 
-const wateringPlanFormRoute = getRouteApi('/_protected/watering-plans/_formular/$wateringPlanId')
+const wateringPlanFormRoute = getRouteApi('/_protected/plans/_formular/$wateringPlanId')
 
-export const Route = createFileRoute(
-  '/_protected/watering-plans/_formular/$wateringPlanId/status/edit/',
-)({
+export const Route = createFileRoute('/_protected/plans/_formular/$wateringPlanId/status/edit/')({
   component: StatusEditWateringPlan,
   pendingComponent: pendingLoading({ key: 'wateringPlan:detail.loadingLabel' }),
   loader: async () => {

@@ -46,7 +46,8 @@ export interface VehicleForm {
   width: number
   length: number
   weight: number
-  waterCapacity: number
+  waterCapacity?: number
+  cargoVolumeCapacity?: number
   description: string
 }
 

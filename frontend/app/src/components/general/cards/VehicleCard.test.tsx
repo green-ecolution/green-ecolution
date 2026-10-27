@@ -49,4 +49,14 @@ describe('VehicleCard', () => {
 
     expect(screen.getByText(/archiviert/i)).toBeInTheDocument()
   })
+
+  it('shows the cargo volume and no water row for a vehicle with cargo volume only', () => {
+    render(
+      <VehicleCard vehicle={vehicleFixture({ capacities: { cargo_volume: 6000 } })} query="" />,
+    )
+
+    expect(screen.getByText(/laderaum/i)).toBeInTheDocument()
+    expect(screen.queryByText(/wasserkapazität/i)).not.toBeInTheDocument()
+    expect(screen.getByText('6000 Liter')).toBeInTheDocument()
+  })
 })

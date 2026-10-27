@@ -51,7 +51,7 @@ const ClusterWateringHistory = ({ clusterId }: ClusterWateringHistoryProps) => {
                   {format(event.date, 'dd.MM.yyyy', { locale: dateLocale })}
                 </span>
                 <Link
-                  to="/watering-plans/$wateringPlanId"
+                  to="/plans/$wateringPlanId"
                   params={{ wateringPlanId: event.wateringPlanId }}
                   className="text-sm text-green-dark hover:underline"
                 >

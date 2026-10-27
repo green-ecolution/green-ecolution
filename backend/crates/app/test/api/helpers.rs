@@ -466,6 +466,13 @@ async fn try_spawn_app_with_exact_modules(
     let mut settings = Settings::for_test(auth);
     settings.info.health_check_interval_secs = 1;
     settings.info.update_check_repo = None;
+    spawn_modules_with_settings(all_modules, settings).await
+}
+
+async fn spawn_modules_with_settings(
+    all_modules: Vec<Box<dyn server::module::Module>>,
+    settings: Settings,
+) -> Result<TestApp, std::io::Error> {
     let container = shared_container().await;
     let (_db_name, db_pool) = create_test_database(container.host_port).await;
     let app =
@@ -587,6 +594,24 @@ pub async fn spawn_app_with_routing_and_auth(streamlet_url: &str, auth: AuthSett
     settings.routing.enabled = true;
     settings.routing.streamlet_url = streamlet_url.to_string();
     let app = spawn_with_settings(settings).await;
+    seed_routing_depots(&app.db_pool).await;
+    app
+}
+
+pub async fn spawn_app_with_modules_and_routing(
+    modules: Vec<Box<dyn server::module::Module>>,
+    streamlet_url: &str,
+) -> TestApp {
+    let mut settings = Settings::for_test(disabled_auth_settings());
+    settings.info.health_check_interval_secs = 1;
+    settings.info.update_check_repo = None;
+    settings.routing.enabled = true;
+    settings.routing.streamlet_url = streamlet_url.to_string();
+    let mut all_modules = app::modules::registered();
+    all_modules.extend(modules);
+    let app = spawn_modules_with_settings(all_modules, settings)
+        .await
+        .expect("failed to build application");
     seed_routing_depots(&app.db_pool).await;
     app
 }

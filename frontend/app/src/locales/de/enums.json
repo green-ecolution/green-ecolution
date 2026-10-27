@@ -78,11 +78,11 @@
     },
     "flagged": {
       "label": "Einzelne Werte verworfen",
-      "description": "Einzelne Messwerte waren unplausibel und wurden von der Auswertung ausgeschlossen. Der Bewässerungszustand beruht auf den übrigen Werten."
+      "description": "Einzelne Messwerte waren unplausibel und wurden von der Auswertung ausgeschlossen. Die Auswertung beruht auf den übrigen Werten."
     },
     "suspect": {
       "label": "Datenqualität prüfen",
-      "description": "Mehrere Übertragungen in Folge enthielten keinen verwertbaren Messwert. Der Sensor ist womöglich defekt und der angezeigte Bewässerungszustand veraltet."
+      "description": "Mehrere Übertragungen in Folge enthielten keinen verwertbaren Messwert. Der Sensor ist womöglich defekt und die angezeigte Auswertung veraltet."
     },
     "reasons": {
       "out_of_range": "Wert außerhalb des möglichen Bereichs",

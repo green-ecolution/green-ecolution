@@ -57,6 +57,7 @@
     "routing": {
       "unavailable": "The routing service is currently unreachable.",
       "invalid_problem": "No route can be calculated from the selected data. Check the vehicle, start point and stops.",
+      "no_station_for_capacity": "There is no station where the vehicle can unload on this tour. Add one under Settings → Stations.",
       "failed": "Route calculation failed."
     },
     "request": {

@@ -1,5 +1,7 @@
-use crate::helpers::{TestApp, spawn_app};
+use crate::helpers::{TestApp, spawn_app, spawn_app_with_modules};
+use crate::test_module::{LEVEL_MODEL, Probe, TestModule};
 use serde_json::json;
+use std::sync::Arc;
 use uuid::Uuid;
 
 async fn insert_sensor(app: &TestApp, id: &str, activated: bool) {
@@ -167,6 +169,66 @@ async fn three_faulty_uplinks_mark_the_sensor_as_suspect() {
 
     let body: serde_json::Value = app
         .get("/api/v1/sensors/eui-suspect")
+        .await
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(body["data_health"], "suspect");
+    assert_eq!(body["implausible_recent"], 3);
+}
+
+#[tokio::test]
+async fn three_faulty_distance_uplinks_mark_the_sensor_as_suspect() {
+    let app =
+        spawn_app_with_modules(vec![Box::new(TestModule::new(Arc::new(Probe::default())))]).await;
+    let ability_id: Uuid = sqlx::query_scalar(
+        "SELECT sma.id FROM sensor_model_abilities sma
+         JOIN sensor_models m ON m.id = sma.sensor_model_id
+         JOIN sensor_abilities sa ON sa.id = sma.sensor_ability_id
+         WHERE m.name = $1 AND sa.ability = 'distance'",
+    )
+    .bind(LEVEL_MODEL)
+    .fetch_one(&app.db_pool)
+    .await
+    .unwrap();
+    sqlx::query(
+        "INSERT INTO sensors (id, activated_at, type, model_id, organization_id)
+         SELECT 'eui-level-suspect', now(), 'lorawan', m.id, '01980000-0000-7000-8000-000000000001'
+         FROM sensor_models m WHERE m.name = $1",
+    )
+    .bind(LEVEL_MODEL)
+    .execute(&app.db_pool)
+    .await
+    .unwrap();
+    sqlx::query(
+        "INSERT INTO sensor_lorawan (id, serial_number, dev_eui, app_eui, app_key)
+         VALUES ('eui-level-suspect', '', '', '', '')",
+    )
+    .execute(&app.db_pool)
+    .await
+    .unwrap();
+
+    for _ in 0..3 {
+        let data_id = Uuid::now_v7();
+        sqlx::query("INSERT INTO sensor_data (id, sensor_id, data) VALUES ($1, 'eui-level-suspect', '{}'::jsonb)")
+            .bind(data_id)
+            .execute(&app.db_pool)
+            .await
+            .unwrap();
+        sqlx::query(
+            "INSERT INTO sensor_data_ability_values
+               (sensor_data_id, sensor_model_ability_id, value, plausible, quality_reason)
+             VALUES ($1, $2, 1200, false, 'out_of_range')",
+        )
+        .bind(data_id)
+        .bind(ability_id)
+        .execute(&app.db_pool)
+        .await
+        .unwrap();
+    }
+
+    let body: serde_json::Value = app
+        .get("/api/v1/sensors/eui-level-suspect")
         .await
         .json()
         .await

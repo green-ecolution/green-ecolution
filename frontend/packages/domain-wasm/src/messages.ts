@@ -42,6 +42,8 @@ export const VALIDATION_KEYS = [
   'vehicle.model.tooLong',
   'water_capacity.outOfRange',
   'vehicle.water_capacity.invalidFormat',
+  'vehicle.cargo_volume_capacity.invalidFormat',
+  'vehicle.capacities.empty',
   'vehicle.dimension.height.outOfRange',
   'vehicle.dimension.width.outOfRange',
   'vehicle.dimension.length.outOfRange',

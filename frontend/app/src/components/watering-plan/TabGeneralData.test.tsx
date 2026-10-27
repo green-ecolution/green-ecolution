@@ -52,6 +52,23 @@ describe('TabGeneralData', () => {
     )
   })
 
+  it('words the vehicle row as cargo space for a cargo volume plan', () => {
+    const trailerOnly = planResponse({
+      trailer: { numberPlate: 'FL-TR 1' } as never,
+      transporterCapacityUsed: false,
+    })
+    render(
+      <TabGeneralData
+        wateringPlan={trailerOnly}
+        planning={probePlanning({ capacityKind: 'cargo_volume' })}
+      />,
+    )
+
+    expect(screen.getByText('Laderaum des Fahrzeugs').nextElementSibling?.textContent).toBe(
+      'Bleibt leer, nur der Anhänger lädt',
+    )
+  })
+
   it('leaves out the tank row for a plan without trailer', () => {
     render(<TabGeneralData wateringPlan={plan([])} planning={planning} />)
 

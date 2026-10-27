@@ -46,6 +46,14 @@ export const SETTINGS_NAV: SettingsNavItem[] = [
     featureKey: 'plugins',
     permission: ['plugin:read'],
   },
+  {
+    key: 'stations',
+    labelKey: 'stations',
+    icon: 'MapPin',
+    to: '/settings/stations',
+    featureKey: 'routing',
+    permission: ['start_point:read'],
+  },
 ]
 
 export const visibleSettingsNav = (

@@ -30,9 +30,6 @@
     "transporterLabel": "Transporter",
     "archivedVehicleValue": "{numberPlate} (Archiviert)",
     "trailerLabel": "Zusätzlicher Anhänger",
-    "transporterTankLabel": "Wassertank des Fahrzeugs",
-    "transporterTankUsedValue": "Wird mitgenutzt",
-    "transporterTankUnusedValue": "Bleibt leer, nur der Anhänger führt Wasser",
     "assignedUsersLabel": "Eingeteilte Mitarbeitende",
     "refillCountLabel": "Benötigte Nachfüllungen",
     "durationLabel": "Benötigte Zeit (Fahrzeit)",
@@ -44,7 +41,19 @@
     "entityTitle": "Einsatzplan: {value}",
     "notFoundBackLabel": "Zur Einsatzplanliste",
     "routePreviewAriaLabel": "Karte mit der Route und den Stopps des Plans",
-    "routePreviewLoadingLabel": "Lade Karte …"
+    "routePreviewLoadingLabel": "Lade Karte …",
+    "transporterCapacity": {
+      "water": {
+        "label": "Wassertank des Fahrzeugs",
+        "used": "Wird mitgenutzt",
+        "unused": "Bleibt leer, nur der Anhänger führt Wasser"
+      },
+      "cargo_volume": {
+        "label": "Laderaum des Fahrzeugs",
+        "used": "Wird mitgenutzt",
+        "unused": "Bleibt leer, nur der Anhänger lädt"
+      }
+    }
   },
   "update": {
     "backLabel": "Zurück zum Einsatzplan",
@@ -81,15 +90,23 @@
     "trailerLabel": "Verknüpfter Anhänger",
     "trailerPlaceholder": "Wähle einen Anhänger aus, sofern vorhanden",
     "noTrailerOption": "Keinen Anhänger",
-    "transporterTankUsedLabel": "Wassertank des Fahrzeugs mitnutzen",
-    "transporterTankUsedHint": "Abwählen, wenn nur der Anhänger Wasser mitführt. Die Route rechnet dann allein mit dessen Fassungsvermögen.",
     "driversLabel": "Verknüpfte Mitarbeitende",
     "driversMultiSelectHint": "Indem du die Taste »Shift« gedrückt hältst, kannst du eine Mehrauswahl tätigen.",
     "noQualifiedDriverError": "Kein ausgewählter Mitarbeiter hat alle erforderlichen Führerscheine für die gewählten Fahrzeuge.",
     "createLeaveMessage": "Möchtest du die Seite wirklich verlassen? Deine Eingaben zum Erstellen des Einsatzplans gehen verloren, wenn du jetzt gehst.",
     "updateLeaveMessage": "Möchtest du die Seite wirklich verlassen? Deine Änderungen am Einsatzplan gehen verloren, wenn du jetzt gehst.",
     "createSuccessMessage": "Der Einsatzplan wurde erfolgreich erstellt.",
-    "updateSuccessMessage": "Der Einsatzplan wurde erfolgreich bearbeitet."
+    "updateSuccessMessage": "Der Einsatzplan wurde erfolgreich bearbeitet.",
+    "transporterCapacityUsed": {
+      "water": {
+        "label": "Wassertank des Fahrzeugs mitnutzen",
+        "hint": "Abwählen, wenn nur der Anhänger Wasser mitführt. Die Route rechnet dann allein mit dessen Fassungsvermögen."
+      },
+      "cargo_volume": {
+        "label": "Laderaum des Fahrzeugs mitnutzen",
+        "hint": "Abwählen, wenn nur der Anhänger geladen wird. Die Route rechnet dann allein mit dessen Fassungsvermögen."
+      }
+    }
   },
   "create": {
     "backLabel": "Zu allen Einsatzplänen",

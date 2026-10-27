@@ -94,6 +94,11 @@ pub fn validate_water_capacity(liters: f64) -> Result<JsValue, JsError> {
     finish(Liters::new(liters), "waterCapacity")
 }
 
+#[wasm_bindgen(js_name = validateCargoVolumeCapacity)]
+pub fn validate_cargo_volume_capacity(liters: f64) -> Result<JsValue, JsError> {
+    finish(Liters::new(liters), "cargoVolumeCapacity")
+}
+
 #[wasm_bindgen(js_name = validateDistance)]
 pub fn validate_distance(meters: f64) -> Result<JsValue, JsError> {
     finish(Distance::new(meters), "distance")

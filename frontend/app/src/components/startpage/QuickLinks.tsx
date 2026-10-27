@@ -21,7 +21,7 @@ const QuickLinks = () => {
     },
     {
       id: 3,
-      url: '/watering-plans',
+      url: '/plans',
       description: t('quickLinks.wateringPlans.description'),
       headline: t('quickLinks.wateringPlans.headline'),
       linkLabel: t('quickLinks.wateringPlans.linkLabel'),

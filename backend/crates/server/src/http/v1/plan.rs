@@ -501,7 +501,7 @@ pub async fn get_plan_route(
     responses(
         (status = 200, description = "Route preview", body = RouteResponse),
         (status = 403, description = "Missing permission, or the module is switched off in the organization (code `module.disabled`)", body = ErrorBody),
-        (status = 422, description = "Route problem rejected by the optimizer, or a stop or vehicle does not fit the plan", body = ErrorBody),
+        (status = 422, description = "Route problem rejected by the optimizer, a stop or vehicle does not fit the plan, or no station restores the plan's capacity kind (code `routing.no_station_for_capacity`)", body = ErrorBody),
         (status = 502, description = "Routing engine unavailable", body = ErrorBody),
         (status = 503, description = "Routing feature is disabled (code `feature.routing_disabled`)", body = ErrorBody),
         (status = 500, description = "Internal server error", body = ErrorBody),

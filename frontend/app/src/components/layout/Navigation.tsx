@@ -127,7 +127,7 @@ const protectedNavData = (
                 key: 'nav-watering-plans',
                 label: t('sidebar.wateringPlans'),
                 icon: <ArrowLeftRight className="w-5 h-5" />,
-                to: '/watering-plans',
+                to: '/plans',
               },
             ]
           : [],

@@ -22,11 +22,11 @@ export const wateringPlanEntityRoute = entityRoute({
   }),
   notFound: {
     entityName: { key: 'wateringPlan:entity.name' },
-    backTo: '/watering-plans',
+    backTo: '/plans',
     backLabel: { key: 'wateringPlan:detail.notFoundBackLabel' },
   },
 })
 
-export const Route = createFileRoute('/_protected/watering-plans/$wateringPlanId')({
+export const Route = createFileRoute('/_protected/plans/$wateringPlanId')({
   ...wateringPlanEntityRoute,
 })

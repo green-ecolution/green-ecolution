@@ -78,11 +78,11 @@
     },
     "flagged": {
       "label": "Some values discarded",
-      "description": "Some readings were implausible and were excluded from the evaluation. The watering status is based on the remaining values."
+      "description": "Some readings were implausible and were excluded from the evaluation. The evaluation is based on the remaining values."
     },
     "suspect": {
       "label": "Check data quality",
-      "description": "Several transmissions in a row contained no usable reading. The sensor may be defective and the displayed watering status may be outdated."
+      "description": "Several transmissions in a row contained no usable reading. The sensor may be defective and the displayed evaluation may be outdated."
     },
     "reasons": {
       "out_of_range": "Value outside the possible range",

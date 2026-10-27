@@ -620,4 +620,14 @@ describe('FormForWateringPlan', () => {
     expect(tankCheckbox()).not.toBeInTheDocument()
     expect(screen.getByTestId('tank-used')).toHaveTextContent('true')
   })
+
+  it('words the vehicle option as cargo space for a cargo volume module', () => {
+    activeManifests.mockReturnValue([probeManifest('irrigation', { capacityKind: 'cargo_volume' })])
+    renderForm({ ...defaultFormValues, trailerId: 'vehicle-uuid-10' })
+
+    expect(
+      screen.getByRole('checkbox', { name: 'Laderaum des Fahrzeugs mitnutzen' }),
+    ).toBeInTheDocument()
+    expect(screen.getByText(/Abwählen, wenn nur der Anhänger geladen wird/)).toBeInTheDocument()
+  })
 })

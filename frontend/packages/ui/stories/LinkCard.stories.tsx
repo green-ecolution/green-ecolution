@@ -142,7 +142,7 @@ export const DashboardExample: Story = {
         </a>
       </LinkCard>
       <LinkCard variant="white" asChild>
-        <a href="/watering-plans">
+        <a href="/plans">
           <LinkCardTitle>Einsatzpläne</LinkCardTitle>
           <LinkCardDescription>
             Planen Sie Bewässerungseinsätze und optimieren Sie Routen.

@@ -19,6 +19,11 @@ interface FormForVehicleProps {
 // on the way into the form state, not on the way out.
 const asNumber = { setValueAs: parseDecimalInput } as const
 
+// An empty optional field must reach the validator as "not set", not as an empty string.
+const asOptionalNumber = {
+  setValueAs: (value: unknown) => (value === '' ? undefined : parseDecimalInput(value)),
+} as const
+
 const FormForVehicle = (props: FormForVehicleProps) => {
   const { t } = useTranslation(['vehicle', 'common'])
   const { register, handleSubmit, control } = useFormContext<VehicleForm>()
@@ -68,9 +73,16 @@ const FormForVehicle = (props: FormForVehicleProps) => {
         placeholder={t('form.waterCapacityPlaceholder')}
         label={t('form.waterCapacityLabel')}
         type="number"
-        required
         error={errors.waterCapacity?.message}
-        {...register('waterCapacity', asNumber)}
+        {...register('waterCapacity', asOptionalNumber)}
+      />
+      <FormField
+        placeholder={t('form.cargoVolumePlaceholder')}
+        label={t('form.cargoVolumeLabel')}
+        type="number"
+        error={errors.cargoVolumeCapacity?.message}
+        description={t('form.capacitiesHint')}
+        {...register('cargoVolumeCapacity', asOptionalNumber)}
       />
       <Controller
         name="availability"

@@ -57,6 +57,7 @@
     "routing": {
       "unavailable": "Der Routing-Dienst ist derzeit nicht erreichbar.",
       "invalid_problem": "Aus den gewählten Angaben lässt sich keine Route berechnen. Prüfe Fahrzeug, Startpunkt und Stopps.",
+      "no_station_for_capacity": "Für diese Tour gibt es keine Station, an der das Fahrzeug entladen kann. Lege unter Einstellungen → Stationen eine an.",
       "failed": "Die Routenberechnung ist fehlgeschlagen."
     },
     "request": {

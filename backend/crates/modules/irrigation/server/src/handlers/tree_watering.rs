@@ -56,6 +56,7 @@ impl TreeWateringFromSensorHandler {
             SensorReadings::Watermarks(w) => {
                 tree.calculate_watering_status_from_watermarks(w, Utc::now())
             }
+            SensorReadings::Distances(_) => return Ok(vec![]),
             SensorReadings::Volumetrics(_) => {
                 let Some(cluster_id) = tree.cluster_id() else {
                     tracing::debug!("skipping volumetric status; tree has no cluster");

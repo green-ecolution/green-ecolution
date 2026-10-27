@@ -18,6 +18,8 @@ pub enum RoutingError {
     InvalidProblem(String),
     #[error("route optimization failed: {0}")]
     Failed(String),
+    #[error("no station replenishes {kind}")]
+    NoStation { kind: CapacityKind },
 }
 
 /// One stop to visit, with its demand in liters of the route's capacity kind.

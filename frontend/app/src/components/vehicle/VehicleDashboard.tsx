@@ -47,12 +47,22 @@ const VehicleDashboard = ({ vehicle }: VehicleDashboardProps) => {
       label: t('detail.numberPlateLabel'),
       value: vehicle?.numberPlate ?? noData,
     },
-    {
-      label: t('detail.waterCapacityLabel'),
-      value: vehicle?.capacities.water
-        ? t('detail.waterCapacityValue', { value: vehicle.capacities.water })
-        : noData,
-    },
+    ...(vehicle.capacities.water !== undefined
+      ? [
+          {
+            label: t('detail.waterCapacityLabel'),
+            value: t('detail.waterCapacityValue', { value: vehicle.capacities.water }),
+          },
+        ]
+      : []),
+    ...(vehicle.capacities.cargo_volume !== undefined
+      ? [
+          {
+            label: t('detail.cargoVolumeLabel'),
+            value: t('detail.cargoVolumeValue', { value: vehicle.capacities.cargo_volume }),
+          },
+        ]
+      : []),
     {
       label: t('detail.lengthLabel'),
       value: vehicle?.length ? t('detail.lengthValue', { value: vehicle.length }) : noData,
@@ -95,7 +105,7 @@ const VehicleDashboard = ({ vehicle }: VehicleDashboardProps) => {
             <GeneralLink
               label={t('detail.wateringPlansLinkLabel')}
               link={{
-                to: '/watering-plans',
+                to: '/plans',
               }}
             />
           </div>
