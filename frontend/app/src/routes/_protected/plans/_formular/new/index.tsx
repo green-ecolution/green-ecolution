@@ -12,7 +12,7 @@ import { useWateringPlanForm } from '@/hooks/form/useWateringPlanForm'
 import { useWateringPlanDraft } from '@/store/form/useFormDraft'
 import UnsavedChangesDialog from '@/components/general/form/UnsavedChangesDialog'
 import ModuleInactive from '@/modules/ModuleInactive'
-import { planModule, planTextKey, type PlanningManifest } from '@/modules/planning'
+import { draftForModule, planModule, planTextKey, type PlanningManifest } from '@/modules/planning'
 import { useActiveModules } from '@/modules/useActiveModules'
 
 export const Route = createFileRoute('/_protected/plans/_formular/new/')({
@@ -43,8 +43,9 @@ function NewWateringPlanForm({ planManifest }: { planManifest: PlanningManifest 
   const { key: module, planning } = planManifest
   const { t, i18n } = useTranslation('wateringPlan')
   const draft = useWateringPlanDraft<WateringPlanForm>('create')
-  const initForm = draft.data ?? defaultForm(module)
-  const formKey = draft.data?.stopIds?.join(',') ?? 'initial'
+  const moduleDraft = draftForModule(draft.data, module)
+  const initForm = moduleDraft ?? defaultForm(module)
+  const formKey = `${module}:${moduleDraft?.stopIds?.join(',') ?? 'initial'}`
 
   const { data: users } = useSuspenseQuery(userQueries.list({ page: 1, perPage: 100 }))
   const { data: trailers } = useSuspenseQuery(vehicleQueries.list())

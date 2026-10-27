@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   completeOutcomes,
+  draftForModule,
   keepUnresolvedStops,
   planModule,
   planningFor,
@@ -95,4 +96,20 @@ describe('planTextKey', () => {
 
 it('provides a complete planning fixture', () => {
   expect(probePlanning().capacityKind).toBe('water')
+})
+
+describe('draftForModule', () => {
+  const draft = { module: 'irrigation', stopIds: ['a'] }
+
+  it('restores a draft of the same module', () => {
+    expect(draftForModule(draft, 'irrigation')).toBe(draft)
+  })
+
+  it('ignores the draft of another module', () => {
+    expect(draftForModule(draft, 'waste')).toBeUndefined()
+  })
+
+  it('has nothing without a draft', () => {
+    expect(draftForModule(undefined, 'waste')).toBeUndefined()
+  })
 })

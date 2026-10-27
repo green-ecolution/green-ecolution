@@ -16,6 +16,14 @@ export function planModule(
   return planning.find(({ key }) => key === search.module) ?? planning[0]
 }
 
+/** A stored draft belongs to the module it was started in; another module's draft is left alone. */
+export function draftForModule<T extends { module?: string }>(
+  draft: T | null | undefined,
+  module: string,
+): T | undefined {
+  return draft?.module === module ? draft : undefined
+}
+
 export function planningFor(
   manifests: readonly ModuleManifest[],
   moduleKey: string,
