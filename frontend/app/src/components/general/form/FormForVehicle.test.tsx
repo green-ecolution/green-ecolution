@@ -294,4 +294,29 @@ describe('FormForVehicle', () => {
     expect(submitted.length).toBe(6)
     expect(submitted.weight).toBe(3.5)
   })
+
+  it('offers a cargo volume field next to the water capacity', () => {
+    render(
+      <TestWrapper defaultValues={defaultFormValues}>
+        <FormForVehicle displayError={false} onSubmit={mockOnSubmit} />
+      </TestWrapper>,
+    )
+
+    expect(screen.getByLabelText(/laderaum/i)).toBeInTheDocument()
+  })
+
+  it('asks for at least one capacity when both are empty', async () => {
+    const user = userEvent.setup()
+
+    render(
+      <TestWrapper defaultValues={{ ...defaultFormValues, waterCapacity: undefined }}>
+        <FormForVehicle displayError={false} onSubmit={mockOnSubmit} />
+      </TestWrapper>,
+    )
+
+    await user.click(screen.getByRole('button', { name: /speichern/i }))
+
+    expect(await screen.findAllByText(/mindestens eine kapazität angeben/i)).not.toHaveLength(0)
+    expect(mockOnSubmit).not.toHaveBeenCalled()
+  })
 })

@@ -32,7 +32,8 @@ const VehicleUpdate = ({ vehicleId }: VehicleUpdateProps) => {
       length: data.length,
       weight: data.weight,
       model: data.model,
-      waterCapacity: data.capacities.water ?? 0,
+      waterCapacity: data.capacities.water,
+      cargoVolumeCapacity: data.capacities.cargo_volume,
       description: data.description,
     }),
   )

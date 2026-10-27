@@ -10,7 +10,7 @@ routes: ['/vehicles', '/vehicles/$vehicleId', '/vehicles/new']
 
 Die Seite **Alle Fahrzeuge** zeigt jedes Fahrzeug mit seinem Kennzeichen und seinem Modell.
 Ein farbiger Punkt davor steht für den Status; verweilst du mit dem Zeiger darauf, nennt
-die Anwendung ihn beim Namen. Darunter stehen der Fahrzeugtyp und die Wasserkapazität, und
+die Anwendung ihn beim Namen. Darunter stehen der Fahrzeugtyp und die erfasste Kapazität (Wasser, Laderaum oder beides), und
 ist das Fenster breit genug, ergänzt dieselbe Zeile die erforderliche Führerscheinklasse;
 auf schmalen Bildschirmen entfällt sie wieder, damit die Zeile nicht umbricht. Ein
 archiviertes Fahrzeug trägt zusätzlich die Kennzeichnung **Archiviert**. Ein Klick auf
@@ -36,7 +36,7 @@ Filter auf einmal zurücksetzt, sowie die Anzahl der gefundenen Fahrzeuge.
 
 Auf der Seite **Alle Fahrzeuge** legst du ein neues Fahrzeug über
 **Neues Fahrzeug erstellen** an. Pflichtangaben sind Kennzeichen, Fahrzeugmodell,
-Fahrzeugtyp (Transporter oder Anhänger), Wasserkapazität, die Verfügbarkeit, die
+Fahrzeugtyp (Transporter oder Anhänger), mindestens eine Kapazität (Wasser oder Laderaum), die Verfügbarkeit, die
 erforderliche Führerscheinklasse sowie Höhe, Breite, Länge und Gewicht des Fahrzeugs;
 eine kurze Beschreibung ist optional. Kennzeichen müssen eindeutig sein, ein bereits
 vergebenes Kennzeichen weist die Anwendung zurück. Die Abmessungen braucht sie, um bei
@@ -75,7 +75,11 @@ ausgewählten Personen für die gewählten Fahrzeuge aus, meldet das Formular, d
 ausgewählter Mitarbeiter alle erforderlichen Führerscheine für die gewählten Fahrzeuge
 hat, und lässt sich nicht absenden.
 
-## Wasserkapazität
+## Kapazitäten
+
+Ein Fahrzeug trägt mindestens eine Kapazität, jeweils in Litern. Die Wasserkapazität ist für Bewässerungstouren gedacht, der Laderaum für Leerungstouren. Ein Fahrzeug darf beide haben; lässt du ein Feld leer, hat das Fahrzeug diese Kapazität nicht. Sind beide Felder leer, weist das Formular die Eingabe mit dem Hinweis „Mindestens eine Kapazität angeben.“ zurück.
+
+### Wasserkapazität
 
 Die Wasserkapazität eines Fahrzeugs gibt in Litern an, wie viel Wasser es fasst. Bei der
 Auswahl der Bewässerungsgruppen für einen Einsatzplan zählt die Kapazität von Transporter

@@ -54,6 +54,12 @@
     "water_capacity": {
       "invalidFormat": "Wasserkapazität muss eine Zahl sein."
     },
+    "cargo_volume_capacity": {
+      "invalidFormat": "Laderaum muss eine Zahl sein."
+    },
+    "capacities": {
+      "empty": "Mindestens eine Kapazität angeben."
+    },
     "dimension": {
       "height": {
         "outOfRange": "Höhe ist erforderlich.",

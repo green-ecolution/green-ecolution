@@ -1,4 +1,4 @@
-import { Droplets, IdCard, Truck } from 'lucide-react'
+import { IdCard, Truck } from 'lucide-react'
 import type { Vehicle } from '@/api/backendApi'
 import { Link } from '@tanstack/react-router'
 import React from 'react'
@@ -7,6 +7,7 @@ import { Badge, ListCard } from '@green-ecolution/ui'
 import { useVehicleStatusDetails } from '@/hooks/details/useDetailsForVehicleStatus'
 import { useVehicleTypeLabel } from '@/hooks/details/useDetailsForVehicleType'
 import { highlightMatch } from '@/lib/highlightMatch'
+import { capacityDisplay } from '@/lib/capacity'
 
 interface VehicleCardProps {
   vehicle: Vehicle
@@ -51,11 +52,20 @@ const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, query = '' }) => {
             <span className="sr-only">{t('card.typeSrLabel')}</span>
             {getVehicleTypeLabel(vehicle.type)}
           </span>
-          <span className="flex items-center gap-2">
-            <Droplets aria-hidden className="size-4" />
-            <span className="sr-only">{t('card.waterCapacitySrLabel')}</span>
-            {t('card.waterCapacityValue', { value: vehicle.capacities.water ?? 0 })}
-          </span>
+          {vehicle.capacities.water !== undefined && (
+            <span className="flex items-center gap-2">
+              <capacityDisplay.water.icon aria-hidden className="size-4" />
+              <span className="sr-only">{t('card.waterCapacitySrLabel')}</span>
+              {t('card.waterCapacityValue', { value: vehicle.capacities.water })}
+            </span>
+          )}
+          {vehicle.capacities.cargo_volume !== undefined && (
+            <span className="flex items-center gap-2">
+              <capacityDisplay.cargo_volume.icon aria-hidden className="size-4" />
+              <span className="sr-only">{t('card.cargoVolumeSrLabel')}</span>
+              {t('card.cargoVolumeValue', { value: vehicle.capacities.cargo_volume })}
+            </span>
+          )}
           {/* Secondary fact, dropped as the card narrows so the row never wraps. */}
           <span className="hidden items-center gap-2 @min-[30rem]:flex">
             <IdCard aria-hidden className="size-4" />

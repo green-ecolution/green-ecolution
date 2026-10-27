@@ -37,6 +37,38 @@ impl<'de> Deserialize<'de> for LooseF64 {
     }
 }
 
+/// A numeric form field the user may leave empty; empty and missing mean "not set".
+#[derive(Debug, Clone, Copy, Default, PartialEq)]
+pub(crate) enum OptionalF64 {
+    #[default]
+    Absent,
+    Value(f64),
+    Invalid,
+}
+
+impl<'de> Deserialize<'de> for OptionalF64 {
+    fn deserialize<D: Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+        #[derive(Deserialize)]
+        #[serde(untagged)]
+        enum Repr {
+            N(f64),
+            S(String),
+            Null(()),
+        }
+        Ok(match Option::<Repr>::deserialize(d)? {
+            None | Some(Repr::Null(())) => Self::Absent,
+            Some(Repr::N(n)) => Self::Value(n),
+            Some(Repr::S(s)) if s.trim().is_empty() => Self::Absent,
+            Some(Repr::S(s)) => s
+                .trim()
+                .replace(',', ".")
+                .parse()
+                .map(Self::Value)
+                .unwrap_or(Self::Invalid),
+        })
+    }
+}
+
 /// Wraps a numeric form field that must parse as a non-negative integer.
 #[derive(Debug, Clone, Default)]
 pub(crate) struct LooseU32(pub Option<u32>);
@@ -142,6 +174,28 @@ mod tests {
     fn loose_f64_treats_empty_as_missing() {
         assert_eq!(parse_loose_f64(json!("")).0, None);
         assert_eq!(parse_loose_f64(json!("   ")).0, None);
+    }
+
+    fn parse_optional(value: serde_json::Value) -> OptionalF64 {
+        serde_json::from_value(value).unwrap()
+    }
+
+    #[test]
+    fn optional_f64_null_and_empty_are_absent() {
+        assert_eq!(parse_optional(json!(null)), OptionalF64::Absent);
+        assert_eq!(parse_optional(json!("")), OptionalF64::Absent);
+        assert_eq!(parse_optional(json!("  ")), OptionalF64::Absent);
+    }
+
+    #[test]
+    fn optional_f64_parses_numbers_and_comma_strings() {
+        assert_eq!(parse_optional(json!(3.0)), OptionalF64::Value(3.0));
+        assert_eq!(parse_optional(json!("12,5")), OptionalF64::Value(12.5));
+    }
+
+    #[test]
+    fn optional_f64_marks_garbage_invalid() {
+        assert_eq!(parse_optional(json!("abc")), OptionalF64::Invalid);
     }
 
     #[test]

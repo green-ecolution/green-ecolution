@@ -9,7 +9,7 @@ use serde_wasm_bindgen::from_value;
 use crate::issue::to_js;
 use wasm_bindgen::prelude::*;
 
-use crate::coerce::{LooseF64, invalid_number_issue, validate_enum};
+use crate::coerce::{LooseF64, OptionalF64, invalid_number_issue, validate_enum};
 use crate::issue::ValidationIssue;
 
 #[derive(Debug, Deserialize)]
@@ -26,7 +26,9 @@ pub(crate) struct VehicleDraftInput {
     #[serde(default)]
     pub availability: String,
     #[serde(default)]
-    pub water_capacity: LooseF64,
+    pub water_capacity: OptionalF64,
+    #[serde(default)]
+    pub cargo_volume_capacity: OptionalF64,
     #[serde(default)]
     pub height: LooseF64,
     #[serde(default)]
@@ -67,16 +69,38 @@ pub(crate) fn collect_vehicle_issues(input: &VehicleDraftInput) -> Vec<Validatio
         issues.push(issue);
     }
 
-    match input.water_capacity.0 {
-        None => issues.push(invalid_number_issue(
+    let capacities = [
+        (
+            input.water_capacity,
             "vehicle.water_capacity",
             "waterCapacity",
-        )),
-        Some(n) => {
-            if let Err(err) = Liters::new(n) {
-                issues.push(ValidationIssue::from_error(&err, "waterCapacity"));
+        ),
+        (
+            input.cargo_volume_capacity,
+            "vehicle.cargo_volume_capacity",
+            "cargoVolumeCapacity",
+        ),
+    ];
+    for (value, field, path) in capacities {
+        match value {
+            OptionalF64::Absent => {}
+            OptionalF64::Invalid => issues.push(invalid_number_issue(field, path)),
+            OptionalF64::Value(n) => {
+                if let Err(err) = Liters::new(n) {
+                    issues.push(ValidationIssue::from_error(&err, path));
+                }
             }
         }
+    }
+    if input.water_capacity == OptionalF64::Absent
+        && input.cargo_volume_capacity == OptionalF64::Absent
+    {
+        issues.push(ValidationIssue::from_error(
+            &ValidationError::EmptyString {
+                field: "vehicle.capacities",
+            },
+            "waterCapacity",
+        ));
     }
 
     let dims = (
@@ -135,7 +159,8 @@ mod tests {
             r#type: "transporter".into(),
             driving_license: "B".into(),
             availability: "available".into(),
-            water_capacity: LooseF64(Some(100.0)),
+            water_capacity: OptionalF64::Value(100.0),
+            cargo_volume_capacity: OptionalF64::Absent,
             height: LooseF64(Some(2.5)),
             width: LooseF64(Some(2.0)),
             length: LooseF64(Some(6.0)),
@@ -189,7 +214,7 @@ mod tests {
     #[test]
     fn negative_water_capacity_yields_issue() {
         let mut input = valid();
-        input.water_capacity = LooseF64(Some(-10.0));
+        input.water_capacity = OptionalF64::Value(-10.0);
         let issues = collect_vehicle_issues(&input);
         let issue = issues
             .iter()
@@ -227,12 +252,44 @@ mod tests {
     #[test]
     fn unparseable_water_capacity_yields_issue() {
         let mut input = valid();
-        input.water_capacity = LooseF64(None);
+        input.water_capacity = OptionalF64::Invalid;
         let issues = collect_vehicle_issues(&input);
         let issue = issues
             .iter()
             .find(|i| i.path == "waterCapacity")
             .expect("water_capacity issue");
         assert_eq!(issue.key, "vehicle.water_capacity.invalidFormat");
+    }
+
+    #[test]
+    fn a_vehicle_needs_at_least_one_capacity() {
+        let mut input = valid();
+        input.water_capacity = OptionalF64::Absent;
+        input.cargo_volume_capacity = OptionalF64::Absent;
+        let issues = collect_vehicle_issues(&input);
+        let issue = issues
+            .iter()
+            .find(|i| i.path == "waterCapacity")
+            .expect("capacity issue");
+        assert_eq!(issue.key, "vehicle.capacities.empty");
+    }
+
+    #[test]
+    fn cargo_volume_alone_is_enough() {
+        let mut input = valid();
+        input.water_capacity = OptionalF64::Absent;
+        input.cargo_volume_capacity = OptionalF64::Value(6000.0);
+        assert!(collect_vehicle_issues(&input).is_empty());
+    }
+
+    #[test]
+    fn unparseable_cargo_volume_yields_issue() {
+        let mut input = valid();
+        input.cargo_volume_capacity = OptionalF64::Invalid;
+        let issue = collect_vehicle_issues(&input)
+            .into_iter()
+            .find(|i| i.path == "cargoVolumeCapacity")
+            .expect("cargo issue");
+        assert_eq!(issue.key, "vehicle.cargo_volume_capacity.invalidFormat");
     }
 }
