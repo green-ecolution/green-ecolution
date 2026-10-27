@@ -27,7 +27,11 @@ use server::{
     },
     module::{Module, ModuleBuildError, ModuleContext, ModuleRoutes, ModuleRuntime},
     service::{
-        ServiceError, module_access::ModuleAccess, operation_plan_service::OperationPlanService,
+        ServiceError,
+        module_access::ModuleAccess,
+        operation_plan_service::OperationPlanService,
+        sensor_parsers::{PayloadError, SensorPayloadParser},
+        sensor_service::ReadingIngest,
     },
 };
 use sqlx::{PgPool, migrate::Migrator};
@@ -41,6 +45,7 @@ static MIGRATOR: Migrator = sqlx::migrate!("test/api/test_module/migrations");
 #[derive(Default)]
 pub struct Probe {
     pub organizations_created: AtomicUsize,
+    pub sensor_data_received: AtomicUsize,
     pub task_ran: AtomicBool,
 }
 
@@ -325,8 +330,14 @@ impl EventHandler for CountOrganizations {
     }
 
     async fn handle(&self, event: &DomainEvent) -> Result<Vec<DomainEvent>, EventHandlerError> {
-        if matches!(event, DomainEvent::OrganizationCreated { .. }) {
-            self.0.organizations_created.fetch_add(1, Ordering::SeqCst);
+        match event {
+            DomainEvent::OrganizationCreated { .. } => {
+                self.0.organizations_created.fetch_add(1, Ordering::SeqCst);
+            }
+            DomainEvent::SensorDataReceived(_) => {
+                self.0.sensor_data_received.fetch_add(1, Ordering::SeqCst);
+            }
+            _ => {}
         }
         Ok(vec![])
     }
@@ -373,6 +384,7 @@ impl Module for TestModule {
         runtime
             .event_handlers
             .push(Arc::new(CountOrganizations(self.probe.clone())));
+        runtime.sensor_parsers.push(Arc::new(TestLevelParser));
         let probe = self.probe.clone();
         runtime.background_tasks.push(Box::pin(async move {
             probe.task_ran.store(true, Ordering::SeqCst);
@@ -401,5 +413,86 @@ impl Module for CollidingModule {
     }
     fn build(&self, _ctx: ModuleContext) -> Result<ModuleRuntime, ModuleBuildError> {
         Ok(ModuleRuntime::new(ModuleRoutes::empty()))
+    }
+}
+
+pub const LEVEL_MODEL: &str = "Test-Level";
+
+struct TestLevelParser;
+
+impl SensorPayloadParser for TestLevelParser {
+    fn model_name(&self) -> &'static str {
+        LEVEL_MODEL
+    }
+
+    fn parse(
+        &self,
+        _model: &domain::sensor_model::SensorModel,
+        body: &serde_json::Value,
+        sensor_id: domain::sensor::SensorId,
+    ) -> Result<ReadingIngest, PayloadError> {
+        let centimeters = body
+            .get("distance_cm")
+            .and_then(serde_json::Value::as_f64)
+            .ok_or_else(|| PayloadError("missing distance_cm".into()))?;
+        Ok(ReadingIngest {
+            sensor_id,
+            raw_payload: body.clone(),
+            normalized: vec![],
+            typed: domain::events::SensorReadings::Distances(vec![
+                domain::sensor::data::DistanceReading {
+                    depth_cm: 0,
+                    centimeters,
+                },
+            ]),
+        })
+    }
+}
+
+/// Registers only a sensor parser; used to prove startup refuses a second parser for one model.
+pub struct ParserOnlyModule {
+    key: &'static str,
+    model: &'static str,
+}
+
+impl ParserOnlyModule {
+    pub fn new(key: &'static str, model: &'static str) -> Self {
+        Self { key, model }
+    }
+}
+
+struct FixedModelParser(&'static str);
+
+impl SensorPayloadParser for FixedModelParser {
+    fn model_name(&self) -> &'static str {
+        self.0
+    }
+
+    fn parse(
+        &self,
+        _model: &domain::sensor_model::SensorModel,
+        _body: &serde_json::Value,
+        _sensor_id: domain::sensor::SensorId,
+    ) -> Result<ReadingIngest, PayloadError> {
+        Err(PayloadError("not used".into()))
+    }
+}
+
+impl Module for ParserOnlyModule {
+    fn key(&self) -> ModuleKey {
+        ModuleKey::new(self.key).expect("valid key")
+    }
+    fn default_enabled(&self) -> bool {
+        false
+    }
+    fn openapi(&self) -> utoipa::openapi::OpenApi {
+        OpenApiRouter::<()>::new().into_openapi()
+    }
+    fn build(&self, _ctx: ModuleContext) -> Result<ModuleRuntime, ModuleBuildError> {
+        let mut runtime = ModuleRuntime::new(ModuleRoutes::empty());
+        runtime
+            .sensor_parsers
+            .push(Arc::new(FixedModelParser(self.model)));
+        Ok(runtime)
     }
 }

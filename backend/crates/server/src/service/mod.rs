@@ -14,6 +14,7 @@ pub mod plugin_service;
 pub mod plugin_view_ticket_service;
 pub mod region_service;
 pub mod role_service;
+pub mod sensor_parsers;
 pub mod sensor_service;
 pub mod settings_service;
 pub mod start_point_service;

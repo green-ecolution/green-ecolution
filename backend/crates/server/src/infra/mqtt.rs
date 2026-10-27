@@ -23,7 +23,10 @@ use url::Url;
 
 use crate::{
     configuration::MqttSettings,
-    service::sensor_service::{ReadingIngest, SensorService},
+    service::{
+        sensor_parsers::SensorParserRegistry,
+        sensor_service::{ReadingIngest, SensorService},
+    },
 };
 use domain::{
     events::SensorReadings,
@@ -48,6 +51,7 @@ pub struct MqttHealthState {
 pub fn spawn(
     settings: MqttSettings,
     sensor_service: Arc<SensorService>,
+    parsers: Arc<SensorParserRegistry>,
     shutdown: tokio::sync::watch::Receiver<bool>,
 ) -> Result<(Arc<MqttHealthState>, Option<tokio::task::JoinHandle<()>>), MqttSubscriberError> {
     let state = Arc::new(MqttHealthState::default());
@@ -70,6 +74,7 @@ pub fn spawn(
             &topic,
             eventloop,
             sensor_service,
+            parsers,
             task_state,
             shutdown,
         )
@@ -109,6 +114,7 @@ async fn run_event_loop(
     topic: &str,
     mut eventloop: EventLoop,
     sensor_service: Arc<SensorService>,
+    parsers: Arc<SensorParserRegistry>,
     state: Arc<MqttHealthState>,
     mut shutdown: tokio::sync::watch::Receiver<bool>,
 ) {
@@ -134,7 +140,7 @@ async fn run_event_loop(
                 }
             }
             Ok(Event::Incoming(Incoming::Publish(pub_pkt))) => {
-                if let Err(e) = handle_publish(&pub_pkt.payload, &sensor_service).await {
+                if let Err(e) = handle_publish(&pub_pkt.payload, &sensor_service, &parsers).await {
                     tracing::warn!(error = %e, "mqtt message dropped");
                 }
             }
@@ -154,6 +160,7 @@ async fn run_event_loop(
 async fn handle_publish(
     raw: &[u8],
     sensor_service: &SensorService,
+    parsers: &SensorParserRegistry,
 ) -> Result<(), MqttSubscriberError> {
     let envelope: Value =
         serde_json::from_slice(raw).map_err(|e| MqttSubscriberError::Decode(e.to_string()))?;
@@ -171,7 +178,7 @@ async fn handle_publish(
         .await
         .map_err(|e| MqttSubscriberError::Service(e.to_string()))?;
 
-    let mut ingest = build_ingest(&model, &body, sensor_id)?;
+    let mut ingest = build_ingest(&model, &body, sensor_id, parsers)?;
     if let Some(signal) = extract_signal(&envelope) {
         merge_signal(&mut ingest.raw_payload, signal);
     }
@@ -254,13 +261,19 @@ fn build_ingest(
     model: &SensorModel,
     body: &Value,
     sensor_id: SensorId,
+    parsers: &SensorParserRegistry,
 ) -> Result<ReadingIngest, MqttSubscriberError> {
     match model.name.as_str() {
         "EcoDrizzler" => build_eco_drizzler(model, body, sensor_id),
         "GES-1000" => build_ges_1000(model, body, sensor_id),
-        other => Err(MqttSubscriberError::Decode(format!(
-            "no parser registered for sensor model {other}"
-        ))),
+        other => match parsers.get(other) {
+            Some(parser) => parser
+                .parse(model, body, sensor_id)
+                .map_err(|e| MqttSubscriberError::Decode(e.0)),
+            None => Err(MqttSubscriberError::Decode(format!(
+                "no parser registered for sensor model {other}"
+            ))),
+        },
     }
 }
 
@@ -790,9 +803,61 @@ mod tests {
             description: None,
             abilities: vec![],
         };
-        let err =
-            build_ingest(&model, &json!({"device": "x"}), SensorId::new("x").unwrap()).unwrap_err();
+        let err = build_ingest(
+            &model,
+            &json!({"device": "x"}),
+            SensorId::new("x").unwrap(),
+            &SensorParserRegistry::empty(),
+        )
+        .unwrap_err();
         assert!(matches!(err, MqttSubscriberError::Decode(_)));
+    }
+
+    #[test]
+    fn an_unknown_model_falls_back_to_the_module_parser() {
+        use crate::service::sensor_parsers::{PayloadError, SensorPayloadParser};
+        use domain::sensor::data::DistanceReading;
+
+        struct Fixed;
+        impl SensorPayloadParser for Fixed {
+            fn model_name(&self) -> &'static str {
+                "Level-1"
+            }
+            fn parse(
+                &self,
+                _: &SensorModel,
+                body: &Value,
+                sensor_id: SensorId,
+            ) -> Result<ReadingIngest, PayloadError> {
+                Ok(ReadingIngest {
+                    sensor_id,
+                    raw_payload: body.clone(),
+                    normalized: vec![],
+                    typed: SensorReadings::Distances(vec![DistanceReading {
+                        depth_cm: 0,
+                        centimeters: 12.0,
+                    }]),
+                })
+            }
+        }
+
+        let registry = SensorParserRegistry::new(vec![Arc::new(Fixed)]).unwrap();
+        let model = SensorModel {
+            id: Id::new_v7(),
+            name: SensorModelName::new("Level-1").unwrap(),
+            description: None,
+            abilities: vec![],
+        };
+        let ingest = build_ingest(
+            &model,
+            &json!({"distance_cm": 12.0}),
+            SensorId::new("eui-1").unwrap(),
+            &registry,
+        )
+        .unwrap();
+        assert!(
+            matches!(ingest.typed, SensorReadings::Distances(ref d) if d[0].centimeters == 12.0)
+        );
     }
 
     #[test]

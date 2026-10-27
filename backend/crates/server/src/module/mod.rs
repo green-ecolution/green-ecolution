@@ -30,6 +30,7 @@ use crate::{
         event_bus::{EventBus, EventHandler},
         module_access::ModuleAccess,
         operation_plan_service::OperationPlanService,
+        sensor_parsers::SensorPayloadParser,
         sensor_service::SensorService,
         user_service::UserService,
     },
@@ -124,6 +125,8 @@ pub struct ModuleRuntime {
     pub targets: Option<Arc<dyn TargetCatalog>>,
     pub planning: Option<Arc<dyn PlanningProvider>>,
     pub statistics: Option<Arc<dyn ModuleStatistics>>,
+    /// Decoders for the module's own sensor models, used by the MQTT ingestor.
+    pub sensor_parsers: Vec<Arc<dyn SensorPayloadParser>>,
 }
 
 impl ModuleRuntime {
@@ -135,6 +138,7 @@ impl ModuleRuntime {
             targets: None,
             planning: None,
             statistics: None,
+            sensor_parsers: Vec::new(),
         }
     }
 }
