@@ -19,7 +19,7 @@ const boardSearchSchema = z.object({
   module: z.string().optional().catch(undefined),
 })
 
-export const Route = createFileRoute('/_protected/watering-plans/')({
+export const Route = createFileRoute('/_protected/plans/')({
   component: WateringPlans,
   validateSearch: boardSearchSchema,
   pendingComponent: pendingLoading({ key: 'wateringPlan:list.loadingLabel' }),
@@ -73,11 +73,7 @@ function WateringPlans() {
           )}
           action={
             canCreate && (
-              <ButtonLink
-                icon={Plus}
-                label={t('list.createButton')}
-                link={{ to: '/watering-plans/new' }}
-              />
+              <ButtonLink icon={Plus} label={t('list.createButton')} link={{ to: '/plans/new' }} />
             )
           }
         />

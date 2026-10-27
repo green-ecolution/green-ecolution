@@ -42,9 +42,7 @@ const SuggestionsColumn = () => {
       driverIds: [],
       startPointName: '',
     })
-    navigate({ to: '/watering-plans/new' }).catch((error) =>
-      console.error('Navigation failed:', error),
-    )
+    navigate({ to: '/plans/new' }).catch((error) => console.error('Navigation failed:', error))
   }
 
   return (

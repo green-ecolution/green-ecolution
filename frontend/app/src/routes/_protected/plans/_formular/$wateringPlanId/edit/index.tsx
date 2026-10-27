@@ -4,9 +4,9 @@ import { createFileRoute, getRouteApi } from '@tanstack/react-router'
 import { useWateringPlanDraft } from '@/store/form/useFormDraft'
 import { WateringPlanForm } from '@/schema/wateringPlanSchema'
 
-const wateringPlanFormRoute = getRouteApi('/_protected/watering-plans/_formular/$wateringPlanId')
+const wateringPlanFormRoute = getRouteApi('/_protected/plans/_formular/$wateringPlanId')
 
-export const Route = createFileRoute('/_protected/watering-plans/_formular/$wateringPlanId/edit/')({
+export const Route = createFileRoute('/_protected/plans/_formular/$wateringPlanId/edit/')({
   component: EditWateringPlan,
   pendingComponent: pendingLoading({ key: 'wateringPlan:detail.loadingLabel' }),
 })

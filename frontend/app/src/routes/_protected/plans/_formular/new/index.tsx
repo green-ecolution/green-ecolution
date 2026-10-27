@@ -14,7 +14,7 @@ import ModuleInactive from '@/modules/ModuleInactive'
 import { planModule, planTextKey, type PlanningManifest } from '@/modules/planning'
 import { useActiveModules } from '@/modules/useActiveModules'
 
-export const Route = createFileRoute('/_protected/watering-plans/_formular/new/')({
+export const Route = createFileRoute('/_protected/plans/_formular/new/')({
   component: NewWateringPlan,
 })
 
@@ -58,7 +58,7 @@ function NewWateringPlanForm({ planManifest }: { planManifest: PlanningManifest 
   return (
     <div className="container mt-6">
       <article className="2xl:w-4/5">
-        <BackLink link={{ to: '/watering-plans' }} label={t('create.backLabel')} />
+        <BackLink link={{ to: '/plans' }} label={t('create.backLabel')} />
         <h1 className="font-lato font-bold text-3xl mb-4 lg:text-4xl xl:text-5xl">
           {t('create.title')}
         </h1>

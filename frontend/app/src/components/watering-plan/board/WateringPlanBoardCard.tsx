@@ -49,7 +49,7 @@ const WateringPlanBoardCard = ({
   return (
     <KanbanCard state={cardState}>
       <Link
-        to="/watering-plans/$wateringPlanId"
+        to="/plans/$wateringPlanId"
         params={{ wateringPlanId: plan.id.toString() }}
         className="block focus-visible:outline-hidden"
       >

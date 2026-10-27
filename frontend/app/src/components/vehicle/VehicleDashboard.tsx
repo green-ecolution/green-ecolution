@@ -105,7 +105,7 @@ const VehicleDashboard = ({ vehicle }: VehicleDashboardProps) => {
             <GeneralLink
               label={t('detail.wateringPlansLinkLabel')}
               link={{
-                to: '/watering-plans',
+                to: '/plans',
               }}
             />
           </div>

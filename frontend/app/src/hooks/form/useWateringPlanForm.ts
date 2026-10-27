@@ -38,7 +38,7 @@ export const useWateringPlanForm = (
     invalidates: queryRoots.wateringPlan,
 
     successRoute: (id) => ({
-      to: '/watering-plans/$wateringPlanId',
+      to: '/plans/$wateringPlanId',
       params: { wateringPlanId: id.toString() },
     }),
     replaceOnSuccess: true,

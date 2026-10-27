@@ -82,7 +82,7 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
         backLink={{
           label: t('update.backLabel'),
           link: {
-            to: `/watering-plans/$wateringPlanId`,
+            to: `/plans/$wateringPlanId`,
             params: { wateringPlanId: wateringPlanId?.toString() },
           },
         }}
@@ -96,7 +96,7 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
             {t('update.statusEditNotice')}
             <GeneralLink
               link={{
-                to: `/watering-plans/$wateringPlanId/status/edit`,
+                to: `/plans/$wateringPlanId/status/edit`,
                 params: { wateringPlanId: String(loadedData.id) },
               }}
               label={t('detail.updateStatusLabel')}
@@ -130,7 +130,7 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
           <DeleteSection
             mutationFn={handleDeleteWateringPlan}
             entityName={{ key: 'wateringPlan:entity.nameWithArticle' }}
-            redirectUrl={{ to: '/watering-plans' }}
+            redirectUrl={{ to: '/plans' }}
             invalidates={planStatusQueryRoots(planning)}
           />
         </Suspense>

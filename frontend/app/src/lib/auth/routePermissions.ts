@@ -46,7 +46,7 @@ export function routePermissionsFor(manifests: readonly ModuleManifest[]): Route
   return {
     ...CORE_ROUTE_PERMISSIONS,
     ...(mapPermissions.length > 0 ? { '/map': mapPermissions } : {}),
-    ...(planPermissions.length > 0 ? { '/watering-plans': planPermissions } : {}),
+    ...(planPermissions.length > 0 ? { '/plans': planPermissions } : {}),
     ...Object.fromEntries(
       manifests.flatMap((manifest) => Object.entries(manifest.routePermissions ?? {})),
     ),

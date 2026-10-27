@@ -148,7 +148,7 @@ const ModuleSwitcher = ({
     <Tabs
       value={current}
       onValueChange={(module) => {
-        navigate({ to: '/watering-plans', search: { module } }).catch((error) =>
+        navigate({ to: '/plans', search: { module } }).catch((error) =>
           console.error('Navigation failed:', error),
         )
       }}

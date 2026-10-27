@@ -57,7 +57,7 @@ describe('routePermissionsFor', () => {
     const table = routePermissionsFor([])
     expect(Object.keys(table).sort()).toEqual(Object.keys(CORE_ROUTE_PERMISSIONS).sort())
     expect(table['/trees']).toBeUndefined()
-    expect(table['/watering-plans']).toBeUndefined()
+    expect(table['/plans']).toBeUndefined()
   })
 
   it('takes the irrigation routes from its manifest', () => {
@@ -69,7 +69,7 @@ describe('routePermissionsFor', () => {
   })
 
   it('guards the plans with the plan resource of the active modules', () => {
-    expect(irrigationTable['/watering-plans']).toEqual(['watering_plan:read'])
+    expect(irrigationTable['/plans']).toEqual(['watering_plan:read'])
   })
 
   it('opens the plans only for a module that can plan', () => {
@@ -79,9 +79,9 @@ describe('routePermissionsFor', () => {
         { key: 'vehicle', area: 'operations', textsKey: 'settings:permission.resource.vehicle' },
       ],
     }
-    expect(routePermissionsFor([operationsOnly])['/watering-plans']).toBeUndefined()
+    expect(routePermissionsFor([operationsOnly])['/plans']).toBeUndefined()
     expect(
-      routePermissionsFor([probeManifest('waste', { planResource: 'sensor' })])['/watering-plans'],
+      routePermissionsFor([probeManifest('waste', { planResource: 'sensor' })])['/plans'],
     ).toEqual(['sensor:read'])
   })
 
@@ -186,7 +186,7 @@ describe('visibleNavSections', () => {
       id: 2,
       headline: 'Planung',
       links: [
-        { key: 'plans', to: '/watering-plans' },
+        { key: 'plans', to: '/plans' },
         { key: 'vehicles', to: '/vehicles' },
       ],
     },

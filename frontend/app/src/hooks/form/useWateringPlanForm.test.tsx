@@ -255,7 +255,7 @@ describe('useWateringPlanForm', () => {
         },
       ]
       const leave = (pathname: string) =>
-        shouldBlockFn({ current: { pathname: '/watering-plans/new' }, next: { pathname } })
+        shouldBlockFn({ current: { pathname: '/plans/new' }, next: { pathname } })
       expect(leave('/probe/pick')).toBe(false)
       expect(leave('/vehicles')).toBe(true)
     })

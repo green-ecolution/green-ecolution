@@ -75,7 +75,7 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
       )
 
       navigate({
-        to: `/watering-plans/$wateringPlanId`,
+        to: `/plans/$wateringPlanId`,
         params: { wateringPlanId: data.id.toString() },
         replace: true,
       }).catch((error) => console.error('Navigation failed:', error))
@@ -157,7 +157,7 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
         backLink={{
           label: t('statusUpdate.backLabel'),
           link: {
-            to: `/watering-plans/$wateringPlanId`,
+            to: `/plans/$wateringPlanId`,
             params: { wateringPlanId },
           },
         }}

@@ -286,7 +286,7 @@ describe('DeleteSection', () => {
           mutationFn={deletePlanFn}
           invalidates={queryRoots.vehicle}
           entityName="der Einsatzplan"
-          redirectUrl={{ to: '/watering-plans' }}
+          redirectUrl={{ to: '/plans' }}
         />,
         { wrapper: createWrapper() },
       )

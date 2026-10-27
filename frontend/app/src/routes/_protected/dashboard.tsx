@@ -35,7 +35,7 @@ function Dashboard() {
     ...(shown.plans
       ? [
           {
-            url: '/watering-plans',
+            url: '/plans',
             description: descriptionKeys.plans
               ? i18n.t(descriptionKeys.plans)
               : t('cards.wateringPlans.description'),
