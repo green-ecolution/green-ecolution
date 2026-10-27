@@ -98,6 +98,8 @@ pub fn physical_range(ability: SensorAbilityName, unit: SensorAbilityUnit) -> Op
         (N::Temperature, U::Celsius) => (-40.0, 80.0),
         (N::Humidity, U::Percent) => (0.0, 100.0),
         (N::Battery, U::Volt) => (0.0, 20.0),
+        // Ultrasonic level sensors on containers reach a few metres at most.
+        (N::Distance, U::Centimeter) => (0.0, 1000.0),
         _ => return None,
     };
     Some(AbilityRange { min, max })
@@ -214,8 +216,15 @@ mod tests {
     }
 
     #[test]
-    fn distance_has_no_physical_range_yet() {
-        assert_eq!(physical_range(N::Distance, U::Centimeter), None);
+    fn distance_beyond_a_thousand_centimeters_is_out_of_range() {
+        let ctx = ctx_without_previous();
+        assert_eq!(evaluate(N::Distance, U::Centimeter, 1000.0, &ctx), None);
+        assert_eq!(evaluate(N::Distance, U::Centimeter, 0.0, &ctx), None);
+        assert!(matches!(
+            evaluate(N::Distance, U::Centimeter, 1000.1, &ctx),
+            Some(PlausibilityIssue::OutOfRange { min, max }) if min == 0.0 && max == 1000.0
+        ));
+        assert!(evaluate(N::Distance, U::Centimeter, -0.1, &ctx).is_some());
     }
 
     #[test]

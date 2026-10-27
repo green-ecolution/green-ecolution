@@ -17,7 +17,7 @@ use crate::{
     role::Role,
     sensor::{
         SensorId,
-        data::{VolumetricReading, Watermark},
+        data::{DistanceReading, VolumetricReading, Watermark},
     },
     target::TargetRef,
 };
@@ -57,6 +57,7 @@ impl ModuleEvent {
 pub enum SensorReadings {
     Watermarks(Vec<Watermark>),
     Volumetrics(Vec<VolumetricReading>),
+    Distances(Vec<DistanceReading>),
 }
 
 #[derive(Debug, Clone)]
