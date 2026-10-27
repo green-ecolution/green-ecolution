@@ -73,6 +73,14 @@ impl PlausibilityIssue {
     }
 }
 
+/// Abilities whose uplinks count towards the defect streak; battery and
+/// climate values alone never make a reading usable.
+pub const PRIMARY_ABILITIES: &[SensorAbilityName] = &[
+    SensorAbilityName::SoilMoisture,
+    SensorAbilityName::SoilTension,
+    SensorAbilityName::Distance,
+];
+
 /// Inclusive bounds for one ability in one unit.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct AbilityRange {
