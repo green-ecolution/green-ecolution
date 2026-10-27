@@ -142,6 +142,7 @@ dependencies = [
  "utoipa",
  "utoipa-axum",
  "uuid",
+ "waste-server",
  "wiremock",
 ]
 
@@ -5643,6 +5644,26 @@ dependencies = [
  "sqlx",
  "thiserror 2.0.21",
  "uuid",
+]
+
+[[package]]
+name = "waste-server"
+version = "0.8.0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "config",
+ "domain",
+ "secrecy",
+ "serde",
+ "serde_json",
+ "server",
+ "sqlx",
+ "thiserror 2.0.21",
+ "utoipa",
+ "utoipa-axum",
+ "uuid",
+ "waste-domain",
 ]
 
 [[package]]

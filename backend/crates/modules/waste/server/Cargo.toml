@@ -1,0 +1,32 @@
+[package]
+name = "waste-server"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description = "Green Ecolution waste module: services, adapters and routes"
+publish.workspace = true
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+async-trait = { workspace = true }
+chrono = { workspace = true }
+domain = { path = "../../../domain", features = ["sqlx"] }
+serde = { workspace = true }
+serde_json = { workspace = true }
+server = { path = "../../../server" }
+sqlx = { workspace = true, features = ["macros", "migrate", "runtime-tokio", "tls-rustls", "postgres", "chrono", "uuid", "json"] }
+thiserror = { workspace = true }
+utoipa = { version = "6", features = ["axum_extras", "uuid", "chrono"] }
+utoipa-axum = "0.3"
+uuid = { workspace = true }
+waste-domain = { path = "../domain", features = ["sqlx"] }
+
+[dev-dependencies]
+config = "0.15.23"
+secrecy = { workspace = true }

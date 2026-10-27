@@ -4,12 +4,12 @@ use uuid::Uuid;
 use crate::{helpers::spawn_app, organizations::ROOT_ORG_ID};
 
 #[tokio::test]
-async fn list_holds_only_irrigation_without_other_modules() {
+async fn list_holds_the_registered_modules() {
     let app = spawn_app().await;
     let resp = app.get("/api/v1/modules").await;
     assert_eq!(resp.status(), 200);
     let body: serde_json::Value = resp.json().await.unwrap();
-    assert_eq!(body["modules"], json!(["irrigation"]));
+    assert_eq!(body["modules"], json!(["irrigation", "waste"]));
     assert!(
         body["organizations"]
             .as_array()

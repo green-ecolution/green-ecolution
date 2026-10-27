@@ -5,7 +5,10 @@ use server::{configuration::ModuleSettings, module::Module};
 
 /// Every module this build ships. Adding a module means one line here.
 pub fn registered() -> Vec<Box<dyn Module>> {
-    vec![Box::new(irrigation_server::IrrigationModule)]
+    vec![
+        Box::new(irrigation_server::IrrigationModule),
+        Box::new(waste_server::WasteModule),
+    ]
 }
 
 /// The activation an organization inherits when no ancestor switched the

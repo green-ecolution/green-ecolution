@@ -56,6 +56,7 @@ url = { workspace = true }
 utoipa = { version = "6", features = ["axum_extras", "uuid", "chrono"] }
 utoipa-axum = "0.3"
 uuid = { workspace = true }
+waste-server = { path = "../modules/waste/server" }
 
 [dev-dependencies]
 base64 = "0.23"

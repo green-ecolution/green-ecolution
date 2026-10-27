@@ -58,3 +58,5 @@ modules:
     nearest_tree_max_radius: 500.0
     nearest_tree_default_limit: 10
     nearest_tree_max_limit: 50
+  waste:
+    full_threshold_percent: 80 # 1-100

@@ -33,7 +33,7 @@ pub async fn switch(
 async fn a_registered_module_is_listed_and_off_by_default() {
     let (app, _) = app_with_test_module().await;
     let body: serde_json::Value = app.get("/api/v1/modules").await.json().await.unwrap();
-    assert_eq!(body["modules"], json!(["irrigation", KEY]));
+    assert_eq!(body["modules"], json!(["irrigation", KEY, "waste"]));
 
     let org: serde_json::Value = app
         .get(&format!("/api/v1/organizations/{ROOT_ORG_ID}/modules"))
