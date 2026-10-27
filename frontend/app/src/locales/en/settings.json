@@ -48,12 +48,6 @@
       "water": "Water",
       "cargo_volume": "Cargo volume"
     },
-    "columns": {
-      "name": "Name",
-      "organization": "Organization",
-      "replenishes": "Replenishes",
-      "actions": "Actions"
-    },
     "noReplenishes": "Start and end only",
     "action": {
       "edit": "Edit station {name}",

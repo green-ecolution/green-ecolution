@@ -8,7 +8,6 @@
     "descriptionCanModify": "Plane, starte und dokumentiere Einsätze. Ziehe einen Einsatzplan in die nächste Spalte, um seinen Status zu ändern.",
     "description": "Verfolge geplante, laufende und abgeschlossene Einsätze.",
     "createButton": "Neuen Einsatzplan erstellen",
-    "moduleTabsLabel": "Einsatzart",
     "loadingLabel": "Daten werden geladen"
   },
   "detail": {

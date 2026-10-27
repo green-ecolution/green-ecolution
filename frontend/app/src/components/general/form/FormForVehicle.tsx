@@ -74,7 +74,6 @@ const FormForVehicle = (props: FormForVehicleProps) => {
         label={t('form.waterCapacityLabel')}
         type="number"
         error={errors.waterCapacity?.message}
-        description={t('form.capacitiesHint')}
         {...register('waterCapacity', asOptionalNumber)}
       />
       <FormField

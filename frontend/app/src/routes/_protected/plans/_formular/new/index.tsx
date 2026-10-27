@@ -35,7 +35,9 @@ const defaultForm = (module: string): DefaultValues<WateringPlanForm> => ({
 
 function NewWateringPlan() {
   const { manifests } = useActiveModules()
-  const planManifest = planModule(Route.useSearch(), manifests)
+  const search = Route.useSearch()
+  const draft = useWateringPlanDraft<WateringPlanForm>('create')
+  const planManifest = planModule({ module: search.module ?? draft.data?.module }, manifests)
   return planManifest ? <NewWateringPlanForm planManifest={planManifest} /> : <ModuleInactive />
 }
 

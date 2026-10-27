@@ -40,19 +40,13 @@
     "title": "Stationen",
     "intro": "Startpunkte und Stationen, an denen Fahrzeuge Wasser auffüllen oder Laderaum entladen.",
     "createButton": "Station anlegen",
-    "loading": "Laden von Stationen...",
+    "loading": "Stationen werden geladen …",
     "empty": "Zur Zeit sind keine Stationen angelegt.",
     "routingDisabled": "Routing ist in dieser Installation ausgeschaltet.",
     "defaultBadge": "Standard",
     "kind": {
       "water": "Wasser",
       "cargo_volume": "Laderaum"
-    },
-    "columns": {
-      "name": "Name",
-      "organization": "Organisation",
-      "replenishes": "Füllt auf",
-      "actions": "Aktionen"
     },
     "noReplenishes": "Nur Start und Ziel",
     "action": {
