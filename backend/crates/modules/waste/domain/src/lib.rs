@@ -4,6 +4,7 @@
 pub mod fill;
 pub mod settings;
 pub mod values;
+pub mod waste_bin;
 
 use domain::module::ModuleKey;
 
