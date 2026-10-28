@@ -26,7 +26,7 @@ diese Seiten auch nicht erreichbar: Wer eine solche Adresse öffnet, die Zurück
 benutzt oder aus einem Mandanten auf einer solchen Seite zurück in die eigene
 Organisation wechselt, landet wieder in der Mandantenübersicht.
 
-![Die Mandantenübersicht mit zwei Mandanten und ihren Kennzahlen](../images/admin-tenants.png)
+![Die Mandantenübersicht mit dem Mandanten TBZ und seinen Kennzahlen](../images/admin-tenants.png)
 
 ## Was die Übersicht zeigt
 
