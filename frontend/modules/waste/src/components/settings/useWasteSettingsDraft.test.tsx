@@ -57,6 +57,16 @@ describe('useWasteSettingsDraft', () => {
     expect(updateWasteSettings).not.toHaveBeenCalled()
   })
 
+  it('rejects a fractional threshold as no whole number instead of rounding it', async () => {
+    const { result } = await loaded()
+
+    act(() => result.current.setOwn(true))
+    act(() => result.current.setText('80.5'))
+
+    expect(result.current.issue?.key).toBe('settings.full_threshold.invalidFormat')
+    expect(result.current.valid).toBe(false)
+  })
+
   it('saves 70 through the settings endpoint and reloads', async () => {
     updateWasteSettings.mockResolvedValue(own)
     const { result, queryClient } = await loaded()

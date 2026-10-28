@@ -138,7 +138,8 @@
       "outOfRange": "Nachwirkzeit muss zwischen {min} und {max} liegen."
     },
     "full_threshold": {
-      "outOfRange": "Voll-Schwelle muss zwischen {min} und {max} Prozent liegen."
+      "outOfRange": "Voll-Schwelle muss zwischen {min} und {max} Prozent liegen.",
+      "invalidFormat": "Die Voll-Schwelle muss eine ganze Zahl sein."
     },
     "map_view": {
       "invalidFormat": "Der Mittelpunkt muss innerhalb des gewählten Ausschnitts liegen."

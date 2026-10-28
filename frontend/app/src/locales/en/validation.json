@@ -138,7 +138,8 @@
       "outOfRange": "Just-watered duration must be between {min} and {max}."
     },
     "full_threshold": {
-      "outOfRange": "Full threshold must be between {min} and {max} percent."
+      "outOfRange": "Full threshold must be between {min} and {max} percent.",
+      "invalidFormat": "The full threshold must be a whole number."
     },
     "map_view": {
       "invalidFormat": "The centre must lie inside the chosen extent."
