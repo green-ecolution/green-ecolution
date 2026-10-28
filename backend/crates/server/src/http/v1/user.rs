@@ -82,10 +82,11 @@ pub async fn get_me(
 #[utoipa::path(get, path = "/users/me/map-view", tag = "Users",
     operation_id = "getMyMapView",
     summary = "Get the map viewport for the authenticated user",
-    description = "Returns the centre and bounding box the map opens at for the caller's organization, resolved along the organization tree. Falls back to the instance default where the account belongs to no organization. Unlike `/info/map`, which stays unauthenticated and always reports the instance default, this answer is organization-specific and therefore requires a token.",
+    description = "Returns the centre and bounding box the map opens at for the caller's organization, or for the organization selected via `X-Organization-Scope`, resolved along the organization tree. Falls back to the instance default where the account belongs to no organization. Unlike `/info/map`, which stays unauthenticated and always reports the instance default, this answer is organization-specific and therefore requires a token.",
     responses(
         (status = 200, description = "The map viewport in force for the caller", body = MapInfoResponse),
         (status = 401, description = "Unauthorized", body = ErrorBody),
+        (status = 403, description = "The selected organization scope is out of the caller's reach (code `organization_scope.invalid`)", body = ErrorBody),
         (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
@@ -94,7 +95,19 @@ pub async fn get_my_map_view(
     State(state): State<Arc<AppState>>,
     user: AuthUserExtractor,
 ) -> Result<Json<MapInfoResponse>, ServiceError> {
-    let view = state.settings_service.map_view_for_user(user.id).await?;
+    let view = match user.organization_scope {
+        Some(scope) => {
+            state
+                .authorization_service
+                .context_for(user.caller())
+                .await?;
+            state
+                .settings_service
+                .map_view_for_organization(scope)
+                .await?
+        }
+        None => state.settings_service.map_view_for_user(user.id).await?,
+    };
     Ok(Json(MapInfoResponse::from(view)))
 }
 

@@ -448,3 +448,59 @@ async fn moving_a_member_between_organizations_with_rights_in_both() {
     assert_eq!(resp.status(), 200);
     assert_eq!(organization_of(&app, member).await, tree.firma_a);
 }
+
+async fn my_map_view(app: &TestApp, token: &str, scope: Option<&str>) -> reqwest::Response {
+    request(
+        reqwest::Client::new().get(format!("{}/api/v1/users/me/map-view", app.address)),
+        Some(token),
+        scope,
+    )
+    .send()
+    .await
+    .unwrap()
+}
+
+#[tokio::test]
+async fn map_view_follows_the_scope() {
+    let (harness, app) = spawn_with_auth().await;
+    let tree = seed_tree(&app).await;
+    let token = seed_user(&harness, &app, tree.tbz, &["setting:update"]).await;
+    let hamburg_center = json!([53.55, 9.99]);
+    let resp = request(
+        reqwest::Client::new().put(format!(
+            "{}/api/v1/organizations/{}/settings",
+            app.address, tree.firma_a
+        )),
+        Some(&token),
+        None,
+    )
+    .json(&json!({ "map_view": {
+        "center": hamburg_center, "bbox": [53.40, 9.75, 53.70, 10.25],
+        "min_zoom": 11, "max_zoom": 19
+    } }))
+    .send()
+    .await
+    .unwrap();
+    assert_eq!(resp.status(), 200, "storing Firma A's view");
+
+    let scoped = my_map_view(&app, &token, Some(&tree.firma_a.to_string())).await;
+    assert_eq!(scoped.status(), 200);
+    let scoped: Value = scoped.json().await.unwrap();
+    assert_eq!(scoped["center"], hamburg_center);
+
+    let unscoped: Value = my_map_view(&app, &token, None).await.json().await.unwrap();
+    assert_ne!(unscoped["center"], hamburg_center);
+}
+
+#[tokio::test]
+async fn map_view_rejects_an_unreachable_scope() {
+    let (harness, app) = spawn_with_auth().await;
+    let tree = seed_tree(&app).await;
+    let token = seed_user(&harness, &app, tree.firma_a, &[]).await;
+
+    let resp = my_map_view(&app, &token, Some(&tree.firma_b.to_string())).await;
+
+    assert_eq!(resp.status(), 403);
+    let body: Value = resp.json().await.unwrap();
+    assert_eq!(body["code"], "organization_scope.invalid");
+}

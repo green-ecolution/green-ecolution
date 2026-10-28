@@ -58,9 +58,19 @@ impl SettingsService {
             .map(|(_, org)| org);
 
         match organization {
-            Some(org) => Ok(self.resolver.effective_for(org).await?.map_view),
+            Some(org) => self.map_view_for_organization(org).await,
             None => Ok(self.defaults.map_view),
         }
+    }
+
+    /// The viewport a map opens at while the caller works in `org`; the
+    /// caller must have validated that organization as their scope.
+    #[tracing::instrument(level = "info", skip(self))]
+    pub async fn map_view_for_organization(
+        &self,
+        org: Id<Organization>,
+    ) -> Result<MapView, ServiceError> {
+        Ok(self.resolver.effective_for(org).await?.map_view)
     }
 
     #[tracing::instrument(level = "info", skip(self))]
