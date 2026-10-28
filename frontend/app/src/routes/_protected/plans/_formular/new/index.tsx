@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { WateringPlanStatus } from '@/api/backendApi'
+import { VehicleType, WateringPlanStatus } from '@/api/backendApi'
 import { DefaultValues, FormProvider } from 'react-hook-form'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { z } from 'zod'
@@ -50,8 +50,10 @@ function NewWateringPlanForm({ planManifest }: { planManifest: PlanningManifest 
   const formKey = `${module}:${moduleDraft?.stopIds?.join(',') ?? 'initial'}`
 
   const { data: users } = useSuspenseQuery(userQueries.list({ page: 1, perPage: 100 }))
-  const { data: trailers } = useSuspenseQuery(vehicleQueries.list())
-  const { data: transporters } = useSuspenseQuery(vehicleQueries.list())
+  const { data: trailers } = useSuspenseQuery(vehicleQueries.list({ type: [VehicleType.Trailer] }))
+  const { data: transporters } = useSuspenseQuery(
+    vehicleQueries.list({ type: [VehicleType.Transporter] }),
+  )
   const { mutate, isError, error, form, navigationBlocker, saveDraft } = useWateringPlanForm(
     'create',
     {
