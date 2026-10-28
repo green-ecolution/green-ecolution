@@ -13,6 +13,7 @@ import {
   ListVehiclesRequest,
   ListResponsePlanInListResponse,
   MapInfoResponse,
+  ReachableOrganizationResponse,
   moduleApi,
   ModuleListResponse,
   organizationApi,
@@ -292,6 +293,12 @@ export const userQueries = {
       queryKey: ['users', 'me', 'map-view'],
       queryFn: () => userApi.getMyMapView(),
       staleTime: Infinity,
+    }),
+
+  myOrganizations: () =>
+    queryOptions<ReachableOrganizationResponse[]>({
+      queryKey: ['users', 'me', 'organizations'],
+      queryFn: () => userApi.listMyOrganizations(),
     }),
 
   list: (params?: ListUsersRequest) =>

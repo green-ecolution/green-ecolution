@@ -1,6 +1,7 @@
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { modulesQuery, userQueries } from '@/api/queries'
 import { startSigninHandover } from '@/lib/auth/handover'
+import { loadOrganizationScope } from '@/lib/auth/scope/organizationScopeStore'
 import { readAuthBypass } from '@/lib/auth/runtimeConfig'
 import { prefetch } from '@/lib/router'
 
@@ -21,7 +22,9 @@ export const Route = createFileRoute('/_protected')({
     // Nav entries and child guards read permissions synchronously from the
     // cache, so the user has to be resolved before anything inside renders.
     if (!readAuthBypass()) {
-      await context.queryClient.ensureQueryData(userQueries.me())
+      const me = await context.queryClient.ensureQueryData(userQueries.me())
+      // Requests after this point carry the user's stored organization scope.
+      loadOrganizationScope(me.id)
     }
     // Module guards and the navigation read the active modules synchronously;
     // the endpoint answers in auth-bypass mode too.
