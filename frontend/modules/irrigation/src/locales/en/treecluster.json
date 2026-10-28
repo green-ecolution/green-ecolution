@@ -108,7 +108,11 @@
     "deleteDialogTitle": "Delete watering group?",
     "deleteDialogDescription": "Do you really want to delete the watering group? Its trees remain.",
     "deleteSuccessToast": "The watering group was deleted.",
-    "deleteErrorToast": "The watering group could not be deleted."
+    "deleteErrorToast": "The watering group could not be deleted.",
+    "transferDialogTitle": "Move group {name}",
+    "transferDialogDescription": "The group moves to the chosen organization. Its trees and their sensors move along.",
+    "transferSuccessToast": "The watering group was moved.",
+    "transferErrorToast": "The watering group could not be moved."
   },
   "soilTexture": {
     "fractionSand": "Sand",

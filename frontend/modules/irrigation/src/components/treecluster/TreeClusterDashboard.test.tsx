@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck - ad-hoc routes are not part of the generated route tree
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import {
   createRootRoute,
   createRoute,
@@ -26,11 +27,16 @@ vi.mock('@/lib/auth/authSessionContext', () => ({
 }))
 
 const getMe = vi.fn().mockResolvedValue({ id: 'me', roles: [] })
+const listOrganizations = vi.fn()
 vi.mock('@/api/backendApi', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/api/backendApi')>()
   return {
     ...actual,
-    userApi: { getMe: (...args: unknown[]) => getMe(...args) as unknown },
+    userApi: {
+      getMe: (...args: unknown[]) => getMe(...args) as unknown,
+      listMyOrganizations: () => [],
+    },
+    organizationApi: { listOrganizations: () => listOrganizations() as unknown },
   }
 })
 
@@ -40,6 +46,7 @@ vi.mock('@/components/map-gl/MapPreview', () => ({
 }))
 
 const { default: TreeClusterDashboard } = await import('./TreeClusterDashboard')
+const { clusterApi } = await import('../../api/client')
 
 const treecluster = {
   id: 1,
@@ -180,6 +187,61 @@ describe('TreeClusterDashboard unknown-status notice', () => {
     expect(await screen.findByText('Keine Bäume zugewiesen')).toBeInTheDocument()
     expect(
       screen.queryByText('Warum ist der Bewässerungszustand unbekannt?'),
+    ).not.toBeInTheDocument()
+  })
+})
+
+describe('TreeClusterDashboard transfer', () => {
+  const orgs = [
+    { id: 'root', name: 'Green Ecolution', parentId: null, memberCount: 0 },
+    { id: 'tbz', name: 'Betriebshof', parentId: 'root', memberCount: 0 },
+  ]
+  const meWithUpdateIn = (organizationId: string) => ({
+    id: 'me',
+    organization: orgs[0],
+    roles: [{ id: 'r', name: 'Rolle', organizationId, permissions: ['tree_cluster:update'] }],
+  })
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    permissions.mockReturnValue(new Set(['tree_cluster:update', 'organization:read']))
+    listOrganizations.mockResolvedValue(orgs)
+  })
+
+  it('moves the cluster to the chosen organization', async () => {
+    const user = userEvent.setup()
+    getMe.mockResolvedValue(meWithUpdateIn('root'))
+    const transfer = vi.spyOn(clusterApi, 'transferCluster').mockResolvedValue(undefined)
+    renderDashboard({ ...treecluster, organizationId: 'tbz' })
+
+    await user.click(await screen.findByLabelText('Weitere Aktionen'))
+    await user.click(
+      await screen.findByRole('menuitem', { name: 'In andere Organisation verschieben' }),
+    )
+    await user.click(screen.getByRole('combobox', { name: /zielorganisation/i }))
+    await user.click(screen.getByRole('option', { name: 'Green Ecolution' }))
+    await user.click(screen.getByRole('button', { name: 'Verschieben' }))
+
+    await waitFor(() =>
+      expect(transfer).toHaveBeenCalledWith({
+        clusterId: '1',
+        transferRequest: { organizationId: 'root' },
+      }),
+    )
+  })
+
+  it('offers no move without another organization to move to', async () => {
+    const user = userEvent.setup()
+    getMe.mockResolvedValue(meWithUpdateIn('tbz'))
+    permissions.mockReturnValue(
+      new Set(['tree_cluster:update', 'tree_cluster:delete', 'organization:read']),
+    )
+    renderDashboard({ ...treecluster, organizationId: 'tbz' })
+
+    await user.click(await screen.findByLabelText('Weitere Aktionen'))
+    expect(await screen.findByRole('menuitem', { name: 'Gruppe löschen' })).toBeInTheDocument()
+    expect(
+      screen.queryByRole('menuitem', { name: 'In andere Organisation verschieben' }),
     ).not.toBeInTheDocument()
   })
 })

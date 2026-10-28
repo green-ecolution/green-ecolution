@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useMutation } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { ChevronDown, Link2, Link2Off, Replace, Trash2 } from 'lucide-react'
+import { ArrowRightLeft, ChevronDown, Link2, Link2Off, Replace, Trash2 } from 'lucide-react'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,6 +23,8 @@ import {
 } from '@green-ecolution/ui'
 import type { Sensor } from '@/api/backendApi'
 import { sensorApi } from '@/api/backendApi'
+import TransferOrganizationDialog from '@/components/general/transfer/TransferOrganizationDialog'
+import { useTransferTargets } from '@/components/general/transfer/useTransferTargets'
 import { useInvalidateQueryRoots } from '@/lib/queryInvalidation'
 import { useHasPermission } from '@/lib/auth/useHasPermission'
 import { targetTextKey } from '@/lib/targets'
@@ -38,10 +40,28 @@ const SensorActionsMenu = ({ sensor }: SensorActionsMenuProps) => {
   const actions = useSensorActions()
   const isPrepared = sensor.status === 'prepared'
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [transferOpen, setTransferOpen] = useState(false)
   const navigate = useNavigate()
   const invalidate = useInvalidateQueryRoots()
   const canUpdate = useHasPermission(['sensor:update'])
   const canDelete = useHasPermission(['sensor:delete'])
+  const transferTargets = useTransferTargets('sensor:update', sensor.organizationId)
+  const canTransfer = canUpdate && transferTargets.length > 0
+  // A bound sensor moves with its target, the backend refuses it alone.
+  const transferBlocked = sensor.target != null
+
+  const transferMutation = useMutation({
+    mutationFn: (organizationId: string) =>
+      sensorApi.transferSensor({ sensorId, transferRequest: { organizationId } }),
+    onSuccess: async () => {
+      setTransferOpen(false)
+      toast.success(t('actions.transferSuccessToast'))
+      await invalidate(queryRoots.sensor, { reloadRoutes: true })
+    },
+    onError: () => {
+      toast.error(t('actions.transferFailedToast'))
+    },
+  })
 
   const deleteMutation = useMutation({
     mutationFn: () => sensorApi.deleteSensor({ sensorId }),
@@ -97,6 +117,23 @@ const SensorActionsMenu = ({ sensor }: SensorActionsMenuProps) => {
               )}
             </DropdownMenuItem>
           )}
+          {canTransfer && (
+            <DropdownMenuItem
+              className="cursor-pointer items-start"
+              disabled={transferBlocked}
+              onSelect={() => setTransferOpen(true)}
+            >
+              <ArrowRightLeft className="mr-2 mt-0.5 size-4" />
+              <span className="flex flex-col gap-0.5">
+                {t('common:transfer.menuItem')}
+                {transferBlocked && (
+                  <span className="text-xs text-muted-foreground">
+                    {t('actions.transferBlockedBound')}
+                  </span>
+                )}
+              </span>
+            </DropdownMenuItem>
+          )}
           {canDelete && (
             <DropdownMenuItem
               className="text-destructive focus:text-destructive cursor-pointer"
@@ -111,6 +148,16 @@ const SensorActionsMenu = ({ sensor }: SensorActionsMenuProps) => {
           )}
         </DropdownMenuContent>
       </DropdownMenu>
+
+      <TransferOrganizationDialog
+        open={transferOpen}
+        onOpenChange={setTransferOpen}
+        title={t('actions.transferDialogTitle', { id: sensorId })}
+        description={t('actions.transferDialogDescription')}
+        organizations={transferTargets}
+        pending={transferMutation.isPending}
+        onConfirm={(organizationId) => transferMutation.mutate(organizationId)}
+      />
 
       <AlertDialogContent>
         <AlertDialogHeader>

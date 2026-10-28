@@ -12,6 +12,18 @@ vi.mock('@/lib/auth/usePermissions', () => ({
   usePermissions: () => permissions(),
 }))
 
+const getMe = vi.fn()
+const listOrganizations = vi.fn()
+vi.mock('@/api/backendApi', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/api/backendApi')>()),
+  userApi: { getMe: () => getMe() as unknown, listMyOrganizations: () => [] },
+  organizationApi: { listOrganizations: () => listOrganizations() as unknown },
+}))
+
+vi.mock('@/lib/auth/authSessionContext', () => ({
+  useAuthSession: () => ({ isAuthenticated: true, accessToken: null }),
+}))
+
 // The core section is tested on its own; here only the subject it gets matters.
 vi.mock('@/components/comments/CommentsSection', () => ({
   default: ({ subject }: { subject: CommentSubject }) => (
@@ -113,5 +125,47 @@ describe('WasteBinDetail', { timeout: 20_000 }, () => {
 
     await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument())
     expect(deleteBin).not.toHaveBeenCalled()
+  })
+})
+
+describe('WasteBinDetail transfer', { timeout: 20_000 }, () => {
+  const orgs = [
+    { id: 'root', name: 'Green Ecolution', parentId: null, memberCount: 0 },
+    { id: 'org-1', name: 'Stadt Flensburg', parentId: 'root', memberCount: 0 },
+    { id: 'org-2', name: 'TBZ', parentId: 'root', memberCount: 0 },
+  ]
+
+  beforeEach(() => {
+    vi.restoreAllMocks()
+    permissions.mockReturnValue(new Set(['waste_bin:update', 'organization:read']))
+    listOrganizations.mockResolvedValue(orgs)
+    getMe.mockResolvedValue({
+      id: 'me',
+      organization: orgs[0],
+      roles: [
+        { id: 'r', name: 'Rolle', organizationId: 'root', permissions: ['waste_bin:update'] },
+      ],
+    })
+  })
+
+  it('moves the bin to the chosen organization', async () => {
+    const transfer = vi.spyOn(wasteBinApi, 'transferWasteBin').mockResolvedValue()
+    const user = userEvent.setup()
+    renderInRouter(<WasteBinDetail bin={fullBin} />)
+
+    await user.click(await screen.findByRole('button', { name: 'Weitere Aktionen' }))
+    await user.click(
+      await screen.findByRole('menuitem', { name: 'In andere Organisation verschieben' }),
+    )
+    await user.click(screen.getByRole('combobox', { name: /zielorganisation/i }))
+    await user.click(screen.getByRole('option', { name: 'TBZ' }))
+    await user.click(screen.getByRole('button', { name: 'Verschieben' }))
+
+    await waitFor(() =>
+      expect(transfer).toHaveBeenCalledWith({
+        wasteBinId: BIN_FULL_ID,
+        transferRequest: { organizationId: 'org-2' },
+      }),
+    )
   })
 })

@@ -57,6 +57,10 @@
     "deleteDialogDescription": "The bin is removed permanently and taken out of every planned collection tour. An attached sensor is released and stays activated.",
     "deleteSuccessToast": "The waste bin was deleted.",
     "deleteErrorToast": "The waste bin could not be deleted.",
+    "transferDialogTitle": "Move bin {number}",
+    "transferDialogDescription": "The bin moves to the chosen organization. An attached sensor moves along.",
+    "transferSuccessToast": "The waste bin was moved.",
+    "transferErrorToast": "The waste bin could not be moved.",
     "masterData": {
       "title": "Master data",
       "numberLabel": "Bin number",

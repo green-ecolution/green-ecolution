@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck - ad-hoc routes are not part of the generated route tree
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import {
   createRootRoute,
   createRoute,
@@ -19,12 +20,25 @@ vi.mock('@/lib/auth/usePermissions', () => ({
   usePermissions: () => permissions(),
 }))
 
+const getMe = vi.fn()
+const listOrganizations = vi.fn()
+vi.mock('@/api/backendApi', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/api/backendApi')>()),
+  userApi: { getMe: () => getMe() as unknown, listMyOrganizations: () => [] },
+  organizationApi: { listOrganizations: () => listOrganizations() as unknown },
+}))
+
+vi.mock('@/lib/auth/authSessionContext', () => ({
+  useAuthSession: () => ({ isAuthenticated: true, accessToken: null }),
+}))
+
 // MapLibre needs a WebGL context, which jsdom does not provide.
 vi.mock('@/components/map-gl/MapPreview', () => ({
   default: () => <div data-testid="map-preview" />,
 }))
 
 const { default: TreeDashboard } = await import('./TreeDashboard')
+const { treeApi } = await import('../../api/client')
 
 const tree = {
   id: '11111111-1111-1111-1111-111111111111',
@@ -127,5 +141,57 @@ describe('TreeDashboard content', () => {
     renderDashboard({ tree, treeCluster: cluster })
     expect(await screen.findByText('Gruppe A')).toBeInTheDocument()
     expect(screen.getByText(/Dieser Baum ist als »Sehr trocken« bewertet/)).toBeInTheDocument()
+  })
+})
+
+describe('TreeDashboard transfer', () => {
+  const orgs = [
+    { id: 'root', name: 'Green Ecolution', parentId: null, memberCount: 0 },
+    { id: 'tbz', name: 'Betriebshof', parentId: 'root', memberCount: 0 },
+  ]
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    permissions.mockReturnValue(new Set(['tree:update', 'organization:read']))
+    listOrganizations.mockResolvedValue(orgs)
+    getMe.mockResolvedValue({
+      id: 'me',
+      organization: orgs[0],
+      roles: [{ id: 'r', name: 'Rolle', organizationId: 'root', permissions: ['tree:update'] }],
+    })
+  })
+
+  it('moves a tree without a group to the chosen organization', async () => {
+    const user = userEvent.setup()
+    const transfer = vi.spyOn(treeApi, 'transferTree').mockResolvedValue(undefined)
+    renderDashboard({ tree: { ...tree, organizationId: 'tbz' } })
+
+    await user.click(await screen.findByLabelText('Weitere Aktionen'))
+    await user.click(
+      await screen.findByRole('menuitem', { name: 'In andere Organisation verschieben' }),
+    )
+    await user.click(screen.getByRole('combobox', { name: /zielorganisation/i }))
+    await user.click(screen.getByRole('option', { name: 'Green Ecolution' }))
+    await user.click(screen.getByRole('button', { name: 'Verschieben' }))
+
+    await waitFor(() =>
+      expect(transfer).toHaveBeenCalledWith({
+        treeId: tree.id,
+        transferRequest: { organizationId: 'root' },
+      }),
+    )
+  })
+
+  it('explains why a tree inside a group cannot move alone', async () => {
+    const user = userEvent.setup()
+    renderDashboard({
+      tree: { ...tree, organizationId: 'tbz', treeClusterId: cluster.id },
+      treeCluster: cluster,
+    })
+
+    await user.click(await screen.findByLabelText('Weitere Aktionen'))
+    const item = await screen.findByRole('menuitem', { name: /In andere Organisation verschieben/ })
+    expect(item).toHaveAttribute('aria-disabled', 'true')
+    expect(item).toHaveTextContent('Gehört zur Gruppe Gruppe A. Verschiebe stattdessen die Gruppe.')
   })
 })

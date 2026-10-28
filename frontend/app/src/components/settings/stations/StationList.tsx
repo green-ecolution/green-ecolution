@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Pencil, Star, Trash2 } from 'lucide-react'
+import { ArrowRightLeft, Pencil, Star, Trash2 } from 'lucide-react'
 import { Badge, Button, ListCard, ListCardDescription, ListCardTitle } from '@green-ecolution/ui'
 import type { Organization, StartPointResponse } from '@/api/backendApi'
 import { Can } from '@/lib/auth/Can'
 import { capacityDisplay } from '@/lib/capacity'
+import { useOrganizationsWithPermission } from '@/lib/auth/useOrganizationsWithPermission'
 import EntityList from '@/components/general/EntityList'
 import DeleteConfirmDialog from '@/components/general/DeleteConfirmDialog'
+import TransferOrganizationDialog from '@/components/general/transfer/TransferOrganizationDialog'
 
 interface StationListProps {
   stations: StartPointResponse[]
@@ -14,6 +16,7 @@ interface StationListProps {
   onEdit: (station: StartPointResponse) => void
   onSetDefault: (station: StartPointResponse) => void
   onDelete: (station: StartPointResponse) => void
+  onTransfer: (station: StartPointResponse, organizationId: string) => void
 }
 
 const StationList = ({
@@ -22,11 +25,20 @@ const StationList = ({
   onEdit,
   onSetDefault,
   onDelete,
+  onTransfer,
 }: StationListProps) => {
   const { t } = useTranslation('settings')
   const [pendingDelete, setPendingDelete] = useState<StartPointResponse | null>(null)
+  const [pendingTransfer, setPendingTransfer] = useState<StartPointResponse | null>(null)
+  const writableOrganizations = useOrganizationsWithPermission('start_point:update')
 
   const organizationName = (id: string) => organizations.find((org) => org.id === id)?.name ?? id
+  const transferTargetsOf = (station: StartPointResponse) =>
+    writableOrganizations.filter((org) => org.id !== station.organizationId)
+  // The default is unique per organization, so moving it could collide with
+  // the target's own default. Only non-default stations are offered.
+  const canTransfer = (station: StartPointResponse) =>
+    !station.isDefault && transferTargetsOf(station).length > 0
 
   return (
     <>
@@ -84,6 +96,18 @@ const StationList = ({
                     <Star className="size-4" aria-hidden />
                   </Button>
                 )}
+                {canTransfer(station) && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label={t('stations.action.transfer', { name: station.name })}
+                    title={t('stations.actionLabel.transfer')}
+                    onClick={() => setPendingTransfer(station)}
+                  >
+                    <ArrowRightLeft className="size-4" aria-hidden />
+                  </Button>
+                )}
               </Can>
               <Can permission={['start_point:delete']}>
                 <Button
@@ -112,6 +136,19 @@ const StationList = ({
         onConfirm={() => {
           if (pendingDelete) onDelete(pendingDelete)
           setPendingDelete(null)
+        }}
+      />
+      <TransferOrganizationDialog
+        open={pendingTransfer !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingTransfer(null)
+        }}
+        title={t('stations.transferDialog.title', { name: pendingTransfer?.name ?? '' })}
+        description={t('stations.transferDialog.description')}
+        organizations={pendingTransfer ? transferTargetsOf(pendingTransfer) : []}
+        onConfirm={(organizationId) => {
+          if (pendingTransfer) onTransfer(pendingTransfer, organizationId)
+          setPendingTransfer(null)
         }}
       />
     </>
