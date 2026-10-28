@@ -330,7 +330,6 @@ impl WasteBinWriter for PgWasteBinRepository {
 
     #[tracing::instrument(level = "trace", skip_all)]
     async fn save(&self, bin: &WasteBin) -> Result<(), RepositoryError> {
-        let fill = bin.fill();
         let result = sqlx::query!(
             r#"UPDATE waste_bins SET
                 number = $2,
@@ -341,10 +340,7 @@ impl WasteBinWriter for PgWasteBinRepository {
                 depth_cm = $6,
                 organization_id = $7,
                 provider = $8,
-                additional_informations = $9,
-                fill_fraction = $10,
-                fill_measured_at = $11,
-                last_emptied_at = $12
+                additional_informations = $9
             WHERE id = $1"#,
             bin.id.value(),
             bin.number.as_str(),
@@ -355,9 +351,6 @@ impl WasteBinWriter for PgWasteBinRepository {
             bin.organization_id().value(),
             bin.provenance().provider().map(|p| p.as_str().to_owned()),
             bin.provenance().additional_info().cloned(),
-            fill.map(|f| f.fraction),
-            fill.map(|f| f.measured_at),
-            bin.last_emptied_at(),
         )
         .execute(&self.pool)
         .await?;

@@ -203,3 +203,33 @@ async fn an_older_emptying_does_not_overwrite_a_newer_one() {
 
     assert_eq!(row(&app.db_pool, bin).await.last_emptied_at, Some(hour(12)));
 }
+
+#[tokio::test]
+async fn an_edit_from_a_stale_copy_does_not_roll_back_a_reading_or_an_emptying() {
+    let app = waste_app().await;
+    let bin = id_of(&create_bin(&app, "AB-1").await);
+    let repo = Arc::new(PgWasteBinRepository::new(app.db_pool.clone()));
+    let mut stale = repo.by_id(Id::new(bin)).await.unwrap();
+    assert!(stale.record_fill_level(90.0, hour(8)));
+    stale.mark_emptied(hour(7));
+
+    let mut fresh = stale.clone();
+    assert!(fresh.record_fill_level(30.0, hour(12)));
+    repo.save_fill_level(&fresh).await.unwrap();
+    fresh.mark_emptied(hour(11));
+    repo.save_emptied(&fresh).await.unwrap();
+
+    stale.relocate(domain::shared::coordinates::Coordinate::new(54.5, 9.5).unwrap());
+    repo.save(&stale).await.unwrap();
+
+    let row = row(&app.db_pool, bin).await;
+    assert_eq!(row.fill_fraction, Some(0.75));
+    assert_eq!(row.fill_measured_at, Some(hour(12)));
+    assert_eq!(row.last_emptied_at, Some(hour(11)));
+    let (latitude,): (f64,) = sqlx::query_as("SELECT latitude FROM waste_bins WHERE id = $1")
+        .bind(bin)
+        .fetch_one(&app.db_pool)
+        .await
+        .unwrap();
+    assert_eq!(latitude, 54.5);
+}
