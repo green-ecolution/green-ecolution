@@ -116,7 +116,7 @@ export class ModulesApi extends runtime.BaseAPI {
     }
 
     /**
-     * An omitted module stays as it is, `null` returns it to inheritance. Requires setting:update.
+     * An omitted module stays as it is, `null` returns it to inheritance. A switch is stamped with the topmost organization the caller may update settings for; only callers acting for that organization or above may change it again. Requires setting:update.
      * Switch modules for an organization
      */
     async updateOrganizationModulesRaw(requestParameters: UpdateOrganizationModulesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OrganizationModulesResponse>> {
@@ -156,7 +156,7 @@ export class ModulesApi extends runtime.BaseAPI {
     }
 
     /**
-     * An omitted module stays as it is, `null` returns it to inheritance. Requires setting:update.
+     * An omitted module stays as it is, `null` returns it to inheritance. A switch is stamped with the topmost organization the caller may update settings for; only callers acting for that organization or above may change it again. Requires setting:update.
      * Switch modules for an organization
      */
     async updateOrganizationModules(requestParameters: UpdateOrganizationModulesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OrganizationModulesResponse> {

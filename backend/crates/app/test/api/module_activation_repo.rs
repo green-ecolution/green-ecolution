@@ -3,7 +3,7 @@ use std::sync::Arc;
 
 use domain::{
     Id, RepositoryError,
-    module::{ModuleActivationReader, ModuleActivationWriter, ModuleKey},
+    module::{ModuleActivationReader, ModuleActivationWriter, ModuleKey, OwnSwitch},
     organization::Organization,
     settings::SettingOrigin,
 };
@@ -46,12 +46,20 @@ async fn activation_inherits_over_three_levels_and_own_values_win() {
     let leaf = child_org(&app, "Blatt", mid).await;
     let repo = repo(&app, &[("alpha", false), ("beta", true)]);
 
-    repo.apply(Id::new(root), &BTreeMap::from([(key("alpha"), Some(true))]))
-        .await
-        .unwrap();
-    repo.apply(Id::new(leaf), &BTreeMap::from([(key("beta"), Some(false))]))
-        .await
-        .unwrap();
+    repo.apply(
+        Id::new(root),
+        &BTreeMap::from([(key("alpha"), Some(true))]),
+        Id::new(root),
+    )
+    .await
+    .unwrap();
+    repo.apply(
+        Id::new(leaf),
+        &BTreeMap::from([(key("beta"), Some(false))]),
+        Id::new(leaf),
+    )
+    .await
+    .unwrap();
 
     let at_leaf = repo.resolve(Id::<Organization>::new(leaf)).await.unwrap();
     assert!(at_leaf[&key("alpha")].enabled);
@@ -68,7 +76,13 @@ async fn activation_inherits_over_three_levels_and_own_values_win() {
 
     assert_eq!(
         repo.own(Id::new(leaf)).await.unwrap(),
-        BTreeMap::from([(key("beta"), false)])
+        BTreeMap::from([(
+            key("beta"),
+            OwnSwitch {
+                enabled: false,
+                set_by: Id::new(leaf)
+            }
+        )])
     );
 }
 
@@ -79,12 +93,20 @@ async fn clearing_returns_to_inheritance() {
     let org = child_org(&app, "Klar", root).await;
     let repo = repo(&app, &[("alpha", false)]);
 
-    repo.apply(Id::new(org), &BTreeMap::from([(key("alpha"), Some(true))]))
-        .await
-        .unwrap();
-    repo.apply(Id::new(org), &BTreeMap::from([(key("alpha"), None)]))
-        .await
-        .unwrap();
+    repo.apply(
+        Id::new(org),
+        &BTreeMap::from([(key("alpha"), Some(true))]),
+        Id::new(org),
+    )
+    .await
+    .unwrap();
+    repo.apply(
+        Id::new(org),
+        &BTreeMap::from([(key("alpha"), None)]),
+        Id::new(org),
+    )
+    .await
+    .unwrap();
 
     let r = repo.resolve(Id::new(org)).await.unwrap();
     assert!(!r[&key("alpha")].enabled);
@@ -100,12 +122,17 @@ async fn a_lock_above_freezes_the_subtree() {
     let leaf = child_org(&app, "Darunter", mid).await;
     let repo = repo(&app, &[("alpha", false)]);
 
-    repo.apply(Id::new(mid), &BTreeMap::from([(key("alpha"), Some(true))]))
-        .await
-        .unwrap();
+    repo.apply(
+        Id::new(mid),
+        &BTreeMap::from([(key("alpha"), Some(true))]),
+        Id::new(mid),
+    )
+    .await
+    .unwrap();
     repo.apply(
         Id::new(leaf),
         &BTreeMap::from([(key("alpha"), Some(false))]),
+        Id::new(leaf),
     )
     .await
     .unwrap();
@@ -124,9 +151,13 @@ async fn active_orgs_lists_exactly_the_enabled_organizations() {
     let off = child_org(&app, "Aus", root).await;
     let repo = repo(&app, &[("alpha", false)]);
 
-    repo.apply(Id::new(on), &BTreeMap::from([(key("alpha"), Some(true))]))
-        .await
-        .unwrap();
+    repo.apply(
+        Id::new(on),
+        &BTreeMap::from([(key("alpha"), Some(true))]),
+        Id::new(on),
+    )
+    .await
+    .unwrap();
 
     let active = repo.active_orgs(&key("alpha")).await.unwrap();
     assert!(active.contains(&Id::new(on)));

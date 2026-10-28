@@ -4,7 +4,7 @@ use async_trait::async_trait;
 
 use crate::{
     Id, RepositoryError,
-    module::{ActivationResolution, ModuleKey},
+    module::{ActivationResolution, ModuleKey, OwnSwitch},
     organization::Organization,
 };
 
@@ -14,7 +14,7 @@ pub trait ModuleActivationReader: Send + Sync {
     async fn own(
         &self,
         org: Id<Organization>,
-    ) -> Result<BTreeMap<ModuleKey, bool>, RepositoryError>;
+    ) -> Result<BTreeMap<ModuleKey, OwnSwitch>, RepositoryError>;
     /// One resolution per registered module; `NotFound` for an unknown organization.
     async fn resolve(
         &self,
@@ -30,11 +30,12 @@ pub trait ModuleActivationReader: Send + Sync {
 
 #[async_trait]
 pub trait ModuleActivationWriter: Send + Sync {
-    /// `Some` sets the organization's own switch, `None` returns the module to
-    /// inheritance.
+    /// `Some` sets the organization's own switch, stamped with `set_by`;
+    /// `None` returns the module to inheritance.
     async fn apply(
         &self,
         org: Id<Organization>,
         changes: &BTreeMap<ModuleKey, Option<bool>>,
+        set_by: Id<Organization>,
     ) -> Result<(), RepositoryError>;
 }

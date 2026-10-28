@@ -28,11 +28,12 @@ interface ModuleRowProps {
   row: ModuleActivationRow
   label: string
   sourceName: string | null
+  setByName: string | null
   locked: boolean
   onOwn: (value: boolean | null) => void
 }
 
-const ModuleRow = ({ row, label, sourceName, locked, onOwn }: ModuleRowProps) => {
+const ModuleRow = ({ row, label, sourceName, setByName, locked, onOwn }: ModuleRowProps) => {
   const { t } = useTranslation('settings')
   const switchId = useId()
 
@@ -46,7 +47,11 @@ const ModuleRow = ({ row, label, sourceName, locked, onOwn }: ModuleRowProps) =>
       <div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
         <Label htmlFor={switchId}>{label}</Label>
         <Badge variant={row.origin === SettingOriginDto.Own ? 'outline-green-dark' : 'muted'}>
-          {originLabel(row.origin, sourceName, t)}
+          {row.setBy
+            ? setByName
+              ? t('organization.modules.setBy', { name: setByName })
+              : t('organization.modules.setByUnknown')
+            : originLabel(row.origin, sourceName, t)}
         </Badge>
       </div>
       <div className="flex items-center gap-4">
@@ -116,6 +121,7 @@ const OrganizationModulesSection = ({
             row={row}
             label={labelOf(row.key)}
             sourceName={organizationName(row.sourceId)}
+            setByName={organizationName(row.setBy)}
             locked={row.locked || !canUpdate}
             onOwn={(value) => draft.setOwn(row.key, value)}
           />

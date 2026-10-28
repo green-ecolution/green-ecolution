@@ -165,6 +165,10 @@ pub enum ServiceError {
     /// permission but a state conflict, hence 409 rather than 403.
     #[error("settings are enforced by organization {organization_id}")]
     SettingsEnforcedByAncestor { organization_id: uuid::Uuid },
+    /// An organization above chose this value for the sub-unit; only someone
+    /// acting for that organization or above may change it.
+    #[error("set by organization {organization_id}")]
+    SettingsSetByAncestor { organization_id: uuid::Uuid },
     #[error("the plugin proxy is not configured on this instance")]
     PluginProxyUnavailable,
     #[error("proxied frontend target is not on the service allowlist")]
@@ -224,6 +228,7 @@ impl ServiceError {
             Self::CannotChangeOwnAccess => "conflict.cannot_change_own_access",
             Self::CannotRevokeOwnAdministration => "conflict.cannot_revoke_own_administration",
             Self::SettingsEnforcedByAncestor { .. } => "settings.enforced_by_ancestor",
+            Self::SettingsSetByAncestor { .. } => "settings.set_by_ancestor",
             Self::ContactPersonNotAMember => "organization.contact_person_not_a_member",
             Self::MissingOrganization => "organization.missing",
             Self::ModuleUnknown { .. } => "module.unknown",
@@ -482,6 +487,9 @@ mod tests {
                 kind: "water".into(),
             },
             ServiceError::SettingsEnforcedByAncestor {
+                organization_id: uuid::Uuid::nil(),
+            },
+            ServiceError::SettingsSetByAncestor {
                 organization_id: uuid::Uuid::nil(),
             },
             ServiceError::OperationPlan(OperationPlanError::InvalidStateTransition {

@@ -158,7 +158,8 @@ impl IntoResponse for ServiceError {
             | ServiceError::CannotChangeOwnAccess
             | ServiceError::CannotRevokeOwnAdministration
             | ServiceError::SensorBoundToTarget
-            | ServiceError::SettingsEnforcedByAncestor { .. } => {
+            | ServiceError::SettingsEnforcedByAncestor { .. }
+            | ServiceError::SettingsSetByAncestor { .. } => {
                 (StatusCode::CONFLICT, self.to_string())
             }
             // Not a conflict with stored state: the request combines two

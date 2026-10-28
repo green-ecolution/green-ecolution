@@ -488,7 +488,9 @@
     },
     "modules": {
       "title": "Module",
-      "hint": "Lege fest, welche Fachmodule in dieser Organisation und darunter zur Verfügung stehen."
+      "hint": "Lege fest, welche Fachmodule in dieser Organisation und darunter zur Verfügung stehen. Schaltet eine übergeordnete Organisation ein Modul für eine Unterorganisation, kann die Unterorganisation diese Wahl nicht selbst ändern.",
+      "setBy": "Festgelegt von {name}",
+      "setByUnknown": "Von einer übergeordneten Organisation festgelegt"
     }
   },
   "permission": {

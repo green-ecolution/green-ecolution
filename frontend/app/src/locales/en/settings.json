@@ -488,7 +488,9 @@
     },
     "modules": {
       "title": "Modules",
-      "hint": "Choose which modules are available in this organization and everything below it."
+      "hint": "Choose which modules are available in this organization and everything below it. When a parent organization switches a module for a sub-unit, the sub-unit cannot change that choice itself.",
+      "setBy": "Set by {name}",
+      "setByUnknown": "Set by a parent organization"
     }
   },
   "permission": {
