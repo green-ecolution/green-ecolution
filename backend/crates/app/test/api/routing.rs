@@ -639,3 +639,155 @@ async fn preview_with_unknown_start_point_name_falls_back_to_default() {
         "expected fallback to default depot Betriebshof (lat≈54.76879), got {depot_lat}"
     );
 }
+
+const ROOT_ORG_ID: &str = "01980000-0000-7000-8000-000000000001";
+
+async fn create_tenant(app: &crate::helpers::TestApp, name: &str) -> String {
+    let created: serde_json::Value = app
+        .post_json(
+            "/api/v1/organizations",
+            &serde_json::json!({ "name": name, "parent_id": ROOT_ORG_ID }),
+        )
+        .await
+        .json()
+        .await
+        .unwrap();
+    created["id"].as_str().unwrap().to_string()
+}
+
+async fn insert_depot(
+    app: &crate::helpers::TestApp,
+    org_id: &str,
+    name: &str,
+    lat: f64,
+    replenishes: &[&str],
+    is_default: bool,
+) {
+    let replenishes: Vec<String> = replenishes.iter().map(|s| s.to_string()).collect();
+    sqlx::query(
+        r#"INSERT INTO depots (id, name, latitude, longitude, geometry, replenishes, is_default, organization_id)
+           VALUES (gen_random_uuid(), $1, $2, 9.5, ST_SetSRID(ST_MakePoint(9.5, $2), 4326), $3, $4, $5)"#,
+    )
+    .bind(name)
+    .bind(lat)
+    .bind(&replenishes)
+    .bind(is_default)
+    .bind(uuid::Uuid::parse_str(org_id).unwrap())
+    .execute(&app.db_pool)
+    .await
+    .unwrap();
+}
+
+async fn create_cluster_with_tree_in(app: &crate::helpers::TestApp, org_id: &str) -> String {
+    let tree_id = uuid::Uuid::now_v7();
+    sqlx::query(
+        r#"INSERT INTO trees (id, planting_year, species, number, latitude, longitude, geometry, description, organization_id)
+        VALUES ($1, 2020, 'Eiche', 'RT-ORG', 54.79, 9.44, ST_SetSRID(ST_MakePoint(9.44, 54.79), 4326), 'Routing', $2)"#,
+    )
+    .bind(tree_id)
+    .bind(uuid::Uuid::parse_str(org_id).unwrap())
+    .execute(&app.db_pool)
+    .await
+    .unwrap();
+    let body = serde_json::json!({
+        "name": "Routing-Cluster Mandant",
+        "address": "Testweg 1",
+        "description": "Routing",
+        "soil_condition": "Su3",
+        "tree_ids": [tree_id],
+        "organization_id": org_id
+    });
+    let resp = app.post_json("/api/v1/clusters", &body).await;
+    assert_eq!(resp.status().as_u16(), 201, "cluster setup failed");
+    let cluster: serde_json::Value = resp.json().await.unwrap();
+    cluster["id"].as_str().unwrap().to_string()
+}
+
+async fn last_streamlet_problem(streamlet: &MockServer) -> serde_json::Value {
+    let requests = streamlet.received_requests().await.unwrap();
+    let last = requests.last().unwrap();
+    let body: serde_json::Value = serde_json::from_slice(&last.body).unwrap();
+    body["problem"].clone()
+}
+
+async fn preview_in(app: &crate::helpers::TestApp, org_id: &str, tid: &str, cid: &str) {
+    let resp = app
+        .post_json(
+            "/api/v1/plans/route/preview",
+            &serde_json::json!({
+                "module": "irrigation",
+                "stops": [cid],
+                "transporter_id": tid,
+                "organization_id": org_id
+            }),
+        )
+        .await;
+    assert_eq!(resp.status().as_u16(), 200);
+}
+
+/// The seeded root default sorts after "Altes Depot B" by name, so an
+/// unscoped "first default wins" lookup would pick the other tenant's depot.
+#[tokio::test]
+async fn preview_never_starts_from_another_tenants_default_depot() {
+    let streamlet = mock_streamlet(ResponseTemplate::new(200).set_body_json(streamlet_ok())).await;
+    let app = spawn_app_with_routing(&streamlet.uri()).await;
+    let tenant_a = create_tenant(&app, "Mandant A").await;
+    let tenant_b = create_tenant(&app, "Mandant B").await;
+    insert_depot(&app, &tenant_b, "Altes Depot B", 54.90, &["water"], true).await;
+    let transporter = create_transporter(&app).await;
+    let tid = transporter["id"].as_str().unwrap();
+    let cid = create_cluster_with_tree_in(&app, &tenant_a).await;
+
+    preview_in(&app, &tenant_a, tid, &cid).await;
+
+    let problem = last_streamlet_problem(&streamlet).await;
+    let depot_lat = problem["depots"][0]["location"]["lat"].as_f64().unwrap();
+    assert!(
+        (depot_lat - 54.76879).abs() < 0.001,
+        "expected the inherited root default (lat≈54.76879), got {depot_lat}"
+    );
+}
+
+#[tokio::test]
+async fn preview_prefers_the_plans_own_default_over_an_ancestors() {
+    let streamlet = mock_streamlet(ResponseTemplate::new(200).set_body_json(streamlet_ok())).await;
+    let app = spawn_app_with_routing(&streamlet.uri()).await;
+    let tenant_a = create_tenant(&app, "Mandant A").await;
+    insert_depot(&app, &tenant_a, "Zz Depot A", 54.95, &["water"], true).await;
+    let transporter = create_transporter(&app).await;
+    let tid = transporter["id"].as_str().unwrap();
+    let cid = create_cluster_with_tree_in(&app, &tenant_a).await;
+
+    preview_in(&app, &tenant_a, tid, &cid).await;
+
+    let problem = last_streamlet_problem(&streamlet).await;
+    let depot_lat = problem["depots"][0]["location"]["lat"].as_f64().unwrap();
+    assert!(
+        (depot_lat - 54.95).abs() < 0.001,
+        "expected the tenant's own default (lat≈54.95), got {depot_lat}"
+    );
+}
+
+#[tokio::test]
+async fn preview_never_refills_at_another_tenants_station() {
+    let streamlet = mock_streamlet(ResponseTemplate::new(200).set_body_json(streamlet_ok())).await;
+    let app = spawn_app_with_routing(&streamlet.uri()).await;
+    let tenant_a = create_tenant(&app, "Mandant A").await;
+    let tenant_b = create_tenant(&app, "Mandant B").await;
+    insert_depot(&app, &tenant_b, "Anlage B", 54.90, &["water"], false).await;
+    let transporter = create_transporter(&app).await;
+    let tid = transporter["id"].as_str().unwrap();
+    let cid = create_cluster_with_tree_in(&app, &tenant_a).await;
+
+    preview_in(&app, &tenant_a, tid, &cid).await;
+
+    let problem = last_streamlet_problem(&streamlet).await;
+    let refills = problem["refill_stations"].as_array().unwrap();
+    assert_eq!(refills.len(), 2, "only the two inherited root stations");
+    assert!(
+        refills
+            .iter()
+            .all(|r| (r["location"]["lat"].as_f64().unwrap() - 54.90).abs() > 0.001),
+        "Anlage B of the other tenant must not be a refill station"
+    );
+}

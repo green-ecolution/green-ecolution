@@ -549,7 +549,7 @@ pub async fn preview_plan_route(
         &state.user_service,
         &state.authorization_service,
         user.caller(),
-        None,
+        req.organization_id,
     )
     .await?;
     access

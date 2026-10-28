@@ -69,7 +69,9 @@ Der Füllstand ergibt sich aus der letzten Abstandsmessung des Sensors. Misst de
 60 cm bei einer Behältertiefe von 120 cm, ist der Behälter zu 50 Prozent gefüllt; allgemein
 gilt Füllstand gleich eins minus Abstand durch Tiefe. Daraus leitet Green Ecolution eine
 von vier Füllstufen ab. **Voll** heißt, der Füllstand hat den Schwellwert der Organisation
-erreicht. **Normal** gilt darunter.
+erreicht, der der Behälter gehört. **Normal** gilt darunter. Auch der Filter nach Füllstufe
+in der Liste beurteilt jeden Behälter nach dem Schwellwert seiner eigenen Organisation,
+sodass ein gefilterter Behälter immer die Füllstufe trägt, nach der du gefiltert hast.
 
 **Unbekannt** erscheint zuerst, wenn es noch keine Messung gibt oder die letzte Messung
 älter ist als die Offline-Grenze der Organisation. Das ist dieselbe Grenze, nach der ein

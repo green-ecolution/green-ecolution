@@ -246,7 +246,7 @@ export class WasteBinsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a paginated list of the waste bins visible to the caller in organizations where the waste module is active, sorted by number. `number` filters by a case-insensitive substring. `fill_state` is judged by the full threshold and sensor offline period of `organization_id`, or of the caller\'s own organization when none is given.
+     * Returns a paginated list of the waste bins visible to the caller in organizations where the waste module is active, sorted by number. `number` filters by a case-insensitive substring. `fill_state` is judged per bin by the full threshold and sensor offline period of the bin\'s own organization, the same rules that label it.
      * List waste bins
      */
     async listWasteBinsRaw(requestParameters: ListWasteBinsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListResponseWasteBinResponse>> {
@@ -288,7 +288,7 @@ export class WasteBinsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a paginated list of the waste bins visible to the caller in organizations where the waste module is active, sorted by number. `number` filters by a case-insensitive substring. `fill_state` is judged by the full threshold and sensor offline period of `organization_id`, or of the caller\'s own organization when none is given.
+     * Returns a paginated list of the waste bins visible to the caller in organizations where the waste module is active, sorted by number. `number` filters by a case-insensitive substring. `fill_state` is judged per bin by the full threshold and sensor offline period of the bin\'s own organization, the same rules that label it.
      * List waste bins
      */
     async listWasteBins(requestParameters: ListWasteBinsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ListResponseWasteBinResponse> {

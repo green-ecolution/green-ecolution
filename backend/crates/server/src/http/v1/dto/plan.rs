@@ -451,6 +451,12 @@ pub struct PlanRouteRequest {
     #[serde(default)]
     #[schema(example = "Betriebshof Schleswiger Straße", nullable)]
     pub start_point_name: Option<String>,
+    /// Organization the plan will belong to; start points and stations are
+    /// taken from its organization chain. Defaults to the acting user's own
+    /// organization when omitted, like a plan created without one.
+    #[serde(default)]
+    #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000", nullable)]
+    pub organization_id: Option<Uuid>,
 }
 
 fn default_true() -> bool {

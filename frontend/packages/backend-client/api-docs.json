@@ -9276,7 +9276,7 @@
           "WasteBins"
         ],
         "summary": "List waste bins",
-        "description": "Returns a paginated list of the waste bins visible to the caller in organizations where the waste module is active, sorted by number. `number` filters by a case-insensitive substring. `fill_state` is judged by the full threshold and sensor offline period of `organization_id`, or of the caller's own organization when none is given.",
+        "description": "Returns a paginated list of the waste bins visible to the caller in organizations where the waste module is active, sorted by number. `number` filters by a case-insensitive substring. `fill_state` is judged per bin by the full threshold and sensor offline period of the bin's own organization, the same rules that label it.",
         "operationId": "listWasteBins",
         "parameters": [
           {
@@ -12814,6 +12814,15 @@
             "type": "string",
             "description": "Module whose stops are routed.",
             "example": "irrigation"
+          },
+          "organization_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Organization the plan will belong to; start points and stations are\ntaken from its organization chain. Defaults to the acting user's own\norganization when omitted, like a plan created without one.",
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
           },
           "start_point_name": {
             "type": [

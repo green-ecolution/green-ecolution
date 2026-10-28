@@ -630,6 +630,7 @@ impl Services {
             repos.comment_writer.clone(),
             planning,
             module_activation.clone(),
+            repos.organization_reader.clone(),
         ));
         let plugin_sensor_ingest = Arc::new(PluginSensorIngestService::new(
             sensor.clone(),

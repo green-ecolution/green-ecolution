@@ -1,0 +1,111 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT b.id, b.number, b.latitude, b.longitude, b.volume_liters, b.depth_cm,\n                      b.organization_id, b.provider, b.additional_informations,\n                      b.fill_fraction, b.fill_measured_at, b.last_emptied_at,\n                      sa.sensor_id AS \"sensor_id?\", b.updated_at\n            FROM waste_bins b\n            LEFT JOIN sensor_attachments sa\n                   ON sa.module_key = 'waste' AND sa.target_kind = 'bin' AND sa.target_id = b.id\n            LEFT JOIN unnest($3::uuid[], $4::float8[], $5::float8[], $6::timestamptz[], $7::timestamptz[])\n                   AS f(organization_id, min_fraction, max_fraction, measured_after, stale_before)\n                   ON f.organization_id = b.organization_id\n            WHERE ($1::uuid[] IS NULL OR b.organization_id = ANY($1))\n              AND ($2::text IS NULL OR b.number ILIKE $2 ESCAPE '\\')\n              AND ($3::uuid[] IS NULL OR f.organization_id IS NOT NULL)\n              AND (f.min_fraction IS NULL OR b.fill_fraction >= f.min_fraction)\n              AND (f.max_fraction IS NULL OR b.fill_fraction < f.max_fraction)\n              AND (f.measured_after IS NULL OR b.fill_measured_at >= f.measured_after)\n              AND (f.stale_before IS NULL OR b.fill_measured_at IS NULL OR b.fill_measured_at < f.stale_before)\n              AND (NOT $8::bool OR b.fill_measured_at IS NOT NULL)\n              AND (NOT $9::bool OR b.last_emptied_at IS NULL OR b.last_emptied_at <= b.fill_measured_at)\n              AND (NOT $10::bool OR b.last_emptied_at > b.fill_measured_at)\n            ORDER BY b.number, b.id\n            LIMIT $11 OFFSET $12",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "number",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "latitude",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 3,
+        "name": "longitude",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 4,
+        "name": "volume_liters",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 5,
+        "name": "depth_cm",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 6,
+        "name": "organization_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 7,
+        "name": "provider",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 8,
+        "name": "additional_informations",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 9,
+        "name": "fill_fraction",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 10,
+        "name": "fill_measured_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 11,
+        "name": "last_emptied_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 12,
+        "name": "sensor_id?",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 13,
+        "name": "updated_at",
+        "type_info": "Timestamp"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "UuidArray",
+        "Text",
+        "UuidArray",
+        "Float8Array",
+        "Float8Array",
+        "TimestamptzArray",
+        "TimestamptzArray",
+        "Bool",
+        "Bool",
+        "Bool",
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "9ad56dc72fe722cf6068955bde2d82c71e35e38817fc778d56b6e77acf9d4a8a"
+}

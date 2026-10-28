@@ -371,3 +371,71 @@ async fn refs_are_listed_per_plugin_and_paged() {
         "a plugin must never see another plugin's refs"
     );
 }
+
+async fn switch_irrigation_off(app: &crate::helpers::TestApp) {
+    let res = app
+        .put_json(
+            &format!("/api/v1/organizations/{ROOT_ORG}/modules"),
+            &json!({ "modules": { "irrigation": false } }),
+        )
+        .await;
+    assert_eq!(res.status().as_u16(), 200);
+}
+
+#[tokio::test]
+async fn upsert_is_refused_when_irrigation_is_off_in_the_plugins_organization() {
+    let app = spawn_app_with_plugins().await;
+    let key = install_plugin(
+        &app,
+        "kataster",
+        &["tree:read", "tree:create", "tree:update", "tree:delete"],
+    )
+    .await;
+    switch_irrigation_off(&app).await;
+
+    let resp = app
+        .post_json_with_bearer(
+            "/api/v1/plugins/ingest/trees",
+            &json!({ "items": [item("1", "Quercus robur")] }),
+            &key,
+        )
+        .await;
+    assert_eq!(resp.status().as_u16(), 403);
+    let body: serde_json::Value = resp.json().await.unwrap();
+    assert_eq!(body["code"], "module.disabled");
+
+    let trees: serde_json::Value = app.get("/api/v1/trees").await.json().await.unwrap();
+    assert_eq!(trees["pagination"]["total_records"], 0);
+}
+
+#[tokio::test]
+async fn delete_is_refused_when_irrigation_is_off_in_the_trees_organization() {
+    let app = spawn_app_with_plugins().await;
+    let key = install_plugin(
+        &app,
+        "kataster",
+        &["tree:read", "tree:create", "tree:update", "tree:delete"],
+    )
+    .await;
+    app.post_json_with_bearer(
+        "/api/v1/plugins/ingest/trees",
+        &json!({ "items": [item("1", "Quercus robur")] }),
+        &key,
+    )
+    .await;
+    switch_irrigation_off(&app).await;
+
+    let resp = app
+        .delete_with_bearer("/api/v1/plugins/ingest/trees/1", &key)
+        .await;
+    assert_eq!(resp.status().as_u16(), 403);
+    let body: serde_json::Value = resp.json().await.unwrap();
+    assert_eq!(body["code"], "module.disabled");
+
+    let left: i64 = sqlx::query_scalar!("SELECT count(*) FROM plugin_tree_refs")
+        .fetch_one(&app.db_pool)
+        .await
+        .unwrap()
+        .unwrap_or(0);
+    assert_eq!(left, 1);
+}

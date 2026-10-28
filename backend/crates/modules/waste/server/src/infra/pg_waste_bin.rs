@@ -17,8 +17,8 @@ use waste_domain::{
     fill::FillMeasurement,
     values::{BinDepth, BinVolume, WasteBinNumber},
     waste_bin::{
-        FillFilter, WasteBin, WasteBinDraft, WasteBinReader, WasteBinSearchQuery, WasteBinSnapshot,
-        WasteBinView, WasteBinWriter,
+        FillFilter, OrganizationFillBounds, WasteBin, WasteBinDraft, WasteBinReader,
+        WasteBinSearchQuery, WasteBinSnapshot, WasteBinView, WasteBinWriter,
     },
 };
 
@@ -211,16 +211,13 @@ impl WasteBinReader for PgWasteBinRepository {
             .map(str::trim)
             .filter(|n| !n.is_empty())
             .map(contains_pattern);
-        let fill = query.fill.unwrap_or_default();
         let FillFilter {
-            min_fraction,
-            max_fraction,
-            measured_after,
-            stale_before,
+            bounds,
             require_measurement,
             not_emptied_since_measurement,
             emptied_after_measurement,
-        } = fill;
+        } = query.fill.unwrap_or_default();
+        let bounds = BoundsColumns::from(bounds);
         let limit = i64::try_from(pagination.limit()).unwrap_or(i64::MAX);
         let offset = i64::try_from(pagination.offset()).unwrap_or(i64::MAX);
 
@@ -233,23 +230,28 @@ impl WasteBinReader for PgWasteBinRepository {
             FROM waste_bins b
             LEFT JOIN sensor_attachments sa
                    ON sa.module_key = 'waste' AND sa.target_kind = 'bin' AND sa.target_id = b.id
+            LEFT JOIN unnest($3::uuid[], $4::float8[], $5::float8[], $6::timestamptz[], $7::timestamptz[])
+                   AS f(organization_id, min_fraction, max_fraction, measured_after, stale_before)
+                   ON f.organization_id = b.organization_id
             WHERE ($1::uuid[] IS NULL OR b.organization_id = ANY($1))
               AND ($2::text IS NULL OR b.number ILIKE $2 ESCAPE '\')
-              AND ($3::float8 IS NULL OR b.fill_fraction >= $3)
-              AND ($4::float8 IS NULL OR b.fill_fraction < $4)
-              AND ($5::timestamptz IS NULL OR b.fill_measured_at >= $5)
-              AND ($6::timestamptz IS NULL OR b.fill_measured_at IS NULL OR b.fill_measured_at < $6)
-              AND (NOT $7::bool OR b.fill_measured_at IS NOT NULL)
-              AND (NOT $8::bool OR b.last_emptied_at IS NULL OR b.last_emptied_at <= b.fill_measured_at)
-              AND (NOT $9::bool OR b.last_emptied_at > b.fill_measured_at)
+              AND ($3::uuid[] IS NULL OR f.organization_id IS NOT NULL)
+              AND (f.min_fraction IS NULL OR b.fill_fraction >= f.min_fraction)
+              AND (f.max_fraction IS NULL OR b.fill_fraction < f.max_fraction)
+              AND (f.measured_after IS NULL OR b.fill_measured_at >= f.measured_after)
+              AND (f.stale_before IS NULL OR b.fill_measured_at IS NULL OR b.fill_measured_at < f.stale_before)
+              AND (NOT $8::bool OR b.fill_measured_at IS NOT NULL)
+              AND (NOT $9::bool OR b.last_emptied_at IS NULL OR b.last_emptied_at <= b.fill_measured_at)
+              AND (NOT $10::bool OR b.last_emptied_at > b.fill_measured_at)
             ORDER BY b.number, b.id
-            LIMIT $10 OFFSET $11"#,
+            LIMIT $11 OFFSET $12"#,
             scope.as_deref(),
             number.as_deref(),
-            min_fraction,
-            max_fraction,
-            measured_after,
-            stale_before,
+            bounds.organization_ids.as_deref(),
+            bounds.min_fractions.as_deref(),
+            bounds.max_fractions.as_deref(),
+            bounds.measured_after.as_deref(),
+            bounds.stale_before.as_deref(),
             require_measurement,
             not_emptied_since_measurement,
             emptied_after_measurement,
@@ -261,21 +263,26 @@ impl WasteBinReader for PgWasteBinRepository {
 
         let total = sqlx::query_scalar!(
             r#"SELECT COUNT(*) AS "count!" FROM waste_bins b
+            LEFT JOIN unnest($3::uuid[], $4::float8[], $5::float8[], $6::timestamptz[], $7::timestamptz[])
+                   AS f(organization_id, min_fraction, max_fraction, measured_after, stale_before)
+                   ON f.organization_id = b.organization_id
             WHERE ($1::uuid[] IS NULL OR b.organization_id = ANY($1))
               AND ($2::text IS NULL OR b.number ILIKE $2 ESCAPE '\')
-              AND ($3::float8 IS NULL OR b.fill_fraction >= $3)
-              AND ($4::float8 IS NULL OR b.fill_fraction < $4)
-              AND ($5::timestamptz IS NULL OR b.fill_measured_at >= $5)
-              AND ($6::timestamptz IS NULL OR b.fill_measured_at IS NULL OR b.fill_measured_at < $6)
-              AND (NOT $7::bool OR b.fill_measured_at IS NOT NULL)
-              AND (NOT $8::bool OR b.last_emptied_at IS NULL OR b.last_emptied_at <= b.fill_measured_at)
-              AND (NOT $9::bool OR b.last_emptied_at > b.fill_measured_at)"#,
+              AND ($3::uuid[] IS NULL OR f.organization_id IS NOT NULL)
+              AND (f.min_fraction IS NULL OR b.fill_fraction >= f.min_fraction)
+              AND (f.max_fraction IS NULL OR b.fill_fraction < f.max_fraction)
+              AND (f.measured_after IS NULL OR b.fill_measured_at >= f.measured_after)
+              AND (f.stale_before IS NULL OR b.fill_measured_at IS NULL OR b.fill_measured_at < f.stale_before)
+              AND (NOT $8::bool OR b.fill_measured_at IS NOT NULL)
+              AND (NOT $9::bool OR b.last_emptied_at IS NULL OR b.last_emptied_at <= b.fill_measured_at)
+              AND (NOT $10::bool OR b.last_emptied_at > b.fill_measured_at)"#,
             scope.as_deref(),
             number.as_deref(),
-            min_fraction,
-            max_fraction,
-            measured_after,
-            stale_before,
+            bounds.organization_ids.as_deref(),
+            bounds.min_fractions.as_deref(),
+            bounds.max_fractions.as_deref(),
+            bounds.measured_after.as_deref(),
+            bounds.stale_before.as_deref(),
             require_measurement,
             not_emptied_since_measurement,
             emptied_after_measurement,
@@ -404,6 +411,41 @@ impl WasteBinWriter for PgWasteBinRepository {
             return Err(RepositoryError::NotFound);
         }
         Ok(())
+    }
+}
+
+/// The per-organization bounds as parallel arrays, so one static query can
+/// `unnest` them into a row per organization. A `None` ids array means "no
+/// fill filter"; an empty one would otherwise match no bin at all. A bound
+/// is set for every organization or for none (it depends on the asked-for
+/// state), so a `None` column stands for "unset", which `unnest` pads with
+/// NULLs. Postgres arrays with NULL elements are not bindable here.
+struct BoundsColumns {
+    organization_ids: Option<Vec<RawId>>,
+    min_fractions: Option<Vec<f64>>,
+    max_fractions: Option<Vec<f64>>,
+    measured_after: Option<Vec<DateTime<Utc>>>,
+    stale_before: Option<Vec<DateTime<Utc>>>,
+}
+
+impl From<Vec<OrganizationFillBounds>> for BoundsColumns {
+    fn from(bounds: Vec<OrganizationFillBounds>) -> Self {
+        if bounds.is_empty() {
+            return Self {
+                organization_ids: None,
+                min_fractions: None,
+                max_fractions: None,
+                measured_after: None,
+                stale_before: None,
+            };
+        }
+        Self {
+            organization_ids: Some(bounds.iter().map(|b| b.organization_id.value()).collect()),
+            min_fractions: bounds.iter().map(|b| b.min_fraction).collect(),
+            max_fractions: bounds.iter().map(|b| b.max_fraction).collect(),
+            measured_after: bounds.iter().map(|b| b.measured_after).collect(),
+            stale_before: bounds.iter().map(|b| b.stale_before).collect(),
+        }
     }
 }
 

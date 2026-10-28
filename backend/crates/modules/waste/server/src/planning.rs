@@ -1,4 +1,7 @@
-use std::sync::Arc;
+use std::{
+    collections::{HashMap, hash_map::Entry},
+    sync::Arc,
+};
 
 use chrono::Utc;
 use domain::{
@@ -58,7 +61,13 @@ impl PlanningProvider for WastePlanning {
         let ids: Vec<Id<WasteBin>> = stops.iter().map(|s| Id::new(s.value())).collect();
         let bins = self.bins.by_ids(&ids).await?;
         let hierarchy = self.organizations.hierarchy().await?;
-        let rules = self.fill_rules.rules_for(org).await?;
+        // A bin is judged by its own organization's rules, as on its label.
+        let mut rules = HashMap::new();
+        for bin in &bins {
+            if let Entry::Vacant(slot) = rules.entry(bin.organization_id()) {
+                slot.insert(self.fill_rules.rules_for(bin.organization_id()).await?);
+            }
+        }
         let now = Utc::now();
         stops
             .iter()
@@ -70,6 +79,7 @@ impl PlanningProvider for WastePlanning {
                 if !hierarchy.is_descendant_or_self(bin.organization_id(), org) {
                     return Err(PlanningError::OrganizationMismatch);
                 }
+                let rules = rules[&bin.organization_id()];
                 let volume = bin.volume.liters();
                 let demand = match (
                     bin.fill_state(rules.threshold, now, rules.stale_after),
@@ -183,6 +193,25 @@ mod tests {
         }
     }
 
+    /// Staleness limit per organization; unknown organizations get one hour.
+    struct OfflineAfterByOrg(std::collections::HashMap<Id<Organization>, i64>);
+
+    #[async_trait::async_trait]
+    impl SettingsResolver for OfflineAfterByOrg {
+        async fn effective_for(
+            &self,
+            org: Id<Organization>,
+        ) -> Result<EffectiveSettings, RepositoryError> {
+            let seconds = self.0.get(&org).copied().unwrap_or(3_600);
+            Ok(EffectiveSettings {
+                sensor_offline_after: SensorOfflineAfter::new(seconds).unwrap(),
+                defect_streak: DefectStreak::new(3).unwrap(),
+                map_view: MapView::new(Coordinate::new(54.78, 9.43).unwrap(), None).unwrap(),
+                enforced_by: None,
+            })
+        }
+    }
+
     struct EightyPercent;
 
     #[async_trait::async_trait]
@@ -255,6 +284,27 @@ mod tests {
 
     fn hours_ago(h: i64) -> DateTime<Utc> {
         Utc::now() - Duration::hours(h)
+    }
+
+    /// The plan's organization may judge readings stale sooner than the
+    /// sub-unit that owns the bin; the bin's own rules decide, as on its label.
+    #[tokio::test]
+    async fn a_bin_is_judged_by_its_own_organizations_staleness_limit() {
+        let f = fixture();
+        let b = bin(f.child, Some((0.1, hours_ago(5))), None);
+        let planning = WastePlanning::new(
+            Arc::new(Bins(vec![b.clone()])),
+            Arc::new(Orgs(vec![(f.root, None), (f.child, Some(f.root))])),
+            Arc::new(FillRulesResolver::new(
+                Arc::new(OfflineAfterByOrg(std::collections::HashMap::from([(
+                    f.child,
+                    10 * 3_600,
+                )]))),
+                Arc::new(EightyPercent),
+            )),
+        );
+        let resolved = planning.resolve_stops(&[stop(&b)], f.root).await.unwrap();
+        assert!((resolved[0].demand - 24.0).abs() < 1e-9);
     }
 
     #[tokio::test]
