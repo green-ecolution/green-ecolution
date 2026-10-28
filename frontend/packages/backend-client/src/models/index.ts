@@ -64,6 +64,7 @@ export * from './OrganizationModulesEntry';
 export * from './OrganizationModulesResponse';
 export * from './OrganizationModulesUpdateRequest';
 export * from './OrganizationRef';
+export * from './OrganizationResourceCountsResponse';
 export * from './OrganizationResponse';
 export * from './OrganizationSettingsResponse';
 export * from './OrganizationSettingsUpdateRequest';
