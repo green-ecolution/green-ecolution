@@ -13,17 +13,18 @@ use server::{
     http::{
         auth::extractor::AuthUserExtractor,
         extractors::{Json, Path, Query},
-        v1::{dto::ListResponse, error::ErrorBody, scope},
+        v1::{
+            dto::{ListResponse, TransferRequest},
+            error::ErrorBody,
+            scope,
+        },
     },
     service::ServiceError,
 };
 use waste_domain::waste_bin::WasteBinUpdate;
 
 use super::{
-    dto::{
-        WasteBinCreateRequest, WasteBinListParams, WasteBinResponse, WasteBinTransferRequest,
-        WasteBinUpdateRequest,
-    },
+    dto::{WasteBinCreateRequest, WasteBinListParams, WasteBinResponse, WasteBinUpdateRequest},
     state::WasteHttpState,
 };
 use crate::{
@@ -60,8 +61,8 @@ async fn visible_bin(
     operation_id = "listWasteBins",
     summary = "List waste bins",
     description = "Returns a paginated list of the waste bins visible to the caller in organizations where the waste module is active, sorted by number. \
-                   `number` filters by a case-insensitive substring. `fillState` is judged by the full threshold and sensor offline period \
-                   of `organizationId`, or of the caller's own organization when none is given.",
+                   `number` filters by a case-insensitive substring. `fill_state` is judged by the full threshold and sensor offline period \
+                   of `organization_id`, or of the caller's own organization when none is given.",
     params(WasteBinListParams),
     responses(
         (status = 200, description = "Paginated list of waste bins", body = ListResponse<WasteBinResponse>),
@@ -128,7 +129,7 @@ pub async fn get_waste_bin(
 #[utoipa::path(post, path = "/waste-bins", tag = "WasteBins",
     operation_id = "createWasteBin",
     summary = "Create a waste bin",
-    description = "Creates a waste bin in `organizationId`, or in the caller's own organization when none is given.",
+    description = "Creates a waste bin in `organization_id`, or in the caller's own organization when none is given.",
     request_body = WasteBinCreateRequest,
     responses(
         (status = 201, description = "Waste bin created", body = WasteBinResponse),
@@ -236,7 +237,7 @@ pub async fn delete_waste_bin(
     description = "Moves a waste bin, and an attached sensor with it, to another organization. \
                    Requires `waste_bin:update` and an active waste module in both the source and the target organization.",
     params(("waste_bin_id" = Uuid, Path, description = "Waste bin ID")),
-    request_body = WasteBinTransferRequest,
+    request_body = TransferRequest,
     responses(
         (status = 204, description = "Waste bin transferred"),
         (status = 403, description = "Missing waste_bin:update in source or target organization, or the waste module is off there (code `module.disabled`)", body = ErrorBody),
@@ -250,7 +251,7 @@ pub async fn transfer_waste_bin(
     State(state): State<Arc<WasteHttpState>>,
     user: AuthUserExtractor,
     Path(id): Path<Uuid>,
-    Json(req): Json<WasteBinTransferRequest>,
+    Json(req): Json<TransferRequest>,
 ) -> Result<StatusCode, ServiceError> {
     let current = visible_bin(&state, user.id, id).await?;
     let update = Permission::new(WASTE_BIN, Action::Update);

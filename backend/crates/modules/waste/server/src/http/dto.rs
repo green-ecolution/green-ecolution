@@ -47,7 +47,6 @@ impl From<FillStateDto> for FillState {
 
 /// A waste container with its current fill level.
 #[derive(Debug, Serialize, utoipa::ToSchema)]
-#[serde(rename_all = "camelCase")]
 pub struct WasteBinResponse {
     #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000")]
     pub id: Uuid,
@@ -110,7 +109,6 @@ impl From<&WasteBinState> for WasteBinResponse {
 }
 
 #[derive(Debug, Deserialize, utoipa::ToSchema)]
-#[serde(rename_all = "camelCase")]
 pub struct WasteBinCreateRequest {
     #[schema(example = "K-12")]
     pub number: String,
@@ -142,7 +140,6 @@ impl WasteBinCreateRequest {
 }
 
 #[derive(Debug, Deserialize, utoipa::ToSchema)]
-#[serde(rename_all = "camelCase")]
 pub struct WasteBinUpdateRequest {
     #[schema(example = "K-12")]
     pub number: String,
@@ -169,15 +166,7 @@ impl TryFrom<WasteBinUpdateRequest> for WasteBinUpdate {
     }
 }
 
-#[derive(Debug, Deserialize, utoipa::ToSchema)]
-#[serde(rename_all = "camelCase")]
-pub struct WasteBinTransferRequest {
-    #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000")]
-    pub organization_id: Uuid,
-}
-
 #[derive(Debug, Deserialize, utoipa::IntoParams)]
-#[serde(rename_all = "camelCase")]
 #[into_params(parameter_in = Query)]
 pub struct WasteBinListParams {
     #[param(default = 1, minimum = 1, example = 1)]
@@ -190,7 +179,7 @@ pub struct WasteBinListParams {
     #[param(example = "K-1")]
     pub number: Option<String>,
     pub organization_id: Option<Uuid>,
-    /// Judged by the threshold and offline period of `organizationId`, or of
+    /// Judged by the threshold and offline period of `organization_id`, or of
     /// the caller's organization when none is given.
     pub fill_state: Option<FillStateDto>,
 }
@@ -234,17 +223,19 @@ mod tests {
     }
 
     #[test]
-    fn fields_are_camel_case() {
+    fn fields_are_snake_case() {
         let json = serde_json::to_value(WasteBinResponse::from(&state(Some(0.5)))).unwrap();
         for key in [
-            "volumeLiters",
-            "depthCm",
-            "organizationId",
-            "fillPercent",
-            "fillState",
+            "volume_liters",
+            "depth_cm",
+            "organization_id",
+            "fill_percent",
+            "fill_measured_at",
+            "fill_state",
+            "created_at",
         ] {
             assert!(json.get(key).is_some(), "{key} missing in {json}");
         }
-        assert_eq!(json["fillState"], "normal");
+        assert_eq!(json["fill_state"], "normal");
     }
 }

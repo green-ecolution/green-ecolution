@@ -25,8 +25,8 @@ pub fn bin_body(number: &str) -> Value {
         "number": number,
         "latitude": 54.79,
         "longitude": 9.44,
-        "volumeLiters": 1100.0,
-        "depthCm": 120
+        "volume_liters": 1100.0,
+        "depth_cm": 120
     })
 }
 
@@ -101,12 +101,12 @@ fn numbers(list: &Value) -> Vec<String> {
 async fn a_bin_can_be_created_read_and_listed() {
     let app = waste_app().await;
     let created = create_bin(&app, "AB-1").await;
-    assert_eq!(created["fillState"], "unknown");
-    assert_eq!(created["volumeLiters"], 1100.0);
-    assert_eq!(created["depthCm"], 120);
-    assert_eq!(created["organizationId"], ROOT_ORG_ID);
-    assert!(created["createdAt"].is_string());
-    assert!(created.get("fillPercent").is_none());
+    assert_eq!(created["fill_state"], "unknown");
+    assert_eq!(created["volume_liters"], 1100.0);
+    assert_eq!(created["depth_cm"], 120);
+    assert_eq!(created["organization_id"], ROOT_ORG_ID);
+    assert!(created["created_at"].is_string());
+    assert!(created.get("fill_percent").is_none());
     let got: Value = app
         .get(&format!(
             "/api/v1/waste-bins/{}",
@@ -162,16 +162,16 @@ async fn a_bin_can_be_updated() {
                 "number": "AB-9",
                 "latitude": 54.8,
                 "longitude": 9.45,
-                "volumeLiters": 240.0,
-                "depthCm": 90
+                "volume_liters": 240.0,
+                "depth_cm": 90
             }),
         )
         .await;
     assert_eq!(res.status(), 200);
     let body: Value = res.json().await.unwrap();
     assert_eq!(body["number"], "AB-9");
-    assert_eq!(body["volumeLiters"], 240.0);
-    assert_eq!(body["depthCm"], 90);
+    assert_eq!(body["volume_liters"], 240.0);
+    assert_eq!(body["depth_cm"], 90);
     assert_eq!(body["latitude"], 54.8);
 }
 
@@ -207,7 +207,7 @@ async fn the_list_hides_bins_where_the_module_is_off() {
 async fn an_invalid_depth_is_rejected() {
     let app = waste_app().await;
     let mut body = bin_body("AB-1");
-    body["depthCm"] = json!(0);
+    body["depth_cm"] = json!(0);
     let res = app.post_json("/api/v1/waste-bins", &body).await;
     assert_eq!(res.status(), 400);
     let body: Value = res.json().await.unwrap();
@@ -228,21 +228,21 @@ async fn the_list_filters_by_fill_state() {
     set_fill(&app, empty, Some(0.9), Some(2), Some(1)).await;
     set_fill(&app, stale, Some(0.9), Some(24 * 60), None).await;
 
-    let full_list = list(&app, "?fillState=full").await;
+    let full_list = list(&app, "?fill_state=full").await;
     assert_eq!(numbers(&full_list), ["FULL"]);
-    assert_eq!(full_list["data"][0]["fillState"], "full");
-    assert_eq!(full_list["data"][0]["fillPercent"], 90);
-    assert_eq!(numbers(&list(&app, "?fillState=normal").await), ["NORMAL"]);
-    assert_eq!(numbers(&list(&app, "?fillState=empty").await), ["EMPTY"]);
+    assert_eq!(full_list["data"][0]["fill_state"], "full");
+    assert_eq!(full_list["data"][0]["fill_percent"], 90);
+    assert_eq!(numbers(&list(&app, "?fill_state=normal").await), ["NORMAL"]);
+    assert_eq!(numbers(&list(&app, "?fill_state=empty").await), ["EMPTY"]);
     assert_eq!(
-        numbers(&list(&app, "?fillState=unknown").await),
+        numbers(&list(&app, "?fill_state=unknown").await),
         ["NEVER", "STALE"]
     );
     assert_eq!(
         numbers(
             &list(
                 &app,
-                &format!("?fillState=full&organizationId={ROOT_ORG_ID}")
+                &format!("?fill_state=full&organization_id={ROOT_ORG_ID}")
             )
             .await
         ),
@@ -257,7 +257,7 @@ async fn the_list_searches_by_number_and_pages() {
         create_bin(&app, n).await;
     }
     assert_eq!(numbers(&list(&app, "?number=ab").await), ["AB-1", "AB-2"]);
-    let page = list(&app, "?page=2&perPage=2").await;
+    let page = list(&app, "?page=2&per_page=2").await;
     assert_eq!(numbers(&page), ["XY-1"]);
     assert_eq!(page["pagination"]["total_records"], 3);
 }
@@ -270,7 +270,7 @@ async fn a_bin_without_sensor_moves_to_another_organization() {
     let res = app
         .patch_json(
             &format!("/api/v1/waste-bins/{}/organization", id_of(&bin)),
-            &json!({ "organizationId": child }),
+            &json!({ "organization_id": child }),
         )
         .await;
     assert_eq!(res.status(), 204);
@@ -280,7 +280,7 @@ async fn a_bin_without_sensor_moves_to_another_organization() {
         .json()
         .await
         .unwrap();
-    assert_eq!(got["organizationId"], child.to_string());
+    assert_eq!(got["organization_id"], child.to_string());
 }
 
 #[tokio::test]
@@ -388,7 +388,7 @@ async fn transferring_a_bin_moves_its_sensor_along() {
     let res = app
         .patch_json(
             &format!("/api/v1/waste-bins/{bin}/organization"),
-            &json!({ "organizationId": child }),
+            &json!({ "organization_id": child }),
         )
         .await;
     assert_eq!(res.status(), 204);
@@ -399,8 +399,8 @@ async fn transferring_a_bin_moves_its_sensor_along() {
         .json()
         .await
         .unwrap();
-    assert_eq!(got["organizationId"], child.to_string());
-    assert_eq!(got["sensorId"], sensor);
+    assert_eq!(got["organization_id"], child.to_string());
+    assert_eq!(got["sensor_id"], sensor);
 
     let sensor: Value = app
         .get(&format!("/api/v1/sensors/{sensor}"))
