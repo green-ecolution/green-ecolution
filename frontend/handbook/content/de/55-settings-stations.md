@@ -38,6 +38,12 @@ anlegst. Über **Als Standard setzen** machst du einen anderen Startpunkt zum St
 das bisherige Abzeichen wandert dann mit. Den Standard selbst kannst du nicht löschen:
 Bestimme zuerst einen anderen, dann lässt sich der bisherige entfernen.
 
+Welche Startpunkte und Stationen für einen Einsatzplan infrage kommen, richtet sich nach
+der Organisation des Plans: ihre eigenen, dazu die der übergeordneten Organisationen und
+die ihrer Untereinheiten. Hat eine Untereinheit keinen eigenen Standard, startet ihre Tour
+am Standard der nächsthöheren Organisation. Startpunkte anderer Organisationen, etwa eines
+anderen Mandanten, werden nie verwendet, auch nicht als Station zum Auffüllen oder Entladen.
+
 ## Eine Station anlegen
 
 Über **Station anlegen** oben rechts öffnet sich ein Dialog. Trage einen Namen ein,
