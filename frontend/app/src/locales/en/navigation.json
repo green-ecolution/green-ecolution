@@ -29,9 +29,8 @@
     "logout": "Log out",
     "language": "Language",
     "organization": "Organization",
-    "allOrganizations": "All my organizations",
     "searchOrganization": "Search organization …",
-    "leaveScope": "Switch to all my organizations"
+    "leaveScope": "Switch to my organization"
   },
   "breadcrumb": {
     "nav": "Breadcrumb navigation",

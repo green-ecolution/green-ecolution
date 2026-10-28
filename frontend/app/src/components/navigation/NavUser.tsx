@@ -25,7 +25,8 @@ const NavUser = ({
   const initials = `${firstName.charAt(0)}${lastName.charAt(0)}`
   const fullName = `${firstName} ${lastName}`.trim()
   const { t } = useTranslation('navigation')
-  const { activeName } = useScopeOrganizations()
+  const { activeName, scope } = useScopeOrganizations()
+  const subtitle = scope ? (activeName ?? email) : email
 
   return (
     <NavUserMenu email={email} side="right" onNavigate={closeSidebar}>
@@ -40,7 +41,7 @@ const NavUser = ({
         </Avatar>
         <span className={`min-w-0 flex-1 text-left leading-tight ${collapsed ? 'lg:hidden' : ''}`}>
           <span className="block truncate font-lato font-semibold tracking-[0.1]">{fullName}</span>
-          <span className="block truncate text-xs text-light/70">{activeName ?? email}</span>
+          <span className="block truncate text-xs text-light/70">{subtitle}</span>
         </span>
         <ChevronsUpDown className={`size-4 shrink-0 ${collapsed ? 'lg:hidden' : ''}`} />
       </button>

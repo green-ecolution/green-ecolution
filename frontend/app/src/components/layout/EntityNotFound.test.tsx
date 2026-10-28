@@ -16,7 +16,7 @@ import { userQueries } from '@/api/queries'
 import { getOrganizationScope, setOrganizationScope } from '@/lib/auth/scope/organizationScopeStore'
 import EntityNotFound from './EntityNotFound'
 
-const LEAVE_SCOPE = 'Zu allen meinen Organisationen wechseln'
+const LEAVE_SCOPE = 'Zu meiner Organisation wechseln'
 
 const renderNotFound = () => {
   const rootRoute = createRootRoute({ component: () => <Outlet /> })
@@ -58,7 +58,7 @@ describe('EntityNotFound', () => {
     expect(screen.queryByRole('button', { name: LEAVE_SCOPE })).not.toBeInTheDocument()
   })
 
-  it('switches to all organizations when a scope hides the object', async () => {
+  it('switches back to the own organization when a scope hides the object', async () => {
     const user = userEvent.setup()
     setOrganizationScope('u1', 'firma_a')
     renderNotFound()

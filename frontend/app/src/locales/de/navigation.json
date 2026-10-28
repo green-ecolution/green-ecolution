@@ -29,9 +29,8 @@
     "logout": "Abmelden",
     "language": "Sprache",
     "organization": "Organisation",
-    "allOrganizations": "Alle meine Organisationen",
     "searchOrganization": "Organisation suchen …",
-    "leaveScope": "Zu allen meinen Organisationen wechseln"
+    "leaveScope": "Zu meiner Organisation wechseln"
   },
   "breadcrumb": {
     "nav": "Seitennavigation",

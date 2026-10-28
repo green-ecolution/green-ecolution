@@ -16,10 +16,14 @@ const A = { id: 'firma_a', name: 'Firma A', parentId: 'root' }
 const B = { id: 'firma_b', name: 'Firma B', parentId: 'root' }
 const A1 = { id: 'a1', name: 'Abteilung Grün', parentId: 'firma_a' }
 
-const renderMenu = (orgs: ReachableOrganizationResponse[]) => {
+const renderMenu = (orgs: ReachableOrganizationResponse[], ownOrganizationId?: string) => {
   const queryClient = new QueryClient({ defaultOptions: { queries: { staleTime: Infinity } } })
   queryClient.setQueryData(userQueries.myOrganizations().queryKey, orgs)
-  queryClient.setQueryData(userQueries.me().queryKey, { id: 'u1' } as UserResponse)
+  const ownOrganization = orgs.find((org) => org.id === ownOrganizationId)
+  queryClient.setQueryData(userQueries.me().queryKey, {
+    id: 'u1',
+    organization: ownOrganization,
+  } as UserResponse)
   const resetQueries = vi.spyOn(queryClient, 'resetQueries')
   render(
     <QueryClientProvider client={queryClient}>
@@ -55,14 +59,13 @@ describe('OrganizationScopeMenu', () => {
     expect(screen.queryByRole('menuitem', { name: /organisation/i })).not.toBeInTheDocument()
   })
 
-  it('lists all organizations plus the tree with the active entry checked', async () => {
+  it('lists only the tree with the active entry checked', async () => {
     setOrganizationScope('u1', 'firma_a')
-    renderMenu([ROOT, A, B, A1])
+    renderMenu([ROOT, A, B, A1], 'root')
     await openSub(userEvent.setup())
 
     const items = await screen.findAllByRole('menuitemradio')
     expect(items.map((i) => i.textContent)).toEqual([
-      'Alle meine Organisationen',
       'Stadt',
       'Firma A',
       'Abteilung Grün',
@@ -76,6 +79,43 @@ describe('OrganizationScopeMenu', () => {
       'aria-checked',
       'false',
     )
+  })
+
+  it('checks the own organization while no scope is set', async () => {
+    renderMenu([ROOT, A, B], 'firma_a')
+    await openSub(userEvent.setup())
+
+    expect(await screen.findByRole('menuitemradio', { name: 'Firma A' })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    )
+    expect(screen.getByRole('menuitemradio', { name: 'Stadt' })).toHaveAttribute(
+      'aria-checked',
+      'false',
+    )
+  })
+
+  it('falls back to the topmost organization without an own organization', async () => {
+    renderMenu([ROOT, A, B])
+    await openSub(userEvent.setup())
+
+    expect(await screen.findByRole('menuitemradio', { name: 'Stadt' })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    )
+  })
+
+  it('clears the scope when switching back to the own organization', async () => {
+    const user = userEvent.setup()
+    setOrganizationScope('u1', 'firma_b')
+    const { resetQueries } = renderMenu([ROOT, A, B], 'root')
+    await openSub(user)
+    await user.click(await screen.findByRole('menuitemradio', { name: 'Stadt' }))
+
+    await waitFor(() => expect(invalidate).toHaveBeenCalled())
+    expect(getOrganizationScope()).toBeNull()
+    expect(localStorage.getItem('ge.organizationScope.u1')).toBeNull()
+    expect(resetQueries).toHaveBeenCalled()
   })
 
   it('stores the scope, resets the cache and invalidates the router on selection', async () => {
@@ -104,12 +144,7 @@ describe('OrganizationScopeMenu', () => {
     await user.type(search, 'abteilung')
 
     const items = screen.getAllByRole('menuitemradio')
-    expect(items.map((i) => i.textContent)).toEqual([
-      'Alle meine Organisationen',
-      'Stadt',
-      'Firma A',
-      'Abteilung Grün',
-    ])
+    expect(items.map((i) => i.textContent)).toEqual(['Stadt', 'Firma A', 'Abteilung Grün'])
   })
 
   it('moves from the search field into the list with the down arrow', async () => {
@@ -126,7 +161,7 @@ describe('OrganizationScopeMenu', () => {
     await user.click(search)
     await user.keyboard('{ArrowDown}')
 
-    expect(screen.getByRole('menuitemradio', { name: 'Alle meine Organisationen' })).toHaveFocus()
+    expect(screen.getByRole('menuitemradio', { name: 'Stadt' })).toHaveFocus()
   })
 
   it('has no search field for a short list', async () => {

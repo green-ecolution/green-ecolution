@@ -13,21 +13,19 @@ import { useScopeOrganizations } from '@/lib/auth/scope/useScopeOrganizations'
 import { useSwitchOrganizationScope } from '@/lib/auth/scope/useSwitchOrganizationScope'
 import { menuItemClasses } from './menuItemStyles'
 
-const ALL = '__all__'
 const SEARCH_THRESHOLD = 8
 
 const radioItemClasses = `${menuItemClasses} relative justify-between pr-8 [&>span:first-child]:hidden`
 
 const OrganizationScopeMenu = () => {
   const { t } = useTranslation('navigation')
-  const { organizations, switchable, activeName, scope } = useScopeOrganizations()
+  const { organizations, switchable, homeId, activeId, activeName } = useScopeOrganizations()
   const switchScope = useSwitchOrganizationScope()
   const [query, setQuery] = useState('')
 
   if (!switchable) return null
 
   const rows = buildOrganizationRows(organizations, query)
-  const current = scope ?? ALL
 
   return (
     <DropdownMenuSub>
@@ -35,7 +33,7 @@ const OrganizationScopeMenu = () => {
         <Building2 />
         {t('user.organization')}
         <span className="ml-auto max-w-32 flex-1 truncate text-right text-xs font-normal text-light/70">
-          {activeName ?? t('user.allOrganizations')}
+          {activeName}
         </span>
       </DropdownMenuSubTrigger>
       <DropdownMenuSubContent className="max-h-80 w-72 overflow-y-auto rounded-lg border-dark-400/30 bg-dark p-2 text-sm text-white shadow-cards">
@@ -68,13 +66,10 @@ const OrganizationScopeMenu = () => {
           </div>
         )}
         <DropdownMenuRadioGroup
-          value={current}
-          onValueChange={(value) => void switchScope(value === ALL ? null : value)}
+          value={activeId ?? ''}
+          // Back in the home organization means no scope: the unnarrowed view.
+          onValueChange={(value) => void switchScope(value === homeId ? null : value)}
         >
-          <DropdownMenuRadioItem value={ALL} className={radioItemClasses}>
-            {t('user.allOrganizations')}
-            {current === ALL && <Check className="absolute right-3" aria-hidden />}
-          </DropdownMenuRadioItem>
           {rows.map((row) => (
             <DropdownMenuRadioItem
               key={row.id}
@@ -83,7 +78,7 @@ const OrganizationScopeMenu = () => {
               style={{ paddingLeft: `${0.75 + row.depth}rem` }}
             >
               <span className="truncate">{row.name}</span>
-              {current === row.id && <Check className="absolute right-3" aria-hidden />}
+              {activeId === row.id && <Check className="absolute right-3" aria-hidden />}
             </DropdownMenuRadioItem>
           ))}
         </DropdownMenuRadioGroup>

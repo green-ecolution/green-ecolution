@@ -80,18 +80,16 @@ describe('Forbidden', () => {
 
     await screen.findByText('Zum Dashboard')
     expect(
-      screen.queryByRole('button', { name: 'Zu allen meinen Organisationen wechseln' }),
+      screen.queryByRole('button', { name: 'Zu meiner Organisation wechseln' }),
     ).not.toBeInTheDocument()
   })
 
-  it('switches to all organizations when a scope hides the page', async () => {
+  it('switches back to the own organization when a scope hides the page', async () => {
     const user = userEvent.setup()
     setOrganizationScope('u1', 'firma_a')
     renderForbidden()
 
-    await user.click(
-      await screen.findByRole('button', { name: 'Zu allen meinen Organisationen wechseln' }),
-    )
+    await user.click(await screen.findByRole('button', { name: 'Zu meiner Organisation wechseln' }))
 
     await waitFor(() => expect(getOrganizationScope()).toBeNull())
   })

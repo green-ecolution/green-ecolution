@@ -31,6 +31,7 @@ const renderNavUser = (
 ) => {
   const queryClient = new QueryClient({ defaultOptions: { queries: { staleTime: Infinity } } })
   queryClient.setQueryData(userQueries.myOrganizations().queryKey, organizations)
+  queryClient.setQueryData(userQueries.me().queryKey, { id: 'u1', organization: ORGS[0] })
   const rootRoute = createRootRoute({
     component: () => <Outlet />,
   })
@@ -86,7 +87,7 @@ describe('NavUser', () => {
     cleanup()
   })
 
-  it('shows initials, name and email in the trigger', async () => {
+  it('shows initials, name and email in the trigger while in the own organization', async () => {
     renderNavUser()
 
     await waitFor(() => {
@@ -95,6 +96,7 @@ describe('NavUser', () => {
     expect(screen.getByText('EM')).toBeInTheDocument()
     expect(screen.getByText('Erika Mustermann')).toBeInTheDocument()
     expect(screen.getByText('erika@example.com')).toBeInTheDocument()
+    expect(screen.queryByText('Stadt')).not.toBeInTheDocument()
   })
 
   it('opens the menu with profile and logout entries', async () => {
