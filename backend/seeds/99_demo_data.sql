@@ -36,7 +36,6 @@ INSERT INTO tree_clusters (id, name, watering_status, moisture_level, region_id,
   ('019e3fcb-2a53-7706-a04c-50d6c926c7f8'::uuid, 'Nordstadt', 'good', 0.8, (SELECT id FROM regions WHERE name = 'Nordstadt'), 'Apenrader Straße', 'Guter Baumbestand mit großen Kronen.', 'Ss', 54.807162, 9.423138, ST_SetSRID(ST_MakePoint(9.423138, 54.807162), 4326), '01980000-0000-7000-8000-000000000002'),
   ('019e3fcb-2a53-7963-8228-705689f884b9'::uuid, 'TSB Neustadt', 'just_watered', 0.9, (SELECT id FROM regions WHERE name = 'Nordstadt'), 'Ecknerstraße', 'Kleiner Baumbestand.', 'Ss', 54.797162, 9.419620, ST_SetSRID(ST_MakePoint(9.419620, 54.797162), 4326), '01980000-0000-7000-8000-000000000002'),
   ('019e3fcb-2a53-7be5-9a56-e2260bb1c9fb'::uuid, 'Seniorenanlage Valentinerhof', 'bad', 0.15, (SELECT id FROM regions WHERE name = 'Nordstadt'), 'Auf dem Geländer der Seniorenanlage', 'Sehr viel versiegelter Boden.', 'Ss', 54.76994251235151, 9.441111747447234, ST_SetSRID(ST_MakePoint(9.441111747447234, 54.76994251235151), 4326), '01980000-0000-7000-8000-000000000002'),
-  ('019e3fcb-2a53-7433-8d57-6258f9688c82'::uuid, 'Peelwatt', 'unknown', 0.3, (SELECT id FROM regions WHERE name = 'Nordstadt'), 'Peelwatt halt', 'Sehr viel versiegelter Boden.', 'Ss', 54.76671656688957, 9.456136954289867, ST_SetSRID(ST_MakePoint(9.456136954289867, 54.76671656688957), 4326), '01980000-0000-7000-8000-000000000002'),
   ('019e3fcb-2a53-7fc1-bc32-9c8885df5027'::uuid, 'Lautrupsbach', 'moderate', 0.45, (SELECT id FROM regions WHERE name = 'Nordstadt'), 'An der Nordstraße', 'Sehr viel versiegelter Boden.', 'Ss', 54.79265065021804, 9.454269041383837, ST_SetSRID(ST_MakePoint(9.454269041383837, 54.76671656688957), 4326), '01980000-0000-7000-8000-000000000002');
 
 
@@ -110,34 +109,10 @@ INSERT INTO trees (id, tree_cluster_id, planting_year, species, number, latitude
   (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7be5-9a56-e2260bb1c9fb'::uuid, 2023, 'Populus cf. suaveolens', 4444, 54.76915329290317, 9.441851862902759, ST_SetSRID(ST_MakePoint(9.441851862902759, 54.76915329290317), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
   (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7be5-9a56-e2260bb1c9fb'::uuid, 2023, 'Populus cf. suaveolens', 3333, 54.770304653528044, 9.44233994363491, ST_SetSRID(ST_MakePoint(9.44233994363491, 54.770304653528044), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
   (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7be5-9a56-e2260bb1c9fb'::uuid, 2023, 'Populus cf. suaveolens', 2222, 54.771043653535294, 9.440740347234932, ST_SetSRID(ST_MakePoint(9.440740347234932, 54.771043653535294), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7433-8d57-6258f9688c82'::uuid, 2024, 'Tilia x vulgaris', 1015, 54.76752937879732, 9.457372632491829, ST_SetSRID(ST_MakePoint(9.457372632491829, 54.76752937879732), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7433-8d57-6258f9688c82'::uuid, 2024, 'Tilia x vulgaris', 1015, 54.767564688002714, 9.453443844886783, ST_SetSRID(ST_MakePoint(9.453443844886783, 54.767564688002714), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7433-8d57-6258f9688c82'::uuid, 2024, 'Tilia x vulgaris', 1015, 54.765620842535895, 9.4575523046762, ST_SetSRID(ST_MakePoint(9.4575523046762, 54.765620842535895), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7433-8d57-6258f9688c82'::uuid, 2024, 'Tilia x vulgaris', 1015, 54.76725516472003, 9.456833592389275, ST_SetSRID(ST_MakePoint(9.456833592389275, 54.76725516472003), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
   (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7fc1-bc32-9c8885df5027'::uuid, 2023, 'Alnus glutinosa', 1030, 54.792472, 9.452773, ST_SetSRID(ST_MakePoint(9.452773, 54.792472), 4326), 'moderate', '', '01980000-0000-7000-8000-000000000002'),
   (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7fc1-bc32-9c8885df5027'::uuid, 2023, 'Alnus glutinosa', 1031, 54.792782, 9.453795, ST_SetSRID(ST_MakePoint(9.453795, 54.792782), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt', '01980000-0000-7000-8000-000000000002'),
   (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7fc1-bc32-9c8885df5027'::uuid, 2023, 'Alnus glutinosa', 1032, 54.792837, 9.454880, ST_SetSRID(ST_MakePoint(9.454880, 54.792837), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7fc1-bc32-9c8885df5027'::uuid, 2023, 'Alnus glutinosa', 1033, 54.792435, 9.455545, ST_SetSRID(ST_MakePoint(9.455545, 54.792435), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), NULL, 2024, 'Carpinus betulus', 1015, 54.783739, 9.426823, ST_SetSRID(ST_MakePoint(9.426823, 54.783739), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), NULL, 2022, 'Carpinus betulus', 1017, 54.785981, 9.430668, ST_SetSRID(ST_MakePoint(9.430668, 54.785981), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), NULL, 2022, 'Carpinus betulus', 1018, 54.786269, 9.431758, ST_SetSRID(ST_MakePoint(9.431758, 54.786269), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), NULL, 2022, 'Carpinus betulus', 1019, 54.787339, 9.431701, ST_SetSRID(ST_MakePoint(9.431701, 54.787339), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), NULL, 2021, 'Carpinus betulus', 1020, 54.786656, 9.432243, ST_SetSRID(ST_MakePoint(9.432243, 54.786656), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), NULL, 2022, 'Populus cf. suaveolens', 1051, 54.769030, 9.429936, ST_SetSRID(ST_MakePoint(9.429936, 54.769030), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), NULL, 2021, 'Populus cf. suaveolens', 1053, 54.775237, 9.441981, ST_SetSRID(ST_MakePoint(9.441981, 54.775237), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), NULL, 2022, 'Populus cf. suaveolens', 1054, 54.780192, 9.459607, ST_SetSRID(ST_MakePoint(9.459607, 54.780192), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), NULL, 2021, 'Populus cf. suaveolens', 1055, 54.785043, 9.418210, ST_SetSRID(ST_MakePoint(9.418210, 54.785043), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), NULL, 2022, 'Fraxinus excelsior', 1056, 54.779697, 9.440026, ST_SetSRID(ST_MakePoint(9.440026, 54.779697), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), NULL, 2020, 'Fraxinus excelsior', 1057, 54.785147, 9.438903, ST_SetSRID(ST_MakePoint(9.438903, 54.785147), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), NULL, 2020, 'Fraxinus excelsior', 1058, 54.788205, 9.454699, ST_SetSRID(ST_MakePoint(9.454699, 54.788205), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), NULL, 2020, 'Fraxinus excelsior', 1059, 54.804054, 9.469544, ST_SetSRID(ST_MakePoint(9.469544, 54.804054), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), NULL, 2024, 'Acer pseudoplatanus', 1060, 54.813655, 9.477633, ST_SetSRID(ST_MakePoint(9.477633, 54.813655), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), NULL, 2024, 'Acer pseudoplatanus', 1061, 54.811001, 9.484132, ST_SetSRID(ST_MakePoint(9.484132, 54.811001), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt', '01980000-0000-7000-8000-000000000002'),
-  (uuidv7_from_timestamp(now()::timestamp), NULL, 2024, 'Acer pseudoplatanus', 1062, 54.790366, 9.472744, ST_SetSRID(ST_MakePoint(9.472744, 54.790366), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002');
-
-
-INSERT INTO trees (id, tree_cluster_id, planting_year, species, number, latitude, longitude, geometry, watering_status, description, last_watered, organization_id) VALUES
-  (uuidv7_from_timestamp(now()::timestamp), NULL, 2023, 'Quercus robur', 1065, 54.780394213230196, 9.417514801025392, ST_SetSRID(ST_MakePoint(9.417514801025392, 54.780394213230196), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt', '2025-02-14 12:34:56', '01980000-0000-7000-8000-000000000002');
+  (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7fc1-bc32-9c8885df5027'::uuid, 2023, 'Alnus glutinosa', 1033, 54.792435, 9.455545, ST_SetSRID(ST_MakePoint(9.455545, 54.792435), 4326), 'unknown', '', '01980000-0000-7000-8000-000000000002');
 
 -- Tree ids are generated above, so the sensors find their tree by position.
 INSERT INTO sensor_attachments (sensor_id, module_key, target_kind, target_id)
@@ -490,15 +465,15 @@ UPDATE trees
 -- Move a few plan-free demo clusters (with their trees) to the external
 -- sub-orgs so resource scoping is demonstrable. The matching sensors are
 -- already assigned to these orgs in the sensors INSERT above.
---   Extern A (…0003): Campus Hochschule (sensor-4), Peelwatt
+--   Extern A (…0003): Campus Hochschule (sensor-4)
 --   Extern B (…0004): Mathildenstraße (sensor-5), Seniorenanlage (sensor-7)
 UPDATE tree_clusters SET organization_id = '01980000-0000-7000-8000-000000000003'
- WHERE id IN ('019e3fcb-2a53-7493-a7a1-b194faa409d7', '019e3fcb-2a53-7433-8d57-6258f9688c82');
+ WHERE id = '019e3fcb-2a53-7493-a7a1-b194faa409d7';
 UPDATE tree_clusters SET organization_id = '01980000-0000-7000-8000-000000000004'
  WHERE id IN ('019e3fcb-2a53-713d-8cae-4a52d3fd2967', '019e3fcb-2a53-7be5-9a56-e2260bb1c9fb');
 
 UPDATE trees SET organization_id = '01980000-0000-7000-8000-000000000003'
- WHERE tree_cluster_id IN ('019e3fcb-2a53-7493-a7a1-b194faa409d7', '019e3fcb-2a53-7433-8d57-6258f9688c82');
+ WHERE tree_cluster_id = '019e3fcb-2a53-7493-a7a1-b194faa409d7';
 UPDATE trees SET organization_id = '01980000-0000-7000-8000-000000000004'
  WHERE tree_cluster_id IN ('019e3fcb-2a53-713d-8cae-4a52d3fd2967', '019e3fcb-2a53-7be5-9a56-e2260bb1c9fb');
 
