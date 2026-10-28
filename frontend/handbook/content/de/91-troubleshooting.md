@@ -64,7 +64,7 @@ nur ansehen darfst.
 
 Hast du im Benutzermenü eine einzelne Organisation gewählt, liegt die Ursache womöglich
 nur darin, dass die Seite außerhalb dieser Auswahl liegt. Die Meldung bietet dann
-**Zu allen meinen Organisationen wechseln** an, siehe
+**Zu meiner Organisation wechseln** an, siehe
 [Organisation wählen](./getting-started.md#organisation-wahlen).
 
 Fehlt dir das Recht tatsächlich, hilft nur die Verwaltung deiner Organisation weiter: Sie ordnet dir die
