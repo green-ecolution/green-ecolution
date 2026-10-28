@@ -7,7 +7,6 @@
 //! - Emptying after the last measurement wins over that measurement.
 //! - The owning organization changes only through `transfer_to`.
 
-mod error;
 mod repository;
 mod snapshot;
 mod view;
@@ -20,7 +19,6 @@ use domain::{
     shared::{coordinates::Coordinate, error::ValidationError, provenance::Provenance},
 };
 
-pub use error::WasteBinError;
 pub use repository::{WasteBinReader, WasteBinWriter};
 #[doc(hidden)]
 pub use snapshot::WasteBinSnapshot;
@@ -264,6 +262,26 @@ mod tests {
         assert_eq!(bin.organization_id(), org);
         assert_eq!(bin.fill(), fill);
         assert_eq!(bin.last_emptied_at(), emptied);
+    }
+
+    #[test]
+    fn relocate_moves_the_coordinate_only() {
+        let mut bin = bin_with_depth(100);
+        bin.record_fill_level(20.0, at(0));
+        bin.mark_emptied(at(1));
+        let before = bin.clone();
+        let target = Coordinate::new(54.5, 9.5).unwrap();
+
+        bin.relocate(target);
+
+        assert_eq!(bin.coordinate, target);
+        assert_ne!(before.coordinate, target);
+        assert_eq!(bin.number, before.number);
+        assert_eq!(bin.volume, before.volume);
+        assert_eq!(bin.depth, before.depth);
+        assert_eq!(bin.organization_id(), before.organization_id());
+        assert_eq!(bin.fill(), before.fill());
+        assert_eq!(bin.last_emptied_at(), before.last_emptied_at());
     }
 
     #[test]

@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 use serde_json::Value;
 use uuid::Uuid;
 
-/// Raw row mapping used exclusively for aggregate rehydration.
+/// Unvalidated field values, used only to rebuild the aggregate.
 #[doc(hidden)]
 #[derive(Debug, Clone)]
 pub struct WasteBinSnapshot {
