@@ -77,7 +77,7 @@ async fn create_org(app: &crate::helpers::TestApp, name: &str) -> String {
 }
 
 #[tokio::test]
-async fn templates_endpoint_lists_the_five_seeded_templates() {
+async fn templates_endpoint_lists_the_six_seeded_templates() {
     let app = spawn_app().await;
     let templates: serde_json::Value = app
         .get("/api/v1/roles/templates")
@@ -85,7 +85,7 @@ async fn templates_endpoint_lists_the_five_seeded_templates() {
         .json()
         .await
         .unwrap();
-    assert_eq!(templates.as_array().unwrap().len(), 5);
+    assert_eq!(templates.as_array().unwrap().len(), 6);
     assert!(
         templates
             .as_array()

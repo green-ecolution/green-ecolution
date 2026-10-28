@@ -236,7 +236,8 @@ mod tests {
             [
                 "create waste bins",
                 "create waste settings",
-                "add distance sensor model"
+                "add distance sensor model",
+                "add waste role templates"
             ]
         );
     }
