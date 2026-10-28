@@ -203,6 +203,21 @@ describe('Query Functions', () => {
         expect(await preview().queryFn!({} as never)).toBeNull()
       })
 
+      it('sends the organization the plan belongs to and keys the cache by it', async () => {
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        vi.mocked(planPreviewApi.previewPlanRoute).mockResolvedValueOnce({} as RouteResponse)
+
+        const query = preview({ organizationId: 'org-1' })
+        await query.queryFn!({} as never)
+
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        expect(planPreviewApi.previewPlanRoute).toHaveBeenCalledWith({
+          planRouteRequest: expect.objectContaining({ organizationId: 'org-1' }) as unknown,
+        })
+        expect(query.queryKey).toContain('org-1')
+        expect(preview().queryKey).not.toEqual(query.queryKey)
+      })
+
       it('uses planPreviewApi, not planApi', async () => {
         // eslint-disable-next-line @typescript-eslint/unbound-method
         vi.mocked(planPreviewApi.previewPlanRoute).mockResolvedValueOnce({} as RouteResponse)

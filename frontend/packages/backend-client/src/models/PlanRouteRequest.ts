@@ -26,6 +26,14 @@ export interface PlanRouteRequest {
      */
     module: string;
     /**
+     * Organization the plan will belong to; start points and stations are
+     * taken from its organization chain. Defaults to the acting user's own
+     * organization when omitted, like a plan created without one.
+     * @type {string}
+     * @memberof PlanRouteRequest
+     */
+    organizationId?: string | null;
+    /**
      * Name of the configured start point to depart from and return to. Unknown names fall back to the default depot.
      * @type {string}
      * @memberof PlanRouteRequest
@@ -79,6 +87,7 @@ export function PlanRouteRequestFromJSONTyped(json: any, ignoreDiscriminator: bo
     return {
         
         'module': json['module'],
+        'organizationId': json['organization_id'] == null ? undefined : json['organization_id'],
         'startPointName': json['start_point_name'] == null ? undefined : json['start_point_name'],
         'stops': json['stops'],
         'trailerId': json['trailer_id'] == null ? undefined : json['trailer_id'],
@@ -99,6 +108,7 @@ export function PlanRouteRequestToJSONTyped(value?: PlanRouteRequest | null, ign
     return {
         
         'module': value['module'],
+        'organization_id': value['organizationId'],
         'start_point_name': value['startPointName'],
         'stops': value['stops'],
         'trailer_id': value['trailerId'],

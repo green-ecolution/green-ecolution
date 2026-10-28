@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use domain::{
     Id,
-    authorization::Visibility,
+    authorization::{OrgHierarchy, Visibility},
     capacity::{CapacityKind, Liters, route_capacity},
     comment::{CommentSubject, CommentWriter},
     events::DomainEvent,
@@ -12,7 +12,7 @@ use domain::{
         OperationPlanSearchQuery, OperationPlanUpdate, OperationPlanView, OperationPlanWriter,
         RouteMetrics, StationVisit, ensure_capacity_available,
     },
-    organization::Organization,
+    organization::{Organization, OrganizationReader},
     planning::{PlanningError, PlanningProvider, ResolvedStop, StopOutcome, StopRef},
     routing::{OptimizedRoute, RouteOptimizer, RouteRequest, RouteStop, RoutingError},
     shared::{
@@ -38,6 +38,7 @@ pub struct OperationPlanService {
     comment_writer: Arc<dyn CommentWriter>,
     planning: Arc<PlanningRegistry>,
     activation: Arc<dyn ModuleActivationReader>,
+    organizations: Arc<dyn OrganizationReader>,
 }
 
 /// Input for a route computation that is not (yet) a stored plan.
@@ -72,6 +73,7 @@ impl OperationPlanService {
         comment_writer: Arc<dyn CommentWriter>,
         planning: Arc<PlanningRegistry>,
         activation: Arc<dyn ModuleActivationReader>,
+        organizations: Arc<dyn OrganizationReader>,
     ) -> Self {
         Self {
             reader,
@@ -83,6 +85,7 @@ impl OperationPlanService {
             comment_writer,
             planning,
             activation,
+            organizations,
         }
     }
 
@@ -318,19 +321,15 @@ impl OperationPlanService {
         };
         // Internal lookup for the plan's own depot selection, not a user-facing
         // listing — access to the plan itself is already gated by the caller.
+        let hierarchy = self.organizations.hierarchy().await?;
+        let ranked_orgs = related_orgs_nearest_first(&hierarchy, req.organization_id);
         let start_points = self
             .start_point_reader
-            .all(Visibility::Unrestricted)
+            .all(Visibility::Only(ranked_orgs.iter().copied().collect()))
             .await?;
-        let depot = match req.start_point_name.as_deref() {
-            Some(name) => start_points
-                .iter()
-                .find(|p| p.name.as_str() == name)
-                .or_else(|| start_points.iter().find(|p| p.is_default())),
-            None => start_points.iter().find(|p| p.is_default()),
-        }
-        .map(|p| p.coordinate)
-        .ok_or_else(|| ServiceError::InvalidInput("no start point configured".into()))?;
+        let depot = select_depot(&start_points, &ranked_orgs, req.start_point_name.as_deref())
+            .map(|p| p.coordinate)
+            .ok_or_else(|| ServiceError::InvalidInput("no start point configured".into()))?;
 
         let station_points: Vec<&StartPoint> = start_points
             .iter()
@@ -452,4 +451,138 @@ fn capacity(
             kind: e.kind.to_string(),
         }
     })
+}
+
+/// The organizations whose start points serve a plan of `org`: itself, then
+/// its ancestors nearest first (a depot is configured once at the tenant and
+/// inherited down), then its sub-units. Sibling tenants never appear, so a
+/// plan can neither start from nor refill at another tenant's station.
+fn related_orgs_nearest_first(
+    hierarchy: &OrgHierarchy,
+    org: Id<Organization>,
+) -> Vec<Id<Organization>> {
+    let mut ranked: Vec<Id<Organization>> = hierarchy.ancestors_from_root(org);
+    ranked.reverse();
+    if ranked.is_empty() {
+        ranked.push(org);
+    }
+    ranked.extend(
+        hierarchy
+            .descendants_or_self(org)
+            .into_iter()
+            .filter(|id| *id != org),
+    );
+    ranked
+}
+
+/// A name match beats the default, and among candidates the one closest to
+/// the plan's organization wins.
+fn select_depot<'a>(
+    start_points: &'a [StartPoint],
+    ranked_orgs: &[Id<Organization>],
+    name: Option<&str>,
+) -> Option<&'a StartPoint> {
+    let nearest = |pred: &dyn Fn(&StartPoint) -> bool| {
+        ranked_orgs.iter().find_map(|org| {
+            start_points
+                .iter()
+                .find(|p| p.organization_id() == *org && pred(p))
+        })
+    };
+    name.and_then(|name| nearest(&|p| p.name.as_str() == name))
+        .or_else(|| nearest(&|p| p.is_default()))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use domain::start_point::StartPointSnapshot;
+    use std::collections::BTreeSet;
+
+    fn org(n: u128) -> Id<Organization> {
+        Id::new(uuid::Uuid::from_u128(n))
+    }
+
+    fn point(name: &str, org_id: Id<Organization>, is_default: bool) -> StartPoint {
+        StartPoint::reconstitute(StartPointSnapshot {
+            id: uuid::Uuid::now_v7(),
+            name: name.to_string(),
+            latitude: 54.0,
+            longitude: 9.0,
+            replenishes: BTreeSet::new(),
+            is_default,
+            organization_id: org_id.value(),
+        })
+    }
+
+    /// root(1) → tenant(2) → unit(3); tenant(4) is a sibling tenant.
+    fn hierarchy() -> OrgHierarchy {
+        OrgHierarchy::from_pairs([
+            (org(1), None),
+            (org(2), Some(org(1))),
+            (org(3), Some(org(2))),
+            (org(4), Some(org(1))),
+        ])
+    }
+
+    #[test]
+    fn related_orgs_are_self_then_ancestors_then_sub_units_never_siblings() {
+        let ranked = related_orgs_nearest_first(&hierarchy(), org(2));
+        assert_eq!(ranked, vec![org(2), org(1), org(3)]);
+    }
+
+    #[test]
+    fn unknown_org_still_ranks_itself() {
+        assert_eq!(
+            related_orgs_nearest_first(&hierarchy(), org(9)),
+            vec![org(9)]
+        );
+    }
+
+    #[test]
+    fn own_default_beats_the_ancestors_default() {
+        let points = vec![point("Root", org(1), true), point("Own", org(2), true)];
+        let ranked = related_orgs_nearest_first(&hierarchy(), org(2));
+        assert_eq!(
+            select_depot(&points, &ranked, None).unwrap().name.as_str(),
+            "Own"
+        );
+    }
+
+    #[test]
+    fn ancestor_default_is_inherited_when_nothing_closer_exists() {
+        let points = vec![point("Root", org(1), true), point("Unit", org(3), false)];
+        let ranked = related_orgs_nearest_first(&hierarchy(), org(2));
+        assert_eq!(
+            select_depot(&points, &ranked, None).unwrap().name.as_str(),
+            "Root"
+        );
+    }
+
+    #[test]
+    fn name_match_beats_the_default_and_an_unknown_name_falls_back() {
+        let points = vec![point("Root", org(1), true), point("Nord", org(2), false)];
+        let ranked = related_orgs_nearest_first(&hierarchy(), org(2));
+        assert_eq!(
+            select_depot(&points, &ranked, Some("Nord"))
+                .unwrap()
+                .name
+                .as_str(),
+            "Nord"
+        );
+        assert_eq!(
+            select_depot(&points, &ranked, Some("Nirgends"))
+                .unwrap()
+                .name
+                .as_str(),
+            "Root"
+        );
+    }
+
+    #[test]
+    fn a_sibling_tenants_default_is_never_chosen() {
+        let points = vec![point("Fremd", org(4), true)];
+        let ranked = related_orgs_nearest_first(&hierarchy(), org(2));
+        assert!(select_depot(&points, &ranked, None).is_none());
+    }
 }

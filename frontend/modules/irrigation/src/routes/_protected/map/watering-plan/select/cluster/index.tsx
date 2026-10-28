@@ -45,6 +45,11 @@ function SelectCluster() {
   const navigate = useNavigate({ from: Route.fullPath })
   const { wateringPlanId } = Route.useSearch()
   const draft = useWateringPlanDraft<WateringPlanForm>(formType)
+  // An edited plan keeps its organization, which decides its depot and stations.
+  const { data: editedPlan } = useQuery({
+    ...wateringPlanQueries.detail(wateringPlanId ?? ''),
+    enabled: formType === 'update' && !!wateringPlanId,
+  })
 
   const navigationBlocker = useFormNavigationBlocker({
     isDirty: true,
@@ -82,6 +87,7 @@ function SelectCluster() {
       trailerId: hasTrailer ? trailerId : undefined,
       transporterCapacityUsed: transporterTankUsed,
       startPointName: draft.data?.startPointName,
+      organizationId: editedPlan?.organizationId,
     }),
     enabled: previewEnabled,
   })

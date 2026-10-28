@@ -12815,6 +12815,15 @@
             "description": "Module whose stops are routed.",
             "example": "irrigation"
           },
+          "organization_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Organization the plan will belong to; start points and stations are\ntaken from its organization chain. Defaults to the acting user's own\norganization when omitted, like a plan created without one.",
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
+          },
           "start_point_name": {
             "type": [
               "string",

@@ -214,6 +214,7 @@ export const wateringPlanQueries = {
     trailerId,
     transporterCapacityUsed = true,
     startPointName,
+    organizationId,
   }: {
     module: string
     stops: string[]
@@ -221,6 +222,7 @@ export const wateringPlanQueries = {
     trailerId?: string
     transporterCapacityUsed?: boolean
     startPointName?: string | null
+    organizationId?: string | null
   }) =>
     queryOptions<RouteResponse | null>({
       queryKey: [
@@ -231,6 +233,7 @@ export const wateringPlanQueries = {
         trailerId ?? null,
         transporterCapacityUsed,
         startPointName ?? null,
+        organizationId ?? null,
       ],
       queryFn: async () => {
         try {
@@ -242,6 +245,7 @@ export const wateringPlanQueries = {
               trailerId,
               transporterCapacityUsed,
               startPointName,
+              organizationId,
             },
           })
         } catch {
