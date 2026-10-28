@@ -98,7 +98,7 @@ ohne sie siehst du die Schalter nur. Gespeichert wird wie bei den übrigen Werte
 Seite mit dem einen Knopf **Speichern**, der Modulschalter und Fachliche Vorgaben
 gemeinsam übernimmt.
 
-![Der Abschnitt Module mit dem Schalter für Bewässerung und seinem Herkunftsabzeichen](../images/settings-organization-modules.png)
+![Der Abschnitt Module mit den Schaltern für Bewässerung und Abfall und ihren Herkunftsabzeichen](../images/settings-organization-modules.png)
 
 Schaltest du ein Modul ab, verschwinden seine Bereiche für alle Mitarbeitenden der
 Organisation und ihrer Unterorganisationen aus der Navigation, von der Karte, vom
