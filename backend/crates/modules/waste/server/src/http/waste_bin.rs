@@ -29,7 +29,7 @@ use super::{
 };
 use crate::{
     resources::WASTE_BIN,
-    service::waste_bin_service::{FillStateFilter, WasteBinListQuery, WasteBinState},
+    service::waste_bin_service::{WasteBinListQuery, WasteBinState},
 };
 
 pub fn routes() -> OpenApiRouter<Arc<WasteHttpState>> {
@@ -61,8 +61,8 @@ async fn visible_bin(
     operation_id = "listWasteBins",
     summary = "List waste bins",
     description = "Returns a paginated list of the waste bins visible to the caller in organizations where the waste module is active, sorted by number. \
-                   `number` filters by a case-insensitive substring. `fill_state` is judged by the full threshold and sensor offline period \
-                   of `organization_id`, or of the caller's own organization when none is given.",
+                   `number` filters by a case-insensitive substring. `fill_state` is judged per bin by the full threshold and sensor \
+                   offline period of the bin's own organization, the same rules that label it.",
     params(WasteBinListParams),
     responses(
         (status = 200, description = "Paginated list of waste bins", body = ListResponse<WasteBinResponse>),
@@ -81,23 +81,10 @@ pub async fn list_waste_bins(
         .access
         .visible_orgs(user.caller(), Permission::new(WASTE_BIN, Action::Read))
         .await?;
-    let fill_state = match params.fill_state {
-        Some(fill) => Some(FillStateFilter {
-            state: fill.into(),
-            reference_org: scope::resolve_target_org(
-                &state.users,
-                &state.authorization,
-                user.caller(),
-                params.organization_id,
-            )
-            .await?,
-        }),
-        None => None,
-    };
     let query = WasteBinListQuery {
         number: params.number,
         organization_id: params.organization_id.map(Id::new),
-        fill_state,
+        fill_state: params.fill_state.map(Into::into),
     };
     let result = state.bins.list(query, pagination, &visible).await?;
     Ok(Json(

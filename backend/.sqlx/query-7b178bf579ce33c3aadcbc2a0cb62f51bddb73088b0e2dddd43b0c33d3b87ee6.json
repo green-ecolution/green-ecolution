@@ -1,0 +1,31 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT COUNT(*) AS \"count!\" FROM waste_bins b\n            LEFT JOIN unnest($3::uuid[], $4::float8[], $5::float8[], $6::timestamptz[], $7::timestamptz[])\n                   AS f(organization_id, min_fraction, max_fraction, measured_after, stale_before)\n                   ON f.organization_id = b.organization_id\n            WHERE ($1::uuid[] IS NULL OR b.organization_id = ANY($1))\n              AND ($2::text IS NULL OR b.number ILIKE $2 ESCAPE '\\')\n              AND ($3::uuid[] IS NULL OR f.organization_id IS NOT NULL)\n              AND (f.min_fraction IS NULL OR b.fill_fraction >= f.min_fraction)\n              AND (f.max_fraction IS NULL OR b.fill_fraction < f.max_fraction)\n              AND (f.measured_after IS NULL OR b.fill_measured_at >= f.measured_after)\n              AND (f.stale_before IS NULL OR b.fill_measured_at IS NULL OR b.fill_measured_at < f.stale_before)\n              AND (NOT $8::bool OR b.fill_measured_at IS NOT NULL)\n              AND (NOT $9::bool OR b.last_emptied_at IS NULL OR b.last_emptied_at <= b.fill_measured_at)\n              AND (NOT $10::bool OR b.last_emptied_at > b.fill_measured_at)",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "count!",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "UuidArray",
+        "Text",
+        "UuidArray",
+        "Float8Array",
+        "Float8Array",
+        "TimestamptzArray",
+        "TimestamptzArray",
+        "Bool",
+        "Bool",
+        "Bool"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "7b178bf579ce33c3aadcbc2a0cb62f51bddb73088b0e2dddd43b0c33d3b87ee6"
+}

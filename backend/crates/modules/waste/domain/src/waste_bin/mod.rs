@@ -67,8 +67,22 @@ pub struct WasteBinSearchQuery {
 }
 
 /// Narrows a search by the current fill level. All set conditions apply together.
+///
+/// The bounds depend on the organization's rules (full threshold, staleness
+/// limit), so they come per organization; a bin of an organization without
+/// an entry never matches. The flags depend only on the asked-for state.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct FillFilter {
+    pub bounds: Vec<OrganizationFillBounds>,
+    pub require_measurement: bool,
+    pub not_emptied_since_measurement: bool,
+    pub emptied_after_measurement: bool,
+}
+
+/// The rule-dependent part of a [`FillFilter`] for one organization's bins.
+#[derive(Debug, Clone, PartialEq)]
+pub struct OrganizationFillBounds {
+    pub organization_id: Id<Organization>,
     /// Inclusive lower bound of the fill fraction.
     pub min_fraction: Option<f64>,
     /// Exclusive upper bound of the fill fraction.
@@ -77,9 +91,6 @@ pub struct FillFilter {
     pub measured_after: Option<DateTime<Utc>>,
     /// Matches bins without a reading or with a reading strictly before this instant.
     pub stale_before: Option<DateTime<Utc>>,
-    pub require_measurement: bool,
-    pub not_emptied_since_measurement: bool,
-    pub emptied_after_measurement: bool,
 }
 
 impl WasteBin {

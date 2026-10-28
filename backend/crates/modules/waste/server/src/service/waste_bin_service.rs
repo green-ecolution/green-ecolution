@@ -1,11 +1,14 @@
-use std::{collections::HashMap, sync::Arc};
+use std::{
+    collections::{HashMap, hash_map::Entry},
+    sync::Arc,
+};
 
-use chrono::{DateTime, Duration, Utc};
+use chrono::{DateTime, Utc};
 
 use domain::{
     Id, RepositoryError,
     authorization::Visibility,
-    organization::Organization,
+    organization::{Organization, OrganizationReader},
     planning::StopRef,
     shared::pagination::{Page, Pagination, SearchPage},
 };
@@ -15,10 +18,9 @@ use server::service::{
 };
 use waste_domain::{
     fill::FillState,
-    settings::FullThreshold,
     waste_bin::{
-        FillFilter, WasteBin, WasteBinDraft, WasteBinReader, WasteBinSearchQuery, WasteBinUpdate,
-        WasteBinView, WasteBinWriter,
+        FillFilter, OrganizationFillBounds, WasteBin, WasteBinDraft, WasteBinReader,
+        WasteBinSearchQuery, WasteBinUpdate, WasteBinView, WasteBinWriter,
     },
 };
 
@@ -32,52 +34,51 @@ pub struct WasteBinState {
     pub fill_state: FillState,
 }
 
-/// Narrows the list to one fill state, judged by the rules of `reference_org`.
-#[derive(Debug, Clone, Copy)]
-pub struct FillStateFilter {
-    pub state: FillState,
-    pub reference_org: Id<Organization>,
-}
-
 #[derive(Debug, Clone, Default)]
 pub struct WasteBinListQuery {
     pub number: Option<String>,
     pub organization_id: Option<Id<Organization>>,
-    pub fill_state: Option<FillStateFilter>,
+    /// Judged per bin by the rules of the bin's own organization, so the
+    /// filter and the `fill_state` label of a listed bin always agree.
+    pub fill_state: Option<FillState>,
 }
 
 pub fn filter_for(
     state: FillState,
-    threshold: FullThreshold,
     now: DateTime<Utc>,
-    stale_after: Duration,
+    rules: &[(Id<Organization>, FillRules)],
 ) -> FillFilter {
-    let fresh = Some(now - stale_after);
-    match state {
-        FillState::Full => FillFilter {
-            min_fraction: Some(threshold.fraction()),
-            measured_after: fresh,
-            require_measurement: true,
-            not_emptied_since_measurement: true,
-            ..Default::default()
-        },
-        FillState::Normal => FillFilter {
-            max_fraction: Some(threshold.fraction()),
-            measured_after: fresh,
-            require_measurement: true,
-            not_emptied_since_measurement: true,
-            ..Default::default()
-        },
-        FillState::Empty => FillFilter {
-            measured_after: fresh,
-            require_measurement: true,
-            emptied_after_measurement: true,
-            ..Default::default()
-        },
-        FillState::Unknown => FillFilter {
-            stale_before: fresh,
-            ..Default::default()
-        },
+    let bounds = rules
+        .iter()
+        .map(|(org, rules)| {
+            let fresh = Some(now - rules.stale_after);
+            let threshold = Some(rules.threshold.fraction());
+            let (min_fraction, max_fraction, measured_after, stale_before) = match state {
+                FillState::Full => (threshold, None, fresh, None),
+                FillState::Normal => (None, threshold, fresh, None),
+                FillState::Empty => (None, None, fresh, None),
+                FillState::Unknown => (None, None, None, fresh),
+            };
+            OrganizationFillBounds {
+                organization_id: *org,
+                min_fraction,
+                max_fraction,
+                measured_after,
+                stale_before,
+            }
+        })
+        .collect();
+    let (require_measurement, not_emptied_since_measurement, emptied_after_measurement) =
+        match state {
+            FillState::Full | FillState::Normal => (true, true, false),
+            FillState::Empty => (true, false, true),
+            FillState::Unknown => (false, false, false),
+        };
+    FillFilter {
+        bounds,
+        require_measurement,
+        not_emptied_since_measurement,
+        emptied_after_measurement,
     }
 }
 
@@ -88,6 +89,7 @@ pub struct WasteBinService {
     plans: Arc<OperationPlanService>,
     comments: Arc<CommentService>,
     fill_rules: Arc<FillRulesResolver>,
+    organizations: Arc<dyn OrganizationReader>,
 }
 
 impl WasteBinService {
@@ -98,6 +100,7 @@ impl WasteBinService {
         plans: Arc<OperationPlanService>,
         comments: Arc<CommentService>,
         fill_rules: Arc<FillRulesResolver>,
+        organizations: Arc<dyn OrganizationReader>,
     ) -> Self {
         Self {
             reader,
@@ -106,40 +109,70 @@ impl WasteBinService {
             plans,
             comments,
             fill_rules,
+            organizations,
         }
     }
 
-    async fn rules_for(&self, org: Id<Organization>) -> Result<FillRules, WasteError> {
-        Ok(self.fill_rules.rules_for(org).await?)
+    /// Resolves the rules once per organization, however many bins it owns.
+    /// Takes the ids by value: a borrowed iterator held across the awaits
+    /// makes the handler future non-`Send` for axum.
+    async fn rules_by_org(
+        &self,
+        orgs: Vec<Id<Organization>>,
+    ) -> Result<HashMap<Id<Organization>, FillRules>, WasteError> {
+        let mut rules = HashMap::new();
+        for org in orgs {
+            if let Entry::Vacant(slot) = rules.entry(org) {
+                slot.insert(self.fill_rules.rules_for(org).await?);
+            }
+        }
+        Ok(rules)
     }
 
-    /// Resolves the rules once per organization, however many bins it owns.
     async fn with_states(
         &self,
         views: Vec<WasteBinView>,
     ) -> Result<Vec<WasteBinState>, WasteError> {
         let now = Utc::now();
-        let mut rules: HashMap<Id<Organization>, FillRules> = HashMap::new();
-        let mut out = Vec::with_capacity(views.len());
-        for view in views {
-            let org_rules = match rules.get(&view.organization_id) {
-                Some(r) => *r,
-                None => {
-                    let r = self.rules_for(view.organization_id).await?;
-                    rules.insert(view.organization_id, r);
-                    r
-                }
-            };
-            let fill_state = waste_domain::fill::derive_fill_state(
-                view.fill,
-                view.last_emptied_at,
-                org_rules.threshold,
-                now,
-                org_rules.stale_after,
-            );
-            out.push(WasteBinState { view, fill_state });
-        }
-        Ok(out)
+        let rules = self
+            .rules_by_org(views.iter().map(|v| v.organization_id).collect())
+            .await?;
+        Ok(views
+            .into_iter()
+            .map(|view| {
+                let org_rules = rules[&view.organization_id];
+                let fill_state = waste_domain::fill::derive_fill_state(
+                    view.fill,
+                    view.last_emptied_at,
+                    org_rules.threshold,
+                    now,
+                    org_rules.stale_after,
+                );
+                WasteBinState { view, fill_state }
+            })
+            .collect())
+    }
+
+    /// The organizations a list request can return bins from.
+    async fn candidate_orgs(
+        &self,
+        visibility: &Visibility,
+        requested: Option<Id<Organization>>,
+    ) -> Result<Vec<Id<Organization>>, WasteError> {
+        let visible: Vec<Id<Organization>> = match visibility {
+            Visibility::Only(orgs) => orgs.iter().copied().collect(),
+            Visibility::Unrestricted => self
+                .organizations
+                .all()
+                .await?
+                .into_iter()
+                .map(|o| o.id)
+                .collect(),
+        };
+        Ok(visible
+            .into_iter()
+            .filter(|org| requested.is_none_or(|r| r == *org))
+            .collect())
     }
 
     async fn state_of(&self, id: Id<WasteBin>) -> Result<WasteBinState, WasteError> {
@@ -156,14 +189,14 @@ impl WasteBinService {
         visibility: &Visibility,
     ) -> Result<SearchPage<WasteBinState>, WasteError> {
         let fill = match query.fill_state {
-            Some(filter) => {
-                let rules = self.rules_for(filter.reference_org).await?;
-                Some(filter_for(
-                    filter.state,
-                    rules.threshold,
-                    Utc::now(),
-                    rules.stale_after,
-                ))
+            Some(state) => {
+                let orgs = self
+                    .candidate_orgs(visibility, query.organization_id)
+                    .await?;
+                let rules = self.rules_by_org(orgs.clone()).await?;
+                let rules: Vec<(Id<Organization>, FillRules)> =
+                    orgs.into_iter().map(|org| (org, rules[&org])).collect();
+                Some(filter_for(state, Utc::now(), &rules))
             }
             None => None,
         };
@@ -253,18 +286,41 @@ fn number_taken(e: RepositoryError) -> WasteError {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::TimeZone;
+    use chrono::{Duration, TimeZone};
+    use waste_domain::settings::FullThreshold;
 
     fn now() -> DateTime<Utc> {
         Utc.with_ymd_and_hms(2026, 11, 2, 8, 0, 0).unwrap()
     }
 
-    fn threshold() -> FullThreshold {
-        FullThreshold::new(80).unwrap()
+    fn org() -> Id<Organization> {
+        Id::new(uuid::Uuid::from_u128(1))
+    }
+
+    fn rules(percent: i64) -> FillRules {
+        FillRules {
+            threshold: FullThreshold::new(percent).unwrap(),
+            stale_after: Duration::hours(6),
+        }
     }
 
     fn filter(state: FillState) -> FillFilter {
-        filter_for(state, threshold(), now(), Duration::hours(6))
+        filter_for(state, now(), &[(org(), rules(80))])
+    }
+
+    fn bounds(
+        min_fraction: Option<f64>,
+        max_fraction: Option<f64>,
+        measured_after: Option<DateTime<Utc>>,
+        stale_before: Option<DateTime<Utc>>,
+    ) -> Vec<OrganizationFillBounds> {
+        vec![OrganizationFillBounds {
+            organization_id: org(),
+            min_fraction,
+            max_fraction,
+            measured_after,
+            stale_before,
+        }]
     }
 
     #[test]
@@ -272,10 +328,7 @@ mod tests {
         assert_eq!(
             filter(FillState::Full),
             FillFilter {
-                min_fraction: Some(0.8),
-                max_fraction: None,
-                measured_after: Some(now() - Duration::hours(6)),
-                stale_before: None,
+                bounds: bounds(Some(0.8), None, Some(now() - Duration::hours(6)), None),
                 require_measurement: true,
                 not_emptied_since_measurement: true,
                 emptied_after_measurement: false,
@@ -288,10 +341,7 @@ mod tests {
         assert_eq!(
             filter(FillState::Normal),
             FillFilter {
-                min_fraction: None,
-                max_fraction: Some(0.8),
-                measured_after: Some(now() - Duration::hours(6)),
-                stale_before: None,
+                bounds: bounds(None, Some(0.8), Some(now() - Duration::hours(6)), None),
                 require_measurement: true,
                 not_emptied_since_measurement: true,
                 emptied_after_measurement: false,
@@ -304,7 +354,7 @@ mod tests {
         assert_eq!(
             filter(FillState::Empty),
             FillFilter {
-                measured_after: Some(now() - Duration::hours(6)),
+                bounds: bounds(None, None, Some(now() - Duration::hours(6)), None),
                 require_measurement: true,
                 emptied_after_measurement: true,
                 ..Default::default()
@@ -317,10 +367,26 @@ mod tests {
         assert_eq!(
             filter(FillState::Unknown),
             FillFilter {
-                stale_before: Some(now() - Duration::hours(6)),
+                bounds: bounds(None, None, None, Some(now() - Duration::hours(6))),
                 ..Default::default()
             }
         );
+    }
+
+    #[test]
+    fn every_organization_gets_its_own_threshold() {
+        let other = Id::new(uuid::Uuid::from_u128(2));
+        let filter = filter_for(
+            FillState::Full,
+            now(),
+            &[(org(), rules(80)), (other, rules(90))],
+        );
+        let thresholds: Vec<(Id<Organization>, Option<f64>)> = filter
+            .bounds
+            .iter()
+            .map(|b| (b.organization_id, b.min_fraction))
+            .collect();
+        assert_eq!(thresholds, [(org(), Some(0.8)), (other, Some(0.9))]);
     }
 
     #[test]

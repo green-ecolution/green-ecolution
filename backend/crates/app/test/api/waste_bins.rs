@@ -409,3 +409,30 @@ async fn transferring_a_bin_moves_its_sensor_along() {
     assert_eq!(sensor["organization_id"], child.to_string());
     assert_eq!(sensor["target"]["id"], bin.to_string());
 }
+
+/// A sub-unit with its own full threshold judges its bins by that threshold,
+/// both for the label and for the list filter, whoever asks.
+#[tokio::test]
+async fn the_fill_state_filter_judges_every_bin_by_its_own_organizations_rules() {
+    let app = waste_app().await;
+    let sub_unit = child_org(&app, "Bezirk Nord", root()).await;
+    let res = app
+        .put_json(
+            &format!("/api/v1/organizations/{sub_unit}/settings/waste"),
+            &json!({ "full_threshold": 90 }),
+        )
+        .await;
+    assert_eq!(res.status(), 200, "{}", res.text().await.unwrap());
+    let in_root = id_of(&create_bin(&app, "ROOT-85").await);
+    let in_sub_unit = insert_bin(&app, "SUB-85", sub_unit).await;
+    set_fill(&app, in_root, Some(0.85), Some(1), None).await;
+    set_fill(&app, in_sub_unit, Some(0.85), Some(1), None).await;
+
+    let full = list(&app, "?fill_state=full").await;
+    assert_eq!(numbers(&full), ["ROOT-85"]);
+    assert_eq!(full["data"][0]["fill_state"], "full");
+
+    let normal = list(&app, "?fill_state=normal").await;
+    assert_eq!(numbers(&normal), ["SUB-85"]);
+    assert_eq!(normal["data"][0]["fill_state"], "normal");
+}

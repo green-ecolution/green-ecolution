@@ -97,6 +97,7 @@ impl Module for WasteModule {
             ctx.plans.clone(),
             ctx.comments.clone(),
             fill_rules.clone(),
+            ctx.organizations.clone(),
         ));
         let state = Arc::new(WasteHttpState {
             bins: bin_service,
