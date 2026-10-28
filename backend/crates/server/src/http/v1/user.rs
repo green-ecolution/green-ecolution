@@ -432,7 +432,7 @@ pub async fn revoke_user_role(
 #[utoipa::path(patch, path = "/users/{user_id}/organization", tag = "Users",
     operation_id = "setUserOrganization",
     summary = "Set a user's organization",
-    description = "Moves the user into the given organization. Requires user:update in the target organization. Changes to one's own organization membership are rejected.",
+    description = "Moves the user into the given organization. Requires user:update in the target organization and, where the user already belongs to one, in their current organization. Changes to one's own organization membership are rejected.",
     params(("user_id" = Uuid, Path, description = "User id")),
     request_body = SetOrganizationRequest,
     responses(
@@ -451,14 +451,23 @@ pub async fn set_user_organization(
     Json(req): Json<SetOrganizationRequest>,
 ) -> Result<Json<UserResponse>, ServiceError> {
     let org = Id::new(req.organization_id);
+    let permission = Permission::new(ResourceKey::USER, Action::Update);
     state
         .authorization_service
-        .require(
-            user.caller(),
-            Permission::new(ResourceKey::USER, Action::Update),
-            org,
-        )
+        .require(user.caller(), permission, org)
         .await?;
+    // Moving a member also takes them out of their current organization.
+    if let Some(current) = state
+        .user_service
+        .organization_of(user_id)
+        .await?
+        .filter(|current| *current != org)
+    {
+        state
+            .authorization_service
+            .require(user.caller(), permission, current)
+            .await?;
+    }
     ensure_not_self(user.id, user_id)?;
     let updated = state.user_service.set_organization(user_id, org).await?;
     Ok(Json((&updated).into()))

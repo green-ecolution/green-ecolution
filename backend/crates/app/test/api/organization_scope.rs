@@ -361,3 +361,90 @@ async fn my_organizations_without_organization_read() {
     assert_eq!(body.len(), 1);
     assert_eq!(body[0]["id"], json!(tree.firma_a));
 }
+
+async fn seed_member(app: &TestApp, org: Uuid) -> Uuid {
+    let user_id = Uuid::new_v4();
+    sqlx::query("INSERT INTO user_profiles (id, organization_id) VALUES ($1, $2)")
+        .bind(user_id)
+        .bind(org)
+        .execute(&app.db_pool)
+        .await
+        .unwrap();
+    user_id
+}
+
+async fn organization_of(app: &TestApp, user_id: Uuid) -> Uuid {
+    sqlx::query_scalar("SELECT organization_id FROM user_profiles WHERE id = $1")
+        .bind(user_id)
+        .fetch_one(&app.db_pool)
+        .await
+        .unwrap()
+}
+
+async fn move_user(
+    app: &TestApp,
+    token: &str,
+    scope: Option<&str>,
+    user_id: Uuid,
+    org: Uuid,
+) -> reqwest::Response {
+    request(
+        reqwest::Client::new().patch(format!(
+            "{}/api/v1/users/{user_id}/organization",
+            app.address
+        )),
+        Some(token),
+        scope,
+    )
+    .json(&json!({ "organization_id": org }))
+    .send()
+    .await
+    .unwrap()
+}
+
+#[tokio::test]
+async fn moving_a_member_into_the_scope_from_outside_is_rejected() {
+    let (harness, app) = spawn_with_auth().await;
+    let tree = seed_tree(&app).await;
+    let token = seed_user(&harness, &app, tree.tbz, &["user:update"]).await;
+    let member = seed_member(&app, tree.firma_b).await;
+
+    let resp = move_user(
+        &app,
+        &token,
+        Some(&tree.firma_a.to_string()),
+        member,
+        tree.firma_a,
+    )
+    .await;
+
+    assert_eq!(resp.status(), 403);
+    assert_eq!(organization_of(&app, member).await, tree.firma_b);
+}
+
+#[tokio::test]
+async fn moving_a_member_out_of_an_organization_without_rights_is_rejected() {
+    let (harness, app) = spawn_with_auth().await;
+    let tree = seed_tree(&app).await;
+    let token = seed_user(&harness, &app, tree.firma_a, &["user:update"]).await;
+    let member = seed_member(&app, tree.firma_b).await;
+
+    let resp = move_user(&app, &token, None, member, tree.firma_a).await;
+
+    assert_eq!(resp.status(), 403);
+    assert_eq!(organization_of(&app, member).await, tree.firma_b);
+}
+
+#[tokio::test]
+async fn moving_a_member_between_organizations_with_rights_in_both() {
+    let (harness, app) = spawn_with_auth().await;
+    let tree = seed_tree(&app).await;
+    let token = seed_user(&harness, &app, tree.tbz, &["user:update"]).await;
+    let member = seed_member(&app, tree.firma_b).await;
+    harness.mock_identity_lookups(&[(member, "member")]).await;
+
+    let resp = move_user(&app, &token, None, member, tree.firma_a).await;
+
+    assert_eq!(resp.status(), 200);
+    assert_eq!(organization_of(&app, member).await, tree.firma_a);
+}
