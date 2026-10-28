@@ -14,7 +14,8 @@ export interface TenantRow {
   name: string
   subOrganizationCount: number
   memberCount: number
-  activeModules: string[]
+  /** `null` while the module list has not arrived; the card shows no badge, not "none". */
+  activeModules: string[] | null
   /** `null` while the counts have not arrived; the card shows a placeholder, not 0. */
   sensorCount: number | null
   vehicleCount: number | null
@@ -43,7 +44,7 @@ export function tenantRows(
       name: node.org.name,
       subOrganizationCount: flatten(node).length - 1,
       memberCount: subtreeMemberCount(node),
-      activeModules: activeByOrg.get(node.org.id) ?? [],
+      activeModules: modules ? (activeByOrg.get(node.org.id) ?? []) : null,
       sensorCount: resources?.sensorCount ?? null,
       vehicleCount: resources?.vehicleCount ?? null,
       planCount: resources?.planCount ?? null,

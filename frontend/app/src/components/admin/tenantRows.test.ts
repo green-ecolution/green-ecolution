@@ -53,11 +53,23 @@ describe('tenantRows', () => {
   it('reports missing counts as null, not zero', () => {
     const [andere] = tenantRows(ORGS, undefined, undefined)
     expect(andere).toMatchObject({
-      activeModules: [],
+      activeModules: null,
       sensorCount: null,
       vehicleCount: null,
       planCount: null,
     })
+  })
+
+  it('reports an empty module list once modules are loaded and the tenant has none', () => {
+    const [andere] = tenantRows(
+      ORGS,
+      {
+        modules: ['irrigation'],
+        organizations: [{ organizationId: 'tbz', active: ['irrigation'] }],
+      },
+      undefined,
+    )
+    expect(andere.activeModules).toEqual([])
   })
 
   it('is empty without a root in the list', () => {

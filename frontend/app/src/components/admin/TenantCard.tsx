@@ -8,6 +8,7 @@ import type { TenantRow } from './tenantRows'
 interface TenantCardProps {
   tenant: TenantRow
   onOpen: () => void
+  pending?: boolean
 }
 
 interface FactProps {
@@ -28,7 +29,7 @@ const Fact = ({ icon, label, value, pending }: FactProps) => (
   </span>
 )
 
-const TenantCard = ({ tenant, onOpen }: TenantCardProps) => {
+const TenantCard = ({ tenant, onOpen, pending: opening = false }: TenantCardProps) => {
   const { t, i18n } = useTranslation('admin')
   const pending = t('tenants.card.pending')
   const moduleLabel = (key: string) => {
@@ -41,23 +42,26 @@ const TenantCard = ({ tenant, onOpen }: TenantCardProps) => {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
           <h2 className="font-lato text-lg font-bold">{tenant.name}</h2>
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            <span className="sr-only">{t('tenants.card.modules')}</span>
-            {tenant.activeModules.length === 0 ? (
-              <Badge variant="muted">{t('tenants.card.noModules')}</Badge>
-            ) : (
-              tenant.activeModules.map((key) => (
-                <Badge key={key} variant="outline-dark">
-                  {moduleLabel(key)}
-                </Badge>
-              ))
-            )}
-          </div>
+          {tenant.activeModules && (
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <span className="sr-only">{t('tenants.card.modules')}</span>
+              {tenant.activeModules.length === 0 ? (
+                <Badge variant="muted">{t('tenants.card.noModules')}</Badge>
+              ) : (
+                tenant.activeModules.map((key) => (
+                  <Badge key={key} variant="outline-dark">
+                    {moduleLabel(key)}
+                  </Badge>
+                ))
+              )}
+            </div>
+          )}
         </div>
         <Button
           type="button"
           variant="outline"
           onClick={onOpen}
+          disabled={opening}
           aria-label={t('tenants.openSrLabel', { name: tenant.name })}
         >
           {t('tenants.open')}

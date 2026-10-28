@@ -5,9 +5,12 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { server } from '@/test/mocks/server'
+import { DEMO_USER_ID, setOrganizationScope } from '@/lib/auth/scope/organizationScopeStore'
 
 const navigate = vi.fn()
-const switchScope = vi.fn().mockResolvedValue(undefined)
+const showToast = vi.fn()
+const switchScope = vi.fn()
+vi.mock('@/hooks/createToast', () => ({ default: () => showToast }))
 vi.mock('@tanstack/react-router', async () => {
   const actual =
     await vi.importActual<typeof import('@tanstack/react-router')>('@tanstack/react-router')
@@ -60,6 +63,11 @@ const renderOverview = () => {
 describe('TenantOverview', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    setOrganizationScope(DEMO_USER_ID, null)
+    switchScope.mockImplementation((id: string) => {
+      setOrganizationScope(DEMO_USER_ID, id)
+      return Promise.resolve()
+    })
     // The generated client asks the auth session for a token; the demo session needs no OIDC settings.
     vi.stubEnv('VITE_AUTH_BYPASS', 'true')
   })
@@ -92,6 +100,53 @@ describe('TenantOverview', () => {
 
     await waitFor(() => expect(switchScope).toHaveBeenCalledWith(TBZ))
     expect(navigate).toHaveBeenCalledWith({ to: '/dashboard' })
+  })
+
+  it('marks a tenant without active modules once the modules are loaded', async () => {
+    const ANDERE = '01980000-0000-7000-8000-000000000003'
+    respondWith([
+      { id: ROOT, parent_id: null, name: 'Green Ecolution', member_count: 1 },
+      { id: TBZ, parent_id: ROOT, name: 'TBZ', member_count: 5 },
+      { id: ANDERE, parent_id: ROOT, name: 'Andere Stadt', member_count: 2 },
+    ])
+
+    renderOverview()
+
+    expect(await screen.findByText('Keine Module aktiv')).toBeInTheDocument()
+    expect(screen.getAllByText('Keine Module aktiv')).toHaveLength(1)
+  })
+
+  it('does not open the tenant and reports it when the scope switch fails', async () => {
+    respondWith([
+      { id: ROOT, parent_id: null, name: 'Green Ecolution', member_count: 1 },
+      { id: TBZ, parent_id: ROOT, name: 'TBZ', member_count: 5 },
+    ])
+    switchScope.mockRejectedValueOnce(new Error('boom'))
+    renderOverview()
+    const user = userEvent.setup()
+
+    await user.click(await screen.findByRole('button', { name: 'TBZ als Mandant öffnen' }))
+
+    await waitFor(() =>
+      expect(showToast).toHaveBeenCalledWith('Der Mandant konnte nicht geöffnet werden.', 'error'),
+    )
+    expect(navigate).not.toHaveBeenCalled()
+    expect(screen.getByRole('button', { name: 'TBZ als Mandant öffnen' })).toBeEnabled()
+  })
+
+  it('does not navigate when the switch left the scope unset', async () => {
+    respondWith([
+      { id: ROOT, parent_id: null, name: 'Green Ecolution', member_count: 1 },
+      { id: TBZ, parent_id: ROOT, name: 'TBZ', member_count: 5 },
+    ])
+    switchScope.mockResolvedValueOnce(undefined)
+    renderOverview()
+    const user = userEvent.setup()
+
+    await user.click(await screen.findByRole('button', { name: 'TBZ als Mandant öffnen' }))
+
+    await waitFor(() => expect(showToast).toHaveBeenCalled())
+    expect(navigate).not.toHaveBeenCalled()
   })
 
   it('shows the empty state with a link to the organization page', async () => {

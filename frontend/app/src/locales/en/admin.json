@@ -6,6 +6,7 @@
     "empty": "This instance has no tenants yet.",
     "emptyLink": "Create tenants under Organization",
     "loadError": "The tenants could not be loaded.",
+    "openError": "The tenant could not be opened.",
     "open": "Open as tenant",
     "openSrLabel": "Open {name} as tenant",
     "card": {

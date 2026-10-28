@@ -6,6 +6,7 @@
     "empty": "Diese Instanz hat noch keine Mandanten.",
     "emptyLink": "Mandanten unter Organisation anlegen",
     "loadError": "Die Mandanten konnten nicht geladen werden.",
+    "openError": "Der Mandant konnte nicht geöffnet werden.",
     "open": "Als Mandant öffnen",
     "openSrLabel": "{name} als Mandant öffnen",
     "card": {
