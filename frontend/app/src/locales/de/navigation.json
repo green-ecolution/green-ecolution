@@ -27,7 +27,10 @@
     "signedInAs": "Angemeldet als:",
     "profile": "Dein Profil",
     "logout": "Abmelden",
-    "language": "Sprache"
+    "language": "Sprache",
+    "organization": "Organisation",
+    "allOrganizations": "Alle meine Organisationen",
+    "searchOrganization": "Organisation suchen …"
   },
   "breadcrumb": {
     "nav": "Seitennavigation",
@@ -72,7 +75,8 @@
   },
   "entityNotFound": {
     "title": "{entityName} nicht gefunden",
-    "description": "Die angeforderte Ressource existiert nicht oder wurde bereits entfernt."
+    "description": "Die angeforderte Ressource existiert nicht oder wurde bereits entfernt.",
+    "leaveScope": "Zu allen meinen Organisationen wechseln"
   },
   "updateNotification": {
     "title": "Neue Version verfügbar",

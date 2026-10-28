@@ -2,6 +2,8 @@ import { Link, LinkProps } from '@tanstack/react-router'
 import { MoveLeft, Search } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@green-ecolution/ui'
+import { useOrganizationScope } from '@/lib/auth/scope/organizationScopeStore'
+import { useSwitchOrganizationScope } from '@/lib/auth/scope/useSwitchOrganizationScope'
 import { useLocalizedText, type LocalizedText } from '@/lib/i18n/localizedText'
 
 interface EntityNotFoundProps {
@@ -13,6 +15,8 @@ interface EntityNotFoundProps {
 function EntityNotFound({ entityName, backTo, backLabel }: EntityNotFoundProps) {
   const { t } = useTranslation('navigation')
   const resolve = useLocalizedText()
+  const scope = useOrganizationScope()
+  const switchScope = useSwitchOrganizationScope()
 
   return (
     <div className="container mt-6">
@@ -40,13 +44,18 @@ function EntityNotFound({ entityName, backTo, backLabel }: EntityNotFoundProps) 
           </div>
 
           {/* Action button */}
-          <div className="mt-8">
+          <div className="mt-8 flex flex-col items-center gap-3">
             <Button asChild variant="outline" className="group gap-2 px-6">
               <Link to={backTo}>
                 <MoveLeft className="w-4 h-4 transition-transform duration-base ease-emphasized group-hover:-translate-x-1 motion-reduce:transition-none" />
                 {resolve(backLabel)}
               </Link>
             </Button>
+            {scope && (
+              <Button variant="ghost" onClick={() => void switchScope(null)}>
+                {t('entityNotFound.leaveScope')}
+              </Button>
+            )}
           </div>
         </div>
       </section>

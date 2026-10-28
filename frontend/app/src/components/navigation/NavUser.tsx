@@ -1,6 +1,7 @@
 import { ChevronsUpDown } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Avatar, AvatarFallback, AvatarImage } from '@green-ecolution/ui'
+import { useScopeOrganizations } from '@/lib/auth/scope/useScopeOrganizations'
 import NavUserMenu from './NavUserMenu'
 import { navItemClasses } from './navItemStyles'
 
@@ -24,6 +25,7 @@ const NavUser = ({
   const initials = `${firstName.charAt(0)}${lastName.charAt(0)}`
   const fullName = `${firstName} ${lastName}`.trim()
   const { t } = useTranslation('navigation')
+  const { activeName } = useScopeOrganizations()
 
   return (
     <NavUserMenu email={email} side="right" onNavigate={closeSidebar}>
@@ -38,7 +40,7 @@ const NavUser = ({
         </Avatar>
         <span className={`min-w-0 flex-1 text-left leading-tight ${collapsed ? 'lg:hidden' : ''}`}>
           <span className="block truncate font-lato font-semibold tracking-[0.1]">{fullName}</span>
-          <span className="block truncate text-xs text-light/70">{email}</span>
+          <span className="block truncate text-xs text-light/70">{activeName ?? email}</span>
         </span>
         <ChevronsUpDown className={`size-4 shrink-0 ${collapsed ? 'lg:hidden' : ''}`} />
       </button>

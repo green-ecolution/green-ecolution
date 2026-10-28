@@ -10,6 +10,8 @@ import {
   DropdownMenuTrigger,
 } from '@green-ecolution/ui'
 import LanguageSwitcher from '@/components/settings/LanguageSwitcher'
+import OrganizationScopeMenu from './OrganizationScopeMenu'
+import { menuItemClasses } from './menuItemStyles'
 
 interface NavUserMenuProps {
   email: string
@@ -17,11 +19,6 @@ interface NavUserMenuProps {
   onNavigate: () => void
   children: ReactNode
 }
-
-// Menu entries mirror the sidebar nav rows (see navItemStyles); focus: replaces
-// hover: because Radix drives highlighting via focus.
-const menuItemClasses =
-  'cursor-pointer gap-x-3 rounded-xl px-3 py-2.5 font-lato font-semibold tracking-[0.1] text-light transition-colors duration-quick ease-out focus:bg-green-light/20 focus:text-green-light-200 [&_svg]:size-5'
 
 const NavUserMenu = ({ email, side, onNavigate, children }: NavUserMenuProps) => {
   const { t } = useTranslation('navigation')
@@ -41,6 +38,7 @@ const NavUserMenu = ({ email, side, onNavigate, children }: NavUserMenuProps) =>
         </p>
         <DropdownMenuSeparator className="mx-3 bg-dark-800" />
         <div className="pt-2">
+          <OrganizationScopeMenu />
           <DropdownMenuItem asChild className={menuItemClasses}>
             <Link to="/settings/profile" onClick={onNavigate}>
               <UserRound />

@@ -27,7 +27,10 @@
     "signedInAs": "Signed in as:",
     "profile": "Your profile",
     "logout": "Log out",
-    "language": "Language"
+    "language": "Language",
+    "organization": "Organization",
+    "allOrganizations": "All my organizations",
+    "searchOrganization": "Search organization …"
   },
   "breadcrumb": {
     "nav": "Breadcrumb navigation",
@@ -72,7 +75,8 @@
   },
   "entityNotFound": {
     "title": "{entityName} not found",
-    "description": "The requested resource does not exist or has already been removed."
+    "description": "The requested resource does not exist or has already been removed.",
+    "leaveScope": "Switch to all my organizations"
   },
   "updateNotification": {
     "title": "New version available",
