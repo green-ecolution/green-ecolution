@@ -13,6 +13,11 @@ Sie begrüßt dich namentlich und dient als Ausgangspunkt für den direkten Zugr
 die wichtigsten Bereiche der Anwendung, ohne dass du dich vorher durch die
 Seitennavigation klicken musst.
 
+Eine Ausnahme gibt es: Gehört deine eigene Organisation ganz oben in den Organisationsbaum,
+bist du also Mitglied der obersten Organisation der Instanz, landest du statt auf dem
+Dashboard in der [Mandantenübersicht](./admin-tenants.md). Das Dashboard siehst du dann,
+sobald du einen Mandanten geöffnet hast.
+
 ![Das persönliche Dashboard mit den sechs Kacheln unter Schnellverweise](../images/dashboard.png)
 
 ## Die Kacheln lesen
