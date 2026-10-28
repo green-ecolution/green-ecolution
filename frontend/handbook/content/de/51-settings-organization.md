@@ -82,6 +82,14 @@ du den eigenen Wert wieder aufgibst und der Zustand erneut von oben kommt. Hat e
 setzen dürfen, steht der Schalter fest, und ein Hinweis nennt die sperrende
 Organisation.
 
+Was eine übergeordnete Organisation für eine Unterorganisation einstellt, ist für diese
+verbindlich. Schaltet etwa Green Ecolution das Modul Abfall für das TBZ ab, steht am
+Schalter des TBZ **Festgelegt von Green Ecolution**, und wer nur im TBZ Rechte hat, kann
+den Schalter weder umlegen noch mit **Wieder erben** zurücksetzen. Ändern kann ihn nur,
+wer in der festlegenden Organisation oder darüber `setting:update` hat. Ein Wert, den das
+TBZ selbst gesetzt hat, bleibt dagegen offen: Die übergeordnete Organisation kann ihn
+jederzeit überschreiben und macht ihn damit ebenfalls verbindlich.
+
 Zum Ändern brauchst du zusätzlich zu `setting:read` die Berechtigung `setting:update`;
 ohne sie siehst du die Schalter nur. Gespeichert wird wie bei den übrigen Werten dieser
 Seite mit dem einen Knopf **Speichern**, der Modulschalter und Fachliche Vorgaben
