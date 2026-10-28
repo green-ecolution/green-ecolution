@@ -48,6 +48,12 @@ export interface OrganizationModuleResponse {
      */
     fixedByAncestor: boolean;
     /**
+     * The state without this organization's own switch, i.e. after returning it to inheritance.
+     * @type {boolean}
+     * @memberof OrganizationModuleResponse
+     */
+    inheritedEnabled: boolean;
+    /**
      * 
      * @type {string}
      * @memberof OrganizationModuleResponse
@@ -87,6 +93,7 @@ export interface OrganizationModuleResponse {
 export function instanceOfOrganizationModuleResponse(value: object): value is OrganizationModuleResponse {
     if (!('enabled' in value) || value['enabled'] === undefined) return false;
     if (!('fixedByAncestor' in value) || value['fixedByAncestor'] === undefined) return false;
+    if (!('inheritedEnabled' in value) || value['inheritedEnabled'] === undefined) return false;
     if (!('key' in value) || value['key'] === undefined) return false;
     if (!('origin' in value) || value['origin'] === undefined) return false;
     return true;
@@ -104,6 +111,7 @@ export function OrganizationModuleResponseFromJSONTyped(json: any, ignoreDiscrim
         
         'enabled': json['enabled'],
         'fixedByAncestor': json['fixed_by_ancestor'],
+        'inheritedEnabled': json['inherited_enabled'],
         'key': json['key'],
         'origin': SettingOriginDtoFromJSON(json['origin']),
         'ownValue': json['own_value'] == null ? undefined : json['own_value'],
@@ -125,6 +133,7 @@ export function OrganizationModuleResponseToJSONTyped(value?: OrganizationModule
         
         'enabled': value['enabled'],
         'fixed_by_ancestor': value['fixedByAncestor'],
+        'inherited_enabled': value['inheritedEnabled'],
         'key': value['key'],
         'origin': SettingOriginDtoToJSON(value['origin']),
         'own_value': value['ownValue'],

@@ -13,7 +13,7 @@ type OwnSwitches = Record<string, boolean | null>
 
 export interface ModuleActivationRow {
   key: string
-  /** The state the switch shows: the draft's own value, else the one in force. */
+  /** The state the switch shows: the draft's own value, else what inheriting gives. */
   enabled: boolean
   /** Stored origin; an unsaved flip has not changed it yet. */
   origin: SettingOriginDto
@@ -80,7 +80,7 @@ export const useModuleActivationDraft = (
         const setBy = module.setBy?.id ?? null
         return {
           key: module.key,
-          enabled: drafted ?? module.enabled,
+          enabled: drafted ?? module.inheritedEnabled,
           origin: module.origin,
           sourceId: module.source?.id ?? null,
           own: drafted,

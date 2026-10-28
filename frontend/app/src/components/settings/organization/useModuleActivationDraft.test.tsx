@@ -14,11 +14,19 @@ const response = (overrides: Partial<OrganizationModulesResponse> = {}) =>
       {
         key: 'irrigation',
         enabled: true,
+        inheritedEnabled: true,
         origin: 'inherited',
         source: { id: 'root' },
         fixedByAncestor: false,
       },
-      { key: 'waste', enabled: false, origin: 'own', ownValue: false, fixedByAncestor: false },
+      {
+        key: 'waste',
+        enabled: false,
+        inheritedEnabled: false,
+        origin: 'own',
+        ownValue: false,
+        fixedByAncestor: false,
+      },
     ],
     ...overrides,
   }) as unknown as OrganizationModulesResponse
@@ -87,6 +95,27 @@ describe('useModuleActivationDraft', () => {
     })
   })
 
+  it('shows what inheriting again gives once an own switch is dropped', async () => {
+    const { result } = await loaded(
+      response({
+        modules: [
+          {
+            key: 'waste',
+            enabled: true,
+            inheritedEnabled: false,
+            origin: 'own',
+            ownValue: true,
+            fixedByAncestor: false,
+          },
+        ],
+      }),
+    )
+
+    expect(result.current.rows[0].enabled).toBe(true)
+    act(() => result.current.setOwn('waste', null))
+    expect(result.current.rows[0]).toMatchObject({ own: null, enabled: false })
+  })
+
   it('sends only the switches that changed', async () => {
     const { result } = await loaded()
 
@@ -137,6 +166,7 @@ describe('useModuleActivationDraft', () => {
           {
             key: 'irrigation',
             enabled: true,
+            inheritedEnabled: true,
             origin: 'inherited',
             source: { id: 'root' },
             fixedByAncestor: false,
@@ -144,6 +174,7 @@ describe('useModuleActivationDraft', () => {
           {
             key: 'waste',
             enabled: true,
+            inheritedEnabled: true,
             origin: 'own',
             ownValue: true,
             setBy: { id: 'root' },
@@ -168,6 +199,7 @@ describe('useModuleActivationDraft', () => {
           {
             key: 'irrigation',
             enabled: true,
+            inheritedEnabled: true,
             origin: 'inherited',
             source: { id: 'root' },
             fixedByAncestor: false,
@@ -175,6 +207,7 @@ describe('useModuleActivationDraft', () => {
           {
             key: 'waste',
             enabled: false,
+            inheritedEnabled: false,
             origin: 'own',
             ownValue: false,
             setBy: { id: 'root' },
@@ -197,6 +230,7 @@ describe('useModuleActivationDraft', () => {
           {
             key: 'waste',
             enabled: false,
+            inheritedEnabled: false,
             origin: 'own',
             ownValue: false,
             setBy: { id: 'root' },
@@ -216,6 +250,7 @@ describe('useModuleActivationDraft', () => {
           {
             key: 'waste',
             enabled: false,
+            inheritedEnabled: false,
             origin: 'own',
             ownValue: false,
             setBy: { id: 'nord' },

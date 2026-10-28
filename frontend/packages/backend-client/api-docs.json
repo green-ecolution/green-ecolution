@@ -11957,6 +11957,7 @@
           "key",
           "enabled",
           "origin",
+          "inherited_enabled",
           "fixed_by_ancestor"
         ],
         "properties": {
@@ -11966,6 +11967,10 @@
           "fixed_by_ancestor": {
             "type": "boolean",
             "description": "The own switch was set from a level the caller does not act for, so\nthe caller can neither change nor reset it."
+          },
+          "inherited_enabled": {
+            "type": "boolean",
+            "description": "The state without this organization's own switch, i.e. after returning it to inheritance."
           },
           "key": {
             "type": "string"

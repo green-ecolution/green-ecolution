@@ -66,7 +66,15 @@ const users: UserResponse[] = [
 const modulesOf = (): OrganizationModulesResponse =>
   ({
     enforcedBy: null,
-    modules: [{ key: 'probe', enabled: true, origin: 'inherited', source: { id: 'root' } }],
+    modules: [
+      {
+        key: 'probe',
+        enabled: true,
+        inheritedEnabled: true,
+        origin: 'inherited',
+        source: { id: 'root' },
+      },
+    ],
   }) as unknown as OrganizationModulesResponse
 
 const settingsOf = (): OrganizationSettingsResponse =>
@@ -747,7 +755,9 @@ describe('OrganizationPage', () => {
   it('shows a module section only where the module is active', () => {
     modulesMap.amt = {
       ...modulesOf(),
-      modules: [{ key: 'probe', enabled: false, origin: 'own', ownValue: false }],
+      modules: [
+        { key: 'probe', enabled: false, inheritedEnabled: true, origin: 'own', ownValue: false },
+      ],
     } as unknown as OrganizationModulesResponse
     render(<OrganizationPage />)
 
