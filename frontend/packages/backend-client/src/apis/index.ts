@@ -17,3 +17,4 @@ export * from './TreeClustersApi';
 export * from './TreesApi';
 export * from './UsersApi';
 export * from './VehiclesApi';
+export * from './WasteBinsApi';

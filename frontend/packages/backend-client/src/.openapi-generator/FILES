@@ -16,6 +16,7 @@ apis/TreeClustersApi.ts
 apis/TreesApi.ts
 apis/UsersApi.ts
 apis/VehiclesApi.ts
+apis/WasteBinsApi.ts
 apis/index.ts
 index.ts
 models/AcknowledgeDataQualityRequest.ts
@@ -40,6 +41,7 @@ models/DataStatisticsResponse.ts
 models/DrivingLicense.ts
 models/ErrorBody.ts
 models/EvaluationResponse.ts
+models/FillStateDto.ts
 models/GitInfoResponse.ts
 models/IngestBatchResponse.ts
 models/IngestResultResponse.ts
@@ -65,6 +67,8 @@ models/ListResponseUserResponse.ts
 models/ListResponseUserResponseDataInner.ts
 models/ListResponseVehicleResponse.ts
 models/ListResponseVehicleResponseDataInner.ts
+models/ListResponseWasteBinResponse.ts
+models/ListResponseWasteBinResponseDataInner.ts
 models/LorawanCredentialsRequest.ts
 models/LorawanInfoResponse.ts
 models/MapInfoResponse.ts
@@ -177,6 +181,11 @@ models/VersionInfoResponse.ts
 models/ViewTicketRedeemRequest.ts
 models/ViewTicketRedeemResponse.ts
 models/ViewTicketUserResponse.ts
+models/WasteBinCreateRequest.ts
+models/WasteBinResponse.ts
+models/WasteBinUpdateRequest.ts
+models/WasteSettingsResponse.ts
+models/WasteSettingsUpdateRequest.ts
 models/WateringStatus.ts
 models/index.ts
 runtime.ts

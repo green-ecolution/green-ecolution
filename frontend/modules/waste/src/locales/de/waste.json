@@ -1,0 +1,302 @@
+{
+  "label": "Abfall",
+  "nav": {
+    "bins": "Abfallbehälter"
+  },
+  "crumb": {
+    "bins": "Abfallbehälter",
+    "new": "Neuer Abfallbehälter",
+    "edit": "Behälter bearbeiten"
+  },
+  "entity": {
+    "name": "Abfallbehälter"
+  },
+  "fillState": {
+    "full": "Voll",
+    "normal": "Normal",
+    "empty": "Geleert",
+    "unknown": "Unbekannt",
+    "withPercent": "{state} · {percent} %"
+  },
+  "list": {
+    "title": "Abfallbehälter",
+    "description": "Alle erfassten Abfallbehälter mit ihrem aktuellen Füllstand. Den Füllstand meldet ein Sensor am Behälter, eine abgeschlossene Leerungstour setzt ihn auf geleert.",
+    "createButton": "Neuen Behälter erfassen",
+    "searchLabel": "Behälter suchen",
+    "searchPlaceholder": "Nach Behälternummer suchen",
+    "filterFillState": "Füllstufe",
+    "filterNoOptions": "Keine Optionen gefunden",
+    "loadingLabel": "Abfallbehälter werden geladen",
+    "emptyMessage": "Es ist noch kein Abfallbehälter erfasst.",
+    "emptyFilteredMessage": "Kein Behälter passt zu diesen Filtern.",
+    "emptyFilteredAction": "Filter zurücksetzen",
+    "resultCount_one": "{count} Behälter",
+    "resultCount_other": "{count} Behälter",
+    "resultCountFiltered": "{filtered} von {total} Behältern"
+  },
+  "card": {
+    "numberSrLabel": "Behälternummer: ",
+    "volumeSrLabel": "Volumen: ",
+    "sensorSrLabel": "Sensor: ",
+    "noSensor": "Kein Sensor"
+  },
+  "units": {
+    "liters": "{value} l",
+    "centimeters": "{value} cm",
+    "percent": "{value} %"
+  },
+  "detail": {
+    "title": "Behälter {number}",
+    "loadingLabel": "Abfallbehälter wird geladen",
+    "notFoundBackLabel": "Zu allen Abfallbehältern",
+    "backToList": "Zu allen Abfallbehältern",
+    "editLink": "Behälter bearbeiten",
+    "moreActionsAriaLabel": "Weitere Aktionen",
+    "deleteMenuItem": "Behälter löschen",
+    "deleteDialogTitle": "Behälter {number} löschen?",
+    "deleteDialogDescription": "Der Behälter wird dauerhaft entfernt und aus allen geplanten Leerungstouren genommen. Ein verbundener Sensor wird freigegeben und bleibt aktiviert.",
+    "deleteSuccessToast": "Der Abfallbehälter wurde gelöscht.",
+    "deleteErrorToast": "Der Abfallbehälter konnte nicht gelöscht werden.",
+    "masterData": {
+      "title": "Stammdaten",
+      "numberLabel": "Behälternummer",
+      "volumeLabel": "Volumen",
+      "depthLabel": "Tiefe",
+      "coordinatesLabel": "Koordinaten",
+      "dataSourceLabel": "Datenquelle",
+      "manuallyCreated": "Manuell erfasst",
+      "lastUpdateLabel": "Zuletzt geändert"
+    },
+    "fill": {
+      "title": "Füllstand",
+      "stateLabel": "Füllstufe",
+      "levelLabel": "Füllstand",
+      "lastMeasurementLabel": "Letzte Messung",
+      "lastEmptiedLabel": "Letzte Leerung",
+      "sensorLabel": "Sensor",
+      "noMeasurement": "Noch keine Messung",
+      "neverEmptied": "Noch nicht geleert",
+      "noSensor": "Kein Sensor verbunden"
+    }
+  },
+  "form": {
+    "numberLabel": "Behälternummer",
+    "numberPlaceholder": "z. B. B-0042",
+    "volumeLabel": "Volumen in Litern",
+    "volumePlaceholder": "z. B. 1100",
+    "depthLabel": "Tiefe in Zentimetern",
+    "depthPlaceholder": "z. B. 120",
+    "depthHint": "Abstand vom Sensor bis zum Behälterboden. Daraus berechnet sich der Füllstand.",
+    "organizationLabel": "Organisation",
+    "organizationPlaceholder": "Organisation auswählen",
+    "organizationSearchPlaceholder": "Organisation suchen",
+    "organizationHint": "Die Organisation, der der Behälter gehört.",
+    "positionLabel": "Standort",
+    "positionHint": "Klicke auf die Karte, um den Standort zu setzen. Danach lässt sich der Marker verschieben.",
+    "positionMoveHint": "Ziehe den Marker, um den Standort zu ändern.",
+    "positionRequired": "Bitte den Standort auf der Karte wählen.",
+    "mapAriaLabel": "Karte zur Wahl des Behälterstandorts",
+    "createLeaveMessage": "Der neue Behälter ist noch nicht gespeichert. Seite trotzdem verlassen?",
+    "updateLeaveMessage": "Die Änderungen am Behälter sind noch nicht gespeichert. Seite trotzdem verlassen?",
+    "createSuccessMessage": "Der Abfallbehälter wurde erfasst.",
+    "updateSuccessMessage": "Der Abfallbehälter wurde gespeichert."
+  },
+  "create": {
+    "title": "Neuen Abfallbehälter erfassen",
+    "description": "Erfasse Nummer, Größe und Standort des Behälters. Einen Sensor verbindest du anschließend in der Sensorverwaltung.",
+    "backLabel": "Zu allen Abfallbehältern"
+  },
+  "update": {
+    "title": "Behälter {number} bearbeiten",
+    "description": "Ändere Nummer, Größe oder Standort des Behälters.",
+    "backLabel": "Zurück zum Behälter"
+  },
+  "statistics": {
+    "bin": {
+      "label": "Abfallbehälter"
+    }
+  },
+  "settings": {
+    "permission": {
+      "resource": {
+        "waste_bin": {
+          "label": "Abfallbehälter",
+          "pluralNoun": "Abfallbehälter",
+          "singular": "Abfallbehälter",
+          "description": "Behälter & Füllstände",
+          "hint": {
+            "read": "Abfallbehälter und Füllstände einsehen",
+            "create": "Neue Abfallbehälter erfassen",
+            "update": "Stammdaten und Standort ändern",
+            "delete": "Abfallbehälter dauerhaft entfernen"
+          }
+        },
+        "collection_plan": {
+          "label": "Leerungstouren",
+          "pluralNoun": "Leerungstouren",
+          "singular": "Leerungstour",
+          "description": "Planung & Touren",
+          "hint": {
+            "read": "Geplante und abgeschlossene Leerungstouren einsehen",
+            "create": "Neue Leerungstour anlegen (setzt das Recht Startpunkte ansehen voraus)",
+            "update": "Route, Zeit, Umfang und Status ändern",
+            "delete": "Leerungstour dauerhaft entfernen"
+          }
+        }
+      }
+    },
+    "fullThresholdLabel": "Schwellwert für „voll“",
+    "fullThresholdHint": "Ab diesem Füllstand gilt ein Behälter als voll. Das bestimmt die Füllstufe in Liste und Karte und welche Behälter die Tourenplanung vorschlägt. Bereits geplante Touren bleiben unverändert.",
+    "fullThresholdUnit": "Prozent"
+  },
+  "map": {
+    "popup": {
+      "ariaLabel": "Abfallbehälter {number} auf der Karte",
+      "title": "Behälter {number}",
+      "close": "Schließen",
+      "detailLink": "Zum Behälter",
+      "notFound": "Behälter nicht gefunden",
+      "notFoundHint": "Der Behälter existiert nicht mehr oder ist für dich nicht sichtbar."
+    }
+  },
+  "planning": {
+    "label": "Leerung",
+    "plansLabel": "Leerungstouren",
+    "stopsLabel": "Abfallbehälter",
+    "stopCountLabel": "Anzahl der Behälter",
+    "stopCount_one": "{count} Behälter",
+    "stopCount_other": "{count} Behälter",
+    "stopList": {
+      "emptyMessage": "Diese Tour enthält keine Behälter, die du sehen kannst."
+    },
+    "summary": {
+      "emptiedLabel": "Geleerte Behälter",
+      "emptiedValue": "{emptied} von {total}",
+      "emptiedDescription": "Ihr Füllstand steht wieder auf geleert.",
+      "collectedDescription": "Gesammelt: {value} Liter"
+    },
+    "outcome": {
+      "legend": "Leerung pro Behälter:",
+      "hint": "Schalte einen Behälter aus, der nicht geleert wurde. Die Menge ist freiwillig.",
+      "emptiedLabel": "{number} geleert",
+      "amountLabel": "Menge für {number} in Litern",
+      "amountPlaceholder": "optional",
+      "litersUnitLabel": "Liter",
+      "negativeAmountError": "Die Menge darf nicht negativ sein."
+    },
+    "stopPicker": {
+      "label": "Abfallbehälter",
+      "openButton": "Behälter auswählen",
+      "removeAriaLabel": "{number} entfernen",
+      "requiredError": "Wähle mindestens einen Behälter aus.",
+      "dialogTitle": "Behälter für die Tour auswählen",
+      "dialogDescription": "Hake die Behälter an, die auf dieser Tour geleert werden sollen.",
+      "searchLabel": "Behälter suchen",
+      "searchPlaceholder": "Nach Behälternummer suchen",
+      "selectFull": "Alle vollen auswählen",
+      "selectAriaLabel": "{number} auswählen",
+      "noBins": "Es ist noch kein Abfallbehälter erfasst.",
+      "noMatch": "Kein Behälter passt zu dieser Suche.",
+      "loadError": "Die Behälter konnten nicht geladen werden.",
+      "done": "Fertig"
+    },
+    "suggestions": {
+      "ariaLabel": "Vorschläge",
+      "title": "Volle Behälter",
+      "loadError": "Die vollen Behälter konnten nicht geladen werden.",
+      "emptyMessage": "Aktuell ist kein Behälter voll.",
+      "bundleButtonLabel": "Zu Leerungstour bündeln"
+    },
+    "suggestionCard": {
+      "selectAriaLabel": "{number} für Leerungstour auswählen"
+    },
+    "texts": {
+      "listDescription": "Verfolge geplante, laufende und abgeschlossene Leerungstouren.",
+      "listDescriptionCanModify": "Plane, starte und dokumentiere Leerungstouren. Ziehe eine Tour in die nächste Spalte, um ihren Status zu ändern.",
+      "createDescription": "Eine Leerungstour bildet eine Sammelroute ab, indem ihr ein Fahrzeug, ein Anhänger, Mitarbeitende und die anzufahrenden Abfallbehälter zugewiesen werden. Eine neu erstellte Tour wird automatisch als »geplant« eingestuft. Aus dem Füllstand der Behälter wird berechnet, wie viel Laderaum die Tour braucht. Bevor das Fahrzeug zurückkehrt, entlädt es an einer Station.",
+      "updateDescription": "Die Leerungstour kann in dieser Ansicht bearbeitet werden, falls bestimmte Daten nicht mehr stimmen oder zusätzliche Informationen hinterlegt werden müssen. Eine Tour erfordert immer mindestens einen Behälter, mindestens eine:n Mitarbeiter:in, die die Tour fährt, und ein Fahrzeug.",
+      "statusUpdateDescription": "Der Status einer Leerungstour beschreibt, ob sie beispielsweise gerade gefahren wird, beendet ist oder abgebrochen wurde. Beim Beenden gibst du an, welche Behälter geleert wurden. Deren Füllstand steht danach auf geleert.",
+      "routeErrorAlert": "Die Route für diese Leerungstour konnte nicht berechnet werden. Prüfe, ob das Fahrzeug Laderaum hat und unter Einstellungen → Stationen eine Station zum Entladen angelegt ist.",
+      "routePreviewAriaLabel": "Karte mit der Route und den Abfallbehältern der Tour"
+    }
+  },
+  "errors": {
+    "code": {
+      "organization_mismatch": {
+        "stops_vs_plan": "Die ausgewählten Behälter liegen außerhalb der Organisation der Leerungstour."
+      },
+      "plan": {
+        "outcome_missing": "Für mindestens einen Behälter fehlt noch die Angabe, ob er geleert wurde.",
+        "outcome_duplicate": "Für einen Behälter wurde die Leerung mehrfach angegeben.",
+        "outcome_unknown_stop": "Die Auswertung nennt einen Behälter, der nicht zur Leerungstour gehört.",
+        "unknown_stop": "Ein ausgewählter Behälter existiert nicht mehr."
+      },
+      "routing": {
+        "invalid_problem": "Aus den gewählten Angaben lässt sich keine Route berechnen. Prüfe Fahrzeug, Startpunkt und Behälter.",
+        "no_station_for_capacity": "Für Leerungstouren fehlt eine Entladestelle. Lege unter Einstellungen → Stationen eine Station mit Laderaum an."
+      },
+      "waste_bin": {
+        "number_taken": "Diese Behälternummer ist in der Organisation bereits vergeben."
+      }
+    }
+  },
+  "sensor": {
+    "target": {
+      "bin": "Abfallbehälter"
+    },
+    "binTexts": {
+      "activateAction": "Aktivieren & Behälter zuweisen",
+      "reassignAction": "Anderen Behälter zuweisen",
+      "removeLinkAction": "Behälterverknüpfung aufheben",
+      "removeConfirmTitle": "Behälterverknüpfung aufheben und Sensor zurücksetzen?",
+      "removeConfirmDescription": "Die Verknüpfung zum Behälter wird aufgehoben und der Sensor auf den Zustand „{status}“ zurückgesetzt. Anschließend kann er wie ein neuer Sensor an einem anderen Behälter aktiviert werden.",
+      "activateSuccess": "Sensor aktiviert und Behälter zugewiesen.",
+      "reassignSuccess": "Behälter gewechselt.",
+      "activateConflict": "Der Sensor oder der Behälter ist bereits zugeordnet.",
+      "reassignNotFound": "Sensor oder Behälter existiert nicht (mehr).",
+      "reassignConflict": "Der Behälter hat bereits einen anderen Sensor.",
+      "reassignFailed": "Behälterwechsel fehlgeschlagen. Bitte erneut versuchen.",
+      "scanDescription": "Halte den QR-Code auf der Sensoreinheit ruhig in den Scan-Rahmen. Wir identifizieren damit den Sensor eindeutig, bevor du ihn im nächsten Schritt einem Abfallbehälter zuordnest. Bei schlechter Beleuchtung hilft es, den Code etwas näher heranzuhalten.",
+      "alreadyLinkedDescription": "Dieser Sensor ist bereits aktiviert und einem Abfallbehälter zugeordnet."
+    },
+    "binAssignDialog": {
+      "activate": {
+        "title": "Sensor aktivieren und Behälter zuweisen",
+        "description": "Suche den Behälter nach Nummer und aktiviere den Sensor an diesem Behälter.",
+        "confirm": "Aktivieren"
+      },
+      "reassign": {
+        "description": "Wähle den neuen Behälter, dem dieser Sensor zugeordnet werden soll.",
+        "confirm": "Behälter zuweisen"
+      },
+      "saving": "Wird gespeichert …"
+    },
+    "binSearch": {
+      "label": "Behälter suchen",
+      "placeholder": "Nach Behälternummer suchen",
+      "loading": "Abfallbehälter werden geladen",
+      "failed": "Die Abfallbehälter konnten nicht geladen werden.",
+      "retry": "Erneut versuchen",
+      "empty": "Kein Behälter gefunden.",
+      "taken": "Hat bereits einen Sensor"
+    },
+    "wizard": {
+      "bin": {
+        "header": {
+          "title": "Behälter zuordnen",
+          "description": "Wähle den Abfallbehälter aus, an dem der Sensor angebracht wird. Die Liste ist nach der Entfernung zu deinem aktuellen Standort sortiert. Gespeichert wird am Sensor nur die Behälter-Zuordnung, nicht deine Koordinaten."
+        },
+        "relocateButton": "Standort aktualisieren",
+        "locatingNotice": "Standort wird ermittelt …"
+      }
+    },
+    "placement": {
+      "binLabel": "Sitzt am Behälter",
+      "mapAriaLabel": "Karte mit der Sensor-Position"
+    },
+    "linkedBin": {
+      "loadFailedTitle": "Behälter nicht geladen",
+      "loadFailedDescription": "Der verknüpfte Behälter (#{id}) konnte nicht abgerufen werden."
+    }
+  }
+}

@@ -59,7 +59,7 @@ Angabe hat Vorrang vor einem Plan, den vielleicht nur niemand abgeschlossen hat.
 Bei der Auswahl eines Fahrzeugs für einen Einsatzplan spielt weder die Verfügbarkeit noch
 der Status eine Rolle; beides dient deiner Übersicht.
 
-![Das Formular zum Anlegen eines Fahrzeugs mit Führerscheinklasse und Wasserkapazität](../images/vehicle-form.png)
+![Das Formular zum Anlegen eines Fahrzeugs mit Führerscheinklasse und Kapazitäten](../images/vehicle-form.png)
 
 ## Führerscheinklassen
 
@@ -77,7 +77,7 @@ hat, und lässt sich nicht absenden.
 
 ## Kapazitäten
 
-Ein Fahrzeug trägt mindestens eine Kapazität, jeweils in Litern. Die Wasserkapazität ist für Bewässerungstouren gedacht, der Laderaum für Leerungstouren. Ein Fahrzeug darf beide haben; lässt du ein Feld leer, hat das Fahrzeug diese Kapazität nicht. Sind beide Felder leer, weist das Formular die Eingabe mit dem Hinweis „Mindestens eine Kapazität angeben.“ zurück.
+Im Formular stehen die Kapazitäten gebündelt im Abschnitt „Kapazität“. Jedes Feld nimmt Liter entgegen und nennt darunter das Fachmodul, das diese Kapazität für seine Touren nutzt, etwa „für Leerung“. Der Wassertank dient der Bewässerung, der Laderaum den Leerungstouren. Der Abschnitt zeigt nur die Kapazitäten der Fachmodule, die für deine Organisation aktiv sind; ist keines aktiv, erscheinen beide Felder. Ein ausgeblendetes Feld behält seinen gespeicherten Wert, er geht beim Speichern nicht verloren. Ein Fahrzeug trägt mindestens eine Kapazität und darf auch beide haben; lässt du ein Feld leer, hat das Fahrzeug diese Kapazität nicht. Fehlt jede Angabe, weist das Formular die Eingabe mit dem Hinweis „Mindestens eine Kapazität angeben.“ zurück.
 
 ### Wasserkapazität
 

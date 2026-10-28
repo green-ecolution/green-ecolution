@@ -1,0 +1,302 @@
+{
+  "label": "Waste",
+  "nav": {
+    "bins": "Waste bins"
+  },
+  "crumb": {
+    "bins": "Waste bins",
+    "new": "New waste bin",
+    "edit": "Edit bin"
+  },
+  "entity": {
+    "name": "Waste bin"
+  },
+  "fillState": {
+    "full": "Full",
+    "normal": "Normal",
+    "empty": "Emptied",
+    "unknown": "Unknown",
+    "withPercent": "{state} · {percent} %"
+  },
+  "list": {
+    "title": "Waste bins",
+    "description": "Every registered waste bin with its current fill level. A sensor on the bin reports the fill level, a finished collection tour sets it to emptied.",
+    "createButton": "Register new bin",
+    "searchLabel": "Search bins",
+    "searchPlaceholder": "Search by bin number",
+    "filterFillState": "Fill state",
+    "filterNoOptions": "No options found",
+    "loadingLabel": "Loading waste bins",
+    "emptyMessage": "No waste bin has been registered yet.",
+    "emptyFilteredMessage": "No bin matches these filters.",
+    "emptyFilteredAction": "Reset filters",
+    "resultCount_one": "{count} bin",
+    "resultCount_other": "{count} bins",
+    "resultCountFiltered": "{filtered} of {total} bins"
+  },
+  "card": {
+    "numberSrLabel": "Bin number: ",
+    "volumeSrLabel": "Volume: ",
+    "sensorSrLabel": "Sensor: ",
+    "noSensor": "No sensor"
+  },
+  "units": {
+    "liters": "{value} l",
+    "centimeters": "{value} cm",
+    "percent": "{value} %"
+  },
+  "detail": {
+    "title": "Bin {number}",
+    "loadingLabel": "Loading waste bin",
+    "notFoundBackLabel": "To all waste bins",
+    "backToList": "To all waste bins",
+    "editLink": "Edit bin",
+    "moreActionsAriaLabel": "More actions",
+    "deleteMenuItem": "Delete bin",
+    "deleteDialogTitle": "Delete bin {number}?",
+    "deleteDialogDescription": "The bin is removed permanently and taken out of every planned collection tour. An attached sensor is released and stays activated.",
+    "deleteSuccessToast": "The waste bin was deleted.",
+    "deleteErrorToast": "The waste bin could not be deleted.",
+    "masterData": {
+      "title": "Master data",
+      "numberLabel": "Bin number",
+      "volumeLabel": "Volume",
+      "depthLabel": "Depth",
+      "coordinatesLabel": "Coordinates",
+      "dataSourceLabel": "Data source",
+      "manuallyCreated": "Created manually",
+      "lastUpdateLabel": "Last changed"
+    },
+    "fill": {
+      "title": "Fill level",
+      "stateLabel": "Fill state",
+      "levelLabel": "Fill level",
+      "lastMeasurementLabel": "Last measurement",
+      "lastEmptiedLabel": "Last emptied",
+      "sensorLabel": "Sensor",
+      "noMeasurement": "No measurement yet",
+      "neverEmptied": "Not emptied yet",
+      "noSensor": "No sensor attached"
+    }
+  },
+  "form": {
+    "numberLabel": "Bin number",
+    "numberPlaceholder": "e.g. B-0042",
+    "volumeLabel": "Volume in liters",
+    "volumePlaceholder": "e.g. 1100",
+    "depthLabel": "Depth in centimeters",
+    "depthPlaceholder": "e.g. 120",
+    "depthHint": "Distance from the sensor to the bottom of the bin. The fill level is calculated from it.",
+    "organizationLabel": "Organization",
+    "organizationPlaceholder": "Select organization",
+    "organizationSearchPlaceholder": "Search organization",
+    "organizationHint": "The organization that owns the bin.",
+    "positionLabel": "Location",
+    "positionHint": "Click on the map to set the location. Afterwards the marker can be dragged.",
+    "positionMoveHint": "Drag the marker to change the location.",
+    "positionRequired": "Please choose the location on the map.",
+    "mapAriaLabel": "Map for choosing the bin location",
+    "createLeaveMessage": "The new bin has not been saved yet. Leave the page anyway?",
+    "updateLeaveMessage": "The changes to the bin have not been saved yet. Leave the page anyway?",
+    "createSuccessMessage": "The waste bin was registered.",
+    "updateSuccessMessage": "The waste bin was saved."
+  },
+  "create": {
+    "title": "Register new waste bin",
+    "description": "Enter number, size and location of the bin. You attach a sensor afterwards in the sensor management.",
+    "backLabel": "To all waste bins"
+  },
+  "update": {
+    "title": "Edit bin {number}",
+    "description": "Change number, size or location of the bin.",
+    "backLabel": "Back to the bin"
+  },
+  "statistics": {
+    "bin": {
+      "label": "Waste bins"
+    }
+  },
+  "settings": {
+    "permission": {
+      "resource": {
+        "waste_bin": {
+          "label": "Waste bins",
+          "pluralNoun": "waste bins",
+          "singular": "waste bin",
+          "description": "Bins & fill levels",
+          "hint": {
+            "read": "View waste bins and fill levels",
+            "create": "Register new waste bins",
+            "update": "Change master data and location",
+            "delete": "Permanently remove waste bins"
+          }
+        },
+        "collection_plan": {
+          "label": "Collection tours",
+          "pluralNoun": "collection tours",
+          "singular": "collection tour",
+          "description": "Planning & tours",
+          "hint": {
+            "read": "View planned and completed collection tours",
+            "create": "Create a new collection tour (requires the right to view start points)",
+            "update": "Change route, time, scope and status",
+            "delete": "Permanently remove a collection tour"
+          }
+        }
+      }
+    },
+    "fullThresholdLabel": "Threshold for \"full\"",
+    "fullThresholdHint": "From this fill level a bin counts as full. It decides the fill state in list and map and which bins the tour planning suggests. Tours already planned stay unchanged.",
+    "fullThresholdUnit": "Percent"
+  },
+  "map": {
+    "popup": {
+      "ariaLabel": "Waste bin {number} on the map",
+      "title": "Bin {number}",
+      "close": "Close",
+      "detailLink": "Open bin",
+      "notFound": "Bin not found",
+      "notFoundHint": "The bin no longer exists or is not visible to you."
+    }
+  },
+  "planning": {
+    "label": "Collection",
+    "plansLabel": "Collection tours",
+    "stopsLabel": "Waste bins",
+    "stopCountLabel": "Number of bins",
+    "stopCount_one": "{count} bin",
+    "stopCount_other": "{count} bins",
+    "stopList": {
+      "emptyMessage": "This tour contains no bins you can see."
+    },
+    "summary": {
+      "emptiedLabel": "Emptied bins",
+      "emptiedValue": "{emptied} of {total}",
+      "emptiedDescription": "Their fill level is back to emptied.",
+      "collectedDescription": "Collected: {value} liters"
+    },
+    "outcome": {
+      "legend": "Collection per bin:",
+      "hint": "Switch off a bin that was not emptied. The amount is optional.",
+      "emptiedLabel": "{number} emptied",
+      "amountLabel": "Amount for {number} in liters",
+      "amountPlaceholder": "optional",
+      "litersUnitLabel": "liters",
+      "negativeAmountError": "The amount must not be negative."
+    },
+    "stopPicker": {
+      "label": "Waste bins",
+      "openButton": "Select bins",
+      "removeAriaLabel": "Remove {number}",
+      "requiredError": "Select at least one bin.",
+      "dialogTitle": "Select bins for the tour",
+      "dialogDescription": "Tick the bins this tour should empty.",
+      "searchLabel": "Search bins",
+      "searchPlaceholder": "Search by bin number",
+      "selectFull": "Select all full bins",
+      "selectAriaLabel": "Select {number}",
+      "noBins": "No waste bin has been recorded yet.",
+      "noMatch": "No bin matches this search.",
+      "loadError": "The bins could not be loaded.",
+      "done": "Done"
+    },
+    "suggestions": {
+      "ariaLabel": "Suggestions",
+      "title": "Full bins",
+      "loadError": "The full bins could not be loaded.",
+      "emptyMessage": "No bin is full right now.",
+      "bundleButtonLabel": "Bundle into collection tour"
+    },
+    "suggestionCard": {
+      "selectAriaLabel": "Select {number} for a collection tour"
+    },
+    "texts": {
+      "listDescription": "Track planned, running and finished collection tours.",
+      "listDescriptionCanModify": "Plan, start and document collection tours. Drag a tour into the next column to change its status.",
+      "createDescription": "A collection tour describes a collection route by assigning a vehicle, a trailer, staff and the waste bins to visit. A newly created tour is automatically classified as »planned«. The bins' fill levels determine how much cargo space the tour needs. Before returning, the vehicle unloads at a station.",
+      "updateDescription": "The collection tour can be edited in this view if some data is no longer correct or additional information needs to be recorded. A tour always requires at least one bin, at least one staff member to drive it, and a vehicle.",
+      "statusUpdateDescription": "The status of a collection tour describes whether it is, for example, being driven, finished or canceled. When finishing it you state which bins were emptied. Their fill level then reads emptied.",
+      "routeErrorAlert": "The route for this collection tour could not be calculated. Check that the vehicle has cargo space and that a station to unload at exists under Settings → Stations.",
+      "routePreviewAriaLabel": "Map with the route and the waste bins of the tour"
+    }
+  },
+  "errors": {
+    "code": {
+      "organization_mismatch": {
+        "stops_vs_plan": "The selected bins lie outside the collection tour's organization."
+      },
+      "plan": {
+        "outcome_missing": "At least one bin still lacks whether it was emptied.",
+        "outcome_duplicate": "The emptying of a bin was reported more than once.",
+        "outcome_unknown_stop": "The report names a bin that is not part of the collection tour.",
+        "unknown_stop": "A selected bin no longer exists."
+      },
+      "routing": {
+        "invalid_problem": "No route can be calculated from the chosen details. Check vehicle, start point and bins.",
+        "no_station_for_capacity": "Collection tours lack an unloading point. Add a station with cargo space under Settings → Stations."
+      },
+      "waste_bin": {
+        "number_taken": "This bin number is already taken in the organization."
+      }
+    }
+  },
+  "sensor": {
+    "target": {
+      "bin": "Waste bin"
+    },
+    "binTexts": {
+      "activateAction": "Activate & assign bin",
+      "reassignAction": "Assign another bin",
+      "removeLinkAction": "Remove bin link",
+      "removeConfirmTitle": "Remove the bin link and reset the sensor?",
+      "removeConfirmDescription": "The link to the bin is removed and the sensor falls back to the state \"{status}\". Afterwards it can be activated at another bin like a new sensor.",
+      "activateSuccess": "Sensor activated and bin assigned.",
+      "reassignSuccess": "Bin changed.",
+      "activateConflict": "The sensor or the bin is already assigned.",
+      "reassignNotFound": "The sensor or the bin no longer exists.",
+      "reassignConflict": "The bin already has another sensor.",
+      "reassignFailed": "Changing the bin failed. Please try again.",
+      "scanDescription": "Hold the QR code on the sensor unit steady inside the scan frame. It identifies the sensor unambiguously before you assign it to a waste bin in the next step. In poor light it helps to hold the code a little closer.",
+      "alreadyLinkedDescription": "This sensor is already activated and assigned to a waste bin."
+    },
+    "binAssignDialog": {
+      "activate": {
+        "title": "Activate sensor and assign bin",
+        "description": "Search the bin by number and activate the sensor at this bin.",
+        "confirm": "Activate"
+      },
+      "reassign": {
+        "description": "Pick the new bin this sensor should be assigned to.",
+        "confirm": "Assign bin"
+      },
+      "saving": "Saving …"
+    },
+    "binSearch": {
+      "label": "Search bins",
+      "placeholder": "Search by bin number",
+      "loading": "Loading waste bins",
+      "failed": "The waste bins could not be loaded.",
+      "retry": "Try again",
+      "empty": "No bin found.",
+      "taken": "Already has a sensor"
+    },
+    "wizard": {
+      "bin": {
+        "header": {
+          "title": "Assign bin",
+          "description": "Pick the waste bin the sensor is mounted on. The list is sorted by distance to your current position. Only the bin assignment is stored on the sensor, not your coordinates."
+        },
+        "relocateButton": "Update position",
+        "locatingNotice": "Locating …"
+      }
+    },
+    "placement": {
+      "binLabel": "Mounted on bin",
+      "mapAriaLabel": "Map with the sensor position"
+    },
+    "linkedBin": {
+      "loadFailedTitle": "Bin not loaded",
+      "loadFailedDescription": "The linked bin (#{id}) could not be retrieved."
+    }
+  }
+}

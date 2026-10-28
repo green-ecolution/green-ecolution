@@ -5,14 +5,14 @@ use crate::{
     helpers::{TestApp, spawn_app_with_modules, spawn_app_with_modules_and_routing},
     module_host::switch,
     settings_repo::child_org,
-    test_module::TestModule,
+    test_module::{KEY, TestModule},
 };
 
 const ROOT: &str = "01980000-0000-7000-8000-000000000001";
 
 async fn app() -> TestApp {
     let app = spawn_app_with_modules(vec![Box::new(TestModule::new(Default::default()))]).await;
-    switch(&app, ROOT.parse().unwrap(), Some(true)).await;
+    switch(&app, KEY, ROOT.parse().unwrap(), Some(true)).await;
     app
 }
 
@@ -63,11 +63,11 @@ async fn plan(app: &TestApp, stops: &[Uuid], vehicle: Uuid) -> Value {
     plan_in(app, stops, vehicle, ROOT.parse().unwrap()).await
 }
 
-async fn put_status(app: &TestApp, id: &str, body: Value) -> reqwest::Response {
+pub async fn put_status(app: &TestApp, id: &str, body: Value) -> reqwest::Response {
     app.put_json(&format!("/api/v1/plans/{id}"), &body).await
 }
 
-fn update_body(plan: &Value, status: &str, outcomes: Option<Value>) -> Value {
+pub fn update_body(plan: &Value, status: &str, outcomes: Option<Value>) -> Value {
     json!({
         "date": plan["date"],
         "description": plan["description"],
@@ -172,7 +172,7 @@ async fn a_disabled_module_refuses_new_plans() {
     let app = app().await;
     let stop = thing(&app).await;
     let vehicle = cargo_vehicle(&app).await;
-    switch(&app, ROOT.parse().unwrap(), Some(false)).await;
+    switch(&app, KEY, ROOT.parse().unwrap(), Some(false)).await;
     let res = app
         .post_json(
             "/api/v1/plans",
@@ -219,7 +219,7 @@ async fn listing_leaves_out_plans_where_the_module_is_switched_off() {
     let root_plan = plan(&app, &[thing(&app).await], vehicle).await;
     plan_in(&app, &[thing_in(&app, child).await], vehicle, child).await;
 
-    switch(&app, child, Some(false)).await;
+    switch(&app, KEY, child, Some(false)).await;
 
     let res: Value = app
         .get("/api/v1/plans?module=test_module")
@@ -300,7 +300,7 @@ async fn a_collection_route_without_an_unloading_station_is_refused() {
         &streamlet.uri(),
     )
     .await;
-    switch(&app, ROOT.parse().unwrap(), Some(true)).await;
+    switch(&app, KEY, ROOT.parse().unwrap(), Some(true)).await;
     let stop = thing(&app).await;
     let vehicle = cargo_vehicle(&app).await;
 
@@ -325,7 +325,7 @@ async fn a_collection_route_with_an_unloading_station_asks_the_optimizer_to_retu
         &streamlet.uri(),
     )
     .await;
-    switch(&app, ROOT.parse().unwrap(), Some(true)).await;
+    switch(&app, KEY, ROOT.parse().unwrap(), Some(true)).await;
     let station = app
         .post_json(
             "/api/v1/routing/start-points",

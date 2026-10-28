@@ -22,7 +22,7 @@ export interface ModuleI18n {
   load: (lng: Language) => Promise<Record<string, object>>
 }
 
-export type NavSectionKey = 'greenspaces' | 'planning' | 'analysis'
+export type NavSectionKey = 'greenspaces' | 'assets' | 'planning' | 'analysis'
 
 export interface ModuleNavLink {
   key: string

@@ -1,0 +1,34 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT o.id AS organization_id,\n                      w.full_threshold_percent AS \"full_threshold_percent?\",\n                      COALESCE(s.descendants_may_override, TRUE) AS \"descendants_may_override!\"\n               FROM organizations o\n               LEFT JOIN waste_settings w ON w.organization_id = o.id\n               LEFT JOIN organization_settings s ON s.organization_id = o.id\n               WHERE o.id = ANY($1)",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "organization_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "full_threshold_percent?",
+        "type_info": "Int2"
+      },
+      {
+        "ordinal": 2,
+        "name": "descendants_may_override!",
+        "type_info": "Bool"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "UuidArray"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      null
+    ]
+  },
+  "hash": "fdc0af9b8b4f3d3ada9b2d0e82642a9965a09df912c966d937d023d88d854910"
+}

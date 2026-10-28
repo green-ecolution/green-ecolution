@@ -14,20 +14,22 @@ const COMPOSITION_ROOTS = new Set([
 ])
 const FORBIDDEN: [string, RegExp][] = [
   ['imports a module package', /@green-ecolution\/module-/],
-  ['names a module package path', /modules\/irrigation/],
+  ['names a module package path', /modules\/(irrigation|waste)/],
   [
     'links a module route',
-    /['"`]\/(trees|treecluster|evaluations)\b|['"`]\/map\/(tree|treecluster|watering-plan)\b/,
+    /['"`]\/(trees|treecluster|evaluations|waste-bins)\b|['"`]\/map\/(tree|treecluster|watering-plan)\b/,
   ],
   [
     'uses irrigation api',
-    /\b(treeApi|clusterApi|evaluationApi|irrigationApi|treeQueries|clusterQueries)\b/,
+    /\b(treeApi|clusterApi|evaluationApi|irrigationApi|treeQueries|clusterQueries|wasteBinApi|wasteBinQueries)\b/,
   ],
   ['names the irrigation module', /['"]irrigation['"]/],
+  ['names the waste module', /['"]waste['"]/],
   [
     'names an irrigation resource',
     /\b(tree|tree_cluster|watering_plan):(read|create|update|delete)\b/,
   ],
+  ['names a waste resource', /\b(waste_bin|collection_plan):(read|create|update|delete)\b/],
 ]
 
 function sourceFiles(dir: string): string[] {

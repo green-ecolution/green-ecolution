@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE waste_bins SET last_emptied_at = $2\n            WHERE id = $1 AND (last_emptied_at IS NULL OR last_emptied_at < $2)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "7bfbaf7d1f08fcfff5781df1e7830a5ad6e6eed4d0fed58eebf397c43014d44e"
+}

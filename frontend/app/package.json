@@ -23,6 +23,7 @@
     "@green-ecolution/backend-client": "workspace:*",
     "@green-ecolution/domain-wasm": "workspace:*",
     "@green-ecolution/module-irrigation": "workspace:*",
+    "@green-ecolution/module-waste": "workspace:*",
     "@green-ecolution/plugin-interface": "workspace:*",
     "@green-ecolution/ui": "workspace:*",
     "@hookform/resolvers": "^5.9.1",

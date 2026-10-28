@@ -1,0 +1,88 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT id, number, latitude, longitude, volume_liters, depth_cm, organization_id,\n                      provider, additional_informations,\n                      fill_fraction, fill_measured_at, last_emptied_at\n            FROM waste_bins WHERE id = ANY($1::uuid[])",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "number",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "latitude",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 3,
+        "name": "longitude",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 4,
+        "name": "volume_liters",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 5,
+        "name": "depth_cm",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 6,
+        "name": "organization_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 7,
+        "name": "provider",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 8,
+        "name": "additional_informations",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 9,
+        "name": "fill_fraction",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 10,
+        "name": "fill_measured_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 11,
+        "name": "last_emptied_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "UuidArray"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "a80885b2860ab866ac4fb13701869c9a21ec3d93ced5d1d0b980ad29c842565d"
+}

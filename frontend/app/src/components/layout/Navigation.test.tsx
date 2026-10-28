@@ -216,6 +216,46 @@ describe('Navigation', () => {
     expect(position('Sensoren')).toBeLessThan(position('Auswertung'))
   })
 
+  describe('assets section', () => {
+    const respondWithModules = (active: string[]) =>
+      server.use(
+        http.get('*/v1/modules', () =>
+          HttpResponse.json({
+            modules: ['irrigation', 'waste'],
+            organizations: [{ organizationId: 'a', active }],
+          }),
+        ),
+      )
+
+    it('lists the waste bins under the assets headline while the module is active', async () => {
+      permissions.mockReturnValue(new Set(['waste_bin:read']))
+      respondWithModules(['waste'])
+      renderNavigation()
+
+      expect(await screen.findByText('Bestand')).toBeInTheDocument()
+      expect(screen.getByText('Abfallbehälter')).toBeInTheDocument()
+    })
+
+    it('omits the section while the waste module is not active', async () => {
+      permissions.mockReturnValue(UNRESTRICTED)
+      respondWithModules(['irrigation'])
+      renderNavigation()
+
+      await screen.findByText('Bäume')
+      expect(screen.queryByText('Bestand')).not.toBeInTheDocument()
+    })
+
+    it('omits the section without the right to read waste bins', async () => {
+      permissions.mockReturnValue(new Set(['tree:read']))
+      respondWithModules(['irrigation', 'waste'])
+      renderNavigation()
+
+      await screen.findByText('Bäume')
+      expect(screen.queryByText('Bestand')).not.toBeInTheDocument()
+      expect(screen.queryByText('Abfallbehälter')).not.toBeInTheDocument()
+    })
+  })
+
   it('keeps the always-open settings entry for a user without any grant', async () => {
     permissions.mockReturnValue(new Set<string>())
 

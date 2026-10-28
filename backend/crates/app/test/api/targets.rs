@@ -4,14 +4,14 @@ use uuid::Uuid;
 use crate::{
     helpers::{TestApp, spawn_app_with_modules},
     module_host::switch,
-    test_module::TestModule,
+    test_module::{KEY, TestModule},
 };
 
 const ROOT: &str = "01980000-0000-7000-8000-000000000001";
 
 async fn app() -> TestApp {
     let app = spawn_app_with_modules(vec![Box::new(TestModule::new(Default::default()))]).await;
-    switch(&app, ROOT.parse().unwrap(), Some(true)).await;
+    switch(&app, KEY, ROOT.parse().unwrap(), Some(true)).await;
     app
 }
 
@@ -100,7 +100,7 @@ async fn a_sensor_on_a_thing_cannot_also_go_onto_a_tree() {
 async fn a_disabled_module_refuses_new_attachments() {
     let app = app().await;
     let thing = thing(&app, "a").await;
-    switch(&app, ROOT.parse().unwrap(), Some(false)).await;
+    switch(&app, KEY, ROOT.parse().unwrap(), Some(false)).await;
     let sensor = crate::sensors::create_prepared_sensor(&app, "eui-d").await;
     let res = app
         .post_json(

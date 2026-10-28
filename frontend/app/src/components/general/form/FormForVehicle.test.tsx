@@ -10,6 +10,15 @@ import { FORM_VALIDATION_MODE } from '@/hooks/form/useEntityForm'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from '@green-ecolution/ui'
 import { VehicleType, DrivingLicense, VehicleAvailability } from '@green-ecolution/backend-client'
+import type { ModuleManifest } from '@/modules/types'
+
+const planningManifest = (key: string, capacityKind: string, labelKey: string) =>
+  ({ key, planning: { capacityKind, labelKey } }) as unknown as ModuleManifest
+
+const activeManifests = vi.fn((): ModuleManifest[] => [])
+vi.mock('@/modules/useActiveModules', () => ({
+  useActiveModules: () => ({ manifests: activeManifests(), isActive: () => true }),
+}))
 
 function TestWrapper({
   children,
@@ -55,6 +64,7 @@ describe('FormForVehicle', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    activeManifests.mockReturnValue([])
   })
 
   it('renders all form fields', () => {
@@ -67,7 +77,7 @@ describe('FormForVehicle', () => {
     expect(screen.getByLabelText(/kennzeichen/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/fahrzeugmodell/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/fahrzeugtyp/i)).toBeInTheDocument()
-    expect(screen.getByLabelText(/wasserkapazität/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/wassertank/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/verfügbarkeit/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/führerscheinklasse/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/höhe des fahrzeugs/i)).toBeInTheDocument()
@@ -222,7 +232,7 @@ describe('FormForVehicle', () => {
       </TestWrapper>,
     )
 
-    const waterCapacityInput = screen.getByLabelText(/wasserkapazität/i)
+    const waterCapacityInput = screen.getByLabelText(/wassertank/i)
     await user.clear(waterCapacityInput)
     await user.type(waterCapacityInput, '1500')
 
@@ -276,7 +286,7 @@ describe('FormForVehicle', () => {
     await user.clear(heightInput)
     await user.type(heightInput, '1,88')
 
-    const waterCapacityInput = screen.getByLabelText(/wasserkapazität/i)
+    const waterCapacityInput = screen.getByLabelText(/wassertank/i)
     await user.clear(waterCapacityInput)
     await user.type(waterCapacityInput, '1500')
 
@@ -295,14 +305,78 @@ describe('FormForVehicle', () => {
     expect(submitted.weight).toBe(3.5)
   })
 
-  it('offers a cargo volume field next to the water capacity', () => {
+  it('offers both capacities in one group when no planning module is active', () => {
     render(
       <TestWrapper defaultValues={defaultFormValues}>
         <FormForVehicle displayError={false} onSubmit={mockOnSubmit} />
       </TestWrapper>,
     )
 
+    const group = screen.getByRole('group', { name: /kapazität/i })
+    expect(within(group).getByLabelText(/wassertank/i)).toBeInTheDocument()
+    expect(within(group).getByLabelText(/laderaum/i)).toBeInTheDocument()
+    expect(within(group).getByText('Mindestens eine Kapazität angeben.')).toBeInTheDocument()
+  })
+
+  it('shows only the capacity of the active planning module', () => {
+    activeManifests.mockReturnValue([planningManifest('a', 'water', 'vehicle:entity.name')])
+
+    render(
+      <TestWrapper defaultValues={defaultFormValues}>
+        <FormForVehicle displayError={false} onSubmit={mockOnSubmit} />
+      </TestWrapper>,
+    )
+
+    expect(screen.getByLabelText(/wassertank/i)).toBeInTheDocument()
+    expect(screen.queryByLabelText(/laderaum/i)).not.toBeInTheDocument()
+    expect(screen.getByText('für Fahrzeug')).toBeInTheDocument()
+  })
+
+  it('names the module behind each capacity when both are planned', () => {
+    activeManifests.mockReturnValue([
+      planningManifest('a', 'water', 'vehicle:entity.name'),
+      planningManifest('b', 'cargo_volume', 'vehicle:list.title'),
+    ])
+
+    render(
+      <TestWrapper defaultValues={defaultFormValues}>
+        <FormForVehicle displayError={false} onSubmit={mockOnSubmit} />
+      </TestWrapper>,
+    )
+
+    expect(screen.getByLabelText(/wassertank/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/laderaum/i)).toBeInTheDocument()
+    expect(screen.getByText('für Fahrzeug')).toBeInTheDocument()
+    expect(screen.getByText('für Alle Fahrzeuge')).toBeInTheDocument()
+  })
+
+  it('still submits the stored value of a hidden capacity', async () => {
+    const user = userEvent.setup()
+    activeManifests.mockReturnValue([planningManifest('a', 'water', 'vehicle:entity.name')])
+
+    render(
+      <TestWrapper
+        defaultValues={{
+          ...defaultFormValues,
+          numberPlate: 'HH-AB-1234',
+          model: 'Sprinter',
+          height: 2.5,
+          width: 2,
+          length: 6,
+          weight: 3.5,
+          waterCapacity: 1000,
+          cargoVolumeCapacity: 4000,
+        }}
+      >
+        <FormForVehicle displayError={false} onSubmit={mockOnSubmit} />
+      </TestWrapper>,
+    )
+
+    await user.click(screen.getByRole('button', { name: /speichern/i }))
+
+    await waitFor(() => expect(mockOnSubmit).toHaveBeenCalled())
+    const submitted = mockOnSubmit.mock.calls[0][0] as VehicleForm
+    expect(submitted.cargoVolumeCapacity).toBe(4000)
   })
 
   it('asks for at least one capacity when both are empty', async () => {
@@ -316,7 +390,24 @@ describe('FormForVehicle', () => {
 
     await user.click(screen.getByRole('button', { name: /speichern/i }))
 
-    expect(await screen.findAllByText(/mindestens eine kapazität angeben/i)).not.toHaveLength(0)
+    const group = screen.getByRole('group', { name: /kapazität/i })
+    expect(await within(group).findByRole('alert')).toHaveTextContent('vehicle.capacities.empty')
     expect(mockOnSubmit).not.toHaveBeenCalled()
+  })
+
+  it('shows the empty-capacities error even when the water field is hidden', async () => {
+    const user = userEvent.setup()
+    activeManifests.mockReturnValue([planningManifest('b', 'cargo_volume', 'vehicle:entity.name')])
+
+    render(
+      <TestWrapper defaultValues={{ ...defaultFormValues, waterCapacity: undefined }}>
+        <FormForVehicle displayError={false} onSubmit={mockOnSubmit} />
+      </TestWrapper>,
+    )
+
+    await user.click(screen.getByRole('button', { name: /speichern/i }))
+
+    const group = screen.getByRole('group', { name: /kapazität/i })
+    expect(await within(group).findByRole('alert')).toHaveTextContent('vehicle.capacities.empty')
   })
 })

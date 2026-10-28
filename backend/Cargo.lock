@@ -142,6 +142,8 @@ dependencies = [
  "utoipa",
  "utoipa-axum",
  "uuid",
+ "waste-domain",
+ "waste-server",
  "wiremock",
 ]
 
@@ -1276,6 +1278,7 @@ dependencies = [
  "serde_json",
  "uuid",
  "wasm-bindgen",
+ "waste-domain",
 ]
 
 [[package]]
@@ -5628,6 +5631,43 @@ dependencies = [
  "hashbrown 0.15.5",
  "indexmap 2.14.0",
  "semver",
+]
+
+[[package]]
+name = "waste-domain"
+version = "0.8.0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "claims",
+ "domain",
+ "serde_json",
+ "sqlx",
+ "uuid",
+]
+
+[[package]]
+name = "waste-server"
+version = "0.8.0"
+dependencies = [
+ "async-trait",
+ "axum",
+ "chrono",
+ "config",
+ "domain",
+ "rust_decimal",
+ "secrecy",
+ "serde",
+ "serde_json",
+ "server",
+ "sqlx",
+ "thiserror 2.0.21",
+ "tokio",
+ "tracing",
+ "utoipa",
+ "utoipa-axum",
+ "uuid",
+ "waste-domain",
 ]
 
 [[package]]
