@@ -234,6 +234,9 @@
       "routing": {
         "invalid_problem": "No route can be calculated from the chosen details. Check vehicle, start point and bins.",
         "no_station_for_capacity": "Collection tours lack an unloading point. Add a station with cargo space under Settings → Stations."
+      },
+      "waste_bin": {
+        "number_taken": "This bin number is already taken in the organization."
       }
     }
   },

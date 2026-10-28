@@ -234,6 +234,9 @@
       "routing": {
         "invalid_problem": "Aus den gewählten Angaben lässt sich keine Route berechnen. Prüfe Fahrzeug, Startpunkt und Behälter.",
         "no_station_for_capacity": "Für Leerungstouren fehlt eine Entladestelle. Lege unter Einstellungen → Stationen eine Station mit Laderaum an."
+      },
+      "waste_bin": {
+        "number_taken": "Diese Behälternummer ist in der Organisation bereits vergeben."
       }
     }
   },

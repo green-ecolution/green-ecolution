@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, renderHook, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from '@green-ecolution/ui'
+import { ResponseError } from '@green-ecolution/backend-client'
 import useStore from '@/store/store'
 import { wasteBinApi } from '../api/client'
 import { wasteBinFixtures } from '../test/handlers'
@@ -87,6 +88,29 @@ describe('useWasteBinForm', () => {
           depthCm: 120,
         },
       }),
+    )
+  })
+
+  it('names a taken bin number in its own words', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    vi.spyOn(wasteBinApi, 'createWasteBin').mockRejectedValue(
+      new ResponseError(
+        new Response(JSON.stringify({ error: 'taken', code: 'waste_bin.number_taken' }), {
+          status: 409,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      ),
+    )
+    const { result } = renderHook(() => useWasteBinForm('create', { initForm: draft }), {
+      wrapper,
+    })
+
+    act(() => result.current.mutate(draft))
+
+    await waitFor(() =>
+      expect(result.current.error?.message).toBe(
+        'Diese Behälternummer ist in der Organisation bereits vergeben.',
+      ),
     )
   })
 })
