@@ -22,15 +22,18 @@ export interface TenantRow {
   planCount: number | null
 }
 
-/** One row per direct child of the root, with everything below it folded in. */
+/**
+ * One row per direct child of the root, with everything below it folded in.
+ * `null` while the list holds no root, e.g. a refetch under a tenant scope.
+ */
 export function tenantRows(
   organizations: OrganizationResponse[],
   modules: ModuleListResponse | undefined,
   counts: OrganizationResourceCountsResponse[] | undefined,
-): TenantRow[] {
+): TenantRow[] | null {
   const root = organizations.find((org) => org.parentId == null)
   const tree = root ? buildTree(organizations, root.id) : null
-  if (!tree) return []
+  if (!tree) return null
 
   const activeByOrg = new Map(
     (modules?.organizations ?? []).map((entry) => [entry.organizationId, entry.active]),

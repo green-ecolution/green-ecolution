@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
+import { Loading } from '@green-ecolution/ui'
 import { modulesQuery, organizationQueries } from '@/api/queries'
 import EntityList from '@/components/general/EntityList'
 import ListPageHeader from '@/components/general/ListPageHeader'
@@ -37,6 +38,11 @@ const TenantOverview = () => {
     } finally {
       setPendingId(null)
     }
+  }
+
+  // Under a tenant scope the list has no root until the router sends the user on.
+  if (rows === null) {
+    return <Loading className="mt-20 justify-center" label={t('tenants.loadingLabel')} />
   }
 
   return (

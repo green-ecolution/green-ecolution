@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { OrganizationResponse } from '@green-ecolution/backend-client'
-import { tenantRows } from './tenantRows'
+import { tenantRows as tenantRowsOrNull } from './tenantRows'
 
 const org = (
   id: string,
@@ -16,6 +16,12 @@ const EXTERN_A1 = org('extern-a1', 'Extern A1', 'extern-a', 1)
 const ANDERE = org('andere', 'Andere Stadt', 'root', 4)
 
 const ORGS = [ROOT, TBZ, EXTERN_A, EXTERN_A1, ANDERE]
+
+const tenantRows = (...args: Parameters<typeof tenantRowsOrNull>) => {
+  const rows = tenantRowsOrNull(...args)
+  if (rows === null) throw new Error('expected rows')
+  return rows
+}
 
 describe('tenantRows', () => {
   it('turns only the direct children of the root into rows, sorted by name', () => {
@@ -72,7 +78,11 @@ describe('tenantRows', () => {
     expect(andere.activeModules).toEqual([])
   })
 
-  it('is empty without a root in the list', () => {
-    expect(tenantRows([TBZ, EXTERN_A], undefined, undefined)).toEqual([])
+  it('is null without a root in the list', () => {
+    expect(tenantRowsOrNull([TBZ, EXTERN_A], undefined, undefined)).toBeNull()
+  })
+
+  it('gives an empty list for a root without children', () => {
+    expect(tenantRows([ROOT], undefined, undefined)).toEqual([])
   })
 })

@@ -8,6 +8,12 @@ import { getOrganizationScope, useOrganizationScope } from './organizationScopeS
 export const isRootMember = (me: UserResponse | undefined): boolean =>
   me?.organization != null && me.organization.parentId == null
 
+/** Pages that concern the instance, not a tenant; every other route is operational. */
+export const ADMIN_MODE_PATHS = ['/admin', '/settings', '/info', '/help', '/debug'] as const
+
+export const isAdminModePath = (pathname: string): boolean =>
+  ADMIN_MODE_PATHS.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))
+
 /**
  * Admin mode: a root member working without a scope sees the instance, not a
  * tenant. It needs a real login; the demo bypass has no home organization, so

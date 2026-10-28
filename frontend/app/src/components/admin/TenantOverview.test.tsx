@@ -149,6 +149,15 @@ describe('TenantOverview', () => {
     expect(navigate).not.toHaveBeenCalled()
   })
 
+  it('shows the loading label, not the empty state, while the list holds no root', async () => {
+    respondWith([{ id: TBZ, parent_id: ROOT, name: 'TBZ', member_count: 5 }])
+
+    renderOverview()
+
+    expect(await screen.findByText('Mandanten werden geladen …')).toBeInTheDocument()
+    expect(screen.queryByText('Diese Instanz hat noch keine Mandanten.')).not.toBeInTheDocument()
+  })
+
   it('shows the empty state with a link to the organization page', async () => {
     respondWith([{ id: ROOT, parent_id: null, name: 'Green Ecolution', member_count: 1 }])
 

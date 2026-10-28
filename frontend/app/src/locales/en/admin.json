@@ -8,7 +8,7 @@
     "loadError": "The tenants could not be loaded.",
     "openError": "The tenant could not be opened.",
     "open": "Open as tenant",
-    "openSrLabel": "Open {name} as tenant",
+    "openSrLabel": "Open as tenant: {name}",
     "card": {
       "subOrganizations": "Sub-organizations",
       "members": "Members",

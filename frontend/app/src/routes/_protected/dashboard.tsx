@@ -1,21 +1,13 @@
 import { Fragment } from 'react'
-import { createFileRoute, Link, redirect } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { useCurrentUser } from '@/lib/auth/useCurrentUser'
 import { LinkCard, LinkCardTitle, LinkCardDescription, LinkCardFooter } from '@green-ecolution/ui'
 import { cardDescriptionKeys, coreCardsShown } from '@/modules/dashboard'
 import { useActiveModules } from '@/modules/useActiveModules'
-import { isAdminMode } from '@/lib/auth/scope/adminMode'
 
 export const Route = createFileRoute('/_protected/dashboard')({
   component: Dashboard,
-  // Every landing link points here; the admin shell is reached by redirect
-  // instead of touching each of them.
-  beforeLoad: async ({ context }) => {
-    if (await isAdminMode(context.queryClient)) {
-      throw redirect({ to: '/admin', replace: true })
-    }
-  },
 })
 
 function Dashboard() {
