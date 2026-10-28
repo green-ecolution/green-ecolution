@@ -86,6 +86,7 @@ export * from './PluginResponse';
 export * from './PluginSensorCreateRequest';
 export * from './PluginUpdateRequest';
 export * from './PluginViewResponse';
+export * from './ReachableOrganizationResponse';
 export * from './ReadinessResponse';
 export * from './RegionEvaluationResponse';
 export * from './RegionResponse';

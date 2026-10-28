@@ -8135,6 +8135,51 @@
         }
       }
     },
+    "/v1/users/me/organizations": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "List the organizations the authenticated user works in",
+        "description": "Every organization any of the caller's roles reaches, with its parent, for the organization scope switcher. Needs no permission beyond authentication and ignores `X-Organization-Scope`, so the list stays complete while a scope is selected.",
+        "operationId": "listMyOrganizations",
+        "responses": {
+          "200": {
+            "description": "Reachable organizations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReachableOrganizationResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/users/{user_id}": {
       "put": {
         "tags": [
@@ -13348,6 +13393,30 @@
           "name": "TBZ Baumkataster",
           "slug": "tbz-baumkataster",
           "view_ticket": "gev_3f2a9c41d7b05e6a8f1c2d3e4b5a69788796a5b4c3d2e1f00112233445566778"
+        }
+      },
+      "ReachableOrganizationResponse": {
+        "type": "object",
+        "description": "An organization the caller works in, as offered by the scope switcher.",
+        "required": [
+          "id",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "parent_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          }
         }
       },
       "ReadinessResponse": {

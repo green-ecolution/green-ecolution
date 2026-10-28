@@ -105,6 +105,7 @@ models/PluginResponse.ts
 models/PluginSensorCreateRequest.ts
 models/PluginUpdateRequest.ts
 models/PluginViewResponse.ts
+models/ReachableOrganizationResponse.ts
 models/ReadinessResponse.ts
 models/RegionEvaluationResponse.ts
 models/RegionResponse.ts

@@ -19,6 +19,7 @@ import type {
   ErrorBody,
   ListResponseUserResponse,
   MapInfoResponse,
+  ReachableOrganizationResponse,
   RoleResponse,
   SetOrganizationRequest,
   UserRegisterRequest,
@@ -34,6 +35,8 @@ import {
     ListResponseUserResponseToJSON,
     MapInfoResponseFromJSON,
     MapInfoResponseToJSON,
+    ReachableOrganizationResponseFromJSON,
+    ReachableOrganizationResponseToJSON,
     RoleResponseFromJSON,
     RoleResponseToJSON,
     SetOrganizationRequestFromJSON,
@@ -236,6 +239,37 @@ export class UsersApi extends runtime.BaseAPI {
      */
     async getMyMapView(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<MapInfoResponse> {
         const response = await this.getMyMapViewRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Every organization any of the caller\'s roles reaches, with its parent, for the organization scope switcher. Needs no permission beyond authentication and ignores `X-Organization-Scope`, so the list stays complete while a scope is selected.
+     * List the organizations the authenticated user works in
+     */
+    async listMyOrganizationsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<ReachableOrganizationResponse>>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/v1/users/me/organizations`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(ReachableOrganizationResponseFromJSON));
+    }
+
+    /**
+     * Every organization any of the caller\'s roles reaches, with its parent, for the organization scope switcher. Needs no permission beyond authentication and ignores `X-Organization-Scope`, so the list stays complete while a scope is selected.
+     * List the organizations the authenticated user works in
+     */
+    async listMyOrganizations(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<ReachableOrganizationResponse>> {
+        const response = await this.listMyOrganizationsRaw(initOverrides);
         return await response.value();
     }
 
