@@ -1,0 +1,12 @@
+DELETE FROM operation_plan_stops WHERE plan_id IN (SELECT id FROM operation_plans WHERE module_key = 'waste');
+DELETE FROM operation_plan_users WHERE plan_id IN (SELECT id FROM operation_plans WHERE module_key = 'waste');
+DELETE FROM operation_plan_vehicles WHERE plan_id IN (SELECT id FROM operation_plans WHERE module_key = 'waste');
+DELETE FROM operation_plans WHERE module_key = 'waste';
+DELETE FROM sensor_data WHERE sensor_id LIKE 'sensor-bin-%';
+DELETE FROM sensor_attachments WHERE module_key = 'waste';
+DELETE FROM sensor_lorawan WHERE id LIKE 'sensor-bin-%';
+DELETE FROM sensors WHERE id LIKE 'sensor-bin-%';
+DELETE FROM waste_bins;
+DELETE FROM vehicle_capacities WHERE kind = 'cargo_volume';
+DELETE FROM vehicles WHERE id = '019e3fcb-2a51-7601-8000-000000000601'::uuid;
+DELETE FROM organization_modules WHERE module_key = 'waste' AND organization_id = '01980000-0000-7000-8000-000000000002';
