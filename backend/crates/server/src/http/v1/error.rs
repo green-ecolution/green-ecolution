@@ -106,6 +106,7 @@ fn auth_error_response(e: &AuthError) -> (StatusCode, String) {
         | AuthError::PluginProxySessionInvalid => StatusCode::UNAUTHORIZED,
         AuthError::Forbidden | AuthError::PluginDisabled => StatusCode::FORBIDDEN,
         AuthError::IdpUnavailable(_) => StatusCode::SERVICE_UNAVAILABLE,
+        AuthError::InvalidOrganizationScope => StatusCode::BAD_REQUEST,
     };
     let message = match e {
         AuthError::IdpUnavailable(_) => "identity provider unavailable".to_string(),
@@ -167,7 +168,9 @@ impl IntoResponse for ServiceError {
             ServiceError::OrganizationMismatch(kind) => {
                 (StatusCode::UNPROCESSABLE_ENTITY, kind.to_string())
             }
-            ServiceError::ModuleDisabled { .. } => (StatusCode::FORBIDDEN, self.to_string()),
+            ServiceError::ModuleDisabled { .. } | ServiceError::InvalidOrganizationScope => {
+                (StatusCode::FORBIDDEN, self.to_string())
+            }
             ServiceError::Module { kind, .. } => match kind {
                 ModuleErrorKind::Conflict => (StatusCode::CONFLICT, self.to_string()),
                 ModuleErrorKind::Unprocessable => {

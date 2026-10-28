@@ -242,7 +242,7 @@ pub async fn update_user(
                 .authorization_service
                 .context_for(user.caller())
                 .await?;
-            if !ctx.permissions.allows(permission) {
+            if !ctx.allows_anywhere(permission) {
                 return Err(AuthError::Forbidden.into());
             }
         }
@@ -287,7 +287,7 @@ pub async fn list_user_roles(
                 .authorization_service
                 .context_for(user.caller())
                 .await?;
-            if !ctx.permissions.allows(permission) {
+            if !ctx.allows_anywhere(permission) {
                 return Err(AuthError::Forbidden.into());
             }
         }

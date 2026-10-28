@@ -9,8 +9,9 @@ use domain::{
     organization::{Organization, root_organization_id},
 };
 
-/// Target org for a create: explicit payload wins, then the acting user's
-/// own organization; the demo bypass falls back to the root org.
+/// Target org for a create: explicit payload wins, then the scope the caller
+/// picked, then the acting user's own organization; the demo bypass falls
+/// back to the root org.
 pub async fn resolve_target_org(
     users: &UserService,
     authorization: &AuthorizationService,
@@ -19,6 +20,9 @@ pub async fn resolve_target_org(
 ) -> Result<Id<Organization>, ServiceError> {
     if let Some(org) = payload_org {
         return Ok(Id::new(org));
+    }
+    if let Some(scope) = caller.scope {
+        return Ok(scope);
     }
     if let Some(org) = users.organization_of(caller.user_id).await? {
         return Ok(org);

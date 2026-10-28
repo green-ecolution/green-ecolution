@@ -79,12 +79,36 @@ impl AuthorizationService {
         }
     }
 
+    /// Refuses a scope the user could not pick instead of ignoring it, so a
+    /// stale scope fails loudly rather than silently widening the request.
     #[tracing::instrument(level = "debug", skip_all, fields(user.id = %caller.user_id))]
     pub async fn context_for(&self, caller: Caller) -> Result<AccessContext, ServiceError> {
-        if !self.enforced || caller.user_id.is_nil() {
-            return Ok(AccessContext::unrestricted());
+        let bypass = !self.enforced || caller.user_id.is_nil();
+        let Some(scope) = caller.scope else {
+            return if bypass {
+                Ok(AccessContext::unrestricted())
+            } else {
+                self.unscoped_context(caller.user_id).await
+            };
+        };
+        let ctx = if bypass {
+            // The unrestricted context carries no tree, and narrowing needs one.
+            AccessContext {
+                hierarchy: self.org_reader.hierarchy().await?,
+                ..AccessContext::unrestricted()
+            }
+        } else {
+            self.unscoped_context(caller.user_id).await?
+        };
+        if ctx.admits_scope(scope) {
+            Ok(ctx.with_scope(scope))
+        } else {
+            Err(ServiceError::InvalidOrganizationScope)
         }
-        let roles = self.role_reader.roles_for_user(caller.user_id).await?;
+    }
+
+    async fn unscoped_context(&self, user_id: Uuid) -> Result<AccessContext, ServiceError> {
+        let roles = self.role_reader.roles_for_user(user_id).await?;
         let grants = roles
             .into_iter()
             .filter_map(|r| {
@@ -415,6 +439,65 @@ mod tests {
                 .await
                 .is_ok()
         );
+    }
+
+    #[tokio::test]
+    async fn a_scope_narrows_and_one_outside_reach_is_refused() {
+        let (root, tbz, firma) = (Id::new_v7(), Id::new_v7(), Id::new_v7());
+        let user = Uuid::now_v7();
+        let svc = AuthorizationService::new(
+            Arc::new(StubOrgs {
+                pairs: vec![(root, None), (tbz, Some(root)), (firma, Some(tbz))],
+            }),
+            Arc::new(StubRoles {
+                by_user: vec![(user, role_in(tbz, &[widget_read()]))],
+            }),
+            true,
+        );
+        let scoped = Caller {
+            user_id: user,
+            scope: Some(firma),
+        };
+        assert!(svc.require(scoped, widget_read(), firma).await.is_ok());
+        assert!(svc.require(scoped, widget_read(), tbz).await.is_err());
+
+        let above = Caller {
+            user_id: user,
+            scope: Some(root),
+        };
+        assert!(matches!(
+            svc.context_for(above).await,
+            Err(ServiceError::InvalidOrganizationScope)
+        ));
+    }
+
+    #[tokio::test]
+    async fn demo_bypass_narrows_to_a_known_scope() {
+        let (root, tbz, firma) = (Id::new_v7(), Id::new_v7(), Id::new_v7());
+        let svc = AuthorizationService::new(
+            Arc::new(StubOrgs {
+                pairs: vec![(root, None), (tbz, Some(root)), (firma, Some(tbz))],
+            }),
+            Arc::new(StubRoles { by_user: vec![] }),
+            false,
+        );
+        let scoped = Caller {
+            user_id: Uuid::nil(),
+            scope: Some(tbz),
+        };
+        assert_eq!(
+            svc.visible_orgs_for(scoped, widget_read()).await.unwrap(),
+            domain::authorization::Visibility::Only(BTreeSet::from([tbz, firma]))
+        );
+
+        let unknown = Caller {
+            user_id: Uuid::nil(),
+            scope: Some(Id::new_v7()),
+        };
+        assert!(matches!(
+            svc.context_for(unknown).await,
+            Err(ServiceError::InvalidOrganizationScope)
+        ));
     }
 
     #[tokio::test]
