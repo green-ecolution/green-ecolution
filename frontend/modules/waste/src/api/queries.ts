@@ -22,21 +22,47 @@ const fetchAllBins = async (): Promise<WasteBinResponse[]> => {
   return [first, ...rest].flatMap((page) => page.data)
 }
 
+const binsInStopOrder = (bins: WasteBinResponse[], ids: string[]): WasteBinResponse[] => {
+  const byId = new Map(bins.map((bin) => [bin.id, bin]))
+  return ids.flatMap((id) => byId.get(id) ?? [])
+}
+
+const MARKERS_KEY = ['waste-bins', 'markers'] as const
+const MARKERS_STALE_TIME = 5 * 60_000
+
+const list = (params?: ListWasteBinsRequest) =>
+  queryOptions<ListResponseWasteBinResponse>({
+    queryKey: ['waste-bins', 'list', params ?? {}],
+    queryFn: () => wasteBinApi.listWasteBins(params),
+  })
+
 export const wasteBinQueries = {
   all: () => ['waste-bins'] as const,
 
-  list: (params?: ListWasteBinsRequest) =>
-    queryOptions<ListResponseWasteBinResponse>({
-      queryKey: ['waste-bins', 'list', params ?? {}],
-      queryFn: () => wasteBinApi.listWasteBins(params),
-    }),
+  list,
 
   markers: () =>
     queryOptions<WasteBinResponse[]>({
-      queryKey: ['waste-bins', 'markers'],
+      queryKey: MARKERS_KEY,
       queryFn: fetchAllBins,
-      staleTime: 5 * 60_000,
+      staleTime: MARKERS_STALE_TIME,
     }),
+
+  /**
+   * The bins behind a plan's stops, in stop order. Reads the visible bins the
+   * map already holds; stops the reader may not see, or that were deleted, are
+   * missing from the result.
+   */
+  byIds: (ids: string[]) =>
+    queryOptions<WasteBinResponse[], Error, WasteBinResponse[]>({
+      queryKey: MARKERS_KEY,
+      queryFn: fetchAllBins,
+      staleTime: MARKERS_STALE_TIME,
+      select: (bins) => binsInStopOrder(bins, ids),
+    }),
+
+  /** Full by the caller's own organization's threshold, see `listWasteBins`. */
+  full: () => list({ fillState: 'full', page: 1, perPage: MARKER_PAGE_SIZE }),
 
   detail: (id: string) =>
     queryOptions<WasteBinResponse>({

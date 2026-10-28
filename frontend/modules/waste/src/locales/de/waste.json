@@ -153,5 +153,83 @@
       "close": "Schließen",
       "detailLink": "Zum Behälter"
     }
+  },
+  "planning": {
+    "label": "Leerung",
+    "plansLabel": "Leerungstouren",
+    "stopsLabel": "Abfallbehälter",
+    "stopCountLabel": "Anzahl der Behälter",
+    "stopCount_one": "{count} Behälter",
+    "stopCount_other": "{count} Behälter",
+    "stopList": {
+      "emptyMessage": "Diese Tour enthält keine Behälter, die du sehen kannst."
+    },
+    "summary": {
+      "emptiedLabel": "Geleerte Behälter",
+      "emptiedValue": "{emptied} von {total}",
+      "emptiedDescription": "Ihr Füllstand steht wieder auf geleert.",
+      "collectedDescription": "Gesammelt: {value} Liter"
+    },
+    "outcome": {
+      "legend": "Leerung pro Behälter:",
+      "hint": "Schalte einen Behälter aus, der nicht geleert wurde. Die Menge ist freiwillig.",
+      "emptiedLabel": "{number} geleert",
+      "amountLabel": "Menge für {number} in Litern",
+      "amountPlaceholder": "optional",
+      "litersUnitLabel": "Liter",
+      "negativeAmountError": "Die Menge darf nicht negativ sein."
+    },
+    "stopPicker": {
+      "label": "Abfallbehälter",
+      "openButton": "Behälter auswählen",
+      "removeAriaLabel": "{number} entfernen",
+      "requiredError": "Wähle mindestens einen Behälter aus.",
+      "dialogTitle": "Behälter für die Tour auswählen",
+      "dialogDescription": "Hake die Behälter an, die auf dieser Tour geleert werden sollen.",
+      "searchLabel": "Behälter suchen",
+      "searchPlaceholder": "Nach Behälternummer suchen",
+      "selectFull": "Alle vollen auswählen",
+      "selectAriaLabel": "{number} auswählen",
+      "noBins": "Es ist noch kein Abfallbehälter erfasst.",
+      "noMatch": "Kein Behälter passt zu dieser Suche.",
+      "loadError": "Die Behälter konnten nicht geladen werden.",
+      "done": "Fertig"
+    },
+    "suggestions": {
+      "ariaLabel": "Vorschläge",
+      "title": "Volle Behälter",
+      "loadError": "Die vollen Behälter konnten nicht geladen werden.",
+      "emptyMessage": "Aktuell ist kein Behälter voll.",
+      "bundleButtonLabel": "Zu Leerungstour bündeln"
+    },
+    "suggestionCard": {
+      "selectAriaLabel": "{number} für Leerungstour auswählen"
+    },
+    "texts": {
+      "listDescription": "Verfolge geplante, laufende und abgeschlossene Leerungstouren.",
+      "listDescriptionCanModify": "Plane, starte und dokumentiere Leerungstouren. Ziehe eine Tour in die nächste Spalte, um ihren Status zu ändern.",
+      "createDescription": "Eine Leerungstour bildet eine Sammelroute ab, indem ihr ein Fahrzeug, ein Anhänger, Mitarbeitende und die anzufahrenden Abfallbehälter zugewiesen werden. Eine neu erstellte Tour wird automatisch als »geplant« eingestuft. Aus dem Füllstand der Behälter wird berechnet, wie viel Laderaum die Tour braucht. Bevor das Fahrzeug zurückkehrt, entlädt es an einer Station.",
+      "updateDescription": "Die Leerungstour kann in dieser Ansicht bearbeitet werden, falls bestimmte Daten nicht mehr stimmen oder zusätzliche Informationen hinterlegt werden müssen. Eine Tour erfordert immer mindestens einen Behälter, mindestens eine:n Mitarbeiter:in, die die Tour fährt, und ein Fahrzeug.",
+      "statusUpdateDescription": "Der Status einer Leerungstour beschreibt, ob sie beispielsweise gerade gefahren wird, beendet ist oder abgebrochen wurde. Beim Beenden gibst du an, welche Behälter geleert wurden. Deren Füllstand steht danach auf geleert.",
+      "routeErrorAlert": "Die Route für diese Leerungstour konnte nicht berechnet werden. Prüfe, ob das Fahrzeug Laderaum hat und unter Einstellungen → Stationen eine Station zum Entladen angelegt ist.",
+      "routePreviewAriaLabel": "Karte mit der Route und den Abfallbehältern der Tour"
+    }
+  },
+  "errors": {
+    "code": {
+      "organization_mismatch": {
+        "stops_vs_plan": "Die ausgewählten Behälter liegen außerhalb der Organisation der Leerungstour."
+      },
+      "plan": {
+        "outcome_missing": "Für mindestens einen Behälter fehlt noch die Angabe, ob er geleert wurde.",
+        "outcome_duplicate": "Für einen Behälter wurde die Leerung mehrfach angegeben.",
+        "outcome_unknown_stop": "Die Auswertung nennt einen Behälter, der nicht zur Leerungstour gehört.",
+        "unknown_stop": "Ein ausgewählter Behälter existiert nicht mehr."
+      },
+      "routing": {
+        "invalid_problem": "Aus den gewählten Angaben lässt sich keine Route berechnen. Prüfe Fahrzeug, Startpunkt und Behälter.",
+        "no_station_for_capacity": "Für Leerungstouren fehlt eine Entladestelle. Lege unter Einstellungen → Stationen eine Station mit Laderaum an."
+      }
+    }
   }
 }

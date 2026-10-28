@@ -1,6 +1,7 @@
 import { Trash2 } from 'lucide-react'
 import type { ModuleManifest } from '@/modules/types'
 import { wasteMap } from './map'
+import { wastePlanning } from './planning'
 import { WASTE } from './lib/targets'
 import { wasteResources } from './resources'
 
@@ -31,6 +32,7 @@ export const wasteManifest: ModuleManifest = {
   },
   resources: wasteResources,
   map: wasteMap,
+  planning: wastePlanning,
   statistics: {
     bin: {
       icon: Trash2,

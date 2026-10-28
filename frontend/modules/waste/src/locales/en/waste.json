@@ -153,5 +153,83 @@
       "close": "Close",
       "detailLink": "Open bin"
     }
+  },
+  "planning": {
+    "label": "Collection",
+    "plansLabel": "Collection tours",
+    "stopsLabel": "Waste bins",
+    "stopCountLabel": "Number of bins",
+    "stopCount_one": "{count} bin",
+    "stopCount_other": "{count} bins",
+    "stopList": {
+      "emptyMessage": "This tour contains no bins you can see."
+    },
+    "summary": {
+      "emptiedLabel": "Emptied bins",
+      "emptiedValue": "{emptied} of {total}",
+      "emptiedDescription": "Their fill level is back to emptied.",
+      "collectedDescription": "Collected: {value} liters"
+    },
+    "outcome": {
+      "legend": "Collection per bin:",
+      "hint": "Switch off a bin that was not emptied. The amount is optional.",
+      "emptiedLabel": "{number} emptied",
+      "amountLabel": "Amount for {number} in liters",
+      "amountPlaceholder": "optional",
+      "litersUnitLabel": "liters",
+      "negativeAmountError": "The amount must not be negative."
+    },
+    "stopPicker": {
+      "label": "Waste bins",
+      "openButton": "Select bins",
+      "removeAriaLabel": "Remove {number}",
+      "requiredError": "Select at least one bin.",
+      "dialogTitle": "Select bins for the tour",
+      "dialogDescription": "Tick the bins this tour should empty.",
+      "searchLabel": "Search bins",
+      "searchPlaceholder": "Search by bin number",
+      "selectFull": "Select all full bins",
+      "selectAriaLabel": "Select {number}",
+      "noBins": "No waste bin has been recorded yet.",
+      "noMatch": "No bin matches this search.",
+      "loadError": "The bins could not be loaded.",
+      "done": "Done"
+    },
+    "suggestions": {
+      "ariaLabel": "Suggestions",
+      "title": "Full bins",
+      "loadError": "The full bins could not be loaded.",
+      "emptyMessage": "No bin is full right now.",
+      "bundleButtonLabel": "Bundle into collection tour"
+    },
+    "suggestionCard": {
+      "selectAriaLabel": "Select {number} for a collection tour"
+    },
+    "texts": {
+      "listDescription": "Track planned, running and finished collection tours.",
+      "listDescriptionCanModify": "Plan, start and document collection tours. Drag a tour into the next column to change its status.",
+      "createDescription": "A collection tour describes a collection route by assigning a vehicle, a trailer, staff and the waste bins to visit. A newly created tour is automatically classified as »planned«. The bins' fill levels determine how much cargo space the tour needs. Before returning, the vehicle unloads at a station.",
+      "updateDescription": "The collection tour can be edited in this view if some data is no longer correct or additional information needs to be recorded. A tour always requires at least one bin, at least one staff member to drive it, and a vehicle.",
+      "statusUpdateDescription": "The status of a collection tour describes whether it is, for example, being driven, finished or canceled. When finishing it you state which bins were emptied. Their fill level then reads emptied.",
+      "routeErrorAlert": "The route for this collection tour could not be calculated. Check that the vehicle has cargo space and that a station to unload at exists under Settings → Stations.",
+      "routePreviewAriaLabel": "Map with the route and the waste bins of the tour"
+    }
+  },
+  "errors": {
+    "code": {
+      "organization_mismatch": {
+        "stops_vs_plan": "The selected bins lie outside the collection tour's organization."
+      },
+      "plan": {
+        "outcome_missing": "At least one bin still lacks whether it was emptied.",
+        "outcome_duplicate": "The emptying of a bin was reported more than once.",
+        "outcome_unknown_stop": "The report names a bin that is not part of the collection tour.",
+        "unknown_stop": "A selected bin no longer exists."
+      },
+      "routing": {
+        "invalid_problem": "No route can be calculated from the chosen details. Check vehicle, start point and bins.",
+        "no_station_for_capacity": "Collection tours lack an unloading point. Add a station with cargo space under Settings → Stations."
+      }
+    }
   }
 }
