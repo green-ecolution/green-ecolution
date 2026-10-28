@@ -6,6 +6,7 @@ import { Bell, Building2, MapPin, Puzzle, UserRound, Users } from 'lucide-react'
 import { Badge } from '@green-ecolution/ui'
 import { infoQueries } from '@/api/queries'
 import { usePermissions } from '@/lib/auth/usePermissions'
+import { useAdminMode } from '@/lib/auth/scope/adminMode'
 import { SETTINGS_NAV, visibleSettingsNav } from './settingsNav'
 
 const ICONS = { UserRound, Building2, Bell, Users, Puzzle, MapPin } as const
@@ -21,7 +22,8 @@ const SettingsLayout = ({ children }: SettingsLayoutProps) => {
   const enabledFeatures = new Set(
     (services?.items ?? []).filter((item) => item.enabled).map((item) => item.name),
   )
-  const items = visibleSettingsNav(SETTINGS_NAV, perms, enabledFeatures)
+  const adminMode = useAdminMode()
+  const items = visibleSettingsNav(SETTINGS_NAV, perms, enabledFeatures, adminMode)
 
   return (
     <div

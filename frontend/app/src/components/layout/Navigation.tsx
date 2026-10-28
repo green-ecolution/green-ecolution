@@ -1,4 +1,17 @@
-import { ArrowLeftRight, BookOpen, Bug, Car, LogIn, Map, Puzzle, Settings } from 'lucide-react'
+import {
+  ArrowLeftRight,
+  BookOpen,
+  Bug,
+  Building2,
+  Car,
+  Info,
+  LogIn,
+  Map,
+  Network,
+  Puzzle,
+  Settings,
+  Users,
+} from 'lucide-react'
 import * as React from 'react'
 import { useCallback } from 'react'
 import { LinkProps } from '@tanstack/react-router'
@@ -23,7 +36,8 @@ import {
 import { useActiveModulesOptional } from '@/modules/useActiveModules'
 import type { I18nKey, ModuleManifest, NavSectionKey } from '@/modules/types'
 import { usePermissions } from '@/lib/auth/usePermissions'
-import { pluginViewsQuery } from '@/api/queries'
+import { useAdminMode } from '@/lib/auth/scope/adminMode'
+import { infoQueries, pluginViewsQuery } from '@/api/queries'
 import type { PluginNavEntryResponse } from '@/api/backendApi'
 
 interface NavigationProps {
@@ -38,7 +52,7 @@ interface NavLinkData extends LinkProps {
 }
 
 interface NavSectionData {
-  key: NavSectionKey | 'public' | 'plugins'
+  key: NavSectionKey | 'public' | 'plugins' | 'instance'
   headline: string
   links: NavLinkData[]
 }
@@ -201,6 +215,73 @@ const pluginNavSection = (
   })),
 })
 
+// What a root member sees instead of the operational sections: the pages that
+// concern the instance as a whole. Tenant work happens inside a scope.
+const adminNavData = (t: TFunction<'navigation'>, pluginsEnabled: boolean): NavSectionData[] => [
+  {
+    key: 'instance',
+    headline: t('sidebar.headlineInstance'),
+    links: [
+      {
+        key: 'nav-admin-tenants',
+        label: t('sidebar.tenants'),
+        icon: <Building2 className="w-5 h-5" />,
+        to: '/admin',
+      },
+      {
+        key: 'nav-admin-organization',
+        label: t('sidebar.organization'),
+        icon: <Network className="w-5 h-5" />,
+        to: '/settings/organization',
+      },
+      {
+        key: 'nav-admin-team',
+        label: t('sidebar.team'),
+        icon: <Users className="w-5 h-5" />,
+        to: '/settings/team',
+      },
+      ...(pluginsEnabled
+        ? [
+            {
+              key: 'nav-admin-plugins',
+              label: t('sidebar.plugins'),
+              icon: <Puzzle className="w-5 h-5" />,
+              to: '/settings/plugin',
+            } as NavLinkData,
+          ]
+        : []),
+      {
+        key: 'nav-admin-info',
+        label: t('sidebar.info'),
+        icon: <Info className="w-5 h-5" />,
+        to: '/info',
+      },
+    ],
+  },
+  {
+    key: 'analysis',
+    headline: t('sidebar.headlineMore'),
+    links: [
+      {
+        key: 'nav-more-help',
+        label: t('sidebar.help'),
+        icon: <BookOpen className="w-5 h-5" />,
+        to: '/help',
+      },
+      ...(import.meta.env.DEV
+        ? [
+            {
+              key: 'nav-more-debug',
+              label: t('sidebar.debug'),
+              icon: <Bug className="w-5 h-5" />,
+              to: '/debug',
+            } as NavLinkData,
+          ]
+        : []),
+    ],
+  },
+]
+
 interface NavSectionsProps {
   sections: NavSectionData[]
   collapsed: boolean
@@ -230,14 +311,23 @@ const NavSections: React.FC<NavSectionsProps> = ({ sections, collapsed, onLinkCl
 const ProtectedNavSections: React.FC<Omit<NavSectionsProps, 'sections'>> = (props) => {
   const { t } = useTranslation('navigation')
   const { i18n } = useTranslation()
-  const { data: pluginViews = [] } = useQuery(pluginViewsQuery())
+  const admin = useAdminMode()
+  const { data: pluginViews = [] } = useQuery({ ...pluginViewsQuery(), enabled: !admin })
+  const { data: services } = useQuery({ ...infoQueries.services(), enabled: admin })
   const perms = usePermissions()
   const { manifests } = useActiveModulesOptional()
-  const sections = visibleNavSections(
-    [...protectedNavData(t, (key) => i18n.t(key), manifests), pluginNavSection(t, pluginViews)],
-    perms,
-    routePermissionsFor(manifests),
+  const routePermissions = routePermissionsFor(manifests)
+
+  const pluginsEnabled = (services?.items ?? []).some(
+    (item) => item.name === 'plugins' && item.enabled,
   )
+  const sections = admin
+    ? visibleNavSections(adminNavData(t, pluginsEnabled), perms, routePermissions)
+    : visibleNavSections(
+        [...protectedNavData(t, (key) => i18n.t(key), manifests), pluginNavSection(t, pluginViews)],
+        perms,
+        routePermissions,
+      )
 
   return <NavSections sections={sections} {...props} />
 }

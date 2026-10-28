@@ -72,3 +72,14 @@ describe('visibleSettingsNav', () => {
     ).not.toContain('stations')
   })
 })
+
+describe('visibleSettingsNav in admin mode', () => {
+  it('hides the stations entry, which belongs to a tenant', () => {
+    const features = new Set(['routing', 'plugins'])
+    const normal = visibleSettingsNav(SETTINGS_NAV, UNRESTRICTED, features)
+    const admin = visibleSettingsNav(SETTINGS_NAV, UNRESTRICTED, features, true)
+    expect(keysOf(normal)).toContain('stations')
+    expect(keysOf(admin)).not.toContain('stations')
+    expect(keysOf(admin)).toContain('organization')
+  })
+})

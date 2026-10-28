@@ -18,6 +18,9 @@ export type RoutePermissions = Readonly<Record<string, PermissionRequirement>>
 export const CORE_ROUTE_PERMISSIONS: RoutePermissions = {
   '/sensors': ['sensor:read'],
   '/vehicles': ['vehicle:read'],
+  '/settings/organization': ['organization:read'],
+  '/settings/team': ['user:read', 'role:read'],
+  '/settings/plugin': ['plugin:read'],
   '/settings/team/members': ['user:read'],
   '/settings/team/roles': ['role:read'],
 }
