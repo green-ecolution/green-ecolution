@@ -10,7 +10,7 @@ import { Loading } from '@green-ecolution/ui'
 import { Suspense } from 'react'
 import { useTranslation } from 'react-i18next'
 import DeleteSection from '../general/DeleteSection'
-import { planApi } from '@/api/backendApi'
+import { planApi, VehicleType } from '@/api/backendApi'
 import { planStatusQueryRoots } from '@/lib/queryInvalidation'
 import { planningManifests, planTextKey } from '@/modules/planning'
 import { useActiveModules } from '@/modules/useActiveModules'
@@ -67,8 +67,10 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
     : t('common:state.noData')
 
   const { data: users } = useSuspenseQuery(userQueries.list({ page: 1, perPage: 100 }))
-  const { data: trailers } = useSuspenseQuery(vehicleQueries.list())
-  const { data: transporters } = useSuspenseQuery(vehicleQueries.list())
+  const { data: trailers } = useSuspenseQuery(vehicleQueries.list({ type: [VehicleType.Trailer] }))
+  const { data: transporters } = useSuspenseQuery(
+    vehicleQueries.list({ type: [VehicleType.Transporter] }),
+  )
 
   const onSubmit: SubmitHandler<WateringPlanForm> = (data) => mutate(data)
 

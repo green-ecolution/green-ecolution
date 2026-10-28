@@ -9,6 +9,7 @@ interface FormArgs {
   planManifest: { key: string }
 }
 const formSpy = vi.hoisted(() => vi.fn<(args: FormArgs) => void>())
+const vehicleListSpy = vi.hoisted(() => vi.fn((_params?: unknown) => ({})))
 
 vi.mock('@tanstack/react-router', () => ({
   createFileRoute: () => (options: { component: unknown }) => ({
@@ -21,7 +22,7 @@ vi.mock('@tanstack/react-query', () => ({
 }))
 vi.mock('@/api/queries', () => ({
   userQueries: { list: () => ({}) },
-  vehicleQueries: { list: () => ({}) },
+  vehicleQueries: { list: vehicleListSpy },
 }))
 vi.mock('@/modules/useActiveModules', () => ({
   useActiveModules: () => ({ manifests: [probeManifest('irrigation'), probeManifest('waste')] }),
@@ -80,5 +81,16 @@ describe('/plans/new module choice', () => {
     expect(args.planManifest.key).toBe('irrigation')
     expect(args.initForm.module).toBe('irrigation')
     expect(args.initForm.description).toBe('')
+  })
+
+  it('loads transporters and trailers as separate, type-filtered lists', () => {
+    search.value = { module: 'irrigation' }
+    vehicleListSpy.mockClear()
+    render(<NewWateringPlan />)
+    const requestedTypes = vehicleListSpy.mock.calls.map(
+      ([params]) => (params as { type?: string[] } | undefined)?.type,
+    )
+    expect(requestedTypes).toEqual(expect.arrayContaining([['transporter'], ['trailer']]))
+    expect(requestedTypes).toHaveLength(2)
   })
 })
