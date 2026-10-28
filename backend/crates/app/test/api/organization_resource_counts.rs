@@ -73,11 +73,15 @@ async fn counts_cover_the_whole_subtree_of_each_organization() {
     let root = Uuid::parse_str(ROOT_ORG_ID).unwrap();
     let tbz = insert_org(&app, root, "TBZ").await;
     let firma_a = insert_org(&app, tbz, "Firma A").await;
+    let andere_stadt = insert_org(&app, root, "Andere Stadt").await;
 
     insert_sensor(&app, firma_a).await;
     insert_vehicle(&app, tbz, false).await;
     insert_vehicle(&app, firma_a, true).await;
     insert_plan(&app, firma_a).await;
+    insert_sensor(&app, andere_stadt).await;
+    insert_vehicle(&app, andere_stadt, false).await;
+    insert_plan(&app, andere_stadt).await;
 
     let response = app.get("/api/v1/organizations/resource-counts").await;
     assert_eq!(response.status().as_u16(), 200);
@@ -96,10 +100,15 @@ async fn counts_cover_the_whole_subtree_of_each_organization() {
     assert_eq!(firma_a_entry["vehicle_count"], 0);
     assert_eq!(firma_a_entry["plan_count"], 1);
 
+    let andere_stadt_entry = entry_for(&body, andere_stadt);
+    assert_eq!(andere_stadt_entry["sensor_count"], 1);
+    assert_eq!(andere_stadt_entry["vehicle_count"], 1);
+    assert_eq!(andere_stadt_entry["plan_count"], 1);
+
     let root_entry = entry_for(&body, root);
-    assert_eq!(root_entry["sensor_count"], 1);
-    assert_eq!(root_entry["vehicle_count"], 1);
-    assert_eq!(root_entry["plan_count"], 1);
+    assert_eq!(root_entry["sensor_count"], 2);
+    assert_eq!(root_entry["vehicle_count"], 2);
+    assert_eq!(root_entry["plan_count"], 2);
 }
 
 #[tokio::test]
