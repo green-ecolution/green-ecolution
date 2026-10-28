@@ -90,7 +90,7 @@ jobs:
           set -euo pipefail
           cargo update \
             --manifest-path backend/Cargo.toml \
-            -p server -p domain -p domain-wasm -p irrigation-domain -p irrigation-server
+            -p server -p domain -p domain-wasm -p irrigation-domain -p irrigation-server -p waste-domain -p waste-server
           if git diff --quiet backend/Cargo.lock; then
             echo "Cargo.lock already in sync"
             exit 0

@@ -53,6 +53,7 @@ jobs:
         run: |
           cargo build -p domain --no-default-features --locked
           cargo build -p irrigation-domain --no-default-features --locked
+          cargo build -p waste-domain --no-default-features --locked
 
       - name: Verify Docker daemon (testcontainers prerequisite)
         run: docker version
