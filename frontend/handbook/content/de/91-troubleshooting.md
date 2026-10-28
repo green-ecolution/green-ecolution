@@ -62,7 +62,12 @@ Aktion, obwohl die Seite selbst sich öffnet, fehlt dir statt der Ansicht nur da
 für genau diese eine Aktion, etwa Bearbeiten oder Löschen an einer Stelle, die du sonst
 nur ansehen darfst.
 
-In beiden Fällen hilft nur die Verwaltung deiner Organisation weiter: Sie ordnet dir die
+Hast du im Benutzermenü eine einzelne Organisation gewählt, liegt die Ursache womöglich
+nur darin, dass die Seite außerhalb dieser Auswahl liegt. Die Meldung bietet dann
+**Zu allen meinen Organisationen wechseln** an, siehe
+[Organisation wählen](./getting-started.md#organisation-wahlen).
+
+Fehlt dir das Recht tatsächlich, hilft nur die Verwaltung deiner Organisation weiter: Sie ordnet dir die
 passende Rolle zu oder schneidet eine bestehende passend zu, siehe
 [Wie weit eine Rolle reicht](./settings-team.md#wie-weit-eine-rolle-reicht). Prüft die
 Verwaltung eine Zuweisung nach, lohnt sich zusätzlich der Blick in
