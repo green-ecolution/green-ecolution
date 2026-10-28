@@ -108,7 +108,11 @@ async fn respond(
     caller: Caller,
     org: Id<domain::organization::Organization>,
 ) -> Result<Json<OrganizationModulesResponse>, ServiceError> {
-    let ctx = state.authorization_service.context_for(caller).await?;
+    let ctx = state
+        .authorization_service
+        .context_for(caller)
+        .await?
+        .without_scope();
     let resolution = state.module_activation_service.resolution(org).await?;
     let own = state.module_activation_service.own(org).await?;
     Ok(Json(OrganizationModulesResponse::build(
@@ -153,7 +157,8 @@ pub async fn update_organization_modules(
     let ctx = state
         .authorization_service
         .context_for(user.caller())
-        .await?;
+        .await?
+        .without_scope();
     state
         .module_activation_service
         .update(&ctx, org, req.modules)

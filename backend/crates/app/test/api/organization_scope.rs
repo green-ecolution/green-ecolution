@@ -244,3 +244,120 @@ async fn demo_bypass_respects_scope() {
     let scoped = listed_plates(&app, None, Some(&tree.firma_a.to_string())).await;
     assert_eq!(scoped, vec!["SCP-A"]);
 }
+
+#[tokio::test]
+async fn create_with_org_outside_scope_is_rejected() {
+    let (harness, app) = spawn_with_auth().await;
+    let tree = seed_tree(&app).await;
+    let token = seed_user(&harness, &app, tree.tbz, VEHICLE_PERMS).await;
+
+    let resp = request(
+        reqwest::Client::new().post(format!("{}/api/v1/vehicles", app.address)),
+        Some(&token),
+        Some(&tree.firma_a.to_string()),
+    )
+    .json(&vehicle_payload("SCP-OUT", Some(tree.firma_b)))
+    .send()
+    .await
+    .unwrap();
+
+    assert_eq!(resp.status(), 403);
+}
+
+#[tokio::test]
+async fn module_list_respects_scope() {
+    let (harness, app) = spawn_with_auth().await;
+    let tree = seed_tree(&app).await;
+    let root = Uuid::parse_str(ROOT_ORG_ID).unwrap();
+    sqlx::query(
+        "INSERT INTO organization_modules (organization_id, module_key, enabled, set_by) VALUES ($1, 'waste', true, $1)",
+    )
+    .bind(root)
+    .execute(&app.db_pool)
+    .await
+    .unwrap();
+    for (number, org) in [("SC-A", tree.firma_a), ("SC-B", tree.firma_b)] {
+        sqlx::query(
+            "INSERT INTO waste_bins (id, number, latitude, longitude, geometry, volume_liters, depth_cm, organization_id)
+             VALUES ($1, $2, 54.79, 9.44, ST_SetSRID(ST_MakePoint(9.44, 54.79), 4326), 1100, 120, $3)",
+        )
+        .bind(Uuid::now_v7())
+        .bind(number)
+        .bind(org)
+        .execute(&app.db_pool)
+        .await
+        .unwrap();
+    }
+    let token = seed_user(&harness, &app, tree.tbz, &["waste_bin:read"]).await;
+
+    let resp = request(
+        reqwest::Client::new().get(format!("{}/api/v1/waste-bins", app.address)),
+        Some(&token),
+        Some(&tree.firma_a.to_string()),
+    )
+    .send()
+    .await
+    .unwrap();
+
+    assert_eq!(resp.status(), 200);
+    let body: Value = resp.json().await.unwrap();
+    let numbers: Vec<&str> = body["data"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|b| b["number"].as_str().unwrap())
+        .collect();
+    assert_eq!(numbers, vec!["SC-A"]);
+}
+
+async fn my_organizations(app: &TestApp, token: &str, scope: Option<&str>) -> reqwest::Response {
+    request(
+        reqwest::Client::new().get(format!("{}/api/v1/users/me/organizations", app.address)),
+        Some(token),
+        scope,
+    )
+    .send()
+    .await
+    .unwrap()
+}
+
+#[tokio::test]
+async fn my_organizations_ignores_scope() {
+    let (harness, app) = spawn_with_auth().await;
+    let tree = seed_tree(&app).await;
+    let token = seed_user(&harness, &app, tree.tbz, VEHICLE_PERMS).await;
+
+    for scope in [tree.firma_a, Uuid::now_v7()] {
+        let resp = my_organizations(&app, &token, Some(&scope.to_string())).await;
+        assert_eq!(resp.status(), 200);
+        let body: Vec<Value> = resp.json().await.unwrap();
+        let parent_of = |id: Uuid| {
+            body.iter()
+                .find(|o| o["id"] == json!(id))
+                .map(|o| o["parent_id"].clone())
+        };
+        assert_eq!(body.len(), 3);
+        assert_eq!(parent_of(tree.tbz), Some(json!(ROOT_ORG_ID)));
+        assert_eq!(parent_of(tree.firma_a), Some(json!(tree.tbz)));
+        assert_eq!(parent_of(tree.firma_b), Some(json!(tree.tbz)));
+        let name = body
+            .iter()
+            .find(|o| o["id"] == json!(tree.firma_a))
+            .unwrap();
+        assert_eq!(name["name"], "Firma A");
+    }
+}
+
+#[tokio::test]
+async fn my_organizations_without_organization_read() {
+    let (harness, app) = spawn_with_auth().await;
+    let tree = seed_tree(&app).await;
+    let token = seed_user(&harness, &app, tree.firma_a, &["vehicle:read"]).await;
+
+    let resp = my_organizations(&app, &token, None).await;
+
+    assert_eq!(resp.status(), 200);
+    let body: Vec<Value> = resp.json().await.unwrap();
+    assert_eq!(body.len(), 1);
+    assert_eq!(body[0]["id"], json!(tree.firma_a));
+}

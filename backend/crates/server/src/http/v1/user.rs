@@ -16,8 +16,8 @@ use crate::{
             info::MapInfoResponse,
             role::RoleResponse,
             user::{
-                AssignRoleRequest, SetOrganizationRequest, UserListParams, UserRegisterRequest,
-                UserResponse, UserUpdateRequest,
+                AssignRoleRequest, ReachableOrganizationResponse, SetOrganizationRequest,
+                UserListParams, UserRegisterRequest, UserResponse, UserUpdateRequest,
             },
         },
         v1::scope::resolve_target_org,
@@ -26,7 +26,7 @@ use crate::{
 };
 use domain::{
     Id,
-    authorization::{Action, Permission, ResourceKey},
+    authorization::{Action, Caller, Permission, ResourceKey},
     shared::pagination::Pagination,
     user::UserCreate as DomainUserCreate,
 };
@@ -36,6 +36,7 @@ pub fn protected_routes() -> OpenApiRouter<Arc<AppState>> {
         .routes(routes!(list_users, create_user))
         .routes(routes!(get_me))
         .routes(routes!(get_my_map_view))
+        .routes(routes!(list_my_organizations))
         .routes(routes!(update_user))
         .routes(routes!(list_user_roles, assign_user_role))
         .routes(routes!(revoke_user_role))
@@ -95,6 +96,41 @@ pub async fn get_my_map_view(
 ) -> Result<Json<MapInfoResponse>, ServiceError> {
     let view = state.settings_service.map_view_for_user(user.id).await?;
     Ok(Json(MapInfoResponse::from(view)))
+}
+
+#[utoipa::path(get, path = "/users/me/organizations", tag = "Users",
+    operation_id = "listMyOrganizations",
+    summary = "List the organizations the authenticated user works in",
+    description = "Every organization any of the caller's roles reaches, with its parent, for the organization scope switcher. Needs no permission beyond authentication and ignores `X-Organization-Scope`, so the list stays complete while a scope is selected.",
+    responses(
+        (status = 200, description = "Reachable organizations", body = Vec<ReachableOrganizationResponse>),
+        (status = 401, description = "Unauthorized", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
+    )
+)]
+#[tracing::instrument(level = "info", skip_all)]
+pub async fn list_my_organizations(
+    State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
+) -> Result<Json<Vec<ReachableOrganizationResponse>>, ServiceError> {
+    let reachable = state
+        .authorization_service
+        .context_for(Caller::unscoped(user.id))
+        .await?
+        .reachable_orgs();
+    let organizations = state
+        .organization_service
+        .list()
+        .await?
+        .into_iter()
+        .filter(|org| reachable.allows(org.id))
+        .map(|org| ReachableOrganizationResponse {
+            id: org.id.value(),
+            name: org.name.as_str().to_owned(),
+            parent_id: org.parent_id.map(|id| id.value()),
+        })
+        .collect();
+    Ok(Json(organizations))
 }
 
 #[utoipa::path(get, path = "/users", tag = "Users",

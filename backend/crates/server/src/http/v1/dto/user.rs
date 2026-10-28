@@ -398,3 +398,11 @@ mod tests {
         assert!(!profile.watering_plan_selectable);
     }
 }
+
+/// An organization the caller works in, as offered by the scope switcher.
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+pub struct ReachableOrganizationResponse {
+    pub id: Uuid,
+    pub name: String,
+    pub parent_id: Option<Uuid>,
+}
