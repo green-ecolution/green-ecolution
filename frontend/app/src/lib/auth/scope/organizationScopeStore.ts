@@ -40,7 +40,13 @@ export function useOrganizationScope(): string | null {
   )
 }
 
+// Same id as the backend's demo user in auth-bypass mode.
+export const DEMO_USER_ID = '00000000-0000-0000-0000-000000000000'
+
+// Runs on every protected navigation; re-reading would overwrite the in-memory
+// scope with null when storage is blocked.
 export function loadOrganizationScope(userId: string): void {
+  if (userId === activeUserId) return
   activeUserId = userId
   setScope(readStored(userId))
 }

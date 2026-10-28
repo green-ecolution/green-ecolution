@@ -8,11 +8,7 @@ vi.mock('@/lib/auth/session', () => ({
 }))
 
 import { userApi } from './backendApi'
-import {
-  getOrganizationScope,
-  loadOrganizationScope,
-  setOrganizationScope,
-} from '@/lib/auth/scope/organizationScopeStore'
+import { getOrganizationScope, setOrganizationScope } from '@/lib/auth/scope/organizationScopeStore'
 
 const ORG = '0190a1b2-0000-7000-8000-000000000001'
 
@@ -30,7 +26,7 @@ describe('backend request scope header', () => {
     sessionStorage.clear()
     fetchMock.mockReset()
     vi.stubGlobal('fetch', fetchMock)
-    loadOrganizationScope('u1')
+    setOrganizationScope('u1', null)
   })
   afterEach(() => vi.unstubAllGlobals())
 

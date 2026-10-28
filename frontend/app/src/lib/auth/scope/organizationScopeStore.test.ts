@@ -27,6 +27,16 @@ describe('organizationScopeStore', () => {
     expect(getOrganizationScope()).toBe(ORG)
   })
 
+  it('does not re-read storage when the same user is loaded again', () => {
+    loadOrganizationScope('u1')
+    setOrganizationScope('u1', ORG)
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new Error('blocked')
+    })
+    loadOrganizationScope('u1')
+    expect(getOrganizationScope()).toBe(ORG)
+  })
+
   it('loads null for another user', () => {
     setOrganizationScope('u1', ORG)
     loadOrganizationScope('u2')
