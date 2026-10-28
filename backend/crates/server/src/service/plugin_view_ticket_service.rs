@@ -207,6 +207,7 @@ mod tests {
                 Some(n) => serde_json::json!({ "name": n }),
                 None => serde_json::json!({}),
             },
+            organization_scope: None,
         }
     }
 

@@ -43,6 +43,7 @@ pub async fn plugin_access_context(
             plugin.permissions().clone(),
         )]),
         hierarchy: authorization.hierarchy().await?,
+        scope: None,
     })
 }
 

@@ -96,6 +96,7 @@ impl AuthorizationService {
         Ok(AccessContext {
             permissions: EffectivePermissions::from_grants(grants),
             hierarchy,
+            scope: None,
         })
     }
 
@@ -207,6 +208,7 @@ impl AuthorizationService {
         let after = AccessContext {
             permissions: EffectivePermissions::from_grants(grants),
             hierarchy: self.org_reader.hierarchy().await?,
+            scope: None,
         };
         if SELF_ADMINISTRATION
             .iter()
@@ -655,6 +657,7 @@ mod tests {
         AccessContext {
             permissions: EffectivePermissions::from_grants(grants),
             hierarchy: OrgHierarchy::from_pairs(hierarchy.to_vec()),
+            scope: None,
         }
     }
 
