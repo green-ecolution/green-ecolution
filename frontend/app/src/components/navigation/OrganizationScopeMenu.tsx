@@ -49,8 +49,18 @@ const OrganizationScopeMenu = () => {
               type="search"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              // Keeps the menu's typeahead from swallowing typed characters.
-              onKeyDown={(event) => event.stopPropagation()}
+              onKeyDown={(event) => {
+                // Keeps the menu's typeahead from swallowing typed characters.
+                event.stopPropagation()
+                // The menu's own arrow navigation only starts from an item.
+                if (event.key === 'ArrowDown') {
+                  event.preventDefault()
+                  event.currentTarget
+                    .closest('[role="menu"]')
+                    ?.querySelector<HTMLElement>('[role="menuitemradio"]')
+                    ?.focus()
+                }
+              }}
               placeholder={t('user.searchOrganization')}
               aria-label={t('user.searchOrganization')}
               className="w-full rounded-lg border border-dark-400/40 bg-dark-800 py-2 pl-9 pr-3 text-light placeholder:text-light/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-light"

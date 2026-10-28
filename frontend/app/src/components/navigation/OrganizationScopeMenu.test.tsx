@@ -112,6 +112,23 @@ describe('OrganizationScopeMenu', () => {
     ])
   })
 
+  it('moves from the search field into the list with the down arrow', async () => {
+    const user = userEvent.setup()
+    const many = Array.from({ length: 7 }, (_, i) => ({
+      id: `x${i}`,
+      name: `Amt ${i}`,
+      parentId: 'root',
+    }))
+    renderMenu([ROOT, A, B, A1, ...many])
+    await openSub(user)
+
+    const search = await screen.findByRole('searchbox', { name: /organisation suchen/i })
+    await user.click(search)
+    await user.keyboard('{ArrowDown}')
+
+    expect(screen.getByRole('menuitemradio', { name: 'Alle meine Organisationen' })).toHaveFocus()
+  })
+
   it('has no search field for a short list', async () => {
     renderMenu([ROOT, A, B])
     await openSub(userEvent.setup())
