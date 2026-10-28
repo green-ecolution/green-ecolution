@@ -20,6 +20,15 @@
   "dateTime": {
     "at": "{date} um {time}"
   },
+  "transfer": {
+    "menuItem": "In andere Organisation verschieben",
+    "organizationLabel": "Zielorganisation",
+    "organizationPlaceholder": "Organisation wählen",
+    "organizationSearchPlaceholder": "Organisation suchen …",
+    "organizationEmpty": "Keine Organisation gefunden.",
+    "confirm": "Verschieben",
+    "pending": "Wird verschoben …"
+  },
   "language": {
     "label": "Sprache",
     "description": "Die Auswahl gilt für diesen Browser und wirkt sofort.",

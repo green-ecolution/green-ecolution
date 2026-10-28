@@ -52,12 +52,14 @@
     "action": {
       "edit": "Edit station {name}",
       "setDefault": "Set station {name} as default",
-      "delete": "Delete station {name}"
+      "delete": "Delete station {name}",
+      "transfer": "Move station {name}"
     },
     "actionLabel": {
       "edit": "Edit",
       "setDefault": "Set as default",
-      "delete": "Delete"
+      "delete": "Delete",
+      "transfer": "Move"
     },
     "dialog": {
       "createTitle": "Add station",
@@ -84,11 +86,16 @@
       "title": "Delete station?",
       "description": "The station {name} will be removed permanently."
     },
+    "transferDialog": {
+      "title": "Move station {name}",
+      "description": "The station moves to the chosen organization and then serves its tours as start, end or stop."
+    },
     "toast": {
       "created": "The station was created.",
       "updated": "The station was saved.",
       "deleted": "The station was deleted.",
       "defaultSet": "The station is now the default.",
+      "moved": "The station was moved.",
       "failed": "The action failed."
     }
   },

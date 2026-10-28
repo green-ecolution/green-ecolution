@@ -44,6 +44,13 @@
     "title": "Tree: {number}",
     "backToList": "Back to all trees",
     "editLink": "Edit tree",
+    "moreActionsAriaLabel": "More actions",
+    "transferBlockedInCluster": "Belongs to group {name}. Move the group instead.",
+    "transferBlockedInUnknownCluster": "Belongs to a group. Move the group instead.",
+    "transferDialogTitle": "Move tree {number}",
+    "transferDialogDescription": "The tree moves to the chosen organization. An attached sensor moves along.",
+    "transferSuccessToast": "The tree was moved.",
+    "transferErrorToast": "The tree could not be moved.",
     "noClusterAssigned": "Not assigned to a watering group",
     "loadingLabel": "Loading tree data …",
     "notFoundBackLabel": "To the tree list"

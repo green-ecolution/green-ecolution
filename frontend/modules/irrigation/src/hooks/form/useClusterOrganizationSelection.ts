@@ -1,12 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useWatch, type UseFormReturn } from 'react-hook-form'
 import type { OrganizationResponse } from '@green-ecolution/backend-client'
 import { organizationQueries } from '@/api/queries'
-import { byOrgName, orgsWithPermission } from '@/lib/auth/organizationScope'
-import { readAuthBypass } from '@/lib/auth/runtimeConfig'
 import { useHasPermission } from '@/lib/auth/useHasPermission'
-import { useEffectiveRoles, useHomeOrganizationId } from '@/lib/auth/scope/effectiveRoles'
+import { useOrganizationsWithPermission } from '@/lib/auth/useOrganizationsWithPermission'
+import { useHomeOrganizationId } from '@/lib/auth/scope/effectiveRoles'
 import type { TreeclusterForm } from '../../schema/treeclusterSchema'
 
 export interface ClusterOrganizationSelection {
@@ -33,21 +32,14 @@ export interface ClusterOrganizationSelection {
 export function useClusterOrganizationSelection(
   form: UseFormReturn<TreeclusterForm>,
 ): ClusterOrganizationSelection {
-  const bypass = readAuthBypass()
   const canReadOrganizations = useHasPermission(['organization:read'])
-  const roles = useEffectiveRoles()
   const homeOrganizationId = useHomeOrganizationId()
+  // `nameOf` needs every visible organization, not only the selectable ones.
   const { data: orgs } = useQuery({
     ...organizationQueries.list(),
     enabled: canReadOrganizations,
   })
-
-  const organizations = useMemo(() => {
-    if (!orgs) return []
-    // Bypass mirrors the backend's unrestricted mode: every visible org counts.
-    if (bypass) return [...orgs].sort(byOrgName)
-    return orgsWithPermission(orgs, roles ?? [], 'tree_cluster:create')
-  }, [orgs, roles, bypass])
+  const organizations = useOrganizationsWithPermission('tree_cluster:create')
 
   const organizationId = useWatch({ control: form.control, name: 'organizationId' })
   const [discardedTreeCount, setDiscardedTreeCount] = useState(0)

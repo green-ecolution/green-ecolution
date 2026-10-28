@@ -81,3 +81,8 @@ Stelle wieder eingesetzt wird. Davon zu unterscheiden ist **Sensor löschen**: D
 Aktion entfernt den Sensor endgültig aus dem System, zusammen mit seiner
 LoRaWAN-Konfiguration und allen aufgezeichneten Messdaten, und lässt sich nicht
 rückgängig machen; die Anwendung fragt vor dem Löschen deshalb noch einmal nach.
+
+Ein Sensor ohne Verknüpfung bietet im Aktionsmenü zusätzlich **In andere Organisation
+verschieben**, sofern du Sensoren in mindestens einer weiteren Organisation bearbeiten
+darfst. Bei einem verknüpften Sensor ist der Eintrag ausgegraut: Er zieht mit seinem Baum
+oder Behälter um, wenn du diesen verschiebst.

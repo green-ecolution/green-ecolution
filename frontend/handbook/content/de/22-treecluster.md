@@ -106,8 +106,14 @@ der **Bäume** dieser Gruppe und ihre **Stammdaten** mit Region, vorkommenden Ba
 Bodenart und Beschreibung. Wer die nötige Berechtigung hat, findet oben zudem
 **Gruppe bearbeiten** und, über das Menü daneben, **Gruppe löschen**; gelöscht wird
 dabei nur die Gruppe, ihre Bäume bleiben erhalten.
+Im selben Menü steht **In andere Organisation verschieben**, sofern du
+Bewässerungsgruppen in mindestens einer weiteren Organisation bearbeiten darfst. Im
+Dialog wählst du die Zielorganisation; die Gruppe wechselt dann samt ihren Bäumen und
+deren Sensoren dorthin, ihre Einsatzpläne und Kommentare bleiben erhalten.
 
 ![Das Gruppendashboard mit dem Verlauf der Wasserversorgung](../images/treecluster-dashboard.png)
+
+![Der Dialog zum Verschieben einer Bewässerungsgruppe mit der Auswahl der Zielorganisation](../images/transfer-organization-dialog.png)
 
 ## Bewässerungsstatus und wie er zustande kommt
 

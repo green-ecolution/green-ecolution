@@ -57,6 +57,10 @@
     "deleteDialogDescription": "Der Behälter wird dauerhaft entfernt und aus allen geplanten Leerungstouren genommen. Ein verbundener Sensor wird freigegeben und bleibt aktiviert.",
     "deleteSuccessToast": "Der Abfallbehälter wurde gelöscht.",
     "deleteErrorToast": "Der Abfallbehälter konnte nicht gelöscht werden.",
+    "transferDialogTitle": "Behälter {number} verschieben",
+    "transferDialogDescription": "Der Behälter wechselt in die gewählte Organisation. Ein verbundener Sensor zieht mit.",
+    "transferSuccessToast": "Der Abfallbehälter wurde verschoben.",
+    "transferErrorToast": "Der Abfallbehälter konnte nicht verschoben werden.",
     "masterData": {
       "title": "Stammdaten",
       "numberLabel": "Behälternummer",

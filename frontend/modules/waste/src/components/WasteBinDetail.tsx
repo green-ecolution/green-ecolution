@@ -1,6 +1,7 @@
 import { useId, useState, type ReactNode } from 'react'
 import { Link, useNavigate } from '@tanstack/react-router'
-import { ChevronDown, Pencil, Trash2 } from 'lucide-react'
+import { useMutation } from '@tanstack/react-query'
+import { ArrowRightLeft, ChevronDown, Pencil, Trash2 } from 'lucide-react'
 import { format } from 'date-fns'
 import { useTranslation } from 'react-i18next'
 import {
@@ -19,6 +20,9 @@ import {
 import CommentsSection from '@/components/comments/CommentsSection'
 import DeleteConfirmDialog from '@/components/general/DeleteConfirmDialog'
 import EntityDetailHeader from '@/components/general/EntityDetailHeader'
+import TransferOrganizationDialog from '@/components/general/transfer/TransferOrganizationDialog'
+import { useTransferTargets } from '@/components/general/transfer/useTransferTargets'
+import { queryRoots } from '@/api/queries'
 import createToast from '@/hooks/createToast'
 import { useHasPermission } from '@/lib/auth/useHasPermission'
 import { useDateLocale } from '@/lib/i18n/useFormatters'
@@ -49,14 +53,29 @@ const DetailCard = ({ title, children }: { title: string; children: ReactNode })
 }
 
 const WasteBinDetail = ({ bin }: WasteBinDetailProps) => {
-  const { t } = useTranslation('waste')
+  const { t } = useTranslation(['waste', 'common'])
   const dateLocale = useDateLocale()
   const navigate = useNavigate()
   const invalidate = useInvalidateQueryRoots()
   const showToast = createToast()
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [transferOpen, setTransferOpen] = useState(false)
   const canEdit = useHasPermission(['waste_bin:update'])
   const canDelete = useHasPermission(['waste_bin:delete'])
+  const transferTargets = useTransferTargets('waste_bin:update', bin.organizationId)
+  const canTransfer = canEdit && transferTargets.length > 0
+
+  const transfer = useMutation({
+    mutationFn: (organizationId: string) =>
+      wasteBinApi.transferWasteBin({ wasteBinId: bin.id, transferRequest: { organizationId } }),
+    onSuccess: async () => {
+      setTransferOpen(false)
+      showToast(t('detail.transferSuccessToast'))
+      // An attached sensor moves along with the bin.
+      await invalidate([...wasteRoots.bin, ...queryRoots.sensor], { reloadRoutes: true })
+    },
+    onError: () => showToast(t('detail.transferErrorToast'), 'error'),
+  })
 
   const formatDateTime = (value: string) =>
     format(new Date(value), 'dd.MM.yyyy, HH:mm', { locale: dateLocale })
@@ -144,7 +163,7 @@ const WasteBinDetail = ({ bin }: WasteBinDetailProps) => {
         title={<>{t('detail.title', { number: bin.number })}</>}
         badge={<FillStateBadge state={bin.fillState} percent={bin.fillPercent} size="lg" />}
         actions={
-          (canEdit || canDelete) && (
+          (canEdit || canDelete || canTransfer) && (
             <ButtonGroup>
               {canEdit && (
                 <Button variant="outline" asChild>
@@ -154,7 +173,7 @@ const WasteBinDetail = ({ bin }: WasteBinDetailProps) => {
                   </Link>
                 </Button>
               )}
-              {canDelete && (
+              {(canDelete || canTransfer) && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
@@ -167,13 +186,24 @@ const WasteBinDetail = ({ bin }: WasteBinDetailProps) => {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="min-w-[12rem]">
-                    <DropdownMenuItem
-                      className="gap-2 px-3 py-2 text-destructive focus:bg-destructive/10 focus:text-destructive"
-                      onSelect={() => setConfirmDelete(true)}
-                    >
-                      <Trash2 />
-                      {t('detail.deleteMenuItem')}
-                    </DropdownMenuItem>
+                    {canTransfer && (
+                      <DropdownMenuItem
+                        className="gap-2 px-3 py-2"
+                        onSelect={() => setTransferOpen(true)}
+                      >
+                        <ArrowRightLeft />
+                        {t('common:transfer.menuItem')}
+                      </DropdownMenuItem>
+                    )}
+                    {canDelete && (
+                      <DropdownMenuItem
+                        className="gap-2 px-3 py-2 text-destructive focus:bg-destructive/10 focus:text-destructive"
+                        onSelect={() => setConfirmDelete(true)}
+                      >
+                        <Trash2 />
+                        {t('detail.deleteMenuItem')}
+                      </DropdownMenuItem>
+                    )}
                   </DropdownMenuContent>
                 </DropdownMenu>
               )}
@@ -201,6 +231,15 @@ const WasteBinDetail = ({ bin }: WasteBinDetailProps) => {
         title={t('detail.deleteDialogTitle', { number: bin.number })}
         description={t('detail.deleteDialogDescription')}
         onConfirm={handleDelete}
+      />
+      <TransferOrganizationDialog
+        open={transferOpen}
+        onOpenChange={setTransferOpen}
+        title={t('detail.transferDialogTitle', { number: bin.number })}
+        description={t('detail.transferDialogDescription')}
+        organizations={transferTargets}
+        pending={transfer.isPending}
+        onConfirm={(organizationId) => transfer.mutate(organizationId)}
       />
     </>
   )

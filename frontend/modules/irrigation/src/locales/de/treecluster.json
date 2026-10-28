@@ -108,7 +108,11 @@
     "deleteDialogTitle": "Bewässerungsgruppe löschen?",
     "deleteDialogDescription": "Möchtest du die Bewässerungsgruppe wirklich löschen? Die zugehörigen Bäume bleiben erhalten.",
     "deleteSuccessToast": "Die Bewässerungsgruppe wurde gelöscht.",
-    "deleteErrorToast": "Die Bewässerungsgruppe konnte nicht gelöscht werden."
+    "deleteErrorToast": "Die Bewässerungsgruppe konnte nicht gelöscht werden.",
+    "transferDialogTitle": "Gruppe {name} verschieben",
+    "transferDialogDescription": "Die Gruppe wechselt in die gewählte Organisation. Ihre Bäume und deren Sensoren ziehen mit.",
+    "transferSuccessToast": "Die Bewässerungsgruppe wurde verschoben.",
+    "transferErrorToast": "Die Bewässerungsgruppe konnte nicht verschoben werden."
   },
   "soilTexture": {
     "fractionSand": "Sand",

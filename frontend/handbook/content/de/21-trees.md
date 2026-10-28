@@ -106,6 +106,11 @@ bereits ausgefüllten Werten und dem Marker an der bisherigen Position; wie beim
 lässt er sich weiterhin verschieben, um den Standort anzupassen. Über **Baum löschen**
 entfernst du den Baum endgültig; die Anwendung fragt vor dem Löschen noch einmal nach,
 weil sich die Aktion nicht rückgängig machen lässt.
+Neben **Baum bearbeiten** öffnet der Pfeil das Menü **Weitere Aktionen** mit dem Eintrag
+**In andere Organisation verschieben**, sofern du Bäume in mindestens einer weiteren
+Organisation bearbeiten darfst. Ein verknüpfter Sensor zieht mit dem Baum um. Gehört der
+Baum zu einer Bewässerungsgruppe, ist der Eintrag ausgegraut und nennt die Gruppe, denn ein
+Baum verlässt seine Gruppe nicht allein: Verschiebe in diesem Fall die Gruppe, siehe [Bewässerungsgruppen](./treecluster.md#das-gruppendashboard-lesen).
 
 ![Das Formular zum Bearbeiten eines Baums mit Baumnummer, Baumart, Pflanzjahr und Bewässerungsgruppe](../images/tree-form.png)
 

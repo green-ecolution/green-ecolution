@@ -52,12 +52,14 @@
     "action": {
       "edit": "Station {name} bearbeiten",
       "setDefault": "Station {name} als Standard setzen",
-      "delete": "Station {name} löschen"
+      "delete": "Station {name} löschen",
+      "transfer": "Station {name} verschieben"
     },
     "actionLabel": {
       "edit": "Bearbeiten",
       "setDefault": "Als Standard setzen",
-      "delete": "Löschen"
+      "delete": "Löschen",
+      "transfer": "Verschieben"
     },
     "dialog": {
       "createTitle": "Station anlegen",
@@ -84,11 +86,16 @@
       "title": "Station löschen?",
       "description": "Die Station {name} wird dauerhaft entfernt."
     },
+    "transferDialog": {
+      "title": "Station {name} verschieben",
+      "description": "Die Station wechselt in die gewählte Organisation und dient dann deren Touren als Start, Ziel oder Station."
+    },
     "toast": {
       "created": "Die Station wurde angelegt.",
       "updated": "Die Station wurde gespeichert.",
       "deleted": "Die Station wurde gelöscht.",
       "defaultSet": "Die Station ist jetzt der Standard.",
+      "moved": "Die Station wurde verschoben.",
       "failed": "Die Aktion ist fehlgeschlagen."
     }
   },

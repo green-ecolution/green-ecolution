@@ -44,6 +44,13 @@
     "title": "Baum: {number}",
     "backToList": "Zu allen Bäumen",
     "editLink": "Baum bearbeiten",
+    "moreActionsAriaLabel": "Weitere Aktionen",
+    "transferBlockedInCluster": "Gehört zur Gruppe {name}. Verschiebe stattdessen die Gruppe.",
+    "transferBlockedInUnknownCluster": "Gehört zu einer Gruppe. Verschiebe stattdessen die Gruppe.",
+    "transferDialogTitle": "Baum {number} verschieben",
+    "transferDialogDescription": "Der Baum wechselt in die gewählte Organisation. Ein verknüpfter Sensor zieht mit.",
+    "transferSuccessToast": "Der Baum wurde verschoben.",
+    "transferErrorToast": "Der Baum konnte nicht verschoben werden.",
     "noClusterAssigned": "Keiner Bewässerungsgruppe zugeordnet",
     "loadingLabel": "Baumdaten werden geladen …",
     "notFoundBackLabel": "Zur Baumliste"

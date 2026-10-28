@@ -22,7 +22,7 @@ function StationsView() {
   const { data: stations, isPending } = useQuery(routingStartPointsQuery())
   const { data: organizations } = useQuery(organizationQueries.list())
   const { data: mapView } = useQuery(userQueries.mapView())
-  const { create, update, remove, setDefault } = useStationMutations()
+  const { create, update, remove, setDefault, transfer } = useStationMutations()
   const [dialog, setDialog] = useState<DialogState>(null)
 
   const handleSubmit = (payload: StationPayload) => {
@@ -72,6 +72,9 @@ function StationsView() {
           onEdit={(station) => setDialog({ mode: 'edit', station })}
           onSetDefault={(station) => setDefault.mutate(station.id)}
           onDelete={(station) => remove.mutate(station.id)}
+          onTransfer={(station, organizationId) =>
+            transfer.mutate({ id: station.id, organizationId })
+          }
         />
       )}
 

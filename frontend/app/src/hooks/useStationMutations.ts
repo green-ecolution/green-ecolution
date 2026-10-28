@@ -12,6 +12,11 @@ export interface UpdateStationVariables {
   body: StartPointRequest
 }
 
+export interface TransferStationVariables {
+  id: string
+  organizationId: string
+}
+
 export const useStationMutations = () => {
   const invalidate = useInvalidateQueryRoots()
   const showToast = createToast()
@@ -64,5 +69,15 @@ export const useStationMutations = () => {
     onError: showFailure,
   })
 
-  return { create, update, remove, setDefault }
+  const transfer = useMutation({
+    mutationFn: ({ id, organizationId }: TransferStationVariables) =>
+      routingApi.transferStartPoint({ startPointId: id, transferRequest: { organizationId } }),
+    onSuccess: () => {
+      void refresh()
+      showToast(t('stations.toast.moved'))
+    },
+    onError: showFailure,
+  })
+
+  return { create, update, remove, setDefault, transfer }
 }

@@ -1,13 +1,30 @@
-import EntityDetailHeader from '../general/EntityDetailHeader'
-import { Badge } from '@green-ecolution/ui'
-import { useVehicleStatusDetails } from '@/hooks/details/useDetailsForVehicleStatus'
-import GeneralLink from '../general/links/GeneralLink'
-import type { Vehicle } from '@/api/backendApi'
-import { VehicleStatus } from '@green-ecolution/backend-client'
-import { useVehicleTypeLabel } from '@/hooks/details/useDetailsForVehicleType'
-import { DetailedList } from '@green-ecolution/ui'
-import { useHasPermission } from '@/lib/auth/useHasPermission'
+import { useState } from 'react'
+import { Link } from '@tanstack/react-router'
+import { useMutation } from '@tanstack/react-query'
+import { ArrowRightLeft, ChevronDown, Pencil } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import {
+  Badge,
+  Button,
+  ButtonGroup,
+  DetailedList,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@green-ecolution/ui'
+import { VehicleStatus } from '@green-ecolution/backend-client'
+import EntityDetailHeader from '../general/EntityDetailHeader'
+import GeneralLink from '../general/links/GeneralLink'
+import TransferOrganizationDialog from '../general/transfer/TransferOrganizationDialog'
+import { useTransferTargets } from '../general/transfer/useTransferTargets'
+import { vehicleApi, type Vehicle } from '@/api/backendApi'
+import { queryRoots } from '@/api/queries'
+import createToast from '@/hooks/createToast'
+import { useVehicleStatusDetails } from '@/hooks/details/useDetailsForVehicleStatus'
+import { useVehicleTypeLabel } from '@/hooks/details/useDetailsForVehicleType'
+import { useHasPermission } from '@/lib/auth/useHasPermission'
+import { useInvalidateQueryRoots } from '@/lib/queryInvalidation'
 
 interface VehicleDashboardProps {
   vehicle: Vehicle
@@ -19,8 +36,24 @@ const VehicleDashboard = ({ vehicle }: VehicleDashboardProps) => {
   const getVehicleTypeLabel = useVehicleTypeLabel()
   const statusDetails = getVehicleStatusDetails(vehicle.status)
   const vehicleType = getVehicleTypeLabel(vehicle.type)
+  const invalidate = useInvalidateQueryRoots()
+  const showToast = createToast()
+  const [transferOpen, setTransferOpen] = useState(false)
   const canEdit = useHasPermission(['vehicle:update'])
+  const transferTargets = useTransferTargets('vehicle:update', vehicle.organizationId)
+  const canTransfer = canEdit && transferTargets.length > 0
   const noData = t('common:state.noData')
+
+  const transfer = useMutation({
+    mutationFn: (organizationId: string) =>
+      vehicleApi.transferVehicle({ vehicleId: vehicle.id, transferRequest: { organizationId } }),
+    onSuccess: async () => {
+      setTransferOpen(false)
+      showToast(t('detail.transferSuccessToast'))
+      await invalidate(queryRoots.vehicle, { reloadRoutes: true })
+    },
+    onError: () => showToast(t('detail.transferErrorToast'), 'error'),
+  })
 
   const vehicleData = [
     {
@@ -83,16 +116,40 @@ const VehicleDashboard = ({ vehicle }: VehicleDashboardProps) => {
             {statusDetails?.label ?? noData}
           </Badge>
         }
-        editLink={
-          canEdit
-            ? {
-                label: t('detail.editLabel'),
-                link: {
-                  to: `/vehicles/$vehicleId/edit`,
-                  params: { vehicleId: String(vehicle.id) },
-                },
-              }
-            : undefined
+        actions={
+          canEdit && (
+            <ButtonGroup>
+              <Button variant="outline" asChild>
+                <Link to="/vehicles/$vehicleId/edit" params={{ vehicleId: String(vehicle.id) }}>
+                  {t('detail.editLabel')}
+                  <Pencil className="stroke-1" />
+                </Link>
+              </Button>
+              {canTransfer && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      aria-label={t('detail.moreActionsAriaLabel')}
+                      className="[&_svg]:size-4 [&_svg]:transition-transform [&_svg]:duration-base data-[state=open]:[&_svg]:rotate-180 motion-reduce:[&_svg]:transition-none"
+                    >
+                      <ChevronDown />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="min-w-[12rem]">
+                    <DropdownMenuItem
+                      className="gap-2 px-3 py-2"
+                      onSelect={() => setTransferOpen(true)}
+                    >
+                      <ArrowRightLeft />
+                      {t('common:transfer.menuItem')}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+            </ButtonGroup>
+          )
         }
       >
         {vehicle.description && <p className="mb-4">{vehicle.description}</p>}
@@ -115,6 +172,16 @@ const VehicleDashboard = ({ vehicle }: VehicleDashboardProps) => {
       <section className="mt-16">
         <DetailedList headline={t('detail.headline')} details={vehicleData} />
       </section>
+
+      <TransferOrganizationDialog
+        open={transferOpen}
+        onOpenChange={setTransferOpen}
+        title={t('detail.transferDialogTitle', { numberPlate: vehicle.numberPlate })}
+        description={t('detail.transferDialogDescription')}
+        organizations={transferTargets}
+        pending={transfer.isPending}
+        onConfirm={(organizationId) => transfer.mutate(organizationId)}
+      />
     </>
   )
 }

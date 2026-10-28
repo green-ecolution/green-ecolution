@@ -2,7 +2,8 @@ import { irrigationRoots } from '../../api/queries'
 import { clusterTarget } from '../../lib/targets'
 import { useState } from 'react'
 import { Link, useNavigate } from '@tanstack/react-router'
-import { ChevronDown, Pencil, Trash2 } from 'lucide-react'
+import { useMutation } from '@tanstack/react-query'
+import { ArrowRightLeft, ChevronDown, Pencil, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import ClusterKpiRow from './ClusterKpiRow'
 import ClusterWaterSupplyChart from './ClusterWaterSupplyChart'
@@ -14,10 +15,11 @@ import ClusterMasterDataCard from './ClusterMasterDataCard'
 import CommentsSection from '@/components/comments/CommentsSection'
 import EntityDetailHeader from '@/components/general/EntityDetailHeader'
 import DeleteConfirmDialog from '@/components/general/DeleteConfirmDialog'
+import TransferOrganizationDialog from '@/components/general/transfer/TransferOrganizationDialog'
+import { useTransferTargets } from '@/components/general/transfer/useTransferTargets'
 import { unknownStatusReasons } from './clusterStatusReason'
 import { useWateringStatusDetails } from '../../hooks/details/useDetailsForWateringStatus'
 import createToast from '@/hooks/createToast'
-import { Can } from '@/lib/auth/Can'
 import { useHasPermission } from '@/lib/auth/useHasPermission'
 import {
   Alert,
@@ -34,6 +36,7 @@ import {
   DropdownMenuTrigger,
 } from '@green-ecolution/ui'
 import { clusterApi, type TreeCluster } from '../../api/client'
+import { queryRoots } from '@/api/queries'
 import { useInvalidateQueryRoots } from '@/lib/queryInvalidation'
 
 interface TreeClusterDashboardProps {
@@ -41,13 +44,16 @@ interface TreeClusterDashboardProps {
 }
 
 const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
-  const { t } = useTranslation('treecluster')
+  const { t } = useTranslation(['treecluster', 'common'])
   const navigate = useNavigate()
   const invalidate = useInvalidateQueryRoots()
   const showToast = createToast()
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [transferOpen, setTransferOpen] = useState(false)
   const canEdit = useHasPermission(['tree_cluster:update'])
   const canDelete = useHasPermission(['tree_cluster:delete'])
+  const transferTargets = useTransferTargets('tree_cluster:update', treecluster.organizationId)
+  const canTransfer = canEdit && transferTargets.length > 0
   const getWateringStatusDetails = useWateringStatusDetails()
   const wateringStatus = getWateringStatusDetails(treecluster.wateringStatus)
   const trees = treecluster.trees ?? []
@@ -71,6 +77,24 @@ const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
       })
   }
 
+  const transfer = useMutation({
+    mutationFn: (organizationId: string) =>
+      clusterApi.transferCluster({
+        clusterId: treecluster.id.toString(),
+        transferRequest: { organizationId },
+      }),
+    onSuccess: async () => {
+      setTransferOpen(false)
+      showToast(t('dashboard.transferSuccessToast'))
+      // The trees and their sensors move along with the cluster.
+      await invalidate(
+        [...irrigationRoots.cluster, ...irrigationRoots.tree, ...queryRoots.sensor],
+        { reloadRoutes: true },
+      )
+    },
+    onError: () => showToast(t('dashboard.transferErrorToast'), 'error'),
+  })
+
   return (
     <>
       <EntityDetailHeader
@@ -78,7 +102,7 @@ const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
         title={<>{t('dashboard.title', { name: treecluster.name })}</>}
         badge={<Badge variant={wateringStatus.color}>{wateringStatus.label}</Badge>}
         actions={
-          (canEdit || canDelete) && (
+          (canEdit || canDelete || canTransfer) && (
             <ButtonGroup>
               {canEdit && (
                 <Button variant="outline" asChild>
@@ -91,7 +115,7 @@ const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
                   </Link>
                 </Button>
               )}
-              <Can permission={['tree_cluster:delete']}>
+              {(canDelete || canTransfer) && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
@@ -104,16 +128,27 @@ const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="min-w-[12rem]">
-                    <DropdownMenuItem
-                      className="gap-2 px-3 py-2 text-destructive focus:bg-destructive/10 focus:text-destructive"
-                      onSelect={() => setConfirmDelete(true)}
-                    >
-                      <Trash2 />
-                      {t('dashboard.deleteMenuItem')}
-                    </DropdownMenuItem>
+                    {canTransfer && (
+                      <DropdownMenuItem
+                        className="gap-2 px-3 py-2"
+                        onSelect={() => setTransferOpen(true)}
+                      >
+                        <ArrowRightLeft />
+                        {t('common:transfer.menuItem')}
+                      </DropdownMenuItem>
+                    )}
+                    {canDelete && (
+                      <DropdownMenuItem
+                        className="gap-2 px-3 py-2 text-destructive focus:bg-destructive/10 focus:text-destructive"
+                        onSelect={() => setConfirmDelete(true)}
+                      >
+                        <Trash2 />
+                        {t('dashboard.deleteMenuItem')}
+                      </DropdownMenuItem>
+                    )}
                   </DropdownMenuContent>
                 </DropdownMenu>
-              </Can>
+              )}
             </ButtonGroup>
           )
         }
@@ -183,6 +218,15 @@ const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
         title={t('dashboard.deleteDialogTitle')}
         description={t('dashboard.deleteDialogDescription')}
         onConfirm={handleDelete}
+      />
+      <TransferOrganizationDialog
+        open={transferOpen}
+        onOpenChange={setTransferOpen}
+        title={t('dashboard.transferDialogTitle', { name: treecluster.name })}
+        description={t('dashboard.transferDialogDescription')}
+        organizations={transferTargets}
+        pending={transfer.isPending}
+        onConfirm={(organizationId) => transfer.mutate(organizationId)}
       />
     </>
   )
