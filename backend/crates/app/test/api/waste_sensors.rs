@@ -5,6 +5,8 @@ use waste_server::sensor_parser::{DISTANCE_MODEL, DistanceSensorParser};
 
 use crate::{
     helpers::TestApp,
+    sensor_relink::insert_tree,
+    sensors::tree_target,
     waste_bins::{bin_body, bin_target, create_bin, waste_app},
 };
 
@@ -156,4 +158,41 @@ async fn a_bin_comment_goes_through_the_core_target_route() {
         )
         .await;
     assert_eq!(res.status(), 201, "{}", res.text().await.unwrap());
+}
+
+#[tokio::test]
+async fn a_sensor_on_a_tree_is_refused_by_activate_and_moves_by_retarget() {
+    let app = waste_app().await;
+    let tree = insert_tree(&app, "T-W-1").await;
+    let bin = create_bin(&app, "AB-1").await;
+    let bin = bin["id"].as_str().unwrap();
+    let sensor = create_distance_sensor(&app, "eui-both").await;
+    let res = app
+        .post_json(
+            &format!("/api/v1/sensors/{sensor}/activate"),
+            &tree_target(tree),
+        )
+        .await;
+    assert_eq!(res.status(), 200);
+
+    let res = activate_on_bin(&app, &sensor, bin).await;
+    assert_eq!(res.status(), 409);
+    assert_eq!(
+        res.json::<Value>().await.unwrap()["code"],
+        "conflict.sensor_already_activated"
+    );
+    assert_eq!(
+        app.sensor_of_tree(tree).await.as_deref(),
+        Some(sensor.as_str())
+    );
+
+    let res = app
+        .put_json(
+            &format!("/api/v1/sensors/{sensor}/target"),
+            &bin_target(bin),
+        )
+        .await;
+    assert_eq!(res.status(), 200, "{}", res.text().await.unwrap());
+    assert_eq!(app.sensor_of_tree(tree).await, None);
+    assert_eq!(get_bin(&app, bin).await["sensor_id"], sensor);
 }

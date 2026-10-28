@@ -4,7 +4,7 @@ use crate::{
 };
 use uuid::Uuid;
 
-async fn insert_tree(app: &TestApp, number: &str) -> Uuid {
+pub async fn insert_tree(app: &TestApp, number: &str) -> Uuid {
     let id = Uuid::now_v7();
     sqlx::query!(
         r#"INSERT INTO trees (id, planting_year, species, number, latitude, longitude, geometry, description, organization_id)
