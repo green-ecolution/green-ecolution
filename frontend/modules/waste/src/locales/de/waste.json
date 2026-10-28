@@ -3,6 +3,114 @@
   "nav": {
     "bins": "Abfallbehälter"
   },
+  "crumb": {
+    "bins": "Abfallbehälter",
+    "new": "Neuer Abfallbehälter",
+    "edit": "Behälter bearbeiten"
+  },
+  "entity": {
+    "name": "Abfallbehälter"
+  },
+  "fillState": {
+    "full": "Voll",
+    "normal": "Normal",
+    "empty": "Geleert",
+    "unknown": "Unbekannt",
+    "withPercent": "{state} · {percent} %"
+  },
+  "list": {
+    "title": "Abfallbehälter",
+    "description": "Alle erfassten Abfallbehälter mit ihrem aktuellen Füllstand. Den Füllstand meldet ein Sensor am Behälter, eine abgeschlossene Leerungstour setzt ihn auf geleert.",
+    "createButton": "Neuen Behälter erfassen",
+    "searchLabel": "Behälter suchen",
+    "searchPlaceholder": "Nach Behälternummer suchen",
+    "filterFillState": "Füllstufe",
+    "filterNoOptions": "Keine Optionen gefunden",
+    "loadingLabel": "Abfallbehälter werden geladen",
+    "emptyMessage": "Es ist noch kein Abfallbehälter erfasst.",
+    "emptyFilteredMessage": "Kein Behälter passt zu diesen Filtern.",
+    "emptyFilteredAction": "Filter zurücksetzen",
+    "resultCount_one": "{count} Behälter",
+    "resultCount_other": "{count} Behälter",
+    "resultCountFiltered": "{filtered} von {total} Behältern"
+  },
+  "card": {
+    "numberSrLabel": "Behälternummer: ",
+    "volumeSrLabel": "Volumen: ",
+    "sensorSrLabel": "Sensor: ",
+    "noSensor": "Kein Sensor"
+  },
+  "units": {
+    "liters": "{value} l",
+    "centimeters": "{value} cm",
+    "percent": "{value} %"
+  },
+  "detail": {
+    "title": "Behälter {number}",
+    "loadingLabel": "Abfallbehälter wird geladen",
+    "notFoundBackLabel": "Zu allen Abfallbehältern",
+    "backToList": "Zu allen Abfallbehältern",
+    "editLink": "Behälter bearbeiten",
+    "moreActionsAriaLabel": "Weitere Aktionen",
+    "deleteMenuItem": "Behälter löschen",
+    "deleteDialogTitle": "Behälter {number} löschen?",
+    "deleteDialogDescription": "Der Behälter wird dauerhaft entfernt und aus allen geplanten Leerungstouren genommen. Ein verbundener Sensor wird freigegeben und bleibt aktiviert.",
+    "deleteSuccessToast": "Der Abfallbehälter wurde gelöscht.",
+    "deleteErrorToast": "Der Abfallbehälter konnte nicht gelöscht werden.",
+    "masterData": {
+      "title": "Stammdaten",
+      "numberLabel": "Behälternummer",
+      "volumeLabel": "Volumen",
+      "depthLabel": "Tiefe",
+      "coordinatesLabel": "Koordinaten",
+      "dataSourceLabel": "Datenquelle",
+      "manuallyCreated": "Manuell erfasst",
+      "lastUpdateLabel": "Zuletzt geändert"
+    },
+    "fill": {
+      "title": "Füllstand",
+      "stateLabel": "Füllstufe",
+      "levelLabel": "Füllstand",
+      "lastMeasurementLabel": "Letzte Messung",
+      "lastEmptiedLabel": "Letzte Leerung",
+      "sensorLabel": "Sensor",
+      "noMeasurement": "Noch keine Messung",
+      "neverEmptied": "Noch nicht geleert",
+      "noSensor": "Kein Sensor verbunden"
+    }
+  },
+  "form": {
+    "numberLabel": "Behälternummer",
+    "numberPlaceholder": "z. B. B-0042",
+    "volumeLabel": "Volumen in Litern",
+    "volumePlaceholder": "z. B. 1100",
+    "depthLabel": "Tiefe in Zentimetern",
+    "depthPlaceholder": "z. B. 120",
+    "depthHint": "Abstand vom Sensor bis zum Behälterboden. Daraus berechnet sich der Füllstand.",
+    "organizationLabel": "Organisation",
+    "organizationPlaceholder": "Organisation auswählen",
+    "organizationSearchPlaceholder": "Organisation suchen",
+    "organizationHint": "Die Organisation, der der Behälter gehört.",
+    "positionLabel": "Standort",
+    "positionHint": "Klicke auf die Karte, um den Standort zu setzen. Danach lässt sich der Marker verschieben.",
+    "positionMoveHint": "Ziehe den Marker, um den Standort zu ändern.",
+    "positionRequired": "Bitte den Standort auf der Karte wählen.",
+    "mapAriaLabel": "Karte zur Wahl des Behälterstandorts",
+    "createLeaveMessage": "Der neue Behälter ist noch nicht gespeichert. Seite trotzdem verlassen?",
+    "updateLeaveMessage": "Die Änderungen am Behälter sind noch nicht gespeichert. Seite trotzdem verlassen?",
+    "createSuccessMessage": "Der Abfallbehälter wurde erfasst.",
+    "updateSuccessMessage": "Der Abfallbehälter wurde gespeichert."
+  },
+  "create": {
+    "title": "Neuen Abfallbehälter erfassen",
+    "description": "Erfasse Nummer, Größe und Standort des Behälters. Einen Sensor verbindest du anschließend in der Sensorverwaltung.",
+    "backLabel": "Zu allen Abfallbehältern"
+  },
+  "update": {
+    "title": "Behälter {number} bearbeiten",
+    "description": "Ändere Nummer, Größe oder Standort des Behälters.",
+    "backLabel": "Zurück zum Behälter"
+  },
   "statistics": {
     "bin": {
       "label": "Abfallbehälter"

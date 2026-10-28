@@ -3,6 +3,114 @@
   "nav": {
     "bins": "Waste bins"
   },
+  "crumb": {
+    "bins": "Waste bins",
+    "new": "New waste bin",
+    "edit": "Edit bin"
+  },
+  "entity": {
+    "name": "Waste bin"
+  },
+  "fillState": {
+    "full": "Full",
+    "normal": "Normal",
+    "empty": "Emptied",
+    "unknown": "Unknown",
+    "withPercent": "{state} · {percent} %"
+  },
+  "list": {
+    "title": "Waste bins",
+    "description": "Every registered waste bin with its current fill level. A sensor on the bin reports the fill level, a finished collection tour sets it to emptied.",
+    "createButton": "Register new bin",
+    "searchLabel": "Search bins",
+    "searchPlaceholder": "Search by bin number",
+    "filterFillState": "Fill state",
+    "filterNoOptions": "No options found",
+    "loadingLabel": "Loading waste bins",
+    "emptyMessage": "No waste bin has been registered yet.",
+    "emptyFilteredMessage": "No bin matches these filters.",
+    "emptyFilteredAction": "Reset filters",
+    "resultCount_one": "{count} bin",
+    "resultCount_other": "{count} bins",
+    "resultCountFiltered": "{filtered} of {total} bins"
+  },
+  "card": {
+    "numberSrLabel": "Bin number: ",
+    "volumeSrLabel": "Volume: ",
+    "sensorSrLabel": "Sensor: ",
+    "noSensor": "No sensor"
+  },
+  "units": {
+    "liters": "{value} l",
+    "centimeters": "{value} cm",
+    "percent": "{value} %"
+  },
+  "detail": {
+    "title": "Bin {number}",
+    "loadingLabel": "Loading waste bin",
+    "notFoundBackLabel": "To all waste bins",
+    "backToList": "To all waste bins",
+    "editLink": "Edit bin",
+    "moreActionsAriaLabel": "More actions",
+    "deleteMenuItem": "Delete bin",
+    "deleteDialogTitle": "Delete bin {number}?",
+    "deleteDialogDescription": "The bin is removed permanently and taken out of every planned collection tour. An attached sensor is released and stays activated.",
+    "deleteSuccessToast": "The waste bin was deleted.",
+    "deleteErrorToast": "The waste bin could not be deleted.",
+    "masterData": {
+      "title": "Master data",
+      "numberLabel": "Bin number",
+      "volumeLabel": "Volume",
+      "depthLabel": "Depth",
+      "coordinatesLabel": "Coordinates",
+      "dataSourceLabel": "Data source",
+      "manuallyCreated": "Created manually",
+      "lastUpdateLabel": "Last changed"
+    },
+    "fill": {
+      "title": "Fill level",
+      "stateLabel": "Fill state",
+      "levelLabel": "Fill level",
+      "lastMeasurementLabel": "Last measurement",
+      "lastEmptiedLabel": "Last emptied",
+      "sensorLabel": "Sensor",
+      "noMeasurement": "No measurement yet",
+      "neverEmptied": "Not emptied yet",
+      "noSensor": "No sensor attached"
+    }
+  },
+  "form": {
+    "numberLabel": "Bin number",
+    "numberPlaceholder": "e.g. B-0042",
+    "volumeLabel": "Volume in liters",
+    "volumePlaceholder": "e.g. 1100",
+    "depthLabel": "Depth in centimeters",
+    "depthPlaceholder": "e.g. 120",
+    "depthHint": "Distance from the sensor to the bottom of the bin. The fill level is calculated from it.",
+    "organizationLabel": "Organization",
+    "organizationPlaceholder": "Select organization",
+    "organizationSearchPlaceholder": "Search organization",
+    "organizationHint": "The organization that owns the bin.",
+    "positionLabel": "Location",
+    "positionHint": "Click on the map to set the location. Afterwards the marker can be dragged.",
+    "positionMoveHint": "Drag the marker to change the location.",
+    "positionRequired": "Please choose the location on the map.",
+    "mapAriaLabel": "Map for choosing the bin location",
+    "createLeaveMessage": "The new bin has not been saved yet. Leave the page anyway?",
+    "updateLeaveMessage": "The changes to the bin have not been saved yet. Leave the page anyway?",
+    "createSuccessMessage": "The waste bin was registered.",
+    "updateSuccessMessage": "The waste bin was saved."
+  },
+  "create": {
+    "title": "Register new waste bin",
+    "description": "Enter number, size and location of the bin. You attach a sensor afterwards in the sensor management.",
+    "backLabel": "To all waste bins"
+  },
+  "update": {
+    "title": "Edit bin {number}",
+    "description": "Change number, size or location of the bin.",
+    "backLabel": "Back to the bin"
+  },
   "statistics": {
     "bin": {
       "label": "Waste bins"
