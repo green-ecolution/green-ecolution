@@ -41,3 +41,24 @@ async fn unknown_organization_is_not_found() {
         .await;
     assert_eq!(resp.status(), 404);
 }
+
+#[tokio::test]
+async fn an_own_switch_reports_what_inheriting_again_would_give() {
+    let app = spawn_app().await;
+    let path = format!("/api/v1/organizations/{ROOT_ORG_ID}/modules");
+    let resp = app
+        .put_json(&path, &json!({ "modules": { "waste": true } }))
+        .await;
+    assert_eq!(resp.status(), 200);
+
+    let body: serde_json::Value = app.get(&path).await.json().await.unwrap();
+    let waste = body["modules"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|m| m["key"] == "waste")
+        .unwrap();
+    assert_eq!(waste["enabled"], true);
+    assert_eq!(waste["own_value"], true);
+    assert_eq!(waste["inherited_enabled"], false);
+}

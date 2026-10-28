@@ -32,6 +32,8 @@ pub struct OrganizationModuleResponse {
     pub source: Option<OrganizationRef>,
     /// This organization's own switch, reported even while a lock above makes it dormant.
     pub own_value: Option<bool>,
+    /// The state without this organization's own switch, i.e. after returning it to inheritance.
+    pub inherited_enabled: bool,
     /// The organization the own switch was set from; this one or an ancestor.
     pub set_by: Option<OrganizationRef>,
     /// The own switch was set from a level the caller does not act for, so
@@ -80,6 +82,7 @@ impl OrganizationModulesResponse {
                         _ => None,
                     },
                     own_value: own.map(|s| s.enabled),
+                    inherited_enabled: r.inherited,
                     set_by: own.map(|s| OrganizationRef {
                         id: s.set_by.value(),
                     }),

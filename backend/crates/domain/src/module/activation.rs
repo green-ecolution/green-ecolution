@@ -18,6 +18,9 @@ pub struct ActivationResolution {
     pub origin: SettingOrigin,
     /// The topmost ancestor that froze this subtree, if any.
     pub enforced_by: Option<Id<Organization>>,
+    /// The state without the target's own switch: what returning it to
+    /// inheritance would lead to.
+    pub inherited: bool,
 }
 
 /// An organization's own switch and the level it was set from. A `set_by`
@@ -44,10 +47,22 @@ pub fn resolve_activation(
         })
         .collect();
     let r = inherit(default_enabled, &levels, target);
+    let without_own: Vec<InheritLevel<bool>> = levels
+        .iter()
+        .map(|l| InheritLevel {
+            value: if l.organization_id == target {
+                None
+            } else {
+                l.value
+            },
+            ..*l
+        })
+        .collect();
     ActivationResolution {
         enabled: r.value,
         origin: r.origin,
         enforced_by: r.enforced_by,
+        inherited: inherit(default_enabled, &without_own, target).value,
     }
 }
 
@@ -119,6 +134,34 @@ mod tests {
         assert!(r.enabled);
         assert_eq!(r.origin, SettingOrigin::Inherited(root));
         assert_eq!(r.enforced_by, Some(root));
+    }
+
+    #[test]
+    fn inherited_ignores_the_targets_own_switch() {
+        let (root, mid, leaf) = orgs();
+        let chain = [
+            level(root, None, true),
+            level(mid, Some(false), true),
+            level(leaf, Some(true), true),
+        ];
+        let r = resolve_activation(true, &chain, leaf);
+        assert!(r.enabled);
+        assert!(!r.inherited);
+
+        let root_only = [level(root, Some(true), true)];
+        assert!(!resolve_activation(false, &root_only, root).inherited);
+    }
+
+    #[test]
+    fn inherited_under_a_lock_is_the_locked_value() {
+        let (root, _, leaf) = orgs();
+        let chain = [
+            level(root, Some(false), false),
+            level(leaf, Some(true), true),
+        ];
+        let r = resolve_activation(true, &chain, leaf);
+        assert!(!r.enabled);
+        assert!(!r.inherited);
     }
 
     #[test]
