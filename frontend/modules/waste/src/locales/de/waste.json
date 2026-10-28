@@ -154,7 +154,9 @@
       "ariaLabel": "Abfallbehälter {number} auf der Karte",
       "title": "Behälter {number}",
       "close": "Schließen",
-      "detailLink": "Zum Behälter"
+      "detailLink": "Zum Behälter",
+      "notFound": "Behälter nicht gefunden",
+      "notFoundHint": "Der Behälter existiert nicht mehr oder ist für dich nicht sichtbar."
     }
   },
   "planning": {

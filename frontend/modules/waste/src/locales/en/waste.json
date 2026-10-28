@@ -154,7 +154,9 @@
       "ariaLabel": "Waste bin {number} on the map",
       "title": "Bin {number}",
       "close": "Close",
-      "detailLink": "Open bin"
+      "detailLink": "Open bin",
+      "notFound": "Bin not found",
+      "notFoundHint": "The bin no longer exists or is not visible to you."
     }
   },
   "planning": {
