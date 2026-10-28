@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router'
 import { Lock, MoveRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@green-ecolution/ui'
+import LeaveScopeButton from './LeaveScopeButton'
 
 function Forbidden() {
   const { t } = useTranslation('navigation')
@@ -30,13 +31,14 @@ function Forbidden() {
             </p>
           </div>
 
-          <div className="mt-8">
+          <div className="mt-8 flex flex-col items-center gap-3">
             <Button asChild variant="outline" className="group gap-2 px-6">
               <Link to="/dashboard">
                 {t('forbidden.toDashboard')}
                 <MoveRight className="w-4 h-4 transition-transform duration-base ease-emphasized group-hover:translate-x-1 motion-reduce:transition-none" />
               </Link>
             </Button>
+            <LeaveScopeButton />
           </div>
         </div>
       </section>

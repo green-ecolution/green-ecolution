@@ -30,7 +30,8 @@
     "language": "Language",
     "organization": "Organization",
     "allOrganizations": "All my organizations",
-    "searchOrganization": "Search organization …"
+    "searchOrganization": "Search organization …",
+    "leaveScope": "Switch to all my organizations"
   },
   "breadcrumb": {
     "nav": "Breadcrumb navigation",
@@ -75,8 +76,7 @@
   },
   "entityNotFound": {
     "title": "{entityName} not found",
-    "description": "The requested resource does not exist or has already been removed.",
-    "leaveScope": "Switch to all my organizations"
+    "description": "The requested resource does not exist or has already been removed."
   },
   "updateNotification": {
     "title": "New version available",
