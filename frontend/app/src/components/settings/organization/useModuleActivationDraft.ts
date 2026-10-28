@@ -72,7 +72,10 @@ export const useModuleActivationDraft = (
   }
 
   const rows: ModuleActivationRow[] = ready
-    ? server.modules.map((module) => {
+    ? server.modules.flatMap((module) => {
+        const locked = enforcedBy !== null || module.fixedByAncestor
+        // Switched off from above: nothing this organization could do with it.
+        if (locked && !module.enabled) return []
         const drafted = own[module.key] ?? null
         const setBy = module.setBy?.id ?? null
         return {
@@ -82,7 +85,7 @@ export const useModuleActivationDraft = (
           sourceId: module.source?.id ?? null,
           own: drafted,
           setBy: setBy === organizationId ? null : setBy,
-          locked: enforcedBy !== null || module.fixedByAncestor,
+          locked,
         }
       })
     : []

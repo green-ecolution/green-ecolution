@@ -119,17 +119,49 @@ describe('useModuleActivationDraft', () => {
     expect(result.current.rows[0].own).toBeNull()
   })
 
-  it('locks every row while an ancestor holds the lock', async () => {
+  it('locks the rows and hides the switched-off modules while an ancestor holds the lock', async () => {
     const { result } = await loaded(response({ enforcedBy: { id: 'root' } }))
 
     expect(result.current.enforcedBy).toEqual({ id: 'root' })
+    expect(result.current.rows.map((row) => row.key)).toEqual(['irrigation'])
     expect(result.current.rows.every((row) => row.locked)).toBe(true)
 
     act(() => result.current.setOwn('irrigation', false))
     expect(result.current.dirty).toBe(false)
   })
 
-  it('locks a switch a parent set for this organization and names the parent', async () => {
+  it('locks a switch a parent turned on for this organization and names the parent', async () => {
+    const { result } = await loaded(
+      response({
+        modules: [
+          {
+            key: 'irrigation',
+            enabled: true,
+            origin: 'inherited',
+            source: { id: 'root' },
+            fixedByAncestor: false,
+          },
+          {
+            key: 'waste',
+            enabled: true,
+            origin: 'own',
+            ownValue: true,
+            setBy: { id: 'root' },
+            fixedByAncestor: true,
+          },
+        ],
+      }),
+    )
+
+    expect(result.current.rows[1]).toMatchObject({ setBy: 'root', locked: true })
+    expect(result.current.rows[0].locked).toBe(false)
+
+    act(() => result.current.setOwn('waste', false))
+    act(() => result.current.setOwn('waste', null))
+    expect(result.current.dirty).toBe(false)
+  })
+
+  it('hides a module a parent switched off for this organization', async () => {
     const { result } = await loaded(
       response({
         modules: [
@@ -152,11 +184,9 @@ describe('useModuleActivationDraft', () => {
       }),
     )
 
-    expect(result.current.rows[1]).toMatchObject({ setBy: 'root', locked: true })
-    expect(result.current.rows[0].locked).toBe(false)
+    expect(result.current.rows.map((row) => row.key)).toEqual(['irrigation'])
 
     act(() => result.current.setOwn('waste', true))
-    act(() => result.current.setOwn('waste', null))
     expect(result.current.dirty).toBe(false)
   })
 
