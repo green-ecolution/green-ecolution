@@ -80,15 +80,18 @@ Organisation einen eigenen Wert, und neben dem Schalter erscheint **Wieder erben
 du den eigenen Wert wieder aufgibst und der Zustand erneut von oben kommt. Hat eine
 übergeordnete Organisation festgelegt, dass ihre Untereinheiten keine eigenen Werte
 setzen dürfen, steht der Schalter fest, und ein Hinweis nennt die sperrende
-Organisation.
+Organisation. Module, die unter einer solchen Sperre aus sind, erscheinen dann gar nicht
+mehr in der Liste.
 
 Was eine übergeordnete Organisation für eine Unterorganisation einstellt, ist für diese
-verbindlich. Schaltet etwa Green Ecolution das Modul Abfall für das TBZ ab, steht am
-Schalter des TBZ **Festgelegt von Green Ecolution**, und wer nur im TBZ Rechte hat, kann
-den Schalter weder umlegen noch mit **Wieder erben** zurücksetzen. Ändern kann ihn nur,
-wer in der festlegenden Organisation oder darüber `setting:update` hat. Ein Wert, den das
-TBZ selbst gesetzt hat, bleibt dagegen offen: Die übergeordnete Organisation kann ihn
-jederzeit überschreiben und macht ihn damit ebenfalls verbindlich.
+verbindlich. Schaltet etwa Green Ecolution das Modul Abfall für das TBZ ab, taucht Abfall
+für alle, die nur im TBZ Rechte haben, in der Liste gar nicht mehr auf. Schaltet Green
+Ecolution es für das TBZ fest ein, steht am Schalter **Festgelegt von Green Ecolution**,
+und er lässt sich dort weder umlegen noch mit **Wieder erben** zurücksetzen. Ändern kann
+den Schalter nur, wer in der festlegenden Organisation oder darüber `setting:update` hat;
+dort bleibt er auch sichtbar, wenn das Modul aus ist. Ein Wert, den das TBZ selbst gesetzt
+hat, bleibt dagegen offen: Die übergeordnete Organisation kann ihn jederzeit überschreiben
+und macht ihn damit ebenfalls verbindlich.
 
 Zum Ändern brauchst du zusätzlich zu `setting:read` die Berechtigung `setting:update`;
 ohne sie siehst du die Schalter nur. Gespeichert wird wie bei den übrigen Werten dieser
