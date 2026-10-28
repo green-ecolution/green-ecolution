@@ -8,7 +8,7 @@ import { ResponseError } from '@green-ecolution/backend-client'
 import EntityNotFound from '@/components/layout/EntityNotFound'
 import ErrorFallback from '@/components/layout/ErrorFallback'
 import Forbidden from '@/components/layout/Forbidden'
-import { userQueries } from '@/api/queries'
+import { ensureEffectiveRoles } from '@/lib/auth/scope/effectiveRoles'
 import { readAuthBypass } from '@/lib/auth/runtimeConfig'
 import type { NavigationCrumbKey } from '@/lib/i18n/navigation'
 import type { AllNamespaces } from '@/lib/i18n/languages'
@@ -154,7 +154,7 @@ export const requirePermission =
   async ({ context }: { context: { queryClient: QueryClient } }): Promise<void> => {
     const perms = readAuthBypass()
       ? UNRESTRICTED
-      : permissionsOf(await context.queryClient.ensureQueryData(userQueries.me()))
+      : permissionsOf(await ensureEffectiveRoles(context.queryClient))
 
     if (!satisfies(perms, required)) throw new ForbiddenError()
   }

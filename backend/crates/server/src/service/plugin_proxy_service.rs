@@ -6,6 +6,7 @@ use uuid::Uuid;
 
 use domain::{
     Id, RepositoryError,
+    authorization::Caller,
     plugin::{Plugin, PluginFrontend, PluginReader, PluginSlug, ServiceEndpoint},
 };
 
@@ -141,7 +142,7 @@ impl PluginProxyService {
         }
         self.authorization
             .require_plugin_view(
-                session.user_id,
+                Caller::unscoped(session.user_id),
                 plugin.required_permissions(),
                 plugin.organization_id(),
             )

@@ -10,6 +10,8 @@ export type FormDraftKey = `${FormType}-${MutationType}`
 export interface FormDraftState<T = unknown> {
   data: T | null
   hasChanges: boolean
+  /** Organization scope the draft was made under; a draft is void under another one. */
+  scope: string | null
 }
 
 export interface FormDraftSlice {

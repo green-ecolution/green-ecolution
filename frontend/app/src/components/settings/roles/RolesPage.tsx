@@ -19,6 +19,7 @@ import {
 } from '@green-ecolution/ui'
 import type { Role } from '@/api/backendApi'
 import { userQueries, roleQueries } from '@/api/queries'
+import { useHomeOrganizationId } from '@/lib/auth/scope/effectiveRoles'
 import { useRoleMutations } from '@/hooks/useRoleMutations'
 import { useHasPermission } from '@/lib/auth/useHasPermission'
 import { usePermissions } from '@/lib/auth/usePermissions'
@@ -48,8 +49,7 @@ const RolesPage = () => {
   const canReadUsers = useHasPermission(['user:read'])
   const { ref: layoutRef, isWide } = useContainerWiderThan<HTMLDivElement>(TWO_PANE_MIN_WIDTH)
 
-  const { data: me } = useQuery(userQueries.me())
-  const orgId = me?.organization?.id ?? null
+  const orgId = useHomeOrganizationId()
 
   const { data: templates, isLoading: templatesLoading } = useQuery(roleQueries.templates())
   const { data: orgRoles, isLoading: orgRolesLoading } = useQuery({

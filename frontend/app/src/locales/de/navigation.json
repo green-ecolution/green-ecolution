@@ -27,7 +27,10 @@
     "signedInAs": "Angemeldet als:",
     "profile": "Dein Profil",
     "logout": "Abmelden",
-    "language": "Sprache"
+    "language": "Sprache",
+    "organization": "Organisation",
+    "searchOrganization": "Organisation suchen …",
+    "leaveScope": "Zu meiner Organisation wechseln"
   },
   "breadcrumb": {
     "nav": "Seitennavigation",

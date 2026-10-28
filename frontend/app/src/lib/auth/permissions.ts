@@ -1,4 +1,4 @@
-import type { UserResponse } from '@green-ecolution/backend-client'
+import type { RoleResponse } from '@green-ecolution/backend-client'
 import type { ModuleManifest } from '@/modules/types'
 
 export const CORE_RESOURCES = [
@@ -49,9 +49,9 @@ export const readPermissionsOf = (resources: readonly Resource[]): Permission[] 
  * nav and route gating only ask whether a right is held anywhere, the backend
  * enforces the organization subtree.
  */
-export function permissionsOf(me: UserResponse | undefined): Permissions {
-  if (!me) return NO_PERMISSIONS
-  return new Set(me.roles.flatMap((role) => role.permissions))
+export function permissionsOf(roles: RoleResponse[] | undefined): Permissions {
+  if (!roles) return NO_PERMISSIONS
+  return new Set(roles.flatMap((role) => role.permissions))
 }
 
 export function satisfies(perms: Permissions, required: PermissionRequirement): boolean {

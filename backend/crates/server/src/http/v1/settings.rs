@@ -49,7 +49,7 @@ pub async fn get_settings(
     state
         .authorization_service
         .require(
-            user.id,
+            user.caller(),
             Permission::new(ResourceKey::SETTING, Action::Read),
             org,
         )
@@ -95,7 +95,7 @@ pub async fn update_settings(
     state
         .authorization_service
         .require(
-            user.id,
+            user.caller(),
             Permission::new(ResourceKey::SETTING, Action::Update),
             org,
         )

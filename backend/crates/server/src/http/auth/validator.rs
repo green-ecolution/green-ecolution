@@ -48,6 +48,7 @@ impl TokenValidator {
             username: Some("ttester".into()),
             email: Some("toni.tester@green-ecolution.de".into()),
             raw_claims: Value::Null,
+            organization_scope: None,
         }
     }
 
@@ -98,5 +99,6 @@ fn claims_to_auth_user(claims: Value) -> Result<AuthUser, AuthError> {
         username,
         email,
         raw_claims: claims,
+        organization_scope: None,
     })
 }

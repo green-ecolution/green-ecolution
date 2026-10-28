@@ -1,5 +1,7 @@
 use std::collections::{BTreeSet, HashMap, HashSet};
 
+use uuid::Uuid;
+
 use crate::{Id, organization::Organization};
 
 use super::Permission;
@@ -168,11 +170,30 @@ impl EffectivePermissions {
     }
 }
 
+/// The user behind a request plus the organization scope they picked, if any.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Caller {
+    pub user_id: Uuid,
+    pub scope: Option<Id<Organization>>,
+}
+
+impl Caller {
+    pub fn unscoped(user_id: Uuid) -> Self {
+        Self {
+            user_id,
+            scope: None,
+        }
+    }
+}
+
 /// Everything needed to answer authorization questions for one request.
+/// A `scope` only narrows: every answer additionally has to lie inside the
+/// scope's subtree, it never grants anything.
 #[derive(Debug, Clone)]
 pub struct AccessContext {
     pub permissions: EffectivePermissions,
     pub hierarchy: OrgHierarchy,
+    pub scope: Option<Id<Organization>>,
 }
 
 impl AccessContext {
@@ -180,24 +201,73 @@ impl AccessContext {
         Self {
             permissions: EffectivePermissions::unrestricted(),
             hierarchy: OrgHierarchy::default(),
+            scope: None,
+        }
+    }
+
+    pub fn with_scope(mut self, scope: Id<Organization>) -> Self {
+        self.scope = Some(scope);
+        self
+    }
+
+    pub fn without_scope(&self) -> Self {
+        Self {
+            scope: None,
+            ..self.clone()
+        }
+    }
+
+    fn in_scope(&self, org: Id<Organization>) -> bool {
+        self.scope
+            .is_none_or(|scope| self.hierarchy.is_descendant_or_self(org, scope))
+    }
+
+    fn narrow(&self, visibility: Visibility) -> Visibility {
+        let Some(scope) = self.scope else {
+            return visibility;
+        };
+        let subtree = self.hierarchy.descendants_or_self(scope);
+        match visibility {
+            Visibility::Unrestricted => Visibility::Only(subtree),
+            Visibility::Only(orgs) => {
+                Visibility::Only(orgs.intersection(&subtree).copied().collect())
+            }
         }
     }
 
     pub fn allows_in(&self, p: Permission, org: Id<Organization>) -> bool {
-        self.permissions.allows_in(p, org, &self.hierarchy)
+        self.in_scope(org) && self.permissions.allows_in(p, org, &self.hierarchy)
     }
 
     pub fn superset_of(&self, required: &BTreeSet<Permission>, org: Id<Organization>) -> bool {
-        self.permissions.superset_of(required, org, &self.hierarchy)
+        self.in_scope(org) && self.permissions.superset_of(required, org, &self.hierarchy)
     }
 
     pub fn holds_any_in(&self, org: Id<Organization>) -> bool {
-        self.permissions.holds_any_in(org, &self.hierarchy)
+        self.in_scope(org) && self.permissions.holds_any_in(org, &self.hierarchy)
+    }
+
+    /// Whether `p` is granted anywhere inside the scope (anywhere at all
+    /// without one).
+    pub fn allows_anywhere(&self, p: Permission) -> bool {
+        match self.visible_orgs(p) {
+            Visibility::Unrestricted => true,
+            Visibility::Only(orgs) => !orgs.is_empty(),
+        }
+    }
+
+    /// Whether the user may pick `scope`: it lies in their reachable
+    /// organizations, ignoring any scope already set on this context.
+    pub fn admits_scope(&self, scope: Id<Organization>) -> bool {
+        match self.without_scope().reachable_orgs() {
+            Visibility::Unrestricted => self.hierarchy.knows(scope),
+            Visibility::Only(orgs) => orgs.contains(&scope),
+        }
     }
 
     pub fn visible_orgs(&self, p: Permission) -> Visibility {
         if self.permissions.is_unrestricted() {
-            return Visibility::Unrestricted;
+            return self.narrow(Visibility::Unrestricted);
         }
         let mut orgs = BTreeSet::new();
         for (granted, perms) in self.permissions.grants() {
@@ -205,14 +275,14 @@ impl AccessContext {
                 orgs.extend(self.hierarchy.descendants_or_self(*granted));
             }
         }
-        Visibility::Only(orgs)
+        self.narrow(Visibility::Only(orgs))
     }
 
     /// Organizations any of the user's grants reaches, whatever the permission.
     /// Answers "where does this user work", not "what may they do there".
     pub fn reachable_orgs(&self) -> Visibility {
         if self.permissions.is_unrestricted() {
-            return Visibility::Unrestricted;
+            return self.narrow(Visibility::Unrestricted);
         }
         let mut orgs = BTreeSet::new();
         for (granted, perms) in self.permissions.grants() {
@@ -220,7 +290,7 @@ impl AccessContext {
                 orgs.extend(self.hierarchy.descendants_or_self(*granted));
             }
         }
-        Visibility::Only(orgs)
+        self.narrow(Visibility::Only(orgs))
     }
 }
 
@@ -372,6 +442,7 @@ mod tests {
         let ctx = AccessContext {
             permissions: eff,
             hierarchy: h,
+            scope: None,
         };
         match ctx.visible_orgs(tree_read()) {
             Visibility::Only(orgs) => {
@@ -410,6 +481,7 @@ mod tests {
                 BTreeSet::from([tree_read()]),
             )]),
             hierarchy,
+            scope: None,
         };
         assert_eq!(
             ctx.reachable_orgs(),
@@ -424,6 +496,7 @@ mod tests {
         let ctx = AccessContext {
             permissions: EffectivePermissions::from_grants(vec![(tbz, BTreeSet::new())]),
             hierarchy,
+            scope: None,
         };
         assert_eq!(ctx.reachable_orgs(), Visibility::Only(BTreeSet::new()));
         assert_eq!(
@@ -438,5 +511,140 @@ mod tests {
             AccessContext::unrestricted().visible_orgs(tree_read()),
             Visibility::Unrestricted
         );
+    }
+
+    struct ScopeTree {
+        root: Id<Organization>,
+        tbz: Id<Organization>,
+        firma_a: Id<Organization>,
+        firma_b: Id<Organization>,
+        firma_a1: Id<Organization>,
+        hierarchy: OrgHierarchy,
+    }
+
+    fn scope_tree() -> ScopeTree {
+        let (root, tbz, firma_a) = ids();
+        let (firma_b, firma_a1) = (Id::new_v7(), Id::new_v7());
+        let hierarchy = OrgHierarchy::from_pairs([
+            (root, None),
+            (tbz, Some(root)),
+            (firma_a, Some(tbz)),
+            (firma_b, Some(tbz)),
+            (firma_a1, Some(firma_a)),
+        ]);
+        ScopeTree {
+            root,
+            tbz,
+            firma_a,
+            firma_b,
+            firma_a1,
+            hierarchy,
+        }
+    }
+
+    fn ctx_with_grant(t: &ScopeTree, at: Id<Organization>) -> AccessContext {
+        AccessContext {
+            permissions: EffectivePermissions::from_grants(vec![(
+                at,
+                BTreeSet::from([tree_read()]),
+            )]),
+            hierarchy: t.hierarchy.clone(),
+            scope: None,
+        }
+    }
+
+    #[test]
+    fn scope_narrows_ancestor_grant() {
+        let t = scope_tree();
+        let ctx = ctx_with_grant(&t, t.tbz).with_scope(t.firma_a);
+        assert!(ctx.allows_in(tree_read(), t.firma_a1));
+        assert!(!ctx.allows_in(tree_read(), t.tbz));
+        assert!(!ctx.allows_in(tree_read(), t.firma_b));
+        assert_eq!(
+            ctx.visible_orgs(tree_read()),
+            Visibility::Only(BTreeSet::from([t.firma_a, t.firma_a1]))
+        );
+    }
+
+    #[test]
+    fn scope_keeps_descendant_grant() {
+        let t = scope_tree();
+        let ctx = ctx_with_grant(&t, t.firma_a1).with_scope(t.tbz);
+        assert!(ctx.allows_in(tree_read(), t.firma_a1));
+    }
+
+    #[test]
+    fn scope_drops_foreign_grant() {
+        let t = scope_tree();
+        let ctx = ctx_with_grant(&t, t.firma_b).with_scope(t.firma_a);
+        assert_eq!(
+            ctx.visible_orgs(tree_read()),
+            Visibility::Only(BTreeSet::new())
+        );
+        assert!(!ctx.allows_anywhere(tree_read()));
+    }
+
+    #[test]
+    fn scope_narrows_unrestricted() {
+        let t = scope_tree();
+        let ctx = AccessContext {
+            permissions: EffectivePermissions::unrestricted(),
+            hierarchy: t.hierarchy.clone(),
+            scope: Some(t.firma_a),
+        };
+        assert_eq!(
+            ctx.visible_orgs(tree_read()),
+            Visibility::Only(BTreeSet::from([t.firma_a, t.firma_a1]))
+        );
+        assert!(!ctx.allows_in(tree_read(), t.tbz));
+        assert!(ctx.allows_in(tree_read(), t.firma_a1));
+    }
+
+    #[test]
+    fn scope_narrows_superset_and_holds_any() {
+        let t = scope_tree();
+        let ctx = ctx_with_grant(&t, t.tbz).with_scope(t.firma_a);
+        let required = BTreeSet::from([tree_read()]);
+        assert!(ctx.superset_of(&required, t.firma_a1));
+        assert!(!ctx.superset_of(&required, t.firma_b));
+        assert!(ctx.holds_any_in(t.firma_a));
+        assert!(!ctx.holds_any_in(t.tbz));
+        assert_eq!(
+            ctx.reachable_orgs(),
+            Visibility::Only(BTreeSet::from([t.firma_a, t.firma_a1]))
+        );
+    }
+
+    #[test]
+    fn without_scope_restores_full_view() {
+        let t = scope_tree();
+        let ctx = ctx_with_grant(&t, t.tbz).with_scope(t.firma_a);
+        assert!(ctx.without_scope().allows_in(tree_read(), t.tbz));
+        assert_eq!(ctx.without_scope().scope, None);
+    }
+
+    #[test]
+    fn admits_scope_only_reachable() {
+        let t = scope_tree();
+        let ctx = ctx_with_grant(&t, t.firma_a);
+        assert!(ctx.admits_scope(t.firma_a1));
+        assert!(!ctx.admits_scope(t.tbz));
+
+        let unrestricted = AccessContext {
+            permissions: EffectivePermissions::unrestricted(),
+            hierarchy: t.hierarchy.clone(),
+            scope: None,
+        };
+        assert!(unrestricted.admits_scope(t.root));
+        assert!(!unrestricted.admits_scope(Id::new_v7()));
+    }
+
+    #[test]
+    fn allows_anywhere_without_scope_matches_allows() {
+        let t = scope_tree();
+        let ctx = ctx_with_grant(&t, t.firma_a);
+        assert!(ctx.allows_anywhere(tree_read()));
+        assert!(!ctx.allows_anywhere(Permission::new(WIDGET, Action::Delete)));
+        assert!(AccessContext::unrestricted().allows_anywhere(tree_read()));
     }
 }

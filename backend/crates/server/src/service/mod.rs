@@ -109,6 +109,10 @@ pub enum ModuleErrorKind {
     Unprocessable,
 }
 
+/// Shared by the malformed header (400) and the refused scope (403), so a
+/// client handles both alike and resets its stored scope.
+const ORGANIZATION_SCOPE_INVALID: &str = "organization_scope.invalid";
+
 #[derive(Debug, thiserror::Error)]
 pub enum ServiceError {
     #[error(transparent)]
@@ -157,6 +161,10 @@ pub enum ServiceError {
     SensorBoundToTarget,
     #[error("no organization given and the acting user has none")]
     MissingOrganization,
+    /// The requested scope is unknown or none of the user's grants reaches
+    /// it. A scope only narrows, so picking one outside is refused outright.
+    #[error("organization scope is unknown or outside the caller's organizations")]
+    InvalidOrganizationScope,
     #[error("a user cannot change their own roles or organization")]
     CannotChangeOwnAccess,
     #[error("this change would remove your own right to administer roles and members")]
@@ -231,6 +239,7 @@ impl ServiceError {
             Self::SettingsSetByAncestor { .. } => "settings.set_by_ancestor",
             Self::ContactPersonNotAMember => "organization.contact_person_not_a_member",
             Self::MissingOrganization => "organization.missing",
+            Self::InvalidOrganizationScope => ORGANIZATION_SCOPE_INVALID,
             Self::ModuleUnknown { .. } => "module.unknown",
             Self::ModuleDisabled { .. } => "module.disabled",
             Self::TargetNotAccepted { .. } => "target.not_accepted",
@@ -366,6 +375,8 @@ pub enum AuthError {
     PluginViewTicketInvalid,
     #[error("invalid plugin proxy session")]
     PluginProxySessionInvalid,
+    #[error("malformed organization scope header")]
+    InvalidOrganizationScope,
 }
 
 impl AuthError {
@@ -380,6 +391,7 @@ impl AuthError {
             Self::PluginDisabled => "plugin.disabled",
             Self::PluginViewTicketInvalid => "plugin.view_ticket_invalid",
             Self::PluginProxySessionInvalid => "plugin.proxy_session_invalid",
+            Self::InvalidOrganizationScope => ORGANIZATION_SCOPE_INVALID,
         }
     }
 }

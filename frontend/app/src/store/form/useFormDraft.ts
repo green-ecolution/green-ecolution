@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react'
 import useStore from '@/store/store'
+import { useOrganizationScope } from '@/lib/auth/scope/organizationScopeStore'
 import {
   FormDraftKey,
   FormDraftState,
@@ -11,7 +12,9 @@ import {
 export function useFormDraft<T>(formType: FormType, mutationType: MutationType) {
   const key: FormDraftKey = `${formType}-${mutationType}`
 
-  const draft = useStore((state) => state.formDrafts[key]) as FormDraftState<T> | undefined
+  const scope = useOrganizationScope()
+  const stored = useStore((state) => state.formDrafts[key]) as FormDraftState<T> | undefined
+  const draft = stored?.scope === scope ? stored : undefined
   const setFormDraft = useStore((state) => state.setFormDraft)
   const updateFormDraft = useStore((state) => state.updateFormDraft)
   const markFormDraftChanged = useStore((state) => state.markFormDraftChanged)

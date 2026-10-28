@@ -11,13 +11,27 @@ import {
   RouterProvider,
   Outlet,
 } from '@tanstack/react-router'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import NavUser from './NavUser'
+import { userQueries } from '@/api/queries'
+import { setOrganizationScope } from '@/lib/auth/scope/organizationScopeStore'
 import { getI18n } from '@/lib/i18n'
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 const noop = () => {}
 
-const renderNavUser = (props: Partial<React.ComponentProps<typeof NavUser>> = {}) => {
+const ORGS = [
+  { id: 'root', name: 'Stadt', parentId: null },
+  { id: 'firma_a', name: 'Firma A', parentId: 'root' },
+]
+
+const renderNavUser = (
+  props: Partial<React.ComponentProps<typeof NavUser>> = {},
+  organizations = ORGS,
+) => {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { staleTime: Infinity } } })
+  queryClient.setQueryData(userQueries.myOrganizations().queryKey, organizations)
+  queryClient.setQueryData(userQueries.me().queryKey, { id: 'u1', organization: ORGS[0] })
   const rootRoute = createRootRoute({
     component: () => <Outlet />,
   })
@@ -55,19 +69,25 @@ const renderNavUser = (props: Partial<React.ComponentProps<typeof NavUser>> = {}
     history: createMemoryHistory({ initialEntries: ['/'] }),
   })
 
-  return render(<RouterProvider router={router} />)
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>,
+  )
 }
 
 describe('NavUser', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    localStorage.clear()
+    setOrganizationScope('u1', null)
   })
 
   afterEach(() => {
     cleanup()
   })
 
-  it('shows initials, name and email in the trigger', async () => {
+  it('shows initials, name and email in the trigger while in the own organization', async () => {
     renderNavUser()
 
     await waitFor(() => {
@@ -76,6 +96,7 @@ describe('NavUser', () => {
     expect(screen.getByText('EM')).toBeInTheDocument()
     expect(screen.getByText('Erika Mustermann')).toBeInTheDocument()
     expect(screen.getByText('erika@example.com')).toBeInTheDocument()
+    expect(screen.queryByText('Stadt')).not.toBeInTheDocument()
   })
 
   it('opens the menu with profile and logout entries', async () => {
@@ -140,5 +161,20 @@ describe('NavUser', () => {
       expect(screen.getByText('Erika Mustermann')).toBeInTheDocument()
     })
     expect(screen.getByText('Erika Mustermann').parentElement).toHaveClass('lg:hidden')
+  })
+
+  it('shows the active organization instead of the email when a scope is set', async () => {
+    setOrganizationScope('u1', 'firma_a')
+    renderNavUser()
+
+    expect(await screen.findByText('Firma A')).toBeInTheDocument()
+    expect(screen.queryByText('erika@example.com')).not.toBeInTheDocument()
+  })
+
+  it('keeps the email with a single reachable organization', async () => {
+    setOrganizationScope('u1', 'firma_a')
+    renderNavUser({}, [ORGS[1]])
+
+    expect(await screen.findByText('erika@example.com')).toBeInTheDocument()
   })
 })

@@ -14,6 +14,7 @@ import {
   SelectField,
   TextareaField,
 } from '@green-ecolution/ui'
+import { useOrganizationScope } from '@/lib/auth/scope/organizationScopeStore'
 import type { OrganizationResponse, PluginFrontendDto } from '@/api/backendApi'
 import PluginPermissionMatrix from './PluginPermissionMatrix'
 import PluginDeviceCapabilities from './PluginDeviceCapabilities'
@@ -67,7 +68,10 @@ export const PluginInstallDialog = ({
   const [slug, setSlug] = useState('')
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
-  const [organizationId, setOrganizationId] = useState('')
+  const scope = useOrganizationScope()
+  const [chosenOrganizationId, setChosenOrganizationId] = useState('')
+  const organizationId =
+    chosenOrganizationId || (organizations.some((org) => org.id === scope) ? (scope ?? '') : '')
   const [frontendMode, setFrontendMode] = useState<FrontendMode>('none')
   const [target, setTarget] = useState('')
   const [deviceCapabilities, setDeviceCapabilities] = useState<ReadonlySet<string>>(() => new Set())
@@ -84,7 +88,7 @@ export const PluginInstallDialog = ({
     setSlug('')
     setName('')
     setDescription('')
-    setOrganizationId('')
+    setChosenOrganizationId('')
     setFrontendMode('none')
     setTarget('')
     resetPermissionDraft()
@@ -180,7 +184,7 @@ export const PluginInstallDialog = ({
                 id="plugin-install-organization"
                 options={organizations.map((org) => ({ value: org.id, label: org.name }))}
                 value={organizationId}
-                onChange={setOrganizationId}
+                onChange={setChosenOrganizationId}
                 placeholder={t('plugin.install.organizationPlaceholder')}
                 searchPlaceholder={t('plugin.install.organizationSearchPlaceholder')}
                 aria-invalid={!!errors.organization}

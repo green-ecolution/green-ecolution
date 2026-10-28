@@ -16,8 +16,8 @@ use crate::{
             info::MapInfoResponse,
             role::RoleResponse,
             user::{
-                AssignRoleRequest, SetOrganizationRequest, UserListParams, UserRegisterRequest,
-                UserResponse, UserUpdateRequest,
+                AssignRoleRequest, ReachableOrganizationResponse, SetOrganizationRequest,
+                UserListParams, UserRegisterRequest, UserResponse, UserUpdateRequest,
             },
         },
         v1::scope::resolve_target_org,
@@ -26,7 +26,7 @@ use crate::{
 };
 use domain::{
     Id,
-    authorization::{Action, Permission, ResourceKey},
+    authorization::{Action, Caller, Permission, ResourceKey},
     shared::pagination::Pagination,
     user::UserCreate as DomainUserCreate,
 };
@@ -36,6 +36,7 @@ pub fn protected_routes() -> OpenApiRouter<Arc<AppState>> {
         .routes(routes!(list_users, create_user))
         .routes(routes!(get_me))
         .routes(routes!(get_my_map_view))
+        .routes(routes!(list_my_organizations))
         .routes(routes!(update_user))
         .routes(routes!(list_user_roles, assign_user_role))
         .routes(routes!(revoke_user_role))
@@ -81,10 +82,11 @@ pub async fn get_me(
 #[utoipa::path(get, path = "/users/me/map-view", tag = "Users",
     operation_id = "getMyMapView",
     summary = "Get the map viewport for the authenticated user",
-    description = "Returns the centre and bounding box the map opens at for the caller's organization, resolved along the organization tree. Falls back to the instance default where the account belongs to no organization. Unlike `/info/map`, which stays unauthenticated and always reports the instance default, this answer is organization-specific and therefore requires a token.",
+    description = "Returns the centre and bounding box the map opens at for the caller's organization, or for the organization selected via `X-Organization-Scope`, resolved along the organization tree. Falls back to the instance default where the account belongs to no organization. Unlike `/info/map`, which stays unauthenticated and always reports the instance default, this answer is organization-specific and therefore requires a token.",
     responses(
         (status = 200, description = "The map viewport in force for the caller", body = MapInfoResponse),
         (status = 401, description = "Unauthorized", body = ErrorBody),
+        (status = 403, description = "The selected organization scope is out of the caller's reach (code `organization_scope.invalid`)", body = ErrorBody),
         (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
@@ -93,8 +95,55 @@ pub async fn get_my_map_view(
     State(state): State<Arc<AppState>>,
     user: AuthUserExtractor,
 ) -> Result<Json<MapInfoResponse>, ServiceError> {
-    let view = state.settings_service.map_view_for_user(user.id).await?;
+    let view = match user.organization_scope {
+        Some(scope) => {
+            state
+                .authorization_service
+                .context_for(user.caller())
+                .await?;
+            state
+                .settings_service
+                .map_view_for_organization(scope)
+                .await?
+        }
+        None => state.settings_service.map_view_for_user(user.id).await?,
+    };
     Ok(Json(MapInfoResponse::from(view)))
+}
+
+#[utoipa::path(get, path = "/users/me/organizations", tag = "Users",
+    operation_id = "listMyOrganizations",
+    summary = "List the organizations the authenticated user works in",
+    description = "Every organization any of the caller's roles reaches, with its parent, for the organization scope switcher. Needs no permission beyond authentication and ignores `X-Organization-Scope`, so the list stays complete while a scope is selected.",
+    responses(
+        (status = 200, description = "Reachable organizations", body = Vec<ReachableOrganizationResponse>),
+        (status = 401, description = "Unauthorized", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
+    )
+)]
+#[tracing::instrument(level = "info", skip_all)]
+pub async fn list_my_organizations(
+    State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
+) -> Result<Json<Vec<ReachableOrganizationResponse>>, ServiceError> {
+    let reachable = state
+        .authorization_service
+        .context_for(Caller::unscoped(user.id))
+        .await?
+        .reachable_orgs();
+    let organizations = state
+        .organization_service
+        .list()
+        .await?
+        .into_iter()
+        .filter(|org| reachable.allows(org.id))
+        .map(|org| ReachableOrganizationResponse {
+            id: org.id.value(),
+            name: org.name.as_str().to_owned(),
+            parent_id: org.parent_id.map(|id| id.value()),
+        })
+        .collect();
+    Ok(Json(organizations))
 }
 
 #[utoipa::path(get, path = "/users", tag = "Users",
@@ -126,19 +175,19 @@ pub async fn list_users(
     let scope = resolve_target_org(
         &state.user_service,
         &state.authorization_service,
-        user.id,
+        user.caller(),
         None,
     )
     .await?;
     state
         .authorization_service
-        .require(user.id, read, scope)
+        .require(user.caller(), read, scope)
         .await?;
     // The gate only proves the caller may read *somewhere*; a tenant must not
     // see the members of sibling tenants or of the organization above it.
     let visibility = state
         .authorization_service
-        .visible_orgs_for(user.id, read)
+        .visible_orgs_for(user.caller(), read)
         .await?;
     let pagination = Pagination::new(params.page, params.per_page);
     let filter = UserListFilter {
@@ -181,7 +230,7 @@ pub async fn create_user(
     state
         .authorization_service
         .require(
-            user.id,
+            user.caller(),
             Permission::new(ResourceKey::USER, Action::Create),
             entity.organization_id,
         )
@@ -195,7 +244,7 @@ pub async fn create_user(
             let perms: BTreeSet<Permission> = role.permissions.iter().copied().collect();
             state
                 .authorization_service
-                .require_superset(user.id, &perms, role_org)
+                .require_superset(user.caller(), &perms, role_org)
                 .await?;
         }
     }
@@ -230,7 +279,7 @@ pub async fn update_user(
         Some(org) => {
             state
                 .authorization_service
-                .require(user.id, permission, org)
+                .require(user.caller(), permission, org)
                 .await?
         }
         // organization_id is NOT NULL once a profile row exists, so this is not
@@ -238,8 +287,11 @@ pub async fn update_user(
         // all (e.g. never given an organization). Nothing to scope against, so
         // fall back to requiring user:update anywhere in the caller's scope.
         None => {
-            let ctx = state.authorization_service.context_for(user.id).await?;
-            if !ctx.permissions.allows(permission) {
+            let ctx = state
+                .authorization_service
+                .context_for(user.caller())
+                .await?;
+            if !ctx.allows_anywhere(permission) {
                 return Err(AuthError::Forbidden.into());
             }
         }
@@ -272,7 +324,7 @@ pub async fn list_user_roles(
         Some(org) => {
             state
                 .authorization_service
-                .require(user.id, permission, org)
+                .require(user.caller(), permission, org)
                 .await?
         }
         // organization_id is NOT NULL once a profile row exists, so this is not
@@ -280,8 +332,11 @@ pub async fn list_user_roles(
         // all (e.g. never given an organization). Nothing to scope against, so
         // fall back to requiring user:read anywhere in the caller's scope.
         None => {
-            let ctx = state.authorization_service.context_for(user.id).await?;
-            if !ctx.permissions.allows(permission) {
+            let ctx = state
+                .authorization_service
+                .context_for(user.caller())
+                .await?;
+            if !ctx.allows_anywhere(permission) {
                 return Err(AuthError::Forbidden.into());
             }
         }
@@ -320,14 +375,14 @@ pub async fn assign_user_role(
         state
             .authorization_service
             .require(
-                user.id,
+                user.caller(),
                 Permission::new(ResourceKey::USER, Action::Update),
                 role_org,
             )
             .await?;
         state
             .authorization_service
-            .require_superset(user.id, &perms, role_org)
+            .require_superset(user.caller(), &perms, role_org)
             .await?;
         // A role grants its permissions for its owning organization plus that
         // organization's whole subtree. Assigning a role owned by a different
@@ -374,7 +429,7 @@ pub async fn revoke_user_role(
         state
             .authorization_service
             .require(
-                user.id,
+                user.caller(),
                 Permission::new(ResourceKey::USER, Action::Update),
                 role_org,
             )
@@ -390,7 +445,7 @@ pub async fn revoke_user_role(
 #[utoipa::path(patch, path = "/users/{user_id}/organization", tag = "Users",
     operation_id = "setUserOrganization",
     summary = "Set a user's organization",
-    description = "Moves the user into the given organization. Requires user:update in the target organization. Changes to one's own organization membership are rejected.",
+    description = "Moves the user into the given organization. Requires user:update in the target organization and, where the user already belongs to one, in their current organization. Changes to one's own organization membership are rejected.",
     params(("user_id" = Uuid, Path, description = "User id")),
     request_body = SetOrganizationRequest,
     responses(
@@ -409,14 +464,23 @@ pub async fn set_user_organization(
     Json(req): Json<SetOrganizationRequest>,
 ) -> Result<Json<UserResponse>, ServiceError> {
     let org = Id::new(req.organization_id);
+    let permission = Permission::new(ResourceKey::USER, Action::Update);
     state
         .authorization_service
-        .require(
-            user.id,
-            Permission::new(ResourceKey::USER, Action::Update),
-            org,
-        )
+        .require(user.caller(), permission, org)
         .await?;
+    // Moving a member also takes them out of their current organization.
+    if let Some(current) = state
+        .user_service
+        .organization_of(user_id)
+        .await?
+        .filter(|current| *current != org)
+    {
+        state
+            .authorization_service
+            .require(user.caller(), permission, current)
+            .await?;
+    }
     ensure_not_self(user.id, user_id)?;
     let updated = state.user_service.set_organization(user_id, org).await?;
     Ok(Json((&updated).into()))

@@ -5,6 +5,6 @@ pub mod effective;
 pub mod permission;
 pub mod resource;
 
-pub use effective::{AccessContext, EffectivePermissions, OrgHierarchy, Visibility};
+pub use effective::{AccessContext, Caller, EffectivePermissions, OrgHierarchy, Visibility};
 pub use permission::{Action, Permission};
 pub use resource::{PermissionParseError, ResourceCatalog, ResourceKey};

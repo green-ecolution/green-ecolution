@@ -18,6 +18,10 @@ import {
   VehiclesApi,
 } from '@green-ecolution/backend-client'
 import { getAuthSession } from '@/lib/auth/session'
+import {
+  getOrganizationScope,
+  resetInvalidOrganizationScope,
+} from '@/lib/auth/scope/organizationScopeStore'
 
 export const basePath = import.meta.env.VITE_BACKEND_BASEURL ?? '/api-local'
 
@@ -30,15 +34,31 @@ const withAuthHeader = async (
   config: RequestInit | undefined,
 ): Promise<RequestInit | undefined> => {
   const token = await getAuthSession().getAccessToken()
-  return token
-    ? { ...config, headers: { ...config?.headers, Authorization: `Bearer ${token}` } }
+  // An empty value would be rejected as malformed, so the header is left out entirely.
+  const scope = getOrganizationScope()
+  const extra: Record<string, string> = {}
+  if (token) extra.Authorization = `Bearer ${token}`
+  if (scope) extra['X-Organization-Scope'] = scope
+  return Object.keys(extra).length > 0
+    ? { ...config, headers: { ...config?.headers, ...extra } }
     : config
+}
+
+const resetScopeOnRejection = async (response: Response): Promise<void> => {
+  if (response.status !== 400 && response.status !== 403) return
+  try {
+    const body = (await response.clone().json()) as { code?: string }
+    if (body.code === 'organization_scope.invalid') resetInvalidOrganizationScope()
+  } catch {
+    // not a JSON body, so not a scope rejection
+  }
 }
 
 let signinRedirectInFlight = false
 
 const backendFetch: FetchAPI = async (resource, config) => {
   const response = await fetch(resource, await withAuthHeader(config))
+  await resetScopeOnRejection(response)
 
   // Only 401 means the session is gone. 422 is a domain rejection the backend
   // sends with a message (invalid input, organization mismatch, …) — sending
@@ -59,8 +79,11 @@ const backendFetch: FetchAPI = async (resource, config) => {
 
 // Route-preview calls fail routinely while a plan is still being assembled and
 // must never bounce the user to the login page.
-const silentFetch: FetchAPI = async (resource, config) =>
-  fetch(resource, await withAuthHeader(config))
+const silentFetch: FetchAPI = async (resource, config) => {
+  const response = await fetch(resource, await withAuthHeader(config))
+  await resetScopeOnRejection(response)
+  return response
+}
 
 const configParams: ConfigurationParameters = {
   basePath,

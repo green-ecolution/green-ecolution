@@ -19,6 +19,7 @@ import {
 } from '@green-ecolution/ui'
 import type { UserResponse } from '@/api/backendApi'
 import { organizationQueries, roleQueries, userQueries } from '@/api/queries'
+import { useHomeOrganizationId } from '@/lib/auth/scope/effectiveRoles'
 import { useUserMutations } from '@/hooks/useUserMutations'
 import { useContainerWiderThan } from '@/hooks/useContainerWiderThan'
 import { TWO_PANE_MIN_WIDTH } from '../twoPaneWidth'
@@ -147,7 +148,7 @@ const MembersPage = () => {
   // Tree order instead of the API's alphabetical order, so both filters read like
   // the organization structure they describe.
   const visibleOrganizations = organizations ?? []
-  const ownOrgId = me?.organization?.id
+  const ownOrgId = useHomeOrganizationId() ?? undefined
   const orgRoot = ownOrgId ? buildTree(visibleOrganizations, ownOrgId) : null
   const organizationList = orgRoot ? flatten(orgRoot) : visibleOrganizations
   const isSelf = selected !== null && selected.id === me?.id

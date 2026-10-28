@@ -26,7 +26,7 @@ use crate::{
 };
 use domain::{
     Id, RepositoryError,
-    authorization::{Action, Permission},
+    authorization::{Action, Caller, Permission},
     comment::{Comment, CommentBody, CommentSubject, CommentView},
     shared::pagination::Pagination,
 };
@@ -39,7 +39,7 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
 
 async fn plan_scope(
     state: &AppState,
-    user_id: Uuid,
+    caller: Caller,
     plan_id: Uuid,
 ) -> Result<CommentSubject, ServiceError> {
     let view = state
@@ -47,7 +47,7 @@ async fn plan_scope(
         .view_by_id(Id::new(plan_id))
         .await?;
     let resource = state.planning.provider(&view.module)?.plan_resource();
-    let ctx = state.authorization_service.context_for(user_id).await?;
+    let ctx = state.authorization_service.context_for(caller).await?;
     scope::ensure_visible(
         &ctx,
         Permission::new(resource, Action::Read),
@@ -167,7 +167,7 @@ pub async fn list_plan_comments(
     Path(plan_id): Path<uuid::Uuid>,
     Query(params): Query<PaginationParams>,
 ) -> Result<Json<ListResponse<CommentResponse>>, ServiceError> {
-    let subject = plan_scope(&state, user.id, plan_id).await?;
+    let subject = plan_scope(&state, user.caller(), plan_id).await?;
     Ok(Json(
         list_for(
             &state.comment_service,
@@ -202,7 +202,7 @@ pub async fn create_plan_comment(
     Path(plan_id): Path<uuid::Uuid>,
     Json(payload): Json<CreateCommentRequest>,
 ) -> Result<(axum::http::StatusCode, Json<CommentResponse>), ServiceError> {
-    let subject = plan_scope(&state, user.id, plan_id).await?;
+    let subject = plan_scope(&state, user.caller(), plan_id).await?;
     let response = create_for(
         &state.comment_service,
         &state.user_service,
@@ -238,7 +238,7 @@ pub async fn delete_plan_comment(
     user: AuthUserExtractor,
     Path((plan_id, comment_id)): Path<(uuid::Uuid, uuid::Uuid)>,
 ) -> Result<axum::http::StatusCode, ServiceError> {
-    let subject = plan_scope(&state, user.id, plan_id).await?;
+    let subject = plan_scope(&state, user.caller(), plan_id).await?;
     let id = authorize_own_comment(&state.comment_service, user.id, subject, comment_id).await?;
     state.comment_service.delete(id).await?;
     Ok(axum::http::StatusCode::NO_CONTENT)
@@ -271,7 +271,7 @@ pub async fn update_plan_comment(
     Path((plan_id, comment_id)): Path<(uuid::Uuid, uuid::Uuid)>,
     Json(payload): Json<UpdateCommentRequest>,
 ) -> Result<Json<CommentResponse>, ServiceError> {
-    let subject = plan_scope(&state, user.id, plan_id).await?;
+    let subject = plan_scope(&state, user.caller(), plan_id).await?;
     let id = authorize_own_comment(&state.comment_service, user.id, subject, comment_id).await?;
     Ok(Json(
         update_for(&state.comment_service, &state.user_service, id, payload).await?,

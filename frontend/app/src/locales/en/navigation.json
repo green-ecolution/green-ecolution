@@ -27,7 +27,10 @@
     "signedInAs": "Signed in as:",
     "profile": "Your profile",
     "logout": "Log out",
-    "language": "Language"
+    "language": "Language",
+    "organization": "Organization",
+    "searchOrganization": "Search organization …",
+    "leaveScope": "Switch to my organization"
   },
   "breadcrumb": {
     "nav": "Breadcrumb navigation",

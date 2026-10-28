@@ -3,6 +3,7 @@ import { MoveLeft, Search } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@green-ecolution/ui'
 import { useLocalizedText, type LocalizedText } from '@/lib/i18n/localizedText'
+import LeaveScopeButton from './LeaveScopeButton'
 
 interface EntityNotFoundProps {
   entityName: LocalizedText
@@ -40,13 +41,14 @@ function EntityNotFound({ entityName, backTo, backLabel }: EntityNotFoundProps) 
           </div>
 
           {/* Action button */}
-          <div className="mt-8">
+          <div className="mt-8 flex flex-col items-center gap-3">
             <Button asChild variant="outline" className="group gap-2 px-6">
               <Link to={backTo}>
                 <MoveLeft className="w-4 h-4 transition-transform duration-base ease-emphasized group-hover:-translate-x-1 motion-reduce:transition-none" />
                 {resolve(backLabel)}
               </Link>
             </Button>
+            <LeaveScopeButton />
           </div>
         </div>
       </section>

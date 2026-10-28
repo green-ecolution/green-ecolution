@@ -58,7 +58,7 @@ pub async fn list_routing_start_points(
     let visible = state
         .authorization_service
         .visible_orgs_for(
-            user.id,
+            user.caller(),
             Permission::new(ResourceKey::START_POINT, Action::Read),
         )
         .await?;
@@ -86,14 +86,14 @@ pub async fn create_start_point(
     let org = scope::resolve_target_org(
         &state.user_service,
         &state.authorization_service,
-        user.id,
+        user.caller(),
         req.organization_id,
     )
     .await?;
     state
         .authorization_service
         .require(
-            user.id,
+            user.caller(),
             Permission::new(ResourceKey::START_POINT, Action::Create),
             org,
         )
@@ -124,7 +124,10 @@ pub async fn update_start_point(
 ) -> Result<Json<StartPointResponse>, ServiceError> {
     ensure_routing(&state)?;
     let current = state.start_point_service.by_id(Id::new(id)).await?;
-    let ctx = state.authorization_service.context_for(user.id).await?;
+    let ctx = state
+        .authorization_service
+        .context_for(user.caller())
+        .await?;
     scope::ensure_visible(
         &ctx,
         Permission::new(ResourceKey::START_POINT, Action::Read),
@@ -133,7 +136,7 @@ pub async fn update_start_point(
     state
         .authorization_service
         .require(
-            user.id,
+            user.caller(),
             Permission::new(ResourceKey::START_POINT, Action::Update),
             current.organization_id(),
         )
@@ -166,7 +169,10 @@ pub async fn delete_start_point(
 ) -> Result<StatusCode, ServiceError> {
     ensure_routing(&state)?;
     let current = state.start_point_service.by_id(Id::new(id)).await?;
-    let ctx = state.authorization_service.context_for(user.id).await?;
+    let ctx = state
+        .authorization_service
+        .context_for(user.caller())
+        .await?;
     scope::ensure_visible(
         &ctx,
         Permission::new(ResourceKey::START_POINT, Action::Read),
@@ -175,7 +181,7 @@ pub async fn delete_start_point(
     state
         .authorization_service
         .require(
-            user.id,
+            user.caller(),
             Permission::new(ResourceKey::START_POINT, Action::Delete),
             current.organization_id(),
         )
@@ -203,7 +209,10 @@ pub async fn set_default_start_point(
 ) -> Result<StatusCode, ServiceError> {
     ensure_routing(&state)?;
     let current = state.start_point_service.by_id(Id::new(id)).await?;
-    let ctx = state.authorization_service.context_for(user.id).await?;
+    let ctx = state
+        .authorization_service
+        .context_for(user.caller())
+        .await?;
     scope::ensure_visible(
         &ctx,
         Permission::new(ResourceKey::START_POINT, Action::Read),
@@ -212,7 +221,7 @@ pub async fn set_default_start_point(
     state
         .authorization_service
         .require(
-            user.id,
+            user.caller(),
             Permission::new(ResourceKey::START_POINT, Action::Update),
             current.organization_id(),
         )
@@ -246,7 +255,10 @@ pub async fn transfer_start_point(
 ) -> Result<StatusCode, ServiceError> {
     ensure_routing(&state)?;
     let current = state.start_point_service.by_id(Id::new(id)).await?;
-    let ctx = state.authorization_service.context_for(user.id).await?;
+    let ctx = state
+        .authorization_service
+        .context_for(user.caller())
+        .await?;
     scope::ensure_visible(
         &ctx,
         Permission::new(ResourceKey::START_POINT, Action::Read),
@@ -255,11 +267,11 @@ pub async fn transfer_start_point(
     let perm = Permission::new(ResourceKey::START_POINT, Action::Update);
     state
         .authorization_service
-        .require(user.id, perm, current.organization_id())
+        .require(user.caller(), perm, current.organization_id())
         .await?;
     state
         .authorization_service
-        .require(user.id, perm, Id::new(req.organization_id))
+        .require(user.caller(), perm, Id::new(req.organization_id))
         .await?;
     state
         .start_point_service

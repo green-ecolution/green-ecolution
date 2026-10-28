@@ -11,12 +11,11 @@
 use std::collections::BTreeSet;
 use std::sync::Arc;
 
-use uuid::Uuid;
-
 use domain::{
     Id,
     authorization::{
-        AccessContext, Action, EffectivePermissions, Permission, ResourceCatalog, ResourceKey,
+        AccessContext, Action, Caller, EffectivePermissions, Permission, ResourceCatalog,
+        ResourceKey,
     },
     plugin::{
         DeviceCapability, Plugin, PluginDraft, PluginFrontend, PluginKeyHash, PluginName,
@@ -43,6 +42,7 @@ pub async fn plugin_access_context(
             plugin.permissions().clone(),
         )]),
         hierarchy: authorization.hierarchy().await?,
+        scope: None,
     })
 }
 
@@ -108,7 +108,7 @@ impl PluginService {
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    pub async fn list(&self, actor: Uuid) -> Result<Vec<PluginView>, ServiceError> {
+    pub async fn list(&self, actor: Caller) -> Result<Vec<PluginView>, ServiceError> {
         let visibility = self
             .authorization
             .visible_orgs_for(actor, Permission::new(ResourceKey::PLUGIN, Action::Read))
@@ -139,7 +139,7 @@ impl PluginService {
     #[tracing::instrument(level = "debug", skip_all)]
     pub async fn view_for(
         &self,
-        actor: Uuid,
+        actor: Caller,
         slug: &PluginSlug,
     ) -> Result<PluginView, ServiceError> {
         let plugin = self.reader.by_slug(slug).await?;
@@ -159,7 +159,7 @@ impl PluginService {
     /// The plugins whose view the actor may open right now, for the navigation.
     /// Roles are resolved once for the whole list instead of once per plugin.
     #[tracing::instrument(level = "debug", skip_all)]
-    pub async fn openable_views(&self, actor: Uuid) -> Result<Vec<PluginView>, ServiceError> {
+    pub async fn openable_views(&self, actor: Caller) -> Result<Vec<PluginView>, ServiceError> {
         let ctx = self.authorization.context_for(actor).await?;
         Ok(self
             .reader
@@ -181,7 +181,7 @@ impl PluginService {
     #[tracing::instrument(level = "debug", skip_all)]
     pub async fn install(
         &self,
-        actor: Uuid,
+        actor: Caller,
         draft: PluginDraft,
     ) -> Result<(PluginView, String), ServiceError> {
         self.authorization
@@ -205,7 +205,7 @@ impl PluginService {
     #[tracing::instrument(level = "debug", skip_all)]
     pub async fn update(
         &self,
-        actor: Uuid,
+        actor: Caller,
         slug: &PluginSlug,
         change: PluginChange,
     ) -> Result<PluginView, ServiceError> {
@@ -272,7 +272,11 @@ impl PluginService {
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    pub async fn rotate_key(&self, actor: Uuid, slug: &PluginSlug) -> Result<String, ServiceError> {
+    pub async fn rotate_key(
+        &self,
+        actor: Caller,
+        slug: &PluginSlug,
+    ) -> Result<String, ServiceError> {
         let mut plugin = self.reader.by_slug(slug).await?;
         let org = plugin.organization_id();
         self.authorization
@@ -298,7 +302,7 @@ impl PluginService {
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    pub async fn uninstall(&self, actor: Uuid, slug: &PluginSlug) -> Result<(), ServiceError> {
+    pub async fn uninstall(&self, actor: Caller, slug: &PluginSlug) -> Result<(), ServiceError> {
         let plugin = self.reader.by_slug(slug).await?;
         self.authorization
             .require(
@@ -317,11 +321,15 @@ mod tests {
     use super::*;
     use crate::infra::plugin_key::{self, RandomPluginKeyFactory};
     use domain::authorization::{Action, ResourceKey};
+    use uuid::Uuid;
 
     #[tokio::test]
     async fn install_returns_a_plaintext_key_once() {
         let svc = service_with_unrestricted_auth();
-        let (view, key) = svc.install(Uuid::nil(), draft("acme")).await.unwrap();
+        let (view, key) = svc
+            .install(Caller::unscoped(Uuid::nil()), draft("acme"))
+            .await
+            .unwrap();
 
         assert!(key.starts_with("gep_"));
         assert!(view.has_credential);
@@ -340,7 +348,10 @@ mod tests {
         // it was given, which would hand out a key that can never resolve
         // back to a real plugin.
         let svc = service_with_unrestricted_auth();
-        let (view, key) = svc.install(Uuid::nil(), draft("acme")).await.unwrap();
+        let (view, key) = svc
+            .install(Caller::unscoped(Uuid::nil()), draft("acme"))
+            .await
+            .unwrap();
 
         let (parsed_id, _secret) = plugin_key::parse_key(&key).expect("key must parse");
         assert_eq!(
@@ -360,7 +371,10 @@ mod tests {
             Action::Delete,
         )]);
 
-        let err = svc.install(Uuid::new_v4(), d).await.unwrap_err();
+        let err = svc
+            .install(Caller::unscoped(Uuid::new_v4()), d)
+            .await
+            .unwrap_err();
         assert!(matches!(err, ServiceError::Auth(_)));
     }
 
@@ -376,15 +390,25 @@ mod tests {
             Action::Delete,
         )]);
 
-        assert!(svc.install(Uuid::new_v4(), d).await.is_ok());
+        assert!(
+            svc.install(Caller::unscoped(Uuid::new_v4()), d)
+                .await
+                .is_ok()
+        );
     }
 
     #[tokio::test]
     async fn rotate_key_replaces_the_hash() {
         let svc = service_with_unrestricted_auth();
-        let (_, first) = svc.install(Uuid::nil(), draft("acme")).await.unwrap();
+        let (_, first) = svc
+            .install(Caller::unscoped(Uuid::nil()), draft("acme"))
+            .await
+            .unwrap();
         let second = svc
-            .rotate_key(Uuid::nil(), &PluginSlug::new("acme").unwrap())
+            .rotate_key(
+                Caller::unscoped(Uuid::nil()),
+                &PluginSlug::new("acme").unwrap(),
+            )
             .await
             .unwrap();
         assert_ne!(first, second);
@@ -403,7 +427,10 @@ mod tests {
         );
 
         let err = svc
-            .rotate_key(Uuid::new_v4(), &PluginSlug::new("acme").unwrap())
+            .rotate_key(
+                Caller::unscoped(Uuid::new_v4()),
+                &PluginSlug::new("acme").unwrap(),
+            )
             .await
             .unwrap_err();
         assert!(matches!(err, ServiceError::Auth(_)));
@@ -420,7 +447,7 @@ mod tests {
 
         let err = svc
             .update(
-                Uuid::new_v4(),
+                Caller::unscoped(Uuid::new_v4()),
                 &PluginSlug::new("acme").unwrap(),
                 PluginChange {
                     enabled: Some(true),
@@ -445,7 +472,7 @@ mod tests {
 
         let view = svc
             .update(
-                Uuid::new_v4(),
+                Caller::unscoped(Uuid::new_v4()),
                 &PluginSlug::new("acme").unwrap(),
                 PluginChange {
                     name: Some(PluginName::new("Neuer Name").unwrap()),
@@ -469,7 +496,7 @@ mod tests {
 
         let view = svc
             .update(
-                Uuid::new_v4(),
+                Caller::unscoped(Uuid::new_v4()),
                 &PluginSlug::new("acme").unwrap(),
                 PluginChange {
                     enabled: Some(false),
@@ -741,7 +768,7 @@ mod tests {
         let mut d = draft("acme");
         d.frontend = proxied("kataster.plugins.svc.cluster.local", 8080);
         let err = service_with_proxy(None)
-            .install(Uuid::nil(), d)
+            .install(Caller::unscoped(Uuid::nil()), d)
             .await
             .unwrap_err();
         assert!(matches!(err, ServiceError::PluginProxyUnavailable));
@@ -752,7 +779,7 @@ mod tests {
         let mut d = draft("acme");
         d.frontend = proxied("metadata.google.internal", 80);
         let err = service_with_proxy(Some(cluster_policy()))
-            .install(Uuid::nil(), d)
+            .install(Caller::unscoped(Uuid::nil()), d)
             .await
             .unwrap_err();
         assert!(matches!(err, ServiceError::PluginProxyTargetNotAllowed));
@@ -764,7 +791,7 @@ mod tests {
         d.frontend = proxied("kataster.plugins.svc.cluster.local", 8080);
         assert!(
             service_with_proxy(Some(cluster_policy()))
-                .install(Uuid::nil(), d)
+                .install(Caller::unscoped(Uuid::nil()), d)
                 .await
                 .is_ok()
         );
@@ -773,10 +800,12 @@ mod tests {
     #[tokio::test]
     async fn update_rejects_a_proxied_target_outside_the_allowlist() {
         let svc = service_with_proxy(Some(cluster_policy()));
-        svc.install(Uuid::nil(), draft("acme")).await.unwrap();
+        svc.install(Caller::unscoped(Uuid::nil()), draft("acme"))
+            .await
+            .unwrap();
         let err = svc
             .update(
-                Uuid::nil(),
+                Caller::unscoped(Uuid::nil()),
                 &PluginSlug::new("acme").unwrap(),
                 PluginChange {
                     frontend: Some(proxied("db.internal", 5432)),
@@ -795,13 +824,13 @@ mod tests {
         let mut d = draft("acme");
         d.frontend = stored.clone();
         service_over(repo.clone(), None, Some(cluster_policy()))
-            .install(Uuid::nil(), d)
+            .install(Caller::unscoped(Uuid::nil()), d)
             .await
             .unwrap();
 
         let view = service_over(repo, None, None)
             .update(
-                Uuid::nil(),
+                Caller::unscoped(Uuid::nil()),
                 &PluginSlug::new("acme").unwrap(),
                 PluginChange {
                     name: Some(PluginName::new("Kataster").unwrap()),
@@ -831,7 +860,7 @@ mod tests {
             Action::Delete,
         )]);
         service_over(repo.clone(), None, None)
-            .install(Uuid::nil(), d)
+            .install(Caller::unscoped(Uuid::nil()), d)
             .await
             .unwrap();
         repo

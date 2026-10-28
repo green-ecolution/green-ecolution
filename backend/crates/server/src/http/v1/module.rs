@@ -3,7 +3,7 @@ use std::sync::Arc;
 use axum::extract::State;
 use domain::{
     Id,
-    authorization::{Action, Permission, ResourceKey},
+    authorization::{Action, Caller, Permission, ResourceKey},
 };
 use utoipa_axum::{router::OpenApiRouter, routes};
 use uuid::Uuid;
@@ -48,7 +48,7 @@ pub async fn list_modules(
 ) -> Result<Json<ModuleListResponse>, ServiceError> {
     let reachable = state
         .authorization_service
-        .context_for(user.id)
+        .context_for(user.caller())
         .await?
         .reachable_orgs();
     let active = state
@@ -95,20 +95,24 @@ pub async fn get_organization_modules(
     state
         .authorization_service
         .require(
-            user.id,
+            user.caller(),
             Permission::new(ResourceKey::SETTING, Action::Read),
             org,
         )
         .await?;
-    respond(&state, user.id, org).await
+    respond(&state, user.caller(), org).await
 }
 
 async fn respond(
     state: &AppState,
-    user_id: Uuid,
+    caller: Caller,
     org: Id<domain::organization::Organization>,
 ) -> Result<Json<OrganizationModulesResponse>, ServiceError> {
-    let ctx = state.authorization_service.context_for(user_id).await?;
+    let ctx = state
+        .authorization_service
+        .context_for(caller)
+        .await?
+        .without_scope();
     let resolution = state.module_activation_service.resolution(org).await?;
     let own = state.module_activation_service.own(org).await?;
     Ok(Json(OrganizationModulesResponse::build(
@@ -145,15 +149,19 @@ pub async fn update_organization_modules(
     state
         .authorization_service
         .require(
-            user.id,
+            user.caller(),
             Permission::new(ResourceKey::SETTING, Action::Update),
             org,
         )
         .await?;
-    let ctx = state.authorization_service.context_for(user.id).await?;
+    let ctx = state
+        .authorization_service
+        .context_for(user.caller())
+        .await?
+        .without_scope();
     state
         .module_activation_service
         .update(&ctx, org, req.modules)
         .await?;
-    respond(&state, user.id, org).await
+    respond(&state, user.caller(), org).await
 }

@@ -1,4 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
+import { renderHook } from '@testing-library/react'
+import { setOrganizationScope } from '@/lib/auth/scope/organizationScopeStore'
+import { useFormDraft } from './useFormDraft'
 import useStore from '../store'
 import type { FormDraftKey, FormDraftState } from './formDraftSlice'
 
@@ -58,6 +61,7 @@ describe('formDraftSlice', () => {
       expect(getDraft<{ label: string }>('waste-bin-create')).toEqual({
         data: { label: 'Bin' },
         hasChanges: true,
+        scope: null,
       })
     })
   })
@@ -411,5 +415,44 @@ describe('Type safety for FormDraftKey', () => {
       useStore.getState().setFormDraft(key, { test: true })
       expect(useStore.getState().formDrafts[key]).toBeDefined()
     })
+  })
+})
+
+describe('formDraftSlice organization scope', () => {
+  beforeEach(() => {
+    useStore.getState().clearAllFormDrafts()
+    setOrganizationScope('u1', null)
+  })
+
+  it('stamps a draft with the scope it was made under', () => {
+    setOrganizationScope('u1', 'firma_a')
+    useStore.getState().setFormDraft('cluster-create', { name: 'A' })
+
+    expect(useStore.getState().formDrafts['cluster-create']?.scope).toBe('firma_a')
+  })
+
+  it('does not restore a draft under another scope', () => {
+    setOrganizationScope('u1', 'firma_a')
+    useStore.getState().setFormDraft('cluster-create', { name: 'A' })
+    useStore.getState().markFormDraftChanged('cluster-create')
+
+    setOrganizationScope('u1', 'firma_b')
+    const { result } = renderHook(() => useFormDraft<{ name: string }>('cluster', 'create'))
+
+    expect(result.current.data).toBeNull()
+    expect(result.current.hasChanges).toBe(false)
+  })
+
+  it('starts fresh when updating a draft of another scope', () => {
+    setOrganizationScope('u1', 'firma_a')
+    useStore.getState().setFormDraft('cluster-create', { name: 'A' })
+
+    setOrganizationScope('u1', 'firma_b')
+    useStore
+      .getState()
+      .updateFormDraft<{ name?: string }>('cluster-create', (prev) => ({ ...prev, address: 'x' }))
+
+    expect(useStore.getState().formDrafts['cluster-create']?.data).toEqual({ address: 'x' })
+    expect(useStore.getState().formDrafts['cluster-create']?.scope).toBe('firma_b')
   })
 })

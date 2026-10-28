@@ -4,11 +4,12 @@ import { useWatch, type DefaultValues, type UseFormReturn } from 'react-hook-for
 import { useTranslation } from 'react-i18next'
 import { wasteBinDraftResolver, type WasteBinForm } from '@green-ecolution/domain-wasm'
 import type { OrganizationResponse } from '@green-ecolution/backend-client'
-import { organizationQueries, userQueries } from '@/api/queries'
+import { organizationQueries } from '@/api/queries'
 import { EntityFormConfig, useEntityForm } from '@/hooks/form/useEntityForm'
 import { byOrgName, orgsWithPermission } from '@/lib/auth/organizationScope'
 import { readAuthBypass } from '@/lib/auth/runtimeConfig'
 import { useHasPermission } from '@/lib/auth/useHasPermission'
+import { useEffectiveRoles, useHomeOrganizationId } from '@/lib/auth/scope/effectiveRoles'
 import { useIssueTranslator } from '@/lib/i18n/validation'
 import { wasteBinApi, type WasteBin, type WasteBinCreate, type WasteBinUpdate } from '../api/client'
 import { wasteRoots } from '../api/roots'
@@ -93,7 +94,8 @@ export function useWasteBinOrganizations(
 ): OrganizationResponse[] {
   const bypass = readAuthBypass()
   const canReadOrganizations = useHasPermission(['organization:read'])
-  const { data: me } = useQuery(userQueries.me())
+  const roles = useEffectiveRoles()
+  const homeOrganizationId = useHomeOrganizationId()
   const { data: orgs } = useQuery({
     ...organizationQueries.list(),
     enabled: canReadOrganizations,
@@ -103,16 +105,16 @@ export function useWasteBinOrganizations(
     if (!orgs) return []
     // Bypass mirrors the backend's unrestricted mode: every visible org counts.
     if (bypass) return [...orgs].sort(byOrgName)
-    return orgsWithPermission(orgs, me?.roles ?? [], 'waste_bin:create')
-  }, [orgs, me, bypass])
+    return orgsWithPermission(orgs, roles ?? [], 'waste_bin:create')
+  }, [orgs, roles, bypass])
 
   const organizationId = useWatch({ control: form.control, name: 'organizationId' })
 
   useEffect(() => {
     if (organizationId || organizations.length === 0) return
-    const own = organizations.find((org) => org.id === me?.organization?.id)
+    const own = organizations.find((org) => org.id === homeOrganizationId)
     form.setValue('organizationId', (own ?? organizations[0]).id)
-  }, [organizationId, organizations, me, form])
+  }, [organizationId, organizations, homeOrganizationId, form])
 
   return organizations
 }

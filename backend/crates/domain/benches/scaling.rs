@@ -78,6 +78,7 @@ fn authorization_grants(c: &mut Criterion) {
             let context = AccessContext {
                 permissions: EffectivePermissions::from_grants(grants),
                 hierarchy,
+                scope: None,
             };
             b.iter(|| context.allows_in(black_box(permission), black_box(probe)))
         });
@@ -90,6 +91,7 @@ fn authorization_grants(c: &mut Criterion) {
                 let context = AccessContext {
                     permissions: EffectivePermissions::from_grants(grants),
                     hierarchy,
+                    scope: None,
                 };
                 b.iter(|| black_box(context.visible_orgs(black_box(permission))))
             },

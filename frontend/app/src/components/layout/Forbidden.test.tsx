@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck - ad-hoc routes are not part of the generated route tree
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import {
@@ -11,6 +11,9 @@ import {
   RouterProvider,
   Outlet,
 } from '@tanstack/react-router'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { userQueries } from '@/api/queries'
+import { getOrganizationScope, setOrganizationScope } from '@/lib/auth/scope/organizationScopeStore'
 import Forbidden from './Forbidden'
 
 const renderForbidden = () => {
@@ -33,10 +36,21 @@ const renderForbidden = () => {
     history: createMemoryHistory({ initialEntries: ['/'] }),
   })
 
-  return render(<RouterProvider router={router} />)
+  const queryClient = new QueryClient({ defaultOptions: { queries: { staleTime: Infinity } } })
+  queryClient.setQueryData(userQueries.me().queryKey, { id: 'u1' })
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>,
+  )
 }
 
 describe('Forbidden', () => {
+  beforeEach(() => {
+    localStorage.clear()
+    setOrganizationScope('u1', null)
+  })
+
   it('states that access is denied', async () => {
     renderForbidden()
 
@@ -59,5 +73,24 @@ describe('Forbidden', () => {
     await waitFor(() => {
       expect(screen.getByTestId('dashboard-page')).toBeInTheDocument()
     })
+  })
+
+  it('offers no scope switch without a selected organization', async () => {
+    renderForbidden()
+
+    await screen.findByText('Zum Dashboard')
+    expect(
+      screen.queryByRole('button', { name: 'Zu meiner Organisation wechseln' }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('switches back to the own organization when a scope hides the page', async () => {
+    const user = userEvent.setup()
+    setOrganizationScope('u1', 'firma_a')
+    renderForbidden()
+
+    await user.click(await screen.findByRole('button', { name: 'Zu meiner Organisation wechseln' }))
+
+    await waitFor(() => expect(getOrganizationScope()).toBeNull())
   })
 })

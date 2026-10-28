@@ -23,7 +23,7 @@ use crate::{
     service::ServiceError,
 };
 use domain::{
-    authorization::{Action, Permission},
+    authorization::{Action, Caller, Permission},
     comment::CommentSubject,
     target::TargetRef,
 };
@@ -38,14 +38,14 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
 /// the caller may see it at all.
 async fn target_scope(
     state: &AppState,
-    user_id: Uuid,
+    caller: Caller,
     module: &str,
     kind: &str,
     target_id: Uuid,
 ) -> Result<CommentSubject, ServiceError> {
     let target = TargetRef::new(module, kind, target_id)?;
     let admitted = state.comment_service.admit_target(&target).await?;
-    let ctx = state.authorization_service.context_for(user_id).await?;
+    let ctx = state.authorization_service.context_for(caller).await?;
     scope::ensure_visible(
         &ctx,
         Permission::new(admitted.resource, Action::Read),
@@ -82,7 +82,7 @@ pub async fn list_target_comments(
     Path((module, kind, target_id)): Path<(String, String, uuid::Uuid)>,
     Query(params): Query<PaginationParams>,
 ) -> Result<Json<ListResponse<CommentResponse>>, ServiceError> {
-    let subject = target_scope(&state, user.id, &module, &kind, target_id).await?;
+    let subject = target_scope(&state, user.caller(), &module, &kind, target_id).await?;
     Ok(Json(
         list_for(
             &state.comment_service,
@@ -123,7 +123,7 @@ pub async fn create_target_comment(
     Path((module, kind, target_id)): Path<(String, String, uuid::Uuid)>,
     Json(payload): Json<CreateCommentRequest>,
 ) -> Result<(axum::http::StatusCode, Json<CommentResponse>), ServiceError> {
-    let subject = target_scope(&state, user.id, &module, &kind, target_id).await?;
+    let subject = target_scope(&state, user.caller(), &module, &kind, target_id).await?;
     let response = create_for(
         &state.comment_service,
         &state.user_service,
@@ -162,7 +162,7 @@ pub async fn delete_target_comment(
     user: AuthUserExtractor,
     Path((module, kind, target_id, comment_id)): Path<(String, String, uuid::Uuid, uuid::Uuid)>,
 ) -> Result<axum::http::StatusCode, ServiceError> {
-    let subject = target_scope(&state, user.id, &module, &kind, target_id).await?;
+    let subject = target_scope(&state, user.caller(), &module, &kind, target_id).await?;
     let id = authorize_own_comment(&state.comment_service, user.id, subject, comment_id).await?;
     state.comment_service.delete(id).await?;
     Ok(axum::http::StatusCode::NO_CONTENT)
@@ -198,7 +198,7 @@ pub async fn update_target_comment(
     Path((module, kind, target_id, comment_id)): Path<(String, String, uuid::Uuid, uuid::Uuid)>,
     Json(payload): Json<UpdateCommentRequest>,
 ) -> Result<Json<CommentResponse>, ServiceError> {
-    let subject = target_scope(&state, user.id, &module, &kind, target_id).await?;
+    let subject = target_scope(&state, user.caller(), &module, &kind, target_id).await?;
     let id = authorize_own_comment(&state.comment_service, user.id, subject, comment_id).await?;
     Ok(Json(
         update_for(&state.comment_service, &state.user_service, id, payload).await?,

@@ -219,3 +219,57 @@ async fn a_middle_level_cannot_change_what_a_higher_level_set_below_it() {
         true
     );
 }
+
+async fn scoped_switch(
+    app: &TestApp,
+    token: &str,
+    scope: Uuid,
+    org: Uuid,
+    waste: Value,
+) -> reqwest::Response {
+    reqwest::Client::new()
+        .put(format!(
+            "{}/api/v1/organizations/{org}/modules",
+            app.address
+        ))
+        .bearer_auth(token)
+        .header("X-Organization-Scope", scope.to_string())
+        .json(&json!({ "modules": { "waste": waste } }))
+        .send()
+        .await
+        .unwrap()
+}
+
+#[tokio::test]
+async fn scoped_switch_keeps_set_by_of_role_org() {
+    let (harness, app) = spawn_with_auth().await;
+    let t = parent_and_child(&harness, &app).await;
+
+    let resp = scoped_switch(&app, &t.parent_token, t.child, t.child, json!(true)).await;
+
+    assert_eq!(resp.status(), 200);
+    let body: Value = resp.json().await.unwrap();
+    let row = body["modules"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|m| m["key"] == "waste")
+        .unwrap();
+    assert_eq!(row["set_by"]["id"], t.parent.to_string());
+}
+
+#[tokio::test]
+async fn scoped_admin_may_change_parent_switch() {
+    let (harness, app) = spawn_with_auth().await;
+    let t = parent_and_child(&harness, &app).await;
+    assert_eq!(
+        switch(&app, &t.parent_token, t.child, json!(false))
+            .await
+            .status(),
+        200
+    );
+
+    let resp = scoped_switch(&app, &t.parent_token, t.child, t.child, json!(true)).await;
+
+    assert_eq!(resp.status(), 200);
+}

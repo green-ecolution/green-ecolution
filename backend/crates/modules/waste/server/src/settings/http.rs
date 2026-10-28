@@ -119,7 +119,7 @@ pub async fn get_waste_settings(
     state
         .authorization
         .require(
-            user.id,
+            user.caller(),
             Permission::new(ResourceKey::SETTING, Action::Read),
             org,
         )
@@ -154,7 +154,7 @@ pub async fn update_waste_settings(
     state
         .access
         .require_write(
-            user.id,
+            user.caller(),
             Permission::new(ResourceKey::SETTING, Action::Update),
             org,
         )

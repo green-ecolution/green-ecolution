@@ -97,7 +97,7 @@ async fn create_thing(
 ) -> Result<(StatusCode, Json<Thing>), ServiceError> {
     state
         .access
-        .require_write(user.id, permission(), Id::new(req.organization_id))
+        .require_write(user.caller(), permission(), Id::new(req.organization_id))
         .await?;
     let id = Uuid::now_v7();
     sqlx::query(
@@ -126,7 +126,10 @@ async fn list_things(
     State(state): State<Arc<TestState>>,
     user: AuthUserExtractor,
 ) -> Result<Json<Vec<Thing>>, ServiceError> {
-    let visible = state.access.visible_orgs(user.id, permission()).await?;
+    let visible = state
+        .access
+        .visible_orgs(user.caller(), permission())
+        .await?;
     let orgs = visible.into_raw_ids().unwrap_or_default();
     let rows: Vec<(Uuid, Uuid)> = sqlx::query_as(
         "SELECT id, organization_id FROM test_module_things WHERE organization_id = ANY($1)",
@@ -160,7 +163,11 @@ async fn delete_thing(
             .ok_or(ServiceError::Repository(RepositoryError::NotFound))?;
     state
         .access
-        .require_write(user.id, Permission::new(PLAN, Action::Delete), Id::new(org))
+        .require_write(
+            user.caller(),
+            Permission::new(PLAN, Action::Delete),
+            Id::new(org),
+        )
         .await?;
     sqlx::query("DELETE FROM test_module_things WHERE id = $1")
         .bind(id)

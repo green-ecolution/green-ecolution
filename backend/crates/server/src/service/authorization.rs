@@ -6,7 +6,7 @@ use uuid::Uuid;
 use domain::{
     Id,
     authorization::{
-        AccessContext, Action, EffectivePermissions, OrgHierarchy, Permission, ResourceKey,
+        AccessContext, Action, Caller, EffectivePermissions, OrgHierarchy, Permission, ResourceKey,
         Visibility,
     },
     organization::{Organization, OrganizationReader},
@@ -79,11 +79,35 @@ impl AuthorizationService {
         }
     }
 
-    #[tracing::instrument(level = "debug", skip_all, fields(user.id = %user_id))]
-    pub async fn context_for(&self, user_id: Uuid) -> Result<AccessContext, ServiceError> {
-        if !self.enforced || user_id.is_nil() {
-            return Ok(AccessContext::unrestricted());
+    /// Refuses a scope the user could not pick instead of ignoring it, so a
+    /// stale scope fails loudly rather than silently widening the request.
+    #[tracing::instrument(level = "debug", skip_all, fields(user.id = %caller.user_id))]
+    pub async fn context_for(&self, caller: Caller) -> Result<AccessContext, ServiceError> {
+        let bypass = !self.enforced || caller.user_id.is_nil();
+        let Some(scope) = caller.scope else {
+            return if bypass {
+                Ok(AccessContext::unrestricted())
+            } else {
+                self.unscoped_context(caller.user_id).await
+            };
+        };
+        let ctx = if bypass {
+            // The unrestricted context carries no tree, and narrowing needs one.
+            AccessContext {
+                hierarchy: self.org_reader.hierarchy().await?,
+                ..AccessContext::unrestricted()
+            }
+        } else {
+            self.unscoped_context(caller.user_id).await?
+        };
+        if ctx.admits_scope(scope) {
+            Ok(ctx.with_scope(scope))
+        } else {
+            Err(ServiceError::InvalidOrganizationScope)
         }
+    }
+
+    async fn unscoped_context(&self, user_id: Uuid) -> Result<AccessContext, ServiceError> {
         let roles = self.role_reader.roles_for_user(user_id).await?;
         let grants = roles
             .into_iter()
@@ -96,16 +120,17 @@ impl AuthorizationService {
         Ok(AccessContext {
             permissions: EffectivePermissions::from_grants(grants),
             hierarchy,
+            scope: None,
         })
     }
 
     pub async fn require(
         &self,
-        user_id: Uuid,
+        caller: Caller,
         permission: Permission,
         org: Id<Organization>,
     ) -> Result<(), ServiceError> {
-        let ctx = self.context_for(user_id).await?;
+        let ctx = self.context_for(caller).await?;
         if ctx.allows_in(permission, org) {
             Ok(())
         } else {
@@ -115,11 +140,11 @@ impl AuthorizationService {
 
     pub async fn require_superset(
         &self,
-        user_id: Uuid,
+        caller: Caller,
         required: &BTreeSet<Permission>,
         org: Id<Organization>,
     ) -> Result<(), ServiceError> {
-        let ctx = self.context_for(user_id).await?;
+        let ctx = self.context_for(caller).await?;
         if ctx.superset_of(required, org) {
             Ok(())
         } else {
@@ -136,11 +161,11 @@ impl AuthorizationService {
     /// administrator can check a view they just installed.
     pub async fn require_plugin_view(
         &self,
-        user_id: Uuid,
+        caller: Caller,
         required: &BTreeSet<Permission>,
         org: Id<Organization>,
     ) -> Result<(), ServiceError> {
-        let ctx = self.context_for(user_id).await?;
+        let ctx = self.context_for(caller).await?;
         if may_open_plugin_view(&ctx, required, org) {
             Ok(())
         } else {
@@ -207,6 +232,7 @@ impl AuthorizationService {
         let after = AccessContext {
             permissions: EffectivePermissions::from_grants(grants),
             hierarchy: self.org_reader.hierarchy().await?,
+            scope: None,
         };
         if SELF_ADMINISTRATION
             .iter()
@@ -218,13 +244,13 @@ impl AuthorizationService {
         }
     }
 
-    #[tracing::instrument(level = "debug", skip_all, fields(user.id = %user_id))]
+    #[tracing::instrument(level = "debug", skip_all, fields(user.id = %caller.user_id))]
     pub async fn visible_orgs_for(
         &self,
-        user_id: Uuid,
+        caller: Caller,
         permission: Permission,
     ) -> Result<Visibility, ServiceError> {
-        Ok(self.context_for(user_id).await?.visible_orgs(permission))
+        Ok(self.context_for(caller).await?.visible_orgs(permission))
     }
 }
 
@@ -367,9 +393,10 @@ mod tests {
             }),
             true,
         );
-        assert!(svc.require(user, widget_read(), sub).await.is_ok());
+        let caller = Caller::unscoped(user);
+        assert!(svc.require(caller, widget_read(), sub).await.is_ok());
         assert!(matches!(
-            svc.require(user, widget_read(), root).await,
+            svc.require(caller, widget_read(), root).await,
             Err(ServiceError::Auth(AuthError::Forbidden))
         ));
     }
@@ -391,12 +418,13 @@ mod tests {
             widget_read(),
             Permission::new(crate::service::test_resources::WIDGET, Action::Delete),
         ]);
+        let caller = Caller::unscoped(user);
         assert!(
-            svc.require_superset(user, &BTreeSet::from([widget_read()]), tbz)
+            svc.require_superset(caller, &BTreeSet::from([widget_read()]), tbz)
                 .await
                 .is_ok()
         );
-        assert!(svc.require_superset(user, &wider, tbz).await.is_err());
+        assert!(svc.require_superset(caller, &wider, tbz).await.is_err());
     }
 
     #[tokio::test]
@@ -407,10 +435,69 @@ mod tests {
             false,
         );
         assert!(
-            svc.require(Uuid::nil(), widget_read(), Id::new_v7())
+            svc.require(Caller::unscoped(Uuid::nil()), widget_read(), Id::new_v7())
                 .await
                 .is_ok()
         );
+    }
+
+    #[tokio::test]
+    async fn a_scope_narrows_and_one_outside_reach_is_refused() {
+        let (root, tbz, firma) = (Id::new_v7(), Id::new_v7(), Id::new_v7());
+        let user = Uuid::now_v7();
+        let svc = AuthorizationService::new(
+            Arc::new(StubOrgs {
+                pairs: vec![(root, None), (tbz, Some(root)), (firma, Some(tbz))],
+            }),
+            Arc::new(StubRoles {
+                by_user: vec![(user, role_in(tbz, &[widget_read()]))],
+            }),
+            true,
+        );
+        let scoped = Caller {
+            user_id: user,
+            scope: Some(firma),
+        };
+        assert!(svc.require(scoped, widget_read(), firma).await.is_ok());
+        assert!(svc.require(scoped, widget_read(), tbz).await.is_err());
+
+        let above = Caller {
+            user_id: user,
+            scope: Some(root),
+        };
+        assert!(matches!(
+            svc.context_for(above).await,
+            Err(ServiceError::InvalidOrganizationScope)
+        ));
+    }
+
+    #[tokio::test]
+    async fn demo_bypass_narrows_to_a_known_scope() {
+        let (root, tbz, firma) = (Id::new_v7(), Id::new_v7(), Id::new_v7());
+        let svc = AuthorizationService::new(
+            Arc::new(StubOrgs {
+                pairs: vec![(root, None), (tbz, Some(root)), (firma, Some(tbz))],
+            }),
+            Arc::new(StubRoles { by_user: vec![] }),
+            false,
+        );
+        let scoped = Caller {
+            user_id: Uuid::nil(),
+            scope: Some(tbz),
+        };
+        assert_eq!(
+            svc.visible_orgs_for(scoped, widget_read()).await.unwrap(),
+            domain::authorization::Visibility::Only(BTreeSet::from([tbz, firma]))
+        );
+
+        let unknown = Caller {
+            user_id: Uuid::nil(),
+            scope: Some(Id::new_v7()),
+        };
+        assert!(matches!(
+            svc.context_for(unknown).await,
+            Err(ServiceError::InvalidOrganizationScope)
+        ));
     }
 
     #[tokio::test]
@@ -426,7 +513,11 @@ mod tests {
             }),
             true,
         );
-        match svc.visible_orgs_for(user, widget_read()).await.unwrap() {
+        match svc
+            .visible_orgs_for(Caller::unscoped(user), widget_read())
+            .await
+            .unwrap()
+        {
             domain::authorization::Visibility::Only(orgs) => {
                 assert!(orgs.contains(&tbz) && !orgs.contains(&root))
             }
@@ -438,7 +529,7 @@ mod tests {
             false,
         );
         assert_eq!(
-            demo.visible_orgs_for(Uuid::nil(), widget_read())
+            demo.visible_orgs_for(Caller::unscoped(Uuid::nil()), widget_read())
                 .await
                 .unwrap(),
             domain::authorization::Visibility::Unrestricted
@@ -655,6 +746,7 @@ mod tests {
         AccessContext {
             permissions: EffectivePermissions::from_grants(grants),
             hierarchy: OrgHierarchy::from_pairs(hierarchy.to_vec()),
+            scope: None,
         }
     }
 

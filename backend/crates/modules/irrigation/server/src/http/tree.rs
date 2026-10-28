@@ -108,7 +108,7 @@ pub async fn list_trees(
     let visible = state
         .authorization
         .visible_orgs_for(
-            user.id,
+            user.caller(),
             Permission::new(crate::resources::TREE, Action::Read),
         )
         .await?;
@@ -168,7 +168,7 @@ pub async fn get_tree(
     Path(id): Path<uuid::Uuid>,
 ) -> Result<Json<TreeResponse>, ServiceError> {
     let tree = state.trees.view_by_id(Id::new(id)).await?;
-    let ctx = state.authorization.context_for(user.id).await?;
+    let ctx = state.authorization.context_for(user.caller()).await?;
     scope::ensure_visible(
         &ctx,
         Permission::new(crate::resources::TREE, Action::Read),
@@ -206,14 +206,14 @@ pub async fn create_tree(
     let org = scope::resolve_target_org(
         &state.users,
         &state.authorization,
-        user.id,
+        user.caller(),
         entity.organization_id,
     )
     .await?;
     state
         .authorization
         .require(
-            user.id,
+            user.caller(),
             Permission::new(crate::resources::TREE, Action::Create),
             org,
         )
@@ -225,7 +225,7 @@ pub async fn create_tree(
         state
             .authorization
             .require(
-                user.id,
+                user.caller(),
                 Permission::new(ResourceKey::SENSOR, Action::Update),
                 Id::new(sensor_view.organization_id),
             )
@@ -280,7 +280,7 @@ pub async fn update_tree(
     Json(entity): Json<TreeUpdateRequest>,
 ) -> Result<Json<TreeResponse>, ServiceError> {
     let current = state.trees.view_by_id(Id::new(id)).await?;
-    let ctx = state.authorization.context_for(user.id).await?;
+    let ctx = state.authorization.context_for(user.caller()).await?;
     scope::ensure_visible(
         &ctx,
         Permission::new(crate::resources::TREE, Action::Read),
@@ -289,7 +289,7 @@ pub async fn update_tree(
     state
         .authorization
         .require(
-            user.id,
+            user.caller(),
             Permission::new(crate::resources::TREE, Action::Update),
             Id::new(current.organization_id),
         )
@@ -304,7 +304,7 @@ pub async fn update_tree(
             state
                 .authorization
                 .require(
-                    user.id,
+                    user.caller(),
                     Permission::new(ResourceKey::SENSOR, Action::Update),
                     Id::new(sensor_view.organization_id),
                 )
@@ -391,7 +391,7 @@ pub async fn delete_tree(
     Path(id): Path<uuid::Uuid>,
 ) -> Result<StatusCode, ServiceError> {
     let current = state.trees.view_by_id(Id::new(id)).await?;
-    let ctx = state.authorization.context_for(user.id).await?;
+    let ctx = state.authorization.context_for(user.caller()).await?;
     scope::ensure_visible(
         &ctx,
         Permission::new(crate::resources::TREE, Action::Read),
@@ -400,7 +400,7 @@ pub async fn delete_tree(
     state
         .authorization
         .require(
-            user.id,
+            user.caller(),
             Permission::new(crate::resources::TREE, Action::Delete),
             Id::new(current.organization_id),
         )
@@ -426,7 +426,7 @@ pub async fn list_planting_years(
     let visible = state
         .authorization
         .visible_orgs_for(
-            user.id,
+            user.caller(),
             Permission::new(crate::resources::TREE, Action::Read),
         )
         .await?;
@@ -463,7 +463,7 @@ pub async fn get_nearest_trees(
     let visible = state
         .authorization
         .visible_orgs_for(
-            user.id,
+            user.caller(),
             Permission::new(crate::resources::TREE, Action::Read),
         )
         .await?;
@@ -539,7 +539,7 @@ pub async fn list_tree_markers(
     let visible = state
         .authorization
         .visible_orgs_for(
-            user.id,
+            user.caller(),
             Permission::new(crate::resources::TREE, Action::Read),
         )
         .await?;
@@ -580,7 +580,7 @@ pub async fn transfer_tree(
     Json(req): Json<TransferRequest>,
 ) -> Result<StatusCode, ServiceError> {
     let current = state.trees.view_by_id(Id::new(id)).await?;
-    let ctx = state.authorization.context_for(user.id).await?;
+    let ctx = state.authorization.context_for(user.caller()).await?;
     scope::ensure_visible(
         &ctx,
         Permission::new(crate::resources::TREE, Action::Read),
@@ -589,11 +589,11 @@ pub async fn transfer_tree(
     let perm = Permission::new(crate::resources::TREE, Action::Update);
     state
         .authorization
-        .require(user.id, perm, Id::new(current.organization_id))
+        .require(user.caller(), perm, Id::new(current.organization_id))
         .await?;
     state
         .authorization
-        .require(user.id, perm, Id::new(req.organization_id))
+        .require(user.caller(), perm, Id::new(req.organization_id))
         .await?;
     state
         .trees

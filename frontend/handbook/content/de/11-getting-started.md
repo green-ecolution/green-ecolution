@@ -52,6 +52,34 @@ Auf breiten Bildschirmen liegt der Avatar am
 unteren Rand der Seitennavigation, auf schmalen Bildschirmen wie einem Smartphone
 stattdessen oben rechts in der Kopfzeile.
 
+### Organisation wählen
+
+Gehörst du mehreren Organisationen an oder verwaltest du eine Organisation mit
+Untereinheiten, findest du im Benutzermenü den Eintrag **Organisation**. Er öffnet den
+Organisationsbaum, den du erreichen kannst. Solange du nichts ausgewählt hast, ist deine
+eigene Organisation markiert, und du siehst alles, was deine Rollen abdecken. Ab neun
+Einträgen steht oberhalb der Liste ein Suchfeld bereit. Mit nur einer Organisation fehlt
+der Eintrag.
+
+Wählst du eine Organisation, gilt die Auswahl samt ihren Untereinheiten. Karte, Listen,
+Einsatzpläne, Dashboard und Einstellungen zeigen dann nur noch, was zu diesem Teil
+gehört, und die Karte öffnet sich an dem Ausschnitt, der für diese Organisation
+eingestellt ist. Ausgenommen sind die Zahlen auf der Seite mit den Systeminformationen, die immer
+die gesamte Instanz abbilden. Neue Objekte legst du in der gewählten Organisation an; in
+Formularen kannst du weiterhin eine ihrer Untereinheiten auswählen. Deine eigenen Rechte
+behältst du dabei nur innerhalb der gewählten Organisation. Hast du an anderer Stelle des
+Baums mehr Rechte, spielen sie in dieser Ansicht keine Rolle, bis du wieder wechselst.
+Wählst du deine eigene Organisation, hebt die Anwendung die Auswahl auf, und du bist
+wieder in der gewohnten Ansicht.
+
+![Das geöffnete Benutzermenü mit dem Untermenü zur Auswahl der Organisation](../images/organization-scope-menu.png)
+
+Bist du in einer anderen als deiner eigenen Organisation, erscheint sie auf deiner Karte
+im Benutzermenü anstelle der E-Mail-Adresse. Der Browser merkt sich die Auswahl für dein Konto, sodass sie nach einem Neuladen
+erhalten bleibt. Öffnest du einen Link auf ein Objekt, das außerhalb der gewählten
+Organisation liegt, meldet die Anwendung es als nicht gefunden oder zeigt **Kein
+Zugriff**. In beiden Fällen bietet sie an, **Zu meiner Organisation wechseln**.
+
 ### Kopf- und Fußzeile
 
 Die Kopfzeile ist auf jeder Seite sichtbar. Links zeigt der Navigationspfad, wo du dich

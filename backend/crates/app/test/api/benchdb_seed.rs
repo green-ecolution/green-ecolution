@@ -258,7 +258,7 @@ async fn seeding_creates_a_user_with_role_grants() {
         .expect("the constant is a valid uuid");
 
     let context = service
-        .context_for(user_id)
+        .context_for(domain::authorization::Caller::unscoped(user_id))
         .await
         .expect("the access context must resolve");
 

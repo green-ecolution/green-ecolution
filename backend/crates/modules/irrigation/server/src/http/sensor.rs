@@ -52,7 +52,7 @@ pub async fn get_sensor_soil_moisture(
     Query(params): Query<SoilMoistureParams>,
 ) -> Result<Json<SoilMoistureSeriesResponse>, ServiceError> {
     let sensor = state.sensors.view_by_id(&sensor_id).await?;
-    let ctx = state.authorization.context_for(user.id).await?;
+    let ctx = state.authorization.context_for(user.caller()).await?;
     scope::ensure_visible(
         &ctx,
         Permission::new(ResourceKey::SENSOR, Action::Read),
@@ -84,7 +84,7 @@ pub async fn get_tree_by_sensor(
     SensorIdPath(sensor_id): SensorIdPath,
 ) -> Result<Json<TreeResponse>, ServiceError> {
     let sensor = state.sensors.view_by_id(&sensor_id).await?;
-    let ctx = state.authorization.context_for(user.id).await?;
+    let ctx = state.authorization.context_for(user.caller()).await?;
     scope::ensure_visible(
         &ctx,
         Permission::new(ResourceKey::SENSOR, Action::Read),

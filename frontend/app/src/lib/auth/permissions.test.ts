@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import type { UserResponse } from '@green-ecolution/backend-client'
+import type { RoleResponse } from '@green-ecolution/backend-client'
 import {
   NO_PERMISSIONS,
   UNRESTRICTED,
@@ -11,18 +11,18 @@ import {
 } from './permissions'
 import { irrigationManifest } from '@green-ecolution/module-irrigation'
 
-// Fixture: permissionsOf only reads `roles`, so the rest of UserResponse is irrelevant.
-const userWithRoles = (...permissionSets: string[][]): UserResponse =>
-  ({
-    roles: permissionSets.map((permissions, index) => ({
-      id: `role-${index}`,
-      name: `Rolle ${index}`,
-      description: '',
-      organizationId: null,
-      permissions,
-      createdAt: '2026-07-27T00:00:00Z',
-    })),
-  }) as unknown as UserResponse
+const userWithRoles = (...permissionSets: string[][]): RoleResponse[] =>
+  permissionSets.map(
+    (permissions, index) =>
+      ({
+        id: `role-${index}`,
+        name: `Rolle ${index}`,
+        description: '',
+        organizationId: null,
+        permissions,
+        createdAt: '2026-07-27T00:00:00Z',
+      }) as unknown as RoleResponse,
+  )
 
 describe('permissionsOf', () => {
   it('unions the permissions of all assigned roles', () => {

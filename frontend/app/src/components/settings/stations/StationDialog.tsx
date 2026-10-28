@@ -16,6 +16,7 @@ import {
   Label,
   SelectField,
 } from '@green-ecolution/ui'
+import { useOrganizationScope } from '@/lib/auth/scope/organizationScopeStore'
 import type { CapacityKindDto, Organization, StartPointResponse } from '@/api/backendApi'
 import { capacityDisplay } from '@/lib/capacity'
 import DraggableMarker from '@/components/map-gl/DraggableMarker'
@@ -66,6 +67,8 @@ const StationForm = ({
   onCancel,
 }: FormProps) => {
   const { t } = useTranslation(['settings', 'common'])
+  const scope = useOrganizationScope()
+  const scopedDefault = organizations.find((org) => org.id === scope)?.id
 
   const schema = useMemo(
     () =>
@@ -104,7 +107,7 @@ const StationForm = ({
     resolver: zodResolver(schema),
     defaultValues: {
       name: station?.name ?? '',
-      organizationId: station?.organizationId ?? organizations[0]?.id ?? '',
+      organizationId: station?.organizationId ?? scopedDefault ?? organizations[0]?.id ?? '',
       replenishes: station?.replenishes ?? [],
       lat: start.lat,
       lon: start.lng,

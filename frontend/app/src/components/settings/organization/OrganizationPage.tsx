@@ -24,6 +24,7 @@ import type {
   OrganizationSettingsResponse,
 } from '@/api/backendApi'
 import { organizationQueries, settingsQueries, userQueries } from '@/api/queries'
+import { useHomeOrganizationId } from '@/lib/auth/scope/effectiveRoles'
 import { useOrganizationMutations } from '@/hooks/useOrganizationMutations'
 import { useSettingsMutations, useSettingsSave } from '@/hooks/useSettingsMutations'
 import { useContainerWiderThan } from '@/hooks/useContainerWiderThan'
@@ -91,8 +92,7 @@ const OrganizationPage = () => {
   const canUpdateSettings = useHasPermission(['setting:update'])
   const { ref: layoutRef, isWide } = useContainerWiderThan<HTMLDivElement>(TWO_PANE_MIN_WIDTH)
 
-  const { data: me } = useQuery(userQueries.me())
-  const rootId = me?.organization?.id ?? null
+  const rootId = useHomeOrganizationId()
 
   const {
     data: orgs,

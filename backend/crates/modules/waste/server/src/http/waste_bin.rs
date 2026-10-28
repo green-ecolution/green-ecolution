@@ -6,7 +6,7 @@ use uuid::Uuid;
 
 use domain::{
     Id, RepositoryError,
-    authorization::{Action, Permission},
+    authorization::{Action, Caller, Permission},
     shared::pagination::Pagination,
 };
 use server::{
@@ -43,7 +43,7 @@ pub fn routes() -> OpenApiRouter<Arc<WasteHttpState>> {
 /// organization without the module, reads as 404.
 async fn visible_bin(
     state: &WasteHttpState,
-    user: Uuid,
+    user: Caller,
     id: Uuid,
 ) -> Result<WasteBinState, ServiceError> {
     let bin = state.bins.get(Id::new(id)).await?;
@@ -79,7 +79,7 @@ pub async fn list_waste_bins(
     let pagination = Pagination::new(params.page, params.per_page);
     let visible = state
         .access
-        .visible_orgs(user.id, Permission::new(WASTE_BIN, Action::Read))
+        .visible_orgs(user.caller(), Permission::new(WASTE_BIN, Action::Read))
         .await?;
     let fill_state = match params.fill_state {
         Some(fill) => Some(FillStateFilter {
@@ -87,7 +87,7 @@ pub async fn list_waste_bins(
             reference_org: scope::resolve_target_org(
                 &state.users,
                 &state.authorization,
-                user.id,
+                user.caller(),
                 params.organization_id,
             )
             .await?,
@@ -122,7 +122,7 @@ pub async fn get_waste_bin(
     user: AuthUserExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<Json<WasteBinResponse>, ServiceError> {
-    let bin = visible_bin(&state, user.id, id).await?;
+    let bin = visible_bin(&state, user.caller(), id).await?;
     Ok(Json(WasteBinResponse::from(&bin)))
 }
 
@@ -149,13 +149,17 @@ pub async fn create_waste_bin(
     let org = scope::resolve_target_org(
         &state.users,
         &state.authorization,
-        user.id,
+        user.caller(),
         req.organization_id,
     )
     .await?;
     state
         .access
-        .require_write(user.id, Permission::new(WASTE_BIN, Action::Create), org)
+        .require_write(
+            user.caller(),
+            Permission::new(WASTE_BIN, Action::Create),
+            org,
+        )
         .await?;
     let bin = state.bins.create(req.into_draft(org)?).await?;
     Ok((StatusCode::CREATED, Json(WasteBinResponse::from(&bin))))
@@ -184,11 +188,11 @@ pub async fn update_waste_bin(
     Path(id): Path<Uuid>,
     Json(req): Json<WasteBinUpdateRequest>,
 ) -> Result<Json<WasteBinResponse>, ServiceError> {
-    let current = visible_bin(&state, user.id, id).await?;
+    let current = visible_bin(&state, user.caller(), id).await?;
     state
         .access
         .require_write(
-            user.id,
+            user.caller(),
             Permission::new(WASTE_BIN, Action::Update),
             current.view.organization_id,
         )
@@ -218,11 +222,11 @@ pub async fn delete_waste_bin(
     user: AuthUserExtractor,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, ServiceError> {
-    let current = visible_bin(&state, user.id, id).await?;
+    let current = visible_bin(&state, user.caller(), id).await?;
     state
         .access
         .require_write(
-            user.id,
+            user.caller(),
             Permission::new(WASTE_BIN, Action::Delete),
             current.view.organization_id,
         )
@@ -253,15 +257,15 @@ pub async fn transfer_waste_bin(
     Path(id): Path<Uuid>,
     Json(req): Json<TransferRequest>,
 ) -> Result<StatusCode, ServiceError> {
-    let current = visible_bin(&state, user.id, id).await?;
+    let current = visible_bin(&state, user.caller(), id).await?;
     let update = Permission::new(WASTE_BIN, Action::Update);
     state
         .access
-        .require_write(user.id, update, current.view.organization_id)
+        .require_write(user.caller(), update, current.view.organization_id)
         .await?;
     state
         .access
-        .require_write(user.id, update, Id::new(req.organization_id))
+        .require_write(user.caller(), update, Id::new(req.organization_id))
         .await?;
     state
         .bins
