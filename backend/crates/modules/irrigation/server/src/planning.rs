@@ -207,6 +207,17 @@ mod tests {
         ) -> Result<std::collections::HashMap<Id<Organization>, i64>, RepositoryError> {
             Ok(std::collections::HashMap::new())
         }
+        async fn resource_counts(
+            &self,
+        ) -> Result<
+            std::collections::HashMap<
+                Id<Organization>,
+                domain::organization::OrganizationResourceCounts,
+            >,
+            RepositoryError,
+        > {
+            Ok(std::collections::HashMap::new())
+        }
     }
 
     struct Liters(f64);

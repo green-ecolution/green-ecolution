@@ -1,0 +1,38 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            WITH RECURSIVE subtree AS (\n                SELECT id AS ancestor_id, id AS descendant_id FROM organizations\n                UNION ALL\n                SELECT s.ancestor_id, o.id\n                  FROM subtree s\n                  JOIN organizations o ON o.parent_id = s.descendant_id\n            ),\n            own AS (\n                SELECT o.id,\n                       (SELECT COUNT(*) FROM sensors se WHERE se.organization_id = o.id) AS sensor_count,\n                       (SELECT COUNT(*) FROM vehicles v\n                         WHERE v.organization_id = o.id AND v.archived_at IS NULL) AS vehicle_count,\n                       (SELECT COUNT(*) FROM operation_plans p WHERE p.organization_id = o.id) AS plan_count\n                  FROM organizations o\n            )\n            SELECT s.ancestor_id AS \"organization_id!\",\n                   SUM(own.sensor_count)::bigint  AS \"sensor_count!\",\n                   SUM(own.vehicle_count)::bigint AS \"vehicle_count!\",\n                   SUM(own.plan_count)::bigint    AS \"plan_count!\"\n              FROM subtree s\n              JOIN own ON own.id = s.descendant_id\n             GROUP BY s.ancestor_id\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "organization_id!",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "sensor_count!",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 2,
+        "name": "vehicle_count!",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 3,
+        "name": "plan_count!",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "8a56cca96a318f19eb3f65ea043967f443487e373b2e0285243c5d9ff7950f8b"
+}

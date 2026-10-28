@@ -12,8 +12,8 @@ use crate::{
         AppState,
         auth::extractor::AuthUserExtractor,
         v1::dto::organization::{
-            OrganizationCreateRequest, OrganizationDetailResponse, OrganizationResponse,
-            OrganizationUpdateRequest,
+            OrganizationCreateRequest, OrganizationDetailResponse,
+            OrganizationResourceCountsResponse, OrganizationResponse, OrganizationUpdateRequest,
         },
         v1::scope::resolve_target_org,
     },
@@ -29,6 +29,7 @@ use domain::{
 pub fn routes() -> OpenApiRouter<Arc<AppState>> {
     OpenApiRouter::new()
         .routes(routes!(list_organizations, create_organization))
+        .routes(routes!(list_organization_resource_counts))
         .routes(routes!(
             get_organization,
             update_organization,
@@ -79,6 +80,55 @@ pub async fn list_organizations(
             .map(Into::into)
             .collect(),
     ))
+}
+
+#[utoipa::path(get, path = "/organizations/resource-counts", tag = "Organizations",
+    operation_id = "listOrganizationResourceCounts",
+    summary = "Resource counts per visible organization",
+    description = "Sensors, non-archived vehicles and operation plans per organization, each counted over the organization's whole subtree. One entry per organization visible to the caller. Requires organization:read.",
+    responses(
+        (status = 200, description = "Counts per visible organization", body = Vec<OrganizationResourceCountsResponse>),
+        (status = 401, description = "Unauthorized", body = ErrorBody),
+        (status = 403, description = "Forbidden", body = ErrorBody),
+        (status = 422, description = "Acting user has no organization and none was given", body = ErrorBody),
+        (status = 500, description = "Internal server error", body = ErrorBody),
+    )
+)]
+#[tracing::instrument(level = "info", skip_all)]
+pub async fn list_organization_resource_counts(
+    State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
+) -> Result<Json<Vec<OrganizationResourceCountsResponse>>, ServiceError> {
+    let read = Permission::new(ResourceKey::ORGANIZATION, Action::Read);
+    let scope = resolve_target_org(
+        &state.user_service,
+        &state.authorization_service,
+        user.caller(),
+        None,
+    )
+    .await?;
+    state
+        .authorization_service
+        .require(user.caller(), read, scope)
+        .await?;
+    let visible = state
+        .authorization_service
+        .visible_orgs_for(user.caller(), read)
+        .await?;
+    let counts = state.organization_service.resource_counts().await?;
+    let mut items: Vec<OrganizationResourceCountsResponse> = counts
+        .into_iter()
+        .filter(|(id, _)| visible.allows(*id))
+        .map(|(id, c)| OrganizationResourceCountsResponse {
+            organization_id: id.to_string(),
+            sensor_count: c.sensor_count,
+            vehicle_count: c.vehicle_count,
+            plan_count: c.plan_count,
+        })
+        .collect();
+    // HashMap order is arbitrary; a stable body keeps clients and tests simple.
+    items.sort_by(|a, b| a.organization_id.cmp(&b.organization_id));
+    Ok(Json(items))
 }
 
 #[utoipa::path(get, path = "/organizations/{org_id}", tag = "Organizations",
