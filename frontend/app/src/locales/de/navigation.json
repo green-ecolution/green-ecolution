@@ -51,7 +51,8 @@
     "team": "Team & Rollen",
     "plugins": "Plugins",
     "info": "Systeminformationen",
-    "handbook": "Handbuch"
+    "handbook": "Handbuch",
+    "admin": "Mandanten"
   },
   "footer": {
     "tagline": "Smartes Grünflächenmanagement - Green Ecolution {version}",

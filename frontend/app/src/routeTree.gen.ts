@@ -14,6 +14,7 @@ import { Route as ProtectedRouteImport } from './routes/_protected'
 import { Route as HelpRouteRouteImport } from './routes/help/route'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LogoutRouteImport } from './routes/logout'
+import { Route as ProtectedAdminRouteRouteImport } from './routes/_protected/admin/route'
 import { Route as ProtectedDashboardRouteImport } from './routes/_protected/dashboard'
 import { Route as ProtectedDebugRouteRouteImport } from './routes/_protected/debug/route'
 import { Route as ProtectedEvaluationsRouteRouteImport } from './../../modules/irrigation/src/routes/_protected/evaluations/route'
@@ -29,6 +30,7 @@ import { Route as ProtectedWasteBinsRouteRouteImport } from './../../modules/was
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 import { Route as HelpIndexRouteImport } from './routes/help/index'
 import { Route as HelpSlugRouteImport } from './routes/help/$slug'
+import { Route as ProtectedAdminIndexRouteImport } from './routes/_protected/admin/index'
 import { Route as ProtectedDebugIndexRouteImport } from './routes/_protected/debug/index'
 import { Route as ProtectedEvaluationsIndexRouteImport } from './../../modules/irrigation/src/routes/_protected/evaluations/index'
 import { Route as ProtectedMapIndexRouteImport } from './routes/_protected/map/index'
@@ -117,6 +119,11 @@ const LogoutRoute = LogoutRouteImport.update({
   path: '/logout',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProtectedAdminRouteRoute = ProtectedAdminRouteRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => ProtectedRoute,
+} as any)
 const ProtectedDashboardRoute = ProtectedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -193,6 +200,11 @@ const HelpSlugRoute = HelpSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
   getParentRoute: () => HelpRouteRoute,
+} as any)
+const ProtectedAdminIndexRoute = ProtectedAdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ProtectedAdminRouteRoute,
 } as any)
 const ProtectedDebugIndexRoute = ProtectedDebugIndexRouteImport.update({
   id: '/',
@@ -571,6 +583,7 @@ export interface FileRoutesByFullPath {
   '/help': typeof HelpRouteRouteWithChildren
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
+  '/admin': typeof ProtectedAdminRouteRouteWithChildren
   '/debug': typeof ProtectedDebugRouteRouteWithChildren
   '/evaluations': typeof ProtectedEvaluationsRouteRouteWithChildren
   '/map': typeof ProtectedMapRouteRouteWithChildren
@@ -595,6 +608,7 @@ export interface FileRoutesByFullPath {
   '/trees/$treeId': typeof ProtectedTreesTreeIdRouteRouteWithChildren
   '/vehicles/$vehicleId': typeof ProtectedVehiclesFormularVehicleIdRouteRouteWithChildren
   '/waste-bins/$wasteBinId': typeof ProtectedWasteBinsFormularWasteBinIdRouteRouteWithChildren
+  '/admin/': typeof ProtectedAdminIndexRoute
   '/debug/': typeof ProtectedDebugIndexRoute
   '/evaluations/': typeof ProtectedEvaluationsIndexRoute
   '/map/': typeof ProtectedMapIndexRoute
@@ -656,6 +670,7 @@ export interface FileRoutesByTo {
   '/auth/callback': typeof AuthCallbackRoute
   '/help/$slug': typeof HelpSlugRoute
   '/help': typeof HelpIndexRoute
+  '/admin': typeof ProtectedAdminIndexRoute
   '/debug': typeof ProtectedDebugIndexRoute
   '/evaluations': typeof ProtectedEvaluationsIndexRoute
   '/map': typeof ProtectedMapIndexRoute
@@ -705,6 +720,7 @@ export interface FileRoutesById {
   '/_protected': typeof ProtectedRouteWithChildren
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
+  '/_protected/admin': typeof ProtectedAdminRouteRouteWithChildren
   '/_protected/debug': typeof ProtectedDebugRouteRouteWithChildren
   '/_protected/evaluations': typeof ProtectedEvaluationsRouteRouteWithChildren
   '/_protected/map': typeof ProtectedMapRouteRouteWithChildren
@@ -729,6 +745,7 @@ export interface FileRoutesById {
   '/_protected/trees/$treeId': typeof ProtectedTreesTreeIdRouteRouteWithChildren
   '/_protected/vehicles/$vehicleId': typeof ProtectedVehiclesVehicleIdRouteRouteWithChildren
   '/_protected/waste-bins/$wasteBinId': typeof ProtectedWasteBinsWasteBinIdRouteRouteWithChildren
+  '/_protected/admin/': typeof ProtectedAdminIndexRoute
   '/_protected/debug/': typeof ProtectedDebugIndexRoute
   '/_protected/evaluations/': typeof ProtectedEvaluationsIndexRoute
   '/_protected/map/': typeof ProtectedMapIndexRoute
@@ -791,6 +808,7 @@ export interface FileRouteTypes {
     | '/help'
     | '/login'
     | '/logout'
+    | '/admin'
     | '/debug'
     | '/evaluations'
     | '/map'
@@ -815,6 +833,7 @@ export interface FileRouteTypes {
     | '/trees/$treeId'
     | '/vehicles/$vehicleId'
     | '/waste-bins/$wasteBinId'
+    | '/admin/'
     | '/debug/'
     | '/evaluations/'
     | '/map/'
@@ -876,6 +895,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/help/$slug'
     | '/help'
+    | '/admin'
     | '/debug'
     | '/evaluations'
     | '/map'
@@ -924,6 +944,7 @@ export interface FileRouteTypes {
     | '/_protected'
     | '/login'
     | '/logout'
+    | '/_protected/admin'
     | '/_protected/debug'
     | '/_protected/evaluations'
     | '/_protected/map'
@@ -948,6 +969,7 @@ export interface FileRouteTypes {
     | '/_protected/trees/$treeId'
     | '/_protected/vehicles/$vehicleId'
     | '/_protected/waste-bins/$wasteBinId'
+    | '/_protected/admin/'
     | '/_protected/debug/'
     | '/_protected/evaluations/'
     | '/_protected/map/'
@@ -1049,6 +1071,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/logout'
       preLoaderRoute: typeof LogoutRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_protected/admin': {
+      id: '/_protected/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof ProtectedAdminRouteRouteImport
+      parentRoute: typeof ProtectedRoute
     }
     '/_protected/dashboard': {
       id: '/_protected/dashboard'
@@ -1154,6 +1183,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/help/$slug'
       preLoaderRoute: typeof HelpSlugRouteImport
       parentRoute: typeof HelpRouteRoute
+    }
+    '/_protected/admin/': {
+      id: '/_protected/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof ProtectedAdminIndexRouteImport
+      parentRoute: typeof ProtectedAdminRouteRoute
     }
     '/_protected/debug/': {
       id: '/_protected/debug/'
@@ -1612,6 +1648,17 @@ const HelpRouteRouteChildren: HelpRouteRouteChildren = {
 const HelpRouteRouteWithChildren = HelpRouteRoute._addFileChildren(
   HelpRouteRouteChildren,
 )
+
+interface ProtectedAdminRouteRouteChildren {
+  ProtectedAdminIndexRoute: typeof ProtectedAdminIndexRoute
+}
+
+const ProtectedAdminRouteRouteChildren: ProtectedAdminRouteRouteChildren = {
+  ProtectedAdminIndexRoute: ProtectedAdminIndexRoute,
+}
+
+const ProtectedAdminRouteRouteWithChildren =
+  ProtectedAdminRouteRoute._addFileChildren(ProtectedAdminRouteRouteChildren)
 
 interface ProtectedDebugRouteRouteChildren {
   ProtectedDebugIndexRoute: typeof ProtectedDebugIndexRoute
@@ -2143,6 +2190,7 @@ const ProtectedWasteBinsRouteRouteWithChildren =
   )
 
 interface ProtectedRouteChildren {
+  ProtectedAdminRouteRoute: typeof ProtectedAdminRouteRouteWithChildren
   ProtectedDebugRouteRoute: typeof ProtectedDebugRouteRouteWithChildren
   ProtectedEvaluationsRouteRoute: typeof ProtectedEvaluationsRouteRouteWithChildren
   ProtectedMapRouteRoute: typeof ProtectedMapRouteRouteWithChildren
@@ -2159,6 +2207,7 @@ interface ProtectedRouteChildren {
 }
 
 const ProtectedRouteChildren: ProtectedRouteChildren = {
+  ProtectedAdminRouteRoute: ProtectedAdminRouteRouteWithChildren,
   ProtectedDebugRouteRoute: ProtectedDebugRouteRouteWithChildren,
   ProtectedEvaluationsRouteRoute: ProtectedEvaluationsRouteRouteWithChildren,
   ProtectedMapRouteRoute: ProtectedMapRouteRouteWithChildren,

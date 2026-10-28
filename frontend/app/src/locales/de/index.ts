@@ -1,3 +1,4 @@
+import admin from './admin.json'
 import common from './common.json'
 import validation from './validation.json'
 import errors from './errors.json'
@@ -15,6 +16,7 @@ import comments from './comments.json'
 import help from './help.json'
 
 export default {
+  admin,
   common,
   validation,
   errors,
