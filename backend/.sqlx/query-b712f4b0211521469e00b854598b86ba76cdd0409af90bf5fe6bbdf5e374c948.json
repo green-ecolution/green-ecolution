@@ -1,0 +1,19 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO operation_plan_itinerary\n           (plan_id, position, kind, stop_id, name, latitude, longitude, geometry)\n           SELECT $1, (ord - 1)::int, kind, stop_id, name, lat, lon,\n                  CASE WHEN lat IS NULL THEN NULL\n                       ELSE ST_SetSRID(ST_MakePoint(lon, lat), 4326) END\n           FROM UNNEST($2::text[], $3::uuid[], $4::text[], $5::float8[], $6::float8[])\n                WITH ORDINALITY AS t(kind, stop_id, name, lat, lon, ord)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "TextArray",
+        "UuidArray",
+        "TextArray",
+        "Float8Array",
+        "Float8Array"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "b712f4b0211521469e00b854598b86ba76cdd0409af90bf5fe6bbdf5e374c948"
+}

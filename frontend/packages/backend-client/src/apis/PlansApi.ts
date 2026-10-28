@@ -203,7 +203,7 @@ export class PlansApi extends runtime.BaseAPI {
     }
 
     /**
-     * Renders the optimized route of a plan as a GPX track.
+     * Renders the optimized route of a plan as a GPX track, with the depot, the stops and the refill stations as waypoints in driving order.
      * Download GPX file
      */
     async getPlanGpxRaw(requestParameters: GetPlanGpxRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
@@ -233,7 +233,7 @@ export class PlansApi extends runtime.BaseAPI {
     }
 
     /**
-     * Renders the optimized route of a plan as a GPX track.
+     * Renders the optimized route of a plan as a GPX track, with the depot, the stops and the refill stations as waypoints in driving order.
      * Download GPX file
      */
     async getPlanGpx(requestParameters: GetPlanGpxRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {

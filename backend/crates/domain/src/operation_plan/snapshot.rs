@@ -5,7 +5,7 @@ use serde_json::Value;
 use uuid::Uuid;
 
 use crate::{
-    operation_plan::{OperationPlanStatus, StationVisit},
+    operation_plan::{ItineraryEntry, OperationPlanStatus},
     shared::coordinates::Coordinate,
 };
 
@@ -32,6 +32,6 @@ pub struct OperationPlanSnapshot {
     pub provider: Option<String>,
     pub additional_info: Option<Value>,
     pub route_geometry: Option<Vec<Coordinate>>,
-    pub station_visits: Vec<StationVisit>,
+    pub itinerary: Vec<ItineraryEntry>,
     pub organization_id: Uuid,
 }

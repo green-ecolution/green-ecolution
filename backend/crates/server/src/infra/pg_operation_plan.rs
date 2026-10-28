@@ -7,9 +7,9 @@ use domain::{
     Id, RawId, RepositoryError,
     module::ModuleKey,
     operation_plan::{
-        OperationPlan, OperationPlanDraft, OperationPlanReader, OperationPlanSearchQuery,
-        OperationPlanSnapshot, OperationPlanStatus, OperationPlanView, OperationPlanWriter,
-        StationVisit,
+        ItineraryEntry, OperationPlan, OperationPlanDraft, OperationPlanReader,
+        OperationPlanSearchQuery, OperationPlanSnapshot, OperationPlanStatus, OperationPlanView,
+        OperationPlanWriter, StationVisit,
     },
     planning::{StopOutcome, StopRef},
     shared::{
@@ -154,28 +154,16 @@ impl OperationPlanReader for PgOperationPlanRepository {
         .await?
         .ok_or(RepositoryError::NotFound)?;
 
-        struct StationRow {
-            name: String,
-            latitude: f64,
-            longitude: f64,
-        }
-        let station_visits = sqlx::query_as!(
-            StationRow,
-            r#"SELECT name, latitude, longitude FROM operation_plan_station_visits
+        let itinerary = sqlx::query_as!(
+            ItineraryRow,
+            r#"SELECT kind, stop_id, name, latitude, longitude FROM operation_plan_itinerary
                WHERE plan_id = $1 ORDER BY position"#,
             id.value()
         )
         .fetch_all(&self.pool)
         .await?
         .into_iter()
-        .map(|r| {
-            Ok(StationVisit {
-                name: StartPointName::reconstitute(r.name),
-                coordinate: Coordinate::new(r.latitude, r.longitude).map_err(|e| {
-                    RepositoryError::DataIntegrity(format!("invalid station visit: {e}"))
-                })?,
-            })
-        })
+        .map(ItineraryRow::into_entry)
         .collect::<Result<Vec<_>, RepositoryError>>()?;
 
         OperationPlan::reconstitute(OperationPlanSnapshot {
@@ -198,7 +186,7 @@ impl OperationPlanReader for PgOperationPlanRepository {
             provider: row.provider,
             additional_info: row.additional_informations,
             route_geometry: geojson_to_geometry(row.route_geometry)?,
-            station_visits,
+            itinerary,
             organization_id: row.organization_id,
         })
         .map_err(|e| RepositoryError::DataIntegrity(format!("invalid operation plan: {e}")))
@@ -384,43 +372,6 @@ async fn persist_plan(
     }
 
     sqlx::query!(
-        "DELETE FROM operation_plan_station_visits WHERE plan_id = $1",
-        plan.id.value()
-    )
-    .execute(&mut **tx)
-    .await?;
-
-    let station_visits = plan.station_visits();
-    if !station_visits.is_empty() {
-        let names: Vec<String> = station_visits
-            .iter()
-            .map(|p| p.name.as_str().to_owned())
-            .collect();
-        let lats: Vec<f64> = station_visits
-            .iter()
-            .map(|p| p.coordinate.latitude())
-            .collect();
-        let lons: Vec<f64> = station_visits
-            .iter()
-            .map(|p| p.coordinate.longitude())
-            .collect();
-        sqlx::query!(
-            r#"INSERT INTO operation_plan_station_visits
-               (plan_id, position, name, latitude, longitude, geometry)
-               SELECT $1, (ord - 1)::int, name, lat, lon,
-                      ST_SetSRID(ST_MakePoint(lon, lat), 4326)
-               FROM UNNEST($2::text[], $3::float8[], $4::float8[])
-                    WITH ORDINALITY AS t(name, lat, lon, ord)"#,
-            plan.id.value(),
-            &names,
-            &lats,
-            &lons,
-        )
-        .execute(&mut **tx)
-        .await?;
-    }
-
-    sqlx::query!(
         "DELETE FROM operation_plan_vehicles WHERE plan_id = $1",
         plan.id.value()
     )
@@ -474,6 +425,90 @@ async fn persist_plan(
         .await?;
     }
 
+    // After the stops: itinerary stop rows reference operation_plan_stops.
+    persist_itinerary(tx, plan).await
+}
+
+struct ItineraryRow {
+    kind: String,
+    stop_id: Option<RawId>,
+    name: Option<String>,
+    latitude: Option<f64>,
+    longitude: Option<f64>,
+}
+
+impl ItineraryRow {
+    fn into_entry(self) -> Result<ItineraryEntry, RepositoryError> {
+        let invalid =
+            |what: &str| RepositoryError::DataIntegrity(format!("invalid itinerary row: {what}"));
+        let place = || match (self.name.clone(), self.latitude, self.longitude) {
+            (Some(name), Some(lat), Some(lon)) => Ok(StationVisit {
+                name: StartPointName::reconstitute(name),
+                coordinate: Coordinate::new(lat, lon).map_err(|e| invalid(&format!("{e}")))?,
+            }),
+            _ => Err(invalid("place without name or position")),
+        };
+        match self.kind.as_str() {
+            "depot" => Ok(ItineraryEntry::Depot(place()?)),
+            "station" => Ok(ItineraryEntry::Station(place()?)),
+            "stop" => self
+                .stop_id
+                .map(|id| ItineraryEntry::Stop(StopRef::new(id)))
+                .ok_or_else(|| invalid("stop without stop_id")),
+            other => Err(invalid(&format!("unknown kind {other}"))),
+        }
+    }
+}
+
+async fn persist_itinerary(
+    tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
+    plan: &OperationPlan,
+) -> Result<(), RepositoryError> {
+    sqlx::query!(
+        "DELETE FROM operation_plan_itinerary WHERE plan_id = $1",
+        plan.id.value()
+    )
+    .execute(&mut **tx)
+    .await?;
+
+    let itinerary = plan.itinerary();
+    if itinerary.is_empty() {
+        return Ok(());
+    }
+    let mut kinds: Vec<&str> = Vec::with_capacity(itinerary.len());
+    let mut stop_ids: Vec<Option<RawId>> = Vec::with_capacity(itinerary.len());
+    let mut names: Vec<Option<String>> = Vec::with_capacity(itinerary.len());
+    let mut lats: Vec<Option<f64>> = Vec::with_capacity(itinerary.len());
+    let mut lons: Vec<Option<f64>> = Vec::with_capacity(itinerary.len());
+    for entry in itinerary {
+        let (kind, stop, place) = match entry {
+            ItineraryEntry::Depot(place) => ("depot", None, Some(place)),
+            ItineraryEntry::Station(place) => ("station", None, Some(place)),
+            ItineraryEntry::Stop(stop) => ("stop", Some(stop.value()), None),
+        };
+        kinds.push(kind);
+        stop_ids.push(stop);
+        names.push(place.map(|p| p.name.as_str().to_owned()));
+        lats.push(place.map(|p| p.coordinate.latitude()));
+        lons.push(place.map(|p| p.coordinate.longitude()));
+    }
+    sqlx::query!(
+        r#"INSERT INTO operation_plan_itinerary
+           (plan_id, position, kind, stop_id, name, latitude, longitude, geometry)
+           SELECT $1, (ord - 1)::int, kind, stop_id, name, lat, lon,
+                  CASE WHEN lat IS NULL THEN NULL
+                       ELSE ST_SetSRID(ST_MakePoint(lon, lat), 4326) END
+           FROM UNNEST($2::text[], $3::uuid[], $4::text[], $5::float8[], $6::float8[])
+                WITH ORDINALITY AS t(kind, stop_id, name, lat, lon, ord)"#,
+        plan.id.value(),
+        &kinds as &[&str],
+        &stop_ids as &[Option<RawId>],
+        &names as &[Option<String>],
+        &lats as &[Option<f64>],
+        &lons as &[Option<f64>],
+    )
+    .execute(&mut **tx)
+    .await?;
     Ok(())
 }
 

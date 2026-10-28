@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use domain::{
     planning::StopRef,
-    routing::{OptimizedRoute, RouteOptimizer, RouteRequest, RoutingError},
+    routing::{OptimizedRoute, RouteOptimizer, RouteRequest, RouteVisit, RoutingError},
     shared::{coordinates::Coordinate, distance::Distance},
 };
 
@@ -285,23 +285,24 @@ impl RouteOptimizer for StreamletRouteOptimizer {
             .count() as u32;
         let geometry = decode_geometry(&solve.routes)?;
 
-        let mut refill_station_indices: Vec<usize> = Vec::new();
-        for stop in solve.routes.iter().flat_map(|r| &r.stops) {
-            if let StopDto::Refill(id) = stop {
-                // streamlet refill ids are 1-based request indices
-                let Some(idx) = (*id as usize).checked_sub(1) else {
-                    continue;
-                };
-                if idx < refill_stations.len() && !refill_station_indices.contains(&idx) {
-                    refill_station_indices.push(idx);
-                }
-            }
-        }
-
         let id_by_customer: HashMap<u32, StopRef> = stops
             .iter()
             .enumerate()
             .map(|(i, s)| ((i + 1) as u32, s.stop))
+            .collect();
+        // streamlet ids are 1-based request indices; unknown ones are dropped
+        let visits = solve
+            .routes
+            .iter()
+            .flat_map(|r| &r.stops)
+            .filter_map(|stop| match stop {
+                StopDto::VehicleStart(_) | StopDto::Depot(_) => Some(RouteVisit::Depot),
+                StopDto::Customer(id) => id_by_customer.get(id).copied().map(RouteVisit::Stop),
+                StopDto::Refill(id) => (*id as usize)
+                    .checked_sub(1)
+                    .filter(|idx| *idx < refill_stations.len())
+                    .map(RouteVisit::Station),
+            })
             .collect();
         let unserved = solve
             .unserved
@@ -313,7 +314,7 @@ impl RouteOptimizer for StreamletRouteOptimizer {
             distance,
             duration: Duration::from_secs_f64(duration_secs.max(0.0)),
             refill_count,
-            refill_station_indices,
+            visits,
             geometry,
             unserved,
         })
@@ -326,7 +327,7 @@ mod tests {
     use std::collections::BTreeMap;
 
     use domain::capacity::{CapacityKind, Liters};
-    use domain::routing::{RouteOptimizer, RouteRequest, RouteStop};
+    use domain::routing::{RouteOptimizer, RouteRequest, RouteStop, RouteVisit};
     use domain::shared::coordinates::Coordinate;
     use domain::vehicle::{
         DrivingLicense, Vehicle, VehicleAvailability, VehicleSnapshot, VehicleType,
@@ -458,7 +459,16 @@ mod tests {
         assert_eq!(route.distance.meters(), 12500.0);
         assert_eq!(route.duration.as_secs_f64(), 3600.0); // travel_time + wait_time
         assert_eq!(route.refill_count, 1);
-        assert_eq!(route.refill_station_indices, vec![0]);
+        assert_eq!(
+            route.visits,
+            vec![
+                RouteVisit::Depot,
+                RouteVisit::Station(0),
+                RouteVisit::Stop(stops[0].stop),
+                RouteVisit::Stop(stops[1].stop),
+                RouteVisit::Depot,
+            ]
+        );
         assert_eq!(route.geometry.len(), 2);
         assert!((route.geometry[0].latitude() - 54.7687).abs() < 1e-4);
         assert!((route.geometry[0].longitude() - 9.4347).abs() < 1e-4);
@@ -597,7 +607,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn optimize_returns_visited_refill_station_indices_deduped() {
+    async fn optimize_returns_visits_in_solved_order() {
         let server = MockServer::start().await;
         let mut body = ok_body(&encoded_line());
         body["routes"][0]["stops"] = serde_json::json!([
@@ -607,6 +617,7 @@ mod tests {
             {"Refill": 1},
             {"Refill": 2},
             {"Refill": 9},
+            {"Customer": 7},
             {"Customer": 2},
             {"Depot": 1}
         ]);
@@ -617,13 +628,25 @@ mod tests {
             .await;
 
         let transporter = vehicle(VehicleType::Transporter, 2000.0);
+        let stops = stops();
         let route = optimizer(&server.uri())
-            .optimize(request(&transporter, &stops(), depot(), &refills()))
+            .optimize(request(&transporter, &stops, depot(), &refills()))
             .await
             .unwrap();
 
-        // ids are 1-based; unknown id 9 is dropped, repeat visits dedupe
-        assert_eq!(route.refill_station_indices, vec![1, 0]);
+        // ids are 1-based; unknown ids 9 and 7 are dropped, repeats stay
+        assert_eq!(
+            route.visits,
+            vec![
+                RouteVisit::Depot,
+                RouteVisit::Station(1),
+                RouteVisit::Stop(stops[0].stop),
+                RouteVisit::Station(0),
+                RouteVisit::Station(1),
+                RouteVisit::Stop(stops[1].stop),
+                RouteVisit::Depot,
+            ]
+        );
         assert_eq!(route.refill_count, 4);
     }
 

@@ -3597,7 +3597,7 @@
           "Plans"
         ],
         "summary": "Download GPX file",
-        "description": "Renders the optimized route of a plan as a GPX track.",
+        "description": "Renders the optimized route of a plan as a GPX track, with the depot, the stops and the refill stations as waypoints in driving order.",
         "operationId": "getPlanGpx",
         "parameters": [
           {

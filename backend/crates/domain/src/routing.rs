@@ -30,14 +30,22 @@ pub struct RouteStop {
     pub demand: f64,
 }
 
+/// One visit of a solved route. `Station` indexes the caller-supplied
+/// station list of the [`RouteRequest`].
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RouteVisit {
+    Depot,
+    Stop(StopRef),
+    Station(usize),
+}
+
 #[derive(Debug, Clone)]
 pub struct OptimizedRoute {
     pub distance: Distance,
     pub duration: std::time::Duration,
     pub refill_count: u32,
-    /// Indices into the caller-supplied refill station list of the stations
-    /// the route actually visits, deduplicated in first-visit order.
-    pub refill_station_indices: Vec<usize>,
+    /// Every visit in driving order, repeat station visits included.
+    pub visits: Vec<RouteVisit>,
     pub geometry: Vec<Coordinate>,
     /// Stops the solver could not fit into the route (logged, not fatal).
     pub unserved: Vec<StopRef>,

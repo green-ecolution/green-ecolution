@@ -209,8 +209,8 @@ impl PlanningProvider for ThingPlanning {
         org: Id<Organization>,
     ) -> Result<Vec<ResolvedStop>, PlanningError> {
         let ids: Vec<Uuid> = stops.iter().map(StopRef::value).collect();
-        let rows: Vec<(Uuid, Uuid, Option<f64>, Option<f64>)> = sqlx::query_as(
-            "SELECT id, organization_id, latitude, longitude FROM test_module_things
+        let rows: Vec<(Uuid, Uuid, String, Option<f64>, Option<f64>)> = sqlx::query_as(
+            "SELECT id, organization_id, label, latitude, longitude FROM test_module_things
              WHERE id = ANY($1)",
         )
         .bind(&ids)
@@ -221,7 +221,7 @@ impl PlanningProvider for ThingPlanning {
         stops
             .iter()
             .map(|stop| {
-                let (_, owner, lat, lng) = rows
+                let (_, owner, label, lat, lng) = rows
                     .iter()
                     .find(|(id, ..)| *id == stop.value())
                     .ok_or(PlanningError::UnknownStop(*stop))?;
@@ -237,6 +237,7 @@ impl PlanningProvider for ThingPlanning {
                 };
                 Ok(ResolvedStop {
                     stop: *stop,
+                    label: label.clone(),
                     location,
                     demand: 1.0,
                 })
