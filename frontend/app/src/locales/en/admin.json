@@ -1,5 +1,22 @@
 {
   "tenants": {
-    "loadingLabel": "Loading tenants …"
+    "title": "Tenants",
+    "description": "Every tenant of this instance with its sub-organizations, members, modules and assets. Open a tenant to see it the way its members do.",
+    "loadingLabel": "Loading tenants …",
+    "empty": "This instance has no tenants yet.",
+    "emptyLink": "Create tenants under Organization",
+    "loadError": "The tenants could not be loaded.",
+    "open": "Open as tenant",
+    "openSrLabel": "Open {name} as tenant",
+    "card": {
+      "subOrganizations": "Sub-organizations",
+      "members": "Members",
+      "modules": "Modules",
+      "noModules": "No modules active",
+      "sensors": "Sensors",
+      "vehicles": "Vehicles",
+      "plans": "Operation plans",
+      "pending": "–"
+    }
   }
 }
