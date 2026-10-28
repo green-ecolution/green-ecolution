@@ -30,7 +30,7 @@ async fn child_of(app: &TestApp, parent: Uuid, name: &str) -> Uuid {
 
 async fn activate(app: &TestApp, org: Uuid) {
     sqlx::query(
-        "INSERT INTO organization_modules (organization_id, module_key, enabled) VALUES ($1, $2, true)",
+        "INSERT INTO organization_modules (organization_id, module_key, enabled, set_by) VALUES ($1, $2, true, $1)",
     )
     .bind(org)
     .bind(KEY)

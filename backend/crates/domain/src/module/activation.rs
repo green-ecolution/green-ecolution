@@ -20,6 +20,15 @@ pub struct ActivationResolution {
     pub enforced_by: Option<Id<Organization>>,
 }
 
+/// An organization's own switch and the level it was set from. A `set_by`
+/// above the organization is a parent's choice for this sub-unit, which only
+/// someone acting for that level or above may change.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct OwnSwitch {
+    pub enabled: bool,
+    pub set_by: Id<Organization>,
+}
+
 /// Inherits like every setting, see `settings::inherit`.
 pub fn resolve_activation(
     default_enabled: bool,

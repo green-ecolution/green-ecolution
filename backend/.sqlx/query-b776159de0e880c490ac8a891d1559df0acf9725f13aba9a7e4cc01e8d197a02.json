@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT module_key, enabled FROM organization_modules WHERE organization_id = $1",
+  "query": "SELECT module_key, enabled, set_by FROM organization_modules\n               WHERE organization_id = $1",
   "describe": {
     "columns": [
       {
@@ -12,6 +12,11 @@
         "ordinal": 1,
         "name": "enabled",
         "type_info": "Bool"
+      },
+      {
+        "ordinal": 2,
+        "name": "set_by",
+        "type_info": "Uuid"
       }
     ],
     "parameters": {
@@ -21,8 +26,9 @@
     },
     "nullable": [
       false,
+      false,
       false
     ]
   },
-  "hash": "b095542a1a307e6a8e2668d45b0923582d6a9eee0e01379bc8cb17933c0a8b4f"
+  "hash": "b776159de0e880c490ac8a891d1559df0acf9725f13aba9a7e4cc01e8d197a02"
 }

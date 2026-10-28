@@ -7,7 +7,7 @@ use domain::{
     authorization::OrgHierarchy,
     module::{
         ActivationLevel, ActivationResolution, ModuleActivationReader, ModuleActivationWriter,
-        ModuleKey, resolve_activation,
+        ModuleKey, OwnSwitch, resolve_activation,
     },
     organization::{Organization, OrganizationReader},
 };
@@ -99,15 +99,24 @@ impl ModuleActivationReader for PgModuleActivationRepository {
     async fn own(
         &self,
         org: Id<Organization>,
-    ) -> Result<BTreeMap<ModuleKey, bool>, RepositoryError> {
+    ) -> Result<BTreeMap<ModuleKey, OwnSwitch>, RepositoryError> {
         let rows = sqlx::query!(
-            r#"SELECT module_key, enabled FROM organization_modules WHERE organization_id = $1"#,
+            r#"SELECT module_key, enabled, set_by FROM organization_modules
+               WHERE organization_id = $1"#,
             org.value()
         )
         .fetch_all(&self.pool)
         .await?;
         rows.into_iter()
-            .map(|row| Ok((ModuleKey::new(&row.module_key)?, row.enabled)))
+            .map(|row| {
+                Ok((
+                    ModuleKey::new(&row.module_key)?,
+                    OwnSwitch {
+                        enabled: row.enabled,
+                        set_by: Id::new(row.set_by),
+                    },
+                ))
+            })
             .collect()
     }
 
@@ -154,19 +163,22 @@ impl ModuleActivationWriter for PgModuleActivationRepository {
         &self,
         org: Id<Organization>,
         changes: &BTreeMap<ModuleKey, Option<bool>>,
+        set_by: Id<Organization>,
     ) -> Result<(), RepositoryError> {
         let mut tx = self.pool.begin().await?;
         for (key, change) in changes {
             match change {
                 Some(enabled) => {
                     sqlx::query!(
-                        r#"INSERT INTO organization_modules (organization_id, module_key, enabled)
-                           VALUES ($1, $2, $3)
+                        r#"INSERT INTO organization_modules
+                               (organization_id, module_key, enabled, set_by)
+                           VALUES ($1, $2, $3, $4)
                            ON CONFLICT (organization_id, module_key)
-                           DO UPDATE SET enabled = EXCLUDED.enabled"#,
+                           DO UPDATE SET enabled = EXCLUDED.enabled, set_by = EXCLUDED.set_by"#,
                         org.value(),
                         key.as_str(),
-                        enabled
+                        enabled,
+                        set_by.value()
                     )
                     .execute(&mut *tx)
                     .await?;

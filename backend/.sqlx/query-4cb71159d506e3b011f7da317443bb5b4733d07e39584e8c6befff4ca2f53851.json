@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO organization_modules\n                               (organization_id, module_key, enabled, set_by)\n                           VALUES ($1, $2, $3, $4)\n                           ON CONFLICT (organization_id, module_key)\n                           DO UPDATE SET enabled = EXCLUDED.enabled, set_by = EXCLUDED.set_by",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Bool",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "4cb71159d506e3b011f7da317443bb5b4733d07e39584e8c6befff4ca2f53851"
+}

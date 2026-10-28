@@ -16,7 +16,7 @@ use crate::shared::{
     key::{KEY_MAX_LEN, validate_key},
 };
 
-pub use activation::{ActivationLevel, ActivationResolution, resolve_activation};
+pub use activation::{ActivationLevel, ActivationResolution, OwnSwitch, resolve_activation};
 pub use repository::{ModuleActivationReader, ModuleActivationWriter};
 pub use statistics::{ModuleCount, ModuleStatistics};
 
