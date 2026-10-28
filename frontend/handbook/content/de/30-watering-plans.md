@@ -15,6 +15,11 @@ eine oder mehrere Gruppen und klickst auf **Zu Einsatzplan bündeln**, öffnet s
 Formular für einen neuen Einsatzplan mit diesen Gruppen bereits vorausgewählt; auswählen
 und bündeln kann nur, wer neue Einsatzpläne anlegen darf.
 
+Ist zusätzlich das Modul Abfall aktiv, bildet dasselbe Board auch Leerungstouren ab. Ein
+Umschalter über dem Board wechselt zwischen den Planungsmodulen, und die Spalte
+Vorschläge zeigt dann volle Abfallbehälter. Mehr dazu in
+[Abfallbehälter und Leerungstouren](./waste-bins.md).
+
 Die drei übrigen Spalten fassen die eigentlichen Einsatzpläne nach Zustand zusammen:
 **Geplant**, **Unterwegs** und **Erledigt**. Unterwegs zeigt Einsatzpläne im Zustand
 Aktiv; Erledigt fasst die drei abgeschlossenen Zustände Beendet, Abgebrochen und Nicht
