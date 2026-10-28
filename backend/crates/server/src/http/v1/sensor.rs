@@ -30,7 +30,7 @@ use crate::{
 };
 use domain::{
     Id,
-    authorization::{Action, Permission, ResourceKey},
+    authorization::{Action, Caller, Permission, ResourceKey},
     module::ModuleKey,
     sensor::{AcknowledgementNote, SensorId, SensorSearchQuery, SensorSort, SensorSortField},
     sensor_model::SensorModel,
@@ -97,7 +97,10 @@ pub async fn list_sensors(
 
     let visible = state
         .authorization_service
-        .visible_orgs_for(user.id, Permission::new(ResourceKey::SENSOR, Action::Read))
+        .visible_orgs_for(
+            user.caller(),
+            Permission::new(ResourceKey::SENSOR, Action::Read),
+        )
         .await?;
 
     let query = SensorSearchQuery {
@@ -152,7 +155,10 @@ pub async fn get_sensor(
     SensorIdPath(sensor_id): SensorIdPath,
 ) -> Result<Json<SensorResponse>, ServiceError> {
     let view = state.sensor_service.view_by_id(&sensor_id).await?;
-    let ctx = state.authorization_service.context_for(user.id).await?;
+    let ctx = state
+        .authorization_service
+        .context_for(user.caller())
+        .await?;
     scope::ensure_visible(
         &ctx,
         Permission::new(ResourceKey::SENSOR, Action::Read),
@@ -180,7 +186,10 @@ pub async fn delete_sensor(
     SensorIdPath(sensor_id): SensorIdPath,
 ) -> Result<StatusCode, ServiceError> {
     let current = state.sensor_service.view_by_id(&sensor_id).await?;
-    let ctx = state.authorization_service.context_for(user.id).await?;
+    let ctx = state
+        .authorization_service
+        .context_for(user.caller())
+        .await?;
     scope::ensure_visible(
         &ctx,
         Permission::new(ResourceKey::SENSOR, Action::Read),
@@ -189,7 +198,7 @@ pub async fn delete_sensor(
     state
         .authorization_service
         .require(
-            user.id,
+            user.caller(),
             Permission::new(ResourceKey::SENSOR, Action::Delete),
             Id::new(current.organization_id),
         )
@@ -248,7 +257,10 @@ pub async fn list_sensor_data(
     Query(params): Query<SensorDataParams>,
 ) -> Result<Json<ListResponse<SensorDataResponse>>, ServiceError> {
     let sensor = state.sensor_service.view_by_id(&sensor_id).await?;
-    let ctx = state.authorization_service.context_for(user.id).await?;
+    let ctx = state
+        .authorization_service
+        .context_for(user.caller())
+        .await?;
     scope::ensure_visible(
         &ctx,
         Permission::new(ResourceKey::SENSOR, Action::Read),
@@ -287,14 +299,14 @@ pub async fn create_sensor(
     let org = scope::resolve_target_org(
         &state.user_service,
         &state.authorization_service,
-        user.id,
+        user.caller(),
         body.organization_id,
     )
     .await?;
     state
         .authorization_service
         .require(
-            user.id,
+            user.caller(),
             Permission::new(ResourceKey::SENSOR, Action::Create),
             org,
         )
@@ -308,7 +320,7 @@ pub async fn create_sensor(
 /// target's organization. Returns the target once both pass.
 async fn require_sensor_target_update(
     state: &AppState,
-    user: uuid::Uuid,
+    user: Caller,
     sensor_id: &SensorId,
     target: TargetRefDto,
 ) -> Result<TargetRef, ServiceError> {
@@ -363,7 +375,8 @@ pub async fn activate_sensor(
     SensorIdPath(sensor_id): SensorIdPath,
     Json(body): Json<ActivateSensorRequest>,
 ) -> Result<Json<SensorResponse>, ServiceError> {
-    let target = require_sensor_target_update(&state, user.id, &sensor_id, body.target).await?;
+    let target =
+        require_sensor_target_update(&state, user.caller(), &sensor_id, body.target).await?;
     let view = state.sensor_service.activate(&sensor_id, target).await?;
     Ok(Json(SensorResponse::from(&view)))
 }
@@ -392,7 +405,8 @@ pub async fn set_sensor_target(
     SensorIdPath(sensor_id): SensorIdPath,
     Json(body): Json<SetSensorTargetRequest>,
 ) -> Result<Json<SensorResponse>, ServiceError> {
-    let target = require_sensor_target_update(&state, user.id, &sensor_id, body.target).await?;
+    let target =
+        require_sensor_target_update(&state, user.caller(), &sensor_id, body.target).await?;
     let view = state.sensor_service.retarget(&sensor_id, target).await?;
     Ok(Json(SensorResponse::from(&view)))
 }
@@ -418,7 +432,10 @@ pub async fn remove_sensor_target(
     SensorIdPath(sensor_id): SensorIdPath,
 ) -> Result<Json<SensorResponse>, ServiceError> {
     let sensor = state.sensor_service.view_by_id(&sensor_id).await?;
-    let ctx = state.authorization_service.context_for(user.id).await?;
+    let ctx = state
+        .authorization_service
+        .context_for(user.caller())
+        .await?;
     scope::ensure_visible(
         &ctx,
         Permission::new(ResourceKey::SENSOR, Action::Read),
@@ -427,7 +444,7 @@ pub async fn remove_sensor_target(
     state
         .authorization_service
         .require(
-            user.id,
+            user.caller(),
             Permission::new(ResourceKey::SENSOR, Action::Update),
             Id::new(sensor.organization_id),
         )
@@ -442,7 +459,7 @@ pub async fn remove_sensor_target(
         state
             .authorization_service
             .require(
-                user.id,
+                user.caller(),
                 Permission::new(resource, Action::Update),
                 Id::new(sensor.organization_id),
             )
@@ -515,7 +532,10 @@ pub async fn transfer_sensor(
     Json(req): Json<TransferRequest>,
 ) -> Result<StatusCode, ServiceError> {
     let current = state.sensor_service.view_by_id(&sensor_id).await?;
-    let ctx = state.authorization_service.context_for(user.id).await?;
+    let ctx = state
+        .authorization_service
+        .context_for(user.caller())
+        .await?;
     scope::ensure_visible(
         &ctx,
         Permission::new(ResourceKey::SENSOR, Action::Read),
@@ -524,11 +544,11 @@ pub async fn transfer_sensor(
     let perm = Permission::new(ResourceKey::SENSOR, Action::Update);
     state
         .authorization_service
-        .require(user.id, perm, Id::new(current.organization_id))
+        .require(user.caller(), perm, Id::new(current.organization_id))
         .await?;
     state
         .authorization_service
-        .require(user.id, perm, Id::new(req.organization_id))
+        .require(user.caller(), perm, Id::new(req.organization_id))
         .await?;
     state
         .sensor_service
@@ -556,7 +576,10 @@ pub async fn get_sensor_data_quality(
     SensorIdPath(sensor_id): SensorIdPath,
 ) -> Result<Json<SensorDataQualityResponse>, ServiceError> {
     let sensor = state.sensor_service.view_by_id(&sensor_id).await?;
-    let ctx = state.authorization_service.context_for(user.id).await?;
+    let ctx = state
+        .authorization_service
+        .context_for(user.caller())
+        .await?;
     scope::ensure_visible(
         &ctx,
         Permission::new(ResourceKey::SENSOR, Action::Read),
@@ -601,7 +624,10 @@ pub async fn acknowledge_sensor_data_quality(
     Json(body): Json<AcknowledgeDataQualityRequest>,
 ) -> Result<Json<SensorDataQualityResponse>, ServiceError> {
     let sensor = state.sensor_service.view_by_id(&sensor_id).await?;
-    let ctx = state.authorization_service.context_for(user.id).await?;
+    let ctx = state
+        .authorization_service
+        .context_for(user.caller())
+        .await?;
     scope::ensure_visible(
         &ctx,
         Permission::new(ResourceKey::SENSOR, Action::Update),

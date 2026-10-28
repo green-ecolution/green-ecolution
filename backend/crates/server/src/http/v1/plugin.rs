@@ -65,7 +65,7 @@ pub async fn list_plugins(
     user: AuthUserExtractor,
 ) -> Result<Json<Vec<PluginResponse>>, ServiceError> {
     guard(&state)?;
-    let views = state.plugin_service.list(user.id).await?;
+    let views = state.plugin_service.list(user.caller()).await?;
     Ok(Json(views.iter().map(Into::into).collect()))
 }
 
@@ -86,7 +86,7 @@ pub async fn list_plugin_views(
     user: AuthUserExtractor,
 ) -> Result<Json<Vec<PluginNavEntryResponse>>, ServiceError> {
     guard(&state)?;
-    let views = state.plugin_service.openable_views(user.id).await?;
+    let views = state.plugin_service.openable_views(user.caller()).await?;
     Ok(Json(
         views.iter().map(PluginNavEntryResponse::from).collect(),
     ))
@@ -115,7 +115,7 @@ pub async fn install_plugin(
 ) -> Result<(StatusCode, Json<PluginKeyResponse>), ServiceError> {
     guard(&state)?;
     let draft = req.into_draft(&state.app_origins, &state.resource_catalog)?;
-    let (_, key) = state.plugin_service.install(user.id, draft).await?;
+    let (_, key) = state.plugin_service.install(user.caller(), draft).await?;
     Ok((StatusCode::CREATED, Json(PluginKeyResponse { key })))
 }
 
@@ -150,7 +150,7 @@ pub async fn get_plugin(
     state
         .authorization_service
         .require(
-            user.id,
+            user.caller(),
             Permission::new(ResourceKey::PLUGIN, Action::Read),
             view.organization_id,
         )
@@ -180,7 +180,7 @@ pub async fn get_plugin_view(
 ) -> Result<Json<PluginViewResponse>, ServiceError> {
     guard(&state)?;
     let slug = PluginSlug::new(slug)?;
-    let view = state.plugin_service.view_for(user.id, &slug).await?;
+    let view = state.plugin_service.view_for(user.caller(), &slug).await?;
     let ticket = state
         .plugin_view_ticket_service
         .issue(view.id, &user)
@@ -219,7 +219,10 @@ pub async fn update_plugin(
     guard(&state)?;
     let slug = PluginSlug::new(slug)?;
     let change = req.into_change(&state.app_origins, &state.resource_catalog)?;
-    let view = state.plugin_service.update(user.id, &slug, change).await?;
+    let view = state
+        .plugin_service
+        .update(user.caller(), &slug, change)
+        .await?;
     Ok(Json((&view).into()))
 }
 
@@ -245,7 +248,7 @@ pub async fn uninstall_plugin(
 ) -> Result<StatusCode, ServiceError> {
     guard(&state)?;
     let slug = PluginSlug::new(slug)?;
-    state.plugin_service.uninstall(user.id, &slug).await?;
+    state.plugin_service.uninstall(user.caller(), &slug).await?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -271,7 +274,10 @@ pub async fn rotate_plugin_key(
 ) -> Result<Json<PluginKeyResponse>, ServiceError> {
     guard(&state)?;
     let slug = PluginSlug::new(slug)?;
-    let key = state.plugin_service.rotate_key(user.id, &slug).await?;
+    let key = state
+        .plugin_service
+        .rotate_key(user.caller(), &slug)
+        .await?;
     Ok(Json(PluginKeyResponse { key }))
 }
 

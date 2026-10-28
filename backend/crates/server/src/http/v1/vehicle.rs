@@ -85,7 +85,10 @@ pub async fn list_vehicles(
 
     let visible = state
         .authorization_service
-        .visible_orgs_for(user.id, Permission::new(ResourceKey::VEHICLE, Action::Read))
+        .visible_orgs_for(
+            user.caller(),
+            Permission::new(ResourceKey::VEHICLE, Action::Read),
+        )
         .await?;
 
     let sort = VehicleSort {
@@ -142,7 +145,10 @@ pub async fn get_vehicle(
     Path(id): Path<uuid::Uuid>,
 ) -> Result<Json<VehicleResponse>, ServiceError> {
     let view = state.vehicle_service.view_by_id(Id::new(id)).await?;
-    let ctx = state.authorization_service.context_for(user.id).await?;
+    let ctx = state
+        .authorization_service
+        .context_for(user.caller())
+        .await?;
     scope::ensure_visible(
         &ctx,
         Permission::new(ResourceKey::VEHICLE, Action::Read),
@@ -172,14 +178,14 @@ pub async fn create_vehicle(
     let org = scope::resolve_target_org(
         &state.user_service,
         &state.authorization_service,
-        user.id,
+        user.caller(),
         entity.organization_id,
     )
     .await?;
     state
         .authorization_service
         .require(
-            user.id,
+            user.caller(),
             Permission::new(ResourceKey::VEHICLE, Action::Create),
             org,
         )
@@ -211,7 +217,10 @@ pub async fn update_vehicle(
     Json(entity): Json<VehicleUpdateRequest>,
 ) -> Result<Json<VehicleResponse>, ServiceError> {
     let current = state.vehicle_service.view_by_id(Id::new(id)).await?;
-    let ctx = state.authorization_service.context_for(user.id).await?;
+    let ctx = state
+        .authorization_service
+        .context_for(user.caller())
+        .await?;
     scope::ensure_visible(
         &ctx,
         Permission::new(ResourceKey::VEHICLE, Action::Read),
@@ -220,7 +229,7 @@ pub async fn update_vehicle(
     state
         .authorization_service
         .require(
-            user.id,
+            user.caller(),
             Permission::new(ResourceKey::VEHICLE, Action::Update),
             Id::new(current.organization_id),
         )
@@ -250,7 +259,10 @@ pub async fn delete_vehicle(
     Path(id): Path<uuid::Uuid>,
 ) -> Result<StatusCode, ServiceError> {
     let current = state.vehicle_service.view_by_id(Id::new(id)).await?;
-    let ctx = state.authorization_service.context_for(user.id).await?;
+    let ctx = state
+        .authorization_service
+        .context_for(user.caller())
+        .await?;
     scope::ensure_visible(
         &ctx,
         Permission::new(ResourceKey::VEHICLE, Action::Read),
@@ -259,7 +271,7 @@ pub async fn delete_vehicle(
     state
         .authorization_service
         .require(
-            user.id,
+            user.caller(),
             Permission::new(ResourceKey::VEHICLE, Action::Delete),
             Id::new(current.organization_id),
         )
@@ -287,7 +299,10 @@ pub async fn list_archived_vehicles(
     let pagination = Pagination::from(&params);
     let visible = state
         .authorization_service
-        .visible_orgs_for(user.id, Permission::new(ResourceKey::VEHICLE, Action::Read))
+        .visible_orgs_for(
+            user.caller(),
+            Permission::new(ResourceKey::VEHICLE, Action::Read),
+        )
         .await?;
     let query = VehicleSearchQuery {
         archive: ArchiveFilterKind::ArchivedOnly,
@@ -318,7 +333,10 @@ pub async fn archive_vehicle(
     Path(id): Path<uuid::Uuid>,
 ) -> Result<StatusCode, ServiceError> {
     let current = state.vehicle_service.view_by_id(Id::new(id)).await?;
-    let ctx = state.authorization_service.context_for(user.id).await?;
+    let ctx = state
+        .authorization_service
+        .context_for(user.caller())
+        .await?;
     scope::ensure_visible(
         &ctx,
         Permission::new(ResourceKey::VEHICLE, Action::Read),
@@ -327,7 +345,7 @@ pub async fn archive_vehicle(
     state
         .authorization_service
         .require(
-            user.id,
+            user.caller(),
             Permission::new(ResourceKey::VEHICLE, Action::Update),
             Id::new(current.organization_id),
         )
@@ -360,7 +378,10 @@ pub async fn get_vehicle_by_plate(
         .await?
         .ok_or(ServiceError::Repository(domain::RepositoryError::NotFound))?;
     let view = state.vehicle_service.view_by_id(vehicle.id).await?;
-    let ctx = state.authorization_service.context_for(user.id).await?;
+    let ctx = state
+        .authorization_service
+        .context_for(user.caller())
+        .await?;
     scope::ensure_visible(
         &ctx,
         Permission::new(ResourceKey::VEHICLE, Action::Read),
@@ -389,7 +410,10 @@ pub async fn transfer_vehicle(
     Json(req): Json<TransferRequest>,
 ) -> Result<StatusCode, ServiceError> {
     let current = state.vehicle_service.view_by_id(Id::new(id)).await?;
-    let ctx = state.authorization_service.context_for(user.id).await?;
+    let ctx = state
+        .authorization_service
+        .context_for(user.caller())
+        .await?;
     scope::ensure_visible(
         &ctx,
         Permission::new(ResourceKey::VEHICLE, Action::Read),
@@ -398,11 +422,11 @@ pub async fn transfer_vehicle(
     let perm = Permission::new(ResourceKey::VEHICLE, Action::Update);
     state
         .authorization_service
-        .require(user.id, perm, Id::new(current.organization_id))
+        .require(user.caller(), perm, Id::new(current.organization_id))
         .await?;
     state
         .authorization_service
-        .require(user.id, perm, Id::new(req.organization_id))
+        .require(user.caller(), perm, Id::new(req.organization_id))
         .await?;
     state
         .vehicle_service

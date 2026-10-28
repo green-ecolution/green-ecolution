@@ -5,7 +5,7 @@ use crate::service::{
 };
 use domain::{
     Id, RepositoryError,
-    authorization::{AccessContext, Permission},
+    authorization::{AccessContext, Caller, Permission},
     organization::{Organization, root_organization_id},
 };
 
@@ -14,13 +14,13 @@ use domain::{
 pub async fn resolve_target_org(
     users: &UserService,
     authorization: &AuthorizationService,
-    user_id: Uuid,
+    caller: Caller,
     payload_org: Option<Uuid>,
 ) -> Result<Id<Organization>, ServiceError> {
     if let Some(org) = payload_org {
         return Ok(Id::new(org));
     }
-    if let Some(org) = users.organization_of(user_id).await? {
+    if let Some(org) = users.organization_of(caller.user_id).await? {
         return Ok(org);
     }
     if !authorization.enforced() {

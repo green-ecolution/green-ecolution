@@ -55,17 +55,17 @@ pub async fn list_roles(
     let scope = resolve_target_org(
         &state.user_service,
         &state.authorization_service,
-        user.id,
+        user.caller(),
         None,
     )
     .await?;
     state
         .authorization_service
-        .require(user.id, read, scope)
+        .require(user.caller(), read, scope)
         .await?;
     let visible = state
         .authorization_service
-        .visible_orgs_for(user.id, read)
+        .visible_orgs_for(user.caller(), read)
         .await?;
     let org_ids: Vec<Id<Organization>> = match visible {
         // Demo bypass: no orgs are actually excluded, so every organization
@@ -148,7 +148,7 @@ pub async fn list_org_roles(
     state
         .authorization_service
         .require(
-            user.id,
+            user.caller(),
             Permission::new(ResourceKey::ROLE, Action::Read),
             id,
         )
@@ -184,7 +184,7 @@ pub async fn create_role(
     state
         .authorization_service
         .require(
-            user.id,
+            user.caller(),
             Permission::new(ResourceKey::ROLE, Action::Create),
             org,
         )
@@ -195,7 +195,7 @@ pub async fn create_role(
             let perms: BTreeSet<Permission> = source_view.permissions.iter().copied().collect();
             state
                 .authorization_service
-                .require_superset(user.id, &perms, org)
+                .require_superset(user.caller(), &perms, org)
                 .await?;
             match req.name {
                 Some(name) => {
@@ -227,7 +227,7 @@ pub async fn create_role(
             )?;
             state
                 .authorization_service
-                .require_superset(user.id, &permissions, org)
+                .require_superset(user.caller(), &permissions, org)
                 .await?;
             let description = req
                 .description
@@ -271,7 +271,10 @@ pub async fn get_role(
     // Templates own no organization and are already listed unscoped under
     // /roles/templates; scoping them would only break the copy-on-create flow.
     if let Some(org) = view.organization_id {
-        let ctx = state.authorization_service.context_for(user.id).await?;
+        let ctx = state
+            .authorization_service
+            .context_for(user.caller())
+            .await?;
         ensure_visible(
             &ctx,
             Permission::new(ResourceKey::ROLE, Action::Read),
@@ -311,14 +314,14 @@ pub async fn update_role(
         state
             .authorization_service
             .require(
-                user.id,
+                user.caller(),
                 Permission::new(ResourceKey::ROLE, Action::Update),
                 org,
             )
             .await?;
         state
             .authorization_service
-            .require_superset(user.id, &permissions, org)
+            .require_superset(user.caller(), &permissions, org)
             .await?;
     }
     state
@@ -368,7 +371,7 @@ pub async fn delete_role(
         state
             .authorization_service
             .require(
-                user.id,
+                user.caller(),
                 Permission::new(ResourceKey::ROLE, Action::Delete),
                 org,
             )

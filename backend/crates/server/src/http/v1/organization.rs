@@ -57,19 +57,19 @@ pub async fn list_organizations(
     let scope = resolve_target_org(
         &state.user_service,
         &state.authorization_service,
-        user.id,
+        user.caller(),
         None,
     )
     .await?;
     state
         .authorization_service
-        .require(user.id, read, scope)
+        .require(user.caller(), read, scope)
         .await?;
     // The gate only proves the caller may read *somewhere*; a tenant must not
     // see the addresses and contact people of sibling tenants.
     let visible = state
         .authorization_service
-        .visible_orgs_for(user.id, read)
+        .visible_orgs_for(user.caller(), read)
         .await?;
     let views = state.organization_service.list().await?;
     Ok(Json(
@@ -104,7 +104,7 @@ pub async fn get_organization(
     state
         .authorization_service
         .require(
-            user.id,
+            user.caller(),
             Permission::new(ResourceKey::ORGANIZATION, Action::Read),
             id,
         )
@@ -138,7 +138,7 @@ pub async fn create_organization(
     state
         .authorization_service
         .require(
-            user.id,
+            user.caller(),
             Permission::new(ResourceKey::ORGANIZATION, Action::Create),
             parent,
         )
@@ -179,7 +179,7 @@ pub async fn update_organization(
     state
         .authorization_service
         .require(
-            user.id,
+            user.caller(),
             Permission::new(ResourceKey::ORGANIZATION, Action::Update),
             id,
         )
@@ -220,7 +220,7 @@ pub async fn delete_organization(
     state
         .authorization_service
         .require(
-            user.id,
+            user.caller(),
             Permission::new(ResourceKey::ORGANIZATION, Action::Delete),
             id,
         )

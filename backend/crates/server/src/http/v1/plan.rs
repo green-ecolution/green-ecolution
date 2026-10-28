@@ -34,7 +34,7 @@ use crate::{
 };
 use domain::{
     Id,
-    authorization::{Action, Permission, ResourceKey},
+    authorization::{Action, Caller, Permission, ResourceKey},
     module::ModuleKey,
     operation_plan::{
         OperationPlan, OperationPlanSearchQuery, OperationPlanStatus as DomainStatus,
@@ -76,11 +76,11 @@ fn plan_resource(state: &AppState, module: &ModuleKey) -> Result<ResourceKey, Se
 
 async fn ensure_vehicles_visible(
     state: &AppState,
-    user_id: uuid::Uuid,
+    caller: Caller,
     transporter_id: uuid::Uuid,
     trailer_id: Option<uuid::Uuid>,
 ) -> Result<(), ServiceError> {
-    let ctx = state.authorization_service.context_for(user_id).await?;
+    let ctx = state.authorization_service.context_for(caller).await?;
     let read = Permission::new(ResourceKey::VEHICLE, Action::Read);
     let transporter = state
         .vehicle_service
@@ -153,7 +153,7 @@ pub async fn list_plans(
     let (access, resource) = plan_access(&state, &module)?;
     let pagination = Pagination::new(params.page, params.per_page);
     let visible = access
-        .visible_orgs(user.id, Permission::new(resource, Action::Read))
+        .visible_orgs(user.caller(), Permission::new(resource, Action::Read))
         .await?;
     let query = OperationPlanSearchQuery {
         module,
@@ -225,7 +225,10 @@ pub async fn get_plan(
 ) -> Result<Json<PlanResponse>, ServiceError> {
     let view = state.operation_plan_service.view_by_id(Id::new(id)).await?;
     let resource = plan_resource(&state, &view.module)?;
-    let ctx = state.authorization_service.context_for(user.id).await?;
+    let ctx = state
+        .authorization_service
+        .context_for(user.caller())
+        .await?;
     scope::ensure_visible(
         &ctx,
         Permission::new(resource, Action::Read),
@@ -258,14 +261,24 @@ pub async fn create_plan(
     let org = scope::resolve_target_org(
         &state.user_service,
         &state.authorization_service,
-        user.id,
+        user.caller(),
         entity.organization_id,
     )
     .await?;
     access
-        .require_write(user.id, Permission::new(resource, Action::Create), org)
+        .require_write(
+            user.caller(),
+            Permission::new(resource, Action::Create),
+            org,
+        )
         .await?;
-    ensure_vehicles_visible(&state, user.id, entity.transporter_id, entity.trailer_id).await?;
+    ensure_vehicles_visible(
+        &state,
+        user.caller(),
+        entity.transporter_id,
+        entity.trailer_id,
+    )
+    .await?;
 
     let draft = entity.into_draft(module, org)?;
     let plan = state.operation_plan_service.create(draft).await?;
@@ -303,7 +316,10 @@ pub async fn update_plan(
     let new_status: DomainStatus = entity.status.into();
     let (access, resource) = plan_access(&state, current.module())?;
 
-    let ctx = state.authorization_service.context_for(user.id).await?;
+    let ctx = state
+        .authorization_service
+        .context_for(user.caller())
+        .await?;
     scope::ensure_visible(
         &ctx,
         Permission::new(resource, Action::Read),
@@ -311,14 +327,20 @@ pub async fn update_plan(
     )?;
     access
         .require_write(
-            user.id,
+            user.caller(),
             Permission::new(resource, Action::Update),
             current.organization_id(),
         )
         .await?;
 
     if current.status() == DomainStatus::Planned {
-        ensure_vehicles_visible(&state, user.id, entity.transporter_id, entity.trailer_id).await?;
+        ensure_vehicles_visible(
+            &state,
+            user.caller(),
+            entity.transporter_id,
+            entity.trailer_id,
+        )
+        .await?;
 
         let update = OperationPlanUpdate {
             date: parse_date(&entity.date)?,
@@ -418,7 +440,10 @@ pub async fn delete_plan(
     let plan_id = Id::new(id);
     let current = state.operation_plan_service.by_id(plan_id).await?;
     let (access, resource) = plan_access(&state, current.module())?;
-    let ctx = state.authorization_service.context_for(user.id).await?;
+    let ctx = state
+        .authorization_service
+        .context_for(user.caller())
+        .await?;
     scope::ensure_visible(
         &ctx,
         Permission::new(resource, Action::Read),
@@ -426,7 +451,7 @@ pub async fn delete_plan(
     )?;
     access
         .require_write(
-            user.id,
+            user.caller(),
             Permission::new(resource, Action::Delete),
             current.organization_id(),
         )
@@ -452,7 +477,7 @@ fn route_response_from_plan(plan: &OperationPlan) -> Result<RouteResponse, Servi
 /// Loads a plan after checking the routing flag and the caller's read right.
 async fn readable_plan(
     state: &AppState,
-    user_id: uuid::Uuid,
+    caller: Caller,
     id: uuid::Uuid,
 ) -> Result<OperationPlan, ServiceError> {
     if !state.feature_flags.routing_enabled {
@@ -462,7 +487,7 @@ async fn readable_plan(
     }
     let plan = state.operation_plan_service.by_id(Id::new(id)).await?;
     let resource = plan_resource(state, plan.module())?;
-    let ctx = state.authorization_service.context_for(user_id).await?;
+    let ctx = state.authorization_service.context_for(caller).await?;
     scope::ensure_visible(
         &ctx,
         Permission::new(resource, Action::Read),
@@ -489,7 +514,7 @@ pub async fn get_plan_route(
     user: AuthUserExtractor,
     Path(id): Path<uuid::Uuid>,
 ) -> Result<Json<RouteResponse>, ServiceError> {
-    let plan = readable_plan(&state, user.id, id).await?;
+    let plan = readable_plan(&state, user.caller(), id).await?;
     Ok(Json(route_response_from_plan(&plan)?))
 }
 
@@ -523,12 +548,16 @@ pub async fn preview_plan_route(
     let org = scope::resolve_target_org(
         &state.user_service,
         &state.authorization_service,
-        user.id,
+        user.caller(),
         None,
     )
     .await?;
     access
-        .require_write(user.id, Permission::new(resource, Action::Create), org)
+        .require_write(
+            user.caller(),
+            Permission::new(resource, Action::Create),
+            org,
+        )
         .await?;
     let computed = state
         .operation_plan_service
@@ -570,7 +599,7 @@ pub async fn get_plan_gpx(
     user: AuthUserExtractor,
     Path(id): Path<uuid::Uuid>,
 ) -> Result<impl IntoResponse, ServiceError> {
-    let plan = readable_plan(&state, user.id, id).await?;
+    let plan = readable_plan(&state, user.caller(), id).await?;
     let geometry = plan
         .route_geometry()
         .ok_or(ServiceError::Repository(domain::RepositoryError::NotFound))?;

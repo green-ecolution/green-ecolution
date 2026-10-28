@@ -558,7 +558,9 @@ pub async fn measure_all(
                 scale,
                 "unrestricted",
                 || async {
-                    let context = authorization.context_for(user_id).await?;
+                    let context = authorization
+                        .context_for(domain::authorization::Caller::unscoped(user_id))
+                        .await?;
                     Ok(context.permissions.grants().len() as u64)
                 },
             )

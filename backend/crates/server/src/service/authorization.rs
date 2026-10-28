@@ -6,7 +6,7 @@ use uuid::Uuid;
 use domain::{
     Id,
     authorization::{
-        AccessContext, Action, EffectivePermissions, OrgHierarchy, Permission, ResourceKey,
+        AccessContext, Action, Caller, EffectivePermissions, OrgHierarchy, Permission, ResourceKey,
         Visibility,
     },
     organization::{Organization, OrganizationReader},
@@ -79,12 +79,12 @@ impl AuthorizationService {
         }
     }
 
-    #[tracing::instrument(level = "debug", skip_all, fields(user.id = %user_id))]
-    pub async fn context_for(&self, user_id: Uuid) -> Result<AccessContext, ServiceError> {
-        if !self.enforced || user_id.is_nil() {
+    #[tracing::instrument(level = "debug", skip_all, fields(user.id = %caller.user_id))]
+    pub async fn context_for(&self, caller: Caller) -> Result<AccessContext, ServiceError> {
+        if !self.enforced || caller.user_id.is_nil() {
             return Ok(AccessContext::unrestricted());
         }
-        let roles = self.role_reader.roles_for_user(user_id).await?;
+        let roles = self.role_reader.roles_for_user(caller.user_id).await?;
         let grants = roles
             .into_iter()
             .filter_map(|r| {
@@ -102,11 +102,11 @@ impl AuthorizationService {
 
     pub async fn require(
         &self,
-        user_id: Uuid,
+        caller: Caller,
         permission: Permission,
         org: Id<Organization>,
     ) -> Result<(), ServiceError> {
-        let ctx = self.context_for(user_id).await?;
+        let ctx = self.context_for(caller).await?;
         if ctx.allows_in(permission, org) {
             Ok(())
         } else {
@@ -116,11 +116,11 @@ impl AuthorizationService {
 
     pub async fn require_superset(
         &self,
-        user_id: Uuid,
+        caller: Caller,
         required: &BTreeSet<Permission>,
         org: Id<Organization>,
     ) -> Result<(), ServiceError> {
-        let ctx = self.context_for(user_id).await?;
+        let ctx = self.context_for(caller).await?;
         if ctx.superset_of(required, org) {
             Ok(())
         } else {
@@ -137,11 +137,11 @@ impl AuthorizationService {
     /// administrator can check a view they just installed.
     pub async fn require_plugin_view(
         &self,
-        user_id: Uuid,
+        caller: Caller,
         required: &BTreeSet<Permission>,
         org: Id<Organization>,
     ) -> Result<(), ServiceError> {
-        let ctx = self.context_for(user_id).await?;
+        let ctx = self.context_for(caller).await?;
         if may_open_plugin_view(&ctx, required, org) {
             Ok(())
         } else {
@@ -220,13 +220,13 @@ impl AuthorizationService {
         }
     }
 
-    #[tracing::instrument(level = "debug", skip_all, fields(user.id = %user_id))]
+    #[tracing::instrument(level = "debug", skip_all, fields(user.id = %caller.user_id))]
     pub async fn visible_orgs_for(
         &self,
-        user_id: Uuid,
+        caller: Caller,
         permission: Permission,
     ) -> Result<Visibility, ServiceError> {
-        Ok(self.context_for(user_id).await?.visible_orgs(permission))
+        Ok(self.context_for(caller).await?.visible_orgs(permission))
     }
 }
 
@@ -369,9 +369,10 @@ mod tests {
             }),
             true,
         );
-        assert!(svc.require(user, widget_read(), sub).await.is_ok());
+        let caller = Caller::unscoped(user);
+        assert!(svc.require(caller, widget_read(), sub).await.is_ok());
         assert!(matches!(
-            svc.require(user, widget_read(), root).await,
+            svc.require(caller, widget_read(), root).await,
             Err(ServiceError::Auth(AuthError::Forbidden))
         ));
     }
@@ -393,12 +394,13 @@ mod tests {
             widget_read(),
             Permission::new(crate::service::test_resources::WIDGET, Action::Delete),
         ]);
+        let caller = Caller::unscoped(user);
         assert!(
-            svc.require_superset(user, &BTreeSet::from([widget_read()]), tbz)
+            svc.require_superset(caller, &BTreeSet::from([widget_read()]), tbz)
                 .await
                 .is_ok()
         );
-        assert!(svc.require_superset(user, &wider, tbz).await.is_err());
+        assert!(svc.require_superset(caller, &wider, tbz).await.is_err());
     }
 
     #[tokio::test]
@@ -409,7 +411,7 @@ mod tests {
             false,
         );
         assert!(
-            svc.require(Uuid::nil(), widget_read(), Id::new_v7())
+            svc.require(Caller::unscoped(Uuid::nil()), widget_read(), Id::new_v7())
                 .await
                 .is_ok()
         );
@@ -428,7 +430,11 @@ mod tests {
             }),
             true,
         );
-        match svc.visible_orgs_for(user, widget_read()).await.unwrap() {
+        match svc
+            .visible_orgs_for(Caller::unscoped(user), widget_read())
+            .await
+            .unwrap()
+        {
             domain::authorization::Visibility::Only(orgs) => {
                 assert!(orgs.contains(&tbz) && !orgs.contains(&root))
             }
@@ -440,7 +446,7 @@ mod tests {
             false,
         );
         assert_eq!(
-            demo.visible_orgs_for(Uuid::nil(), widget_read())
+            demo.visible_orgs_for(Caller::unscoped(Uuid::nil()), widget_read())
                 .await
                 .unwrap(),
             domain::authorization::Visibility::Unrestricted

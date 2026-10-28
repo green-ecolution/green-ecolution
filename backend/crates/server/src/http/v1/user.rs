@@ -126,19 +126,19 @@ pub async fn list_users(
     let scope = resolve_target_org(
         &state.user_service,
         &state.authorization_service,
-        user.id,
+        user.caller(),
         None,
     )
     .await?;
     state
         .authorization_service
-        .require(user.id, read, scope)
+        .require(user.caller(), read, scope)
         .await?;
     // The gate only proves the caller may read *somewhere*; a tenant must not
     // see the members of sibling tenants or of the organization above it.
     let visibility = state
         .authorization_service
-        .visible_orgs_for(user.id, read)
+        .visible_orgs_for(user.caller(), read)
         .await?;
     let pagination = Pagination::new(params.page, params.per_page);
     let filter = UserListFilter {
@@ -181,7 +181,7 @@ pub async fn create_user(
     state
         .authorization_service
         .require(
-            user.id,
+            user.caller(),
             Permission::new(ResourceKey::USER, Action::Create),
             entity.organization_id,
         )
@@ -195,7 +195,7 @@ pub async fn create_user(
             let perms: BTreeSet<Permission> = role.permissions.iter().copied().collect();
             state
                 .authorization_service
-                .require_superset(user.id, &perms, role_org)
+                .require_superset(user.caller(), &perms, role_org)
                 .await?;
         }
     }
@@ -230,7 +230,7 @@ pub async fn update_user(
         Some(org) => {
             state
                 .authorization_service
-                .require(user.id, permission, org)
+                .require(user.caller(), permission, org)
                 .await?
         }
         // organization_id is NOT NULL once a profile row exists, so this is not
@@ -238,7 +238,10 @@ pub async fn update_user(
         // all (e.g. never given an organization). Nothing to scope against, so
         // fall back to requiring user:update anywhere in the caller's scope.
         None => {
-            let ctx = state.authorization_service.context_for(user.id).await?;
+            let ctx = state
+                .authorization_service
+                .context_for(user.caller())
+                .await?;
             if !ctx.permissions.allows(permission) {
                 return Err(AuthError::Forbidden.into());
             }
@@ -272,7 +275,7 @@ pub async fn list_user_roles(
         Some(org) => {
             state
                 .authorization_service
-                .require(user.id, permission, org)
+                .require(user.caller(), permission, org)
                 .await?
         }
         // organization_id is NOT NULL once a profile row exists, so this is not
@@ -280,7 +283,10 @@ pub async fn list_user_roles(
         // all (e.g. never given an organization). Nothing to scope against, so
         // fall back to requiring user:read anywhere in the caller's scope.
         None => {
-            let ctx = state.authorization_service.context_for(user.id).await?;
+            let ctx = state
+                .authorization_service
+                .context_for(user.caller())
+                .await?;
             if !ctx.permissions.allows(permission) {
                 return Err(AuthError::Forbidden.into());
             }
@@ -320,14 +326,14 @@ pub async fn assign_user_role(
         state
             .authorization_service
             .require(
-                user.id,
+                user.caller(),
                 Permission::new(ResourceKey::USER, Action::Update),
                 role_org,
             )
             .await?;
         state
             .authorization_service
-            .require_superset(user.id, &perms, role_org)
+            .require_superset(user.caller(), &perms, role_org)
             .await?;
         // A role grants its permissions for its owning organization plus that
         // organization's whole subtree. Assigning a role owned by a different
@@ -374,7 +380,7 @@ pub async fn revoke_user_role(
         state
             .authorization_service
             .require(
-                user.id,
+                user.caller(),
                 Permission::new(ResourceKey::USER, Action::Update),
                 role_org,
             )
@@ -412,7 +418,7 @@ pub async fn set_user_organization(
     state
         .authorization_service
         .require(
-            user.id,
+            user.caller(),
             Permission::new(ResourceKey::USER, Action::Update),
             org,
         )

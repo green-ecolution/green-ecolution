@@ -125,7 +125,7 @@ pub async fn list_clusters(
     let visible = state
         .authorization
         .visible_orgs_for(
-            user.id,
+            user.caller(),
             Permission::new(crate::resources::TREE_CLUSTER, Action::Read),
         )
         .await?;
@@ -195,7 +195,7 @@ pub async fn get_cluster(
     Path(id): Path<uuid::Uuid>,
 ) -> Result<Json<TreeClusterResponse>, ServiceError> {
     let view = state.clusters.view_by_id(Id::new(id)).await?;
-    let ctx = state.authorization.context_for(user.id).await?;
+    let ctx = state.authorization.context_for(user.caller()).await?;
     scope::ensure_visible(
         &ctx,
         Permission::new(crate::resources::TREE_CLUSTER, Action::Read),
@@ -228,14 +228,14 @@ pub async fn create_cluster(
     let org = scope::resolve_target_org(
         &state.users,
         &state.authorization,
-        user.id,
+        user.caller(),
         entity.organization_id,
     )
     .await?;
     state
         .authorization
         .require(
-            user.id,
+            user.caller(),
             Permission::new(crate::resources::TREE_CLUSTER, Action::Create),
             org,
         )
@@ -273,7 +273,7 @@ pub async fn update_cluster(
 ) -> Result<Json<TreeClusterResponse>, ServiceError> {
     let cluster_id = Id::new(id);
     let current = state.clusters.view_by_id(cluster_id).await?;
-    let ctx = state.authorization.context_for(user.id).await?;
+    let ctx = state.authorization.context_for(user.caller()).await?;
     scope::ensure_visible(
         &ctx,
         Permission::new(crate::resources::TREE_CLUSTER, Action::Read),
@@ -282,7 +282,7 @@ pub async fn update_cluster(
     state
         .authorization
         .require(
-            user.id,
+            user.caller(),
             Permission::new(crate::resources::TREE_CLUSTER, Action::Update),
             Id::new(current.organization_id),
         )
@@ -326,7 +326,7 @@ pub async fn delete_cluster(
     Path(id): Path<uuid::Uuid>,
 ) -> Result<StatusCode, ServiceError> {
     let current = state.clusters.view_by_id(Id::new(id)).await?;
-    let ctx = state.authorization.context_for(user.id).await?;
+    let ctx = state.authorization.context_for(user.caller()).await?;
     scope::ensure_visible(
         &ctx,
         Permission::new(crate::resources::TREE_CLUSTER, Action::Read),
@@ -335,7 +335,7 @@ pub async fn delete_cluster(
     state
         .authorization
         .require(
-            user.id,
+            user.caller(),
             Permission::new(crate::resources::TREE_CLUSTER, Action::Delete),
             Id::new(current.organization_id),
         )
@@ -365,7 +365,7 @@ pub async fn list_cluster_markers(
     let visible = state
         .authorization
         .visible_orgs_for(
-            user.id,
+            user.caller(),
             Permission::new(crate::resources::TREE_CLUSTER, Action::Read),
         )
         .await?;
@@ -395,7 +395,7 @@ pub async fn list_cluster_boundaries(
     let visible = state
         .authorization
         .visible_orgs_for(
-            user.id,
+            user.caller(),
             Permission::new(crate::resources::TREE_CLUSTER, Action::Read),
         )
         .await?;
@@ -427,7 +427,7 @@ pub async fn cluster_statistics(
     let visible = state
         .authorization
         .visible_orgs_for(
-            user.id,
+            user.caller(),
             Permission::new(crate::resources::TREE_CLUSTER, Action::Read),
         )
         .await?;
@@ -461,7 +461,7 @@ pub async fn get_cluster_soil_moisture(
 ) -> Result<Json<SoilMoistureSeriesResponse>, ServiceError> {
     let cluster_id = Id::new(id);
     let view = state.clusters.view_by_id(cluster_id).await?;
-    let ctx = state.authorization.context_for(user.id).await?;
+    let ctx = state.authorization.context_for(user.caller()).await?;
     scope::ensure_visible(
         &ctx,
         Permission::new(crate::resources::TREE_CLUSTER, Action::Read),
@@ -498,7 +498,7 @@ pub async fn list_cluster_sensor_ids(
 ) -> Result<Json<Vec<String>>, ServiceError> {
     let cluster_id = Id::new(id);
     let view = state.clusters.view_by_id(cluster_id).await?;
-    let ctx = state.authorization.context_for(user.id).await?;
+    let ctx = state.authorization.context_for(user.caller()).await?;
     scope::ensure_visible(
         &ctx,
         Permission::new(crate::resources::TREE_CLUSTER, Action::Read),
@@ -533,7 +533,7 @@ pub async fn transfer_cluster(
     Json(req): Json<TransferRequest>,
 ) -> Result<StatusCode, ServiceError> {
     let current = state.clusters.view_by_id(Id::new(id)).await?;
-    let ctx = state.authorization.context_for(user.id).await?;
+    let ctx = state.authorization.context_for(user.caller()).await?;
     scope::ensure_visible(
         &ctx,
         Permission::new(crate::resources::TREE_CLUSTER, Action::Read),
@@ -542,11 +542,11 @@ pub async fn transfer_cluster(
     let perm = Permission::new(crate::resources::TREE_CLUSTER, Action::Update);
     state
         .authorization
-        .require(user.id, perm, Id::new(current.organization_id))
+        .require(user.caller(), perm, Id::new(current.organization_id))
         .await?;
     state
         .authorization
-        .require(user.id, perm, Id::new(req.organization_id))
+        .require(user.caller(), perm, Id::new(req.organization_id))
         .await?;
     state
         .clusters

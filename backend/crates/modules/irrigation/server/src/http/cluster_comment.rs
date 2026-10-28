@@ -3,7 +3,7 @@ use std::sync::Arc;
 use axum::extract::State;
 use domain::{
     Id,
-    authorization::{Action, Permission},
+    authorization::{Action, Caller, Permission},
     comment::CommentSubject,
 };
 use utoipa_axum::{router::OpenApiRouter, routes};
@@ -39,11 +39,11 @@ pub fn routes() -> OpenApiRouter<Arc<IrrigationHttpState>> {
 /// cluster at all.
 async fn cluster_scope(
     state: &IrrigationHttpState,
-    user_id: Uuid,
+    caller: Caller,
     cluster_id: Uuid,
 ) -> Result<CommentSubject, ServiceError> {
     let view = state.clusters.view_by_id(Id::new(cluster_id)).await?;
-    let ctx = state.authorization.context_for(user_id).await?;
+    let ctx = state.authorization.context_for(caller).await?;
     scope::ensure_visible(
         &ctx,
         Permission::new(resources::TREE_CLUSTER, Action::Read),
@@ -73,7 +73,7 @@ pub async fn list_cluster_comments(
     Path(cluster_id): Path<uuid::Uuid>,
     Query(params): Query<PaginationParams>,
 ) -> Result<Json<ListResponse<CommentResponse>>, ServiceError> {
-    let subject = cluster_scope(&state, user.id, cluster_id).await?;
+    let subject = cluster_scope(&state, user.caller(), cluster_id).await?;
     Ok(Json(
         list_for(&state.comments, &state.users, subject, &params).await?,
     ))
@@ -102,7 +102,7 @@ pub async fn create_cluster_comment(
     Path(cluster_id): Path<uuid::Uuid>,
     Json(payload): Json<CreateCommentRequest>,
 ) -> Result<(axum::http::StatusCode, Json<CommentResponse>), ServiceError> {
-    let subject = cluster_scope(&state, user.id, cluster_id).await?;
+    let subject = cluster_scope(&state, user.caller(), cluster_id).await?;
     let response = create_for(&state.comments, &state.users, subject, user.id, payload).await?;
     Ok((axum::http::StatusCode::CREATED, Json(response)))
 }
@@ -131,7 +131,7 @@ pub async fn delete_cluster_comment(
     user: AuthUserExtractor,
     Path((cluster_id, comment_id)): Path<(uuid::Uuid, uuid::Uuid)>,
 ) -> Result<axum::http::StatusCode, ServiceError> {
-    let subject = cluster_scope(&state, user.id, cluster_id).await?;
+    let subject = cluster_scope(&state, user.caller(), cluster_id).await?;
     let id = authorize_own_comment(&state.comments, user.id, subject, comment_id).await?;
     state.comments.delete(id).await?;
     Ok(axum::http::StatusCode::NO_CONTENT)
@@ -164,7 +164,7 @@ pub async fn update_cluster_comment(
     Path((cluster_id, comment_id)): Path<(uuid::Uuid, uuid::Uuid)>,
     Json(payload): Json<UpdateCommentRequest>,
 ) -> Result<Json<CommentResponse>, ServiceError> {
-    let subject = cluster_scope(&state, user.id, cluster_id).await?;
+    let subject = cluster_scope(&state, user.caller(), cluster_id).await?;
     let id = authorize_own_comment(&state.comments, user.id, subject, comment_id).await?;
     Ok(Json(
         update_for(&state.comments, &state.users, id, payload).await?,

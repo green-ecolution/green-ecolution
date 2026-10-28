@@ -2,11 +2,10 @@ use std::sync::Arc;
 
 use domain::{
     Id,
-    authorization::{Permission, Visibility},
+    authorization::{Caller, Permission, Visibility},
     module::{ModuleActivationReader, ModuleKey},
     organization::Organization,
 };
-use uuid::Uuid;
 
 use crate::service::{
     ServiceError, authorization::AuthorizationService, targets::ensure_module_active,
@@ -44,11 +43,11 @@ impl ModuleAccess {
 
     pub async fn require_write(
         &self,
-        user: Uuid,
+        caller: Caller,
         permission: Permission,
         org: Id<Organization>,
     ) -> Result<(), ServiceError> {
-        self.authorization.require(user, permission, org).await?;
+        self.authorization.require(caller, permission, org).await?;
         ensure_module_active(self.activation.as_ref(), &self.key, org).await
     }
 
@@ -56,12 +55,12 @@ impl ModuleAccess {
     /// which the module is active.
     pub async fn visible_orgs(
         &self,
-        user: Uuid,
+        caller: Caller,
         permission: Permission,
     ) -> Result<Visibility, ServiceError> {
         let visible = self
             .authorization
-            .visible_orgs_for(user, permission)
+            .visible_orgs_for(caller, permission)
             .await?;
         let active = self.activation.active_orgs(&self.key).await?;
         Ok(Visibility::Only(match visible {
