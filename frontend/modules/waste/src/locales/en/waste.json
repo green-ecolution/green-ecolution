@@ -145,5 +145,13 @@
         }
       }
     }
+  },
+  "map": {
+    "popup": {
+      "ariaLabel": "Waste bin {number} on the map",
+      "title": "Bin {number}",
+      "close": "Close",
+      "detailLink": "Open bin"
+    }
   }
 }

@@ -145,5 +145,13 @@
         }
       }
     }
+  },
+  "map": {
+    "popup": {
+      "ariaLabel": "Abfallbehälter {number} auf der Karte",
+      "title": "Behälter {number}",
+      "close": "Schließen",
+      "detailLink": "Zum Behälter"
+    }
   }
 }
