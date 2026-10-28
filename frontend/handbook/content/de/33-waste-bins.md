@@ -62,17 +62,20 @@ Der Füllstand ergibt sich aus der letzten Abstandsmessung des Sensors. Misst de
 60 cm bei einer Behältertiefe von 120 cm, ist der Behälter zu 50 Prozent gefüllt; allgemein
 gilt Füllstand gleich eins minus Abstand durch Tiefe. Daraus leitet Green Ecolution eine
 von vier Füllstufen ab. **Voll** heißt, der Füllstand hat den Schwellwert der Organisation
-erreicht. **Normal** gilt darunter. **Geleert** steht ein Behälter, wenn er nach der
-letzten Messung durch eine abgeschlossene Leerungstour geleert wurde, denn die alte
-Messung beschreibt dann nicht mehr den Behälter. Sobald der Sensor wieder misst, gilt
-die neue Messung.
+erreicht. **Normal** gilt darunter.
 
-**Unbekannt** erscheint, wenn es noch keine Messung gibt oder die letzte Messung älter ist
-als die Offline-Grenze der Organisation. Das ist dieselbe Grenze, nach der ein Sensor als
-offline gilt, siehe
+**Unbekannt** erscheint zuerst, wenn es noch keine Messung gibt oder die letzte Messung
+älter ist als die Offline-Grenze der Organisation. Das ist dieselbe Grenze, nach der ein
+Sensor als offline gilt, siehe
 [Die Verbindungszustände](./sensors.md#die-verbindungszustande-vorbereitet-online-und-offline).
-Ein Behälter ohne Sensor bleibt deshalb dauerhaft auf Unbekannt, solange niemand eine
-Leerungstour für ihn abschließt.
+Ein Behälter, der nie gemessen hat, etwa weil er keinen Sensor trägt, bleibt deshalb
+dauerhaft auf Unbekannt, auch wenn eine Leerungstour für ihn abgeschlossen wird.
+
+**Geleert** steht ein Behälter nur dann, wenn die letzte Messung noch innerhalb der
+Offline-Grenze liegt und der Behälter danach durch eine abgeschlossene Leerungstour
+geleert wurde, denn die alte Messung beschreibt dann nicht mehr den Behälter. Ist die
+Messung bereits zu alt, zeigt der Behälter Unbekannt. Sobald der Sensor wieder misst,
+gilt die neue Messung.
 
 ## Den Schwellwert für voll einstellen
 
@@ -120,7 +123,9 @@ Beim Beenden einer Tour fragt Green Ecolution für jeden Behälter, ob er geleer
 Vorausgewählt ist **geleert**. Einen Behälter, den die Fahrerin oder der Fahrer nicht
 leeren konnte, schaltest du aus. Zusätzlich kannst du für jeden Behälter die gesammelte
 Menge in Litern eintragen; die Angabe ist freiwillig. Auf der Detailseite der Tour steht
-danach, wie viele Behälter geleert wurden. Deren Füllstufe wechselt auf **Geleert**.
+danach, wie viele Behälter geleert wurden. Deren Füllstufe wechselt auf **Geleert**, solange ihre letzte Messung noch
+nicht älter als die Offline-Grenze ist, sonst steht sie auf Unbekannt, siehe
+[Wie die Füllstufe zustande kommt](./waste-bins.md#wie-die-fullstufe-zustande-kommt).
 
 ![Der Dialog zum Beenden einer Leerungstour mit der Angabe je Behälter, ob er geleert wurde](../images/waste-plan-outcome.png)
 
