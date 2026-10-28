@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { setOrganizationScope } from '@/lib/auth/scope/organizationScopeStore'
 import StationDialog from './StationDialog'
 
 vi.mock('@/components/map-gl/MapPreview', () => ({
@@ -23,6 +24,28 @@ describe('StationDialog', { timeout: 20_000 }, () => {
   const onSubmit = vi.fn()
 
   beforeEach(() => onSubmit.mockClear())
+
+  it('preselects the scope organization even when it is not the first entry', async () => {
+    const user = userEvent.setup()
+    setOrganizationScope('u1', 'org-2')
+    try {
+      render(
+        <StationDialog
+          open
+          mode="create"
+          onOpenChange={vi.fn()}
+          onSubmit={onSubmit}
+          organizations={orgs}
+          initialPosition={{ lat: 54.78, lng: 9.43 }}
+        />,
+      )
+      await user.type(screen.getByLabelText(/name/i), 'Hof')
+      await user.click(screen.getByRole('button', { name: 'Speichern' }))
+      expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ organizationId: 'org-2' }))
+    } finally {
+      setOrganizationScope('u1', null)
+    }
+  })
 
   it('requires a name', async () => {
     const user = userEvent.setup()

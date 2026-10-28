@@ -1,6 +1,7 @@
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
+import { setOrganizationScope } from '@/lib/auth/scope/organizationScopeStore'
 import { PluginInstallDialog } from './PluginInstallDialog'
 
 const ORGANIZATION = { id: 'org-1', name: 'Stadt Flensburg', memberCount: 0 }
@@ -18,6 +19,28 @@ const accessMatrixOf = () =>
  * timed out in a parallel run while passing on their own.
  */
 describe('PluginInstallDialog', { timeout: 20_000 }, () => {
+  it('preselects the scope organization even when it is not the first entry', async () => {
+    const user = userEvent.setup()
+    const onSubmit = vi.fn()
+    setOrganizationScope('u1', 'org-2')
+    try {
+      render(
+        <PluginInstallDialog
+          open
+          onSubmit={onSubmit}
+          onOpenChange={vi.fn()}
+          organizations={[ORGANIZATION, { id: 'org-2', name: 'TBZ', memberCount: 0 }]}
+        />,
+      )
+      await user.type(screen.getByLabelText(/slug/i), 'acme')
+      await user.type(screen.getByLabelText(/name/i), 'Acme')
+      await user.click(screen.getByRole('button', { name: /installieren/i }))
+      expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ organizationId: 'org-2' }))
+    } finally {
+      setOrganizationScope('u1', null)
+    }
+  })
+
   it('mirrors the plugin permissions into the access permissions until they are edited', async () => {
     const user = userEvent.setup()
     render(<PluginInstallDialog open onSubmit={vi.fn()} onOpenChange={vi.fn()} />)
