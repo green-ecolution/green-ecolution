@@ -32,20 +32,22 @@ Abstand vom Sensor bis zum Behälterboden; aus ihr berechnet sich später der F�
 Dazu wählst du die Organisation, der der Behälter gehört, und setzt den Standort mit einem
 Klick auf die Karte. Den Marker kannst du danach noch verschieben. Nach dem Speichern
 erscheint der Behälter in der Liste. Über **Behälter bearbeiten** auf der Detailseite
-änderst du Nummer, Größe und Standort später, und im Menü **Weitere Aktionen** löscht du
+änderst du Nummer, Größe und Standort später, und im Menü **Weitere Aktionen** löschst du
 einen Behälter nach einer Rückfrage. Dabei wird er aus allen geplanten Leerungstouren
-genommen, und ein verbundener Sensor wird freigegeben, bleibt aber aktiviert.
+genommen, seine Kommentare werden gelöscht, und ein verbundener Sensor wird freigegeben,
+bleibt aber aktiviert.
 
 ## Einen Sensor zuordnen
 
-Den Füllstand meldet ein Abstandssensor, der von oben die Entfernung zur Füllung misst. Die Zuordnung läuft über die
-[Sensorverwaltung](./sensor-installation.md). Beim Aktivieren eines Sensors wählst du als
-Ziel einen Abfallbehälter aus, den die Anwendung nach der Entfernung zu deinem Standort
-sortiert. Alternativ weist du in der Sensordetailansicht einen anderen Behälter zu oder
-hebst die Verknüpfung über **Behälterverknüpfung aufheben** wieder auf. Ein Behälter
-kann höchstens einen Sensor haben, und ein Sensor sitzt an höchstens einem Behälter.
-Beide müssen zur selben Organisation gehören. In der Simulation heißt das passende
-Sensormodell **GE Distance (simuliert)**.
+Den Füllstand meldet ein Abstandssensor, der von oben die Entfernung zur Füllung misst.
+Als Sensormodell bringt das Modul bislang **GE Distance (simuliert)** mit, einen
+simulierten Ultraschallsensor, der den Abstand vom Deckel zur Füllung meldet. Die
+Zuordnung läuft über die [Sensorverwaltung](./sensor-installation.md). Beim Aktivieren
+eines Sensors wählst du als Ziel einen Abfallbehälter aus, den die Anwendung nach der
+Entfernung zu deinem Standort sortiert. Alternativ weist du in der Sensordetailansicht
+einen anderen Behälter zu oder hebst die Verknüpfung über **Behälterverknüpfung
+aufheben** wieder auf. Ein Behälter kann höchstens einen Sensor haben, und ein Sensor
+sitzt an höchstens einem Behälter. Beide müssen zur selben Organisation gehören.
 
 ## Die Detailseite
 
@@ -53,6 +55,11 @@ Die Detailseite eines Behälters zeigt links die **Stammdaten** mit Nummer, Volu
 Tiefe, Koordinaten, Datenquelle und dem Zeitpunkt der letzten Änderung. Rechts steht der
 Bereich **Füllstand** mit der Füllstufe, dem Füllstand in Prozent, dem Zeitpunkt der
 letzten Messung und der letzten Leerung sowie dem verbundenen Sensor.
+
+Darunter können alle, die auf den Behälter zugreifen dürfen, Kommentare hinterlassen,
+etwa zu einem beschädigten Deckel oder einem zugestellten Standplatz. Eigene Kommentare
+lassen sich nachträglich bearbeiten, was als **(bearbeitet)** vermerkt wird, oder nach
+einer Rückfrage löschen. Kommentare anderer lassen sich nur lesen.
 
 ![Die Detailseite eines Abfallbehälters mit Stammdaten und Füllstand](../images/waste-bin-detail.png)
 
@@ -80,8 +87,8 @@ gilt die neue Messung.
 ## Den Schwellwert für voll einstellen
 
 Ab welchem Füllstand ein Behälter als voll gilt, legt jede Organisation selbst fest. Die
-Vorgabe liegt bei 80 Prozent. Den Wert findest du in den Einstellungen der Organisation unter
-**Schwellwert für „voll“**. Er wird wie die
+Vorgabe liegt bei 80 Prozent. Den Wert findest du in den Einstellungen der Organisation
+unter **Schwellwert für „voll“**. Er wird wie die
 [Fachlichen Vorgaben](./settings-organization.md#fachliche-vorgaben) im Organisationsbaum
 nach unten vererbt, und eine Unterorganisation kann einen eigenen Wert setzen, sofern die
 übergeordnete Organisation das nicht sperrt. Der Schwellwert bestimmt die Füllstufe in
@@ -92,7 +99,9 @@ bleiben bei einer Änderung unverändert.
 
 Wenn das Modul aktiv ist, zeigt die Karte die Behälter nach Füllstufe eingefärbt. Ein
 Klick auf einen Behälter öffnet ein Fenster mit der Behälternummer und dem Link **Zum
-Behälter**, der zur Detailseite führt.
+Behälter**, der zur Detailseite führt. Führt ein gespeicherter Link auf einen Behälter, der
+inzwischen gelöscht oder für dich nicht sichtbar ist, meldet das Fenster stattdessen, dass
+der Behälter nicht gefunden wurde.
 
 ## Leerungstouren planen
 
@@ -102,7 +111,7 @@ den Umschalter zwischen **Bewässerung** und **Leerung**; die Leerung hat die Ad
 `/plans?module=waste`. In der Spalte **Vorschläge** stehen dann die vollen Behälter. Du
 markierst einen oder mehrere und klickst auf **Zu Leerungstour bündeln**, oder du wählst
 die Behälter im Formular über **Behälter auswählen** aus. Dort wählt **Alle vollen
-auswählen** sämtliche Behälter über dem Schwellwert auf einmal aus.
+auswählen** sämtliche Behälter ab dem Schwellwert auf einmal aus.
 
 Wie bei jedem Einsatzplan brauchst du ein Datum, ein Fahrzeug, die Mitarbeitenden und
 einen Startpunkt. Für Leerungstouren gelten zwei zusätzliche Voraussetzungen. Das
@@ -113,9 +122,10 @@ es mindestens eine Station mit der Angabe **Laderaum entladen** geben, siehe
 Laderaum, bevor es zurückkehrt. Fehlt eine von beiden, kann Green Ecolution keine Route
 berechnen und weist darauf hin.
 
-Der Bedarf eines Behälters ist sein Volumen mal sein Füllstand. Hat ein Behälter keine
-bekannte Füllung, rechnet die Planung vorsichtig mit dem vollen Volumen. Daraus berechnet Green Ecolution,
-wie viel Laderaum die Tour braucht.
+Der Bedarf eines Behälters ist sein Volumen mal sein Füllstand. Ein Behälter mit der
+Füllstufe Geleert zählt mit null Litern. Ist die Füllung unbekannt, rechnet die Planung
+vorsichtig mit dem vollen Volumen. Aus der Summe berechnet Green Ecolution, wie viel
+Laderaum die Tour braucht.
 
 ## Eine Leerungstour abschließen
 
@@ -123,8 +133,9 @@ Beim Beenden einer Tour fragt Green Ecolution für jeden Behälter, ob er geleer
 Vorausgewählt ist **geleert**. Einen Behälter, den die Fahrerin oder der Fahrer nicht
 leeren konnte, schaltest du aus. Zusätzlich kannst du für jeden Behälter die gesammelte
 Menge in Litern eintragen; die Angabe ist freiwillig. Auf der Detailseite der Tour steht
-danach, wie viele Behälter geleert wurden. Deren Füllstufe wechselt auf **Geleert**, solange ihre letzte Messung noch
-nicht älter als die Offline-Grenze ist, sonst steht sie auf Unbekannt, siehe
+danach, wie viele Behälter geleert wurden. Deren Füllstufe wechselt auf **Geleert**,
+solange ihre letzte Messung noch nicht älter als die Offline-Grenze ist, sonst steht sie
+auf Unbekannt, siehe
 [Wie die Füllstufe zustande kommt](./waste-bins.md#wie-die-fullstufe-zustande-kommt).
 
 ![Der Dialog zum Beenden einer Leerungstour mit der Angabe je Behälter, ob er geleert wurde](../images/waste-plan-outcome.png)
