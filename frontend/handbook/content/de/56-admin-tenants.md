@@ -21,7 +21,10 @@ solchen Mitgliedern eine eigene Oberfläche: Statt des Dashboards öffnet sich d
 Mandantenübersicht, und die Seitennavigation führt unter **Instanz** zu den Seiten, die
 die Instanz als Ganzes betreffen: Mandanten, Organisation, Team und Rollen, Plugins und
 Systeminformationen. Karte, Einsatzpläne, Fahrzeuge und Sensoren tauchen dort nicht auf,
-denn sie gehören immer zu einem bestimmten Mandanten.
+denn sie gehören immer zu einem bestimmten Mandanten. In der obersten Organisation sind
+diese Seiten auch nicht erreichbar: Wer eine solche Adresse öffnet, die Zurück-Taste
+benutzt oder aus einem Mandanten auf einer solchen Seite zurück in die eigene
+Organisation wechselt, landet wieder in der Mandantenübersicht.
 
 ![Die Mandantenübersicht mit zwei Mandanten und ihren Kennzahlen](../images/admin-tenants.png)
 
@@ -46,6 +49,6 @@ Organisationswechsel, den du auch über das Benutzermenü auslöst (siehe
 [Erste Schritte](./getting-started.md), Abschnitt "Organisation wählen"); die
 Benutzerkarte unten in der Seitennavigation zeigt dann den Namen des Mandanten statt
 deiner E-Mail-Adresse.
-Zurück in die Übersicht kommst du über denselben Weg: Wähle im Nutzermenü unter
+Zurück in die Übersicht kommst du über denselben Weg: Wähle im Benutzermenü unter
 **Organisation** wieder deine eigene Organisation, oder nutze **Zu meiner Organisation
-wechseln**, wo es angeboten wird.
+wechseln**, auf den Fehlerseiten.
