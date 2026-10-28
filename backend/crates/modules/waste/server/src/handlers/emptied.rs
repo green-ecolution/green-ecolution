@@ -40,7 +40,7 @@ impl EventHandler for BinsEmptied {
             let result = async {
                 let mut bin = self.reader.by_id(id).await?;
                 bin.mark_emptied(*finished_at);
-                self.writer.save(&bin).await
+                self.writer.save_emptied(&bin).await
             }
             .await;
             if let Err(error) = result {
@@ -109,7 +109,13 @@ mod tests {
         async fn save_new(&self, _draft: WasteBinDraft) -> Result<WasteBin, RepositoryError> {
             unimplemented!()
         }
-        async fn save(&self, bin: &WasteBin) -> Result<(), RepositoryError> {
+        async fn save(&self, _bin: &WasteBin) -> Result<(), RepositoryError> {
+            panic!("the handler must not rewrite the whole bin");
+        }
+        async fn save_fill_level(&self, _bin: &WasteBin) -> Result<(), RepositoryError> {
+            unimplemented!()
+        }
+        async fn save_emptied(&self, bin: &WasteBin) -> Result<(), RepositoryError> {
             let mut bins = self.0.lock().unwrap();
             let slot = bins.iter_mut().find(|b| b.id == bin.id).unwrap();
             *slot = bin.clone();

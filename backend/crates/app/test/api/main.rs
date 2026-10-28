@@ -72,6 +72,7 @@ pub mod user_profiles;
 pub mod users;
 pub mod vehicle;
 pub mod waste_bins;
+pub mod waste_concurrent_writes;
 pub mod waste_plans;
 pub mod waste_roles;
 pub mod waste_sensors;

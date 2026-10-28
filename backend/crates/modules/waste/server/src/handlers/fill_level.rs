@@ -48,7 +48,7 @@ impl EventHandler for FillLevelFromSensor {
         };
         // The payload carries no timestamp and the handler runs right after ingest.
         if bin.record_fill_level(reading.centimeters, Utc::now()) {
-            self.writer.save(&bin).await?;
+            self.writer.save_fill_level(&bin).await?;
         }
         Ok(vec![])
     }

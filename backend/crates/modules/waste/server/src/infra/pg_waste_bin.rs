@@ -369,6 +369,39 @@ impl WasteBinWriter for PgWasteBinRepository {
     }
 
     #[tracing::instrument(level = "trace", skip_all)]
+    async fn save_fill_level(&self, bin: &WasteBin) -> Result<(), RepositoryError> {
+        let Some(fill) = bin.fill() else {
+            return Ok(());
+        };
+        sqlx::query!(
+            r#"UPDATE waste_bins SET fill_fraction = $2, fill_measured_at = $3
+            WHERE id = $1 AND (fill_measured_at IS NULL OR fill_measured_at < $3)"#,
+            bin.id.value(),
+            fill.fraction,
+            fill.measured_at,
+        )
+        .execute(&self.pool)
+        .await?;
+        Ok(())
+    }
+
+    #[tracing::instrument(level = "trace", skip_all)]
+    async fn save_emptied(&self, bin: &WasteBin) -> Result<(), RepositoryError> {
+        let Some(emptied_at) = bin.last_emptied_at() else {
+            return Ok(());
+        };
+        sqlx::query!(
+            r#"UPDATE waste_bins SET last_emptied_at = $2
+            WHERE id = $1 AND (last_emptied_at IS NULL OR last_emptied_at < $2)"#,
+            bin.id.value(),
+            emptied_at,
+        )
+        .execute(&self.pool)
+        .await?;
+        Ok(())
+    }
+
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn delete(&self, id: Id<WasteBin>) -> Result<(), RepositoryError> {
         let result = sqlx::query!("DELETE FROM waste_bins WHERE id = $1", id.value())
             .execute(&self.pool)

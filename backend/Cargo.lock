@@ -142,6 +142,7 @@ dependencies = [
  "utoipa",
  "utoipa-axum",
  "uuid",
+ "waste-domain",
  "waste-server",
  "wiremock",
 ]

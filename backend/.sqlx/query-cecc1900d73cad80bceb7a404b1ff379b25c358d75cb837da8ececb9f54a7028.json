@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE waste_bins SET fill_fraction = $2, fill_measured_at = $3\n            WHERE id = $1 AND (fill_measured_at IS NULL OR fill_measured_at < $3)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Float8",
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "cecc1900d73cad80bceb7a404b1ff379b25c358d75cb837da8ececb9f54a7028"
+}

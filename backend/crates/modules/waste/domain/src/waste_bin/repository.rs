@@ -28,5 +28,12 @@ pub trait WasteBinReader: Send + Sync {
 pub trait WasteBinWriter: Send + Sync {
     async fn save_new(&self, draft: WasteBinDraft) -> Result<WasteBin, RepositoryError>;
     async fn save(&self, bin: &WasteBin) -> Result<(), RepositoryError>;
+    /// Keeps only the bin's fill measurement, so an edit or transfer that
+    /// happened since the bin was loaded survives. An older measurement than
+    /// the one already recorded changes nothing.
+    async fn save_fill_level(&self, bin: &WasteBin) -> Result<(), RepositoryError>;
+    /// Keeps only the bin's emptying time, under the same rules as
+    /// `save_fill_level`.
+    async fn save_emptied(&self, bin: &WasteBin) -> Result<(), RepositoryError>;
     async fn delete(&self, id: Id<WasteBin>) -> Result<(), RepositoryError>;
 }

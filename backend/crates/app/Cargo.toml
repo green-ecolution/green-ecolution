@@ -74,4 +74,5 @@ secrecy = { workspace = true }
 testcontainers = { version = "0.27", features = ["watchdog"] }
 testcontainers-modules = { version = "0.15", features = ["postgres"] }
 urlencoding = "2"
+waste-domain = { path = "../modules/waste/domain" }
 wiremock = "0.6.5"
