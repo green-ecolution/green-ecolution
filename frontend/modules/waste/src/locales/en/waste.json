@@ -1,0 +1,41 @@
+{
+  "label": "Waste",
+  "nav": {
+    "bins": "Waste bins"
+  },
+  "statistics": {
+    "bin": {
+      "label": "Waste bins"
+    }
+  },
+  "settings": {
+    "permission": {
+      "resource": {
+        "waste_bin": {
+          "label": "Waste bins",
+          "pluralNoun": "waste bins",
+          "singular": "waste bin",
+          "description": "Bins & fill levels",
+          "hint": {
+            "read": "View waste bins and fill levels",
+            "create": "Register new waste bins",
+            "update": "Change master data and location",
+            "delete": "Permanently remove waste bins"
+          }
+        },
+        "collection_plan": {
+          "label": "Collection tours",
+          "pluralNoun": "collection tours",
+          "singular": "collection tour",
+          "description": "Planning & tours",
+          "hint": {
+            "read": "View planned and completed collection tours",
+            "create": "Create a new collection tour (requires the right to view start points)",
+            "update": "Change route, time, scope and status",
+            "delete": "Permanently remove a collection tour"
+          }
+        }
+      }
+    }
+  }
+}

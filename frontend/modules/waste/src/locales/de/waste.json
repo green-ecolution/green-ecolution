@@ -1,0 +1,41 @@
+{
+  "label": "Abfall",
+  "nav": {
+    "bins": "Abfallbehälter"
+  },
+  "statistics": {
+    "bin": {
+      "label": "Abfallbehälter"
+    }
+  },
+  "settings": {
+    "permission": {
+      "resource": {
+        "waste_bin": {
+          "label": "Abfallbehälter",
+          "pluralNoun": "Abfallbehälter",
+          "singular": "Abfallbehälter",
+          "description": "Behälter & Füllstände",
+          "hint": {
+            "read": "Abfallbehälter und Füllstände einsehen",
+            "create": "Neue Abfallbehälter erfassen",
+            "update": "Stammdaten und Standort ändern",
+            "delete": "Abfallbehälter dauerhaft entfernen"
+          }
+        },
+        "collection_plan": {
+          "label": "Leerungstouren",
+          "pluralNoun": "Leerungstouren",
+          "singular": "Leerungstour",
+          "description": "Planung & Touren",
+          "hint": {
+            "read": "Geplante und abgeschlossene Leerungstouren einsehen",
+            "create": "Neue Leerungstour anlegen (setzt das Recht Startpunkte ansehen voraus)",
+            "update": "Route, Zeit, Umfang und Status ändern",
+            "delete": "Leerungstour dauerhaft entfernen"
+          }
+        }
+      }
+    }
+  }
+}

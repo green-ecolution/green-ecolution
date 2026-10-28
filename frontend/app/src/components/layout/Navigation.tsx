@@ -118,6 +118,12 @@ const protectedNavData = (
       after: [],
     },
     {
+      key: 'assets',
+      headline: t('sidebar.headlineAssets'),
+      before: [],
+      after: [],
+    },
+    {
       key: 'planning',
       headline: t('sidebar.headlinePlanning'),
       before:

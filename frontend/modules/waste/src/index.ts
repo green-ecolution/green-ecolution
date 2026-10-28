@@ -1,0 +1,1 @@
+export { wasteManifest } from './manifest'

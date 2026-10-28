@@ -73,6 +73,7 @@ it('looks a code up in the module of the request, the core, then the other modul
     'evaluation:errors.code.plan.unknown_stop',
     'irrigation:errors.code.plan.unknown_stop',
     'errors:code.plan.unknown_stop',
+    'waste:errors.code.plan.unknown_stop',
   ])
   expect(errorCatalogKeys('code.plan.unknown_stop')[0]).toBe('errors:code.plan.unknown_stop')
   expect(errorCatalogKeys('status.409', 'irrigation')).toEqual(['errors:status.409'])
