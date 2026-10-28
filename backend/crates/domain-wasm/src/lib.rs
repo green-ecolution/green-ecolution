@@ -9,5 +9,6 @@ mod irrigation;
 mod issue;
 mod plan_draft;
 mod vehicle_draft;
+mod waste;
 
 pub use issue::ValidationIssue;

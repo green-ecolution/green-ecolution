@@ -2483,6 +2483,182 @@
         }
       }
     },
+    "/v1/organizations/{org_id}/settings/waste": {
+      "get": {
+        "tags": [
+          "WasteBins"
+        ],
+        "summary": "Read an organization's waste defaults",
+        "description": "Each field carries the value in force, where it came from, this organization's own value and when it was last changed. Requires setting:read.",
+        "operationId": "getWasteSettings",
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "description": "Organization id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The resolved settings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WasteSettingsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "WasteBins"
+        ],
+        "summary": "Set an organization's waste defaults",
+        "description": "An omitted field stays as it is, `null` drops the organization's own value and returns it to inheritance. Requires setting:update.",
+        "operationId": "updateWasteSettings",
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "description": "Organization id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WasteSettingsUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WasteSettingsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Value outside its range",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "An organization above froze this subtree (code `settings.enforced_by_ancestor`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/permissions": {
       "get": {
         "tags": [
@@ -9038,6 +9214,470 @@
           }
         }
       }
+    },
+    "/v1/waste-bins": {
+      "get": {
+        "tags": [
+          "WasteBins"
+        ],
+        "summary": "List waste bins",
+        "description": "Returns a paginated list of the waste bins visible to the caller in organizations where the waste module is active, sorted by number. `number` filters by a case-insensitive substring. `fill_state` is judged by the full threshold and sensor offline period of `organization_id`, or of the caller's own organization when none is given.",
+        "operationId": "listWasteBins",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "default": 1,
+              "minimum": 1
+            },
+            "example": 1
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1
+            },
+            "example": 25
+          },
+          {
+            "name": "number",
+            "in": "query",
+            "description": "Case-insensitive substring of the bin number.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "K-1"
+          },
+          {
+            "name": "organization_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "fill_state",
+            "in": "query",
+            "description": "Judged by the threshold and offline period of `organization_id`, or of\nthe caller's organization when none is given.",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/FillStateDto"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of waste bins",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListResponse_WasteBinResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid query parameter",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "WasteBins"
+        ],
+        "summary": "Create a waste bin",
+        "description": "Creates a waste bin in `organization_id`, or in the caller's own organization when none is given.",
+        "operationId": "createWasteBin",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WasteBinCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Waste bin created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WasteBinResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input, e.g. a depth outside 1-1000 cm (code `request.validation_failed`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing waste_bin:create, or the waste module is off in the organization (code `module.disabled`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The number is already used in the organization (code `waste_bin.number_taken`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Malformed request body",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/waste-bins/{waste_bin_id}": {
+      "get": {
+        "tags": [
+          "WasteBins"
+        ],
+        "summary": "Get a waste bin by ID",
+        "operationId": "getWasteBin",
+        "parameters": [
+          {
+            "name": "waste_bin_id",
+            "in": "path",
+            "description": "Waste bin ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Waste bin found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WasteBinResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Waste bin not found or not visible",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "WasteBins"
+        ],
+        "summary": "Update a waste bin",
+        "description": "Replaces number, position, volume and depth of a waste bin. Fill level and organization stay unchanged.",
+        "operationId": "updateWasteBin",
+        "parameters": [
+          {
+            "name": "waste_bin_id",
+            "in": "path",
+            "description": "Waste bin ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WasteBinUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Waste bin updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WasteBinResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input (code `request.validation_failed`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing waste_bin:update, or the waste module is off in the organization (code `module.disabled`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Waste bin not found or not visible",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The number is already used in the organization (code `waste_bin.number_taken`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Malformed request body",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "WasteBins"
+        ],
+        "summary": "Delete a waste bin",
+        "description": "Deletes a waste bin, releases its sensor, removes it from every collection plan and deletes its comments.",
+        "operationId": "deleteWasteBin",
+        "parameters": [
+          {
+            "name": "waste_bin_id",
+            "in": "path",
+            "description": "Waste bin ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Waste bin deleted"
+          },
+          "403": {
+            "description": "Missing waste_bin:delete, or the waste module is off in the organization (code `module.disabled`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Waste bin not found or not visible",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/waste-bins/{waste_bin_id}/organization": {
+      "patch": {
+        "tags": [
+          "WasteBins"
+        ],
+        "summary": "Transfer a waste bin to another organization",
+        "description": "Moves a waste bin, and an attached sensor with it, to another organization. Requires `waste_bin:update` and an active waste module in both the source and the target organization.",
+        "operationId": "transferWasteBin",
+        "parameters": [
+          {
+            "name": "waste_bin_id",
+            "in": "path",
+            "description": "Waste bin ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransferRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Waste bin transferred"
+          },
+          "403": {
+            "description": "Missing waste_bin:update in source or target organization, or the waste module is off there (code `module.disabled`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Waste bin or organization not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The number is already used in the target organization (code `waste_bin.number_taken`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -9657,6 +10297,15 @@
             "minimum": 0
           }
         }
+      },
+      "FillStateDto": {
+        "type": "string",
+        "enum": [
+          "empty",
+          "normal",
+          "full",
+          "unknown"
+        ]
       },
       "GitInfoResponse": {
         "type": "object",
@@ -10822,6 +11471,127 @@
                   "description": "Vehicle width in meters.",
                   "example": 2.5,
                   "minimum": 0
+                }
+              }
+            }
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationResponse"
+          }
+        }
+      },
+      "ListResponse_WasteBinResponse": {
+        "type": "object",
+        "required": [
+          "data",
+          "pagination"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "description": "A waste container with its current fill level.",
+              "required": [
+                "id",
+                "number",
+                "latitude",
+                "longitude",
+                "volume_liters",
+                "depth_cm",
+                "organization_id",
+                "fill_state",
+                "created_at",
+                "updated_at"
+              ],
+              "properties": {
+                "created_at": {
+                  "type": "string",
+                  "example": "2026-10-27T10:30:00+00:00"
+                },
+                "depth_cm": {
+                  "type": "integer",
+                  "format": "int32",
+                  "description": "Inner height; the distance a sensor reads when the bin is empty.",
+                  "example": 120
+                },
+                "fill_measured_at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "example": "2026-11-02T08:00:00+00:00"
+                },
+                "fill_percent": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "int32",
+                  "description": "Last measured fill level, rounded to whole percent.",
+                  "example": 75,
+                  "maximum": 100,
+                  "minimum": 0
+                },
+                "fill_state": {
+                  "$ref": "#/components/schemas/FillStateDto"
+                },
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "example": "0190a8e9-7c4f-7000-8000-000000000000"
+                },
+                "last_emptied_at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "example": "2026-11-02T09:30:00+00:00"
+                },
+                "latitude": {
+                  "type": "number",
+                  "format": "double",
+                  "example": 54.7937,
+                  "maximum": 90,
+                  "minimum": -90
+                },
+                "longitude": {
+                  "type": "number",
+                  "format": "double",
+                  "example": 9.4469,
+                  "maximum": 180,
+                  "minimum": -180
+                },
+                "number": {
+                  "type": "string",
+                  "example": "K-12"
+                },
+                "organization_id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "provider": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "example": "green-ecolution"
+                },
+                "sensor_id": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "example": "eui-a81758fffe0c3b52"
+                },
+                "updated_at": {
+                  "type": "string",
+                  "example": "2026-10-27T10:30:00+00:00"
+                },
+                "volume_liters": {
+                  "type": "number",
+                  "format": "double",
+                  "example": 1100.0
                 }
               }
             }
@@ -15802,6 +16572,243 @@
           }
         }
       },
+      "WasteBinCreateRequest": {
+        "type": "object",
+        "required": [
+          "number",
+          "latitude",
+          "longitude",
+          "volume_liters",
+          "depth_cm"
+        ],
+        "properties": {
+          "depth_cm": {
+            "type": "integer",
+            "format": "int32",
+            "example": 120,
+            "maximum": 1000,
+            "minimum": 1
+          },
+          "latitude": {
+            "type": "number",
+            "format": "double",
+            "example": 54.7937,
+            "maximum": 90,
+            "minimum": -90
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double",
+            "example": 9.4469,
+            "maximum": 180,
+            "minimum": -180
+          },
+          "number": {
+            "type": "string",
+            "example": "K-12"
+          },
+          "organization_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Defaults to the caller's own organization."
+          },
+          "volume_liters": {
+            "type": "number",
+            "format": "double",
+            "example": 1100.0,
+            "maximum": 100000,
+            "minimum": 1
+          }
+        }
+      },
+      "WasteBinResponse": {
+        "type": "object",
+        "description": "A waste container with its current fill level.",
+        "required": [
+          "id",
+          "number",
+          "latitude",
+          "longitude",
+          "volume_liters",
+          "depth_cm",
+          "organization_id",
+          "fill_state",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "string",
+            "example": "2026-10-27T10:30:00+00:00"
+          },
+          "depth_cm": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Inner height; the distance a sensor reads when the bin is empty.",
+            "example": 120
+          },
+          "fill_measured_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "2026-11-02T08:00:00+00:00"
+          },
+          "fill_percent": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Last measured fill level, rounded to whole percent.",
+            "example": 75,
+            "maximum": 100,
+            "minimum": 0
+          },
+          "fill_state": {
+            "$ref": "#/components/schemas/FillStateDto"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
+          },
+          "last_emptied_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "2026-11-02T09:30:00+00:00"
+          },
+          "latitude": {
+            "type": "number",
+            "format": "double",
+            "example": 54.7937,
+            "maximum": 90,
+            "minimum": -90
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double",
+            "example": 9.4469,
+            "maximum": 180,
+            "minimum": -180
+          },
+          "number": {
+            "type": "string",
+            "example": "K-12"
+          },
+          "organization_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "provider": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "green-ecolution"
+          },
+          "sensor_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "eui-a81758fffe0c3b52"
+          },
+          "updated_at": {
+            "type": "string",
+            "example": "2026-10-27T10:30:00+00:00"
+          },
+          "volume_liters": {
+            "type": "number",
+            "format": "double",
+            "example": 1100.0
+          }
+        }
+      },
+      "WasteBinUpdateRequest": {
+        "type": "object",
+        "required": [
+          "number",
+          "latitude",
+          "longitude",
+          "volume_liters",
+          "depth_cm"
+        ],
+        "properties": {
+          "depth_cm": {
+            "type": "integer",
+            "format": "int32",
+            "example": 120,
+            "maximum": 1000,
+            "minimum": 1
+          },
+          "latitude": {
+            "type": "number",
+            "format": "double",
+            "example": 54.7937,
+            "maximum": 90,
+            "minimum": -90
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double",
+            "example": 9.4469,
+            "maximum": 180,
+            "minimum": -180
+          },
+          "number": {
+            "type": "string",
+            "example": "K-12"
+          },
+          "volume_liters": {
+            "type": "number",
+            "format": "double",
+            "example": 1100.0,
+            "maximum": 100000,
+            "minimum": 1
+          }
+        }
+      },
+      "WasteSettingsResponse": {
+        "type": "object",
+        "required": [
+          "full_threshold"
+        ],
+        "properties": {
+          "enforced_by": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/OrganizationRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "full_threshold": {
+            "$ref": "#/components/schemas/SettingField_i64",
+            "description": "Fill level in percent from which a bin counts as full."
+          }
+        }
+      },
+      "WasteSettingsUpdateRequest": {
+        "type": "object",
+        "description": "Three states per field. Absent means unchanged, `null` means go back to\ninheriting, a number sets it.",
+        "properties": {
+          "full_threshold": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          }
+        }
+      },
       "WateringStatus": {
         "type": "string",
         "description": "Current watering status of a tree or tree cluster.",
@@ -15884,6 +16891,10 @@
     {
       "name": "Irrigation",
       "description": "Per-organization irrigation defaults — water demand and just-watered duration — resolved along the organization tree."
+    },
+    {
+      "name": "WasteBins",
+      "description": "Manage waste containers, their location and size. The fill level comes from an attached distance sensor and is classified per organization as empty, normal, full or unknown."
     }
   ]
 }

@@ -1277,6 +1277,7 @@ dependencies = [
  "serde_json",
  "uuid",
  "wasm-bindgen",
+ "waste-domain",
 ]
 
 [[package]]

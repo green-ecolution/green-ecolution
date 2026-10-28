@@ -116,12 +116,29 @@
       "empty": "Es muss ein Startpunkt ausgewählt werden."
     }
   },
+  "waste_bin": {
+    "number": {
+      "empty": "Behälternummer ist erforderlich.",
+      "tooLong": "Behälternummer darf maximal {max} Zeichen lang sein."
+    },
+    "volume": {
+      "outOfRange": "Volumen muss zwischen {min} und {max} Litern liegen.",
+      "invalidFormat": "Das Volumen muss eine Zahl sein."
+    },
+    "depth": {
+      "outOfRange": "Tiefe muss zwischen {min} und {max} cm liegen.",
+      "invalidFormat": "Die Tiefe muss eine ganze Zahl sein."
+    }
+  },
   "settings": {
     "water_demand": {
       "outOfRange": "Wasserbedarf muss zwischen {min} und {max} Liter liegen."
     },
     "just_watered_ttl": {
       "outOfRange": "Nachwirkzeit muss zwischen {min} und {max} liegen."
+    },
+    "full_threshold": {
+      "outOfRange": "Voll-Schwelle muss zwischen {min} und {max} Prozent liegen."
     },
     "map_view": {
       "invalidFormat": "Der Mittelpunkt muss innerhalb des gewählten Ausschnitts liegen."

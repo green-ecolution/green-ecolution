@@ -12,6 +12,7 @@ import {
   irrigationValidateTreeDraft,
   validateVehicleDraft,
   validateWateringPlanDraft,
+  wasteValidateBinDraft,
 } from '../pkg/domain_wasm.js'
 
 type RawValidator = (input: unknown) => ValidationIssue[]
@@ -61,6 +62,7 @@ const treeValidator = irrigationValidateTreeDraft as RawValidator
 const clusterValidator = irrigationValidateTreeClusterDraft as RawValidator
 const vehicleValidator = validateVehicleDraft as RawValidator
 const wateringPlanValidator = validateWateringPlanDraft as RawValidator
+const wasteBinValidator = wasteValidateBinDraft as RawValidator
 
 export const treeDraftResolver = <TForm extends FieldValues>(
   translate: IssueTranslator,
@@ -77,3 +79,7 @@ export const vehicleDraftResolver = <TForm extends FieldValues>(
 export const wateringPlanDraftResolver = <TForm extends FieldValues>(
   translate: IssueTranslator,
 ): Resolver<TForm> => makeResolver<TForm>(wateringPlanValidator, translate)
+
+export const wasteBinDraftResolver = <TForm extends FieldValues>(
+  translate: IssueTranslator,
+): Resolver<TForm> => makeResolver<TForm>(wasteBinValidator, translate)

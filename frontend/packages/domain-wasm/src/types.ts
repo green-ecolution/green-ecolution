@@ -51,6 +51,16 @@ export interface VehicleForm {
   description: string
 }
 
+export interface WasteBinForm {
+  number: string
+  latitude: number
+  longitude: number
+  volumeLiters: number
+  depthCm: number
+  /** Owning organization. Only sent on create; the backend defaults to the caller's org. */
+  organizationId?: string
+}
+
 export interface WateringPlanForm {
   date: Date
   status: string

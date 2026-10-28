@@ -6,6 +6,7 @@ export type {
   TreeclusterForm,
   VehicleForm,
   WateringPlanForm,
+  WasteBinForm,
 } from './types'
 export { translateIssue, VALIDATION_KEYS } from './messages'
 
@@ -41,6 +42,17 @@ export {
   irrigationValidateTreeClusterDraft,
   validateVehicleDraft,
   validateWateringPlanDraft,
+  wasteValidateBinDraft,
+  wasteValidateBinNumber,
+  wasteValidateBinVolume,
+  wasteValidateBinDepth,
+  wasteValidateFullThreshold,
+  wasteBinVolumeMin,
+  wasteBinVolumeMax,
+  wasteBinDepthMin,
+  wasteBinDepthMax,
+  wasteFullThresholdMin,
+  wasteFullThresholdMax,
 } from '../pkg/domain_wasm.js'
 
 // Resolvers
@@ -49,4 +61,5 @@ export {
   clusterDraftResolver,
   vehicleDraftResolver,
   wateringPlanDraftResolver,
+  wasteBinDraftResolver,
 } from './resolver'

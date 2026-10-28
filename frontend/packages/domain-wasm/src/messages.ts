@@ -67,9 +67,18 @@ export const VALIDATION_KEYS = [
   'watering_plan.date.outOfRange',
   'watering_plan.start_point_name.empty',
 
+  // Waste bin
+  'waste_bin.number.empty',
+  'waste_bin.number.tooLong',
+  'waste_bin.volume.outOfRange',
+  'waste_bin.volume.invalidFormat',
+  'waste_bin.depth.outOfRange',
+  'waste_bin.depth.invalidFormat',
+
   // Settings
   'settings.water_demand.outOfRange',
   'settings.just_watered_ttl.outOfRange',
+  'settings.full_threshold.outOfRange',
   'settings.map_view.invalidFormat',
 
   // Bounding box, reachable through the map viewport setting.
