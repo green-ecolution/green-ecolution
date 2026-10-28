@@ -8099,7 +8099,7 @@
           "Users"
         ],
         "summary": "Get the map viewport for the authenticated user",
-        "description": "Returns the centre and bounding box the map opens at for the caller's organization, resolved along the organization tree. Falls back to the instance default where the account belongs to no organization. Unlike `/info/map`, which stays unauthenticated and always reports the instance default, this answer is organization-specific and therefore requires a token.",
+        "description": "Returns the centre and bounding box the map opens at for the caller's organization, or for the organization selected via `X-Organization-Scope`, resolved along the organization tree. Falls back to the instance default where the account belongs to no organization. Unlike `/info/map`, which stays unauthenticated and always reports the instance default, this answer is organization-specific and therefore requires a token.",
         "operationId": "getMyMapView",
         "responses": {
           "200": {
@@ -8114,6 +8114,16 @@
           },
           "401": {
             "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The selected organization scope is out of the caller's reach (code `organization_scope.invalid`)",
             "content": {
               "application/json": {
                 "schema": {
@@ -8280,7 +8290,7 @@
           "Users"
         ],
         "summary": "Set a user's organization",
-        "description": "Moves the user into the given organization. Requires user:update in the target organization. Changes to one's own organization membership are rejected.",
+        "description": "Moves the user into the given organization. Requires user:update in the target organization and, where the user already belongs to one, in their current organization. Changes to one's own organization membership are rejected.",
         "operationId": "setUserOrganization",
         "parameters": [
           {

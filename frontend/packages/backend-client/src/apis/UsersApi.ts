@@ -212,7 +212,7 @@ export class UsersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the centre and bounding box the map opens at for the caller\'s organization, resolved along the organization tree. Falls back to the instance default where the account belongs to no organization. Unlike `/info/map`, which stays unauthenticated and always reports the instance default, this answer is organization-specific and therefore requires a token.
+     * Returns the centre and bounding box the map opens at for the caller\'s organization, or for the organization selected via `X-Organization-Scope`, resolved along the organization tree. Falls back to the instance default where the account belongs to no organization. Unlike `/info/map`, which stays unauthenticated and always reports the instance default, this answer is organization-specific and therefore requires a token.
      * Get the map viewport for the authenticated user
      */
     async getMyMapViewRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<MapInfoResponse>> {
@@ -234,7 +234,7 @@ export class UsersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the centre and bounding box the map opens at for the caller\'s organization, resolved along the organization tree. Falls back to the instance default where the account belongs to no organization. Unlike `/info/map`, which stays unauthenticated and always reports the instance default, this answer is organization-specific and therefore requires a token.
+     * Returns the centre and bounding box the map opens at for the caller\'s organization, or for the organization selected via `X-Organization-Scope`, resolved along the organization tree. Falls back to the instance default where the account belongs to no organization. Unlike `/info/map`, which stays unauthenticated and always reports the instance default, this answer is organization-specific and therefore requires a token.
      * Get the map viewport for the authenticated user
      */
     async getMyMapView(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<MapInfoResponse> {
@@ -410,7 +410,7 @@ export class UsersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Moves the user into the given organization. Requires user:update in the target organization. Changes to one\'s own organization membership are rejected.
+     * Moves the user into the given organization. Requires user:update in the target organization and, where the user already belongs to one, in their current organization. Changes to one\'s own organization membership are rejected.
      * Set a user\'s organization
      */
     async setUserOrganizationRaw(requestParameters: SetUserOrganizationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UserResponse>> {
@@ -450,7 +450,7 @@ export class UsersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Moves the user into the given organization. Requires user:update in the target organization. Changes to one\'s own organization membership are rejected.
+     * Moves the user into the given organization. Requires user:update in the target organization and, where the user already belongs to one, in their current organization. Changes to one\'s own organization membership are rejected.
      * Set a user\'s organization
      */
     async setUserOrganization(requestParameters: SetUserOrganizationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UserResponse> {
