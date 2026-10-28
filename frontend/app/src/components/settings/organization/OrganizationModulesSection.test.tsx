@@ -17,8 +17,24 @@ const { default: OrganizationModulesSection } = await import('./OrganizationModu
 const setOwn = vi.fn()
 
 const ROWS: ModuleActivationRow[] = [
-  { key: 'probe', enabled: true, origin: 'inherited', sourceId: 'root', own: null, locked: false },
-  { key: 'waste', enabled: false, origin: 'own', sourceId: null, own: false, locked: false },
+  {
+    key: 'probe',
+    enabled: true,
+    origin: 'inherited',
+    sourceId: 'root',
+    own: null,
+    setBy: null,
+    locked: false,
+  },
+  {
+    key: 'waste',
+    enabled: false,
+    origin: 'own',
+    sourceId: null,
+    own: false,
+    setBy: null,
+    locked: false,
+  },
 ]
 
 const draftOf = (overrides: Partial<ModuleActivationDraft> = {}): ModuleActivationDraft => ({
@@ -52,9 +68,7 @@ describe('OrganizationModulesSection', () => {
 
     expect(screen.getByRole('heading', { name: 'Module' })).toBeInTheDocument()
     expect(
-      screen.getByText(
-        'Lege fest, welche Fachmodule in dieser Organisation und darunter zur Verfügung stehen.',
-      ),
+      screen.getByText(/^Lege fest, welche Fachmodule in dieser Organisation und darunter/),
     ).toBeInTheDocument()
     expect(screen.getByRole('switch', { name: 'Bewässerung' })).toBeChecked()
     // A key the backend registers but this build ships no manifest for.
@@ -132,5 +146,36 @@ describe('OrganizationModulesSection', () => {
     expect(screen.getByRole('alert')).toHaveTextContent(/Stadt Flensburg/)
     expect(screen.getByRole('switch', { name: 'Bewässerung' })).toBeDisabled()
     expect(screen.queryByRole('button', { name: /wieder erben/ })).not.toBeInTheDocument()
+  })
+
+  it('names the organization that set a switch and keeps it fixed for the sub-unit', () => {
+    const rows = [ROWS[0], { ...ROWS[1], setBy: 'root', locked: true }]
+    render(
+      <OrganizationModulesSection
+        draft={draftOf({ rows })}
+        canUpdate
+        organizationName={organizationName}
+      />,
+    )
+
+    expect(screen.getByText('Festgelegt von Stadt Flensburg')).toBeInTheDocument()
+    expect(screen.queryByText('Eigener Wert')).not.toBeInTheDocument()
+    expect(screen.getByRole('switch', { name: 'waste' })).toBeDisabled()
+    expect(screen.getByRole('switch', { name: 'Bewässerung' })).toBeEnabled()
+    expect(screen.queryByRole('button', { name: /waste wieder erben/ })).not.toBeInTheDocument()
+  })
+
+  it('names the setting organization to the parent, who may still change it', () => {
+    const rows = [ROWS[0], { ...ROWS[1], setBy: 'root' }]
+    render(
+      <OrganizationModulesSection
+        draft={draftOf({ rows })}
+        canUpdate
+        organizationName={organizationName}
+      />,
+    )
+
+    expect(screen.getByText('Festgelegt von Stadt Flensburg')).toBeInTheDocument()
+    expect(screen.getByRole('switch', { name: 'waste' })).toBeEnabled()
   })
 })

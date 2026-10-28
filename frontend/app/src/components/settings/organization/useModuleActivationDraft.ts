@@ -20,6 +20,8 @@ export interface ModuleActivationRow {
   sourceId: string | null
   /** This organization's own switch in the draft; `null` inherits. */
   own: boolean | null
+  /** The parent that set this organization's switch; `null` when it set it itself. */
+  setBy: string | null
   locked: boolean
 }
 
@@ -72,20 +74,24 @@ export const useModuleActivationDraft = (
   const rows: ModuleActivationRow[] = ready
     ? server.modules.map((module) => {
         const drafted = own[module.key] ?? null
+        const setBy = module.setBy?.id ?? null
         return {
           key: module.key,
           enabled: drafted ?? module.enabled,
           origin: module.origin,
           sourceId: module.source?.id ?? null,
           own: drafted,
-          locked: enforcedBy !== null,
+          setBy: setBy === organizationId ? null : setBy,
+          locked: enforcedBy !== null || module.fixedByAncestor,
         }
       })
     : []
 
   const setOwn = (key: string, value: boolean | null) => {
-    // The backend refuses the whole write under a lock above.
-    if (!own || serverKey === null || enforcedBy) return
+    // The backend refuses the whole write under a lock above, and a switch a
+    // parent set for this organization.
+    const fixed = server?.modules.some((module) => module.key === key && module.fixedByAncestor)
+    if (!own || serverKey === null || enforcedBy || fixed) return
     setEdit({ key: serverKey, own: { ...own, [key]: value } })
   }
 

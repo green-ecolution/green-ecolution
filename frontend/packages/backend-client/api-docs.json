@@ -1864,7 +1864,7 @@
           "Modules"
         ],
         "summary": "Switch modules for an organization",
-        "description": "An omitted module stays as it is, `null` returns it to inheritance. Requires setting:update.",
+        "description": "An omitted module stays as it is, `null` returns it to inheritance. A switch is stamped with the topmost organization the caller may update settings for; only callers acting for that organization or above may change it again. Requires setting:update.",
         "operationId": "updateOrganizationModules",
         "parameters": [
           {
@@ -1930,7 +1930,7 @@
             }
           },
           "409": {
-            "description": "An organization above froze this subtree (code `settings.enforced_by_ancestor`)",
+            "description": "An organization above froze this subtree (code `settings.enforced_by_ancestor`), or set a switch for this organization that the caller does not act for (code `settings.set_by_ancestor`)",
             "content": {
               "application/json": {
                 "schema": {
@@ -11956,11 +11956,16 @@
         "required": [
           "key",
           "enabled",
-          "origin"
+          "origin",
+          "fixed_by_ancestor"
         ],
         "properties": {
           "enabled": {
             "type": "boolean"
+          },
+          "fixed_by_ancestor": {
+            "type": "boolean",
+            "description": "The own switch was set from a level the caller does not act for, so\nthe caller can neither change nor reset it."
           },
           "key": {
             "type": "string"
@@ -11974,6 +11979,17 @@
               "null"
             ],
             "description": "This organization's own switch, reported even while a lock above makes it dormant."
+          },
+          "set_by": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/OrganizationRef",
+                "description": "The organization the own switch was set from; this one or an ancestor."
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "source": {
             "oneOf": [

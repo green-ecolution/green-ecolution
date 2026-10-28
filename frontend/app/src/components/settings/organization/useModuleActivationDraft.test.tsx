@@ -11,8 +11,14 @@ const response = (overrides: Partial<OrganizationModulesResponse> = {}) =>
   ({
     enforcedBy: null,
     modules: [
-      { key: 'irrigation', enabled: true, origin: 'inherited', source: { id: 'root' } },
-      { key: 'waste', enabled: false, origin: 'own', ownValue: false },
+      {
+        key: 'irrigation',
+        enabled: true,
+        origin: 'inherited',
+        source: { id: 'root' },
+        fixedByAncestor: false,
+      },
+      { key: 'waste', enabled: false, origin: 'own', ownValue: false, fixedByAncestor: false },
     ],
     ...overrides,
   }) as unknown as OrganizationModulesResponse
@@ -41,9 +47,18 @@ describe('useModuleActivationDraft', () => {
         origin: 'inherited',
         sourceId: 'root',
         own: null,
+        setBy: null,
         locked: false,
       },
-      { key: 'waste', enabled: false, origin: 'own', sourceId: null, own: false, locked: false },
+      {
+        key: 'waste',
+        enabled: false,
+        origin: 'own',
+        sourceId: null,
+        own: false,
+        setBy: null,
+        locked: false,
+      },
     ])
   })
 
@@ -112,6 +127,75 @@ describe('useModuleActivationDraft', () => {
 
     act(() => result.current.setOwn('irrigation', false))
     expect(result.current.dirty).toBe(false)
+  })
+
+  it('locks a switch a parent set for this organization and names the parent', async () => {
+    const { result } = await loaded(
+      response({
+        modules: [
+          {
+            key: 'irrigation',
+            enabled: true,
+            origin: 'inherited',
+            source: { id: 'root' },
+            fixedByAncestor: false,
+          },
+          {
+            key: 'waste',
+            enabled: false,
+            origin: 'own',
+            ownValue: false,
+            setBy: { id: 'root' },
+            fixedByAncestor: true,
+          },
+        ],
+      }),
+    )
+
+    expect(result.current.rows[1]).toMatchObject({ setBy: 'root', locked: true })
+    expect(result.current.rows[0].locked).toBe(false)
+
+    act(() => result.current.setOwn('waste', true))
+    act(() => result.current.setOwn('waste', null))
+    expect(result.current.dirty).toBe(false)
+  })
+
+  it('names the parent but keeps the switch open for whoever acts for it', async () => {
+    const { result } = await loaded(
+      response({
+        modules: [
+          {
+            key: 'waste',
+            enabled: false,
+            origin: 'own',
+            ownValue: false,
+            setBy: { id: 'root' },
+            fixedByAncestor: false,
+          },
+        ],
+      }),
+    )
+
+    expect(result.current.rows[0]).toMatchObject({ setBy: 'root', locked: false })
+  })
+
+  it('does not name the organization itself as the one that set its switch', async () => {
+    const { result } = await loaded(
+      response({
+        modules: [
+          {
+            key: 'waste',
+            enabled: false,
+            origin: 'own',
+            ownValue: false,
+            setBy: { id: 'nord' },
+            fixedByAncestor: false,
+          },
+        ],
+      }),
+    )
+
+    expect(result.current.rows[0].setBy).toBeNull()
   })
 
   it('asks nothing while disabled', () => {
