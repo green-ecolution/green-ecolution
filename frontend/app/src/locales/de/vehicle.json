@@ -84,11 +84,6 @@
     "modelLabel": "Fahrzeugmodell",
     "typeLabel": "Fahrzeugtyp",
     "typePlaceholder": "Fahrzeugtyp",
-    "waterCapacityPlaceholder": "Wasserkapazität",
-    "waterCapacityLabel": "Wasserkapazität",
-    "cargoVolumePlaceholder": "Laderaum in Litern",
-    "cargoVolumeLabel": "Laderaum",
-    "capacitiesHint": "Mindestens eine Kapazität angeben. Wasser für Bewässerungstouren, Laderaum für Leerungstouren.",
     "availabilityLabel": "Verfügbarkeit",
     "availabilityPlaceholder": "Steht das Fahrzeug zur Verfügung?",
     "drivingLicenseLabel": "Führerscheinklasse",
@@ -104,6 +99,20 @@
     "createLeaveMessage": "Möchtest du die Seite wirklich verlassen? Deine Eingaben zum Erstellen des Fahrzeugs gehen verloren, wenn du jetzt gehst.",
     "updateLeaveMessage": "Möchtest du die Seite wirklich verlassen? Deine Änderungen am Fahrzeug gehen verloren, wenn du jetzt gehst.",
     "createSuccessMessage": "Das Fahrzeug wurde erfolgreich erstellt.",
-    "updateSuccessMessage": "Das Fahrzeug wurde erfolgreich bearbeitet."
+    "updateSuccessMessage": "Das Fahrzeug wurde erfolgreich bearbeitet.",
+    "capacity": {
+      "legend": "Kapazität",
+      "hint": "Mindestens eine Kapazität angeben.",
+      "unit": "Liter",
+      "usedBy": "für {label}",
+      "water": {
+        "label": "Wassertank",
+        "placeholder": "Fassungsvermögen"
+      },
+      "cargo_volume": {
+        "label": "Laderaum",
+        "placeholder": "Fassungsvermögen"
+      }
+    }
   }
 }

@@ -84,11 +84,6 @@
     "modelLabel": "Vehicle model",
     "typeLabel": "Vehicle type",
     "typePlaceholder": "Vehicle type",
-    "waterCapacityPlaceholder": "Water capacity",
-    "waterCapacityLabel": "Water capacity",
-    "cargoVolumePlaceholder": "Cargo volume in liters",
-    "cargoVolumeLabel": "Cargo volume",
-    "capacitiesHint": "Enter at least one capacity. Water for watering runs, cargo volume for emptying runs.",
     "availabilityLabel": "Availability",
     "availabilityPlaceholder": "Is the vehicle available for use?",
     "drivingLicenseLabel": "Driving licence class",
@@ -104,6 +99,20 @@
     "createLeaveMessage": "Do you really want to leave this page? Your entries for creating the vehicle will be lost if you leave now.",
     "updateLeaveMessage": "Do you really want to leave this page? Your changes to the vehicle will be lost if you leave now.",
     "createSuccessMessage": "The vehicle was created successfully.",
-    "updateSuccessMessage": "The vehicle was updated successfully."
+    "updateSuccessMessage": "The vehicle was updated successfully.",
+    "capacity": {
+      "legend": "Capacity",
+      "hint": "Enter at least one capacity.",
+      "unit": "Liters",
+      "usedBy": "for {label}",
+      "water": {
+        "label": "Water tank",
+        "placeholder": "Capacity"
+      },
+      "cargo_volume": {
+        "label": "Cargo space",
+        "placeholder": "Capacity"
+      }
+    }
   }
 }
