@@ -11,7 +11,7 @@ const prefetch: NonNullable<ModulePlanning['prefetch']> = (queryClient) => {
   // A failed chunk surfaces when the lazy component renders.
   Promise.all([
     import('./api/queries').then(({ wasteBinQueries }) =>
-      queryClient.prefetchQuery(wasteBinQueries.full()),
+      queryClient.prefetchQuery(wasteBinQueries.markers()),
     ),
     loadSuggestionsColumn(),
   ]).catch(() => undefined)

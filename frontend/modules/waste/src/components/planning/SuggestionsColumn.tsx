@@ -21,14 +21,18 @@ import { WASTE } from '../../lib/targets'
 import FillStateBadge from '../FillStateBadge'
 
 const SuggestionsColumn = () => {
-  const binsQuery = useQuery(wasteBinQueries.full())
+  // Same source and rule as the badges and the picker's "select all full", so the column never disagrees with them.
+  const binsQuery = useQuery({
+    ...wasteBinQueries.markers(),
+    select: (bins) => bins.filter((bin) => bin.fillState === 'full'),
+  })
   const [selected, setSelected] = useState<string[]>([])
   const draft = useWateringPlanDraft<WateringPlanForm>('create')
   const navigate = useNavigate()
   const canBundle = useHasPermission(['collection_plan:create'])
   const { t } = useTranslation(['waste', 'common'])
 
-  const bins = binsQuery.data?.data ?? []
+  const bins = binsQuery.data ?? []
 
   const toggle = (binId: string, isSelected: boolean) =>
     setSelected((prev) => (isSelected ? [...prev, binId] : prev.filter((id) => id !== binId)))

@@ -42,12 +42,31 @@ describe('waste SuggestionsColumn', () => {
     })
   })
 
-  it('suggests the full bins', async () => {
+  it('suggests the bins whose own fill state is full, across every page', async () => {
+    const normalBin = {
+      ...fullBin,
+      id: 'b2',
+      number: 'B-0002',
+      fillState: 'normal',
+      fillPercent: 40,
+    }
+    const laterFullBin = { ...fullBin, id: 'b3', number: 'B-0003', fillPercent: 81 }
+    listWasteBins.mockImplementation((params) =>
+      Promise.resolve(
+        (params as { page: number }).page === 1
+          ? { data: [fullBin, normalBin], pagination: { totalPages: 2 } }
+          : { data: [laterFullBin], pagination: { totalPages: 2 } },
+      ),
+    )
     render(<SuggestionsColumn />)
 
     expect(await screen.findByText('B-0001')).toBeInTheDocument()
+    expect(await screen.findByText('B-0003')).toBeInTheDocument()
+    expect(screen.queryByText('B-0002')).not.toBeInTheDocument()
     expect(screen.getByText('Voll · 92 %')).toBeInTheDocument()
-    expect(listWasteBins).toHaveBeenCalledWith(expect.objectContaining({ fillState: 'full' }))
+    const header = screen.getByRole('heading', { name: 'Volle Behälter' }).parentElement
+    expect(header).toHaveTextContent('2')
+    expect(listWasteBins).not.toHaveBeenCalledWith(expect.objectContaining({ fillState: 'full' }))
   })
 
   it('offers no selection without collection_plan:create', async () => {

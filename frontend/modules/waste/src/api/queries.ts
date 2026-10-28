@@ -61,9 +61,6 @@ export const wasteBinQueries = {
       select: (bins) => binsInStopOrder(bins, ids),
     }),
 
-  /** Full by the caller's own organization's threshold, see `listWasteBins`. */
-  full: () => list({ fillState: 'full', page: 1, perPage: MARKER_PAGE_SIZE }),
-
   detail: (id: string) =>
     queryOptions<WasteBinResponse>({
       queryKey: ['waste-bins', id],
