@@ -10,7 +10,9 @@ use utoipa_axum::router::OpenApiRouter;
 use state::WasteHttpState;
 
 pub fn protected_routes() -> OpenApiRouter<Arc<WasteHttpState>> {
-    OpenApiRouter::new().merge(waste_bin::routes())
+    OpenApiRouter::new()
+        .merge(waste_bin::routes())
+        .merge(crate::settings::http::routes())
 }
 
 pub fn tags() -> Vec<Tag> {

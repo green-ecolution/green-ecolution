@@ -23,25 +23,7 @@ use waste_domain::{
     },
 };
 
-use crate::{error::WasteError, targets::bin_target};
-
-/// Where the full threshold of an organization comes from.
-#[async_trait::async_trait]
-pub trait ThresholdSource: Send + Sync {
-    async fn threshold_for(&self, org: Id<Organization>) -> Result<FullThreshold, RepositoryError>;
-}
-
-pub struct FixedThreshold(pub FullThreshold);
-
-#[async_trait::async_trait]
-impl ThresholdSource for FixedThreshold {
-    async fn threshold_for(
-        &self,
-        _org: Id<Organization>,
-    ) -> Result<FullThreshold, RepositoryError> {
-        Ok(self.0)
-    }
-}
+use crate::{error::WasteError, settings::WasteSettingsResolver, targets::bin_target};
 
 /// A bin together with the fill state its organization's rules derive.
 #[derive(Debug, Clone)]
@@ -112,7 +94,7 @@ pub struct WasteBinService {
     plans: Arc<OperationPlanService>,
     comments: Arc<CommentService>,
     settings: Arc<dyn SettingsResolver>,
-    thresholds: Arc<dyn ThresholdSource>,
+    waste_settings: Arc<dyn WasteSettingsResolver>,
 }
 
 impl WasteBinService {
@@ -123,7 +105,7 @@ impl WasteBinService {
         plans: Arc<OperationPlanService>,
         comments: Arc<CommentService>,
         settings: Arc<dyn SettingsResolver>,
-        thresholds: Arc<dyn ThresholdSource>,
+        waste_settings: Arc<dyn WasteSettingsResolver>,
     ) -> Self {
         Self {
             reader,
@@ -132,14 +114,15 @@ impl WasteBinService {
             plans,
             comments,
             settings,
-            thresholds,
+            waste_settings,
         }
     }
 
     async fn rules_for(&self, org: Id<Organization>) -> Result<FillRules, WasteError> {
         let effective = self.settings.effective_for(org).await?;
+        let waste = self.waste_settings.effective_for(org).await?;
         Ok(FillRules {
-            threshold: self.thresholds.threshold_for(org).await?,
+            threshold: waste.full_threshold,
             stale_after: Duration::seconds(effective.sensor_offline_after.seconds()),
         })
     }

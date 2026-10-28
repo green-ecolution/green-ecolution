@@ -6,6 +6,7 @@ pub mod error;
 pub mod http;
 pub mod infra;
 pub mod service;
+pub mod settings;
 pub mod targets;
 
 use std::sync::Arc;
@@ -16,7 +17,8 @@ use waste_domain::settings::FullThreshold;
 
 use http::state::WasteHttpState;
 use infra::pg_waste_bin::PgWasteBinRepository;
-use service::waste_bin_service::{FixedThreshold, WasteBinService};
+use service::waste_bin_service::WasteBinService;
+use settings::{WasteDefaults, repository::PgWasteSettings, service::WasteSettingsService};
 
 pub use waste_domain::{KEY, key};
 
@@ -68,10 +70,17 @@ impl Module for WasteModule {
     }
 
     fn build(&self, ctx: ModuleContext) -> Result<ModuleRuntime, ModuleBuildError> {
-        let _config: WasteConfig = ctx.module_config(&key())?;
+        let config: WasteConfig = ctx.module_config(&key())?;
+        let defaults = WasteDefaults::from_config(&config).map_err(|e| ModuleBuildError {
+            module: key(),
+            reason: e.to_string(),
+        })?;
+        let settings = Arc::new(PgWasteSettings::new(
+            ctx.pool.clone(),
+            defaults,
+            ctx.organizations.clone(),
+        ));
         let bins = Arc::new(PgWasteBinRepository::new(ctx.pool.clone()));
-        let threshold = FullThreshold::new(i64::from(FullThreshold::DEFAULT))
-            .expect("the default threshold is in range");
         let bin_service = Arc::new(WasteBinService::new(
             bins.clone(),
             bins,
@@ -79,10 +88,11 @@ impl Module for WasteModule {
             ctx.plans.clone(),
             ctx.comments.clone(),
             ctx.settings.clone(),
-            Arc::new(FixedThreshold(threshold)),
+            settings.clone(),
         ));
         let state = Arc::new(WasteHttpState {
             bins: bin_service,
+            settings: Arc::new(WasteSettingsService::new(settings)),
             access: ctx.access.clone(),
             authorization: ctx.authorization.clone(),
             users: ctx.users.clone(),
