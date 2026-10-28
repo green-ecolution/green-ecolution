@@ -7,7 +7,6 @@ use domain::{
     authorization::Visibility,
     organization::Organization,
     planning::StopRef,
-    settings::SettingsResolver,
     shared::pagination::{Page, Pagination, SearchPage},
 };
 use server::service::{
@@ -23,7 +22,8 @@ use waste_domain::{
     },
 };
 
-use crate::{error::WasteError, settings::WasteSettingsResolver, targets::bin_target};
+use super::fill_rules::{FillRules, FillRulesResolver};
+use crate::{error::WasteError, targets::bin_target};
 
 /// A bin together with the fill state its organization's rules derive.
 #[derive(Debug, Clone)]
@@ -44,12 +44,6 @@ pub struct WasteBinListQuery {
     pub number: Option<String>,
     pub organization_id: Option<Id<Organization>>,
     pub fill_state: Option<FillStateFilter>,
-}
-
-#[derive(Debug, Clone, Copy)]
-struct FillRules {
-    threshold: FullThreshold,
-    stale_after: Duration,
 }
 
 pub fn filter_for(
@@ -93,8 +87,7 @@ pub struct WasteBinService {
     sensors: Arc<SensorService>,
     plans: Arc<OperationPlanService>,
     comments: Arc<CommentService>,
-    settings: Arc<dyn SettingsResolver>,
-    waste_settings: Arc<dyn WasteSettingsResolver>,
+    fill_rules: Arc<FillRulesResolver>,
 }
 
 impl WasteBinService {
@@ -104,8 +97,7 @@ impl WasteBinService {
         sensors: Arc<SensorService>,
         plans: Arc<OperationPlanService>,
         comments: Arc<CommentService>,
-        settings: Arc<dyn SettingsResolver>,
-        waste_settings: Arc<dyn WasteSettingsResolver>,
+        fill_rules: Arc<FillRulesResolver>,
     ) -> Self {
         Self {
             reader,
@@ -113,18 +105,12 @@ impl WasteBinService {
             sensors,
             plans,
             comments,
-            settings,
-            waste_settings,
+            fill_rules,
         }
     }
 
     async fn rules_for(&self, org: Id<Organization>) -> Result<FillRules, WasteError> {
-        let effective = self.settings.effective_for(org).await?;
-        let waste = self.waste_settings.effective_for(org).await?;
-        Ok(FillRules {
-            threshold: waste.full_threshold,
-            stale_after: Duration::seconds(effective.sensor_offline_after.seconds()),
-        })
+        Ok(self.fill_rules.rules_for(org).await?)
     }
 
     /// Resolves the rules once per organization, however many bins it owns.

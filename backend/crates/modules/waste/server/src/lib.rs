@@ -6,6 +6,7 @@ pub mod error;
 pub mod handlers;
 pub mod http;
 pub mod infra;
+pub mod planning;
 pub mod sensor_parser;
 pub mod service;
 pub mod settings;
@@ -20,7 +21,7 @@ use waste_domain::settings::FullThreshold;
 use http::state::WasteHttpState;
 use infra::pg_waste_bin::PgWasteBinRepository;
 use sensor_parser::DistanceSensorParser;
-use service::waste_bin_service::WasteBinService;
+use service::{fill_rules::FillRulesResolver, waste_bin_service::WasteBinService};
 use settings::{WasteDefaults, repository::PgWasteSettings, service::WasteSettingsService};
 use targets::WasteTargets;
 
@@ -85,14 +86,17 @@ impl Module for WasteModule {
             ctx.organizations.clone(),
         ));
         let bins = Arc::new(PgWasteBinRepository::new(ctx.pool.clone()));
+        let fill_rules = Arc::new(FillRulesResolver::new(
+            ctx.settings.clone(),
+            settings.clone(),
+        ));
         let bin_service = Arc::new(WasteBinService::new(
             bins.clone(),
             bins.clone(),
             ctx.sensors.clone(),
             ctx.plans.clone(),
             ctx.comments.clone(),
-            ctx.settings.clone(),
-            settings.clone(),
+            fill_rules.clone(),
         ));
         let state = Arc::new(WasteHttpState {
             bins: bin_service,
@@ -107,6 +111,14 @@ impl Module for WasteModule {
         });
         runtime.targets = Some(Arc::new(WasteTargets::new(bins.clone())));
         runtime.sensor_parsers = vec![Arc::new(DistanceSensorParser)];
+        runtime.planning = Some(Arc::new(planning::WastePlanning::new(
+            bins.clone(),
+            ctx.organizations.clone(),
+            fill_rules,
+        )));
+        runtime.statistics = Some(Arc::new(infra::statistics::WasteStatistics::new(
+            ctx.pool.clone(),
+        )));
         runtime.event_handlers = handlers::all(bins.clone(), bins);
         Ok(runtime)
     }

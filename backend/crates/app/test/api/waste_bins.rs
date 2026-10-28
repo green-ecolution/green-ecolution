@@ -40,7 +40,7 @@ pub fn bin_target(id: impl std::fmt::Display) -> Value {
     json!({ "target": { "module": KEY, "kind": "bin", "id": id.to_string() } })
 }
 
-fn id_of(bin: &Value) -> Uuid {
+pub fn id_of(bin: &Value) -> Uuid {
     bin["id"].as_str().unwrap().parse().unwrap()
 }
 
@@ -59,7 +59,7 @@ async fn insert_bin(app: &TestApp, number: &str, org: Uuid) -> Uuid {
     id
 }
 
-async fn set_fill(
+pub async fn set_fill(
     app: &TestApp,
     id: Uuid,
     fraction: Option<f64>,
@@ -293,7 +293,6 @@ async fn a_bin_can_be_deleted() {
 }
 
 #[tokio::test]
-#[ignore = "needs task 7"]
 async fn deleting_a_bin_releases_its_sensor_removes_it_from_plans_and_drops_comments() {
     let app = waste_app().await;
     let bin = id_of(&create_bin(&app, "AB-1").await);

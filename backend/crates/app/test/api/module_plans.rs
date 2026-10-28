@@ -63,11 +63,11 @@ async fn plan(app: &TestApp, stops: &[Uuid], vehicle: Uuid) -> Value {
     plan_in(app, stops, vehicle, ROOT.parse().unwrap()).await
 }
 
-async fn put_status(app: &TestApp, id: &str, body: Value) -> reqwest::Response {
+pub async fn put_status(app: &TestApp, id: &str, body: Value) -> reqwest::Response {
     app.put_json(&format!("/api/v1/plans/{id}"), &body).await
 }
 
-fn update_body(plan: &Value, status: &str, outcomes: Option<Value>) -> Value {
+pub fn update_body(plan: &Value, status: &str, outcomes: Option<Value>) -> Value {
     json!({
         "date": plan["date"],
         "description": plan["description"],

@@ -7,7 +7,7 @@ fn encoded_line() -> String {
     polyline::encode_coordinates(line, 6).unwrap()
 }
 
-fn streamlet_ok() -> serde_json::Value {
+pub fn streamlet_ok() -> serde_json::Value {
     serde_json::json!({
         "routes": [{
             "vehicle": 1,

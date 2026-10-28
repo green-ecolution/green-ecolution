@@ -1,3 +1,4 @@
+pub mod emptied;
 pub mod fill_level;
 
 use std::sync::Arc;
@@ -9,7 +10,11 @@ pub fn all(
     bins: Arc<dyn WasteBinReader>,
     bin_writer: Arc<dyn WasteBinWriter>,
 ) -> Vec<Arc<dyn EventHandler>> {
-    vec![Arc::new(fill_level::FillLevelFromSensor::new(
-        bins, bin_writer,
-    ))]
+    vec![
+        Arc::new(fill_level::FillLevelFromSensor::new(
+            bins.clone(),
+            bin_writer.clone(),
+        )),
+        Arc::new(emptied::BinsEmptied::new(bins, bin_writer)),
+    ]
 }
