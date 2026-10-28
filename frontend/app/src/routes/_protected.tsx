@@ -1,11 +1,13 @@
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { modulesQuery, userQueries } from '@/api/queries'
+import ScopedOutlet from '@/components/layout/ScopedOutlet'
 import { startSigninHandover } from '@/lib/auth/handover'
 import { DEMO_USER_ID, loadOrganizationScope } from '@/lib/auth/scope/organizationScopeStore'
 import { readAuthBypass } from '@/lib/auth/runtimeConfig'
 import { prefetch } from '@/lib/router'
 
 export const Route = createFileRoute('/_protected')({
+  component: ScopedOutlet,
   beforeLoad: async ({ context, location, preload }) => {
     if (!(await context.auth.isAuthenticated())) {
       // Hovering a protected link preloads this route. Handing the visitor over

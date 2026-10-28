@@ -20,7 +20,7 @@ const renderMenu = (orgs: ReachableOrganizationResponse[]) => {
   const queryClient = new QueryClient({ defaultOptions: { queries: { staleTime: Infinity } } })
   queryClient.setQueryData(userQueries.myOrganizations().queryKey, orgs)
   queryClient.setQueryData(userQueries.me().queryKey, { id: 'u1' } as UserResponse)
-  const clear = vi.spyOn(queryClient, 'clear')
+  const resetQueries = vi.spyOn(queryClient, 'resetQueries')
   render(
     <QueryClientProvider client={queryClient}>
       <DropdownMenu>
@@ -31,7 +31,7 @@ const renderMenu = (orgs: ReachableOrganizationResponse[]) => {
       </DropdownMenu>
     </QueryClientProvider>,
   )
-  return { clear }
+  return { resetQueries }
 }
 
 const openSub = async (user: ReturnType<typeof userEvent.setup>) => {
@@ -78,16 +78,16 @@ describe('OrganizationScopeMenu', () => {
     )
   })
 
-  it('stores the scope, clears the cache and invalidates the router on selection', async () => {
+  it('stores the scope, resets the cache and invalidates the router on selection', async () => {
     const user = userEvent.setup()
-    const { clear } = renderMenu([ROOT, A, B])
+    const { resetQueries } = renderMenu([ROOT, A, B])
     await openSub(user)
     await user.click(await screen.findByRole('menuitemradio', { name: 'Firma A' }))
 
     await waitFor(() => expect(invalidate).toHaveBeenCalled())
     expect(getOrganizationScope()).toBe('firma_a')
     expect(localStorage.getItem('ge.organizationScope.u1')).toBe('firma_a')
-    expect(clear).toHaveBeenCalled()
+    expect(resetQueries).toHaveBeenCalled()
   })
 
   it('shows the search field only above eight entries and filters with ancestors', async () => {
