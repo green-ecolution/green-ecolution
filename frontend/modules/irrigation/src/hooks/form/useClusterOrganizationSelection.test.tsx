@@ -6,10 +6,11 @@ import type { TreeclusterForm } from '../../schema/treeclusterSchema'
 
 const getMe = vi.fn()
 const listOrganizations = vi.fn()
+const listMine = vi.fn()
 
 vi.mock('@/api/backendApi', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/api/backendApi')>()),
-  userApi: { getMe: () => getMe() as unknown },
+  userApi: { getMe: () => getMe() as unknown, listMyOrganizations: () => listMine() as unknown },
   organizationApi: { listOrganizations: () => listOrganizations() as unknown },
 }))
 
@@ -20,7 +21,12 @@ vi.mock('@/lib/auth/useHasPermission', () => ({
 
 vi.mock('@/lib/auth/runtimeConfig', () => ({ readAuthBypass: () => false }))
 
+vi.mock('@/lib/auth/authSessionContext', () => ({
+  useAuthSession: () => ({ isAuthenticated: true }),
+}))
+
 const { useClusterOrganizationSelection } = await import('./useClusterOrganizationSelection')
+const { setOrganizationScope } = await import('@/lib/auth/scope/organizationScopeStore')
 
 const orgs = [
   { id: 'root', name: 'Green Ecolution', parentId: null, memberCount: 0 },
@@ -43,6 +49,8 @@ const renderSelection = (initialTreeIds: string[] = []) =>
 describe('useClusterOrganizationSelection', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    setOrganizationScope('u1', null)
+    listMine.mockResolvedValue(orgs.map(({ id, name, parentId }) => ({ id, name, parentId })))
     canReadOrganizations.mockReturnValue(true)
     listOrganizations.mockResolvedValue(orgs)
     getMe.mockResolvedValue(me('root', 'root', ['tree_cluster:create']))
@@ -52,6 +60,16 @@ describe('useClusterOrganizationSelection', () => {
     const { result } = renderSelection()
 
     await waitFor(() => expect(result.current.selection.organizationId).toBe('root'))
+  })
+
+  it('applies a role above the scope to the scope organization and preselects it', async () => {
+    getMe.mockResolvedValue(me('root', 'tbz', ['tree_cluster:create']))
+    listOrganizations.mockResolvedValue([orgs[2]])
+    setOrganizationScope('u1', 'extern')
+    const { result } = renderSelection()
+
+    await waitFor(() => expect(result.current.selection.organizationId).toBe('extern'))
+    expect(result.current.selection.organizations.map((o) => o.id)).toEqual(['extern'])
   })
 
   it('offers only organizations the user may create clusters in', async () => {

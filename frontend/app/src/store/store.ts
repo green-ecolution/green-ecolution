@@ -2,6 +2,7 @@ import { create, StateCreator } from 'zustand'
 import { devtools, persist } from 'zustand/middleware'
 import { immer } from 'zustand/middleware/immer'
 import { FormDraftSlice } from './form/formDraftSlice'
+import { getOrganizationScope } from '@/lib/auth/scope/organizationScopeStore'
 
 // Live map viewport, mirrored from MapLibre on every move/zoom end. On /map the
 // URL search params are the deep-link source of truth (synced debounced in
@@ -68,24 +69,30 @@ const createFormDraftSlice: StateCreator<Store, Mutators, [], FormDraftSlice> = 
 
   setFormDraft: (key, data) =>
     set((state) => {
-      state.formDrafts[key] = { data, hasChanges: false }
+      state.formDrafts[key] = { data, hasChanges: false, scope: getOrganizationScope() }
     }),
 
   // Writing data is not the same as changing it: whether the user actually
   // altered something is decided by the caller via markFormDraftChanged.
   updateFormDraft: (key, updater) =>
     set((state) => {
-      const draft = state.formDrafts[key]
+      const scope = getOrganizationScope()
+      const draft = state.formDrafts[key]?.scope === scope ? state.formDrafts[key] : undefined
       const current = (draft?.data as Parameters<typeof updater>[0]) ?? null
-      state.formDrafts[key] = { data: updater(current), hasChanges: draft?.hasChanges ?? false }
+      state.formDrafts[key] = {
+        data: updater(current),
+        hasChanges: draft?.hasChanges ?? false,
+        scope,
+      }
     }),
 
   markFormDraftChanged: (key) =>
     set((state) => {
-      if (state.formDrafts[key]) {
+      const scope = getOrganizationScope()
+      if (state.formDrafts[key]?.scope === scope) {
         state.formDrafts[key].hasChanges = true
       } else {
-        state.formDrafts[key] = { data: null, hasChanges: true }
+        state.formDrafts[key] = { data: null, hasChanges: true, scope }
       }
     }),
 

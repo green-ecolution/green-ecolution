@@ -35,6 +35,10 @@ vi.mock('@/lib/auth/usePermissions', () => ({
   usePermissions: () => permissions(),
 }))
 
+vi.mock('@/lib/auth/authSessionContext', () => ({
+  useAuthSession: () => ({ isAuthenticated: true }),
+}))
+
 const { default: FormForWasteBin } = await import('./FormForWasteBin')
 const { useWasteBinForm, useWasteBinOrganizations } = await import('../hooks/useWasteBinForm')
 

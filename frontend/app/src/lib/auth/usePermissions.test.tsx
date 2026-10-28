@@ -8,6 +8,7 @@ import { UNRESTRICTED } from './permissions'
 const readAuthBypass = vi.fn(() => false)
 const isAuthenticated = vi.fn(() => true)
 const queryFn = vi.fn<() => Promise<UserResponse>>()
+const reachableFn = vi.fn()
 
 vi.mock('./runtimeConfig', () => ({
   readAuthBypass: () => readAuthBypass(),
@@ -21,10 +22,15 @@ vi.mock('./authSessionContext', () => ({
 vi.mock('@/api/queries', () => ({
   userQueries: {
     me: () => ({ queryKey: ['users', 'me'], queryFn: () => queryFn() }),
+    myOrganizations: () => ({
+      queryKey: ['users', 'me', 'organizations'],
+      queryFn: () => reachableFn() as Promise<unknown>,
+    }),
   },
 }))
 
 const { usePermissions } = await import('./usePermissions')
+const { setOrganizationScope } = await import('./scope/organizationScopeStore')
 
 const me = (permissions: string[]): UserResponse =>
   ({
@@ -52,6 +58,33 @@ describe('usePermissions', () => {
     vi.clearAllMocks()
     readAuthBypass.mockReturnValue(false)
     isAuthenticated.mockReturnValue(true)
+    setOrganizationScope('u1', null)
+  })
+
+  it('applies the roles of an ancestor organization under a scope and drops unrelated ones', async () => {
+    const roleAt = (organizationId: string, permissions: string[]) => ({
+      id: organizationId,
+      name: 'Rolle',
+      description: '',
+      organizationId,
+      permissions,
+      createdAt: '2026-07-27T00:00:00Z',
+    })
+    queryFn.mockResolvedValue({
+      roles: [roleAt('tbz', ['tree:read']), roleAt('firma_b', ['vehicle:read'])],
+    } as unknown as UserResponse)
+    reachableFn.mockResolvedValue([
+      { id: 'tbz', name: 'TBZ', parentId: null },
+      { id: 'firma_a', name: 'Firma A', parentId: 'tbz' },
+      { id: 'firma_b', name: 'Firma B', parentId: 'tbz' },
+    ])
+    setOrganizationScope('u1', 'firma_a')
+
+    const { result } = renderHook(() => usePermissions(), { wrapper })
+
+    await waitFor(() => {
+      expect([...(result.current as ReadonlySet<string>)]).toEqual(['tree:read'])
+    })
   })
 
   it('returns the union of the roles of the current user', async () => {

@@ -1,17 +1,13 @@
-import { useQuery } from '@tanstack/react-query'
-import { userQueries } from '@/api/queries'
-import { useAuthSession } from './authSessionContext'
 import { readAuthBypass } from './runtimeConfig'
+import { useEffectiveRoles } from './scope/effectiveRoles'
 import { permissionsOf, UNRESTRICTED, type Permissions } from './permissions'
 
 /**
- * Effective permissions of the logged-in user. With auth bypassed the backend
- * grants unrestricted access, so the frontend must not hide anything.
+ * Effective permissions of the logged-in user under the selected organization
+ * scope. With auth bypassed the backend grants unrestricted access, so the
+ * frontend must not hide anything.
  */
 export function usePermissions(): Permissions {
-  const { isAuthenticated } = useAuthSession()
-  const bypass = readAuthBypass()
-  const { data } = useQuery({ ...userQueries.me(), enabled: isAuthenticated && !bypass })
-
-  return bypass ? UNRESTRICTED : permissionsOf(data)
+  const roles = useEffectiveRoles()
+  return readAuthBypass() ? UNRESTRICTED : permissionsOf(roles)
 }
