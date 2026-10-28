@@ -3,8 +3,10 @@
 //! the `ModuleContext`.
 
 pub mod error;
+pub mod handlers;
 pub mod http;
 pub mod infra;
+pub mod sensor_parser;
 pub mod service;
 pub mod settings;
 pub mod targets;
@@ -17,8 +19,10 @@ use waste_domain::settings::FullThreshold;
 
 use http::state::WasteHttpState;
 use infra::pg_waste_bin::PgWasteBinRepository;
+use sensor_parser::DistanceSensorParser;
 use service::waste_bin_service::WasteBinService;
 use settings::{WasteDefaults, repository::PgWasteSettings, service::WasteSettingsService};
+use targets::WasteTargets;
 
 pub use waste_domain::{KEY, key};
 
@@ -83,7 +87,7 @@ impl Module for WasteModule {
         let bins = Arc::new(PgWasteBinRepository::new(ctx.pool.clone()));
         let bin_service = Arc::new(WasteBinService::new(
             bins.clone(),
-            bins,
+            bins.clone(),
             ctx.sensors.clone(),
             ctx.plans.clone(),
             ctx.comments.clone(),
@@ -97,10 +101,14 @@ impl Module for WasteModule {
             authorization: ctx.authorization.clone(),
             users: ctx.users.clone(),
         });
-        Ok(ModuleRuntime::new(ModuleRoutes {
+        let mut runtime = ModuleRuntime::new(ModuleRoutes {
             public: utoipa_axum::router::OpenApiRouter::new(),
             protected: http::protected_routes().with_state(state),
-        }))
+        });
+        runtime.targets = Some(Arc::new(WasteTargets::new(bins.clone())));
+        runtime.sensor_parsers = vec![Arc::new(DistanceSensorParser)];
+        runtime.event_handlers = handlers::all(bins.clone(), bins);
+        Ok(runtime)
     }
 }
 
@@ -205,13 +213,20 @@ mod tests {
     }
 
     #[test]
-    fn migrations_ship_both_tables() {
+    fn migrations_ship_all_files() {
         let names: Vec<_> = WasteModule
             .migrations()
             .iter()
             .map(|m| m.description.to_string())
             .collect();
-        assert_eq!(names, ["create waste bins", "create waste settings"]);
+        assert_eq!(
+            names,
+            [
+                "create waste bins",
+                "create waste settings",
+                "add distance sensor model"
+            ]
+        );
     }
 
     #[test]

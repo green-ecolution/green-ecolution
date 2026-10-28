@@ -72,4 +72,5 @@ pub mod user_profiles;
 pub mod users;
 pub mod vehicle;
 pub mod waste_bins;
+pub mod waste_sensors;
 pub mod waste_settings;

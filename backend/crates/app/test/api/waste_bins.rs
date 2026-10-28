@@ -293,7 +293,7 @@ async fn a_bin_can_be_deleted() {
 }
 
 #[tokio::test]
-#[ignore = "needs task 6/7"]
+#[ignore = "needs task 7"]
 async fn deleting_a_bin_releases_its_sensor_removes_it_from_plans_and_drops_comments() {
     let app = waste_app().await;
     let bin = id_of(&create_bin(&app, "AB-1").await);
@@ -371,7 +371,6 @@ async fn deleting_a_bin_releases_its_sensor_removes_it_from_plans_and_drops_comm
 }
 
 #[tokio::test]
-#[ignore = "needs task 6/7"]
 async fn transferring_a_bin_moves_its_sensor_along() {
     let app = waste_app().await;
     let child = child_org(&app, "Bauhof", root()).await;
