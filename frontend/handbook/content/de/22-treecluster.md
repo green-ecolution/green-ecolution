@@ -113,6 +113,8 @@ deren Sensoren dorthin, ihre Einsatzpläne und Kommentare bleiben erhalten.
 
 ![Das Gruppendashboard mit dem Verlauf der Wasserversorgung](../images/treecluster-dashboard.png)
 
+![Das Menü neben Gruppe bearbeiten mit den Einträgen zum Verschieben und Löschen der Gruppe](../images/treecluster-actions-menu.png)
+
 ![Der Dialog zum Verschieben einer Bewässerungsgruppe mit der Auswahl der Zielorganisation](../images/transfer-organization-dialog.png)
 
 ## Bewässerungsstatus und wie er zustande kommt

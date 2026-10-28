@@ -59,6 +59,8 @@ Organisation lässt sich hier nicht mehr wechseln. Das Papierkorb-Symbol löscht
 Station nach einer Rückfrage. Verweigert Green Ecolution das Löschen, etwa weil es sich
 um den Standard handelt, erscheint der Grund als Meldung am Bildschirmrand.
 
+![Der Dialog zum Bearbeiten einer Station mit Name, Kapazitäten und Position auf der Karte](../images/settings-station-form.png)
+
 Über das Pfeil-Symbol **Verschieben** gibst du eine Station an eine andere Organisation ab;
 sie dient dann deren Touren als Start, Ziel oder Station. Das Symbol erscheint nur, wenn
 du Stationen in mindestens einer weiteren Organisation bearbeiten darfst, und nie bei der

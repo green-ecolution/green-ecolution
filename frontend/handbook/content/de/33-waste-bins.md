@@ -22,7 +22,7 @@ schränkt die Liste auf Behälter in einem bestimmten Zustand ein. Jede Zeile ne
 Behälternummer, das Volumen, die aktuelle Füllstufe und den zugeordneten Sensor, sofern
 es einen gibt. Behälter ohne Sensor tragen den Hinweis **Kein Sensor**.
 
-![Die Liste der Abfallbehälter mit Suche, Füllstufenfilter und den Füllstufen der einzelnen Behälter](../images/waste-bins-list.png)
+![Die Liste der Abfallbehälter mit Suche, Füllstufenfilter und der Füllstufe jedes Behälters](../images/waste-bins-list.png)
 
 ## Einen Behälter erfassen
 
