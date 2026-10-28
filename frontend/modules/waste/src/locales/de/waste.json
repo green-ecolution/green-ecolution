@@ -144,7 +144,10 @@
           }
         }
       }
-    }
+    },
+    "fullThresholdLabel": "Schwellwert für „voll“",
+    "fullThresholdHint": "Ab diesem Füllstand gilt ein Behälter als voll. Das bestimmt die Füllstufe in Liste und Karte und welche Behälter die Tourenplanung vorschlägt. Bereits geplante Touren bleiben unverändert.",
+    "fullThresholdUnit": "Prozent"
   },
   "map": {
     "popup": {
@@ -230,6 +233,65 @@
         "invalid_problem": "Aus den gewählten Angaben lässt sich keine Route berechnen. Prüfe Fahrzeug, Startpunkt und Behälter.",
         "no_station_for_capacity": "Für Leerungstouren fehlt eine Entladestelle. Lege unter Einstellungen → Stationen eine Station mit Laderaum an."
       }
+    }
+  },
+  "sensor": {
+    "target": {
+      "bin": "Abfallbehälter"
+    },
+    "binTexts": {
+      "activateAction": "Aktivieren & Behälter zuweisen",
+      "reassignAction": "Anderen Behälter zuweisen",
+      "removeLinkAction": "Behälterverknüpfung aufheben",
+      "removeConfirmTitle": "Behälterverknüpfung aufheben und Sensor zurücksetzen?",
+      "removeConfirmDescription": "Die Verknüpfung zum Behälter wird aufgehoben und der Sensor auf den Zustand „{status}“ zurückgesetzt. Anschließend kann er wie ein neuer Sensor an einem anderen Behälter aktiviert werden.",
+      "activateSuccess": "Sensor aktiviert und Behälter zugewiesen.",
+      "reassignSuccess": "Behälter gewechselt.",
+      "activateConflict": "Der Sensor oder der Behälter ist bereits zugeordnet.",
+      "reassignNotFound": "Sensor oder Behälter existiert nicht (mehr).",
+      "reassignConflict": "Der Behälter hat bereits einen anderen Sensor.",
+      "reassignFailed": "Behälterwechsel fehlgeschlagen. Bitte erneut versuchen.",
+      "scanDescription": "Halte den QR-Code auf der Sensoreinheit ruhig in den Scan-Rahmen. Wir identifizieren damit den Sensor eindeutig, bevor du ihn im nächsten Schritt einem Abfallbehälter zuordnest. Bei schlechter Beleuchtung hilft es, den Code etwas näher heranzuhalten.",
+      "alreadyLinkedDescription": "Dieser Sensor ist bereits aktiviert und einem Abfallbehälter zugeordnet."
+    },
+    "binAssignDialog": {
+      "activate": {
+        "title": "Sensor aktivieren und Behälter zuweisen",
+        "description": "Suche den Behälter nach Nummer und aktiviere den Sensor an diesem Behälter.",
+        "confirm": "Aktivieren"
+      },
+      "reassign": {
+        "description": "Wähle den neuen Behälter, dem dieser Sensor zugeordnet werden soll.",
+        "confirm": "Behälter zuweisen"
+      },
+      "saving": "Wird gespeichert …"
+    },
+    "binSearch": {
+      "label": "Behälter suchen",
+      "placeholder": "Nach Behälternummer suchen",
+      "loading": "Abfallbehälter werden geladen",
+      "failed": "Die Abfallbehälter konnten nicht geladen werden.",
+      "retry": "Erneut versuchen",
+      "empty": "Kein Behälter gefunden.",
+      "taken": "Hat bereits einen Sensor"
+    },
+    "wizard": {
+      "bin": {
+        "header": {
+          "title": "Behälter zuordnen",
+          "description": "Wähle den Abfallbehälter aus, an dem der Sensor angebracht wird. Die Liste ist nach der Entfernung zu deinem aktuellen Standort sortiert. Gespeichert wird am Sensor nur die Behälter-Zuordnung, nicht deine Koordinaten."
+        },
+        "relocateButton": "Standort aktualisieren",
+        "locatingNotice": "Standort wird ermittelt …"
+      }
+    },
+    "placement": {
+      "binLabel": "Sitzt am Behälter",
+      "mapAriaLabel": "Karte mit der Sensor-Position"
+    },
+    "linkedBin": {
+      "loadFailedTitle": "Behälter nicht geladen",
+      "loadFailedDescription": "Der verknüpfte Behälter (#{id}) konnte nicht abgerufen werden."
     }
   }
 }

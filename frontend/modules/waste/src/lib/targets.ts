@@ -8,3 +8,6 @@ export const binTarget = (binId: string): TargetRefDto => ({
   kind: BIN_KIND,
   id: binId,
 })
+
+export const isBinTarget = (target?: TargetRefDto | null): target is TargetRefDto =>
+  target?.module === WASTE && target.kind === BIN_KIND

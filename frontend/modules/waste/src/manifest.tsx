@@ -4,6 +4,8 @@ import { wasteMap } from './map'
 import { wastePlanning } from './planning'
 import { WASTE } from './lib/targets'
 import { wasteResources } from './resources'
+import { binSensorTarget } from './sensorTargets'
+import { wasteSettingsSection } from './components/settings/settingsSection'
 
 export const wasteManifest: ModuleManifest = {
   key: WASTE,
@@ -33,6 +35,8 @@ export const wasteManifest: ModuleManifest = {
   resources: wasteResources,
   map: wasteMap,
   planning: wastePlanning,
+  targets: [binSensorTarget],
+  settingsSection: wasteSettingsSection,
   statistics: {
     bin: {
       icon: Trash2,

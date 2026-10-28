@@ -144,7 +144,10 @@
           }
         }
       }
-    }
+    },
+    "fullThresholdLabel": "Threshold for \"full\"",
+    "fullThresholdHint": "From this fill level a bin counts as full. It decides the fill state in list and map and which bins the tour planning suggests. Tours already planned stay unchanged.",
+    "fullThresholdUnit": "Percent"
   },
   "map": {
     "popup": {
@@ -230,6 +233,65 @@
         "invalid_problem": "No route can be calculated from the chosen details. Check vehicle, start point and bins.",
         "no_station_for_capacity": "Collection tours lack an unloading point. Add a station with cargo space under Settings → Stations."
       }
+    }
+  },
+  "sensor": {
+    "target": {
+      "bin": "Waste bin"
+    },
+    "binTexts": {
+      "activateAction": "Activate & assign bin",
+      "reassignAction": "Assign another bin",
+      "removeLinkAction": "Remove bin link",
+      "removeConfirmTitle": "Remove the bin link and reset the sensor?",
+      "removeConfirmDescription": "The link to the bin is removed and the sensor falls back to the state \"{status}\". Afterwards it can be activated at another bin like a new sensor.",
+      "activateSuccess": "Sensor activated and bin assigned.",
+      "reassignSuccess": "Bin changed.",
+      "activateConflict": "The sensor or the bin is already assigned.",
+      "reassignNotFound": "The sensor or the bin no longer exists.",
+      "reassignConflict": "The bin already has another sensor.",
+      "reassignFailed": "Changing the bin failed. Please try again.",
+      "scanDescription": "Hold the QR code on the sensor unit steady inside the scan frame. It identifies the sensor unambiguously before you assign it to a waste bin in the next step. In poor light it helps to hold the code a little closer.",
+      "alreadyLinkedDescription": "This sensor is already activated and assigned to a waste bin."
+    },
+    "binAssignDialog": {
+      "activate": {
+        "title": "Activate sensor and assign bin",
+        "description": "Search the bin by number and activate the sensor at this bin.",
+        "confirm": "Activate"
+      },
+      "reassign": {
+        "description": "Pick the new bin this sensor should be assigned to.",
+        "confirm": "Assign bin"
+      },
+      "saving": "Saving …"
+    },
+    "binSearch": {
+      "label": "Search bins",
+      "placeholder": "Search by bin number",
+      "loading": "Loading waste bins",
+      "failed": "The waste bins could not be loaded.",
+      "retry": "Try again",
+      "empty": "No bin found.",
+      "taken": "Already has a sensor"
+    },
+    "wizard": {
+      "bin": {
+        "header": {
+          "title": "Assign bin",
+          "description": "Pick the waste bin the sensor is mounted on. The list is sorted by distance to your current position. Only the bin assignment is stored on the sensor, not your coordinates."
+        },
+        "relocateButton": "Update position",
+        "locatingNotice": "Locating …"
+      }
+    },
+    "placement": {
+      "binLabel": "Mounted on bin",
+      "mapAriaLabel": "Map with the sensor position"
+    },
+    "linkedBin": {
+      "loadFailedTitle": "Bin not loaded",
+      "loadFailedDescription": "The linked bin (#{id}) could not be retrieved."
     }
   }
 }
