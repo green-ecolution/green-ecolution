@@ -299,6 +299,7 @@ export const userQueries = {
     queryOptions<ReachableOrganizationResponse[]>({
       queryKey: ['users', 'me', 'organizations'],
       queryFn: () => userApi.listMyOrganizations(),
+      staleTime: 5 * 60 * 1000,
     }),
 
   list: (params?: ListUsersRequest) =>
