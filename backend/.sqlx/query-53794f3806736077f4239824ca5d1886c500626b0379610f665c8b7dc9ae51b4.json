@@ -1,0 +1,25 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE waste_bins SET\n                number = $2,\n                latitude = $3,\n                longitude = $4,\n                geometry = ST_SetSRID(ST_MakePoint($4, $3), 4326),\n                volume_liters = $5,\n                depth_cm = $6,\n                organization_id = $7,\n                provider = $8,\n                additional_informations = $9,\n                fill_fraction = $10,\n                fill_measured_at = $11,\n                last_emptied_at = $12\n            WHERE id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Float8",
+        "Float8",
+        "Float8",
+        "Int4",
+        "Uuid",
+        "Text",
+        "Jsonb",
+        "Float8",
+        "Timestamptz",
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "53794f3806736077f4239824ca5d1886c500626b0379610f665c8b7dc9ae51b4"
+}

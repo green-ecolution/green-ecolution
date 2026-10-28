@@ -71,3 +71,4 @@ pub mod update_checker;
 pub mod user_profiles;
 pub mod users;
 pub mod vehicle;
+pub mod waste_bins;

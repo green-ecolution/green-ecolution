@@ -3,10 +3,20 @@
 //! the `ModuleContext`.
 
 pub mod error;
+pub mod http;
+pub mod infra;
+pub mod service;
+pub mod targets;
+
+use std::sync::Arc;
 
 use domain::{authorization::ResourceKey, module::ModuleKey};
 use server::module::{Module, ModuleBuildError, ModuleContext, ModuleRoutes, ModuleRuntime};
 use waste_domain::settings::FullThreshold;
+
+use http::state::WasteHttpState;
+use infra::pg_waste_bin::PgWasteBinRepository;
+use service::waste_bin_service::{FixedThreshold, WasteBinService};
 
 pub use waste_domain::{KEY, key};
 
@@ -44,7 +54,9 @@ impl Module for WasteModule {
     }
 
     fn openapi(&self) -> utoipa::openapi::OpenApi {
-        utoipa::openapi::OpenApiBuilder::new().build()
+        let mut api = http::protected_routes().into_openapi();
+        api.tags = Some(http::tags());
+        api
     }
 
     fn resources(&self) -> &'static [ResourceKey] {
@@ -57,7 +69,28 @@ impl Module for WasteModule {
 
     fn build(&self, ctx: ModuleContext) -> Result<ModuleRuntime, ModuleBuildError> {
         let _config: WasteConfig = ctx.module_config(&key())?;
-        Ok(ModuleRuntime::new(ModuleRoutes::empty()))
+        let bins = Arc::new(PgWasteBinRepository::new(ctx.pool.clone()));
+        let threshold = FullThreshold::new(i64::from(FullThreshold::DEFAULT))
+            .expect("the default threshold is in range");
+        let bin_service = Arc::new(WasteBinService::new(
+            bins.clone(),
+            bins,
+            ctx.sensors.clone(),
+            ctx.plans.clone(),
+            ctx.comments.clone(),
+            ctx.settings.clone(),
+            Arc::new(FixedThreshold(threshold)),
+        ));
+        let state = Arc::new(WasteHttpState {
+            bins: bin_service,
+            access: ctx.access.clone(),
+            authorization: ctx.authorization.clone(),
+            users: ctx.users.clone(),
+        });
+        Ok(ModuleRuntime::new(ModuleRoutes {
+            public: utoipa_axum::router::OpenApiRouter::new(),
+            protected: http::protected_routes().with_state(state),
+        }))
     }
 }
 

@@ -1,3 +1,4 @@
+use domain::{RepositoryError, shared::error::ValidationError};
 use server::service::{ModuleErrorKind, ServiceError};
 
 #[derive(Debug, thiserror::Error)]
@@ -19,6 +20,18 @@ impl From<WasteError> for ServiceError {
             code,
             message: err.to_string(),
         }
+    }
+}
+
+impl From<RepositoryError> for WasteError {
+    fn from(e: RepositoryError) -> Self {
+        Self::Core(ServiceError::Repository(e))
+    }
+}
+
+impl From<ValidationError> for WasteError {
+    fn from(e: ValidationError) -> Self {
+        Self::Core(ServiceError::Validation(e))
     }
 }
 

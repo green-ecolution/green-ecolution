@@ -15,6 +15,7 @@ path = "src/lib.rs"
 
 [dependencies]
 async-trait = { workspace = true }
+axum = { version = "0.8.9", features = ["json"] }
 chrono = { workspace = true }
 domain = { path = "../../../domain", features = ["sqlx"] }
 serde = { workspace = true }
@@ -22,6 +23,7 @@ serde_json = { workspace = true }
 server = { path = "../../../server" }
 sqlx = { workspace = true, features = ["macros", "migrate", "runtime-tokio", "tls-rustls", "postgres", "chrono", "uuid", "json"] }
 thiserror = { workspace = true }
+tracing = "0.1"
 utoipa = { version = "6", features = ["axum_extras", "uuid", "chrono"] }
 utoipa-axum = "0.3"
 uuid = { workspace = true }

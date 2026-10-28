@@ -19,12 +19,13 @@ async fn app_with_test_module() -> (crate::helpers::TestApp, Arc<Probe>) {
 
 pub async fn switch(
     app: &crate::helpers::TestApp,
+    module: &str,
     org: Uuid,
     enabled: Option<bool>,
 ) -> reqwest::Response {
     app.put_json(
         &format!("/api/v1/organizations/{org}/modules"),
-        &json!({ "modules": { KEY: enabled } }),
+        &json!({ "modules": { module: enabled } }),
     )
     .await
 }
@@ -66,7 +67,7 @@ async fn writes_into_an_organization_without_the_module_are_refused() {
     let body: serde_json::Value = resp.json().await.unwrap();
     assert_eq!(body["code"], "module.disabled");
 
-    assert_eq!(switch(&app, org, Some(true)).await.status(), 200);
+    assert_eq!(switch(&app, KEY, org, Some(true)).await.status(), 200);
     let resp = app
         .post_json(
             "/api/v1/test-module/things",
@@ -83,7 +84,7 @@ async fn activation_at_the_root_reaches_three_levels_down() {
     let mid = child_org(&app, "Mitte", root).await;
     let leaf = child_org(&app, "Blatt", mid).await;
 
-    assert_eq!(switch(&app, root, Some(true)).await.status(), 200);
+    assert_eq!(switch(&app, KEY, root, Some(true)).await.status(), 200);
 
     let body: serde_json::Value = app
         .get(&format!("/api/v1/organizations/{leaf}/modules"))
@@ -116,7 +117,7 @@ async fn a_locked_subtree_cannot_switch_modules() {
         .await;
     assert_eq!(lock.status(), 200);
 
-    let resp = switch(&app, leaf, Some(true)).await;
+    let resp = switch(&app, KEY, leaf, Some(true)).await;
     assert_eq!(resp.status(), 409);
     let body: serde_json::Value = resp.json().await.unwrap();
     assert_eq!(body["code"], "settings.enforced_by_ancestor");
@@ -128,8 +129,8 @@ async fn reads_only_show_organizations_with_the_module_active() {
     let root = Uuid::parse_str(ROOT_ORG_ID).unwrap();
     let on = child_org(&app, "An", root).await;
     let off = child_org(&app, "Aus", root).await;
-    assert_eq!(switch(&app, on, Some(true)).await.status(), 200);
-    assert_eq!(switch(&app, off, Some(true)).await.status(), 200);
+    assert_eq!(switch(&app, KEY, on, Some(true)).await.status(), 200);
+    assert_eq!(switch(&app, KEY, off, Some(true)).await.status(), 200);
     for org in [on, off] {
         let created = app
             .post_json(
@@ -139,7 +140,7 @@ async fn reads_only_show_organizations_with_the_module_active() {
             .await;
         assert_eq!(created.status(), 201);
     }
-    assert_eq!(switch(&app, off, Some(false)).await.status(), 200);
+    assert_eq!(switch(&app, KEY, off, Some(false)).await.status(), 200);
 
     let things: Vec<serde_json::Value> = app
         .get("/api/v1/test-module/things")
