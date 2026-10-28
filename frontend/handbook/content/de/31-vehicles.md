@@ -87,6 +87,14 @@ und, falls einer verknüpft ist, Anhänger zusammen; Gruppen, deren Bäume zusam
 Wasser benötigen, als diese Summe hergibt, lassen sich für den Einsatz nicht auswählen,
 siehe [Route festlegen](./watering-plans.md#route-festlegen).
 
+## Fahrzeug in eine andere Organisation verschieben
+
+Auf der Detailseite öffnet der Pfeil neben **Fahrzeug bearbeiten** das Menü **Weitere
+Aktionen** mit dem Eintrag **In andere Organisation verschieben**. Er erscheint nur, wenn
+du Fahrzeuge in mindestens einer weiteren Organisation bearbeiten darfst. Nach der Wahl
+der Zielorganisation gehört das Fahrzeug dieser Organisation und steht nur noch ihren
+Einsatzplänen zur Verfügung; bestehende Einsatzpläne behalten es.
+
 ## Fahrzeug archivieren
 
 Ein Fahrzeug, das nicht mehr im Einsatz ist, entfernst du nicht, sondern archivierst es

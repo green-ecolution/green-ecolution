@@ -36,6 +36,9 @@ erscheint der Behälter in der Liste. Über **Behälter bearbeiten** auf der Det
 einen Behälter nach einer Rückfrage. Dabei wird er aus allen geplanten Leerungstouren
 genommen, seine Kommentare werden gelöscht, und ein verbundener Sensor wird freigegeben,
 bleibt aber aktiviert.
+Im selben Menü steht **In andere Organisation verschieben**, sofern du Behälter in
+mindestens einer weiteren Organisation bearbeiten darfst; ein verbundener Sensor zieht
+mit dem Behälter um.
 
 ## Einen Sensor zuordnen
 
