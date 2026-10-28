@@ -27,7 +27,7 @@ use irrigation_domain::{
 use super::tree_service::TreeDeletion;
 use server::service::{
     AuthError, ServiceError, authorization::AuthorizationService, event_bus::EventBus,
-    plugin_service::plugin_access_context,
+    module_access::ModuleAccess, plugin_service::plugin_access_context,
 };
 
 /// Batch size cap for [`PluginIngestService::upsert_trees`]. Enforced by the
@@ -78,6 +78,10 @@ pub struct PluginIngestService {
     tree_deletion: Arc<dyn TreeDeletion>,
     event_bus: Arc<dyn EventBus>,
     authorization: Arc<AuthorizationService>,
+    /// The key check is state-independent, so activation has to be enforced
+    /// here: a plugin must not keep writing into an organization that
+    /// switched the module off.
+    access: ModuleAccess,
 }
 
 impl PluginIngestService {
@@ -88,6 +92,7 @@ impl PluginIngestService {
         tree_deletion: Arc<dyn TreeDeletion>,
         event_bus: Arc<dyn EventBus>,
         authorization: Arc<AuthorizationService>,
+        access: ModuleAccess,
     ) -> Self {
         Self {
             tree_reader,
@@ -96,6 +101,7 @@ impl PluginIngestService {
             tree_deletion,
             event_bus,
             authorization,
+            access,
         }
     }
 
@@ -118,6 +124,7 @@ impl PluginIngestService {
         if !can_create || !can_update {
             return Err(AuthError::Forbidden.into());
         }
+        self.access.ensure_active(org).await?;
 
         let mut results = Vec::with_capacity(items.len());
         for item in items {
@@ -296,6 +303,7 @@ impl PluginIngestService {
         ) {
             return Err(AuthError::Forbidden.into());
         }
+        self.access.ensure_active(tree.organization_id()).await?;
         self.tree_deletion.delete(tree_ref.tree_id).await
     }
 
@@ -384,7 +392,44 @@ mod tests {
     use serde_json::json;
     use uuid::Uuid;
 
+    use domain::module::{ActivationResolution, ModuleActivationReader, ModuleKey, OwnSwitch};
+    use domain::settings::SettingOrigin;
     use server::service::event_bus::NoopEventBus;
+
+    struct AlwaysActive;
+
+    #[async_trait::async_trait]
+    impl ModuleActivationReader for AlwaysActive {
+        async fn own(
+            &self,
+            _org: Id<Organization>,
+        ) -> Result<std::collections::BTreeMap<ModuleKey, OwnSwitch>, RepositoryError> {
+            Ok(Default::default())
+        }
+
+        async fn resolve(
+            &self,
+            _org: Id<Organization>,
+        ) -> Result<std::collections::BTreeMap<ModuleKey, ActivationResolution>, RepositoryError>
+        {
+            Ok(std::collections::BTreeMap::from([(
+                crate::key(),
+                ActivationResolution {
+                    enabled: true,
+                    origin: SettingOrigin::Default,
+                    enforced_by: None,
+                    inherited: true,
+                },
+            )]))
+        }
+
+        async fn active_orgs(
+            &self,
+            _key: &ModuleKey,
+        ) -> Result<BTreeSet<Id<Organization>>, RepositoryError> {
+            Ok(BTreeSet::new())
+        }
+    }
 
     #[derive(Default)]
     struct FakeTreeRepo {
@@ -766,6 +811,7 @@ mod tests {
             Arc::new(NoRoles),
             true,
         ));
+        let access = ModuleAccess::new(crate::key(), authorization.clone(), Arc::new(AlwaysActive));
         let svc = PluginIngestService::new(
             tree_repo.clone(),
             tree_repo.clone(),
@@ -773,6 +819,7 @@ mod tests {
             tree_repo.clone(),
             event_bus,
             authorization,
+            access,
         );
         (svc, tree_repo)
     }

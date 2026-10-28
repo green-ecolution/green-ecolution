@@ -147,6 +147,7 @@ impl Module for IrrigationModule {
             tree_service.clone(),
             ctx.event_bus.clone(),
             ctx.authorization.clone(),
+            ctx.access.clone(),
         ));
 
         let state = Arc::new(IrrigationHttpState {
