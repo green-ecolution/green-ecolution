@@ -12,6 +12,7 @@ export const FALLBACK_LANGUAGE: Language = 'de'
  */
 export const NAMESPACES = [
   'common',
+  'admin',
   'validation',
   'errors',
   'ui',

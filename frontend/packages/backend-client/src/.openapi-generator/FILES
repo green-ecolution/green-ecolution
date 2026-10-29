@@ -83,6 +83,7 @@ models/OrganizationModulesEntry.ts
 models/OrganizationModulesResponse.ts
 models/OrganizationModulesUpdateRequest.ts
 models/OrganizationRef.ts
+models/OrganizationResourceCountsResponse.ts
 models/OrganizationResponse.ts
 models/OrganizationSettingsResponse.ts
 models/OrganizationSettingsUpdateRequest.ts

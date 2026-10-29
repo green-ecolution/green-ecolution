@@ -7,6 +7,12 @@
     "headlinePlanning": "Planung",
     "headlineMore": "Weiteres",
     "headlinePlugins": "Plugins",
+    "headlineInstance": "Instanz",
+    "tenants": "Mandanten",
+    "organization": "Organisation",
+    "team": "Team & Rollen",
+    "plugins": "Plugins",
+    "info": "Systeminformationen",
     "map": "Karte",
     "wateringPlans": "Einsatzpläne",
     "vehicles": "Fahrzeuge",
@@ -51,7 +57,8 @@
     "team": "Team & Rollen",
     "plugins": "Plugins",
     "info": "Systeminformationen",
-    "handbook": "Handbuch"
+    "handbook": "Handbuch",
+    "admin": "Mandanten"
   },
   "footer": {
     "tagline": "Smartes Grünflächenmanagement - Green Ecolution {version}",

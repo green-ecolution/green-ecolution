@@ -894,6 +894,14 @@ mod tests {
             self.member_count_queries.fetch_add(1, Ordering::Relaxed);
             Ok(HashMap::new())
         }
+        async fn resource_counts(
+            &self,
+        ) -> Result<
+            HashMap<Id<Organization>, domain::organization::OrganizationResourceCounts>,
+            RepositoryError,
+        > {
+            Ok(HashMap::new())
+        }
     }
 
     fn identity(id: Uuid, username: &str) -> UserIdentity {

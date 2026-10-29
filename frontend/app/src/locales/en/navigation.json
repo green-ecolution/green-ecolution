@@ -7,6 +7,12 @@
     "headlinePlanning": "Planning",
     "headlineMore": "More",
     "headlinePlugins": "Plugins",
+    "headlineInstance": "Instance",
+    "tenants": "Tenants",
+    "organization": "Organization",
+    "team": "Team & roles",
+    "plugins": "Plugins",
+    "info": "System information",
     "map": "Map",
     "wateringPlans": "Watering plans",
     "vehicles": "Vehicles",
@@ -51,7 +57,8 @@
     "team": "Team & roles",
     "plugins": "Plugins",
     "info": "System information",
-    "handbook": "Handbook"
+    "handbook": "Handbook",
+    "admin": "Tenants"
   },
   "footer": {
     "tagline": "Smart green-space management - Green Ecolution {version}",

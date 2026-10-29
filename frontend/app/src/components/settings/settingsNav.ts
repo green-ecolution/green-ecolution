@@ -13,6 +13,8 @@ export interface SettingsNavItem {
   permission?: PermissionRequirement
   featureKey?: string
   comingSoon?: boolean
+  /** Pages about one tenant's operations; the instance admin has none. */
+  hiddenInAdminMode?: boolean
 }
 
 export const SETTINGS_NAV: SettingsNavItem[] = [
@@ -53,6 +55,7 @@ export const SETTINGS_NAV: SettingsNavItem[] = [
     to: '/settings/stations',
     featureKey: 'routing',
     permission: ['start_point:read'],
+    hiddenInAdminMode: true,
   },
 ]
 
@@ -60,8 +63,10 @@ export const visibleSettingsNav = (
   items: SettingsNavItem[],
   perms: Permissions,
   enabledFeatures: ReadonlySet<string>,
+  adminMode = false,
 ): SettingsNavItem[] =>
   items.filter((item) => {
+    if (adminMode && item.hiddenInAdminMode) return false
     if (item.featureKey && !enabledFeatures.has(item.featureKey)) return false
     if (item.permission && !satisfies(perms, item.permission)) return false
     return true

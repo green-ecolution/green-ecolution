@@ -1,12 +1,12 @@
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
 use domain::{
     Id,
     events::DomainEvent,
     organization::{
         ContactPersonView, Organization, OrganizationDetailView, OrganizationDraft,
-        OrganizationError, OrganizationName, OrganizationReader, OrganizationView,
-        OrganizationWriter,
+        OrganizationError, OrganizationName, OrganizationReader, OrganizationResourceCounts,
+        OrganizationView, OrganizationWriter,
     },
     role::RoleReader,
     shared::address::Address,
@@ -54,6 +54,13 @@ impl OrganizationService {
             .iter()
             .map(|org| OrganizationView::new(org, counts.get(&org.id).copied().unwrap_or(0)))
             .collect())
+    }
+
+    #[tracing::instrument(level = "debug", skip_all)]
+    pub async fn resource_counts(
+        &self,
+    ) -> Result<HashMap<Id<Organization>, OrganizationResourceCounts>, ServiceError> {
+        Ok(self.org_reader.resource_counts().await?)
     }
 
     /// Loads the whole count map for a single organization. The tree is small
@@ -253,6 +260,12 @@ mod tests {
         }
         async fn member_counts(&self) -> Result<HashMap<Id<Organization>, i64>, RepositoryError> {
             Ok(self.member_counts.lock().unwrap().clone())
+        }
+        async fn resource_counts(
+            &self,
+        ) -> Result<HashMap<Id<Organization>, OrganizationResourceCounts>, RepositoryError>
+        {
+            Ok(HashMap::new())
         }
     }
 

@@ -28,6 +28,7 @@ pub mod module_host;
 pub mod module_plans;
 pub mod modules;
 pub mod openapi;
+pub mod organization_resource_counts;
 pub mod organization_scope;
 pub mod organizations;
 pub mod plans;

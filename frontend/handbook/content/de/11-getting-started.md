@@ -13,7 +13,9 @@ prüft Benutzername und Passwort nicht selbst, sondern überlässt das einem eig
 Anmeldedienst, der zusammen mit der Anwendung betrieben wird. Deshalb wechselt der
 Browser dafür kurz auf eine eigene Seite: Dort gibst du Benutzername und Passwort ein
 und bestätigst die Eingabe. Danach kehrst du automatisch zu Green Ecolution zurück,
-entweder auf die Seite, die du zuvor aufrufen wolltest, oder auf das Dashboard.
+entweder auf die Seite, die du zuvor aufrufen wolltest, oder auf das Dashboard. Gehörst du
+der obersten Organisation der Instanz an, öffnet sich stattdessen die
+[Mandantenübersicht](./admin-tenants.md).
 
 Benutzerkonten legt nicht du selbst an, sondern die Verwaltung deiner Organisation.
 Hast du noch keine Zugangsdaten oder hast du dein Passwort vergessen, ist sie die

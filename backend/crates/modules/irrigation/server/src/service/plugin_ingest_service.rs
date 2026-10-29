@@ -730,6 +730,14 @@ mod tests {
         async fn member_counts(&self) -> Result<HashMap<Id<Organization>, i64>, RepositoryError> {
             Ok(HashMap::new())
         }
+        async fn resource_counts(
+            &self,
+        ) -> Result<
+            HashMap<Id<Organization>, domain::organization::OrganizationResourceCounts>,
+            RepositoryError,
+        > {
+            Ok(HashMap::new())
+        }
     }
 
     struct NoRoles;

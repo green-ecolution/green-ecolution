@@ -20,6 +20,7 @@ import {
   OrganizationDetailResponse,
   OrganizationModulesResponse,
   OrganizationResponse,
+  OrganizationResourceCountsResponse,
   OrganizationSettingsResponse,
   pluginApi,
   PluginResponse,
@@ -341,6 +342,14 @@ export const organizationQueries = {
     queryOptions<OrganizationResponse[]>({
       queryKey: ['organizations'],
       queryFn: () => organizationApi.listOrganizations(),
+    }),
+
+  // Lives under 'organizations' so the invalidation on that prefix
+  // (queryRoots.organization) refreshes it after an organization changes.
+  resourceCounts: () =>
+    queryOptions<OrganizationResourceCountsResponse[]>({
+      queryKey: ['organizations', 'resource-counts'],
+      queryFn: () => organizationApi.listOrganizationResourceCounts(),
     }),
 
   byId: (orgId: string) =>

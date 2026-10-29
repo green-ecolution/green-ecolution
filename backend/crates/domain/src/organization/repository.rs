@@ -5,7 +5,7 @@ use async_trait::async_trait;
 use crate::{
     Id, RepositoryError,
     authorization::OrgHierarchy,
-    organization::{Organization, OrganizationDraft},
+    organization::{Organization, OrganizationDraft, OrganizationResourceCounts},
     role::Role,
 };
 
@@ -18,6 +18,11 @@ pub trait OrganizationReader: Send + Sync {
     /// Directly assigned user count per organization, in one query. Organizations
     /// without users are absent from the map.
     async fn member_counts(&self) -> Result<HashMap<Id<Organization>, i64>, RepositoryError>;
+    /// Sensors, non-archived vehicles and plans per organization, each summed
+    /// over the organization's subtree. Every organization has an entry.
+    async fn resource_counts(
+        &self,
+    ) -> Result<HashMap<Id<Organization>, OrganizationResourceCounts>, RepositoryError>;
 }
 
 #[async_trait]

@@ -12,12 +12,18 @@ export type RoutePermissions = Readonly<Record<string, PermissionRequirement>>
 
 /**
  * Core part of the single source of truth for nav filtering and route guards.
- * Paths without an entry are open, which covers /dashboard, /settings,
- * /settings/profile, /info and /debug. Module routes come from the manifests.
+ * Paths without an entry are open: /dashboard, /settings, /settings/profile,
+ * /info, /debug and /help. The settings sub-pages and /admin are listed
+ * because they cannot render without their read right. Module routes come
+ * from the manifests.
  */
 export const CORE_ROUTE_PERMISSIONS: RoutePermissions = {
+  '/admin': ['organization:read'],
   '/sensors': ['sensor:read'],
   '/vehicles': ['vehicle:read'],
+  '/settings/organization': ['organization:read'],
+  '/settings/team': ['user:read', 'role:read'],
+  '/settings/plugin': ['plugin:read'],
   '/settings/team/members': ['user:read'],
   '/settings/team/roles': ['role:read'],
 }

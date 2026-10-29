@@ -31,7 +31,11 @@ const visibleNavSections = <S extends { links: readonly { to?: unknown }[] }>(
 describe('CORE_ROUTE_PERMISSIONS', () => {
   it('carries no irrigation route', () => {
     expect(Object.keys(CORE_ROUTE_PERMISSIONS).sort()).toEqual([
+      '/admin',
       '/sensors',
+      '/settings/organization',
+      '/settings/plugin',
+      '/settings/team',
       '/settings/team/members',
       '/settings/team/roles',
       '/vehicles',

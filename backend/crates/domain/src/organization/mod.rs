@@ -21,7 +21,7 @@ pub use error::OrganizationError;
 pub use repository::{OrganizationReader, OrganizationWriter};
 #[doc(hidden)]
 pub use snapshot::OrganizationSnapshot;
-pub use view::OrganizationView;
+pub use view::{OrganizationResourceCounts, OrganizationView};
 
 crate::newtype_nonempty! {
     /// Organization display name, 1–120 characters after trimming.

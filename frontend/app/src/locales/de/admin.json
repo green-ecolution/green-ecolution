@@ -1,0 +1,23 @@
+{
+  "tenants": {
+    "title": "Mandanten",
+    "description": "Alle Mandanten dieser Instanz mit ihren Unterorganisationen, Mitarbeitenden, Modulen und Beständen. Öffne einen Mandanten, um ihn so zu sehen, wie seine Mitarbeitenden ihn sehen.",
+    "loadingLabel": "Mandanten werden geladen …",
+    "empty": "Diese Instanz hat noch keine Mandanten.",
+    "emptyLink": "Mandanten unter Organisation anlegen",
+    "loadError": "Die Mandanten konnten nicht geladen werden.",
+    "openError": "Der Mandant konnte nicht geöffnet werden.",
+    "open": "Als Mandant öffnen",
+    "openSrLabel": "{name} als Mandant öffnen",
+    "card": {
+      "subOrganizations": "Unterorganisationen",
+      "members": "Mitarbeitende",
+      "modules": "Module",
+      "noModules": "Keine Module aktiv",
+      "sensors": "Sensoren",
+      "vehicles": "Fahrzeuge",
+      "plans": "Einsatzpläne",
+      "pending": "–"
+    }
+  }
+}

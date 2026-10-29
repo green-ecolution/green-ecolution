@@ -92,6 +92,22 @@ impl From<&OrganizationView> for OrganizationResponse {
     }
 }
 
+/// Sensors, non-archived vehicles and operation plans of an organization,
+/// counted over its whole subtree.
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+#[schema(example = json!({
+    "organization_id": "01980000-0000-7000-8000-000000000002",
+    "sensor_count": 12,
+    "vehicle_count": 3,
+    "plan_count": 40
+}))]
+pub struct OrganizationResourceCountsResponse {
+    pub organization_id: String,
+    pub sensor_count: i64,
+    pub vehicle_count: i64,
+    pub plan_count: i64,
+}
+
 /// A single organization with its contact person resolved.
 #[derive(Debug, Serialize, utoipa::ToSchema)]
 #[schema(example = json!({

@@ -18,6 +18,7 @@ import type {
   ErrorBody,
   OrganizationCreateRequest,
   OrganizationDetailResponse,
+  OrganizationResourceCountsResponse,
   OrganizationResponse,
   OrganizationUpdateRequest,
 } from '../models/index';
@@ -28,6 +29,8 @@ import {
     OrganizationCreateRequestToJSON,
     OrganizationDetailResponseFromJSON,
     OrganizationDetailResponseToJSON,
+    OrganizationResourceCountsResponseFromJSON,
+    OrganizationResourceCountsResponseToJSON,
     OrganizationResponseFromJSON,
     OrganizationResponseToJSON,
     OrganizationUpdateRequestFromJSON,
@@ -169,6 +172,37 @@ export class OrganizationsApi extends runtime.BaseAPI {
      */
     async getOrganization(requestParameters: GetOrganizationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OrganizationDetailResponse> {
         const response = await this.getOrganizationRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Sensors, non-archived vehicles and operation plans per organization, each counted over the organization\'s whole subtree. One entry per organization visible to the caller. Requires organization:read.
+     * Resource counts per visible organization
+     */
+    async listOrganizationResourceCountsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<OrganizationResourceCountsResponse>>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/v1/organizations/resource-counts`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(OrganizationResourceCountsResponseFromJSON));
+    }
+
+    /**
+     * Sensors, non-archived vehicles and operation plans per organization, each counted over the organization\'s whole subtree. One entry per organization visible to the caller. Requires organization:read.
+     * Resource counts per visible organization
+     */
+    async listOrganizationResourceCounts(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<OrganizationResourceCountsResponse>> {
+        const response = await this.listOrganizationResourceCountsRaw(initOverrides);
         return await response.value();
     }
 

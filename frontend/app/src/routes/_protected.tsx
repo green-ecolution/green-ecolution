@@ -2,6 +2,7 @@ import { createFileRoute, redirect } from '@tanstack/react-router'
 import { modulesQuery, userQueries } from '@/api/queries'
 import ScopedOutlet from '@/components/layout/ScopedOutlet'
 import { startSigninHandover } from '@/lib/auth/handover'
+import { isAdminMode, isAdminModePath } from '@/lib/auth/scope/adminMode'
 import { DEMO_USER_ID, loadOrganizationScope } from '@/lib/auth/scope/organizationScopeStore'
 import { readAuthBypass } from '@/lib/auth/runtimeConfig'
 import { prefetch } from '@/lib/router'
@@ -33,6 +34,15 @@ export const Route = createFileRoute('/_protected')({
     // Module guards and the navigation read the active modules synchronously;
     // the endpoint answers in auth-bypass mode too.
     await context.queryClient.ensureQueryData(modulesQuery())
+    // Operational pages show one tenant's data; a root member without a scope
+    // has none to show. A preload must not redirect.
+    if (
+      !preload &&
+      !isAdminModePath(location.pathname) &&
+      (await isAdminMode(context.queryClient))
+    ) {
+      throw redirect({ to: '/admin', replace: true })
+    }
     // Every map below here opens at this viewport and suspends on it. Warming
     // it once at the top means no page pays for it individually, and the small
     // previews never render a frame at the wrong place.

@@ -35,6 +35,11 @@ vi.mock('@/lib/auth/useCurrentUserAvatar', () => ({
   useCurrentUserAvatar: () => undefined,
 }))
 
+const adminMode = vi.hoisted(() => ({ value: false }))
+vi.mock('@/lib/auth/scope/adminMode', () => ({
+  useAdminMode: () => adminMode.value,
+}))
+
 vi.mock('@/modules/registry', async () => {
   const actual = await vi.importActual<typeof import('@/modules/registry')>('@/modules/registry')
   const probe = {
@@ -64,6 +69,24 @@ const respondWithActive = (active: string[]) =>
       HttpResponse.json({
         modules: ['irrigation', 'probe'],
         organizations: [{ organizationId: 'a', active }],
+      }),
+    ),
+  )
+
+const respondWithServices = (pluginsEnabled: boolean) =>
+  server.use(
+    http.get('*/v1/info/services', () =>
+      HttpResponse.json({
+        items: [
+          {
+            name: 'plugins',
+            enabled: pluginsEnabled,
+            healthy: true,
+            lastChecked: '2026-10-28T00:00:00Z',
+            message: '',
+            responseTimeMs: 0,
+          },
+        ],
       }),
     ),
   )
@@ -103,6 +126,7 @@ const renderNavigation = () => {
 describe('Navigation', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    adminMode.value = false
   })
 
   it('shows only the entries the permissions allow', async () => {
@@ -304,6 +328,39 @@ describe('Navigation', () => {
 
     await screen.findByText('Sensoren')
     await settledPluginViews(queryClient)
+    expect(screen.queryByText('Plugins')).not.toBeInTheDocument()
+  })
+
+  it('shows the instance entries and no operational ones in admin mode', async () => {
+    permissions.mockReturnValue(UNRESTRICTED)
+    adminMode.value = true
+    respondWithServices(true)
+
+    renderNavigation()
+
+    expect(await screen.findByText('Mandanten')).toBeInTheDocument()
+    expect(screen.getByText('Instanz')).toBeInTheDocument()
+    expect(screen.getByText('Organisation')).toBeInTheDocument()
+    expect(screen.getByText('Team & Rollen')).toBeInTheDocument()
+    expect(await screen.findByText('Plugins')).toBeInTheDocument()
+    expect(screen.getByText('Systeminformationen')).toBeInTheDocument()
+    expect(screen.getByText('Handbuch')).toBeInTheDocument()
+    expect(screen.queryByText('Karte')).not.toBeInTheDocument()
+    expect(screen.queryByText('Fahrzeuge')).not.toBeInTheDocument()
+    expect(screen.queryByText('Sensoren')).not.toBeInTheDocument()
+    expect(screen.queryByText('Einsatzpläne')).not.toBeInTheDocument()
+  })
+
+  it('filters the admin entries by permission and feature', async () => {
+    permissions.mockReturnValue(new Set(['organization:read']))
+    adminMode.value = true
+    respondWithServices(false)
+
+    renderNavigation()
+
+    expect(await screen.findByText('Organisation')).toBeInTheDocument()
+    expect(screen.getByText('Mandanten')).toBeInTheDocument()
+    expect(screen.queryByText('Team & Rollen')).not.toBeInTheDocument()
     expect(screen.queryByText('Plugins')).not.toBeInTheDocument()
   })
 })

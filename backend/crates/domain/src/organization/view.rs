@@ -32,3 +32,12 @@ impl OrganizationView {
         }
     }
 }
+
+/// Sensors, non-archived vehicles and operation plans of an organization,
+/// counted over its whole subtree.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct OrganizationResourceCounts {
+    pub sensor_count: i64,
+    pub vehicle_count: i64,
+    pub plan_count: i64,
+}

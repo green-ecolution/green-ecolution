@@ -1526,6 +1526,71 @@
         }
       }
     },
+    "/v1/organizations/resource-counts": {
+      "get": {
+        "tags": [
+          "Organizations"
+        ],
+        "summary": "Resource counts per visible organization",
+        "description": "Sensors, non-archived vehicles and operation plans per organization, each counted over the organization's whole subtree. One entry per organization visible to the caller. Requires organization:read.",
+        "operationId": "listOrganizationResourceCounts",
+        "responses": {
+          "200": {
+            "description": "Counts per visible organization",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OrganizationResourceCountsResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Acting user has no organization and none was given",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/organizations/{org_id}": {
       "get": {
         "tags": [
@@ -12135,6 +12200,39 @@
             "type": "string",
             "format": "uuid"
           }
+        }
+      },
+      "OrganizationResourceCountsResponse": {
+        "type": "object",
+        "description": "Sensors, non-archived vehicles and operation plans of an organization,\ncounted over its whole subtree.",
+        "required": [
+          "organization_id",
+          "sensor_count",
+          "vehicle_count",
+          "plan_count"
+        ],
+        "properties": {
+          "organization_id": {
+            "type": "string"
+          },
+          "plan_count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "sensor_count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "vehicle_count": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "example": {
+          "organization_id": "01980000-0000-7000-8000-000000000002",
+          "plan_count": 40,
+          "sensor_count": 12,
+          "vehicle_count": 3
         }
       },
       "OrganizationResponse": {

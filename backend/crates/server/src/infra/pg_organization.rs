@@ -6,7 +6,10 @@ use domain::organization::OrganizationSnapshot;
 use domain::{
     Id, RepositoryError,
     authorization::OrgHierarchy,
-    organization::{Organization, OrganizationDraft, OrganizationReader, OrganizationWriter},
+    organization::{
+        Organization, OrganizationDraft, OrganizationReader, OrganizationResourceCounts,
+        OrganizationWriter,
+    },
     role::Role,
 };
 
@@ -75,6 +78,53 @@ impl OrganizationReader for PgOrganizationRepository {
         Ok(rows
             .into_iter()
             .map(|r| (Id::<Organization>::new(r.organization_id), r.count))
+            .collect())
+    }
+
+    #[tracing::instrument(level = "trace", skip_all)]
+    async fn resource_counts(
+        &self,
+    ) -> Result<HashMap<Id<Organization>, OrganizationResourceCounts>, RepositoryError> {
+        let rows = sqlx::query!(
+            r#"
+            WITH RECURSIVE subtree AS (
+                SELECT id AS ancestor_id, id AS descendant_id FROM organizations
+                UNION ALL
+                SELECT s.ancestor_id, o.id
+                  FROM subtree s
+                  JOIN organizations o ON o.parent_id = s.descendant_id
+            ),
+            own AS (
+                SELECT o.id,
+                       (SELECT COUNT(*) FROM sensors se WHERE se.organization_id = o.id) AS sensor_count,
+                       (SELECT COUNT(*) FROM vehicles v
+                         WHERE v.organization_id = o.id AND v.archived_at IS NULL) AS vehicle_count,
+                       (SELECT COUNT(*) FROM operation_plans p WHERE p.organization_id = o.id) AS plan_count
+                  FROM organizations o
+            )
+            SELECT s.ancestor_id AS "organization_id!",
+                   SUM(own.sensor_count)::bigint  AS "sensor_count!",
+                   SUM(own.vehicle_count)::bigint AS "vehicle_count!",
+                   SUM(own.plan_count)::bigint    AS "plan_count!"
+              FROM subtree s
+              JOIN own ON own.id = s.descendant_id
+             GROUP BY s.ancestor_id
+            "#
+        )
+        .fetch_all(&self.pool)
+        .await?;
+        Ok(rows
+            .into_iter()
+            .map(|r| {
+                (
+                    Id::<Organization>::new(r.organization_id),
+                    OrganizationResourceCounts {
+                        sensor_count: r.sensor_count,
+                        vehicle_count: r.vehicle_count,
+                        plan_count: r.plan_count,
+                    },
+                )
+            })
             .collect())
     }
 }
