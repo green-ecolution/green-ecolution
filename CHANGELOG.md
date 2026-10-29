@@ -11,6 +11,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > single repository. For legacy releases, see the
 > [GitHub Releases](https://github.com/green-ecolution/green-ecolution/releases) page.
 
+## [0.9.0](https://github.com/green-ecolution/green-ecolution/compare/v0.8.0...v0.9.0) (2026-10-29)
+
+
+### ⚠ BREAKING CHANGES
+
+* /api/v1/info/statistics returns sensorCount, vehicleCount, planCount and a modules list instead of treeCount, treeClusterCount and wateringPlanCount.
+* generalize the core for domain modules ([#1106](https://github.com/green-ecolution/green-ecolution/issues/1106))
+
+### Features
+
+* add an organization scope switcher to the user menu ([#1116](https://github.com/green-ecolution/green-ecolution/issues/1116)) ([62a6497](https://github.com/green-ecolution/green-ecolution/commit/62a64976008eaa15995b61e5aa775de3f8c1151a))
+* add the waste module with fill levels and collection tours ([#1114](https://github.com/green-ecolution/green-ecolution/issues/1114)) ([5a17fe9](https://github.com/green-ecolution/green-ecolution/commit/5a17fe9b29cc84989b26ae0ec493988b32029ce7))
+* admin view with tenant overview for members of the root organization ([#1121](https://github.com/green-ecolution/green-ecolution/issues/1121)) ([705829e](https://github.com/green-ecolution/green-ecolution/commit/705829e0c5e7d6fd16861526da8d2efa2d1e7de7))
+* **backend:** add module scaffold with per-organization activation ([#1105](https://github.com/green-ecolution/green-ecolution/issues/1105)) ([4389a8f](https://github.com/green-ecolution/green-ecolution/commit/4389a8f5886ca7e0668b96fb4fea25ff67390003))
+* **backend:** persist the route itinerary and export it as GPX waypoints ([#1122](https://github.com/green-ecolution/green-ecolution/issues/1122)) ([808b471](https://github.com/green-ecolution/green-ecolution/commit/808b47133bc9a6457b20d8f5347812ccc551976f))
+* **devcli:** add geco developer console for the local stack ([#1101](https://github.com/green-ecolution/green-ecolution/issues/1101)) ([2ac3efc](https://github.com/green-ecolution/green-ecolution/commit/2ac3efc8eca4b12fb40ab2f4c357a99578056c11))
+* **frontend:** move irrigation into a module package with per-organization switches ([#1111](https://github.com/green-ecolution/green-ecolution/issues/1111)) ([c2fa899](https://github.com/green-ecolution/green-ecolution/commit/c2fa89994b84d8616dbe384e7de447fc62b2c180))
+* **frontend:** move resources to another organization from their action menus ([#1118](https://github.com/green-ecolution/green-ecolution/issues/1118)) ([db6edda](https://github.com/green-ecolution/green-ecolution/commit/db6edda21f3dbbd61a6b2bafc1fe2669b054ed2e))
+* generalize the core for domain modules ([#1106](https://github.com/green-ecolution/green-ecolution/issues/1106)) ([27d2d71](https://github.com/green-ecolution/green-ecolution/commit/27d2d710eed5c69e656b1e259cb534ac4563e95f))
+* move irrigation into its own module crates ([#1107](https://github.com/green-ecolution/green-ecolution/issues/1107)) ([d395a32](https://github.com/green-ecolution/green-ecolution/commit/d395a32eb8f54e5bdedd2f70a5fc66a164318075))
+* prepare the core for cargo-volume collection tours ([#1113](https://github.com/green-ecolution/green-ecolution/issues/1113)) ([41f3336](https://github.com/green-ecolution/green-ecolution/commit/41f3336e8f14b905a34e0c81fc26b9d16e864d0d))
+* **watering-plan:** allow leaving out the vehicle's water tank when a trailer is attached ([#1104](https://github.com/green-ecolution/green-ecolution/issues/1104)) ([1294879](https://github.com/green-ecolution/green-ecolution/commit/1294879ed9cec8010f578fcb7ad9e73a71c55f96)), closes [#116](https://github.com/green-ecolution/green-ecolution/issues/116)
+
+
+### Bug Fixes
+
+* **backend:** harden module startup checks and migration handling ([#1112](https://github.com/green-ecolution/green-ecolution/issues/1112)) ([db3c9f4](https://github.com/green-ecolution/green-ecolution/commit/db3c9f454f86b8b1dfcfaf5281c5ba32ee14a7b1))
+* **frontend:** filter plan form vehicles by transporter and trailer type ([#1120](https://github.com/green-ecolution/green-ecolution/issues/1120)) ([d8e309d](https://github.com/green-ecolution/green-ecolution/commit/d8e309d7cc49f60259ca718cbee63e4f853aaf93))
+* make module switches set by a parent organization binding for its sub-units ([#1115](https://github.com/green-ecolution/green-ecolution/issues/1115)) ([586462b](https://github.com/green-ecolution/green-ecolution/commit/586462b35cf8c8a8379b1b185e5c1299584476f4))
+* scope start points, fill filters and plugin ingest to the right organization ([#1117](https://github.com/green-ecolution/green-ecolution/issues/1117)) ([3f703dc](https://github.com/green-ecolution/green-ecolution/commit/3f703dc3df8b2a6acd9ea8d1c3defe433e523e33))
+
+
+### Documentation
+
+* **handbook:** replace the remaining placeholder figures and seed waste demo data ([#1119](https://github.com/green-ecolution/green-ecolution/issues/1119)) ([f7072d8](https://github.com/green-ecolution/green-ecolution/commit/f7072d88e4d73cdc7a7be894a76efa3379ca96b3))
+
 ## [0.8.0](https://github.com/green-ecolution/green-ecolution/compare/v0.7.0...v0.8.0) (2026-10-09)
 
 
