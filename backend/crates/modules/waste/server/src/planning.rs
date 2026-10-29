@@ -91,6 +91,7 @@ impl PlanningProvider for WastePlanning {
                 };
                 Ok(ResolvedStop {
                     stop: *stop,
+                    label: bin.number.as_str().to_owned(),
                     location: Some(bin.coordinate),
                     demand,
                 })
@@ -329,6 +330,17 @@ mod tests {
         assert_eq!(resolved[0].demand, 120.0);
         assert_eq!(resolved[0].stop, stop(&b));
         assert_eq!(resolved[0].location, Some(b.coordinate));
+    }
+
+    #[tokio::test]
+    async fn a_stop_is_labelled_with_the_bin_number() {
+        let f = fixture();
+        let b = bin(f.root, None, None);
+        let resolved = planning(&f, vec![b.clone()])
+            .resolve_stops(&[stop(&b)], f.root)
+            .await
+            .unwrap();
+        assert_eq!(resolved[0].label, "AB-1");
     }
 
     #[tokio::test]

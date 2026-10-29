@@ -72,6 +72,7 @@ impl PlanningProvider for IrrigationPlanning {
                 }
                 Ok(ResolvedStop {
                     stop: *stop,
+                    label: cluster.name.as_str().to_owned(),
                     location: cluster.coordinates(),
                     demand: cluster.tree_ids.len() as f64 * liters_per_tree,
                 })
@@ -301,6 +302,17 @@ mod tests {
         assert_eq!(resolved[1].stop, stop(&a));
         assert_eq!(resolved[1].demand, 240.0);
         assert_eq!(resolved[1].location, a.coordinates());
+    }
+
+    #[tokio::test]
+    async fn a_stop_is_labelled_with_the_cluster_name() {
+        let f = fixture();
+        let a = cluster(f.root, 1);
+        let resolved = planning(&f, vec![a.clone()])
+            .resolve_stops(&[stop(&a)], f.root)
+            .await
+            .unwrap();
+        assert_eq!(resolved[0].label, "Cluster");
     }
 
     #[tokio::test]

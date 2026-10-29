@@ -71,12 +71,23 @@ pub enum OperationPlanStatus {
     NotCompleted,
 }
 
-/// Refill station a computed route visits, captured by name and location at
-/// computation time so later depot edits don't rewrite history.
+/// Depot or refill station a computed route visits, captured by name and
+/// location at computation time so later start point edits don't rewrite
+/// history.
 #[derive(Debug, Clone, PartialEq)]
 pub struct StationVisit {
     pub name: StartPointName,
     pub coordinate: Coordinate,
+}
+
+/// One entry of a plan's persisted driving order. Stops stay references
+/// because the module owns their name and position; a station visited twice
+/// appears twice.
+#[derive(Debug, Clone, PartialEq)]
+pub enum ItineraryEntry {
+    Depot(StationVisit),
+    Stop(StopRef),
+    Station(StationVisit),
 }
 
 /// Result of a route computation applied to a plan via
@@ -89,7 +100,20 @@ pub struct RouteMetrics {
     pub refill_count: u32,
     pub duration: Duration,
     pub route_geometry: Option<Vec<Coordinate>>,
-    pub station_visits: Vec<StationVisit>,
+    pub itinerary: Vec<ItineraryEntry>,
+}
+
+/// The stations an itinerary refills at, each once, in first-visit order.
+pub fn station_visits(itinerary: &[ItineraryEntry]) -> Vec<StationVisit> {
+    let mut visits: Vec<StationVisit> = Vec::new();
+    for entry in itinerary {
+        if let ItineraryEntry::Station(visit) = entry
+            && !visits.contains(visit)
+        {
+            visits.push(visit.clone());
+        }
+    }
+    visits
 }
 
 impl RouteMetrics {
@@ -118,7 +142,7 @@ pub struct OperationPlan {
     cancellation_note: Option<String>,
     provenance: Provenance,
     route_geometry: Option<Vec<Coordinate>>,
-    station_visits: Vec<StationVisit>,
+    itinerary: Vec<ItineraryEntry>,
     user_ids: Vec<Uuid>,
     organization_id: Id<Organization>,
 }
@@ -203,7 +227,7 @@ impl OperationPlan {
             cancellation_note: snap.cancellation_note,
             provenance: Provenance::reconstitute(snap.provider, snap.additional_info),
             route_geometry: snap.route_geometry,
-            station_visits: snap.station_visits,
+            itinerary: snap.itinerary,
             user_ids: snap.user_ids,
             organization_id: Id::new(snap.organization_id),
         })
@@ -255,8 +279,12 @@ impl OperationPlan {
         self.route_geometry.as_deref()
     }
 
-    pub fn station_visits(&self) -> &[StationVisit] {
-        &self.station_visits
+    pub fn itinerary(&self) -> &[ItineraryEntry] {
+        &self.itinerary
+    }
+
+    pub fn station_visits(&self) -> Vec<StationVisit> {
+        station_visits(&self.itinerary)
     }
 
     fn ensure_planned(&self) -> Result<(), OperationPlanError> {
@@ -414,7 +442,7 @@ impl OperationPlan {
         self.refill_count = metrics.refill_count;
         self.duration = metrics.duration;
         self.route_geometry = metrics.route_geometry;
-        self.station_visits = metrics.station_visits;
+        self.itinerary = metrics.itinerary;
     }
 }
 
@@ -449,7 +477,7 @@ mod tests {
             provider: None,
             additional_info: None,
             route_geometry: None,
-            station_visits: Vec::new(),
+            itinerary: Vec::new(),
             organization_id: Uuid::now_v7(),
         })
         .unwrap()
@@ -662,7 +690,7 @@ mod tests {
             refill_count: 3,
             duration: Duration::from_secs(60 * 45),
             route_geometry: Some(geometry.clone()),
-            station_visits: Vec::new(),
+            itinerary: Vec::new(),
         });
         assert_eq!(p.distance, Some(dist));
         assert_eq!(p.total_demand, Some(99.5));
@@ -671,23 +699,54 @@ mod tests {
         assert_eq!(p.route_geometry(), Some(geometry.as_slice()));
     }
 
-    #[test]
-    fn set_metrics_records_and_clears_station_visits() {
-        let (mut p, _) = fixed_plan();
-        let visit = StationVisit {
-            name: StartPointName::new("Klärwerk Kielseng".to_string()).unwrap(),
+    fn visit(name: &str) -> StationVisit {
+        StationVisit {
+            name: StartPointName::new(name.to_string()).unwrap(),
             coordinate: Coordinate::new(54.8052, 9.4471).unwrap(),
-        };
+        }
+    }
+
+    #[test]
+    fn set_metrics_records_and_clears_itinerary() {
+        let (mut p, stops) = fixed_plan();
+        let itinerary = vec![
+            ItineraryEntry::Depot(visit("Betriebshof")),
+            ItineraryEntry::Stop(stops[1]),
+            ItineraryEntry::Station(visit("Klärwerk Kielseng")),
+            ItineraryEntry::Stop(stops[0]),
+            ItineraryEntry::Depot(visit("Betriebshof")),
+        ];
         p.set_metrics(RouteMetrics {
             refill_count: 1,
             duration: Duration::from_secs(60),
-            station_visits: vec![visit.clone()],
+            itinerary: itinerary.clone(),
             ..RouteMetrics::default()
         });
-        assert_eq!(p.station_visits(), &[visit]);
+        assert_eq!(p.itinerary(), itinerary.as_slice());
 
         p.set_metrics(RouteMetrics::cleared());
-        assert_eq!(p.station_visits(), &[]);
+        assert_eq!(p.itinerary(), &[]);
+    }
+
+    #[test]
+    fn station_visits_list_each_station_once_in_first_visit_order() {
+        let (mut p, stops) = fixed_plan();
+        p.set_metrics(RouteMetrics {
+            itinerary: vec![
+                ItineraryEntry::Depot(visit("Betriebshof")),
+                ItineraryEntry::Station(visit("Klärwerk Kielseng")),
+                ItineraryEntry::Stop(stops[0]),
+                ItineraryEntry::Station(visit("Hydrant Nord")),
+                ItineraryEntry::Station(visit("Klärwerk Kielseng")),
+                ItineraryEntry::Stop(stops[1]),
+                ItineraryEntry::Depot(visit("Betriebshof")),
+            ],
+            ..RouteMetrics::default()
+        });
+        assert_eq!(
+            p.station_visits(),
+            vec![visit("Klärwerk Kielseng"), visit("Hydrant Nord")]
+        );
     }
 
     #[test]
@@ -941,7 +1000,7 @@ mod tests {
             provider: None,
             additional_info: None,
             route_geometry: None,
-            station_visits: vec![],
+            itinerary: vec![],
             organization_id: Uuid::now_v7(),
         })
         .unwrap_err();

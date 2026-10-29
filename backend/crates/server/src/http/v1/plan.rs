@@ -575,7 +575,7 @@ pub async fn preview_plan_route(
         distance: computed.route.distance.meters(),
         duration: computed.route.duration.as_secs_f64(),
         refill_count: computed.route.refill_count,
-        station_visits: computed.station_visits.iter().map(Into::into).collect(),
+        station_visits: computed.station_visits().iter().map(Into::into).collect(),
         total_demand: computed.total_demand,
         geometry: RouteGeometry::from_coordinates(&computed.route.geometry),
     }))
@@ -584,7 +584,7 @@ pub async fn preview_plan_route(
 #[utoipa::path(get, path = "/plans/{plan_id}/route/gpx", tag = "Plans",
     operation_id = "getPlanGpx",
     summary = "Download GPX file",
-    description = "Renders the optimized route of a plan as a GPX track.",
+    description = "Renders the optimized route of a plan as a GPX track, with the depot, the stops and the refill stations as waypoints in driving order.",
     params(("plan_id" = uuid::Uuid, Path, description = "Plan ID")),
     responses(
         (status = 200, description = "GPX file", content_type = "application/gpx+xml"),
@@ -603,9 +603,19 @@ pub async fn get_plan_gpx(
     let geometry = plan
         .route_geometry()
         .ok_or(ServiceError::Repository(domain::RepositoryError::NotFound))?;
+    // A stop its module no longer knows costs its waypoint, not the download.
+    let stops = match state.operation_plan_service.resolved_stops(&plan).await {
+        Ok(stops) => stops,
+        Err(ServiceError::UnknownStop { stop }) => {
+            tracing::warn!(%stop, "gpx export skips stop waypoints: unknown stop");
+            Vec::new()
+        }
+        Err(e) => return Err(e),
+    };
+    let waypoints = gpx::waypoints(plan.itinerary(), &stops);
     let date = plan.date.format("%Y-%m-%d").to_string();
     let name = gpx::track_name(plan.description.as_deref(), &date);
-    let body = gpx::render_gpx(&name, geometry);
+    let body = gpx::render_gpx(&name, geometry, &waypoints);
     Ok((
         [
             (header::CONTENT_TYPE, "application/gpx+xml".to_string()),

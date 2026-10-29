@@ -119,6 +119,17 @@ Bewässerungsgruppen verfügt. Liegt eine Route vor, lädst du sie über
 **Route herunterladen** als GPX-Datei herunter und siehst sie zusätzlich im Reiter
 **Route** auf einer interaktiven Karte.
 
+Die GPX-Datei enthält die berechnete Strecke als Track und dazu Wegpunkte für den
+Startpunkt, jede Bewässerungsgruppe und jede Nachfüllstation, in Fahrreihenfolge
+durchnummeriert. Die Reihenfolge ist die, die die Routenberechnung festgelegt hat, und
+bleibt beim Einsatzplan gespeichert. In einer Navigations-App wie OsmAnd importierst du die
+Datei, lässt den Track anzeigen und startest die Navigation mit dem Track als Routenquelle
+(in OsmAnd die Option, einem Track zu folgen). Wähle dort zusätzlich die Einstellung, den
+Track an die Straßen anzuheften: Erst dann gibt die App Abbiegehinweise entlang der
+berechneten Strecke, statt zwischen den Punkten eine eigene Route zu rechnen. Die Wegpunkte
+zeigt die App entlang der Strecke an, sodass du siehst, welche Gruppe als nächstes dran ist
+und wo nachgefüllt wird.
+
 ![Die Routenauswahl auf der Karte mit eingezeichneter Route und Nachfüllpunkten](../images/watering-plan-route.png)
 
 ## Einsatz starten

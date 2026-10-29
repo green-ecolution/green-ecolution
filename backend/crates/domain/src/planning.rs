@@ -38,9 +38,11 @@ pub struct StopOutcome {
     pub amount: Option<f64>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct ResolvedStop {
     pub stop: StopRef,
+    /// How the module names the stop to a human, e.g. on a route export.
+    pub label: String,
     /// Stops without a position are skipped when routing.
     pub location: Option<Coordinate>,
     /// In liters of the provider's capacity kind.

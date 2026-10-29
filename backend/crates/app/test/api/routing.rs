@@ -53,6 +53,10 @@ async fn create_transporter(app: &crate::helpers::TestApp) -> serde_json::Value 
 
 /// A cluster only gets coordinates (centroid) when it contains trees.
 async fn create_cluster_with_tree(app: &crate::helpers::TestApp) -> String {
+    create_named_cluster_with_tree(app, "Routing-Cluster").await
+}
+
+async fn create_named_cluster_with_tree(app: &crate::helpers::TestApp, name: &str) -> String {
     let tree_id = uuid::Uuid::now_v7();
     sqlx::query(
         r#"INSERT INTO trees (id, planting_year, species, number, latitude, longitude, geometry, description, organization_id)
@@ -63,7 +67,7 @@ async fn create_cluster_with_tree(app: &crate::helpers::TestApp) -> String {
     .await
     .unwrap();
     let body = serde_json::json!({
-        "name": "Routing-Cluster",
+        "name": name,
         "address": "Testweg 1",
         "description": "Routing",
         "soil_condition": "Su3",
@@ -221,6 +225,47 @@ async fn gpx_download_renders_track_from_geometry() {
     let body = gpx_resp.text().await.unwrap();
     assert!(body.contains("<trkpt"));
     assert!(body.contains("green-ecolution"));
+}
+
+#[tokio::test]
+async fn gpx_download_lists_depot_stops_and_stations_in_driving_order() {
+    // The solver visits the second stop first; the file must say so.
+    let mut body = streamlet_ok();
+    body["routes"][0]["stops"] = serde_json::json!([
+        {"VehicleStart": 1}, {"Refill": 1}, {"Customer": 2}, {"Customer": 1}, {"Depot": 1}
+    ]);
+    let streamlet = mock_streamlet(ResponseTemplate::new(200).set_body_json(body)).await;
+    let app = spawn_app_with_routing(&streamlet.uri()).await;
+    let transporter = create_transporter(&app).await;
+    let tid = transporter["id"].as_str().unwrap();
+    let stadtpark = create_named_cluster_with_tree(&app, "Stadtpark").await;
+    let hafen = create_named_cluster_with_tree(&app, "Hafen & Mole").await;
+
+    let mut plan_body = plan_body(tid, &stadtpark);
+    plan_body["stops"] = serde_json::json!([stadtpark, hafen]);
+    let resp = app.post_json("/api/v1/plans", &plan_body).await;
+    assert_eq!(resp.status().as_u16(), 201);
+    let plan: serde_json::Value = resp.json().await.unwrap();
+    let plan_id = plan["id"].as_str().unwrap();
+
+    let gpx_resp = app.get(&format!("/api/v1/plans/{plan_id}/route/gpx")).await;
+    assert_eq!(gpx_resp.status().as_u16(), 200);
+    let gpx = gpx_resp.text().await.unwrap();
+    let expected = [
+        "<name>Betriebshof Schleswiger Straße</name><type>depot</type>",
+        "<name>1. Betriebshof Schleswiger Straße</name><type>station</type>",
+        "<name>2. Hafen &amp; Mole</name><type>stop</type>",
+        "<name>3. Stadtpark</name><type>stop</type>",
+        "<trk>",
+    ];
+    let positions: Vec<usize> = expected
+        .iter()
+        .map(|needle| {
+            gpx.find(needle)
+                .unwrap_or_else(|| panic!("missing {needle} in {gpx}"))
+        })
+        .collect();
+    assert!(positions.windows(2).all(|w| w[0] < w[1]), "order: {gpx}");
 }
 
 #[tokio::test]

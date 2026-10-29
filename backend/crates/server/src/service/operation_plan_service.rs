@@ -8,13 +8,13 @@ use domain::{
     events::DomainEvent,
     module::{ModuleActivationReader, ModuleKey},
     operation_plan::{
-        OperationPlan, OperationPlanDraft, OperationPlanError, OperationPlanReader,
+        ItineraryEntry, OperationPlan, OperationPlanDraft, OperationPlanError, OperationPlanReader,
         OperationPlanSearchQuery, OperationPlanUpdate, OperationPlanView, OperationPlanWriter,
-        RouteMetrics, StationVisit, ensure_capacity_available,
+        RouteMetrics, StationVisit, ensure_capacity_available, station_visits,
     },
     organization::{Organization, OrganizationReader},
     planning::{PlanningError, PlanningProvider, ResolvedStop, StopOutcome, StopRef},
-    routing::{OptimizedRoute, RouteOptimizer, RouteRequest, RouteStop, RoutingError},
+    routing::{OptimizedRoute, RouteOptimizer, RouteRequest, RouteStop, RouteVisit, RoutingError},
     shared::{
         coordinates::Coordinate,
         pagination::{Page, Pagination},
@@ -58,7 +58,13 @@ pub struct PreviewRoute {
 pub struct ComputedRoute {
     pub route: OptimizedRoute,
     pub total_demand: f64,
-    pub station_visits: Vec<StationVisit>,
+    pub itinerary: Vec<ItineraryEntry>,
+}
+
+impl ComputedRoute {
+    pub fn station_visits(&self) -> Vec<StationVisit> {
+        station_visits(&self.itinerary)
+    }
 }
 
 impl OperationPlanService {
@@ -87,6 +93,16 @@ impl OperationPlanService {
             activation,
             organizations,
         }
+    }
+
+    /// The plan's stops as its module names and locates them today.
+    pub async fn resolved_stops(
+        &self,
+        plan: &OperationPlan,
+    ) -> Result<Vec<ResolvedStop>, ServiceError> {
+        let provider = self.planning.provider(plan.module())?;
+        self.resolve(provider.as_ref(), plan.stops(), plan.organization_id())
+            .await
     }
 
     async fn resolve(
@@ -275,7 +291,7 @@ impl OperationPlanService {
                     refill_count: computed.route.refill_count,
                     duration: computed.route.duration,
                     route_geometry: Some(computed.route.geometry),
-                    station_visits: computed.station_visits,
+                    itinerary: computed.itinerary,
                 });
                 if let Err(e) = self.writer.save(plan).await {
                     tracing::warn!(error = %e, "failed to persist route metrics");
@@ -328,7 +344,6 @@ impl OperationPlanService {
             .all(Visibility::Only(ranked_orgs.iter().copied().collect()))
             .await?;
         let depot = select_depot(&start_points, &ranked_orgs, req.start_point_name.as_deref())
-            .map(|p| p.coordinate)
             .ok_or_else(|| ServiceError::InvalidInput("no start point configured".into()))?;
 
         let station_points: Vec<&StartPoint> = start_points
@@ -355,7 +370,7 @@ impl OperationPlanService {
                 kind,
                 capacity,
                 stops: &stops,
-                depot,
+                depot: depot.coordinate,
                 stations: &station_coordinates,
                 return_replenished,
             })
@@ -366,18 +381,24 @@ impl OperationPlanService {
                 "route leaves stops unserved"
             );
         }
-        let station_visits: Vec<StationVisit> = route
-            .refill_station_indices
+        let visit_of = |p: &StartPoint| StationVisit {
+            name: p.name.clone(),
+            coordinate: p.coordinate,
+        };
+        let itinerary = route
+            .visits
             .iter()
-            .filter_map(|&i| station_points.get(i))
-            .map(|p| StationVisit {
-                name: p.name.clone(),
-                coordinate: p.coordinate,
+            .filter_map(|visit| match visit {
+                RouteVisit::Depot => Some(ItineraryEntry::Depot(visit_of(depot))),
+                RouteVisit::Stop(stop) => Some(ItineraryEntry::Stop(*stop)),
+                RouteVisit::Station(i) => station_points
+                    .get(*i)
+                    .map(|p| ItineraryEntry::Station(visit_of(p))),
             })
             .collect();
         Ok(ComputedRoute {
             total_demand: stops.iter().map(|s| s.demand).sum(),
-            station_visits,
+            itinerary,
             route,
         })
     }
