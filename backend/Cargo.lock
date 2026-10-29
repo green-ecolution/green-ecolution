@@ -105,7 +105,7 @@ checksum = "330a5ed07fa54e4702c9d6c4174f74427fc0ef6e214bbd677ae50a5099946470"
 
 [[package]]
 name = "app"
-version = "0.8.0"
+version = "0.9.0"
 dependencies = [
  "async-trait",
  "axum",
@@ -1157,7 +1157,7 @@ dependencies = [
 
 [[package]]
 name = "devcli"
-version = "0.8.0"
+version = "0.9.0"
 dependencies = [
  "anstream",
  "anstyle",
@@ -1248,7 +1248,7 @@ dependencies = [
 
 [[package]]
 name = "domain"
-version = "0.8.0"
+version = "0.9.0"
 dependencies = [
  "async-trait",
  "chrono",
@@ -1268,7 +1268,7 @@ dependencies = [
 
 [[package]]
 name = "domain-wasm"
-version = "0.8.0"
+version = "0.9.0"
 dependencies = [
  "chrono",
  "domain",
@@ -2199,7 +2199,7 @@ checksum = "d98f6fed1fde3f8c21bc40a1abb88dd75e67924f9cffc3ef95607bad8017f8e2"
 
 [[package]]
 name = "irrigation-domain"
-version = "0.8.0"
+version = "0.9.0"
 dependencies = [
  "async-trait",
  "chrono",
@@ -2215,7 +2215,7 @@ dependencies = [
 
 [[package]]
 name = "irrigation-server"
-version = "0.8.0"
+version = "0.9.0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -4088,7 +4088,7 @@ dependencies = [
 
 [[package]]
 name = "server"
-version = "0.8.0"
+version = "0.9.0"
 dependencies = [
  "async-trait",
  "axum",
@@ -5636,7 +5636,7 @@ dependencies = [
 
 [[package]]
 name = "waste-domain"
-version = "0.8.0"
+version = "0.9.0"
 dependencies = [
  "async-trait",
  "chrono",
@@ -5649,7 +5649,7 @@ dependencies = [
 
 [[package]]
 name = "waste-server"
-version = "0.8.0"
+version = "0.9.0"
 dependencies = [
  "async-trait",
  "axum",
