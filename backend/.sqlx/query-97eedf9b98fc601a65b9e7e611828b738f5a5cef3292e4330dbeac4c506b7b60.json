@@ -1,0 +1,101 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO data_export_targets\n                   (organization_id, enabled, base_url, auth_kind, auth_principal,\n                    auth_secret, auth_token_url, auth_scope)\n               VALUES ($1, $2, $3, $4, $5, $6, $7, $8)\n               ON CONFLICT (organization_id) DO UPDATE SET\n                   enabled        = EXCLUDED.enabled,\n                   base_url       = EXCLUDED.base_url,\n                   auth_kind      = EXCLUDED.auth_kind,\n                   auth_principal = EXCLUDED.auth_principal,\n                   auth_secret    = EXCLUDED.auth_secret,\n                   auth_token_url = EXCLUDED.auth_token_url,\n                   auth_scope     = EXCLUDED.auth_scope,\n                   activated_at   = CASE WHEN data_export_targets.base_url <> EXCLUDED.base_url\n                                         THEN now() ELSE data_export_targets.activated_at END,\n                   cursor_reading_id = CASE WHEN data_export_targets.base_url <> EXCLUDED.base_url\n                                         THEN NULL ELSE data_export_targets.cursor_reading_id END,\n                   failure_count  = 0,\n                   next_attempt_at = NULL,\n                   last_run_at = CASE WHEN data_export_targets.base_url <> EXCLUDED.base_url\n                                         THEN NULL ELSE data_export_targets.last_run_at END,\n                   last_success_at = CASE WHEN data_export_targets.base_url <> EXCLUDED.base_url\n                                         THEN NULL ELSE data_export_targets.last_success_at END,\n                   last_error = NULL,\n                   last_run_stats = CASE WHEN data_export_targets.base_url <> EXCLUDED.base_url\n                                         THEN NULL ELSE data_export_targets.last_run_stats END\n               RETURNING organization_id, enabled, base_url, auth_kind, auth_principal,\n                         auth_secret, auth_token_url, auth_scope, activated_at,\n                         last_run_at, last_success_at, last_error, last_run_stats",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "organization_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "enabled",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 2,
+        "name": "base_url",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "auth_kind",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "auth_principal",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "auth_secret",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "auth_token_url",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 7,
+        "name": "auth_scope",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 8,
+        "name": "activated_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 9,
+        "name": "last_run_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 10,
+        "name": "last_success_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 11,
+        "name": "last_error",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 12,
+        "name": "last_run_stats",
+        "type_info": "Jsonb"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Bool",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      false,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "97eedf9b98fc601a65b9e7e611828b738f5a5cef3292e4330dbeac4c506b7b60"
+}

@@ -1,8 +1,10 @@
+pub mod data_export_worker;
 pub mod health;
 pub mod keycloak;
 pub mod list;
 pub mod mqtt;
 pub mod pg_comment;
+pub mod pg_data_export;
 pub mod pg_module_activation;
 pub mod pg_operation_plan;
 pub mod pg_organization;
@@ -20,6 +22,7 @@ pub mod pg_vehicle;
 pub mod plugin_key;
 pub mod plugin_proxy_session;
 pub mod plugin_view_ticket;
+pub mod sensorthings;
 pub(crate) mod sql;
 pub mod statistics_repo;
 pub mod streamlet;

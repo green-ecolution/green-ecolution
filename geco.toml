@@ -53,6 +53,14 @@ builtin_hooks = ["traefik-dev-services"]
 [unit.valhalla]
 pre_start = ["just _ensure-valhalla"]
 
+# `docker compose config` hides services of inactive compose profiles, so geco cannot manage
+# `frost` as a compose unit; it runs as an attached `compose up` that geco stops with SIGTERM.
+[unit.frost]
+kind = "process"
+run = "just _compose --profile frost up --attach frost --no-log-prefix frost"
+after = ["db"]
+ready = { http = "http://localhost:8180/FROST-Server/v1.1" }
+
 [unit.build-release]
 kind = "oneshot"
 run = "just build-domain-wasm _compile-backend && cd frontend && pnpm install --frozen-lockfile && VITE_BACKEND_BASEURL=/api APP_VERSION={{app_version}} pnpm run build"
@@ -63,6 +71,11 @@ units = ["db", "migrations", "keycloak", "backend", "frontend", "reverse-proxy"]
 [profile.full]
 extends = "minimal"
 units = ["valhalla", "streamlet", "pgadmin"]
+
+# FROST SensorThings server as the target of the data platform export.
+[profile.frost]
+extends = "minimal"
+units = ["frost"]
 
 # Release binary and production frontend build, as `just run-prod` does.
 [profile.prod-like]

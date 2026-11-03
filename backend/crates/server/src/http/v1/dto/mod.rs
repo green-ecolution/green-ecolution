@@ -1,4 +1,5 @@
 pub mod comment;
+pub mod data_export;
 pub mod info;
 pub mod module;
 pub mod organization;

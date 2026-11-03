@@ -46,6 +46,7 @@ pub mod v1;
 pub struct FeatureFlags {
     pub routing_enabled: bool,
     pub plugins_enabled: bool,
+    pub data_export_enabled: bool,
 }
 
 /// OIDC parameters Swagger UI needs to run the PKCE login flow against
@@ -108,6 +109,10 @@ pub struct AppState {
     pub readiness_reader: Arc<dyn ReadinessReader>,
     pub statistics_reader: Arc<dyn StatisticsReader>,
     pub statistics: Arc<crate::service::statistics_registry::StatisticsRegistry>,
+    /// Exposed for the export sync and integration tests.
+    pub export_registry: Arc<crate::service::export_registry::ExportRegistry>,
+    /// Exposed so integration tests can run a pass directly.
+    pub data_export_sync: Arc<crate::service::data_export_sync::DataExportSync>,
     pub token_validator: Arc<TokenValidator>,
     pub feature_flags: FeatureFlags,
     pub frontend_config_js: std::sync::Arc<str>,
@@ -128,6 +133,7 @@ pub struct AppState {
     /// drive resolution directly instead of through the HTTP surface.
     pub settings_reader: Arc<dyn domain::settings::SettingsReader>,
     pub settings_service: Arc<SettingsService>,
+    pub data_export_service: Arc<crate::service::data_export_service::DataExportService>,
     pub module_activation_service:
         Arc<crate::service::module_activation_service::ModuleActivationService>,
     pub module_activation: Arc<dyn domain::module::ModuleActivationReader>,
@@ -167,6 +173,7 @@ impl AsRef<extractors::PluginAuthenticator> for AppState {
         (name = "Roles", description = "Manage roles (named permission sets) and their assignment to users."),
         (name = "Comments", description = "Free-text comments on module objects and plans. Reading follows the parent resource's read permission, writing its update permission."),
         (name = "Modules", description = "Feature modules and their activation per organization"),
+        (name = "Data Export", description = "An organization's export target on an urban data platform (OGC SensorThings API) and its connection test."),
         (name = "Settings", description = "Per-organization operational defaults — sensor thresholds and the map viewport — resolved along the organization tree."),
     ),
 )]

@@ -10,6 +10,7 @@ use std::{
 
 use domain::{
     authorization::ResourceKey,
+    data_export::ExportCatalog,
     module::{ModuleKey, ModuleStatistics},
     organization::OrganizationReader,
     planning::PlanningProvider,
@@ -127,6 +128,8 @@ pub struct ModuleRuntime {
     pub statistics: Option<Arc<dyn ModuleStatistics>>,
     /// Decoders for the module's own sensor models, used by the MQTT ingestor.
     pub sensor_parsers: Vec<Arc<dyn SensorPayloadParser>>,
+    /// Objects the data export writes to an urban data platform.
+    pub export: Option<Arc<dyn ExportCatalog>>,
 }
 
 impl ModuleRuntime {
@@ -139,6 +142,7 @@ impl ModuleRuntime {
             planning: None,
             statistics: None,
             sensor_parsers: Vec::new(),
+            export: None,
         }
     }
 }

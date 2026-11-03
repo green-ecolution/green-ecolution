@@ -67,6 +67,7 @@ For a reproducible environment, use `nix develop`.
 | `just generate-sqlx` | Refresh sqlx offline query cache (after changing any `query!` / `query_as!`) |
 | `just build-keycloak-theme` | Build the Keycloak login theme (jar + exploded theme dir under `frontend/keycloak-theme/dist_keycloak/theme/`) |
 | `just keycloak-theme-dev` | Run the theme's Vite dev server against a mocked Keycloak context |
+| `just frost-up` / `just frost-down` | Start or remove the FROST SensorThings server (compose profile `frost`, database `frost` in the shared Postgres) on <http://localhost:8180/FROST-Server/v1.1> and `frost.<app host>` |
 | `just bench` | Run the micro-benchmarks of `domain` and `irrigation-domain` (Criterion) |
 | `just bench-check` | Execute every benchmark once without measuring; this is what CI runs |
 
@@ -123,7 +124,7 @@ case, so `geco logs` and `geco restart` still work. Ctrl-C only stops watching a
 start running in the background. Without a terminal, or with `NO_COLOR` set, it returns as soon
 as the supervisor answers.
 
-Units and profiles (`minimal`, `full`, `prod-like`) are defined in `geco.toml` at the
+Units and profiles (`minimal`, `full`, `frost`, `prod-like`) are defined in `geco.toml` at the
 repository root; a profile can extend another and override local units. Switching profiles at
 runtime restarts the units whose definition or dependencies changed, together with the units
 that depend on them, and also starts units that were stopped or failed; everything else keeps
@@ -722,6 +723,40 @@ Proxied plugin views are served under `http://<slug>.plugins.localhost:3000`
 `backend/config/local.yaml` allows the demo plugin as a proxied target:
 `demo-plugin:80` when the backend runs in compose, `localhost:5175` when it
 runs via `just run-dev`.
+
+### Data platform export
+
+Each organization can export its module objects with their states to an external
+SensorThings server (OGC SensorThings API), today the trees and clusters of the
+irrigation module and the bins of the waste module, plus the raw sensor readings.
+The target, its credentials and the on/off switch are set per organization under the
+organization settings in the app. Which servers the backend may call at all is decided
+by the instance operator in the `data_export` block of the YAML config
+(`backend/config/base.yaml`):
+
+- `enabled`: switches the export on for the instance (`false` by default).
+- `allowed_hosts`: bare host names or IP literals, without scheme, port or path. A
+  DNS name matches itself and every host below it (suffix match); an IP literal
+  matches only when listed verbatim. Startup logs an advisory for entries that can
+  never match. The list can only be set in YAML, because the environment source
+  (`APP_…`, `__` as separator) is configured without a list separator.
+- `allow_insecure_http`: permits `http` targets, which are otherwise refused. For
+  local development only: `Settings::ensure_secure` refuses it in `staging`,
+  `demo` and `production`, and also refuses an enabled export without
+  `auth.enabled` there.
+- `interval_secs` (300), `run_budget_secs` (120) and `batch_size` (500): the export
+  cycle, the time budget of one run and the number of records per batch. A target
+  runs at most once per interval across all replicas; the worker polls every 30 s
+  (or every interval, if shorter) and the database decides which target is due.
+- `reading_settle_secs` (120): readings younger than this wait for a later run. Their
+  ids are minted before the insert commits, so without the wait a run could move its
+  cursor past a reading that becomes visible only afterwards.
+
+`backend/config/local.yaml` enables the export and allows `localhost` over `http`.
+To try it, start a local FROST server with `geco -p frost` or `just frost-up`
+(`just frost-down` removes it), then enter `http://localhost:8180/FROST-Server/v1.1`
+as the server URL in the organization settings, without sign-in. The end-to-end test
+runs against the same server with `just test-data-export`.
 
 ## Getting Help
 

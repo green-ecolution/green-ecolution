@@ -47,6 +47,14 @@ routing:
   streamlet_url: "http://localhost:2510"
 plugins:
   enabled: false
+data_export:
+  enabled: false
+  allowed_hosts: []
+  allow_insecure_http: false
+  interval_secs: 300
+  run_budget_secs: 120
+  batch_size: 500
+  reading_settle_secs: 120
 analytics:
   enabled: false
   script_url: "https://analytics.progeek.de/a.js"

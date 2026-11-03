@@ -44,7 +44,12 @@
     "vehicle": {
       "capacity_missing": "Das Fahrzeug hat keine passende Kapazität für diesen Plan."
     },
+    "data_export": {
+      "url_not_allowed": "Diese Adresse ist für den Datenexport auf dieser Instanz nicht freigegeben. Wende dich an den Betrieb.",
+      "auth_incomplete": "Gib das Passwort bzw. das Client-Secret erneut ein. Es wird nur behalten, solange Anmeldeart und Zieladresse gleich bleiben."
+    },
     "feature": {
+      "data_export_disabled": "Der Datenexport ist in dieser Umgebung nicht aktiviert.",
       "routing_disabled": "Die Routenplanung ist in dieser Umgebung nicht aktiviert.",
       "plugins_disabled": "Das Plugin-System ist in dieser Umgebung nicht aktiviert."
     },

@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT organization_id FROM data_export_targets\n               WHERE enabled\n                 AND (leased_until IS NULL OR leased_until < now())\n                 AND (next_attempt_at IS NULL OR next_attempt_at <= now())\n                 AND (last_run_at IS NULL\n                      OR last_run_at <= now() - make_interval(secs => $1::bigint::float8))\n               ORDER BY organization_id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "organization_id",
+        "type_info": "Uuid"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "55de0232e68fdcf641e755b609b1cbd44577514f70bc6be64b85b823fe312b1c"
+}

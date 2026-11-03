@@ -1,6 +1,9 @@
 pub mod authorization;
 pub mod comment_service;
+pub mod data_export_service;
+pub mod data_export_sync;
 pub mod event_bus;
+pub mod export_registry;
 pub mod module_access;
 pub mod module_activation_service;
 pub mod operation_execution_service;
@@ -50,6 +53,7 @@ use domain::{
 pub enum Feature {
     Routing,
     Plugins,
+    DataExport,
 }
 
 impl std::fmt::Display for Feature {
@@ -57,6 +61,7 @@ impl std::fmt::Display for Feature {
         f.write_str(match self {
             Self::Routing => "routing",
             Self::Plugins => "plugins",
+            Self::DataExport => "data export",
         })
     }
 }
@@ -150,6 +155,8 @@ pub enum ServiceError {
     #[error(transparent)]
     Organization(#[from] domain::organization::OrganizationError),
     #[error(transparent)]
+    DataExport(#[from] domain::data_export::DataExportError),
+    #[error(transparent)]
     Role(#[from] domain::role::RoleError),
     #[error("organization still has sub-organizations or users")]
     OrganizationNotEmpty,
@@ -224,6 +231,7 @@ impl ServiceError {
             Self::Auth(e) => e.code(),
             Self::Routing(e) => routing_code(e),
             Self::Organization(e) => organization_code(e),
+            Self::DataExport(e) => data_export_code(e),
             Self::Role(e) => role_code(e),
             Self::OperationPlan(e) => operation_plan_code(e),
             Self::OrganizationMismatch(kind) => kind.code(),
@@ -250,6 +258,7 @@ impl ServiceError {
             Self::FeatureDisabled { feature } => match feature {
                 Feature::Routing => "feature.routing_disabled",
                 Feature::Plugins => "feature.plugins_disabled",
+                Feature::DataExport => "feature.data_export_disabled",
             },
             Self::PayloadTooLarge { .. } => "plugin.batch_too_large",
             Self::PluginProxyUnavailable => "plugin.proxy_unavailable",
@@ -282,6 +291,14 @@ fn repository_code(e: &RepositoryError) -> &'static str {
         RepositoryError::ForeignKeyViolation(_) => "resource.referenced_missing",
         RepositoryError::ConstraintViolation(_) => "resource.constraint_violated",
         RepositoryError::DataIntegrity(_) | RepositoryError::Internal(_) => "internal.error",
+    }
+}
+
+fn data_export_code(e: &domain::data_export::DataExportError) -> &'static str {
+    use domain::data_export::DataExportError as E;
+    match e {
+        E::UrlNotAllowed { .. } => "data_export.url_not_allowed",
+        E::SecretMissing { .. } => "data_export.auth_incomplete",
     }
 }
 
@@ -460,6 +477,15 @@ mod tests {
             ServiceError::FeatureDisabled {
                 feature: Feature::Plugins,
             },
+            ServiceError::FeatureDisabled {
+                feature: Feature::DataExport,
+            },
+            ServiceError::DataExport(domain::data_export::DataExportError::UrlNotAllowed {
+                field: "data_export.base_url",
+            }),
+            ServiceError::DataExport(domain::data_export::DataExportError::SecretMissing {
+                kind: "basic",
+            }),
             ServiceError::PayloadTooLarge { limit: 500 },
             ServiceError::Routing(RoutingError::Unavailable("x".into())),
             ServiceError::Routing(RoutingError::InvalidProblem("x".into())),
@@ -571,6 +597,26 @@ mod tests {
             internal.len(),
             2,
             "only DataIntegrity and Internal may collapse, got {internal:?}"
+        );
+    }
+
+    #[test]
+    fn data_export_errors_carry_their_codes() {
+        use domain::data_export::DataExportError;
+        assert_eq!(
+            ServiceError::DataExport(DataExportError::UrlNotAllowed { field: "f" }).code(),
+            "data_export.url_not_allowed"
+        );
+        assert_eq!(
+            ServiceError::DataExport(DataExportError::SecretMissing { kind: "basic" }).code(),
+            "data_export.auth_incomplete"
+        );
+        assert_eq!(
+            ServiceError::FeatureDisabled {
+                feature: Feature::DataExport
+            }
+            .code(),
+            "feature.data_export_disabled"
         );
     }
 }
