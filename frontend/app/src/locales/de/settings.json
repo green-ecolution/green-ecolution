@@ -368,6 +368,12 @@
     }
   },
   "organization": {
+    "dataExport": {
+      "toast": {
+        "saved": "Datenplattform gespeichert",
+        "removed": "Datenplattform entfernt"
+      }
+    },
     "treeTitle": "Organisationsstruktur",
     "treeAriaLabel": "Organisationsstruktur",
     "createButton": "Neu",

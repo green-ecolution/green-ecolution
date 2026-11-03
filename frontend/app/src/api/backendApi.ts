@@ -1,5 +1,6 @@
 import {
   CommentsApi,
+  DataExportApi,
   Configuration,
   ConfigurationParameters,
   FetchAPI,
@@ -112,6 +113,7 @@ export const roleApi = new RolesApi(configuration)
 export const organizationApi = new OrganizationsApi(configuration)
 export const commentApi = new CommentsApi(configuration)
 export const settingsApi = new SettingsApi(configuration)
+export const dataExportApi = new DataExportApi(configuration)
 export const moduleApi = new ModulesApi(configuration)
 
 export * from '@green-ecolution/backend-client'
