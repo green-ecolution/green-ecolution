@@ -31,7 +31,7 @@ RUN cargo build --release --locked --bin green-ecolution --bin migrate \
     && cp target/release/green-ecolution /usr/local/bin/green-ecolution \
     && cp target/release/migrate /usr/local/bin/migrate
 
-FROM gcr.io/distroless/cc-debian13:nonroot@sha256:3ee00291cf386ec52a552e6a858d555debd74776eb4bfa53fa3df2cd6677515e AS runtime
+FROM gcr.io/distroless/cc-debian13:nonroot@sha256:08476c244888bfb425bae1ae4dd7c17f093e972aab8426883d97f3c6f280f7c1 AS runtime
 WORKDIR /app
 
 ARG APP_VERSION=dev
