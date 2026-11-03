@@ -39,7 +39,6 @@
   },
   "sensorCard": {
     "title": "Sensors",
-    "treeLabel": "Sensor tree: {species} · {number}",
     "signalLabel": "Signal",
     "noSignalData": "No data",
     "batteryLabel": "Battery",
@@ -55,7 +54,13 @@
   "treeList": {
     "title": "Trees · {count}",
     "emptyMessage": "No trees have been added to the watering group.",
-    "sensorBadge": "Sensor"
+    "sensorBadge": "Sensor tree",
+    "noSensor": "no sensor",
+    "number": "ID {number}",
+    "moreTrees_one": "+ {count} more tree",
+    "moreTrees_other": "+ {count} more trees",
+    "showAll": "show all",
+    "showLess": "show less"
   },
   "viewToggle": {
     "ariaLabel": "Switch view",

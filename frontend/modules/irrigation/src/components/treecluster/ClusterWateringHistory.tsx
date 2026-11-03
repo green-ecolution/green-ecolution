@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
-import { format } from 'date-fns'
+import { format, formatDistanceToNow } from 'date-fns'
+import { ChevronRight, Droplet } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Card, CardContent, CardHeader, CardTitle, Loading } from '@green-ecolution/ui'
 import { clusterQueries } from '../../api/queries'
@@ -41,28 +42,44 @@ const ClusterWateringHistory = ({ clusterId }: ClusterWateringHistoryProps) => {
         ) : events.length === 0 ? (
           <p className="text-sm text-muted-foreground">{t('wateringHistory.emptyMessage')}</p>
         ) : (
-          <ul className="flex flex-col gap-y-3">
-            {events.map((event) => (
-              <li
-                key={event.wateringPlanId}
-                className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 rounded-lg border border-dark-50 bg-white p-4"
-              >
-                <span className="font-bold">
-                  {format(event.date, 'dd.MM.yyyy', { locale: dateLocale })}
-                </span>
+          <ol>
+            {events.map((event, index) => (
+              <li key={event.wateringPlanId} className="relative">
+                {events.length > 1 && (
+                  <span
+                    aria-hidden
+                    className={`absolute left-[7.5px] w-px bg-dark-100 ${index === 0 ? 'top-1/2' : 'top-0'} ${index === events.length - 1 ? 'bottom-1/2' : 'bottom-0'}`}
+                  />
+                )}
                 <Link
                   to="/plans/$wateringPlanId"
                   params={{ wateringPlanId: event.wateringPlanId }}
-                  className="text-sm text-green-dark hover:underline"
+                  className="group relative flex items-center gap-3 rounded-sm py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-dark"
                 >
-                  {t('wateringHistory.viewLink')}
+                  <span className="flex size-4 shrink-0 items-center justify-center bg-card">
+                    <Droplet className="size-3.5 fill-green-dark/15 text-green-dark" aria-hidden />
+                  </span>
+                  <span className="min-w-0 flex-1 truncate">
+                    <span className="font-semibold tabular-nums group-hover:underline">
+                      {format(event.date, 'dd.MM.yyyy', { locale: dateLocale })}
+                    </span>
+                    <span className="text-muted-foreground">
+                      {' · '}
+                      {formatDistanceToNow(event.date, { locale: dateLocale, addSuffix: true })}
+                    </span>
+                  </span>
+                  <span className="shrink-0 tabular-nums">
+                    {numberFormatter.format(event.consumedWaterLiters)} L
+                  </span>
+                  <ChevronRight
+                    className="size-4 shrink-0 text-dark-400 transition-transform duration-quick group-hover:translate-x-0.5 motion-reduce:transition-none"
+                    aria-hidden
+                  />
+                  <span className="sr-only">{t('wateringHistory.viewLink')}</span>
                 </Link>
-                <span className="tabular-nums">
-                  {numberFormatter.format(event.consumedWaterLiters)} L
-                </span>
               </li>
             ))}
-          </ul>
+          </ol>
         )}
       </CardContent>
     </Card>

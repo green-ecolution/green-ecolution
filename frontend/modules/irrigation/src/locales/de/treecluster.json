@@ -39,7 +39,6 @@
   },
   "sensorCard": {
     "title": "Sensorik",
-    "treeLabel": "Sensor-Baum: {species} · {number}",
     "signalLabel": "Signal",
     "noSignalData": "Keine Daten",
     "batteryLabel": "Batterie",
@@ -55,7 +54,13 @@
   "treeList": {
     "title": "Bäume · {count}",
     "emptyMessage": "Der Bewässerungsgruppe wurden keine Bäume hinzugefügt.",
-    "sensorBadge": "Sensor"
+    "sensorBadge": "Sensor-Baum",
+    "noSensor": "kein Sensor",
+    "number": "ID {number}",
+    "moreTrees_one": "+ {count} weiterer Baum",
+    "moreTrees_other": "+ {count} weitere Bäume",
+    "showAll": "alle anzeigen",
+    "showLess": "weniger anzeigen"
   },
   "viewToggle": {
     "ariaLabel": "Ansicht wechseln",
