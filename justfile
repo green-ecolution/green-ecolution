@@ -308,6 +308,17 @@ plugin-demo-up:
 plugin-demo-down:
     @just _compose --profile plugins rm -sf demo-plugin
 
+# Start the FROST SensorThings server used to test the data platform export
+[group('infra')]
+frost-up:
+    @just _compose --profile frost up -d frost
+    @echo "FROST: {{ app_proto }}://frost.{{ app_host }}:{{ app_port }}/FROST-Server/v1.1"
+
+# Stop and remove the FROST server; its database `frost` stays in the shared Postgres
+[group('infra')]
+frost-down:
+    @just _compose --profile frost rm -sf frost frost-init-db
+
 # Set up ACME storage for Let's Encrypt
 _acme-init:
     @if [ -n "{{ porkbun_api_key }}" ]; then \

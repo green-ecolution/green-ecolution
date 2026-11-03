@@ -67,6 +67,7 @@ For a reproducible environment, use `nix develop`.
 | `just generate-sqlx` | Refresh sqlx offline query cache (after changing any `query!` / `query_as!`) |
 | `just build-keycloak-theme` | Build the Keycloak login theme (jar + exploded theme dir under `frontend/keycloak-theme/dist_keycloak/theme/`) |
 | `just keycloak-theme-dev` | Run the theme's Vite dev server against a mocked Keycloak context |
+| `just frost-up` / `just frost-down` | Start or remove the FROST SensorThings server (compose profile `frost`, database `frost` in the shared Postgres) on <http://localhost:8180/FROST-Server/v1.1> and `frost.<app host>` |
 | `just bench` | Run the micro-benchmarks of `domain` and `irrigation-domain` (Criterion) |
 | `just bench-check` | Execute every benchmark once without measuring; this is what CI runs |
 
@@ -123,7 +124,7 @@ case, so `geco logs` and `geco restart` still work. Ctrl-C only stops watching a
 start running in the background. Without a terminal, or with `NO_COLOR` set, it returns as soon
 as the supervisor answers.
 
-Units and profiles (`minimal`, `full`, `prod-like`) are defined in `geco.toml` at the
+Units and profiles (`minimal`, `full`, `frost`, `prod-like`) are defined in `geco.toml` at the
 repository root; a profile can extend another and override local units. Switching profiles at
 runtime restarts the units whose definition or dependencies changed, together with the units
 that depend on them, and also starts units that were stopped or failed; everything else keeps
