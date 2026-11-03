@@ -25,6 +25,7 @@ pub mod auth;
 pub mod authorization;
 pub mod capacity;
 pub mod comment;
+pub mod data_export;
 pub mod error;
 pub mod event_bus;
 pub mod events;
