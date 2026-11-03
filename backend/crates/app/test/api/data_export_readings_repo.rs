@@ -82,7 +82,8 @@ async fn readings_after_the_cursor_come_with_target_ability_and_quality() {
     let rows = repo
         .readings_after(&irrigation_root(), Uuid::nil(), 10)
         .await
-        .unwrap();
+        .unwrap()
+        .rows;
     let ours: Vec<_> = rows.iter().filter(|r| r.sensor_id == sensor).collect();
 
     assert_eq!(ours.len(), 2);
@@ -109,6 +110,7 @@ async fn readings_after_the_cursor_come_with_target_ability_and_quality() {
         repo.readings_after(&irrigation_root(), reading, 10)
             .await
             .unwrap()
+            .rows
             .iter()
             .all(|r| r.sensor_id != sensor)
     );
@@ -117,6 +119,7 @@ async fn readings_after_the_cursor_come_with_target_ability_and_quality() {
         repo.readings_after(&waste_only, Uuid::nil(), 10)
             .await
             .unwrap()
+            .rows
             .iter()
             .all(|r| r.sensor_id != sensor)
     );
@@ -143,6 +146,15 @@ async fn the_cursor_is_fenced_by_the_target_generation() {
         .unwrap();
     assert_eq!(repo.cursor(Id::new(root())).await.unwrap(), Some(c));
 
+    repo.advance_cursor(Id::new(root()), a.target.activated_at, Uuid::nil())
+        .await
+        .unwrap();
+    assert_eq!(
+        repo.cursor(Id::new(root())).await.unwrap(),
+        Some(c),
+        "the cursor never moves backwards"
+    );
+
     tokio::time::sleep(std::time::Duration::from_millis(5)).await;
     repo.upsert(Id::new(root()), &cfg("https://b.example.org/v1.1"))
         .await
@@ -155,4 +167,39 @@ async fn the_cursor_is_fenced_by_the_target_generation() {
         None,
         "stale pass must not move the new cursor"
     );
+}
+
+#[tokio::test]
+async fn the_limit_counts_readings_and_value_less_readings_move_the_frontier() {
+    let app = spawn_app().await;
+    let repo = PgDataExportRepository::new(app.db_pool.clone());
+    let (sensor, _, first) = seed(&app).await;
+
+    let limited = repo
+        .readings_after(&irrigation_root(), first_before(first), 1)
+        .await
+        .unwrap();
+    assert_eq!(limited.scanned, 1);
+    assert_eq!(limited.rows.len(), 2);
+
+    let second = Uuid::now_v7();
+    sqlx::query("INSERT INTO sensor_data (id, sensor_id, data) VALUES ($1, $2, '{}')")
+        .bind(second)
+        .bind(&sensor)
+        .execute(&app.db_pool)
+        .await
+        .unwrap();
+    let batch = repo
+        .readings_after(&irrigation_root(), first, 10)
+        .await
+        .unwrap();
+    assert!(batch.rows.iter().all(|r| r.sensor_id != sensor));
+    // Other tests seed readings into the shared DB, so the frontier may lie beyond ours.
+    assert!(batch.scanned_until >= Some(second));
+    assert!(batch.scanned >= 1);
+}
+
+/// Seed data may hold older readings; start just below the fresh one.
+fn first_before(reading: Uuid) -> Uuid {
+    Uuid::from_u128(reading.as_u128() - 1)
 }

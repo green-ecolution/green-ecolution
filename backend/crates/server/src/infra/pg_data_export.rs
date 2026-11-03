@@ -10,7 +10,8 @@ use domain::{
     data_export::{
         ExportAuth, ExportEntity, ExportReading, ExportReadingSource, ExportRef, ExportRefReader,
         ExportRefWriter, ExportRunStore, ExportTargetConfig, ExportTargetReader,
-        ExportTargetSnapshot, ExportTargetWriter, RemoteId, RunResult, StoredExportTarget,
+        ExportTargetSnapshot, ExportTargetWriter, ReadingBatch, RemoteId, RunResult,
+        StoredExportTarget,
     },
     module::ModuleKey,
     organization::Organization,
@@ -357,7 +358,7 @@ impl ExportRunStore for PgDataExportRepository {
         cursor: Uuid,
     ) -> Result<(), RepositoryError> {
         sqlx::query!(
-            "UPDATE data_export_targets SET cursor_reading_id = $3 WHERE organization_id = $1 AND activated_at = $2",
+            "UPDATE data_export_targets SET cursor_reading_id = $3 WHERE organization_id = $1 AND activated_at = $2 AND (cursor_reading_id IS NULL OR cursor_reading_id < $3)",
             org.value(),
             generation,
             cursor,
@@ -376,12 +377,12 @@ impl ExportReadingSource for PgDataExportRepository {
         active: &[(ModuleKey, Id<Organization>)],
         after: Uuid,
         limit: i64,
-    ) -> Result<Vec<ExportReading>, RepositoryError> {
+    ) -> Result<ReadingBatch, RepositoryError> {
         let modules: Vec<String> = active.iter().map(|(m, _)| m.as_str().to_string()).collect();
         let orgs: Vec<Uuid> = active.iter().map(|(_, o)| o.value()).collect();
         let rows = sqlx::query!(
             r#"WITH active AS (
-                   SELECT * FROM unnest($1::text[], $2::uuid[]) AS a(module_key, organization_id)
+                   SELECT DISTINCT * FROM unnest($1::text[], $2::uuid[]) AS a(module_key, organization_id)
                ),
                batch AS (
                    SELECT d.id, d.sensor_id, a.module_key, a.target_kind, a.target_id, m.name AS model
@@ -396,12 +397,12 @@ impl ExportReadingSource for PgDataExportRepository {
                )
                SELECT b.id AS "reading_id!", b.sensor_id AS "sensor_id!", b.module_key AS "module_key!",
                       b.target_kind AS "target_kind!", b.target_id AS "target_id!", b.model AS "model!",
-                      ab.ability AS "ability!", ab.unit AS "unit!: SensorAbilityUnit", ma.depth_cm AS "depth_cm!",
-                      v.value::float8 AS "value!", v.plausible AS "plausible!", v.quality_reason
+                      ab.ability AS "ability?", ab.unit AS "unit?: SensorAbilityUnit", ma.depth_cm AS "depth_cm?",
+                      v.value::float8 AS "value?", v.plausible AS "plausible?", v.quality_reason
                FROM batch b
-               JOIN sensor_data_ability_values v ON v.sensor_data_id = b.id
-               JOIN sensor_model_abilities ma ON ma.id = v.sensor_model_ability_id
-               JOIN sensor_abilities ab ON ab.id = ma.sensor_ability_id
+               LEFT JOIN sensor_data_ability_values v ON v.sensor_data_id = b.id
+               LEFT JOIN sensor_model_abilities ma ON ma.id = v.sensor_model_ability_id
+               LEFT JOIN sensor_abilities ab ON ab.id = ma.sensor_ability_id
                ORDER BY b.id, ab.ability, ma.depth_cm"#,
             &modules,
             &orgs,
@@ -410,34 +411,55 @@ impl ExportReadingSource for PgDataExportRepository {
         )
         .fetch_all(&self.pool)
         .await?;
-        rows.into_iter()
-            .map(|r| {
+        let scanned_until = rows.iter().map(|r| r.reading_id).max();
+        let scanned = rows
+            .iter()
+            .map(|r| r.reading_id)
+            .collect::<std::collections::BTreeSet<_>>()
+            .len() as i64;
+        let rows = rows
+            .into_iter()
+            .filter_map(|r| {
+                let (ability, unit, depth_cm, value, plausible) = (
+                    r.ability.as_deref()?,
+                    r.unit?,
+                    r.depth_cm?,
+                    r.value?,
+                    r.plausible?,
+                );
                 let broken = |what: String| {
                     RepositoryError::DataIntegrity(format!(
                         "export reading {}: {what}",
                         r.reading_id
                     ))
                 };
-                Ok(ExportReading {
-                    reading_id: r.reading_id,
-                    sensor_id: r.sensor_id.clone(),
-                    sensor_model: r.model.clone(),
-                    target: TargetRef::new(&r.module_key, &r.target_kind, r.target_id)
-                        .map_err(|e| broken(e.to_string()))?,
-                    ability: SensorAbilityName::from_str(&r.ability)
-                        .map_err(|e| broken(e.to_string()))?,
-                    unit: r.unit,
-                    depth_cm: r.depth_cm,
-                    value: r.value,
-                    quality_issue: (!r.plausible).then(|| {
-                        r.quality_reason
-                            .clone()
-                            .unwrap_or_else(|| "implausible".into())
-                    }),
-                    measured_at: domain::uuid_v7_timestamp(&r.reading_id)
-                        .ok_or_else(|| broken("not a UUID v7".into()))?,
-                })
+                Some((|| {
+                    Ok(ExportReading {
+                        reading_id: r.reading_id,
+                        sensor_id: r.sensor_id.clone(),
+                        sensor_model: r.model.clone(),
+                        target: TargetRef::new(&r.module_key, &r.target_kind, r.target_id)
+                            .map_err(|e| broken(e.to_string()))?,
+                        ability: SensorAbilityName::from_str(ability)
+                            .map_err(|e| broken(e.to_string()))?,
+                        unit,
+                        depth_cm,
+                        value,
+                        quality_issue: (!plausible).then(|| {
+                            r.quality_reason
+                                .clone()
+                                .unwrap_or_else(|| "implausible".into())
+                        }),
+                        measured_at: domain::uuid_v7_timestamp(&r.reading_id)
+                            .ok_or_else(|| broken("not a UUID v7".into()))?,
+                    })
+                })())
             })
-            .collect()
+            .collect::<Result<Vec<_>, RepositoryError>>()?;
+        Ok(ReadingBatch {
+            rows,
+            scanned_until,
+            scanned,
+        })
     }
 }

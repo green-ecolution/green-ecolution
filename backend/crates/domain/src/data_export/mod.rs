@@ -22,8 +22,8 @@ pub use catalog::{
 };
 pub use error::DataExportError;
 pub use readings::{
-    BatchOutcome, ExportReading, ExportReadingSource, ObservationRow, RawStream, device_sensor_key,
-    raw_property, raw_stream_key, ucum, v7_floor,
+    BatchOutcome, ExportReading, ExportReadingSource, ObservationRow, RawStream, ReadingBatch,
+    device_sensor_key, raw_property, raw_stream_key, ucum, v7_floor,
 };
 pub use repository::{
     ConnectionOutcome, ConnectionReport, ConnectionTester, DATA_ARRAY_CONFORMANCE,

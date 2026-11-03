@@ -111,6 +111,15 @@ pub struct RawStream<'a> {
     pub observed_property: &'a RemoteId,
 }
 
+/// `scanned_until` is the largest `sensor_data` id the batch covered, value-less
+/// readings included; `scanned` is the number of `sensor_data` rows in it.
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct ReadingBatch {
+    pub rows: Vec<ExportReading>,
+    pub scanned_until: Option<Uuid>,
+    pub scanned: i64,
+}
+
 #[async_trait::async_trait]
 pub trait ExportReadingSource: Send + Sync {
     /// Every ability value of the next `limit` readings after `after` whose
@@ -120,7 +129,7 @@ pub trait ExportReadingSource: Send + Sync {
         active: &[(ModuleKey, Id<Organization>)],
         after: Uuid,
         limit: i64,
-    ) -> Result<Vec<ExportReading>, RepositoryError>;
+    ) -> Result<ReadingBatch, RepositoryError>;
 }
 
 #[cfg(test)]
