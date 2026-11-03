@@ -42,9 +42,13 @@ export interface DataExportFormValues {
   scope: string
 }
 
+// Secrets go out exactly as typed: whitespace may be part of a password.
+const secretOf = (value: string): string | undefined =>
+  value.trim().length > 0 ? value : undefined
+
 const authFrom = (values: DataExportFormValues): DataExportAuthRequest => {
-  const password = values.password.trim()
-  const clientSecret = values.clientSecret.trim()
+  const password = secretOf(values.password)
+  const clientSecret = secretOf(values.clientSecret)
   const scope = values.scope.trim()
   switch (values.authKind) {
     case 'none':

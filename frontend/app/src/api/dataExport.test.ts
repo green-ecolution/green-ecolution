@@ -68,7 +68,17 @@ describe('toDataExportRequest', () => {
     expect('scope' in request.auth).toBe(false)
   })
 
-  it('sends secret and scope when given', () => {
+  it('omits a whitespace-only password', () => {
+    const request = toDataExportRequest({
+      ...blank,
+      authKind: 'basic',
+      username: 'alice',
+      password: '   ',
+    })
+    expect('password' in request.auth).toBe(false)
+  })
+
+  it('sends secret untrimmed and scope trimmed when given', () => {
     const request = toDataExportRequest({
       ...blank,
       authKind: 'oauth2_client_credentials',
@@ -81,7 +91,7 @@ describe('toDataExportRequest', () => {
       kind: 'oauth2_client_credentials',
       tokenUrl: 'https://auth.example/token',
       clientId: 'client',
-      clientSecret: 's3',
+      clientSecret: ' s3 ',
       scope: 'read',
     })
   })

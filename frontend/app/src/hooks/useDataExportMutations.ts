@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { dataExportApi } from '@/api/backendApi'
-import { toDataExportRequest, type DataExportFormValues } from '@/api/dataExport'
+import { dataExportQueries, toDataExportRequest, type DataExportFormValues } from '@/api/dataExport'
 import createToast from '@/hooks/createToast'
 import { resolveApiError } from '@/lib/apiError'
 
@@ -11,7 +11,7 @@ export const useDataExportMutations = (orgId: string) => {
   const { t } = useTranslation('settings')
 
   const refresh = () =>
-    queryClient.invalidateQueries({ queryKey: ['organizations', orgId, 'data-export'] })
+    queryClient.invalidateQueries({ queryKey: dataExportQueries.byOrganization(orgId).queryKey })
 
   const showFailure = (error: unknown) => {
     void resolveApiError(error).then((info) => showToast(info.message, 'error'))
