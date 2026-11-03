@@ -1,5 +1,6 @@
 pub mod authorization;
 pub mod comment_service;
+pub mod data_export_service;
 pub mod event_bus;
 pub mod module_access;
 pub mod module_activation_service;
