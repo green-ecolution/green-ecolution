@@ -453,7 +453,7 @@ pub enum ConfigError {
     Source(#[from] config::ConfigError),
 }
 
-/// A configuration an environment must not run with. Both cases are a single
+/// A configuration an environment must not run with. Each case is a single
 /// mistyped override away and would disable a protection without any visible
 /// symptom, so the process refuses to start rather than serving traffic.
 #[derive(Debug, thiserror::Error, PartialEq, Eq)]
@@ -475,6 +475,13 @@ pub enum InsecureConfiguration {
          credentials for the data platform would travel unencrypted."
     )]
     InsecureDataExport { environment: &'static str },
+
+    #[error(
+        "data_export.enabled = true is refused in the {environment} environment while \
+         auth.enabled = false: anonymous callers could store data platform credentials and make \
+         the server send requests. Enable authentication or switch the data export off."
+    )]
+    AnonymousDataExport { environment: &'static str },
 }
 
 impl Settings {
@@ -509,13 +516,17 @@ impl Settings {
             return Err(InsecureConfiguration::WildcardCors { environment });
         }
 
-        if self
+        let internet_facing = self
             .application
             .environment
-            .requires_explicit_cors_origins()
-            && self.data_export.allow_insecure_http
-        {
+            .requires_explicit_cors_origins();
+
+        if internet_facing && self.data_export.allow_insecure_http {
             return Err(InsecureConfiguration::InsecureDataExport { environment });
+        }
+
+        if internet_facing && self.data_export.enabled && !self.auth.enabled {
+            return Err(InsecureConfiguration::AnonymousDataExport { environment });
         }
 
         Ok(())
@@ -836,6 +847,35 @@ mod tests {
                 Err(InsecureConfiguration::InsecureDataExport { environment: name })
             );
         }
+    }
+
+    #[test]
+    fn demo_refuses_the_data_export_without_authentication() {
+        let mut settings = settings_in(Environment::Demo, false, &REAL_ORIGIN);
+        settings.data_export.enabled = true;
+
+        assert_eq!(
+            settings.ensure_secure(),
+            Err(InsecureConfiguration::AnonymousDataExport {
+                environment: "demo"
+            })
+        );
+    }
+
+    #[test]
+    fn demo_without_authentication_may_run_with_the_data_export_off() {
+        let mut settings = settings_in(Environment::Demo, false, &REAL_ORIGIN);
+        settings.data_export.enabled = false;
+
+        assert_eq!(settings.ensure_secure(), Ok(()));
+    }
+
+    #[test]
+    fn local_may_export_without_authentication() {
+        let mut settings = settings_in(Environment::Local, false, &REAL_ORIGIN);
+        settings.data_export.enabled = true;
+
+        assert_eq!(settings.ensure_secure(), Ok(()));
     }
 
     #[test]
