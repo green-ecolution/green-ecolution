@@ -11,7 +11,7 @@ use domain::data_export::{
 
 use crate::service::ServiceError;
 
-/// No `Debug`: the request carries the plaintext secret.
+// No `Debug`: the request carries the plaintext secret.
 #[derive(Deserialize, utoipa::ToSchema)]
 pub struct DataExportTargetRequest {
     pub enabled: bool,
@@ -66,12 +66,15 @@ impl TryFrom<DataExportTargetRequest> for ExportTargetDraft {
                 client_secret: client_secret
                     .map(|s| ExportSecret::new("data_export.auth.client_secret", s))
                     .transpose()?,
-                scope: scope.map(ExportScope::new).transpose()?,
+                scope: scope
+                    .filter(|s| !s.trim().is_empty())
+                    .map(ExportScope::new)
+                    .transpose()?,
             },
         };
         Ok(Self {
             enabled: req.enabled,
-            base_url: ExportUrl::new(BASE_URL_FIELD, &req.base_url)?,
+            base_url: ExportUrl::service_root(BASE_URL_FIELD, &req.base_url)?,
             auth,
         })
     }
@@ -208,5 +211,47 @@ impl From<ConnectionReport> for ConnectionTestResponse {
             data_array_supported: r.data_array_supported,
             detail: r.detail,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    fn oauth_request(scope: Option<&str>) -> DataExportTargetRequest {
+        serde_json::from_value(json!({
+            "enabled": true,
+            "base_url": "https://frost.example.org/v1.1/",
+            "auth": { "kind": "oauth2_client_credentials",
+                      "token_url": "https://auth.example.org/token",
+                      "client_id": "ge", "client_secret": "s", "scope": scope }
+        }))
+        .unwrap()
+    }
+
+    fn scope_of(draft: &ExportTargetDraft) -> Option<&str> {
+        match &draft.auth {
+            ExportAuthDraft::OAuth2ClientCredentials { scope, .. } => {
+                scope.as_ref().map(|s| s.as_str())
+            }
+            _ => panic!("expected an OAuth2 draft"),
+        }
+    }
+
+    #[test]
+    fn a_blank_scope_means_no_scope() {
+        for blank in [Some(""), Some("   "), None] {
+            let draft = ExportTargetDraft::try_from(oauth_request(blank)).unwrap();
+            assert_eq!(scope_of(&draft), None, "{blank:?}");
+        }
+        let draft = ExportTargetDraft::try_from(oauth_request(Some("export"))).unwrap();
+        assert_eq!(scope_of(&draft), Some("export"));
+    }
+
+    #[test]
+    fn the_base_url_is_stored_as_a_service_root() {
+        let draft = ExportTargetDraft::try_from(oauth_request(None)).unwrap();
+        assert_eq!(draft.base_url.as_str(), "https://frost.example.org/v1.1");
     }
 }

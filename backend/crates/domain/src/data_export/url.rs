@@ -15,12 +15,13 @@ impl ExportUrl {
         if raw.is_empty() {
             return Err(ValidationError::EmptyString { field });
         }
+        let too_long = |got: usize| ValidationError::TooLong {
+            field,
+            max: MAX_URL_LEN,
+            got,
+        };
         if raw.len() > MAX_URL_LEN {
-            return Err(ValidationError::TooLong {
-                field,
-                max: MAX_URL_LEN,
-                got: raw.len(),
-            });
+            return Err(too_long(raw.len()));
         }
         let invalid = |reason: &str| ValidationError::InvalidFormat {
             field,
@@ -39,6 +40,20 @@ impl ExportUrl {
         if url.query().is_some() || url.fragment().is_some() {
             return Err(invalid("must not carry a query or fragment"));
         }
+        // Percent-encoding can push a short input past the limit.
+        if url.as_str().len() > MAX_URL_LEN {
+            return Err(too_long(url.as_str().len()));
+        }
+        Ok(Self(url))
+    }
+
+    /// A SensorThings service root, spelled without a trailing `/` so that
+    /// `…/v1.1/` and `…/v1.1` are one target. Not for token URLs, where the
+    /// slash may be significant and redirects are not followed.
+    pub fn service_root(field: &'static str, raw: &str) -> Result<Self, ValidationError> {
+        let mut url = Self::new(field, raw)?.0;
+        let path = url.path().trim_end_matches('/').to_string();
+        url.set_path(&path);
         Ok(Self(url))
     }
 
@@ -167,6 +182,50 @@ mod tests {
                 ..
             })
         ));
+    }
+
+    #[test]
+    fn the_limit_applies_to_the_encoded_url() {
+        let raw = format!("https://frost.example.org/{}", "ä".repeat(1000));
+        assert!(raw.len() <= MAX_URL_LEN);
+        assert!(matches!(
+            ExportUrl::new(F, &raw),
+            Err(ValidationError::TooLong {
+                field: F,
+                max: 2048,
+                ..
+            })
+        ));
+    }
+
+    #[test]
+    fn a_service_root_drops_its_trailing_slash_except_for_the_root() {
+        let root = |raw| ExportUrl::service_root(F, raw).unwrap();
+        assert_eq!(
+            root("https://frost.example.org/FROST-Server/v1.1/").as_str(),
+            "https://frost.example.org/FROST-Server/v1.1"
+        );
+        assert_eq!(
+            root("https://frost.example.org/v1.1//").as_str(),
+            "https://frost.example.org/v1.1"
+        );
+        assert_eq!(
+            root("https://frost.example.org/").as_str(),
+            "https://frost.example.org/"
+        );
+        assert_eq!(
+            root("https://frost.example.org").as_str(),
+            "https://frost.example.org/"
+        );
+        assert!(ExportUrl::service_root(F, "https://user@frost.example.org/v1.1").is_err());
+    }
+
+    #[test]
+    fn other_urls_keep_their_trailing_slash() {
+        assert_eq!(
+            url("https://auth.example.org/o/token/").as_str(),
+            "https://auth.example.org/o/token/"
+        );
     }
 
     #[test]
