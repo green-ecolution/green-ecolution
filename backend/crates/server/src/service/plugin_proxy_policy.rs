@@ -1,4 +1,5 @@
 use domain::plugin::ServiceEndpoint;
+use domain::shared::dns::is_dns_name;
 
 /// Which in-cluster services a `proxied` plugin may point at. Without it an
 /// administrator could aim the proxy at the cloud metadata endpoint or any
@@ -24,10 +25,7 @@ impl ProxyPolicy {
         }
     }
 
-    /// The suffix match alone is not enough: a URL parser reads characters
-    /// like `\`, `?` or `@` as delimiters, so a host that ends in an allowed
-    /// suffix could still resolve to a different machine. Only a plain DNS
-    /// name gets compared at all.
+    /// Only a plain DNS name is compared at all, see [`is_dns_name`].
     pub fn allows(&self, endpoint: &ServiceEndpoint) -> bool {
         let host = endpoint.host().to_ascii_lowercase();
         is_dns_name(&host)
@@ -39,18 +37,6 @@ impl ProxyPolicy {
                         .is_some_and(|rest| rest.ends_with('.'))
             })
     }
-}
-
-fn is_dns_name(host: &str) -> bool {
-    host.len() <= 253
-        && host.split('.').all(|label| {
-            (1..=63).contains(&label.len())
-                && !label.starts_with('-')
-                && !label.ends_with('-')
-                && label
-                    .bytes()
-                    .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'-')
-        })
 }
 
 #[cfg(test)]

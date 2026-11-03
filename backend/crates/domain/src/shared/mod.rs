@@ -9,6 +9,7 @@
 pub mod address;
 pub mod coordinates;
 pub mod distance;
+pub mod dns;
 pub mod email;
 pub mod error;
 pub mod geo;
