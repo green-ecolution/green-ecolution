@@ -2,7 +2,7 @@
 //! against the refs of the last pass, and only the differences are written.
 
 use std::{
-    collections::{BTreeSet, HashMap, HashSet},
+    collections::{BTreeMap, BTreeSet, HashMap, HashSet},
     sync::Arc,
     time::{Duration, Instant},
 };
@@ -11,14 +11,17 @@ use chrono::{DateTime, Utc};
 use domain::{
     Id, RepositoryError,
     data_export::{
-        ExportEntity, ExportProperty, ExportRef, ExportRefReader, ExportRefWriter, ExportRunStats,
-        ExportRunStore, ExportState, ExportTargetConfig, ExportThing, RemoteId, RunResult,
-        SENSOR_KEY, SensorThingsSink, SinkError, SinkSession, StateStream, export_scope,
-        location_key, property_key, state_stream_key,
+        ExportEntity, ExportProperty, ExportReading, ExportReadingSource, ExportRef,
+        ExportRefReader, ExportRefWriter, ExportRunStats, ExportRunStore, ExportState,
+        ExportTargetConfig, ExportThing, ObservationRow, RawStream, RemoteId, RunResult,
+        SENSOR_KEY, SensorThingsSink, SinkError, SinkSession, StateStream, device_sensor_key,
+        export_scope, ge_key, location_key, property_key, raw_property, raw_stream_key,
+        state_stream_key, v7_floor,
     },
     module::{ModuleActivationReader, ModuleKey},
     organization::{Organization, OrganizationReader},
 };
+use serde_json::{Map, Value};
 
 use super::export_registry::ExportRegistry;
 
@@ -29,6 +32,8 @@ const LEASE_MARGIN_SECS: i64 = 60;
 pub struct SyncSettings {
     pub interval_secs: i64,
     pub run_budget: Duration,
+    /// Readings per batch; values below 1 are read as 1.
+    pub batch_size: i64,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -43,6 +48,7 @@ pub struct DataExportSync {
     runs: Arc<dyn ExportRunStore>,
     refs: Arc<dyn ExportRefReader>,
     ref_writer: Arc<dyn ExportRefWriter>,
+    readings: Arc<dyn ExportReadingSource>,
     sink: Arc<dyn SensorThingsSink>,
     registry: Arc<ExportRegistry>,
     activation: Arc<dyn ModuleActivationReader>,
@@ -56,6 +62,7 @@ impl DataExportSync {
         runs: Arc<dyn ExportRunStore>,
         refs: Arc<dyn ExportRefReader>,
         ref_writer: Arc<dyn ExportRefWriter>,
+        readings: Arc<dyn ExportReadingSource>,
         sink: Arc<dyn SensorThingsSink>,
         registry: Arc<ExportRegistry>,
         activation: Arc<dyn ModuleActivationReader>,
@@ -66,11 +73,15 @@ impl DataExportSync {
             runs,
             refs,
             ref_writer,
+            readings,
             sink,
             registry,
             activation,
             organizations,
-            settings,
+            settings: SyncSettings {
+                batch_size: settings.batch_size.max(1),
+                ..settings
+            },
         }
     }
 
@@ -141,11 +152,14 @@ impl DataExportSync {
             session,
             refs: self.refs.refs(org).await?,
             writer: self.ref_writer.as_ref(),
+            runs: self.runs.as_ref(),
+            readings: self.readings.as_ref(),
             stats: ExportRunStats::default(),
             started,
             budget: self.settings.run_budget,
         };
         let sensor = pass.sensor().await?;
+        let mut raw = RawScope::default();
         for (module, catalog) in self.registry.catalogs() {
             if pass.out_of_budget() {
                 break;
@@ -157,7 +171,11 @@ impl DataExportSync {
                 continue;
             }
             let things = catalog.snapshot(&active).await?;
+            raw.add(&module, &active, &things);
             pass.module(&module, &things, &sensor).await?;
+        }
+        if !pass.out_of_budget() {
+            pass.raw_phase(&raw, self.settings.batch_size).await?;
         }
         Ok(pass.stats)
     }
@@ -180,9 +198,58 @@ struct Pass<'a> {
     session: Box<dyn SinkSession>,
     refs: HashMap<String, ExportRef>,
     writer: &'a dyn ExportRefWriter,
+    runs: &'a dyn ExportRunStore,
+    readings: &'a dyn ExportReadingSource,
     stats: ExportRunStats,
     started: Instant,
     budget: Duration,
+}
+
+struct SnapshotThing {
+    name: String,
+    located: bool,
+}
+
+/// What the things phase saw, so readings go only to things exported in this pass.
+#[derive(Default)]
+struct RawScope {
+    active: Vec<(ModuleKey, Id<Organization>)>,
+    things: HashMap<String, SnapshotThing>,
+}
+
+impl RawScope {
+    fn add(
+        &mut self,
+        module: &ModuleKey,
+        active: &BTreeSet<Id<Organization>>,
+        things: &[ExportThing],
+    ) {
+        self.active
+            .extend(active.iter().map(|org| (module.clone(), *org)));
+        self.things.extend(things.iter().map(|t| {
+            let seen = SnapshotThing {
+                name: t.name.clone(),
+                located: t.coordinate.is_some(),
+            };
+            (t.key(), seen)
+        }));
+    }
+}
+
+fn observation_row(reading: &ExportReading) -> ObservationRow {
+    let mut parameters = Map::new();
+    parameters.insert(
+        "ge_reading_id".into(),
+        Value::String(reading.reading_id.to_string()),
+    );
+    if let Some(issue) = &reading.quality_issue {
+        parameters.insert("quality_issue".into(), Value::String(issue.clone()));
+    }
+    ObservationRow {
+        phenomenon_time: reading.measured_at,
+        result: reading.value,
+        parameters,
+    }
 }
 
 fn plain_ref(ge_key: impl Into<String>, entity: ExportEntity, remote_id: RemoteId) -> ExportRef {
@@ -267,6 +334,11 @@ impl Pass<'_> {
             return Ok(());
         };
         self.locate(&key, &id, thing).await?;
+        // FROST derives an Observation's FeatureOfInterest from the Thing's Location
+        // and rejects every Observation of a Thing without one.
+        if thing.coordinate.is_none() {
+            return Ok(());
+        }
         for state in &thing.states {
             self.state(&key, &id, thing, state, sensor).await?;
         }
@@ -465,6 +537,142 @@ impl Pass<'_> {
         }
         Ok(())
     }
+
+    /// The cursor moves only after a batch was posted, so a pass that ends early
+    /// resends at most the last batch.
+    #[tracing::instrument(level = "debug", skip_all, fields(organization.id = %self.org))]
+    async fn raw_phase(&mut self, scope: &RawScope, batch_size: i64) -> Result<(), SyncError> {
+        let mut cursor = match self.runs.cursor(self.org).await? {
+            Some(cursor) => cursor,
+            None => v7_floor(self.generation),
+        };
+        while !self.out_of_budget() {
+            let batch = self
+                .readings
+                .readings_after(&scope.active, cursor, batch_size)
+                .await?;
+            let Some(until) = batch.scanned_until.filter(|_| batch.scanned > 0) else {
+                return Ok(());
+            };
+            self.raw_batch(&batch.rows, scope).await?;
+            self.runs
+                .advance_cursor(self.org, self.generation, until)
+                .await?;
+            cursor = until;
+            if batch.scanned < batch_size {
+                return Ok(());
+            }
+        }
+        Ok(())
+    }
+
+    async fn raw_batch(
+        &mut self,
+        rows: &[ExportReading],
+        scope: &RawScope,
+    ) -> Result<(), SyncError> {
+        let mut streams: BTreeMap<String, (RemoteId, Vec<ObservationRow>)> = BTreeMap::new();
+        for row in rows {
+            let Some((key, datastream)) = self.raw_row(row, scope).await? else {
+                continue;
+            };
+            streams
+                .entry(key)
+                .or_insert_with(|| (datastream, Vec::new()))
+                .1
+                .push(observation_row(row));
+        }
+        if streams.is_empty() {
+            return Ok(());
+        }
+        let batches: Vec<_> = streams.into_values().collect();
+        let outcome = self.session.post_observation_batches(&batches).await?;
+        self.stats.observations_written += outcome.accepted;
+        self.stats.skipped += outcome.rejected;
+        Ok(())
+    }
+
+    /// The datastream a reading goes to, or `None` (counted as skipped) when its
+    /// Thing is not exported in this pass or a remote entity was rejected.
+    async fn raw_row(
+        &mut self,
+        row: &ExportReading,
+        scope: &RawScope,
+    ) -> Result<Option<(String, RemoteId)>, SyncError> {
+        let thing_key = ge_key(&row.target);
+        let thing_id = self
+            .refs
+            .get(&thing_key)
+            .filter(|r| r.entity == ExportEntity::Thing)
+            .map(|r| r.remote_id.clone());
+        let exported = scope.things.get(&thing_key).filter(|t| t.located);
+        let Some((thing, thing_id)) = exported.zip(thing_id) else {
+            self.stats.skipped += 1;
+            return Ok(None);
+        };
+        // serde_json would send NaN or infinity as a null result.
+        if !row.value.is_finite() {
+            self.stats.skipped += 1;
+            return Ok(None);
+        }
+        let key = raw_stream_key(row);
+        if let Some(existing) = self.refs.get(&key) {
+            return Ok(Some((key, existing.remote_id.clone())));
+        }
+        let id = self
+            .raw_datastream(row, &key, &thing.name, &thing_id)
+            .await?;
+        Ok(id.map(|id| (key, id)))
+    }
+
+    async fn raw_datastream(
+        &mut self,
+        row: &ExportReading,
+        key: &str,
+        thing_name: &str,
+        thing: &RemoteId,
+    ) -> Result<Option<RemoteId>, SyncError> {
+        let Some(sensor) = self.device_sensor(row).await? else {
+            return Ok(None);
+        };
+        let property = raw_property(row.ability, row.unit);
+        let Some(observed_property) = self.observed_property(&property).await? else {
+            return Ok(None);
+        };
+        let name = format!("{thing_name} · {} {} cm", property.label, row.depth_cm);
+        let stream = RawStream {
+            ge_key: key,
+            name: &name,
+            thing,
+            property: &property,
+            sensor: &sensor,
+            observed_property: &observed_property,
+        };
+        let ensured = self.session.ensure_raw_datastream(&stream).await;
+        let Some(id) = self.tolerate(key, ensured)? else {
+            return Ok(None);
+        };
+        self.remember(plain_ref(key, ExportEntity::Datastream, id.clone()))
+            .await?;
+        Ok(Some(id))
+    }
+
+    async fn device_sensor(&mut self, row: &ExportReading) -> Result<Option<RemoteId>, SyncError> {
+        let key = device_sensor_key(&row.sensor_id);
+        if let Some(existing) = self.refs.get(&key) {
+            return Ok(Some(existing.remote_id.clone()));
+        }
+        let ensured = self
+            .session
+            .ensure_device_sensor(&row.sensor_id, &row.sensor_model)
+            .await;
+        let Some(id) = self.tolerate(&key, ensured)? else {
+            return Ok(None);
+        };
+        self.remember(plain_ref(key, ExportEntity::Sensor, id.clone()))
+            .await?;
+        Ok(Some(id))
+    }
 }
 
 #[cfg(test)]
@@ -481,6 +689,7 @@ mod tests {
         data_export::*,
         module::{ActivationResolution, ModuleActivationReader, ModuleKey, OwnSwitch},
         organization::{Organization, OrganizationReader, OrganizationResourceCounts},
+        sensor_model::{SensorAbilityName, SensorAbilityUnit},
         shared::coordinates::Coordinate,
         target::TargetRef,
     };
@@ -502,6 +711,8 @@ mod tests {
         targets: BTreeSet<Id<Organization>>,
         finished: Mutex<Vec<(DateTime<Utc>, RunResult)>>,
         leasable: bool,
+        cursor: Mutex<Option<Uuid>>,
+        advanced: Mutex<Vec<(DateTime<Utc>, Uuid)>>,
     }
 
     impl Runs {
@@ -557,16 +768,41 @@ mod tests {
                 .push((generation, result.clone()));
             Ok(())
         }
-        async fn cursor(&self, _: Id<Organization>) -> Result<Option<uuid::Uuid>, RepositoryError> {
-            Ok(None)
+        async fn cursor(&self, _: Id<Organization>) -> Result<Option<Uuid>, RepositoryError> {
+            Ok(*self.cursor.lock().unwrap())
         }
         async fn advance_cursor(
             &self,
             _: Id<Organization>,
-            _: DateTime<Utc>,
-            _: uuid::Uuid,
+            generation: DateTime<Utc>,
+            cursor: Uuid,
         ) -> Result<(), RepositoryError> {
+            *self.cursor.lock().unwrap() = Some(cursor);
+            self.advanced.lock().unwrap().push((generation, cursor));
             Ok(())
+        }
+    }
+
+    #[derive(Default)]
+    struct Readings {
+        batches: Mutex<std::collections::VecDeque<ReadingBatch>>,
+        afters: Mutex<Vec<Uuid>>,
+        limits: Mutex<Vec<i64>>,
+        active: Mutex<Vec<(ModuleKey, Id<Organization>)>>,
+    }
+
+    #[async_trait::async_trait]
+    impl ExportReadingSource for Readings {
+        async fn readings_after(
+            &self,
+            active: &[(ModuleKey, Id<Organization>)],
+            after: Uuid,
+            limit: i64,
+        ) -> Result<ReadingBatch, RepositoryError> {
+            self.afters.lock().unwrap().push(after);
+            self.limits.lock().unwrap().push(limit);
+            *self.active.lock().unwrap() = active.to_vec();
+            Ok(self.batches.lock().unwrap().pop_front().unwrap_or_default())
         }
     }
 
@@ -617,6 +853,9 @@ mod tests {
         unreachable: bool,
         adopts_existing: bool,
         reject_sensor: bool,
+        rejected_rows: u32,
+        batch_error: Option<SinkError>,
+        reject_raw_datastreams: bool,
     }
 
     struct Session {
@@ -624,6 +863,9 @@ mod tests {
         reject_observations: bool,
         adopts_existing: bool,
         reject_sensor: bool,
+        rejected_rows: u32,
+        batch_error: Option<SinkError>,
+        reject_raw_datastreams: bool,
     }
 
     #[async_trait::async_trait]
@@ -637,6 +879,9 @@ mod tests {
                 reject_observations: self.reject_observations,
                 adopts_existing: self.adopts_existing,
                 reject_sensor: self.reject_sensor,
+                rejected_rows: self.rejected_rows,
+                batch_error: self.batch_error.clone(),
+                reject_raw_datastreams: self.reject_raw_datastreams,
             }))
         }
     }
@@ -713,6 +958,12 @@ mod tests {
             Ok(RemoteId(json!(sensor_id)))
         }
         async fn ensure_raw_datastream(&self, s: &RawStream<'_>) -> Result<RemoteId, SinkError> {
+            if self.reject_raw_datastreams {
+                return Err(SinkError::Rejected {
+                    status: 400,
+                    detail: "no".into(),
+                });
+            }
             Ok(RemoteId(json!(s.ge_key)))
         }
         async fn post_observation_batches(
@@ -721,9 +972,13 @@ mod tests {
         ) -> Result<BatchOutcome, SinkError> {
             let n = batches.iter().map(|(_, r)| r.len()).sum::<usize>();
             self.calls.lock().unwrap().push(Call::Batch(n));
+            if let Some(e) = &self.batch_error {
+                return Err(e.clone());
+            }
+            let n = u32::try_from(n).unwrap();
             Ok(BatchOutcome {
-                accepted: u32::try_from(n).unwrap_or(u32::MAX),
-                rejected: 0,
+                accepted: n - self.rejected_rows,
+                rejected: self.rejected_rows,
             })
         }
     }
@@ -806,12 +1061,67 @@ mod tests {
         }
     }
 
+    fn reading(n: u128, thing: u128, ability: SensorAbilityName, value: f64) -> ExportReading {
+        let unit = match ability {
+            SensorAbilityName::Battery => SensorAbilityUnit::Volt,
+            _ => SensorAbilityUnit::Percent,
+        };
+        ExportReading {
+            reading_id: Uuid::from_u128(n),
+            sensor_id: "eui-1".into(),
+            sensor_model: "GES-1000".into(),
+            target: TargetRef::new("irrigation", "tree", Uuid::from_u128(thing)).unwrap(),
+            ability,
+            unit,
+            depth_cm: 40,
+            value,
+            quality_issue: None,
+            measured_at: generation(),
+        }
+    }
+
+    fn batch(rows: Vec<ExportReading>) -> ReadingBatch {
+        let ids: BTreeSet<Uuid> = rows.iter().map(|r| r.reading_id).collect();
+        ReadingBatch {
+            scanned_until: ids.last().copied(),
+            scanned: i64::try_from(ids.len()).unwrap(),
+            rows,
+        }
+    }
+
     struct Fixture {
         sync: DataExportSync,
         sink_calls: Arc<Mutex<Vec<Call>>>,
         catalog: Arc<Catalog>,
         runs: Arc<Runs>,
         refs: Arc<Refs>,
+        readings: Arc<Readings>,
+    }
+
+    struct Setup {
+        things: Vec<ExportThing>,
+        active: Vec<u128>,
+        sink: Sink,
+        refs: Arc<Refs>,
+        leasable: bool,
+        run_budget: std::time::Duration,
+        readings: Vec<ReadingBatch>,
+        batch_size: i64,
+    }
+
+    impl Default for Setup {
+        fn default() -> Self {
+            Self {
+                things: vec![],
+                active: vec![1],
+                sink: Sink::default(),
+                refs: Arc::new(Refs::default()),
+                leasable: true,
+                run_budget: std::time::Duration::from_secs(60),
+                readings: vec![],
+                batch_size: 100,
+            }
+        }
     }
 
     fn fixture(things: Vec<ExportThing>, active: &[u128], sink: Sink) -> Fixture {
@@ -826,14 +1136,14 @@ mod tests {
         refs: Arc<Refs>,
         leasable: bool,
     ) -> Fixture {
-        fixture_budget(
+        build(Setup {
             things,
-            active,
+            active: active.to_vec(),
             sink,
             refs,
             leasable,
-            std::time::Duration::from_secs(60),
-        )
+            ..Setup::default()
+        })
     }
 
     fn fixture_budget(
@@ -844,9 +1154,35 @@ mod tests {
         leasable: bool,
         run_budget: std::time::Duration,
     ) -> Fixture {
+        build(Setup {
+            things,
+            active: active.to_vec(),
+            sink,
+            refs,
+            leasable,
+            run_budget,
+            ..Setup::default()
+        })
+    }
+
+    fn build(setup: Setup) -> Fixture {
+        let Setup {
+            things,
+            active,
+            sink,
+            refs,
+            leasable,
+            run_budget,
+            readings,
+            batch_size,
+        } = setup;
         let runs = Arc::new(Runs {
             targets: BTreeSet::from([org(1)]),
             leasable,
+            ..Default::default()
+        });
+        let readings = Arc::new(Readings {
+            batches: Mutex::new(readings.into()),
             ..Default::default()
         });
         let catalog = Arc::new(Catalog(Mutex::new(things)));
@@ -862,6 +1198,7 @@ mod tests {
             runs.clone(),
             refs.clone(),
             refs.clone(),
+            readings.clone(),
             Arc::new(sink),
             registry,
             Arc::new(Activation(active.iter().map(|n| org(*n)).collect())),
@@ -869,6 +1206,7 @@ mod tests {
             SyncSettings {
                 interval_secs: 300,
                 run_budget,
+                batch_size,
             },
         );
         Fixture {
@@ -877,6 +1215,7 @@ mod tests {
             catalog,
             runs,
             refs,
+            readings,
         }
     }
 
@@ -1078,7 +1417,16 @@ mod tests {
 
     #[tokio::test]
     async fn every_write_carries_the_leased_generation() {
-        let f = fixture(vec![tree(1, "good")], &[1], Sink::default());
+        let f = build(Setup {
+            things: vec![tree(1, "good")],
+            readings: vec![batch(vec![reading(
+                10,
+                1,
+                SensorAbilityName::SoilMoisture,
+                31.5,
+            )])],
+            ..Setup::default()
+        });
 
         f.sync.sync(org(1)).await.unwrap();
 
@@ -1087,6 +1435,336 @@ mod tests {
             BTreeSet::from([generation()])
         );
         assert_eq!(f.runs.finished.lock().unwrap()[0].0, generation());
+        assert_eq!(
+            *f.runs.advanced.lock().unwrap(),
+            vec![(generation(), Uuid::from_u128(10))]
+        );
+    }
+
+    #[tokio::test]
+    async fn readings_of_an_exported_thing_go_out_as_one_batch_and_move_the_cursor() {
+        let f = build(Setup {
+            things: vec![tree(1, "good")],
+            readings: vec![batch(vec![
+                reading(10, 1, SensorAbilityName::SoilMoisture, 31.5),
+                reading(10, 1, SensorAbilityName::Battery, 3.6),
+            ])],
+            ..Setup::default()
+        });
+
+        let stats = f.sync.sync(org(1)).await.unwrap().unwrap();
+
+        assert_eq!(
+            calls(&f),
+            vec![
+                Call::Create(tree(1, "good").key()),
+                Call::Observation(json!("good")),
+                Call::Batch(2)
+            ]
+        );
+        assert_eq!(stats.observations_written, 3);
+        assert_eq!(stats.skipped, 0);
+        assert_eq!(
+            *f.readings.active.lock().unwrap(),
+            vec![(ModuleKey::new("irrigation").unwrap(), org(1))]
+        );
+        assert_eq!(*f.runs.cursor.lock().unwrap(), Some(Uuid::from_u128(10)));
+        let refs = f.refs.map.lock().unwrap();
+        assert_eq!(refs["device:eui-1"].entity, ExportEntity::Sensor);
+        let stream = raw_stream_key(&reading(10, 1, SensorAbilityName::Battery, 3.6));
+        assert_eq!(refs[&stream].entity, ExportEntity::Datastream);
+    }
+
+    #[tokio::test]
+    async fn readings_of_unknown_things_are_skipped_but_passed_by_the_cursor() {
+        let f = build(Setup {
+            things: vec![tree(1, "good")],
+            readings: vec![batch(vec![reading(
+                10,
+                9,
+                SensorAbilityName::SoilMoisture,
+                31.5,
+            )])],
+            ..Setup::default()
+        });
+
+        let stats = f.sync.sync(org(1)).await.unwrap().unwrap();
+
+        assert!(!calls(&f).iter().any(|c| matches!(c, Call::Batch(_))));
+        assert_eq!(stats.skipped, 1);
+        assert_eq!(*f.runs.cursor.lock().unwrap(), Some(Uuid::from_u128(10)));
+    }
+
+    #[tokio::test]
+    async fn a_thing_without_coordinate_gets_neither_states_nor_readings() {
+        let mut unlocated = tree(1, "good");
+        unlocated.coordinate = None;
+        let f = build(Setup {
+            things: vec![unlocated.clone()],
+            readings: vec![batch(vec![reading(
+                10,
+                1,
+                SensorAbilityName::SoilMoisture,
+                31.5,
+            )])],
+            ..Setup::default()
+        });
+
+        let stats = f.sync.sync(org(1)).await.unwrap().unwrap();
+
+        assert_eq!(calls(&f), vec![Call::Create(unlocated.key())]);
+        assert_eq!(stats.observations_written, 0);
+        assert_eq!(stats.skipped, 1);
+        let refs = f.refs.map.lock().unwrap();
+        assert!(!refs.keys().any(|k| k.starts_with("state:")));
+    }
+
+    #[tokio::test]
+    async fn the_cursor_starts_at_the_activation_when_unset() {
+        let f = build(Setup {
+            things: vec![tree(1, "good")],
+            ..Setup::default()
+        });
+
+        f.sync.sync(org(1)).await.unwrap();
+
+        assert_eq!(
+            *f.readings.afters.lock().unwrap(),
+            vec![v7_floor(generation())]
+        );
+        assert!(f.runs.advanced.lock().unwrap().is_empty());
+    }
+
+    #[tokio::test]
+    async fn a_stored_cursor_is_where_the_next_pass_continues() {
+        let f = build(Setup {
+            things: vec![tree(1, "good")],
+            ..Setup::default()
+        });
+        *f.runs.cursor.lock().unwrap() = Some(Uuid::from_u128(7));
+
+        f.sync.sync(org(1)).await.unwrap();
+
+        assert_eq!(*f.readings.afters.lock().unwrap(), vec![Uuid::from_u128(7)]);
+    }
+
+    #[tokio::test]
+    async fn full_batches_are_read_until_a_short_one() {
+        let f = build(Setup {
+            things: vec![tree(1, "good")],
+            readings: vec![
+                batch(vec![reading(10, 1, SensorAbilityName::SoilMoisture, 31.5)]),
+                batch(vec![reading(11, 1, SensorAbilityName::SoilMoisture, 30.5)]),
+            ],
+            batch_size: 1,
+            ..Setup::default()
+        });
+
+        f.sync.sync(org(1)).await.unwrap();
+
+        assert_eq!(
+            *f.readings.afters.lock().unwrap(),
+            vec![
+                v7_floor(generation()),
+                Uuid::from_u128(10),
+                Uuid::from_u128(11)
+            ]
+        );
+        assert_eq!(*f.runs.cursor.lock().unwrap(), Some(Uuid::from_u128(11)));
+    }
+
+    #[tokio::test]
+    async fn a_batch_size_below_one_still_reads_one_reading_per_batch() {
+        let f = build(Setup {
+            things: vec![tree(1, "good")],
+            readings: vec![batch(vec![reading(
+                10,
+                1,
+                SensorAbilityName::SoilMoisture,
+                31.5,
+            )])],
+            batch_size: 0,
+            ..Setup::default()
+        });
+
+        f.sync.sync(org(1)).await.unwrap();
+
+        assert_eq!(*f.readings.limits.lock().unwrap(), vec![1, 1]);
+        assert_eq!(*f.runs.cursor.lock().unwrap(), Some(Uuid::from_u128(10)));
+    }
+
+    #[tokio::test]
+    async fn a_rejected_observation_row_counts_as_skipped() {
+        let f = build(Setup {
+            things: vec![tree(1, "good")],
+            sink: Sink {
+                rejected_rows: 1,
+                ..Default::default()
+            },
+            readings: vec![batch(vec![
+                reading(10, 1, SensorAbilityName::SoilMoisture, 31.5),
+                reading(10, 1, SensorAbilityName::Battery, 3.6),
+            ])],
+            ..Setup::default()
+        });
+
+        let stats = f.sync.sync(org(1)).await.unwrap().unwrap();
+
+        assert_eq!(stats.skipped, 1);
+        assert_eq!(stats.observations_written, 2);
+        assert!(matches!(f.runs.results()[0], RunResult::Succeeded(_)));
+        assert_eq!(*f.runs.cursor.lock().unwrap(), Some(Uuid::from_u128(10)));
+    }
+
+    #[tokio::test]
+    async fn a_non_finite_value_is_skipped_instead_of_sent() {
+        let f = build(Setup {
+            things: vec![tree(1, "good")],
+            readings: vec![batch(vec![reading(
+                10,
+                1,
+                SensorAbilityName::SoilMoisture,
+                f64::NAN,
+            )])],
+            ..Setup::default()
+        });
+
+        let stats = f.sync.sync(org(1)).await.unwrap().unwrap();
+
+        assert!(!calls(&f).iter().any(|c| matches!(c, Call::Batch(_))));
+        assert_eq!(stats.skipped, 1);
+        assert_eq!(*f.runs.cursor.lock().unwrap(), Some(Uuid::from_u128(10)));
+    }
+
+    #[tokio::test]
+    async fn value_less_readings_still_move_the_cursor() {
+        let f = build(Setup {
+            things: vec![tree(1, "good")],
+            readings: vec![ReadingBatch {
+                rows: vec![],
+                scanned_until: Some(Uuid::from_u128(10)),
+                scanned: 1,
+            }],
+            ..Setup::default()
+        });
+
+        let stats = f.sync.sync(org(1)).await.unwrap().unwrap();
+
+        assert!(!calls(&f).iter().any(|c| matches!(c, Call::Batch(_))));
+        assert_eq!(stats.skipped, 0);
+        assert_eq!(*f.runs.cursor.lock().unwrap(), Some(Uuid::from_u128(10)));
+    }
+
+    #[tokio::test]
+    async fn a_failed_batch_post_keeps_the_cursor_and_fails_the_pass() {
+        for error in [
+            SinkError::Unreachable("down".into()),
+            SinkError::Rejected {
+                status: 413,
+                detail: "too large".into(),
+            },
+        ] {
+            let f = build(Setup {
+                things: vec![tree(1, "good")],
+                sink: Sink {
+                    batch_error: Some(error),
+                    ..Default::default()
+                },
+                readings: vec![batch(vec![reading(
+                    10,
+                    1,
+                    SensorAbilityName::SoilMoisture,
+                    31.5,
+                )])],
+                ..Setup::default()
+            });
+
+            assert!(f.sync.sync(org(1)).await.is_err());
+
+            assert_eq!(*f.runs.cursor.lock().unwrap(), None);
+            assert!(matches!(f.runs.results()[0], RunResult::Failed { .. }));
+        }
+    }
+
+    #[tokio::test]
+    async fn a_rejected_raw_datastream_skips_its_reading_and_stores_no_ref() {
+        let f = build(Setup {
+            things: vec![tree(1, "good")],
+            sink: Sink {
+                reject_raw_datastreams: true,
+                ..Default::default()
+            },
+            readings: vec![batch(vec![reading(
+                10,
+                1,
+                SensorAbilityName::SoilMoisture,
+                31.5,
+            )])],
+            ..Setup::default()
+        });
+
+        let stats = f.sync.sync(org(1)).await.unwrap().unwrap();
+
+        assert_eq!(stats.skipped, 1);
+        assert!(!calls(&f).iter().any(|c| matches!(c, Call::Batch(_))));
+        let refs = f.refs.map.lock().unwrap();
+        assert!(!refs.keys().any(|k| k.starts_with("raw:")));
+        assert_eq!(*f.runs.cursor.lock().unwrap(), Some(Uuid::from_u128(10)));
+    }
+
+    #[tokio::test]
+    async fn a_known_raw_datastream_is_reused_on_the_next_pass() {
+        let first = build(Setup {
+            things: vec![tree(1, "good")],
+            readings: vec![batch(vec![reading(
+                10,
+                1,
+                SensorAbilityName::SoilMoisture,
+                31.5,
+            )])],
+            ..Setup::default()
+        });
+        first.sync.sync(org(1)).await.unwrap();
+        let second = build(Setup {
+            things: vec![tree(1, "good")],
+            sink: Sink {
+                reject_raw_datastreams: true,
+                ..Default::default()
+            },
+            refs: first.refs.clone(),
+            readings: vec![batch(vec![reading(
+                11,
+                1,
+                SensorAbilityName::SoilMoisture,
+                30.5,
+            )])],
+            ..Setup::default()
+        });
+
+        let stats = second.sync.sync(org(1)).await.unwrap().unwrap();
+
+        assert_eq!(calls(&second), vec![Call::Batch(1)]);
+        assert_eq!((stats.observations_written, stats.skipped), (1, 0));
+    }
+
+    #[tokio::test]
+    async fn no_raw_phase_after_an_exhausted_budget() {
+        let f = build(Setup {
+            things: vec![tree(1, "good")],
+            run_budget: std::time::Duration::ZERO,
+            readings: vec![batch(vec![reading(
+                10,
+                1,
+                SensorAbilityName::SoilMoisture,
+                31.5,
+            )])],
+            ..Setup::default()
+        });
+
+        f.sync.sync(org(1)).await.unwrap();
+
+        assert!(f.readings.afters.lock().unwrap().is_empty());
+        assert_eq!(*f.runs.cursor.lock().unwrap(), None);
     }
 
     #[tokio::test]

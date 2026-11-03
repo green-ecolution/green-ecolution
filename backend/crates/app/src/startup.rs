@@ -305,6 +305,7 @@ impl Application {
             data_export_repo.clone(),
             data_export_repo.clone(),
             data_export_repo.clone(),
+            data_export_repo.clone(),
             Arc::new(infra::sensorthings::SensorThingsHttpSink::new(
                 infra::sensorthings::http_client(),
                 data_export_policy.clone(),
@@ -315,6 +316,7 @@ impl Application {
             server::service::data_export_sync::SyncSettings {
                 interval_secs: settings.data_export.interval_secs as i64,
                 run_budget: Duration::from_secs(settings.data_export.run_budget_secs),
+                batch_size: i64::try_from(settings.data_export.batch_size).unwrap_or(i64::MAX),
             },
         ));
         if settings.data_export.enabled {
