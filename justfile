@@ -551,6 +551,11 @@ test:
     @echo "Frontend tests..."
     cd {{ frontend_dir }} && pnpm run test
 
+# Run the end-to-end export test against the local FROST server
+[group('check')]
+test-data-export: frost-up
+    cd {{ backend_dir }} && GE_TEST_FROST_URL=http://localhost:8180/FROST-Server/v1.1 SQLX_OFFLINE=true cargo test --locked -p app --test api -- --ignored data_export_e2e
+
 # Remove testcontainer leftovers; only a hard kill (SIGKILL) can leave any behind
 [group('check')]
 test-clean:

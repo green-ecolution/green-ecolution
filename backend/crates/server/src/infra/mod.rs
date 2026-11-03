@@ -1,3 +1,4 @@
+pub mod data_export_worker;
 pub mod health;
 pub mod keycloak;
 pub mod list;

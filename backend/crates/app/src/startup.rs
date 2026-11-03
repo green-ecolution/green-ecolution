@@ -166,12 +166,12 @@ impl Application {
         let data_export_service = Arc::new(
             server::service::data_export_service::DataExportService::new(
                 data_export_repo.clone(),
-                data_export_repo,
+                data_export_repo.clone(),
                 Arc::new(infra::sensorthings::SensorThingsProbe::new(
                     infra::sensorthings::http_client(),
                     data_export_policy.clone(),
                 )),
-                data_export_policy,
+                data_export_policy.clone(),
             ),
         );
         let activation_defaults = crate::modules::activation_defaults(&modules, &settings.modules);
@@ -301,6 +301,28 @@ impl Application {
         export_registry
             .install(export_catalogs)
             .map_err(|e| std::io::Error::other(e.to_string()))?;
+        let data_export_sync = Arc::new(server::service::data_export_sync::DataExportSync::new(
+            data_export_repo.clone(),
+            data_export_repo.clone(),
+            data_export_repo.clone(),
+            Arc::new(infra::sensorthings::SensorThingsHttpSink::new(
+                infra::sensorthings::http_client(),
+                data_export_policy.clone(),
+            )),
+            export_registry.clone(),
+            module_activation_repo.clone(),
+            repos.organization_reader.clone(),
+            server::service::data_export_sync::SyncSettings {
+                interval_secs: settings.data_export.interval_secs as i64,
+                run_budget: Duration::from_secs(settings.data_export.run_budget_secs),
+            },
+        ));
+        if settings.data_export.enabled {
+            let _export_worker = infra::data_export_worker::spawn(
+                data_export_sync.clone(),
+                Duration::from_secs(settings.data_export.interval_secs),
+            );
+        }
         let sensor_parsers = Arc::new(
             server::service::sensor_parsers::SensorParserRegistry::new(sensor_parsers)
                 .map_err(std::io::Error::other)?,
@@ -383,6 +405,7 @@ impl Application {
             statistics_reader: repos.statistics,
             statistics,
             export_registry,
+            data_export_sync,
             token_validator,
             feature_flags: FeatureFlags {
                 routing_enabled: settings.routing.enabled,

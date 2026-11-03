@@ -9,6 +9,7 @@ pub mod comments_repo;
 pub mod config_js;
 pub mod data_export;
 pub mod data_export_catalogs;
+pub mod data_export_e2e;
 pub mod data_export_refs_repo;
 pub mod data_export_repo;
 pub mod enforcement_cluster;

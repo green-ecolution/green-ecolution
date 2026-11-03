@@ -111,6 +111,8 @@ pub struct AppState {
     pub statistics: Arc<crate::service::statistics_registry::StatisticsRegistry>,
     /// Exposed for the export sync and integration tests.
     pub export_registry: Arc<crate::service::export_registry::ExportRegistry>,
+    /// Exposed so integration tests can run a pass directly.
+    pub data_export_sync: Arc<crate::service::data_export_sync::DataExportSync>,
     pub token_validator: Arc<TokenValidator>,
     pub feature_flags: FeatureFlags,
     pub frontend_config_js: std::sync::Arc<str>,
