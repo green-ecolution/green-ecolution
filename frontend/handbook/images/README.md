@@ -94,6 +94,12 @@ be re-shot under the capture conditions above.
   groups the capacities in a "Kapazität" section (Wassertank and Laderaum, each with a
   "Liter" suffix and a "für <Modul>" line) and requires at least one of them, so it needs
   a re-shoot.
+- `treecluster-dashboard.png` shows the old "Sensorik", "Bäume" and
+  "Bewässerungshistorie" cards. All three are now compact divided lists: sensor rows with
+  one line of signal, battery and last transmission, a tree list collapsed to three rows
+  with "alle anzeigen", and a one-line watering timeline. It needs a re-shoot; the local
+  seed data has sensor readings from a single day only, so take it on an instance with a
+  real sensor history.
 
 ## Screenshots
 

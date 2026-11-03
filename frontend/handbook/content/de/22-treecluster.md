@@ -99,11 +99,16 @@ Der Bereich **Wasserversorgung** zeichnet das pflanzenverfügbare Wasser über d
 mit gestrichelten Linien für die Schwellen **mäßig** und **kritisch**; ohne Bäume mit
 Sensor oder ohne bekannte Bodenart lässt sich der Verlauf nicht berechnen, und die
 Anwendung sagt das an derselben Stelle. Die **Bewässerungshistorie** darunter listet die
-abgeschlossenen Einsatzpläne dieser Gruppe auf. In der rechten Spalte folgen der
+sechs letzten abgeschlossenen Einsatzpläne dieser Gruppe mit Datum und verbrauchter
+Wassermenge auf; ein Klick auf einen Eintrag öffnet den Einsatzplan. In der rechten
+Spalte folgen der
 **Standort** mit einer kleinen Karte und einem Link dorthin, die **Sensorik** mit
 Signalstärke, Batteriestand und letzter Übertragung je ausgestattetem Baum, die Liste
 der **Bäume** dieser Gruppe und ihre **Stammdaten** mit Region, vorkommenden Baumarten,
-Bodenart und Beschreibung. Wer die nötige Berechtigung hat, findet oben zudem
+Bodenart und Beschreibung. Die Baumliste nennt Baumart und Nummer und kennzeichnet
+Bäume mit Sensor als **Sensor-Baum**; sie stehen oben. Zunächst sind drei Bäume zu
+sehen, über **alle anzeigen** klappst du die übrigen auf. Ein Klick auf eine Zeile
+öffnet den Baum. Wer die nötige Berechtigung hat, findet oben zudem
 **Gruppe bearbeiten** und, über das Menü daneben, **Gruppe löschen**; gelöscht wird
 dabei nur die Gruppe, ihre Bäume bleiben erhalten.
 Im selben Menü steht **In andere Organisation verschieben**, sofern du

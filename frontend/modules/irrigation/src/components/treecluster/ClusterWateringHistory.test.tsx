@@ -91,10 +91,12 @@ describe('ClusterWateringHistory', () => {
     expect(screen.getByText('1.234 L')).toBeInTheDocument()
     expect(screen.getByText('500 L')).toBeInTheDocument()
 
-    const links = screen.getAllByRole('link', { name: 'Einsatzplan ansehen' })
+    const links = screen.getAllByRole('link', { name: /Einsatzplan ansehen/ })
     expect(links).toHaveLength(2)
     expect(links[0]).toHaveAttribute('href', '/plans/plan-1')
     expect(links[1]).toHaveAttribute('href', '/plans/plan-2')
+    expect(links[0]).toHaveAccessibleName(/05\.03\.2024/)
+    expect(screen.getAllByText(/vor .* Jahren/)).toHaveLength(2)
   })
 
   it('caps the list at the 6 newest events', async () => {
@@ -116,7 +118,7 @@ describe('ClusterWateringHistory', () => {
     renderWithProviders()
 
     await waitFor(() => {
-      expect(screen.getAllByRole('link', { name: 'Einsatzplan ansehen' })).toHaveLength(6)
+      expect(screen.getAllByRole('link', { name: /Einsatzplan ansehen/ })).toHaveLength(6)
     })
 
     const newestSixDates = [
