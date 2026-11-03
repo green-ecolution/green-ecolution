@@ -171,8 +171,13 @@ pub enum SinkError {
     Unreachable(String),
     #[error("target refused the credentials (HTTP {0})")]
     Unauthorized(u16),
-    #[error("target rejected the request (HTTP {status}): {detail}")]
-    Rejected { status: u16, detail: String },
+    #[error("target rejected the request (HTTP {status})")]
+    Rejected {
+        status: u16,
+        /// Start of the remote answer, for debugging only. Never persist or log it:
+        /// a proxy echoing the request may put the credentials in there.
+        detail: String,
+    },
     #[error("unexpected answer from the target: {0}")]
     Malformed(String),
 }

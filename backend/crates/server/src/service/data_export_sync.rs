@@ -105,9 +105,17 @@ impl DataExportSync {
             },
         };
         let finished = self.runs.finish(org, generation, &result).await;
-        let stats = outcome?;
-        finished?;
-        Ok(Some(stats))
+        match (outcome, finished) {
+            (Ok(stats), finished) => {
+                finished?;
+                Ok(Some(stats))
+            }
+            (Err(pass_error), Err(finish_error)) => {
+                tracing::warn!(organization.id = %org, error = %finish_error, "recording the failed export pass failed");
+                Err(pass_error)
+            }
+            (Err(pass_error), Ok(())) => Err(pass_error),
+        }
     }
 
     fn lease_secs(&self) -> i64 {
@@ -209,7 +217,12 @@ impl Pass<'_> {
     ) -> Result<Option<T>, SinkError> {
         match result {
             Ok(value) => Ok(Some(value)),
-            Err(SinkError::Rejected { status, .. }) => {
+            Err(e) if e.aborts_pass() => Err(e),
+            Err(e) => {
+                let status = match e {
+                    SinkError::Rejected { status, .. } => Some(status),
+                    _ => None,
+                };
                 tracing::warn!(
                     ge_key = key,
                     status,
@@ -218,7 +231,6 @@ impl Pass<'_> {
                 self.stats.skipped += 1;
                 Ok(None)
             }
-            Err(e) => Err(e),
         }
     }
 
@@ -592,12 +604,14 @@ mod tests {
         reject_observations: bool,
         unreachable: bool,
         adopts_existing: bool,
+        reject_sensor: bool,
     }
 
     struct Session {
         calls: Arc<Mutex<Vec<Call>>>,
         reject_observations: bool,
         adopts_existing: bool,
+        reject_sensor: bool,
     }
 
     #[async_trait::async_trait]
@@ -610,6 +624,7 @@ mod tests {
                 calls: self.calls.clone(),
                 reject_observations: self.reject_observations,
                 adopts_existing: self.adopts_existing,
+                reject_sensor: self.reject_sensor,
             }))
         }
     }
@@ -640,6 +655,12 @@ mod tests {
             Ok(())
         }
         async fn ensure_sensor(&self) -> Result<RemoteId, SinkError> {
+            if self.reject_sensor {
+                return Err(SinkError::Rejected {
+                    status: 400,
+                    detail: "Authorization: Bearer secret".into(),
+                });
+            }
             Ok(RemoteId(json!(1)))
         }
         async fn ensure_observed_property(
@@ -985,6 +1006,26 @@ mod tests {
 
         assert!(matches!(&f.runs.results()[0],
             RunResult::Failed { base_interval_secs: 300, error } if error.contains("unreachable")));
+    }
+
+    #[tokio::test]
+    async fn a_rejected_sensor_fails_the_pass_without_the_remote_answer() {
+        let f = fixture(
+            vec![tree(1, "good")],
+            &[1],
+            Sink {
+                reject_sensor: true,
+                ..Default::default()
+            },
+        );
+
+        assert!(f.sync.sync(org(1)).await.is_err());
+
+        let RunResult::Failed { error, .. } = &f.runs.results()[0] else {
+            panic!("the pass must fail");
+        };
+        assert!(error.contains("400"), "{error}");
+        assert!(!error.contains("secret"), "{error}");
     }
 
     #[tokio::test]
