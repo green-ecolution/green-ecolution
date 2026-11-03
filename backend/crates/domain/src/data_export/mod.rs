@@ -5,6 +5,7 @@
 pub mod auth;
 pub mod catalog;
 pub mod error;
+pub mod readings;
 pub mod repository;
 pub mod scope;
 pub mod snapshot;
@@ -20,6 +21,10 @@ pub use catalog::{
     ObservationKind, StateValue, WATERING_STATUS, ge_key,
 };
 pub use error::DataExportError;
+pub use readings::{
+    BatchOutcome, ExportReading, ExportReadingSource, ObservationRow, RawStream, device_sensor_key,
+    raw_property, raw_stream_key, ucum, v7_floor,
+};
 pub use repository::{
     ConnectionOutcome, ConnectionReport, ConnectionTester, DATA_ARRAY_CONFORMANCE,
     ExportTargetReader, ExportTargetWriter,
