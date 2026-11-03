@@ -1,0 +1,94 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT organization_id, enabled, base_url, auth_kind, auth_principal,\n                      auth_secret, auth_token_url, auth_scope, activated_at,\n                      last_run_at, last_success_at, last_error, last_run_stats\n               FROM data_export_targets\n               WHERE organization_id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "organization_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "enabled",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 2,
+        "name": "base_url",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "auth_kind",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "auth_principal",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "auth_secret",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "auth_token_url",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 7,
+        "name": "auth_scope",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 8,
+        "name": "activated_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 9,
+        "name": "last_run_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 10,
+        "name": "last_success_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 11,
+        "name": "last_error",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 12,
+        "name": "last_run_stats",
+        "type_info": "Jsonb"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      false,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "9a35ce69c69b24c2599670aaecff557e9d2f481b682824b8683893635a044517"
+}
