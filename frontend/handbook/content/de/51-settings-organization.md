@@ -114,6 +114,67 @@ Auch diese Hilfe richtet sich danach: Wer angemeldet ist, sieht darin nur die Ka
 zu Modulen, die für ihn aktiv sind. Ein direkt geöffneter Link auf ein ausgeblendetes
 Kapitel funktioniert trotzdem.
 
+## Datenplattform
+
+Viele Städte betreiben eine urbane Datenplattform, die Daten aus unterschiedlichen
+Fachverfahren zusammenführt. Green Ecolution kann die Daten einer Organisation an eine
+solche Plattform übertragen, sofern sie die OGC SensorThings API anbietet, zum Beispiel
+CIVORA oder CIVITAS/CORE. Green Ecolution bleibt dabei die führende Quelle: Die Plattform
+erhält Kopien, und Änderungen dort wirken nicht zurück.
+
+Die Karte **Datenplattform** erscheint auf der Organisationsseite nur, wenn deine Instanz
+den Export überhaupt eingeschaltet hat. Mit der Berechtigung `setting:read` siehst du die
+Karte und ihren Zustand. Einrichten, testen, ändern, pausieren und entfernen kannst du
+nur mit `setting:update`; ohne dieses Recht fehlen die Knöpfe, und eine Organisation ohne
+Datenplattform zeigt lediglich den Hinweis, dass keine eingerichtet ist.
+
+![Die Karte Datenplattform mit Adresse, Anmeldeart, Status des letzten Laufs und den Aktionen Verbindung testen, Bearbeiten und Entfernen](../images/settings-organization-data-platform.png)
+
+Zum Einrichten wählst du **Datenplattform einrichten**. Im Dialog gibst du die Adresse
+der SensorThings API an, und zwar die Basisadresse samt Version, etwa
+`https://frost.stadt.de/FROST-Server/v1.1`. Danach wählst du die Anmeldung: keine
+Anmeldung, Benutzername und Passwort, oder OAuth2 mit Client Credentials. Bei OAuth2
+kommen Token-Adresse, Client-ID und Client-Secret hinzu, der Scope ist optional. Mit
+dem Schalter **Export aktiv** legst du fest, ob die Übertragung läuft. Gespeichert wird
+mit **Speichern**.
+
+Ein Passwort oder Client-Secret zeigt Green Ecolution nach dem Speichern nie wieder an.
+Beim Bearbeiten steht stattdessen der Hinweis, dass es gespeichert ist; lässt du das Feld
+leer, bleibt es erhalten. Das gilt aber nur, solange sich Anmeldeart und Zieladresse
+(Schema, Host und Port) nicht ändern. Ändert sich eines davon, musst du das Geheimnis neu
+eingeben, damit es nicht an einen anderen Server geschickt wird.
+
+Mit **Verbindung testen** prüft Green Ecolution die gespeicherten Angaben. Das Ergebnis
+erscheint direkt unter den Knöpfen: Die Verbindung steht, der Server ist nicht
+erreichbar, er hat die Anmeldung abgelehnt, unter der Adresse antwortet keine
+SensorThings API, oder die Adresse ist auf dieser Instanz nicht freigegeben. Unterstützt
+der Server keine gebündelten Messwerte, weist die Karte darauf hin, dass sich
+Rohmesswerte nicht übertragen lassen.
+
+Die Übertragung läuft in regelmäßigen Abständen und sendet nur Änderungen. Übertragen
+werden die Bäume, Bewässerungsgruppen und Abfallbehälter der Organisation, bei den
+Behältern nur dort, wo das Modul Abfall aktiv ist, außerdem ihre Zustände
+(Bewässerungsstatus, Füllstand und Füllzustand) und die Messwerte der Sensoren. Hat eine
+Unterorganisation eine eigene Datenplattform eingerichtet, exportiert sie dorthin und
+nicht an die Plattform der übergeordneten Organisation. Objekte ohne Standort, etwa eine
+Bewässerungsgruppe ohne Bäume, erhalten auf der Plattform weder Zustände noch Messwerte.
+Messwerte, die vor dem Einrichten entstanden sind, werden nicht nachgeliefert.
+Unplausible Messwerte gehen mit einem Qualitätshinweis an die Plattform.
+
+Löschst du ein Objekt in Green Ecolution, wird es auf der Plattform nur als gelöscht
+markiert. Gelöscht wird dort nichts.
+
+Oben rechts auf der Karte zeigt ein Abzeichen den Zustand: **Aktiv**, wenn der Export
+läuft, **Pausiert**, wenn du **Export aktiv** ausgeschaltet hast, und **Fehler**, wenn der
+letzte Lauf gescheitert ist. In der Karte stehen außerdem die Adresse, die Anmeldeart,
+der Zeitpunkt des letzten Laufs mit der Zahl der übertragenen Objekte und Messwerte
+sowie, falls vorhanden, die Zahl der übersprungenen Einträge. Bei einem Fehler nennt ein
+roter Hinweis den letzten Fehler.
+
+Mit **Entfernen** und anschließender Bestätigung löschst du die Verbindung. Der Export
+dieser Organisation stoppt damit, auf der Datenplattform bleiben alle bisher
+übertragenen Daten unverändert bestehen.
+
 ## Fachliche Vorgaben
 
 Mit der Berechtigung `setting:read` zeigt die Detailansicht einer Organisation
