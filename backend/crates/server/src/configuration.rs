@@ -237,10 +237,18 @@ pub struct DataExportSettings {
     pub run_budget_secs: u64,
     #[serde(default = "default_export_batch_size")]
     pub batch_size: u64,
+    /// Readings younger than this are left for a later pass: their ids are minted
+    /// before the insert commits, so a lower id can still become visible.
+    #[serde(default = "default_export_reading_settle_secs")]
+    pub reading_settle_secs: u64,
 }
 
 fn default_export_batch_size() -> u64 {
     500
+}
+
+fn default_export_reading_settle_secs() -> u64 {
+    120
 }
 
 fn default_export_interval_secs() -> u64 {
@@ -260,6 +268,7 @@ impl Default for DataExportSettings {
             interval_secs: default_export_interval_secs(),
             run_budget_secs: default_export_run_budget_secs(),
             batch_size: default_export_batch_size(),
+            reading_settle_secs: default_export_reading_settle_secs(),
         }
     }
 }

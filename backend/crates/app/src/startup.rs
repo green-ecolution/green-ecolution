@@ -317,6 +317,7 @@ impl Application {
                 interval_secs: settings.data_export.interval_secs as i64,
                 run_budget: Duration::from_secs(settings.data_export.run_budget_secs),
                 batch_size: i64::try_from(settings.data_export.batch_size).unwrap_or(i64::MAX),
+                reading_settle: Duration::from_secs(settings.data_export.reading_settle_secs),
             },
         ));
         if settings.data_export.enabled {

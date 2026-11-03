@@ -123,6 +123,11 @@ async fn a_tree_reaches_the_local_frost_server_with_its_watering_status() {
     assert_eq!(implausible["parameters"]["quality_issue"], "out of range");
     assert_eq!(streams.len(), 3);
 
+    // A second pass within the interval is not due yet.
+    sqlx::query("UPDATE data_export_targets SET last_run_at = now() - interval '1 hour'")
+        .execute(&app.db_pool)
+        .await
+        .unwrap();
     let again = app
         .state
         .data_export_sync

@@ -34,6 +34,9 @@ pub struct SyncSettings {
     pub run_budget: Duration,
     /// Readings per batch; values below 1 are read as 1.
     pub batch_size: i64,
+    /// Readings younger than this wait for a later pass, so one that commits after
+    /// a higher id is not passed by the cursor.
+    pub reading_settle: Duration,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -42,6 +45,18 @@ pub enum SyncError {
     Repository(#[from] RepositoryError),
     #[error(transparent)]
     Sink(#[from] SinkError),
+}
+
+/// Shown to everyone with `setting:read`, so it never carries driver detail.
+const INTERNAL_ERROR_TEXT: &str = "internal error";
+
+impl SyncError {
+    fn status_text(&self) -> String {
+        match self {
+            Self::Repository(_) => INTERNAL_ERROR_TEXT.to_string(),
+            Self::Sink(e) => e.to_string(),
+        }
+    }
 }
 
 pub struct DataExportSync {
@@ -86,7 +101,7 @@ impl DataExportSync {
     }
 
     pub async fn run_due(&self) {
-        let due = match self.runs.due().await {
+        let due = match self.runs.due(self.settings.interval_secs).await {
             Ok(due) => due,
             Err(e) => {
                 tracing::warn!(error = %e, "could not list the due export targets");
@@ -103,17 +118,26 @@ impl DataExportSync {
     /// `None` when the target is not leased: another replica runs it or it is not due.
     #[tracing::instrument(level = "info", skip_all, fields(organization.id = %org))]
     pub async fn sync(&self, org: Id<Organization>) -> Result<Option<ExportRunStats>, SyncError> {
-        let Some(leased) = self.runs.try_lease(org, self.lease_secs()).await? else {
+        let Some(leased) = self
+            .runs
+            .try_lease(org, self.lease_secs(), self.settings.interval_secs)
+            .await?
+        else {
             return Ok(None);
         };
         let generation = leased.target.activated_at;
         let outcome = self.pass(org, generation, &leased.target.config).await;
         let result = match &outcome {
             Ok(stats) => RunResult::Succeeded(*stats),
-            Err(e) => RunResult::Failed {
-                error: e.to_string(),
-                base_interval_secs: self.settings.interval_secs,
-            },
+            Err(e) => {
+                if let SyncError::Repository(detail) = e {
+                    tracing::error!(organization.id = %org, error = %detail, "export pass failed on the database");
+                }
+                RunResult::Failed {
+                    error: e.status_text(),
+                    base_interval_secs: self.settings.interval_secs,
+                }
+            }
         };
         let finished = self.runs.finish(org, generation, &result).await;
         match (outcome, finished) {
@@ -157,6 +181,7 @@ impl DataExportSync {
             stats: ExportRunStats::default(),
             started,
             budget: self.settings.run_budget,
+            refused: HashSet::new(),
         };
         let sensor = pass.sensor().await?;
         let mut raw = RawScope::default();
@@ -175,7 +200,8 @@ impl DataExportSync {
             pass.module(&module, &things, &sensor).await?;
         }
         if !pass.out_of_budget() {
-            pass.raw_phase(&raw, self.settings.batch_size).await?;
+            pass.raw_phase(&raw, self.settings.batch_size, self.settings.reading_settle)
+                .await?;
         }
         Ok(pass.stats)
     }
@@ -203,6 +229,9 @@ struct Pass<'a> {
     stats: ExportRunStats,
     started: Instant,
     budget: Duration,
+    /// Remote entities the target rejected in this pass, so later readings of the
+    /// same stream do not ask again.
+    refused: HashSet<String>,
 }
 
 struct SnapshotThing {
@@ -541,15 +570,25 @@ impl Pass<'_> {
     /// The cursor moves only after a batch was posted, so a pass that ends early
     /// resends at most the last batch.
     #[tracing::instrument(level = "debug", skip_all, fields(organization.id = %self.org))]
-    async fn raw_phase(&mut self, scope: &RawScope, batch_size: i64) -> Result<(), SyncError> {
+    async fn raw_phase(
+        &mut self,
+        scope: &RawScope,
+        batch_size: i64,
+        settle: Duration,
+    ) -> Result<(), SyncError> {
         let mut cursor = match self.runs.cursor(self.org).await? {
             Some(cursor) => cursor,
             None => v7_floor(self.generation),
         };
+        let settled = chrono::TimeDelta::from_std(settle)
+            .ok()
+            .and_then(|settle| Utc::now().checked_sub_signed(settle))
+            .unwrap_or(DateTime::<Utc>::MIN_UTC);
+        let before = v7_floor(settled);
         while !self.out_of_budget() {
             let batch = self
                 .readings
-                .readings_after(&scope.active, cursor, batch_size)
+                .readings_after(&scope.active, cursor, before, batch_size)
                 .await?;
             let Some(until) = batch.scanned_until.filter(|_| batch.scanned > 0) else {
                 return Ok(());
@@ -619,10 +658,18 @@ impl Pass<'_> {
         if let Some(existing) = self.refs.get(&key) {
             return Ok(Some((key, existing.remote_id.clone())));
         }
-        let id = self
+        if self.refused.contains(&key) {
+            self.stats.skipped += 1;
+            return Ok(None);
+        }
+        let Some(id) = self
             .raw_datastream(row, &key, &thing.name, &thing_id)
-            .await?;
-        Ok(id.map(|id| (key, id)))
+            .await?
+        else {
+            self.refused.insert(key);
+            return Ok(None);
+        };
+        Ok(Some((key, id)))
     }
 
     async fn raw_datastream(
@@ -639,7 +686,11 @@ impl Pass<'_> {
         let Some(observed_property) = self.observed_property(&property).await? else {
             return Ok(None);
         };
-        let name = format!("{thing_name} · {} {} cm", property.label, row.depth_cm);
+        // Depth 0 means a sensor without depth (battery, distance).
+        let name = match row.depth_cm {
+            0 => format!("{thing_name} · {}", property.label),
+            depth => format!("{thing_name} · {} {depth} cm", property.label),
+        };
         let stream = RawStream {
             ge_key: key,
             name: &name,
@@ -662,11 +713,16 @@ impl Pass<'_> {
         if let Some(existing) = self.refs.get(&key) {
             return Ok(Some(existing.remote_id.clone()));
         }
+        if self.refused.contains(&key) {
+            self.stats.skipped += 1;
+            return Ok(None);
+        }
         let ensured = self
             .session
             .ensure_device_sensor(&row.sensor_id, &row.sensor_model)
             .await;
         let Some(id) = self.tolerate(&key, ensured)? else {
+            self.refused.insert(key);
             return Ok(None);
         };
         self.remember(plain_ref(key, ExportEntity::Sensor, id.clone()))
@@ -713,6 +769,7 @@ mod tests {
         leasable: bool,
         cursor: Mutex<Option<Uuid>>,
         advanced: Mutex<Vec<(DateTime<Utc>, Uuid)>>,
+        lease_intervals: Mutex<Vec<i64>>,
     }
 
     impl Runs {
@@ -731,14 +788,16 @@ mod tests {
         async fn target_orgs(&self) -> Result<BTreeSet<Id<Organization>>, RepositoryError> {
             Ok(self.targets.clone())
         }
-        async fn due(&self) -> Result<Vec<Id<Organization>>, RepositoryError> {
+        async fn due(&self, _: i64) -> Result<Vec<Id<Organization>>, RepositoryError> {
             Ok(self.targets.iter().copied().collect())
         }
         async fn try_lease(
             &self,
             org: Id<Organization>,
             _: i64,
+            interval_secs: i64,
         ) -> Result<Option<StoredExportTarget>, RepositoryError> {
+            self.lease_intervals.lock().unwrap().push(interval_secs);
             Ok(self.leasable.then(|| StoredExportTarget {
                 target: ExportTarget {
                     organization_id: org,
@@ -787,8 +846,10 @@ mod tests {
     struct Readings {
         batches: Mutex<std::collections::VecDeque<ReadingBatch>>,
         afters: Mutex<Vec<Uuid>>,
+        befores: Mutex<Vec<Uuid>>,
         limits: Mutex<Vec<i64>>,
         active: Mutex<Vec<(ModuleKey, Id<Organization>)>>,
+        broken: bool,
     }
 
     #[async_trait::async_trait]
@@ -797,9 +858,16 @@ mod tests {
             &self,
             active: &[(ModuleKey, Id<Organization>)],
             after: Uuid,
+            before: Uuid,
             limit: i64,
         ) -> Result<ReadingBatch, RepositoryError> {
+            if self.broken {
+                return Err(RepositoryError::Internal(
+                    "relation \"sensor_data\" does not exist".into(),
+                ));
+            }
             self.afters.lock().unwrap().push(after);
+            self.befores.lock().unwrap().push(before);
             self.limits.lock().unwrap().push(limit);
             *self.active.lock().unwrap() = active.to_vec();
             Ok(self.batches.lock().unwrap().pop_front().unwrap_or_default())
@@ -856,10 +924,12 @@ mod tests {
         rejected_rows: u32,
         batch_error: Option<SinkError>,
         reject_raw_datastreams: bool,
+        raw_streams: Arc<Mutex<Vec<String>>>,
     }
 
     struct Session {
         calls: Arc<Mutex<Vec<Call>>>,
+        raw_streams: Arc<Mutex<Vec<String>>>,
         reject_observations: bool,
         adopts_existing: bool,
         reject_sensor: bool,
@@ -876,6 +946,7 @@ mod tests {
             }
             Ok(Box::new(Session {
                 calls: self.calls.clone(),
+                raw_streams: self.raw_streams.clone(),
                 reject_observations: self.reject_observations,
                 adopts_existing: self.adopts_existing,
                 reject_sensor: self.reject_sensor,
@@ -958,6 +1029,7 @@ mod tests {
             Ok(RemoteId(json!(sensor_id)))
         }
         async fn ensure_raw_datastream(&self, s: &RawStream<'_>) -> Result<RemoteId, SinkError> {
+            self.raw_streams.lock().unwrap().push(s.name.to_string());
             if self.reject_raw_datastreams {
                 return Err(SinkError::Rejected {
                     status: 400,
@@ -1092,6 +1164,7 @@ mod tests {
     struct Fixture {
         sync: DataExportSync,
         sink_calls: Arc<Mutex<Vec<Call>>>,
+        raw_streams: Arc<Mutex<Vec<String>>>,
         catalog: Arc<Catalog>,
         runs: Arc<Runs>,
         refs: Arc<Refs>,
@@ -1107,6 +1180,8 @@ mod tests {
         run_budget: std::time::Duration,
         readings: Vec<ReadingBatch>,
         batch_size: i64,
+        reading_settle: std::time::Duration,
+        broken_readings: bool,
     }
 
     impl Default for Setup {
@@ -1120,6 +1195,8 @@ mod tests {
                 run_budget: std::time::Duration::from_secs(60),
                 readings: vec![],
                 batch_size: 100,
+                reading_settle: std::time::Duration::from_secs(120),
+                broken_readings: false,
             }
         }
     }
@@ -1175,6 +1252,8 @@ mod tests {
             run_budget,
             readings,
             batch_size,
+            reading_settle,
+            broken_readings,
         } = setup;
         let runs = Arc::new(Runs {
             targets: BTreeSet::from([org(1)]),
@@ -1183,6 +1262,7 @@ mod tests {
         });
         let readings = Arc::new(Readings {
             batches: Mutex::new(readings.into()),
+            broken: broken_readings,
             ..Default::default()
         });
         let catalog = Arc::new(Catalog(Mutex::new(things)));
@@ -1194,6 +1274,7 @@ mod tests {
             )]))
             .unwrap();
         let sink_calls = sink.calls.clone();
+        let raw_streams = sink.raw_streams.clone();
         let sync = DataExportSync::new(
             runs.clone(),
             refs.clone(),
@@ -1207,11 +1288,13 @@ mod tests {
                 interval_secs: 300,
                 run_budget,
                 batch_size,
+                reading_settle,
             },
         );
         Fixture {
             sync,
             sink_calls,
+            raw_streams,
             catalog,
             runs,
             refs,
@@ -1783,6 +1866,100 @@ mod tests {
         assert!(calls(&f).is_empty());
         assert_eq!(stats, ExportRunStats::default());
         assert!(matches!(f.runs.results()[0], RunResult::Succeeded(_)));
+    }
+
+    #[tokio::test]
+    async fn readings_are_read_only_below_the_settle_bound() {
+        let f = build(Setup {
+            things: vec![tree(1, "good")],
+            reading_settle: std::time::Duration::from_secs(120),
+            ..Setup::default()
+        });
+        let settle = chrono::Duration::seconds(120);
+        let earliest = v7_floor(Utc::now() - settle);
+
+        f.sync.sync(org(1)).await.unwrap();
+
+        let latest = v7_floor(Utc::now() - settle);
+        let befores = f.readings.befores.lock().unwrap();
+        assert_eq!(befores.len(), 1);
+        assert!(
+            (earliest..=latest).contains(&befores[0]),
+            "{} not in {earliest}..={latest}",
+            befores[0]
+        );
+    }
+
+    #[tokio::test]
+    async fn a_rejected_raw_datastream_is_asked_once_per_pass() {
+        let f = build(Setup {
+            things: vec![tree(1, "good")],
+            sink: Sink {
+                reject_raw_datastreams: true,
+                ..Default::default()
+            },
+            readings: vec![batch(vec![
+                reading(10, 1, SensorAbilityName::SoilMoisture, 31.5),
+                reading(11, 1, SensorAbilityName::SoilMoisture, 30.5),
+                reading(12, 1, SensorAbilityName::SoilMoisture, 29.5),
+            ])],
+            ..Setup::default()
+        });
+
+        let stats = f.sync.sync(org(1)).await.unwrap().unwrap();
+
+        assert_eq!(f.raw_streams.lock().unwrap().len(), 1);
+        assert_eq!(stats.skipped, 3);
+        assert_eq!(*f.runs.cursor.lock().unwrap(), Some(Uuid::from_u128(12)));
+    }
+
+    #[tokio::test]
+    async fn a_raw_datastream_without_depth_names_no_depth() {
+        let mut battery = reading(10, 1, SensorAbilityName::Battery, 3.6);
+        battery.depth_cm = 0;
+        let f = build(Setup {
+            things: vec![tree(1, "good")],
+            readings: vec![batch(vec![
+                battery,
+                reading(10, 1, SensorAbilityName::SoilMoisture, 31.5),
+            ])],
+            ..Setup::default()
+        });
+
+        f.sync.sync(org(1)).await.unwrap();
+
+        assert_eq!(
+            *f.raw_streams.lock().unwrap(),
+            vec![
+                "Baum 1 · Batteriespannung".to_string(),
+                "Baum 1 · Bodenfeuchte 40 cm".to_string()
+            ]
+        );
+    }
+
+    #[tokio::test]
+    async fn a_database_failure_is_recorded_without_its_detail() {
+        let f = build(Setup {
+            things: vec![tree(1, "good")],
+            broken_readings: true,
+            ..Setup::default()
+        });
+
+        assert!(f.sync.sync(org(1)).await.is_err());
+
+        let RunResult::Failed { error, .. } = &f.runs.results()[0] else {
+            panic!("the pass must fail");
+        };
+        assert_eq!(error, "internal error");
+    }
+
+    #[tokio::test]
+    async fn the_lease_is_asked_with_the_interval() {
+        let f = fixture(vec![tree(1, "good")], &[1], Sink::default());
+
+        f.sync.sync(org(1)).await.unwrap();
+
+        assert_eq!(*f.runs.lease_intervals.lock().unwrap(), vec![300]);
     }
 
     #[tokio::test]

@@ -654,6 +654,8 @@ pub async fn spawn_app_with_data_export_and_auth(
     settings.data_export.enabled = true;
     settings.data_export.allowed_hosts = allowed_hosts.iter().map(|h| h.to_string()).collect();
     settings.data_export.allow_insecure_http = true;
+    // Tests ingest and export in the same instant.
+    settings.data_export.reading_settle_secs = 0;
     spawn_with_settings(settings).await
 }
 

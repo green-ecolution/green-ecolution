@@ -122,12 +122,13 @@ pub struct ReadingBatch {
 
 #[async_trait::async_trait]
 pub trait ExportReadingSource: Send + Sync {
-    /// Every ability value of the next `limit` readings after `after` whose
-    /// sensor's current target is in one of the (module, organization) pairs.
+    /// Every ability value of the next `limit` readings after `after` and below
+    /// `before` whose sensor's current target is in one of the (module, organization) pairs.
     async fn readings_after(
         &self,
         active: &[(ModuleKey, Id<Organization>)],
         after: Uuid,
+        before: Uuid,
         limit: i64,
     ) -> Result<ReadingBatch, RepositoryError>;
 }

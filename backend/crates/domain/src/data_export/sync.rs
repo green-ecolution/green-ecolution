@@ -147,13 +147,15 @@ pub trait ExportRefWriter: Send + Sync {
 pub trait ExportRunStore: Send + Sync {
     /// Every organization with a target, enabled or not: they bound the scopes.
     async fn target_orgs(&self) -> Result<BTreeSet<Id<Organization>>, RepositoryError>;
-    /// Enabled, not leased and past their backoff.
-    async fn due(&self) -> Result<Vec<Id<Organization>>, RepositoryError>;
+    /// Enabled, not leased, past their backoff and last run at least
+    /// `interval_secs` ago, so several replicas run a target once per interval.
+    async fn due(&self, interval_secs: i64) -> Result<Vec<Id<Organization>>, RepositoryError>;
     /// `None` when another replica holds the lease or the target is not due.
     async fn try_lease(
         &self,
         org: Id<Organization>,
         lease_secs: i64,
+        interval_secs: i64,
     ) -> Result<Option<StoredExportTarget>, RepositoryError>;
     /// Writes only while the target still has this generation (`activated_at`), so a
     /// pass that outlived a base-URL change writes nothing. A stale write is not an error.

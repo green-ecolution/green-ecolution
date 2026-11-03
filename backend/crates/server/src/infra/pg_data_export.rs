@@ -89,8 +89,9 @@ impl ExportTargetWriter for PgDataExportRepository {
         )
         .fetch_optional(&mut *tx)
         .await?;
-        // A changed base URL is a different server: restart activation, cursor
-        // and backoff in the INSERT and drop the refs in the same transaction.
+        // A changed base URL is a different server: restart activation and cursor
+        // in the INSERT and drop the refs in the same transaction. Every save lifts
+        // the backoff, so corrected credentials are retried within one interval.
         let row = sqlx::query_as!(
             ExportTargetSnapshot,
             r#"INSERT INTO data_export_targets
@@ -109,16 +110,13 @@ impl ExportTargetWriter for PgDataExportRepository {
                                          THEN now() ELSE data_export_targets.activated_at END,
                    cursor_reading_id = CASE WHEN data_export_targets.base_url <> EXCLUDED.base_url
                                          THEN NULL ELSE data_export_targets.cursor_reading_id END,
-                   failure_count  = CASE WHEN data_export_targets.base_url <> EXCLUDED.base_url
-                                         THEN 0 ELSE data_export_targets.failure_count END,
-                   next_attempt_at = CASE WHEN data_export_targets.base_url <> EXCLUDED.base_url
-                                         THEN NULL ELSE data_export_targets.next_attempt_at END,
+                   failure_count  = 0,
+                   next_attempt_at = NULL,
                    last_run_at = CASE WHEN data_export_targets.base_url <> EXCLUDED.base_url
                                          THEN NULL ELSE data_export_targets.last_run_at END,
                    last_success_at = CASE WHEN data_export_targets.base_url <> EXCLUDED.base_url
                                          THEN NULL ELSE data_export_targets.last_success_at END,
-                   last_error = CASE WHEN data_export_targets.base_url <> EXCLUDED.base_url
-                                         THEN NULL ELSE data_export_targets.last_error END,
+                   last_error = NULL,
                    last_run_stats = CASE WHEN data_export_targets.base_url <> EXCLUDED.base_url
                                          THEN NULL ELSE data_export_targets.last_run_stats END
                RETURNING organization_id, enabled, base_url, auth_kind, auth_principal,
@@ -218,7 +216,8 @@ impl ExportRefWriter for PgDataExportRepository {
                    (organization_id, ge_key, entity, remote_id, content_hash, last_value, deleted_marked)
                SELECT $1, $2, $3, $4, $5, $6, $7
                WHERE EXISTS (SELECT 1 FROM data_export_targets
-                             WHERE organization_id = $1 AND activated_at = $8)
+                             WHERE organization_id = $1 AND activated_at = $8
+                             FOR SHARE)
                ON CONFLICT (organization_id, ge_key) DO UPDATE SET
                    entity = EXCLUDED.entity,
                    remote_id = EXCLUDED.remote_id,
@@ -251,13 +250,16 @@ impl ExportRunStore for PgDataExportRepository {
     }
 
     #[tracing::instrument(level = "debug", skip(self))]
-    async fn due(&self) -> Result<Vec<Id<Organization>>, RepositoryError> {
+    async fn due(&self, interval_secs: i64) -> Result<Vec<Id<Organization>>, RepositoryError> {
         let ids = sqlx::query_scalar!(
             r#"SELECT organization_id FROM data_export_targets
                WHERE enabled
                  AND (leased_until IS NULL OR leased_until < now())
                  AND (next_attempt_at IS NULL OR next_attempt_at <= now())
-               ORDER BY organization_id"#
+                 AND (last_run_at IS NULL
+                      OR last_run_at <= now() - make_interval(secs => $1::bigint::float8))
+               ORDER BY organization_id"#,
+            interval_secs,
         )
         .fetch_all(&self.pool)
         .await?;
@@ -269,6 +271,7 @@ impl ExportRunStore for PgDataExportRepository {
         &self,
         org: Id<Organization>,
         lease_secs: i64,
+        interval_secs: i64,
     ) -> Result<Option<StoredExportTarget>, RepositoryError> {
         let row = sqlx::query_as!(
             ExportTargetSnapshot,
@@ -278,11 +281,14 @@ impl ExportRunStore for PgDataExportRepository {
                  AND enabled
                  AND (leased_until IS NULL OR leased_until < now())
                  AND (next_attempt_at IS NULL OR next_attempt_at <= now())
+                 AND (last_run_at IS NULL
+                      OR last_run_at <= now() - make_interval(secs => $3::bigint::float8))
                RETURNING organization_id, enabled, base_url, auth_kind, auth_principal,
                          auth_secret, auth_token_url, auth_scope, activated_at,
                          last_run_at, last_success_at, last_error, last_run_stats"#,
             org.value(),
             lease_secs,
+            interval_secs,
         )
         .fetch_optional(&self.pool)
         .await?;
@@ -376,6 +382,7 @@ impl ExportReadingSource for PgDataExportRepository {
         &self,
         active: &[(ModuleKey, Id<Organization>)],
         after: Uuid,
+        before: Uuid,
         limit: i64,
     ) -> Result<ReadingBatch, RepositoryError> {
         let modules: Vec<String> = active.iter().map(|(m, _)| m.as_str().to_string()).collect();
@@ -391,7 +398,7 @@ impl ExportReadingSource for PgDataExportRepository {
                    JOIN sensor_attachments a ON a.sensor_id = d.sensor_id
                    JOIN active ON active.module_key = a.module_key AND active.organization_id = s.organization_id
                    JOIN sensor_models m ON m.id = s.model_id
-                   WHERE d.id > $3
+                   WHERE d.id > $3 AND d.id < $5
                    ORDER BY d.id
                    LIMIT $4
                )
@@ -408,6 +415,7 @@ impl ExportReadingSource for PgDataExportRepository {
             &orgs,
             after,
             limit,
+            before,
         )
         .fetch_all(&self.pool)
         .await?;

@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "UPDATE data_export_targets\n               SET leased_until = now() + make_interval(secs => $2::bigint::float8)\n               WHERE organization_id = $1\n                 AND enabled\n                 AND (leased_until IS NULL OR leased_until < now())\n                 AND (next_attempt_at IS NULL OR next_attempt_at <= now())\n               RETURNING organization_id, enabled, base_url, auth_kind, auth_principal,\n                         auth_secret, auth_token_url, auth_scope, activated_at,\n                         last_run_at, last_success_at, last_error, last_run_stats",
+  "query": "UPDATE data_export_targets\n               SET leased_until = now() + make_interval(secs => $2::bigint::float8)\n               WHERE organization_id = $1\n                 AND enabled\n                 AND (leased_until IS NULL OR leased_until < now())\n                 AND (next_attempt_at IS NULL OR next_attempt_at <= now())\n                 AND (last_run_at IS NULL\n                      OR last_run_at <= now() - make_interval(secs => $3::bigint::float8))\n               RETURNING organization_id, enabled, base_url, auth_kind, auth_principal,\n                         auth_secret, auth_token_url, auth_scope, activated_at,\n                         last_run_at, last_success_at, last_error, last_run_stats",
   "describe": {
     "columns": [
       {
@@ -72,6 +72,7 @@
     "parameters": {
       "Left": [
         "Uuid",
+        "Int8",
         "Int8"
       ]
     },
@@ -91,5 +92,5 @@
       true
     ]
   },
-  "hash": "630817dc4935313dddacdd69108b4e760ebce1b425d17e4750d72e7d126be5ba"
+  "hash": "84ec1f9cdc6bcd48e8aea397deb44fb3d7da3967700350fce0f33aad3b16758d"
 }

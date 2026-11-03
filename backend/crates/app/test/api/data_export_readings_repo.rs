@@ -2,7 +2,7 @@ use domain::{
     Id,
     data_export::{
         BASE_URL_FIELD, ExportAuth, ExportReadingSource, ExportRunStore, ExportTargetConfig,
-        ExportTargetWriter, ExportUrl,
+        ExportTargetWriter, ExportUrl, v7_floor,
     },
     module::ModuleKey,
     sensor_model::SensorAbilityName,
@@ -80,7 +80,7 @@ async fn readings_after_the_cursor_come_with_target_ability_and_quality() {
     let (sensor, tree, reading) = seed(&app).await;
 
     let rows = repo
-        .readings_after(&irrigation_root(), Uuid::nil(), 10)
+        .readings_after(&irrigation_root(), Uuid::nil(), Uuid::max(), 10)
         .await
         .unwrap()
         .rows;
@@ -107,7 +107,7 @@ async fn readings_after_the_cursor_come_with_target_ability_and_quality() {
     );
 
     assert!(
-        repo.readings_after(&irrigation_root(), reading, 10)
+        repo.readings_after(&irrigation_root(), reading, Uuid::max(), 10)
             .await
             .unwrap()
             .rows
@@ -116,7 +116,7 @@ async fn readings_after_the_cursor_come_with_target_ability_and_quality() {
     );
     let waste_only = vec![(ModuleKey::new("waste").unwrap(), Id::new(root()))];
     assert!(
-        repo.readings_after(&waste_only, Uuid::nil(), 10)
+        repo.readings_after(&waste_only, Uuid::nil(), Uuid::max(), 10)
             .await
             .unwrap()
             .rows
@@ -176,7 +176,7 @@ async fn the_limit_counts_readings_and_value_less_readings_move_the_frontier() {
     let (sensor, _, first) = seed(&app).await;
 
     let limited = repo
-        .readings_after(&irrigation_root(), first_before(first), 1)
+        .readings_after(&irrigation_root(), first_before(first), Uuid::max(), 1)
         .await
         .unwrap();
     assert_eq!(limited.scanned, 1);
@@ -190,12 +190,41 @@ async fn the_limit_counts_readings_and_value_less_readings_move_the_frontier() {
         .await
         .unwrap();
     let batch = repo
-        .readings_after(&irrigation_root(), first, 10)
+        .readings_after(&irrigation_root(), first, Uuid::max(), 10)
         .await
         .unwrap();
     assert!(batch.rows.iter().all(|r| r.sensor_id != sensor));
     assert_eq!(batch.scanned_until, Some(second));
     assert_eq!(batch.scanned, 1);
+}
+
+#[tokio::test]
+async fn readings_at_or_above_the_settle_bound_wait_for_a_later_pass() {
+    let app = spawn_app().await;
+    let repo = PgDataExportRepository::new(app.db_pool.clone());
+    let (sensor, _, reading) = seed(&app).await;
+    let settled = v7_floor(chrono::Utc::now() - chrono::Duration::seconds(120));
+
+    let batch = repo
+        .readings_after(&irrigation_root(), first_before(reading), settled, 10)
+        .await
+        .unwrap();
+    assert!(batch.rows.iter().all(|r| r.sensor_id != sensor));
+    assert_eq!(batch.scanned, 0);
+    assert_eq!(batch.scanned_until, None);
+
+    let at_the_bound = repo
+        .readings_after(&irrigation_root(), first_before(reading), reading, 10)
+        .await
+        .unwrap();
+    assert_eq!(at_the_bound.scanned, 0, "the bound itself is excluded");
+
+    let above = Uuid::from_u128(reading.as_u128() + 1);
+    let batch = repo
+        .readings_after(&irrigation_root(), first_before(reading), above, 10)
+        .await
+        .unwrap();
+    assert_eq!(batch.scanned_until, Some(reading));
 }
 
 /// Seed data may hold older readings; start just below the fresh one.
