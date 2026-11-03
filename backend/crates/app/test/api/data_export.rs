@@ -82,6 +82,31 @@ async fn put_stores_the_target_and_never_returns_the_secret() {
 }
 
 #[tokio::test]
+async fn an_oauth2_target_round_trips_without_its_secret() {
+    let app = spawn_app_with_data_export(&["example.org"]).await;
+
+    let resp = app
+        .put_json(
+            &url(root()),
+            &json!({ "enabled": true, "base_url": "https://frost.example.org/v1.1",
+                     "auth": { "kind": "oauth2_client_credentials",
+                               "token_url": "https://auth.example.org/token",
+                               "client_id": "ge", "client_secret": "s", "scope": "export" } }),
+        )
+        .await;
+    assert_eq!(resp.status(), 200);
+
+    let auth = body(app.get(&url(root())).await).await["auth"].clone();
+    assert_eq!(auth["kind"], "oauth2_client_credentials");
+    assert_eq!(auth["client_id"], "ge");
+    assert_eq!(auth["token_url"], "https://auth.example.org/token");
+    assert_eq!(auth["scope"], "export");
+    assert_eq!(auth["has_secret"], true);
+    assert!(auth["username"].is_null());
+    assert!(auth.get("client_secret").is_none());
+}
+
+#[tokio::test]
 async fn a_resubmitted_form_without_secret_keeps_it() {
     let app = spawn_app_with_data_export(&["example.org"]).await;
     app.put_json(

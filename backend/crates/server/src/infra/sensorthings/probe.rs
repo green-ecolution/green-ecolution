@@ -309,6 +309,24 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn a_token_url_off_the_list_is_never_called() {
+        let server = MockServer::start().await;
+        let auth = ExportAuth::OAuth2ClientCredentials {
+            token_url: ExportUrl::new(TOKEN_URL_FIELD, "https://auth.evil.test/token").unwrap(),
+            client_id: ExportPrincipal::new("ge").unwrap(),
+            client_secret: secret("s"),
+            scope: None,
+        };
+
+        let report = SensorThingsProbe::new(http_client(), policy())
+            .test(&config(&server, auth))
+            .await;
+
+        assert_eq!(report.outcome, ConnectionOutcome::UrlNotAllowed);
+        assert!(server.received_requests().await.unwrap().is_empty());
+    }
+
+    #[tokio::test]
     async fn an_unreachable_server_is_reported() {
         // A dropped MockServer goes back to wiremock's pool and keeps listening.
         let closed_port = std::net::TcpListener::bind("127.0.0.1:0")

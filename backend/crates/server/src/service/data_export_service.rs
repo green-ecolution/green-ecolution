@@ -220,6 +220,30 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn put_refuses_a_token_url_off_the_list() {
+        let draft = ExportTargetDraft {
+            auth: ExportAuthDraft::OAuth2ClientCredentials {
+                token_url: ExportUrl::new(TOKEN_URL_FIELD, "https://auth.evil.test/token").unwrap(),
+                client_id: ExportPrincipal::new("ge").unwrap(),
+                client_secret: Some(
+                    ExportSecret::new("f", SecretString::from("s".to_string())).unwrap(),
+                ),
+                scope: None,
+            },
+            ..draft("https://frost.example.org/v1.1", None)
+        };
+
+        let err = service().put(org(), draft).await.unwrap_err();
+
+        assert!(matches!(
+            err,
+            ServiceError::DataExport(DataExportError::UrlNotAllowed {
+                field: TOKEN_URL_FIELD
+            })
+        ));
+    }
+
+    #[tokio::test]
     async fn put_does_not_send_the_stored_secret_to_a_new_host() {
         let service = service();
         let org = org();
