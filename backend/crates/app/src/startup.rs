@@ -156,6 +156,24 @@ impl Application {
             profile_repo.clone(),
             defaults,
         ));
+        let data_export_policy = domain::data_export::ExportUrlPolicy::new(
+            settings.data_export.allowed_hosts.clone(),
+            settings.data_export.allow_insecure_http,
+        );
+        let data_export_repo = Arc::new(infra::pg_data_export::PgDataExportRepository::new(
+            pool.clone(),
+        ));
+        let data_export_service = Arc::new(
+            server::service::data_export_service::DataExportService::new(
+                data_export_repo.clone(),
+                data_export_repo,
+                Arc::new(infra::sensorthings::SensorThingsProbe::new(
+                    infra::sensorthings::http_client(),
+                    data_export_policy.clone(),
+                )),
+                data_export_policy,
+            ),
+        );
         let activation_defaults = crate::modules::activation_defaults(&modules, &settings.modules);
         let module_activation_repo = Arc::new(
             server::infra::pg_module_activation::PgModuleActivationRepository::new(
@@ -381,6 +399,7 @@ impl Application {
             plugin_proxy,
             settings_reader: settings_repo.clone(),
             settings_service,
+            data_export_service,
             module_activation_service,
             module_activation: module_activation_repo,
             targets,

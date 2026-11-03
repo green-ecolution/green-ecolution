@@ -7,6 +7,7 @@ pub mod clusters;
 pub mod comments;
 pub mod comments_repo;
 pub mod config_js;
+pub mod data_export;
 pub mod data_export_repo;
 pub mod enforcement_cluster;
 pub mod enforcement_evaluation;

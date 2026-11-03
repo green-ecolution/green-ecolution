@@ -640,6 +640,23 @@ pub async fn spawn_app_with_plugins_and_auth(auth: AuthSettings) -> TestApp {
     spawn_with_settings(settings).await
 }
 
+pub async fn spawn_app_with_data_export(allowed_hosts: &[&str]) -> TestApp {
+    spawn_app_with_data_export_and_auth(allowed_hosts, disabled_auth_settings()).await
+}
+
+pub async fn spawn_app_with_data_export_and_auth(
+    allowed_hosts: &[&str],
+    auth: AuthSettings,
+) -> TestApp {
+    let mut settings = Settings::for_test(auth);
+    settings.info.health_check_interval_secs = 1;
+    settings.info.update_check_repo = None;
+    settings.data_export.enabled = true;
+    settings.data_export.allowed_hosts = allowed_hosts.iter().map(|h| h.to_string()).collect();
+    settings.data_export.allow_insecure_http = true;
+    spawn_with_settings(settings).await
+}
+
 pub async fn spawn_app_with_plugin_proxy(proxy: PluginProxySettings) -> TestApp {
     spawn_app_with_plugin_proxy_and_auth(proxy, disabled_auth_settings()).await
 }

@@ -6,6 +6,7 @@ use utoipa_axum::router::OpenApiRouter;
 use crate::http::{AppState, auth::AuthLayer};
 
 pub mod comment;
+pub mod data_export;
 pub mod dto;
 pub mod error;
 pub mod gpx;
@@ -35,6 +36,7 @@ pub fn protected_router() -> OpenApiRouter<Arc<AppState>> {
     OpenApiRouter::new()
         .merge(region::routes())
         .merge(comment::routes())
+        .merge(data_export::routes())
         .merge(info::protected_routes())
         .merge(module::routes())
         .merge(organization::routes())
