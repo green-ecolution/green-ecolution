@@ -35,30 +35,30 @@ const issuesOf = (values: DataExportFormValues, stored?: DataExportTargetRespons
 }
 
 describe('dataExportSchema', () => {
-  it('accepts a secret of exactly 1024 UTF-8 bytes', () => {
-    expect(issuesOf(basic({ password: 'ä'.repeat(512) }))).toEqual({})
-  })
-
-  it('counts a secret in UTF-8 bytes like the backend', () => {
-    expect(issuesOf(basic({ password: 'ä'.repeat(513) }))).toEqual({
+  it('counts a secret in characters like the backend', () => {
+    expect(issuesOf(basic({ password: 'ä'.repeat(1024) }))).toEqual({})
+    expect(issuesOf(basic({ password: '😀'.repeat(1024) }))).toEqual({})
+    expect(issuesOf(basic({ password: 'ä'.repeat(1025) }))).toEqual({
       password: `${ERRORS}.tooLong`,
     })
   })
 
-  it('counts principal and scope in UTF-8 bytes', () => {
-    expect(issuesOf(basic({ username: 'ä'.repeat(129) }))).toEqual({
+  it('counts principal and scope in characters', () => {
+    expect(issuesOf(basic({ username: 'ä'.repeat(256) }))).toEqual({})
+    expect(issuesOf(basic({ username: 'ä'.repeat(257) }))).toEqual({
       username: `${ERRORS}.tooLong`,
     })
-    expect(
+    const oauth2 = (scope: string) =>
       issuesOf({
         ...basic({}),
         authKind: 'oauth2_client_credentials',
         tokenUrl: 'https://auth.stadt.de/token',
         clientId: 'client',
         clientSecret: 's3',
-        scope: 'ä'.repeat(129),
-      }),
-    ).toEqual({ scope: `${ERRORS}.tooLong` })
+        scope,
+      })
+    expect(oauth2('😀'.repeat(256))).toEqual({})
+    expect(oauth2('ä'.repeat(257))).toEqual({ scope: `${ERRORS}.tooLong` })
   })
 
   it('counts the address in UTF-8 bytes', () => {

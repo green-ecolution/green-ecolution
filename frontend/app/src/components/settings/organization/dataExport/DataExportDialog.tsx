@@ -38,6 +38,16 @@ type FormProps = Omit<DataExportDialogProps, 'open' | 'onOpenChange'> & {
   onCancel: () => void
 }
 
+// The code covers both addresses; only the backend text names the refused field.
+const refusedAddress = (
+  detail: string | undefined,
+  authKind: DataExportFormValues['authKind'],
+): 'baseUrl' | 'tokenUrl' | null => {
+  if (detail?.includes('data_export.auth.token_url')) return 'tokenUrl'
+  if (detail?.includes('data_export.base_url')) return 'baseUrl'
+  return authKind === 'oauth2_client_credentials' ? null : 'baseUrl'
+}
+
 const DataExportForm = ({ target, onSubmit, onDone, onCancel }: FormProps) => {
   const { t } = useTranslation('settings')
   const ids = useId()
@@ -64,8 +74,12 @@ const DataExportForm = ({ target, onSubmit, onDone, onCancel }: FormProps) => {
       onDone()
     } catch (error) {
       const info = await resolveApiError(error)
-      if (info.code === 'data_export.url_not_allowed') {
-        setError('baseUrl', { type: 'server', message: info.message })
+      const refused =
+        info.code === 'data_export.url_not_allowed'
+          ? refusedAddress(info.detail, values.authKind)
+          : undefined
+      if (refused) {
+        setError(refused, { type: 'server', message: info.message })
       } else if (info.code === 'data_export.auth_incomplete') {
         setError(values.authKind === 'basic' ? 'password' : 'clientSecret', {
           type: 'server',

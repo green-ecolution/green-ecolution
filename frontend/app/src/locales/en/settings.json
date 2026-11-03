@@ -370,7 +370,7 @@
   "organization": {
     "dataExport": {
       "title": "Data platform",
-      "hint": "Transfers this organization's trees, bins, states and readings to an urban data platform (OGC SensorThings API).",
+      "hint": "Transfers this organization's objects, states and readings to an urban data platform (OGC SensorThings API).",
       "empty": "No data platform is set up for this organization.",
       "setUp": "Set up data platform",
       "edit": "Edit",

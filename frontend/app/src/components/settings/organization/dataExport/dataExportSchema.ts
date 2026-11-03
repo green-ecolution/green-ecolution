@@ -3,14 +3,16 @@ import type { TFunction } from 'i18next'
 import type { DataExportTargetResponse } from '@/api/backendApi'
 import type { DataExportFormValues } from '@/api/dataExport'
 
-// The backend caps these in UTF-8 bytes, not characters.
+// Same units as the backend: URLs in UTF-8 bytes, the other fields in Unicode
+// code points (Rust `chars`), which `String.length` would miscount.
 const URL_MAX_BYTES = 2048
-const PRINCIPAL_MAX_BYTES = 256
-const SECRET_MAX_BYTES = 1024
-const SCOPE_MAX_BYTES = 256
+const PRINCIPAL_MAX_CHARS = 256
+const SECRET_MAX_CHARS = 1024
+const SCOPE_MAX_CHARS = 256
 
 const encoder = new TextEncoder()
 const byteLength = (value: string): number => encoder.encode(value).length
+const charLength = (value: string): number => [...value].length
 
 const parseUrl = (value: string): URL | null => {
   try {
@@ -88,13 +90,13 @@ export const dataExportSchema = (
       const checkPrincipal = (path: 'username' | 'clientId') => {
         const value = values[path].trim()
         if (value.length === 0) fail(path, t('organization.dataExport.dialog.errors.required'))
-        else if (byteLength(value) > PRINCIPAL_MAX_BYTES)
+        else if (charLength(value) > PRINCIPAL_MAX_CHARS)
           fail(path, t('organization.dataExport.dialog.errors.tooLong'))
       }
 
       const checkSecret = (path: 'password' | 'clientSecret', addressesValid: boolean) => {
         const value = values[path]
-        if (byteLength(value) > SECRET_MAX_BYTES)
+        if (charLength(value) > SECRET_MAX_CHARS)
           fail(path, t('organization.dataExport.dialog.errors.tooLong'))
         else if (addressesValid && value.trim().length === 0 && !keepsStoredSecret(values, stored))
           fail(path, t('organization.dataExport.dialog.errors.secretRequired'))
@@ -119,7 +121,7 @@ export const dataExportSchema = (
           )
           checkPrincipal('clientId')
           checkSecret('clientSecret', baseUrlValid && tokenUrlValid)
-          if (byteLength(values.scope.trim()) > SCOPE_MAX_BYTES)
+          if (charLength(values.scope.trim()) > SCOPE_MAX_CHARS)
             fail('scope', t('organization.dataExport.dialog.errors.tooLong'))
         }
       }

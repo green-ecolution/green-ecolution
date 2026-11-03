@@ -194,6 +194,76 @@ describe('DataExportDialog', () => {
     expect(onOpenChange).not.toHaveBeenCalledWith(false)
   })
 
+  describe('a refused address with OAuth2', () => {
+    const refuse = (error: string) =>
+      onSubmit.mockImplementation(() =>
+        Promise.reject(
+          new ResponseError(
+            new Response(JSON.stringify({ error, code: 'data_export.url_not_allowed' }), {
+              status: 422,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          ),
+        ),
+      )
+
+    const submitOAuth2 = async () => {
+      const dialog = renderDialog()
+      await userEvent.type(
+        dialog.getByLabelText('Adresse der SensorThings API'),
+        'https://frost.stadt.de/v1.1',
+      )
+      await userEvent.click(dialog.getByRole('radio', { name: 'OAuth2' }))
+      await userEvent.type(
+        dialog.getByLabelText('Token-Adresse'),
+        'https://auth.elsewhere.de/token',
+      )
+      await userEvent.type(dialog.getByLabelText('Client-ID'), 'green-ecolution')
+      await userEvent.type(dialog.getByLabelText('Client-Secret'), 's3cret')
+      await userEvent.click(dialog.getByRole('button', { name: 'Speichern' }))
+      return dialog
+    }
+
+    it('lands on the token address when the backend names it', async () => {
+      refuse('data_export.auth.token_url points to a host this instance does not allow')
+      const dialog = await submitOAuth2()
+
+      await waitFor(() =>
+        expect(dialog.getByLabelText('Token-Adresse')).toHaveAccessibleDescription(URL_NOT_ALLOWED),
+      )
+      expect(dialog.getByLabelText('Adresse der SensorThings API')).not.toHaveAccessibleDescription(
+        URL_NOT_ALLOWED,
+      )
+    })
+
+    it('lands on the base address when the backend names it', async () => {
+      refuse('data_export.base_url points to a host this instance does not allow')
+      const dialog = await submitOAuth2()
+
+      await waitFor(() =>
+        expect(dialog.getByLabelText('Adresse der SensorThings API')).toHaveAccessibleDescription(
+          URL_NOT_ALLOWED,
+        ),
+      )
+      expect(dialog.getByLabelText('Token-Adresse')).not.toHaveAccessibleDescription(
+        URL_NOT_ALLOWED,
+      )
+    })
+
+    it('is shown as the general alert when the field is not named', async () => {
+      refuse('nope')
+      const dialog = await submitOAuth2()
+
+      expect(await dialog.findByText(URL_NOT_ALLOWED)).toBeInTheDocument()
+      expect(dialog.getByLabelText('Token-Adresse')).not.toHaveAccessibleDescription(
+        URL_NOT_ALLOWED,
+      )
+      expect(dialog.getByLabelText('Adresse der SensorThings API')).not.toHaveAccessibleDescription(
+        URL_NOT_ALLOWED,
+      )
+    })
+  })
+
   it('shows any other server error inside the dialog', async () => {
     onSubmit.mockImplementation(() =>
       Promise.reject(

@@ -97,7 +97,7 @@ describe('DataExportCard', () => {
     render(<DataExportCard organizationId="org-1" />)
 
     const view = await card()
-    expect(view.getByText(/Überträgt Bäume, Behälter/)).toBeInTheDocument()
+    expect(view.getByText(/Überträgt Objekte, Zustände und Messwerte/)).toBeInTheDocument()
     expect(view.getByRole('button', { name: 'Datenplattform einrichten' })).toBeInTheDocument()
     expect(
       view.queryByText('Für diese Organisation ist keine Datenplattform eingerichtet.'),

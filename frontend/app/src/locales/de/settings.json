@@ -370,7 +370,7 @@
   "organization": {
     "dataExport": {
       "title": "Datenplattform",
-      "hint": "Überträgt Bäume, Behälter, Zustände und Messwerte dieser Organisation an eine urbane Datenplattform (OGC SensorThings API).",
+      "hint": "Überträgt Objekte, Zustände und Messwerte dieser Organisation an eine urbane Datenplattform (OGC SensorThings API).",
       "empty": "Für diese Organisation ist keine Datenplattform eingerichtet.",
       "setUp": "Datenplattform einrichten",
       "edit": "Bearbeiten",
