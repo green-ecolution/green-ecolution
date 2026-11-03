@@ -1,11 +1,14 @@
 use domain::data_export::{
     BASE_URL_FIELD, ConnectionOutcome, ConnectionReport, ConnectionTester, DATA_ARRAY_CONFORMANCE,
-    ExportTargetConfig, ExportUrlPolicy, TOKEN_URL_FIELD,
+    ExportTargetConfig, ExportUrlPolicy, SinkError, TOKEN_URL_FIELD,
 };
 
-use super::auth::{AuthFailure, authorize};
 #[cfg(test)]
 use super::http_client;
+use super::{
+    auth::{AuthFailure, authorize},
+    body::{MAX_BODY_BYTES, read_capped},
+};
 
 pub struct SensorThingsProbe {
     client: reqwest::Client,
@@ -98,7 +101,24 @@ impl ConnectionTester for SensorThingsProbe {
                 None,
             );
         }
-        match response.json::<ServiceRoot>().await {
+        let body = match read_capped(response, MAX_BODY_BYTES).await {
+            Ok(body) => body,
+            Err(SinkError::Unreachable(detail)) => {
+                return ConnectionReport::failed(
+                    ConnectionOutcome::Unreachable,
+                    Some(status),
+                    Some(detail),
+                );
+            }
+            Err(_) => {
+                return ConnectionReport::failed(
+                    ConnectionOutcome::NotSensorThings,
+                    Some(status),
+                    None,
+                );
+            }
+        };
+        match serde_json::from_slice::<ServiceRoot>(&body) {
             Ok(root) => ConnectionReport {
                 outcome: ConnectionOutcome::Ok,
                 http_status: Some(status),
@@ -308,6 +328,27 @@ mod tests {
             .await;
 
         assert_eq!(report.outcome, ConnectionOutcome::NotSensorThings);
+    }
+
+    #[tokio::test]
+    async fn an_oversized_root_is_not_sensorthings() {
+        let server = MockServer::start().await;
+        let padding = "x".repeat(MAX_BODY_BYTES);
+        Mock::given(method("GET"))
+            .and(path("/FROST-Server/v1.1"))
+            .respond_with(
+                ResponseTemplate::new(200)
+                    .set_body_string(format!(r#"{{"value":[],"padding":"{padding}"}}"#)),
+            )
+            .mount(&server)
+            .await;
+
+        let report = SensorThingsProbe::new(http_client(), policy())
+            .test(&config(&server, ExportAuth::None))
+            .await;
+
+        assert_eq!(report.outcome, ConnectionOutcome::NotSensorThings);
+        assert_eq!(report.http_status, Some(200));
     }
 
     #[tokio::test]
