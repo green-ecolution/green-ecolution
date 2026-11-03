@@ -21,6 +21,7 @@ pub mod pg_vehicle;
 pub mod plugin_key;
 pub mod plugin_proxy_session;
 pub mod plugin_view_ticket;
+pub mod sensorthings;
 pub(crate) mod sql;
 pub mod statistics_repo;
 pub mod streamlet;
