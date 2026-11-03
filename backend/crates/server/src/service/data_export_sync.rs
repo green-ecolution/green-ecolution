@@ -607,6 +607,7 @@ mod tests {
         Move(String),
         Deleted(String),
         Observation(serde_json::Value),
+        Batch(usize),
     }
 
     #[derive(Default)]
@@ -703,6 +704,27 @@ mod tests {
                 .unwrap()
                 .push(Call::Observation(v.to_json()));
             Ok(())
+        }
+        async fn ensure_device_sensor(
+            &self,
+            sensor_id: &str,
+            _: &str,
+        ) -> Result<RemoteId, SinkError> {
+            Ok(RemoteId(json!(sensor_id)))
+        }
+        async fn ensure_raw_datastream(&self, s: &RawStream<'_>) -> Result<RemoteId, SinkError> {
+            Ok(RemoteId(json!(s.ge_key)))
+        }
+        async fn post_observation_batches(
+            &self,
+            batches: &[(RemoteId, Vec<ObservationRow>)],
+        ) -> Result<BatchOutcome, SinkError> {
+            let n = batches.iter().map(|(_, r)| r.len()).sum::<usize>();
+            self.calls.lock().unwrap().push(Call::Batch(n));
+            Ok(BatchOutcome {
+                accepted: u32::try_from(n).unwrap_or(u32::MAX),
+                rejected: 0,
+            })
         }
     }
 

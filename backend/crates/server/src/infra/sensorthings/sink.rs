@@ -4,9 +4,9 @@ use serde_json::{Map, Value, json};
 use tokio::sync::Mutex;
 
 use domain::data_export::{
-    BASE_URL_FIELD, ExportProperty, ExportTargetConfig, ExportThing, ExportUrlPolicy, RemoteId,
-    SENSOR_KEY, SensorThingsSink, SinkError, SinkSession, StateStream, StateValue, TOKEN_URL_FIELD,
-    location_key, property_key,
+    BASE_URL_FIELD, BatchOutcome, ExportProperty, ExportTargetConfig, ExportThing, ExportUrlPolicy,
+    ObservationRow, RawStream, RemoteId, SENSOR_KEY, SensorThingsSink, SinkError, SinkSession,
+    StateStream, StateValue, TOKEN_URL_FIELD, device_sensor_key, location_key, property_key,
 };
 
 use super::{
@@ -226,6 +226,30 @@ fn id_link(id: &RemoteId) -> Value {
     json!({ "@iot.id": id.as_json() })
 }
 
+fn datastream_body(
+    name: &str,
+    property: &ExportProperty,
+    thing: &RemoteId,
+    sensor: &RemoteId,
+    observed_property: &RemoteId,
+    ge_key: &str,
+) -> Value {
+    let unit = match property.unit {
+        Some(u) => json!({ "name": u.name, "symbol": u.symbol, "definition": u.definition }),
+        None => json!({ "name": null, "symbol": null, "definition": null }),
+    };
+    json!({
+        "name": name,
+        "description": property.description,
+        "observationType": property.kind.observation_type(),
+        "unitOfMeasurement": unit,
+        "Thing": id_link(thing),
+        "Sensor": id_link(sensor),
+        "ObservedProperty": id_link(observed_property),
+        "properties": { "ge_key": ge_key },
+    })
+}
+
 #[async_trait::async_trait]
 impl SinkSession for HttpSession {
     async fn create_thing(&self, thing: &ExportThing) -> Result<(RemoteId, bool), SinkError> {
@@ -329,22 +353,96 @@ impl SinkSession for HttpSession {
         &self,
         stream: &StateStream<'_>,
     ) -> Result<RemoteId, SinkError> {
-        let unit = match stream.property.unit {
-            Some(u) => json!({ "name": u.name, "symbol": u.symbol, "definition": u.definition }),
-            None => json!({ "name": null, "symbol": null, "definition": null }),
-        };
-        let body = json!({
-            "name": format!("{} · {}", stream.thing_name, stream.property.label),
-            "description": stream.property.description,
-            "observationType": stream.property.kind.observation_type(),
-            "unitOfMeasurement": unit,
-            "Thing": id_link(stream.thing),
-            "Sensor": id_link(stream.sensor),
-            "ObservedProperty": id_link(stream.observed_property),
-            "properties": { "ge_key": stream.ge_key },
-        });
+        let name = format!("{} · {}", stream.thing_name, stream.property.label);
+        let body = datastream_body(
+            &name,
+            stream.property,
+            stream.thing,
+            stream.sensor,
+            stream.observed_property,
+            stream.ge_key,
+        );
         self.find_or_create("Datastreams", stream.ge_key, &body)
             .await
+    }
+
+    async fn ensure_raw_datastream(&self, stream: &RawStream<'_>) -> Result<RemoteId, SinkError> {
+        let body = datastream_body(
+            stream.name,
+            stream.property,
+            stream.thing,
+            stream.sensor,
+            stream.observed_property,
+            stream.ge_key,
+        );
+        self.find_or_create("Datastreams", stream.ge_key, &body)
+            .await
+    }
+
+    async fn ensure_device_sensor(
+        &self,
+        sensor_id: &str,
+        model: &str,
+    ) -> Result<RemoteId, SinkError> {
+        let key = device_sensor_key(sensor_id);
+        let body = json!({
+            "name": sensor_id,
+            "description": format!("Sensor {model}"),
+            "encodingType": "text/plain",
+            "metadata": model,
+            "properties": { "ge_key": key, "model": model },
+        });
+        self.find_or_create("Sensors", &key, &body).await
+    }
+
+    async fn post_observation_batches(
+        &self,
+        batches: &[(RemoteId, Vec<ObservationRow>)],
+    ) -> Result<BatchOutcome, SinkError> {
+        let rows: usize = batches.iter().map(|(_, r)| r.len()).sum();
+        if rows == 0 {
+            return Ok(BatchOutcome::default());
+        }
+        let body: Vec<Value> = batches
+            .iter()
+            .filter(|(_, r)| !r.is_empty())
+            .map(|(datastream, rows)| {
+                json!({
+                    "Datastream": id_link(datastream),
+                    "components": ["phenomenonTime", "result", "parameters"],
+                    "dataArray@iot.count": rows.len(),
+                    "dataArray": rows.iter()
+                        .map(|r| json!([rfc3339(r.phenomenon_time), r.result, r.parameters]))
+                        .collect::<Vec<_>>(),
+                })
+            })
+            .collect();
+        // FROST answers 201 even when single rows fail; the per-row strings tell.
+        let answer = self
+            .send(
+                Method::POST,
+                "CreateObservations",
+                &[],
+                Some(&Value::Array(body)),
+            )
+            .await?;
+        let results: Vec<String> = serde_json::from_slice(&answer.body).map_err(|_| {
+            SinkError::Malformed("CreateObservations answer is not a list of strings".into())
+        })?;
+        if results.len() != rows {
+            return Err(SinkError::Malformed(format!(
+                "{} answers for {rows} observations",
+                results.len()
+            )));
+        }
+        let rejected = results.iter().filter(|r| r.starts_with("error")).count();
+        if rejected > 0 {
+            tracing::warn!(rejected, "export target rejected observations of a batch");
+        }
+        Ok(BatchOutcome {
+            accepted: u32::try_from(rows - rejected).unwrap_or(u32::MAX),
+            rejected: u32::try_from(rejected).unwrap_or(u32::MAX),
+        })
     }
 
     async fn post_observation(
@@ -370,8 +468,8 @@ mod tests {
     use chrono::TimeZone;
     use domain::{
         data_export::{
-            BASE_URL_FIELD, ExportAuth, ExportTargetConfig, ExportThing, ExportUrl,
-            ExportUrlPolicy, FILL_LEVEL, StateValue, WATERING_STATUS,
+            BASE_URL_FIELD, BatchOutcome, ExportAuth, ExportTargetConfig, ExportThing, ExportUrl,
+            ExportUrlPolicy, FILL_LEVEL, ObservationRow, RawStream, StateValue, WATERING_STATUS,
         },
         shared::coordinates::Coordinate,
         target::TargetRef,
@@ -781,6 +879,127 @@ mod tests {
         .await;
 
         assert!(matches!(result, Err(SinkError::UrlNotAllowed)));
+        assert!(server.received_requests().await.unwrap().is_empty());
+    }
+
+    #[tokio::test]
+    async fn device_sensors_are_found_or_created_by_their_device_key() {
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/v1.1/Sensors"))
+            .and(query_param(
+                "$filter",
+                "properties/ge_key eq 'device:eui-1'",
+            ))
+            .respond_with(none_found())
+            .mount(&server)
+            .await;
+        Mock::given(method("POST")).and(path("/v1.1/Sensors"))
+            .and(body_partial_json(json!({ "name": "eui-1", "metadata": "GES-1000", "properties": { "ge_key": "device:eui-1" } })))
+            .respond_with(created(4, "Sensors", &server)).expect(1).mount(&server).await;
+
+        assert_eq!(
+            session(&server)
+                .await
+                .ensure_device_sensor("eui-1", "GES-1000")
+                .await
+                .unwrap(),
+            RemoteId(json!(4))
+        );
+    }
+
+    #[tokio::test]
+    async fn a_raw_datastream_takes_its_full_name() {
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/v1.1/Datastreams"))
+            .respond_with(none_found())
+            .mount(&server)
+            .await;
+        Mock::given(method("POST")).and(path("/v1.1/Datastreams"))
+            .and(body_partial_json(json!({ "name": "Baum 12 · Bodenfeuchte 40 cm", "unitOfMeasurement": { "symbol": "%" } })))
+            .respond_with(created(9, "Datastreams", &server)).expect(1).mount(&server).await;
+        let property = domain::data_export::raw_property(
+            domain::sensor_model::SensorAbilityName::SoilMoisture,
+            domain::sensor_model::SensorAbilityUnit::Percent,
+        );
+
+        let id = session(&server)
+            .await
+            .ensure_raw_datastream(&RawStream {
+                ge_key: "raw:eui-1:soil_moisture:40:irrigation:tree:1",
+                name: "Baum 12 · Bodenfeuchte 40 cm",
+                thing: &RemoteId(json!(5)),
+                property: &property,
+                sensor: &RemoteId(json!(4)),
+                observed_property: &RemoteId(json!(2)),
+            })
+            .await
+            .unwrap();
+        assert_eq!(id, RemoteId(json!(9)));
+    }
+
+    fn row(result: f64) -> ObservationRow {
+        ObservationRow {
+            phenomenon_time: chrono::Utc.with_ymd_and_hms(2026, 11, 3, 12, 0, 0).unwrap(),
+            result,
+            parameters: serde_json::Map::from_iter([("ge_reading_id".to_string(), json!("r1"))]),
+        }
+    }
+
+    #[tokio::test]
+    async fn batches_go_out_as_one_data_array_request_and_count_the_answers() {
+        let server = MockServer::start().await;
+        Mock::given(method("POST")).and(path("/v1.1/CreateObservations"))
+            .and(body_partial_json(json!([{
+                "Datastream": { "@iot.id": 9 },
+                "components": ["phenomenonTime", "result", "parameters"],
+                "dataArray@iot.count": 2,
+                "dataArray": [["2026-11-03T12:00:00Z", 41.5, { "ge_reading_id": "r1" }], ["2026-11-03T12:00:00Z", 99.0, { "ge_reading_id": "r1" }]]
+            }])))
+            .respond_with(ResponseTemplate::new(201).set_body_json(json!(["Observations(1)", "error Result out of range"])))
+            .expect(1).mount(&server).await;
+
+        let outcome = session(&server)
+            .await
+            .post_observation_batches(&[(RemoteId(json!(9)), vec![row(41.5), row(99.0)])])
+            .await
+            .unwrap();
+
+        assert_eq!(
+            outcome,
+            BatchOutcome {
+                accepted: 1,
+                rejected: 1
+            }
+        );
+    }
+
+    #[tokio::test]
+    async fn an_answer_that_does_not_match_the_rows_is_malformed() {
+        let server = MockServer::start().await;
+        Mock::given(method("POST"))
+            .and(path("/v1.1/CreateObservations"))
+            .respond_with(ResponseTemplate::new(201).set_body_json(json!(["Observations(1)"])))
+            .mount(&server)
+            .await;
+
+        let result = session(&server)
+            .await
+            .post_observation_batches(&[(RemoteId(json!(9)), vec![row(1.0), row(2.0)])])
+            .await;
+        assert!(matches!(result, Err(SinkError::Malformed(_))));
+    }
+
+    #[tokio::test]
+    async fn an_empty_batch_sends_nothing() {
+        let server = MockServer::start().await;
+        let outcome = session(&server)
+            .await
+            .post_observation_batches(&[])
+            .await
+            .unwrap();
+        assert_eq!(outcome, BatchOutcome::default());
         assert!(server.received_requests().await.unwrap().is_empty());
     }
 }

@@ -5,7 +5,8 @@ use serde_json::Value;
 use uuid::Uuid;
 
 use super::{
-    ExportProperty, ExportRunStats, ExportTargetConfig, ExportThing, StateValue, StoredExportTarget,
+    BatchOutcome, ExportProperty, ExportRunStats, ExportTargetConfig, ExportThing, ObservationRow,
+    RawStream, StateValue, StoredExportTarget,
 };
 use crate::{Id, RepositoryError, organization::Organization};
 
@@ -239,6 +240,17 @@ pub trait SinkSession: Send + Sync {
         value: &StateValue,
         phenomenon_time: DateTime<Utc>,
     ) -> Result<(), SinkError>;
+    async fn ensure_device_sensor(
+        &self,
+        sensor_id: &str,
+        model: &str,
+    ) -> Result<RemoteId, SinkError>;
+    async fn ensure_raw_datastream(&self, stream: &RawStream<'_>) -> Result<RemoteId, SinkError>;
+    /// One request for all batches. Rows the target rejects are counted, not errors.
+    async fn post_observation_batches(
+        &self,
+        batches: &[(RemoteId, Vec<ObservationRow>)],
+    ) -> Result<BatchOutcome, SinkError>;
 }
 
 #[cfg(test)]
