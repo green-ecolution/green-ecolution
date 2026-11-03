@@ -726,11 +726,13 @@ runs via `just run-dev`.
 
 ### Data platform export
 
-Each organization can export its sensors and readings to an external SensorThings
-server (OGC SensorThings API). The target, its credentials and the on/off switch are
-set per organization under the organization settings in the app. Which servers the
-backend may call at all is decided by the instance operator in the `data_export` block
-of the YAML config (`backend/config/base.yaml`):
+Each organization can export its module objects with their states to an external
+SensorThings server (OGC SensorThings API), today the trees and clusters of the
+irrigation module and the bins of the waste module, plus the raw sensor readings.
+The target, its credentials and the on/off switch are set per organization under the
+organization settings in the app. Which servers the backend may call at all is decided
+by the instance operator in the `data_export` block of the YAML config
+(`backend/config/base.yaml`):
 
 - `enabled`: switches the export on for the instance (`false` by default).
 - `allowed_hosts`: bare host names or IP literals, without scheme, port or path. A
@@ -743,7 +745,12 @@ of the YAML config (`backend/config/base.yaml`):
   `demo` and `production`, and also refuses an enabled export without
   `auth.enabled` there.
 - `interval_secs` (300), `run_budget_secs` (120) and `batch_size` (500): the export
-  cycle, the time budget of one run and the number of records per batch.
+  cycle, the time budget of one run and the number of records per batch. A target
+  runs at most once per interval across all replicas; the worker polls every 30 s
+  (or every interval, if shorter) and the database decides which target is due.
+- `reading_settle_secs` (120): readings younger than this wait for a later run. Their
+  ids are minted before the insert commits, so without the wait a run could move its
+  cursor past a reading that becomes visible only afterwards.
 
 `backend/config/local.yaml` enables the export and allows `localhost` over `http`.
 To try it, start a local FROST server with `geco -p frost` or `just frost-up`
