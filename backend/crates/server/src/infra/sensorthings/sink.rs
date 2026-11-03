@@ -197,7 +197,7 @@ fn parse(body: &[u8]) -> Result<Value, SinkError> {
 }
 
 fn rfc3339(at: DateTime<Utc>) -> String {
-    at.to_rfc3339_opts(SecondsFormat::Secs, true)
+    at.to_rfc3339_opts(SecondsFormat::Millis, true)
 }
 
 fn thing_properties(thing: &ExportThing) -> Value {
@@ -617,7 +617,7 @@ mod tests {
             .mount(&server)
             .await;
         Mock::given(method("PATCH")).and(path("/v1.1/Things(5)"))
-            .and(body_partial_json(json!({ "properties": { "species": "Linde", "deleted_at": "2026-11-03T12:00:00Z" } })))
+            .and(body_partial_json(json!({ "properties": { "species": "Linde", "deleted_at": "2026-11-03T12:00:00.000Z" } })))
             .respond_with(ResponseTemplate::new(200)).expect(1).mount(&server).await;
 
         let at = chrono::Utc.with_ymd_and_hms(2026, 11, 3, 12, 0, 0).unwrap();
@@ -796,7 +796,7 @@ mod tests {
         Mock::given(method("POST"))
             .and(path("/v1.1/Datastreams(8)/Observations"))
             .and(body_partial_json(
-                json!({ "result": "good", "phenomenonTime": "2026-11-03T12:00:00Z" }),
+                json!({ "result": "good", "phenomenonTime": "2026-11-03T12:00:00.000Z" }),
             ))
             .respond_with(created(1, "Observations", &server))
             .expect(1)
@@ -941,7 +941,8 @@ mod tests {
 
     fn row(result: f64) -> ObservationRow {
         ObservationRow {
-            phenomenon_time: chrono::Utc.with_ymd_and_hms(2026, 11, 3, 12, 0, 0).unwrap(),
+            phenomenon_time: chrono::Utc.with_ymd_and_hms(2026, 11, 3, 12, 0, 0).unwrap()
+                + chrono::Duration::milliseconds(250),
             result,
             parameters: serde_json::Map::from_iter([("ge_reading_id".to_string(), json!("r1"))]),
         }
@@ -955,7 +956,7 @@ mod tests {
                 "Datastream": { "@iot.id": 9 },
                 "components": ["phenomenonTime", "result", "parameters"],
                 "dataArray@iot.count": 2,
-                "dataArray": [["2026-11-03T12:00:00Z", 41.5, { "ge_reading_id": "r1" }], ["2026-11-03T12:00:00Z", 99.0, { "ge_reading_id": "r1" }]]
+                "dataArray": [["2026-11-03T12:00:00.250Z", 41.5, { "ge_reading_id": "r1" }], ["2026-11-03T12:00:00.250Z", 99.0, { "ge_reading_id": "r1" }]]
             }])))
             .respond_with(ResponseTemplate::new(201).set_body_json(json!(["Observations(1)", "error Result out of range"])))
             .expect(1).mount(&server).await;
