@@ -21,16 +21,10 @@ pub struct DataExportTargetRequest {
 }
 
 /// An omitted `password` / `client_secret` keeps the stored one only while the kind and the receiving origins are unchanged.
+// Variant order matters for the generated TypeScript client: it tries the variants in order and `none` only requires `kind`, so it must come last.
 #[derive(Deserialize, utoipa::ToSchema)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum DataExportAuthRequest {
-    None,
-    Basic {
-        username: String,
-        #[serde(default)]
-        #[schema(value_type = Option<String>, write_only)]
-        password: Option<SecretString>,
-    },
     #[serde(rename = "oauth2_client_credentials")]
     OAuth2ClientCredentials {
         token_url: String,
@@ -41,6 +35,13 @@ pub enum DataExportAuthRequest {
         #[serde(default)]
         scope: Option<String>,
     },
+    Basic {
+        username: String,
+        #[serde(default)]
+        #[schema(value_type = Option<String>, write_only)]
+        password: Option<SecretString>,
+    },
+    None,
 }
 
 impl TryFrom<DataExportTargetRequest> for ExportTargetDraft {

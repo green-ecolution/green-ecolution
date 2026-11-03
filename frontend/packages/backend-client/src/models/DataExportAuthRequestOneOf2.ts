@@ -24,31 +24,7 @@ export interface DataExportAuthRequestOneOf2 {
      * @type {string}
      * @memberof DataExportAuthRequestOneOf2
      */
-    clientId: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof DataExportAuthRequestOneOf2
-     */
-    clientSecret?: string | null;
-    /**
-     * 
-     * @type {string}
-     * @memberof DataExportAuthRequestOneOf2
-     */
     kind: DataExportAuthRequestOneOf2KindEnum;
-    /**
-     * 
-     * @type {string}
-     * @memberof DataExportAuthRequestOneOf2
-     */
-    scope?: string | null;
-    /**
-     * 
-     * @type {string}
-     * @memberof DataExportAuthRequestOneOf2
-     */
-    tokenUrl: string;
 }
 
 
@@ -56,7 +32,7 @@ export interface DataExportAuthRequestOneOf2 {
  * @export
  */
 export const DataExportAuthRequestOneOf2KindEnum = {
-    Oauth2ClientCredentials: 'oauth2_client_credentials'
+    None: 'none'
 } as const;
 export type DataExportAuthRequestOneOf2KindEnum = typeof DataExportAuthRequestOneOf2KindEnum[keyof typeof DataExportAuthRequestOneOf2KindEnum];
 
@@ -65,9 +41,7 @@ export type DataExportAuthRequestOneOf2KindEnum = typeof DataExportAuthRequestOn
  * Check if a given object implements the DataExportAuthRequestOneOf2 interface.
  */
 export function instanceOfDataExportAuthRequestOneOf2(value: object): value is DataExportAuthRequestOneOf2 {
-    if (!('clientId' in value) || value['clientId'] === undefined) return false;
     if (!('kind' in value) || value['kind'] === undefined) return false;
-    if (!('tokenUrl' in value) || value['tokenUrl'] === undefined) return false;
     return true;
 }
 
@@ -81,11 +55,7 @@ export function DataExportAuthRequestOneOf2FromJSONTyped(json: any, ignoreDiscri
     }
     return {
         
-        'clientId': json['client_id'],
-        'clientSecret': json['client_secret'] == null ? undefined : json['client_secret'],
         'kind': json['kind'],
-        'scope': json['scope'] == null ? undefined : json['scope'],
-        'tokenUrl': json['token_url'],
     };
 }
 
@@ -100,11 +70,7 @@ export function DataExportAuthRequestOneOf2ToJSONTyped(value?: DataExportAuthReq
 
     return {
         
-        'client_id': value['clientId'],
-        'client_secret': value['clientSecret'],
         'kind': value['kind'],
-        'scope': value['scope'],
-        'token_url': value['tokenUrl'],
     };
 }
 

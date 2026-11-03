@@ -10634,14 +10634,35 @@
           {
             "type": "object",
             "required": [
+              "token_url",
+              "client_id",
               "kind"
             ],
             "properties": {
+              "client_id": {
+                "type": "string"
+              },
+              "client_secret": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "writeOnly": true
+              },
               "kind": {
                 "type": "string",
                 "enum": [
-                  "none"
+                  "oauth2_client_credentials"
                 ]
+              },
+              "scope": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "token_url": {
+                "type": "string"
               }
             }
           },
@@ -10673,35 +10694,14 @@
           {
             "type": "object",
             "required": [
-              "token_url",
-              "client_id",
               "kind"
             ],
             "properties": {
-              "client_id": {
-                "type": "string"
-              },
-              "client_secret": {
-                "type": [
-                  "string",
-                  "null"
-                ],
-                "writeOnly": true
-              },
               "kind": {
                 "type": "string",
                 "enum": [
-                  "oauth2_client_credentials"
+                  "none"
                 ]
-              },
-              "scope": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "token_url": {
-                "type": "string"
               }
             }
           }
