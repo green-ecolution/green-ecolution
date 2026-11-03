@@ -44,7 +44,12 @@
     "vehicle": {
       "capacity_missing": "The vehicle has no matching capacity for this plan."
     },
+    "data_export": {
+      "url_not_allowed": "This address is not approved for the data export on this instance. Contact the operators.",
+      "auth_incomplete": "The password or client secret for this sign-in method is still missing."
+    },
     "feature": {
+      "data_export_disabled": "The data export is not enabled in this environment.",
       "routing_disabled": "Route planning is not enabled in this environment.",
       "plugins_disabled": "The plugin system is not enabled in this environment."
     },
