@@ -46,7 +46,7 @@
     },
     "data_export": {
       "url_not_allowed": "Diese Adresse ist für den Datenexport auf dieser Instanz nicht freigegeben. Wende dich an den Betrieb.",
-      "auth_incomplete": "Für diese Anmeldeart fehlt noch das Passwort bzw. das Client-Secret."
+      "auth_incomplete": "Gib das Passwort bzw. das Client-Secret erneut ein. Es wird nur behalten, solange Anmeldeart und Zieladresse gleich bleiben."
     },
     "feature": {
       "data_export_disabled": "Der Datenexport ist in dieser Umgebung nicht aktiviert.",

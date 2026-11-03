@@ -15,7 +15,7 @@ use crate::service::ServiceError;
 #[derive(Deserialize, utoipa::ToSchema)]
 pub struct DataExportTargetRequest {
     pub enabled: bool,
-    /// SensorThings service root including the version, e.g. `https://…/FROST-Server/v1.1`.
+    /// SensorThings service root including the version, e.g. `https://…/FROST-Server/v1.1`. A trailing `/` is removed.
     pub base_url: String,
     pub auth: DataExportAuthRequest,
 }

@@ -194,9 +194,8 @@ async fn the_limit_counts_readings_and_value_less_readings_move_the_frontier() {
         .await
         .unwrap();
     assert!(batch.rows.iter().all(|r| r.sensor_id != sensor));
-    // Other tests seed readings into the shared DB, so the frontier may lie beyond ours.
-    assert!(batch.scanned_until >= Some(second));
-    assert!(batch.scanned >= 1);
+    assert_eq!(batch.scanned_until, Some(second));
+    assert_eq!(batch.scanned, 1);
 }
 
 /// Seed data may hold older readings; start just below the fresh one.

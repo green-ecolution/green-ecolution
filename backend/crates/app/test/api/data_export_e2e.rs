@@ -90,6 +90,7 @@ async fn a_tree_reaches_the_local_frost_server_with_its_watering_status() {
         .json()
         .await
         .unwrap();
+    assert_eq!(things["value"].as_array().unwrap().len(), 1);
     let thing = &things["value"][0];
     assert_eq!(thing["name"], "Baum E2E");
     assert_eq!(

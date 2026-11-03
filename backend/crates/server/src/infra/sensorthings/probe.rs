@@ -88,6 +88,9 @@ impl ConnectionTester for SensorThingsProbe {
         if matches!(status, 401 | 403) {
             return ConnectionReport::failed(ConnectionOutcome::Unauthorized, Some(status), None);
         }
+        if response.status().is_server_error() {
+            return ConnectionReport::failed(ConnectionOutcome::Unreachable, Some(status), None);
+        }
         if !response.status().is_success() {
             return ConnectionReport::failed(
                 ConnectionOutcome::NotSensorThings,
@@ -280,6 +283,19 @@ mod tests {
 
         assert_eq!(report.outcome, ConnectionOutcome::NotSensorThings);
         assert_eq!(report.http_status, Some(302));
+    }
+
+    #[tokio::test]
+    async fn a_server_error_on_the_root_is_unreachable() {
+        let server = MockServer::start().await;
+        mount_root(&server, 503, json!({})).await;
+
+        let report = SensorThingsProbe::new(http_client(), policy())
+            .test(&config(&server, ExportAuth::None))
+            .await;
+
+        assert_eq!(report.outcome, ConnectionOutcome::Unreachable);
+        assert_eq!(report.http_status, Some(503));
     }
 
     #[tokio::test]

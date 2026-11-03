@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 use std::time::Duration;
 
+use domain::data_export::ExportUrlPolicy;
 use secrecy::{ExposeSecret, SecretString};
 use serde::Deserialize;
 use serde_aux::field_attributes::deserialize_number_from_string;
@@ -575,6 +576,11 @@ impl Settings {
                     .to_string(),
             );
         }
+        for entry in ExportUrlPolicy::unusable_entries(&self.data_export.allowed_hosts) {
+            advisories.push(format!(
+                "data_export.allowed_hosts entry \"{entry}\" can never match: list bare host names or IP addresses, without scheme, port or path."
+            ));
+        }
         advisories
     }
 
@@ -966,6 +972,17 @@ mod tests {
         let settings = Settings::for_test(auth(true, Some("backend")));
 
         assert!(settings.security_advisories().is_empty());
+    }
+
+    #[test]
+    fn unusable_export_hosts_are_advised() {
+        let mut settings = Settings::for_test(auth(true, Some("backend")));
+        settings.data_export.allowed_hosts = vec!["https://x.org".into(), "x.org".into()];
+
+        let advisories = settings.security_advisories();
+
+        assert_eq!(advisories.len(), 1);
+        assert!(advisories[0].contains("\"https://x.org\" can never match"));
     }
 
     #[test]

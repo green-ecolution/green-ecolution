@@ -1,3 +1,5 @@
+use std::net::IpAddr;
+
 use url::{Host, Url};
 
 use super::error::DataExportError;
@@ -92,11 +94,23 @@ impl ExportUrlPolicy {
         Self {
             allowed_hosts: allowed_hosts
                 .into_iter()
-                .map(|h| h.trim().trim_start_matches('.').to_ascii_lowercase())
+                .map(|h| normalize_entry(&h))
                 .filter(|h| !h.is_empty())
                 .collect(),
             allow_insecure_http,
         }
+    }
+
+    /// Entries that no URL host can equal: a scheme, port, path or userinfo
+    /// has no place in a host list.
+    pub fn unusable_entries(raw: &[String]) -> Vec<String> {
+        raw.iter()
+            .filter(|entry| {
+                let entry = normalize_entry(entry);
+                entry.parse::<IpAddr>().is_err() && entry.contains([':', '/', '@'])
+            })
+            .cloned()
+            .collect()
     }
 
     pub fn check(&self, field: &'static str, url: &ExportUrl) -> Result<(), DataExportError> {
@@ -123,6 +137,19 @@ impl ExportUrlPolicy {
             Err(DataExportError::UrlNotAllowed { field })
         }
     }
+}
+
+/// IP literals are compared by their canonical text, so `[::1]` and the
+/// expanded form both equal what `Url` reports for the host.
+fn normalize_entry(raw: &str) -> String {
+    let entry = raw.trim().trim_start_matches('.').to_ascii_lowercase();
+    let unbracketed = entry
+        .strip_prefix('[')
+        .and_then(|e| e.strip_suffix(']'))
+        .unwrap_or(&entry);
+    unbracketed
+        .parse::<IpAddr>()
+        .map_or(entry.clone(), |ip| ip.to_string())
 }
 
 #[cfg(test)]
@@ -274,6 +301,32 @@ mod tests {
             policy(&["localhost"], true)
                 .check(F, &url("http://127.1/v1.1"))
                 .is_err()
+        );
+    }
+
+    #[test]
+    fn ip_entries_match_in_any_spelling() {
+        let u = url("http://[::1]:8080/v1.1");
+        for entry in ["::1", "[::1]", "0:0:0:0:0:0:0:1", "[0:0:0:0:0:0:0:1]"] {
+            assert!(policy(&[entry], true).check(F, &u).is_ok(), "{entry}");
+        }
+    }
+
+    #[test]
+    fn names_entries_that_can_never_match() {
+        let raw = [
+            "https://x.org",
+            "x.org:443",
+            "x.org",
+            "x.org/v1",
+            "a@x.org",
+            "[::1]",
+            "::1",
+        ]
+        .map(String::from);
+        assert_eq!(
+            ExportUrlPolicy::unusable_entries(&raw),
+            ["https://x.org", "x.org:443", "x.org/v1", "a@x.org"]
         );
     }
 

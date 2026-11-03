@@ -46,7 +46,7 @@
     },
     "data_export": {
       "url_not_allowed": "This address is not approved for the data export on this instance. Contact the operators.",
-      "auth_incomplete": "The password or client secret for this sign-in method is still missing."
+      "auth_incomplete": "Enter the password or client secret again. It is only kept while the sign-in method and the target address stay the same."
     },
     "feature": {
       "data_export_disabled": "The data export is not enabled in this environment.",
