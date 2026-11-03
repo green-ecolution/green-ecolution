@@ -36,7 +36,7 @@ import {
 
 /**
  * @type DataExportAuthRequest
- * An omitted `password` / `client_secret` keeps the stored one of the same kind.
+ * An omitted `password` / `client_secret` keeps the stored one only while the kind and the receiving origins are unchanged.
  * @export
  */
 export type DataExportAuthRequest = DataExportAuthRequestOneOf | DataExportAuthRequestOneOf1 | DataExportAuthRequestOneOf2;

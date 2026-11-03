@@ -22,7 +22,7 @@ import {
 } from './DataExportAuthRequest';
 
 /**
- * No `Debug`: the request carries the plaintext secret.
+ * 
  * @export
  * @interface DataExportTargetRequest
  */

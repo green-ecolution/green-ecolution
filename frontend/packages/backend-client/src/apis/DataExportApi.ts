@@ -131,7 +131,7 @@ export class DataExportApi extends runtime.BaseAPI {
     }
 
     /**
-     * Omitting `password` / `client_secret` keeps the stored secret of the same auth kind. A changed `base_url` counts as a new target. Hosts must be on the instance allowlist. Requires setting:update.
+     * Omitting `password` / `client_secret` keeps the stored secret only while the auth kind and every receiving origin (scheme, host, port of `base_url`, and of `token_url` for OAuth2) are unchanged; otherwise the secret has to be sent again (code `data_export.auth_incomplete`). A changed `base_url` counts as a new target. Hosts must be on the instance allowlist. Requires setting:update.
      * Create or replace an organization\'s export target
      */
     async putDataExportTargetRaw(requestParameters: PutDataExportTargetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DataExportTargetResponse>> {
@@ -171,7 +171,7 @@ export class DataExportApi extends runtime.BaseAPI {
     }
 
     /**
-     * Omitting `password` / `client_secret` keeps the stored secret of the same auth kind. A changed `base_url` counts as a new target. Hosts must be on the instance allowlist. Requires setting:update.
+     * Omitting `password` / `client_secret` keeps the stored secret only while the auth kind and every receiving origin (scheme, host, port of `base_url`, and of `token_url` for OAuth2) are unchanged; otherwise the secret has to be sent again (code `data_export.auth_incomplete`). A changed `base_url` counts as a new target. Hosts must be on the instance allowlist. Requires setting:update.
      * Create or replace an organization\'s export target
      */
     async putDataExportTarget(requestParameters: PutDataExportTargetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DataExportTargetResponse> {
