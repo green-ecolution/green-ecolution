@@ -136,12 +136,16 @@ impl HttpSession {
             )
             .await?;
         let page: Value = parse(&answer.body)?;
-        Ok(page["value"]
+        let Some(raw) = page["value"]
             .as_array()
             .and_then(|items| items.first())
             .and_then(|item| item.get("@iot.id"))
-            .cloned()
-            .map(RemoteId))
+        else {
+            return Ok(None);
+        };
+        RemoteId::from_json(raw)
+            .map(Some)
+            .ok_or_else(|| SinkError::Malformed("unsupported id".into()))
     }
 
     async fn create(&self, set: &str, body: &Value) -> Result<RemoteId, SinkError> {
@@ -284,7 +288,7 @@ impl SinkSession for HttpSession {
         let mut properties = current["properties"]
             .as_object()
             .cloned()
-            .unwrap_or_default();
+            .ok_or_else(|| SinkError::Malformed("thing has no properties object".into()))?;
         properties.insert("deleted_at".into(), json!(rfc3339(deleted_at)));
         self.send(
             Method::PATCH,
@@ -524,6 +528,105 @@ mod tests {
             .mark_thing_deleted(&RemoteId(json!(5)), at)
             .await
             .unwrap();
+    }
+
+    #[tokio::test]
+    async fn an_id_that_is_neither_number_nor_string_is_refused() {
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/v1.1/Things"))
+            .respond_with(
+                ResponseTemplate::new(200)
+                    .set_body_json(json!({ "value": [{ "@iot.id": { "x": 1 } }] })),
+            )
+            .mount(&server)
+            .await;
+        Mock::given(method("PATCH"))
+            .respond_with(ResponseTemplate::new(200))
+            .expect(0)
+            .mount(&server)
+            .await;
+        Mock::given(method("POST"))
+            .respond_with(ResponseTemplate::new(201))
+            .expect(0)
+            .mount(&server)
+            .await;
+
+        let result = session(&server).await.create_thing(&tree()).await;
+
+        assert!(matches!(result, Err(SinkError::Malformed(ref m)) if m == "unsupported id"));
+    }
+
+    #[tokio::test]
+    async fn marking_deleted_without_properties_sends_nothing() {
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/v1.1/Things(5)"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({ "name": "x" })))
+            .mount(&server)
+            .await;
+        Mock::given(method("PATCH"))
+            .respond_with(ResponseTemplate::new(200))
+            .expect(0)
+            .mount(&server)
+            .await;
+
+        let result = session(&server)
+            .await
+            .mark_thing_deleted(&RemoteId(json!(5)), chrono::Utc::now())
+            .await;
+
+        assert!(matches!(result, Err(SinkError::Malformed(_))));
+    }
+
+    #[tokio::test]
+    async fn a_401_is_retried_once_with_fresh_authorization() {
+        let server = MockServer::start().await;
+        Mock::given(method("POST"))
+            .and(path("/v1.1/Datastreams(8)/Observations"))
+            .respond_with(ResponseTemplate::new(401))
+            .up_to_n_times(1)
+            .mount(&server)
+            .await;
+        Mock::given(method("POST"))
+            .and(path("/v1.1/Datastreams(8)/Observations"))
+            .respond_with(created(1, "Observations", &server))
+            .mount(&server)
+            .await;
+
+        session(&server)
+            .await
+            .post_observation(
+                &RemoteId(json!(8)),
+                &StateValue::Measurement(1.0),
+                chrono::Utc::now(),
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(server.received_requests().await.unwrap().len(), 2);
+    }
+
+    #[tokio::test]
+    async fn a_second_401_is_unauthorized() {
+        let server = MockServer::start().await;
+        Mock::given(method("POST"))
+            .and(path("/v1.1/Datastreams(8)/Observations"))
+            .respond_with(ResponseTemplate::new(401))
+            .mount(&server)
+            .await;
+
+        let result = session(&server)
+            .await
+            .post_observation(
+                &RemoteId(json!(8)),
+                &StateValue::Measurement(1.0),
+                chrono::Utc::now(),
+            )
+            .await;
+
+        assert!(matches!(result, Err(SinkError::Unauthorized(401))));
+        assert_eq!(server.received_requests().await.unwrap().len(), 2);
     }
 
     #[tokio::test]

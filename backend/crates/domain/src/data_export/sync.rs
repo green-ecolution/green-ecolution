@@ -35,10 +35,31 @@ impl RemoteId {
         }
         inner.parse::<i64>().ok().map(|n| Self(Value::from(n)))
     }
+    pub fn from_json(value: &Value) -> Option<Self> {
+        match value {
+            Value::String(_) => Some(Self(value.clone())),
+            Value::Number(n) => n.as_i64().map(|n| Self(Value::from(n))),
+            _ => None,
+        }
+    }
 
+    /// Ids are remote input; the encoding keeps one from leaving its path segment.
     pub fn path_segment(&self) -> String {
         match &self.0 {
-            Value::String(s) => format!("('{}')", s.replace('\'', "''")),
+            Value::String(s) => {
+                let mut out = String::from("('");
+                for byte in s.bytes() {
+                    match byte {
+                        b'\'' => out.push_str("''"),
+                        b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'.' | b'_' | b'~' => {
+                            out.push(byte as char)
+                        }
+                        _ => out.push_str(&format!("%{byte:02X}")),
+                    }
+                }
+                out.push_str("')");
+                out
+            }
             other => format!("({other})"),
         }
     }
@@ -226,9 +247,32 @@ mod tests {
     }
 
     #[test]
+    fn malformed_location_ids_are_refused() {
+        for h in [
+            "x/Things(abc)",
+            "x/Things(42",
+            "x/Things()",
+            "x/Things('a(b)')",
+        ] {
+            assert_eq!(RemoteId::from_location(h), None, "{h}");
+        }
+    }
+
+    #[test]
+    fn json_ids_must_be_integers_or_strings() {
+        assert_eq!(RemoteId::from_json(&json!(3)), Some(RemoteId(json!(3))));
+        assert_eq!(RemoteId::from_json(&json!("a")), Some(RemoteId(json!("a"))));
+        assert_eq!(RemoteId::from_json(&json!(1.5)), None);
+        assert_eq!(RemoteId::from_json(&json!({"x": 1})), None);
+        assert_eq!(RemoteId::from_json(&json!(null)), None);
+    }
+
+    #[test]
     fn renders_ids_as_odata_path_segments() {
         assert_eq!(RemoteId(json!(7)).path_segment(), "(7)");
         assert_eq!(RemoteId(json!("a'b")).path_segment(), "('a''b')");
+        assert_eq!(RemoteId(json!("a/b?c")).path_segment(), "('a%2Fb%3Fc')");
+        assert_eq!(RemoteId(json!("../x")).path_segment(), "('..%2Fx')");
     }
 
     #[test]
