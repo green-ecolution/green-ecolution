@@ -1,11 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { dataExportApi } from '@/api/backendApi'
-import {
-  toDataExportRequest,
-  toDataExportWireBody,
-  type DataExportFormValues,
-} from '@/api/dataExport'
+import { toDataExportRequest, type DataExportFormValues } from '@/api/dataExport'
 import createToast from '@/hooks/createToast'
 import { resolveApiError } from '@/lib/apiError'
 
@@ -22,16 +18,11 @@ export const useDataExportMutations = (orgId: string) => {
   }
 
   const save = useMutation({
-    mutationFn: (values: DataExportFormValues) => {
-      const dataExportTargetRequest = toDataExportRequest(values)
-      return dataExportApi.putDataExportTarget(
-        { orgId, dataExportTargetRequest },
-        {
-          // The client stringifies a non-string body itself.
-          body: toDataExportWireBody(dataExportTargetRequest) as unknown as BodyInit,
-        },
-      )
-    },
+    mutationFn: (values: DataExportFormValues) =>
+      dataExportApi.putDataExportTarget({
+        orgId,
+        dataExportTargetRequest: toDataExportRequest(values),
+      }),
     onSuccess: () => showToast(t('organization.dataExport.toast.saved')),
     onError: showFailure,
     onSettled: refresh,

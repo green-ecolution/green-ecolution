@@ -79,22 +79,3 @@ export function formValuesFrom(target?: DataExportTargetResponse): DataExportFor
     scope: target?.auth.scope ?? '',
   }
 }
-
-// The generated union serializer matches the `none` variant for every auth kind
-// (it only requires `kind`) and drops the other fields, so the body is built here.
-export function toDataExportWireBody(request: DataExportTargetRequest) {
-  const { auth } = request
-  const wireAuth =
-    auth.kind === 'basic'
-      ? { kind: auth.kind, username: auth.username, password: auth.password }
-      : auth.kind === 'oauth2_client_credentials'
-        ? {
-            kind: auth.kind,
-            token_url: auth.tokenUrl,
-            client_id: auth.clientId,
-            client_secret: auth.clientSecret,
-            scope: auth.scope,
-          }
-        : { kind: auth.kind }
-  return { enabled: request.enabled, base_url: request.baseUrl, auth: wireAuth }
-}

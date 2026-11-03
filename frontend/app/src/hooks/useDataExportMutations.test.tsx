@@ -18,7 +18,7 @@ const values: DataExportFormValues = {
   baseUrl: 'https://frost.example/v1.1',
   authKind: 'basic',
   username: 'alice',
-  password: '',
+  password: 'pw',
   tokenUrl: '',
   clientId: '',
   clientSecret: '',
@@ -54,10 +54,44 @@ describe('useDataExportMutations', () => {
     expect(body).toEqual({
       enabled: true,
       base_url: 'https://frost.example/v1.1',
-      auth: { kind: 'basic', username: 'alice' },
+      auth: { kind: 'basic', username: 'alice', password: 'pw' },
     })
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['organizations', 'org-1', 'data-export'] })
     expect(showToast).toHaveBeenCalledWith('Datenplattform gespeichert')
+  })
+
+  it('sends the oauth fields through the generated client', async () => {
+    let body: unknown
+    server.use(
+      http.put('*/v1/organizations/org-1/data-export', async ({ request }) => {
+        body = await request.json()
+        return HttpResponse.json(targetBody)
+      }),
+    )
+    const { result } = renderHookWithClient(() => useDataExportMutations('org-1'))
+
+    await act(() =>
+      result.current.save.mutateAsync({
+        ...values,
+        authKind: 'oauth2_client_credentials',
+        tokenUrl: 'https://auth.example/token',
+        clientId: 'client',
+        clientSecret: 's3',
+        scope: 'read',
+      }),
+    )
+
+    expect(body).toEqual({
+      enabled: true,
+      base_url: 'https://frost.example/v1.1',
+      auth: {
+        kind: 'oauth2_client_credentials',
+        token_url: 'https://auth.example/token',
+        client_id: 'client',
+        client_secret: 's3',
+        scope: 'read',
+      },
+    })
   })
 
   it('removes the target and refreshes', async () => {
