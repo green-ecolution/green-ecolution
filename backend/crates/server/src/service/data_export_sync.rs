@@ -557,6 +557,17 @@ mod tests {
                 .push((generation, result.clone()));
             Ok(())
         }
+        async fn cursor(&self, _: Id<Organization>) -> Result<Option<uuid::Uuid>, RepositoryError> {
+            Ok(None)
+        }
+        async fn advance_cursor(
+            &self,
+            _: Id<Organization>,
+            _: DateTime<Utc>,
+            _: uuid::Uuid,
+        ) -> Result<(), RepositoryError> {
+            Ok(())
+        }
     }
 
     #[derive(Default)]

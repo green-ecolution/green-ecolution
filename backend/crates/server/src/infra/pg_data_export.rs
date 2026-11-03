@@ -2,15 +2,20 @@ use std::collections::{BTreeSet, HashMap};
 
 use chrono::{DateTime, Utc};
 use sqlx::PgPool;
+use std::str::FromStr;
+use uuid::Uuid;
 
 use domain::{
     Id, RepositoryError,
     data_export::{
-        ExportAuth, ExportEntity, ExportRef, ExportRefReader, ExportRefWriter, ExportRunStore,
-        ExportTargetConfig, ExportTargetReader, ExportTargetSnapshot, ExportTargetWriter, RemoteId,
-        RunResult, StoredExportTarget,
+        ExportAuth, ExportEntity, ExportReading, ExportReadingSource, ExportRef, ExportRefReader,
+        ExportRefWriter, ExportRunStore, ExportTargetConfig, ExportTargetReader,
+        ExportTargetSnapshot, ExportTargetWriter, RemoteId, RunResult, StoredExportTarget,
     },
+    module::ModuleKey,
     organization::Organization,
+    sensor_model::{SensorAbilityName, SensorAbilityUnit},
+    target::TargetRef,
 };
 
 pub struct PgDataExportRepository {
@@ -331,5 +336,108 @@ impl ExportRunStore for PgDataExportRepository {
             }
         }
         Ok(())
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn cursor(&self, org: Id<Organization>) -> Result<Option<Uuid>, RepositoryError> {
+        Ok(sqlx::query_scalar!(
+            "SELECT cursor_reading_id FROM data_export_targets WHERE organization_id = $1",
+            org.value()
+        )
+        .fetch_optional(&self.pool)
+        .await?
+        .flatten())
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn advance_cursor(
+        &self,
+        org: Id<Organization>,
+        generation: DateTime<Utc>,
+        cursor: Uuid,
+    ) -> Result<(), RepositoryError> {
+        sqlx::query!(
+            "UPDATE data_export_targets SET cursor_reading_id = $3 WHERE organization_id = $1 AND activated_at = $2",
+            org.value(),
+            generation,
+            cursor,
+        )
+        .execute(&self.pool)
+        .await?;
+        Ok(())
+    }
+}
+
+#[async_trait::async_trait]
+impl ExportReadingSource for PgDataExportRepository {
+    #[tracing::instrument(level = "debug", skip(self, active), fields(pairs = active.len()))]
+    async fn readings_after(
+        &self,
+        active: &[(ModuleKey, Id<Organization>)],
+        after: Uuid,
+        limit: i64,
+    ) -> Result<Vec<ExportReading>, RepositoryError> {
+        let modules: Vec<String> = active.iter().map(|(m, _)| m.as_str().to_string()).collect();
+        let orgs: Vec<Uuid> = active.iter().map(|(_, o)| o.value()).collect();
+        let rows = sqlx::query!(
+            r#"WITH active AS (
+                   SELECT * FROM unnest($1::text[], $2::uuid[]) AS a(module_key, organization_id)
+               ),
+               batch AS (
+                   SELECT d.id, d.sensor_id, a.module_key, a.target_kind, a.target_id, m.name AS model
+                   FROM sensor_data d
+                   JOIN sensors s ON s.id = d.sensor_id
+                   JOIN sensor_attachments a ON a.sensor_id = d.sensor_id
+                   JOIN active ON active.module_key = a.module_key AND active.organization_id = s.organization_id
+                   JOIN sensor_models m ON m.id = s.model_id
+                   WHERE d.id > $3
+                   ORDER BY d.id
+                   LIMIT $4
+               )
+               SELECT b.id AS "reading_id!", b.sensor_id AS "sensor_id!", b.module_key AS "module_key!",
+                      b.target_kind AS "target_kind!", b.target_id AS "target_id!", b.model AS "model!",
+                      ab.ability AS "ability!", ab.unit AS "unit!: SensorAbilityUnit", ma.depth_cm AS "depth_cm!",
+                      v.value::float8 AS "value!", v.plausible AS "plausible!", v.quality_reason
+               FROM batch b
+               JOIN sensor_data_ability_values v ON v.sensor_data_id = b.id
+               JOIN sensor_model_abilities ma ON ma.id = v.sensor_model_ability_id
+               JOIN sensor_abilities ab ON ab.id = ma.sensor_ability_id
+               ORDER BY b.id, ab.ability, ma.depth_cm"#,
+            &modules,
+            &orgs,
+            after,
+            limit,
+        )
+        .fetch_all(&self.pool)
+        .await?;
+        rows.into_iter()
+            .map(|r| {
+                let broken = |what: String| {
+                    RepositoryError::DataIntegrity(format!(
+                        "export reading {}: {what}",
+                        r.reading_id
+                    ))
+                };
+                Ok(ExportReading {
+                    reading_id: r.reading_id,
+                    sensor_id: r.sensor_id.clone(),
+                    sensor_model: r.model.clone(),
+                    target: TargetRef::new(&r.module_key, &r.target_kind, r.target_id)
+                        .map_err(|e| broken(e.to_string()))?,
+                    ability: SensorAbilityName::from_str(&r.ability)
+                        .map_err(|e| broken(e.to_string()))?,
+                    unit: r.unit,
+                    depth_cm: r.depth_cm,
+                    value: r.value,
+                    quality_issue: (!r.plausible).then(|| {
+                        r.quality_reason
+                            .clone()
+                            .unwrap_or_else(|| "implausible".into())
+                    }),
+                    measured_at: domain::uuid_v7_timestamp(&r.reading_id)
+                        .ok_or_else(|| broken("not a UUID v7".into()))?,
+                })
+            })
+            .collect()
     }
 }

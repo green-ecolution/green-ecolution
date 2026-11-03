@@ -234,6 +234,12 @@ pub struct DataExportSettings {
     pub interval_secs: u64,
     #[serde(default = "default_export_run_budget_secs")]
     pub run_budget_secs: u64,
+    #[serde(default = "default_export_batch_size")]
+    pub batch_size: u64,
+}
+
+fn default_export_batch_size() -> u64 {
+    500
 }
 
 fn default_export_interval_secs() -> u64 {
@@ -252,6 +258,7 @@ impl Default for DataExportSettings {
             allow_insecure_http: false,
             interval_secs: default_export_interval_secs(),
             run_budget_secs: default_export_run_budget_secs(),
+            batch_size: default_export_batch_size(),
         }
     }
 }

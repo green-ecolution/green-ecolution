@@ -2,6 +2,7 @@ use std::collections::{BTreeSet, HashMap};
 
 use chrono::{DateTime, Utc};
 use serde_json::Value;
+use uuid::Uuid;
 
 use super::{
     ExportProperty, ExportRunStats, ExportTargetConfig, ExportThing, StateValue, StoredExportTarget,
@@ -160,6 +161,14 @@ pub trait ExportRunStore: Send + Sync {
         org: Id<Organization>,
         generation: DateTime<Utc>,
         result: &RunResult,
+    ) -> Result<(), RepositoryError>;
+    async fn cursor(&self, org: Id<Organization>) -> Result<Option<Uuid>, RepositoryError>;
+    /// Like `finish`, writes only while the target still has this generation.
+    async fn advance_cursor(
+        &self,
+        org: Id<Organization>,
+        generation: DateTime<Utc>,
+        cursor: Uuid,
     ) -> Result<(), RepositoryError>;
 }
 

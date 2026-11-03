@@ -53,6 +53,7 @@ data_export:
   allow_insecure_http: false
   interval_secs: 300
   run_budget_secs: 120
+  batch_size: 500
 analytics:
   enabled: false
   script_url: "https://analytics.progeek.de/a.js"
