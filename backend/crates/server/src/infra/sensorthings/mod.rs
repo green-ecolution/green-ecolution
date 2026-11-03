@@ -2,9 +2,12 @@
 //! the sink that writes entities and observations builds on `auth`.
 
 mod auth;
+mod body;
 mod probe;
+mod sink;
 
 pub use probe::SensorThingsProbe;
+pub use sink::SensorThingsHttpSink;
 
 use std::time::Duration;
 
