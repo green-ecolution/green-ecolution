@@ -180,9 +180,8 @@ impl IntoResponse for ServiceError {
             ServiceError::TargetNotAccepted { .. }
             | ServiceError::TargetRefused { .. }
             | ServiceError::VehicleCapacityMissing { .. }
-            | ServiceError::UnknownStop { .. } => {
-                (StatusCode::UNPROCESSABLE_ENTITY, self.to_string())
-            }
+            | ServiceError::UnknownStop { .. }
+            | ServiceError::DataExport(_) => (StatusCode::UNPROCESSABLE_ENTITY, self.to_string()),
             ServiceError::ModuleUnknown { .. } => {
                 (StatusCode::UNPROCESSABLE_ENTITY, self.to_string())
             }
@@ -382,6 +381,21 @@ mod tests {
         assert_eq!(response.status(), StatusCode::PAYLOAD_TOO_LARGE);
         let body: serde_json::Value = serde_json::from_str(&body_of(response).await).unwrap();
         assert_eq!(body["code"], "plugin.batch_too_large");
+    }
+
+    #[tokio::test]
+    async fn a_refused_export_url_is_unprocessable() {
+        let response =
+            ServiceError::DataExport(domain::data_export::DataExportError::UrlNotAllowed {
+                field: "data_export.base_url",
+            })
+            .into_response();
+        assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
+        assert!(
+            body_of(response)
+                .await
+                .contains("data_export.url_not_allowed")
+        );
     }
 
     #[tokio::test]

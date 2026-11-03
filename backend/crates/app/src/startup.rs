@@ -360,6 +360,7 @@ impl Application {
             feature_flags: FeatureFlags {
                 routing_enabled: settings.routing.enabled,
                 plugins_enabled: settings.plugins.enabled,
+                data_export_enabled: settings.data_export.enabled,
             },
             frontend_config_js: server::http::render_frontend_config_js(
                 &settings.auth,

@@ -46,6 +46,7 @@ pub mod v1;
 pub struct FeatureFlags {
     pub routing_enabled: bool,
     pub plugins_enabled: bool,
+    pub data_export_enabled: bool,
 }
 
 /// OIDC parameters Swagger UI needs to run the PKCE login flow against

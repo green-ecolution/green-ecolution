@@ -28,6 +28,8 @@ pub struct Settings {
     #[serde(default)]
     pub plugins: PluginsSettings,
     #[serde(default)]
+    pub data_export: DataExportSettings,
+    #[serde(default)]
     pub analytics: AnalyticsSettings,
     /// One section per module key: activation default plus the module's own keys.
     #[serde(default)]
@@ -216,6 +218,18 @@ pub struct PluginsSettings {
     pub enabled: bool,
     #[serde(default)]
     pub proxy: Option<PluginProxySettings>,
+}
+
+/// Export to urban data platforms (SensorThings). Hosts not on the allowlist
+/// are refused, so an organization cannot aim the server at internal services.
+#[derive(serde::Deserialize, Clone, Default)]
+pub struct DataExportSettings {
+    #[serde(default)]
+    pub enabled: bool,
+    #[serde(default)]
+    pub allowed_hosts: Vec<String>,
+    #[serde(default)]
+    pub allow_insecure_http: bool,
 }
 
 pub const MAX_PLUGIN_SESSION_TTL_MINUTES: u32 = 480;
@@ -455,6 +469,12 @@ pub enum InsecureConfiguration {
          List the frontend origins explicitly."
     )]
     WildcardCors { environment: &'static str },
+
+    #[error(
+        "data_export.allow_insecure_http = true is refused in the {environment} environment: \
+         credentials for the data platform would travel unencrypted."
+    )]
+    InsecureDataExport { environment: &'static str },
 }
 
 impl Settings {
@@ -487,6 +507,15 @@ impl Settings {
             && self.cors.allowed_origins.iter().any(|o| o == "*")
         {
             return Err(InsecureConfiguration::WildcardCors { environment });
+        }
+
+        if self
+            .application
+            .environment
+            .requires_explicit_cors_origins()
+            && self.data_export.allow_insecure_http
+        {
+            return Err(InsecureConfiguration::InsecureDataExport { environment });
         }
 
         Ok(())
@@ -545,6 +574,7 @@ impl Settings {
             sensor: SensorSettings::default(),
             routing: RoutingSettings::default(),
             plugins: PluginsSettings::default(),
+            data_export: DataExportSettings::default(),
             analytics: AnalyticsSettings::default(),
             modules: std::collections::BTreeMap::new(),
         }
@@ -788,6 +818,32 @@ mod tests {
                 environment: "production"
             })
         );
+    }
+
+    #[test]
+    fn internet_facing_profiles_refuse_plain_http_data_export() {
+        for env in [
+            Environment::Staging,
+            Environment::Demo,
+            Environment::Production,
+        ] {
+            let name = env.as_str();
+            let mut settings = settings_in(env, true, &REAL_ORIGIN);
+            settings.data_export.allow_insecure_http = true;
+
+            assert_eq!(
+                settings.ensure_secure(),
+                Err(InsecureConfiguration::InsecureDataExport { environment: name })
+            );
+        }
+    }
+
+    #[test]
+    fn local_may_export_over_plain_http() {
+        let mut settings = settings_in(Environment::Local, true, &REAL_ORIGIN);
+        settings.data_export.allow_insecure_http = true;
+
+        assert_eq!(settings.ensure_secure(), Ok(()));
     }
 
     /// Demo is internet-facing too, so the origin list stays mandatory even
