@@ -369,6 +369,71 @@
   },
   "organization": {
     "dataExport": {
+      "title": "Datenplattform",
+      "hint": "Überträgt Bäume, Behälter, Zustände und Messwerte dieser Organisation an eine urbane Datenplattform (OGC SensorThings API).",
+      "empty": "Für diese Organisation ist keine Datenplattform eingerichtet.",
+      "setUp": "Datenplattform einrichten",
+      "edit": "Bearbeiten",
+      "remove": "Entfernen",
+      "test": "Verbindung testen",
+      "loading": "Datenplattform wird geladen",
+      "loadError": "Die Einstellungen zur Datenplattform konnten nicht geladen werden.",
+      "status": {
+        "active": "Aktiv",
+        "paused": "Pausiert",
+        "failing": "Fehler"
+      },
+      "auth": {
+        "label": "Anmeldung: {summary}",
+        "none": "Keine Anmeldung",
+        "basic": "Benutzername und Passwort",
+        "oauth2": "OAuth2",
+        "user": "Benutzer {name}",
+        "client": "Client-ID {name}"
+      },
+      "lastRun": "Letzter Lauf {time}",
+      "neverRun": "Noch kein Lauf",
+      "stats": "{things} Objekte · {observations} Messwerte",
+      "skipped": "{count} übersprungen",
+      "lastError": "Letzter Fehler: {error}",
+      "outcome": {
+        "ok": "Verbindung steht. Der Server unterstützt gebündelte Messwerte.",
+        "okWithoutDataArray": "Verbindung steht, aber der Server unterstützt keine gebündelten Messwerte. Rohmesswerte können nicht übertragen werden.",
+        "url_not_allowed": "Diese Adresse ist auf dieser Instanz nicht freigegeben.",
+        "unreachable": "Der Server ist nicht erreichbar.",
+        "unauthorized": "Der Server hat die Anmeldung abgelehnt.",
+        "not_sensorthings": "Unter dieser Adresse antwortet keine SensorThings API."
+      },
+      "dialog": {
+        "createTitle": "Datenplattform einrichten",
+        "editTitle": "Datenplattform bearbeiten",
+        "enabled": "Export aktiv",
+        "baseUrl": "Adresse der SensorThings API",
+        "baseUrlHint": "Die Basisadresse mit Version, zum Beispiel https://frost.stadt.de/FROST-Server/v1.1.",
+        "authKind": "Anmeldung",
+        "username": "Benutzername",
+        "password": "Passwort",
+        "tokenUrl": "Token-Adresse",
+        "clientId": "Client-ID",
+        "clientSecret": "Client-Secret",
+        "scope": "Scope (optional)",
+        "secretKept": "Gespeichert. Leer lassen, um es zu behalten.",
+        "save": "Speichern",
+        "cancel": "Abbrechen",
+        "errors": {
+          "urlRequired": "Gib die Adresse der SensorThings API an.",
+          "urlInvalid": "Gib eine vollständige http- oder https-Adresse ohne Zugangsdaten, Parameter oder Anker an.",
+          "tooLong": "Der Wert ist zu lang.",
+          "required": "Dieses Feld ist erforderlich.",
+          "secretRequired": "Gib das Passwort bzw. das Client-Secret ein."
+        }
+      },
+      "removeDialog": {
+        "title": "Datenplattform entfernen?",
+        "description": "Der Export dieser Organisation stoppt. Auf der Datenplattform wird nichts gelöscht.",
+        "confirm": "Entfernen",
+        "cancel": "Abbrechen"
+      },
       "toast": {
         "saved": "Datenplattform gespeichert",
         "removed": "Datenplattform entfernt"

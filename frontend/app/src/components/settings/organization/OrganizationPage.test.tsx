@@ -18,6 +18,7 @@ import type {
   UpdateOrganizationModulesVariables,
   UpdateSettingsVariables,
 } from '@/hooks/useSettingsMutations'
+import type { DataExportState } from '@/api/dataExport'
 import { defineSettingsSection } from '@/modules/settings'
 import type { ModuleManifest, ModuleSettingsDraft } from '@/modules/types'
 
@@ -208,6 +209,7 @@ const listError = vi.fn((): unknown => null)
 const detailError = vi.fn((): unknown => null)
 const settingsError = vi.fn((): unknown => null)
 const modulesError = vi.fn((): unknown => null)
+const dataExportState = vi.fn((): DataExportState => ({ kind: 'disabled' }))
 
 vi.mock('@tanstack/react-query', async () => {
   const actual =
@@ -237,6 +239,9 @@ vi.mock('@tanstack/react-query', async () => {
       }
       if (scope === 'organizations' && second === undefined) {
         return { data: orgList, isLoading: false, error: listError() }
+      }
+      if (scope === 'organizations' && third === 'data-export') {
+        return { data: dataExportState(), isLoading: false, error: null }
       }
       if (scope === 'organizations' && third === 'modules') {
         const data = options.enabled === false ? undefined : modulesMap[second as string]
@@ -296,6 +301,7 @@ describe('OrganizationPage', () => {
     detailError.mockReturnValue(null)
     settingsError.mockReturnValue(null)
     modulesError.mockReturnValue(null)
+    dataExportState.mockReturnValue({ kind: 'disabled' })
     probeLoadError.mockReturnValue(null)
     probeSave.mockImplementation(() => Promise.resolve())
     updateSettingsMutate.mockImplementation(() => Promise.resolve())
@@ -933,10 +939,32 @@ describe('OrganizationPage', () => {
 
   it('hides the settings and module sections without setting:read', () => {
     permissions.mockReturnValue(new Set(['organization:read', 'organization:update', 'user:read']))
+    dataExportState.mockReturnValue({ kind: 'none' })
     render(<OrganizationPage />)
 
     expect(screen.queryByText('Fachliche Vorgaben')).not.toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Module' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Datenplattform' })).not.toBeInTheDocument()
+  })
+
+  it('shows the data platform card after the module switches', () => {
+    dataExportState.mockReturnValue({ kind: 'none' })
+    render(<OrganizationPage />)
+
+    const card = cardOf('Datenplattform')
+    expect(card.getByRole('button', { name: 'Datenplattform einrichten' })).toBeInTheDocument()
+    const modules = screen.getByRole('heading', { name: 'Module' })
+    const dataExport = screen.getByRole('heading', { name: 'Datenplattform' })
+    expect(modules.compareDocumentPosition(dataExport) & Node.DOCUMENT_POSITION_FOLLOWING).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    )
+  })
+
+  it('leaves the data platform card out where the export is disabled', () => {
+    render(<OrganizationPage />)
+
+    expect(screen.getByRole('heading', { name: 'Module' })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Datenplattform' })).not.toBeInTheDocument()
   })
 
   // Silently dropping the section would look exactly like the case above, so a
