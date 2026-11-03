@@ -8,6 +8,7 @@ pub mod error;
 pub mod repository;
 pub mod scope;
 pub mod snapshot;
+pub mod sync;
 pub mod target;
 pub mod url;
 
@@ -26,6 +27,11 @@ pub use repository::{
 pub use scope::{export_scope, responsible_target};
 #[doc(hidden)]
 pub use snapshot::ExportTargetSnapshot;
+pub use sync::{
+    ExportEntity, ExportRef, ExportRefReader, ExportRefWriter, ExportRunStore, RemoteId, RunResult,
+    SENSOR_KEY, SensorThingsSink, SinkError, SinkSession, StateStream, location_key, property_key,
+    state_stream_key,
+};
 pub use target::{
     ExportAuthSummary, ExportRunStats, ExportTarget, ExportTargetConfig, ExportTargetDraft,
     ExportTargetStatus, ExportTargetView, StoredExportTarget,
