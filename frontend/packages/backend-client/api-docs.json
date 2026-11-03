@@ -10821,7 +10821,7 @@
           },
           "base_url": {
             "type": "string",
-            "description": "SensorThings service root including the version, e.g. `https://…/FROST-Server/v1.1`."
+            "description": "SensorThings service root including the version, e.g. `https://…/FROST-Server/v1.1`. A trailing `/` is removed."
           },
           "enabled": {
             "type": "boolean"

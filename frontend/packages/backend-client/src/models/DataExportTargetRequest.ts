@@ -34,7 +34,7 @@ export interface DataExportTargetRequest {
      */
     auth: DataExportAuthRequest;
     /**
-     * SensorThings service root including the version, e.g. `https://…/FROST-Server/v1.1`.
+     * SensorThings service root including the version, e.g. `https://…/FROST-Server/v1.1`. A trailing `/` is removed.
      * @type {string}
      * @memberof DataExportTargetRequest
      */
