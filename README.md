@@ -15,11 +15,6 @@ Urban green spaces need water - but how much, and when? City maintenance teams o
 
 ![Dashboard Preview](assets/dashboard-preview.png)
 
-<!-- Voting banner: remove after 2026-09-30 -->
-> [!NOTE]
-> **Green Ecolution is up for the community vote of the [Open Source Wettbewerb](https://open-source-wettbewerb.de/) 2026**, run by the Open Source Business Alliance. If this project is useful to you, we would appreciate your support:
-> **[Vote for Green Ecolution](https://open-source-wettbewerb.de/voting/green-ecolution/)** — voting is open until 30 September 2026.
-
 ## What it does
 
 - 🌳 **Tree management** - Track trees and tree clusters, monitor their watering status
@@ -76,17 +71,17 @@ just build       # Build frontend + backend
 
 ### Common Commands
 
-| Command | Description |
-|---------|-------------|
-| `just run-dev` | Backend + frontend dev via Traefik (bacon live reload) |
-| `just run-docker` | Full stack via Docker Compose |
-| `just infra-up` | Start infrastructure only |
-| `just test` | Run all tests (Rust workspace + frontend) |
-| `just lint` | Lint Rust workspace + frontend |
-| `just generate-sqlx` | Refresh sqlx offline query cache |
-| `just migrate-up` | Apply database migrations |
-| `just migrate-new <name>` | Create new migration |
-| `just seed-up` | Apply seed data on top of the migrated DB |
+| Command                   | Description                                            |
+| ------------------------- | ------------------------------------------------------ |
+| `just run-dev`            | Backend + frontend dev via Traefik (bacon live reload) |
+| `just run-docker`         | Full stack via Docker Compose                          |
+| `just infra-up`           | Start infrastructure only                              |
+| `just test`               | Run all tests (Rust workspace + frontend)              |
+| `just lint`               | Lint Rust workspace + frontend                         |
+| `just generate-sqlx`      | Refresh sqlx offline query cache                       |
+| `just migrate-up`         | Apply database migrations                              |
+| `just migrate-new <name>` | Create new migration                                   |
+| `just seed-up`            | Apply seed data on top of the migrated DB              |
 
 > For a reproducible dev environment, you can also use `nix develop`.
 
@@ -96,23 +91,23 @@ just build       # Build frontend + backend
 
 **Without Porkbun keys** (HTTP on port 3000):
 
-| Service | URL |
-|---------|-----|
+| Service     | URL                                                          |
+| ----------- | ------------------------------------------------------------ |
 | Backend API | <http://localhost:3000/api> (needs `run-dev` / `run-docker`) |
-| Keycloak | <http://auth.localhost:3000> |
-| pgAdmin | <http://pgadmin.localhost:3000> |
-| Valhalla | <http://valhalla.localhost:3000> |
-| Streamlet | <http://streamlet.localhost:3000> |
+| Keycloak    | <http://auth.localhost:3000>                                 |
+| pgAdmin     | <http://pgadmin.localhost:3000>                              |
+| Valhalla    | <http://valhalla.localhost:3000>                             |
+| Streamlet   | <http://streamlet.localhost:3000>                            |
 
 **With Porkbun keys** (HTTPS on port 3443, valid Let's Encrypt certs):
 
-| Service | URL |
-|---------|-----|
+| Service     | URL                                                                          |
+| ----------- | ---------------------------------------------------------------------------- |
 | Backend API | `https://<ip>.green-ecolution.dev:3443/api` (needs `run-dev` / `run-docker`) |
-| Keycloak | `https://auth.<ip>.green-ecolution.dev:3443` |
-| pgAdmin | `https://pgadmin.<ip>.green-ecolution.dev:3443` |
-| Valhalla | `https://valhalla.<ip>.green-ecolution.dev:3443` |
-| Streamlet | `https://streamlet.<ip>.green-ecolution.dev:3443` |
+| Keycloak    | `https://auth.<ip>.green-ecolution.dev:3443`                                 |
+| pgAdmin     | `https://pgadmin.<ip>.green-ecolution.dev:3443`                              |
+| Valhalla    | `https://valhalla.<ip>.green-ecolution.dev:3443`                             |
+| Streamlet   | `https://streamlet.<ip>.green-ecolution.dev:3443`                            |
 
 ## Architecture
 
