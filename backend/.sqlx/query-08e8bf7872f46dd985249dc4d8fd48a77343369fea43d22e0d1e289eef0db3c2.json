@@ -1,0 +1,76 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT id, number, species, planting_year, latitude, longitude, tree_cluster_id,\n                      description, organization_id, watering_status::text AS \"watering_status!\"\n               FROM trees WHERE organization_id = ANY($1)",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "number",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "species",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "planting_year",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 4,
+        "name": "latitude",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 5,
+        "name": "longitude",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 6,
+        "name": "tree_cluster_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 7,
+        "name": "description",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 8,
+        "name": "organization_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 9,
+        "name": "watering_status!",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "UuidArray"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      false,
+      null
+    ]
+  },
+  "hash": "08e8bf7872f46dd985249dc4d8fd48a77343369fea43d22e0d1e289eef0db3c2"
+}

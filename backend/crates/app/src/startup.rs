@@ -210,6 +210,7 @@ impl Application {
         let targets = Arc::new(server::service::targets::TargetRegistry::new());
         let planning = Arc::new(PlanningRegistry::new());
         let statistics = Arc::new(server::service::statistics_registry::StatisticsRegistry::new());
+        let export_registry = Arc::new(server::service::export_registry::ExportRegistry::new());
         let services = Services::build(
             &repos,
             event_bus.clone(),
@@ -242,6 +243,7 @@ impl Application {
         let mut catalogs = std::collections::BTreeMap::new();
         let mut providers = std::collections::BTreeMap::new();
         let mut statistics_providers = std::collections::BTreeMap::new();
+        let mut export_catalogs = std::collections::BTreeMap::new();
         let mut sensor_parsers = Vec::new();
         for module in &modules {
             let ctx = server::module::ModuleContext {
@@ -283,6 +285,9 @@ impl Application {
             if let Some(provider) = runtime.statistics {
                 statistics_providers.insert(module.key(), provider);
             }
+            if let Some(catalog) = runtime.export {
+                export_catalogs.insert(module.key(), catalog);
+            }
         }
         targets
             .install(catalogs)
@@ -292,6 +297,9 @@ impl Application {
             .map_err(|e| std::io::Error::other(e.to_string()))?;
         statistics
             .install(statistics_providers)
+            .map_err(|e| std::io::Error::other(e.to_string()))?;
+        export_registry
+            .install(export_catalogs)
             .map_err(|e| std::io::Error::other(e.to_string()))?;
         let sensor_parsers = Arc::new(
             server::service::sensor_parsers::SensorParserRegistry::new(sensor_parsers)
@@ -374,6 +382,7 @@ impl Application {
             readiness_reader,
             statistics_reader: repos.statistics,
             statistics,
+            export_registry,
             token_validator,
             feature_flags: FeatureFlags {
                 routing_enabled: settings.routing.enabled,

@@ -109,6 +109,8 @@ pub struct AppState {
     pub readiness_reader: Arc<dyn ReadinessReader>,
     pub statistics_reader: Arc<dyn StatisticsReader>,
     pub statistics: Arc<crate::service::statistics_registry::StatisticsRegistry>,
+    /// Exposed for the export sync and integration tests.
+    pub export_registry: Arc<crate::service::export_registry::ExportRegistry>,
     pub token_validator: Arc<TokenValidator>,
     pub feature_flags: FeatureFlags,
     pub frontend_config_js: std::sync::Arc<str>,
