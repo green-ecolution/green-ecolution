@@ -71,3 +71,50 @@ async fn irrigation_exports_trees_and_clusters_of_the_given_organizations() {
             .all(|t| t.target.id != tree && t.target.id != cluster)
     );
 }
+
+#[tokio::test]
+async fn waste_exports_bins_with_fill_level_and_state() {
+    let app = spawn_app().await;
+    let root = Uuid::parse_str(ROOT_ORG_ID).unwrap();
+    let bin = Uuid::now_v7();
+    sqlx::query(
+        "INSERT INTO waste_bins (id, number, latitude, longitude, geometry, volume_liters, depth_cm, organization_id, fill_fraction, fill_measured_at)
+         VALUES ($1, 'B-1', 54.79, 9.43, ST_SetSRID(ST_MakePoint(9.43, 54.79), 4326), 240, 100, $2, 0.9, now())",
+    )
+    .bind(bin)
+    .bind(root)
+    .execute(&app.db_pool)
+    .await
+    .unwrap();
+
+    let catalog = app
+        .state
+        .export_registry
+        .catalogs()
+        .into_iter()
+        .find(|(key, _)| key.as_str() == "waste")
+        .map(|(_, catalog)| catalog)
+        .expect("waste registers an export catalog");
+    let things = catalog
+        .snapshot(&BTreeSet::from([Id::new(root)]))
+        .await
+        .unwrap();
+
+    let thing = things
+        .iter()
+        .find(|t| t.target.id == bin)
+        .expect("bin exported");
+    assert_eq!(thing.name, "Behälter B-1");
+    let level = thing
+        .states
+        .iter()
+        .find(|s| s.property.key == "fill_level")
+        .unwrap();
+    assert_eq!(level.value, StateValue::Measurement(90.0));
+    let state = thing
+        .states
+        .iter()
+        .find(|s| s.property.key == "fill_state")
+        .unwrap();
+    assert_eq!(state.value, StateValue::Category("full".into()));
+}
