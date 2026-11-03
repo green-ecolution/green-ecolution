@@ -1,0 +1,20 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT organization_id FROM data_export_targets\n               WHERE enabled\n                 AND (leased_until IS NULL OR leased_until < now())\n                 AND (next_attempt_at IS NULL OR next_attempt_at <= now())\n               ORDER BY organization_id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "organization_id",
+        "type_info": "Uuid"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "b490dddd167d23a4c7012d435d1309f110b29aff5dca089e6e8f45ab21acf3d5"
+}

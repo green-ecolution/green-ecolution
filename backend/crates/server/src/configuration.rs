@@ -222,7 +222,7 @@ pub struct PluginsSettings {
 
 /// Export to urban data platforms (SensorThings). Hosts not on the allowlist
 /// are refused, so an organization cannot aim the server at internal services.
-#[derive(serde::Deserialize, Clone, Default)]
+#[derive(serde::Deserialize, Clone)]
 pub struct DataExportSettings {
     #[serde(default)]
     pub enabled: bool,
@@ -230,6 +230,30 @@ pub struct DataExportSettings {
     pub allowed_hosts: Vec<String>,
     #[serde(default)]
     pub allow_insecure_http: bool,
+    #[serde(default = "default_export_interval_secs")]
+    pub interval_secs: u64,
+    #[serde(default = "default_export_run_budget_secs")]
+    pub run_budget_secs: u64,
+}
+
+fn default_export_interval_secs() -> u64 {
+    300
+}
+
+fn default_export_run_budget_secs() -> u64 {
+    120
+}
+
+impl Default for DataExportSettings {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            allowed_hosts: Vec::new(),
+            allow_insecure_http: false,
+            interval_secs: default_export_interval_secs(),
+            run_budget_secs: default_export_run_budget_secs(),
+        }
+    }
 }
 
 pub const MAX_PLUGIN_SESSION_TTL_MINUTES: u32 = 480;
