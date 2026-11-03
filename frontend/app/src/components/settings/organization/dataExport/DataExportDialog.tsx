@@ -64,7 +64,6 @@ const DataExportForm = ({ target, onSubmit, onDone, onCancel }: FormProps) => {
       onDone()
     } catch (error) {
       const info = await resolveApiError(error)
-      setServerError(info.message)
       if (info.code === 'data_export.url_not_allowed') {
         setError('baseUrl', { type: 'server', message: info.message })
       } else if (info.code === 'data_export.auth_incomplete') {
@@ -72,6 +71,8 @@ const DataExportForm = ({ target, onSubmit, onDone, onCancel }: FormProps) => {
           type: 'server',
           message: info.message,
         })
+      } else {
+        setServerError(info.message)
       }
     }
   })

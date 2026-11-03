@@ -23,8 +23,8 @@ export const useDataExportMutations = (orgId: string) => {
         orgId,
         dataExportTargetRequest: toDataExportRequest(values),
       }),
+    // No error toast: the dialog owns a failed save and shows it in place.
     onSuccess: () => showToast(t('organization.dataExport.toast.saved')),
-    onError: showFailure,
     onSettled: refresh,
   })
 

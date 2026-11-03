@@ -126,7 +126,7 @@ describe('useDataExportMutations', () => {
     expect(showToast).not.toHaveBeenCalled()
   })
 
-  it('shows the catalog text for a refused url', async () => {
+  it('leaves a failed save to the caller without a toast', async () => {
     server.use(
       http.put('*/v1/organizations/org-1/data-export', () =>
         HttpResponse.json({ error: 'nope', code: 'data_export.url_not_allowed' }, { status: 422 }),
@@ -134,10 +134,27 @@ describe('useDataExportMutations', () => {
     )
     const { result } = renderHookWithClient(() => useDataExportMutations('org-1'))
 
-    await act(() => result.current.save.mutateAsync(values).catch(() => undefined))
+    await expect(act(() => result.current.save.mutateAsync(values))).rejects.toBeDefined()
+
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(showToast).not.toHaveBeenCalled()
+  })
+
+  it('shows a failed removal as an error toast', async () => {
+    server.use(
+      http.delete('*/v1/organizations/org-1/data-export', () =>
+        HttpResponse.json({ error: 'forbidden' }, { status: 403 }),
+      ),
+    )
+    const { result } = renderHookWithClient(() => useDataExportMutations('org-1'))
+
+    await act(() => result.current.remove.mutateAsync().catch(() => undefined))
 
     await vi.waitFor(() =>
-      expect(showToast).toHaveBeenCalledWith(expect.stringContaining('nicht freigegeben'), 'error'),
+      expect(showToast).toHaveBeenCalledWith(
+        'Für diese Aktion fehlt dir die Berechtigung.',
+        'error',
+      ),
     )
   })
 })

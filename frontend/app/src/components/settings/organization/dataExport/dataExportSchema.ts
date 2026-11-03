@@ -3,10 +3,14 @@ import type { TFunction } from 'i18next'
 import type { DataExportTargetResponse } from '@/api/backendApi'
 import type { DataExportFormValues } from '@/api/dataExport'
 
-const URL_MAX_LENGTH = 2048
-const PRINCIPAL_MAX_LENGTH = 256
-const SECRET_MAX_LENGTH = 1024
-const SCOPE_MAX_LENGTH = 256
+// The backend caps these in UTF-8 bytes, not characters.
+const URL_MAX_BYTES = 2048
+const PRINCIPAL_MAX_BYTES = 256
+const SECRET_MAX_BYTES = 1024
+const SCOPE_MAX_BYTES = 256
+
+const encoder = new TextEncoder()
+const byteLength = (value: string): number => encoder.encode(value).length
 
 const parseUrl = (value: string): URL | null => {
   try {
@@ -68,44 +72,55 @@ export const dataExportSchema = (
       const fail = (path: keyof DataExportFormValues, message: string) =>
         ctx.addIssue({ code: 'custom', path: [path], message })
 
-      const checkUrl = (path: 'baseUrl' | 'tokenUrl', missing: string) => {
+      // Returns whether the address is usable, so a secret is only demanded
+      // once there is a valid server it would be sent to.
+      const checkUrl = (path: 'baseUrl' | 'tokenUrl', missing: string): boolean => {
         const value = values[path].trim()
         if (value.length === 0) fail(path, missing)
-        else if (value.length > URL_MAX_LENGTH)
+        else if (byteLength(value) > URL_MAX_BYTES)
           fail(path, t('organization.dataExport.dialog.errors.tooLong'))
         else if (!isExportUrl(value))
           fail(path, t('organization.dataExport.dialog.errors.urlInvalid'))
+        else return true
+        return false
       }
 
       const checkPrincipal = (path: 'username' | 'clientId') => {
         const value = values[path].trim()
         if (value.length === 0) fail(path, t('organization.dataExport.dialog.errors.required'))
-        else if (value.length > PRINCIPAL_MAX_LENGTH)
+        else if (byteLength(value) > PRINCIPAL_MAX_BYTES)
           fail(path, t('organization.dataExport.dialog.errors.tooLong'))
       }
 
-      const checkSecret = (path: 'password' | 'clientSecret') => {
+      const checkSecret = (path: 'password' | 'clientSecret', addressesValid: boolean) => {
         const value = values[path]
-        if (value.length > SECRET_MAX_LENGTH)
+        if (byteLength(value) > SECRET_MAX_BYTES)
           fail(path, t('organization.dataExport.dialog.errors.tooLong'))
-        else if (value.trim().length === 0 && !keepsStoredSecret(values, stored))
+        else if (addressesValid && value.trim().length === 0 && !keepsStoredSecret(values, stored))
           fail(path, t('organization.dataExport.dialog.errors.secretRequired'))
       }
 
-      checkUrl('baseUrl', t('organization.dataExport.dialog.errors.urlRequired'))
+      const baseUrlValid = checkUrl(
+        'baseUrl',
+        t('organization.dataExport.dialog.errors.urlRequired'),
+      )
 
       switch (values.authKind) {
         case 'none':
           return
         case 'basic':
           checkPrincipal('username')
-          checkSecret('password')
+          checkSecret('password', baseUrlValid)
           return
-        case 'oauth2_client_credentials':
-          checkUrl('tokenUrl', t('organization.dataExport.dialog.errors.required'))
+        case 'oauth2_client_credentials': {
+          const tokenUrlValid = checkUrl(
+            'tokenUrl',
+            t('organization.dataExport.dialog.errors.required'),
+          )
           checkPrincipal('clientId')
-          checkSecret('clientSecret')
-          if (values.scope.trim().length > SCOPE_MAX_LENGTH)
+          checkSecret('clientSecret', baseUrlValid && tokenUrlValid)
+          if (byteLength(values.scope.trim()) > SCOPE_MAX_BYTES)
             fail('scope', t('organization.dataExport.dialog.errors.tooLong'))
+        }
       }
     })

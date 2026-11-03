@@ -376,7 +376,7 @@
       "edit": "Edit",
       "remove": "Remove",
       "test": "Test connection",
-      "loading": "Loading data platform",
+      "testing": "Testing the connection.",
       "loadError": "The data platform settings could not be loaded.",
       "status": {
         "active": "Active",

@@ -57,10 +57,30 @@ describe('DataExportCard', () => {
     render(<DataExportCard organizationId="org-1" />)
 
     await waitFor(() => expect(requested).toBe(true))
-    await waitFor(() =>
-      expect(screen.queryByRole('status', { name: 'Datenplattform wird geladen' })).toBeNull(),
-    )
+    await new Promise((resolve) => setTimeout(resolve, 0))
     expect(screen.queryByRole('heading', { name: 'Datenplattform' })).toBeNull()
+    expect(screen.queryByRole('alert')).toBeNull()
+  })
+
+  it('renders nothing while the state is loading', async () => {
+    const pending: { answer?: () => void } = {}
+    server.use(
+      http.get(
+        TARGET_URL,
+        () =>
+          new Promise<Response>((resolve) => {
+            pending.answer = () => resolve(HttpResponse.json(targetBody()))
+          }),
+      ),
+    )
+    render(<DataExportCard organizationId="org-1" />)
+
+    await waitFor(() => expect(pending.answer).toBeDefined())
+    expect(screen.queryByRole('status')).toBeNull()
+    expect(screen.queryByRole('heading', { name: 'Datenplattform' })).toBeNull()
+
+    pending.answer?.()
+    expect(await screen.findByRole('heading', { name: 'Datenplattform' })).toBeInTheDocument()
   })
 
   it('reports a failed load', async () => {
@@ -175,6 +195,34 @@ describe('DataExportCard', () => {
     await userEvent.click(view.getByRole('button', { name: 'Verbindung testen' }))
 
     expect(await view.findByText(text)).toBeInTheDocument()
+  })
+
+  it('says that the connection test is running', async () => {
+    answerTarget(targetBody())
+    const pending: { answer?: () => void } = {}
+    server.use(
+      http.post(
+        `${TARGET_URL}/test`,
+        () =>
+          new Promise<Response>((resolve) => {
+            pending.answer = () =>
+              resolve(HttpResponse.json({ outcome: 'ok', data_array_supported: true }))
+          }),
+      ),
+    )
+    render(<DataExportCard organizationId="org-1" />)
+
+    const view = await card()
+    await userEvent.click(view.getByRole('button', { name: 'Verbindung testen' }))
+
+    expect(await view.findByRole('status')).toHaveTextContent('Verbindung wird getestet.')
+    expect(view.getByRole('button', { name: 'Verbindung testen' })).toBeDisabled()
+
+    pending.answer?.()
+    expect(
+      await view.findByText('Verbindung steht. Der Server unterstützt gebündelte Messwerte.'),
+    ).toBeInTheDocument()
+    expect(view.queryByRole('status')).toBeNull()
   })
 
   it('reports a connection test request that failed', async () => {

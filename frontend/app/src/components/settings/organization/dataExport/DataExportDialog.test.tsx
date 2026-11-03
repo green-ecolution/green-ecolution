@@ -1,8 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { http, HttpResponse } from 'msw'
 import { render, screen, userEvent, waitFor, within } from '@/test/utils'
 import { ResponseError, type DataExportTargetResponse } from '@/api/backendApi'
 import { toDataExportRequest, type DataExportFormValues } from '@/api/dataExport'
+import { useDataExportMutations } from '@/hooks/useDataExportMutations'
+import { server } from '@/test/mocks/server'
 import DataExportDialog from './DataExportDialog'
+
+vi.mock('@/lib/auth/session', () => ({
+  getAuthSession: () => ({ getAccessToken: () => Promise.resolve(null) }),
+}))
+
+const showToast = vi.fn()
+vi.mock('@/hooks/createToast', () => ({ default: () => showToast }))
 
 const URL_NOT_ALLOWED =
   'Diese Adresse ist für den Datenexport auf dieser Instanz nicht freigegeben. Wende dich an den Betrieb.'
@@ -205,5 +215,67 @@ describe('DataExportDialog', () => {
     expect(
       await dialog.findByText('Für diese Aktion fehlt dir die Berechtigung.'),
     ).toBeInTheDocument()
+  })
+})
+
+describe('DataExportDialog with the save mutation', () => {
+  const SERVER_ERROR =
+    'Auf dem Server ist ein unerwarteter Fehler aufgetreten. Bitte probiere es erneut oder wende dich an einen Systemadministrierenden.'
+
+  const SavingDialog = () => {
+    const { save } = useDataExportMutations('org-1')
+    return (
+      <DataExportDialog open onOpenChange={onOpenChange} onSubmit={(v) => save.mutateAsync(v)} />
+    )
+  }
+
+  const failSave = (body: Record<string, unknown>, status: number) => {
+    let calls = 0
+    server.use(
+      http.put('*/v1/organizations/org-1/data-export', () => {
+        calls += 1
+        return HttpResponse.json(body, { status })
+      }),
+      http.get('*/v1/organizations/org-1/data-export', () =>
+        HttpResponse.json({ error: 'missing' }, { status: 404 }),
+      ),
+    )
+    return () => calls
+  }
+
+  const submitAddress = async () => {
+    render(<SavingDialog />)
+    const dialog = within(screen.getByRole('dialog'))
+    await userEvent.type(
+      dialog.getByLabelText('Adresse der SensorThings API'),
+      'https://frost.elsewhere.de/v1.1',
+    )
+    await userEvent.click(dialog.getByRole('button', { name: 'Speichern' }))
+    return dialog
+  }
+
+  beforeEach(() => vi.clearAllMocks())
+
+  it('shows a refused address once, on the field, and without a toast', async () => {
+    const calls = failSave({ error: 'nope', code: 'data_export.url_not_allowed' }, 422)
+    const dialog = await submitAddress()
+
+    await waitFor(() =>
+      expect(dialog.getByLabelText('Adresse der SensorThings API')).toHaveAccessibleDescription(
+        URL_NOT_ALLOWED,
+      ),
+    )
+    expect(calls()).toBe(1)
+    expect(screen.getAllByText(URL_NOT_ALLOWED)).toHaveLength(1)
+    expect(showToast).not.toHaveBeenCalled()
+  })
+
+  it('shows a server failure once, as the general alert', async () => {
+    failSave({ error: 'boom' }, 500)
+    const dialog = await submitAddress()
+
+    expect(await dialog.findByText(SERVER_ERROR)).toBeInTheDocument()
+    expect(screen.getAllByText(SERVER_ERROR)).toHaveLength(1)
+    expect(showToast).not.toHaveBeenCalled()
   })
 })

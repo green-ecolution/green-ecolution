@@ -18,7 +18,6 @@ import {
   AlertIcon,
   Badge,
   Button,
-  Loading,
   type BadgeProps,
 } from '@green-ecolution/ui'
 import type {
@@ -94,20 +93,12 @@ const DataExportCard = ({ organizationId }: DataExportCardProps) => {
   const locale = useDateLocale()
   const numbers = useNumberFormatter()
   const canUpdate = useHasPermission(['setting:update'])
-  const {
-    data: state,
-    isLoading,
-    error,
-  } = useQuery(dataExportQueries.byOrganization(organizationId))
+  const { data: state, error } = useQuery(dataExportQueries.byOrganization(organizationId))
   const { save, remove, test } = useDataExportMutations(organizationId)
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [confirmRemove, setConfirmRemove] = useState(false)
   const [testResult, setTestResult] = useState<TestResult | null>(null)
-
-  if (isLoading) {
-    return <Loading size="sm" role="status" aria-label={t('organization.dataExport.loading')} />
-  }
 
   if (error) {
     return (
@@ -117,6 +108,8 @@ const DataExportCard = ({ organizationId }: DataExportCardProps) => {
     )
   }
 
+  // Also null while loading: most instances run without the export, and a
+  // spinner there would flash on every organization.
   if (!state || state.kind === 'disabled') return null
 
   const target = state.kind === 'configured' ? state.target : undefined
@@ -235,6 +228,12 @@ const DataExportCard = ({ organizationId }: DataExportCardProps) => {
             </Button>
           )}
         </div>
+      )}
+
+      {test.isPending && (
+        <p role="status" className="mt-3 text-sm text-dark-600">
+          {t('organization.dataExport.testing')}
+        </p>
       )}
 
       {result && (

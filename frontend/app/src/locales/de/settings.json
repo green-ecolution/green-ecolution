@@ -376,7 +376,7 @@
       "edit": "Bearbeiten",
       "remove": "Entfernen",
       "test": "Verbindung testen",
-      "loading": "Datenplattform wird geladen",
+      "testing": "Verbindung wird getestet.",
       "loadError": "Die Einstellungen zur Datenplattform konnten nicht geladen werden.",
       "status": {
         "active": "Aktiv",
