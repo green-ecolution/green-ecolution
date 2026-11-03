@@ -110,9 +110,12 @@ pub trait ExportRefReader: Send + Sync {
 
 #[async_trait::async_trait]
 pub trait ExportRefWriter: Send + Sync {
+    /// Writes only while the target still has this generation (`activated_at`), so a
+    /// pass that outlived a base-URL change writes nothing. A stale write is not an error.
     async fn put_ref(
         &self,
         org: Id<Organization>,
+        generation: DateTime<Utc>,
         export_ref: &ExportRef,
     ) -> Result<(), RepositoryError>;
 }
@@ -129,9 +132,12 @@ pub trait ExportRunStore: Send + Sync {
         org: Id<Organization>,
         lease_secs: i64,
     ) -> Result<Option<StoredExportTarget>, RepositoryError>;
+    /// Writes only while the target still has this generation (`activated_at`), so a
+    /// pass that outlived a base-URL change writes nothing. A stale write is not an error.
     async fn finish(
         &self,
         org: Id<Organization>,
+        generation: DateTime<Utc>,
         result: &RunResult,
     ) -> Result<(), RepositoryError>;
 }

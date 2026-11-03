@@ -1,5 +1,6 @@
 use std::collections::{BTreeSet, HashMap};
 
+use chrono::{DateTime, Utc};
 use sqlx::PgPool;
 
 use domain::{
@@ -83,7 +84,7 @@ impl ExportTargetWriter for PgDataExportRepository {
         .fetch_optional(&mut *tx)
         .await?;
         // A changed base URL is a different server: restart activation, cursor
-        // and backoff in the same statement so no pass sees a half-reset row.
+        // and backoff in the INSERT and drop the refs in the same transaction.
         let row = sqlx::query_as!(
             ExportTargetSnapshot,
             r#"INSERT INTO data_export_targets
@@ -203,12 +204,15 @@ impl ExportRefWriter for PgDataExportRepository {
     async fn put_ref(
         &self,
         org: Id<Organization>,
+        generation: DateTime<Utc>,
         export_ref: &ExportRef,
     ) -> Result<(), RepositoryError> {
         sqlx::query!(
             r#"INSERT INTO data_export_refs
                    (organization_id, ge_key, entity, remote_id, content_hash, last_value, deleted_marked)
-               VALUES ($1, $2, $3, $4, $5, $6, $7)
+               SELECT $1, $2, $3, $4, $5, $6, $7
+               WHERE EXISTS (SELECT 1 FROM data_export_targets
+                             WHERE organization_id = $1 AND activated_at = $8)
                ON CONFLICT (organization_id, ge_key) DO UPDATE SET
                    entity = EXCLUDED.entity,
                    remote_id = EXCLUDED.remote_id,
@@ -222,6 +226,7 @@ impl ExportRefWriter for PgDataExportRepository {
             export_ref.content_hash,
             export_ref.last_value,
             export_ref.deleted_marked,
+            generation,
         )
         .execute(&self.pool)
         .await?;
@@ -282,6 +287,7 @@ impl ExportRunStore for PgDataExportRepository {
     async fn finish(
         &self,
         org: Id<Organization>,
+        generation: DateTime<Utc>,
         result: &RunResult,
     ) -> Result<(), RepositoryError> {
         match result {
@@ -293,9 +299,10 @@ impl ExportRunStore for PgDataExportRepository {
                        SET leased_until = NULL, last_run_at = now(), last_success_at = now(),
                            last_error = NULL, last_run_stats = $2,
                            failure_count = 0, next_attempt_at = NULL
-                       WHERE organization_id = $1"#,
+                       WHERE organization_id = $1 AND activated_at = $3"#,
                     org.value(),
                     stats,
+                    generation,
                 )
                 .execute(&self.pool)
                 .await?;
@@ -312,11 +319,12 @@ impl ExportRunStore for PgDataExportRepository {
                        SET leased_until = NULL, last_run_at = now(), last_error = $2,
                            failure_count = failure_count + 1,
                            next_attempt_at = now() + make_interval(
-                               secs => LEAST($3::bigint * power(2, failure_count + 1), 3600)::float8)
-                       WHERE organization_id = $1"#,
+                               secs => LEAST($3::bigint * power(2, LEAST(failure_count + 1, 20)), 3600)::float8)
+                       WHERE organization_id = $1 AND activated_at = $4"#,
                     org.value(),
                     error,
                     base_interval_secs,
+                    generation,
                 )
                 .execute(&self.pool)
                 .await?;
