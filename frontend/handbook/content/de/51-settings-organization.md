@@ -161,8 +161,16 @@ Bewässerungsgruppe ohne Bäume, erhalten auf der Plattform weder Zustände noch
 Messwerte, die vor dem Einrichten entstanden sind, werden nicht nachgeliefert.
 Unplausible Messwerte gehen mit einem Qualitätshinweis an die Plattform.
 
+Neue Messwerte gehen mit einer kurzen Verzögerung von wenigen Minuten hinaus, damit
+keiner verloren geht, der gerade erst gespeichert wird.
+
 Löschst du ein Objekt in Green Ecolution, wird es auf der Plattform nur als gelöscht
-markiert. Gelöscht wird dort nichts.
+markiert. Gelöscht wird dort nichts. Dasselbe geschieht, wenn Objekte aus dem Bereich
+einer Plattform herausfallen: Schaltest du ein Modul nur für einen Teil der
+Organisationen ab, oder richtet eine Unterorganisation eine eigene Datenplattform ein,
+werden die betroffenen Objekte auf der bisherigen Plattform als gelöscht markiert.
+Schaltest du ein Modul dagegen für alle Organisationen ab, die an diese Plattform
+exportieren, bleibt dort alles unverändert.
 
 Oben rechts auf der Karte zeigt ein Abzeichen den Zustand: **Aktiv**, wenn der Export
 läuft, **Pausiert**, wenn du **Export aktiv** ausgeschaltet hast, und **Fehler**, wenn der
