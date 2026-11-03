@@ -20,7 +20,7 @@ pub struct DataExportTargetRequest {
     pub auth: DataExportAuthRequest,
 }
 
-/// An omitted `password` / `client_secret` keeps the stored one of the same kind.
+/// An omitted `password` / `client_secret` keeps the stored one only while the kind and the receiving origins are unchanged.
 #[derive(Deserialize, utoipa::ToSchema)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum DataExportAuthRequest {

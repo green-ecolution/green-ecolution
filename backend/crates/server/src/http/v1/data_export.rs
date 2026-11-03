@@ -84,7 +84,7 @@ pub async fn get_data_export(
 #[utoipa::path(put, path = "/organizations/{org_id}/data-export", tag = "Data Export",
     operation_id = "putDataExportTarget",
     summary = "Create or replace an organization's export target",
-    description = "Omitting `password` / `client_secret` keeps the stored secret of the same auth kind. A changed `base_url` counts as a new target. Hosts must be on the instance allowlist. Requires setting:update.",
+    description = "Omitting `password` / `client_secret` keeps the stored secret only while the auth kind and every receiving origin (scheme, host, port of `base_url`, and of `token_url` for OAuth2) are unchanged; otherwise the secret has to be sent again (code `data_export.auth_incomplete`). A changed `base_url` counts as a new target. Hosts must be on the instance allowlist. Requires setting:update.",
     params(("org_id" = Uuid, Path, description = "Organization id")),
     request_body = DataExportTargetRequest,
     responses(

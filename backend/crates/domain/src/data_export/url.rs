@@ -50,6 +50,11 @@ impl ExportUrl {
         self.0.as_str()
     }
 
+    /// Scheme, host and port (the scheme's default when none is written).
+    pub fn same_origin(&self, other: &ExportUrl) -> bool {
+        self.0.origin() == other.0.origin()
+    }
+
     #[doc(hidden)]
     pub fn reconstitute(raw: &str) -> Result<Self, RepositoryError> {
         Url::parse(raw)

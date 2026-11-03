@@ -58,7 +58,7 @@ impl DataExportService {
         let stored = self.reader.find(org).await?;
         let auth = draft
             .auth
-            .resolve(stored.as_ref().map(|s| &s.target.config.auth))?;
+            .resolve(&draft.base_url, stored.as_ref().map(|s| &s.target.config))?;
         let saved = self
             .writer
             .upsert(
@@ -217,6 +217,26 @@ mod tests {
             .unwrap();
 
         assert!(view.auth.has_secret);
+    }
+
+    #[tokio::test]
+    async fn put_does_not_send_the_stored_secret_to_a_new_host() {
+        let service = service();
+        let org = org();
+        service
+            .put(org, draft("https://frost.example.org/v1.1", Some("pw")))
+            .await
+            .unwrap();
+
+        let err = service
+            .put(org, draft("https://other.example.org/v1.1", None))
+            .await
+            .unwrap_err();
+
+        assert!(matches!(
+            err,
+            ServiceError::DataExport(DataExportError::SecretMissing { kind: "basic" })
+        ));
     }
 
     #[tokio::test]

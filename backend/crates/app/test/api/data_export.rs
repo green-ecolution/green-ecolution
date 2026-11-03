@@ -102,6 +102,28 @@ async fn a_resubmitted_form_without_secret_keeps_it() {
 }
 
 #[tokio::test]
+async fn a_stored_secret_does_not_follow_a_changed_host() {
+    let app = spawn_app_with_data_export(&["example.org"]).await;
+    app.put_json(
+        &url(root()),
+        &basic_target("https://frost.example.org/v1.1", Some("pw")),
+    )
+    .await;
+
+    let resp = app
+        .put_json(
+            &url(root()),
+            &basic_target("https://other.example.org/v1.1", None),
+        )
+        .await;
+
+    assert_eq!(resp.status(), 422);
+    assert_eq!(body(resp).await["code"], "data_export.auth_incomplete");
+    let got = body(app.get(&url(root())).await).await;
+    assert_eq!(got["base_url"], "https://frost.example.org/v1.1");
+}
+
+#[tokio::test]
 async fn the_first_save_without_secret_is_422() {
     let app = spawn_app_with_data_export(&["example.org"]).await;
 
