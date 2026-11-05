@@ -84,7 +84,7 @@ services:
         condition: service_healthy
 
   db:
-    image: postgis/postgis:17-3.5-alpine
+    image: postgis/postgis:18-3.6-alpine
     environment:
       - POSTGRES_USER=${POSTGRES_USER:-postgres}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
@@ -100,7 +100,7 @@ services:
       - "127.0.0.1:5432:5432"
 
   pgadmin:
-    image: dpage/pgadmin4:9.17
+    image: dpage/pgadmin4:9.19
     entrypoint: /bin/sh
     command: >
       -c "echo \"$$SERVERS_JSON\" > /tmp/servers.json &&
@@ -215,7 +215,7 @@ services:
       - "traefik.http.routers.valhalla.rule=Host(`valhalla.${APP_HOST:-localhost}`)"
       - "traefik.http.routers.valhalla.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
   reverse-proxy:
-    image: traefik:v3.7.15
+    image: traefik:v3.7.16
     extra_hosts:
       - "host.docker.internal:host-gateway"
     environment:
