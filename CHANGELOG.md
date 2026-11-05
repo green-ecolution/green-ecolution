@@ -11,6 +11,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > single repository. For legacy releases, see the
 > [GitHub Releases](https://github.com/green-ecolution/green-ecolution/releases) page.
 
+## [0.10.0](https://github.com/green-ecolution/green-ecolution/compare/v0.9.0...v0.10.0) (2026-11-03)
+
+
+### Features
+
+* **frontend:** compact tree, sensor and watering history cards on the cluster dashboard ([#1128](https://github.com/green-ecolution/green-ecolution/issues/1128)) ([ac2f15e](https://github.com/green-ecolution/green-ecolution/commit/ac2f15ee154d78d3ed7e4bbb4608f85a11805b3f))
+
+
+### Documentation
+
+* **README:** remove community vote section ([4804672](https://github.com/green-ecolution/green-ecolution/commit/48046721d6e49be60636a7dd7b97dc7e5cc7aec3))
+
 ## [0.9.0](https://github.com/green-ecolution/green-ecolution/compare/v0.8.0...v0.9.0) (2026-10-29)
 
 
