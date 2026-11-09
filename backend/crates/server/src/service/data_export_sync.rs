@@ -649,7 +649,17 @@ impl Pass<'_> {
                 .readings
                 .readings_after(&scope.active, cursor, before, batch_size)
                 .await?;
+            // A short batch saw every matching reading below `before`, so the cursor
+            // may skip the rest of that range; otherwise a target whose sensors are
+            // silent would scan all newer readings of every organization each pass.
+            let exhausted = batch.scanned < batch_size;
             let Some(until) = batch.scanned_until.filter(|_| batch.scanned > 0) else {
+                // Right after an activation the limit still lies before the start.
+                if before > cursor {
+                    self.runs
+                        .advance_cursor(self.org, &self.lease, before)
+                        .await?;
+                }
                 return Ok(());
             };
             if let BatchEnd::Cut { done_until } = self.raw_batch(&batch.rows, scope).await? {
@@ -660,11 +670,12 @@ impl Pass<'_> {
                 }
                 return Ok(());
             }
+            let next = if exhausted { before.max(until) } else { until };
             self.runs
-                .advance_cursor(self.org, &self.lease, until)
+                .advance_cursor(self.org, &self.lease, next)
                 .await?;
-            cursor = until;
-            if batch.scanned < batch_size {
+            cursor = next;
+            if exhausted {
                 return Ok(());
             }
         }
@@ -863,6 +874,12 @@ mod tests {
 
     fn generation() -> DateTime<Utc> {
         Utc.with_ymd_and_hms(2026, 11, 1, 12, 0, 0).unwrap()
+    }
+
+    /// Where a short batch leaves the cursor: the settle limit of the default
+    /// setup, whose clock stands at `generation()`.
+    fn settle_limit() -> Uuid {
+        v7_floor(generation() - chrono::TimeDelta::seconds(120))
     }
 
     #[derive(Default)]
@@ -1363,7 +1380,7 @@ mod tests {
                 batch_size: 100,
                 reading_settle: std::time::Duration::from_secs(120),
                 broken_readings: false,
-                clock: Arc::new(domain::clock::SystemClock),
+                clock: Arc::new(ManualClock::new()),
                 lease_lost: false,
             }
         }
@@ -1781,7 +1798,7 @@ mod tests {
         assert_eq!(f.runs.finished.lock().unwrap()[0].0, generation());
         assert_eq!(
             *f.runs.advanced.lock().unwrap(),
-            vec![(generation(), Uuid::from_u128(10))]
+            vec![(generation(), settle_limit())]
         );
     }
 
@@ -1812,7 +1829,7 @@ mod tests {
             *f.readings.active.lock().unwrap(),
             vec![(ModuleKey::new("irrigation").unwrap(), org(1))]
         );
-        assert_eq!(*f.runs.cursor.lock().unwrap(), Some(Uuid::from_u128(10)));
+        assert_eq!(*f.runs.cursor.lock().unwrap(), Some(settle_limit()));
         let refs = f.refs.map.lock().unwrap();
         assert_eq!(refs["device:eui-1"].entity, ExportEntity::Sensor);
         let stream = raw_stream_key(&reading(10, 1, SensorAbilityName::Battery, 3.6));
@@ -1836,7 +1853,7 @@ mod tests {
 
         assert!(!calls(&f).iter().any(|c| matches!(c, Call::Batch(_))));
         assert_eq!(stats.skipped, 1);
-        assert_eq!(*f.runs.cursor.lock().unwrap(), Some(Uuid::from_u128(10)));
+        assert_eq!(*f.runs.cursor.lock().unwrap(), Some(settle_limit()));
     }
 
     #[tokio::test]
@@ -1880,6 +1897,21 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn a_pass_without_matching_readings_moves_the_cursor_to_the_settle_limit() {
+        let f = build(Setup {
+            things: vec![tree(1, "good")],
+            ..Setup::default()
+        });
+        let old = v7_floor(generation() - chrono::TimeDelta::days(30));
+        *f.runs.cursor.lock().unwrap() = Some(old);
+
+        f.sync.sync(org(1)).await.unwrap();
+
+        assert_eq!(*f.readings.afters.lock().unwrap(), vec![old]);
+        assert_eq!(*f.runs.cursor.lock().unwrap(), Some(settle_limit()));
+    }
+
+    #[tokio::test]
     async fn a_stored_cursor_is_where_the_next_pass_continues() {
         let f = build(Setup {
             things: vec![tree(1, "good")],
@@ -1914,7 +1946,15 @@ mod tests {
                 Uuid::from_u128(11)
             ]
         );
-        assert_eq!(*f.runs.cursor.lock().unwrap(), Some(Uuid::from_u128(11)));
+        assert_eq!(
+            *f.runs.advanced.lock().unwrap(),
+            vec![
+                (generation(), Uuid::from_u128(10)),
+                (generation(), Uuid::from_u128(11)),
+                (generation(), settle_limit())
+            ],
+            "full batches move to their last reading, the short one to the settle limit"
+        );
     }
 
     #[tokio::test]
@@ -1934,7 +1974,7 @@ mod tests {
         f.sync.sync(org(1)).await.unwrap();
 
         assert_eq!(*f.readings.limits.lock().unwrap(), vec![1, 1]);
-        assert_eq!(*f.runs.cursor.lock().unwrap(), Some(Uuid::from_u128(10)));
+        assert_eq!(*f.runs.cursor.lock().unwrap(), Some(settle_limit()));
     }
 
     #[tokio::test]
@@ -1957,7 +1997,7 @@ mod tests {
         assert_eq!(stats.skipped, 1);
         assert_eq!(stats.observations_written, 2);
         assert!(matches!(f.runs.results()[0], RunResult::Succeeded(_)));
-        assert_eq!(*f.runs.cursor.lock().unwrap(), Some(Uuid::from_u128(10)));
+        assert_eq!(*f.runs.cursor.lock().unwrap(), Some(settle_limit()));
     }
 
     #[tokio::test]
@@ -1977,7 +2017,7 @@ mod tests {
 
         assert!(!calls(&f).iter().any(|c| matches!(c, Call::Batch(_))));
         assert_eq!(stats.skipped, 1);
-        assert_eq!(*f.runs.cursor.lock().unwrap(), Some(Uuid::from_u128(10)));
+        assert_eq!(*f.runs.cursor.lock().unwrap(), Some(settle_limit()));
     }
 
     #[tokio::test]
@@ -1996,7 +2036,7 @@ mod tests {
 
         assert!(!calls(&f).iter().any(|c| matches!(c, Call::Batch(_))));
         assert_eq!(stats.skipped, 0);
-        assert_eq!(*f.runs.cursor.lock().unwrap(), Some(Uuid::from_u128(10)));
+        assert_eq!(*f.runs.cursor.lock().unwrap(), Some(settle_limit()));
     }
 
     #[tokio::test]
@@ -2053,7 +2093,7 @@ mod tests {
         assert!(!calls(&f).iter().any(|c| matches!(c, Call::Batch(_))));
         let refs = f.refs.map.lock().unwrap();
         assert!(!refs.keys().any(|k| k.starts_with("raw:")));
-        assert_eq!(*f.runs.cursor.lock().unwrap(), Some(Uuid::from_u128(10)));
+        assert_eq!(*f.runs.cursor.lock().unwrap(), Some(settle_limit()));
     }
 
     #[tokio::test]
@@ -2162,19 +2202,9 @@ mod tests {
             reading_settle: std::time::Duration::from_secs(120),
             ..Setup::default()
         });
-        let settle = chrono::Duration::seconds(120);
-        let earliest = v7_floor(Utc::now() - settle);
-
         f.sync.sync(org(1)).await.unwrap();
 
-        let latest = v7_floor(Utc::now() - settle);
-        let befores = f.readings.befores.lock().unwrap();
-        assert_eq!(befores.len(), 1);
-        assert!(
-            (earliest..=latest).contains(&befores[0]),
-            "{} not in {earliest}..={latest}",
-            befores[0]
-        );
+        assert_eq!(*f.readings.befores.lock().unwrap(), vec![settle_limit()]);
     }
 
     #[tokio::test]
@@ -2197,7 +2227,7 @@ mod tests {
 
         assert_eq!(f.raw_streams.lock().unwrap().len(), 1);
         assert_eq!(stats.skipped, 3);
-        assert_eq!(*f.runs.cursor.lock().unwrap(), Some(Uuid::from_u128(12)));
+        assert_eq!(*f.runs.cursor.lock().unwrap(), Some(settle_limit()));
     }
 
     #[tokio::test]
