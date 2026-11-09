@@ -383,6 +383,31 @@ impl Pass<'_> {
         Ok(())
     }
 
+    async fn forget(&mut self, keys: Vec<String>) -> Result<(), RepositoryError> {
+        if keys.is_empty() {
+            return Ok(());
+        }
+        self.writer.drop_refs(self.org, &self.lease, &keys).await?;
+        for key in &keys {
+            self.refs.remove(key);
+        }
+        Ok(())
+    }
+
+    /// Someone deleted a Thing on the target, and its datastreams went with it:
+    /// its refs are dropped, so the next pass adopts or creates it again.
+    async fn forget_thing(&mut self, thing_key: &str) -> Result<(), RepositoryError> {
+        let suffix = format!(":{thing_key}");
+        let keys = self
+            .refs
+            .keys()
+            .filter(|k| *k == thing_key || k.ends_with(&suffix))
+            .cloned()
+            .collect();
+        self.stats.skipped += 1;
+        self.forget(keys).await
+    }
+
     async fn remember(&mut self, export_ref: ExportRef) -> Result<(), RepositoryError> {
         self.writer
             .put_ref(self.org, &self.lease, &export_ref)
@@ -418,8 +443,16 @@ impl Pass<'_> {
 
     /// Every datastream needs the sensor, so a sensor the target refuses ends the pass.
     async fn sensor(&mut self) -> Result<RemoteId, SyncError> {
-        if let Some(existing) = self.refs.get(SENSOR_KEY) {
-            return Ok(existing.remote_id.clone());
+        if let Some(existing) = self.refs.get(SENSOR_KEY).cloned() {
+            if self.session.sensor_exists(&existing.remote_id).await? {
+                return Ok(existing.remote_id);
+            }
+            tracing::warn!(
+                organization.id = %self.org,
+                "export target lost the exported entities; writing them again"
+            );
+            let all: Vec<String> = self.refs.keys().cloned().collect();
+            self.forget(all).await?;
         }
         let id = self.session.ensure_sensor().await?;
         self.remember(plain_ref(SENSOR_KEY, ExportEntity::Sensor, id.clone()))
@@ -449,7 +482,9 @@ impl Pass<'_> {
         let Some(id) = self.upsert(&key, thing).await? else {
             return Ok(());
         };
-        self.locate(&key, &id, thing).await?;
+        if !self.locate(&key, &id, thing).await? {
+            return Ok(());
+        }
         // FROST derives an Observation's FeatureOfInterest from the Thing's Location
         // and rejects every Observation of a Thing without one.
         if thing.coordinate.is_none() {
@@ -457,6 +492,9 @@ impl Pass<'_> {
         }
         for state in &thing.states {
             self.state(&key, &id, thing, state, sensor).await?;
+            if !self.refs.contains_key(&key) {
+                break;
+            }
         }
         Ok(())
     }
@@ -474,6 +512,10 @@ impl Pass<'_> {
             return Ok(Some(existing.remote_id));
         }
         let updated = self.session.update_thing(&existing.remote_id, thing).await;
+        if updated.as_ref().is_err_and(SinkError::is_not_found) {
+            self.forget_thing(key).await?;
+            return Ok(None);
+        }
         if self.tolerate(key, updated)?.is_some() {
             let id = existing.remote_id.clone();
             self.remember(ExportRef {
@@ -518,14 +560,15 @@ impl Pass<'_> {
         Ok(Some(id))
     }
 
+    /// `false` when the Thing turned out to be gone from the target.
     async fn locate(
         &mut self,
         key: &str,
         id: &RemoteId,
         thing: &ExportThing,
-    ) -> Result<(), SyncError> {
+    ) -> Result<bool, SyncError> {
         let Some(fingerprint) = thing.location_fingerprint() else {
-            return Ok(());
+            return Ok(true);
         };
         let location = location_key(key);
         let stored = self
@@ -533,9 +576,13 @@ impl Pass<'_> {
             .get(&location)
             .and_then(|r| r.content_hash.as_deref());
         if stored == Some(fingerprint.as_str()) {
-            return Ok(());
+            return Ok(true);
         }
         let moved = self.session.move_thing(id, thing).await;
+        if moved.as_ref().is_err_and(SinkError::is_not_found) {
+            self.forget_thing(key).await?;
+            return Ok(false);
+        }
         if self.tolerate(&location, moved)?.is_some() {
             self.remember(ExportRef {
                 content_hash: Some(fingerprint),
@@ -543,7 +590,7 @@ impl Pass<'_> {
             })
             .await?;
         }
-        Ok(())
+        Ok(true)
     }
 
     async fn state(
@@ -577,6 +624,10 @@ impl Pass<'_> {
             .session
             .post_observation(&datastream.remote_id, &state.value, state.observed_at)
             .await;
+        if posted.as_ref().is_err_and(SinkError::is_not_found) {
+            self.forget_thing(thing_key).await?;
+            return Ok(());
+        }
         if self.tolerate(&stream_key, posted)?.is_some() {
             self.remember(ExportRef {
                 last_value: Some(value),
@@ -644,6 +695,10 @@ impl Pass<'_> {
                 .session
                 .mark_thing_deleted(&thing.remote_id, &thing.ge_key, self.clock.now())
                 .await;
+            if marked.as_ref().is_err_and(SinkError::is_not_found) {
+                self.forget_thing(&thing.ge_key).await?;
+                continue;
+            }
             // A Thing that is no longer ours is settled here too: nothing to mark.
             if self.tolerate(&thing.ge_key, marked)?.is_some() {
                 self.remember(ExportRef {
@@ -1095,6 +1150,18 @@ mod tests {
 
     #[async_trait::async_trait]
     impl ExportRefWriter for Refs {
+        async fn drop_refs(
+            &self,
+            _: Id<Organization>,
+            _: &ExportLease,
+            keys: &[String],
+        ) -> Result<(), RepositoryError> {
+            let mut map = self.map.lock().unwrap();
+            for key in keys {
+                map.remove(key);
+            }
+            Ok(())
+        }
         async fn put_ref(
             &self,
             _: Id<Organization>,
@@ -1131,6 +1198,9 @@ mod tests {
         /// Each created raw datastream moves this clock, like a slow target would.
         slow_raw_streams: Option<(Arc<ManualClock>, std::time::Duration)>,
         throttle_raw_datastreams: bool,
+        /// Things and datastreams were deleted on the target behind our back.
+        things_gone: bool,
+        sensor_gone: bool,
     }
 
     struct Session {
@@ -1144,6 +1214,15 @@ mod tests {
         reject_raw_datastreams: bool,
         slow_raw_streams: Option<(Arc<ManualClock>, std::time::Duration)>,
         throttle_raw_datastreams: bool,
+        things_gone: bool,
+        sensor_gone: bool,
+    }
+
+    fn not_found() -> SinkError {
+        SinkError::Rejected {
+            status: 404,
+            detail: String::new(),
+        }
     }
 
     #[async_trait::async_trait]
@@ -1167,6 +1246,8 @@ mod tests {
                 reject_raw_datastreams: self.reject_raw_datastreams,
                 slow_raw_streams: self.slow_raw_streams.clone(),
                 throttle_raw_datastreams: self.throttle_raw_datastreams,
+                things_gone: self.things_gone,
+                sensor_gone: self.sensor_gone,
             }))
         }
     }
@@ -1179,6 +1260,9 @@ mod tests {
         }
         async fn update_thing(&self, _: &RemoteId, t: &ExportThing) -> Result<(), SinkError> {
             self.calls.lock().unwrap().push(Call::Update(t.key()));
+            if self.things_gone {
+                return Err(not_found());
+            }
             Ok(())
         }
         async fn move_thing(&self, _: &RemoteId, t: &ExportThing) -> Result<(), SinkError> {
@@ -1196,6 +1280,9 @@ mod tests {
                 .unwrap()
                 .push(Call::Deleted(id.as_json().as_str().unwrap().to_string()));
             Ok(DeletionMark::Marked)
+        }
+        async fn sensor_exists(&self, _: &RemoteId) -> Result<bool, SinkError> {
+            Ok(!self.sensor_gone)
         }
         async fn ensure_sensor(&self) -> Result<RemoteId, SinkError> {
             if self.reject_sensor {
@@ -1229,6 +1316,9 @@ mod tests {
                     status: 400,
                     detail: "no".into(),
                 });
+            }
+            if self.things_gone {
+                return Err(not_found());
             }
             self.calls
                 .lock()
@@ -1668,6 +1758,74 @@ mod tests {
         f.sync.sync(org(1)).await.unwrap();
 
         assert_eq!(calls(&f), vec![Call::Deleted(tree(1, "good").key())]);
+    }
+
+    #[tokio::test]
+    async fn a_thing_deleted_on_the_target_is_written_again_on_the_next_pass() {
+        let first = fixture(vec![tree(1, "good")], &[1], Sink::default());
+        first.sync.sync(org(1)).await.unwrap();
+        let gone = fixture_with(
+            vec![tree(1, "bad")],
+            &[1],
+            Sink {
+                things_gone: true,
+                ..Sink::default()
+            },
+            first.refs.clone(),
+            true,
+        );
+
+        let stats = gone.sync.sync(org(1)).await.unwrap().unwrap();
+
+        assert_eq!(stats.skipped, 1);
+        let key = tree(1, "bad").key();
+        assert!(
+            !first
+                .refs
+                .map
+                .lock()
+                .unwrap()
+                .keys()
+                .any(|k| k.ends_with(&key))
+        );
+        let again = fixture_with(
+            vec![tree(1, "bad")],
+            &[1],
+            Sink::default(),
+            first.refs.clone(),
+            true,
+        );
+        again.sync.sync(org(1)).await.unwrap();
+        assert_eq!(
+            calls(&again),
+            vec![Call::Create(key), Call::Observation(json!("bad"))]
+        );
+    }
+
+    #[tokio::test]
+    async fn a_target_that_lost_the_sensor_gets_everything_written_again() {
+        let first = fixture(vec![tree(1, "good")], &[1], Sink::default());
+        first.sync.sync(org(1)).await.unwrap();
+        let reset = fixture_with(
+            vec![tree(1, "good")],
+            &[1],
+            Sink {
+                sensor_gone: true,
+                ..Sink::default()
+            },
+            first.refs.clone(),
+            true,
+        );
+
+        reset.sync.sync(org(1)).await.unwrap();
+
+        assert_eq!(
+            calls(&reset),
+            vec![
+                Call::Create(tree(1, "good").key()),
+                Call::Observation(json!("good"))
+            ]
+        );
     }
 
     #[tokio::test]

@@ -358,6 +358,25 @@ impl SinkSession for HttpSession {
         self.find_or_create("Sensors", SENSOR_KEY, &body).await
     }
 
+    async fn sensor_exists(&self, id: &RemoteId) -> Result<bool, SinkError> {
+        let answer = self
+            .send(
+                Method::GET,
+                &format!("Sensors{}", id.path_segment()),
+                &[("$select", "properties".into())],
+                None,
+            )
+            .await;
+        let answer = match answer {
+            Ok(answer) => answer,
+            Err(e) if e.is_not_found() => return Ok(false),
+            Err(e) => return Err(e),
+        };
+        // A reset server hands out ids again, possibly to someone else's sensor.
+        let sensor: Value = parse(&answer.body)?;
+        Ok(sensor["properties"]["ge_key"].as_str() == Some(SENSOR_KEY))
+    }
+
     async fn ensure_observed_property(
         &self,
         property: &ExportProperty,
@@ -673,6 +692,37 @@ mod tests {
         let (id, new) = session(&server).await.create_thing(&tree()).await.unwrap();
 
         assert_eq!((id, new), (RemoteId(json!(3)), false));
+    }
+
+    #[tokio::test]
+    async fn the_export_sensor_counts_as_present_only_with_its_key() {
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/v1.1/Sensors(1)"))
+            .respond_with(
+                ResponseTemplate::new(200)
+                    .set_body_json(json!({ "properties": { "ge_key": "sensor:green-ecolution" } })),
+            )
+            .mount(&server)
+            .await;
+        Mock::given(method("GET"))
+            .and(path("/v1.1/Sensors(2)"))
+            .respond_with(
+                ResponseTemplate::new(200)
+                    .set_body_json(json!({ "properties": { "ge_key": "foreign" } })),
+            )
+            .mount(&server)
+            .await;
+        Mock::given(method("GET"))
+            .and(path("/v1.1/Sensors(3)"))
+            .respond_with(ResponseTemplate::new(404))
+            .mount(&server)
+            .await;
+        let s = session(&server).await;
+
+        assert!(s.sensor_exists(&RemoteId(json!(1))).await.unwrap());
+        assert!(!s.sensor_exists(&RemoteId(json!(2))).await.unwrap());
+        assert!(!s.sensor_exists(&RemoteId(json!(3))).await.unwrap());
     }
 
     #[tokio::test]

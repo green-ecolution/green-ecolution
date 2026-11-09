@@ -408,3 +408,42 @@ async fn a_pass_whose_lease_was_taken_over_writes_nothing() {
     );
     assert!(repo.renew_lease(root(), &new, 60).await.unwrap());
 }
+
+#[tokio::test]
+async fn dropped_refs_are_gone_and_a_stale_pass_drops_nothing() {
+    let app = spawn_app().await;
+    let repo = PgDataExportRepository::new(app.db_pool.clone());
+    repo.upsert(root(), &config("https://a.example.org/v1.1"))
+        .await
+        .unwrap();
+    let held = lease(&repo, 0).await.unwrap();
+    for key in [
+        "irrigation:tree:1",
+        "location:irrigation:tree:1",
+        "irrigation:tree:2",
+    ] {
+        repo.put_ref(root(), &held, &thing_ref(key)).await.unwrap();
+    }
+
+    let stale = ExportLease {
+        token: Uuid::now_v7(),
+        ..held
+    };
+    repo.drop_refs(root(), &stale, &["irrigation:tree:2".into()])
+        .await
+        .unwrap();
+    assert_eq!(repo.refs(root()).await.unwrap().len(), 3);
+
+    repo.drop_refs(
+        root(),
+        &held,
+        &[
+            "irrigation:tree:1".into(),
+            "location:irrigation:tree:1".into(),
+        ],
+    )
+    .await
+    .unwrap();
+    let left: Vec<String> = repo.refs(root()).await.unwrap().into_keys().collect();
+    assert_eq!(left, vec!["irrigation:tree:2".to_string()]);
+}

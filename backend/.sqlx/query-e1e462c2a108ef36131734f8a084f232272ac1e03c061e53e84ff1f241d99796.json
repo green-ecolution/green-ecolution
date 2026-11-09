@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM data_export_refs r\n               USING data_export_targets t\n               WHERE r.organization_id = $1 AND r.ge_key = ANY($2)\n                 AND t.organization_id = $1 AND t.activated_at = $3 AND t.lease_token = $4",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "TextArray",
+        "Timestamptz",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "e1e462c2a108ef36131734f8a084f232272ac1e03c061e53e84ff1f241d99796"
+}

@@ -149,6 +149,13 @@ pub trait ExportRefWriter: Send + Sync {
         lease: &ExportLease,
         export_ref: &ExportRef,
     ) -> Result<(), RepositoryError>;
+    /// Forgets remote entities the target no longer has, so they are created again.
+    async fn drop_refs(
+        &self,
+        org: Id<Organization>,
+        lease: &ExportLease,
+        ge_keys: &[String],
+    ) -> Result<(), RepositoryError>;
 }
 
 #[async_trait::async_trait]
@@ -213,6 +220,11 @@ pub enum SinkError {
 }
 
 impl SinkError {
+    /// The entity behind a stored ref is gone from the target.
+    pub fn is_not_found(&self) -> bool {
+        matches!(self, Self::Rejected { status: 404, .. })
+    }
+
     /// A rejected single entity is skipped; everything else means the target
     /// cannot be worked with right now.
     pub fn aborts_pass(&self) -> bool {
@@ -261,6 +273,9 @@ pub trait SinkSession: Send + Sync {
         deleted_at: DateTime<Utc>,
     ) -> Result<DeletionMark, SinkError>;
     async fn ensure_sensor(&self) -> Result<RemoteId, SinkError>;
+    /// `false` when the target lost the export's sensor, which every datastream
+    /// hangs on: its database was reset, so every stored ref is stale.
+    async fn sensor_exists(&self, id: &RemoteId) -> Result<bool, SinkError>;
     async fn ensure_observed_property(
         &self,
         property: &ExportProperty,

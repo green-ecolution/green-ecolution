@@ -238,6 +238,28 @@ impl ExportRefWriter for PgDataExportRepository {
         .await?;
         Ok(())
     }
+
+    #[tracing::instrument(level = "debug", skip(self, ge_keys), fields(count = ge_keys.len()))]
+    async fn drop_refs(
+        &self,
+        org: Id<Organization>,
+        lease: &ExportLease,
+        ge_keys: &[String],
+    ) -> Result<(), RepositoryError> {
+        sqlx::query!(
+            r#"DELETE FROM data_export_refs r
+               USING data_export_targets t
+               WHERE r.organization_id = $1 AND r.ge_key = ANY($2)
+                 AND t.organization_id = $1 AND t.activated_at = $3 AND t.lease_token = $4"#,
+            org.value(),
+            ge_keys,
+            lease.generation,
+            lease.token,
+        )
+        .execute(&self.pool)
+        .await?;
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
