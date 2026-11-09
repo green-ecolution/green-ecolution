@@ -1,0 +1,52 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT ge_key, entity, remote_id, content_hash, last_value, deleted_marked\n               FROM data_export_refs WHERE organization_id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "ge_key",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "entity",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "remote_id",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 3,
+        "name": "content_hash",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "last_value",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 5,
+        "name": "deleted_marked",
+        "type_info": "Bool"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      true,
+      false
+    ]
+  },
+  "hash": "4db37c231cb58d9835f57a97a13f0e53bebdd1cb0632f5ddc298184f971576c1"
+}

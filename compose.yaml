@@ -383,5 +383,56 @@ services:
       start_period: 5s
       retries: 3
 
+  # OGC SensorThings API server as bundled by CIVITAS/CORE (CIVORA speaks UrbanPulse instead,
+  # see docs/integrations/urban-data-platforms.md); local target for the data platform export.
+  # Start it with `just frost-up`.
+  frost:
+    profiles: ["frost"]
+    image: fraunhoferiosb/frost-server-http:2.8.2
+    environment:
+      # Self links always name the Traefik host, also for requests on the direct port: FROST
+      # 2.8's root URL autodetection yields `null://null:null` links without X-Forwarded headers.
+      serviceRootUrl: ${APP_PROTO:-http}://frost.${APP_HOST:-localhost}:${APP_PORT:-3000}/FROST-Server
+      persistence_db_driver: org.postgresql.Driver
+      persistence_db_url: jdbc:postgresql://db:5432/frost
+      persistence_db_username: ${POSTGRES_USER:-postgres}
+      persistence_db_password: ${POSTGRES_PASSWORD:-postgres}
+      persistence_autoUpdateDatabase: "true"
+      persistence_countMode: LIMIT_ESTIMATE
+      plugins_multiDatastream_enable: "false"
+      plugins_actuation_enable: "false"
+    ports:
+      - "127.0.0.1:8180:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+      frost-init-db:
+        condition: service_completed_successfully
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frost.rule=Host(`frost.${APP_HOST:-localhost}`)"
+      - "traefik.http.routers.frost.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
+      - "traefik.http.services.frost.loadbalancer.server.port=8080"
+
+  # CREATE DATABASE runs on every start because the shared db volume may predate this service.
+  # A database created this way does not inherit PostGIS from the image's init scripts.
+  frost-init-db:
+    profiles: ["frost"]
+    image: postgres:18
+    user: "1001:1001"
+    environment:
+      PGHOST: db
+      PGUSER: ${POSTGRES_USER:-postgres}
+      PGPASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    entrypoint: /bin/sh
+    command: >
+      -c "
+      echo \"SELECT 'CREATE DATABASE frost' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'frost')\\gexec\" | psql &&
+      psql -d frost -c 'CREATE EXTENSION IF NOT EXISTS postgis'
+      "
+    depends_on:
+      db:
+        condition: service_healthy
+
 volumes:
   db_data:

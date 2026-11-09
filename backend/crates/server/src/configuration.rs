@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 use std::time::Duration;
 
+use domain::data_export::ExportUrlPolicy;
 use secrecy::{ExposeSecret, SecretString};
 use serde::Deserialize;
 use serde_aux::field_attributes::deserialize_number_from_string;
@@ -27,6 +28,8 @@ pub struct Settings {
     pub routing: RoutingSettings,
     #[serde(default)]
     pub plugins: PluginsSettings,
+    #[serde(default)]
+    pub data_export: DataExportSettings,
     #[serde(default)]
     pub analytics: AnalyticsSettings,
     /// One section per module key: activation default plus the module's own keys.
@@ -216,6 +219,59 @@ pub struct PluginsSettings {
     pub enabled: bool,
     #[serde(default)]
     pub proxy: Option<PluginProxySettings>,
+}
+
+/// Export to urban data platforms (SensorThings). Hosts not on the allowlist
+/// are refused, so an organization cannot aim the server at internal services.
+/// An entry without `:port` allows only the scheme's default port.
+#[derive(serde::Deserialize, Clone)]
+pub struct DataExportSettings {
+    #[serde(default)]
+    pub enabled: bool,
+    #[serde(default)]
+    pub allowed_hosts: Vec<String>,
+    #[serde(default)]
+    pub allow_insecure_http: bool,
+    #[serde(default = "default_export_interval_secs")]
+    pub interval_secs: u64,
+    #[serde(default = "default_export_run_budget_secs")]
+    pub run_budget_secs: u64,
+    #[serde(default = "default_export_batch_size")]
+    pub batch_size: u64,
+    /// Readings younger than this are left for a later pass: their ids are minted
+    /// before the insert commits, so a lower id can still become visible.
+    #[serde(default = "default_export_reading_settle_secs")]
+    pub reading_settle_secs: u64,
+}
+
+fn default_export_batch_size() -> u64 {
+    500
+}
+
+fn default_export_reading_settle_secs() -> u64 {
+    120
+}
+
+fn default_export_interval_secs() -> u64 {
+    300
+}
+
+fn default_export_run_budget_secs() -> u64 {
+    120
+}
+
+impl Default for DataExportSettings {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            allowed_hosts: Vec::new(),
+            allow_insecure_http: false,
+            interval_secs: default_export_interval_secs(),
+            run_budget_secs: default_export_run_budget_secs(),
+            batch_size: default_export_batch_size(),
+            reading_settle_secs: default_export_reading_settle_secs(),
+        }
+    }
 }
 
 pub const MAX_PLUGIN_SESSION_TTL_MINUTES: u32 = 480;
@@ -439,7 +495,7 @@ pub enum ConfigError {
     Source(#[from] config::ConfigError),
 }
 
-/// A configuration an environment must not run with. Both cases are a single
+/// A configuration an environment must not run with. Each case is a single
 /// mistyped override away and would disable a protection without any visible
 /// symptom, so the process refuses to start rather than serving traffic.
 #[derive(Debug, thiserror::Error, PartialEq, Eq)]
@@ -455,6 +511,19 @@ pub enum InsecureConfiguration {
          List the frontend origins explicitly."
     )]
     WildcardCors { environment: &'static str },
+
+    #[error(
+        "data_export.allow_insecure_http = true is refused in the {environment} environment: \
+         credentials for the data platform would travel unencrypted."
+    )]
+    InsecureDataExport { environment: &'static str },
+
+    #[error(
+        "data_export.enabled = true is refused in the {environment} environment while \
+         auth.enabled = false: anonymous callers could store data platform credentials and make \
+         the server send requests. Enable authentication or switch the data export off."
+    )]
+    AnonymousDataExport { environment: &'static str },
 }
 
 impl Settings {
@@ -489,6 +558,19 @@ impl Settings {
             return Err(InsecureConfiguration::WildcardCors { environment });
         }
 
+        let internet_facing = self
+            .application
+            .environment
+            .requires_explicit_cors_origins();
+
+        if internet_facing && self.data_export.allow_insecure_http {
+            return Err(InsecureConfiguration::InsecureDataExport { environment });
+        }
+
+        if internet_facing && self.data_export.enabled && !self.auth.enabled {
+            return Err(InsecureConfiguration::AnonymousDataExport { environment });
+        }
+
         Ok(())
     }
 
@@ -503,6 +585,11 @@ impl Settings {
                  Keycloak and set auth.expected_audience."
                     .to_string(),
             );
+        }
+        for entry in ExportUrlPolicy::unusable_entries(&self.data_export.allowed_hosts) {
+            advisories.push(format!(
+                "data_export.allowed_hosts entry \"{entry}\" can never match: list host names or IP addresses, optionally with :port or :*, without scheme or path."
+            ));
         }
         advisories
     }
@@ -545,6 +632,7 @@ impl Settings {
             sensor: SensorSettings::default(),
             routing: RoutingSettings::default(),
             plugins: PluginsSettings::default(),
+            data_export: DataExportSettings::default(),
             analytics: AnalyticsSettings::default(),
             modules: std::collections::BTreeMap::new(),
         }
@@ -790,6 +878,61 @@ mod tests {
         );
     }
 
+    #[test]
+    fn internet_facing_profiles_refuse_plain_http_data_export() {
+        for env in [
+            Environment::Staging,
+            Environment::Demo,
+            Environment::Production,
+        ] {
+            let name = env.as_str();
+            let mut settings = settings_in(env, true, &REAL_ORIGIN);
+            settings.data_export.allow_insecure_http = true;
+
+            assert_eq!(
+                settings.ensure_secure(),
+                Err(InsecureConfiguration::InsecureDataExport { environment: name })
+            );
+        }
+    }
+
+    #[test]
+    fn demo_refuses_the_data_export_without_authentication() {
+        let mut settings = settings_in(Environment::Demo, false, &REAL_ORIGIN);
+        settings.data_export.enabled = true;
+
+        assert_eq!(
+            settings.ensure_secure(),
+            Err(InsecureConfiguration::AnonymousDataExport {
+                environment: "demo"
+            })
+        );
+    }
+
+    #[test]
+    fn demo_without_authentication_may_run_with_the_data_export_off() {
+        let mut settings = settings_in(Environment::Demo, false, &REAL_ORIGIN);
+        settings.data_export.enabled = false;
+
+        assert_eq!(settings.ensure_secure(), Ok(()));
+    }
+
+    #[test]
+    fn local_may_export_without_authentication() {
+        let mut settings = settings_in(Environment::Local, false, &REAL_ORIGIN);
+        settings.data_export.enabled = true;
+
+        assert_eq!(settings.ensure_secure(), Ok(()));
+    }
+
+    #[test]
+    fn local_may_export_over_plain_http() {
+        let mut settings = settings_in(Environment::Local, true, &REAL_ORIGIN);
+        settings.data_export.allow_insecure_http = true;
+
+        assert_eq!(settings.ensure_secure(), Ok(()));
+    }
+
     /// Demo is internet-facing too, so the origin list stays mandatory even
     /// though the login does not.
     #[test]
@@ -839,6 +982,17 @@ mod tests {
         let settings = Settings::for_test(auth(true, Some("backend")));
 
         assert!(settings.security_advisories().is_empty());
+    }
+
+    #[test]
+    fn unusable_export_hosts_are_advised() {
+        let mut settings = Settings::for_test(auth(true, Some("backend")));
+        settings.data_export.allowed_hosts = vec!["https://x.org".into(), "x.org".into()];
+
+        let advisories = settings.security_advisories();
+
+        assert_eq!(advisories.len(), 1);
+        assert!(advisories[0].contains("\"https://x.org\" can never match"));
     }
 
     #[test]

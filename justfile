@@ -308,6 +308,17 @@ plugin-demo-up:
 plugin-demo-down:
     @just _compose --profile plugins rm -sf demo-plugin
 
+# Start the FROST SensorThings server used to test the data platform export
+[group('infra')]
+frost-up:
+    @just _compose --profile frost up -d frost
+    @echo "FROST: {{ app_proto }}://frost.{{ app_host }}:{{ app_port }}/FROST-Server/v1.1"
+
+# Stop and remove the FROST server; its database `frost` stays in the shared Postgres
+[group('infra')]
+frost-down:
+    @just _compose --profile frost rm -sf frost frost-init-db
+
 # Set up ACME storage for Let's Encrypt
 _acme-init:
     @if [ -n "{{ porkbun_api_key }}" ]; then \
@@ -539,6 +550,11 @@ test:
     cd {{ backend_dir }} && SQLX_OFFLINE=true cargo test --workspace --locked
     @echo "Frontend tests..."
     cd {{ frontend_dir }} && pnpm run test
+
+# Run the end-to-end export test against the local FROST server
+[group('check')]
+test-data-export: frost-up
+    cd {{ backend_dir }} && GE_TEST_FROST_URL=http://localhost:8180/FROST-Server/v1.1 SQLX_OFFLINE=true cargo test --locked -p app --test api -- --ignored data_export_e2e
 
 # Remove testcontainer leftovers; only a hard kill (SIGKILL) can leave any behind
 [group('check')]

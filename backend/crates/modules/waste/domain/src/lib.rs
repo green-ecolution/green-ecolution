@@ -1,6 +1,7 @@
 //! Waste module domain: waste bins, their fill level and the collection rules.
 //! Depends on the core `domain` only.
 
+pub mod export;
 pub mod fill;
 pub mod settings;
 pub mod values;

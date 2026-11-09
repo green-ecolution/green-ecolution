@@ -368,6 +368,77 @@
     }
   },
   "organization": {
+    "dataExport": {
+      "title": "Data platform",
+      "hint": "Transfers this organization's objects, states and readings to an urban data platform (OGC SensorThings API).",
+      "empty": "No data platform is set up for this organization.",
+      "setUp": "Set up data platform",
+      "edit": "Edit",
+      "remove": "Remove",
+      "test": "Test connection",
+      "testing": "Testing the connection.",
+      "loadError": "The data platform settings could not be loaded.",
+      "status": {
+        "active": "Active",
+        "paused": "Paused",
+        "failing": "Error"
+      },
+      "auth": {
+        "label": "Authentication: {summary}",
+        "none": "No authentication",
+        "basic": "Username and password",
+        "oauth2": "OAuth2",
+        "user": "User {name}",
+        "client": "Client ID {name}"
+      },
+      "lastRun": "Last run {time}",
+      "neverRun": "No run yet",
+      "stats": "{things} objects · {observations} readings",
+      "skipped": "{count} skipped",
+      "lastError": "Last error: {error}",
+      "outcome": {
+        "ok": "Connected. The server supports batched readings.",
+        "okWithoutDataArray": "Connected, but the server does not support batched readings. Raw readings cannot be transferred.",
+        "url_not_allowed": "This address is not allowed on this instance.",
+        "unreachable": "The server cannot be reached.",
+        "unauthorized": "The server rejected the credentials.",
+        "not_sensorthings": "No SensorThings API answers at this address."
+      },
+      "dialog": {
+        "createTitle": "Set up data platform",
+        "editTitle": "Edit data platform",
+        "enabled": "Export active",
+        "baseUrl": "SensorThings API address",
+        "baseUrlHint": "The base address including the version, for example https://frost.stadt.de/FROST-Server/v1.1.",
+        "authKind": "Authentication",
+        "username": "Username",
+        "password": "Password",
+        "tokenUrl": "Token address",
+        "clientId": "Client ID",
+        "clientSecret": "Client secret",
+        "scope": "Scope (optional)",
+        "secretKept": "Stored. Leave empty to keep it.",
+        "save": "Save",
+        "cancel": "Cancel",
+        "errors": {
+          "urlRequired": "Enter the address of the SensorThings API.",
+          "urlInvalid": "Enter a complete http or https address without credentials, parameters or fragment.",
+          "tooLong": "The value is too long.",
+          "required": "This field is required.",
+          "secretRequired": "Enter the password or the client secret."
+        }
+      },
+      "removeDialog": {
+        "title": "Remove data platform?",
+        "description": "The export of this organization stops. Nothing is deleted on the data platform.",
+        "confirm": "Remove",
+        "cancel": "Cancel"
+      },
+      "toast": {
+        "saved": "Data platform saved",
+        "removed": "Data platform removed"
+      }
+    },
     "treeTitle": "Organization structure",
     "treeAriaLabel": "Organization structure",
     "createButton": "New",

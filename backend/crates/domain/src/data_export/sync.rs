@@ -1,0 +1,402 @@
+use std::collections::{BTreeSet, HashMap};
+
+use chrono::{DateTime, Utc};
+use serde_json::Value;
+use uuid::Uuid;
+
+use super::{
+    BatchOutcome, ExportProperty, ExportRunStats, ExportTargetConfig, ExportThing, ObservationRow,
+    RawStream, StateValue, StoredExportTarget,
+};
+use crate::{Id, RepositoryError, organization::Organization};
+
+pub const SENSOR_KEY: &str = "sensor:green-ecolution";
+
+pub fn location_key(thing_key: &str) -> String {
+    format!("location:{thing_key}")
+}
+
+pub fn property_key(property: &ExportProperty) -> String {
+    format!("property:{}", property.key)
+}
+
+pub fn state_stream_key(property: &ExportProperty, thing_key: &str) -> String {
+    format!("state:{}:{thing_key}", property.key)
+}
+
+/// A SensorThings `@iot.id`; FROST defaults to numbers, other servers use strings.
+#[derive(Debug, Clone, PartialEq)]
+pub struct RemoteId(pub Value);
+
+impl RemoteId {
+    pub fn from_location(header: &str) -> Option<Self> {
+        let open = header.rfind('(')?;
+        let inner = header[open + 1..].strip_suffix(')')?;
+        if let Some(quoted) = inner.strip_prefix('\'').and_then(|s| s.strip_suffix('\'')) {
+            return Some(Self(Value::String(quoted.replace("''", "'"))));
+        }
+        inner.parse::<i64>().ok().map(|n| Self(Value::from(n)))
+    }
+    pub fn from_json(value: &Value) -> Option<Self> {
+        match value {
+            Value::String(_) => Some(Self(value.clone())),
+            Value::Number(n) => n.as_i64().map(|n| Self(Value::from(n))),
+            _ => None,
+        }
+    }
+
+    /// Ids are remote input; the encoding keeps one from leaving its path segment.
+    pub fn path_segment(&self) -> String {
+        match &self.0 {
+            Value::String(s) => {
+                let mut out = String::from("('");
+                for byte in s.bytes() {
+                    match byte {
+                        b'\'' => out.push_str("''"),
+                        b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'.' | b'_' | b'~' => {
+                            out.push(byte as char)
+                        }
+                        _ => out.push_str(&format!("%{byte:02X}")),
+                    }
+                }
+                out.push_str("')");
+                out
+            }
+            other => format!("({other})"),
+        }
+    }
+
+    pub fn as_json(&self) -> &Value {
+        &self.0
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ExportEntity {
+    Thing,
+    Location,
+    Sensor,
+    ObservedProperty,
+    Datastream,
+}
+
+impl ExportEntity {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Thing => "thing",
+            Self::Location => "location",
+            Self::Sensor => "sensor",
+            Self::ObservedProperty => "observed_property",
+            Self::Datastream => "datastream",
+        }
+    }
+
+    pub fn parse(raw: &str) -> Option<Self> {
+        match raw {
+            "thing" => Some(Self::Thing),
+            "location" => Some(Self::Location),
+            "sensor" => Some(Self::Sensor),
+            "observed_property" => Some(Self::ObservedProperty),
+            "datastream" => Some(Self::Datastream),
+            _ => None,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct ExportRef {
+    pub ge_key: String,
+    pub entity: ExportEntity,
+    pub remote_id: RemoteId,
+    pub content_hash: Option<String>,
+    pub last_value: Option<Value>,
+    pub deleted_marked: bool,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum RunResult {
+    Succeeded(ExportRunStats),
+    /// `error` must not contain secrets; it is shown in the settings UI.
+    Failed {
+        error: String,
+        base_interval_secs: i64,
+    },
+}
+
+#[async_trait::async_trait]
+pub trait ExportRefReader: Send + Sync {
+    async fn refs(
+        &self,
+        org: Id<Organization>,
+    ) -> Result<HashMap<String, ExportRef>, RepositoryError>;
+}
+
+/// Proof that a pass holds a target. The stores write only while the target
+/// still has this generation (`activated_at`) and this lease token, so neither
+/// a pass that outlived a base-URL change nor one whose lease another replica
+/// took over writes anything. A fenced write is not an error.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ExportLease {
+    pub generation: DateTime<Utc>,
+    pub token: Uuid,
+}
+
+#[async_trait::async_trait]
+pub trait ExportRefWriter: Send + Sync {
+    async fn put_ref(
+        &self,
+        org: Id<Organization>,
+        lease: &ExportLease,
+        export_ref: &ExportRef,
+    ) -> Result<(), RepositoryError>;
+    /// Forgets remote entities the target no longer has, so they are created again.
+    async fn drop_refs(
+        &self,
+        org: Id<Organization>,
+        lease: &ExportLease,
+        ge_keys: &[String],
+    ) -> Result<(), RepositoryError>;
+}
+
+#[async_trait::async_trait]
+pub trait ExportRunStore: Send + Sync {
+    /// Organizations with an enabled target. A paused target leaves its subtree
+    /// to the next target above.
+    async fn target_orgs(&self) -> Result<BTreeSet<Id<Organization>>, RepositoryError>;
+    /// Enabled, not leased, past their backoff and last run at least
+    /// `interval_secs` ago, so several replicas run a target once per interval.
+    async fn due(&self, interval_secs: i64) -> Result<Vec<Id<Organization>>, RepositoryError>;
+    /// Takes the lease under `token`; `None` when another replica holds it or the
+    /// target is not due.
+    async fn try_lease(
+        &self,
+        org: Id<Organization>,
+        token: Uuid,
+        lease_secs: i64,
+        interval_secs: i64,
+    ) -> Result<Option<StoredExportTarget>, RepositoryError>;
+    /// Extends the lease to `lease_secs` from now; `false` when it is no longer held.
+    async fn renew_lease(
+        &self,
+        org: Id<Organization>,
+        lease: &ExportLease,
+        lease_secs: i64,
+    ) -> Result<bool, RepositoryError>;
+    async fn finish(
+        &self,
+        org: Id<Organization>,
+        lease: &ExportLease,
+        result: &RunResult,
+    ) -> Result<(), RepositoryError>;
+    async fn cursor(&self, org: Id<Organization>) -> Result<Option<Uuid>, RepositoryError>;
+    async fn advance_cursor(
+        &self,
+        org: Id<Organization>,
+        lease: &ExportLease,
+        cursor: Uuid,
+    ) -> Result<(), RepositoryError>;
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
+pub enum SinkError {
+    #[error("the target is not on the instance allowlist")]
+    UrlNotAllowed,
+    #[error("target unreachable: {0}")]
+    Unreachable(String),
+    #[error("target refused the credentials (HTTP {0})")]
+    Unauthorized(u16),
+    /// 408 or 429: nothing wrong with the request, the target wants it later.
+    #[error("target asked to retry later (HTTP {0})")]
+    RetryLater(u16),
+    #[error("target rejected the request (HTTP {status})")]
+    Rejected {
+        status: u16,
+        /// Start of the remote answer, for debugging only. Never persist or log it:
+        /// a proxy echoing the request may put the credentials in there.
+        detail: String,
+    },
+    #[error("unexpected answer from the target: {0}")]
+    Malformed(String),
+}
+
+impl SinkError {
+    /// The entity behind a stored ref is gone from the target.
+    pub fn is_not_found(&self) -> bool {
+        matches!(self, Self::Rejected { status: 404, .. })
+    }
+
+    /// A rejected single entity is skipped; everything else means the target
+    /// cannot be worked with right now.
+    pub fn aborts_pass(&self) -> bool {
+        !matches!(self, Self::Rejected { .. })
+    }
+}
+
+/// Whether a vanished Thing got its deletion mark.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DeletionMark {
+    Marked,
+    /// The Thing now carries another key or another exporter, for example after
+    /// a second target on the same server adopted it, or the server reused the id.
+    NotOurs,
+}
+
+pub struct StateStream<'a> {
+    pub ge_key: &'a str,
+    pub thing: &'a RemoteId,
+    pub thing_name: &'a str,
+    pub property: &'a ExportProperty,
+    pub sensor: &'a RemoteId,
+    pub observed_property: &'a RemoteId,
+}
+
+#[async_trait::async_trait]
+pub trait SensorThingsSink: Send + Sync {
+    /// Checks the URL policy and authenticates once for a sync pass. Things the
+    /// session writes are stamped with `exporter`, the organization of the target.
+    async fn open(
+        &self,
+        exporter: Id<Organization>,
+        config: &ExportTargetConfig,
+    ) -> Result<Box<dyn SinkSession>, SinkError>;
+}
+
+#[async_trait::async_trait]
+pub trait SinkSession: Send + Sync {
+    async fn create_thing(&self, thing: &ExportThing) -> Result<(RemoteId, bool), SinkError>;
+    async fn update_thing(&self, id: &RemoteId, thing: &ExportThing) -> Result<(), SinkError>;
+    async fn move_thing(&self, id: &RemoteId, thing: &ExportThing) -> Result<(), SinkError>;
+    async fn mark_thing_deleted(
+        &self,
+        id: &RemoteId,
+        ge_key: &str,
+        deleted_at: DateTime<Utc>,
+    ) -> Result<DeletionMark, SinkError>;
+    async fn ensure_sensor(&self) -> Result<RemoteId, SinkError>;
+    /// `false` when the target lost the export's sensor, which every datastream
+    /// hangs on: its database was reset, so every stored ref is stale.
+    async fn sensor_exists(&self, id: &RemoteId) -> Result<bool, SinkError>;
+    async fn ensure_observed_property(
+        &self,
+        property: &ExportProperty,
+    ) -> Result<RemoteId, SinkError>;
+    async fn ensure_state_datastream(
+        &self,
+        stream: &StateStream<'_>,
+    ) -> Result<RemoteId, SinkError>;
+    async fn post_observation(
+        &self,
+        datastream: &RemoteId,
+        value: &StateValue,
+        phenomenon_time: DateTime<Utc>,
+    ) -> Result<(), SinkError>;
+    async fn ensure_device_sensor(
+        &self,
+        sensor_id: &str,
+        model: &str,
+    ) -> Result<RemoteId, SinkError>;
+    async fn ensure_raw_datastream(&self, stream: &RawStream<'_>) -> Result<RemoteId, SinkError>;
+    /// One request for all batches. Rows the target rejects are counted, not errors.
+    async fn post_observation_batches(
+        &self,
+        batches: &[(RemoteId, Vec<ObservationRow>)],
+    ) -> Result<BatchOutcome, SinkError>;
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data_export::ObservationKind;
+    use serde_json::json;
+
+    const STATUS: ExportProperty = ExportProperty {
+        key: "status",
+        label: "Status",
+        description: "A test state",
+        kind: ObservationKind::Category,
+        unit: None,
+    };
+
+    #[test]
+    fn reads_numeric_and_string_ids_from_a_location_header() {
+        assert_eq!(
+            RemoteId::from_location("http://x/FROST-Server/v1.1/Things(42)"),
+            Some(RemoteId(json!(42)))
+        );
+        assert_eq!(
+            RemoteId::from_location("http://x/v1.1/Things('a''b')"),
+            Some(RemoteId(json!("a'b")))
+        );
+        assert_eq!(RemoteId::from_location("http://x/v1.1/Things"), None);
+    }
+
+    #[test]
+    fn malformed_location_ids_are_refused() {
+        for h in [
+            "x/Things(abc)",
+            "x/Things(42",
+            "x/Things()",
+            "x/Things('a(b)')",
+        ] {
+            assert_eq!(RemoteId::from_location(h), None, "{h}");
+        }
+    }
+
+    #[test]
+    fn json_ids_must_be_integers_or_strings() {
+        assert_eq!(RemoteId::from_json(&json!(3)), Some(RemoteId(json!(3))));
+        assert_eq!(RemoteId::from_json(&json!("a")), Some(RemoteId(json!("a"))));
+        assert_eq!(RemoteId::from_json(&json!(1.5)), None);
+        assert_eq!(RemoteId::from_json(&json!({"x": 1})), None);
+        assert_eq!(RemoteId::from_json(&json!(null)), None);
+    }
+
+    #[test]
+    fn renders_ids_as_odata_path_segments() {
+        assert_eq!(RemoteId(json!(7)).path_segment(), "(7)");
+        assert_eq!(RemoteId(json!("a'b")).path_segment(), "('a''b')");
+        assert_eq!(RemoteId(json!("a/b?c")).path_segment(), "('a%2Fb%3Fc')");
+        assert_eq!(RemoteId(json!("../x")).path_segment(), "('..%2Fx')");
+    }
+
+    #[test]
+    fn entities_round_trip_through_their_names() {
+        for e in [
+            ExportEntity::Thing,
+            ExportEntity::Location,
+            ExportEntity::Sensor,
+            ExportEntity::ObservedProperty,
+            ExportEntity::Datastream,
+        ] {
+            assert_eq!(ExportEntity::parse(e.as_str()), Some(e));
+        }
+    }
+
+    #[test]
+    fn keys_are_namespaced() {
+        assert_eq!(
+            location_key("irrigation:tree:1"),
+            "location:irrigation:tree:1"
+        );
+        assert_eq!(property_key(&STATUS), "property:status");
+        assert_eq!(
+            state_stream_key(&STATUS, "irrigation:tree:1"),
+            "state:status:irrigation:tree:1"
+        );
+    }
+
+    #[test]
+    fn only_rejections_keep_a_pass_running() {
+        assert!(
+            !SinkError::Rejected {
+                status: 400,
+                detail: "x".into()
+            }
+            .aborts_pass()
+        );
+        assert!(SinkError::Unreachable("x".into()).aborts_pass());
+        assert!(SinkError::RetryLater(429).aborts_pass());
+        assert!(SinkError::Unauthorized(401).aborts_pass());
+        assert!(SinkError::UrlNotAllowed.aborts_pass());
+    }
+}

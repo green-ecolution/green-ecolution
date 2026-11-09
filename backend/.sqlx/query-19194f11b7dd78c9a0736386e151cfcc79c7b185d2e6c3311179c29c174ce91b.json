@@ -1,0 +1,20 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT cursor_reading_id FROM data_export_targets",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "cursor_reading_id",
+        "type_info": "Uuid"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "19194f11b7dd78c9a0736386e151cfcc79c7b185d2e6c3311179c29c174ce91b"
+}

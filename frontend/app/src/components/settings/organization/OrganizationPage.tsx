@@ -34,6 +34,7 @@ import { statusOf } from '@/lib/httpError'
 import { initialsOf } from '@/lib/initials'
 import ContactPersonPicker from './ContactPersonPicker'
 import CreateOrganizationDialog from './CreateOrganizationDialog'
+import DataExportCard from './dataExport/DataExportCard'
 import OrganizationActionButtons from './OrganizationActionButtons'
 import OrganizationDetail from './OrganizationDetail'
 import OrganizationModulesSection from './OrganizationModulesSection'
@@ -458,6 +459,8 @@ const OrganizationPage = () => {
         canUpdate={canUpdateSettings}
         organizationName={nameOfOrg}
       />
+      {/* Keyed so a test result never carries over to another organization. */}
+      {selectedId && <DataExportCard key={selectedId} organizationId={selectedId} />}
     </>
   ) : null
 

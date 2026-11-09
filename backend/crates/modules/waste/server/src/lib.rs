@@ -115,6 +115,10 @@ impl Module for WasteModule {
         runtime.planning = Some(Arc::new(planning::WastePlanning::new(
             bins.clone(),
             ctx.organizations.clone(),
+            fill_rules.clone(),
+        )));
+        runtime.export = Some(Arc::new(infra::export_catalog::WasteExportCatalog::new(
+            ctx.pool.clone(),
             fill_rules,
         )));
         runtime.statistics = Some(Arc::new(infra::statistics::WasteStatistics::new(

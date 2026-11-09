@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE data_export_targets SET cursor_reading_id = $3\n               WHERE organization_id = $1 AND activated_at = $2 AND lease_token = $4\n                 AND (cursor_reading_id IS NULL OR cursor_reading_id < $3)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Timestamptz",
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "fa23354dec19bedba64e726332599b48430074b3763d5da00319d645daa6ea09"
+}

@@ -1,6 +1,7 @@
 /* tslint:disable */
 /* eslint-disable */
 export * from './CommentsApi';
+export * from './DataExportApi';
 export * from './EvaluationApi';
 export * from './InfoApi';
 export * from './IrrigationApi';

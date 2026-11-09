@@ -1,0 +1,76 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT id, number, latitude, longitude, volume_liters, depth_cm, organization_id,\n                      fill_fraction, fill_measured_at, last_emptied_at\n               FROM waste_bins WHERE organization_id = ANY($1)",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "number",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "latitude",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 3,
+        "name": "longitude",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 4,
+        "name": "volume_liters",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 5,
+        "name": "depth_cm",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 6,
+        "name": "organization_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 7,
+        "name": "fill_fraction",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 8,
+        "name": "fill_measured_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 9,
+        "name": "last_emptied_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "UuidArray"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "38bacfa74d3248e5b39922e3b0448f22fe8b7d4e53fab87ad253b8d91d1895d3"
+}

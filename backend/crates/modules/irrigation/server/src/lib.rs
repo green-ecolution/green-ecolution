@@ -211,6 +211,9 @@ impl Module for IrrigationModule {
         runtime.statistics = Some(Arc::new(infra::statistics::IrrigationStatistics::new(
             ctx.pool.clone(),
         )));
+        runtime.export = Some(Arc::new(
+            infra::export_catalog::IrrigationExportCatalog::new(ctx.pool.clone()),
+        ));
         Ok(runtime)
     }
 }

@@ -1851,6 +1851,371 @@
         }
       }
     },
+    "/v1/organizations/{org_id}/data-export": {
+      "get": {
+        "tags": [
+          "Data Export"
+        ],
+        "summary": "Read an organization's data platform export target",
+        "description": "The target (a SensorThings server) serves the organization's subtree. The secret is never returned, only `has_secret`. Requires setting:read.",
+        "operationId": "getDataExportTarget",
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "description": "Organization id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The export target",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataExportTargetResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No target configured",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Data export is disabled on this instance (code `feature.data_export_disabled`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Data Export"
+        ],
+        "summary": "Create or replace an organization's export target",
+        "description": "Omitting `password` / `client_secret` keeps the stored secret only while the auth kind and every receiving origin (scheme, host, port of `base_url`, and of `token_url` for OAuth2) are unchanged; otherwise the secret has to be sent again (code `data_export.auth_incomplete`). A changed `base_url` counts as a new target. Hosts must be on the instance allowlist. Requires setting:update.",
+        "operationId": "putDataExportTarget",
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "description": "Organization id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DataExportTargetRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Stored",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataExportTargetResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input (code `request.validation_failed`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Organization not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "An organization above locked the settings of this subtree (code `settings.enforced_by_ancestor`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Host not allowed (code `data_export.url_not_allowed`) or secret missing (code `data_export.auth_incomplete`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Data export is disabled on this instance (code `feature.data_export_disabled`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Data Export"
+        ],
+        "summary": "Remove an organization's export target",
+        "description": "Stops the export. Nothing is deleted on the data platform. Requires setting:update.",
+        "operationId": "deleteDataExportTarget",
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "description": "Organization id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Removed"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No target configured",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Data export is disabled on this instance (code `feature.data_export_disabled`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/organizations/{org_id}/data-export/test": {
+      "post": {
+        "tags": [
+          "Data Export"
+        ],
+        "summary": "Test the connection to the stored export target",
+        "description": "Fetches the SensorThings service root with the stored auth. A failed connection is a normal 200 answer whose `outcome` says why. Requires setting:update, because it sends the stored credentials.",
+        "operationId": "testDataExportTarget",
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "description": "Organization id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Test result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionTestResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No target configured",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Data export is disabled on this instance (code `feature.data_export_disabled`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/organizations/{org_id}/modules": {
       "get": {
         "tags": [
@@ -10130,6 +10495,46 @@
           }
         }
       },
+      "ConnectionOutcomeDto": {
+        "type": "string",
+        "enum": [
+          "ok",
+          "url_not_allowed",
+          "unreachable",
+          "unauthorized",
+          "not_sensorthings"
+        ]
+      },
+      "ConnectionTestResponse": {
+        "type": "object",
+        "required": [
+          "outcome",
+          "data_array_supported"
+        ],
+        "properties": {
+          "data_array_supported": {
+            "type": "boolean",
+            "description": "The server lists the SensorThings data-array conformance class, which the export uses for readings."
+          },
+          "detail": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "http_status": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "minimum": 0
+          },
+          "outcome": {
+            "$ref": "#/components/schemas/ConnectionOutcomeDto"
+          }
+        }
+      },
       "ContactPersonDto": {
         "type": "object",
         "description": "The organization's contact person, resolved from the identity provider.",
@@ -10223,6 +10628,251 @@
           },
           "sensor_type": {
             "$ref": "#/components/schemas/SensorTypeResponse"
+          }
+        }
+      },
+      "DataExportAuthKindDto": {
+        "type": "string",
+        "enum": [
+          "none",
+          "basic",
+          "oauth2_client_credentials"
+        ]
+      },
+      "DataExportAuthRequest": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "token_url",
+              "client_id",
+              "kind"
+            ],
+            "properties": {
+              "client_id": {
+                "type": "string"
+              },
+              "client_secret": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "writeOnly": true
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "oauth2_client_credentials"
+                ]
+              },
+              "scope": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "token_url": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "username",
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "basic"
+                ]
+              },
+              "password": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "writeOnly": true
+              },
+              "username": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "none"
+                ]
+              }
+            }
+          }
+        ],
+        "description": "An omitted `password` / `client_secret` keeps the stored one only while the kind and the receiving origins are unchanged."
+      },
+      "DataExportAuthResponse": {
+        "type": "object",
+        "required": [
+          "kind",
+          "has_secret"
+        ],
+        "properties": {
+          "client_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "has_secret": {
+            "type": "boolean",
+            "description": "The secret itself is never returned."
+          },
+          "kind": {
+            "$ref": "#/components/schemas/DataExportAuthKindDto"
+          },
+          "scope": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "token_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "username": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "DataExportRunStatsResponse": {
+        "type": "object",
+        "required": [
+          "things_written",
+          "observations_written",
+          "skipped"
+        ],
+        "properties": {
+          "observations_written": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "skipped": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "things_written": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          }
+        }
+      },
+      "DataExportStatusResponse": {
+        "type": "object",
+        "properties": {
+          "last_error": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "last_run_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "last_run_stats": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DataExportRunStatsResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "last_success_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "DataExportTargetRequest": {
+        "type": "object",
+        "required": [
+          "enabled",
+          "base_url",
+          "auth"
+        ],
+        "properties": {
+          "auth": {
+            "$ref": "#/components/schemas/DataExportAuthRequest"
+          },
+          "base_url": {
+            "type": "string",
+            "description": "SensorThings service root including the version, e.g. `https://…/FROST-Server/v1.1`. A trailing `/` is removed."
+          },
+          "enabled": {
+            "type": "boolean"
+          }
+        }
+      },
+      "DataExportTargetResponse": {
+        "type": "object",
+        "required": [
+          "organization_id",
+          "kind",
+          "enabled",
+          "base_url",
+          "auth",
+          "activated_at",
+          "status"
+        ],
+        "properties": {
+          "activated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "auth": {
+            "$ref": "#/components/schemas/DataExportAuthResponse"
+          },
+          "base_url": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "kind": {
+            "type": "string",
+            "description": "Always `sensorthings` for now."
+          },
+          "organization_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "$ref": "#/components/schemas/DataExportStatusResponse"
           }
         }
       },
@@ -17078,6 +17728,10 @@
     {
       "name": "Modules",
       "description": "Feature modules and their activation per organization"
+    },
+    {
+      "name": "Data Export",
+      "description": "An organization's export target on an urban data platform (OGC SensorThings API) and its connection test."
     },
     {
       "name": "Settings",

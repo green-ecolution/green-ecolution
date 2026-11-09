@@ -73,6 +73,7 @@ pub struct Application {
     _jwks: Arc<JwksProvider>,
     shutdown_tx: tokio::sync::watch::Sender<bool>,
     mqtt_handle: Option<tokio::task::JoinHandle<()>>,
+    export_handle: Option<tokio::task::JoinHandle<()>>,
     module_mounts: Vec<server::module::ModuleMount>,
     event_bus: Arc<dyn EventBus>,
 }
@@ -156,6 +157,25 @@ impl Application {
             profile_repo.clone(),
             defaults,
         ));
+        let data_export_policy = domain::data_export::ExportUrlPolicy::new(
+            settings.data_export.allowed_hosts.clone(),
+            settings.data_export.allow_insecure_http,
+        );
+        let data_export_repo = Arc::new(infra::pg_data_export::PgDataExportRepository::new(
+            pool.clone(),
+        ));
+        let data_export_service = Arc::new(
+            server::service::data_export_service::DataExportService::new(
+                data_export_repo.clone(),
+                data_export_repo.clone(),
+                Arc::new(infra::sensorthings::SensorThingsProbe::new(
+                    infra::sensorthings::http_client(),
+                    data_export_policy.clone(),
+                )),
+                settings_repo.clone(),
+                data_export_policy.clone(),
+            ),
+        );
         let activation_defaults = crate::modules::activation_defaults(&modules, &settings.modules);
         let module_activation_repo = Arc::new(
             server::infra::pg_module_activation::PgModuleActivationRepository::new(
@@ -192,6 +212,7 @@ impl Application {
         let targets = Arc::new(server::service::targets::TargetRegistry::new());
         let planning = Arc::new(PlanningRegistry::new());
         let statistics = Arc::new(server::service::statistics_registry::StatisticsRegistry::new());
+        let export_registry = Arc::new(server::service::export_registry::ExportRegistry::new());
         let services = Services::build(
             &repos,
             event_bus.clone(),
@@ -224,6 +245,7 @@ impl Application {
         let mut catalogs = std::collections::BTreeMap::new();
         let mut providers = std::collections::BTreeMap::new();
         let mut statistics_providers = std::collections::BTreeMap::new();
+        let mut export_catalogs = std::collections::BTreeMap::new();
         let mut sensor_parsers = Vec::new();
         for module in &modules {
             let ctx = server::module::ModuleContext {
@@ -265,6 +287,9 @@ impl Application {
             if let Some(provider) = runtime.statistics {
                 statistics_providers.insert(module.key(), provider);
             }
+            if let Some(catalog) = runtime.export {
+                export_catalogs.insert(module.key(), catalog);
+            }
         }
         targets
             .install(catalogs)
@@ -275,6 +300,38 @@ impl Application {
         statistics
             .install(statistics_providers)
             .map_err(|e| std::io::Error::other(e.to_string()))?;
+        export_registry
+            .install(export_catalogs)
+            .map_err(|e| std::io::Error::other(e.to_string()))?;
+        let data_export_sync = Arc::new(server::service::data_export_sync::DataExportSync::new(
+            data_export_repo.clone(),
+            data_export_repo.clone(),
+            data_export_repo.clone(),
+            data_export_repo.clone(),
+            Arc::new(infra::sensorthings::SensorThingsHttpSink::new(
+                infra::sensorthings::http_client(),
+                data_export_policy.clone(),
+            )),
+            export_registry.clone(),
+            module_activation_repo.clone(),
+            repos.organization_reader.clone(),
+            settings_repo.clone(),
+            Arc::new(domain::clock::SystemClock),
+            server::service::data_export_sync::SyncSettings {
+                interval_secs: settings.data_export.interval_secs as i64,
+                run_budget: Duration::from_secs(settings.data_export.run_budget_secs),
+                batch_size: i64::try_from(settings.data_export.batch_size).unwrap_or(i64::MAX),
+                reading_settle: Duration::from_secs(settings.data_export.reading_settle_secs),
+            },
+        ));
+        let (shutdown_tx, shutdown_rx) = tokio::sync::watch::channel(false);
+        let export_handle = settings.data_export.enabled.then(|| {
+            infra::data_export_worker::spawn(
+                data_export_sync.clone(),
+                Duration::from_secs(settings.data_export.interval_secs),
+                shutdown_rx.clone(),
+            )
+        });
         let sensor_parsers = Arc::new(
             server::service::sensor_parsers::SensorParserRegistry::new(sensor_parsers)
                 .map_err(std::io::Error::other)?,
@@ -286,7 +343,6 @@ impl Application {
             tokio::spawn(task);
         }
 
-        let (shutdown_tx, shutdown_rx) = tokio::sync::watch::channel(false);
         let (mqtt_state, mqtt_handle) = spawn_mqtt_subscriber(
             &settings,
             services.sensor.clone(),
@@ -356,10 +412,13 @@ impl Application {
             readiness_reader,
             statistics_reader: repos.statistics,
             statistics,
+            export_registry,
+            data_export_sync,
             token_validator,
             feature_flags: FeatureFlags {
                 routing_enabled: settings.routing.enabled,
                 plugins_enabled: settings.plugins.enabled,
+                data_export_enabled: settings.data_export.enabled,
             },
             frontend_config_js: server::http::render_frontend_config_js(
                 &settings.auth,
@@ -380,6 +439,7 @@ impl Application {
             plugin_proxy,
             settings_reader: settings_repo.clone(),
             settings_service,
+            data_export_service,
             module_activation_service,
             module_activation: module_activation_repo,
             targets,
@@ -405,6 +465,7 @@ impl Application {
             _jwks: jwks,
             shutdown_tx,
             mqtt_handle,
+            export_handle,
             module_mounts,
             event_bus,
         })
@@ -452,6 +513,14 @@ impl Application {
                 .is_err()
         {
             tracing::warn!("mqtt subscriber did not stop within 10s; exiting anyway");
+        }
+        // A pass stops at its next safe point; one slow request can still take 10 s.
+        if let Some(handle) = self.export_handle
+            && tokio::time::timeout(Duration::from_secs(15), handle)
+                .await
+                .is_err()
+        {
+            tracing::warn!("data export did not stop within 15s; exiting anyway");
         }
         Ok(())
     }
