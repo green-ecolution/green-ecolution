@@ -185,15 +185,19 @@ async fn a_failure_backs_off_and_a_success_clears_it() {
 }
 
 #[tokio::test]
-async fn target_orgs_include_disabled_targets() {
+async fn a_paused_target_claims_no_subtree() {
     let app = spawn_app().await;
     let repo = PgDataExportRepository::new(app.db_pool.clone());
     let mut cfg = config("https://a.example.org/v1.1");
     cfg.enabled = false;
     repo.upsert(root(), &cfg).await.unwrap();
 
-    assert!(repo.target_orgs().await.unwrap().contains(&root()));
+    assert!(repo.target_orgs().await.unwrap().is_empty());
     assert!(repo.due(0).await.unwrap().is_empty());
+
+    cfg.enabled = true;
+    repo.upsert(root(), &cfg).await.unwrap();
+    assert!(repo.target_orgs().await.unwrap().contains(&root()));
 }
 
 #[tokio::test]

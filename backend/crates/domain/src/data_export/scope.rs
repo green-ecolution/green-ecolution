@@ -2,8 +2,8 @@ use std::collections::BTreeSet;
 
 use crate::{Id, authorization::OrgHierarchy, organization::Organization};
 
-/// The organization on `org`'s path to the root that owns its export; the
-/// nearest one wins, whether its target is enabled or not.
+/// The organization on `org`'s path to the root that owns its export: the
+/// nearest one in `targets`, which holds only targets that may claim a subtree.
 pub fn responsible_target(
     hierarchy: &OrgHierarchy,
     targets: &BTreeSet<Id<Organization>>,

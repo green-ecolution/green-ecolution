@@ -308,3 +308,24 @@ async fn reading_needs_setting_read_and_writing_setting_update() {
         403
     );
 }
+
+#[tokio::test]
+async fn a_sub_unit_below_a_settings_lock_cannot_set_up_its_own_target() {
+    let app = spawn_app_with_data_export(&["frost.example.org"]).await;
+    let child = crate::settings_repo::child_org(&app, "Gemeinde", root()).await;
+    app.put_json(
+        &format!("/api/v1/organizations/{}/settings", root()),
+        &json!({ "descendants_may_override": false }),
+    )
+    .await;
+
+    let resp = app
+        .put_json(
+            &url(child),
+            &basic_target("https://frost.example.org/v1.1", Some("pw")),
+        )
+        .await;
+
+    assert_eq!(resp.status(), 409);
+    assert_eq!(body(resp).await["code"], "settings.enforced_by_ancestor");
+}

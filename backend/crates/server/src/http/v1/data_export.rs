@@ -93,6 +93,7 @@ pub async fn get_data_export(
         (status = 401, description = "Unauthorized", body = ErrorBody),
         (status = 403, description = "Forbidden", body = ErrorBody),
         (status = 404, description = "Organization not found", body = ErrorBody),
+        (status = 409, description = "An organization above locked the settings of this subtree (code `settings.enforced_by_ancestor`)", body = ErrorBody),
         (status = 422, description = "Host not allowed (code `data_export.url_not_allowed`) or secret missing (code `data_export.auth_incomplete`)", body = ErrorBody),
         (status = 503, description = "Data export is disabled on this instance (code `feature.data_export_disabled`)", body = ErrorBody),
         (status = 500, description = "Internal server error", body = ErrorBody),

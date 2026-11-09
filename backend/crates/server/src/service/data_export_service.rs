@@ -7,6 +7,7 @@ use domain::{
         ExportTargetReader, ExportTargetView, ExportTargetWriter, ExportUrlPolicy, TOKEN_URL_FIELD,
     },
     organization::Organization,
+    settings::SettingsReader,
 };
 
 use super::ServiceError;
@@ -17,6 +18,7 @@ pub struct DataExportService {
     reader: Arc<dyn ExportTargetReader>,
     writer: Arc<dyn ExportTargetWriter>,
     tester: Arc<dyn ConnectionTester>,
+    settings: Arc<dyn SettingsReader>,
     policy: ExportUrlPolicy,
 }
 
@@ -25,12 +27,14 @@ impl DataExportService {
         reader: Arc<dyn ExportTargetReader>,
         writer: Arc<dyn ExportTargetWriter>,
         tester: Arc<dyn ConnectionTester>,
+        settings: Arc<dyn SettingsReader>,
         policy: ExportUrlPolicy,
     ) -> Self {
         Self {
             reader,
             writer,
             tester,
+            settings,
             policy,
         }
     }
@@ -51,6 +55,12 @@ impl DataExportService {
         org: Id<Organization>,
         draft: ExportTargetDraft,
     ) -> Result<ExportTargetView, ServiceError> {
+        // Deleting stays allowed: it hands the subtree back to the lock's export.
+        if let Some(enforcer) = self.settings.resolution(org).await?.effective.enforced_by {
+            return Err(ServiceError::SettingsEnforcedByAncestor {
+                organization_id: enforcer.value(),
+            });
+        }
         self.policy.check(BASE_URL_FIELD, &draft.base_url)?;
         if let Some(token_url) = draft.auth.token_url() {
             self.policy.check(TOKEN_URL_FIELD, token_url)?;
@@ -154,12 +164,67 @@ mod tests {
         }
     }
 
+    /// `Some(enforcer)` locks every organization's settings from that ancestor.
+    struct Lock(Option<Id<Organization>>);
+
+    #[async_trait::async_trait]
+    impl SettingsReader for Lock {
+        async fn own(
+            &self,
+            _: Id<Organization>,
+        ) -> Result<domain::settings::OrganizationSettings, RepositoryError> {
+            unimplemented!()
+        }
+        async fn resolution(
+            &self,
+            o: Id<Organization>,
+        ) -> Result<domain::settings::Resolution, RepositoryError> {
+            use domain::settings::{
+                DefectStreak, InstanceDefaults, MapView, OrganizationSettings, SensorOfflineAfter,
+                resolve,
+            };
+            let defaults = InstanceDefaults {
+                sensor_offline_after: SensorOfflineAfter::new(86_400).unwrap(),
+                defect_streak: DefectStreak::new(3).unwrap(),
+                map_view: MapView::new(
+                    domain::shared::coordinates::Coordinate::new(54.79, 9.43).unwrap(),
+                    None,
+                )
+                .unwrap(),
+            };
+            let mut chain: Vec<OrganizationSettings> = self
+                .0
+                .iter()
+                .map(|enforcer| OrganizationSettings {
+                    descendants_may_override: false,
+                    ..OrganizationSettings::empty(*enforcer)
+                })
+                .collect();
+            chain.push(OrganizationSettings::empty(o));
+            Ok(resolve(&defaults, &chain, o))
+        }
+        async fn last_changes(
+            &self,
+            _: Id<Organization>,
+        ) -> Result<
+            HashMap<domain::settings::SettingKey, domain::settings::SettingChangeEntry>,
+            RepositoryError,
+        > {
+            unimplemented!()
+        }
+    }
+
     fn service() -> DataExportService {
+        service_locked_by(None)
+    }
+
+    fn service_locked_by(enforcer: Option<Id<Organization>>) -> DataExportService {
         let memory = Arc::new(Memory::default());
         DataExportService::new(
             memory.clone(),
             memory,
             Arc::new(FixedTester),
+            Arc::new(Lock(enforcer)),
             ExportUrlPolicy::new(["example.org".to_string()], false),
         )
     }
@@ -185,6 +250,19 @@ mod tests {
         assert!(matches!(
             service().get(org()).await,
             Err(ServiceError::Repository(RepositoryError::NotFound))
+        ));
+    }
+
+    #[tokio::test]
+    async fn put_refuses_a_target_below_a_settings_lock() {
+        let enforcer = org();
+        let err = service_locked_by(Some(enforcer))
+            .put(org(), draft("https://frost.example.org/v1.1", Some("pw")))
+            .await
+            .unwrap_err();
+        assert!(matches!(
+            err,
+            ServiceError::SettingsEnforcedByAncestor { organization_id } if organization_id == enforcer.value()
         ));
     }
 

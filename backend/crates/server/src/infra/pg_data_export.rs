@@ -244,9 +244,10 @@ impl ExportRefWriter for PgDataExportRepository {
 impl ExportRunStore for PgDataExportRepository {
     #[tracing::instrument(level = "debug", skip(self))]
     async fn target_orgs(&self) -> Result<BTreeSet<Id<Organization>>, RepositoryError> {
-        let ids = sqlx::query_scalar!("SELECT organization_id FROM data_export_targets")
-            .fetch_all(&self.pool)
-            .await?;
+        let ids =
+            sqlx::query_scalar!("SELECT organization_id FROM data_export_targets WHERE enabled")
+                .fetch_all(&self.pool)
+                .await?;
         Ok(ids.into_iter().map(Id::new).collect())
     }
 

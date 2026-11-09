@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT organization_id FROM data_export_targets",
+  "query": "SELECT organization_id FROM data_export_targets WHERE enabled",
   "describe": {
     "columns": [
       {
@@ -16,5 +16,5 @@
       false
     ]
   },
-  "hash": "e701b2b652fb590f09d86ed7b10887e9951a4393eb0057729a42aaaed7371044"
+  "hash": "b9fbef1cc19d7cf722aa9dc18bcf2fe90f237f6eb6c089ea0f58a592e7e8edcf"
 }

@@ -21,6 +21,7 @@ use domain::{
     },
     module::{ModuleActivationReader, ModuleKey},
     organization::{Organization, OrganizationReader},
+    settings::SettingsReader,
 };
 use serde_json::{Map, Value};
 use uuid::Uuid;
@@ -49,6 +50,10 @@ pub enum SyncError {
     Sink(#[from] SinkError),
     #[error("the export pass lost its lease to another replica")]
     LeaseLost,
+    #[error(
+        "an organization above locked the settings of this subtree, so its own target exports nothing"
+    )]
+    LockedByAncestor,
 }
 
 /// Shown to everyone with `setting:read`, so it never carries driver detail.
@@ -59,7 +64,7 @@ impl SyncError {
         match self {
             Self::Repository(_) => INTERNAL_ERROR_TEXT.to_string(),
             Self::Sink(e) => e.to_string(),
-            Self::LeaseLost => self.to_string(),
+            Self::LeaseLost | Self::LockedByAncestor => self.to_string(),
         }
     }
 }
@@ -73,6 +78,7 @@ pub struct DataExportSync {
     registry: Arc<ExportRegistry>,
     activation: Arc<dyn ModuleActivationReader>,
     organizations: Arc<dyn OrganizationReader>,
+    org_settings: Arc<dyn SettingsReader>,
     clock: Arc<dyn Clock>,
     settings: SyncSettings,
 }
@@ -88,6 +94,7 @@ impl DataExportSync {
         registry: Arc<ExportRegistry>,
         activation: Arc<dyn ModuleActivationReader>,
         organizations: Arc<dyn OrganizationReader>,
+        org_settings: Arc<dyn SettingsReader>,
         clock: Arc<dyn Clock>,
         settings: SyncSettings,
     ) -> Self {
@@ -100,6 +107,7 @@ impl DataExportSync {
             registry,
             activation,
             organizations,
+            org_settings,
             clock,
             settings: SyncSettings {
                 batch_size: settings.batch_size.max(1),
@@ -179,7 +187,10 @@ impl DataExportSync {
     ) -> Result<ExportRunStats, SyncError> {
         let started = self.clock.now();
         let hierarchy = self.organizations.hierarchy().await?;
-        let targets = self.runs.target_orgs().await?;
+        let targets = self.claiming_targets().await?;
+        if !targets.contains(&org) {
+            return Err(SyncError::LockedByAncestor);
+        }
         let scope = export_scope(&hierarchy, &targets, org);
         let session = self.sink.open(config).await?;
         let mut pass = Pass {
@@ -219,6 +230,25 @@ impl DataExportSync {
                 .await?;
         }
         Ok(pass.stats)
+    }
+
+    /// A locked subtree belongs to the lock's export like every other setting
+    /// below it, so a target set up there before the lock stops claiming it.
+    async fn claiming_targets(&self) -> Result<BTreeSet<Id<Organization>>, RepositoryError> {
+        let mut claiming = BTreeSet::new();
+        for org in self.runs.target_orgs().await? {
+            let locked = self
+                .org_settings
+                .resolution(org)
+                .await?
+                .effective
+                .enforced_by
+                .is_some();
+            if !locked {
+                claiming.insert(org);
+            }
+        }
+        Ok(claiming)
     }
 
     async fn active_in(
@@ -852,6 +882,10 @@ mod tests {
         module::{ActivationResolution, ModuleActivationReader, ModuleKey, OwnSwitch},
         organization::{Organization, OrganizationReader, OrganizationResourceCounts},
         sensor_model::{SensorAbilityName, SensorAbilityUnit},
+        settings::{
+            DefectStreak, InstanceDefaults, MapView, OrganizationSettings, Resolution,
+            SensorOfflineAfter, SettingChangeEntry, SettingKey, resolve,
+        },
         shared::coordinates::Coordinate,
         target::TargetRef,
     };
@@ -1272,6 +1306,38 @@ mod tests {
         }
     }
 
+    /// Organizations whose settings an ancestor (always `org(1)`) locked.
+    struct Locks(BTreeSet<Id<Organization>>);
+
+    #[async_trait::async_trait]
+    impl SettingsReader for Locks {
+        async fn own(&self, _: Id<Organization>) -> Result<OrganizationSettings, RepositoryError> {
+            unimplemented!()
+        }
+        async fn resolution(&self, o: Id<Organization>) -> Result<Resolution, RepositoryError> {
+            let defaults = InstanceDefaults {
+                sensor_offline_after: SensorOfflineAfter::new(86_400).unwrap(),
+                defect_streak: DefectStreak::new(3).unwrap(),
+                map_view: MapView::new(Coordinate::new(54.79, 9.43).unwrap(), None).unwrap(),
+            };
+            let mut chain = Vec::new();
+            if self.0.contains(&o) {
+                chain.push(OrganizationSettings {
+                    descendants_may_override: false,
+                    ..OrganizationSettings::empty(org(1))
+                });
+            }
+            chain.push(OrganizationSettings::empty(o));
+            Ok(resolve(&defaults, &chain, o))
+        }
+        async fn last_changes(
+            &self,
+            _: Id<Organization>,
+        ) -> Result<HashMap<SettingKey, SettingChangeEntry>, RepositoryError> {
+            unimplemented!()
+        }
+    }
+
     struct Orgs;
 
     #[async_trait::async_trait]
@@ -1365,6 +1431,8 @@ mod tests {
         broken_readings: bool,
         clock: Arc<dyn domain::clock::Clock>,
         lease_lost: bool,
+        targets: Vec<u128>,
+        locked: Vec<u128>,
     }
 
     impl Default for Setup {
@@ -1382,6 +1450,8 @@ mod tests {
                 broken_readings: false,
                 clock: Arc::new(ManualClock::new()),
                 lease_lost: false,
+                targets: vec![1],
+                locked: vec![],
             }
         }
     }
@@ -1441,9 +1511,11 @@ mod tests {
             broken_readings,
             clock,
             lease_lost,
+            targets,
+            locked,
         } = setup;
         let runs = Arc::new(Runs {
-            targets: BTreeSet::from([org(1)]),
+            targets: targets.iter().map(|n| org(*n)).collect(),
             leasable,
             lease_lost,
             ..Default::default()
@@ -1472,6 +1544,7 @@ mod tests {
             registry,
             Arc::new(Activation(active.iter().map(|n| org(*n)).collect())),
             Arc::new(Orgs),
+            Arc::new(Locks(locked.iter().map(|n| org(*n)).collect())),
             clock,
             SyncSettings {
                 interval_secs: 300,
@@ -1685,6 +1758,62 @@ mod tests {
         assert_eq!(f.sync.sync(org(1)).await.unwrap(), None);
         assert!(calls(&f).is_empty());
         assert!(f.runs.results().is_empty());
+    }
+
+    #[tokio::test]
+    async fn a_target_below_a_settings_lock_exports_nothing() {
+        let f = build(Setup {
+            things: vec![tree(1, "good")],
+            active: vec![1, 2],
+            targets: vec![1, 2],
+            locked: vec![2],
+            ..Setup::default()
+        });
+
+        let result = f.sync.sync(org(2)).await;
+
+        assert!(matches!(result, Err(SyncError::LockedByAncestor)));
+        assert!(calls(&f).is_empty());
+        assert!(matches!(
+            f.runs.results().as_slice(),
+            [RunResult::Failed { error, .. }] if error.contains("locked")
+        ));
+    }
+
+    #[tokio::test]
+    async fn a_locked_sub_unit_stays_in_the_parent_export() {
+        let f = build(Setup {
+            things: vec![tree(1, "good")],
+            active: vec![1, 2],
+            targets: vec![1, 2],
+            locked: vec![2],
+            ..Setup::default()
+        });
+
+        f.sync.sync(org(1)).await.unwrap().unwrap();
+
+        let irrigation = ModuleKey::new("irrigation").unwrap();
+        assert_eq!(
+            *f.readings.active.lock().unwrap(),
+            vec![(irrigation.clone(), org(1)), (irrigation, org(2))]
+        );
+    }
+
+    #[tokio::test]
+    async fn a_sub_unit_with_its_own_target_leaves_the_parent_export() {
+        let f = build(Setup {
+            things: vec![tree(1, "good")],
+            active: vec![1, 2],
+            targets: vec![1, 2],
+            ..Setup::default()
+        });
+
+        f.sync.sync(org(1)).await.unwrap().unwrap();
+
+        assert_eq!(
+            *f.readings.active.lock().unwrap(),
+            vec![(ModuleKey::new("irrigation").unwrap(), org(1))]
+        );
     }
 
     #[tokio::test]

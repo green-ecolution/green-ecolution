@@ -153,7 +153,8 @@ pub trait ExportRefWriter: Send + Sync {
 
 #[async_trait::async_trait]
 pub trait ExportRunStore: Send + Sync {
-    /// Every organization with a target, enabled or not: they bound the scopes.
+    /// Organizations with an enabled target. A paused target leaves its subtree
+    /// to the next target above.
     async fn target_orgs(&self) -> Result<BTreeSet<Id<Organization>>, RepositoryError>;
     /// Enabled, not leased, past their backoff and last run at least
     /// `interval_secs` ago, so several replicas run a target once per interval.

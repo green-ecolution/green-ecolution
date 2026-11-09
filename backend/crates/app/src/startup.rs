@@ -171,6 +171,7 @@ impl Application {
                     infra::sensorthings::http_client(),
                     data_export_policy.clone(),
                 )),
+                settings_repo.clone(),
                 data_export_policy.clone(),
             ),
         );
@@ -313,6 +314,7 @@ impl Application {
             export_registry.clone(),
             module_activation_repo.clone(),
             repos.organization_reader.clone(),
+            settings_repo.clone(),
             Arc::new(domain::clock::SystemClock),
             server::service::data_export_sync::SyncSettings {
                 interval_secs: settings.data_export.interval_secs as i64,
