@@ -24,6 +24,7 @@ use uuid::Uuid;
 pub mod auth;
 pub mod authorization;
 pub mod capacity;
+pub mod clock;
 pub mod comment;
 pub mod data_export;
 pub mod error;

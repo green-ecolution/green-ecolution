@@ -313,6 +313,7 @@ impl Application {
             export_registry.clone(),
             module_activation_repo.clone(),
             repos.organization_reader.clone(),
+            Arc::new(domain::clock::SystemClock),
             server::service::data_export_sync::SyncSettings {
                 interval_secs: settings.data_export.interval_secs as i64,
                 run_budget: Duration::from_secs(settings.data_export.run_budget_secs),

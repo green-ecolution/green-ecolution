@@ -4,12 +4,13 @@
 use std::{
     collections::{BTreeMap, BTreeSet, HashMap, HashSet},
     sync::Arc,
-    time::{Duration, Instant},
+    time::Duration,
 };
 
 use chrono::{DateTime, Utc};
 use domain::{
     Id, RepositoryError,
+    clock::Clock,
     data_export::{
         ExportEntity, ExportProperty, ExportReading, ExportReadingSource, ExportRef,
         ExportRefReader, ExportRefWriter, ExportRunStats, ExportRunStore, ExportState,
@@ -68,6 +69,7 @@ pub struct DataExportSync {
     registry: Arc<ExportRegistry>,
     activation: Arc<dyn ModuleActivationReader>,
     organizations: Arc<dyn OrganizationReader>,
+    clock: Arc<dyn Clock>,
     settings: SyncSettings,
 }
 
@@ -82,6 +84,7 @@ impl DataExportSync {
         registry: Arc<ExportRegistry>,
         activation: Arc<dyn ModuleActivationReader>,
         organizations: Arc<dyn OrganizationReader>,
+        clock: Arc<dyn Clock>,
         settings: SyncSettings,
     ) -> Self {
         Self {
@@ -93,6 +96,7 @@ impl DataExportSync {
             registry,
             activation,
             organizations,
+            clock,
             settings: SyncSettings {
                 batch_size: settings.batch_size.max(1),
                 ..settings
@@ -165,7 +169,7 @@ impl DataExportSync {
         generation: DateTime<Utc>,
         config: &ExportTargetConfig,
     ) -> Result<ExportRunStats, SyncError> {
-        let started = Instant::now();
+        let started = self.clock.now();
         let hierarchy = self.organizations.hierarchy().await?;
         let targets = self.runs.target_orgs().await?;
         let scope = export_scope(&hierarchy, &targets, org);
@@ -179,6 +183,7 @@ impl DataExportSync {
             runs: self.runs.as_ref(),
             readings: self.readings.as_ref(),
             stats: ExportRunStats::default(),
+            clock: self.clock.as_ref(),
             started,
             budget: self.settings.run_budget,
             refused: HashSet::new(),
@@ -227,7 +232,8 @@ struct Pass<'a> {
     runs: &'a dyn ExportRunStore,
     readings: &'a dyn ExportReadingSource,
     stats: ExportRunStats,
-    started: Instant,
+    clock: &'a dyn Clock,
+    started: DateTime<Utc>,
     budget: Duration,
     /// Remote entities the target rejected in this pass, so later readings of the
     /// same stream do not ask again.
@@ -294,7 +300,10 @@ fn plain_ref(ge_key: impl Into<String>, entity: ExportEntity, remote_id: RemoteI
 
 impl Pass<'_> {
     fn out_of_budget(&self) -> bool {
-        self.started.elapsed() >= self.budget
+        let elapsed = (self.clock.now() - self.started)
+            .to_std()
+            .unwrap_or_default();
+        elapsed >= self.budget
     }
 
     async fn remember(&mut self, export_ref: ExportRef) -> Result<(), RepositoryError> {
@@ -554,7 +563,7 @@ impl Pass<'_> {
             }
             let marked = self
                 .session
-                .mark_thing_deleted(&thing.remote_id, Utc::now())
+                .mark_thing_deleted(&thing.remote_id, self.clock.now())
                 .await;
             if self.tolerate(&thing.ge_key, marked)?.is_some() {
                 self.remember(ExportRef {
@@ -582,7 +591,7 @@ impl Pass<'_> {
         };
         let settled = chrono::TimeDelta::from_std(settle)
             .ok()
-            .and_then(|settle| Utc::now().checked_sub_signed(settle))
+            .and_then(|settle| self.clock.now().checked_sub_signed(settle))
             .unwrap_or(DateTime::<Utc>::MIN_UTC);
         let before = v7_floor(settled);
         while !self.out_of_budget() {
@@ -1292,6 +1301,7 @@ mod tests {
             registry,
             Arc::new(Activation(active.iter().map(|n| org(*n)).collect())),
             Arc::new(Orgs),
+            Arc::new(domain::clock::SystemClock),
             SyncSettings {
                 interval_secs: 300,
                 run_budget,
