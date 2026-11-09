@@ -20,6 +20,9 @@
     "sensor": {
       "already_attached": "The sensor is already attached to another object."
     },
+    "settings": {
+      "enforced_by_ancestor": "An organization above has locked the settings of this organization."
+    },
     "target": {
       "not_accepted": "This object cannot take a sensor."
     },

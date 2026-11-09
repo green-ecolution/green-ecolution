@@ -20,6 +20,9 @@
     "sensor": {
       "already_attached": "Der Sensor hängt bereits an einem anderen Objekt."
     },
+    "settings": {
+      "enforced_by_ancestor": "Eine übergeordnete Organisation hat die Einstellungen für diese Organisation gesperrt."
+    },
     "target": {
       "not_accepted": "Dieses Objekt kann keinen Sensor aufnehmen."
     },

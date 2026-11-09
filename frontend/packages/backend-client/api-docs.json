@@ -2014,6 +2014,16 @@
               }
             }
           },
+          "409": {
+            "description": "An organization above locked the settings of this subtree (code `settings.enforced_by_ancestor`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Host not allowed (code `data_export.url_not_allowed`) or secret missing (code `data_export.auth_incomplete`)",
             "content": {
