@@ -182,6 +182,10 @@ fn classify(answer: Answer) -> Result<Answer, SinkError> {
     if matches!(code, 401 | 403) {
         return Err(SinkError::Unauthorized(code));
     }
+    // Skipping the entity would move the cursor past its readings for good.
+    if matches!(code, 408 | 429) {
+        return Err(SinkError::RetryLater(code));
+    }
     if status.is_client_error() {
         let detail: String = String::from_utf8_lossy(&answer.body)
             .chars()
@@ -876,6 +880,16 @@ mod tests {
             .respond_with(ResponseTemplate::new(403))
             .mount(&server)
             .await;
+        Mock::given(method("POST"))
+            .and(path("/v1.1/Datastreams(4)/Observations"))
+            .respond_with(ResponseTemplate::new(429))
+            .mount(&server)
+            .await;
+        Mock::given(method("POST"))
+            .and(path("/v1.1/Datastreams(5)/Observations"))
+            .respond_with(ResponseTemplate::new(408))
+            .mount(&server)
+            .await;
         let s = session(&server).await;
         let at = chrono::Utc::now();
         let v = StateValue::Measurement(1.0);
@@ -891,6 +905,14 @@ mod tests {
         assert!(matches!(
             s.post_observation(&RemoteId(json!(3)), &v, at).await,
             Err(SinkError::Unauthorized(403))
+        ));
+        assert!(matches!(
+            s.post_observation(&RemoteId(json!(4)), &v, at).await,
+            Err(SinkError::RetryLater(429))
+        ));
+        assert!(matches!(
+            s.post_observation(&RemoteId(json!(5)), &v, at).await,
+            Err(SinkError::RetryLater(408))
         ));
     }
 

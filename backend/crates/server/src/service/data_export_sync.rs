@@ -1078,6 +1078,7 @@ mod tests {
         raw_streams: Arc<Mutex<Vec<String>>>,
         /// Each created raw datastream moves this clock, like a slow target would.
         slow_raw_streams: Option<(Arc<ManualClock>, std::time::Duration)>,
+        throttle_raw_datastreams: bool,
     }
 
     struct Session {
@@ -1090,6 +1091,7 @@ mod tests {
         batch_error: Option<SinkError>,
         reject_raw_datastreams: bool,
         slow_raw_streams: Option<(Arc<ManualClock>, std::time::Duration)>,
+        throttle_raw_datastreams: bool,
     }
 
     #[async_trait::async_trait]
@@ -1108,6 +1110,7 @@ mod tests {
                 batch_error: self.batch_error.clone(),
                 reject_raw_datastreams: self.reject_raw_datastreams,
                 slow_raw_streams: self.slow_raw_streams.clone(),
+                throttle_raw_datastreams: self.throttle_raw_datastreams,
             }))
         }
     }
@@ -1187,6 +1190,9 @@ mod tests {
             self.raw_streams.lock().unwrap().push(s.name.to_string());
             if let Some((clock, by)) = &self.slow_raw_streams {
                 clock.advance(*by);
+            }
+            if self.throttle_raw_datastreams {
+                return Err(SinkError::RetryLater(429));
             }
             if self.reject_raw_datastreams {
                 return Err(SinkError::Rejected {
@@ -2048,6 +2054,32 @@ mod tests {
         let refs = f.refs.map.lock().unwrap();
         assert!(!refs.keys().any(|k| k.starts_with("raw:")));
         assert_eq!(*f.runs.cursor.lock().unwrap(), Some(Uuid::from_u128(10)));
+    }
+
+    #[tokio::test]
+    async fn a_throttled_raw_datastream_ends_the_pass_and_keeps_the_cursor() {
+        let f = build(Setup {
+            things: vec![tree(1, "good")],
+            sink: Sink {
+                throttle_raw_datastreams: true,
+                ..Default::default()
+            },
+            readings: vec![batch(vec![reading(
+                10,
+                1,
+                SensorAbilityName::SoilMoisture,
+                31.5,
+            )])],
+            ..Setup::default()
+        });
+
+        let result = f.sync.sync(org(1)).await;
+
+        assert!(matches!(
+            result,
+            Err(SyncError::Sink(SinkError::RetryLater(429)))
+        ));
+        assert_eq!(*f.runs.cursor.lock().unwrap(), None);
     }
 
     #[tokio::test]

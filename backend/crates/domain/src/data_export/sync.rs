@@ -197,6 +197,9 @@ pub enum SinkError {
     Unreachable(String),
     #[error("target refused the credentials (HTTP {0})")]
     Unauthorized(u16),
+    /// 408 or 429: nothing wrong with the request, the target wants it later.
+    #[error("target asked to retry later (HTTP {0})")]
+    RetryLater(u16),
     #[error("target rejected the request (HTTP {status})")]
     Rejected {
         status: u16,
@@ -361,6 +364,7 @@ mod tests {
             .aborts_pass()
         );
         assert!(SinkError::Unreachable("x".into()).aborts_pass());
+        assert!(SinkError::RetryLater(429).aborts_pass());
         assert!(SinkError::Unauthorized(401).aborts_pass());
         assert!(SinkError::UrlNotAllowed.aborts_pass());
     }
