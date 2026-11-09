@@ -754,6 +754,14 @@ mod tests {
 
     use super::*;
 
+    const WATERING_STATUS: ExportProperty = ExportProperty {
+        key: "watering_status",
+        label: "Bewässerungsstatus",
+        description: "Derived watering status",
+        kind: ObservationKind::Category,
+        unit: None,
+    };
+
     fn org(n: u128) -> Id<Organization> {
         Id::new(Uuid::from_u128(n))
     }

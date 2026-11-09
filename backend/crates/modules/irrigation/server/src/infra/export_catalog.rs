@@ -3,11 +3,12 @@ use std::collections::{BTreeMap, BTreeSet};
 use chrono::Utc;
 use domain::{
     Id, RepositoryError,
-    data_export::{ExportCatalog, ExportState, ExportThing, StateValue, WATERING_STATUS},
+    data_export::{ExportCatalog, ExportState, ExportThing, StateValue},
     organization::Organization,
     shared::coordinates::Coordinate,
     target::TargetRef,
 };
+use irrigation_domain::export::WATERING_STATUS;
 use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;

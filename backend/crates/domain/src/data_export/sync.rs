@@ -258,8 +258,16 @@ pub trait SinkSession: Send + Sync {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::data_export::WATERING_STATUS;
+    use crate::data_export::ObservationKind;
     use serde_json::json;
+
+    const STATUS: ExportProperty = ExportProperty {
+        key: "status",
+        label: "Status",
+        description: "A test state",
+        kind: ObservationKind::Category,
+        unit: None,
+    };
 
     #[test]
     fn reads_numeric_and_string_ids_from_a_location_header() {
@@ -322,10 +330,10 @@ mod tests {
             location_key("irrigation:tree:1"),
             "location:irrigation:tree:1"
         );
-        assert_eq!(property_key(&WATERING_STATUS), "property:watering_status");
+        assert_eq!(property_key(&STATUS), "property:status");
         assert_eq!(
-            state_stream_key(&WATERING_STATUS, "irrigation:tree:1"),
-            "state:watering_status:irrigation:tree:1"
+            state_stream_key(&STATUS, "irrigation:tree:1"),
+            "state:status:irrigation:tree:1"
         );
     }
 

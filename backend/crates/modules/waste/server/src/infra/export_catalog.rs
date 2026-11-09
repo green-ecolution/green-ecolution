@@ -6,7 +6,7 @@ use std::{
 use chrono::Utc;
 use domain::{
     Id, RepositoryError,
-    data_export::{ExportCatalog, ExportState, ExportThing, FILL_LEVEL, FILL_STATE, StateValue},
+    data_export::{ExportCatalog, ExportState, ExportThing, StateValue},
     organization::Organization,
     shared::coordinates::Coordinate,
     target::TargetRef,
@@ -14,7 +14,10 @@ use domain::{
 use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
-use waste_domain::fill::{FillMeasurement, derive_fill_state};
+use waste_domain::{
+    export::{FILL_LEVEL, FILL_STATE},
+    fill::{FillMeasurement, derive_fill_state},
+};
 
 use crate::{KEY, service::fill_rules::FillRulesResolver, targets::BIN_KIND};
 

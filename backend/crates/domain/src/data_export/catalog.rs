@@ -51,30 +51,6 @@ pub const PERCENT: ExportUnit = ExportUnit {
     definition: "http://unitsofmeasure.org/ucum.html",
 };
 
-pub const WATERING_STATUS: ExportProperty = ExportProperty {
-    key: "watering_status",
-    label: "Bewässerungsstatus",
-    description: "Derived watering status: good, moderate, bad, just_watered or unknown",
-    kind: ObservationKind::Category,
-    unit: None,
-};
-
-pub const FILL_LEVEL: ExportProperty = ExportProperty {
-    key: "fill_level",
-    label: "Füllstand",
-    description: "Measured fill level of the bin in percent",
-    kind: ObservationKind::Measurement,
-    unit: Some(PERCENT),
-};
-
-pub const FILL_STATE: ExportProperty = ExportProperty {
-    key: "fill_state",
-    label: "Füllzustand",
-    description: "Derived fill state: empty, normal, full or unknown",
-    kind: ObservationKind::Category,
-    unit: None,
-};
-
 #[derive(Debug, Clone, PartialEq)]
 pub enum StateValue {
     Category(String),
@@ -212,10 +188,7 @@ mod tests {
     }
 
     #[test]
-    fn category_properties_carry_no_unit() {
-        assert!(WATERING_STATUS.unit.is_none());
-        assert!(FILL_STATE.unit.is_none());
-        assert_eq!(FILL_LEVEL.unit.map(|u| u.symbol), Some("%"));
+    fn category_observations_have_their_om_type() {
         assert!(
             ObservationKind::Category
                 .observation_type()

@@ -4,6 +4,7 @@
 pub mod cluster;
 pub mod evaluation;
 pub mod events;
+pub mod export;
 pub mod plugin_refs;
 pub mod settings;
 pub mod tree;

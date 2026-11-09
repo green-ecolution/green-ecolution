@@ -17,8 +17,8 @@ pub use auth::{
     ExportAuth, ExportAuthDraft, ExportAuthKind, ExportPrincipal, ExportScope, ExportSecret,
 };
 pub use catalog::{
-    ExportCatalog, ExportProperty, ExportState, ExportThing, ExportUnit, FILL_LEVEL, FILL_STATE,
-    ObservationKind, StateValue, WATERING_STATUS, ge_key,
+    ExportCatalog, ExportProperty, ExportState, ExportThing, ExportUnit, ObservationKind, PERCENT,
+    StateValue, ge_key,
 };
 pub use error::DataExportError;
 pub use readings::{

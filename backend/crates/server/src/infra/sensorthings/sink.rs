@@ -469,7 +469,7 @@ mod tests {
     use domain::{
         data_export::{
             BASE_URL_FIELD, BatchOutcome, ExportAuth, ExportTargetConfig, ExportThing, ExportUrl,
-            ExportUrlPolicy, FILL_LEVEL, ObservationRow, RawStream, StateValue, WATERING_STATUS,
+            ExportUrlPolicy, ObservationKind, ObservationRow, PERCENT, RawStream, StateValue,
         },
         shared::coordinates::Coordinate,
         target::TargetRef,
@@ -480,6 +480,22 @@ mod tests {
     use wiremock::{
         Mock, MockServer, ResponseTemplate,
         matchers::{body_partial_json, method, path, query_param},
+    };
+
+    // Stand-ins for the module properties; the core knows no module.
+    const WATERING_STATUS: ExportProperty = ExportProperty {
+        key: "watering_status",
+        label: "Bewässerungsstatus",
+        description: "Derived watering status",
+        kind: ObservationKind::Category,
+        unit: None,
+    };
+    const FILL_LEVEL: ExportProperty = ExportProperty {
+        key: "fill_level",
+        label: "Füllstand",
+        description: "Fill level in percent",
+        kind: ObservationKind::Measurement,
+        unit: Some(PERCENT),
     };
 
     fn policy() -> ExportUrlPolicy {
