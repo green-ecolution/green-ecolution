@@ -383,8 +383,9 @@ services:
       start_period: 5s
       retries: 3
 
-  # OGC SensorThings API broker that urban data platforms (CIVITAS/CORE, CIVORA) run;
-  # local target for the data platform export. Start it with `just frost-up`.
+  # OGC SensorThings API server as bundled by CIVITAS/CORE (CIVORA speaks UrbanPulse instead,
+  # see docs/integrations/urban-data-platforms.md); local target for the data platform export.
+  # Start it with `just frost-up`.
   frost:
     profiles: ["frost"]
     image: fraunhoferiosb/frost-server-http:2.8.2

@@ -1,6 +1,8 @@
 //! Export of an organization's objects, states and readings to an urban data
 //! platform (a SensorThings server). This module holds the target
 //! configuration; the sync itself lives in the server crate.
+//! Which platforms accept such writes (CIVITAS/CORE V2 and CIVORA do not) is
+//! recorded in `docs/integrations/urban-data-platforms.md`.
 
 pub mod auth;
 pub mod catalog;
