@@ -735,10 +735,12 @@ by the instance operator in the `data_export` block of the YAML config
 (`backend/config/base.yaml`):
 
 - `enabled`: switches the export on for the instance (`false` by default).
-- `allowed_hosts`: bare host names or IP literals, without scheme, port or path. A
-  DNS name matches itself and every host below it (suffix match); an IP literal
-  matches only when listed verbatim. Startup logs an advisory for entries that can
-  never match. The list can only be set in YAML, because the environment source
+- `allowed_hosts`: host names or IP literals, optionally followed by `:port` or
+  `:*` (any port), without scheme or path. A DNS name matches itself and every host
+  below it (suffix match); an IP literal matches only when listed verbatim. An entry
+  without a port allows only the scheme's default port (443, or 80 for `http`), so a
+  listed host cannot be used to reach its other services. Startup logs an advisory
+  for entries that can never match. The list can only be set in YAML, because the environment source
   (`APP_…`, `__` as separator) is configured without a list separator.
 - `allow_insecure_http`: permits `http` targets, which are otherwise refused. For
   local development only: `Settings::ensure_secure` refuses it in `staging`,
@@ -752,7 +754,8 @@ by the instance operator in the `data_export` block of the YAML config
   ids are minted before the insert commits, so without the wait a run could move its
   cursor past a reading that becomes visible only afterwards.
 
-`backend/config/local.yaml` enables the export and allows `localhost` over `http`.
+`backend/config/local.yaml` enables the export and allows `localhost` and
+`localhost:8180` over `http`.
 To try it, start a local FROST server with `geco -p frost` or `just frost-up`
 (`just frost-down` removes it), then enter `http://localhost:8180/FROST-Server/v1.1`
 as the server URL in the organization settings, without sign-in. The end-to-end test

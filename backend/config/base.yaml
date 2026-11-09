@@ -49,6 +49,8 @@ plugins:
   enabled: false
 data_export:
   enabled: false
+  # Host names, `.suffix`es or IP literals, optionally with `:port` or `:*`;
+  # without a port only 443 (or 80 for plain http) is allowed.
   allowed_hosts: []
   allow_insecure_http: false
   interval_secs: 300

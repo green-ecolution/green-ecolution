@@ -223,6 +223,7 @@ pub struct PluginsSettings {
 
 /// Export to urban data platforms (SensorThings). Hosts not on the allowlist
 /// are refused, so an organization cannot aim the server at internal services.
+/// An entry without `:port` allows only the scheme's default port.
 #[derive(serde::Deserialize, Clone)]
 pub struct DataExportSettings {
     #[serde(default)]
@@ -587,7 +588,7 @@ impl Settings {
         }
         for entry in ExportUrlPolicy::unusable_entries(&self.data_export.allowed_hosts) {
             advisories.push(format!(
-                "data_export.allowed_hosts entry \"{entry}\" can never match: list bare host names or IP addresses, without scheme, port or path."
+                "data_export.allowed_hosts entry \"{entry}\" can never match: list host names or IP addresses, optionally with :port or :*, without scheme or path."
             ));
         }
         advisories

@@ -223,7 +223,7 @@ async fn the_connection_test_reports_a_reachable_sensorthings_server() {
         })))
         .mount(&frost)
         .await;
-    let app = spawn_app_with_data_export(&["127.0.0.1"]).await;
+    let app = spawn_app_with_data_export(&["127.0.0.1:*"]).await;
     app.put_json(
         &url(root()),
         &json!({ "enabled": true, "base_url": format!("{}/FROST-Server/v1.1", frost.uri()),

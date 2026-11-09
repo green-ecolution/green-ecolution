@@ -541,7 +541,7 @@ mod tests {
     };
 
     fn policy() -> ExportUrlPolicy {
-        ExportUrlPolicy::new(["127.0.0.1".to_string()], true)
+        ExportUrlPolicy::new(["127.0.0.1:*".to_string()], true)
     }
 
     fn config(server: &MockServer) -> ExportTargetConfig {

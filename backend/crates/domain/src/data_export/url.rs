@@ -83,32 +83,57 @@ impl ExportUrl {
 /// Which hosts an organization may point the export at. Without it anyone
 /// allowed to edit an organization's settings could make the server call
 /// internal services or the cloud metadata endpoint.
+///
+/// An entry is a host, a `.suffix` for every host below it, or an IP literal,
+/// optionally followed by `:port` or `:*`. Without a port only the scheme's
+/// default port is allowed, so a listed host cannot be used to reach its other
+/// services.
 #[derive(Debug, Clone)]
 pub struct ExportUrlPolicy {
-    allowed_hosts: Vec<String>,
+    allowed: Vec<AllowedHost>,
     allow_insecure_http: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct AllowedHost {
+    host: String,
+    port: PortRule,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum PortRule {
+    SchemeDefault,
+    Exactly(u16),
+    Any,
+}
+
+impl PortRule {
+    fn allows(self, url: &Url) -> bool {
+        match self {
+            // `Url::port` is `None` when the URL names no port or the scheme's default.
+            Self::SchemeDefault => url.port().is_none(),
+            Self::Exactly(port) => url.port_or_known_default() == Some(port),
+            Self::Any => true,
+        }
+    }
 }
 
 impl ExportUrlPolicy {
     pub fn new(allowed_hosts: impl IntoIterator<Item = String>, allow_insecure_http: bool) -> Self {
         Self {
-            allowed_hosts: allowed_hosts
+            allowed: allowed_hosts
                 .into_iter()
-                .map(|h| normalize_entry(&h))
-                .filter(|h| !h.is_empty())
+                .filter_map(|h| parse_entry(&h))
                 .collect(),
             allow_insecure_http,
         }
     }
 
-    /// Entries that no URL host can equal: a scheme, port, path or userinfo
+    /// Entries that no URL can match: a scheme, path, userinfo or malformed port
     /// has no place in a host list.
     pub fn unusable_entries(raw: &[String]) -> Vec<String> {
         raw.iter()
-            .filter(|entry| {
-                let entry = normalize_entry(entry);
-                entry.parse::<IpAddr>().is_err() && entry.contains([':', '/', '@'])
-            })
+            .filter(|entry| !entry.trim().is_empty() && parse_entry(entry).is_none())
             .cloned()
             .collect()
     }
@@ -116,22 +141,11 @@ impl ExportUrlPolicy {
     pub fn check(&self, field: &'static str, url: &ExportUrl) -> Result<(), DataExportError> {
         let url = url.as_url();
         let scheme_ok = url.scheme() == "https" || self.allow_insecure_http;
-        let host_ok = match url.host() {
-            Some(Host::Domain(domain)) => {
-                let domain = domain.to_ascii_lowercase();
-                is_dns_name(&domain)
-                    && self.allowed_hosts.iter().any(|entry| {
-                        domain == *entry
-                            || domain
-                                .strip_suffix(entry.as_str())
-                                .is_some_and(|rest| rest.ends_with('.'))
-                    })
-            }
-            Some(Host::Ipv4(ip)) => self.allowed_hosts.contains(&ip.to_string()),
-            Some(Host::Ipv6(ip)) => self.allowed_hosts.contains(&ip.to_string()),
-            None => false,
-        };
-        if scheme_ok && host_ok {
+        let allowed = self
+            .allowed
+            .iter()
+            .any(|entry| entry.matches_host(url) && entry.port.allows(url));
+        if scheme_ok && allowed {
             Ok(())
         } else {
             Err(DataExportError::UrlNotAllowed { field })
@@ -139,17 +153,67 @@ impl ExportUrlPolicy {
     }
 }
 
+impl AllowedHost {
+    fn matches_host(&self, url: &Url) -> bool {
+        match url.host() {
+            Some(Host::Domain(domain)) => {
+                let domain = domain.to_ascii_lowercase();
+                is_dns_name(&domain)
+                    && (domain == self.host
+                        || domain
+                            .strip_suffix(self.host.as_str())
+                            .is_some_and(|rest| rest.ends_with('.')))
+            }
+            Some(Host::Ipv4(ip)) => self.host == ip.to_string(),
+            Some(Host::Ipv6(ip)) => self.host == ip.to_string(),
+            None => false,
+        }
+    }
+}
+
 /// IP literals are compared by their canonical text, so `[::1]` and the
 /// expanded form both equal what `Url` reports for the host.
-fn normalize_entry(raw: &str) -> String {
+fn parse_entry(raw: &str) -> Option<AllowedHost> {
     let entry = raw.trim().trim_start_matches('.').to_ascii_lowercase();
-    let unbracketed = entry
-        .strip_prefix('[')
-        .and_then(|e| e.strip_suffix(']'))
-        .unwrap_or(&entry);
-    unbracketed
-        .parse::<IpAddr>()
-        .map_or(entry.clone(), |ip| ip.to_string())
+    if entry.is_empty() || entry.contains(['/', '@']) {
+        return None;
+    }
+    let canonical = |host: &str| {
+        host.parse::<IpAddr>()
+            .map_or_else(|_| host.to_string(), |ip| ip.to_string())
+    };
+    if let Ok(ip) = entry.parse::<IpAddr>() {
+        return Some(AllowedHost {
+            host: ip.to_string(),
+            port: PortRule::SchemeDefault,
+        });
+    }
+    let (host, port) = match entry.strip_prefix('[') {
+        Some(bracketed) => {
+            let (ip, rest) = bracketed.split_once(']')?;
+            ip.parse::<std::net::Ipv6Addr>().ok()?;
+            match rest {
+                "" => (ip, None),
+                rest => (ip, Some(rest.strip_prefix(':')?)),
+            }
+        }
+        None => match entry.rsplit_once(':') {
+            Some((host, port)) => (host, Some(port)),
+            None => (entry.as_str(), None),
+        },
+    };
+    if host.is_empty() || host.contains(':') && host.parse::<IpAddr>().is_err() {
+        return None;
+    }
+    let port = match port {
+        None => PortRule::SchemeDefault,
+        Some("*") => PortRule::Any,
+        Some(p) => PortRule::Exactly(p.parse().ok()?),
+    };
+    Some(AllowedHost {
+        host: canonical(host),
+        port,
+    })
 }
 
 #[cfg(test)]
@@ -257,13 +321,36 @@ mod tests {
 
     #[test]
     fn allows_an_exact_host_and_hosts_below_a_suffix() {
-        let p = policy(&["example.org", ".platform.test"], false);
+        let p = policy(&["example.org", ".platform.test:8443"], false);
         assert!(p.check(F, &url("https://example.org/v1.1")).is_ok());
         assert!(p.check(F, &url("https://frost.example.org/v1.1")).is_ok());
         assert!(
             p.check(F, &url("https://a.b.platform.test:8443/v1.1"))
                 .is_ok()
         );
+    }
+
+    #[test]
+    fn an_entry_without_port_allows_only_the_scheme_default() {
+        let p = policy(&["example.org"], true);
+        assert!(p.check(F, &url("https://example.org:443/v1.1")).is_ok());
+        assert!(p.check(F, &url("http://example.org/v1.1")).is_ok());
+        for raw in [
+            "https://example.org:8443/v1.1",
+            "https://example.org:80/v1.1",
+            "http://frost.example.org:5432/",
+        ] {
+            assert!(p.check(F, &url(raw)).is_err(), "{raw} was allowed");
+        }
+    }
+
+    #[test]
+    fn a_port_entry_allows_that_port_and_a_star_any() {
+        let p = policy(&["example.org:8443", "dev.test:*"], false);
+        assert!(p.check(F, &url("https://example.org:8443/v1.1")).is_ok());
+        assert!(p.check(F, &url("https://example.org/v1.1")).is_err());
+        assert!(p.check(F, &url("https://dev.test:1234/v1.1")).is_ok());
+        assert!(p.check(F, &url("https://dev.test/v1.1")).is_ok());
     }
 
     #[test]
@@ -287,15 +374,15 @@ mod tests {
     #[test]
     fn plain_http_needs_the_instance_switch() {
         let u = url("http://frost.localhost:8180/FROST-Server/v1.1");
-        assert!(policy(&["localhost"], false).check(F, &u).is_err());
-        assert!(policy(&["localhost"], true).check(F, &u).is_ok());
+        assert!(policy(&["localhost:8180"], false).check(F, &u).is_err());
+        assert!(policy(&["localhost:8180"], true).check(F, &u).is_ok());
     }
 
     #[test]
     fn ip_literals_pass_only_when_listed_verbatim() {
         let u = url("http://127.0.0.1:9000/v1.1");
-        assert!(policy(&["127.0.0.1"], true).check(F, &u).is_ok());
-        assert!(policy(&["localhost"], true).check(F, &u).is_err());
+        assert!(policy(&["127.0.0.1:9000"], true).check(F, &u).is_ok());
+        assert!(policy(&["localhost:9000"], true).check(F, &u).is_err());
         // The parser normalizes shorthand IPv4, so it cannot slip past the list.
         assert!(
             policy(&["localhost"], true)
@@ -306,10 +393,15 @@ mod tests {
 
     #[test]
     fn ip_entries_match_in_any_spelling() {
-        let u = url("http://[::1]:8080/v1.1");
+        let plain = url("http://[::1]/v1.1");
         for entry in ["::1", "[::1]", "0:0:0:0:0:0:0:1", "[0:0:0:0:0:0:0:1]"] {
-            assert!(policy(&[entry], true).check(F, &u).is_ok(), "{entry}");
+            assert!(policy(&[entry], true).check(F, &plain).is_ok(), "{entry}");
         }
+        let ported = url("http://[::1]:8080/v1.1");
+        for entry in ["[::1]:8080", "[0:0:0:0:0:0:0:1]:8080", "[::1]:*"] {
+            assert!(policy(&[entry], true).check(F, &ported).is_ok(), "{entry}");
+        }
+        assert!(policy(&["::1"], true).check(F, &ported).is_err());
     }
 
     #[test]
@@ -317,16 +409,28 @@ mod tests {
         let raw = [
             "https://x.org",
             "x.org:443",
+            "x.org:*",
             "x.org",
             "x.org/v1",
             "a@x.org",
+            "x.org:http",
+            "x.org:70000",
             "[::1]",
+            "[::1]:8080",
             "::1",
+            "[x]:1",
         ]
         .map(String::from);
         assert_eq!(
             ExportUrlPolicy::unusable_entries(&raw),
-            ["https://x.org", "x.org:443", "x.org/v1", "a@x.org"]
+            [
+                "https://x.org",
+                "x.org/v1",
+                "a@x.org",
+                "x.org:http",
+                "x.org:70000",
+                "[x]:1"
+            ]
         );
     }
 

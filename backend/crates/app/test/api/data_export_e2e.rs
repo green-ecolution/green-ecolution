@@ -8,7 +8,7 @@ use crate::{helpers::spawn_app_with_data_export, organizations::ROOT_ORG_ID};
 #[ignore]
 async fn a_tree_reaches_the_local_frost_server_with_its_watering_status() {
     let frost = std::env::var("GE_TEST_FROST_URL").expect("GE_TEST_FROST_URL");
-    let app = spawn_app_with_data_export(&["localhost"]).await;
+    let app = spawn_app_with_data_export(&["localhost:8180"]).await;
     let root = Uuid::parse_str(ROOT_ORG_ID).unwrap();
     let tree = Uuid::now_v7();
     sqlx::query(

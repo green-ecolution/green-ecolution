@@ -28,6 +28,7 @@ plugins:
     allowed_ports: [80, 5175]
 data_export:
   enabled: true
-  # The FROST server of `geco -p frost` / `just frost-up`.
-  allowed_hosts: ["localhost"]
+  # The FROST server of `geco -p frost` / `just frost-up`: port 8180 on the
+  # host, frost.localhost behind Traefik.
+  allowed_hosts: ["localhost", "localhost:8180"]
   allow_insecure_http: true
