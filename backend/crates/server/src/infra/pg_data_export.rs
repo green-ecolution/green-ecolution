@@ -89,8 +89,10 @@ impl ExportTargetWriter for PgDataExportRepository {
         .fetch_optional(&mut *tx)
         .await?;
         // A changed base URL is a different server: restart activation and cursor
-        // in the INSERT and drop the refs in the same transaction. Every save lifts
-        // the backoff, so corrected credentials are retried within one interval.
+        // in the INSERT and drop the refs in the same transaction. Resuming a paused
+        // target restarts activation and cursor too, so the pause is not sent later.
+        // Every save lifts the backoff, so corrected credentials are retried within
+        // one interval.
         let row = sqlx::query_as!(
             ExportTargetSnapshot,
             r#"INSERT INTO data_export_targets
@@ -106,8 +108,10 @@ impl ExportTargetWriter for PgDataExportRepository {
                    auth_token_url = EXCLUDED.auth_token_url,
                    auth_scope     = EXCLUDED.auth_scope,
                    activated_at   = CASE WHEN data_export_targets.base_url <> EXCLUDED.base_url
+                                              OR (NOT data_export_targets.enabled AND EXCLUDED.enabled)
                                          THEN now() ELSE data_export_targets.activated_at END,
                    cursor_reading_id = CASE WHEN data_export_targets.base_url <> EXCLUDED.base_url
+                                              OR (NOT data_export_targets.enabled AND EXCLUDED.enabled)
                                          THEN NULL ELSE data_export_targets.cursor_reading_id END,
                    failure_count  = 0,
                    next_attempt_at = NULL,

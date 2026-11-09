@@ -14,7 +14,9 @@ pub trait ExportTargetReader: Send + Sync {
 
 #[async_trait::async_trait]
 pub trait ExportTargetWriter: Send + Sync {
-    /// A changed base URL counts as a new target: activation and cursor restart.
+    /// A changed base URL counts as a new target: activation and cursor restart,
+    /// the refs are dropped. Resuming a paused target restarts activation and
+    /// cursor as well; it keeps the refs.
     async fn upsert(
         &self,
         org: Id<Organization>,

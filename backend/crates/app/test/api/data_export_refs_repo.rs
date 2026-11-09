@@ -447,3 +447,27 @@ async fn dropped_refs_are_gone_and_a_stale_pass_drops_nothing() {
     let left: Vec<String> = repo.refs(root()).await.unwrap().into_keys().collect();
     assert_eq!(left, vec!["irrigation:tree:2".to_string()]);
 }
+
+#[tokio::test]
+async fn resuming_a_paused_target_sends_nothing_from_the_pause() {
+    let app = spawn_app().await;
+    let repo = PgDataExportRepository::new(app.db_pool.clone());
+    let mut cfg = config("https://a.example.org/v1.1");
+    cfg.enabled = false;
+    let paused = repo.upsert(root(), &cfg).await.unwrap().target.activated_at;
+    sqlx::query(
+        "UPDATE data_export_targets SET cursor_reading_id = $1, activated_at = activated_at - interval '30 days'",
+    )
+    .bind(Uuid::now_v7())
+    .execute(&app.db_pool)
+    .await
+    .unwrap();
+
+    cfg.enabled = true;
+    let resumed = repo.upsert(root(), &cfg).await.unwrap();
+
+    assert!(resumed.target.activated_at >= paused);
+    assert_eq!(repo.cursor(root()).await.unwrap(), None);
+    let kept = repo.upsert(root(), &cfg).await.unwrap();
+    assert_eq!(kept.target.activated_at, resumed.target.activated_at);
+}
