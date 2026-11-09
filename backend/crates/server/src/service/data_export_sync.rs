@@ -192,7 +192,7 @@ impl DataExportSync {
             return Err(SyncError::LockedByAncestor);
         }
         let scope = export_scope(&hierarchy, &targets, org);
-        let session = self.sink.open(config).await?;
+        let session = self.sink.open(org, config).await?;
         let mut pass = Pass {
             org,
             lease,
@@ -642,8 +642,9 @@ impl Pass<'_> {
             self.keep_lease().await?;
             let marked = self
                 .session
-                .mark_thing_deleted(&thing.remote_id, self.clock.now())
+                .mark_thing_deleted(&thing.remote_id, &thing.ge_key, self.clock.now())
                 .await;
+            // A Thing that is no longer ours is settled here too: nothing to mark.
             if self.tolerate(&thing.ge_key, marked)?.is_some() {
                 self.remember(ExportRef {
                     deleted_marked: true,
@@ -1147,7 +1148,11 @@ mod tests {
 
     #[async_trait::async_trait]
     impl SensorThingsSink for Sink {
-        async fn open(&self, _: &ExportTargetConfig) -> Result<Box<dyn SinkSession>, SinkError> {
+        async fn open(
+            &self,
+            _: Id<Organization>,
+            _: &ExportTargetConfig,
+        ) -> Result<Box<dyn SinkSession>, SinkError> {
             if self.unreachable {
                 return Err(SinkError::Unreachable("down".into()));
             }
@@ -1183,13 +1188,14 @@ mod tests {
         async fn mark_thing_deleted(
             &self,
             id: &RemoteId,
+            _: &str,
             _: DateTime<Utc>,
-        ) -> Result<(), SinkError> {
+        ) -> Result<DeletionMark, SinkError> {
             self.calls
                 .lock()
                 .unwrap()
                 .push(Call::Deleted(id.as_json().as_str().unwrap().to_string()));
-            Ok(())
+            Ok(DeletionMark::Marked)
         }
         async fn ensure_sensor(&self) -> Result<RemoteId, SinkError> {
             if self.reject_sensor {

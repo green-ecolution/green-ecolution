@@ -220,6 +220,15 @@ impl SinkError {
     }
 }
 
+/// Whether a vanished Thing got its deletion mark.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DeletionMark {
+    Marked,
+    /// The Thing now carries another key or another exporter, for example after
+    /// a second target on the same server adopted it, or the server reused the id.
+    NotOurs,
+}
+
 pub struct StateStream<'a> {
     pub ge_key: &'a str,
     pub thing: &'a RemoteId,
@@ -231,8 +240,13 @@ pub struct StateStream<'a> {
 
 #[async_trait::async_trait]
 pub trait SensorThingsSink: Send + Sync {
-    /// Checks the URL policy and authenticates once for a sync pass.
-    async fn open(&self, config: &ExportTargetConfig) -> Result<Box<dyn SinkSession>, SinkError>;
+    /// Checks the URL policy and authenticates once for a sync pass. Things the
+    /// session writes are stamped with `exporter`, the organization of the target.
+    async fn open(
+        &self,
+        exporter: Id<Organization>,
+        config: &ExportTargetConfig,
+    ) -> Result<Box<dyn SinkSession>, SinkError>;
 }
 
 #[async_trait::async_trait]
@@ -243,8 +257,9 @@ pub trait SinkSession: Send + Sync {
     async fn mark_thing_deleted(
         &self,
         id: &RemoteId,
+        ge_key: &str,
         deleted_at: DateTime<Utc>,
-    ) -> Result<(), SinkError>;
+    ) -> Result<DeletionMark, SinkError>;
     async fn ensure_sensor(&self) -> Result<RemoteId, SinkError>;
     async fn ensure_observed_property(
         &self,

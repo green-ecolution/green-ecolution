@@ -4,10 +4,12 @@ use serde_json::{Map, Value, json};
 use tokio::sync::Mutex;
 
 use domain::data_export::{
-    BASE_URL_FIELD, BatchOutcome, ExportProperty, ExportTargetConfig, ExportThing, ExportUrlPolicy,
-    ObservationRow, RawStream, RemoteId, SENSOR_KEY, SensorThingsSink, SinkError, SinkSession,
-    StateStream, StateValue, TOKEN_URL_FIELD, device_sensor_key, location_key, property_key,
+    BASE_URL_FIELD, BatchOutcome, DeletionMark, ExportProperty, ExportTargetConfig, ExportThing,
+    ExportUrlPolicy, ObservationRow, RawStream, RemoteId, SENSOR_KEY, SensorThingsSink, SinkError,
+    SinkSession, StateStream, StateValue, TOKEN_URL_FIELD, device_sensor_key, location_key,
+    property_key,
 };
+use domain::{Id, organization::Organization};
 
 use super::{
     auth::{AuthFailure, Authorization, authorize},
@@ -36,7 +38,11 @@ fn auth_error(failure: AuthFailure) -> SinkError {
 #[async_trait::async_trait]
 impl SensorThingsSink for SensorThingsHttpSink {
     #[tracing::instrument(level = "info", skip_all, fields(target.host = config.base_url.as_url().host_str()))]
-    async fn open(&self, config: &ExportTargetConfig) -> Result<Box<dyn SinkSession>, SinkError> {
+    async fn open(
+        &self,
+        exporter: Id<Organization>,
+        config: &ExportTargetConfig,
+    ) -> Result<Box<dyn SinkSession>, SinkError> {
         // Every request of the session is built from `base`, so checking the two
         // configured URLs here covers all of them.
         self.policy
@@ -54,6 +60,7 @@ impl SensorThingsSink for SensorThingsHttpSink {
             client: self.client.clone(),
             base: config.base_url.as_str().trim_end_matches('/').to_string(),
             config: config.clone(),
+            exporter: exporter.to_string(),
             authorization: Mutex::new(authorization),
         }))
     }
@@ -63,6 +70,7 @@ struct HttpSession {
     client: reqwest::Client,
     base: String,
     config: ExportTargetConfig,
+    exporter: String,
     authorization: Mutex<Authorization>,
 }
 
@@ -207,9 +215,10 @@ fn rfc3339(at: DateTime<Utc>) -> String {
     at.to_rfc3339_opts(SecondsFormat::Millis, true)
 }
 
-fn thing_properties(thing: &ExportThing) -> Value {
+fn thing_properties(thing: &ExportThing, exporter: &str) -> Value {
     let mut properties: Map<String, Value> = thing.attributes.clone().into_iter().collect();
     properties.insert("ge_key".into(), json!(thing.key()));
+    properties.insert("ge_exporter".into(), json!(exporter));
     properties.insert("source".into(), json!("green-ecolution"));
     properties.insert("module".into(), json!(thing.target.module.as_str()));
     properties.insert("kind".into(), json!(thing.target.kind.as_str()));
@@ -267,7 +276,7 @@ impl SinkSession for HttpSession {
         let mut body = json!({
             "name": thing.name,
             "description": thing.description,
-            "properties": thing_properties(thing),
+            "properties": thing_properties(thing, &self.exporter),
         });
         if let Some(location) = location_body(thing) {
             body["Locations"] = json!([location]);
@@ -279,7 +288,7 @@ impl SinkSession for HttpSession {
         let body = json!({
             "name": thing.name,
             "description": thing.description,
-            "properties": thing_properties(thing),
+            "properties": thing_properties(thing, &self.exporter),
         });
         self.send(
             Method::PATCH,
@@ -304,8 +313,9 @@ impl SinkSession for HttpSession {
     async fn mark_thing_deleted(
         &self,
         id: &RemoteId,
+        ge_key: &str,
         deleted_at: DateTime<Utc>,
-    ) -> Result<(), SinkError> {
+    ) -> Result<DeletionMark, SinkError> {
         let path = format!("Things{}", id.path_segment());
         let answer = self
             .send(
@@ -316,10 +326,16 @@ impl SinkSession for HttpSession {
             )
             .await?;
         let current: Value = parse(&answer.body)?;
-        let mut properties = current["properties"]
-            .as_object()
-            .cloned()
-            .ok_or_else(|| SinkError::Malformed("thing has no properties object".into()))?;
+        let Some(mut properties) = current["properties"].as_object().cloned() else {
+            return Ok(DeletionMark::NotOurs);
+        };
+        // Things written before exporters were stamped carry no `ge_exporter`.
+        let exporter_matches = properties
+            .get("ge_exporter")
+            .is_none_or(|e| e.as_str() == Some(self.exporter.as_str()));
+        if properties.get("ge_key").and_then(Value::as_str) != Some(ge_key) || !exporter_matches {
+            return Ok(DeletionMark::NotOurs);
+        }
         properties.insert("deleted_at".into(), json!(rfc3339(deleted_at)));
         self.send(
             Method::PATCH,
@@ -328,7 +344,7 @@ impl SinkSession for HttpSession {
             Some(&json!({ "properties": properties })),
         )
         .await?;
-        Ok(())
+        Ok(DeletionMark::Marked)
     }
 
     async fn ensure_sensor(&self) -> Result<RemoteId, SinkError> {
@@ -518,6 +534,12 @@ mod tests {
         }
     }
 
+    const EXPORTER: &str = "00000000-0000-0000-0000-00000000004d";
+
+    fn exporter() -> Id<Organization> {
+        Id::new(Uuid::parse_str(EXPORTER).unwrap())
+    }
+
     fn tree() -> ExportThing {
         ExportThing {
             target: TargetRef::new("irrigation", "tree", Uuid::from_u128(1)).unwrap(),
@@ -542,7 +564,7 @@ mod tests {
 
     async fn session(server: &MockServer) -> Box<dyn SinkSession> {
         SensorThingsHttpSink::new(http_client(), policy())
-            .open(&config(server))
+            .open(exporter(), &config(server))
             .await
             .unwrap()
     }
@@ -566,6 +588,7 @@ mod tests {
                 "properties": {
                     "species": "Linde",
                     "ge_key": "irrigation:tree:00000000-0000-0000-0000-000000000001",
+                    "ge_exporter": EXPORTER,
                     "source": "green-ecolution", "module": "irrigation", "kind": "tree",
                     "id": "00000000-0000-0000-0000-000000000001"
                 },
@@ -657,10 +680,9 @@ mod tests {
         let server = MockServer::start().await;
         Mock::given(method("GET"))
             .and(path("/v1.1/Things(5)"))
-            .respond_with(
-                ResponseTemplate::new(200)
-                    .set_body_json(json!({ "properties": { "species": "Linde" } })),
-            )
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+                "properties": { "species": "Linde", "ge_key": "irrigation:tree:1", "ge_exporter": EXPORTER }
+            })))
             .mount(&server)
             .await;
         Mock::given(method("PATCH")).and(path("/v1.1/Things(5)"))
@@ -668,11 +690,51 @@ mod tests {
             .respond_with(ResponseTemplate::new(200)).expect(1).mount(&server).await;
 
         let at = chrono::Utc.with_ymd_and_hms(2026, 11, 3, 12, 0, 0).unwrap();
-        session(&server)
+        let mark = session(&server)
             .await
-            .mark_thing_deleted(&RemoteId(json!(5)), at)
+            .mark_thing_deleted(&RemoteId(json!(5)), "irrigation:tree:1", at)
             .await
             .unwrap();
+        assert_eq!(mark, DeletionMark::Marked);
+    }
+
+    async fn mark_with_properties(properties: Value) -> DeletionMark {
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/v1.1/Things(5)"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(properties))
+            .mount(&server)
+            .await;
+        Mock::given(method("PATCH"))
+            .respond_with(ResponseTemplate::new(200))
+            .expect(0)
+            .mount(&server)
+            .await;
+        session(&server)
+            .await
+            .mark_thing_deleted(&RemoteId(json!(5)), "irrigation:tree:1", chrono::Utc::now())
+            .await
+            .unwrap()
+    }
+
+    #[tokio::test]
+    async fn a_thing_adopted_by_another_exporter_keeps_its_properties() {
+        let mark = mark_with_properties(json!({ "properties": {
+            "ge_key": "irrigation:tree:1",
+            "ge_exporter": "00000000-0000-0000-0000-000000000099"
+        } }))
+        .await;
+        assert_eq!(mark, DeletionMark::NotOurs);
+    }
+
+    #[tokio::test]
+    async fn a_reused_id_with_another_key_is_left_alone() {
+        let mark = mark_with_properties(json!({ "properties": {
+            "ge_key": "irrigation:tree:2",
+            "ge_exporter": EXPORTER
+        } }))
+        .await;
+        assert_eq!(mark, DeletionMark::NotOurs);
     }
 
     #[tokio::test]
@@ -704,24 +766,8 @@ mod tests {
 
     #[tokio::test]
     async fn marking_deleted_without_properties_sends_nothing() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path("/v1.1/Things(5)"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(json!({ "name": "x" })))
-            .mount(&server)
-            .await;
-        Mock::given(method("PATCH"))
-            .respond_with(ResponseTemplate::new(200))
-            .expect(0)
-            .mount(&server)
-            .await;
-
-        let result = session(&server)
-            .await
-            .mark_thing_deleted(&RemoteId(json!(5)), chrono::Utc::now())
-            .await;
-
-        assert!(matches!(result, Err(SinkError::Malformed(_))));
+        let mark = mark_with_properties(json!({ "name": "x" })).await;
+        assert_eq!(mark, DeletionMark::NotOurs);
     }
 
     #[tokio::test]
@@ -940,7 +986,7 @@ mod tests {
             http_client(),
             ExportUrlPolicy::new(Vec::<String>::new(), true),
         )
-        .open(&config(&server))
+        .open(exporter(), &config(&server))
         .await;
 
         assert!(matches!(result, Err(SinkError::UrlNotAllowed)));
