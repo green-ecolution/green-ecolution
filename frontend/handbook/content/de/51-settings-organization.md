@@ -155,11 +155,17 @@ Die Übertragung läuft in regelmäßigen Abständen und sendet nur Änderungen.
 werden die Bäume, Bewässerungsgruppen und Abfallbehälter der Organisation, bei den
 Behältern nur dort, wo das Modul Abfall aktiv ist, außerdem ihre Zustände
 (Bewässerungsstatus, Füllstand und Füllzustand) und die Messwerte der Sensoren. Hat eine
-Unterorganisation eine eigene Datenplattform eingerichtet, exportiert sie dorthin und
-nicht an die Plattform der übergeordneten Organisation. Objekte ohne Standort, etwa eine
-Bewässerungsgruppe ohne Bäume, erhalten auf der Plattform weder Zustände noch Messwerte.
-Messwerte, die vor dem Einrichten entstanden sind, werden nicht nachgeliefert.
-Unplausible Messwerte gehen mit einem Qualitätshinweis an die Plattform.
+Unterorganisation eine eigene Datenplattform eingerichtet und ihren Export eingeschaltet,
+exportiert sie dorthin und nicht an die Plattform der übergeordneten Organisation.
+Pausiert sie ihren Export, gehen ihre Objekte wieder an die Plattform darüber. Hat eine
+übergeordnete Organisation die Einstellungen für ihre Unterorganisationen gesperrt, lässt
+sich darunter keine eigene Datenplattform einrichten. Eine schon vorhandene überträgt dann
+nichts mehr und zeigt einen Fehler. Ihre Objekte gehen an die Plattform oberhalb der
+Sperre. Objekte ohne Standort, etwa eine Bewässerungsgruppe ohne Bäume, erhalten auf der
+Plattform weder Zustände noch Messwerte. Messwerte, die vor dem Einrichten entstanden
+sind, werden nicht nachgeliefert. Das gilt auch nach einer Pause: Schaltest du den Export
+wieder ein, folgen nur Messwerte ab diesem Zeitpunkt. Unplausible Messwerte gehen mit
+einem Qualitätshinweis an die Plattform.
 
 Neue Messwerte gehen mit einer kurzen Verzögerung von wenigen Minuten hinaus, damit
 keiner verloren geht, der gerade erst gespeichert wird.
@@ -171,6 +177,10 @@ Organisationen ab, oder richtet eine Unterorganisation eine eigene Datenplattfor
 werden die betroffenen Objekte auf der bisherigen Plattform als gelöscht markiert.
 Schaltest du ein Modul dagegen für alle Organisationen ab, die an diese Plattform
 exportieren, bleibt dort alles unverändert.
+
+Fehlt auf der Plattform ein Objekt, das Green Ecolution dort angelegt hatte, weil es dort
+gelöscht oder die Plattform zurückgesetzt wurde, legt Green Ecolution es bei einem
+späteren Lauf neu an.
 
 Oben rechts auf der Karte zeigt ein Abzeichen den Zustand: **Aktiv**, wenn der Export
 läuft, **Pausiert**, wenn du **Export aktiv** ausgeschaltet hast, und **Fehler**, wenn der
