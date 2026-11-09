@@ -121,6 +121,8 @@ impl HttpSession {
         Err(SinkError::Unauthorized(401))
     }
 
+    /// Two passes racing each other may both have created an entity; ordering by
+    /// id makes every later pass adopt the same one of them.
     async fn find(&self, set: &str, ge_key: &str) -> Result<Option<RemoteId>, SinkError> {
         let filter = format!("properties/ge_key eq '{}'", ge_key.replace('\'', "''"));
         let answer = self
@@ -130,6 +132,7 @@ impl HttpSession {
                 &[
                     ("$filter", filter),
                     ("$select", "id".into()),
+                    ("$orderby", "id asc".into()),
                     ("$top", "1".into()),
                 ],
                 None,
@@ -619,6 +622,30 @@ mod tests {
             .move_thing(&RemoteId(json!(5)), &tree())
             .await
             .unwrap();
+    }
+
+    #[tokio::test]
+    async fn a_lookup_by_key_asks_for_the_oldest_match() {
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/v1.1/Things"))
+            .and(query_param("$orderby", "id asc"))
+            .and(query_param("$top", "1"))
+            .respond_with(
+                ResponseTemplate::new(200).set_body_json(json!({ "value": [{ "@iot.id": 3 }] })),
+            )
+            .expect(1)
+            .mount(&server)
+            .await;
+        Mock::given(method("PATCH"))
+            .and(path("/v1.1/Things(3)"))
+            .respond_with(ResponseTemplate::new(200))
+            .mount(&server)
+            .await;
+
+        let (id, new) = session(&server).await.create_thing(&tree()).await.unwrap();
+
+        assert_eq!((id, new), (RemoteId(json!(3)), false));
     }
 
     #[tokio::test]

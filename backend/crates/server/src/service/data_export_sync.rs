@@ -12,7 +12,7 @@ use domain::{
     Id, RepositoryError,
     clock::Clock,
     data_export::{
-        ExportEntity, ExportProperty, ExportReading, ExportReadingSource, ExportRef,
+        ExportEntity, ExportLease, ExportProperty, ExportReading, ExportReadingSource, ExportRef,
         ExportRefReader, ExportRefWriter, ExportRunStats, ExportRunStore, ExportState,
         ExportTargetConfig, ExportThing, ObservationRow, RawStream, RemoteId, RunResult,
         SENSOR_KEY, SensorThingsSink, SinkError, SinkSession, StateStream, device_sensor_key,
@@ -23,6 +23,7 @@ use domain::{
     organization::{Organization, OrganizationReader},
 };
 use serde_json::{Map, Value};
+use uuid::Uuid;
 
 use super::export_registry::ExportRegistry;
 
@@ -46,6 +47,8 @@ pub enum SyncError {
     Repository(#[from] RepositoryError),
     #[error(transparent)]
     Sink(#[from] SinkError),
+    #[error("the export pass lost its lease to another replica")]
+    LeaseLost,
 }
 
 /// Shown to everyone with `setting:read`, so it never carries driver detail.
@@ -56,6 +59,7 @@ impl SyncError {
         match self {
             Self::Repository(_) => INTERNAL_ERROR_TEXT.to_string(),
             Self::Sink(e) => e.to_string(),
+            Self::LeaseLost => self.to_string(),
         }
     }
 }
@@ -122,15 +126,19 @@ impl DataExportSync {
     /// `None` when the target is not leased: another replica runs it or it is not due.
     #[tracing::instrument(level = "info", skip_all, fields(organization.id = %org))]
     pub async fn sync(&self, org: Id<Organization>) -> Result<Option<ExportRunStats>, SyncError> {
+        let token = Uuid::now_v7();
         let Some(leased) = self
             .runs
-            .try_lease(org, self.lease_secs(), self.settings.interval_secs)
+            .try_lease(org, token, self.lease_secs(), self.settings.interval_secs)
             .await?
         else {
             return Ok(None);
         };
-        let generation = leased.target.activated_at;
-        let outcome = self.pass(org, generation, &leased.target.config).await;
+        let lease = ExportLease {
+            generation: leased.target.activated_at,
+            token,
+        };
+        let outcome = self.pass(org, lease, &leased.target.config).await;
         let result = match &outcome {
             Ok(stats) => RunResult::Succeeded(*stats),
             Err(e) => {
@@ -143,7 +151,7 @@ impl DataExportSync {
                 }
             }
         };
-        let finished = self.runs.finish(org, generation, &result).await;
+        let finished = self.runs.finish(org, &lease, &result).await;
         match (outcome, finished) {
             (Ok(stats), finished) => {
                 finished?;
@@ -166,7 +174,7 @@ impl DataExportSync {
     async fn pass(
         &self,
         org: Id<Organization>,
-        generation: DateTime<Utc>,
+        lease: ExportLease,
         config: &ExportTargetConfig,
     ) -> Result<ExportRunStats, SyncError> {
         let started = self.clock.now();
@@ -176,7 +184,9 @@ impl DataExportSync {
         let session = self.sink.open(config).await?;
         let mut pass = Pass {
             org,
-            generation,
+            lease,
+            lease_secs: self.lease_secs(),
+            renewed_at: started,
             session,
             refs: self.refs.refs(org).await?,
             writer: self.ref_writer.as_ref(),
@@ -224,8 +234,10 @@ impl DataExportSync {
 /// What one pass carries along: the session, the refs cache and the counters.
 struct Pass<'a> {
     org: Id<Organization>,
-    /// The leased target's `activated_at`; the stores drop writes of a stale pass.
-    generation: DateTime<Utc>,
+    /// The stores drop every write of a pass that no longer holds this lease.
+    lease: ExportLease,
+    lease_secs: i64,
+    renewed_at: DateTime<Utc>,
     session: Box<dyn SinkSession>,
     refs: HashMap<String, ExportRef>,
     writer: &'a dyn ExportRefWriter,
@@ -238,6 +250,22 @@ struct Pass<'a> {
     /// Remote entities the target rejected in this pass, so later readings of the
     /// same stream do not ask again.
     refused: HashSet<String>,
+}
+
+/// What became of one reading in a batch.
+enum RawRow {
+    Stream(String, RemoteId),
+    Skipped,
+    /// The budget ran out before a remote entity the reading needs was created.
+    OutOfBudget,
+}
+
+enum BatchEnd {
+    Complete,
+    /// Stopped at the budget; readings up to `done_until` are handled.
+    Cut {
+        done_until: Option<Uuid>,
+    },
 }
 
 struct SnapshotThing {
@@ -306,9 +334,28 @@ impl Pass<'_> {
         elapsed >= self.budget
     }
 
+    /// A single slow step can outlast the margin between budget and lease, so the
+    /// lease is extended while the pass works. A third of the lease leaves room
+    /// for a step of several requests between two renewals.
+    async fn keep_lease(&mut self) -> Result<(), SyncError> {
+        let now = self.clock.now();
+        if (now - self.renewed_at).num_seconds() < self.lease_secs / 3 {
+            return Ok(());
+        }
+        if !self
+            .runs
+            .renew_lease(self.org, &self.lease, self.lease_secs)
+            .await?
+        {
+            return Err(SyncError::LeaseLost);
+        }
+        self.renewed_at = now;
+        Ok(())
+    }
+
     async fn remember(&mut self, export_ref: ExportRef) -> Result<(), RepositoryError> {
         self.writer
-            .put_ref(self.org, self.generation, &export_ref)
+            .put_ref(self.org, &self.lease, &export_ref)
             .await?;
         self.refs.insert(export_ref.ge_key.clone(), export_ref);
         Ok(())
@@ -360,6 +407,7 @@ impl Pass<'_> {
             if self.out_of_budget() {
                 return Ok(());
             }
+            self.keep_lease().await?;
             self.thing(thing, sensor).await?;
         }
         let seen: HashSet<String> = things.iter().map(ExportThing::key).collect();
@@ -561,6 +609,7 @@ impl Pass<'_> {
             if self.out_of_budget() {
                 return Ok(());
             }
+            self.keep_lease().await?;
             let marked = self
                 .session
                 .mark_thing_deleted(&thing.remote_id, self.clock.now())
@@ -576,8 +625,8 @@ impl Pass<'_> {
         Ok(())
     }
 
-    /// The cursor moves only after a batch was posted, so a pass that ends early
-    /// resends at most the last batch.
+    /// The cursor moves only past readings that were posted, so a pass that ends
+    /// early resends at most the last batch.
     #[tracing::instrument(level = "debug", skip_all, fields(organization.id = %self.org))]
     async fn raw_phase(
         &mut self,
@@ -587,7 +636,7 @@ impl Pass<'_> {
     ) -> Result<(), SyncError> {
         let mut cursor = match self.runs.cursor(self.org).await? {
             Some(cursor) => cursor,
-            None => v7_floor(self.generation),
+            None => v7_floor(self.lease.generation),
         };
         let settled = chrono::TimeDelta::from_std(settle)
             .ok()
@@ -595,6 +644,7 @@ impl Pass<'_> {
             .unwrap_or(DateTime::<Utc>::MIN_UTC);
         let before = v7_floor(settled);
         while !self.out_of_budget() {
+            self.keep_lease().await?;
             let batch = self
                 .readings
                 .readings_after(&scope.active, cursor, before, batch_size)
@@ -602,9 +652,16 @@ impl Pass<'_> {
             let Some(until) = batch.scanned_until.filter(|_| batch.scanned > 0) else {
                 return Ok(());
             };
-            self.raw_batch(&batch.rows, scope).await?;
+            if let BatchEnd::Cut { done_until } = self.raw_batch(&batch.rows, scope).await? {
+                if let Some(done) = done_until {
+                    self.runs
+                        .advance_cursor(self.org, &self.lease, done)
+                        .await?;
+                }
+                return Ok(());
+            }
             self.runs
-                .advance_cursor(self.org, self.generation, until)
+                .advance_cursor(self.org, &self.lease, until)
                 .await?;
             cursor = until;
             if batch.scanned < batch_size {
@@ -614,39 +671,62 @@ impl Pass<'_> {
         Ok(())
     }
 
+    /// Rows arrive ordered by reading, so a cut leaves every earlier reading
+    /// complete; the rows of the reading it stopped at wait for the next pass.
     async fn raw_batch(
         &mut self,
         rows: &[ExportReading],
         scope: &RawScope,
-    ) -> Result<(), SyncError> {
-        let mut streams: BTreeMap<String, (RemoteId, Vec<ObservationRow>)> = BTreeMap::new();
+    ) -> Result<BatchEnd, SyncError> {
+        let mut routed = Vec::new();
+        let mut cut_at = None;
         for row in rows {
-            let Some((key, datastream)) = self.raw_row(row, scope).await? else {
+            match self.raw_row(row, scope).await? {
+                RawRow::Stream(key, datastream) => routed.push((row, key, datastream)),
+                RawRow::Skipped => {}
+                RawRow::OutOfBudget => {
+                    cut_at = Some(row.reading_id);
+                    break;
+                }
+            }
+        }
+        let mut streams: BTreeMap<String, (RemoteId, Vec<ObservationRow>)> = BTreeMap::new();
+        for (row, key, datastream) in routed {
+            if cut_at.is_some_and(|cut| row.reading_id >= cut) {
                 continue;
-            };
+            }
             streams
                 .entry(key)
                 .or_insert_with(|| (datastream, Vec::new()))
                 .1
                 .push(observation_row(row));
         }
-        if streams.is_empty() {
-            return Ok(());
+        if !streams.is_empty() {
+            self.keep_lease().await?;
+            let batches: Vec<_> = streams.into_values().collect();
+            let outcome = self.session.post_observation_batches(&batches).await?;
+            self.stats.observations_written += outcome.accepted;
+            self.stats.skipped += outcome.rejected;
         }
-        let batches: Vec<_> = streams.into_values().collect();
-        let outcome = self.session.post_observation_batches(&batches).await?;
-        self.stats.observations_written += outcome.accepted;
-        self.stats.skipped += outcome.rejected;
-        Ok(())
+        Ok(match cut_at {
+            None => BatchEnd::Complete,
+            Some(cut) => BatchEnd::Cut {
+                done_until: rows
+                    .iter()
+                    .map(|r| r.reading_id)
+                    .filter(|id| *id < cut)
+                    .max(),
+            },
+        })
     }
 
-    /// The datastream a reading goes to, or `None` (counted as skipped) when its
-    /// Thing is not exported in this pass or a remote entity was rejected.
+    /// The datastream a reading goes to. Skipped (and counted) when its Thing is
+    /// not exported in this pass or a remote entity was rejected.
     async fn raw_row(
         &mut self,
         row: &ExportReading,
         scope: &RawScope,
-    ) -> Result<Option<(String, RemoteId)>, SyncError> {
+    ) -> Result<RawRow, SyncError> {
         let thing_key = ge_key(&row.target);
         let thing_id = self
             .refs
@@ -656,29 +736,35 @@ impl Pass<'_> {
         let exported = scope.things.get(&thing_key).filter(|t| t.located);
         let Some((thing, thing_id)) = exported.zip(thing_id) else {
             self.stats.skipped += 1;
-            return Ok(None);
+            return Ok(RawRow::Skipped);
         };
         // serde_json would send NaN or infinity as a null result.
         if !row.value.is_finite() {
             self.stats.skipped += 1;
-            return Ok(None);
+            return Ok(RawRow::Skipped);
         }
         let key = raw_stream_key(row);
         if let Some(existing) = self.refs.get(&key) {
-            return Ok(Some((key, existing.remote_id.clone())));
+            return Ok(RawRow::Stream(key, existing.remote_id.clone()));
         }
         if self.refused.contains(&key) {
             self.stats.skipped += 1;
-            return Ok(None);
+            return Ok(RawRow::Skipped);
         }
+        // Creating a stream costs several requests; check the budget and the lease
+        // before each one rather than once per batch.
+        if self.out_of_budget() {
+            return Ok(RawRow::OutOfBudget);
+        }
+        self.keep_lease().await?;
         let Some(id) = self
             .raw_datastream(row, &key, &thing.name, &thing_id)
             .await?
         else {
             self.refused.insert(key);
-            return Ok(None);
+            return Ok(RawRow::Skipped);
         };
-        Ok(Some((key, id)))
+        Ok(RawRow::Stream(key, id))
     }
 
     async fn raw_datastream(
@@ -787,6 +873,8 @@ mod tests {
         cursor: Mutex<Option<Uuid>>,
         advanced: Mutex<Vec<(DateTime<Utc>, Uuid)>>,
         lease_intervals: Mutex<Vec<i64>>,
+        lease_lost: bool,
+        renewals: Mutex<u32>,
     }
 
     impl Runs {
@@ -811,6 +899,7 @@ mod tests {
         async fn try_lease(
             &self,
             org: Id<Organization>,
+            _: Uuid,
             _: i64,
             interval_secs: i64,
         ) -> Result<Option<StoredExportTarget>, RepositoryError> {
@@ -832,16 +921,25 @@ mod tests {
                 status: ExportTargetStatus::default(),
             }))
         }
+        async fn renew_lease(
+            &self,
+            _: Id<Organization>,
+            _: &ExportLease,
+            _: i64,
+        ) -> Result<bool, RepositoryError> {
+            *self.renewals.lock().unwrap() += 1;
+            Ok(!self.lease_lost)
+        }
         async fn finish(
             &self,
             _: Id<Organization>,
-            generation: DateTime<Utc>,
+            lease: &ExportLease,
             result: &RunResult,
         ) -> Result<(), RepositoryError> {
             self.finished
                 .lock()
                 .unwrap()
-                .push((generation, result.clone()));
+                .push((lease.generation, result.clone()));
             Ok(())
         }
         async fn cursor(&self, _: Id<Organization>) -> Result<Option<Uuid>, RepositoryError> {
@@ -850,12 +948,48 @@ mod tests {
         async fn advance_cursor(
             &self,
             _: Id<Organization>,
-            generation: DateTime<Utc>,
+            lease: &ExportLease,
             cursor: Uuid,
         ) -> Result<(), RepositoryError> {
             *self.cursor.lock().unwrap() = Some(cursor);
-            self.advanced.lock().unwrap().push((generation, cursor));
+            self.advanced
+                .lock()
+                .unwrap()
+                .push((lease.generation, cursor));
             Ok(())
+        }
+    }
+
+    /// Stands still until a test or the sink moves it.
+    struct ManualClock(Mutex<DateTime<Utc>>);
+
+    impl ManualClock {
+        fn new() -> Self {
+            Self(Mutex::new(generation()))
+        }
+        fn advance(&self, by: std::time::Duration) {
+            let mut now = self.0.lock().unwrap();
+            *now += chrono::TimeDelta::from_std(by).unwrap();
+        }
+    }
+
+    impl domain::clock::Clock for ManualClock {
+        fn now(&self) -> DateTime<Utc> {
+            *self.0.lock().unwrap()
+        }
+    }
+
+    /// Moves forward by `step` every time it is read.
+    struct SteppingClock {
+        now: Mutex<DateTime<Utc>>,
+        step: chrono::TimeDelta,
+    }
+
+    impl domain::clock::Clock for SteppingClock {
+        fn now(&self) -> DateTime<Utc> {
+            let mut now = self.now.lock().unwrap();
+            *now += self.step;
+            *now
         }
     }
 
@@ -912,10 +1046,10 @@ mod tests {
         async fn put_ref(
             &self,
             _: Id<Organization>,
-            generation: DateTime<Utc>,
+            lease: &ExportLease,
             r: &ExportRef,
         ) -> Result<(), RepositoryError> {
-            self.generations.lock().unwrap().insert(generation);
+            self.generations.lock().unwrap().insert(lease.generation);
             self.map.lock().unwrap().insert(r.ge_key.clone(), r.clone());
             Ok(())
         }
@@ -942,6 +1076,8 @@ mod tests {
         batch_error: Option<SinkError>,
         reject_raw_datastreams: bool,
         raw_streams: Arc<Mutex<Vec<String>>>,
+        /// Each created raw datastream moves this clock, like a slow target would.
+        slow_raw_streams: Option<(Arc<ManualClock>, std::time::Duration)>,
     }
 
     struct Session {
@@ -953,6 +1089,7 @@ mod tests {
         rejected_rows: u32,
         batch_error: Option<SinkError>,
         reject_raw_datastreams: bool,
+        slow_raw_streams: Option<(Arc<ManualClock>, std::time::Duration)>,
     }
 
     #[async_trait::async_trait]
@@ -970,6 +1107,7 @@ mod tests {
                 rejected_rows: self.rejected_rows,
                 batch_error: self.batch_error.clone(),
                 reject_raw_datastreams: self.reject_raw_datastreams,
+                slow_raw_streams: self.slow_raw_streams.clone(),
             }))
         }
     }
@@ -1047,6 +1185,9 @@ mod tests {
         }
         async fn ensure_raw_datastream(&self, s: &RawStream<'_>) -> Result<RemoteId, SinkError> {
             self.raw_streams.lock().unwrap().push(s.name.to_string());
+            if let Some((clock, by)) = &self.slow_raw_streams {
+                clock.advance(*by);
+            }
             if self.reject_raw_datastreams {
                 return Err(SinkError::Rejected {
                     status: 400,
@@ -1199,6 +1340,8 @@ mod tests {
         batch_size: i64,
         reading_settle: std::time::Duration,
         broken_readings: bool,
+        clock: Arc<dyn domain::clock::Clock>,
+        lease_lost: bool,
     }
 
     impl Default for Setup {
@@ -1214,6 +1357,8 @@ mod tests {
                 batch_size: 100,
                 reading_settle: std::time::Duration::from_secs(120),
                 broken_readings: false,
+                clock: Arc::new(domain::clock::SystemClock),
+                lease_lost: false,
             }
         }
     }
@@ -1271,10 +1416,13 @@ mod tests {
             batch_size,
             reading_settle,
             broken_readings,
+            clock,
+            lease_lost,
         } = setup;
         let runs = Arc::new(Runs {
             targets: BTreeSet::from([org(1)]),
             leasable,
+            lease_lost,
             ..Default::default()
         });
         let readings = Arc::new(Readings {
@@ -1301,7 +1449,7 @@ mod tests {
             registry,
             Arc::new(Activation(active.iter().map(|n| org(*n)).collect())),
             Arc::new(Orgs),
-            Arc::new(domain::clock::SystemClock),
+            clock,
             SyncSettings {
                 interval_secs: 300,
                 run_budget,
@@ -1514,6 +1662,95 @@ mod tests {
         assert_eq!(f.sync.sync(org(1)).await.unwrap(), None);
         assert!(calls(&f).is_empty());
         assert!(f.runs.results().is_empty());
+    }
+
+    #[tokio::test]
+    async fn a_pass_that_lost_its_lease_stops_before_writing() {
+        // Lease = budget + 60 s; the first renewal falls due after a third of it.
+        let f = build(Setup {
+            things: vec![tree(1, "good")],
+            run_budget: std::time::Duration::from_secs(3600),
+            clock: Arc::new(SteppingClock {
+                now: Mutex::new(generation()),
+                step: chrono::TimeDelta::seconds(1300),
+            }),
+            lease_lost: true,
+            ..Setup::default()
+        });
+
+        let result = f.sync.sync(org(1)).await;
+
+        assert!(matches!(result, Err(SyncError::LeaseLost)));
+        assert!(calls(&f).is_empty());
+        assert_eq!(*f.runs.renewals.lock().unwrap(), 1);
+    }
+
+    #[tokio::test]
+    async fn a_long_pass_keeps_renewing_its_lease() {
+        let f = build(Setup {
+            things: vec![tree(1, "good"), tree(2, "bad")],
+            run_budget: std::time::Duration::from_secs(3600),
+            clock: Arc::new(SteppingClock {
+                now: Mutex::new(generation()),
+                step: chrono::TimeDelta::seconds(700),
+            }),
+            ..Setup::default()
+        });
+
+        f.sync.sync(org(1)).await.unwrap().unwrap();
+
+        assert!(*f.runs.renewals.lock().unwrap() >= 2);
+    }
+
+    #[tokio::test]
+    async fn the_budget_stops_a_batch_before_the_next_new_stream() {
+        let clock = Arc::new(ManualClock::new());
+        let f = build(Setup {
+            things: vec![tree(1, "good")],
+            readings: vec![batch(vec![
+                reading(10, 1, SensorAbilityName::SoilMoisture, 31.5),
+                reading(11, 1, SensorAbilityName::Battery, 3.6),
+            ])],
+            sink: Sink {
+                slow_raw_streams: Some((clock.clone(), std::time::Duration::from_secs(61))),
+                ..Sink::default()
+            },
+            clock,
+            ..Setup::default()
+        });
+
+        f.sync.sync(org(1)).await.unwrap().unwrap();
+
+        assert_eq!(f.raw_streams.lock().unwrap().len(), 1);
+        assert_eq!(calls(&f).last(), Some(&Call::Batch(1)));
+        assert_eq!(
+            *f.runs.advanced.lock().unwrap(),
+            vec![(generation(), Uuid::from_u128(10))],
+            "the cursor stops before the reading that did not go out"
+        );
+    }
+
+    #[tokio::test]
+    async fn a_reading_cut_in_half_by_the_budget_waits_whole_for_the_next_pass() {
+        let clock = Arc::new(ManualClock::new());
+        let f = build(Setup {
+            things: vec![tree(1, "good")],
+            readings: vec![batch(vec![
+                reading(10, 1, SensorAbilityName::Battery, 3.6),
+                reading(10, 1, SensorAbilityName::SoilMoisture, 31.5),
+            ])],
+            sink: Sink {
+                slow_raw_streams: Some((clock.clone(), std::time::Duration::from_secs(61))),
+                ..Sink::default()
+            },
+            clock,
+            ..Setup::default()
+        });
+
+        f.sync.sync(org(1)).await.unwrap().unwrap();
+
+        assert!(!calls(&f).iter().any(|c| matches!(c, Call::Batch(_))));
+        assert!(f.runs.advanced.lock().unwrap().is_empty());
     }
 
     #[tokio::test]

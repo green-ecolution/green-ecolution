@@ -1,9 +1,9 @@
 use domain::{
     Id,
     data_export::{
-        BASE_URL_FIELD, ExportAuth, ExportEntity, ExportRef, ExportRefReader, ExportRefWriter,
-        ExportRunStats, ExportRunStore, ExportTargetConfig, ExportTargetWriter, ExportUrl,
-        RemoteId, RunResult,
+        BASE_URL_FIELD, ExportAuth, ExportEntity, ExportLease, ExportRef, ExportRefReader,
+        ExportRefWriter, ExportRunStats, ExportRunStore, ExportTargetConfig, ExportTargetWriter,
+        ExportUrl, RemoteId, RunResult,
     },
 };
 use serde_json::json;
@@ -24,6 +24,18 @@ fn config(url: &str) -> ExportTargetConfig {
     }
 }
 
+/// Leases the root target under a fresh token, as a pass does.
+async fn lease(repo: &PgDataExportRepository, interval_secs: i64) -> Option<ExportLease> {
+    let token = Uuid::now_v7();
+    repo.try_lease(root(), token, 60, interval_secs)
+        .await
+        .unwrap()
+        .map(|leased| ExportLease {
+            generation: leased.target.activated_at,
+            token,
+        })
+}
+
 fn thing_ref(key: &str) -> ExportRef {
     ExportRef {
         ge_key: key.into(),
@@ -39,20 +51,18 @@ fn thing_ref(key: &str) -> ExportRef {
 async fn refs_are_stored_and_overwritten_by_key() {
     let app = spawn_app().await;
     let repo = PgDataExportRepository::new(app.db_pool.clone());
-    let gen_ = repo
-        .upsert(root(), &config("https://frost.example.org/v1.1"))
+    repo.upsert(root(), &config("https://frost.example.org/v1.1"))
         .await
-        .unwrap()
-        .target
-        .activated_at;
+        .unwrap();
+    let lease = lease(&repo, 0).await.unwrap();
 
-    repo.put_ref(root(), gen_, &thing_ref("irrigation:tree:1"))
+    repo.put_ref(root(), &lease, &thing_ref("irrigation:tree:1"))
         .await
         .unwrap();
     let mut changed = thing_ref("irrigation:tree:1");
     changed.content_hash = Some("def".into());
     changed.deleted_marked = true;
-    repo.put_ref(root(), gen_, &changed).await.unwrap();
+    repo.put_ref(root(), &lease, &changed).await.unwrap();
 
     let refs = repo.refs(root()).await.unwrap();
     assert_eq!(refs.len(), 1);
@@ -63,18 +73,16 @@ async fn refs_are_stored_and_overwritten_by_key() {
 async fn a_new_base_url_drops_the_refs_and_the_last_run() {
     let app = spawn_app().await;
     let repo = PgDataExportRepository::new(app.db_pool.clone());
-    let gen_ = repo
-        .upsert(root(), &config("https://a.example.org/v1.1"))
+    repo.upsert(root(), &config("https://a.example.org/v1.1"))
         .await
-        .unwrap()
-        .target
-        .activated_at;
-    repo.put_ref(root(), gen_, &thing_ref("irrigation:tree:1"))
+        .unwrap();
+    let lease = lease(&repo, 0).await.unwrap();
+    repo.put_ref(root(), &lease, &thing_ref("irrigation:tree:1"))
         .await
         .unwrap();
     repo.finish(
         root(),
-        gen_,
+        &lease,
         &RunResult::Succeeded(ExportRunStats::default()),
     )
     .await
@@ -97,21 +105,18 @@ async fn a_new_base_url_drops_the_refs_and_the_last_run() {
 async fn a_lease_is_exclusive_until_the_run_finishes() {
     let app = spawn_app().await;
     let repo = PgDataExportRepository::new(app.db_pool.clone());
-    let gen_ = repo
-        .upsert(root(), &config("https://a.example.org/v1.1"))
+    repo.upsert(root(), &config("https://a.example.org/v1.1"))
         .await
-        .unwrap()
-        .target
-        .activated_at;
+        .unwrap();
 
     assert_eq!(repo.due(0).await.unwrap(), vec![root()]);
-    assert!(repo.try_lease(root(), 60, 0).await.unwrap().is_some());
-    assert!(repo.try_lease(root(), 60, 0).await.unwrap().is_none());
+    let held = lease(&repo, 0).await.unwrap();
+    assert!(lease(&repo, 0).await.is_none());
     assert!(repo.due(0).await.unwrap().is_empty());
 
     repo.finish(
         root(),
-        gen_,
+        &held,
         &RunResult::Succeeded(ExportRunStats {
             things_written: 2,
             observations_written: 3,
@@ -120,7 +125,11 @@ async fn a_lease_is_exclusive_until_the_run_finishes() {
     )
     .await
     .unwrap();
-    let leased = repo.try_lease(root(), 60, 0).await.unwrap().unwrap();
+    let leased = repo
+        .try_lease(root(), Uuid::now_v7(), 60, 0)
+        .await
+        .unwrap()
+        .unwrap();
     assert_eq!(leased.status.last_run_stats.unwrap().things_written, 2);
     assert!(leased.status.last_success_at.is_some());
 }
@@ -129,17 +138,14 @@ async fn a_lease_is_exclusive_until_the_run_finishes() {
 async fn a_failure_backs_off_and_a_success_clears_it() {
     let app = spawn_app().await;
     let repo = PgDataExportRepository::new(app.db_pool.clone());
-    let gen_ = repo
-        .upsert(root(), &config("https://a.example.org/v1.1"))
+    repo.upsert(root(), &config("https://a.example.org/v1.1"))
         .await
-        .unwrap()
-        .target
-        .activated_at;
-    repo.try_lease(root(), 60, 0).await.unwrap().unwrap();
+        .unwrap();
+    let first = lease(&repo, 0).await.unwrap();
 
     repo.finish(
         root(),
-        gen_,
+        &first,
         &RunResult::Failed {
             error: "target unreachable".into(),
             base_interval_secs: 300,
@@ -162,10 +168,10 @@ async fn a_failure_backs_off_and_a_success_clears_it() {
         .execute(&app.db_pool)
         .await
         .unwrap();
-    repo.try_lease(root(), 60, 0).await.unwrap().unwrap();
+    let second = lease(&repo, 0).await.unwrap();
     repo.finish(
         root(),
-        gen_,
+        &second,
         &RunResult::Succeeded(ExportRunStats::default()),
     )
     .await
@@ -194,20 +200,18 @@ async fn target_orgs_include_disabled_targets() {
 async fn the_backoff_is_capped_after_many_failures() {
     let app = spawn_app().await;
     let repo = PgDataExportRepository::new(app.db_pool.clone());
-    let gen_ = repo
-        .upsert(root(), &config("https://a.example.org/v1.1"))
+    repo.upsert(root(), &config("https://a.example.org/v1.1"))
         .await
-        .unwrap()
-        .target
-        .activated_at;
+        .unwrap();
     sqlx::query("UPDATE data_export_targets SET failure_count = 2000")
         .execute(&app.db_pool)
         .await
         .unwrap();
+    let held = lease(&repo, 0).await.unwrap();
 
     repo.finish(
         root(),
-        gen_,
+        &held,
         &RunResult::Failed {
             error: "down".into(),
             base_interval_secs: 300,
@@ -233,23 +237,21 @@ async fn the_backoff_is_capped_after_many_failures() {
 async fn a_pass_from_before_a_base_url_change_writes_nothing() {
     let app = spawn_app().await;
     let repo = PgDataExportRepository::new(app.db_pool.clone());
-    let stale = repo
-        .upsert(root(), &config("https://a.example.org/v1.1"))
+    repo.upsert(root(), &config("https://a.example.org/v1.1"))
         .await
-        .unwrap()
-        .target
-        .activated_at;
+        .unwrap();
+    let stale = lease(&repo, 0).await.unwrap();
     tokio::time::sleep(std::time::Duration::from_millis(5)).await;
     repo.upsert(root(), &config("https://b.example.org/v1.1"))
         .await
         .unwrap();
 
-    repo.put_ref(root(), stale, &thing_ref("irrigation:tree:1"))
+    repo.put_ref(root(), &stale, &thing_ref("irrigation:tree:1"))
         .await
         .unwrap();
     repo.finish(
         root(),
-        stale,
+        &stale,
         &RunResult::Succeeded(ExportRunStats::default()),
     )
     .await
@@ -268,23 +270,20 @@ async fn a_pass_from_before_a_base_url_change_writes_nothing() {
 async fn a_finished_run_is_not_leased_again_within_the_interval() {
     let app = spawn_app().await;
     let repo = PgDataExportRepository::new(app.db_pool.clone());
-    let gen_ = repo
-        .upsert(root(), &config("https://a.example.org/v1.1"))
+    repo.upsert(root(), &config("https://a.example.org/v1.1"))
         .await
-        .unwrap()
-        .target
-        .activated_at;
-    assert!(repo.try_lease(root(), 60, 300).await.unwrap().is_some());
+        .unwrap();
+    let held = lease(&repo, 300).await.unwrap();
     repo.finish(
         root(),
-        gen_,
+        &held,
         &RunResult::Succeeded(ExportRunStats::default()),
     )
     .await
     .unwrap();
 
-    assert!(repo.try_lease(root(), 60, 300).await.unwrap().is_none());
-    assert!(repo.try_lease(root(), 60, 300).await.unwrap().is_none());
+    assert!(lease(&repo, 300).await.is_none());
+    assert!(lease(&repo, 300).await.is_none());
     assert!(repo.due(300).await.unwrap().is_empty());
 
     sqlx::query("UPDATE data_export_targets SET last_run_at = now() - interval '301 seconds'")
@@ -292,7 +291,7 @@ async fn a_finished_run_is_not_leased_again_within_the_interval() {
         .await
         .unwrap();
     assert_eq!(repo.due(300).await.unwrap(), vec![root()]);
-    assert!(repo.try_lease(root(), 60, 300).await.unwrap().is_some());
+    assert!(lease(&repo, 300).await.is_some());
 }
 
 #[tokio::test]
@@ -305,13 +304,13 @@ async fn saving_the_target_lifts_the_backoff_and_the_error() {
         .unwrap()
         .target
         .activated_at;
-    repo.put_ref(root(), gen_, &thing_ref("irrigation:tree:1"))
+    let held = lease(&repo, 0).await.unwrap();
+    repo.put_ref(root(), &held, &thing_ref("irrigation:tree:1"))
         .await
         .unwrap();
-    repo.try_lease(root(), 60, 0).await.unwrap().unwrap();
     repo.finish(
         root(),
-        gen_,
+        &held,
         &RunResult::Failed {
             error: "target refused the credentials (HTTP 401)".into(),
             base_interval_secs: 300,
@@ -343,12 +342,10 @@ async fn saving_the_target_lifts_the_backoff_and_the_error() {
 async fn a_ref_written_during_a_generation_change_waits_and_is_dropped() {
     let app = spawn_app().await;
     let repo = PgDataExportRepository::new(app.db_pool.clone());
-    let stale = repo
-        .upsert(root(), &config("https://a.example.org/v1.1"))
+    repo.upsert(root(), &config("https://a.example.org/v1.1"))
         .await
-        .unwrap()
-        .target
-        .activated_at;
+        .unwrap();
+    let stale = lease(&repo, 0).await.unwrap();
     let mut change = app.db_pool.begin().await.unwrap();
     sqlx::query("UPDATE data_export_targets SET activated_at = activated_at + interval '1 second'")
         .execute(&mut *change)
@@ -358,7 +355,7 @@ async fn a_ref_written_during_a_generation_change_waits_and_is_dropped() {
     let writer = PgDataExportRepository::new(app.db_pool.clone());
     let put = tokio::spawn(async move {
         writer
-            .put_ref(root(), stale, &thing_ref("irrigation:tree:1"))
+            .put_ref(root(), &stale, &thing_ref("irrigation:tree:1"))
             .await
     });
     tokio::time::sleep(std::time::Duration::from_millis(200)).await;
@@ -366,4 +363,44 @@ async fn a_ref_written_during_a_generation_change_waits_and_is_dropped() {
     put.await.unwrap().unwrap();
 
     assert!(repo.refs(root()).await.unwrap().is_empty());
+}
+
+#[tokio::test]
+async fn a_pass_whose_lease_was_taken_over_writes_nothing() {
+    let app = spawn_app().await;
+    let repo = PgDataExportRepository::new(app.db_pool.clone());
+    repo.upsert(root(), &config("https://a.example.org/v1.1"))
+        .await
+        .unwrap();
+    let old = lease(&repo, 0).await.unwrap();
+    sqlx::query("UPDATE data_export_targets SET leased_until = now() - interval '1 second'")
+        .execute(&app.db_pool)
+        .await
+        .unwrap();
+    let new = lease(&repo, 0)
+        .await
+        .expect("an expired lease can be taken over");
+
+    assert!(!repo.renew_lease(root(), &old, 60).await.unwrap());
+    repo.put_ref(root(), &old, &thing_ref("irrigation:tree:1"))
+        .await
+        .unwrap();
+    repo.advance_cursor(root(), &old, Uuid::now_v7())
+        .await
+        .unwrap();
+    repo.finish(
+        root(),
+        &old,
+        &RunResult::Succeeded(ExportRunStats::default()),
+    )
+    .await
+    .unwrap();
+
+    assert!(repo.refs(root()).await.unwrap().is_empty());
+    assert_eq!(repo.cursor(root()).await.unwrap(), None);
+    assert!(
+        lease(&repo, 0).await.is_none(),
+        "the old pass must not end the new pass's lease"
+    );
+    assert!(repo.renew_lease(root(), &new, 60).await.unwrap());
 }

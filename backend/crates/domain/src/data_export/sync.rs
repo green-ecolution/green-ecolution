@@ -131,14 +131,22 @@ pub trait ExportRefReader: Send + Sync {
     ) -> Result<HashMap<String, ExportRef>, RepositoryError>;
 }
 
+/// Proof that a pass holds a target. The stores write only while the target
+/// still has this generation (`activated_at`) and this lease token, so neither
+/// a pass that outlived a base-URL change nor one whose lease another replica
+/// took over writes anything. A fenced write is not an error.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ExportLease {
+    pub generation: DateTime<Utc>,
+    pub token: Uuid,
+}
+
 #[async_trait::async_trait]
 pub trait ExportRefWriter: Send + Sync {
-    /// Writes only while the target still has this generation (`activated_at`), so a
-    /// pass that outlived a base-URL change writes nothing. A stale write is not an error.
     async fn put_ref(
         &self,
         org: Id<Organization>,
-        generation: DateTime<Utc>,
+        lease: &ExportLease,
         export_ref: &ExportRef,
     ) -> Result<(), RepositoryError>;
 }
@@ -150,27 +158,33 @@ pub trait ExportRunStore: Send + Sync {
     /// Enabled, not leased, past their backoff and last run at least
     /// `interval_secs` ago, so several replicas run a target once per interval.
     async fn due(&self, interval_secs: i64) -> Result<Vec<Id<Organization>>, RepositoryError>;
-    /// `None` when another replica holds the lease or the target is not due.
+    /// Takes the lease under `token`; `None` when another replica holds it or the
+    /// target is not due.
     async fn try_lease(
         &self,
         org: Id<Organization>,
+        token: Uuid,
         lease_secs: i64,
         interval_secs: i64,
     ) -> Result<Option<StoredExportTarget>, RepositoryError>;
-    /// Writes only while the target still has this generation (`activated_at`), so a
-    /// pass that outlived a base-URL change writes nothing. A stale write is not an error.
+    /// Extends the lease to `lease_secs` from now; `false` when it is no longer held.
+    async fn renew_lease(
+        &self,
+        org: Id<Organization>,
+        lease: &ExportLease,
+        lease_secs: i64,
+    ) -> Result<bool, RepositoryError>;
     async fn finish(
         &self,
         org: Id<Organization>,
-        generation: DateTime<Utc>,
+        lease: &ExportLease,
         result: &RunResult,
     ) -> Result<(), RepositoryError>;
     async fn cursor(&self, org: Id<Organization>) -> Result<Option<Uuid>, RepositoryError>;
-    /// Like `finish`, writes only while the target still has this generation.
     async fn advance_cursor(
         &self,
         org: Id<Organization>,
-        generation: DateTime<Utc>,
+        lease: &ExportLease,
         cursor: Uuid,
     ) -> Result<(), RepositoryError>;
 }

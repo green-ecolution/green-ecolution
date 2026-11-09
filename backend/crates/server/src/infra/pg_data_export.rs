@@ -1,6 +1,5 @@
 use std::collections::{BTreeSet, HashMap};
 
-use chrono::{DateTime, Utc};
 use sqlx::PgPool;
 use std::str::FromStr;
 use uuid::Uuid;
@@ -8,8 +7,8 @@ use uuid::Uuid;
 use domain::{
     Id, RepositoryError,
     data_export::{
-        ExportAuth, ExportEntity, ExportReading, ExportReadingSource, ExportRef, ExportRefReader,
-        ExportRefWriter, ExportRunStore, ExportTargetConfig, ExportTargetReader,
+        ExportAuth, ExportEntity, ExportLease, ExportReading, ExportReadingSource, ExportRef,
+        ExportRefReader, ExportRefWriter, ExportRunStore, ExportTargetConfig, ExportTargetReader,
         ExportTargetSnapshot, ExportTargetWriter, ReadingBatch, RemoteId, RunResult,
         StoredExportTarget,
     },
@@ -208,7 +207,7 @@ impl ExportRefWriter for PgDataExportRepository {
     async fn put_ref(
         &self,
         org: Id<Organization>,
-        generation: DateTime<Utc>,
+        lease: &ExportLease,
         export_ref: &ExportRef,
     ) -> Result<(), RepositoryError> {
         sqlx::query!(
@@ -217,6 +216,7 @@ impl ExportRefWriter for PgDataExportRepository {
                SELECT $1, $2, $3, $4, $5, $6, $7
                WHERE EXISTS (SELECT 1 FROM data_export_targets
                              WHERE organization_id = $1 AND activated_at = $8
+                               AND lease_token = $9
                              FOR SHARE)
                ON CONFLICT (organization_id, ge_key) DO UPDATE SET
                    entity = EXCLUDED.entity,
@@ -231,7 +231,8 @@ impl ExportRefWriter for PgDataExportRepository {
             export_ref.content_hash,
             export_ref.last_value,
             export_ref.deleted_marked,
-            generation,
+            lease.generation,
+            lease.token,
         )
         .execute(&self.pool)
         .await?;
@@ -270,13 +271,15 @@ impl ExportRunStore for PgDataExportRepository {
     async fn try_lease(
         &self,
         org: Id<Organization>,
+        token: Uuid,
         lease_secs: i64,
         interval_secs: i64,
     ) -> Result<Option<StoredExportTarget>, RepositoryError> {
         let row = sqlx::query_as!(
             ExportTargetSnapshot,
             r#"UPDATE data_export_targets
-               SET leased_until = now() + make_interval(secs => $2::bigint::float8)
+               SET leased_until = now() + make_interval(secs => $2::bigint::float8),
+                   lease_token = $4
                WHERE organization_id = $1
                  AND enabled
                  AND (leased_until IS NULL OR leased_until < now())
@@ -289,17 +292,39 @@ impl ExportRunStore for PgDataExportRepository {
             org.value(),
             lease_secs,
             interval_secs,
+            token,
         )
         .fetch_optional(&self.pool)
         .await?;
         row.map(StoredExportTarget::reconstitute).transpose()
     }
 
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn renew_lease(
+        &self,
+        org: Id<Organization>,
+        lease: &ExportLease,
+        lease_secs: i64,
+    ) -> Result<bool, RepositoryError> {
+        let renewed = sqlx::query!(
+            r#"UPDATE data_export_targets
+               SET leased_until = now() + make_interval(secs => $4::bigint::float8)
+               WHERE organization_id = $1 AND activated_at = $2 AND lease_token = $3"#,
+            org.value(),
+            lease.generation,
+            lease.token,
+            lease_secs,
+        )
+        .execute(&self.pool)
+        .await?;
+        Ok(renewed.rows_affected() == 1)
+    }
+
     #[tracing::instrument(level = "debug", skip(self, result))]
     async fn finish(
         &self,
         org: Id<Organization>,
-        generation: DateTime<Utc>,
+        lease: &ExportLease,
         result: &RunResult,
     ) -> Result<(), RepositoryError> {
         match result {
@@ -308,13 +333,14 @@ impl ExportRunStore for PgDataExportRepository {
                     .map_err(|e| RepositoryError::Internal(format!("run stats: {e}")))?;
                 sqlx::query!(
                     r#"UPDATE data_export_targets
-                       SET leased_until = NULL, last_run_at = now(), last_success_at = now(),
-                           last_error = NULL, last_run_stats = $2,
+                       SET leased_until = NULL, lease_token = NULL, last_run_at = now(),
+                           last_success_at = now(), last_error = NULL, last_run_stats = $2,
                            failure_count = 0, next_attempt_at = NULL
-                       WHERE organization_id = $1 AND activated_at = $3"#,
+                       WHERE organization_id = $1 AND activated_at = $3 AND lease_token = $4"#,
                     org.value(),
                     stats,
-                    generation,
+                    lease.generation,
+                    lease.token,
                 )
                 .execute(&self.pool)
                 .await?;
@@ -328,15 +354,17 @@ impl ExportRunStore for PgDataExportRepository {
                 // failure waits interval x 2.
                 sqlx::query!(
                     r#"UPDATE data_export_targets
-                       SET leased_until = NULL, last_run_at = now(), last_error = $2,
+                       SET leased_until = NULL, lease_token = NULL, last_run_at = now(),
+                           last_error = $2,
                            failure_count = failure_count + 1,
                            next_attempt_at = now() + make_interval(
                                secs => LEAST($3::bigint * power(2, LEAST(failure_count + 1, 20)), 3600)::float8)
-                       WHERE organization_id = $1 AND activated_at = $4"#,
+                       WHERE organization_id = $1 AND activated_at = $4 AND lease_token = $5"#,
                     org.value(),
                     error,
                     base_interval_secs,
-                    generation,
+                    lease.generation,
+                    lease.token,
                 )
                 .execute(&self.pool)
                 .await?;
@@ -360,14 +388,17 @@ impl ExportRunStore for PgDataExportRepository {
     async fn advance_cursor(
         &self,
         org: Id<Organization>,
-        generation: DateTime<Utc>,
+        lease: &ExportLease,
         cursor: Uuid,
     ) -> Result<(), RepositoryError> {
         sqlx::query!(
-            "UPDATE data_export_targets SET cursor_reading_id = $3 WHERE organization_id = $1 AND activated_at = $2 AND (cursor_reading_id IS NULL OR cursor_reading_id < $3)",
+            r#"UPDATE data_export_targets SET cursor_reading_id = $3
+               WHERE organization_id = $1 AND activated_at = $2 AND lease_token = $4
+                 AND (cursor_reading_id IS NULL OR cursor_reading_id < $3)"#,
             org.value(),
-            generation,
+            lease.generation,
             cursor,
+            lease.token,
         )
         .execute(&self.pool)
         .await?;

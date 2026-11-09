@@ -1,8 +1,8 @@
 use domain::{
     Id,
     data_export::{
-        BASE_URL_FIELD, ExportAuth, ExportReadingSource, ExportRunStore, ExportTargetConfig,
-        ExportTargetWriter, ExportUrl, v7_floor,
+        BASE_URL_FIELD, ExportAuth, ExportLease, ExportReadingSource, ExportRunStore,
+        ExportTargetConfig, ExportTargetWriter, ExportUrl, v7_floor,
     },
     module::ModuleKey,
     sensor_model::SensorAbilityName,
@@ -139,14 +139,23 @@ async fn the_cursor_is_fenced_by_the_target_generation() {
         .await
         .unwrap();
     assert_eq!(repo.cursor(Id::new(root())).await.unwrap(), None);
+    let token = Uuid::now_v7();
+    repo.try_lease(Id::new(root()), token, 60, 0)
+        .await
+        .unwrap()
+        .unwrap();
+    let lease = ExportLease {
+        generation: a.target.activated_at,
+        token,
+    };
 
     let c = Uuid::now_v7();
-    repo.advance_cursor(Id::new(root()), a.target.activated_at, c)
+    repo.advance_cursor(Id::new(root()), &lease, c)
         .await
         .unwrap();
     assert_eq!(repo.cursor(Id::new(root())).await.unwrap(), Some(c));
 
-    repo.advance_cursor(Id::new(root()), a.target.activated_at, Uuid::nil())
+    repo.advance_cursor(Id::new(root()), &lease, Uuid::nil())
         .await
         .unwrap();
     assert_eq!(
@@ -159,7 +168,7 @@ async fn the_cursor_is_fenced_by_the_target_generation() {
     repo.upsert(Id::new(root()), &cfg("https://b.example.org/v1.1"))
         .await
         .unwrap();
-    repo.advance_cursor(Id::new(root()), a.target.activated_at, Uuid::now_v7())
+    repo.advance_cursor(Id::new(root()), &lease, Uuid::now_v7())
         .await
         .unwrap();
     assert_eq!(

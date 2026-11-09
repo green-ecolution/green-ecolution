@@ -33,9 +33,9 @@ pub use scope::{export_scope, responsible_target};
 #[doc(hidden)]
 pub use snapshot::ExportTargetSnapshot;
 pub use sync::{
-    ExportEntity, ExportRef, ExportRefReader, ExportRefWriter, ExportRunStore, RemoteId, RunResult,
-    SENSOR_KEY, SensorThingsSink, SinkError, SinkSession, StateStream, location_key, property_key,
-    state_stream_key,
+    ExportEntity, ExportLease, ExportRef, ExportRefReader, ExportRefWriter, ExportRunStore,
+    RemoteId, RunResult, SENSOR_KEY, SensorThingsSink, SinkError, SinkSession, StateStream,
+    location_key, property_key, state_stream_key,
 };
 pub use target::{
     ExportAuthSummary, ExportRunStats, ExportTarget, ExportTargetConfig, ExportTargetDraft,

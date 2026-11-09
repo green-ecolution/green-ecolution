@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE data_export_targets\n                       SET leased_until = NULL, lease_token = NULL, last_run_at = now(),\n                           last_success_at = now(), last_error = NULL, last_run_stats = $2,\n                           failure_count = 0, next_attempt_at = NULL\n                       WHERE organization_id = $1 AND activated_at = $3 AND lease_token = $4",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Jsonb",
+        "Timestamptz",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "b583346b9cd47cccd1e0b7c6026483bd745d04d9b7ee2bad2a8f2197f6c3986e"
+}
