@@ -73,6 +73,7 @@ pub struct Application {
     _jwks: Arc<JwksProvider>,
     shutdown_tx: tokio::sync::watch::Sender<bool>,
     mqtt_handle: Option<tokio::task::JoinHandle<()>>,
+    export_handle: Option<tokio::task::JoinHandle<()>>,
     module_mounts: Vec<server::module::ModuleMount>,
     event_bus: Arc<dyn EventBus>,
 }
@@ -323,12 +324,14 @@ impl Application {
                 reading_settle: Duration::from_secs(settings.data_export.reading_settle_secs),
             },
         ));
-        if settings.data_export.enabled {
-            let _export_worker = infra::data_export_worker::spawn(
+        let (shutdown_tx, shutdown_rx) = tokio::sync::watch::channel(false);
+        let export_handle = settings.data_export.enabled.then(|| {
+            infra::data_export_worker::spawn(
                 data_export_sync.clone(),
                 Duration::from_secs(settings.data_export.interval_secs),
-            );
-        }
+                shutdown_rx.clone(),
+            )
+        });
         let sensor_parsers = Arc::new(
             server::service::sensor_parsers::SensorParserRegistry::new(sensor_parsers)
                 .map_err(std::io::Error::other)?,
@@ -340,7 +343,6 @@ impl Application {
             tokio::spawn(task);
         }
 
-        let (shutdown_tx, shutdown_rx) = tokio::sync::watch::channel(false);
         let (mqtt_state, mqtt_handle) = spawn_mqtt_subscriber(
             &settings,
             services.sensor.clone(),
@@ -463,6 +465,7 @@ impl Application {
             _jwks: jwks,
             shutdown_tx,
             mqtt_handle,
+            export_handle,
             module_mounts,
             event_bus,
         })
@@ -510,6 +513,14 @@ impl Application {
                 .is_err()
         {
             tracing::warn!("mqtt subscriber did not stop within 10s; exiting anyway");
+        }
+        // A pass stops at its next safe point; one slow request can still take 10 s.
+        if let Some(handle) = self.export_handle
+            && tokio::time::timeout(Duration::from_secs(15), handle)
+                .await
+                .is_err()
+        {
+            tracing::warn!("data export did not stop within 15s; exiting anyway");
         }
         Ok(())
     }

@@ -3,7 +3,10 @@
 
 use std::{
     collections::{BTreeMap, BTreeSet, HashMap, HashSet},
-    sync::Arc,
+    sync::{
+        Arc,
+        atomic::{AtomicBool, Ordering},
+    },
     time::Duration,
 };
 
@@ -81,6 +84,7 @@ pub struct DataExportSync {
     org_settings: Arc<dyn SettingsReader>,
     clock: Arc<dyn Clock>,
     settings: SyncSettings,
+    stop: AtomicBool,
 }
 
 impl DataExportSync {
@@ -113,7 +117,18 @@ impl DataExportSync {
                 batch_size: settings.batch_size.max(1),
                 ..settings
             },
+            stop: AtomicBool::new(false),
         }
+    }
+
+    /// Ends a running pass at its next safe point, as if its budget ran out, and
+    /// starts no further one. For shutdown.
+    pub fn request_stop(&self) {
+        self.stop.store(true, Ordering::Relaxed);
+    }
+
+    fn stopping(&self) -> bool {
+        self.stop.load(Ordering::Relaxed)
     }
 
     pub async fn run_due(&self) {
@@ -125,6 +140,9 @@ impl DataExportSync {
             }
         };
         for org in due {
+            if self.stopping() {
+                return;
+            }
             if let Err(e) = self.sync(org).await {
                 tracing::warn!(organization.id = %org, error = %e, "export pass failed");
             }
@@ -205,6 +223,7 @@ impl DataExportSync {
             readings: self.readings.as_ref(),
             stats: ExportRunStats::default(),
             clock: self.clock.as_ref(),
+            stop: &self.stop,
             started,
             budget: self.settings.run_budget,
             refused: HashSet::new(),
@@ -275,6 +294,7 @@ struct Pass<'a> {
     readings: &'a dyn ExportReadingSource,
     stats: ExportRunStats,
     clock: &'a dyn Clock,
+    stop: &'a AtomicBool,
     started: DateTime<Utc>,
     budget: Duration,
     /// Remote entities the target rejected in this pass, so later readings of the
@@ -357,11 +377,13 @@ fn plain_ref(ge_key: impl Into<String>, entity: ExportEntity, remote_id: RemoteI
 }
 
 impl Pass<'_> {
+    /// Also true once a stop was requested, so shutdown ends the pass at the same
+    /// safe points as the budget does.
     fn out_of_budget(&self) -> bool {
         let elapsed = (self.clock.now() - self.started)
             .to_std()
             .unwrap_or_default();
-        elapsed >= self.budget
+        elapsed >= self.budget || self.stop.load(Ordering::Relaxed)
     }
 
     /// A single slow step can outlast the margin between budget and lease, so the
@@ -1978,6 +2000,21 @@ mod tests {
             *f.readings.active.lock().unwrap(),
             vec![(ModuleKey::new("irrigation").unwrap(), org(1))]
         );
+    }
+
+    #[tokio::test]
+    async fn a_requested_stop_ends_the_pass_before_any_object() {
+        let f = build(Setup {
+            things: vec![tree(1, "good")],
+            ..Setup::default()
+        });
+        f.sync.request_stop();
+
+        f.sync.sync(org(1)).await.unwrap().unwrap();
+        f.sync.run_due().await;
+
+        assert!(calls(&f).is_empty());
+        assert_eq!(f.runs.results().len(), 1, "run_due starts no further pass");
     }
 
     #[tokio::test]
