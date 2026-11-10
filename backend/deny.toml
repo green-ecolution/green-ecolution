@@ -23,6 +23,9 @@ ignore = [
   # rustls-pemfile is unmaintained; still required by rumqttc's use-rustls
   # feature.
   "RUSTSEC-2025-0134",
+  # astral-tokio-tar is unmaintained; dev-only via testcontainers (0.27 and
+  # 0.28 depend on it unconditionally). Remove once testcontainers drops it.
+  "RUSTSEC-2026-0440",
 ]
 
 [licenses]
