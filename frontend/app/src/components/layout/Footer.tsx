@@ -54,7 +54,7 @@ function Footer() {
       className={`bg-white transition-[padding] ease-in-out duration-300 motion-reduce:transition-none ${isPluginView ? '' : 'mt-16'} ${collapsed ? 'lg:pl-[4.5rem]' : 'lg:pl-[16rem]'} ${isMapPage ? 'hidden' : ''}`}
     >
       <div className="container text-sm border-t border-dark-50 py-4 lg:flex lg:justify-between lg:items-center">
-        <p className="text-dark-400 mb-5 lg:mb-0">{t('footer.tagline', { version })}</p>
+        <p className="text-dark-600 mb-5 lg:mb-0">{t('footer.tagline', { version })}</p>
         <nav aria-label={t('footer.nav')}>
           <ul className="flex flex-wrap gap-x-4">
             {navItems.map((navItem) => (

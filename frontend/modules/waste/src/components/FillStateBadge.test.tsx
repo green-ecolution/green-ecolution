@@ -31,7 +31,7 @@ describe('FillStateBadge', () => {
 
   it('colors the badge by state', () => {
     const { rerender } = render(<FillStateBadge state="full" percent={85} />)
-    expect(screen.getByText('Voll · 85 %').closest('[data-fill-state]')).toHaveClass('text-red')
+    expect(screen.getByText('Voll · 85 %').closest('[data-fill-state]')).toHaveClass('text-red-700')
     rerender(<FillStateBadge state="normal" percent={40} />)
     expect(screen.getByText('Normal · 40 %').closest('[data-fill-state]')).toHaveClass(
       'text-green-dark',
