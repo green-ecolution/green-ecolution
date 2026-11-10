@@ -177,7 +177,8 @@
                     "name",
                     "moisture",
                     "trees",
-                    "last_watered"
+                    "last_watered",
+                    "watering_status"
                   ]
                 },
                 {

@@ -202,6 +202,7 @@ pub enum ClusterSortParam {
     Moisture,
     Trees,
     LastWatered,
+    WateringStatus,
 }
 
 impl From<ClusterSortParam> for ClusterSortField {
@@ -211,6 +212,7 @@ impl From<ClusterSortParam> for ClusterSortField {
             ClusterSortParam::Moisture => Self::Moisture,
             ClusterSortParam::Trees => Self::Trees,
             ClusterSortParam::LastWatered => Self::LastWatered,
+            ClusterSortParam::WateringStatus => Self::WateringStatus,
         }
     }
 }
