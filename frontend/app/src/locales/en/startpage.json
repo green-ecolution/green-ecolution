@@ -60,7 +60,7 @@
     },
     "routing": {
       "label": "Dynamic route planning",
-      "description": "Dynamic calculation of watering routes using open-source software (Valhalla & Vroom)."
+      "description": "Dynamic calculation of watering routes with Valhalla and Streamlet."
     }
   }
 }

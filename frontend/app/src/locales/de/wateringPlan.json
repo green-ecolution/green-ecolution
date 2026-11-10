@@ -58,7 +58,7 @@
   "update": {
     "backLabel": "Zurück zum Einsatzplan",
     "title": "Einsatzplan für den {date} bearbeiten",
-    "description": "Der Einsatzplan kann in dieser Ansicht editiert werden, falls bestimmte Daten nicht mehr stimmen oder z. B. bestimmte Informationen zusätzlich hinterlegt werden müssen. Ein Einsatzplan erfordert immer mindestens einen Stopp, der angefahren werden soll, und mindestens eine:n Mitarbeiter:in, die den Einsatzplan durchführen soll. Zudem muss ein Fahrzeug hinterlegt werden.",
+    "description": "Ein Einsatzplan braucht mindestens einen Stopp, eine Person und ein Fahrzeug.",
     "statusEditNotice": "Der Status eines Einsatzplans kann separat editiert werden.",
     "deletingLabel": "Der Einsatzplan wird gelöscht"
   },
@@ -91,7 +91,7 @@
     "trailerPlaceholder": "Wähle einen Anhänger aus, sofern vorhanden",
     "noTrailerOption": "Keinen Anhänger",
     "driversLabel": "Verknüpfte Mitarbeitende",
-    "driversMultiSelectHint": "Indem du die Taste »Shift« gedrückt hältst, kannst du eine Mehrauswahl tätigen.",
+    "driversPlaceholder": "Mitarbeitende auswählen",
     "noQualifiedDriverError": "Kein ausgewählter Mitarbeiter hat alle erforderlichen Führerscheine für die gewählten Fahrzeuge.",
     "createLeaveMessage": "Möchtest du die Seite wirklich verlassen? Deine Eingaben zum Erstellen des Einsatzplans gehen verloren, wenn du jetzt gehst.",
     "updateLeaveMessage": "Möchtest du die Seite wirklich verlassen? Deine Änderungen am Einsatzplan gehen verloren, wenn du jetzt gehst.",
@@ -111,7 +111,7 @@
   "create": {
     "backLabel": "Zu allen Einsatzplänen",
     "title": "Neuen Einsatzplan erstellen",
-    "description": "Ein Einsatzplan bildet eine Route ab, indem ihr ein Fahrzeug, einen Anhänger, Mitarbeitende und anzufahrende Stopps zugewiesen werden können. Ein neu erstellter Einsatzplan wird automatisch als »geplant« eingestuft. Der Startpunkt des Einsatzplans kann aus den konfigurierten Depotstandorten ausgewählt werden."
+    "description": "Wähle Datum, Fahrzeug, Mitarbeitende und die anzufahrenden Stopps. Ein neuer Einsatzplan startet als »geplant«."
   },
   "board": {
     "moduleSwitcherAriaLabel": "Planungsmodul",

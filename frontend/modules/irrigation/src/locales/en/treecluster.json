@@ -102,7 +102,7 @@
   },
   "dashboard": {
     "backToList": "Back to all watering groups",
-    "title": "Watering group: {name}",
+    "title": "{name}",
     "editLink": "Edit group",
     "moreActionsAriaLabel": "More actions",
     "deleteMenuItem": "Delete group",

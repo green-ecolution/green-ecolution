@@ -68,6 +68,19 @@ const ClusterWaterSupplyChart = ({ clusterId, hasSensors }: ClusterWaterSupplyCh
   const markers = wateringEventMarkers(data?.wateringEvents ?? [], rows, bucket)
   const thresholds = data?.conditionThresholds
 
+  if (!hasSensors) {
+    return (
+      <Card variant="outlined">
+        <CardHeader>
+          <CardTitle>{t('waterSupplyChart.title')}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">{t('waterSupplyChart.noSensorsNotice')}</p>
+        </CardContent>
+      </Card>
+    )
+  }
+
   return (
     <Card variant="outlined">
       <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-2">
@@ -82,11 +95,7 @@ const ClusterWaterSupplyChart = ({ clusterId, hasSensors }: ClusterWaterSupplyCh
         />
       </CardHeader>
       <CardContent>
-        {!hasSensors ? (
-          <p className="flex h-[260px] items-center justify-center text-center text-sm text-muted-foreground">
-            {t('waterSupplyChart.noSensorsNotice')}
-          </p>
-        ) : !data ? (
+        {!data ? (
           <Loading
             className="h-[260px] justify-center"
             label={t('waterSupplyChart.loadingLabel')}

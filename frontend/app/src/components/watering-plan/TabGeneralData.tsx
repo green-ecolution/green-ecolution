@@ -7,7 +7,6 @@ import { DetailedList, StatusCard } from '@green-ecolution/ui'
 import StatusCardGrid from '../general/StatusCardGrid'
 import { format, formatDuration, intervalToDuration } from 'date-fns'
 import { useTranslation } from 'react-i18next'
-import { useWateringPlanStatusDetails } from '@/hooks/details/useDetailsForWateringPlanStatus'
 import { useSuspenseQuery, useQuery } from '@tanstack/react-query'
 import { userQueries, routingStartPointsQuery } from '@/api/queries'
 import { useDateLocale } from '@/lib/i18n/useFormatters'
@@ -22,7 +21,6 @@ interface TabGeneralDataProps {
 const TabGeneralData: React.FC<TabGeneralDataProps> = ({ wateringPlan, planning }) => {
   const { t, i18n } = useTranslation(['wateringPlan', 'common'])
   const dateLocale = useDateLocale()
-  const getWateringPlanStatusDetails = useWateringPlanStatusDetails()
   const { data: userRes } = useSuspenseQuery(userQueries.list({ page: 1, perPage: 100 }))
   const { data: startPoints } = useQuery(routingStartPointsQuery())
   const defaultStartPointName = startPoints?.[0]?.name
@@ -39,14 +37,6 @@ const TabGeneralData: React.FC<TabGeneralDataProps> = ({ wateringPlan, planning 
     label: string
     value: string
   }[] = [
-    {
-      label: t('detail.routeLengthLabel'),
-      value: wateringPlan.distance ? formatKm(wateringPlan.distance) : noData,
-    },
-    {
-      label: t('detail.startPointLabel'),
-      value: wateringPlan.startPointName ?? defaultStartPointName ?? noData,
-    },
     ...(planning
       ? [
           {
@@ -115,20 +105,9 @@ const TabGeneralData: React.FC<TabGeneralDataProps> = ({ wateringPlan, planning 
     },
   ]
 
-  const statusDetails = getWateringPlanStatusDetails(wateringPlan.status)
-
   return (
     <>
       <StatusCardGrid>
-        <li>
-          <StatusCard
-            status={statusDetails.color}
-            indicator="badge"
-            label={t('detail.currentStatusLabel')}
-            value={statusDetails.label}
-            description={statusDetails.description}
-          />
-        </li>
         {wateringPlan?.status === WateringPlanStatus.Canceled && wateringPlan.cancellationNote && (
           <li>
             <StatusCard

@@ -80,7 +80,7 @@
   "create": {
     "backLabel": "To all vehicles",
     "title": "Create new vehicle",
-    "description": "In this view you can create a new vehicle. Please note that every vehicle must have a unique number plate, since duplicate number plates are not allowed. The vehicle's dimensions must also be recorded so the navigation system can determine which routes the vehicle can take during a watering run."
+    "description": "The number plate must be unique. Route planning uses the dimensions to pick only roads the vehicle can take."
   },
   "form": {
     "numberPlatePlaceholder": "Number plate",

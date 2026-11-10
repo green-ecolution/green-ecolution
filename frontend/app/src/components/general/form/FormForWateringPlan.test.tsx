@@ -147,6 +147,14 @@ const mockUsers = [
   },
 ] as User[]
 
+const driverOptions = async () => {
+  await userEvent.click(screen.getByRole('combobox', { name: /verknüpfte mitarbeitende/i }))
+  const listbox = await screen.findByRole('listbox')
+  return within(listbox)
+    .getAllByRole('option')
+    .map((option) => option.textContent ?? '')
+}
+
 describe('FormForWateringPlan', () => {
   const mockOnSubmit = vi.fn()
   const mockSaveDraft = vi.fn()
@@ -229,7 +237,7 @@ describe('FormForWateringPlan', () => {
     expect(within(listbox).getByText(/HH-TR-0001/)).toBeInTheDocument()
   })
 
-  it('renders user select with options', () => {
+  it('renders user select with options', async () => {
     render(
       <TestWrapper defaultValues={defaultFormValues}>
         <FormForWateringPlan
@@ -244,14 +252,13 @@ describe('FormForWateringPlan', () => {
       </TestWrapper>,
     )
 
-    const userSelect = screen.getByRole('listbox', { name: /verknüpfte mitarbeitende/i })
-    const options = Array.from((userSelect as HTMLSelectElement).options).map((opt) => opt.text)
+    const options = await driverOptions()
 
     expect(options.some((opt) => opt.includes('Max Mustermann'))).toBe(true)
     expect(options.some((opt) => opt.includes('Anna Schmidt'))).toBe(true)
   })
 
-  it('offers only employees marked as selectable for watering plans', () => {
+  it('offers only employees marked as selectable for watering plans', async () => {
     render(
       <TestWrapper defaultValues={defaultFormValues}>
         <FormForWateringPlan
@@ -266,15 +273,14 @@ describe('FormForWateringPlan', () => {
       </TestWrapper>,
     )
 
-    const userSelect = screen.getByRole('listbox', { name: /verknüpfte mitarbeitende/i })
-    const options = Array.from((userSelect as HTMLSelectElement).options).map((opt) => opt.text)
+    const options = await driverOptions()
 
     expect(options.some((opt) => opt.includes('Max Mustermann'))).toBe(true)
     expect(options.some((opt) => opt.includes('Anna Schmidt'))).toBe(true)
     expect(options.some((opt) => opt.includes('Bernd Bürokraft'))).toBe(false)
   })
 
-  it('keeps a stored driver who is no longer selectable hidden from the picker while still validating their licence', () => {
+  it('keeps a stored driver who is no longer selectable hidden from the picker while still validating their licence', async () => {
     const formValues: WateringPlanForm = {
       ...defaultFormValues,
       transporterId: 'vehicle-uuid-1',
@@ -295,8 +301,7 @@ describe('FormForWateringPlan', () => {
       </TestWrapper>,
     )
 
-    const userSelect = screen.getByRole('listbox', { name: /verknüpfte mitarbeitende/i })
-    const options = Array.from((userSelect as HTMLSelectElement).options).map((opt) => opt.text)
+    const options = await driverOptions()
     expect(options.some((opt) => opt.includes('Bernd Bürokraft'))).toBe(false)
 
     expect(

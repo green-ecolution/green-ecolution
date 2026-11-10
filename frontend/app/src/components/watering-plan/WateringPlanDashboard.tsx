@@ -72,6 +72,7 @@ const WateringPlanDashboard = ({ wateringPlan }: WateringPlanDashboardProps) => 
             : undefined
         }
       >
+        <p className="mb-4 text-dark-600">{statusDetails.description}</p>
         {wateringPlan.description && <p className="mb-4">{wateringPlan.description}</p>}
         <div className="flex flex-wrap gap-4 items-center">
           {canEdit && showWateringPlanStatusButton(wateringPlan) && (

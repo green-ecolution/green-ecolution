@@ -102,7 +102,7 @@
   },
   "dashboard": {
     "backToList": "Zu allen Bewässerungsgruppen",
-    "title": "Bewässerungsgruppe: {name}",
+    "title": "{name}",
     "editLink": "Gruppe bearbeiten",
     "moreActionsAriaLabel": "Weitere Aktionen",
     "deleteMenuItem": "Gruppe löschen",

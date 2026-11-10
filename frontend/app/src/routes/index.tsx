@@ -44,7 +44,7 @@ function Startpage() {
                 icon={MoveRight}
               />
             )}
-            <Button asChild>
+            <Button variant="outline" asChild>
               <a href="mailto:info@green-ecolution.de">
                 {t('hero.ctaContact')}
                 <Mail />
