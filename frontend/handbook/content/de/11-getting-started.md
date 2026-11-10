@@ -32,10 +32,11 @@ Seitennavigation, dem Navigationspfad, dem Benutzermenü sowie Kopf- und Fußzei
 
 ### Seitennavigation
 
-Die Seitennavigation gliedert sich in die drei Bereiche **Grünflächen**, **Planung**
-und **Weiteres**. Unter **Grünflächen** liegen Karte, Bewässerungsgruppen und Bäume,
-unter **Planung** Einsatzpläne und Fahrzeuge, unter **Weiteres** das Handbuch, die
-Sensoren und die Auswertung. **Einstellungen** und das Benutzermenü sind davon getrennt
+Die Seitennavigation gliedert sich in die vier Bereiche **Grünflächen**, **Bestand**,
+**Planung** und **Weiteres**. Unter **Grünflächen** liegen Karte, Bewässerungsgruppen und
+Bäume, unter **Bestand** die Sensoren und bei aktivem Abfallmodul die Abfallbehälter,
+unter **Planung** Einsatzpläne und Fahrzeuge, unter **Weiteres** das Handbuch und die
+Auswertung. **Einstellungen** und das Benutzermenü sind davon getrennt
 am unteren Rand der Navigation angeheftet. Welche Einträge du siehst, hängt von deinen
 Rollen ab; mehr dazu steht in [Rollen und Sichtbarkeit](./introduction.md#rollen-und-sichtbarkeit).
 

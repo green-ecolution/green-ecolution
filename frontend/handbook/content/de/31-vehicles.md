@@ -8,7 +8,7 @@ routes: ['/vehicles', '/vehicles/$vehicleId', '/vehicles/new']
 
 ## Die Fahrzeugliste lesen
 
-Die Seite **Alle Fahrzeuge** zeigt jedes Fahrzeug mit seinem Kennzeichen und seinem Modell.
+Die Seite **Fahrzeuge** zeigt jedes Fahrzeug mit seinem Kennzeichen und seinem Modell.
 Ein farbiger Punkt davor steht für den Status; verweilst du mit dem Zeiger darauf, nennt
 die Anwendung ihn beim Namen. Darunter stehen der Fahrzeugtyp und die erfasste Kapazität (Wasser, Laderaum oder beides), und
 ist das Fenster breit genug, ergänzt dieselbe Zeile die erforderliche Führerscheinklasse;
@@ -34,7 +34,7 @@ Filter auf einmal zurücksetzt, sowie die Anzahl der gefundenen Fahrzeuge.
 
 ## Fahrzeug anlegen
 
-Auf der Seite **Alle Fahrzeuge** legst du ein neues Fahrzeug über
+Auf der Seite **Fahrzeuge** legst du ein neues Fahrzeug über
 **Neues Fahrzeug erstellen** an. Pflichtangaben sind Kennzeichen, Fahrzeugmodell,
 Fahrzeugtyp (Transporter oder Anhänger), mindestens eine Kapazität (Wasser oder Laderaum), die Verfügbarkeit, die
 erforderliche Führerscheinklasse sowie Höhe, Breite, Länge und Gewicht des Fahrzeugs;
