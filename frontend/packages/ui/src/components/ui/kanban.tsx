@@ -19,7 +19,9 @@ KanbanBoard.displayName = 'KanbanBoard'
 const kanbanColumnVariants = cva(
   // No motion-reduce guard: the dim/highlight tells the user whether a column is
   // a valid drop target, and a colour fade is not a vestibular trigger.
-  'flex w-[300px] shrink-0 snap-start flex-col gap-3 rounded-xl p-3 transition-[background-color,opacity] duration-base ease-out',
+  // From xl the columns share the width, so a desktop shows the whole board
+  // without a horizontal scroll nobody notices.
+  'flex w-[300px] shrink-0 snap-start flex-col gap-3 rounded-xl p-3 transition-[background-color,opacity] duration-base ease-out xl:w-auto xl:min-w-60 xl:flex-1',
   {
     variants: {
       tone: {

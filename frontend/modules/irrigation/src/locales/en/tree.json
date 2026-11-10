@@ -57,9 +57,7 @@
   },
   "list": {
     "title": "Trees",
-    "descriptionIntro": "Here you'll find an overview of all trees in a list view. The trees can also be displayed on a",
-    "mapLinkLabel": "map",
-    "descriptionOutro": ".",
+    "description": "All trees in your area of responsibility with their group, sensor and last watering.",
     "createButton": "Create new tree",
     "searchLabel": "Search trees",
     "searchPlaceholder": "Search by number or species",

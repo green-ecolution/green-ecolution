@@ -10,7 +10,7 @@
     "noSoilData": "–",
     "noRegion": "–",
     "lastWateredPrefix": "Last watered: {label}",
-    "lastWateredNever": "not watered yet",
+    "lastWateredNever": "never",
     "lastWateredToday": "today",
     "lastWateredYesterday": "yesterday",
     "lastWateredDaysAgo": "{count} days ago",
@@ -49,7 +49,8 @@
   },
   "treeDots": {
     "noTreesNotice": "No trees assigned yet",
-    "legend": "Sensor tree · measures the group"
+    "legend": "Sensor tree · measures the group",
+    "legendTree": "Tree"
   },
   "treeList": {
     "title": "Trees · {count}",
@@ -163,7 +164,7 @@
   "list": {
     "title": "Watering groups",
     "statsLabel": "{total} groups · {trees} trees",
-    "description": "Here you'll find an overview of all watering groups. A watering group consists of several trees grouped together based on their proximity and site conditions. Equipping individual trees with sensors allows an overall assessment of the watering status of the whole group.",
+    "description": "Trees that are watered together because of their proximity and similar site conditions.",
     "createButton": "Create group",
     "loadingLabel": "Loading data",
     "columnStatus": "Status",
@@ -178,6 +179,7 @@
     "filterSoil": "Soil type",
     "filterNoOptions": "No options available.",
     "regionUnknown": "Unknown region",
+    "sortWateringStatus": "Urgency",
     "sortName": "Name",
     "sortMoisture": "Moisture",
     "sortTrees": "Tree count",

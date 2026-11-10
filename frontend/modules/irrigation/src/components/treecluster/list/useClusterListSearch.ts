@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
 import { getRouteApi } from '@tanstack/react-router'
-import type { ListClustersSortEnum } from '@green-ecolution/backend-client'
+import { ListClustersSortEnum } from '@green-ecolution/backend-client'
 import type { SortDirection } from '@/components/general/list/ListSortMenu'
 
 // getRouteApi instead of importing Route: the route module imports this hook,
@@ -8,6 +8,9 @@ import type { SortDirection } from '@/components/general/list/ListSortMenu'
 const routeApi = getRouteApi('/_protected/treecluster/')
 
 type ClusterSearch = ReturnType<typeof routeApi.useSearch>
+
+// Driest groups first: the list is where crews pick what to water next.
+export const DEFAULT_CLUSTER_SORT = ListClustersSortEnum.WateringStatus
 
 export const useClusterListSearch = () => {
   const search = routeApi.useSearch()

@@ -5,7 +5,7 @@ import type { Tree } from '../../../api/client'
 import { Link } from '@tanstack/react-router'
 import React from 'react'
 import { useTranslation } from 'react-i18next'
-import { ListCard } from '@green-ecolution/ui'
+import { Badge, ListCard } from '@green-ecolution/ui'
 import SensorIcon from '@/components/icons/Sensor'
 import { useWateringStatusDetails } from '../../../hooks/details/useDetailsForWateringStatus'
 import { useDateLocale } from '@/lib/i18n/useFormatters'
@@ -34,10 +34,6 @@ const TreeCard: React.FC<TreeCardProps> = ({ tree, query = '' }) => {
               style={{ backgroundColor: statusDetails.colorHex }}
             />
             <span className="font-lato text-lg font-bold tabular-nums">
-              <span className="sr-only">
-                {t('card.statusSrLabel')}
-                {statusDetails.label}
-              </span>
               <span className="sr-only">{t('card.numberSrLabel')}</span>
               {highlightMatch(tree.number ?? t('card.numberUnknown'), query)}
             </span>
@@ -45,6 +41,10 @@ const TreeCard: React.FC<TreeCardProps> = ({ tree, query = '' }) => {
           <span className="text-base font-medium text-dark-800">
             {highlightMatch(tree.species, query)}
           </span>
+          <Badge variant={statusDetails.color}>
+            <span className="sr-only">{t('card.statusSrLabel')}</span>
+            {statusDetails.label}
+          </Badge>
         </div>
 
         <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-sm text-dark-600">

@@ -347,7 +347,7 @@ describe('FormForVehicle', () => {
     expect(screen.getByLabelText(/wassertank/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/laderaum/i)).toBeInTheDocument()
     expect(screen.getByText('für Fahrzeug')).toBeInTheDocument()
-    expect(screen.getByText('für Alle Fahrzeuge')).toBeInTheDocument()
+    expect(screen.getByText('für Fahrzeuge')).toBeInTheDocument()
   })
 
   it('still submits the stored value of a hidden capacity', async () => {

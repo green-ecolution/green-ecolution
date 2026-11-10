@@ -260,13 +260,15 @@ describe('Navigation', () => {
       expect(screen.getByText('Abfallbehälter')).toBeInTheDocument()
     })
 
-    it('omits the section while the waste module is not active', async () => {
+    it('keeps only the sensors under the assets headline while the waste module is not active', async () => {
       permissions.mockReturnValue(UNRESTRICTED)
       respondWithModules(['irrigation'])
       renderNavigation()
 
       await screen.findByText('Bäume')
-      expect(screen.queryByText('Bestand')).not.toBeInTheDocument()
+      expect(screen.getByText('Bestand')).toBeInTheDocument()
+      expect(screen.getByText('Sensoren')).toBeInTheDocument()
+      expect(screen.queryByText('Abfallbehälter')).not.toBeInTheDocument()
     })
 
     it('omits the section without the right to read waste bins', async () => {

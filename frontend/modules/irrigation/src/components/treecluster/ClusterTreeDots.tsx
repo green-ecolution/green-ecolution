@@ -40,12 +40,18 @@ const ClusterTreeDots: React.FC<ClusterTreeDotsProps> = ({ treeCount, sensorCoun
         )}
       </div>
 
-      {sensorCount > 0 && (
-        <p className="mt-2.5 flex items-center gap-1.5 text-xs text-dark-600">
-          <span className="h-2 w-2 rounded-full bg-green-dark" aria-hidden />
-          {t('treeDots.legend')}
-        </p>
-      )}
+      <p className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-dark-600">
+        <span className="flex items-center gap-1.5">
+          <span className="h-2 w-2 rounded-full bg-dark-300" aria-hidden />
+          {t('treeDots.legendTree')}
+        </span>
+        {sensorCount > 0 && (
+          <span className="flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-full bg-green-dark" aria-hidden />
+            {t('treeDots.legend')}
+          </span>
+        )}
+      </p>
     </div>
   )
 }

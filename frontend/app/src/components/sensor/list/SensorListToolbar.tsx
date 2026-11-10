@@ -1,4 +1,4 @@
-import { Suspense, type ReactNode } from 'react'
+import { Suspense } from 'react'
 import { Link2 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
@@ -22,10 +22,9 @@ interface SensorListToolbarProps {
   filteredRecords: number
   /** Sensors in scope before the toolbar's own filters; undefined until the list loads. */
   totalRecords?: number
-  action?: ReactNode
 }
 
-const SensorListToolbar = ({ filteredRecords, totalRecords, action }: SensorListToolbarProps) => {
+const SensorListToolbar = ({ filteredRecords, totalRecords }: SensorListToolbarProps) => {
   const { t, i18n } = useTranslation('sensor')
   const { search, setQuery, setSort, setFilter, setAttached, resetFilters } = useSensorListSearch()
   const getSensorStatusDetails = useSensorStatusDetails()
@@ -188,7 +187,6 @@ const SensorListToolbar = ({ filteredRecords, totalRecords, action }: SensorList
             onChange={setSort}
           />
         }
-        action={action}
       />
       <ActiveFilterChips
         chips={chips}

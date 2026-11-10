@@ -1,6 +1,8 @@
 import { modulesQuery, sensorQueries } from '@/api/queries'
 import { Badge, Button, Loading, Tabs, TabsList, TabsTrigger } from '@green-ecolution/ui'
 import Pagination from '@/components/general/Pagination'
+import ListPageHeader from '@/components/general/ListPageHeader'
+import ButtonLink from '@/components/general/links/ButtonLink'
 import EntityList from '@/components/general/EntityList'
 import SensorCard from '@/components/general/cards/SensorCard'
 import SensorListToolbar from '@/components/sensor/list/SensorListToolbar'
@@ -17,7 +19,7 @@ import {
   type SensorListView,
 } from '@/components/sensor/list/sensorListView'
 import { useQuery } from '@tanstack/react-query'
-import { createFileRoute, Link, redirect } from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { Zap } from 'lucide-react'
 import { SensorStatus } from '@green-ecolution/backend-client'
@@ -68,21 +70,21 @@ function Sensors() {
 
   return (
     <div className="container mt-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <article className="flex-1">
-          <h1 className="font-lato font-bold text-3xl mb-2 lg:text-4xl xl:text-5xl">
-            {t('list.title')}
-          </h1>
-          <p className="text-sm text-muted-foreground max-w-prose">{t('list.description')}</p>
-        </article>
-      </div>
+      <ListPageHeader
+        title={t('list.title')}
+        description={t('list.description')}
+        action={
+          <Can permission={['sensor:create']}>
+            <ButtonLink icon={Zap} label={t('list.activateButton')} link={{ to: '/sensors/new' }} />
+          </Can>
+        }
+      />
 
       <Tabs
         value={view}
         onValueChange={(value) => {
           if (value === 'activated' || value === 'prepared') setView(value)
         }}
-        className="mt-8"
       >
         <TabsList aria-label={t('list.viewsAriaLabel')}>
           {viewTabs.map((tab) => (
@@ -98,16 +100,6 @@ function Sensors() {
         <SensorListToolbar
           filteredRecords={sensorsRes?.pagination?.totalRecords ?? 0}
           totalRecords={view === 'prepared' ? preparedTotal : activatedTotal}
-          action={
-            <Can permission={['sensor:create']}>
-              <Button asChild size="sm" className="w-full sm:w-auto sm:shrink-0">
-                <Link to="/sensors/new">
-                  <Zap />
-                  {t('list.activateButton')}
-                </Link>
-              </Button>
-            </Can>
-          }
         />
 
         {!sensorsRes ? (

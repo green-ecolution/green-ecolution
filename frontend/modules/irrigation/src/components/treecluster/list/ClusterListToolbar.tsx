@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import {
@@ -19,16 +18,15 @@ import {
   useSoilConditionLabel,
   useSoilConditionOptions,
 } from '../../../hooks/details/useDetailsForSoilCondition'
-import { useClusterListSearch } from './useClusterListSearch'
+import { DEFAULT_CLUSTER_SORT, useClusterListSearch } from './useClusterListSearch'
 
 interface ClusterListToolbarProps {
   filteredRecords: number
   /** Clusters in scope before the toolbar's own filters; undefined until the list loads. */
   totalRecords?: number
-  action?: ReactNode
 }
 
-const ClusterListToolbar = ({ filteredRecords, totalRecords, action }: ClusterListToolbarProps) => {
+const ClusterListToolbar = ({ filteredRecords, totalRecords }: ClusterListToolbarProps) => {
   const { t } = useTranslation('treecluster')
   const { search, setQuery, setSort, setFilter, resetFilters } = useClusterListSearch()
   const getWateringStatusDetails = useWateringStatusDetails()
@@ -50,6 +48,7 @@ const ClusterListToolbar = ({ filteredRecords, totalRecords, action }: ClusterLi
     label: option.label,
   }))
   const sortOptions: { value: ListClustersSortEnum; label: string }[] = [
+    { value: ListClustersSortEnum.WateringStatus, label: t('list.sortWateringStatus') },
     { value: ListClustersSortEnum.Name, label: t('list.sortName') },
     { value: ListClustersSortEnum.Moisture, label: t('list.sortMoisture') },
     { value: ListClustersSortEnum.Trees, label: t('list.sortTrees') },
@@ -135,14 +134,18 @@ const ClusterListToolbar = ({ filteredRecords, totalRecords, action }: ClusterLi
         sort={
           <ListSortMenu
             options={sortOptions}
-            field={search.sort ?? ListClustersSortEnum.Name}
+            field={search.sort ?? DEFAULT_CLUSTER_SORT}
             direction={search.order ?? 'asc'}
             onChange={setSort}
           />
         }
-        action={action}
       />
-      <ActiveFilterChips chips={chips} onReset={resetFilters} resultLabel={resultLabel} />
+      <ActiveFilterChips
+        chips={chips}
+        onReset={resetFilters}
+        // The page header already states the unfiltered totals.
+        resultLabel={isFiltered ? resultLabel : ''}
+      />
     </>
   )
 }

@@ -70,9 +70,21 @@ function WasteBins() {
 
   return (
     <div className="container mt-6">
-      <ListPageHeader title={t('list.title')} description={t('list.description')} />
+      <ListPageHeader
+        title={t('list.title')}
+        description={t('list.description')}
+        action={
+          <Can permission={['waste_bin:create']}>
+            <ButtonLink
+              icon={Plus}
+              label={t('list.createButton')}
+              link={{ to: '/waste-bins/new' }}
+            />
+          </Can>
+        }
+      />
 
-      <section className="mt-10">
+      <section>
         <ListToolbar
           search={
             <ListSearchInput
@@ -93,15 +105,6 @@ function WasteBins() {
             />
           }
           sort={null}
-          action={
-            <Can permission={['waste_bin:create']}>
-              <ButtonLink
-                icon={Plus}
-                label={t('list.createButton')}
-                link={{ to: '/waste-bins/new' }}
-              />
-            </Can>
-          }
         />
         <ActiveFilterChips
           chips={

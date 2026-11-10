@@ -135,7 +135,14 @@ const protectedNavData = (
       key: 'assets',
       headline: t('sidebar.headlineAssets'),
       before: [],
-      after: [],
+      after: [
+        {
+          key: 'nav-assets-sensor',
+          label: t('sidebar.sensors'),
+          icon: <SensorIcon className="w-5 h-5" />,
+          to: '/sensors',
+        },
+      ],
     },
     {
       key: 'planning',
@@ -169,12 +176,6 @@ const protectedNavData = (
           label: t('sidebar.help'),
           icon: <BookOpen className="w-5 h-5" />,
           to: '/help',
-        },
-        {
-          key: 'nav-more-sensor',
-          label: t('sidebar.sensors'),
-          icon: <SensorIcon className="w-5 h-5" />,
-          to: '/sensors',
         },
       ],
       after: [

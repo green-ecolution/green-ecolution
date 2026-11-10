@@ -4,8 +4,8 @@
     "nameWithArticle": "das Fahrzeug"
   },
   "list": {
-    "title": "Alle Fahrzeuge",
-    "description": "Hier findest du eine Übersicht aller Fahrzeuge, die für Einsätze verwendet werden können.",
+    "title": "Fahrzeuge",
+    "description": "Fahrzeuge, die du für Einsätze einteilen kannst.",
     "createButton": "Neues Fahrzeug erstellen",
     "emptyMessage": "Es wurden leider keine Fahrzeuge gefunden.",
     "loadingLabel": "Fahrzeuge werden geladen …",

@@ -40,10 +40,6 @@ const SensorCard: React.FC<SensorCardProps> = ({ sensor, query = '' }) => {
               style={{ backgroundColor: statusDetails.colorHex }}
             />
             <span className="font-lato text-lg font-bold tabular-nums">
-              <span className="sr-only">
-                {t('card.statusSrLabel')}
-                {statusDetails.label}
-              </span>
               <span className="sr-only">{t('card.idSrLabel')}</span>
               {highlightMatch(sensor.id, query)}
             </span>
@@ -51,6 +47,10 @@ const SensorCard: React.FC<SensorCardProps> = ({ sensor, query = '' }) => {
           <span className="text-base font-medium text-dark-800">
             {highlightMatch(sensor.model?.name ?? t('card.modelUnknown'), query)}
           </span>
+          <Badge variant={statusDetails.color}>
+            <span className="sr-only">{t('card.statusSrLabel')}</span>
+            {statusDetails.label}
+          </Badge>
           {hasQualityWarning(sensor) && (
             <Badge variant={getDataQualityDetails(sensor).color}>
               {getDataQualityDetails(sensor).label}

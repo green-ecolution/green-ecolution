@@ -4,8 +4,8 @@
     "nameWithArticle": "the vehicle"
   },
   "list": {
-    "title": "All vehicles",
-    "description": "Here you'll find an overview of all vehicles that can be used for watering plans.",
+    "title": "Vehicles",
+    "description": "Vehicles you can assign to trips.",
     "createButton": "Create new vehicle",
     "emptyMessage": "Unfortunately no vehicles were found.",
     "loadingLabel": "Loading vehicles …",
