@@ -10,7 +10,7 @@
     },
     "sensors": {
       "headline": "Liste aller verbauten Sensoren",
-      "description": "Zeigt alle verbauten Sensoren in Flensburg inkl. Akkustand, Standort,…",
+      "description": "Zeigt alle verbauten Sensoren inkl. Akkustand, Standort,…",
       "linkLabel": "Zu den Sensoren"
     },
     "wateringPlans": {

@@ -10,7 +10,7 @@
     },
     "sensors": {
       "headline": "List of all installed sensors",
-      "description": "Shows all installed sensors in Flensburg incl. battery level, location,…",
+      "description": "Shows all installed sensors incl. battery level, location,…",
       "linkLabel": "To the sensors"
     },
     "wateringPlans": {

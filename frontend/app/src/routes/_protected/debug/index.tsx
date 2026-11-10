@@ -123,9 +123,6 @@ function Debug() {
               <KV label="Build">
                 <span className="font-mono">{__APP_BUILD_TIME__}</span>
               </KV>
-              <KV label="Stadt">
-                <span className="font-mono">{__APP_CITY__}</span>
-              </KV>
               <KV label="Backend-URL">
                 <span className="font-mono text-xs">{import.meta.env.VITE_BACKEND_BASEURL}</span>
               </KV>

@@ -84,13 +84,14 @@ Organisation. Module, die unter einer solchen Sperre aus sind, erscheinen dann g
 mehr in der Liste.
 
 Was eine übergeordnete Organisation für eine Unterorganisation einstellt, ist für diese
-verbindlich. Schaltet etwa Green Ecolution das Modul Abfall für das TBZ ab, taucht Abfall
-für alle, die nur im TBZ Rechte haben, in der Liste gar nicht mehr auf. Schaltet Green
-Ecolution es für das TBZ fest ein, steht am Schalter **Festgelegt von Green Ecolution**,
-und er lässt sich dort weder umlegen noch mit **Wieder erben** zurücksetzen. Ändern kann
-den Schalter nur, wer in der festlegenden Organisation oder darüber `setting:update` hat;
-dort bleibt er auch sichtbar, wenn das Modul aus ist. Ein Wert, den das TBZ selbst gesetzt
-hat, bleibt dagegen offen: Die übergeordnete Organisation kann ihn jederzeit überschreiben
+verbindlich. Schaltet etwa die oberste Organisation das Modul Abfall für einen Mandanten
+ab, taucht Abfall für alle, die nur bei diesem Mandanten Rechte haben, in der Liste gar
+nicht mehr auf. Schaltet sie es für den Mandanten fest ein, steht am Schalter
+**Festgelegt von** mit dem Namen der obersten Organisation. Der Schalter lässt sich dort
+dann weder umlegen noch mit **Wieder erben** zurücksetzen. Ändern kann ihn nur, wer in
+der festlegenden Organisation oder darüber `setting:update` hat; dort bleibt er auch
+sichtbar, wenn das Modul aus ist. Ein Wert, den der Mandant selbst gesetzt hat, bleibt
+dagegen offen: Die übergeordnete Organisation kann ihn jederzeit überschreiben
 und macht ihn damit ebenfalls verbindlich.
 
 Zum Ändern brauchst du zusätzlich zu `setting:read` die Berechtigung `setting:update`;
