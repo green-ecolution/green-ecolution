@@ -24,7 +24,10 @@ interface FormForWasteBinProps {
 }
 
 // The domain validator does not coerce, so a raw input string would reach the API.
-const asNumber = { setValueAs: parseDecimalInput } as const
+// An empty field becomes undefined so it matches the form's defaults.
+const asNumber = {
+  setValueAs: (value: unknown) => (value === '' ? undefined : parseDecimalInput(value)),
+} as const
 
 const FormForWasteBin = ({
   onSubmit,

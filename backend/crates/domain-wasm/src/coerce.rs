@@ -22,10 +22,12 @@ impl<'de> Deserialize<'de> for LooseF64 {
         enum Repr {
             N(f64),
             S(String),
+            Null(()),
         }
-        Ok(match Repr::deserialize(d)? {
-            Repr::N(n) => LooseF64(Some(n)),
-            Repr::S(s) => {
+        Ok(match Option::<Repr>::deserialize(d)? {
+            None | Some(Repr::Null(())) => LooseF64(None),
+            Some(Repr::N(n)) => LooseF64(Some(n)),
+            Some(Repr::S(s)) => {
                 let trimmed = s.trim();
                 if trimmed.is_empty() {
                     LooseF64(None)
@@ -162,6 +164,13 @@ mod tests {
     #[test]
     fn loose_f64_translates_comma() {
         assert_eq!(parse_loose_f64(json!("2,5")).0, Some(2.5));
+    }
+
+    // React Hook Form keeps an emptied number field as `undefined`, which reaches
+    // serde as null; it must count as "not set" rather than abort the validator.
+    #[test]
+    fn loose_f64_treats_null_as_not_set() {
+        assert_eq!(parse_loose_f64(json!(null)).0, None);
     }
 
     #[test]

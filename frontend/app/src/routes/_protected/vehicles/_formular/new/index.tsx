@@ -1,33 +1,20 @@
-import { VehicleType, DrivingLicense, VehicleAvailability } from '@green-ecolution/backend-client'
 import FormForVehicle from '@/components/general/form/FormForVehicle'
 import UnsavedChangesDialog from '@/components/general/form/UnsavedChangesDialog'
 import BackLink from '@/components/general/links/BackLink'
 import { VehicleForm } from '@/schema/vehicleSchema'
 import { createFileRoute } from '@tanstack/react-router'
-import { useVehicleForm } from '@/hooks/form/useVehicleForm'
-import { DefaultValues, FormProvider } from 'react-hook-form'
+import { NEW_VEHICLE_DEFAULTS, useVehicleForm } from '@/hooks/form/useVehicleForm'
+import { FormProvider } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 
 export const Route = createFileRoute('/_protected/vehicles/_formular/new/')({
   component: NewVehicle,
 })
 
-const defaultForm: DefaultValues<VehicleForm> = {
-  numberPlate: '',
-  type: VehicleType.Transporter,
-  drivingLicense: DrivingLicense.B,
-  availability: VehicleAvailability.Available,
-  height: 2.5,
-  width: 2,
-  length: 6,
-  weight: 3.5,
-  waterCapacity: 300,
-}
-
 function NewVehicle() {
   const { t } = useTranslation('vehicle')
   const { mutate, isError, error, form, navigationBlocker } = useVehicleForm('create', {
-    initForm: defaultForm,
+    initForm: NEW_VEHICLE_DEFAULTS,
   })
   const onSubmit = (data: VehicleForm) => {
     mutate({ ...data })
