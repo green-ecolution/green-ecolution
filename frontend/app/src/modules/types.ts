@@ -52,10 +52,6 @@ export interface ModuleStatistic {
   hero?: { companionKind: string; companionKey: I18nKey; linkLabelKey: I18nKey }
 }
 
-export interface DashboardTileProps {
-  variant: 'light' | 'dark'
-}
-
 export interface ModuleMap {
   permissions: PermissionRequirement
   /** Replaces the core description of the dashboard's map card while the module is active. */
@@ -251,7 +247,8 @@ export interface ModuleManifest {
   nav?: ModuleNav
   routePermissions?: Readonly<Record<string, PermissionRequirement>>
   resources?: readonly ModuleResource[]
-  dashboardTiles?: readonly ComponentType<DashboardTileProps>[]
+  /** Figures for the dashboard's overview; each renders one `<li>` or nothing. */
+  dashboardTiles?: readonly ComponentType[]
   statistics?: Readonly<Record<string, ModuleStatistic>>
   map?: ModuleMap
   planning?: ModulePlanning

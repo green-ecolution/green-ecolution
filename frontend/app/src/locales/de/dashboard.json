@@ -1,32 +1,40 @@
 {
   "welcomeTitle": "Willkommen zurück, {name}!",
-  "welcomeDescription": "Du befindest dich auf dem Dashboard. Dies ist eine Übersichtsseite, um direkten Zugriff auf wichtige Bereiche zu erhalten.",
-  "quickLinksTitle": "Schnellverweise",
+  "overviewTitle": "Auf einen Blick",
+  "quickLinksTitle": "Schnellzugriff",
+  "overview": {
+    "plans": {
+      "label": "Einsätze unterwegs",
+      "description_zero": "Heute ist kein Einsatz geplant",
+      "description_one": "{count} Einsatz heute geplant",
+      "description_other": "{count} Einsätze heute geplant"
+    },
+    "sensors": {
+      "label": "Sensoren offline",
+      "description_one": "von {count} aktivierten Sensor",
+      "description_other": "von {count} aktivierten Sensoren"
+    }
+  },
   "cards": {
     "map": {
       "headline": "Karte",
-      "description": "Alle erfassten Objekte deiner Organisation auf einer Karte.",
-      "linkLabel": "Zur Karte"
+      "description": "Alle erfassten Objekte auf der Karte."
     },
     "sensors": {
-      "headline": "Liste aller verbauten Sensoren",
-      "description": "Zeigt alle verbauten Sensoren inkl. Akkustand, Standort,…",
-      "linkLabel": "Zu den Sensoren"
+      "headline": "Sensoren",
+      "description": "Messwerte, Akkustand und Verknüpfung."
     },
     "wateringPlans": {
       "headline": "Einsatzpläne",
-      "description": "Planung neuer Einsatzpläne und Überblick über laufende Einsätze.",
-      "linkLabel": "Zu den Einsatzplänen"
+      "description": "Einsätze planen und verfolgen."
     },
     "settings": {
       "headline": "Einstellungen",
-      "description": "Hier kannst du Einstellungen vornehmen, da du Administrator bist.",
-      "linkLabel": "Zu den Einstellungen"
+      "description": "Organisation, Team und Rollen."
     },
     "profile": {
       "headline": "Eigenes Profil",
-      "description": "Hier können persönliche Informationen hinterlegt und angepasst werden.",
-      "linkLabel": "Zum Profil"
+      "description": "Persönliche Angaben ansehen und ändern."
     }
   }
 }

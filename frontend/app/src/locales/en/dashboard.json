@@ -1,32 +1,40 @@
 {
   "welcomeTitle": "Welcome back, {name}!",
-  "welcomeDescription": "You're on the dashboard. This overview page gives you direct access to important areas.",
-  "quickLinksTitle": "Quick links",
+  "overviewTitle": "At a glance",
+  "quickLinksTitle": "Quick access",
+  "overview": {
+    "plans": {
+      "label": "Trips under way",
+      "description_zero": "No trip planned for today",
+      "description_one": "{count} trip planned for today",
+      "description_other": "{count} trips planned for today"
+    },
+    "sensors": {
+      "label": "Sensors offline",
+      "description_one": "of {count} activated sensor",
+      "description_other": "of {count} activated sensors"
+    }
+  },
   "cards": {
     "map": {
       "headline": "Map",
-      "description": "All recorded objects of your organization on one map.",
-      "linkLabel": "To the map"
+      "description": "Every recorded object on the map."
     },
     "sensors": {
-      "headline": "List of all installed sensors",
-      "description": "Shows all installed sensors incl. battery level, location,…",
-      "linkLabel": "To the sensors"
+      "headline": "Sensors",
+      "description": "Readings, battery and links."
     },
     "wateringPlans": {
       "headline": "Watering plans",
-      "description": "Plan new watering plans and keep track of running ones.",
-      "linkLabel": "To the watering plans"
+      "description": "Plan and track trips."
     },
     "settings": {
       "headline": "Settings",
-      "description": "You can adjust settings here if you're an administrator.",
-      "linkLabel": "To the settings"
+      "description": "Organisation, team and roles."
     },
     "profile": {
-      "headline": "My profile",
-      "description": "Manage and update your personal information here.",
-      "linkLabel": "To the profile"
+      "headline": "Your profile",
+      "description": "View and change your details."
     }
   }
 }

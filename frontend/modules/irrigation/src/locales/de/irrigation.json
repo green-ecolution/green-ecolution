@@ -7,12 +7,11 @@
   },
   "dashboard": {
     "clusters": {
-      "headline": "Auflistung der Bewässerungsgruppen",
-      "description": "Listenansicht aller gruppierten Bäume, die mit Sensoren ausgestattet sind.",
-      "linkLabel": "Zu den Bewässerungsgruppen"
+      "label": "Gruppen sehr trocken",
+      "description": "{moderate} leicht trocken · {total} Gruppen gesamt"
     },
-    "mapCardDescription": "Alle Bäume im eigenen Zuständigkeitsbereich.",
-    "plansCardDescription": "Planung eines neuen Einsatzplans zur Bewässerung von Bewässerungsgruppen"
+    "mapCardDescription": "Alle Bäume und Bewässerungsgruppen auf der Karte.",
+    "plansCardDescription": "Bewässerungsfahrten planen und verfolgen."
   },
   "statistics": {
     "tree": {
