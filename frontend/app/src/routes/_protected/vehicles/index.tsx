@@ -71,21 +71,20 @@ function Vehicles() {
 
   return (
     <div className="container mt-6">
-      <ListPageHeader title={t('list.title')} description={t('list.description')} />
+      <ListPageHeader
+        title={t('list.title')}
+        description={t('list.description')}
+        action={
+          <Can permission={['vehicle:create']}>
+            <ButtonLink icon={Plus} label={t('list.createButton')} link={{ to: '/vehicles/new' }} />
+          </Can>
+        }
+      />
 
-      <section className="mt-10">
+      <section>
         <VehicleListToolbar
           filteredRecords={vehicleRes?.pagination?.totalRecords ?? 0}
           totalRecords={vehicleRes?.pagination?.totalUnfiltered ?? undefined}
-          action={
-            <Can permission={['vehicle:create']}>
-              <ButtonLink
-                icon={Plus}
-                label={t('list.createButton')}
-                link={{ to: '/vehicles/new' }}
-              />
-            </Can>
-          }
         />
 
         {!vehicleRes ? (

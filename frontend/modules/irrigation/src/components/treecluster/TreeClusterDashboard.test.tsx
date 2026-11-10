@@ -102,7 +102,7 @@ describe('TreeClusterDashboard actions', () => {
   it('renders no actions block when neither is permitted', async () => {
     permissions.mockReturnValue(new Set(['tree_cluster:read']))
     renderDashboard()
-    await screen.findByText(/Bewässerungsgruppe: Gruppe A/)
+    await screen.findByRole('heading', { level: 1, name: /Gruppe A/ })
     expect(screen.queryByText('Gruppe bearbeiten')).not.toBeInTheDocument()
     expect(screen.queryByLabelText('Weitere Aktionen')).not.toBeInTheDocument()
   })
@@ -175,7 +175,7 @@ describe('TreeClusterDashboard unknown-status notice', () => {
   it('stays hidden while the status is known', async () => {
     renderDashboard(withTrees({ wateringStatus: 'good' }, [sensorlessTree('a')]))
 
-    await screen.findByText(/Bewässerungsgruppe: Gruppe A/)
+    await screen.findByRole('heading', { level: 1, name: /Gruppe A/ })
     expect(
       screen.queryByText('Warum ist der Bewässerungszustand unbekannt?'),
     ).not.toBeInTheDocument()

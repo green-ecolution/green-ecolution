@@ -3,10 +3,11 @@ import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import FormForVehicle from './FormForVehicle'
 import { VehicleForm } from '@/schema/vehicleSchema'
-import { FormProvider, useForm } from 'react-hook-form'
+import { FormProvider, useForm, useFormState } from 'react-hook-form'
 import { vehicleDraftResolver } from '@green-ecolution/domain-wasm'
 import { ReactNode } from 'react'
 import { FORM_VALIDATION_MODE } from '@/hooks/form/useEntityForm'
+import { NEW_VEHICLE_DEFAULTS } from '@/hooks/form/useVehicleForm'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from '@green-ecolution/ui'
 import { VehicleType, DrivingLicense, VehicleAvailability } from '@green-ecolution/backend-client'
@@ -347,7 +348,7 @@ describe('FormForVehicle', () => {
     expect(screen.getByLabelText(/wassertank/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/laderaum/i)).toBeInTheDocument()
     expect(screen.getByText('für Fahrzeug')).toBeInTheDocument()
-    expect(screen.getByText('für Alle Fahrzeuge')).toBeInTheDocument()
+    expect(screen.getByText('für Fahrzeuge')).toBeInTheDocument()
   })
 
   it('still submits the stored value of a hidden capacity', async () => {
@@ -409,5 +410,41 @@ describe('FormForVehicle', () => {
 
     const group = screen.getByRole('group', { name: /kapazität/i })
     expect(await within(group).findByRole('alert')).toHaveTextContent('vehicle.capacities.empty')
+  })
+
+  describe('untouched create form', () => {
+    const DirtyProbe = () => {
+      const { isDirty } = useFormState()
+      return <output data-testid="dirty">{String(isDirty)}</output>
+    }
+
+    // A dirty flag here makes leaving the empty form ask "Seite verlassen?".
+    it.each([
+      ['only water is planned', [planningManifest('a', 'water', 'vehicle:entity.name')]],
+      [
+        'both capacities are planned',
+        [
+          planningManifest('a', 'water', 'vehicle:entity.name'),
+          planningManifest('b', 'cargo_volume', 'vehicle:entity.name'),
+        ],
+      ],
+    ])('is not dirty after typing and deleting when %s', async (_, manifests) => {
+      activeManifests.mockReturnValue(manifests)
+
+      render(
+        <TestWrapper defaultValues={NEW_VEHICLE_DEFAULTS as VehicleForm}>
+          <FormForVehicle displayError={false} onSubmit={mockOnSubmit} />
+          <DirtyProbe />
+        </TestWrapper>,
+      )
+
+      // Typing and deleting again makes the form recompute its dirty flag against the defaults.
+      const user = userEvent.setup()
+      const numberPlate = screen.getByLabelText(/kennzeichen/i)
+      await user.type(numberPlate, 'X')
+      await user.clear(numberPlate)
+
+      expect(screen.getByTestId('dirty')).toHaveTextContent('false')
+    })
   })
 })

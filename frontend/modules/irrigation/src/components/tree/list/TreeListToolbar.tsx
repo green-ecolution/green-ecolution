@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react'
 import { FolderClosed } from 'lucide-react'
 import { useQueries, useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
@@ -19,10 +18,9 @@ interface TreeListToolbarProps {
   filteredRecords: number
   /** Trees in scope before the toolbar's own filters; undefined until the list loads. */
   totalRecords?: number
-  action?: ReactNode
 }
 
-const TreeListToolbar = ({ filteredRecords, totalRecords, action }: TreeListToolbarProps) => {
+const TreeListToolbar = ({ filteredRecords, totalRecords }: TreeListToolbarProps) => {
   const { t } = useTranslation('tree')
   const {
     search,
@@ -220,7 +218,6 @@ const TreeListToolbar = ({ filteredRecords, totalRecords, action }: TreeListTool
             onChange={setSort}
           />
         }
-        action={action}
       />
       <ActiveFilterChips chips={chips} onReset={resetFilters} resultLabel={resultLabel} />
     </>

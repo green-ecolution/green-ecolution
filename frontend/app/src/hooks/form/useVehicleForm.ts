@@ -1,3 +1,4 @@
+import { VehicleType, DrivingLicense, VehicleAvailability } from '@green-ecolution/backend-client'
 import { VEHICLE_FORM } from '@/store/form/formDraftSlice'
 import { queryRoots } from '@/api/queries'
 import type { Vehicle } from '@/api/backendApi'
@@ -10,6 +11,23 @@ import { useTranslation } from 'react-i18next'
 import { EntityFormConfig, useEntityForm } from './useEntityForm'
 
 export const FORM_CAPACITY_KINDS = ['water', 'cargo_volume'] as const
+
+// Every field the form can register needs a key here, the optional ones included:
+// a registered field missing from the defaults marks the untouched form as dirty.
+export const NEW_VEHICLE_DEFAULTS: DefaultValues<VehicleForm> = {
+  numberPlate: '',
+  model: '',
+  description: '',
+  type: VehicleType.Transporter,
+  drivingLicense: DrivingLicense.B,
+  availability: VehicleAvailability.Available,
+  height: 2.5,
+  width: 2,
+  length: 6,
+  weight: 3.5,
+  waterCapacity: 300,
+  cargoVolumeCapacity: undefined,
+}
 
 const toRequest = (
   { waterCapacity, cargoVolumeCapacity, ...fields }: VehicleForm,

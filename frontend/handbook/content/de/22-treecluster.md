@@ -17,10 +17,14 @@ und Kleinschreibung.
 
 Darunter stehen drei Filter, die jeweils sofort wirken, ohne dass eine Bestätigung nötig
 wäre: nach dem Bewässerungszustand, nach der Region und nach der Bodenart. Über das
-Sortiermenü ordnest du die Liste nach Name, Feuchte, Anzahl der Bäume oder dem Zeitpunkt
-der letzten Bewässerung, jeweils auf- oder absteigend. Jede gesetzte Auswahl erscheint
+Sortiermenü ordnest du die Liste nach Dringlichkeit, Name, Feuchte, Anzahl der Bäume oder
+dem Zeitpunkt der letzten Bewässerung, jeweils auf- oder absteigend. Ohne eigene Wahl
+sortiert die Liste nach Dringlichkeit: Zuerst kommen die sehr trockenen Gruppen, dann die
+leicht trockenen, die unauffälligen, die soeben bewässerten und zuletzt die mit unbekanntem
+Zustand. Innerhalb einer Stufe gilt der Name. Jede gesetzte Auswahl erscheint
 darunter als entfernbarer Chip, daneben ein Link, der alle Filter auf einmal zurücksetzt,
-sowie die Anzahl der gefundenen Gruppen.
+sowie die Anzahl der gefundenen Gruppen. Ohne Filter nennt der Kopf der Seite die
+Gesamtzahl der Gruppen und Bäume.
 
 ![Die Übersicht der Bewässerungsgruppen in der Kartenansicht mit Filterleiste und aktiven Filtern](../images/treecluster-list.png)
 
@@ -41,14 +45,15 @@ hinterlegte Bodenart nach KA5; ist für die Gruppe keine bestimmt, steht dort ei
 Die Punktreihe darunter macht dasselbe Verhältnis auf einen Blick sichtbar: ein Punkt je
 Baum, die grün gefüllten stehen für die Bäume mit Sensor. Welcher Punkt welchen Baum meint,
 sagt die Reihe nicht, sie zeigt allein das Verhältnis der beiden Zahlen zueinander. Ab 24
-Bäumen bricht sie ab und zählt die übrigen als **+n** dahinter; enthält die Gruppe noch
+Bäumen bricht sie ab und zählt die übrigen als **+n** dahinter. Eine kleine Legende unter
+der Reihe benennt die beiden Punktarten; enthält die Gruppe noch
 keine Bäume, steht an dieser Stelle der Hinweis **Noch keine Bäume zugeordnet**. Bleibt die
 Reihe ganz grau, trägt kein Baum dieser Gruppe einen Sensor, und ihr Bewässerungszustand
 kann dann nicht aus Messwerten stammen: Er steht auf **Unbekannt** oder, nach einem
 abgeschlossenen Einsatzplan, für eine Weile auf **Soeben bewässert**.
 
 Am Fuß der Karte steht schließlich, wann die Gruppe zuletzt bewässert wurde, als **heute**,
-**gestern**, **vor n Tagen** oder **noch nicht bewässert**. Dieser Zeitpunkt stammt
+**gestern**, **vor n Tagen** oder **nie**. Dieser Zeitpunkt stammt
 ausschließlich aus Einsatzplänen, die als **Beendet** markiert wurden. Über **Details** oder
 einen Klick auf die Karte gelangst du zum Dashboard der Gruppe.
 
@@ -91,9 +96,10 @@ zu jedem Zeitpunkt nur einer Gruppe angehören oder gar keiner.
 Der Kopf des Dashboards zeigt den Namen der Gruppe, ihren Bewässerungszustand als Badge,
 Adresse, Region und Baumzahl sowie eine hinterlegte Beschreibung. Enthält die Gruppe
 noch keine Bäume, weist ein Hinweis darauf hin, dass ihr dadurch auch der Standort
-fehlt. Darunter folgen vier Kennzahlen: **Bewässerungszustand (ø)**, **Bodentemperatur**,
+fehlt. Darunter folgen die Kennzahlen **Bewässerungszustand (ø)**, **Bodentemperatur**,
 **Letzte Messung** und **Letzte Bewässerung**; Letztere aktualisiert sich erst, sobald
-ein Einsatzplan mit dieser Gruppe als **Beendet** markiert wird.
+ein Einsatzplan mit dieser Gruppe als **Beendet** markiert wird. Trägt kein Baum der Gruppe
+einen Sensor, entfallen Bodentemperatur und Letzte Messung, weil es dafür keine Werte gibt.
 
 Der Bereich **Wasserversorgung** zeichnet das pflanzenverfügbare Wasser über die Zeit,
 mit gestrichelten Linien für die Schwellen **mäßig** und **kritisch**; ohne Bäume mit

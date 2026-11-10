@@ -35,7 +35,7 @@ const AssignUsersPopover = ({ plan, users }: AssignUsersPopoverProps) => {
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
-        <Button type="button" size="sm" variant="outline">
+        <Button type="button" size="sm" variant="outline" className="h-8 text-sm">
           {plan.userIds.length > 0
             ? t('board.assignUsersPopover.changeLabel')
             : t('board.assignUsersPopover.assignLabel')}

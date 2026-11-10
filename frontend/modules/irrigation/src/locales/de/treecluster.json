@@ -10,7 +10,7 @@
     "noSoilData": "–",
     "noRegion": "–",
     "lastWateredPrefix": "Zuletzt bewässert: {label}",
-    "lastWateredNever": "noch nicht bewässert",
+    "lastWateredNever": "nie",
     "lastWateredToday": "heute",
     "lastWateredYesterday": "gestern",
     "lastWateredDaysAgo": "vor {count} Tagen",
@@ -49,7 +49,8 @@
   },
   "treeDots": {
     "noTreesNotice": "Noch keine Bäume zugeordnet",
-    "legend": "Sensor-Baum · misst die Gruppe"
+    "legend": "Sensor-Baum · misst die Gruppe",
+    "legendTree": "Baum"
   },
   "treeList": {
     "title": "Bäume · {count}",
@@ -101,7 +102,7 @@
   },
   "dashboard": {
     "backToList": "Zu allen Bewässerungsgruppen",
-    "title": "Bewässerungsgruppe: {name}",
+    "title": "{name}",
     "editLink": "Gruppe bearbeiten",
     "moreActionsAriaLabel": "Weitere Aktionen",
     "deleteMenuItem": "Gruppe löschen",
@@ -163,7 +164,7 @@
   "list": {
     "title": "Bewässerungsgruppen",
     "statsLabel": "{total} Gruppen · {trees} Bäume",
-    "description": "Hier findest du eine Übersicht aller Bewässerungsgruppen. Eine Bewässerungsgruppe besteht aus mehreren Bäumen, welche aufgrund ihrer Nähe und Standortbedingungen in einer Gruppe zusammengefasst wurden. Die Ausstattung einzelner Bäume mit Sensoren erlaubt eine Gesamtaussage über den Bewässerungszustand der vollständigen Gruppe.",
+    "description": "Bäume, die wegen ihrer Nähe und ähnlicher Standortbedingungen gemeinsam bewässert werden.",
     "createButton": "Gruppe anlegen",
     "loadingLabel": "Daten werden geladen",
     "columnStatus": "Status",
@@ -178,6 +179,7 @@
     "filterSoil": "Bodenart",
     "filterNoOptions": "Keine Auswahl vorhanden.",
     "regionUnknown": "Unbekannte Region",
+    "sortWateringStatus": "Dringlichkeit",
     "sortName": "Name",
     "sortMoisture": "Feuchte",
     "sortTrees": "Anzahl Bäume",

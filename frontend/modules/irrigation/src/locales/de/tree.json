@@ -57,9 +57,7 @@
   },
   "list": {
     "title": "Bäume",
-    "descriptionIntro": "Hier findest du eine Übersicht aller Bäume in einer Listenansicht. Die Bäume lassen sich allerdings auch auf einer",
-    "mapLinkLabel": "Karte",
-    "descriptionOutro": "visualisieren.",
+    "description": "Alle Bäume im Zuständigkeitsbereich mit Gruppe, Sensor und letzter Bewässerung.",
     "createButton": "Neuen Baum erstellen",
     "searchLabel": "Bäume durchsuchen",
     "searchPlaceholder": "Nummer oder Baumart suchen",

@@ -1539,6 +1539,38 @@ async fn list_clusters_search_sort_and_sensor_count() {
             "sort=trees&order={order}: Hafenspitze has 3 trees, Zob-Vorplatz 1"
         );
     }
+
+    // 4. sort=watering_status → the drier cluster first on asc
+    for (id, status) in [(hafen_id, "good"), (zob_id, "bad")] {
+        sqlx::query("UPDATE tree_clusters SET watering_status = $1::watering_status WHERE id = $2")
+            .bind(status)
+            .bind(id)
+            .execute(&app.db_pool)
+            .await
+            .unwrap();
+    }
+    for (order, zob_first) in [("asc", true), ("desc", false)] {
+        let resp = app
+            .get(&format!(
+                "/api/v1/clusters?sort=watering_status&order={order}"
+            ))
+            .await;
+        assert_eq!(resp.status().as_u16(), 200);
+        let body: serde_json::Value = resp.json().await.unwrap();
+        let names: Vec<&str> = body["data"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter_map(|c| c["name"].as_str())
+            .collect();
+        let hafen_pos = names.iter().position(|&n| n == "Hafenspitze").unwrap();
+        let zob_pos = names.iter().position(|&n| n == "Zob-Vorplatz").unwrap();
+        assert_eq!(
+            zob_pos < hafen_pos,
+            zob_first,
+            "sort=watering_status&order={order}: Zob-Vorplatz is bad, Hafenspitze good"
+        );
+    }
 }
 
 #[tokio::test]

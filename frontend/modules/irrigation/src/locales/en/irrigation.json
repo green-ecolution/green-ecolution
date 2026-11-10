@@ -7,12 +7,11 @@
   },
   "dashboard": {
     "clusters": {
-      "headline": "List of watering groups",
-      "description": "List view of all grouped trees fitted with sensors.",
-      "linkLabel": "To the watering groups"
+      "label": "Groups very dry",
+      "description": "{moderate} slightly dry · {total} groups in total"
     },
-    "mapCardDescription": "All trees within your area of responsibility.",
-    "plansCardDescription": "Plan a new watering plan for watering groups"
+    "mapCardDescription": "All trees and watering groups on the map.",
+    "plansCardDescription": "Plan and track watering trips."
   },
   "statistics": {
     "tree": {
@@ -145,7 +144,7 @@
     "texts": {
       "listDescription": "Track planned, ongoing, and completed watering trips.",
       "listDescriptionCanModify": "Plan, start, and document watering trips. Drag a watering plan into the next column to change its status.",
-      "createDescription": "A watering plan maps out a watering route: it can be assigned a vehicle, a trailer, staff, and the watering groups to visit. A newly created watering plan is automatically classified as \"planned\". Based on the watering groups and the number of trees, the amount of water needed for watering is calculated. The watering plan's start point can be chosen from the configured depot locations.",
+      "createDescription": "Choose the date, vehicle, staff and the watering groups. The water demand is calculated from the number of trees.",
       "updateDescription": "The watering plan can be edited in this view if certain data is no longer accurate or additional information needs to be recorded, for example. A watering plan always requires at least one watering group to be visited and at least one staff member to carry out the watering plan. A vehicle must also be assigned.",
       "statusUpdateDescription": "A watering plan's status describes whether it is currently being carried out, has been completed, or was canceled, for example. This information helps categorize the watering plans that have been created and build an evaluation. Once a watering plan is completed, you can also specify how much water was used for the associated watering groups.",
       "routeErrorAlert": "The route for this watering plan could not be calculated. Please check whether the selected vehicle has enough water capacity for the chosen watering groups.",

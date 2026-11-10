@@ -2,7 +2,6 @@ import { lazy } from 'react'
 import { FolderClosed, PieChart, TreeDeciduous, Trees } from 'lucide-react'
 import Tree from '@/components/icons/Tree'
 import type { ModuleManifest } from '@/modules/types'
-import ClustersTile from './components/dashboard/ClustersTile'
 import { irrigationSettingsSection } from './components/settings/settingsSection'
 import { IRRIGATION } from './lib/targets'
 import { irrigationMap } from './map'
@@ -52,7 +51,7 @@ export const irrigationManifest: ModuleManifest = {
     '/evaluations': EVALUATION_READ,
   },
   resources: irrigationResources,
-  dashboardTiles: [ClustersTile],
+  dashboardTiles: [lazy(() => import('./components/dashboard/ClustersTile'))],
   statistics: {
     tree: {
       icon: TreeDeciduous,

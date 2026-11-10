@@ -17,6 +17,14 @@ import { WASTE } from '../lib/targets'
 
 export const WASTE_BIN_FORM = 'waste-bin'
 
+// Every field the form registers needs a key, the empty numbers included: a
+// registered field missing here marks the untouched form as dirty.
+export const NEW_WASTE_BIN_DEFAULTS: DefaultValues<WasteBinForm> = {
+  number: '',
+  volumeLiters: undefined,
+  depthCm: undefined,
+}
+
 const toCreate = ({
   number,
   latitude,
@@ -113,7 +121,10 @@ export function useWasteBinOrganizations(
   useEffect(() => {
     if (organizationId || organizations.length === 0) return
     const own = organizations.find((org) => org.id === homeOrganizationId)
-    form.setValue('organizationId', (own ?? organizations[0]).id)
+    // A preselection is a default, not an edit. resetField only acts on a registered
+    // field, and the picker is not rendered while there is a single organization.
+    form.register('organizationId')
+    form.resetField('organizationId', { defaultValue: (own ?? organizations[0]).id })
   }, [organizationId, organizations, homeOrganizationId, form])
 
   return organizations

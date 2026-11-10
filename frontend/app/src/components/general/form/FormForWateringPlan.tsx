@@ -5,7 +5,7 @@ import {
   TextareaField,
   SelectField,
   Label,
-  MultiSelect,
+  MultiSelectCombobox,
   Checkbox,
 } from '@green-ecolution/ui'
 import { useTranslation } from 'react-i18next'
@@ -263,11 +263,12 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
                 {t('form.driversLabel')}
                 <span className="text-destructive ml-1">*</span>
               </Label>
-              <p className="text-sm text-muted-foreground">{t('form.driversMultiSelectHint')}</p>
-              <MultiSelect
+              <MultiSelectCombobox
                 id="driverIds"
                 value={field.value}
                 onChange={field.onChange}
+                placeholder={t('form.driversPlaceholder')}
+                summaryThreshold={3}
                 options={selectableUsers.map((user) => ({
                   value: user.id,
                   label: `${user.firstName} ${user.lastName} · ${getDrivingLicensesString(user)}`,

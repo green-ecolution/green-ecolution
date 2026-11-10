@@ -12,9 +12,9 @@ const accuracyBadgeVariants = cva(
     variants: {
       level: {
         excellent: 'border-green-dark-200 bg-green-dark-50 text-green-dark',
-        good: 'border-green-light-200 bg-green-light-50 text-green-light-900',
+        good: 'border-green-light-200 bg-green-light-50 text-dark',
         fair: 'border-yellow-200 bg-yellow-50 text-yellow-900',
-        poor: 'border-red-200 bg-red-50 text-red',
+        poor: 'border-red-200 bg-red-50 text-red-700',
         searching: 'border-dark-200 bg-dark-50 text-dark-600',
       },
     },

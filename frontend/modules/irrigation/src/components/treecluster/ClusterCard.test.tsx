@@ -78,11 +78,11 @@ describe('ClusterCard', () => {
     expect(link).toHaveAttribute('href', '/treecluster/42')
   })
 
-  it('shows the "noch nicht bewässert" footer when never watered', async () => {
+  it('shows the "nie" footer when never watered', async () => {
     renderWithRouter(makeCluster({ lastWatered: null }))
 
     await waitFor(() => {
-      expect(screen.getByText(/noch nicht bewässert/)).toBeInTheDocument()
+      expect(screen.getByText('Zuletzt bewässert: nie')).toBeInTheDocument()
     })
   })
 })

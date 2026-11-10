@@ -1,25 +1,31 @@
-import { Link } from '@tanstack/react-router'
+import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { LinkCard, LinkCardDescription, LinkCardFooter, LinkCardTitle } from '@green-ecolution/ui'
-import type { DashboardTileProps } from '@/modules/types'
+import { WateringStatus } from '@green-ecolution/backend-client'
+import DashboardStatTile from '@/components/dashboard/DashboardStatTile'
+import { useHasPermission } from '@/lib/auth/useHasPermission'
+import { clusterQueries } from '../../api/queries'
 
-// Typed as string like the other dashboard cards, which link without search params.
-const clustersUrl = (): string => '/treecluster'
-
-const ClustersTile = ({ variant }: DashboardTileProps) => {
+const ClustersTile = () => {
   const { t } = useTranslation('irrigation')
-  const linkLabel = t('dashboard.clusters.linkLabel')
+  const canRead = useHasPermission(['tree_cluster:read'])
+  const { data: stats } = useQuery({ ...clusterQueries.statistics(), enabled: canRead })
+  if (!canRead) return null
 
   return (
-    <li>
-      <LinkCard variant={variant} asChild>
-        <Link to={clustersUrl()} aria-label={linkLabel}>
-          <LinkCardTitle>{t('dashboard.clusters.headline')}</LinkCardTitle>
-          <LinkCardDescription>{t('dashboard.clusters.description')}</LinkCardDescription>
-          <LinkCardFooter>{linkLabel}</LinkCardFooter>
-        </Link>
-      </LinkCard>
-    </li>
+    <DashboardStatTile
+      label={t('dashboard.clusters.label')}
+      value={stats?.bad}
+      status={stats?.bad ? 'red' : stats?.moderate ? 'yellow' : 'green-dark'}
+      description={
+        stats
+          ? t('dashboard.clusters.description', { moderate: stats.moderate, total: stats.total })
+          : undefined
+      }
+      link={{
+        to: '/treecluster',
+        search: { page: 1, wateringStatuses: [WateringStatus.Bad] },
+      }}
+    />
   )
 }
 

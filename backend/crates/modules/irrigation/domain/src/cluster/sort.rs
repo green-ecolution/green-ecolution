@@ -13,6 +13,8 @@ pub enum ClusterSortField {
     Moisture,
     Trees,
     LastWatered,
+    /// Most urgent first when ascending: bad, moderate, good, just watered, unknown.
+    WateringStatus,
 }
 
 impl ClusterSortField {
@@ -22,6 +24,7 @@ impl ClusterSortField {
             Self::Moisture => "moisture",
             Self::Trees => "trees",
             Self::LastWatered => "last_watered",
+            Self::WateringStatus => "watering_status",
         }
     }
 }
@@ -45,12 +48,22 @@ mod tests {
             ClusterSortField::Moisture,
             ClusterSortField::Trees,
             ClusterSortField::LastWatered,
+            ClusterSortField::WateringStatus,
         ]
         .into_iter()
         .map(ClusterSortField::as_sql_key)
         .collect();
 
-        assert_eq!(keys, vec!["name", "moisture", "trees", "last_watered"]);
+        assert_eq!(
+            keys,
+            vec![
+                "name",
+                "moisture",
+                "trees",
+                "last_watered",
+                "watering_status"
+            ]
+        );
     }
 
     #[test]

@@ -56,8 +56,8 @@ Auf dem Board legst du einen neuen Einsatzplan über **Neuen Einsatzplan erstell
 Trage das Datum des Einsatzplans, das einzusetzende Fahrzeug (**Verknüpftes Fahrzeug**)
 und den Startpunkt ein, von dem aus die Fahrt beginnt und zu dem sie zurückkehrt; optional
 trägst du unter **Verknüpfter Anhänger** einen Anhänger ein. Unter **Verknüpfte Mitarbeitende** wählst du
-die Personen aus, die den Einsatz durchführen; mit gedrückter Shift-Taste lassen sich
-mehrere auf einen Griff markieren. Eine kurze Beschreibung ist optional. Welche
+die Personen aus, die den Einsatz durchführen. Das Feld öffnet eine Liste mit Suchfeld,
+in der du beliebig viele Personen nacheinander anhakst. Eine kurze Beschreibung ist optional. Welche
 Bewässerungsgruppen angefahren werden, legst du im nächsten Abschnitt fest.
 
 Sobald ein Anhänger gewählt ist, erscheint darunter die Option **Wassertank des Fahrzeugs

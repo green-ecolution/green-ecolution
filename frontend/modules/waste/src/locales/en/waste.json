@@ -217,7 +217,7 @@
     "texts": {
       "listDescription": "Track planned, running and finished collection tours.",
       "listDescriptionCanModify": "Plan, start and document collection tours. Drag a tour into the next column to change its status.",
-      "createDescription": "A collection tour describes a collection route by assigning a vehicle, a trailer, staff and the waste bins to visit. A newly created tour is automatically classified as »planned«. The bins' fill levels determine how much cargo space the tour needs. Before returning, the vehicle unloads at a station.",
+      "createDescription": "Choose the date, vehicle, staff and the waste bins. The cargo space is calculated from the fill levels. The vehicle unloads at a station before it returns.",
       "updateDescription": "The collection tour can be edited in this view if some data is no longer correct or additional information needs to be recorded. A tour always requires at least one bin, at least one staff member to drive it, and a vehicle.",
       "statusUpdateDescription": "The status of a collection tour describes whether it is, for example, being driven, finished or canceled. When finishing it you state which bins were emptied. Their fill level then reads emptied.",
       "routeErrorAlert": "The route for this collection tour could not be calculated. Check that the vehicle has cargo space and that a station to unload at exists under Settings → Stations.",

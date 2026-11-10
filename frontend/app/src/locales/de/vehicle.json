@@ -4,8 +4,8 @@
     "nameWithArticle": "das Fahrzeug"
   },
   "list": {
-    "title": "Alle Fahrzeuge",
-    "description": "Hier findest du eine Übersicht aller Fahrzeuge, die für Einsätze verwendet werden können.",
+    "title": "Fahrzeuge",
+    "description": "Fahrzeuge, die du für Einsätze einteilen kannst.",
     "createButton": "Neues Fahrzeug erstellen",
     "emptyMessage": "Es wurden leider keine Fahrzeuge gefunden.",
     "loadingLabel": "Fahrzeuge werden geladen …",
@@ -80,7 +80,7 @@
   "create": {
     "backLabel": "Zu allen Fahrzeugen",
     "title": "Neues Fahrzeug erstellen",
-    "description": "In dieser Ansicht kannst du ein neues Fahrzeug anlegen. Bitte beachte, dass jedes Fahrzeug ein eindeutiges Kennzeichen besitzen muss, da keine doppelten Kennzeichen erlaubt sind. Zusätzlich müssen die Abmessungen des Fahrzeugs hinterlegt werden, damit das Navigationssystem bei einer Bewässerungsfahrt ermitteln kann, welche Strecken für das Fahrzeug befahrbar sind."
+    "description": "Das Kennzeichen muss eindeutig sein. Die Abmessungen nutzt die Routenplanung, um nur befahrbare Strecken zu wählen."
   },
   "form": {
     "numberPlatePlaceholder": "Kennzeichen",

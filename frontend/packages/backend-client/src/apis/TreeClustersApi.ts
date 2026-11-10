@@ -579,7 +579,8 @@ export const ListClustersSortEnum = {
     Name: 'name',
     Moisture: 'moisture',
     Trees: 'trees',
-    LastWatered: 'last_watered'
+    LastWatered: 'last_watered',
+    WateringStatus: 'watering_status'
 } as const;
 export type ListClustersSortEnum = typeof ListClustersSortEnum[keyof typeof ListClustersSortEnum];
 /**

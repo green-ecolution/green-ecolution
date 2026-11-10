@@ -2,8 +2,9 @@ import type { ReactNode } from 'react'
 import { beforeEach, describe, expect, it, vi, type MockInstance } from 'vitest'
 import { act, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { FormProvider } from 'react-hook-form'
+import { FormProvider, useFormState, useWatch } from 'react-hook-form'
 import type { OrganizationResponse, UserResponse } from '@green-ecolution/backend-client'
+import type { WasteBinForm } from '@green-ecolution/domain-wasm'
 import { organizationApi, userApi } from '@/api/backendApi'
 import type { MapClickLngLat } from '@/components/map-gl/useMapClick'
 import type { Permissions } from '@/lib/auth/permissions'
@@ -40,7 +41,8 @@ vi.mock('@/lib/auth/authSessionContext', () => ({
 }))
 
 const { default: FormForWasteBin } = await import('./FormForWasteBin')
-const { useWasteBinForm, useWasteBinOrganizations } = await import('../hooks/useWasteBinForm')
+const { NEW_WASTE_BIN_DEFAULTS, useWasteBinForm, useWasteBinOrganizations } =
+  await import('../hooks/useWasteBinForm')
 
 const org = (id: string, name: string, parentId?: string) =>
   ({ id, name, parentId, memberCount: 0 }) as OrganizationResponse
@@ -51,9 +53,19 @@ const me = {
   roles: [{ id: 'role-1', organizationId: 'org-1', permissions: ['waste_bin:create'] }],
 } as unknown as UserResponse
 
+function DirtyProbe() {
+  const { isDirty } = useFormState()
+  const organizationId = useWatch<WasteBinForm, 'organizationId'>({ name: 'organizationId' })
+  return (
+    <output data-testid="dirty" data-organization={organizationId ?? ''}>
+      {String(isDirty)}
+    </output>
+  )
+}
+
 function CreateHarness() {
   const { form, mutate, isError, error } = useWasteBinForm('create', {
-    initForm: { number: '' },
+    initForm: NEW_WASTE_BIN_DEFAULTS,
   })
   const organizations = useWasteBinOrganizations(form)
   return (
@@ -64,6 +76,7 @@ function CreateHarness() {
         errorMessage={error?.message}
         onSubmit={(data) => mutate(data)}
       />
+      <DirtyProbe />
     </FormProvider>
   )
 }
@@ -89,6 +102,21 @@ describe('FormForWasteBin', { timeout: 20_000 }, () => {
     listOrganizations = vi
       .spyOn(organizationApi, 'listOrganizations')
       .mockResolvedValue([org('org-root', 'Wurzel'), org('org-1', 'Stadt Flensburg', 'org-root')])
+  })
+
+  // A dirty untouched form makes leaving it ask "Seite verlassen?".
+  it('stays clean after the own organization is preselected and a field is typed and cleared', async () => {
+    const user = userEvent.setup()
+    renderInRouter(<CreateHarness />)
+
+    await waitFor(() =>
+      expect(screen.getByTestId('dirty')).toHaveAttribute('data-organization', 'org-1'),
+    )
+    const number = await screen.findByLabelText(/Behälternummer/)
+    await user.type(number, 'B')
+    await user.clear(number)
+
+    expect(screen.getByTestId('dirty')).toHaveTextContent('false')
   })
 
   it('reports every required field and sends nothing', async () => {

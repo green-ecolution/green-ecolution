@@ -73,33 +73,18 @@ function Trees() {
     <div className="container mt-6">
       <ListPageHeader
         title={t('list.title')}
-        description={
-          <>
-            {t('list.descriptionIntro')}{' '}
-            <a
-              href="/map"
-              className="text-green underline hover:text-green-light focus:text-green-light-50"
-            >
-              {t('list.mapLinkLabel')}
-            </a>
-            &nbsp;{t('list.descriptionOutro')}
-          </>
+        description={t('list.description')}
+        action={
+          <Can permission={['tree:create']}>
+            <ButtonLink icon={Plus} label={t('list.createButton')} link={{ to: '/map/tree/new' }} />
+          </Can>
         }
       />
 
-      <section className="mt-10">
+      <section>
         <TreeListToolbar
           filteredRecords={treesRes?.pagination?.totalRecords ?? 0}
           totalRecords={treesRes?.pagination?.totalUnfiltered ?? undefined}
-          action={
-            <Can permission={['tree:create']}>
-              <ButtonLink
-                icon={Plus}
-                label={t('list.createButton')}
-                link={{ to: '/map/tree/new' }}
-              />
-            </Can>
-          }
         />
 
         {!treesRes ? (

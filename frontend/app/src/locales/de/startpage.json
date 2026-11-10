@@ -60,7 +60,7 @@
     },
     "routing": {
       "label": "Dynamische Routenplanung",
-      "description": "Dynamische Berechnung von Bewässerungsrouten mithilfe von Open-Source Software (Valhalla & Vroom)."
+      "description": "Dynamische Berechnung von Bewässerungsrouten mit Valhalla und Streamlet."
     }
   }
 }

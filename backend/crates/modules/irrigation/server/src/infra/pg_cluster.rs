@@ -127,6 +127,12 @@ const CLUSTER_SORT_COLUMNS: SortColumns = &[
         &["(SELECT COUNT(*) FROM trees t WHERE t.tree_cluster_id = tc.id)"],
     ),
     ("last_watered", &["tc.last_watered"]),
+    (
+        "watering_status",
+        &["CASE tc.watering_status \
+            WHEN 'bad' THEN 0 WHEN 'moderate' THEN 1 WHEN 'good' THEN 2 \
+            WHEN 'just_watered' THEN 3 ELSE 4 END"],
+    ),
 ];
 
 #[async_trait::async_trait]

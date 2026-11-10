@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react'
 import { Archive } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import {
@@ -23,10 +22,9 @@ interface VehicleListToolbarProps {
   filteredRecords: number
   /** Vehicles in scope before the toolbar's own filters; undefined until the list loads. */
   totalRecords?: number
-  action?: ReactNode
 }
 
-const VehicleListToolbar = ({ filteredRecords, totalRecords, action }: VehicleListToolbarProps) => {
+const VehicleListToolbar = ({ filteredRecords, totalRecords }: VehicleListToolbarProps) => {
   const { t } = useTranslation('vehicle')
   const { search, setQuery, setSort, setFilter, setArchive, resetFilters } = useVehicleListSearch()
   const getVehicleStatusDetails = useVehicleStatusDetails()
@@ -163,7 +161,6 @@ const VehicleListToolbar = ({ filteredRecords, totalRecords, action }: VehicleLi
             onChange={setSort}
           />
         }
-        action={action}
       />
       <ActiveFilterChips chips={chips} onReset={resetFilters} resultLabel={resultLabel} />
     </>

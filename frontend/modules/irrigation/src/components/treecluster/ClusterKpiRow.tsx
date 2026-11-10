@@ -17,10 +17,13 @@ const ClusterKpiRow = ({ treecluster }: ClusterKpiRowProps) => {
   const dateLocale = useDateLocale()
   const getWateringStatusDetails = useWateringStatusDetails()
   const wateringStatus = getWateringStatusDetails(treecluster.wateringStatus)
-  const { temperature, measuredAt } = latestClusterReading(treecluster.trees ?? [])
+  const trees = treecluster.trees ?? []
+  const { temperature, measuredAt } = latestClusterReading(trees)
+  // Without a sensor both reading tiles could only ever say "no data".
+  const hasSensors = trees.some((tree) => tree.sensor)
 
   return (
-    <StatusCardGrid columns={4}>
+    <StatusCardGrid columns={hasSensors ? 4 : 2}>
       <li className="h-full">
         <StatusCard
           size="compact"
@@ -31,24 +34,28 @@ const ClusterKpiRow = ({ treecluster }: ClusterKpiRowProps) => {
           info={wateringStatus.description}
         />
       </li>
-      <li className="h-full">
-        <StatusCard
-          size="compact"
-          label={t('kpi.soilTemperatureLabel')}
-          value={temperature != null ? `${roundTo(temperature, 1)} °C` : t('kpi.noData')}
-        />
-      </li>
-      <li className="h-full">
-        <StatusCard
-          size="compact"
-          label={t('kpi.lastMeasurementLabel')}
-          value={
-            measuredAt
-              ? formatDistanceToNow(measuredAt, { addSuffix: true, locale: dateLocale })
-              : t('kpi.noData')
-          }
-        />
-      </li>
+      {hasSensors && (
+        <>
+          <li className="h-full">
+            <StatusCard
+              size="compact"
+              label={t('kpi.soilTemperatureLabel')}
+              value={temperature != null ? `${roundTo(temperature, 1)} °C` : t('kpi.noData')}
+            />
+          </li>
+          <li className="h-full">
+            <StatusCard
+              size="compact"
+              label={t('kpi.lastMeasurementLabel')}
+              value={
+                measuredAt
+                  ? formatDistanceToNow(measuredAt, { addSuffix: true, locale: dateLocale })
+                  : t('kpi.noData')
+              }
+            />
+          </li>
+        </>
+      )}
       <li className="h-full">
         <StatusCard
           size="compact"
@@ -56,7 +63,7 @@ const ClusterKpiRow = ({ treecluster }: ClusterKpiRowProps) => {
           value={
             treecluster.lastWatered
               ? format(new Date(treecluster.lastWatered), 'dd.MM.yyyy', { locale: dateLocale })
-              : '—'
+              : t('card.lastWateredNever')
           }
           info={t('kpi.lastWateredInfo')}
         />

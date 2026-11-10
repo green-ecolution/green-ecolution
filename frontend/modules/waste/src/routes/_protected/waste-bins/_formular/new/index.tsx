@@ -5,7 +5,11 @@ import type { WasteBinForm } from '@green-ecolution/domain-wasm'
 import FormPageHeader from '@/components/general/FormPageHeader'
 import UnsavedChangesDialog from '@/components/general/form/UnsavedChangesDialog'
 import FormForWasteBin from '../../../../../components/FormForWasteBin'
-import { useWasteBinForm, useWasteBinOrganizations } from '../../../../../hooks/useWasteBinForm'
+import {
+  NEW_WASTE_BIN_DEFAULTS,
+  useWasteBinForm,
+  useWasteBinOrganizations,
+} from '../../../../../hooks/useWasteBinForm'
 
 export const Route = createFileRoute('/_protected/waste-bins/_formular/new/')({
   component: NewWasteBin,
@@ -14,7 +18,7 @@ export const Route = createFileRoute('/_protected/waste-bins/_formular/new/')({
 function NewWasteBin() {
   const { t } = useTranslation('waste')
   const { mutate, isError, error, form, navigationBlocker, saveDraft } = useWasteBinForm('create', {
-    initForm: { number: '' },
+    initForm: NEW_WASTE_BIN_DEFAULTS,
   })
   const organizations = useWasteBinOrganizations(form)
 

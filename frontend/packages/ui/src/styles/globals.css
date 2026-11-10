@@ -37,7 +37,8 @@
   --dark-300: oklch(0.786 0 0);
   --dark-400: oklch(0.712 0 0);
   --dark-500: oklch(0.62 0 0);
-  --dark-600: oklch(0.559 0 0);
+  /* Secondary text on white and dark-50/100 needs 4.5:1. */
+  --dark-600: oklch(0.51 0 0);
   --dark-700: oklch(0.478 0 0);
   --dark-800: oklch(0.39 0 0);
   --dark-900: oklch(0.301 0 0);
@@ -47,6 +48,8 @@
   --red-100: oklch(0.958 0.016 17.2);
   --red-200: oklch(0.919 0.033 19.9);
   --red: oklch(0.63 0.186 24.5);
+  /* --red is too light for small text on white (3.8:1); use this for text. */
+  --red-700: oklch(0.5 0.17 24.5);
 
   --yellow-50: oklch(0.991 0.01 87.5);
   --yellow-100: oklch(0.983 0.019 87.5);
@@ -154,6 +157,7 @@
   --color-red-100: var(--red-100);
   --color-red-200: var(--red-200);
   --color-red: var(--red);
+  --color-red-700: var(--red-700);
 
   --color-yellow-50: var(--yellow-50);
   --color-yellow-100: var(--yellow-100);

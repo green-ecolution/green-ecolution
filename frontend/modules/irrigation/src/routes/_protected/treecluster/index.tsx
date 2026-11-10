@@ -5,11 +5,15 @@ import ButtonLink from '@/components/general/links/ButtonLink'
 import { Plus } from 'lucide-react'
 import { Button, Loading } from '@green-ecolution/ui'
 import EntityList from '@/components/general/EntityList'
+import ListPageHeader from '@/components/general/ListPageHeader'
 import TreeclusterCard from '../../../components/general/cards/TreeclusterCard'
 import ClusterCard from '../../../components/treecluster/ClusterCard'
 import Pagination from '@/components/general/Pagination'
 import ClusterListToolbar from '../../../components/treecluster/list/ClusterListToolbar'
-import { useClusterListSearch } from '../../../components/treecluster/list/useClusterListSearch'
+import {
+  DEFAULT_CLUSTER_SORT,
+  useClusterListSearch,
+} from '../../../components/treecluster/list/useClusterListSearch'
 import ClusterViewToggle from '../../../components/treecluster/ClusterViewToggle'
 import { z } from 'zod'
 import { ListClustersSortEnum, ListClustersOrderEnum } from '@green-ecolution/backend-client'
@@ -40,7 +44,7 @@ const listParams = (search: z.infer<typeof treeclusterFilterSchema>) => ({
   wateringStatus: search.wateringStatuses,
   region: search.regions,
   query: search.q,
-  sort: search.sort,
+  sort: search.sort ?? DEFAULT_CLUSTER_SORT,
   order: search.order,
   soilCondition: search.soil as SoilCondition[] | undefined,
 })
@@ -69,29 +73,25 @@ function Treecluster() {
 
   return (
     <div className="container mt-6">
-      <header className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <article className="max-w-3xl">
-          <h1 className="font-lato font-bold text-3xl lg:text-4xl xl:text-5xl">
-            {t('list.title')}
-          </h1>
-          <p className="mt-2 font-lato font-semibold text-dark-700">
-            {t('list.statsLabel', { total: stats.total, trees: stats.trees })}
-          </p>
-          <p className="mt-3 hidden text-sm text-dark-600 md:block">{t('list.description')}</p>
-        </article>
-        <div className="flex shrink-0 flex-wrap items-center gap-3">
-          <ClusterViewToggle />
-          <Can permission={['tree_cluster:create']}>
-            <ButtonLink
-              icon={Plus}
-              label={t('list.createButton')}
-              link={{ to: '/map/treecluster/new' }}
-            />
-          </Can>
-        </div>
-      </header>
+      <ListPageHeader
+        title={t('list.title')}
+        meta={t('list.statsLabel', { total: stats.total, trees: stats.trees })}
+        description={t('list.description')}
+        action={
+          <>
+            <ClusterViewToggle />
+            <Can permission={['tree_cluster:create']}>
+              <ButtonLink
+                icon={Plus}
+                label={t('list.createButton')}
+                link={{ to: '/map/treecluster/new' }}
+              />
+            </Can>
+          </>
+        }
+      />
 
-      <section className="mt-8">
+      <section>
         <ClusterListToolbar
           filteredRecords={clustersRes?.pagination?.totalRecords ?? 0}
           totalRecords={clustersRes?.pagination?.totalUnfiltered ?? undefined}
