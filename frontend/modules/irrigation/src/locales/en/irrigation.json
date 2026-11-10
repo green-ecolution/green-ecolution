@@ -11,7 +11,7 @@
       "description": "List view of all grouped trees fitted with sensors.",
       "linkLabel": "To the watering groups"
     },
-    "mapCardDescription": "All trees in Flensburg within the TBZ's area of responsibility.",
+    "mapCardDescription": "All trees within your area of responsibility.",
     "plansCardDescription": "Plan a new watering plan for watering groups"
   },
   "statistics": {

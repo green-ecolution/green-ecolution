@@ -11,7 +11,7 @@
       "description": "Listenansicht aller gruppierten Bäume, die mit Sensoren ausgestattet sind.",
       "linkLabel": "Zu den Bewässerungsgruppen"
     },
-    "mapCardDescription": "Alle Bäume in Flensburg im Zuständigkeitsbereich des TBZ.",
+    "mapCardDescription": "Alle Bäume im eigenen Zuständigkeitsbereich.",
     "plansCardDescription": "Planung eines neuen Einsatzplans zur Bewässerung von Bewässerungsgruppen"
   },
   "statistics": {

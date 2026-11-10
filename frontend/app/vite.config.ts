@@ -127,7 +127,6 @@ export default defineConfig({
     // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- empty string must fall back to npm_package_version
     __APP_VERSION__: JSON.stringify(process.env.APP_VERSION || process.env.npm_package_version),
     __APP_BUILD_TIME__: JSON.stringify(new Date().toISOString().slice(0, 10).replace(/-/g, '')),
-    __APP_CITY__: JSON.stringify(process.env.VITE_APP_CITY ?? 'Stadt Flensburg'),
   },
   build: {
     target: 'esnext',
