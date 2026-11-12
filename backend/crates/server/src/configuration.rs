@@ -195,6 +195,8 @@ pub struct RoutingSettings {
     pub enabled: bool,
     #[serde(default = "default_streamlet_url")]
     pub streamlet_url: String,
+    #[serde(default = "default_valhalla_url")]
+    pub valhalla_url: String,
 }
 
 impl Default for RoutingSettings {
@@ -202,12 +204,17 @@ impl Default for RoutingSettings {
         Self {
             enabled: false,
             streamlet_url: default_streamlet_url(),
+            valhalla_url: default_valhalla_url(),
         }
     }
 }
 
 fn default_streamlet_url() -> String {
     "http://localhost:2510".to_string()
+}
+
+fn default_valhalla_url() -> String {
+    "http://localhost:8002".to_string()
 }
 
 #[derive(serde::Deserialize, Clone, Default)]

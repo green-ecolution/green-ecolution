@@ -45,6 +45,7 @@ sensor:
 routing:
   enabled: false
   streamlet_url: "http://localhost:2510"
+  valhalla_url: "http://localhost:8002"
 plugins:
   enabled: false
 analytics:
