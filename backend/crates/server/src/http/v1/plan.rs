@@ -475,7 +475,7 @@ fn route_response_from_plan(plan: &OperationPlan) -> Result<RouteResponse, Servi
 }
 
 /// Loads a plan after checking the routing flag and the caller's read right.
-async fn readable_plan(
+pub(super) async fn readable_plan(
     state: &AppState,
     caller: Caller,
     id: uuid::Uuid,

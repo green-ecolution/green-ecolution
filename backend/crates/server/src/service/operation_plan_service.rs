@@ -105,6 +105,30 @@ impl OperationPlanService {
             .await
     }
 
+    /// Like [`Self::resolved_stops`], but a stop its module no longer knows is
+    /// dropped instead of failing the whole plan, so a driver still gets the rest.
+    pub async fn resolved_stops_lenient(
+        &self,
+        plan: &OperationPlan,
+    ) -> Result<Vec<ResolvedStop>, ServiceError> {
+        let provider = self.planning.provider(plan.module())?;
+        let mut stops: Vec<StopRef> = plan.stops().to_vec();
+        // Each round drops one unknown stop, so this ends after at most stops.len() rounds.
+        loop {
+            match provider.resolve_stops(&stops, plan.organization_id()).await {
+                Ok(resolved) => return Ok(resolved),
+                Err(PlanningError::UnknownStop(unknown)) => {
+                    tracing::warn!(stop = %unknown.value(), "skipping unknown stop");
+                    stops.retain(|s| *s != unknown);
+                }
+                Err(PlanningError::OrganizationMismatch) => {
+                    return Err(OrganizationMismatch::StopsVsPlan.into());
+                }
+                Err(PlanningError::Repository(e)) => return Err(e.into()),
+            }
+        }
+    }
+
     async fn resolve(
         &self,
         provider: &dyn PlanningProvider,

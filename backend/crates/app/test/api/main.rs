@@ -31,6 +31,7 @@ pub mod openapi;
 pub mod organization_resource_counts;
 pub mod organization_scope;
 pub mod organizations;
+pub mod plan_itinerary;
 pub mod plans;
 pub mod plugin_auth;
 pub mod plugin_ingest;
