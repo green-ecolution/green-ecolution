@@ -109,3 +109,19 @@ async fn valhalla_down_is_502() {
         "routing.unavailable"
     );
 }
+
+#[tokio::test]
+async fn navigation_is_503_while_routing_is_disabled() {
+    let app = crate::helpers::spawn_app().await;
+    let resp = app
+        .post_json(
+            &format!("/api/v1/plans/{}/navigation", uuid::Uuid::now_v7()),
+            &json!({ "lat": 54.79, "lon": 9.43, "remaining": [1] }),
+        )
+        .await;
+    assert_eq!(resp.status().as_u16(), 503);
+    assert_eq!(
+        resp.json::<serde_json::Value>().await.unwrap()["code"],
+        "feature.routing_disabled"
+    );
+}
