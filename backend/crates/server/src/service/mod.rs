@@ -199,6 +199,9 @@ pub enum ServiceError {
     OperationPlan(#[from] OperationPlanError),
     #[error("unknown stop {stop}")]
     UnknownStop { stop: uuid::Uuid },
+    /// A retried finish whose outcomes differ from the ones already stored.
+    #[error("plan was already finished with different outcomes")]
+    PlanFinishedDifferently,
     /// An error a module raises with its own stable code, e.g.
     /// `conflict.tree_in_cluster`.
     #[error("{message}")]
@@ -245,6 +248,7 @@ impl ServiceError {
             Self::TargetNotAccepted { .. } => "target.not_accepted",
             Self::VehicleCapacityMissing { .. } => "vehicle.capacity_missing",
             Self::UnknownStop { .. } => "plan.unknown_stop",
+            Self::PlanFinishedDifferently => "plan.already_finished_differently",
             Self::TargetRefused { code, .. } => code,
             Self::Module { code, .. } => code,
             Self::FeatureDisabled { feature } => match feature {

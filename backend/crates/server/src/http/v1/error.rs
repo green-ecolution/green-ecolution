@@ -150,6 +150,7 @@ impl IntoResponse for ServiceError {
                 (status, message)
             }
             ServiceError::TargetAlreadyHasSensor
+            | ServiceError::PlanFinishedDifferently
             | ServiceError::SensorAlreadyAttached
             | ServiceError::AlreadyActivated
             | ServiceError::NotActivated

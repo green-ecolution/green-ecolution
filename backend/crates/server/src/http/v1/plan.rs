@@ -57,7 +57,7 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
 
 /// Permissions on a plan hang on the plan resource its module declares, and
 /// writes additionally need the module to be active in the organization.
-fn plan_access(
+pub(super) fn plan_access(
     state: &AppState,
     module: &ModuleKey,
 ) -> Result<(ModuleAccess, ResourceKey), ServiceError> {
@@ -97,7 +97,7 @@ async fn ensure_vehicles_visible(
     Ok(())
 }
 
-async fn detail_response(
+pub(super) async fn detail_response(
     state: &AppState,
     view: OperationPlanView,
 ) -> Result<PlanResponse, ServiceError> {
