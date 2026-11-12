@@ -112,6 +112,9 @@ pub async fn get_evaluation(
                 provider: None,
                 statuses: Vec::new(),
                 visible: plan_visible.clone(),
+                assigned_user: None,
+                date_from: None,
+                date_to: None,
             },
             count_pagination,
         )

@@ -248,6 +248,13 @@ impl OperationPlanReader for PgOperationPlanRepository {
                 query.visible.into_raw_ids(),
             ))
             .filter(Predicate::any_of("op.status", query.statuses))
+            .filter(Predicate::bound(
+                "op.id IN (SELECT plan_id FROM operation_plan_users WHERE user_id = ",
+                query.assigned_user,
+                ")",
+            ))
+            .filter(Predicate::bound("op.date >= ", query.date_from, ""))
+            .filter(Predicate::bound("op.date < ", query.date_to, ""))
             .sort("date", true, OPERATION_PLAN_SORT_COLUMNS)
             .page(pagination)
             .fetch::<OperationPlanViewRow>(&self.pool, OPERATION_PLAN_COLUMNS)

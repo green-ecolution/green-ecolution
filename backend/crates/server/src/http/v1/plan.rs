@@ -160,6 +160,9 @@ pub async fn list_plans(
         provider: None,
         statuses: params.status.into_iter().map(Into::into).collect(),
         visible,
+        assigned_user: None,
+        date_from: None,
+        date_to: None,
     };
     let page = state
         .operation_plan_service

@@ -66,7 +66,7 @@ pub(crate) async fn planned_plan(
         .post_json_with_bearer(
             "/api/v1/vehicles",
             &json!({
-                "number_plate": format!("FL GE {}", &Uuid::now_v7().simple().to_string()[..4]),
+                "number_plate": format!("FL GE {}", &Uuid::new_v4().simple().to_string()[..4]),
                 "description": "Giesswagen",
                 "capacities": { "water": 5000.0 },
                 "model": "MAN TGS",
@@ -85,7 +85,7 @@ pub(crate) async fn planned_plan(
     let tree_id = Uuid::now_v7();
     sqlx::query(
         r#"INSERT INTO trees (id, planting_year, species, number, latitude, longitude, geometry, description, organization_id)
-        VALUES ($1, 2020, 'Eiche', 'EX-001', 54.79, 9.44, ST_SetSRID(ST_MakePoint(9.44, 54.79), 4326), 'Execution', $2)"#,
+        VALUES ($1, 2020, 'Eiche', 'EX-' || substr($1::text, 25), 54.79, 9.44, ST_SetSRID(ST_MakePoint(9.44, 54.79), 4326), 'Execution', $2)"#,
     )
     .bind(tree_id)
     .bind(Uuid::parse_str(ORG).unwrap())
@@ -96,7 +96,7 @@ pub(crate) async fn planned_plan(
         .post_json_with_bearer(
             "/api/v1/clusters",
             &json!({
-                "name": format!("Cluster {}", &Uuid::now_v7().simple().to_string()[..6]),
+                "name": format!("Cluster {}", &Uuid::new_v4().simple().to_string()[..6]),
                 "address": "Testweg 1",
                 "description": "Execution",
                 "soil_condition": "Su3",

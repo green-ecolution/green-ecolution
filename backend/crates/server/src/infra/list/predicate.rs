@@ -84,6 +84,18 @@ impl Predicate {
         }))
     }
 
+    /// `<before>$n<after>` for shapes the other helpers do not cover (ranges,
+    /// membership subqueries). Both texts are static, only the value is bound.
+    pub fn bound<T>(before: &'static str, value: Option<T>, after: &'static str) -> Option<Self>
+    where
+        T: Clone + Send + Sync + 'static + for<'q> Encode<'q, Postgres> + Type<Postgres>,
+    {
+        let value = value?;
+        Some(Self::new(move |qb| {
+            qb.push(before).push_bind(value.clone()).push(after);
+        }))
+    }
+
     /// Same as [`Self::any_of`], for an expression the repository had to
     /// compose at startup because it carries a configured constant. The string
     /// still originates in this repository, never in a request.
@@ -165,6 +177,24 @@ mod tests {
         let mut qb: QueryBuilder<'_, Postgres> = QueryBuilder::new("");
         predicate.expect("predicate must be present").push(&mut qb);
         qb.into_sql()
+    }
+
+    #[test]
+    fn bound_wraps_the_value_between_static_text() {
+        let sql = rendered(Predicate::bound(
+            "op.id IN (SELECT plan_id FROM operation_plan_users WHERE user_id = ",
+            Some(uuid::Uuid::nil()),
+            ")",
+        ));
+        assert_eq!(
+            sql,
+            "op.id IN (SELECT plan_id FROM operation_plan_users WHERE user_id = $1)"
+        );
+    }
+
+    #[test]
+    fn bound_without_value_writes_nothing() {
+        assert!(Predicate::bound::<i32>("x = ", None, "").is_none());
     }
 
     #[test]
