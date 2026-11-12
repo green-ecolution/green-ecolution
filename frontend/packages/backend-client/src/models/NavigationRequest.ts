@@ -38,7 +38,8 @@ export interface NavigationRequest {
      */
     lon: number;
     /**
-     * Itinerary indices still to drive, in the order to drive them.
+     * Itinerary indices still to drive, in the order to drive them. Routing covers
+     * at most the next 10 entries that have a position.
      * @type {Array<number>}
      * @memberof NavigationRequest
      */

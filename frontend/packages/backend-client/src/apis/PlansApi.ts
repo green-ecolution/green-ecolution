@@ -558,7 +558,7 @@ export class PlansApi extends runtime.BaseAPI {
     }
 
     /**
-     * Routes from the given position over the listed itinerary entries and returns the routing engine\'s answer unchanged (Valhalla, OSRM format with banner and voice instructions in German).
+     * Routes from the given position over the listed itinerary entries and routes over at most the next 10 positioned entries (request again as the tour progresses) and returns the routing engine\'s answer unchanged (Valhalla, OSRM format with banner and voice instructions in German).
      * Turn-by-turn route over the remaining entries
      */
     async navigatePlanRaw(requestParameters: NavigatePlanRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
@@ -598,7 +598,7 @@ export class PlansApi extends runtime.BaseAPI {
     }
 
     /**
-     * Routes from the given position over the listed itinerary entries and returns the routing engine\'s answer unchanged (Valhalla, OSRM format with banner and voice instructions in German).
+     * Routes from the given position over the listed itinerary entries and routes over at most the next 10 positioned entries (request again as the tour progresses) and returns the routing engine\'s answer unchanged (Valhalla, OSRM format with banner and voice instructions in German).
      * Turn-by-turn route over the remaining entries
      */
     async navigatePlan(requestParameters: NavigatePlanRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {

@@ -13,6 +13,13 @@
  */
 
 import { mapValues } from '../runtime';
+import type { CapacityKindDto } from './CapacityKindDto';
+import {
+    CapacityKindDtoFromJSON,
+    CapacityKindDtoFromJSONTyped,
+    CapacityKindDtoToJSON,
+    CapacityKindDtoToJSONTyped,
+} from './CapacityKindDto';
 import type { ItineraryEntryResponse } from './ItineraryEntryResponse';
 import {
     ItineraryEntryResponseFromJSON,
@@ -29,10 +36,10 @@ import {
 export interface ItineraryResponse {
     /**
      * `water` or `cargo_volume`.
-     * @type {string}
+     * @type {CapacityKindDto}
      * @memberof ItineraryResponse
      */
-    capacityKind: string;
+    capacityKind: CapacityKindDto;
     /**
      * 
      * @type {Array<ItineraryEntryResponse>}
@@ -52,6 +59,8 @@ export interface ItineraryResponse {
      */
     planId: string;
 }
+
+
 
 /**
  * Check if a given object implements the ItineraryResponse interface.
@@ -74,7 +83,7 @@ export function ItineraryResponseFromJSONTyped(json: any, ignoreDiscriminator: b
     }
     return {
         
-        'capacityKind': json['capacity_kind'],
+        'capacityKind': CapacityKindDtoFromJSON(json['capacity_kind']),
         'entries': ((json['entries'] as Array<any>).map(ItineraryEntryResponseFromJSON)),
         'module': json['module'],
         'planId': json['plan_id'],
@@ -92,7 +101,7 @@ export function ItineraryResponseToJSONTyped(value?: ItineraryResponse | null, i
 
     return {
         
-        'capacity_kind': value['capacityKind'],
+        'capacity_kind': CapacityKindDtoToJSON(value['capacityKind']),
         'entries': ((value['entries'] as Array<any>).map(ItineraryEntryResponseToJSON)),
         'module': value['module'],
         'plan_id': value['planId'],
