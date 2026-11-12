@@ -10,6 +10,9 @@ use domain::{
 
 use super::ServiceError;
 
+// Valhalla rejects requests above its configured location limit.
+pub const MAX_NAVIGATION_WAYPOINTS: usize = 10;
+
 pub struct NavigationService {
     router: Arc<dyn TurnByTurnRouter>,
     vehicles: Arc<dyn VehicleReader>,
@@ -100,6 +103,7 @@ pub fn waypoints(
             .ok_or_else(|| ServiceError::InvalidInput(format!("index {index} out of range")))?;
         picked.extend(entry.coordinate);
     }
+    picked.truncate(MAX_NAVIGATION_WAYPOINTS);
     if picked.is_empty() {
         return Err(ServiceError::InvalidInput(
             "no remaining entry has a position".into(),
@@ -160,6 +164,20 @@ mod tests {
             picked.iter().map(|c| c.latitude()).collect::<Vec<_>>(),
             vec![3.0, 2.0]
         );
+    }
+
+    #[test]
+    fn routes_over_the_first_ten_positioned_entries_only() {
+        let entries: Vec<_> = (0..15).map(|i| entry(i, Some(i as f64 + 1.0))).collect();
+        let remaining: Vec<usize> = (0..15).collect();
+        let picked = waypoints(&entries, &remaining).unwrap();
+        assert_eq!(
+            picked.iter().map(|c| c.latitude()).collect::<Vec<_>>(),
+            (1..=10).map(f64::from).collect::<Vec<_>>()
+        );
+        let mut bad = remaining;
+        bad.push(99);
+        assert!(waypoints(&entries, &bad).is_err());
     }
 
     #[test]

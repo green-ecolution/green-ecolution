@@ -65,8 +65,10 @@ pub(super) async fn authorize_execution(
     access.ensure_active(org).await
 }
 
-pub fn same_outcomes(stored: &[StopOutcome], requested: &[StopOutcome]) -> bool {
-    stored.len() == requested.len() && requested.iter().all(|r| stored.contains(r))
+fn same_outcomes(stored: &[StopOutcome], requested: &[StopOutcome]) -> bool {
+    stored.len() == requested.len()
+        && requested.iter().all(|r| stored.contains(r))
+        && stored.iter().all(|s| requested.contains(s))
 }
 
 async fn respond(state: &AppState, id: Uuid) -> Result<Json<PlanResponse>, ServiceError> {
@@ -208,6 +210,18 @@ mod tests {
         assert!(!same_outcomes(
             &[o(a, true, Some(10.0))],
             &[o(a, false, Some(10.0))]
+        ));
+    }
+
+    #[test]
+    fn a_duplicate_request_does_not_hide_a_stored_outcome() {
+        let (a, b) = (
+            StopRef::new(uuid::Uuid::now_v7()),
+            StopRef::new(uuid::Uuid::now_v7()),
+        );
+        assert!(!same_outcomes(
+            &[o(a, true, None), o(b, true, None)],
+            &[o(a, true, None), o(a, true, None)]
         ));
     }
 

@@ -28,14 +28,15 @@ pub struct NavigationRequest {
     /// Degrees clockwise from north.
     #[schema(nullable, minimum = 0.0, maximum = 360.0)]
     pub heading: Option<f64>,
-    /// Itinerary indices still to drive, in the order to drive them.
+    /// Itinerary indices still to drive, in the order to drive them. Routing covers
+    /// at most the next 10 entries that have a position.
     pub remaining: Vec<usize>,
 }
 
 #[utoipa::path(post, path = "/plans/{plan_id}/navigation", tag = "Plans",
     operation_id = "navigatePlan",
     summary = "Turn-by-turn route over the remaining entries",
-    description = "Routes from the given position over the listed itinerary entries and returns the routing engine's answer unchanged (Valhalla, OSRM format with banner and voice instructions in German).",
+    description = "Routes from the given position over the listed itinerary entries and routes over at most the next 10 positioned entries (request again as the tour progresses) and returns the routing engine's answer unchanged (Valhalla, OSRM format with banner and voice instructions in German).",
     params(("plan_id" = Uuid, Path, description = "Plan ID")),
     request_body = NavigationRequest,
     responses(

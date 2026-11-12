@@ -87,7 +87,10 @@ impl TurnByTurnRouter for ValhallaTurnByTurnRouter {
         if status.is_success() {
             Ok(TurnByTurnRoute { json: text })
         } else if status.is_client_error() {
-            Err(RoutingError::InvalidProblem(text))
+            tracing::warn!(%status, body = %text, "valhalla rejected the request");
+            Err(RoutingError::InvalidProblem(
+                "routing engine rejected the request".into(),
+            ))
         } else {
             Err(RoutingError::Unavailable(format!(
                 "valhalla answered {status}"
@@ -159,7 +162,10 @@ mod tests {
             .route(request())
             .await
             .unwrap_err();
-        assert!(matches!(err, RoutingError::InvalidProblem(_)));
+        match err {
+            RoutingError::InvalidProblem(msg) => assert!(!msg.contains("No path")),
+            other => panic!("unexpected {other:?}"),
+        }
 
         let server = MockServer::start().await;
         Mock::given(method("POST"))
