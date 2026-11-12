@@ -45,7 +45,7 @@
     "react": "catalog:react19",
     "react-dom": "catalog:react19",
     "react-hook-form": "^7.91.0",
-    "react-i18next": "^17.1.11",
+    "react-i18next": "^18.0.0",
     "react-oidc-context": "^3.3.1",
     "recharts": "^3.10.1",
     "utility-types": "^3.11.0",
