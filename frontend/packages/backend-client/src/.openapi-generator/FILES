@@ -41,7 +41,9 @@ models/DataStatisticsResponse.ts
 models/DrivingLicense.ts
 models/ErrorBody.ts
 models/EvaluationResponse.ts
+models/FailPlanRequest.ts
 models/FillStateDto.ts
+models/FinishPlanRequest.ts
 models/GitInfoResponse.ts
 models/IngestBatchResponse.ts
 models/IngestResultResponse.ts
@@ -49,6 +51,9 @@ models/IngestStatusResponse.ts
 models/IngestSummaryResponse.ts
 models/IrrigationSettingsResponse.ts
 models/IrrigationSettingsUpdateRequest.ts
+models/ItineraryEntryResponse.ts
+models/ItineraryKind.ts
+models/ItineraryResponse.ts
 models/ListResponseCommentResponse.ts
 models/ListResponseCommentResponseDataInner.ts
 models/ListResponsePlanInListResponse.ts
@@ -75,6 +80,7 @@ models/MapInfoResponse.ts
 models/MapViewDto.ts
 models/ModuleCountResponse.ts
 models/ModuleListResponse.ts
+models/NavigationRequest.ts
 models/NearestTreeListResponse.ts
 models/OrganizationCreateRequest.ts
 models/OrganizationDetailResponse.ts

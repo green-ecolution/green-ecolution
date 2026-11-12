@@ -3528,6 +3528,352 @@
         }
       }
     },
+    "/v1/plans/{plan_id}/fail": {
+      "post": {
+        "tags": [
+          "Plans"
+        ],
+        "summary": "End a plan early",
+        "description": "Active to not completed, with a note. Repeating it changes nothing.",
+        "operationId": "failPlan",
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "description": "Plan ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FailPlanRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Plan is not completed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid transition or blank note (codes `plan.*`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Neither update right nor assigned, or the module is switched off (code `module.disabled`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Plan not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/plans/{plan_id}/finish": {
+      "post": {
+        "tags": [
+          "Plans"
+        ],
+        "summary": "Finish a plan",
+        "description": "Active to finished with one outcome per stop. Repeating it with the stored outcomes changes nothing; with different ones it is a conflict.",
+        "operationId": "finishPlan",
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "description": "Plan ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FinishPlanRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Plan is finished",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid transition or outcomes (codes `plan.*`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Neither update right nor assigned, or the module is switched off (code `module.disabled`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Plan not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Already finished with other outcomes (code `plan.already_finished_differently`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/plans/{plan_id}/itinerary": {
+      "get": {
+        "tags": [
+          "Plans"
+        ],
+        "summary": "Get the driving order of a plan",
+        "description": "Returns the persisted driving order (depot, stops, stations) with stop labels, positions and demand. A stop its module no longer knows keeps its place with null label and position.",
+        "operationId": "getPlanItinerary",
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "description": "Plan ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Driving order",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItineraryResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Plan not found or has no route",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Routing feature is disabled (code `feature.routing_disabled`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/plans/{plan_id}/navigation": {
+      "post": {
+        "tags": [
+          "Plans"
+        ],
+        "summary": "Turn-by-turn route over the remaining entries",
+        "description": "Routes from the given position over the listed itinerary entries and returns the routing engine's answer unchanged (Valhalla, OSRM format with banner and voice instructions in German).",
+        "operationId": "navigatePlan",
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "description": "Plan ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NavigationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Valhalla route (OSRM format)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid indices, position or plan state (code `request.invalid_input` / `request.validation_failed`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Plan not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "No route between the positions (code `routing.invalid_problem`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Called again too soon (code `routing.too_many_requests`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Routing engine unavailable (code `routing.unavailable`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Routing feature is disabled (code `feature.routing_disabled`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/plans/{plan_id}/route": {
       "get": {
         "tags": [
@@ -3641,6 +3987,80 @@
           },
           "503": {
             "description": "Routing feature is disabled (code `feature.routing_disabled`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/plans/{plan_id}/start": {
+      "post": {
+        "tags": [
+          "Plans"
+        ],
+        "summary": "Start a plan",
+        "description": "Planned to active. Allowed with the plan's update right, or for an assigned user with read right. Starting an active plan again changes nothing.",
+        "operationId": "startPlan",
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "description": "Plan ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Plan is active",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid status transition (code `plan.invalid_state_transition`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Neither update right nor assigned, or the module is switched off (code `module.disabled`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Plan not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
             "content": {
               "application/json": {
                 "schema": {
@@ -8256,6 +8676,81 @@
         }
       }
     },
+    "/v1/users/me/plans": {
+      "get": {
+        "tags": [
+          "Plans"
+        ],
+        "summary": "List the caller's assigned plans",
+        "description": "Plans of every planning module the caller is assigned to and may read, in modules active for the plan's organization, sorted by date ascending.",
+        "operationId": "listMyPlans",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "description": "First day, inclusive (`YYYY-MM-DD`). Default: today.",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "description": "Last day, inclusive. Default: `from` + 7 days. At most 31 days after `from`.",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "format": "date"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Repeatable. Default: `planned` and `active`.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/PlanStatus"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Assigned plans",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PlanInListResponse"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Window longer than 31 days or `to` before `from` (code `request.invalid_input`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/users/{user_id}": {
       "put": {
         "tags": [
@@ -10419,6 +10914,18 @@
           }
         }
       },
+      "FailPlanRequest": {
+        "type": "object",
+        "required": [
+          "note"
+        ],
+        "properties": {
+          "note": {
+            "type": "string",
+            "description": "Why the tour ended early; must not be blank."
+          }
+        }
+      },
       "FillStateDto": {
         "type": "string",
         "enum": [
@@ -10427,6 +10934,21 @@
           "full",
           "unknown"
         ]
+      },
+      "FinishPlanRequest": {
+        "type": "object",
+        "required": [
+          "outcomes"
+        ],
+        "properties": {
+          "outcomes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StopOutcomeDto"
+            },
+            "description": "Exactly one outcome per stop of the plan."
+          }
+        }
       },
       "GitInfoResponse": {
         "type": "object",
@@ -10582,6 +11104,96 @@
               "null"
             ],
             "format": "double"
+          }
+        }
+      },
+      "ItineraryEntryResponse": {
+        "type": "object",
+        "required": [
+          "index",
+          "kind"
+        ],
+        "properties": {
+          "demand": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double",
+            "description": "Only for stops, in the unit of the module's capacity kind."
+          },
+          "index": {
+            "type": "integer",
+            "description": "Position in driving order; the navigation endpoint addresses entries by it.",
+            "minimum": 0
+          },
+          "kind": {
+            "$ref": "#/components/schemas/ItineraryKind"
+          },
+          "lat": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          },
+          "lon": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Station or depot name, or the module's label of a stop. `null` for a stop\nits module no longer knows."
+          },
+          "stop": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Only for stops: the stop as the plan's module identifies it."
+          }
+        }
+      },
+      "ItineraryKind": {
+        "type": "string",
+        "enum": [
+          "depot",
+          "stop",
+          "station"
+        ]
+      },
+      "ItineraryResponse": {
+        "type": "object",
+        "required": [
+          "plan_id",
+          "module",
+          "capacity_kind",
+          "entries"
+        ],
+        "properties": {
+          "capacity_kind": {
+            "type": "string",
+            "description": "`water` or `cargo_volume`."
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ItineraryEntryResponse"
+            }
+          },
+          "module": {
+            "type": "string"
+          },
+          "plan_id": {
+            "type": "string",
+            "format": "uuid"
           }
         }
       },
@@ -11953,6 +12565,42 @@
               "$ref": "#/components/schemas/OrganizationModulesEntry"
             },
             "description": "One entry per organization the caller works in."
+          }
+        }
+      },
+      "NavigationRequest": {
+        "type": "object",
+        "required": [
+          "lat",
+          "lon",
+          "remaining"
+        ],
+        "properties": {
+          "heading": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double",
+            "description": "Degrees clockwise from north.",
+            "maximum": 360,
+            "minimum": 0
+          },
+          "lat": {
+            "type": "number",
+            "format": "double"
+          },
+          "lon": {
+            "type": "number",
+            "format": "double"
+          },
+          "remaining": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "description": "Itinerary indices still to drive, in the order to drive them."
           }
         }
       },

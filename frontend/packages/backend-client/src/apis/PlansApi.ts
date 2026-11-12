@@ -16,8 +16,13 @@
 import * as runtime from '../runtime';
 import type {
   ErrorBody,
+  FailPlanRequest,
+  FinishPlanRequest,
+  ItineraryResponse,
   ListResponsePlanInListResponse,
+  NavigationRequest,
   PlanCreateRequest,
+  PlanInListResponse,
   PlanResponse,
   PlanRouteRequest,
   PlanStatus,
@@ -27,10 +32,20 @@ import type {
 import {
     ErrorBodyFromJSON,
     ErrorBodyToJSON,
+    FailPlanRequestFromJSON,
+    FailPlanRequestToJSON,
+    FinishPlanRequestFromJSON,
+    FinishPlanRequestToJSON,
+    ItineraryResponseFromJSON,
+    ItineraryResponseToJSON,
     ListResponsePlanInListResponseFromJSON,
     ListResponsePlanInListResponseToJSON,
+    NavigationRequestFromJSON,
+    NavigationRequestToJSON,
     PlanCreateRequestFromJSON,
     PlanCreateRequestToJSON,
+    PlanInListResponseFromJSON,
+    PlanInListResponseToJSON,
     PlanResponseFromJSON,
     PlanResponseToJSON,
     PlanRouteRequestFromJSON,
@@ -51,6 +66,16 @@ export interface DeletePlanRequest {
     planId: string;
 }
 
+export interface FailPlanOperationRequest {
+    planId: string;
+    failPlanRequest: FailPlanRequest;
+}
+
+export interface FinishPlanOperationRequest {
+    planId: string;
+    finishPlanRequest: FinishPlanRequest;
+}
+
 export interface GetPlanRequest {
     planId: string;
 }
@@ -59,8 +84,18 @@ export interface GetPlanGpxRequest {
     planId: string;
 }
 
+export interface GetPlanItineraryRequest {
+    planId: string;
+}
+
 export interface GetPlanRouteRequest {
     planId: string;
+}
+
+export interface ListMyPlansRequest {
+    from?: Date | null;
+    to?: Date | null;
+    status?: Array<PlanStatus>;
 }
 
 export interface ListPlansRequest {
@@ -70,8 +105,17 @@ export interface ListPlansRequest {
     status?: Array<PlanStatus>;
 }
 
+export interface NavigatePlanRequest {
+    planId: string;
+    navigationRequest: NavigationRequest;
+}
+
 export interface PreviewPlanRouteRequest {
     planRouteRequest: PlanRouteRequest;
+}
+
+export interface StartPlanRequest {
+    planId: string;
 }
 
 export interface UpdatePlanRequest {
@@ -164,6 +208,104 @@ export class PlansApi extends runtime.BaseAPI {
     }
 
     /**
+     * Active to not completed, with a note. Repeating it changes nothing.
+     * End a plan early
+     */
+    async failPlanRaw(requestParameters: FailPlanOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PlanResponse>> {
+        if (requestParameters['planId'] == null) {
+            throw new runtime.RequiredError(
+                'planId',
+                'Required parameter "planId" was null or undefined when calling failPlan().'
+            );
+        }
+
+        if (requestParameters['failPlanRequest'] == null) {
+            throw new runtime.RequiredError(
+                'failPlanRequest',
+                'Required parameter "failPlanRequest" was null or undefined when calling failPlan().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+
+        let urlPath = `/v1/plans/{plan_id}/fail`;
+        urlPath = urlPath.replace(`{${"plan_id"}}`, encodeURIComponent(String(requestParameters['planId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: FailPlanRequestToJSON(requestParameters['failPlanRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PlanResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Active to not completed, with a note. Repeating it changes nothing.
+     * End a plan early
+     */
+    async failPlan(requestParameters: FailPlanOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PlanResponse> {
+        const response = await this.failPlanRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Active to finished with one outcome per stop. Repeating it with the stored outcomes changes nothing; with different ones it is a conflict.
+     * Finish a plan
+     */
+    async finishPlanRaw(requestParameters: FinishPlanOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PlanResponse>> {
+        if (requestParameters['planId'] == null) {
+            throw new runtime.RequiredError(
+                'planId',
+                'Required parameter "planId" was null or undefined when calling finishPlan().'
+            );
+        }
+
+        if (requestParameters['finishPlanRequest'] == null) {
+            throw new runtime.RequiredError(
+                'finishPlanRequest',
+                'Required parameter "finishPlanRequest" was null or undefined when calling finishPlan().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+
+        let urlPath = `/v1/plans/{plan_id}/finish`;
+        urlPath = urlPath.replace(`{${"plan_id"}}`, encodeURIComponent(String(requestParameters['planId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: FinishPlanRequestToJSON(requestParameters['finishPlanRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PlanResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Active to finished with one outcome per stop. Repeating it with the stored outcomes changes nothing; with different ones it is a conflict.
+     * Finish a plan
+     */
+    async finishPlan(requestParameters: FinishPlanOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PlanResponse> {
+        const response = await this.finishPlanRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
      * Returns full plan detail including the per-stop outcomes.
      * Get a plan
      */
@@ -241,6 +383,45 @@ export class PlansApi extends runtime.BaseAPI {
     }
 
     /**
+     * Returns the persisted driving order (depot, stops, stations) with stop labels, positions and demand. A stop its module no longer knows keeps its place with null label and position.
+     * Get the driving order of a plan
+     */
+    async getPlanItineraryRaw(requestParameters: GetPlanItineraryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ItineraryResponse>> {
+        if (requestParameters['planId'] == null) {
+            throw new runtime.RequiredError(
+                'planId',
+                'Required parameter "planId" was null or undefined when calling getPlanItinerary().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/v1/plans/{plan_id}/itinerary`;
+        urlPath = urlPath.replace(`{${"plan_id"}}`, encodeURIComponent(String(requestParameters['planId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ItineraryResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns the persisted driving order (depot, stops, stations) with stop labels, positions and demand. A stop its module no longer knows keeps its place with null label and position.
+     * Get the driving order of a plan
+     */
+    async getPlanItinerary(requestParameters: GetPlanItineraryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ItineraryResponse> {
+        const response = await this.getPlanItineraryRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
      * Returns the persisted optimized route as GeoJSON LineString geometry with metrics.
      * Get the optimized route of a plan
      */
@@ -276,6 +457,49 @@ export class PlansApi extends runtime.BaseAPI {
      */
     async getPlanRoute(requestParameters: GetPlanRouteRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RouteResponse> {
         const response = await this.getPlanRouteRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Plans of every planning module the caller is assigned to and may read, in modules active for the plan\'s organization, sorted by date ascending.
+     * List the caller\'s assigned plans
+     */
+    async listMyPlansRaw(requestParameters: ListMyPlansRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<PlanInListResponse>>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['from'] != null) {
+            queryParameters['from'] = (requestParameters['from'] as any).toISOString().substring(0,10);
+        }
+
+        if (requestParameters['to'] != null) {
+            queryParameters['to'] = (requestParameters['to'] as any).toISOString().substring(0,10);
+        }
+
+        if (requestParameters['status'] != null) {
+            queryParameters['status'] = requestParameters['status'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/v1/users/me/plans`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(PlanInListResponseFromJSON));
+    }
+
+    /**
+     * Plans of every planning module the caller is assigned to and may read, in modules active for the plan\'s organization, sorted by date ascending.
+     * List the caller\'s assigned plans
+     */
+    async listMyPlans(requestParameters: ListMyPlansRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<PlanInListResponse>> {
+        const response = await this.listMyPlansRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -334,6 +558,55 @@ export class PlansApi extends runtime.BaseAPI {
     }
 
     /**
+     * Routes from the given position over the listed itinerary entries and returns the routing engine\'s answer unchanged (Valhalla, OSRM format with banner and voice instructions in German).
+     * Turn-by-turn route over the remaining entries
+     */
+    async navigatePlanRaw(requestParameters: NavigatePlanRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
+        if (requestParameters['planId'] == null) {
+            throw new runtime.RequiredError(
+                'planId',
+                'Required parameter "planId" was null or undefined when calling navigatePlan().'
+            );
+        }
+
+        if (requestParameters['navigationRequest'] == null) {
+            throw new runtime.RequiredError(
+                'navigationRequest',
+                'Required parameter "navigationRequest" was null or undefined when calling navigatePlan().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+
+        let urlPath = `/v1/plans/{plan_id}/navigation`;
+        urlPath = urlPath.replace(`{${"plan_id"}}`, encodeURIComponent(String(requestParameters['planId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: NavigationRequestToJSON(requestParameters['navigationRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse<any>(response);
+    }
+
+    /**
+     * Routes from the given position over the listed itinerary entries and returns the routing engine\'s answer unchanged (Valhalla, OSRM format with banner and voice instructions in German).
+     * Turn-by-turn route over the remaining entries
+     */
+    async navigatePlan(requestParameters: NavigatePlanRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {
+        const response = await this.navigatePlanRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
      * Calculates and previews an optimized route over a module\'s stops without creating a plan.
      * Preview a route
      */
@@ -371,6 +644,45 @@ export class PlansApi extends runtime.BaseAPI {
      */
     async previewPlanRoute(requestParameters: PreviewPlanRouteRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RouteResponse> {
         const response = await this.previewPlanRouteRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Planned to active. Allowed with the plan\'s update right, or for an assigned user with read right. Starting an active plan again changes nothing.
+     * Start a plan
+     */
+    async startPlanRaw(requestParameters: StartPlanRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PlanResponse>> {
+        if (requestParameters['planId'] == null) {
+            throw new runtime.RequiredError(
+                'planId',
+                'Required parameter "planId" was null or undefined when calling startPlan().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/v1/plans/{plan_id}/start`;
+        urlPath = urlPath.replace(`{${"plan_id"}}`, encodeURIComponent(String(requestParameters['planId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PlanResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Planned to active. Allowed with the plan\'s update right, or for an assigned user with read right. Starting an active plan again changes nothing.
+     * Start a plan
+     */
+    async startPlan(requestParameters: StartPlanRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PlanResponse> {
+        const response = await this.startPlanRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
