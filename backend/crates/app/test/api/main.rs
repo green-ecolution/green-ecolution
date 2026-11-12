@@ -34,6 +34,7 @@ pub mod organization_scope;
 pub mod organizations;
 pub mod plan_execution;
 pub mod plan_itinerary;
+pub mod plan_navigation;
 pub mod plans;
 pub mod plugin_auth;
 pub mod plugin_ingest;

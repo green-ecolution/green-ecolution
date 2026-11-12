@@ -3,6 +3,7 @@ pub mod comment_service;
 pub mod event_bus;
 pub mod module_access;
 pub mod module_activation_service;
+pub mod navigation_service;
 pub mod operation_execution_service;
 pub mod operation_plan_service;
 pub mod organization_service;
@@ -202,6 +203,8 @@ pub enum ServiceError {
     /// A retried finish whose outcomes differ from the ones already stored.
     #[error("plan was already finished with different outcomes")]
     PlanFinishedDifferently,
+    #[error("too many routing requests, try again shortly")]
+    TooManyRequests,
     /// An error a module raises with its own stable code, e.g.
     /// `conflict.tree_in_cluster`.
     #[error("{message}")]
@@ -249,6 +252,7 @@ impl ServiceError {
             Self::VehicleCapacityMissing { .. } => "vehicle.capacity_missing",
             Self::UnknownStop { .. } => "plan.unknown_stop",
             Self::PlanFinishedDifferently => "plan.already_finished_differently",
+            Self::TooManyRequests => "routing.too_many_requests",
             Self::TargetRefused { code, .. } => code,
             Self::Module { code, .. } => code,
             Self::FeatureDisabled { feature } => match feature {

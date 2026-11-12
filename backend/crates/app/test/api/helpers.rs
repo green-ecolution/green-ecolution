@@ -598,6 +598,22 @@ pub async fn spawn_app_with_routing_and_auth(streamlet_url: &str, auth: AuthSett
     app
 }
 
+pub async fn spawn_app_with_valhalla_and_auth(
+    streamlet_url: &str,
+    valhalla_url: &str,
+    auth: AuthSettings,
+) -> TestApp {
+    let mut settings = Settings::for_test(auth);
+    settings.info.health_check_interval_secs = 1;
+    settings.info.update_check_repo = None;
+    settings.routing.enabled = true;
+    settings.routing.streamlet_url = streamlet_url.to_string();
+    settings.routing.valhalla_url = valhalla_url.to_string();
+    let app = spawn_with_settings(settings).await;
+    seed_routing_depots(&app.db_pool).await;
+    app
+}
+
 pub async fn spawn_app_with_modules_and_routing(
     modules: Vec<Box<dyn server::module::Module>>,
     streamlet_url: &str,

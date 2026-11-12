@@ -13,6 +13,7 @@ pub mod info;
 pub mod itinerary;
 pub mod module;
 pub mod my_plans;
+pub mod navigation;
 pub mod organization;
 pub mod pagination;
 pub mod plan;
@@ -45,6 +46,7 @@ pub fn protected_router() -> OpenApiRouter<Arc<AppState>> {
         .merge(plan::routes())
         .merge(plan_execution::routes())
         .merge(itinerary::routes())
+        .merge(navigation::routes())
         .merge(plugin::routes())
         .merge(role::routes())
         .merge(routing::routes())

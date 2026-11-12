@@ -169,6 +169,7 @@ impl IntoResponse for ServiceError {
             ServiceError::OrganizationMismatch(kind) => {
                 (StatusCode::UNPROCESSABLE_ENTITY, kind.to_string())
             }
+            ServiceError::TooManyRequests => (StatusCode::TOO_MANY_REQUESTS, self.to_string()),
             ServiceError::ModuleDisabled { .. } | ServiceError::InvalidOrganizationScope => {
                 (StatusCode::FORBIDDEN, self.to_string())
             }
