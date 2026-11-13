@@ -11,6 +11,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > single repository. For legacy releases, see the
 > [GitHub Releases](https://github.com/green-ecolution/green-ecolution/releases) page.
 
+## [0.10.0](https://github.com/green-ecolution/green-ecolution/compare/v0.9.0...v0.10.0) (2026-11-13)
+
+
+### Features
+
+* **api:** add driver API for the mobile app ([#1138](https://github.com/green-ecolution/green-ecolution/issues/1138)) ([cc3f677](https://github.com/green-ecolution/green-ecolution/commit/cc3f677cc8b8f8b7980206f8bb612e63afb2aff2))
+* **frontend:** compact tree, sensor and watering history cards on the cluster dashboard ([#1128](https://github.com/green-ecolution/green-ecolution/issues/1128)) ([ac2f15e](https://github.com/green-ecolution/green-ecolution/commit/ac2f15ee154d78d3ed7e4bbb4608f85a11805b3f))
+* **frontend:** dashboard overview, consistent list pages and accessible status colors ([#1137](https://github.com/green-ecolution/green-ecolution/issues/1137)) ([9009d78](https://github.com/green-ecolution/green-ecolution/commit/9009d78441395d574e0b6d4eb86dd6b7b962ee7b))
+
+
+### Bug Fixes
+
+* **frontend:** remove Flensburg and TBZ wording from the interface ([#1136](https://github.com/green-ecolution/green-ecolution/issues/1136)) ([39cd8ce](https://github.com/green-ecolution/green-ecolution/commit/39cd8ce2d7d35a928f52aaeec2badfe24a3e75c5))
+
+
+### Documentation
+
+* **README:** remove community vote section ([4804672](https://github.com/green-ecolution/green-ecolution/commit/48046721d6e49be60636a7dd7b97dc7e5cc7aec3))
+
 ## [0.9.0](https://github.com/green-ecolution/green-ecolution/compare/v0.8.0...v0.9.0) (2026-10-29)
 
 
