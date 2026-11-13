@@ -188,6 +188,8 @@ services:
       - ./.docker/infra/valhalla/custom_files:/custom_files
     environment:
       server_threads: 20
+    ports:
+      - "127.0.0.1:8002:8002"
     healthcheck:
       test:
         [

@@ -25,7 +25,7 @@ pub mod view;
 
 use std::time::Duration;
 
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDate, Utc};
 use uuid::Uuid;
 
 use crate::{
@@ -189,6 +189,12 @@ pub struct OperationPlanSearchQuery {
     /// Which organizations may see the result. Callers must set this per
     /// request.
     pub visible: Visibility,
+    /// Only plans this user is assigned to.
+    pub assigned_user: Option<Uuid>,
+    /// Inclusive lower bound of the plan date.
+    pub date_from: Option<NaiveDate>,
+    /// Exclusive upper bound of the plan date.
+    pub date_to: Option<NaiveDate>,
 }
 
 /// Replacement input for [`OperationPlan`] field edits while still

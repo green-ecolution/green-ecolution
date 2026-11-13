@@ -7,7 +7,7 @@ use crate::{
     capacity::{CapacityKind, Liters},
     planning::StopRef,
     shared::{coordinates::Coordinate, distance::Distance},
-    vehicle::Vehicle,
+    vehicle::{Vehicle, VehicleDimension},
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -20,6 +20,27 @@ pub enum RoutingError {
     Failed(String),
     #[error("no station replenishes {kind}")]
     NoStation { kind: CapacityKind },
+}
+
+#[derive(Debug, Clone)]
+pub struct TurnByTurnRequest {
+    pub origin: Coordinate,
+    /// Degrees clockwise from north, 0-360.
+    pub heading: Option<f64>,
+    /// Remaining waypoints in driving order, at least one.
+    pub waypoints: Vec<Coordinate>,
+    pub vehicle: VehicleDimension,
+}
+
+/// The routing engine's answer, passed through to the client untouched.
+#[derive(Debug, Clone)]
+pub struct TurnByTurnRoute {
+    pub json: String,
+}
+
+#[async_trait::async_trait]
+pub trait TurnByTurnRouter: Send + Sync {
+    async fn route(&self, request: TurnByTurnRequest) -> Result<TurnByTurnRoute, RoutingError>;
 }
 
 /// One stop to visit, with its demand in liters of the route's capacity kind.

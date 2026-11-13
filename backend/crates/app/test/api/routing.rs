@@ -25,7 +25,7 @@ pub fn streamlet_ok() -> serde_json::Value {
     })
 }
 
-async fn mock_streamlet(response: ResponseTemplate) -> MockServer {
+pub(crate) async fn mock_streamlet(response: ResponseTemplate) -> MockServer {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
         .and(path("/v1/solve"))
@@ -35,7 +35,7 @@ async fn mock_streamlet(response: ResponseTemplate) -> MockServer {
     server
 }
 
-async fn create_transporter(app: &crate::helpers::TestApp) -> serde_json::Value {
+pub(crate) async fn create_transporter(app: &crate::helpers::TestApp) -> serde_json::Value {
     let body = serde_json::json!({
         "number_plate": format!("FL RT {}", &uuid::Uuid::now_v7().simple().to_string()[..4]),
         "description": "Routing-Transporter",
@@ -56,7 +56,10 @@ async fn create_cluster_with_tree(app: &crate::helpers::TestApp) -> String {
     create_named_cluster_with_tree(app, "Routing-Cluster").await
 }
 
-async fn create_named_cluster_with_tree(app: &crate::helpers::TestApp, name: &str) -> String {
+pub(crate) async fn create_named_cluster_with_tree(
+    app: &crate::helpers::TestApp,
+    name: &str,
+) -> String {
     let tree_id = uuid::Uuid::now_v7();
     sqlx::query(
         r#"INSERT INTO trees (id, planting_year, species, number, latitude, longitude, geometry, description, organization_id)
@@ -79,7 +82,7 @@ async fn create_named_cluster_with_tree(app: &crate::helpers::TestApp, name: &st
     cluster["id"].as_str().unwrap().to_string()
 }
 
-fn plan_body(transporter_id: &str, cluster_id: &str) -> serde_json::Value {
+pub(crate) fn plan_body(transporter_id: &str, cluster_id: &str) -> serde_json::Value {
     serde_json::json!({
         "date": "2026-08-15T06:00:00+00:00",
         "description": "Routing-Plan",

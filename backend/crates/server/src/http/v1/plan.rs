@@ -57,7 +57,7 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
 
 /// Permissions on a plan hang on the plan resource its module declares, and
 /// writes additionally need the module to be active in the organization.
-fn plan_access(
+pub(super) fn plan_access(
     state: &AppState,
     module: &ModuleKey,
 ) -> Result<(ModuleAccess, ResourceKey), ServiceError> {
@@ -97,7 +97,7 @@ async fn ensure_vehicles_visible(
     Ok(())
 }
 
-async fn detail_response(
+pub(super) async fn detail_response(
     state: &AppState,
     view: OperationPlanView,
 ) -> Result<PlanResponse, ServiceError> {
@@ -160,6 +160,9 @@ pub async fn list_plans(
         provider: None,
         statuses: params.status.into_iter().map(Into::into).collect(),
         visible,
+        assigned_user: None,
+        date_from: None,
+        date_to: None,
     };
     let page = state
         .operation_plan_service
@@ -475,7 +478,7 @@ fn route_response_from_plan(plan: &OperationPlan) -> Result<RouteResponse, Servi
 }
 
 /// Loads a plan after checking the routing flag and the caller's read right.
-async fn readable_plan(
+pub(super) async fn readable_plan(
     state: &AppState,
     caller: Caller,
     id: uuid::Uuid,

@@ -189,6 +189,9 @@ impl Application {
                     &settings.routing,
                 )) as Arc<dyn domain::routing::RouteOptimizer>
             });
+        let turn_by_turn: Arc<dyn domain::routing::TurnByTurnRouter> = Arc::new(
+            infra::valhalla::ValhallaTurnByTurnRouter::new(&settings.routing),
+        );
         let targets = Arc::new(server::service::targets::TargetRegistry::new());
         let planning = Arc::new(PlanningRegistry::new());
         let statistics = Arc::new(server::service::statistics_registry::StatisticsRegistry::new());
@@ -349,6 +352,17 @@ impl Application {
             vehicle_service: services.vehicle,
             comment_service: services.comment,
             operation_plan_service: services.operation_plan,
+            navigation_service: Arc::new(
+                server::service::navigation_service::NavigationService::new(
+                    turn_by_turn,
+                    repos.vehicle_reader.clone(),
+                ),
+            ),
+            navigation_throttle: Arc::new(
+                server::http::navigation_throttle::NavigationThrottle::new(
+                    std::time::Duration::from_secs(2),
+                ),
+            ),
             operation_execution_service: services.operation_execution,
             user_service,
             info_provider,

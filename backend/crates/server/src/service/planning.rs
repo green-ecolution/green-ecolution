@@ -27,6 +27,13 @@ impl PlanningRegistry {
             .map_err(|_| RegistryAlreadyInstalled)
     }
 
+    pub fn modules(&self) -> Vec<ModuleKey> {
+        self.providers
+            .get()
+            .map(|p| p.keys().cloned().collect())
+            .unwrap_or_default()
+    }
+
     pub fn provider(&self, module: &ModuleKey) -> Result<Arc<dyn PlanningProvider>, ServiceError> {
         self.providers
             .get()
@@ -84,6 +91,11 @@ mod tests {
             .provider(&ModuleKey::new("fake").unwrap())
             .unwrap();
         assert_eq!(provider.plan_resource(), ResourceKey::declare("fake_plan"));
+    }
+
+    #[test]
+    fn modules_lists_every_installed_planning_module() {
+        assert_eq!(registry().modules(), vec![ModuleKey::new("fake").unwrap()]);
     }
 
     #[test]

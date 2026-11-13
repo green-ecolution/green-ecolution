@@ -38,6 +38,7 @@ use domain::info::{HealthSnapshotReader, ReadinessReader, StatisticsReader, Syst
 pub mod auth;
 pub mod extractors;
 pub mod health;
+pub mod navigation_throttle;
 pub mod plugin_proxy;
 mod tracing;
 pub mod v1;
@@ -101,6 +102,8 @@ pub struct AppState {
     pub vehicle_service: Arc<VehicleService>,
     pub comment_service: Arc<CommentService>,
     pub operation_plan_service: Arc<OperationPlanService>,
+    pub navigation_service: Arc<crate::service::navigation_service::NavigationService>,
+    pub navigation_throttle: Arc<navigation_throttle::NavigationThrottle>,
     pub operation_execution_service: Arc<OperationExecutionService>,
     pub user_service: Arc<UserService>,
     pub info_provider: Arc<dyn SystemInfoProvider>,
