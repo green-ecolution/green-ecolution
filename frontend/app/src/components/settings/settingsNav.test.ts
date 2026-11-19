@@ -3,83 +3,59 @@ import { UNRESTRICTED } from '@/lib/auth/permissions'
 import { SETTINGS_NAV, visibleSettingsNav } from './settingsNav'
 
 const keysOf = (items: { key: string }[]) => items.map((item) => item.key)
+const ALL_FEATURES = new Set(['plugins', 'routing'])
 
 describe('SETTINGS_NAV', () => {
-  it('lists the settings pages in order', () => {
-    expect(keysOf(SETTINGS_NAV)).toEqual([
-      'profile',
-      'organization',
-      'notifications',
-      'team',
-      'plugin',
-      'stations',
+  it('lists the account pages, then the pages of the organization', () => {
+    expect(SETTINGS_NAV.map((item) => [item.group, item.key])).toEqual([
+      ['account', 'profile'],
+      ['account', 'notifications'],
+      ['organization', 'overview'],
+      ['organization', 'areas'],
+      ['organization', 'structure'],
+      ['organization', 'members'],
+      ['organization', 'roles'],
+      ['organization', 'stations'],
+      ['organization', 'plugins'],
     ])
   })
 
   it('marks only notifications as coming soon', () => {
-    const comingSoon = SETTINGS_NAV.filter((item) => item.comingSoon).map((item) => item.key)
-    expect(comingSoon).toEqual(['notifications'])
-  })
-
-  it('no longer offers the placeholder areas whose values moved into the organization', () => {
-    const keys = keysOf(SETTINGS_NAV)
-    expect(keys).not.toContain('irrigation')
-    expect(keys).not.toContain('sensors')
-    expect(keys).not.toContain('map')
-    expect(keys).toContain('notifications')
+    expect(keysOf(SETTINGS_NAV.filter((item) => item.comingSoon))).toEqual(['notifications'])
   })
 })
 
 describe('visibleSettingsNav', () => {
-  it('hides the team entry without user or role read', () => {
-    const visible = visibleSettingsNav(SETTINGS_NAV, new Set(['tree:read']), new Set(['plugins']))
-    expect(keysOf(visible)).not.toContain('team')
-  })
-
-  it('shows the team entry with role read alone', () => {
-    const visible = visibleSettingsNav(SETTINGS_NAV, new Set(['role:read']), new Set())
-    expect(keysOf(visible)).toContain('team')
-  })
-
-  it('hides the organization entry without organization read', () => {
-    const visible = visibleSettingsNav(SETTINGS_NAV, new Set(['tree:read']), new Set())
-    expect(keysOf(visible)).not.toContain('organization')
-  })
-
-  it('hides plugins when the feature is disabled', () => {
-    const visible = visibleSettingsNav(SETTINGS_NAV, UNRESTRICTED, new Set())
-    expect(keysOf(visible)).not.toContain('plugin')
-  })
-
-  it('shows plugins when the feature is enabled', () => {
-    const visible = visibleSettingsNav(SETTINGS_NAV, UNRESTRICTED, new Set(['plugins']))
-    expect(keysOf(visible)).toContain('plugin')
-  })
-
-  it('always keeps profile', () => {
+  it('always keeps the account pages', () => {
     const visible = visibleSettingsNav(SETTINGS_NAV, new Set(), new Set())
-    expect(keysOf(visible)).toContain('profile')
+    expect(keysOf(visible)).toEqual(['profile', 'notifications'])
   })
 
-  it('shows stations only with start point read and routing enabled', () => {
-    const perms = new Set(['start_point:read'])
-    expect(keysOf(visibleSettingsNav(SETTINGS_NAV, perms, new Set(['routing'])))).toContain(
-      'stations',
-    )
-    expect(keysOf(visibleSettingsNav(SETTINGS_NAV, perms, new Set()))).not.toContain('stations')
-    expect(
-      keysOf(visibleSettingsNav(SETTINGS_NAV, new Set(['tree:read']), new Set(['routing']))),
-    ).not.toContain('stations')
+  it('shows every page with every right and feature', () => {
+    const visible = visibleSettingsNav(SETTINGS_NAV, UNRESTRICTED, ALL_FEATURES)
+    expect(keysOf(visible)).toHaveLength(SETTINGS_NAV.length)
   })
-})
 
-describe('visibleSettingsNav in admin mode', () => {
-  it('hides the stations entry, which belongs to a tenant', () => {
-    const features = new Set(['routing', 'plugins'])
-    const normal = visibleSettingsNav(SETTINGS_NAV, UNRESTRICTED, features)
-    const admin = visibleSettingsNav(SETTINGS_NAV, UNRESTRICTED, features, true)
-    expect(keysOf(normal)).toContain('stations')
-    expect(keysOf(admin)).not.toContain('stations')
-    expect(keysOf(admin)).toContain('organization')
+  it('shows overview and structure with organization:read alone', () => {
+    const visible = visibleSettingsNav(SETTINGS_NAV, new Set(['organization:read']), ALL_FEATURES)
+    expect(keysOf(visible)).toEqual(['profile', 'notifications', 'overview', 'structure'])
+  })
+
+  it('ties areas to setting:read, members to user:read and roles to role:read', () => {
+    const perms = new Set(['setting:read', 'user:read', 'role:read'])
+    const visible = visibleSettingsNav(SETTINGS_NAV, perms, new Set())
+    expect(keysOf(visible)).toEqual(['profile', 'notifications', 'areas', 'members', 'roles'])
+  })
+
+  it('hides plugins and stations when their feature is off', () => {
+    const visible = visibleSettingsNav(SETTINGS_NAV, UNRESTRICTED, new Set())
+    expect(keysOf(visible)).not.toContain('plugins')
+    expect(keysOf(visible)).not.toContain('stations')
+  })
+
+  it('hides stations in admin mode', () => {
+    const visible = visibleSettingsNav(SETTINGS_NAV, UNRESTRICTED, ALL_FEATURES, true)
+    expect(keysOf(visible)).not.toContain('stations')
+    expect(keysOf(visible)).toContain('plugins')
   })
 })

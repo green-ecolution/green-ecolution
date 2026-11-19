@@ -1,64 +1,94 @@
+import type { LinkProps } from '@tanstack/react-router'
 import type de from '@/locales/de'
 import { satisfies, type PermissionRequirement, type Permissions } from '@/lib/auth/permissions'
+import { SECTION_ROUTES } from './settingsSections'
 
 type SettingsNavKey = keyof (typeof de)['settings']['nav']
 
+export type SettingsNavGroup = 'account' | 'organization'
+
 export interface SettingsNavItem {
-  key: string
-  /** Key into settings:nav.*, resolved in SettingsLayout so this module stays translation-free. */
-  labelKey: SettingsNavKey
+  key: SettingsNavKey
+  group: SettingsNavGroup
   /** Lucide icon name, resolved in SettingsLayout so this module stays JSX-free. */
   icon: string
-  to: string
+  /** Organization entries carry `$orgId`, filled in by the layout. */
+  to: LinkProps['to']
   permission?: PermissionRequirement
   featureKey?: string
   comingSoon?: boolean
   /** Pages about one tenant's operations; the instance admin has none. */
   hiddenInAdminMode?: boolean
+  /** Shows the number of sub-organizations or members next to the label. */
+  count?: 'children' | 'members'
 }
 
 export const SETTINGS_NAV: SettingsNavItem[] = [
-  { key: 'profile', labelKey: 'profile', icon: 'UserRound', to: '/settings/profile' },
-  {
-    key: 'organization',
-    labelKey: 'organization',
-    icon: 'Building2',
-    to: '/settings/organization',
-    permission: ['organization:read'],
-  },
+  { key: 'profile', group: 'account', icon: 'UserRound', to: '/settings/profile' },
   {
     key: 'notifications',
-    labelKey: 'notifications',
+    group: 'account',
     icon: 'Bell',
     to: '/settings/notifications',
     comingSoon: true,
   },
   {
-    key: 'team',
-    labelKey: 'team',
-    icon: 'Users',
-    to: '/settings/team',
-    permission: ['user:read', 'role:read'],
+    key: 'overview',
+    group: 'organization',
+    icon: 'Building2',
+    to: SECTION_ROUTES.overview,
+    permission: ['organization:read'],
   },
   {
-    key: 'plugin',
-    labelKey: 'plugin',
-    icon: 'Puzzle',
-    to: '/settings/plugin',
-    featureKey: 'plugins',
-    permission: ['plugin:read'],
+    key: 'areas',
+    group: 'organization',
+    icon: 'SlidersHorizontal',
+    to: SECTION_ROUTES.areas,
+    permission: ['setting:read'],
+  },
+  {
+    key: 'structure',
+    group: 'organization',
+    icon: 'Network',
+    to: SECTION_ROUTES.structure,
+    permission: ['organization:read'],
+    count: 'children',
+  },
+  {
+    key: 'members',
+    group: 'organization',
+    icon: 'Users',
+    to: SECTION_ROUTES.members,
+    permission: ['user:read'],
+    count: 'members',
+  },
+  {
+    key: 'roles',
+    group: 'organization',
+    icon: 'ShieldCheck',
+    to: SECTION_ROUTES.roles,
+    permission: ['role:read'],
   },
   {
     key: 'stations',
-    labelKey: 'stations',
+    group: 'organization',
     icon: 'MapPin',
-    to: '/settings/stations',
+    to: SECTION_ROUTES.stations,
     featureKey: 'routing',
     permission: ['start_point:read'],
     hiddenInAdminMode: true,
   },
+  {
+    key: 'plugins',
+    group: 'organization',
+    icon: 'Puzzle',
+    to: SECTION_ROUTES.plugins,
+    featureKey: 'plugins',
+    permission: ['plugin:read'],
+  },
 ]
 
+/** `perms` are the rights in the selected organization, not the union over all. */
 export const visibleSettingsNav = (
   items: SettingsNavItem[],
   perms: Permissions,

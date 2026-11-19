@@ -2,15 +2,28 @@
   "layout": {
     "title": "Einstellungen",
     "navAriaLabel": "Einstellungsbereiche",
-    "comingSoonBadge": "bald"
+    "comingSoonBadge": "bald",
+    "groupAccount": "Mein Konto",
+    "groupOrganization": "Einstellungen für"
   },
   "nav": {
     "profile": "Profil",
-    "organization": "Organisation",
     "notifications": "Benachrichtigungen",
-    "team": "Team & Rollen",
-    "plugin": "Plugins",
-    "stations": "Stationen"
+    "overview": "Überblick",
+    "areas": "Aufgabenbereiche",
+    "structure": "Struktur",
+    "members": "Mitarbeitende",
+    "roles": "Rollen",
+    "stations": "Stationen",
+    "plugins": "Plugins"
+  },
+  "picker": {
+    "ariaLabel": "Organisation wechseln, aktuell {name}",
+    "searchPlaceholder": "Organisation suchen",
+    "empty": "Keine Organisation gefunden",
+    "withChildren_one": "mit {count} Unterorganisation",
+    "withChildren_other": "mit {count} Unterorganisationen",
+    "manageStructure": "Struktur verwalten"
   },
   "comingSoon": {
     "inProgress": "In Arbeit",

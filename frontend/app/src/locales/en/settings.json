@@ -2,15 +2,28 @@
   "layout": {
     "title": "Settings",
     "navAriaLabel": "Settings areas",
-    "comingSoonBadge": "soon"
+    "comingSoonBadge": "soon",
+    "groupAccount": "My account",
+    "groupOrganization": "Settings for"
   },
   "nav": {
     "profile": "Profile",
-    "organization": "Organization",
     "notifications": "Notifications",
-    "team": "Team & roles",
-    "plugin": "Plugins",
-    "stations": "Stations"
+    "overview": "Overview",
+    "areas": "Areas of work",
+    "structure": "Structure",
+    "members": "Members",
+    "roles": "Roles",
+    "stations": "Stations",
+    "plugins": "Plugins"
+  },
+  "picker": {
+    "ariaLabel": "Switch organization, currently {name}",
+    "searchPlaceholder": "Search organization",
+    "empty": "No organization found",
+    "withChildren_one": "with {count} sub-organization",
+    "withChildren_other": "with {count} sub-organizations",
+    "manageStructure": "Manage structure"
   },
   "comingSoon": {
     "inProgress": "In progress",
