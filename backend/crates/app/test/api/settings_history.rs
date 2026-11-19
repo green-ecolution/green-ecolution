@@ -93,46 +93,8 @@ async fn returning_to_inheritance_is_visible_in_the_history() {
     assert_eq!(rows[1].2, None);
 }
 
-#[tokio::test]
-async fn a_rejected_change_leaves_no_entry() {
-    let app = spawn_app().await;
-    let root = Uuid::parse_str(ROOT_ORG_ID).unwrap();
-    let leaf = child_org(&app, "Gesperrt", root).await;
-
-    app.state
-        .settings_service
-        .update(
-            Uuid::nil(),
-            Id::<Organization>::new(root),
-            SettingsUpdate {
-                descendants_may_override: Some(false),
-                ..SettingsUpdate::default()
-            },
-        )
-        .await
-        .unwrap();
-
-    assert!(
-        app.state
-            .settings_service
-            .update(
-                Uuid::nil(),
-                Id::<Organization>::new(leaf),
-                SettingsUpdate {
-                    sensor_offline_after: Patch::Set(SensorOfflineAfter::new(70_000).unwrap()),
-                    ..SettingsUpdate::default()
-                },
-            )
-            .await
-            .is_err()
-    );
-
-    assert!(history_rows(&app, leaf).await.is_empty());
-}
-
-/// The rejection above never reaches the database; this one fails inside the
-/// write, on the history insert, and must take the value with it. Without a
-/// shared transaction the new value would survive without a record of it.
+/// Fails inside the write, on the history insert, and must take the value
+/// with it. Without a shared transaction the new value would survive without a record of it.
 #[tokio::test]
 async fn a_write_that_fails_on_the_history_keeps_the_old_value() {
     let app = spawn_app().await;
@@ -166,65 +128,18 @@ async fn a_write_that_fails_on_the_history_keeps_the_old_value() {
     assert!(stored.is_none());
 }
 
-/// `changed_at` defaults to `now()`, which is transaction-start time, so every
-/// key touched by one patch carries the same timestamp — a tie is the normal
-/// case here, not a rare one. The newer entry has to win on `id`.
 #[tokio::test]
-async fn entries_sharing_a_timestamp_are_separated_by_their_id() {
+async fn falling_back_by_sending_the_inherited_value_is_recorded() {
     let app = spawn_app().await;
-    let org = child_org(&app, "Gleichzeitig", Uuid::parse_str(ROOT_ORG_ID).unwrap()).await;
-
-    let older = Uuid::now_v7();
-    let newer = Uuid::now_v7();
-    let changed_at = chrono::Utc::now();
-
-    for (id, secs) in [(older, 90_000), (newer, 120_000)] {
-        sqlx::query!(
-            r#"INSERT INTO organization_settings_history
-                   (id, organization_id, setting_key, previous_value, new_value, changed_at)
-               VALUES ($1, $2, $3, NULL, $4, $5)"#,
-            id,
-            org,
-            SettingKey::SensorOfflineAfter.as_str(),
-            serde_json::json!(secs),
-            changed_at,
-        )
-        .execute(&app.db_pool)
-        .await
-        .unwrap();
-    }
-
-    let last = app
-        .state
-        .settings_service
-        .last_changes(Id::<Organization>::new(org))
-        .await
-        .unwrap();
-
-    let entry = last
-        .get(&SettingKey::SensorOfflineAfter)
-        .expect("entry for the changed key");
-    assert_eq!(entry.next, Some(serde_json::json!(120_000)));
-}
-
-#[tokio::test]
-async fn the_last_change_per_key_is_readable() {
-    let app = spawn_app().await;
-    let org = child_org(&app, "Letzte", Uuid::parse_str(ROOT_ORG_ID).unwrap()).await;
+    let root = Uuid::parse_str(ROOT_ORG_ID).unwrap();
+    let org = child_org(&app, "Zurück", root).await;
 
     set_offline_after(&app, org, 90_000).await;
-    set_offline_after(&app, org, 120_000).await;
+    // 86_400 is the instance default, which is what `org` inherits.
+    set_offline_after(&app, org, 86_400).await;
 
-    let last = app
-        .state
-        .settings_service
-        .last_changes(Id::<Organization>::new(org))
-        .await
-        .unwrap();
-
-    let entry = last
-        .get(&SettingKey::SensorOfflineAfter)
-        .expect("entry for the changed key");
-    assert_eq!(entry.next, Some(serde_json::json!(120_000)));
-    assert_eq!(entry.previous, Some(serde_json::json!(90_000)));
+    let rows = history_rows(&app, org).await;
+    assert_eq!(rows.len(), 2);
+    assert_eq!(rows[1].1, Some(serde_json::json!(90_000)));
+    assert_eq!(rows[1].2, None, "the own value is gone, not replaced");
 }

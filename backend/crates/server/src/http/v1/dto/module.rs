@@ -7,7 +7,18 @@ use domain::{
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::http::v1::dto::settings::{OrganizationRef, SettingOriginDto};
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum SettingOriginDto {
+    Default,
+    Inherited,
+    Own,
+}
+
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+pub struct OrganizationRef {
+    pub id: Uuid,
+}
 
 #[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct ModuleListResponse {
@@ -44,7 +55,6 @@ pub struct OrganizationModuleResponse {
 #[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct OrganizationModulesResponse {
     pub modules: Vec<OrganizationModuleResponse>,
-    pub enforced_by: Option<OrganizationRef>,
 }
 
 #[derive(Debug, Deserialize, utoipa::ToSchema)]
@@ -61,10 +71,6 @@ impl OrganizationModulesResponse {
         own: &BTreeMap<ModuleKey, OwnSwitch>,
         may_change: impl Fn(&OwnSwitch) -> bool,
     ) -> Self {
-        let enforced_by = resolution
-            .values()
-            .find_map(|r| r.enforced_by)
-            .map(|id| OrganizationRef { id: id.value() });
         let modules = resolution
             .iter()
             .map(|(key, r)| {
@@ -90,9 +96,6 @@ impl OrganizationModulesResponse {
                 }
             })
             .collect();
-        Self {
-            modules,
-            enforced_by,
-        }
+        Self { modules }
     }
 }

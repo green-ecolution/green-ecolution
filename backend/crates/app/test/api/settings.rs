@@ -16,22 +16,23 @@ async fn settings_of(app: &TestApp, org: Uuid) -> serde_json::Value {
 }
 
 #[tokio::test]
-async fn an_untouched_organization_reports_every_field_as_default() {
+async fn an_untouched_organization_reports_the_instance_default_twice() {
     let app = spawn_app().await;
     let org = child_org(&app, "Neu", Uuid::parse_str(ROOT_ORG_ID).unwrap()).await;
 
     let body = settings_of(&app, org).await;
 
-    assert_eq!(body["sensor_offline_after_secs"]["origin"], "default");
-    assert_eq!(body["sensor_offline_after_secs"]["value"], 86_400);
-    assert!(body["sensor_offline_after_secs"]["source"].is_null());
-    assert!(body["sensor_offline_after_secs"]["own_value"].is_null());
-    assert_eq!(body["descendants_may_override"], true);
-    assert!(body["enforced_by"].is_null());
+    let field = body["sensor_offline_after_secs"].as_object().unwrap();
+    assert_eq!(field["value"], 86_400);
+    assert_eq!(field["inherited_value"], 86_400);
+    assert_eq!(field.len(), 2, "a field carries nothing but the two values");
+    let top = body.as_object().unwrap();
+    assert!(!top.contains_key("descendants_may_override"));
+    assert!(!top.contains_key("enforced_by"));
 }
 
 #[tokio::test]
-async fn an_inherited_value_names_the_organization_it_comes_from() {
+async fn a_value_set_above_is_the_inherited_value_below() {
     let app = spawn_app().await;
     let root = Uuid::parse_str(ROOT_ORG_ID).unwrap();
     let leaf = child_org(&app, "Blatt", root).await;
@@ -45,47 +46,72 @@ async fn an_inherited_value_names_the_organization_it_comes_from() {
     assert_eq!(resp.status(), 200);
 
     let body = settings_of(&app, leaf).await;
-    assert_eq!(body["sensor_offline_after_secs"]["origin"], "inherited");
     assert_eq!(body["sensor_offline_after_secs"]["value"], 100_000);
     assert_eq!(
-        body["sensor_offline_after_secs"]["source"]["id"],
-        root.to_string()
+        body["sensor_offline_after_secs"]["inherited_value"],
+        100_000
     );
 }
 
 #[tokio::test]
-async fn null_restores_inheritance_and_the_next_read_says_so() {
+async fn sending_the_inherited_value_makes_the_organization_follow_again() {
     let app = spawn_app().await;
     let root = Uuid::parse_str(ROOT_ORG_ID).unwrap();
     let leaf = child_org(&app, "Blatt", root).await;
 
+    for (org, secs) in [(root, 100_000), (leaf, 70_000)] {
+        app.put_json(
+            &format!("/api/v1/organizations/{org}/settings"),
+            &json!({ "sensor_offline_after_secs": secs }),
+        )
+        .await;
+    }
+    let body = settings_of(&app, leaf).await;
+    assert_eq!(body["sensor_offline_after_secs"]["value"], 70_000);
+    assert_eq!(
+        body["sensor_offline_after_secs"]["inherited_value"],
+        100_000
+    );
+
+    // The leaf types in what it would inherit anyway, then the root moves.
+    for (org, secs) in [(leaf, 100_000), (root, 110_000)] {
+        let resp = app
+            .put_json(
+                &format!("/api/v1/organizations/{org}/settings"),
+                &json!({ "sensor_offline_after_secs": secs }),
+            )
+            .await;
+        assert_eq!(resp.status(), 200);
+    }
+
+    assert_eq!(
+        settings_of(&app, leaf).await["sensor_offline_after_secs"]["value"],
+        110_000
+    );
+}
+
+#[tokio::test]
+async fn null_is_treated_like_an_omitted_field() {
+    let app = spawn_app().await;
+    let org = child_org(&app, "Null", Uuid::parse_str(ROOT_ORG_ID).unwrap()).await;
+
     app.put_json(
-        &format!("/api/v1/organizations/{root}/settings"),
-        &json!({ "sensor_offline_after_secs": 100_000 }),
-    )
-    .await;
-    app.put_json(
-        &format!("/api/v1/organizations/{leaf}/settings"),
+        &format!("/api/v1/organizations/{org}/settings"),
         &json!({ "sensor_offline_after_secs": 70_000 }),
     )
     .await;
-    assert_eq!(
-        settings_of(&app, leaf).await["sensor_offline_after_secs"]["origin"],
-        "own"
-    );
-
     let resp = app
         .put_json(
-            &format!("/api/v1/organizations/{leaf}/settings"),
+            &format!("/api/v1/organizations/{org}/settings"),
             &json!({ "sensor_offline_after_secs": null }),
         )
         .await;
     assert_eq!(resp.status(), 200);
 
-    let body = settings_of(&app, leaf).await;
-    assert_eq!(body["sensor_offline_after_secs"]["origin"], "inherited");
-    assert_eq!(body["sensor_offline_after_secs"]["value"], 100_000);
-    assert!(body["sensor_offline_after_secs"]["own_value"].is_null());
+    assert_eq!(
+        settings_of(&app, org).await["sensor_offline_after_secs"]["value"],
+        70_000
+    );
 }
 
 #[tokio::test]
@@ -105,60 +131,8 @@ async fn an_omitted_field_is_left_alone() {
     .await;
 
     let body = settings_of(&app, org).await;
-    assert_eq!(body["sensor_offline_after_secs"]["origin"], "own");
     assert_eq!(body["sensor_offline_after_secs"]["value"], 70_000);
     assert_eq!(body["defect_streak"]["value"], 7);
-}
-
-#[tokio::test]
-async fn a_dormant_own_value_is_still_reported() {
-    let app = spawn_app().await;
-    let root = Uuid::parse_str(ROOT_ORG_ID).unwrap();
-    let leaf = child_org(&app, "Ruhend", root).await;
-
-    app.put_json(
-        &format!("/api/v1/organizations/{root}/settings"),
-        &json!({ "sensor_offline_after_secs": 100_000 }),
-    )
-    .await;
-    app.put_json(
-        &format!("/api/v1/organizations/{leaf}/settings"),
-        &json!({ "sensor_offline_after_secs": 70_000 }),
-    )
-    .await;
-    app.put_json(
-        &format!("/api/v1/organizations/{root}/settings"),
-        &json!({ "descendants_may_override": false }),
-    )
-    .await;
-
-    let body = settings_of(&app, leaf).await;
-    assert_eq!(body["sensor_offline_after_secs"]["value"], 100_000);
-    assert_eq!(body["sensor_offline_after_secs"]["own_value"], 70_000);
-    assert_eq!(body["enforced_by"]["id"], root.to_string());
-}
-
-#[tokio::test]
-async fn a_write_below_a_lock_answers_409_with_its_code() {
-    let app = spawn_app().await;
-    let root = Uuid::parse_str(ROOT_ORG_ID).unwrap();
-    let leaf = child_org(&app, "Gesperrt", root).await;
-
-    app.put_json(
-        &format!("/api/v1/organizations/{root}/settings"),
-        &json!({ "descendants_may_override": false }),
-    )
-    .await;
-
-    let resp = app
-        .put_json(
-            &format!("/api/v1/organizations/{leaf}/settings"),
-            &json!({ "sensor_offline_after_secs": 70_000 }),
-        )
-        .await;
-    assert_eq!(resp.status(), 409);
-    let body: serde_json::Value = resp.json().await.unwrap();
-    assert_eq!(body["code"], "settings.enforced_by_ancestor");
 }
 
 #[tokio::test]
@@ -182,22 +156,6 @@ async fn an_out_of_range_value_answers_400_with_a_field_label() {
 }
 
 #[tokio::test]
-async fn the_last_change_is_reported_per_field() {
-    let app = spawn_app().await;
-    let org = child_org(&app, "Nachweis", Uuid::parse_str(ROOT_ORG_ID).unwrap()).await;
-
-    app.put_json(
-        &format!("/api/v1/organizations/{org}/settings"),
-        &json!({ "sensor_offline_after_secs": 70_000 }),
-    )
-    .await;
-
-    let body = settings_of(&app, org).await;
-    assert!(body["sensor_offline_after_secs"]["last_change"]["changed_at"].is_string());
-    assert!(body["defect_streak"]["last_change"].is_null());
-}
-
-#[tokio::test]
 async fn an_empty_write_leaves_the_organization_untouched() {
     let app = spawn_app().await;
     let org = child_org(&app, "Leer", Uuid::parse_str(ROOT_ORG_ID).unwrap()).await;
@@ -208,8 +166,7 @@ async fn an_empty_write_leaves_the_organization_untouched() {
     assert_eq!(resp.status(), 200);
 
     let body = settings_of(&app, org).await;
-    assert_eq!(body["sensor_offline_after_secs"]["origin"], "default");
-    assert_eq!(body["descendants_may_override"], true);
+    assert_eq!(body["sensor_offline_after_secs"]["value"], 86_400);
 
     let stored = sqlx::query_scalar!(
         r#"SELECT count(*) FROM organization_settings WHERE organization_id = $1"#,
@@ -257,13 +214,11 @@ async fn a_map_view_round_trips_with_its_numbers_in_place() {
     assert_eq!(resp.status(), 200);
 
     let body = settings_of(&app, org).await;
-    assert_eq!(body["map_view"]["origin"], "own");
     assert_eq!(body["map_view"]["value"]["center"], center);
     assert_eq!(body["map_view"]["value"]["bbox"], bbox);
     assert_eq!(body["map_view"]["value"]["min_zoom"], 13);
     assert_eq!(body["map_view"]["value"]["max_zoom"], 18);
-    assert_eq!(body["map_view"]["own_value"]["center"], center);
-    assert_eq!(body["map_view"]["own_value"]["bbox"], bbox);
+    assert!(body["map_view"]["inherited_value"]["center"].is_array());
 
     let recorded = sqlx::query_scalar!(
         r#"SELECT new_value FROM organization_settings_history
@@ -456,69 +411,4 @@ async fn an_unknown_organization_answers_404_on_both_verbs() {
         )
         .await;
     assert_eq!(resp.status(), 404);
-}
-
-#[tokio::test]
-async fn last_change_carries_the_author_name() {
-    let (harness, app) = crate::auth_helpers::spawn_with_auth().await;
-    let root = Uuid::parse_str(ROOT_ORG_ID).unwrap();
-
-    let actor = Uuid::new_v4();
-    sqlx::query!(
-        r#"INSERT INTO user_profiles (id, organization_id) VALUES ($1, $2)"#,
-        actor,
-        root
-    )
-    .execute(&app.db_pool)
-    .await
-    .unwrap();
-    let role_id: Uuid = sqlx::query_scalar!(
-        r#"INSERT INTO roles (id, organization_id, name, permissions)
-           VALUES (gen_random_uuid(), $1, 'Einstellungen', ARRAY['setting:read','setting:update'])
-           RETURNING id"#,
-        root
-    )
-    .fetch_one(&app.db_pool)
-    .await
-    .unwrap();
-    sqlx::query!(
-        r#"INSERT INTO role_assignments (user_id, role_id) VALUES ($1, $2)"#,
-        actor,
-        role_id
-    )
-    .execute(&app.db_pool)
-    .await
-    .unwrap();
-
-    harness.mock_identity_lookups(&[(actor, "ge.admin")]).await;
-    let token = harness.sign_token(json!({ "sub": actor.to_string() }));
-    let client = reqwest::Client::new();
-
-    let put = client
-        .put(format!(
-            "{}/api/v1/organizations/{root}/settings",
-            app.address
-        ))
-        .bearer_auth(&token)
-        .json(&json!({ "sensor_offline_after_secs": 120_000 }))
-        .send()
-        .await
-        .unwrap();
-    assert_eq!(put.status(), 200);
-
-    let get = client
-        .get(format!(
-            "{}/api/v1/organizations/{root}/settings",
-            app.address
-        ))
-        .bearer_auth(&token)
-        .send()
-        .await
-        .unwrap();
-    assert_eq!(get.status(), 200);
-    let body: serde_json::Value = get.json().await.unwrap();
-
-    let change = &body["sensor_offline_after_secs"]["last_change"];
-    assert_eq!(change["changed_by"], json!(actor.to_string()));
-    assert_eq!(change["changed_by_name"], json!("Test ge.admin"));
 }

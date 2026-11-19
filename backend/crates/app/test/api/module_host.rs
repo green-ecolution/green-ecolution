@@ -104,26 +104,6 @@ async fn activation_at_the_root_reaches_three_levels_down() {
 }
 
 #[tokio::test]
-async fn a_locked_subtree_cannot_switch_modules() {
-    let (app, _) = app_with_test_module().await;
-    let root = Uuid::parse_str(ROOT_ORG_ID).unwrap();
-    let mid = child_org(&app, "Sperre", root).await;
-    let leaf = child_org(&app, "Darunter", mid).await;
-    let lock = app
-        .put_json(
-            &format!("/api/v1/organizations/{mid}/settings"),
-            &json!({ "descendants_may_override": false }),
-        )
-        .await;
-    assert_eq!(lock.status(), 200);
-
-    let resp = switch(&app, KEY, leaf, Some(true)).await;
-    assert_eq!(resp.status(), 409);
-    let body: serde_json::Value = resp.json().await.unwrap();
-    assert_eq!(body["code"], "settings.enforced_by_ancestor");
-}
-
-#[tokio::test]
 async fn reads_only_show_organizations_with_the_module_active() {
     let (app, _) = app_with_test_module().await;
     let root = Uuid::parse_str(ROOT_ORG_ID).unwrap();

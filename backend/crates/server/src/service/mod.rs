@@ -170,10 +170,6 @@ pub enum ServiceError {
     CannotChangeOwnAccess,
     #[error("this change would remove your own right to administer roles and members")]
     CannotRevokeOwnAdministration,
-    /// A write below an organization that froze its subtree. Not a missing
-    /// permission but a state conflict, hence 409 rather than 403.
-    #[error("settings are enforced by organization {organization_id}")]
-    SettingsEnforcedByAncestor { organization_id: uuid::Uuid },
     /// An organization above chose this value for the sub-unit; only someone
     /// acting for that organization or above may change it.
     #[error("set by organization {organization_id}")]
@@ -241,7 +237,6 @@ impl ServiceError {
             Self::SensorBoundToTarget => "conflict.sensor_bound_to_target",
             Self::CannotChangeOwnAccess => "conflict.cannot_change_own_access",
             Self::CannotRevokeOwnAdministration => "conflict.cannot_revoke_own_administration",
-            Self::SettingsEnforcedByAncestor { .. } => "settings.enforced_by_ancestor",
             Self::SettingsSetByAncestor { .. } => "settings.set_by_ancestor",
             Self::ContactPersonNotAMember => "organization.contact_person_not_a_member",
             Self::MissingOrganization => "organization.missing",
@@ -505,9 +500,6 @@ mod tests {
             ServiceError::VehicleCapacityMissing {
                 vehicle: uuid::Uuid::nil(),
                 kind: "water".into(),
-            },
-            ServiceError::SettingsEnforcedByAncestor {
-                organization_id: uuid::Uuid::nil(),
             },
             ServiceError::SettingsSetByAncestor {
                 organization_id: uuid::Uuid::nil(),

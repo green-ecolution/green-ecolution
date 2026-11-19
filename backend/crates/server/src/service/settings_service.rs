@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::sync::Arc;
 
 use uuid::Uuid;
@@ -7,8 +6,8 @@ use domain::{
     Id,
     organization::Organization,
     settings::{
-        InstanceDefaults, MapView, OrganizationSettings, Resolution, SettingChangeEntry,
-        SettingKey, SettingsReader, SettingsResolver, SettingsUpdate, SettingsWriter,
+        InstanceDefaults, MapView, OrganizationSettings, Resolution, SettingsReader,
+        SettingsResolver, SettingsUpdate, SettingsWriter,
     },
     user::UserProfileReader,
 };
@@ -83,18 +82,8 @@ impl SettingsService {
         Ok(self.reader.own(org).await?)
     }
 
-    #[tracing::instrument(level = "info", skip(self))]
-    pub async fn last_changes(
-        &self,
-        org: Id<Organization>,
-    ) -> Result<HashMap<SettingKey, SettingChangeEntry>, ServiceError> {
-        Ok(self.reader.last_changes(org).await?)
-    }
-
-    /// Rejects the whole write when an ancestor froze the subtree — including
-    /// the lock switch itself, so a sub-unit cannot unlock itself. That is
-    /// harmless: the topmost lock wins regardless, and it spares the question
-    /// of what a switch with no effect would mean.
+    /// A value equal to what the organization would inherit anyway is dropped
+    /// rather than stored, so the organization follows its parent again.
     #[tracing::instrument(level = "info", skip(self, update))]
     pub async fn update(
         &self,
@@ -102,13 +91,8 @@ impl SettingsService {
         org: Id<Organization>,
         update: SettingsUpdate,
     ) -> Result<OrganizationSettings, ServiceError> {
-        if let Some(enforcer) = self.reader.resolution(org).await?.effective.enforced_by {
-            return Err(ServiceError::SettingsEnforcedByAncestor {
-                organization_id: enforcer.value(),
-            });
-        }
-        // Checked after the lock, so a write into a frozen subtree still fails
-        // rather than quietly succeeding because it happened to be empty.
+        let inherited = self.reader.resolution(org).await?.inherited;
+        let update = update.settled(&inherited);
         if update.is_empty() {
             return Ok(self.reader.own(org).await?);
         }

@@ -3,7 +3,6 @@
 //! cache would keep serving pre-write values on every other replica.
 
 use std::collections::HashMap;
-use std::str::FromStr;
 use std::sync::Arc;
 
 use sqlx::PgPool;
@@ -13,8 +12,7 @@ use domain::{
     organization::{Organization, OrganizationReader},
     settings::{
         EffectiveSettings, InstanceDefaults, OrganizationSettings, OrganizationSettingsSnapshot,
-        Resolution, SettingChangeEntry, SettingKey, SettingValue, SettingsReader, SettingsResolver,
-        SettingsUpdate, SettingsWriter,
+        Resolution, SettingValue, SettingsReader, SettingsResolver, SettingsUpdate, SettingsWriter,
         values::{DefectStreak, MapBounds, MapView, SensorOfflineAfter, ZoomLevel},
     },
     shared::{coordinates::Coordinate, geo::BoundingBox},
@@ -48,8 +46,7 @@ impl PgSettingsRepository {
                       map_center_lat, map_center_lng,
                       map_bbox_sw_lat, map_bbox_sw_lng,
                       map_bbox_ne_lat, map_bbox_ne_lng,
-                      map_min_zoom, map_max_zoom,
-                      descendants_may_override
+                      map_min_zoom, map_max_zoom
                FROM organization_settings"#
         )
         .fetch_all(&self.pool)
@@ -132,7 +129,6 @@ fn reconstitute(
             .transpose()?,
         defect_streak: snap.defect_streak.map(DefectStreak::new).transpose()?,
         map_view,
-        descendants_may_override: snap.descendants_may_override,
     })
 }
 
@@ -142,7 +138,6 @@ fn to_json(value: SettingValue) -> serde_json::Value {
     match value {
         SettingValue::Seconds(v) => serde_json::json!(v),
         SettingValue::Count(v) => serde_json::json!(v),
-        SettingValue::Flag(v) => serde_json::json!(v),
         SettingValue::Viewport(m) => serde_json::json!({
             "center": [m.center().latitude(), m.center().longitude()],
             "bbox": m.bounds().map(|b| {
@@ -170,49 +165,6 @@ impl SettingsReader for PgSettingsRepository {
     async fn resolution(&self, org: Id<Organization>) -> Result<Resolution, RepositoryError> {
         self.resolve_for(org).await
     }
-
-    #[tracing::instrument(level = "trace", skip_all)]
-    async fn last_changes(
-        &self,
-        org: Id<Organization>,
-    ) -> Result<HashMap<SettingKey, SettingChangeEntry>, RepositoryError> {
-        // `changed_at` defaults to `now()`, which is transaction-start time, so
-        // every key touched by one patch carries the same timestamp. `id` is a
-        // uuid v7 and breaks the tie in insertion order; without it the planner
-        // decides which row counts as the last one.
-        let rows = sqlx::query!(
-            r#"SELECT DISTINCT ON (setting_key)
-                      setting_key AS "setting_key!", previous_value, new_value,
-                      changed_at, changed_by
-               FROM organization_settings_history
-               WHERE organization_id = $1
-               ORDER BY setting_key, changed_at DESC, id DESC"#,
-            org.value()
-        )
-        .fetch_all(&self.pool)
-        .await?;
-
-        let mut out = HashMap::new();
-        for row in rows {
-            // A key the current build no longer knows is skipped rather than
-            // failing the whole read: the history outlives a renamed setting.
-            let Ok(key) = SettingKey::from_str(&row.setting_key) else {
-                continue;
-            };
-            out.insert(
-                key,
-                SettingChangeEntry {
-                    organization_id: org,
-                    key,
-                    previous: row.previous_value,
-                    next: row.new_value,
-                    changed_at: row.changed_at,
-                    changed_by: row.changed_by,
-                },
-            );
-        }
-        Ok(out)
-    }
 }
 
 #[async_trait::async_trait]
@@ -232,8 +184,7 @@ impl SettingsWriter for PgSettingsRepository {
                       map_center_lat, map_center_lng,
                       map_bbox_sw_lat, map_bbox_sw_lng,
                       map_bbox_ne_lat, map_bbox_ne_lng,
-                      map_min_zoom, map_max_zoom,
-                      descendants_may_override
+                      map_min_zoom, map_max_zoom
                FROM organization_settings WHERE organization_id = $1 FOR UPDATE"#,
             org.value()
         )
@@ -251,9 +202,8 @@ impl SettingsWriter for PgSettingsRepository {
                    organization_id, sensor_offline_after_secs, defect_streak,
                    map_center_lat, map_center_lng,
                    map_bbox_sw_lat, map_bbox_sw_lng, map_bbox_ne_lat, map_bbox_ne_lng,
-                   map_min_zoom, map_max_zoom,
-                   descendants_may_override)
-               VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+                   map_min_zoom, map_max_zoom)
+               VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
                ON CONFLICT (organization_id) DO UPDATE SET
                    sensor_offline_after_secs = EXCLUDED.sensor_offline_after_secs,
                    defect_streak = EXCLUDED.defect_streak,
@@ -264,8 +214,7 @@ impl SettingsWriter for PgSettingsRepository {
                    map_bbox_ne_lat = EXCLUDED.map_bbox_ne_lat,
                    map_bbox_ne_lng = EXCLUDED.map_bbox_ne_lng,
                    map_min_zoom = EXCLUDED.map_min_zoom,
-                   map_max_zoom = EXCLUDED.map_max_zoom,
-                   descendants_may_override = EXCLUDED.descendants_may_override"#,
+                   map_max_zoom = EXCLUDED.map_max_zoom"#,
             org.value(),
             next.sensor_offline_after.map(|v| v.seconds()),
             next.defect_streak.map(|v| v.count()),
@@ -279,7 +228,6 @@ impl SettingsWriter for PgSettingsRepository {
                 .map(|b| i16::from(b.min_zoom().level())),
             map.and_then(|m| m.bounds())
                 .map(|b| i16::from(b.max_zoom().level())),
-            next.descendants_may_override,
         )
         .execute(&mut *tx)
         .await?;

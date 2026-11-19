@@ -1,76 +1,28 @@
-use std::collections::HashMap;
-
-use serde::{Deserialize, Deserializer, Serialize};
-use uuid::Uuid;
+use serde::{Deserialize, Serialize};
 
 use domain::{
-    Id,
-    organization::Organization,
     settings::{
-        DefectStreak, MapBounds, MapView, OrganizationSettings, Patch, Resolution,
-        SensorOfflineAfter, SettingChangeEntry, SettingKey, SettingOrigin, SettingsUpdate,
+        DefectStreak, MapBounds, MapView, Patch, Resolution, SensorOfflineAfter, SettingsUpdate,
         ZoomLevel,
     },
     shared::{coordinates::Coordinate, error::ValidationError, geo::BoundingBox},
 };
 
-use crate::service::{ServiceError, user_service::UserService};
+use crate::service::ServiceError;
 
-use super::user::display_name;
-
-#[derive(Debug, Serialize, utoipa::ToSchema)]
-#[serde(rename_all = "snake_case")]
-pub enum SettingOriginDto {
-    Default,
-    Inherited,
-    Own,
-}
-
-#[derive(Debug, Serialize, utoipa::ToSchema)]
-pub struct OrganizationRef {
-    pub id: Uuid,
-}
-
-#[derive(Debug, Serialize, utoipa::ToSchema)]
-pub struct SettingChangeRef {
-    pub changed_at: chrono::DateTime<chrono::Utc>,
-    pub changed_by: Option<Uuid>,
-    /// Resolved by the handler; absent when the account no longer resolves.
-    pub changed_by_name: Option<String>,
-}
-
-/// When and by whom a value last changed, whichever module owns the key.
-#[derive(Debug, Clone, Copy)]
-pub struct ChangeStamp {
-    pub changed_at: chrono::DateTime<chrono::Utc>,
-    pub changed_by: Option<Uuid>,
-}
-
-impl From<&SettingChangeEntry> for ChangeStamp {
-    fn from(entry: &SettingChangeEntry) -> Self {
-        Self {
-            changed_at: entry.changed_at,
-            changed_by: entry.changed_by,
-        }
-    }
-}
-
-/// One value plus everything the interface needs to show where it comes from
-/// and to offer "set my own" or "inherit again".
+/// One value as the settings screen needs it: what is in force, and what would
+/// be in force without the organization's own value.
 #[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct SettingField<T> {
-    /// The value in force.
     pub value: T,
-    pub origin: SettingOriginDto,
-    /// Set only where `origin` is `inherited`.
-    pub source: Option<OrganizationRef>,
-    /// This organization's own value, reported even while a lock above makes
-    /// it dormant — a value that silently disappears and reappears on unlock
-    /// is the first thing someone reports as a bug.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub own_value: Option<T>,
-    /// Always about this organization's own value, never the source's.
-    pub last_change: Option<SettingChangeRef>,
+    pub inherited_value: T,
+}
+
+pub fn field<T>(value: T, inherited_value: T) -> SettingField<T> {
+    SettingField {
+        value,
+        inherited_value,
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, utoipa::ToSchema, Clone, Copy)]
@@ -136,53 +88,28 @@ pub struct OrganizationSettingsResponse {
     pub sensor_offline_after_secs: SettingField<i64>,
     pub defect_streak: SettingField<i32>,
     pub map_view: SettingField<MapViewDto>,
-    /// This organization's own switch for its sub-units. While `enforced_by`
-    /// is set, an organization above has frozen the subtree and no sub-unit
-    /// may set anything, whatever this says.
-    pub descendants_may_override: bool,
-    /// The organization that froze this subtree, if any.
-    pub enforced_by: Option<OrganizationRef>,
 }
 
-/// Three states per field. Absent means unchanged, `null` means go back to
-/// inheriting, a value means set it.
+/// An omitted field stays as it is, and so does `null`. Sending the value an
+/// organization would inherit drops its own value.
 #[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct OrganizationSettingsUpdateRequest {
-    #[serde(default, deserialize_with = "double_option")]
-    #[schema(value_type = Option<i64>)]
-    pub sensor_offline_after_secs: Option<Option<i64>>,
-    #[serde(default, deserialize_with = "double_option")]
-    #[schema(value_type = Option<i32>)]
-    pub defect_streak: Option<Option<i32>>,
-    #[serde(default, deserialize_with = "double_option")]
-    #[schema(value_type = Option<MapViewDto>)]
-    pub map_view: Option<Option<MapViewDto>>,
-    /// A plain toggle, not a three-state field: `null` is equivalent to
-    /// omitting it and leaves the switch as it is.
     #[serde(default)]
-    pub descendants_may_override: Option<bool>,
+    pub sensor_offline_after_secs: Option<i64>,
+    #[serde(default)]
+    pub defect_streak: Option<i32>,
+    #[serde(default)]
+    pub map_view: Option<MapViewDto>,
 }
 
-/// `Option<Option<T>>` needs an explicit deserializer: serde's `default`
-/// collapses "absent" and "null" into `None` otherwise, and every partial save
-/// would reset the fields it did not send.
-pub fn double_option<'de, D, T>(deserializer: D) -> Result<Option<Option<T>>, D::Error>
-where
-    D: Deserializer<'de>,
-    T: Deserialize<'de>,
-{
-    Option::deserialize(deserializer).map(Some)
-}
-
-pub fn patch<T, U, F>(raw: Option<Option<T>>, build: F) -> Result<Patch<U>, ServiceError>
-where
-    F: FnOnce(T) -> Result<U, ServiceError>,
-{
-    match raw {
-        None => Ok(Patch::Unchanged),
-        Some(None) => Ok(Patch::Clear),
-        Some(Some(value)) => Ok(Patch::Set(build(value)?)),
-    }
+pub fn patch<T, U>(
+    raw: Option<T>,
+    build: impl FnOnce(T) -> Result<U, ServiceError>,
+) -> Result<Patch<U>, ServiceError> {
+    Ok(raw
+        .map(build)
+        .transpose()?
+        .map_or(Patch::Unchanged, Patch::Set))
 }
 
 impl TryFrom<OrganizationSettingsUpdateRequest> for SettingsUpdate {
@@ -195,96 +122,26 @@ impl TryFrom<OrganizationSettingsUpdateRequest> for SettingsUpdate {
             })?,
             defect_streak: patch(req.defect_streak, |v| Ok(DefectStreak::new(v)?))?,
             map_view: patch(req.map_view, MapView::try_from)?,
-            descendants_may_override: req.descendants_may_override,
         })
     }
 }
 
-/// One lookup for every distinct author on the page. An IdP outage must not
-/// fail the read: the values are still valid, they just render without a name.
-pub async fn resolve_change_authors(
-    users: &UserService,
-    authors: impl IntoIterator<Item = Option<Uuid>>,
-) -> HashMap<Uuid, String> {
-    let mut ids: Vec<Uuid> = authors.into_iter().flatten().collect();
-    ids.sort_unstable();
-    ids.dedup();
-    if ids.is_empty() {
-        return HashMap::new();
-    }
-    users
-        .by_ids(&ids)
-        .await
-        .inspect_err(|error| tracing::warn!(%error, "failed to resolve settings change authors"))
-        .unwrap_or_default()
-        .iter()
-        .map(|user| (user.id, display_name(user)))
-        .collect()
-}
-
-pub fn field<T>(
-    value: T,
-    origin: SettingOrigin,
-    own: Option<T>,
-    last: Option<ChangeStamp>,
-    names: &HashMap<Uuid, String>,
-) -> SettingField<T> {
-    SettingField {
-        value,
-        origin: match origin {
-            SettingOrigin::Default => SettingOriginDto::Default,
-            SettingOrigin::Inherited(_) => SettingOriginDto::Inherited,
-            SettingOrigin::Own => SettingOriginDto::Own,
-        },
-        source: match origin {
-            SettingOrigin::Inherited(id) => Some(OrganizationRef { id: id.value() }),
-            _ => None,
-        },
-        own_value: own,
-        last_change: last.map(|e| SettingChangeRef {
-            changed_at: e.changed_at,
-            changed_by: e.changed_by,
-            changed_by_name: e.changed_by.and_then(|id| names.get(&id).cloned()),
-        }),
-    }
-}
-
 impl OrganizationSettingsResponse {
-    pub fn build(
-        resolution: &Resolution,
-        own: &OrganizationSettings,
-        last: &HashMap<SettingKey, SettingChangeEntry>,
-        names: &HashMap<Uuid, String>,
-    ) -> Self {
-        let effective = resolution.effective;
-        let origins = resolution.origins;
+    pub fn build(resolution: &Resolution) -> Self {
+        let Resolution {
+            effective,
+            inherited,
+        } = *resolution;
         Self {
             sensor_offline_after_secs: field(
                 effective.sensor_offline_after.seconds(),
-                origins.sensor_offline_after,
-                own.sensor_offline_after.map(|v| v.seconds()),
-                last.get(&SettingKey::SensorOfflineAfter)
-                    .map(ChangeStamp::from),
-                names,
+                inherited.sensor_offline_after.seconds(),
             ),
             defect_streak: field(
                 effective.defect_streak.count(),
-                origins.defect_streak,
-                own.defect_streak.map(|v| v.count()),
-                last.get(&SettingKey::DefectStreak).map(ChangeStamp::from),
-                names,
+                inherited.defect_streak.count(),
             ),
-            map_view: field(
-                effective.map_view.into(),
-                origins.map_view,
-                own.map_view.map(MapViewDto::from),
-                last.get(&SettingKey::MapView).map(ChangeStamp::from),
-                names,
-            ),
-            descendants_may_override: own.descendants_may_override,
-            enforced_by: effective
-                .enforced_by
-                .map(|id: Id<Organization>| OrganizationRef { id: id.value() }),
+            map_view: field(effective.map_view.into(), inherited.map_view.into()),
         }
     }
 }
@@ -293,19 +150,12 @@ impl OrganizationSettingsResponse {
 mod tests {
     use super::*;
 
-    /// utoipa cannot carry `Option`'s nullability through a generic argument,
-    /// so the schema describes `own_value` as optional and not nullable. The
-    /// body has to match that: omit the key rather than send `null`.
     #[test]
-    fn a_field_without_an_own_value_omits_the_key() {
-        let field = SettingField {
-            value: 80.0,
-            origin: SettingOriginDto::Default,
-            source: None,
-            own_value: None,
-            last_change: None,
-        };
-        let body = serde_json::to_value(&field).unwrap();
-        assert!(!body.as_object().unwrap().contains_key("own_value"));
+    fn a_field_serializes_the_value_and_what_would_be_inherited() {
+        let body = serde_json::to_value(field(120.0, 80.0)).unwrap();
+        assert_eq!(
+            body,
+            serde_json::json!({ "value": 120.0, "inherited_value": 80.0 })
+        );
     }
 }
