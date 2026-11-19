@@ -381,7 +381,9 @@
     "areas": {
       "title": "Aufgabenbereiche",
       "intro": "Schalte ein, was zu den Aufgaben von {name} gehört, und trage ein, womit die Planung rechnen soll.",
-      "loading": "Aufgabenbereiche werden geladen"
+      "loading": "Aufgabenbereiche werden geladen",
+      "usual_one": "Üblich ist {value}.",
+      "usual_other": "Üblich sind {value}."
     },
     "loadErrorForbidden": "Du darfst diese Organisation nicht einsehen. Vermutlich gilt deine Rolle nur für eine untergeordnete Organisation.",
     "loadErrorGeneric": "Die Organisationsstruktur konnte nicht geladen werden. Bitte versuche es später erneut.",
