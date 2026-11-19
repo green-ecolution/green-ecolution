@@ -4,8 +4,10 @@ import { render, screen, userEvent, within } from '@/test/utils'
 import { UNRESTRICTED, type Permissions } from '@/lib/auth/permissions'
 import type { PluginResponse } from '@/api/backendApi'
 
-const permissions = vi.fn((): Permissions => UNRESTRICTED)
-vi.mock('@/lib/auth/usePermissions', () => ({ usePermissions: () => permissions() }))
+const permissions = vi.fn((orgId: string | null): Permissions => (orgId ? UNRESTRICTED : new Set()))
+vi.mock('@/lib/auth/usePermissionsIn', () => ({
+  usePermissionsIn: (orgId: string | null) => permissions(orgId),
+}))
 
 const updateMutate = vi.fn()
 vi.mock('@/hooks/usePluginMutations', () => ({
@@ -82,7 +84,7 @@ const save = async () => {
 describe('PluginDetailPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    permissions.mockReturnValue(UNRESTRICTED)
+    permissions.mockImplementation(() => UNRESTRICTED)
   })
 
   /**
@@ -209,5 +211,28 @@ describe('PluginDetailPage', () => {
     expect(screen.getAllByRole('link').map((link) => link.getAttribute('href'))).toContain(
       '/settings/organization/org-1/plugins',
     )
+  })
+
+  it('offers the write controls with the rights in the plugin organization', () => {
+    permissions.mockImplementation((orgId) =>
+      orgId === 'org-1' ? new Set(['plugin:read', 'plugin:update', 'plugin:delete']) : new Set(),
+    )
+    render(<PluginDetailPage plugin={plugin} />)
+    expect(screen.getByRole('button', { name: /speichern/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /deinstallieren/i })).toBeInTheDocument()
+    expect(screen.getByLabelText(/^name/i)).toBeEnabled()
+  })
+
+  it('offers no write controls when the rights are held only in another organization', () => {
+    permissions.mockImplementation((orgId) =>
+      orgId === 'org-1'
+        ? new Set(['plugin:read'])
+        : new Set(['plugin:read', 'plugin:update', 'plugin:delete']),
+    )
+    render(<PluginDetailPage plugin={plugin} />)
+    expect(screen.queryByRole('button', { name: /speichern/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /deinstallieren/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('switch')).not.toBeInTheDocument()
+    expect(screen.getByLabelText(/^name/i)).toBeDisabled()
   })
 })

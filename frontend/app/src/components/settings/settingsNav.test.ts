@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { UNRESTRICTED } from '@/lib/auth/permissions'
-import { SETTINGS_NAV, visibleSettingsNav } from './settingsNav'
+import { sectionPermission, SETTINGS_NAV, visibleSettingsNav } from './settingsNav'
 
 const keysOf = (items: { key: string }[]) => items.map((item) => item.key)
 const ALL_FEATURES = new Set(['plugins', 'routing'])
@@ -53,9 +53,17 @@ describe('visibleSettingsNav', () => {
     expect(keysOf(visible)).not.toContain('stations')
   })
 
-  it('hides stations in admin mode', () => {
+  it('hides stations at the instance root', () => {
     const visible = visibleSettingsNav(SETTINGS_NAV, UNRESTRICTED, ALL_FEATURES, true)
     expect(keysOf(visible)).not.toContain('stations')
     expect(keysOf(visible)).toContain('plugins')
+  })
+})
+
+describe('sectionPermission', () => {
+  it("asks for the right of the section's navigation entry", () => {
+    expect(sectionPermission('overview')).toEqual(['organization:read'])
+    expect(sectionPermission('stations')).toEqual(['start_point:read'])
+    expect(sectionPermission(null)).toBeUndefined()
   })
 })

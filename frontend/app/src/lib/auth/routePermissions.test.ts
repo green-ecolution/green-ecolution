@@ -34,6 +34,7 @@ describe('CORE_ROUTE_PERMISSIONS', () => {
       '/admin',
       '/sensors',
       '/settings/organization',
+      '/settings/organization/$orgId',
       '/settings/organization/$orgId/members',
       '/settings/organization/$orgId/plugins',
       '/vehicles',
@@ -167,11 +168,18 @@ describe('canAccessRoute', () => {
     expect(canAccessRoute('/settings/organization/$orgId/members', UNRESTRICTED)).toBe(true)
   })
 
-  it('guards the members entry with user:read and role:read', () => {
-    expect(
-      canAccessRoute('/settings/organization/$orgId/members', new Set(['organization:read'])),
-    ).toBe(false)
+  it('guards the organization entry with organization:read', () => {
+    expect(canAccessRoute('/settings/organization/$orgId', new Set(['user:read']))).toBe(false)
+    expect(canAccessRoute('/settings/organization/$orgId', new Set(['organization:read']))).toBe(
+      true,
+    )
+  })
+
+  it('guards the members entry with user:read, which the members page requires', () => {
     expect(canAccessRoute('/settings/organization/$orgId/members', new Set(['role:read']))).toBe(
+      false,
+    )
+    expect(canAccessRoute('/settings/organization/$orgId/members', new Set(['user:read']))).toBe(
       true,
     )
   })
@@ -179,6 +187,9 @@ describe('canAccessRoute', () => {
   it('guards the plugins entry with plugin:read', () => {
     expect(canAccessRoute('/settings/organization/$orgId/plugins', new Set(['user:read']))).toBe(
       false,
+    )
+    expect(canAccessRoute('/settings/organization/$orgId/plugins', new Set(['plugin:read']))).toBe(
+      true,
     )
   })
 })

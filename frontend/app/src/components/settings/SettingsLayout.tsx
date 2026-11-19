@@ -17,7 +17,8 @@ import { Badge } from '@green-ecolution/ui'
 import { infoQueries } from '@/api/queries'
 import { useAdminMode } from '@/lib/auth/scope/adminMode'
 import { useSettingsHomeOrganizationId } from '@/lib/auth/scope/settingsOrganization'
-import { usePermissionsIn } from '@/lib/auth/usePermissionsIn'
+import { NO_PERMISSIONS } from '@/lib/auth/permissions'
+import { usePermissionsResolver } from '@/lib/auth/usePermissionsIn'
 import { buildTree, subtreeMemberCount } from './organization/organizationTree'
 import { useSettingsOrganizations } from './organization/useSettingsOrganizations'
 import SettingsOrganizationPicker from './SettingsOrganizationPicker'
@@ -63,14 +64,25 @@ const SettingsLayout = ({ children }: SettingsLayoutProps) => {
   const homeId = useSettingsHomeOrganizationId()
   // On the account pages the organization group still needs a target.
   const orgId = organizationIdOf(pathname) ?? homeId ?? null
-  const perms = usePermissionsIn(orgId)
+  const permissionsOf = usePermissionsResolver()
   const adminMode = useAdminMode()
   const { data: services } = useQuery(infoQueries.services())
   const { organizations = [], hasMemberCounts } = useSettingsOrganizations()
   const enabledFeatures = new Set(
     (services?.items ?? []).filter((item) => item.enabled).map((item) => item.name),
   )
-  const items = visibleSettingsNav(SETTINGS_NAV, perms, enabledFeatures, adminMode)
+  // The instance root runs no operations of its own; a tenant picked in admin mode does.
+  const atInstanceRoot = (id: string) =>
+    adminMode && organizations.some((org) => org.id === id && org.parentId == null)
+  const visibleIn = (id: string | null) =>
+    visibleSettingsNav(
+      SETTINGS_NAV,
+      permissionsOf?.(id) ?? NO_PERMISSIONS,
+      enabledFeatures,
+      id !== null && atInstanceRoot(id),
+    )
+
+  const items = visibleIn(orgId)
   const accountItems = items.filter((item) => item.group === 'account')
   const organizationItems = orgId ? items.filter((item) => item.group === 'organization') : []
 
@@ -81,9 +93,15 @@ const SettingsLayout = ({ children }: SettingsLayoutProps) => {
     return hasMemberCounts ? subtreeMemberCount(node) : null
   }
 
+  // Keeps the section where the target organization allows it, else its first
+  // visible one, so switching never lands on a forbidden page.
   const switchOrganization = (next: string) => {
-    const section = sectionOf(pathname) ?? 'overview'
-    void navigate({ to: SECTION_ROUTES[section], params: { orgId: next } })
+    const current = SECTION_ROUTES[sectionOf(pathname) ?? 'overview']
+    const sections = visibleIn(next)
+      .map((item) => item.to)
+      .filter(isSectionRoute)
+    const to = sections.find((route) => route === current) ?? sections[0] ?? SECTION_ROUTES.overview
+    void navigate({ to, params: { orgId: next } })
   }
 
   const renderItem = (item: SettingsNavItem) => {

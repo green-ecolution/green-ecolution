@@ -23,9 +23,10 @@ export const CORE_ROUTE_PERMISSIONS: RoutePermissions = {
   '/sensors': ['sensor:read'],
   '/vehicles': ['vehicle:read'],
   '/settings/organization': ['organization:read'],
-  // Only the instance navigation links these two directly; inside the settings
+  // Only the instance navigation links these directly; inside the settings
   // the entries are filtered per selected organization by settingsNav.
-  '/settings/organization/$orgId/members': ['user:read', 'role:read'],
+  '/settings/organization/$orgId': ['organization:read'],
+  '/settings/organization/$orgId/members': ['user:read'],
   '/settings/organization/$orgId/plugins': ['plugin:read'],
 }
 

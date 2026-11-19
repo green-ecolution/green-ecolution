@@ -5,7 +5,7 @@ import type {
   ReachableOrganizationResponse,
   RoleResponse,
 } from '@green-ecolution/backend-client'
-import { render, screen, within } from '@/test/utils'
+import { render, screen, userEvent, within } from '@/test/utils'
 import type { Permissions } from '@/lib/auth/permissions'
 import SettingsLayout from './SettingsLayout'
 
@@ -25,12 +25,16 @@ const state = vi.hoisted(
   (): {
     pathname: string
     perms: Permissions
+    permsByOrg: Partial<Record<string, Permissions>>
+    adminMode: boolean
     roles: RoleResponse[]
     home: string | null | undefined
     navigate: ReturnType<typeof vi.fn>
   } => ({
     pathname: '/settings/organization/amt/members',
     perms: 'unrestricted',
+    permsByOrg: {},
+    adminMode: false,
     roles: [],
     home: 'amt',
     navigate: vi.fn(),
@@ -59,7 +63,10 @@ vi.mock('@tanstack/react-router', () => ({
   useLocation: () => ({ pathname: state.pathname }),
   useNavigate: () => state.navigate,
 }))
-vi.mock('@/lib/auth/usePermissionsIn', () => ({ usePermissionsIn: () => state.perms }))
+vi.mock('@/lib/auth/usePermissionsIn', () => ({
+  usePermissionsResolver: () => (orgId: string | null) =>
+    (orgId === null ? undefined : state.permsByOrg[orgId]) ?? state.perms,
+}))
 vi.mock('@/lib/auth/scope/settingsOrganization', () => ({
   useSettingsHomeOrganizationId: () => state.home,
 }))
@@ -67,7 +74,7 @@ vi.mock('@/lib/auth/scope/effectiveRoles', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/auth/scope/effectiveRoles')>()),
   useEffectiveRoles: () => state.roles,
 }))
-vi.mock('@/lib/auth/scope/adminMode', () => ({ useAdminMode: () => false }))
+vi.mock('@/lib/auth/scope/adminMode', () => ({ useAdminMode: () => state.adminMode }))
 // Like the backend, GET /organizations answers nothing without organization:read.
 vi.mock('@tanstack/react-query', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@tanstack/react-query')>()),
@@ -94,6 +101,8 @@ describe('SettingsLayout', () => {
   beforeEach(() => {
     state.pathname = '/settings/organization/amt/members'
     state.perms = 'unrestricted'
+    state.permsByOrg = {}
+    state.adminMode = false
     state.roles = [roleWith(['organization:read'])]
     state.home = 'amt'
     state.navigate.mockReset()
@@ -187,5 +196,66 @@ describe('SettingsLayout', () => {
     state.home = undefined
     render(<SettingsLayout>content</SettingsLayout>)
     expect(screen.queryByText('Einstellungen für')).not.toBeInTheDocument()
+  })
+
+  it('hides stations at the instance root in admin mode', () => {
+    state.adminMode = true
+    state.pathname = '/settings/organization/amt'
+    render(<SettingsLayout>content</SettingsLayout>)
+    expect(screen.queryByRole('link', { name: 'Stationen' })).not.toBeInTheDocument()
+  })
+
+  it('shows stations for a tenant picked in admin mode', () => {
+    state.adminMode = true
+    state.pathname = '/settings/organization/nord'
+    render(<SettingsLayout>content</SettingsLayout>)
+    expect(screen.getByRole('link', { name: 'Stationen' })).toBeInTheDocument()
+  })
+})
+
+describe('SettingsLayout organization switch', () => {
+  beforeEach(() => {
+    state.pathname = '/settings/organization/amt/roles'
+    state.perms = 'unrestricted'
+    state.permsByOrg = {}
+    state.adminMode = false
+    state.roles = [roleWith(['organization:read'])]
+    state.home = 'amt'
+    state.navigate.mockReset()
+  })
+
+  const switchTo = async (name: RegExp) => {
+    await userEvent.click(screen.getByRole('button', { name: /Organisation wechseln/ }))
+    await userEvent.click(screen.getByRole('option', { name }))
+  }
+
+  it('stays on the same section where the target allows it', async () => {
+    state.permsByOrg = { nord: new Set(['role:read']) }
+    render(<SettingsLayout>content</SettingsLayout>)
+    await switchTo(/Stadtgärtnerei Nord/)
+    expect(state.navigate).toHaveBeenCalledWith({
+      to: '/settings/organization/$orgId/roles',
+      params: { orgId: 'nord' },
+    })
+  })
+
+  it('moves to the first visible section where the target forbids the current one', async () => {
+    state.permsByOrg = { nord: new Set(['user:read', 'start_point:read']) }
+    render(<SettingsLayout>content</SettingsLayout>)
+    await switchTo(/Stadtgärtnerei Nord/)
+    expect(state.navigate).toHaveBeenCalledWith({
+      to: '/settings/organization/$orgId/members',
+      params: { orgId: 'nord' },
+    })
+  })
+
+  it('maps a plugin detail to the plugin list', async () => {
+    state.pathname = '/settings/organization/amt/plugins/kataster'
+    render(<SettingsLayout>content</SettingsLayout>)
+    await switchTo(/Stadtgärtnerei Nord/)
+    expect(state.navigate).toHaveBeenCalledWith({
+      to: '/settings/organization/$orgId/plugins',
+      params: { orgId: 'nord' },
+    })
   })
 })

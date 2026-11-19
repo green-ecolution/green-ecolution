@@ -1,4 +1,3 @@
-import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { userQueries } from '@/api/queries'
 import { permissionsIn } from './organizationScope'
@@ -6,18 +5,27 @@ import { NO_PERMISSIONS, UNRESTRICTED, type Permissions } from './permissions'
 import { readAuthBypass } from './runtimeConfig'
 import { useEffectiveRoles } from './scope/effectiveRoles'
 
+export type PermissionsResolver = (orgId: string | null) => Permissions
+
 /**
+ * The rights per organization, or `undefined` while the roles or the parent
+ * chain still load, so a caller can wait instead of reading "no rights".
+ *
  * The parent chain comes from the reachable organizations rather than the
  * visible ones: a role may sit on an organization the user cannot list.
  */
-export function usePermissionsIn(orgId: string | null): Permissions {
+export function usePermissionsResolver(): PermissionsResolver | undefined {
   const bypass = readAuthBypass()
   const roles = useEffectiveRoles()
   const { data: reachable } = useQuery({ ...userQueries.myOrganizations(), enabled: !bypass })
 
-  return useMemo(() => {
-    if (bypass) return UNRESTRICTED
-    if (!orgId || !roles || !reachable) return NO_PERMISSIONS
-    return permissionsIn(roles, orgId, new Map(reachable.map((org) => [org.id, org.parentId])))
-  }, [bypass, orgId, roles, reachable])
+  if (bypass) return () => UNRESTRICTED
+  if (!roles || !reachable) return undefined
+  const parentOf = new Map(reachable.map((org) => [org.id, org.parentId]))
+  return (orgId: string | null) => (orgId ? permissionsIn(roles, orgId, parentOf) : NO_PERMISSIONS)
+}
+
+/** `NO_PERMISSIONS` while loading; see `usePermissionsResolver` to tell the two apart. */
+export function usePermissionsIn(orgId: string | null): Permissions {
+  return usePermissionsResolver()?.(orgId) ?? NO_PERMISSIONS
 }

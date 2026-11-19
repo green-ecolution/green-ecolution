@@ -1,7 +1,7 @@
 import type { LinkProps } from '@tanstack/react-router'
 import type de from '@/locales/de'
 import { satisfies, type PermissionRequirement, type Permissions } from '@/lib/auth/permissions'
-import { SECTION_ROUTES } from './settingsSections'
+import { SECTION_ROUTES, type SettingsSection } from './settingsSections'
 
 type SettingsNavKey = keyof (typeof de)['settings']['nav']
 
@@ -17,8 +17,8 @@ export interface SettingsNavItem {
   permission?: PermissionRequirement
   featureKey?: string
   comingSoon?: boolean
-  /** Pages about one tenant's operations; the instance admin has none. */
-  hiddenInAdminMode?: boolean
+  /** Pages about one tenant's operations; the instance root has none. */
+  hiddenAtInstanceRoot?: boolean
   /** Shows the number of sub-organizations or members next to the label. */
   count?: 'children' | 'members'
 }
@@ -76,7 +76,7 @@ export const SETTINGS_NAV: SettingsNavItem[] = [
     to: SECTION_ROUTES.stations,
     featureKey: 'routing',
     permission: ['start_point:read'],
-    hiddenInAdminMode: true,
+    hiddenAtInstanceRoot: true,
   },
   {
     key: 'plugins',
@@ -88,16 +88,25 @@ export const SETTINGS_NAV: SettingsNavItem[] = [
   },
 ]
 
-/** `perms` are the rights in the selected organization, not the union over all. */
+/**
+ * `perms` are the rights in the selected organization, not the union over all;
+ * `atInstanceRoot` says the selected organization is the instance root in admin mode.
+ */
 export const visibleSettingsNav = (
   items: SettingsNavItem[],
   perms: Permissions,
   enabledFeatures: ReadonlySet<string>,
-  adminMode = false,
+  atInstanceRoot = false,
 ): SettingsNavItem[] =>
   items.filter((item) => {
-    if (adminMode && item.hiddenInAdminMode) return false
+    if (atInstanceRoot && item.hiddenAtInstanceRoot) return false
     if (item.featureKey && !enabledFeatures.has(item.featureKey)) return false
     if (item.permission && !satisfies(perms, item.permission)) return false
     return true
   })
+
+/** The right a section's page needs, the same one its navigation entry asks for. */
+export const sectionPermission = (
+  section: SettingsSection | null,
+): PermissionRequirement | undefined =>
+  section ? SETTINGS_NAV.find((item) => item.to === SECTION_ROUTES[section])?.permission : undefined
