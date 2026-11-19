@@ -1,7 +1,7 @@
 use domain::capacity::Liters;
 use domain::region::RegionName;
 use domain::sensor::SensorId;
-use domain::settings::{MapBounds, MapView, ZoomLevel};
+use domain::settings::{DefectStreak, MapBounds, MapView, SensorOfflineAfter, ZoomLevel};
 use domain::shared::coordinates::Coordinate;
 use domain::shared::distance::Distance;
 use domain::shared::email::Email;
@@ -12,6 +12,7 @@ use domain::user::Username;
 use domain::vehicle::{NumberPlate, VehicleDimension, VehicleModel};
 use wasm_bindgen::prelude::*;
 
+use crate::coerce::invalid_number_issue;
 use crate::issue::{ValidationIssue, to_js};
 
 /// Convert a value-object construction result into a `JsValue` containing
@@ -27,6 +28,50 @@ pub(crate) fn finish<T>(
             to_js(&issue)
         }
     }
+}
+
+/// Rejects a fractional value instead of rounding it, so the field reports the
+/// same issue the draft validation does on save.
+pub(crate) fn whole_number_issue<T>(
+    value: f64,
+    field: &'static str,
+    path: &'static str,
+    build: impl FnOnce(i64) -> Result<T, ValidationError>,
+) -> Option<ValidationIssue> {
+    if !value.is_finite() || value.fract() != 0.0 {
+        return Some(invalid_number_issue(field, path));
+    }
+    build(value as i64)
+        .err()
+        .map(|err| ValidationIssue::from_error(&err, path))
+}
+
+pub(crate) fn report(issue: Option<ValidationIssue>) -> Result<JsValue, JsError> {
+    issue.map_or(Ok(JsValue::NULL), |issue| to_js(&issue))
+}
+
+pub(crate) const SECONDS_PER_HOUR: f64 = 3600.0;
+
+/// A duration value object checks seconds while its field asks for hours, so
+/// the raw error would tell someone typing hours to stay between 3600 and
+/// 2592000.
+pub(crate) fn hours_issue(err: &ValidationError, path: &str) -> ValidationIssue {
+    let ValidationError::OutOfRange {
+        field,
+        min,
+        max,
+        got,
+    } = *err
+    else {
+        return ValidationIssue::from_error(err, path);
+    };
+    let in_hours = ValidationError::OutOfRange {
+        field,
+        min: min / SECONDS_PER_HOUR,
+        max: max / SECONDS_PER_HOUR,
+        got: got / SECONDS_PER_HOUR,
+    };
+    ValidationIssue::from_error(&in_hours, path)
 }
 
 #[wasm_bindgen(js_name = validateCoordinate)]
@@ -162,4 +207,78 @@ pub fn validate_map_view(
     let view = Coordinate::new(center_lat, center_lng)
         .and_then(|center| bounds.and_then(|bounds| MapView::new(center, bounds)));
     finish(view, "mapView")
+}
+
+fn sensor_offline_after_issue(hours: f64) -> Option<ValidationIssue> {
+    SensorOfflineAfter::new((hours * SECONDS_PER_HOUR).round() as i64)
+        .err()
+        .map(|err| hours_issue(&err, "sensorOfflineAfterHours"))
+}
+
+/// Hours, not seconds: the form asks in hours.
+#[wasm_bindgen(js_name = validateSensorOfflineAfterHours)]
+pub fn validate_sensor_offline_after_hours(hours: f64) -> Result<JsValue, JsError> {
+    report(sensor_offline_after_issue(hours))
+}
+
+#[wasm_bindgen(js_name = sensorOfflineAfterMinHours)]
+pub fn sensor_offline_after_min_hours() -> f64 {
+    SensorOfflineAfter::MIN as f64 / SECONDS_PER_HOUR
+}
+
+#[wasm_bindgen(js_name = sensorOfflineAfterMaxHours)]
+pub fn sensor_offline_after_max_hours() -> f64 {
+    SensorOfflineAfter::MAX as f64 / SECONDS_PER_HOUR
+}
+
+fn defect_streak_issue(count: f64) -> Option<ValidationIssue> {
+    whole_number_issue(count, "settings.defect_streak", "defectStreak", |count| {
+        DefectStreak::new(i32::try_from(count).unwrap_or(i32::MAX))
+    })
+}
+
+#[wasm_bindgen(js_name = validateDefectStreak)]
+pub fn validate_defect_streak(count: f64) -> Result<JsValue, JsError> {
+    report(defect_streak_issue(count))
+}
+
+#[wasm_bindgen(js_name = defectStreakMin)]
+pub fn defect_streak_min() -> f64 {
+    f64::from(DefectStreak::MIN)
+}
+
+#[wasm_bindgen(js_name = defectStreakMax)]
+pub fn defect_streak_max() -> f64 {
+    f64::from(DefectStreak::MAX)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn sensor_offline_after_reports_its_range_in_hours() {
+        let issue = sensor_offline_after_issue(0.5).expect("half an hour is below the minimum");
+        assert_eq!(issue.path, "sensorOfflineAfterHours");
+        assert_eq!(issue.key, "settings.sensor_offline_after.outOfRange");
+        assert_eq!(issue.params["min"].as_f64(), Some(1.0));
+        assert_eq!(issue.params["max"].as_f64(), Some(720.0));
+    }
+
+    #[test]
+    fn sensor_offline_after_accepts_both_ends_of_the_range() {
+        assert!(sensor_offline_after_issue(1.0).is_none());
+        assert!(sensor_offline_after_issue(720.0).is_none());
+        assert_eq!(sensor_offline_after_min_hours(), 1.0);
+        assert_eq!(sensor_offline_after_max_hours(), 720.0);
+    }
+
+    #[test]
+    fn defect_streak_refuses_a_fraction_and_an_out_of_range_count() {
+        let fraction = defect_streak_issue(2.5).expect("a fraction is not a count");
+        assert_eq!(fraction.key, "settings.defect_streak.invalidFormat");
+        let zero = defect_streak_issue(0.0).expect("zero is below the minimum");
+        assert_eq!(zero.key, "settings.defect_streak.outOfRange");
+        assert!(defect_streak_issue(3.0).is_none());
+    }
 }

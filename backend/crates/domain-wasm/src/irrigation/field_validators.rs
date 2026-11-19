@@ -1,4 +1,3 @@
-use domain::shared::error::ValidationError;
 use irrigation_domain::cluster::{ClusterAddress, ClusterName};
 use irrigation_domain::settings::{JustWateredTtl, WaterDemand};
 use irrigation_domain::tree::{
@@ -6,8 +5,8 @@ use irrigation_domain::tree::{
 };
 use wasm_bindgen::prelude::*;
 
-use crate::field_validators::finish;
-use crate::issue::{ValidationIssue, to_js};
+use crate::field_validators::{SECONDS_PER_HOUR, finish, hours_issue};
+use crate::issue::to_js;
 
 #[wasm_bindgen(js_name = irrigationValidateSpecies)]
 pub fn validate_species(value: &str) -> Result<JsValue, JsError> {
@@ -70,38 +69,14 @@ pub fn water_demand_max() -> f64 {
     WaterDemand::MAX
 }
 
-const SECONDS_PER_HOUR: f64 = 3600.0;
-
 /// Hours, not seconds: the form asks in hours, and a range check that speaks
 /// a different unit than the field is how off-by-3600 bugs get in.
 #[wasm_bindgen(js_name = irrigationValidateJustWateredTtlHours)]
 pub fn validate_just_watered_ttl_hours(hours: f64) -> Result<JsValue, JsError> {
     match JustWateredTtl::new((hours * SECONDS_PER_HOUR).round() as i64) {
         Ok(_) => Ok(JsValue::NULL),
-        Err(err) => to_js(&ttl_hours_issue(&err)),
+        Err(err) => to_js(&hours_issue(&err, "justWateredTtlHours")),
     }
-}
-
-/// `JustWateredTtl` checks seconds while the field asks for hours, so the raw
-/// domain error would tell someone typing hours to stay between 3600 and
-/// 1209600.
-fn ttl_hours_issue(err: &ValidationError) -> ValidationIssue {
-    let ValidationError::OutOfRange {
-        field,
-        min,
-        max,
-        got,
-    } = *err
-    else {
-        return ValidationIssue::from_error(err, "justWateredTtlHours");
-    };
-    let in_hours = ValidationError::OutOfRange {
-        field,
-        min: min / SECONDS_PER_HOUR,
-        max: max / SECONDS_PER_HOUR,
-        got: got / SECONDS_PER_HOUR,
-    };
-    ValidationIssue::from_error(&in_hours, "justWateredTtlHours")
 }
 
 #[wasm_bindgen(js_name = irrigationJustWateredTtlMinHours)]
@@ -127,7 +102,7 @@ mod tests {
     #[test]
     fn just_watered_ttl_reports_its_range_in_the_unit_the_field_asks_for() {
         let err = JustWateredTtl::new(1_800).unwrap_err();
-        let issue = ttl_hours_issue(&err);
+        let issue = hours_issue(&err, "justWateredTtlHours");
 
         assert_eq!(issue.path, "justWateredTtlHours");
         assert_eq!(issue.key, "settings.just_watered_ttl.outOfRange");
