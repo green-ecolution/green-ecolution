@@ -354,6 +354,10 @@ describe('Navigation', () => {
       '/settings/organization/org-root/members',
     )
     expect(await screen.findByText('Plugins')).toBeInTheDocument()
+    expect(screen.getByText('Plugins').closest('a')).toHaveAttribute(
+      'href',
+      '/settings/organization/org-root/plugins',
+    )
     expect(screen.getByText('Systeminformationen')).toBeInTheDocument()
     expect(screen.getByText('Handbuch')).toBeInTheDocument()
     expect(screen.queryByText('Karte')).not.toBeInTheDocument()
@@ -362,16 +366,17 @@ describe('Navigation', () => {
     expect(screen.queryByText('Einsatzpläne')).not.toBeInTheDocument()
   })
 
-  it('hides the team entry while the own organization is unknown', async () => {
+  it('hides the team and plugin entries while the own organization is unknown', async () => {
     permissions.mockReturnValue(UNRESTRICTED)
     adminMode.value = true
     homeOrganizationId.value = null
-    respondWithServices(false)
+    respondWithServices(true)
 
     renderNavigation()
 
     expect(await screen.findByText('Mandanten')).toBeInTheDocument()
     expect(screen.queryByText('Team & Rollen')).not.toBeInTheDocument()
+    expect(screen.queryByText('Plugins')).not.toBeInTheDocument()
   })
 
   it('filters the admin entries by permission and feature', async () => {

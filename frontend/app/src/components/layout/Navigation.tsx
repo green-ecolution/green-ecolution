@@ -251,13 +251,14 @@ const adminNavData = (
             } as NavLinkData,
           ]
         : []),
-      ...(pluginsEnabled
+      ...(pluginsEnabled && organizationId
         ? [
             {
               key: 'nav-admin-plugins',
               label: t('sidebar.plugins'),
               icon: <Puzzle className="w-5 h-5" />,
-              to: '/settings/plugin',
+              to: '/settings/organization/$orgId/plugins',
+              params: { orgId: organizationId },
             } as NavLinkData,
           ]
         : []),

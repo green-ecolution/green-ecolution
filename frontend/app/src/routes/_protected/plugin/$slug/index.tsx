@@ -30,7 +30,7 @@ export const Route = createFileRoute('/_protected/plugin/$slug/')({
   errorComponent: forbiddenErrorComponent(
     entityNotFound({
       entityName: { key: 'settings:plugin.entityName' },
-      backTo: '/settings/plugin',
+      backTo: '/settings/organization',
       backLabel: { key: 'settings:plugin.notFoundBackLabel' },
     }),
   ),

@@ -2,13 +2,16 @@ import { createFileRoute, redirect } from '@tanstack/react-router'
 import { infoQueries } from '@/api/queries'
 import { crumbRoute, forbiddenErrorComponent, requirePermission } from '@/lib/router'
 
-export const Route = createFileRoute('/_protected/settings/plugin')({
+export const Route = createFileRoute('/_protected/settings/organization/$orgId/plugins')({
   ...crumbRoute('plugins'),
   beforeLoad: async (opts) => {
     const services = await opts.context.queryClient.ensureQueryData(infoQueries.services())
     const plugins = services.items.find((item) => item.name === 'plugins')
     if (!plugins?.enabled) {
-      throw redirect({ to: '/settings' })
+      throw redirect({
+        to: '/settings/organization/$orgId',
+        params: { orgId: opts.params.orgId },
+      })
     }
     await requirePermission(['plugin:read'])(opts)
   },

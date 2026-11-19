@@ -126,8 +126,6 @@
       "nameLabel": "Name",
       "descriptionLabel": "Description",
       "organizationLabel": "Organization",
-      "organizationPlaceholder": "Choose an organization",
-      "organizationSearchPlaceholder": "Search organization",
       "frontendModeLabel": "View",
       "frontendModeOption": {
         "none": "No view",
@@ -145,7 +143,6 @@
       "slugInvalid": "Only lowercase letters, digits and hyphens, not at the start or end.",
       "slugReserved": "The slug \"{slug}\" is reserved by the plugin api and cannot be used.",
       "nameRequired": "Give the plugin a name.",
-      "organizationRequired": "Choose an organization.",
       "targetRequired": "Enter an address.",
       "targetInvalidUrl": "That is not a valid address.",
       "targetRequiresHttps": "The external address must use https (localhost excepted).",

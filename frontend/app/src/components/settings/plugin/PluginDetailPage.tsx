@@ -148,7 +148,10 @@ const PluginDetailPage = ({ plugin }: PluginDetailPageProps) => {
     uninstallPlugin.mutate(plugin.slug, {
       onSuccess: () => {
         setUninstallConfirmOpen(false)
-        void navigate({ to: '/settings/plugin' })
+        void navigate({
+          to: '/settings/organization/$orgId/plugins',
+          params: { orgId: plugin.organizationId },
+        })
       },
     })
   }
@@ -174,7 +177,13 @@ const PluginDetailPage = ({ plugin }: PluginDetailPageProps) => {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <BackLink link={{ to: '/settings/plugin' }} label={t('plugin.backLabel')} />
+        <BackLink
+          link={{
+            to: '/settings/organization/$orgId/plugins',
+            params: { orgId: plugin.organizationId },
+          }}
+          label={t('plugin.backLabel')}
+        />
 
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">

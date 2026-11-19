@@ -17,9 +17,18 @@ vi.mock('@/hooks/usePluginMutations', () => ({
   }),
 }))
 
+const navigate = vi.fn()
 vi.mock('@tanstack/react-router', () => ({
-  useNavigate: () => vi.fn(),
-  Link: ({ children }: { children: ReactNode }) => <a href="#link">{children}</a>,
+  useNavigate: () => navigate,
+  Link: ({
+    children,
+    to,
+    params,
+  }: {
+    children: ReactNode
+    to?: string
+    params?: Record<string, string>
+  }) => <a href={to?.replace('$orgId', params?.orgId ?? '') ?? '#link'}>{children}</a>,
 }))
 
 vi.mock('@tanstack/react-query', async () => {
@@ -193,5 +202,12 @@ describe('PluginDetailPage', () => {
   it('offers no view for a plugin without a frontend', () => {
     render(<PluginDetailPage plugin={plugin} />)
     expect(screen.queryByText(/ansicht öffnen/i)).not.toBeInTheDocument()
+  })
+
+  it('links back to the plugins of the plugin organization', () => {
+    render(<PluginDetailPage plugin={plugin} />)
+    expect(screen.getAllByRole('link').map((link) => link.getAttribute('href'))).toContain(
+      '/settings/organization/org-1/plugins',
+    )
   })
 })

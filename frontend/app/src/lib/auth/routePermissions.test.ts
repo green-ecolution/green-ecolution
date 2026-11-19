@@ -35,6 +35,7 @@ describe('CORE_ROUTE_PERMISSIONS', () => {
       '/sensors',
       '/settings/organization',
       '/settings/organization/$orgId/members',
+      '/settings/organization/$orgId/plugins',
       '/settings/plugin',
       '/settings/team',
       '/settings/team/members',

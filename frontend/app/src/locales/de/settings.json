@@ -126,8 +126,6 @@
       "nameLabel": "Name",
       "descriptionLabel": "Beschreibung",
       "organizationLabel": "Organisation",
-      "organizationPlaceholder": "Organisation wählen",
-      "organizationSearchPlaceholder": "Organisation suchen",
       "frontendModeLabel": "Ansicht",
       "frontendModeOption": {
         "none": "Keine Ansicht",
@@ -145,7 +143,6 @@
       "slugInvalid": "Nur Kleinbuchstaben, Ziffern und Bindestriche, nicht am Anfang oder Ende.",
       "slugReserved": "Der Slug \"{slug}\" ist von der Plugin-Schnittstelle belegt und kann nicht verwendet werden.",
       "nameRequired": "Gib dem Plugin einen Namen.",
-      "organizationRequired": "Wähle eine Organisation.",
       "targetRequired": "Gib eine Adresse an.",
       "targetInvalidUrl": "Das ist keine gültige Adresse.",
       "targetRequiresHttps": "Die externe Adresse muss https verwenden (außer bei localhost).",

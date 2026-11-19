@@ -1,12 +1,10 @@
-import { createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { Plus, Puzzle } from 'lucide-react'
 import { Button, ListCardHeader, Loading } from '@green-ecolution/ui'
-import { pluginsQuery, organizationQueries } from '@/api/queries'
+import { pluginsQuery } from '@/api/queries'
 import { usePluginMutations } from '@/hooks/usePluginMutations'
-import { Can } from '@/lib/auth/Can'
 import EntityList from '@/components/general/EntityList'
 import PluginInstallDialog, {
   type PluginInstallPayload,
@@ -14,15 +12,13 @@ import PluginInstallDialog, {
 import PluginKeyDialog from '@/components/settings/plugin/PluginKeyDialog'
 import PluginCard, { PLUGIN_COLUMNS } from '@/components/settings/plugin/PluginCard'
 import { organizationNameOf } from '@/components/settings/plugin/pluginList'
+import { buildTree, flatten } from '../organization/organizationTree'
+import { useSettingsOrganization } from '../organization/useSettingsOrganization'
 
-export const Route = createFileRoute('/_protected/settings/plugin/')({
-  component: PluginView,
-})
-
-function PluginView() {
+const PluginsPage = () => {
   const { t } = useTranslation(['settings', 'common'])
+  const { orgId, organizations, can } = useSettingsOrganization()
   const { data: pluginList, isPending } = useQuery(pluginsQuery())
-  const { data: organizations } = useQuery(organizationQueries.list())
   const { installPlugin } = usePluginMutations()
 
   const [installOpen, setInstallOpen] = useState(false)
@@ -49,7 +45,9 @@ function PluginView() {
     )
   }
 
-  const plugins = pluginList ?? []
+  const subtree = buildTree(organizations, orgId)
+  const listedOrgIds = new Set(subtree ? flatten(subtree).map((org) => org.id) : [orgId])
+  const plugins = (pluginList ?? []).filter((plugin) => listedOrgIds.has(plugin.organizationId))
 
   return (
     <div className="flex flex-col gap-8">
@@ -58,7 +56,7 @@ function PluginView() {
           <h2 className="font-lato text-xl font-bold">{t('plugin.overviewTitle')}</h2>
           <p className="mt-2 max-w-prose text-sm text-dark-600">{t('plugin.overviewIntro')}</p>
         </article>
-        <Can permission={['plugin:create']}>
+        {can(['plugin:create']) && (
           <Button
             type="button"
             size="sm"
@@ -68,7 +66,7 @@ function PluginView() {
             <Plus className="size-4" aria-hidden />
             {t('plugin.installButton')}
           </Button>
-        </Can>
+        )}
       </div>
 
       {isPending ? (
@@ -95,9 +93,9 @@ function PluginView() {
               <PluginCard
                 plugin={plugin}
                 organizationName={
-                  organizationNameOf(plugin.organizationId, organizations ?? []) ??
-                  plugin.organizationId
+                  organizationNameOf(plugin.organizationId, organizations) ?? plugin.organizationId
                 }
+                orgId={orgId}
               />
             )}
           />
@@ -106,7 +104,7 @@ function PluginView() {
 
       <PluginInstallDialog
         open={installOpen}
-        organizations={organizations ?? []}
+        organizationId={orgId}
         saving={installPlugin.isPending}
         onOpenChange={setInstallOpen}
         onSubmit={handleInstall}
@@ -123,3 +121,5 @@ function PluginView() {
     </div>
   )
 }
+
+export default PluginsPage

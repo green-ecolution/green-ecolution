@@ -24,6 +24,7 @@ export const CORE_ROUTE_PERMISSIONS: RoutePermissions = {
   '/settings/organization': ['organization:read'],
   '/settings/team': ['user:read', 'role:read'],
   '/settings/organization/$orgId/members': ['user:read', 'role:read'],
+  '/settings/organization/$orgId/plugins': ['plugin:read'],
   '/settings/plugin': ['plugin:read'],
   '/settings/team/members': ['user:read'],
   '/settings/team/roles': ['role:read'],
