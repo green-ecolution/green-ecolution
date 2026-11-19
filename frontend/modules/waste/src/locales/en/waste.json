@@ -1,5 +1,6 @@
 {
   "label": "Waste",
+  "description": "Waste bins and collection tours",
   "nav": {
     "bins": "Waste bins"
   },
@@ -149,9 +150,11 @@
         }
       }
     },
-    "fullThresholdLabel": "Threshold for \"full\"",
-    "fullThresholdHint": "From this fill level a bin counts as full. It decides the fill state in list and map and which bins the tour planning suggests. Tours already planned stay unchanged.",
-    "fullThresholdUnit": "Percent"
+    "fullThresholdLabel": "Bin counts as full from",
+    "fullThresholdHint": "From this fill level, route planning proposes the bin for emptying.",
+    "fullThresholdUnit": "Percent",
+    "percent_one": "{count} percent",
+    "percent_other": "{count} percent"
   },
   "map": {
     "popup": {

@@ -10,6 +10,8 @@ import { wasteSettingsSection } from './components/settings/settingsSection'
 export const wasteManifest: ModuleManifest = {
   key: WASTE,
   labelKey: 'waste:label',
+  icon: Trash2,
+  descriptionKey: 'waste:description',
   i18n: {
     namespaces: ['waste'],
     // One `import()` per language literal, so each language gets its own chunk.

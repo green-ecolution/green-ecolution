@@ -1,5 +1,6 @@
 {
   "label": "Abfall",
+  "description": "Abfallbehälter und Leerungstouren",
   "nav": {
     "bins": "Abfallbehälter"
   },
@@ -149,9 +150,11 @@
         }
       }
     },
-    "fullThresholdLabel": "Schwellwert für „voll“",
-    "fullThresholdHint": "Ab diesem Füllstand gilt ein Behälter als voll. Das bestimmt die Füllstufe in Liste und Karte und welche Behälter die Tourenplanung vorschlägt. Bereits geplante Touren bleiben unverändert.",
-    "fullThresholdUnit": "Prozent"
+    "fullThresholdLabel": "Behälter gilt als voll ab",
+    "fullThresholdHint": "Ab diesem Füllstand schlägt die Tourenplanung den Behälter zur Leerung vor.",
+    "fullThresholdUnit": "Prozent",
+    "percent_one": "{count} Prozent",
+    "percent_other": "{count} Prozent"
   },
   "map": {
     "popup": {

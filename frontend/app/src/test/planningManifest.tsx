@@ -36,6 +36,8 @@ export function probeManifest(
   return {
     key,
     labelKey: 'irrigation:label',
+    icon: () => null,
+    descriptionKey: 'irrigation:label',
     i18n: { namespaces: [], load: () => Promise.resolve({}) },
     planning: probePlanning({
       SuggestionsColumn: slot(`suggestions-${key}`),

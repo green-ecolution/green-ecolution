@@ -1,5 +1,5 @@
 import { lazy } from 'react'
-import { FolderClosed, PieChart, TreeDeciduous, Trees } from 'lucide-react'
+import { Droplets, FolderClosed, PieChart, TreeDeciduous, Trees } from 'lucide-react'
 import Tree from '@/components/icons/Tree'
 import type { ModuleManifest } from '@/modules/types'
 import { irrigationSettingsSection } from './components/settings/settingsSection'
@@ -12,6 +12,8 @@ import { treeSensorTarget } from './sensorTargets'
 export const irrigationManifest: ModuleManifest = {
   key: IRRIGATION,
   labelKey: 'irrigation:label',
+  icon: Droplets,
+  descriptionKey: 'irrigation:description',
   i18n: {
     namespaces: ['tree', 'treecluster', 'evaluation', 'irrigation'],
     // One `import()` per language literal, so each language gets its own chunk.

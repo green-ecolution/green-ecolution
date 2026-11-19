@@ -222,12 +222,8 @@ export interface ModuleSettingsDraft {
 
 export interface ModuleSettingsSectionProps<D extends ModuleSettingsDraft = ModuleSettingsDraft> {
   draft: D
-  /** Nothing to edit: an ancestor froze the subtree or the viewer lacks `setting:update`. */
+  /** Nothing to edit: the viewer lacks `setting:update`. */
   locked: boolean
-  /** An ancestor froze the subtree, so an own value lies dormant. */
-  enforced: boolean
-  /** Resolves source organizations from the list the page already loaded. */
-  organizationName: (organizationId: string | null | undefined) => string | null
 }
 
 /** Build it with `defineSettingsSection`, which ties `Section` to the draft `useDraft` returns. */
@@ -243,6 +239,10 @@ export interface ModuleSettingsSection<D extends ModuleSettingsDraft = ModuleSet
 export interface ModuleManifest {
   key: string
   labelKey: I18nKey
+  /** Symbol of the module's card on the areas page. */
+  icon: ComponentType<{ className?: string }>
+  /** One line under the module's name saying what it covers. */
+  descriptionKey: I18nKey
   i18n: ModuleI18n
   nav?: ModuleNav
   routePermissions?: Readonly<Record<string, PermissionRequirement>>

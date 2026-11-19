@@ -9,18 +9,12 @@ import { useWasteSettingsDraft } from './useWasteSettingsDraft'
 const getWasteSettings = vi.spyOn(wasteBinApi, 'getWasteSettings')
 const updateWasteSettings = vi.spyOn(wasteBinApi, 'updateWasteSettings')
 
-const inherited = {
-  fullThreshold: { value: 80, origin: 'inherited', source: { id: 'parent' }, lastChange: null },
-  enforcedBy: null,
-} as unknown as WasteSettingsResponse
+const response = (value = 80): WasteSettingsResponse => ({
+  fullThreshold: { value, inheritedValue: 80 },
+})
 
-const own = {
-  fullThreshold: { value: 70, origin: 'own', ownValue: 70, lastChange: null },
-  enforcedBy: null,
-} as unknown as WasteSettingsResponse
-
-const loaded = async (response: WasteSettingsResponse = inherited) => {
-  getWasteSettings.mockResolvedValue(response)
+const loaded = async (settings: WasteSettingsResponse = response()) => {
+  getWasteSettings.mockResolvedValue(settings)
   const hook = renderHookWithClient(() => useWasteSettingsDraft('nord', { enabled: true }))
   await waitFor(() => expect(hook.result.current.loading).toBe(false))
   return hook
@@ -41,13 +35,12 @@ describe('useWasteSettingsDraft', () => {
     expect(getWasteSettings).toHaveBeenCalledWith({ orgId: 'nord' })
     expect(result.current.dirty).toBe(false)
     expect(result.current.valid).toBe(true)
-    expect(result.current.draft).toEqual({ own: false, text: '80' })
+    expect(result.current.draft).toEqual({ text: '80' })
   })
 
   it('treats 0 as invalid and sends nothing', async () => {
     const { result } = await loaded()
 
-    act(() => result.current.setOwn(true))
     act(() => result.current.setText('0'))
 
     expect(result.current.issue).not.toBeNull()
@@ -60,7 +53,6 @@ describe('useWasteSettingsDraft', () => {
   it('rejects a fractional threshold as no whole number instead of rounding it', async () => {
     const { result } = await loaded()
 
-    act(() => result.current.setOwn(true))
     act(() => result.current.setText('80.5'))
 
     expect(result.current.issue?.key).toBe('settings.full_threshold.invalidFormat')
@@ -68,11 +60,10 @@ describe('useWasteSettingsDraft', () => {
   })
 
   it('saves 70 through the settings endpoint and reloads', async () => {
-    updateWasteSettings.mockResolvedValue(own)
+    updateWasteSettings.mockResolvedValue(response(70))
     const { result, queryClient } = await loaded()
     const invalidate = vi.spyOn(queryClient, 'invalidateQueries')
 
-    act(() => result.current.setOwn(true))
     act(() => result.current.setText('70'))
     expect(result.current.dirty).toBe(true)
     await act(() => result.current.save())
@@ -86,27 +77,21 @@ describe('useWasteSettingsDraft', () => {
     })
   })
 
-  it('gives an own value back to inheritance with null', async () => {
-    updateWasteSettings.mockResolvedValue(inherited)
-    const { result } = await loaded(own)
+  it('sends the usual value as a plain number, the backend lets it follow again', async () => {
+    updateWasteSettings.mockResolvedValue(response())
+    const { result } = await loaded(response(70))
 
-    act(() => result.current.setOwn(false))
+    act(() => result.current.setText('80'))
     await act(() => result.current.save())
 
     expect(updateWasteSettings).toHaveBeenCalledWith({
       orgId: 'nord',
-      wasteSettingsUpdateRequest: { fullThreshold: null },
+      wasteSettingsUpdateRequest: { fullThreshold: 80 },
     })
   })
 
-  it('takes over the inherited value as the starting point', async () => {
-    const { result } = await loaded()
-    act(() => result.current.setOwn(true))
-    expect(result.current.draft?.text).toBe('80')
-  })
-
-  it('does not silently give up an own value when the text is not numeric', async () => {
-    const { result } = await loaded(own)
+  it('builds no request while the text is not numeric', async () => {
+    const { result } = await loaded(response(70))
     act(() => result.current.setText('abc'))
     expect(result.current.valid).toBe(false)
     expect(result.current.dirty).toBe(false)
@@ -114,7 +99,7 @@ describe('useWasteSettingsDraft', () => {
 
   it('rejects a failed save and keeps the typed value', async () => {
     updateWasteSettings.mockRejectedValue({ response: { status: 500 } })
-    const { result } = await loaded(own)
+    const { result } = await loaded(response(70))
 
     act(() => result.current.setText('60'))
     await act(async () => {
@@ -124,18 +109,18 @@ describe('useWasteSettingsDraft', () => {
   })
 
   it('keeps a typed value when the settings come back unchanged', async () => {
-    const { result, queryClient } = await loaded(own)
+    const { result, queryClient } = await loaded(response(70))
 
     act(() => result.current.setText('60'))
     act(() => {
-      queryClient.setQueryData(wasteSettingsQueries.byOrganization('nord').queryKey, { ...own })
+      queryClient.setQueryData(wasteSettingsQueries.byOrganization('nord').queryKey, response(70))
     })
 
     expect(result.current.draft?.text).toBe('60')
   })
 
   it('resets the draft to what the server holds', async () => {
-    const { result } = await loaded(own)
+    const { result } = await loaded(response(70))
     act(() => result.current.setText('60'))
     act(() => result.current.reset())
     expect(result.current.draft?.text).toBe('70')

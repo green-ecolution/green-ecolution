@@ -65,6 +65,8 @@ describe('DataTabContent', () => {
     const waste: ModuleManifest = {
       key: 'waste',
       labelKey: 'irrigation:label',
+      icon: () => null,
+      descriptionKey: 'irrigation:label',
       i18n: { namespaces: [], load: () => Promise.resolve({}) },
       statistics: {
         bin: {

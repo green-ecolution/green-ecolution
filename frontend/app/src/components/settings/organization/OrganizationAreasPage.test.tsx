@@ -95,6 +95,8 @@ const useProbeDraft = (organizationId: string, { enabled }: { enabled: boolean }
 const probeManifest: ModuleManifest = {
   key: 'probe',
   labelKey: 'irrigation:label',
+  icon: () => null,
+  descriptionKey: 'irrigation:label',
   i18n: { namespaces: [], load: () => Promise.resolve({}) },
   settingsSection: defineSettingsSection<ProbeDraft>({
     useDraft: useProbeDraft,
