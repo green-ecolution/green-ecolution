@@ -19,10 +19,15 @@ import { useAdminMode } from '@/lib/auth/scope/adminMode'
 import { useSettingsHomeOrganizationId } from '@/lib/auth/scope/settingsOrganization'
 import { NO_PERMISSIONS } from '@/lib/auth/permissions'
 import { usePermissionsResolver } from '@/lib/auth/usePermissionsIn'
-import { buildTree, subtreeMemberCount } from './organization/organizationTree'
+import { buildTree, flatten, subtreeMemberCount } from './organization/organizationTree'
 import { useSettingsOrganizations } from './organization/useSettingsOrganizations'
 import SettingsOrganizationPicker from './SettingsOrganizationPicker'
-import { SETTINGS_NAV, visibleSettingsNav, type SettingsNavItem } from './settingsNav'
+import {
+  landingSection,
+  SETTINGS_NAV,
+  visibleSettingsNav,
+  type SettingsNavItem,
+} from './settingsNav'
 import {
   organizationIdOf,
   sectionOf,
@@ -44,12 +49,14 @@ const ICONS = {
 
 const LINK =
   'flex items-center gap-3 whitespace-nowrap rounded-xl border border-transparent px-3 py-2.5 font-nunito-sans text-sm transition-colors hover:bg-green-dark-50 data-[status=active]:border-green-dark data-[status=active]:bg-green-dark-50 data-[status=active]:font-semibold data-[status=active]:text-green-dark'
-// Below lg the groups dissolve (`contents`) into one scrolling strip without labels.
+// Below lg the group wrappers dissolve (`contents`), so both lists sit side by side
+// in one scrolling strip without labels. The lists themselves keep their display:
+// `contents` on a <ul> drops its list semantics in some browsers.
 const STRIP =
   '-mx-4 flex gap-2 overflow-x-auto px-4 pb-2 lg:mx-0 lg:flex-col lg:gap-7 lg:overflow-visible lg:px-0 lg:pb-0'
 const GROUP = 'contents lg:block'
 const GROUP_LABEL = 'mb-1 hidden px-3 text-[13px] font-bold text-dark-600 lg:block'
-const LIST = 'contents lg:flex lg:flex-col lg:gap-1'
+const LIST = 'flex shrink-0 gap-2 lg:flex-col lg:gap-1'
 
 const isSectionRoute = (
   to: SettingsNavItem['to'],
@@ -72,7 +79,7 @@ const SettingsLayout = ({ children }: SettingsLayoutProps) => {
   const permissionsOf = usePermissionsResolver()
   const adminMode = useAdminMode()
   const { data: services } = useQuery(infoQueries.services())
-  const { organizations = [], hasMemberCounts } = useSettingsOrganizations()
+  const { organizations = [], readableIds } = useSettingsOrganizations()
   const enabledFeatures = new Set(
     (services?.items ?? []).filter((item) => item.enabled).map((item) => item.name),
   )
@@ -95,18 +102,21 @@ const SettingsLayout = ({ children }: SettingsLayoutProps) => {
   const countOf = (item: SettingsNavItem): number | null => {
     if (!node || !item.count) return null
     if (item.count === 'children') return node.children.length
-    return hasMemberCounts ? subtreeMemberCount(node) : null
+    // An organization outside GET /organizations has no real count; a sum over it would lie.
+    const counted = flatten(node).every((org) => readableIds.has(org.id))
+    return counted ? subtreeMemberCount(node) : null
   }
 
   // Keeps the section where the target organization allows it, else its first
   // visible one, so switching never lands on a forbidden page.
   const switchOrganization = (next: string) => {
-    const current = SECTION_ROUTES[sectionOf(pathname) ?? 'overview']
-    const sections = visibleIn(next)
-      .map((item) => item.to)
-      .filter(isSectionRoute)
-    const to = sections.find((route) => route === current) ?? sections[0] ?? SECTION_ROUTES.overview
-    void navigate({ to, params: { orgId: next } })
+    const section = landingSection(
+      permissionsOf?.(next) ?? NO_PERMISSIONS,
+      enabledFeatures,
+      atInstanceRoot(next),
+      sectionOf(pathname) ?? 'overview',
+    )
+    void navigate({ to: SECTION_ROUTES[section ?? 'overview'], params: { orgId: next } })
   }
 
   const renderItem = (item: SettingsNavItem) => {

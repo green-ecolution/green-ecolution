@@ -16,6 +16,14 @@ const ORGS: OrganizationResponse[] = [
 
 const person = { id: 'u1', firstName: 'Nils', lastName: 'Nissen' } as UserResponse
 
+// Reachable but not readable: GET /organizations does not list it, so it has no member data.
+const REACHABLE_ONLY: OrganizationResponse = {
+  id: 'west',
+  name: 'Betriebshof West',
+  memberCount: 0,
+  parentId: 'amt',
+}
+
 const context = vi.hoisted((): { orgId: string; perms: Permissions } => ({
   orgId: 'amt',
   perms: 'unrestricted',
@@ -24,7 +32,8 @@ const context = vi.hoisted((): { orgId: string; perms: Permissions } => ({
 vi.mock('./useSettingsOrganization', () => ({
   useSettingsOrganization: () => ({
     orgId: context.orgId,
-    organizations: ORGS,
+    organizations: [...ORGS, REACHABLE_ONLY],
+    readableIds: new Set(ORGS.map((org) => org.id)),
     perms: context.perms,
     can: (required: readonly string[]) =>
       context.perms === 'unrestricted' ||
@@ -128,6 +137,11 @@ describe('OrganizationStructurePage', () => {
     expect(rows).toHaveLength(4)
     expect(within(rows[0]).getByText('Hier bist du gerade')).toBeInTheDocument()
     expect(rows[0]).toHaveAttribute('aria-current', 'true')
+  })
+
+  it('lists no organization without member data', () => {
+    renderPage()
+    expect(screen.queryByText('Betriebshof West')).not.toBeInTheDocument()
   })
 
   it('opens the overview of the clicked organization', () => {

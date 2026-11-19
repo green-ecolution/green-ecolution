@@ -8,15 +8,22 @@ const organizationRoute = getRouteApi('/_protected/settings/organization/$orgId'
 
 export interface SettingsOrganization {
   orgId: string
-  /** See `useSettingsOrganizations`: member counts are 0 without organization:read. */
+  /** See `useSettingsOrganizations`: member counts are real only for `readableIds`. */
   organizations: OrganizationResponse[]
+  readableIds: ReadonlySet<string>
   perms: Permissions
   can: (required: PermissionRequirement) => boolean
 }
 
 export function useSettingsOrganization(): SettingsOrganization {
   const { orgId } = organizationRoute.useParams()
-  const { organizations = [] } = useSettingsOrganizations()
+  const { organizations = [], readableIds } = useSettingsOrganizations()
   const perms = usePermissionsIn(orgId)
-  return { orgId, organizations, perms, can: (required) => satisfies(perms, required) }
+  return {
+    orgId,
+    organizations,
+    readableIds,
+    perms,
+    can: (required) => satisfies(perms, required),
+  }
 }

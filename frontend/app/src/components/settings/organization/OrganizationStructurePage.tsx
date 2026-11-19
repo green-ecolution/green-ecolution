@@ -28,7 +28,7 @@ const CONTACTS_PER_PAGE = 100
 const OrganizationStructurePage = () => {
   const { t, i18n } = useTranslation('settings')
   const navigate = useNavigate()
-  const { orgId, organizations, can } = useSettingsOrganization()
+  const { orgId, organizations, readableIds, can } = useSettingsOrganization()
   const { createOrganization } = useOrganizationMutations()
   const [createOpen, setCreateOpen] = useState(false)
 
@@ -42,7 +42,11 @@ const OrganizationStructurePage = () => {
   const activeByOrg = new Map(
     (moduleList?.organizations ?? []).map((entry) => [entry.organizationId, entry.active]),
   )
-  const rows = structureRows(organizations, activeByOrg)
+  // Organizations only reachable carry no member count or contact person to show.
+  const rows = structureRows(
+    organizations.filter((org) => readableIds.has(org.id)),
+    activeByOrg,
+  )
   const nameOfPerson = (id: string | null): string | null => {
     const person = (people?.data ?? []).find((user) => user.id === id)
     return person ? `${person.firstName} ${person.lastName}` : null

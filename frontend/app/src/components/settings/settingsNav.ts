@@ -3,6 +3,8 @@ import type de from '@/locales/de'
 import { satisfies, type PermissionRequirement, type Permissions } from '@/lib/auth/permissions'
 import { SECTION_ROUTES, type SettingsSection } from './settingsSections'
 
+const SECTIONS = Object.keys(SECTION_ROUTES) as SettingsSection[]
+
 type SettingsNavKey = keyof (typeof de)['settings']['nav']
 
 export type SettingsNavGroup = 'account' | 'organization'
@@ -110,3 +112,21 @@ export const sectionPermission = (
   section: SettingsSection | null,
 ): PermissionRequirement | undefined =>
   section ? SETTINGS_NAV.find((item) => item.to === SECTION_ROUTES[section])?.permission : undefined
+
+/**
+ * Where the settings of an organization open: `preferred` if its entry is
+ * visible there, else the first visible organization entry in navigation
+ * order. The entry route and the organization switch both decide with it.
+ */
+export const landingSection = (
+  perms: Permissions,
+  enabledFeatures: ReadonlySet<string>,
+  atInstanceRoot: boolean,
+  preferred: SettingsSection | null = null,
+): SettingsSection | null => {
+  const sections = visibleSettingsNav(SETTINGS_NAV, perms, enabledFeatures, atInstanceRoot).flatMap(
+    (item) => SECTIONS.filter((section) => SECTION_ROUTES[section] === item.to),
+  )
+  if (preferred && sections.includes(preferred)) return preferred
+  return sections[0] ?? null
+}

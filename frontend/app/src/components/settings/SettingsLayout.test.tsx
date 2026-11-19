@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { afterEach, describe, it, expect, vi, beforeEach } from 'vitest'
 import type { ReactNode } from 'react'
 import type {
   OrganizationResponse,
@@ -28,6 +28,7 @@ const state = vi.hoisted(
     permsByOrg: Partial<Record<string, Permissions>>
     adminMode: boolean
     roles: RoleResponse[]
+    visible: OrganizationResponse[]
     home: string | null | undefined
     navigate: ReturnType<typeof vi.fn>
   } => ({
@@ -36,6 +37,7 @@ const state = vi.hoisted(
     permsByOrg: {},
     adminMode: false,
     roles: [],
+    visible: [],
     home: 'amt',
     navigate: vi.fn(),
   }),
@@ -83,7 +85,7 @@ vi.mock('@tanstack/react-query', async (importOriginal) => ({
     const key = queryKey.join('/')
     if (key === 'organizations') {
       const canRead = state.roles.some((role) => role.permissions.includes('organization:read'))
-      return { data: canRead ? VISIBLE : undefined }
+      return { data: canRead ? state.visible : undefined }
     }
     if (key === 'users/me/organizations') return { data: REACHABLE }
     return {
@@ -97,13 +99,33 @@ vi.mock('@tanstack/react-query', async (importOriginal) => ({
   },
 }))
 
+// jsdom applies no Tailwind, so the breakpoint classes the picker copies rely on are
+// stubbed: `hidden` always, the `lg:` variants only for a wide viewport.
+const VIEWPORT_CSS = {
+  narrow: '.hidden { display: none } .contents { display: contents }',
+  wide: '.hidden { display: none } .contents { display: contents } .lg\\:hidden { display: none } .lg\\:block { display: block }',
+}
+let viewport: HTMLStyleElement | null = null
+const simulateViewport = (width: keyof typeof VIEWPORT_CSS) => {
+  viewport?.remove()
+  viewport = document.createElement('style')
+  viewport.textContent = VIEWPORT_CSS[width]
+  document.head.append(viewport)
+}
+afterEach(() => {
+  viewport?.remove()
+  viewport = null
+})
+
 describe('SettingsLayout', () => {
   beforeEach(() => {
+    simulateViewport('narrow')
     state.pathname = '/settings/organization/amt/members'
     state.perms = 'unrestricted'
     state.permsByOrg = {}
     state.adminMode = false
     state.roles = [roleWith(['organization:read'])]
+    state.visible = VISIBLE
     state.home = 'amt'
     state.navigate.mockReset()
   })
@@ -180,10 +202,9 @@ describe('SettingsLayout', () => {
     state.perms = new Set(['start_point:read'])
     render(<SettingsLayout>content</SettingsLayout>)
     expect(screen.getByText('Einstellungen für')).toBeInTheDocument()
-    // One picker for narrow screens, one inside the group from lg up.
     expect(
-      screen.getAllByRole('button', { name: 'Organisation wechseln, aktuell Grünflächenamt' }),
-    ).toHaveLength(2)
+      screen.getByRole('button', { name: 'Organisation wechseln, aktuell Grünflächenamt' }),
+    ).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Stationen' })).toHaveAttribute(
       'href',
       '/settings/organization/amt/stations',
@@ -198,6 +219,21 @@ describe('SettingsLayout', () => {
       within(screen.getByRole('link', { name: /Struktur/ })).getByText('1'),
     ).toBeInTheDocument()
     expect(within(screen.getByRole('link', { name: /Mitarbeitende/ })).queryByText(/\d/)).toBeNull()
+  })
+
+  it('counts members only where every organization of the subtree is readable', () => {
+    state.roles = [{ ...roleWith(['organization:read']), organizationId: 'nord' }]
+    state.visible = [VISIBLE[1]]
+    state.pathname = '/settings/organization/nord/members'
+    const { unmount } = render(<SettingsLayout>content</SettingsLayout>)
+    expect(screen.getByRole('link', { name: 'Mitarbeitende 4 Personen' })).toBeInTheDocument()
+    unmount()
+
+    // Grünflächenamt itself is only reachable: its 0 must not count, nor sum up with Nord.
+    state.pathname = '/settings/organization/amt/members'
+    render(<SettingsLayout>content</SettingsLayout>)
+    expect(screen.getByRole('link', { name: 'Mitarbeitende' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Struktur 1 Unterorganisation' })).toBeInTheDocument()
   })
 
   it('hides the organization group without any organization to manage', () => {
@@ -221,6 +257,28 @@ describe('SettingsLayout', () => {
     expect(screen.queryByRole('link', { name: 'Stationen' })).not.toBeInTheDocument()
   })
 
+  it('keeps both lists displayed in the narrow strip, so they stay lists', () => {
+    render(<SettingsLayout>content</SettingsLayout>)
+    for (const name of ['Mein Konto', 'Einstellungen für']) {
+      expect(getComputedStyle(screen.getByRole('list', { name })).display).not.toBe('contents')
+    }
+  })
+
+  it('exposes one picker per width: above the strip when narrow, in its group from lg', () => {
+    render(<SettingsLayout>content</SettingsLayout>)
+    const accountList = screen.getByRole('list', { name: 'Mein Konto' })
+    const narrowPicker = screen.getByRole('button', { name: /Organisation wechseln/ })
+    expect(narrowPicker.compareDocumentPosition(accountList)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+
+    simulateViewport('wide')
+    const widePicker = screen.getByRole('button', { name: /Organisation wechseln/ })
+    expect(widePicker).not.toBe(narrowPicker)
+    expect(accountList.compareDocumentPosition(widePicker)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+    expect(
+      widePicker.compareDocumentPosition(screen.getByRole('list', { name: 'Einstellungen für' })),
+    ).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+  })
+
   it('shows stations for a tenant picked in admin mode', () => {
     state.adminMode = true
     state.pathname = '/settings/organization/nord'
@@ -231,17 +289,19 @@ describe('SettingsLayout', () => {
 
 describe('SettingsLayout organization switch', () => {
   beforeEach(() => {
+    simulateViewport('narrow')
     state.pathname = '/settings/organization/amt/roles'
     state.perms = 'unrestricted'
     state.permsByOrg = {}
     state.adminMode = false
     state.roles = [roleWith(['organization:read'])]
+    state.visible = VISIBLE
     state.home = 'amt'
     state.navigate.mockReset()
   })
 
   const switchTo = async (name: RegExp) => {
-    await userEvent.click(screen.getAllByRole('button', { name: /Organisation wechseln/ })[0])
+    await userEvent.click(screen.getByRole('button', { name: /Organisation wechseln/ }))
     await userEvent.click(screen.getByRole('option', { name }))
   }
 

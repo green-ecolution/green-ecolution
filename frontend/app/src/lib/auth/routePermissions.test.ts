@@ -33,7 +33,6 @@ describe('CORE_ROUTE_PERMISSIONS', () => {
     expect(Object.keys(CORE_ROUTE_PERMISSIONS).sort()).toEqual([
       '/admin',
       '/sensors',
-      '/settings/organization',
       '/settings/organization/$orgId',
       '/settings/organization/$orgId/members',
       '/settings/organization/$orgId/plugins',
@@ -166,6 +165,10 @@ describe('canAccessRoute', () => {
 
   it('allows everything for unrestricted access', () => {
     expect(canAccessRoute('/settings/organization/$orgId/members', UNRESTRICTED)).toBe(true)
+  })
+
+  it('leaves the settings entry open; it opens the first section the user may see', () => {
+    expect(canAccessRoute('/settings/organization', NO_PERMISSIONS)).toBe(true)
   })
 
   it('guards the organization entry with organization:read', () => {

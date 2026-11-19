@@ -9,28 +9,36 @@ import { useOrganizationScope } from '@/lib/auth/scope/organizationScopeStore'
 export interface SettingsOrganizationList {
   /** `undefined` while loading. */
   organizations: OrganizationResponse[] | undefined
-  /** Only GET /organizations carries real member counts; the fallback reports 0. */
-  hasMemberCounts: boolean
+  /**
+   * The entries from GET /organizations. Only these carry a real member count
+   * and contact person; the others stand in with `memberCount: 0`.
+   */
+  readableIds: ReadonlySet<string>
 }
+
+const NONE: ReadonlySet<string> = new Set()
 
 /**
  * The reachable list ignores the scope, so it is cut down to the scope subtree:
  * requests for an organization outside it would be rejected.
  */
-const fromReachable = (
+const reachableOutside = (
   reachable: ReachableOrganizationResponse[],
   scope: string | null,
+  known: ReadonlySet<string>,
 ): OrganizationResponse[] => {
   const parentOf = new Map(reachable.map((org) => [org.id, org.parentId]))
   return reachable
+    .filter((org) => !known.has(org.id))
     .filter((org) => !scope || isAncestorOrSelf(scope, org.id, parentOf))
     .map((org) => ({ id: org.id, name: org.name, parentId: org.parentId, memberCount: 0 }))
 }
 
 /**
- * The organizations the settings offer. GET /organizations needs
- * organization:read; without it anywhere, the reachable organizations stand
- * in, so pages such as stations work for roles that only hold their own right.
+ * The organizations the settings offer: GET /organizations, completed by every
+ * reachable organization it lacks. A role may grant, say, start_point:read in
+ * an organization without organization:read there, and that organization must
+ * still be selectable and part of its subtree.
  */
 export function useSettingsOrganizations(): SettingsOrganizationList {
   const bypass = readAuthBypass()
@@ -43,15 +51,19 @@ export function useSettingsOrganizations(): SettingsOrganizationList {
     ...organizationQueries.list(),
     enabled: rolesKnown && canReadOrganizations,
   })
+  // The bypass reads every organization already.
   const { data: reachable } = useQuery({
     ...userQueries.myOrganizations(),
-    enabled: rolesKnown && !canReadOrganizations,
+    enabled: rolesKnown && !bypass,
   })
 
-  if (!rolesKnown) return { organizations: undefined, hasMemberCounts: false }
-  if (canReadOrganizations) return { organizations: visible, hasMemberCounts: true }
+  if (!rolesKnown) return { organizations: undefined, readableIds: NONE }
+  const readable = canReadOrganizations ? visible : []
+  if (!readable || (!bypass && !reachable)) return { organizations: undefined, readableIds: NONE }
+
+  const readableIds = new Set(readable.map((org) => org.id))
   return {
-    organizations: reachable && fromReachable(reachable, scope),
-    hasMemberCounts: false,
+    organizations: [...readable, ...reachableOutside(reachable ?? [], scope, readableIds)],
+    readableIds,
   }
 }

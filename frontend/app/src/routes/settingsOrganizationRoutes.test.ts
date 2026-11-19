@@ -18,40 +18,50 @@ const REACHABLE: ReachableOrganizationResponse[] = [
   { id: 'nord', name: 'Stadtgärtnerei Nord', parentId: 'amt' },
 ]
 
-const data = vi.hoisted((): { me: UserResponse; reachable: ReachableOrganizationResponse[] } => ({
-  me: {} as UserResponse,
-  reachable: [],
-}))
+const data = vi.hoisted(
+  (): {
+    me: UserResponse
+    reachable: ReachableOrganizationResponse[]
+    features: { name: string; enabled: boolean }[]
+  } => ({ me: {} as UserResponse, reachable: [], features: [] }),
+)
 
 const queryClient = {
-  ensureQueryData: ({ queryKey }: { queryKey: unknown[] }) =>
-    Promise.resolve(queryKey.join('/') === 'users/me/organizations' ? data.reachable : data.me),
+  ensureQueryData: ({ queryKey }: { queryKey: unknown[] }) => {
+    const key = queryKey.join('/')
+    if (key === 'users/me/organizations') return Promise.resolve(data.reachable)
+    if (key === 'info/services') return Promise.resolve({ items: data.features })
+    return Promise.resolve(data.me)
+  },
 } as unknown as QueryClient
 
 type Hook = (options: unknown) => Promise<unknown>
 
-const entryTarget = async (): Promise<string | undefined> => {
+const entryRedirect = async (): Promise<{ to?: string; params?: { orgId?: string } }> => {
   try {
     await (Entry.options.beforeLoad as Hook)({ context: { queryClient } })
   } catch (error) {
     if (!isRedirect(error)) throw error
-    return (error.options as { params?: { orgId?: string } }).params?.orgId
+    return error.options as { to?: string; params?: { orgId?: string } }
   }
   throw new Error('expected a redirect')
 }
+const entryTarget = async () => (await entryRedirect()).params?.orgId
+
+const meWith = (permissions: string[]) =>
+  ({
+    id: 'u1',
+    organization: { id: 'amt', name: 'Grünflächenamt', parentId: 'root' },
+    roles: [{ id: 'r1', name: 'Rolle', organizationId: 'amt', permissions }],
+  }) as UserResponse
 
 describe('/settings/organization (entry)', () => {
   beforeEach(() => {
     bypass.value = false
     setOrganizationScope('u1', null)
     data.reachable = REACHABLE
-    data.me = {
-      id: 'u1',
-      organization: { id: 'amt', name: 'Grünflächenamt' },
-      roles: [
-        { id: 'r1', name: 'Admin', organizationId: 'amt', permissions: ['organization:read'] },
-      ],
-    } as UserResponse
+    data.features = [{ name: 'routing', enabled: true }]
+    data.me = meWith(['organization:read'])
   })
 
   it('redirects to the own organization', async () => {
@@ -68,10 +78,35 @@ describe('/settings/organization (entry)', () => {
     await expect(entryTarget()).rejects.toBeInstanceOf(ForbiddenError)
   })
 
-  it('resolves the topmost reachable organization in the auth bypass', async () => {
+  it('opens the overview with organization:read', async () => {
+    await expect(entryRedirect()).resolves.toMatchObject({
+      to: '/settings/organization/$orgId',
+      params: { orgId: 'amt' },
+    })
+  })
+
+  it('opens the stations for a user who holds only start_point:read', async () => {
+    data.me = meWith(['start_point:read'])
+    await expect(entryRedirect()).resolves.toMatchObject({
+      to: '/settings/organization/$orgId/stations',
+      params: { orgId: 'amt' },
+    })
+  })
+
+  it('is forbidden when no section is visible, e.g. stations with routing off', async () => {
+    data.me = meWith(['start_point:read'])
+    data.features = [{ name: 'routing', enabled: false }]
+    await expect(entryTarget()).rejects.toBeInstanceOf(ForbiddenError)
+  })
+
+  it('resolves the topmost reachable organization and its overview in the auth bypass', async () => {
     bypass.value = true
     data.me = {} as UserResponse
-    await expect(entryTarget()).resolves.toBe('amt')
+    data.features = []
+    await expect(entryRedirect()).resolves.toMatchObject({
+      to: '/settings/organization/$orgId',
+      params: { orgId: 'amt' },
+    })
   })
 })
 
