@@ -1,26 +1,17 @@
 use async_trait::async_trait;
-use std::collections::HashMap;
 
 use crate::{
     Id, RepositoryError,
     organization::Organization,
-    settings::{
-        EffectiveSettings, OrganizationSettings, Resolution, SettingChangeEntry, SettingKey,
-        SettingsUpdate,
-    },
+    settings::{EffectiveSettings, OrganizationSettings, Resolution, SettingsUpdate},
 };
 
 #[async_trait]
 pub trait SettingsReader: Send + Sync {
     /// The organization's own values, all-inherit when it never set anything.
     async fn own(&self, org: Id<Organization>) -> Result<OrganizationSettings, RepositoryError>;
-    /// Values plus per-field origin for one organization.
+    /// Values in force plus what would be inherited, for one organization.
     async fn resolution(&self, org: Id<Organization>) -> Result<Resolution, RepositoryError>;
-    /// Most recent change per key, for the "last changed" line under a field.
-    async fn last_changes(
-        &self,
-        org: Id<Organization>,
-    ) -> Result<HashMap<SettingKey, SettingChangeEntry>, RepositoryError>;
 }
 
 #[async_trait]
