@@ -19,14 +19,14 @@
     "@tanstack/react-router": "1.170.32",
     "date-fns": "^4.4.0",
     "i18next": "^26.7.1",
-    "lucide-react": "^1.66.0",
-    "maplibre-gl": "^6.16.0",
+    "lucide-react": "^1.75.0",
+    "maplibre-gl": "^6.19.0",
     "react": "catalog:react19",
     "react-dom": "catalog:react19",
-    "react-hook-form": "^7.91.0",
+    "react-hook-form": "^7.92.0",
     "react-i18next": "^18.0.2",
     "zod": "^4.6.7",
-    "zustand": "^5.0.16"
+    "zustand": "^5.1.0"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^7.0.1",
