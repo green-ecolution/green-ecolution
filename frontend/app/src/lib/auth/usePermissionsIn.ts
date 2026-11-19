@@ -10,6 +10,7 @@ export type PermissionsResolver = (orgId: string | null) => Permissions
 /**
  * The rights per organization, or `undefined` while the roles or the parent
  * chain still load, so a caller can wait instead of reading "no rights".
+ * Narrowed by the active organization scope: `useEffectiveRoles` already applies it.
  *
  * The parent chain comes from the reachable organizations rather than the
  * visible ones: a role may sit on an organization the user cannot list.

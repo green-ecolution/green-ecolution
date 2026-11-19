@@ -330,6 +330,14 @@ describe('MembersPage', () => {
     ).toBeInTheDocument()
   })
 
+  it('counts matches, not people, while a search narrows the list', async () => {
+    render(<MembersPage />)
+    await userEvent.type(screen.getByRole('searchbox', { name: /suchen/i }), 'Boysen')
+    expect(
+      await screen.findByRole('heading', { name: '1 Treffer in Grünflächenamt' }),
+    ).toBeInTheDocument()
+  })
+
   it('revokes a role immediately', async () => {
     render(<MembersPage />)
     await select(/Anna Ahlmann/)

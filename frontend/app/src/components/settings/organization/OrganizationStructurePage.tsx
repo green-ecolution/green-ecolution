@@ -109,7 +109,6 @@ const OrganizationStructurePage = () => {
                   <Link
                     to="/settings/organization/$orgId"
                     params={{ orgId: row.id }}
-                    aria-label={t('organization.structure.openAriaLabel', { name: row.name })}
                     className="flex items-center gap-3 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     style={{ paddingLeft: `${row.depth * 1.5}rem` }}
                   >
@@ -123,10 +122,14 @@ const OrganizationStructurePage = () => {
                       <span className="block truncate font-lato text-sm font-semibold text-dark">
                         {row.name}
                       </span>
+                      {/* The space keeps name and marker apart in the link's accessible name. */}
                       {row.id === orgId && (
-                        <span className="block text-xs text-dark-600">
-                          {t('organization.structure.current')}
-                        </span>
+                        <>
+                          {' '}
+                          <span className="block text-xs text-dark-600">
+                            {t('organization.structure.current')}
+                          </span>
+                        </>
                       )}
                     </span>
                   </Link>

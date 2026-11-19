@@ -75,7 +75,8 @@ const SettingsOrganizationPicker = ({
         </button>
       </PopoverTrigger>
       <PopoverContent align="start" className="w-[22rem] max-w-[calc(100vw-2rem)] p-2">
-        <Command shouldFilter={false}>
+        {/* cmdk names its input through this label; an aria-label on the input loses to it. */}
+        <Command shouldFilter={false} label={t('picker.searchPlaceholder')}>
           <CommandInput
             value={query}
             onValueChange={setQuery}

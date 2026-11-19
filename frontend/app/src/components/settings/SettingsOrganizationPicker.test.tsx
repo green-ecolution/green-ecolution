@@ -66,6 +66,12 @@ describe('SettingsOrganizationPicker', () => {
     expect(screen.getAllByRole('option')).toHaveLength(3)
   })
 
+  it('names the search field', async () => {
+    render(<SettingsOrganizationPicker organizations={ORGS} selectedId="amt" onSelect={vi.fn()} />)
+    await userEvent.click(screen.getByRole('button', { name: /Organisation wechseln/ }))
+    expect(screen.getByRole('combobox', { name: 'Organisation suchen' })).toBeInTheDocument()
+  })
+
   it('filters by name and keeps the ancestors for context', async () => {
     render(<SettingsOrganizationPicker organizations={ORGS} selectedId="amt" onSelect={vi.fn()} />)
     await userEvent.click(screen.getByRole('button', { name: /Organisation wechseln/ }))

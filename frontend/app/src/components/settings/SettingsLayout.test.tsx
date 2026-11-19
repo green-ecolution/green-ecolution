@@ -110,8 +110,23 @@ describe('SettingsLayout', () => {
 
   it('groups the entries under "Mein Konto" and "Einstellungen für"', () => {
     render(<SettingsLayout>content</SettingsLayout>)
-    expect(screen.getByText('Mein Konto')).toBeInTheDocument()
-    expect(screen.getByText('Einstellungen für')).toBeInTheDocument()
+    expect(
+      within(screen.getByRole('list', { name: 'Mein Konto' })).getByRole('link', {
+        name: 'Profil',
+      }),
+    ).toBeInTheDocument()
+    expect(
+      within(screen.getByRole('list', { name: 'Einstellungen für' })).getByRole('link', {
+        name: 'Überblick',
+      }),
+    ).toBeInTheDocument()
+  })
+
+  it('reads the counts as words and hides the bare numbers', () => {
+    render(<SettingsLayout>content</SettingsLayout>)
+    expect(screen.getByRole('link', { name: 'Struktur 1 Unterorganisation' })).toBeInTheDocument()
+    const members = screen.getByRole('link', { name: 'Mitarbeitende 7 Personen' })
+    expect(within(members).getByText('7')).toHaveAttribute('aria-hidden', 'true')
   })
 
   it('links the organization entries to the organization in the path', () => {
@@ -165,9 +180,10 @@ describe('SettingsLayout', () => {
     state.perms = new Set(['start_point:read'])
     render(<SettingsLayout>content</SettingsLayout>)
     expect(screen.getByText('Einstellungen für')).toBeInTheDocument()
+    // One picker for narrow screens, one inside the group from lg up.
     expect(
-      screen.getByRole('button', { name: 'Organisation wechseln, aktuell Grünflächenamt' }),
-    ).toBeInTheDocument()
+      screen.getAllByRole('button', { name: 'Organisation wechseln, aktuell Grünflächenamt' }),
+    ).toHaveLength(2)
     expect(screen.getByRole('link', { name: 'Stationen' })).toHaveAttribute(
       'href',
       '/settings/organization/amt/stations',
@@ -225,7 +241,7 @@ describe('SettingsLayout organization switch', () => {
   })
 
   const switchTo = async (name: RegExp) => {
-    await userEvent.click(screen.getByRole('button', { name: /Organisation wechseln/ }))
+    await userEvent.click(screen.getAllByRole('button', { name: /Organisation wechseln/ })[0])
     await userEvent.click(screen.getByRole('option', { name }))
   }
 

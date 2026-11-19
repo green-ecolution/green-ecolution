@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from 'react'
+import { useId, type CSSProperties, type ReactNode } from 'react'
 import { Link, useLocation, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
@@ -44,9 +44,12 @@ const ICONS = {
 
 const LINK =
   'flex items-center gap-3 whitespace-nowrap rounded-xl border border-transparent px-3 py-2.5 font-nunito-sans text-sm transition-colors hover:bg-green-dark-50 data-[status=active]:border-green-dark data-[status=active]:bg-green-dark-50 data-[status=active]:font-semibold data-[status=active]:text-green-dark'
-const GROUP_LABEL = 'mb-1 px-3 text-[13px] font-bold text-dark-600'
-const LIST =
-  '-mx-4 flex gap-2 overflow-x-auto px-4 pb-2 lg:mx-0 lg:flex-col lg:gap-1 lg:overflow-visible lg:px-0 lg:pb-0'
+// Below lg the groups dissolve (`contents`) into one scrolling strip without labels.
+const STRIP =
+  '-mx-4 flex gap-2 overflow-x-auto px-4 pb-2 lg:mx-0 lg:flex-col lg:gap-7 lg:overflow-visible lg:px-0 lg:pb-0'
+const GROUP = 'contents lg:block'
+const GROUP_LABEL = 'mb-1 hidden px-3 text-[13px] font-bold text-dark-600 lg:block'
+const LIST = 'contents lg:flex lg:flex-col lg:gap-1'
 
 const isSectionRoute = (
   to: SettingsNavItem['to'],
@@ -61,6 +64,8 @@ const SettingsLayout = ({ children }: SettingsLayoutProps) => {
   const { t } = useTranslation('settings')
   const { pathname } = useLocation()
   const navigate = useNavigate()
+  const accountLabelId = useId()
+  const organizationLabelId = useId()
   const homeId = useSettingsHomeOrganizationId()
   // On the account pages the organization group still needs a target.
   const orgId = organizationIdOf(pathname) ?? homeId ?? null
@@ -114,7 +119,14 @@ const SettingsLayout = ({ children }: SettingsLayoutProps) => {
           {t(`nav.${item.key}`)}
         </span>
         {count !== null && count > 0 && (
-          <span className="ml-auto hidden text-[13px] text-dark-600 lg:inline">{count}</span>
+          <>
+            <span className="ml-auto hidden text-[13px] text-dark-600 lg:inline" aria-hidden>
+              {count}
+            </span>{' '}
+            <span className="sr-only">
+              {t(item.count === 'children' ? 'nav.countChildren' : 'nav.countMembers', { count })}
+            </span>
+          </>
         )}
         {item.comingSoon && (
           <Badge variant="muted" className="ml-auto hidden lg:inline-flex">
@@ -143,6 +155,15 @@ const SettingsLayout = ({ children }: SettingsLayoutProps) => {
     )
   }
 
+  const picker =
+    orgId !== null && organizationItems.length > 0 ? (
+      <SettingsOrganizationPicker
+        organizations={organizations}
+        selectedId={orgId}
+        onSelect={switchOrganization}
+      />
+    ) : null
+
   return (
     <div
       className="container mt-6 pb-16"
@@ -160,26 +181,34 @@ const SettingsLayout = ({ children }: SettingsLayoutProps) => {
       <div className="lg:grid lg:grid-cols-[272px_1fr] lg:gap-8">
         <nav
           aria-label={t('layout.navAriaLabel')}
-          className="z-20 flex flex-col gap-4 lg:sticky lg:top-[var(--settings-header-top)] lg:gap-7 lg:self-start"
+          className="z-20 flex flex-col gap-4 lg:sticky lg:top-[var(--settings-header-top)] lg:self-start"
         >
-          <div>
-            <p className={GROUP_LABEL}>{t('layout.groupAccount')}</p>
-            <ul className={LIST}>{accountItems.map(renderItem)}</ul>
-          </div>
+          {/* Rendered twice instead of moved with CSS, so the DOM order matches what is
+              seen: above the strip on narrow screens, inside its group from lg up. */}
+          {picker && <div className="lg:hidden">{picker}</div>}
 
-          {orgId && organizationItems.length > 0 && (
-            <div>
-              <p className={GROUP_LABEL}>{t('layout.groupOrganization')}</p>
-              <div className="mb-2">
-                <SettingsOrganizationPicker
-                  organizations={organizations}
-                  selectedId={orgId}
-                  onSelect={switchOrganization}
-                />
-              </div>
-              <ul className={LIST}>{organizationItems.map(renderItem)}</ul>
+          <div className={STRIP}>
+            <div className={GROUP}>
+              <p id={accountLabelId} className={GROUP_LABEL}>
+                {t('layout.groupAccount')}
+              </p>
+              <ul aria-labelledby={accountLabelId} className={LIST}>
+                {accountItems.map(renderItem)}
+              </ul>
             </div>
-          )}
+
+            {picker && (
+              <div className={GROUP}>
+                <p id={organizationLabelId} className={GROUP_LABEL}>
+                  {t('layout.groupOrganization')}
+                </p>
+                <div className="mb-2 hidden lg:block">{picker}</div>
+                <ul aria-labelledby={organizationLabelId} className={LIST}>
+                  {organizationItems.map(renderItem)}
+                </ul>
+              </div>
+            )}
+          </div>
         </nav>
 
         <div className="mt-6 rounded-2xl bg-dark-50 p-4 lg:mt-0 lg:p-6">{children}</div>

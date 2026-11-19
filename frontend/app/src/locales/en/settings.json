@@ -15,7 +15,11 @@
     "members": "Members",
     "roles": "Roles",
     "stations": "Stations",
-    "plugins": "Plugins"
+    "plugins": "Plugins",
+    "countChildren_one": "{count} sub-organization",
+    "countChildren_other": "{count} sub-organizations",
+    "countMembers_one": "{count} person",
+    "countMembers_other": "{count} people"
   },
   "picker": {
     "ariaLabel": "Switch organization, currently {name}",
@@ -295,6 +299,8 @@
     "headline_other": "{count} people in {name}",
     "headlineWithChildren_one": "{count} person in {name} and its sub-organizations",
     "headlineWithChildren_other": "{count} people in {name} and its sub-organizations",
+    "headlineFiltered_one": "{count} match in {name}",
+    "headlineFiltered_other": "{count} matches in {name}",
     "roleFilterAriaLabel": "Role",
     "roleFilterPlaceholder": "All roles",
     "roleFilterSearchPlaceholder": "Search role",
@@ -377,7 +383,6 @@
       "intro": "Switch on what is part of the work of {name}, and enter what planning should reckon with.",
       "loading": "Loading areas of work"
     },
-    "loading": "Loading organizations",
     "loadErrorForbidden": "You aren't allowed to view this organization. Your role probably only applies to a sub-organization.",
     "loadErrorGeneric": "The organization structure could not be loaded. Please try again later.",
     "nameConflict": "An organization with this name already exists.",
@@ -419,7 +424,7 @@
     "deleteButton": "Delete organization",
     "structure": {
       "title": "Structure",
-      "intro": "Every organization you may manage. Click a row to open its settings.",
+      "intro": "Every organization you may manage. Click a name to open its settings.",
       "columnOrganization": "Organization",
       "columnMembers": "People",
       "columnContact": "Contact person",
@@ -428,7 +433,6 @@
       "membersWithDirect": "{total}, {direct} of them directly",
       "noContact": "Not set",
       "noModules": "None",
-      "openAriaLabel": "Open the settings of {name}",
       "contactUnresolved": "Name not available"
     },
     "overview": {

@@ -15,7 +15,11 @@
     "members": "Mitarbeitende",
     "roles": "Rollen",
     "stations": "Stationen",
-    "plugins": "Plugins"
+    "plugins": "Plugins",
+    "countChildren_one": "{count} Unterorganisation",
+    "countChildren_other": "{count} Unterorganisationen",
+    "countMembers_one": "{count} Person",
+    "countMembers_other": "{count} Personen"
   },
   "picker": {
     "ariaLabel": "Organisation wechseln, aktuell {name}",
@@ -295,6 +299,8 @@
     "headline_other": "{count} Personen in {name}",
     "headlineWithChildren_one": "{count} Person in {name} und den Unterorganisationen",
     "headlineWithChildren_other": "{count} Personen in {name} und den Unterorganisationen",
+    "headlineFiltered_one": "{count} Treffer in {name}",
+    "headlineFiltered_other": "{count} Treffer in {name}",
     "roleFilterAriaLabel": "Rolle",
     "roleFilterPlaceholder": "Alle Rollen",
     "roleFilterSearchPlaceholder": "Rolle suchen",
@@ -377,7 +383,6 @@
       "intro": "Schalte ein, was zu den Aufgaben von {name} gehört, und trage ein, womit die Planung rechnen soll.",
       "loading": "Aufgabenbereiche werden geladen"
     },
-    "loading": "Organisationen werden geladen",
     "loadErrorForbidden": "Du darfst diese Organisation nicht einsehen. Vermutlich gilt deine Rolle nur für eine untergeordnete Organisation.",
     "loadErrorGeneric": "Die Organisationsstruktur konnte nicht geladen werden. Bitte versuche es später erneut.",
     "nameConflict": "Eine Organisation mit diesem Namen existiert bereits.",
@@ -419,7 +424,7 @@
     "deleteButton": "Organisation löschen",
     "structure": {
       "title": "Struktur",
-      "intro": "Alle Organisationen, die du verwalten darfst. Ein Klick auf eine Zeile öffnet ihre Einstellungen.",
+      "intro": "Alle Organisationen, die du verwalten darfst. Ein Klick auf den Namen öffnet ihre Einstellungen.",
       "columnOrganization": "Organisation",
       "columnMembers": "Personen",
       "columnContact": "Kontaktperson",
@@ -428,7 +433,6 @@
       "membersWithDirect": "{total}, davon {direct} direkt",
       "noContact": "Nicht hinterlegt",
       "noModules": "Keine",
-      "openAriaLabel": "Einstellungen von {name} öffnen",
       "contactUnresolved": "Name nicht verfügbar"
     },
     "overview": {

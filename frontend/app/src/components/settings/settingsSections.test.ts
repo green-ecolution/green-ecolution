@@ -16,6 +16,11 @@ describe('sectionOf', () => {
     expect(sectionOf('/settings/organization/amt/plugins/kataster')).toBe('plugins')
   })
 
+  it('takes no inherited object key for a section', () => {
+    expect(sectionOf('/settings/organization/amt/constructor')).toBeNull()
+    expect(sectionOf('/settings/organization/amt/toString')).toBeNull()
+  })
+
   it('knows no section outside an organization', () => {
     expect(sectionOf('/settings/profile')).toBeNull()
     expect(sectionOf('/settings/organization')).toBeNull()

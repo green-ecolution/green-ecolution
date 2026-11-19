@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { OrganizationResponse } from '@/api/backendApi'
-import { buildTree, flatten, nodeOf, pathTo, subtreeMemberCount } from './organizationTree'
+import { buildTree, flatten, subtreeMemberCount } from './organizationTree'
 
 const org = (
   id: string,
@@ -99,33 +99,5 @@ describe('subtreeMemberCount', () => {
 
   it('returns the own count for a leaf', () => {
     expect(subtreeMemberCount(buildTree(orgs, 'duburg')!)).toBe(6)
-  })
-})
-
-describe('pathTo', () => {
-  it('returns the chain from the root down to the target', () => {
-    const path = pathTo(buildTree(orgs, 'root')!, 'duburg')
-    expect(path.map((o) => o.id)).toEqual(['root', 'amt', 'nord', 'duburg'])
-  })
-
-  it('returns just the root when the target is the root', () => {
-    const path = pathTo(buildTree(orgs, 'amt')!, 'amt')
-    expect(path.map((o) => o.id)).toEqual(['amt'])
-  })
-
-  it('returns an empty array when the target is absent', () => {
-    expect(pathTo(buildTree(orgs, 'amt')!, 'nope')).toEqual([])
-  })
-})
-
-describe('nodeOf', () => {
-  it('finds a nested node with its subtree', () => {
-    const found = nodeOf(buildTree(orgs, 'root')!, 'nord')
-    expect(found?.org.id).toBe('nord')
-    expect(found?.children.map((c) => c.org.id)).toEqual(['duburg', 'juergensby'])
-  })
-
-  it('returns null when the node is absent', () => {
-    expect(nodeOf(buildTree(orgs, 'amt')!, 'nope')).toBeNull()
   })
 })

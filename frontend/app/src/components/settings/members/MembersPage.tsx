@@ -310,9 +310,12 @@ const MembersPage = () => {
       selectedId={selectedId}
       search={search}
       headline={t(
-        includeDescendants && hasSubOrganizations
-          ? 'members.headlineWithChildren'
-          : 'members.headline',
+        // Follows the query rather than the input, so it never counts the previous result.
+        isFiltered(debouncedSearch, roleFilter)
+          ? 'members.headlineFiltered'
+          : includeDescendants && hasSubOrganizations
+            ? 'members.headlineWithChildren'
+            : 'members.headline',
         {
           count: total,
           name: visibleOrganizations.find((org) => org.id === orgId)?.name ?? '',

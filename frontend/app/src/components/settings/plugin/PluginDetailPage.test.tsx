@@ -10,12 +10,26 @@ vi.mock('@/lib/auth/usePermissionsIn', () => ({
 }))
 
 const updateMutate = vi.fn()
+const uninstallMutate = vi.fn((_slug: string, options: { onSuccess: () => void }) =>
+  options.onSuccess(),
+)
 vi.mock('@/hooks/usePluginMutations', () => ({
   usePluginMutations: () => ({
     installPlugin: { mutate: vi.fn(), isPending: false },
     updatePlugin: { mutate: updateMutate, isPending: false },
     rotatePluginKey: { mutate: vi.fn(), isPending: false },
-    uninstallPlugin: { mutate: vi.fn(), isPending: false },
+    uninstallPlugin: { mutate: uninstallMutate, isPending: false },
+  }),
+}))
+
+// The plugin belongs to a sub-organization of the one selected in the path.
+vi.mock('../organization/useSettingsOrganization', () => ({
+  useSettingsOrganization: () => ({
+    orgId: 'amt',
+    organizations: [
+      { id: 'amt', name: 'Grünflächenamt', memberCount: 0 },
+      { id: 'org-1', name: 'Stadtgärtnerei Nord', memberCount: 0, parentId: 'amt' },
+    ],
   }),
 }))
 
@@ -206,11 +220,31 @@ describe('PluginDetailPage', () => {
     expect(screen.queryByText(/ansicht öffnen/i)).not.toBeInTheDocument()
   })
 
-  it('links back to the plugins of the plugin organization', () => {
+  it('names the plugin organization', () => {
+    render(<PluginDetailPage plugin={plugin} />)
+    expect(screen.getByText('Stadtgärtnerei Nord')).toBeInTheDocument()
+  })
+
+  it('links back to the plugins of the selected organization', () => {
     render(<PluginDetailPage plugin={plugin} />)
     expect(screen.getAllByRole('link').map((link) => link.getAttribute('href'))).toContain(
-      '/settings/organization/org-1/plugins',
+      '/settings/organization/amt/plugins',
     )
+  })
+
+  it('returns to the plugins of the selected organization after uninstalling', async () => {
+    const user = userEvent.setup()
+    render(<PluginDetailPage plugin={plugin} />)
+    await user.click(screen.getByRole('button', { name: /deinstallieren/i }))
+    await user.click(
+      within(await screen.findByRole('alertdialog')).getByRole('button', {
+        name: /deinstallieren/i,
+      }),
+    )
+    expect(navigate).toHaveBeenCalledWith({
+      to: '/settings/organization/$orgId/plugins',
+      params: { orgId: 'amt' },
+    })
   })
 
   it('offers the write controls with the rights in the plugin organization', () => {

@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from '@tanstack/react-router'
-import { useQuery } from '@tanstack/react-query'
 import { ExternalLink, KeyRound } from 'lucide-react'
 import {
   AlertDialog,
@@ -24,11 +23,11 @@ import {
   TextareaField,
 } from '@green-ecolution/ui'
 import type { PluginResponse } from '@/api/backendApi'
-import { organizationQueries } from '@/api/queries'
 import { usePluginMutations } from '@/hooks/usePluginMutations'
 import BackLink from '@/components/general/links/BackLink'
 import { satisfies } from '@/lib/auth/permissions'
 import { usePermissionsIn } from '@/lib/auth/usePermissionsIn'
+import { useSettingsOrganization } from '../organization/useSettingsOrganization'
 import { useDateLocale } from '@/lib/i18n/useFormatters'
 import { intlLocale } from '@/lib/i18n/format'
 import PluginPermissionMatrix from './PluginPermissionMatrix'
@@ -61,7 +60,8 @@ const PluginDetailPage = ({ plugin }: PluginDetailPageProps) => {
   const perms = usePermissionsIn(plugin.organizationId)
   const canUpdate = satisfies(perms, ['plugin:update'])
   const canDelete = satisfies(perms, ['plugin:delete'])
-  const { data: organizations } = useQuery(organizationQueries.list())
+  // The selected organization may be a parent of the plugin's; going back keeps it.
+  const { orgId, organizations } = useSettingsOrganization()
   const { updatePlugin, rotatePluginKey, uninstallPlugin } = usePluginMutations()
 
   const [name, setName] = useState(plugin.name)
@@ -82,7 +82,7 @@ const PluginDetailPage = ({ plugin }: PluginDetailPageProps) => {
   const [uninstallConfirmOpen, setUninstallConfirmOpen] = useState(false)
 
   const organizationName =
-    organizationNameOf(plugin.organizationId, organizations ?? []) ?? plugin.organizationId
+    organizationNameOf(plugin.organizationId, organizations) ?? plugin.organizationId
 
   // Show the requested state while the round trip runs, so the switch answers
   // the click instead of waiting for the reloaded route data.
@@ -151,10 +151,7 @@ const PluginDetailPage = ({ plugin }: PluginDetailPageProps) => {
     uninstallPlugin.mutate(plugin.slug, {
       onSuccess: () => {
         setUninstallConfirmOpen(false)
-        void navigate({
-          to: '/settings/organization/$orgId/plugins',
-          params: { orgId: plugin.organizationId },
-        })
+        void navigate({ to: '/settings/organization/$orgId/plugins', params: { orgId } })
       },
     })
   }
@@ -181,10 +178,7 @@ const PluginDetailPage = ({ plugin }: PluginDetailPageProps) => {
     <div className="flex flex-col gap-6">
       <div>
         <BackLink
-          link={{
-            to: '/settings/organization/$orgId/plugins',
-            params: { orgId: plugin.organizationId },
-          }}
+          link={{ to: '/settings/organization/$orgId/plugins', params: { orgId } }}
           label={t('plugin.backLabel')}
         />
 

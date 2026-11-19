@@ -132,9 +132,26 @@ describe('OrganizationStructurePage', () => {
 
   it('opens the overview of the clicked organization', () => {
     renderPage()
+    expect(screen.getByRole('link', { name: 'Stadtgärtnerei Nord' })).toHaveAttribute(
+      'href',
+      '/settings/organization/nord',
+    )
+  })
+
+  it('tells assistive technology which organization is the current one', () => {
+    renderPage()
     expect(
-      screen.getByRole('link', { name: 'Einstellungen von Stadtgärtnerei Nord öffnen' }),
-    ).toHaveAttribute('href', '/settings/organization/nord')
+      screen.getByRole('link', { name: 'Grünflächenamt Hier bist du gerade' }),
+    ).toBeInTheDocument()
+  })
+
+  it('says that a click on the name opens the settings', () => {
+    renderPage()
+    expect(
+      screen.getByText(
+        'Alle Organisationen, die du verwalten darfst. Ein Klick auf den Namen öffnet ihre Einstellungen.',
+      ),
+    ).toBeInTheDocument()
   })
 
   it('shows total and direct members where they differ', () => {

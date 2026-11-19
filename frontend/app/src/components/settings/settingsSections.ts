@@ -25,5 +25,8 @@ export function sectionOf(pathname: string): SettingsSection | null {
   if (!match) return null
   const segment = match[2]
   if (!segment) return 'overview'
-  return segment in SECTION_ROUTES ? (segment as SettingsSection) : null
+  // `in` would also match inherited keys such as `constructor`.
+  return Object.prototype.hasOwnProperty.call(SECTION_ROUTES, segment)
+    ? (segment as SettingsSection)
+    : null
 }
