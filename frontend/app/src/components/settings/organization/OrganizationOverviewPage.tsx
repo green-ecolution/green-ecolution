@@ -164,8 +164,12 @@ const OrganizationOverviewPage = () => {
           setConfirmDelete(false)
           const parentVisible = organizations.some((org) => org.id === detail.parentId)
           void (parentVisible && detail.parentId
-            ? navigate({ to: '/settings/organization/$orgId', params: { orgId: detail.parentId } })
-            : navigate({ to: '/settings/organization' }))
+            ? navigate({
+                to: '/settings/organization/$orgId',
+                params: { orgId: detail.parentId },
+                ignoreBlocker: true,
+              })
+            : navigate({ to: '/settings/organization', ignoreBlocker: true }))
         },
         // A 409 explains itself in a toast, which the open dialog would cover.
         onError: () => setConfirmDelete(false),
@@ -207,7 +211,10 @@ const OrganizationOverviewPage = () => {
             title: t('organization.overview.areasLink'),
             summary:
               activeLabels.length > 0
-                ? t('organization.overview.areasActive', { modules: activeLabels.join(', ') })
+                ? t('organization.overview.areasActive', {
+                    count: activeLabels.length,
+                    modules: activeLabels,
+                  })
                 : t('organization.overview.areasNone'),
           },
         ]

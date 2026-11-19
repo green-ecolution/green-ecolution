@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest'
 import { render, screen, userEvent, waitFor } from '@/test/utils'
 import type { Permissions } from '@/lib/auth/permissions'
 import type {
@@ -13,6 +13,8 @@ import type {
   UpdateOrganizationVariables,
 } from '@/hooks/useOrganizationMutations'
 import type { UpdateSettingsVariables } from '@/hooks/useSettingsMutations'
+import { getI18n } from '@/lib/i18n'
+import type { ModuleManifest } from '@/modules/types'
 
 const BASE_ORGS: OrganizationResponse[] = [
   { id: 'root', name: 'Stadt Flensburg', memberCount: 1 },
@@ -67,6 +69,7 @@ const settingsOf = (): OrganizationSettingsResponse =>
     enforcedBy: null,
   }) as unknown as OrganizationSettingsResponse
 
+let visibleOrganizations = BASE_ORGS
 let detailMap: Record<string, OrganizationDetailResponse> = {}
 let settingsMap: Record<string, OrganizationSettingsResponse> = {}
 
@@ -78,7 +81,7 @@ const context = vi.hoisted((): { orgId: string; perms: Permissions } => ({
 vi.mock('./useSettingsOrganization', () => ({
   useSettingsOrganization: () => ({
     orgId: context.orgId,
-    organizations: BASE_ORGS,
+    organizations: visibleOrganizations,
     perms: context.perms,
     can: (required: readonly string[]) =>
       context.perms === 'unrestricted' ||
@@ -87,7 +90,20 @@ vi.mock('./useSettingsOrganization', () => ({
   }),
 }))
 
-vi.mock('@/modules/registry', () => ({ moduleManifests: [] }))
+const probeManifest = (key: string): ModuleManifest => ({
+  key,
+  labelKey: `probe:${key}` as ModuleManifest['labelKey'],
+  i18n: { namespaces: [], load: () => Promise.resolve({}) },
+})
+
+const registry = vi.hoisted(() => ({ manifests: [] as ModuleManifest[] }))
+vi.mock('@/modules/registry', () => ({
+  get moduleManifests() {
+    return registry.manifests
+  },
+}))
+
+let activeModules: string[] = []
 
 const updateMutate = vi.fn()
 const deleteMutate = vi.fn()
@@ -162,6 +178,12 @@ vi.mock('@tanstack/react-query', async () => {
           isLoading: false,
         }
       }
+      if (scope === 'modules') {
+        return {
+          data: { organizations: [{ organizationId: context.orgId, active: activeModules }] },
+          isLoading: false,
+        }
+      }
       if (scope === 'organizations' && third === 'settings') {
         const data = options.enabled === false ? undefined : settingsMap[second as string]
         return { data, isLoading: false, error: settingsError() }
@@ -187,8 +209,15 @@ const setOwnMapView = () =>
   userEvent.click(screen.getByRole('button', { name: /Eigenen Wert für Kartenausschnitt setzen/ }))
 
 describe('OrganizationOverviewPage', () => {
+  beforeAll(() => {
+    getI18n().addResourceBundle('de', 'probe', { alpha: 'Bewässerung', beta: 'Abfall' })
+  })
+
   beforeEach(() => {
     vi.clearAllMocks()
+    registry.manifests = []
+    activeModules = []
+    visibleOrganizations = BASE_ORGS
     context.orgId = 'amt'
     context.perms = 'unrestricted'
     detailMap = { ...BASE_DETAILS }
@@ -458,6 +487,48 @@ describe('OrganizationOverviewPage', () => {
     expect(navigate).toHaveBeenCalledWith({
       to: '/settings/organization/$orgId',
       params: { orgId: 'amt' },
+      ignoreBlocker: true,
     })
+  })
+
+  it('skips the leave-page blocker when deleting with unsaved edits', async () => {
+    context.orgId = 'nord'
+    renderPage()
+    await userEvent.type(screen.getByRole('textbox', { name: 'Name' }), ' Ost')
+    await userEvent.click(screen.getByRole('button', { name: 'Organisation löschen' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Löschen' }))
+    expect(navigate).toHaveBeenCalledWith(expect.objectContaining({ ignoreBlocker: true }))
+  })
+
+  it('falls back to the entry when the parent is not visible', async () => {
+    context.orgId = 'nord'
+    visibleOrganizations = BASE_ORGS.filter((org) => org.id !== 'amt')
+    renderPage()
+    await userEvent.click(screen.getByRole('button', { name: 'Organisation löschen' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Löschen' }))
+    expect(navigate).toHaveBeenCalledWith({
+      to: '/settings/organization',
+      ignoreBlocker: true,
+    })
+  })
+
+  it('summarises the active modules on the areas link', () => {
+    registry.manifests = [probeManifest('alpha'), probeManifest('beta')]
+    activeModules = ['alpha', 'beta']
+    renderPage()
+    expect(screen.getByText('Bewässerung und Abfall sind eingeschaltet')).toBeInTheDocument()
+  })
+
+  it('uses the singular for a single active module', () => {
+    registry.manifests = [probeManifest('alpha'), probeManifest('beta')]
+    activeModules = ['alpha']
+    renderPage()
+    expect(screen.getByText('Bewässerung ist eingeschaltet')).toBeInTheDocument()
+  })
+
+  it('says so when no module is switched on', () => {
+    registry.manifests = [probeManifest('alpha')]
+    renderPage()
+    expect(screen.getByText('Kein Aufgabenbereich ist eingeschaltet')).toBeInTheDocument()
   })
 })

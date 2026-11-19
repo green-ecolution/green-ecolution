@@ -427,7 +427,8 @@
       "structureLink": "Structure",
       "areasLink": "Areas of work",
       "structureNone": "No sub-organizations yet",
-      "areasActive": "{{modules}} switched on",
+      "areasActive_one": "{modules, list} is switched on",
+      "areasActive_other": "{modules, list} are switched on",
       "areasNone": "No area of work is switched on"
     },
     "discardDescription": "You have unsaved changes to this organization.",

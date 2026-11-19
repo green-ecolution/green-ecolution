@@ -427,7 +427,8 @@
       "structureLink": "Struktur",
       "areasLink": "Aufgabenbereiche",
       "structureNone": "Noch keine Unterorganisationen",
-      "areasActive": "{{modules}} eingeschaltet",
+      "areasActive_one": "{modules, list} ist eingeschaltet",
+      "areasActive_other": "{modules, list} sind eingeschaltet",
       "areasNone": "Kein Aufgabenbereich ist eingeschaltet"
     },
     "discardDescription": "Du hast Änderungen an dieser Organisation, die noch nicht gespeichert sind.",

@@ -317,7 +317,7 @@ const OrganizationOverview = ({
       {/* `readOnly` does not hide the bar: the instance root refuses its master
           data but still keeps the defaults every organization below inherits. */}
       {dirty && (
-        <div className="sticky bottom-0 -mt-6 flex flex-col-reverse gap-2 border-t border-dark-200 bg-[var(--org-panel-bg,var(--color-dark-50))] pb-3 pt-6 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
+        <div className="sticky bottom-0 -mt-6 flex flex-col-reverse gap-2 border-t border-dark-200 bg-dark-50 pb-3 pt-6 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
           <OrganizationActionButtons
             saving={saving}
             canSave={canSave}
