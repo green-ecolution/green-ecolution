@@ -43,7 +43,8 @@ eingeschaltet wird. Auch die Rechte, die Rollen dafür enthalten, bleiben gespei
 wirken aber nur, solange er eingeschaltet ist, siehe
 [Mitarbeitende und Rollen](./settings-team.md#der-berechtigungskatalog). Diese Hilfe
 richtet sich ebenfalls danach: Wer angemeldet ist, sieht nur die Kapitel zu
-Aufgabenbereichen, die für ihn eingeschaltet sind.
+Aufgabenbereichen, die für ihn eingeschaltet sind. Ein direkt geöffneter Link auf ein
+ausgeblendetes Kapitel funktioniert trotzdem.
 
 ## Werte
 

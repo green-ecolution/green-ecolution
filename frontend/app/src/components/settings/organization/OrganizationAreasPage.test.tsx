@@ -250,6 +250,16 @@ describe('OrganizationAreasPage', () => {
     ])
   })
 
+  it('writes no module values for a module switched off in the same save', async () => {
+    await renderLoaded()
+    await userEvent.type(await screen.findByLabelText('Probewert'), 'x')
+    await userEvent.click(screen.getByRole('switch', { name: 'Bewässerung' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Speichern' }))
+    await waitFor(() => expect(calls).toHaveLength(1))
+    expect(calls).toEqual([['modules', { probe: false }]])
+    expect(probeSave).not.toHaveBeenCalled()
+  })
+
   it('disables a switch a parent set and says who', async () => {
     modulesMap.nord = modulesOf([{ fixedByAncestor: true, setBy: { id: 'amt' } }])
     await renderLoaded()

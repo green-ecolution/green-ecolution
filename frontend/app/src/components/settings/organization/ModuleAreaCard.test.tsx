@@ -32,6 +32,9 @@ describe('ModuleAreaCard', () => {
     expect(screen.getByText('Ausgeschaltet')).toBeInTheDocument()
     expect(screen.getByRole('switch', { name: 'Abfall' })).toBeDisabled()
     expect(screen.getByText('Legt TBZ fest.')).toBeInTheDocument()
+    expect(screen.getByRole('switch', { name: 'Abfall' })).toHaveAccessibleDescription(
+      'Legt TBZ fest.',
+    )
   })
 
   it('has no switch without a toggle and renders its fields', () => {

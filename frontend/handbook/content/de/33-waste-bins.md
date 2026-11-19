@@ -8,11 +8,12 @@ routes:
 module: waste
 ---
 
-Das Modul **Abfall** erweitert Green Ecolution um Abfallbehälter und ihre Leerung. Es ist
-standardmäßig ausgeschaltet und wird je Organisation auf der Seite
-[Aufgabenbereiche](./settings-areas.md#aufgabenbereiche-ein-und-ausschalten) eingeschaltet. Erst dann erscheinen
-der Bereich **Abfallbehälter** unter **Bestand** in der Seitennavigation, die Behälter auf
-der Karte und die Leerungstouren in der Einsatzplanung.
+Das Modul **Abfall** erweitert Green Ecolution um Abfallbehälter und ihre Leerung. Es
+ist standardmäßig ausgeschaltet und wird je Organisation auf der Seite
+[Aufgabenbereiche](./settings-areas.md#aufgabenbereiche-ein-und-ausschalten)
+eingeschaltet. Erst dann erscheinen der Bereich **Abfallbehälter** unter **Bestand** in
+der Seitennavigation, die Behälter auf der Karte und die Leerungstouren in der
+Einsatzplanung.
 
 ## Die Behälterliste lesen
 
@@ -91,12 +92,12 @@ gilt die neue Messung.
 
 ## Den Schwellwert für voll einstellen
 
-Ab welchem Füllstand ein Behälter als voll gilt, legt jede Organisation selbst fest. Üblich
-sind 80 Prozent. Den Wert findest du in den Einstellungen der Organisation unter
-[Aufgabenbereiche](./settings-areas.md#werte) im Feld **Behälter gilt als voll ab**. Ohne
-eigene Eingabe gilt der Wert der übergeordneten Organisation. Der Schwellwert bestimmt die Füllstufe in
-Liste und Karte und welche Behälter die Tourenplanung vorschlägt. Bereits geplante Touren
-bleiben bei einer Änderung unverändert.
+Ab welchem Füllstand ein Behälter als voll gilt, legt jede Organisation selbst fest.
+Üblich sind 80 Prozent. Den Wert findest du in den Einstellungen der Organisation unter
+[Aufgabenbereiche](./settings-areas.md#werte) im Feld **Behälter gilt als voll ab**.
+Ohne eigene Eingabe gilt der Wert der übergeordneten Organisation. Der Schwellwert
+bestimmt die Füllstufe in Liste und Karte und welche Behälter die Tourenplanung
+vorschlägt. Bereits geplante Touren bleiben bei einer Änderung unverändert.
 
 ## Behälter auf der Karte
 

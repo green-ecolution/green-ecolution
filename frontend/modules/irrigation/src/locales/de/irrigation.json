@@ -267,7 +267,7 @@
     "waterDemandHint": "So viel Wasser rechnet die Tourenplanung für jeden Baum ein.",
     "waterDemandUnit": "Liter",
     "justWateredTtlLabel": "Frisch gegossen gilt für",
-    "justWateredTtlHint": "So lange zeigt ein Baum nach einem abgeschlossenen Einsatz den Zustand „frisch gegossen“.",
+    "justWateredTtlHint": "So lange zeigt ein Baum nach einem abgeschlossenen Einsatz den Zustand „Soeben bewässert“.",
     "justWateredTtlUnit": "Stunden",
     "liters_one": "{count} Liter",
     "liters_other": "{count} Liter",

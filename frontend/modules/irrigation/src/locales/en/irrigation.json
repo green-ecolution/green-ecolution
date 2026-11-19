@@ -267,7 +267,7 @@
     "waterDemandHint": "The amount of water route planning allows for each tree.",
     "waterDemandUnit": "liters",
     "justWateredTtlLabel": "Freshly watered lasts",
-    "justWateredTtlHint": "How long a tree shows the state “freshly watered” after a finished run.",
+    "justWateredTtlHint": "How long a tree shows the state “Just watered” after a finished run.",
     "justWateredTtlUnit": "hours",
     "liters_one": "{count} liter",
     "liters_other": "{count} liters",

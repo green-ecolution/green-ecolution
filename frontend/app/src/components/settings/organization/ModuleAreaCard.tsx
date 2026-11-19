@@ -26,6 +26,7 @@ const ModuleAreaCard = ({
 }: ModuleAreaCardProps) => {
   const { t } = useTranslation('settings')
   const titleId = useId()
+  const noteId = useId()
 
   return (
     <section aria-labelledby={titleId} className={cn(CARD, 'p-0')}>
@@ -49,6 +50,7 @@ const ModuleAreaCard = ({
             </span>
             <Switch
               aria-labelledby={titleId}
+              aria-describedby={toggle.note ? noteId : undefined}
               checked={toggle.enabled}
               disabled={toggle.disabled}
               onCheckedChange={toggle.onChange}
@@ -56,7 +58,11 @@ const ModuleAreaCard = ({
           </>
         )}
       </div>
-      {toggle?.note && <p className="px-6 pb-4 text-sm text-dark-600">{toggle.note}</p>}
+      {toggle?.note && (
+        <p id={noteId} className="px-6 pb-4 text-sm text-dark-600">
+          {toggle.note}
+        </p>
+      )}
       {children}
     </section>
   )

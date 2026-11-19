@@ -88,10 +88,10 @@ sich dabei nicht aktivieren.
 
 Die Rollenmatrix zeigt nur die Bereiche der Module, die in der gewählten Organisation
 aktiv sind. Schaltet diese Organisation das Modul Bewässerung ab (siehe
-[Aufgabenbereiche](./settings-areas.md#aufgabenbereiche-ein-und-ausschalten)), fehlen in der Matrix die Bereiche
-Bäume, Bewässerungsgruppen und Einsatzpläne. Die bereits gespeicherten Rechte dafür
-gehen dabei nicht verloren: Sie bleiben an der Rolle hängen und stehen nach dem
-erneuten Einschalten des Moduls wieder zur Auswahl.
+[Aufgabenbereiche](./settings-areas.md#aufgabenbereiche-ein-und-ausschalten)), fehlen in
+der Matrix die Bereiche Bäume, Bewässerungsgruppen und Einsatzpläne. Die bereits
+gespeicherten Rechte dafür gehen dabei nicht verloren: Sie bleiben an der Rolle hängen
+und stehen nach dem erneuten Einschalten des Moduls wieder zur Auswahl.
 
 ![Eine Rolle mit ihrer Rechteauswahl aus Kein, Ansehen, Bearbeiten und Verwalten je Bereich](../images/settings-team-roles.png)
 

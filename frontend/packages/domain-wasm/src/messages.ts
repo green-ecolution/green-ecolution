@@ -76,6 +76,9 @@ export const VALIDATION_KEYS = [
   'waste_bin.depth.invalidFormat',
 
   // Settings
+  'settings.sensor_offline_after.outOfRange',
+  'settings.defect_streak.outOfRange',
+  'settings.defect_streak.invalidFormat',
   'settings.water_demand.outOfRange',
   'settings.just_watered_ttl.outOfRange',
   'settings.full_threshold.outOfRange',

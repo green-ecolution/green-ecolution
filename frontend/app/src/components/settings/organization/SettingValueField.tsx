@@ -71,19 +71,16 @@ const SettingValueField = ({
             onChange={(event) => onText(event.target.value)}
           />
           <InputGroupAddon align="inline-end">
-            <InputGroupText id={`${id}-unit`}>{unit}</InputGroupText>
+            <InputGroupText id={`${id}-unit`} className="text-dark">
+              {unit}
+            </InputGroupText>
           </InputGroupAddon>
         </InputGroup>
         <p id={`${id}-usual`} className="mt-1.5 text-[0.8125rem] text-dark-600">
           {t('organization.areas.usual', { count: usualCount, value: usual })}
         </p>
         {error && (
-          <p
-            id={`${id}-error`}
-            role="alert"
-            aria-live="assertive"
-            className="mt-1 text-sm text-destructive"
-          >
+          <p id={`${id}-error`} role="alert" className="mt-1 text-sm text-destructive">
             {error}
           </p>
         )}
