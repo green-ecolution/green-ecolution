@@ -421,6 +421,19 @@
     "createSubOrganization": "Unterorganisation anlegen",
     "deleteHint": "Eine Organisation lässt sich nur löschen, wenn sie keine Unterorganisationen und keine Mitarbeitenden mehr hat.",
     "deleteButton": "Organisation löschen",
+    "structure": {
+      "title": "Struktur",
+      "intro": "Alle Organisationen, die du verwalten darfst. Ein Klick auf eine Zeile öffnet ihre Einstellungen.",
+      "columnOrganization": "Organisation",
+      "columnMembers": "Personen",
+      "columnContact": "Kontaktperson",
+      "columnModules": "Module",
+      "current": "Hier bist du gerade",
+      "membersWithDirect": "{total}, davon {direct} direkt",
+      "noContact": "Nicht hinterlegt",
+      "noModules": "Keine",
+      "openAriaLabel": "Einstellungen von {name} öffnen"
+    },
     "overview": {
       "mapViewTitle": "Kartenausschnitt",
       "membersLink": "Mitarbeitende",

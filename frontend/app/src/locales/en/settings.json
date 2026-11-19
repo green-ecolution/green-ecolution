@@ -421,6 +421,19 @@
     "createSubOrganization": "Create sub-organization",
     "deleteHint": "An organization can only be deleted once it has no sub-organizations and no members left.",
     "deleteButton": "Delete organization",
+    "structure": {
+      "title": "Structure",
+      "intro": "Every organization you may manage. Click a row to open its settings.",
+      "columnOrganization": "Organization",
+      "columnMembers": "People",
+      "columnContact": "Contact person",
+      "columnModules": "Modules",
+      "current": "You are here",
+      "membersWithDirect": "{total}, {direct} of them directly",
+      "noContact": "Not set",
+      "noModules": "None",
+      "openAriaLabel": "Open the settings of {name}"
+    },
     "overview": {
       "mapViewTitle": "Map view",
       "membersLink": "Members",
