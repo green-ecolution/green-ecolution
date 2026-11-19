@@ -1,9 +1,28 @@
 import type { OrganizationResponse, RoleResponse } from '@green-ecolution/backend-client'
 import { buildTree, flatten } from '@/components/settings/organization/organizationTree'
-import type { Permission } from './permissions'
+import type { Permission, Permissions } from './permissions'
+import { isAncestorOrSelf } from './scope/effectiveRoles'
 
 export const byOrgName = (a: OrganizationResponse, b: OrganizationResponse): number =>
   a.name.localeCompare(b.name, 'de')
+
+/**
+ * What the user may do in exactly this organization: the union of every role
+ * held there or above it.
+ */
+export function permissionsIn(
+  roles: RoleResponse[],
+  orgId: string,
+  parentOf: ReadonlyMap<string, string | null | undefined>,
+): Permissions {
+  const granted = new Set<string>()
+  for (const role of roles) {
+    if (!role.organizationId) continue
+    if (!isAncestorOrSelf(role.organizationId, orgId, parentOf)) continue
+    for (const permission of role.permissions) granted.add(permission)
+  }
+  return granted
+}
 
 /**
  * Organizations in which the user holds `permission`.

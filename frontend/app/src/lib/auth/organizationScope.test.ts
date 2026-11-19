@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { OrganizationResponse, RoleResponse } from '@green-ecolution/backend-client'
-import { orgsWithPermission } from './organizationScope'
+import { orgsWithPermission, permissionsIn } from './organizationScope'
 
 // Root ─ TBZ ─ Extern, plus a sibling tenant that shares no ancestry with TBZ.
 const orgs = [
@@ -75,5 +75,60 @@ describe('orgsWithPermission', () => {
     )
 
     expect(result).toEqual([])
+  })
+})
+
+describe('permissionsIn', () => {
+  const namedRole = (
+    id: string,
+    organizationId: string | undefined,
+    permissions: string[],
+  ): RoleResponse => ({
+    id,
+    name: id,
+    organizationId,
+    permissions,
+    isTemplate: organizationId === undefined,
+  })
+
+  const PARENTS = new Map<string, string | null | undefined>([
+    ['amt', undefined],
+    ['nord', 'amt'],
+    ['duburg', 'nord'],
+    ['sued', 'amt'],
+  ])
+
+  it('grants a role held in the organization itself', () => {
+    const perms = permissionsIn([namedRole('a', 'nord', ['user:read'])], 'nord', PARENTS)
+    expect(perms).toEqual(new Set(['user:read']))
+  })
+
+  it('grants a role held above, because a role covers its subtree', () => {
+    const perms = permissionsIn([namedRole('a', 'amt', ['role:read'])], 'duburg', PARENTS)
+    expect(perms).toEqual(new Set(['role:read']))
+  })
+
+  it('never grants upwards', () => {
+    const perms = permissionsIn([namedRole('a', 'duburg', ['role:read'])], 'nord', PARENTS)
+    expect(perms).toEqual(new Set())
+  })
+
+  it('ignores roles of a sibling branch', () => {
+    const perms = permissionsIn([namedRole('a', 'sued', ['user:read'])], 'nord', PARENTS)
+    expect(perms).toEqual(new Set())
+  })
+
+  it('ignores templates, which belong to no organization', () => {
+    const perms = permissionsIn([namedRole('t', undefined, ['user:read'])], 'nord', PARENTS)
+    expect(perms).toEqual(new Set())
+  })
+
+  it('unions the roles that apply', () => {
+    const perms = permissionsIn(
+      [namedRole('a', 'amt', ['user:read']), namedRole('b', 'nord', ['role:read'])],
+      'nord',
+      PARENTS,
+    )
+    expect(perms).toEqual(new Set(['user:read', 'role:read']))
   })
 })
