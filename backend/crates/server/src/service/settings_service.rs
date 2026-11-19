@@ -77,11 +77,6 @@ impl SettingsService {
         Ok(self.reader.resolution(org).await?)
     }
 
-    #[tracing::instrument(level = "info", skip(self))]
-    pub async fn own(&self, org: Id<Organization>) -> Result<OrganizationSettings, ServiceError> {
-        Ok(self.reader.own(org).await?)
-    }
-
     /// A value equal to what the organization would inherit anyway is dropped
     /// rather than stored, so the organization follows its parent again.
     #[tracing::instrument(level = "info", skip(self, update))]

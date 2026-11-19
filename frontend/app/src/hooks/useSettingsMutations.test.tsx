@@ -115,7 +115,7 @@ describe('useSettingsSave', () => {
     expect(showToast).toHaveBeenCalledWith(expect.not.stringContaining('festgelegt'), 'error')
   })
 
-  it('reports the ancestor lock instead of a generic error', async () => {
+  it('reports a value set by an ancestor instead of a generic error', async () => {
     const { result } = renderHookWithClient(() => useSettingsSave())
     const failing = vi.fn().mockRejectedValue({ response: { status: 409 } })
 

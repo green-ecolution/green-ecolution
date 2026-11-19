@@ -112,8 +112,8 @@ describe('useIrrigationSettingsDraft', () => {
     expect(result.current.draft?.justWateredTtlHours).toBe('48')
   })
 
-  // `lastChange.changedAt` is a Date, so every refetch hands back a new object;
-  // only a change in content may replace what was typed.
+  // Every refetch hands back a new object; only a change in content may
+  // replace what was typed.
   it('keeps a typed value when the settings come back unchanged', async () => {
     const { result, queryClient } = await loaded()
 

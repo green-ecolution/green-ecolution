@@ -25,10 +25,6 @@ impl IrrigationSettingsService {
         Ok(self.repo.resolution(org).await?)
     }
 
-    pub async fn own(&self, org: Id<Organization>) -> Result<IrrigationSettings, ServiceError> {
-        Ok(self.repo.own(org).await?)
-    }
-
     /// A value equal to the inherited one is dropped, like in the core's settings.
     pub async fn update(
         &self,

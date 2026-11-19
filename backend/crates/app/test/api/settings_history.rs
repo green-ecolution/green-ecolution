@@ -93,8 +93,8 @@ async fn returning_to_inheritance_is_visible_in_the_history() {
     assert_eq!(rows[1].2, None);
 }
 
-/// Fails inside the write, on the history insert, and must take the value
-/// with it. Without a shared transaction the new value would survive without a record of it.
+/// Fails inside the write, on the history insert, and must take the value with
+/// it. Without a shared transaction the new value would survive without a record.
 #[tokio::test]
 async fn a_write_that_fails_on_the_history_keeps_the_old_value() {
     let app = spawn_app().await;

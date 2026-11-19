@@ -132,8 +132,8 @@ fn reconstitute(
     })
 }
 
-/// The history is display-only, so the shape mirrors what a reader wants to
-/// see: a bare number for the scalar values, an object for the viewport.
+/// The history stores values in the shape a reader wants to see: a bare number
+/// for the scalar values, an object for the viewport.
 fn to_json(value: SettingValue) -> serde_json::Value {
     match value {
         SettingValue::Seconds(v) => serde_json::json!(v),

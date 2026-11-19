@@ -59,9 +59,8 @@ export const useWasteSettingsDraft = (
     },
   })
 
-  // Keyed on the content: `lastChange.changedAt` is parsed into a Date, so a
-  // refetch hands back a new object and an identity check would reset the draft
-  // while a save is still in flight.
+  // Keyed on the content: a refetch hands back a new object, and an identity
+  // check would reset the draft while a save is still in flight.
   if (response && responseKey !== loadedKey) {
     setLoadedKey(responseKey)
     setDraft(draftOf(response))
