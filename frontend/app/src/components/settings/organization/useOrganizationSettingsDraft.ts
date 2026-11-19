@@ -45,7 +45,7 @@ const sameBbox = (a: MapViewDto['bbox'], b: MapViewDto['bbox']): boolean => {
   return a.every((v, i) => v === b[i])
 }
 
-const sameMapView = (a: MapViewDto, b: MapViewDto): boolean =>
+export const sameMapView = (a: MapViewDto, b: MapViewDto): boolean =>
   a.center.every((v, i) => v === b.center[i]) &&
   sameBbox(a.bbox, b.bbox) &&
   a.minZoom === b.minZoom &&

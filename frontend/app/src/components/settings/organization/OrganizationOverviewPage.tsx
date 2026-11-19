@@ -228,11 +228,13 @@ const OrganizationOverviewPage = () => {
           label={t('organization.settings.mapView.label')}
           description={t('organization.settings.mapView.hint')}
           value={settingsDraft.draft.mapView}
+          usual={settings.mapView.inheritedValue}
           locked={!canUpdateSettings}
           error={settingsDraft.errors.mapView}
           onChange={settingsDraft.setMapView}
           onRestrictedChange={settingsDraft.setMapViewRestricted}
           onZoomChange={settingsDraft.setMapViewZoom}
+          onUseUsual={() => settingsDraft.setMapView(settings.mapView.inheritedValue)}
         />
       </div>
     </section>

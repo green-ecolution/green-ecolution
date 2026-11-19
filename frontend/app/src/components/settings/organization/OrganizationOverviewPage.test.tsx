@@ -439,6 +439,56 @@ describe('OrganizationOverviewPage', () => {
     expect(updateMutate).not.toHaveBeenCalled()
   })
 
+  it('returns to the usual viewport and saves exactly that viewport', async () => {
+    context.orgId = 'nord'
+    const own = { ...settingsOf().mapView.value, center: [54.8, 9.44] }
+    const settings = settingsOf()
+    settingsMap.nord = { ...settings, mapView: { ...settings.mapView, value: own } }
+    renderPage()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Üblichen Ausschnitt verwenden' }))
+    expect(
+      screen.queryByRole('button', { name: 'Üblichen Ausschnitt verwenden' }),
+    ).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Speichern' }))
+
+    await waitFor(() =>
+      expect(updateSettingsMutate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          orgId: 'nord',
+          body: { mapView: settings.mapView.inheritedValue },
+        }),
+      ),
+    )
+  })
+
+  it('offers the usual viewport only while the draft differs and the viewer may update', async () => {
+    context.orgId = 'nord'
+    renderPage()
+    expect(
+      screen.queryByRole('button', { name: 'Üblichen Ausschnitt verwenden' }),
+    ).not.toBeInTheDocument()
+
+    await editMapView()
+    expect(
+      screen.getByRole('button', { name: 'Üblichen Ausschnitt verwenden' }),
+    ).toBeInTheDocument()
+  })
+
+  it('offers no usual viewport without setting:update', () => {
+    context.orgId = 'nord'
+    context.perms = new Set(['organization:read', 'setting:read'])
+    const settings = settingsOf()
+    settingsMap.nord = {
+      ...settings,
+      mapView: { ...settings.mapView, value: { ...settings.mapView.value, center: [54.8, 9.44] } },
+    }
+    renderPage()
+    expect(
+      screen.queryByRole('button', { name: 'Üblichen Ausschnitt verwenden' }),
+    ).not.toBeInTheDocument()
+  })
+
   it('offers saving on the read-only root when a setting changed', async () => {
     context.orgId = 'root'
     renderPage()

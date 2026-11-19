@@ -386,13 +386,13 @@
       "usual_other": "Usually {value}.",
       "enabled": "Switched on",
       "disabled": "Switched off",
-      "fixedBy": "{name} sets this task area.",
-      "fixedByUnknown": "A parent organisation sets this task area.",
+      "fixedBy": "{name} sets this area of work.",
+      "fixedByUnknown": "A parent organization sets this area of work.",
       "saveHint": "Changes apply only after saving.",
       "save": "Save",
-      "readOnlyNotice": "You can view the task areas but not change them.",
-      "loadErrorForbidden": "You may not view this organisation's task areas. Your role probably applies to a sub-organisation only.",
-      "loadErrorGeneric": "The task areas could not be loaded. Please try again later.",
+      "readOnlyNotice": "You can view the areas of work but not change them.",
+      "loadErrorForbidden": "You may not view this organization's areas of work. Your role probably applies to a sub-organization only.",
+      "loadErrorGeneric": "The areas of work could not be loaded. Please try again later.",
       "sensors": {
         "title": "Sensors",
         "description": "When a sensor counts as offline or suspect",
@@ -507,6 +507,7 @@
         "minZoomLabel": "Zoom from",
         "maxZoomLabel": "to",
         "zoomHint": "Lower values show more ground, higher values more detail.",
+        "useUsual": "Use the usual view",
         "apply": "Apply this extent",
         "applyCentre": "Apply this centre",
         "centre": "Centre {value}",
@@ -514,12 +515,12 @@
         "previewAriaLabel": "Preview of the viewport in force",
         "pinAriaLabel": "Map centre, draggable"
       },
-      "loadErrorForbidden": "You aren't allowed to view this organization's defaults. Your role probably only applies to a sub-organization.",
-      "loadErrorGeneric": "The defaults could not be loaded. Please try again later.",
+      "loadErrorForbidden": "You aren't allowed to view this organization's map view. Your role probably only applies to a sub-organization.",
+      "loadErrorGeneric": "The map view could not be loaded. Please try again later.",
       "toast": {
         "saved": "Settings saved",
         "saveFailed": "The settings could not be saved.",
-        "setByAncestor": "A parent organisation has set this task area."
+        "setByAncestor": "A parent organization has set this area of work."
       }
     }
   },

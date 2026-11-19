@@ -507,6 +507,7 @@
         "minZoomLabel": "Zoom von",
         "maxZoomLabel": "bis",
         "zoomHint": "Kleine Werte zeigen mehr Fläche, große Werte mehr Detail.",
+        "useUsual": "Üblichen Ausschnitt verwenden",
         "apply": "Ausschnitt übernehmen",
         "applyCentre": "Mittelpunkt übernehmen",
         "centre": "Mittelpunkt {value}",
@@ -514,8 +515,8 @@
         "previewAriaLabel": "Vorschau des geltenden Kartenausschnitts",
         "pinAriaLabel": "Mittelpunkt der Karte, ziehbar"
       },
-      "loadErrorForbidden": "Du darfst die Vorgaben dieser Organisation nicht einsehen. Vermutlich gilt deine Rolle nur für eine untergeordnete Organisation.",
-      "loadErrorGeneric": "Die Vorgaben konnten nicht geladen werden. Bitte versuche es später erneut.",
+      "loadErrorForbidden": "Du darfst den Kartenausschnitt dieser Organisation nicht einsehen. Vermutlich gilt deine Rolle nur für eine untergeordnete Organisation.",
+      "loadErrorGeneric": "Der Kartenausschnitt konnte nicht geladen werden. Bitte versuche es später erneut.",
       "toast": {
         "saved": "Einstellungen gespeichert",
         "saveFailed": "Die Einstellungen konnten nicht gespeichert werden.",

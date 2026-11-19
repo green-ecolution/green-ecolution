@@ -1,20 +1,23 @@
 import { useId } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Input, Label, Switch } from '@green-ecolution/ui'
+import { Button, Input, Label, Switch } from '@green-ecolution/ui'
 import type { MapViewDto } from '@/api/backendApi'
 import MapPreview from '@/components/map-gl/MapPreview'
 import { MAP_ZOOM_SCALE_MAX, MAP_ZOOM_SCALE_MIN } from '@/lib/mapConfig'
 import MapViewPicker from './MapViewPicker'
+import { sameMapView } from './useOrganizationSettingsDraft'
 
 interface MapViewSettingRowProps {
   label: string
   description: string
   value: MapViewDto
+  usual: MapViewDto
   locked: boolean
   error: string | null
   onChange: (view: MapViewDto) => void
   onRestrictedChange: (restricted: boolean) => void
   onZoomChange: (which: 'minZoom' | 'maxZoom', level: number) => void
+  onUseUsual: () => void
 }
 
 const formatCentre = (view: MapViewDto): string =>
@@ -67,11 +70,13 @@ const MapViewSettingRow = ({
   label,
   description,
   value,
+  usual,
   locked,
   error,
   onChange,
   onRestrictedChange,
   onZoomChange,
+  onUseUsual,
 }: MapViewSettingRowProps) => {
   const { t } = useTranslation('settings')
   const fieldId = useId()
@@ -154,6 +159,11 @@ const MapViewSettingRow = ({
           <p className="flex h-10 items-center rounded-lg bg-dark-50 px-3 font-lato text-base font-semibold text-dark">
             {t('organization.settings.mapView.centre', { value: formatCentre(value) })}
           </p>
+          {editable && !sameMapView(value, usual) && (
+            <Button type="button" variant="link" onClick={onUseUsual}>
+              {t('organization.settings.mapView.useUsual')}
+            </Button>
+          )}
         </div>
       </div>
 
