@@ -80,6 +80,7 @@ import { Route as ProtectedMapTreeclusterNewIndexRouteImport } from './../../mod
 import { Route as ProtectedMapWateringPlanSelectClusterRouteRouteImport } from './../../modules/irrigation/src/routes/_protected/map/watering-plan/select/cluster/route'
 import { Route as ProtectedPlansFormularWateringPlanIdEditRouteRouteImport } from './routes/_protected/plans/_formular/$wateringPlanId/edit/route'
 import { Route as ProtectedPlansFormularNewIndexRouteImport } from './routes/_protected/plans/_formular/new/index'
+import { Route as ProtectedSettingsOrganizationOrgIdIndexRouteImport } from './routes/_protected/settings/organization/$orgId/index'
 import { Route as ProtectedSettingsPluginSlugIndexRouteImport } from './routes/_protected/settings/plugin/$slug/index'
 import { Route as ProtectedSettingsTeamMembersIndexRouteImport } from './routes/_protected/settings/team/members/index'
 import { Route as ProtectedSettingsTeamRolesIndexRouteImport } from './routes/_protected/settings/team/roles/index'
@@ -493,6 +494,12 @@ const ProtectedPlansFormularNewIndexRoute =
     path: '/',
     getParentRoute: () => ProtectedPlansFormularNewRouteRoute,
   } as any)
+const ProtectedSettingsOrganizationOrgIdIndexRoute =
+  ProtectedSettingsOrganizationOrgIdIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => ProtectedSettingsOrganizationOrgIdRouteRoute,
+  } as any)
 const ProtectedSettingsPluginSlugIndexRoute =
   ProtectedSettingsPluginSlugIndexRouteImport.update({
     id: '/',
@@ -628,7 +635,7 @@ export interface FileRoutesByFullPath {
   '/waste-bins/': typeof ProtectedWasteBinsIndexRoute
   '/map/tree/new': typeof ProtectedMapTreeNewRouteRouteWithChildren
   '/plans/new': typeof ProtectedPlansFormularNewRouteRouteWithChildren
-  '/settings/organization/$orgId': typeof ProtectedSettingsOrganizationOrgIdRouteRoute
+  '/settings/organization/$orgId': typeof ProtectedSettingsOrganizationOrgIdRouteRouteWithChildren
   '/settings/plugin/$slug': typeof ProtectedSettingsPluginSlugRouteRouteWithChildren
   '/vehicles/new': typeof ProtectedVehiclesFormularNewRouteRouteWithChildren
   '/waste-bins/new': typeof ProtectedWasteBinsFormularNewRouteRouteWithChildren
@@ -655,6 +662,7 @@ export interface FileRoutesByFullPath {
   '/map/tree/new/': typeof ProtectedMapTreeNewIndexRoute
   '/map/treecluster/new/': typeof ProtectedMapTreeclusterNewIndexRoute
   '/plans/new/': typeof ProtectedPlansFormularNewIndexRoute
+  '/settings/organization/$orgId/': typeof ProtectedSettingsOrganizationOrgIdIndexRoute
   '/settings/plugin/$slug/': typeof ProtectedSettingsPluginSlugIndexRoute
   '/settings/team/members/': typeof ProtectedSettingsTeamMembersIndexRoute
   '/settings/team/roles/': typeof ProtectedSettingsTeamRolesIndexRoute
@@ -690,7 +698,6 @@ export interface FileRoutesByTo {
   '/vehicles': typeof ProtectedVehiclesIndexRoute
   '/waste-bins': typeof ProtectedWasteBinsIndexRoute
   '/plans/$wateringPlanId': typeof ProtectedPlansWateringPlanIdIndexRoute
-  '/settings/organization/$orgId': typeof ProtectedSettingsOrganizationOrgIdRouteRoute
   '/vehicles/$vehicleId': typeof ProtectedVehiclesVehicleIdIndexRoute
   '/waste-bins/$wasteBinId': typeof ProtectedWasteBinsWasteBinIdIndexRoute
   '/debug/geolocation': typeof ProtectedDebugGeolocationIndexRoute
@@ -709,6 +716,7 @@ export interface FileRoutesByTo {
   '/map/tree/new': typeof ProtectedMapTreeNewIndexRoute
   '/map/treecluster/new': typeof ProtectedMapTreeclusterNewIndexRoute
   '/plans/new': typeof ProtectedPlansFormularNewIndexRoute
+  '/settings/organization/$orgId': typeof ProtectedSettingsOrganizationOrgIdIndexRoute
   '/settings/plugin/$slug': typeof ProtectedSettingsPluginSlugIndexRoute
   '/settings/team/members': typeof ProtectedSettingsTeamMembersIndexRoute
   '/settings/team/roles': typeof ProtectedSettingsTeamRolesIndexRoute
@@ -768,7 +776,7 @@ export interface FileRoutesById {
   '/_protected/map/tree/new': typeof ProtectedMapTreeNewRouteRouteWithChildren
   '/_protected/plans/_formular/$wateringPlanId': typeof ProtectedPlansFormularWateringPlanIdRouteRouteWithChildren
   '/_protected/plans/_formular/new': typeof ProtectedPlansFormularNewRouteRouteWithChildren
-  '/_protected/settings/organization/$orgId': typeof ProtectedSettingsOrganizationOrgIdRouteRoute
+  '/_protected/settings/organization/$orgId': typeof ProtectedSettingsOrganizationOrgIdRouteRouteWithChildren
   '/_protected/settings/plugin/$slug': typeof ProtectedSettingsPluginSlugRouteRouteWithChildren
   '/_protected/vehicles/_formular/$vehicleId': typeof ProtectedVehiclesFormularVehicleIdRouteRouteWithChildren
   '/_protected/vehicles/_formular/new': typeof ProtectedVehiclesFormularNewRouteRouteWithChildren
@@ -797,6 +805,7 @@ export interface FileRoutesById {
   '/_protected/map/tree/new/': typeof ProtectedMapTreeNewIndexRoute
   '/_protected/map/treecluster/new/': typeof ProtectedMapTreeclusterNewIndexRoute
   '/_protected/plans/_formular/new/': typeof ProtectedPlansFormularNewIndexRoute
+  '/_protected/settings/organization/$orgId/': typeof ProtectedSettingsOrganizationOrgIdIndexRoute
   '/_protected/settings/plugin/$slug/': typeof ProtectedSettingsPluginSlugIndexRoute
   '/_protected/settings/team/members/': typeof ProtectedSettingsTeamMembersIndexRoute
   '/_protected/settings/team/roles/': typeof ProtectedSettingsTeamRolesIndexRoute
@@ -883,6 +892,7 @@ export interface FileRouteTypes {
     | '/map/tree/new/'
     | '/map/treecluster/new/'
     | '/plans/new/'
+    | '/settings/organization/$orgId/'
     | '/settings/plugin/$slug/'
     | '/settings/team/members/'
     | '/settings/team/roles/'
@@ -918,7 +928,6 @@ export interface FileRouteTypes {
     | '/vehicles'
     | '/waste-bins'
     | '/plans/$wateringPlanId'
-    | '/settings/organization/$orgId'
     | '/vehicles/$vehicleId'
     | '/waste-bins/$wasteBinId'
     | '/debug/geolocation'
@@ -937,6 +946,7 @@ export interface FileRouteTypes {
     | '/map/tree/new'
     | '/map/treecluster/new'
     | '/plans/new'
+    | '/settings/organization/$orgId'
     | '/settings/plugin/$slug'
     | '/settings/team/members'
     | '/settings/team/roles'
@@ -1024,6 +1034,7 @@ export interface FileRouteTypes {
     | '/_protected/map/tree/new/'
     | '/_protected/map/treecluster/new/'
     | '/_protected/plans/_formular/new/'
+    | '/_protected/settings/organization/$orgId/'
     | '/_protected/settings/plugin/$slug/'
     | '/_protected/settings/team/members/'
     | '/_protected/settings/team/roles/'
@@ -1547,6 +1558,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedPlansFormularNewIndexRouteImport
       parentRoute: typeof ProtectedPlansFormularNewRouteRoute
     }
+    '/_protected/settings/organization/$orgId/': {
+      id: '/_protected/settings/organization/$orgId/'
+      path: '/'
+      fullPath: '/settings/organization/$orgId/'
+      preLoaderRoute: typeof ProtectedSettingsOrganizationOrgIdIndexRouteImport
+      parentRoute: typeof ProtectedSettingsOrganizationOrgIdRouteRoute
+    }
     '/_protected/settings/plugin/$slug/': {
       id: '/_protected/settings/plugin/$slug/'
       path: '/'
@@ -1955,11 +1973,26 @@ const ProtectedSettingsTeamRouteRouteWithChildren =
     ProtectedSettingsTeamRouteRouteChildren,
   )
 
+interface ProtectedSettingsOrganizationOrgIdRouteRouteChildren {
+  ProtectedSettingsOrganizationOrgIdIndexRoute: typeof ProtectedSettingsOrganizationOrgIdIndexRoute
+}
+
+const ProtectedSettingsOrganizationOrgIdRouteRouteChildren: ProtectedSettingsOrganizationOrgIdRouteRouteChildren =
+  {
+    ProtectedSettingsOrganizationOrgIdIndexRoute:
+      ProtectedSettingsOrganizationOrgIdIndexRoute,
+  }
+
+const ProtectedSettingsOrganizationOrgIdRouteRouteWithChildren =
+  ProtectedSettingsOrganizationOrgIdRouteRoute._addFileChildren(
+    ProtectedSettingsOrganizationOrgIdRouteRouteChildren,
+  )
+
 interface ProtectedSettingsRouteRouteChildren {
   ProtectedSettingsPluginRouteRoute: typeof ProtectedSettingsPluginRouteRouteWithChildren
   ProtectedSettingsTeamRouteRoute: typeof ProtectedSettingsTeamRouteRouteWithChildren
   ProtectedSettingsIndexRoute: typeof ProtectedSettingsIndexRoute
-  ProtectedSettingsOrganizationOrgIdRouteRoute: typeof ProtectedSettingsOrganizationOrgIdRouteRoute
+  ProtectedSettingsOrganizationOrgIdRouteRoute: typeof ProtectedSettingsOrganizationOrgIdRouteRouteWithChildren
   ProtectedSettingsNotificationsIndexRoute: typeof ProtectedSettingsNotificationsIndexRoute
   ProtectedSettingsOrganizationIndexRoute: typeof ProtectedSettingsOrganizationIndexRoute
   ProtectedSettingsProfileIndexRoute: typeof ProtectedSettingsProfileIndexRoute
@@ -1974,7 +2007,7 @@ const ProtectedSettingsRouteRouteChildren: ProtectedSettingsRouteRouteChildren =
       ProtectedSettingsTeamRouteRouteWithChildren,
     ProtectedSettingsIndexRoute: ProtectedSettingsIndexRoute,
     ProtectedSettingsOrganizationOrgIdRouteRoute:
-      ProtectedSettingsOrganizationOrgIdRouteRoute,
+      ProtectedSettingsOrganizationOrgIdRouteRouteWithChildren,
     ProtectedSettingsNotificationsIndexRoute:
       ProtectedSettingsNotificationsIndexRoute,
     ProtectedSettingsOrganizationIndexRoute:

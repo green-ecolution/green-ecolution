@@ -421,6 +421,15 @@
     "createSubOrganization": "Unterorganisation anlegen",
     "deleteHint": "Eine Organisation lässt sich nur löschen, wenn sie keine Unterorganisationen und keine Mitarbeitenden mehr hat.",
     "deleteButton": "Organisation löschen",
+    "overview": {
+      "mapViewTitle": "Kartenausschnitt",
+      "membersLink": "Mitarbeitende",
+      "structureLink": "Struktur",
+      "areasLink": "Aufgabenbereiche",
+      "structureNone": "Noch keine Unterorganisationen",
+      "areasActive": "{{modules}} eingeschaltet",
+      "areasNone": "Kein Aufgabenbereich ist eingeschaltet"
+    },
     "discardDescription": "Du hast Änderungen an dieser Organisation, die noch nicht gespeichert sind.",
     "deleteDialog": {
       "title": "Organisation löschen?",

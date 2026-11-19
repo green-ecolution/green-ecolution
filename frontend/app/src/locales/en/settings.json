@@ -421,6 +421,15 @@
     "createSubOrganization": "Create sub-organization",
     "deleteHint": "An organization can only be deleted once it has no sub-organizations and no members left.",
     "deleteButton": "Delete organization",
+    "overview": {
+      "mapViewTitle": "Map view",
+      "membersLink": "Members",
+      "structureLink": "Structure",
+      "areasLink": "Areas of work",
+      "structureNone": "No sub-organizations yet",
+      "areasActive": "{{modules}} switched on",
+      "areasNone": "No area of work is switched on"
+    },
     "discardDescription": "You have unsaved changes to this organization.",
     "deleteDialog": {
       "title": "Delete organization?",
