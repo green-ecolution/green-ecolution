@@ -14,10 +14,8 @@ import {
   DialogTitle,
   FormField,
   Label,
-  SelectField,
 } from '@green-ecolution/ui'
-import { useOrganizationScope } from '@/lib/auth/scope/organizationScopeStore'
-import type { CapacityKindDto, Organization, StartPointResponse } from '@/api/backendApi'
+import type { CapacityKindDto, StartPointResponse } from '@/api/backendApi'
 import { capacityDisplay } from '@/lib/capacity'
 import DraggableMarker from '@/components/map-gl/DraggableMarker'
 import MapPreview from '@/components/map-gl/MapPreview'
@@ -37,7 +35,7 @@ export interface StationPayload {
 interface StationDialogProps {
   open: boolean
   mode: 'create' | 'edit'
-  organizations: Organization[]
+  organizationId: string
   station?: StartPointResponse
   initialPosition?: { lat: number; lng: number }
   saving?: boolean
@@ -47,7 +45,6 @@ interface StationDialogProps {
 
 interface FormValues {
   name: string
-  organizationId: string
   replenishes: CapacityKindDto[]
   lat: number | null
   lon: number | null
@@ -59,7 +56,7 @@ type FormProps = Omit<StationDialogProps, 'open' | 'onOpenChange'> & {
 
 const StationForm = ({
   mode,
-  organizations,
+  organizationId,
   station,
   initialPosition,
   saving = false,
@@ -67,8 +64,6 @@ const StationForm = ({
   onCancel,
 }: FormProps) => {
   const { t } = useTranslation(['settings', 'common'])
-  const scope = useOrganizationScope()
-  const scopedDefault = organizations.find((org) => org.id === scope)?.id
 
   const schema = useMemo(
     () =>
@@ -78,10 +73,6 @@ const StationForm = ({
           .trim()
           .min(1, t('stations.dialog.nameRequired'))
           .max(NAME_MAX_LENGTH, t('stations.dialog.nameTooLong')),
-        organizationId:
-          mode === 'create'
-            ? z.string().min(1, t('stations.dialog.organizationRequired'))
-            : z.string(),
         replenishes: z.array(z.enum(['water', 'cargo_volume'])),
         lat: z
           .number()
@@ -95,7 +86,7 @@ const StationForm = ({
             t('stations.dialog.positionRequired'),
           ),
       }),
-    [mode, t],
+    [t],
   )
 
   const start = {
@@ -107,7 +98,6 @@ const StationForm = ({
     resolver: zodResolver(schema),
     defaultValues: {
       name: station?.name ?? '',
-      organizationId: station?.organizationId ?? scopedDefault ?? organizations[0]?.id ?? '',
       replenishes: station?.replenishes ?? [],
       lat: start.lat,
       lon: start.lng,
@@ -124,7 +114,7 @@ const StationForm = ({
       name: values.name.trim(),
       lat: values.lat,
       lon: values.lon,
-      ...(mode === 'create' ? { organizationId: values.organizationId } : {}),
+      ...(mode === 'create' ? { organizationId } : {}),
       replenishes: values.replenishes,
     })
   })
@@ -137,24 +127,6 @@ const StationForm = ({
         error={errors.name?.message}
         {...register('name')}
       />
-
-      {mode === 'create' && (
-        <Controller
-          control={control}
-          name="organizationId"
-          render={({ field }) => (
-            <SelectField
-              id="station-organization"
-              label={t('stations.dialog.organizationLabel')}
-              placeholder={t('stations.dialog.organizationPlaceholder')}
-              options={organizations.map((org) => ({ value: org.id, label: org.name }))}
-              value={field.value}
-              onValueChange={field.onChange}
-              error={errors.organizationId?.message}
-            />
-          )}
-        />
-      )}
 
       <Controller
         control={control}

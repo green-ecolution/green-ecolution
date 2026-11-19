@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from '@tanstack/react-router'
-import { useQuery } from '@tanstack/react-query'
 import { ExternalLink, KeyRound } from 'lucide-react'
 import {
   AlertDialog,
@@ -24,11 +23,11 @@ import {
   TextareaField,
 } from '@green-ecolution/ui'
 import type { PluginResponse } from '@/api/backendApi'
-import { organizationQueries } from '@/api/queries'
 import { usePluginMutations } from '@/hooks/usePluginMutations'
 import BackLink from '@/components/general/links/BackLink'
-import { Can } from '@/lib/auth/Can'
-import { useHasPermission } from '@/lib/auth/useHasPermission'
+import { satisfies } from '@/lib/auth/permissions'
+import { usePermissionsIn } from '@/lib/auth/usePermissionsIn'
+import { useSettingsOrganization } from '../organization/useSettingsOrganization'
 import { useDateLocale } from '@/lib/i18n/useFormatters'
 import { intlLocale } from '@/lib/i18n/format'
 import PluginPermissionMatrix from './PluginPermissionMatrix'
@@ -57,8 +56,12 @@ const PluginDetailPage = ({ plugin }: PluginDetailPageProps) => {
   const { t, i18n } = useTranslation(['settings', 'common'])
   const navigate = useNavigate()
   const dateLocale = useDateLocale()
-  const canUpdate = useHasPermission(['plugin:update'])
-  const { data: organizations } = useQuery(organizationQueries.list())
+  // The rights in the plugin's own organization, not the union over all of them.
+  const perms = usePermissionsIn(plugin.organizationId)
+  const canUpdate = satisfies(perms, ['plugin:update'])
+  const canDelete = satisfies(perms, ['plugin:delete'])
+  // The selected organization may be a parent of the plugin's; going back keeps it.
+  const { orgId, organizations } = useSettingsOrganization()
   const { updatePlugin, rotatePluginKey, uninstallPlugin } = usePluginMutations()
 
   const [name, setName] = useState(plugin.name)
@@ -79,7 +82,7 @@ const PluginDetailPage = ({ plugin }: PluginDetailPageProps) => {
   const [uninstallConfirmOpen, setUninstallConfirmOpen] = useState(false)
 
   const organizationName =
-    organizationNameOf(plugin.organizationId, organizations ?? []) ?? plugin.organizationId
+    organizationNameOf(plugin.organizationId, organizations) ?? plugin.organizationId
 
   // Show the requested state while the round trip runs, so the switch answers
   // the click instead of waiting for the reloaded route data.
@@ -148,7 +151,7 @@ const PluginDetailPage = ({ plugin }: PluginDetailPageProps) => {
     uninstallPlugin.mutate(plugin.slug, {
       onSuccess: () => {
         setUninstallConfirmOpen(false)
-        void navigate({ to: '/settings/plugin' })
+        void navigate({ to: '/settings/organization/$orgId/plugins', params: { orgId } })
       },
     })
   }
@@ -174,7 +177,10 @@ const PluginDetailPage = ({ plugin }: PluginDetailPageProps) => {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <BackLink link={{ to: '/settings/plugin' }} label={t('plugin.backLabel')} />
+        <BackLink
+          link={{ to: '/settings/organization/$orgId/plugins', params: { orgId } }}
+          label={t('plugin.backLabel')}
+        />
 
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
@@ -203,7 +209,7 @@ const PluginDetailPage = ({ plugin }: PluginDetailPageProps) => {
           <CardTitle className="text-base">{t('plugin.detail.operationHeading')}</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-5">
-          <Can permission={['plugin:update']}>
+          {canUpdate && (
             <div className="flex items-start gap-3">
               <Switch
                 checked={enabled}
@@ -217,7 +223,7 @@ const PluginDetailPage = ({ plugin }: PluginDetailPageProps) => {
                 <p className="text-sm text-dark-600">{t('plugin.detail.enableHint')}</p>
               </div>
             </div>
-          </Can>
+          )}
 
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-dark-50 px-4 py-3">
             <div className="flex items-center gap-3">
@@ -233,7 +239,7 @@ const PluginDetailPage = ({ plugin }: PluginDetailPageProps) => {
                 </p>
               </div>
             </div>
-            <Can permission={['plugin:update']}>
+            {canUpdate && (
               <Button
                 type="button"
                 variant="outline"
@@ -242,7 +248,7 @@ const PluginDetailPage = ({ plugin }: PluginDetailPageProps) => {
               >
                 {t('plugin.detail.rotateButton')}
               </Button>
-            </Can>
+            )}
           </div>
 
           <dl className="grid gap-x-8 gap-y-3 sm:grid-cols-3">
@@ -336,7 +342,7 @@ const PluginDetailPage = ({ plugin }: PluginDetailPageProps) => {
       </Card>
 
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-dark-200 pt-4">
-        <Can permission={['plugin:delete']}>
+        {canDelete && (
           <Button
             type="button"
             variant="ghost-destructive"
@@ -344,9 +350,9 @@ const PluginDetailPage = ({ plugin }: PluginDetailPageProps) => {
           >
             {t('plugin.detail.uninstallButton')}
           </Button>
-        </Can>
+        )}
 
-        <Can permission={['plugin:update']}>
+        {canUpdate && (
           <Button
             type="button"
             className="ml-auto"
@@ -355,7 +361,7 @@ const PluginDetailPage = ({ plugin }: PluginDetailPageProps) => {
           >
             {t('plugin.detail.saveButton')}
           </Button>
-        </Can>
+        )}
       </div>
 
       <AlertDialog open={rotateConfirmOpen} onOpenChange={setRotateConfirmOpen}>

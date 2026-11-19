@@ -6,7 +6,7 @@ import { useAuthSession } from '../authSessionContext'
 import { readAuthBypass } from '../runtimeConfig'
 import { getOrganizationScope, useOrganizationScope } from './organizationScopeStore'
 
-const isAncestorOrSelf = (
+export const isAncestorOrSelf = (
   ancestorId: string,
   orgId: string,
   parentOf: ReadonlyMap<string, string | null | undefined>,

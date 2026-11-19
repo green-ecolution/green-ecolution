@@ -2,15 +2,32 @@
   "layout": {
     "title": "Settings",
     "navAriaLabel": "Settings areas",
-    "comingSoonBadge": "soon"
+    "comingSoonBadge": "soon",
+    "groupAccount": "My account",
+    "groupOrganization": "Settings for"
   },
   "nav": {
     "profile": "Profile",
-    "organization": "Organization",
     "notifications": "Notifications",
-    "team": "Team & roles",
-    "plugin": "Plugins",
-    "stations": "Stations"
+    "overview": "Overview",
+    "areas": "Areas of work",
+    "structure": "Structure",
+    "members": "Members",
+    "roles": "Roles",
+    "stations": "Stations",
+    "plugins": "Plugins",
+    "countChildren_one": "{count} sub-organization",
+    "countChildren_other": "{count} sub-organizations",
+    "countMembers_one": "{count} person",
+    "countMembers_other": "{count} people"
+  },
+  "picker": {
+    "ariaLabel": "Switch organization, currently {name}",
+    "searchPlaceholder": "Search organization",
+    "empty": "No organization found",
+    "withChildren_one": "with {count} sub-organization",
+    "withChildren_other": "with {count} sub-organizations",
+    "manageStructure": "Manage structure"
   },
   "comingSoon": {
     "inProgress": "In progress",
@@ -30,11 +47,6 @@
     "rolesLabel": "Roles:",
     "emailLabel": "Email:",
     "languageHeading": "Language"
-  },
-  "team": {
-    "navAriaLabel": "Team and roles",
-    "tabMembers": "Members",
-    "tabRoles": "Roles"
   },
   "stations": {
     "title": "Stations",
@@ -68,9 +80,6 @@
       "nameLabel": "Name",
       "nameRequired": "Please enter a name.",
       "nameTooLong": "The name may be at most 255 characters long.",
-      "organizationLabel": "Organization",
-      "organizationPlaceholder": "Select organization",
-      "organizationRequired": "Please select an organization.",
       "replenishesLegend": "At this station vehicles can",
       "replenishes": {
         "water": "Refill water",
@@ -134,8 +143,6 @@
       "nameLabel": "Name",
       "descriptionLabel": "Description",
       "organizationLabel": "Organization",
-      "organizationPlaceholder": "Choose an organization",
-      "organizationSearchPlaceholder": "Search organization",
       "frontendModeLabel": "View",
       "frontendModeOption": {
         "none": "No view",
@@ -153,7 +160,6 @@
       "slugInvalid": "Only lowercase letters, digits and hyphens, not at the start or end.",
       "slugReserved": "The slug \"{slug}\" is reserved by the plugin api and cannot be used.",
       "nameRequired": "Give the plugin a name.",
-      "organizationRequired": "Choose an organization.",
       "targetRequired": "Enter an address.",
       "targetInvalidUrl": "That is not a valid address.",
       "targetRequiresHttps": "The external address must use https (localhost excepted).",
@@ -258,7 +264,6 @@
       "description": "{name} will be removed. People with this role lose the permissions it contains."
     },
     "leaveDescription": "Your changes to this role haven't been saved yet.",
-    "noOrganization": "Your account isn't assigned to an organization. Roles can't be managed without an organization.",
     "loading": "Loading roles",
     "nameConflict": "A role with this name already exists.",
     "createButtonLabel": "Create role",
@@ -287,12 +292,15 @@
     }
   },
   "members": {
-    "listTitle": "Members",
     "searchPlaceholder": "Name, username or email",
     "searchAriaLabel": "Search members",
-    "organizationFilterLabel": "Organization",
-    "organizationFilterPlaceholder": "All organizations",
-    "organizationFilterAllLabel": "All organizations",
+    "withSubOrganizations": "with sub-organizations",
+    "headline_one": "{count} person in {name}",
+    "headline_other": "{count} people in {name}",
+    "headlineWithChildren_one": "{count} person in {name} and its sub-organizations",
+    "headlineWithChildren_other": "{count} people in {name} and its sub-organizations",
+    "headlineFiltered_one": "{count} match in {name}",
+    "headlineFiltered_other": "{count} matches in {name}",
     "roleFilterAriaLabel": "Role",
     "roleFilterPlaceholder": "All roles",
     "roleFilterSearchPlaceholder": "Search role",
@@ -368,18 +376,17 @@
     }
   },
   "organization": {
-    "treeTitle": "Organization structure",
-    "treeAriaLabel": "Organization structure",
-    "createButton": "New",
-    "collapseAriaLabel": "Collapse",
-    "expandAriaLabel": "Expand",
-    "loading": "Loading organizations",
+    "entityName": "organization",
+    "notFoundBackLabel": "To my organization",
+    "areas": {
+      "title": "Areas of work",
+      "intro": "Switch on what is part of the work of {name}, and enter what planning should reckon with.",
+      "loading": "Loading areas of work"
+    },
     "loadErrorForbidden": "You aren't allowed to view this organization. Your role probably only applies to a sub-organization.",
     "loadErrorGeneric": "The organization structure could not be loaded. Please try again later.",
     "nameConflict": "An organization with this name already exists.",
     "contactPersonNotAssigned": "This person isn't assigned to this organization and can't be the contact person.",
-    "noOwnOrganization": "Your account isn't assigned to an organization. The organization structure can't be managed without an organization.",
-    "ownOrganizationMissing": "Your organization wasn't found. The organization structure can't be shown without it.",
     "count_one": "{count} person",
     "count_other": "{count} people",
     "memberSummaryWithChildren": "{people} in {children}",
@@ -412,14 +419,32 @@
     "changeContactPerson": "Change",
     "setContactPerson": "Set contact person",
     "noContactPerson": "No contact person set.",
-    "assignedMembersTitle": "Assigned members",
-    "manageMembers": "Manage members",
-    "subOrganizationsTitle": "Sub-organizations",
-    "noSubOrganizations": "This organization has no sub-organizations.",
     "createSubOrganization": "Create sub-organization",
     "deleteHint": "An organization can only be deleted once it has no sub-organizations and no members left.",
     "deleteButton": "Delete organization",
-    "discardDescription": "You have unsaved changes to this organization.",
+    "structure": {
+      "title": "Structure",
+      "intro": "Every organization you may manage. Click a name to open its settings.",
+      "columnOrganization": "Organization",
+      "columnMembers": "People",
+      "columnContact": "Contact person",
+      "columnModules": "Modules",
+      "current": "You are here",
+      "membersWithDirect": "{total}, {direct} of them directly",
+      "noContact": "Not set",
+      "noModules": "None",
+      "contactUnresolved": "Name not available"
+    },
+    "overview": {
+      "mapViewTitle": "Map view",
+      "membersLink": "Members",
+      "structureLink": "Structure",
+      "areasLink": "Areas of work",
+      "structureNone": "No sub-organizations yet",
+      "areasActive_one": "{modules, list} is switched on",
+      "areasActive_other": "{modules, list} are switched on",
+      "areasNone": "No area of work is switched on"
+    },
     "deleteDialog": {
       "title": "Delete organization?",
       "description": "{name} will be removed. This is only possible while no sub-organizations and no members are assigned."

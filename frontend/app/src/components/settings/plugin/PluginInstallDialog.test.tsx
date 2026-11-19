@@ -1,10 +1,26 @@
+import type { ComponentProps } from 'react'
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
-import { setOrganizationScope } from '@/lib/auth/scope/organizationScopeStore'
 import { PluginInstallDialog } from './PluginInstallDialog'
 
-const ORGANIZATION = { id: 'org-1', name: 'Stadt Flensburg', memberCount: 0 }
+const renderDialog = (props: Partial<ComponentProps<typeof PluginInstallDialog>> = {}) =>
+  render(
+    <PluginInstallDialog
+      open
+      organizationId="org-1"
+      onSubmit={vi.fn()}
+      onOpenChange={vi.fn()}
+      {...props}
+    />,
+  )
+
+const fillAndSubmit = async ({ slug, name }: { slug: string; name: string }) => {
+  const user = userEvent.setup()
+  await user.type(screen.getByLabelText(/slug/i), slug)
+  await user.type(screen.getByLabelText(/name/i), name)
+  await user.click(screen.getByRole('button', { name: /installieren/i }))
+}
 
 const pluginMatrixOf = () => within(screen.getByRole('group', { name: /rechte des plugins/i }))
 
@@ -19,31 +35,19 @@ const accessMatrixOf = () =>
  * timed out in a parallel run while passing on their own.
  */
 describe('PluginInstallDialog', { timeout: 20_000 }, () => {
-  it('preselects the scope organization even when it is not the first entry', async () => {
-    const user = userEvent.setup()
+  it('has no organization field and submits the given organization', async () => {
     const onSubmit = vi.fn()
-    setOrganizationScope('u1', 'org-2')
-    try {
-      render(
-        <PluginInstallDialog
-          open
-          onSubmit={onSubmit}
-          onOpenChange={vi.fn()}
-          organizations={[ORGANIZATION, { id: 'org-2', name: 'TBZ', memberCount: 0 }]}
-        />,
-      )
-      await user.type(screen.getByLabelText(/slug/i), 'acme')
-      await user.type(screen.getByLabelText(/name/i), 'Acme')
-      await user.click(screen.getByRole('button', { name: /installieren/i }))
-      expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ organizationId: 'org-2' }))
-    } finally {
-      setOrganizationScope('u1', null)
-    }
+    renderDialog({ organizationId: 'amt', onSubmit })
+    expect(screen.queryByRole('combobox', { name: /organisation/i })).not.toBeInTheDocument()
+    await fillAndSubmit({ slug: 'kataster', name: 'Kataster' })
+    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ organizationId: 'amt' }))
   })
 
   it('mirrors the plugin permissions into the access permissions until they are edited', async () => {
     const user = userEvent.setup()
-    render(<PluginInstallDialog open onSubmit={vi.fn()} onOpenChange={vi.fn()} />)
+    render(
+      <PluginInstallDialog open organizationId="org-1" onSubmit={vi.fn()} onOpenChange={vi.fn()} />,
+    )
 
     await user.click(pluginMatrixOf().getByRole('checkbox', { name: /bäume.*anlegen/i }))
 
@@ -52,7 +56,9 @@ describe('PluginInstallDialog', { timeout: 20_000 }, () => {
 
   it('stops mirroring once the access permissions were touched', async () => {
     const user = userEvent.setup()
-    render(<PluginInstallDialog open onSubmit={vi.fn()} onOpenChange={vi.fn()} />)
+    render(
+      <PluginInstallDialog open organizationId="org-1" onSubmit={vi.fn()} onOpenChange={vi.fn()} />,
+    )
 
     await user.click(accessMatrixOf().getByRole('checkbox', { name: /bäume.*lesen/i }))
     await user.click(pluginMatrixOf().getByRole('checkbox', { name: /bäume.*anlegen/i }))
@@ -63,7 +69,14 @@ describe('PluginInstallDialog', { timeout: 20_000 }, () => {
   it('rejects a non-https external url', async () => {
     const user = userEvent.setup()
     const onSubmit = vi.fn()
-    render(<PluginInstallDialog open onSubmit={onSubmit} onOpenChange={vi.fn()} />)
+    render(
+      <PluginInstallDialog
+        open
+        organizationId="org-1"
+        onSubmit={onSubmit}
+        onOpenChange={vi.fn()}
+      />,
+    )
 
     await user.type(screen.getByLabelText(/slug/i), 'acme')
     await user.type(screen.getByLabelText(/name/i), 'Acme')
@@ -89,7 +102,7 @@ describe('PluginInstallDialog', { timeout: 20_000 }, () => {
     render(
       <PluginInstallDialog
         open
-        organizations={[ORGANIZATION]}
+        organizationId="org-1"
         onSubmit={onSubmit}
         onOpenChange={vi.fn()}
       />,
@@ -97,8 +110,6 @@ describe('PluginInstallDialog', { timeout: 20_000 }, () => {
 
     await user.type(screen.getByLabelText(/slug/i), 'kataster')
     await user.type(screen.getByLabelText(/name/i), 'TBZ Baumkataster')
-    await user.click(screen.getByRole('combobox', { name: /organisation/i }))
-    await user.click(screen.getByRole('option', { name: ORGANIZATION.name }))
 
     // Grants the access requirement directly, without the plugin ever holding it.
     await user.click(accessMatrixOf().getByRole('checkbox', { name: /bäume.*lesen/i }))
@@ -119,7 +130,7 @@ describe('PluginInstallDialog', { timeout: 20_000 }, () => {
     render(
       <PluginInstallDialog
         open
-        organizations={[ORGANIZATION]}
+        organizationId="org-1"
         onSubmit={onSubmit}
         onOpenChange={vi.fn()}
       />,
@@ -127,8 +138,6 @@ describe('PluginInstallDialog', { timeout: 20_000 }, () => {
 
     await user.type(screen.getByLabelText(/slug/i), 'sensor-setup')
     await user.type(screen.getByLabelText(/name/i), 'Sensor-Einrichtung')
-    await user.click(screen.getByRole('combobox', { name: /organisation/i }))
-    await user.click(screen.getByRole('option', { name: ORGANIZATION.name }))
     // The capabilities only appear once the plugin has a view.
     screen.getByRole('combobox', { name: /ansicht/i }).focus()
     await user.keyboard('{Enter}{ArrowDown}{Enter}')

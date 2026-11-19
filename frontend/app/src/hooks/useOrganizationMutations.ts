@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient, type InvalidateQueryFilters } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import type { AddressDto } from '@green-ecolution/backend-client'
 import { organizationApi } from '@/api/backendApi'
@@ -38,20 +38,30 @@ export const useOrganizationMutations = () => {
   const { t } = useTranslation('settings')
 
   // A rename also changes the organization name shown in the navigation, which
-  // comes from the cached /users/me response.
-  const invalidate = () => {
-    void queryClient.invalidateQueries({ queryKey: ['organizations'] })
-    void queryClient.invalidateQueries({ queryKey: ['users', 'me'] })
-  }
+  // comes from the cached /users/me response; ['users', 'me'] also covers the
+  // reachable organizations the settings resolve their organization from.
+  // `deletedId`: its own detail and settings would only refetch into a 404 while
+  // its page is still open.
+  const affected = (deletedId?: string): InvalidateQueryFilters[] => [
+    {
+      queryKey: ['organizations'],
+      predicate: (query) => deletedId === undefined || query.queryKey[1] !== deletedId,
+    },
+    { queryKey: ['users', 'me'] },
+  ]
+  const invalidate = () =>
+    Promise.all(affected().map((filters) => queryClient.invalidateQueries(filters)))
 
   const createOrganization = useMutation({
     mutationFn: ({ parentId, name }: CreateOrganizationVariables) =>
       organizationApi.createOrganization({
         organizationCreateRequest: { name, parentId },
       }),
+    // Returning the refetch holds the caller's onSuccess, which navigates to the
+    // new organization, until the reachable list knows it.
     onSuccess: () => {
-      invalidate()
       showToast(t('organization.toast.created'))
+      return invalidate()
     },
     onError: (error) => {
       if (!isConflict(error)) {
@@ -67,7 +77,7 @@ export const useOrganizationMutations = () => {
         organizationUpdateRequest: { name, address, contactPersonId },
       }),
     onSuccess: () => {
-      invalidate()
+      void invalidate()
       showToast(t('organization.toast.saved'))
     },
     onError: (error) => {
@@ -80,9 +90,23 @@ export const useOrganizationMutations = () => {
   const deleteOrganization = useMutation({
     mutationFn: ({ orgId }: DeleteOrganizationVariables) =>
       organizationApi.deleteOrganization({ orgId }),
-    onSuccess: () => {
-      invalidate()
+    // Not held like create: the refetched reachable list lacks the organization,
+    // its still open page turns into "Kein Zugriff" and unmounts, and TanStack
+    // Query skips the onSuccess of an unmounted caller, so it would never navigate
+    // away. The queries are marked stale at once, which the entry route's
+    // fetchQuery honours, and refetched in a later task, after the caller's
+    // onSuccess has run in this one.
+    onSuccess: (_, { orgId }) => {
       showToast(t('organization.toast.deleted'))
+      const filters = affected(orgId)
+      for (const filter of filters) {
+        void queryClient.invalidateQueries({ ...filter, refetchType: 'none' })
+      }
+      setTimeout(() => {
+        for (const filter of filters) {
+          void queryClient.refetchQueries({ ...filter, type: 'active' })
+        }
+      }, 0)
     },
     onError: (error) => {
       showToast(

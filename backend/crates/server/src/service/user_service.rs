@@ -30,6 +30,8 @@ use super::ServiceError;
 #[derive(Debug, Clone, Default)]
 pub struct UserListFilter {
     pub organization_id: Option<Id<Organization>>,
+    /// Widens `organization_id` from direct membership to the whole subtree.
+    pub include_descendants: bool,
     pub role_id: Option<Id<Role>>,
     pub query: Option<String>,
     pub visibility: Visibility,
@@ -354,7 +356,19 @@ impl UserService {
             }
         };
         let by_org = match filter.organization_id {
-            Some(org) => Some(self.profile_reader.ids_in_organizations(&[org]).await?),
+            Some(org) => {
+                let orgs: Vec<Id<Organization>> = if filter.include_descendants {
+                    self.org_reader
+                        .hierarchy()
+                        .await?
+                        .descendants_or_self(org)
+                        .into_iter()
+                        .collect()
+                } else {
+                    vec![org]
+                };
+                Some(self.profile_reader.ids_in_organizations(&orgs).await?)
+            }
             None => None,
         };
         let by_role = match filter.role_id {
@@ -814,14 +828,20 @@ mod tests {
         }
     }
 
+    type OrgPair = (Id<Organization>, Option<Id<Organization>>);
+
     #[derive(Default)]
     struct StubOrgs {
         member_count_queries: AtomicUsize,
         rows: Mutex<HashMap<Id<Organization>, Organization>>,
         saves: AtomicUsize,
+        pairs: Mutex<Vec<OrgPair>>,
     }
 
     impl StubOrgs {
+        fn set_hierarchy(&self, pairs: Vec<OrgPair>) {
+            *self.pairs.lock().unwrap() = pairs;
+        }
         fn insert(&self, id: Id<Organization>, contact_person: Option<Uuid>) {
             self.rows
                 .lock()
@@ -888,7 +908,7 @@ mod tests {
             }))
         }
         async fn hierarchy(&self) -> Result<OrgHierarchy, RepositoryError> {
-            Ok(OrgHierarchy::default())
+            Ok(OrgHierarchy::from_pairs(self.pairs.lock().unwrap().clone()))
         }
         async fn member_counts(&self) -> Result<HashMap<Id<Organization>, i64>, RepositoryError> {
             self.member_count_queries.fetch_add(1, Ordering::Relaxed);
@@ -1158,6 +1178,75 @@ mod tests {
 
         assert_eq!(page.total, 1);
         assert_eq!(page.items[0].username.as_str(), "bboysen");
+    }
+
+    #[tokio::test]
+    async fn organization_filter_with_descendants_covers_the_subtree() {
+        let in_parent = Uuid::now_v7();
+        let in_child = Uuid::now_v7();
+        let elsewhere = Uuid::now_v7();
+        let parent = Id::new_v7();
+        let child = Id::new_v7();
+        let other = Id::new_v7();
+        let profiles = Arc::new(InMemoryProfiles::default());
+        profiles.add_member(parent, in_parent);
+        profiles.add_member(child, in_child);
+        profiles.add_member(other, elsewhere);
+        let repo = Arc::new(StubIdentityRepo::new(vec![
+            identity(in_parent, "parent"),
+            identity(in_child, "child"),
+            identity(elsewhere, "other"),
+        ]));
+        let orgs = Arc::new(StubOrgs::default());
+        orgs.set_hierarchy(vec![(parent, None), (child, Some(parent)), (other, None)]);
+        let svc = service_with_orgs(repo, profiles, orgs);
+
+        let page = svc
+            .list(
+                Pagination::default(),
+                UserListFilter {
+                    organization_id: Some(parent),
+                    include_descendants: true,
+                    ..UserListFilter::default()
+                },
+            )
+            .await
+            .unwrap();
+
+        let ids: HashSet<Uuid> = page.items.iter().map(|user| user.id).collect();
+        assert_eq!(ids, HashSet::from([in_parent, in_child]));
+    }
+
+    #[tokio::test]
+    async fn organization_filter_without_descendants_stays_on_direct_members() {
+        let in_parent = Uuid::now_v7();
+        let in_child = Uuid::now_v7();
+        let parent = Id::new_v7();
+        let child = Id::new_v7();
+        let profiles = Arc::new(InMemoryProfiles::default());
+        profiles.add_member(parent, in_parent);
+        profiles.add_member(child, in_child);
+        let repo = Arc::new(StubIdentityRepo::new(vec![
+            identity(in_parent, "parent"),
+            identity(in_child, "child"),
+        ]));
+        let orgs = Arc::new(StubOrgs::default());
+        orgs.set_hierarchy(vec![(parent, None), (child, Some(parent))]);
+        let svc = service_with_orgs(repo, profiles, orgs);
+
+        let page = svc
+            .list(
+                Pagination::default(),
+                UserListFilter {
+                    organization_id: Some(parent),
+                    ..UserListFilter::default()
+                },
+            )
+            .await
+            .unwrap();
+
+        let ids: HashSet<Uuid> = page.items.iter().map(|user| user.id).collect();
+        assert_eq!(ids, HashSet::from([in_parent]));
     }
 
     #[tokio::test]

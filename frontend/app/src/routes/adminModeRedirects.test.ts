@@ -68,6 +68,7 @@ describe('admin mode redirects', () => {
   it('lets a root member reach the instance pages', async () => {
     admin.value = true
     await expect(runProtected('/settings/organization')).resolves.toBeNull()
+    await expect(runProtected('/settings/organization/root/members')).resolves.toBeNull()
     await expect(runProtected('/admin')).resolves.toBeNull()
   })
 

@@ -3,7 +3,7 @@ slug: settings-stations
 title: Stationen
 part: administration
 summary: Wozu Startpunkte und Stationen dienen, was Fahrzeuge an einer Station tun können, wie sich eine Station anlegen, bearbeiten und löschen lässt und was der Standard-Startpunkt ist.
-routes: ['/settings/stations']
+routes: ['/settings/organization/$orgId/stations']
 ---
 
 > [!NOTE]
@@ -12,7 +12,8 @@ routes: ['/settings/stations']
 > das Routing ausgeschaltet, taucht **Stationen** in deiner Einstellungsnavigation gar
 > nicht erst auf. Zum Anlegen, Ändern und Löschen brauchst du zusätzlich
 > `start_point:create`, `start_point:update` beziehungsweise `start_point:delete`, jeweils
-> in der Organisation, der die Station gehört.
+> in der Organisation, der die Station gehört. Die Seite zeigt die Stationen der in der
+> Navigation gewählten Organisation und ihrer Unterorganisationen.
 
 ## Wozu Startpunkte und Stationen dienen
 
@@ -46,16 +47,19 @@ anderen Mandanten, werden nie verwendet, auch nicht als Station zum Auffüllen o
 
 ## Eine Station anlegen
 
-Über **Station anlegen** oben rechts öffnet sich ein Dialog. Trage einen Namen ein,
-wähle die Organisation, der die Station gehört, und hake unter **Fahrzeuge können hier** an, was
-dort geschieht. Die Position legst du auf der Karte fest: Verschiebe die Markierung an
+Über **Station anlegen** oben rechts öffnet sich ein Dialog. Trage einen Namen ein
+und hake unter **Fahrzeuge können hier** an, was dort geschieht. Ein Feld für die
+Organisation gibt es nicht: Die Station entsteht in der Organisation, die du in der
+Navigation der Einstellungen gewählt hast. Wechseln kannst du sie später über
+**Verschieben**. Die Position legst du auf der Karte fest: Verschiebe die Markierung an
 den Standort der Station. Die Karte öffnet mit dem Kartenausschnitt deiner Organisation.
 Nach **Speichern** erscheint die Station in der Liste.
 
 ## Eine Station bearbeiten oder löschen
 
 Über das Stift-Symbol änderst du Name, Position und die Angabe **Fahrzeuge können hier**. Die
-Organisation lässt sich hier nicht mehr wechseln. Das Papierkorb-Symbol löscht die
+Organisation lässt sich im Bearbeiten-Dialog nicht mehr wechseln; dafür gibt es die Aktion
+**Verschieben**, die weiter unten beschrieben ist. Das Papierkorb-Symbol löscht die
 Station nach einer Rückfrage. Verweigert Green Ecolution das Löschen, etwa weil es sich
 um den Standard handelt, erscheint der Grund als Meldung am Bildschirmrand.
 

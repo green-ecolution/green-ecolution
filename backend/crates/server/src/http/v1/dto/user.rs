@@ -190,6 +190,8 @@ pub struct UserListParams {
     #[serde(default)]
     pub organization_id: Option<Uuid>,
     #[serde(default)]
+    pub include_descendants: bool,
+    #[serde(default)]
     pub role_id: Option<Uuid>,
     #[serde(default)]
     pub query: Option<String>,

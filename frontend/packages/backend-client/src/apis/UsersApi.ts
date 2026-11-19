@@ -66,6 +66,7 @@ export interface ListUsersRequest {
     page?: number;
     perPage?: number;
     organizationId?: string;
+    includeDescendants?: boolean;
     roleId?: string;
     query?: string;
 }
@@ -329,6 +330,10 @@ export class UsersApi extends runtime.BaseAPI {
 
         if (requestParameters['organizationId'] != null) {
             queryParameters['organization_id'] = requestParameters['organizationId'];
+        }
+
+        if (requestParameters['includeDescendants'] != null) {
+            queryParameters['include_descendants'] = requestParameters['includeDescendants'];
         }
 
         if (requestParameters['roleId'] != null) {

@@ -37,6 +37,7 @@ import { useActiveModulesOptional } from '@/modules/useActiveModules'
 import type { I18nKey, ModuleManifest, NavSectionKey } from '@/modules/types'
 import { usePermissions } from '@/lib/auth/usePermissions'
 import { useAdminMode } from '@/lib/auth/scope/adminMode'
+import { useSettingsHomeOrganizationId } from '@/lib/auth/scope/settingsOrganization'
 import { infoQueries, pluginViewsQuery } from '@/api/queries'
 import type { PluginNavEntryResponse } from '@/api/backendApi'
 
@@ -218,7 +219,11 @@ const pluginNavSection = (
 
 // What a root member sees instead of the operational sections: the pages that
 // concern the instance as a whole. Tenant work happens inside a scope.
-const adminNavData = (t: TFunction<'navigation'>, pluginsEnabled: boolean): NavSectionData[] => [
+const adminNavData = (
+  t: TFunction<'navigation'>,
+  pluginsEnabled: boolean,
+  organizationId: string | null,
+): NavSectionData[] => [
   {
     key: 'instance',
     headline: t('sidebar.headlineInstance'),
@@ -233,21 +238,29 @@ const adminNavData = (t: TFunction<'navigation'>, pluginsEnabled: boolean): NavS
         key: 'nav-admin-organization',
         label: t('sidebar.organization'),
         icon: <Network className="w-5 h-5" />,
-        to: '/settings/organization',
+        ...(organizationId
+          ? { to: '/settings/organization/$orgId', params: { orgId: organizationId } }
+          : { to: '/settings/organization' }),
       },
-      {
-        key: 'nav-admin-team',
-        label: t('sidebar.team'),
-        icon: <Users className="w-5 h-5" />,
-        to: '/settings/team',
-      },
-      ...(pluginsEnabled
+      ...(organizationId
+        ? [
+            {
+              key: 'nav-admin-team',
+              label: t('sidebar.team'),
+              icon: <Users className="w-5 h-5" />,
+              to: '/settings/organization/$orgId/members',
+              params: { orgId: organizationId },
+            } as NavLinkData,
+          ]
+        : []),
+      ...(pluginsEnabled && organizationId
         ? [
             {
               key: 'nav-admin-plugins',
               label: t('sidebar.plugins'),
               icon: <Puzzle className="w-5 h-5" />,
-              to: '/settings/plugin',
+              to: '/settings/organization/$orgId/plugins',
+              params: { orgId: organizationId },
             } as NavLinkData,
           ]
         : []),
@@ -316,6 +329,7 @@ const ProtectedNavSections: React.FC<Omit<NavSectionsProps, 'sections'>> = (prop
   const { data: pluginViews = [] } = useQuery({ ...pluginViewsQuery(), enabled: !admin })
   const { data: services } = useQuery({ ...infoQueries.services(), enabled: admin })
   const perms = usePermissions()
+  const homeOrganizationId = useSettingsHomeOrganizationId() ?? null
   const { manifests } = useActiveModulesOptional()
   const routePermissions = routePermissionsFor(manifests)
 
@@ -323,7 +337,11 @@ const ProtectedNavSections: React.FC<Omit<NavSectionsProps, 'sections'>> = (prop
     (item) => item.name === 'plugins' && item.enabled,
   )
   const sections = admin
-    ? visibleNavSections(adminNavData(t, pluginsEnabled), perms, routePermissions)
+    ? visibleNavSections(
+        adminNavData(t, pluginsEnabled, homeOrganizationId),
+        perms,
+        routePermissions,
+      )
     : visibleNavSections(
         [...protectedNavData(t, (key) => i18n.t(key), manifests), pluginNavSection(t, pluginViews)],
         perms,

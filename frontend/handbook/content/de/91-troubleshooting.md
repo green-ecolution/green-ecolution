@@ -71,7 +71,7 @@ Fehlt dir das Recht tatsächlich, hilft nur die Verwaltung deiner Organisation w
 passende Rolle zu oder schneidet eine bestehende passend zu, siehe
 [Wie weit eine Rolle reicht](./settings-team.md#wie-weit-eine-rolle-reicht). Prüft die
 Verwaltung eine Zuweisung nach, lohnt sich zusätzlich der Blick in
-[Wie Berechtigungen im Baum wirken](./settings-organization.md#wie-berechtigungen-im-baum-wirken):
+[Wie Berechtigungen im Baum wirken](./settings-structure.md#wie-berechtigungen-im-baum-wirken):
 Eine Rolle wirkt nur nach unten im Organisationsbaum, nie nach oben.
 
 ## Ein Sensor bleibt offline

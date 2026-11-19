@@ -44,24 +44,6 @@ export const buildTree = (orgs: OrganizationResponse[], rootId: string): OrgNode
 export const subtreeMemberCount = (node: OrgNode): number =>
   node.org.memberCount + node.children.reduce((sum, child) => sum + subtreeMemberCount(child), 0)
 
-export const pathTo = (root: OrgNode, orgId: string): OrganizationResponse[] => {
-  if (root.org.id === orgId) return [root.org]
-  for (const child of root.children) {
-    const tail = pathTo(child, orgId)
-    if (tail.length > 0) return [root.org, ...tail]
-  }
-  return []
-}
-
-export const nodeOf = (root: OrgNode, orgId: string): OrgNode | null => {
-  if (root.org.id === orgId) return root
-  for (const child of root.children) {
-    const found = nodeOf(child, orgId)
-    if (found) return found
-  }
-  return null
-}
-
 export const flatten = (node: OrgNode): OrganizationResponse[] => [
   node.org,
   ...node.children.flatMap(flatten),

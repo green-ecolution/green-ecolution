@@ -55,12 +55,13 @@ describe('emptyMessageOf', () => {
 
 describe('isFiltered', () => {
   it('ignores a blank search', () => {
-    expect(isFiltered('   ', null, null)).toBe(false)
+    expect(isFiltered('   ', null)).toBe(false)
   })
 
-  it('reports any active narrowing', () => {
-    expect(isFiltered('', 'org-1', null)).toBe(true)
-    expect(isFiltered('anna', null, null)).toBe(true)
+  it('counts a search or a role as a filter, never the organization', () => {
+    expect(isFiltered('', null)).toBe(false)
+    expect(isFiltered('nis', null)).toBe(true)
+    expect(isFiltered('', 'r-lead')).toBe(true)
   })
 })
 

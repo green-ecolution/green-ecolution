@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, userEvent, waitFor, within } from '@/test/utils'
-import { UNRESTRICTED, type Permissions } from '@/lib/auth/permissions'
+import { UNRESTRICTED, satisfies, type Permissions } from '@/lib/auth/permissions'
 import type { OrganizationResponse, RoleResponse, UserResponse } from '@/api/backendApi'
 
 const ORGS: OrganizationResponse[] = [
@@ -85,6 +85,16 @@ const users: UserResponse[] = [
 const permissions = vi.fn((): Permissions => UNRESTRICTED)
 vi.mock('@/lib/auth/usePermissions', () => ({ usePermissions: () => permissions() }))
 
+const context = vi.hoisted(() => ({ orgId: 'amt' }))
+vi.mock('../organization/useSettingsOrganization', () => ({
+  useSettingsOrganization: () => ({
+    orgId: context.orgId,
+    organizations: ORGS,
+    perms: permissions(),
+    can: (required: Parameters<typeof satisfies>[1]) => satisfies(permissions(), required),
+  }),
+}))
+
 // jsdom never runs layout (getBoundingClientRect always reports 0 width), so an
 // unmocked useContainerWiderThan would report `false` forever and wrap the detail
 // panel in a Drawer, leaving both panes unqueryable.
@@ -120,6 +130,8 @@ vi.mock('@tanstack/react-router', () => ({
 }))
 
 const meId = vi.fn((): string => 'u-anna')
+const listParams: Record<string, unknown>[] = []
+const lastListParams = () => listParams[listParams.length - 1]
 
 vi.mock('@tanstack/react-query', async () => {
   const actual =
@@ -134,11 +146,12 @@ vi.mock('@tanstack/react-query', async () => {
       if (scope === 'users') {
         const params = (second ?? {}) as {
           query?: string
-          organizationId?: string
           roleId?: string
+          page?: number
         }
+        listParams.push(params)
+        // The organization scope is the backend's job; the mock returns everyone.
         const matches = users.filter((user) => {
-          if (params.organizationId && user.organization?.id !== params.organizationId) return false
           if (params.roleId && !user.roles.some((r) => r.id === params.roleId)) return false
           if (params.query) {
             const needle = params.query.toLowerCase()
@@ -152,16 +165,15 @@ vi.mock('@tanstack/react-query', async () => {
           data: {
             data: matches,
             pagination: {
-              currentPage: 1,
+              currentPage: params.page ?? 1,
               perPage: 50,
               totalRecords: matches.length,
-              totalPages: 1,
+              totalPages: 2,
             },
           },
           isLoading: false,
         }
       }
-      if (scope === 'organizations') return { data: ORGS, isLoading: false }
       if (scope === 'roles' && second === 'org') {
         const orgId = third as string
         return { data: ROLES_BY_ORG[orgId] ?? [], isLoading: false }
@@ -195,6 +207,8 @@ describe('MembersPage', () => {
   beforeEach(() => {
     // clearAllMocks keeps return values, so every error mock is reset explicitly.
     vi.clearAllMocks()
+    listParams.length = 0
+    context.orgId = 'amt'
     // Nobody in the list is the signed-in user by default; the self-lock test
     // opts in explicitly.
     meId.mockReturnValue('u-admin')
@@ -258,30 +272,70 @@ describe('MembersPage', () => {
     expect(screen.getByRole('option', { name: 'Einsatzleitung' })).toBeInTheDocument()
   })
 
-  it('drops a role filter that the newly picked organization cannot own', async () => {
+  it('asks for the members of the selected organization and its sub-organizations', () => {
     render(<MembersPage />)
-
-    await openCombobox('Rolle')
-    await userEvent.click(screen.getByRole('option', { name: 'Fahrerin' }))
-    expect(screen.getByRole('combobox', { name: 'Rolle' })).toHaveTextContent('Fahrerin')
-
-    // "Fahrerin" belongs to "nord"; picking "amt" makes the pair unsatisfiable,
-    // because the backend requires a holder's organization to match the role's.
-    await openCombobox('Organisation')
-    await userEvent.click(screen.getByRole('option', { name: 'Grünflächenamt' }))
-
-    expect(screen.getByRole('combobox', { name: 'Rolle' })).toHaveTextContent('Alle Rollen')
+    expect(lastListParams()).toMatchObject({ organizationId: 'amt', includeDescendants: true })
   })
 
-  it("offers only the picked organization's roles in the role filter", async () => {
+  it('narrows to direct members when the toggle is switched off', async () => {
     render(<MembersPage />)
+    await userEvent.click(screen.getByRole('switch', { name: 'mit Unterorganisationen' }))
+    expect(lastListParams()).toMatchObject({ organizationId: 'amt', includeDescendants: false })
+  })
 
-    await openCombobox('Organisation')
-    await userEvent.click(screen.getByRole('option', { name: 'Grünflächenamt' }))
+  it('hides the toggle for an organization without sub-organizations', () => {
+    context.orgId = 'nord'
+    render(<MembersPage />)
+    expect(
+      screen.queryByRole('switch', { name: 'mit Unterorganisationen' }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('offers only roles of the listed organizations in the role filter', async () => {
+    context.orgId = 'nord'
+    render(<MembersPage />)
     await openCombobox('Rolle')
+    expect(screen.getByRole('option', { name: 'Fahrerin' })).toBeInTheDocument()
+    expect(screen.queryByRole('option', { name: 'Gärtner' })).not.toBeInTheDocument()
+  })
 
-    expect(screen.getByRole('option', { name: 'Einsatzleitung' })).toBeInTheDocument()
+  it('drops the roles of sub-organizations from the filter when the toggle is off', async () => {
+    render(<MembersPage />)
+    await userEvent.click(screen.getByRole('switch', { name: 'mit Unterorganisationen' }))
+    await openCombobox('Rolle')
+    expect(screen.getByRole('option', { name: 'Gärtner' })).toBeInTheDocument()
     expect(screen.queryByRole('option', { name: 'Fahrerin' })).not.toBeInTheDocument()
+  })
+
+  it('returns to the first page when the toggle changes', async () => {
+    render(<MembersPage />)
+    await userEvent.click(screen.getByRole('button', { name: /nächste/i }))
+    expect(lastListParams()).toMatchObject({ page: 2 })
+
+    await userEvent.click(screen.getByRole('switch', { name: 'mit Unterorganisationen' }))
+
+    expect(lastListParams()).toMatchObject({ includeDescendants: false, page: 1 })
+  })
+
+  it('names the organization in the headline and mentions its sub-organizations', async () => {
+    render(<MembersPage />)
+    expect(
+      screen.getByRole('heading', {
+        name: '4 Personen in Grünflächenamt und den Unterorganisationen',
+      }),
+    ).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('switch', { name: 'mit Unterorganisationen' }))
+    expect(
+      screen.getByRole('heading', { name: '4 Personen in Grünflächenamt' }),
+    ).toBeInTheDocument()
+  })
+
+  it('counts matches, not people, while a search narrows the list', async () => {
+    render(<MembersPage />)
+    await userEvent.type(screen.getByRole('searchbox', { name: /suchen/i }), 'Boysen')
+    expect(
+      await screen.findByRole('heading', { name: '1 Treffer in Grünflächenamt' }),
+    ).toBeInTheDocument()
   })
 
   it('revokes a role immediately', async () => {

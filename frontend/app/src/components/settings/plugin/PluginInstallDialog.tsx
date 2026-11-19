@@ -2,7 +2,6 @@ import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   Button,
-  Combobox,
   Dialog,
   DialogContent,
   DialogDescription,
@@ -10,12 +9,10 @@ import {
   DialogHeader,
   DialogTitle,
   FormField,
-  Label,
   SelectField,
   TextareaField,
 } from '@green-ecolution/ui'
-import { useOrganizationScope } from '@/lib/auth/scope/organizationScopeStore'
-import type { OrganizationResponse, PluginFrontendDto } from '@/api/backendApi'
+import type { PluginFrontendDto } from '@/api/backendApi'
 import PluginPermissionMatrix from './PluginPermissionMatrix'
 import PluginDeviceCapabilities from './PluginDeviceCapabilities'
 import { orderedCapabilities, toggledCapability } from './deviceCapabilities'
@@ -43,7 +40,7 @@ export interface PluginInstallPayload {
 
 interface PluginInstallDialogProps {
   open: boolean
-  organizations?: OrganizationResponse[]
+  organizationId: string
   saving?: boolean
   onOpenChange: (open: boolean) => void
   onSubmit: (payload: PluginInstallPayload) => void
@@ -52,13 +49,12 @@ interface PluginInstallDialogProps {
 interface FieldErrors {
   slug?: string | null
   name?: string | null
-  organization?: string | null
   target?: string | null
 }
 
 export const PluginInstallDialog = ({
   open,
-  organizations = [],
+  organizationId,
   saving = false,
   onOpenChange,
   onSubmit,
@@ -68,10 +64,6 @@ export const PluginInstallDialog = ({
   const [slug, setSlug] = useState('')
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
-  const scope = useOrganizationScope()
-  const [chosenOrganizationId, setChosenOrganizationId] = useState('')
-  const organizationId =
-    chosenOrganizationId || (organizations.some((org) => org.id === scope) ? (scope ?? '') : '')
   const [frontendMode, setFrontendMode] = useState<FrontendMode>('none')
   const [target, setTarget] = useState('')
   const [deviceCapabilities, setDeviceCapabilities] = useState<ReadonlySet<string>>(() => new Set())
@@ -88,7 +80,6 @@ export const PluginInstallDialog = ({
     setSlug('')
     setName('')
     setDescription('')
-    setChosenOrganizationId('')
     setFrontendMode('none')
     setTarget('')
     resetPermissionDraft()
@@ -114,12 +105,11 @@ export const PluginInstallDialog = ({
     const nextErrors: FieldErrors = {
       slug: validateSlug(slugTrimmed, t),
       name: nameTrimmed === '' ? t('plugin.install.nameRequired') : null,
-      organization: organizationId === '' ? t('plugin.install.organizationRequired') : null,
       target: validateTarget(frontendMode, target, t),
     }
     setErrors(nextErrors)
 
-    if (nextErrors.slug || nextErrors.name || nextErrors.organization || nextErrors.target) return
+    if (nextErrors.slug || nextErrors.name || nextErrors.target) return
     if (saving) return
 
     onSubmit({
@@ -174,27 +164,6 @@ export const PluginInstallDialog = ({
               value={description}
               onChange={(event) => setDescription(event.target.value)}
             />
-
-            <div className="flex flex-col gap-y-2">
-              <Label htmlFor="plugin-install-organization">
-                {t('plugin.install.organizationLabel')}
-                <span className="text-destructive ml-1">*</span>
-              </Label>
-              <Combobox
-                id="plugin-install-organization"
-                options={organizations.map((org) => ({ value: org.id, label: org.name }))}
-                value={organizationId}
-                onChange={setChosenOrganizationId}
-                placeholder={t('plugin.install.organizationPlaceholder')}
-                searchPlaceholder={t('plugin.install.organizationSearchPlaceholder')}
-                aria-invalid={!!errors.organization}
-              />
-              {errors.organization && (
-                <p role="alert" aria-live="assertive" className="text-sm text-destructive">
-                  {errors.organization}
-                </p>
-              )}
-            </div>
 
             <SelectField
               id="plugin-install-frontend-mode"

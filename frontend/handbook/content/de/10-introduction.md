@@ -31,7 +31,7 @@ Was du in Green Ecolution siehst, richtet sich nach deiner **Organisation** und 
 fehlt, tauchen in der Seitennavigation gar nicht erst auf. Rufst du eine solche Seite
 trotzdem direkt auf, meldet dir die Anwendung, dass der Zugriff fehlt. Welche Rechte
 zu welcher Rolle gehören, legt die Verwaltung der eigenen Organisation fest; wie
-Rollen zugeschnitten werden, steht in [Team und Rollen](./settings-team.md).
+Rollen zugeschnitten werden, steht in [Mitarbeitende und Rollen](./settings-team.md).
 
 Für dieses Handbuch gilt diese Einschränkung nicht. Es lässt sich unabhängig von
 Organisation, Rollen und sogar ohne Anmeldung öffnen, damit sich jede und jeder

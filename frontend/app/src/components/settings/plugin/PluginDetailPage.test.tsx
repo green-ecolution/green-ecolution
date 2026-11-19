@@ -4,22 +4,47 @@ import { render, screen, userEvent, within } from '@/test/utils'
 import { UNRESTRICTED, type Permissions } from '@/lib/auth/permissions'
 import type { PluginResponse } from '@/api/backendApi'
 
-const permissions = vi.fn((): Permissions => UNRESTRICTED)
-vi.mock('@/lib/auth/usePermissions', () => ({ usePermissions: () => permissions() }))
+const permissions = vi.fn((orgId: string | null): Permissions => (orgId ? UNRESTRICTED : new Set()))
+vi.mock('@/lib/auth/usePermissionsIn', () => ({
+  usePermissionsIn: (orgId: string | null) => permissions(orgId),
+}))
 
 const updateMutate = vi.fn()
+const uninstallMutate = vi.fn((_slug: string, options: { onSuccess: () => void }) =>
+  options.onSuccess(),
+)
 vi.mock('@/hooks/usePluginMutations', () => ({
   usePluginMutations: () => ({
     installPlugin: { mutate: vi.fn(), isPending: false },
     updatePlugin: { mutate: updateMutate, isPending: false },
     rotatePluginKey: { mutate: vi.fn(), isPending: false },
-    uninstallPlugin: { mutate: vi.fn(), isPending: false },
+    uninstallPlugin: { mutate: uninstallMutate, isPending: false },
   }),
 }))
 
+// The plugin belongs to a sub-organization of the one selected in the path.
+vi.mock('../organization/useSettingsOrganization', () => ({
+  useSettingsOrganization: () => ({
+    orgId: 'amt',
+    organizations: [
+      { id: 'amt', name: 'Grünflächenamt', memberCount: 0 },
+      { id: 'org-1', name: 'Stadtgärtnerei Nord', memberCount: 0, parentId: 'amt' },
+    ],
+  }),
+}))
+
+const navigate = vi.fn()
 vi.mock('@tanstack/react-router', () => ({
-  useNavigate: () => vi.fn(),
-  Link: ({ children }: { children: ReactNode }) => <a href="#link">{children}</a>,
+  useNavigate: () => navigate,
+  Link: ({
+    children,
+    to,
+    params,
+  }: {
+    children: ReactNode
+    to?: string
+    params?: Record<string, string>
+  }) => <a href={to?.replace('$orgId', params?.orgId ?? '') ?? '#link'}>{children}</a>,
 }))
 
 vi.mock('@tanstack/react-query', async () => {
@@ -73,7 +98,7 @@ const save = async () => {
 describe('PluginDetailPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    permissions.mockReturnValue(UNRESTRICTED)
+    permissions.mockImplementation(() => UNRESTRICTED)
   })
 
   /**
@@ -193,5 +218,55 @@ describe('PluginDetailPage', () => {
   it('offers no view for a plugin without a frontend', () => {
     render(<PluginDetailPage plugin={plugin} />)
     expect(screen.queryByText(/ansicht öffnen/i)).not.toBeInTheDocument()
+  })
+
+  it('names the plugin organization', () => {
+    render(<PluginDetailPage plugin={plugin} />)
+    expect(screen.getByText('Stadtgärtnerei Nord')).toBeInTheDocument()
+  })
+
+  it('links back to the plugins of the selected organization', () => {
+    render(<PluginDetailPage plugin={plugin} />)
+    expect(screen.getAllByRole('link').map((link) => link.getAttribute('href'))).toContain(
+      '/settings/organization/amt/plugins',
+    )
+  })
+
+  it('returns to the plugins of the selected organization after uninstalling', async () => {
+    const user = userEvent.setup()
+    render(<PluginDetailPage plugin={plugin} />)
+    await user.click(screen.getByRole('button', { name: /deinstallieren/i }))
+    await user.click(
+      within(await screen.findByRole('alertdialog')).getByRole('button', {
+        name: /deinstallieren/i,
+      }),
+    )
+    expect(navigate).toHaveBeenCalledWith({
+      to: '/settings/organization/$orgId/plugins',
+      params: { orgId: 'amt' },
+    })
+  })
+
+  it('offers the write controls with the rights in the plugin organization', () => {
+    permissions.mockImplementation((orgId) =>
+      orgId === 'org-1' ? new Set(['plugin:read', 'plugin:update', 'plugin:delete']) : new Set(),
+    )
+    render(<PluginDetailPage plugin={plugin} />)
+    expect(screen.getByRole('button', { name: /speichern/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /deinstallieren/i })).toBeInTheDocument()
+    expect(screen.getByLabelText(/^name/i)).toBeEnabled()
+  })
+
+  it('offers no write controls when the rights are held only in another organization', () => {
+    permissions.mockImplementation((orgId) =>
+      orgId === 'org-1'
+        ? new Set(['plugin:read'])
+        : new Set(['plugin:read', 'plugin:update', 'plugin:delete']),
+    )
+    render(<PluginDetailPage plugin={plugin} />)
+    expect(screen.queryByRole('button', { name: /speichern/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /deinstallieren/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('switch')).not.toBeInTheDocument()
+    expect(screen.getByLabelText(/^name/i)).toBeDisabled()
   })
 })

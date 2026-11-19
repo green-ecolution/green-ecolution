@@ -3,9 +3,10 @@ import { useTranslation } from 'react-i18next'
 import { ArrowRightLeft, Pencil, Star, Trash2 } from 'lucide-react'
 import { Badge, Button, ListCard, ListCardDescription, ListCardTitle } from '@green-ecolution/ui'
 import type { Organization, StartPointResponse } from '@/api/backendApi'
-import { Can } from '@/lib/auth/Can'
 import { capacityDisplay } from '@/lib/capacity'
+import { satisfies, type Permission } from '@/lib/auth/permissions'
 import { useOrganizationsWithPermission } from '@/lib/auth/useOrganizationsWithPermission'
+import { usePermissionsResolver } from '@/lib/auth/usePermissionsIn'
 import EntityList from '@/components/general/EntityList'
 import DeleteConfirmDialog from '@/components/general/DeleteConfirmDialog'
 import TransferOrganizationDialog from '@/components/general/transfer/TransferOrganizationDialog'
@@ -31,6 +32,12 @@ const StationList = ({
   const [pendingDelete, setPendingDelete] = useState<StartPointResponse | null>(null)
   const [pendingTransfer, setPendingTransfer] = useState<StartPointResponse | null>(null)
   const writableOrganizations = useOrganizationsWithPermission('start_point:update')
+  const permissionsOf = usePermissionsResolver()
+
+  // Not useOrganizationsWithPermission: that needs organization:read, which
+  // roles that manage stations often lack.
+  const may = (station: StartPointResponse, permission: Permission) =>
+    !!permissionsOf && satisfies(permissionsOf(station.organizationId), [permission])
 
   const organizationName = (id: string) => organizations.find((org) => org.id === id)?.name ?? id
   const transferTargetsOf = (station: StartPointResponse) =>
@@ -38,7 +45,9 @@ const StationList = ({
   // The default is unique per organization, so moving it could collide with
   // the target's own default. Only non-default stations are offered.
   const canTransfer = (station: StartPointResponse) =>
-    !station.isDefault && transferTargetsOf(station).length > 0
+    !station.isDefault &&
+    may(station, 'start_point:update') &&
+    transferTargetsOf(station).length > 0
 
   return (
     <>
@@ -73,7 +82,7 @@ const StationList = ({
             </div>
 
             <div className="flex items-center gap-1">
-              <Can permission={['start_point:update']}>
+              {may(station, 'start_point:update') && (
                 <Button
                   type="button"
                   variant="ghost"
@@ -84,32 +93,32 @@ const StationList = ({
                 >
                   <Pencil className="size-4" aria-hidden />
                 </Button>
-                {!station.isDefault && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    aria-label={t('stations.action.setDefault', { name: station.name })}
-                    title={t('stations.actionLabel.setDefault')}
-                    onClick={() => onSetDefault(station)}
-                  >
-                    <Star className="size-4" aria-hidden />
-                  </Button>
-                )}
-                {canTransfer(station) && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    aria-label={t('stations.action.transfer', { name: station.name })}
-                    title={t('stations.actionLabel.transfer')}
-                    onClick={() => setPendingTransfer(station)}
-                  >
-                    <ArrowRightLeft className="size-4" aria-hidden />
-                  </Button>
-                )}
-              </Can>
-              <Can permission={['start_point:delete']}>
+              )}
+              {may(station, 'start_point:update') && !station.isDefault && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  aria-label={t('stations.action.setDefault', { name: station.name })}
+                  title={t('stations.actionLabel.setDefault')}
+                  onClick={() => onSetDefault(station)}
+                >
+                  <Star className="size-4" aria-hidden />
+                </Button>
+              )}
+              {canTransfer(station) && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  aria-label={t('stations.action.transfer', { name: station.name })}
+                  title={t('stations.actionLabel.transfer')}
+                  onClick={() => setPendingTransfer(station)}
+                >
+                  <ArrowRightLeft className="size-4" aria-hidden />
+                </Button>
+              )}
+              {may(station, 'start_point:delete') && (
                 <Button
                   type="button"
                   variant="ghost-destructive"
@@ -120,7 +129,7 @@ const StationList = ({
                 >
                   <Trash2 className="size-4" aria-hidden />
                 </Button>
-              </Can>
+              )}
             </div>
           </ListCard>
         )}

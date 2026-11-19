@@ -10,17 +10,18 @@ export const PLUGIN_COLUMNS = '1fr 2fr 1.5fr 1.5fr'
 interface PluginCardProps {
   plugin: PluginResponse
   organizationName: string
+  orgId: string
 }
 
-const PluginCard = ({ plugin, organizationName }: PluginCardProps) => {
+const PluginCard = ({ plugin, organizationName, orgId }: PluginCardProps) => {
   const { t } = useTranslation('settings')
   const dateLocale = useDateLocale()
 
   return (
     <ListCard asChild columns={PLUGIN_COLUMNS}>
       <Link
-        to="/settings/plugin/$slug"
-        params={{ slug: plugin.slug }}
+        to="/settings/organization/$orgId/plugins/$slug"
+        params={{ orgId, slug: plugin.slug }}
         aria-label={t('plugin.detailAriaLabel', { name: plugin.name })}
       >
         <div>

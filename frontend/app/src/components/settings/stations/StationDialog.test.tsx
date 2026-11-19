@@ -1,8 +1,7 @@
-import type { ReactNode } from 'react'
+import type { ComponentProps, ReactNode } from 'react'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { setOrganizationScope } from '@/lib/auth/scope/organizationScopeStore'
 import StationDialog from './StationDialog'
 
 vi.mock('@/components/map-gl/MapPreview', () => ({
@@ -15,50 +14,44 @@ vi.mock('@/components/map-gl/DraggableMarker', () => ({
   default: () => <div data-testid="draggable-marker" />,
 }))
 
-const orgs = [
-  { id: 'org-1', name: 'Stadt Flensburg', memberCount: 0 },
-  { id: 'org-2', name: 'TBZ', memberCount: 0 },
-]
-
 describe('StationDialog', { timeout: 20_000 }, () => {
   const onSubmit = vi.fn()
 
   beforeEach(() => onSubmit.mockClear())
 
-  it('preselects the scope organization even when it is not the first entry', async () => {
-    const user = userEvent.setup()
-    setOrganizationScope('u1', 'org-2')
-    try {
-      render(
-        <StationDialog
-          open
-          mode="create"
-          onOpenChange={vi.fn()}
-          onSubmit={onSubmit}
-          organizations={orgs}
-          initialPosition={{ lat: 54.78, lng: 9.43 }}
-        />,
-      )
-      await user.type(screen.getByLabelText(/name/i), 'Hof')
-      await user.click(screen.getByRole('button', { name: 'Speichern' }))
-      expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ organizationId: 'org-2' }))
-    } finally {
-      setOrganizationScope('u1', null)
-    }
-  })
-
-  it('requires a name', async () => {
-    const user = userEvent.setup()
+  const renderDialog = (props: Partial<ComponentProps<typeof StationDialog>> = {}) =>
     render(
       <StationDialog
         open
         mode="create"
+        organizationId="org-1"
         onOpenChange={vi.fn()}
         onSubmit={onSubmit}
-        organizations={orgs}
         initialPosition={{ lat: 54.78, lng: 9.43 }}
+        {...props}
       />,
     )
+
+  const fillAndSubmit = async ({ name }: { name: string }) => {
+    const user = userEvent.setup()
+    await user.type(screen.getByLabelText('Name'), name)
+    await user.click(screen.getByRole('button', { name: 'Speichern' }))
+  }
+
+  it('has no organization field, the page decides where a station is created', () => {
+    renderDialog({ mode: 'create', organizationId: 'amt' })
+    expect(screen.queryByLabelText(/Organisation/)).not.toBeInTheDocument()
+  })
+
+  it('submits the given organization on create', async () => {
+    renderDialog({ mode: 'create', organizationId: 'amt' })
+    await fillAndSubmit({ name: 'Depot West' })
+    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ organizationId: 'amt' }))
+  })
+
+  it('requires a name', async () => {
+    const user = userEvent.setup()
+    renderDialog()
     await user.click(screen.getByRole('button', { name: 'Speichern' }))
     expect(await screen.findByText('Bitte einen Namen angeben.')).toBeInTheDocument()
     expect(onSubmit).not.toHaveBeenCalled()
@@ -66,16 +59,7 @@ describe('StationDialog', { timeout: 20_000 }, () => {
 
   it('submits the chosen capacity kinds', async () => {
     const user = userEvent.setup()
-    render(
-      <StationDialog
-        open
-        mode="create"
-        onOpenChange={vi.fn()}
-        onSubmit={onSubmit}
-        organizations={orgs}
-        initialPosition={{ lat: 54.78, lng: 9.43 }}
-      />,
-    )
+    renderDialog()
     await user.type(screen.getByLabelText('Name'), 'Wertstoffhof')
     await user.click(screen.getByRole('checkbox', { name: 'Laderaum entladen' }))
     await user.click(screen.getByRole('button', { name: 'Speichern' }))
@@ -83,7 +67,7 @@ describe('StationDialog', { timeout: 20_000 }, () => {
       name: 'Wertstoffhof',
       lat: 54.78,
       lon: 9.43,
-      organizationId: orgs[0].id,
+      organizationId: 'org-1',
       replenishes: ['cargo_volume'],
     })
   })
@@ -96,7 +80,7 @@ describe('StationDialog', { timeout: 20_000 }, () => {
         mode="edit"
         onOpenChange={vi.fn()}
         onSubmit={onSubmit}
-        organizations={orgs}
+        organizationId="org-2"
         station={{
           id: 's-1',
           name: 'Betriebshof',

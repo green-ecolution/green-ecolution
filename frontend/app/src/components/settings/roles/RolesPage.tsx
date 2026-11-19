@@ -18,17 +18,15 @@ import {
   Loading,
 } from '@green-ecolution/ui'
 import type { Role } from '@/api/backendApi'
-import { userQueries, roleQueries } from '@/api/queries'
-import { useHomeOrganizationId } from '@/lib/auth/scope/effectiveRoles'
+import { modulesQuery, userQueries, roleQueries } from '@/api/queries'
 import { useRoleMutations } from '@/hooks/useRoleMutations'
-import { useHasPermission } from '@/lib/auth/useHasPermission'
-import { usePermissions } from '@/lib/auth/usePermissions'
 import { useContainerWiderThan } from '@/hooks/useContainerWiderThan'
 import { TWO_PANE_MIN_WIDTH } from '../twoPaneWidth'
 import { statusOf } from '@/lib/httpError'
 import { initialsOf } from '@/lib/initials'
 import RoleActionButtons from './RoleActionButtons'
-import { useActiveModules } from '@/modules/useActiveModules'
+import { moduleManifests } from '@/modules/registry'
+import { useSettingsOrganization } from '../organization/useSettingsOrganization'
 import RoleDetail from './RoleDetail'
 import RoleList from './RoleList'
 import { ownRolesOf } from './roleList'
@@ -41,21 +39,20 @@ const nameConflictMessage = (error: unknown, t: TFunction<'settings'>): string |
 
 const RolesPage = () => {
   const { t } = useTranslation(['settings', 'common'])
-  const grantable = usePermissions()
-  const { manifests } = useActiveModules()
-  const canCreate = useHasPermission(['role:create'])
-  const canUpdate = useHasPermission(['role:update'])
-  const canDelete = useHasPermission(['role:delete'])
-  const canReadUsers = useHasPermission(['user:read'])
+  const { orgId, can, perms: grantable } = useSettingsOrganization()
+  const { data: moduleList } = useQuery(modulesQuery())
+  const activeKeys = new Set(
+    moduleList?.organizations.find((entry) => entry.organizationId === orgId)?.active ?? [],
+  )
+  const manifests = moduleManifests.filter((manifest) => activeKeys.has(manifest.key))
+  const canCreate = can(['role:create'])
+  const canUpdate = can(['role:update'])
+  const canDelete = can(['role:delete'])
+  const canReadUsers = can(['user:read'])
   const { ref: layoutRef, isWide } = useContainerWiderThan<HTMLDivElement>(TWO_PANE_MIN_WIDTH)
 
-  const orgId = useHomeOrganizationId()
-
   const { data: templates, isLoading: templatesLoading } = useQuery(roleQueries.templates())
-  const { data: orgRoles, isLoading: orgRolesLoading } = useQuery({
-    ...roleQueries.org(orgId ?? ''),
-    enabled: orgId !== null,
-  })
+  const { data: orgRoles, isLoading: orgRolesLoading } = useQuery(roleQueries.org(orgId))
   const { data: users } = useQuery({
     ...userQueries.list(TEAM_USERS_PARAMS),
     enabled: canReadUsers,
@@ -155,7 +152,6 @@ const RolesPage = () => {
     const permissions = [...draft.permissions]
 
     if (draft.kind === 'new') {
-      if (!orgId) return
       createRole.mutate(
         { orgId, name: draft.name.trim(), description, permissions },
         {
@@ -197,10 +193,6 @@ const RolesPage = () => {
         },
       },
     )
-  }
-
-  if (!orgId) {
-    return <p className="text-sm text-dark-600">{t('roles.noOrganization')}</p>
   }
 
   if (templatesLoading || orgRolesLoading) {

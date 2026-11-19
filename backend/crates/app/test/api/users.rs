@@ -368,6 +368,21 @@ async fn list_users_filtered_by_role_uses_db_assignments() {
 }
 
 #[tokio::test]
+async fn list_users_accepts_include_descendants() {
+    let app = spawn_app().await;
+    let org = create_org(&app, "TBZ").await;
+
+    let resp = app
+        .get(&format!(
+            "/api/v1/users?organization_id={org}&include_descendants=true"
+        ))
+        .await;
+    assert_eq!(resp.status(), 200);
+    let body: serde_json::Value = resp.json().await.unwrap();
+    assert!(body["data"].as_array().unwrap().is_empty());
+}
+
+#[tokio::test]
 async fn list_users_search_matches_the_demo_user() {
     let app = spawn_app().await;
 

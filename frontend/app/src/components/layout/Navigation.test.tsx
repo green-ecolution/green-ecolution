@@ -40,6 +40,11 @@ vi.mock('@/lib/auth/scope/adminMode', () => ({
   useAdminMode: () => adminMode.value,
 }))
 
+const homeOrganizationId = vi.hoisted(() => ({ value: null as string | null | undefined }))
+vi.mock('@/lib/auth/scope/settingsOrganization', () => ({
+  useSettingsHomeOrganizationId: () => homeOrganizationId.value,
+}))
+
 vi.mock('@/modules/registry', async () => {
   const actual = await vi.importActual<typeof import('@/modules/registry')>('@/modules/registry')
   const probe = {
@@ -127,6 +132,7 @@ describe('Navigation', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     adminMode.value = false
+    homeOrganizationId.value = 'org-root'
   })
 
   it('shows only the entries the permissions allow', async () => {
@@ -342,9 +348,19 @@ describe('Navigation', () => {
 
     expect(await screen.findByText('Mandanten')).toBeInTheDocument()
     expect(screen.getByText('Instanz')).toBeInTheDocument()
-    expect(screen.getByText('Organisation')).toBeInTheDocument()
-    expect(screen.getByText('Team & Rollen')).toBeInTheDocument()
+    expect(screen.getByText('Organisation').closest('a')).toHaveAttribute(
+      'href',
+      '/settings/organization/org-root',
+    )
+    expect(screen.getByText('Team & Rollen').closest('a')).toHaveAttribute(
+      'href',
+      '/settings/organization/org-root/members',
+    )
     expect(await screen.findByText('Plugins')).toBeInTheDocument()
+    expect(screen.getByText('Plugins').closest('a')).toHaveAttribute(
+      'href',
+      '/settings/organization/org-root/plugins',
+    )
     expect(screen.getByText('Systeminformationen')).toBeInTheDocument()
     expect(screen.getByText('Handbuch')).toBeInTheDocument()
     expect(screen.queryByText('Karte')).not.toBeInTheDocument()
@@ -352,6 +368,26 @@ describe('Navigation', () => {
     expect(screen.queryByText('Sensoren')).not.toBeInTheDocument()
     expect(screen.queryByText('Einsatzpläne')).not.toBeInTheDocument()
   })
+
+  it.each([null, undefined])(
+    'hides the team and plugin entries while the organization is %s',
+    async (unresolved) => {
+      permissions.mockReturnValue(UNRESTRICTED)
+      adminMode.value = true
+      homeOrganizationId.value = unresolved
+      respondWithServices(true)
+
+      renderNavigation()
+
+      expect(await screen.findByText('Mandanten')).toBeInTheDocument()
+      expect(screen.getByText('Organisation').closest('a')).toHaveAttribute(
+        'href',
+        '/settings/organization',
+      )
+      expect(screen.queryByText('Team & Rollen')).not.toBeInTheDocument()
+      expect(screen.queryByText('Plugins')).not.toBeInTheDocument()
+    },
+  )
 
   it('filters the admin entries by permission and feature', async () => {
     permissions.mockReturnValue(new Set(['organization:read']))

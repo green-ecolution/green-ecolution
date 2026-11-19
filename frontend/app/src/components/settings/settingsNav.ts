@@ -1,73 +1,132 @@
+import type { LinkProps } from '@tanstack/react-router'
 import type de from '@/locales/de'
 import { satisfies, type PermissionRequirement, type Permissions } from '@/lib/auth/permissions'
+import { SECTION_ROUTES, type SettingsSection } from './settingsSections'
+
+const SECTIONS = Object.keys(SECTION_ROUTES) as SettingsSection[]
 
 type SettingsNavKey = keyof (typeof de)['settings']['nav']
 
+export type SettingsNavGroup = 'account' | 'organization'
+
 export interface SettingsNavItem {
-  key: string
-  /** Key into settings:nav.*, resolved in SettingsLayout so this module stays translation-free. */
-  labelKey: SettingsNavKey
+  key: SettingsNavKey
+  group: SettingsNavGroup
   /** Lucide icon name, resolved in SettingsLayout so this module stays JSX-free. */
   icon: string
-  to: string
+  /** Organization entries carry `$orgId`, filled in by the layout. */
+  to: LinkProps['to']
   permission?: PermissionRequirement
   featureKey?: string
   comingSoon?: boolean
-  /** Pages about one tenant's operations; the instance admin has none. */
-  hiddenInAdminMode?: boolean
+  /** Pages about one tenant's operations; the instance root has none. */
+  hiddenAtInstanceRoot?: boolean
+  /** Shows the number of sub-organizations or members next to the label. */
+  count?: 'children' | 'members'
 }
 
 export const SETTINGS_NAV: SettingsNavItem[] = [
-  { key: 'profile', labelKey: 'profile', icon: 'UserRound', to: '/settings/profile' },
-  {
-    key: 'organization',
-    labelKey: 'organization',
-    icon: 'Building2',
-    to: '/settings/organization',
-    permission: ['organization:read'],
-  },
+  { key: 'profile', group: 'account', icon: 'UserRound', to: '/settings/profile' },
   {
     key: 'notifications',
-    labelKey: 'notifications',
+    group: 'account',
     icon: 'Bell',
     to: '/settings/notifications',
     comingSoon: true,
   },
   {
-    key: 'team',
-    labelKey: 'team',
-    icon: 'Users',
-    to: '/settings/team',
-    permission: ['user:read', 'role:read'],
+    key: 'overview',
+    group: 'organization',
+    icon: 'Building2',
+    to: SECTION_ROUTES.overview,
+    permission: ['organization:read'],
   },
   {
-    key: 'plugin',
-    labelKey: 'plugin',
-    icon: 'Puzzle',
-    to: '/settings/plugin',
-    featureKey: 'plugins',
-    permission: ['plugin:read'],
+    key: 'areas',
+    group: 'organization',
+    icon: 'SlidersHorizontal',
+    to: SECTION_ROUTES.areas,
+    permission: ['setting:read'],
+  },
+  {
+    key: 'structure',
+    group: 'organization',
+    icon: 'Network',
+    to: SECTION_ROUTES.structure,
+    permission: ['organization:read'],
+    count: 'children',
+  },
+  {
+    key: 'members',
+    group: 'organization',
+    icon: 'Users',
+    to: SECTION_ROUTES.members,
+    permission: ['user:read'],
+    count: 'members',
+  },
+  {
+    key: 'roles',
+    group: 'organization',
+    icon: 'ShieldCheck',
+    to: SECTION_ROUTES.roles,
+    permission: ['role:read'],
   },
   {
     key: 'stations',
-    labelKey: 'stations',
+    group: 'organization',
     icon: 'MapPin',
-    to: '/settings/stations',
+    to: SECTION_ROUTES.stations,
     featureKey: 'routing',
     permission: ['start_point:read'],
-    hiddenInAdminMode: true,
+    hiddenAtInstanceRoot: true,
+  },
+  {
+    key: 'plugins',
+    group: 'organization',
+    icon: 'Puzzle',
+    to: SECTION_ROUTES.plugins,
+    featureKey: 'plugins',
+    permission: ['plugin:read'],
   },
 ]
 
+/**
+ * `perms` are the rights in the selected organization, not the union over all;
+ * `atInstanceRoot` says the selected organization is the instance root in admin mode.
+ */
 export const visibleSettingsNav = (
   items: SettingsNavItem[],
   perms: Permissions,
   enabledFeatures: ReadonlySet<string>,
-  adminMode = false,
+  atInstanceRoot = false,
 ): SettingsNavItem[] =>
   items.filter((item) => {
-    if (adminMode && item.hiddenInAdminMode) return false
+    if (atInstanceRoot && item.hiddenAtInstanceRoot) return false
     if (item.featureKey && !enabledFeatures.has(item.featureKey)) return false
     if (item.permission && !satisfies(perms, item.permission)) return false
     return true
   })
+
+/** The right a section's page needs, the same one its navigation entry asks for. */
+export const sectionPermission = (
+  section: SettingsSection | null,
+): PermissionRequirement | undefined =>
+  section ? SETTINGS_NAV.find((item) => item.to === SECTION_ROUTES[section])?.permission : undefined
+
+/**
+ * Where the settings of an organization open: `preferred` if its entry is
+ * visible there, else the first visible organization entry in navigation
+ * order. The entry route and the organization switch both decide with it.
+ */
+export const landingSection = (
+  perms: Permissions,
+  enabledFeatures: ReadonlySet<string>,
+  atInstanceRoot: boolean,
+  preferred: SettingsSection | null = null,
+): SettingsSection | null => {
+  const sections = visibleSettingsNav(SETTINGS_NAV, perms, enabledFeatures, atInstanceRoot).flatMap(
+    (item) => SECTIONS.filter((section) => SECTION_ROUTES[section] === item.to),
+  )
+  if (preferred && sections.includes(preferred)) return preferred
+  return sections[0] ?? null
+}

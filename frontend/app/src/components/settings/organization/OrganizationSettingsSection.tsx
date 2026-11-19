@@ -10,46 +10,27 @@ import {
   Separator,
   Switch,
 } from '@green-ecolution/ui'
-import type { MapViewDto, OrganizationSettingsResponse } from '@/api/backendApi'
-import { CARD, CARD_TITLE } from './OrganizationDetail'
-import MapViewSettingRow from './MapViewSettingRow'
+import type { OrganizationSettingsResponse } from '@/api/backendApi'
+import { CARD, CARD_TITLE } from '../cardStyles'
 import type { SettingsDraft } from './useOrganizationSettingsDraft'
-
-export interface SettingsFieldErrors {
-  mapView: string | null
-}
-
-export type SettingsSourceNames = Record<'mapView', string | null>
 
 interface OrganizationSettingsSectionProps {
   settings: OrganizationSettingsResponse
   draft: SettingsDraft
-  errors: SettingsFieldErrors
   canUpdate: boolean
   /** Name of the organization that froze this subtree, if any. */
   enforcedByName: string | null
-  sourceNames: SettingsSourceNames
   /** The active modules' own rows, ahead of the core ones. */
   moduleSections?: ReactNode
-  onMapViewOwnChange: (own: boolean) => void
-  onMapViewChange: (view: MapViewDto) => void
-  onMapViewRestrictedChange: (restricted: boolean) => void
-  onMapViewZoomChange: (which: 'minZoom' | 'maxZoom', level: number) => void
   onDescendantsMayOverrideChange: (value: boolean) => void
 }
 
 const OrganizationSettingsSection = ({
   settings,
   draft,
-  errors,
   canUpdate,
   enforcedByName,
-  sourceNames,
   moduleSections,
-  onMapViewOwnChange,
-  onMapViewChange,
-  onMapViewRestrictedChange,
-  onMapViewZoomChange,
   onDescendantsMayOverrideChange,
 }: OrganizationSettingsSectionProps) => {
   const { t } = useTranslation('settings')
@@ -88,27 +69,6 @@ const OrganizationSettingsSection = ({
       )}
 
       {moduleSections}
-
-      {/* A full-width row: a map needs the width to be worth looking at. */}
-      <div className="mt-6">
-        <MapViewSettingRow
-          label={t('organization.settings.mapView.label')}
-          description={t('organization.settings.mapView.hint')}
-          effective={settings.mapView.value}
-          draft={draft.mapView.value}
-          origin={settings.mapView.origin}
-          sourceName={sourceNames.mapView}
-          dormant={enforced ? (settings.mapView.ownValue ?? null) : null}
-          lastChange={settings.mapView.lastChange}
-          own={draft.mapView.own}
-          locked={locked}
-          error={errors.mapView}
-          onOwn={onMapViewOwnChange}
-          onChange={onMapViewChange}
-          onRestrictedChange={onMapViewRestrictedChange}
-          onZoomChange={onMapViewZoomChange}
-        />
-      </div>
 
       <Separator className="my-5" />
 

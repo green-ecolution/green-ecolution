@@ -6,10 +6,19 @@ import type { Permissions } from '@/lib/auth/permissions'
 import { render } from '@/test/utils'
 import StationList from './StationList'
 
-const permissions = vi.hoisted(() => ({ current: new Set<string>() }))
+const permissions = vi.hoisted(
+  (): { current: Set<string>; byOrg: Partial<Record<string, Permissions>> } => ({
+    current: new Set<string>(),
+    byOrg: {},
+  }),
+)
 
 vi.mock('@/lib/auth/usePermissions', () => ({
   usePermissions: (): Permissions => permissions.current,
+}))
+vi.mock('@/lib/auth/usePermissionsIn', () => ({
+  usePermissionsResolver: () => (orgId: string | null) =>
+    (orgId === null ? undefined : permissions.byOrg[orgId]) ?? new Set<string>(),
 }))
 
 const getMe = vi.fn()
@@ -61,9 +70,14 @@ const renderList = (handlers = {}) => {
   return props
 }
 
+const grantInEvery = (rights: string[]) => {
+  permissions.byOrg = { 'org-1': new Set(rights), 'org-2': new Set(rights) }
+}
+
 describe('StationList', () => {
   beforeEach(() => {
     permissions.current = new Set(['start_point:read'])
+    grantInEvery(['start_point:read'])
   })
 
   it('shows name, organization, capacity kinds and the default marker', () => {
@@ -83,7 +97,7 @@ describe('StationList', () => {
   })
 
   it('sets a station as default only for non-default stations', async () => {
-    permissions.current = new Set(['start_point:read', 'start_point:update'])
+    grantInEvery(['start_point:read', 'start_point:update'])
     const user = userEvent.setup()
     const { onSetDefault } = renderList()
     const buttons = screen.getAllByRole('button', { name: /als standard setzen/i })
@@ -93,7 +107,7 @@ describe('StationList', () => {
   })
 
   it('asks for confirmation before deleting', async () => {
-    permissions.current = new Set(['start_point:read', 'start_point:delete'])
+    grantInEvery(['start_point:read', 'start_point:delete'])
     const user = userEvent.setup()
     const { onDelete } = renderList()
     await user.click(screen.getByRole('button', { name: 'Station Wertstoffhof löschen' }))
@@ -101,6 +115,24 @@ describe('StationList', () => {
     const dialog = await screen.findByRole('alertdialog')
     await user.click(within(dialog).getByRole('button', { name: 'Löschen' }))
     expect(onDelete).toHaveBeenCalledWith(stations[1])
+  })
+
+  it('offers edit and delete only for stations of organizations with the right', () => {
+    permissions.byOrg = {
+      'org-1': new Set(['start_point:read']),
+      'org-2': new Set(['start_point:read', 'start_point:update', 'start_point:delete']),
+    }
+    renderList()
+    expect(
+      screen.getByRole('button', { name: 'Station Wertstoffhof bearbeiten' }),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Station Wertstoffhof löschen' })).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Station Betriebshof bearbeiten' }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Station Betriebshof löschen' }),
+    ).not.toBeInTheDocument()
   })
 })
 
@@ -114,6 +146,7 @@ describe('StationList transfer', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     permissions.current = new Set(['start_point:read', 'start_point:update', 'organization:read'])
+    grantInEvery(['start_point:read', 'start_point:update'])
     listOrganizations.mockResolvedValue(tree)
     getMe.mockResolvedValue({
       id: 'me',

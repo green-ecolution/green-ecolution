@@ -1,9 +1,11 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest'
 import { render, screen, userEvent, waitFor } from '@/test/utils'
 import { UNRESTRICTED, type Permissions } from '@/lib/auth/permissions'
 import type { Role } from '@/api/backendApi'
 import type { CreateRoleVariables } from '@/hooks/useRoleMutations'
 import type { ModuleManifest } from '@/modules/types'
+import type { Resource } from '@/lib/auth/permissions'
+import { getI18n } from '@/lib/i18n'
 import { irrigationManifest } from '@green-ecolution/module-irrigation'
 
 const templates: Role[] = [
@@ -35,12 +37,38 @@ const orgRoles: Role[] = [
   },
 ]
 
-const activeManifests = vi.fn((): ModuleManifest[] => [irrigationManifest])
-vi.mock('@/modules/useActiveModules', () => ({
-  useActiveModules: () => ({ manifests: activeManifests(), isActive: () => true }),
+const probeManifest = (key: string): ModuleManifest => ({
+  key,
+  labelKey: `${key}:label` as ModuleManifest['labelKey'],
+  i18n: { namespaces: [], load: () => Promise.resolve({}) },
+  resources: [{ key: `${key}_item` as Resource, area: 'operations', textsKey: `${key}:item` }],
+})
+const probes = vi.hoisted(() => ({ list: [] as ModuleManifest[] }))
+vi.mock('@/modules/registry', async () => {
+  const { irrigationManifest: irrigation } = await import('@green-ecolution/module-irrigation')
+  return {
+    get moduleManifests() {
+      return [irrigation, ...probes.list]
+    },
+  }
+})
+
+const selectedOrg = vi.hoisted(() => ({ id: 'nord' }))
+const selectedOrgPerms = vi.hoisted((): { value: Permissions } => ({ value: 'unrestricted' }))
+vi.mock('../organization/useSettingsOrganization', () => ({
+  useSettingsOrganization: () => ({
+    orgId: selectedOrg.id,
+    organizations: [],
+    perms: selectedOrgPerms.value,
+    can: (required: readonly string[]) => {
+      const held = grantedPermissions()
+      return held === 'unrestricted' || required.length === 0 || required.some((p) => held.has(p))
+    },
+  }),
 }))
 
 const permissions = vi.fn((): Permissions => UNRESTRICTED)
+const grantedPermissions = () => permissions()
 vi.mock('@/lib/auth/usePermissions', () => ({ usePermissions: () => permissions() }))
 
 // jsdom never runs layout (getBoundingClientRect always reports 0 width), so an
@@ -66,11 +94,8 @@ vi.mock('@/hooks/useRoleMutations', () => ({
 
 vi.mock('@tanstack/react-router', () => ({ useBlocker: () => ({ status: 'idle' }) }))
 
-const me = {
-  id: 'u1',
-  organization: { id: 'org-1', name: 'Green Ecolution' },
-  roles: [],
-}
+const activeByOrg = vi.hoisted((): { value: Record<string, string[]> } => ({ value: {} }))
+const requestedOrgRoles = vi.hoisted(() => ({ ids: new Set<string>() }))
 
 vi.mock('@tanstack/react-query', async () => {
   const actual =
@@ -78,25 +103,97 @@ vi.mock('@tanstack/react-query', async () => {
   return {
     ...actual,
     useQuery: (options: { queryKey: unknown[] }) => {
-      const key = JSON.stringify(options.queryKey)
-      if (key.includes('templates')) return { data: templates, isLoading: false }
-      if (key.includes('org')) return { data: orgRoles, isLoading: false }
-      if (key.includes('me')) return { data: me, isLoading: false }
+      const [scope, kind, id] = options.queryKey
+      if (scope === 'modules') {
+        return {
+          data: {
+            modules: [],
+            organizations: Object.entries(activeByOrg.value).map(([organizationId, active]) => ({
+              organizationId,
+              active,
+            })),
+          },
+          isLoading: false,
+        }
+      }
+      if (scope === 'roles' && kind === 'templates') return { data: templates, isLoading: false }
+      if (scope === 'roles' && kind === 'org') {
+        requestedOrgRoles.ids.add(String(id))
+        return { data: orgRoles, isLoading: false }
+      }
       return { data: { data: [] }, isLoading: false }
     },
   }
 })
 
+const activeModulesByOrg = (value: Record<string, string[]>) => {
+  activeByOrg.value = value
+}
+const orgRolesRequestedFor = () => [...requestedOrgRoles.ids]
+
 const { default: RolesPage } = await import('./RolesPage')
 
+const renderPage = () => render(<RolesPage />)
+
+const createRoleThroughTheForm = async (name: string) => {
+  await userEvent.click(screen.getByRole('button', { name: 'Neu' }))
+  await userEvent.type(screen.getByRole('textbox', { name: 'Name der Rolle' }), name)
+  await userEvent.click(screen.getByRole('button', { name: 'Rolle anlegen' }))
+  await waitFor(() => expect(createMutate).toHaveBeenCalled())
+}
+
 describe('RolesPage', () => {
+  beforeAll(() => {
+    for (const [key, label] of [
+      ['alpha', 'Probe Alpha'],
+      ['beta', 'Probe Beta'],
+    ]) {
+      getI18n().addResourceBundle('de', key, {
+        item: {
+          label,
+          singular: label,
+          pluralNoun: label,
+          description: 'Probe',
+          hint: { read: 'r', create: 'c', update: 'u', delete: 'd' },
+        },
+      })
+    }
+  })
+
   beforeEach(() => {
     vi.clearAllMocks()
-    activeManifests.mockReturnValue([irrigationManifest])
+    permissions.mockReturnValue(UNRESTRICTED)
+    isWide.mockReturnValue(true)
+    selectedOrg.id = 'nord'
+    selectedOrgPerms.value = UNRESTRICTED
+    requestedOrgRoles.ids.clear()
+    probes.list = [probeManifest('alpha'), probeManifest('beta')]
+    activeModulesByOrg({ nord: [irrigationManifest.key] })
+  })
+
+  it('lists the roles of the selected organization, not of the own one', () => {
+    renderPage()
+    expect(orgRolesRequestedFor()).toEqual(['nord'])
+  })
+
+  it('creates a new role in the selected organization', async () => {
+    renderPage()
+    await createRoleThroughTheForm('Gießtrupp')
+    expect(createMutate).toHaveBeenCalledWith(
+      expect.objectContaining({ orgId: 'nord', name: 'Gießtrupp' }),
+      expect.anything(),
+    )
+  })
+
+  it('shows only the modules active in the selected organization in the matrix', () => {
+    activeModulesByOrg({ nord: ['alpha'], amt: ['alpha', 'beta'] })
+    renderPage()
+    expect(screen.getByText('Probe Alpha')).toBeInTheDocument()
+    expect(screen.queryByText('Probe Beta')).not.toBeInTheDocument()
   })
 
   it('lists the system role and hides the untouched copy of it', () => {
-    render(<RolesPage />)
+    renderPage()
     expect(screen.getByText('System · nicht editierbar')).toBeInTheDocument()
     expect(screen.getByText('Bezirksleiter Nord')).toBeInTheDocument()
     // 'Routenplanung' exists once — as the template, not as its pristine copy
@@ -104,13 +201,13 @@ describe('RolesPage', () => {
   })
 
   it('shows the system role read-only when selected', async () => {
-    render(<RolesPage />)
+    renderPage()
     await userEvent.click(screen.getByRole('button', { name: /^Routenplanung/ }))
     expect(screen.getByText(/Systemrollen sind schreibgeschützt/)).toBeInTheDocument()
   })
 
   it('prefills a copy and creates it with the full permission set', async () => {
-    render(<RolesPage />)
+    renderPage()
     await userEvent.click(screen.getByRole('button', { name: /^Routenplanung/ }))
     await userEvent.click(screen.getByRole('button', { name: 'Kopieren & bearbeiten' }))
 
@@ -122,15 +219,26 @@ describe('RolesPage', () => {
     await waitFor(() => expect(createMutate).toHaveBeenCalled())
     const createVars = createMutate.mock.calls[0][0] as CreateRoleVariables
     expect(createVars).toMatchObject({
-      orgId: 'org-1',
+      orgId: 'nord',
       name: 'Routenplanung (Kopie)',
       description: 'Kopie von Routenplanung',
     })
     expect([...createVars.permissions].sort()).toEqual(['tree:read', 'watering_plan:read'])
   })
 
+  it('only grants what the user holds in the selected organization', async () => {
+    selectedOrgPerms.value = new Set(['role:create', 'tree:read'])
+    renderPage()
+    await userEvent.click(screen.getByRole('button', { name: /^Routenplanung/ }))
+    await userEvent.click(screen.getByRole('button', { name: 'Kopieren & bearbeiten' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Rolle anlegen' }))
+    await waitFor(() => expect(createMutate).toHaveBeenCalled())
+    const createVars = createMutate.mock.calls[0][0] as CreateRoleVariables
+    expect([...createVars.permissions]).toEqual(['tree:read'])
+  })
+
   it('saves an edited own role', async () => {
-    render(<RolesPage />)
+    renderPage()
     await userEvent.click(screen.getByRole('button', { name: /Bezirksleiter Nord/ }))
     await userEvent.type(screen.getByRole('textbox', { name: 'Name der Rolle' }), ' Ost')
     await userEvent.click(screen.getByRole('button', { name: 'Speichern' }))
@@ -140,8 +248,8 @@ describe('RolesPage', () => {
   })
 
   it('hides the rows of an inactive module and still saves its stored permissions', async () => {
-    activeManifests.mockReturnValue([])
-    render(<RolesPage />)
+    activeModulesByOrg({ nord: [] })
+    renderPage()
     await userEvent.click(screen.getByRole('button', { name: /Bezirksleiter Nord/ }))
 
     expect(screen.getByText('Fahrzeuge')).toBeInTheDocument()
@@ -158,14 +266,14 @@ describe('RolesPage', () => {
 
   it('hides the create button without role:create', () => {
     permissions.mockReturnValue(new Set(['role:read']))
-    render(<RolesPage />)
+    renderPage()
     expect(screen.queryByRole('button', { name: 'Neu' })).not.toBeInTheDocument()
   })
 
   it('does not open the detail drawer on load on mobile', () => {
     permissions.mockReturnValue(UNRESTRICTED)
     isWide.mockReturnValue(false)
-    render(<RolesPage />)
+    renderPage()
 
     // The list is shown, but nothing is auto-selected into the drawer.
     expect(screen.getByText('System · nicht editierbar')).toBeInTheDocument()
@@ -175,7 +283,7 @@ describe('RolesPage', () => {
   it('guards the mobile drawer close when the draft is dirty', async () => {
     permissions.mockReturnValue(UNRESTRICTED)
     isWide.mockReturnValue(false)
-    render(<RolesPage />)
+    renderPage()
 
     // Mobile shows the list first; tap a role to open the detail drawer.
     await userEvent.click(screen.getByRole('button', { name: /Bezirksleiter Nord/ }))

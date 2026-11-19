@@ -1,15 +1,68 @@
-import type { CSSProperties, ReactNode } from 'react'
-import { Link } from '@tanstack/react-router'
+import { useId, type CSSProperties, type ReactNode } from 'react'
+import { Link, useLocation, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { Bell, Building2, MapPin, Puzzle, UserRound, Users } from 'lucide-react'
+import {
+  Bell,
+  Building2,
+  MapPin,
+  Network,
+  Puzzle,
+  ShieldCheck,
+  SlidersHorizontal,
+  UserRound,
+  Users,
+} from 'lucide-react'
 import { Badge } from '@green-ecolution/ui'
 import { infoQueries } from '@/api/queries'
-import { usePermissions } from '@/lib/auth/usePermissions'
 import { useAdminMode } from '@/lib/auth/scope/adminMode'
-import { SETTINGS_NAV, visibleSettingsNav } from './settingsNav'
+import { useSettingsHomeOrganizationId } from '@/lib/auth/scope/settingsOrganization'
+import { NO_PERMISSIONS, satisfies } from '@/lib/auth/permissions'
+import { usePermissionsResolver } from '@/lib/auth/usePermissionsIn'
+import { buildTree, flatten, subtreeMemberCount } from './organization/organizationTree'
+import { useSettingsOrganizations } from './organization/useSettingsOrganizations'
+import SettingsOrganizationPicker from './SettingsOrganizationPicker'
+import {
+  landingSection,
+  sectionPermission,
+  SETTINGS_NAV,
+  visibleSettingsNav,
+  type SettingsNavItem,
+} from './settingsNav'
+import {
+  organizationIdOf,
+  sectionOf,
+  SECTION_ROUTES,
+  type SettingsSection,
+} from './settingsSections'
 
-const ICONS = { UserRound, Building2, Bell, Users, Puzzle, MapPin } as const
+const ICONS = {
+  UserRound,
+  Building2,
+  Bell,
+  Users,
+  Puzzle,
+  MapPin,
+  Network,
+  ShieldCheck,
+  SlidersHorizontal,
+} as const
+
+const LINK =
+  'flex items-center gap-3 whitespace-nowrap rounded-xl border border-transparent px-3 py-2.5 font-nunito-sans text-sm transition-colors hover:bg-green-dark-50 data-[status=active]:border-green-dark data-[status=active]:bg-green-dark-50 data-[status=active]:font-semibold data-[status=active]:text-green-dark'
+// Below lg the group wrappers dissolve (`contents`), so both lists sit side by side
+// in one scrolling strip without labels. The lists themselves keep their display:
+// `contents` on a <ul> drops its list semantics in some browsers.
+const STRIP =
+  '-mx-4 flex gap-2 overflow-x-auto px-4 pb-2 lg:mx-0 lg:flex-col lg:gap-7 lg:overflow-visible lg:px-0 lg:pb-0'
+const GROUP = 'contents lg:block'
+const GROUP_LABEL = 'mb-1 hidden px-3 text-[13px] font-bold text-dark-600 lg:block'
+const LIST = 'flex shrink-0 gap-2 lg:flex-col lg:gap-1'
+
+const isSectionRoute = (
+  to: SettingsNavItem['to'],
+): to is (typeof SECTION_ROUTES)[SettingsSection] =>
+  Object.values<string | undefined>(SECTION_ROUTES).includes(to)
 
 interface SettingsLayoutProps {
   children: ReactNode
@@ -17,13 +70,114 @@ interface SettingsLayoutProps {
 
 const SettingsLayout = ({ children }: SettingsLayoutProps) => {
   const { t } = useTranslation('settings')
-  const perms = usePermissions()
+  const { pathname } = useLocation()
+  const navigate = useNavigate()
+  const accountLabelId = useId()
+  const organizationLabelId = useId()
+  const homeId = useSettingsHomeOrganizationId()
+  // On the account pages the organization group still needs a target.
+  const orgId = organizationIdOf(pathname) ?? homeId ?? null
+  const permissionsOf = usePermissionsResolver()
+  const adminMode = useAdminMode()
   const { data: services } = useQuery(infoQueries.services())
+  const { organizations = [], readableIds } = useSettingsOrganizations()
   const enabledFeatures = new Set(
     (services?.items ?? []).filter((item) => item.enabled).map((item) => item.name),
   )
-  const adminMode = useAdminMode()
-  const items = visibleSettingsNav(SETTINGS_NAV, perms, enabledFeatures, adminMode)
+  // The instance root runs no operations of its own; a tenant picked in admin mode does.
+  const atInstanceRoot = (id: string) =>
+    adminMode && organizations.some((org) => org.id === id && org.parentId == null)
+  const visibleIn = (id: string | null) =>
+    visibleSettingsNav(
+      SETTINGS_NAV,
+      permissionsOf?.(id) ?? NO_PERMISSIONS,
+      enabledFeatures,
+      id !== null && atInstanceRoot(id),
+    )
+
+  const items = visibleIn(orgId)
+  const accountItems = items.filter((item) => item.group === 'account')
+  const organizationItems = orgId ? items.filter((item) => item.group === 'organization') : []
+
+  const node = orgId ? buildTree(organizations, orgId) : null
+  const countOf = (item: SettingsNavItem): number | null => {
+    if (!node || !item.count) return null
+    if (item.count === 'children') return node.children.length
+    // An organization outside GET /organizations has no real count; a sum over it would lie.
+    const counted = flatten(node).every((org) => readableIds.has(org.id))
+    return counted ? subtreeMemberCount(node) : null
+  }
+
+  // Keeps the section where the target organization allows it, else its first
+  // visible one, so switching never lands on a forbidden page.
+  const switchOrganization = (next: string) => {
+    const section = landingSection(
+      permissionsOf?.(next) ?? NO_PERMISSIONS,
+      enabledFeatures,
+      atInstanceRoot(next),
+      sectionOf(pathname) ?? 'overview',
+    )
+    void navigate({ to: SECTION_ROUTES[section ?? 'overview'], params: { orgId: next } })
+  }
+
+  const renderItem = (item: SettingsNavItem) => {
+    const Icon = ICONS[item.icon as keyof typeof ICONS]
+    const count = countOf(item)
+    const content = (
+      <>
+        <Icon className="size-5 shrink-0" aria-hidden />
+        <span className={item.comingSoon ? 'text-dark-500' : undefined}>
+          {t(`nav.${item.key}`)}
+        </span>
+        {count !== null && count > 0 && (
+          <>
+            <span className="ml-auto hidden text-[13px] text-dark-600 lg:inline" aria-hidden>
+              {count}
+            </span>{' '}
+            <span className="sr-only">
+              {t(item.count === 'children' ? 'nav.countChildren' : 'nav.countMembers', { count })}
+            </span>
+          </>
+        )}
+        {item.comingSoon && (
+          <Badge variant="muted" className="ml-auto hidden lg:inline-flex">
+            {t('layout.comingSoonBadge')}
+          </Badge>
+        )}
+      </>
+    )
+    return (
+      <li key={item.key} className="shrink-0 lg:shrink">
+        {orgId && isSectionRoute(item.to) ? (
+          <Link
+            to={item.to}
+            params={{ orgId }}
+            activeOptions={{ exact: item.key === 'overview' }}
+            className={LINK}
+          >
+            {content}
+          </Link>
+        ) : (
+          <Link to={item.to} className={LINK}>
+            {content}
+          </Link>
+        )}
+      </li>
+    )
+  }
+
+  const picker =
+    orgId !== null && organizationItems.length > 0 ? (
+      <SettingsOrganizationPicker
+        organizations={organizations}
+        selectedId={orgId}
+        onSelect={switchOrganization}
+        canManageStructure={satisfies(
+          permissionsOf?.(orgId) ?? NO_PERMISSIONS,
+          sectionPermission('structure') ?? [],
+        )}
+      />
+    ) : null
 
   return (
     <div
@@ -39,35 +193,37 @@ const SettingsLayout = ({ children }: SettingsLayoutProps) => {
         <h1 className="font-lato text-3xl font-bold lg:text-4xl">{t('layout.title')}</h1>
       </div>
 
-      <div className="lg:grid lg:grid-cols-[240px_1fr] lg:gap-8">
+      <div className="lg:grid lg:grid-cols-[272px_1fr] lg:gap-8">
         <nav
           aria-label={t('layout.navAriaLabel')}
-          className="z-20 lg:sticky lg:top-[var(--settings-header-top)] lg:self-start"
+          className="z-20 flex flex-col gap-4 lg:sticky lg:top-[var(--settings-header-top)] lg:self-start"
         >
-          <ul className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-2 lg:mx-0 lg:flex-col lg:overflow-visible lg:px-0 lg:pb-0">
-            {items.map((item) => {
-              const Icon = ICONS[item.icon as keyof typeof ICONS]
-              return (
-                <li key={item.key} className="shrink-0 lg:shrink">
-                  <Link
-                    to={item.to}
-                    activeOptions={{ exact: false }}
-                    className="flex items-center gap-3 whitespace-nowrap rounded-xl border border-transparent px-3 py-2.5 font-nunito-sans text-sm transition-colors hover:bg-green-dark-50 data-[status=active]:border-green-dark data-[status=active]:bg-green-dark-50 data-[status=active]:font-semibold data-[status=active]:text-green-dark"
-                  >
-                    <Icon className="size-5 shrink-0" aria-hidden />
-                    <span className={item.comingSoon ? 'text-dark-500' : undefined}>
-                      {t(`nav.${item.labelKey}`)}
-                    </span>
-                    {item.comingSoon && (
-                      <Badge variant="muted" className="ml-auto hidden lg:inline-flex">
-                        {t('layout.comingSoonBadge')}
-                      </Badge>
-                    )}
-                  </Link>
-                </li>
-              )
-            })}
-          </ul>
+          {/* Rendered twice instead of moved with CSS, so the DOM order matches what is
+              seen: above the strip on narrow screens, inside its group from lg up. */}
+          {picker && <div className="lg:hidden">{picker}</div>}
+
+          <div className={STRIP}>
+            <div className={GROUP}>
+              <p id={accountLabelId} className={GROUP_LABEL}>
+                {t('layout.groupAccount')}
+              </p>
+              <ul aria-labelledby={accountLabelId} className={LIST}>
+                {accountItems.map(renderItem)}
+              </ul>
+            </div>
+
+            {picker && (
+              <div className={GROUP}>
+                <p id={organizationLabelId} className={GROUP_LABEL}>
+                  {t('layout.groupOrganization')}
+                </p>
+                <div className="mb-2 hidden lg:block">{picker}</div>
+                <ul aria-labelledby={organizationLabelId} className={LIST}>
+                  {organizationItems.map(renderItem)}
+                </ul>
+              </div>
+            )}
+          </div>
         </nav>
 
         <div className="mt-6 rounded-2xl bg-dark-50 p-4 lg:mt-0 lg:p-6">{children}</div>
