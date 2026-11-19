@@ -56,9 +56,6 @@ interface OrganizationOverviewProps {
   onDelete: () => void
 }
 
-// The routes behind these links arrive with the following tasks of this change.
-const linkTarget = (to: OverviewLink['to']) => to as '/settings/organization/$orgId'
-
 const TILE = 'flex shrink-0 items-center justify-center rounded-lg font-semibold'
 
 const sinceLabel = (createdAt?: string | null): string | null => {
@@ -286,7 +283,7 @@ const OrganizationOverview = ({
           {links.map((link) => (
             <li key={link.key}>
               <Link
-                to={linkTarget(link.to)}
+                to={link.to}
                 params={{ orgId: detail.id }}
                 className={`${CARD} flex h-full items-center gap-3 hover:border-green-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring`}
               >

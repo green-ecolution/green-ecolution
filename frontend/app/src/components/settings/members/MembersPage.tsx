@@ -18,17 +18,17 @@ import {
   DrawerFooter,
 } from '@green-ecolution/ui'
 import type { UserResponse } from '@/api/backendApi'
-import { organizationQueries, roleQueries, userQueries } from '@/api/queries'
-import { useHomeOrganizationId } from '@/lib/auth/scope/effectiveRoles'
+import { roleQueries, userQueries } from '@/api/queries'
+import { buildOrganizationRows } from '@/lib/auth/scope/organizationRows'
 import { useUserMutations } from '@/hooks/useUserMutations'
 import { useContainerWiderThan } from '@/hooks/useContainerWiderThan'
 import { TWO_PANE_MIN_WIDTH } from '../twoPaneWidth'
-import { useHasPermission } from '@/lib/auth/useHasPermission'
 import { statusOf } from '@/lib/httpError'
 import MemberActionButtons from './MemberActionButtons'
 import MemberDetail from './MemberDetail'
 import MemberList from './MemberList'
 import { buildTree, flatten } from '../organization/organizationTree'
+import { useSettingsOrganization } from '../organization/useSettingsOrganization'
 import { fullNameOf, isFiltered, phoneNumberIssue } from './memberList'
 import { useMemberProfileDraft } from './useMemberProfileDraft'
 
@@ -64,14 +64,15 @@ const trimmedOrNull = (value: string): string | null => {
 
 const MembersPage = () => {
   const { t } = useTranslation(['settings', 'common'])
-  const canUpdate = useHasPermission(['user:update'])
-  const canReadRoles = useHasPermission(['role:read'])
-  const canReadOrganizations = useHasPermission(['organization:read'])
+  const { orgId, organizations: visibleOrganizations, can } = useSettingsOrganization()
+  const canUpdate = can(['user:update'])
+  const canReadRoles = can(['role:read'])
+  const canReadOrganizations = can(['organization:read'])
   const { ref: layoutRef, isWide } = useContainerWiderThan<HTMLDivElement>(TWO_PANE_MIN_WIDTH)
 
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
-  const [organizationFilter, setOrganizationFilter] = useState<string | null>(null)
+  const [includeDescendants, setIncludeDescendants] = useState(true)
   const [roleFilter, setRoleFilter] = useState<string | null>(null)
   const [page, setPage] = useState(1)
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -93,15 +94,11 @@ const MembersPage = () => {
       page,
       perPage: PER_PAGE,
       query: debouncedSearch || undefined,
-      organizationId: organizationFilter ?? undefined,
+      organizationId: orgId,
+      includeDescendants,
       roleId: roleFilter ?? undefined,
     }),
   )
-
-  const { data: organizations } = useQuery({
-    ...organizationQueries.list(),
-    enabled: canReadOrganizations,
-  })
 
   const members = useMemo(() => userPage?.data ?? [], [userPage])
   const selected = members.find((user) => user.id === selectedId) ?? null
@@ -139,18 +136,25 @@ const MembersPage = () => {
 
   const total = userPage?.pagination.totalRecords ?? 0
   const totalPages = userPage?.pagination.totalPages ?? 1
-  const filtered = isFiltered(search, organizationFilter, roleFilter)
 
   const assignableRoles = (assignableOrgRoles ?? []).filter(
     (role) => !role.isTemplate && !(selected?.roles ?? []).some((held) => held.id === role.id),
   )
-  const filterRoles = (filterVisibleRoles ?? []).filter((role) => !role.isTemplate)
-  // Tree order instead of the API's alphabetical order, so both filters read like
-  // the organization structure they describe.
-  const visibleOrganizations = organizations ?? []
-  const ownOrgId = useHomeOrganizationId() ?? undefined
-  const orgRoot = ownOrgId ? buildTree(visibleOrganizations, ownOrgId) : null
-  const organizationList = orgRoot ? flatten(orgRoot) : visibleOrganizations
+  const orgRoot = buildTree(visibleOrganizations, orgId)
+  const subtree = orgRoot ? flatten(orgRoot) : []
+  const hasSubOrganizations = subtree.length > 1
+  // A role belongs to exactly one organization and its holder must be a member of
+  // it, so only roles of the listed organizations can ever match the list.
+  const listedOrgIds = new Set(includeDescendants ? subtree.map((org) => org.id) : [orgId])
+  const filterRoles = (filterVisibleRoles ?? []).filter(
+    (role) =>
+      !role.isTemplate && role.organizationId != null && listedOrgIds.has(role.organizationId),
+  )
+  const filtered = isFiltered(search, roleFilter)
+  // Tree order instead of the API's alphabetical order.
+  const organizationList = buildOrganizationRows(visibleOrganizations).flatMap(
+    (row) => visibleOrganizations.find((org) => org.id === row.id) ?? [],
+  )
   const isSelf = selected !== null && selected.id === me?.id
 
   useEffect(() => {
@@ -235,17 +239,10 @@ const MembersPage = () => {
     setPage(1)
   }
 
-  const changeOrganizationFilter = (orgId: string | null) => {
-    setOrganizationFilter(orgId)
+  const changeIncludeDescendants = (value: boolean) => {
+    setIncludeDescendants(value)
+    setRoleFilter(null)
     setPage(1)
-    // A role belongs to exactly one organization, and the backend requires a
-    // holder's organization to match the role's. A role from elsewhere can
-    // therefore never match, and leaving it selected strands the list on an
-    // empty result the user cannot explain.
-    if (orgId !== null && roleFilter !== null) {
-      const role = filterRoles.find((candidate) => candidate.id === roleFilter)
-      if (role?.organizationId !== orgId) setRoleFilter(null)
-    }
   }
 
   const changeRoleFilter = (roleId: string | null) => {
@@ -256,7 +253,6 @@ const MembersPage = () => {
   const resetFilters = () => {
     setSearch('')
     setDebouncedSearch('')
-    setOrganizationFilter(null)
     setRoleFilter(null)
     setPage(1)
   }
@@ -313,12 +309,22 @@ const MembersPage = () => {
       loading={usersLoading}
       selectedId={selectedId}
       search={search}
-      organizationFilter={organizationFilter}
+      headline={t(
+        includeDescendants && hasSubOrganizations
+          ? 'members.headlineWithChildren'
+          : 'members.headline',
+        {
+          count: total,
+          name: visibleOrganizations.find((org) => org.id === orgId)?.name ?? '',
+        },
+      )}
+      includeDescendants={includeDescendants}
+      showDescendantsToggle={hasSubOrganizations}
       roleFilter={roleFilter}
       organizations={organizationList}
       roles={filterRoles}
       onSearchChange={changeSearch}
-      onOrganizationFilterChange={changeOrganizationFilter}
+      onIncludeDescendantsChange={changeIncludeDescendants}
       onRoleFilterChange={changeRoleFilter}
       onPageChange={setPage}
       onSelect={select}

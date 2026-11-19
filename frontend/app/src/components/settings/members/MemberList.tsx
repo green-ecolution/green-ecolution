@@ -1,6 +1,7 @@
+import { useId } from 'react'
 import { Search } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { Combobox, Input, Loading, SelectField, SimplePagination } from '@green-ecolution/ui'
+import { Combobox, Input, Label, Loading, SimplePagination, Switch } from '@green-ecolution/ui'
 import type { OrganizationResponse, RoleResponse, UserResponse } from '@/api/backendApi'
 import MemberListItem from './MemberListItem'
 import { emptyMessageOf, isFiltered, memberCountLabel, roleFilterOptions } from './memberList'
@@ -16,12 +17,15 @@ interface MemberListProps {
   loading: boolean
   selectedId: string | null
   search: string
-  organizationFilter: string | null
+  headline: string
+  includeDescendants: boolean
+  showDescendantsToggle: boolean
   roleFilter: string | null
+  /** Only for grouping the role filter by organization. */
   organizations: OrganizationResponse[]
   roles: RoleResponse[]
   onSearchChange: (value: string) => void
-  onOrganizationFilterChange: (orgId: string | null) => void
+  onIncludeDescendantsChange: (value: boolean) => void
   onRoleFilterChange: (roleId: string | null) => void
   onPageChange: (page: number) => void
   onSelect: (user: UserResponse) => void
@@ -35,30 +39,25 @@ const MemberList = ({
   loading,
   selectedId,
   search,
-  organizationFilter,
+  headline,
+  includeDescendants,
+  showDescendantsToggle,
   roleFilter,
   organizations,
   roles,
   onSearchChange,
-  onOrganizationFilterChange,
+  onIncludeDescendantsChange,
   onRoleFilterChange,
   onPageChange,
   onSelect,
 }: MemberListProps) => {
   const { t } = useTranslation('settings')
-  const filtered = isFiltered(search, organizationFilter, roleFilter)
-
-  // With an organization picked, only its own roles can ever match: the backend
-  // requires a role's organization to equal its holder's. Offering the rest
-  // would let the user build a combination that is empty by construction.
-  const selectableRoles =
-    organizationFilter === null
-      ? roles
-      : roles.filter((role) => role.organizationId === organizationFilter)
+  const toggleId = useId()
+  const filtered = isFiltered(search, roleFilter)
 
   return (
     <div className="flex flex-col gap-4">
-      <h2 className="font-lato text-base font-semibold">{t('members.listTitle')}</h2>
+      <h2 className="font-lato text-base font-semibold">{headline}</h2>
 
       <div className="relative">
         <Search
@@ -75,17 +74,16 @@ const MemberList = ({
         />
       </div>
 
-      <SelectField
-        label={t('members.organizationFilterLabel')}
-        hideLabel
-        placeholder={t('members.organizationFilterPlaceholder')}
-        value={organizationFilter ?? ALL}
-        onValueChange={(value) => onOrganizationFilterChange(value === ALL ? null : value)}
-        options={[
-          { value: ALL, label: t('members.organizationFilterAllLabel') },
-          ...organizations.map((org) => ({ value: org.id, label: org.name })),
-        ]}
-      />
+      {showDescendantsToggle && (
+        <div className="flex items-center justify-between gap-3">
+          <Label htmlFor={toggleId}>{t('members.withSubOrganizations')}</Label>
+          <Switch
+            id={toggleId}
+            checked={includeDescendants}
+            onCheckedChange={onIncludeDescendantsChange}
+          />
+        </div>
+      )}
 
       <Combobox
         aria-label={t('members.roleFilterAriaLabel')}
@@ -96,7 +94,7 @@ const MemberList = ({
         onChange={(value) => onRoleFilterChange(value === ALL ? null : value)}
         options={[
           { value: ALL, label: t('members.roleFilterAllLabel') },
-          ...roleFilterOptions(selectableRoles, organizations, t),
+          ...roleFilterOptions(roles, organizations, t),
         ]}
       />
 

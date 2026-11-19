@@ -20,11 +20,8 @@ export const memberCountLabel = (
 export const emptyMessageOf = (filtered: boolean, t: TFunction<'settings'>): string =>
   t(filtered ? 'members.emptyFiltered' : 'members.emptyUnfiltered')
 
-export const isFiltered = (
-  search: string,
-  organizationId: string | null,
-  roleId: string | null,
-): boolean => search.trim().length > 0 || organizationId !== null || roleId !== null
+export const isFiltered = (search: string, roleFilter: string | null): boolean =>
+  search.trim().length > 0 || roleFilter !== null
 
 /**
  * The phone number field is optional, but `PhoneNumber::new("")` is an error —

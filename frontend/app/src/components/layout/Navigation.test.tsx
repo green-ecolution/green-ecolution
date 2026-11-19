@@ -40,6 +40,11 @@ vi.mock('@/lib/auth/scope/adminMode', () => ({
   useAdminMode: () => adminMode.value,
 }))
 
+const homeOrganizationId = vi.hoisted(() => ({ value: null as string | null }))
+vi.mock('@/lib/auth/scope/effectiveRoles', () => ({
+  useHomeOrganizationId: () => homeOrganizationId.value,
+}))
+
 vi.mock('@/modules/registry', async () => {
   const actual = await vi.importActual<typeof import('@/modules/registry')>('@/modules/registry')
   const probe = {
@@ -127,6 +132,7 @@ describe('Navigation', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     adminMode.value = false
+    homeOrganizationId.value = 'org-root'
   })
 
   it('shows only the entries the permissions allow', async () => {
@@ -343,7 +349,10 @@ describe('Navigation', () => {
     expect(await screen.findByText('Mandanten')).toBeInTheDocument()
     expect(screen.getByText('Instanz')).toBeInTheDocument()
     expect(screen.getByText('Organisation')).toBeInTheDocument()
-    expect(screen.getByText('Team & Rollen')).toBeInTheDocument()
+    expect(screen.getByText('Team & Rollen').closest('a')).toHaveAttribute(
+      'href',
+      '/settings/organization/org-root/members',
+    )
     expect(await screen.findByText('Plugins')).toBeInTheDocument()
     expect(screen.getByText('Systeminformationen')).toBeInTheDocument()
     expect(screen.getByText('Handbuch')).toBeInTheDocument()
@@ -351,6 +360,18 @@ describe('Navigation', () => {
     expect(screen.queryByText('Fahrzeuge')).not.toBeInTheDocument()
     expect(screen.queryByText('Sensoren')).not.toBeInTheDocument()
     expect(screen.queryByText('Einsatzpläne')).not.toBeInTheDocument()
+  })
+
+  it('hides the team entry while the own organization is unknown', async () => {
+    permissions.mockReturnValue(UNRESTRICTED)
+    adminMode.value = true
+    homeOrganizationId.value = null
+    respondWithServices(false)
+
+    renderNavigation()
+
+    expect(await screen.findByText('Mandanten')).toBeInTheDocument()
+    expect(screen.queryByText('Team & Rollen')).not.toBeInTheDocument()
   })
 
   it('filters the admin entries by permission and feature', async () => {
