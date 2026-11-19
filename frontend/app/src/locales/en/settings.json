@@ -63,9 +63,6 @@
       "nameLabel": "Name",
       "nameRequired": "Please enter a name.",
       "nameTooLong": "The name may be at most 255 characters long.",
-      "organizationLabel": "Organization",
-      "organizationPlaceholder": "Select organization",
-      "organizationRequired": "Please select an organization.",
       "replenishesLegend": "At this station vehicles can",
       "replenishes": {
         "water": "Refill water",

@@ -63,9 +63,6 @@
       "nameLabel": "Name",
       "nameRequired": "Bitte einen Namen angeben.",
       "nameTooLong": "Der Name darf höchstens 255 Zeichen lang sein.",
-      "organizationLabel": "Organisation",
-      "organizationPlaceholder": "Organisation wählen",
-      "organizationRequired": "Bitte eine Organisation wählen.",
       "replenishesLegend": "Fahrzeuge können hier",
       "replenishes": {
         "water": "Wasser auffüllen",
