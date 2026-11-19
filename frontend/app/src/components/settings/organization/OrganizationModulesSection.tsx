@@ -14,7 +14,7 @@ import {
 } from '@green-ecolution/ui'
 import { SettingOriginDto } from '@/api/backendApi'
 import { moduleManifests } from '@/modules/registry'
-import { CARD, CARD_TITLE } from './OrganizationDetail'
+import { CARD, CARD_TITLE } from '../cardStyles'
 import { originLabel } from './settingOrigin'
 import type { ModuleActivationDraft, ModuleActivationRow } from './useModuleActivationDraft'
 

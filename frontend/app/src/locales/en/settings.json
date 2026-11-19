@@ -370,11 +370,11 @@
   "organization": {
     "entityName": "organization",
     "notFoundBackLabel": "To my organization",
-    "treeTitle": "Organization structure",
-    "treeAriaLabel": "Organization structure",
+    "areas": {
+      "title": "Areas of work",
+      "intro": "Switch on what is part of the work of {name}, and enter what planning should reckon with."
+    },
     "createButton": "New",
-    "collapseAriaLabel": "Collapse",
-    "expandAriaLabel": "Expand",
     "loading": "Loading organizations",
     "loadErrorForbidden": "You aren't allowed to view this organization. Your role probably only applies to a sub-organization.",
     "loadErrorGeneric": "The organization structure could not be loaded. Please try again later.",
