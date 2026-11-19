@@ -61,6 +61,7 @@ import { Route as ProtectedSensorsSensorIdIndexRouteImport } from './routes/_pro
 import { Route as ProtectedSensorsNewIndexRouteImport } from './routes/_protected/sensors/new/index'
 import { Route as ProtectedSettingsNotificationsIndexRouteImport } from './routes/_protected/settings/notifications/index'
 import { Route as ProtectedSettingsOrganizationIndexRouteImport } from './routes/_protected/settings/organization/index'
+import { Route as ProtectedSettingsOrganizationOrgIdRouteRouteImport } from './routes/_protected/settings/organization/$orgId/route'
 import { Route as ProtectedSettingsPluginIndexRouteImport } from './routes/_protected/settings/plugin/index'
 import { Route as ProtectedSettingsPluginSlugRouteRouteImport } from './routes/_protected/settings/plugin/$slug/route'
 import { Route as ProtectedSettingsProfileIndexRouteImport } from './routes/_protected/settings/profile/index'
@@ -378,6 +379,12 @@ const ProtectedSettingsOrganizationIndexRoute =
     path: '/organization/',
     getParentRoute: () => ProtectedSettingsRouteRoute,
   } as any)
+const ProtectedSettingsOrganizationOrgIdRouteRoute =
+  ProtectedSettingsOrganizationOrgIdRouteRouteImport.update({
+    id: '/organization/$orgId',
+    path: '/organization/$orgId',
+    getParentRoute: () => ProtectedSettingsRouteRoute,
+  } as any)
 const ProtectedSettingsPluginIndexRoute =
   ProtectedSettingsPluginIndexRouteImport.update({
     id: '/',
@@ -621,6 +628,7 @@ export interface FileRoutesByFullPath {
   '/waste-bins/': typeof ProtectedWasteBinsIndexRoute
   '/map/tree/new': typeof ProtectedMapTreeNewRouteRouteWithChildren
   '/plans/new': typeof ProtectedPlansFormularNewRouteRouteWithChildren
+  '/settings/organization/$orgId': typeof ProtectedSettingsOrganizationOrgIdRouteRoute
   '/settings/plugin/$slug': typeof ProtectedSettingsPluginSlugRouteRouteWithChildren
   '/vehicles/new': typeof ProtectedVehiclesFormularNewRouteRouteWithChildren
   '/waste-bins/new': typeof ProtectedWasteBinsFormularNewRouteRouteWithChildren
@@ -682,6 +690,7 @@ export interface FileRoutesByTo {
   '/vehicles': typeof ProtectedVehiclesIndexRoute
   '/waste-bins': typeof ProtectedWasteBinsIndexRoute
   '/plans/$wateringPlanId': typeof ProtectedPlansWateringPlanIdIndexRoute
+  '/settings/organization/$orgId': typeof ProtectedSettingsOrganizationOrgIdRouteRoute
   '/vehicles/$vehicleId': typeof ProtectedVehiclesVehicleIdIndexRoute
   '/waste-bins/$wasteBinId': typeof ProtectedWasteBinsWasteBinIdIndexRoute
   '/debug/geolocation': typeof ProtectedDebugGeolocationIndexRoute
@@ -759,6 +768,7 @@ export interface FileRoutesById {
   '/_protected/map/tree/new': typeof ProtectedMapTreeNewRouteRouteWithChildren
   '/_protected/plans/_formular/$wateringPlanId': typeof ProtectedPlansFormularWateringPlanIdRouteRouteWithChildren
   '/_protected/plans/_formular/new': typeof ProtectedPlansFormularNewRouteRouteWithChildren
+  '/_protected/settings/organization/$orgId': typeof ProtectedSettingsOrganizationOrgIdRouteRoute
   '/_protected/settings/plugin/$slug': typeof ProtectedSettingsPluginSlugRouteRouteWithChildren
   '/_protected/vehicles/_formular/$vehicleId': typeof ProtectedVehiclesFormularVehicleIdRouteRouteWithChildren
   '/_protected/vehicles/_formular/new': typeof ProtectedVehiclesFormularNewRouteRouteWithChildren
@@ -846,6 +856,7 @@ export interface FileRouteTypes {
     | '/waste-bins/'
     | '/map/tree/new'
     | '/plans/new'
+    | '/settings/organization/$orgId'
     | '/settings/plugin/$slug'
     | '/vehicles/new'
     | '/waste-bins/new'
@@ -907,6 +918,7 @@ export interface FileRouteTypes {
     | '/vehicles'
     | '/waste-bins'
     | '/plans/$wateringPlanId'
+    | '/settings/organization/$orgId'
     | '/vehicles/$vehicleId'
     | '/waste-bins/$wasteBinId'
     | '/debug/geolocation'
@@ -983,6 +995,7 @@ export interface FileRouteTypes {
     | '/_protected/map/tree/new'
     | '/_protected/plans/_formular/$wateringPlanId'
     | '/_protected/plans/_formular/new'
+    | '/_protected/settings/organization/$orgId'
     | '/_protected/settings/plugin/$slug'
     | '/_protected/vehicles/_formular/$vehicleId'
     | '/_protected/vehicles/_formular/new'
@@ -1399,6 +1412,13 @@ declare module '@tanstack/react-router' {
       path: '/organization'
       fullPath: '/settings/organization/'
       preLoaderRoute: typeof ProtectedSettingsOrganizationIndexRouteImport
+      parentRoute: typeof ProtectedSettingsRouteRoute
+    }
+    '/_protected/settings/organization/$orgId': {
+      id: '/_protected/settings/organization/$orgId'
+      path: '/organization/$orgId'
+      fullPath: '/settings/organization/$orgId'
+      preLoaderRoute: typeof ProtectedSettingsOrganizationOrgIdRouteRouteImport
       parentRoute: typeof ProtectedSettingsRouteRoute
     }
     '/_protected/settings/plugin/': {
@@ -1939,6 +1959,7 @@ interface ProtectedSettingsRouteRouteChildren {
   ProtectedSettingsPluginRouteRoute: typeof ProtectedSettingsPluginRouteRouteWithChildren
   ProtectedSettingsTeamRouteRoute: typeof ProtectedSettingsTeamRouteRouteWithChildren
   ProtectedSettingsIndexRoute: typeof ProtectedSettingsIndexRoute
+  ProtectedSettingsOrganizationOrgIdRouteRoute: typeof ProtectedSettingsOrganizationOrgIdRouteRoute
   ProtectedSettingsNotificationsIndexRoute: typeof ProtectedSettingsNotificationsIndexRoute
   ProtectedSettingsOrganizationIndexRoute: typeof ProtectedSettingsOrganizationIndexRoute
   ProtectedSettingsProfileIndexRoute: typeof ProtectedSettingsProfileIndexRoute
@@ -1952,6 +1973,8 @@ const ProtectedSettingsRouteRouteChildren: ProtectedSettingsRouteRouteChildren =
     ProtectedSettingsTeamRouteRoute:
       ProtectedSettingsTeamRouteRouteWithChildren,
     ProtectedSettingsIndexRoute: ProtectedSettingsIndexRoute,
+    ProtectedSettingsOrganizationOrgIdRouteRoute:
+      ProtectedSettingsOrganizationOrgIdRouteRoute,
     ProtectedSettingsNotificationsIndexRoute:
       ProtectedSettingsNotificationsIndexRoute,
     ProtectedSettingsOrganizationIndexRoute:

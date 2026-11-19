@@ -368,6 +368,8 @@
     }
   },
   "organization": {
+    "entityName": "organization",
+    "notFoundBackLabel": "To my organization",
     "treeTitle": "Organization structure",
     "treeAriaLabel": "Organization structure",
     "createButton": "New",

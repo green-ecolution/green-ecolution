@@ -21,6 +21,7 @@ import {
 } from '@green-ecolution/ui'
 import type { OrganizationDetailResponse, OrganizationResponse } from '@/api/backendApi'
 import { initialsOf, initialsOfName } from '@/lib/initials'
+import { CARD, CARD_TITLE } from '../cardStyles'
 import OrganizationActionButtons from './OrganizationActionButtons'
 import { directChildrenLine, memberSubtitle, memberSummary } from './organizationLabels'
 import type { OrgNode } from './organizationTree'
@@ -63,8 +64,7 @@ interface OrganizationDetailProps {
   renderActionBar: boolean
 }
 
-export const CARD = '@container rounded-xl border border-dark-50 bg-white p-5 shadow-cards'
-export const CARD_TITLE = 'font-lato text-base font-semibold text-dark'
+export { CARD, CARD_TITLE }
 const TILE = 'flex shrink-0 items-center justify-center rounded-lg font-semibold'
 
 const sinceLabel = (createdAt?: string | null): string | null => {
