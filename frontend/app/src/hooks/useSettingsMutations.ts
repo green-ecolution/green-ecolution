@@ -85,7 +85,7 @@ export const useSettingsSave = () => {
     }
     showToast(
       failures.some((error) => statusOf(error) === 409)
-        ? t('organization.settings.toast.lockedByAncestor')
+        ? t('organization.settings.toast.setByAncestor')
         : t('organization.settings.toast.saveFailed'),
       'error',
     )

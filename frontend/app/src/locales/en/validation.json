@@ -143,6 +143,13 @@
     },
     "map_view": {
       "invalidFormat": "The centre must lie inside the chosen extent."
+    },
+    "sensor_offline_after": {
+      "outOfRange": "The time must be between {min} and {max} hours."
+    },
+    "defect_streak": {
+      "outOfRange": "The count must be between {min} and {max}.",
+      "invalidFormat": "The count must be a whole number."
     }
   },
   "geo": {
