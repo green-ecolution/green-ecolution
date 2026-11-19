@@ -1996,7 +1996,7 @@
             }
           },
           "409": {
-            "description": "An organization above froze this subtree (code `settings.enforced_by_ancestor`), or set a switch for this organization that the caller does not act for (code `settings.set_by_ancestor`)",
+            "description": "A parent set this switch for the organization and the caller does not act for that parent (code `settings.set_by_ancestor`)",
             "content": {
               "application/json": {
                 "schema": {
@@ -2203,7 +2203,7 @@
           "Settings"
         ],
         "summary": "Read an organization's operational defaults",
-        "description": "Each field carries the value in force, where it came from, this organization's own value (even while a lock above makes it dormant) and when it was last changed. Requires setting:read.",
+        "description": "Each field carries the value in force and the value that would apply without this organization's own one. Requires setting:read.",
         "operationId": "getOrganizationSettings",
         "parameters": [
           {
@@ -2275,7 +2275,7 @@
           "Settings"
         ],
         "summary": "Set an organization's operational defaults",
-        "description": "An omitted field stays as it is, `null` drops the organization's own value and returns it to inheritance. Requires setting:update.",
+        "description": "An omitted field stays as it is. Sending the value the organization would inherit drops its own value, so it follows its parent again. Requires setting:update.",
         "operationId": "updateOrganizationSettings",
         "parameters": [
           {
@@ -2350,16 +2350,6 @@
               }
             }
           },
-          "409": {
-            "description": "An organization above froze this subtree (code `settings.enforced_by_ancestor`)",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          },
           "500": {
             "description": "Internal server error",
             "content": {
@@ -2379,7 +2369,7 @@
           "Irrigation"
         ],
         "summary": "Read an organization's irrigation defaults",
-        "description": "Each field carries the value in force, where it came from, this organization's own value and when it was last changed. Requires setting:read.",
+        "description": "Each field carries the value in force and the value that would apply without this organization's own one. Requires setting:read.",
         "operationId": "getIrrigationSettings",
         "parameters": [
           {
@@ -2451,7 +2441,7 @@
           "Irrigation"
         ],
         "summary": "Set an organization's irrigation defaults",
-        "description": "An omitted field stays as it is, `null` drops the organization's own value and returns it to inheritance. Requires setting:update.",
+        "description": "An omitted field stays as it is. Sending the value the organization would inherit drops its own value, so it follows its parent again. Requires setting:update.",
         "operationId": "updateIrrigationSettings",
         "parameters": [
           {
@@ -2526,16 +2516,6 @@
               }
             }
           },
-          "409": {
-            "description": "An organization above froze this subtree (code `settings.enforced_by_ancestor`)",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          },
           "500": {
             "description": "Internal server error",
             "content": {
@@ -2555,7 +2535,7 @@
           "WasteBins"
         ],
         "summary": "Read an organization's waste defaults",
-        "description": "Each field carries the value in force, where it came from, this organization's own value and when it was last changed. Requires setting:read.",
+        "description": "Each field carries the value in force and the value that would apply without this organization's own one. Requires setting:read.",
         "operationId": "getWasteSettings",
         "parameters": [
           {
@@ -2627,7 +2607,7 @@
           "WasteBins"
         ],
         "summary": "Set an organization's waste defaults",
-        "description": "An omitted field stays as it is, `null` drops the organization's own value and returns it to inheritance. Requires setting:update.",
+        "description": "An omitted field stays as it is. Sending the value the organization would inherit drops its own value, so it follows its parent again. Requires setting:update.",
         "operationId": "updateWasteSettings",
         "parameters": [
           {
@@ -2694,16 +2674,6 @@
           },
           "404": {
             "description": "Not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "An organization above froze this subtree (code `settings.enforced_by_ancestor`)",
             "content": {
               "application/json": {
                 "schema": {
@@ -11077,16 +11047,6 @@
           "just_watered_ttl_secs"
         ],
         "properties": {
-          "enforced_by": {
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/OrganizationRef"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
           "just_watered_ttl_secs": {
             "$ref": "#/components/schemas/SettingField_i64"
           },
@@ -11098,7 +11058,7 @@
       },
       "IrrigationSettingsUpdateRequest": {
         "type": "object",
-        "description": "Three states per field. Absent means unchanged, `null` means go back to\ninheriting, a number sets it.",
+        "description": "An omitted field stays as it is. Sending the inherited value drops the\norganization's own one.",
         "properties": {
           "just_watered_ttl_secs": {
             "type": [
@@ -12812,16 +12772,6 @@
           "modules"
         ],
         "properties": {
-          "enforced_by": {
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/OrganizationRef"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
           "modules": {
             "type": "array",
             "items": {
@@ -12963,27 +12913,11 @@
         "required": [
           "sensor_offline_after_secs",
           "defect_streak",
-          "map_view",
-          "descendants_may_override"
+          "map_view"
         ],
         "properties": {
           "defect_streak": {
             "$ref": "#/components/schemas/SettingField_i32"
-          },
-          "descendants_may_override": {
-            "type": "boolean",
-            "description": "This organization's own switch for its sub-units. While `enforced_by`\nis set, an organization above has frozen the subtree and no sub-unit\nmay set anything, whatever this says."
-          },
-          "enforced_by": {
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/OrganizationRef",
-                "description": "The organization that froze this subtree, if any."
-              },
-              {
-                "type": "null"
-              }
-            ]
           },
           "map_view": {
             "$ref": "#/components/schemas/SettingField_MapViewDto"
@@ -12995,7 +12929,7 @@
       },
       "OrganizationSettingsUpdateRequest": {
         "type": "object",
-        "description": "Three states per field. Absent means unchanged, `null` means go back to\ninheriting, a value means set it.",
+        "description": "An omitted field stays as it is, and so does `null`. Sending the value an\norganization would inherit drops its own value.",
         "properties": {
           "defect_streak": {
             "type": [
@@ -13003,13 +12937,6 @@
               "null"
             ],
             "format": "int32"
-          },
-          "descendants_may_override": {
-            "type": [
-              "boolean",
-              "null"
-            ],
-            "description": "A plain toggle, not a three-state field: `null` is equivalent to\nomitting it and leaves the switch as it is."
           },
           "map_view": {
             "oneOf": [
@@ -15004,55 +14931,15 @@
           }
         }
       },
-      "SettingChangeRef": {
-        "type": "object",
-        "required": [
-          "changed_at"
-        ],
-        "properties": {
-          "changed_at": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "changed_by": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "uuid"
-          },
-          "changed_by_name": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "Resolved by the handler; absent when the account no longer resolves."
-          }
-        }
-      },
       "SettingField_MapViewDto": {
         "type": "object",
-        "description": "One value plus everything the interface needs to show where it comes from\nand to offer \"set my own\" or \"inherit again\".",
+        "description": "One value as the settings screen needs it: what is in force, and what would\nbe in force without the organization's own value.",
         "required": [
           "value",
-          "origin"
+          "inherited_value"
         ],
         "properties": {
-          "last_change": {
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/SettingChangeRef",
-                "description": "Always about this organization's own value, never the source's."
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "origin": {
-            "$ref": "#/components/schemas/SettingOriginDto"
-          },
-          "own_value": {
+          "inherited_value": {
             "type": "object",
             "required": [
               "center"
@@ -15094,17 +14981,6 @@
                 "minimum": 0
               }
             }
-          },
-          "source": {
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/OrganizationRef",
-                "description": "Set only where `origin` is `inherited`."
-              },
-              {
-                "type": "null"
-              }
-            ]
           },
           "value": {
             "type": "object",
@@ -15153,40 +15029,15 @@
       },
       "SettingField_f64": {
         "type": "object",
-        "description": "One value plus everything the interface needs to show where it comes from\nand to offer \"set my own\" or \"inherit again\".",
+        "description": "One value as the settings screen needs it: what is in force, and what would\nbe in force without the organization's own value.",
         "required": [
           "value",
-          "origin"
+          "inherited_value"
         ],
         "properties": {
-          "last_change": {
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/SettingChangeRef",
-                "description": "Always about this organization's own value, never the source's."
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "origin": {
-            "$ref": "#/components/schemas/SettingOriginDto"
-          },
-          "own_value": {
+          "inherited_value": {
             "type": "number",
             "format": "double"
-          },
-          "source": {
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/OrganizationRef",
-                "description": "Set only where `origin` is `inherited`."
-              },
-              {
-                "type": "null"
-              }
-            ]
           },
           "value": {
             "type": "number",
@@ -15196,40 +15047,15 @@
       },
       "SettingField_i32": {
         "type": "object",
-        "description": "One value plus everything the interface needs to show where it comes from\nand to offer \"set my own\" or \"inherit again\".",
+        "description": "One value as the settings screen needs it: what is in force, and what would\nbe in force without the organization's own value.",
         "required": [
           "value",
-          "origin"
+          "inherited_value"
         ],
         "properties": {
-          "last_change": {
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/SettingChangeRef",
-                "description": "Always about this organization's own value, never the source's."
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "origin": {
-            "$ref": "#/components/schemas/SettingOriginDto"
-          },
-          "own_value": {
+          "inherited_value": {
             "type": "integer",
             "format": "int32"
-          },
-          "source": {
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/OrganizationRef",
-                "description": "Set only where `origin` is `inherited`."
-              },
-              {
-                "type": "null"
-              }
-            ]
           },
           "value": {
             "type": "integer",
@@ -15239,40 +15065,15 @@
       },
       "SettingField_i64": {
         "type": "object",
-        "description": "One value plus everything the interface needs to show where it comes from\nand to offer \"set my own\" or \"inherit again\".",
+        "description": "One value as the settings screen needs it: what is in force, and what would\nbe in force without the organization's own value.",
         "required": [
           "value",
-          "origin"
+          "inherited_value"
         ],
         "properties": {
-          "last_change": {
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/SettingChangeRef",
-                "description": "Always about this organization's own value, never the source's."
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "origin": {
-            "$ref": "#/components/schemas/SettingOriginDto"
-          },
-          "own_value": {
+          "inherited_value": {
             "type": "integer",
             "format": "int64"
-          },
-          "source": {
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/OrganizationRef",
-                "description": "Set only where `origin` is `inherited`."
-              },
-              {
-                "type": "null"
-              }
-            ]
           },
           "value": {
             "type": "integer",
@@ -17645,16 +17446,6 @@
           "full_threshold"
         ],
         "properties": {
-          "enforced_by": {
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/OrganizationRef"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
           "full_threshold": {
             "$ref": "#/components/schemas/SettingField_i64",
             "description": "Fill level in percent from which a bin counts as full."
@@ -17663,7 +17454,7 @@
       },
       "WasteSettingsUpdateRequest": {
         "type": "object",
-        "description": "Three states per field. Absent means unchanged, `null` means go back to\ninheriting, a number sets it.",
+        "description": "An omitted field stays as it is. Sending the inherited value drops the\norganization's own one.",
         "properties": {
           "full_threshold": {
             "type": [

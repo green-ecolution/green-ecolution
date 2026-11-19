@@ -22,8 +22,8 @@ import {
 } from './MapViewDto';
 
 /**
- * Three states per field. Absent means unchanged, `null` means go back to
- * inheriting, a value means set it.
+ * An omitted field stays as it is, and so does `null`. Sending the value an
+ * organization would inherit drops its own value.
  * @export
  * @interface OrganizationSettingsUpdateRequest
  */
@@ -34,13 +34,6 @@ export interface OrganizationSettingsUpdateRequest {
      * @memberof OrganizationSettingsUpdateRequest
      */
     defectStreak?: number | null;
-    /**
-     * A plain toggle, not a three-state field: `null` is equivalent to
-     * omitting it and leaves the switch as it is.
-     * @type {boolean}
-     * @memberof OrganizationSettingsUpdateRequest
-     */
-    descendantsMayOverride?: boolean | null;
     /**
      * 
      * @type {MapViewDto}
@@ -73,7 +66,6 @@ export function OrganizationSettingsUpdateRequestFromJSONTyped(json: any, ignore
     return {
         
         'defectStreak': json['defect_streak'] == null ? undefined : json['defect_streak'],
-        'descendantsMayOverride': json['descendants_may_override'] == null ? undefined : json['descendants_may_override'],
         'mapView': json['map_view'] == null ? undefined : MapViewDtoFromJSON(json['map_view']),
         'sensorOfflineAfterSecs': json['sensor_offline_after_secs'] == null ? undefined : json['sensor_offline_after_secs'],
     };
@@ -91,7 +83,6 @@ export function OrganizationSettingsUpdateRequestToJSONTyped(value?: Organizatio
     return {
         
         'defect_streak': value['defectStreak'],
-        'descendants_may_override': value['descendantsMayOverride'],
         'map_view': MapViewDtoToJSON(value['mapView']),
         'sensor_offline_after_secs': value['sensorOfflineAfterSecs'],
     };

@@ -13,59 +13,19 @@
  */
 
 import { mapValues } from '../runtime';
-import type { SettingOriginDto } from './SettingOriginDto';
-import {
-    SettingOriginDtoFromJSON,
-    SettingOriginDtoFromJSONTyped,
-    SettingOriginDtoToJSON,
-    SettingOriginDtoToJSONTyped,
-} from './SettingOriginDto';
-import type { OrganizationRef } from './OrganizationRef';
-import {
-    OrganizationRefFromJSON,
-    OrganizationRefFromJSONTyped,
-    OrganizationRefToJSON,
-    OrganizationRefToJSONTyped,
-} from './OrganizationRef';
-import type { SettingChangeRef } from './SettingChangeRef';
-import {
-    SettingChangeRefFromJSON,
-    SettingChangeRefFromJSONTyped,
-    SettingChangeRefToJSON,
-    SettingChangeRefToJSONTyped,
-} from './SettingChangeRef';
-
 /**
- * One value plus everything the interface needs to show where it comes from
- * and to offer "set my own" or "inherit again".
+ * One value as the settings screen needs it: what is in force, and what would
+ * be in force without the organization's own value.
  * @export
  * @interface SettingFieldI32
  */
 export interface SettingFieldI32 {
     /**
-     * Always about this organization's own value, never the source's.
-     * @type {SettingChangeRef}
-     * @memberof SettingFieldI32
-     */
-    lastChange?: SettingChangeRef | null;
-    /**
-     * 
-     * @type {SettingOriginDto}
-     * @memberof SettingFieldI32
-     */
-    origin: SettingOriginDto;
-    /**
      * 
      * @type {number}
      * @memberof SettingFieldI32
      */
-    ownValue?: number;
-    /**
-     * Set only where `origin` is `inherited`.
-     * @type {OrganizationRef}
-     * @memberof SettingFieldI32
-     */
-    source?: OrganizationRef | null;
+    inheritedValue: number;
     /**
      * 
      * @type {number}
@@ -74,13 +34,11 @@ export interface SettingFieldI32 {
     value: number;
 }
 
-
-
 /**
  * Check if a given object implements the SettingFieldI32 interface.
  */
 export function instanceOfSettingFieldI32(value: object): value is SettingFieldI32 {
-    if (!('origin' in value) || value['origin'] === undefined) return false;
+    if (!('inheritedValue' in value) || value['inheritedValue'] === undefined) return false;
     if (!('value' in value) || value['value'] === undefined) return false;
     return true;
 }
@@ -95,10 +53,7 @@ export function SettingFieldI32FromJSONTyped(json: any, ignoreDiscriminator: boo
     }
     return {
         
-        'lastChange': json['last_change'] == null ? undefined : SettingChangeRefFromJSON(json['last_change']),
-        'origin': SettingOriginDtoFromJSON(json['origin']),
-        'ownValue': json['own_value'] == null ? undefined : json['own_value'],
-        'source': json['source'] == null ? undefined : OrganizationRefFromJSON(json['source']),
+        'inheritedValue': json['inherited_value'],
         'value': json['value'],
     };
 }
@@ -114,10 +69,7 @@ export function SettingFieldI32ToJSONTyped(value?: SettingFieldI32 | null, ignor
 
     return {
         
-        'last_change': SettingChangeRefToJSON(value['lastChange']),
-        'origin': SettingOriginDtoToJSON(value['origin']),
-        'own_value': value['ownValue'],
-        'source': OrganizationRefToJSON(value['source']),
+        'inherited_value': value['inheritedValue'],
         'value': value['value'],
     };
 }

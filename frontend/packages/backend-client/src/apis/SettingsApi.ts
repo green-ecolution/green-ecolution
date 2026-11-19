@@ -43,7 +43,7 @@ export interface UpdateOrganizationSettingsRequest {
 export class SettingsApi extends runtime.BaseAPI {
 
     /**
-     * Each field carries the value in force, where it came from, this organization\'s own value (even while a lock above makes it dormant) and when it was last changed. Requires setting:read.
+     * Each field carries the value in force and the value that would apply without this organization\'s own one. Requires setting:read.
      * Read an organization\'s operational defaults
      */
     async getOrganizationSettingsRaw(requestParameters: GetOrganizationSettingsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OrganizationSettingsResponse>> {
@@ -73,7 +73,7 @@ export class SettingsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Each field carries the value in force, where it came from, this organization\'s own value (even while a lock above makes it dormant) and when it was last changed. Requires setting:read.
+     * Each field carries the value in force and the value that would apply without this organization\'s own one. Requires setting:read.
      * Read an organization\'s operational defaults
      */
     async getOrganizationSettings(requestParameters: GetOrganizationSettingsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OrganizationSettingsResponse> {
@@ -82,7 +82,7 @@ export class SettingsApi extends runtime.BaseAPI {
     }
 
     /**
-     * An omitted field stays as it is, `null` drops the organization\'s own value and returns it to inheritance. Requires setting:update.
+     * An omitted field stays as it is. Sending the value the organization would inherit drops its own value, so it follows its parent again. Requires setting:update.
      * Set an organization\'s operational defaults
      */
     async updateOrganizationSettingsRaw(requestParameters: UpdateOrganizationSettingsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OrganizationSettingsResponse>> {
@@ -122,7 +122,7 @@ export class SettingsApi extends runtime.BaseAPI {
     }
 
     /**
-     * An omitted field stays as it is, `null` drops the organization\'s own value and returns it to inheritance. Requires setting:update.
+     * An omitted field stays as it is. Sending the value the organization would inherit drops its own value, so it follows its parent again. Requires setting:update.
      * Set an organization\'s operational defaults
      */
     async updateOrganizationSettings(requestParameters: UpdateOrganizationSettingsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OrganizationSettingsResponse> {

@@ -13,13 +13,6 @@
  */
 
 import { mapValues } from '../runtime';
-import type { OrganizationRef } from './OrganizationRef';
-import {
-    OrganizationRefFromJSON,
-    OrganizationRefFromJSONTyped,
-    OrganizationRefToJSON,
-    OrganizationRefToJSONTyped,
-} from './OrganizationRef';
 import type { SettingFieldI64 } from './SettingFieldI64';
 import {
     SettingFieldI64FromJSON,
@@ -55,20 +48,6 @@ export interface OrganizationSettingsResponse {
      */
     defectStreak: SettingFieldI32;
     /**
-     * This organization's own switch for its sub-units. While `enforced_by`
-     * is set, an organization above has frozen the subtree and no sub-unit
-     * may set anything, whatever this says.
-     * @type {boolean}
-     * @memberof OrganizationSettingsResponse
-     */
-    descendantsMayOverride: boolean;
-    /**
-     * The organization that froze this subtree, if any.
-     * @type {OrganizationRef}
-     * @memberof OrganizationSettingsResponse
-     */
-    enforcedBy?: OrganizationRef | null;
-    /**
      * 
      * @type {SettingFieldMapViewDto}
      * @memberof OrganizationSettingsResponse
@@ -87,7 +66,6 @@ export interface OrganizationSettingsResponse {
  */
 export function instanceOfOrganizationSettingsResponse(value: object): value is OrganizationSettingsResponse {
     if (!('defectStreak' in value) || value['defectStreak'] === undefined) return false;
-    if (!('descendantsMayOverride' in value) || value['descendantsMayOverride'] === undefined) return false;
     if (!('mapView' in value) || value['mapView'] === undefined) return false;
     if (!('sensorOfflineAfterSecs' in value) || value['sensorOfflineAfterSecs'] === undefined) return false;
     return true;
@@ -104,8 +82,6 @@ export function OrganizationSettingsResponseFromJSONTyped(json: any, ignoreDiscr
     return {
         
         'defectStreak': SettingFieldI32FromJSON(json['defect_streak']),
-        'descendantsMayOverride': json['descendants_may_override'],
-        'enforcedBy': json['enforced_by'] == null ? undefined : OrganizationRefFromJSON(json['enforced_by']),
         'mapView': SettingFieldMapViewDtoFromJSON(json['map_view']),
         'sensorOfflineAfterSecs': SettingFieldI64FromJSON(json['sensor_offline_after_secs']),
     };
@@ -123,8 +99,6 @@ export function OrganizationSettingsResponseToJSONTyped(value?: OrganizationSett
     return {
         
         'defect_streak': SettingFieldI32ToJSON(value['defectStreak']),
-        'descendants_may_override': value['descendantsMayOverride'],
-        'enforced_by': OrganizationRefToJSON(value['enforcedBy']),
         'map_view': SettingFieldMapViewDtoToJSON(value['mapView']),
         'sensor_offline_after_secs': SettingFieldI64ToJSON(value['sensorOfflineAfterSecs']),
     };

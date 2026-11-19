@@ -13,13 +13,6 @@
  */
 
 import { mapValues } from '../runtime';
-import type { OrganizationRef } from './OrganizationRef';
-import {
-    OrganizationRefFromJSON,
-    OrganizationRefFromJSONTyped,
-    OrganizationRefToJSON,
-    OrganizationRefToJSONTyped,
-} from './OrganizationRef';
 import type { SettingFieldI64 } from './SettingFieldI64';
 import {
     SettingFieldI64FromJSON,
@@ -34,12 +27,6 @@ import {
  * @interface WasteSettingsResponse
  */
 export interface WasteSettingsResponse {
-    /**
-     * 
-     * @type {OrganizationRef}
-     * @memberof WasteSettingsResponse
-     */
-    enforcedBy?: OrganizationRef | null;
     /**
      * Fill level in percent from which a bin counts as full.
      * @type {SettingFieldI64}
@@ -66,7 +53,6 @@ export function WasteSettingsResponseFromJSONTyped(json: any, ignoreDiscriminato
     }
     return {
         
-        'enforcedBy': json['enforced_by'] == null ? undefined : OrganizationRefFromJSON(json['enforced_by']),
         'fullThreshold': SettingFieldI64FromJSON(json['full_threshold']),
     };
 }
@@ -82,7 +68,6 @@ export function WasteSettingsResponseToJSONTyped(value?: WasteSettingsResponse |
 
     return {
         
-        'enforced_by': OrganizationRefToJSON(value['enforcedBy']),
         'full_threshold': SettingFieldI64ToJSON(value['fullThreshold']),
     };
 }

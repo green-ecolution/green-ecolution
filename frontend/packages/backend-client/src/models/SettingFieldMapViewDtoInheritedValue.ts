@@ -16,9 +16,9 @@ import { mapValues } from '../runtime';
 /**
  * 
  * @export
- * @interface SettingFieldMapViewDtoOwnValue
+ * @interface SettingFieldMapViewDtoInheritedValue
  */
-export interface SettingFieldMapViewDtoOwnValue {
+export interface SettingFieldMapViewDtoInheritedValue {
     /**
      * `[sw_lat, sw_lng, ne_lat, ne_lng]`, or `null` where the map may be
      * panned and zoomed freely. Absent reads the same as `null`: the generated
@@ -26,43 +26,43 @@ export interface SettingFieldMapViewDtoOwnValue {
      * entirely on the way out, so a round-tripped viewport must not be
      * rejected.
      * @type {Array<number>}
-     * @memberof SettingFieldMapViewDtoOwnValue
+     * @memberof SettingFieldMapViewDtoInheritedValue
      */
     bbox?: Array<number> | null;
     /**
      * 
      * @type {Array<number>}
-     * @memberof SettingFieldMapViewDtoOwnValue
+     * @memberof SettingFieldMapViewDtoInheritedValue
      */
     center: Array<number>;
     /**
      * 
      * @type {number}
-     * @memberof SettingFieldMapViewDtoOwnValue
+     * @memberof SettingFieldMapViewDtoInheritedValue
      */
     maxZoom?: number | null;
     /**
      * Set together with `bbox`, never on their own: the limits are one
      * decision, and half of them would restrict a map for no stated reason.
      * @type {number}
-     * @memberof SettingFieldMapViewDtoOwnValue
+     * @memberof SettingFieldMapViewDtoInheritedValue
      */
     minZoom?: number | null;
 }
 
 /**
- * Check if a given object implements the SettingFieldMapViewDtoOwnValue interface.
+ * Check if a given object implements the SettingFieldMapViewDtoInheritedValue interface.
  */
-export function instanceOfSettingFieldMapViewDtoOwnValue(value: object): value is SettingFieldMapViewDtoOwnValue {
+export function instanceOfSettingFieldMapViewDtoInheritedValue(value: object): value is SettingFieldMapViewDtoInheritedValue {
     if (!('center' in value) || value['center'] === undefined) return false;
     return true;
 }
 
-export function SettingFieldMapViewDtoOwnValueFromJSON(json: any): SettingFieldMapViewDtoOwnValue {
-    return SettingFieldMapViewDtoOwnValueFromJSONTyped(json, false);
+export function SettingFieldMapViewDtoInheritedValueFromJSON(json: any): SettingFieldMapViewDtoInheritedValue {
+    return SettingFieldMapViewDtoInheritedValueFromJSONTyped(json, false);
 }
 
-export function SettingFieldMapViewDtoOwnValueFromJSONTyped(json: any, ignoreDiscriminator: boolean): SettingFieldMapViewDtoOwnValue {
+export function SettingFieldMapViewDtoInheritedValueFromJSONTyped(json: any, ignoreDiscriminator: boolean): SettingFieldMapViewDtoInheritedValue {
     if (json == null) {
         return json;
     }
@@ -75,11 +75,11 @@ export function SettingFieldMapViewDtoOwnValueFromJSONTyped(json: any, ignoreDis
     };
 }
 
-export function SettingFieldMapViewDtoOwnValueToJSON(json: any): SettingFieldMapViewDtoOwnValue {
-    return SettingFieldMapViewDtoOwnValueToJSONTyped(json, false);
+export function SettingFieldMapViewDtoInheritedValueToJSON(json: any): SettingFieldMapViewDtoInheritedValue {
+    return SettingFieldMapViewDtoInheritedValueToJSONTyped(json, false);
 }
 
-export function SettingFieldMapViewDtoOwnValueToJSONTyped(value?: SettingFieldMapViewDtoOwnValue | null, ignoreDiscriminator: boolean = false): any {
+export function SettingFieldMapViewDtoInheritedValueToJSONTyped(value?: SettingFieldMapViewDtoInheritedValue | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }

@@ -14,8 +14,8 @@
 
 import { mapValues } from '../runtime';
 /**
- * Three states per field. Absent means unchanged, `null` means go back to
- * inheriting, a number sets it.
+ * An omitted field stays as it is. Sending the inherited value drops the
+ * organization's own one.
  * @export
  * @interface IrrigationSettingsUpdateRequest
  */
