@@ -31,11 +31,6 @@
     "emailLabel": "E-Mail:",
     "languageHeading": "Sprache"
   },
-  "team": {
-    "navAriaLabel": "Team und Rollen",
-    "tabMembers": "Mitarbeitende",
-    "tabRoles": "Rollen"
-  },
   "stations": {
     "title": "Stationen",
     "intro": "Startpunkte und Stationen, an denen Fahrzeuge Wasser auffüllen oder Laderaum entladen.",
@@ -287,7 +282,6 @@
     }
   },
   "members": {
-    "listTitle": "Mitarbeitende",
     "searchPlaceholder": "Name, Username oder E-Mail",
     "searchAriaLabel": "Mitarbeitende suchen",
     "withSubOrganizations": "mit Unterorganisationen",

@@ -31,11 +31,6 @@
     "emailLabel": "Email:",
     "languageHeading": "Language"
   },
-  "team": {
-    "navAriaLabel": "Team and roles",
-    "tabMembers": "Members",
-    "tabRoles": "Roles"
-  },
   "stations": {
     "title": "Stations",
     "intro": "Start points and stations where vehicles refill water or unload cargo volume.",
@@ -287,7 +282,6 @@
     }
   },
   "members": {
-    "listTitle": "Members",
     "searchPlaceholder": "Name, username or email",
     "searchAriaLabel": "Search members",
     "withSubOrganizations": "with sub-organizations",

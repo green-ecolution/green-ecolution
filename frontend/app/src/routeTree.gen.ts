@@ -81,6 +81,7 @@ import { Route as ProtectedPlansFormularNewIndexRouteImport } from './routes/_pr
 import { Route as ProtectedSettingsOrganizationOrgIdIndexRouteImport } from './routes/_protected/settings/organization/$orgId/index'
 import { Route as ProtectedSettingsOrganizationOrgIdAreasRouteImport } from './routes/_protected/settings/organization/$orgId/areas'
 import { Route as ProtectedSettingsOrganizationOrgIdMembersRouteImport } from './routes/_protected/settings/organization/$orgId/members'
+import { Route as ProtectedSettingsOrganizationOrgIdRolesRouteImport } from './routes/_protected/settings/organization/$orgId/roles'
 import { Route as ProtectedSettingsOrganizationOrgIdStructureRouteImport } from './routes/_protected/settings/organization/$orgId/structure'
 import { Route as ProtectedSettingsPluginSlugIndexRouteImport } from './routes/_protected/settings/plugin/$slug/index'
 import { Route as ProtectedVehiclesFormularVehicleIdEditRouteRouteImport } from './routes/_protected/vehicles/_formular/$vehicleId/edit/route'
@@ -499,6 +500,12 @@ const ProtectedSettingsOrganizationOrgIdMembersRoute =
     path: '/members',
     getParentRoute: () => ProtectedSettingsOrganizationOrgIdRouteRoute,
   } as any)
+const ProtectedSettingsOrganizationOrgIdRolesRoute =
+  ProtectedSettingsOrganizationOrgIdRolesRouteImport.update({
+    id: '/roles',
+    path: '/roles',
+    getParentRoute: () => ProtectedSettingsOrganizationOrgIdRouteRoute,
+  } as any)
 const ProtectedSettingsOrganizationOrgIdStructureRoute =
   ProtectedSettingsOrganizationOrgIdStructureRouteImport.update({
     id: '/structure',
@@ -652,6 +659,7 @@ export interface FileRoutesByFullPath {
   '/waste-bins/$wasteBinId/edit': typeof ProtectedWasteBinsFormularWasteBinIdEditRouteRouteWithChildren
   '/settings/organization/$orgId/areas': typeof ProtectedSettingsOrganizationOrgIdAreasRoute
   '/settings/organization/$orgId/members': typeof ProtectedSettingsOrganizationOrgIdMembersRoute
+  '/settings/organization/$orgId/roles': typeof ProtectedSettingsOrganizationOrgIdRolesRoute
   '/settings/organization/$orgId/structure': typeof ProtectedSettingsOrganizationOrgIdStructureRoute
   '/map/tree/new/': typeof ProtectedMapTreeNewIndexRoute
   '/map/treecluster/new/': typeof ProtectedMapTreeclusterNewIndexRoute
@@ -706,6 +714,7 @@ export interface FileRoutesByTo {
   '/trees/$treeId': typeof ProtectedTreesTreeIdIndexRoute
   '/settings/organization/$orgId/areas': typeof ProtectedSettingsOrganizationOrgIdAreasRoute
   '/settings/organization/$orgId/members': typeof ProtectedSettingsOrganizationOrgIdMembersRoute
+  '/settings/organization/$orgId/roles': typeof ProtectedSettingsOrganizationOrgIdRolesRoute
   '/settings/organization/$orgId/structure': typeof ProtectedSettingsOrganizationOrgIdStructureRoute
   '/map/tree/new': typeof ProtectedMapTreeNewIndexRoute
   '/map/treecluster/new': typeof ProtectedMapTreeclusterNewIndexRoute
@@ -794,6 +803,7 @@ export interface FileRoutesById {
   '/_protected/waste-bins/_formular/$wasteBinId/edit': typeof ProtectedWasteBinsFormularWasteBinIdEditRouteRouteWithChildren
   '/_protected/settings/organization/$orgId/areas': typeof ProtectedSettingsOrganizationOrgIdAreasRoute
   '/_protected/settings/organization/$orgId/members': typeof ProtectedSettingsOrganizationOrgIdMembersRoute
+  '/_protected/settings/organization/$orgId/roles': typeof ProtectedSettingsOrganizationOrgIdRolesRoute
   '/_protected/settings/organization/$orgId/structure': typeof ProtectedSettingsOrganizationOrgIdStructureRoute
   '/_protected/map/tree/new/': typeof ProtectedMapTreeNewIndexRoute
   '/_protected/map/treecluster/new/': typeof ProtectedMapTreeclusterNewIndexRoute
@@ -880,6 +890,7 @@ export interface FileRouteTypes {
     | '/waste-bins/$wasteBinId/edit'
     | '/settings/organization/$orgId/areas'
     | '/settings/organization/$orgId/members'
+    | '/settings/organization/$orgId/roles'
     | '/settings/organization/$orgId/structure'
     | '/map/tree/new/'
     | '/map/treecluster/new/'
@@ -934,6 +945,7 @@ export interface FileRouteTypes {
     | '/trees/$treeId'
     | '/settings/organization/$orgId/areas'
     | '/settings/organization/$orgId/members'
+    | '/settings/organization/$orgId/roles'
     | '/settings/organization/$orgId/structure'
     | '/map/tree/new'
     | '/map/treecluster/new'
@@ -1021,6 +1033,7 @@ export interface FileRouteTypes {
     | '/_protected/waste-bins/_formular/$wasteBinId/edit'
     | '/_protected/settings/organization/$orgId/areas'
     | '/_protected/settings/organization/$orgId/members'
+    | '/_protected/settings/organization/$orgId/roles'
     | '/_protected/settings/organization/$orgId/structure'
     | '/_protected/map/tree/new/'
     | '/_protected/map/treecluster/new/'
@@ -1554,6 +1567,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedSettingsOrganizationOrgIdMembersRouteImport
       parentRoute: typeof ProtectedSettingsOrganizationOrgIdRouteRoute
     }
+    '/_protected/settings/organization/$orgId/roles': {
+      id: '/_protected/settings/organization/$orgId/roles'
+      path: '/roles'
+      fullPath: '/settings/organization/$orgId/roles'
+      preLoaderRoute: typeof ProtectedSettingsOrganizationOrgIdRolesRouteImport
+      parentRoute: typeof ProtectedSettingsOrganizationOrgIdRouteRoute
+    }
     '/_protected/settings/organization/$orgId/structure': {
       id: '/_protected/settings/organization/$orgId/structure'
       path: '/structure'
@@ -1939,6 +1959,7 @@ const ProtectedSettingsPluginRouteRouteWithChildren =
 interface ProtectedSettingsOrganizationOrgIdRouteRouteChildren {
   ProtectedSettingsOrganizationOrgIdAreasRoute: typeof ProtectedSettingsOrganizationOrgIdAreasRoute
   ProtectedSettingsOrganizationOrgIdMembersRoute: typeof ProtectedSettingsOrganizationOrgIdMembersRoute
+  ProtectedSettingsOrganizationOrgIdRolesRoute: typeof ProtectedSettingsOrganizationOrgIdRolesRoute
   ProtectedSettingsOrganizationOrgIdStructureRoute: typeof ProtectedSettingsOrganizationOrgIdStructureRoute
   ProtectedSettingsOrganizationOrgIdIndexRoute: typeof ProtectedSettingsOrganizationOrgIdIndexRoute
 }
@@ -1949,6 +1970,8 @@ const ProtectedSettingsOrganizationOrgIdRouteRouteChildren: ProtectedSettingsOrg
       ProtectedSettingsOrganizationOrgIdAreasRoute,
     ProtectedSettingsOrganizationOrgIdMembersRoute:
       ProtectedSettingsOrganizationOrgIdMembersRoute,
+    ProtectedSettingsOrganizationOrgIdRolesRoute:
+      ProtectedSettingsOrganizationOrgIdRolesRoute,
     ProtectedSettingsOrganizationOrgIdStructureRoute:
       ProtectedSettingsOrganizationOrgIdStructureRoute,
     ProtectedSettingsOrganizationOrgIdIndexRoute:
