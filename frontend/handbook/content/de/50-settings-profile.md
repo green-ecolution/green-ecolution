@@ -3,7 +3,7 @@ slug: settings-profile
 title: Profil
 part: administration
 summary: Die eigene Profilseite lesen und wo sich Sprache und persönliche Daten ändern lassen.
-routes: ['/settings', '/settings/profile']
+routes: ['/settings', '/settings/profile', '/settings/notifications']
 ---
 
 ## Deine Profilseite
@@ -25,7 +25,10 @@ Organisation gilt das nicht: Die kann selbst diese Person nicht am eigenen Konto
 ## Aufbau der Einstellungen
 
 Die Navigation der Einstellungen hat zwei Gruppen. Unter **Mein Konto** stehen
-**Profil** und **Benachrichtigungen**. Unter **Einstellungen für** wählst du zuerst eine
+**Profil** und **Benachrichtigungen**. Die Seite Benachrichtigungen ist noch nicht
+fertig: Ihr Eintrag trägt das Abzeichen **bald**, und die Seite selbst sagt nur, dass sie
+**In Arbeit** ist und du hier künftig bestimmst, worüber und auf welchem Weg dich die
+Anwendung informiert. Unter **Einstellungen für** wählst du zuerst eine
 Organisation und findest darunter die Einträge **Überblick**, **Aufgabenbereiche**,
 **Struktur**, **Mitarbeitende**, **Rollen**, **Stationen** und **Plugins**. Verwaltest du
 nur eine Organisation, steht an der Stelle der Auswahl lediglich ihr Name. Einträge, für

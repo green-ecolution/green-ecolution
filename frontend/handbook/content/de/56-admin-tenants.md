@@ -19,7 +19,7 @@ angehört, arbeitet nicht mit Bäumen, Fahrzeugen und Einsatzplänen einer einze
 Kommune, sondern verwaltet die Organisationen, die das tun. Deshalb zeigt die Anwendung
 solchen Mitgliedern eine eigene Oberfläche: Statt des Dashboards öffnet sich die
 Mandantenübersicht, und die Seitennavigation führt unter **Instanz** zu den Seiten, die
-die Instanz als Ganzes betreffen: Mandanten, Organisation, Team und Rollen, Plugins und
+die Instanz als Ganzes betreffen: Mandanten, Organisation, Team & Rollen, Plugins und
 Systeminformationen. Die Einträge **Organisation**, **Team & Rollen** und **Plugins**
 führen dabei in die Einstellungen der obersten Organisation, also auf deren
 [Überblick](./settings-organization.md), auf die Mitarbeitenden und auf die Plugins. Karte, Einsatzpläne, Fahrzeuge und Sensoren tauchen dort nicht auf,
@@ -38,9 +38,13 @@ die bei ihm aktiven Module sowie die Sensoren, Fahrzeuge und Einsatzpläne, die 
 seinen Unterorganisationen gehören. Archivierte Fahrzeuge zählen nicht mit. Solange die
 Zahlen noch geladen werden, steht ein Strich an ihrer Stelle.
 
-Hat die Instanz noch keinen Mandanten, legst du den ersten auf der Seite
-[Struktur](./settings-structure.md#unterorganisationen) der obersten Organisation an; die
-Übersicht verlinkt dorthin.
+Hat die Instanz noch keinen Mandanten, steht anstelle der Karten ein Hinweis mit dem
+Link **Mandanten unter Organisation anlegen**. Er öffnet den
+[Überblick](./settings-organization.md) der obersten Organisation. Von dort führt die
+Karte **Struktur**, ebenso der Eintrag **Struktur** in der Einstellungsnavigation, zu der
+Seite, auf der du den Mandanten als
+[Unterorganisation](./settings-structure.md#unterorganisationen) der obersten Organisation
+anlegst.
 
 ## In einen Mandanten wechseln
 

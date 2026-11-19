@@ -58,7 +58,8 @@ Nach **Speichern** erscheint die Station in der Liste.
 ## Eine Station bearbeiten oder löschen
 
 Über das Stift-Symbol änderst du Name, Position und die Angabe **Fahrzeuge können hier**. Die
-Organisation lässt sich hier nicht mehr wechseln. Das Papierkorb-Symbol löscht die
+Organisation lässt sich im Bearbeiten-Dialog nicht mehr wechseln; dafür gibt es die Aktion
+**Verschieben**, die weiter unten beschrieben ist. Das Papierkorb-Symbol löscht die
 Station nach einer Rückfrage. Verweigert Green Ecolution das Löschen, etwa weil es sich
 um den Standard handelt, erscheint der Grund als Meldung am Bildschirmrand.
 
