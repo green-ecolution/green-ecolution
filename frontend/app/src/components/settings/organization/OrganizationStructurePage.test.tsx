@@ -11,7 +11,7 @@ const ORGS: OrganizationResponse[] = [
   { id: 'amt', name: 'Grünflächenamt', memberCount: 3, parentId: 'root', contactPersonId: 'u1' },
   { id: 'nord', name: 'Stadtgärtnerei Nord', memberCount: 4, parentId: 'amt' },
   { id: 'duburg', name: 'Team Duburg', memberCount: 6, parentId: 'nord' },
-  { id: 'sued', name: 'Betriebshof Süd', memberCount: 2, parentId: 'amt' },
+  { id: 'sued', name: 'Betriebshof Süd', memberCount: 2, parentId: 'amt', contactPersonId: 'u9' },
 ]
 
 const person = { id: 'u1', firstName: 'Nils', lastName: 'Nissen' } as UserResponse
@@ -146,7 +146,15 @@ describe('OrganizationStructurePage', () => {
   it('names the contact person, or says that none is set', () => {
     renderPage()
     expect(screen.getByText('Nils Nissen')).toBeInTheDocument()
-    expect(screen.getAllByText('Nicht hinterlegt')).toHaveLength(3)
+    expect(screen.getAllByText('Nicht hinterlegt')).toHaveLength(2)
+  })
+
+  it('does not claim that a contact person is missing when the name cannot be resolved', () => {
+    renderPage()
+    const row = screen.getByText('Betriebshof Süd').closest('tr')!
+    expect(within(row).queryByText('Nicht hinterlegt')).not.toBeInTheDocument()
+    expect(within(row).getByText('Name nicht verfügbar')).toHaveClass('sr-only')
+    expect(within(row).getByText('–')).toBeInTheDocument()
   })
 
   it('shows the active modules by their label', () => {

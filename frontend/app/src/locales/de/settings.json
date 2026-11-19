@@ -260,7 +260,6 @@
       "description": "{name} wird entfernt. Personen mit dieser Rolle verlieren die darin enthaltenen Rechte."
     },
     "leaveDescription": "Deine Änderungen an dieser Rolle sind noch nicht gespeichert.",
-    "noOrganization": "Deinem Konto ist keine Organisation zugeordnet. Ohne Organisation lassen sich keine Rollen verwalten.",
     "loading": "Rollen werden geladen",
     "nameConflict": "Eine Rolle mit diesem Namen existiert bereits.",
     "createButtonLabel": "Rolle anlegen",
@@ -375,16 +374,14 @@
     "notFoundBackLabel": "Zu meiner Organisation",
     "areas": {
       "title": "Aufgabenbereiche",
-      "intro": "Schalte ein, was zu den Aufgaben von {name} gehört, und trage ein, womit die Planung rechnen soll."
+      "intro": "Schalte ein, was zu den Aufgaben von {name} gehört, und trage ein, womit die Planung rechnen soll.",
+      "loading": "Aufgabenbereiche werden geladen"
     },
-    "createButton": "Neu",
     "loading": "Organisationen werden geladen",
     "loadErrorForbidden": "Du darfst diese Organisation nicht einsehen. Vermutlich gilt deine Rolle nur für eine untergeordnete Organisation.",
     "loadErrorGeneric": "Die Organisationsstruktur konnte nicht geladen werden. Bitte versuche es später erneut.",
     "nameConflict": "Eine Organisation mit diesem Namen existiert bereits.",
     "contactPersonNotAssigned": "Diese Person ist dieser Organisation nicht zugeordnet und kann nicht Kontaktperson sein.",
-    "noOwnOrganization": "Deinem Konto ist keine Organisation zugeordnet. Ohne Organisation lässt sich keine Organisationsstruktur verwalten.",
-    "ownOrganizationMissing": "Deine Organisation wurde nicht gefunden. Ohne sie lässt sich die Organisationsstruktur nicht anzeigen.",
     "count_one": "{count} Person",
     "count_other": "{count} Personen",
     "memberSummaryWithChildren": "{people} in {children}",
@@ -417,10 +414,6 @@
     "changeContactPerson": "Ändern",
     "setContactPerson": "Kontaktperson festlegen",
     "noContactPerson": "Keine Kontaktperson festgelegt.",
-    "assignedMembersTitle": "Zugewiesene Mitarbeitende",
-    "manageMembers": "Mitarbeitende verwalten",
-    "subOrganizationsTitle": "Untergeordnete Organisationen",
-    "noSubOrganizations": "Diese Organisation hat keine Unterorganisationen.",
     "createSubOrganization": "Unterorganisation anlegen",
     "deleteHint": "Eine Organisation lässt sich nur löschen, wenn sie keine Unterorganisationen und keine Mitarbeitenden mehr hat.",
     "deleteButton": "Organisation löschen",
@@ -435,7 +428,8 @@
       "membersWithDirect": "{total}, davon {direct} direkt",
       "noContact": "Nicht hinterlegt",
       "noModules": "Keine",
-      "openAriaLabel": "Einstellungen von {name} öffnen"
+      "openAriaLabel": "Einstellungen von {name} öffnen",
+      "contactUnresolved": "Name nicht verfügbar"
     },
     "overview": {
       "mapViewTitle": "Kartenausschnitt",
@@ -447,7 +441,6 @@
       "areasActive_other": "{modules, list} sind eingeschaltet",
       "areasNone": "Kein Aufgabenbereich ist eingeschaltet"
     },
-    "discardDescription": "Du hast Änderungen an dieser Organisation, die noch nicht gespeichert sind.",
     "deleteDialog": {
       "title": "Organisation löschen?",
       "description": "{name} wird entfernt. Das ist nur möglich, solange keine Unterorganisationen und keine Mitarbeitenden zugeordnet sind."

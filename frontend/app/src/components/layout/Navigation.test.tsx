@@ -348,7 +348,10 @@ describe('Navigation', () => {
 
     expect(await screen.findByText('Mandanten')).toBeInTheDocument()
     expect(screen.getByText('Instanz')).toBeInTheDocument()
-    expect(screen.getByText('Organisation')).toBeInTheDocument()
+    expect(screen.getByText('Organisation').closest('a')).toHaveAttribute(
+      'href',
+      '/settings/organization/org-root',
+    )
     expect(screen.getByText('Team & Rollen').closest('a')).toHaveAttribute(
       'href',
       '/settings/organization/org-root/members',
@@ -375,6 +378,10 @@ describe('Navigation', () => {
     renderNavigation()
 
     expect(await screen.findByText('Mandanten')).toBeInTheDocument()
+    expect(screen.getByText('Organisation').closest('a')).toHaveAttribute(
+      'href',
+      '/settings/organization',
+    )
     expect(screen.queryByText('Team & Rollen')).not.toBeInTheDocument()
     expect(screen.queryByText('Plugins')).not.toBeInTheDocument()
   })

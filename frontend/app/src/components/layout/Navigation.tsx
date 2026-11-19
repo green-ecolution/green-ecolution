@@ -238,7 +238,9 @@ const adminNavData = (
         key: 'nav-admin-organization',
         label: t('sidebar.organization'),
         icon: <Network className="w-5 h-5" />,
-        to: '/settings/organization',
+        ...(organizationId
+          ? { to: '/settings/organization/$orgId', params: { orgId: organizationId } }
+          : { to: '/settings/organization' }),
       },
       ...(organizationId
         ? [

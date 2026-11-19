@@ -140,9 +140,17 @@ const OrganizationStructurePage = () => {
                       })}
                 </TableCell>
                 <TableCell>
-                  {nameOfPerson(row.contactPersonId) ?? (
-                    <span className="text-dark-600">{t('organization.structure.noContact')}</span>
-                  )}
+                  {nameOfPerson(row.contactPersonId) ??
+                    (row.contactPersonId ? (
+                      <span className="text-dark-600">
+                        <span aria-hidden="true">–</span>
+                        <span className="sr-only">
+                          {t('organization.structure.contactUnresolved')}
+                        </span>
+                      </span>
+                    ) : (
+                      <span className="text-dark-600">{t('organization.structure.noContact')}</span>
+                    ))}
                 </TableCell>
                 <TableCell>
                   {row.moduleKeys.length === 0 ? (

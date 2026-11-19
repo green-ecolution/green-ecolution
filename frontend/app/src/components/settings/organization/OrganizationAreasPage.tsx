@@ -149,7 +149,7 @@ const OrganizationAreasPage = () => {
           />
         </>
       ) : (
-        <Loading className="mt-10 justify-center" label={t('organization.loading')} />
+        <Loading className="mt-10 justify-center" label={t('organization.areas.loading')} />
       )}
 
       {unsaved && (

@@ -20,7 +20,6 @@ import {
 import type { Role } from '@/api/backendApi'
 import { modulesQuery, userQueries, roleQueries } from '@/api/queries'
 import { useRoleMutations } from '@/hooks/useRoleMutations'
-import { usePermissions } from '@/lib/auth/usePermissions'
 import { useContainerWiderThan } from '@/hooks/useContainerWiderThan'
 import { TWO_PANE_MIN_WIDTH } from '../twoPaneWidth'
 import { statusOf } from '@/lib/httpError'
@@ -40,8 +39,7 @@ const nameConflictMessage = (error: unknown, t: TFunction<'settings'>): string |
 
 const RolesPage = () => {
   const { t } = useTranslation(['settings', 'common'])
-  const grantable = usePermissions()
-  const { orgId, can } = useSettingsOrganization()
+  const { orgId, can, perms: grantable } = useSettingsOrganization()
   const { data: moduleList } = useQuery(modulesQuery())
   const activeKeys = new Set(
     moduleList?.organizations.find((entry) => entry.organizationId === orgId)?.active ?? [],

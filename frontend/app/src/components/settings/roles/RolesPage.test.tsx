@@ -54,11 +54,12 @@ vi.mock('@/modules/registry', async () => {
 })
 
 const selectedOrg = vi.hoisted(() => ({ id: 'nord' }))
+const selectedOrgPerms = vi.hoisted((): { value: Permissions } => ({ value: 'unrestricted' }))
 vi.mock('../organization/useSettingsOrganization', () => ({
   useSettingsOrganization: () => ({
     orgId: selectedOrg.id,
     organizations: [],
-    perms: 'unrestricted',
+    perms: selectedOrgPerms.value,
     can: (required: readonly string[]) => {
       const held = grantedPermissions()
       return held === 'unrestricted' || required.length === 0 || required.some((p) => held.has(p))
@@ -164,6 +165,7 @@ describe('RolesPage', () => {
     permissions.mockReturnValue(UNRESTRICTED)
     isWide.mockReturnValue(true)
     selectedOrg.id = 'nord'
+    selectedOrgPerms.value = UNRESTRICTED
     requestedOrgRoles.ids.clear()
     probes.list = [probeManifest('alpha'), probeManifest('beta')]
     activeModulesByOrg({ nord: [irrigationManifest.key] })
@@ -222,6 +224,17 @@ describe('RolesPage', () => {
       description: 'Kopie von Routenplanung',
     })
     expect([...createVars.permissions].sort()).toEqual(['tree:read', 'watering_plan:read'])
+  })
+
+  it('only grants what the user holds in the selected organization', async () => {
+    selectedOrgPerms.value = new Set(['role:create', 'tree:read'])
+    renderPage()
+    await userEvent.click(screen.getByRole('button', { name: /^Routenplanung/ }))
+    await userEvent.click(screen.getByRole('button', { name: 'Kopieren & bearbeiten' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Rolle anlegen' }))
+    await waitFor(() => expect(createMutate).toHaveBeenCalled())
+    const createVars = createMutate.mock.calls[0][0] as CreateRoleVariables
+    expect([...createVars.permissions]).toEqual(['tree:read'])
   })
 
   it('saves an edited own role', async () => {

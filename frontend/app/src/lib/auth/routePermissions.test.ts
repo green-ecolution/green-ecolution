@@ -36,10 +36,6 @@ describe('CORE_ROUTE_PERMISSIONS', () => {
       '/settings/organization',
       '/settings/organization/$orgId/members',
       '/settings/organization/$orgId/plugins',
-      '/settings/plugin',
-      '/settings/team',
-      '/settings/team/members',
-      '/settings/team/roles',
       '/vehicles',
     ])
   })
@@ -168,12 +164,22 @@ describe('canAccessRoute', () => {
   })
 
   it('allows everything for unrestricted access', () => {
-    expect(canAccessRoute('/settings/team/members', UNRESTRICTED)).toBe(true)
+    expect(canAccessRoute('/settings/organization/$orgId/members', UNRESTRICTED)).toBe(true)
   })
 
-  it('guards the roles tab with role:read', () => {
-    expect(canAccessRoute('/settings/team/roles', new Set(['user:read']))).toBe(false)
-    expect(canAccessRoute('/settings/team/roles', new Set(['role:read']))).toBe(true)
+  it('guards the members entry with user:read and role:read', () => {
+    expect(
+      canAccessRoute('/settings/organization/$orgId/members', new Set(['organization:read'])),
+    ).toBe(false)
+    expect(canAccessRoute('/settings/organization/$orgId/members', new Set(['role:read']))).toBe(
+      true,
+    )
+  })
+
+  it('guards the plugins entry with plugin:read', () => {
+    expect(canAccessRoute('/settings/organization/$orgId/plugins', new Set(['user:read']))).toBe(
+      false,
+    )
   })
 })
 
