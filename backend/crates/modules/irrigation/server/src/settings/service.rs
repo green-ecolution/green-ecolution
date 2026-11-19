@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::Arc};
+use std::sync::Arc;
 
 use domain::{Id, organization::Organization};
 use uuid::Uuid;
@@ -7,7 +7,7 @@ use super::{
     IrrigationResolution, IrrigationSettings, IrrigationSettingsUpdate,
     repository::PgIrrigationSettings,
 };
-use server::{http::v1::dto::settings::ChangeStamp, service::ServiceError};
+use server::service::ServiceError;
 
 pub struct IrrigationSettingsService {
     repo: Arc<PgIrrigationSettings>,
@@ -29,25 +29,15 @@ impl IrrigationSettingsService {
         Ok(self.repo.own(org).await?)
     }
 
-    pub async fn last_changes(
-        &self,
-        org: Id<Organization>,
-    ) -> Result<HashMap<&'static str, ChangeStamp>, ServiceError> {
-        Ok(self.repo.last_changes(org).await?)
-    }
-
-    /// Rejected while an ancestor froze the subtree, like the core's settings.
+    /// A value equal to the inherited one is dropped, like in the core's settings.
     pub async fn update(
         &self,
         actor: Uuid,
         org: Id<Organization>,
         update: IrrigationSettingsUpdate,
     ) -> Result<IrrigationSettings, ServiceError> {
-        if let Some(enforcer) = self.repo.resolution(org).await?.effective.enforced_by {
-            return Err(ServiceError::SettingsEnforcedByAncestor {
-                organization_id: enforcer.value(),
-            });
-        }
+        let inherited = self.repo.resolution(org).await?.inherited;
+        let update = update.settled(&inherited);
         if update.is_empty() {
             return Ok(self.repo.own(org).await?);
         }

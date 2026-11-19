@@ -12,12 +12,11 @@ use uuid::Uuid;
 use waste_domain::settings::FullThreshold;
 
 use super::{
-    EffectiveWasteSettings, WasteDefaults, WasteLevel, WasteResolution, WasteSettings,
-    WasteSettingsResolver, WasteSettingsUpdate, resolve,
+    EffectiveWasteSettings, WasteDefaults, WasteResolution, WasteSettings, WasteSettingsResolver,
+    WasteSettingsUpdate, resolve,
 };
-use server::http::v1::dto::settings::ChangeStamp;
 
-pub const FULL_THRESHOLD_KEY: &str = "full_threshold";
+const FULL_THRESHOLD_KEY: &str = "full_threshold";
 
 pub struct PgWasteSettings {
     pool: PgPool,
@@ -38,7 +37,7 @@ impl PgWasteSettings {
         }
     }
 
-    async fn chain(&self, target: Id<Organization>) -> Result<Vec<WasteLevel>, RepositoryError> {
+    async fn chain(&self, target: Id<Organization>) -> Result<Vec<WasteSettings>, RepositoryError> {
         let hierarchy = self.org_reader.hierarchy().await?;
         if !hierarchy.knows(target) {
             return Err(RepositoryError::NotFound);
@@ -48,11 +47,9 @@ impl PgWasteSettings {
 
         let rows = sqlx::query!(
             r#"SELECT o.id AS organization_id,
-                      w.full_threshold_percent AS "full_threshold_percent?",
-                      COALESCE(s.descendants_may_override, TRUE) AS "descendants_may_override!"
+                      w.full_threshold_percent AS "full_threshold_percent?"
                FROM organizations o
                LEFT JOIN waste_settings w ON w.organization_id = o.id
-               LEFT JOIN organization_settings s ON s.organization_id = o.id
                WHERE o.id = ANY($1)"#,
             &ids
         )
@@ -62,26 +59,25 @@ impl PgWasteSettings {
         let mut by_org = HashMap::new();
         for row in rows {
             let org = Id::new(row.organization_id);
-            let level = WasteLevel {
-                settings: WasteSettings {
+            by_org.insert(
+                org,
+                WasteSettings {
                     organization_id: org,
                     full_threshold: row
                         .full_threshold_percent
                         .map(|p| FullThreshold::new(i64::from(p)))
                         .transpose()?,
                 },
-                descendants_may_override: row.descendants_may_override,
-            };
-            by_org.insert(org, level);
+            );
         }
 
         Ok(ancestors
             .into_iter()
             .map(|id| {
-                by_org.get(&id).copied().unwrap_or(WasteLevel {
-                    settings: WasteSettings::empty(id),
-                    descendants_may_override: true,
-                })
+                by_org
+                    .get(&id)
+                    .copied()
+                    .unwrap_or_else(|| WasteSettings::empty(id))
             })
             .collect())
     }
@@ -103,35 +99,6 @@ impl PgWasteSettings {
     ) -> Result<WasteResolution, RepositoryError> {
         let chain = self.chain(org).await?;
         Ok(resolve(&self.defaults, &chain, org))
-    }
-
-    pub async fn last_changes(
-        &self,
-        org: Id<Organization>,
-    ) -> Result<HashMap<&'static str, ChangeStamp>, RepositoryError> {
-        let rows = sqlx::query!(
-            r#"SELECT changed_at, changed_by
-               FROM organization_settings_history
-               WHERE organization_id = $1 AND setting_key = 'full_threshold'
-               ORDER BY changed_at DESC, id DESC
-               LIMIT 1"#,
-            org.value()
-        )
-        .fetch_all(&self.pool)
-        .await?;
-
-        Ok(rows
-            .into_iter()
-            .map(|row| {
-                (
-                    FULL_THRESHOLD_KEY,
-                    ChangeStamp {
-                        changed_at: row.changed_at,
-                        changed_by: row.changed_by,
-                    },
-                )
-            })
-            .collect())
     }
 
     pub async fn apply(

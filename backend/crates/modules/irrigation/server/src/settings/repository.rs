@@ -12,10 +12,9 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 use super::{
-    EffectiveIrrigationSettings, IrrigationDefaults, IrrigationLevel, IrrigationResolution,
-    IrrigationSettings, IrrigationSettingsResolver, IrrigationSettingsUpdate, resolve,
+    EffectiveIrrigationSettings, IrrigationDefaults, IrrigationResolution, IrrigationSettings,
+    IrrigationSettingsResolver, IrrigationSettingsUpdate, resolve,
 };
-use server::http::v1::dto::settings::ChangeStamp;
 
 const WATER_DEMAND_KEY: &str = "water_demand";
 const JUST_WATERED_TTL_KEY: &str = "just_watered_ttl";
@@ -42,7 +41,7 @@ impl PgIrrigationSettings {
     async fn chain(
         &self,
         target: Id<Organization>,
-    ) -> Result<Vec<IrrigationLevel>, RepositoryError> {
+    ) -> Result<Vec<IrrigationSettings>, RepositoryError> {
         let hierarchy = self.org_reader.hierarchy().await?;
         if !hierarchy.knows(target) {
             return Err(RepositoryError::NotFound);
@@ -53,11 +52,9 @@ impl PgIrrigationSettings {
         let rows = sqlx::query!(
             r#"SELECT o.id AS organization_id,
                       i.water_demand_liters AS "water_demand_liters?",
-                      i.just_watered_ttl_secs AS "just_watered_ttl_secs?",
-                      COALESCE(s.descendants_may_override, TRUE) AS "descendants_may_override!"
+                      i.just_watered_ttl_secs AS "just_watered_ttl_secs?"
                FROM organizations o
                LEFT JOIN irrigation_settings i ON i.organization_id = o.id
-               LEFT JOIN organization_settings s ON s.organization_id = o.id
                WHERE o.id = ANY($1)"#,
             &ids
         )
@@ -67,8 +64,9 @@ impl PgIrrigationSettings {
         let mut by_org = HashMap::new();
         for row in rows {
             let org = Id::new(row.organization_id);
-            let level = IrrigationLevel {
-                settings: IrrigationSettings {
+            by_org.insert(
+                org,
+                IrrigationSettings {
                     organization_id: org,
                     water_demand: row.water_demand_liters.map(WaterDemand::new).transpose()?,
                     just_watered_ttl: row
@@ -76,18 +74,16 @@ impl PgIrrigationSettings {
                         .map(JustWateredTtl::new)
                         .transpose()?,
                 },
-                descendants_may_override: row.descendants_may_override,
-            };
-            by_org.insert(org, level);
+            );
         }
 
         Ok(ancestors
             .into_iter()
             .map(|id| {
-                by_org.get(&id).copied().unwrap_or(IrrigationLevel {
-                    settings: IrrigationSettings::empty(id),
-                    descendants_may_override: true,
-                })
+                by_org
+                    .get(&id)
+                    .copied()
+                    .unwrap_or_else(|| IrrigationSettings::empty(id))
             })
             .collect())
     }
@@ -112,42 +108,6 @@ impl PgIrrigationSettings {
     ) -> Result<IrrigationResolution, RepositoryError> {
         let chain = self.chain(org).await?;
         Ok(resolve(&self.defaults, &chain, org))
-    }
-
-    pub async fn last_changes(
-        &self,
-        org: Id<Organization>,
-    ) -> Result<HashMap<&'static str, ChangeStamp>, RepositoryError> {
-        // `changed_at` is transaction-start time, so `id` (uuid v7) breaks ties
-        // between keys written by one update.
-        let rows = sqlx::query!(
-            r#"SELECT DISTINCT ON (setting_key)
-                      setting_key AS "setting_key!", changed_at, changed_by
-               FROM organization_settings_history
-               WHERE organization_id = $1
-                 AND setting_key IN ('water_demand', 'just_watered_ttl')
-               ORDER BY setting_key, changed_at DESC, id DESC"#,
-            org.value()
-        )
-        .fetch_all(&self.pool)
-        .await?;
-
-        let mut out = HashMap::new();
-        for row in rows {
-            let key = match row.setting_key.as_str() {
-                WATER_DEMAND_KEY => WATER_DEMAND_KEY,
-                JUST_WATERED_TTL_KEY => JUST_WATERED_TTL_KEY,
-                _ => continue,
-            };
-            out.insert(
-                key,
-                ChangeStamp {
-                    changed_at: row.changed_at,
-                    changed_by: row.changed_by,
-                },
-            );
-        }
-        Ok(out)
     }
 
     pub async fn apply(

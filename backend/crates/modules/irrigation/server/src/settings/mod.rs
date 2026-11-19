@@ -1,5 +1,4 @@
-//! Irrigation's own settings. They inherit down the organization tree like the
-//! core's and obey the same lock, which stays a core setting.
+//! Irrigation's own settings. They inherit down the organization tree like the core's.
 
 pub mod http;
 pub mod repository;
@@ -8,7 +7,7 @@ pub mod service;
 use domain::{
     Id, RepositoryError,
     organization::Organization,
-    settings::{InheritLevel, Patch, SettingOrigin, inherit},
+    settings::{InheritLevel, Patch, inherit},
     shared::error::ValidationError,
 };
 use irrigation_domain::settings::{JustWateredTtl, WaterDemand};
@@ -53,19 +52,13 @@ impl IrrigationDefaults {
 pub struct EffectiveIrrigationSettings {
     pub water_demand: WaterDemand,
     pub just_watered_ttl: JustWateredTtl,
-    pub enforced_by: Option<Id<Organization>>,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct IrrigationOrigins {
-    pub water_demand: SettingOrigin,
-    pub just_watered_ttl: SettingOrigin,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct IrrigationResolution {
     pub effective: EffectiveIrrigationSettings,
-    pub origins: IrrigationOrigins,
+    /// The values in force without the organization's own ones.
+    pub inherited: EffectiveIrrigationSettings,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
@@ -78,31 +71,31 @@ impl IrrigationSettingsUpdate {
     pub fn is_empty(&self) -> bool {
         !self.water_demand.touches() && !self.just_watered_ttl.touches()
     }
-}
 
-/// One organization's level: its own irrigation values plus the core lock.
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub struct IrrigationLevel {
-    pub settings: IrrigationSettings,
-    pub descendants_may_override: bool,
+    /// A value equal to the inherited one is no own value, as in the core.
+    pub fn settled(self, inherited: &EffectiveIrrigationSettings) -> Self {
+        Self {
+            water_demand: self.water_demand.settled(inherited.water_demand),
+            just_watered_ttl: self.just_watered_ttl.settled(inherited.just_watered_ttl),
+        }
+    }
 }
 
 /// `chain` runs root first, target last.
 pub fn resolve(
     defaults: &IrrigationDefaults,
-    chain: &[IrrigationLevel],
+    chain: &[IrrigationSettings],
     target: Id<Organization>,
 ) -> IrrigationResolution {
     fn levels<T: Copy>(
-        chain: &[IrrigationLevel],
+        chain: &[IrrigationSettings],
         pick: impl Fn(&IrrigationSettings) -> Option<T>,
     ) -> Vec<InheritLevel<T>> {
         chain
             .iter()
-            .map(|l| InheritLevel {
-                organization_id: l.settings.organization_id,
-                value: pick(&l.settings),
-                descendants_may_override: l.descendants_may_override,
+            .map(|s| InheritLevel {
+                organization_id: s.organization_id,
+                value: pick(s),
             })
             .collect()
     }
@@ -120,11 +113,10 @@ pub fn resolve(
         effective: EffectiveIrrigationSettings {
             water_demand: water_demand.value,
             just_watered_ttl: just_watered_ttl.value,
-            enforced_by: water_demand.enforced_by,
         },
-        origins: IrrigationOrigins {
-            water_demand: water_demand.origin,
-            just_watered_ttl: just_watered_ttl.origin,
+        inherited: EffectiveIrrigationSettings {
+            water_demand: water_demand.inherited,
+            just_watered_ttl: just_watered_ttl.inherited,
         },
     }
 }
@@ -148,53 +140,49 @@ mod tests {
         }
     }
 
-    fn level(org: Id<Organization>, demand: Option<f64>, may_override: bool) -> IrrigationLevel {
-        IrrigationLevel {
-            settings: IrrigationSettings {
-                organization_id: org,
-                water_demand: demand.map(|d| WaterDemand::new(d).unwrap()),
-                just_watered_ttl: None,
-            },
-            descendants_may_override: may_override,
+    fn level(org: Id<Organization>, demand: Option<f64>) -> IrrigationSettings {
+        IrrigationSettings {
+            organization_id: org,
+            water_demand: demand.map(|d| WaterDemand::new(d).unwrap()),
+            just_watered_ttl: None,
         }
     }
 
     #[test]
     fn defaults_apply_without_values() {
         let (root, leaf) = (Id::new_v7(), Id::new_v7());
-        let r = resolve(
-            &defaults(),
-            &[level(root, None, true), level(leaf, None, true)],
-            leaf,
-        );
+        let r = resolve(&defaults(), &[level(root, None), level(leaf, None)], leaf);
         assert_eq!(r.effective.water_demand.liters(), 80.0);
-        assert_eq!(r.origins.water_demand, SettingOrigin::Default);
+        assert_eq!(r.inherited.water_demand.liters(), 80.0);
     }
 
     #[test]
-    fn inherited_value_names_its_source() {
+    fn inherited_value_comes_from_the_nearest_ancestor() {
         let (root, leaf) = (Id::new_v7(), Id::new_v7());
         let r = resolve(
             &defaults(),
-            &[level(root, Some(50.0), true), level(leaf, None, true)],
+            &[level(root, Some(50.0)), level(leaf, None)],
             leaf,
         );
         assert_eq!(r.effective.water_demand.liters(), 50.0);
-        assert_eq!(r.origins.water_demand, SettingOrigin::Inherited(root));
+        assert_eq!(r.inherited.water_demand.liters(), 50.0);
     }
 
     #[test]
-    fn lock_above_freezes_the_value() {
-        let (root, leaf) = (Id::new_v7(), Id::new_v7());
-        let r = resolve(
-            &defaults(),
-            &[
-                level(root, Some(50.0), false),
-                level(leaf, Some(90.0), true),
-            ],
-            leaf,
+    fn a_value_equal_to_the_inherited_one_is_dropped() {
+        let inherited = EffectiveIrrigationSettings {
+            water_demand: WaterDemand::new(80.0).unwrap(),
+            just_watered_ttl: JustWateredTtl::new(86_400).unwrap(),
+        };
+        let update = IrrigationSettingsUpdate {
+            water_demand: Patch::Set(WaterDemand::new(80.0).unwrap()),
+            just_watered_ttl: Patch::Set(JustWateredTtl::new(43_200).unwrap()),
+        }
+        .settled(&inherited);
+        assert_eq!(update.water_demand, Patch::Clear);
+        assert_eq!(
+            update.just_watered_ttl,
+            Patch::Set(JustWateredTtl::new(43_200).unwrap())
         );
-        assert_eq!(r.effective.water_demand.liters(), 50.0);
-        assert_eq!(r.effective.enforced_by, Some(root));
     }
 }

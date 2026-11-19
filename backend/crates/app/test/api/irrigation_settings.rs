@@ -23,88 +23,63 @@ async fn defaults_come_from_the_instance_config() {
 
     let body = irrigation_of(&app, Uuid::parse_str(ROOT_ORG_ID).unwrap()).await;
 
-    assert_eq!(body["water_demand"]["origin"], "default");
     assert_eq!(body["water_demand"]["value"], 80.0);
-    assert_eq!(body["just_watered_ttl_secs"]["origin"], "default");
-    assert!(body["enforced_by"].is_null());
+    assert_eq!(body["water_demand"]["inherited_value"], 80.0);
+    assert_eq!(body["just_watered_ttl_secs"]["value"], 86_400);
 }
 
 #[tokio::test]
-async fn a_set_value_is_own_at_the_root_and_inherited_below() {
+async fn a_value_set_at_the_root_is_the_inherited_value_below() {
     let app = spawn_app().await;
     let root = Uuid::parse_str(ROOT_ORG_ID).unwrap();
-    let child = child_org(&app, "Kind", root).await;
+    let leaf = child_org(&app, "Blatt", root).await;
 
-    let res = app
-        .put_json(&url(root), &json!({ "water_demand": 42.0 }))
+    let resp = app
+        .put_json(&url(root), &json!({ "water_demand": 120.0 }))
         .await;
-    assert_eq!(res.status(), 200);
+    assert_eq!(resp.status(), 200);
 
-    let own = irrigation_of(&app, root).await;
-    assert_eq!(own["water_demand"]["origin"], "own");
-
-    let below = irrigation_of(&app, child).await;
-    assert_eq!(below["water_demand"]["value"], 42.0);
-    assert_eq!(below["water_demand"]["origin"], "inherited");
-    assert_eq!(below["water_demand"]["source"]["id"], root.to_string());
+    let at_root = irrigation_of(&app, root).await;
+    assert_eq!(at_root["water_demand"]["value"], 120.0);
+    assert_eq!(at_root["water_demand"]["inherited_value"], 80.0);
+    let below = irrigation_of(&app, leaf).await;
+    assert_eq!(below["water_demand"]["value"], 120.0);
+    assert_eq!(below["water_demand"]["inherited_value"], 120.0);
+    assert!(!below.as_object().unwrap().contains_key("enforced_by"));
 }
 
 #[tokio::test]
-async fn a_locked_ancestor_refuses_irrigation_writes_below() {
+async fn sending_the_inherited_value_falls_back_and_is_recorded() {
     let app = spawn_app().await;
-    let root = Uuid::parse_str(ROOT_ORG_ID).unwrap();
-    let child = child_org(&app, "Kind", root).await;
-    app.put_json(
-        &format!("/api/v1/organizations/{root}/settings"),
-        &json!({ "descendants_may_override": false }),
+    let org = child_org(&app, "Zurück", Uuid::parse_str(ROOT_ORG_ID).unwrap()).await;
+
+    app.put_json(&url(org), &json!({ "water_demand": 120.0 }))
+        .await;
+    let resp = app
+        .put_json(&url(org), &json!({ "water_demand": 80.0 }))
+        .await;
+    assert_eq!(resp.status(), 200);
+
+    let stored = sqlx::query_scalar!(
+        "SELECT water_demand_liters FROM irrigation_settings WHERE organization_id = $1",
+        org
     )
-    .await;
+    .fetch_one(&app.db_pool)
+    .await
+    .unwrap();
+    assert_eq!(stored, None, "no own value is kept");
 
-    let res = app
-        .put_json(&url(child), &json!({ "water_demand": 10.0 }))
-        .await;
-
-    assert_eq!(res.status(), 409);
-    let body: serde_json::Value = res.json().await.unwrap();
-    assert_eq!(body["code"], "settings.enforced_by_ancestor");
-}
-
-#[tokio::test]
-async fn the_lock_freezes_a_dormant_own_value_and_reports_it() {
-    let app = spawn_app().await;
-    let root = Uuid::parse_str(ROOT_ORG_ID).unwrap();
-    let child = child_org(&app, "Kind", root).await;
-    app.put_json(&url(root), &json!({ "water_demand": 100.0 }))
-        .await;
-    app.put_json(&url(child), &json!({ "water_demand": 70.0 }))
-        .await;
-    app.put_json(
-        &format!("/api/v1/organizations/{root}/settings"),
-        &json!({ "descendants_may_override": false }),
+    let last = sqlx::query!(
+        r#"SELECT previous_value, new_value FROM organization_settings_history
+           WHERE organization_id = $1 AND setting_key = 'water_demand'
+           ORDER BY changed_at DESC, id DESC LIMIT 1"#,
+        org
     )
-    .await;
-
-    let body = irrigation_of(&app, child).await;
-
-    assert_eq!(body["water_demand"]["value"], 100.0);
-    assert_eq!(body["water_demand"]["own_value"], 70.0);
-    assert_eq!(body["enforced_by"]["id"], root.to_string());
-}
-
-#[tokio::test]
-async fn clearing_a_value_falls_back_and_is_recorded() {
-    let app = spawn_app().await;
-    let root = Uuid::parse_str(ROOT_ORG_ID).unwrap();
-    app.put_json(&url(root), &json!({ "just_watered_ttl_secs": 7200 }))
-        .await;
-    app.put_json(&url(root), &json!({ "just_watered_ttl_secs": null }))
-        .await;
-
-    let body = irrigation_of(&app, root).await;
-
-    assert_eq!(body["just_watered_ttl_secs"]["origin"], "default");
-    assert!(body["just_watered_ttl_secs"]["last_change"].is_object());
-    assert!(body["water_demand"]["last_change"].is_null());
+    .fetch_one(&app.db_pool)
+    .await
+    .unwrap();
+    assert_eq!(last.previous_value, Some(json!(120.0)));
+    assert_eq!(last.new_value, None);
 }
 
 #[tokio::test]
