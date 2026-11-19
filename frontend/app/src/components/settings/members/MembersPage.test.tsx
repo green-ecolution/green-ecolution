@@ -147,6 +147,7 @@ vi.mock('@tanstack/react-query', async () => {
         const params = (second ?? {}) as {
           query?: string
           roleId?: string
+          page?: number
         }
         listParams.push(params)
         // The organization scope is the backend's job; the mock returns everyone.
@@ -164,10 +165,10 @@ vi.mock('@tanstack/react-query', async () => {
           data: {
             data: matches,
             pagination: {
-              currentPage: 1,
+              currentPage: params.page ?? 1,
               perPage: 50,
               totalRecords: matches.length,
-              totalPages: 1,
+              totalPages: 2,
             },
           },
           isLoading: false,
@@ -308,8 +309,12 @@ describe('MembersPage', () => {
 
   it('returns to the first page when the toggle changes', async () => {
     render(<MembersPage />)
+    await userEvent.click(screen.getByRole('button', { name: /nächste/i }))
+    expect(lastListParams()).toMatchObject({ page: 2 })
+
     await userEvent.click(screen.getByRole('switch', { name: 'mit Unterorganisationen' }))
-    expect(lastListParams()).toMatchObject({ page: 1 })
+
+    expect(lastListParams()).toMatchObject({ includeDescendants: false, page: 1 })
   })
 
   it('names the organization in the headline and mentions its sub-organizations', async () => {
