@@ -9,7 +9,7 @@ routes: ['/admin']
 > [!NOTE]
 > Diese Seite siehst du nur, wenn deine eigene Organisation die oberste Organisation der
 > Instanz ist, also die Organisation Green Ecolution ganz oben im
-> [Organisationsbaum](./settings-organization.md#der-organisationsbaum). Alle anderen
+> [Organisationsbaum](./settings-structure.md#der-organisationsbaum). Alle anderen
 > landen nach der Anmeldung wie gewohnt auf dem [Dashboard](./dashboard.md).
 
 ## Wer die Übersicht sieht
@@ -20,7 +20,9 @@ Kommune, sondern verwaltet die Organisationen, die das tun. Deshalb zeigt die An
 solchen Mitgliedern eine eigene Oberfläche: Statt des Dashboards öffnet sich die
 Mandantenübersicht, und die Seitennavigation führt unter **Instanz** zu den Seiten, die
 die Instanz als Ganzes betreffen: Mandanten, Organisation, Team und Rollen, Plugins und
-Systeminformationen. Karte, Einsatzpläne, Fahrzeuge und Sensoren tauchen dort nicht auf,
+Systeminformationen. Die Einträge **Organisation**, **Team & Rollen** und **Plugins**
+führen dabei in die Einstellungen der obersten Organisation, also auf deren
+[Überblick](./settings-organization.md), auf die Mitarbeitenden und auf die Plugins. Karte, Einsatzpläne, Fahrzeuge und Sensoren tauchen dort nicht auf,
 denn sie gehören immer zu einem bestimmten Mandanten. In der obersten Organisation sind
 diese Seiten auch nicht erreichbar: Wer eine solche Adresse öffnet, die Zurück-Taste
 benutzt oder aus einem Mandanten auf einer solchen Seite zurück in die eigene
@@ -37,8 +39,8 @@ seinen Unterorganisationen gehören. Archivierte Fahrzeuge zählen nicht mit. So
 Zahlen noch geladen werden, steht ein Strich an ihrer Stelle.
 
 Hat die Instanz noch keinen Mandanten, legst du den ersten auf der Seite
-[Organisation](./settings-organization.md#unterorganisationen) an; die Übersicht verlinkt
-dorthin.
+[Struktur](./settings-structure.md#unterorganisationen) der obersten Organisation an; die
+Übersicht verlinkt dorthin.
 
 ## In einen Mandanten wechseln
 

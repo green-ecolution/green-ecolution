@@ -1,167 +1,53 @@
 ---
 slug: settings-organization
-title: Organisation
+title: Überblick
 part: administration
-summary: Was eine Organisation im System bedeutet, wie der Organisationsbaum aufgebaut ist und wie Berechtigungen darin nach unten wirken.
-routes: ['/settings/organization']
+summary: Die Stammdaten einer Organisation, ihr Standort, die Kontaktperson, der Kartenausschnitt und die Verweise zu Mitarbeitenden, Struktur und Aufgabenbereichen.
+routes: ['/settings/organization', '/settings/organization/$orgId']
 ---
 
 > [!NOTE]
 > Diese Seite setzt die Berechtigung `organization:read` voraus. Fehlt sie dir, taucht
-> **Organisation** in deiner Einstellungsnavigation gar nicht erst auf; wende dich an
+> **Überblick** in deiner Einstellungsnavigation gar nicht erst auf; wende dich an
 > die Verwaltung deiner Organisation, wenn du sie brauchst.
 
-## Der Organisationsbaum
+## Die Stammdaten einer Organisation
 
-Jede Organisation in Green Ecolution ist ein Knoten in einem Baum: Sie hat höchstens
-eine übergeordnete Organisation und beliebig viele untergeordnete. An der Organisation
-hängt, wem eine Person, ein Baum, eine Bewässerungsgruppe, ein Sensor, ein Fahrzeug
-oder ein Einsatzplan gehört, und über welche Rollen Zugriff darauf vergeben werden
-kann. Die Seite zeigt den Baum links als Liste zum Auf- und Zuklappen, rechts die
-Stammdaten der ausgewählten Organisation; auf schmalen Bildschirmen öffnen sich die
-Stammdaten stattdessen in einem eigenen Fenster.
+Eine Organisation ist in Green Ecolution der Besitzer von Personen, Bäumen,
+Bewässerungsgruppen, Sensoren, Fahrzeugen und Einsatzplänen und zugleich der Rahmen für
+Rollen und Einstellungen. Wie die Organisationen untereinander zusammenhängen, zeigt
+die [Struktur](./settings-structure.md). Der **Überblick** ist die Seite einer einzelnen
+Organisation. Er öffnet sich für deine eigene Organisation oder für die, die du im
+Benutzermenü ausgewählt hast. Welche Organisation die Einstellungen gerade betreffen,
+wechselst du über die Organisationswahl in der Navigation der Einstellungen.
 
-Genau eine Organisation steht ganz oben im Baum, sie trägt instanzweit immer den Namen
-Green Ecolution und lässt sich nicht bearbeiten oder löschen. Ein entsprechender
-Hinweis erscheint, sobald du sie auswählst. Jede andere Organisation zeigt neben ihrem
-Namen eine optionale Adresse, die nur vollständig gespeichert werden kann, eine
-optionale Kontaktperson aus den ihr zugeordneten Mitarbeitenden sowie die Anzahl der
-ihr direkt und über Unterorganisationen zugeordneten Personen. Mit der Berechtigung
-`user:read` kommt zusätzlich eine Kachel **Zugewiesene Mitarbeitende** mit ihren
-Kürzeln hinzu, die auf die Mitarbeitendenliste verlinkt.
+Die Seite zeigt zuerst den Namen der Organisation und darunter die Karten
+**Stammdaten** mit dem Namen, **Standort** mit Straße, Postleitzahl und Ort sowie
+**Kontaktperson**. Die Adresse ist optional, lässt sich aber nur vollständig
+speichern. Als Kontaktperson kommen nur Personen infrage, die der Organisation
+zugeordnet sind; über **Kontaktperson festlegen** oder **Ändern** wählst du sie aus.
+Geändert wird mit der Berechtigung `organization:update` und wirkt erst mit
+**Speichern**. Die oberste Organisation der Instanz trägt immer den Namen Green
+Ecolution und lässt sich nicht bearbeiten; ein Hinweis auf der Seite sagt das.
 
-![Der Organisationsbaum mit ausgewählter Organisation und ihren Stammdaten](../images/settings-organization.png)
+![Der Überblick einer Organisation mit der Navigation der Einstellungen in zwei Gruppen](../images/settings-organization.png)
 
-## Unterorganisationen
+## Kartenausschnitt
 
-Mit der Berechtigung `organization:create` legst du über **Unterorganisation anlegen**
-eine neue Organisation unterhalb der gerade ausgewählten an; zunächst genügt ein Name,
-Adresse und Kontaktperson trägst du anschließend in den Stammdaten nach. Der Name muss
-sich von seinen Geschwistern unterscheiden, also von den anderen Organisationen mit
-derselben übergeordneten Organisation; ein bereits vergebener Name wird zurückgewiesen.
-Löschen lässt sich eine Organisation mit der Berechtigung `organization:delete` nur,
-solange sie weder Unterorganisationen noch zugeordnete Mitarbeitende noch andere
-Ressourcen wie Bäume oder Sensoren mehr besitzt, ein Hinweis unter **Organisation
-löschen** erinnert daran.
-
-Beim Anlegen bekommt eine neue Organisation sofort eigene, nutzbare Kopien aller
-Rollenvorlagen; mehr dazu und wie sich diese Kopien zu eigenen Rollen entwickeln, steht
-in [Team und Rollen](./settings-team.md#rollenvorlagen).
-
-## Wie Berechtigungen im Baum wirken
-
-Eine Rolle gehört immer zu genau einer Organisation und gilt für diese Organisation und
-den gesamten Ast darunter, niemals für die Organisationen darüber. Ist eine Rolle also
-einer weiter oben stehenden Organisation zugeordnet, reicht sie automatisch in jede ihr
-untergeordnete Organisation hinein; eine Rolle einer untergeordneten Organisation
-bleibt dagegen auf deren eigenen Ast beschränkt und erreicht weder Geschwister- noch
-übergeordnete Organisationen. Deshalb liegt die Verwaltung, die über mehrere
-Organisationen hinweg zuständig sein soll, sinnvollerweise weiter oben im Baum. Wie
-Rollen im Einzelnen zugeschnitten werden und welche Rechte sich darin kombinieren
-lassen, steht in [Team und Rollen](./settings-team.md).
-
-## Module
-
-Green Ecolution besteht aus einem gemeinsamen Kern und Fachmodulen. Der Kern umfasst
-die Organisationen, Rollen, Sensoren, Fahrzeuge und Startpunkte; ein Fachmodul bringt die
-Bereiche mit, die zu einer bestimmten Aufgabe gehören. Das Modul **Bewässerung** liefert
-Bäume, Bewässerungsgruppen, Einsatzpläne und die Auswertung samt der zugehörigen
-Kartenebenen und Kacheln auf dem Dashboard.
-
-Im Abschnitt **Module** der Organisationsseite steht für jedes Modul, das diese Instanz
-kennt, eine Zeile mit einem Schalter. Ein eingeschaltetes Modul steht der ausgewählten
-Organisation und allen Organisationen darunter zur Verfügung. Wie bei den
-[Fachlichen Vorgaben](./settings-organization.md#fachliche-vorgaben) zeigt ein Abzeichen neben dem Schalter, woher
-der Zustand kommt: ein eigener Wert dieser Organisation, ein von einer übergeordneten
-Organisation geerbter Wert oder die Vorgabe der Instanz, solange noch keine Organisation
-im Baum einen Wert gesetzt hat. Ohne eigenen Wert folgt eine Organisation also ihrer
-übergeordneten. Den Schalter bedienst du direkt: Sobald du ihn umlegst, setzt die
-Organisation einen eigenen Wert, und neben dem Schalter erscheint **Wieder erben**, womit
-du den eigenen Wert wieder aufgibst und der Zustand erneut von oben kommt. Hat eine
-übergeordnete Organisation festgelegt, dass ihre Untereinheiten keine eigenen Werte
-setzen dürfen, steht der Schalter fest, und ein Hinweis nennt die sperrende
-Organisation. Module, die unter einer solchen Sperre aus sind, erscheinen dann gar nicht
-mehr in der Liste.
-
-Was eine übergeordnete Organisation für eine Unterorganisation einstellt, ist für diese
-verbindlich. Schaltet etwa die oberste Organisation das Modul Abfall für einen Mandanten
-ab, taucht Abfall für alle, die nur bei diesem Mandanten Rechte haben, in der Liste gar
-nicht mehr auf. Schaltet sie es für den Mandanten fest ein, steht am Schalter
-**Festgelegt von** mit dem Namen der obersten Organisation. Der Schalter lässt sich dort
-dann weder umlegen noch mit **Wieder erben** zurücksetzen. Ändern kann ihn nur, wer in
-der festlegenden Organisation oder darüber `setting:update` hat; dort bleibt er auch
-sichtbar, wenn das Modul aus ist. Ein Wert, den der Mandant selbst gesetzt hat, bleibt
-dagegen offen: Die übergeordnete Organisation kann ihn jederzeit überschreiben
-und macht ihn damit ebenfalls verbindlich.
-
-Zum Ändern brauchst du zusätzlich zu `setting:read` die Berechtigung `setting:update`;
-ohne sie siehst du die Schalter nur. Gespeichert wird wie bei den übrigen Werten dieser
-Seite mit dem einen Knopf **Speichern**, der Modulschalter und Fachliche Vorgaben
-gemeinsam übernimmt.
-
-![Der Abschnitt Module mit den Schaltern für Bewässerung und Abfall und ihren Herkunftsabzeichen](../images/settings-organization-modules.png)
-
-Schaltest du ein Modul ab, verschwinden seine Bereiche für alle Mitarbeitenden der
-Organisation und ihrer Unterorganisationen aus der Navigation, von der Karte, vom
-Dashboard und aus der Einsatzplanung. Wer einen Link auf eine solche Seite öffnet,
-sieht stattdessen den Hinweis **Modul nicht aktiv**. Die Daten selbst bleiben unberührt:
-Bäume, Bewässerungsgruppen und Einsatzpläne werden weder gelöscht noch verändert, und
-sie stehen wieder zur Verfügung, sobald das Modul erneut eingeschaltet wird. Auch die
-Rechte, die Rollen für das Modul enthalten, bleiben gespeichert, wirken aber nur,
-solange das Modul aktiv ist, siehe
-[Team und Rollen](./settings-team.md#der-berechtigungskatalog).
-
-Auch diese Hilfe richtet sich danach: Wer angemeldet ist, sieht darin nur die Kapitel
-zu Modulen, die für ihn aktiv sind. Ein direkt geöffneter Link auf ein ausgeblendetes
-Kapitel funktioniert trotzdem.
-
-## Fachliche Vorgaben
-
-Mit der Berechtigung `setting:read` zeigt die Detailansicht einer Organisation
-zusätzlich den Abschnitt **Fachliche Vorgaben** mit dem Wasserbedarf je Baum in Litern,
-der Nachwirkzeit frisch gegossen in Stunden und dem Kartenausschnitt. Der Wasserbedarf geht
-in die Bedarfsrechnung jeder Bewässerungsgruppe ein und bestimmt damit, wie viele
-Gruppen eine Tourenplanung in eine Fahrt legt; eine spätere Änderung rechnet einen
-bereits berechneten Einsatzplan nicht rückwirkend um. Die Nachwirkzeit bestimmt, wie
-lange ein Baum nach einem abgeschlossenen Einsatzplan seiner Gruppe als
-[Soeben bewässert](./treecluster.md#bewasserungsstatus-und-wie-er-zustande-kommt) gilt,
-bevor er auf **Unbekannt** zurückfällt; einen aus Sensordaten berechneten
-Bewässerungszustand zeigt er erst wieder, sobald tatsächlich neue Messwerte eintreffen.
-Eine Änderung der Nachwirkzeit wirkt beim nächsten Lauf des dafür zuständigen
-Hintergrundjobs, ohne dass die Anwendung dafür neu gestartet werden müsste.
-
-Unter dem Namen jedes Werts steht, was er bewirkt, und daneben ein Abzeichen, das
-seine Herkunft zeigt: **Vorgabe der Instanz** für den mitgelieferten Standardwert,
-**Geerbt von …** mit dem Namen der Organisation, von der der Wert stammt, oder
-**Eigener Wert**, wenn diese Organisation selbst einen gesetzt hat. Ohne eigenen Wert
-übernimmt eine Organisation also automatisch, was ihre übergeordnete Organisation
-vorgibt, den Baum hinauf bis zur obersten Organisation und von dort zur Vorgabe der
-Instanz. Ein geerbter Wert steht schlicht als Zahl mit seiner Einheit da, denn es gibt
-nichts einzutragen, solange er von woanders kommt; erst über **Eigenen Wert setzen**
-wird daraus ein Eingabefeld, in das du eine eigene Zahl schreibst. **Wieder erben**
-verwirft den eigenen Wert, und die Organisation folgt von da an erneut dem geerbten.
-Ein senkrechter Strich links an jedem Wert greift dieselbe Unterscheidung auf: grün,
-solange die Organisation den Wert selbst setzt, sonst grau. Darunter steht, wann und
-von wem der Wert zuletzt geändert wurde, sofern das schon einmal geschehen ist; das
-beantwortet die Frage, wer für eine überraschende Änderung verantwortlich ist.
-
-![Der Abschnitt Fachliche Vorgaben mit einem geerbten und einem eigenen Wert](../images/settings-organization-values.png)
-
-### Kartenausschnitt
-
-Der **Kartenausschnitt** bestimmt, wo die Karte für die Mitarbeitenden dieser
+Mit der Berechtigung `setting:read` zeigt der Überblick zusätzlich den
+**Kartenausschnitt**. Er bestimmt, wo die Karte für die Mitarbeitenden dieser
 Organisation aufgeht und welchen Bereich sie überhaupt freigibt. Beides gehört
 zusammen: Der Ausschnitt ist die Grenze, über die hinaus sich die Karte nicht schwenken
 lässt, und der Mittelpunkt ist der Punkt, an dem sie startet. Ohne eigenen Wert erbt
 eine Organisation auch hier nach oben, bis zur Vorgabe der Instanz. Eine Instanz, die
 mehrere Kommunen verwaltet, zeigt damit nicht mehr allen denselben Ort.
 
-Anders als die beiden Zahlenwerte wird der Kartenausschnitt nicht eingetippt, sondern
+Anders als die Zahlenwerte unter [Aufgabenbereiche](./settings-areas.md#fachliche-vorgaben) wird der Kartenausschnitt nicht eingetippt, sondern
 auf einer Karte festgelegt. Nach **Eigenen Wert setzen** wird die Vorschau bedienbar:
 Du schwenkst und zoomst, bis der sichtbare Bereich genau den Bereich zeigt, den deine
 Mitarbeitenden erreichen können sollen, und ziehst die Markierung an die Stelle, an der
 die Karte aufgehen soll. **Ausschnitt übernehmen** schreibt beides in den Entwurf;
-gespeichert wird wie bei den übrigen Werten erst mit **Speichern**. Liegt die Markierung
+gespeichert wird zusammen mit den Stammdaten erst mit **Speichern**. Liegt die Markierung
 am Ende außerhalb des gewählten Bereichs, weist die Anwendung das zurück und sagt es
 unter dem Wert, denn ein Mittelpunkt außerhalb der eigenen Grenze wäre ein Ausschnitt,
 den niemand sehen könnte.
@@ -194,19 +80,25 @@ zeigt.
 
 ![Der Kartenausschnitt im Bearbeitungszustand mit verschiebbarer Karte und Markierung](../images/settings-organization-map-view.png)
 
-Der Schalter **Untereinheiten dürfen eigene Werte setzen** entscheidet, ob die
-Organisationen unterhalb der gerade ausgewählten überhaupt eigene Werte setzen dürfen.
-Steht er aus, sperrt die Organisation die Vorgaben für ihren gesamten Ast: Der
-Abschnitt einer betroffenen Untereinheit wird dadurch nur noch lesbar, ein Hinweis oben
-im Abschnitt nennt die sperrende Organisation, und es gelten dort deren Werte, nicht
-mehr die eigenen. Hatte eine Untereinheit vor der Sperre bereits einen eigenen Wert
-gesetzt, bleibt er sichtbar, unter dem Wert steht aber, dass er ruht, solange die
-Sperre gilt; er kommt unverändert wieder zum Tragen, sobald sie wieder aufgehoben
-wird. Der Satz unter dem Schalter beschreibt jeweils den Zustand, in dem er gerade
-steht, damit die Tragweite des Ausschaltens nicht erst beim Ausprobieren auffällt.
+Wie die Zahlenwerte erbt auch der Kartenausschnitt nach oben und lässt sich von einer
+übergeordneten Organisation sperren; ob die Untereinheiten eigene Werte setzen dürfen,
+legst du unter [Aufgabenbereiche](./settings-areas.md#fachliche-vorgaben) fest. Zum
+Ändern brauchst du zusätzlich `setting:update`.
 
-Zum Ändern eines Werts oder des Schalters brauchst du zusätzlich zu `setting:read` die
-Berechtigung `setting:update`. Ohne sie zeigt die Anwendung den Abschnitt nur an: alle
-Werte stehen als Zahl da, **Eigenen Wert setzen** und **Wieder erben** fehlen, und ein
-Hinweis oben im Abschnitt sagt, dass du die Vorgaben ansehen, aber nicht ändern kannst.
-Wie die übrigen Stammdaten dieser Seite wirkt eine Änderung erst mit **Speichern**.
+## Verweise zu den übrigen Seiten
+
+Unter dem Kartenausschnitt stehen bis zu drei Karten, die zu den übrigen Seiten der
+Organisation führen und jeweils eine kurze Zusammenfassung zeigen. **Mitarbeitende**
+nennt die Zahl der Personen und erscheint mit der Berechtigung `user:read`.
+**Struktur** nennt die Zahl der direkten Unterorganisationen oder, dass es noch keine
+gibt. **Aufgabenbereiche** erscheint mit `setting:read` und zählt die eingeschalteten
+Module auf. Mehr dazu steht unter [Mitarbeitende und Rollen](./settings-team.md),
+[Struktur](./settings-structure.md) und [Aufgabenbereiche](./settings-areas.md).
+
+## Eine Organisation löschen
+
+Mit der Berechtigung `organization:delete` steht am Ende der Seite **Organisation
+löschen**. Das ist nur möglich, solange die Organisation weder Unterorganisationen noch
+zugeordnete Mitarbeitende oder andere Ressourcen wie Bäume oder Sensoren mehr besitzt,
+ein Hinweis neben dem Knopf erinnert daran. Die oberste Organisation lässt sich nicht
+löschen.

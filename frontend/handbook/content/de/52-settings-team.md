@@ -1,23 +1,29 @@
 ---
 slug: settings-team
-title: Team und Rollen
+title: Mitarbeitende und Rollen
 part: administration
 summary: Mitarbeitende, Rollen und ihren Zuschnitt verwalten, den Berechtigungskatalog aus Ressource und Aktion sowie die mitgelieferten Rollenvorlagen.
-routes: ['/settings/team', '/settings/team/members', '/settings/team/roles']
+routes: ['/settings/organization/$orgId/members', '/settings/organization/$orgId/roles']
 ---
 
 > [!NOTE]
 > Mitarbeitende einzusehen setzt die Berechtigung `user:read` voraus, Rollen einzusehen
-> die Berechtigung `role:read`. Fehlen dir beide, taucht **Team & Rollen** in deiner
-> Einstellungsnavigation gar nicht erst auf; fehlt dir nur eine davon, bleibt der
-> jeweilige Reiter verborgen. Wende dich an die Verwaltung deiner Organisation, wenn du
-> Zugriff brauchst.
+> die Berechtigung `role:read`. Fehlt dir eine davon in der gewählten Organisation,
+> taucht der zugehörige Eintrag **Mitarbeitende** oder **Rollen** in deiner
+> Einstellungsnavigation gar nicht erst auf. Wende dich an die Verwaltung deiner
+> Organisation, wenn du Zugriff brauchst.
 
 ## Mitarbeitende verwalten
 
-Die Seite **Mitarbeitende** listet links alle Personen der Instanz, durchsuchbar nach
-Name, Username oder E-Mail-Adresse und einschränkbar nach Organisation und Rolle;
-rechts zeigt sie die Details der ausgewählten Person in drei Bereichen:
+Beide Seiten, **Mitarbeitende** und **Rollen**, sind eigene Einträge der
+Einstellungsnavigation und beziehen sich auf die Organisation, die du dort oben gewählt
+hast. Die Seite **Mitarbeitende** listet links die Personen dieser Organisation,
+durchsuchbar nach Name, Username oder E-Mail-Adresse und einschränkbar nach Rolle.
+Hat die Organisation Unterorganisationen, steht über der Liste der Schalter **mit
+Unterorganisationen**. Er ist zunächst eingeschaltet, die Liste zeigt dann auch die
+Personen der Unterorganisationen; schaltest du ihn aus, bleiben nur die Personen übrig,
+die der gewählten Organisation selbst zugeordnet sind. Rechts zeigt die Seite die Details
+der ausgewählten Person in drei Bereichen:
 **Organisation**, **Rollen** und die persönlichen Daten. Zum Ändern braucht jeder
 Bereich zusätzlich zum bloßen Ansehen die Berechtigung `user:update`.
 
@@ -56,13 +62,14 @@ Verwaltungsrechten für dich übernehmen.
 
 Eine Rolle besteht aus einem Namen, einer optionalen Beschreibung und einer Menge von
 Rechten, und sie gehört immer zu genau einer Organisation. Die Seite **Rollen** listet
-sie in zwei Gruppen: **System · nicht editierbar** für die mitgelieferten
-[Rollenvorlagen](./settings-team.md#rollenvorlagen) und **Eigene Rollen** für die Rollen deiner
+die Rollen der gewählten Organisation in zwei Gruppen: **System · nicht editierbar** für die mitgelieferten
+[Rollenvorlagen](./settings-team.md#rollenvorlagen) und **Eigene Rollen** für die Rollen dieser
 Organisation. Eine unangetastete Kopie einer Vorlage sieht darin noch genauso aus wie
 die Vorlage selbst und erscheint deshalb erst nach ihrer ersten Änderung als eigene
 Rolle in der Liste; zuweisen lässt sie sich aber von Anfang an.
 
-Mit der Berechtigung `role:create` legst du über **Neu** eine leere eigene Rolle an
+Mit der Berechtigung `role:create` legst du über **Neu** eine leere eigene Rolle in der
+gewählten Organisation an
 oder über **Kopieren & bearbeiten** an einer bestehenden Rolle oder Vorlage eine Kopie
 mit denselben Rechten, die du anschließend anpasst. Übersteigen die kopierten Rechte
 deine eigenen, entfernt die Anwendung die überzähligen automatisch und weist dich
@@ -79,9 +86,9 @@ setzen; passt die daraus entstehende Kombination zu keiner der vier Stufen, zeig
 Anwendung stattdessen **Individuell**. Ein Recht, das du selbst nicht besitzt, lässt
 sich dabei nicht aktivieren.
 
-Die Rollenmatrix zeigt nur die Bereiche der Module, die für dich aktiv sind. Schaltet
-deine Organisation das Modul Bewässerung ab (siehe
-[Organisation](./settings-organization.md#module)), fehlen in der Matrix die Bereiche
+Die Rollenmatrix zeigt nur die Bereiche der Module, die in der gewählten Organisation
+aktiv sind. Schaltet diese Organisation das Modul Bewässerung ab (siehe
+[Aufgabenbereiche](./settings-areas.md#module)), fehlen in der Matrix die Bereiche
 Bäume, Bewässerungsgruppen und Einsatzpläne. Die bereits gespeicherten Rechte dafür
 gehen dabei nicht verloren: Sie bleiben an der Rolle hängen und stehen nach dem
 erneuten Einschalten des Moduls wieder zur Auswahl.
@@ -160,14 +167,14 @@ Rollen enthalten dieses Recht nicht von selbst.
 
 Eine Rolle gilt für ihre eigene Organisation und für den gesamten Ast darunter,
 niemals für die Organisationen darüber; wie diese Richtung im Organisationsbaum
-zustande kommt, steht in [Organisation](./settings-organization.md#wie-berechtigungen-im-baum-wirken).
+zustande kommt, steht in [Struktur](./settings-structure.md#wie-berechtigungen-im-baum-wirken).
 Für die Zuweisung an eine Person gilt zusätzlich: Du brauchst die Berechtigung
 `user:update` in der Organisation der Rolle, die Rechte der Rolle dürfen deine eigenen
 nicht übersteigen, und die Rolle muss zur aktuellen Organisation der Person passen. Die
-Seite **Rollen** zeigt und bearbeitet dabei immer nur die Rollen deiner eigenen
-Organisation, auch **Kopieren & bearbeiten** legt eine Kopie stets dort an; eine neue,
-eigens zugeschnittene Rolle für eine andere Organisation lässt sich über diese Seite
-nicht anlegen. Gehört eine Person einer anderen Organisation als du, bleiben dir für
+Seite **Rollen** zeigt und bearbeitet dabei immer nur die Rollen der gewählten
+Organisation, auch **Kopieren & bearbeiten** legt eine Kopie stets dort an; eine neue
+Rolle für eine andere Organisation legst du an, indem du in der Navigation diese
+Organisation wählst. Gehört eine Person einer anderen Organisation als du, bleiben dir für
 sie deshalb die Rollen, die diese Organisation bereits besitzt, insbesondere die
 [Rollenvorlagen](./settings-team.md#rollenvorlagen), die schon bei ihrer Anlage jede
 Organisation automatisch bekommt. Die eigene Rollenzuweisung lässt sich, wie die eigene

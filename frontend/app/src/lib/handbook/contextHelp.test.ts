@@ -32,7 +32,10 @@ describe('chapterForRoute', () => {
   })
 
   it('maps a nested route', () => {
-    expect(chapterForRoute('/settings/team/members/')).toBe('settings-team')
+    expect(chapterForRoute('/settings/organization/$orgId/members/')).toBe('settings-team')
+    expect(chapterForRoute('/settings/organization/$orgId')).toBe('settings-organization')
+    expect(chapterForRoute('/settings/organization/$orgId/structure')).toBe('settings-structure')
+    expect(chapterForRoute('/settings/organization/$orgId/areas')).toBe('settings-areas')
   })
 
   it('returns null for a route no chapter claims', () => {

@@ -62,7 +62,10 @@ Untereinheiten, findest du im Benutzermenü den Eintrag **Organisation**. Er öf
 Organisationsbaum, den du erreichen kannst. Solange du nichts ausgewählt hast, ist deine
 eigene Organisation markiert, und du siehst alles, was deine Rollen abdecken. Ab neun
 Einträgen steht oberhalb der Liste ein Suchfeld bereit. Mit nur einer Organisation fehlt
-der Eintrag.
+der Eintrag. Die Einstellungen haben eine eigene Organisationswahl, die nur bestimmt,
+wessen Einstellungen du bearbeitest, und die Ansicht der übrigen Anwendung nicht
+verändert; sie ist unter [Einstellungen](./settings-profile.md#aufbau-der-einstellungen)
+beschrieben.
 
 Wählst du eine Organisation, gilt die Auswahl samt ihren Untereinheiten. Karte, Listen,
 Einsatzpläne, Dashboard und Einstellungen zeigen dann nur noch, was zu diesem Teil

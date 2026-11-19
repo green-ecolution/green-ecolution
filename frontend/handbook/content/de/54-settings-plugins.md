@@ -3,7 +3,12 @@ slug: settings-plugins
 title: Plugins
 part: administration
 summary: Was ein Plugin ist, wie ein Admin eines installiert, was die beiden Rechtemengen bedeuten, wie der einmalig sichtbare Schlüssel rotiert wird und wie sich die eigene Ansicht eines Plugins öffnen lässt.
-routes: ['/settings/plugin', '/settings/plugin/$slug', '/plugin/$slug']
+routes:
+  [
+    '/settings/organization/$orgId/plugins',
+    '/settings/organization/$orgId/plugins/$slug',
+    '/plugin/$slug',
+  ]
 ---
 
 > [!NOTE]
@@ -25,7 +30,8 @@ Green Ecolution eingebettet erscheint, muss das aber nicht. Ein Plugin registrie
 dabei nicht selbst; es wird von einer Person mit den passenden Rechten in den
 Einstellungen angelegt, ganz wie ein Fahrzeug oder eine Rolle.
 
-Die Übersichtsseite **Plugins** listet jedes installierte Plugin mit Status, Name samt
+Die Übersichtsseite **Plugins** listet jedes installierte Plugin der in der Navigation
+gewählten Organisation und ihrer Unterorganisationen mit Status, Name samt
 Slug, Organisation und dem Zeitpunkt seines letzten Kontakts. Dieser Zeitpunkt ist keine
 manuelle Angabe, sondern aktualisiert sich mit jeder Anfrage, die das Plugin an seine
 Schnittstelle stellt, und zeigt dir damit auf einen Blick, ob ein Plugin überhaupt noch
@@ -34,8 +40,9 @@ aktiv angebunden ist.
 ## Ein Plugin installieren
 
 Über **Plugin installieren** öffnest du den Installationsdialog. Slug, Name und
-optional eine Beschreibung sowie die Organisation, der das Plugin gehören soll, sind
-Pflichtangaben. Der Slug besteht aus Kleinbuchstaben, Ziffern und Bindestrichen und
+optional eine Beschreibung sind die Pflichtangaben. Ein Feld für die Organisation gibt
+es nicht: Das Plugin entsteht in der Organisation, die du in der Navigation der
+Einstellungen gewählt hast und der es danach gehört. Der Slug besteht aus Kleinbuchstaben, Ziffern und Bindestrichen und
 lässt sich nach dem Anlegen nicht mehr ändern: Er dient zugleich als Herkunftskennung
 aller Daten, die das Plugin importiert, und ein nachträglicher Wechsel würde diese
 Zuordnung verwaisen lassen. Einzelne Wörter sind für die Plugin-Schnittstelle selbst

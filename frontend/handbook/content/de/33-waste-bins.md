@@ -9,8 +9,8 @@ module: waste
 ---
 
 Das Modul **Abfall** erweitert Green Ecolution um Abfallbehälter und ihre Leerung. Es ist
-standardmäßig ausgeschaltet und wird je Organisation im Abschnitt **Module** der
-[Organisationsseite](./settings-organization.md#module) eingeschaltet. Erst dann erscheinen
+standardmäßig ausgeschaltet und wird je Organisation im Abschnitt **Module** der Seite
+[Aufgabenbereiche](./settings-areas.md#module) eingeschaltet. Erst dann erscheinen
 der Bereich **Abfallbehälter** unter **Bestand** in der Seitennavigation, die Behälter auf
 der Karte und die Leerungstouren in der Einsatzplanung.
 
@@ -94,7 +94,7 @@ gilt die neue Messung.
 Ab welchem Füllstand ein Behälter als voll gilt, legt jede Organisation selbst fest. Die
 Vorgabe liegt bei 80 Prozent. Den Wert findest du in den Einstellungen der Organisation
 unter **Schwellwert für „voll“**. Er wird wie die
-[Fachlichen Vorgaben](./settings-organization.md#fachliche-vorgaben) im Organisationsbaum
+[Fachlichen Vorgaben](./settings-areas.md#fachliche-vorgaben) im Organisationsbaum
 nach unten vererbt, und eine Unterorganisation kann einen eigenen Wert setzen, sofern die
 übergeordnete Organisation das nicht sperrt. Der Schwellwert bestimmt die Füllstufe in
 Liste und Karte und welche Behälter die Tourenplanung vorschlägt. Bereits geplante Touren
@@ -153,4 +153,4 @@ einer Tour setzt zusätzlich das Recht voraus, Startpunkte anzusehen. Die mitgel
 Rollenvorlage **Abfallsammlung** bündelt alles, was für die tägliche Arbeit nötig ist:
 Behälter und Touren verwalten sowie Sensoren, Fahrzeuge, Regionen und Startpunkte
 ansehen. Die Rechte wirken nur in Organisationen, in denen das Modul aktiv ist, siehe
-[Team und Rollen](./settings-team.md#der-berechtigungskatalog).
+[Mitarbeitende und Rollen](./settings-team.md#der-berechtigungskatalog).
