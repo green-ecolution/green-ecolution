@@ -36,7 +36,8 @@ const SettingsOrganizationPicker = ({
   const [query, setQuery] = useState('')
 
   const selected = organizations.find((org) => org.id === selectedId)
-  const name = selected?.name ?? ''
+  if (!selected) return null
+  const { name } = selected
   const childCount = organizations.filter((org) => org.parentId === selectedId).length
 
   const summary = (

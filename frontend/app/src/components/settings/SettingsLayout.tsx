@@ -14,11 +14,12 @@ import {
   Users,
 } from 'lucide-react'
 import { Badge } from '@green-ecolution/ui'
-import { infoQueries, organizationQueries } from '@/api/queries'
+import { infoQueries } from '@/api/queries'
 import { useAdminMode } from '@/lib/auth/scope/adminMode'
-import { useHomeOrganizationId } from '@/lib/auth/scope/effectiveRoles'
+import { useSettingsHomeOrganizationId } from '@/lib/auth/scope/settingsOrganization'
 import { usePermissionsIn } from '@/lib/auth/usePermissionsIn'
 import { buildTree, subtreeMemberCount } from './organization/organizationTree'
+import { useSettingsOrganizations } from './organization/useSettingsOrganizations'
 import SettingsOrganizationPicker from './SettingsOrganizationPicker'
 import { SETTINGS_NAV, visibleSettingsNav, type SettingsNavItem } from './settingsNav'
 import {
@@ -59,16 +60,13 @@ const SettingsLayout = ({ children }: SettingsLayoutProps) => {
   const { t } = useTranslation('settings')
   const { pathname } = useLocation()
   const navigate = useNavigate()
-  const homeId = useHomeOrganizationId()
+  const homeId = useSettingsHomeOrganizationId()
   // On the account pages the organization group still needs a target.
-  const orgId = organizationIdOf(pathname) ?? homeId
+  const orgId = organizationIdOf(pathname) ?? homeId ?? null
   const perms = usePermissionsIn(orgId)
   const adminMode = useAdminMode()
   const { data: services } = useQuery(infoQueries.services())
-  const { data: organizations = [] } = useQuery({
-    ...organizationQueries.list(),
-    enabled: orgId !== null,
-  })
+  const { organizations = [], hasMemberCounts } = useSettingsOrganizations()
   const enabledFeatures = new Set(
     (services?.items ?? []).filter((item) => item.enabled).map((item) => item.name),
   )
@@ -79,7 +77,8 @@ const SettingsLayout = ({ children }: SettingsLayoutProps) => {
   const node = orgId ? buildTree(organizations, orgId) : null
   const countOf = (item: SettingsNavItem): number | null => {
     if (!node || !item.count) return null
-    return item.count === 'children' ? node.children.length : subtreeMemberCount(node)
+    if (item.count === 'children') return node.children.length
+    return hasMemberCounts ? subtreeMemberCount(node) : null
   }
 
   const switchOrganization = (next: string) => {

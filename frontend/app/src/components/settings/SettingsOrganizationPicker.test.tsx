@@ -22,6 +22,22 @@ describe('SettingsOrganizationPicker', () => {
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
   })
 
+  it.each([
+    ['no organization', []],
+    ['only other organizations', [ORGS[1]]],
+  ])('renders nothing while the selected one is unknown (%s)', (_, organizations) => {
+    render(
+      <SettingsOrganizationPicker
+        organizations={organizations}
+        selectedId="amt"
+        onSelect={vi.fn()}
+      />,
+    )
+    expect(screen.queryByRole('button')).not.toBeInTheDocument()
+    expect(screen.queryByText(/Stadtgärtnerei|Grünflächenamt/)).not.toBeInTheDocument()
+    expect(document.querySelector('[aria-hidden="true"]')).toBeNull()
+  })
+
   it('names the selected organization and its number of sub-organizations', () => {
     render(<SettingsOrganizationPicker organizations={ORGS} selectedId="amt" onSelect={vi.fn()} />)
     expect(

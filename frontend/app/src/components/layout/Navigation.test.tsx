@@ -40,9 +40,9 @@ vi.mock('@/lib/auth/scope/adminMode', () => ({
   useAdminMode: () => adminMode.value,
 }))
 
-const homeOrganizationId = vi.hoisted(() => ({ value: null as string | null }))
-vi.mock('@/lib/auth/scope/effectiveRoles', () => ({
-  useHomeOrganizationId: () => homeOrganizationId.value,
+const homeOrganizationId = vi.hoisted(() => ({ value: null as string | null | undefined }))
+vi.mock('@/lib/auth/scope/settingsOrganization', () => ({
+  useSettingsHomeOrganizationId: () => homeOrganizationId.value,
 }))
 
 vi.mock('@/modules/registry', async () => {
@@ -369,22 +369,25 @@ describe('Navigation', () => {
     expect(screen.queryByText('Einsatzpläne')).not.toBeInTheDocument()
   })
 
-  it('hides the team and plugin entries while the own organization is unknown', async () => {
-    permissions.mockReturnValue(UNRESTRICTED)
-    adminMode.value = true
-    homeOrganizationId.value = null
-    respondWithServices(true)
+  it.each([null, undefined])(
+    'hides the team and plugin entries while the organization is %s',
+    async (unresolved) => {
+      permissions.mockReturnValue(UNRESTRICTED)
+      adminMode.value = true
+      homeOrganizationId.value = unresolved
+      respondWithServices(true)
 
-    renderNavigation()
+      renderNavigation()
 
-    expect(await screen.findByText('Mandanten')).toBeInTheDocument()
-    expect(screen.getByText('Organisation').closest('a')).toHaveAttribute(
-      'href',
-      '/settings/organization',
-    )
-    expect(screen.queryByText('Team & Rollen')).not.toBeInTheDocument()
-    expect(screen.queryByText('Plugins')).not.toBeInTheDocument()
-  })
+      expect(await screen.findByText('Mandanten')).toBeInTheDocument()
+      expect(screen.getByText('Organisation').closest('a')).toHaveAttribute(
+        'href',
+        '/settings/organization',
+      )
+      expect(screen.queryByText('Team & Rollen')).not.toBeInTheDocument()
+      expect(screen.queryByText('Plugins')).not.toBeInTheDocument()
+    },
+  )
 
   it('filters the admin entries by permission and feature', async () => {
     permissions.mockReturnValue(new Set(['organization:read']))

@@ -1,18 +1,37 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import type { ReactNode } from 'react'
+import type {
+  OrganizationResponse,
+  ReachableOrganizationResponse,
+  RoleResponse,
+} from '@green-ecolution/backend-client'
 import { render, screen, within } from '@/test/utils'
 import type { Permissions } from '@/lib/auth/permissions'
 import SettingsLayout from './SettingsLayout'
+
+const VISIBLE: OrganizationResponse[] = [
+  { id: 'amt', name: 'Grünflächenamt', memberCount: 3 },
+  { id: 'nord', name: 'Stadtgärtnerei Nord', memberCount: 4, parentId: 'amt' },
+]
+const REACHABLE: ReachableOrganizationResponse[] = [
+  { id: 'amt', name: 'Grünflächenamt' },
+  { id: 'nord', name: 'Stadtgärtnerei Nord', parentId: 'amt' },
+]
+
+const roleWith = (permissions: string[]): RoleResponse =>
+  ({ id: 'r', name: 'Rolle', organizationId: 'amt', permissions }) as RoleResponse
 
 const state = vi.hoisted(
   (): {
     pathname: string
     perms: Permissions
-    home: string | null
+    roles: RoleResponse[]
+    home: string | null | undefined
     navigate: ReturnType<typeof vi.fn>
   } => ({
     pathname: '/settings/organization/amt/members',
     perms: 'unrestricted',
+    roles: [],
     home: 'amt',
     navigate: vi.fn(),
   }),
@@ -41,18 +60,25 @@ vi.mock('@tanstack/react-router', () => ({
   useNavigate: () => state.navigate,
 }))
 vi.mock('@/lib/auth/usePermissionsIn', () => ({ usePermissionsIn: () => state.perms }))
-vi.mock('@/lib/auth/scope/effectiveRoles', () => ({ useHomeOrganizationId: () => state.home }))
+vi.mock('@/lib/auth/scope/settingsOrganization', () => ({
+  useSettingsHomeOrganizationId: () => state.home,
+}))
+vi.mock('@/lib/auth/scope/effectiveRoles', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/auth/scope/effectiveRoles')>()),
+  useEffectiveRoles: () => state.roles,
+}))
 vi.mock('@/lib/auth/scope/adminMode', () => ({ useAdminMode: () => false }))
+// Like the backend, GET /organizations answers nothing without organization:read.
 vi.mock('@tanstack/react-query', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@tanstack/react-query')>()),
-  useQuery: ({ queryKey }: { queryKey: unknown[] }) => {
-    if (queryKey[0] === 'organizations')
-      return {
-        data: [
-          { id: 'amt', name: 'Grünflächenamt', memberCount: 3 },
-          { id: 'nord', name: 'Stadtgärtnerei Nord', memberCount: 4, parentId: 'amt' },
-        ],
-      }
+  useQuery: ({ queryKey, enabled }: { queryKey: unknown[]; enabled?: boolean }) => {
+    if (enabled === false) return { data: undefined }
+    const key = queryKey.join('/')
+    if (key === 'organizations') {
+      const canRead = state.roles.some((role) => role.permissions.includes('organization:read'))
+      return { data: canRead ? VISIBLE : undefined }
+    }
+    if (key === 'users/me/organizations') return { data: REACHABLE }
     return {
       data: {
         items: [
@@ -68,6 +94,7 @@ describe('SettingsLayout', () => {
   beforeEach(() => {
     state.pathname = '/settings/organization/amt/members'
     state.perms = 'unrestricted'
+    state.roles = [roleWith(['organization:read'])]
     state.home = 'amt'
     state.navigate.mockReset()
   })
@@ -96,6 +123,16 @@ describe('SettingsLayout', () => {
     )
   })
 
+  it('falls back to the resolved organization without an own one', () => {
+    state.pathname = '/settings/profile'
+    state.home = 'nord'
+    render(<SettingsLayout>content</SettingsLayout>)
+    expect(screen.getByRole('link', { name: 'Überblick' })).toHaveAttribute(
+      'href',
+      '/settings/organization/nord',
+    )
+  })
+
   it('hides entries the user has no right to in this organization', () => {
     state.perms = new Set(['organization:read'])
     render(<SettingsLayout>content</SettingsLayout>)
@@ -113,9 +150,41 @@ describe('SettingsLayout', () => {
     ).toBeInTheDocument()
   })
 
+  it('works for a role without organization:read', () => {
+    state.pathname = '/settings/organization/amt/stations'
+    state.roles = [roleWith(['start_point:read'])]
+    state.perms = new Set(['start_point:read'])
+    render(<SettingsLayout>content</SettingsLayout>)
+    expect(screen.getByText('Einstellungen für')).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Organisation wechseln, aktuell Grünflächenamt' }),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Stationen' })).toHaveAttribute(
+      'href',
+      '/settings/organization/amt/stations',
+    )
+  })
+
+  it('counts the sub-organizations but not the members without organization:read', () => {
+    state.roles = [roleWith(['user:read'])]
+    state.perms = new Set(['user:read', 'organization:read'])
+    render(<SettingsLayout>content</SettingsLayout>)
+    expect(
+      within(screen.getByRole('link', { name: /Struktur/ })).getByText('1'),
+    ).toBeInTheDocument()
+    expect(within(screen.getByRole('link', { name: /Mitarbeitende/ })).queryByText(/\d/)).toBeNull()
+  })
+
   it('hides the organization group without any organization to manage', () => {
     state.pathname = '/settings/profile'
     state.home = null
+    render(<SettingsLayout>content</SettingsLayout>)
+    expect(screen.queryByText('Einstellungen für')).not.toBeInTheDocument()
+  })
+
+  it('hides the organization group while the home organization loads', () => {
+    state.pathname = '/settings/profile'
+    state.home = undefined
     render(<SettingsLayout>content</SettingsLayout>)
     expect(screen.queryByText('Einstellungen für')).not.toBeInTheDocument()
   })

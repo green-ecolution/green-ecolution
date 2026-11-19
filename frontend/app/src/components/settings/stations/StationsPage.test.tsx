@@ -27,15 +27,16 @@ const station = (id: string, name: string, organizationId: string): StartPointRe
 const state = vi.hoisted(
   (): {
     perms: Permissions
+    organizations: OrganizationResponse[]
     stations: StartPointResponse[] | null
     dialogProps: { organizationId: string; onSubmit: (payload: StationPayload) => void } | null
-  } => ({ perms: 'unrestricted', stations: [], dialogProps: null }),
+  } => ({ perms: 'unrestricted', organizations: [], stations: [], dialogProps: null }),
 )
 
 vi.mock('../organization/useSettingsOrganization', () => ({
   useSettingsOrganization: () => ({
     orgId: 'amt',
-    organizations: ORGS,
+    organizations: state.organizations,
     perms: state.perms,
     can: (required: readonly string[]) =>
       state.perms === 'unrestricted' ||
@@ -91,6 +92,7 @@ describe('StationsPage', () => {
   beforeEach(() => {
     create.mockClear()
     state.perms = 'unrestricted'
+    state.organizations = ORGS
     state.stations = [
       station('s1', 'Depot Amt', 'amt'),
       station('s2', 'Depot Nord', 'nord'),
@@ -120,6 +122,18 @@ describe('StationsPage', () => {
     render(<StationsPage />)
     expect(await screen.findByText('Depot Amt')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /Station anlegen/ })).not.toBeInTheDocument()
+  })
+
+  // Without organization:read the context offers the reachable organizations.
+  it('lists the stations for a role that holds only start_point:read', async () => {
+    state.perms = new Set(['start_point:read'])
+    state.organizations = [
+      { id: 'amt', name: 'Grünflächenamt', memberCount: 0, parentId: 'root' },
+      { id: 'nord', name: 'Stadtgärtnerei Nord', memberCount: 0, parentId: 'amt' },
+    ]
+    render(<StationsPage />)
+    expect(await screen.findByText('Depot Amt')).toBeInTheDocument()
+    expect(screen.getByText('Depot Nord')).toBeInTheDocument()
   })
 
   it('shows the routing hint when routing is switched off', async () => {

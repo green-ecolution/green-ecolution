@@ -37,7 +37,7 @@ import { useActiveModulesOptional } from '@/modules/useActiveModules'
 import type { I18nKey, ModuleManifest, NavSectionKey } from '@/modules/types'
 import { usePermissions } from '@/lib/auth/usePermissions'
 import { useAdminMode } from '@/lib/auth/scope/adminMode'
-import { useHomeOrganizationId } from '@/lib/auth/scope/effectiveRoles'
+import { useSettingsHomeOrganizationId } from '@/lib/auth/scope/settingsOrganization'
 import { infoQueries, pluginViewsQuery } from '@/api/queries'
 import type { PluginNavEntryResponse } from '@/api/backendApi'
 
@@ -329,7 +329,7 @@ const ProtectedNavSections: React.FC<Omit<NavSectionsProps, 'sections'>> = (prop
   const { data: pluginViews = [] } = useQuery({ ...pluginViewsQuery(), enabled: !admin })
   const { data: services } = useQuery({ ...infoQueries.services(), enabled: admin })
   const perms = usePermissions()
-  const homeOrganizationId = useHomeOrganizationId()
+  const homeOrganizationId = useSettingsHomeOrganizationId() ?? null
   const { manifests } = useActiveModulesOptional()
   const routePermissions = routePermissionsFor(manifests)
 
