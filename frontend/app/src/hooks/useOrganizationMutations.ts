@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient, type InvalidateQueryFilters } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import type { AddressDto } from '@green-ecolution/backend-client'
 import { organizationApi } from '@/api/backendApi'
@@ -42,14 +42,15 @@ export const useOrganizationMutations = () => {
   // reachable organizations the settings resolve their organization from.
   // `deletedId`: its own detail and settings would only refetch into a 404 while
   // its page is still open.
-  const invalidate = (deletedId?: string) =>
-    Promise.all([
-      queryClient.invalidateQueries({
-        queryKey: ['organizations'],
-        predicate: (query) => deletedId === undefined || query.queryKey[1] !== deletedId,
-      }),
-      queryClient.invalidateQueries({ queryKey: ['users', 'me'] }),
-    ])
+  const affected = (deletedId?: string): InvalidateQueryFilters[] => [
+    {
+      queryKey: ['organizations'],
+      predicate: (query) => deletedId === undefined || query.queryKey[1] !== deletedId,
+    },
+    { queryKey: ['users', 'me'] },
+  ]
+  const invalidate = () =>
+    Promise.all(affected().map((filters) => queryClient.invalidateQueries(filters)))
 
   const createOrganization = useMutation({
     mutationFn: ({ parentId, name }: CreateOrganizationVariables) =>
@@ -89,10 +90,23 @@ export const useOrganizationMutations = () => {
   const deleteOrganization = useMutation({
     mutationFn: ({ orgId }: DeleteOrganizationVariables) =>
       organizationApi.deleteOrganization({ orgId }),
-    // Held like create: the caller then navigates on a list without the deleted one.
+    // Not held like create: the refetched reachable list lacks the organization,
+    // its still open page turns into "Kein Zugriff" and unmounts, and TanStack
+    // Query skips the onSuccess of an unmounted caller, so it would never navigate
+    // away. The queries are marked stale at once, which the entry route's
+    // fetchQuery honours, and refetched in a later task, after the caller's
+    // onSuccess has run in this one.
     onSuccess: (_, { orgId }) => {
       showToast(t('organization.toast.deleted'))
-      return invalidate(orgId)
+      const filters = affected(orgId)
+      for (const filter of filters) {
+        void queryClient.invalidateQueries({ ...filter, refetchType: 'none' })
+      }
+      setTimeout(() => {
+        for (const filter of filters) {
+          void queryClient.refetchQueries({ ...filter, type: 'active' })
+        }
+      }, 0)
     },
     onError: (error) => {
       showToast(

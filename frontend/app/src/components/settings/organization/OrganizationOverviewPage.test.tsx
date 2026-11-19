@@ -504,6 +504,30 @@ describe('OrganizationOverviewPage', () => {
     expect(navigate).toHaveBeenCalledWith(expect.objectContaining({ ignoreBlocker: true }))
   })
 
+  // The deleted organization drops out of the context before onSuccess runs.
+  it('opens the parent overview even when the list no longer holds the deleted one', async () => {
+    let finishDelete: (() => void) | undefined
+    deleteMutate.mockImplementation(
+      (_vars: DeleteOrganizationVariables, opts?: { onSuccess?: () => void }) => {
+        finishDelete = () => opts?.onSuccess?.()
+      },
+    )
+    context.orgId = 'nord'
+    const { rerender } = renderPage()
+    await userEvent.click(screen.getByRole('button', { name: 'Organisation löschen' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Löschen' }))
+
+    visibleOrganizations = BASE_ORGS.filter((org) => org.id !== 'nord')
+    rerender(<OrganizationOverviewPage />)
+    finishDelete?.()
+
+    expect(navigate).toHaveBeenCalledWith({
+      to: '/settings/organization/$orgId',
+      params: { orgId: 'amt' },
+      ignoreBlocker: true,
+    })
+  })
+
   it('falls back to the entry when the parent is only reachable, not readable', async () => {
     context.orgId = 'nord'
     readableIds = new Set(['root', 'nord', 'duburg'])
