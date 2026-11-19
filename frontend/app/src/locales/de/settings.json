@@ -514,19 +514,6 @@
         "previewAriaLabel": "Vorschau des geltenden Kartenausschnitts",
         "pinAriaLabel": "Mittelpunkt der Karte, ziehbar"
       },
-      "origin": {
-        "default": "Vorgabe der Instanz",
-        "inherited": "Geerbt von {name}",
-        "inheritedUnknown": "Von einer übergeordneten Organisation geerbt",
-        "own": "Eigener Wert"
-      },
-      "setOwnValue": "Eigenen Wert setzen",
-      "setOwnValueFor": "Eigenen Wert für {field} setzen",
-      "inheritAgain": "Wieder erben",
-      "inheritAgainFor": "{field} wieder erben",
-      "dormantOwnValue": "Der eigene Wert von {value} ruht, solange die Sperre gilt.",
-      "lastChange": "Zuletzt geändert am {date}",
-      "lastChangeBy": "Zuletzt geändert am {date} von {name}",
       "loadErrorForbidden": "Du darfst die Vorgaben dieser Organisation nicht einsehen. Vermutlich gilt deine Rolle nur für eine untergeordnete Organisation.",
       "loadErrorGeneric": "Die Vorgaben konnten nicht geladen werden. Bitte versuche es später erneut.",
       "toast": {

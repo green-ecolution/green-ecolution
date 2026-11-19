@@ -39,9 +39,7 @@ const draftOf = (response: OrganizationSettingsResponse): Draft => ({
 })
 
 const fingerprint = (orgId: string, response: OrganizationSettingsResponse | undefined) =>
-  response
-    ? JSON.stringify([orgId, response.sensorOfflineAfterSecs, response.defectStreak])
-    : null
+  response ? JSON.stringify([orgId, response.sensorOfflineAfterSecs, response.defectStreak]) : null
 
 export const useSensorSettingsDraft = (
   organizationId: string,

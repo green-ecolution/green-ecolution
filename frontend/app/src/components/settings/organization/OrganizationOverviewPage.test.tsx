@@ -53,21 +53,24 @@ const users: UserResponse[] = [
   member('u-bo', 'Bo', 'Boysen', 'nord'),
 ]
 
-const settingsOf = (): OrganizationSettingsResponse =>
-  ({
-    mapView: {
-      value: {
-        center: [54.7923, 9.4358],
-        bbox: [54.7148, 9.2858, 54.8601, 9.5838],
-        minZoom: 13,
-        maxZoom: 18,
-      },
-      origin: 'default',
-      lastChange: null,
+const settingsOf = (): OrganizationSettingsResponse => ({
+  sensorOfflineAfterSecs: { value: 3600, inheritedValue: 3600 },
+  defectStreak: { value: 3, inheritedValue: 3 },
+  mapView: {
+    value: {
+      center: [54.7923, 9.4358],
+      bbox: [54.7148, 9.2858, 54.8601, 9.5838],
+      minZoom: 13,
+      maxZoom: 18,
     },
-    descendantsMayOverride: true,
-    enforcedBy: null,
-  }) as unknown as OrganizationSettingsResponse
+    inheritedValue: {
+      center: [54.7923, 9.4358],
+      bbox: [54.7148, 9.2858, 54.8601, 9.5838],
+      minZoom: 13,
+      maxZoom: 18,
+    },
+  },
+})
 
 let visibleOrganizations = BASE_ORGS
 // null: every listed organization came from GET /organizations.
@@ -210,8 +213,8 @@ const { default: OrganizationOverviewPage } = await import('./OrganizationOvervi
 
 const renderPage = () => render(<OrganizationOverviewPage />)
 
-const setOwnMapView = () =>
-  userEvent.click(screen.getByRole('button', { name: /Eigenen Wert für Kartenausschnitt setzen/ }))
+const editMapView = () =>
+  userEvent.click(screen.getByRole('switch', { name: 'Keine Einschränkung' }))
 
 describe('OrganizationOverviewPage', () => {
   beforeAll(() => {
@@ -414,7 +417,7 @@ describe('OrganizationOverviewPage', () => {
     context.orgId = 'nord'
     renderPage()
 
-    await setOwnMapView()
+    await editMapView()
     await userEvent.click(screen.getByRole('button', { name: 'Speichern' }))
 
     await waitFor(() => expect(updateSettingsMutate).toHaveBeenCalled())
@@ -429,7 +432,7 @@ describe('OrganizationOverviewPage', () => {
       screen.getByRole('textbox', { name: 'Straße und Hausnummer' }),
       'Gartenweg 1',
     )
-    await setOwnMapView()
+    await editMapView()
     await userEvent.click(screen.getByRole('button', { name: 'Speichern' }))
 
     await waitFor(() => expect(updateSettingsMutate).toHaveBeenCalled())
@@ -442,7 +445,7 @@ describe('OrganizationOverviewPage', () => {
 
     expect(screen.queryByRole('button', { name: 'Speichern' })).not.toBeInTheDocument()
 
-    await setOwnMapView()
+    await editMapView()
     await userEvent.click(screen.getByRole('button', { name: 'Speichern' }))
 
     await waitFor(() =>
@@ -477,6 +480,21 @@ describe('OrganizationOverviewPage', () => {
     context.perms = new Set(['organization:read'])
     renderPage()
     expect(screen.queryByRole('link', { name: /Mitarbeitende/ })).not.toBeInTheDocument()
+  })
+
+  it('edits the map view directly with setting:update', () => {
+    renderPage()
+    expect(screen.getByRole('switch', { name: 'Keine Einschränkung' })).toBeEnabled()
+    expect(
+      screen.queryByRole('button', { name: /Wieder erben|Eigenen Wert/ }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('shows the map view as a preview only without setting:update', () => {
+    context.perms = new Set(['organization:read', 'setting:read'])
+    renderPage()
+    expect(screen.getByRole('switch', { name: 'Keine Einschränkung' })).toBeDisabled()
+    expect(screen.getByTestId('map-preview')).toBeInTheDocument()
   })
 
   it('hides the map view without setting:read in this organization', () => {

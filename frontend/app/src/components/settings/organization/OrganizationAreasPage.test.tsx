@@ -23,27 +23,25 @@ const BASE_ORGS: OrganizationResponse[] = [
 
 const modulesOf = (
   rows: Partial<OrganizationModuleResponse>[] = [{}],
-): OrganizationModulesResponse =>
-  ({
-    modules: rows.map((row) => ({
-      key: 'probe',
-      enabled: true,
-      inheritedEnabled: true,
-      origin: 'default',
-      fixedByAncestor: false,
-      ...row,
-    })),
-  })
+): OrganizationModulesResponse => ({
+  modules: rows.map((row) => ({
+    key: 'probe',
+    enabled: true,
+    inheritedEnabled: true,
+    origin: 'default',
+    fixedByAncestor: false,
+    ...row,
+  })),
+})
 
-const settingsOf = (): OrganizationSettingsResponse =>
-  ({
-    sensorOfflineAfterSecs: { value: 86_400, inheritedValue: 86_400 },
-    defectStreak: { value: 3, inheritedValue: 3 },
-    mapView: {
-      value: { center: [54.7923, 9.4358] },
-      inheritedValue: { center: [54.7923, 9.4358] },
-    },
-  })
+const settingsOf = (): OrganizationSettingsResponse => ({
+  sensorOfflineAfterSecs: { value: 86_400, inheritedValue: 86_400 },
+  defectStreak: { value: 3, inheritedValue: 3 },
+  mapView: {
+    value: { center: [54.7923, 9.4358] },
+    inheritedValue: { center: [54.7923, 9.4358] },
+  },
+})
 
 let settingsMap: Record<string, OrganizationSettingsResponse> = {}
 let modulesMap: Record<string, OrganizationModulesResponse> = {}
@@ -256,9 +254,7 @@ describe('OrganizationAreasPage', () => {
     modulesMap.nord = modulesOf([{ fixedByAncestor: true, setBy: { id: 'amt' } }])
     await renderLoaded()
     expect(await screen.findByRole('switch', { name: 'Bewässerung' })).toBeDisabled()
-    expect(
-      screen.getByText('Diesen Aufgabenbereich legt Grünflächenamt fest.'),
-    ).toBeInTheDocument()
+    expect(screen.getByText('Diesen Aufgabenbereich legt Grünflächenamt fest.')).toBeInTheDocument()
   })
 
   it('keeps save disabled while a value is invalid and explains it at the field', async () => {
@@ -293,7 +289,9 @@ describe('OrganizationAreasPage', () => {
   it('reports a failed settings load instead of hiding the cards', async () => {
     settingsError.mockReturnValue({ response: { status: 403 } })
     await renderLoaded()
-    expect(screen.getByRole('alert')).toHaveTextContent(/Aufgabenbereiche dieser Organisation nicht/)
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      /Aufgabenbereiche dieser Organisation nicht/,
+    )
   })
 
   it('reports a failed module switch load instead of hiding the cards', async () => {

@@ -1,65 +1,20 @@
 import { useId } from 'react'
-import { format } from 'date-fns'
-import type { Locale } from 'date-fns'
 import { useTranslation } from 'react-i18next'
-import type { TFunction } from 'i18next'
-import { Badge, Button, Input, Label, Switch, cn } from '@green-ecolution/ui'
-import { SettingOriginDto, type MapViewDto, type SettingChangeRef } from '@/api/backendApi'
+import { Input, Label, Switch } from '@green-ecolution/ui'
+import type { MapViewDto } from '@/api/backendApi'
 import MapPreview from '@/components/map-gl/MapPreview'
 import { MAP_ZOOM_SCALE_MAX, MAP_ZOOM_SCALE_MIN } from '@/lib/mapConfig'
-import { useDateLocale } from '@/lib/i18n/useFormatters'
 import MapViewPicker from './MapViewPicker'
 
 interface MapViewSettingRowProps {
   label: string
   description: string
-  /** The viewport in force, shown while this organization does not own it. */
-  effective: MapViewDto
-  /** The viewport being edited; equals `effective` until the person moves it. */
-  draft: MapViewDto
-  origin: SettingOriginDto
-  sourceName: string | null
-  /** Own value while a lock above keeps it from taking effect. */
-  dormant: MapViewDto | null
-  lastChange: SettingChangeRef | null | undefined
-  own: boolean
+  value: MapViewDto
   locked: boolean
   error: string | null
-  onOwn: (own: boolean) => void
   onChange: (view: MapViewDto) => void
   onRestrictedChange: (restricted: boolean) => void
   onZoomChange: (which: 'minZoom' | 'maxZoom', level: number) => void
-}
-
-const originLabel = (
-  origin: SettingOriginDto,
-  sourceName: string | null,
-  t: TFunction<'settings'>,
-): string => {
-  switch (origin) {
-    case SettingOriginDto.Own:
-      return t('organization.settings.origin.own')
-    case SettingOriginDto.Inherited:
-      return sourceName
-        ? t('organization.settings.origin.inherited', { name: sourceName })
-        : t('organization.settings.origin.inheritedUnknown')
-    case SettingOriginDto.Default:
-      return t('organization.settings.origin.default')
-  }
-}
-
-const lastChangeLine = (
-  change: SettingChangeRef | null | undefined,
-  locale: Locale,
-  t: TFunction<'settings'>,
-): string | null => {
-  if (!change) return null
-  const changedAt = new Date(change.changedAt)
-  if (Number.isNaN(changedAt.getTime())) return null
-  const date = format(changedAt, 'dd.MM.yyyy', { locale })
-  return change.changedByName
-    ? t('organization.settings.lastChangeBy', { date, name: change.changedByName })
-    : t('organization.settings.lastChange', { date })
 }
 
 const formatCentre = (view: MapViewDto): string =>
@@ -73,8 +28,8 @@ interface ZoomFieldProps {
   onChange: (level: number) => void
 }
 
-/** One end of the zoom range: a field while this organization owns the value,
- *  a plain figure everywhere else, like the numeric rows above. */
+/** One end of the zoom range: a field while it may be changed,
+ *  a plain figure otherwise. */
 const ZoomField = ({ id, label, value, editable, onChange }: ZoomFieldProps) => (
   <div className="flex flex-col gap-1">
     {editable ? (
@@ -107,54 +62,27 @@ const ZoomField = ({ id, label, value, editable, onChange }: ZoomFieldProps) => 
   </div>
 )
 
-/**
- * The map viewport, in the same shape as the numeric rows next to it: origin
- * rail, badge, "set my own" / "inherit again". Only the value itself is a map
- * rather than a number, because four coordinate fields are not something a
- * person can picture.
- */
+/** The map viewport: a map rather than four coordinate fields nobody can picture. */
 const MapViewSettingRow = ({
   label,
   description,
-  effective,
-  draft,
-  origin,
-  sourceName,
-  dormant,
-  lastChange,
-  own,
+  value,
   locked,
   error,
-  onOwn,
   onChange,
   onRestrictedChange,
   onZoomChange,
 }: MapViewSettingRowProps) => {
   const { t } = useTranslation('settings')
-  const dateLocale = useDateLocale()
   const fieldId = useId()
   const switchId = useId()
-  const history = lastChangeLine(lastChange, dateLocale, t)
-  // Same rule as the numeric rows: a value is a field only while this
-  // organization owns it and may change it; elsewhere it is a fact to read.
-  const editable = own && !locked
-  const shown = editable ? draft : effective
-  const restricted = shown.bbox != null
+  const editable = !locked
+  const restricted = value.bbox != null
 
   return (
-    <div
-      className={cn(
-        'flex flex-col gap-2 border-l-2 pl-4',
-        origin === SettingOriginDto.Own ? 'border-green-dark' : 'border-dark-200',
-      )}
-    >
+    <div className="flex flex-col gap-2">
       <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-2">
-        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <p className="text-sm font-medium text-dark">{label}</p>
-          <Badge variant={origin === SettingOriginDto.Own ? 'outline-green-dark' : 'muted'}>
-            {originLabel(origin, sourceName, t)}
-          </Badge>
-        </div>
+        <p className="text-sm font-medium text-dark">{label}</p>
         {/* Reads as a statement in both states, so the row says what is the case
             rather than what the switch would do. */}
         <div className="flex items-center gap-3">
@@ -180,20 +108,20 @@ const MapViewSettingRow = ({
           // map is for, and it should be re-framed rather than nudged.
           <MapViewPicker
             key={restricted ? 'bounded' : 'unbounded'}
-            value={draft}
+            value={value}
             onApply={onChange}
           />
         ) : (
           <MapPreview
             bounds={
-              shown.bbox
+              value.bbox
                 ? [
-                    [shown.bbox[1], shown.bbox[0]],
-                    [shown.bbox[3], shown.bbox[2]],
+                    [value.bbox[1], value.bbox[0]],
+                    [value.bbox[3], value.bbox[2]],
                   ]
                 : undefined
             }
-            center={shown.bbox ? undefined : [shown.center[1], shown.center[0]]}
+            center={value.bbox ? undefined : [value.center[1], value.center[0]]}
             zoom={12}
             className="h-64"
             ariaLabel={t('organization.settings.mapView.previewAriaLabel')}
@@ -205,14 +133,14 @@ const MapViewSettingRow = ({
             <ZoomField
               id={`${fieldId}-min-zoom`}
               label={t('organization.settings.mapView.minZoomLabel')}
-              value={shown.minZoom}
+              value={value.minZoom}
               editable={editable}
               onChange={(level) => onZoomChange('minZoom', level)}
             />
             <ZoomField
               id={`${fieldId}-max-zoom`}
               label={t('organization.settings.mapView.maxZoomLabel')}
-              value={shown.maxZoom}
+              value={value.maxZoom}
               editable={editable}
               onChange={(level) => onZoomChange('maxZoom', level)}
             />
@@ -224,26 +152,8 @@ const MapViewSettingRow = ({
 
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           <p className="flex h-10 items-center rounded-lg bg-dark-50 px-3 font-lato text-base font-semibold text-dark">
-            {t('organization.settings.mapView.centre', { value: formatCentre(shown) })}
+            {t('organization.settings.mapView.centre', { value: formatCentre(value) })}
           </p>
-          {!locked && (
-            <Button
-              type="button"
-              variant="link"
-              size="sm"
-              className="h-auto px-0 text-sm"
-              aria-label={
-                own
-                  ? t('organization.settings.inheritAgainFor', { field: label })
-                  : t('organization.settings.setOwnValueFor', { field: label })
-              }
-              onClick={() => onOwn(!own)}
-            >
-              {own
-                ? t('organization.settings.inheritAgain')
-                : t('organization.settings.setOwnValue')}
-            </Button>
-          )}
         </div>
       </div>
 
@@ -255,12 +165,6 @@ const MapViewSettingRow = ({
           className="text-sm text-destructive"
         >
           {error}
-        </p>
-      )}
-      {history && <p className="text-xs text-dark-600">{history}</p>}
-      {dormant && (
-        <p className="text-xs text-dark-600">
-          {t('organization.settings.dormantOwnValue', { value: formatCentre(dormant) })}
         </p>
       )}
     </div>

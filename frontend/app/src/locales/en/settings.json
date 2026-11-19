@@ -514,19 +514,6 @@
         "previewAriaLabel": "Preview of the viewport in force",
         "pinAriaLabel": "Map centre, draggable"
       },
-      "origin": {
-        "default": "Instance default",
-        "inherited": "Inherited from {name}",
-        "inheritedUnknown": "Inherited from a parent organization",
-        "own": "Own value"
-      },
-      "setOwnValue": "Set own value",
-      "setOwnValueFor": "Set own value for {field}",
-      "inheritAgain": "Inherit again",
-      "inheritAgainFor": "Inherit {field} again",
-      "dormantOwnValue": "The own value of {value} lies dormant while the lock applies.",
-      "lastChange": "Last changed on {date}",
-      "lastChangeBy": "Last changed on {date} by {name}",
       "loadErrorForbidden": "You aren't allowed to view this organization's defaults. Your role probably only applies to a sub-organization.",
       "loadErrorGeneric": "The defaults could not be loaded. Please try again later.",
       "toast": {

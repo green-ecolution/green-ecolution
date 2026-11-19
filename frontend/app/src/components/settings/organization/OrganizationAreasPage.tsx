@@ -40,8 +40,7 @@ const OrganizationAreasPage = () => {
 
   // An invalid draft builds no request, so its `dirty` is false. Typed input
   // would then be dropped without a word on the way out, hence the `!valid` arm.
-  const dirty =
-    moduleDraft.dirty || sensors.dirty || shown.some((section) => section.draft.dirty)
+  const dirty = moduleDraft.dirty || sensors.dirty || shown.some((section) => section.draft.dirty)
   const valid = sensors.valid && shown.every((section) => section.draft.valid)
   const unsaved = dirty || !valid
 
@@ -132,11 +131,7 @@ const OrganizationAreasPage = () => {
           <p className="flex-[1_1_15rem] text-sm text-dark-600">
             {t('organization.areas.saveHint')}
           </p>
-          <Button
-            type="button"
-            disabled={!dirty || !valid || settingsSave.pending}
-            onClick={save}
-          >
+          <Button type="button" disabled={!dirty || !valid || settingsSave.pending} onClick={save}>
             {t('organization.areas.save')}
           </Button>
         </div>

@@ -11,10 +11,17 @@ const MAP_VIEW = {
   maxZoom: 18,
 }
 
+const DEFAULT_VIEW = {
+  center: [54.0, 9.0],
+  bbox: [53.9, 8.8, 54.1, 9.2],
+  minZoom: 12,
+  maxZoom: 17,
+}
+
 const response = {
-  mapView: { value: MAP_VIEW, origin: 'default', lastChange: null },
-  descendantsMayOverride: true,
-  enforcedBy: null,
+  sensorOfflineAfterSecs: { value: 3600, inheritedValue: 3600 },
+  defectStreak: { value: 3, inheritedValue: 3 },
+  mapView: { value: MAP_VIEW, inheritedValue: DEFAULT_VIEW },
 } as unknown as OrganizationSettingsResponse
 
 describe('useOrganizationSettingsDraft', () => {
@@ -25,12 +32,19 @@ describe('useOrganizationSettingsDraft', () => {
     expect(result.current.toRequest()).toBeNull()
   })
 
-  it('takes over the viewport in force when the map view is switched to own', () => {
+  it('is clean after loading and edits the viewport directly', () => {
     const { result } = renderHook(() => useOrganizationSettingsDraft())
     act(() => result.current.load(response))
-    act(() => result.current.setMapViewOwn(true))
-    expect(result.current.draft?.mapView.value).toEqual(MAP_VIEW)
-    expect(result.current.toRequest()).toEqual({ mapView: MAP_VIEW })
+    expect(result.current.dirty).toBe(false)
+    act(() => result.current.setMapView({ ...MAP_VIEW, center: [54.8, 9.44] }))
+    expect(result.current.toRequest()).toEqual({ mapView: { ...MAP_VIEW, center: [54.8, 9.44] } })
+  })
+
+  it('sends the usual viewport like any other, the backend lets it follow again', () => {
+    const { result } = renderHook(() => useOrganizationSettingsDraft())
+    act(() => result.current.load(response))
+    act(() => result.current.setMapView(DEFAULT_VIEW))
+    expect(result.current.toRequest()).toEqual({ mapView: DEFAULT_VIEW })
   })
 
   it('sends the moved viewport as a whole', () => {
@@ -46,24 +60,13 @@ describe('useOrganizationSettingsDraft', () => {
     expect(result.current.toRequest()).toEqual({ mapView: moved })
   })
 
-  it('sends null when an own viewport is given back to inheritance', () => {
-    const owned = {
-      ...response,
-      mapView: { value: MAP_VIEW, origin: 'own', ownValue: MAP_VIEW, lastChange: null },
-    } as unknown as OrganizationSettingsResponse
-    const { result } = renderHook(() => useOrganizationSettingsDraft())
-    act(() => result.current.load(owned))
-    act(() => result.current.setMapViewOwn(false))
-    expect(result.current.toRequest()).toEqual({ mapView: null })
-  })
-
   it('drops the box but keeps the centre when the limit is switched off', () => {
     const { result } = renderHook(() => useOrganizationSettingsDraft())
     act(() => result.current.load(response))
     act(() => result.current.setMapViewRestricted(false))
 
-    expect(result.current.draft?.mapView.value.bbox).toBeNull()
-    expect(result.current.draft?.mapView.value.center).toEqual(MAP_VIEW.center)
+    expect(result.current.draft?.mapView.bbox).toBeNull()
+    expect(result.current.draft?.mapView.center).toEqual(MAP_VIEW.center)
     expect(result.current.toRequest()).toEqual({
       mapView: { center: MAP_VIEW.center, bbox: null, minZoom: undefined, maxZoom: undefined },
     })
@@ -74,8 +77,8 @@ describe('useOrganizationSettingsDraft', () => {
     act(() => result.current.load(response))
     act(() => result.current.setMapViewRestricted(false))
 
-    expect(result.current.draft?.mapView.value.minZoom).toBeUndefined()
-    expect(result.current.draft?.mapView.value.maxZoom).toBeUndefined()
+    expect(result.current.draft?.mapView.minZoom).toBeUndefined()
+    expect(result.current.draft?.mapView.maxZoom).toBeUndefined()
   })
 
   it('sends a changed zoom level with the rest of the viewport', () => {
@@ -105,7 +108,7 @@ describe('useOrganizationSettingsDraft', () => {
     act(() => result.current.setMapViewRestricted(false))
     act(() => result.current.setMapViewRestricted(true))
 
-    const bbox = result.current.draft?.mapView.value.bbox
+    const bbox = result.current.draft?.mapView.bbox
     expect(bbox).not.toBeNull()
     const [swLat, swLng, neLat, neLng] = bbox!
     const [lat, lng] = MAP_VIEW.center
