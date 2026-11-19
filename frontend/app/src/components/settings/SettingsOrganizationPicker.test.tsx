@@ -16,7 +16,12 @@ const ORGS: OrganizationResponse[] = [
 describe('SettingsOrganizationPicker', () => {
   it('shows only the name when there is a single organization', () => {
     render(
-      <SettingsOrganizationPicker organizations={[ORGS[0]]} selectedId="amt" onSelect={vi.fn()} />,
+      <SettingsOrganizationPicker
+        organizations={[ORGS[0]]}
+        selectedId="amt"
+        onSelect={vi.fn()}
+        canManageStructure
+      />,
     )
     expect(screen.getByText('Grünflächenamt')).toBeInTheDocument()
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
@@ -31,6 +36,7 @@ describe('SettingsOrganizationPicker', () => {
         organizations={organizations}
         selectedId="amt"
         onSelect={vi.fn()}
+        canManageStructure
       />,
     )
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
@@ -39,7 +45,14 @@ describe('SettingsOrganizationPicker', () => {
   })
 
   it('names the selected organization and its number of sub-organizations', () => {
-    render(<SettingsOrganizationPicker organizations={ORGS} selectedId="amt" onSelect={vi.fn()} />)
+    render(
+      <SettingsOrganizationPicker
+        organizations={ORGS}
+        selectedId="amt"
+        onSelect={vi.fn()}
+        canManageStructure
+      />,
+    )
     expect(
       screen.getByRole('button', { name: 'Organisation wechseln, aktuell Grünflächenamt' }),
     ).toBeInTheDocument()
@@ -48,7 +61,14 @@ describe('SettingsOrganizationPicker', () => {
 
   it('lists the organizations as a tree and reports the chosen one', async () => {
     const onSelect = vi.fn()
-    render(<SettingsOrganizationPicker organizations={ORGS} selectedId="amt" onSelect={onSelect} />)
+    render(
+      <SettingsOrganizationPicker
+        organizations={ORGS}
+        selectedId="amt"
+        onSelect={onSelect}
+        canManageStructure
+      />,
+    )
     await userEvent.click(screen.getByRole('button', { name: /Organisation wechseln/ }))
     expect(screen.getAllByRole('option').map((option) => option.textContent)).toEqual([
       expect.stringContaining('Grünflächenamt'),
@@ -60,28 +80,69 @@ describe('SettingsOrganizationPicker', () => {
   })
 
   it('never shows an organization above the visible ones', async () => {
-    render(<SettingsOrganizationPicker organizations={ORGS} selectedId="amt" onSelect={vi.fn()} />)
+    render(
+      <SettingsOrganizationPicker
+        organizations={ORGS}
+        selectedId="amt"
+        onSelect={vi.fn()}
+        canManageStructure
+      />,
+    )
     await userEvent.click(screen.getByRole('button', { name: /Organisation wechseln/ }))
     expect(screen.queryByText('root')).not.toBeInTheDocument()
     expect(screen.getAllByRole('option')).toHaveLength(3)
   })
 
   it('names the search field', async () => {
-    render(<SettingsOrganizationPicker organizations={ORGS} selectedId="amt" onSelect={vi.fn()} />)
+    render(
+      <SettingsOrganizationPicker
+        organizations={ORGS}
+        selectedId="amt"
+        onSelect={vi.fn()}
+        canManageStructure
+      />,
+    )
     await userEvent.click(screen.getByRole('button', { name: /Organisation wechseln/ }))
     expect(screen.getByRole('combobox', { name: 'Organisation suchen' })).toBeInTheDocument()
   })
 
   it('filters by name and keeps the ancestors for context', async () => {
-    render(<SettingsOrganizationPicker organizations={ORGS} selectedId="amt" onSelect={vi.fn()} />)
+    render(
+      <SettingsOrganizationPicker
+        organizations={ORGS}
+        selectedId="amt"
+        onSelect={vi.fn()}
+        canManageStructure
+      />,
+    )
     await userEvent.click(screen.getByRole('button', { name: /Organisation wechseln/ }))
     await userEvent.type(screen.getByPlaceholderText('Organisation suchen'), 'Nord')
     expect(screen.getAllByRole('option')).toHaveLength(2)
   })
 
   it('links to the structure page', async () => {
-    render(<SettingsOrganizationPicker organizations={ORGS} selectedId="amt" onSelect={vi.fn()} />)
+    render(
+      <SettingsOrganizationPicker
+        organizations={ORGS}
+        selectedId="amt"
+        onSelect={vi.fn()}
+        canManageStructure
+      />,
+    )
     await userEvent.click(screen.getByRole('button', { name: /Organisation wechseln/ }))
     expect(screen.getByRole('link', { name: 'Struktur verwalten' })).toBeInTheDocument()
+  })
+
+  it('offers no structure link without organization:read in the selected organization', async () => {
+    render(
+      <SettingsOrganizationPicker
+        organizations={ORGS}
+        selectedId="amt"
+        onSelect={vi.fn()}
+        canManageStructure={false}
+      />,
+    )
+    await userEvent.click(screen.getByRole('button', { name: /Organisation wechseln/ }))
+    expect(screen.queryByRole('link', { name: 'Struktur verwalten' })).not.toBeInTheDocument()
   })
 })

@@ -16,7 +16,9 @@ import { ForbiddenError, forbiddenErrorComponent } from '@/lib/router'
 export const Route = createFileRoute('/_protected/settings/organization/')({
   beforeLoad: async ({ context: { queryClient } }) => {
     const bypass = readAuthBypass()
-    const reachable = await queryClient.ensureQueryData(userQueries.myOrganizations())
+    // fetchQuery, not ensureQueryData: right after a delete the cached list is
+    // invalidated but may still hold the deleted organization.
+    const reachable = await queryClient.fetchQuery(userQueries.myOrganizations())
     const ownId = bypass
       ? undefined
       : (await queryClient.ensureQueryData(userQueries.me())).organization?.id

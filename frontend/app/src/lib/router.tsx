@@ -138,6 +138,24 @@ export const entityRoute = <TEntity, TKey extends string>({
   },
 })
 
+/** A loaded list that lacks the requested entity, unlike a request that failed. */
+export class EntityNotFoundError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'EntityNotFoundError'
+  }
+}
+
+/** "Not found" only for an `EntityNotFoundError`; any other failure keeps the error view. */
+export const entityNotFoundOnMiss =
+  (props: ComponentProps<typeof EntityNotFound>) =>
+  ({ error, reset }: ErrorComponentProps): ReactNode =>
+    error instanceof EntityNotFoundError ? (
+      <EntityNotFound {...props} />
+    ) : (
+      <ErrorFallback error={error} resetErrorBoundary={reset} />
+    )
+
 export class ForbiddenError extends Error {
   constructor() {
     super('Forbidden')

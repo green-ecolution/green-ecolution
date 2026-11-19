@@ -62,7 +62,7 @@ const mapViewFingerprint = (
 const OrganizationOverviewPage = () => {
   const { t, i18n } = useTranslation(['settings', 'common'])
   const navigate = useNavigate()
-  const { orgId, organizations, can } = useSettingsOrganization()
+  const { orgId, organizations, readableIds, can } = useSettingsOrganization()
   const canUpdate = can(['organization:update'])
   const canDelete = can(['organization:delete'])
   const canReadUsers = can(['user:read'])
@@ -162,8 +162,10 @@ const OrganizationOverviewPage = () => {
       {
         onSuccess: () => {
           setConfirmDelete(false)
-          const parentVisible = organizations.some((org) => org.id === detail.parentId)
-          void (parentVisible && detail.parentId
+          // The parent's overview needs organization:read there; an organization the
+          // user only reaches would end on Forbidden, so the entry picks a page instead.
+          const parentReadable = !!detail.parentId && readableIds.has(detail.parentId)
+          void (parentReadable && detail.parentId
             ? navigate({
                 to: '/settings/organization/$orgId',
                 params: { orgId: detail.parentId },

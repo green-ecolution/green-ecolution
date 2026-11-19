@@ -30,3 +30,17 @@ export function usePermissionsResolver(): PermissionsResolver | undefined {
 export function usePermissionsIn(orgId: string | null): Permissions {
   return usePermissionsResolver()?.(orgId) ?? NO_PERMISSIONS
 }
+
+/**
+ * The failed request that keeps `usePermissionsResolver` at `undefined`; without
+ * it a caller waiting for the rights would wait forever.
+ */
+export function usePermissionsLoadError(): Error | null {
+  const bypass = readAuthBypass()
+  const { error: meError } = useQuery({ ...userQueries.me(), enabled: !bypass })
+  const { error: reachableError } = useQuery({
+    ...userQueries.myOrganizations(),
+    enabled: !bypass,
+  })
+  return bypass ? null : (meError ?? reachableError)
+}

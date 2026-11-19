@@ -21,6 +21,8 @@ interface SettingsOrganizationPickerProps {
   organizations: OrganizationResponse[]
   selectedId: string
   onSelect: (orgId: string) => void
+  /** The structure page needs organization:read in the selected organization. */
+  canManageStructure: boolean
 }
 
 const TILE =
@@ -30,6 +32,7 @@ const SettingsOrganizationPicker = ({
   organizations,
   selectedId,
   onSelect,
+  canManageStructure,
 }: SettingsOrganizationPickerProps) => {
   const { t } = useTranslation('settings')
   const [open, setOpen] = useState(false)
@@ -101,15 +104,17 @@ const SettingsOrganizationPicker = ({
             ))}
           </CommandList>
         </Command>
-        <Link
-          to={SECTION_ROUTES.structure}
-          params={{ orgId: selectedId }}
-          onClick={() => setOpen(false)}
-          className="mt-2 flex min-h-11 items-center justify-between gap-3 border-t border-dark-100 px-2.5 text-sm font-bold text-green-dark"
-        >
-          {t('picker.manageStructure')}
-          <ChevronRight className="size-4" aria-hidden />
-        </Link>
+        {canManageStructure && (
+          <Link
+            to={SECTION_ROUTES.structure}
+            params={{ orgId: selectedId }}
+            onClick={() => setOpen(false)}
+            className="mt-2 flex min-h-11 items-center justify-between gap-3 border-t border-dark-100 px-2.5 text-sm font-bold text-green-dark"
+          >
+            {t('picker.manageStructure')}
+            <ChevronRight className="size-4" aria-hidden />
+          </Link>
+        )}
       </PopoverContent>
     </Popover>
   )

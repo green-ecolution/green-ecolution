@@ -70,6 +70,8 @@ const settingsOf = (): OrganizationSettingsResponse =>
   }) as unknown as OrganizationSettingsResponse
 
 let visibleOrganizations = BASE_ORGS
+// null: every listed organization came from GET /organizations.
+let readableIds: Set<string> | null = null
 let detailMap: Record<string, OrganizationDetailResponse> = {}
 let settingsMap: Record<string, OrganizationSettingsResponse> = {}
 
@@ -82,6 +84,7 @@ vi.mock('./useSettingsOrganization', () => ({
   useSettingsOrganization: () => ({
     orgId: context.orgId,
     organizations: visibleOrganizations,
+    readableIds: readableIds ?? new Set(visibleOrganizations.map((org) => org.id)),
     perms: context.perms,
     can: (required: readonly string[]) =>
       context.perms === 'unrestricted' ||
@@ -218,6 +221,7 @@ describe('OrganizationOverviewPage', () => {
     registry.manifests = []
     activeModules = []
     visibleOrganizations = BASE_ORGS
+    readableIds = null
     context.orgId = 'amt'
     context.perms = 'unrestricted'
     detailMap = { ...BASE_DETAILS }
@@ -498,6 +502,18 @@ describe('OrganizationOverviewPage', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Organisation löschen' }))
     await userEvent.click(screen.getByRole('button', { name: 'Löschen' }))
     expect(navigate).toHaveBeenCalledWith(expect.objectContaining({ ignoreBlocker: true }))
+  })
+
+  it('falls back to the entry when the parent is only reachable, not readable', async () => {
+    context.orgId = 'nord'
+    readableIds = new Set(['root', 'nord', 'duburg'])
+    renderPage()
+    await userEvent.click(screen.getByRole('button', { name: 'Organisation löschen' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Löschen' }))
+    expect(navigate).toHaveBeenCalledWith({
+      to: '/settings/organization',
+      ignoreBlocker: true,
+    })
   })
 
   it('falls back to the entry when the parent is not visible', async () => {

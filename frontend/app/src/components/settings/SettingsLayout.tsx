@@ -17,13 +17,14 @@ import { Badge } from '@green-ecolution/ui'
 import { infoQueries } from '@/api/queries'
 import { useAdminMode } from '@/lib/auth/scope/adminMode'
 import { useSettingsHomeOrganizationId } from '@/lib/auth/scope/settingsOrganization'
-import { NO_PERMISSIONS } from '@/lib/auth/permissions'
+import { NO_PERMISSIONS, satisfies } from '@/lib/auth/permissions'
 import { usePermissionsResolver } from '@/lib/auth/usePermissionsIn'
 import { buildTree, flatten, subtreeMemberCount } from './organization/organizationTree'
 import { useSettingsOrganizations } from './organization/useSettingsOrganizations'
 import SettingsOrganizationPicker from './SettingsOrganizationPicker'
 import {
   landingSection,
+  sectionPermission,
   SETTINGS_NAV,
   visibleSettingsNav,
   type SettingsNavItem,
@@ -171,6 +172,10 @@ const SettingsLayout = ({ children }: SettingsLayoutProps) => {
         organizations={organizations}
         selectedId={orgId}
         onSelect={switchOrganization}
+        canManageStructure={satisfies(
+          permissionsOf?.(orgId) ?? NO_PERMISSIONS,
+          sectionPermission('structure') ?? [],
+        )}
       />
     ) : null
 

@@ -8,7 +8,13 @@ const state = vi.hoisted(
     orgId: string
     pathname: string
     permsByOrg: Partial<Record<string, Permissions>> | undefined
-  } => ({ orgId: 'amt', pathname: '/settings/organization/amt/roles', permsByOrg: undefined }),
+    loadError: Error | null
+  } => ({
+    orgId: 'amt',
+    pathname: '/settings/organization/amt/roles',
+    permsByOrg: undefined,
+    loadError: null,
+  }),
 )
 
 vi.mock('@tanstack/react-router', () => {
@@ -23,6 +29,7 @@ vi.mock('@tanstack/react-router', () => {
   }
 })
 vi.mock('@/lib/auth/usePermissionsIn', () => ({
+  usePermissionsLoadError: () => state.loadError,
   usePermissionsResolver: () =>
     state.permsByOrg &&
     ((orgId: string | null) =>
@@ -37,6 +44,7 @@ describe('SettingsOrganizationOutlet', () => {
     state.orgId = 'amt'
     state.pathname = '/settings/organization/amt/roles'
     state.permsByOrg = { amt: UNRESTRICTED, nord: UNRESTRICTED }
+    state.loadError = null
   })
 
   it('keeps the page state while the organization stays the same', async () => {
@@ -90,5 +98,12 @@ describe('SettingsOrganizationOutlet', () => {
     render(<SettingsOrganizationOutlet />)
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
     expect(screen.queryByText('forbidden')).not.toBeInTheDocument()
+  })
+
+  it('surfaces a failed request for the rights instead of staying blank', () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    state.permsByOrg = undefined
+    state.loadError = new Error('GET /users/me failed')
+    expect(() => render(<SettingsOrganizationOutlet />)).toThrow('GET /users/me failed')
   })
 })
