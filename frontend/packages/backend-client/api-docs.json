@@ -8364,6 +8364,15 @@
             }
           },
           {
+            "name": "include_descendants",
+            "in": "query",
+            "description": "With organization_id: include the members of its sub-organizations",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
             "name": "role_id",
             "in": "query",
             "description": "Filter by assigned role",
