@@ -23,6 +23,7 @@ import type {
   RoleResponse,
   SetOrganizationRequest,
   UserRegisterRequest,
+  UserRegisterResponse,
   UserResponse,
   UserUpdateRequest,
 } from '../models/index';
@@ -43,6 +44,8 @@ import {
     SetOrganizationRequestToJSON,
     UserRegisterRequestFromJSON,
     UserRegisterRequestToJSON,
+    UserRegisterResponseFromJSON,
+    UserRegisterResponseToJSON,
     UserResponseFromJSON,
     UserResponseToJSON,
     UserUpdateRequestFromJSON,
@@ -141,10 +144,10 @@ export class UsersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Registers a user in the given organization and assigns the requested roles. Requires user:create in the organization, plus each role\'s permissions must not exceed the caller\'s own grants.
+     * Registers a user in the given organization, assigns the requested roles and answers with the password the account starts with. The password is temporary: the person has to change it at the first login. It is shown in this response only. Requires user:create in the organization, plus each role\'s permissions must not exceed the caller\'s own grants.
      * Register a new user
      */
-    async createUserRaw(requestParameters: CreateUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UserResponse>> {
+    async createUserRaw(requestParameters: CreateUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UserRegisterResponse>> {
         if (requestParameters['userRegisterRequest'] == null) {
             throw new runtime.RequiredError(
                 'userRegisterRequest',
@@ -169,14 +172,14 @@ export class UsersApi extends runtime.BaseAPI {
             body: UserRegisterRequestToJSON(requestParameters['userRegisterRequest']),
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => UserResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => UserRegisterResponseFromJSON(jsonValue));
     }
 
     /**
-     * Registers a user in the given organization and assigns the requested roles. Requires user:create in the organization, plus each role\'s permissions must not exceed the caller\'s own grants.
+     * Registers a user in the given organization, assigns the requested roles and answers with the password the account starts with. The password is temporary: the person has to change it at the first login. It is shown in this response only. Requires user:create in the organization, plus each role\'s permissions must not exceed the caller\'s own grants.
      * Register a new user
      */
-    async createUser(requestParameters: CreateUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UserResponse> {
+    async createUser(requestParameters: CreateUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UserRegisterResponse> {
         const response = await this.createUserRaw(requestParameters, initOverrides);
         return await response.value();
     }
