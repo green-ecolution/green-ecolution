@@ -181,7 +181,7 @@ Rollen enthalten dieses Recht nicht von selbst.
 | `region:update`        | Gebiet bearbeiten             |
 | `region:delete`        | Gebiet löschen                |
 | `user:read`            | Mitarbeitende ansehen         |
-| `user:create`          | Mitarbeitende einladen        |
+| `user:create`          | Mitarbeitende anlegen         |
 | `user:update`          | Mitarbeitende bearbeiten      |
 | `user:delete`          | Mitarbeitende entfernen       |
 | `organization:read`    | Organisation ansehen          |

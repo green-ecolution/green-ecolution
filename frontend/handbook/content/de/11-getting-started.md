@@ -17,9 +17,10 @@ entweder auf die Seite, die du zuvor aufrufen wolltest, oder auf das Dashboard. 
 der obersten Organisation der Instanz an, öffnet sich stattdessen die
 [Mandantenübersicht](./admin-tenants.md).
 
-Benutzerkonten legt nicht du selbst an, sondern die Verwaltung deiner Organisation.
-Hast du noch keine Zugangsdaten oder hast du dein Passwort vergessen, ist sie die
-richtige Anlaufstelle.
+Benutzerkonten legt nicht jede Person selbst an, sondern wer in deiner Organisation die
+Berechtigung dazu hat, siehe [Eine Person hinzufügen](./settings-team.md#eine-person-hinzufugen).
+Hast du noch keine Zugangsdaten oder hast du dein Passwort vergessen, ist die Verwaltung
+deiner Organisation die richtige Anlaufstelle.
 
 ![Die Anmeldeseite, zu der die Schaltfläche Anmelden führt](../images/login.png)
 
