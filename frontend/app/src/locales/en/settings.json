@@ -457,7 +457,23 @@
       "membersWithDirect": "{total}, {direct} of them directly",
       "noContact": "Not set",
       "noModules": "None",
-      "contactUnresolved": "Name not available"
+      "contactUnresolved": "Name not available",
+      "empty": {
+        "title": "{name} has no sub-organizations yet",
+        "description": "A sub-organization is a separate area within {name}, for example a depot, a department or a contracted company.",
+        "exampleCaption": "What it could look like",
+        "exampleLabel": "Example: {name} with the sub-organizations Depot and Contracted company",
+        "exampleFirst": "Depot",
+        "exampleSecond": "Contracted company",
+        "benefitsTitle": "What sub-organizations are for",
+        "teamTitle": "Its own team",
+        "teamText": "Each sub-organization has its own members and its own roles.",
+        "dataTitle": "Separate data",
+        "dataText": "Its members only see what belongs to their own sub-organization, for example vehicles, sensors and operation plans.",
+        "overviewTitle": "Everything in view",
+        "overviewText": "{name} keeps the overview. With the right permissions you still see everything from all sub-organizations.",
+        "note": "Good to know: A sub-organization can be renamed later, but not moved. It can only be deleted while it has no members and no sub-organizations of its own."
+      }
     },
     "overview": {
       "mapViewTitle": "Map view",

@@ -457,7 +457,23 @@
       "membersWithDirect": "{total}, davon {direct} direkt",
       "noContact": "Nicht hinterlegt",
       "noModules": "Keine",
-      "contactUnresolved": "Name nicht verfügbar"
+      "contactUnresolved": "Name nicht verfügbar",
+      "empty": {
+        "title": "{name} hat noch keine Unterorganisationen",
+        "description": "Eine Unterorganisation ist ein eigener Bereich innerhalb von {name}, zum Beispiel ein Betriebshof, eine Abteilung oder eine beauftragte Firma.",
+        "exampleCaption": "So könnte es aussehen",
+        "exampleLabel": "Beispiel: {name} mit den Unterorganisationen Betriebshof und Beauftragte Firma",
+        "exampleFirst": "Betriebshof",
+        "exampleSecond": "Beauftragte Firma",
+        "benefitsTitle": "Wofür Unterorganisationen gut sind",
+        "teamTitle": "Eigenes Team",
+        "teamText": "Jede Unterorganisation hat eigene Mitarbeitende und eigene Rollen.",
+        "dataTitle": "Getrennte Daten",
+        "dataText": "Ihre Mitarbeitenden sehen nur, was zur eigenen Unterorganisation gehört, zum Beispiel Fahrzeuge, Sensoren und Einsatzpläne.",
+        "overviewTitle": "Alles im Blick",
+        "overviewText": "{name} behält den Überblick. Mit den passenden Rechten siehst du weiterhin alles aus allen Unterorganisationen.",
+        "note": "Gut zu wissen: Eine Unterorganisation lässt sich später umbenennen, aber nicht verschieben. Löschen geht nur, solange sie keine Mitarbeitenden und keine eigenen Unterorganisationen hat."
+      }
     },
     "overview": {
       "mapViewTitle": "Kartenausschnitt",

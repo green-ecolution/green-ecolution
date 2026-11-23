@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest'
-import { render, screen, userEvent, within } from '@/test/utils'
+import { cleanup, render, screen, userEvent, within } from '@/test/utils'
 import type { Permissions } from '@/lib/auth/permissions'
 import type { OrganizationResponse, UserResponse } from '@/api/backendApi'
 import type { CreateOrganizationVariables } from '@/hooks/useOrganizationMutations'
@@ -24,16 +24,19 @@ const REACHABLE_ONLY: OrganizationResponse = {
   parentId: 'amt',
 }
 
-const context = vi.hoisted((): { orgId: string; perms: Permissions } => ({
-  orgId: 'amt',
-  perms: 'unrestricted',
-}))
+const context = vi.hoisted(
+  (): { orgId: string; perms: Permissions; readable: string[] | null } => ({
+    orgId: 'amt',
+    perms: 'unrestricted',
+    readable: null,
+  }),
+)
 
 vi.mock('./useSettingsOrganization', () => ({
   useSettingsOrganization: () => ({
     orgId: context.orgId,
     organizations: [...ORGS, REACHABLE_ONLY],
-    readableIds: new Set(ORGS.map((org) => org.id)),
+    readableIds: new Set(context.readable ?? ORGS.map((org) => org.id)),
     perms: context.perms,
     can: (required: readonly string[]) =>
       context.perms === 'unrestricted' ||
@@ -123,6 +126,7 @@ describe('OrganizationStructurePage', () => {
     vi.clearAllMocks()
     context.orgId = 'amt'
     context.perms = 'unrestricted'
+    context.readable = null
     createOrganization.mockImplementation(
       (
         _vars: CreateOrganizationVariables,
@@ -216,5 +220,55 @@ describe('OrganizationStructurePage', () => {
       to: '/settings/organization/$orgId',
       params: { orgId: 'west' },
     })
+  })
+
+  describe('while the selected organization is the only one listed', () => {
+    beforeEach(() => {
+      context.readable = ['amt']
+    })
+
+    it('explains sub-organizations while the selected organization is the only one', () => {
+      renderPage()
+      expect(
+        screen.getByRole('heading', { name: 'Grünflächenamt hat noch keine Unterorganisationen' }),
+      ).toBeInTheDocument()
+      expect(screen.queryByRole('table')).not.toBeInTheDocument()
+      expect(
+        screen.getByRole('img', {
+          name: 'Beispiel: Grünflächenamt mit den Unterorganisationen Betriebshof und Beauftragte Firma',
+        }),
+      ).toBeInTheDocument()
+      expect(screen.getByText('Eigenes Team')).toBeInTheDocument()
+      expect(screen.getByText('Getrennte Daten')).toBeInTheDocument()
+      expect(screen.getByText('Alles im Blick')).toBeInTheDocument()
+      expect(screen.getByText(/^Gut zu wissen:/)).toBeInTheDocument()
+    })
+
+    it('offers to create one only with the right', () => {
+      renderPage()
+      expect(screen.getAllByRole('button', { name: 'Unterorganisation anlegen' })).toHaveLength(1)
+      cleanup()
+      context.perms = new Set(['organization:read'])
+      renderPage()
+      expect(
+        screen.queryByRole('button', { name: 'Unterorganisation anlegen' }),
+      ).not.toBeInTheDocument()
+    })
+
+    it('opens the create dialog from the empty state', async () => {
+      renderPage()
+      await userEvent.click(screen.getByRole('button', { name: 'Unterorganisation anlegen' }))
+      expect(screen.getByRole('dialog')).toBeInTheDocument()
+    })
+  })
+
+  it('shows the table as soon as a second organization is visible', () => {
+    context.readable = ['amt', 'nord']
+    renderPage()
+    expect(screen.getByRole('table')).toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', { name: /hat noch keine Unterorganisationen/ }),
+    ).not.toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: 'Unterorganisation anlegen' })).toHaveLength(1)
   })
 })
