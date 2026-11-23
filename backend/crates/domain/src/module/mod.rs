@@ -15,7 +15,7 @@ use crate::shared::{
     key::{KEY_MAX_LEN, validate_key},
 };
 
-pub use activation::{ModuleState, SwitchHolder, module_state, released_state};
+pub use activation::{ModuleState, SwitchHolder, module_state};
 pub use repository::{ModuleActivationReader, ModuleActivationWriter};
 pub use statistics::{ModuleCount, ModuleStatistics};
 

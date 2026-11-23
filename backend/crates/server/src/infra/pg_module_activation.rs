@@ -115,8 +115,7 @@ impl ModuleActivationReader for PgModuleActivationRepository {
         org: Id<Organization>,
     ) -> Result<BTreeMap<ModuleKey, ModuleState>, RepositoryError> {
         let snapshot = self.snapshot().await?;
-        // Without this an unknown id resolves to a one-element chain and reads
-        // like a real answer made of defaults.
+        // An unknown id would otherwise be treated as the root.
         if !snapshot.hierarchy.knows(org) {
             return Err(RepositoryError::NotFound);
         }
@@ -180,8 +179,8 @@ impl ModuleActivationWriter for PgModuleActivationRepository {
         Ok(())
     }
 
-    // The SQL mirrors `released_state`: the first release switches on, a later
-    // one keeps the stored switch.
+    // The first release inserts the row switched on; a later one only sets
+    // `released` and keeps the tenant's switch.
     #[tracing::instrument(level = "info", skip(self, changes))]
     async fn release(
         &self,

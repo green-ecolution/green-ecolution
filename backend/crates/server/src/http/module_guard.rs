@@ -8,9 +8,9 @@ use domain::auth::AuthUser;
 use crate::service::{AuthError, module_access::ModuleAccess};
 
 /// Runs inside the authentication layer, in front of every protected route
-/// of one module. A module locked for the caller's tenant answers as if it
-/// were switched off, on every route, including ones that check nothing
-/// themselves.
+/// of one module. Refuses a module that is released in no organization the
+/// caller reaches. A released module that is switched off passes; the handlers
+/// judge it per organization.
 pub async fn module_guard(
     State(access): State<ModuleAccess>,
     request: Request,

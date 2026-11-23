@@ -41,15 +41,6 @@ pub fn module_state(
     }
 }
 
-/// The row after releasing: the first release switches the module on, a
-/// later one restores what the tenant had when it was locked.
-pub fn released_state(row: Option<ModuleState>) -> ModuleState {
-    ModuleState {
-        released: true,
-        enabled: row.is_none_or(|r| r.enabled),
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -99,20 +90,5 @@ mod tests {
             enabled: true,
         };
         assert!(!module_state(SwitchHolder::Tenant, true, Some(locked)).active());
-    }
-
-    #[test]
-    fn the_first_release_switches_on_and_a_later_one_restores() {
-        assert_eq!(released_state(None), ON);
-        let locked_off = ModuleState {
-            released: false,
-            enabled: false,
-        };
-        assert_eq!(released_state(Some(locked_off)), OFF);
-        let locked_on = ModuleState {
-            released: false,
-            enabled: true,
-        };
-        assert_eq!(released_state(Some(locked_on)), ON);
     }
 }

@@ -36,7 +36,8 @@ pub struct Settings {
 
 #[derive(serde::Deserialize, Clone, Debug)]
 pub struct ModuleSettings {
-    /// Overrides the module's own activation default.
+    /// Overrides the module's default for the root organization's switch;
+    /// tenants do not inherit it.
     #[serde(default)]
     pub default_enabled: Option<bool>,
     /// Kept as `config::Value`: env overrides arrive as strings and only the

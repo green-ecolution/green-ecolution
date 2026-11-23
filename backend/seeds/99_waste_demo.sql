@@ -3,8 +3,7 @@
 -- one collection tour per board column. Runs after 99_demo_data.sql because
 -- the tours reference its users.
 
--- The module ships switched off and locked; the root releases it for TBZ,
--- which switches it on for itself and its sub-organizations.
+-- Released for TBZ and switched on there; its sub-organizations follow.
 INSERT INTO organization_modules (organization_id, module_key, released, enabled) VALUES
   ('01980000-0000-7000-8000-000000000002', 'waste', TRUE, TRUE)
 ON CONFLICT (organization_id, module_key) DO UPDATE SET released = TRUE, enabled = TRUE;

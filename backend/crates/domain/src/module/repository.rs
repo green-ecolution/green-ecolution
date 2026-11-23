@@ -43,7 +43,7 @@ pub trait ModuleActivationWriter: Send + Sync {
         changes: &BTreeMap<ModuleKey, bool>,
     ) -> Result<(), RepositoryError>;
     /// Releases (`true`) or locks (`false`) modules for a tenant. Locking
-    /// keeps the tenant's switch, see `released_state`.
+    /// keeps the tenant's switch; the first release switches the module on.
     async fn release(
         &self,
         tenant: Id<Organization>,
