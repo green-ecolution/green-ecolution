@@ -35,7 +35,8 @@ mit einer kurzen Einordnung darunter. Ein Klick führt zur passenden Liste:
 
 Die Farbe einer Kachel folgt ihrer Zahl: Rot steht für etwas, das zu tun ist, Grün für
 einen unauffälligen Stand. Eine Kachel erscheint nur, wenn du den Bereich dahinter lesen
-darfst. Ist das Modul Bewässerung für deine Organisation abgeschaltet (siehe
+darfst. Ist das Modul Bewässerung für deine Organisation abgeschaltet oder nicht
+freigegeben (siehe
 [Aufgabenbereiche](./settings-areas.md#aufgabenbereiche-ein-und-ausschalten)), fehlt die
 Kachel zu den Bewässerungsgruppen.
 

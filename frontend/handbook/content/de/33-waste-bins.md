@@ -9,9 +9,11 @@ module: waste
 ---
 
 Das Modul **Abfall** erweitert Green Ecolution um Abfallbehälter und ihre Leerung. Es
-ist standardmäßig ausgeschaltet und wird je Organisation auf der Seite
-[Aufgabenbereiche](./settings-areas.md#aufgabenbereiche-ein-und-ausschalten)
-eingeschaltet. Erst dann erscheinen der Bereich **Abfallbehälter** unter **Bestand** in
+steht einem Mandanten erst zur Verfügung, wenn der Betreiber der Instanz es für ihn
+[freigegeben](./admin-tenants.md#module-freigeben-und-sperren) hat. Der Mandant schaltet
+es danach auf der Seite
+[Aufgabenbereiche](./settings-areas.md#aufgabenbereiche-ein-und-ausschalten) ein, seine
+Unterorganisationen folgen ihm. Erst dann erscheinen der Bereich **Abfallbehälter** unter **Bestand** in
 der Seitennavigation, die Behälter auf der Karte und die Leerungstouren in der
 Einsatzplanung.
 

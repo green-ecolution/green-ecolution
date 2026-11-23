@@ -557,11 +557,23 @@ frontend/
     irrigation/              Frontend module package of the irrigation module
 ```
 
-Features that can be switched on per organization are called modules. An organization
-enables or disables a module with `PUT /api/v1/organizations/{org_id}/modules`, and the
-setting is inherited down the organization tree the same way as the other organization
-settings. Module endpoints answer with `module.disabled` (403) for an organization that
-has not activated the module.
+Features that can be switched on per organization are called modules. The root
+organization releases a module per tenant (a tenant is a direct child of the root) with
+`PUT /api/v1/organizations/{id}/module-releases`, and `GET /api/v1/modules/releases`
+lists the releases. A new tenant has no module released. The tenant switches a released
+module on or off with `PUT /api/v1/organizations/{id}/modules` (read with the matching
+`GET`); every organization below a tenant follows the tenant's switch and cannot change
+it. The first release switches the module on, locking keeps the tenant's switch and
+deletes no data. The root is no tenant: its modules are always released and its own
+switch concerns only the root itself, it does not reach the tenants.
+
+Protected module routes sit behind a release guard that answers `module.disabled` (403)
+when the module is released in no organization the caller reaches. Whether the module is
+switched on is checked per organization by the handlers through `ModuleAccess`
+(`visible_orgs`, `require_write`, `ensure_active`), which answer `module.disabled` as
+well. Integration tests create tenants with every module released in its default state
+through a test-only database trigger; `set_module(..)` sets another state and
+`TestApp::without_release_fixture()` removes the trigger.
 
 A module is a pair of crates under `backend/crates/modules/<name>/`: `<name>-domain`
 for its aggregates and value objects (same portability rules as `domain`) and
@@ -615,7 +627,7 @@ composition root spawns at startup.
 
 A module reads its instance configuration from its own `modules.<key>` section of the
 YAML config through `ModuleContext::module_config`; `modules.<key>.default_enabled` is
-reserved for the activation default. The irrigation defaults live under
+the root organization's switch where it stored none of its own; tenants do not inherit it. The irrigation defaults live under
 `modules.irrigation` (`tree_demand_liters`, `just_watered_ttl_secs`,
 `just_watered_sweep_interval_secs`, `nearest_tree_max_radius`,
 `nearest_tree_default_limit`, `nearest_tree_max_limit`). The server refuses to start
@@ -625,7 +637,7 @@ environment variable, and the error names the new key.
 
 A module's migrations live in `backend/crates/modules/<name>/migrations` and are merged
 with the core's into one history and one `_sqlx_migrations` table. To take a module out
-of use, switch it off for the organizations. Removing a deployed module from the code
+of use, lock it for the tenants or switch it off. Removing a deployed module from the code
 is possible, but its migration files have to stay in the history that
 `backend/crates/app/src/migrations.rs` assembles: sqlx checks for applied versions
 missing from the sources before it applies anything, so `migrate` would refuse to run.
