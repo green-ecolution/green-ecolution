@@ -105,10 +105,10 @@ describe('permissionAreasFor', () => {
     ])
   })
 
-  // The generic "{resource} {verb}" composition is lossless for 34 of the 36
-  // cells; these two pin the label overrides that restore the distinction the
-  // generic verb would otherwise flatten (create vs. add a person, remove
-  // access vs. delete a person). watering_plan:create is deliberately not
+  // These pin the two user label overrides. Only the delete one restores a
+  // distinction the generic verb would flatten (removing access vs. deleting a
+  // person); the create one matches the composed form, because the permission
+  // creates the account. watering_plan:create is deliberately not
   // overridden — see the next test.
   it('overrides the two cells the generic verbs would flatten', () => {
     const labelOf = (t: TFunction<'settings'>, resource: string, action: string) =>
