@@ -4,38 +4,49 @@ use async_trait::async_trait;
 
 use crate::{
     Id, RepositoryError,
-    module::{ActivationResolution, ModuleKey, OwnSwitch},
+    module::{ModuleKey, ModuleState},
     organization::Organization,
 };
 
 #[async_trait]
 pub trait ModuleActivationReader: Send + Sync {
-    /// The organization's own switches. A module it never set is absent.
-    async fn own(
-        &self,
-        org: Id<Organization>,
-    ) -> Result<BTreeMap<ModuleKey, OwnSwitch>, RepositoryError>;
-    /// One resolution per registered module; `NotFound` for an unknown organization.
+    /// One state per registered module, taken from the organization's tenant;
+    /// `NotFound` for an unknown organization.
     async fn resolve(
         &self,
         org: Id<Organization>,
-    ) -> Result<BTreeMap<ModuleKey, ActivationResolution>, RepositoryError>;
-    /// Every organization in which `key` resolves to enabled. Empty for an
-    /// unregistered key.
+    ) -> Result<BTreeMap<ModuleKey, ModuleState>, RepositoryError>;
+    /// Every organization in which `key` is released and switched on. Empty
+    /// for an unregistered key.
     async fn active_orgs(
         &self,
         key: &ModuleKey,
     ) -> Result<BTreeSet<Id<Organization>>, RepositoryError>;
+    /// Every organization in which `key` is released, switched on or not.
+    async fn released_orgs(
+        &self,
+        key: &ModuleKey,
+    ) -> Result<BTreeSet<Id<Organization>>, RepositoryError>;
+    /// Every tenant with the state of each registered module.
+    async fn tenants(
+        &self,
+    ) -> Result<BTreeMap<Id<Organization>, BTreeMap<ModuleKey, ModuleState>>, RepositoryError>;
 }
 
 #[async_trait]
 pub trait ModuleActivationWriter: Send + Sync {
-    /// `Some` sets the organization's own switch, stamped with `set_by`;
-    /// `None` returns the module to inheritance.
-    async fn apply(
+    /// Switches modules on or off for `holder`, a tenant or the root. The
+    /// caller has checked that each module is released there.
+    async fn switch(
         &self,
-        org: Id<Organization>,
-        changes: &BTreeMap<ModuleKey, Option<bool>>,
-        set_by: Id<Organization>,
+        holder: Id<Organization>,
+        changes: &BTreeMap<ModuleKey, bool>,
+    ) -> Result<(), RepositoryError>;
+    /// Releases (`true`) or locks (`false`) modules for a tenant. Locking
+    /// keeps the tenant's switch, see `released_state`.
+    async fn release(
+        &self,
+        tenant: Id<Organization>,
+        changes: &BTreeMap<ModuleKey, bool>,
     ) -> Result<(), RepositoryError>;
 }

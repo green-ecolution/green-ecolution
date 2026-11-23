@@ -1,9 +1,8 @@
 //! Module identity and activation.
 //!
-//! A module is a feature area such as irrigation or waste collection that an
-//! organization switches on or off. Activation inherits down the organization
-//! tree the same way operational settings do: an organization's own switch
-//! wins, otherwise the nearest ancestor's applies.
+//! A module is a feature area such as irrigation or waste collection. The
+//! root organization releases it per tenant, the tenant switches it on or
+//! off, and every organization below a tenant follows that tenant.
 
 pub mod activation;
 pub mod repository;
@@ -16,7 +15,7 @@ use crate::shared::{
     key::{KEY_MAX_LEN, validate_key},
 };
 
-pub use activation::{ActivationLevel, ActivationResolution, OwnSwitch, resolve_activation};
+pub use activation::{ModuleState, SwitchHolder, module_state, released_state};
 pub use repository::{ModuleActivationReader, ModuleActivationWriter};
 pub use statistics::{ModuleCount, ModuleStatistics};
 
