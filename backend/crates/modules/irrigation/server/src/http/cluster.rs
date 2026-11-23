@@ -15,6 +15,7 @@ use super::{
         },
         tree::TreeResponse,
     },
+    ensure_readable,
     state::IrrigationHttpState,
 };
 use domain::{
@@ -123,8 +124,8 @@ pub async fn list_clusters(
         )));
     }
     let visible = state
-        .authorization
-        .visible_orgs_for(
+        .access
+        .visible_orgs(
             user.caller(),
             Permission::new(crate::resources::TREE_CLUSTER, Action::Read),
         )
@@ -195,12 +196,13 @@ pub async fn get_cluster(
     Path(id): Path<uuid::Uuid>,
 ) -> Result<Json<TreeClusterResponse>, ServiceError> {
     let view = state.clusters.view_by_id(Id::new(id)).await?;
-    let ctx = state.authorization.context_for(user.caller()).await?;
-    scope::ensure_visible(
-        &ctx,
+    ensure_readable(
+        &state,
+        user.caller(),
         Permission::new(crate::resources::TREE_CLUSTER, Action::Read),
         view.organization_id,
-    )?;
+    )
+    .await?;
     let response = build_cluster_response(&state, &view).await?;
     Ok(Json(response))
 }
@@ -215,6 +217,7 @@ pub async fn get_cluster(
     request_body = TreeClusterCreateRequest,
     responses(
         (status = 201, description = "Cluster created", body = TreeClusterResponse),
+        (status = 403, description = "Missing tree_cluster:create, or the irrigation module is off in the organization (code `module.disabled`)", body = ErrorBody),
         (status = 422, description = "A selected tree belongs to a different organization (code `organization_mismatch.trees_vs_cluster`)", body = ErrorBody),
         (status = 500, description = "Internal server error", body = ErrorBody),
     )
@@ -233,8 +236,8 @@ pub async fn create_cluster(
     )
     .await?;
     state
-        .authorization
-        .require(
+        .access
+        .require_write(
             user.caller(),
             Permission::new(crate::resources::TREE_CLUSTER, Action::Create),
             org,
@@ -258,7 +261,7 @@ pub async fn create_cluster(
     request_body = TreeClusterUpdateRequest,
     responses(
         (status = 200, description = "Cluster updated", body = TreeClusterResponse),
-        (status = 403, description = "Missing tree_cluster:update in the owning organization", body = ErrorBody),
+        (status = 403, description = "Missing tree_cluster:update in the owning organization, or the irrigation module is off there (code `module.disabled`)", body = ErrorBody),
         (status = 404, description = "Cluster not found", body = ErrorBody),
         (status = 422, description = "A selected tree belongs to a different organization (code `organization_mismatch.trees_vs_cluster`)", body = ErrorBody),
         (status = 500, description = "Internal server error", body = ErrorBody),
@@ -280,8 +283,8 @@ pub async fn update_cluster(
         current.organization_id,
     )?;
     state
-        .authorization
-        .require(
+        .access
+        .require_write(
             user.caller(),
             Permission::new(crate::resources::TREE_CLUSTER, Action::Update),
             Id::new(current.organization_id),
@@ -314,7 +317,7 @@ pub async fn update_cluster(
     params(("cluster_id" = uuid::Uuid, Path, description = "Cluster ID")),
     responses(
         (status = 204, description = "Cluster deleted"),
-        (status = 403, description = "Missing tree_cluster:delete in the owning organization", body = ErrorBody),
+        (status = 403, description = "Missing tree_cluster:delete in the owning organization, or the irrigation module is off there (code `module.disabled`)", body = ErrorBody),
         (status = 404, description = "Cluster not found", body = ErrorBody),
         (status = 500, description = "Internal server error", body = ErrorBody),
     )
@@ -333,8 +336,8 @@ pub async fn delete_cluster(
         current.organization_id,
     )?;
     state
-        .authorization
-        .require(
+        .access
+        .require_write(
             user.caller(),
             Permission::new(crate::resources::TREE_CLUSTER, Action::Delete),
             Id::new(current.organization_id),
@@ -363,8 +366,8 @@ pub async fn list_cluster_markers(
     user: AuthUserExtractor,
 ) -> Result<Json<ClusterMarkerListResponse>, ServiceError> {
     let visible = state
-        .authorization
-        .visible_orgs_for(
+        .access
+        .visible_orgs(
             user.caller(),
             Permission::new(crate::resources::TREE_CLUSTER, Action::Read),
         )
@@ -393,8 +396,8 @@ pub async fn list_cluster_boundaries(
     user: AuthUserExtractor,
 ) -> Result<Json<ClusterBoundaryListResponse>, ServiceError> {
     let visible = state
-        .authorization
-        .visible_orgs_for(
+        .access
+        .visible_orgs(
             user.caller(),
             Permission::new(crate::resources::TREE_CLUSTER, Action::Read),
         )
@@ -425,8 +428,8 @@ pub async fn cluster_statistics(
     user: AuthUserExtractor,
 ) -> Result<Json<ClusterStatisticsResponse>, ServiceError> {
     let visible = state
-        .authorization
-        .visible_orgs_for(
+        .access
+        .visible_orgs(
             user.caller(),
             Permission::new(crate::resources::TREE_CLUSTER, Action::Read),
         )
@@ -461,12 +464,13 @@ pub async fn get_cluster_soil_moisture(
 ) -> Result<Json<SoilMoistureSeriesResponse>, ServiceError> {
     let cluster_id = Id::new(id);
     let view = state.clusters.view_by_id(cluster_id).await?;
-    let ctx = state.authorization.context_for(user.caller()).await?;
-    scope::ensure_visible(
-        &ctx,
+    ensure_readable(
+        &state,
+        user.caller(),
         Permission::new(crate::resources::TREE_CLUSTER, Action::Read),
         view.organization_id,
-    )?;
+    )
+    .await?;
     let (from, to, bucket) = params.resolve()?;
     let overview = state
         .clusters
@@ -498,12 +502,13 @@ pub async fn list_cluster_sensor_ids(
 ) -> Result<Json<Vec<String>>, ServiceError> {
     let cluster_id = Id::new(id);
     let view = state.clusters.view_by_id(cluster_id).await?;
-    let ctx = state.authorization.context_for(user.caller()).await?;
-    scope::ensure_visible(
-        &ctx,
+    ensure_readable(
+        &state,
+        user.caller(),
         Permission::new(crate::resources::TREE_CLUSTER, Action::Read),
         view.organization_id,
-    )?;
+    )
+    .await?;
     let ids = state.clusters.sensor_ids(cluster_id).await?;
     Ok(Json(ids.iter().map(|id| id.as_str().to_owned()).collect()))
 }
@@ -521,7 +526,7 @@ pub async fn list_cluster_sensor_ids(
     request_body = TransferRequest,
     responses(
         (status = 204, description = "Cluster transferred"),
-        (status = 403, description = "Missing tree_cluster:update in source or target organization", body = ErrorBody),
+        (status = 403, description = "Missing tree_cluster:update in source or target organization, or the irrigation module is off there (code `module.disabled`)", body = ErrorBody),
         (status = 404, description = "Cluster or organization not found", body = ErrorBody),
     )
 )]
@@ -541,12 +546,12 @@ pub async fn transfer_cluster(
     )?;
     let perm = Permission::new(crate::resources::TREE_CLUSTER, Action::Update);
     state
-        .authorization
-        .require(user.caller(), perm, Id::new(current.organization_id))
+        .access
+        .require_write(user.caller(), perm, Id::new(current.organization_id))
         .await?;
     state
-        .authorization
-        .require(user.caller(), perm, Id::new(req.organization_id))
+        .access
+        .require_write(user.caller(), perm, Id::new(req.organization_id))
         .await?;
     state
         .clusters

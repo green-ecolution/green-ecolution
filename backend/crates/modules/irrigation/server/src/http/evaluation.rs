@@ -39,36 +39,36 @@ pub async fn get_evaluation(
     let count_pagination = Pagination::new(1, 1);
 
     let tree_visible = state
-        .authorization
-        .visible_orgs_for(
+        .access
+        .visible_orgs(
             user.caller(),
             Permission::new(crate::resources::TREE, Action::Read),
         )
         .await?;
     let cluster_visible = state
-        .authorization
-        .visible_orgs_for(
+        .access
+        .visible_orgs(
             user.caller(),
             Permission::new(crate::resources::TREE_CLUSTER, Action::Read),
         )
         .await?;
     let sensor_visible = state
-        .authorization
-        .visible_orgs_for(
+        .access
+        .visible_orgs(
             user.caller(),
             Permission::new(ResourceKey::SENSOR, Action::Read),
         )
         .await?;
     let plan_visible = state
-        .authorization
-        .visible_orgs_for(
+        .access
+        .visible_orgs(
             user.caller(),
             Permission::new(crate::resources::WATERING_PLAN, Action::Read),
         )
         .await?;
     let vehicle_visible = state
-        .authorization
-        .visible_orgs_for(
+        .access
+        .visible_orgs(
             user.caller(),
             Permission::new(ResourceKey::VEHICLE, Action::Read),
         )

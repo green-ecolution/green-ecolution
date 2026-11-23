@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use axum::extract::State;
 use domain::{
-    RepositoryError,
+    Id, RepositoryError,
     authorization::{Action, Permission, ResourceKey},
 };
 use utoipa_axum::{router::OpenApiRouter, routes};
@@ -22,6 +22,14 @@ use server::{
     },
     service::ServiceError,
 };
+
+/// Reads must not reveal that the object exists in an organization without the module.
+fn hide_module_off(err: ServiceError) -> ServiceError {
+    match err {
+        ServiceError::ModuleDisabled { .. } => RepositoryError::NotFound.into(),
+        other => other,
+    }
+}
 
 pub fn routes() -> OpenApiRouter<Arc<IrrigationHttpState>> {
     OpenApiRouter::new()
@@ -58,6 +66,11 @@ pub async fn get_sensor_soil_moisture(
         Permission::new(ResourceKey::SENSOR, Action::Read),
         sensor.organization_id,
     )?;
+    state
+        .access
+        .ensure_active(Id::new(sensor.organization_id))
+        .await
+        .map_err(hide_module_off)?;
     let (from, to, bucket) = params.resolve()?;
     let overview = state
         .sensor_overview
@@ -90,6 +103,11 @@ pub async fn get_tree_by_sensor(
         Permission::new(ResourceKey::SENSOR, Action::Read),
         sensor.organization_id,
     )?;
+    state
+        .access
+        .ensure_active(Id::new(sensor.organization_id))
+        .await
+        .map_err(hide_module_off)?;
     let tree = state
         .trees
         .view_by_sensor_id(&sensor_id)

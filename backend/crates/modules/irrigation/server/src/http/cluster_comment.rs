@@ -9,7 +9,7 @@ use domain::{
 use utoipa_axum::{router::OpenApiRouter, routes};
 use uuid::Uuid;
 
-use super::state::IrrigationHttpState;
+use super::{ensure_readable, state::IrrigationHttpState};
 use crate::{resources, targets::cluster_target};
 use server::{
     http::{
@@ -23,7 +23,6 @@ use server::{
             },
             error::ErrorBody,
             pagination::PaginationParams,
-            scope,
         },
     },
     service::ServiceError,
@@ -43,12 +42,13 @@ async fn cluster_scope(
     cluster_id: Uuid,
 ) -> Result<CommentSubject, ServiceError> {
     let view = state.clusters.view_by_id(Id::new(cluster_id)).await?;
-    let ctx = state.authorization.context_for(caller).await?;
-    scope::ensure_visible(
-        &ctx,
+    ensure_readable(
+        state,
+        caller,
         Permission::new(resources::TREE_CLUSTER, Action::Read),
         view.organization_id,
-    )?;
+    )
+    .await?;
     Ok(CommentSubject::Target(cluster_target(Id::new(cluster_id))))
 }
 
