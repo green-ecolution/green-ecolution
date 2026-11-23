@@ -572,6 +572,7 @@ async fn clone_database(host_port: u16, template: Option<&str>) -> (String, PgPo
 
 /// Version of the last migration before stage 3 of the module epic.
 pub const BEFORE_STAGE_3: i64 = 20261024100000;
+pub const BEFORE_MODULE_RELEASE: i64 = 20261119204847;
 pub const BEFORE_START_POINT_RESOURCE: i64 = 20261025100600;
 
 /// Builds a database that stops at `cutoff`, lets the test seed data in the

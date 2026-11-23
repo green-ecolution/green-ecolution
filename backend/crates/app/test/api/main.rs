@@ -25,6 +25,8 @@ pub mod module_access;
 pub mod module_activation_repo;
 pub mod module_host;
 pub mod module_plans;
+pub mod module_release;
+pub mod module_release_migration;
 pub mod modules;
 pub mod my_plans;
 pub mod openapi;

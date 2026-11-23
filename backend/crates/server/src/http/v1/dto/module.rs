@@ -40,6 +40,51 @@ pub struct OrganizationModulesUpdateRequest {
     pub modules: BTreeMap<String, bool>,
 }
 
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+pub struct ModuleReleaseResponse {
+    pub key: String,
+    pub released: bool,
+    /// The tenant's own switch; kept while the module is locked.
+    pub enabled: bool,
+}
+
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+pub struct TenantModuleReleasesResponse {
+    pub organization_id: Uuid,
+    pub modules: Vec<ModuleReleaseResponse>,
+}
+
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+pub struct ModuleReleasesResponse {
+    /// Every module this instance ships.
+    pub modules: Vec<String>,
+    pub tenants: Vec<TenantModuleReleasesResponse>,
+}
+
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
+pub struct ModuleReleasesUpdateRequest {
+    /// `true` releases a module for the tenant, `false` locks it; an absent
+    /// key stays as it is.
+    #[serde(default)]
+    pub modules: BTreeMap<String, bool>,
+}
+
+impl TenantModuleReleasesResponse {
+    pub fn build(tenant: Uuid, states: &BTreeMap<ModuleKey, ModuleState>) -> Self {
+        Self {
+            organization_id: tenant,
+            modules: states
+                .iter()
+                .map(|(key, state)| ModuleReleaseResponse {
+                    key: key.to_string(),
+                    released: state.released,
+                    enabled: state.enabled,
+                })
+                .collect(),
+        }
+    }
+}
+
 impl OrganizationModulesResponse {
     /// Lists released modules only; a locked one is absent.
     pub fn build(states: &BTreeMap<ModuleKey, ModuleState>, switchable: bool) -> Self {

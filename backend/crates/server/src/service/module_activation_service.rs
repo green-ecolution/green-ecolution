@@ -103,6 +103,47 @@ impl ModuleActivationService {
         Ok(self.writer.switch(org, &parsed).await?)
     }
 
+    /// Every tenant with the state of each registered module, for the release table.
+    #[tracing::instrument(level = "debug", skip(self))]
+    pub async fn releases(
+        &self,
+    ) -> Result<BTreeMap<Id<Organization>, BTreeMap<ModuleKey, ModuleState>>, ServiceError> {
+        Ok(self.reader.tenants().await?)
+    }
+
+    /// Releases (`true`) or locks (`false`) modules for a tenant. Locking keeps
+    /// the tenant's own switch, so a later release restores it.
+    #[tracing::instrument(level = "info", skip(self, changes))]
+    pub async fn release(
+        &self,
+        tenant: Id<Organization>,
+        changes: BTreeMap<String, bool>,
+    ) -> Result<BTreeMap<ModuleKey, ModuleState>, ServiceError> {
+        let mut parsed = BTreeMap::new();
+        for (raw, release) in changes {
+            let key = ModuleKey::new(&raw)
+                .ok()
+                .filter(|key| self.registered.contains(key))
+                .ok_or(ServiceError::ModuleUnknown { key: raw })?;
+            parsed.insert(key, release);
+        }
+
+        let hierarchy = self.organizations.hierarchy().await?;
+        if !hierarchy.knows(tenant) {
+            return Err(RepositoryError::NotFound.into());
+        }
+        if hierarchy.tenant_of(tenant) != Some(tenant) {
+            return Err(ServiceError::ModuleNotATenant);
+        }
+
+        let states = self.states(tenant).await?;
+        parsed.retain(|key, release| states.get(key).map(|s| s.released) != Some(*release));
+        if !parsed.is_empty() {
+            self.writer.release(tenant, &parsed).await?;
+        }
+        self.states(tenant).await
+    }
+
     #[tracing::instrument(level = "debug", skip(self))]
     pub async fn listing(&self, reachable: &Visibility) -> Result<ModuleListing, ServiceError> {
         let orgs: BTreeSet<Id<Organization>> = match reachable {
