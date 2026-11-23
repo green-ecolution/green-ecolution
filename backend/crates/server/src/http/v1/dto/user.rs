@@ -139,7 +139,7 @@ pub struct UserRegisterRequest {
 }
 
 /// A registered user together with the password the account starts with.
-#[derive(Debug, Serialize, utoipa::ToSchema)]
+#[derive(Serialize, utoipa::ToSchema)]
 pub struct UserRegisterResponse {
     pub user: UserResponse,
     /// Shown exactly once. The person has to change it at the first login.
