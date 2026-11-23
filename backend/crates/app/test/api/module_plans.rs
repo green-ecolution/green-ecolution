@@ -380,9 +380,29 @@ async fn a_plan_of_a_switched_off_module_is_not_readable_by_id() {
         format!("/api/v1/plans/{id}"),
         format!("/api/v1/plans/{id}/route"),
         format!("/api/v1/plans/{id}/route/gpx"),
+        format!("/api/v1/plans/{id}/itinerary"),
     ] {
         assert_module_disabled(app.get(&path).await).await;
     }
+}
+
+#[tokio::test]
+async fn a_plan_of_a_module_locked_for_its_tenant_is_not_readable_by_id() {
+    let app = app().await;
+    let tenant = child_org(&app, "Mandant", ROOT.parse().unwrap()).await;
+    set_module(&app, tenant, KEY, true, true).await;
+    let plan = plan_in(
+        &app,
+        &[thing_in(&app, tenant).await],
+        cargo_vehicle(&app).await,
+        tenant,
+    )
+    .await;
+    let id = plan["id"].as_str().unwrap();
+
+    set_module(&app, tenant, KEY, false, true).await;
+
+    assert_module_disabled(app.get(&format!("/api/v1/plans/{id}")).await).await;
 }
 
 #[tokio::test]

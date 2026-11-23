@@ -11,6 +11,8 @@ const A: Uuid = Uuid::from_u128(0x0198_0000_0000_7000_8000_0000_0000_aa01);
 const B: Uuid = Uuid::from_u128(0x0198_0000_0000_7000_8000_0000_0000_aa02);
 const C: Uuid = Uuid::from_u128(0x0198_0000_0000_7000_8000_0000_0000_aa03);
 const D: Uuid = Uuid::from_u128(0x0198_0000_0000_7000_8000_0000_0000_aa04);
+const E: Uuid = Uuid::from_u128(0x0198_0000_0000_7000_8000_0000_0000_aa05);
+const F: Uuid = Uuid::from_u128(0x0198_0000_0000_7000_8000_0000_0000_aa06);
 const A1: Uuid = Uuid::from_u128(0x0198_0000_0000_7000_8000_0000_0000_aa11);
 
 async fn seed_old_schema(pool: &PgPool) {
@@ -20,6 +22,8 @@ async fn seed_old_schema(pool: &PgPool) {
         (B, root, "B"),
         (C, root, "C"),
         (D, root, "D"),
+        (E, root, "E"),
+        (F, root, "F"),
         (A1, A, "A1"),
     ] {
         sqlx::query("INSERT INTO organizations (id, parent_id, name) VALUES ($1, $2, $3)")
@@ -35,6 +39,8 @@ async fn seed_old_schema(pool: &PgPool) {
         (B, "waste", false, B),
         (C, "waste", false, root),
         (D, "irrigation", false, D),
+        (E, "irrigation", true, root),
+        (F, "other_module", false, F),
         (A1, "waste", false, A1),
     ] {
         sqlx::query(
@@ -89,6 +95,17 @@ async fn the_old_switches_become_releases_per_tenant() {
     assert_eq!(state(&releases, B, "waste"), (true, false));
     assert!(!state(&releases, C, "waste").0);
     assert_eq!(state(&releases, D, "irrigation"), (true, false));
+    assert_eq!(state(&releases, E, "irrigation"), (true, true));
+
+    let other: Option<bool> = sqlx::query_scalar(
+        "SELECT enabled FROM organization_modules
+         WHERE organization_id = $1 AND module_key = 'other_module'",
+    )
+    .bind(F)
+    .fetch_optional(&app.db_pool)
+    .await
+    .unwrap();
+    assert_eq!(other, Some(false));
 
     let sub_rows: i64 =
         sqlx::query_scalar("SELECT count(*) FROM organization_modules WHERE organization_id = $1")

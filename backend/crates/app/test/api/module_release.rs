@@ -211,6 +211,53 @@ async fn a_locked_module_is_neither_listed_nor_switchable_for_the_tenant() {
 }
 
 #[tokio::test]
+async fn a_user_below_a_tenant_with_a_locked_module_gets_no_access() {
+    let (harness, app) = spawn_with_auth().await;
+    let (tenant, _tenant_token) =
+        seed_user_with_permissions(&harness, &app, "Mandant", &["waste_bin:read"]).await;
+    let sub = child_of(&app, tenant, "Unter").await;
+    let user_id = Uuid::new_v4();
+    sqlx::query("INSERT INTO user_profiles (id, organization_id) VALUES ($1, $2)")
+        .bind(user_id)
+        .bind(sub)
+        .execute(&app.db_pool)
+        .await
+        .unwrap();
+    sqlx::query(
+        "INSERT INTO role_assignments (user_id, role_id)
+         SELECT $1, id FROM roles WHERE organization_id = $2",
+    )
+    .bind(user_id)
+    .bind(tenant)
+    .execute(&app.db_pool)
+    .await
+    .unwrap();
+    let token = harness.sign_token(json!({ "sub": user_id.to_string() }));
+
+    let resp = app.get_with_bearer("/api/v1/waste-bins", &token).await;
+    assert_eq!(resp.status(), 200);
+    set_module(&app, tenant, "waste", false, true).await;
+
+    let resp = app.get_with_bearer("/api/v1/waste-bins", &token).await;
+    assert_eq!(resp.status(), 403);
+    let body: Value = resp.json().await.unwrap();
+    assert_eq!(body["code"], "module.disabled");
+
+    let body: Value = app
+        .get_with_bearer("/api/v1/modules", &token)
+        .await
+        .json()
+        .await
+        .unwrap();
+    assert!(
+        !body["modules"]
+            .as_array()
+            .unwrap()
+            .contains(&json!("waste"))
+    );
+}
+
+#[tokio::test]
 async fn a_sub_organization_follows_its_tenant_and_cannot_switch() {
     let app = spawn_app().await;
     let tenant = create_tenant(&app, "Mandant").await;
