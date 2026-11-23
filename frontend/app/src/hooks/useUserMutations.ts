@@ -139,7 +139,11 @@ export const useUserMutations = () => {
           roleIds: variables.roleIds,
         },
       }),
-    onSuccess: invalidate,
+    onSuccess: () => {
+      invalidate()
+      // Member counts live on the organizations.
+      void queryClient.invalidateQueries({ queryKey: ['organizations'] })
+    },
   })
 
   return { createUser, assignRole, revokeRole, setOrganization, updateProfile }
