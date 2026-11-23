@@ -50,7 +50,10 @@ function EmptyState({
         </div>
 
         {example && (
-          <div className="flex min-w-0 max-w-sm flex-[1_1_18rem] flex-col gap-2">
+          <div
+            data-slot="empty-state-example"
+            className="flex min-w-0 max-w-sm flex-[1_1_18rem] flex-col gap-2"
+          >
             <p className="mb-1 text-sm font-bold text-dark-600">{example.caption}</p>
             <div role="img" aria-label={example.label}>
               <div aria-hidden="true">{example.content}</div>
@@ -60,7 +63,10 @@ function EmptyState({
       </div>
 
       {benefits && (
-        <div className="border-t border-dark-50 px-6 pb-8 pt-7 md:px-10">
+        <div
+          data-slot="empty-state-benefits"
+          className="border-t border-dark-50 px-6 pb-8 pt-7 md:px-10"
+        >
           <h4 className="mb-5 font-lato text-base font-bold">{benefits.title}</h4>
           <ul className="flex flex-wrap gap-x-10 gap-y-6">
             {benefits.items.map((item) => (
@@ -79,7 +85,10 @@ function EmptyState({
       )}
 
       {note && (
-        <p className="border-t border-dark-50 bg-dark-50/60 px-6 py-4 text-dark-800 md:px-10">
+        <p
+          data-slot="empty-state-note"
+          className="border-t border-dark-50 bg-dark-50/60 px-6 py-4 text-dark-800 md:px-10"
+        >
           {note}
         </p>
       )}

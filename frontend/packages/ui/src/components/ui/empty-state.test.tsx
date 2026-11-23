@@ -56,11 +56,41 @@ describe('EmptyState', () => {
     expect(within(list).getByText('Getrennte Daten')).toBeInTheDocument()
   })
 
-  it('omits benefits and note when they are not given', () => {
-    render(<EmptyState title="T" description="D" />)
+  it('exposes the section as a region named by the headline', () => {
+    render(<EmptyState title="Noch nichts da" description="D" />)
+    expect(screen.getByRole('region', { name: 'Noch nichts da' })).toBeInTheDocument()
+  })
+
+  it('renders the benefits zone only when benefits are given', () => {
+    const { container, rerender } = render(
+      <EmptyState title="T" description="D" benefits={benefits} />,
+    )
+    expect(container.querySelector('[data-slot="empty-state-benefits"]')).not.toBeNull()
+    rerender(<EmptyState title="T" description="D" />)
+    expect(container.querySelector('[data-slot="empty-state-benefits"]')).toBeNull()
     expect(screen.queryByRole('list')).not.toBeInTheDocument()
     expect(screen.queryByRole('heading', { level: 4 })).not.toBeInTheDocument()
-    expect(screen.queryByText('Gut zu wissen')).not.toBeInTheDocument()
+  })
+
+  it('renders the example zone only when an example is given', () => {
+    const example = { caption: 'So könnte es aussehen', label: 'Beispiel', content: <span>x</span> }
+    const { container, rerender } = render(
+      <EmptyState title="T" description="D" example={example} />,
+    )
+    expect(container.querySelector('[data-slot="empty-state-example"]')).not.toBeNull()
+    rerender(<EmptyState title="T" description="D" />)
+    expect(container.querySelector('[data-slot="empty-state-example"]')).toBeNull()
+    expect(screen.queryByRole('img')).not.toBeInTheDocument()
+    expect(screen.queryByText('So könnte es aussehen')).not.toBeInTheDocument()
+  })
+
+  it('renders the note zone only when a note is given', () => {
+    const { container, rerender } = render(
+      <EmptyState title="T" description="D" note="Gut zu wissen: Hinweis." />,
+    )
+    expect(container.querySelector('[data-slot="empty-state-note"]')).not.toBeNull()
+    rerender(<EmptyState title="T" description="D" />)
+    expect(container.querySelector('[data-slot="empty-state-note"]')).toBeNull()
   })
 
   it('renders the note', () => {
