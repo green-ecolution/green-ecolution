@@ -105,6 +105,7 @@ vi.mock('@/hooks/useContainerWiderThan', () => ({
 
 const NEW_PERSON = member('u-new', 'Neo', 'Neumann', 'amt', [])
 let listedOverride: UserResponse[] | null = null
+let listFetching = false
 
 vi.mock('./AddMemberDialog', () => ({
   default: ({ open, onCreated }: { open: boolean; onCreated: (user: UserResponse) => void }) =>
@@ -190,6 +191,7 @@ vi.mock('@tanstack/react-query', async () => {
             },
           },
           isLoading: false,
+          isFetching: listFetching,
         }
       }
       if (scope === 'roles' && second === 'org') {
@@ -227,6 +229,7 @@ describe('MembersPage', () => {
     vi.clearAllMocks()
     listParams.length = 0
     listedOverride = null
+    listFetching = false
     vi.stubEnv('VITE_AUTH_BYPASS', '')
     context.orgId = 'amt'
     // Nobody in the list is the signed-in user by default; the self-lock test
@@ -701,17 +704,28 @@ describe('MembersPage', () => {
       expect(screen.queryByRole('button', { name: 'Person hinzufügen' })).not.toBeInTheDocument()
     })
 
-    it('selects the new person after adding', async () => {
-      listedOverride = [...users, NEW_PERSON]
-      render(<MembersPage />)
+    it('selects the new person after adding, also while the list is still stale', async () => {
+      const { rerender } = render(<MembersPage />)
+      await openCombobox('Rolle')
+      await userEvent.click(screen.getByRole('option', { name: 'Gärtner' }))
       await userEvent.type(screen.getByRole('searchbox', { name: /suchen/i }), 'Boysen')
       await userEvent.click(screen.getByRole('button', { name: 'Person hinzufügen' }))
+      expect(lastListParams()).toMatchObject({ roleId: 'r-garden' })
 
+      // Back on the unfiltered key the cache serves the old page while it refetches.
+      listedOverride = users
+      listFetching = true
       await userEvent.click(screen.getByRole('button', { name: 'Dialog fertig' }))
 
       expect(screen.getByRole('searchbox', { name: /suchen/i })).toHaveValue('')
       expect(lastListParams()).toMatchObject({ page: 1, includeDescendants: true })
       expect(lastListParams()).not.toHaveProperty('query', 'Boysen')
+      expect(lastListParams()).not.toHaveProperty('roleId', 'r-garden')
+
+      listedOverride = [...users, NEW_PERSON]
+      listFetching = false
+      rerender(<MembersPage />)
+
       expect(list().getByRole('button', { name: /Neo Neumann/ })).toHaveAttribute(
         'aria-current',
         'true',

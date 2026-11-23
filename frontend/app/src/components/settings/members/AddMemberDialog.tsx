@@ -66,7 +66,8 @@ const AddMemberDialog = ({
 
   const handleOpenChange = (next: boolean) => {
     if (next) onOpenChange(true)
-    else close()
+    // Closing now would detach the request and lose the one-time password.
+    else if (!createUser.isPending) close()
   }
 
   const edit: typeof setField = (field, value) => {
@@ -111,7 +112,10 @@ const AddMemberDialog = ({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
         onInteractOutside={(event) => {
-          if (created) event.preventDefault()
+          if (created || createUser.isPending) event.preventDefault()
+        }}
+        onEscapeKeyDown={(event) => {
+          if (createUser.isPending) event.preventDefault()
         }}
       >
         {created ? (
@@ -196,7 +200,12 @@ const AddMemberDialog = ({
               )}
 
               <DialogFooter>
-                <Button type="button" variant="outline" onClick={close}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={createUser.isPending}
+                  onClick={close}
+                >
                   {t('common:actions.cancel')}
                 </Button>
                 <Button type="submit" disabled={!valid || createUser.isPending}>

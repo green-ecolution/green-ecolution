@@ -95,7 +95,11 @@ const MembersPage = () => {
 
   const { data: me } = useQuery(userQueries.me())
 
-  const { data: userPage, isLoading: usersLoading } = useQuery(
+  const {
+    data: userPage,
+    isLoading: usersLoading,
+    isFetching: usersFetching,
+  } = useQuery(
     userQueries.list({
       page,
       perPage: PER_PAGE,
@@ -203,10 +207,12 @@ const MembersPage = () => {
     // A selection that vanished from an unfiltered list is gone for good (paged
     // away or deleted), so drop it and let the auto-selection take over. With a
     // filter active the selection is only hidden, and the pane offers a reset.
-    if (selectedId === null || selected !== null || usersLoading || filtered) return
+    // Settled data only: a just-added person is missing from the cached page until the refetch lands.
+    if (selectedId === null || selected !== null || usersLoading || usersFetching || filtered)
+      return
     // eslint-disable-next-line react-hooks/set-state-in-effect, react-x/set-state-in-effect -- drops a selection the refreshed list no longer contains
     setSelectedId(null)
-  }, [selectedId, selected, usersLoading, filtered])
+  }, [selectedId, selected, usersLoading, usersFetching, filtered])
 
   const goTo = (userId: string) => {
     setSelectedId(userId)

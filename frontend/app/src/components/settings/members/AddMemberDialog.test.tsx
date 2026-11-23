@@ -210,4 +210,46 @@ describe('AddMemberDialog', () => {
 
     expect(calls).toBe(1)
   })
+
+  describe('while the request is pending', () => {
+    const holdRequest = () => {
+      let release!: () => void
+      const gate = new Promise<void>((resolve) => {
+        release = resolve
+      })
+      let calls = 0
+      server.use(
+        http.post('*/v1/users', async () => {
+          calls += 1
+          await gate
+          return HttpResponse.json(
+            { user: createdUser, initial_password: PASSWORD },
+            { status: 201 },
+          )
+        }),
+      )
+      return { release, calls: () => calls }
+    }
+
+    it('cannot be closed by cancel, Escape or an outside click and shows the password afterwards', async () => {
+      const held = holdRequest()
+      const { onOpenChange } = setup()
+      await fillForm()
+      await submit()
+      await waitFor(() => expect(screen.getByRole('button', { name: 'Abbrechen' })).toBeDisabled())
+
+      await userEvent.click(screen.getByRole('button', { name: 'Abbrechen' }))
+      await userEvent.keyboard('{Escape}')
+      fireEvent.pointerDown(document.body)
+      fireEvent.click(document.body)
+      await userEvent.click(screen.getByRole('button', { name: /schließen|close/i }))
+
+      expect(onOpenChange).not.toHaveBeenCalled()
+      expect(screen.getByLabelText('Vorname')).toBeInTheDocument()
+      expect(held.calls()).toBe(1)
+
+      held.release()
+      expect(await screen.findByText(PASSWORD)).toBeInTheDocument()
+    })
+  })
 })
