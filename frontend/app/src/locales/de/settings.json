@@ -653,12 +653,12 @@
         "description": "Konten & Zuordnung",
         "hint": {
           "read": "Mitarbeitende und ihre Rollen einsehen",
-          "create": "Neue Mitarbeitende einladen",
+          "create": "Neue Mitarbeitende anlegen",
           "update": "Stammdaten und Rollenzuordnung ändern",
           "delete": "Zugang entziehen"
         },
         "actionOverrides": {
-          "create": "Mitarbeitende einladen",
+          "create": "Mitarbeitende anlegen",
           "delete": "Mitarbeitende entfernen"
         }
       },

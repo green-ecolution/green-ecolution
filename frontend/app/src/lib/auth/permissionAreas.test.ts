@@ -107,7 +107,7 @@ describe('permissionAreasFor', () => {
 
   // The generic "{resource} {verb}" composition is lossless for 34 of the 36
   // cells; these two pin the label overrides that restore the distinction the
-  // generic verb would otherwise flatten (invite vs. create a person, remove
+  // generic verb would otherwise flatten (create vs. add a person, remove
   // access vs. delete a person). watering_plan:create is deliberately not
   // overridden — see the next test.
   it('overrides the two cells the generic verbs would flatten', () => {
@@ -116,10 +116,10 @@ describe('permissionAreasFor', () => {
         .find((area) => area.resource === resource)!
         .actions.find((candidate) => candidate.action === action)!.label
 
-    expect(labelOf(t, 'user', 'create')).toBe('Mitarbeitende einladen')
+    expect(labelOf(t, 'user', 'create')).toBe('Mitarbeitende anlegen')
     expect(labelOf(t, 'user', 'delete')).toBe('Mitarbeitende entfernen')
 
-    expect(labelOf(tEn, 'user', 'create')).toBe('Invite members')
+    expect(labelOf(tEn, 'user', 'create')).toBe('Create members')
     expect(labelOf(tEn, 'user', 'delete')).toBe('Remove members')
   })
 

@@ -653,12 +653,12 @@
         "description": "Accounts & assignment",
         "hint": {
           "read": "View members and their roles",
-          "create": "Invite new members",
+          "create": "Create new members",
           "update": "Change master data and role assignment",
           "delete": "Revoke access"
         },
         "actionOverrides": {
-          "create": "Invite members",
+          "create": "Create members",
           "delete": "Remove members"
         }
       },
