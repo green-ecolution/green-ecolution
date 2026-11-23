@@ -392,32 +392,22 @@ mod tests {
     use serde_json::json;
     use uuid::Uuid;
 
-    use domain::module::{ActivationResolution, ModuleActivationReader, ModuleKey, OwnSwitch};
-    use domain::settings::SettingOrigin;
+    use domain::module::{ModuleActivationReader, ModuleKey, ModuleState};
     use server::service::event_bus::NoopEventBus;
 
     struct AlwaysActive;
 
     #[async_trait::async_trait]
     impl ModuleActivationReader for AlwaysActive {
-        async fn own(
-            &self,
-            _org: Id<Organization>,
-        ) -> Result<std::collections::BTreeMap<ModuleKey, OwnSwitch>, RepositoryError> {
-            Ok(Default::default())
-        }
-
         async fn resolve(
             &self,
             _org: Id<Organization>,
-        ) -> Result<std::collections::BTreeMap<ModuleKey, ActivationResolution>, RepositoryError>
-        {
+        ) -> Result<std::collections::BTreeMap<ModuleKey, ModuleState>, RepositoryError> {
             Ok(std::collections::BTreeMap::from([(
                 crate::key(),
-                ActivationResolution {
+                ModuleState {
+                    released: true,
                     enabled: true,
-                    origin: SettingOrigin::Default,
-                    inherited: true,
                 },
             )]))
         }
@@ -427,6 +417,25 @@ mod tests {
             _key: &ModuleKey,
         ) -> Result<BTreeSet<Id<Organization>>, RepositoryError> {
             Ok(BTreeSet::new())
+        }
+
+        async fn released_orgs(
+            &self,
+            _key: &ModuleKey,
+        ) -> Result<BTreeSet<Id<Organization>>, RepositoryError> {
+            Ok(BTreeSet::new())
+        }
+
+        async fn tenants(
+            &self,
+        ) -> Result<
+            std::collections::BTreeMap<
+                Id<Organization>,
+                std::collections::BTreeMap<ModuleKey, ModuleState>,
+            >,
+            RepositoryError,
+        > {
+            Ok(Default::default())
         }
     }
 

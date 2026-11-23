@@ -2,7 +2,7 @@ use serde_json::{Value, json};
 use uuid::Uuid;
 
 use crate::{
-    helpers::{TestApp, spawn_app_with_modules, spawn_app_with_modules_and_routing},
+    helpers::{TestApp, set_module, spawn_app_with_modules, spawn_app_with_modules_and_routing},
     module_host::switch,
     settings_repo::child_org,
     test_module::{KEY, TestModule},
@@ -215,6 +215,7 @@ async fn listing_leaves_out_plans_where_the_module_is_switched_off() {
     let app = app().await;
     let root: Uuid = ROOT.parse().unwrap();
     let child = child_org(&app, "Abfall Nord", root).await;
+    set_module(&app, child, KEY, true, true).await;
     let vehicle = cargo_vehicle(&app).await;
     let root_plan = plan(&app, &[thing(&app).await], vehicle).await;
     plan_in(&app, &[thing_in(&app, child).await], vehicle, child).await;

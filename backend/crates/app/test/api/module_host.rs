@@ -49,7 +49,7 @@ async fn a_registered_module_is_listed_and_off_by_default() {
         .find(|m| m["key"] == KEY)
         .unwrap();
     assert_eq!(entry["enabled"], false);
-    assert_eq!(entry["origin"], "default");
+    assert_eq!(entry["switchable"], true);
 }
 
 #[tokio::test]
@@ -78,13 +78,13 @@ async fn writes_into_an_organization_without_the_module_are_refused() {
 }
 
 #[tokio::test]
-async fn activation_at_the_root_reaches_three_levels_down() {
+async fn a_tenants_switch_reaches_its_sub_organizations() {
     let (app, _) = app_with_test_module().await;
     let root = Uuid::parse_str(ROOT_ORG_ID).unwrap();
     let mid = child_org(&app, "Mitte", root).await;
     let leaf = child_org(&app, "Blatt", mid).await;
 
-    assert_eq!(switch(&app, KEY, root, Some(true)).await.status(), 200);
+    assert_eq!(switch(&app, KEY, mid, Some(true)).await.status(), 200);
 
     let body: serde_json::Value = app
         .get(&format!("/api/v1/organizations/{leaf}/modules"))
@@ -99,8 +99,7 @@ async fn activation_at_the_root_reaches_three_levels_down() {
         .find(|m| m["key"] == KEY)
         .unwrap();
     assert_eq!(entry["enabled"], true);
-    assert_eq!(entry["origin"], "inherited");
-    assert_eq!(entry["source"]["id"], ROOT_ORG_ID);
+    assert_eq!(entry["switchable"], false);
 }
 
 #[tokio::test]

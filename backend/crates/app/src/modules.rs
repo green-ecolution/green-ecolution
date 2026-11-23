@@ -11,8 +11,9 @@ pub fn registered() -> Vec<Box<dyn Module>> {
     ]
 }
 
-/// The activation an organization inherits when no ancestor switched the
-/// module: `modules.<key>.default_enabled` from the config, else the module's own.
+/// The root organization's switch where it stored none of its own:
+/// `modules.<key>.default_enabled` from the config, else the module's own.
+/// Tenants do not inherit it.
 pub fn activation_defaults(
     modules: &[Box<dyn Module>],
     configured: &BTreeMap<String, ModuleSettings>,

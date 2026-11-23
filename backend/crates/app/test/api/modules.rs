@@ -43,7 +43,7 @@ async fn unknown_organization_is_not_found() {
 }
 
 #[tokio::test]
-async fn an_own_switch_reports_what_inheriting_again_would_give() {
+async fn the_root_switches_a_module_and_reports_it() {
     let app = spawn_app().await;
     let path = format!("/api/v1/organizations/{ROOT_ORG_ID}/modules");
     let resp = app
@@ -59,6 +59,17 @@ async fn an_own_switch_reports_what_inheriting_again_would_give() {
         .find(|m| m["key"] == "waste")
         .unwrap();
     assert_eq!(waste["enabled"], true);
-    assert_eq!(waste["own_value"], true);
-    assert_eq!(waste["inherited_enabled"], false);
+    assert_eq!(waste["switchable"], true);
+    for gone in [
+        "own_value",
+        "inherited_enabled",
+        "set_by",
+        "origin",
+        "source",
+    ] {
+        assert!(
+            waste.get(gone).is_none(),
+            "{gone} is gone from the response"
+        );
+    }
 }

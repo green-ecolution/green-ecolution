@@ -170,10 +170,6 @@ pub enum ServiceError {
     CannotChangeOwnAccess,
     #[error("this change would remove your own right to administer roles and members")]
     CannotRevokeOwnAdministration,
-    /// An organization above chose this value for the sub-unit; only someone
-    /// acting for that organization or above may change it.
-    #[error("set by organization {organization_id}")]
-    SettingsSetByAncestor { organization_id: uuid::Uuid },
     #[error("the plugin proxy is not configured on this instance")]
     PluginProxyUnavailable,
     #[error("proxied frontend target is not on the service allowlist")]
@@ -182,6 +178,11 @@ pub enum ServiceError {
     PluginUpstreamUnreachable,
     #[error("unknown module {key}")]
     ModuleUnknown { key: String },
+    /// Only a tenant and the root switch modules; everything below follows.
+    #[error("modules are switched by the tenant, not by this organization")]
+    ModuleNotSwitchable,
+    #[error("modules are released for tenants only")]
+    ModuleNotATenant,
     /// The module exists but is switched off for the organization the request
     /// targets. Not a missing permission of the user, but still a refusal.
     #[error("module {module} is not active in this organization")]
@@ -237,11 +238,12 @@ impl ServiceError {
             Self::SensorBoundToTarget => "conflict.sensor_bound_to_target",
             Self::CannotChangeOwnAccess => "conflict.cannot_change_own_access",
             Self::CannotRevokeOwnAdministration => "conflict.cannot_revoke_own_administration",
-            Self::SettingsSetByAncestor { .. } => "settings.set_by_ancestor",
             Self::ContactPersonNotAMember => "organization.contact_person_not_a_member",
             Self::MissingOrganization => "organization.missing",
             Self::InvalidOrganizationScope => ORGANIZATION_SCOPE_INVALID,
             Self::ModuleUnknown { .. } => "module.unknown",
+            Self::ModuleNotSwitchable => "module.not_switchable",
+            Self::ModuleNotATenant => "module.not_a_tenant",
             Self::ModuleDisabled { .. } => "module.disabled",
             Self::TargetNotAccepted { .. } => "target.not_accepted",
             Self::VehicleCapacityMissing { .. } => "vehicle.capacity_missing",
@@ -483,6 +485,8 @@ mod tests {
             ServiceError::CannotChangeOwnAccess,
             ServiceError::CannotRevokeOwnAdministration,
             ServiceError::ModuleUnknown { key: "x".into() },
+            ServiceError::ModuleNotSwitchable,
+            ServiceError::ModuleNotATenant,
             ServiceError::ModuleDisabled { module: "x".into() },
             ServiceError::Module {
                 kind: ModuleErrorKind::Conflict,
@@ -500,9 +504,6 @@ mod tests {
             ServiceError::VehicleCapacityMissing {
                 vehicle: uuid::Uuid::nil(),
                 kind: "water".into(),
-            },
-            ServiceError::SettingsSetByAncestor {
-                organization_id: uuid::Uuid::nil(),
             },
             ServiceError::OperationPlan(OperationPlanError::InvalidStateTransition {
                 from: OperationPlanStatus::Planned,

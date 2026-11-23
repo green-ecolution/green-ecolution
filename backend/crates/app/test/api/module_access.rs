@@ -5,7 +5,7 @@ use uuid::Uuid;
 
 use crate::{
     auth_helpers::AuthHarness,
-    helpers::{TestApp, seed_user_with_permissions, spawn_app_with_modules_and_auth},
+    helpers::{TestApp, seed_user_with_permissions, set_module, spawn_app_with_modules_and_auth},
     test_module::{KEY, Probe, TestModule},
 };
 
@@ -29,14 +29,7 @@ async fn child_of(app: &TestApp, parent: Uuid, name: &str) -> Uuid {
 }
 
 async fn activate(app: &TestApp, org: Uuid) {
-    sqlx::query(
-        "INSERT INTO organization_modules (organization_id, module_key, enabled, set_by) VALUES ($1, $2, true, $1)",
-    )
-    .bind(org)
-    .bind(KEY)
-    .execute(&app.db_pool)
-    .await
-    .unwrap();
+    set_module(app, org, KEY, true, true).await;
 }
 
 async fn insert_thing(app: &TestApp, org: Uuid) {

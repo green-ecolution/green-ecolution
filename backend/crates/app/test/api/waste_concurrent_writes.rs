@@ -24,7 +24,7 @@ use waste_server::{
 };
 
 use crate::{
-    helpers::TestApp,
+    helpers::{TestApp, set_module},
     organizations::ROOT_ORG_ID,
     settings_repo::child_org,
     waste_bins::{create_bin, id_of, waste_app},
@@ -131,6 +131,7 @@ fn hour(h: u32) -> DateTime<Utc> {
 async fn a_reading_does_not_undo_a_concurrent_transfer() {
     let app = waste_app().await;
     let child = child_org(&app, "Bauhof", ROOT_ORG_ID.parse().unwrap()).await;
+    set_module(&app, child, "waste", true, true).await;
     let bin = id_of(&create_bin(&app, "AB-1").await);
     let repo = Arc::new(PgWasteBinRepository::new(app.db_pool.clone()));
     let before_transfer = repo.by_id(Id::new(bin)).await.unwrap();
@@ -151,6 +152,7 @@ async fn a_reading_does_not_undo_a_concurrent_transfer() {
 async fn an_emptying_does_not_undo_a_transfer_or_a_newer_emptying() {
     let app = waste_app().await;
     let child = child_org(&app, "Bauhof", ROOT_ORG_ID.parse().unwrap()).await;
+    set_module(&app, child, "waste", true, true).await;
     let bin = id_of(&create_bin(&app, "AB-1").await);
     let repo = Arc::new(PgWasteBinRepository::new(app.db_pool.clone()));
     let before_emptying = repo.by_id(Id::new(bin)).await.unwrap();

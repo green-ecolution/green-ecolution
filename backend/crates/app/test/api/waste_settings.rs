@@ -2,7 +2,10 @@ use serde_json::json;
 use uuid::Uuid;
 
 use crate::{
-    helpers::TestApp, organizations::ROOT_ORG_ID, settings_repo::child_org, waste_bins::waste_app,
+    helpers::{TestApp, set_module},
+    organizations::ROOT_ORG_ID,
+    settings_repo::child_org,
+    waste_bins::waste_app,
 };
 
 fn url(org: impl std::fmt::Display) -> String {
@@ -51,6 +54,7 @@ async fn a_value_set_at_the_root_is_the_inherited_value_below() {
 async fn sending_the_inherited_value_falls_back_and_is_recorded() {
     let app = waste_app().await;
     let org = child_org(&app, "Zurück", root()).await;
+    set_module(&app, org, "waste", true, true).await;
 
     app.put_json(&url(org), &json!({ "full_threshold": 60 }))
         .await;

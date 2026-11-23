@@ -159,10 +159,7 @@ impl IntoResponse for ServiceError {
             | ServiceError::OrganizationNotEmpty
             | ServiceError::CannotChangeOwnAccess
             | ServiceError::CannotRevokeOwnAdministration
-            | ServiceError::SensorBoundToTarget
-            | ServiceError::SettingsSetByAncestor { .. } => {
-                (StatusCode::CONFLICT, self.to_string())
-            }
+            | ServiceError::SensorBoundToTarget => (StatusCode::CONFLICT, self.to_string()),
             // Not a conflict with stored state: the request combines two
             // entities that may not be linked, which is an input problem.
             ServiceError::OrganizationMismatch(kind) => {
@@ -184,7 +181,9 @@ impl IntoResponse for ServiceError {
             | ServiceError::UnknownStop { .. } => {
                 (StatusCode::UNPROCESSABLE_ENTITY, self.to_string())
             }
-            ServiceError::ModuleUnknown { .. } => {
+            ServiceError::ModuleUnknown { .. }
+            | ServiceError::ModuleNotSwitchable
+            | ServiceError::ModuleNotATenant => {
                 (StatusCode::UNPROCESSABLE_ENTITY, self.to_string())
             }
             ServiceError::MissingOrganization | ServiceError::ContactPersonNotAMember => {

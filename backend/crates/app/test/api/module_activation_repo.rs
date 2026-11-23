@@ -1,11 +1,10 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::sync::Arc;
 
 use domain::{
     Id, RepositoryError,
-    module::{ModuleActivationReader, ModuleActivationWriter, ModuleKey, OwnSwitch},
+    module::{ModuleActivationReader, ModuleActivationWriter, ModuleKey, ModuleState},
     organization::Organization,
-    settings::SettingOrigin,
 };
 use server::infra::{
     pg_module_activation::PgModuleActivationRepository, pg_organization::PgOrganizationRepository,
@@ -14,8 +13,25 @@ use uuid::Uuid;
 
 use crate::{helpers::spawn_app, organizations::ROOT_ORG_ID, settings_repo::child_org};
 
+const LOCKED: ModuleState = ModuleState {
+    released: false,
+    enabled: false,
+};
+const ON: ModuleState = ModuleState {
+    released: true,
+    enabled: true,
+};
+const OFF: ModuleState = ModuleState {
+    released: true,
+    enabled: false,
+};
+
 fn key(k: &str) -> ModuleKey {
     ModuleKey::new(k).unwrap()
+}
+
+fn org(id: Uuid) -> Id<Organization> {
+    Id::new(id)
 }
 
 fn repo(app: &crate::helpers::TestApp, defaults: &[(&str, bool)]) -> PgModuleActivationRepository {
@@ -26,116 +42,135 @@ fn repo(app: &crate::helpers::TestApp, defaults: &[(&str, bool)]) -> PgModuleAct
     )
 }
 
+fn changes(entries: &[(&str, bool)]) -> BTreeMap<ModuleKey, bool> {
+    entries.iter().map(|(k, v)| (key(k), *v)).collect()
+}
+
 #[tokio::test]
-async fn activation_inherits_over_three_levels_and_own_values_win() {
+async fn a_tenant_without_a_row_has_the_module_locked() {
     let app = spawn_app().await;
     let root = Uuid::parse_str(ROOT_ORG_ID).unwrap();
-    let mid = child_org(&app, "Mitte", root).await;
-    let leaf = child_org(&app, "Blatt", mid).await;
+    let tenant = child_org(&app, "Mandant", root).await;
     let repo = repo(&app, &[("alpha", false), ("beta", true)]);
 
-    repo.apply(
-        Id::new(root),
-        &BTreeMap::from([(key("alpha"), Some(true))]),
-        Id::new(root),
-    )
-    .await
-    .unwrap();
-    repo.apply(
-        Id::new(leaf),
-        &BTreeMap::from([(key("beta"), Some(false))]),
-        Id::new(leaf),
-    )
-    .await
-    .unwrap();
-
-    let at_leaf = repo.resolve(Id::<Organization>::new(leaf)).await.unwrap();
-    assert!(at_leaf[&key("alpha")].enabled);
+    let states = repo.resolve(org(tenant)).await.unwrap();
+    assert_eq!(states[&key("beta")], LOCKED);
+    assert_eq!(states[&key("alpha")], LOCKED);
     assert_eq!(
-        at_leaf[&key("alpha")].origin,
-        SettingOrigin::Inherited(Id::new(root))
+        repo.active_orgs(&key("beta")).await.unwrap(),
+        BTreeSet::from([org(root)])
     );
-    assert!(!at_leaf[&key("beta")].enabled);
-    assert_eq!(at_leaf[&key("beta")].origin, SettingOrigin::Own);
-
-    let at_mid = repo.resolve(Id::new(mid)).await.unwrap();
-    assert!(at_mid[&key("beta")].enabled);
-    assert_eq!(at_mid[&key("beta")].origin, SettingOrigin::Default);
-
     assert_eq!(
-        repo.own(Id::new(leaf)).await.unwrap(),
-        BTreeMap::from([(
-            key("beta"),
-            OwnSwitch {
-                enabled: false,
-                set_by: Id::new(leaf)
-            }
-        )])
+        repo.released_orgs(&key("beta")).await.unwrap(),
+        BTreeSet::from([org(root)])
     );
 }
 
 #[tokio::test]
-async fn clearing_returns_to_inheritance() {
+async fn the_root_follows_the_default_until_it_switches() {
     let app = spawn_app().await;
     let root = Uuid::parse_str(ROOT_ORG_ID).unwrap();
-    let org = child_org(&app, "Klar", root).await;
-    let repo = repo(&app, &[("alpha", false)]);
+    let tenant = child_org(&app, "Mandant", root).await;
+    let repo = repo(&app, &[("alpha", false), ("beta", true)]);
 
-    repo.apply(
-        Id::new(org),
-        &BTreeMap::from([(key("alpha"), Some(true))]),
-        Id::new(org),
-    )
-    .await
-    .unwrap();
-    repo.apply(
-        Id::new(org),
-        &BTreeMap::from([(key("alpha"), None)]),
-        Id::new(org),
-    )
-    .await
-    .unwrap();
+    let states = repo.resolve(org(root)).await.unwrap();
+    assert_eq!(states[&key("alpha")], OFF);
+    assert_eq!(states[&key("beta")], ON);
 
-    let r = repo.resolve(Id::new(org)).await.unwrap();
-    assert!(!r[&key("alpha")].enabled);
-    assert_eq!(r[&key("alpha")].origin, SettingOrigin::Default);
-    assert!(repo.own(Id::new(org)).await.unwrap().is_empty());
+    repo.switch(org(root), &changes(&[("alpha", true)]))
+        .await
+        .unwrap();
+    assert_eq!(repo.resolve(org(root)).await.unwrap()[&key("alpha")], ON);
+    assert_eq!(
+        repo.resolve(org(tenant)).await.unwrap()[&key("alpha")],
+        LOCKED
+    );
 }
 
 #[tokio::test]
-async fn active_orgs_lists_exactly_the_enabled_organizations() {
+async fn releasing_switches_on_and_reaches_the_sub_organization() {
     let app = spawn_app().await;
     let root = Uuid::parse_str(ROOT_ORG_ID).unwrap();
-    let on = child_org(&app, "An", root).await;
-    let off = child_org(&app, "Aus", root).await;
-    let repo = repo(&app, &[("alpha", false)]);
+    let tenant = child_org(&app, "Mandant", root).await;
+    let sub = child_org(&app, "Unter", tenant).await;
+    let repo = repo(&app, &[("alpha", false), ("beta", true)]);
 
-    repo.apply(
-        Id::new(on),
-        &BTreeMap::from([(key("alpha"), Some(true))]),
-        Id::new(on),
-    )
-    .await
-    .unwrap();
+    repo.release(org(tenant), &changes(&[("alpha", true)]))
+        .await
+        .unwrap();
 
-    let active = repo.active_orgs(&key("alpha")).await.unwrap();
-    assert!(active.contains(&Id::new(on)));
-    assert!(!active.contains(&Id::new(off)));
-    assert!(!active.contains(&Id::new(root)));
-    assert!(
-        repo.active_orgs(&key("unregistered"))
-            .await
-            .unwrap()
-            .is_empty()
+    assert_eq!(repo.resolve(org(tenant)).await.unwrap()[&key("alpha")], ON);
+    assert_eq!(repo.resolve(org(sub)).await.unwrap()[&key("alpha")], ON);
+    assert_eq!(
+        repo.active_orgs(&key("alpha")).await.unwrap(),
+        BTreeSet::from([org(tenant), org(sub)])
     );
+}
+
+#[tokio::test]
+async fn locking_keeps_the_switch_and_releasing_restores_it() {
+    let app = spawn_app().await;
+    let root = Uuid::parse_str(ROOT_ORG_ID).unwrap();
+    let tenant = child_org(&app, "Mandant", root).await;
+    let sub = child_org(&app, "Unter", tenant).await;
+    let repo = repo(&app, &[("alpha", false), ("beta", true)]);
+
+    repo.release(org(tenant), &changes(&[("alpha", true)]))
+        .await
+        .unwrap();
+    repo.switch(org(tenant), &changes(&[("alpha", false)]))
+        .await
+        .unwrap();
+    repo.release(org(tenant), &changes(&[("alpha", false)]))
+        .await
+        .unwrap();
+
+    let released = repo.released_orgs(&key("alpha")).await.unwrap();
+    assert!(!released.contains(&org(tenant)));
+    assert!(!released.contains(&org(sub)));
+    assert!(!repo.resolve(org(tenant)).await.unwrap()[&key("alpha")].released);
+
+    repo.release(org(tenant), &changes(&[("alpha", true)]))
+        .await
+        .unwrap();
+    assert_eq!(repo.resolve(org(tenant)).await.unwrap()[&key("alpha")], OFF);
+}
+
+#[tokio::test]
+async fn tenants_lists_every_tenant_with_every_registered_module() {
+    let app = spawn_app().await;
+    let root = Uuid::parse_str(ROOT_ORG_ID).unwrap();
+    let first = child_org(&app, "Erster", root).await;
+    let second = child_org(&app, "Zweiter", root).await;
+    let sub = child_org(&app, "Unter", first).await;
+    let repo = repo(&app, &[("alpha", false), ("beta", true)]);
+
+    repo.release(org(first), &changes(&[("alpha", true)]))
+        .await
+        .unwrap();
+
+    let tenants = repo.tenants().await.unwrap();
+    assert_eq!(
+        tenants.keys().copied().collect::<BTreeSet<_>>(),
+        BTreeSet::from([org(first), org(second)])
+    );
+    assert!(!tenants.contains_key(&org(root)));
+    assert!(!tenants.contains_key(&org(sub)));
+    for states in tenants.values() {
+        assert_eq!(
+            states.keys().cloned().collect::<Vec<_>>(),
+            vec![key("alpha"), key("beta")]
+        );
+    }
+    assert_eq!(tenants[&org(first)][&key("alpha")], ON);
+    assert_eq!(tenants[&org(second)][&key("alpha")], LOCKED);
 }
 
 #[tokio::test]
 async fn unknown_organization_is_not_found() {
     let app = spawn_app().await;
     let repo = repo(&app, &[("alpha", false)]);
-    assert!(matches!(
-        repo.resolve(Id::new_v7()).await,
-        Err(RepositoryError::NotFound)
-    ));
+
+    let result = repo.resolve(Id::new(Uuid::now_v7())).await;
+    assert!(matches!(result, Err(RepositoryError::NotFound)));
 }
