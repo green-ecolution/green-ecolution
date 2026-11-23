@@ -3,7 +3,11 @@ use std::{collections::BTreeSet, sync::Arc};
 use crate::http::v1::error::ErrorBody;
 
 use crate::http::extractors::{Json, Path, Query};
-use axum::{extract::State, http::StatusCode};
+use axum::{
+    extract::State,
+    http::{StatusCode, header},
+    response::IntoResponse,
+};
 use secrecy::ExposeSecret;
 use utoipa_axum::{router::OpenApiRouter, routes};
 use uuid::Uuid;
@@ -230,8 +234,9 @@ pub async fn create_user(
     State(state): State<Arc<AppState>>,
     user: AuthUserExtractor,
     Json(req): Json<UserRegisterRequest>,
-) -> Result<(StatusCode, Json<UserRegisterResponse>), ServiceError> {
+) -> Result<impl IntoResponse, ServiceError> {
     let entity: DomainUserCreate = req.try_into()?;
+    let organization_id = entity.organization_id;
     state
         .authorization_service
         .require(
@@ -254,8 +259,15 @@ pub async fn create_user(
         }
     }
     let created = state.user_service.register(entity).await?;
+    tracing::info!(
+        actor.id = %user.id,
+        user.id = %created.user.id,
+        organization.id = %organization_id,
+        "user registered"
+    );
     Ok((
         StatusCode::CREATED,
+        [(header::CACHE_CONTROL, "no-store")],
         Json(UserRegisterResponse {
             user: (&created.user).into(),
             initial_password: created.initial_password.expose_secret().to_owned(),

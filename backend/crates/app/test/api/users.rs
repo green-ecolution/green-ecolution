@@ -636,6 +636,12 @@ async fn creating_a_user_returns_the_person_and_an_initial_password() {
         .await;
 
     assert_eq!(resp.status(), 201);
+    assert_eq!(
+        resp.headers()
+            .get("cache-control")
+            .and_then(|v| v.to_str().ok()),
+        Some("no-store")
+    );
     let body: serde_json::Value = resp.json().await.unwrap();
     assert_eq!(body["user"]["username"], "mmustermann");
     assert_eq!(body["user"]["id"], new_id.to_string());

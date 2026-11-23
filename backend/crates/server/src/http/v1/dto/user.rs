@@ -330,11 +330,23 @@ pub struct ClientTokenResponse {
     pub scope: String,
 }
 
-fn non_blank(value: String, field: &'static str) -> Result<String, ValidationError> {
-    match value.trim() {
-        "" => Err(ValidationError::EmptyString { field }),
-        trimmed => Ok(trimmed.to_owned()),
+/// The identity provider refuses longer names with a bare 400.
+const NAME_MAX_CHARS: usize = 255;
+
+fn person_name(value: String, field: &'static str) -> Result<String, ValidationError> {
+    let trimmed = value.trim();
+    let len = trimmed.chars().count();
+    if len == 0 {
+        return Err(ValidationError::EmptyString { field });
     }
+    if len > NAME_MAX_CHARS {
+        return Err(ValidationError::TooLong {
+            field,
+            max: NAME_MAX_CHARS,
+            got: len,
+        });
+    }
+    Ok(trimmed.to_owned())
 }
 
 impl TryFrom<UserRegisterRequest> for DomainUserCreate {
@@ -342,8 +354,8 @@ impl TryFrom<UserRegisterRequest> for DomainUserCreate {
 
     fn try_from(value: UserRegisterRequest) -> Result<Self, Self::Error> {
         let username = Username::new(value.username)?;
-        let first_name = non_blank(value.first_name, "user.first_name")?;
-        let last_name = non_blank(value.last_name, "user.last_name")?;
+        let first_name = person_name(value.first_name, "user.first_name")?;
+        let last_name = person_name(value.last_name, "user.last_name")?;
         let email = Email::new(value.email)?;
         let role_ids: Vec<Id<Role>> = value.role_ids.into_iter().map(Id::new).collect();
         let avatar_url = value
@@ -429,6 +441,34 @@ mod tests {
         ));
         let padded = DomainUserCreate::try_from(register_request(" Max ", "Mustermann")).unwrap();
         assert_eq!(padded.first_name, "Max");
+    }
+
+    #[test]
+    fn a_name_beyond_255_characters_is_refused() {
+        let longest = "ä".repeat(255);
+        let accepted =
+            DomainUserCreate::try_from(register_request(&format!(" {longest} "), "Mustermann"))
+                .unwrap();
+        assert_eq!(accepted.first_name, longest);
+
+        let too_long = DomainUserCreate::try_from(register_request(&"a".repeat(256), "Mustermann"));
+        assert!(matches!(
+            too_long,
+            Err(ServiceError::Validation(ValidationError::TooLong {
+                field: "user.first_name",
+                max: 255,
+                got: 256,
+            }))
+        ));
+        let too_long = DomainUserCreate::try_from(register_request("Max", &"b".repeat(300)));
+        assert!(matches!(
+            too_long,
+            Err(ServiceError::Validation(ValidationError::TooLong {
+                field: "user.last_name",
+                max: 255,
+                got: 300,
+            }))
+        ));
     }
 
     #[test]

@@ -119,6 +119,11 @@ impl UserRepository for KeycloakUserRepository {
                     entity.username.as_str()
                 )));
             }
+            StatusCode::BAD_REQUEST => {
+                return Err(RepositoryError::ConstraintViolation(
+                    "identity provider rejected the input".into(),
+                ));
+            }
             status => {
                 return Err(RepositoryError::Internal(format!(
                     "create user failed ({status})"
@@ -545,6 +550,34 @@ mod tests {
         let result = repo(&server).create(entity()).await;
 
         assert!(matches!(result, Err(RepositoryError::AlreadyExists(_))));
+    }
+
+    #[tokio::test]
+    async fn input_the_identity_provider_refuses_is_a_constraint_violation() {
+        let server = MockServer::start().await;
+        mock_token(&server).await;
+        Mock::given(method("POST"))
+            .and(path(users_path()))
+            .respond_with(
+                ResponseTemplate::new(400)
+                    .set_body_json(json!({"errorMessage": "error-invalid-length"})),
+            )
+            .mount(&server)
+            .await;
+        Mock::given(method("DELETE"))
+            .respond_with(ResponseTemplate::new(204))
+            .expect(0)
+            .mount(&server)
+            .await;
+
+        let result = repo(&server).create(entity()).await;
+
+        match result {
+            Err(RepositoryError::ConstraintViolation(message)) => {
+                assert_eq!(message, "identity provider rejected the input");
+            }
+            other => panic!("unexpected result: {other:?}"),
+        }
     }
 
     #[tokio::test]
