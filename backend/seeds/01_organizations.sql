@@ -35,3 +35,8 @@ JOIN (VALUES
     ('01980000-0000-7000-8000-0000000000a4', '01980000-0000-7000-8000-0000000000e4', '01980000-0000-7000-8000-000000000004'),
     ('01980000-0000-7000-8000-0000000000a5', '01980000-0000-7000-8000-0000000000e5', '01980000-0000-7000-8000-000000000004')
 ) AS m(template_id, copy_id, org_id) ON t.id = m.template_id::uuid;
+
+-- A new tenant has no module released; the demo tenant gets irrigation.
+INSERT INTO organization_modules (organization_id, module_key, released, enabled) VALUES
+  ('01980000-0000-7000-8000-000000000002', 'irrigation', TRUE, TRUE)
+ON CONFLICT (organization_id, module_key) DO NOTHING;
