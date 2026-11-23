@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import type { ModuleReleasesResponse } from '@green-ecolution/backend-client'
 import { moduleApi } from '@/api/backendApi'
-import { modulesQuery } from '@/api/queries'
+import { modulesQuery, moduleReleasesQuery } from '@/api/queries'
 
 export interface UpdateModuleReleaseVariables {
   orgId: string
@@ -8,7 +9,7 @@ export interface UpdateModuleReleaseVariables {
   released: boolean
 }
 
-export const useUpdateModuleRelease = () => {
+export const useUpdateModuleRelease = ({ onError }: { onError: () => void }) => {
   const queryClient = useQueryClient()
 
   return useMutation({
@@ -17,14 +18,31 @@ export const useUpdateModuleRelease = () => {
         orgId,
         moduleReleasesUpdateRequest: { modules: { [key]: released } },
       }),
-    onSettled: () => {
-      // The releases and the active modules hang on the `modules` root.
-      void queryClient.invalidateQueries({ queryKey: modulesQuery().queryKey })
-      // A release reaches the whole subtree, so every organization's switches go stale,
-      // but not the organization list or the counts.
-      void queryClient.invalidateQueries({
-        predicate: ({ queryKey }) => queryKey[0] === 'organizations' && queryKey[2] === 'modules',
-      })
+    onSuccess: (tenant) => {
+      queryClient.setQueryData<ModuleReleasesResponse>(
+        moduleReleasesQuery().queryKey,
+        (old) =>
+          old && {
+            ...old,
+            tenants: old.tenants.some((entry) => entry.organizationId === tenant.organizationId)
+              ? old.tenants.map((entry) =>
+                  entry.organizationId === tenant.organizationId ? tenant : entry,
+                )
+              : [...old.tenants, tenant],
+          },
+      )
     },
+    onError,
+    // Returned so the mutation stays pending until the fresh releases are on screen.
+    onSettled: () =>
+      Promise.all([
+        // The releases and the active modules hang on the `modules` root.
+        queryClient.invalidateQueries({ queryKey: modulesQuery().queryKey }),
+        // A release reaches the whole subtree, so every organization's switches go stale,
+        // but not the organization list or the counts.
+        queryClient.invalidateQueries({
+          predicate: ({ queryKey }) => queryKey[0] === 'organizations' && queryKey[2] === 'modules',
+        }),
+      ]),
   })
 }

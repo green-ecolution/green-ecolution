@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
-import { Info, MoveRight, X } from 'lucide-react'
+import { Info, MoveRight, TriangleAlert, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import {
   AlertDialog,
@@ -18,6 +18,7 @@ import { moduleReleasesQuery, organizationQueries } from '@/api/queries'
 import ListPageHeader from '@/components/general/ListPageHeader'
 import createToast from '@/hooks/createToast'
 import { useUpdateModuleRelease } from '@/hooks/useModuleReleases'
+import { statusOf } from '@/lib/httpError'
 import { satisfies } from '@/lib/auth/permissions'
 import { getOrganizationScope } from '@/lib/auth/scope/organizationScopeStore'
 import { useSwitchOrganizationScope } from '@/lib/auth/scope/useSwitchOrganizationScope'
@@ -34,13 +35,16 @@ interface PendingLock {
 const TenantOverview = () => {
   const { t, i18n } = useTranslation('admin')
   const { data: organizations } = useSuspenseQuery(organizationQueries.list())
-  // A failed read (no right at the root) leaves `releases` undefined: no module columns.
-  const { data: releases } = useQuery(moduleReleasesQuery())
+  // A 403 (no right at the root) quietly leaves out the module columns; other failures say so.
+  const { data: releases, error: releasesError } = useQuery(moduleReleasesQuery())
+  const releasesFailed = !!releasesError && statusOf(releasesError) !== 403
   const { data: counts } = useQuery(organizationQueries.resourceCounts())
   const switchScope = useSwitchOrganizationScope()
   const navigate = useNavigate()
   const showToast = createToast()
-  const updateRelease = useUpdateModuleRelease()
+  const updateRelease = useUpdateModuleRelease({
+    onError: () => showToast(t('tenants.release.saveError'), 'error'),
+  })
   const [pendingId, setPendingId] = useState<string | null>(null)
   const [pendingLock, setPendingLock] = useState<PendingLock | null>(null)
 
@@ -65,10 +69,7 @@ const TenantOverview = () => {
   }
 
   const changeRelease = (row: TenantRow, key: string, released: boolean) => {
-    updateRelease.mutate(
-      { orgId: row.id, key, released },
-      { onError: () => showToast(t('tenants.release.saveError'), 'error') },
-    )
+    updateRelease.mutate({ orgId: row.id, key, released })
   }
 
   const requestRelease = (row: TenantRow, cell: TenantModuleCell, released: boolean) => {
@@ -107,10 +108,17 @@ const TenantOverview = () => {
             rows={rows}
             moduleKeys={releases?.modules ?? null}
             canRelease={canRelease}
+            releasePending={updateRelease.isPending}
             pendingOpen={pendingId !== null}
             onOpen={(id) => void openTenant(id)}
             onRelease={requestRelease}
           />
+          {releasesFailed && (
+            <div role="alert" className="mt-6 flex max-w-prose gap-3 text-dark-600">
+              <TriangleAlert aria-hidden className="mt-0.5 size-5 shrink-0" />
+              <p>{t('tenants.release.loadError')}</p>
+            </div>
+          )}
           {releases && (
             <div className="mt-6 flex max-w-prose gap-3 text-dark-600">
               <Info aria-hidden className="mt-0.5 size-5 shrink-0" />

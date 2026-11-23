@@ -41,7 +41,8 @@
         "description": "{name} is using {module} right now. Once locked, the module disappears for {name} and all of its sub-organizations from the navigation and the areas of work. Existing data stays stored and is back after the module is released again.",
         "confirm": "Lock",
         "cancel": "Cancel"
-      }
+      },
+      "loadError": "The releases could not be loaded. Please reload the page."
     }
   }
 }

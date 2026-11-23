@@ -2,7 +2,7 @@ import { Suspense } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { http, HttpResponse } from 'msw'
+import { delay, http, HttpResponse } from 'msw'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { server } from '@/test/mocks/server'
 import { DEMO_USER_ID, setOrganizationScope } from '@/lib/auth/scope/organizationScopeStore'
@@ -296,7 +296,7 @@ describe('TenantOverview', () => {
       expect(showToast).not.toHaveBeenCalled()
     })
 
-    it('reports a failed change and keeps the switch', async () => {
+    it('reports a failed change, restores the switch and keeps it usable', async () => {
       respondWith(ORGANIZATIONS)
       server.use(
         http.put('*/v1/organizations/:id/module-releases', () =>
@@ -314,10 +314,93 @@ describe('TenantOverview', () => {
           'error',
         ),
       )
-      expect(screen.getByRole('switch', { name: 'Abfall für TBZ freigeben' })).toHaveAttribute(
-        'aria-checked',
-        'false',
+      const waste = screen.getByRole('switch', { name: 'Abfall für TBZ freigeben' })
+      await waitFor(() => expect(waste).toBeEnabled())
+      expect(waste).toHaveAttribute('aria-checked', 'false')
+    })
+
+    it('sends nothing for a second click while a change is pending', async () => {
+      respondWith(ORGANIZATIONS)
+      const bodies: unknown[] = []
+      let finish: () => void = () => undefined
+      const gate = new Promise<void>((resolve) => {
+        finish = resolve
+      })
+      server.use(
+        http.put('*/v1/organizations/:id/module-releases', async ({ request, params }) => {
+          bodies.push(await request.json())
+          await gate
+          return HttpResponse.json({ organization_id: params.id, modules: [] })
+        }),
       )
+      renderOverview()
+      const user = userEvent.setup()
+
+      await user.click(await screen.findByRole('switch', { name: 'Abfall für TBZ freigeben' }))
+      await waitFor(() => expect(bodies).toHaveLength(1))
+      expect(screen.getByRole('switch', { name: 'Abfall für TBZ freigeben' })).toBeDisabled()
+      expect(screen.getByRole('switch', { name: 'Bewässerung für TBZ freigeben' })).toBeDisabled()
+      await user.click(screen.getByRole('switch', { name: 'Abfall für TBZ freigeben' }))
+      await user.click(screen.getByRole('switch', { name: 'Bewässerung für TBZ freigeben' }))
+
+      expect(bodies).toHaveLength(1)
+      expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
+      finish()
+    })
+
+    it('shows the new state after the change without waiting for the refetch', async () => {
+      respondWith(ORGANIZATIONS)
+      let reads = 0
+      server.use(
+        http.get('*/v1/modules/releases', async () => {
+          reads += 1
+          if (reads > 1) await delay('infinite')
+          return HttpResponse.json({
+            modules: ['irrigation', 'waste'],
+            tenants: [{ organization_id: TBZ, modules: DEFAULT_RELEASES }],
+          })
+        }),
+        http.put('*/v1/organizations/:id/module-releases', ({ params }) =>
+          HttpResponse.json({
+            organization_id: params.id,
+            modules: [
+              { key: 'irrigation', released: true, enabled: true },
+              { key: 'waste', released: true, enabled: true },
+            ],
+          }),
+        ),
+      )
+      renderOverview()
+      const user = userEvent.setup()
+
+      await user.click(await screen.findByRole('switch', { name: 'Abfall für TBZ freigeben' }))
+
+      await waitFor(() =>
+        expect(screen.getByRole('switch', { name: 'Abfall für TBZ freigeben' })).toHaveAttribute(
+          'aria-checked',
+          'true',
+        ),
+      )
+      expect(reads).toBeGreaterThan(1)
+    })
+
+    it('says so when the releases fail to load for another reason than a missing right', async () => {
+      respondWith(ORGANIZATIONS)
+      server.use(
+        http.get('*/v1/modules/releases', () =>
+          HttpResponse.json({ error: 'boom' }, { status: 500 }),
+        ),
+      )
+      renderOverview()
+
+      expect(
+        await screen.findByText(
+          'Die Freigaben konnten nicht geladen werden. Bitte lade die Seite neu.',
+        ),
+      ).toBeInTheDocument()
+      expect(screen.queryByRole('switch')).not.toBeInTheDocument()
+      expect(screen.queryByRole('columnheader', { name: /Bewässerung/ })).not.toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'TBZ als Mandant öffnen' })).toBeInTheDocument()
     })
   })
 })

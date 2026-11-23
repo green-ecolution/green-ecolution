@@ -41,7 +41,8 @@
         "description": "{name} nutzt {module} gerade. Nach dem Sperren verschwindet das Modul bei {name} und allen Unterorganisationen aus der Navigation und aus den Aufgabenbereichen. Die vorhandenen Daten bleiben gespeichert und sind nach einer erneuten Freigabe wieder da.",
         "confirm": "Sperren",
         "cancel": "Abbrechen"
-      }
+      },
+      "loadError": "Die Freigaben konnten nicht geladen werden. Bitte lade die Seite neu."
     }
   }
 }

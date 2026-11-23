@@ -17,6 +17,7 @@ interface TenantTableProps {
   rows: TenantRow[]
   moduleKeys: string[] | null
   canRelease: boolean
+  releasePending: boolean
   pendingOpen: boolean
   onOpen: (id: string) => void
   onRelease: (row: TenantRow, cell: TenantModuleCell, released: boolean) => void
@@ -26,6 +27,7 @@ const TenantTable = ({
   rows,
   moduleKeys,
   canRelease,
+  releasePending,
   pendingOpen,
   onOpen,
   onRelease,
@@ -106,7 +108,7 @@ const TenantTable = ({
                         moduleLabel={moduleLabel(key) ?? key}
                         tenantName={row.name}
                         cell={cell}
-                        disabled={!canRelease}
+                        disabled={!canRelease || releasePending}
                         onChange={(released) => onRelease(row, cell, released)}
                       />
                     )}
