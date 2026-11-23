@@ -452,6 +452,10 @@ export const routingStartPointsQuery = () =>
     staleTime: Infinity,
   })
 
+/** Every organization's switches hang on `['organizations', id, 'modules']`. */
+export const isOrganizationModulesQuery = ({ queryKey }: { queryKey: readonly unknown[] }) =>
+  queryKey[0] === 'organizations' && queryKey[2] === 'modules'
+
 export const modulesQuery = () =>
   queryOptions<ModuleListResponse>({
     queryKey: ['modules'],

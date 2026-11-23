@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { act, waitFor } from '@testing-library/react'
+import { isOrganizationModulesQuery } from '@/api/queries'
 import { renderHookWithClient } from '@/test/utils'
 import {
   useSettingsMutations,
@@ -67,7 +68,19 @@ describe('useUpdateOrganizationModules', () => {
     })
     // Navigation and the module route guards read the `modules` root.
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['modules'] })
-    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['organizations', 'org-1', 'modules'] })
+    expect(invalidate).toHaveBeenCalledWith({ predicate: isOrganizationModulesQuery })
+  })
+
+  it('marks the cached switches of a sub-organization stale after the tenant switch', async () => {
+    updateOrganizationModules.mockResolvedValue({ modules: [] })
+    const { result, queryClient } = renderHookWithClient(() => useUpdateOrganizationModules())
+    queryClient.setQueryData(['organizations', 'sub-1', 'modules'], { modules: [] })
+
+    await act(() => result.current.mutateAsync({ orgId: 'tenant', modules: { irrigation: false } }))
+
+    expect(queryClient.getQueryState(['organizations', 'sub-1', 'modules'])?.isInvalidated).toBe(
+      true,
+    )
   })
 
   it('reloads after a failure too, since another tab may have moved the switches', async () => {
@@ -81,7 +94,7 @@ describe('useUpdateOrganizationModules', () => {
       ).rejects.toBeDefined()
     })
 
-    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['organizations', 'org-1', 'modules'] })
+    expect(invalidate).toHaveBeenCalledWith({ predicate: isOrganizationModulesQuery })
   })
 })
 

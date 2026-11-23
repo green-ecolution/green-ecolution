@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import type { OrganizationSettingsUpdateRequest } from '@green-ecolution/backend-client'
 import { moduleApi, settingsApi } from '@/api/backendApi'
-import { modulesQuery, organizationModulesQuery } from '@/api/queries'
+import { isOrganizationModulesQuery, modulesQuery } from '@/api/queries'
 import createToast from '@/hooks/createToast'
 
 export interface UpdateSettingsVariables {
@@ -45,8 +45,9 @@ export const useUpdateOrganizationModules = () => {
         orgId,
         organizationModulesUpdateRequest: { modules },
       }),
-    onSettled: (_data, _error, { orgId }) => {
-      void queryClient.invalidateQueries({ queryKey: organizationModulesQuery(orgId).queryKey })
+    onSettled: () => {
+      // A tenant's switch changes the answer for every organization below it.
+      void queryClient.invalidateQueries({ predicate: isOrganizationModulesQuery })
       // Navigation, route guards and module sections all follow the `modules` root.
       void queryClient.invalidateQueries({ queryKey: modulesQuery().queryKey })
     },
