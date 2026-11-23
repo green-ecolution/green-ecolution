@@ -20,12 +20,12 @@ import { mapValues } from '../runtime';
  */
 export interface OrganizationModulesUpdateRequest {
     /**
-     * `true`/`false` sets the organization's own switch, `null` returns the
-     * module to inheritance, an absent key stays as it is.
-     * @type {{ [key: string]: boolean | null; }}
+     * `true` switches a released module on, `false` off; an absent key
+     * stays as it is.
+     * @type {{ [key: string]: boolean; }}
      * @memberof OrganizationModulesUpdateRequest
      */
-    modules?: { [key: string]: boolean | null; };
+    modules?: { [key: string]: boolean; };
 }
 
 /**

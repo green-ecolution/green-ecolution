@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE organization_modules SET released = FALSE\n                       WHERE organization_id = $1 AND module_key = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "baaf1e8aee4f37a79b13917d49f32824f29a4a7e1dcc7ca71441af7754f563d6"
+}

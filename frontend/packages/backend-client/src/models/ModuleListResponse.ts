@@ -28,7 +28,7 @@ import {
  */
 export interface ModuleListResponse {
     /**
-     * Every module this instance ships, active or not.
+     * Modules released in at least one organization the caller works in.
      * @type {Array<string>}
      * @memberof ModuleListResponse
      */
