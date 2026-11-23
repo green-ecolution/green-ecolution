@@ -480,6 +480,9 @@ mod tests {
         ) -> Result<UserIdentity, RepositoryError> {
             unimplemented!("identity creation is not exercised by organization tests")
         }
+        async fn delete(&self, _id: Uuid) -> Result<(), RepositoryError> {
+            unimplemented!("identity removal is not exercised by organization tests")
+        }
         async fn all(
             &self,
             _pagination: Pagination,

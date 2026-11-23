@@ -2,6 +2,7 @@ use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
 use chrono::Utc;
+use secrecy::SecretString;
 use uuid::Uuid;
 
 use domain::{
@@ -21,6 +22,12 @@ use domain::{
 };
 
 use super::ServiceError;
+
+/// Makes the password a new account starts with. A port so the service
+/// stays free of a random source and tests can fix the value.
+pub trait InitialPasswordFactory: Send + Sync {
+    fn generate(&self) -> SecretString;
+}
 
 /// List filters. Organization membership and role assignments are resolved
 /// against Postgres; the free-text query is resolved by the IdP, which owns
@@ -636,6 +643,7 @@ mod tests {
         identities: Vec<UserIdentity>,
         seen: Mutex<Vec<Pagination>>,
         total_override: Option<u64>,
+        deleted: Mutex<Vec<Uuid>>,
     }
 
     impl StubIdentityRepo {
@@ -644,6 +652,7 @@ mod tests {
                 identities,
                 seen: Mutex::new(Vec::new()),
                 total_override: None,
+                deleted: Mutex::new(Vec::new()),
             }
         }
     }
@@ -655,6 +664,10 @@ mod tests {
             entity: UserIdentityCreate,
         ) -> Result<UserIdentity, RepositoryError> {
             Ok(identity(Uuid::now_v7(), entity.username.as_str()))
+        }
+        async fn delete(&self, id: Uuid) -> Result<(), RepositoryError> {
+            self.deleted.lock().unwrap().push(id);
+            Ok(())
         }
         async fn all(&self, _p: Pagination) -> Result<Page<UserIdentity>, RepositoryError> {
             Ok(Page {
@@ -699,6 +712,7 @@ mod tests {
     struct InMemoryProfiles {
         rows: Mutex<HashMap<Uuid, UserProfile>>,
         members: Mutex<HashMap<Id<Organization>, Vec<Uuid>>>,
+        deleted: Mutex<Vec<Uuid>>,
     }
 
     impl InMemoryProfiles {
@@ -757,6 +771,10 @@ mod tests {
             _id: Uuid,
             _org: Id<Organization>,
         ) -> Result<(), RepositoryError> {
+            Ok(())
+        }
+        async fn delete(&self, id: Uuid) -> Result<(), RepositoryError> {
+            self.deleted.lock().unwrap().push(id);
             Ok(())
         }
     }

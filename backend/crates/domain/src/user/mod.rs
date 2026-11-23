@@ -122,6 +122,9 @@ pub struct UserIdentity {
 #[async_trait::async_trait]
 pub trait UserRepository: Send + Sync {
     async fn create(&self, entity: UserIdentityCreate) -> Result<UserIdentity, RepositoryError>;
+    /// Removes an identity. Only used to undo a registration that failed
+    /// after the identity was created; an unknown id is not an error.
+    async fn delete(&self, id: Uuid) -> Result<(), RepositoryError>;
     async fn all(&self, pagination: Pagination) -> Result<Page<UserIdentity>, RepositoryError>;
     /// Free-text lookup over username, first name, last name and email.
     /// Separate from `all` because the IdP resolves the match, not us.
@@ -158,4 +161,8 @@ pub trait UserProfileWriter: Send + Sync {
         id: Uuid,
         org: Id<Organization>,
     ) -> Result<(), RepositoryError>;
+    /// Removes the profile row with everything hanging on it (role
+    /// assignments cascade). Only used to undo a failed registration; a
+    /// missing row is not an error.
+    async fn delete(&self, id: Uuid) -> Result<(), RepositoryError>;
 }
