@@ -11,17 +11,14 @@ import { useModuleActivationDraft } from './useModuleActivationDraft'
 const getOrganizationModules = vi.spyOn(moduleApi, 'getOrganizationModules')
 const updateOrganizationModules = vi.spyOn(moduleApi, 'updateOrganizationModules')
 
-const modules = (rows: Partial<OrganizationModuleResponse>[]): OrganizationModulesResponse =>
-  ({
-    modules: rows.map((row) => ({
-      key: 'irrigation',
-      enabled: true,
-      inheritedEnabled: true,
-      origin: 'default',
-      fixedByAncestor: false,
-      ...row,
-    })),
-  }) as unknown as OrganizationModulesResponse
+const modules = (rows: Partial<OrganizationModuleResponse>[]): OrganizationModulesResponse => ({
+  modules: rows.map((row) => ({
+    key: 'irrigation',
+    enabled: true,
+    switchable: true,
+    ...row,
+  })),
+})
 
 const serve = async (data: OrganizationModulesResponse) => {
   getOrganizationModules.mockResolvedValue(data)
@@ -31,7 +28,7 @@ const serve = async (data: OrganizationModulesResponse) => {
   return hook
 }
 
-const sent = (body: Record<string, boolean | null>) => ({
+const sent = (body: Record<string, boolean>) => ({
   orgId: 'nord',
   organizationModulesUpdateRequest: { modules: body },
 })
@@ -39,20 +36,18 @@ const sent = (body: Record<string, boolean | null>) => ({
 describe('useModuleActivationDraft', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  it('lists every module with its state and hides one that is fixed off', async () => {
+  it('lists every released module with its state and whether it is switchable', async () => {
     const { result } = await serve(
-      modules([
-        { key: 'a' },
-        { key: 'b', enabled: false, fixedByAncestor: true, setBy: { id: 'root' } },
-      ]),
+      modules([{ key: 'a' }, { key: 'b', enabled: false, switchable: false }]),
     )
-    expect(result.current.rows).toEqual([{ key: 'a', enabled: true, fixed: false, fixedBy: null }])
+    expect(result.current.rows).toEqual([
+      { key: 'a', enabled: true, switchable: true },
+      { key: 'b', enabled: false, switchable: false },
+    ])
   })
 
   it('drafts a flip and reports the direction', async () => {
-    const { result } = await serve(
-      modules([{ key: 'a' }, { key: 'b', enabled: false, inheritedEnabled: false }]),
-    )
+    const { result } = await serve(modules([{ key: 'a' }, { key: 'b', enabled: false }]))
     act(() => result.current.setEnabled('a', false))
     act(() => result.current.setEnabled('b', true))
     expect(result.current.isEnabled('a')).toBe(false)
@@ -67,10 +62,8 @@ describe('useModuleActivationDraft', () => {
     expect(result.current.dirty).toBe(false)
   })
 
-  it('writes switching on and switching off in separate requests', async () => {
-    const { result } = await serve(
-      modules([{ key: 'a' }, { key: 'b', enabled: false, inheritedEnabled: false }]),
-    )
+  it('sends plain booleans, switching on and off in their own calls', async () => {
+    const { result } = await serve(modules([{ key: 'a' }, { key: 'b', enabled: false }]))
     act(() => result.current.setEnabled('a', false))
     act(() => result.current.setEnabled('b', true))
     await act(() => result.current.saveEnabling())
@@ -80,22 +73,10 @@ describe('useModuleActivationDraft', () => {
     expect(updateOrganizationModules).toHaveBeenCalledTimes(2)
   })
 
-  it('gives up the own switch when the drafted state is what it would inherit', async () => {
-    const { result } = await serve(
-      modules([{ key: 'a', enabled: false, inheritedEnabled: true, ownValue: false }]),
-    )
-    act(() => result.current.setEnabled('a', true))
-    await act(() => result.current.saveEnabling())
-    expect(updateOrganizationModules).toHaveBeenLastCalledWith(sent({ a: null }))
-  })
-
-  it('leaves a fixed switch alone', async () => {
-    const { result } = await serve(
-      modules([{ key: 'a', fixedByAncestor: true, setBy: { id: 'root' } }]),
-    )
+  it('ignores a flip on a module the organization does not switch', async () => {
+    const { result } = await serve(modules([{ key: 'a', switchable: false }]))
     act(() => result.current.setEnabled('a', false))
     expect(result.current.dirty).toBe(false)
-    expect(result.current.rows[0]).toMatchObject({ fixed: true, fixedBy: 'root' })
   })
 
   it('drops the flips on reset and sends nothing when nothing changed', async () => {

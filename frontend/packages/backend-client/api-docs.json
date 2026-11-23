@@ -269,6 +269,16 @@
               }
             }
           },
+          "403": {
+            "description": "Missing tree_cluster:create, or the irrigation module is off in the organization (code `module.disabled`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
           "422": {
             "description": "A selected tree belongs to a different organization (code `organization_mismatch.trees_vs_cluster`)",
             "content": {
@@ -482,7 +492,7 @@
             }
           },
           "403": {
-            "description": "Missing tree_cluster:update in the owning organization",
+            "description": "Missing tree_cluster:update in the owning organization, or the irrigation module is off there (code `module.disabled`)",
             "content": {
               "application/json": {
                 "schema": {
@@ -547,7 +557,7 @@
             "description": "Cluster deleted"
           },
           "403": {
-            "description": "Missing tree_cluster:delete in the owning organization",
+            "description": "Missing tree_cluster:delete in the owning organization, or the irrigation module is off there (code `module.disabled`)",
             "content": {
               "application/json": {
                 "schema": {
@@ -926,7 +936,7 @@
             "description": "Cluster transferred"
           },
           "403": {
-            "description": "Missing tree_cluster:update in source or target organization",
+            "description": "Missing tree_cluster:update in source or target organization, or the irrigation module is off there (code `module.disabled`)",
             "content": {
               "application/json": {
                 "schema": {
@@ -1335,8 +1345,8 @@
         "tags": [
           "Modules"
         ],
-        "summary": "List modules and where they are active",
-        "description": "Every module the instance ships plus, for each organization the caller works in, the modules active there.",
+        "summary": "List released modules and where they are active",
+        "description": "Every module released in an organization the caller works in plus, for each organization the caller works in, the modules active there.",
         "operationId": "listModules",
         "responses": {
           "200": {
@@ -1351,6 +1361,58 @@
           },
           "401": {
             "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/modules/releases": {
+      "get": {
+        "tags": [
+          "Modules"
+        ],
+        "summary": "List module releases per tenant",
+        "description": "Every tenant with the release state and the own switch of each module this instance ships. Requires setting:read at the root organization.",
+        "operationId": "listModuleReleases",
+        "responses": {
+          "200": {
+            "description": "Releases per tenant",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModuleReleasesResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
             "content": {
               "application/json": {
                 "schema": {
@@ -1852,13 +1914,107 @@
         }
       }
     },
+    "/v1/organizations/{org_id}/module-releases": {
+      "put": {
+        "tags": [
+          "Modules"
+        ],
+        "summary": "Release or lock modules for a tenant",
+        "description": "Releases or locks modules for a tenant. The first release switches the module on; locking keeps the tenant's switch. Requires setting:update at the root organization.",
+        "operationId": "updateOrganizationModuleReleases",
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "description": "Tenant id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModuleReleasesUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenantModuleReleasesResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unknown module (code `module.unknown`) or a target that is no tenant (code `module.not_a_tenant`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/organizations/{org_id}/modules": {
       "get": {
         "tags": [
           "Modules"
         ],
         "summary": "Read an organization's module switches",
-        "description": "Each module carries the state in force, where it came from and this organization's own switch. Requires setting:read.",
+        "description": "Lists the modules released for the organization's tenant with their switch. A locked module is absent. Requires setting:read.",
         "operationId": "getOrganizationModules",
         "parameters": [
           {
@@ -1930,7 +2086,7 @@
           "Modules"
         ],
         "summary": "Switch modules for an organization",
-        "description": "An omitted module stays as it is, `null` returns it to inheritance. A switch is stamped with the topmost organization the caller may update settings for; only callers acting for that organization or above may change it again. Requires setting:update.",
+        "description": "Switches released modules on or off. Only a tenant and the root organization hold switches; a sub-organization answers 422 `module.not_switchable`. A locked module answers like an unknown one. Requires setting:update.",
         "operationId": "updateOrganizationModules",
         "parameters": [
           {
@@ -1995,18 +2151,8 @@
               }
             }
           },
-          "409": {
-            "description": "A parent set this switch for the organization and the caller does not act for that parent (code `settings.set_by_ancestor`)",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          },
           "422": {
-            "description": "Unknown module (code `module.unknown`)",
+            "description": "Unknown or locked module (code `module.unknown`) or an organization that holds no switches (code `module.not_switchable`)",
             "content": {
               "application/json": {
                 "schema": {
@@ -3016,6 +3162,16 @@
               }
             }
           },
+          "403": {
+            "description": "The plan's module is switched off in its organization (code `module.disabled`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Plan not found",
             "content": {
@@ -3244,6 +3400,16 @@
               }
             }
           },
+          "403": {
+            "description": "The plan's module is switched off in its organization (code `module.disabled`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Plan not found or not visible",
             "content": {
@@ -3308,6 +3474,16 @@
           },
           "400": {
             "description": "Empty or overlong comment text",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The plan's module is switched off in its organization (code `module.disabled`)",
             "content": {
               "application/json": {
                 "schema": {
@@ -3401,7 +3577,7 @@
             }
           },
           "403": {
-            "description": "Not the author",
+            "description": "Not the author, or the plan's module is switched off in its organization (code `module.disabled`)",
             "content": {
               "application/json": {
                 "schema": {
@@ -3466,7 +3642,7 @@
             "description": "Comment deleted"
           },
           "403": {
-            "description": "Not the author",
+            "description": "Not the author, or the plan's module is switched off in its organization (code `module.disabled`)",
             "content": {
               "application/json": {
                 "schema": {
@@ -3875,6 +4051,16 @@
               }
             }
           },
+          "403": {
+            "description": "The plan's module is switched off in its organization (code `module.disabled`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Plan not found or has no route",
             "content": {
@@ -3933,6 +4119,16 @@
             "description": "GPX file",
             "content": {
               "application/gpx+xml": {}
+            }
+          },
+          "403": {
+            "description": "The plan's module is switched off in its organization (code `module.disabled`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
             }
           },
           "404": {
@@ -7777,6 +7973,16 @@
               }
             }
           },
+          "403": {
+            "description": "Missing tree:create, or the irrigation module is off in the organization (code `module.disabled`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
           "409": {
             "description": "The given sensor is already attached to another target (code `sensor.already_attached`)",
             "content": {
@@ -8117,7 +8323,7 @@
             }
           },
           "403": {
-            "description": "Missing tree:update in the owning organization",
+            "description": "Missing tree:update in the owning organization, or the irrigation module is off there (code `module.disabled`)",
             "content": {
               "application/json": {
                 "schema": {
@@ -8192,7 +8398,7 @@
             "description": "Tree deleted"
           },
           "403": {
-            "description": "Missing tree:delete in the owning organization",
+            "description": "Missing tree:delete in the owning organization, or the irrigation module is off there (code `module.disabled`)",
             "content": {
               "application/json": {
                 "schema": {
@@ -8259,7 +8465,7 @@
             "description": "Tree transferred"
           },
           "403": {
-            "description": "Missing tree:update in source or target organization",
+            "description": "Missing tree:update in source or target organization, or the irrigation module is off there (code `module.disabled`)",
             "content": {
               "application/json": {
                 "schema": {
@@ -12526,7 +12732,7 @@
             "items": {
               "type": "string"
             },
-            "description": "Every module this instance ships, active or not."
+            "description": "Modules released in at least one organization the caller works in."
           },
           "organizations": {
             "type": "array",
@@ -12534,6 +12740,63 @@
               "$ref": "#/components/schemas/OrganizationModulesEntry"
             },
             "description": "One entry per organization the caller works in."
+          }
+        }
+      },
+      "ModuleReleaseResponse": {
+        "type": "object",
+        "required": [
+          "key",
+          "released",
+          "enabled"
+        ],
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "description": "The tenant's own switch; kept while the module is locked."
+          },
+          "key": {
+            "type": "string"
+          },
+          "released": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ModuleReleasesResponse": {
+        "type": "object",
+        "required": [
+          "modules",
+          "tenants"
+        ],
+        "properties": {
+          "modules": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Every module this instance ships."
+          },
+          "tenants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TenantModuleReleasesResponse"
+            }
+          }
+        }
+      },
+      "ModuleReleasesUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "modules": {
+            "type": "object",
+            "description": "`true` releases a module for the tenant, `false` locks it; an absent\nkey stays as it is.",
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "propertyNames": {
+              "type": "string"
+            }
           }
         }
       },
@@ -12694,56 +12957,18 @@
         "required": [
           "key",
           "enabled",
-          "origin",
-          "inherited_enabled",
-          "fixed_by_ancestor"
+          "switchable"
         ],
         "properties": {
           "enabled": {
             "type": "boolean"
           },
-          "fixed_by_ancestor": {
-            "type": "boolean",
-            "description": "The own switch was set from a level the caller does not act for, so\nthe caller can neither change nor reset it."
-          },
-          "inherited_enabled": {
-            "type": "boolean",
-            "description": "The state without this organization's own switch, i.e. after returning it to inheritance."
-          },
           "key": {
             "type": "string"
           },
-          "origin": {
-            "$ref": "#/components/schemas/SettingOriginDto"
-          },
-          "own_value": {
-            "type": [
-              "boolean",
-              "null"
-            ],
-            "description": "This organization's own switch, reported even while a lock above makes it dormant."
-          },
-          "set_by": {
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/OrganizationRef",
-                "description": "The organization the own switch was set from; this one or an ancestor."
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "source": {
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/OrganizationRef",
-                "description": "Set only where `origin` is `inherited`."
-              },
-              {
-                "type": "null"
-              }
-            ]
+          "switchable": {
+            "type": "boolean",
+            "description": "The organization switches this module itself. Sub-organizations\nfollow their tenant and report `false`."
           }
         }
       },
@@ -12785,28 +13010,13 @@
         "properties": {
           "modules": {
             "type": "object",
-            "description": "`true`/`false` sets the organization's own switch, `null` returns the\nmodule to inheritance, an absent key stays as it is.",
+            "description": "`true` switches a released module on, `false` off; an absent key\nstays as it is.",
             "additionalProperties": {
-              "type": [
-                "boolean",
-                "null"
-              ]
+              "type": "boolean"
             },
             "propertyNames": {
               "type": "string"
             }
-          }
-        }
-      },
-      "OrganizationRef": {
-        "type": "object",
-        "required": [
-          "id"
-        ],
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
           }
         }
       },
@@ -15081,14 +15291,6 @@
           }
         }
       },
-      "SettingOriginDto": {
-        "type": "string",
-        "enum": [
-          "default",
-          "inherited",
-          "own"
-        ]
-      },
       "SignalResponse": {
         "type": "object",
         "description": "LoRaWAN radio quality of the strongest receiving gateway for a reading.",
@@ -15518,6 +15720,25 @@
           "module": {
             "type": "string",
             "example": "irrigation"
+          }
+        }
+      },
+      "TenantModuleReleasesResponse": {
+        "type": "object",
+        "required": [
+          "organization_id",
+          "modules"
+        ],
+        "properties": {
+          "modules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ModuleReleaseResponse"
+            }
+          },
+          "organization_id": {
+            "type": "string",
+            "format": "uuid"
           }
         }
       },

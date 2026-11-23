@@ -11,6 +11,7 @@ use super::{
         TreeMarkerListResponse, TreeMarkerQueryParams, TreeMarkerResponse, TreeResponse,
         TreeUpdateRequest, TreeWithDistanceResponse,
     },
+    ensure_readable,
     state::IrrigationHttpState,
 };
 use crate::{error::IrrigationError, targets::tree_target};
@@ -106,8 +107,8 @@ pub async fn list_trees(
         .collect::<Vec<_>>();
 
     let visible = state
-        .authorization
-        .visible_orgs_for(
+        .access
+        .visible_orgs(
             user.caller(),
             Permission::new(crate::resources::TREE, Action::Read),
         )
@@ -168,12 +169,13 @@ pub async fn get_tree(
     Path(id): Path<uuid::Uuid>,
 ) -> Result<Json<TreeResponse>, ServiceError> {
     let tree = state.trees.view_by_id(Id::new(id)).await?;
-    let ctx = state.authorization.context_for(user.caller()).await?;
-    scope::ensure_visible(
-        &ctx,
+    ensure_readable(
+        &state,
+        user.caller(),
         Permission::new(crate::resources::TREE, Action::Read),
         tree.organization_id,
-    )?;
+    )
+    .await?;
     let sensor = match &tree.sensor_id {
         Some(sid) => {
             let sensor_id = SensorId::new(sid)?;
@@ -192,6 +194,7 @@ pub async fn get_tree(
     responses(
         (status = 201, description = "Tree created", body = TreeResponse),
         (status = 400, description = "Invalid input", body = ErrorBody),
+        (status = 403, description = "Missing tree:create, or the irrigation module is off in the organization (code `module.disabled`)", body = ErrorBody),
         (status = 409, description = "The given sensor is already attached to another target (code `sensor.already_attached`)", body = ErrorBody),
         (status = 422, description = "The given cluster or sensor belongs to a different organization, or a sensor is given for a tree not planted yet (codes `organization_mismatch.cluster_vs_tree`, `organization_mismatch.sensor_vs_target`, `tree.not_yet_planted`)", body = ErrorBody),
         (status = 500, description = "Internal server error", body = ErrorBody),
@@ -211,8 +214,8 @@ pub async fn create_tree(
     )
     .await?;
     state
-        .authorization
-        .require(
+        .access
+        .require_write(
             user.caller(),
             Permission::new(crate::resources::TREE, Action::Create),
             org,
@@ -234,7 +237,7 @@ pub async fn create_tree(
     }
     let (draft, sensor_id) = entity.into_draft(org)?;
     if let Some(sensor) = &sensor {
-        ensure_sensor_fits(&state, sensor, None, org, draft.planting_year).await?;
+        ensure_sensor_fits(sensor, None, org, draft.planting_year).await?;
     }
     let tree = state.trees.create(draft).await?;
     if let Some(sensor_id) = sensor_id {
@@ -265,7 +268,7 @@ pub async fn create_tree(
     request_body = TreeUpdateRequest,
     responses(
         (status = 200, description = "Tree updated", body = TreeResponse),
-        (status = 403, description = "Missing tree:update in the owning organization", body = ErrorBody),
+        (status = 403, description = "Missing tree:update in the owning organization, or the irrigation module is off there (code `module.disabled`)", body = ErrorBody),
         (status = 409, description = "The given sensor is already attached to another target (code `sensor.already_attached`)", body = ErrorBody),
         (status = 404, description = "Tree not found", body = ErrorBody),
         (status = 422, description = "The given cluster or sensor belongs to a different organization, or a sensor is given for a tree not planted yet (codes `organization_mismatch.cluster_vs_tree`, `organization_mismatch.sensor_vs_target`, `tree.not_yet_planted`)", body = ErrorBody),
@@ -287,8 +290,8 @@ pub async fn update_tree(
         current.organization_id,
     )?;
     state
-        .authorization
-        .require(
+        .access
+        .require_write(
             user.caller(),
             Permission::new(crate::resources::TREE, Action::Update),
             Id::new(current.organization_id),
@@ -328,7 +331,7 @@ pub async fn update_tree(
     let (draft, sensor_id) = create.into_draft(org)?;
     if let Some(sensor_id) = &sensor_id {
         let sensor = state.sensors.view_by_id(sensor_id).await?;
-        ensure_sensor_fits(&state, &sensor, Some(Id::new(id)), org, draft.planting_year).await?;
+        ensure_sensor_fits(&sensor, Some(Id::new(id)), org, draft.planting_year).await?;
     }
     let tree = state.trees.replace(Id::new(id), draft).await?;
     if sensor_id.as_ref().map(SensorId::as_str) != current.sensor_id.as_deref() {
@@ -352,13 +355,11 @@ pub async fn update_tree(
 /// Checked before the tree is written, so a refused sensor leaves the tree
 /// untouched; attaching afterwards repeats these rules.
 async fn ensure_sensor_fits(
-    state: &IrrigationHttpState,
     sensor: &SensorView,
     tree: Option<Id<Tree>>,
     org: Id<Organization>,
     planting_year: PlantingYear,
 ) -> Result<(), ServiceError> {
-    state.access.ensure_active(org).await?;
     if planting_year.is_future(Utc::now()) {
         return Err(IrrigationError::TreeNotYetPlanted.into());
     }
@@ -379,7 +380,7 @@ async fn ensure_sensor_fits(
     params(("tree_id" = uuid::Uuid, Path, description = "Tree ID")),
     responses(
         (status = 204, description = "Tree deleted"),
-        (status = 403, description = "Missing tree:delete in the owning organization", body = ErrorBody),
+        (status = 403, description = "Missing tree:delete in the owning organization, or the irrigation module is off there (code `module.disabled`)", body = ErrorBody),
         (status = 404, description = "Tree not found", body = ErrorBody),
         (status = 500, description = "Internal server error", body = ErrorBody),
     )
@@ -398,8 +399,8 @@ pub async fn delete_tree(
         current.organization_id,
     )?;
     state
-        .authorization
-        .require(
+        .access
+        .require_write(
             user.caller(),
             Permission::new(crate::resources::TREE, Action::Delete),
             Id::new(current.organization_id),
@@ -424,8 +425,8 @@ pub async fn list_planting_years(
     user: AuthUserExtractor,
 ) -> Result<Json<Vec<i32>>, ServiceError> {
     let visible = state
-        .authorization
-        .visible_orgs_for(
+        .access
+        .visible_orgs(
             user.caller(),
             Permission::new(crate::resources::TREE, Action::Read),
         )
@@ -461,8 +462,8 @@ pub async fn get_nearest_trees(
         .min(limits.max_limit);
 
     let visible = state
-        .authorization
-        .visible_orgs_for(
+        .access
+        .visible_orgs(
             user.caller(),
             Permission::new(crate::resources::TREE, Action::Read),
         )
@@ -537,8 +538,8 @@ pub async fn list_tree_markers(
         .collect();
 
     let visible = state
-        .authorization
-        .visible_orgs_for(
+        .access
+        .visible_orgs(
             user.caller(),
             Permission::new(crate::resources::TREE, Action::Read),
         )
@@ -567,7 +568,7 @@ pub async fn list_tree_markers(
     request_body = TransferRequest,
     responses(
         (status = 204, description = "Tree transferred"),
-        (status = 403, description = "Missing tree:update in source or target organization", body = ErrorBody),
+        (status = 403, description = "Missing tree:update in source or target organization, or the irrigation module is off there (code `module.disabled`)", body = ErrorBody),
         (status = 404, description = "Tree or organization not found", body = ErrorBody),
         (status = 409, description = "Tree is part of a cluster (code `conflict.tree_in_cluster`)", body = ErrorBody),
     )
@@ -588,12 +589,12 @@ pub async fn transfer_tree(
     )?;
     let perm = Permission::new(crate::resources::TREE, Action::Update);
     state
-        .authorization
-        .require(user.caller(), perm, Id::new(current.organization_id))
+        .access
+        .require_write(user.caller(), perm, Id::new(current.organization_id))
         .await?;
     state
-        .authorization
-        .require(user.caller(), perm, Id::new(req.organization_id))
+        .access
+        .require_write(user.caller(), perm, Id::new(req.organization_id))
         .await?;
     state
         .trees

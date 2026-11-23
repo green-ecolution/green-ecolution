@@ -1,28 +1,12 @@
 use std::collections::BTreeMap;
 
-use domain::{
-    module::{ActivationResolution, ModuleKey, OwnSwitch},
-    settings::SettingOrigin,
-};
+use domain::module::{ModuleKey, ModuleState};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 #[derive(Debug, Serialize, utoipa::ToSchema)]
-#[serde(rename_all = "snake_case")]
-pub enum SettingOriginDto {
-    Default,
-    Inherited,
-    Own,
-}
-
-#[derive(Debug, Serialize, utoipa::ToSchema)]
-pub struct OrganizationRef {
-    pub id: Uuid,
-}
-
-#[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct ModuleListResponse {
-    /// Every module this instance ships, active or not.
+    /// Modules released in at least one organization the caller works in.
     pub modules: Vec<String>,
     /// One entry per organization the caller works in.
     pub organizations: Vec<OrganizationModulesEntry>,
@@ -38,18 +22,9 @@ pub struct OrganizationModulesEntry {
 pub struct OrganizationModuleResponse {
     pub key: String,
     pub enabled: bool,
-    pub origin: SettingOriginDto,
-    /// Set only where `origin` is `inherited`.
-    pub source: Option<OrganizationRef>,
-    /// This organization's own switch, reported even while a lock above makes it dormant.
-    pub own_value: Option<bool>,
-    /// The state without this organization's own switch, i.e. after returning it to inheritance.
-    pub inherited_enabled: bool,
-    /// The organization the own switch was set from; this one or an ancestor.
-    pub set_by: Option<OrganizationRef>,
-    /// The own switch was set from a level the caller does not act for, so
-    /// the caller can neither change nor reset it.
-    pub fixed_by_ancestor: bool,
+    /// The organization switches this module itself. Sub-organizations
+    /// follow their tenant and report `false`.
+    pub switchable: bool,
 }
 
 #[derive(Debug, Serialize, utoipa::ToSchema)]
@@ -59,41 +34,67 @@ pub struct OrganizationModulesResponse {
 
 #[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct OrganizationModulesUpdateRequest {
-    /// `true`/`false` sets the organization's own switch, `null` returns the
-    /// module to inheritance, an absent key stays as it is.
+    /// `true` switches a released module on, `false` off; an absent key
+    /// stays as it is.
     #[serde(default)]
-    pub modules: BTreeMap<String, Option<bool>>,
+    pub modules: BTreeMap<String, bool>,
+}
+
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+pub struct ModuleReleaseResponse {
+    pub key: String,
+    pub released: bool,
+    /// The tenant's own switch; kept while the module is locked.
+    pub enabled: bool,
+}
+
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+pub struct TenantModuleReleasesResponse {
+    pub organization_id: Uuid,
+    pub modules: Vec<ModuleReleaseResponse>,
+}
+
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+pub struct ModuleReleasesResponse {
+    /// Every module this instance ships.
+    pub modules: Vec<String>,
+    pub tenants: Vec<TenantModuleReleasesResponse>,
+}
+
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
+pub struct ModuleReleasesUpdateRequest {
+    /// `true` releases a module for the tenant, `false` locks it; an absent
+    /// key stays as it is.
+    #[serde(default)]
+    pub modules: BTreeMap<String, bool>,
+}
+
+impl TenantModuleReleasesResponse {
+    pub fn build(tenant: Uuid, states: &BTreeMap<ModuleKey, ModuleState>) -> Self {
+        Self {
+            organization_id: tenant,
+            modules: states
+                .iter()
+                .map(|(key, state)| ModuleReleaseResponse {
+                    key: key.to_string(),
+                    released: state.released,
+                    enabled: state.enabled,
+                })
+                .collect(),
+        }
+    }
 }
 
 impl OrganizationModulesResponse {
-    pub fn build(
-        resolution: &BTreeMap<ModuleKey, ActivationResolution>,
-        own: &BTreeMap<ModuleKey, OwnSwitch>,
-        may_change: impl Fn(&OwnSwitch) -> bool,
-    ) -> Self {
-        let modules = resolution
+    /// Lists released modules only; a locked one is absent.
+    pub fn build(states: &BTreeMap<ModuleKey, ModuleState>, switchable: bool) -> Self {
+        let modules = states
             .iter()
-            .map(|(key, r)| {
-                let own = own.get(key);
-                OrganizationModuleResponse {
-                    key: key.to_string(),
-                    enabled: r.enabled,
-                    origin: match r.origin {
-                        SettingOrigin::Default => SettingOriginDto::Default,
-                        SettingOrigin::Inherited(_) => SettingOriginDto::Inherited,
-                        SettingOrigin::Own => SettingOriginDto::Own,
-                    },
-                    source: match r.origin {
-                        SettingOrigin::Inherited(id) => Some(OrganizationRef { id: id.value() }),
-                        _ => None,
-                    },
-                    own_value: own.map(|s| s.enabled),
-                    inherited_enabled: r.inherited,
-                    set_by: own.map(|s| OrganizationRef {
-                        id: s.set_by.value(),
-                    }),
-                    fixed_by_ancestor: own.is_some_and(|s| !may_change(s)),
-                }
+            .filter(|(_, state)| state.released)
+            .map(|(key, state)| OrganizationModuleResponse {
+                key: key.to_string(),
+                enabled: state.enabled,
+                switchable,
             })
             .collect();
         Self { modules }

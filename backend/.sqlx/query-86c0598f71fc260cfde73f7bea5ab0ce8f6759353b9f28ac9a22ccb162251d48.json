@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT organization_id, module_key, enabled FROM organization_modules",
+  "query": "SELECT organization_id, module_key, released, enabled FROM organization_modules",
   "describe": {
     "columns": [
       {
@@ -15,6 +15,11 @@
       },
       {
         "ordinal": 2,
+        "name": "released",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 3,
         "name": "enabled",
         "type_info": "Bool"
       }
@@ -25,8 +30,9 @@
     "nullable": [
       false,
       false,
+      false,
       false
     ]
   },
-  "hash": "60587f80eac563b24c2145eb5c72d5b266894b41a605aacfa2975537a042b0b4"
+  "hash": "86c0598f71fc260cfde73f7bea5ab0ce8f6759353b9f28ac9a22ccb162251d48"
 }

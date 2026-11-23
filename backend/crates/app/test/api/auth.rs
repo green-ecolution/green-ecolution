@@ -4,7 +4,7 @@ use serde_json::{Value, json};
 use uuid::Uuid;
 
 use crate::auth_helpers::{AuthHarness, spawn_with_auth};
-use crate::helpers::spawn_app_with_auth;
+use crate::helpers::{seed_user_with_permissions, spawn_app_with_auth};
 
 #[tokio::test]
 async fn public_info_route_does_not_require_auth() {
@@ -67,7 +67,7 @@ async fn protected_route_rejects_expired_token() {
 #[tokio::test]
 async fn protected_route_accepts_valid_token() {
     let (harness, app) = spawn_with_auth().await;
-    let token = harness.sign_token(Value::Null);
+    let (_, token) = seed_user_with_permissions(&harness, &app, "Mandant", &["tree:read"]).await;
 
     let response = reqwest::Client::new()
         .get(format!("{}/api/v1/trees", app.address))

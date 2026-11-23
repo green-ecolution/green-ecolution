@@ -386,8 +386,7 @@
       "usual_other": "Üblich sind {value}.",
       "enabled": "Eingeschaltet",
       "disabled": "Ausgeschaltet",
-      "fixedBy": "Diesen Aufgabenbereich legt {name} fest.",
-      "fixedByUnknown": "Diesen Aufgabenbereich legt eine übergeordnete Organisation fest.",
+      "followsTenant": "Diesen Aufgabenbereich schaltet die übergeordnete Organisation.",
       "saveHint": "Änderungen gelten erst nach dem Speichern.",
       "save": "Speichern",
       "readOnlyNotice": "Du kannst die Aufgabenbereiche ansehen, aber nicht ändern.",
@@ -519,8 +518,7 @@
       "loadErrorGeneric": "Der Kartenausschnitt konnte nicht geladen werden. Bitte versuche es später erneut.",
       "toast": {
         "saved": "Einstellungen gespeichert",
-        "saveFailed": "Die Einstellungen konnten nicht gespeichert werden.",
-        "setByAncestor": "Eine übergeordnete Organisation hat diesen Aufgabenbereich festgelegt."
+        "saveFailed": "Die Einstellungen konnten nicht gespeichert werden."
       }
     }
   },

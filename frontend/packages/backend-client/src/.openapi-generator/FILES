@@ -80,6 +80,9 @@ models/MapInfoResponse.ts
 models/MapViewDto.ts
 models/ModuleCountResponse.ts
 models/ModuleListResponse.ts
+models/ModuleReleaseResponse.ts
+models/ModuleReleasesResponse.ts
+models/ModuleReleasesUpdateRequest.ts
 models/NavigationRequest.ts
 models/NearestTreeListResponse.ts
 models/OrganizationCreateRequest.ts
@@ -88,7 +91,6 @@ models/OrganizationModuleResponse.ts
 models/OrganizationModulesEntry.ts
 models/OrganizationModulesResponse.ts
 models/OrganizationModulesUpdateRequest.ts
-models/OrganizationRef.ts
 models/OrganizationResourceCountsResponse.ts
 models/OrganizationResponse.ts
 models/OrganizationSettingsResponse.ts
@@ -142,7 +144,6 @@ models/SettingFieldI32.ts
 models/SettingFieldI64.ts
 models/SettingFieldMapViewDto.ts
 models/SettingFieldMapViewDtoInheritedValue.ts
-models/SettingOriginDto.ts
 models/SignalResponse.ts
 models/SoilCondition.ts
 models/SoilMoistureConditionPointResponse.ts
@@ -156,6 +157,7 @@ models/StartPointResponse.ts
 models/StationVisitResponse.ts
 models/StopOutcomeDto.ts
 models/TargetRefDto.ts
+models/TenantModuleReleasesResponse.ts
 models/TransferRequest.ts
 models/TreeClusterCreateRequest.ts
 models/TreeClusterInListResponse.ts

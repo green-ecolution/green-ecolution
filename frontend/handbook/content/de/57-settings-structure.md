@@ -53,6 +53,9 @@ in [Mitarbeitende und Rollen](./settings-team.md#rollenvorlagen). Löschen läss
 eine Organisation im Überblick, und zwar nur, solange sie weder Unterorganisationen noch
 zugeordnete Mitarbeitende mehr besitzt.
 
+Ein neu angelegter Mandant startet ohne jedes Modul. Der Betreiber der Instanz gibt die
+Module in der [Mandantenübersicht](./admin-tenants.md#module-freigeben-und-sperren) frei.
+
 ## Wie Berechtigungen im Baum wirken
 
 Eine Rolle gehört immer zu genau einer Organisation und gilt für diese Organisation und

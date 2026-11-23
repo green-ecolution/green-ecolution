@@ -3,7 +3,10 @@ use std::sync::Arc;
 use axum::middleware;
 use utoipa_axum::router::OpenApiRouter;
 
-use crate::http::{AppState, auth::AuthLayer};
+use crate::{
+    http::{AppState, auth::AuthLayer},
+    service::module_access::ModuleAccess,
+};
 
 pub mod comment;
 pub mod dto;
@@ -68,17 +71,20 @@ pub fn core_openapi() -> utoipa::openapi::OpenApi {
 pub fn router(
     state: Arc<AppState>,
     auth_layer: AuthLayer,
-    module_routes: Vec<crate::module::ModuleRoutes>,
+    module_routes: Vec<(ModuleAccess, crate::module::ModuleRoutes)>,
 ) -> OpenApiRouter {
     let (public, protected) = module_routes.into_iter().fold(
         (
             public_router().with_state(state.clone()),
             protected_router().with_state(state),
         ),
-        |(public, protected), routes| {
+        |(public, protected), (access, routes)| {
             (
                 public.merge(routes.public),
-                protected.merge(routes.protected),
+                protected.merge(routes.protected.layer(middleware::from_fn_with_state(
+                    access,
+                    crate::http::module_guard::module_guard,
+                ))),
             )
         },
     );

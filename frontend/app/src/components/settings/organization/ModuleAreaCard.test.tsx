@@ -12,7 +12,7 @@ describe('ModuleAreaCard', () => {
         icon={Icon}
         title="Bewässerung"
         description="Bäume und Gießeinsätze"
-        toggle={{ enabled: true, disabled: false, note: null, onChange }}
+        toggle={{ enabled: true, note: null, control: { disabled: false, onChange } }}
       />,
     )
     expect(screen.getByText('Eingeschaltet')).toBeInTheDocument()
@@ -26,7 +26,11 @@ describe('ModuleAreaCard', () => {
         icon={Icon}
         title="Abfall"
         description={null}
-        toggle={{ enabled: false, disabled: true, note: 'Legt TBZ fest.', onChange: vi.fn() }}
+        toggle={{
+          enabled: false,
+          note: 'Legt TBZ fest.',
+          control: { disabled: true, onChange: vi.fn() },
+        }}
       />,
     )
     expect(screen.getByText('Ausgeschaltet')).toBeInTheDocument()
@@ -35,6 +39,20 @@ describe('ModuleAreaCard', () => {
     expect(screen.getByRole('switch', { name: 'Abfall' })).toHaveAccessibleDescription(
       'Legt TBZ fest.',
     )
+  })
+
+  it('shows the state and the note without a switch when there is no control', () => {
+    render(
+      <ModuleAreaCard
+        icon={Icon}
+        title="Abfall"
+        description={null}
+        toggle={{ enabled: true, note: 'Schaltet die Mutter.' }}
+      />,
+    )
+    expect(screen.queryByRole('switch')).toBeNull()
+    expect(screen.getByText('Eingeschaltet')).toBeInTheDocument()
+    expect(screen.getByText('Schaltet die Mutter.')).toBeInTheDocument()
   })
 
   it('has no switch without a toggle and renders its fields', () => {

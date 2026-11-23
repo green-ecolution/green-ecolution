@@ -1,5 +1,6 @@
 import type {
-  ModuleListResponse,
+  ModuleReleaseResponse,
+  ModuleReleasesResponse,
   OrganizationResourceCountsResponse,
   OrganizationResponse,
 } from '@green-ecolution/backend-client'
@@ -9,14 +10,16 @@ import {
   subtreeMemberCount,
 } from '@/components/settings/organization/organizationTree'
 
+export type TenantModuleCell = ModuleReleaseResponse
+
 export interface TenantRow {
   id: string
   name: string
   subOrganizationCount: number
   memberCount: number
-  /** `null` while the module list has not arrived; the card shows no badge, not "none". */
-  activeModules: string[] | null
-  /** `null` while the counts have not arrived; the card shows a placeholder, not 0. */
+  /** `null` while the releases have not arrived or cannot be read; the table then has no module columns. */
+  modules: TenantModuleCell[] | null
+  /** `null` while the counts have not arrived; the table shows a placeholder, not 0. */
   sensorCount: number | null
   vehicleCount: number | null
   planCount: number | null
@@ -28,15 +31,15 @@ export interface TenantRow {
  */
 export function tenantRows(
   organizations: OrganizationResponse[],
-  modules: ModuleListResponse | undefined,
+  releases: ModuleReleasesResponse | undefined,
   counts: OrganizationResourceCountsResponse[] | undefined,
 ): TenantRow[] | null {
   const root = organizations.find((org) => org.parentId == null)
   const tree = root ? buildTree(organizations, root.id) : null
   if (!tree) return null
 
-  const activeByOrg = new Map(
-    (modules?.organizations ?? []).map((entry) => [entry.organizationId, entry.active]),
+  const modulesByOrg = new Map(
+    (releases?.tenants ?? []).map((entry) => [entry.organizationId, entry.modules]),
   )
   const countsByOrg = new Map((counts ?? []).map((entry) => [entry.organizationId, entry]))
 
@@ -47,7 +50,7 @@ export function tenantRows(
       name: node.org.name,
       subOrganizationCount: flatten(node).length - 1,
       memberCount: subtreeMemberCount(node),
-      activeModules: modules ? (activeByOrg.get(node.org.id) ?? []) : null,
+      modules: releases ? (modulesByOrg.get(node.org.id) ?? []) : null,
       sensorCount: resources?.sensorCount ?? null,
       vehicleCount: resources?.vehicleCount ?? null,
       planCount: resources?.planCount ?? null,

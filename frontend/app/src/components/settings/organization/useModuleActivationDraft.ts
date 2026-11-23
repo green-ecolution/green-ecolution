@@ -9,10 +9,8 @@ type Flips = Record<string, boolean>
 export interface ModuleActivationRow {
   key: string
   enabled: boolean
-  /** A parent set this switch; this organization cannot move it. */
-  fixed: boolean
-  /** The organization that set it, when it is a visible one. */
-  fixedBy: string | null
+  /** Only a tenant and the top organization switch; everything below follows. */
+  switchable: boolean
 }
 
 export interface ModuleActivationDraft {
@@ -49,20 +47,21 @@ export const useModuleActivationDraft = (
   const flips = edit?.key === serverKey ? edit.flips : {}
   const modules = enabled && server ? server.modules : []
 
-  // Giving up the own switch where the drafted state is what the organization
-  // would inherit keeps it following its parent, as with the values.
-  const changes = (direction: boolean): Record<string, boolean | null> =>
+  const changes = (direction: boolean): Record<string, boolean> =>
     Object.fromEntries(
       modules
-        .filter((module) => flips[module.key] === direction && module.enabled !== direction)
-        .map((module) => [module.key, module.inheritedEnabled === direction ? null : direction]),
+        .filter(
+          (module) =>
+            module.switchable && flips[module.key] === direction && module.enabled !== direction,
+        )
+        .map((module) => [module.key, direction]),
     )
   const enablingChanges = changes(true)
   const disablingChanges = changes(false)
   const enabling = Object.keys(enablingChanges).length > 0
   const disabling = Object.keys(disablingChanges).length > 0
 
-  const send = async (modulesToWrite: Record<string, boolean | null>) => {
+  const send = async (modulesToWrite: Record<string, boolean>) => {
     if (Object.keys(modulesToWrite).length === 0) return
     await updateModules.mutateAsync({ orgId: organizationId, modules: modulesToWrite })
   }
@@ -72,24 +71,18 @@ export const useModuleActivationDraft = (
     loadError: error,
     dirty: enabling || disabling,
     reset: () => setEdit(null),
-    rows: modules.flatMap((module) => {
-      const fixed = module.fixedByAncestor
-      // Switched off from above: nothing this organization could do with it.
-      if (fixed && !module.enabled) return []
-      return {
-        key: module.key,
-        enabled: flips[module.key] ?? module.enabled,
-        fixed,
-        fixedBy: fixed ? (module.setBy?.id ?? null) : null,
-      }
-    }),
+    rows: modules.map((module) => ({
+      key: module.key,
+      enabled: flips[module.key] ?? module.enabled,
+      switchable: module.switchable,
+    })),
     isEnabled: (key) => {
       const module = modules.find((candidate) => candidate.key === key)
       return module ? (flips[key] ?? module.enabled) : false
     },
     setEnabled: (key, value) => {
       const module = modules.find((candidate) => candidate.key === key)
-      if (!module || module.fixedByAncestor || serverKey === null) return
+      if (!module || !module.switchable || serverKey === null) return
       setEdit({ key: serverKey, flips: { ...flips, [key]: value } })
     },
     enabling,

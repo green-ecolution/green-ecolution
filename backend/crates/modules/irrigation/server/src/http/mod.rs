@@ -9,10 +9,32 @@ pub mod tree;
 
 use std::sync::Arc;
 
+use domain::{
+    Id, RepositoryError,
+    authorization::{Caller, Permission},
+};
+use server::service::ServiceError;
 use utoipa::openapi::tag::{Tag, TagBuilder};
 use utoipa_axum::router::OpenApiRouter;
+use uuid::Uuid;
 
 use state::IrrigationHttpState;
+
+/// Detail gate: an object the caller may not read, or one in an organization
+/// without the module, reads as 404, so its existence cannot be probed.
+pub(crate) async fn ensure_readable(
+    state: &IrrigationHttpState,
+    caller: Caller,
+    read: Permission,
+    owner: Uuid,
+) -> Result<(), ServiceError> {
+    let visible = state.access.visible_orgs(caller, read).await?;
+    if visible.allows(Id::new(owner)) {
+        Ok(())
+    } else {
+        Err(RepositoryError::NotFound.into())
+    }
+}
 
 /// Authenticated by a plugin key rather than a user session.
 pub fn public_routes() -> OpenApiRouter<Arc<IrrigationHttpState>> {

@@ -1,52 +1,43 @@
-use crate::{
-    Id,
-    organization::Organization,
-    settings::{InheritLevel, SettingOrigin, inherit},
-};
-
-/// One organization's contribution to a module's activation, root first.
+/// A module's state in one organization: what the root allows and what the
+/// tenant chose. Both live on the tenant's row; sub-organizations follow it.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct ActivationLevel {
-    pub organization_id: Id<Organization>,
-    pub enabled: Option<bool>,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct ActivationResolution {
+pub struct ModuleState {
+    pub released: bool,
     pub enabled: bool,
-    pub origin: SettingOrigin,
-    /// The state without the target's own switch: what returning it to
-    /// inheritance would lead to.
-    pub inherited: bool,
 }
 
-/// An organization's own switch and the level it was set from. A `set_by`
-/// above the organization is a parent's choice for this sub-unit, which only
-/// someone acting for that level or above may change.
+impl ModuleState {
+    /// Usable in the organization: released by the root and switched on.
+    pub fn active(self) -> bool {
+        self.released && self.enabled
+    }
+}
+
+/// Whose row decides for an organization.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct OwnSwitch {
-    pub enabled: bool,
-    pub set_by: Id<Organization>,
+pub enum SwitchHolder {
+    /// The root is no tenant: always released, switched by `default_enabled`
+    /// until it stores a switch of its own.
+    Root,
+    /// A tenant without a row has the module locked.
+    Tenant,
 }
 
-/// Inherits like every setting, see `settings::inherit`.
-pub fn resolve_activation(
+pub fn module_state(
+    holder: SwitchHolder,
     default_enabled: bool,
-    chain: &[ActivationLevel],
-    target: Id<Organization>,
-) -> ActivationResolution {
-    let levels: Vec<InheritLevel<bool>> = chain
-        .iter()
-        .map(|l| InheritLevel {
-            organization_id: l.organization_id,
-            value: l.enabled,
-        })
-        .collect();
-    let r = inherit(default_enabled, &levels, target);
-    ActivationResolution {
-        enabled: r.value,
-        origin: r.origin,
-        inherited: r.inherited,
+    row: Option<ModuleState>,
+) -> ModuleState {
+    match (holder, row) {
+        (SwitchHolder::Root, row) => ModuleState {
+            released: true,
+            enabled: row.map_or(default_enabled, |r| r.enabled),
+        },
+        (SwitchHolder::Tenant, Some(row)) => row,
+        (SwitchHolder::Tenant, None) => ModuleState {
+            released: false,
+            enabled: false,
+        },
     }
 }
 
@@ -54,65 +45,50 @@ pub fn resolve_activation(
 mod tests {
     use super::*;
 
-    fn level(org: Id<Organization>, enabled: Option<bool>) -> ActivationLevel {
-        ActivationLevel {
-            organization_id: org,
-            enabled,
-        }
-    }
+    const ON: ModuleState = ModuleState {
+        released: true,
+        enabled: true,
+    };
+    const OFF: ModuleState = ModuleState {
+        released: true,
+        enabled: false,
+    };
 
-    fn orgs() -> (Id<Organization>, Id<Organization>, Id<Organization>) {
-        (Id::new_v7(), Id::new_v7(), Id::new_v7())
+    #[test]
+    fn the_root_is_always_released_and_follows_the_default_without_a_row() {
+        assert_eq!(module_state(SwitchHolder::Root, true, None), ON);
+        assert_eq!(module_state(SwitchHolder::Root, false, None), OFF);
     }
 
     #[test]
-    fn untouched_chain_yields_the_default() {
-        let (root, mid, leaf) = orgs();
-        let chain = [level(root, None), level(mid, None), level(leaf, None)];
-        let r = resolve_activation(true, &chain, leaf);
-        assert!(r.enabled);
-        assert_eq!(r.origin, SettingOrigin::Default);
+    fn the_roots_own_switch_beats_the_default() {
+        assert_eq!(module_state(SwitchHolder::Root, true, Some(OFF)), OFF);
+        let locked_row = ModuleState {
+            released: false,
+            enabled: true,
+        };
+        assert!(module_state(SwitchHolder::Root, false, Some(locked_row)).released);
     }
 
     #[test]
-    fn value_set_at_the_root_reaches_three_levels_down() {
-        let (root, mid, leaf) = orgs();
-        let chain = [
-            level(root, Some(false)),
-            level(mid, None),
-            level(leaf, None),
-        ];
-        let r = resolve_activation(true, &chain, leaf);
-        assert!(!r.enabled);
-        assert_eq!(r.origin, SettingOrigin::Inherited(root));
+    fn a_tenant_without_a_row_is_locked_whatever_the_default() {
+        let state = module_state(SwitchHolder::Tenant, true, None);
+        assert!(!state.released);
+        assert!(!state.active());
     }
 
     #[test]
-    fn own_value_beats_the_parent() {
-        let (root, mid, leaf) = orgs();
-        let chain = [
-            level(root, Some(false)),
-            level(mid, None),
-            level(leaf, Some(true)),
-        ];
-        let r = resolve_activation(false, &chain, leaf);
-        assert!(r.enabled);
-        assert_eq!(r.origin, SettingOrigin::Own);
+    fn a_released_module_is_active_only_while_switched_on() {
+        assert!(module_state(SwitchHolder::Tenant, false, Some(ON)).active());
+        assert!(!module_state(SwitchHolder::Tenant, true, Some(OFF)).active());
     }
 
     #[test]
-    fn inherited_ignores_the_targets_own_switch() {
-        let (root, mid, leaf) = orgs();
-        let chain = [
-            level(root, None),
-            level(mid, Some(false)),
-            level(leaf, Some(true)),
-        ];
-        let r = resolve_activation(true, &chain, leaf);
-        assert!(r.enabled);
-        assert!(!r.inherited);
-
-        let root_only = [level(root, Some(true))];
-        assert!(!resolve_activation(false, &root_only, root).inherited);
+    fn a_locked_module_is_inactive_even_while_switched_on() {
+        let locked = ModuleState {
+            released: false,
+            enabled: true,
+        };
+        assert!(!module_state(SwitchHolder::Tenant, true, Some(locked)).active());
     }
 }

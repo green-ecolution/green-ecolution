@@ -36,7 +36,10 @@ export const moduleRoute = <T extends object & ModuleRouteOptions>(
 } => ({
   ...options,
   beforeLoad: async (ctx) => {
-    const modules = await ctx.context.queryClient.ensureQueryData(modulesQuery())
+    const modules = await ctx.context.queryClient.ensureQueryData({
+      ...modulesQuery(),
+      revalidateIfStale: true,
+    })
     if (!activeManifestsFrom(moduleManifests, modules).some((m) => m.key === moduleKey)) {
       throw new ModuleInactiveError(moduleKey)
     }

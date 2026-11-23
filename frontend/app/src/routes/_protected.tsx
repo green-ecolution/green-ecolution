@@ -33,7 +33,10 @@ export const Route = createFileRoute('/_protected')({
     }
     // Module guards and the navigation read the active modules synchronously;
     // the endpoint answers in auth-bypass mode too.
-    await context.queryClient.ensureQueryData(modulesQuery())
+    await context.queryClient.ensureQueryData({
+      ...modulesQuery(),
+      revalidateIfStale: true,
+    })
     // Operational pages show one tenant's data; a root member without a scope
     // has none to show. A preload must not redirect.
     if (

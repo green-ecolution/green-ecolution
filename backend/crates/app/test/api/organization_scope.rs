@@ -2,7 +2,7 @@ use serde_json::{Value, json};
 use uuid::Uuid;
 
 use crate::auth_helpers::{AuthHarness, spawn_with_auth};
-use crate::helpers::{TestApp, spawn_app};
+use crate::helpers::{TestApp, set_module, spawn_app};
 use crate::organizations::ROOT_ORG_ID;
 
 const SCOPE_HEADER: &str = "X-Organization-Scope";
@@ -268,14 +268,7 @@ async fn create_with_org_outside_scope_is_rejected() {
 async fn module_list_respects_scope() {
     let (harness, app) = spawn_with_auth().await;
     let tree = seed_tree(&app).await;
-    let root = Uuid::parse_str(ROOT_ORG_ID).unwrap();
-    sqlx::query(
-        "INSERT INTO organization_modules (organization_id, module_key, enabled, set_by) VALUES ($1, 'waste', true, $1)",
-    )
-    .bind(root)
-    .execute(&app.db_pool)
-    .await
-    .unwrap();
+    set_module(&app, tree.tbz, "waste", true, true).await;
     for (number, org) in [("SC-A", tree.firma_a), ("SC-B", tree.firma_b)] {
         sqlx::query(
             "INSERT INTO waste_bins (id, number, latitude, longitude, geometry, volume_liters, depth_cm, organization_id)

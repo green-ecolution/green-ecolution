@@ -17,22 +17,36 @@ import * as runtime from '../runtime';
 import type {
   ErrorBody,
   ModuleListResponse,
+  ModuleReleasesResponse,
+  ModuleReleasesUpdateRequest,
   OrganizationModulesResponse,
   OrganizationModulesUpdateRequest,
+  TenantModuleReleasesResponse,
 } from '../models/index';
 import {
     ErrorBodyFromJSON,
     ErrorBodyToJSON,
     ModuleListResponseFromJSON,
     ModuleListResponseToJSON,
+    ModuleReleasesResponseFromJSON,
+    ModuleReleasesResponseToJSON,
+    ModuleReleasesUpdateRequestFromJSON,
+    ModuleReleasesUpdateRequestToJSON,
     OrganizationModulesResponseFromJSON,
     OrganizationModulesResponseToJSON,
     OrganizationModulesUpdateRequestFromJSON,
     OrganizationModulesUpdateRequestToJSON,
+    TenantModuleReleasesResponseFromJSON,
+    TenantModuleReleasesResponseToJSON,
 } from '../models/index';
 
 export interface GetOrganizationModulesRequest {
     orgId: string;
+}
+
+export interface UpdateOrganizationModuleReleasesRequest {
+    orgId: string;
+    moduleReleasesUpdateRequest: ModuleReleasesUpdateRequest;
 }
 
 export interface UpdateOrganizationModulesRequest {
@@ -46,7 +60,7 @@ export interface UpdateOrganizationModulesRequest {
 export class ModulesApi extends runtime.BaseAPI {
 
     /**
-     * Each module carries the state in force, where it came from and this organization\'s own switch. Requires setting:read.
+     * Lists the modules released for the organization\'s tenant with their switch. A locked module is absent. Requires setting:read.
      * Read an organization\'s module switches
      */
     async getOrganizationModulesRaw(requestParameters: GetOrganizationModulesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OrganizationModulesResponse>> {
@@ -76,7 +90,7 @@ export class ModulesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Each module carries the state in force, where it came from and this organization\'s own switch. Requires setting:read.
+     * Lists the modules released for the organization\'s tenant with their switch. A locked module is absent. Requires setting:read.
      * Read an organization\'s module switches
      */
     async getOrganizationModules(requestParameters: GetOrganizationModulesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OrganizationModulesResponse> {
@@ -85,8 +99,39 @@ export class ModulesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Every module the instance ships plus, for each organization the caller works in, the modules active there.
-     * List modules and where they are active
+     * Every tenant with the release state and the own switch of each module this instance ships. Requires setting:read at the root organization.
+     * List module releases per tenant
+     */
+    async listModuleReleasesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ModuleReleasesResponse>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/v1/modules/releases`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ModuleReleasesResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Every tenant with the release state and the own switch of each module this instance ships. Requires setting:read at the root organization.
+     * List module releases per tenant
+     */
+    async listModuleReleases(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ModuleReleasesResponse> {
+        const response = await this.listModuleReleasesRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Every module released in an organization the caller works in plus, for each organization the caller works in, the modules active there.
+     * List released modules and where they are active
      */
     async listModulesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ModuleListResponse>> {
         const queryParameters: any = {};
@@ -107,8 +152,8 @@ export class ModulesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Every module the instance ships plus, for each organization the caller works in, the modules active there.
-     * List modules and where they are active
+     * Every module released in an organization the caller works in plus, for each organization the caller works in, the modules active there.
+     * List released modules and where they are active
      */
     async listModules(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ModuleListResponse> {
         const response = await this.listModulesRaw(initOverrides);
@@ -116,7 +161,56 @@ export class ModulesApi extends runtime.BaseAPI {
     }
 
     /**
-     * An omitted module stays as it is, `null` returns it to inheritance. A switch is stamped with the topmost organization the caller may update settings for; only callers acting for that organization or above may change it again. Requires setting:update.
+     * Releases or locks modules for a tenant. The first release switches the module on; locking keeps the tenant\'s switch. Requires setting:update at the root organization.
+     * Release or lock modules for a tenant
+     */
+    async updateOrganizationModuleReleasesRaw(requestParameters: UpdateOrganizationModuleReleasesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TenantModuleReleasesResponse>> {
+        if (requestParameters['orgId'] == null) {
+            throw new runtime.RequiredError(
+                'orgId',
+                'Required parameter "orgId" was null or undefined when calling updateOrganizationModuleReleases().'
+            );
+        }
+
+        if (requestParameters['moduleReleasesUpdateRequest'] == null) {
+            throw new runtime.RequiredError(
+                'moduleReleasesUpdateRequest',
+                'Required parameter "moduleReleasesUpdateRequest" was null or undefined when calling updateOrganizationModuleReleases().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+
+        let urlPath = `/v1/organizations/{org_id}/module-releases`;
+        urlPath = urlPath.replace(`{${"org_id"}}`, encodeURIComponent(String(requestParameters['orgId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: ModuleReleasesUpdateRequestToJSON(requestParameters['moduleReleasesUpdateRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => TenantModuleReleasesResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Releases or locks modules for a tenant. The first release switches the module on; locking keeps the tenant\'s switch. Requires setting:update at the root organization.
+     * Release or lock modules for a tenant
+     */
+    async updateOrganizationModuleReleases(requestParameters: UpdateOrganizationModuleReleasesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TenantModuleReleasesResponse> {
+        const response = await this.updateOrganizationModuleReleasesRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Switches released modules on or off. Only a tenant and the root organization hold switches; a sub-organization answers 422 `module.not_switchable`. A locked module answers like an unknown one. Requires setting:update.
      * Switch modules for an organization
      */
     async updateOrganizationModulesRaw(requestParameters: UpdateOrganizationModulesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OrganizationModulesResponse>> {
@@ -156,7 +250,7 @@ export class ModulesApi extends runtime.BaseAPI {
     }
 
     /**
-     * An omitted module stays as it is, `null` returns it to inheritance. A switch is stamped with the topmost organization the caller may update settings for; only callers acting for that organization or above may change it again. Requires setting:update.
+     * Switches released modules on or off. Only a tenant and the root organization hold switches; a sub-organization answers 422 `module.not_switchable`. A locked module answers like an unknown one. Requires setting:update.
      * Switch modules for an organization
      */
     async updateOrganizationModules(requestParameters: UpdateOrganizationModulesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OrganizationModulesResponse> {

@@ -94,7 +94,6 @@ const OrganizationAreasPage = () => {
           {moduleDraft.rows.map((row) => {
             const manifest = moduleManifests.find((candidate) => candidate.key === row.key)
             const section = shown.find((candidate) => candidate.key === row.key)
-            const fixedByName = organizations.find((org) => org.id === row.fixedBy)?.name
             return (
               <ModuleAreaCard
                 key={row.key}
@@ -103,13 +102,13 @@ const OrganizationAreasPage = () => {
                 description={manifest ? i18n.t(manifest.descriptionKey) : null}
                 toggle={{
                   enabled: row.enabled,
-                  disabled: row.fixed || !canUpdate,
-                  note: !row.fixed
-                    ? null
-                    : fixedByName
-                      ? t('organization.areas.fixedBy', { name: fixedByName })
-                      : t('organization.areas.fixedByUnknown'),
-                  onChange: (enabled) => moduleDraft.setEnabled(row.key, enabled),
+                  note: row.switchable ? null : t('organization.areas.followsTenant'),
+                  control: row.switchable
+                    ? {
+                        disabled: !canUpdate,
+                        onChange: (enabled) => moduleDraft.setEnabled(row.key, enabled),
+                      }
+                    : undefined,
                 }}
               >
                 {section && !section.draft.loading && (

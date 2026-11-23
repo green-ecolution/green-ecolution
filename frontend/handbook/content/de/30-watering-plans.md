@@ -177,9 +177,7 @@ jede zugewiesene Bewässerungsgruppe die tatsächlich verbrauchte Wassermenge in
 ein; als Ausgangswert schlägt die Anwendung denselben Standardwert von 80 Litern je Baum
 der Gruppe vor, den du für jede Gruppe einzeln anpassen kannst. Für jede Gruppe muss ein
 Wert größer null hinterlegt sein, ein Einsatzplan lässt sich nur beenden, wenn für jede
-seiner Gruppen ein solcher Wert vorliegt. Ist das Modul Bewässerung für deine
-Organisation abgeschaltet, erscheint statt der Wassermengen ein Hinweis, und der
-Einsatzplan lässt sich erst beenden, wenn das Modul wieder eingeschaltet ist.
+seiner Gruppen ein solcher Wert vorliegt.
 
 ![Der Dialog zum Beenden eines Einsatzplans mit der verbrauchten Wassermenge je Bewässerungsgruppe](../images/watering-plan-finish.png)
 

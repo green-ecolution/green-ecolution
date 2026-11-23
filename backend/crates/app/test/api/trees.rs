@@ -1024,14 +1024,18 @@ async fn update_tree_keeping_its_own_sensor_returns_200() {
     assert_eq!(response.status().as_u16(), 200);
 }
 
-async fn switch_irrigation_off(app: &TestApp) {
+async fn switch_irrigation(app: &TestApp, on: bool) {
     let res = app
         .put_json(
             &format!("/api/v1/organizations/{ROOT_ORG_ID}/modules"),
-            &serde_json::json!({ "modules": { "irrigation": false } }),
+            &serde_json::json!({ "modules": { "irrigation": on } }),
         )
         .await;
     assert_eq!(res.status().as_u16(), 200);
+}
+
+async fn switch_irrigation_off(app: &TestApp) {
+    switch_irrigation(app, false).await;
 }
 
 #[tokio::test]
@@ -1045,6 +1049,7 @@ async fn create_tree_with_sensor_is_refused_before_writing_when_irrigation_is_of
     assert_eq!(response.status().as_u16(), 403);
     let body: serde_json::Value = response.json().await.unwrap();
     assert_eq!(body["code"], "module.disabled");
+    switch_irrigation(&app, true).await;
     let trees: serde_json::Value = app.get("/api/v1/trees").await.json().await.unwrap();
     assert_eq!(trees["pagination"]["total_records"], 0);
 }
@@ -1073,6 +1078,7 @@ async fn update_tree_with_new_sensor_keeps_the_old_one_when_irrigation_is_off() 
     assert_eq!(response.status().as_u16(), 403);
     let body: serde_json::Value = response.json().await.unwrap();
     assert_eq!(body["code"], "module.disabled");
+    switch_irrigation(&app, true).await;
     let after = app.get(&format!("/api/v1/trees/{tree_id}")).await;
     let after: serde_json::Value = after.json().await.unwrap();
     assert_eq!(after["sensor"]["id"], "eui-off-2");

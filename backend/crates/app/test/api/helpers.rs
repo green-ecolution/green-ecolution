@@ -30,6 +30,13 @@ pub struct TestApp {
 }
 
 impl TestApp {
+    pub async fn without_release_fixture(&self) {
+        sqlx::query("DROP TRIGGER test_release_modules ON organizations")
+            .execute(&self.db_pool)
+            .await
+            .expect("release fixture is installed in every template clone");
+    }
+
     /// Look up the seeded `EcoDrizzler` sensor model UUID. Migrations seed two
     /// well-known models by name — tests reference them through this helper
     /// since the integer ids no longer exist after the UUID migration.
@@ -355,6 +362,7 @@ async fn template_database() -> &'static str {
                 .run(&mut conn)
                 .await
                 .expect("failed to migrate template database");
+            install_release_fixture(&mut conn).await;
             conn.close()
                 .await
                 .expect("failed to close template connection");
@@ -376,6 +384,49 @@ async fn template_database() -> &'static str {
             db_name
         })
         .await
+}
+
+/// Test-only: a tenant created in a test starts with every module released
+/// and in its default state, like a tenant the release migration carried
+/// over. Production releases nothing for a new tenant; a test of that state
+/// drops the trigger first, see `TestApp::without_release_fixture`.
+async fn install_release_fixture(conn: &mut PgConnection) {
+    let values = template_modules()
+        .iter()
+        .map(|m| format!("(NEW.id, '{}', TRUE, {})", m.key(), m.default_enabled()))
+        .collect::<Vec<_>>()
+        .join(", ");
+    let sql = format!(
+        "CREATE FUNCTION test_release_modules() RETURNS trigger LANGUAGE plpgsql AS $$
+         BEGIN
+           IF NEW.parent_id = '{ROOT_ORG_ID}' THEN
+             INSERT INTO organization_modules (organization_id, module_key, released, enabled)
+             VALUES {values};
+           END IF;
+           RETURN NULL;
+         END $$;
+         CREATE TRIGGER test_release_modules AFTER INSERT ON organizations
+         FOR EACH ROW EXECUTE FUNCTION test_release_modules();"
+    );
+    conn.execute(sql.as_str())
+        .await
+        .expect("failed to install the release fixture");
+}
+
+pub async fn set_module(app: &TestApp, holder: Uuid, key: &str, released: bool, enabled: bool) {
+    sqlx::query(
+        "INSERT INTO organization_modules (organization_id, module_key, released, enabled)
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT (organization_id, module_key)
+         DO UPDATE SET released = EXCLUDED.released, enabled = EXCLUDED.enabled",
+    )
+    .bind(holder)
+    .bind(key)
+    .bind(released)
+    .bind(enabled)
+    .execute(&app.db_pool)
+    .await
+    .unwrap();
 }
 
 /// Modules whose migrations every test database carries. The test module is
@@ -521,6 +572,7 @@ async fn clone_database(host_port: u16, template: Option<&str>) -> (String, PgPo
 
 /// Version of the last migration before stage 3 of the module epic.
 pub const BEFORE_STAGE_3: i64 = 20261024100000;
+pub const BEFORE_MODULE_RELEASE: i64 = 20261119204847;
 pub const BEFORE_START_POINT_RESOURCE: i64 = 20261025100600;
 
 /// Builds a database that stops at `cutoff`, lets the test seed data in the

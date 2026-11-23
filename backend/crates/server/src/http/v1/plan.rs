@@ -216,6 +216,7 @@ pub async fn list_plans(
     params(("plan_id" = uuid::Uuid, Path, description = "Plan ID")),
     responses(
         (status = 200, description = "Plan found", body = PlanResponse),
+        (status = 403, description = "The plan's module is switched off in its organization (code `module.disabled`)", body = ErrorBody),
         (status = 404, description = "Plan not found", body = ErrorBody),
         (status = 500, description = "Internal server error", body = ErrorBody),
     )
@@ -237,6 +238,10 @@ pub async fn get_plan(
         Permission::new(resource, Action::Read),
         view.organization_id,
     )?;
+    plan_access(&state, &view.module)?
+        .0
+        .ensure_active(Id::new(view.organization_id))
+        .await?;
     Ok(Json(detail_response(&state, view).await?))
 }
 
@@ -496,6 +501,10 @@ pub(super) async fn readable_plan(
         Permission::new(resource, Action::Read),
         plan.organization_id().value(),
     )?;
+    plan_access(state, plan.module())?
+        .0
+        .ensure_active(plan.organization_id())
+        .await?;
     Ok(plan)
 }
 
@@ -506,6 +515,7 @@ pub(super) async fn readable_plan(
     params(("plan_id" = uuid::Uuid, Path, description = "Plan ID")),
     responses(
         (status = 200, description = "Optimized route", body = RouteResponse),
+        (status = 403, description = "The plan's module is switched off in its organization (code `module.disabled`)", body = ErrorBody),
         (status = 404, description = "Plan not found or has no route", body = ErrorBody),
         (status = 503, description = "Routing feature is disabled (code `feature.routing_disabled`)", body = ErrorBody),
         (status = 500, description = "Internal server error", body = ErrorBody),
@@ -591,6 +601,7 @@ pub async fn preview_plan_route(
     params(("plan_id" = uuid::Uuid, Path, description = "Plan ID")),
     responses(
         (status = 200, description = "GPX file", content_type = "application/gpx+xml"),
+        (status = 403, description = "The plan's module is switched off in its organization (code `module.disabled`)", body = ErrorBody),
         (status = 404, description = "Plan not found or has no route", body = ErrorBody),
         (status = 503, description = "Routing feature is disabled (code `feature.routing_disabled`)", body = ErrorBody),
         (status = 500, description = "Internal server error", body = ErrorBody),

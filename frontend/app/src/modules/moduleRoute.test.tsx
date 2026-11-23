@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import {
   createMemoryHistory,
@@ -33,8 +33,9 @@ const respondWith = (active: string[]) =>
     ),
   )
 
-const renderRoute = (guardOptions: object = {}) => {
+const renderRoute = (guardOptions: object = {}, cachedModules?: object) => {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  if (cachedModules) queryClient.setQueryData(['modules'], cachedModules)
   const rootRoute = createRootRouteWithContext<{ queryClient: QueryClient }>()()
   const wasteRoute = createRoute({
     getParentRoute: () => rootRoute,
@@ -54,6 +55,7 @@ const renderRoute = (guardOptions: object = {}) => {
       <RouterProvider router={router} />
     </QueryClientProvider>,
   )
+  return queryClient
 }
 
 describe('moduleRoute', () => {
@@ -70,6 +72,21 @@ describe('moduleRoute', () => {
     renderRoute()
 
     expect(await screen.findByText('Waste content')).toBeInTheDocument()
+  })
+
+  it('refetches a stale modules answer so a lock reaches an open session', async () => {
+    respondWith([])
+    const queryClient = renderRoute(
+      {},
+      { modules: ['waste'], organizations: [{ organizationId: 'a', active: ['waste'] }] },
+    )
+
+    await waitFor(() =>
+      expect(
+        queryClient.getQueryData<{ organizations: { active: string[] }[] }>(['modules'])
+          ?.organizations[0]?.active,
+      ).toEqual([]),
+    )
   })
 
   it('runs the wrapped beforeLoad after the activation check', async () => {

@@ -1,7 +1,7 @@
 {
   "tenants": {
     "title": "Mandanten",
-    "description": "Alle Mandanten dieser Instanz mit ihren Unterorganisationen, Mitarbeitenden, Modulen und Beständen. Öffne einen Mandanten, um ihn so zu sehen, wie seine Mitarbeitenden ihn sehen.",
+    "description": "Alle Mandanten dieser Instanz. Hier legst du fest, welche Module ein Mandant nutzen darf. Ein gesperrtes Modul ist für den Mandanten nicht sichtbar.",
     "loadingLabel": "Mandanten werden geladen …",
     "empty": "Diese Instanz hat noch keine Mandanten.",
     "emptyLink": "Mandanten unter Organisation anlegen",
@@ -9,15 +9,40 @@
     "openError": "Der Mandant konnte nicht geöffnet werden.",
     "open": "Als Mandant öffnen",
     "openSrLabel": "{name} als Mandant öffnen",
-    "card": {
-      "subOrganizations": "Unterorganisationen",
-      "members": "Mitarbeitende",
-      "modules": "Module",
-      "noModules": "Keine Module aktiv",
-      "sensors": "Sensoren",
-      "vehicles": "Fahrzeuge",
-      "plans": "Einsatzpläne",
+    "columns": {
+      "tenant": "Mandant",
+      "stock": "Bestand",
+      "actions": "Aktionen"
+    },
+    "summary": {
+      "subOrganizations_one": "{count} Unterorganisation",
+      "subOrganizations_other": "{count} Unterorganisationen",
+      "members_one": "{count} Person",
+      "members_other": "{count} Mitarbeitende",
+      "sensors_one": "{count} Sensor",
+      "sensors_other": "{count} Sensoren",
+      "vehicles_one": "{count} Fahrzeug",
+      "vehicles_other": "{count} Fahrzeuge",
+      "plans_one": "{count} Einsatzplan",
+      "plans_other": "{count} Einsatzpläne",
       "pending": "–"
+    },
+    "release": {
+      "switchLabel": "{module} für {name} freigeben",
+      "released": "Freigegeben",
+      "locked": "Gesperrt",
+      "enabledByTenant": "Vom Mandanten eingeschaltet",
+      "disabledByTenant": "Vom Mandanten ausgeschaltet",
+      "hidden": "Für {name} nicht sichtbar",
+      "note": "Sperren wirkt für den Mandanten und alle seine Unterorganisationen. Das Modul verschwindet dort aus der Navigation und aus den Aufgabenbereichen. Vorhandene Daten bleiben gespeichert.",
+      "saveError": "Die Freigabe konnte nicht geändert werden.",
+      "lockDialog": {
+        "title": "{module} für {name} sperren?",
+        "description": "{name} nutzt {module} gerade. Nach dem Sperren verschwindet das Modul bei {name} und allen Unterorganisationen aus der Navigation und aus den Aufgabenbereichen. Die vorhandenen Daten bleiben gespeichert und sind nach einer erneuten Freigabe wieder da.",
+        "confirm": "Sperren",
+        "cancel": "Abbrechen"
+      },
+      "loadError": "Die Freigaben konnten nicht geladen werden. Bitte lade die Seite neu."
     }
   }
 }

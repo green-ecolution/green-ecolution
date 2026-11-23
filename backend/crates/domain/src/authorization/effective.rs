@@ -106,6 +106,12 @@ impl OrgHierarchy {
         chain.reverse();
         chain
     }
+
+    /// The tenant `node` belongs to: the direct child of the root on its chain,
+    /// `node` itself for a tenant. `None` for the root and for an unknown node.
+    pub fn tenant_of(&self, node: Id<Organization>) -> Option<Id<Organization>> {
+        self.ancestors_from_root(node).get(1).copied()
+    }
 }
 
 /// Union of all role grants a user holds: each grant scopes a permission set
@@ -417,6 +423,22 @@ mod tests {
         let h = OrgHierarchy::from_pairs([(root, None), (tbz, Some(root)), (sub, Some(tbz))]);
         assert_eq!(h.ancestors_from_root(sub), vec![root, tbz, sub]);
         assert_eq!(h.ancestors_from_root(root), vec![root]);
+    }
+
+    #[test]
+    fn tenant_of_is_the_direct_child_of_the_root_on_the_chain() {
+        let (root, tbz, sub) = ids();
+        let h = OrgHierarchy::from_pairs([(root, None), (tbz, Some(root)), (sub, Some(tbz))]);
+        assert_eq!(h.tenant_of(sub), Some(tbz));
+        assert_eq!(h.tenant_of(tbz), Some(tbz));
+    }
+
+    #[test]
+    fn tenant_of_the_root_and_of_an_unknown_node_is_none() {
+        let (root, tbz, unknown) = ids();
+        let h = OrgHierarchy::from_pairs([(root, None), (tbz, Some(root))]);
+        assert_eq!(h.tenant_of(root), None);
+        assert_eq!(h.tenant_of(unknown), None);
     }
 
     #[test]

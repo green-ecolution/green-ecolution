@@ -1,7 +1,7 @@
 {
   "tenants": {
     "title": "Tenants",
-    "description": "Every tenant of this instance with its sub-organizations, members, modules and assets. Open a tenant to see it the way its members do.",
+    "description": "Every tenant of this instance. Here you decide which modules a tenant may use. A locked module is not visible to the tenant.",
     "loadingLabel": "Loading tenants …",
     "empty": "This instance has no tenants yet.",
     "emptyLink": "Create tenants under Organization",
@@ -9,15 +9,40 @@
     "openError": "The tenant could not be opened.",
     "open": "Open as tenant",
     "openSrLabel": "Open as tenant: {name}",
-    "card": {
-      "subOrganizations": "Sub-organizations",
-      "members": "Members",
-      "modules": "Modules",
-      "noModules": "No modules active",
-      "sensors": "Sensors",
-      "vehicles": "Vehicles",
-      "plans": "Operation plans",
+    "columns": {
+      "tenant": "Tenant",
+      "stock": "Assets",
+      "actions": "Actions"
+    },
+    "summary": {
+      "subOrganizations_one": "{count} sub-organization",
+      "subOrganizations_other": "{count} sub-organizations",
+      "members_one": "{count} member",
+      "members_other": "{count} members",
+      "sensors_one": "{count} sensor",
+      "sensors_other": "{count} sensors",
+      "vehicles_one": "{count} vehicle",
+      "vehicles_other": "{count} vehicles",
+      "plans_one": "{count} operation plan",
+      "plans_other": "{count} operation plans",
       "pending": "–"
+    },
+    "release": {
+      "switchLabel": "Release {module} for {name}",
+      "released": "Released",
+      "locked": "Locked",
+      "enabledByTenant": "Switched on by the tenant",
+      "disabledByTenant": "Switched off by the tenant",
+      "hidden": "Not visible to {name}",
+      "note": "Locking applies to the tenant and all of its sub-organizations. The module disappears from their navigation and areas of work. Existing data stays stored.",
+      "saveError": "The release could not be changed.",
+      "lockDialog": {
+        "title": "Lock {module} for {name}?",
+        "description": "{name} is using {module} right now. Once locked, the module disappears for {name} and all of its sub-organizations from the navigation and the areas of work. Existing data stays stored and is back after the module is released again.",
+        "confirm": "Lock",
+        "cancel": "Cancel"
+      },
+      "loadError": "The releases could not be loaded. Please reload the page."
     }
   }
 }

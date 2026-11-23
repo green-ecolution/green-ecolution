@@ -124,7 +124,7 @@ pub async fn ensure_module_active(
         .resolve(org)
         .await?
         .get(module)
-        .is_some_and(|r| r.enabled);
+        .is_some_and(|state| state.active());
     if active {
         Ok(())
     } else {

@@ -2,7 +2,7 @@ use serde_json::{Value, json};
 use uuid::Uuid;
 
 use crate::{
-    helpers::{TestApp, spawn_app},
+    helpers::{TestApp, set_module, spawn_app},
     module_host::switch,
     organizations::ROOT_ORG_ID,
     settings_repo::child_org,
@@ -266,6 +266,7 @@ async fn the_list_searches_by_number_and_pages() {
 async fn a_bin_without_sensor_moves_to_another_organization() {
     let app = waste_app().await;
     let child = child_org(&app, "Bauhof", root()).await;
+    set_module(&app, child, KEY, true, true).await;
     let bin = create_bin(&app, "AB-1").await;
     let res = app
         .patch_json(
@@ -373,6 +374,7 @@ async fn deleting_a_bin_releases_its_sensor_removes_it_from_plans_and_drops_comm
 async fn transferring_a_bin_moves_its_sensor_along() {
     let app = waste_app().await;
     let child = child_org(&app, "Bauhof", root()).await;
+    set_module(&app, child, KEY, true, true).await;
     let bin = id_of(&create_bin(&app, "AB-1").await);
     let sensor = crate::sensors::create_prepared_sensor(&app, "eui-bin-2").await;
     let res = app
@@ -416,6 +418,7 @@ async fn transferring_a_bin_moves_its_sensor_along() {
 async fn the_fill_state_filter_judges_every_bin_by_its_own_organizations_rules() {
     let app = waste_app().await;
     let sub_unit = child_org(&app, "Bezirk Nord", root()).await;
+    set_module(&app, sub_unit, KEY, true, true).await;
     let res = app
         .put_json(
             &format!("/api/v1/organizations/{sub_unit}/settings/waste"),

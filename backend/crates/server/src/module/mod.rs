@@ -40,7 +40,8 @@ pub type BackgroundTask = Pin<Box<dyn Future<Output = ()> + Send + 'static>>;
 
 pub trait Module: Send + Sync {
     fn key(&self) -> ModuleKey;
-    /// Activation where neither the YAML nor any organization says otherwise.
+    /// The root organization's switch where it stored none of its own; tenants
+    /// do not inherit it.
     fn default_enabled(&self) -> bool;
     /// Built from the same routes as the runtime router but without state, so
     /// `dump-openapi` and the startup checks need no database.
@@ -113,6 +114,8 @@ impl ModuleRoutes {
 /// What the HTTP layer mounts for one module. The routers carry the module's
 /// paths but not its tag descriptions, which only `Module::openapi` has.
 pub struct ModuleMount {
+    /// Guards the module's protected routes.
+    pub access: ModuleAccess,
     pub routes: ModuleRoutes,
     pub openapi: utoipa::openapi::OpenApi,
 }

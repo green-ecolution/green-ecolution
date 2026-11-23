@@ -26,17 +26,23 @@ Aufgabenbereich bringt mit, was zu einer bestimmten Aufgabe gehört: **Bewässer
 liefert Bäume, Bewässerungsgruppen, Einsatzpläne und die Auswertung, **Abfall** die
 Abfallbehälter und Leerungstouren.
 
-Oben auf jeder Karte steht der Schalter mit dem Zustand **Eingeschaltet** oder
-**Ausgeschaltet**. Ein eingeschalteter Aufgabenbereich steht der ausgewählten
-Organisation und ihren Unterorganisationen zur Verfügung, solange diese nichts anderes
-einstellen. Hat eine übergeordnete Organisation den Schalter für deine Organisation
-festgelegt, lässt er sich hier nicht umlegen, und ein Satz unter dem Namen nennt die
-Organisation, die ihn festgelegt hat. Einen von oben ausgeschalteten Aufgabenbereich
-zeigt die Seite gar nicht.
+Welche Karten erscheinen, bestimmt der Betreiber der Instanz: Er gibt jedem Mandanten
+Module frei oder sperrt sie, siehe [Mandantenübersicht](./admin-tenants.md#module-freigeben-und-sperren).
+Ein Aufgabenbereich, der nicht freigegeben ist, hat hier keine Karte.
+
+Oben auf der Karte eines freigegebenen Aufgabenbereichs steht der Schalter mit dem
+Zustand **Eingeschaltet** oder **Ausgeschaltet**. Ihn bedient der Mandant, also die
+Organisation direkt unterhalb der obersten, ebenso die oberste Organisation selbst.
+Unterorganisationen eines Mandanten sehen den Zustand ohne Schalter, dazu steht der
+Hinweis „Diesen Aufgabenbereich schaltet die übergeordnete Organisation.“ Sie folgen
+ihrem Mandanten. Die Werte unter einem eingeschalteten Aufgabenbereich kann dagegen
+jede Organisation für sich eintragen.
 
 Schaltest du einen Aufgabenbereich aus, verschwinden seine Seiten für alle
-Mitarbeitenden der Organisation und ihrer Unterorganisationen aus der Navigation, von
-der Karte, vom Dashboard und aus der Einsatzplanung. Wer einen Link auf eine solche
+Mitarbeitenden der Organisation aus der Navigation, von der Karte, vom Dashboard und
+aus der Einsatzplanung. Ist die Organisation ein Mandant, trifft das auch alle ihre
+Unterorganisationen. Der Schalter der obersten Organisation betrifft dagegen nur sie
+selbst und reicht nicht bis zu den Mandanten. Wer einen Link auf eine solche
 Seite öffnet, sieht stattdessen den Hinweis **Modul nicht aktiv**. Die Daten bleiben
 unberührt und stehen wieder zur Verfügung, sobald der Aufgabenbereich erneut
 eingeschaltet wird. Auch die Rechte, die Rollen dafür enthalten, bleiben gespeichert,

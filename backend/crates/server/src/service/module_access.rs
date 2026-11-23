@@ -41,6 +41,28 @@ impl ModuleAccess {
         ensure_module_active(self.activation.as_ref(), &self.key, org).await
     }
 
+    /// Route gate: the module must be released in at least one organization the
+    /// caller reaches. Whether it is switched on is checked per organization.
+    pub async fn ensure_released(&self, caller: Caller) -> Result<(), ServiceError> {
+        let reachable = self
+            .authorization
+            .context_for(caller)
+            .await?
+            .reachable_orgs();
+        let released = self.activation.released_orgs(&self.key).await?;
+        let reached = match reachable {
+            Visibility::Unrestricted => !released.is_empty(),
+            Visibility::Only(ids) => !ids.is_disjoint(&released),
+        };
+        if reached {
+            Ok(())
+        } else {
+            Err(ServiceError::ModuleDisabled {
+                module: self.key.to_string(),
+            })
+        }
+    }
+
     pub async fn require_write(
         &self,
         caller: Caller,

@@ -3,11 +3,10 @@
 -- one collection tour per board column. Runs after 99_demo_data.sql because
 -- the tours reference its users.
 
--- The module ships switched off; TBZ switches it on for itself and its
--- sub-organizations (set_by = TBZ, so TBZ may reset it).
-INSERT INTO organization_modules (organization_id, module_key, enabled, set_by) VALUES
-  ('01980000-0000-7000-8000-000000000002', 'waste', TRUE, '01980000-0000-7000-8000-000000000002')
-ON CONFLICT (organization_id, module_key) DO NOTHING;
+-- Released for TBZ and switched on there; its sub-organizations follow.
+INSERT INTO organization_modules (organization_id, module_key, released, enabled) VALUES
+  ('01980000-0000-7000-8000-000000000002', 'waste', TRUE, TRUE)
+ON CONFLICT (organization_id, module_key) DO UPDATE SET released = TRUE, enabled = TRUE;
 
 INSERT INTO vehicles (id, number_plate, description, type, availability, driving_license, model, width, height, length, weight, organization_id) VALUES
   ('019e3fcb-2a51-7601-8000-000000000601'::uuid, 'FL-GE-601', 'Abfallsammelfahrzeug für Innenstadt und Stadtteile', 'transporter', 'available', 'C', 'Mercedes Econic 2630', 2.55, 3.40, 9.30, 26.0, '01980000-0000-7000-8000-000000000002');

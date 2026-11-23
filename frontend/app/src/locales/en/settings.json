@@ -386,8 +386,7 @@
       "usual_other": "Usually {value}.",
       "enabled": "Switched on",
       "disabled": "Switched off",
-      "fixedBy": "{name} sets this area of work.",
-      "fixedByUnknown": "A parent organization sets this area of work.",
+      "followsTenant": "This area of work is switched by the parent organization.",
       "saveHint": "Changes apply only after saving.",
       "save": "Save",
       "readOnlyNotice": "You can view the areas of work but not change them.",
@@ -519,8 +518,7 @@
       "loadErrorGeneric": "The map view could not be loaded. Please try again later.",
       "toast": {
         "saved": "Settings saved",
-        "saveFailed": "The settings could not be saved.",
-        "setByAncestor": "A parent organization has set this area of work."
+        "saveFailed": "The settings could not be saved."
       }
     }
   },

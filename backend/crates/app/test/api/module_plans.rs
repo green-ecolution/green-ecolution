@@ -2,7 +2,7 @@ use serde_json::{Value, json};
 use uuid::Uuid;
 
 use crate::{
-    helpers::{TestApp, spawn_app_with_modules, spawn_app_with_modules_and_routing},
+    helpers::{TestApp, set_module, spawn_app_with_modules, spawn_app_with_modules_and_routing},
     module_host::switch,
     settings_repo::child_org,
     test_module::{KEY, TestModule},
@@ -215,6 +215,7 @@ async fn listing_leaves_out_plans_where_the_module_is_switched_off() {
     let app = app().await;
     let root: Uuid = ROOT.parse().unwrap();
     let child = child_org(&app, "Abfall Nord", root).await;
+    set_module(&app, child, KEY, true, true).await;
     let vehicle = cargo_vehicle(&app).await;
     let root_plan = plan(&app, &[thing(&app).await], vehicle).await;
     plan_in(&app, &[thing_in(&app, child).await], vehicle, child).await;
@@ -346,4 +347,125 @@ async fn a_collection_route_with_an_unloading_station_asks_the_optimizer_to_retu
     assert_eq!(requests.len(), 1);
     let body: Value = serde_json::from_slice(&requests[0].body).unwrap();
     assert_eq!(body["problem"]["vehicles"][0]["return_full"], true);
+}
+
+async fn routed_app() -> (TestApp, wiremock::MockServer) {
+    let streamlet = wiremock::MockServer::start().await;
+    let app = spawn_app_with_modules_and_routing(
+        vec![Box::new(TestModule::new(Default::default()))],
+        &streamlet.uri(),
+    )
+    .await;
+    switch(&app, KEY, ROOT.parse().unwrap(), Some(true)).await;
+    (app, streamlet)
+}
+
+async fn assert_module_disabled(res: reqwest::Response) {
+    assert_eq!(res.status(), 403);
+    assert_eq!(
+        res.json::<Value>().await.unwrap()["code"],
+        "module.disabled"
+    );
+}
+
+#[tokio::test]
+async fn a_plan_of_a_switched_off_module_is_not_readable_by_id() {
+    let (app, _streamlet) = routed_app().await;
+    let plan = plan(&app, &[thing(&app).await], cargo_vehicle(&app).await).await;
+    let id = plan["id"].as_str().unwrap();
+
+    switch(&app, KEY, ROOT.parse().unwrap(), Some(false)).await;
+
+    for path in [
+        format!("/api/v1/plans/{id}"),
+        format!("/api/v1/plans/{id}/route"),
+        format!("/api/v1/plans/{id}/route/gpx"),
+        format!("/api/v1/plans/{id}/itinerary"),
+    ] {
+        assert_module_disabled(app.get(&path).await).await;
+    }
+}
+
+#[tokio::test]
+async fn a_plan_of_a_module_locked_for_its_tenant_is_not_readable_by_id() {
+    let app = app().await;
+    let tenant = child_org(&app, "Mandant", ROOT.parse().unwrap()).await;
+    set_module(&app, tenant, KEY, true, true).await;
+    let plan = plan_in(
+        &app,
+        &[thing_in(&app, tenant).await],
+        cargo_vehicle(&app).await,
+        tenant,
+    )
+    .await;
+    let id = plan["id"].as_str().unwrap();
+
+    set_module(&app, tenant, KEY, false, true).await;
+
+    assert_module_disabled(app.get(&format!("/api/v1/plans/{id}")).await).await;
+}
+
+#[tokio::test]
+async fn comments_of_such_a_plan_are_closed() {
+    let app = app().await;
+    let plan = plan(&app, &[thing(&app).await], cargo_vehicle(&app).await).await;
+    let id = plan["id"].as_str().unwrap();
+    let res = app
+        .post_json(
+            &format!("/api/v1/plans/{id}/comments"),
+            &json!({ "body": "Tor war zu" }),
+        )
+        .await;
+    assert_eq!(res.status(), 201);
+    let comment = res.json::<Value>().await.unwrap()["id"]
+        .as_str()
+        .unwrap()
+        .to_string();
+
+    switch(&app, KEY, ROOT.parse().unwrap(), Some(false)).await;
+
+    let comments = format!("/api/v1/plans/{id}/comments");
+    let one = format!("{comments}/{comment}");
+    assert_module_disabled(app.get(&comments).await).await;
+    assert_module_disabled(
+        app.post_json(&comments, &json!({ "body": "Noch eins" }))
+            .await,
+    )
+    .await;
+    assert_module_disabled(app.put_json(&one, &json!({ "body": "Geändert" })).await).await;
+    assert_module_disabled(app.delete(&one).await).await;
+}
+
+#[tokio::test]
+async fn an_active_module_leaves_the_plan_endpoints_as_they_were() {
+    let (app, _streamlet) = routed_app().await;
+    let plan = plan(&app, &[thing(&app).await], cargo_vehicle(&app).await).await;
+    let id = plan["id"].as_str().unwrap();
+
+    assert_eq!(app.get(&format!("/api/v1/plans/{id}")).await.status(), 200);
+    assert_eq!(
+        app.get(&format!("/api/v1/plans/{id}/route")).await.status(),
+        404
+    );
+    assert_eq!(
+        app.get(&format!("/api/v1/plans/{id}/route/gpx"))
+            .await
+            .status(),
+        404
+    );
+
+    let comments = format!("/api/v1/plans/{id}/comments");
+    let res = app.post_json(&comments, &json!({ "body": "Hallo" })).await;
+    assert_eq!(res.status(), 201);
+    let comment = res.json::<Value>().await.unwrap()["id"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    let one = format!("{comments}/{comment}");
+    assert_eq!(app.get(&comments).await.status(), 200);
+    assert_eq!(
+        app.put_json(&one, &json!({ "body": "Neu" })).await.status(),
+        200
+    );
+    assert_eq!(app.delete(&one).await.status(), 204);
 }

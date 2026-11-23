@@ -13,21 +13,6 @@
  */
 
 import { mapValues } from '../runtime';
-import type { SettingOriginDto } from './SettingOriginDto';
-import {
-    SettingOriginDtoFromJSON,
-    SettingOriginDtoFromJSONTyped,
-    SettingOriginDtoToJSON,
-    SettingOriginDtoToJSONTyped,
-} from './SettingOriginDto';
-import type { OrganizationRef } from './OrganizationRef';
-import {
-    OrganizationRefFromJSON,
-    OrganizationRefFromJSONTyped,
-    OrganizationRefToJSON,
-    OrganizationRefToJSONTyped,
-} from './OrganizationRef';
-
 /**
  * 
  * @export
@@ -41,61 +26,27 @@ export interface OrganizationModuleResponse {
      */
     enabled: boolean;
     /**
-     * The own switch was set from a level the caller does not act for, so
-     * the caller can neither change nor reset it.
-     * @type {boolean}
-     * @memberof OrganizationModuleResponse
-     */
-    fixedByAncestor: boolean;
-    /**
-     * The state without this organization's own switch, i.e. after returning it to inheritance.
-     * @type {boolean}
-     * @memberof OrganizationModuleResponse
-     */
-    inheritedEnabled: boolean;
-    /**
      * 
      * @type {string}
      * @memberof OrganizationModuleResponse
      */
     key: string;
     /**
-     * 
-     * @type {SettingOriginDto}
-     * @memberof OrganizationModuleResponse
-     */
-    origin: SettingOriginDto;
-    /**
-     * This organization's own switch, reported even while a lock above makes it dormant.
+     * The organization switches this module itself. Sub-organizations
+     * follow their tenant and report `false`.
      * @type {boolean}
      * @memberof OrganizationModuleResponse
      */
-    ownValue?: boolean | null;
-    /**
-     * The organization the own switch was set from; this one or an ancestor.
-     * @type {OrganizationRef}
-     * @memberof OrganizationModuleResponse
-     */
-    setBy?: OrganizationRef | null;
-    /**
-     * Set only where `origin` is `inherited`.
-     * @type {OrganizationRef}
-     * @memberof OrganizationModuleResponse
-     */
-    source?: OrganizationRef | null;
+    switchable: boolean;
 }
-
-
 
 /**
  * Check if a given object implements the OrganizationModuleResponse interface.
  */
 export function instanceOfOrganizationModuleResponse(value: object): value is OrganizationModuleResponse {
     if (!('enabled' in value) || value['enabled'] === undefined) return false;
-    if (!('fixedByAncestor' in value) || value['fixedByAncestor'] === undefined) return false;
-    if (!('inheritedEnabled' in value) || value['inheritedEnabled'] === undefined) return false;
     if (!('key' in value) || value['key'] === undefined) return false;
-    if (!('origin' in value) || value['origin'] === undefined) return false;
+    if (!('switchable' in value) || value['switchable'] === undefined) return false;
     return true;
 }
 
@@ -110,13 +61,8 @@ export function OrganizationModuleResponseFromJSONTyped(json: any, ignoreDiscrim
     return {
         
         'enabled': json['enabled'],
-        'fixedByAncestor': json['fixed_by_ancestor'],
-        'inheritedEnabled': json['inherited_enabled'],
         'key': json['key'],
-        'origin': SettingOriginDtoFromJSON(json['origin']),
-        'ownValue': json['own_value'] == null ? undefined : json['own_value'],
-        'setBy': json['set_by'] == null ? undefined : OrganizationRefFromJSON(json['set_by']),
-        'source': json['source'] == null ? undefined : OrganizationRefFromJSON(json['source']),
+        'switchable': json['switchable'],
     };
 }
 
@@ -132,13 +78,8 @@ export function OrganizationModuleResponseToJSONTyped(value?: OrganizationModule
     return {
         
         'enabled': value['enabled'],
-        'fixed_by_ancestor': value['fixedByAncestor'],
-        'inherited_enabled': value['inheritedEnabled'],
         'key': value['key'],
-        'origin': SettingOriginDtoToJSON(value['origin']),
-        'own_value': value['ownValue'],
-        'set_by': OrganizationRefToJSON(value['setBy']),
-        'source': OrganizationRefToJSON(value['source']),
+        'switchable': value['switchable'],
     };
 }
 
