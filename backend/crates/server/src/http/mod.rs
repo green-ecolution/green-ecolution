@@ -38,6 +38,7 @@ use domain::info::{HealthSnapshotReader, ReadinessReader, StatisticsReader, Syst
 pub mod auth;
 pub mod extractors;
 pub mod health;
+pub mod module_guard;
 pub mod navigation_throttle;
 pub mod plugin_proxy;
 mod tracing;
@@ -244,7 +245,7 @@ pub fn router(
 ) -> Router {
     let (module_routes, module_docs): (Vec<_>, Vec<_>) = modules
         .into_iter()
-        .map(|module| (module.routes, module.openapi))
+        .map(|module| ((module.access, module.routes), module.openapi))
         .unzip();
     let (router, mut api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
         .nest("/api", health::routes())

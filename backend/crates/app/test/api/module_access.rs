@@ -128,3 +128,46 @@ async fn module_reads_intersect_grants_with_activation() {
     assert_eq!(things.len(), 1);
     assert_eq!(things[0]["organization_id"], a.to_string());
 }
+
+async fn things_status(app: &TestApp, token: &str) -> (u16, Value) {
+    let resp = app
+        .get_with_bearer("/api/v1/test-module/things", token)
+        .await;
+    (resp.status().as_u16(), resp.json().await.unwrap())
+}
+
+#[tokio::test]
+async fn a_locked_module_refuses_its_routes_whatever_the_permissions() {
+    let (harness, app) = app_with_auth().await;
+    let (a, token) = seed_user_with_permissions(&harness, &app, "A", &["organization:read"]).await;
+    set_module(&app, a, KEY, false, true).await;
+
+    let (status, body) = things_status(&app, &token).await;
+    assert_eq!(status, 403);
+    assert_eq!(body["code"], "module.disabled");
+}
+
+#[tokio::test]
+async fn a_released_module_that_is_switched_off_passes_the_guard() {
+    let (harness, app) = app_with_auth().await;
+    let (a, token) = seed_user_with_permissions(&harness, &app, "A", &["organization:read"]).await;
+    set_module(&app, a, KEY, true, false).await;
+    insert_thing(&app, a).await;
+
+    let (status, body) = things_status(&app, &token).await;
+    assert_eq!(status, 200);
+    assert_eq!(body, json!([]));
+}
+
+#[tokio::test]
+async fn a_module_released_in_another_tenant_does_not_open_the_routes() {
+    let (harness, app) = app_with_auth().await;
+    let (a, token) = seed_user_with_permissions(&harness, &app, "A", &["organization:read"]).await;
+    let (b, _) = seed_user_with_permissions(&harness, &app, "B", &["organization:read"]).await;
+    set_module(&app, a, KEY, false, false).await;
+    activate(&app, b).await;
+
+    let (status, body) = things_status(&app, &token).await;
+    assert_eq!(status, 403);
+    assert_eq!(body["code"], "module.disabled");
+}

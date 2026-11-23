@@ -327,15 +327,18 @@ async fn releasing_an_unknown_module_is_rejected() {
 
 #[tokio::test]
 async fn locking_deletes_no_data() {
-    let app = spawn_app().await;
+    let (harness, app) = spawn_with_auth().await;
     app.without_release_fixture().await;
-    let tenant = create_tenant(&app, "Mandant").await;
-    assert_eq!(
-        release(&app, tenant, json!({ "waste": true }))
-            .await
-            .status(),
-        200
-    );
+    let root_member = seed_root_member(&harness, &app, &["setting:update"]).await;
+    let (tenant, token) =
+        seed_user_with_permissions(&harness, &app, "Mandant", &["waste_bin:read"]).await;
+    let release = |released: bool| {
+        let body = json!({ "modules": { "waste": released } });
+        let path = releases_path(tenant);
+        let (app, member) = (&app, &root_member);
+        async move { app.put_json_with_bearer(&path, &body, member).await }
+    };
+    assert_eq!(release(true).await.status(), 200);
     sqlx::query(
         "INSERT INTO waste_bins (id, number, latitude, longitude, geometry, volume_liters, depth_cm, organization_id)
          VALUES ($1, 'LOCK-1', 54.79, 9.44, ST_SetSRID(ST_MakePoint(9.44, 54.79), 4326), 1100, 120, $2)",
@@ -346,12 +349,11 @@ async fn locking_deletes_no_data() {
     .await
     .unwrap();
 
-    assert_eq!(
-        release(&app, tenant, json!({ "waste": false }))
-            .await
-            .status(),
-        200
-    );
+    assert_eq!(release(false).await.status(), 200);
+    let locked = app.get_with_bearer("/api/v1/waste-bins", &token).await;
+    assert_eq!(locked.status(), 403);
+    let body: Value = locked.json().await.unwrap();
+    assert_eq!(body["code"], "module.disabled");
     let rows: i64 =
         sqlx::query_scalar("SELECT count(*) FROM waste_bins WHERE organization_id = $1")
             .bind(tenant)
@@ -360,13 +362,10 @@ async fn locking_deletes_no_data() {
             .unwrap();
     assert_eq!(rows, 1);
 
-    assert_eq!(
-        release(&app, tenant, json!({ "waste": true }))
-            .await
-            .status(),
-        200
-    );
-    let bins = get_json(&app, "/api/v1/waste-bins").await;
+    assert_eq!(release(true).await.status(), 200);
+    let resp = app.get_with_bearer("/api/v1/waste-bins", &token).await;
+    assert_eq!(resp.status(), 200);
+    let bins: Value = resp.json().await.unwrap();
     let numbers: Vec<&str> = bins["data"]
         .as_array()
         .unwrap()
@@ -374,4 +373,21 @@ async fn locking_deletes_no_data() {
         .map(|b| b["number"].as_str().unwrap())
         .collect();
     assert!(numbers.contains(&"LOCK-1"), "{numbers:?}");
+}
+
+#[tokio::test]
+async fn module_settings_stay_readable_while_released_but_off() {
+    let (harness, app) = spawn_with_auth().await;
+    let (tenant, token) =
+        seed_user_with_permissions(&harness, &app, "Mandant", &["setting:read"]).await;
+    let path = format!("/api/v1/organizations/{tenant}/settings/waste");
+
+    set_module(&app, tenant, "waste", true, false).await;
+    assert_eq!(app.get_with_bearer(&path, &token).await.status(), 200);
+
+    set_module(&app, tenant, "waste", false, false).await;
+    let resp = app.get_with_bearer(&path, &token).await;
+    assert_eq!(resp.status(), 403);
+    let body: Value = resp.json().await.unwrap();
+    assert_eq!(body["code"], "module.disabled");
 }

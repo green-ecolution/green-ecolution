@@ -229,17 +229,18 @@ impl Application {
         let mut statistics_providers = std::collections::BTreeMap::new();
         let mut sensor_parsers = Vec::new();
         for module in &modules {
+            let access = server::service::module_access::ModuleAccess::new(
+                module.key(),
+                services.authorization.clone(),
+                module_activation_repo.clone(),
+            );
             let ctx = server::module::ModuleContext {
                 pool: pool.clone(),
                 event_bus: event_bus.clone(),
                 authorization: services.authorization.clone(),
                 organizations: repos.organization_reader.clone(),
                 settings: settings_repo.clone(),
-                access: server::service::module_access::ModuleAccess::new(
-                    module.key(),
-                    services.authorization.clone(),
-                    module_activation_repo.clone(),
-                ),
+                access: access.clone(),
                 users: user_service.clone(),
                 config: config.clone(),
                 sensors: services.sensor.clone(),
@@ -254,6 +255,7 @@ impl Application {
                 .map_err(|err| std::io::Error::other(err.to_string()))?;
             handlers.extend(runtime.event_handlers);
             module_mounts.push(server::module::ModuleMount {
+                access,
                 routes: runtime.routes,
                 openapi: module.openapi(),
             });

@@ -113,6 +113,8 @@ impl ModuleRoutes {
 /// What the HTTP layer mounts for one module. The routers carry the module's
 /// paths but not its tag descriptions, which only `Module::openapi` has.
 pub struct ModuleMount {
+    /// Guards the module's protected routes.
+    pub access: ModuleAccess,
     pub routes: ModuleRoutes,
     pub openapi: utoipa::openapi::OpenApi,
 }
