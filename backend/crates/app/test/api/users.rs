@@ -712,6 +712,24 @@ async fn creating_a_user_with_a_role_of_another_organization_returns_422() {
 }
 
 #[tokio::test]
+async fn creating_a_user_with_a_role_beyond_the_callers_grants_returns_403() {
+    let (harness, app) = spawn_with_auth().await;
+    let (org, token) =
+        seed_user_with_permissions(&harness, &app, "Mandant", CALLER_PERMISSIONS).await;
+    let stronger_role = seed_role(&app, org, &["sensor:read", "sensor:delete"]).await;
+    harness
+        .mock_account_creation(Uuid::now_v7(), "mmustermann")
+        .await;
+
+    let resp = app
+        .post_json_with_bearer("/api/v1/users", &new_person(org, &[stronger_role]), &token)
+        .await;
+
+    assert_eq!(resp.status(), 403);
+    assert!(harness.account_creations().await.is_empty());
+}
+
+#[tokio::test]
 async fn creating_a_user_with_a_taken_username_returns_409() {
     let (harness, app) = spawn_with_auth().await;
     let (org, token) =

@@ -702,6 +702,7 @@ mod tests {
         total_override: Option<u64>,
         deleted: Mutex<Vec<Uuid>>,
         created: Mutex<Vec<UserIdentityCreate>>,
+        created_ids: Mutex<Vec<Uuid>>,
         create_error: Mutex<Option<RepositoryError>>,
         delete_fails: bool,
     }
@@ -714,6 +715,7 @@ mod tests {
                 total_override: None,
                 deleted: Mutex::new(Vec::new()),
                 created: Mutex::new(Vec::new()),
+                created_ids: Mutex::new(Vec::new()),
                 create_error: Mutex::new(None),
                 delete_fails: false,
             }
@@ -730,6 +732,7 @@ mod tests {
                 return Err(error);
             }
             let created = identity(Uuid::now_v7(), entity.username.as_str());
+            self.created_ids.lock().unwrap().push(created.id);
             self.created.lock().unwrap().push(entity);
             Ok(created)
         }
@@ -928,7 +931,7 @@ mod tests {
             _role_id: Id<Role>,
         ) -> Result<(), RepositoryError> {
             if self.assign_fails {
-                return Err(RepositoryError::Internal("down".into()));
+                return Err(RepositoryError::Internal("role assignment down".into()));
             }
             Ok(())
         }
@@ -1354,9 +1357,10 @@ mod tests {
             result,
             Err(ServiceError::Repository(RepositoryError::Internal(_)))
         ));
-        let account = repo.deleted.lock().unwrap().clone();
-        assert_eq!(account.len(), 1);
-        assert_eq!(*profiles.deleted.lock().unwrap(), account);
+        let created = repo.created_ids.lock().unwrap().clone();
+        assert_eq!(created.len(), 1);
+        assert_eq!(*repo.deleted.lock().unwrap(), created);
+        assert_eq!(*profiles.deleted.lock().unwrap(), created);
     }
 
     #[tokio::test]
@@ -1384,10 +1388,10 @@ mod tests {
 
         let result = svc.register(registration(org, vec![role_id])).await;
 
-        assert!(matches!(
-            result,
-            Err(ServiceError::Repository(RepositoryError::Internal(_)))
-        ));
+        let Err(ServiceError::Repository(RepositoryError::Internal(message))) = result else {
+            panic!("expected the internal error of the role assignment");
+        };
+        assert_eq!(message, "role assignment down");
         assert_eq!(repo.deleted.lock().unwrap().len(), 1);
         assert_eq!(profiles.deleted.lock().unwrap().len(), 1);
     }
