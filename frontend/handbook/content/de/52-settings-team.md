@@ -2,7 +2,7 @@
 slug: settings-team
 title: Mitarbeitende und Rollen
 part: administration
-summary: Mitarbeitende, Rollen und ihren Zuschnitt verwalten, den Berechtigungskatalog aus Ressource und Aktion sowie die mitgelieferten Rollenvorlagen.
+summary: Mitarbeitende verwalten und hinzufügen, Rollen und ihren Zuschnitt, den Berechtigungskatalog aus Ressource und Aktion sowie die mitgelieferten Rollenvorlagen.
 routes: ['/settings/organization/$orgId/members', '/settings/organization/$orgId/roles']
 ---
 
@@ -57,6 +57,44 @@ Zuordnung von Mitarbeitenden zu einem [Einsatzplan](./watering-plans.md).
 An deinem eigenen Konto lassen sich Organisation und Rollen über diese Seite nicht
 ändern, selbst mit der passenden Berechtigung nicht; das muss eine andere Person mit
 Verwaltungsrechten für dich übernehmen.
+
+## Eine Person hinzufügen
+
+Mit der Berechtigung `user:create` in der gewählten Organisation legst du neue
+Mitarbeitende direkt in der Anwendung an. Die Schaltfläche **Person hinzufügen** steht in
+der Kopfzeile der Seite, bei einer leeren Organisation stattdessen in der erklärenden
+Ansicht. Der Dialog fragt nach Vorname, Nachname, E-Mail-Adresse und Benutzername. Der
+Benutzername ist mit dem Teil der E-Mail-Adresse vor dem @ vorbelegt und lässt sich
+ändern; hast du ihn einmal von Hand angepasst, folgt er der E-Mail-Adresse nicht mehr.
+Mit diesem Benutzernamen meldet sich die Person an. Rollen sind freiwillig und lassen sich
+auch später vergeben, wie oben unter Mitarbeitende verwalten beschrieben. Zur Auswahl
+stehen nur Rollen der gewählten Organisation.
+
+![Der Dialog Person hinzufügen mit ausgefüllten Angaben und zwei gewählten Rollen](../images/settings-members-add.png)
+
+Die Anwendung legt das Konto selbst an und vergibt ein Startpasswort. Du siehst es genau
+einmal im Dialog und kannst es dort kopieren; die Anwendung verschickt keine E-Mail.
+Gib das Passwort deshalb persönlich weiter. Die Person muss es bei der ersten Anmeldung
+ändern. Nach **Fertig** erscheint sie in der Liste und ist dort ausgewählt. Ist der
+Benutzername oder die E-Mail-Adresse bereits vergeben, steht darüber eine Meldung über
+beiden Feldern. Welches der beiden Felder betroffen ist, meldet das System nicht
+getrennt, prüfe also beide. Auf einer Instanz ohne Anmeldung wird die Funktion nicht
+angeboten.
+
+## Wenn noch niemand da ist
+
+Enthält die Liste mit Unterorganisationen, ohne Suche und ohne Rollenfilter, nur dich
+selbst, zeigt die Seite statt der Liste eine erklärende Ansicht mit der Überschrift
+„Außer dir ist noch niemand in“ und dem Namen der Organisation. Hat die Organisation gar
+keine Person, lautet sie „In“, der Name und „ist noch niemand“. Die Ansicht erklärt, wer
+Mitarbeitende sind, zeigt ein Beispiel und nennt drei Verwendungen: eigener Zugang,
+Rollen vergeben und Personen für Einsätze einteilen. Dazu steht ein Hinweis, dass eine
+Person immer zu einer Organisation gehört und sich später in eine andere verschieben
+lässt. Wer `user:create` besitzt, findet hier **Person hinzufügen**. Sobald eine weitere
+Person dazukommt, erscheint die gewohnte Liste mit den Details daneben. Suchst du oder
+filterst du nach Rolle, bleibt es bei der Meldung, dass nichts gefunden wurde.
+
+![Die Seite Mitarbeitende, solange nur die angemeldete Person in der Organisation ist](../images/settings-members-empty.png)
 
 ## Rollen und ihr Zuschnitt
 

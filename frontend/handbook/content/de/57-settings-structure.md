@@ -2,7 +2,7 @@
 slug: settings-structure
 title: Struktur
 part: administration
-summary: Wie der Organisationsbaum aufgebaut ist, was die Tabelle der Struktur zeigt, wie sich eine Unterorganisation anlegen lässt und wie Berechtigungen im Baum nach unten wirken.
+summary: Wie der Organisationsbaum aufgebaut ist, was die Tabelle der Struktur zeigt, was die Seite ohne Unterorganisationen zeigt, wie sich eine Unterorganisation anlegen lässt und wie Berechtigungen im Baum nach unten wirken.
 routes: ['/settings/organization/$orgId/structure']
 ---
 
@@ -36,6 +36,26 @@ Organisation. Dasselbe erreichst du über die Organisationswahl in der Navigatio
 unten als Eintrag **Struktur verwalten** hierher zurückführt.
 
 ![Die Struktur von TBZ mit ihren Unterorganisationen, Personenzahlen, Kontaktpersonen und Modulen](../images/settings-structure.png)
+
+## Solange es keine Unterorganisationen gibt
+
+Würde die Tabelle außer der gewählten Organisation keine weitere zeigen, ersetzt die Seite
+sie durch eine erklärende Ansicht. Sie sagt, dass die gewählte Organisation noch keine
+Unterorganisationen hat, und erklärt, was eine Unterorganisation ist: ein eigener Bereich
+innerhalb der Organisation, etwa ein Betriebshof, eine Abteilung oder eine beauftragte
+Firma. Ein kleines Beispiel zeigt, wie das aussehen könnte, und drei Punkte nennen den
+Nutzen. Jede Unterorganisation hat ein eigenes Team mit eigenen Rollen, ihre Daten sind
+getrennt, und die übergeordnete Organisation behält mit den passenden Rechten den
+Überblick. Ein Hinweis erinnert daran, dass sich eine Unterorganisation später umbenennen,
+aber nicht verschieben lässt und dass sie sich nur löschen lässt, solange sie weder
+Mitarbeitende noch eigene Unterorganisationen hat. Wer `organization:create` besitzt,
+findet in der Ansicht die Schaltfläche **Unterorganisation anlegen**. Sobald eine zweite
+Organisation sichtbar ist, erscheint wieder die Tabelle, und die Schaltfläche steht in der
+Kopfzeile der Seite. Ein Mitglied der obersten Organisation, das einen Mandanten ohne
+Unterorganisationen wählt, sieht weiter die Tabelle, weil sie dann auch die übrigen
+Organisationen zeigt.
+
+![Die Struktur einer Organisation ohne Unterorganisationen mit Erklärung, Beispiel und Schaltfläche zum Anlegen](../images/settings-structure-empty.png)
 
 ## Unterorganisationen
 
