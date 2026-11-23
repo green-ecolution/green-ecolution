@@ -83,9 +83,11 @@ const OrganizationStructurePage = () => {
           <h2 className="font-lato text-2xl font-bold text-dark">
             {t('organization.structure.title')}
           </h2>
-          <p className="mt-1 max-w-[62ch] text-sm text-dark-600">
-            {t('organization.structure.intro')}
-          </p>
+          {!empty && (
+            <p className="mt-1 max-w-[62ch] text-sm text-dark-600">
+              {t('organization.structure.intro')}
+            </p>
+          )}
         </header>
         {!empty && can(['organization:create']) && (
           <Button

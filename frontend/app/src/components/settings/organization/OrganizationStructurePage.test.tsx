@@ -244,6 +244,11 @@ describe('OrganizationStructurePage', () => {
       expect(screen.getByText(/^Gut zu wissen:/)).toBeInTheDocument()
     })
 
+    it('leaves out the intro about clicking a name, since no name is listed', () => {
+      renderPage()
+      expect(screen.queryByText(/Ein Klick auf den Namen/)).not.toBeInTheDocument()
+    })
+
     it('offers to create one only with the right', () => {
       renderPage()
       expect(screen.getAllByRole('button', { name: 'Unterorganisation anlegen' })).toHaveLength(1)
