@@ -83,23 +83,26 @@ async fn a_tenants_switch_reaches_its_sub_organizations() {
     let root = Uuid::parse_str(ROOT_ORG_ID).unwrap();
     let mid = child_org(&app, "Mitte", root).await;
     let leaf = child_org(&app, "Blatt", mid).await;
+    let deep = child_org(&app, "Tief", leaf).await;
 
     assert_eq!(switch(&app, KEY, mid, Some(true)).await.status(), 200);
 
-    let body: serde_json::Value = app
-        .get(&format!("/api/v1/organizations/{leaf}/modules"))
-        .await
-        .json()
-        .await
-        .unwrap();
-    let entry = body["modules"]
-        .as_array()
-        .unwrap()
-        .iter()
-        .find(|m| m["key"] == KEY)
-        .unwrap();
-    assert_eq!(entry["enabled"], true);
-    assert_eq!(entry["switchable"], false);
+    for org in [leaf, deep] {
+        let body: serde_json::Value = app
+            .get(&format!("/api/v1/organizations/{org}/modules"))
+            .await
+            .json()
+            .await
+            .unwrap();
+        let entry = body["modules"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|m| m["key"] == KEY)
+            .unwrap();
+        assert_eq!(entry["enabled"], true, "{org}");
+        assert_eq!(entry["switchable"], false, "{org}");
+    }
 }
 
 #[tokio::test]
