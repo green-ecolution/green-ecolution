@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type CSSProperties } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useBlocker } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
+import { Plus } from 'lucide-react'
 import type { TFunction } from 'i18next'
 import {
   AlertDialog,
@@ -24,9 +25,12 @@ import { useUserMutations } from '@/hooks/useUserMutations'
 import { useContainerWiderThan } from '@/hooks/useContainerWiderThan'
 import { TWO_PANE_MIN_WIDTH } from '../twoPaneWidth'
 import { statusOf } from '@/lib/httpError'
+import { readAuthBypass } from '@/lib/auth/runtimeConfig'
+import AddMemberDialog from './AddMemberDialog'
 import MemberActionButtons from './MemberActionButtons'
 import MemberDetail from './MemberDetail'
 import MemberList from './MemberList'
+import MembersEmptyState from './MembersEmptyState'
 import { buildTree, flatten } from '../organization/organizationTree'
 import { useSettingsOrganization } from '../organization/useSettingsOrganization'
 import { fullNameOf, isFiltered, phoneNumberIssue } from './memberList'
@@ -68,6 +72,7 @@ const MembersPage = () => {
   const canUpdate = can(['user:update'])
   const canReadRoles = can(['role:read'])
   const canReadOrganizations = can(['organization:read'])
+  const canCreate = can(['user:create']) && !readAuthBypass()
   const { ref: layoutRef, isWide } = useContainerWiderThan<HTMLDivElement>(TWO_PANE_MIN_WIDTH)
 
   const [search, setSearch] = useState('')
@@ -81,6 +86,7 @@ const MembersPage = () => {
   const [pendingSelection, setPendingSelection] = useState<string | null>(null)
   const [pendingClose, setPendingClose] = useState(false)
   const [confirmOrgChange, setConfirmOrgChange] = useState<string | null>(null)
+  const [addOpen, setAddOpen] = useState(false)
 
   useEffect(() => {
     const timeout = setTimeout(() => setDebouncedSearch(search.trim()), SEARCH_DEBOUNCE_MS)
@@ -123,6 +129,11 @@ const MembersPage = () => {
     enabled: canReadRoles,
   })
 
+  const { data: ownOrgRoles } = useQuery({
+    ...roleQueries.org(orgId),
+    enabled: canReadRoles,
+  })
+
   const { assignRole, revokeRole, setOrganization, updateProfile } = useUserMutations()
   const draftState = useMemberProfileDraft()
   const { draft, dirty, edit, discard } = draftState
@@ -155,6 +166,15 @@ const MembersPage = () => {
   const organizationList = buildOrganizationRows(visibleOrganizations).flatMap(
     (row) => visibleOrganizations.find((org) => org.id === row.id) ?? [],
   )
+  const ownOrganizationName = visibleOrganizations.find((org) => org.id === orgId)?.name ?? ''
+  const nobodyElseListed =
+    !usersLoading &&
+    userPage !== undefined &&
+    includeDescendants &&
+    page === 1 &&
+    !filtered &&
+    !isFiltered(debouncedSearch, roleFilter) &&
+    members.every((user) => user.id === me?.id)
   const isSelf = selected !== null && selected.id === me?.id
 
   useEffect(() => {
@@ -248,6 +268,15 @@ const MembersPage = () => {
   const changeRoleFilter = (roleId: string | null) => {
     setRoleFilter(roleId)
     setPage(1)
+  }
+
+  const selectCreated = (user: UserResponse) => {
+    setSearch('')
+    setDebouncedSearch('')
+    setRoleFilter(null)
+    setPage(1)
+    if (dirty) setPendingSelection(user.id)
+    else goTo(user.id)
   }
 
   const resetFilters = () => {
@@ -382,45 +411,73 @@ const MembersPage = () => {
   const targetOrganization = organizationList.find((org) => org.id === confirmOrgChange) ?? null
   const sourceOrganizationName = selected?.organization?.name ?? null
 
+  const addButton = (
+    <Button type="button" size="sm" onClick={() => setAddOpen(true)}>
+      <Plus className="size-4" aria-hidden />
+      {t('members.add.button')}
+    </Button>
+  )
+
   return (
     <>
-      {/* Measured, not the branch content, so the ResizeObserver keeps observing
+      {nobodyElseListed ? (
+        <MembersEmptyState
+          organizationName={ownOrganizationName}
+          variant={members.length === 0 ? 'none' : 'onlyMe'}
+          viewerName={me ? fullNameOf(me) : null}
+          onAdd={canCreate ? () => setAddOpen(true) : undefined}
+        />
+      ) : (
+        <>
+          {canCreate && <div className="mb-4 flex justify-end">{addButton}</div>}
+          {/* Measured, not the branch content, so the ResizeObserver keeps observing
           across the two-pane <-> Drawer switch instead of losing its element. */}
-      <div ref={layoutRef}>
-        {isWide ? (
-          <div className="grid grid-cols-[300px_minmax(0,1fr)] gap-6">
-            {list}
-            {/* --member-panel-bg lets the sticky action bar blend into its surface. */}
-            <div
-              className="min-w-0"
-              style={{ '--member-panel-bg': 'var(--color-dark-50)' } as CSSProperties}
-            >
-              {renderDetail(true)}
-            </div>
-          </div>
-        ) : (
-          <>
-            {list}
-            <Drawer open={detailOpen} onOpenChange={requestClose}>
-              <DrawerContent className="max-h-[90vh]">
-                {/* Content scrolls in its own region; the actions live in a fixed
+          <div ref={layoutRef}>
+            {isWide ? (
+              <div className="grid grid-cols-[300px_minmax(0,1fr)] gap-6">
+                {list}
+                {/* --member-panel-bg lets the sticky action bar blend into its surface. */}
+                <div
+                  className="min-w-0"
+                  style={{ '--member-panel-bg': 'var(--color-dark-50)' } as CSSProperties}
+                >
+                  {renderDetail(true)}
+                </div>
+              </div>
+            ) : (
+              <>
+                {list}
+                <Drawer open={detailOpen} onOpenChange={requestClose}>
+                  <DrawerContent className="max-h-[90vh]">
+                    {/* Content scrolls in its own region; the actions live in a fixed
                     footer below so they stay anchored to the drawer bottom. */}
-                <div className="min-h-0 flex-1 overflow-y-auto p-4">{renderDetail(false)}</div>
-                {draft && dirty && canUpdate && (
-                  <DrawerFooter className="flex-col-reverse gap-2 border-t border-dark-200 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
-                    <MemberActionButtons
-                      saving={updateProfile.isPending}
-                      phoneNumberInvalid={phoneNumberIssue(draft.phoneNumber) !== null}
-                      onSave={save}
-                      onCancel={resetDraft}
-                    />
-                  </DrawerFooter>
-                )}
-              </DrawerContent>
-            </Drawer>
-          </>
-        )}
-      </div>
+                    <div className="min-h-0 flex-1 overflow-y-auto p-4">{renderDetail(false)}</div>
+                    {draft && dirty && canUpdate && (
+                      <DrawerFooter className="flex-col-reverse gap-2 border-t border-dark-200 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
+                        <MemberActionButtons
+                          saving={updateProfile.isPending}
+                          phoneNumberInvalid={phoneNumberIssue(draft.phoneNumber) !== null}
+                          onSave={save}
+                          onCancel={resetDraft}
+                        />
+                      </DrawerFooter>
+                    )}
+                  </DrawerContent>
+                </Drawer>
+              </>
+            )}
+          </div>
+        </>
+      )}
+
+      <AddMemberDialog
+        open={addOpen}
+        organizationId={orgId}
+        organizationName={ownOrganizationName}
+        roles={canReadRoles ? (ownOrgRoles ?? []) : null}
+        onOpenChange={setAddOpen}
+        onCreated={selectCreated}
+      />
 
       <AlertDialog
         open={confirmOrgChange !== null}

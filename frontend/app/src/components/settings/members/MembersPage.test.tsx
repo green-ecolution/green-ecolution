@@ -103,6 +103,14 @@ vi.mock('@/hooks/useContainerWiderThan', () => ({
   useContainerWiderThan: () => ({ ref: vi.fn(), isWide: isWide() }),
 }))
 
+const NEW_PERSON = member('u-new', 'Neo', 'Neumann', 'amt', [])
+let listedOverride: UserResponse[] | null = null
+
+vi.mock('./AddMemberDialog', () => ({
+  default: ({ open, onCreated }: { open: boolean; onCreated: (user: UserResponse) => void }) =>
+    open ? <button onClick={() => onCreated(NEW_PERSON)}>Dialog fertig</button> : null,
+}))
+
 const assignMutate = vi.fn()
 const revokeMutate = vi.fn()
 const setOrgMutate = vi.fn()
@@ -111,6 +119,7 @@ const assignError = vi.fn((): unknown => null)
 const setOrgError = vi.fn((): unknown => null)
 vi.mock('@/hooks/useUserMutations', () => ({
   useUserMutations: () => ({
+    createUser: { mutate: vi.fn(), isPending: false, error: null, reset: vi.fn() },
     assignRole: { mutate: assignMutate, isPending: false, error: assignError(), reset: vi.fn() },
     revokeRole: { mutate: revokeMutate, isPending: false, error: null, reset: vi.fn() },
     setOrganization: {
@@ -141,7 +150,16 @@ vi.mock('@tanstack/react-query', async () => {
     useQuery: (options: { queryKey: unknown[] }) => {
       const [scope, second, third] = options.queryKey
       if (scope === 'users' && second === 'me') {
-        return { data: { id: meId(), roles: [], organization: ORGS[0] }, isLoading: false }
+        return {
+          data: {
+            id: meId(),
+            firstName: 'Anna',
+            lastName: 'Ahlmann',
+            roles: [],
+            organization: ORGS[0],
+          },
+          isLoading: false,
+        }
       }
       if (scope === 'users') {
         const params = (second ?? {}) as {
@@ -151,7 +169,7 @@ vi.mock('@tanstack/react-query', async () => {
         }
         listParams.push(params)
         // The organization scope is the backend's job; the mock returns everyone.
-        const matches = users.filter((user) => {
+        const matches = (listedOverride ?? users).filter((user) => {
           if (params.roleId && !user.roles.some((r) => r.id === params.roleId)) return false
           if (params.query) {
             const needle = params.query.toLowerCase()
@@ -208,6 +226,8 @@ describe('MembersPage', () => {
     // clearAllMocks keeps return values, so every error mock is reset explicitly.
     vi.clearAllMocks()
     listParams.length = 0
+    listedOverride = null
+    vi.stubEnv('VITE_AUTH_BYPASS', '')
     context.orgId = 'amt'
     // Nobody in the list is the signed-in user by default; the self-lock test
     // opts in explicitly.
@@ -615,6 +635,87 @@ describe('MembersPage', () => {
 
       expect(container.querySelectorAll(`img[src*="u-legacy"]`)).toHaveLength(0)
       expect(screen.getAllByText('CD')).toHaveLength(2)
+    })
+  })
+  describe('empty view', () => {
+    const justAnna = users.filter((user) => user.id === 'u-anna')
+
+    it('explains members while nobody but the viewer is listed', () => {
+      meId.mockReturnValue('u-anna')
+      listedOverride = justAnna
+      render(<MembersPage />)
+
+      expect(
+        screen.getByRole('heading', { name: 'Außer dir ist noch niemand in Grünflächenamt' }),
+      ).toBeInTheDocument()
+      expect(screen.getByText('Was du mit Mitarbeitenden machen kannst')).toBeInTheDocument()
+      expect(screen.getByText(/Gut zu wissen/)).toBeInTheDocument()
+      expect(screen.queryByRole('list', { name: 'Mitarbeitende' })).not.toBeInTheDocument()
+    })
+
+    it('names an organization without any person', () => {
+      listedOverride = []
+      render(<MembersPage />)
+
+      expect(
+        screen.getByRole('heading', { name: 'In Grünflächenamt ist noch niemand' }),
+      ).toBeInTheDocument()
+    })
+
+    it('keeps the normal list while a search or filter is set', async () => {
+      meId.mockReturnValue('u-anna')
+      render(<MembersPage />)
+
+      await userEvent.type(screen.getByRole('searchbox', { name: /suchen/i }), 'gibtesnicht')
+      expect(await screen.findByText('Keine Person passt zu Suche und Filter.')).toBeInTheDocument()
+      expect(screen.queryByText(/noch niemand/)).not.toBeInTheDocument()
+
+      await userEvent.clear(screen.getByRole('searchbox', { name: /suchen/i }))
+      await userEvent.type(screen.getByRole('searchbox', { name: /suchen/i }), 'Ahlmann')
+      expect(
+        await screen.findByRole('heading', { name: '1 Treffer in Grünflächenamt' }),
+      ).toBeInTheDocument()
+      expect(screen.queryByText(/noch niemand/)).not.toBeInTheDocument()
+    })
+
+    it('offers to add a person only with user:create', () => {
+      permissions.mockReturnValue(new Set(['user:read']))
+      const { unmount } = render(<MembersPage />)
+      expect(screen.queryByRole('button', { name: 'Person hinzufügen' })).not.toBeInTheDocument()
+      unmount()
+
+      permissions.mockReturnValue(new Set(['user:read', 'user:create']))
+      const normal = render(<MembersPage />)
+      expect(screen.getByRole('button', { name: 'Person hinzufügen' })).toBeInTheDocument()
+      normal.unmount()
+
+      listedOverride = []
+      render(<MembersPage />)
+      const button = screen.getByRole('button', { name: 'Person hinzufügen' })
+      expect(button.closest('section')).not.toBeNull()
+    })
+
+    it('hides the button in the demo bypass', () => {
+      vi.stubEnv('VITE_AUTH_BYPASS', 'true')
+      render(<MembersPage />)
+      expect(screen.queryByRole('button', { name: 'Person hinzufügen' })).not.toBeInTheDocument()
+    })
+
+    it('selects the new person after adding', async () => {
+      listedOverride = [...users, NEW_PERSON]
+      render(<MembersPage />)
+      await userEvent.type(screen.getByRole('searchbox', { name: /suchen/i }), 'Boysen')
+      await userEvent.click(screen.getByRole('button', { name: 'Person hinzufügen' }))
+
+      await userEvent.click(screen.getByRole('button', { name: 'Dialog fertig' }))
+
+      expect(screen.getByRole('searchbox', { name: /suchen/i })).toHaveValue('')
+      expect(lastListParams()).toMatchObject({ page: 1, includeDescendants: true })
+      expect(lastListParams()).not.toHaveProperty('query', 'Boysen')
+      expect(list().getByRole('button', { name: /Neo Neumann/ })).toHaveAttribute(
+        'aria-current',
+        'true',
+      )
     })
   })
 })

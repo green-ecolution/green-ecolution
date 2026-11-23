@@ -73,6 +73,9 @@
       "malformed_path_parameter": "Der Verweis in der Adresse ist ungültig.",
       "malformed_query_parameter": "Ein Filter- oder Seitenparameter ist ungültig.",
       "malformed_body": "Die gesendeten Daten konnten nicht gelesen werden."
+    },
+    "user": {
+      "identity_taken": "Der Benutzername oder die E-Mail-Adresse ist bereits vergeben."
     }
   },
   "status": {

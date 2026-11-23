@@ -32,6 +32,15 @@ export interface UpdateProfileVariables {
   wateringPlanSelectable: boolean
 }
 
+export interface CreateUserVariables {
+  organizationId: string
+  firstName: string
+  lastName: string
+  email: string
+  username: string
+  roleIds: string[]
+}
+
 /** 403 (role exceeds own grants) and 409 (own account) are shown at the card. */
 const isFieldLevel = (error: unknown): boolean => {
   const status = statusOf(error)
@@ -115,5 +124,23 @@ export const useUserMutations = () => {
     },
   })
 
-  return { assignRole, revokeRole, setOrganization, updateProfile }
+  // No toasts and no cache write: the response carries the one-time initial
+  // password, which only the open dialog may hold.
+  const createUser = useMutation({
+    gcTime: 0,
+    mutationFn: (variables: CreateUserVariables) =>
+      userApi.createUser({
+        userRegisterRequest: {
+          organizationId: variables.organizationId,
+          firstName: variables.firstName,
+          lastName: variables.lastName,
+          email: variables.email,
+          username: variables.username,
+          roleIds: variables.roleIds,
+        },
+      }),
+    onSuccess: invalidate,
+  })
+
+  return { createUser, assignRole, revokeRole, setOrganization, updateProfile }
 }

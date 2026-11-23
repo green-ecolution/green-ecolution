@@ -73,6 +73,9 @@
       "malformed_path_parameter": "The reference in the address is invalid.",
       "malformed_query_parameter": "A filter or paging parameter is invalid.",
       "malformed_body": "The submitted data could not be read."
+    },
+    "user": {
+      "identity_taken": "The username or email address is already taken."
     }
   },
   "status": {
