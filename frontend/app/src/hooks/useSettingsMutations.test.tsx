@@ -74,6 +74,9 @@ describe('useUpdateOrganizationModules', () => {
   it('marks the cached switches of a sub-organization stale after the tenant switch', async () => {
     updateOrganizationModules.mockResolvedValue({ modules: [] })
     const { result, queryClient } = renderHookWithClient(() => useUpdateOrganizationModules())
+    // The test client collects unobserved queries at once; without this the
+    // seeded answer may be gone before the assertion reads its state.
+    queryClient.setQueryDefaults(['organizations', 'sub-1', 'modules'], { gcTime: Infinity })
     queryClient.setQueryData(['organizations', 'sub-1', 'modules'], { modules: [] })
 
     await act(() => result.current.mutateAsync({ orgId: 'tenant', modules: { irrigation: false } }))
