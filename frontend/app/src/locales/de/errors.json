@@ -39,7 +39,9 @@
     },
     "module": {
       "disabled": "Dieses Modul ist für die Organisation nicht aktiviert.",
-      "unknown": "Dieses Modul ist nicht bekannt."
+      "unknown": "Dieses Modul ist nicht bekannt.",
+      "not_switchable": "Aufgabenbereiche schaltet nur die übergeordnete Organisation.",
+      "not_a_tenant": "Module lassen sich nur für Mandanten freigeben."
     },
     "vehicle": {
       "capacity_missing": "Das Fahrzeug hat keine passende Kapazität für diesen Plan."

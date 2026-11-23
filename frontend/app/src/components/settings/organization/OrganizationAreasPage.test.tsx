@@ -27,9 +27,7 @@ const modulesOf = (
   modules: rows.map((row) => ({
     key: 'probe',
     enabled: true,
-    inheritedEnabled: true,
-    origin: 'default',
-    fixedByAncestor: false,
+    switchable: true,
     ...row,
   })),
 })
@@ -117,7 +115,9 @@ const probeManifest: ModuleManifest = {
   }),
 }
 
-vi.mock('@/modules/registry', () => ({ moduleManifests: [probeManifest] }))
+const lockedManifest: ModuleManifest = { ...probeManifest, key: 'locked' }
+
+vi.mock('@/modules/registry', () => ({ moduleManifests: [probeManifest, lockedManifest] }))
 
 const updateSettingsMutate = vi.fn((_vars: UpdateSettingsVariables) => Promise.resolve())
 const updateModulesMutate = vi.fn((vars: UpdateOrganizationModulesVariables) => {
@@ -225,7 +225,7 @@ describe('OrganizationAreasPage', () => {
   })
 
   it('shows a module\u2019s fields as soon as it is switched on in the draft', async () => {
-    modulesMap.nord = modulesOf([{ enabled: false, inheritedEnabled: false }])
+    modulesMap.nord = modulesOf([{ enabled: false }])
     await renderLoaded()
     expect(screen.queryByLabelText('Probewert')).toBeNull()
     await userEvent.click(await screen.findByRole('switch', { name: 'Bewässerung' }))
@@ -234,7 +234,7 @@ describe('OrganizationAreasPage', () => {
 
   it('saves in three phases: switch on, values, switch off', async () => {
     modulesMap.nord = modulesOf([
-      { key: 'probe', enabled: false, inheritedEnabled: false },
+      { key: 'probe', enabled: false },
       { key: 'other', enabled: true },
     ])
     await renderLoaded()
@@ -260,11 +260,21 @@ describe('OrganizationAreasPage', () => {
     expect(probeSave).not.toHaveBeenCalled()
   })
 
-  it('disables a switch a parent set and says who', async () => {
-    modulesMap.nord = modulesOf([{ fixedByAncestor: true, setBy: { id: 'amt' } }])
+  it('shows the state without a switch where the organization follows its tenant', async () => {
+    modulesMap.nord = modulesOf([{ switchable: false }])
     await renderLoaded()
-    expect(await screen.findByRole('switch', { name: 'Bewässerung' })).toBeDisabled()
-    expect(screen.getByText('Diesen Aufgabenbereich legt Grünflächenamt fest.')).toBeInTheDocument()
+    expect(
+      await screen.findByText('Diesen Aufgabenbereich schaltet die übergeordnete Organisation.'),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Eingeschaltet')).toBeInTheDocument()
+    expect(screen.queryByRole('switch', { name: 'Bewässerung' })).toBeNull()
+  })
+
+  it('shows no card for a module the response does not list', async () => {
+    modulesMap.nord = modulesOf([{ key: 'probe' }])
+    await renderLoaded()
+    await screen.findByRole('switch', { name: 'Bewässerung' })
+    expect(screen.getAllByRole('switch', { name: 'Bewässerung' })).toHaveLength(1)
   })
 
   it('keeps save disabled while a value is invalid and explains it at the field', async () => {

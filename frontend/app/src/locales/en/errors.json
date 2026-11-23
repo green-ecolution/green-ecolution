@@ -39,7 +39,9 @@
     },
     "module": {
       "disabled": "This module is not enabled for the organization.",
-      "unknown": "This module is unknown."
+      "unknown": "This module is unknown.",
+      "not_switchable": "Areas of work are switched by the parent organization only.",
+      "not_a_tenant": "Modules can only be released for tenants."
     },
     "vehicle": {
       "capacity_missing": "The vehicle has no matching capacity for this plan."

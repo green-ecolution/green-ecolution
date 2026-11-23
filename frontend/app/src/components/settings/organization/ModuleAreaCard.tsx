@@ -10,9 +10,12 @@ interface ModuleAreaCardProps {
   /** Without a switch the card has no on/off state (the sensors card). */
   toggle?: {
     enabled: boolean
-    disabled: boolean
     note: string | null
-    onChange: (enabled: boolean) => void
+    /** Absent where the organization only follows: the state shows without a switch. */
+    control?: {
+      disabled: boolean
+      onChange: (enabled: boolean) => void
+    }
   }
   children?: ReactNode
 }
@@ -48,13 +51,15 @@ const ModuleAreaCard = ({
             <span className="text-sm font-semibold text-dark">
               {toggle.enabled ? t('organization.areas.enabled') : t('organization.areas.disabled')}
             </span>
-            <Switch
-              aria-labelledby={titleId}
-              aria-describedby={toggle.note ? noteId : undefined}
-              checked={toggle.enabled}
-              disabled={toggle.disabled}
-              onCheckedChange={toggle.onChange}
-            />
+            {toggle.control && (
+              <Switch
+                aria-labelledby={titleId}
+                aria-describedby={toggle.note ? noteId : undefined}
+                checked={toggle.enabled}
+                disabled={toggle.control.disabled}
+                onCheckedChange={toggle.control.onChange}
+              />
+            )}
           </>
         )}
       </div>

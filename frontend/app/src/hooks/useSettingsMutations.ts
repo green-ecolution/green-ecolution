@@ -5,7 +5,6 @@ import type { OrganizationSettingsUpdateRequest } from '@green-ecolution/backend
 import { moduleApi, settingsApi } from '@/api/backendApi'
 import { modulesQuery, organizationModulesQuery } from '@/api/queries'
 import createToast from '@/hooks/createToast'
-import { statusOf } from '@/lib/httpError'
 
 export interface UpdateSettingsVariables {
   orgId: string
@@ -14,8 +13,7 @@ export interface UpdateSettingsVariables {
 
 export interface UpdateOrganizationModulesVariables {
   orgId: string
-  /** `null` returns a module to inheritance; a missing key stays as it is. */
-  modules: Record<string, boolean | null>
+  modules: Record<string, boolean>
 }
 
 /** No toasts here: the page saves several parts at once and reports them through `useSettingsSave`. */
@@ -83,12 +81,7 @@ export const useSettingsSave = () => {
       showToast(t('organization.settings.toast.saved'))
       return
     }
-    showToast(
-      failures.some((error) => statusOf(error) === 409)
-        ? t('organization.settings.toast.setByAncestor')
-        : t('organization.settings.toast.saveFailed'),
-      'error',
-    )
+    showToast(t('organization.settings.toast.saveFailed'), 'error')
   }
 
   return { save, pending }
