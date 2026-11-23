@@ -1,27 +1,9 @@
-use domain::shared::error::ValidationError;
 use wasm_bindgen::prelude::*;
 use waste_domain::settings::FullThreshold;
 use waste_domain::values::{BinDepth, BinVolume, WasteBinNumber};
 
-use crate::coerce::invalid_number_issue;
-use crate::field_validators::finish;
-use crate::issue::{ValidationIssue, to_js};
-
-/// Rejects a fractional value instead of rounding it, so the field reports the
-/// same issue the draft validation does on save.
-fn whole_number_issue<T>(
-    value: f64,
-    field: &'static str,
-    path: &'static str,
-    build: impl FnOnce(i64) -> Result<T, ValidationError>,
-) -> Option<ValidationIssue> {
-    if !value.is_finite() || value.fract() != 0.0 {
-        return Some(invalid_number_issue(field, path));
-    }
-    build(value as i64)
-        .err()
-        .map(|err| ValidationIssue::from_error(&err, path))
-}
+use crate::field_validators::{finish, report, whole_number_issue};
+use crate::issue::ValidationIssue;
 
 fn bin_depth_issue(centimeters: f64) -> Option<ValidationIssue> {
     whole_number_issue(centimeters, "waste_bin.depth", "depthCm", BinDepth::new)
@@ -34,10 +16,6 @@ fn full_threshold_issue(percent: f64) -> Option<ValidationIssue> {
         "fullThresholdPercent",
         FullThreshold::new,
     )
-}
-
-fn report(issue: Option<ValidationIssue>) -> Result<JsValue, JsError> {
-    issue.map_or(Ok(JsValue::NULL), |issue| to_js(&issue))
 }
 
 #[wasm_bindgen(js_name = wasteValidateBinNumber)]

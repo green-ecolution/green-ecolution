@@ -45,6 +45,8 @@ describe('routePermissionsFor', () => {
   const probe: ModuleManifest = {
     key: 'probe',
     labelKey: 'irrigation:label',
+    icon: () => null,
+    descriptionKey: 'irrigation:label',
     i18n: { namespaces: [], load: () => Promise.resolve({}) },
     routePermissions: { '/probe': ['sensor:read'] },
   }
@@ -99,6 +101,8 @@ describe('mapPermissionsFor', () => {
   const withMap = (key: string, permissions: ModuleMap['permissions']): ModuleManifest => ({
     key,
     labelKey: 'irrigation:label',
+    icon: () => null,
+    descriptionKey: 'irrigation:label',
     i18n: { namespaces: [], load: () => Promise.resolve({}) },
     map: {
       permissions,

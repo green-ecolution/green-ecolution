@@ -114,7 +114,6 @@ pub fn settings_chain(depth: usize) -> (Vec<OrganizationSettings>, Id<Organizati
             sensor_offline_after: SensorOfflineAfter::new(3_600 + (i % 100) as i64 * 60).ok(),
             defect_streak: None,
             map_view: None,
-            descendants_may_override: true,
         });
     }
     (chain, target)

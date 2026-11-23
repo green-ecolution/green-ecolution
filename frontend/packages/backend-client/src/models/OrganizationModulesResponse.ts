@@ -13,13 +13,6 @@
  */
 
 import { mapValues } from '../runtime';
-import type { OrganizationRef } from './OrganizationRef';
-import {
-    OrganizationRefFromJSON,
-    OrganizationRefFromJSONTyped,
-    OrganizationRefToJSON,
-    OrganizationRefToJSONTyped,
-} from './OrganizationRef';
 import type { OrganizationModuleResponse } from './OrganizationModuleResponse';
 import {
     OrganizationModuleResponseFromJSON,
@@ -34,12 +27,6 @@ import {
  * @interface OrganizationModulesResponse
  */
 export interface OrganizationModulesResponse {
-    /**
-     * 
-     * @type {OrganizationRef}
-     * @memberof OrganizationModulesResponse
-     */
-    enforcedBy?: OrganizationRef | null;
     /**
      * 
      * @type {Array<OrganizationModuleResponse>}
@@ -66,7 +53,6 @@ export function OrganizationModulesResponseFromJSONTyped(json: any, ignoreDiscri
     }
     return {
         
-        'enforcedBy': json['enforced_by'] == null ? undefined : OrganizationRefFromJSON(json['enforced_by']),
         'modules': ((json['modules'] as Array<any>).map(OrganizationModuleResponseFromJSON)),
     };
 }
@@ -82,7 +68,6 @@ export function OrganizationModulesResponseToJSONTyped(value?: OrganizationModul
 
     return {
         
-        'enforced_by': OrganizationRefToJSON(value['enforcedBy']),
         'modules': ((value['modules'] as Array<any>).map(OrganizationModuleResponseToJSON)),
     };
 }

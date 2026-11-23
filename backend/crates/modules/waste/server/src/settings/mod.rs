@@ -1,5 +1,4 @@
-//! Waste's own settings. They inherit down the organization tree like the
-//! core's and obey the same lock, which stays a core setting.
+//! Waste's own settings. They inherit down the organization tree like the core's.
 
 pub mod http;
 pub mod repository;
@@ -8,7 +7,7 @@ pub mod service;
 use domain::{
     Id, RepositoryError,
     organization::Organization,
-    settings::{InheritLevel, Patch, SettingOrigin, inherit},
+    settings::{InheritLevel, Patch, inherit},
     shared::error::ValidationError,
 };
 use waste_domain::settings::FullThreshold;
@@ -46,18 +45,13 @@ impl WasteDefaults {
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct EffectiveWasteSettings {
     pub full_threshold: FullThreshold,
-    pub enforced_by: Option<Id<Organization>>,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct WasteOrigins {
-    pub full_threshold: SettingOrigin,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct WasteResolution {
     pub effective: EffectiveWasteSettings,
-    pub origins: WasteOrigins,
+    /// The value in force without the organization's own one.
+    pub inherited: EffectiveWasteSettings,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
@@ -69,37 +63,35 @@ impl WasteSettingsUpdate {
     pub fn is_empty(&self) -> bool {
         !self.full_threshold.touches()
     }
-}
 
-/// One organization's level: its own waste values plus the core lock.
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub struct WasteLevel {
-    pub settings: WasteSettings,
-    pub descendants_may_override: bool,
+    /// A value equal to the inherited one is no own value, as in the core.
+    pub fn settled(self, inherited: &EffectiveWasteSettings) -> Self {
+        Self {
+            full_threshold: self.full_threshold.settled(inherited.full_threshold),
+        }
+    }
 }
 
 /// `chain` runs root first, target last.
 pub fn resolve(
     defaults: &WasteDefaults,
-    chain: &[WasteLevel],
+    chain: &[WasteSettings],
     target: Id<Organization>,
 ) -> WasteResolution {
     let levels: Vec<InheritLevel<FullThreshold>> = chain
         .iter()
-        .map(|l| InheritLevel {
-            organization_id: l.settings.organization_id,
-            value: l.settings.full_threshold,
-            descendants_may_override: l.descendants_may_override,
+        .map(|s| InheritLevel {
+            organization_id: s.organization_id,
+            value: s.full_threshold,
         })
         .collect();
     let full_threshold = inherit(defaults.full_threshold, &levels, target);
     WasteResolution {
         effective: EffectiveWasteSettings {
             full_threshold: full_threshold.value,
-            enforced_by: full_threshold.enforced_by,
         },
-        origins: WasteOrigins {
-            full_threshold: full_threshold.origin,
+        inherited: EffectiveWasteSettings {
+            full_threshold: full_threshold.inherited,
         },
     }
 }
@@ -122,50 +114,51 @@ mod tests {
         }
     }
 
-    fn level(org: Id<Organization>, threshold: Option<i64>, may_override: bool) -> WasteLevel {
-        WasteLevel {
-            settings: WasteSettings {
-                organization_id: org,
-                full_threshold: threshold.map(|t| FullThreshold::new(t).unwrap()),
-            },
-            descendants_may_override: may_override,
+    fn level(org: Id<Organization>, threshold: Option<i64>) -> WasteSettings {
+        WasteSettings {
+            organization_id: org,
+            full_threshold: threshold.map(|t| FullThreshold::new(t).unwrap()),
         }
     }
 
     #[test]
     fn defaults_apply_without_values() {
         let (root, leaf) = (Id::new_v7(), Id::new_v7());
-        let r = resolve(
-            &defaults(),
-            &[level(root, None, true), level(leaf, None, true)],
-            leaf,
-        );
+        let r = resolve(&defaults(), &[level(root, None), level(leaf, None)], leaf);
         assert_eq!(r.effective.full_threshold.percent(), 80);
-        assert_eq!(r.origins.full_threshold, SettingOrigin::Default);
+        assert_eq!(r.inherited.full_threshold.percent(), 80);
     }
 
     #[test]
-    fn inherited_value_names_its_source() {
+    fn inherited_value_comes_from_the_nearest_ancestor() {
         let (root, leaf) = (Id::new_v7(), Id::new_v7());
         let r = resolve(
             &defaults(),
-            &[level(root, Some(50), true), level(leaf, None, true)],
+            &[level(root, Some(50)), level(leaf, None)],
             leaf,
         );
         assert_eq!(r.effective.full_threshold.percent(), 50);
-        assert_eq!(r.origins.full_threshold, SettingOrigin::Inherited(root));
+        assert_eq!(r.inherited.full_threshold.percent(), 50);
     }
 
     #[test]
-    fn lock_above_freezes_the_value() {
-        let (root, leaf) = (Id::new_v7(), Id::new_v7());
-        let r = resolve(
-            &defaults(),
-            &[level(root, Some(50), false), level(leaf, Some(90), true)],
-            leaf,
+    fn a_value_equal_to_the_inherited_one_is_dropped() {
+        let inherited = EffectiveWasteSettings {
+            full_threshold: FullThreshold::new(80).unwrap(),
+        };
+        let same = WasteSettingsUpdate {
+            full_threshold: Patch::Set(FullThreshold::new(80).unwrap()),
+        }
+        .settled(&inherited);
+        assert_eq!(same.full_threshold, Patch::Clear);
+        let other = WasteSettingsUpdate {
+            full_threshold: Patch::Set(FullThreshold::new(60).unwrap()),
+        }
+        .settled(&inherited);
+        assert_eq!(
+            other.full_threshold,
+            Patch::Set(FullThreshold::new(60).unwrap())
         );
-        assert_eq!(r.effective.full_threshold.percent(), 50);
-        assert_eq!(r.effective.enforced_by, Some(root));
     }
 
     #[test]

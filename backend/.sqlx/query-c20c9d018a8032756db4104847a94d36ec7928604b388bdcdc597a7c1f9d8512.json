@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT o.id AS organization_id,\n                      w.full_threshold_percent AS \"full_threshold_percent?\"\n               FROM organizations o\n               LEFT JOIN waste_settings w ON w.organization_id = o.id\n               WHERE o.id = ANY($1)",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "organization_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "full_threshold_percent?",
+        "type_info": "Int2"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "UuidArray"
+      ]
+    },
+    "nullable": [
+      false,
+      true
+    ]
+  },
+  "hash": "c20c9d018a8032756db4104847a94d36ec7928604b388bdcdc597a7c1f9d8512"
+}

@@ -45,6 +45,8 @@ vi.mock('./useSettingsOrganization', () => ({
 const probeManifest: ModuleManifest = {
   key: 'alpha',
   labelKey: 'probe:label' as ModuleManifest['labelKey'],
+  icon: () => null,
+  descriptionKey: 'probe:label' as ModuleManifest['labelKey'],
   i18n: { namespaces: [], load: () => Promise.resolve({}) },
 }
 vi.mock('@/modules/registry', () => ({ moduleManifests: [probeManifest] }))

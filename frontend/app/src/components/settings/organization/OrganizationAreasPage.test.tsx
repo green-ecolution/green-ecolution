@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, userEvent, waitFor, within } from '@/test/utils'
+import { render, screen, userEvent, waitFor } from '@/test/utils'
 import type { Permissions } from '@/lib/auth/permissions'
 import type {
+  OrganizationModuleResponse,
   OrganizationModulesResponse,
   OrganizationResponse,
   OrganizationSettingsResponse,
@@ -20,30 +21,27 @@ const BASE_ORGS: OrganizationResponse[] = [
   { id: 'nord', name: 'Stadtgärtnerei Nord', memberCount: 4, parentId: 'amt' },
 ]
 
-const modulesOf = (): OrganizationModulesResponse =>
-  ({
-    enforcedBy: null,
-    modules: [
-      {
-        key: 'probe',
-        enabled: true,
-        inheritedEnabled: true,
-        origin: 'inherited',
-        source: { id: 'root' },
-      },
-    ],
-  }) as unknown as OrganizationModulesResponse
+const modulesOf = (
+  rows: Partial<OrganizationModuleResponse>[] = [{}],
+): OrganizationModulesResponse => ({
+  modules: rows.map((row) => ({
+    key: 'probe',
+    enabled: true,
+    inheritedEnabled: true,
+    origin: 'default',
+    fixedByAncestor: false,
+    ...row,
+  })),
+})
 
-const settingsOf = (): OrganizationSettingsResponse =>
-  ({
-    mapView: {
-      value: { center: [54.7923, 9.4358], bbox: [54.7148, 9.2858, 54.8601, 9.5838] },
-      origin: 'default',
-      lastChange: null,
-    },
-    descendantsMayOverride: true,
-    enforcedBy: null,
-  }) as unknown as OrganizationSettingsResponse
+const settingsOf = (): OrganizationSettingsResponse => ({
+  sensorOfflineAfterSecs: { value: 86_400, inheritedValue: 86_400 },
+  defectStreak: { value: 3, inheritedValue: 3 },
+  mapView: {
+    value: { center: [54.7923, 9.4358] },
+    inheritedValue: { center: [54.7923, 9.4358] },
+  },
+})
 
 let settingsMap: Record<string, OrganizationSettingsResponse> = {}
 let modulesMap: Record<string, OrganizationModulesResponse> = {}
@@ -72,7 +70,11 @@ interface ProbeDraft extends ModuleSettingsDraft {
   setValue: (value: string) => void
 }
 
-const probeSave = vi.fn((_orgId: string, _value: string) => Promise.resolve())
+const calls: unknown[][] = []
+const probeSave = vi.fn((_orgId: string, _value: string) => {
+  calls.push(['probe-values'])
+  return Promise.resolve()
+})
 const probeLoadError = vi.fn((): unknown => null)
 
 // Like a real module draft, it starts over for another organization.
@@ -95,12 +97,13 @@ const useProbeDraft = (organizationId: string, { enabled }: { enabled: boolean }
 const probeManifest: ModuleManifest = {
   key: 'probe',
   labelKey: 'irrigation:label',
+  icon: () => null,
+  descriptionKey: 'irrigation:label',
   i18n: { namespaces: [], load: () => Promise.resolve({}) },
   settingsSection: defineSettingsSection<ProbeDraft>({
     useDraft: useProbeDraft,
-    Section: ({ draft, locked, organizationName }) => (
+    Section: ({ draft, locked }) => (
       <div>
-        <p>{`Probe-Vorgabe von ${organizationName('root') ?? '?'}`}</p>
         <label>
           Probewert
           <input
@@ -117,7 +120,10 @@ const probeManifest: ModuleManifest = {
 vi.mock('@/modules/registry', () => ({ moduleManifests: [probeManifest] }))
 
 const updateSettingsMutate = vi.fn((_vars: UpdateSettingsVariables) => Promise.resolve())
-const updateModulesMutate = vi.fn((_vars: UpdateOrganizationModulesVariables) => Promise.resolve())
+const updateModulesMutate = vi.fn((vars: UpdateOrganizationModulesVariables) => {
+  calls.push(['modules', vars.modules])
+  return Promise.resolve()
+})
 vi.mock('@/hooks/useSettingsMutations', async () => ({
   ...(await vi.importActual<typeof import('@/hooks/useSettingsMutations')>(
     '@/hooks/useSettingsMutations',
@@ -171,18 +177,10 @@ const { default: OrganizationAreasPage } = await import('./OrganizationAreasPage
 
 const renderPage = () => render(<OrganizationAreasPage />)
 
-const cardOf = (title: string) => {
-  const section = screen.getByRole('heading', { name: title }).closest('section')
-  if (!section) throw new Error(`card ${title} not found`)
-  return within(section)
-}
-
-const overrideSwitch = () =>
-  screen.getByRole('switch', { name: /Untereinheiten dürfen eigene Werte setzen/ })
-
 describe('OrganizationAreasPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    calls.length = 0
     context.orgId = 'nord'
     context.perms = 'unrestricted'
     settingsMap = Object.fromEntries(BASE_ORGS.map((org) => [org.id, settingsOf()]))
@@ -192,169 +190,123 @@ describe('OrganizationAreasPage', () => {
     settingsError.mockReturnValue(null)
     modulesError.mockReturnValue(null)
     probeLoadError.mockReturnValue(null)
-    probeSave.mockImplementation(() => Promise.resolve())
-    updateSettingsMutate.mockImplementation(() => Promise.resolve())
-    updateModulesMutate.mockImplementation(() => Promise.resolve())
   })
 
-  it('names the organization in the intro', () => {
+  const renderLoaded = async () => {
+    const view = renderPage()
+    await screen.findByRole('heading', { name: 'Aufgabenbereiche' })
+    return view
+  }
+
+  it('names the organization in the intro', async () => {
     context.orgId = 'amt'
-    renderPage()
+    await renderLoaded()
     expect(
       screen.getByText(/Schalte ein, was zu den Aufgaben von Grünflächenamt gehört/),
     ).toBeInTheDocument()
   })
 
-  it('no longer shows the map view, which moved to the overview', () => {
-    renderPage()
-    expect(screen.queryByText('Kartenausschnitt')).not.toBeInTheDocument()
+  it('shows a card per module and the sensors card', async () => {
+    await renderLoaded()
+    expect(await screen.findByRole('switch', { name: 'Bewässerung' })).toBeChecked()
+    expect(screen.getByText('Eingeschaltet')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Sensoren' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Sensor gilt als offline nach')).toHaveValue(24)
   })
 
-  it('saves core settings, module switches and a module section with one button', async () => {
-    renderPage()
-
-    await userEvent.type(screen.getByRole('textbox', { name: 'Probewert' }), '48')
-    await userEvent.click(overrideSwitch())
-    await userEvent.click(cardOf('Module').getByRole('switch', { name: 'Bewässerung' }))
-    await userEvent.click(screen.getByRole('button', { name: 'Speichern' }))
-
-    await waitFor(() => expect(updateModulesMutate).toHaveBeenCalledTimes(1))
-    expect(updateSettingsMutate).toHaveBeenCalledWith({
-      orgId: 'nord',
-      body: { descendantsMayOverride: false },
-    })
-    expect(probeSave).toHaveBeenCalledWith('nord', '48')
-    expect(updateModulesMutate).toHaveBeenCalledWith({ orgId: 'nord', modules: { probe: false } })
-    // One outcome for everything the button sent.
-    await waitFor(() => expect(showToast).toHaveBeenCalledTimes(1))
-    expect(showToast).toHaveBeenCalledWith('Einstellungen gespeichert')
-  })
-
-  it('saves only the switches when only a module switch changed', async () => {
-    renderPage()
-
-    expect(screen.queryByRole('button', { name: 'Speichern' })).not.toBeInTheDocument()
-    await userEvent.click(cardOf('Module').getByRole('switch', { name: 'Bewässerung' }))
-    await userEvent.click(screen.getByRole('button', { name: 'Speichern' }))
-
-    await waitFor(() => expect(updateModulesMutate).toHaveBeenCalled())
-    expect(updateModulesMutate.mock.calls[0][0]).toEqual({
-      orgId: 'nord',
-      modules: { probe: false },
-    })
-    expect(updateSettingsMutate).not.toHaveBeenCalled()
-    expect(probeSave).not.toHaveBeenCalled()
-  })
-
-  it('shows a module section only where the module is active', () => {
-    modulesMap.nord = {
-      ...modulesOf(),
-      modules: [
-        { key: 'probe', enabled: false, inheritedEnabled: true, origin: 'own', ownValue: false },
-      ],
-    } as unknown as OrganizationModulesResponse
-    renderPage()
-
-    expect(screen.queryByRole('textbox', { name: 'Probewert' })).not.toBeInTheDocument()
-    // The switch that turns it back on stays.
-    expect(cardOf('Module').getByRole('switch', { name: 'Bewässerung' })).not.toBeChecked()
-    expect(screen.getByRole('heading', { name: 'Fachliche Vorgaben' })).toBeInTheDocument()
-  })
-
-  it('reports a failed part with the error toast and keeps its draft', async () => {
-    probeSave.mockImplementation(() => Promise.reject(new Error('boom')))
-    // The core half goes through and comes back changed.
-    updateSettingsMutate.mockImplementation(() => {
-      settingsMap.nord = { ...settingsMap.nord, descendantsMayOverride: false }
-      return Promise.resolve()
-    })
-    const { rerender } = renderPage()
-
-    await userEvent.type(screen.getByRole('textbox', { name: 'Probewert' }), '48')
-    await userEvent.click(overrideSwitch())
-    await userEvent.click(screen.getByRole('button', { name: 'Speichern' }))
-
-    await waitFor(() =>
-      expect(showToast).toHaveBeenCalledWith(
-        'Die Einstellungen konnten nicht gespeichert werden.',
-        'error',
+  it('carries no inheritance vocabulary', async () => {
+    await renderLoaded()
+    await screen.findByRole('switch', { name: 'Bewässerung' })
+    expect(
+      screen.queryByText(
+        /erben|Eigenen Wert|Untereinheiten|Zuletzt geändert|Geerbt|Vorgabe der Instanz/,
       ),
-    )
-    expect(updateSettingsMutate).toHaveBeenCalled()
-    rerender(<OrganizationAreasPage />)
-
-    expect(screen.getByRole('textbox', { name: 'Probewert' })).toHaveValue('48')
-    expect(overrideSwitch()).not.toBeChecked()
-    expect(screen.getByRole('button', { name: 'Speichern' })).toBeInTheDocument()
+    ).toBeNull()
   })
 
-  it('keeps an invalid module edit when a valid core change is saved', async () => {
-    const { rerender } = renderPage()
+  it('shows a module\u2019s fields as soon as it is switched on in the draft', async () => {
+    modulesMap.nord = modulesOf([{ enabled: false, inheritedEnabled: false }])
+    await renderLoaded()
+    expect(screen.queryByLabelText('Probewert')).toBeNull()
+    await userEvent.click(await screen.findByRole('switch', { name: 'Bewässerung' }))
+    expect(await screen.findByLabelText('Probewert')).toBeInTheDocument()
+  })
 
-    await userEvent.type(screen.getByRole('textbox', { name: 'Probewert' }), 'invalid')
-    await userEvent.click(overrideSwitch())
+  it('saves in three phases: switch on, values, switch off', async () => {
+    modulesMap.nord = modulesOf([
+      { key: 'probe', enabled: false, inheritedEnabled: false },
+      { key: 'other', enabled: true },
+    ])
+    await renderLoaded()
+    await userEvent.click(await screen.findByRole('switch', { name: 'Bewässerung' }))
+    await userEvent.click(screen.getByRole('switch', { name: 'other' }))
+    await userEvent.type(await screen.findByLabelText('Probewert'), 'x')
     await userEvent.click(screen.getByRole('button', { name: 'Speichern' }))
+    await waitFor(() => expect(calls).toHaveLength(3))
+    expect(calls).toEqual([
+      ['modules', { probe: true }],
+      ['probe-values'],
+      ['modules', { other: false }],
+    ])
+  })
 
-    await waitFor(() => expect(updateSettingsMutate).toHaveBeenCalled())
-    // An invalid draft sends nothing.
+  it('writes no module values for a module switched off in the same save', async () => {
+    await renderLoaded()
+    await userEvent.type(await screen.findByLabelText('Probewert'), 'x')
+    await userEvent.click(screen.getByRole('switch', { name: 'Bewässerung' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Speichern' }))
+    await waitFor(() => expect(calls).toHaveLength(1))
+    expect(calls).toEqual([['modules', { probe: false }]])
     expect(probeSave).not.toHaveBeenCalled()
-    settingsMap.nord = { ...settingsMap.nord, descendantsMayOverride: false }
-    rerender(<OrganizationAreasPage />)
+  })
 
-    await waitFor(() => expect(overrideSwitch()).not.toBeChecked())
-    expect(screen.getByRole('textbox', { name: 'Probewert' })).toHaveValue('invalid')
+  it('disables a switch a parent set and says who', async () => {
+    modulesMap.nord = modulesOf([{ fixedByAncestor: true, setBy: { id: 'amt' } }])
+    await renderLoaded()
+    expect(await screen.findByRole('switch', { name: 'Bewässerung' })).toBeDisabled()
+    expect(screen.getByText('Diesen Aufgabenbereich legt Grünflächenamt fest.')).toBeInTheDocument()
+  })
+
+  it('keeps save disabled while a value is invalid and explains it at the field', async () => {
+    await renderLoaded()
+    const field = await screen.findByLabelText('Sensor gilt als auffällig nach')
+    await userEvent.clear(field)
+    await userEvent.type(field, '2.5')
+    expect(screen.getByRole('alert')).toHaveTextContent('Die Anzahl muss eine ganze Zahl sein.')
+    expect(screen.getByRole('button', { name: 'Speichern' })).toBeDisabled()
+  })
+
+  it('is read-only without setting:update', async () => {
+    context.perms = new Set(['setting:read'])
+    await renderLoaded()
+    expect(await screen.findByRole('switch', { name: 'Bewässerung' })).toBeDisabled()
+    expect(screen.getByLabelText('Sensor gilt als offline nach')).toBeDisabled()
+    expect(screen.queryByRole('button', { name: 'Speichern' })).toBeNull()
+    expect(
+      screen.getByText('Du kannst die Aufgabenbereiche ansehen, aber nicht ändern.'),
+    ).toBeInTheDocument()
   })
 
   // An invalid draft builds no request, so `dirty` alone would let the typed
   // value disappear on the way out.
   it('still asks before leaving with an invalid module value typed', async () => {
-    renderPage()
+    await renderLoaded()
     expect(blocker.shouldBlockFn?.()).toBe(false)
-
-    await userEvent.type(screen.getByRole('textbox', { name: 'Probewert' }), 'invalid')
-
+    await userEvent.type(await screen.findByLabelText('Probewert'), 'invalid')
     expect(blocker.shouldBlockFn?.()).toBe(true)
   })
 
-  it('discards a flipped module switch on cancel', async () => {
-    renderPage()
-
-    await userEvent.click(cardOf('Module').getByRole('switch', { name: 'Bewässerung' }))
-    expect(cardOf('Module').getByRole('switch', { name: 'Bewässerung' })).not.toBeChecked()
-    await userEvent.click(screen.getByRole('button', { name: 'Abbrechen' }))
-
-    expect(cardOf('Module').getByRole('switch', { name: 'Bewässerung' })).toBeChecked()
-  })
-
-  it('reports a failed settings load instead of hiding the section', () => {
+  it('reports a failed settings load instead of hiding the cards', async () => {
     settingsError.mockReturnValue({ response: { status: 403 } })
-    renderPage()
-
-    expect(screen.getByRole('alert')).toHaveTextContent(/Vorgaben dieser Organisation nicht/)
+    await renderLoaded()
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      /Aufgabenbereiche dieser Organisation nicht/,
+    )
   })
 
-  it('reports a failed module section load instead of hiding the section', () => {
-    probeLoadError.mockReturnValue({ response: { status: 500 } })
-    renderPage()
-
-    expect(screen.getByRole('alert')).toBeInTheDocument()
-    expect(screen.queryByRole('textbox', { name: 'Probewert' })).not.toBeInTheDocument()
-  })
-
-  it('reports a failed module switch load instead of hiding the section', () => {
+  it('reports a failed module switch load instead of hiding the cards', async () => {
     modulesError.mockReturnValue({ response: { status: 500 } })
-    renderPage()
-
-    expect(screen.getByRole('alert')).toHaveTextContent(/Vorgaben konnten nicht geladen werden/)
-  })
-
-  it('shows the settings read-only without setting:update', () => {
-    context.perms = new Set(['setting:read'])
-    renderPage()
-
-    expect(screen.getByText('Fachliche Vorgaben')).toBeInTheDocument()
-    expect(screen.getByRole('textbox', { name: 'Probewert' })).toBeDisabled()
-    expect(overrideSwitch()).toBeDisabled()
-    expect(cardOf('Module').getByRole('switch', { name: 'Bewässerung' })).toBeDisabled()
+    await renderLoaded()
+    expect(screen.getByRole('alert')).toHaveTextContent(/konnten nicht geladen werden/)
   })
 })

@@ -36,13 +36,13 @@ describe('useSettingsMutations', () => {
     await act(() =>
       result.current.updateSettings.mutateAsync({
         orgId: 'org-1',
-        body: { descendantsMayOverride: false },
+        body: { defectStreak: 4 },
       }),
     )
 
     expect(updateOrganizationSettings).toHaveBeenCalledWith({
       orgId: 'org-1',
-      organizationSettingsUpdateRequest: { descendantsMayOverride: false },
+      organizationSettingsUpdateRequest: { defectStreak: 4 },
     })
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['organizations', 'org-1', 'settings'] })
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['users', 'me', 'map-view'] })
@@ -112,16 +112,16 @@ describe('useSettingsSave', () => {
     expect(other).toHaveBeenCalled()
     expect(later).toHaveBeenCalled()
     expect(showToast).toHaveBeenCalledTimes(1)
-    expect(showToast).toHaveBeenCalledWith(expect.not.stringContaining('gesperrt'), 'error')
+    expect(showToast).toHaveBeenCalledWith(expect.not.stringContaining('festgelegt'), 'error')
   })
 
-  it('reports the ancestor lock instead of a generic error', async () => {
+  it('reports a value set by an ancestor instead of a generic error', async () => {
     const { result } = renderHookWithClient(() => useSettingsSave())
     const failing = vi.fn().mockRejectedValue({ response: { status: 409 } })
 
     await act(() => result.current.save([[failing]]))
 
-    expect(showToast).toHaveBeenCalledWith(expect.stringContaining('gesperrt'), 'error')
+    expect(showToast).toHaveBeenCalledWith(expect.stringContaining('festgelegt'), 'error')
   })
 
   it('starts a phase only after the one before has settled', async () => {

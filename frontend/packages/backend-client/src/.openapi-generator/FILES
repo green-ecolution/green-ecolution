@@ -137,12 +137,11 @@ models/ServiceStatusResponse.ts
 models/ServicesInfoResponse.ts
 models/SetOrganizationRequest.ts
 models/SetSensorTargetRequest.ts
-models/SettingChangeRef.ts
 models/SettingFieldF64.ts
 models/SettingFieldI32.ts
 models/SettingFieldI64.ts
 models/SettingFieldMapViewDto.ts
-models/SettingFieldMapViewDtoOwnValue.ts
+models/SettingFieldMapViewDtoInheritedValue.ts
 models/SettingOriginDto.ts
 models/SignalResponse.ts
 models/SoilCondition.ts

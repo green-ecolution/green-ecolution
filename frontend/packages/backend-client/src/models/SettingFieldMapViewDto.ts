@@ -13,81 +13,40 @@
  */
 
 import { mapValues } from '../runtime';
-import type { SettingOriginDto } from './SettingOriginDto';
+import type { SettingFieldMapViewDtoInheritedValue } from './SettingFieldMapViewDtoInheritedValue';
 import {
-    SettingOriginDtoFromJSON,
-    SettingOriginDtoFromJSONTyped,
-    SettingOriginDtoToJSON,
-    SettingOriginDtoToJSONTyped,
-} from './SettingOriginDto';
-import type { OrganizationRef } from './OrganizationRef';
-import {
-    OrganizationRefFromJSON,
-    OrganizationRefFromJSONTyped,
-    OrganizationRefToJSON,
-    OrganizationRefToJSONTyped,
-} from './OrganizationRef';
-import type { SettingChangeRef } from './SettingChangeRef';
-import {
-    SettingChangeRefFromJSON,
-    SettingChangeRefFromJSONTyped,
-    SettingChangeRefToJSON,
-    SettingChangeRefToJSONTyped,
-} from './SettingChangeRef';
-import type { SettingFieldMapViewDtoOwnValue } from './SettingFieldMapViewDtoOwnValue';
-import {
-    SettingFieldMapViewDtoOwnValueFromJSON,
-    SettingFieldMapViewDtoOwnValueFromJSONTyped,
-    SettingFieldMapViewDtoOwnValueToJSON,
-    SettingFieldMapViewDtoOwnValueToJSONTyped,
-} from './SettingFieldMapViewDtoOwnValue';
+    SettingFieldMapViewDtoInheritedValueFromJSON,
+    SettingFieldMapViewDtoInheritedValueFromJSONTyped,
+    SettingFieldMapViewDtoInheritedValueToJSON,
+    SettingFieldMapViewDtoInheritedValueToJSONTyped,
+} from './SettingFieldMapViewDtoInheritedValue';
 
 /**
- * One value plus everything the interface needs to show where it comes from
- * and to offer "set my own" or "inherit again".
+ * One value as the settings screen needs it: what is in force, and what would
+ * be in force without the organization's own value.
  * @export
  * @interface SettingFieldMapViewDto
  */
 export interface SettingFieldMapViewDto {
     /**
-     * Always about this organization's own value, never the source's.
-     * @type {SettingChangeRef}
+     * 
+     * @type {SettingFieldMapViewDtoInheritedValue}
      * @memberof SettingFieldMapViewDto
      */
-    lastChange?: SettingChangeRef | null;
+    inheritedValue: SettingFieldMapViewDtoInheritedValue;
     /**
      * 
-     * @type {SettingOriginDto}
+     * @type {SettingFieldMapViewDtoInheritedValue}
      * @memberof SettingFieldMapViewDto
      */
-    origin: SettingOriginDto;
-    /**
-     * 
-     * @type {SettingFieldMapViewDtoOwnValue}
-     * @memberof SettingFieldMapViewDto
-     */
-    ownValue?: SettingFieldMapViewDtoOwnValue;
-    /**
-     * Set only where `origin` is `inherited`.
-     * @type {OrganizationRef}
-     * @memberof SettingFieldMapViewDto
-     */
-    source?: OrganizationRef | null;
-    /**
-     * 
-     * @type {SettingFieldMapViewDtoOwnValue}
-     * @memberof SettingFieldMapViewDto
-     */
-    value: SettingFieldMapViewDtoOwnValue;
+    value: SettingFieldMapViewDtoInheritedValue;
 }
-
-
 
 /**
  * Check if a given object implements the SettingFieldMapViewDto interface.
  */
 export function instanceOfSettingFieldMapViewDto(value: object): value is SettingFieldMapViewDto {
-    if (!('origin' in value) || value['origin'] === undefined) return false;
+    if (!('inheritedValue' in value) || value['inheritedValue'] === undefined) return false;
     if (!('value' in value) || value['value'] === undefined) return false;
     return true;
 }
@@ -102,11 +61,8 @@ export function SettingFieldMapViewDtoFromJSONTyped(json: any, ignoreDiscriminat
     }
     return {
         
-        'lastChange': json['last_change'] == null ? undefined : SettingChangeRefFromJSON(json['last_change']),
-        'origin': SettingOriginDtoFromJSON(json['origin']),
-        'ownValue': json['own_value'] == null ? undefined : SettingFieldMapViewDtoOwnValueFromJSON(json['own_value']),
-        'source': json['source'] == null ? undefined : OrganizationRefFromJSON(json['source']),
-        'value': SettingFieldMapViewDtoOwnValueFromJSON(json['value']),
+        'inheritedValue': SettingFieldMapViewDtoInheritedValueFromJSON(json['inherited_value']),
+        'value': SettingFieldMapViewDtoInheritedValueFromJSON(json['value']),
     };
 }
 
@@ -121,11 +77,8 @@ export function SettingFieldMapViewDtoToJSONTyped(value?: SettingFieldMapViewDto
 
     return {
         
-        'last_change': SettingChangeRefToJSON(value['lastChange']),
-        'origin': SettingOriginDtoToJSON(value['origin']),
-        'own_value': SettingFieldMapViewDtoOwnValueToJSON(value['ownValue']),
-        'source': OrganizationRefToJSON(value['source']),
-        'value': SettingFieldMapViewDtoOwnValueToJSON(value['value']),
+        'inherited_value': SettingFieldMapViewDtoInheritedValueToJSON(value['inheritedValue']),
+        'value': SettingFieldMapViewDtoInheritedValueToJSON(value['value']),
     };
 }
 

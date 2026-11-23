@@ -2,8 +2,8 @@
 //!
 //! A module is a feature area such as irrigation or waste collection that an
 //! organization switches on or off. Activation inherits down the organization
-//! tree the same way operational settings do, including the lock an
-//! organization can put on its descendants.
+//! tree the same way operational settings do: an organization's own switch
+//! wins, otherwise the nearest ancestor's applies.
 
 pub mod activation;
 pub mod repository;

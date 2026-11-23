@@ -16,6 +16,8 @@ vi.mock('@/modules/registry', () => {
   const probe = (key: string): ModuleManifest => ({
     key,
     labelKey: 'irrigation:label',
+    icon: () => null,
+    descriptionKey: 'irrigation:label',
     i18n: { namespaces: [], load: () => Promise.resolve({}) },
     map: {
       permissions: [],

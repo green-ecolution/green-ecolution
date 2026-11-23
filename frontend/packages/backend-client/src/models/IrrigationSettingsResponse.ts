@@ -13,13 +13,6 @@
  */
 
 import { mapValues } from '../runtime';
-import type { OrganizationRef } from './OrganizationRef';
-import {
-    OrganizationRefFromJSON,
-    OrganizationRefFromJSONTyped,
-    OrganizationRefToJSON,
-    OrganizationRefToJSONTyped,
-} from './OrganizationRef';
 import type { SettingFieldF64 } from './SettingFieldF64';
 import {
     SettingFieldF64FromJSON,
@@ -41,12 +34,6 @@ import {
  * @interface IrrigationSettingsResponse
  */
 export interface IrrigationSettingsResponse {
-    /**
-     * 
-     * @type {OrganizationRef}
-     * @memberof IrrigationSettingsResponse
-     */
-    enforcedBy?: OrganizationRef | null;
     /**
      * 
      * @type {SettingFieldI64}
@@ -80,7 +67,6 @@ export function IrrigationSettingsResponseFromJSONTyped(json: any, ignoreDiscrim
     }
     return {
         
-        'enforcedBy': json['enforced_by'] == null ? undefined : OrganizationRefFromJSON(json['enforced_by']),
         'justWateredTtlSecs': SettingFieldI64FromJSON(json['just_watered_ttl_secs']),
         'waterDemand': SettingFieldF64FromJSON(json['water_demand']),
     };
@@ -97,7 +83,6 @@ export function IrrigationSettingsResponseToJSONTyped(value?: IrrigationSettings
 
     return {
         
-        'enforced_by': OrganizationRefToJSON(value['enforcedBy']),
         'just_watered_ttl_secs': SettingFieldI64ToJSON(value['justWateredTtlSecs']),
         'water_demand': SettingFieldF64ToJSON(value['waterDemand']),
     };

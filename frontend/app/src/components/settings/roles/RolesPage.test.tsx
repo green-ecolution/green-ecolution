@@ -40,6 +40,8 @@ const orgRoles: Role[] = [
 const probeManifest = (key: string): ModuleManifest => ({
   key,
   labelKey: `${key}:label` as ModuleManifest['labelKey'],
+  icon: () => null,
+  descriptionKey: `${key}:label` as ModuleManifest['labelKey'],
   i18n: { namespaces: [], load: () => Promise.resolve({}) },
   resources: [{ key: `${key}_item` as Resource, area: 'operations', textsKey: `${key}:item` }],
 })

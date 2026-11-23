@@ -200,7 +200,6 @@ mod tests {
                 sensor_offline_after: SensorOfflineAfter::new(3_600).unwrap(),
                 defect_streak: DefectStreak::new(3).unwrap(),
                 map_view: MapView::new(Coordinate::new(54.78, 9.43).unwrap(), None).unwrap(),
-                enforced_by: None,
             })
         }
     }
@@ -219,7 +218,6 @@ mod tests {
                 sensor_offline_after: SensorOfflineAfter::new(seconds).unwrap(),
                 defect_streak: DefectStreak::new(3).unwrap(),
                 map_view: MapView::new(Coordinate::new(54.78, 9.43).unwrap(), None).unwrap(),
-                enforced_by: None,
             })
         }
     }
@@ -234,7 +232,6 @@ mod tests {
         ) -> Result<EffectiveWasteSettings, RepositoryError> {
             Ok(EffectiveWasteSettings {
                 full_threshold: FullThreshold::new(80).unwrap(),
-                enforced_by: None,
             })
         }
     }

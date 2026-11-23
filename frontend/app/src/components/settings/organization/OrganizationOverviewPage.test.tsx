@@ -53,21 +53,24 @@ const users: UserResponse[] = [
   member('u-bo', 'Bo', 'Boysen', 'nord'),
 ]
 
-const settingsOf = (): OrganizationSettingsResponse =>
-  ({
-    mapView: {
-      value: {
-        center: [54.7923, 9.4358],
-        bbox: [54.7148, 9.2858, 54.8601, 9.5838],
-        minZoom: 13,
-        maxZoom: 18,
-      },
-      origin: 'default',
-      lastChange: null,
+const settingsOf = (): OrganizationSettingsResponse => ({
+  sensorOfflineAfterSecs: { value: 3600, inheritedValue: 3600 },
+  defectStreak: { value: 3, inheritedValue: 3 },
+  mapView: {
+    value: {
+      center: [54.7923, 9.4358],
+      bbox: [54.7148, 9.2858, 54.8601, 9.5838],
+      minZoom: 13,
+      maxZoom: 18,
     },
-    descendantsMayOverride: true,
-    enforcedBy: null,
-  }) as unknown as OrganizationSettingsResponse
+    inheritedValue: {
+      center: [54.7923, 9.4358],
+      bbox: [54.7148, 9.2858, 54.8601, 9.5838],
+      minZoom: 13,
+      maxZoom: 18,
+    },
+  },
+})
 
 let visibleOrganizations = BASE_ORGS
 // null: every listed organization came from GET /organizations.
@@ -96,6 +99,8 @@ vi.mock('./useSettingsOrganization', () => ({
 const probeManifest = (key: string): ModuleManifest => ({
   key,
   labelKey: `probe:${key}` as ModuleManifest['labelKey'],
+  icon: () => null,
+  descriptionKey: `probe:${key}` as ModuleManifest['labelKey'],
   i18n: { namespaces: [], load: () => Promise.resolve({}) },
 })
 
@@ -208,8 +213,8 @@ const { default: OrganizationOverviewPage } = await import('./OrganizationOvervi
 
 const renderPage = () => render(<OrganizationOverviewPage />)
 
-const setOwnMapView = () =>
-  userEvent.click(screen.getByRole('button', { name: /Eigenen Wert für Kartenausschnitt setzen/ }))
+const editMapView = () =>
+  userEvent.click(screen.getByRole('switch', { name: 'Keine Einschränkung' }))
 
 describe('OrganizationOverviewPage', () => {
   beforeAll(() => {
@@ -412,7 +417,7 @@ describe('OrganizationOverviewPage', () => {
     context.orgId = 'nord'
     renderPage()
 
-    await setOwnMapView()
+    await editMapView()
     await userEvent.click(screen.getByRole('button', { name: 'Speichern' }))
 
     await waitFor(() => expect(updateSettingsMutate).toHaveBeenCalled())
@@ -427,11 +432,61 @@ describe('OrganizationOverviewPage', () => {
       screen.getByRole('textbox', { name: 'Straße und Hausnummer' }),
       'Gartenweg 1',
     )
-    await setOwnMapView()
+    await editMapView()
     await userEvent.click(screen.getByRole('button', { name: 'Speichern' }))
 
     await waitFor(() => expect(updateSettingsMutate).toHaveBeenCalled())
     expect(updateMutate).not.toHaveBeenCalled()
+  })
+
+  it('returns to the usual viewport and saves exactly that viewport', async () => {
+    context.orgId = 'nord'
+    const own = { ...settingsOf().mapView.value, center: [54.8, 9.44] }
+    const settings = settingsOf()
+    settingsMap.nord = { ...settings, mapView: { ...settings.mapView, value: own } }
+    renderPage()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Üblichen Ausschnitt verwenden' }))
+    expect(
+      screen.queryByRole('button', { name: 'Üblichen Ausschnitt verwenden' }),
+    ).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Speichern' }))
+
+    await waitFor(() =>
+      expect(updateSettingsMutate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          orgId: 'nord',
+          body: { mapView: settings.mapView.inheritedValue },
+        }),
+      ),
+    )
+  })
+
+  it('offers the usual viewport only while the draft differs and the viewer may update', async () => {
+    context.orgId = 'nord'
+    renderPage()
+    expect(
+      screen.queryByRole('button', { name: 'Üblichen Ausschnitt verwenden' }),
+    ).not.toBeInTheDocument()
+
+    await editMapView()
+    expect(
+      screen.getByRole('button', { name: 'Üblichen Ausschnitt verwenden' }),
+    ).toBeInTheDocument()
+  })
+
+  it('offers no usual viewport without setting:update', () => {
+    context.orgId = 'nord'
+    context.perms = new Set(['organization:read', 'setting:read'])
+    const settings = settingsOf()
+    settingsMap.nord = {
+      ...settings,
+      mapView: { ...settings.mapView, value: { ...settings.mapView.value, center: [54.8, 9.44] } },
+    }
+    renderPage()
+    expect(
+      screen.queryByRole('button', { name: 'Üblichen Ausschnitt verwenden' }),
+    ).not.toBeInTheDocument()
   })
 
   it('offers saving on the read-only root when a setting changed', async () => {
@@ -440,7 +495,7 @@ describe('OrganizationOverviewPage', () => {
 
     expect(screen.queryByRole('button', { name: 'Speichern' })).not.toBeInTheDocument()
 
-    await setOwnMapView()
+    await editMapView()
     await userEvent.click(screen.getByRole('button', { name: 'Speichern' }))
 
     await waitFor(() =>
@@ -475,6 +530,21 @@ describe('OrganizationOverviewPage', () => {
     context.perms = new Set(['organization:read'])
     renderPage()
     expect(screen.queryByRole('link', { name: /Mitarbeitende/ })).not.toBeInTheDocument()
+  })
+
+  it('edits the map view directly with setting:update', () => {
+    renderPage()
+    expect(screen.getByRole('switch', { name: 'Keine Einschränkung' })).toBeEnabled()
+    expect(
+      screen.queryByRole('button', { name: /Wieder erben|Eigenen Wert/ }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('shows the map view as a preview only without setting:update', () => {
+    context.perms = new Set(['organization:read', 'setting:read'])
+    renderPage()
+    expect(screen.getByRole('switch', { name: 'Keine Einschränkung' })).toBeDisabled()
+    expect(screen.getByTestId('map-preview')).toBeInTheDocument()
   })
 
   it('hides the map view without setting:read in this organization', () => {

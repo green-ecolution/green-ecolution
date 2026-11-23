@@ -15,5 +15,4 @@ pub struct OrganizationSettingsSnapshot {
     pub map_bbox_ne_lng: Option<f64>,
     pub map_min_zoom: Option<i16>,
     pub map_max_zoom: Option<i16>,
-    pub descendants_may_override: bool,
 }

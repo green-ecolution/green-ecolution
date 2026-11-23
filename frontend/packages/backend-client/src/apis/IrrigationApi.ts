@@ -43,7 +43,7 @@ export interface UpdateIrrigationSettingsRequest {
 export class IrrigationApi extends runtime.BaseAPI {
 
     /**
-     * Each field carries the value in force, where it came from, this organization\'s own value and when it was last changed. Requires setting:read.
+     * Each field carries the value in force and the value that would apply without this organization\'s own one. Requires setting:read.
      * Read an organization\'s irrigation defaults
      */
     async getIrrigationSettingsRaw(requestParameters: GetIrrigationSettingsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<IrrigationSettingsResponse>> {
@@ -73,7 +73,7 @@ export class IrrigationApi extends runtime.BaseAPI {
     }
 
     /**
-     * Each field carries the value in force, where it came from, this organization\'s own value and when it was last changed. Requires setting:read.
+     * Each field carries the value in force and the value that would apply without this organization\'s own one. Requires setting:read.
      * Read an organization\'s irrigation defaults
      */
     async getIrrigationSettings(requestParameters: GetIrrigationSettingsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<IrrigationSettingsResponse> {
@@ -82,7 +82,7 @@ export class IrrigationApi extends runtime.BaseAPI {
     }
 
     /**
-     * An omitted field stays as it is, `null` drops the organization\'s own value and returns it to inheritance. Requires setting:update.
+     * An omitted field stays as it is. Sending the value the organization would inherit drops its own value, so it follows its parent again. Requires setting:update.
      * Set an organization\'s irrigation defaults
      */
     async updateIrrigationSettingsRaw(requestParameters: UpdateIrrigationSettingsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<IrrigationSettingsResponse>> {
@@ -122,7 +122,7 @@ export class IrrigationApi extends runtime.BaseAPI {
     }
 
     /**
-     * An omitted field stays as it is, `null` drops the organization\'s own value and returns it to inheritance. Requires setting:update.
+     * An omitted field stays as it is. Sending the value the organization would inherit drops its own value, so it follows its parent again. Requires setting:update.
      * Set an organization\'s irrigation defaults
      */
     async updateIrrigationSettings(requestParameters: UpdateIrrigationSettingsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<IrrigationSettingsResponse> {

@@ -9,9 +9,7 @@ use crate::{
         AppState,
         auth::extractor::AuthUserExtractor,
         extractors::{Json, Path},
-        v1::dto::settings::{
-            OrganizationSettingsResponse, OrganizationSettingsUpdateRequest, resolve_change_authors,
-        },
+        v1::dto::settings::{OrganizationSettingsResponse, OrganizationSettingsUpdateRequest},
         v1::error::ErrorBody,
     },
     service::ServiceError,
@@ -29,7 +27,7 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
 #[utoipa::path(get, path = "/organizations/{org_id}/settings", tag = "Settings",
     operation_id = "getOrganizationSettings",
     summary = "Read an organization's operational defaults",
-    description = "Each field carries the value in force, where it came from, this organization's own value (even while a lock above makes it dormant) and when it was last changed. Requires setting:read.",
+    description = "Each field carries the value in force and the value that would apply without this organization's own one. Requires setting:read.",
     params(("org_id" = Uuid, Path, description = "Organization id")),
     responses(
         (status = 200, description = "The resolved settings", body = OrganizationSettingsResponse),
@@ -56,22 +54,13 @@ pub async fn get_settings(
         .await?;
 
     let resolution = state.settings_service.resolution(org).await?;
-    let own = state.settings_service.own(org).await?;
-    let last = state.settings_service.last_changes(org).await?;
-    let names =
-        resolve_change_authors(&state.user_service, last.values().map(|e| e.changed_by)).await;
-    Ok(Json(OrganizationSettingsResponse::build(
-        &resolution,
-        &own,
-        &last,
-        &names,
-    )))
+    Ok(Json(OrganizationSettingsResponse::build(&resolution)))
 }
 
 #[utoipa::path(put, path = "/organizations/{org_id}/settings", tag = "Settings",
     operation_id = "updateOrganizationSettings",
     summary = "Set an organization's operational defaults",
-    description = "An omitted field stays as it is, `null` drops the organization's own value and returns it to inheritance. Requires setting:update.",
+    description = "An omitted field stays as it is. Sending the value the organization would inherit drops its own value, so it follows its parent again. Requires setting:update.",
     params(("org_id" = Uuid, Path, description = "Organization id")),
     request_body = OrganizationSettingsUpdateRequest,
     responses(
@@ -80,7 +69,6 @@ pub async fn get_settings(
         (status = 401, description = "Unauthorized", body = ErrorBody),
         (status = 403, description = "Forbidden", body = ErrorBody),
         (status = 404, description = "Not found", body = ErrorBody),
-        (status = 409, description = "An organization above froze this subtree (code `settings.enforced_by_ancestor`)", body = ErrorBody),
         (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
@@ -105,14 +93,5 @@ pub async fn update_settings(
     state.settings_service.update(user.id, org, update).await?;
 
     let resolution = state.settings_service.resolution(org).await?;
-    let own = state.settings_service.own(org).await?;
-    let last = state.settings_service.last_changes(org).await?;
-    let names =
-        resolve_change_authors(&state.user_service, last.values().map(|e| e.changed_by)).await;
-    Ok(Json(OrganizationSettingsResponse::build(
-        &resolution,
-        &own,
-        &last,
-        &names,
-    )))
+    Ok(Json(OrganizationSettingsResponse::build(&resolution)))
 }

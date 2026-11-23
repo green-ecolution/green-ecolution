@@ -1,40 +1,34 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import type {
-  OrganizationModulesResponse,
-  OrganizationRef,
-  SettingOriginDto,
-} from '@/api/backendApi'
+import type { OrganizationModulesResponse } from '@/api/backendApi'
 import { organizationModulesQuery } from '@/api/queries'
 import { useUpdateOrganizationModules } from '@/hooks/useSettingsMutations'
-import type { ModuleSettingsDraft } from '@/modules/types'
 
-type OwnSwitches = Record<string, boolean | null>
+type Flips = Record<string, boolean>
 
 export interface ModuleActivationRow {
   key: string
-  /** The state the switch shows: the draft's own value, else what inheriting gives. */
   enabled: boolean
-  /** Stored origin; an unsaved flip has not changed it yet. */
-  origin: SettingOriginDto
-  sourceId: string | null
-  /** This organization's own switch in the draft; `null` inherits. */
-  own: boolean | null
-  /** The parent that set this organization's switch; `null` when it set it itself. */
-  setBy: string | null
-  locked: boolean
+  /** A parent set this switch; this organization cannot move it. */
+  fixed: boolean
+  /** The organization that set it, when it is a visible one. */
+  fixedBy: string | null
 }
 
-export interface ModuleActivationDraft extends ModuleSettingsDraft {
+export interface ModuleActivationDraft {
+  loading: boolean
+  loadError: unknown
+  dirty: boolean
+  reset: () => void
   rows: ModuleActivationRow[]
-  enforcedBy: OrganizationRef | null
-  /** Activation in force on the server, which a section's visibility follows. */
-  isActive: (key: string) => boolean
-  setOwn: (key: string, value: boolean | null) => void
+  /** The switch as drafted, which a card's fields follow. */
+  isEnabled: (key: string) => boolean
+  setEnabled: (key: string, enabled: boolean) => void
+  enabling: boolean
+  disabling: boolean
+  saveEnabling: () => Promise<void>
+  saveDisabling: () => Promise<void>
 }
-
-const ownSwitchesOf = (response: OrganizationModulesResponse): OwnSwitches =>
-  Object.fromEntries(response.modules.map((module) => [module.key, module.ownValue ?? null]))
 
 const fingerprint = (orgId: string, response: OrganizationModulesResponse | undefined) =>
   response ? JSON.stringify([orgId, response]) : null
@@ -48,74 +42,59 @@ export const useModuleActivationDraft = (
     enabled,
   })
   const updateModules = useUpdateOrganizationModules()
-  // The edit remembers the response it was made on. Keyed on content: a
-  // refetch that changed nothing leaves a flip alone, one that moved a switch
-  // replaces it with the server's truth.
-  const [edit, setEdit] = useState<{ key: string; own: OwnSwitches } | null>(null)
+  // The edit remembers the response it was made on: a refetch that changed
+  // nothing leaves a flip alone, one that moved a switch replaces it.
+  const [edit, setEdit] = useState<{ key: string; flips: Flips } | null>(null)
   const serverKey = fingerprint(organizationId, server)
-  const own =
-    server && serverKey !== null
-      ? edit?.key === serverKey
-        ? edit.own
-        : ownSwitchesOf(server)
-      : null
+  const flips = edit?.key === serverKey ? edit.flips : {}
+  const modules = enabled && server ? server.modules : []
 
-  const enforcedBy = server?.enforcedBy ?? null
-  const ready = enabled && server !== undefined && own !== null
+  // Giving up the own switch where the drafted state is what the organization
+  // would inherit keeps it following its parent, as with the values.
+  const changes = (direction: boolean): Record<string, boolean | null> =>
+    Object.fromEntries(
+      modules
+        .filter((module) => flips[module.key] === direction && module.enabled !== direction)
+        .map((module) => [module.key, module.inheritedEnabled === direction ? null : direction]),
+    )
+  const enablingChanges = changes(true)
+  const disablingChanges = changes(false)
+  const enabling = Object.keys(enablingChanges).length > 0
+  const disabling = Object.keys(disablingChanges).length > 0
 
-  const changes: OwnSwitches = {}
-  if (ready) {
-    for (const module of server.modules) {
-      const drafted = own[module.key] ?? null
-      if (drafted !== (module.ownValue ?? null)) changes[module.key] = drafted
-    }
-  }
-
-  const rows: ModuleActivationRow[] = ready
-    ? server.modules.flatMap((module) => {
-        const locked = enforcedBy !== null || module.fixedByAncestor
-        // Switched off from above: nothing this organization could do with it.
-        if (locked && !module.enabled) return []
-        const drafted = own[module.key] ?? null
-        const setBy = module.setBy?.id ?? null
-        return {
-          key: module.key,
-          enabled: drafted ?? module.inheritedEnabled,
-          origin: module.origin,
-          sourceId: module.source?.id ?? null,
-          own: drafted,
-          setBy: setBy === organizationId ? null : setBy,
-          locked,
-        }
-      })
-    : []
-
-  const setOwn = (key: string, value: boolean | null) => {
-    // The backend refuses the whole write under a lock above, and a switch a
-    // parent set for this organization.
-    const fixed = server?.modules.some((module) => module.key === key && module.fixedByAncestor)
-    if (!own || serverKey === null || enforcedBy || fixed) return
-    setEdit({ key: serverKey, own: { ...own, [key]: value } })
-  }
-
-  const reset = () => setEdit(null)
-
-  const save = async () => {
-    if (Object.keys(changes).length === 0) return
-    await updateModules.mutateAsync({ orgId: organizationId, modules: changes })
+  const send = async (modulesToWrite: Record<string, boolean | null>) => {
+    if (Object.keys(modulesToWrite).length === 0) return
+    await updateModules.mutateAsync({ orgId: organizationId, modules: modulesToWrite })
   }
 
   return {
-    loading: !ready,
+    loading: !enabled || server === undefined,
     loadError: error,
-    dirty: Object.keys(changes).length > 0,
-    valid: true,
-    reset,
-    save,
-    rows,
-    enforcedBy,
-    isActive: (key) =>
-      server?.modules.some((module) => module.key === key && module.enabled) ?? false,
-    setOwn,
+    dirty: enabling || disabling,
+    reset: () => setEdit(null),
+    rows: modules.flatMap((module) => {
+      const fixed = module.fixedByAncestor
+      // Switched off from above: nothing this organization could do with it.
+      if (fixed && !module.enabled) return []
+      return {
+        key: module.key,
+        enabled: flips[module.key] ?? module.enabled,
+        fixed,
+        fixedBy: fixed ? (module.setBy?.id ?? null) : null,
+      }
+    }),
+    isEnabled: (key) => {
+      const module = modules.find((candidate) => candidate.key === key)
+      return module ? (flips[key] ?? module.enabled) : false
+    },
+    setEnabled: (key, value) => {
+      const module = modules.find((candidate) => candidate.key === key)
+      if (!module || module.fixedByAncestor || serverKey === null) return
+      setEdit({ key: serverKey, flips: { ...flips, [key]: value } })
+    },
+    enabling,
+    disabling,
+    saveEnabling: () => send(enablingChanges),
+    saveDisabling: () => send(disablingChanges),
   }
 }

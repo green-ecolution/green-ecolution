@@ -133,7 +133,7 @@ async fn respond(
         (status = 401, description = "Unauthorized", body = ErrorBody),
         (status = 403, description = "Forbidden", body = ErrorBody),
         (status = 404, description = "Not found", body = ErrorBody),
-        (status = 409, description = "An organization above froze this subtree (code `settings.enforced_by_ancestor`), or set a switch for this organization that the caller does not act for (code `settings.set_by_ancestor`)", body = ErrorBody),
+        (status = 409, description = "A parent set this switch for the organization and the caller does not act for that parent (code `settings.set_by_ancestor`)", body = ErrorBody),
         (status = 422, description = "Unknown module (code `module.unknown`)", body = ErrorBody),
         (status = 500, description = "Internal server error", body = ErrorBody),
     )

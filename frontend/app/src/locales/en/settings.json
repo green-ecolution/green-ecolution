@@ -381,7 +381,32 @@
     "areas": {
       "title": "Areas of work",
       "intro": "Switch on what is part of the work of {name}, and enter what planning should reckon with.",
-      "loading": "Loading areas of work"
+      "loading": "Loading areas of work",
+      "usual_one": "Usually {value}.",
+      "usual_other": "Usually {value}.",
+      "enabled": "Switched on",
+      "disabled": "Switched off",
+      "fixedBy": "{name} sets this area of work.",
+      "fixedByUnknown": "A parent organization sets this area of work.",
+      "saveHint": "Changes apply only after saving.",
+      "save": "Save",
+      "readOnlyNotice": "You can view the areas of work but not change them.",
+      "loadErrorForbidden": "You may not view this organization's areas of work. Your role probably applies to a sub-organization only.",
+      "loadErrorGeneric": "The areas of work could not be loaded. Please try again later.",
+      "sensors": {
+        "title": "Sensors",
+        "description": "When a sensor counts as offline or suspect",
+        "offlineAfterLabel": "Sensor counts as offline after",
+        "offlineAfterHint": "A sensor that stays silent this long counts as offline, and its last readings count as outdated.",
+        "offlineAfterUnit": "hours",
+        "defectStreakLabel": "Sensor counts as suspect after",
+        "defectStreakHint": "This many unusable readings in a row until a sensor is flagged as suspect.",
+        "defectStreakUnit": "readings",
+        "hours_one": "{count} hour",
+        "hours_other": "{count} hours",
+        "readings_one": "{count} reading",
+        "readings_other": "{count} readings"
+      }
     },
     "loadErrorForbidden": "You aren't allowed to view this organization. Your role probably only applies to a sub-organization.",
     "loadErrorGeneric": "The organization structure could not be loaded. Please try again later.",
@@ -473,9 +498,6 @@
       "deleteFailed": "The organization could not be deleted."
     },
     "settings": {
-      "title": "Operational defaults",
-      "hint": "These values apply to this organization and to every sub-unit that has not set its own. Without an own value a sub-unit follows its parent organization, all the way up to the instance default.",
-      "readOnlyNotice": "You can view these defaults but not change them.",
       "mapView": {
         "label": "Map viewport",
         "hint": "Where the map opens and how far it may be panned. Members of this organization start in this extent and cannot move beyond it.",
@@ -485,6 +507,7 @@
         "minZoomLabel": "Zoom from",
         "maxZoomLabel": "to",
         "zoomHint": "Lower values show more ground, higher values more detail.",
+        "useUsual": "Use the usual view",
         "apply": "Apply this extent",
         "applyCentre": "Apply this centre",
         "centre": "Centre {value}",
@@ -492,37 +515,13 @@
         "previewAriaLabel": "Preview of the viewport in force",
         "pinAriaLabel": "Map centre, draggable"
       },
-      "origin": {
-        "default": "Instance default",
-        "inherited": "Inherited from {name}",
-        "inheritedUnknown": "Inherited from a parent organization",
-        "own": "Own value"
-      },
-      "setOwnValue": "Set own value",
-      "setOwnValueFor": "Set own value for {field}",
-      "inheritAgain": "Inherit again",
-      "inheritAgainFor": "Inherit {field} again",
-      "dormantOwnValue": "The own value of {value} lies dormant while the lock applies.",
-      "lastChange": "Last changed on {date}",
-      "lastChangeBy": "Last changed on {date} by {name}",
-      "enforcedNotice": "{name} has locked the defaults for this organization. The values from there apply and cannot be overridden here.",
-      "enforcedNoticeUnknown": "A parent organization has locked the defaults for this organization. The values from there apply and cannot be overridden here.",
-      "descendantsLabel": "Sub-units may set their own values",
-      "descendantsHintOn": "A sub-unit that sets none keeps following what is set here.",
-      "descendantsHintOff": "These defaults are binding for every sub-unit. The section is read-only there.",
-      "loadErrorForbidden": "You aren't allowed to view this organization's defaults. Your role probably only applies to a sub-organization.",
-      "loadErrorGeneric": "The defaults could not be loaded. Please try again later.",
+      "loadErrorForbidden": "You aren't allowed to view this organization's map view. Your role probably only applies to a sub-organization.",
+      "loadErrorGeneric": "The map view could not be loaded. Please try again later.",
       "toast": {
         "saved": "Settings saved",
         "saveFailed": "The settings could not be saved.",
-        "lockedByAncestor": "A parent organization has locked these settings."
+        "setByAncestor": "A parent organization has set this area of work."
       }
-    },
-    "modules": {
-      "title": "Modules",
-      "hint": "Choose which modules are available in this organization and everything below it. When a parent organization switches a module for a sub-unit, the sub-unit cannot change that choice itself.",
-      "setBy": "Set by {name}",
-      "setByUnknown": "Set by a parent organization"
     }
   },
   "permission": {

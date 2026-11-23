@@ -36,21 +36,22 @@ Ecolution und lässt sich nicht bearbeiten; ein Hinweis auf der Seite sagt das.
 
 Mit der Berechtigung `setting:read` zeigt der Überblick zusätzlich den
 **Kartenausschnitt**. Er bestimmt, wo die Karte für die Mitarbeitenden dieser
-Organisation aufgeht und welchen Bereich sie überhaupt freigibt. Beides gehört
-zusammen: Der Ausschnitt ist die Grenze, über die hinaus sich die Karte nicht schwenken
-lässt, und der Mittelpunkt ist der Punkt, an dem sie startet. Ohne eigenen Wert erbt
-eine Organisation auch hier nach oben, bis zur Vorgabe der Instanz. Eine Instanz, die
-mehrere Kommunen verwaltet, zeigt damit nicht mehr allen denselben Ort.
+Organisation aufgeht und welchen Bereich sie überhaupt freigibt. Beides gehört zusammen:
+Der Ausschnitt ist die Grenze, über die hinaus sich die Karte nicht schwenken lässt, und
+der Mittelpunkt ist der Punkt, an dem sie startet. Ohne eigenen Ausschnitt gilt der
+Ausschnitt der übergeordneten Organisation und ganz oben der Standard der Anwendung.
+Eine Instanz, die mehrere Kommunen verwaltet, zeigt damit nicht mehr allen denselben
+Ort.
 
-Anders als die Zahlenwerte unter [Aufgabenbereiche](./settings-areas.md#fachliche-vorgaben) wird der Kartenausschnitt nicht eingetippt, sondern
-auf einer Karte festgelegt. Nach **Eigenen Wert setzen** wird die Vorschau bedienbar:
-Du schwenkst und zoomst, bis der sichtbare Bereich genau den Bereich zeigt, den deine
-Mitarbeitenden erreichen können sollen, und ziehst die Markierung an die Stelle, an der
-die Karte aufgehen soll. **Ausschnitt übernehmen** schreibt beides in den Entwurf;
-gespeichert wird zusammen mit den Stammdaten erst mit **Speichern**. Liegt die Markierung
-am Ende außerhalb des gewählten Bereichs, weist die Anwendung das zurück und sagt es
-unter dem Wert, denn ein Mittelpunkt außerhalb der eigenen Grenze wäre ein Ausschnitt,
-den niemand sehen könnte.
+Anders als die Zahlenwerte unter [Aufgabenbereiche](./settings-areas.md#werte) wird der
+Kartenausschnitt nicht eingetippt, sondern auf einer Karte festgelegt. Mit der
+Berechtigung `setting:update` ist die Karte direkt bedienbar: Du schwenkst und zoomst,
+bis der sichtbare Bereich genau den Bereich zeigt, den deine Mitarbeitenden erreichen
+können sollen, und ziehst die Markierung an die Stelle, an der die Karte aufgehen soll.
+**Ausschnitt übernehmen** schreibt beides in den Entwurf; gespeichert wird zusammen mit
+den Stammdaten erst mit **Speichern**. Liegt die Markierung am Ende außerhalb des
+gewählten Bereichs, weist die Anwendung das zurück und sagt es unter dem Wert, denn ein
+Mittelpunkt außerhalb der eigenen Grenze wäre ein Ausschnitt, den niemand sehen könnte.
 
 Unter der Karte stehen zusätzlich die beiden Zoomstufen, zwischen denen sich die Karte
 bewegen darf. Kleine Werte zeigen mehr Fläche, große mehr Detail; die Skala reicht von 0
@@ -61,16 +62,16 @@ Läuft der Bereich verkehrt herum, also die untere Stufe über der oberen, weist
 Anwendung das unter dem Wert zurück.
 
 Nicht jede Organisation arbeitet in einem abgegrenzten Gebiet. Der Schalter **Keine
-Einschränkung** oben rechts hebt die Grenze deshalb ganz auf, und zwar vollständig: Weder
-der Ausschnitt noch die Zoomstufen gelten dann noch, die Karte lässt sich überallhin
-schwenken und so weit zoomen, wie das Kartenmaterial reicht. Bestehen bleibt nur der
-Mittelpunkt, denn aufgehen muss sie weiterhin irgendwo. Solange der Schalter an ist,
-spielt der sichtbare Bereich keine Rolle mehr, die Zoomfelder verschwinden, und aus dem
-Knopf wird entsprechend **Mittelpunkt übernehmen**. Wer die Grenze später wieder
+Einschränkung** oben rechts hebt die Grenze deshalb ganz auf, und zwar vollständig:
+Weder der Ausschnitt noch die Zoomstufen gelten dann noch, die Karte lässt sich
+überallhin schwenken und so weit zoomen, wie das Kartenmaterial reicht. Bestehen bleibt
+nur der Mittelpunkt, denn aufgehen muss sie weiterhin irgendwo. Solange der Schalter an
+ist, spielt der sichtbare Bereich keine Rolle mehr, die Zoomfelder verschwinden, und aus
+dem Knopf wird entsprechend **Mittelpunkt übernehmen**. Wer die Grenze später wieder
 einführt, bekommt einen Vorschlag rund um den Mittelpunkt samt Standard-Zoombereich, den
-er wie gewohnt zurechtschieben kann. Der Schalter gehört zum Wert selbst und lässt sich
-erst bedienen, wenn diese Organisation den Kartenausschnitt über **Eigenen Wert setzen**
-übernommen hat; bei einem geerbten Ausschnitt gibt es hier nichts aufzuheben.
+er wie gewohnt zurechtschieben kann. Mit **Üblichen Ausschnitt verwenden** stellst du
+den Ausschnitt wieder auf den der übergeordneten Organisation, ganz oben auf den
+Standard der Anwendung; nach dem Speichern folgt deine Organisation ihm wieder.
 
 Die Änderung greift, sobald eine Karte neu geöffnet wird. Wer die Karte bereits vor sich
 hat und darin verschoben hat, bleibt an seiner Stelle; das ist gewollt, denn eine Karte,
@@ -80,10 +81,8 @@ zeigt.
 
 ![Der Kartenausschnitt im Bearbeitungszustand mit verschiebbarer Karte und Markierung](../images/settings-organization-map-view.png)
 
-Wie die Zahlenwerte erbt auch der Kartenausschnitt nach oben und lässt sich von einer
-übergeordneten Organisation sperren; ob die Untereinheiten eigene Werte setzen dürfen,
-legst du unter [Aufgabenbereiche](./settings-areas.md#fachliche-vorgaben) fest. Zum
-Ändern brauchst du zusätzlich `setting:update`.
+Zum Ändern brauchst du zusätzlich `setting:update`; ohne sie siehst du den Ausschnitt
+als Vorschau.
 
 ## Verweise zu den übrigen Seiten
 

@@ -160,7 +160,6 @@ impl IntoResponse for ServiceError {
             | ServiceError::CannotChangeOwnAccess
             | ServiceError::CannotRevokeOwnAdministration
             | ServiceError::SensorBoundToTarget
-            | ServiceError::SettingsEnforcedByAncestor { .. }
             | ServiceError::SettingsSetByAncestor { .. } => {
                 (StatusCode::CONFLICT, self.to_string())
             }

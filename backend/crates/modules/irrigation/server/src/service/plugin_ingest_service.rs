@@ -417,7 +417,6 @@ mod tests {
                 ActivationResolution {
                     enabled: true,
                     origin: SettingOrigin::Default,
-                    enforced_by: None,
                     inherited: true,
                 },
             )]))

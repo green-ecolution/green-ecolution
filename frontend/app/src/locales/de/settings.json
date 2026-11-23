@@ -381,7 +381,32 @@
     "areas": {
       "title": "Aufgabenbereiche",
       "intro": "Schalte ein, was zu den Aufgaben von {name} gehört, und trage ein, womit die Planung rechnen soll.",
-      "loading": "Aufgabenbereiche werden geladen"
+      "loading": "Aufgabenbereiche werden geladen",
+      "usual_one": "Üblich ist {value}.",
+      "usual_other": "Üblich sind {value}.",
+      "enabled": "Eingeschaltet",
+      "disabled": "Ausgeschaltet",
+      "fixedBy": "Diesen Aufgabenbereich legt {name} fest.",
+      "fixedByUnknown": "Diesen Aufgabenbereich legt eine übergeordnete Organisation fest.",
+      "saveHint": "Änderungen gelten erst nach dem Speichern.",
+      "save": "Speichern",
+      "readOnlyNotice": "Du kannst die Aufgabenbereiche ansehen, aber nicht ändern.",
+      "loadErrorForbidden": "Du darfst die Aufgabenbereiche dieser Organisation nicht einsehen. Vermutlich gilt deine Rolle nur für eine untergeordnete Organisation.",
+      "loadErrorGeneric": "Die Aufgabenbereiche konnten nicht geladen werden. Bitte versuche es später erneut.",
+      "sensors": {
+        "title": "Sensoren",
+        "description": "Ab wann ein Sensor als offline oder auffällig gilt",
+        "offlineAfterLabel": "Sensor gilt als offline nach",
+        "offlineAfterHint": "Meldet sich ein Sensor so lange nicht, gilt er als offline, und seine letzten Messwerte gelten als veraltet.",
+        "offlineAfterUnit": "Stunden",
+        "defectStreakLabel": "Sensor gilt als auffällig nach",
+        "defectStreakHint": "So viele unbrauchbare Messungen in Folge, bis ein Sensor als auffällig markiert wird.",
+        "defectStreakUnit": "Messungen",
+        "hours_one": "{count} Stunde",
+        "hours_other": "{count} Stunden",
+        "readings_one": "{count} Messung",
+        "readings_other": "{count} Messungen"
+      }
     },
     "loadErrorForbidden": "Du darfst diese Organisation nicht einsehen. Vermutlich gilt deine Rolle nur für eine untergeordnete Organisation.",
     "loadErrorGeneric": "Die Organisationsstruktur konnte nicht geladen werden. Bitte versuche es später erneut.",
@@ -473,9 +498,6 @@
       "deleteFailed": "Die Organisation konnte nicht gelöscht werden."
     },
     "settings": {
-      "title": "Fachliche Vorgaben",
-      "hint": "Diese Werte gelten für diese Organisation und für alle Untereinheiten, die nichts Eigenes gesetzt haben. Ohne eigenen Wert folgt eine Untereinheit ihrer übergeordneten Organisation, bis hinauf zur Vorgabe der Instanz.",
-      "readOnlyNotice": "Du kannst diese Vorgaben ansehen, aber nicht ändern.",
       "mapView": {
         "label": "Kartenausschnitt",
         "hint": "Wo die Karte aufgeht und welchen Bereich sie freigibt. Mitarbeitende dieser Organisation starten in diesem Ausschnitt und können nicht darüber hinaus schwenken.",
@@ -485,6 +507,7 @@
         "minZoomLabel": "Zoom von",
         "maxZoomLabel": "bis",
         "zoomHint": "Kleine Werte zeigen mehr Fläche, große Werte mehr Detail.",
+        "useUsual": "Üblichen Ausschnitt verwenden",
         "apply": "Ausschnitt übernehmen",
         "applyCentre": "Mittelpunkt übernehmen",
         "centre": "Mittelpunkt {value}",
@@ -492,37 +515,13 @@
         "previewAriaLabel": "Vorschau des geltenden Kartenausschnitts",
         "pinAriaLabel": "Mittelpunkt der Karte, ziehbar"
       },
-      "origin": {
-        "default": "Vorgabe der Instanz",
-        "inherited": "Geerbt von {name}",
-        "inheritedUnknown": "Von einer übergeordneten Organisation geerbt",
-        "own": "Eigener Wert"
-      },
-      "setOwnValue": "Eigenen Wert setzen",
-      "setOwnValueFor": "Eigenen Wert für {field} setzen",
-      "inheritAgain": "Wieder erben",
-      "inheritAgainFor": "{field} wieder erben",
-      "dormantOwnValue": "Der eigene Wert von {value} ruht, solange die Sperre gilt.",
-      "lastChange": "Zuletzt geändert am {date}",
-      "lastChangeBy": "Zuletzt geändert am {date} von {name}",
-      "enforcedNotice": "{name} hat die Vorgaben für diese Organisation gesperrt. Es gelten die Werte von dort, eigene Eingaben sind hier nicht möglich.",
-      "enforcedNoticeUnknown": "Eine übergeordnete Organisation hat die Vorgaben für diese Organisation gesperrt. Es gelten die Werte von dort, eigene Eingaben sind hier nicht möglich.",
-      "descendantsLabel": "Untereinheiten dürfen eigene Werte setzen",
-      "descendantsHintOn": "Wer keinen eigenen Wert setzt, übernimmt weiterhin, was hier steht.",
-      "descendantsHintOff": "Diese Vorgaben gelten für alle Untereinheiten verbindlich. Dort ist der Abschnitt nur noch lesbar.",
-      "loadErrorForbidden": "Du darfst die Vorgaben dieser Organisation nicht einsehen. Vermutlich gilt deine Rolle nur für eine untergeordnete Organisation.",
-      "loadErrorGeneric": "Die Vorgaben konnten nicht geladen werden. Bitte versuche es später erneut.",
+      "loadErrorForbidden": "Du darfst den Kartenausschnitt dieser Organisation nicht einsehen. Vermutlich gilt deine Rolle nur für eine untergeordnete Organisation.",
+      "loadErrorGeneric": "Der Kartenausschnitt konnte nicht geladen werden. Bitte versuche es später erneut.",
       "toast": {
         "saved": "Einstellungen gespeichert",
         "saveFailed": "Die Einstellungen konnten nicht gespeichert werden.",
-        "lockedByAncestor": "Eine übergeordnete Organisation hat diese Einstellungen gesperrt."
+        "setByAncestor": "Eine übergeordnete Organisation hat diesen Aufgabenbereich festgelegt."
       }
-    },
-    "modules": {
-      "title": "Module",
-      "hint": "Lege fest, welche Fachmodule in dieser Organisation und darunter zur Verfügung stehen. Schaltet eine übergeordnete Organisation ein Modul für eine Unterorganisation, kann die Unterorganisation diese Wahl nicht selbst ändern.",
-      "setBy": "Festgelegt von {name}",
-      "setByUnknown": "Von einer übergeordneten Organisation festgelegt"
     }
   },
   "permission": {

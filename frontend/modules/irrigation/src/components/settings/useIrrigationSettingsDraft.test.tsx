@@ -10,65 +10,60 @@ import { useIrrigationDraftState, useIrrigationSettingsDraft } from './useIrriga
 const getIrrigationSettings = vi.spyOn(irrigationApi, 'getIrrigationSettings')
 const updateIrrigationSettings = vi.spyOn(irrigationApi, 'updateIrrigationSettings')
 
-const response = {
-  waterDemand: { value: 80, origin: 'inherited', source: { id: 'parent' }, lastChange: null },
-  justWateredTtlSecs: { value: 86400, origin: 'own', ownValue: 86400, lastChange: null },
-  enforcedBy: null,
-} as unknown as IrrigationSettingsResponse
+const response = (waterDemand = 120, ttlSecs = 86_400): IrrigationSettingsResponse => ({
+  waterDemand: { value: waterDemand, inheritedValue: 80 },
+  justWateredTtlSecs: { value: ttlSecs, inheritedValue: 86_400 },
+})
 
 describe('useIrrigationDraftState', () => {
-  it('starts clean and sends nothing', () => {
+  it('starts from the values in force and is clean', () => {
     const { result } = renderHook(() => useIrrigationDraftState())
-    act(() => result.current.load(response))
+    act(() => result.current.load(response()))
+    expect(result.current.draft).toEqual({ waterDemand: '120', justWateredTtlHours: '24' })
     expect(result.current.dirty).toBe(false)
     expect(result.current.toRequest()).toBeNull()
   })
 
-  it('sends null when an own value is given back to inheritance', () => {
+  it('sends only the field that moved', () => {
     const { result } = renderHook(() => useIrrigationDraftState())
-    act(() => result.current.load(response))
-    act(() => result.current.setOwn('justWateredTtlHours', false))
-    expect(result.current.toRequest()).toEqual({ justWateredTtlSecs: null })
+    act(() => result.current.load(response()))
+    act(() => result.current.setText('waterDemand', '90'))
+    expect(result.current.toRequest()).toEqual({ waterDemand: 90 })
   })
 
-  it('converts hours back into seconds', () => {
+  it('sends the usual value as a plain number, the backend lets it follow again', () => {
     const { result } = renderHook(() => useIrrigationDraftState())
-    act(() => result.current.load(response))
-    act(() => result.current.setText('justWateredTtlHours', '12'))
-    expect(result.current.toRequest()).toEqual({ justWateredTtlSecs: 43200 })
-  })
-
-  it('takes over an inherited value as the starting point when own is switched on', () => {
-    const { result } = renderHook(() => useIrrigationDraftState())
-    act(() => result.current.load(response))
-    act(() => result.current.setOwn('waterDemand', true))
-    expect(result.current.draft?.waterDemand.text).toBe('80')
+    act(() => result.current.load(response()))
+    act(() => result.current.setText('waterDemand', '80'))
     expect(result.current.toRequest()).toEqual({ waterDemand: 80 })
   })
 
-  it('reports a value outside the domain range and refuses to submit', () => {
+  it('converts hours to seconds', () => {
     const { result } = renderHook(() => useIrrigationDraftState())
-    act(() => result.current.load(response))
-    act(() => result.current.setOwn('waterDemand', true))
+    act(() => result.current.load(response()))
+    act(() => result.current.setText('justWateredTtlHours', '12'))
+    expect(result.current.toRequest()).toEqual({ justWateredTtlSecs: 43_200 })
+  })
+
+  it('builds no request while a value is invalid', () => {
+    const { result } = renderHook(() => useIrrigationDraftState())
+    act(() => result.current.load(response()))
+    act(() => result.current.setText('waterDemand', ''))
+    expect(result.current.valid).toBe(false)
+    expect(result.current.toRequest()).toBeNull()
+  })
+
+  it('reports a value outside the domain range', () => {
+    const { result } = renderHook(() => useIrrigationDraftState())
+    act(() => result.current.load(response()))
     act(() => result.current.setText('waterDemand', '5000'))
     expect(result.current.issues.waterDemand).not.toBeNull()
     expect(result.current.valid).toBe(false)
   })
-
-  it('does not silently give up an own value when the text is not numeric', () => {
-    const { result } = renderHook(() => useIrrigationDraftState())
-    act(() => result.current.load(response))
-    act(() => result.current.setOwn('waterDemand', true))
-    act(() => result.current.setText('waterDemand', 'abc'))
-    expect(result.current.valid).toBe(false)
-    // Number('abc') is NaN, which JSON.stringify turns into null — that would
-    // read server-side as "give up the own value". Must not happen.
-    expect(result.current.toRequest()).toBeNull()
-  })
 })
 
 const loaded = async () => {
-  getIrrigationSettings.mockResolvedValue(response)
+  getIrrigationSettings.mockResolvedValue(response())
   const hook = renderHookWithClient(() => useIrrigationSettingsDraft('nord', { enabled: true }))
   await waitFor(() => expect(hook.result.current.loading).toBe(false))
   return hook
@@ -83,16 +78,15 @@ describe('useIrrigationSettingsDraft', () => {
     expect(getIrrigationSettings).toHaveBeenCalledWith({ orgId: 'nord' })
     expect(result.current.dirty).toBe(false)
     expect(result.current.valid).toBe(true)
-    expect(result.current.server).toEqual(response)
-    expect(result.current.draft?.justWateredTtlHours).toEqual({ own: true, text: '24' })
+    expect(result.current.server).toEqual(response())
+    expect(result.current.draft?.justWateredTtlHours).toBe('24')
   })
 
   it('saves only the field that moved and reloads its settings', async () => {
-    updateIrrigationSettings.mockResolvedValue(response)
+    updateIrrigationSettings.mockResolvedValue(response())
     const { result, queryClient } = await loaded()
     const invalidate = vi.spyOn(queryClient, 'invalidateQueries')
 
-    act(() => result.current.setOwn('waterDemand', true))
     act(() => result.current.setText('waterDemand', '95'))
     expect(result.current.dirty).toBe(true)
     await act(() => result.current.save())
@@ -115,22 +109,23 @@ describe('useIrrigationSettingsDraft', () => {
     await act(async () => {
       await expect(result.current.save()).rejects.toBeDefined()
     })
-    expect(result.current.draft?.justWateredTtlHours.text).toBe('48')
+    expect(result.current.draft?.justWateredTtlHours).toBe('48')
   })
 
-  // `lastChange.changedAt` is a Date, so every refetch hands back a new object;
-  // only a change in content may replace what was typed.
+  // Every refetch hands back a new object; only a change in content may
+  // replace what was typed.
   it('keeps a typed value when the settings come back unchanged', async () => {
     const { result, queryClient } = await loaded()
 
     act(() => result.current.setText('justWateredTtlHours', '48'))
     act(() => {
-      queryClient.setQueryData(irrigationSettingsQueries.byOrganization('nord').queryKey, {
-        ...response,
-      })
+      queryClient.setQueryData(
+        irrigationSettingsQueries.byOrganization('nord').queryKey,
+        response(),
+      )
     })
 
-    expect(result.current.draft?.justWateredTtlHours.text).toBe('48')
+    expect(result.current.draft?.justWateredTtlHours).toBe('48')
   })
 
   it('takes over a value that changed on the server', async () => {
@@ -138,13 +133,13 @@ describe('useIrrigationSettingsDraft', () => {
 
     act(() => result.current.setText('justWateredTtlHours', '48'))
     act(() => {
-      queryClient.setQueryData(irrigationSettingsQueries.byOrganization('nord').queryKey, {
-        ...response,
-        justWateredTtlSecs: { ...response.justWateredTtlSecs, value: 259200 },
-      })
+      queryClient.setQueryData(
+        irrigationSettingsQueries.byOrganization('nord').queryKey,
+        response(120, 259_200),
+      )
     })
 
-    await waitFor(() => expect(result.current.draft?.justWateredTtlHours.text).toBe('72'))
+    await waitFor(() => expect(result.current.draft?.justWateredTtlHours).toBe('72'))
   })
 
   it('drops the edits on reset', async () => {
@@ -154,7 +149,7 @@ describe('useIrrigationSettingsDraft', () => {
     act(() => result.current.reset())
 
     expect(result.current.dirty).toBe(false)
-    expect(result.current.draft?.justWateredTtlHours.text).toBe('24')
+    expect(result.current.draft?.justWateredTtlHours).toBe('24')
   })
 
   it('asks nothing while the module is off in the organization', () => {

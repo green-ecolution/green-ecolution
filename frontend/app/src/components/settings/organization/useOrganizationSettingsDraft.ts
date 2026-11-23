@@ -1,22 +1,14 @@
 import { useCallback, useState } from 'react'
 import { translateIssue, validateMapView, type ValidationIssue } from '@green-ecolution/domain-wasm'
 import {
-  SettingOriginDto,
   type MapViewDto,
   type OrganizationSettingsResponse,
   type OrganizationSettingsUpdateRequest,
 } from '@/api/backendApi'
 import { useIssueTranslator } from '@/lib/i18n/validation'
 
-export interface MapViewFieldDraft {
-  own: boolean
-  /** Always a whole viewport: centre and box only mean anything together. */
-  value: MapViewDto
-}
-
 export interface SettingsDraft {
-  mapView: MapViewFieldDraft
-  descendantsMayOverride: boolean
+  mapView: MapViewDto
 }
 
 // wasm-bindgen emits `(input: number) => any`; tighten the return type at the boundary,
@@ -53,7 +45,7 @@ const sameBbox = (a: MapViewDto['bbox'], b: MapViewDto['bbox']): boolean => {
   return a.every((v, i) => v === b[i])
 }
 
-const sameMapView = (a: MapViewDto, b: MapViewDto): boolean =>
+export const sameMapView = (a: MapViewDto, b: MapViewDto): boolean =>
   a.center.every((v, i) => v === b.center[i]) &&
   sameBbox(a.bbox, b.bbox) &&
   a.minZoom === b.minZoom &&
@@ -69,11 +61,7 @@ const limitsAround = ([lat, lng]: number[]): Pick<MapViewDto, 'bbox' | 'minZoom'
 })
 
 const draftOf = (response: OrganizationSettingsResponse): SettingsDraft => ({
-  mapView: {
-    own: response.mapView.origin === SettingOriginDto.Own,
-    value: response.mapView.value,
-  },
-  descendantsMayOverride: response.descendantsMayOverride,
+  mapView: response.mapView.value,
 })
 
 export const useOrganizationSettingsDraft = () => {
@@ -87,18 +75,8 @@ export const useOrganizationSettingsDraft = () => {
     setDraft(draftOf(response))
   }, [])
 
-  const setMapViewOwn = (own: boolean) => {
-    setDraft((current) => {
-      if (!current || !server) return current
-      if (!own) return { ...current, mapView: { ...current.mapView, own: false } }
-      // Take over what is currently in force, so the picker opens on the view
-      // the person already sees rather than somewhere they have to find again.
-      return { ...current, mapView: { own: true, value: server.mapView.value } }
-    })
-  }
-
-  const setMapView = (value: MapViewDto) => {
-    setDraft((current) => (current ? { ...current, mapView: { own: true, value } } : current))
+  const setMapView = (mapView: MapViewDto) => {
+    setDraft((current) => (current ? { ...current, mapView } : current))
   }
 
   // Dropping the limit keeps the centre: the map still has to open somewhere,
@@ -107,69 +85,33 @@ export const useOrganizationSettingsDraft = () => {
   const setMapViewRestricted = (restricted: boolean) => {
     setDraft((current) => {
       if (!current) return current
-      const { center, bbox, minZoom, maxZoom } = current.mapView.value
+      const { center, bbox, minZoom, maxZoom } = current.mapView
       if (!restricted) {
         return {
           ...current,
-          mapView: {
-            own: true,
-            value: { center, bbox: null, minZoom: undefined, maxZoom: undefined },
-          },
+          mapView: { center, bbox: null, minZoom: undefined, maxZoom: undefined },
         }
       }
       // Coming back from unrestricted there is nothing to restore, so start
       // from limits around the centre that the picker can then adjust.
       const limits = bbox ? { bbox, minZoom, maxZoom } : limitsAround(center)
-      return { ...current, mapView: { own: true, value: { center, ...limits } } }
+      return { ...current, mapView: { center, ...limits } }
     })
   }
 
   const setMapViewZoom = (which: 'minZoom' | 'maxZoom', level: number) => {
     setDraft((current) =>
-      current
-        ? {
-            ...current,
-            mapView: {
-              own: true,
-              value: { ...current.mapView.value, [which]: level },
-            },
-          }
-        : current,
+      current ? { ...current, mapView: { ...current.mapView, [which]: level } } : current,
     )
   }
 
-  const setDescendantsMayOverride = (value: boolean) => {
-    setDraft((current) => (current ? { ...current, descendantsMayOverride: value } : current))
-  }
-
-  const mapViewIssue = draft?.mapView.own ? checkMapView(draft.mapView.value) : null
-
-  const errors = {
-    mapView: mapViewIssue ? translateIssue(mapViewIssue, translate) : null,
-  }
-
+  const mapViewIssue = draft ? checkMapView(draft.mapView) : null
+  const errors = { mapView: mapViewIssue ? translateIssue(mapViewIssue, translate) : null }
   const valid = errors.mapView === null
 
   const toRequest = (): OrganizationSettingsUpdateRequest | null => {
-    // A non-numeric own value would otherwise serialize to `null` over JSON
-    // and silently read as "give up the own value" on the server. Refuse to
-    // build a body at all while invalid; the caller already sees the error
-    // via `errors`, so nothing is lost by withholding the request.
     if (!draft || !server || !valid) return null
-    const body: OrganizationSettingsUpdateRequest = {}
-
-    const mapViewWasOwn = server.mapView.origin === SettingOriginDto.Own
-    if (!draft.mapView.own) {
-      if (mapViewWasOwn) body.mapView = null
-    } else if (!mapViewWasOwn || !sameMapView(draft.mapView.value, server.mapView.value)) {
-      body.mapView = draft.mapView.value
-    }
-
-    if (draft.descendantsMayOverride !== server.descendantsMayOverride) {
-      body.descendantsMayOverride = draft.descendantsMayOverride
-    }
-
-    return Object.keys(body).length > 0 ? body : null
+    return sameMapView(draft.mapView, server.mapView.value) ? null : { mapView: draft.mapView }
   }
 
   const dirty = toRequest() !== null
@@ -180,11 +122,9 @@ export const useOrganizationSettingsDraft = () => {
     errors,
     valid,
     load,
-    setMapViewOwn,
     setMapViewRestricted,
     setMapViewZoom,
     setMapView,
-    setDescendantsMayOverride,
     toRequest,
   }
 }

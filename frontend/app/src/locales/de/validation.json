@@ -143,6 +143,13 @@
     },
     "map_view": {
       "invalidFormat": "Der Mittelpunkt muss innerhalb des gewählten Ausschnitts liegen."
+    },
+    "sensor_offline_after": {
+      "outOfRange": "Die Zeit muss zwischen {min} und {max} Stunden liegen."
+    },
+    "defect_streak": {
+      "outOfRange": "Die Anzahl muss zwischen {min} und {max} liegen.",
+      "invalidFormat": "Die Anzahl muss eine ganze Zahl sein."
     }
   },
   "geo": {

@@ -1,0 +1,34 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT o.id AS organization_id,\n                      i.water_demand_liters AS \"water_demand_liters?\",\n                      i.just_watered_ttl_secs AS \"just_watered_ttl_secs?\"\n               FROM organizations o\n               LEFT JOIN irrigation_settings i ON i.organization_id = o.id\n               WHERE o.id = ANY($1)",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "organization_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "water_demand_liters?",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 2,
+        "name": "just_watered_ttl_secs?",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "UuidArray"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "0552bd150d5b23663385b21431f3751c3ca607e83bb7ffb7cec1eab9619107af"
+}

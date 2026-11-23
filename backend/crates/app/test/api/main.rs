@@ -66,7 +66,6 @@ pub mod sensor_status;
 pub mod sensors;
 pub mod settings;
 pub mod settings_history;
-pub mod settings_lock;
 pub mod settings_repo;
 pub mod stage3_migration;
 pub mod statistics;

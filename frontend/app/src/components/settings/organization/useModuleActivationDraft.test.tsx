@@ -1,37 +1,29 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { act, waitFor } from '@testing-library/react'
 import { renderHookWithClient } from '@/test/utils'
-import { moduleApi, type OrganizationModulesResponse } from '@/api/backendApi'
+import {
+  moduleApi,
+  type OrganizationModuleResponse,
+  type OrganizationModulesResponse,
+} from '@/api/backendApi'
 import { useModuleActivationDraft } from './useModuleActivationDraft'
 
 const getOrganizationModules = vi.spyOn(moduleApi, 'getOrganizationModules')
 const updateOrganizationModules = vi.spyOn(moduleApi, 'updateOrganizationModules')
 
-const response = (overrides: Partial<OrganizationModulesResponse> = {}) =>
+const modules = (rows: Partial<OrganizationModuleResponse>[]): OrganizationModulesResponse =>
   ({
-    enforcedBy: null,
-    modules: [
-      {
-        key: 'irrigation',
-        enabled: true,
-        inheritedEnabled: true,
-        origin: 'inherited',
-        source: { id: 'root' },
-        fixedByAncestor: false,
-      },
-      {
-        key: 'waste',
-        enabled: false,
-        inheritedEnabled: false,
-        origin: 'own',
-        ownValue: false,
-        fixedByAncestor: false,
-      },
-    ],
-    ...overrides,
+    modules: rows.map((row) => ({
+      key: 'irrigation',
+      enabled: true,
+      inheritedEnabled: true,
+      origin: 'default',
+      fixedByAncestor: false,
+      ...row,
+    })),
   }) as unknown as OrganizationModulesResponse
 
-const loaded = async (data: OrganizationModulesResponse = response()) => {
+const serve = async (data: OrganizationModulesResponse) => {
   getOrganizationModules.mockResolvedValue(data)
   updateOrganizationModules.mockResolvedValue(data)
   const hook = renderHookWithClient(() => useModuleActivationDraft('nord', { enabled: true }))
@@ -39,235 +31,86 @@ const loaded = async (data: OrganizationModulesResponse = response()) => {
   return hook
 }
 
+const sent = (body: Record<string, boolean | null>) => ({
+  orgId: 'nord',
+  organizationModulesUpdateRequest: { modules: body },
+})
+
 describe('useModuleActivationDraft', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  it('starts from the response and is clean', async () => {
-    const { result } = await loaded()
-
-    expect(getOrganizationModules).toHaveBeenCalledWith({ orgId: 'nord' })
-    expect(result.current.dirty).toBe(false)
-    expect(result.current.valid).toBe(true)
-    expect(result.current.rows).toEqual([
-      {
-        key: 'irrigation',
-        enabled: true,
-        origin: 'inherited',
-        sourceId: 'root',
-        own: null,
-        setBy: null,
-        locked: false,
-      },
-      {
-        key: 'waste',
-        enabled: false,
-        origin: 'own',
-        sourceId: null,
-        own: false,
-        setBy: null,
-        locked: false,
-      },
-    ])
-  })
-
-  it('becomes dirty when a switch is flipped and shows the new state', async () => {
-    const { result } = await loaded()
-
-    act(() => result.current.setOwn('irrigation', false))
-
-    expect(result.current.dirty).toBe(true)
-    expect(result.current.rows[0]).toMatchObject({ enabled: false, own: false })
-    // The rows follow the draft, the activation in force follows the server.
-    expect(result.current.isActive('irrigation')).toBe(true)
-  })
-
-  it('returns a module to inheritance with null', async () => {
-    const { result } = await loaded()
-
-    act(() => result.current.setOwn('waste', null))
-    expect(result.current.dirty).toBe(true)
-    expect(result.current.rows[1].own).toBeNull()
-
-    await act(() => result.current.save())
-    expect(updateOrganizationModules).toHaveBeenCalledWith({
-      orgId: 'nord',
-      organizationModulesUpdateRequest: { modules: { waste: null } },
-    })
-  })
-
-  it('shows what inheriting again gives once an own switch is dropped', async () => {
-    const { result } = await loaded(
-      response({
-        modules: [
-          {
-            key: 'waste',
-            enabled: true,
-            inheritedEnabled: false,
-            origin: 'own',
-            ownValue: true,
-            fixedByAncestor: false,
-          },
-        ],
-      }),
+  it('lists every module with its state and hides one that is fixed off', async () => {
+    const { result } = await serve(
+      modules([
+        { key: 'a' },
+        { key: 'b', enabled: false, fixedByAncestor: true, setBy: { id: 'root' } },
+      ]),
     )
-
-    expect(result.current.rows[0].enabled).toBe(true)
-    act(() => result.current.setOwn('waste', null))
-    expect(result.current.rows[0]).toMatchObject({ own: null, enabled: false })
+    expect(result.current.rows).toEqual([{ key: 'a', enabled: true, fixed: false, fixedBy: null }])
   })
 
-  it('sends only the switches that changed', async () => {
-    const { result } = await loaded()
-
-    act(() => result.current.setOwn('waste', true))
-    await act(() => result.current.save())
-
-    expect(updateOrganizationModules).toHaveBeenCalledTimes(1)
-    expect(updateOrganizationModules).toHaveBeenCalledWith({
-      orgId: 'nord',
-      organizationModulesUpdateRequest: { modules: { waste: true } },
-    })
+  it('drafts a flip and reports the direction', async () => {
+    const { result } = await serve(
+      modules([{ key: 'a' }, { key: 'b', enabled: false, inheritedEnabled: false }]),
+    )
+    act(() => result.current.setEnabled('a', false))
+    act(() => result.current.setEnabled('b', true))
+    expect(result.current.isEnabled('a')).toBe(false)
+    expect(result.current.isEnabled('b')).toBe(true)
+    expect(result.current.enabling && result.current.disabling && result.current.dirty).toBe(true)
   })
 
-  it('is clean again once a switch is back where the server has it', async () => {
-    const { result } = await loaded()
-
-    act(() => result.current.setOwn('waste', true))
-    act(() => result.current.setOwn('waste', false))
-
+  it('flipping back to the stored state is no change', async () => {
+    const { result } = await serve(modules([{ key: 'a' }]))
+    act(() => result.current.setEnabled('a', false))
+    act(() => result.current.setEnabled('a', true))
     expect(result.current.dirty).toBe(false)
   })
 
-  it('drops the edits on reset', async () => {
-    const { result } = await loaded()
+  it('writes switching on and switching off in separate requests', async () => {
+    const { result } = await serve(
+      modules([{ key: 'a' }, { key: 'b', enabled: false, inheritedEnabled: false }]),
+    )
+    act(() => result.current.setEnabled('a', false))
+    act(() => result.current.setEnabled('b', true))
+    await act(() => result.current.saveEnabling())
+    expect(updateOrganizationModules).toHaveBeenLastCalledWith(sent({ b: true }))
+    await act(() => result.current.saveDisabling())
+    expect(updateOrganizationModules).toHaveBeenLastCalledWith(sent({ a: false }))
+    expect(updateOrganizationModules).toHaveBeenCalledTimes(2)
+  })
 
-    act(() => result.current.setOwn('irrigation', false))
+  it('gives up the own switch when the drafted state is what it would inherit', async () => {
+    const { result } = await serve(
+      modules([{ key: 'a', enabled: false, inheritedEnabled: true, ownValue: false }]),
+    )
+    act(() => result.current.setEnabled('a', true))
+    await act(() => result.current.saveEnabling())
+    expect(updateOrganizationModules).toHaveBeenLastCalledWith(sent({ a: null }))
+  })
+
+  it('leaves a fixed switch alone', async () => {
+    const { result } = await serve(
+      modules([{ key: 'a', fixedByAncestor: true, setBy: { id: 'root' } }]),
+    )
+    act(() => result.current.setEnabled('a', false))
+    expect(result.current.dirty).toBe(false)
+    expect(result.current.rows[0]).toMatchObject({ fixed: true, fixedBy: 'root' })
+  })
+
+  it('drops the flips on reset and sends nothing when nothing changed', async () => {
+    const { result } = await serve(modules([{ key: 'a' }]))
+    act(() => result.current.setEnabled('a', false))
     act(() => result.current.reset())
-
-    expect(result.current.dirty).toBe(false)
-    expect(result.current.rows[0].own).toBeNull()
-  })
-
-  it('locks the rows and hides the switched-off modules while an ancestor holds the lock', async () => {
-    const { result } = await loaded(response({ enforcedBy: { id: 'root' } }))
-
-    expect(result.current.enforcedBy).toEqual({ id: 'root' })
-    expect(result.current.rows.map((row) => row.key)).toEqual(['irrigation'])
-    expect(result.current.rows.every((row) => row.locked)).toBe(true)
-
-    act(() => result.current.setOwn('irrigation', false))
-    expect(result.current.dirty).toBe(false)
-  })
-
-  it('locks a switch a parent turned on for this organization and names the parent', async () => {
-    const { result } = await loaded(
-      response({
-        modules: [
-          {
-            key: 'irrigation',
-            enabled: true,
-            inheritedEnabled: true,
-            origin: 'inherited',
-            source: { id: 'root' },
-            fixedByAncestor: false,
-          },
-          {
-            key: 'waste',
-            enabled: true,
-            inheritedEnabled: true,
-            origin: 'own',
-            ownValue: true,
-            setBy: { id: 'root' },
-            fixedByAncestor: true,
-          },
-        ],
-      }),
-    )
-
-    expect(result.current.rows[1]).toMatchObject({ setBy: 'root', locked: true })
-    expect(result.current.rows[0].locked).toBe(false)
-
-    act(() => result.current.setOwn('waste', false))
-    act(() => result.current.setOwn('waste', null))
-    expect(result.current.dirty).toBe(false)
-  })
-
-  it('hides a module a parent switched off for this organization', async () => {
-    const { result } = await loaded(
-      response({
-        modules: [
-          {
-            key: 'irrigation',
-            enabled: true,
-            inheritedEnabled: true,
-            origin: 'inherited',
-            source: { id: 'root' },
-            fixedByAncestor: false,
-          },
-          {
-            key: 'waste',
-            enabled: false,
-            inheritedEnabled: false,
-            origin: 'own',
-            ownValue: false,
-            setBy: { id: 'root' },
-            fixedByAncestor: true,
-          },
-        ],
-      }),
-    )
-
-    expect(result.current.rows.map((row) => row.key)).toEqual(['irrigation'])
-
-    act(() => result.current.setOwn('waste', true))
-    expect(result.current.dirty).toBe(false)
-  })
-
-  it('names the parent but keeps the switch open for whoever acts for it', async () => {
-    const { result } = await loaded(
-      response({
-        modules: [
-          {
-            key: 'waste',
-            enabled: false,
-            inheritedEnabled: false,
-            origin: 'own',
-            ownValue: false,
-            setBy: { id: 'root' },
-            fixedByAncestor: false,
-          },
-        ],
-      }),
-    )
-
-    expect(result.current.rows[0]).toMatchObject({ setBy: 'root', locked: false })
-  })
-
-  it('does not name the organization itself as the one that set its switch', async () => {
-    const { result } = await loaded(
-      response({
-        modules: [
-          {
-            key: 'waste',
-            enabled: false,
-            inheritedEnabled: false,
-            origin: 'own',
-            ownValue: false,
-            setBy: { id: 'nord' },
-            fixedByAncestor: false,
-          },
-        ],
-      }),
-    )
-
-    expect(result.current.rows[0].setBy).toBeNull()
+    expect(result.current.isEnabled('a')).toBe(true)
+    await act(() => result.current.saveDisabling())
+    expect(updateOrganizationModules).not.toHaveBeenCalled()
   })
 
   it('asks nothing while disabled', () => {
     const { result } = renderHookWithClient(() =>
       useModuleActivationDraft('nord', { enabled: false }),
     )
-
     expect(getOrganizationModules).not.toHaveBeenCalled()
     expect(result.current.rows).toEqual([])
     expect(result.current.dirty).toBe(false)

@@ -1,5 +1,6 @@
 {
   "label": "Bewässerung",
+  "description": "Bäume, Bewässerungsgruppen und Gießeinsätze",
   "nav": {
     "clusters": "Bewässerungsgruppen",
     "trees": "Bäume",
@@ -263,10 +264,10 @@
   },
   "settings": {
     "waterDemandLabel": "Wasserbedarf je Baum",
-    "waterDemandHint": "Geht in die Bedarfsrechnung jeder Bewässerungsgruppe ein und bestimmt damit, wie viele Gruppen eine Tourenplanung in eine Fahrt legt. Bereits geplante Einsätze bleiben unverändert.",
+    "waterDemandHint": "So viel Wasser rechnet die Tourenplanung für jeden Baum ein.",
     "waterDemandUnit": "Liter",
-    "justWateredTtlLabel": "Nachwirkzeit frisch gegossen",
-    "justWateredTtlHint": "So lange gilt ein Baum nach einem abgeschlossenen Einsatzplan als soeben bewässert, bevor er auf Unbekannt zurückfällt.",
+    "justWateredTtlLabel": "Frisch gegossen gilt für",
+    "justWateredTtlHint": "So lange zeigt ein Baum nach einem abgeschlossenen Einsatz den Zustand „Soeben bewässert“.",
     "justWateredTtlUnit": "Stunden",
     "liters_one": "{count} Liter",
     "liters_other": "{count} Liter",

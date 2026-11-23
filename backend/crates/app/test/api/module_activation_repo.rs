@@ -26,18 +26,6 @@ fn repo(app: &crate::helpers::TestApp, defaults: &[(&str, bool)]) -> PgModuleAct
     )
 }
 
-async fn lock(app: &crate::helpers::TestApp, org: Uuid) {
-    sqlx::query!(
-        r#"INSERT INTO organization_settings (organization_id, descendants_may_override)
-           VALUES ($1, false)
-           ON CONFLICT (organization_id) DO UPDATE SET descendants_may_override = false"#,
-        org
-    )
-    .execute(&app.db_pool)
-    .await
-    .unwrap();
-}
-
 #[tokio::test]
 async fn activation_inherits_over_three_levels_and_own_values_win() {
     let app = spawn_app().await;
@@ -112,35 +100,6 @@ async fn clearing_returns_to_inheritance() {
     assert!(!r[&key("alpha")].enabled);
     assert_eq!(r[&key("alpha")].origin, SettingOrigin::Default);
     assert!(repo.own(Id::new(org)).await.unwrap().is_empty());
-}
-
-#[tokio::test]
-async fn a_lock_above_freezes_the_subtree() {
-    let app = spawn_app().await;
-    let root = Uuid::parse_str(ROOT_ORG_ID).unwrap();
-    let mid = child_org(&app, "Sperre", root).await;
-    let leaf = child_org(&app, "Darunter", mid).await;
-    let repo = repo(&app, &[("alpha", false)]);
-
-    repo.apply(
-        Id::new(mid),
-        &BTreeMap::from([(key("alpha"), Some(true))]),
-        Id::new(mid),
-    )
-    .await
-    .unwrap();
-    repo.apply(
-        Id::new(leaf),
-        &BTreeMap::from([(key("alpha"), Some(false))]),
-        Id::new(leaf),
-    )
-    .await
-    .unwrap();
-    lock(&app, mid).await;
-
-    let r = repo.resolve(Id::new(leaf)).await.unwrap();
-    assert!(r[&key("alpha")].enabled);
-    assert_eq!(r[&key("alpha")].enforced_by, Some(Id::new(mid)));
 }
 
 #[tokio::test]

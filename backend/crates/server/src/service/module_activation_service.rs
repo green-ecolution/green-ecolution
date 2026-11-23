@@ -63,10 +63,6 @@ impl ModuleActivationService {
         ctx.allows_in(setting_update(), switch.set_by)
     }
 
-    /// The lock check mirrors `SettingsService::update` but runs per registered
-    /// module: a write into a frozen subtree fails even when it would change
-    /// nothing, except with no module registered, where there is nothing to write.
-    ///
     /// A switch is written as the topmost organization on the chain the caller
     /// may update settings for, so a parent's choice binds the sub-unit. A
     /// switch set from a level the caller does not act for is refused; resending
@@ -88,12 +84,6 @@ impl ModuleActivationService {
             parsed.insert(key, change);
         }
 
-        let resolution = self.reader.resolve(org).await?;
-        if let Some(enforcer) = resolution.values().find_map(|r| r.enforced_by) {
-            return Err(ServiceError::SettingsEnforcedByAncestor {
-                organization_id: enforcer.value(),
-            });
-        }
         if parsed.is_empty() {
             return Ok(());
         }

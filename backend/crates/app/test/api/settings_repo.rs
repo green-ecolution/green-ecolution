@@ -1,4 +1,4 @@
-use domain::{Id, organization::Organization, settings::SettingOrigin};
+use domain::{Id, organization::Organization};
 use uuid::Uuid;
 
 use crate::{helpers::spawn_app, organizations::ROOT_ORG_ID};
@@ -48,10 +48,7 @@ async fn a_leaf_without_a_value_inherits_from_the_nearest_ancestor_that_has_one(
         .unwrap();
 
     assert_eq!(resolution.effective.sensor_offline_after.seconds(), 90_000);
-    assert_eq!(
-        resolution.origins.sensor_offline_after,
-        SettingOrigin::Inherited(Id::new(mid))
-    );
+    assert_eq!(resolution.inherited.sensor_offline_after.seconds(), 90_000);
 }
 
 /// An organization created after an earlier resolution must still resolve
@@ -80,10 +77,7 @@ async fn an_organization_created_after_the_first_read_still_inherits() {
         .unwrap();
 
     assert_eq!(resolution.effective.sensor_offline_after.seconds(), 100_000);
-    assert_eq!(
-        resolution.origins.sensor_offline_after,
-        SettingOrigin::Inherited(Id::new(root))
-    );
+    assert_eq!(resolution.inherited.sensor_offline_after.seconds(), 100_000);
 }
 
 #[tokio::test]
@@ -100,10 +94,7 @@ async fn an_organization_without_any_value_gets_the_instance_default() {
         .unwrap();
 
     assert_eq!(resolution.effective.sensor_offline_after.seconds(), 86_400);
-    assert_eq!(
-        resolution.origins.sensor_offline_after,
-        SettingOrigin::Default
-    );
+    assert_eq!(resolution.inherited.sensor_offline_after.seconds(), 86_400);
 }
 
 #[tokio::test]
@@ -123,7 +114,7 @@ async fn an_own_value_beats_the_inherited_one() {
         .unwrap();
 
     assert_eq!(resolution.effective.sensor_offline_after.seconds(), 70_000);
-    assert_eq!(resolution.origins.sensor_offline_after, SettingOrigin::Own);
+    assert_eq!(resolution.inherited.sensor_offline_after.seconds(), 100_000);
 }
 
 pub(crate) async fn set_just_watered_ttl(app: &crate::helpers::TestApp, org: Uuid, secs: i64) {

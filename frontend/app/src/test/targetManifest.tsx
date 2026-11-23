@@ -44,6 +44,8 @@ export function probeTargetManifest(key: string, targets: ModuleTarget[]): Modul
   return {
     key,
     labelKey: 'irrigation:label',
+    icon: () => null,
+    descriptionKey: 'irrigation:label',
     i18n: { namespaces: [], load: () => Promise.resolve({}) },
     targets,
   }

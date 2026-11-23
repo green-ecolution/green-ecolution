@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::sync::Arc;
 
 use async_trait::async_trait;
@@ -23,7 +23,6 @@ pub struct PgModuleActivationRepository {
 /// have dozens of nodes, so folding in memory beats a recursive query.
 struct Snapshot {
     hierarchy: OrgHierarchy,
-    locked: HashSet<Id<Organization>>,
     own: HashMap<Id<Organization>, BTreeMap<ModuleKey, bool>>,
 }
 
@@ -41,7 +40,6 @@ impl Snapshot {
             .map(|id| ActivationLevel {
                 organization_id: id,
                 enabled: self.own.get(&id).and_then(|m| m.get(key)).copied(),
-                descendants_may_override: !self.locked.contains(&id),
             })
             .collect();
         resolve_activation(default_enabled, &chain, org)
@@ -63,16 +61,6 @@ impl PgModuleActivationRepository {
 
     async fn snapshot(&self) -> Result<Snapshot, RepositoryError> {
         let hierarchy = self.org_reader.hierarchy().await?;
-        let locked = sqlx::query_scalar!(
-            r#"SELECT organization_id FROM organization_settings
-               WHERE descendants_may_override = false"#
-        )
-        .fetch_all(&self.pool)
-        .await?
-        .into_iter()
-        .map(Id::new)
-        .collect();
-
         let rows = sqlx::query!(
             r#"SELECT organization_id, module_key, enabled FROM organization_modules"#
         )
@@ -85,11 +73,7 @@ impl PgModuleActivationRepository {
                 .insert(ModuleKey::new(&row.module_key)?, row.enabled);
         }
 
-        Ok(Snapshot {
-            hierarchy,
-            locked,
-            own,
-        })
+        Ok(Snapshot { hierarchy, own })
     }
 }
 

@@ -232,7 +232,6 @@ mod tests {
             Ok(EffectiveIrrigationSettings {
                 water_demand: WaterDemand::new(self.0).unwrap(),
                 just_watered_ttl: JustWateredTtl::new(86_400).unwrap(),
-                enforced_by: None,
             })
         }
     }

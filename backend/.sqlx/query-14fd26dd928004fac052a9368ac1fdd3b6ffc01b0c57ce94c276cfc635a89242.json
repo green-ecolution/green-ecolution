@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT previous_value, new_value FROM organization_settings_history\n           WHERE organization_id = $1 AND setting_key = 'full_threshold'\n           ORDER BY changed_at DESC, id DESC LIMIT 1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "previous_value",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 1,
+        "name": "new_value",
+        "type_info": "Jsonb"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      true,
+      true
+    ]
+  },
+  "hash": "14fd26dd928004fac052a9368ac1fdd3b6ffc01b0c57ce94c276cfc635a89242"
+}

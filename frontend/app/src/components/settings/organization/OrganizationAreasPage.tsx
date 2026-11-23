@@ -1,6 +1,6 @@
-import { Suspense, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { Suspense } from 'react'
 import { useBlocker } from '@tanstack/react-router'
+import { Blocks } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import {
   AlertDialog,
@@ -11,60 +11,37 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  Button,
   Loading,
 } from '@green-ecolution/ui'
-import type { OrganizationSettingsResponse } from '@/api/backendApi'
-import { settingsQueries } from '@/api/queries'
-import { useSettingsMutations, useSettingsSave } from '@/hooks/useSettingsMutations'
+import { useSettingsSave } from '@/hooks/useSettingsMutations'
 import { statusOf } from '@/lib/httpError'
-import OrganizationActionButtons from './OrganizationActionButtons'
-import OrganizationModulesSection from './OrganizationModulesSection'
-import OrganizationSettingsSection from './OrganizationSettingsSection'
+import { moduleManifests } from '@/modules/registry'
+import ModuleAreaCard from './ModuleAreaCard'
+import SensorsCard from './SensorsCard'
 import { useModuleActivationDraft } from './useModuleActivationDraft'
 import { useModuleSettingsDrafts } from './useModuleSettingsDrafts'
-import { useOrganizationSettingsDraft } from './useOrganizationSettingsDraft'
+import { useSensorSettingsDraft } from './useSensorSettingsDraft'
 import { useSettingsOrganization } from './useSettingsOrganization'
 
-const lockFingerprint = (
-  orgId: string,
-  settings: OrganizationSettingsResponse | undefined,
-): string | null =>
-  settings
-    ? JSON.stringify([orgId, settings.descendantsMayOverride, settings.enforcedBy?.id ?? null])
-    : null
-
 const OrganizationAreasPage = () => {
-  const { t } = useTranslation(['settings', 'common'])
+  const { t, i18n } = useTranslation(['settings', 'common'])
   const { orgId, organizations, can } = useSettingsOrganization()
   const canUpdate = can(['setting:update'])
   const name = organizations.find((org) => org.id === orgId)?.name ?? ''
 
-  const { updateSettings } = useSettingsMutations()
   const settingsSave = useSettingsSave()
-  const settingsDraft = useOrganizationSettingsDraft()
-  const [loadedKey, setLoadedKey] = useState<string | null>(null)
-
-  const { data: settings, error: settingsError } = useQuery(settingsQueries.byOrganization(orgId))
   const moduleDraft = useModuleActivationDraft(orgId, { enabled: true })
-  const moduleSections = useModuleSettingsDrafts(orgId, moduleDraft.isActive)
-  const activeSections = moduleSections.filter((section) => section.active)
-
-  const key = lockFingerprint(orgId, settings)
-  if (settings && key !== loadedKey) {
-    setLoadedKey(key)
-    settingsDraft.load(settings)
-  }
+  const sensors = useSensorSettingsDraft(orgId, { enabled: true })
+  // A card's fields follow the drafted switch: a module switched on here is
+  // written first, so its values may be edited in the same save.
+  const sections = useModuleSettingsDrafts(orgId, moduleDraft.isEnabled)
+  const shown = sections.filter((section) => section.active)
 
   // An invalid draft builds no request, so its `dirty` is false. Typed input
   // would then be dropped without a word on the way out, hence the `!valid` arm.
-  const dirty =
-    settingsDraft.dirty ||
-    moduleDraft.dirty ||
-    activeSections.some((section) => section.draft.dirty)
-  const valid =
-    settingsDraft.valid &&
-    moduleDraft.valid &&
-    activeSections.every((section) => section.draft.valid)
+  const dirty = moduleDraft.dirty || sensors.dirty || shown.some((section) => section.draft.dirty)
+  const valid = sensors.valid && shown.every((section) => section.draft.valid)
   const unsaved = dirty || !valid
 
   const blocker = useBlocker({
@@ -73,38 +50,24 @@ const OrganizationAreasPage = () => {
     withResolver: true,
   })
 
-  const nameOfOrg = (id: string | null | undefined): string | null =>
-    id ? (organizations.find((org) => org.id === id)?.name ?? null) : null
-
-  const reset = () => {
-    if (settings) settingsDraft.load(settings)
-    moduleDraft.reset()
-    for (const section of moduleSections) section.draft.reset()
-  }
-
   const save = () => {
-    const body = settingsDraft.toRequest()
+    // Module values are refused while the module is off, so switching on comes
+    // before the values and switching off after them.
     void settingsSave.save([
+      moduleDraft.enabling ? [moduleDraft.saveEnabling] : [],
       [
-        ...(body ? [() => updateSettings.mutateAsync({ orgId, body })] : []),
-        ...activeSections.filter(({ draft }) => draft.dirty).map(({ draft }) => draft.save),
+        ...(sensors.dirty ? [sensors.save] : []),
+        ...shown.filter(({ draft }) => draft.dirty).map(({ draft }) => draft.save),
       ],
-      // After the sections: a module switched off in the same save refuses
-      // writes to its settings once the switch is through.
-      moduleDraft.dirty ? [moduleDraft.save] : [],
+      moduleDraft.disabling ? [moduleDraft.saveDisabling] : [],
     ])
   }
 
   const loadError =
-    settingsError ??
     moduleDraft.loadError ??
-    activeSections.map(({ draft }) => draft.loadError).find((error) => error != null)
-  const ready =
-    settings !== undefined &&
-    settingsDraft.draft !== null &&
-    !moduleDraft.loading &&
-    activeSections.every(({ draft }) => !draft.loading)
-  const enforced = settings?.enforcedBy != null
+    sensors.loadError ??
+    shown.map(({ draft }) => draft.loadError).find((error) => error != null)
+  const ready = !moduleDraft.loading && !sensors.loading
 
   return (
     <div className="flex flex-col gap-6">
@@ -113,53 +76,64 @@ const OrganizationAreasPage = () => {
         <p className="mt-1 max-w-[62ch] text-sm text-dark-600">
           {t('organization.areas.intro', { name })}
         </p>
+        {!canUpdate && (
+          <p className="mt-2 text-sm text-dark-600">{t('organization.areas.readOnlyNotice')}</p>
+        )}
       </header>
 
       {loadError ? (
         <p role="alert" className="text-sm text-dark-600">
           {t(
             statusOf(loadError) === 403
-              ? 'organization.settings.loadErrorForbidden'
-              : 'organization.settings.loadErrorGeneric',
+              ? 'organization.areas.loadErrorForbidden'
+              : 'organization.areas.loadErrorGeneric',
           )}
         </p>
-      ) : settings && settingsDraft.draft && ready ? (
+      ) : ready ? (
         <>
-          <OrganizationSettingsSection
-            settings={settings}
-            draft={settingsDraft.draft}
-            canUpdate={canUpdate}
-            enforcedByName={nameOfOrg(settings.enforcedBy?.id)}
-            moduleSections={activeSections.map(({ key: sectionKey, draft, Section }) => (
-              <Suspense key={sectionKey} fallback={null}>
-                <Section
-                  draft={draft}
-                  locked={enforced || !canUpdate}
-                  enforced={enforced}
-                  organizationName={nameOfOrg}
-                />
-              </Suspense>
-            ))}
-            onDescendantsMayOverrideChange={settingsDraft.setDescendantsMayOverride}
-          />
-          <OrganizationModulesSection
-            draft={moduleDraft}
-            canUpdate={canUpdate}
-            organizationName={nameOfOrg}
-          />
+          {moduleDraft.rows.map((row) => {
+            const manifest = moduleManifests.find((candidate) => candidate.key === row.key)
+            const section = shown.find((candidate) => candidate.key === row.key)
+            const fixedByName = organizations.find((org) => org.id === row.fixedBy)?.name
+            return (
+              <ModuleAreaCard
+                key={row.key}
+                icon={manifest?.icon ?? Blocks}
+                title={manifest ? i18n.t(manifest.labelKey) : row.key}
+                description={manifest ? i18n.t(manifest.descriptionKey) : null}
+                toggle={{
+                  enabled: row.enabled,
+                  disabled: row.fixed || !canUpdate,
+                  note: !row.fixed
+                    ? null
+                    : fixedByName
+                      ? t('organization.areas.fixedBy', { name: fixedByName })
+                      : t('organization.areas.fixedByUnknown'),
+                  onChange: (enabled) => moduleDraft.setEnabled(row.key, enabled),
+                }}
+              >
+                {section && !section.draft.loading && (
+                  <Suspense fallback={null}>
+                    <section.Section draft={section.draft} locked={!canUpdate} />
+                  </Suspense>
+                )}
+              </ModuleAreaCard>
+            )
+          })}
+          <SensorsCard draft={sensors} locked={!canUpdate} />
         </>
       ) : (
         <Loading className="mt-10 justify-center" label={t('organization.areas.loading')} />
       )}
 
-      {unsaved && (
-        <div className="sticky bottom-0 flex flex-col-reverse gap-2 border-t border-dark-200 bg-dark-50 pb-3 pt-6 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
-          <OrganizationActionButtons
-            saving={settingsSave.pending}
-            canSave={dirty}
-            onSave={save}
-            onCancel={reset}
-          />
+      {canUpdate && ready && !loadError && (
+        <div className="flex flex-wrap items-center justify-end gap-3">
+          <p className="flex-[1_1_15rem] text-sm text-dark-600">
+            {t('organization.areas.saveHint')}
+          </p>
+          <Button type="button" disabled={!dirty || !valid || settingsSave.pending} onClick={save}>
+            {t('organization.areas.save')}
+          </Button>
         </div>
       )}
 

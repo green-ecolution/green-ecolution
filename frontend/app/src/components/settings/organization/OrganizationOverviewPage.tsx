@@ -48,16 +48,7 @@ const contactPersonMessage = (error: unknown, t: TFunction<'settings'>): string 
 const mapViewFingerprint = (
   orgId: string,
   settings: OrganizationSettingsResponse | undefined,
-): string | null =>
-  settings
-    ? JSON.stringify([
-        orgId,
-        settings.mapView.value,
-        settings.mapView.origin,
-        settings.mapView.ownValue ?? null,
-        settings.enforcedBy?.id ?? null,
-      ])
-    : null
+): string | null => (settings ? JSON.stringify([orgId, settings.mapView.value]) : null)
 
 const OrganizationOverviewPage = () => {
   const { t, i18n } = useTranslation(['settings', 'common'])
@@ -125,8 +116,6 @@ const OrganizationOverviewPage = () => {
 
   const readOnly = detail.parentId == null
   const node = buildTree(organizations, orgId)
-  const nameOfOrg = (id: string | null | undefined): string | null =>
-    id ? (organizations.find((org) => org.id === id)?.name ?? null) : null
 
   const resetDraft = () => {
     edit(detail)
@@ -223,7 +212,6 @@ const OrganizationOverviewPage = () => {
       : []),
   ]
 
-  const enforced = settings?.enforcedBy != null
   const mapViewSection = !canReadSettings ? null : settingsError ? (
     <p role="alert" className="text-sm text-dark-600">
       {t(
@@ -239,19 +227,14 @@ const OrganizationOverviewPage = () => {
         <MapViewSettingRow
           label={t('organization.settings.mapView.label')}
           description={t('organization.settings.mapView.hint')}
-          effective={settings.mapView.value}
-          draft={settingsDraft.draft.mapView.value}
-          origin={settings.mapView.origin}
-          sourceName={nameOfOrg(settings.mapView.source?.id)}
-          dormant={enforced ? (settings.mapView.ownValue ?? null) : null}
-          lastChange={settings.mapView.lastChange}
-          own={settingsDraft.draft.mapView.own}
-          locked={enforced || !canUpdateSettings}
+          value={settingsDraft.draft.mapView}
+          usual={settings.mapView.inheritedValue}
+          locked={!canUpdateSettings}
           error={settingsDraft.errors.mapView}
-          onOwn={settingsDraft.setMapViewOwn}
           onChange={settingsDraft.setMapView}
           onRestrictedChange={settingsDraft.setMapViewRestricted}
           onZoomChange={settingsDraft.setMapViewZoom}
+          onUseUsual={() => settingsDraft.setMapView(settings.mapView.inheritedValue)}
         />
       </div>
     </section>

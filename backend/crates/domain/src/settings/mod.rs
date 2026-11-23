@@ -5,26 +5,18 @@
 //! what it sets itself, and (later) the user level for preferences only. A
 //! field that is not set means "inherit"; that is why every value field is an
 //! `Option`.
-//!
-//! `descendants_may_override` is deliberately not an `Option`: it does not
-//! inherit. It is a statement about one's own descendants, not a value taken
-//! from above. Where no settings exist at all, it reads as "allowed".
 
-pub mod history;
 pub mod inherit;
 pub mod repository;
 pub mod resolve;
 pub mod snapshot;
 pub mod values;
 
-use std::str::FromStr;
+use crate::{Id, organization::Organization};
 
-use crate::{Id, organization::Organization, shared::error::ValidationError};
-
-pub use history::SettingChangeEntry;
-pub use inherit::{InheritLevel, Inherited, inherit};
+pub use inherit::{InheritLevel, Inherited, SettingOrigin, inherit};
 pub use repository::{SettingsReader, SettingsResolver, SettingsWriter};
-pub use resolve::{Resolution, SettingOrigin, SettingOrigins, resolve};
+pub use resolve::{Resolution, resolve};
 #[doc(hidden)]
 pub use snapshot::OrganizationSettingsSnapshot;
 pub use values::{DefectStreak, MapBounds, MapView, SensorOfflineAfter, ZoomLevel};
@@ -36,19 +28,16 @@ pub struct OrganizationSettings {
     pub sensor_offline_after: Option<SensorOfflineAfter>,
     pub defect_streak: Option<DefectStreak>,
     pub map_view: Option<MapView>,
-    pub descendants_may_override: bool,
 }
 
 impl OrganizationSettings {
-    /// An organization that has never set anything: everything inherits and
-    /// descendants may override.
+    /// An organization that has never set anything: everything inherits.
     pub fn empty(organization_id: Id<Organization>) -> Self {
         Self {
             organization_id,
             sensor_offline_after: None,
             defect_streak: None,
             map_view: None,
-            descendants_may_override: true,
         }
     }
 }
@@ -79,13 +68,23 @@ impl<T: Copy> Patch<T> {
     }
 }
 
+impl<T: Copy + PartialEq> Patch<T> {
+    /// A value equal to what the organization would inherit is no own value:
+    /// it follows its parent again.
+    pub fn settled(self, inherited: T) -> Self {
+        match self {
+            Patch::Set(value) if value == inherited => Patch::Clear,
+            other => other,
+        }
+    }
+}
+
 /// One submitted change to an organization's own values.
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub struct SettingsUpdate {
     pub sensor_offline_after: Patch<SensorOfflineAfter>,
     pub defect_streak: Patch<DefectStreak>,
     pub map_view: Patch<MapView>,
-    pub descendants_may_override: Option<bool>,
 }
 
 impl SettingsUpdate {
@@ -93,7 +92,6 @@ impl SettingsUpdate {
         !self.sensor_offline_after.touches()
             && !self.defect_streak.touches()
             && !self.map_view.touches()
-            && self.descendants_may_override.is_none()
     }
 
     /// The values as they would stand afterwards.
@@ -105,9 +103,6 @@ impl SettingsUpdate {
                 .resolve(current.sensor_offline_after),
             defect_streak: self.defect_streak.resolve(current.defect_streak),
             map_view: self.map_view.resolve(current.map_view),
-            descendants_may_override: self
-                .descendants_may_override
-                .unwrap_or(current.descendants_may_override),
         }
     }
 
@@ -141,14 +136,19 @@ impl SettingsUpdate {
             current.map_view.map(SettingValue::Viewport),
             next.map_view.map(SettingValue::Viewport),
         );
-        push_change(
-            &mut changes,
-            SettingKey::DescendantsMayOverride,
-            Some(SettingValue::Flag(current.descendants_may_override)),
-            Some(SettingValue::Flag(next.descendants_may_override)),
-        );
 
         changes
+    }
+
+    /// Applies the "same value follows again" rule to every field.
+    pub fn settled(self, inherited: &EffectiveSettings) -> Self {
+        Self {
+            sensor_offline_after: self
+                .sensor_offline_after
+                .settled(inherited.sensor_offline_after),
+            defect_streak: self.defect_streak.settled(inherited.defect_streak),
+            map_view: self.map_view.settled(inherited.map_view),
+        }
     }
 }
 
@@ -160,7 +160,6 @@ pub enum SettingValue {
     Seconds(i64),
     Count(i32),
     Viewport(MapView),
-    Flag(bool),
 }
 
 /// What changed about one setting. `None` on either side means the value was,
@@ -202,7 +201,6 @@ pub struct EffectiveSettings {
     pub sensor_offline_after: SensorOfflineAfter,
     pub defect_streak: DefectStreak,
     pub map_view: MapView,
-    pub enforced_by: Option<Id<Organization>>,
 }
 
 /// Names one settable thing. History entries and error messages need a word
@@ -213,15 +211,13 @@ pub enum SettingKey {
     SensorOfflineAfter,
     DefectStreak,
     MapView,
-    DescendantsMayOverride,
 }
 
 impl SettingKey {
-    pub const ALL: [SettingKey; 4] = [
+    pub const ALL: [SettingKey; 3] = [
         SettingKey::SensorOfflineAfter,
         SettingKey::DefectStreak,
         SettingKey::MapView,
-        SettingKey::DescendantsMayOverride,
     ];
 
     pub fn as_str(&self) -> &'static str {
@@ -229,7 +225,6 @@ impl SettingKey {
             SettingKey::SensorOfflineAfter => "sensor_offline_after",
             SettingKey::DefectStreak => "defect_streak",
             SettingKey::MapView => "map_view",
-            SettingKey::DescendantsMayOverride => "descendants_may_override",
         }
     }
 }
@@ -240,42 +235,9 @@ impl std::fmt::Display for SettingKey {
     }
 }
 
-impl FromStr for SettingKey {
-    type Err = ValidationError;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        SettingKey::ALL
-            .into_iter()
-            .find(|k| k.as_str() == s)
-            .ok_or_else(|| ValidationError::InvalidFormat {
-                field: "settings.key",
-                reason: format!("unknown setting '{s}'"),
-            })
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn every_key_round_trips() {
-        for key in SettingKey::ALL {
-            assert_eq!(SettingKey::from_str(key.as_str()).unwrap(), key);
-        }
-    }
-
-    #[test]
-    fn an_unknown_key_is_rejected_with_a_field_label() {
-        let err = SettingKey::from_str("moisture").unwrap_err();
-        assert!(matches!(
-            err,
-            ValidationError::InvalidFormat {
-                field: "settings.key",
-                ..
-            }
-        ));
-    }
 
     fn stored() -> OrganizationSettings {
         OrganizationSettings {
@@ -399,7 +361,6 @@ mod tests {
                 )
                 .unwrap(),
             ),
-            descendants_may_override: Some(false),
         };
 
         let moved: BTreeSet<SettingKey> = update
@@ -412,15 +373,46 @@ mod tests {
     }
 
     #[test]
-    fn flipping_the_lock_is_recorded() {
-        let update = SettingsUpdate {
-            descendants_may_override: Some(false),
-            ..SettingsUpdate::default()
+    fn a_value_equal_to_the_inherited_one_gives_up_the_own_value() {
+        let inherited = SensorOfflineAfter::new(86_400).unwrap();
+        assert_eq!(Patch::Set(inherited).settled(inherited), Patch::Clear);
+    }
+
+    #[test]
+    fn a_different_value_stays_set_and_the_other_states_pass_through() {
+        let inherited = SensorOfflineAfter::new(86_400).unwrap();
+        let other = SensorOfflineAfter::new(90_000).unwrap();
+        assert_eq!(Patch::Set(other).settled(inherited), Patch::Set(other));
+        assert_eq!(
+            Patch::<SensorOfflineAfter>::Unchanged.settled(inherited),
+            Patch::Unchanged
+        );
+        assert_eq!(
+            Patch::<SensorOfflineAfter>::Clear.settled(inherited),
+            Patch::Clear
+        );
+    }
+
+    #[test]
+    fn an_update_settles_each_field_against_its_own_inherited_value() {
+        use crate::shared::coordinates::Coordinate;
+
+        let inherited = EffectiveSettings {
+            sensor_offline_after: SensorOfflineAfter::new(86_400).unwrap(),
+            defect_streak: DefectStreak::new(3).unwrap(),
+            map_view: MapView::new(Coordinate::new(54.79, 9.43).unwrap(), None).unwrap(),
         };
-        let changes = update.changes(&stored());
-        assert_eq!(changes.len(), 1);
-        assert_eq!(changes[0].key, SettingKey::DescendantsMayOverride);
-        assert_eq!(changes[0].previous, Some(SettingValue::Flag(true)));
-        assert_eq!(changes[0].next, Some(SettingValue::Flag(false)));
+        let update = SettingsUpdate {
+            sensor_offline_after: Patch::Set(SensorOfflineAfter::new(86_400).unwrap()),
+            defect_streak: Patch::Set(DefectStreak::new(5).unwrap()),
+            map_view: Patch::Unchanged,
+        }
+        .settled(&inherited);
+        assert_eq!(update.sensor_offline_after, Patch::Clear);
+        assert_eq!(
+            update.defect_streak,
+            Patch::Set(DefectStreak::new(5).unwrap())
+        );
+        assert_eq!(update.map_view, Patch::Unchanged);
     }
 }
