@@ -35,21 +35,12 @@ describe('tenantRows', () => {
     expect(tbz.memberCount).toBe(9)
   })
 
-  it('takes the active modules and the counts of the tenant itself', () => {
-    const rows = tenantRows(
-      ORGS,
-      {
-        modules: ['irrigation', 'waste'],
-        organizations: [
-          { organizationId: 'tbz', active: ['irrigation'] },
-          { organizationId: 'extern-a', active: ['irrigation', 'waste'] },
-        ],
-      },
-      [{ organizationId: 'tbz', sensorCount: 7, vehicleCount: 2, planCount: 11 }],
-    )
+  it('takes the counts of the tenant itself', () => {
+    const rows = tenantRows(ORGS, undefined, [
+      { organizationId: 'tbz', sensorCount: 7, vehicleCount: 2, planCount: 11 },
+    ])
     const tbz = rows.find((row) => row.id === 'tbz')
     expect(tbz).toMatchObject({
-      activeModules: ['irrigation'],
       sensorCount: 7,
       vehicleCount: 2,
       planCount: 11,
@@ -58,24 +49,39 @@ describe('tenantRows', () => {
 
   it('reports missing counts as null, not zero', () => {
     const [andere] = tenantRows(ORGS, undefined, undefined)
-    expect(andere).toMatchObject({
-      activeModules: null,
-      sensorCount: null,
-      vehicleCount: null,
-      planCount: null,
-    })
+    expect(andere).toMatchObject({ sensorCount: null, vehicleCount: null, planCount: null })
   })
 
-  it('reports an empty module list once modules are loaded and the tenant has none', () => {
-    const [andere] = tenantRows(
+  it('takes the release and the switch of each module from the releases', () => {
+    const rows = tenantRows(
       ORGS,
       {
-        modules: ['irrigation'],
-        organizations: [{ organizationId: 'tbz', active: ['irrigation'] }],
+        modules: ['irrigation', 'waste'],
+        tenants: [
+          {
+            organizationId: 'tbz',
+            modules: [
+              { key: 'irrigation', released: true, enabled: true },
+              { key: 'waste', released: false, enabled: false },
+            ],
+          },
+        ],
       },
       undefined,
     )
-    expect(andere.activeModules).toEqual([])
+    expect(rows.find((row) => row.id === 'tbz')?.modules).toEqual([
+      { key: 'irrigation', released: true, enabled: true },
+      { key: 'waste', released: false, enabled: false },
+    ])
+  })
+
+  it('gives a tenant without an entry an empty module list once the releases are loaded', () => {
+    const [andere] = tenantRows(ORGS, { modules: ['irrigation'], tenants: [] }, undefined)
+    expect(andere.modules).toEqual([])
+  })
+
+  it('reports the modules as null while the releases have not arrived', () => {
+    expect(tenantRows(ORGS, undefined, undefined)[0].modules).toBeNull()
   })
 
   it('is null without a root in the list', () => {

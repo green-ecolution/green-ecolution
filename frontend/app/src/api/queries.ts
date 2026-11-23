@@ -16,6 +16,7 @@ import {
   ReachableOrganizationResponse,
   moduleApi,
   ModuleListResponse,
+  ModuleReleasesResponse,
   organizationApi,
   OrganizationDetailResponse,
   OrganizationModulesResponse,
@@ -455,6 +456,13 @@ export const modulesQuery = () =>
   queryOptions<ModuleListResponse>({
     queryKey: ['modules'],
     queryFn: () => moduleApi.listModules(),
+  })
+
+export const moduleReleasesQuery = () =>
+  queryOptions<ModuleReleasesResponse>({
+    queryKey: ['modules', 'releases'],
+    queryFn: () => moduleApi.listModuleReleases(),
+    retry: false,
   })
 
 export const organizationModulesQuery = (orgId: string) =>
