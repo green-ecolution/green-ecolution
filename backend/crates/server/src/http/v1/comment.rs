@@ -53,6 +53,10 @@ async fn plan_scope(
         Permission::new(resource, Action::Read),
         view.organization_id,
     )?;
+    super::plan::plan_access(state, &view.module)?
+        .0
+        .ensure_active(Id::new(view.organization_id))
+        .await?;
     Ok(CommentSubject::Plan(Id::new(plan_id)))
 }
 
@@ -156,6 +160,7 @@ pub async fn update_for(
     params(("plan_id" = uuid::Uuid, Path, description = "Plan ID"), PaginationParams),
     responses(
         (status = 200, description = "Paginated list of comments", body = ListResponse<CommentResponse>),
+        (status = 403, description = "The plan's module is switched off in its organization (code `module.disabled`)", body = ErrorBody),
         (status = 404, description = "Plan not found or not visible", body = ErrorBody),
         (status = 500, description = "Internal server error", body = ErrorBody),
     )
@@ -190,6 +195,7 @@ pub async fn list_plan_comments(
     request_body = CreateCommentRequest,
     responses(
         (status = 201, description = "Comment created", body = CommentResponse),
+        (status = 403, description = "The plan's module is switched off in its organization (code `module.disabled`)", body = ErrorBody),
         (status = 404, description = "Plan not found or not visible", body = ErrorBody),
         (status = 400, description = "Empty or overlong comment text", body = ErrorBody),
         (status = 500, description = "Internal server error", body = ErrorBody),
@@ -227,7 +233,7 @@ pub async fn create_plan_comment(
     ),
     responses(
         (status = 204, description = "Comment deleted"),
-        (status = 403, description = "Not the author", body = ErrorBody),
+        (status = 403, description = "Not the author, or the plan's module is switched off in its organization (code `module.disabled`)", body = ErrorBody),
         (status = 404, description = "Plan or comment not found, or the comment belongs to another plan", body = ErrorBody),
         (status = 500, description = "Internal server error", body = ErrorBody),
     )
@@ -258,7 +264,7 @@ pub async fn delete_plan_comment(
     request_body = UpdateCommentRequest,
     responses(
         (status = 200, description = "Comment updated", body = CommentResponse),
-        (status = 403, description = "Not the author", body = ErrorBody),
+        (status = 403, description = "Not the author, or the plan's module is switched off in its organization (code `module.disabled`)", body = ErrorBody),
         (status = 404, description = "Plan or comment not found, or the comment belongs to another plan", body = ErrorBody),
         (status = 400, description = "Empty or overlong comment text", body = ErrorBody),
         (status = 500, description = "Internal server error", body = ErrorBody),

@@ -348,3 +348,104 @@ async fn a_collection_route_with_an_unloading_station_asks_the_optimizer_to_retu
     let body: Value = serde_json::from_slice(&requests[0].body).unwrap();
     assert_eq!(body["problem"]["vehicles"][0]["return_full"], true);
 }
+
+async fn routed_app() -> (TestApp, wiremock::MockServer) {
+    let streamlet = wiremock::MockServer::start().await;
+    let app = spawn_app_with_modules_and_routing(
+        vec![Box::new(TestModule::new(Default::default()))],
+        &streamlet.uri(),
+    )
+    .await;
+    switch(&app, KEY, ROOT.parse().unwrap(), Some(true)).await;
+    (app, streamlet)
+}
+
+async fn assert_module_disabled(res: reqwest::Response) {
+    assert_eq!(res.status(), 403);
+    assert_eq!(
+        res.json::<Value>().await.unwrap()["code"],
+        "module.disabled"
+    );
+}
+
+#[tokio::test]
+async fn a_plan_of_a_switched_off_module_is_not_readable_by_id() {
+    let (app, _streamlet) = routed_app().await;
+    let plan = plan(&app, &[thing(&app).await], cargo_vehicle(&app).await).await;
+    let id = plan["id"].as_str().unwrap();
+
+    switch(&app, KEY, ROOT.parse().unwrap(), Some(false)).await;
+
+    for path in [
+        format!("/api/v1/plans/{id}"),
+        format!("/api/v1/plans/{id}/route"),
+        format!("/api/v1/plans/{id}/route/gpx"),
+    ] {
+        assert_module_disabled(app.get(&path).await).await;
+    }
+}
+
+#[tokio::test]
+async fn comments_of_such_a_plan_are_closed() {
+    let app = app().await;
+    let plan = plan(&app, &[thing(&app).await], cargo_vehicle(&app).await).await;
+    let id = plan["id"].as_str().unwrap();
+    let res = app
+        .post_json(
+            &format!("/api/v1/plans/{id}/comments"),
+            &json!({ "body": "Tor war zu" }),
+        )
+        .await;
+    assert_eq!(res.status(), 201);
+    let comment = res.json::<Value>().await.unwrap()["id"]
+        .as_str()
+        .unwrap()
+        .to_string();
+
+    switch(&app, KEY, ROOT.parse().unwrap(), Some(false)).await;
+
+    let comments = format!("/api/v1/plans/{id}/comments");
+    let one = format!("{comments}/{comment}");
+    assert_module_disabled(app.get(&comments).await).await;
+    assert_module_disabled(
+        app.post_json(&comments, &json!({ "body": "Noch eins" }))
+            .await,
+    )
+    .await;
+    assert_module_disabled(app.put_json(&one, &json!({ "body": "Geändert" })).await).await;
+    assert_module_disabled(app.delete(&one).await).await;
+}
+
+#[tokio::test]
+async fn an_active_module_leaves_the_plan_endpoints_as_they_were() {
+    let (app, _streamlet) = routed_app().await;
+    let plan = plan(&app, &[thing(&app).await], cargo_vehicle(&app).await).await;
+    let id = plan["id"].as_str().unwrap();
+
+    assert_eq!(app.get(&format!("/api/v1/plans/{id}")).await.status(), 200);
+    assert_eq!(
+        app.get(&format!("/api/v1/plans/{id}/route")).await.status(),
+        404
+    );
+    assert_eq!(
+        app.get(&format!("/api/v1/plans/{id}/route/gpx"))
+            .await
+            .status(),
+        404
+    );
+
+    let comments = format!("/api/v1/plans/{id}/comments");
+    let res = app.post_json(&comments, &json!({ "body": "Hallo" })).await;
+    assert_eq!(res.status(), 201);
+    let comment = res.json::<Value>().await.unwrap()["id"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    let one = format!("{comments}/{comment}");
+    assert_eq!(app.get(&comments).await.status(), 200);
+    assert_eq!(
+        app.put_json(&one, &json!({ "body": "Neu" })).await.status(),
+        200
+    );
+    assert_eq!(app.delete(&one).await.status(), 204);
+}
