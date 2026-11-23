@@ -627,8 +627,8 @@ composition root spawns at startup.
 
 A module reads its instance configuration from its own `modules.<key>` section of the
 YAML config through `ModuleContext::module_config`; `modules.<key>.default_enabled` is
-the root organization's switch where it stored none of its own; tenants do not inherit it. The irrigation defaults live under
-`modules.irrigation` (`tree_demand_liters`, `just_watered_ttl_secs`,
+the root organization's switch where it stored none of its own; tenants do not inherit
+it. The irrigation defaults live under `modules.irrigation` (`tree_demand_liters`, `just_watered_ttl_secs`,
 `just_watered_sweep_interval_secs`, `nearest_tree_max_radius`,
 `nearest_tree_default_limit`, `nearest_tree_max_limit`). The server refuses to start
 while one of the old locations of these keys (`routing.tree_demand_liters`,

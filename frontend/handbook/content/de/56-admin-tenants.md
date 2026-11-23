@@ -60,7 +60,8 @@ Modul zum ersten Mal frei, schaltet die Anwendung es beim Mandanten gleich ein. 
 Mandant das Modul danach nutzt, entscheidet er selbst unter
 [Aufgabenbereiche](./settings-areas.md); die Zeile unter dem Schalter nennt den Stand
 **Vom Mandanten eingeschaltet** oder **Vom Mandanten ausgeschaltet**. Ein gesperrtes
-Modul steht dort als mit dem Hinweis „Für TBZ nicht sichtbar“, wobei der Name des Mandanten eingesetzt wird.
+Modul steht dort mit dem Hinweis „Für TBZ nicht sichtbar“, wobei statt TBZ der Name des
+Mandanten steht.
 
 Sperren wirkt für den Mandanten und alle seine Unterorganisationen. Das Modul
 verschwindet dort aus der Navigation und aus den Aufgabenbereichen, und seine Seiten
