@@ -81,7 +81,6 @@ pub struct UserCreate {
     pub first_name: String,
     pub last_name: String,
     pub email: Email,
-    pub password: SecretString,
     pub organization_id: Id<Organization>,
     pub role_ids: Vec<Id<Role>>,
     pub employee_id: Option<String>,

@@ -138,6 +138,70 @@ impl AuthHarness {
             .await;
     }
 
+    /// Mocks what registering `username` as `id` takes at the identity
+    /// provider: the account is created, gets its password and is read back.
+    pub async fn mock_account_creation(&self, id: Uuid, username: &str) {
+        self.mock_service_account_token().await;
+        let user = format!("/admin/realms/{REALM}/users/{id}");
+        Mock::given(method("POST"))
+            .and(path(format!("/admin/realms/{REALM}/users")))
+            .respond_with(
+                ResponseTemplate::new(201)
+                    .insert_header("Location", format!("{}{user}", self.server.uri()).as_str()),
+            )
+            .mount(&self.server)
+            .await;
+        Mock::given(method("PUT"))
+            .and(path(format!("{user}/reset-password")))
+            .respond_with(ResponseTemplate::new(204))
+            .mount(&self.server)
+            .await;
+        Mock::given(method("GET"))
+            .and(path(user))
+            .respond_with(ResponseTemplate::new(200).set_body_json(kc_user_json(id, username)))
+            .mount(&self.server)
+            .await;
+    }
+
+    /// The identity provider refuses to create an account: username or
+    /// e-mail address already taken.
+    pub async fn mock_account_conflict(&self) {
+        self.mock_service_account_token().await;
+        Mock::given(method("POST"))
+            .and(path(format!("/admin/realms/{REALM}/users")))
+            .respond_with(ResponseTemplate::new(409))
+            .mount(&self.server)
+            .await;
+    }
+
+    /// Bodies of the requests that asked the identity provider to create an
+    /// account.
+    pub async fn account_creations(&self) -> Vec<Value> {
+        self.server
+            .received_requests()
+            .await
+            .unwrap_or_default()
+            .into_iter()
+            .filter(|r| {
+                r.method.as_str() == "POST"
+                    && r.url.path() == format!("/admin/realms/{REALM}/users")
+            })
+            .map(|r| r.body_json().unwrap_or(Value::Null))
+            .collect()
+    }
+
+    /// The password the identity provider was told to set for `id`.
+    pub async fn password_set_for(&self, id: Uuid) -> Option<Value> {
+        let target = format!("/admin/realms/{REALM}/users/{id}/reset-password");
+        self.server
+            .received_requests()
+            .await
+            .unwrap_or_default()
+            .into_iter()
+            .find(|r| r.method.as_str() == "PUT" && r.url.path() == target)
+            .and_then(|r| r.body_json().ok())
+    }
+
     async fn mock_service_account_token(&self) {
         Mock::given(method("POST"))
             .and(path(format!(

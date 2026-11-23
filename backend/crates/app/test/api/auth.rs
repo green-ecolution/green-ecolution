@@ -96,7 +96,6 @@ async fn create_user_without_any_granted_role_returns_403() {
             "first_name": "New",
             "last_name": "User",
             "email": "new@example.com",
-            "password": "S3cret!",
             "organization_id": Uuid::new_v4(),
         }))
         .send()

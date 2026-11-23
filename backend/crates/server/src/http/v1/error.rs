@@ -158,6 +158,7 @@ impl IntoResponse for ServiceError {
             | ServiceError::Role(_)
             | ServiceError::OrganizationNotEmpty
             | ServiceError::CannotChangeOwnAccess
+            | ServiceError::UserIdentityTaken
             | ServiceError::CannotRevokeOwnAdministration
             | ServiceError::SensorBoundToTarget => (StatusCode::CONFLICT, self.to_string()),
             // Not a conflict with stored state: the request combines two

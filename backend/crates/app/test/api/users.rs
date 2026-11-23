@@ -1,4 +1,8 @@
-use crate::{helpers::spawn_app, organizations::ROOT_ORG_ID};
+use crate::{
+    auth_helpers::spawn_with_auth,
+    helpers::{seed_user_with_permissions, spawn_app},
+    organizations::ROOT_ORG_ID,
+};
 use serde_json::json;
 use uuid::Uuid;
 
@@ -301,7 +305,6 @@ async fn create_user_with_template_role_returns_409() {
                 "first_name": "New",
                 "last_name": "User",
                 "email": "newuser@example.com",
-                "password": "SecurePass123!",
                 "organization_id": org_uuid,
                 "role_ids": ["01980000-0000-7000-8000-0000000000a1"]
             }),
@@ -577,4 +580,206 @@ async fn user_response_carries_watering_plan_selectable() {
     assert_eq!(response.status().as_u16(), 200);
     let body: serde_json::Value = response.json().await.unwrap();
     assert_eq!(body["watering_plan_selectable"], true);
+}
+
+const CALLER_PERMISSIONS: &[&str] = &["user:create", "role:read", "sensor:read"];
+
+fn new_person(org: Uuid, role_ids: &[Uuid]) -> serde_json::Value {
+    json!({
+        "username": "mmustermann",
+        "first_name": "Max",
+        "last_name": "Mustermann",
+        "email": "max@example.com",
+        "organization_id": org,
+        "role_ids": role_ids,
+    })
+}
+
+async fn seed_role(app: &crate::helpers::TestApp, org: Uuid, permissions: &[&str]) -> Uuid {
+    let permissions: Vec<String> = permissions.iter().map(|p| p.to_string()).collect();
+    sqlx::query_scalar!(
+        r#"INSERT INTO roles (id, organization_id, name, permissions)
+           VALUES (gen_random_uuid(), $1, 'Planung', $2)
+           RETURNING id"#,
+        org,
+        &permissions,
+    )
+    .fetch_one(&app.db_pool)
+    .await
+    .unwrap()
+}
+
+fn has_initial_password_shape(password: &str) -> bool {
+    let groups: Vec<&str> = password.split('-').collect();
+    let plain: String = groups.concat();
+    groups.len() == 4
+        && groups.iter().all(|g| g.len() == 5)
+        && plain
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() && !"0O1lI".contains(c))
+        && plain.chars().any(|c| c.is_ascii_uppercase())
+        && plain.chars().any(|c| c.is_ascii_lowercase())
+        && plain.chars().any(|c| c.is_ascii_digit())
+}
+
+#[tokio::test]
+async fn creating_a_user_returns_the_person_and_an_initial_password() {
+    let (harness, app) = spawn_with_auth().await;
+    let (org, token) =
+        seed_user_with_permissions(&harness, &app, "Mandant", CALLER_PERMISSIONS).await;
+    let role = seed_role(&app, org, &["sensor:read"]).await;
+    let new_id = Uuid::now_v7();
+    harness.mock_account_creation(new_id, "mmustermann").await;
+
+    let resp = app
+        .post_json_with_bearer("/api/v1/users", &new_person(org, &[role]), &token)
+        .await;
+
+    assert_eq!(resp.status(), 201);
+    let body: serde_json::Value = resp.json().await.unwrap();
+    assert_eq!(body["user"]["username"], "mmustermann");
+    assert_eq!(body["user"]["id"], new_id.to_string());
+    assert!(has_initial_password_shape(
+        body["initial_password"].as_str().unwrap()
+    ));
+    let stored_org: Uuid = sqlx::query_scalar!(
+        r#"SELECT organization_id FROM user_profiles WHERE id = $1"#,
+        new_id
+    )
+    .fetch_one(&app.db_pool)
+    .await
+    .unwrap();
+    assert_eq!(stored_org, org);
+    let assigned: Vec<Uuid> = sqlx::query_scalar!(
+        r#"SELECT role_id FROM role_assignments WHERE user_id = $1"#,
+        new_id
+    )
+    .fetch_all(&app.db_pool)
+    .await
+    .unwrap();
+    assert_eq!(assigned, vec![role]);
+}
+
+#[tokio::test]
+async fn the_initial_password_is_sent_to_the_identity_provider_as_temporary() {
+    let (harness, app) = spawn_with_auth().await;
+    let (org, token) =
+        seed_user_with_permissions(&harness, &app, "Mandant", CALLER_PERMISSIONS).await;
+    let new_id = Uuid::now_v7();
+    harness.mock_account_creation(new_id, "mmustermann").await;
+
+    let resp = app
+        .post_json_with_bearer("/api/v1/users", &new_person(org, &[]), &token)
+        .await;
+
+    assert_eq!(resp.status(), 201);
+    let body: serde_json::Value = resp.json().await.unwrap();
+    let sent = harness
+        .password_set_for(new_id)
+        .await
+        .expect("password set");
+    assert_eq!(sent["temporary"], true);
+    assert_eq!(sent["value"], body["initial_password"]);
+}
+
+#[tokio::test]
+async fn creating_a_user_with_a_role_of_another_organization_returns_422() {
+    let (harness, app) = spawn_with_auth().await;
+    let (org, token) =
+        seed_user_with_permissions(&harness, &app, "Mandant", CALLER_PERMISSIONS).await;
+    // A sub-unit stays within the caller's grants, so the role check, not the
+    // permission check, is what refuses the request.
+    let sub_unit: Uuid = sqlx::query_scalar!(
+        r#"INSERT INTO organizations (id, parent_id, name) VALUES (gen_random_uuid(), $1, 'Unterbereich') RETURNING id"#,
+        org
+    )
+    .fetch_one(&app.db_pool)
+    .await
+    .unwrap();
+    let foreign_role = seed_role(&app, sub_unit, &["sensor:read"]).await;
+    harness
+        .mock_account_creation(Uuid::now_v7(), "mmustermann")
+        .await;
+
+    let resp = app
+        .post_json_with_bearer("/api/v1/users", &new_person(org, &[foreign_role]), &token)
+        .await;
+
+    assert_eq!(resp.status(), 422);
+    let body: serde_json::Value = resp.json().await.unwrap();
+    assert_eq!(body["code"], "organization_mismatch.role_vs_user");
+    assert!(harness.account_creations().await.is_empty());
+}
+
+#[tokio::test]
+async fn creating_a_user_with_a_taken_username_returns_409() {
+    let (harness, app) = spawn_with_auth().await;
+    let (org, token) =
+        seed_user_with_permissions(&harness, &app, "Mandant", CALLER_PERMISSIONS).await;
+    harness.mock_account_conflict().await;
+
+    let resp = app
+        .post_json_with_bearer("/api/v1/users", &new_person(org, &[]), &token)
+        .await;
+
+    assert_eq!(resp.status(), 409);
+    let body: serde_json::Value = resp.json().await.unwrap();
+    assert_eq!(body["code"], "user.identity_taken");
+}
+
+#[tokio::test]
+async fn creating_a_user_without_a_first_name_returns_400() {
+    let (harness, app) = spawn_with_auth().await;
+    let (org, token) =
+        seed_user_with_permissions(&harness, &app, "Mandant", CALLER_PERMISSIONS).await;
+    harness
+        .mock_account_creation(Uuid::now_v7(), "mmustermann")
+        .await;
+    let mut body = new_person(org, &[]);
+    body["first_name"] = json!("  ");
+
+    let resp = app
+        .post_json_with_bearer("/api/v1/users", &body, &token)
+        .await;
+
+    assert_eq!(resp.status(), 400);
+    let body: serde_json::Value = resp.json().await.unwrap();
+    assert_eq!(body["code"], "request.validation_failed");
+    assert!(harness.account_creations().await.is_empty());
+}
+
+#[tokio::test]
+async fn creating_a_user_needs_user_create() {
+    let (harness, app) = spawn_with_auth().await;
+    let (org, token) = seed_user_with_permissions(&harness, &app, "Mandant", &["user:read"]).await;
+    harness
+        .mock_account_creation(Uuid::now_v7(), "mmustermann")
+        .await;
+
+    let resp = app
+        .post_json_with_bearer("/api/v1/users", &new_person(org, &[]), &token)
+        .await;
+
+    assert_eq!(resp.status(), 403);
+    assert!(harness.account_creations().await.is_empty());
+}
+
+#[tokio::test]
+async fn creating_a_user_in_the_demo_bypass_answers_without_an_identity_provider() {
+    let app = spawn_app().await;
+    let org = create_org(&app, "TBZ").await;
+
+    let resp = app
+        .post_json(
+            "/api/v1/users",
+            &new_person(Uuid::parse_str(&org).unwrap(), &[]),
+        )
+        .await;
+
+    assert_eq!(resp.status(), 201);
+    let body: serde_json::Value = resp.json().await.unwrap();
+    assert_eq!(body["user"]["username"], "mmustermann");
+    assert!(has_initial_password_shape(
+        body["initial_password"].as_str().unwrap()
+    ));
 }

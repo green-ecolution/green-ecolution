@@ -133,6 +133,10 @@ pub enum ServiceError {
     InvalidInput(String),
     #[error(transparent)]
     Auth(#[from] AuthError),
+    /// The identity provider reports a taken username and a taken e-mail
+    /// address as one conflict, so the two cannot be told apart.
+    #[error("username or e-mail address is already in use")]
+    UserIdentityTaken,
     #[error("target already has a different sensor")]
     TargetAlreadyHasSensor,
     #[error("sensor is already attached to another target")]
@@ -237,6 +241,7 @@ impl ServiceError {
             Self::OrganizationNotEmpty => "conflict.organization_not_empty",
             Self::SensorBoundToTarget => "conflict.sensor_bound_to_target",
             Self::CannotChangeOwnAccess => "conflict.cannot_change_own_access",
+            Self::UserIdentityTaken => "user.identity_taken",
             Self::CannotRevokeOwnAdministration => "conflict.cannot_revoke_own_administration",
             Self::ContactPersonNotAMember => "organization.contact_person_not_a_member",
             Self::MissingOrganization => "organization.missing",
@@ -483,6 +488,7 @@ mod tests {
             ServiceError::SensorBoundToTarget,
             ServiceError::MissingOrganization,
             ServiceError::CannotChangeOwnAccess,
+            ServiceError::UserIdentityTaken,
             ServiceError::CannotRevokeOwnAdministration,
             ServiceError::ModuleUnknown { key: "x".into() },
             ServiceError::ModuleNotSwitchable,

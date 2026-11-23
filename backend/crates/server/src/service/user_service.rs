@@ -21,7 +21,7 @@ use domain::{
     vehicle::DrivingLicense,
 };
 
-use super::ServiceError;
+use super::{OrganizationMismatch, ServiceError};
 
 /// Makes the password a new account starts with. A port so the service
 /// stays free of a random source and tests can fix the value.
@@ -50,6 +50,13 @@ pub struct UserListFilter {
 /// result, which the service logs rather than hiding.
 pub const SEARCH_INTERSECTION_CAP: u64 = 500;
 
+/// A freshly registered person with the password the account starts with.
+pub struct RegisteredUser {
+    pub user: UserView,
+    /// Shown to the caller exactly once; it is stored nowhere on our side.
+    pub initial_password: SecretString,
+}
+
 pub struct UserService {
     user_repo: Arc<dyn UserRepository>,
     profile_reader: Arc<dyn UserProfileReader>,
@@ -58,6 +65,7 @@ pub struct UserService {
     role_writer: Arc<dyn RoleWriter>,
     org_reader: Arc<dyn OrganizationReader>,
     org_writer: Arc<dyn OrganizationWriter>,
+    initial_passwords: Arc<dyn InitialPasswordFactory>,
     enabled: bool,
 }
 
@@ -71,6 +79,7 @@ impl UserService {
         role_writer: Arc<dyn RoleWriter>,
         org_reader: Arc<dyn OrganizationReader>,
         org_writer: Arc<dyn OrganizationWriter>,
+        initial_passwords: Arc<dyn InitialPasswordFactory>,
         enabled: bool,
     ) -> Self {
         Self {
@@ -81,14 +90,33 @@ impl UserService {
             role_writer,
             org_reader,
             org_writer,
+            initial_passwords,
             enabled,
         }
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    pub async fn register(&self, entity: UserCreate) -> Result<UserView, ServiceError> {
+    pub async fn register(&self, entity: UserCreate) -> Result<RegisteredUser, ServiceError> {
+        let initial_password = self.initial_passwords.generate();
         if !self.enabled {
-            return Ok(synthesize_registered_user(entity));
+            return Ok(RegisteredUser {
+                user: synthesize_registered_user(entity),
+                initial_password,
+            });
+        }
+        // Everything that can be refused is checked before the account exists,
+        // so a refusal leaves nothing behind in the identity provider.
+        let org = self.org_reader.by_id(entity.organization_id).await?;
+        let mut roles = Vec::with_capacity(entity.role_ids.len());
+        for role_id in &entity.role_ids {
+            let role = self.role_reader.by_id(*role_id).await?;
+            if role.is_template() {
+                return Err(RoleError::CannotAssignTemplate.into());
+            }
+            if role.organization_id() != Some(entity.organization_id) {
+                return Err(OrganizationMismatch::RoleVsUser.into());
+            }
+            roles.push(role);
         }
         let identity = self
             .user_repo
@@ -97,9 +125,38 @@ impl UserService {
                 first_name: entity.first_name.clone(),
                 last_name: entity.last_name.clone(),
                 email: entity.email.clone(),
-                password: entity.password.clone(),
+                password: initial_password.clone(),
             })
-            .await?;
+            .await
+            .map_err(|e| match e {
+                RepositoryError::AlreadyExists(_) => ServiceError::UserIdentityTaken,
+                other => other.into(),
+            })?;
+        match self.attach_membership(&identity, entity, &roles).await {
+            Ok((profile, counts)) => {
+                let organization = Some(OrganizationView::new(
+                    &org,
+                    counts.get(&org.id).copied().unwrap_or(0),
+                ));
+                let assigned = roles.iter().map(RoleView::from).collect();
+                Ok(RegisteredUser {
+                    user: merge(identity, Some(profile), organization, assigned),
+                    initial_password,
+                })
+            }
+            Err(error) => {
+                self.undo_registration(identity.id).await;
+                Err(error)
+            }
+        }
+    }
+
+    async fn attach_membership(
+        &self,
+        identity: &UserIdentity,
+        entity: UserCreate,
+        roles: &[Role],
+    ) -> Result<(UserProfile, HashMap<Id<Organization>, i64>), ServiceError> {
         let profile = UserProfile {
             id: identity.id,
             employee_id: entity.employee_id,
@@ -115,24 +172,24 @@ impl UserService {
             .set_organization(identity.id, entity.organization_id)
             .await?;
         self.profile_writer.update(&profile).await?;
-        let mut assigned = Vec::new();
-        for role_id in &entity.role_ids {
-            let role = self.role_reader.by_id(*role_id).await?;
-            if role.is_template() {
-                return Err(RoleError::CannotAssignTemplate.into());
-            }
+        for role in roles {
             self.role_writer
-                .assign_to_user(identity.id, *role_id)
+                .assign_to_user(identity.id, role.id)
                 .await?;
-            assigned.push(RoleView::from(&role));
         }
-        let org = self.org_reader.by_id(entity.organization_id).await?;
         let counts = self.org_reader.member_counts().await?;
-        let organization = Some(OrganizationView::new(
-            &org,
-            counts.get(&org.id).copied().unwrap_or(0),
-        ));
-        Ok(merge(identity, Some(profile), organization, assigned))
+        Ok((profile, counts))
+    }
+
+    /// Best effort: the registration already failed, so a failing cleanup is
+    /// logged and must not replace the error the caller gets.
+    async fn undo_registration(&self, id: Uuid) {
+        if let Err(e) = self.profile_writer.delete(id).await {
+            tracing::error!(user.id = %id, error = %e, "could not remove the profile of a failed registration");
+        }
+        if let Err(e) = self.user_repo.delete(id).await {
+            tracing::error!(user.id = %id, error = %e, "could not remove the account of a failed registration");
+        }
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
@@ -644,6 +701,9 @@ mod tests {
         seen: Mutex<Vec<Pagination>>,
         total_override: Option<u64>,
         deleted: Mutex<Vec<Uuid>>,
+        created: Mutex<Vec<UserIdentityCreate>>,
+        create_error: Mutex<Option<RepositoryError>>,
+        delete_fails: bool,
     }
 
     impl StubIdentityRepo {
@@ -653,6 +713,9 @@ mod tests {
                 seen: Mutex::new(Vec::new()),
                 total_override: None,
                 deleted: Mutex::new(Vec::new()),
+                created: Mutex::new(Vec::new()),
+                create_error: Mutex::new(None),
+                delete_fails: false,
             }
         }
     }
@@ -663,10 +726,18 @@ mod tests {
             &self,
             entity: UserIdentityCreate,
         ) -> Result<UserIdentity, RepositoryError> {
-            Ok(identity(Uuid::now_v7(), entity.username.as_str()))
+            if let Some(error) = self.create_error.lock().unwrap().take() {
+                return Err(error);
+            }
+            let created = identity(Uuid::now_v7(), entity.username.as_str());
+            self.created.lock().unwrap().push(entity);
+            Ok(created)
         }
         async fn delete(&self, id: Uuid) -> Result<(), RepositoryError> {
             self.deleted.lock().unwrap().push(id);
+            if self.delete_fails {
+                return Err(RepositoryError::Internal("down".into()));
+            }
             Ok(())
         }
         async fn all(&self, _p: Pagination) -> Result<Page<UserIdentity>, RepositoryError> {
@@ -713,6 +784,7 @@ mod tests {
         rows: Mutex<HashMap<Uuid, UserProfile>>,
         members: Mutex<HashMap<Id<Organization>, Vec<Uuid>>>,
         deleted: Mutex<Vec<Uuid>>,
+        delete_fails: bool,
     }
 
     impl InMemoryProfiles {
@@ -775,17 +847,37 @@ mod tests {
         }
         async fn delete(&self, id: Uuid) -> Result<(), RepositoryError> {
             self.deleted.lock().unwrap().push(id);
+            if self.delete_fails {
+                return Err(RepositoryError::Internal("down".into()));
+            }
             Ok(())
         }
     }
 
     #[derive(Default)]
-    struct StubRoles;
+    struct StubRoles {
+        known: Mutex<HashMap<Id<Role>, Role>>,
+        assign_fails: bool,
+    }
+
+    impl StubRoles {
+        fn knowing(roles: Vec<Role>) -> Self {
+            Self {
+                known: Mutex::new(roles.into_iter().map(|r| (r.id, r)).collect()),
+                assign_fails: false,
+            }
+        }
+    }
 
     #[async_trait::async_trait]
     impl RoleReader for StubRoles {
-        async fn by_id(&self, _id: Id<Role>) -> Result<Role, RepositoryError> {
-            Err(RepositoryError::NotFound)
+        async fn by_id(&self, id: Id<Role>) -> Result<Role, RepositoryError> {
+            self.known
+                .lock()
+                .unwrap()
+                .get(&id)
+                .cloned()
+                .ok_or(RepositoryError::NotFound)
         }
         async fn by_organization(
             &self,
@@ -835,6 +927,9 @@ mod tests {
             _user_id: Uuid,
             _role_id: Id<Role>,
         ) -> Result<(), RepositoryError> {
+            if self.assign_fails {
+                return Err(RepositoryError::Internal("down".into()));
+            }
             Ok(())
         }
         async fn revoke_from_user(
@@ -854,6 +949,7 @@ mod tests {
         rows: Mutex<HashMap<Id<Organization>, Organization>>,
         saves: AtomicUsize,
         pairs: Mutex<Vec<OrgPair>>,
+        strict: bool,
     }
 
     impl StubOrgs {
@@ -913,6 +1009,9 @@ mod tests {
         }
         async fn by_id(&self, id: Id<Organization>) -> Result<Organization, RepositoryError> {
             let rows = self.rows.lock().unwrap();
+            if self.strict && !rows.contains_key(&id) {
+                return Err(RepositoryError::NotFound);
+            }
             Ok(rows.get(&id).cloned().unwrap_or_else(|| {
                 Organization::reconstitute(OrganizationSnapshot {
                     id: id.value(),
@@ -966,7 +1065,15 @@ mod tests {
         profiles: Arc<InMemoryProfiles>,
         orgs: Arc<StubOrgs>,
     ) -> UserService {
-        let roles = Arc::new(StubRoles);
+        service_with_roles(repo, profiles, orgs, Arc::new(StubRoles::default()))
+    }
+
+    fn service_with_roles(
+        repo: Arc<StubIdentityRepo>,
+        profiles: Arc<InMemoryProfiles>,
+        orgs: Arc<StubOrgs>,
+        roles: Arc<StubRoles>,
+    ) -> UserService {
         UserService::new(
             repo,
             profiles.clone(),
@@ -975,8 +1082,17 @@ mod tests {
             roles,
             orgs.clone(),
             orgs,
+            Arc::new(FixedPassword("Abcde-fghjk-23456-mnpqr")),
             true,
         )
+    }
+
+    struct FixedPassword(&'static str);
+
+    impl InitialPasswordFactory for FixedPassword {
+        fn generate(&self) -> SecretString {
+            SecretString::from(self.0.to_string())
+        }
     }
 
     fn service(identities: Vec<UserIdentity>, profiles: Arc<InMemoryProfiles>) -> UserService {
@@ -1064,7 +1180,6 @@ mod tests {
             first_name: "New".into(),
             last_name: "User".into(),
             email: Email::reconstitute("new@example.com".into()),
-            password: SecretString::from("pw".to_string()),
             organization_id: org,
             role_ids: Vec::new(),
             employee_id: Some("EMP-9".into()),
@@ -1075,7 +1190,7 @@ mod tests {
             watering_plan_selectable: false,
         };
 
-        let view = svc.register(entity).await.unwrap();
+        let view = svc.register(entity).await.unwrap().user;
 
         let stored = profiles.by_ids(&[view.id]).await.unwrap();
         assert_eq!(stored.len(), 1);
@@ -1087,6 +1202,205 @@ mod tests {
             .expect("organization present after register");
         assert_eq!(organization.id, org);
         assert_eq!(organization.name.as_str(), "Testorg");
+    }
+
+    fn registration(org: Id<Organization>, role_ids: Vec<Id<Role>>) -> UserCreate {
+        UserCreate {
+            username: Username::reconstitute("new".into()),
+            first_name: "New".into(),
+            last_name: "User".into(),
+            email: Email::reconstitute("new@example.com".into()),
+            organization_id: org,
+            role_ids,
+            employee_id: None,
+            phone_number: None,
+            avatar_url: None,
+            status: UserStatus::Available,
+            driving_licenses: Vec::new(),
+            watering_plan_selectable: true,
+        }
+    }
+
+    fn role_of(org: Option<Id<Organization>>) -> Role {
+        use domain::authorization::ResourceCatalog;
+        use domain::role::RoleSnapshot;
+        Role::reconstitute(
+            RoleSnapshot {
+                id: Uuid::now_v7(),
+                organization_id: org.map(|o| o.value()),
+                name: "Planung".into(),
+                description: None,
+                permissions: vec!["sensor:read".into()],
+                template_key: None,
+            },
+            &ResourceCatalog::core(),
+        )
+        .unwrap()
+        .role
+    }
+
+    #[tokio::test]
+    async fn register_hands_the_generated_password_to_the_identity_and_returns_it() {
+        use secrecy::ExposeSecret;
+        let repo = Arc::new(StubIdentityRepo::new(vec![]));
+        let svc = service_with_repo(repo.clone(), Arc::new(InMemoryProfiles::default()));
+
+        let registered = svc
+            .register(registration(Id::new_v7(), vec![]))
+            .await
+            .unwrap();
+
+        let created = repo.created.lock().unwrap();
+        assert_eq!(created.len(), 1);
+        assert_eq!(
+            created[0].password.expose_secret(),
+            "Abcde-fghjk-23456-mnpqr"
+        );
+        assert_eq!(
+            registered.initial_password.expose_secret(),
+            "Abcde-fghjk-23456-mnpqr"
+        );
+    }
+
+    #[tokio::test]
+    async fn register_refuses_a_role_of_another_organization_before_creating_the_account() {
+        let org = Id::new_v7();
+        let role = role_of(Some(Id::new_v7()));
+        let role_id = role.id;
+        let repo = Arc::new(StubIdentityRepo::new(vec![]));
+        let svc = service_with_roles(
+            repo.clone(),
+            Arc::new(InMemoryProfiles::default()),
+            Arc::new(StubOrgs::default()),
+            Arc::new(StubRoles::knowing(vec![role])),
+        );
+
+        let result = svc.register(registration(org, vec![role_id])).await;
+
+        assert!(matches!(
+            result,
+            Err(ServiceError::OrganizationMismatch(
+                OrganizationMismatch::RoleVsUser
+            ))
+        ));
+        assert!(repo.created.lock().unwrap().is_empty());
+    }
+
+    #[tokio::test]
+    async fn register_refuses_a_template_role_before_creating_the_account() {
+        let role = role_of(None);
+        let role_id = role.id;
+        let repo = Arc::new(StubIdentityRepo::new(vec![]));
+        let svc = service_with_roles(
+            repo.clone(),
+            Arc::new(InMemoryProfiles::default()),
+            Arc::new(StubOrgs::default()),
+            Arc::new(StubRoles::knowing(vec![role])),
+        );
+
+        let result = svc
+            .register(registration(Id::new_v7(), vec![role_id]))
+            .await;
+
+        assert!(matches!(
+            result,
+            Err(ServiceError::Role(RoleError::CannotAssignTemplate))
+        ));
+        assert!(repo.created.lock().unwrap().is_empty());
+    }
+
+    #[tokio::test]
+    async fn register_refuses_an_unknown_organization_before_creating_the_account() {
+        let repo = Arc::new(StubIdentityRepo::new(vec![]));
+        let svc = service_with_orgs(
+            repo.clone(),
+            Arc::new(InMemoryProfiles::default()),
+            Arc::new(StubOrgs {
+                strict: true,
+                ..StubOrgs::default()
+            }),
+        );
+
+        let result = svc.register(registration(Id::new_v7(), vec![])).await;
+
+        assert!(matches!(
+            result,
+            Err(ServiceError::Repository(RepositoryError::NotFound))
+        ));
+        assert!(repo.created.lock().unwrap().is_empty());
+    }
+
+    #[tokio::test]
+    async fn register_removes_account_and_profile_when_a_role_cannot_be_assigned() {
+        let org = Id::new_v7();
+        let role = role_of(Some(org));
+        let role_id = role.id;
+        let repo = Arc::new(StubIdentityRepo::new(vec![]));
+        let profiles = Arc::new(InMemoryProfiles::default());
+        let roles = StubRoles {
+            assign_fails: true,
+            ..StubRoles::knowing(vec![role])
+        };
+        let svc = service_with_roles(
+            repo.clone(),
+            profiles.clone(),
+            Arc::new(StubOrgs::default()),
+            Arc::new(roles),
+        );
+
+        let result = svc.register(registration(org, vec![role_id])).await;
+
+        assert!(matches!(
+            result,
+            Err(ServiceError::Repository(RepositoryError::Internal(_)))
+        ));
+        let account = repo.deleted.lock().unwrap().clone();
+        assert_eq!(account.len(), 1);
+        assert_eq!(*profiles.deleted.lock().unwrap(), account);
+    }
+
+    #[tokio::test]
+    async fn register_keeps_the_first_error_when_the_cleanup_fails_too() {
+        let org = Id::new_v7();
+        let role = role_of(Some(org));
+        let role_id = role.id;
+        let mut repo = StubIdentityRepo::new(vec![]);
+        repo.delete_fails = true;
+        let repo = Arc::new(repo);
+        let profiles = Arc::new(InMemoryProfiles {
+            delete_fails: true,
+            ..InMemoryProfiles::default()
+        });
+        let roles = StubRoles {
+            assign_fails: true,
+            ..StubRoles::knowing(vec![role])
+        };
+        let svc = service_with_roles(
+            repo.clone(),
+            profiles.clone(),
+            Arc::new(StubOrgs::default()),
+            Arc::new(roles),
+        );
+
+        let result = svc.register(registration(org, vec![role_id])).await;
+
+        assert!(matches!(
+            result,
+            Err(ServiceError::Repository(RepositoryError::Internal(_)))
+        ));
+        assert_eq!(repo.deleted.lock().unwrap().len(), 1);
+        assert_eq!(profiles.deleted.lock().unwrap().len(), 1);
+    }
+
+    #[tokio::test]
+    async fn register_reports_a_taken_identity() {
+        let repo = StubIdentityRepo::new(vec![]);
+        *repo.create_error.lock().unwrap() = Some(RepositoryError::AlreadyExists("x".into()));
+        let svc = service_with_repo(Arc::new(repo), Arc::new(InMemoryProfiles::default()));
+
+        let result = svc.register(registration(Id::new_v7(), vec![])).await;
+
+        assert!(matches!(result, Err(ServiceError::UserIdentityTaken)));
     }
 
     #[tokio::test]
