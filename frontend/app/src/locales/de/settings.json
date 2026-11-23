@@ -393,7 +393,8 @@
       "createdTitle": "{name} ist angelegt",
       "passwordLabel": "Startpasswort",
       "passwordHint": "Gib das Startpasswort persönlich weiter. Es wird nur jetzt angezeigt, und die Person muss es bei der ersten Anmeldung ändern.",
-      "done": "Fertig"
+      "done": "Fertig",
+      "leaveDescription": "Das Startpasswort der neuen Person wird nur in diesem Fenster angezeigt. Wenn du die Seite jetzt verlässt, lässt es sich nicht mehr anzeigen."
     },
     "empty": {
       "titleOnlyMe": "Außer dir ist noch niemand in {name}",
@@ -413,7 +414,8 @@
       "rolesText": "Eine Rolle legt fest, was jemand sehen und ändern darf.",
       "plansTitle": "Für Einsätze einteilen",
       "plansText": "Verfügbarkeit und Führerscheinklassen zeigen, wer in einen Einsatzplan eingeteilt werden kann.",
-      "note": "Gut zu wissen: Eine Person gehört immer zu einer Organisation. Du kannst sie später in eine andere verschieben."
+      "note": "Gut zu wissen: Eine Person gehört immer zu einer Organisation. Du kannst sie später in eine andere verschieben.",
+      "ownProfile": "Eigenes Profil bearbeiten"
     }
   },
   "organization": {

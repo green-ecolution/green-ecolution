@@ -107,9 +107,26 @@ const NEW_PERSON = member('u-new', 'Neo', 'Neumann', 'amt', [])
 let listedOverride: UserResponse[] | null = null
 let listFetching = false
 
+interface DialogStubProps {
+  open: boolean
+  organizationId: string
+  organizationName: string
+  roles: RoleResponse[] | null
+  onCreated: (user: UserResponse) => void
+  onBusyChange: (busy: boolean) => void
+}
+let dialogProps: DialogStubProps | null = null
+
 vi.mock('./AddMemberDialog', () => ({
-  default: ({ open, onCreated }: { open: boolean; onCreated: (user: UserResponse) => void }) =>
-    open ? <button onClick={() => onCreated(NEW_PERSON)}>Dialog fertig</button> : null,
+  default: (props: DialogStubProps) => {
+    dialogProps = props
+    return props.open ? (
+      <>
+        <button onClick={() => props.onCreated(NEW_PERSON)}>Dialog fertig</button>
+        <button onClick={() => props.onBusyChange(true)}>Dialog beschäftigt</button>
+      </>
+    ) : null
+  },
 }))
 
 const assignMutate = vi.fn()
@@ -134,8 +151,13 @@ vi.mock('@/hooks/useUserMutations', () => ({
 }))
 
 const blockerStatus = vi.fn((): string => 'idle')
+let blockerOptions: { shouldBlockFn: () => boolean; enableBeforeUnload: () => boolean } | null =
+  null
 vi.mock('@tanstack/react-router', () => ({
-  useBlocker: () => ({ status: blockerStatus(), proceed: vi.fn(), reset: vi.fn() }),
+  useBlocker: (options: typeof blockerOptions) => {
+    blockerOptions = options
+    return { status: blockerStatus(), proceed: vi.fn(), reset: vi.fn() }
+  },
   Link: ({ children }: { children: ReactNode }) => <a href="#link">{children}</a>,
 }))
 
@@ -230,6 +252,8 @@ describe('MembersPage', () => {
     listParams.length = 0
     listedOverride = null
     listFetching = false
+    dialogProps = null
+    blockerOptions = null
     vi.stubEnv('VITE_AUTH_BYPASS', '')
     context.orgId = 'amt'
     // Nobody in the list is the signed-in user by default; the self-lock test
@@ -696,6 +720,89 @@ describe('MembersPage', () => {
       render(<MembersPage />)
       const button = screen.getByRole('button', { name: 'Person hinzufügen' })
       expect(button.closest('section')).not.toBeNull()
+    })
+
+    it('shows the page title above the explanation', () => {
+      listedOverride = []
+      render(<MembersPage />)
+
+      expect(screen.getByRole('heading', { level: 2, name: 'Mitarbeitende' })).toBeInTheDocument()
+    })
+
+    it('offers no way to add a person without user:create', () => {
+      permissions.mockReturnValue(new Set(['user:read']))
+      listedOverride = []
+      render(<MembersPage />)
+
+      expect(
+        screen.getByRole('heading', { name: 'In Grünflächenamt ist noch niemand' }),
+      ).toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'Person hinzufügen' })).not.toBeInTheDocument()
+    })
+
+    it('keeps the own profile reachable while only the viewer is listed', async () => {
+      meId.mockReturnValue('u-anna')
+      listedOverride = justAnna
+      render(<MembersPage />)
+
+      await userEvent.click(screen.getByRole('button', { name: 'Eigenes Profil bearbeiten' }))
+
+      const drawer = await screen.findByRole('dialog')
+      expect(within(drawer).getByRole('heading', { name: 'Anna Ahlmann' })).toBeInTheDocument()
+      expect(within(drawer).getByLabelText('Telefonnummer')).toBeEnabled()
+
+      await userEvent.keyboard('{Escape}')
+      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+      expect(
+        screen.getByRole('heading', { name: 'Außer dir ist noch niemand in Grünflächenamt' }),
+      ).toBeInTheDocument()
+    })
+
+    it('offers the own profile without user:create too, but not while nobody is listed', () => {
+      meId.mockReturnValue('u-anna')
+      permissions.mockReturnValue(new Set(['user:read', 'user:update']))
+      listedOverride = justAnna
+      const { unmount } = render(<MembersPage />)
+      expect(screen.getByRole('button', { name: 'Eigenes Profil bearbeiten' })).toBeInTheDocument()
+      unmount()
+
+      permissions.mockReturnValue(UNRESTRICTED)
+      listedOverride = []
+      render(<MembersPage />)
+      expect(
+        screen.queryByRole('button', { name: 'Eigenes Profil bearbeiten' }),
+      ).not.toBeInTheDocument()
+    })
+
+    it('hands the dialog the selected organization and its roles', async () => {
+      context.orgId = 'nord'
+      render(<MembersPage />)
+      await userEvent.click(screen.getByRole('button', { name: 'Person hinzufügen' }))
+
+      expect(dialogProps).toMatchObject({
+        open: true,
+        organizationId: 'nord',
+        organizationName: 'Stadtgärtnerei Nord',
+        roles: ROLES_BY_ORG.nord,
+      })
+    })
+
+    it('hands the dialog no roles without role:read', () => {
+      permissions.mockReturnValue(new Set(['user:read', 'user:create']))
+      render(<MembersPage />)
+
+      expect(dialogProps).toMatchObject({ organizationId: 'amt', roles: null })
+    })
+
+    it('blocks leaving the page while a person is being added', async () => {
+      render(<MembersPage />)
+      expect(blockerOptions?.shouldBlockFn()).toBe(false)
+
+      await userEvent.click(screen.getByRole('button', { name: 'Person hinzufügen' }))
+      await userEvent.click(screen.getByRole('button', { name: 'Dialog beschäftigt' }))
+
+      expect(blockerOptions?.shouldBlockFn()).toBe(true)
+      expect(blockerOptions?.enableBeforeUnload()).toBe(true)
     })
 
     it('hides the button in the demo bypass', () => {

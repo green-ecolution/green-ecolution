@@ -87,6 +87,7 @@ const MembersPage = () => {
   const [pendingClose, setPendingClose] = useState(false)
   const [confirmOrgChange, setConfirmOrgChange] = useState<string | null>(null)
   const [addOpen, setAddOpen] = useState(false)
+  const [addBusy, setAddBusy] = useState(false)
 
   useEffect(() => {
     const timeout = setTimeout(() => setDebouncedSearch(search.trim()), SEARCH_DEBOUNCE_MS)
@@ -142,10 +143,11 @@ const MembersPage = () => {
   const draftState = useMemberProfileDraft()
   const { draft, dirty, edit, discard } = draftState
 
+  // Leaving while a person is being added loses the one-time password as well.
   const blocker = useBlocker({
-    shouldBlockFn: () => dirty,
+    shouldBlockFn: () => dirty || addBusy,
     // Also gates the browser's own unload prompt; see useFormNavigationBlocker.
-    enableBeforeUnload: () => dirty,
+    enableBeforeUnload: () => dirty || addBusy,
     withResolver: true,
   })
 
@@ -179,6 +181,7 @@ const MembersPage = () => {
     !filtered &&
     !isFiltered(debouncedSearch, roleFilter) &&
     members.every((user) => user.id === me?.id)
+  const ownListing = members.find((user) => user.id === me?.id)
   const isSelf = selected !== null && selected.id === me?.id
 
   useEffect(() => {
@@ -417,6 +420,26 @@ const MembersPage = () => {
   const targetOrganization = organizationList.find((org) => org.id === confirmOrgChange) ?? null
   const sourceOrganizationName = selected?.organization?.name ?? null
 
+  const detailDrawer = (
+    <Drawer open={detailOpen} onOpenChange={requestClose}>
+      <DrawerContent className="max-h-[90vh]">
+        {/* Content scrolls in its own region; the actions live in a fixed
+        footer below so they stay anchored to the drawer bottom. */}
+        <div className="min-h-0 flex-1 overflow-y-auto p-4">{renderDetail(false)}</div>
+        {draft && dirty && canUpdate && (
+          <DrawerFooter className="flex-col-reverse gap-2 border-t border-dark-200 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
+            <MemberActionButtons
+              saving={updateProfile.isPending}
+              phoneNumberInvalid={phoneNumberIssue(draft.phoneNumber) !== null}
+              onSave={save}
+              onCancel={resetDraft}
+            />
+          </DrawerFooter>
+        )}
+      </DrawerContent>
+    </Drawer>
+  )
+
   const addButton = (
     <Button type="button" size="sm" onClick={() => setAddOpen(true)}>
       <Plus className="size-4" aria-hidden />
@@ -427,12 +450,18 @@ const MembersPage = () => {
   return (
     <>
       {nobodyElseListed ? (
-        <MembersEmptyState
-          organizationName={ownOrganizationName}
-          variant={members.length === 0 ? 'none' : 'onlyMe'}
-          viewerName={me ? fullNameOf(me) : null}
-          onAdd={canCreate ? () => setAddOpen(true) : undefined}
-        />
+        <div className="flex flex-col gap-6">
+          <h2 className="font-lato text-2xl font-bold text-dark">{t('nav.members')}</h2>
+          <MembersEmptyState
+            organizationName={ownOrganizationName}
+            variant={ownListing ? 'onlyMe' : 'none'}
+            viewerName={me ? fullNameOf(me) : null}
+            onAdd={canCreate ? () => setAddOpen(true) : undefined}
+            onEditOwnProfile={ownListing ? () => select(ownListing) : undefined}
+          />
+          {/* The own profile opens in the Drawer at every width: there is no list beside it. */}
+          {detailDrawer}
+        </div>
       ) : (
         <>
           {canCreate && <div className="mb-4 flex justify-end">{addButton}</div>}
@@ -453,23 +482,7 @@ const MembersPage = () => {
             ) : (
               <>
                 {list}
-                <Drawer open={detailOpen} onOpenChange={requestClose}>
-                  <DrawerContent className="max-h-[90vh]">
-                    {/* Content scrolls in its own region; the actions live in a fixed
-                    footer below so they stay anchored to the drawer bottom. */}
-                    <div className="min-h-0 flex-1 overflow-y-auto p-4">{renderDetail(false)}</div>
-                    {draft && dirty && canUpdate && (
-                      <DrawerFooter className="flex-col-reverse gap-2 border-t border-dark-200 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
-                        <MemberActionButtons
-                          saving={updateProfile.isPending}
-                          phoneNumberInvalid={phoneNumberIssue(draft.phoneNumber) !== null}
-                          onSave={save}
-                          onCancel={resetDraft}
-                        />
-                      </DrawerFooter>
-                    )}
-                  </DrawerContent>
-                </Drawer>
+                {detailDrawer}
               </>
             )}
           </div>
@@ -483,6 +496,7 @@ const MembersPage = () => {
         roles={canReadRoles ? (ownOrgRoles ?? []) : null}
         onOpenChange={setAddOpen}
         onCreated={selectCreated}
+        onBusyChange={setAddBusy}
       />
 
       <AlertDialog
@@ -545,7 +559,9 @@ const MembersPage = () => {
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>{t('common:dialog.unsavedChanges.title')}</AlertDialogTitle>
-              <AlertDialogDescription>{t('members.leaveDescription')}</AlertDialogDescription>
+              <AlertDialogDescription>
+                {t(addBusy ? 'members.add.leaveDescription' : 'members.leaveDescription')}
+              </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel onClick={() => blocker.reset?.()}>

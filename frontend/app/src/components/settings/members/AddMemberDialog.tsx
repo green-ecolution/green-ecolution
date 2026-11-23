@@ -14,13 +14,17 @@ import {
   MultiSelectCombobox,
 } from '@green-ecolution/ui'
 import type { RoleResponse, UserResponse } from '@/api/backendApi'
-import { resolveApiError } from '@/lib/apiError'
+import { resolveApiError, type ApiErrorInfo } from '@/lib/apiError'
 import createToast from '@/hooks/createToast'
 import { useUserMutations } from '@/hooks/useUserMutations'
 import { useAddMemberForm } from './addMemberForm'
 import { fullNameOf } from './memberList'
 
 const IDENTITY_TAKEN = 'user.identity_taken'
+
+/** A cause the backend named beats the generic failure text. */
+const namesCause = ({ messageKey }: ApiErrorInfo) =>
+  messageKey.startsWith('code.') || messageKey.startsWith('validation:')
 
 interface AddMemberDialogProps {
   open: boolean
@@ -30,6 +34,8 @@ interface AddMemberDialogProps {
   roles: RoleResponse[] | null
   onOpenChange: (open: boolean) => void
   onCreated: (user: UserResponse) => void
+  /** True from submitting until the result is closed: leaving then loses the password. */
+  onBusyChange?: (busy: boolean) => void
 }
 
 interface CreatedPerson {
@@ -44,6 +50,7 @@ const AddMemberDialog = ({
   roles,
   onOpenChange,
   onCreated,
+  onBusyChange,
 }: AddMemberDialogProps) => {
   const { t } = useTranslation(['settings', 'common'])
   const { createUser } = useUserMutations()
@@ -53,13 +60,16 @@ const AddMemberDialog = ({
   // The initial password lives here and nowhere else; closing discards it.
   const [created, setCreated] = useState<CreatedPerson | null>(null)
   const [identityTaken, setIdentityTaken] = useState(false)
+  const [rolesTooPowerful, setRolesTooPowerful] = useState(false)
 
   const close = () => {
     const person = created
     setCreated(null)
     setIdentityTaken(false)
+    setRolesTooPowerful(false)
     form.reset()
     createUser.reset()
+    onBusyChange?.(false)
     onOpenChange(false)
     if (person) onCreated(person.user)
   }
@@ -72,6 +82,7 @@ const AddMemberDialog = ({
 
   const edit: typeof setField = (field, value) => {
     setIdentityTaken(false)
+    setRolesTooPowerful(false)
     setField(field, value)
   }
 
@@ -80,6 +91,9 @@ const AddMemberDialog = ({
     // Disabling the button alone doesn't stop Enter-to-submit in every browser.
     if (!valid || createUser.isPending) return
     setIdentityTaken(false)
+    setRolesTooPowerful(false)
+    const roleIds = roles === null ? [] : values.roleIds
+    onBusyChange?.(true)
     createUser.mutate(
       {
         organizationId,
@@ -87,7 +101,7 @@ const AddMemberDialog = ({
         lastName: values.lastName.trim(),
         email: values.email.trim(),
         username: values.username.trim(),
-        roleIds: roles === null ? [] : values.roleIds,
+        roleIds,
       },
       {
         onSuccess: ({ user, initialPassword }) => {
@@ -95,9 +109,12 @@ const AddMemberDialog = ({
           createUser.reset()
         },
         onError: (error) => {
+          onBusyChange?.(false)
           void resolveApiError(error).then((info) => {
             if (info.code === IDENTITY_TAKEN) setIdentityTaken(true)
-            else showToast(t('members.add.failed'), 'error')
+            // The only 403 a permitted caller can meet: a role beyond their own grants.
+            else if (info.status === 403 && roleIds.length > 0) setRolesTooPowerful(true)
+            else showToast(namesCause(info) ? info.message : t('members.add.failed'), 'error')
           })
         },
       },
@@ -115,7 +132,8 @@ const AddMemberDialog = ({
           if (created || createUser.isPending) event.preventDefault()
         }}
         onEscapeKeyDown={(event) => {
-          if (createUser.isPending) event.preventDefault()
+          // The password cannot be shown again, so only "Fertig" or the close button leave it.
+          if (created || createUser.isPending) event.preventDefault()
         }}
       >
         {created ? (
@@ -195,6 +213,11 @@ const AddMemberDialog = ({
                     value={values.roleIds}
                     onChange={(ids) => edit('roleIds', ids)}
                   />
+                  {rolesTooPowerful && (
+                    <p role="alert" className="text-sm text-destructive">
+                      {t('members.roleErrorTooPowerful')}
+                    </p>
+                  )}
                   <p className="text-sm text-muted-foreground">{t('members.add.rolesHint')}</p>
                 </div>
               )}

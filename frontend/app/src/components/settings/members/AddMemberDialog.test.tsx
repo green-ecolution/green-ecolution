@@ -3,7 +3,13 @@ import { http, HttpResponse, delay } from 'msw'
 import { server } from '@/test/mocks/server'
 import { fireEvent, render, screen, userEvent, waitFor } from '@/test/utils'
 import type { RoleResponse } from '@/api/backendApi'
-import AddMemberDialog from './AddMemberDialog'
+
+// Sonner keeps its toasts in a module-wide store, so a toast of one test would
+// still be on screen in the next.
+const showToast = vi.fn()
+vi.mock('@/hooks/createToast', () => ({ default: () => showToast }))
+
+const { default: AddMemberDialog } = await import('./AddMemberDialog')
 
 const ROLES: RoleResponse[] = [
   { id: 'r-plan', name: 'Planung', organizationId: 'org-1', permissions: [], isTemplate: false },
@@ -64,7 +70,10 @@ const fillForm = async () => {
 const submit = () => userEvent.click(screen.getByRole('button', { name: 'Person anlegen' }))
 
 describe('AddMemberDialog', () => {
-  beforeEach(() => vi.stubEnv('VITE_AUTH_BYPASS', 'true'))
+  beforeEach(() => {
+    vi.stubEnv('VITE_AUTH_BYPASS', 'true')
+    showToast.mockClear()
+  })
   afterEach(() => vi.unstubAllEnvs())
 
   it('creates the person in the selected organization with the chosen roles', async () => {
@@ -167,15 +176,103 @@ describe('AddMemberDialog', () => {
     expect(screen.getByLabelText('E-Mail-Adresse')).toHaveValue('Anna.Schmidt@tbz.example')
   })
 
-  it('reports any other failure as a toast and keeps the form', async () => {
+  it('reports an uncoded failure with the generic toast and keeps the form', async () => {
     respondWith(500, { error: 'boom' })
     setup()
     await fillForm()
     await submit()
 
-    expect(await screen.findByText('Die Person konnte nicht angelegt werden.')).toBeInTheDocument()
+    await waitFor(() =>
+      expect(showToast).toHaveBeenCalledWith('Die Person konnte nicht angelegt werden.', 'error'),
+    )
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
     expect(screen.getByLabelText('Vorname')).toHaveValue('Anna')
+  })
+
+  it('names the cause of a coded failure in the toast', async () => {
+    respondWith(422, { error: 'mismatch', code: 'organization_mismatch.role_vs_user' })
+    setup()
+    await fillForm()
+    await submit()
+
+    await waitFor(() =>
+      expect(showToast).toHaveBeenCalledWith(
+        'Die Rolle gehört zu einer anderen Organisation als die ausgewählte Person.',
+        'error',
+      ),
+    )
+    expect(showToast).toHaveBeenCalledTimes(1)
+  })
+
+  it('blames the roles for a 403 while at least one is chosen', async () => {
+    respondWith(403, { error: 'forbidden' })
+    setup()
+    await fillForm()
+    await userEvent.click(screen.getByRole('combobox', { name: 'Rollen' }))
+    await userEvent.click(screen.getByRole('option', { name: 'Planung' }))
+    await userEvent.keyboard('{Escape}')
+    await submit()
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Diese Rolle enthält Rechte, die über deine eigenen hinausgehen.',
+    )
+    expect(showToast).not.toHaveBeenCalled()
+    expect(screen.getByLabelText('Vorname')).toHaveValue('Anna')
+    expect(screen.getByLabelText('E-Mail-Adresse')).toHaveValue('Anna.Schmidt@tbz.example')
+  })
+
+  it('reports a 403 without a chosen role with the generic toast', async () => {
+    respondWith(403, { error: 'forbidden' })
+    setup()
+    await fillForm()
+    await submit()
+
+    await waitFor(() =>
+      expect(showToast).toHaveBeenCalledWith('Die Person konnte nicht angelegt werden.', 'error'),
+    )
+    expect(
+      screen.queryByText('Diese Rolle enthält Rechte, die über deine eigenen hinausgehen.'),
+    ).not.toBeInTheDocument()
+  })
+
+  it('keeps the password on Escape, so only Fertig or the close button leave it', async () => {
+    respondCreated()
+    const { onOpenChange } = setup()
+    await fillForm()
+    await submit()
+    await screen.findByText(PASSWORD)
+
+    await userEvent.keyboard('{Escape}')
+
+    expect(onOpenChange).not.toHaveBeenCalled()
+    expect(screen.getByText(PASSWORD)).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: /schließen|close/i }))
+    expect(onOpenChange).toHaveBeenCalledWith(false)
+  })
+
+  it('reports itself busy from submitting until the result is closed', async () => {
+    respondCreated()
+    const onBusyChange = vi.fn()
+    setup({ onBusyChange })
+    await fillForm()
+    await submit()
+    await screen.findByText(PASSWORD)
+    expect(onBusyChange).toHaveBeenLastCalledWith(true)
+
+    await userEvent.click(screen.getByRole('button', { name: 'Fertig' }))
+    expect(onBusyChange).toHaveBeenLastCalledWith(false)
+  })
+
+  it('stops reporting busy when the request fails', async () => {
+    respondWith(500, { error: 'boom' })
+    const onBusyChange = vi.fn()
+    setup({ onBusyChange })
+    await fillForm()
+    await submit()
+
+    await waitFor(() => expect(onBusyChange).toHaveBeenLastCalledWith(false))
+    expect(onBusyChange).toHaveBeenCalledWith(true)
   })
 
   it('leaves the roles out without the right to read them', async () => {

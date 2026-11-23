@@ -8,6 +8,7 @@ interface MembersEmptyStateProps {
   variant: 'onlyMe' | 'none'
   viewerName: string | null
   onAdd?: () => void
+  onEditOwnProfile?: () => void
 }
 
 const ExampleRow = ({ dashed, children }: { dashed?: boolean; children: React.ReactNode }) => (
@@ -37,6 +38,7 @@ const MembersEmptyState = ({
   variant,
   viewerName,
   onAdd,
+  onEditOwnProfile,
 }: MembersEmptyStateProps) => {
   const { t } = useTranslation('settings')
   const prefix = 'members.empty'
@@ -49,11 +51,20 @@ const MembersEmptyState = ({
       })}
       description={t(`${prefix}.description`, { name: organizationName })}
       action={
-        onAdd && (
-          <Button type="button" onClick={onAdd}>
-            <Plus className="size-4" aria-hidden />
-            {t('members.add.button')}
-          </Button>
+        (onAdd ?? onEditOwnProfile) && (
+          <div className="flex flex-wrap gap-3">
+            {onAdd && (
+              <Button type="button" onClick={onAdd}>
+                <Plus className="size-4" aria-hidden />
+                {t('members.add.button')}
+              </Button>
+            )}
+            {onEditOwnProfile && (
+              <Button type="button" variant="outline" onClick={onEditOwnProfile}>
+                {t(`${prefix}.ownProfile`)}
+              </Button>
+            )}
+          </div>
         )
       }
       example={{
