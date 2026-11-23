@@ -181,7 +181,16 @@
       "invalidFormat": "Email address is invalid."
     },
     "username": {
-      "empty": "Username is required."
+      "empty": "Username is required.",
+      "tooLong": "Username must be at most {max} characters long."
+    },
+    "first_name": {
+      "empty": "First name is required.",
+      "tooLong": "First name must be at most {max} characters long."
+    },
+    "last_name": {
+      "empty": "Last name is required.",
+      "tooLong": "Last name must be at most {max} characters long."
     },
     "phone_number": {
       "empty": "Phone number is required.",

@@ -100,6 +100,12 @@ export const VALIDATION_KEYS = [
   'user.email.empty',
   'user.email.invalidFormat',
   'user.username.empty',
+  'user.username.tooLong',
+  // Names are only checked by the server.
+  'user.first_name.empty',
+  'user.first_name.tooLong',
+  'user.last_name.empty',
+  'user.last_name.tooLong',
   'user.phone_number.empty',
   'user.phone_number.invalidFormat',
 ] as const satisfies readonly string[]
