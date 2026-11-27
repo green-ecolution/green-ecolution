@@ -9,7 +9,7 @@ use crate::infra::list::{ArchiveFilter, ListSpec, Predicate, SortColumns};
 use domain::{
     Id, IdSliceExt, RawId, RepositoryError,
     authorization::Visibility,
-    capacity::{CapacityKind, Liters},
+    capacity::{Amount, CapacityKind},
     shared::pagination::{Page, Pagination, SearchPage},
     vehicle::{
         ArchiveFilterKind, DrivingLicense, NumberPlate, Vehicle, VehicleAvailability, VehicleDraft,
@@ -57,12 +57,12 @@ fn parse_capacities(value: Value) -> Result<BTreeMap<CapacityKind, f64>, Reposit
     };
     entries
         .into_iter()
-        .map(|(kind, liters)| {
+        .map(|(kind, amount)| {
             let kind = kind.parse::<CapacityKind>()?;
-            let liters = liters.as_f64().ok_or_else(|| {
+            let amount = amount.as_f64().ok_or_else(|| {
                 RepositoryError::DataIntegrity(format!("capacity '{kind}' is not a number"))
             })?;
-            Ok((kind, liters))
+            Ok((kind, amount))
         })
         .collect()
 }
@@ -149,7 +149,7 @@ impl TryFrom<VehicleViewRow> for VehicleView {
 }
 
 const VEHICLE_COLUMNS: &str = "v.id, v.updated_at, v.archived_at, v.number_plate, \
-    v.description, COALESCE((SELECT jsonb_object_agg(vc.kind, vc.liters) \
+    v.description, COALESCE((SELECT jsonb_object_agg(vc.kind, vc.amount) \
             FROM vehicle_capacities vc WHERE vc.vehicle_id = v.id), '{}'::jsonb) AS capacities, v.type AS vehicle_type, v.availability, \
     v.model, v.driving_license, v.height, v.width, v.length, v.weight, \
     v.provider, v.additional_informations AS additional_info, v.organization_id, \
@@ -171,7 +171,7 @@ const VEHICLE_SORT_COLUMNS: SortColumns = &[
     ("number_plate", &["v.number_plate"]),
     (
         "water_capacity",
-        &["COALESCE((SELECT vc.liters FROM vehicle_capacities vc \
+        &["COALESCE((SELECT vc.amount FROM vehicle_capacities vc \
             WHERE vc.vehicle_id = v.id AND vc.kind = 'water'), 0)"],
     ),
     ("model", &["v.model"]),
@@ -188,7 +188,7 @@ impl VehicleReader for PgVehicleRepository {
                       archived_at AS "archived_at: DateTime<chrono::Utc>",
                       number_plate,
                       description,
-                      COALESCE((SELECT jsonb_object_agg(kind, liters)
+                      COALESCE((SELECT jsonb_object_agg(kind, amount)
                                 FROM vehicle_capacities WHERE vehicle_id = vehicles.id),
                                '{}'::jsonb) AS "capacities!: Value",
                       type AS "vehicle_type: VehicleType",
@@ -218,7 +218,7 @@ impl VehicleReader for PgVehicleRepository {
                       archived_at AS "archived_at: DateTime<chrono::Utc>",
                       number_plate,
                       description,
-                      COALESCE((SELECT jsonb_object_agg(kind, liters)
+                      COALESCE((SELECT jsonb_object_agg(kind, amount)
                                 FROM vehicle_capacities WHERE vehicle_id = vehicles.id),
                                '{}'::jsonb) AS "capacities!: Value",
                       type AS "vehicle_type: VehicleType",
@@ -249,7 +249,7 @@ impl VehicleReader for PgVehicleRepository {
                       archived_at AS "archived_at: DateTime<chrono::Utc>",
                       number_plate,
                       description,
-                      COALESCE((SELECT jsonb_object_agg(kind, liters)
+                      COALESCE((SELECT jsonb_object_agg(kind, amount)
                                 FROM vehicle_capacities WHERE vehicle_id = vehicles.id),
                                '{}'::jsonb) AS "capacities!: Value",
                       type AS "vehicle_type: VehicleType",
@@ -278,7 +278,7 @@ impl VehicleReader for PgVehicleRepository {
                       archived_at,
                       number_plate,
                       description,
-                      COALESCE((SELECT jsonb_object_agg(kind, liters)
+                      COALESCE((SELECT jsonb_object_agg(kind, amount)
                                 FROM vehicle_capacities WHERE vehicle_id = vehicles.id),
                                '{}'::jsonb) AS "capacities!: Value",
                       type AS "vehicle_type: VehicleType",
@@ -312,7 +312,7 @@ impl VehicleReader for PgVehicleRepository {
                       archived_at,
                       number_plate,
                       description,
-                      COALESCE((SELECT jsonb_object_agg(kind, liters)
+                      COALESCE((SELECT jsonb_object_agg(kind, amount)
                                 FROM vehicle_capacities WHERE vehicle_id = vehicles.id),
                                '{}'::jsonb) AS "capacities!: Value",
                       type AS "vehicle_type: VehicleType",
@@ -459,7 +459,7 @@ impl VehicleWriter for PgVehicleRepository {
             capacities: draft
                 .capacities
                 .iter()
-                .map(|(kind, liters)| (*kind, liters.value()))
+                .map(|(kind, amount)| (kind.clone(), amount.value()))
                 .collect(),
             availability: draft.availability,
             vehicle_type: draft.vehicle_type,
@@ -535,10 +535,10 @@ impl VehicleWriter for PgVehicleRepository {
 async fn replace_capacities(
     tx: &mut sqlx::PgConnection,
     vehicle: Id<Vehicle>,
-    capacities: &BTreeMap<CapacityKind, Liters>,
+    capacities: &BTreeMap<CapacityKind, Amount>,
 ) -> Result<(), RepositoryError> {
     let kinds: Vec<String> = capacities.keys().map(|k| k.as_str().to_owned()).collect();
-    let liters: Vec<f64> = capacities.values().map(Liters::value).collect();
+    let amounts: Vec<f64> = capacities.values().map(Amount::value).collect();
     sqlx::query!(
         "DELETE FROM vehicle_capacities WHERE vehicle_id = $1",
         vehicle.value()
@@ -546,11 +546,11 @@ async fn replace_capacities(
     .execute(&mut *tx)
     .await?;
     sqlx::query!(
-        "INSERT INTO vehicle_capacities (vehicle_id, kind, liters)
-         SELECT $1, kind, liters FROM UNNEST($2::text[], $3::float8[]) AS c(kind, liters)",
+        "INSERT INTO vehicle_capacities (vehicle_id, kind, amount)
+         SELECT $1, kind, amount FROM UNNEST($2::text[], $3::float8[]) AS c(kind, amount)",
         vehicle.value(),
         &kinds,
-        &liters,
+        &amounts,
     )
     .execute(&mut *tx)
     .await?;

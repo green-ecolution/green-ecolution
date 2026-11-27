@@ -12,7 +12,7 @@ INSERT INTO vehicles (id, number_plate, description, type, availability, driving
   ('019e3fcb-2a52-7547-b44d-33e5c74e10cf'::uuid, 'FL-TEST-03', '[TEST] Unrealistisch: Extreme Werte für Grenzwert-Tests', 'transporter', 'not_available', 'CE', 'Test Heavy Loader', 4.00, 6.00, 30.0, 150.0, '01980000-0000-7000-8000-000000000002'),
   ('019e3fcb-2a52-729c-9bb6-10669401291e'::uuid, 'FL-TEST-A01', '[TEST] Unrealistisch: Riesiger Testanhänger', 'trailer', 'available', 'CE', 'Test Giant Trailer', 3.00, 4.00, 15.0, 25.0, '01980000-0000-7000-8000-000000000002');
 
-INSERT INTO vehicle_capacities (vehicle_id, kind, liters) VALUES
+INSERT INTO vehicle_capacities (vehicle_id, kind, amount) VALUES
   ('019e3fcb-2a51-7e7e-9392-c4e6dfb61845'::uuid, 'water', 500.0),
   ('019e3fcb-2a51-75fd-818b-913a7cd9cec1'::uuid, 'water', 800.0),
   ('019e3fcb-2a51-73cf-b612-cd0ccdac6f0d'::uuid, 'water', 300.0),

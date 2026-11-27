@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id,\n                      archived_at AS \"archived_at: DateTime<chrono::Utc>\",\n                      number_plate,\n                      description,\n                      COALESCE((SELECT jsonb_object_agg(kind, liters)\n                                FROM vehicle_capacities WHERE vehicle_id = vehicles.id),\n                               '{}'::jsonb) AS \"capacities!: Value\",\n                      type AS \"vehicle_type: VehicleType\",\n                      availability AS \"availability: VehicleAvailability\",\n                      model,\n                      driving_license AS \"driving_license: DrivingLicense\",\n                      height, width, length, weight,\n                      provider,\n                      additional_informations AS \"additional_info: Value\",\n                      organization_id\n            FROM vehicles WHERE id = ANY($1::uuid[])",
+  "query": "SELECT id,\n                      archived_at AS \"archived_at: DateTime<chrono::Utc>\",\n                      number_plate,\n                      description,\n                      COALESCE((SELECT jsonb_object_agg(kind, amount)\n                                FROM vehicle_capacities WHERE vehicle_id = vehicles.id),\n                               '{}'::jsonb) AS \"capacities!: Value\",\n                      type AS \"vehicle_type: VehicleType\",\n                      availability AS \"availability: VehicleAvailability\",\n                      model,\n                      driving_license AS \"driving_license: DrivingLicense\",\n                      height, width, length, weight,\n                      provider,\n                      additional_informations AS \"additional_info: Value\",\n                      organization_id\n            FROM vehicles WHERE id = ANY($1::uuid[])",
   "describe": {
     "columns": [
       {
@@ -140,5 +140,5 @@
       false
     ]
   },
-  "hash": "8b6a84d580513c72d7293afd972265ecc13cc4eda18136d268493657914bf62f"
+  "hash": "7fd076b730494431cdf8676d8f1b46a89204f80f97e596b923a6116abc300e8b"
 }

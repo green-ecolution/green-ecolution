@@ -610,7 +610,7 @@ async fn seed_plans(pool: &PgPool, scale: Scale) -> Result<i64, sqlx::Error> {
         ON CONFLICT DO NOTHING
         RETURNING id
         )
-        INSERT INTO vehicle_capacities (vehicle_id, kind, liters)
+        INSERT INTO vehicle_capacities (vehicle_id, kind, amount)
         SELECT id, 'water', 2000 FROM inserted
         "#,
     )
