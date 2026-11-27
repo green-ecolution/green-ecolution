@@ -1,7 +1,7 @@
 import { createFileRoute, getRouteApi } from '@tanstack/react-router'
 import { FormProvider } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
-import type { WasteBinForm } from '@green-ecolution/domain-wasm'
+import type { WasteBinForm } from '../../../../../../lib/drafts'
 import FormPageHeader from '@/components/general/FormPageHeader'
 import UnsavedChangesDialog from '@/components/general/form/UnsavedChangesDialog'
 import { useInitFormQuery } from '@/hooks/form/useInitForm'

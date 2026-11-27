@@ -1,108 +1,75 @@
 import { describe, expect, it, vi } from 'vitest'
-import type { TreeForm, ValidationIssue, WasteBinForm } from './types'
+import { draftResolver } from './resolver'
+import type { ValidationIssue } from './types'
 
-vi.mock('../pkg/domain_wasm.js', () => ({
-  irrigationValidateTreeDraft: vi.fn<(_: unknown) => ValidationIssue[]>(),
-  irrigationValidateTreeClusterDraft: vi.fn<(_: unknown) => ValidationIssue[]>(),
-  validateVehicleDraft: vi.fn<(_: unknown) => ValidationIssue[]>(),
-  validatePlanDraft: vi.fn<(_: unknown) => ValidationIssue[]>(),
-  wasteValidateBinDraft: vi.fn<(_: unknown) => ValidationIssue[]>(),
-}))
-
-import { irrigationValidateTreeDraft, wasteValidateBinDraft } from '../pkg/domain_wasm.js'
-import { treeDraftResolver, wasteBinDraftResolver } from './resolver'
-
-const validTreeForm: TreeForm = {
-  number: 'FL-001',
-  species: 'Quercus',
-  plantingYear: 2020,
-  latitude: 52.5,
-  longitude: 13.4,
-  description: '',
-  treeClusterId: -1,
-  sensorId: '-1',
+interface ThingForm {
+  name: string
+  builtAt: Date
+  parts: { checkedAt: Date }[]
 }
 
-const translate = (key: string) => key
+const form: ThingForm = {
+  name: 'Bench',
+  builtAt: new Date('2026-05-01T08:00:00.000Z'),
+  parts: [{ checkedAt: new Date('2026-06-01T08:00:00.000Z') }],
+}
 
-const resolver = treeDraftResolver<TreeForm>(translate)
-
-describe('treeDraftResolver', () => {
-  it('returns values when validation passes', async () => {
-    vi.mocked(irrigationValidateTreeDraft).mockReturnValueOnce([])
-    const result = await resolver(validTreeForm, undefined, {
-      fields: {},
-      shouldUseNativeValidation: false,
-    })
-    expect(result.values).toEqual(validTreeForm)
-    expect(result.errors).toEqual({})
-  })
-
-  it('maps issues to RHF FieldErrors keyed by path', async () => {
-    vi.mocked(irrigationValidateTreeDraft).mockReturnValueOnce([
-      {
-        path: 'species',
-        field: 'tree.species',
-        key: 'tree.species.empty',
-        params: {},
-      },
-    ])
-    const result = await resolver({ ...validTreeForm, species: '' }, undefined, {
-      fields: {},
-      shouldUseNativeValidation: false,
-    })
-    expect(result.values).toEqual({})
-    expect('species' in result.errors && result.errors.species).toMatchObject({
-      type: 'tree.species.empty',
-      message: 'tree.species.empty',
-    })
-  })
-
-  it('uses i18n key as message fallback when no translation exists', async () => {
-    vi.mocked(irrigationValidateTreeDraft).mockReturnValueOnce([
-      {
-        path: 'plantingYear',
-        field: 'tree.planting_year',
-        key: 'tree.planting_year.unknown',
-        params: {},
-      },
-    ])
-    const result = await resolver(validTreeForm, undefined, {
-      fields: {},
-      shouldUseNativeValidation: false,
-    })
-    expect('plantingYear' in result.errors && result.errors.plantingYear?.message).toBe(
-      'tree.planting_year.unknown',
-    )
-  })
+const options = { fields: {}, shouldUseNativeValidation: false }
+const issue = (overrides: Partial<ValidationIssue> = {}): ValidationIssue => ({
+  path: 'name',
+  field: 'thing.name',
+  key: 'thing.name.empty',
+  params: {},
+  ...overrides,
 })
 
-describe('wasteBinDraftResolver', () => {
-  const form: WasteBinForm = {
-    number: '',
-    latitude: 54.78,
-    longitude: 9.43,
-    volumeLiters: 1100,
-    depthCm: 120,
-  }
-  const binResolver = wasteBinDraftResolver<WasteBinForm>(translate)
-  const options = { fields: {}, shouldUseNativeValidation: false }
+describe('draftResolver', () => {
+  it('returns the values when the validator finds nothing', async () => {
+    const resolver = draftResolver<ThingForm>(
+      () => [],
+      (key) => key,
+    )
 
-  it('returns values when validation passes', async () => {
-    vi.mocked(wasteValidateBinDraft).mockReturnValueOnce([])
-    const result = await binResolver(form, undefined, options)
+    const result = await resolver(form, undefined, options)
+
     expect(result.values).toEqual(form)
     expect(result.errors).toEqual({})
   })
 
-  it('maps issues to field errors keyed by path', async () => {
-    vi.mocked(wasteValidateBinDraft).mockReturnValueOnce([
-      { path: 'depthCm', field: 'waste_bin.depth', key: 'waste_bin.depth.outOfRange', params: {} },
-    ])
-    const result = await binResolver({ ...form, depthCm: 0 }, undefined, options)
+  it('builds a resolver from any validator', async () => {
+    const validate = vi.fn(() => [issue()])
+    const resolver = draftResolver<ThingForm>(validate, (key) => `text:${key}`)
+
+    const result = await resolver({ ...form, name: '' }, undefined, options)
+
     expect(result.values).toEqual({})
-    expect('depthCm' in result.errors && result.errors.depthCm).toMatchObject({
-      type: 'waste_bin.depth.outOfRange',
+    expect(result.errors.name).toEqual({
+      type: 'thing.name.empty',
+      message: 'text:thing.name.empty',
+    })
+  })
+
+  it('shows the key when the translator has no text', async () => {
+    const resolver = draftResolver<ThingForm>(
+      () => [issue()],
+      () => '',
+    )
+
+    const result = await resolver(form, undefined, options)
+
+    expect(result.errors.name?.message).toBe('thing.name.empty')
+  })
+
+  it('passes dates to the validator as ISO strings, however deep they sit', async () => {
+    const validate = vi.fn((_: unknown) => [])
+    const resolver = draftResolver<ThingForm>(validate, (key) => key)
+
+    await resolver(form, undefined, options)
+
+    expect(validate).toHaveBeenCalledWith({
+      name: 'Bench',
+      builtAt: '2026-05-01T08:00:00.000Z',
+      parts: [{ checkedAt: '2026-06-01T08:00:00.000Z' }],
     })
   })
 })

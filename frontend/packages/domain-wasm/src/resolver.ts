@@ -7,15 +7,6 @@ import type {
 } from 'react-hook-form'
 import { translateIssue } from './messages'
 import type { IssueTranslator, ValidationIssue } from './types'
-import {
-  irrigationValidateTreeClusterDraft,
-  irrigationValidateTreeDraft,
-  validateVehicleDraft,
-  validatePlanDraft,
-  wasteValidateBinDraft,
-} from '../pkg/domain_wasm.js'
-
-type RawValidator = (input: unknown) => ValidationIssue[]
 
 // JS-side normalisation before crossing the WASM boundary. Domain DTOs use
 // strict serde types (RFC 3339 strings for dates), but RHF stores `Date`
@@ -34,12 +25,17 @@ function normaliseForWasm(values: unknown): unknown {
   return values
 }
 
-function makeResolver<TForm extends FieldValues>(
-  validate: RawValidator,
+/**
+ * Turns a draft validator of the WASM build into a React Hook Form resolver.
+ * wasm-bindgen types those validators as `(input: any) => any`; what they
+ * return is a list of issues.
+ */
+export function draftResolver<TForm extends FieldValues>(
+  validate: (input: unknown) => unknown,
   translate: IssueTranslator,
 ): Resolver<TForm> {
   return async (values): Promise<ResolverResult<TForm>> => {
-    const issues = validate(normaliseForWasm(values))
+    const issues = validate(normaliseForWasm(values)) as ValidationIssue[]
     if (issues.length === 0) {
       return { values, errors: {} }
     }
@@ -55,31 +51,3 @@ function makeResolver<TForm extends FieldValues>(
     return { values: {}, errors: errors as FieldErrors<TForm> }
   }
 }
-
-// wasm-bindgen emits `(input: any) => any` for these exports; tighten the
-// return type at the boundary so the rest of the module is fully typed.
-const treeValidator = irrigationValidateTreeDraft as RawValidator
-const clusterValidator = irrigationValidateTreeClusterDraft as RawValidator
-const vehicleValidator = validateVehicleDraft as RawValidator
-const planValidator = validatePlanDraft as RawValidator
-const wasteBinValidator = wasteValidateBinDraft as RawValidator
-
-export const treeDraftResolver = <TForm extends FieldValues>(
-  translate: IssueTranslator,
-): Resolver<TForm> => makeResolver<TForm>(treeValidator, translate)
-
-export const clusterDraftResolver = <TForm extends FieldValues>(
-  translate: IssueTranslator,
-): Resolver<TForm> => makeResolver<TForm>(clusterValidator, translate)
-
-export const vehicleDraftResolver = <TForm extends FieldValues>(
-  translate: IssueTranslator,
-): Resolver<TForm> => makeResolver<TForm>(vehicleValidator, translate)
-
-export const planDraftResolver = <TForm extends FieldValues>(
-  translate: IssueTranslator,
-): Resolver<TForm> => makeResolver<TForm>(planValidator, translate)
-
-export const wasteBinDraftResolver = <TForm extends FieldValues>(
-  translate: IssueTranslator,
-): Resolver<TForm> => makeResolver<TForm>(wasteBinValidator, translate)

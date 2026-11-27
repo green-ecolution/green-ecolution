@@ -4,11 +4,8 @@ import userEvent from '@testing-library/user-event'
 import FormForTree from './FormForTree'
 import { TreeForm } from '../../../schema/treeSchema'
 import { FormProvider, useForm } from 'react-hook-form'
-import {
-  irrigationPlantingYearMax,
-  irrigationPlantingYearMin,
-  treeDraftResolver,
-} from '@green-ecolution/domain-wasm'
+import { irrigationPlantingYearMax, irrigationPlantingYearMin } from '@green-ecolution/domain-wasm'
+import { treeDraftResolver } from '../../../lib/drafts'
 import { ReactNode } from 'react'
 import { FORM_VALIDATION_MODE } from '@/hooks/form/useEntityForm'
 import { useIssueTranslator } from '@/lib/i18n/validation'

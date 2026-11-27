@@ -7,7 +7,7 @@ import {
 } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { Combobox, FormField, Label } from '@green-ecolution/ui'
-import type { WasteBinForm } from '@green-ecolution/domain-wasm'
+import type { WasteBinForm } from '../lib/drafts'
 import type { OrganizationResponse } from '@green-ecolution/backend-client'
 import FormError from '@/components/general/form/FormError'
 import FormSubmitButton from '@/components/general/form/FormSubmitButton'

@@ -1,6 +1,11 @@
-import type { TreeclusterForm as TreeclusterFormBase } from '@green-ecolution/domain-wasm'
 import { SoilCondition } from '@green-ecolution/backend-client'
 
-export type TreeclusterForm = Omit<TreeclusterFormBase, 'soilCondition'> & {
+export interface TreeclusterForm {
+  name: string
+  address: string
+  description: string
   soilCondition: SoilCondition
+  treeIds: string[]
+  /** Owning organization. Only sent on create; the backend defaults to the caller's org. */
+  organizationId?: string
 }
