@@ -71,7 +71,7 @@ const PlanStatusUpdate = ({ planId }: PlanStatusUpdateProps) => {
 
     onSuccess: (data: PlanResponse) => {
       invalidate(planStatusQueryRoots(planning)).catch((error) =>
-        console.error('Invalidation after watering plan status update failed:', error),
+        console.error('Invalidation after plan status update failed:', error),
       )
 
       navigate({

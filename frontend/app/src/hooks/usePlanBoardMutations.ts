@@ -38,7 +38,7 @@ export const usePlanBoardMutations = (
   // aborting unrelated plan queries.
   const runInvalidation = (roots: readonly QueryKey[]) =>
     invalidate(roots, { reloadRoutes: true }).catch((error) =>
-      console.error('Invalidation after watering plan mutation failed:', error),
+      console.error('Invalidation after plan mutation failed:', error),
     )
 
   const invalidateAfterStatusChange = () => void runInvalidation(planStatusQueryRoots(planning))
