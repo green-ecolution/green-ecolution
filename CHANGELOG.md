@@ -11,6 +11,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > single repository. For legacy releases, see the
 > [GitHub Releases](https://github.com/green-ecolution/green-ecolution/releases) page.
 
+## [0.10.0](https://github.com/green-ecolution/green-ecolution/compare/v0.9.0...v0.10.0) (2026-11-27)
+
+
+### ⚠ BREAKING CHANGES
+
+* **core:** let modules declare their capacity kinds (GECO-29) ([#1163](https://github.com/green-ecolution/green-ecolution/issues/1163))
+* **core:** name the core's fields and texts without a module (GECO-31) ([#1162](https://github.com/green-ecolution/green-ecolution/issues/1162))
+* add people from the members page and show empty states in the settings ([#1155](https://github.com/green-ecolution/green-ecolution/issues/1155))
+* **modules:** release modules per tenant (GECO-22) ([#1147](https://github.com/green-ecolution/green-ecolution/issues/1147))
+* **settings:** simplify the task areas and drop the settings lock ([#1146](https://github.com/green-ecolution/green-ecolution/issues/1146))
+
+### Features
+
+* add people from the members page and show empty states in the settings ([#1155](https://github.com/green-ecolution/green-ecolution/issues/1155)) ([81302ac](https://github.com/green-ecolution/green-ecolution/commit/81302ac71d5067a80c59bbe227ba218440db64a4))
+* **api:** add driver API for the mobile app ([#1138](https://github.com/green-ecolution/green-ecolution/issues/1138)) ([cc3f677](https://github.com/green-ecolution/green-ecolution/commit/cc3f677cc8b8f8b7980206f8bb612e63afb2aff2))
+* **frontend:** compact tree, sensor and watering history cards on the cluster dashboard ([#1128](https://github.com/green-ecolution/green-ecolution/issues/1128)) ([ac2f15e](https://github.com/green-ecolution/green-ecolution/commit/ac2f15ee154d78d3ed7e4bbb4608f85a11805b3f))
+* **frontend:** dashboard overview, consistent list pages and accessible status colors ([#1137](https://github.com/green-ecolution/green-ecolution/issues/1137)) ([9009d78](https://github.com/green-ecolution/green-ecolution/commit/9009d78441395d574e0b6d4eb86dd6b7b962ee7b))
+* **frontend:** settings by organization (GECO-20) ([#1145](https://github.com/green-ecolution/green-ecolution/issues/1145)) ([6032c16](https://github.com/green-ecolution/green-ecolution/commit/6032c16148ec9f8ba92d925b8acd7f02ad9870bd))
+* **modules:** release modules per tenant (GECO-22) ([#1147](https://github.com/green-ecolution/green-ecolution/issues/1147)) ([3768735](https://github.com/green-ecolution/green-ecolution/commit/376873537e0dc74f28264d1eba654c7926798ce7))
+* **settings:** simplify the task areas and drop the settings lock ([#1146](https://github.com/green-ecolution/green-ecolution/issues/1146)) ([678fa3b](https://github.com/green-ecolution/green-ecolution/commit/678fa3bd8ca2cdbe54f7c6fd58cf95e1ae7ea878))
+
+
+### Bug Fixes
+
+* **deps:** make cargo-deny pass again ([#1159](https://github.com/green-ecolution/green-ecolution/issues/1159)) ([16f802c](https://github.com/green-ecolution/green-ecolution/commit/16f802cae4319150c1777135c4d44ee5096d765e))
+* **frontend:** remove Flensburg and TBZ wording from the interface ([#1136](https://github.com/green-ecolution/green-ecolution/issues/1136)) ([39cd8ce](https://github.com/green-ecolution/green-ecolution/commit/39cd8ce2d7d35a928f52aaeec2badfe24a3e75c5))
+
+
+### Documentation
+
+* **handbook:** capture the dashboard and the new settings figures ([#1156](https://github.com/green-ecolution/green-ecolution/issues/1156)) ([97de18f](https://github.com/green-ecolution/green-ecolution/commit/97de18fc70ce1401347b254ec9412a91703db6f4))
+* **README:** remove community vote section ([4804672](https://github.com/green-ecolution/green-ecolution/commit/48046721d6e49be60636a7dd7b97dc7e5cc7aec3))
+
+
+### Code Refactoring
+
+* **core:** let modules declare their capacity kinds (GECO-29) ([#1163](https://github.com/green-ecolution/green-ecolution/issues/1163)) ([bab43f4](https://github.com/green-ecolution/green-ecolution/commit/bab43f444764362e266db88067ed099c3d2fd15f))
+* **core:** name the core's fields and texts without a module (GECO-31) ([#1162](https://github.com/green-ecolution/green-ecolution/issues/1162)) ([28071cb](https://github.com/green-ecolution/green-ecolution/commit/28071cb43ee0bf71aec245a23e7f0e1eac20fb3e))
+
 ## [0.9.0](https://github.com/green-ecolution/green-ecolution/compare/v0.8.0...v0.9.0) (2026-10-29)
 
 
