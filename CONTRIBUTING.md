@@ -662,8 +662,12 @@ A module package consists of:
 
 - `src/manifest.tsx`: the `ModuleManifest` (type in `frontend/app/src/modules/types.ts`)
   as the default export, with `key` (equal to the directory name), `order` (where the module
-  sorts among the others), navigation, route permissions, resources, statistics, map,
-  planning, sensor target and settings slots, and the module's i18n namespaces.
+  sorts among the others), navigation, route permissions, resources, role templates,
+  statistics, map, planning, sensor target and settings slots, and the module's i18n
+  namespaces. `roleTemplates` gives the roles the module's migrations deliver their
+  translated name and icon (without an entry a role shows its stored name), and
+  `map.navSection` says under which sidebar headline the map link appears while the module
+  is the first one drawing on the map (`assets` by default).
 - `src/locales/catalog.ts`: adds the module's German catalog to the `Catalogs` interface of
   `@/lib/i18n/catalogs`, which makes its translation keys type-checked.
 - `src/routes/`: the module's route files, mirroring the app's paths, for example
@@ -694,8 +698,17 @@ regenerate `routeTree.gen.ts` by starting the dev server briefly
 
 Handbook chapters that only make sense with a module carry `module: <key>` in their
 frontmatter; they are hidden from logged-in users for organizations where the module is
-off. Validation of a module's drafts comes from `domain-wasm`, whose exports carry the
-module key as prefix (`irrigationValidateTreeDraft`).
+off.
+
+Validation of a module's drafts comes from the Rust crate `domain-wasm`, whose exports
+carry the module key as prefix (`irrigationValidateTreeDraft`). The frontend package
+`@green-ecolution/domain-wasm` passes every export of the WASM build through and names
+none of them, so a new module needs no change there. The module builds its form resolver
+itself with `draftResolver(validate, translate)` (see `src/lib/drafts.ts` of the existing
+modules) and keeps its form types in its own package. The texts for its validation keys
+live in its catalog under `<namespace>:validation.<key>`, not in the app's
+`validation.json`; call `useIssueTranslator(<module key>)` so the module's catalog is
+searched first. A module may word a core key for itself the same way.
 
 ## Writing a Plugin
 
