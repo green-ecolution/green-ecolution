@@ -130,7 +130,7 @@ mod tests {
             name: StartPointName::new("Betriebshof").unwrap(),
             coordinate: Coordinate::new(54.768, 9.434).unwrap(),
             is_default: true,
-            replenishes: BTreeSet::from([CapacityKind::Water]),
+            replenishes: BTreeSet::from([CapacityKind::new("water").unwrap()]),
             organization_id: Id::new_v7(),
         }
     }
@@ -169,11 +169,9 @@ mod tests {
     #[test]
     fn set_replenishes_replaces_the_kinds() {
         let mut sp = fixed();
-        sp.set_replenishes(BTreeSet::from([CapacityKind::CargoVolume]));
-        assert_eq!(
-            sp.replenishes(),
-            &BTreeSet::from([CapacityKind::CargoVolume])
-        );
+        let cargo = BTreeSet::from([CapacityKind::new("cargo_volume").unwrap()]);
+        sp.set_replenishes(cargo.clone());
+        assert_eq!(sp.replenishes(), &cargo);
     }
 
     #[test]

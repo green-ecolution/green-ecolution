@@ -22,7 +22,7 @@ use chrono::{DateTime, Utc};
 use crate::{
     Id,
     authorization::Visibility,
-    capacity::{CapacityKind, Liters},
+    capacity::{Amount, CapacityKind},
     events::DomainEvent,
     organization::Organization,
     shared::{
@@ -155,7 +155,7 @@ pub struct Vehicle {
     pub id: Id<Vehicle>,
     pub number_plate: NumberPlate,
     pub description: Option<String>,
-    pub capacities: BTreeMap<CapacityKind, Liters>,
+    pub capacities: BTreeMap<CapacityKind, Amount>,
     pub availability: VehicleAvailability,
     pub vehicle_type: VehicleType,
     pub model: VehicleModel,
@@ -172,7 +172,7 @@ pub struct Vehicle {
 pub struct VehicleDraft {
     pub number_plate: NumberPlate,
     pub description: Option<String>,
-    pub capacities: BTreeMap<CapacityKind, Liters>,
+    pub capacities: BTreeMap<CapacityKind, Amount>,
     pub availability: VehicleAvailability,
     pub vehicle_type: VehicleType,
     pub model: VehicleModel,
@@ -217,7 +217,7 @@ pub struct VehicleSearchQuery {
 pub struct VehicleUpdate {
     pub number_plate: NumberPlate,
     pub description: Option<String>,
-    pub capacities: BTreeMap<CapacityKind, Liters>,
+    pub capacities: BTreeMap<CapacityKind, Amount>,
     pub availability: VehicleAvailability,
     pub vehicle_type: VehicleType,
     pub model: VehicleModel,
@@ -236,10 +236,10 @@ impl Vehicle {
             capacities: snap
                 .capacities
                 .into_iter()
-                .map(|(kind, liters)| {
+                .map(|(kind, amount)| {
                     (
                         kind,
-                        Liters::new(liters).expect("persisted capacity must be valid"),
+                        Amount::new(amount).expect("persisted capacity must be valid"),
                     )
                 })
                 .collect(),
@@ -259,8 +259,8 @@ impl Vehicle {
         }
     }
 
-    pub fn capacity(&self, kind: CapacityKind) -> Option<Liters> {
-        self.capacities.get(&kind).copied()
+    pub fn capacity(&self, kind: &CapacityKind) -> Option<Amount> {
+        self.capacities.get(kind).copied()
     }
 
     pub fn archived_at(&self) -> Option<DateTime<Utc>> {
@@ -328,12 +328,16 @@ mod tests {
     use super::*;
     use claims::{assert_err, assert_ok};
 
+    fn water() -> CapacityKind {
+        CapacityKind::new("water").unwrap()
+    }
+
     fn fixed_vehicle() -> Vehicle {
         Vehicle {
             id: Id::new_v7(),
             number_plate: NumberPlate::new("FL-AB-123").unwrap(),
             description: None,
-            capacities: BTreeMap::from([(CapacityKind::Water, Liters::new(1000.0).unwrap())]),
+            capacities: BTreeMap::from([(water(), Amount::new(1000.0).unwrap())]),
             availability: VehicleAvailability::Available,
             vehicle_type: VehicleType::Transporter,
             model: VehicleModel::new("Mercedes Sprinter").unwrap(),
@@ -411,7 +415,7 @@ mod tests {
         v.replace_details(VehicleUpdate {
             number_plate: NumberPlate::new("FL-XY-789").unwrap(),
             description: Some("neu".into()),
-            capacities: BTreeMap::from([(CapacityKind::Water, Liters::new(2000.0).unwrap())]),
+            capacities: BTreeMap::from([(water(), Amount::new(2000.0).unwrap())]),
             availability: VehicleAvailability::NotAvailable,
             vehicle_type: VehicleType::Trailer,
             model: VehicleModel::new("Schmitz Cargobull").unwrap(),
@@ -421,8 +425,11 @@ mod tests {
         });
         assert_eq!(v.number_plate.as_str(), "FL-XY-789");
         assert_eq!(v.description.as_deref(), Some("neu"));
-        assert_eq!(v.capacity(CapacityKind::Water).unwrap().value(), 2000.0);
-        assert_eq!(v.capacity(CapacityKind::CargoVolume), None);
+        assert_eq!(v.capacity(&water()).unwrap().value(), 2000.0);
+        assert_eq!(
+            v.capacity(&CapacityKind::new("cargo_volume").unwrap()),
+            None
+        );
         assert_eq!(v.availability, VehicleAvailability::NotAvailable);
         assert_eq!(v.vehicle_type, VehicleType::Trailer);
         assert_eq!(v.model.as_str(), "Schmitz Cargobull");
