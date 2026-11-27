@@ -106,12 +106,16 @@ function sourceFiles(dir: string): string[] {
   })
 }
 
-const RELATIVE_IMPORT = /(?:from|import)\s*\(?\s*['"](\.{1,2}\/[^'"]*)['"]/g
+// Every relative path literal counts, not only import specifiers: a glob or a
+// `new URL(…)` reaches a module package just as well.
+const RELATIVE_PATH = /['"`](\.{1,2}\/[^'"`]*)['"`]/g
 
-function reachesModulePackage(file: string): boolean {
-  return [...readFileSync(file, 'utf8').matchAll(RELATIVE_IMPORT)].some(([, specifier]) =>
-    path.resolve(path.dirname(file), specifier).startsWith(MODULE_PACKAGES + path.sep),
-  )
+function reachesModulePackage(file: string, source: string, modulePackages: string): boolean {
+  return [...source.matchAll(RELATIVE_PATH)].some(([, specifier]) => {
+    const fixedPart = specifier.replace(/[*?{[].*$/, '')
+    const target = path.resolve(path.dirname(file), fixedPart)
+    return target === modulePackages || target.startsWith(modulePackages + path.sep)
+  })
 }
 
 describe('core boundary', () => {
@@ -125,8 +129,10 @@ describe('core boundary', () => {
     },
   )
 
-  it('no core file imports a module package by relative path', () => {
-    const offenders = files.filter(reachesModulePackage)
+  it('no core file reaches a module package by relative path', () => {
+    const offenders = files.filter((f) =>
+      reachesModulePackage(f, readFileSync(f, 'utf8'), MODULE_PACKAGES),
+    )
     expect(offenders.map((f) => path.relative(SRC, f))).toEqual([])
   })
 })
@@ -177,6 +183,25 @@ describe('derived terms', () => {
 
     expect(apiIdentifiers(path.join(dir, 'with'))).toEqual(['thingApi', 'thingQueries'])
     expect(apiIdentifiers(path.join(dir, 'without'))).toEqual([])
+  })
+
+  it('sees every relative path that lands in a module package, not only imports', () => {
+    const core = path.join(dir, 'app/src/modules/loader.ts')
+    const packages = path.join(dir, 'modules')
+
+    expect(
+      reachesModulePackage(core, "import.meta.glob('../../../modules/*/src/x.ts')", packages),
+    ).toBe(true)
+    expect(reachesModulePackage(core, "import x from '../../../modules/a/src/x'", packages)).toBe(
+      true,
+    )
+    expect(
+      reachesModulePackage(core, "new URL('../../../modules/a/x.png', import.meta.url)", packages),
+    ).toBe(true)
+    expect(reachesModulePackage(core, "import y from '../lib/y'", packages)).toBe(false)
+    expect(reachesModulePackage(core, "import.meta.glob('../locales/*/index.ts')", packages)).toBe(
+      false,
+    )
   })
 
   it('forbids nothing derived when there is no module', () => {
