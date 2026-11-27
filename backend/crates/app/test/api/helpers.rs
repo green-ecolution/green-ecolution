@@ -462,6 +462,42 @@ pub fn irrigation_cluster_service(
     )
 }
 
+/// Keys the API lists for this build plus `extra`, in the order it returns them.
+pub fn module_keys(extra: &[&str]) -> Vec<String> {
+    let mut keys: Vec<String> = app::modules::registered()
+        .iter()
+        .map(|module| module.key().to_string())
+        .chain(extra.iter().map(ToString::to_string))
+        .collect();
+    keys.sort();
+    keys
+}
+
+pub fn default_on_module_keys() -> Vec<String> {
+    let mut keys: Vec<String> = app::modules::registered()
+        .iter()
+        .filter(|module| module.default_enabled())
+        .map(|module| module.key().to_string())
+        .collect();
+    keys.sort();
+    keys
+}
+
+pub fn registered_resources() -> Vec<domain::authorization::ResourceKey> {
+    app::modules::registered()
+        .iter()
+        .flat_map(|module| module.resources().iter().copied())
+        .collect()
+}
+
+pub async fn template_count(app: &TestApp) -> usize {
+    let count: i64 = sqlx::query_scalar("SELECT count(*) FROM roles WHERE organization_id IS NULL")
+        .fetch_one(&app.db_pool)
+        .await
+        .unwrap();
+    usize::try_from(count).unwrap()
+}
+
 pub fn template_modules() -> Vec<Box<dyn server::module::Module>> {
     let mut modules = app::modules::registered();
     modules.push(Box::new(crate::test_module::TestModule::new(

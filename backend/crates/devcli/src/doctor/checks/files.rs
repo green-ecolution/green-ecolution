@@ -10,7 +10,10 @@ use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 
 use super::{MANUAL_MIGRATION, migrate_fix};
-use crate::doctor::{Check, Env, Finding, Fix, Severity};
+use crate::{
+    doctor::{Check, Env, Finding, Fix, Severity},
+    units::migrations::migration_dirs,
+};
 
 pub(super) const THEME_DIR: &str = "frontend/keycloak-theme/dist_keycloak/theme/green-ecolution";
 pub(super) const TILES: &str = ".docker/infra/valhalla/custom_files/valhalla_tiles.tar";
@@ -267,7 +270,8 @@ impl Check for MigrateBinary {
         else {
             return Ok(Vec::new());
         };
-        let newest = newest_of(&[env.root.join("backend/migrations")])?;
+        let dirs = migration_dirs(&env.root.join("backend")).map_err(|err| err.to_string())?;
+        let newest = newest_of(&dirs)?;
         if !newest.is_some_and(|newest| newest > built) {
             return Ok(Vec::new());
         }
@@ -281,7 +285,7 @@ impl Check for MigrateBinary {
                 "A stale migrate binary reports \"Migrations applied\" without applying the new \
                  migration.\n{MANUAL_MIGRATION}"
             ))
-            .fix(migrate_fix()),
+            .fix(migrate_fix(&env.root)),
         ])
     }
 }
@@ -499,5 +503,24 @@ mod tests {
 
         touch(root, "backend/target/debug/migrate", 30);
         assert!(ids(&MigrateBinary, root).await.is_empty());
+    }
+
+    #[tokio::test]
+    async fn a_migrate_binary_older_than_a_module_migration_is_stale() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        touch(root, "backend/migrations/20260101000000_init.sql", 10);
+        touch(root, "backend/target/debug/migrate", 20);
+        assert!(ids(&MigrateBinary, root).await.is_empty());
+
+        touch(
+            root,
+            "backend/crates/modules/a/migrations/20260102000000_add.sql",
+            30,
+        );
+        assert_eq!(
+            ids(&MigrateBinary, root).await,
+            [("migrate-binary".to_owned(), Severity::Hint)]
+        );
     }
 }

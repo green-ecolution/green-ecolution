@@ -532,6 +532,16 @@ lint:
     cd {{ backend_dir }} && SQLX_OFFLINE=true cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
     cd {{ frontend_dir }} && pnpm run lint
 
+# Build every domain crate without default features (proves portability)
+[group('check')]
+check-portable:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    cd {{ backend_dir }}
+    for manifest in crates/domain/Cargo.toml crates/modules/*/domain/Cargo.toml; do
+        cargo build --manifest-path "$manifest" --no-default-features --locked
+    done
+
 # Run Rust + frontend tests
 [group('check')]
 test:

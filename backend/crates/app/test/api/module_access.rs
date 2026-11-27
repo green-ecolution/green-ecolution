@@ -55,7 +55,7 @@ async fn the_module_list_only_covers_the_callers_subtree() {
     let resp = app.get_with_bearer("/api/v1/modules", &token).await;
     assert_eq!(resp.status(), 200);
     let body: Value = resp.json().await.unwrap();
-    assert_eq!(body["modules"], json!(["irrigation", KEY, "waste"]));
+    assert_eq!(body["modules"], json!(crate::helpers::module_keys(&[KEY])));
     let orgs: Vec<String> = body["organizations"]
         .as_array()
         .unwrap()

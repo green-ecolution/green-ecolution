@@ -48,12 +48,8 @@ jobs:
       - name: Setup Dependencies
         uses: ./.github/actions/setup-backend
 
-      - name: Check domain crate stays portable
-        working-directory: ./backend
-        run: |
-          cargo build -p domain --no-default-features --locked
-          cargo build -p irrigation-domain --no-default-features --locked
-          cargo build -p waste-domain --no-default-features --locked
+      - name: Check domain crates stay portable
+        run: just check-portable
 
       - name: Verify Docker daemon (testcontainers prerequisite)
         run: docker version
