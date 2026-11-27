@@ -26,9 +26,10 @@ export interface VehicleForm {
 type DraftInput = Record<string, unknown> & { capacities?: Record<string, unknown> }
 
 /**
- * The core draft sees only the offered kinds, so a stored kind no module offers
- * neither satisfies nor breaks "at least one"; each offered amount then goes
- * through its module's own range check.
+ * The core draft checks the offered kinds plus every stored amount of a kind
+ * that is not offered: a vehicle that already has a capacity stays saveable
+ * after its module is switched off. Each offered amount then goes through its
+ * module's own range check.
  */
 export const vehicleDraftResolver = <TForm extends FieldValues>(
   translate: IssueTranslator,
@@ -36,9 +37,16 @@ export const vehicleDraftResolver = <TForm extends FieldValues>(
 ): Resolver<TForm> =>
   draftResolver<TForm>((input) => {
     const { capacities = {}, ...rest } = input as DraftInput
+    const offeredKinds = new Set(offered.map(({ kind }) => kind))
+    const storedElsewhere = Object.entries(capacities).filter(
+      ([kind, amount]) => !offeredKinds.has(kind) && typeof amount === 'number',
+    )
     const ownIssues = validateVehicleDraft({
       ...rest,
-      capacities: Object.fromEntries(offered.map(({ kind }) => [kind, capacities[kind]])),
+      capacities: Object.fromEntries<unknown>([
+        ...offered.map(({ kind }): [string, unknown] => [kind, capacities[kind]]),
+        ...storedElsewhere,
+      ]),
     }) as ValidationIssue[]
     const moduleIssues = offered.flatMap(({ kind, validate }) => {
       const amount = capacities[kind]

@@ -63,7 +63,7 @@ const StationForm = ({
 }: FormProps) => {
   const { t, i18n } = useTranslation(['settings', 'common'])
   // A stored kind no active module offers has no checkbox and is submitted unchanged.
-  const offered = useCapacityKinds(organizationId)
+  const offered = useCapacityKinds(station?.organizationId ?? organizationId)
 
   const schema = useMemo(
     () =>

@@ -65,6 +65,29 @@ describe('StationDialog', { timeout: 20_000 }, () => {
     expect(screen.queryByRole('checkbox', { name: 'Wasser auffüllen' })).not.toBeInTheDocument()
   })
 
+  it("asks for the kinds of the station's own organization, not the page's", () => {
+    render(
+      <StationDialog
+        open
+        mode="edit"
+        onOpenChange={vi.fn()}
+        onSubmit={onSubmit}
+        organizationId="root"
+        station={{
+          id: 's-9',
+          name: 'Hof',
+          lat: 54.7,
+          lon: 9.4,
+          isDefault: false,
+          organizationId: 'tenant',
+          replenishes: [],
+        }}
+      />,
+    )
+
+    expect(offeredFor).toHaveBeenLastCalledWith('tenant')
+  })
+
   it('keeps a stored kind that is not offered', async () => {
     const user = userEvent.setup()
     offered.mockReturnValue([cargo])

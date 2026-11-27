@@ -90,7 +90,8 @@ nicht.
 
 Werden Kapazitäten angeboten, braucht ein Fahrzeug mindestens eine davon; fehlt jede
 Angabe, weist das Formular die Eingabe mit dem Hinweis „Mindestens eine Kapazität
-angeben.“ zurück. Ist in der Organisation kein Fachmodul mit Kapazität aktiv, entfällt
+angeben.“ zurück. Eine bereits gespeicherte Kapazität zählt dabei mit, auch wenn ihr
+Feld gerade nicht erscheint. Ist in der Organisation kein Fachmodul mit Kapazität aktiv, entfällt
 der Abschnitt ganz, und das Fahrzeug lässt sich ohne Kapazität speichern. Ein gespeicherter
 Wert, für den gerade kein Feld erscheint, etwa weil sein Fachmodul abgeschaltet ist,
 bleibt beim Speichern unverändert erhalten.

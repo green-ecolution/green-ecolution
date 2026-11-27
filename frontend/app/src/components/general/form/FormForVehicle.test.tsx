@@ -365,7 +365,7 @@ describe('FormForVehicle', () => {
       <TestWrapper
         defaultValues={{
           ...defaultFormValues,
-          capacities: { water: undefined, cargo_volume: undefined, sand: 12.5 },
+          capacities: { water: undefined, cargo_volume: undefined },
         }}
       >
         <FormForVehicle displayError={false} onSubmit={mockOnSubmit} capacities={offered} />
@@ -377,6 +377,34 @@ describe('FormForVehicle', () => {
     const group = screen.getByRole('group', { name: /kapazität/i })
     expect(await within(group).findByRole('alert')).toHaveTextContent('vehicle.capacities.empty')
     expect(mockOnSubmit).not.toHaveBeenCalled()
+  })
+
+  it('saves a vehicle whose only capacity belongs to a kind that is not offered', async () => {
+    const user = userEvent.setup()
+    offered = [water]
+
+    render(
+      <TestWrapper
+        defaultValues={{
+          ...defaultFormValues,
+          numberPlate: 'HH-AB-1234',
+          model: 'Sprinter',
+          height: 2.5,
+          width: 2,
+          length: 6,
+          weight: 3.5,
+          capacities: { water: undefined, cargo_volume: 16000 },
+        }}
+      >
+        <FormForVehicle displayError={false} onSubmit={mockOnSubmit} capacities={offered} />
+      </TestWrapper>,
+    )
+
+    await user.click(screen.getByRole('button', { name: /speichern/i }))
+
+    await waitFor(() => expect(mockOnSubmit).toHaveBeenCalled())
+    const submitted = mockOnSubmit.mock.calls[0][0] as VehicleForm
+    expect(submitted.capacities.cargo_volume).toBe(16000)
   })
 
   it("reports the module validator's issue at the field", async () => {
