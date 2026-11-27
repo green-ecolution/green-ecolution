@@ -14,9 +14,11 @@ import {
   routePermissionsFor,
   visibleNavSections as visibleNavSectionsIn,
 } from './routePermissions'
-import { irrigationManifest } from '@green-ecolution/module-irrigation'
+import { manifestOf } from '@/test/moduleFixtures'
 import type { ModuleManifest, ModuleMap } from '@/modules/types'
 import { probeManifest } from '@/test/planningManifest'
+
+const irrigationManifest = manifestOf('irrigation')
 
 const perms = (...granted: string[]): Permissions => new Set(granted)
 
@@ -44,6 +46,7 @@ describe('CORE_ROUTE_PERMISSIONS', () => {
 describe('routePermissionsFor', () => {
   const probe: ModuleManifest = {
     key: 'probe',
+    order: 0,
     labelKey: 'irrigation:label',
     icon: () => null,
     descriptionKey: 'irrigation:label',
@@ -100,6 +103,7 @@ describe('routePermissionsFor', () => {
 describe('mapPermissionsFor', () => {
   const withMap = (key: string, permissions: ModuleMap['permissions']): ModuleManifest => ({
     key,
+    order: 0,
     labelKey: 'irrigation:label',
     icon: () => null,
     descriptionKey: 'irrigation:label',

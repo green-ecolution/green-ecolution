@@ -2,14 +2,12 @@
 import path from 'node:path'
 import { physical, type VirtualRouteNode } from '@tanstack/virtual-file-routes'
 
-export interface ModuleBuildConfig {
-  key: string
-  routesDirectory: string
-}
-
 export interface ModuleBuild {
+  /** The directory name under `frontend/modules`, which is also the module's key. */
+  key: string
   root: string
-  config: ModuleBuildConfig
+  /** Relative to `root`; unset for a module that ships no routes. */
+  routesDirectory?: string
 }
 
 export function moduleRouteNodes(
@@ -18,8 +16,10 @@ export function moduleRouteNodes(
 ): VirtualRouteNode[] {
   return [
     physical('', '.'),
-    ...modules.map(({ root, config }) =>
-      physical('', path.relative(routesDir, path.join(root, config.routesDirectory))),
+    ...modules.flatMap(({ root, routesDirectory }) =>
+      routesDirectory
+        ? [physical('', path.relative(routesDir, path.join(root, routesDirectory)))]
+        : [],
     ),
   ]
 }

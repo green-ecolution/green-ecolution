@@ -2,8 +2,10 @@ import { beforeEach, expect, it } from 'vitest'
 import { createI18n } from './index'
 import de from '@/locales/de/errors.json'
 import en from '@/locales/en/errors.json'
-import irrigationDe from '@green-ecolution/module-irrigation/locales/de'
+import { germanCatalogOf } from '@/test/moduleFixtures'
 import { errorCatalogKeys } from './errors'
+
+const irrigationDe = germanCatalogOf('irrigation')
 
 beforeEach(() => {
   localStorage.clear()

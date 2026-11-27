@@ -5,8 +5,9 @@ describe('moduleRouteNodes', () => {
   it('mounts each module routes directory relative to the app routes directory', () => {
     const nodes = moduleRouteNodes('/repo/frontend/app/src/routes', [
       {
+        key: 'irrigation',
         root: '/repo/frontend/modules/irrigation',
-        config: { key: 'irrigation', routesDirectory: 'src/routes' },
+        routesDirectory: 'src/routes',
       },
     ])
     expect(nodes).toEqual([

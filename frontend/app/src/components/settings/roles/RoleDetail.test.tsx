@@ -3,8 +3,10 @@ import { describe, it, expect, vi } from 'vitest'
 import { render, screen, userEvent } from '@/test/utils'
 import { UNRESTRICTED } from '@/lib/auth/permissions'
 import type { Role } from '@/api/backendApi'
-import { irrigationManifest } from '@green-ecolution/module-irrigation'
+import { manifestOf } from '@/test/moduleFixtures'
 import RoleDetail from './RoleDetail'
+
+const irrigationManifest = manifestOf('irrigation')
 
 const template: Role = {
   id: 't1',

@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
-import { irrigationManifest } from '@green-ecolution/module-irrigation'
+import { manifestOf } from '@/test/moduleFixtures'
 import { interactiveLayerIdsFor, mapSearchSchemaFor } from './map'
 import type { ModuleManifest, ModuleMap } from './types'
 
+const irrigationManifest = manifestOf('irrigation')
+
 const probe = (key: string, map: Partial<ModuleMap> = {}): ModuleManifest => ({
   key,
+  order: 0,
   labelKey: 'irrigation:label',
   icon: () => null,
   descriptionKey: 'irrigation:label',

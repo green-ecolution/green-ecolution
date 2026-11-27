@@ -9,7 +9,9 @@ import {
   readPermissionsOf,
   resourcesFor,
 } from './permissions'
-import { irrigationManifest } from '@green-ecolution/module-irrigation'
+import { manifestOf } from '@/test/moduleFixtures'
+
+const irrigationManifest = manifestOf('irrigation')
 
 const userWithRoles = (...permissionSets: string[][]): RoleResponse[] =>
   permissionSets.map(

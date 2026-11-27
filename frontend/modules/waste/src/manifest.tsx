@@ -9,6 +9,7 @@ import { wasteSettingsSection } from './components/settings/settingsSection'
 
 export const wasteManifest: ModuleManifest = {
   key: WASTE,
+  order: 20,
   labelKey: 'waste:label',
   icon: Trash2,
   descriptionKey: 'waste:description',
@@ -47,3 +48,5 @@ export const wasteManifest: ModuleManifest = {
     },
   },
 }
+
+export default wasteManifest

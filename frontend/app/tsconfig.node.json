@@ -23,7 +23,6 @@
     "vite.config.ts",
     "vitest.config.ts",
     "modules.config.ts",
-    "src/modules/buildConfig.ts",
-    "../modules/*/module.config.ts"
+    "src/modules/buildConfig.ts"
   ]
 }

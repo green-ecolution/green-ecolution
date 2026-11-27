@@ -13,7 +13,7 @@ function tailwindSources(): string[] {
 }
 
 describe('tailwind sources', () => {
-  it.each(MODULE_BUILDS.map((build) => [build.config.key, build.root]))(
+  it.each(MODULE_BUILDS.map((build) => [build.key, build.root]))(
     'scans the %s module package',
     (_key, root) => {
       const sample = path.join(root, 'src/components/Sample.tsx')

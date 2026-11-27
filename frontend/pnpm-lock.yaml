@@ -50,12 +50,6 @@ importers:
       '@green-ecolution/domain-wasm':
         specifier: workspace:*
         version: link:../packages/domain-wasm
-      '@green-ecolution/module-irrigation':
-        specifier: workspace:*
-        version: link:../modules/irrigation
-      '@green-ecolution/module-waste':
-        specifier: workspace:*
-        version: link:../modules/waste
       '@green-ecolution/plugin-interface':
         specifier: workspace:*
         version: link:../packages/plugin-interface

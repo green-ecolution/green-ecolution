@@ -3,9 +3,11 @@ import type { TFunction } from 'i18next'
 import { render, screen, userEvent } from '@/test/utils'
 import { getI18n } from '@/lib/i18n'
 import { UNRESTRICTED } from '@/lib/auth/permissions'
-import { irrigationManifest } from '@green-ecolution/module-irrigation'
+import { manifestOf } from '@/test/moduleFixtures'
 import { permissionAreasFor } from '@/lib/auth/permissionAreas'
 import RoleAreaCard from './RoleAreaCard'
+
+const irrigationManifest = manifestOf('irrigation')
 
 let t: TFunction<'settings'>
 beforeAll(() => {

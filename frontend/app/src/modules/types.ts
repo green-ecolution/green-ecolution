@@ -238,6 +238,8 @@ export interface ModuleSettingsSection<D extends ModuleSettingsDraft = ModuleSet
 
 export interface ModuleManifest {
   key: string
+  /** Sorts the modules wherever their order shows: error lookup, dashboard texts, chart colors. Ties fall back to the key. */
+  order: number
   labelKey: I18nKey
   /** Symbol of the module's card on the areas page. */
   icon: ComponentType<{ className?: string }>

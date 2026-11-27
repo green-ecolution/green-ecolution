@@ -35,6 +35,7 @@ export function probeManifest(
 ): ModuleManifest & { planning: ModulePlanning } {
   return {
     key,
+    order: 0,
     labelKey: 'irrigation:label',
     icon: () => null,
     descriptionKey: 'irrigation:label',
