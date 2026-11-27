@@ -7,6 +7,8 @@ on:
       - "flake.lock"
       - "backend/Cargo.toml"
       - "backend/Cargo.lock"
+      - "backend/crates/domain/**"
+      - "backend/crates/modules/*/domain/**"
       - "backend/crates/domain-wasm/**"
       - "frontend/pnpm-lock.yaml"
   workflow_dispatch:
