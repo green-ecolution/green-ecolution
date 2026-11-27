@@ -55,7 +55,7 @@ const ENUM_GROUPS: { group: string; values: readonly string[]; hasDescription: b
   { group: 'userStatus', values: Object.values(UserStatus), hasDescription: false },
   { group: 'vehicleStatus', values: Object.values(VehicleStatus), hasDescription: true },
   { group: 'vehicleType', values: Object.values(VehicleType), hasDescription: false },
-  { group: 'wateringPlanStatus', values: Object.values(PlanStatus), hasDescription: true },
+  { group: 'planStatus', values: Object.values(PlanStatus), hasDescription: true },
   { group: 'dataHealth', values: Object.values(DataHealth), hasDescription: true },
   { group: 'drivingLicense', values: Object.values(DrivingLicense), hasDescription: false },
 ]

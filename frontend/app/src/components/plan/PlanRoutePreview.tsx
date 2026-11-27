@@ -64,7 +64,7 @@ const RoutePreviewLayers = ({
 
 /** The core draws the route and its stations; the plan module draws its stops on top. */
 const PlanPreviewRoute = ({ plan: plan, planning }: PlanPreviewRouteProps) => {
-  const { t, i18n } = useTranslation('wateringPlan')
+  const { t, i18n } = useTranslation('plan')
   const [centerLat, centerLng] = useMapCenter()
 
   return (
@@ -74,7 +74,7 @@ const PlanPreviewRoute = ({ plan: plan, planning }: PlanPreviewRouteProps) => {
       interactive
       className="h-[40rem]"
       ariaLabel={i18n.t(
-        planTextKey(planning, 'routePreviewAriaLabel', 'wateringPlan:detail.routePreviewAriaLabel'),
+        planTextKey(planning, 'routePreviewAriaLabel', 'plan:detail.routePreviewAriaLabel'),
       )}
     >
       <Suspense

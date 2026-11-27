@@ -27,8 +27,8 @@ export const usePlanStatusDetails = (): ((status: PlanStatus) => PlanStatusDetai
     (status: PlanStatus): PlanStatusDetails => ({
       value: status,
       color: planStatusColors[status],
-      label: translate(`wateringPlanStatus.${status}.label`),
-      description: translate(`wateringPlanStatus.${status}.description`),
+      label: translate(`planStatus.${status}.label`),
+      description: translate(`planStatus.${status}.description`),
     }),
     [translate],
   )

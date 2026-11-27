@@ -6,11 +6,11 @@ const planRoute = getRouteApi('/_protected/plans/$wateringPlanId')
 
 export const Route = createFileRoute('/_protected/plans/$wateringPlanId/')({
   component: SinglePlan,
-  pendingComponent: pendingLoading({ key: 'wateringPlan:detail.loadingLabel' }),
+  pendingComponent: pendingLoading({ key: 'plan:detail.loadingLabel' }),
 })
 
 function SinglePlan() {
-  const { wateringPlan: plan } = planRoute.useLoaderData()
+  const { plan } = planRoute.useLoaderData()
 
   return (
     <div className="container mt-6">

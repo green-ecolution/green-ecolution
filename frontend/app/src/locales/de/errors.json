@@ -93,12 +93,12 @@
     "unknown": "Der Server hat mit Status {status} geantwortet."
   },
   "frame": {
-    "wateringPlanStartRevertFailed": "Der Start konnte nicht rückgängig gemacht werden: {reason}",
-    "wateringPlanStartFailed": "Der Einsatzplan konnte nicht gestartet werden: {reason}",
-    "wateringPlanCancelFailed": "Der Einsatzplan konnte nicht abgebrochen werden: {reason}",
-    "wateringPlanFinishFailed": "Der Einsatzplan konnte nicht abgeschlossen werden: {reason}",
-    "wateringPlanAssignFailed": "Die Zuweisung konnte nicht gespeichert werden: {reason}",
-    "wateringPlanStatusUpdateFailed": "Der Status konnte nicht geändert werden: {reason}",
+    "planStartRevertFailed": "Der Start konnte nicht rückgängig gemacht werden: {reason}",
+    "planStartFailed": "Der Einsatzplan konnte nicht gestartet werden: {reason}",
+    "planCancelFailed": "Der Einsatzplan konnte nicht abgebrochen werden: {reason}",
+    "planFinishFailed": "Der Einsatzplan konnte nicht abgeschlossen werden: {reason}",
+    "planAssignFailed": "Die Zuweisung konnte nicht gespeichert werden: {reason}",
+    "planStatusUpdateFailed": "Der Status konnte nicht geändert werden: {reason}",
     "deleteFailed": "{entity} konnte nicht gelöscht werden: {reason}",
     "archiveFailed": "{entity} konnte nicht archiviert werden: {reason}",
     "gpxDownloadFailed": "Der GPX-Download ist fehlgeschlagen: {reason}",

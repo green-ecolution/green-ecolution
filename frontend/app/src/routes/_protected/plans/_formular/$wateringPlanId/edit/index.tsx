@@ -8,11 +8,11 @@ const planFormRoute = getRouteApi('/_protected/plans/_formular/$wateringPlanId')
 
 export const Route = createFileRoute('/_protected/plans/_formular/$wateringPlanId/edit/')({
   component: EditPlan,
-  pendingComponent: pendingLoading({ key: 'wateringPlan:detail.loadingLabel' }),
+  pendingComponent: pendingLoading({ key: 'plan:detail.loadingLabel' }),
 })
 
 function EditPlan() {
-  const { wateringPlan: plan } = planFormRoute.useLoaderData()
+  const { plan } = planFormRoute.useLoaderData()
   const draft = usePlanDraft<PlanForm>('update')
 
   const formKey = draft.data?.stopIds?.join(',') ?? 'initial'

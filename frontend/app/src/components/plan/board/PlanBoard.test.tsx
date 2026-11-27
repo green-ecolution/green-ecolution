@@ -123,7 +123,7 @@ describe('PlanBoard planning module', () => {
   it('switches between several planning modules above the columns', async () => {
     activeManifests.mockReturnValue([
       probeManifest('irrigation'),
-      probeManifest('waste', { labelKey: 'wateringPlan:entity.name' }),
+      probeManifest('waste', { labelKey: 'plan:entity.name' }),
     ])
     render(<PlanBoard module="waste" />)
 

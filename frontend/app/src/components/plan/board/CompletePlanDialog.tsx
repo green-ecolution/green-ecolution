@@ -30,7 +30,7 @@ interface CompletePlanDialogProps {
 const CompletePlanDialog = ({ plan, planning, onClose }: CompletePlanDialogProps) => {
   const [mode, setMode] = useState<CompleteMode>('finished')
   const { finishPlan, cancelPlan } = usePlanBoardMutations(planning)
-  const { t } = useTranslation('wateringPlan')
+  const { t } = useTranslation('plan')
   const dateLocale = useDateLocale()
   const getStatusDetails = usePlanStatusDetails()
 

@@ -19,7 +19,7 @@ interface TabGeneralDataProps {
 }
 
 const TabGeneralData: React.FC<TabGeneralDataProps> = ({ plan, planning }) => {
-  const { t, i18n } = useTranslation(['wateringPlan', 'common'])
+  const { t, i18n } = useTranslation(['plan', 'common'])
   const dateLocale = useDateLocale()
   const { data: userRes } = useSuspenseQuery(userQueries.list({ page: 1, perPage: 100 }))
   const { data: startPoints } = useQuery(routingStartPointsQuery())

@@ -35,7 +35,7 @@ export function dropActionFor(from: BoardColumnId, to: BoardColumnId): DropActio
 // Not a component: the caller passes its own scoped `t` (see clusterStatusReason.ts
 // for the same shape) rather than this module reaching for `getI18n()` — a frozen
 // translation here would reproduce the bug the router helpers had.
-export function dropHintFor(action: DropAction, t: TFunction<'wateringPlan'>): string {
+export function dropHintFor(action: DropAction, t: TFunction<'plan'>): string {
   switch (action) {
     case 'start':
       return t('board.dropHint.start')

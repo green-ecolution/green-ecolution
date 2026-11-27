@@ -32,7 +32,7 @@ export function validateDriverLicenses(
   trailers: Vehicle[],
   transporterId: string | undefined,
   trailerId: string | undefined,
-  t: TFunction<'wateringPlan'>,
+  t: TFunction<'plan'>,
 ): { valid: boolean; message?: string } {
   if (!driverIds || driverIds.length === 0) {
     return { valid: true }

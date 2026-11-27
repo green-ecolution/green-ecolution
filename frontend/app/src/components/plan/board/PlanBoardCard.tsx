@@ -35,7 +35,7 @@ const PlanBoardCard = ({ plan, planning, users, assignSlot, cardState }: PlanBoa
   const getPlanStatusDetails = usePlanStatusDetails()
   const statusDetails = getPlanStatusDetails(plan.status)
   const assigned = users.filter((u) => plan.userIds.includes(u.id))
-  const { t, i18n } = useTranslation('wateringPlan')
+  const { t, i18n } = useTranslation('plan')
   const dateLocale = useDateLocale()
   const { stopIcon: StopIcon } = planning
   const { icon: DemandIcon, demandLabelKey } = capacityDisplay[planning.capacityKind]

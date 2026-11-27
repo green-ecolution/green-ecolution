@@ -1,6 +1,11 @@
 import { expect, it } from 'vitest'
-import de from '@/locales/de/wateringPlan.json'
-import en from '@/locales/en/wateringPlan.json'
+import de from '@/locales/de/plan.json'
+import en from '@/locales/en/plan.json'
+import enDashboard from '@/locales/en/dashboard.json'
+import enEnums from '@/locales/en/enums.json'
+import enErrors from '@/locales/en/errors.json'
+import enInfo from '@/locales/en/info.json'
+import enNavigation from '@/locales/en/navigation.json'
 
 function flatten(value: unknown, prefix = ''): string[] {
   if (typeof value === 'string') return [prefix]
@@ -74,4 +79,18 @@ it('uses single-brace interpolation only', () => {
     .filter(([, value]) => value.includes('{{') || value.includes('}}'))
     .map(([key]) => key)
   expect(doubled).toEqual([])
+})
+
+it('names no feature in the English core plan texts', () => {
+  const texts = JSON.stringify([
+    en,
+    enErrors.frame,
+    enErrors.code,
+    enNavigation,
+    enDashboard.cards,
+    enEnums.planStatus,
+    enInfo.data,
+  ])
+
+  expect(texts).not.toMatch(/watering/i)
 })

@@ -30,8 +30,8 @@ export const usePlanBoardMutations = (
   const invalidate = useInvalidateQueryRoots()
   const showToast = createToast()
   // Default namespace stays 'errors' so every existing `t('frame.*')` call below
-  // is untouched; new wateringPlan strings are reached with an explicit prefix.
-  const { t } = useTranslation(['errors', 'wateringPlan'])
+  // is untouched; plan strings are reached with an explicit prefix.
+  const { t } = useTranslation(['errors', 'plan'])
 
   // The board stays mounted after a mutation, so the route loaders have to
   // re-run as well; cancelQueries elsewhere is scoped to the board to avoid
@@ -73,10 +73,10 @@ export const usePlanBoardMutations = (
       if (context?.previousPlanned) queryClient.setQueryData(plannedKey, context.previousPlanned)
       if (context?.previousActive) queryClient.setQueryData(activeKey, context.previousActive)
       void resolveApiError(error, { module: plan.module }).then((info) =>
-        showToast(t('frame.wateringPlanStartRevertFailed', { reason: info.message }), 'error'),
+        showToast(t('frame.planStartRevertFailed', { reason: info.message }), 'error'),
       )
     },
-    onSuccess: () => showToast(t('wateringPlan:board.mutation.startRevertedToast')),
+    onSuccess: () => showToast(t('plan:board.mutation.startRevertedToast')),
     onSettled: invalidateAfterStatusChange,
   })
 
@@ -106,13 +106,13 @@ export const usePlanBoardMutations = (
       if (context?.previousPlanned) queryClient.setQueryData(plannedKey, context.previousPlanned)
       if (context?.previousActive) queryClient.setQueryData(activeKey, context.previousActive)
       void resolveApiError(error, { module: plan.module }).then((info) =>
-        showToast(t('frame.wateringPlanStartFailed', { reason: info.message }), 'error'),
+        showToast(t('frame.planStartFailed', { reason: info.message }), 'error'),
       )
     },
     onSuccess: (_data, plan) =>
-      showToast(t('wateringPlan:board.mutation.startedToast'), 'success', {
+      showToast(t('plan:board.mutation.startedToast'), 'success', {
         action: {
-          label: t('wateringPlan:board.mutation.undoActionLabel'),
+          label: t('plan:board.mutation.undoActionLabel'),
           onClick: () => revertStart.mutate(plan),
         },
       }),
@@ -124,11 +124,11 @@ export const usePlanBoardMutations = (
       update(plan, { status: PlanStatus.Canceled, cancellationNote: note }),
     onError: (error, { plan }) => {
       void resolveApiError(error, { module: plan.module }).then((info) =>
-        showToast(t('frame.wateringPlanCancelFailed', { reason: info.message }), 'error'),
+        showToast(t('frame.planCancelFailed', { reason: info.message }), 'error'),
       )
     },
     onSuccess: () => {
-      showToast(t('wateringPlan:board.mutation.canceledToast'))
+      showToast(t('plan:board.mutation.canceledToast'))
       invalidateAfterStatusChange()
     },
   })
@@ -141,11 +141,11 @@ export const usePlanBoardMutations = (
       }),
     onError: (error, { plan }) => {
       void resolveApiError(error, { module: plan.module }).then((info) =>
-        showToast(t('frame.wateringPlanFinishFailed', { reason: info.message }), 'error'),
+        showToast(t('frame.planFinishFailed', { reason: info.message }), 'error'),
       )
     },
     onSuccess: () => {
-      showToast(t('wateringPlan:board.mutation.finishedToast'))
+      showToast(t('plan:board.mutation.finishedToast'))
       invalidateAfterStatusChange()
     },
   })
@@ -155,11 +155,11 @@ export const usePlanBoardMutations = (
       update(plan, { userIds }),
     onError: (error, { plan }) => {
       void resolveApiError(error, { module: plan.module }).then((info) =>
-        showToast(t('frame.wateringPlanAssignFailed', { reason: info.message }), 'error'),
+        showToast(t('frame.planAssignFailed', { reason: info.message }), 'error'),
       )
     },
     onSuccess: () => {
-      showToast(t('wateringPlan:board.mutation.assignedToast'))
+      showToast(t('plan:board.mutation.assignedToast'))
       invalidatePlans()
     },
   })

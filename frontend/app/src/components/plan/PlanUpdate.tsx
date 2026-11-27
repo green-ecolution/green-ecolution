@@ -27,7 +27,7 @@ interface PlanUpdateProps {
 }
 
 const PlanUpdate = ({ wateringPlanId }: PlanUpdateProps) => {
-  const { t, i18n } = useTranslation(['wateringPlan', 'common'])
+  const { t, i18n } = useTranslation(['plan', 'common'])
   const dateLocale = useDateLocale()
   const draft = usePlanDraft<PlanForm>('update')
   const { initForm, loadedData } = useInitFormQuery(
@@ -87,9 +87,7 @@ const PlanUpdate = ({ wateringPlanId }: PlanUpdateProps) => {
         }}
         title={<>{t('update.title', { date })}</>}
       >
-        <p>
-          {i18n.t(planTextKey(planning, 'updateDescription', 'wateringPlan:update.description'))}
-        </p>
+        <p>{i18n.t(planTextKey(planning, 'updateDescription', 'plan:update.description'))}</p>
         {canUpdateStatus && showPlanStatusButton(loadedData) && (
           <p className="mt-5 flex flex-wrap gap-x-4">
             {t('update.statusEditNotice')}
@@ -128,7 +126,7 @@ const PlanUpdate = ({ wateringPlanId }: PlanUpdateProps) => {
         >
           <DeleteSection
             mutationFn={handleDeletePlan}
-            entityName={{ key: 'wateringPlan:entity.nameWithArticle' }}
+            entityName={{ key: 'plan:entity.nameWithArticle' }}
             redirectUrl={{ to: '/plans' }}
             invalidates={planStatusQueryRoots(planning)}
           />

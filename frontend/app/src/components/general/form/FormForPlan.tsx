@@ -41,7 +41,7 @@ const startOfToday = new Date()
 startOfToday.setHours(0, 0, 0, 0)
 
 const FormForPlan = (props: FormForPlanProps) => {
-  const { t, i18n } = useTranslation(['wateringPlan', 'common'])
+  const { t, i18n } = useTranslation(['plan', 'common'])
   const { register, handleSubmit, control, resetField, getValues, setValue } =
     useFormContext<PlanForm>()
   const { errors } = useFormState({ control })

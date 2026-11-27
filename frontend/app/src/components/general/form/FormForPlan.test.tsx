@@ -320,7 +320,7 @@ describe('FormForPlan', () => {
     const user = userEvent.setup()
     activeManifests.mockReturnValue([
       probeManifest('irrigation'),
-      probeManifest('waste', { labelKey: 'wateringPlan:entity.name' }),
+      probeManifest('waste', { labelKey: 'plan:entity.name' }),
     ])
     renderForm(defaultFormValues)
 
@@ -354,7 +354,7 @@ describe('FormForPlan', () => {
   it('keeps the module of an existing plan fixed', () => {
     activeManifests.mockReturnValue([
       probeManifest('irrigation'),
-      probeManifest('waste', { labelKey: 'wateringPlan:entity.name' }),
+      probeManifest('waste', { labelKey: 'plan:entity.name' }),
     ])
     render(
       <TestWrapper defaultValues={{ ...defaultFormValues, module: 'waste' }}>

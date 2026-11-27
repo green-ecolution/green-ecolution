@@ -22,7 +22,7 @@ const boardSearchSchema = z.object({
 export const Route = createFileRoute('/_protected/plans/')({
   component: Plans,
   validateSearch: boardSearchSchema,
-  pendingComponent: pendingLoading({ key: 'wateringPlan:list.loadingLabel' }),
+  pendingComponent: pendingLoading({ key: 'plan:list.loadingLabel' }),
   loaderDeps: ({ search: { module } }) => ({ module }),
   loader: async ({ context: { queryClient }, deps }) => {
     const modules = await queryClient.ensureQueryData(modulesQuery())
@@ -44,7 +44,7 @@ export const Route = createFileRoute('/_protected/plans/')({
 })
 
 function Plans() {
-  const { t, i18n } = useTranslation('wateringPlan')
+  const { t, i18n } = useTranslation('plan')
   const { module } = Route.useSearch()
   const { manifests } = useActiveModules()
   const planManifest = planModule({ module }, manifests)
@@ -63,13 +63,9 @@ function Plans() {
               ? planTextKey(
                   planManifest.planning,
                   'listDescriptionCanModify',
-                  'wateringPlan:list.descriptionCanModify',
+                  'plan:list.descriptionCanModify',
                 )
-              : planTextKey(
-                  planManifest.planning,
-                  'listDescription',
-                  'wateringPlan:list.description',
-                ),
+              : planTextKey(planManifest.planning, 'listDescription', 'plan:list.description'),
           )}
           action={
             canCreate && (

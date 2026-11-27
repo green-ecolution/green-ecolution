@@ -50,7 +50,7 @@ const PlanStatusUpdate = ({ wateringPlanId }: PlanStatusUpdateProps) => {
   const navigate = useNavigate()
   const invalidate = useInvalidateQueryRoots()
   const showToast = createToast()
-  const { t, i18n } = useTranslation(['wateringPlan', 'errors', 'common'])
+  const { t, i18n } = useTranslation(['plan', 'errors', 'common'])
   const dateLocale = useDateLocale()
   const getPlanStatusDetails = usePlanStatusDetails()
   const statusDetails = getPlanStatusDetails(loadedData.status)
@@ -87,10 +87,7 @@ const PlanStatusUpdate = ({ wateringPlanId }: PlanStatusUpdateProps) => {
       console.error('Error with vehicle mutation:', error)
       // mutationFn already routed this through toApiError, so error.message is
       // the resolved catalog text — the same value FormError renders below.
-      showToast(
-        t('errors:frame.wateringPlanStatusUpdateFailed', { reason: error.message }),
-        'error',
-      )
+      showToast(t('errors:frame.planStatusUpdateFailed', { reason: error.message }), 'error')
     },
     throwOnError: true,
   })
@@ -171,11 +168,7 @@ const PlanStatusUpdate = ({ wateringPlanId }: PlanStatusUpdateProps) => {
         </p>
         <p>
           {i18n.t(
-            planTextKey(
-              planning,
-              'statusUpdateDescription',
-              'wateringPlan:statusUpdate.description',
-            ),
+            planTextKey(planning, 'statusUpdateDescription', 'plan:statusUpdate.description'),
           )}
         </p>
       </FormPageHeader>
@@ -225,7 +218,7 @@ export const CancelPlan = ({
   label,
   placeholder,
 }: CancelPlanProps) => {
-  const { t } = useTranslation(['wateringPlan', 'common'])
+  const { t } = useTranslation(['plan', 'common'])
   const {
     register,
     handleSubmit,

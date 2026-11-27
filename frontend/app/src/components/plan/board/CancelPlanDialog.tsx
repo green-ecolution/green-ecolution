@@ -23,7 +23,7 @@ interface CancelPlanDialogProps {
 
 const CancelPlanDialog = ({ plan, planning, onClose }: CancelPlanDialogProps) => {
   const { cancelPlan } = usePlanBoardMutations(planning)
-  const { t } = useTranslation('wateringPlan')
+  const { t } = useTranslation('plan')
   const dateLocale = useDateLocale()
 
   return (

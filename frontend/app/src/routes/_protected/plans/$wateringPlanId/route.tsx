@@ -7,11 +7,11 @@ import { format } from 'date-fns'
 
 /** Shared by the detail and _formular layout routes; spread it — the router mutates route options on update. */
 export const planEntityRoute = entityRoute({
-  key: 'wateringPlan',
+  key: 'plan',
   query: planQueries.detail,
   idParam: 'wateringPlanId',
   title: (plan) => ({
-    titleKey: 'wateringPlan:detail.entityTitle',
+    titleKey: 'plan:detail.entityTitle',
     params: {
       value: plan.date
         ? format(new Date(plan.date), 'dd.MM.yyyy', {
@@ -21,9 +21,9 @@ export const planEntityRoute = entityRoute({
     },
   }),
   notFound: {
-    entityName: { key: 'wateringPlan:entity.name' },
+    entityName: { key: 'plan:entity.name' },
     backTo: '/plans',
-    backLabel: { key: 'wateringPlan:detail.notFoundBackLabel' },
+    backLabel: { key: 'plan:detail.notFoundBackLabel' },
   },
 })
 

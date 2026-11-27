@@ -34,7 +34,7 @@ interface PlanDashboardProps {
 const PlanDashboard = ({ plan: plan }: PlanDashboardProps) => {
   const getPlanStatusDetails = usePlanStatusDetails()
   const statusDetails = getPlanStatusDetails(plan.status)
-  const { t, i18n } = useTranslation(['wateringPlan', 'common'])
+  const { t, i18n } = useTranslation(['plan', 'common'])
   const dateLocale = useDateLocale()
   const { manifests } = useActiveModules()
   const planning = planningFor(manifests, plan.module)
@@ -92,9 +92,7 @@ const PlanDashboard = ({ plan: plan }: PlanDashboardProps) => {
             <AlertIcon variant="destructive" />
             <AlertContent>
               <AlertDescription>
-                {i18n.t(
-                  planTextKey(planning, 'routeErrorAlert', 'wateringPlan:detail.routeErrorAlert'),
-                )}
+                {i18n.t(planTextKey(planning, 'routeErrorAlert', 'plan:detail.routeErrorAlert'))}
               </AlertDescription>
             </AlertContent>
           </Alert>

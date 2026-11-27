@@ -20,7 +20,7 @@ export const NAMESPACES = [
   'enums',
   'sensor',
   'vehicle',
-  'wateringPlan',
+  'plan',
   'map',
   'dashboard',
   'settings',

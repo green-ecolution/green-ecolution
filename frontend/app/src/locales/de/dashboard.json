@@ -24,7 +24,7 @@
       "headline": "Sensoren",
       "description": "Messwerte, Akkustand und Verknüpfung."
     },
-    "wateringPlans": {
+    "plans": {
       "headline": "Einsatzpläne",
       "description": "Einsätze planen und verfolgen."
     },

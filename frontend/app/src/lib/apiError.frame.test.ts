@@ -40,7 +40,7 @@ it('points messageKey at the validation catalog for field errors', async () => {
 
 it('renders a frame sentence with the resolved reason', async () => {
   const info = await resolveApiError(errorWith(403, { error: 'forbidden' }))
-  expect(getI18n().t('errors:frame.wateringPlanStartFailed', { reason: info.message })).toBe(
+  expect(getI18n().t('errors:frame.planStartFailed', { reason: info.message })).toBe(
     'Der Einsatzplan konnte nicht gestartet werden: Für diese Aktion fehlt dir die Berechtigung.',
   )
 })

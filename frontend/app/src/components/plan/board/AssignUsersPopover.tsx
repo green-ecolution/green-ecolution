@@ -20,7 +20,7 @@ const AssignUsersPopover = ({ plan, users }: AssignUsersPopoverProps) => {
   const [open, setOpen] = useState(false)
   const [selected, setSelected] = useState<string[]>(plan.userIds)
   const { assignUsers } = usePlanBoardMutations()
-  const { t } = useTranslation('wateringPlan')
+  const { t } = useTranslation('plan')
 
   const options = users.map((user) => ({
     value: user.id,

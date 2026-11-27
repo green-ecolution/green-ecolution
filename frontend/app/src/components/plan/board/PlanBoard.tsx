@@ -101,7 +101,7 @@ const DroppableColumn = ({
   const action = activeDrag ? dropActionFor(activeDrag.column, id) : null
   const disabled = activeDrag !== null && action === null && activeDrag.column !== id
   const { setNodeRef, isOver } = useDroppable({ id, disabled: action === null })
-  const { t } = useTranslation('wateringPlan')
+  const { t } = useTranslation('plan')
 
   return (
     <KanbanColumn
@@ -118,7 +118,7 @@ const DroppableColumn = ({
 }
 
 const ColumnError = ({ onRetry }: { onRetry: () => void }) => {
-  const { t } = useTranslation(['wateringPlan', 'common'])
+  const { t } = useTranslation(['plan', 'common'])
   return (
     <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-red-200 p-4 text-center text-sm text-dark-600">
       {t('board.columnError.message')}
@@ -137,7 +137,7 @@ const ModuleSwitcher = ({
   manifests: PlanningManifest[]
 }) => {
   const navigate = useNavigate()
-  const { t, i18n } = useTranslation('wateringPlan')
+  const { t, i18n } = useTranslation('plan')
 
   return (
     <Tabs
@@ -192,7 +192,7 @@ const ModuleBoard = ({ module, planning }: { module: string; planning: ModulePla
   const { SuggestionsColumn } = planning
   const canModify = usePlanPermission(planning, 'update')
   const canCreate = usePlanPermission(planning, 'create')
-  const { t } = useTranslation('wateringPlan')
+  const { t } = useTranslation('plan')
   const [activeDrag, setActiveDrag] = useState<DragData | null>(null)
   const [planToCancel, setPlanToCancel] = useState<PlanInListResponse | null>(null)
   const [planToComplete, setPlanToComplete] = useState<PlanInListResponse | null>(null)

@@ -20,7 +20,7 @@ export const usePlanForm = (
   },
 ) => {
   const translate = useIssueTranslator()
-  const { t } = useTranslation('wateringPlan')
+  const { t } = useTranslation('plan')
 
   const planConfig: EntityFormConfig<PlanForm, PlanForm, PlanForm, PlanResponse> = {
     formType: PLAN_FORM,

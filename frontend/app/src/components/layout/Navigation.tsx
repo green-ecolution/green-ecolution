@@ -153,7 +153,7 @@ const protectedNavData = (
           ? [
               {
                 key: 'nav-plans',
-                label: t('sidebar.wateringPlans'),
+                label: t('sidebar.plans'),
                 icon: <ArrowLeftRight className="w-5 h-5" />,
                 to: '/plans',
               },

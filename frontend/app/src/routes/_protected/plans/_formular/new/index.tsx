@@ -43,7 +43,7 @@ function NewPlan() {
 
 function NewPlanForm({ planManifest }: { planManifest: PlanningManifest }) {
   const { key: module, planning } = planManifest
-  const { t, i18n } = useTranslation('wateringPlan')
+  const { t, i18n } = useTranslation('plan')
   const draft = usePlanDraft<PlanForm>('create')
   const moduleDraft = draftForModule(draft.data, module)
   const initForm = moduleDraft ?? defaultForm(module)
@@ -67,7 +67,7 @@ function NewPlanForm({ planManifest }: { planManifest: PlanningManifest }) {
           {t('create.title')}
         </h1>
         <p className="mb-5">
-          {i18n.t(planTextKey(planning, 'createDescription', 'wateringPlan:create.description'))}
+          {i18n.t(planTextKey(planning, 'createDescription', 'plan:create.description'))}
         </p>
       </article>
 
