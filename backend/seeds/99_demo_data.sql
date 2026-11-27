@@ -373,8 +373,8 @@ INSERT INTO operation_plan_vehicles (vehicle_id, plan_id, role) VALUES
 -- imported realm (green-ecolution-realm.json). One user per role per org:
 -- root (ge.admin), TBZ, Extern A and Extern B. Username = password.
 -- tbz.beobachter (read-only role, no route-planning duties) is marked not
--- selectable so the watering-plan-selectable filter has a visible effect.
-INSERT INTO user_profiles (id, status, driving_licenses, organization_id, watering_plan_selectable) VALUES
+-- selectable so the plan-selectable filter has a visible effect.
+INSERT INTO user_profiles (id, status, driving_licenses, organization_id, plan_selectable) VALUES
   -- Root
   ('01980000-0000-7000-8001-000000000001'::uuid, 'available', ARRAY['B','C']::driving_license[],           '01980000-0000-7000-8000-000000000001', true),
   -- TBZ
@@ -424,7 +424,7 @@ INSERT INTO role_assignments (user_id, role_id) VALUES
 -- in the UI falls back to the alphabetically first one — which owns almost no
 -- trees, so the cluster form looks empty. Licenses and selectability mirror the
 -- static fallback in user_service::demo_user.
-INSERT INTO user_profiles (id, status, driving_licenses, organization_id, watering_plan_selectable) VALUES
+INSERT INTO user_profiles (id, status, driving_licenses, organization_id, plan_selectable) VALUES
   ('00000000-0000-0000-0000-000000000000'::uuid, 'available', ARRAY['B','BE','C','CE']::driving_license[], '01980000-0000-7000-8000-000000000002', true);
 
 INSERT INTO role_assignments (user_id, role_id) VALUES

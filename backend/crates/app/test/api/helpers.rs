@@ -610,6 +610,7 @@ async fn clone_database(host_port: u16, template: Option<&str>) -> (String, PgPo
 pub const BEFORE_STAGE_3: i64 = 20261024100000;
 pub const BEFORE_MODULE_RELEASE: i64 = 20261119204847;
 pub const BEFORE_START_POINT_RESOURCE: i64 = 20261025100600;
+pub const BEFORE_PLAN_SELECTABLE_RENAME: i64 = 20261123120000;
 
 /// Builds a database that stops at `cutoff`, lets the test seed data in the
 /// old schema, then applies everything after it and starts the app.

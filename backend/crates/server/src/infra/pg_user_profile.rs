@@ -27,7 +27,7 @@ struct UserProfileRow {
     avatar_url: Option<String>,
     status: UserStatus,
     driving_licenses: Vec<DrivingLicense>,
-    watering_plan_selectable: bool,
+    plan_selectable: bool,
 }
 
 impl UserProfileRow {
@@ -45,7 +45,7 @@ impl UserProfileRow {
             avatar_url,
             status: self.status,
             driving_licenses: self.driving_licenses,
-            watering_plan_selectable: self.watering_plan_selectable,
+            plan_selectable: self.plan_selectable,
         })
     }
 }
@@ -59,7 +59,7 @@ impl UserProfileReader for PgUserProfileRepository {
             r#"SELECT id, employee_id, phone_number, avatar_url,
                       status AS "status: UserStatus",
                       driving_licenses AS "driving_licenses: Vec<DrivingLicense>",
-                      watering_plan_selectable
+                      plan_selectable
                FROM user_profiles
                WHERE id = ANY($1)"#,
             ids
@@ -117,7 +117,7 @@ impl UserProfileWriter for PgUserProfileRepository {
                    avatar_url               = $4,
                    status                   = $5,
                    driving_licenses         = $6,
-                   watering_plan_selectable = $7
+                   plan_selectable = $7
                WHERE id = $1"#,
             profile.id,
             profile.employee_id.as_deref(),
@@ -125,7 +125,7 @@ impl UserProfileWriter for PgUserProfileRepository {
             avatar_url.as_deref(),
             profile.status as UserStatus,
             profile.driving_licenses.as_slice() as &[DrivingLicense],
-            profile.watering_plan_selectable,
+            profile.plan_selectable,
         )
         .execute(&self.pool)
         .await?;

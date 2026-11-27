@@ -164,7 +164,7 @@ impl UserService {
             avatar_url: entity.avatar_url,
             status: entity.status,
             driving_licenses: entity.driving_licenses,
-            watering_plan_selectable: entity.watering_plan_selectable,
+            plan_selectable: entity.plan_selectable,
         };
         // Org first: its INSERT satisfies the NOT NULL constraint, then upsert's
         // ON CONFLICT DO UPDATE only touches profile fields, leaving the org intact.
@@ -585,7 +585,7 @@ fn merge(
         roles,
         driving_licenses: profile.driving_licenses,
         status: profile.status,
-        watering_plan_selectable: profile.watering_plan_selectable,
+        plan_selectable: profile.plan_selectable,
     }
 }
 
@@ -611,7 +611,7 @@ fn demo_user() -> UserView {
             DrivingLicense::CE,
         ],
         status: UserStatus::Available,
-        watering_plan_selectable: true,
+        plan_selectable: true,
     }
 }
 
@@ -673,7 +673,7 @@ fn synthesize_registered_user(entity: UserCreate) -> UserView {
         roles: Vec::new(),
         driving_licenses: entity.driving_licenses,
         status: entity.status,
-        watering_plan_selectable: entity.watering_plan_selectable,
+        plan_selectable: entity.plan_selectable,
     }
 }
 
@@ -1134,7 +1134,7 @@ mod tests {
                 avatar_url: None,
                 status: UserStatus::Absent,
                 driving_licenses: vec![DrivingLicense::CE],
-                watering_plan_selectable: false,
+                plan_selectable: false,
             })
             .await
             .unwrap();
@@ -1151,7 +1151,7 @@ mod tests {
         assert_eq!(page.items[0].username.as_str(), "jdoe");
         assert!(page.items[0].organization.is_none());
         assert!(page.items[0].roles.is_empty());
-        assert!(!page.items[0].watering_plan_selectable);
+        assert!(!page.items[0].plan_selectable);
     }
 
     #[tokio::test]
@@ -1170,7 +1170,7 @@ mod tests {
         assert_eq!(page.items[0].status, UserStatus::Available);
         assert!(page.items[0].driving_licenses.is_empty());
         assert!(page.items[0].employee_id.is_none());
-        assert!(page.items[0].watering_plan_selectable);
+        assert!(page.items[0].plan_selectable);
     }
 
     #[tokio::test]
@@ -1190,7 +1190,7 @@ mod tests {
             avatar_url: None,
             status: UserStatus::Absent,
             driving_licenses: vec![DrivingLicense::B],
-            watering_plan_selectable: false,
+            plan_selectable: false,
         };
 
         let view = svc.register(entity).await.unwrap().user;
@@ -1198,7 +1198,7 @@ mod tests {
         let stored = profiles.by_ids(&[view.id]).await.unwrap();
         assert_eq!(stored.len(), 1);
         assert_eq!(stored[0].employee_id.as_deref(), Some("EMP-9"));
-        assert!(!stored[0].watering_plan_selectable);
+        assert!(!stored[0].plan_selectable);
         assert_eq!(view.status, UserStatus::Absent);
         let organization = view
             .organization
@@ -1220,7 +1220,7 @@ mod tests {
             avatar_url: None,
             status: UserStatus::Available,
             driving_licenses: Vec::new(),
-            watering_plan_selectable: true,
+            plan_selectable: true,
         }
     }
 
@@ -1460,22 +1460,22 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn update_profile_persists_watering_plan_selectable() {
+    async fn update_profile_persists_plan_selectable() {
         let id = Uuid::now_v7();
         let profiles = Arc::new(InMemoryProfiles::default());
         let svc = service(vec![identity(id, "jdoe")], profiles.clone());
 
         let view = svc
             .update_profile(UserProfile {
-                watering_plan_selectable: false,
+                plan_selectable: false,
                 ..UserProfile::empty(id)
             })
             .await
             .unwrap();
 
-        assert!(!view.watering_plan_selectable);
+        assert!(!view.plan_selectable);
         let stored = profiles.by_ids(&[id]).await.unwrap();
-        assert!(!stored[0].watering_plan_selectable);
+        assert!(!stored[0].plan_selectable);
     }
 
     #[tokio::test]

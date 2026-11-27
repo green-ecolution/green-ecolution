@@ -41,7 +41,7 @@ fn valid_body() -> serde_json::Value {
         "avatar_url": "",
         "status": "absent",
         "driving_licenses": ["B", "CE"],
-        "watering_plan_selectable": true
+        "plan_selectable": true
     })
 }
 
@@ -127,7 +127,7 @@ async fn update_user_returns_400_for_invalid_avatar_url() {
         "avatar_url": "not a url",
         "status": "absent",
         "driving_licenses": [],
-        "watering_plan_selectable": true
+        "plan_selectable": true
     });
     let response = app
         .put_json("/api/v1/users/00000000-0000-0000-0000-000000000000", &body)
@@ -144,7 +144,7 @@ async fn update_user_returns_400_for_lettered_phone_number() {
         "phone_number": "0461 abc",
         "status": "absent",
         "driving_licenses": [],
-        "watering_plan_selectable": true
+        "plan_selectable": true
     });
     let response = app
         .put_json("/api/v1/users/00000000-0000-0000-0000-000000000000", &body)
@@ -572,14 +572,30 @@ async fn updating_your_own_profile_stays_allowed() {
 }
 
 #[tokio::test]
-async fn user_response_carries_watering_plan_selectable() {
+async fn update_user_rejects_the_former_field_name() {
+    let app = spawn_app().await;
+    let mut body = valid_body();
+    let fields = body.as_object_mut().unwrap();
+    fields.remove("plan_selectable");
+    fields.insert("watering_plan_selectable".into(), serde_json::json!(false));
+
+    let resp = app
+        .put_json(&format!("/api/v1/users/{SELF_ID}"), &body)
+        .await;
+
+    // A silently defaulted flag would make the person selectable again.
+    assert_eq!(resp.status(), 422);
+}
+
+#[tokio::test]
+async fn user_response_carries_plan_selectable() {
     let app = spawn_app().await;
 
     let response = app.get("/api/v1/users/me").await;
 
     assert_eq!(response.status().as_u16(), 200);
     let body: serde_json::Value = response.json().await.unwrap();
-    assert_eq!(body["watering_plan_selectable"], true);
+    assert_eq!(body["plan_selectable"], true);
 }
 
 const CALLER_PERMISSIONS: &[&str] = &["user:create", "role:read", "sensor:read"];

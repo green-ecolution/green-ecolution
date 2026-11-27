@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "UPDATE user_profiles SET\n                   employee_id              = $2,\n                   phone_number             = $3,\n                   avatar_url               = $4,\n                   status                   = $5,\n                   driving_licenses         = $6,\n                   watering_plan_selectable = $7\n               WHERE id = $1",
+  "query": "UPDATE user_profiles SET\n                   employee_id              = $2,\n                   phone_number             = $3,\n                   avatar_url               = $4,\n                   status                   = $5,\n                   driving_licenses         = $6,\n                   plan_selectable = $7\n               WHERE id = $1",
   "describe": {
     "columns": [],
     "parameters": {
@@ -45,5 +45,5 @@
     },
     "nullable": []
   },
-  "hash": "2cca7d8a7aa2a308b1c82ee85250623a44d753e5875cac2b56d5545d7ab89033"
+  "hash": "dc9929c3a2cc0e0c28d4c6a5a0afd5f4d6e517c18fa4faba18ec22d6c50c03ec"
 }
