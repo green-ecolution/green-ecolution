@@ -247,7 +247,7 @@ fn decorate(
     }
     if let Some(VerifyKind::MigrationsApplied) = unit.verify {
         hooked = hooked.verify(Arc::new(MigrationsApplied::new(
-            root.join("backend/migrations"),
+            root.join("backend"),
             cli.clone(),
             vars.get("postgres_user")?,
             vars.get("postgres_db")?,

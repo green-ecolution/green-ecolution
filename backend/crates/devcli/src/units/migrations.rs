@@ -27,6 +27,33 @@ pub fn migration_versions(dir: &Path) -> io::Result<BTreeSet<i64>> {
     Ok(versions)
 }
 
+/// The core's directory first, then the directory of every module that ships migrations.
+pub fn migration_dirs(backend: &Path) -> io::Result<Vec<PathBuf>> {
+    let mut dirs = vec![backend.join("migrations")];
+    let modules = backend.join("crates/modules");
+    if !modules.is_dir() {
+        return Ok(dirs);
+    }
+    let mut of_modules = Vec::new();
+    for entry in fs::read_dir(modules)? {
+        let dir = entry?.path().join("migrations");
+        if dir.is_dir() {
+            of_modules.push(dir);
+        }
+    }
+    of_modules.sort();
+    dirs.extend(of_modules);
+    Ok(dirs)
+}
+
+pub fn expected_versions(dirs: &[PathBuf]) -> io::Result<BTreeSet<i64>> {
+    let mut versions = BTreeSet::new();
+    for dir in dirs {
+        versions.extend(migration_versions(dir)?);
+    }
+    Ok(versions)
+}
+
 /// Fails on the first line that is not a version, so a broken query never reads as "nothing
 /// applied".
 pub fn parse_applied(output: &str) -> Result<BTreeSet<i64>, String> {
@@ -72,16 +99,16 @@ pub async fn applied(
 /// Catches the stale `migrate` binary that prints "Migrations applied" without applying the
 /// newest migration.
 pub struct MigrationsApplied {
-    dir: PathBuf,
+    backend: PathBuf,
     cli: ComposeCli,
     user: String,
     database: String,
 }
 
 impl MigrationsApplied {
-    pub fn new(dir: PathBuf, cli: ComposeCli, user: String, database: String) -> Self {
+    pub fn new(backend: PathBuf, cli: ComposeCli, user: String, database: String) -> Self {
         Self {
-            dir,
+            backend,
             cli,
             user,
             database,
@@ -92,7 +119,7 @@ impl MigrationsApplied {
 #[async_trait]
 impl Verify for MigrationsApplied {
     async fn verify(&self) -> Result<(), UnitError> {
-        let expected = migration_versions(&self.dir)?;
+        let expected = expected_versions(&migration_dirs(&self.backend)?)?;
         let applied = applied(&self.cli, &self.user, &self.database).await?;
         let pending = missing(&expected, &applied);
         match pending.last() {
@@ -123,6 +150,69 @@ mod tests {
         }
 
         let versions = migration_versions(dir.path()).unwrap();
+
+        assert_eq!(
+            versions.into_iter().collect::<Vec<_>>(),
+            [20260101000000, 20260102000000]
+        );
+    }
+
+    fn relative(dirs: &[PathBuf], backend: &Path) -> Vec<String> {
+        dirs.iter()
+            .map(|dir| {
+                dir.strip_prefix(backend)
+                    .unwrap()
+                    .to_string_lossy()
+                    .into_owned()
+            })
+            .collect()
+    }
+
+    #[test]
+    fn collects_the_core_directory_and_every_module_directory_that_has_migrations() {
+        let backend = tempfile::tempdir().unwrap();
+        for dir in [
+            "migrations",
+            "crates/modules/b/migrations",
+            "crates/modules/a/migrations",
+            "crates/modules/c/server",
+        ] {
+            fs::create_dir_all(backend.path().join(dir)).unwrap();
+        }
+
+        let dirs = migration_dirs(backend.path()).unwrap();
+
+        assert_eq!(
+            relative(&dirs, backend.path()),
+            [
+                "migrations",
+                "crates/modules/a/migrations",
+                "crates/modules/b/migrations"
+            ]
+        );
+    }
+
+    #[test]
+    fn a_backend_without_modules_yields_only_the_core_directory() {
+        let backend = tempfile::tempdir().unwrap();
+        fs::create_dir_all(backend.path().join("migrations")).unwrap();
+
+        let dirs = migration_dirs(backend.path()).unwrap();
+
+        assert_eq!(relative(&dirs, backend.path()), ["migrations"]);
+    }
+
+    #[test]
+    fn expected_versions_are_the_union_over_all_directories() {
+        let backend = tempfile::tempdir().unwrap();
+        let core = backend.path().join("migrations");
+        let module = backend.path().join("crates/modules/a/migrations");
+        fs::create_dir_all(&core).unwrap();
+        fs::create_dir_all(&module).unwrap();
+        fs::write(core.join("20260101000000_a.sql"), "").unwrap();
+        fs::write(module.join("20260102000000_b.sql"), "").unwrap();
+
+        let versions = expected_versions(&[core, module]).unwrap();
 
         assert_eq!(
             versions.into_iter().collect::<Vec<_>>(),
