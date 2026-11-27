@@ -100,6 +100,11 @@ be re-shot under the capture conditions above.
   `settings-team-roles.png` (also predates the `start_point` row and the matrix filtering by
   active modules), `settings-stations.png` and `plugin-install.png` (the dialog lost its
   organisation field). The briefs for all of them are in the table below.
+- `settings-team-roles.png`: the delivered role "Abfallsammlung" now carries the bin icon
+  instead of the generic shield. If the role is in frame, the pending re-shoot covers it.
+- `dashboard.png`: while more than one module draws on the map or plans, the cards "Karte"
+  and "Einsatzpläne" show the neutral core description instead of the irrigation wording.
+  Re-shoot only if the capture instance has the waste module switched on.
 - `vehicle-form.png` shows water capacity as the only, required capacity. The form now
   groups the capacities in a "Kapazität" section (Wassertank and Laderaum, each with a
   "Liter" suffix and a "für <Modul>" line) and requires at least one of them, so it needs
