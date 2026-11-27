@@ -632,10 +632,7 @@ YAML config through `ModuleContext::module_config`; `modules.<key>.default_enabl
 the root organization's switch where it stored none of its own; tenants do not inherit
 it. The irrigation defaults live under `modules.irrigation` (`tree_demand_liters`, `just_watered_ttl_secs`,
 `just_watered_sweep_interval_secs`, `nearest_tree_max_radius`,
-`nearest_tree_default_limit`, `nearest_tree_max_limit`). The server refuses to start
-while one of the old locations of these keys (`routing.tree_demand_liters`,
-`watering.just_watered_*`, `map.nearest_tree_*`) is still set, in a file or as an `APP_…`
-environment variable, and the error names the new key.
+`nearest_tree_default_limit`, `nearest_tree_max_limit`).
 
 A module's migrations live in `backend/crates/modules/<name>/migrations` and are merged
 with the core's into one history and one `_sqlx_migrations` table. To take a module out

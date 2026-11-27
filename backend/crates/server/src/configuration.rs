@@ -589,53 +589,12 @@ pub fn get_configuration() -> Result<Settings, ConfigError> {
         )
         .build()?;
 
-    refuse_legacy_keys(&raw)?;
     let mut settings: Settings = raw.try_deserialize()?;
     // `APP_ENVIRONMENT` selects the yaml file — keep `application.environment`
     // in sync so consumers (e.g. version suffix logic) don't have to read the
     // env var directly.
     settings.application.environment = environment;
     Ok(settings)
-}
-
-const MOVED_KEYS: &[(&str, &str)] = &[
-    (
-        "routing.tree_demand_liters",
-        "modules.irrigation.tree_demand_liters",
-    ),
-    (
-        "watering.just_watered_ttl_secs",
-        "modules.irrigation.just_watered_ttl_secs",
-    ),
-    (
-        "watering.just_watered_sweep_interval_secs",
-        "modules.irrigation.just_watered_sweep_interval_secs",
-    ),
-    (
-        "map.nearest_tree_max_radius",
-        "modules.irrigation.nearest_tree_max_radius",
-    ),
-    (
-        "map.nearest_tree_default_limit",
-        "modules.irrigation.nearest_tree_default_limit",
-    ),
-    (
-        "map.nearest_tree_max_limit",
-        "modules.irrigation.nearest_tree_max_limit",
-    ),
-];
-
-/// A silently ignored legacy key would put the old value out of effect without
-/// any symptom, so the boot is refused and the message names the new home.
-fn refuse_legacy_keys(raw: &config::Config) -> Result<(), config::ConfigError> {
-    for (old, new) in MOVED_KEYS {
-        if raw.get::<config::Value>(old).is_ok() {
-            return Err(config::ConfigError::Message(format!(
-                "{old} moved to {new}"
-            )));
-        }
-    }
-    Ok(())
 }
 
 #[derive(Debug, Clone, serde::Deserialize, Default)]
@@ -697,20 +656,6 @@ impl TryFrom<String> for Environment {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn legacy_irrigation_keys_are_refused_with_their_new_home() {
-        let raw = config::Config::builder()
-            .set_override("watering.just_watered_ttl_secs", 3600)
-            .unwrap()
-            .build()
-            .unwrap();
-        let err = refuse_legacy_keys(&raw).unwrap_err();
-        assert!(
-            err.to_string()
-                .contains("modules.irrigation.just_watered_ttl_secs")
-        );
-    }
 
     #[test]
     fn module_sections_keep_unknown_fields_for_the_module() {
