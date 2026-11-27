@@ -54,8 +54,10 @@ export interface ModuleStatistic {
 
 export interface ModuleMap {
   permissions: PermissionRequirement
-  /** Replaces the core description of the dashboard's map card while the module is active. */
+  /** Replaces the core description of the dashboard's map card while no other active module draws on the map. */
   cardDescriptionKey?: I18nKey
+  /** Sidebar section of the map link; the first active module with a map decides. Defaults to `assets`. */
+  navSection?: NavSectionKey
   searchSchema: z.ZodObject
   interactiveLayerIds: readonly string[]
   prefetch?: (queryClient: QueryClient) => void

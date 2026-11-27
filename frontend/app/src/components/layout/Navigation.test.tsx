@@ -246,6 +246,54 @@ describe('Navigation', () => {
     expect(position('Sensoren')).toBeLessThan(position('Auswertung'))
   })
 
+  describe('map link', () => {
+    const respondWithModules = (active: string[]) =>
+      server.use(
+        http.get('*/v1/modules', () =>
+          HttpResponse.json({
+            modules: ['irrigation', 'waste', 'probe'],
+            organizations: [{ organizationId: 'a', active }],
+          }),
+        ),
+      )
+
+    const sidebarTexts = (container: HTMLElement) =>
+      [...container.querySelectorAll('p, a')].map((element) => element.textContent)
+
+    it('puts the map link into the section the first map module names', async () => {
+      permissions.mockReturnValue(UNRESTRICTED)
+      respondWithModules(['irrigation', 'waste'])
+      const { container } = renderNavigation()
+
+      await screen.findByText('Abfallbehälter')
+      const texts = sidebarTexts(container)
+      expect(texts.indexOf('Grünflächen')).toBeLessThan(texts.indexOf('Karte'))
+      expect(texts.indexOf('Karte')).toBeLessThan(texts.indexOf('Bestand'))
+      expect(screen.getAllByText('Karte')).toHaveLength(1)
+    })
+
+    it('puts the map link under assets when the module names no section', async () => {
+      permissions.mockReturnValue(UNRESTRICTED)
+      respondWithModules(['waste'])
+      const { container } = renderNavigation()
+
+      await screen.findByText('Abfallbehälter')
+      const texts = sidebarTexts(container)
+      expect(texts).not.toContain('Grünflächen')
+      expect(texts.indexOf('Bestand')).toBeLessThan(texts.indexOf('Karte'))
+      expect(texts.indexOf('Karte')).toBeLessThan(texts.indexOf('Abfallbehälter'))
+    })
+
+    it('shows no map link without a module that draws on the map', async () => {
+      permissions.mockReturnValue(UNRESTRICTED)
+      respondWithModules(['probe'])
+      renderNavigation()
+
+      await screen.findByText('Bewässerung')
+      expect(screen.queryByText('Karte')).not.toBeInTheDocument()
+    })
+  })
+
   describe('assets section', () => {
     const respondWithModules = (active: string[]) =>
       server.use(
